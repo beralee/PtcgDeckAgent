@@ -103,20 +103,57 @@ func _make_state() -> GameState:
 	return state
 
 
+func _make_main_phase_gsm() -> GameStateMachine:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	gsm.game_state.turn_number = 2
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	return gsm
+
+
 ## ==================== 振翼发 飞来横祸 伤害指示物修正 ====================
 
-func test_flutter_mane_bench_damage_counters_is_20_not_120() -> String:
-	var state := _make_state()
-	var attacker := state.players[0].active_pokemon
-	var opp := state.players[1]
-	# 飞来横祸应放置2个伤害指示物（=20），不是120
-	var effect := AttackBenchDamageCounters.new(20)
-	effect.execute_attack(attacker, opp.active_pokemon, 0, state)
-	var total_bench_damage: int = 0
-	for slot: PokemonSlot in opp.bench:
-		total_bench_damage += slot.damage_counters
+func test_flutter_mane_bench_damage_counters_requires_assignment_selection() -> String:
+	var gsm := _make_main_phase_gsm()
+	var flutter_mane_cd: CardData = CardDatabase.get_card("CSV7C", "109")
+	if flutter_mane_cd == null:
+		return "未找到振翼发缓存卡牌数据"
+
+	gsm.effect_processor.register_pokemon_card(flutter_mane_cd)
+	var attacker := _make_slot(flutter_mane_cd, 0)
+	for i: int in 3:
+		attacker.attached_energy.append(CardInstance.create(_make_energy_data("超能量_%d" % i, "P"), 0))
+	gsm.game_state.players[0].active_pokemon = attacker
+
+	var opp: PlayerState = gsm.game_state.players[1]
+	var bench_a := _make_slot(_make_basic_pokemon_data("BenchA", "P", 90), 1)
+	var bench_b := _make_slot(_make_basic_pokemon_data("BenchB", "P", 90), 1)
+	opp.bench.clear()
+	opp.bench.append(bench_a)
+	opp.bench.append(bench_b)
+
+	var steps := gsm.effect_processor.get_attack_interaction_steps_by_id(
+		flutter_mane_cd.effect_id,
+		0,
+		attacker.get_top_card(),
+		flutter_mane_cd.attacks[0],
+		gsm.game_state
+	)
+	var used: bool = gsm.use_attack(0, 0, [{
+		"bench_damage_counters": [
+			{"target": bench_b, "amount": 10},
+			{"target": bench_b, "amount": 10},
+		]
+	}])
+
 	return run_checks([
-		assert_eq(total_bench_damage, 20, "飞来横祸应放置20伤害（2个指示物），不是120"),
+		assert_eq(steps.size(), 1, "飞来横祸应提供1个交互步骤用于分配伤害指示物"),
+		assert_eq(steps[0].get("id", ""), "bench_damage_counters", "飞来横祸应要求玩家分配2个伤害指示物"),
+		assert_true(used, "飞来横祸应能按选择结果执行"),
+		assert_eq(bench_a.damage_counters, 0, "飞来横祸不应自动把伤害指示物分到未选择的备战宝可梦"),
+		assert_eq(bench_b.damage_counters, 20, "飞来横祸应按选择结果把2个伤害指示物都放到同一只备战宝可梦"),
 	])
 
 
@@ -356,6 +393,45 @@ func test_munkidori_requires_dark_energy() -> String:
 	])
 
 
+func test_munkidori_knockout_active_returns_to_main_after_send_out() -> String:
+	var gsm := _make_main_phase_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	var opp: PlayerState = gsm.game_state.players[1]
+
+	var munki_cd := _make_basic_pokemon_data("愿增猿", "P", 110, "Basic", "", "munkidori_ability_test")
+	munki_cd.abilities = [{"name": "亢奋脑力"}]
+	var munki_slot := _make_slot(munki_cd, 0)
+	munki_slot.attached_energy.append(CardInstance.create(_make_energy_data("基本恶能量", "D"), 0))
+	player.bench.clear()
+	player.bench.append(munki_slot)
+	player.active_pokemon.damage_counters = 30
+
+	var opp_active_cd := _make_basic_pokemon_data("OppFragile", "P", 30)
+	var opp_active := _make_slot(opp_active_cd, 1)
+	opp.active_pokemon = opp_active
+	var opp_bench_cd := _make_basic_pokemon_data("OppBench", "P", 90)
+	var opp_bench := _make_slot(opp_bench_cd, 1)
+	opp.bench.clear()
+	opp.bench.append(opp_bench)
+
+	gsm.effect_processor.register_effect("munkidori_ability_test", AbilityMoveDamageCountersToOpponent.new(3))
+
+	var used: bool = gsm.use_ability(0, munki_slot, 0, [{
+		"source_pokemon": [player.active_pokemon],
+		"target_pokemon": [opp_active],
+		"counter_count": [3],
+	}])
+	var send_out_ok: bool = gsm.send_out_pokemon(1, opp_bench)
+
+	return run_checks([
+		assert_true(used, "亢奋脑力：应可将3个伤害指示物转移到对手战斗宝可梦"),
+		assert_eq(gsm.game_state.phase, GameState.GamePhase.MAIN, "亢奋脑力击倒对手战斗宝可梦后，替换完成应回到 MAIN"),
+		assert_eq(gsm.game_state.current_player_index, 0, "亢奋脑力击倒对手战斗宝可梦后，当前玩家回合应继续"),
+		assert_true(send_out_ok, "对手应能派出替换宝可梦"),
+		assert_eq(player.hand.size(), 4, "亢奋脑力击倒对手战斗宝可梦后，当前玩家应额外拿1张奖赏卡"),
+	])
+
+
 ## ==================== 愿增猿 精神幻觉 ====================
 
 func test_munkidori_psychic_phantasm_confuses() -> String:
@@ -409,6 +485,43 @@ func test_scream_tail_no_counters_no_damage() -> String:
 
 	return run_checks([
 		assert_eq(target.damage_counters, 0, "凶暴吼叫：无指示物则伤害为0"),
+	])
+
+
+func test_scream_tail_bench_knockout_advances_to_opponent_turn() -> String:
+	var gsm := _make_main_phase_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	var opp: PlayerState = gsm.game_state.players[1]
+
+	var scream_tail_cd := _make_basic_pokemon_data("吼叫尾", "P", 90, "Basic", "", "scream_tail_attack_test")
+	scream_tail_cd.attacks = [
+		{"name": "巴掌", "cost": "P", "damage": "30", "text": "", "is_vstar_power": false},
+		{"name": "凶暴吼叫", "cost": "PC", "damage": "", "text": "给对手的1只宝可梦，造成这只宝可梦身上放置的伤害指示物数量×20伤害。", "is_vstar_power": false},
+	]
+	var attacker := _make_slot(scream_tail_cd, 0)
+	attacker.attached_energy.append(CardInstance.create(_make_energy_data("基本超能量", "P"), 0))
+	attacker.attached_energy.append(CardInstance.create(_make_energy_data("无色测试能量", "C"), 0))
+	attacker.damage_counters = 50
+	player.active_pokemon = attacker
+
+	var opp_active_cd := _make_basic_pokemon_data("OppActive", "P", 120)
+	opp.active_pokemon = _make_slot(opp_active_cd, 1)
+	var frail_bench_cd := _make_basic_pokemon_data("OppBenchFragile", "P", 90)
+	var frail_bench := _make_slot(frail_bench_cd, 1)
+	opp.bench.clear()
+	opp.bench.append(frail_bench)
+
+	gsm.effect_processor.register_attack_effect("scream_tail_attack_test", AttackSelfDamageCounterTargetDamage.new(20))
+
+	var attacked: bool = gsm.use_attack(0, 1, [{"target_pokemon": [frail_bench]}])
+
+	return run_checks([
+		assert_true(attacked, "凶暴吼叫：应能指定对手备战区并造成伤害"),
+		assert_eq(gsm.game_state.current_player_index, 1, "凶暴吼叫击倒对手备战宝可梦后，应切到对手回合"),
+		assert_eq(gsm.game_state.phase, GameState.GamePhase.MAIN, "凶暴吼叫击倒对手备战宝可梦后，游戏应回到对手 MAIN"),
+		assert_false(frail_bench in opp.bench, "被击倒的备战宝可梦应从备战区移除"),
+		assert_eq(opp.discard_pile.size(), 1, "被击倒的备战宝可梦应进入弃牌区"),
+		assert_eq(player.hand.size(), 4, "击倒对手备战宝可梦后，当前玩家应额外拿1张奖赏卡"),
 	])
 
 

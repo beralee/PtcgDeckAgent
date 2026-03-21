@@ -561,8 +561,8 @@ static func _get_attack_effects(attack_name: String) -> Array:
 			# 己方身上每张特殊能量+70伤害
 			return [AttackSpecialEnergyMultiDamage.new(70)]
 		"飞来横祸":
-			# 在对方备战区宝可梦上放置2个伤害指示物（20HP）
-			return [AttackBenchDamageCounters.new(20)]
+			# 振翼发：将2个伤害指示物以任意方式分配到对方备战区
+			return [AttackDistributedBenchCountersEffect.new(20)]
 		"撕裂":
 			# 无视防守方效果
 			return [AttackIgnoreDefenderEffects.new()]

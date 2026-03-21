@@ -331,12 +331,34 @@ func _check_all_knockouts() -> void:
 				return
 			knockout_found = true
 
+	if game_state.phase == GameState.GamePhase.KNOCKOUT_REPLACE:
+		return
 	if not knockout_found:
 		_advance_to_next_turn()
-	elif _knockout_return_to_main and game_state.phase != GameState.GamePhase.KNOCKOUT_REPLACE:
-		# 备战区自爆不需要替换，直接回到 MAIN 阶段
+	elif _knockout_return_to_main:
+		# 回合中通过特性/训练家/竞技场等造成的 KO，结算后应继续当前玩家的 MAIN。
 		_knockout_return_to_main = false
 		_enter_phase(GameState.GamePhase.MAIN)
+	else:
+		# 攻击击倒备战区等无需替换的 KO，结算后仍应正常换到对手回合。
+		_advance_to_next_turn()
+
+
+func _has_pending_knockouts() -> bool:
+	for player: PlayerState in game_state.players:
+		for slot: PokemonSlot in player.get_all_pokemon():
+			if slot != null and effect_processor.is_effectively_knocked_out(slot, game_state):
+				return true
+	return false
+
+
+func _resolve_mid_turn_knockouts() -> bool:
+	if not _has_pending_knockouts():
+		return false
+	_knockout_return_to_main = true
+	_enter_phase(GameState.GamePhase.POKEMON_CHECK)
+	_check_all_knockouts()
+	return true
 
 
 ## 处理宝可梦昏厥
@@ -738,6 +760,7 @@ func play_trainer(player_index: int, card: CardInstance, targets: Array) -> bool
 
 	_log_action(GameAction.ActionType.PLAY_TRAINER, player_index,
 		{"card_name": card.card_data.name}, "玩家%d使用 %s" % [player_index, card.card_data.name])
+	_resolve_mid_turn_knockouts()
 	return true
 
 
@@ -766,6 +789,7 @@ func play_stadium(player_index: int, card: CardInstance) -> bool:
 
 	_log_action(GameAction.ActionType.PLAY_STADIUM, player_index,
 		{"card_name": card.card_data.name}, "玩家%d使出竞技场 %s" % [player_index, card.card_data.name])
+	_resolve_mid_turn_knockouts()
 	return true
 
 
@@ -813,6 +837,7 @@ func use_stadium_effect(player_index: int, targets: Array = []) -> bool:
 
 	_log_action(GameAction.ActionType.USE_STADIUM, player_index,
 		{"card_name": stadium_card.card_data.name}, "玩家%d使用竞技场效果 %s" % [player_index, stadium_card.card_data.name])
+	_resolve_mid_turn_knockouts()
 	return true
 
 
@@ -1144,11 +1169,7 @@ func use_ability(
 	_log_action(GameAction.ActionType.USE_ABILITY, player_index,
 		{"pokemon_name": pokemon.get_pokemon_name(), "ability_name": ability_name},
 		"Used ability: %s" % ability_name)
-	if pokemon.is_knocked_out():
-		# 特性自爆（如咒怨炸弹）：KO 替换完后回到 MAIN 阶段继续操作
-		_knockout_return_to_main = true
-		_enter_phase(GameState.GamePhase.POKEMON_CHECK)
-		_check_all_knockouts()
+	if _resolve_mid_turn_knockouts():
 		return true
 	if _should_end_turn_after_ability(player_index, pokemon, ability_index):
 		end_turn(player_index)
