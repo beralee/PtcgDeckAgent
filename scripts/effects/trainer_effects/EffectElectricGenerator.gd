@@ -2,6 +2,7 @@
 class_name EffectElectricGenerator
 extends BaseEffect
 
+const ASSIGNMENT_STEP_ID := "energy_assignments"
 
 func can_execute(card: CardInstance, state: GameState) -> bool:
 	var player: PlayerState = state.players[card.owner_index]
@@ -15,16 +16,12 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 
 func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
-	var reveal_cards: Array[CardInstance] = []
+	var energy_items: Array = []
+	var energy_labels: Array[String] = []
 	var reveal_labels: Array[String] = []
 	for idx: int in mini(5, player.deck.size()):
 		var reveal_card: CardInstance = player.deck[idx]
-		reveal_cards.append(reveal_card)
 		reveal_labels.append(reveal_card.card_data.name)
-
-	var energy_items: Array = []
-	var energy_labels: Array[String] = []
-	for reveal_card: CardInstance in reveal_cards:
 		if _is_basic_lightning_energy(reveal_card):
 			energy_items.append(reveal_card)
 			energy_labels.append(reveal_card.card_data.name)
@@ -52,32 +49,17 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			"allow_cancel": true,
 		}]
 
-	return [
-		{
-			"id": "selected_energy",
-			"title": "%s\n选择最多 2 张要附着的基础雷能量" % reveal_title,
-			"items": energy_items,
-			"labels": energy_labels,
-			"presentation": "cards",
-			"card_items": energy_items,
-			"choice_labels": energy_labels,
-			"min_select": 1,
-			"max_select": mini(2, energy_items.size()),
-			"allow_cancel": true,
-		},
-		{
-			"id": "attach_target",
-			"title": "选择要附着能量的备战区雷属性宝可梦",
-			"items": bench_items,
-			"labels": bench_labels,
-			"presentation": "cards",
-			"card_items": bench_items,
-			"choice_labels": bench_labels,
-			"min_select": 1,
-			"max_select": 1,
-			"allow_cancel": true,
-		},
-	]
+	return [build_card_assignment_step(
+		ASSIGNMENT_STEP_ID,
+		"%s\n选择基础雷能量并分配给备战区雷属性宝可梦" % reveal_title,
+		energy_items,
+		energy_labels,
+		bench_items,
+		bench_labels,
+		1,
+		mini(2, energy_items.size()),
+		true
+	)]
 
 
 func execute(card: CardInstance, targets: Array, state: GameState) -> void:
@@ -87,28 +69,16 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	for idx: int in mini(5, player.deck.size()):
 		reveal_cards.append(player.deck[idx])
 
-	var selected_energy_raw: Array = ctx.get("selected_energy", [])
-	var selected_energies: Array[CardInstance] = []
-	for entry: Variant in selected_energy_raw:
-		if entry is CardInstance and entry in reveal_cards and _is_basic_lightning_energy(entry):
-			selected_energies.append(entry)
-
-	if selected_energies.is_empty():
+	var assignments: Array[Dictionary] = _resolve_assignments(player, reveal_cards, ctx)
+	if assignments.is_empty():
 		player.shuffle_deck()
 		return
 
-	var target_slot: PokemonSlot = null
-	var target_raw: Array = ctx.get("attach_target", [])
-	if not target_raw.is_empty() and target_raw[0] is PokemonSlot:
-		var candidate: PokemonSlot = target_raw[0]
-		if candidate in player.bench and candidate.get_energy_type() == "L":
-			target_slot = candidate
-
-	if target_slot == null:
-		player.shuffle_deck()
-		return
-
-	for energy: CardInstance in selected_energies:
+	for assignment: Dictionary in assignments:
+		var energy: CardInstance = assignment.get("source")
+		var target_slot: PokemonSlot = assignment.get("target")
+		if energy == null or target_slot == null:
+			continue
 		player.deck.erase(energy)
 		energy.face_up = true
 		target_slot.attached_energy.append(energy)
@@ -125,3 +95,36 @@ func _is_basic_lightning_energy(card: CardInstance) -> bool:
 		card.card_data.card_type == "Basic Energy"
 		and card.card_data.energy_provides == "L"
 	)
+
+
+func _resolve_assignments(player: PlayerState, reveal_cards: Array[CardInstance], ctx: Dictionary) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	var selected_raw: Array = ctx.get(ASSIGNMENT_STEP_ID, [])
+	var valid_targets: Array[PokemonSlot] = []
+	for slot: PokemonSlot in player.bench:
+		if slot.get_energy_type() == "L":
+			valid_targets.append(slot)
+	var used_sources: Array[CardInstance] = []
+
+	for entry: Variant in selected_raw:
+		if not (entry is Dictionary):
+			continue
+		var assignment: Dictionary = entry
+		var source: Variant = assignment.get("source")
+		var target: Variant = assignment.get("target")
+		if not (source is CardInstance) or not (target is PokemonSlot):
+			continue
+		var energy: CardInstance = source as CardInstance
+		var slot: PokemonSlot = target as PokemonSlot
+		if energy not in reveal_cards or not _is_basic_lightning_energy(energy):
+			continue
+		if slot not in valid_targets or energy in used_sources:
+			continue
+		used_sources.append(energy)
+		result.append({
+			"source": energy,
+			"target": slot,
+		})
+		if result.size() >= 2:
+			break
+	return result

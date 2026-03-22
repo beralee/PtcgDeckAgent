@@ -22,6 +22,19 @@ class ScriptedRuleValidator extends RuleValidator:
 		call_index += 1
 		return true
 
+
+class CountingCoinFlipper extends CoinFlipper:
+	var next_result: bool = true
+	var flip_calls: int = 0
+
+	func _init(result: bool = true) -> void:
+		next_result = result
+
+	func flip() -> bool:
+		flip_calls += 1
+		coin_flipped.emit(next_result)
+		return next_result
+
 ## 创建包含 60 张基础宝可梦的测试卡组数据
 func _make_test_deck_data(deck_id: int) -> DeckData:
 	var deck := DeckData.new()
@@ -38,6 +51,19 @@ func _make_test_deck_data(deck_id: int) -> DeckData:
 			"card_type": "Pokemon",
 			"name": "测试宝可梦%d" % i,
 		})
+	deck.total_cards = 60
+	return deck
+
+
+func _make_real_test_deck_data(deck_id: int, set_code: String = "CSV6C", card_index: String = "065") -> DeckData:
+	var deck := DeckData.new()
+	deck.id = deck_id
+	deck.deck_name = "真实测试卡组%d" % deck_id
+	deck.cards = [{
+		"set_code": set_code,
+		"card_index": card_index,
+		"count": 60,
+	}]
 	deck.total_cards = 60
 	return deck
 
@@ -80,6 +106,40 @@ func test_gsm_instantiate() -> String:
 		assert_eq(gsm.damage_calculator != null, true, "DamageCalculator should initialize"),
 		assert_eq(gsm.effect_processor != null, true, "EffectProcessor should initialize"),
 		assert_eq(gsm.coin_flipper != null, true, "CoinFlipper should initialize"),
+	])
+
+
+func test_start_game_force_player0_first_skips_coin_flip() -> String:
+	var gsm := GameStateMachine.new()
+	var flipper := CountingCoinFlipper.new(false)
+	gsm.coin_flipper = flipper
+	gsm.effect_processor = EffectProcessor.new(flipper)
+
+	var deck_1 := _make_real_test_deck_data(1, "CSV6C", "065")
+	var deck_2 := _make_real_test_deck_data(2, "CSV1C", "060")
+	gsm.start_game(deck_1, deck_2, 0)
+
+	return run_checks([
+		assert_eq(flipper.flip_calls, 0, "强制玩家1先攻时不应触发投硬币"),
+		assert_eq(gsm.game_state.first_player_index, 0, "强制玩家1先攻时 first_player_index 应为 0"),
+		assert_eq(gsm.game_state.current_player_index, 0, "强制玩家1先攻时 current_player_index 应为 0"),
+	])
+
+
+func test_start_game_random_first_uses_coin_flip() -> String:
+	var gsm := GameStateMachine.new()
+	var flipper := CountingCoinFlipper.new(false)
+	gsm.coin_flipper = flipper
+	gsm.effect_processor = EffectProcessor.new(flipper)
+
+	var deck_1 := _make_real_test_deck_data(1, "CSV6C", "065")
+	var deck_2 := _make_real_test_deck_data(2, "CSV1C", "060")
+	gsm.start_game(deck_1, deck_2, -1)
+
+	return run_checks([
+		assert_eq(flipper.flip_calls, 1, "随机先后攻时应触发一次投硬币"),
+		assert_eq(gsm.game_state.first_player_index, 1, "投币为反面时应由玩家2先攻"),
+		assert_eq(gsm.game_state.current_player_index, 1, "随机决定玩家2先攻时 current_player_index 应同步为 1"),
 	])
 
 
@@ -798,10 +858,72 @@ func test_attack_extra_prize_takes_one_additional_prize_on_knockout() -> String:
 		gsm.game_state.players[1].prizes.append(CardInstance.create(defender_cd, 1))
 
 	var attacked: bool = gsm.use_attack(0, 0)
+	var took_first: bool = gsm.resolve_take_prize(0, 1)
+	var took_second: bool = gsm.resolve_take_prize(0, 3)
 	return run_checks([
 		assert_eq(attacked, true, "铁臂膀ex should use Amp You Very Much successfully"),
+		assert_eq(took_first, true, "First prize should be taken by explicit player selection"),
+		assert_eq(took_second, true, "Second prize should also require explicit player selection"),
 		assert_eq(gsm.game_state.players[0].hand.size(), 2, "Amp You Very Much should take two prize cards total"),
 		assert_eq(gsm.game_state.players[0].prizes.size(), 2, "Prize pile should shrink by two"),
+	])
+
+
+func test_knockout_waits_for_prize_selection_before_replacement() -> String:
+	var gsm := _make_gsm_with_decks()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 2
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+
+	var choice_events: Array[Dictionary] = []
+	gsm.player_choice_required.connect(func(choice_type: String, data: Dictionary) -> void:
+		choice_events.append({"type": choice_type, "data": data.duplicate(true)})
+	)
+
+	var attacker_cd := CardData.new()
+	attacker_cd.name = "Prize Picker"
+	attacker_cd.card_type = "Pokemon"
+	attacker_cd.stage = "Basic"
+	attacker_cd.hp = 120
+	attacker_cd.energy_type = "P"
+	attacker_cd.attacks = [{"name": "Hit", "cost": "P", "damage": "120", "is_vstar_power": false}]
+	var attacker_slot := PokemonSlot.new()
+	attacker_slot.pokemon_stack.append(CardInstance.create(attacker_cd, 0))
+	attacker_slot.attached_energy.append(CardInstance.create(_make_test_energy("P"), 0))
+	gsm.game_state.players[0].active_pokemon = attacker_slot
+
+	var defender_cd := CardData.new()
+	defender_cd.name = "Defender"
+	defender_cd.card_type = "Pokemon"
+	defender_cd.stage = "Basic"
+	defender_cd.hp = 120
+	attacker_cd.energy_type = "W"
+	var defender_slot := PokemonSlot.new()
+	defender_slot.pokemon_stack.append(CardInstance.create(defender_cd, 1))
+	gsm.game_state.players[1].active_pokemon = defender_slot
+	var replacement := PokemonSlot.new()
+	replacement.pokemon_stack.append(CardInstance.create(defender_cd, 1))
+	gsm.game_state.players[1].bench.append(replacement)
+	for i: int in 6:
+		gsm.game_state.players[0].prizes.append(CardInstance.create(defender_cd, 0))
+		gsm.game_state.players[1].prizes.append(CardInstance.create(defender_cd, 1))
+
+	var attacked: bool = gsm.use_attack(0, 0)
+	var take_prize_event: Dictionary = choice_events[0] if not choice_events.is_empty() else {}
+	var before_hand: int = gsm.game_state.players[0].hand.size()
+	var before_prizes: int = gsm.game_state.players[0].prizes.size()
+	var took_prize: bool = gsm.resolve_take_prize(0, 3)
+
+	return run_checks([
+		assert_true(attacked, "Attack should succeed"),
+		assert_eq(str(take_prize_event.get("type", "")), "take_prize", "Knockout should pause on prize selection first"),
+		assert_eq(before_hand, 0, "Prize cards should not be auto-added before the player chooses"),
+		assert_eq(before_prizes, 6, "Prize pile should stay untouched until selection"),
+		assert_true(took_prize, "Resolving the chosen prize slot should succeed"),
+		assert_eq(gsm.game_state.players[0].hand.size(), 1, "Chosen prize should enter hand after selection"),
+		assert_eq(gsm.game_state.players[0].prizes.size(), 5, "Prize count should shrink after selection"),
+		assert_eq(gsm.game_state.phase, GameState.GamePhase.KNOCKOUT_REPLACE, "Game should wait for the defender to send out a replacement"),
 	])
 
 
@@ -846,9 +968,11 @@ func test_attack_extra_prize_marker_clears_when_target_survives() -> String:
 	defender_slot.damage_counters = 120
 	gsm.game_state.phase = GameState.GamePhase.POKEMON_CHECK
 	gsm._check_all_knockouts()
+	var took_prize: bool = gsm.resolve_take_prize(0, 0)
 
 	return run_checks([
 		assert_eq(attacked, true, "Amp You Very Much should still be usable when it does not KO"),
+		assert_true(took_prize, "Later knockout should still require a manual prize selection"),
 		assert_eq(defender_slot.effects.filter(func(effect: Dictionary) -> bool: return effect.get("type", "") == "extra_prize").size(), 0, "Extra prize marker should clear if the target survives"),
 		assert_eq(gsm.game_state.players[0].hand.size(), 1, "Later knockouts should not incorrectly draw extra prize cards"),
 	])

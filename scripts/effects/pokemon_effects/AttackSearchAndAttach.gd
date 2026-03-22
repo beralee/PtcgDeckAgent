@@ -155,12 +155,10 @@ func _collect_attach_targets(
 			for slot: PokemonSlot in player.bench:
 				if limit_to_attach_count and result.size() >= attach_count:
 					break
-				var cd: CardData = slot.get_card_data()
-				if cd != null and cd.is_rule_box_pokemon() and _matches_target_tag(slot):
+				if _is_v_pokemon_target(slot) and _matches_target_tag(slot):
 					result.append(slot)
 			if not limit_to_attach_count or result.size() < attach_count:
-				var active_cd: CardData = attacker.get_card_data()
-				if active_cd != null and active_cd.is_rule_box_pokemon() and _matches_target_tag(attacker):
+				if _is_v_pokemon_target(attacker) and _matches_target_tag(attacker):
 					result.append(attacker)
 		"bench":
 			for slot: PokemonSlot in player.bench:
@@ -258,6 +256,15 @@ func _matches_target_tag(slot: PokemonSlot) -> bool:
 	if cd == null:
 		return false
 	return cd.has_tag(target_tag)
+
+
+func _is_v_pokemon_target(slot: PokemonSlot) -> bool:
+	if slot == null:
+		return false
+	var cd: CardData = slot.get_card_data()
+	if cd == null:
+		return false
+	return cd.mechanic in ["V", "VSTAR", "VMAX"]
 
 
 func get_description() -> String:

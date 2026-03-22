@@ -112,8 +112,6 @@ func get_attack_unusable_reason(
 		return "不是你的回合"
 	if state.phase != GameState.GamePhase.MAIN:
 		return "当前不在主要阶段"
-	if state.turn_number == 1 and player_index == state.first_player_index:
-		return "先攻玩家首回合不能攻击"
 
 	var player: PlayerState = state.players[player_index]
 	if player.active_pokemon == null:
@@ -129,6 +127,13 @@ func get_attack_unusable_reason(
 	if attack_index < 0 or attack_index >= card_data.attacks.size():
 		return "招式索引无效"
 	var attack: Dictionary = card_data.attacks[attack_index]
+
+	if (
+		state.turn_number == 1
+		and player_index == state.first_player_index
+		and not _allows_first_player_attack_on_first_turn(attack)
+	):
+		return "先攻玩家首回合不能攻击"
 
 	if attack.get("is_vstar_power", false) and state.vstar_power_used[player_index]:
 		return "本局已使用过 VSTAR 力量"
@@ -161,6 +166,14 @@ func get_attack_unusable_reason(
 	if not has_enough_energy(active, cost, effect_processor, state):
 		return "能量不足，当前无法支付 [%s]" % cost
 	return ""
+
+
+func _allows_first_player_attack_on_first_turn(attack: Dictionary) -> bool:
+	var attack_name: String = str(attack.get("name", ""))
+	if attack_name == "快速充能":
+		return true
+	var attack_text: String = str(attack.get("text", ""))
+	return attack_text.contains("即使是先攻玩家的最初回合也可以使用")
 
 
 func has_enough_energy(

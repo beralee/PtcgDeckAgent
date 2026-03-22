@@ -209,12 +209,19 @@ func test_discard_multi_and_rule_box_defense_families() -> String:
 	var player: PlayerState = state.players[0]
 	var attacker := player.active_pokemon
 	attacker.attached_energy.clear()
-	attacker.attached_energy.append(CardInstance.create(_make_energy_data("L1", "L"), 0))
-	attacker.attached_energy.append(CardInstance.create(_make_energy_data("L2", "L"), 0))
+	var energy_a := CardInstance.create(_make_energy_data("L1", "L"), 0)
+	var energy_b := CardInstance.create(_make_energy_data("L2", "L"), 0)
+	attacker.attached_energy.append(energy_a)
+	player.bench[0].attached_energy.append(energy_b)
 	var defender := state.players[1].active_pokemon
 
 	var discard_multi := AttackDiscardEnergyMultiDamage.new("L", 60)
+	discard_multi.set_attack_interaction_context([{
+		"discard_energy": [energy_a, energy_b],
+	}])
+	var damage_bonus := discard_multi.get_damage_bonus(attacker, state)
 	discard_multi.execute_attack(attacker, defender, 0, state)
+	discard_multi.clear_attack_interaction_context()
 
 	var defending_player := PlayerState.new()
 	var gardevoir_cd := _make_basic_pokemon_data("RadiantGardevoir", "P", 130)
@@ -231,11 +238,61 @@ func test_discard_multi_and_rule_box_defense_families() -> String:
 	zamazenta.attached_energy.append(CardInstance.create(_make_energy_data("Metal", "M"), 1))
 
 	return run_checks([
-		assert_eq(defender.damage_counters, 120, "AttackDiscardEnergyMultiDamage should add damage per discarded energy"),
-		assert_eq(attacker.attached_energy.size(), 0, "AttackDiscardEnergyMultiDamage should discard all matching energy"),
+		assert_eq(damage_bonus, 60, "AttackDiscardEnergyMultiDamage should offset the printed 60x text to the selected count"),
+		assert_eq(defender.damage_counters, 0, "AttackDiscardEnergyMultiDamage should only discard energy; damage bonus comes from DamageCalculator"),
+		assert_eq(attacker.attached_energy.size(), 0, "AttackDiscardEnergyMultiDamage should discard selected energy from the attacker"),
+		assert_eq(player.bench[0].attached_energy.size(), 0, "AttackDiscardEnergyMultiDamage should also discard selected energy from the bench"),
 		assert_eq(player.discard_pile.size(), 2, "AttackDiscardEnergyMultiDamage should move discarded energy to discard"),
 		assert_eq(AbilityVReduceDamage.get_v_damage_reduction(defending_player, normal_defender, v_attacker), -20, "AbilityVReduceDamage should reduce damage from rule-box attackers"),
 		assert_eq(AbilityConditionalDefense.get_conditional_defense(zamazenta), -30, "AbilityConditionalDefense should require basic metal energy"),
+	])
+
+
+func test_mew_copy_attack_uses_selected_opponent_attack() -> String:
+	var processor := EffectProcessor.new()
+	var state := _make_state()
+
+	var mew_cd := _make_basic_pokemon_data("梦幻ex", "P", 180, "Basic", "ex", "49669fcf461deacebeb5755c11ec51f1")
+	mew_cd.attacks = [{
+		"name": "基因侵入",
+		"cost": "CCC",
+		"damage": "",
+		"text": "",
+		"is_vstar_power": false,
+	}]
+	var mew_attacker := _make_slot(mew_cd, 0)
+	state.players[0].active_pokemon = mew_attacker
+
+	var haxorus_cd := _make_dragon_pokemon_data(
+		"双斧战龙",
+		170,
+		"e45788bd7d9ffec5b3da3730d2dc806f",
+		[
+			{"name": "巨斧劈落", "cost": "N", "damage": "", "text": "", "is_vstar_power": false},
+			{"name": "龙之波动", "cost": "NNC", "damage": "230", "text": "", "is_vstar_power": false},
+		]
+	)
+	processor.register_pokemon_card(haxorus_cd)
+	state.players[1].active_pokemon = _make_slot(haxorus_cd, 1)
+
+	var mew_effect := AttackCopyAttack.new(processor)
+	var steps: Array[Dictionary] = mew_effect.get_attack_interaction_steps(mew_attacker.get_top_card(), mew_cd.attacks[0], state)
+	var ctx := {
+		"copied_attack": [{
+			"source_effect_id": haxorus_cd.effect_id,
+			"attack_index": 1,
+			"attack": haxorus_cd.attacks[1],
+		}],
+	}
+	mew_effect.set_attack_interaction_context([ctx])
+	var damage_bonus := mew_effect.get_damage_bonus(mew_attacker, state)
+	mew_effect.execute_attack(mew_attacker, state.players[1].active_pokemon, 0, state)
+	mew_effect.clear_attack_interaction_context()
+
+	return run_checks([
+		assert_eq(steps.size(), 1, "基因侵入应先要求选择对手战斗宝可梦的招式"),
+		assert_eq(damage_bonus, 230, "基因侵入应按选择的对手招式返回对应伤害"),
+		assert_eq(state.players[0].deck.size(), 3, "复制龙之波动时应执行其附加效果并磨掉己方牌库3张"),
 	])
 
 

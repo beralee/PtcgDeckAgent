@@ -15,6 +15,8 @@ var selected_deck_ids: Array[int] = [0, 0]
 var ai_difficulty: int = 1
 ## 先攻选择 (-1=随机, 0=玩家1, 1=玩家2)
 var first_player_choice: int = -1
+## 对战背景资源路径
+var selected_battle_background: String = "res://assets/ui/background.png"
 
 ## 当前游戏状态（对战中有效）
 var game_state: GameState = null

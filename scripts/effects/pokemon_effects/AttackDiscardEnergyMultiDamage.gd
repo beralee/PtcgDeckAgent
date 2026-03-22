@@ -6,6 +6,8 @@
 class_name AttackDiscardEnergyMultiDamage
 extends BaseEffect
 
+const STEP_ID := "discard_energy"
+
 ## 要弃置的能量类型
 var energy_type: String = "L"
 ## 每弃1张追加的伤害值
@@ -15,6 +17,38 @@ var damage_per_energy: int = 60
 func _init(e_type: String = "L", per_energy: int = 60) -> void:
 	energy_type = e_type
 	damage_per_energy = per_energy
+
+
+func get_attack_interaction_steps(
+	card: CardInstance,
+	_attack: Dictionary,
+	state: GameState
+) -> Array[Dictionary]:
+	if card == null:
+		return []
+	var player: PlayerState = state.players[card.owner_index]
+	var items: Array = []
+	var labels: Array[String] = []
+	for slot: PokemonSlot in player.get_all_pokemon():
+		for energy_card: CardInstance in slot.attached_energy:
+			if not _matches_energy_type(energy_card):
+				continue
+			items.append(energy_card)
+			labels.append("%s on %s" % [energy_card.card_data.name, slot.get_pokemon_name()])
+	return [{
+		"id": STEP_ID,
+		"title": "选择要弃置的能量",
+		"items": items,
+		"labels": labels,
+		"min_select": 0,
+		"max_select": items.size(),
+		"allow_cancel": true,
+	}]
+
+
+func get_damage_bonus(_attacker: PokemonSlot, _state: GameState) -> int:
+	var selected_count: int = _get_selected_energy().size()
+	return (selected_count - 1) * damage_per_energy
 
 
 func execute_attack(
@@ -29,23 +63,21 @@ func execute_attack(
 	var pi: int = top_card.owner_index
 	var player: PlayerState = state.players[pi]
 
-	# 找出所有符合类型的能量
-	var to_discard: Array[CardInstance] = []
-	for energy_card: CardInstance in attacker.attached_energy:
-		if _matches_energy_type(energy_card):
-			to_discard.append(energy_card)
-
+	var to_discard: Array[CardInstance] = _get_selected_energy()
 	if to_discard.is_empty():
 		return
 
-	# 从附着能量中移除并放入弃牌区
+	var selected_ids: Dictionary = {}
 	for energy_card: CardInstance in to_discard:
-		attacker.attached_energy.erase(energy_card)
-		player.discard_pile.append(energy_card)
-
-	# 追加伤害
-	var bonus_damage: int = damage_per_energy * to_discard.size()
-	defender.damage_counters += bonus_damage
+		selected_ids[energy_card.instance_id] = true
+	for slot: PokemonSlot in player.get_all_pokemon():
+		var kept: Array[CardInstance] = []
+		for attached: CardInstance in slot.attached_energy:
+			if selected_ids.has(attached.instance_id):
+				player.discard_pile.append(attached)
+			else:
+				kept.append(attached)
+		slot.attached_energy = kept
 
 
 ## 判断能量卡是否符合指定类型
@@ -60,5 +92,15 @@ func _matches_energy_type(card: CardInstance) -> bool:
 	return cd.energy_provides == energy_type or cd.energy_type == energy_type
 
 
+func _get_selected_energy() -> Array[CardInstance]:
+	var ctx: Dictionary = get_attack_interaction_context()
+	var selected_raw: Array = ctx.get(STEP_ID, [])
+	var result: Array[CardInstance] = []
+	for entry: Variant in selected_raw:
+		if entry is CardInstance and _matches_energy_type(entry) and not result.has(entry):
+			result.append(entry)
+	return result
+
+
 func get_description() -> String:
-	return "强劲电光：弃置自身所有%s能量，每弃1张追加%d伤害。" % [energy_type, damage_per_energy]
+	return "强劲电光：弃置己方场上任意数量的%s能量，每弃1张追加%d伤害。" % [energy_type, damage_per_energy]

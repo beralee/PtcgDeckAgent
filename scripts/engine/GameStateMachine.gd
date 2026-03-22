@@ -31,6 +31,12 @@ var _mulligan_counts: Array[int] = [0, 0]
 var _pending_heavy_baton_player_index: int = -1
 var _pending_heavy_baton_slot: PokemonSlot = null
 var _pending_heavy_baton_is_active: bool = false
+var _pending_prize_player_index: int = -1
+var _pending_prize_remaining: int = 0
+var _pending_prize_knocked_out_player_index: int = -1
+var _pending_prize_knockout_is_active: bool = false
+var _pending_prize_resume_mode: String = ""
+var _pending_prize_resume_player_index: int = -1
 
 
 func _init() -> void:
@@ -50,6 +56,7 @@ func start_game(deck_1: DeckData, deck_2: DeckData, force_first: int = -1) -> vo
 	action_log.clear()
 	_mulligan_counts = [0, 0]
 	effect_processor = EffectProcessor.new(coin_flipper)
+	_clear_pending_prize_choice()
 
 	# 决定先攻
 	if force_first == -1:
@@ -251,7 +258,7 @@ func setup_complete(player_index: int) -> bool:
 			var prize: CardInstance = player.deck.pop_front()
 			prize.face_up = false
 			prizes.append(prize)
-		player.prizes = prizes
+		player.set_prizes(prizes)
 		_log_action(GameAction.ActionType.SETUP_SET_PRIZES, pi,
 			{"count": prizes.size()}, "玩家%d摆放6张奖赏卡" % pi)
 
@@ -366,11 +373,10 @@ func _handle_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -> 
 	if _maybe_request_heavy_baton_choice(player_index, slot, is_active):
 		return false
 	_apply_heavy_baton_if_possible(player_index, slot, null)
-	_finalize_knockout(player_index, slot, is_active)
-	return true
+	return _finalize_knockout(player_index, slot, is_active)
 
 
-func _finalize_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -> void:
+func _finalize_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -> bool:
 	var opp_index: int = 1 - player_index
 	var pokemon_name: String = slot.get_pokemon_name()
 	var base_prize_count: int = slot.get_prize_count()
@@ -394,10 +400,7 @@ func _finalize_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -
 			_log_action(GameAction.ActionType.DRAW_CARD, player_index,
 				{"count": drawn}, "馈赠能量生效：抽取%d张卡牌（手牌到7张）" % drawn)
 
-	# 将宝可梦及附着卡牌放入弃牌区
-	var cards_to_discard: Array[CardInstance] = slot.collect_all_cards()
-	for card: CardInstance in cards_to_discard:
-		player.discard_pile.append(card)
+	_move_knocked_out_cards(slot, player)
 
 	# 从场上移除
 	if is_active:
@@ -411,6 +414,33 @@ func _finalize_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -
 
 	# 对手拿取奖赏卡
 	var prizes_taken: Array[CardInstance] = []
+	var available_prizes: int = game_state.players[opp_index].prizes.size()
+	var pending_prize_count: int = mini(prize_count, available_prizes)
+	if pending_prize_count > 0:
+		_pending_prize_player_index = opp_index
+		_pending_prize_remaining = pending_prize_count
+		_pending_prize_knocked_out_player_index = player_index
+		_pending_prize_knockout_is_active = is_active
+		if is_active:
+			if game_state.players[player_index].bench.is_empty():
+				_pending_prize_resume_mode = "game_over"
+				_pending_prize_resume_player_index = opp_index
+			else:
+				_pending_prize_resume_mode = "send_out"
+				_pending_prize_resume_player_index = player_index
+		elif _knockout_return_to_main:
+			_pending_prize_resume_mode = "resume_main"
+			_pending_prize_resume_player_index = player_index
+		else:
+			_pending_prize_resume_mode = "resume_check"
+			_pending_prize_resume_player_index = player_index
+		player_choice_required.emit("take_prize", {
+			"player": opp_index,
+			"count": pending_prize_count,
+			"description": "Select 1 prize card"
+		})
+		return false
+
 	for _i: int in prize_count:
 		if not game_state.players[opp_index].prizes.is_empty():
 			var prize: CardInstance = game_state.players[opp_index].prizes.pop_back()
@@ -424,7 +454,7 @@ func _finalize_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -
 
 	# 检查胜利条件
 	if _check_win_condition() >= 0:
-		return
+		return true
 
 	# 战斗宝可梦昏厥需要派出替换宝可梦
 	if is_active:
@@ -437,6 +467,88 @@ func _finalize_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -
 				"player": player_index,
 				"description": "请选择1只备战宝可梦派出"
 			})
+
+
+	return true
+
+
+func resolve_take_prize(player_index: int, slot_index: int) -> bool:
+	if player_index != _pending_prize_player_index or _pending_prize_remaining <= 0:
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	var taken_prize: CardInstance = player.take_prize_from_slot(slot_index)
+	if taken_prize == null:
+		return false
+
+	_pending_prize_remaining -= 1
+	_log_action(GameAction.ActionType.TAKE_PRIZE, player_index,
+		{
+			"count": 1,
+			"card_name": taken_prize.card_data.name if taken_prize.card_data != null else ""
+		},
+		"玩家%d拿取1张奖赏卡" % player_index)
+
+	if _pending_prize_remaining > 0 and not player.prizes.is_empty():
+		player_choice_required.emit("take_prize", {
+			"player": player_index,
+			"count": _pending_prize_remaining,
+			"description": "Select 1 prize card"
+		})
+		return true
+
+	var resume_mode: String = _pending_prize_resume_mode
+	var resume_player_index: int = _pending_prize_resume_player_index
+	_clear_pending_prize_choice()
+
+	if _check_win_condition() >= 0:
+		return true
+
+	match resume_mode:
+		"send_out":
+			_enter_phase(GameState.GamePhase.KNOCKOUT_REPLACE)
+			player_choice_required.emit("send_out_pokemon", {
+				"player": resume_player_index,
+				"description": "请选择1只备战宝可梦派出"
+			})
+		"game_over":
+			_trigger_game_over(resume_player_index, "对手无宝可梦")
+		"resume_main":
+			_knockout_return_to_main = false
+			_enter_phase(GameState.GamePhase.MAIN)
+		"resume_check":
+			if game_state.phase == GameState.GamePhase.POKEMON_CHECK:
+				_check_all_knockouts()
+	return true
+
+
+func _clear_pending_prize_choice() -> void:
+	_pending_prize_player_index = -1
+	_pending_prize_remaining = 0
+	_pending_prize_knocked_out_player_index = -1
+	_pending_prize_knockout_is_active = false
+	_pending_prize_resume_mode = ""
+	_pending_prize_resume_player_index = -1
+
+
+func _move_knocked_out_cards(slot: PokemonSlot, player: PlayerState) -> void:
+	if _should_lost_city_redirect_knockout():
+		for pokemon_card: CardInstance in slot.pokemon_stack:
+			player.lost_zone.append(pokemon_card)
+		for energy: CardInstance in slot.attached_energy:
+			player.discard_pile.append(energy)
+		if slot.attached_tool != null:
+			player.discard_pile.append(slot.attached_tool)
+		return
+
+	for card: CardInstance in slot.collect_all_cards():
+		player.discard_pile.append(card)
+
+
+func _should_lost_city_redirect_knockout() -> bool:
+	if game_state.stadium_card == null:
+		return false
+	var stadium_effect: BaseEffect = effect_processor.get_effect(game_state.stadium_card.card_data.effect_id)
+	return stadium_effect != null and stadium_effect.has_method("redirects_knocked_out_pokemon_to_lost_zone") and bool(stadium_effect.call("redirects_knocked_out_pokemon_to_lost_zone"))
 
 
 func _maybe_request_heavy_baton_choice(player_index: int, slot: PokemonSlot, is_active: bool) -> bool:
@@ -540,9 +652,9 @@ func resolve_heavy_baton_choice(player_index: int, bench_slot: PokemonSlot) -> b
 	_pending_heavy_baton_is_active = false
 
 	_apply_heavy_baton_if_possible(player_index, pending_slot, bench_slot)
-	_finalize_knockout(player_index, pending_slot, pending_is_active)
+	var knockout_completed: bool = _finalize_knockout(player_index, pending_slot, pending_is_active)
 
-	if game_state.phase == GameState.GamePhase.POKEMON_CHECK:
+	if knockout_completed and game_state.phase == GameState.GamePhase.POKEMON_CHECK:
 		_check_all_knockouts()
 	return true
 

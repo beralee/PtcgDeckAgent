@@ -10,6 +10,8 @@ var deck: Array[CardInstance] = []
 var hand: Array[CardInstance] = []
 ## 奖赏卡
 var prizes: Array[CardInstance] = []
+## 奖赏区固定槽位布局（允许 null）
+var prize_layout: Array = []
 ## 弃牌区
 var discard_pile: Array[CardInstance] = []
 ## 放逐区
@@ -100,11 +102,53 @@ func has_basic_pokemon_in_hand() -> bool:
 	return false
 
 
+func set_prizes(cards: Array[CardInstance]) -> void:
+	prizes = cards.duplicate()
+	reset_prize_layout()
+
+
+func reset_prize_layout() -> void:
+	prize_layout.clear()
+	for prize_card: CardInstance in prizes:
+		prize_layout.append(prize_card)
+
+
+func get_prize_layout() -> Array:
+	if prize_layout.is_empty() and not prizes.is_empty():
+		reset_prize_layout()
+	return prize_layout
+
+
+func get_prize_at_slot(slot_index: int) -> CardInstance:
+	var layout: Array = get_prize_layout()
+	if slot_index < 0 or slot_index >= layout.size():
+		return null
+	var candidate: Variant = layout[slot_index]
+	return candidate as CardInstance if candidate is CardInstance else null
+
+
 ## 拿取一张奖赏卡加入手牌，返回拿到的卡
 func take_prize(index: int = 0) -> CardInstance:
 	if index < 0 or index >= prizes.size():
 		return null
-	var card: CardInstance = prizes.pop_at(index)
+	return take_prize_card(prizes[index])
+
+
+func take_prize_from_slot(slot_index: int) -> CardInstance:
+	var card: CardInstance = get_prize_at_slot(slot_index)
+	if card == null:
+		return null
+	return take_prize_card(card)
+
+
+func take_prize_card(card: CardInstance) -> CardInstance:
+	if card == null or not (card in prizes):
+		return null
+	prizes.erase(card)
+	var layout: Array = get_prize_layout()
+	var slot_index: int = layout.find(card)
+	if slot_index >= 0:
+		layout[slot_index] = null
 	card.face_up = true
 	hand.append(card)
 	return card

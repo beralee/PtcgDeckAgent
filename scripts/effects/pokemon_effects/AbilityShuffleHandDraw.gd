@@ -40,12 +40,10 @@ func execute_ability(
 	hand_copy.append_array(player.hand)
 	player.hand.clear()
 
+	hand_copy.shuffle()
 	for card: CardInstance in hand_copy:
 		card.face_up = false
 		player.deck.append(card)
-
-	# 洗牌
-	player.shuffle_deck()
 
 	# 从牌库顶抽指定数量的牌
 	player.draw_cards(draw_count)

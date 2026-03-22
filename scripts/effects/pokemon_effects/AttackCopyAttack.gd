@@ -1,9 +1,79 @@
 ## 复制对手招式效果 - 基因侵入（梦幻ex）
 ## 复制对手主战宝可梦的招式并执行
-## 简化处理：使用对手第一个招式的基础伤害值直接对防守方造成伤害
-## 参数: 无额外参数
 class_name AttackCopyAttack
 extends BaseEffect
+
+const STEP_ID := "copied_attack"
+
+var _processor: EffectProcessor = null
+
+
+func _init(processor: EffectProcessor = null) -> void:
+	_processor = processor
+
+
+func get_attack_interaction_steps(card: CardInstance, _attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	if card == null:
+		return []
+	var opponent: PlayerState = state.players[1 - card.owner_index]
+	var opp_active: PokemonSlot = opponent.active_pokemon
+	if opp_active == null:
+		return []
+	var items: Array = []
+	var labels: Array[String] = []
+	for attack_index: int in opp_active.get_attacks().size():
+		var copied_attack: Dictionary = opp_active.get_attacks()[attack_index]
+		if copied_attack.get("is_vstar_power", false):
+			continue
+		items.append({
+			"source_effect_id": opp_active.get_card_data().effect_id,
+			"attack_index": attack_index,
+			"attack": copied_attack,
+		})
+		labels.append("%s - %s" % [
+			opp_active.get_pokemon_name(),
+			str(copied_attack.get("name", "")),
+		])
+	if items.is_empty():
+		return []
+	return [{
+		"id": STEP_ID,
+		"title": "选择对手战斗宝可梦的1个招式",
+		"items": items,
+		"labels": labels,
+		"min_select": 1,
+		"max_select": 1,
+		"allow_cancel": true,
+	}]
+
+
+func get_followup_attack_interaction_steps(
+	card: CardInstance,
+	_attack: Dictionary,
+	state: GameState,
+	resolved_context: Dictionary
+) -> Array[Dictionary]:
+	if _processor == null:
+		return []
+	var option: Dictionary = _get_selected_option_from_context(resolved_context)
+	if option.is_empty():
+		return []
+	return _processor.get_attack_interaction_steps_by_id(
+		str(option.get("source_effect_id", "")),
+		int(option.get("attack_index", -1)),
+		card,
+		option.get("attack", {}),
+		state,
+		AttackCopyAttack
+	)
+
+
+func get_damage_bonus(_attacker: PokemonSlot, _state: GameState) -> int:
+	var option: Dictionary = _get_selected_option()
+	if option.is_empty():
+		return 0
+	var attack: Dictionary = option.get("attack", {})
+	return DamageCalculator.new().parse_damage(str(attack.get("damage", "")))
 
 
 func execute_attack(
@@ -15,62 +85,36 @@ func execute_attack(
 	var top_card: CardInstance = attacker.get_top_card()
 	if top_card == null:
 		return
-	var pi: int = top_card.owner_index
-	var opponent_pi: int = 1 - pi
-	var opponent: PlayerState = state.players[opponent_pi]
-
-	# 获取对手主战宝可梦
-	var opp_active: PokemonSlot = opponent.active_pokemon
-	if opp_active == null:
+	if _processor == null:
 		return
-
-	# 获取对手主战宝可梦的招式列表
-	var opp_attacks: Array = opp_active.get_attacks()
-	if opp_attacks.is_empty():
+	var option: Dictionary = _get_selected_option()
+	if option.is_empty():
 		return
-
-	# TODO: 需要UI交互 - 让玩家选择要复制的对手招式
-	# 简化：复制第一个招式
-	var copied_attack: Variant = opp_attacks[0]
-	if copied_attack == null:
+	var source_effect_id: String = str(option.get("source_effect_id", ""))
+	var copied_attack_index: int = int(option.get("attack_index", -1))
+	if source_effect_id == "" or copied_attack_index < 0:
 		return
+	_processor.execute_attack_effect_by_id(
+		source_effect_id,
+		copied_attack_index,
+		attacker,
+		defender,
+		state,
+		[get_attack_interaction_context()],
+		AttackCopyAttack
+	)
 
-	# 解析招式伤害字符串（如 "120"、"50+"）
-	var damage_value: int = _parse_damage_string(copied_attack)
-	if damage_value > 0:
-		defender.damage_counters += damage_value
+
+func _get_selected_option() -> Dictionary:
+	return _get_selected_option_from_context(get_attack_interaction_context())
 
 
-## 将招式伤害字符串解析为整数
-## 支持纯数字或带后缀的字符串（如 "120"、"50+"、"30×"）
-func _parse_damage_string(attack_data: Variant) -> int:
-	var damage_str: String = ""
-	# attack_data 可能是 Dictionary 或其他格式
-	if attack_data is Dictionary:
-		var raw: Variant = attack_data.get("damage", "")
-		damage_str = str(raw)
-	elif attack_data is String:
-		damage_str = attack_data
-	else:
-		return 0
-
-	# 去除非数字后缀（"+"、"×"、"-"等）
-	damage_str = damage_str.strip_edges()
-	if damage_str.is_empty():
-		return 0
-
-	# 仅保留开头的数字部分
-	var num_str: String = ""
-	for ch: String in damage_str:
-		if ch >= "0" and ch <= "9":
-			num_str += ch
-		else:
-			break
-
-	if num_str.is_empty():
-		return 0
-	return num_str.to_int()
+func _get_selected_option_from_context(context: Dictionary) -> Dictionary:
+	var selected_raw: Array = context.get(STEP_ID, [])
+	if selected_raw.is_empty() or not (selected_raw[0] is Dictionary):
+		return {}
+	return selected_raw[0]
 
 
 func get_description() -> String:
-	return "基因侵入：复制对手主战宝可梦的1个招式，对其造成相应伤害。"
+	return "基因侵入：选择对手战斗宝可梦的1个招式，作为这个招式使用。"

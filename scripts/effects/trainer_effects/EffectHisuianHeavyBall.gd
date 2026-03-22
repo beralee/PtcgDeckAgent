@@ -72,9 +72,9 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	if selected_prize == null:
 		return
 
-	player.prizes.erase(selected_prize)
-	selected_prize.face_up = true
-	player.hand.append(selected_prize)
+	selected_prize = player.take_prize_card(selected_prize)
+	if selected_prize == null:
+		return
 
 	var replacement: CardInstance = null
 	if not replacement_raw.is_empty() and replacement_raw[0] is CardInstance:
@@ -94,6 +94,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	replacement.face_up = false
 	player.prizes.append(replacement)
 	_shuffle_cards(player.prizes)
+	player.reset_prize_layout()
 
 
 func _shuffle_cards(cards: Array[CardInstance]) -> void:

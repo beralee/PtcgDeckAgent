@@ -279,3 +279,64 @@ func test_cannot_attack_first_turn_first_player() -> String:
 	return run_checks([
 		assert_eq(v.can_use_attack(state, 0, 0), false, "先攻首回合不可攻击"),
 	])
+
+
+func test_can_attack_first_turn_when_attack_text_allows_it() -> String:
+	var state := _make_state(1, 0, 0)
+	var v := RuleValidator.new()
+
+	var active: PokemonSlot = state.players[0].active_pokemon
+	active.get_card_data().attacks = [{
+		"name": "快速充能",
+		"cost": "L",
+		"damage": "",
+		"text": "这个招式，即使是先攻玩家的最初回合也可以使用。",
+		"is_vstar_power": false,
+	}]
+	var energy := CardData.new()
+	energy.card_type = "Basic Energy"
+	energy.energy_provides = "L"
+	active.attached_energy.append(CardInstance.create(energy, 0))
+
+	return run_checks([
+		assert_eq(v.can_use_attack(state, 0, 0), true, "明确写明可在先攻首回合使用的招式不应被通用限制挡住"),
+		assert_eq(v.get_attack_unusable_reason(state, 0, 0), "", "快速充能这类例外招式不应返回不可用原因"),
+	])
+
+
+func test_bloodmoon_cost_reduction_matches_localized_attack_name() -> String:
+	var state := _make_state(2, 0, 0)
+	var v := RuleValidator.new()
+	var processor := EffectProcessor.new()
+	state.players[1].prizes.clear()
+	for i: int in 3:
+		state.players[1].prizes.append(CardInstance.create(state.players[1].active_pokemon.get_top_card().card_data, 1))
+
+	var bloodmoon_cd := CardData.new()
+	bloodmoon_cd.name = "月月熊 赫月ex"
+	bloodmoon_cd.card_type = "Pokemon"
+	bloodmoon_cd.stage = "Basic"
+	bloodmoon_cd.hp = 240
+	bloodmoon_cd.energy_type = "C"
+	bloodmoon_cd.effect_id = "f2afef80b13b8f6a071facbcade0251c"
+	bloodmoon_cd.attacks = [{
+		"name": "血月",
+		"cost": "CCCCC",
+		"damage": "240",
+		"text": "",
+		"is_vstar_power": false,
+	}]
+	processor.register_pokemon_card(bloodmoon_cd)
+	var attacker := PokemonSlot.new()
+	attacker.pokemon_stack.append(CardInstance.create(bloodmoon_cd, 0))
+	for i: int in 2:
+		var energy := CardData.new()
+		energy.card_type = "Basic Energy"
+		energy.energy_provides = "C"
+		attacker.attached_energy.append(CardInstance.create(energy, 0))
+	state.players[0].active_pokemon = attacker
+
+	return run_checks([
+		assert_eq(v.can_use_attack(state, 0, 0, processor), true, "血月应按对手已拿奖赏数减少无色费用"),
+		assert_eq(v.get_attack_unusable_reason(state, 0, 0, processor), "", "本地化招式名不应导致血月减费失效"),
+	])

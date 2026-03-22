@@ -35,7 +35,9 @@ var _clickable: bool = true
 var _back_texture: Texture2D = null
 var _battle_status_active: bool = false
 var _battle_status: Dictionary = {}
+var _compact_preview: bool = false
 
+var _outer_margin: MarginContainer
 var _art_frame: PanelContainer
 
 var _texture_rect: TextureRect
@@ -109,6 +111,13 @@ func set_clickable(clickable: bool) -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP if clickable else Control.MOUSE_FILTER_IGNORE
 
 
+func set_compact_preview(compact: bool) -> void:
+	_compact_preview = compact
+	_ensure_ui()
+	_update_layout()
+	_update_style()
+
+
 func set_badges(left_text: String = "", right_text: String = "") -> void:
 	_ensure_ui()
 	_top_left_badge.text = left_text
@@ -146,14 +155,10 @@ func _build_ui() -> void:
 	if _texture_rect != null:
 		return
 
-	var outer_margin := MarginContainer.new()
-	_make_passthrough(outer_margin)
-	outer_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	outer_margin.add_theme_constant_override("margin_left", 4)
-	outer_margin.add_theme_constant_override("margin_top", 4)
-	outer_margin.add_theme_constant_override("margin_right", 4)
-	outer_margin.add_theme_constant_override("margin_bottom", 4)
-	add_child(outer_margin)
+	_outer_margin = MarginContainer.new()
+	_make_passthrough(_outer_margin)
+	_outer_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(_outer_margin)
 
 	var aspect := AspectRatioContainer.new()
 	_make_passthrough(aspect)
@@ -161,7 +166,7 @@ func _build_ui() -> void:
 	aspect.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	aspect.ratio = 0.716
 	aspect.stretch_mode = AspectRatioContainer.STRETCH_FIT
-	outer_margin.add_child(aspect)
+	_outer_margin.add_child(aspect)
 
 	_art_frame = PanelContainer.new()
 	_make_passthrough(_art_frame)
@@ -327,7 +332,18 @@ func _build_ui() -> void:
 	_status_hud.visible = false
 	_info_panel.visible = false
 	set_badges()
+	_update_layout()
 	_update_style()
+
+
+func _update_layout() -> void:
+	if _outer_margin == null:
+		return
+	var outer_pad: int = 0 if _compact_preview else 4
+	_outer_margin.add_theme_constant_override("margin_left", outer_pad)
+	_outer_margin.add_theme_constant_override("margin_top", outer_pad)
+	_outer_margin.add_theme_constant_override("margin_right", outer_pad)
+	_outer_margin.add_theme_constant_override("margin_bottom", outer_pad)
 
 
 func _ensure_ui() -> void:

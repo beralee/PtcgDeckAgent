@@ -49,7 +49,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		"title": "从牌库中选择卡牌加入手牌",
 		"items": items,
 		"labels": labels,
-		"min_select": 1,
+		"min_select": 0,
 		"max_select": mini(search_count, items.size()),
 		"allow_cancel": true,
 	}]
@@ -72,6 +72,7 @@ func execute_ability(
 
 	var selected_cards: Array[CardInstance] = []
 	var ctx: Dictionary = get_interaction_context(targets)
+	var has_explicit_selection: bool = ctx.has("search_cards")
 	var selected_raw: Array = ctx.get("search_cards", [])
 	for entry: Variant in selected_raw:
 		if entry is CardInstance and entry in player.deck and entry not in selected_cards:
@@ -79,7 +80,7 @@ func execute_ability(
 			if selected_cards.size() >= search_count:
 				break
 
-	if selected_cards.is_empty():
+	if selected_cards.is_empty() and not has_explicit_selection:
 		var count: int = mini(search_count, player.deck.size())
 		for idx: int in count:
 			selected_cards.append(player.deck[idx])

@@ -27,10 +27,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -200.0
-offset_top = -200.0
-offset_right = 200.0
-offset_bottom = 200.0
+offset_left = -260.0
+offset_top = -300.0
+offset_right = 260.0
+offset_bottom = 300.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 16
@@ -66,6 +66,31 @@ text = "玩家2 卡组:"
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(300, 35)
+
+[node name="FirstPlayerLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "开始先后攻:"
+
+[node name="FirstPlayerOption" type="OptionButton" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(300, 35)
+
+[node name="BackgroundLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "对战场地:"
+
+[node name="BackgroundGallery" type="ScrollContainer" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(420, 210)
+horizontal_scroll_mode = 1
+vertical_scroll_mode = 2
+
+[node name="BackgroundGalleryRow" type="HBoxContainer" parent="VBoxContainer/BackgroundGallery"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 12
 
 [node name="NoDeckWarning" type="Label" parent="VBoxContainer"]
 unique_name_in_owner = true

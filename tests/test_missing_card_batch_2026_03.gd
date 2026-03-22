@@ -992,9 +992,11 @@ func test_csv8c_203_jamming_tower_suppressed_bravery_charm_knocks_out_immediatel
 	player.hand.append(stadium)
 
 	var success := gsm.play_stadium(1, stadium)
+	var take_prize_ok := gsm.resolve_take_prize(1, 0)
 
 	return run_checks([
 		assert_true(success, "CSV8C_203 should be playable"),
+		assert_true(take_prize_ok, "Immediate knockout should still pause for manual prize selection"),
 		assert_false(protected_bench in gsm.game_state.players[0].bench, "Suppressing Bravery Charm should immediately knock out the damaged Benched Basic Pokemon"),
 		assert_eq(gsm.game_state.current_player_index, 1, "After the immediate bench knockout, the Jamming Tower user's turn should continue"),
 		assert_eq(gsm.game_state.phase, GameState.GamePhase.MAIN, "After the immediate bench knockout, the game should return to MAIN"),
@@ -1289,9 +1291,11 @@ func test_csv8c_083_dusknoir_self_ko_returns_to_main_phase() -> String:
 
 	# 使用自爆特性（备战区）
 	var success := gsm.use_ability(0, dusknoir_slot, 0, [{"self_ko_target": [target]}])
+	var take_prize_ok := gsm.resolve_take_prize(1, 0)
 
 	return run_checks([
 		assert_true(success, "黑夜魔灵应成功使用咒怨炸弹"),
+		assert_true(take_prize_ok, "自爆后应先由对手手动拿取奖赏卡"),
 		assert_eq(target.damage_counters, target_hp_before + 130, "应对目标放置13个伤害指示物（130伤害）"),
 		assert_true(dusknoir_slot not in state.players[0].bench, "黑夜魔灵应从备战区移除"),
 		assert_eq(state.phase, GameState.GamePhase.MAIN, "自爆后应回到MAIN阶段继续操作"),
@@ -1575,10 +1579,268 @@ func test_legacy_energy_reduces_prizes_e2e() -> String:
 
 	# 执行攻击，应该击倒 defender
 	gsm.use_attack(0, 0)
+	gsm.resolve_take_prize(0, 0)
 
 	var prizes_after: int = state.players[0].prizes.size()
 	var prizes_taken: int = prizes_before - prizes_after
 
 	return run_checks([
 		assert_eq(prizes_taken, 1, "遗赠能量应使ex宝可梦昏厥时对手只拿1张奖赏卡（正常2张减1张）"),
+	])
+
+
+func test_cs5ac_107_arceus_vstar_starbirth_uses_vstar_power_and_allows_zero_cards() -> String:
+	var processor := EffectProcessor.new()
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.hand.clear()
+	player.deck.clear()
+
+	var arceus_cd := _make_basic_pokemon_data("阿尔宙斯VSTAR", "C", 280, "VSTAR", "V", "9a0982e46cf9a3aaed89e6d3517e7d58")
+	arceus_cd.abilities = [{"name": "星耀诞生", "text": ""}]
+	var arceus_slot := _make_slot(arceus_cd, 0)
+	player.active_pokemon = arceus_slot
+	player.deck.append(CardInstance.create(_make_trainer_data("DeckA", "Item"), 0))
+	player.deck.append(CardInstance.create(_make_trainer_data("DeckB", "Item"), 0))
+	processor.register_pokemon_card(arceus_cd)
+
+	var effect: BaseEffect = processor.get_ability_effect(arceus_slot, 0, state)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(arceus_slot.get_top_card(), state)
+	var execute_ok: bool = processor.execute_ability_effect(arceus_slot, 0, [{"search_cards": []}], state)
+
+	return run_checks([
+		assert_true(execute_ok, "CS5aC_107 should execute Starbirth"),
+		assert_eq(int(steps[0].get("min_select", -1)), 0, "CS5aC_107 should allow choosing up to 2 cards, including 0"),
+		assert_true(state.vstar_power_used[0], "CS5aC_107 should mark the VSTAR power as used"),
+		assert_eq(player.hand.size(), 0, "CS5aC_107 should not auto-tutor cards when the player explicitly chooses none"),
+		assert_false(processor.can_use_ability(arceus_slot, state, 0), "CS5aC_107 should not be usable again after Starbirth"),
+	])
+
+
+func test_csnc_009_arceus_v_trinity_charge_targets_only_pokemon_v() -> String:
+	var processor := EffectProcessor.new()
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.deck.clear()
+
+	var arceus_cd := _make_basic_pokemon_data("阿尔宙斯V", "C", 220, "Basic", "V", "94c6f72a67045857fa44962e4fbb8c27")
+	arceus_cd.attacks = [{"name": "三重蓄能", "cost": "CC", "damage": "", "text": "", "is_vstar_power": false}]
+	var arceus_slot := _make_slot(arceus_cd, 0)
+	player.active_pokemon = arceus_slot
+	player.bench.clear()
+
+	var giratina_slot := _make_slot(_make_basic_pokemon_data("骑拉帝纳V", "N", 220, "Basic", "V"), 0)
+	var iron_leaves_slot := _make_slot(_make_basic_pokemon_data("铁斑叶ex", "G", 220, "Basic", "ex"), 0)
+	player.bench.append(giratina_slot)
+	player.bench.append(iron_leaves_slot)
+	player.deck.append(CardInstance.create(_make_energy_data("Grass", "G"), 0))
+	player.deck.append(CardInstance.create(_make_energy_data("Psychic", "P"), 0))
+	processor.register_pokemon_card(arceus_cd)
+
+	var effects: Array[BaseEffect] = processor.get_attack_effects_for_slot(arceus_slot, 0)
+	var steps: Array[Dictionary] = effects[0].get_attack_interaction_steps(arceus_slot.get_top_card(), arceus_cd.attacks[0], state)
+	var target_items: Array = steps[0].get("target_items", [])
+
+	return run_checks([
+		assert_eq(steps.size(), 1, "CSNC_009 should create an assignment interaction"),
+		assert_contains(target_items, arceus_slot, "CSNC_009 should still be able to attach to the attacker itself"),
+		assert_contains(target_items, giratina_slot, "CSNC_009 should target Benched Pokemon V"),
+		assert_false(iron_leaves_slot in target_items, "CSNC_009 should not treat ex as Pokemon V"),
+	])
+
+
+func test_cs5ac_107_arceus_vstar_trinity_nova_respects_energy_assignments() -> String:
+	var processor := EffectProcessor.new()
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.deck.clear()
+	player.bench.clear()
+
+	var arceus_cd := _make_basic_pokemon_data("阿尔宙斯VSTAR", "C", 280, "VSTAR", "V", "9a0982e46cf9a3aaed89e6d3517e7d58")
+	arceus_cd.attacks = [{"name": "三重新星", "cost": "CCC", "damage": "200", "text": "", "is_vstar_power": false}]
+	var attacker := _make_slot(arceus_cd, 0)
+	player.active_pokemon = attacker
+
+	var giratina_slot := _make_slot(_make_basic_pokemon_data("骑拉帝纳V", "N", 220, "Basic", "V"), 0)
+	var ex_slot := _make_slot(_make_basic_pokemon_data("铁斑叶ex", "G", 220, "Basic", "ex"), 0)
+	player.bench.append(giratina_slot)
+	player.bench.append(ex_slot)
+
+	var energy_a := CardInstance.create(_make_energy_data("GrassA", "G"), 0)
+	var energy_b := CardInstance.create(_make_energy_data("GrassB", "G"), 0)
+	var energy_c := CardInstance.create(_make_energy_data("PsychicA", "P"), 0)
+	player.deck.append(energy_a)
+	player.deck.append(energy_b)
+	player.deck.append(energy_c)
+	processor.register_pokemon_card(arceus_cd)
+
+	var attack_effects: Array[BaseEffect] = processor.get_attack_effects_for_slot(attacker, 0)
+	var steps: Array[Dictionary] = attack_effects[0].get_attack_interaction_steps(attacker.get_top_card(), arceus_cd.attacks[0], state)
+	var target_items: Array = steps[0].get("target_items", [])
+	var ctx := {
+		"energy_assignments": [
+			{"source": energy_a, "target": giratina_slot},
+			{"source": energy_b, "target": attacker},
+			{"source": energy_c, "target": giratina_slot},
+		]
+	}
+	processor.execute_attack_effect(attacker, 0, state.players[1].active_pokemon, state, [ctx])
+
+	return run_checks([
+		assert_eq(steps.size(), 1, "CS5aC_107 should expose one assignment step for Trinity Nova"),
+		assert_contains(target_items, attacker, "CS5aC_107 should be able to target itself"),
+		assert_contains(target_items, giratina_slot, "CS5aC_107 should be able to target another Pokemon V"),
+		assert_false(ex_slot in target_items, "CS5aC_107 should not target Pokemon ex"),
+		assert_eq(attacker.attached_energy.size(), 1, "CS5aC_107 should attach the selected energy to itself"),
+		assert_eq(giratina_slot.attached_energy.size(), 2, "CS5aC_107 should attach two selected energies to Giratina V"),
+		assert_eq(ex_slot.attached_energy.size(), 0, "CS5aC_107 should not attach energy to Pokemon ex"),
+	])
+
+
+func test_csv1c_099_skwovet_nest_stash_keeps_existing_deck_top_order() -> String:
+	var processor := EffectProcessor.new()
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.hand.clear()
+	player.deck.clear()
+
+	var skwovet_cd := _make_basic_pokemon_data("贪心栗鼠", "C", 60, "Basic", "", "de67a9a68f5207134be40c715c9be8ef")
+	skwovet_cd.abilities = [{"name": "巢穴藏身", "text": ""}]
+	var skwovet_slot := _make_slot(skwovet_cd, 0)
+	player.active_pokemon = skwovet_slot
+
+	var top_card := CardInstance.create(_make_trainer_data("Top Card", "Item"), 0)
+	var next_card := CardInstance.create(_make_trainer_data("Next Card", "Item"), 0)
+	var hand_a := CardInstance.create(_make_trainer_data("Hand A", "Item"), 0)
+	var hand_b := CardInstance.create(_make_trainer_data("Hand B", "Item"), 0)
+	player.deck.append(top_card)
+	player.deck.append(next_card)
+	player.hand.append(hand_a)
+	player.hand.append(hand_b)
+	processor.register_pokemon_card(skwovet_cd)
+	processor.execute_ability_effect(skwovet_slot, 0, [], state)
+
+	return run_checks([
+		assert_eq(player.hand.size(), 1, "CSV1C_099 should draw exactly one card"),
+		assert_eq(player.hand[0], top_card, "CSV1C_099 should draw the original top card, not a shuffled hand card"),
+		assert_eq(player.deck[0], next_card, "CSV1C_099 should preserve the remaining deck top order"),
+		assert_contains(player.deck, hand_a, "CSV1C_099 should return the original hand cards to the deck bottom"),
+		assert_contains(player.deck, hand_b, "CSV1C_099 should return all hand cards to the deck bottom"),
+	])
+
+
+func test_cs6bc_123_lost_vacuum_uses_lost_zone_cost_and_selected_target() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+
+	var player: PlayerState = gsm.game_state.players[0]
+	player.hand.clear()
+	player.lost_zone.clear()
+	var fodder := CardInstance.create(_make_trainer_data("Fodder", "Item"), 0)
+	var lost_vacuum := CardInstance.create(_make_trainer_data("Lost Vacuum", "Item", "8f655fea1f90164bfbccb7a95c223e17"), 0)
+	player.hand.append(fodder)
+	player.hand.append(lost_vacuum)
+
+	var opponent: PlayerState = gsm.game_state.players[1]
+	var opp_tool := CardInstance.create(_make_trainer_data("Choice Belt", "Tool"), 1)
+	opponent.active_pokemon.attached_tool = opp_tool
+	var stadium := CardInstance.create(_make_trainer_data("Lost City", "Stadium"), 1)
+	gsm.game_state.stadium_card = stadium
+	gsm.game_state.stadium_owner_index = 1
+
+	var success := gsm.play_trainer(0, lost_vacuum, [{
+		"discard_cards": [fodder],
+		"lost_vacuum_target": [stadium],
+	}])
+
+	return run_checks([
+		assert_true(success, "CS6bC_123 should be playable when there is a valid cost and target"),
+		assert_contains(player.lost_zone, fodder, "CS6bC_123 should put the chosen hand card into the lost zone as the cost"),
+		assert_contains(gsm.game_state.players[1].lost_zone, stadium, "CS6bC_123 should move the selected stadium to the lost zone"),
+		assert_eq(opponent.active_pokemon.attached_tool, opp_tool, "CS6bC_123 should respect the selected target instead of auto-removing a tool first"),
+	])
+
+
+func test_cs6bc_130_lost_city_moves_only_pokemon_cards_to_lost_zone() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	gsm.game_state.current_player_index = 1
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+
+	var player: PlayerState = gsm.game_state.players[0]
+	player.bench.clear()
+	player.discard_pile.clear()
+	player.lost_zone.clear()
+	var slot := _make_slot(_make_basic_pokemon_data("Knocked Out", "P", 90), 0)
+	slot.damage_counters = 90
+	var attached_energy := CardInstance.create(_make_energy_data("Psychic", "P"), 0)
+	var attached_tool := CardInstance.create(_make_trainer_data("Maximum Belt", "Tool"), 0)
+	slot.attached_energy.append(attached_energy)
+	slot.attached_tool = attached_tool
+	player.bench.append(slot)
+
+	gsm.game_state.stadium_card = CardInstance.create(_make_trainer_data("Lost City", "Stadium", "7f4e493ec0d852a5bb31c02bdbdb2c4e"), 1)
+	gsm.game_state.stadium_owner_index = 1
+
+	var resolved := gsm._resolve_mid_turn_knockouts()
+
+	return run_checks([
+		assert_true(resolved, "CS6bC_130 should resolve pending knockouts"),
+		assert_false(slot in player.bench, "CS6bC_130 should remove the knocked out Pokemon from the bench"),
+		assert_eq(player.lost_zone.size(), 1, "CS6bC_130 should move the Pokemon card to the lost zone"),
+		assert_contains(player.lost_zone, slot.get_top_card(), "CS6bC_130 should lost-zone the Pokemon card itself"),
+		assert_contains(player.discard_pile, attached_energy, "CS6bC_130 should discard attached energy instead of lost-zoning it"),
+		assert_contains(player.discard_pile, attached_tool, "CS6bC_130 should discard attached tools instead of lost-zoning them"),
+	])
+
+
+func test_cs5bc_111_bidoof_carefree_countenance_blocks_attack_bench_damage() -> String:
+	var state := _make_state()
+	var attacker := state.players[0].active_pokemon
+	var opponent: PlayerState = state.players[1]
+	opponent.bench.clear()
+
+	var bidoof_cd := _make_basic_pokemon_data("大牙狸", "C", 60, "Basic", "", "5a80f8eb94c6fcc27c475c10a63cf856")
+	bidoof_cd.abilities = [{"name": "毫不在意", "text": ""}]
+	var protected_slot := _make_slot(bidoof_cd, 1)
+	var other_slot := _make_slot(_make_basic_pokemon_data("Other Bench", "C", 90), 1)
+	opponent.bench.append(protected_slot)
+	opponent.bench.append(other_slot)
+
+	var effect := EffectBenchDamage.new(30, true, "opponent")
+	effect.execute_attack(attacker, opponent.active_pokemon, 0, state)
+
+	return run_checks([
+		assert_eq(protected_slot.damage_counters, 0, "CS5bC_111 should ignore attack damage while on the bench"),
+		assert_eq(other_slot.damage_counters, 30, "CS5bC_111 should not block damage for other Benched Pokemon"),
+	])
+
+
+func test_cs5bc_111_and_cs5ac_105_coin_flip_attacks_map_to_fail_on_tails() -> String:
+	var processor := EffectProcessor.new()
+
+	var bidoof_cd := _make_basic_pokemon_data("大牙狸", "C", 60, "Basic", "", "5a80f8eb94c6fcc27c475c10a63cf856")
+	bidoof_cd.attacks = [{"name": "终结门牙", "cost": "CC", "damage": "30", "text": "", "is_vstar_power": false}]
+	processor.register_pokemon_card(bidoof_cd)
+	var bidoof_slot := _make_slot(bidoof_cd, 0)
+
+	var bibarel_cd := _make_basic_pokemon_data("大尾狸", "C", 120, "Stage 1", "", "d8e81bf574a9d7a0f42ff33e15b0522c")
+	bibarel_cd.attacks = [{"name": "长尾粉碎", "cost": "CCC", "damage": "100", "text": "", "is_vstar_power": false}]
+	processor.register_pokemon_card(bibarel_cd)
+	var bibarel_slot := _make_slot(bibarel_cd, 0)
+
+	var bidoof_effects: Array[BaseEffect] = processor.get_attack_effects_for_slot(bidoof_slot, 0)
+	var bibarel_effects: Array[BaseEffect] = processor.get_attack_effects_for_slot(bibarel_slot, 0)
+
+	return run_checks([
+		assert_true(bidoof_effects[0] is AttackCoinFlipOrFail, "CS5bC_111 should use the fail-on-tails effect"),
+		assert_eq((bidoof_effects[0] as AttackCoinFlipOrFail).base_damage, 30, "CS5bC_111 should only cancel its printed 30 damage"),
+		assert_true(bibarel_effects[0] is AttackCoinFlipOrFail, "CS5aC_105 should fail on tails instead of adding bonus damage"),
+		assert_eq((bibarel_effects[0] as AttackCoinFlipOrFail).base_damage, 100, "CS5aC_105 should cancel its printed 100 damage on tails"),
 	])

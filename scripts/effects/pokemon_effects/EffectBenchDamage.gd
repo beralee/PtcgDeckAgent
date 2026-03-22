@@ -31,11 +31,15 @@ func execute_attack(
 	if target_all:
 		# 对全部备战宝可梦造成伤害
 		for slot: PokemonSlot in target_player.bench:
+			if target_side == "opponent" and AbilityBenchImmune.has_bench_immune(slot):
+				continue
 			slot.damage_counters += bench_damage
 	else:
 		# 简化：对第一只备战宝可梦造成伤害
 		if not target_player.bench.is_empty():
-			target_player.bench[0].damage_counters += bench_damage
+			var target_slot: PokemonSlot = target_player.bench[0]
+			if target_side != "opponent" or not AbilityBenchImmune.has_bench_immune(target_slot):
+				target_slot.damage_counters += bench_damage
 
 
 func get_description() -> String:

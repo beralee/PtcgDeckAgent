@@ -14,7 +14,7 @@ const REQUIRED_RETREAT_COST: int = 4
 ## 检查指定槽位是否满足触发条件（撤退费用 >= 4）
 ## slot: 持有此道具的宝可梦槽位
 func can_trigger(slot: PokemonSlot) -> bool:
-	return slot.get_retreat_cost() >= REQUIRED_RETREAT_COST
+	return slot.get_retreat_cost() == REQUIRED_RETREAT_COST
 
 
 ## 获取可从昏厥宝可梦转移到备战宝可梦的基本能量列表（最多3张）

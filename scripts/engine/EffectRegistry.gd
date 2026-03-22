@@ -73,6 +73,7 @@ const AttackDiscardDefenderToolEffect = preload("res://scripts/effects/pokemon_e
 const EffectSecretBoxEffect = preload("res://scripts/effects/trainer_effects/EffectSecretBox.gd")
 const EffectArtazonEffect = preload("res://scripts/effects/stadium_effects/EffectArtazon.gd")
 const AttackTMEvolutionEffect = preload("res://scripts/effects/pokemon_effects/AttackTMEvolution.gd")
+const AttackSearchEnergyFromDeckToSelfEffect = preload("res://scripts/effects/pokemon_effects/AttackSearchEnergyFromDeckToSelf.gd")
 
 
 ## ==================== 主入口 ====================
@@ -108,7 +109,7 @@ static func register_pokemon_card(processor: EffectProcessor, card: CardData) ->
 		var attack_name: String = attack.get("name", "")
 		if attack_name == "":
 			continue
-		var attack_effects: Array = _get_attack_effects(attack_name)
+		var attack_effects: Array = _get_attack_effects(processor, attack_name)
 		for fx: BaseEffect in attack_effects:
 			processor.register_attack_effect(eid, fx)
 
@@ -135,7 +136,7 @@ static func _register_pokemon_effect_overrides(processor: EffectProcessor, effec
 		"74b83ef8987d072950dfe3bde3364d87":
 			processor.register_effect(effect_id, AbilityBenchDamageOnPlayEffect.new(10, 2))
 		"f2afef80b13b8f6a071facbcade0251c":
-			processor.register_effect(effect_id, AbilityPrizeCountColorlessReductionEffect.new("Blood Moon"))
+			processor.register_effect(effect_id, AbilityPrizeCountColorlessReductionEffect.new())
 			processor.register_attack_effect(effect_id, AttackSelfLockNextTurn.new())
 		"8c23889e3e58324f3d58029f72379fac":
 			processor.register_attack_effect(effect_id, AttackCoinFlipApplyStatusEffect.new("confused"))
@@ -371,7 +372,7 @@ static func _get_ability_effect(ability_name: String) -> BaseEffect:
 			return AbilitySearchAny.new(1, false)
 		"星耀诞生":
 			# VSTAR 特技：搜索牌库最多2张任意卡
-			return AbilitySearchAny.new(2, true)
+			return AbilitySearchAny.new(2, true, true)
 		"烈炎支配":
 			# 进化时可从牌库附加最多3个火能量
 			return AbilityAttachFromDeckEffect.new("R", 3, "own", true, false)
@@ -457,17 +458,20 @@ static func _get_ability_effect(ability_name: String) -> BaseEffect:
 
 ## 根据招式名称返回对应的效果实例数组（可能包含多个效果）
 ## 返回空数组表示该招式无附加效果
-static func _get_attack_effects(attack_name: String) -> Array:
+static func _get_attack_effects(processor: EffectProcessor, attack_name: String) -> Array:
 	match attack_name:
 		"三重蓄能":
 			# 从牌库搜索3张能量附加到V宝可梦
 			return [AttackSearchAndAttach.new("", 3, "deck_search", 0, "v_only")]
+		"快速充能":
+			# 从牌库搜索1张雷能量附着给自己
+			return [AttackSearchEnergyFromDeckToSelfEffect.new("L", 1)]
 		"巅峰加速":
-			# 查看顶部5张，将其中最多3个闪电能量附加到备战区
+			# 从牌库选择最多2张基本能量附着于自己的未来宝可梦
 			return [AttackSearchAndAttach.new("", 2, "deck_search", 0, "any", CardData.FUTURE_TAG)]
 		"基因侵入":
 			# 复制对方的招式
-			return [AttackCopyAttack.new()]
+			return [AttackCopyAttack.new(processor)]
 		"废品短路":
 			return [AttackScrapShort.new(40)]
 		"燃烧黑暗":
@@ -517,7 +521,7 @@ static func _get_attack_effects(attack_name: String) -> Array:
 			return [AttackDrawTo7.new()]
 		"月光手里剑":
 			# 对备战区2只宝可梦各90伤害，战斗宝可梦0伤害
-			return [AttackBenchSnipe.new(90, 2, 0)]
+			return [AttackBenchSnipe.new(90, 2, 0), EffectDiscardEnergy.new(2)]
 		"双刃":
 			# 对备战区1只宝可梦120伤害，自身受30反伤
 			return [AttackBenchSnipe.new(120, 1, 30)]
@@ -547,13 +551,13 @@ static func _get_attack_effects(attack_name: String) -> Array:
 			return [AttackDiscardStadium.new()]
 		"终结门牙":
 			# 投币背面则此招式无效果
-			return [AttackCoinFlipOrFail.new(60, "no_damage")]
+			return [AttackCoinFlipOrFail.new(30, "no_damage")]
 		"长尾粉碎":
-			# 投币正面则额外+90伤害
-			return [EffectCoinFlipDamage.new(90, 1, false)]
+			# 投币背面则此招式无效果
+			return [AttackCoinFlipOrFail.new(100, "no_damage")]
 		"鼓足干劲":
-			# 弃掉1张能量（类型不限），内部处理
-			return [AttackDiscardEnergyFromSelf.new(1, "")]
+			# 从弃牌区选择最多2张基本能量附着于1只备战宝可梦
+			return [AttackAttachBasicEnergyFromDiscard.new("", 2, "own_bench")]
 		"读风":
 			# 攻击后摸牌
 			return [AttackReadWindDraw.new()]

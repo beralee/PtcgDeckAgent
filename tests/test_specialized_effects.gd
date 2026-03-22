@@ -10,6 +10,7 @@ const AbilityAttachFromDeckEffect = preload("res://scripts/effects/pokemon_effec
 const AttackSearchDeckToHandEffect = preload("res://scripts/effects/pokemon_effects/AttackSearchDeckToHand.gd")
 const AttackCoinFlipMultiplierEffect = preload("res://scripts/effects/pokemon_effects/AttackCoinFlipMultiplier.gd")
 const AttackDiscardBasicEnergyFromHandDamageEffect = preload("res://scripts/effects/pokemon_effects/AttackDiscardBasicEnergyFromHandDamage.gd")
+const AttackSearchEnergyFromDeckToSelfEffect = preload("res://scripts/effects/pokemon_effects/AttackSearchEnergyFromDeckToSelf.gd")
 
 
 func _make_basic_pokemon_data(
@@ -273,14 +274,48 @@ func test_electric_generator_attaches_selected_energy_to_selected_target() -> St
 		state
 	)
 	effect.execute(CardInstance.create(_make_trainer_data("电气发生器"), 0), [{
-		"selected_energy": [energy_a, energy_b],
-		"attach_target": [lightning_bench],
+		"energy_assignments": [
+			{"source": energy_a, "target": lightning_bench},
+			{"source": energy_b, "target": lightning_bench},
+		],
 	}], state)
 
 	return run_checks([
-		assert_eq(steps.size(), 2, "电气发生器应生成揭示能量和附着目标两步交互"),
+		assert_eq(steps.size(), 1, "电气发生器应生成一条分配交互步骤"),
 		assert_eq(lightning_bench.attached_energy.size(), 2, "应从牌库顶5张附着2张基本雷能量"),
 		assert_eq(player.deck.size(), 4, "牌库应减少2张能量"),
+	])
+
+
+func test_electric_generator_can_split_energy_between_two_benched_targets() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	var first_bench := player.bench[0]
+	var second_bench := player.bench[1]
+	first_bench.get_card_data().energy_type = "L"
+	second_bench.get_card_data().energy_type = "L"
+	player.deck.clear()
+	var energy_a := CardInstance.create(_make_energy_data("雷能量A", "L"), 0)
+	var energy_b := CardInstance.create(_make_energy_data("雷能量B", "L"), 0)
+	player.deck.append_array([
+		energy_a,
+		CardInstance.create(_make_basic_pokemon_data("杂项", "C"), 0),
+		energy_b,
+		CardInstance.create(_make_basic_pokemon_data("杂项2", "C"), 0),
+		CardInstance.create(_make_basic_pokemon_data("杂项3", "C"), 0),
+	])
+
+	var effect := EffectElectricGenerator.new()
+	effect.execute(CardInstance.create(_make_trainer_data("电气发生器"), 0), [{
+		"energy_assignments": [
+			{"source": energy_a, "target": first_bench},
+			{"source": energy_b, "target": second_bench},
+		],
+	}], state)
+
+	return run_checks([
+		assert_eq(first_bench.attached_energy.size(), 1, "第一张雷能量应可附着到第一只目标"),
+		assert_eq(second_bench.attached_energy.size(), 1, "第二张雷能量应可附着到另一只目标"),
 	])
 
 
@@ -323,6 +358,83 @@ func test_search_pokemon_to_bench_uses_selected_targets() -> String:
 		assert_eq(player.bench.size(), 2, "应按选择将最多2只雷属性基础宝可梦放入备战区"),
 		assert_eq(player.bench[0].get_pokemon_name(), "雷基础甲", "第一只应为选中的目标"),
 		assert_eq(player.bench[1].get_pokemon_name(), "雷基础乙", "第二只应为选中的目标"),
+	])
+
+
+func test_quick_charge_searches_lightning_energy_from_deck_to_self() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	var attacker := player.active_pokemon
+	player.deck.clear()
+	var lightning_energy := CardInstance.create(_make_energy_data("雷能量", "L"), 0)
+	var other_energy := CardInstance.create(_make_energy_data("火能量", "R"), 0)
+	player.deck.append(other_energy)
+	player.deck.append(lightning_energy)
+
+	var effect := AttackSearchEnergyFromDeckToSelfEffect.new("L", 1)
+	var steps: Array[Dictionary] = effect.get_attack_interaction_steps(attacker.get_top_card(), {}, state)
+	effect.set_attack_interaction_context([{
+		"deck_energy": [lightning_energy],
+	}])
+	effect.execute_attack(attacker, state.players[1].active_pokemon, 0, state)
+	effect.clear_attack_interaction_context()
+
+	return run_checks([
+		assert_eq(steps.size(), 1, "快速充能应生成从牌库选能量的交互"),
+		assert_eq(attacker.attached_energy.size(), 1, "快速充能应把选中的雷能量附着给自己"),
+		assert_eq(player.deck.size(), 1, "被附着的能量应从牌库移除"),
+	])
+
+
+func test_squawkabilly_attack_attaches_selected_basic_energy_to_selected_bench() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	var attacker := player.active_pokemon
+	var chosen_bench := player.bench[1]
+	player.discard_pile.clear()
+	var energy_a := CardInstance.create(_make_energy_data("Discard L", "L"), 0)
+	var energy_b := CardInstance.create(_make_energy_data("Discard R", "R"), 0)
+	player.discard_pile.append_array([energy_a, energy_b])
+
+	var effect := AttackAttachBasicEnergyFromDiscard.new("", 2, "own_bench")
+	var steps: Array[Dictionary] = effect.get_attack_interaction_steps(attacker.get_top_card(), {}, state)
+	effect.set_attack_interaction_context([{
+		"discard_energy": [energy_a, energy_b],
+		"attach_target": [chosen_bench],
+	}])
+	effect.execute_attack(attacker, state.players[1].active_pokemon, 0, state)
+	effect.clear_attack_interaction_context()
+
+	return run_checks([
+		assert_eq(steps.size(), 2, "怒鹦哥ex的鼓足干劲应包含选能量和选目标两步交互"),
+		assert_eq(chosen_bench.attached_energy.size(), 2, "选中的备战宝可梦应获得弃牌区的两张基本能量"),
+		assert_eq(player.discard_pile.size(), 0, "被附着的能量应从弃牌区移除"),
+	])
+
+
+func test_moonlight_shuriken_discards_two_attached_energy() -> String:
+	var processor := EffectProcessor.new()
+	var state := _make_state()
+	var attacker_cd := _make_basic_pokemon_data("光辉甲贺忍蛙", "W", 130, "Basic", "", "09445b8c32fd4abef4230ebcdc964096")
+	attacker_cd.attacks = [{
+		"name": "月光手里剑",
+		"cost": "WWC",
+		"damage": "",
+		"text": "",
+		"is_vstar_power": false,
+	}]
+	processor.register_pokemon_card(attacker_cd)
+	var attacker := PokemonSlot.new()
+	attacker.pokemon_stack.append(CardInstance.create(attacker_cd, 0))
+	attacker.attached_energy.append(CardInstance.create(_make_energy_data("水1", "W"), 0))
+	attacker.attached_energy.append(CardInstance.create(_make_energy_data("水2", "W"), 0))
+	state.players[0].active_pokemon = attacker
+
+	processor.execute_attack_effect(attacker, 0, state.players[1].active_pokemon, state, [])
+
+	return run_checks([
+		assert_eq(attacker.attached_energy.size(), 0, "月光手里剑结算后应弃掉攻击者身上的2个能量"),
+		assert_eq(state.players[0].discard_pile.size(), 2, "被弃置的能量应进入弃牌区"),
 	])
 
 

@@ -1,7 +1,6 @@
 # 文档导航
 
 这个目录和仓库根目录中的设计文档一起构成 `PtcgDeckDojo` 的主要项目说明。
-
 如果你是第一次阅读，建议按下面顺序进入：
 
 1. [../README.md](../README.md)
@@ -20,12 +19,13 @@
 
 - [../design_document.md](../design_document.md)：项目整体设计文档
 - [card_effect_framework.md](card_effect_framework.md)：卡牌效果与交互框架
-- [effect_implementation.md](effect_implementation.md)：效果实现策略与批量审核流程
+- [effect_implementation.md](effect_implementation.md)：效果实现策略与批量审查流程
 
 ## UI 与交互设计
 
 - [battle_ui_redesign.md](battle_ui_redesign.md)：战斗 UI 重设计说明
 - [battle_status_hud_redesign.md](battle_status_hud_redesign.md)：状态 HUD 设计说明
+- [starting_player_option.md](starting_player_option.md)：开始先后攻选项设计
 
 ## 阶段性记录
 

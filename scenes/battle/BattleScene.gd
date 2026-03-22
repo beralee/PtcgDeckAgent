@@ -36,26 +36,35 @@ var _dialog_card_size: Vector2 = Vector2(148, 208)
 var _detail_card_size: Vector2 = Vector2(300, 420)
 var _last_ui_state_signature: String = ""
 var _pending_handover_action: Callable = Callable()
-var _opp_prize_slots: Array[PanelContainer] = []
-var _my_prize_slots: Array[PanelContainer] = []
+var _opp_prize_slots: Array[BattleCardView] = []
+var _my_prize_slots: Array[BattleCardView] = []
 var _opp_deck_preview: BattleCardView = null
 var _my_deck_preview: BattleCardView = null
 var _opp_discard_preview: BattleCardView = null
 var _my_discard_preview: BattleCardView = null
+var _pending_prize_player_index: int = -1
+var _pending_prize_remaining: int = 0
+var _pending_prize_animating: bool = false
 
 var _player_card_back_texture: Texture2D = null
 var _opponent_card_back_texture: Texture2D = null
 
 # ===================== UI References =====================
 @onready var _log_list: ItemList = %LogList
+@onready var _log_title: Label = $MainArea/LogPanel/LogTitle
 
 # Top status
 @onready var _lbl_phase: Label = %LblPhase
 @onready var _lbl_turn: Label = %LblTurn
+@onready var _top_bar: PanelContainer = $TopBar
 
 # Top actions
 @onready var _btn_end_turn: Button = %BtnEndTurn
 @onready var _btn_back: Button = %BtnBack
+@onready var _hud_end_turn_btn: Button = %HudEndTurnBtn
+@onready var _opp_hand_bar: PanelContainer = $MainArea/CenterField/OppHandBar
+@onready var _left_panel: VBoxContainer = $MainArea/LeftPanel
+@onready var _right_panel: VBoxContainer = $MainArea/RightPanel
 
 # --- Opponent field ---
 @onready var _opp_prizes: Label = %OppPrizesCount
@@ -67,10 +76,26 @@ var _opponent_card_back_texture: Texture2D = null
 @onready var _opp_active: PanelContainer = %OppActive
 @onready var _opp_bench: HBoxContainer = %OppBench
 @onready var _opp_active_lbl: RichTextLabel = %OppActiveLbl
+@onready var _opp_field_shell: HBoxContainer = $MainArea/CenterField/FieldArea/OppField/OppFieldShell
+@onready var _opp_hud_left: PanelContainer = $MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudLeft
+@onready var _opp_hud_right: PanelContainer = $MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudRight
+@onready var _opp_prize_hud_count: Label = %OppHudLeftValue
+@onready var _opp_prize_hud_host: VBoxContainer = %OppPrizeHudHost
+@onready var _opp_deck_hud_box: VBoxContainer = %OppDeckHudBox
+@onready var _opp_deck_hud_value: Label = %OppDeckHudValue
+@onready var _opp_discard_hud_box: VBoxContainer = %OppDiscardHudBox
+@onready var _opp_discard_hud_value: Label = %OppDiscardHudValue
 
 # --- Stadium ---
 @onready var _stadium_lbl: Label = %StadiumLbl
 @onready var _btn_stadium_action: Button = %BtnStadiumAction
+@onready var _lost_zone_section: PanelContainer = %LostZoneSection
+@onready var _stadium_center_section: PanelContainer = %StadiumCenterSection
+@onready var _vstar_section: PanelContainer = %VstarSection
+@onready var _enemy_vstar_value: Label = %EnemyVstarValue
+@onready var _my_vstar_value: Label = %MyVstarValue
+@onready var _enemy_lost_value: Label = %EnemyLostValue
+@onready var _my_lost_value: Label = %MyLostValue
 
 # --- Player field ---
 @onready var _my_prizes: Label = %MyPrizesCount
@@ -81,6 +106,15 @@ var _opponent_card_back_texture: Texture2D = null
 @onready var _my_active: PanelContainer = %MyActive
 @onready var _my_bench: HBoxContainer = %MyBench
 @onready var _my_active_lbl: RichTextLabel = %MyActiveLbl
+@onready var _my_field_shell: HBoxContainer = $MainArea/CenterField/FieldArea/MyField/MyFieldShell
+@onready var _my_hud_left: PanelContainer = $MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudLeft
+@onready var _my_hud_right: PanelContainer = $MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudRight
+@onready var _my_prize_hud_count: Label = %MyHudLeftValue
+@onready var _my_prize_hud_host: VBoxContainer = %MyPrizeHudHost
+@onready var _my_deck_hud_box: VBoxContainer = %MyDeckHudBox
+@onready var _my_deck_hud_value: Label = %MyDeckHudValue
+@onready var _my_discard_hud_box: VBoxContainer = %MyDiscardHudBox
+@onready var _my_discard_hud_value: Label = %MyDiscardHudValue
 
 # Hand area
 @onready var _hand_title: Label = $MainArea/CenterField/HandArea/HandVBox/HandTitle
@@ -129,6 +163,7 @@ var _coin_animating: bool = false
 func _ready() -> void:
 	_init_battle_runtime_log()
 	_btn_end_turn.pressed.connect(_on_end_turn)
+	_hud_end_turn_btn.pressed.connect(_on_end_turn)
 	_btn_stadium_action.pressed.connect(_on_stadium_action_pressed)
 	_btn_back.pressed.connect(_on_back_pressed)
 	_dialog_confirm.pressed.connect(_on_dialog_confirm)
@@ -143,7 +178,23 @@ func _ready() -> void:
 	_detail_overlay.visible = false
 	_discard_overlay.visible = false
 	_hand_title.visible = false
+	_left_panel.visible = false
+	_right_panel.visible = false
+	_opp_prize_hud_count.visible = false
+	_my_prize_hud_count.visible = false
+	for caption_path: String in [
+		"MainArea/CenterField/FieldArea/StadiumBar/StadiumSections/VstarSection/VstarMargin/VstarVBox/InfoColumns/EnemyInfoColumn/InfoEnemyVstar/EnemyVstarMargin/EnemyVstarVBox/EnemyVstarCaption",
+		"MainArea/CenterField/FieldArea/StadiumBar/StadiumSections/VstarSection/VstarMargin/VstarVBox/InfoColumns/MyInfoColumn/InfoMyVstar/MyVstarMargin/MyVstarVBox/MyVstarCaption",
+		"MainArea/CenterField/FieldArea/StadiumBar/StadiumSections/VstarSection/VstarMargin/VstarVBox/InfoColumns/EnemyInfoColumn/InfoEnemyLost/EnemyLostMargin/EnemyLostVBox/EnemyLostCaption",
+		"MainArea/CenterField/FieldArea/StadiumBar/StadiumSections/VstarSection/VstarMargin/VstarVBox/InfoColumns/MyInfoColumn/InfoMyLost/MyLostMargin/MyLostVBox/MyLostCaption"
+	]:
+		var caption := get_node_or_null(caption_path) as Label
+		if caption != null:
+			caption.visible = false
+	_opp_hand_bar.visible = false
 	($MainArea/CenterField/HandArea/HandVBox as VBoxContainer).add_theme_constant_override("separation", 0)
+	_hand_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_hand_container.alignment = BoxContainer.ALIGNMENT_CENTER
 	_setup_side_previews()
 	_install_field_card_views()
 	_setup_detail_preview()
@@ -172,6 +223,10 @@ func _ready() -> void:
 	_discard_close_btn.pressed.connect(func() -> void:
 		_discard_overlay.visible = false
 	)
+	var stadium_sections := $MainArea/CenterField/FieldArea/StadiumBar/StadiumSections as HBoxContainer
+	if stadium_sections != null:
+		stadium_sections.move_child(_stadium_center_section, 0)
+		stadium_sections.move_child(_lost_zone_section, 1)
 
 	# Discard pile interactions
 	_opp_discard.gui_input.connect(func(e: InputEvent) -> void:
@@ -212,6 +267,8 @@ func _ready() -> void:
 		_my_deck_preview.right_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
 			_show_deck_cards(_view_player, "己方牌库")
 		)
+	_stadium_center_section.gui_input.connect(_on_stadium_area_input)
+	_btn_stadium_action.gui_input.connect(_on_stadium_area_input)
 
 	# Pokemon slot interactions
 	_opp_active.gui_input.connect(func(e: InputEvent) -> void:
@@ -283,26 +340,46 @@ func _apply_responsive_layout() -> void:
 	var left_panel: VBoxContainer = $MainArea/LeftPanel
 	var right_panel: VBoxContainer = $MainArea/RightPanel
 	var log_panel: VBoxContainer = $MainArea/LogPanel
+	var main_area: HBoxContainer = $MainArea
 	var hand_area: PanelContainer = $MainArea/CenterField/HandArea
-	var opp_hand_bar: HBoxContainer = $MainArea/CenterField/OppHandBar
+	var opp_hand_bar: PanelContainer = $MainArea/CenterField/OppHandBar
 	var field_area: VBoxContainer = $MainArea/CenterField/FieldArea
 	var stadium_bar: PanelContainer = $MainArea/CenterField/FieldArea/StadiumBar
-	var opp_field_inner: VBoxContainer = $MainArea/CenterField/FieldArea/OppField/OppFieldInner
-	var my_field_inner: VBoxContainer = $MainArea/CenterField/FieldArea/MyField/MyFieldInner
-	var opp_active_row: HBoxContainer = $MainArea/CenterField/FieldArea/OppField/OppFieldInner/OppActiveRow
-	var my_active_row: HBoxContainer = $MainArea/CenterField/FieldArea/MyField/MyFieldInner/MyActiveRow
-	var top_bar: HBoxContainer = $TopBar
+	var stadium_sections: HBoxContainer = $MainArea/CenterField/FieldArea/StadiumBar/StadiumSections
+	var stadium_action_row: HBoxContainer = $MainArea/CenterField/FieldArea/StadiumBar/StadiumSections/StadiumCenterSection/StadiumCenterMargin/StadiumCenterVBox/StadiumActionRow
+	var stadium_center_margin: MarginContainer = $MainArea/CenterField/FieldArea/StadiumBar/StadiumSections/StadiumCenterSection/StadiumCenterMargin
+	var vstar_margin: MarginContainer = $MainArea/CenterField/FieldArea/StadiumBar/StadiumSections/VstarSection/VstarMargin
+	var vstar_vbox: VBoxContainer = $MainArea/CenterField/FieldArea/StadiumBar/StadiumSections/VstarSection/VstarMargin/VstarVBox
+	var enemy_info_column: VBoxContainer = $MainArea/CenterField/FieldArea/StadiumBar/StadiumSections/VstarSection/VstarMargin/VstarVBox/InfoColumns/EnemyInfoColumn
+	var my_info_column: VBoxContainer = $MainArea/CenterField/FieldArea/StadiumBar/StadiumSections/VstarSection/VstarMargin/VstarVBox/InfoColumns/MyInfoColumn
+	var enemy_vstar_margin: MarginContainer = $MainArea/CenterField/FieldArea/StadiumBar/StadiumSections/VstarSection/VstarMargin/VstarVBox/InfoColumns/EnemyInfoColumn/InfoEnemyVstar/EnemyVstarMargin
+	var enemy_lost_margin: MarginContainer = $MainArea/CenterField/FieldArea/StadiumBar/StadiumSections/VstarSection/VstarMargin/VstarVBox/InfoColumns/EnemyInfoColumn/InfoEnemyLost/EnemyLostMargin
+	var my_vstar_margin: MarginContainer = $MainArea/CenterField/FieldArea/StadiumBar/StadiumSections/VstarSection/VstarMargin/VstarVBox/InfoColumns/MyInfoColumn/InfoMyVstar/MyVstarMargin
+	var my_lost_margin: MarginContainer = $MainArea/CenterField/FieldArea/StadiumBar/StadiumSections/VstarSection/VstarMargin/VstarVBox/InfoColumns/MyInfoColumn/InfoMyLost/MyLostMargin
+	var turn_action_column: VBoxContainer = $MainArea/CenterField/FieldArea/StadiumBar/StadiumSections/VstarSection/VstarMargin/VstarVBox/InfoColumns/TurnActionColumn
+	var opp_field_inner: VBoxContainer = $MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppFieldInner
+	var my_field_inner: VBoxContainer = $MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyFieldInner
+	var opp_active_row: HBoxContainer = $MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppFieldInner/OppActiveRow
+	var my_active_row: HBoxContainer = $MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyFieldInner/MyActiveRow
+	var top_bar: PanelContainer = $TopBar
 
-	var side_width: float = clampf(viewport_size.x * 0.05, 72.0, 108.0)
-	var right_width: float = side_width + 6.0
+	var side_width: float = 0.0 if not left_panel.visible else clampf(viewport_size.x * 0.05, 72.0, 108.0)
+	var right_width: float = 0.0 if not right_panel.visible else side_width + 6.0
 	var log_width: float = clampf(viewport_size.x * 0.125, 124.0, 204.0)
 	left_panel.custom_minimum_size = Vector2(side_width, 0)
 	right_panel.custom_minimum_size = Vector2(right_width, 0)
 	log_panel.custom_minimum_size = Vector2(log_width, 0)
 
-	top_bar.offset_bottom = clampf(viewport_size.y * 0.042, 26.0, 38.0)
+	var top_bar_height: float = roundf(clampf(viewport_size.y * 0.042, 26.0, 38.0) * (2.0 / 3.0))
+	top_bar.offset_bottom = top_bar.offset_top + top_bar_height
+	main_area.offset_top = top_bar.offset_bottom + 4.0
+	_btn_back.custom_minimum_size = Vector2(clampf(viewport_size.x * 0.11, 126.0, 172.0), maxf(top_bar_height - 6.0, 18.0))
 	opp_hand_bar.custom_minimum_size = Vector2(0, clampf(viewport_size.y * 0.032, 24.0, 34.0))
 	field_area.add_theme_constant_override("separation", clampi(int(viewport_size.y * 0.004), 2, 6))
+	stadium_sections.add_theme_constant_override("separation", clampi(int(viewport_size.x * 0.006), 6, 14))
+	stadium_action_row.add_theme_constant_override("separation", clampi(int(viewport_size.x * 0.004), 6, 12))
+	_opp_field_shell.add_theme_constant_override("separation", clampi(int(viewport_size.x * 0.006), 8, 16))
+	_my_field_shell.add_theme_constant_override("separation", clampi(int(viewport_size.x * 0.006), 8, 16))
 	opp_field_inner.add_theme_constant_override("separation", clampi(int(viewport_size.y * 0.003), 1, 4))
 	my_field_inner.add_theme_constant_override("separation", clampi(int(viewport_size.y * 0.003), 1, 4))
 	opp_active_row.add_theme_constant_override("separation", clampi(int(viewport_size.x * 0.002), 2, 4))
@@ -317,17 +394,48 @@ func _apply_responsive_layout() -> void:
 	var play_h: float = _compute_play_card_height(viewport_size, center_width, bench_spacing)
 	var dialog_h: float = clampf(viewport_size.y * 0.24, 148.0, 220.0)
 	var detail_h: float = clampf(viewport_size.y * 0.5, 260.0, 460.0)
-	var deck_preview_h: float = clampf(viewport_size.y * 0.12, 74.0, 108.0)
-	var deck_preview_size := Vector2(round(deck_preview_h * CARD_ASPECT), round(deck_preview_h))
-	var prize_slot_w: float = clampf((side_width - 14.0) / 2.0, 26.0, 40.0)
-	var prize_slot_size := Vector2(round(prize_slot_w), round(prize_slot_w / CARD_ASPECT))
-
 	_play_card_size = Vector2(round(play_h * CARD_ASPECT), round(play_h))
 	_dialog_card_size = Vector2(round(dialog_h * CARD_ASPECT), round(dialog_h))
 	_detail_card_size = Vector2(round(detail_h * CARD_ASPECT), round(detail_h))
+	var preview_card_size := Vector2(roundf(_play_card_size.x * 0.9), roundf(_play_card_size.y * 0.9))
+	var prize_slot_size: Vector2 = preview_card_size
 
 	hand_area.custom_minimum_size = Vector2(0, _play_card_size.y + 10.0)
-	stadium_bar.custom_minimum_size = Vector2(0, clampf(viewport_size.y * 0.018, 16.0, 20.0))
+	var stadium_height: float = roundf(clampf(viewport_size.y * 0.082, 54.0, 72.0) * (4.0 / 9.0))
+	var stadium_inner_vpad: int = clampi(int(stadium_height * 0.08), 1, 3)
+	var vstar_stack_gap: int = clampi(int(stadium_height * 0.08), 1, 2)
+	var vstar_panel_vpad: int = clampi(int(stadium_height * 0.06), 1, 2)
+	var prize_panel_height: float = roundf((preview_card_size.y * 2.0 + 24.0) * 0.95)
+	stadium_bar.custom_minimum_size = Vector2(0, stadium_height)
+	stadium_sections.offset_top = float(stadium_inner_vpad)
+	stadium_sections.offset_bottom = -float(stadium_inner_vpad)
+	stadium_center_margin.offset_top = float(stadium_inner_vpad)
+	stadium_center_margin.offset_bottom = -float(stadium_inner_vpad)
+	vstar_margin.offset_top = float(stadium_inner_vpad)
+	vstar_margin.offset_bottom = -float(stadium_inner_vpad)
+	vstar_vbox.add_theme_constant_override("separation", vstar_stack_gap)
+	enemy_info_column.add_theme_constant_override("separation", vstar_stack_gap * 2)
+	my_info_column.add_theme_constant_override("separation", vstar_stack_gap * 2)
+	for margin: MarginContainer in [enemy_vstar_margin, enemy_lost_margin, my_vstar_margin, my_lost_margin]:
+		margin.offset_top = float(vstar_panel_vpad)
+		margin.offset_bottom = -float(vstar_panel_vpad)
+	turn_action_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_hud_end_turn_btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_hud_end_turn_btn.custom_minimum_size = Vector2(0, maxf(stadium_height - float(stadium_inner_vpad * 2), 18.0))
+	_opp_hud_left.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_my_hud_left.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_opp_hud_left.custom_minimum_size = Vector2(0, prize_panel_height)
+	_my_hud_left.custom_minimum_size = Vector2(0, prize_panel_height)
+	var backdrop := get_node_or_null("BattleBackdrop") as TextureRect
+	if backdrop != null:
+		backdrop.anchor_left = 0.0
+		backdrop.anchor_top = 0.0
+		backdrop.anchor_right = 0.0
+		backdrop.anchor_bottom = 0.0
+		backdrop.offset_left = 0.0
+		backdrop.offset_top = 0.0
+		backdrop.offset_right = viewport_size.x - log_width
+		backdrop.offset_bottom = viewport_size.y
 	_hand_container.add_theme_constant_override("separation", clampi(int(_play_card_size.x * 0.08), 4, 10))
 	_my_active.custom_minimum_size = _play_card_size
 	_opp_active.custom_minimum_size = _play_card_size
@@ -345,13 +453,21 @@ func _apply_responsive_layout() -> void:
 		panel.custom_minimum_size = _play_card_size
 		panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		panel.clip_contents = true
-	for slot: PanelContainer in _opp_prize_slots:
-		slot.custom_minimum_size = prize_slot_size
-	for slot: PanelContainer in _my_prize_slots:
-		slot.custom_minimum_size = prize_slot_size
+	for prize_view: BattleCardView in _opp_prize_slots:
+		if prize_view == null:
+			continue
+		prize_view.custom_minimum_size = prize_slot_size
+		prize_view.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		prize_view.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	for prize_view: BattleCardView in _my_prize_slots:
+		if prize_view == null:
+			continue
+		prize_view.custom_minimum_size = prize_slot_size
+		prize_view.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		prize_view.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	for preview: BattleCardView in [_opp_deck_preview, _my_deck_preview, _opp_discard_preview, _my_discard_preview]:
 		if preview != null:
-			preview.custom_minimum_size = deck_preview_size
+			preview.custom_minimum_size = preview_card_size
 
 	_dialog_box.custom_minimum_size = Vector2(
 		clampf(viewport_size.x * 0.62, 640.0, 1120.0),
@@ -429,9 +545,15 @@ func _install_battle_backdrop() -> void:
 
 
 func _load_battle_backdrop_texture() -> Texture2D:
-	var backdrop_res := load(BATTLE_BACKDROP_RESOURCE)
-	if backdrop_res is Texture2D:
-		return backdrop_res as Texture2D
+	var backdrop_path := _resolve_battle_backdrop_path()
+	if ResourceLoader.exists(backdrop_path):
+		var backdrop_res := load(backdrop_path)
+		if backdrop_res is Texture2D:
+			return backdrop_res as Texture2D
+	if FileAccess.file_exists(backdrop_path):
+		var image := Image.load_from_file(ProjectSettings.globalize_path(backdrop_path))
+		if image != null and not image.is_empty():
+			return ImageTexture.create_from_image(image)
 
 	var gradient := Gradient.new()
 	gradient.colors = PackedColorArray([
@@ -450,6 +572,13 @@ func _load_battle_backdrop_texture() -> Texture2D:
 	texture.fill_from = Vector2(0.0, 0.0)
 	texture.fill_to = Vector2(1.0, 1.0)
 	return texture
+
+
+func _resolve_battle_backdrop_path() -> String:
+	var backdrop_path := GameManager.selected_battle_background
+	if backdrop_path != "" and (ResourceLoader.exists(backdrop_path) or FileAccess.file_exists(backdrop_path)):
+		return backdrop_path
+	return BATTLE_BACKDROP_RESOURCE
 
 
 func _load_card_back_texture(resource_path: String, is_player_side: bool) -> Texture2D:
@@ -482,8 +611,141 @@ func _apply_battle_surface_styles() -> void:
 	_style_panel(_my_deck_box, Color(0.05, 0.09, 0.13, 0.82), Color(0.35, 0.6, 0.5), 16)
 	_style_panel($MainArea/CenterField/FieldArea/OppField, Color(0.0, 0.0, 0.0, 0.0), Color(0.0, 0.0, 0.0, 0.0))
 	_style_panel($MainArea/CenterField/FieldArea/MyField, Color(0.0, 0.0, 0.0, 0.0), Color(0.0, 0.0, 0.0, 0.0))
+	_style_panel(_opp_hud_left, Color(0.02, 0.1, 0.16, 0.7), Color(0.22, 0.68, 0.84, 0.92), 16)
+	_style_panel(_my_hud_left, Color(0.03, 0.11, 0.15, 0.7), Color(0.27, 0.86, 0.7, 0.92), 16)
+	_style_panel(_opp_hud_right, Color(0.0, 0.0, 0.0, 0.0), Color(0.0, 0.0, 0.0, 0.0), 16)
+	_style_panel(_my_hud_right, Color(0.0, 0.0, 0.0, 0.0), Color(0.0, 0.0, 0.0, 0.0), 16)
+	_style_panel(_opp_hand_bar, Color(0.01, 0.11, 0.18, 0.72), Color(0.16, 0.62, 0.76, 0.9), 10)
+	for panel_path: String in [
+		"MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudRight/OppHudRightMargin/OppHudRightVBox/OppDeckHudPanel",
+		"MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudRight/OppHudRightMargin/OppHudRightVBox/OppDiscardHudPanel"
+	]:
+		var panel := get_node_or_null(panel_path) as PanelContainer
+		_style_panel(panel, Color(0.0, 0.0, 0.0, 0.0), Color(0.0, 0.0, 0.0, 0.0), 12)
+	for panel_path: String in [
+		"MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudRight/MyHudRightMargin/MyHudRightVBox/MyDeckHudPanel",
+		"MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudRight/MyHudRightMargin/MyHudRightVBox/MyDiscardHudPanel"
+	]:
+		var panel := get_node_or_null(panel_path) as PanelContainer
+		_style_panel(panel, Color(0.0, 0.0, 0.0, 0.0), Color(0.0, 0.0, 0.0, 0.0), 12)
 	_style_panel($MainArea/CenterField/HandArea, Color(0.05, 0.09, 0.13, 0.88), Color(0.42, 0.58, 0.74))
-	_style_panel($MainArea/CenterField/FieldArea/StadiumBar, Color(0.15, 0.2, 0.15, 0.9), Color(0.73, 0.87, 0.62), 14)
+	_style_panel(_top_bar, Color(0.01, 0.08, 0.13, 0.78), Color(0.19, 0.66, 0.8, 0.9), 14)
+	_style_panel($MainArea/CenterField/FieldArea/StadiumBar, Color(0.0, 0.0, 0.0, 0.0), Color(0.0, 0.0, 0.0, 0.0), 14)
+	_style_panel(_lost_zone_section, Color(0.0, 0.0, 0.0, 0.0), Color(0.0, 0.0, 0.0, 0.0), 12)
+	_style_panel(_stadium_center_section, Color(0.11, 0.16, 0.12, 0.82), Color(0.73, 0.87, 0.62), 12)
+	_style_panel(_vstar_section, Color(0.0, 0.0, 0.0, 0.0), Color(0.0, 0.0, 0.0, 0.0), 12)
+	for panel_path: String in [
+		"MainArea/CenterField/FieldArea/StadiumBar/StadiumSections/VstarSection/VstarMargin/VstarVBox/InfoColumns/EnemyInfoColumn/InfoEnemyVstar",
+		"MainArea/CenterField/FieldArea/StadiumBar/StadiumSections/VstarSection/VstarMargin/VstarVBox/InfoColumns/MyInfoColumn/InfoMyVstar",
+		"MainArea/CenterField/FieldArea/StadiumBar/StadiumSections/VstarSection/VstarMargin/VstarVBox/InfoColumns/EnemyInfoColumn/InfoEnemyLost",
+		"MainArea/CenterField/FieldArea/StadiumBar/StadiumSections/VstarSection/VstarMargin/VstarVBox/InfoColumns/MyInfoColumn/InfoMyLost"
+	]:
+		var panel := get_node_or_null(panel_path) as PanelContainer
+		_style_panel(panel, Color(0.01, 0.11, 0.18, 0.72), Color(0.16, 0.62, 0.76, 0.9), 10)
+	_lost_zone_section.self_modulate = Color(1, 1, 1, 0)
+	_stadium_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_stadium_lbl.add_theme_font_size_override("font_size", 12)
+	_btn_stadium_action.add_theme_color_override("font_color", Color(0.93, 0.96, 0.88))
+	_btn_stadium_action.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 0.94))
+	_btn_stadium_action.add_theme_color_override("font_disabled_color", Color(0.5, 0.53, 0.49))
+	_btn_stadium_action.add_theme_font_size_override("font_size", 12)
+	_style_hud_button(_hud_end_turn_btn)
+	_style_hud_button(_btn_back)
+	for label: Label in [_lbl_phase, _lbl_turn]:
+		if label != null:
+			label.add_theme_color_override("font_color", Color(0.92, 0.98, 1.0))
+			label.add_theme_color_override("font_outline_color", Color(0.02, 0.07, 0.12, 0.9))
+			label.add_theme_constant_override("outline_size", 1)
+	for caption_path: String in [
+		"MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudLeft/OppHudLeftMargin/OppHudLeftVBox/OppHudLeftTitle",
+		"MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudRight/OppHudRightMargin/OppHudRightVBox/OppHudRightTitle",
+		"MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudRight/OppHudRightMargin/OppHudRightVBox/OppHudDataRow/OppDeckHudPanel/OppDeckHudMargin/OppDeckHudBox/OppDeckHudHeader/OppDeckHudCaption",
+		"MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudRight/OppHudRightMargin/OppHudRightVBox/OppHudDataRow/OppDiscardHudPanel/OppDiscardHudMargin/OppDiscardHudBox/OppDiscardHudHeader/OppDiscardHudCaption",
+		"MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudLeft/MyHudLeftMargin/MyHudLeftVBox/MyHudLeftTitle",
+		"MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudRight/MyHudRightMargin/MyHudRightVBox/MyHudRightTitle",
+		"MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudRight/MyHudRightMargin/MyHudRightVBox/MyHudDataRow/MyDeckHudPanel/MyDeckHudMargin/MyDeckHudBox/MyDeckHudHeader/MyDeckHudCaption",
+		"MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudRight/MyHudRightMargin/MyHudRightVBox/MyHudDataRow/MyDiscardHudPanel/MyDiscardHudMargin/MyDiscardHudBox/MyDiscardHudHeader/MyDiscardHudCaption",
+		"MainArea/CenterField/FieldArea/StadiumBar/StadiumSections/VstarSection/VstarMargin/VstarVBox/InfoColumns/EnemyInfoColumn/InfoEnemyVstar/EnemyVstarMargin/EnemyVstarVBox/EnemyVstarCaption",
+		"MainArea/CenterField/FieldArea/StadiumBar/StadiumSections/VstarSection/VstarMargin/VstarVBox/InfoColumns/MyInfoColumn/InfoMyVstar/MyVstarMargin/MyVstarVBox/MyVstarCaption",
+		"MainArea/CenterField/FieldArea/StadiumBar/StadiumSections/VstarSection/VstarMargin/VstarVBox/InfoColumns/EnemyInfoColumn/InfoEnemyLost/EnemyLostMargin/EnemyLostVBox/EnemyLostCaption",
+		"MainArea/CenterField/FieldArea/StadiumBar/StadiumSections/VstarSection/VstarMargin/VstarVBox/InfoColumns/MyInfoColumn/InfoMyLost/MyLostMargin/MyLostVBox/MyLostCaption"
+	]:
+		var caption := get_node_or_null(caption_path) as Label
+		if caption != null:
+			caption.add_theme_color_override("font_color", Color(0.54, 0.9, 0.94, 0.9))
+	for value_label: Label in [_enemy_vstar_value, _my_vstar_value, _enemy_lost_value, _my_lost_value]:
+		if value_label != null:
+			value_label.add_theme_color_override("font_color", Color(0.93, 0.99, 1.0))
+	for value_label: Label in [
+		_opp_prize_hud_count,
+		_opp_deck_hud_value,
+		_opp_discard_hud_value,
+		_my_prize_hud_count,
+		_my_deck_hud_value,
+		_my_discard_hud_value
+	]:
+		if value_label != null:
+			value_label.add_theme_color_override("font_color", Color(0.96, 1.0, 1.0))
+	for caption_path: String in [
+		"MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudLeft/OppHudLeftMargin/OppHudLeftVBox/OppHudLeftTitle",
+		"MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudRight/OppHudRightMargin/OppHudRightVBox/OppHudRightTitle",
+		"MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudLeft/MyHudLeftMargin/MyHudLeftVBox/MyHudLeftTitle",
+		"MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudRight/MyHudRightMargin/MyHudRightVBox/MyHudRightTitle"
+	]:
+		var caption := get_node_or_null(caption_path) as Label
+		if caption != null:
+			caption.add_theme_color_override("font_color", Color(0.55, 0.89, 0.96, 0.9))
+	for value_path: String in [
+		"MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudLeft/OppHudLeftMargin/OppHudLeftVBox/OppHudLeftValue",
+		"MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudRight/OppHudRightMargin/OppHudRightVBox/OppHudRightValue",
+		"MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudLeft/MyHudLeftMargin/MyHudLeftVBox/MyHudLeftValue",
+		"MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudRight/MyHudRightMargin/MyHudRightVBox/MyHudRightValue"
+	]:
+		var value_label := get_node_or_null(value_path) as Label
+		if value_label != null:
+			value_label.add_theme_color_override("font_color", Color(0.93, 0.99, 1.0))
+	for label_text: Dictionary in [
+		{"path": "MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudLeft/OppHudLeftMargin/OppHudLeftVBox/OppHudLeftTitle", "text": "对方奖赏"},
+		{"path": "MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudRight/OppHudRightMargin/OppHudRightVBox/OppHudRightTitle", "text": ""},
+		{"path": "MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudRight/OppHudRightMargin/OppHudRightVBox/OppHudRightValue", "text": ""},
+		{"path": "MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudLeft/MyHudLeftMargin/MyHudLeftVBox/MyHudLeftTitle", "text": "己方奖赏"},
+		{"path": "MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudRight/MyHudRightMargin/MyHudRightVBox/MyHudRightTitle", "text": ""},
+		{"path": "MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudRight/MyHudRightMargin/MyHudRightVBox/MyHudRightValue", "text": ""}
+	]:
+		var label := get_node_or_null(str(label_text["path"])) as Label
+		if label != null:
+			label.text = str(label_text["text"])
+	for label: Label in [_opp_prize_hud_count, _my_prize_hud_count]:
+		if label != null:
+			label.add_theme_font_size_override("font_size", 18)
+	for caption_path: String in [
+		"MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudRight/OppHudRightMargin/OppHudRightVBox/OppHudDataRow/OppDeckHudPanel/OppDeckHudMargin/OppDeckHudBox/OppDeckHudHeader/OppDeckHudCaption",
+		"MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudRight/OppHudRightMargin/OppHudRightVBox/OppHudDataRow/OppDiscardHudPanel/OppDiscardHudMargin/OppDiscardHudBox/OppDiscardHudHeader/OppDiscardHudCaption",
+		"MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudRight/MyHudRightMargin/MyHudRightVBox/MyHudDataRow/MyDeckHudPanel/MyDeckHudMargin/MyDeckHudBox/MyDeckHudHeader/MyDeckHudCaption",
+		"MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudRight/MyHudRightMargin/MyHudRightVBox/MyHudDataRow/MyDiscardHudPanel/MyDiscardHudMargin/MyDiscardHudBox/MyDiscardHudHeader/MyDiscardHudCaption"
+	]:
+		var caption := get_node_or_null(caption_path) as Label
+		if caption != null:
+			caption.add_theme_font_size_override("font_size", 14)
+	for label: Label in [_opp_hand_lbl]:
+		if label != null:
+			label.add_theme_font_size_override("font_size", 14)
+			label.add_theme_color_override("font_color", Color(0.93, 0.99, 1.0))
+			label.add_theme_color_override("font_outline_color", Color(0.02, 0.07, 0.12, 0.9))
+			label.add_theme_constant_override("outline_size", 1)
+	if _log_title != null:
+		_log_title.add_theme_font_size_override("font_size", 17)
+	if _log_list != null:
+		_log_list.add_theme_font_size_override("font_size", 15)
+	for label_path: String in [
+		"MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudRight/OppHudRightMargin/OppHudRightVBox/OppHudRightTitle",
+		"MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudRight/OppHudRightMargin/OppHudRightVBox/OppHudRightValue",
+		"MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudRight/MyHudRightMargin/MyHudRightVBox/MyHudRightTitle",
+		"MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudRight/MyHudRightMargin/MyHudRightVBox/MyHudRightValue"
+	]:
+		var label := get_node_or_null(label_path) as Label
+		if label != null:
+			label.visible = false
 	_style_panel(_dialog_box, Color(0.05, 0.08, 0.11, 0.98), Color(0.38, 0.55, 0.72), 20)
 	_style_panel($DetailOverlay/DetailCenter/DetailBox, Color(0.05, 0.08, 0.11, 0.98), Color(0.65, 0.5, 0.27), 20)
 	_style_panel($DiscardOverlay/DiscardCenter/DiscardBox, Color(0.05, 0.08, 0.11, 0.98), Color(0.5, 0.57, 0.72), 20)
@@ -496,11 +758,6 @@ func _apply_battle_surface_styles() -> void:
 		_style_panel(bench_panel, Color(0.04, 0.07, 0.1, 0.76), Color(0.32, 0.5, 0.44), 16)
 	for bench_panel: PanelContainer in _opp_bench.get_children():
 		_style_panel(bench_panel, Color(0.04, 0.07, 0.1, 0.76), Color(0.33, 0.39, 0.5), 16)
-	for prize_slot: PanelContainer in _opp_prize_slots:
-		_style_panel(prize_slot, Color(0.05, 0.09, 0.13, 0.22), Color(0.37, 0.47, 0.64), 10)
-	for prize_slot: PanelContainer in _my_prize_slots:
-		_style_panel(prize_slot, Color(0.05, 0.09, 0.13, 0.22), Color(0.35, 0.6, 0.5), 10)
-
 	_hand_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	_hand_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 
@@ -517,6 +774,33 @@ func _style_panel(panel: Control, bg_color: Color, border_color: Color, radius: 
 		(panel as PanelContainer).add_theme_stylebox_override("panel", style)
 	elif panel is Panel:
 		(panel as Panel).add_theme_stylebox_override("panel", style)
+
+
+func _style_hud_button(button: Button) -> void:
+	if button == null:
+		return
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color(0.01, 0.11, 0.18, 0.72)
+	normal.border_color = Color(0.16, 0.62, 0.76, 0.9)
+	normal.set_border_width_all(2)
+	normal.set_corner_radius_all(10)
+	var hover := normal.duplicate()
+	hover.bg_color = Color(0.04, 0.18, 0.28, 0.82)
+	hover.border_color = Color(0.37, 0.91, 0.98, 0.96)
+	var pressed := normal.duplicate()
+	pressed.bg_color = Color(0.03, 0.14, 0.22, 0.9)
+	pressed.border_color = Color(0.56, 0.94, 1.0, 1.0)
+	var disabled := normal.duplicate()
+	disabled.bg_color = Color(0.04, 0.08, 0.12, 0.45)
+	disabled.border_color = Color(0.22, 0.31, 0.38, 0.6)
+	button.add_theme_stylebox_override("normal", normal)
+	button.add_theme_stylebox_override("hover", hover)
+	button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_stylebox_override("disabled", disabled)
+	button.add_theme_color_override("font_color", Color(0.93, 0.99, 1.0))
+	button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0))
+	button.add_theme_color_override("font_pressed_color", Color(1.0, 1.0, 1.0))
+	button.add_theme_color_override("font_disabled_color", Color(0.48, 0.58, 0.63))
 
 
 
@@ -569,37 +853,55 @@ func _setup_detail_preview() -> void:
 func _setup_side_previews() -> void:
 	_opponent_card_back_texture = _load_card_back_texture(OPPONENT_CARD_BACK_RESOURCE, false)
 	_player_card_back_texture = _load_card_back_texture(PLAYER_CARD_BACK_RESOURCE, true)
-	_opp_prize_slots = _build_prize_slots(_opp_prizes_box, _opponent_card_back_texture)
-	_my_prize_slots = _build_prize_slots(_my_prizes_box, _player_card_back_texture)
-	_opp_deck_preview = _insert_pile_preview(_opp_deck_box, 2, false, _opponent_card_back_texture)
-	_opp_discard_preview = _insert_pile_preview(_opp_deck_box, 5, true)
-	_my_deck_preview = _insert_pile_preview(_my_deck_box, 2, false, _player_card_back_texture)
-	_my_discard_preview = _insert_pile_preview(_my_deck_box, 5, true)
+	_opp_prize_hud_host.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_my_prize_hud_host.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_opp_prize_hud_host.alignment = BoxContainer.ALIGNMENT_CENTER
+	_my_prize_hud_host.alignment = BoxContainer.ALIGNMENT_CENTER
+	_opp_prize_hud_host.add_theme_constant_override("separation", 0)
+	_my_prize_hud_host.add_theme_constant_override("separation", 0)
+	var opp_prize_panel_vbox := get_node_or_null("MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudLeft/OppHudLeftMargin/OppHudLeftVBox") as VBoxContainer
+	var my_prize_panel_vbox := get_node_or_null("MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudLeft/MyHudLeftMargin/MyHudLeftVBox") as VBoxContainer
+	if opp_prize_panel_vbox != null:
+		opp_prize_panel_vbox.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		opp_prize_panel_vbox.add_theme_constant_override("separation", 0)
+	if my_prize_panel_vbox != null:
+		my_prize_panel_vbox.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		my_prize_panel_vbox.add_theme_constant_override("separation", 0)
+	_opp_prize_slots = _build_prize_slots(_opp_prize_hud_host, _opponent_card_back_texture)
+	_my_prize_slots = _build_prize_slots(_my_prize_hud_host, _player_card_back_texture)
+	_opp_deck_preview = _insert_pile_preview(_opp_deck_hud_box, 1, false, _opponent_card_back_texture)
+	_opp_discard_preview = _insert_pile_preview(_opp_discard_hud_box, 1, true)
+	_my_deck_preview = _insert_pile_preview(_my_deck_hud_box, 1, false, _player_card_back_texture)
+	_my_discard_preview = _insert_pile_preview(_my_discard_hud_box, 1, true)
 
 
-func _build_prize_slots(box: VBoxContainer, back_texture: Texture2D) -> Array[PanelContainer]:
+func _build_prize_slots(box: VBoxContainer, back_texture: Texture2D) -> Array[BattleCardView]:
+	var center := CenterContainer.new()
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_child(center)
+
 	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	grid.add_theme_constant_override("h_separation", 4)
-	grid.add_theme_constant_override("v_separation", 4)
-	box.add_child(grid)
+	grid.columns = 3
+	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	grid.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	grid.add_theme_constant_override("h_separation", 0)
+	grid.add_theme_constant_override("v_separation", 0)
+	center.add_child(grid)
 
-	var slots: Array[PanelContainer] = []
+	var slots: Array[BattleCardView] = []
 	for _i: int in 6:
-		var slot := PanelContainer.new()
-		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		slot.clip_contents = true
-		var art := TextureRect.new()
-		art.name = "BackArt"
-		art.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		art.set_anchors_preset(Control.PRESET_FULL_RECT)
-		art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-		art.texture = back_texture
-		slot.add_child(art)
-		grid.add_child(slot)
-		slots.append(slot)
+		var card_view := BATTLE_CARD_VIEW.new()
+		card_view.name = "PrizeCardView"
+		card_view.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		card_view.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		card_view.set_clickable(false)
+		card_view.set_compact_preview(true)
+		card_view.set_back_texture(back_texture)
+		card_view.setup_from_instance(null, BATTLE_CARD_VIEW.MODE_PREVIEW)
+		card_view.set_face_down(true)
+		grid.add_child(card_view)
+		slots.append(card_view)
 	return slots
 
 
@@ -640,7 +942,13 @@ func _on_player_choice_required(choice_type: String, data: Dictionary) -> void:
 			)
 		"setup_ready":
 			_begin_setup_flow()
+		"take_prize":
+			_start_prize_selection(
+				int(data.get("player", _view_player)),
+				int(data.get("count", 1))
+			)
 		"send_out_pokemon":
+			_clear_prize_selection()
 			var pi: int = data.get("player", 0)
 			_prompt_send_out_dialog(pi)
 		"heavy_baton_target":
@@ -658,8 +966,38 @@ func _on_player_choice_required(choice_type: String, data: Dictionary) -> void:
 			)
 
 
+func _start_prize_selection(player_index: int, count: int) -> void:
+	_pending_choice = "take_prize"
+	_pending_prize_player_index = player_index
+	_pending_prize_remaining = count
+	_pending_prize_animating = false
+	_refresh_ui()
+	_focus_prize_panel(player_index)
+	_log("请选择 1 张奖赏卡（剩余 %d 张）" % count)
+
+
+func _clear_prize_selection() -> void:
+	if _pending_choice == "take_prize":
+		_pending_choice = ""
+	_pending_prize_player_index = -1
+	_pending_prize_remaining = 0
+	_pending_prize_animating = false
+
+
+func _focus_prize_panel(player_index: int) -> void:
+	var target_panel: Control = _my_hud_left if player_index == _view_player else _opp_hud_left
+	if target_panel == null or not is_inside_tree():
+		return
+	target_panel.pivot_offset = target_panel.size * 0.5
+	target_panel.scale = Vector2.ONE
+	var tween := create_tween()
+	tween.tween_property(target_panel, "scale", Vector2(1.05, 1.05), 0.10).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(target_panel, "scale", Vector2.ONE, 0.14).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+
+
 func _on_game_over(winner_index: int, reason: String) -> void:
 	_runtime_log("game_over", "winner=%d reason=%s" % [winner_index, reason])
+	_clear_prize_selection()
 	_refresh_ui()
 	_show_dialog(
 		"游戏结束",
@@ -767,6 +1105,17 @@ func _on_stadium_action_pressed() -> void:
 	if _gsm == null:
 		return
 	_try_use_stadium_with_interaction(_gsm.game_state.current_player_index)
+
+
+func _on_stadium_area_input(event: InputEvent) -> void:
+	if not (event is InputEventMouseButton):
+		return
+	var mbe := event as InputEventMouseButton
+	if not mbe.pressed or mbe.button_index != MOUSE_BUTTON_RIGHT:
+		return
+	if _gsm == null or _gsm.game_state.stadium_card == null:
+		return
+	_show_card_detail(_gsm.game_state.stadium_card.card_data)
 
 
 func _on_back_pressed() -> void:
@@ -1003,31 +1352,103 @@ func _setup_discard_gallery() -> void:
 
 
 func _setup_prize_viewer() -> void:
-	for prize_slot: PanelContainer in _opp_prize_slots:
+	for i: int in _opp_prize_slots.size():
+		var prize_slot: BattleCardView = _opp_prize_slots[i]
 		if prize_slot == null:
 			continue
 		prize_slot.mouse_filter = Control.MOUSE_FILTER_STOP
+		var slot_index := i
 		prize_slot.gui_input.connect(func(event: InputEvent) -> void:
-			_on_prize_slot_input(event, 1 - _view_player, "对方奖赏卡")
+			_on_prize_slot_input(event, 1 - _view_player, "对方奖赏卡", slot_index)
 		)
-	for prize_slot: PanelContainer in _my_prize_slots:
+	for i: int in _my_prize_slots.size():
+		var prize_slot: BattleCardView = _my_prize_slots[i]
 		if prize_slot == null:
 			continue
 		prize_slot.mouse_filter = Control.MOUSE_FILTER_STOP
+		var slot_index := i
 		prize_slot.gui_input.connect(func(event: InputEvent) -> void:
-			_on_prize_slot_input(event, _view_player, "己方奖赏卡")
+			_on_prize_slot_input(event, _view_player, "己方奖赏卡", slot_index)
 		)
 
 
-func _on_prize_slot_input(event: InputEvent, player_index: int, title: String) -> void:
-	if GameManager.current_mode != GameManager.GameMode.TWO_PLAYER:
-		return
+func _on_prize_slot_input(event: InputEvent, player_index: int, title: String, slot_index: int) -> void:
 	if not (event is InputEventMouseButton):
 		return
 	var mbe := event as InputEventMouseButton
-	if not mbe.pressed or mbe.button_index != MOUSE_BUTTON_RIGHT:
+	if not mbe.pressed:
+		return
+	if mbe.button_index == MOUSE_BUTTON_LEFT:
+		_try_take_prize_from_slot(player_index, slot_index)
+		return
+	if mbe.button_index != MOUSE_BUTTON_RIGHT:
 		return
 	_show_prize_cards(player_index, title)
+
+
+func _try_take_prize_from_slot(player_index: int, slot_index: int) -> void:
+	if _gsm == null:
+		return
+	if _pending_choice != "take_prize" or _pending_prize_player_index != player_index:
+		return
+	if _pending_prize_animating:
+		return
+	var player: PlayerState = _gsm.game_state.players[player_index]
+	var prize_card: CardInstance = player.get_prize_at_slot(slot_index)
+	if prize_card == null:
+		return
+	var prize_view: BattleCardView = _get_prize_slot_view(player_index, slot_index)
+	if prize_view == null:
+		return
+	_pending_prize_animating = true
+	_animate_prize_flip(prize_view, prize_card, func() -> void:
+		_pending_choice = ""
+		_pending_prize_player_index = -1
+		_pending_prize_remaining = 0
+		var resolved: bool = _gsm.resolve_take_prize(player_index, slot_index)
+		_pending_prize_animating = false
+		if resolved and _pending_choice == "take_prize":
+			_focus_prize_panel(player_index)
+		elif resolved:
+			_clear_prize_selection()
+		_refresh_ui()
+		_check_two_player_handover()
+	)
+
+
+func _get_prize_slot_view(player_index: int, slot_index: int) -> BattleCardView:
+	var slots: Array[BattleCardView] = _my_prize_slots if player_index == _view_player else _opp_prize_slots
+	if slot_index < 0 or slot_index >= slots.size():
+		return null
+	return slots[slot_index]
+
+
+func _animate_prize_flip(prize_view: BattleCardView, prize_card: CardInstance, on_complete: Callable) -> void:
+	if prize_view == null:
+		if on_complete.is_valid():
+			on_complete.call()
+		return
+	if not is_inside_tree():
+		prize_view.setup_from_instance(prize_card, BATTLE_CARD_VIEW.MODE_PREVIEW)
+		prize_view.set_face_down(false)
+		if on_complete.is_valid():
+			on_complete.call()
+		return
+	prize_view.pivot_offset = prize_view.size * 0.5
+	var tween := create_tween()
+	tween.tween_property(prize_view, "scale:x", 0.05, 0.11).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	tween.tween_callback(func() -> void:
+		prize_view.setup_from_instance(prize_card, BATTLE_CARD_VIEW.MODE_PREVIEW)
+		prize_view.set_face_down(false)
+		prize_view.set_selected(true)
+	)
+	tween.tween_property(prize_view, "scale:x", 1.0, 0.13).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_interval(0.08)
+	tween.finished.connect(func() -> void:
+		prize_view.scale = Vector2.ONE
+		if on_complete.is_valid():
+			on_complete.call()
+	)
 
 
 func _show_dialog(title: String, items: Array, extra_data: Dictionary = {}) -> void:
@@ -2469,72 +2890,132 @@ func _refresh_ui() -> void:
 	var vp: int = _view_player
 	var op: int = 1 - vp
 
-	var phase_names := {
-		GameState.GamePhase.SETUP: "准备阶段",
-		GameState.GamePhase.DRAW: "抽牌阶段",
-		GameState.GamePhase.MAIN: "主要阶段",
-		GameState.GamePhase.ATTACK: "攻击阶段",
-		GameState.GamePhase.POKEMON_CHECK: "宝可梦检查",
-		GameState.GamePhase.KNOCKOUT_REPLACE: "替换昏厥宝可梦",
-		GameState.GamePhase.GAME_OVER: "游戏结束",
-	}
-	_lbl_phase.text = phase_names.get(gs.phase, "未知阶段")
-	_lbl_turn.text = "第 %d 回合 | 玩家 %d 行动" % [gs.turn_number, cp + 1]
-
 	var my: PlayerState = gs.players[vp]
 	var opp: PlayerState = gs.players[op]
+
+	_lbl_phase.text = "当前回合：%s | 对方手牌：%d" % [_get_selected_deck_name(cp), opp.hand.size()]
+	_lbl_turn.text = "第 %d 回合 | 玩家 %d 行动" % [gs.turn_number, cp + 1]
 
 	_opp_prizes.text = "x%d" % opp.prizes.size()
 	_opp_deck.text = "%d" % opp.deck.size()
 	_opp_discard.text = "%d" % opp.discard_pile.size()
 	_opp_hand_lbl.text = "对方手牌：%d" % opp.hand.size()
+	_opp_hand_bar.visible = false
+	_opp_prize_hud_count.text = "x%d" % opp.prizes.size()
+	_opp_deck_hud_value.text = "%d张" % opp.deck.size()
+	_opp_discard_hud_value.text = "%d张" % opp.discard_pile.size()
 
 	_my_prizes.text = "x%d" % my.prizes.size()
 	_my_deck.text = "%d" % my.deck.size()
 	_my_discard.text = "%d" % my.discard_pile.size()
+	_my_prize_hud_count.text = "x%d" % my.prizes.size()
+	_my_deck_hud_value.text = "%d张" % my.deck.size()
+	_my_discard_hud_value.text = "%d张" % my.discard_pile.size()
 	_update_side_previews(opp, my)
 
 	_refresh_field_card_views(gs)
 
-	if gs.stadium_card != null:
-		_stadium_lbl.text = "竞技场：%s" % gs.stadium_card.card_data.name
-	else:
-		_stadium_lbl.text = "竞技场：无"
-
-	_refresh_hand()
-
 	var is_my_turn: bool = cp == vp and gs.phase == GameState.GamePhase.MAIN
 	_btn_end_turn.disabled = not is_my_turn
-	_btn_stadium_action.visible = gs.stadium_card != null
-	_btn_stadium_action.disabled = not (is_my_turn and _gsm.can_use_stadium_effect(cp))
+	_hud_end_turn_btn.disabled = _btn_end_turn.disabled
+	_refresh_stadium_area(gs, cp, is_my_turn)
+	_refresh_info_hud(gs, vp, op)
+
+	_refresh_hand()
 	_runtime_log_ui_state_if_changed()
 
 
+func _get_selected_deck_name(player_index: int) -> String:
+	if player_index < 0 or player_index >= GameManager.selected_deck_ids.size():
+		return "未知卡组"
+	var deck_id: int = GameManager.selected_deck_ids[player_index]
+	var deck_data: DeckData = CardDatabase.get_deck(deck_id)
+	if deck_data != null and deck_data.deck_name != "":
+		return deck_data.deck_name
+	return "卡组 %d" % (player_index + 1)
+
+
 func _update_side_previews(opp: PlayerState, my: PlayerState) -> void:
-	_update_prize_slots(_opp_prize_slots, opp.prizes.size(), Color(0.56, 0.67, 0.84), Color(0.12, 0.17, 0.24))
-	_update_prize_slots(_my_prize_slots, my.prizes.size(), Color(0.49, 0.79, 0.66), Color(0.11, 0.17, 0.2))
+	_update_prize_slots(
+		_opp_prize_slots,
+		opp.get_prize_layout(),
+		_pending_choice == "take_prize" and _pending_prize_player_index == (1 - _view_player) and not _pending_prize_animating
+	)
+	_update_prize_slots(
+		_my_prize_slots,
+		my.get_prize_layout(),
+		_pending_choice == "take_prize" and _pending_prize_player_index == _view_player and not _pending_prize_animating
+	)
 	_update_pile_preview(_opp_deck_preview, null, not opp.deck.is_empty())
 	_update_pile_preview(_my_deck_preview, null, not my.deck.is_empty())
 	_update_pile_preview(_opp_discard_preview, opp.discard_pile.back() if not opp.discard_pile.is_empty() else null, false)
 	_update_pile_preview(_my_discard_preview, my.discard_pile.back() if not my.discard_pile.is_empty() else null, false)
 
 
-func _update_prize_slots(slots: Array[PanelContainer], remaining_count: int, active_border: Color, active_bg: Color) -> void:
+func _refresh_stadium_area(gs: GameState, current_player: int, is_my_turn: bool) -> void:
+	if gs.stadium_card == null:
+		_stadium_lbl.visible = true
+		_stadium_lbl.text = "竞技场区域"
+		_btn_stadium_action.visible = false
+		_btn_stadium_action.disabled = true
+		return
+
+	var stadium_name: String = gs.stadium_card.card_data.name
+	var effect: BaseEffect = _gsm.effect_processor.get_effect(gs.stadium_card.card_data.effect_id)
+	var is_action_stadium := effect != null and effect.can_use_as_stadium_action(gs.stadium_card, gs)
+	if is_action_stadium:
+		_stadium_lbl.visible = false
+		_btn_stadium_action.visible = true
+		_btn_stadium_action.text = "使用竞技场%s" % stadium_name
+		_btn_stadium_action.disabled = not (is_my_turn and _gsm.can_use_stadium_effect(current_player))
+		return
+
+	_stadium_lbl.visible = true
+	_stadium_lbl.text = "竞技场：%s" % stadium_name
+	_btn_stadium_action.visible = false
+	_btn_stadium_action.disabled = true
+
+
+func _refresh_info_hud(gs: GameState, view_player: int, opponent_player: int) -> void:
+	var my_player: PlayerState = gs.players[view_player]
+	var opp_player: PlayerState = gs.players[opponent_player]
+	_apply_info_metric(_enemy_vstar_value, gs.vstar_power_used[opponent_player], "敌VSTAR 待命", "敌VSTAR 已用")
+	_apply_info_metric(_my_vstar_value, gs.vstar_power_used[view_player], "我VSTAR 待命", "我VSTAR 已用")
+	if _enemy_lost_value != null:
+		_enemy_lost_value.text = "敌放逐 %02d张" % opp_player.lost_zone.size()
+	if _my_lost_value != null:
+		_my_lost_value.text = "我放逐 %02d张" % my_player.lost_zone.size()
+
+
+func _apply_info_metric(label: Label, is_used: bool, ready_text: String, used_text: String) -> void:
+	if label == null:
+		return
+	label.text = used_text if is_used else ready_text
+	label.add_theme_color_override(
+		"font_color",
+		Color(0.98, 0.43, 0.43) if is_used else Color(0.41, 1.0, 0.75)
+	)
+
+
+func _update_prize_slots(slots: Array[BattleCardView], prize_layout: Array, is_selectable: bool) -> void:
 	for i: int in slots.size():
-		var slot := slots[i]
-		if slot == null:
+		var prize_view: BattleCardView = slots[i]
+		if prize_view == null:
 			continue
-		var art := slot.get_node_or_null("BackArt") as TextureRect
-		var filled := i < remaining_count
-		var style := StyleBoxFlat.new()
-		style.set_corner_radius_all(10)
-		style.set_border_width_all(2)
-		style.border_color = active_border if filled else Color(active_border.r, active_border.g, active_border.b, 0.24)
-		style.bg_color = active_bg if filled else Color(0.05, 0.08, 0.11, 0.22)
-		slot.add_theme_stylebox_override("panel", style)
-		if art != null:
-			art.visible = filled
-			art.modulate = Color(1, 1, 1, 1) if filled else Color(1, 1, 1, 0.0)
+		var prize_card: CardInstance = null
+		if i < prize_layout.size() and prize_layout[i] is CardInstance:
+			prize_card = prize_layout[i] as CardInstance
+		var filled := prize_card != null
+		prize_view.visible = true
+		if filled:
+			prize_view.setup_from_instance(prize_card, BATTLE_CARD_VIEW.MODE_PREVIEW)
+			prize_view.set_face_down(true)
+		else:
+			prize_view.setup_from_instance(null, BATTLE_CARD_VIEW.MODE_PREVIEW)
+			prize_view.set_face_down(true)
+		prize_view.set_selected(filled and is_selectable)
+		prize_view.set_disabled(not filled or (_pending_choice == "take_prize" and not is_selectable))
+		prize_view.self_modulate = Color(1, 1, 1, 1) if filled else Color(1, 1, 1, 0.02)
 
 func _update_pile_preview(preview: BattleCardView, card: CardInstance, face_down: bool) -> void:
 	if preview == null:

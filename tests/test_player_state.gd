@@ -206,6 +206,29 @@ func test_take_prize() -> String:
 	])
 
 
+func test_take_prize_from_fixed_slot_keeps_layout_positions() -> String:
+	CardInstance.reset_id_counter()
+	var player := PlayerState.new()
+	var created: Array[CardInstance] = []
+	for i in 6:
+		var card := CardInstance.create(_make_card_data("Prize%d" % i), 0)
+		card.face_up = false
+		created.append(card)
+	player.set_prizes(created)
+
+	var taken := player.take_prize_from_slot(2)
+	var layout: Array = player.get_prize_layout()
+
+	return run_checks([
+		assert_eq(taken, created[2], "Should take the card from the chosen fixed slot"),
+		assert_eq(player.prizes.size(), 5, "Remaining prize count should shrink by one"),
+		assert_true(layout[0] == created[0], "Earlier fixed slots should stay unchanged"),
+		assert_true(layout[1] == created[1], "Neighbour slots should stay unchanged"),
+		assert_true(layout[2] == null, "Chosen fixed slot should become empty instead of collapsing"),
+		assert_true(layout[3] == created[3], "Later slots should keep their original position"),
+	])
+
+
 func test_take_prize_invalid_index() -> String:
 	var player := PlayerState.new()
 	return assert_null(player.take_prize(0), "空奖赏区返回null")

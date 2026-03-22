@@ -476,6 +476,7 @@ func test_munkidori_knockout_active_returns_to_main_after_send_out() -> String:
 		"target_pokemon": [opp_active],
 		"counter_count": [3],
 	}])
+	var take_prize_ok: bool = gsm.resolve_take_prize(0, 0)
 	var send_out_ok: bool = gsm.send_out_pokemon(1, opp_bench)
 
 	return run_checks([
@@ -569,9 +570,11 @@ func test_scream_tail_bench_knockout_advances_to_opponent_turn() -> String:
 	gsm.effect_processor.register_attack_effect("scream_tail_attack_test", AttackSelfDamageCounterTargetDamage.new(20))
 
 	var attacked: bool = gsm.use_attack(0, 1, [{"target_pokemon": [frail_bench]}])
+	var take_prize_ok: bool = gsm.resolve_take_prize(0, 0)
 
 	return run_checks([
 		assert_true(attacked, "凶暴吼叫：应能指定对手备战区并造成伤害"),
+		assert_true(take_prize_ok, "击倒对手备战宝可梦后应先手动拿取奖赏卡"),
 		assert_eq(gsm.game_state.current_player_index, 1, "凶暴吼叫击倒对手备战宝可梦后，应切到对手回合"),
 		assert_eq(gsm.game_state.phase, GameState.GamePhase.MAIN, "凶暴吼叫击倒对手备战宝可梦后，游戏应回到对手 MAIN"),
 		assert_false(frail_bench in opp.bench, "被击倒的备战宝可梦应从备战区移除"),
@@ -655,6 +658,8 @@ func test_drifloon_balloon_bomb_knockout_replace_advances_cleanly() -> String:
 	gsm.game_state.players[1].bench.append(replacement)
 
 	var used: bool = gsm.use_attack(0, 1)
+	var take_first: bool = gsm.resolve_take_prize(0, 0)
+	var take_second: bool = gsm.resolve_take_prize(0, 1)
 	var send_out_ok: bool = gsm.send_out_pokemon(1, replacement)
 
 	return run_checks([

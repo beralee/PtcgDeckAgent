@@ -3,6 +3,8 @@ class_name TestBattleUIFeatures
 extends TestBase
 
 const BattleSceneScript = preload("res://scenes/battle/BattleScene.gd")
+const BattleSetupScript = preload("res://scenes/battle_setup/BattleSetup.gd")
+const BattleSetupScene = preload("res://scenes/battle_setup/BattleSetup.tscn")
 
 
 ## 构建测试用 CardData（宝可梦）
@@ -145,9 +147,99 @@ func test_coin_flipper_until_tails_emits() -> String:
 	])
 
 
+func test_battle_setup_scene_includes_first_player_option() -> String:
+	var scene: Control = BattleSetupScene.instantiate()
+	var first_player_label := scene.find_child("FirstPlayerLabel", true, false)
+	var first_player_option := scene.find_child("FirstPlayerOption", true, false)
+
+	return run_checks([
+		assert_true(first_player_label is Label, "对战设置页应包含先后攻标签"),
+		assert_true(first_player_option is OptionButton, "对战设置页应包含先后攻选项"),
+	])
+
+
+func test_battle_setup_first_player_choice_mapping() -> String:
+	var setup := BattleSetupScript.new()
+
+	return run_checks([
+		assert_eq(setup._first_player_choice_from_option_index(0), -1, "第 0 项应映射为随机先后攻"),
+		assert_eq(setup._first_player_choice_from_option_index(1), 0, "第 1 项应映射为玩家1卡组先攻"),
+		assert_eq(setup._first_player_option_index_from_choice(-1), 0, "随机先后攻应回填到第 0 项"),
+		assert_eq(setup._first_player_option_index_from_choice(0), 1, "玩家1卡组先攻应回填到第 1 项"),
+		assert_eq(setup._first_player_option_index_from_choice(1), 0, "未在 UI 暴露的玩家2先攻应回退到随机项"),
+	])
+
+
+func test_battle_setup_scene_includes_background_gallery() -> String:
+	var scene: Control = BattleSetupScene.instantiate()
+	var background_label := scene.find_child("BackgroundLabel", true, false)
+	var background_gallery := scene.find_child("BackgroundGallery", true, false)
+	var background_gallery_row := scene.find_child("BackgroundGalleryRow", true, false)
+
+	return run_checks([
+		assert_true(background_label is Label, "对战设置页应包含场地选择标签"),
+		assert_true(background_gallery is ScrollContainer, "对战设置页应包含横向场地滚动区"),
+		assert_true(background_gallery_row is HBoxContainer, "对战设置页应包含场地缩略图行"),
+	])
+
+
+func test_battle_setup_lists_background_assets() -> String:
+	var setup := BattleSetupScript.new()
+	var backgrounds: Array[String] = setup._list_available_background_paths()
+
+	return run_checks([
+		assert_contains(backgrounds, "res://assets/ui/background.png", "应包含默认背景图"),
+		assert_contains(backgrounds, "res://assets/ui/background1.png", "应包含新导入的 background1"),
+		assert_eq(backgrounds[0], "res://assets/ui/background.png", "未主动选择时默认背景应为 background.png"),
+	])
+
+
+func test_battle_scene_loads_selected_background_texture() -> String:
+	var previous_background := GameManager.selected_battle_background
+	GameManager.selected_battle_background = "res://assets/ui/background1.png"
+	var scene := BattleSceneScript.new()
+	var resolved_path := scene._resolve_battle_backdrop_path()
+	var loaded_texture := scene._load_battle_backdrop_texture()
+	GameManager.selected_battle_background = previous_background
+
+	return run_checks([
+		assert_eq(resolved_path, "res://assets/ui/background1.png", "BattleScene 应解析到选中的背景路径"),
+		assert_not_null(loaded_texture, "应能加载已选择的对战背景"),
+	])
+
+
 # ===================== 弃牌区数据测试 =====================
 
 ## 测试：弃牌区初始为空
+func test_battle_scene_prize_slots_keep_fixed_grid_positions() -> String:
+	var scene := BattleSceneScript.new()
+	var slots: Array[BattleCardView] = []
+	for _i: int in 6:
+		var slot := BattleCardView.new()
+		slot.set_compact_preview(true)
+		slot.setup_from_instance(null, BattleCardView.MODE_PREVIEW)
+		slots.append(slot)
+
+	var player := PlayerState.new()
+	var prize_cards: Array[CardInstance] = []
+	CardInstance.reset_id_counter()
+	for i: int in 6:
+		var card := CardInstance.create(_make_pokemon_cd("Prize%d" % i, 60, "C"), 0)
+		card.face_up = false
+		prize_cards.append(card)
+	player.set_prizes(prize_cards)
+	player.take_prize_from_slot(1)
+
+	scene.call("_update_prize_slots", slots, player.get_prize_layout(), true)
+
+	return run_checks([
+		assert_true(slots[0].visible, "Filled prize slots should stay visible"),
+		assert_true(slots[1].visible, "Empty fixed slot should still keep its grid position"),
+		assert_true(slots[1].self_modulate.a < 0.1, "Taken prize slots should fade out instead of collapsing"),
+		assert_true(slots[2].self_modulate.a > 0.9, "Neighbour prize slots should stay in place and visible"),
+	])
+
+
 func test_discard_pile_initially_empty() -> String:
 	var player := PlayerState.new()
 	player.player_index = 0
