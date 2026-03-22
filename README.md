@@ -1,5 +1,7 @@
 # PtcgDeckDojo
 
+[中文](README.md) | [English](README_EN.md)
+
 一个基于 Godot 4.6 与 GDScript 的 PTCG 本地练牌项目。
 
 这个仓库的目标不是做官方替代品，也不是做商业化产品，而是尽可能把 PTCG 的练牌、规则验证、卡牌效果实现和测试流程做成一个可持续演进的开源项目。
