@@ -4,6 +4,7 @@ extends TestBase
 const AIOpponentScript = preload("res://scripts/ai/AIOpponent.gd")
 const AISetupPlannerScript = preload("res://scripts/ai/AISetupPlanner.gd")
 const BattleSceneScript = preload("res://scenes/battle/BattleScene.gd")
+const AbilityBonusDrawIfActiveScript = preload("res://scripts/effects/pokemon_effects/AbilityBonusDrawIfActive.gd")
 
 
 class SpyAIOpponent extends RefCounted:
@@ -96,6 +97,107 @@ func _make_item(name: String) -> CardInstance:
 	card.name = name
 	card.card_type = "Item"
 	return CardInstance.create(card, 1)
+
+
+func _make_ai_manual_gsm() -> GameStateMachine:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 1
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 2
+	CardInstance.reset_id_counter()
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	return gsm
+
+
+func _new_legal_action_builder() -> Variant:
+	var builder_script: Variant = load("res://scripts/ai/AILegalActionBuilder.gd")
+	if builder_script == null:
+		return null
+	return builder_script.new()
+
+
+func _make_ai_pokemon_card_data(
+	name: String,
+	stage: String = "Basic",
+	evolves_from: String = "",
+	effect_id: String = "",
+	abilities: Array = [],
+	attacks: Array = [],
+	retreat_cost: int = 1
+) -> CardData:
+	var card := CardData.new()
+	card.name = name
+	card.card_type = "Pokemon"
+	card.stage = stage
+	card.evolves_from = evolves_from
+	card.effect_id = effect_id
+	card.hp = 100
+	card.retreat_cost = retreat_cost
+	card.abilities.clear()
+	for ability: Dictionary in abilities:
+		card.abilities.append(ability.duplicate(true))
+	card.attacks.clear()
+	for attack: Dictionary in attacks:
+		card.attacks.append(attack.duplicate(true))
+	return card
+
+
+func _make_ai_trainer_card_data(name: String, card_type: String, effect_id: String = "") -> CardData:
+	var card := CardData.new()
+	card.name = name
+	card.card_type = card_type
+	card.effect_id = effect_id
+	return card
+
+
+func _make_ai_energy_card_data(name: String, energy_type: String = "L", card_type: String = "Basic Energy", effect_id: String = "") -> CardData:
+	var card := CardData.new()
+	card.name = name
+	card.card_type = card_type
+	card.energy_provides = energy_type
+	card.effect_id = effect_id
+	return card
+
+
+func _make_ai_slot(card: CardInstance, turn_played: int = 1) -> PokemonSlot:
+	var slot := PokemonSlot.new()
+	slot.pokemon_stack.append(card)
+	slot.turn_played = turn_played
+	return slot
+
+
+func _build_ai_actions(gsm: GameStateMachine, player_index: int = 0) -> Array[Dictionary]:
+	var builder: Variant = _new_legal_action_builder()
+	if builder == null:
+		return []
+	return builder.build_actions(gsm, player_index)
+
+
+func _count_actions_by_kind(actions: Array[Dictionary], kind: String) -> int:
+	var count: int = 0
+	for action: Dictionary in actions:
+		if str(action.get("kind", "")) == kind:
+			count += 1
+	return count
+
+
+func _has_action(actions: Array[Dictionary], kind: String, expected: Dictionary = {}) -> bool:
+	for action: Dictionary in actions:
+		if str(action.get("kind", "")) != kind:
+			continue
+		var matches := true
+		for key: Variant in expected.keys():
+			if action.get(key) != expected[key]:
+				matches = false
+				break
+		if matches:
+			return true
+	return false
 
 
 func _make_battle_scene_refresh_stub() -> Control:
@@ -210,6 +312,170 @@ func test_setup_planner_always_accepts_mulligan_bonus_draw() -> String:
 	var planner := AISetupPlannerScript.new()
 	return run_checks([
 		assert_true(planner.choose_mulligan_bonus_draw(), "Baseline AI should always take the draw"),
+	])
+
+
+func test_ai_legal_action_builder_enumerates_attach_energy_actions() -> String:
+	var gsm := _make_ai_manual_gsm()
+	var builder: Variant = _new_legal_action_builder()
+	var player: PlayerState = gsm.game_state.players[0]
+	var active_slot := _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Active"), 0))
+	var bench_slot := _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Bench"), 0))
+	var energy := CardInstance.create(_make_ai_energy_card_data("Lightning Energy"), 0)
+	player.active_pokemon = active_slot
+	player.bench = [bench_slot]
+	player.hand = [energy, CardInstance.create(_make_ai_trainer_card_data("Ball", "Item"), 0)]
+	var actions := _build_ai_actions(gsm)
+	return run_checks([
+		assert_not_null(builder, "AILegalActionBuilder should load"),
+		assert_eq(_count_actions_by_kind(actions, "attach_energy"), 2, "Builder should enumerate one attach action per own Pokemon"),
+		assert_true(_has_action(actions, "attach_energy", {"card": energy, "target_slot": active_slot}), "Builder should allow attaching to the active Pokemon"),
+		assert_true(_has_action(actions, "attach_energy", {"card": energy, "target_slot": bench_slot}), "Builder should allow attaching to a benched Pokemon"),
+	])
+
+
+func test_ai_legal_action_builder_enumerates_play_basic_to_bench_actions() -> String:
+	var gsm := _make_ai_manual_gsm()
+	var builder: Variant = _new_legal_action_builder()
+	var player: PlayerState = gsm.game_state.players[0]
+	var active_slot := _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Lead"), 0))
+	var basic := CardInstance.create(_make_ai_pokemon_card_data("Bench Basic"), 0)
+	var evolution := CardInstance.create(_make_ai_pokemon_card_data("Stage 1", "Stage 1", "Bench Basic"), 0)
+	player.active_pokemon = active_slot
+	player.hand = [basic, evolution]
+	var actions := _build_ai_actions(gsm)
+	return run_checks([
+		assert_not_null(builder, "AILegalActionBuilder should load"),
+		assert_eq(_count_actions_by_kind(actions, "play_basic_to_bench"), 1, "Builder should only enumerate playable Basic bench actions"),
+		assert_true(_has_action(actions, "play_basic_to_bench", {"card": basic}), "Builder should include the playable Basic Pokemon"),
+	])
+
+
+func test_ai_legal_action_builder_enumerates_evolve_actions() -> String:
+	var gsm := _make_ai_manual_gsm()
+	var builder: Variant = _new_legal_action_builder()
+	var player: PlayerState = gsm.game_state.players[0]
+	var active_slot := _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Mareep"), 0), 1)
+	var evolution := CardInstance.create(_make_ai_pokemon_card_data("Flaaffy", "Stage 1", "Mareep"), 0)
+	var wrong_evolution := CardInstance.create(_make_ai_pokemon_card_data("Charmeleon", "Stage 1", "Charmander"), 0)
+	player.active_pokemon = active_slot
+	player.hand = [evolution, wrong_evolution]
+	var actions := _build_ai_actions(gsm)
+	return run_checks([
+		assert_not_null(builder, "AILegalActionBuilder should load"),
+		assert_eq(_count_actions_by_kind(actions, "evolve"), 1, "Builder should enumerate only legal evolve actions"),
+		assert_true(_has_action(actions, "evolve", {"card": evolution, "target_slot": active_slot}), "Builder should include the valid evolution target"),
+	])
+
+
+func test_ai_legal_action_builder_enumerates_play_trainer_actions() -> String:
+	var gsm := _make_ai_manual_gsm()
+	var builder: Variant = _new_legal_action_builder()
+	var player: PlayerState = gsm.game_state.players[0]
+	var active_slot := _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Lead"), 0))
+	var item := CardInstance.create(_make_ai_trainer_card_data("Switch", "Item"), 0)
+	var basic := CardInstance.create(_make_ai_pokemon_card_data("Bench Basic"), 0)
+	player.active_pokemon = active_slot
+	player.hand = [item, basic]
+	var actions := _build_ai_actions(gsm)
+	return run_checks([
+		assert_not_null(builder, "AILegalActionBuilder should load"),
+		assert_eq(_count_actions_by_kind(actions, "play_trainer"), 1, "Builder should enumerate trainer cards that can be played immediately"),
+		assert_true(_has_action(actions, "play_trainer", {"card": item, "targets": []}), "Builder should include a trainer action with normalized empty targets"),
+	])
+
+
+func test_ai_legal_action_builder_enumerates_play_stadium_actions() -> String:
+	var gsm := _make_ai_manual_gsm()
+	var builder: Variant = _new_legal_action_builder()
+	var player: PlayerState = gsm.game_state.players[0]
+	player.active_pokemon = _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Lead"), 0))
+	var stadium := CardInstance.create(_make_ai_trainer_card_data("Training Court", "Stadium"), 0)
+	player.hand = [stadium]
+	var actions := _build_ai_actions(gsm)
+	return run_checks([
+		assert_not_null(builder, "AILegalActionBuilder should load"),
+		assert_eq(_count_actions_by_kind(actions, "play_stadium"), 1, "Builder should enumerate playable stadium cards"),
+		assert_true(_has_action(actions, "play_stadium", {"card": stadium, "targets": []}), "Builder should include a normalized stadium action"),
+	])
+
+
+func test_ai_legal_action_builder_enumerates_use_ability_actions() -> String:
+	var gsm := _make_ai_manual_gsm()
+	var builder: Variant = _new_legal_action_builder()
+	var player: PlayerState = gsm.game_state.players[0]
+	var ability_cd := _make_ai_pokemon_card_data(
+		"Rotom",
+		"Basic",
+		"",
+		"test_ai_bonus_draw",
+		[{"name": "Draw", "text": ""}]
+	)
+	gsm.effect_processor.register_effect("test_ai_bonus_draw", AbilityBonusDrawIfActiveScript.new())
+	var active_slot := _make_ai_slot(CardInstance.create(ability_cd, 0))
+	player.active_pokemon = active_slot
+	player.deck = [CardInstance.create(_make_ai_pokemon_card_data("Drawn"), 0)]
+	var actions := _build_ai_actions(gsm)
+	return run_checks([
+		assert_not_null(builder, "AILegalActionBuilder should load"),
+		assert_eq(_count_actions_by_kind(actions, "use_ability"), 1, "Builder should enumerate immediately usable abilities"),
+		assert_true(_has_action(actions, "use_ability", {"source_slot": active_slot, "ability_index": 0, "targets": []}), "Builder should include a normalized ability action"),
+	])
+
+
+func test_ai_legal_action_builder_enumerates_retreat_actions() -> String:
+	var gsm := _make_ai_manual_gsm()
+	var builder: Variant = _new_legal_action_builder()
+	var player: PlayerState = gsm.game_state.players[0]
+	var active_slot := _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Active", "Basic", "", "", [], [], 1), 0))
+	var bench_slot := _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Bench"), 0))
+	var energy := CardInstance.create(_make_ai_energy_card_data("Lightning Energy"), 0)
+	active_slot.attached_energy.append(energy)
+	player.active_pokemon = active_slot
+	player.bench = [bench_slot]
+	var actions := _build_ai_actions(gsm)
+	return run_checks([
+		assert_not_null(builder, "AILegalActionBuilder should load"),
+		assert_eq(_count_actions_by_kind(actions, "retreat"), 1, "Builder should enumerate the legal retreat line"),
+		assert_true(_has_action(actions, "retreat", {"bench_target": bench_slot, "energy_to_discard": [energy]}), "Builder should include the discard selection needed to retreat legally"),
+	])
+
+
+func test_ai_legal_action_builder_enumerates_attack_actions() -> String:
+	var gsm := _make_ai_manual_gsm()
+	var builder: Variant = _new_legal_action_builder()
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+	var attack_cd := _make_ai_pokemon_card_data(
+		"Attacker",
+		"Basic",
+		"",
+		"",
+		[],
+		[{"name": "Zap", "cost": "C", "damage": "10", "text": "", "is_vstar_power": false}]
+	)
+	var active_slot := _make_ai_slot(CardInstance.create(attack_cd, 0))
+	active_slot.attached_energy.append(CardInstance.create(_make_ai_energy_card_data("Lightning Energy"), 0))
+	player.active_pokemon = active_slot
+	opponent.active_pokemon = _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Defender"), 1))
+	var actions := _build_ai_actions(gsm)
+	return run_checks([
+		assert_not_null(builder, "AILegalActionBuilder should load"),
+		assert_eq(_count_actions_by_kind(actions, "attack"), 1, "Builder should enumerate attacks that are currently usable"),
+		assert_true(_has_action(actions, "attack", {"attack_index": 0, "targets": []}), "Builder should include a normalized attack action"),
+	])
+
+
+func test_ai_legal_action_builder_enumerates_end_turn_actions() -> String:
+	var gsm := _make_ai_manual_gsm()
+	var builder: Variant = _new_legal_action_builder()
+	var player: PlayerState = gsm.game_state.players[0]
+	player.active_pokemon = _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Lead"), 0))
+	var actions := _build_ai_actions(gsm)
+	return run_checks([
+		assert_not_null(builder, "AILegalActionBuilder should load"),
+		assert_eq(_count_actions_by_kind(actions, "end_turn"), 1, "Builder should always allow ending the turn from the main phase"),
+		assert_true(_has_action(actions, "end_turn"), "Builder should include end_turn as a normalized action"),
 	])
 
 

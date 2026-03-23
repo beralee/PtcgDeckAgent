@@ -2,11 +2,14 @@ class_name AIOpponent
 extends RefCounted
 
 const AISetupPlannerScript = preload("res://scripts/ai/AISetupPlanner.gd")
+const AILegalActionBuilderScript = preload("res://scripts/ai/AILegalActionBuilder.gd")
 
 var player_index: int = 1
 var difficulty: int = 1
 var _setup_planner = AISetupPlannerScript.new()
+var _legal_action_builder = AILegalActionBuilderScript.new()
 var _planned_setup_bench_ids: Array[int] = []
+var _last_legal_actions: Array[Dictionary] = []
 
 
 func configure(next_player_index: int, next_difficulty: int) -> void:
@@ -18,6 +21,14 @@ func should_control_turn(game_state: GameState, ui_blocked: bool) -> bool:
 	if game_state == null or ui_blocked:
 		return false
 	return game_state.current_player_index == player_index
+
+
+func get_legal_actions(gsm: GameStateMachine) -> Array[Dictionary]:
+	if gsm == null:
+		_last_legal_actions.clear()
+		return []
+	_last_legal_actions = _legal_action_builder.build_actions(gsm, player_index)
+	return _last_legal_actions.duplicate()
 
 
 func run_single_step(battle_scene: Control, gsm: GameStateMachine) -> bool:
@@ -35,6 +46,7 @@ func run_single_step(battle_scene: Control, gsm: GameStateMachine) -> bool:
 		return _run_setup_active_step(battle_scene, gsm, pending_choice)
 	if pending_choice.begins_with("setup_bench_"):
 		return _run_setup_bench_step(battle_scene, gsm, pending_choice)
+	get_legal_actions(gsm)
 	return false
 
 
