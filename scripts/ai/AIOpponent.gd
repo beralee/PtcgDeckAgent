@@ -26,7 +26,10 @@ func run_single_step(battle_scene: Control, gsm: GameStateMachine) -> bool:
 	var pending_choice := str(battle_scene.get("_pending_choice"))
 	if pending_choice == "mulligan_extra_draw":
 		var dialog_data: Dictionary = battle_scene.get("_dialog_data")
-		gsm.resolve_mulligan_choice(int(dialog_data.get("beneficiary", player_index)), _setup_planner.choose_mulligan_bonus_draw())
+		var beneficiary: int = int(dialog_data.get("beneficiary", -1))
+		if beneficiary != player_index:
+			return false
+		gsm.resolve_mulligan_choice(beneficiary, _setup_planner.choose_mulligan_bonus_draw())
 		return true
 	if pending_choice.begins_with("setup_active_"):
 		return _run_setup_active_step(battle_scene, gsm, pending_choice)

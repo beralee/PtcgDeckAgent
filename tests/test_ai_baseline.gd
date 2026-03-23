@@ -296,6 +296,26 @@ func test_ai_opponent_accepts_mulligan_bonus_draw_prompt() -> String:
 	])
 
 
+func test_ai_opponent_ignores_human_owned_mulligan_bonus_draw_prompt() -> String:
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	var scene := BattleSceneScript.new()
+	var gsm := SpyGameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.SETUP
+	gsm.game_state.current_player_index = 1
+	gsm.game_state.players = [_make_player_state(0), _make_player_state(1)]
+	scene.set("_gsm", gsm)
+	scene.set("_pending_choice", "mulligan_extra_draw")
+	scene.set("_dialog_data", {"beneficiary": 0})
+
+	var handled := ai.run_single_step(scene, gsm)
+	return run_checks([
+		assert_false(handled, "AI should ignore mulligan prompts owned by the human player"),
+		assert_eq(gsm.mulligan_resolve_calls, 0, "AI should not resolve a human-owned mulligan prompt"),
+	])
+
+
 func test_battle_scene_schedules_ai_for_mulligan_setup_prompt() -> String:
 	var previous_mode: int = GameManager.current_mode
 	var scene := _make_setup_ready_battle_scene()
@@ -366,6 +386,50 @@ func test_battle_scene_schedules_ai_for_setup_bench_prompt_target_player() -> St
 		assert_true(scheduled_after_prompt, "BattleScene should schedule AI for setup_bench prompts owned by the AI"),
 		assert_eq(player.bench.size(), 1, "AI should place a bench Pokemon through BattleScene scheduling"),
 		assert_eq(player.bench[0].get_pokemon_name(), "Bench A", "AI should choose the available Basic for bench"),
+	])
+
+
+func test_ai_opponent_reuses_planned_setup_bench_choices_across_repeated_prompts() -> String:
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	var scene := SpySetupBattleScene.new()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.SETUP
+	gsm.game_state.current_player_index = 1
+	gsm.game_state.players = [_make_player_state(0), _make_player_state(1)]
+	var player: PlayerState = gsm.game_state.players[1]
+	player.hand = [_make_basic("Active A"), _make_basic("Bench A"), _make_basic("Bench B"), _make_item("Ball")]
+	scene.set("_gsm", gsm)
+	scene.set("_setup_done", [false, false])
+	scene.set("_view_player", 1)
+	scene.set("_pending_choice", "setup_active_1")
+	scene.set("_dialog_data", {
+		"basics": [player.hand[0], player.hand[1], player.hand[2]],
+		"player": 1,
+	})
+
+	var handled_active := ai.run_single_step(scene, gsm)
+	scene.set("_pending_choice", "setup_bench_1")
+	scene.set("_dialog_data", {
+		"cards": [player.hand[0], player.hand[1]],
+		"player": 1,
+	})
+	var handled_first_bench := ai.run_single_step(scene, gsm)
+	scene.set("_pending_choice", "setup_bench_1")
+	scene.set("_dialog_data", {
+		"cards": [player.hand[0]],
+		"player": 1,
+	})
+	var handled_second_bench := ai.run_single_step(scene, gsm)
+
+	return run_checks([
+		assert_true(handled_active, "AI should plan setup from the active prompt"),
+		assert_true(handled_first_bench, "AI should consume the first repeated bench prompt"),
+		assert_true(handled_second_bench, "AI should consume the second repeated bench prompt"),
+		assert_eq(player.bench.size(), 2, "AI should bench both planned Basics across repeated prompts"),
+		assert_eq(player.bench[0].get_pokemon_name(), "Bench A", "AI should bench the first planned Basic first"),
+		assert_eq(player.bench[1].get_pokemon_name(), "Bench B", "AI should carry the remaining planned Basic to the next prompt"),
 	])
 
 
