@@ -6,6 +6,9 @@ const CARDS_DIR := "user://cards/"
 const CARD_IMAGES_DIR := "user://cards/images/"
 ## 卡组存储目录
 const DECKS_DIR := "user://decks/"
+const BUNDLED_USER_DIR := "res://data/bundled_user/"
+const BUNDLED_CARDS_DIR := BUNDLED_USER_DIR + "cards/"
+const BUNDLED_DECKS_DIR := BUNDLED_USER_DIR + "decks/"
 
 ## 内存中的卡牌缓存 {uid -> CardData}
 var _card_cache: Dictionary = {}
@@ -18,6 +21,7 @@ signal decks_changed()
 
 func _ready() -> void:
 	_ensure_directories()
+	_seed_bundled_user_data()
 	_load_all_decks()
 
 
@@ -29,6 +33,63 @@ func _ensure_directories() -> void:
 		DirAccess.make_dir_recursive_absolute(CARD_IMAGES_DIR)
 	if not DirAccess.dir_exists_absolute(DECKS_DIR):
 		DirAccess.make_dir_recursive_absolute(DECKS_DIR)
+
+
+func _seed_bundled_user_data() -> void:
+	_copy_missing_files_recursive(BUNDLED_CARDS_DIR, CARDS_DIR)
+	_copy_missing_files_recursive(BUNDLED_DECKS_DIR, DECKS_DIR)
+
+
+func _copy_missing_files_recursive(source_dir_path: String, target_dir_path: String) -> void:
+	var source_dir := DirAccess.open(source_dir_path)
+	if source_dir == null:
+		return
+	if not DirAccess.dir_exists_absolute(target_dir_path):
+		DirAccess.make_dir_recursive_absolute(target_dir_path)
+
+	source_dir.list_dir_begin()
+	var entry := source_dir.get_next()
+	while entry != "":
+		if entry.begins_with("."):
+			entry = source_dir.get_next()
+			continue
+		var source_path := source_dir_path.path_join(entry)
+		if source_dir.current_is_dir():
+			_copy_missing_files_recursive(source_path, target_dir_path.path_join(entry))
+		else:
+			if entry.ends_with(".import"):
+				entry = source_dir.get_next()
+				continue
+			var target_path := _resolve_bundled_target_path(target_dir_path, entry)
+			_copy_file_if_missing(source_path, target_path)
+		entry = source_dir.get_next()
+	source_dir.list_dir_end()
+
+
+func _resolve_bundled_target_path(target_dir_path: String, entry_name: String) -> String:
+	if entry_name.ends_with(".bin"):
+		return target_dir_path.path_join(entry_name.trim_suffix(".bin"))
+	return target_dir_path.path_join(entry_name)
+
+
+func _copy_file_if_missing(source_path: String, target_path: String) -> void:
+	if FileAccess.file_exists(target_path):
+		return
+	var source_file := FileAccess.open(source_path, FileAccess.READ)
+	if source_file == null:
+		push_warning("CardDatabase: 无法读取内置文件 %s" % source_path)
+		return
+	var target_dir := target_path.get_base_dir()
+	if not DirAccess.dir_exists_absolute(target_dir):
+		DirAccess.make_dir_recursive_absolute(target_dir)
+	var target_file := FileAccess.open(target_path, FileAccess.WRITE)
+	if target_file == null:
+		push_warning("CardDatabase: 无法写入预置文件 %s" % target_path)
+		source_file.close()
+		return
+	target_file.store_buffer(source_file.get_buffer(source_file.get_length()))
+	target_file.close()
+	source_file.close()
 
 
 # === 卡牌操作 ===

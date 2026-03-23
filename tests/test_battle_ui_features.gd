@@ -1562,6 +1562,51 @@ func test_battle_scene_prize_slots_keep_fixed_grid_positions() -> String:
 	])
 
 
+func test_battle_scene_prize_selection_titles_highlight_and_reset() -> String:
+	var scene = _make_battle_scene_stub()
+	var my_title := Label.new()
+	var opp_title := Label.new()
+	var my_hud_title := Label.new()
+	var opp_hud_title := Label.new()
+	scene.set("_my_prizes_title", my_title)
+	scene.set("_opp_prizes_title", opp_title)
+	scene.set("_my_prize_hud_title", my_hud_title)
+	scene.set("_opp_prize_hud_title", opp_hud_title)
+	scene.set("_view_player", 0)
+	scene.set("_pending_choice", "take_prize")
+	scene.set("_pending_prize_player_index", 0)
+	scene.set("_pending_prize_remaining", 2)
+	scene.call("_refresh_prize_titles")
+
+	var pending_my_text: String = my_title.text
+	var pending_opp_text: String = opp_title.text
+	var pending_my_hud_text: String = my_hud_title.text
+	var pending_my_color: Color = my_title.get_theme_color("font_color")
+	var pending_my_hud_color: Color = my_hud_title.get_theme_color("font_color")
+	var my_title_size: int = my_title.get_theme_font_size("font_size")
+	var opp_title_size: int = opp_title.get_theme_font_size("font_size")
+
+	scene.set("_pending_choice", "")
+	scene.set("_pending_prize_player_index", -1)
+	scene.set("_pending_prize_remaining", 0)
+	scene.call("_refresh_prize_titles")
+
+	return run_checks([
+		assert_eq(pending_my_text, "选择2张奖赏卡", "Prize selection should replace the player title with the highlighted count prompt"),
+		assert_eq(pending_my_hud_text, "选择2张奖赏卡", "Prize selection should also update the field HUD title"),
+		assert_eq(pending_opp_text, "对方奖赏", "The non-selecting side should keep its default title"),
+		assert_eq(pending_my_color, Color(1.0, 0.87, 0.34, 1.0), "Prize selection title should switch to the highlight color"),
+		assert_eq(pending_my_hud_color, Color(1.0, 0.87, 0.34, 1.0), "Prize selection HUD title should switch to the highlight color"),
+		assert_eq(my_title_size, 11, "Prize titles should be one size larger in the side panel"),
+		assert_eq(opp_title_size, 11, "Opponent prize title should also be one size larger in the side panel"),
+		assert_eq(my_title.text, "己方奖赏", "After prize selection, the player title should reset to its default text"),
+		assert_eq(opp_title.text, "对方奖赏", "After prize selection, the opponent title should remain at its default text"),
+		assert_eq(my_hud_title.text, "己方奖赏", "After prize selection, the HUD title should reset to its default text"),
+		assert_eq(my_title.get_theme_color("font_color"), Color(0.93, 0.97, 1.0, 0.9), "After prize selection, the side-panel title should return to its normal color"),
+		assert_eq(my_hud_title.get_theme_color("font_color"), Color(0.54, 0.9, 0.94, 0.9), "After prize selection, the HUD title should return to its normal color"),
+	])
+
+
 func test_discard_pile_initially_empty() -> String:
 	var player := PlayerState.new()
 	player.player_index = 0

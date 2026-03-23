@@ -513,11 +513,15 @@ func resolve_take_prize(player_index: int, slot_index: int) -> bool:
 		"game_over":
 			_trigger_game_over(resume_player_index, "对手无宝可梦")
 		"resume_main":
-			_knockout_return_to_main = false
-			_enter_phase(GameState.GamePhase.MAIN)
-		"resume_check":
-			if game_state.phase == GameState.GamePhase.POKEMON_CHECK:
+			if _has_pending_knockouts():
+				_enter_phase(GameState.GamePhase.POKEMON_CHECK)
 				_check_all_knockouts()
+			else:
+				_knockout_return_to_main = false
+				_enter_phase(GameState.GamePhase.MAIN)
+		"resume_check":
+			_enter_phase(GameState.GamePhase.POKEMON_CHECK)
+			_check_all_knockouts()
 	return true
 
 

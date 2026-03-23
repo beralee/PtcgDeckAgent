@@ -91,6 +91,7 @@ var _opponent_card_back_texture: Texture2D = null
 
 # --- Opponent field ---
 @onready var _opp_prizes: Label = %OppPrizesCount
+@onready var _opp_prizes_title: Label = $MainArea/LeftPanel/OppPrizesBox/OppPrizesLbl
 @onready var _opp_deck: Label = %OppDeck
 @onready var _opp_discard: Label = %OppDiscard
 @onready var _opp_hand_lbl: Label = %OppHandLbl
@@ -103,6 +104,7 @@ var _opponent_card_back_texture: Texture2D = null
 @onready var _opp_hud_left: PanelContainer = $MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudLeft
 @onready var _opp_hud_right: PanelContainer = $MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudRight
 @onready var _opp_prize_hud_count: Label = %OppHudLeftValue
+@onready var _opp_prize_hud_title: Label = $MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudLeft/OppHudLeftMargin/OppHudLeftVBox/OppHudLeftTitle
 @onready var _opp_prize_hud_host: VBoxContainer = %OppPrizeHudHost
 @onready var _opp_deck_hud_box: VBoxContainer = %OppDeckHudBox
 @onready var _opp_deck_hud_value: Label = %OppDeckHudValue
@@ -122,6 +124,7 @@ var _opponent_card_back_texture: Texture2D = null
 
 # --- Player field ---
 @onready var _my_prizes: Label = %MyPrizesCount
+@onready var _my_prizes_title: Label = $MainArea/LeftPanel/MyPrizesBox/MyPrizesLbl
 @onready var _my_deck: Label = %MyDeck
 @onready var _my_discard: Label = %MyDiscard
 @onready var _my_prizes_box: VBoxContainer = $MainArea/LeftPanel/MyPrizesBox
@@ -133,6 +136,7 @@ var _opponent_card_back_texture: Texture2D = null
 @onready var _my_hud_left: PanelContainer = $MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudLeft
 @onready var _my_hud_right: PanelContainer = $MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudRight
 @onready var _my_prize_hud_count: Label = %MyHudLeftValue
+@onready var _my_prize_hud_title: Label = $MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudLeft/MyHudLeftMargin/MyHudLeftVBox/MyHudLeftTitle
 @onready var _my_prize_hud_host: VBoxContainer = %MyPrizeHudHost
 @onready var _my_deck_hud_box: VBoxContainer = %MyDeckHudBox
 @onready var _my_deck_hud_value: Label = %MyDeckHudValue
@@ -225,6 +229,7 @@ func _ready() -> void:
 	_setup_dialog_gallery()
 	_setup_discard_gallery()
 	_setup_prize_viewer()
+	_refresh_prize_titles()
 	_setup_field_interaction_panel()
 	_setup_battle_layout()
 	if not get_viewport().size_changed.is_connected(_on_viewport_size_changed):
@@ -1010,6 +1015,29 @@ func _clear_prize_selection() -> void:
 	_pending_prize_player_index = -1
 	_pending_prize_remaining = 0
 	_pending_prize_animating = false
+	_refresh_prize_titles()
+
+
+func _refresh_prize_titles() -> void:
+	_update_prize_title(_opp_prizes_title, 1 - _view_player, "对方奖赏", false)
+	_update_prize_title(_my_prizes_title, _view_player, "己方奖赏", false)
+	_update_prize_title(_opp_prize_hud_title, 1 - _view_player, "对方奖赏", true)
+	_update_prize_title(_my_prize_hud_title, _view_player, "己方奖赏", true)
+
+
+func _update_prize_title(label: Label, player_index: int, default_text: String, is_hud: bool) -> void:
+	if label == null:
+		return
+	var is_pending := (
+		_pending_choice == "take_prize"
+		and _pending_prize_player_index == player_index
+		and _pending_prize_remaining > 0
+	)
+	label.text = "选择%d张奖赏卡" % _pending_prize_remaining if is_pending else default_text
+	label.add_theme_font_size_override("font_size", 15 if is_hud else 11)
+	var normal_color := Color(0.54, 0.9, 0.94, 0.9) if is_hud else Color(0.93, 0.97, 1.0, 0.9)
+	var active_color := Color(1.0, 0.87, 0.34, 1.0)
+	label.add_theme_color_override("font_color", active_color if is_pending else normal_color)
 
 
 func _focus_prize_panel(player_index: int) -> void:
@@ -3689,6 +3717,7 @@ func _refresh_ui() -> void:
 	_my_prize_hud_count.text = "x%d" % my.prizes.size()
 	_my_deck_hud_value.text = "%d张" % my.deck.size()
 	_my_discard_hud_value.text = "%d张" % my.discard_pile.size()
+	_refresh_prize_titles()
 	_update_side_previews(opp, my)
 
 	_refresh_field_card_views(gs)

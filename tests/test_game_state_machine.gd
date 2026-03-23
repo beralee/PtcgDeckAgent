@@ -1193,6 +1193,65 @@ func test_dragapult_phantom_dive_awards_prizes_for_active_and_bench_knockouts() 
 	])
 
 
+func test_dragapult_phantom_dive_active_knockout_hands_turn_to_opponent_after_replacement() -> String:
+	var gsm := _make_gsm_with_decks()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 2
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+
+	var dragapult_cd: CardData = CardDatabase.get_card("CSV8C", "159")
+	var attacker_slot := PokemonSlot.new()
+	attacker_slot.pokemon_stack.append(CardInstance.create(dragapult_cd, 0))
+	for energy_type: String in ["R", "P"]:
+		attacker_slot.attached_energy.append(CardInstance.create(_make_test_energy(energy_type), 0))
+	gsm.effect_processor.register_pokemon_card(dragapult_cd)
+	gsm.game_state.players[0].active_pokemon = attacker_slot
+
+	var active_target_cd := CardData.new()
+	active_target_cd.name = "Active Prize Target"
+	active_target_cd.card_type = "Pokemon"
+	active_target_cd.stage = "Basic"
+	active_target_cd.hp = 200
+	active_target_cd.energy_type = "W"
+	var active_target := PokemonSlot.new()
+	active_target.pokemon_stack.append(CardInstance.create(active_target_cd, 1))
+	gsm.game_state.players[1].active_pokemon = active_target
+
+	var replacement_cd := CardData.new()
+	replacement_cd.name = "Replacement"
+	replacement_cd.card_type = "Pokemon"
+	replacement_cd.stage = "Basic"
+	replacement_cd.hp = 120
+	replacement_cd.energy_type = "W"
+	var replacement := PokemonSlot.new()
+	replacement.pokemon_stack.append(CardInstance.create(replacement_cd, 1))
+	gsm.game_state.players[1].bench = [replacement]
+	for i: int in 6:
+		gsm.game_state.players[0].prizes.append(CardInstance.create(active_target_cd, 0))
+		gsm.game_state.players[1].prizes.append(CardInstance.create(active_target_cd, 1))
+
+	var attacked: bool = gsm.use_attack(0, 1, [{
+		"bench_damage_counters": [
+			{"target": replacement, "amount": 60},
+		],
+	}])
+	var took_prize: bool = gsm.resolve_take_prize(0, 0)
+	var replacement_sent: bool = gsm.send_out_pokemon(1, replacement)
+
+	return run_checks([
+		assert_not_null(dragapult_cd, "CSV8C_159 should exist in the card database"),
+		assert_true(attacked, "CSV8C_159 Phantom Dive should resolve successfully"),
+		assert_true(took_prize, "CSV8C_159 should still let the attacking player take the prize from the Active knockout"),
+		assert_true(replacement_sent, "CSV8C_159 should still let the defending player send out a replacement"),
+		assert_eq(replacement.damage_counters, 60, "CSV8C_159 should keep the assigned Bench damage counters on the replacement Pokemon"),
+		assert_eq(gsm.game_state.players[1].active_pokemon, replacement, "CSV8C_159 should promote the chosen replacement after the Active knockout"),
+		assert_eq(int(gsm.get("_pending_prize_remaining")), 0, "CSV8C_159 should not leave prize selection pending after the Active-only knockout"),
+		assert_eq(gsm.game_state.current_player_index, 1, "After the Active-only CSV8C_159 knockout finishes, the turn should pass to the opponent"),
+		assert_eq(gsm.game_state.phase, GameState.GamePhase.MAIN, "After the Active-only CSV8C_159 knockout, the opponent should begin their turn in MAIN"),
+	])
+
+
 func test_evolve_charizard_triggers_infernal_reign_and_attaches_fire_energy() -> String:
 	var gsm := _make_gsm_with_decks()
 	gsm.game_state.phase = GameState.GamePhase.MAIN

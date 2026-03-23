@@ -1327,6 +1327,48 @@ func test_csv8c_083_dusknoir_self_ko_returns_to_main_phase() -> String:
 	])
 
 
+func test_csv8c_083_dusknoir_self_ko_continues_into_opponent_active_knockout() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+	state.current_player_index = 0
+
+	state.players[0].bench.clear()
+	var dusknoir_cd := _make_basic_pokemon_data("Dusknoir", "P", 160, "Stage 2", "", "2a4178f21ba2bf13285bbb43ecaaa472")
+	dusknoir_cd.abilities = [{"name": "Cursed Blast"}]
+	var dusknoir_slot := _make_slot(dusknoir_cd, 0)
+	state.players[0].bench.append(dusknoir_slot)
+	gsm.effect_processor.register_pokemon_card(dusknoir_cd)
+
+	var doomed_active_cd := _make_basic_pokemon_data("Opp Active", "C", 70)
+	var doomed_active := _make_slot(doomed_active_cd, 1)
+	var replacement_cd := _make_basic_pokemon_data("Opp Replacement", "C", 120)
+	var replacement := _make_slot(replacement_cd, 1)
+	state.players[1].active_pokemon = doomed_active
+	state.players[1].bench.clear()
+	state.players[1].bench.append(replacement)
+
+	var used := gsm.use_ability(0, dusknoir_slot, 0, [{"self_ko_target": [doomed_active]}])
+	var opponent_took_prize := gsm.resolve_take_prize(1, 0)
+	var pending_prize_player := int(gsm.get("_pending_prize_player_index"))
+	var player_took_prize := gsm.resolve_take_prize(0, 0)
+	var replacement_sent := gsm.send_out_pokemon(1, replacement)
+
+	return run_checks([
+		assert_true(used, "CSV8C_083 should use Cursed Blast successfully"),
+		assert_true(opponent_took_prize, "CSV8C_083 self-KO should still let the opponent take their prize first"),
+		assert_eq(pending_prize_player, 0, "After the self-KO prize resolves, the opponent Active knockout should queue a prize for the current player"),
+		assert_true(player_took_prize, "CSV8C_083 should still award the prize from knocking out the opponent Active"),
+		assert_true(replacement_sent, "CSV8C_083 should still require the opponent to send out a replacement"),
+		assert_true(dusknoir_slot not in state.players[0].bench, "CSV8C_083 should remove Dusknoir from the Bench after self-KO"),
+		assert_eq(state.players[0].prizes.size(), 5, "CSV8C_083 should award 1 prize for the opponent Active knockout"),
+		assert_eq(state.players[1].prizes.size(), 5, "CSV8C_083 should still give the opponent 1 prize for the self-KO"),
+		assert_eq(state.players[1].active_pokemon, replacement, "CSV8C_083 should replace the knocked-out opponent Active"),
+		assert_eq(state.phase, GameState.GamePhase.MAIN, "After both CSV8C_083 knockouts resolve, the turn should return to MAIN"),
+		assert_eq(state.current_player_index, 0, "CSV8C_083 mid-turn knockouts should keep the turn with the current player"),
+	])
+
+
 func test_csv8c_153_haxorus_koes_special_energy_and_mills_three() -> String:
 	var processor := EffectProcessor.new()
 	var state := _make_state()

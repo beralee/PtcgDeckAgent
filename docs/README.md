@@ -20,6 +20,8 @@
 - [../design_document.md](../design_document.md)：项目整体设计文档
 - [card_effect_framework.md](card_effect_framework.md)：卡牌效果与交互框架
 - [effect_implementation.md](effect_implementation.md)：效果实现策略与批量审查流程
+- [ai_opponent_design.md](ai_opponent_design.md)：本地 AI 对战设计文档
+- [ai_opponent_phase1_plan.md](ai_opponent_phase1_plan.md)：AI 对战第一阶段研发计划
 
 ## UI 与交互设计
 

@@ -4,6 +4,7 @@ extends Control
 const TestEffectInteractionFlow = preload("res://tests/test_effect_interaction_flow.gd")
 const TestCardSemanticMatrix = preload("res://tests/test_card_semantic_matrix.gd")
 const TestCardCatalogAudit = preload("res://tests/test_card_catalog_audit.gd")
+const TestCardDatabaseSeed = preload("res://tests/test_card_database_seed.gd")
 const TestSourceEncodingAudit = preload("res://tests/test_source_encoding_audit.gd")
 const TestMissingCardBatch202603 = preload("res://tests/test_missing_card_batch_2026_03.gd")
 const TestBattleUIHandoverRegression = preload("res://tests/test_battle_ui_handover_regression.gd")
@@ -24,6 +25,7 @@ func _ready() -> void:
 
 	_run_test_suite("CardData", TestCardData.new())
 	_run_test_suite("DeckData", TestDeckData.new())
+	_run_test_suite("CardDatabaseSeed", TestCardDatabaseSeed.new())
 	_run_test_suite("CardInstance", TestCardInstance.new())
 	_run_test_suite("PokemonSlot", TestPokemonSlot.new())
 	_run_test_suite("PlayerState", TestPlayerState.new())
