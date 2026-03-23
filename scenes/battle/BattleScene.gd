@@ -49,6 +49,7 @@ var _pending_prize_remaining: int = 0
 var _pending_prize_animating: bool = false
 var _ai_opponent = null
 var _ai_running: bool = false
+var _ai_step_scheduled: bool = false
 
 var _field_interaction_overlay: Control = null
 var _field_interaction_layout: VBoxContainer = null
@@ -1269,18 +1270,19 @@ func _on_slot_input(event: InputEvent, slot_id: String) -> void:
 				_selected_hand_card = null
 				_refresh_ui()
 				_try_start_evolve_trigger_ability_interaction(cp, target_slot)
+				_maybe_run_ai()
 			else:
 				_log("无法让这只宝可梦进化")
 		elif cd.card_type == "Basic Energy" or cd.card_type == "Special Energy":
 			if _gsm.attach_energy(cp, card, target_slot):
 				_selected_hand_card = null
-				_refresh_ui()
+				_refresh_ui_after_successful_action()
 			else:
 				_log("无法附着能量")
 		elif cd.card_type == "Tool":
 			if _gsm.attach_tool(cp, card, target_slot):
 				_selected_hand_card = null
-				_refresh_ui()
+				_refresh_ui_after_successful_action()
 			else:
 				_log("无法将该道具附着到这里")
 		return
@@ -1309,7 +1311,7 @@ func _try_play_to_bench(player_index: int, card: CardInstance, _slot_id: String)
 			if bench_slot != null:
 				_start_effect_interaction("ability", player_index, bench_steps, bench_slot.get_top_card(), bench_slot, 0)
 		_selected_hand_card = null
-		_refresh_ui()
+		_refresh_ui_after_successful_action()
 	else:
 		_log("无法将该宝可梦放入备战区")
 
@@ -3019,8 +3021,7 @@ func _try_use_attack_with_interaction(player_index: int, slot: PokemonSlot, atta
 		steps.append_array(effect.get_attack_interaction_steps(card, attack, _gsm.game_state))
 	if steps.is_empty():
 		if _gsm.use_attack(player_index, attack_index):
-			_refresh_ui()
-			_check_two_player_handover()
+			_refresh_ui_after_successful_action(true)
 		else:
 			_log(_gsm.get_attack_unusable_reason(player_index, attack_index))
 		return
@@ -3041,8 +3042,7 @@ func _try_use_granted_attack_with_interaction(player_index: int, slot: PokemonSl
 	)
 	if steps.is_empty():
 		if _gsm.use_granted_attack(player_index, slot, granted_attack):
-			_refresh_ui()
-			_check_two_player_handover()
+			_refresh_ui_after_successful_action(true)
 		else:
 			_log(_get_granted_attack_unusable_reason(player_index, slot, granted_attack))
 		return
@@ -3184,6 +3184,13 @@ func _on_handover_confirmed() -> void:
 	_runtime_log("handover_confirmed", _state_snapshot())
 
 
+func _refresh_ui_after_successful_action(check_handover: bool = false) -> void:
+	_refresh_ui()
+	if check_handover:
+		_check_two_player_handover()
+	_maybe_run_ai()
+
+
 func _setup_ai_for_tests() -> void:
 	if _dialog_overlay != null:
 		_dialog_overlay.visible = false
@@ -3193,6 +3200,7 @@ func _setup_ai_for_tests() -> void:
 		_field_interaction_overlay.visible = false
 	_pending_prize_animating = false
 	_ai_running = false
+	_ai_step_scheduled = false
 	_ai_opponent = null
 
 
@@ -3221,13 +3229,17 @@ func _is_ai_turn_ready() -> bool:
 
 
 func _maybe_run_ai() -> void:
-	if _ai_running or not _is_ai_turn_ready():
+	if _ai_running or _ai_step_scheduled or not _is_ai_turn_ready():
 		return
+	_ai_step_scheduled = true
 	call_deferred("_run_ai_step")
 
 
 func _run_ai_step() -> void:
-	if _ai_running or not _is_ai_turn_ready():
+	if _ai_running:
+		return
+	_ai_step_scheduled = false
+	if not _is_ai_turn_ready():
 		return
 	_ai_running = true
 	_ensure_ai_opponent()
@@ -3293,7 +3305,8 @@ func _try_play_trainer_with_interaction(player_index: int, card: CardInstance) -
 	if effect == null:
 		if not _gsm.play_trainer(player_index, card, []):
 			_log("无法使用 %s" % card.card_data.name)
-		_refresh_ui()
+		else:
+			_refresh_ui_after_successful_action()
 		return
 
 	if not effect.can_execute(card, _gsm.game_state):
@@ -3308,7 +3321,7 @@ func _try_play_trainer_with_interaction(player_index: int, card: CardInstance) -
 			var empty_message: String = effect.get_empty_interaction_message(card, _gsm.game_state)
 			if empty_message != "":
 				_log(empty_message)
-		_refresh_ui()
+			_refresh_ui_after_successful_action()
 		return
 
 	_start_effect_interaction("trainer", player_index, steps, card)
@@ -3319,14 +3332,16 @@ func _try_play_stadium_with_interaction(player_index: int, card: CardInstance) -
 	if effect == null:
 		if not _gsm.play_stadium(player_index, card):
 			_log("无法打出这张竞技场卡")
-		_refresh_ui()
+		else:
+			_refresh_ui_after_successful_action()
 		return
 
 	var steps: Array[Dictionary] = effect.get_on_play_interaction_steps(card, _gsm.game_state)
 	if steps.is_empty():
 		if not _gsm.play_stadium(player_index, card):
 			_log("无法打出这张竞技场卡")
-		_refresh_ui()
+		else:
+			_refresh_ui_after_successful_action()
 		return
 
 	_start_effect_interaction("play_stadium", player_index, steps, card)
@@ -3347,8 +3362,7 @@ func _try_use_ability_with_interaction(player_index: int, slot: PokemonSlot, abi
 	)
 	if effect == null:
 		if _gsm.use_ability(player_index, slot, ability_index):
-			_refresh_ui()
-			_check_two_player_handover()
+			_refresh_ui_after_successful_action(true)
 		else:
 			_log("%s 的特性当前无法使用" % card.card_data.name)
 		return
@@ -3364,8 +3378,7 @@ func _try_use_ability_with_interaction(player_index: int, slot: PokemonSlot, abi
 				_gsm.game_state
 			)
 			_log("已使用特性：%s" % ability_name)
-			_refresh_ui()
-			_check_two_player_handover()
+			_refresh_ui_after_successful_action(true)
 		else:
 			_log("%s 的特性当前没有可选目标" % card.card_data.name)
 		return
@@ -3379,7 +3392,7 @@ func _try_use_stadium_with_interaction(player_index: int) -> void:
 	var effect: BaseEffect = _gsm.effect_processor.get_effect(stadium_card.card_data.effect_id)
 	if effect == null:
 		if _gsm.use_stadium_effect(player_index):
-			_refresh_ui()
+			_refresh_ui_after_successful_action()
 		else:
 			_log("当前竞技场效果无法使用")
 		return
@@ -3389,7 +3402,7 @@ func _try_use_stadium_with_interaction(player_index: int) -> void:
 	var steps: Array[Dictionary] = effect.get_interaction_steps(stadium_card, _gsm.game_state)
 	if steps.is_empty():
 		if _gsm.use_stadium_effect(player_index):
-			_refresh_ui()
+			_refresh_ui_after_successful_action()
 		else:
 			_log("当前竞技场效果无法使用")
 		return
@@ -3517,13 +3530,16 @@ func _show_next_effect_interaction_step() -> void:
 			_log("无法使用 %s" % _pending_effect_card.card_data.name)
 		_runtime_log("effect_interaction_complete", "success=%s %s" % [str(success), _state_snapshot()])
 		_reset_effect_interaction()
-		_refresh_ui()
 		if success:
+			_refresh_ui()
 			if followup_evolve_slot != null:
 				_try_start_evolve_trigger_ability_interaction(resolved_player_index, followup_evolve_slot)
 				if _pending_choice == "effect_interaction":
 					return
 			_check_two_player_handover()
+			_maybe_run_ai()
+		else:
+			_refresh_ui()
 		return
 
 	var step: Dictionary = _pending_effect_steps[_pending_effect_step_index]
