@@ -20,6 +20,64 @@ class SpyAIOpponent extends RefCounted:
 		return true
 
 
+class SpyGameStateMachine extends GameStateMachine:
+	var retreat_calls: int = 0
+
+	func retreat(_player_index: int, _energy_to_discard: Array[CardInstance], _bench_target: PokemonSlot) -> bool:
+		retreat_calls += 1
+		return true
+
+
+func _make_player_state(player_index: int) -> PlayerState:
+	var player := PlayerState.new()
+	player.player_index = player_index
+	return player
+
+
+func _make_battle_scene_refresh_stub() -> Control:
+	var battle_scene = BattleSceneScript.new()
+	battle_scene.set("_log_list", ItemList.new())
+	battle_scene.set("_lbl_phase", Label.new())
+	battle_scene.set("_lbl_turn", Label.new())
+	battle_scene.set("_opp_prizes", Label.new())
+	battle_scene.set("_opp_deck", Label.new())
+	battle_scene.set("_opp_discard", Label.new())
+	battle_scene.set("_opp_hand_lbl", Label.new())
+	battle_scene.set("_opp_hand_bar", PanelContainer.new())
+	battle_scene.set("_opp_prize_hud_count", Label.new())
+	battle_scene.set("_opp_deck_hud_value", Label.new())
+	battle_scene.set("_opp_discard_hud_value", Label.new())
+	battle_scene.set("_my_prizes", Label.new())
+	battle_scene.set("_my_deck", Label.new())
+	battle_scene.set("_my_discard", Label.new())
+	battle_scene.set("_my_prize_hud_count", Label.new())
+	battle_scene.set("_my_deck_hud_value", Label.new())
+	battle_scene.set("_my_discard_hud_value", Label.new())
+	battle_scene.set("_btn_end_turn", Button.new())
+	battle_scene.set("_hud_end_turn_btn", Button.new())
+	battle_scene.set("_stadium_lbl", Label.new())
+	battle_scene.set("_btn_stadium_action", Button.new())
+	battle_scene.set("_enemy_vstar_value", Label.new())
+	battle_scene.set("_my_vstar_value", Label.new())
+	battle_scene.set("_enemy_lost_value", Label.new())
+	battle_scene.set("_my_lost_value", Label.new())
+	battle_scene.set("_hand_container", HBoxContainer.new())
+	battle_scene.set("_dialog_overlay", Panel.new())
+	battle_scene.set("_handover_panel", Panel.new())
+	battle_scene.set("_coin_overlay", Panel.new())
+	battle_scene.set("_detail_overlay", Panel.new())
+	battle_scene.set("_discard_overlay", Panel.new())
+	battle_scene.set("_field_interaction_overlay", Control.new())
+	battle_scene.set("_opp_prizes_title", Label.new())
+	battle_scene.set("_my_prizes_title", Label.new())
+	battle_scene.set("_opp_prize_hud_title", Label.new())
+	battle_scene.set("_my_prize_hud_title", Label.new())
+	battle_scene.set("_slot_card_views", {})
+	battle_scene.set("_opp_prize_slots", [])
+	battle_scene.set("_my_prize_slots", [])
+	return battle_scene
+
+
 func test_ai_opponent_instantiates() -> String:
 	var ai := AIOpponentScript.new()
 	var blocked_state := GameState.new()
@@ -64,6 +122,9 @@ func test_battle_scene_schedules_ai_in_vs_ai_when_unblocked() -> String:
 	scene.set("_gsm", gsm)
 	scene.set("_dialog_overlay", Panel.new())
 	scene.set("_handover_panel", Panel.new())
+	scene.set("_coin_overlay", Panel.new())
+	scene.set("_detail_overlay", Panel.new())
+	scene.set("_discard_overlay", Panel.new())
 	scene.set("_field_interaction_overlay", Control.new())
 	scene._setup_ai_for_tests()
 	scene.set("_ai_opponent", spy_ai)
@@ -79,6 +140,96 @@ func test_battle_scene_schedules_ai_in_vs_ai_when_unblocked() -> String:
 	return checks
 
 
+func test_battle_scene_handover_confirmation_callback_schedules_ai_in_vs_ai() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var scene := BattleSceneScript.new()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 1
+	var spy_ai := SpyAIOpponent.new()
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	scene.set("_gsm", gsm)
+	scene.set("_dialog_overlay", Panel.new())
+	scene.set("_handover_panel", Panel.new())
+	scene.set("_coin_overlay", Panel.new())
+	scene.set("_detail_overlay", Panel.new())
+	scene.set("_discard_overlay", Panel.new())
+	scene.set("_field_interaction_overlay", Control.new())
+	scene._setup_ai_for_tests()
+	scene.set("_ai_opponent", spy_ai)
+	scene.set("_pending_handover_action", func() -> void:
+		pass
+	)
+	scene._on_handover_confirmed()
+	var scheduled_after_callback: bool = scene.get("_ai_step_scheduled")
+	scene._run_ai_step()
+	GameManager.current_mode = previous_mode
+	return run_checks([
+		assert_true(scheduled_after_callback, "Handover confirmation should schedule AI on the AI turn in VS_AI mode"),
+		assert_eq(spy_ai.run_count, 1, "Handover confirmation should lead to one AI step"),
+	])
+
+
+func test_battle_scene_handover_confirmation_does_not_schedule_ai_outside_vs_ai() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var scene := BattleSceneScript.new()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 1
+	var spy_ai := SpyAIOpponent.new()
+	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
+	scene.set("_gsm", gsm)
+	scene.set("_dialog_overlay", Panel.new())
+	scene.set("_handover_panel", Panel.new())
+	scene.set("_coin_overlay", Panel.new())
+	scene.set("_detail_overlay", Panel.new())
+	scene.set("_discard_overlay", Panel.new())
+	scene.set("_field_interaction_overlay", Control.new())
+	scene._setup_ai_for_tests()
+	scene.set("_ai_opponent", spy_ai)
+	scene.set("_pending_handover_action", func() -> void:
+		pass
+	)
+	scene._on_handover_confirmed()
+	var scheduled_after_callback: bool = scene.get("_ai_step_scheduled")
+	GameManager.current_mode = previous_mode
+	return run_checks([
+		assert_false(scheduled_after_callback, "Handover confirmation should not schedule AI outside VS_AI mode"),
+		assert_eq(spy_ai.run_count, 0, "Blocked handover callback should not run the AI"),
+	])
+
+
+func test_battle_scene_retreat_action_path_schedules_ai_after_success() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var scene := _make_battle_scene_refresh_stub()
+	var gsm := SpyGameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 1
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.players = [_make_player_state(0), _make_player_state(1)]
+	var bench_target := PokemonSlot.new()
+	bench_target.pokemon_stack.append(CardInstance.create(CardData.new(), 1))
+	var spy_ai := SpyAIOpponent.new()
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	scene.set("_gsm", gsm)
+	scene._setup_ai_for_tests()
+	scene.set("_ai_opponent", spy_ai)
+	scene.set("_pending_choice", "retreat_bench")
+	scene.set("_dialog_data", {
+		"player": 1,
+		"bench": [bench_target],
+		"energy_discard": [],
+	})
+	scene._handle_dialog_choice(PackedInt32Array([0]))
+	var scheduled_after_retreat: bool = scene.get("_ai_step_scheduled")
+	GameManager.current_mode = previous_mode
+	return run_checks([
+		assert_eq(gsm.retreat_calls, 1, "Retreat action path should call GameStateMachine.retreat"),
+		assert_true(scheduled_after_retreat, "Successful retreat action path should schedule the AI"),
+	])
+
+
 func test_battle_scene_does_not_schedule_ai_when_mode_turn_or_ui_block_it() -> String:
 	var previous_mode: int = GameManager.current_mode
 	var scene := BattleSceneScript.new()
@@ -92,6 +243,9 @@ func test_battle_scene_does_not_schedule_ai_when_mode_turn_or_ui_block_it() -> S
 	scene.set("_gsm", gsm)
 	scene.set("_dialog_overlay", dialog_overlay)
 	scene.set("_handover_panel", handover_panel)
+	scene.set("_coin_overlay", Panel.new())
+	scene.set("_detail_overlay", Panel.new())
+	scene.set("_discard_overlay", Panel.new())
 	scene.set("_field_interaction_overlay", field_overlay)
 	scene._setup_ai_for_tests()
 	scene.set("_ai_opponent", spy_ai)

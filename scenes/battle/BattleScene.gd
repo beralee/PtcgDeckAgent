@@ -2660,7 +2660,7 @@ func _handle_dialog_choice(selected_indices: PackedInt32Array) -> void:
 					energy_discard.append(e)
 			if idx < bench_rb.size():
 				_gsm.retreat(cp, energy_discard, bench_rb[idx])
-				_refresh_ui()
+				_refresh_ui_after_successful_action()
 		"confirm_exit":
 			if idx == 0:
 				GameManager.goto_battle_setup()
