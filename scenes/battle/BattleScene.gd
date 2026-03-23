@@ -4,6 +4,7 @@ extends Control
 # ===================== Constants =====================
 const BENCH_SIZE := 5
 const BATTLE_CARD_VIEW := preload("res://scenes/battle/BattleCardView.gd")
+const AIOpponentScript := preload("res://scripts/ai/AIOpponent.gd")
 const CARD_ASPECT := 0.716
 const BATTLE_RUNTIME_LOG_PATH := "user://logs/battle_runtime.log"
 const BATTLE_BACKDROP_RESOURCE := "res://assets/ui/background.png"
@@ -46,6 +47,8 @@ var _my_discard_preview: BattleCardView = null
 var _pending_prize_player_index: int = -1
 var _pending_prize_remaining: int = 0
 var _pending_prize_animating: bool = false
+var _ai_opponent = null
+var _ai_running: bool = false
 
 var _field_interaction_overlay: Control = null
 var _field_interaction_layout: VBoxContainer = null
@@ -953,6 +956,7 @@ func _insert_pile_preview(box: VBoxContainer, child_index: int, clickable: bool,
 func _on_state_changed(_new_phase: GameState.GamePhase) -> void:
 	_refresh_ui()
 	_check_two_player_handover()
+	_maybe_run_ai()
 	_runtime_log("state_changed", _state_snapshot())
 
 
@@ -997,6 +1001,7 @@ func _on_player_choice_required(choice_type: String, data: Dictionary) -> void:
 				int(data.get("count", 0)),
 				str(data.get("source_name", "沉重接力棒"))
 			)
+	_maybe_run_ai()
 
 
 func _start_prize_selection(player_index: int, count: int) -> void:
@@ -1067,6 +1072,7 @@ func _on_game_over(winner_index: int, reason: String) -> void:
 func _begin_setup_flow() -> void:
 	_setup_done = [false, false]
 	_refresh_ui()
+	_maybe_run_ai()
 	_setup_player_active(0)
 
 
@@ -1137,6 +1143,7 @@ func _show_setup_bench_dialog(pi: int) -> void:
 func _after_setup_bench(pi: int) -> void:
 	_setup_done[pi] = true
 	_refresh_ui()
+	_maybe_run_ai()
 	if pi == 0 and not _setup_done[1]:
 		_setup_player_active(1)
 	else:
@@ -3173,7 +3180,59 @@ func _on_handover_confirmed() -> void:
 		var cp: int = _gsm.game_state.current_player_index
 		_view_player = cp
 		_refresh_ui()
+	_maybe_run_ai()
 	_runtime_log("handover_confirmed", _state_snapshot())
+
+
+func _setup_ai_for_tests() -> void:
+	if _dialog_overlay != null:
+		_dialog_overlay.visible = false
+	if _handover_panel != null:
+		_handover_panel.visible = false
+	if _field_interaction_overlay != null:
+		_field_interaction_overlay.visible = false
+	_pending_prize_animating = false
+	_ai_running = false
+	_ai_opponent = null
+
+
+func _ensure_ai_opponent() -> void:
+	if _ai_opponent == null:
+		_ai_opponent = AIOpponentScript.new()
+		_ai_opponent.configure(1, GameManager.ai_difficulty)
+
+
+func _is_ui_blocking_ai() -> bool:
+	return (
+		(_dialog_overlay != null and _dialog_overlay.visible)
+		or (_handover_panel != null and _handover_panel.visible)
+		or _pending_prize_animating
+		or (_field_interaction_overlay != null and _field_interaction_overlay.visible)
+	)
+
+
+func _is_ai_turn_ready() -> bool:
+	if GameManager.current_mode != GameManager.GameMode.VS_AI:
+		return false
+	if _gsm == null:
+		return false
+	_ensure_ai_opponent()
+	return _ai_opponent.should_control_turn(_gsm.game_state, _is_ui_blocking_ai())
+
+
+func _maybe_run_ai() -> void:
+	if _ai_running or not _is_ai_turn_ready():
+		return
+	call_deferred("_run_ai_step")
+
+
+func _run_ai_step() -> void:
+	if _ai_running or not _is_ai_turn_ready():
+		return
+	_ai_running = true
+	_ensure_ai_opponent()
+	_ai_opponent.run_single_step(self, _gsm)
+	_ai_running = false
 
 
 func _on_hand_card_clicked(inst: CardInstance, _panel: PanelContainer) -> void:
