@@ -12,6 +12,7 @@ const PLAYER_CARD_BACK_RESOURCE := "res://assets/ui/card_back_player.svg"
 const OPPONENT_CARD_BACK_RESOURCE := "res://assets/ui/card_back_opponent.svg"
 const USED_ABILITY_TILT_DEGREES := 15.0
 const CoinFlipAnimatorScript := preload("res://scenes/battle/CoinFlipAnimator.gd")
+const AI_MAX_ACTIONS_PER_TURN := 20
 
 # ===================== State =====================
 var _gsm: GameStateMachine
@@ -51,6 +52,8 @@ var _ai_opponent = null
 var _ai_running: bool = false
 var _ai_step_scheduled: bool = false
 var _ai_followup_requested: bool = false
+var _ai_turn_marker: String = ""
+var _ai_actions_this_turn: int = 0
 
 var _field_interaction_overlay: Control = null
 var _field_interaction_layout: VBoxContainer = null
@@ -3206,12 +3209,25 @@ func _setup_ai_for_tests() -> void:
 	_ai_step_scheduled = false
 	_ai_followup_requested = false
 	_ai_opponent = null
+	_ai_turn_marker = ""
+	_ai_actions_this_turn = 0
 
 
 func _ensure_ai_opponent() -> void:
 	if _ai_opponent == null:
 		_ai_opponent = AIOpponentScript.new()
 		_ai_opponent.configure(1, GameManager.ai_difficulty)
+
+
+func _reset_ai_action_counter_if_needed() -> void:
+	if _gsm == null or _gsm.game_state == null:
+		_ai_turn_marker = ""
+		_ai_actions_this_turn = 0
+		return
+	var marker := "%d:%d" % [_gsm.game_state.turn_number, _gsm.game_state.current_player_index]
+	if marker != _ai_turn_marker:
+		_ai_turn_marker = marker
+		_ai_actions_this_turn = 0
 
 
 func _is_ai_setup_prompt(pending_choice: String = _pending_choice) -> bool:
@@ -3230,14 +3246,38 @@ func _get_ai_prompt_player_index() -> int:
 	return -1
 
 
+func _get_effect_interaction_prompt_player_index() -> int:
+	if _pending_choice != "effect_interaction":
+		return -1
+	if _pending_effect_step_index < 0 or _pending_effect_step_index >= _pending_effect_steps.size():
+		return -1
+	return _resolve_effect_step_chooser_player(_pending_effect_steps[_pending_effect_step_index])
+
+
+func _is_ai_prize_prompt() -> bool:
+	if _ai_opponent == null:
+		return false
+	return (
+		_pending_choice == "take_prize"
+		and _pending_prize_player_index == _ai_opponent.player_index
+		and _pending_prize_remaining > 0
+	)
+
+
+func _is_ai_effect_prompt() -> bool:
+	if _ai_opponent == null:
+		return false
+	return _get_effect_interaction_prompt_player_index() == _ai_opponent.player_index
+
+
 func _is_ui_blocking_ai() -> bool:
-	var dialog_blocks_ai := _dialog_overlay != null and _dialog_overlay.visible and not _is_ai_setup_prompt()
+	var dialog_blocks_ai := _dialog_overlay != null and _dialog_overlay.visible and not (_is_ai_setup_prompt() or _is_ai_effect_prompt())
 	return (
 		dialog_blocks_ai
 		or (_handover_panel != null and _handover_panel.visible)
-		or _pending_choice == "take_prize"
+		or (_pending_choice == "take_prize" and not _is_ai_prize_prompt())
 		or _pending_prize_animating
-		or (_field_interaction_overlay != null and _field_interaction_overlay.visible)
+		or (_field_interaction_overlay != null and _field_interaction_overlay.visible and not _is_ai_effect_prompt())
 	)
 
 
@@ -3251,6 +3291,14 @@ func _is_ai_turn_ready() -> bool:
 		if _is_ui_blocking_ai():
 			return false
 		return _get_ai_prompt_player_index() == _ai_opponent.player_index
+	if _pending_choice == "take_prize":
+		if _is_ui_blocking_ai():
+			return false
+		return _is_ai_prize_prompt()
+	if _pending_choice == "effect_interaction":
+		if _is_ui_blocking_ai():
+			return false
+		return _get_effect_interaction_prompt_player_index() == _ai_opponent.player_index
 	return _ai_opponent.should_control_turn(_gsm.game_state, _is_ui_blocking_ai())
 
 
@@ -3271,11 +3319,18 @@ func _run_ai_step() -> void:
 	_ai_step_scheduled = false
 	if not _is_ai_turn_ready():
 		return
+	_reset_ai_action_counter_if_needed()
+	if _ai_actions_this_turn >= AI_MAX_ACTIONS_PER_TURN:
+		if _pending_choice == "" and _gsm != null and _gsm.game_state != null and _gsm.game_state.phase == GameState.GamePhase.MAIN:
+			_on_end_turn()
+		return
 	_ai_running = true
 	_ai_followup_requested = false
 	_ensure_ai_opponent()
-	_ai_opponent.run_single_step(self, _gsm)
+	var handled: bool = _ai_opponent.run_single_step(self, _gsm)
 	_ai_running = false
+	if handled:
+		_ai_actions_this_turn += 1
 	if _ai_followup_requested and not _ai_step_scheduled and _is_ai_turn_ready():
 		_ai_step_scheduled = true
 		call_deferred("_run_ai_step")

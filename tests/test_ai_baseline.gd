@@ -3,7 +3,9 @@ extends TestBase
 
 const AIOpponentScript = preload("res://scripts/ai/AIOpponent.gd")
 const AISetupPlannerScript = preload("res://scripts/ai/AISetupPlanner.gd")
+const AIHeuristicsScript = preload("res://scripts/ai/AIHeuristics.gd")
 const BattleSceneScript = preload("res://scenes/battle/BattleScene.gd")
+const BattleCardViewScript = preload("res://scenes/battle/BattleCardView.gd")
 const AbilityBonusDrawIfActiveScript = preload("res://scripts/effects/pokemon_effects/AbilityBonusDrawIfActive.gd")
 
 
@@ -54,6 +56,26 @@ class SpyGameStateMachine extends GameStateMachine:
 		mulligan_resolve_calls += 1
 		resolved_beneficiary = beneficiary
 		resolved_draw_extra = draw_extra
+
+
+class SpyPrizeResolveGameStateMachine extends GameStateMachine:
+	var resolve_take_prize_calls: int = 0
+
+	func resolve_take_prize(player_index: int, slot_index: int) -> bool:
+		resolve_take_prize_calls += 1
+		return super.resolve_take_prize(player_index, slot_index)
+
+
+class DelayedPrizeAnimationScene extends Control:
+	var _pending_choice: String = "take_prize"
+	var _pending_prize_player_index: int = 1
+	var _pending_prize_remaining: int = 1
+	var _pending_prize_animating: bool = false
+	var try_take_prize_calls: int = 0
+
+	func _try_take_prize_from_slot(_player_index: int, _slot_index: int) -> void:
+		try_take_prize_calls += 1
+		_pending_prize_animating = true
 
 
 class SpySetupBattleScene extends Control:
@@ -244,6 +266,8 @@ func _make_battle_scene_refresh_stub() -> Control:
 	battle_scene.set("_dialog_confirm", Button.new())
 	battle_scene.set("_dialog_cancel", Button.new())
 	battle_scene.set("_handover_panel", Panel.new())
+	battle_scene.set("_handover_lbl", Label.new())
+	battle_scene.set("_handover_btn", Button.new())
 	battle_scene.set("_coin_overlay", Panel.new())
 	battle_scene.set("_detail_overlay", Panel.new())
 	battle_scene.set("_discard_overlay", Panel.new())
@@ -479,6 +503,315 @@ func test_ai_legal_action_builder_enumerates_end_turn_actions() -> String:
 	])
 
 
+func test_ai_opponent_resolves_effect_interaction_dialog_choice() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	var scene := _make_battle_scene_refresh_stub()
+	scene._setup_ai_for_tests()
+	scene.set("_field_interaction_overlay", null)
+	scene.call("_setup_field_interaction_panel")
+	var gsm := _make_ai_manual_gsm()
+	gsm.game_state.current_player_index = 1
+	scene.set("_gsm", gsm)
+	var option_a := CardInstance.create(_make_ai_trainer_card_data("Option A", "Item"), 1)
+	var option_b := CardInstance.create(_make_ai_trainer_card_data("Option B", "Item"), 1)
+	var hold_step := {
+		"id": "hold",
+		"title": "Hold",
+		"items": [CardInstance.create(_make_ai_trainer_card_data("Hold", "Item"), 1)],
+		"labels": ["Hold"],
+		"min_select": 1,
+		"max_select": 1,
+	}
+	var steps: Array[Dictionary] = [
+		{
+			"id": "pick_card",
+			"title": "Pick a card",
+			"items": [option_a, option_b],
+			"labels": ["A", "B"],
+			"min_select": 1,
+			"max_select": 1,
+		},
+		hold_step,
+	]
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	scene.call("_start_effect_interaction", "trainer", 1, steps, CardInstance.create(_make_ai_trainer_card_data("Trainer", "Item"), 1))
+
+	var handled := ai.run_single_step(scene, gsm)
+	var context: Dictionary = scene.get("_pending_effect_context")
+	var selected_cards: Array = context.get("pick_card", [])
+	var first_selected_card: Variant = selected_cards[0] if not selected_cards.is_empty() else null
+	GameManager.current_mode = previous_mode
+	return run_checks([
+		assert_true(handled, "AI should resolve simple dialog-based effect steps"),
+		assert_eq(int(scene.get("_pending_effect_step_index")), 1, "AI should advance to the next effect step after resolving a dialog choice"),
+		assert_eq(selected_cards.size(), 1, "AI should store exactly one selected card"),
+		assert_eq(first_selected_card, option_a, "AI should pick the first legal dialog option for the baseline policy"),
+		assert_eq(str(scene.get("_pending_choice")), "effect_interaction", "Effect interaction flow should continue to the next step"),
+	])
+
+
+func test_ai_opponent_resolves_effect_interaction_field_slot_choice() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	var scene := _make_battle_scene_refresh_stub()
+	scene._setup_ai_for_tests()
+	scene.set("_field_interaction_overlay", null)
+	scene.call("_setup_field_interaction_panel")
+	var gsm := _make_ai_manual_gsm()
+	gsm.game_state.current_player_index = 1
+	scene.set("_gsm", gsm)
+	var player: PlayerState = gsm.game_state.players[1]
+	var bench_a := _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Bench A"), 1))
+	var bench_b := _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Bench B"), 1))
+	player.bench = [bench_a, bench_b]
+	var hold_step := {
+		"id": "hold",
+		"title": "Hold",
+		"items": [CardInstance.create(_make_ai_trainer_card_data("Hold", "Item"), 1)],
+		"labels": ["Hold"],
+		"min_select": 1,
+		"max_select": 1,
+	}
+	var steps: Array[Dictionary] = [
+		{
+			"id": "pick_slot",
+			"title": "Pick a Pokemon",
+			"items": [bench_a, bench_b],
+			"min_select": 1,
+			"max_select": 1,
+		},
+		hold_step,
+	]
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	scene.call("_start_effect_interaction", "trainer", 1, steps, CardInstance.create(_make_ai_trainer_card_data("Trainer", "Item"), 1))
+
+	var handled := ai.run_single_step(scene, gsm)
+	var context: Dictionary = scene.get("_pending_effect_context")
+	var selected_slots: Array = context.get("pick_slot", [])
+	var first_selected_slot: Variant = selected_slots[0] if not selected_slots.is_empty() else null
+	GameManager.current_mode = previous_mode
+	return run_checks([
+		assert_true(handled, "AI should resolve PokemonSlot effect steps through the field UI path"),
+		assert_eq(int(scene.get("_pending_effect_step_index")), 1, "AI should advance after selecting a field slot"),
+		assert_eq(selected_slots.size(), 1, "AI should store exactly one selected PokemonSlot"),
+		assert_eq(first_selected_slot, bench_a, "AI should choose the first legal PokemonSlot by default"),
+		assert_eq(str(scene.get("_field_interaction_mode")), "", "Field interaction UI should close after AI finalizes the slot choice"),
+	])
+
+
+func test_ai_opponent_resolves_effect_interaction_assignment_step() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	var scene := _make_battle_scene_refresh_stub()
+	scene._setup_ai_for_tests()
+	scene.set("_field_interaction_overlay", null)
+	scene.call("_setup_field_interaction_panel")
+	var gsm := _make_ai_manual_gsm()
+	gsm.game_state.current_player_index = 1
+	scene.set("_gsm", gsm)
+	var player: PlayerState = gsm.game_state.players[1]
+	var bench_a := _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Bench A"), 1))
+	var bench_b := _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Bench B"), 1))
+	player.bench = [bench_a, bench_b]
+	var energy_a := CardInstance.create(_make_ai_energy_card_data("Energy A"), 1)
+	var energy_b := CardInstance.create(_make_ai_energy_card_data("Energy B"), 1)
+	var hold_step := {
+		"id": "hold",
+		"title": "Hold",
+		"items": [CardInstance.create(_make_ai_trainer_card_data("Hold", "Item"), 1)],
+		"labels": ["Hold"],
+		"min_select": 1,
+		"max_select": 1,
+	}
+	var steps: Array[Dictionary] = [
+		{
+			"id": "assign_energy",
+			"title": "Assign energy",
+			"ui_mode": "card_assignment",
+			"source_items": [energy_a, energy_b],
+			"target_items": [bench_a, bench_b],
+			"min_select": 2,
+			"max_select": 2,
+			"source_exclude_targets": {
+				1: [0],
+			},
+		},
+		hold_step,
+	]
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	scene.call("_start_effect_interaction", "trainer", 1, steps, CardInstance.create(_make_ai_trainer_card_data("Trainer", "Item"), 1))
+
+	var handled := ai.run_single_step(scene, gsm)
+	var context: Dictionary = scene.get("_pending_effect_context")
+	var assignments: Array = context.get("assign_energy", [])
+	var first_assignment: Dictionary = assignments[0] if not assignments.is_empty() else {}
+	var second_assignment: Dictionary = assignments[1] if assignments.size() > 1 else {}
+	GameManager.current_mode = previous_mode
+	return run_checks([
+		assert_true(handled, "AI should resolve card-assignment effect steps"),
+		assert_eq(int(scene.get("_pending_effect_step_index")), 1, "AI should advance after finalizing the assignment step"),
+		assert_eq(assignments.size(), 2, "AI should complete the required number of assignments"),
+		assert_eq(first_assignment.get("source"), energy_a, "AI should assign the first source item first"),
+		assert_eq(first_assignment.get("target"), bench_a, "AI should pick the first legal target for the first source item"),
+		assert_eq(second_assignment.get("source"), energy_b, "AI should continue with the next source item"),
+		assert_eq(second_assignment.get("target"), bench_b, "AI should respect source_exclude_targets when assigning later sources"),
+	])
+
+
+func test_battle_scene_schedules_ai_for_effect_interaction_prompt_owned_by_ai() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var scene := _make_battle_scene_refresh_stub()
+	scene._setup_ai_for_tests()
+	scene.set("_field_interaction_overlay", null)
+	scene.call("_setup_field_interaction_panel")
+	var gsm := _make_ai_manual_gsm()
+	gsm.game_state.current_player_index = 0
+	scene.set("_gsm", gsm)
+	var opponent: PlayerState = gsm.game_state.players[1]
+	var bench_a := _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Bench A"), 1))
+	var bench_b := _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Bench B"), 1))
+	opponent.bench = [bench_a, bench_b]
+	var hold_step := {
+		"id": "hold",
+		"title": "Hold",
+		"items": [CardInstance.create(_make_ai_trainer_card_data("Hold", "Item"), 1)],
+		"labels": ["Hold"],
+		"min_select": 1,
+		"max_select": 1,
+	}
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	var steps: Array[Dictionary] = [
+		{
+			"id": "opponent_pick",
+			"title": "Opponent chooses",
+			"items": [bench_a, bench_b],
+			"min_select": 1,
+			"max_select": 1,
+			"chooser_player_index": 1,
+		},
+		hold_step,
+	]
+	scene.call("_start_effect_interaction", "ability", 0, steps, CardInstance.create(_make_ai_pokemon_card_data("Human Card", "Basic"), 0))
+	scene._maybe_run_ai()
+	var scheduled := bool(scene.get("_ai_step_scheduled"))
+	scene._run_ai_step()
+	GameManager.current_mode = previous_mode
+	var context: Dictionary = scene.get("_pending_effect_context")
+	var selected_slots: Array = context.get("opponent_pick", [])
+	var first_selected_slot: Variant = selected_slots[0] if not selected_slots.is_empty() else null
+	return run_checks([
+		assert_true(scheduled, "BattleScene should schedule AI when the pending effect step chooser is the AI player"),
+		assert_eq(int(scene.get("_pending_effect_step_index")), 1, "AI should advance the human-owned interaction once it resolves the chooser step"),
+		assert_eq(selected_slots.size(), 1, "AI-owned chooser steps should still record a selection"),
+		assert_eq(first_selected_slot, bench_a, "Baseline AI should pick the first legal slot for chooser-owned effect prompts"),
+	])
+
+
+func test_ai_heuristics_prioritize_knockout_attack() -> String:
+	var heuristics = AIHeuristicsScript.new()
+	var attack_action := {"kind": "attack", "projected_knockout": true}
+	var end_turn_action := {"kind": "end_turn"}
+	return run_checks([
+		assert_true(
+			heuristics.score_action(attack_action, {}) > heuristics.score_action(end_turn_action, {}),
+			"Knockout attacks should outrank ending the turn"
+		),
+	])
+
+
+func test_ai_heuristics_prioritize_play_basic_to_bench_over_end_turn() -> String:
+	var heuristics = AIHeuristicsScript.new()
+	var bench_action := {"kind": "play_basic_to_bench"}
+	var end_turn_action := {"kind": "end_turn"}
+	return run_checks([
+		assert_true(
+			heuristics.score_action(bench_action, {}) > heuristics.score_action(end_turn_action, {}),
+			"Benching a Basic should outrank ending the turn"
+		),
+	])
+
+
+func test_ai_heuristics_prioritize_active_attach_targets() -> String:
+	var heuristics = AIHeuristicsScript.new()
+	var active_attach := {"kind": "attach_energy", "is_active_target": true}
+	var bench_attach := {"kind": "attach_energy", "is_active_target": false}
+	return run_checks([
+		assert_true(
+			heuristics.score_action(active_attach, {}) > heuristics.score_action(bench_attach, {}),
+			"Attaching to the active Pokemon should outrank a generic bench attach in the baseline policy"
+		),
+	])
+
+
+func test_ai_heuristics_prioritize_productive_attach_over_dead_trainer() -> String:
+	var heuristics = AIHeuristicsScript.new()
+	var attach_action := {"kind": "attach_energy", "is_active_target": true}
+	var dead_trainer := {"kind": "play_trainer", "productive": false}
+	return run_checks([
+		assert_true(
+			heuristics.score_action(attach_action, {}) > heuristics.score_action(dead_trainer, {}),
+			"Productive attaches should outrank low-value trainer plays"
+		),
+	])
+
+
+func test_ai_opponent_executes_attack_before_ending_turn() -> String:
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	var scene := _make_battle_scene_refresh_stub()
+	scene._setup_ai_for_tests()
+	var gsm := _make_ai_manual_gsm()
+	gsm.game_state.current_player_index = 1
+	scene.set("_gsm", gsm)
+	var player: PlayerState = gsm.game_state.players[1]
+	var opponent: PlayerState = gsm.game_state.players[0]
+	var attacker_cd := _make_ai_pokemon_card_data(
+		"Attacker",
+		"Basic",
+		"",
+		"",
+		[],
+		[{"name": "Zap", "cost": "C", "damage": "50", "text": "", "is_vstar_power": false}]
+	)
+	var attacker_slot := _make_ai_slot(CardInstance.create(attacker_cd, 1))
+	attacker_slot.attached_energy.append(CardInstance.create(_make_ai_energy_card_data("Lightning Energy"), 1))
+	player.active_pokemon = attacker_slot
+	opponent.active_pokemon = _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Defender"), 0))
+
+	var handled := ai.run_single_step(scene, gsm)
+	return run_checks([
+		assert_true(handled, "AI should execute an available attack"),
+		assert_eq(opponent.active_pokemon.damage_counters, 50, "AI should deal attack damage before considering end_turn"),
+		assert_true(gsm.game_state.phase != GameState.GamePhase.MAIN, "Executing the attack should leave the main-phase idle state"),
+	])
+
+
+func test_ai_opponent_plays_basic_to_bench_when_no_attack_is_available() -> String:
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	var scene := _make_battle_scene_refresh_stub()
+	scene._setup_ai_for_tests()
+	var gsm := _make_ai_manual_gsm()
+	gsm.game_state.current_player_index = 1
+	scene.set("_gsm", gsm)
+	var player: PlayerState = gsm.game_state.players[1]
+	player.active_pokemon = _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Lead"), 1))
+	var bench_basic := CardInstance.create(_make_ai_pokemon_card_data("Bench Basic"), 1)
+	player.hand = [bench_basic]
+
+	var handled := ai.run_single_step(scene, gsm)
+	return run_checks([
+		assert_true(handled, "AI should play a benchable Basic when it cannot attack"),
+		assert_eq(player.bench.size(), 1, "AI should place the Basic onto the bench"),
+		assert_eq(player.bench[0].get_pokemon_name(), "Bench Basic", "AI should bench the available Basic Pokemon"),
+		assert_false(bench_basic in player.hand, "The benched Basic should leave the hand"),
+	])
+
+
 func test_ai_opponent_routes_setup_active_prompt_through_setup_planner() -> String:
 	var ai := AIOpponentScript.new()
 	ai.configure(1, 1)
@@ -540,6 +873,35 @@ func test_ai_opponent_routes_setup_bench_prompt_through_setup_planner() -> Strin
 	])
 
 
+func test_ai_opponent_clears_final_setup_bench_prompt_before_advancing() -> String:
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	var scene := SpySetupBattleScene.new()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.SETUP
+	gsm.game_state.current_player_index = 1
+	gsm.game_state.players = [_make_player_state(0), _make_player_state(1)]
+	var player: PlayerState = gsm.game_state.players[1]
+	player.active_pokemon = PokemonSlot.new()
+	player.active_pokemon.pokemon_stack.append(_make_basic("Lead"))
+	scene.set("_gsm", gsm)
+	scene.set("_setup_done", [false, false])
+	scene.set("_view_player", 1)
+	scene.set("_pending_choice", "setup_bench_1")
+	scene.set("_dialog_data", {
+		"cards": [],
+		"player": 1,
+	})
+
+	var handled := ai.run_single_step(scene, gsm)
+	return run_checks([
+		assert_true(handled, "AI should handle a final setup bench prompt with no remaining Basics"),
+		assert_eq(str(scene.get("_pending_choice")), "", "AI should clear setup_bench after finishing the setup bench step"),
+		assert_eq(scene.after_setup_bench_calls.size(), 1, "AI should still advance the setup flow once"),
+	])
+
+
 func test_ai_opponent_accepts_mulligan_bonus_draw_prompt() -> String:
 	var ai := AIOpponentScript.new()
 	ai.configure(1, 1)
@@ -559,6 +921,78 @@ func test_ai_opponent_accepts_mulligan_bonus_draw_prompt() -> String:
 		assert_eq(gsm.mulligan_resolve_calls, 1, "AI should resolve mulligan choice exactly once"),
 		assert_eq(gsm.resolved_beneficiary, 1, "AI should resolve the configured mulligan beneficiary"),
 		assert_eq(gsm.resolved_draw_extra, true, "Baseline AI should always accept the extra draw"),
+	])
+
+
+func test_ai_opponent_clears_mulligan_prompt_after_resolving_it() -> String:
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	var scene := BattleSceneScript.new()
+	var gsm := SpyGameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.SETUP
+	gsm.game_state.current_player_index = 1
+	gsm.game_state.players = [_make_player_state(0), _make_player_state(1)]
+	scene.set("_gsm", gsm)
+	scene.set("_pending_choice", "mulligan_extra_draw")
+	scene.set("_dialog_data", {"beneficiary": 1})
+
+	var handled := ai.run_single_step(scene, gsm)
+	return run_checks([
+		assert_true(handled, "AI should still resolve the mulligan prompt"),
+		assert_eq(str(scene.get("_pending_choice")), "", "AI should clear mulligan_extra_draw after consuming it"),
+	])
+
+
+func test_ai_opponent_resolves_ai_owned_take_prize_prompt() -> String:
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	var scene := _make_battle_scene_refresh_stub()
+	scene._setup_ai_for_tests()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 1
+	gsm.game_state.players = [_make_player_state(0), _make_player_state(1)]
+	var prize_card := _make_item("Prize")
+	gsm.game_state.players[1].set_prizes([prize_card])
+	scene.set("_gsm", gsm)
+	scene.set("_pending_choice", "take_prize")
+	scene.set("_pending_prize_player_index", 1)
+	scene.set("_pending_prize_remaining", 1)
+	gsm.set("_pending_prize_player_index", 1)
+	gsm.set("_pending_prize_remaining", 1)
+	scene.set("_opp_prize_slots", [BattleCardViewScript.new()])
+
+	var handled := ai.run_single_step(scene, gsm)
+	return run_checks([
+		assert_true(handled, "AI should handle its own take_prize prompt"),
+		assert_eq(gsm.game_state.players[1].prizes.size(), 0, "AI should remove a prize card from its prize area"),
+		assert_true(prize_card in gsm.game_state.players[1].hand, "AI should put the taken prize into hand"),
+		assert_eq(str(scene.get("_pending_choice")), "", "AI should clear the take_prize prompt after resolving it"),
+	])
+
+
+func test_ai_opponent_waits_for_delayed_prize_animation_before_fallback_resolve() -> String:
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	var scene := DelayedPrizeAnimationScene.new()
+	var gsm := SpyPrizeResolveGameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 1
+	gsm.game_state.players = [_make_player_state(0), _make_player_state(1)]
+	gsm.game_state.players[1].set_prizes([_make_item("Prize")])
+	gsm.set("_pending_prize_player_index", 1)
+	gsm.set("_pending_prize_remaining", 1)
+
+	var handled := ai.run_single_step(scene, gsm)
+	return run_checks([
+		assert_true(handled, "AI should treat a started prize flip animation as handled work"),
+		assert_eq(scene.try_take_prize_calls, 1, "AI should still kick off the prize flip interaction"),
+		assert_true(bool(scene.get("_pending_prize_animating")), "Prize prompt should remain in the animating state"),
+		assert_eq(gsm.resolve_take_prize_calls, 0, "AI should not fallback to GameStateMachine.resolve_take_prize while the flip animation is running"),
+		assert_eq(str(scene.get("_pending_choice")), "take_prize", "AI should leave the take_prize prompt pending until the animation callback completes"),
 	])
 
 
@@ -875,7 +1309,7 @@ func test_battle_scene_failed_retreat_does_not_schedule_ai() -> String:
 	])
 
 
-func test_battle_scene_take_prize_prompt_blocks_ai_scheduling() -> String:
+func test_battle_scene_take_prize_prompt_schedules_ai_when_ai_owns_it() -> String:
 	var previous_mode: int = GameManager.current_mode
 	var scene := _make_battle_scene_refresh_stub()
 	var gsm := GameStateMachine.new()
@@ -894,8 +1328,32 @@ func test_battle_scene_take_prize_prompt_blocks_ai_scheduling() -> String:
 	GameManager.current_mode = previous_mode
 	return run_checks([
 		assert_eq(str(scene.get("_pending_choice")), "take_prize", "Prize prompt should leave take_prize pending"),
-		assert_false(scheduled_during_prize_choice, "AI should not schedule while prize selection is pending"),
+		assert_true(scheduled_during_prize_choice, "AI-owned prize prompts should schedule the AI"),
 		assert_eq(spy_ai.run_count, 0, "Prize prompt should not run the AI"),
+	])
+
+
+func test_battle_scene_take_prize_prompt_blocks_ai_when_human_owns_it() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var scene := _make_battle_scene_refresh_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 1
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.players = [_make_player_state(0), _make_player_state(1)]
+	var spy_ai := SpyAIOpponent.new()
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	scene.set("_gsm", gsm)
+	scene._setup_ai_for_tests()
+	scene.set("_ai_opponent", spy_ai)
+	scene._on_player_choice_required("take_prize", {"player": 0, "count": 1})
+	var scheduled_during_prize_choice: bool = scene.get("_ai_step_scheduled")
+	GameManager.current_mode = previous_mode
+	return run_checks([
+		assert_eq(str(scene.get("_pending_choice")), "take_prize", "Prize prompt should leave take_prize pending"),
+		assert_false(scheduled_during_prize_choice, "Human-owned prize prompts should still block the AI"),
+		assert_eq(spy_ai.run_count, 0, "Human-owned prize prompts should not run the AI"),
 	])
 
 
