@@ -9,6 +9,24 @@ const BattleCardViewScript = preload("res://scenes/battle/BattleCardView.gd")
 const AbilityBonusDrawIfActiveScript = preload("res://scripts/effects/pokemon_effects/AbilityBonusDrawIfActive.gd")
 
 
+class InteractiveChoiceEffect extends BaseEffect:
+	func can_execute(_card: CardInstance, _game_state: GameState) -> bool:
+		return true
+
+	func can_use_ability(_pokemon: PokemonSlot, _state: GameState) -> bool:
+		return true
+
+	func get_interaction_steps(_card: CardInstance, _game_state: GameState) -> Array[Dictionary]:
+		return [{
+			"id": "pick_one",
+			"title": "Pick",
+			"items": ["A"],
+			"labels": ["A"],
+			"min_select": 1,
+			"max_select": 1,
+		}]
+
+
 class SpyAIOpponent extends RefCounted:
 	var player_index: int = 1
 	var difficulty: int = 1
@@ -97,6 +115,21 @@ class SpySetupBattleScene extends Control:
 
 	func _refresh_ui() -> void:
 		refresh_ui_calls += 1
+
+
+class SpyInteractiveActionBattleScene extends Control:
+	var trainer_interaction_calls: int = 0
+	var ability_interaction_calls: int = 0
+	var attack_interaction_calls: int = 0
+
+	func _try_play_trainer_with_interaction(_player_index: int, _card: CardInstance) -> void:
+		trainer_interaction_calls += 1
+
+	func _try_use_ability_with_interaction(_player_index: int, _slot: PokemonSlot, _ability_index: int) -> void:
+		ability_interaction_calls += 1
+
+	func _try_use_attack_with_interaction(_player_index: int, _slot: PokemonSlot, _attack_index: int) -> void:
+		attack_interaction_calls += 1
 
 
 func _make_player_state(player_index: int) -> PlayerState:
@@ -409,6 +442,22 @@ func test_ai_legal_action_builder_enumerates_play_trainer_actions() -> String:
 	])
 
 
+func test_ai_legal_action_builder_enumerates_interactive_trainer_actions() -> String:
+	var gsm := _make_ai_manual_gsm()
+	var builder: Variant = _new_legal_action_builder()
+	var player: PlayerState = gsm.game_state.players[0]
+	player.active_pokemon = _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Lead"), 0))
+	var item := CardInstance.create(_make_ai_trainer_card_data("Interactive Item", "Item", "test_ai_interactive_item"), 0)
+	gsm.effect_processor.register_effect("test_ai_interactive_item", InteractiveChoiceEffect.new())
+	player.hand = [item]
+	var actions := _build_ai_actions(gsm)
+	return run_checks([
+		assert_not_null(builder, "AILegalActionBuilder should load"),
+		assert_eq(_count_actions_by_kind(actions, "play_trainer"), 1, "Builder should keep trainer actions that require interaction steps"),
+		assert_true(_has_action(actions, "play_trainer", {"card": item}), "Builder should still expose the interactive trainer action"),
+	])
+
+
 func test_ai_legal_action_builder_enumerates_play_stadium_actions() -> String:
 	var gsm := _make_ai_manual_gsm()
 	var builder: Variant = _new_legal_action_builder()
@@ -444,6 +493,28 @@ func test_ai_legal_action_builder_enumerates_use_ability_actions() -> String:
 		assert_not_null(builder, "AILegalActionBuilder should load"),
 		assert_eq(_count_actions_by_kind(actions, "use_ability"), 1, "Builder should enumerate immediately usable abilities"),
 		assert_true(_has_action(actions, "use_ability", {"source_slot": active_slot, "ability_index": 0, "targets": []}), "Builder should include a normalized ability action"),
+	])
+
+
+func test_ai_legal_action_builder_enumerates_interactive_ability_actions() -> String:
+	var gsm := _make_ai_manual_gsm()
+	var builder: Variant = _new_legal_action_builder()
+	var player: PlayerState = gsm.game_state.players[0]
+	var ability_cd := _make_ai_pokemon_card_data(
+		"Interactive Ability Mon",
+		"Basic",
+		"",
+		"test_ai_interactive_ability",
+		[{"name": "Choose", "text": ""}]
+	)
+	gsm.effect_processor.register_effect("test_ai_interactive_ability", InteractiveChoiceEffect.new())
+	var active_slot := _make_ai_slot(CardInstance.create(ability_cd, 0))
+	player.active_pokemon = active_slot
+	var actions := _build_ai_actions(gsm)
+	return run_checks([
+		assert_not_null(builder, "AILegalActionBuilder should load"),
+		assert_eq(_count_actions_by_kind(actions, "use_ability"), 1, "Builder should keep ability actions that require interaction steps"),
+		assert_true(_has_action(actions, "use_ability", {"source_slot": active_slot, "ability_index": 0}), "Builder should still expose the interactive ability action"),
 	])
 
 
@@ -809,6 +880,49 @@ func test_ai_opponent_plays_basic_to_bench_when_no_attack_is_available() -> Stri
 		assert_eq(player.bench.size(), 1, "AI should place the Basic onto the bench"),
 		assert_eq(player.bench[0].get_pokemon_name(), "Bench Basic", "AI should bench the available Basic Pokemon"),
 		assert_false(bench_basic in player.hand, "The benched Basic should leave the hand"),
+	])
+
+
+func test_ai_opponent_starts_interactive_trainer_actions_through_battle_scene() -> String:
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	var scene := SpyInteractiveActionBattleScene.new()
+	var gsm := _make_ai_manual_gsm()
+	gsm.game_state.current_player_index = 1
+	var player: PlayerState = gsm.game_state.players[1]
+	player.active_pokemon = _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Lead"), 1))
+	var item := CardInstance.create(_make_ai_trainer_card_data("Interactive Item", "Item", "test_ai_interactive_item"), 1)
+	gsm.effect_processor.register_effect("test_ai_interactive_item", InteractiveChoiceEffect.new())
+	player.hand = [item]
+
+	var handled := ai.run_single_step(scene, gsm)
+	return run_checks([
+		assert_true(handled, "AI should treat interactive trainer actions as executable work"),
+		assert_eq(scene.trainer_interaction_calls, 1, "AI should start the trainer interaction through BattleScene instead of skipping it"),
+	])
+
+
+func test_ai_opponent_starts_interactive_ability_actions_through_battle_scene() -> String:
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	var scene := SpyInteractiveActionBattleScene.new()
+	var gsm := _make_ai_manual_gsm()
+	gsm.game_state.current_player_index = 1
+	var player: PlayerState = gsm.game_state.players[1]
+	var ability_cd := _make_ai_pokemon_card_data(
+		"Interactive Ability Mon",
+		"Basic",
+		"",
+		"test_ai_interactive_ability",
+		[{"name": "Choose", "text": ""}]
+	)
+	gsm.effect_processor.register_effect("test_ai_interactive_ability", InteractiveChoiceEffect.new())
+	player.active_pokemon = _make_ai_slot(CardInstance.create(ability_cd, 1))
+
+	var handled := ai.run_single_step(scene, gsm)
+	return run_checks([
+		assert_true(handled, "AI should treat interactive ability actions as executable work"),
+		assert_eq(scene.ability_interaction_calls, 1, "AI should start the ability interaction through BattleScene instead of skipping it"),
 	])
 
 
@@ -1273,6 +1387,82 @@ func test_battle_scene_running_ai_can_queue_followup_step_from_success_hook() ->
 	return run_checks([
 		assert_eq(spy_ai.run_count, 1, "The first AI step should run"),
 		assert_true(scheduled_followup, "A success hook during AI execution should queue one follow-up step"),
+	])
+
+
+func test_battle_scene_ai_started_interactive_ability_queues_followup_step() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var scene := _make_battle_scene_refresh_stub()
+	scene._setup_ai_for_tests()
+	var gsm := _make_ai_manual_gsm()
+	gsm.game_state.current_player_index = 1
+	var player: PlayerState = gsm.game_state.players[1]
+	var ability_cd := _make_ai_pokemon_card_data(
+		"Interactive Ability Mon",
+		"Basic",
+		"",
+		"test_ai_interactive_ability",
+		[{"name": "Choose", "text": ""}]
+	)
+	gsm.effect_processor.register_effect("test_ai_interactive_ability", InteractiveChoiceEffect.new())
+	player.active_pokemon = _make_ai_slot(CardInstance.create(ability_cd, 1))
+	scene.set("_gsm", gsm)
+	scene.set("_ai_opponent", SpyAIOpponent.new())
+	scene.set("_ai_running", true)
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+
+	scene._try_use_ability_with_interaction(1, player.active_pokemon, 0)
+	var queued_followup: bool = bool(scene.get("_ai_followup_requested"))
+	var pending_choice: String = str(scene.get("_pending_choice"))
+	GameManager.current_mode = previous_mode
+	return run_checks([
+		assert_eq(pending_choice, "effect_interaction", "Interactive abilities should enter effect_interaction state"),
+		assert_true(queued_followup, "AI-started interactive abilities should immediately queue an AI follow-up step"),
+	])
+
+
+func test_ai_effect_interaction_queues_followup_for_next_ai_owned_step() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	var scene := _make_battle_scene_refresh_stub()
+	scene._setup_ai_for_tests()
+	var gsm := _make_ai_manual_gsm()
+	gsm.game_state.current_player_index = 1
+	scene.set("_gsm", gsm)
+	scene.set("_ai_opponent", SpyAIOpponent.new())
+	var source_card := CardInstance.create(_make_ai_trainer_card_data("Multi Step Item", "Item"), 1)
+	var steps: Array[Dictionary] = [
+		{
+			"id": "pick_one",
+			"title": "Pick One",
+			"items": [CardInstance.create(_make_ai_trainer_card_data("A", "Item"), 1)],
+			"labels": ["A"],
+			"min_select": 1,
+			"max_select": 1,
+		},
+		{
+			"id": "pick_two",
+			"title": "Pick Two",
+			"items": [CardInstance.create(_make_ai_trainer_card_data("B", "Item"), 1)],
+			"labels": ["B"],
+			"min_select": 1,
+			"max_select": 1,
+		},
+	]
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	scene.call("_start_effect_interaction", "trainer", 1, steps, source_card)
+	scene.set("_ai_followup_requested", false)
+	scene.set("_ai_running", true)
+
+	var handled := ai.run_single_step(scene, gsm)
+	var queued_followup: bool = bool(scene.get("_ai_followup_requested"))
+	var next_step_index: int = int(scene.get("_pending_effect_step_index"))
+	GameManager.current_mode = previous_mode
+	return run_checks([
+		assert_true(handled, "AI should resolve the current effect-interaction step"),
+		assert_eq(next_step_index, 1, "AI should advance to the next interaction step"),
+		assert_true(queued_followup, "AI should queue another follow-up when the next step is still AI-owned"),
 	])
 
 

@@ -78,12 +78,14 @@ func _build_evolve_actions(gsm: GameStateMachine, player_index: int, player: Pla
 func _build_play_trainer_actions(gsm: GameStateMachine, player_index: int, player: PlayerState) -> Array[Dictionary]:
 	var actions: Array[Dictionary] = []
 	for card: CardInstance in player.hand:
-		if not _can_play_trainer_immediately(gsm, player_index, card):
+		var trainer_eval := _evaluate_trainer_action(gsm, player_index, card)
+		if not bool(trainer_eval.get("allowed", false)):
 			continue
 		actions.append({
 			"kind": "play_trainer",
 			"card": card,
 			"targets": [],
+			"requires_interaction": bool(trainer_eval.get("requires_interaction", false)),
 		})
 	return actions
 
@@ -96,12 +98,11 @@ func _build_play_stadium_actions(gsm: GameStateMachine, player_index: int, playe
 		if not gsm.rule_validator.can_play_stadium(gsm.game_state, player_index, card):
 			continue
 		var effect: BaseEffect = gsm.effect_processor.get_effect(card.card_data.effect_id)
-		if effect != null and not effect.get_on_play_interaction_steps(card, gsm.game_state).is_empty():
-			continue
 		actions.append({
 			"kind": "play_stadium",
 			"card": card,
 			"targets": [],
+			"requires_interaction": effect != null and not effect.get_on_play_interaction_steps(card, gsm.game_state).is_empty(),
 		})
 	return actions
 
@@ -126,13 +127,12 @@ func _build_slot_ability_actions(gsm: GameStateMachine, player_index: int, slot:
 		var effect: BaseEffect = gsm.effect_processor.get_ability_effect(slot, ability_index, state)
 		if source_card == null or effect == null:
 			continue
-		if not effect.get_interaction_steps(source_card, state).is_empty():
-			continue
 		actions.append({
 			"kind": "use_ability",
 			"source_slot": slot,
 			"ability_index": ability_index,
 			"targets": [],
+			"requires_interaction": not effect.get_interaction_steps(source_card, state).is_empty(),
 		})
 	for granted: Dictionary in gsm.effect_processor.get_granted_abilities(slot, state):
 		var ability_index: int = int(granted.get("ability_index", -1))
@@ -142,13 +142,12 @@ func _build_slot_ability_actions(gsm: GameStateMachine, player_index: int, slot:
 		var effect: BaseEffect = gsm.effect_processor.get_ability_effect(slot, ability_index, state)
 		if source_card == null or effect == null:
 			continue
-		if not effect.get_interaction_steps(source_card, state).is_empty():
-			continue
 		actions.append({
 			"kind": "use_ability",
 			"source_slot": slot,
 			"ability_index": ability_index,
 			"targets": [],
+			"requires_interaction": not effect.get_interaction_steps(source_card, state).is_empty(),
 		})
 	return actions
 
@@ -185,12 +184,12 @@ func _build_attack_actions(gsm: GameStateMachine, player_index: int, player: Pla
 	for attack_index: int in attacks.size():
 		if not gsm.can_use_attack(player_index, attack_index):
 			continue
-		if not _get_attack_interaction_steps(gsm, active, attack_index).is_empty():
-			continue
+		var interaction_steps: Array[Dictionary] = _get_attack_interaction_steps(gsm, active, attack_index)
 		actions.append({
 			"kind": "attack",
 			"attack_index": attack_index,
 			"targets": [],
+			"requires_interaction": not interaction_steps.is_empty(),
 		})
 	return actions
 
@@ -205,22 +204,25 @@ func _get_player_slots(player: PlayerState) -> Array[PokemonSlot]:
 	return slots
 
 
-func _can_play_trainer_immediately(gsm: GameStateMachine, player_index: int, card: CardInstance) -> bool:
+func _evaluate_trainer_action(gsm: GameStateMachine, player_index: int, card: CardInstance) -> Dictionary:
 	if card == null or card.card_data == null:
-		return false
+		return {"allowed": false, "requires_interaction": false}
 	if card.card_data.card_type != "Item" and card.card_data.card_type != "Supporter":
-		return false
+		return {"allowed": false, "requires_interaction": false}
 	if card.card_data.card_type == "Supporter":
 		if not gsm.rule_validator.can_play_supporter(gsm.game_state, player_index) and not gsm._can_play_supporter_exception(player_index, card):
-			return false
+			return {"allowed": false, "requires_interaction": false}
 	if not card in gsm.game_state.players[player_index].hand:
-		return false
+		return {"allowed": false, "requires_interaction": false}
 	var effect: BaseEffect = gsm.effect_processor.get_effect(card.card_data.effect_id)
 	if effect == null:
-		return true
+		return {"allowed": true, "requires_interaction": false}
 	if not effect.can_execute(card, gsm.game_state):
-		return false
-	return effect.get_interaction_steps(card, gsm.game_state).is_empty()
+		return {"allowed": false, "requires_interaction": false}
+	return {
+		"allowed": true,
+		"requires_interaction": not effect.get_interaction_steps(card, gsm.game_state).is_empty(),
+	}
 
 
 func _get_minimal_retreat_discards(gsm: GameStateMachine, active: PokemonSlot, retreat_cost: int) -> Array[Array]:

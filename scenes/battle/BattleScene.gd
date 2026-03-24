@@ -3032,6 +3032,7 @@ func _try_use_attack_with_interaction(player_index: int, slot: PokemonSlot, atta
 			_log(_gsm.get_attack_unusable_reason(player_index, attack_index))
 		return
 	_start_effect_interaction("attack", player_index, steps, card, slot, attack_index, {}, effects)
+	_maybe_run_ai()
 
 
 func _try_use_granted_attack_with_interaction(player_index: int, slot: PokemonSlot, granted_attack: Dictionary) -> void:
@@ -3053,6 +3054,7 @@ func _try_use_granted_attack_with_interaction(player_index: int, slot: PokemonSl
 			_log(_get_granted_attack_unusable_reason(player_index, slot, granted_attack))
 		return
 	_start_effect_interaction("granted_attack", player_index, steps, card, slot, -1, granted_attack)
+	_maybe_run_ai()
 
 
 func _can_use_granted_attack(player_index: int, slot: PokemonSlot, granted_attack: Dictionary) -> bool:
@@ -3415,6 +3417,7 @@ func _try_play_trainer_with_interaction(player_index: int, card: CardInstance) -
 		return
 
 	_start_effect_interaction("trainer", player_index, steps, card)
+	_maybe_run_ai()
 
 
 func _try_play_stadium_with_interaction(player_index: int, card: CardInstance) -> void:
@@ -3435,6 +3438,7 @@ func _try_play_stadium_with_interaction(player_index: int, card: CardInstance) -
 		return
 
 	_start_effect_interaction("play_stadium", player_index, steps, card)
+	_maybe_run_ai()
 
 
 func _try_use_ability_with_interaction(player_index: int, slot: PokemonSlot, ability_index: int) -> void:
@@ -3473,6 +3477,7 @@ func _try_use_ability_with_interaction(player_index: int, slot: PokemonSlot, abi
 			_log("%s 的特性当前没有可选目标" % card.card_data.name)
 		return
 	_start_effect_interaction("ability", player_index, steps, card, slot, ability_index)
+	_maybe_run_ai()
 
 
 func _try_use_stadium_with_interaction(player_index: int) -> void:
@@ -3497,6 +3502,7 @@ func _try_use_stadium_with_interaction(player_index: int) -> void:
 			_log("当前竞技场效果无法使用")
 		return
 	_start_effect_interaction("stadium", player_index, steps, stadium_card)
+	_maybe_run_ai()
 
 
 func _start_effect_interaction(
@@ -3739,6 +3745,7 @@ func _handle_effect_interaction_choice(selected_indices: PackedInt32Array) -> vo
 	_pending_effect_step_index += 1
 	_inject_followup_steps()
 	_show_next_effect_interaction_step()
+	_maybe_run_ai()
 
 
 ## 在每个交互步骤完成后，检查所有招式效果是否有后续动态步骤需要追加。

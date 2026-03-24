@@ -199,14 +199,34 @@ func _execute_action(battle_scene: Control, gsm: GameStateMachine, action: Dicti
 					battle_scene.call("_maybe_run_ai")
 				return true
 		"play_trainer":
+			if bool(action.get("requires_interaction", false)):
+				if battle_scene != null and battle_scene.has_method("_try_play_trainer_with_interaction"):
+					battle_scene.call("_try_play_trainer_with_interaction", player_index, action.get("card"))
+					return true
+				return false
 			if gsm.play_trainer(player_index, action.get("card"), action.get("targets", [])):
 				_after_successful_action(battle_scene)
 				return true
 		"play_stadium":
+			if bool(action.get("requires_interaction", false)):
+				if battle_scene != null and battle_scene.has_method("_try_play_stadium_with_interaction"):
+					battle_scene.call("_try_play_stadium_with_interaction", player_index, action.get("card"))
+					return true
+				return false
 			if gsm.play_stadium(player_index, action.get("card"), action.get("targets", [])):
 				_after_successful_action(battle_scene)
 				return true
 		"use_ability":
+			if bool(action.get("requires_interaction", false)):
+				if battle_scene != null and battle_scene.has_method("_try_use_ability_with_interaction"):
+					battle_scene.call(
+						"_try_use_ability_with_interaction",
+						player_index,
+						action.get("source_slot"),
+						int(action.get("ability_index", 0))
+					)
+					return true
+				return false
 			if gsm.use_ability(player_index, action.get("source_slot"), int(action.get("ability_index", 0)), action.get("targets", [])):
 				_after_successful_action(battle_scene, true)
 				return true
@@ -215,6 +235,17 @@ func _execute_action(battle_scene: Control, gsm: GameStateMachine, action: Dicti
 				_after_successful_action(battle_scene)
 				return true
 		"attack":
+			if bool(action.get("requires_interaction", false)):
+				if battle_scene != null and battle_scene.has_method("_try_use_attack_with_interaction"):
+					var player: PlayerState = gsm.game_state.players[player_index]
+					battle_scene.call(
+						"_try_use_attack_with_interaction",
+						player_index,
+						player.active_pokemon,
+						int(action.get("attack_index", -1))
+					)
+					return true
+				return false
 			if gsm.use_attack(player_index, int(action.get("attack_index", -1)), action.get("targets", [])):
 				_after_successful_action(battle_scene, true)
 				return true
