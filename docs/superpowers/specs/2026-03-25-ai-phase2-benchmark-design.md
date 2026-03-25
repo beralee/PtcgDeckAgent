@@ -262,6 +262,34 @@ Phase 1 的 `AIBenchmarkRunner.HeadlessBattleBridge` 可以作为起点，但 Ph
 3. 即使在共享 AI 模式下，也推荐显式保留 `agent_a_config / agent_b_config` 字段
    - 这样结果 schema 与 runner API 不需要在 Phase 3 再改一次
 
+`agent_a_config / agent_b_config` 在 Phase 2 第一版中的最小契约为：
+
+1. `agent_id`
+   - 用于标识 agent 类型或实现入口
+   - Phase 2 默认值：`shared-heuristic`
+2. `version_tag`
+   - 用于标识同一 agent 的不同版本
+   - Phase 2 baseline 默认值：`baseline-v1`
+
+示例：
+
+```json
+{
+  "agent_id": "shared-heuristic",
+  "version_tag": "baseline-v1"
+}
+```
+
+在 `version_regression` 模式下，`agent_a_config` 与 `agent_b_config` 可以使用相同 `agent_id` 但不同 `version_tag`，例如：
+
+```json
+{
+  "comparison_mode": "version_regression",
+  "agent_a_config": {"agent_id": "shared-heuristic", "version_tag": "baseline-v1"},
+  "agent_b_config": {"agent_id": "shared-heuristic", "version_tag": "candidate-v2"}
+}
+```
+
 ### 6.3 BenchmarkEvaluator
 
 职责：
@@ -477,6 +505,24 @@ Phase 2 第一版的最小回归契约必须明确为：
 1. `Miraidon vs Gardevoir`
 2. `Miraidon vs Charizard ex`
 3. `Gardevoir vs Charizard ex`
+
+三套牌组在 Phase 2 第一版中必须锁定为仓库内置的具体 deck 文件，不允许规划阶段自由更换 variant：
+
+1. 密勒顿
+   - deck id: `575720`
+   - file: `data/bundled_user/decks/575720.json`
+   - source: `https://tcg.mik.moe/decks/list/575720`
+   - variant: `密勒顿`
+2. 沙奈朵
+   - deck id: `578647`
+   - file: `data/bundled_user/decks/578647.json`
+   - source: `https://tcg.mik.moe/decks/list/578647`
+   - variant: `沙奈朵`
+3. 喷火龙 ex
+   - deck id: `575716`
+   - file: `data/bundled_user/decks/575716.json`
+   - source: `https://tcg.mik.moe/decks/list/575716`
+   - variant: `喷火龙 大比鸟`
 
 每个 pairing：
 
