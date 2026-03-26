@@ -3317,6 +3317,13 @@ func _ensure_ai_opponent() -> void:
 	if _ai_opponent == null:
 		_ai_opponent = AIOpponentScript.new()
 		_ai_opponent.configure(1, GameManager.ai_difficulty)
+		_ai_opponent.use_mcts = true
+		_ai_opponent.mcts_config = {
+			"branch_factor": 3,
+			"rollouts_per_sequence": 20,
+			"rollout_max_steps": 80,
+			"time_budget_ms": 3000,
+		}
 
 
 func _reset_ai_action_counter_if_needed() -> void:
