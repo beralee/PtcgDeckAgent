@@ -45,10 +45,15 @@ func plan_turn(gsm: GameStateMachine, player_index: int, config: Dictionary = {}
 	var best_action_count: int = 0
 	var start_time: int = Time.get_ticks_msec()
 
+	var deadline: int = start_time + time_budget
+
+	_mcts_debug("[MCTS] 候选序列数: %d, rollouts/seq: %d, budget: %dms" % [sequences.size(), rollouts, time_budget])
+
 	for sequence: Array in sequences:
-		if Time.get_ticks_msec() - start_time > time_budget:
+		if Time.get_ticks_msec() > deadline:
+			_mcts_debug("[MCTS] 时间预算用尽，已评估部分序列")
 			break
-		var win_rate: float = _evaluate_sequence(gsm, player_index, sequence, rollouts, rollout_steps)
+		var win_rate: float = _evaluate_sequence(gsm, player_index, sequence, rollouts, rollout_steps, deadline)
 		var action_count: int = _count_game_actions(sequence)
 		## 胜率更高则替换；胜率相同时，优先选择有更多实际动作的序列
 		if win_rate > best_win_rate or (win_rate == best_win_rate and action_count > best_action_count):
@@ -90,6 +95,11 @@ func _expand_sequences(
 		return
 
 	var actions: Array[Dictionary] = _action_builder.build_actions(gsm, player_index)
+	if current_sequence.is_empty():
+		var _action_kinds: Array[String] = []
+		for _a: Dictionary in actions:
+			_action_kinds.append(str(_a.get("kind", "")))
+		_mcts_debug("[MCTS-EXPAND] depth=%d 合法动作(%d): %s" % [remaining_depth, actions.size(), ", ".join(_action_kinds)])
 	if actions.is_empty():
 		var final_seq: Array = current_sequence.duplicate()
 		final_seq.append({"kind": "end_turn"})
@@ -99,15 +109,27 @@ func _expand_sequences(
 	## 用 heuristic 评分并取 top-K
 	var scored: Array = _score_and_rank_actions(gsm, player_index, actions)
 	var top_k: Array = scored.slice(0, mini(branch_factor, scored.size()))
+	if current_sequence.is_empty():
+		var _top_kinds: Array[String] = []
+		for _e: Dictionary in top_k:
+			var _ea: Dictionary = _e.get("action", {})
+			_top_kinds.append("%s(%.0f)" % [str(_ea.get("kind", "")), float(_e.get("score", 0))])
+		_mcts_debug("[MCTS-EXPAND] top-K: %s" % ", ".join(_top_kinds))
+
+	## 始终把 end_turn 作为一个候选分支（不管是否在 top-K 中）
+	var has_end_turn_in_top_k: bool = false
+	var any_branch_succeeded: bool = false
 
 	for entry: Dictionary in top_k:
 		var action: Dictionary = entry.get("action", {})
 		var kind: String = str(action.get("kind", ""))
 
 		if kind == "end_turn":
+			has_end_turn_in_top_k = true
 			var final_seq: Array = current_sequence.duplicate()
 			final_seq.append(action)
 			results.append(final_seq)
+			any_branch_succeeded = true
 			continue
 
 		## 对非终结动作：克隆状态、解析引用、执行、递归
@@ -115,8 +137,10 @@ func _expand_sequences(
 		var resolved_action := _resolve_action_for_gsm(action, branch_gsm, player_index)
 		var executed := _try_execute_action(branch_gsm, player_index, resolved_action)
 		if not executed:
+			_mcts_debug("[MCTS-EXPAND] 执行失败: kind=%s" % kind)
 			continue
 
+		any_branch_succeeded = true
 		## 保存原始 action（带原始 kind 等纯数据字段）到序列
 		var next_seq: Array = current_sequence.duplicate()
 		next_seq.append(_serialize_action(action))
@@ -128,6 +152,13 @@ func _expand_sequences(
 			continue
 
 		_expand_sequences(branch_gsm, player_index, next_seq, branch_factor, remaining_depth - 1, results)
+
+	## 兜底：如果没有 end_turn 在 top-K 中且没有任何分支成功，补一条 end_turn
+	if not any_branch_succeeded or (not has_end_turn_in_top_k and current_sequence.size() > 0):
+		var fallback_seq: Array = current_sequence.duplicate()
+		fallback_seq.append({"kind": "end_turn"})
+		if not any_branch_succeeded:
+			results.append(fallback_seq)
 
 
 func _score_and_rank_actions(
@@ -156,7 +187,8 @@ func _evaluate_sequence(
 	player_index: int,
 	sequence: Array,
 	num_rollouts: int,
-	max_rollout_steps: int
+	max_rollout_steps: int,
+	deadline_ms: int = 0
 ) -> float:
 	## 克隆状态、执行整条序列、然后跑 N 次 rollout
 	var sim_gsm := _cloner.clone_gsm(gsm)
@@ -175,11 +207,16 @@ func _evaluate_sequence(
 		return 1.0 if sim_gsm.game_state.winner_index == player_index else 0.0
 
 	var wins: int = 0
+	var completed_rollouts: int = 0
 	for _i in num_rollouts:
+		## 每次 rollout 前检查时间预算
+		if deadline_ms > 0 and Time.get_ticks_msec() > deadline_ms:
+			break
 		var result: Dictionary = _rollout_sim.run_rollout(sim_gsm, player_index, max_rollout_steps)
+		completed_rollouts += 1
 		if int(result.get("winner_index", -1)) == player_index:
 			wins += 1
-	return float(wins) / float(num_rollouts) if num_rollouts > 0 else 0.0
+	return float(wins) / float(completed_rollouts) if completed_rollouts > 0 else 0.0
 
 
 func _try_execute_action(gsm: GameStateMachine, player_index: int, action: Dictionary) -> bool:
@@ -402,3 +439,14 @@ func _serialize_action(action: Dictionary) -> Dictionary:
 		serialized["targets"] = action.get("targets")
 
 	return serialized
+
+
+func _mcts_debug(msg: String) -> void:
+	print(msg)
+	var file := FileAccess.open("user://mcts_debug.log", FileAccess.READ_WRITE)
+	if file == null:
+		file = FileAccess.open("user://mcts_debug.log", FileAccess.WRITE)
+	if file != null:
+		file.seek_end()
+		file.store_line(msg)
+		file.close()

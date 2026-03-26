@@ -58,6 +58,10 @@ func _apply_shared_adjustments(action: Dictionary, context: Dictionary, features
 		score_delta += 80.0
 		_add_reason_tag(action, "attack_readiness")
 
+	## 贴能目标质量评分：优先贴给高攻击力、高 HP、有招式的目标
+	if kind == "attach_energy":
+		score_delta += _score_attach_target_quality(action, context)
+
 	if kind == "play_trainer" and not _is_productive_trainer(action, features):
 		score_delta -= 30.0
 		_add_reason_tag(action, "dead_trainer_penalty")
@@ -95,6 +99,82 @@ func _advances_stage2_line(action: Dictionary, context: Dictionary) -> bool:
 		if str(hand_card.card_data.evolves_from) == str(evolution_card.card_data.name):
 			return true
 	return false
+
+
+func _score_attach_target_quality(action: Dictionary, context: Dictionary) -> float:
+	## 评估贴能目标的价值：有招式的高 HP 目标 > 无招式的低 HP 杂兵
+	var target_slot: PokemonSlot = action.get("target_slot")
+	if target_slot == null:
+		return 0.0
+	var card_data: CardData = target_slot.get_card_data()
+	if card_data == null:
+		return 0.0
+
+	var delta := 0.0
+
+	## 有攻击招式的目标更值得贴能
+	if not card_data.attacks.is_empty():
+		delta += 30.0
+		## 最高伤害越高越值得投资
+		var max_damage: int = 0
+		for attack: Dictionary in card_data.attacks:
+			var dmg: int = int(str(attack.get("damage", "0")).strip_edges())
+			if dmg > max_damage:
+				max_damage = dmg
+		if max_damage >= 100:
+			delta += 40.0
+			_add_reason_tag(action, "high_damage_target")
+		elif max_damage >= 50:
+			delta += 20.0
+
+	## HP 高的目标更值得投资（不容易被秒）
+	if card_data.hp >= 200:
+		delta += 30.0
+		_add_reason_tag(action, "tanky_target")
+	elif card_data.hp >= 120:
+		delta += 15.0
+
+	## ex/V 宝可梦通常是核心攻击手
+	if card_data.mechanic == "ex" or card_data.mechanic == "V" or card_data.mechanic == "VSTAR":
+		delta += 25.0
+		_add_reason_tag(action, "key_attacker")
+
+	## 接近满足攻击费用的目标额外加分（差 1-2 能量即可攻击）
+	var gsm: GameStateMachine = context.get("gsm")
+	if gsm != null and gsm.rule_validator != null:
+		var energy_gap := _get_min_energy_gap(target_slot, card_data, gsm)
+		if energy_gap == 1:
+			delta += 50.0
+			_add_reason_tag(action, "one_energy_from_attack")
+		elif energy_gap == 2:
+			delta += 20.0
+
+	return delta
+
+
+func _get_min_energy_gap(slot: PokemonSlot, card_data: CardData, gsm: GameStateMachine) -> int:
+	## 计算目标宝可梦距离能攻击还差几个能量（最少的招式）
+	if card_data.attacks.is_empty():
+		return 999
+	var min_gap: int = 999
+	for attack: Dictionary in card_data.attacks:
+		var cost: String = CardData.normalize_attack_cost(str(attack.get("cost", "")))
+		if cost == "":
+			min_gap = 0
+			continue
+		var has_enough: bool = gsm.rule_validator.has_enough_energy(
+			slot, cost, gsm.effect_processor, gsm.game_state
+		)
+		if has_enough:
+			min_gap = 0
+			continue
+		## 粗略估算：cost 字符数 - 已附能量数
+		var cost_count: int = cost.length()
+		var attached_count: int = slot.attached_energy.size()
+		var gap: int = maxi(0, cost_count - attached_count)
+		if gap < min_gap:
+			min_gap = gap
+	return min_gap
 
 
 func _add_reason_tag(action: Dictionary, tag: String) -> void:
@@ -172,7 +252,7 @@ func _has_any_signature(names: Array[String], signatures: Array[String]) -> bool
 
 
 func _miraidon_bias(action: Dictionary, _context: Dictionary, _features: Dictionary) -> float:
-	## Miraidon 卡组：Electric Generator 加分、电属性基础上板加分
+	## Miraidon 卡组：Electric Generator 加分、电属性基础上板加分、电系贴能加分
 	var kind := str(action.get("kind", ""))
 	var card: CardInstance = action.get("card")
 	if kind == "play_trainer" and card != null and card.card_data != null:
@@ -181,6 +261,16 @@ func _miraidon_bias(action: Dictionary, _context: Dictionary, _features: Diction
 	if kind == "play_basic_to_bench" and card != null and card.card_data != null:
 		if str(card.card_data.energy_type) == "L":
 			return 15.0
+	## 贴能给电属性宝可梦额外加分（避免贴给月月熊等非核心）
+	if kind == "attach_energy":
+		var target_slot: PokemonSlot = action.get("target_slot")
+		if target_slot != null:
+			var target_cd: CardData = target_slot.get_card_data()
+			if target_cd != null and str(target_cd.energy_type) == "L":
+				return 35.0
+			## 非电属性宝可梦减分
+			if target_cd != null and str(target_cd.energy_type) != "L" and str(target_cd.energy_type) != "C":
+				return -20.0
 	return 0.0
 
 

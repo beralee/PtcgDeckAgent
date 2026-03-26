@@ -389,25 +389,68 @@ func _choose_mcts_action(gsm: GameStateMachine) -> Dictionary:
 	## 如果还有预规划的序列动作，继续执行
 	if _mcts_sequence_index < _mcts_planned_sequence.size():
 		var planned_action: Dictionary = _mcts_planned_sequence[_mcts_sequence_index]
+		var planned_kind: String = str(planned_action.get("kind", ""))
+
+		## 核心修复：序列中的 end_turn 不直接执行，而是切换到 heuristic
+		## 让 heuristic 处理交互式动作（道具/特性），只有 heuristic 也选 end_turn 才真正结束
+		if planned_kind == "end_turn":
+			_mcts_planned_sequence.clear()
+			_mcts_sequence_index = 0
+			var _mh := "[MCTS] 序列到达 end_turn，切换 heuristic 处理剩余动作"
+			print(_mh)
+			_mcts_log_to_file(_mh)
+			return _choose_heuristic_action(gsm)
+
 		_mcts_sequence_index += 1
 		var resolved := _resolve_mcts_action(gsm, planned_action)
 		if not resolved.is_empty():
+			var _mc := "[MCTS] 续执行: %s (%d/%d)" % [str(resolved.get("kind", "")), _mcts_sequence_index, _mcts_planned_sequence.size()]
+			print(_mc)
+			_mcts_log_to_file(_mc)
 			return resolved
 		## 解析失败，清空序列并回退到 heuristic
+		var _mf := "[MCTS] 续解析失败步骤 %d: %s" % [_mcts_sequence_index, planned_kind]
+		print(_mf)
+		_mcts_log_to_file(_mf)
 		_mcts_planned_sequence.clear()
 		_mcts_sequence_index = 0
 		return _choose_heuristic_action(gsm)
+
 	## 否则规划新序列
 	_mcts_planned_sequence = _mcts_planner.plan_turn(gsm, player_index, mcts_config)
 	_mcts_sequence_index = 0
+	## 诊断输出
+	var _dbg_kinds: Array[String] = []
+	for _dbg_a: Dictionary in _mcts_planned_sequence:
+		_dbg_kinds.append(str(_dbg_a.get("kind", "")))
+	var _dbg_msg := "[MCTS] 规划序列: %s (%d步)" % [", ".join(_dbg_kinds), _mcts_planned_sequence.size()]
+	print(_dbg_msg)
+	_mcts_log_to_file(_dbg_msg)
 	if _mcts_planned_sequence.is_empty():
-		return {"kind": "end_turn"}
+		return _choose_heuristic_action(gsm)
 	var planned_action: Dictionary = _mcts_planned_sequence[_mcts_sequence_index]
+	var planned_kind: String = str(planned_action.get("kind", ""))
+
+	## 如果序列第一步就是 end_turn，直接走 heuristic
+	if planned_kind == "end_turn":
+		_mcts_planned_sequence.clear()
+		_mcts_sequence_index = 0
+		var _mh2 := "[MCTS] 序列仅有 end_turn，切换 heuristic"
+		print(_mh2)
+		_mcts_log_to_file(_mh2)
+		return _choose_heuristic_action(gsm)
+
 	_mcts_sequence_index += 1
 	var resolved := _resolve_mcts_action(gsm, planned_action)
 	if not resolved.is_empty():
+		var _m1 := "[MCTS] 执行: %s (解析成功)" % str(resolved.get("kind", ""))
+		print(_m1)
+		_mcts_log_to_file(_m1)
 		return resolved
 	## 解析失败，清空序列并回退到 heuristic
+	var _mf2 := "[MCTS] 解析失败，回退 heuristic: kind=%s" % planned_kind
+	print(_mf2)
+	_mcts_log_to_file(_mf2)
 	_mcts_planned_sequence.clear()
 	_mcts_sequence_index = 0
 	return _choose_heuristic_action(gsm)
@@ -525,3 +568,13 @@ func _match_slot_card_id(action: Dictionary, slot_key: String, expected_id: int)
 		if top_card != null:
 			return top_card.instance_id == expected_id
 	return false
+
+
+func _mcts_log_to_file(msg: String) -> void:
+	var file := FileAccess.open("user://mcts_debug.log", FileAccess.READ_WRITE)
+	if file == null:
+		file = FileAccess.open("user://mcts_debug.log", FileAccess.WRITE)
+	if file != null:
+		file.seek_end()
+		file.store_line(msg)
+		file.close()
