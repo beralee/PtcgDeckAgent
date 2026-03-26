@@ -1,0 +1,98 @@
+class_name TestDeckManager
+extends TestBase
+
+const DeckManagerScene = preload("res://scenes/deck_manager/DeckManager.tscn")
+
+
+func test_import_deck_name_validation_rejects_empty_and_duplicates() -> String:
+	_cleanup_decks([910001])
+	var existing := _make_deck(910001, "重复名称")
+	CardDatabase.save_deck(existing)
+
+	var scene: Control = DeckManagerScene.instantiate()
+	var empty_error: String = scene._validate_import_deck_name("   ")
+	var duplicate_error: String = scene._validate_import_deck_name("重复名称")
+	var unique_error: String = scene._validate_import_deck_name("新名称")
+
+	_cleanup_decks([existing.id])
+	scene.queue_free()
+
+	return run_checks([
+		assert_true(empty_error != "", "空白名称应返回错误"),
+		assert_true(duplicate_error != "", "重复名称应返回错误"),
+		assert_eq(unique_error, "", "唯一名称不应返回错误"),
+	])
+
+
+func test_import_completed_saves_immediately_when_name_is_unique() -> String:
+	_cleanup_decks([910002])
+	var imported := _make_deck(910002, "唯一导入名")
+	var scene: Control = DeckManagerScene.instantiate()
+
+	scene._on_import_completed(imported, PackedStringArray())
+
+	var saved: DeckData = CardDatabase.get_deck(imported.id)
+	var pending_deck = scene._pending_import_deck
+
+	_cleanup_decks([imported.id])
+	scene.queue_free()
+
+	return run_checks([
+		assert_not_null(saved, "唯一名称导入后应直接保存"),
+		assert_eq(saved.deck_name, "唯一导入名", "应保留原始唯一名称"),
+		assert_null(pending_deck, "唯一名称不应进入待改名状态"),
+	])
+
+
+func test_import_completed_requires_rename_before_saving_duplicate_name() -> String:
+	_cleanup_decks([910003, 910004])
+	var existing := _make_deck(910003, "冲突卡组")
+	var imported := _make_deck(910004, "冲突卡组")
+	CardDatabase.save_deck(existing)
+
+	var scene: Control = DeckManagerScene.instantiate()
+	scene._on_import_completed(imported, PackedStringArray())
+
+	var not_saved_yet: DeckData = CardDatabase.get_deck(imported.id)
+	var pending_before = scene._pending_import_deck
+	var confirm_before: bool = scene._rename_confirm_button.disabled if scene._rename_confirm_button != null else false
+
+	scene._on_import_rename_text_changed("冲突卡组")
+	if scene._rename_input != null:
+		scene._rename_input.text = "改名后卡组"
+	scene._on_import_rename_text_changed("改名后卡组")
+	scene._on_confirm_import_rename()
+
+	var saved: DeckData = CardDatabase.get_deck(imported.id)
+	var pending_after = scene._pending_import_deck
+
+	_cleanup_decks([existing.id, imported.id])
+	scene.queue_free()
+
+	return run_checks([
+		assert_null(not_saved_yet, "重名导入时不应立即保存"),
+		assert_not_null(pending_before, "重名导入时应进入待改名状态"),
+		assert_true(confirm_before, "重名初始值时确认按钮应禁用"),
+		assert_not_null(saved, "改成唯一名称后应保存卡组"),
+		assert_eq(saved.deck_name, "改名后卡组", "保存后的卡组应使用新名称"),
+		assert_null(pending_after, "保存后应清空待改名状态"),
+	])
+
+
+func _make_deck(deck_id: int, deck_name: String) -> DeckData:
+	var deck := DeckData.new()
+	deck.id = deck_id
+	deck.deck_name = deck_name
+	deck.source_url = "https://tcg.mik.moe/decks/list/%d" % deck_id
+	deck.import_date = "2026-03-25 00:00:00"
+	deck.variant_name = deck_name
+	deck.deck_code = "UTEST_%d" % deck_id
+	deck.total_cards = 60
+	deck.cards = []
+	return deck
+
+
+func _cleanup_decks(deck_ids: Array[int]) -> void:
+	for deck_id: int in deck_ids:
+		if CardDatabase.has_deck(deck_id):
+			CardDatabase.delete_deck(deck_id)
