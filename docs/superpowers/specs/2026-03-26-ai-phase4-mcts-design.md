@@ -132,25 +132,17 @@ func run_rollout(gsm: GameStateMachine, player_index: int, max_steps: int = 100)
 
 ### 4.3 数据流
 
-```
-GameStateMachine (原始)
-    │
-    ├── GameStateCloner.clone_gsm() ──→ 克隆体 A（用于序列展开）
-    │                                      │
-    │                                      ├── 执行 action_1 → 克隆体 A'
-    │                                      │     ├── 执行 action_2 → 克隆体 A''
-    │                                      │     │     └── end_turn → 序列 [a1, a2, end]
-    │                                      │     └── 执行 action_3 → ...
-    │                                      └── 执行 action_4 → ...
-    │
-    ├── 对每条完整序列:
-    │     ├── GameStateCloner.clone_gsm() ──→ 克隆体 B
-    │     ├── 执行完整序列
-    │     ├── RolloutSimulator.run_rollout() × N 次
-    │     └── 记录胜率
-    │
-    └── 选胜率最高的序列 → 返回给 AIOpponent
-```
+1. GameStateCloner.clone_gsm() -> 克隆体 A（用于序列展开）
+   - 执行 action_1 -> 克隆体 A'
+     - 执行 action_2 -> end_turn -> 序列 [a1, a2, end]
+     - 执行 action_3 -> ...
+   - 执行 action_4 -> ...
+2. 对每条完整序列:
+   - GameStateCloner.clone_gsm() -> 克隆体 B
+   - 执行完整序列
+   - RolloutSimulator.run_rollout() x N 次
+   - 记录胜率
+3. 选胜率最高的序列 -> 返回给 AIOpponent
 
 ## 5. 组合爆炸控制
 
