@@ -3,17 +3,21 @@ extends RefCounted
 
 const AISetupPlannerScript = preload("res://scripts/ai/AISetupPlanner.gd")
 const AILegalActionBuilderScript = preload("res://scripts/ai/AILegalActionBuilder.gd")
+const AIFeatureExtractorScript = preload("res://scripts/ai/AIFeatureExtractor.gd")
 const AIStepResolverScript = preload("res://scripts/ai/AIStepResolver.gd")
 const AIHeuristicsScript = preload("res://scripts/ai/AIHeuristics.gd")
+const AIDecisionTraceScript = preload("res://scripts/ai/AIDecisionTrace.gd")
 
 var player_index: int = 1
 var difficulty: int = 1
 var _setup_planner = AISetupPlannerScript.new()
 var _legal_action_builder = AILegalActionBuilderScript.new()
+var _feature_extractor = AIFeatureExtractorScript.new()
 var _step_resolver = AIStepResolverScript.new()
 var _heuristics = AIHeuristicsScript.new()
 var _planned_setup_bench_ids: Array[int] = []
 var _last_legal_actions: Array[Dictionary] = []
+var _last_decision_trace = null
 
 
 func configure(next_player_index: int, next_difficulty: int) -> void:
@@ -35,11 +39,20 @@ func get_legal_actions(gsm: GameStateMachine) -> Array[Dictionary]:
 	return _last_legal_actions.duplicate()
 
 
+func get_last_decision_trace():
+	if _last_decision_trace == null:
+		return null
+	return _last_decision_trace.clone()
+
+
 func run_single_step(battle_scene: Control, gsm: GameStateMachine) -> bool:
 	if battle_scene == null or gsm == null or gsm.game_state == null:
 		return false
 	var pending_choice := str(battle_scene.get("_pending_choice"))
+	var bridge_handles_prompts: bool = battle_scene.has_method("handles_bridge_owned_prompts") and bool(battle_scene.call("handles_bridge_owned_prompts"))
 	if pending_choice == "mulligan_extra_draw":
+		if bridge_handles_prompts and _is_bridge_owned_prompt(pending_choice):
+			return false
 		var dialog_data: Dictionary = battle_scene.get("_dialog_data")
 		var beneficiary: int = int(dialog_data.get("beneficiary", -1))
 		if beneficiary != player_index:
@@ -48,11 +61,21 @@ func run_single_step(battle_scene: Control, gsm: GameStateMachine) -> bool:
 		gsm.resolve_mulligan_choice(beneficiary, _setup_planner.choose_mulligan_bonus_draw())
 		return true
 	if pending_choice == "take_prize":
+		if bridge_handles_prompts and _is_bridge_owned_prompt(pending_choice):
+			return false
 		return _run_take_prize_step(battle_scene, gsm)
+	if pending_choice == "send_out":
+		if bridge_handles_prompts and _is_bridge_owned_prompt(pending_choice):
+			return false
+		return _run_send_out_step(battle_scene, gsm)
 	if pending_choice.begins_with("setup_active_"):
+		if bridge_handles_prompts and _is_bridge_owned_prompt(pending_choice):
+			return false
 		_clear_consumed_prompt(battle_scene)
 		return _run_setup_active_step(battle_scene, gsm, pending_choice)
 	if pending_choice.begins_with("setup_bench_"):
+		if bridge_handles_prompts and _is_bridge_owned_prompt(pending_choice):
+			return false
 		var dialog_data: Dictionary = battle_scene.get("_dialog_data")
 		_clear_consumed_prompt(battle_scene)
 		return _run_setup_bench_step(battle_scene, gsm, pending_choice, dialog_data)
@@ -62,6 +85,14 @@ func run_single_step(battle_scene: Control, gsm: GameStateMachine) -> bool:
 	if action.is_empty():
 		return false
 	return _execute_action(battle_scene, gsm, action)
+
+
+func _is_bridge_owned_prompt(pending_choice: String) -> bool:
+	return pending_choice == "mulligan_extra_draw" \
+		or pending_choice == "take_prize" \
+		or pending_choice == "send_out" \
+		or pending_choice.begins_with("setup_active_") \
+		or pending_choice.begins_with("setup_bench_")
 
 
 func _run_setup_active_step(battle_scene: Control, gsm: GameStateMachine, pending_choice: String) -> bool:
@@ -134,20 +165,41 @@ func _find_next_planned_bench_card(player: PlayerState, available_cards: Array[C
 
 func _choose_best_action(gsm: GameStateMachine) -> Dictionary:
 	var actions: Array[Dictionary] = get_legal_actions(gsm)
+	var trace = AIDecisionTraceScript.new()
+	trace.turn_number = int(gsm.game_state.turn_number) if gsm != null and gsm.game_state != null else -1
+	trace.player_index = player_index
+	trace.legal_actions = actions.duplicate(true)
 	if actions.is_empty():
+		_last_decision_trace = trace
 		return {}
 	var best_action: Dictionary = {}
 	var best_score := -INF
+	var best_scored_action: Dictionary = {}
 	for action: Dictionary in actions:
 		var scored_action: Dictionary = _augment_action_for_scoring(gsm, action)
-		var score: float = _heuristics.score_action(scored_action, {
+		var score_context := {
 			"gsm": gsm,
 			"game_state": gsm.game_state,
 			"player_index": player_index,
-		})
+			"action": scored_action,
+			"features": _feature_extractor.build_context(gsm, player_index, scored_action),
+		}
+		var score: float = _heuristics.score_action(scored_action, score_context)
+		var trace_scored_action: Dictionary = scored_action.duplicate(true)
+		trace_scored_action["score"] = score
+		trace.scored_actions.append(trace_scored_action)
 		if best_action.is_empty() or score > best_score:
 			best_action = action
 			best_score = score
+			best_scored_action = trace_scored_action
+	trace.chosen_action = best_scored_action.duplicate(true)
+	if best_scored_action.has("reason_tags") and best_scored_action.get("reason_tags") is Array:
+		for tag_variant: Variant in best_scored_action.get("reason_tags", []):
+			trace.reason_tags.append(str(tag_variant))
+	if trace.reason_tags.is_empty() and trace.chosen_action.has("reason_tags") and trace.chosen_action.get("reason_tags") is Array:
+		for tag_variant: Variant in trace.chosen_action.get("reason_tags", []):
+			trace.reason_tags.append(str(tag_variant))
+	_last_decision_trace = trace
 	return best_action
 
 
@@ -284,6 +336,33 @@ func _run_take_prize_step(battle_scene: Control, gsm: GameStateMachine) -> bool:
 			battle_scene.set("_pending_prize_player_index", -1)
 			battle_scene.set("_pending_prize_remaining", 0)
 			if battle_scene != null and battle_scene.has_method("_refresh_ui"):
+				battle_scene.call("_refresh_ui")
+			return true
+	return false
+
+
+func _run_send_out_step(battle_scene: Control, gsm: GameStateMachine) -> bool:
+	if battle_scene == null or gsm.game_state == null:
+		return false
+	var dialog_data: Dictionary = battle_scene.get("_dialog_data")
+	var send_out_player_index: int = int(dialog_data.get("player", -1))
+	if send_out_player_index != player_index or send_out_player_index >= gsm.game_state.players.size():
+		return false
+	var bench_raw: Array = dialog_data.get("bench", [])
+	var bench_slots: Array[PokemonSlot] = []
+	for slot_variant: Variant in bench_raw:
+		if slot_variant is PokemonSlot:
+			bench_slots.append(slot_variant)
+	if bench_slots.is_empty():
+		bench_slots = gsm.game_state.players[send_out_player_index].bench.duplicate()
+	for bench_slot: PokemonSlot in bench_slots:
+		if gsm.send_out_pokemon(send_out_player_index, bench_slot):
+			_clear_consumed_prompt(battle_scene)
+			if GameManager.current_mode != GameManager.GameMode.VS_AI:
+				battle_scene.set("_view_player", gsm.game_state.current_player_index)
+			if battle_scene.has_method("_refresh_ui_after_successful_action"):
+				battle_scene.call("_refresh_ui_after_successful_action", true)
+			elif battle_scene.has_method("_refresh_ui"):
 				battle_scene.call("_refresh_ui")
 			return true
 	return false

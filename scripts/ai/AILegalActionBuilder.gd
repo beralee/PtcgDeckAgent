@@ -209,6 +209,8 @@ func _evaluate_trainer_action(gsm: GameStateMachine, player_index: int, card: Ca
 		return {"allowed": false, "requires_interaction": false}
 	if card.card_data.card_type != "Item" and card.card_data.card_type != "Supporter":
 		return {"allowed": false, "requires_interaction": false}
+	if card.card_data.card_type == "Item" and not gsm.rule_validator.can_play_item(gsm.game_state, player_index):
+		return {"allowed": false, "requires_interaction": false}
 	if card.card_data.card_type == "Supporter":
 		if not gsm.rule_validator.can_play_supporter(gsm.game_state, player_index) and not gsm._can_play_supporter_exception(player_index, card):
 			return {"allowed": false, "requires_interaction": false}

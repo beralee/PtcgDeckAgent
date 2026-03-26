@@ -3,6 +3,7 @@ extends TestBase
 
 const AIOpponentScript = preload("res://scripts/ai/AIOpponent.gd")
 const AISetupPlannerScript = preload("res://scripts/ai/AISetupPlanner.gd")
+const AIFeatureExtractorScript = preload("res://scripts/ai/AIFeatureExtractor.gd")
 const AIHeuristicsScript = preload("res://scripts/ai/AIHeuristics.gd")
 const BattleSceneScript = preload("res://scenes/battle/BattleScene.gd")
 const BattleCardViewScript = preload("res://scenes/battle/BattleCardView.gd")
@@ -82,6 +83,15 @@ class SpyPrizeResolveGameStateMachine extends GameStateMachine:
 	func resolve_take_prize(player_index: int, slot_index: int) -> bool:
 		resolve_take_prize_calls += 1
 		return super.resolve_take_prize(player_index, slot_index)
+
+
+class SpySendOutViewGameStateMachine extends GameStateMachine:
+	var send_out_calls: int = 0
+
+	func send_out_pokemon(_player_index: int, _bench_slot: PokemonSlot) -> bool:
+		send_out_calls += 1
+		game_state.current_player_index = 1
+		return true
 
 
 class DelayedPrizeAnimationScene extends Control:
@@ -305,6 +315,18 @@ func _make_battle_scene_refresh_stub() -> Control:
 	battle_scene.set("_detail_overlay", Panel.new())
 	battle_scene.set("_discard_overlay", Panel.new())
 	battle_scene.set("_field_interaction_overlay", Control.new())
+	battle_scene.set("_field_interaction_panel", PanelContainer.new())
+	battle_scene.set("_field_interaction_layout", VBoxContainer.new())
+	battle_scene.set("_field_interaction_top_spacer", Control.new())
+	battle_scene.set("_field_interaction_bottom_spacer", Control.new())
+	battle_scene.set("_field_interaction_title_lbl", Label.new())
+	battle_scene.set("_field_interaction_status_lbl", Label.new())
+	battle_scene.set("_field_interaction_scroll", ScrollContainer.new())
+	battle_scene.set("_field_interaction_row", HBoxContainer.new())
+	battle_scene.set("_field_interaction_buttons", HBoxContainer.new())
+	battle_scene.set("_field_interaction_clear_btn", Button.new())
+	battle_scene.set("_field_interaction_cancel_btn", Button.new())
+	battle_scene.set("_field_interaction_confirm_btn", Button.new())
 	battle_scene.set("_opp_prizes_title", Label.new())
 	battle_scene.set("_my_prizes_title", Label.new())
 	battle_scene.set("_opp_prize_hud_title", Label.new())
@@ -335,8 +357,10 @@ func test_ai_opponent_instantiates() -> String:
 		assert_true(ai.has_method("configure"), "AIOpponent should expose configure"),
 		assert_true(ai.has_method("should_control_turn"), "AIOpponent should expose should_control_turn"),
 		assert_true(ai.has_method("run_single_step"), "AIOpponent should expose run_single_step"),
+		assert_true(ai.has_method("get_last_decision_trace"), "AIOpponent should expose get_last_decision_trace"),
 		assert_eq(ai.player_index, 1, "AIOpponent should default to player_index 1"),
 		assert_eq(ai.difficulty, 1, "AIOpponent should default to difficulty 1"),
+		assert_null(ai.get_last_decision_trace(), "AIOpponent should start without a decision trace"),
 	])
 	if initial_checks != "":
 		return initial_checks
@@ -782,6 +806,42 @@ func test_battle_scene_schedules_ai_for_effect_interaction_prompt_owned_by_ai() 
 	])
 
 
+func test_battle_scene_keeps_ai_owned_dialog_effect_step_hidden_from_human_ui() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var scene := _make_battle_scene_refresh_stub()
+	scene._setup_ai_for_tests()
+	scene.set("_field_interaction_overlay", null)
+	scene.call("_setup_field_interaction_panel")
+	var gsm := _make_ai_manual_gsm()
+	gsm.game_state.current_player_index = 1
+	scene.set("_gsm", gsm)
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	var steps: Array[Dictionary] = [
+		{
+			"id": "discard_energy",
+			"title": "选择要丢弃的能量",
+			"items": [
+				CardInstance.create(_make_ai_energy_card_data("Lightning A"), 1),
+				CardInstance.create(_make_ai_energy_card_data("Lightning B"), 1),
+			],
+			"labels": ["A", "B"],
+			"min_select": 0,
+			"max_select": 2,
+		}
+	]
+	scene.call("_start_effect_interaction", "attack", 1, steps, CardInstance.create(_make_ai_pokemon_card_data("AI Attacker"), 1))
+	scene._maybe_run_ai()
+	var pending_choice: String = str(scene.get("_pending_choice"))
+	var dialog_visible: bool = bool(scene.get("_dialog_overlay").visible)
+	var scheduled: bool = bool(scene.get("_ai_step_scheduled"))
+	GameManager.current_mode = previous_mode
+	return run_checks([
+		assert_eq(pending_choice, "effect_interaction", "AI-owned dialog effect steps should still use effect_interaction state"),
+		assert_false(dialog_visible, "AI-owned dialog effect steps should stay hidden from the human UI"),
+		assert_true(scheduled, "AI-owned dialog effect steps should still schedule the AI follow-up"),
+	])
+
+
 func test_ai_heuristics_prioritize_knockout_attack() -> String:
 	var heuristics = AIHeuristicsScript.new()
 	var attack_action := {"kind": "attack", "projected_knockout": true}
@@ -826,6 +886,77 @@ func test_ai_heuristics_prioritize_productive_attach_over_dead_trainer() -> Stri
 		assert_true(
 			heuristics.score_action(attach_action, {}) > heuristics.score_action(dead_trainer, {}),
 			"Productive attaches should outrank low-value trainer plays"
+		),
+	])
+
+
+func test_ai_heuristics_accept_richer_scoring_context_and_preserve_attach_priority() -> String:
+	var heuristics = AIHeuristicsScript.new()
+	var extractor := AIFeatureExtractorScript.new()
+	var gsm := _make_ai_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	var active_slot := _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Active", "Basic", "", "", [], [{"name": "Hit", "cost": "C", "damage": "10"}]), 0))
+	var bench_slot := _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Bench"), 0))
+	var active_energy := CardInstance.create(_make_ai_energy_card_data("Lightning Energy"), 0)
+	var bench_energy := CardInstance.create(_make_ai_energy_card_data("Lightning Energy"), 0)
+	player.active_pokemon = active_slot
+	player.bench = [bench_slot]
+
+	var active_action := {"kind": "attach_energy", "card": active_energy, "target_slot": active_slot, "is_active_target": true}
+	var bench_action := {"kind": "attach_energy", "card": bench_energy, "target_slot": bench_slot, "is_active_target": false}
+	var active_context := {
+		"gsm": gsm,
+		"game_state": gsm.game_state,
+		"player_index": 0,
+		"features": extractor.build_context(gsm, 0, active_action),
+	}
+	var bench_context := {
+		"gsm": gsm,
+		"game_state": gsm.game_state,
+		"player_index": 0,
+		"features": extractor.build_context(gsm, 0, bench_action),
+	}
+	var active_score: float = heuristics.score_action(active_action, active_context)
+	var bench_score: float = heuristics.score_action(bench_action, bench_context)
+
+	return run_checks([
+		assert_true(
+			active_score > bench_score,
+			"Rich scoring context should preserve the active attach preference"
+		),
+	])
+
+
+func test_ai_heuristics_tag_bench_development_and_dead_trainer_penalty() -> String:
+	var heuristics = AIHeuristicsScript.new()
+	var bench_action := {"kind": "play_basic_to_bench"}
+	var dead_trainer := {"kind": "play_trainer"}
+	var bench_context := {
+		"features": {
+			"improves_bench_development": true,
+			"bench_development_delta": 1,
+		},
+	}
+	var dead_trainer_context := {
+		"features": {
+			"productive": false,
+		},
+	}
+	var bench_score: float = heuristics.score_action(bench_action, bench_context)
+	var dead_trainer_score: float = heuristics.score_action(dead_trainer, dead_trainer_context)
+
+	return run_checks([
+		assert_true(
+			bench_score > dead_trainer_score,
+			"Bench development should outrank dead trainer actions once richer heuristic context is applied"
+		),
+		assert_true(
+			Array(bench_action.get("reason_tags", [])).has("bench_development"),
+			"Bench development score bumps should record a stable bench_development reason tag"
+		),
+		assert_true(
+			Array(dead_trainer.get("reason_tags", [])).has("dead_trainer_penalty"),
+			"Dead trainer penalties should record a stable dead_trainer_penalty reason tag"
 		),
 	])
 
@@ -880,6 +1011,129 @@ func test_ai_opponent_plays_basic_to_bench_when_no_attack_is_available() -> Stri
 		assert_eq(player.bench.size(), 1, "AI should place the Basic onto the bench"),
 		assert_eq(player.bench[0].get_pokemon_name(), "Bench Basic", "AI should bench the available Basic Pokemon"),
 		assert_false(bench_basic in player.hand, "The benched Basic should leave the hand"),
+	])
+
+
+func test_ai_opponent_prioritizes_stage2_progress_over_nonadvancing_attach() -> String:
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	var scene := _make_battle_scene_refresh_stub()
+	scene._setup_ai_for_tests()
+	var gsm := _make_ai_manual_gsm()
+	gsm.game_state.current_player_index = 1
+	scene.set("_gsm", gsm)
+	var player: PlayerState = gsm.game_state.players[1]
+	var charmander_slot := _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Charmander"), 1), 1)
+	var charmeleon := CardInstance.create(_make_ai_pokemon_card_data("Charmeleon", "Stage 1", "Charmander"), 1)
+	var charizard_ex := CardInstance.create(_make_ai_pokemon_card_data("Charizard ex", "Stage 2", "Charmeleon"), 1)
+	var fire_energy := CardInstance.create(_make_ai_energy_card_data("Fire Energy", "R"), 1)
+	player.active_pokemon = charmander_slot
+	player.hand = [charmeleon, charizard_ex, fire_energy]
+
+	var handled := ai.run_single_step(scene, gsm)
+	var trace = ai.get_last_decision_trace()
+	return run_checks([
+		assert_true(handled, "AI should take a productive action when Stage 2 progress is available"),
+		assert_eq(player.active_pokemon.get_pokemon_name(), "Charmeleon", "AI should evolve into the Stage 1 that directly advances the Stage 2 line"),
+		assert_true(fire_energy in player.hand, "AI should not spend the attachment before taking the key Stage 2 progression step"),
+		assert_eq(trace.chosen_action.get("kind", ""), "evolve", "Decision trace should show the evolution line was chosen"),
+		assert_true(Array(trace.reason_tags).has("stage2_progress"), "Stage 2 progression bumps should record a stable stage2_progress reason tag"),
+	])
+
+
+func test_ai_opponent_records_attack_readiness_reason_tag_when_attach_beats_cosmetic_action() -> String:
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	var scene := _make_battle_scene_refresh_stub()
+	scene._setup_ai_for_tests()
+	var gsm := _make_ai_manual_gsm()
+	gsm.game_state.current_player_index = 1
+	scene.set("_gsm", gsm)
+	var player: PlayerState = gsm.game_state.players[1]
+	var attacker_cd := _make_ai_pokemon_card_data(
+		"Attacker",
+		"Basic",
+		"",
+		"",
+		[],
+		[{"name": "Zap", "cost": "L", "damage": "50", "text": "", "is_vstar_power": false}]
+	)
+	player.active_pokemon = _make_ai_slot(CardInstance.create(attacker_cd, 1))
+	player.hand = [
+		CardInstance.create(_make_ai_energy_card_data("Lightning Energy"), 1),
+		CardInstance.create(_make_ai_trainer_card_data("Beach Court", "Stadium"), 1),
+	]
+
+	var handled := ai.run_single_step(scene, gsm)
+	var trace = ai.get_last_decision_trace()
+	return run_checks([
+		assert_true(handled, "AI should take the setup action that advances an attack"),
+		assert_eq(trace.chosen_action.get("kind", ""), "attach_energy", "Attack-readiness setup should beat purely cosmetic stadium play"),
+		assert_true(Array(trace.reason_tags).has("attack_readiness"), "Attack-readiness score bumps should record a stable attack_readiness reason tag"),
+	])
+
+
+func test_ai_opponent_uses_nest_ball_after_attaching_when_basic_targets_remain() -> String:
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	var scene := SpyInteractiveActionBattleScene.new()
+	var gsm := _make_ai_manual_gsm()
+	gsm.game_state.current_player_index = 1
+	var player: PlayerState = gsm.game_state.players[1]
+	player.active_pokemon = _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Lead"), 1))
+	var fire_energy := CardInstance.create(_make_ai_energy_card_data("Fire Energy", "R"), 1)
+	var nest_ball := CardInstance.create(
+		_make_ai_trainer_card_data("Nest Ball", "Item", "1af63a7e2cb7a79215474ad8db8fd8fd"),
+		1
+	)
+	var stage_two := CardInstance.create(_make_ai_pokemon_card_data("Charizard ex", "Stage 2", "Charmeleon"), 1)
+	player.hand = [fire_energy, nest_ball, stage_two]
+	player.deck = [CardInstance.create(_make_ai_pokemon_card_data("Charmander"), 1)]
+
+	var handled_attach := ai.run_single_step(scene, gsm)
+	var actions_after_attach := _build_ai_actions(gsm, 1)
+	var handled_followup := ai.run_single_step(scene, gsm)
+	var followup_trace = ai.get_last_decision_trace()
+	return run_checks([
+		assert_true(handled_attach, "AI should use the first action to attach energy"),
+		assert_false(_has_action(actions_after_attach, "attach_energy"), "Attach actions should disappear after the once-per-turn attach is spent"),
+		assert_true(_has_action(actions_after_attach, "play_trainer", {"card": nest_ball}), "Nest Ball should remain a legal follow-up while deck still contains a Basic target"),
+		assert_eq(scene.trainer_interaction_calls, 1, "AI should continue the turn by starting the Nest Ball interaction instead of passing"),
+		assert_true(handled_followup, "The Nest Ball follow-up should count as handled work"),
+		assert_eq(followup_trace.chosen_action.get("kind", ""), "play_trainer", "Decision trace should show the productive Nest Ball line was chosen"),
+		assert_true(Array(followup_trace.reason_tags).has("bench_development"), "Productive Nest Ball follow-ups should record a stable bench_development reason tag"),
+	])
+
+
+func test_ai_can_legally_pass_after_attach_when_nest_ball_has_no_basic_target() -> String:
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	var scene := SpyInteractiveActionBattleScene.new()
+	var gsm := _make_ai_manual_gsm()
+	gsm.game_state.current_player_index = 1
+	var player: PlayerState = gsm.game_state.players[1]
+	player.active_pokemon = _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Lead"), 1))
+	var opponent: PlayerState = gsm.game_state.players[0]
+	opponent.active_pokemon = _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Opponent Lead"), 0))
+	var fire_energy := CardInstance.create(_make_ai_energy_card_data("Fire Energy", "R"), 1)
+	var nest_ball := CardInstance.create(
+		_make_ai_trainer_card_data("Nest Ball", "Item", "1af63a7e2cb7a79215474ad8db8fd8fd"),
+		1
+	)
+	var stage_two := CardInstance.create(_make_ai_pokemon_card_data("Charizard ex", "Stage 2", "Charmeleon"), 1)
+	player.hand = [fire_energy, nest_ball, stage_two]
+	player.deck = [CardInstance.create(_make_ai_trainer_card_data("Arven", "Supporter"), 1)]
+
+	var handled_attach := ai.run_single_step(scene, gsm)
+	var actions_after_attach := _build_ai_actions(gsm, 1)
+	var handled_followup := ai.run_single_step(scene, gsm)
+	return run_checks([
+		assert_true(handled_attach, "AI should still attach energy first in the baseline policy"),
+		assert_false(_has_action(actions_after_attach, "play_trainer", {"card": nest_ball}), "Nest Ball should stop being legal when the deck has no remaining Basic Pokemon"),
+		assert_false(_has_action(actions_after_attach, "play_basic_to_bench"), "A Stage 2 Pokemon in hand should not create a bench action"),
+		assert_eq(scene.trainer_interaction_calls, 0, "AI should not try to open Nest Ball when it has no valid target"),
+		assert_true(handled_followup, "Ending the turn should still count as handled work when no productive legal actions remain"),
+		assert_true(gsm.game_state.current_player_index != 1 or gsm.game_state.phase != GameState.GamePhase.MAIN, "With no productive legal actions left, AI should be allowed to pass the turn"),
 	])
 
 
@@ -1110,6 +1364,79 @@ func test_ai_opponent_waits_for_delayed_prize_animation_before_fallback_resolve(
 	])
 
 
+func test_ai_opponent_resolves_ai_owned_send_out_prompt() -> String:
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	var scene := _make_battle_scene_refresh_stub()
+	scene._setup_ai_for_tests()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.KNOCKOUT_REPLACE
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.players = [_make_player_state(0), _make_player_state(1)]
+	var replacement := PokemonSlot.new()
+	replacement.pokemon_stack.append(CardInstance.create(_make_ai_pokemon_card_data("AI Replacement"), 1))
+	gsm.game_state.players[1].bench = [replacement]
+	gsm.game_state.players[1].deck = [CardInstance.create(_make_ai_pokemon_card_data("Draw Card"), 1)]
+	scene.set("_gsm", gsm)
+	scene.set("_pending_choice", "send_out")
+	scene.set("_dialog_data", {
+		"player": 1,
+		"bench": [replacement],
+		"allow_cancel": false,
+		"min_select": 1,
+		"max_select": 1,
+	})
+	scene.set("_view_player", 0)
+
+	var handled := ai.run_single_step(scene, gsm)
+	return run_checks([
+		assert_true(handled, "AI should resolve its own send_out prompt"),
+		assert_eq(gsm.game_state.players[1].active_pokemon, replacement, "AI should move its chosen bench Pokemon into the active slot"),
+		assert_eq(str(scene.get("_pending_choice")), "", "AI should clear the send_out prompt after resolving it"),
+	])
+
+
+func test_ai_owned_send_out_keeps_human_view_in_vs_ai() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	var scene := _make_battle_scene_refresh_stub()
+	var gsm := SpySendOutViewGameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.KNOCKOUT_REPLACE
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.players = [_make_player_state(0), _make_player_state(1)]
+	var replacement := PokemonSlot.new()
+	replacement.pokemon_stack.append(CardInstance.create(_make_ai_pokemon_card_data("AI Bench"), 1))
+	gsm.game_state.players[1].bench = [replacement]
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	scene.set("_gsm", gsm)
+	scene.set("_pending_choice", "send_out")
+	scene.set("_dialog_data", {
+		"player": 1,
+		"bench": [replacement],
+		"allow_cancel": false,
+		"min_select": 1,
+		"max_select": 1,
+	})
+	scene.set("_view_player", 0)
+
+	var handled := ai.run_single_step(scene, gsm)
+	var current_after_send_out: int = gsm.game_state.current_player_index
+	var view_after_send_out: int = int(scene.get("_view_player"))
+	GameManager.current_mode = previous_mode
+	return run_checks([
+		assert_true(handled, "AI should resolve its own send_out prompt"),
+		assert_eq(gsm.send_out_calls, 1, "AI should drive the send_out transition through GameStateMachine"),
+		assert_eq(current_after_send_out, 1, "The send_out transition may still advance the turn to the AI"),
+		assert_eq(view_after_send_out, 0, "VS_AI should keep the visible side on the human player after AI send_out"),
+	])
+
+
 func test_ai_opponent_ignores_human_owned_mulligan_bonus_draw_prompt() -> String:
 	var ai := AIOpponentScript.new()
 	ai.configure(1, 1)
@@ -1167,10 +1494,11 @@ func test_battle_scene_schedules_ai_for_setup_active_prompt_target_player() -> S
 	scene.set("_gsm", gsm)
 	scene._show_setup_active_dialog(1)
 	var scheduled_after_prompt: bool = scene.get("_ai_step_scheduled")
+	var dialog_visible_after_prompt: bool = bool(scene.get("_dialog_overlay").visible)
 	scene._run_ai_step()
 	GameManager.current_mode = previous_mode
 	return run_checks([
-		assert_true(scene.get("_dialog_overlay").visible, "Setup active prompt should show the dialog overlay"),
+		assert_false(dialog_visible_after_prompt, "AI-owned setup active prompts should stay hidden from the human UI"),
 		assert_true(scheduled_after_prompt, "BattleScene should schedule AI for setup_active prompts owned by the AI"),
 		assert_not_null(player.active_pokemon, "AI should place its active Pokemon through BattleScene scheduling"),
 		assert_eq(player.active_pokemon.get_pokemon_name(), "A", "AI should still choose the first available Basic as active"),
@@ -1193,13 +1521,79 @@ func test_battle_scene_schedules_ai_for_setup_bench_prompt_target_player() -> St
 	scene.set("_gsm", gsm)
 	scene._show_setup_bench_dialog(1)
 	var scheduled_after_prompt: bool = scene.get("_ai_step_scheduled")
+	var dialog_visible_after_prompt: bool = bool(scene.get("_dialog_overlay").visible)
 	scene._run_ai_step()
 	GameManager.current_mode = previous_mode
 	return run_checks([
-		assert_true(scene.get("_dialog_overlay").visible, "Setup bench prompt should show the dialog overlay"),
+		assert_false(dialog_visible_after_prompt, "AI-owned setup bench prompts should stay hidden from the human UI"),
 		assert_true(scheduled_after_prompt, "BattleScene should schedule AI for setup_bench prompts owned by the AI"),
 		assert_eq(player.bench.size(), 1, "AI should place a bench Pokemon through BattleScene scheduling"),
 		assert_eq(player.bench[0].get_pokemon_name(), "Bench A", "AI should choose the available Basic for bench"),
+	])
+
+
+func test_battle_scene_schedules_ai_for_send_out_prompt_target_player() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var scene := _make_battle_scene_refresh_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.KNOCKOUT_REPLACE
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.players = [_make_player_state(0), _make_player_state(1)]
+	var replacement := PokemonSlot.new()
+	replacement.pokemon_stack.append(CardInstance.create(_make_ai_pokemon_card_data("AI Bench"), 1))
+	gsm.game_state.players[1].bench = [replacement]
+	var spy_ai := SpyAIOpponent.new()
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	scene.set("_gsm", gsm)
+	scene._setup_ai_for_tests()
+	scene.set("_ai_opponent", spy_ai)
+	scene.set("_view_player", 0)
+	scene._on_player_choice_required("send_out_pokemon", {"player": 1})
+	var scheduled_after_prompt: bool = bool(scene.get("_ai_step_scheduled"))
+	var field_overlay_visible: bool = bool(scene.get("_field_interaction_overlay").visible)
+	var dialog_visible_after_prompt: bool = bool(scene.get("_dialog_overlay").visible)
+	var view_after_prompt: int = int(scene.get("_view_player"))
+	GameManager.current_mode = previous_mode
+	return run_checks([
+		assert_eq(str(scene.get("_pending_choice")), "send_out", "AI-owned replacement should leave send_out pending"),
+		assert_true(scheduled_after_prompt, "BattleScene should schedule AI for AI-owned send_out prompts"),
+		assert_false(field_overlay_visible, "AI-owned send_out prompts should stay hidden from the human field UI"),
+		assert_false(dialog_visible_after_prompt, "AI-owned send_out prompts should not show the dialog overlay"),
+		assert_eq(view_after_prompt, 0, "AI-owned send_out prompts should not flip the visible side back to the AI"),
+		assert_eq(spy_ai.run_count, 0, "Scheduling should not immediately execute the AI step"),
+	])
+
+
+func test_battle_scene_handoff_from_human_setup_to_ai_active_prompt_schedules_ai() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var scene := _make_setup_ready_battle_scene()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.SETUP
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.players = [_make_player_state(0), _make_player_state(1)]
+	var human: PlayerState = gsm.game_state.players[0]
+	var ai_player: PlayerState = gsm.game_state.players[1]
+	human.hand = [_make_basic("Human Lead"), _make_item("Ball")]
+	ai_player.hand = [_make_basic("AI Lead"), _make_basic("AI Bench")]
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	scene.set("_gsm", gsm)
+	scene.set("_setup_done", [false, false])
+	scene._show_setup_active_dialog(0)
+	scene._handle_dialog_choice(PackedInt32Array([0]))
+	var pending_after_human_choice: String = str(scene.get("_pending_choice"))
+	var scheduled_after_handoff: bool = bool(scene.get("_ai_step_scheduled"))
+	var dialog_visible_after_handoff: bool = bool(scene.get("_dialog_overlay").visible)
+	scene._run_ai_step()
+	GameManager.current_mode = previous_mode
+	return run_checks([
+		assert_eq(pending_after_human_choice, "setup_active_1", "Human setup completion should hand off to the AI active-choice prompt"),
+		assert_true(scheduled_after_handoff, "Handing setup to the AI should schedule an AI step"),
+		assert_false(dialog_visible_after_handoff, "The AI active-choice prompt should not be shown back to the human"),
+		assert_not_null(ai_player.active_pokemon, "AI should place its active Pokemon after the handoff"),
+		assert_eq(ai_player.active_pokemon.get_pokemon_name(), "AI Lead", "AI should choose its own opening active Pokemon"),
 	])
 
 

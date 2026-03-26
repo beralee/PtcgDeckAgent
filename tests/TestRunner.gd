@@ -11,7 +11,14 @@ const TestBattleUIHandoverRegression = preload("res://tests/test_battle_ui_hando
 const TestAttackSearchAndAttachRegression = preload("res://tests/test_attack_search_and_attach_regression.gd")
 const TestGardevoirDeck = preload("res://tests/test_gardevoir_deck.gd")
 const TestAIBaseline = preload("res://tests/test_ai_baseline.gd")
+const TestAIFeatureExtractor = preload("res://tests/test_ai_feature_extractor.gd")
+const TestAIDecisionTrace = preload("res://tests/test_ai_decision_trace.gd")
+const TestHeadlessMatchBridge = preload("res://tests/test_headless_match_bridge.gd")
 const TestAIBenchmark = preload("res://tests/test_ai_benchmark.gd")
+const TestAIPhase2Benchmark = preload("res://tests/test_ai_phase2_benchmark.gd")
+const TestDeckIdentityTracker = preload("res://tests/test_deck_identity_tracker.gd")
+const TestBenchmarkEvaluator = preload("res://tests/test_benchmark_evaluator.gd")
+const TestDeckManager = preload("res://tests/test_deck_manager.gd")
 
 @onready var result_label: RichTextLabel = %ResultLabel
 @onready var summary_label: Label = %SummaryLabel
@@ -48,7 +55,14 @@ func _ready() -> void:
 	_run_test_suite("AttackSearchAndAttachRegression", TestAttackSearchAndAttachRegression.new())
 	_run_test_suite("GardevoirDeck", TestGardevoirDeck.new())
 	_run_test_suite("AIBaseline", TestAIBaseline.new())
+	_run_test_suite("AIFeatureExtractor", TestAIFeatureExtractor.new())
+	_run_test_suite("AIDecisionTrace", TestAIDecisionTrace.new())
+	_run_test_suite("HeadlessMatchBridge", TestHeadlessMatchBridge.new())
 	_run_test_suite("AIBenchmark", TestAIBenchmark.new())
+	_run_test_suite("AIPhase2Benchmark", TestAIPhase2Benchmark.new())
+	_run_test_suite("DeckIdentityTracker", TestDeckIdentityTracker.new())
+	_run_test_suite("BenchmarkEvaluator", TestBenchmarkEvaluator.new())
+	_run_test_suite("DeckManager", TestDeckManager.new())
 	_run_test_suite("CardCatalogAudit", TestCardCatalogAudit.new())
 	_run_test_suite("SourceEncodingAudit", TestSourceEncodingAudit.new())
 
