@@ -1,12 +1,18 @@
 class_name AIHeuristics
 extends RefCounted
 
+# 卡组家族签名卡名称（用于轻量卡组检测）
+const _MIRAIDON_SIGNATURES: Array[String] = ["Miraidon ex"]
+const _GARDEVOIR_SIGNATURES: Array[String] = ["Gardevoir ex", "Kirlia"]
+const _CHARIZARD_SIGNATURES: Array[String] = ["Charizard ex", "Charmeleon", "Charmander"]
+
 
 func score_action(action: Dictionary, context: Dictionary) -> float:
 	var features: Dictionary = context.get("features", {})
 	action["reason_tags"] = []
 	var score: float = _base_score(action, features)
 	score += _apply_shared_adjustments(action, context, features)
+	score += _apply_deck_bias(action, context, features)
 	return score
 
 
@@ -96,3 +102,123 @@ func _add_reason_tag(action: Dictionary, tag: String) -> void:
 	if not reason_tags.has(tag):
 		reason_tags.append(tag)
 	action["reason_tags"] = reason_tags
+
+
+# -- 轻量卡组偏好 --
+
+
+func _apply_deck_bias(action: Dictionary, context: Dictionary, features: Dictionary) -> float:
+	var deck_family := _detect_deck_family(context)
+	if deck_family == "":
+		return 0.0
+	var score_delta := 0.0
+	match deck_family:
+		"miraidon":
+			score_delta += _miraidon_bias(action, context, features)
+		"gardevoir":
+			score_delta += _gardevoir_bias(action, context, features)
+		"charizard_ex":
+			score_delta += _charizard_bias(action, context, features)
+	if score_delta != 0.0:
+		_add_reason_tag(action, "deck_bias")
+	return score_delta
+
+
+func _detect_deck_family(context: Dictionary) -> String:
+	var game_state: GameState = context.get("game_state")
+	var player_index: int = int(context.get("player_index", -1))
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return ""
+	var player: PlayerState = game_state.players[player_index]
+	var names: Array[String] = _collect_visible_card_names(player)
+	if _has_any_signature(names, _MIRAIDON_SIGNATURES):
+		return "miraidon"
+	if _has_any_signature(names, _GARDEVOIR_SIGNATURES):
+		return "gardevoir"
+	if _has_any_signature(names, _CHARIZARD_SIGNATURES):
+		return "charizard_ex"
+	return ""
+
+
+func _collect_visible_card_names(player: PlayerState) -> Array[String]:
+	## 收集玩家所有可见卡牌的名称（手牌、场上、牌库）
+	var names: Array[String] = []
+	# 手牌
+	for card: CardInstance in player.hand:
+		if card != null and card.card_data != null:
+			names.append(str(card.card_data.name))
+	# 场上宝可梦（前场 + 后备）
+	if player.active_pokemon != null:
+		var active_cd: CardData = player.active_pokemon.get_card_data()
+		if active_cd != null:
+			names.append(str(active_cd.name))
+	for slot: PokemonSlot in player.bench:
+		if slot != null:
+			var bench_cd: CardData = slot.get_card_data()
+			if bench_cd != null:
+				names.append(str(bench_cd.name))
+	# 牌库
+	for card: CardInstance in player.deck:
+		if card != null and card.card_data != null:
+			names.append(str(card.card_data.name))
+	return names
+
+
+func _has_any_signature(names: Array[String], signatures: Array[String]) -> bool:
+	for sig: String in signatures:
+		if sig in names:
+			return true
+	return false
+
+
+func _miraidon_bias(action: Dictionary, _context: Dictionary, _features: Dictionary) -> float:
+	## Miraidon 卡组：Electric Generator 加分、电属性基础上板加分
+	var kind := str(action.get("kind", ""))
+	var card: CardInstance = action.get("card")
+	if kind == "play_trainer" and card != null and card.card_data != null:
+		if str(card.card_data.name) == "Electric Generator":
+			return 25.0
+	if kind == "play_basic_to_bench" and card != null and card.card_data != null:
+		if str(card.card_data.energy_type) == "L":
+			return 15.0
+	return 0.0
+
+
+func _gardevoir_bias(action: Dictionary, _context: Dictionary, _features: Dictionary) -> float:
+	## Gardevoir 卡组：超能进化线加分、Psychic Embrace 特性加分
+	var kind := str(action.get("kind", ""))
+	var card: CardInstance = action.get("card")
+	if kind == "evolve" and card != null and card.card_data != null:
+		var evo_name := str(card.card_data.name)
+		if evo_name == "Gardevoir ex" or evo_name == "Kirlia":
+			return 30.0
+	if kind == "use_ability":
+		var source_slot: PokemonSlot = action.get("source_slot")
+		if source_slot != null:
+			var slot_cd: CardData = source_slot.get_card_data()
+			if slot_cd != null and _has_ability_named(slot_cd, "Psychic Embrace"):
+				return 25.0
+	return 0.0
+
+
+func _charizard_bias(action: Dictionary, _context: Dictionary, _features: Dictionary) -> float:
+	## Charizard 卡组：Rare Candy 加分、火属性进化线加分
+	var kind := str(action.get("kind", ""))
+	var card: CardInstance = action.get("card")
+	if kind == "play_trainer" and card != null and card.card_data != null:
+		if str(card.card_data.name) == "Rare Candy":
+			return 25.0
+	if kind == "evolve" and card != null and card.card_data != null:
+		var evo_name := str(card.card_data.name)
+		if evo_name == "Charmeleon" or evo_name == "Charizard ex":
+			return 30.0
+	return 0.0
+
+
+func _has_ability_named(card_data: CardData, ability_name: String) -> bool:
+	if card_data == null:
+		return false
+	for ability: Dictionary in card_data.abilities:
+		if str(ability.get("name", "")) == ability_name:
+			return true
+	return false

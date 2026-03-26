@@ -1996,3 +1996,261 @@ func test_battle_scene_does_not_schedule_ai_when_mode_turn_or_ui_block_it() -> S
 		assert_false(scheduled_with_prize_animation, "Prize animation should block AI scheduling"),
 		assert_eq(spy_ai.run_count, 0, "BattleScene should not run the AI when scheduling is blocked"),
 	])
+
+
+# -- 卡组偏好测试 --
+
+
+func _make_deck_bias_context(gsm: GameStateMachine, player_index: int, action: Dictionary) -> Dictionary:
+	## 构建包含特征的评分上下文（用于卡组偏好测试）
+	var extractor := AIFeatureExtractorScript.new()
+	return {
+		"gsm": gsm,
+		"game_state": gsm.game_state,
+		"player_index": player_index,
+		"action": action,
+		"features": extractor.build_context(gsm, player_index, action),
+	}
+
+
+func test_deck_bias_miraidon_prefers_electric_generator_over_generic_item() -> String:
+	## Miraidon 卡组应优先使用 Electric Generator
+	var heuristics := AIHeuristicsScript.new()
+	var gsm := _make_ai_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	# 在场上放一只 Miraidon ex 作为卡组信号
+	var miraidon_cd := _make_ai_pokemon_card_data("Miraidon ex", "Basic", "", "", [], [], 2)
+	miraidon_cd.energy_type = "L"
+	miraidon_cd.mechanic = "ex"
+	player.active_pokemon = _make_ai_slot(CardInstance.create(miraidon_cd, 0))
+	# Electric Generator（标记为可生产的训练师）
+	var electric_gen := CardInstance.create(
+		_make_ai_trainer_card_data("Electric Generator", "Item", ""),
+		0
+	)
+	# 普通道具
+	var generic_item := CardInstance.create(
+		_make_ai_trainer_card_data("Switch", "Item", ""),
+		0
+	)
+	player.hand = [electric_gen, generic_item]
+	var eg_action := {"kind": "play_trainer", "card": electric_gen, "productive": true}
+	var gi_action := {"kind": "play_trainer", "card": generic_item, "productive": true}
+	var eg_ctx := _make_deck_bias_context(gsm, 0, eg_action)
+	var gi_ctx := _make_deck_bias_context(gsm, 0, gi_action)
+	var eg_score: float = heuristics.score_action(eg_action, eg_ctx)
+	var gi_score: float = heuristics.score_action(gi_action, gi_ctx)
+	return run_checks([
+		assert_true(
+			eg_score > gi_score,
+			"Miraidon deck should score Electric Generator higher than a generic item (got eg=%s, gi=%s)" % [eg_score, gi_score]
+		),
+	])
+
+
+func test_deck_bias_miraidon_prefers_benching_electric_basic() -> String:
+	## Miraidon 卡组上板时应优先放电属性基础宝可梦
+	var heuristics := AIHeuristicsScript.new()
+	var gsm := _make_ai_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	var miraidon_cd := _make_ai_pokemon_card_data("Miraidon ex", "Basic", "", "", [], [], 2)
+	miraidon_cd.energy_type = "L"
+	miraidon_cd.mechanic = "ex"
+	player.active_pokemon = _make_ai_slot(CardInstance.create(miraidon_cd, 0))
+	var electric_basic_cd := _make_ai_pokemon_card_data("Shinx", "Basic")
+	electric_basic_cd.energy_type = "L"
+	var colorless_basic_cd := _make_ai_pokemon_card_data("Pidgey", "Basic")
+	colorless_basic_cd.energy_type = "C"
+	var electric_card := CardInstance.create(electric_basic_cd, 0)
+	var colorless_card := CardInstance.create(colorless_basic_cd, 0)
+	player.hand = [electric_card, colorless_card]
+	var elec_action := {"kind": "play_basic_to_bench", "card": electric_card}
+	var color_action := {"kind": "play_basic_to_bench", "card": colorless_card}
+	var elec_ctx := _make_deck_bias_context(gsm, 0, elec_action)
+	var color_ctx := _make_deck_bias_context(gsm, 0, color_action)
+	var elec_score: float = heuristics.score_action(elec_action, elec_ctx)
+	var color_score: float = heuristics.score_action(color_action, color_ctx)
+	return run_checks([
+		assert_true(
+			elec_score > color_score,
+			"Miraidon deck should prefer benching an Electric basic over a Colorless one (got elec=%s, color=%s)" % [elec_score, color_score]
+		),
+	])
+
+
+func test_deck_bias_gardevoir_prefers_evolving_psychic_line() -> String:
+	## Gardevoir 卡组应优先进化超能属性进化线
+	var heuristics := AIHeuristicsScript.new()
+	var gsm := _make_ai_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	# Gardevoir ex 在手（Stage 2 信号卡）
+	var gardevoir_cd := _make_ai_pokemon_card_data("Gardevoir ex", "Stage 2", "Kirlia")
+	gardevoir_cd.energy_type = "P"
+	gardevoir_cd.mechanic = "ex"
+	gardevoir_cd.abilities = [{"name": "Psychic Embrace", "text": ""}]
+	var gardevoir_card := CardInstance.create(gardevoir_cd, 0)
+	# Kirlia 在场（可进化目标）
+	var kirlia_cd := _make_ai_pokemon_card_data("Kirlia", "Stage 1", "Ralts")
+	kirlia_cd.energy_type = "P"
+	var kirlia_slot := _make_ai_slot(CardInstance.create(kirlia_cd, 0), 1)
+	# 普通 Stage 1（无 Stage 2 配套）
+	var pidgeotto_cd := _make_ai_pokemon_card_data("Pidgeotto", "Stage 1", "Pidgey")
+	pidgeotto_cd.energy_type = "C"
+	var pidgey_cd := _make_ai_pokemon_card_data("Pidgey", "Basic")
+	pidgey_cd.energy_type = "C"
+	var pidgey_slot := _make_ai_slot(CardInstance.create(pidgey_cd, 0), 1)
+	var pidgeotto_card := CardInstance.create(pidgeotto_cd, 0)
+	player.active_pokemon = kirlia_slot
+	player.bench = [pidgey_slot]
+	player.hand = [gardevoir_card, pidgeotto_card]
+	# 进化 Kirlia -> Gardevoir ex 线
+	var kirlia_evolve := {"kind": "evolve", "card": gardevoir_card, "target_slot": kirlia_slot}
+	# 进化 Pidgey -> Pidgeotto 线
+	var pidgey_evolve := {"kind": "evolve", "card": pidgeotto_card, "target_slot": pidgey_slot}
+	var kirlia_ctx := _make_deck_bias_context(gsm, 0, kirlia_evolve)
+	var pidgey_ctx := _make_deck_bias_context(gsm, 0, pidgey_evolve)
+	var kirlia_score: float = heuristics.score_action(kirlia_evolve, kirlia_ctx)
+	var pidgey_score: float = heuristics.score_action(pidgey_evolve, pidgey_ctx)
+	return run_checks([
+		assert_true(
+			kirlia_score > pidgey_score,
+			"Gardevoir deck should prefer evolving the Gardevoir ex line over an unrelated line (got kirlia=%s, pidgey=%s)" % [kirlia_score, pidgey_score]
+		),
+	])
+
+
+func test_deck_bias_gardevoir_prefers_psychic_embrace_ability() -> String:
+	## Gardevoir 卡组应高度优先使用 Psychic Embrace 特性
+	var heuristics := AIHeuristicsScript.new()
+	var gsm := _make_ai_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	var gardevoir_cd := _make_ai_pokemon_card_data(
+		"Gardevoir ex", "Stage 2", "Kirlia", "",
+		[{"name": "Psychic Embrace", "text": ""}]
+	)
+	gardevoir_cd.energy_type = "P"
+	gardevoir_cd.mechanic = "ex"
+	var gardevoir_slot := _make_ai_slot(CardInstance.create(gardevoir_cd, 0))
+	# 另一个有普通特性的宝可梦
+	var generic_ability_cd := _make_ai_pokemon_card_data(
+		"Bidoof", "Basic", "", "",
+		[{"name": "Headbutt Stand", "text": ""}]
+	)
+	var bidoof_slot := _make_ai_slot(CardInstance.create(generic_ability_cd, 0))
+	player.active_pokemon = gardevoir_slot
+	player.bench = [bidoof_slot]
+	var psychic_action := {"kind": "use_ability", "source_slot": gardevoir_slot, "ability_index": 0}
+	var generic_action := {"kind": "use_ability", "source_slot": bidoof_slot, "ability_index": 0}
+	var psychic_ctx := _make_deck_bias_context(gsm, 0, psychic_action)
+	var generic_ctx := _make_deck_bias_context(gsm, 0, generic_action)
+	var psychic_score: float = heuristics.score_action(psychic_action, psychic_ctx)
+	var generic_score: float = heuristics.score_action(generic_action, generic_ctx)
+	return run_checks([
+		assert_true(
+			psychic_score > generic_score,
+			"Gardevoir deck should score Psychic Embrace higher than a generic ability (got psychic=%s, generic=%s)" % [psychic_score, generic_score]
+		),
+	])
+
+
+func test_deck_bias_charizard_prefers_rare_candy() -> String:
+	## Charizard 卡组应优先使用 Rare Candy
+	var heuristics := AIHeuristicsScript.new()
+	var gsm := _make_ai_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	# Charizard ex 在手（Stage 2 信号卡）
+	var charizard_cd := _make_ai_pokemon_card_data("Charizard ex", "Stage 2", "Charmeleon")
+	charizard_cd.energy_type = "R"
+	charizard_cd.mechanic = "ex"
+	var charizard_card := CardInstance.create(charizard_cd, 0)
+	# Charmander 在场
+	var charmander_cd := _make_ai_pokemon_card_data("Charmander", "Basic")
+	charmander_cd.energy_type = "R"
+	player.active_pokemon = _make_ai_slot(CardInstance.create(charmander_cd, 0))
+	var rare_candy := CardInstance.create(
+		_make_ai_trainer_card_data("Rare Candy", "Item", ""),
+		0
+	)
+	var generic_item := CardInstance.create(
+		_make_ai_trainer_card_data("Switch", "Item", ""),
+		0
+	)
+	player.hand = [charizard_card, rare_candy, generic_item]
+	var rc_action := {"kind": "play_trainer", "card": rare_candy, "productive": true}
+	var gi_action := {"kind": "play_trainer", "card": generic_item, "productive": true}
+	var rc_ctx := _make_deck_bias_context(gsm, 0, rc_action)
+	var gi_ctx := _make_deck_bias_context(gsm, 0, gi_action)
+	var rc_score: float = heuristics.score_action(rc_action, rc_ctx)
+	var gi_score: float = heuristics.score_action(gi_action, gi_ctx)
+	return run_checks([
+		assert_true(
+			rc_score > gi_score,
+			"Charizard deck should score Rare Candy higher than a generic item (got rc=%s, gi=%s)" % [rc_score, gi_score]
+		),
+	])
+
+
+func test_deck_bias_charizard_prefers_stage2_evolution_progress() -> String:
+	## Charizard 卡组中 Charmander->Charmeleon 进化应获得额外加分
+	var heuristics := AIHeuristicsScript.new()
+	var gsm := _make_ai_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	var charizard_cd := _make_ai_pokemon_card_data("Charizard ex", "Stage 2", "Charmeleon")
+	charizard_cd.energy_type = "R"
+	charizard_cd.mechanic = "ex"
+	var charizard_card := CardInstance.create(charizard_cd, 0)
+	var charmander_cd := _make_ai_pokemon_card_data("Charmander", "Basic")
+	charmander_cd.energy_type = "R"
+	var charmander_slot := _make_ai_slot(CardInstance.create(charmander_cd, 0), 1)
+	var charmeleon_cd := _make_ai_pokemon_card_data("Charmeleon", "Stage 1", "Charmander")
+	charmeleon_cd.energy_type = "R"
+	var charmeleon_card := CardInstance.create(charmeleon_cd, 0)
+	# 对照：无关的进化线
+	var pidgey_cd := _make_ai_pokemon_card_data("Pidgey", "Basic")
+	pidgey_cd.energy_type = "C"
+	var pidgey_slot := _make_ai_slot(CardInstance.create(pidgey_cd, 0), 1)
+	var pidgeotto_cd := _make_ai_pokemon_card_data("Pidgeotto", "Stage 1", "Pidgey")
+	pidgeotto_cd.energy_type = "C"
+	var pidgeotto_card := CardInstance.create(pidgeotto_cd, 0)
+	player.active_pokemon = charmander_slot
+	player.bench = [pidgey_slot]
+	player.hand = [charizard_card, charmeleon_card, pidgeotto_card]
+	# 进化 Charmander -> Charmeleon（Charizard 线）
+	var char_evolve := {"kind": "evolve", "card": charmeleon_card, "target_slot": charmander_slot}
+	# 进化 Pidgey -> Pidgeotto（无关线）
+	var pidg_evolve := {"kind": "evolve", "card": pidgeotto_card, "target_slot": pidgey_slot}
+	var char_ctx := _make_deck_bias_context(gsm, 0, char_evolve)
+	var pidg_ctx := _make_deck_bias_context(gsm, 0, pidg_evolve)
+	var char_score: float = heuristics.score_action(char_evolve, char_ctx)
+	var pidg_score: float = heuristics.score_action(pidg_evolve, pidg_ctx)
+	return run_checks([
+		assert_true(
+			char_score > pidg_score,
+			"Charizard deck should prefer evolving the Charizard line over an unrelated line (got char=%s, pidg=%s)" % [char_score, pidg_score]
+		),
+	])
+
+
+func test_deck_bias_tags_are_recorded_in_reason_tags() -> String:
+	## 卡组偏好加分应在 reason_tags 中留下记录
+	var heuristics := AIHeuristicsScript.new()
+	var gsm := _make_ai_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	var miraidon_cd := _make_ai_pokemon_card_data("Miraidon ex", "Basic", "", "", [], [], 2)
+	miraidon_cd.energy_type = "L"
+	miraidon_cd.mechanic = "ex"
+	player.active_pokemon = _make_ai_slot(CardInstance.create(miraidon_cd, 0))
+	var electric_basic_cd := _make_ai_pokemon_card_data("Shinx", "Basic")
+	electric_basic_cd.energy_type = "L"
+	var electric_card := CardInstance.create(electric_basic_cd, 0)
+	player.hand = [electric_card]
+	var elec_action := {"kind": "play_basic_to_bench", "card": electric_card}
+	var elec_ctx := _make_deck_bias_context(gsm, 0, elec_action)
+	heuristics.score_action(elec_action, elec_ctx)
+	var tags: Array = elec_action.get("reason_tags", [])
+	return run_checks([
+		assert_true(
+			tags.has("deck_bias"),
+			"Deck bias adjustments should record a 'deck_bias' reason tag (got tags=%s)" % [str(tags)]
+		),
+	])
