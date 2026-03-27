@@ -1,0 +1,149 @@
+class_name SelfPlayRunner
+extends RefCounted
+
+## 批量自博弈执行器。
+## 接收两个 agent config，在多组卡组对上跑 N 局 headless 对战，输出结构化结果。
+
+const AIBenchmarkRunnerScript = preload("res://scripts/ai/AIBenchmarkRunner.gd")
+const AIOpponentScript = preload("res://scripts/ai/AIOpponent.gd")
+const AIHeuristicsScript = preload("res://scripts/ai/AIHeuristics.gd")
+
+
+func run_batch(
+	agent_a_config: Dictionary,
+	agent_b_config: Dictionary,
+	deck_pairings: Array,
+	seeds: Array,
+	max_steps_per_match: int = 200
+) -> Dictionary:
+	var runner := AIBenchmarkRunnerScript.new()
+	var total_matches: int = 0
+	var agent_a_wins: int = 0
+	var agent_b_wins: int = 0
+	var draws: int = 0
+	var match_results: Array[Dictionary] = []
+
+	for pairing: Variant in deck_pairings:
+		if not pairing is Array or (pairing as Array).size() < 2:
+			continue
+		var deck_a_id: int = int((pairing as Array)[0])
+		var deck_b_id: int = int((pairing as Array)[1])
+		var deck_a: DeckData = CardDatabase.get_deck(deck_a_id)
+		var deck_b: DeckData = CardDatabase.get_deck(deck_b_id)
+		if deck_a == null or deck_b == null:
+			print("[SelfPlay] 跳过无法加载的卡组对: %d vs %d" % [deck_a_id, deck_b_id])
+			continue
+
+		for seed_value: Variant in seeds:
+			var sv: int = int(seed_value)
+			## agent_a 做 player 0
+			var result_a0 := _run_one_match(
+				runner, agent_a_config, agent_b_config,
+				deck_a, deck_b, sv, max_steps_per_match
+			)
+			var match_entry_a0 := _build_match_entry(result_a0, sv, deck_a_id, deck_b_id, 0)
+			match_results.append(match_entry_a0)
+			total_matches += 1
+			var winner_a0: int = int(result_a0.get("winner_index", -1))
+			if winner_a0 == 0:
+				agent_a_wins += 1
+			elif winner_a0 == 1:
+				agent_b_wins += 1
+			else:
+				draws += 1
+
+			## agent_a 做 player 1
+			var result_a1 := _run_one_match(
+				runner, agent_b_config, agent_a_config,
+				deck_a, deck_b, sv + 10000, max_steps_per_match
+			)
+			var match_entry_a1 := _build_match_entry(result_a1, sv + 10000, deck_a_id, deck_b_id, 1)
+			match_results.append(match_entry_a1)
+			total_matches += 1
+			var winner_a1: int = int(result_a1.get("winner_index", -1))
+			if winner_a1 == 1:
+				agent_a_wins += 1
+			elif winner_a1 == 0:
+				agent_b_wins += 1
+			else:
+				draws += 1
+
+	var win_rate: float = 0.0 if total_matches == 0 else float(agent_a_wins) / float(total_matches)
+	return {
+		"total_matches": total_matches,
+		"agent_a_wins": agent_a_wins,
+		"agent_b_wins": agent_b_wins,
+		"draws": draws,
+		"agent_a_win_rate": win_rate,
+		"match_results": match_results,
+	}
+
+
+func _run_one_match(
+	runner: AIBenchmarkRunner,
+	p0_config: Dictionary,
+	p1_config: Dictionary,
+	deck_a: DeckData,
+	deck_b: DeckData,
+	seed_value: int,
+	max_steps: int,
+) -> Dictionary:
+	var p0_ai := _make_agent(0, p0_config)
+	var p1_ai := _make_agent(1, p1_config)
+
+	var gsm := GameStateMachine.new()
+	_apply_seed(gsm, seed_value)
+	_set_forced_shuffle_seed(seed_value)
+	gsm.start_game(deck_a, deck_b, 0)
+
+	var result: Dictionary = runner.run_headless_duel(p0_ai, p1_ai, gsm, max_steps)
+	_clear_forced_shuffle_seed()
+	return result
+
+
+func _make_agent(player_index: int, config: Dictionary) -> AIOpponent:
+	var agent := AIOpponentScript.new()
+	agent.configure(player_index, 1)
+	var weights: Variant = config.get("heuristic_weights", {})
+	if weights is Dictionary and not (weights as Dictionary).is_empty():
+		agent.heuristic_weights = (weights as Dictionary).duplicate(true)
+	var mcts: Variant = config.get("mcts_config", {})
+	if mcts is Dictionary and not (mcts as Dictionary).is_empty():
+		agent.use_mcts = true
+		agent.mcts_config = (mcts as Dictionary).duplicate(true)
+	return agent
+
+
+func _build_match_entry(result: Dictionary, seed_value: int, deck_a_id: int, deck_b_id: int, agent_a_player_index: int) -> Dictionary:
+	return {
+		"winner_index": int(result.get("winner_index", -1)),
+		"turn_count": int(result.get("turn_count", 0)),
+		"steps": int(result.get("steps", 0)),
+		"seed": seed_value,
+		"deck_a_id": deck_a_id,
+		"deck_b_id": deck_b_id,
+		"agent_a_player_index": agent_a_player_index,
+		"failure_reason": str(result.get("failure_reason", "")),
+		"terminated_by_cap": bool(result.get("terminated_by_cap", false)),
+		"stalled": bool(result.get("stalled", false)),
+	}
+
+
+func _apply_seed(gsm: GameStateMachine, seed_value: int) -> void:
+	if gsm == null or gsm.coin_flipper == null:
+		return
+	var rng: Variant = gsm.coin_flipper.get("_rng")
+	if rng is RandomNumberGenerator:
+		(rng as RandomNumberGenerator).seed = seed_value
+
+
+func _set_forced_shuffle_seed(seed_value: int) -> void:
+	var ps := PlayerState.new()
+	if ps.has_method("set_forced_shuffle_seed"):
+		ps.call("set_forced_shuffle_seed", seed_value)
+
+
+func _clear_forced_shuffle_seed() -> void:
+	var ps := PlayerState.new()
+	if ps.has_method("clear_forced_shuffle_seed"):
+		ps.call("clear_forced_shuffle_seed")
