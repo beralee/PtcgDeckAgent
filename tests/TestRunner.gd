@@ -26,6 +26,8 @@ const TestMCTSPlanner = preload("res://tests/test_mcts_planner.gd")
 const TestAgentVersionStore = preload("res://tests/test_agent_version_store.gd")
 const TestSelfPlayRunner = preload("res://tests/test_self_play_runner.gd")
 const TestEvolutionEngine = preload("res://tests/test_evolution_engine.gd")
+const TestStateEncoder = preload("res://tests/test_state_encoder.gd")
+const TestNeuralNetInference = preload("res://tests/test_neural_net_inference.gd")
 
 @onready var result_label: RichTextLabel = %ResultLabel
 @onready var summary_label: Label = %SummaryLabel
@@ -77,6 +79,8 @@ func _ready() -> void:
 	_run_test_suite("AgentVersionStore", TestAgentVersionStore.new())
 	_run_test_suite("SelfPlayRunner", TestSelfPlayRunner.new())
 	_run_test_suite("EvolutionEngine", TestEvolutionEngine.new())
+	_run_test_suite("StateEncoder", TestStateEncoder.new())
+	_run_test_suite("NeuralNetInference", TestNeuralNetInference.new())
 	_run_test_suite("CardCatalogAudit", TestCardCatalogAudit.new())
 	_run_test_suite("SourceEncodingAudit", TestSourceEncodingAudit.new())
 
