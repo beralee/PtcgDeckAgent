@@ -105,12 +105,26 @@ func _run_one_match(
 	_set_forced_shuffle_seed(seed_value)
 	gsm.start_game(deck_a, deck_b, 0)
 
+	var step_cb := Callable()
 	if exporter != null:
 		exporter.start_game()
+		## 记录初始状态
 		exporter.record_state(gsm.game_state, 0)
 		exporter.record_state(gsm.game_state, 1)
+		## 用回调在每步后检查回合变化并记录
+		var tracker := {"last_turn": gsm.game_state.turn_number, "last_player": gsm.game_state.current_player_index}
+		step_cb = func(step_gsm: GameStateMachine) -> void:
+			if step_gsm == null or step_gsm.game_state == null:
+				return
+			var tn: int = step_gsm.game_state.turn_number
+			var cp: int = step_gsm.game_state.current_player_index
+			if tn != tracker["last_turn"] or cp != tracker["last_player"]:
+				tracker["last_turn"] = tn
+				tracker["last_player"] = cp
+				exporter.record_state(step_gsm.game_state, 0)
+				exporter.record_state(step_gsm.game_state, 1)
 
-	var result: Dictionary = runner.run_headless_duel(p0_ai, p1_ai, gsm, max_steps)
+	var result: Dictionary = runner.run_headless_duel(p0_ai, p1_ai, gsm, max_steps, step_cb)
 
 	if exporter != null:
 		exporter.end_game(int(result.get("winner_index", -1)))

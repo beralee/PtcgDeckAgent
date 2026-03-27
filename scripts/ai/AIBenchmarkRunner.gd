@@ -309,7 +309,8 @@ func run_headless_duel(
 	player_0_ai: AIOpponent,
 	player_1_ai: AIOpponent,
 	gsm: GameStateMachine,
-	max_steps: int = 200
+	max_steps: int = 200,
+	step_callback: Callable = Callable(),
 ) -> Dictionary:
 	if gsm == null or gsm.game_state == null:
 		return _make_failed_match_result("invalid_state_transition", 0, gsm)
@@ -355,6 +356,8 @@ func run_headless_duel(
 				if _has_interactive_legal_action(current_ai, gsm):
 					return _make_failed_match_result("unsupported_interaction_step", steps + 1, gsm)
 				return _make_failed_match_result("stalled_no_progress", steps + 1, gsm)
+		if step_callback.is_valid():
+			step_callback.call(gsm)
 		steps += 1
 	return _make_failed_match_result("action_cap_reached", max_steps, gsm)
 
@@ -452,6 +455,9 @@ func _make_benchmark_agent(player_index: int, agent_config: Dictionary, comparis
 	agent.set_meta("agent_id", str(agent_config.get("agent_id", "")))
 	agent.set_meta("version_tag", str(agent_config.get("version_tag", "")))
 	agent.set_meta("comparison_mode", comparison_mode)
+	var config_weights: Variant = agent_config.get("heuristic_weights", {})
+	if config_weights is Dictionary and not (config_weights as Dictionary).is_empty():
+		agent.heuristic_weights = (config_weights as Dictionary).duplicate(true)
 	return agent
 
 
