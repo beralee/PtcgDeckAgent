@@ -16,6 +16,10 @@ var _action_builder := AILegalActionBuilderScript.new()
 var _heuristics := AIHeuristicsScript.new()
 var _feature_extractor := AIFeatureExtractorScript.new()
 
+## 价值网络（可选）：如果已加载则用于替代 rollout
+var value_net: RefCounted = null  # NeuralNetInference
+var state_encoder_class: GDScript = null  # StateEncoder
+
 ## 默认搜索参数
 const DEFAULT_BRANCH_FACTOR: int = 3
 const DEFAULT_MAX_ACTIONS: int = 10
@@ -190,7 +194,7 @@ func _evaluate_sequence(
 	max_rollout_steps: int,
 	deadline_ms: int = 0
 ) -> float:
-	## 克隆状态、执行整条序列、然后跑 N 次 rollout
+	## 克隆状态、执行整条序列、然后评估
 	var sim_gsm := _cloner.clone_gsm(gsm)
 	for action: Dictionary in sequence:
 		var kind: String = str(action.get("kind", ""))
@@ -206,10 +210,15 @@ func _evaluate_sequence(
 	if sim_gsm.game_state.is_game_over():
 		return 1.0 if sim_gsm.game_state.winner_index == player_index else 0.0
 
+	## 价值网络路径：如果可用，用一次前向推理替代多次 rollout
+	if value_net != null and value_net.is_loaded() and state_encoder_class != null:
+		var features: Array[float] = state_encoder_class.encode(sim_gsm.game_state, player_index)
+		return value_net.predict(features)
+
+	## Rollout 路径（原有逻辑）
 	var wins: int = 0
 	var completed_rollouts: int = 0
 	for _i in num_rollouts:
-		## 每次 rollout 前检查时间预算
 		if deadline_ms > 0 and Time.get_ticks_msec() > deadline_ms:
 			break
 		var result: Dictionary = _rollout_sim.run_rollout(sim_gsm, player_index, max_rollout_steps)
