@@ -7,6 +7,7 @@ extends RefCounted
 const AIBenchmarkRunnerScript = preload("res://scripts/ai/AIBenchmarkRunner.gd")
 const AIOpponentScript = preload("res://scripts/ai/AIOpponent.gd")
 const AIHeuristicsScript = preload("res://scripts/ai/AIHeuristics.gd")
+const SelfPlayDataExporterScript = preload("res://scripts/ai/SelfPlayDataExporter.gd")
 
 
 func run_batch(
@@ -14,7 +15,8 @@ func run_batch(
 	agent_b_config: Dictionary,
 	deck_pairings: Array,
 	seeds: Array,
-	max_steps_per_match: int = 200
+	max_steps_per_match: int = 200,
+	export_training_data: bool = false,
 ) -> Dictionary:
 	var runner := AIBenchmarkRunnerScript.new()
 	var total_matches: int = 0
@@ -37,9 +39,12 @@ func run_batch(
 		for seed_value: Variant in seeds:
 			var sv: int = int(seed_value)
 			## agent_a 做 player 0
+			var exporter_a0 = null
+			if export_training_data:
+				exporter_a0 = SelfPlayDataExporterScript.new()
 			var result_a0 := _run_one_match(
 				runner, agent_a_config, agent_b_config,
-				deck_a, deck_b, sv, max_steps_per_match
+				deck_a, deck_b, sv, max_steps_per_match, exporter_a0
 			)
 			var match_entry_a0 := _build_match_entry(result_a0, sv, deck_a_id, deck_b_id, 0)
 			match_results.append(match_entry_a0)
@@ -53,9 +58,12 @@ func run_batch(
 				draws += 1
 
 			## agent_a 做 player 1
+			var exporter_a1 = null
+			if export_training_data:
+				exporter_a1 = SelfPlayDataExporterScript.new()
 			var result_a1 := _run_one_match(
 				runner, agent_b_config, agent_a_config,
-				deck_a, deck_b, sv + 10000, max_steps_per_match
+				deck_a, deck_b, sv + 10000, max_steps_per_match, exporter_a1
 			)
 			var match_entry_a1 := _build_match_entry(result_a1, sv + 10000, deck_a_id, deck_b_id, 1)
 			match_results.append(match_entry_a1)
@@ -87,6 +95,7 @@ func _run_one_match(
 	deck_b: DeckData,
 	seed_value: int,
 	max_steps: int,
+	exporter = null,
 ) -> Dictionary:
 	var p0_ai := _make_agent(0, p0_config)
 	var p1_ai := _make_agent(1, p1_config)
@@ -96,7 +105,17 @@ func _run_one_match(
 	_set_forced_shuffle_seed(seed_value)
 	gsm.start_game(deck_a, deck_b, 0)
 
+	if exporter != null:
+		exporter.start_game()
+		exporter.record_state(gsm.game_state, 0)
+		exporter.record_state(gsm.game_state, 1)
+
 	var result: Dictionary = runner.run_headless_duel(p0_ai, p1_ai, gsm, max_steps)
+
+	if exporter != null:
+		exporter.end_game(int(result.get("winner_index", -1)))
+		exporter.export_game()
+
 	_clear_forced_shuffle_seed()
 	return result
 
