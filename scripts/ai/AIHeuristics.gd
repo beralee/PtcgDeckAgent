@@ -6,6 +6,55 @@ const _MIRAIDON_SIGNATURES: Array[String] = ["Miraidon ex"]
 const _GARDEVOIR_SIGNATURES: Array[String] = ["Gardevoir ex", "Kirlia"]
 const _CHARIZARD_SIGNATURES: Array[String] = ["Charizard ex", "Charmeleon", "Charmander"]
 
+## 可调权重字典，留空则使用默认值
+var weights: Dictionary = {}
+
+
+## 从 weights 中读取权重，缺省返回默认值
+func _w(key: String, default_value: float) -> float:
+	return float(weights.get(key, default_value))
+
+
+## 返回所有默认权重的快照
+static func get_default_weights() -> Dictionary:
+	return {
+		# 基础分
+		"attack_knockout": 1000.0,
+		"attack_base": 500.0,
+		"attach_active": 240.0,
+		"attach_bench": 200.0,
+		"play_basic": 180.0,
+		"evolve": 170.0,
+		"use_ability": 160.0,
+		"play_stadium": 120.0,
+		"play_trainer": 110.0,
+		"dead_trainer": 20.0,
+		"retreat": 90.0,
+		# 共享调整
+		"bench_dev_bonus": 70.0,
+		"stage2_bonus": 140.0,
+		"attack_readiness_bonus": 80.0,
+		"dead_trainer_penalty": 30.0,
+		# 目标质量
+		"target_has_attacks": 30.0,
+		"high_damage_bonus": 40.0,
+		"medium_damage_bonus": 20.0,
+		"tanky_200_bonus": 30.0,
+		"tanky_120_bonus": 15.0,
+		"ex_bonus": 25.0,
+		"one_energy_gap": 50.0,
+		"two_energy_gap": 20.0,
+		# 牌组偏置
+		"miraidon_eg": 25.0,
+		"miraidon_l_bench": 15.0,
+		"miraidon_l_attach": 35.0,
+		"miraidon_off_type": -20.0,
+		"gardevoir_evo": 30.0,
+		"gardevoir_embrace": 25.0,
+		"charizard_candy": 25.0,
+		"charizard_evo": 30.0,
+	}
+
 
 func score_action(action: Dictionary, context: Dictionary) -> float:
 	var features: Dictionary = context.get("features", {})
@@ -20,22 +69,22 @@ func _base_score(action: Dictionary, features: Dictionary) -> float:
 	match str(action.get("kind", "")):
 		"attack":
 			if bool(action.get("projected_knockout", false)):
-				return 1000.0
-			return 500.0
+				return _w("attack_knockout", 1000.0)
+			return _w("attack_base", 500.0)
 		"attach_energy":
-			return 240.0 if bool(action.get("is_active_target", false)) else 200.0
+			return _w("attach_active", 240.0) if bool(action.get("is_active_target", false)) else _w("attach_bench", 200.0)
 		"play_basic_to_bench":
-			return 180.0
+			return _w("play_basic", 180.0)
 		"evolve":
-			return 170.0
+			return _w("evolve", 170.0)
 		"use_ability":
-			return 160.0
+			return _w("use_ability", 160.0)
 		"play_stadium":
-			return 120.0
+			return _w("play_stadium", 120.0)
 		"play_trainer":
-			return 110.0 if _is_productive_trainer(action, features) else 20.0
+			return _w("play_trainer", 110.0) if _is_productive_trainer(action, features) else _w("dead_trainer", 20.0)
 		"retreat":
-			return 90.0
+			return _w("retreat", 90.0)
 		"end_turn":
 			return 0.0
 		_:
@@ -47,15 +96,15 @@ func _apply_shared_adjustments(action: Dictionary, context: Dictionary, features
 	var kind := str(action.get("kind", ""))
 
 	if _supports_bench_development(kind, features):
-		score_delta += 70.0
+		score_delta += _w("bench_dev_bonus", 70.0)
 		_add_reason_tag(action, "bench_development")
 
 	if kind == "evolve" and _advances_stage2_line(action, context):
-		score_delta += 140.0
+		score_delta += _w("stage2_bonus", 140.0)
 		_add_reason_tag(action, "stage2_progress")
 
 	if kind == "attach_energy" and bool(features.get("improves_attack_readiness", false)):
-		score_delta += 80.0
+		score_delta += _w("attack_readiness_bonus", 80.0)
 		_add_reason_tag(action, "attack_readiness")
 
 	## 贴能目标质量评分：优先贴给高攻击力、高 HP、有招式的目标
@@ -63,7 +112,7 @@ func _apply_shared_adjustments(action: Dictionary, context: Dictionary, features
 		score_delta += _score_attach_target_quality(action, context)
 
 	if kind == "play_trainer" and not _is_productive_trainer(action, features):
-		score_delta -= 30.0
+		score_delta -= _w("dead_trainer_penalty", 30.0)
 		_add_reason_tag(action, "dead_trainer_penalty")
 
 	return score_delta
@@ -114,7 +163,7 @@ func _score_attach_target_quality(action: Dictionary, context: Dictionary) -> fl
 
 	## 有攻击招式的目标更值得贴能
 	if not card_data.attacks.is_empty():
-		delta += 30.0
+		delta += _w("target_has_attacks", 30.0)
 		## 最高伤害越高越值得投资
 		var max_damage: int = 0
 		for attack: Dictionary in card_data.attacks:
@@ -122,21 +171,21 @@ func _score_attach_target_quality(action: Dictionary, context: Dictionary) -> fl
 			if dmg > max_damage:
 				max_damage = dmg
 		if max_damage >= 100:
-			delta += 40.0
+			delta += _w("high_damage_bonus", 40.0)
 			_add_reason_tag(action, "high_damage_target")
 		elif max_damage >= 50:
-			delta += 20.0
+			delta += _w("medium_damage_bonus", 20.0)
 
 	## HP 高的目标更值得投资（不容易被秒）
 	if card_data.hp >= 200:
-		delta += 30.0
+		delta += _w("tanky_200_bonus", 30.0)
 		_add_reason_tag(action, "tanky_target")
 	elif card_data.hp >= 120:
-		delta += 15.0
+		delta += _w("tanky_120_bonus", 15.0)
 
 	## ex/V 宝可梦通常是核心攻击手
 	if card_data.mechanic == "ex" or card_data.mechanic == "V" or card_data.mechanic == "VSTAR":
-		delta += 25.0
+		delta += _w("ex_bonus", 25.0)
 		_add_reason_tag(action, "key_attacker")
 
 	## 接近满足攻击费用的目标额外加分（差 1-2 能量即可攻击）
@@ -144,10 +193,10 @@ func _score_attach_target_quality(action: Dictionary, context: Dictionary) -> fl
 	if gsm != null and gsm.rule_validator != null:
 		var energy_gap := _get_min_energy_gap(target_slot, card_data, gsm)
 		if energy_gap == 1:
-			delta += 50.0
+			delta += _w("one_energy_gap", 50.0)
 			_add_reason_tag(action, "one_energy_from_attack")
 		elif energy_gap == 2:
-			delta += 20.0
+			delta += _w("two_energy_gap", 20.0)
 
 	return delta
 
@@ -257,20 +306,20 @@ func _miraidon_bias(action: Dictionary, _context: Dictionary, _features: Diction
 	var card: CardInstance = action.get("card")
 	if kind == "play_trainer" and card != null and card.card_data != null:
 		if str(card.card_data.name) == "Electric Generator":
-			return 25.0
+			return _w("miraidon_eg", 25.0)
 	if kind == "play_basic_to_bench" and card != null and card.card_data != null:
 		if str(card.card_data.energy_type) == "L":
-			return 15.0
+			return _w("miraidon_l_bench", 15.0)
 	## 贴能给电属性宝可梦额外加分（避免贴给月月熊等非核心）
 	if kind == "attach_energy":
 		var target_slot: PokemonSlot = action.get("target_slot")
 		if target_slot != null:
 			var target_cd: CardData = target_slot.get_card_data()
 			if target_cd != null and str(target_cd.energy_type) == "L":
-				return 35.0
+				return _w("miraidon_l_attach", 35.0)
 			## 非电属性宝可梦减分
 			if target_cd != null and str(target_cd.energy_type) != "L" and str(target_cd.energy_type) != "C":
-				return -20.0
+				return _w("miraidon_off_type", -20.0)
 	return 0.0
 
 
@@ -281,13 +330,13 @@ func _gardevoir_bias(action: Dictionary, _context: Dictionary, _features: Dictio
 	if kind == "evolve" and card != null and card.card_data != null:
 		var evo_name := str(card.card_data.name)
 		if evo_name == "Gardevoir ex" or evo_name == "Kirlia":
-			return 30.0
+			return _w("gardevoir_evo", 30.0)
 	if kind == "use_ability":
 		var source_slot: PokemonSlot = action.get("source_slot")
 		if source_slot != null:
 			var slot_cd: CardData = source_slot.get_card_data()
 			if slot_cd != null and _has_ability_named(slot_cd, "Psychic Embrace"):
-				return 25.0
+				return _w("gardevoir_embrace", 25.0)
 	return 0.0
 
 
@@ -297,11 +346,11 @@ func _charizard_bias(action: Dictionary, _context: Dictionary, _features: Dictio
 	var card: CardInstance = action.get("card")
 	if kind == "play_trainer" and card != null and card.card_data != null:
 		if str(card.card_data.name) == "Rare Candy":
-			return 25.0
+			return _w("charizard_candy", 25.0)
 	if kind == "evolve" and card != null and card.card_data != null:
 		var evo_name := str(card.card_data.name)
 		if evo_name == "Charmeleon" or evo_name == "Charizard ex":
-			return 30.0
+			return _w("charizard_evo", 30.0)
 	return 0.0
 
 

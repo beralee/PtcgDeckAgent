@@ -305,6 +305,33 @@ func test_capturing_aroma_without_matching_target_returns_acknowledge_step() -> 
 	])
 
 
+func test_capturing_aroma_heads_includes_vstar_as_evolution() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.deck.clear()
+	player.hand.clear()
+	var basic := CardInstance.create(_make_basic_pokemon_data("基础宝可梦", "C", 70, "Basic"), 0)
+	var vstar := CardInstance.create(_make_basic_pokemon_data("洛奇亚VSTAR", "C", 280, "VSTAR", "VSTAR"), 0)
+	player.deck.append(basic)
+	player.deck.append(vstar)
+
+	var effect := EffectCapturingAroma.new(RiggedCoinFlipper.new([true]))
+	var card := CardInstance.create(_make_trainer_data("捕获香氛", "Item", "7cd68d9e286b78a7f9c799fce24a7d6c"), 0)
+
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
+	effect.execute(card, [{
+		"searched_pokemon": [vstar],
+	}], state)
+
+	var items: Array = steps[0].get("items", [])
+	return run_checks([
+		assert_eq(items.size(), 1, "正面时应包含 VSTAR 作为进化宝可梦"),
+		assert_true(items[0] == vstar, "正面时 VSTAR 应在可选列表中"),
+		assert_true(vstar in player.hand, "选择的 VSTAR 应加入手牌"),
+		assert_true(basic not in player.hand, "基础宝可梦不应被检索"),
+	])
+
+
 func test_pokemon_catcher_uses_shared_flipper_and_requires_target_on_heads() -> String:
 	var state := _make_state()
 	var opponent: PlayerState = state.players[1]

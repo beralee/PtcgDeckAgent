@@ -58,7 +58,7 @@ func test_is_basic_pokemon() -> String:
 
 
 func test_is_evolution_pokemon() -> String:
-	for s: String in ["Stage 1", "Stage 2"]:
+	for s: String in ["Stage 1", "Stage 2", "VSTAR", "VMAX"]:
 		var card := CardData.new()
 		card.card_type = "Pokemon"
 		card.stage = s

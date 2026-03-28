@@ -145,9 +145,9 @@ func is_basic_pokemon() -> bool:
 	return is_pokemon() and stage == "Basic"
 
 
-## 是否为进化宝可梦
+## 是否为进化宝可梦（包括 VSTAR、VMAX 等从其他宝可梦进化而来的形态）
 func is_evolution_pokemon() -> bool:
-	return is_pokemon() and stage in ["Stage 1", "Stage 2"]
+	return is_pokemon() and stage in ["Stage 1", "Stage 2", "VSTAR", "VMAX"]
 
 
 ## 是否为特殊规则宝可梦（昏厥给对手额外奖赏卡）
