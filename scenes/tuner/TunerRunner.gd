@@ -23,7 +23,7 @@ func _ready() -> void:
 	var from_latest: bool = false
 
 	var export_data: bool = false
-	var cmdline_args: PackedStringArray = OS.get_cmdline_args()
+	var cmdline_args: PackedStringArray = OS.get_cmdline_user_args()
 	for arg: String in cmdline_args:
 		if arg.begins_with("--generations="):
 			engine.generations = int(arg.split("=")[1])

@@ -89,12 +89,14 @@ func run(initial_config: Dictionary = {}) -> Dictionary:
 		if value_net_path != "":
 			mutant_config["value_net_path"] = value_net_path
 			current_best["value_net_path"] = value_net_path
+		## 导出训练数据时使用更大的步数上限确保对局能完成
+		var effective_max_steps: int = 500 if export_training_data else max_steps_per_match
 		var result: Dictionary = _runner.run_batch(
 			mutant_config,
 			current_best,
 			deck_pairings,
 			seed_set,
-			max_steps_per_match,
+			effective_max_steps,
 			export_training_data,
 		)
 		var mutant_wr: float = float(result.get("agent_a_win_rate", 0.0))

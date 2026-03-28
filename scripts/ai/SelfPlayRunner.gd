@@ -44,7 +44,7 @@ func run_batch(
 				exporter_a0 = SelfPlayDataExporterScript.new()
 			var result_a0 := _run_one_match(
 				runner, agent_a_config, agent_b_config,
-				deck_a, deck_b, sv, max_steps_per_match, exporter_a0
+				deck_a, deck_b, sv, max_steps_per_match, exporter_a0, export_training_data
 			)
 			var match_entry_a0 := _build_match_entry(result_a0, sv, deck_a_id, deck_b_id, 0)
 			match_results.append(match_entry_a0)
@@ -63,7 +63,7 @@ func run_batch(
 				exporter_a1 = SelfPlayDataExporterScript.new()
 			var result_a1 := _run_one_match(
 				runner, agent_b_config, agent_a_config,
-				deck_a, deck_b, sv + 10000, max_steps_per_match, exporter_a1
+				deck_a, deck_b, sv + 10000, max_steps_per_match, exporter_a1, export_training_data
 			)
 			var match_entry_a1 := _build_match_entry(result_a1, sv + 10000, deck_a_id, deck_b_id, 1)
 			match_results.append(match_entry_a1)
@@ -96,9 +96,10 @@ func _run_one_match(
 	seed_value: int,
 	max_steps: int,
 	exporter = null,
+	force_heuristic: bool = false,
 ) -> Dictionary:
-	var p0_ai := _make_agent(0, p0_config)
-	var p1_ai := _make_agent(1, p1_config)
+	var p0_ai := _make_agent(0, p0_config, force_heuristic)
+	var p1_ai := _make_agent(1, p1_config, force_heuristic)
 
 	var gsm := GameStateMachine.new()
 	_apply_seed(gsm, seed_value)
@@ -127,14 +128,15 @@ func _run_one_match(
 	var result: Dictionary = runner.run_headless_duel(p0_ai, p1_ai, gsm, max_steps, step_cb)
 
 	if exporter != null:
-		exporter.end_game(int(result.get("winner_index", -1)))
+		var wi: int = int(result.get("winner_index", -1))
+		exporter.end_game(wi)
 		exporter.export_game()
 
 	_clear_forced_shuffle_seed()
 	return result
 
 
-func _make_agent(player_index: int, config: Dictionary) -> AIOpponent:
+func _make_agent(player_index: int, config: Dictionary, fast_mode: bool = false) -> AIOpponent:
 	var agent := AIOpponentScript.new()
 	agent.configure(player_index, 1)
 	var weights: Variant = config.get("heuristic_weights", {})
@@ -143,7 +145,16 @@ func _make_agent(player_index: int, config: Dictionary) -> AIOpponent:
 	var mcts: Variant = config.get("mcts_config", {})
 	if mcts is Dictionary and not (mcts as Dictionary).is_empty():
 		agent.use_mcts = true
-		agent.mcts_config = (mcts as Dictionary).duplicate(true)
+		if fast_mode:
+			## 数据导出模式：用极轻量 MCTS 加速对局同时保留交互处理能力
+			agent.mcts_config = {
+				"branch_factor": 2,
+				"rollouts_per_sequence": 3,
+				"rollout_max_steps": 30,
+				"time_budget_ms": 500,
+			}
+		else:
+			agent.mcts_config = (mcts as Dictionary).duplicate(true)
 	var vn_path: Variant = config.get("value_net_path", "")
 	if vn_path is String and (vn_path as String) != "":
 		agent.value_net_path = vn_path as String
