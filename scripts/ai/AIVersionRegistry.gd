@@ -11,22 +11,42 @@ func save_version(record: Dictionary) -> bool:
 		return false
 
 	_ensure_dir_exists()
-	var index := _load_index()
-	index[version_id] = record.duplicate(true)
+	var index_data: Variant = _load_index()
+	if index_data == null:
+		return false
+
+	var index: Dictionary = index_data
+	var version_record := record.duplicate(true)
+	if str(version_record.get("created_at", "")).is_empty():
+		version_record["created_at"] = Time.get_datetime_string_from_system()
+
+	index[version_id] = version_record
 	return _save_index(index)
 
 
 func get_version(version_id: String) -> Dictionary:
-	return (_load_index().get(version_id, {}) as Dictionary).duplicate(true)
+	var index_data: Variant = _load_index()
+	if index_data == null:
+		return {}
+	return ((index_data as Dictionary).get(version_id, {}) as Dictionary).duplicate(true)
 
 
 func list_playable_versions() -> Array[Dictionary]:
 	var versions: Array[Dictionary] = []
-	for value: Variant in _load_index().values():
+	var index_data: Variant = _load_index()
+	if index_data == null:
+		return versions
+
+	for value: Variant in (index_data as Dictionary).values():
 		if value is Dictionary and str((value as Dictionary).get("status", "")) == "playable":
 			versions.append((value as Dictionary).duplicate(true))
+
 	versions.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		return str(a.get("created_at", "")) < str(b.get("created_at", ""))
+		var a_created_at := str(a.get("created_at", ""))
+		var b_created_at := str(b.get("created_at", ""))
+		if a_created_at == b_created_at:
+			return str(a.get("version_id", "")) < str(b.get("version_id", ""))
+		return a_created_at < b_created_at
 	)
 	return versions
 
@@ -36,20 +56,24 @@ func get_latest_playable_version() -> Dictionary:
 	return {} if versions.is_empty() else versions.back().duplicate(true)
 
 
-func _load_index() -> Dictionary:
+func _load_index() -> Variant:
 	var index_path := _index_path()
 	if not FileAccess.file_exists(index_path):
 		return {}
+
 	var file := FileAccess.open(index_path, FileAccess.READ)
 	if file == null:
-		return {}
+		return null
+
 	var text := file.get_as_text()
 	file.close()
+
 	var json := JSON.new()
 	if json.parse(text) != OK:
-		return {}
+		return null
+
 	var data: Variant = json.data
-	return data if data is Dictionary else {}
+	return data if data is Dictionary else null
 
 
 func _save_index(index: Dictionary) -> bool:
