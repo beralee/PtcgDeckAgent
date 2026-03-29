@@ -1,5 +1,4 @@
-## 从弃牌区复活指定宝可梦到备战区 - 渡魂（夜巡灵）
-## 从弃牌区选择最多 max_count 张符合名称过滤的宝可梦放到备战区
+## Put up to max_count matching Pokemon from your discard pile onto your Bench.
 class_name AttackReviveFromDiscardToBench
 extends BaseEffect
 
@@ -35,10 +34,10 @@ func get_attack_interaction_steps(
 		labels.append(discard_card.card_data.name)
 	if items.is_empty():
 		return []
-	var name_str: String = "「%s」" % required_name if required_name != "" else "宝可梦"
+	var name_str: String = "\"%s\"" % required_name if required_name != "" else "Pokemon"
 	return [{
 		"id": "revive_from_discard",
-		"title": "从弃牌区选择最多%d张%s放到备战区" % [actual_max, name_str],
+		"title": "Choose up to %d %s from your discard pile to put onto your Bench" % [actual_max, name_str],
 		"items": items,
 		"labels": labels,
 		"min_select": 0,
@@ -57,14 +56,11 @@ func execute_attack(
 	if top == null:
 		return
 	var player: PlayerState = state.players[top.owner_index]
-
 	var bench_space: int = 5 - player.bench.size()
 	if bench_space <= 0:
 		return
 
 	var actual_max: int = mini(max_count, bench_space)
-
-	# 从交互上下文获取玩家选择
 	var ctx: Dictionary = get_attack_interaction_context()
 	var selected_raw: Array = ctx.get("revive_from_discard", [])
 	var chosen: Array[CardInstance] = []
@@ -83,7 +79,6 @@ func execute_attack(
 			if chosen.size() >= actual_max:
 				break
 
-	# 如果没有交互选择，回退到自动选择
 	if chosen.is_empty() and selected_raw.is_empty():
 		for discard_card: CardInstance in player.discard_pile:
 			if not discard_card.card_data.is_pokemon():
@@ -106,5 +101,5 @@ func execute_attack(
 
 
 func get_description() -> String:
-	var name_str: String = "「%s」" % required_name if required_name != "" else "宝可梦"
-	return "从弃牌区选择最多%d张%s放到备战区。" % [max_count, name_str]
+	var name_str: String = "\"%s\"" % required_name if required_name != "" else "Pokemon"
+	return "Put up to %d %s from your discard pile onto your Bench." % [max_count, name_str]

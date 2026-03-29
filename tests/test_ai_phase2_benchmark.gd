@@ -4,6 +4,9 @@ extends TestBase
 const AIBenchmarkRunnerScript = preload("res://scripts/ai/AIBenchmarkRunner.gd")
 const DeckBenchmarkCaseScript = preload("res://scripts/ai/DeckBenchmarkCase.gd")
 const BenchmarkEvaluatorScript = preload("res://scripts/ai/BenchmarkEvaluator.gd")
+const BenchmarkRunnerSceneScript = preload("res://scenes/tuner/BenchmarkRunner.gd")
+const AIVersionRegistryScript = preload("res://scripts/ai/AIVersionRegistry.gd")
+const TrainingRunRegistryScript = preload("res://scripts/ai/TrainingRunRegistry.gd")
 
 
 func _card_identity_signature(cards: Array) -> Array[String]:
@@ -62,6 +65,35 @@ func _make_gate_summary(identity_hit_rate: float, stalled: bool = false, cap_rat
 		summary["failure_breakdown"]["stalled_no_progress"] = 1
 	summary["cap_termination_rate"] = cap_rate
 	return summary
+
+
+func _remove_dir_recursive(dir_path: String) -> void:
+	var dir := DirAccess.open(dir_path)
+	if dir == null:
+		return
+	dir.list_dir_begin()
+	var file_name := dir.get_next()
+	while file_name != "":
+		if file_name == "." or file_name == "..":
+			file_name = dir.get_next()
+			continue
+		var child_path := dir_path.path_join(file_name)
+		if dir.current_is_dir():
+			_remove_dir_recursive(child_path)
+			DirAccess.remove_absolute(child_path)
+		else:
+			DirAccess.remove_absolute(child_path)
+		file_name = dir.get_next()
+	dir.list_dir_end()
+
+
+func _cleanup_benchmark_registry_fixtures() -> void:
+	for user_dir: String in ["user://benchmark_versions_test", "user://benchmark_runs_test"]:
+		var global_dir := ProjectSettings.globalize_path(user_dir)
+		if not DirAccess.dir_exists_absolute(global_dir):
+			continue
+		_remove_dir_recursive(global_dir)
+		DirAccess.remove_absolute(global_dir)
 
 
 func test_deck_benchmark_case_pins_phase2_default_decks() -> String:
@@ -560,3 +592,192 @@ func test_run_and_summarize_version_regression_includes_version_summary() -> Str
 		assert_str_contains(text_summary, "baseline-v1", "版本回归文本汇总应包含 baseline-v1"),
 		assert_str_contains(text_summary, "candidate-v2", "版本回归文本汇总应包含 candidate-v2"),
 	])
+
+
+func test_benchmark_runner_aggregate_case_results_merges_publish_metrics() -> String:
+	var runner = BenchmarkRunnerSceneScript.new()
+	var aggregate: Dictionary = runner.aggregate_case_results([
+		{
+			"pairing_name": "miraidon_vs_gardevoir",
+			"summary": {
+				"total_matches": 8,
+				"version_a_wins": 5,
+				"version_b_wins": 3,
+				"version_a_win_rate": 0.625,
+				"version_b_win_rate": 0.375,
+				"failure_breakdown": {},
+				"cap_termination_rate": 0.0,
+			},
+			"errors": PackedStringArray(),
+			"regression_gate_passed": true,
+		},
+		{
+			"pairing_name": "miraidon_vs_charizard_ex",
+			"summary": {
+				"total_matches": 8,
+				"version_a_wins": 4,
+				"version_b_wins": 4,
+				"version_a_win_rate": 0.5,
+				"version_b_win_rate": 0.5,
+				"failure_breakdown": {},
+				"cap_termination_rate": 0.0,
+			},
+			"errors": PackedStringArray(),
+			"regression_gate_passed": true,
+		},
+		{
+			"pairing_name": "gardevoir_vs_charizard_ex",
+			"summary": {
+				"total_matches": 8,
+				"version_a_wins": 5,
+				"version_b_wins": 3,
+				"version_a_win_rate": 0.625,
+				"version_b_win_rate": 0.375,
+				"failure_breakdown": {"stalled_no_progress": 0},
+				"cap_termination_rate": 0.0,
+			},
+			"errors": PackedStringArray(),
+			"regression_gate_passed": true,
+		},
+	], 0.55)
+	return run_checks([
+		assert_eq(int(aggregate.get("total_matches", 0)), 24, "Aggregate summary should merge total match counts across all fixed pairings"),
+		assert_eq(int(aggregate.get("version_a_wins", 0)), 14, "Aggregate summary should merge version_a wins across all fixed pairings"),
+		assert_eq(int(aggregate.get("version_b_wins", 0)), 10, "Aggregate summary should merge version_b wins across all fixed pairings"),
+		assert_eq(float(aggregate.get("win_rate_vs_current_best", 0.0)), 14.0 / 24.0, "Publish summary should expose candidate win rate vs current best"),
+		assert_true(bool(aggregate.get("gate_passed", false)), "Aggregate gate should pass when every pairing passes and the candidate clears the threshold"),
+	])
+
+
+func test_benchmark_runner_aggregate_case_results_fails_when_any_pairing_fails_gate() -> String:
+	var runner = BenchmarkRunnerSceneScript.new()
+	var aggregate: Dictionary = runner.aggregate_case_results([
+		{
+			"pairing_name": "miraidon_vs_gardevoir",
+			"summary": {
+				"total_matches": 8,
+				"version_a_wins": 5,
+				"version_b_wins": 3,
+				"version_a_win_rate": 0.625,
+				"version_b_win_rate": 0.375,
+				"failure_breakdown": {},
+				"cap_termination_rate": 0.0,
+			},
+			"errors": PackedStringArray(),
+			"regression_gate_passed": true,
+		},
+		{
+			"pairing_name": "gardevoir_vs_charizard_ex",
+			"summary": {
+				"total_matches": 8,
+				"version_a_wins": 6,
+				"version_b_wins": 2,
+				"version_a_win_rate": 0.75,
+				"version_b_win_rate": 0.25,
+				"failure_breakdown": {"stalled_no_progress": 1},
+				"cap_termination_rate": 0.0,
+			},
+			"errors": PackedStringArray(["stalled_no_progress"]),
+			"regression_gate_passed": false,
+		},
+	], 0.55)
+	return run_checks([
+		assert_false(bool(aggregate.get("gate_passed", true)), "Aggregate gate should fail when any pairing fails its regression gate"),
+		assert_eq(int(aggregate.get("failures", 0)), 1, "Aggregate summary should count pairing errors as failures"),
+	])
+
+
+func test_publish_and_record_keeps_last_approved_version_when_gate_fails() -> String:
+	_cleanup_benchmark_registry_fixtures()
+	var version_registry := AIVersionRegistryScript.new()
+	version_registry.base_dir = "user://benchmark_versions_test"
+	version_registry.publish_playable_version({
+		"version_id": "AI-20260329-01",
+		"display_name": "approved best",
+		"agent_config_path": "user://ai_agents/approved.json",
+		"value_net_path": "user://ai_models/approved.json",
+	})
+	var runner = BenchmarkRunnerSceneScript.new()
+	runner.call("_publish_and_record", {
+		"run-id": "run_failed_gate",
+		"pipeline-name": "fixed_three_deck_training",
+		"run-dir": "user://training_data/runs/run_failed_gate",
+		"summary-output": "user://training_data/runs/run_failed_gate/benchmark/summary.json",
+		"run-registry-dir": "user://benchmark_runs_test",
+		"version-registry-dir": "user://benchmark_versions_test",
+		"baseline-version-id": "AI-20260329-01",
+		"baseline-agent-config": "user://ai_agents/approved.json",
+		"baseline-value-net": "user://ai_models/approved.json",
+	}, {
+		"candidate_agent_config_path": "user://ai_agents/candidate_failed.json",
+		"candidate_value_net_path": "user://ai_models/candidate_failed.json",
+		"baseline_agent_config_path": "user://ai_agents/approved.json",
+		"baseline_value_net_path": "user://ai_models/approved.json",
+		"gate_passed": false,
+		"win_rate_vs_current_best": 0.41,
+		"total_matches": 24,
+		"timeouts": 2,
+		"failures": 1,
+	})
+	var latest_approved := version_registry.get_latest_playable_version()
+	var run_registry := TrainingRunRegistryScript.new()
+	run_registry.base_dir = "user://benchmark_runs_test"
+	var run_record := run_registry.get_run("run_failed_gate")
+	var result := run_checks([
+		assert_eq(str(latest_approved.get("version_id", "")), "AI-20260329-01", "benchmark_failed runs should not replace the latest approved version"),
+		assert_eq(str(run_record.get("status", "")), "benchmark_failed", "failed gate runs should persist benchmark_failed status"),
+		assert_eq(str(run_record.get("baseline_version_id", "")), "AI-20260329-01", "run records should keep the approved baseline version id"),
+		assert_eq(str(run_record.get("baseline_agent_config_path", "")), "user://ai_agents/approved.json", "run records should keep the approved baseline agent path"),
+		assert_eq(str(run_record.get("candidate_agent_config_path", "")), "user://ai_agents/candidate_failed.json", "run records should keep the failed candidate agent path"),
+	])
+	_cleanup_benchmark_registry_fixtures()
+	return result
+
+
+func test_publish_and_record_promotes_new_latest_approved_version_after_gate_pass() -> String:
+	_cleanup_benchmark_registry_fixtures()
+	var version_registry := AIVersionRegistryScript.new()
+	version_registry.base_dir = "user://benchmark_versions_test"
+	version_registry.publish_playable_version({
+		"version_id": "AI-20260329-01",
+		"display_name": "approved best",
+		"agent_config_path": "user://ai_agents/approved.json",
+		"value_net_path": "user://ai_models/approved.json",
+	})
+	var runner = BenchmarkRunnerSceneScript.new()
+	runner.call("_publish_and_record", {
+		"run-id": "run_passed_gate",
+		"pipeline-name": "fixed_three_deck_training",
+		"run-dir": "user://training_data/runs/run_passed_gate",
+		"summary-output": "user://training_data/runs/run_passed_gate/benchmark/summary.json",
+		"run-registry-dir": "user://benchmark_runs_test",
+		"version-registry-dir": "user://benchmark_versions_test",
+		"publish-version-id": "AI-20260329-02",
+		"publish-display-name": "candidate promoted",
+		"baseline-version-id": "AI-20260329-01",
+		"baseline-agent-config": "user://ai_agents/approved.json",
+		"baseline-value-net": "user://ai_models/approved.json",
+	}, {
+		"candidate_agent_config_path": "user://ai_agents/candidate_passed.json",
+		"candidate_value_net_path": "user://ai_models/candidate_passed.json",
+		"baseline_agent_config_path": "user://ai_agents/approved.json",
+		"baseline_value_net_path": "user://ai_models/approved.json",
+		"gate_passed": true,
+		"win_rate_vs_current_best": 0.58,
+		"total_matches": 24,
+		"timeouts": 0,
+		"failures": 0,
+	})
+	var latest_approved := version_registry.get_latest_playable_version()
+	var run_registry := TrainingRunRegistryScript.new()
+	run_registry.base_dir = "user://benchmark_runs_test"
+	var run_record := run_registry.get_run("run_passed_gate")
+	var result := run_checks([
+		assert_eq(str(latest_approved.get("version_id", "")), "AI-20260329-02", "passed gate runs should publish a new approved version"),
+		assert_eq(str(latest_approved.get("agent_config_path", "")), "user://ai_agents/candidate_passed.json", "published version should point at the candidate agent config"),
+		assert_eq(str(run_record.get("status", "")), "published", "passed gate runs should persist published status"),
+		assert_eq(str(run_record.get("baseline_version_id", "")), "AI-20260329-01", "published run records should keep the parent approved baseline id"),
+		assert_eq(str(run_record.get("published_version_id", "")), "AI-20260329-02", "published run records should keep the new approved version id"),
+	])
+	_cleanup_benchmark_registry_fixtures()
+	return result

@@ -49,6 +49,25 @@ unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(300, 35)
 
+[node name="AISourceLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "AI 来源:"
+
+[node name="AISourceOption" type="OptionButton" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(300, 35)
+
+[node name="AIVersionLabel" type="Label" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "AI 版本:"
+
+[node name="AIVersionOption" type="OptionButton" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(300, 35)
+
 [node name="Deck1Label" type="Label" parent="VBoxContainer"]
 layout_mode = 2
 text = "玩家1 卡组:"

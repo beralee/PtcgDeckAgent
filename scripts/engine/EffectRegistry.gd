@@ -11,14 +11,19 @@ const AttackGreninjaExMirageBarrageEffect = preload("res://scripts/effects/pokem
 const EffectHisuianHeavyBallEffect = preload("res://scripts/effects/trainer_effects/EffectHisuianHeavyBall.gd")
 const EffectRecoverBasicEnergyEffect = preload("res://scripts/effects/trainer_effects/EffectRecoverBasicEnergy.gd")
 const EffectSearchBasicEnergyEffect = preload("res://scripts/effects/trainer_effects/EffectSearchBasicEnergy.gd")
+const EffectLanceEffect = preload("res://scripts/effects/trainer_effects/EffectLance.gd")
+const EffectDarkPatchEffect = preload("res://scripts/effects/trainer_effects/EffectDarkPatch.gd")
 const AbilityStarPortalEffect = preload("res://scripts/effects/pokemon_effects/AbilityStarPortal.gd")
 const AbilityBonusDrawIfActiveEffect = preload("res://scripts/effects/pokemon_effects/AbilityBonusDrawIfActive.gd")
+const AbilityDrawIfActiveEffect = preload("res://scripts/effects/pokemon_effects/AbilityDrawIfActive.gd")
 const AbilityAttachFromDeckEffect = preload("res://scripts/effects/pokemon_effects/AbilityAttachFromDeck.gd")
 const AttackSearchDeckToHandEffect = preload("res://scripts/effects/pokemon_effects/AttackSearchDeckToHand.gd")
 const AttackCoinFlipMultiplierEffect = preload("res://scripts/effects/pokemon_effects/AttackCoinFlipMultiplier.gd")
 const AttackDiscardBasicEnergyFromHandDamageEffect = preload("res://scripts/effects/pokemon_effects/AttackDiscardBasicEnergyFromHandDamage.gd")
 const AttackLookTopPickHandRestLostZoneEffect = preload("res://scripts/effects/pokemon_effects/AttackLookTopPickHandRestLostZone.gd")
 const AttackSearchDeckToTopEffect = preload("res://scripts/effects/pokemon_effects/AttackSearchDeckToTop.gd")
+const AttackDelphoxVMagicFireEffect = preload("res://scripts/effects/pokemon_effects/AttackDelphoxVMagicFire.gd")
+const AttackSelfLockUntilLeaveActiveEffect = preload("res://scripts/effects/pokemon_effects/AttackSelfLockUntilLeaveActive.gd")
 const EffectRoxanneEffect = preload("res://scripts/effects/trainer_effects/EffectRoxanne.gd")
 const EffectCylleneEffect = preload("res://scripts/effects/trainer_effects/EffectCyllene.gd")
 const EffectTrekkingShoesEffect = preload("res://scripts/effects/trainer_effects/EffectTrekkingShoes.gd")
@@ -35,6 +40,7 @@ const AbilitySelfHealVSTAREffect = preload("res://scripts/effects/pokemon_effect
 const AbilityMillDeckRecoverToHandEffect = preload("res://scripts/effects/pokemon_effects/AbilityMillDeckRecoverToHand.gd")
 const AttackMillAndAttachAllEnergyEffect = preload("res://scripts/effects/pokemon_effects/AttackMillAndAttachAllEnergy.gd")
 const AttackOpponentHandCountDamageEffect = preload("res://scripts/effects/pokemon_effects/AttackOpponentHandCountDamage.gd")
+const AttackBonusIfSelfDamagedEffect = preload("res://scripts/effects/pokemon_effects/AttackBonusIfSelfDamaged.gd")
 const AttackAttachBasicEnergyFromDiscardEffect = preload("res://scripts/effects/pokemon_effects/AttackAttachBasicEnergyFromDiscard.gd")
 const AttackMillOpponentDeckEffect = preload("res://scripts/effects/pokemon_effects/AttackMillOpponentDeck.gd")
 const AttackDiscardHandDrawCardsEffect = preload("res://scripts/effects/pokemon_effects/AttackDiscardHandDrawCards.gd")
@@ -47,6 +53,7 @@ const AbilitySelfKnockoutDamageCountersEffect = preload("res://scripts/effects/p
 const AttackReduceDamageNextTurnEffect = preload("res://scripts/effects/pokemon_effects/AttackReduceDamageNextTurn.gd")
 const AttackActiveEnergyCountDamageEffect = preload("res://scripts/effects/pokemon_effects/AttackActiveEnergyCountDamage.gd")
 const AttackAnyTargetDamageEffect = preload("res://scripts/effects/pokemon_effects/AttackAnyTargetDamage.gd")
+const AttackDrawToHandSizeEffect = preload("res://scripts/effects/pokemon_effects/AttackDrawToHandSize.gd")
 const AttackKODefenderIfHasSpecialEnergyEffect = preload("res://scripts/effects/pokemon_effects/AttackKODefenderIfHasSpecialEnergy.gd")
 const AttackMillSelfDeckEffect = preload("res://scripts/effects/pokemon_effects/AttackMillSelfDeck.gd")
 const EffectTempleOfSinnohEffect = preload("res://scripts/effects/stadium_effects/EffectTempleOfSinnoh.gd")
@@ -56,8 +63,15 @@ const EffectSparklingCrystalEffect = preload("res://scripts/effects/tool_effects
 const EffectLegacyEnergyEffect = preload("res://scripts/effects/energy_effects/EffectLegacyEnergy.gd")
 const EffectMelaEffect = preload("res://scripts/effects/trainer_effects/EffectMela.gd")
 const EffectSadasVitalityEffect = preload("res://scripts/effects/trainer_effects/EffectSadasVitality.gd")
+const EffectCherensCareEffect = preload("res://scripts/effects/trainer_effects/EffectCherensCare.gd")
+const EffectTMTurboEnergizeEffect = preload("res://scripts/effects/trainer_effects/EffectTMTurboEnergize.gd")
 const AttackDefenderRetreatLockNextTurnEffect = preload("res://scripts/effects/pokemon_effects/AttackDefenderRetreatLockNextTurn.gd")
 const AttackReturnEnergyThenBenchDamageEffect = preload("res://scripts/effects/pokemon_effects/AttackReturnEnergyThenBenchDamage.gd")
+const AttackTargetOwnBenchDamageEffect = preload("res://scripts/effects/pokemon_effects/AttackTargetOwnBenchDamage.gd")
+const AttackTargetOpponentBenchDamageEffect = preload("res://scripts/effects/pokemon_effects/AttackTargetOpponentBenchDamage.gd")
+const AbilityMoveBasicEnergyToOwnPokemonEffect = preload("res://scripts/effects/pokemon_effects/AbilityMoveBasicEnergyToOwnPokemon.gd")
+const AbilityPrizeToBenchAndExtraPrizeEffect = preload("res://scripts/effects/pokemon_effects/AbilityPrizeToBenchAndExtraPrize.gd")
+const AbilityPreventDamageFromBasicExEffect = preload("res://scripts/effects/pokemon_effects/AbilityPreventDamageFromBasicEx.gd")
 const AbilityPreventDamageFromAttackersWithAbilitiesEffect = preload("res://scripts/effects/pokemon_effects/AbilityPreventDamageFromAttackersWithAbilities.gd")
 const AttackDistributedBenchCountersEffect = preload("res://scripts/effects/pokemon_effects/AttackDistributedBenchCounters.gd")
 const AttackUseDiscardDragonAttackEffect = preload("res://scripts/effects/pokemon_effects/AttackUseDiscardDragonAttack.gd")
@@ -86,6 +100,12 @@ const AttackDiscardStadiumBonusDamageEffect = preload("res://scripts/effects/pok
 const AttackItemLockNextTurnEffect = preload("res://scripts/effects/pokemon_effects/AttackItemLockNextTurn.gd")
 const EffectMirageGateEffect = preload("res://scripts/effects/trainer_effects/EffectMirageGate.gd")
 const EffectColressExperimentEffect = preload("res://scripts/effects/trainer_effects/EffectColressExperiment.gd")
+const EffectHyperAromaEffect = preload("res://scripts/effects/trainer_effects/EffectHyperAroma.gd")
+const EffectSalvatoreEffect = preload("res://scripts/effects/trainer_effects/EffectSalvatore.gd")
+const EffectExpShareEffect = preload("res://scripts/effects/tool_effects/EffectExpShare.gd")
+const EffectLeagueHQEffect = preload("res://scripts/effects/stadium_effects/EffectLeagueHQ.gd")
+const EffectLuminousEnergyEffect = preload("res://scripts/effects/energy_effects/EffectLuminousEnergy.gd")
+const EffectMagmaBasinEffect = preload("res://scripts/effects/stadium_effects/EffectMagmaBasin.gd")
 
 
 ## ==================== 主入口 ====================
@@ -171,6 +191,9 @@ static func _register_pokemon_effect_overrides(processor: EffectProcessor, effec
 			processor.register_effect(effect_id, AbilityRunAwayDrawEffect.new(3))
 		"8c23889e3e58324f3d58029f72379fac":
 			processor.register_attack_effect(effect_id, AttackCoinFlipApplyStatusEffect.new("confused"))
+		"013d589bd3c3a4c3472231a966ff6786":
+			processor.register_attack_effect(effect_id, AttackBonusIfSelfDamagedEffect.new(70, 0))
+			processor.register_attack_effect(effect_id, AttackIgnoreWeaknessEffect.new(0))
 		"c3ada06b5a60fb63228d9f704109718b":
 			processor.register_effect(effect_id, AbilitySelfHealVSTAREffect.new())
 			processor.register_attack_effect(effect_id, AttackReduceDamageNextTurnEffect.new(80))
@@ -204,6 +227,16 @@ static func _register_pokemon_effect_overrides(processor: EffectProcessor, effec
 		"ab6c3357e2b8a8385a68da738f41e0c1":
 			processor.register_effect(effect_id, AbilityDrawIfKnockoutLastTurnEffect.new(3, "fezandipiti"))
 			processor.register_attack_effect(effect_id, AttackAnyTargetDamageEffect.new(100))
+		"79513e01fbf5084d23e6c60232e2338c":
+			processor.register_effect(effect_id, AbilityPrizeToBenchAndExtraPrizeEffect.new(processor.coin_flipper))
+		"8c812520b47c53417bf960f22970dd18":
+			processor.register_attack_effect(effect_id, AttackTargetOwnBenchDamageEffect.new(10, 0))
+		"fd252ce877c709e9e3161c56ef98aff8":
+			processor.register_effect(effect_id, AbilityPreventDamageFromBasicExEffect.new())
+			processor.register_attack_effect(effect_id, AttackTargetOpponentBenchDamageEffect.new(30, 0))
+		"4550f14d2ebd9d202a0c4ea5af9ec4d9":
+			processor.register_effect(effect_id, AbilityMoveBasicEnergyToOwnPokemonEffect.new())
+			processor.register_attack_effect(effect_id, AttackDrawToHandSizeEffect.new(6, 0))
 		"ce6db179c3d166130e7a637581da3aa2":
 			# 渡魂：从弃牌区选择最多3张「夜巡灵」放到备战区
 			processor.register_attack_effect(effect_id, AttackReviveFromDiscardToBenchEffect.new(3, "夜巡灵"))
@@ -226,6 +259,15 @@ static func _register_pokemon_effect_overrides(processor: EffectProcessor, effec
 		"409898a79b38fe8ca279e7bdaf4fd52e":
 			processor.register_effect(effect_id, AbilityAttachBasicEnergyFromHandDrawEffect.new("G", 1))
 			processor.register_attack_effect(effect_id, AttackActiveEnergyCountDamageEffect.new(30))
+		"3c6c028efc71a5e7ee0fbd2e8f70ece9":
+			processor.register_effect(effect_id, AbilityDrawIfActiveEffect.new(1))
+			processor.register_attack_effect(effect_id, AttackBenchCountDamage.new(20, "both"))
+		"21cad77ee66ee136c386e766736ec247":
+			processor.register_attack_effect(effect_id, EffectApplyStatus.new("burned", false, 0))
+			processor.register_attack_effect(effect_id, EffectApplyStatus.new("confused", false, 0))
+			processor.register_attack_effect(effect_id, AttackDelphoxVMagicFireEffect.new(1))
+		"2d2fed5a4681c1000b070227a730eaff":
+			processor.register_attack_effect(effect_id, AttackSelfLockUntilLeaveActiveEffect.new(1))
 
 
 ## ==================== 物品卡注册（register_effect）====================
@@ -290,8 +332,14 @@ static func _register_items(processor: EffectProcessor) -> void:
 	processor.register_effect("3a6d419769778b40091e69fbd76737ec", EffectPokemonCatcherEffect.new(processor.coin_flipper))
 	# Energy Switch
 	processor.register_effect("294212d9c02dc0acb886a7ef01ebeac4", EffectEnergySwitchEffect.new())
+	# Dark Patch
+	processor.register_effect("11ca8ef52edb2599280e7d5827e9dfb1", EffectDarkPatchEffect.new())
+	# Energy Search
+	processor.register_effect("e508908b9311c0ef5e70e9de44892e26", EffectSearchBasicEnergyEffect.new(1, 0))
 	# Mirage Gate
 	processor.register_effect("15b5bf0cc2edae9b9cd0bc24389ad355", EffectMirageGateEffect.new())
+	# 高级香氛
+	processor.register_effect("e8942749749a9d0069b3b47562ddb415", EffectHyperAromaEffect.new())
 
 
 ## ==================== 支援者卡注册（register_effect）====================
@@ -305,6 +353,7 @@ static func _register_supporters(processor: EffectProcessor) -> void:
 	processor.register_effect("8e1fa2c9018db938084c94c7c970d419", EffectBossOrders.new())
 	# 奇树
 	processor.register_effect("af514f82d182aeae5327b2c360df703d", EffectIono.new())
+	processor.register_effect("8be6a0e0835e0caba9acb7bf8e9c9ce0", EffectCherensCareEffect.new())
 	# 博士的研究：弃掉手牌，摸7张
 	processor.register_effect("aecd80ca2722885c3d062a2255346f3e", EffectDrawCards.new(7, true))
 	# 裁判：双方将手牌洗入牌库，各摸4张
@@ -321,6 +370,8 @@ static func _register_supporters(processor: EffectProcessor) -> void:
 	processor.register_effect("4f53ab6bf158fd1a8869ae037f4a0d6d", EffectIrida.new())
 	# Roxanne
 	processor.register_effect("889c893f76d8be0261cd53daad5e3c11", EffectRoxanneEffect.new())
+	# Lance
+	processor.register_effect("2df65fcd5de0d9d9e24486b059981cdf", EffectLanceEffect.new())
 	# Cyllene
 	processor.register_effect("e5c317e428f0cfd885b53d4d058b5d5b", EffectCylleneEffect.new())
 	# Mela
@@ -331,6 +382,8 @@ static func _register_supporters(processor: EffectProcessor) -> void:
 	processor.register_effect("8150af4062192998497e376ad931bea4", EffectCarmineEffect.new())
 	# Colress's Experiment
 	processor.register_effect("9c6f696e9eb8f0c53b5f1057141a1227", EffectColressExperimentEffect.new())
+	# 赛吉
+	processor.register_effect("08c2507538f1574c5ceda18017ab5031", EffectSalvatoreEffect.new())
 
 
 ## ==================== 道具卡注册（register_effect）====================
@@ -354,8 +407,12 @@ static func _register_tools(processor: EffectProcessor) -> void:
 	processor.register_effect("0b4cc131a19862f92acf71494f29a0ed", EffectToolRescueBoard.new())
 	# Sparkling Crystal
 	processor.register_effect("12164ed03296d2df4ef6d0fa8b5f8aae", EffectSparklingCrystalEffect.new())
+	processor.register_effect("cd9192e99ba06596352434d53223514f", EffectToolHPModifier.new(100))
 	# 招式学习器 进化
 	processor.register_effect("43386015be5c073ba2e5b9d3692ece3f", AttackTMEvolutionEffect.new(2))
+	processor.register_effect("2614722b9b28d9df8fd769b926ec82f2", EffectTMTurboEnergizeEffect.new())
+	# 学习装置
+	processor.register_effect("40d67cc66ad153ee1d54c6213c50b4a1", EffectExpShareEffect.new())
 
 
 ## ==================== 竞技场卡注册（register_effect）====================
@@ -369,6 +426,8 @@ static func _register_stadiums(processor: EffectProcessor) -> void:
 	processor.register_effect("13b3caaa408a85dfd1e2a5ad797e8b8a", EffectTownStore.new())
 	# Full Metal Lab
 	processor.register_effect("59e1e1faa3ceb8c3ae801979a499532e", EffectStadiumDamageModifier.new(-30, "defense", "M"))
+	# Magma Basin
+	processor.register_effect("d781c9da21b24ff7a1453150a534c9df", EffectMagmaBasinEffect.new())
 	# Temple of Sinnoh
 	processor.register_effect("53864b068a4a1e8dce3c53c884b67efa", EffectTempleOfSinnohEffect.new())
 	# Gravity Mountain
@@ -377,6 +436,8 @@ static func _register_stadiums(processor: EffectProcessor) -> void:
 	processor.register_effect("4e16157bfa88a41e823d058a732df8e0", EffectJammingTowerEffect.new())
 	# 深钵镇
 	processor.register_effect("c117bea3cc758d46430d6bef11062a56", EffectArtazonEffect.new())
+	# 宝可梦联盟总部
+	processor.register_effect("b87089abe625a7abb3c523074a8497df", EffectLeagueHQEffect.new())
 
 
 ## ==================== 特殊能量注册（register_effect）====================
@@ -396,6 +457,8 @@ static func _register_special_energies(processor: EffectProcessor) -> void:
 	processor.register_effect("fb0948c721db1f31767aa6cf0c2ea692", EffectMistEnergy.new())
 	# Legacy Energy
 	processor.register_effect("6f31b7241a181631016466e561f148f3", EffectLegacyEnergyEffect.new())
+	# 夜光能量
+	processor.register_effect("540ee48bb93584e4bfe3d7f5d0ee0efc", EffectLuminousEnergyEffect.new())
 
 
 ## ==================== 特性名称 → 效果实例映射 ====================
@@ -410,7 +473,7 @@ static func _get_ability_effect(ability_name: String) -> BaseEffect:
 		"勤奋门牙":
 			return AbilityDrawToN.new(5)
 		"音速搜索":
-			return AbilitySearchAny.new(1, false)
+			return AbilitySearchAny.new(1, true, false, "ability_search_any_quick_search")
 		"星耀诞生":
 			# VSTAR 特技：搜索牌库最多2张任意卡
 			return AbilitySearchAny.new(2, true, true)
@@ -471,8 +534,8 @@ static func _get_ability_effect(ability_name: String) -> BaseEffect:
 			# 降低V宝可梦受到的伤害
 			return AbilityVReduceDamage.new()
 		"振奋之心":
-			# 降低招式能量费用
-			return AbilityReduceAttackCost.new()
+			# 减少与对手已获得奖赏卡张数相同数量的无色能量
+			return AbilityPrizeCountColorlessReductionEffect.new()
 		"金属之盾":
 			# 满足条件时减伤
 			return AbilityConditionalDefense.new()

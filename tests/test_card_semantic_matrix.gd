@@ -198,21 +198,37 @@ func test_thunderous_charge_and_bench_count_family_behaviour() -> String:
 
 
 func test_radiant_charizard_family_behaviour() -> String:
-	var player := PlayerState.new()
-	player.player_index = 0
-	var charizard_cd := _make_basic_pokemon_data("RadiantCharizard", "R", 160)
-	charizard_cd.abilities = [{"name": AbilityReduceAttackCost.ABILITY_NAME}]
-	player.active_pokemon = _make_slot(charizard_cd, 0)
-	player.bench.append(_make_slot(charizard_cd, 0))
-
-	var reduction: int = AbilityReduceAttackCost.get_fire_cost_reduction(player)
-	var lock_effect := AttackSelfLockNextTurn.new()
+	# 振奋之心：减少与对手已获得奖赏卡张数相同数量的无色能量
 	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	var opponent: PlayerState = state.players[1]
+	player.player_index = 0
+	opponent.player_index = 1
+
+	var charizard_cd := _make_basic_pokemon_data("RadiantCharizard", "R", 160)
+	charizard_cd.abilities = [{"name": "振奋之心"}]
+	charizard_cd.attacks = [{"name": "炎爆", "cost": "RCCCC", "damage": "250", "text": ""}]
+	charizard_cd.effect_id = "test_radiant_charizard"
+	player.active_pokemon = _make_slot(charizard_cd, 0)
+
+	# 模拟对手已拿4张奖赏卡（初始6张，剩余2张）
+	opponent.prizes.clear()
+	var energy_data := _make_energy_data("E1", "R")
+	opponent.prizes.append(CardInstance.create(energy_data, 1))
+	opponent.prizes.append(CardInstance.create(energy_data, 1))
+
+	var ability_effect := AbilityPrizeCountColorlessReduction.new()
+	var attack: Dictionary = charizard_cd.attacks[0]
+	var modifier: int = ability_effect.get_attack_colorless_cost_modifier(
+		player.active_pokemon, attack, state
+	)
+
+	var lock_effect := AttackSelfLockNextTurn.new()
 	var attacker := state.players[0].active_pokemon
 	lock_effect.execute_attack(attacker, state.players[1].active_pokemon, 0, state)
 
 	return run_checks([
-		assert_eq(reduction, 2, "AbilityReduceAttackCost should stack across multiple copies in play"),
+		assert_eq(modifier, -4, "振奋之心 should reduce colorless cost by opponent's taken prize count (4)"),
 		assert_true(attacker.effects.any(func(e: Dictionary) -> bool: return e.get("type", "") == "attack_lock"), "AttackSelfLockNextTurn should mark the attack as locked"),
 	])
 

@@ -523,6 +523,39 @@ func test_rare_candy_can_be_played_multiple_times_in_one_match() -> String:
 	])
 
 
+func test_rare_candy_play_trainer_evolves_froakie_into_greninja_ex_without_stage1_reference() -> String:
+	var gsm := _make_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	player.hand.clear()
+	player.deck.clear()
+	player.discard_pile.clear()
+
+	var froakie_cd: CardData = CardDatabase.get_card("CSV2C", "028")
+	var greninja_cd: CardData = CardDatabase.get_card("CSV7C", "123")
+	var active_slot := PokemonSlot.new()
+	active_slot.pokemon_stack.append(CardInstance.create(froakie_cd, 0))
+	active_slot.turn_played = 0
+	player.active_pokemon = active_slot
+
+	var greninja := CardInstance.create(greninja_cd, 0)
+	var candy := CardInstance.create(_make_trainer_data("Rare Candy", "Item", "d3891abcfe3277c8811cde06741d3236"), 0)
+	player.hand.append_array([greninja, candy])
+
+	var result := gsm.play_trainer(0, candy, [{
+		"stage2_card": [greninja],
+		"target_pokemon": [active_slot],
+	}])
+
+	return run_checks([
+		assert_not_null(froakie_cd, "CSV2C_028 should exist in the card database"),
+		assert_not_null(greninja_cd, "CSV7C_123 should exist in the card database"),
+		assert_true(result, "Rare Candy should resolve for the Froakie to Greninja ex line"),
+		assert_eq(active_slot.get_pokemon_name(), greninja_cd.name, "Rare Candy should evolve Froakie directly into Greninja ex"),
+		assert_true(candy in player.discard_pile, "Rare Candy should be discarded after resolving"),
+		assert_false(greninja in player.hand, "Greninja ex should leave the hand after evolving"),
+	])
+
+
 func test_supporters_generate_interaction_steps() -> String:
 	var gsm := _make_manual_gsm()
 	var player: PlayerState = gsm.game_state.players[0]

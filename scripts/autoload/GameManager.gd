@@ -13,6 +13,13 @@ var current_mode: GameMode = GameMode.TWO_PLAYER
 var selected_deck_ids: Array[int] = [0, 0]
 ## AI 难度等级 (0=简单, 1=普通, 2=困难, 3=专家)
 var ai_difficulty: int = 1
+var ai_selection: Dictionary = {
+	"source": "default",
+	"version_id": "",
+	"agent_config_path": "",
+	"value_net_path": "",
+	"display_name": "",
+}
 ## 先攻选择 (-1=随机, 0=玩家1, 1=玩家2)
 var first_player_choice: int = -1
 ## 对战背景资源路径
@@ -56,3 +63,13 @@ func goto_battle_setup() -> void:
 ## 切换到对战场景
 func goto_battle() -> void:
 	goto_scene(SCENE_BATTLE)
+
+
+func reset_ai_selection() -> void:
+	ai_selection = {
+		"source": "default",
+		"version_id": "",
+		"agent_config_path": "",
+		"value_net_path": "",
+		"display_name": "",
+	}

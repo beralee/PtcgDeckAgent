@@ -1,6 +1,8 @@
-## Techno Radar - discard 2 cards, then search for up to 2 Future Pokemon
+## Techno Radar - discard 1 card, then search for up to 2 Future Pokemon
 class_name EffectTechnoRadar
 extends BaseEffect
+
+const DISCARD_COUNT := 1
 
 
 func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
@@ -23,11 +25,11 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	return [
 		{
 			"id": "discard_cards",
-			"title": "Choose 2 cards to discard",
+			"title": "Choose 1 card to discard",
 			"items": hand_items,
 			"labels": hand_labels,
-			"min_select": 2,
-			"max_select": 2,
+			"min_select": DISCARD_COUNT,
+			"max_select": DISCARD_COUNT,
 			"allow_cancel": true,
 		},
 		{
@@ -48,7 +50,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	for hand_card: CardInstance in player.hand:
 		if hand_card != card:
 			other_hand_cards += 1
-	if other_hand_cards < 2:
+	if other_hand_cards < DISCARD_COUNT:
 		return false
 	for deck_card: CardInstance in player.deck:
 		if _is_future(deck_card.card_data):
@@ -66,9 +68,11 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	for c: Variant in discard_cards_raw:
 		if c is CardInstance and c in player.hand and c != card:
 			discard_cards.append(c)
-	if discard_cards.size() < 2:
+			if discard_cards.size() >= DISCARD_COUNT:
+				break
+	if discard_cards.size() < DISCARD_COUNT:
 		for hand_card: CardInstance in player.hand:
-			if discard_cards.size() >= 2:
+			if discard_cards.size() >= DISCARD_COUNT:
 				break
 			if hand_card != card and hand_card not in discard_cards:
 				discard_cards.append(hand_card)
@@ -107,4 +111,4 @@ func _is_future(cd: CardData) -> bool:
 
 
 func get_description() -> String:
-	return "Discard 2 cards from your hand. Search your deck for up to 2 Future Pokemon."
+	return "Discard 1 card from your hand. Search your deck for up to 2 Future Pokemon."

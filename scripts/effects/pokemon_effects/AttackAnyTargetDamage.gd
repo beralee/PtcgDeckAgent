@@ -1,6 +1,8 @@
 class_name AttackAnyTargetDamage
 extends BaseEffect
 
+const AbilityPreventDamageFromBasicExEffect = preload("res://scripts/effects/pokemon_effects/AbilityPreventDamageFromBasicEx.gd")
+
 var damage_amount: int = 100
 
 
@@ -48,9 +50,10 @@ func execute_attack(
 		target = defender
 	if AttackCoinFlipPreventDamageAndEffectsNextTurn.prevents_attack_damage(target, state):
 		return
-	# 直接放置伤害指示物（不计弱点抗性），无论目标是战斗还是备战宝可梦
+	if AbilityPreventDamageFromBasicExEffect.prevents_target_damage(attacker, target, state):
+		return
 	target.damage_counters += damage_amount
 
 
 func get_description() -> String:
-	return "给对手的1只宝可梦造成%d伤害。" % damage_amount
+	return "Deal %d damage to 1 opponent Pokemon." % damage_amount

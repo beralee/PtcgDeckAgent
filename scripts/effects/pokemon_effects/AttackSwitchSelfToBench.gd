@@ -1,7 +1,8 @@
-## 瞬移破坏 - 拉鲁拉丝
-## 造成伤害后将自身与备战区宝可梦交换
+## Switch this Pokemon with one of your Benched Pokemon after dealing damage.
 class_name AttackSwitchSelfToBench
 extends BaseEffect
+
+const AttackSelfLockUntilLeaveActive = preload("res://scripts/effects/pokemon_effects/AttackSelfLockUntilLeaveActive.gd")
 
 
 func get_attack_interaction_steps(
@@ -21,7 +22,7 @@ func get_attack_interaction_steps(
 		labels.append(slot.get_pokemon_name())
 	return [{
 		"id": "switch_target",
-		"title": "选择要交换的备战宝可梦",
+		"title": "Choose a Benched Pokemon to switch with",
 		"items": items,
 		"labels": labels,
 		"min_select": 1,
@@ -47,19 +48,19 @@ func execute_attack(
 	var target: PokemonSlot = null
 	var target_raw: Array = ctx.get("switch_target", [])
 	if not target_raw.is_empty() and target_raw[0] is PokemonSlot:
-		var t: PokemonSlot = target_raw[0]
-		if t in player.bench:
-			target = t
+		var selected: PokemonSlot = target_raw[0]
+		if selected in player.bench:
+			target = selected
 	if target == null:
 		target = player.bench[0]
 
-	# 交换
 	var bench_idx: int = player.bench.find(target)
 	if bench_idx < 0:
 		return
+	AttackSelfLockUntilLeaveActive.clear_for_slot(attacker)
 	player.bench[bench_idx] = attacker
 	player.active_pokemon = target
 
 
 func get_description() -> String:
-	return "攻击后与备战宝可梦交换。"
+	return "Switch this Pokemon with 1 of your Benched Pokemon."

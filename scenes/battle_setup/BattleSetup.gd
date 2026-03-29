@@ -3,15 +3,21 @@ extends Control
 
 const FIRST_PLAYER_RANDOM := -1
 const FIRST_PLAYER_PLAYER_ONE := 0
+const AI_SOURCE_DEFAULT := 0
+const AI_SOURCE_LATEST := 1
+const AI_SOURCE_SPECIFIC := 2
 const BACKGROUND_DIR := "res://assets/ui"
 const DEFAULT_BACKGROUND := "res://assets/ui/background.png"
 const BACKGROUND_CARD_SIZE := Vector2(188, 112)
+const AIVersionRegistryScript = preload("res://scripts/ai/AIVersionRegistry.gd")
 
 ## 卡组列表，与 OptionButton index 对应
-var _deck_list: Array[DeckData] = []
+var _deck_list: Array = []
 var _battle_backgrounds: Array[String] = []
 var _background_cards: Array[PanelContainer] = []
 var _selected_background_path: String = DEFAULT_BACKGROUND
+var _ai_version_registry: RefCounted = AIVersionRegistryScript.new()
+var _playable_ai_versions: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -19,6 +25,8 @@ func _ready() -> void:
 	%ModeOption.add_item("双人操控", 0)
 	%ModeOption.add_item("AI 对战", 1)
 
+	_setup_ai_source_options()
+	_refresh_ai_version_options()
 	_setup_first_player_options()
 	_setup_background_gallery()
 
@@ -33,6 +41,111 @@ func _setup_first_player_options() -> void:
 	%FirstPlayerOption.add_item("随机先后攻", FIRST_PLAYER_RANDOM)
 	%FirstPlayerOption.add_item("玩家1卡组先攻", FIRST_PLAYER_PLAYER_ONE)
 	%FirstPlayerOption.select(_first_player_option_index_from_choice(GameManager.first_player_choice))
+
+
+func _setup_ai_source_options() -> void:
+	%AISourceOption.clear()
+	%AISourceOption.add_item("默认 AI", AI_SOURCE_DEFAULT)
+	%AISourceOption.add_item("最新训练版 AI", AI_SOURCE_LATEST)
+	%AISourceOption.add_item("指定训练版本 AI", AI_SOURCE_SPECIFIC)
+	%AISourceOption.select(_ai_source_option_index_from_source(str(GameManager.ai_selection.get("source", "default"))))
+	if not %AISourceOption.item_selected.is_connected(_on_ai_source_changed):
+		%AISourceOption.item_selected.connect(_on_ai_source_changed)
+	_refresh_ai_version_control_state()
+
+
+func _refresh_ai_version_options() -> void:
+	_playable_ai_versions = []
+	if _ai_version_registry != null:
+		_playable_ai_versions = _ai_version_registry.list_playable_versions()
+
+	%AIVersionOption.clear()
+	for version: Dictionary in _playable_ai_versions:
+		%AIVersionOption.add_item(_format_ai_version_option_label(version))
+
+	var selected_version_id := str(GameManager.ai_selection.get("version_id", ""))
+	if not selected_version_id.is_empty():
+		var selected_index := _ai_version_option_index_from_version_id(selected_version_id)
+		if selected_index >= 0:
+			%AIVersionOption.select(selected_index)
+	elif not _playable_ai_versions.is_empty():
+		%AIVersionOption.select(0)
+
+	_refresh_ai_version_control_state()
+
+
+func set_ai_version_registry_for_test(registry: RefCounted) -> void:
+	_ai_version_registry = registry
+	if get_node_or_null("%AIVersionOption") != null:
+		_refresh_ai_version_options()
+
+
+func _ai_source_option_index_from_source(source: String) -> int:
+	match source:
+		"latest_trained":
+			return AI_SOURCE_LATEST
+		"specific_version":
+			return AI_SOURCE_SPECIFIC
+		_:
+			return AI_SOURCE_DEFAULT
+
+
+func _ai_source_from_option_index(option_index: int) -> String:
+	match option_index:
+		AI_SOURCE_LATEST:
+			return "latest_trained"
+		AI_SOURCE_SPECIFIC:
+			return "specific_version"
+		_:
+			return "default"
+
+
+func _on_ai_source_changed(_index: int) -> void:
+	_refresh_ai_version_control_state()
+
+
+func _ai_version_option_index_from_version_id(version_id: String) -> int:
+	for idx: int in _playable_ai_versions.size():
+		if str(_playable_ai_versions[idx].get("version_id", "")) == version_id:
+			return idx
+	return -1
+
+
+func _format_ai_version_option_label(version: Dictionary) -> String:
+	var version_id := str(version.get("version_id", ""))
+	var display_name := str(version.get("display_name", ""))
+	var label := version_id
+	if not display_name.is_empty():
+		label = "%s | %s" % [version_id, display_name]
+
+	var benchmark_summary := str(version.get("benchmark_summary", ""))
+	if benchmark_summary != "" and benchmark_summary != "{}":
+		label += " | %s" % benchmark_summary
+	return label
+
+
+func _refresh_ai_version_control_state() -> void:
+	var show_version_picker := _ai_source_from_option_index(%AISourceOption.selected) == "specific_version"
+	%AIVersionLabel.visible = show_version_picker
+	%AIVersionOption.visible = show_version_picker
+	%AIVersionOption.disabled = not show_version_picker or _playable_ai_versions.is_empty()
+
+
+func _selected_ai_version_record() -> Dictionary:
+	var selected_index: int = %AIVersionOption.selected
+	if selected_index < 0 or selected_index >= _playable_ai_versions.size():
+		return {}
+	return _playable_ai_versions[selected_index].duplicate(true)
+
+
+func _build_ai_selection(source: String, version_record: Dictionary = {}) -> Dictionary:
+	return {
+		"source": source,
+		"version_id": str(version_record.get("version_id", "")),
+		"agent_config_path": str(version_record.get("agent_config_path", "")),
+		"value_net_path": str(version_record.get("value_net_path", "")),
+		"display_name": str(version_record.get("display_name", "")),
+	}
 
 
 func _setup_background_gallery() -> void:
@@ -167,7 +280,7 @@ func _refresh_deck_options() -> void:
 	%NoDeckWarning.visible = false
 	%BtnStart.disabled = false
 
-	for deck: DeckData in _deck_list:
+	for deck: Variant in _deck_list:
 		var label := "%s (%d张)" % [deck.deck_name, deck.total_cards]
 		%Deck1Option.add_item(label)
 		%Deck2Option.add_item(label)
@@ -196,6 +309,17 @@ func _apply_setup_selection() -> bool:
 	GameManager.selected_deck_ids = [_deck_list[deck1_idx].id, _deck_list[deck2_idx].id]
 	GameManager.first_player_choice = _first_player_choice_from_option_index(%FirstPlayerOption.selected)
 	GameManager.selected_battle_background = _selected_background_path if _selected_background_path != "" else DEFAULT_BACKGROUND
+
+	var ai_source := _ai_source_from_option_index(%AISourceOption.selected)
+	var ai_version: Dictionary = {}
+	if ai_source == "latest_trained":
+		if _ai_version_registry != null:
+			ai_version = _ai_version_registry.get_latest_playable_version()
+	elif ai_source == "specific_version":
+		ai_version = _selected_ai_version_record()
+	if ai_source != "default" and ai_version.is_empty():
+		ai_source = "default"
+	GameManager.ai_selection = _build_ai_selection(ai_source, ai_version)
 	return true
 
 

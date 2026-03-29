@@ -2262,7 +2262,7 @@ func test_deck_bias_tags_are_recorded_in_reason_tags() -> String:
 func test_ai_opponent_mcts_mode_disabled_by_default() -> String:
 	var ai := AIOpponentScript.new()
 	return run_checks([
-		assert_false(ai.use_mcts, "MCTS 模式默认应关闭"),
+		assert_false(ai.use_mcts, "MCTS mode should be disabled by default"),
 	])
 
 
@@ -2308,5 +2308,252 @@ func test_ai_opponent_mcts_mode_executes_multi_step_sequence() -> String:
 			break
 
 	return run_checks([
-		assert_true(step_count >= 2, "MCTS 模式应执行多步动作序列（铺场+攻击），实际执行了 %d 步" % step_count),
+		assert_true(step_count >= 2, "MCTS mode should execute a multi-step sequence, got %d steps" % step_count),
+	])
+func _battle_scene_ai_version_test_base_dir() -> String:
+	return "user://battle_scene_ai_versions_test"
+
+
+func _battle_scene_remove_dir_recursive(dir_path: String) -> void:
+	var dir := DirAccess.open(dir_path)
+	if dir == null:
+		return
+	dir.list_dir_begin()
+	var file_name := dir.get_next()
+	while file_name != "":
+		if file_name == "." or file_name == "..":
+			file_name = dir.get_next()
+			continue
+		var child_path := dir_path.path_join(file_name)
+		if dir.current_is_dir():
+			_battle_scene_remove_dir_recursive(child_path)
+			DirAccess.remove_absolute(child_path)
+		else:
+			DirAccess.remove_absolute(child_path)
+		file_name = dir.get_next()
+	dir.list_dir_end()
+
+
+func _cleanup_battle_scene_ai_version_test_dir() -> void:
+	var dir_path := ProjectSettings.globalize_path(_battle_scene_ai_version_test_base_dir())
+	if not DirAccess.dir_exists_absolute(dir_path):
+		return
+	_battle_scene_remove_dir_recursive(dir_path)
+	DirAccess.remove_absolute(dir_path)
+
+
+func _write_battle_scene_test_json(path: String, data: Dictionary) -> void:
+	var dir_path := ProjectSettings.globalize_path(path.get_base_dir())
+	DirAccess.make_dir_recursive_absolute(dir_path)
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file != null:
+		file.store_string(JSON.stringify(data, "  "))
+		file.close()
+
+
+func test_battle_scene_uses_default_ai_selection_when_no_version_is_set() -> String:
+	var previous_ai_selection := GameManager.ai_selection.duplicate(true)
+	GameManager.reset_ai_selection()
+	var scene := _make_setup_ready_battle_scene()
+	scene.call("_ensure_ai_opponent")
+	var ai = scene.get("_ai_opponent")
+	var selection: Dictionary = GameManager.ai_selection.duplicate(true)
+	GameManager.ai_selection = previous_ai_selection
+	return run_checks([
+		assert_true(ai != null, "BattleScene should create a default AI opponent"),
+		assert_eq(str(selection.get("source", "")), "default", "GameManager default source should remain default"),
+		assert_eq(str(ai.get_meta("ai_source", "")), "default", "Default AI should mark its source as default"),
+	])
+
+
+func _battle_scene_runtime_log_path() -> String:
+	return "user://logs/battle_runtime.log"
+
+
+func _cleanup_battle_scene_runtime_log() -> void:
+	var log_path := ProjectSettings.globalize_path(_battle_scene_runtime_log_path())
+	if FileAccess.file_exists(_battle_scene_runtime_log_path()) or FileAccess.file_exists(log_path):
+		DirAccess.remove_absolute(log_path)
+
+
+func _read_battle_scene_runtime_log() -> String:
+	var log_path := _battle_scene_runtime_log_path()
+	if not FileAccess.file_exists(log_path) and not FileAccess.file_exists(ProjectSettings.globalize_path(log_path)):
+		return ""
+	var file := FileAccess.open(log_path, FileAccess.READ)
+	if file == null:
+		return ""
+	var text := file.get_as_text()
+	file.close()
+	return text
+
+
+func test_battle_scene_loads_latest_training_ai_version_through_setup_prompt_and_logs_selection() -> String:
+	_cleanup_battle_scene_ai_version_test_dir()
+	_cleanup_battle_scene_runtime_log()
+	var previous_ai_selection := GameManager.ai_selection.duplicate(true)
+	var previous_mode: int = GameManager.current_mode
+	var registry_script: Variant = load("res://scripts/ai/AIVersionRegistry.gd")
+	var registry = registry_script.new()
+	registry.base_dir = _battle_scene_ai_version_test_base_dir().path_join("versions")
+	var older_agent_config_path := _battle_scene_ai_version_test_base_dir().path_join("older_agent_config.json")
+	var latest_agent_config_path := _battle_scene_ai_version_test_base_dir().path_join("latest_agent_config.json")
+	var latest_value_net_path := _battle_scene_ai_version_test_base_dir().path_join("latest_value_net.json")
+	_write_battle_scene_test_json(older_agent_config_path, {
+		"heuristic_weights": {"aggression": 0.5},
+		"mcts_config": {
+			"branch_factor": 3,
+			"rollouts_per_sequence": 4,
+			"rollout_max_steps": 25,
+			"time_budget_ms": 700,
+		},
+	})
+	_write_battle_scene_test_json(latest_agent_config_path, {
+		"heuristic_weights": {"aggression": 1.75},
+		"mcts_config": {
+			"branch_factor": 5,
+			"rollouts_per_sequence": 9,
+			"rollout_max_steps": 45,
+			"time_budget_ms": 1100,
+		},
+	})
+	_write_battle_scene_test_json(latest_value_net_path, {"weights": []})
+	registry.save_version({
+		"version_id": "AI-20260328-03",
+		"display_name": "older playable",
+		"status": "playable",
+		"agent_config_path": older_agent_config_path,
+		"value_net_path": "",
+	})
+	registry.save_version({
+		"version_id": "AI-20260328-04",
+		"display_name": "latest playable",
+		"status": "playable",
+		"agent_config_path": latest_agent_config_path,
+		"value_net_path": latest_value_net_path,
+	})
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	GameManager.ai_selection = {
+		"source": "latest_trained",
+		"version_id": "",
+		"agent_config_path": "",
+		"value_net_path": "",
+		"display_name": "",
+	}
+	var scene := _make_setup_ready_battle_scene()
+	scene.call("set_ai_version_registry_for_test", registry)
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.SETUP
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.players = [_make_player_state(0), _make_player_state(1)]
+	var player: PlayerState = gsm.game_state.players[1]
+	player.hand = [_make_basic("Latest Lead"), _make_basic("Latest Bench"), _make_item("Ball")]
+	scene.set("_gsm", gsm)
+	scene.call("_init_battle_runtime_log")
+	scene._show_setup_active_dialog(1)
+	var ai = scene.get("_ai_opponent")
+	var scheduled_after_prompt: bool = bool(scene.get("_ai_step_scheduled"))
+	var dialog_visible_after_prompt: bool = bool(scene.get("_dialog_overlay").visible)
+	var runtime_log := _read_battle_scene_runtime_log()
+	GameManager.ai_selection = previous_ai_selection
+	GameManager.current_mode = previous_mode
+	_cleanup_battle_scene_ai_version_test_dir()
+	_cleanup_battle_scene_runtime_log()
+	return run_checks([
+		assert_true(ai != null, "BattleScene should create an AI opponent for latest_trained selection"),
+		assert_false(dialog_visible_after_prompt, "AI-owned setup prompt should stay hidden when latest_trained is selected"),
+		assert_true(scheduled_after_prompt, "BattleScene should schedule the AI through the real setup prompt path"),
+		assert_eq(str(ai.get_meta("ai_source", "")), "latest_trained", "Loaded AI should record latest_trained source"),
+		assert_eq(str(ai.get_meta("ai_version_id", "")), "AI-20260328-04", "Latest playable version should be selected through the registry"),
+		assert_eq(str(ai.get_meta("ai_display_name", "")), "latest playable", "Loaded AI should record the latest version display name"),
+		assert_eq(str(ai.value_net_path), latest_value_net_path, "Loaded AI should use the latest playable value net"),
+		assert_eq(float(ai.heuristic_weights.get("aggression", 0.0)), 1.75, "Loaded AI should apply heuristic weights from the latest playable config"),
+		assert_eq(int(ai.mcts_config.get("branch_factor", 0)), 5, "Loaded AI should apply MCTS config from the latest playable config"),
+		assert_str_contains(runtime_log, "ai_loaded", "Battle runtime log should record ai_loaded when the AI is created"),
+		assert_str_contains(runtime_log, "source=latest_trained", "Battle runtime log should include the selected AI source"),
+		assert_str_contains(runtime_log, "version=AI-20260328-04", "Battle runtime log should include the selected AI version id"),
+		assert_str_contains(runtime_log, "display=latest playable", "Battle runtime log should include the AI display name"),
+	])
+
+
+func test_battle_scene_loads_specific_training_ai_version() -> String:
+	_cleanup_battle_scene_ai_version_test_dir()
+	var previous_ai_selection := GameManager.ai_selection.duplicate(true)
+	var registry_script: Variant = load("res://scripts/ai/AIVersionRegistry.gd")
+	var registry = registry_script.new()
+	registry.base_dir = _battle_scene_ai_version_test_base_dir().path_join("versions")
+	var agent_config_path := _battle_scene_ai_version_test_base_dir().path_join("agent_config.json")
+	var value_net_path := _battle_scene_ai_version_test_base_dir().path_join("value_net.json")
+	_write_battle_scene_test_json(agent_config_path, {
+		"heuristic_weights": {"aggression": 1.25},
+		"mcts_config": {
+			"branch_factor": 4,
+			"rollouts_per_sequence": 8,
+			"rollout_max_steps": 40,
+			"time_budget_ms": 900,
+		},
+	})
+	_write_battle_scene_test_json(value_net_path, {"weights": []})
+	registry.save_version({
+		"version_id": "AI-20260328-01",
+		"display_name": "v015 + value1",
+		"status": "playable",
+		"agent_config_path": agent_config_path,
+		"value_net_path": value_net_path,
+	})
+	GameManager.ai_selection = {
+		"source": "specific_version",
+		"version_id": "AI-20260328-01",
+		"agent_config_path": agent_config_path,
+		"value_net_path": value_net_path,
+		"display_name": "v015 + value1",
+	}
+	var scene := _make_setup_ready_battle_scene()
+	scene.call("set_ai_version_registry_for_test", registry)
+	scene.call("_ensure_ai_opponent")
+	var ai = scene.get("_ai_opponent")
+	GameManager.ai_selection = previous_ai_selection
+	_cleanup_battle_scene_ai_version_test_dir()
+	return run_checks([
+		assert_true(ai != null, "BattleScene should create an AI opponent for a specific version"),
+		assert_eq(str(ai.get_meta("ai_source", "")), "specific_version", "Loaded AI should record specific_version source"),
+		assert_eq(str(ai.get_meta("ai_version_id", "")), "AI-20260328-01", "Loaded AI should record the selected version id"),
+		assert_eq(str(ai.value_net_path), value_net_path, "Loaded AI should use the version's value net"),
+		assert_eq(float(ai.heuristic_weights.get("aggression", 0.0)), 1.25, "Loaded AI should apply heuristic weights from agent config"),
+		assert_eq(int(ai.mcts_config.get("branch_factor", 0)), 4, "Loaded AI should apply MCTS config from agent config"),
+	])
+
+
+func test_battle_scene_falls_back_to_default_when_training_version_file_is_missing() -> String:
+	_cleanup_battle_scene_ai_version_test_dir()
+	var previous_ai_selection := GameManager.ai_selection.duplicate(true)
+	var registry_script: Variant = load("res://scripts/ai/AIVersionRegistry.gd")
+	var registry = registry_script.new()
+	registry.base_dir = _battle_scene_ai_version_test_base_dir().path_join("versions")
+	registry.save_version({
+		"version_id": "AI-20260328-02",
+		"display_name": "broken version",
+		"status": "playable",
+		"agent_config_path": _battle_scene_ai_version_test_base_dir().path_join("missing_agent.json"),
+		"value_net_path": "",
+	})
+	GameManager.ai_selection = {
+		"source": "specific_version",
+		"version_id": "AI-20260328-02",
+		"agent_config_path": _battle_scene_ai_version_test_base_dir().path_join("missing_agent.json"),
+		"value_net_path": "",
+		"display_name": "broken version",
+	}
+	var scene := _make_setup_ready_battle_scene()
+	scene.call("set_ai_version_registry_for_test", registry)
+	scene.call("_ensure_ai_opponent")
+	var ai = scene.get("_ai_opponent")
+	GameManager.ai_selection = previous_ai_selection
+	_cleanup_battle_scene_ai_version_test_dir()
+	return run_checks([
+		assert_true(ai != null, "BattleScene should still produce an AI opponent when the training version is broken"),
+		assert_eq(str(ai.get_meta("ai_source", "")), "default", "Broken training version should fall back to default AI"),
+		assert_eq(str(ai.value_net_path), "", "Fallback AI should not keep a missing value net path"),
+		assert_eq(int(ai.mcts_config.get("branch_factor", 0)), 2, "Fallback AI should restore default MCTS config"),
 	])

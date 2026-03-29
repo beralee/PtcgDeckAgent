@@ -581,6 +581,8 @@ func get_energy_type(energy: CardInstance, state: GameState = null) -> String:
 		return "C"
 	var effect: BaseEffect = get_effect(energy.card_data.effect_id)
 	if effect != null and effect.has_method("provides_any_type") and bool(effect.call("provides_any_type")):
+		if state != null and effect.has_method("should_downgrade_to_colorless") and bool(effect.call("should_downgrade_to_colorless", energy, state)):
+			return "C"
 		return "ANY"
 	if effect is EffectSpecialEnergyModifier:
 		return (effect as EffectSpecialEnergyModifier).energy_type_provides
@@ -666,6 +668,8 @@ func is_damage_prevented_by_defender_ability(attacker: PokemonSlot, defender: Po
 		return false
 	if AttackCoinFlipPreventDamageAndEffectsNextTurn.prevents_attack_damage(defender, state):
 		return true
+	if is_ability_disabled(defender, state):
+		return false
 	var effect: BaseEffect = get_effect(defender.get_card_data().effect_id)
 	if effect != null and effect.has_method("prevents_damage_from"):
 		return bool(effect.call("prevents_damage_from", attacker, defender, state))

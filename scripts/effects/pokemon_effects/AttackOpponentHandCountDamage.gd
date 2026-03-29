@@ -4,6 +4,7 @@ extends BaseEffect
 var damage_per_card: int = 20
 var trainer_only: bool = false
 var printed_base_damage: int = 0
+var attack_index_to_match: int = -1
 
 
 func _init(per_card: int = 20, only_trainers: bool = false, printed_damage: int = 0) -> void:
@@ -12,7 +13,13 @@ func _init(per_card: int = 20, only_trainers: bool = false, printed_damage: int 
 	printed_base_damage = printed_damage
 
 
+func applies_to_attack_index(attack_index: int) -> bool:
+	return attack_index_to_match == -1 or attack_index == attack_index_to_match
+
+
 func get_damage_bonus(attacker: PokemonSlot, state: GameState) -> int:
+	if attacker == null:
+		return 0
 	var top: CardInstance = attacker.get_top_card()
 	if top == null:
 		return 0

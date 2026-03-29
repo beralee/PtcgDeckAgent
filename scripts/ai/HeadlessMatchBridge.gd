@@ -12,6 +12,29 @@ var _setup_order_index: int = 0
 var _setup_planner = AISetupPlannerScript.new()
 var _planned_setup_bench_ids: Array[int] = []
 
+## 效果交互状态（与 BattleScene 同名以兼容 AIStepResolver）
+var _pending_effect_card: CardInstance = null
+var _pending_effect_steps: Array[Dictionary] = []
+var _pending_effect_step_index: int = -1
+var _pending_effect_context: Dictionary = {}
+var _pending_effect_kind: String = ""
+var _pending_effect_player_index: int = -1
+var _pending_effect_slot: PokemonSlot = null
+var _pending_effect_ability_index: int = -1
+var _pending_effect_attack_data: Dictionary = {}
+var _pending_effect_attack_effects: Array[BaseEffect] = []
+
+## 场地交互状态（AIStepResolver 读取）
+var _field_interaction_mode: String = ""
+var _field_interaction_data: Dictionary = {}
+var _field_interaction_selected_indices: Array[int] = []
+var _field_interaction_assignment_selected_source_index: int = -1
+var _field_interaction_assignment_entries: Array[Dictionary] = []
+
+## 对话分配状态（AIStepResolver 读取）
+var _dialog_assignment_selected_source_index: int = -1
+var _dialog_assignment_assignments: Array[Dictionary] = []
+
 
 func bind(next_gsm: GameStateMachine) -> void:
 	if _gsm != null and _gsm.player_choice_required.is_connected(_on_player_choice_required):
@@ -26,7 +49,7 @@ func handles_bridge_owned_prompts() -> bool:
 
 
 func supports_effect_interaction_execution() -> bool:
-	return false
+	return true
 
 
 func bootstrap_pending_setup() -> void:
@@ -58,6 +81,8 @@ func get_pending_prompt_owner() -> int:
 		_ when _pending_choice.begins_with("setup_active_") or _pending_choice.begins_with("setup_bench_"):
 			return int(_dialog_data.get("player", -1))
 		"effect_interaction":
+			if _pending_effect_step_index >= 0 and _pending_effect_step_index < _pending_effect_steps.size():
+				return _resolve_effect_step_chooser_player(_pending_effect_steps[_pending_effect_step_index])
 			var chooser_owner: int = _get_effect_interaction_prompt_owner()
 			if chooser_owner >= 0:
 				return chooser_owner
@@ -195,10 +220,6 @@ func _maybe_run_ai() -> void:
 	pass
 
 
-func _try_start_evolve_trigger_ability_interaction(_player_index: int, _slot: PokemonSlot) -> void:
-	pass
-
-
 func _try_play_to_bench(player_index: int, basic_card: CardInstance, _source: String = "") -> bool:
 	if _gsm == null:
 		return false
@@ -209,6 +230,471 @@ func _on_end_turn() -> void:
 	if _gsm == null or _gsm.game_state == null:
 		return
 	_gsm.end_turn(_gsm.game_state.current_player_index)
+
+
+## ===== 效果交互：_try_*_with_interaction 方法 =====
+
+func _try_play_trainer_with_interaction(player_index: int, card: CardInstance) -> void:
+	if _gsm == null:
+		return
+	var effect: BaseEffect = _gsm.effect_processor.get_effect(card.card_data.effect_id)
+	if effect == null:
+		_gsm.play_trainer(player_index, card, [])
+		return
+	if not effect.can_execute(card, _gsm.game_state):
+		return
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, _gsm.game_state)
+	if steps.is_empty():
+		_gsm.play_trainer(player_index, card, [])
+		return
+	_start_effect_interaction("trainer", player_index, steps, card)
+
+
+func _try_play_stadium_with_interaction(player_index: int, card: CardInstance) -> void:
+	if _gsm == null:
+		return
+	var effect: BaseEffect = _gsm.effect_processor.get_effect(card.card_data.effect_id)
+	if effect == null:
+		_gsm.play_stadium(player_index, card)
+		return
+	var steps: Array[Dictionary] = effect.get_on_play_interaction_steps(card, _gsm.game_state)
+	if steps.is_empty():
+		_gsm.play_stadium(player_index, card)
+		return
+	_start_effect_interaction("play_stadium", player_index, steps, card)
+
+
+func _try_use_ability_with_interaction(player_index: int, slot: PokemonSlot, ability_index: int) -> void:
+	if _gsm == null:
+		return
+	var card: CardInstance = _gsm.effect_processor.get_ability_source_card(slot, ability_index, _gsm.game_state)
+	if card == null:
+		return
+	var effect: BaseEffect = _gsm.effect_processor.get_ability_effect(slot, ability_index, _gsm.game_state)
+	if effect == null:
+		_gsm.use_ability(player_index, slot, ability_index)
+		return
+	if not _gsm.effect_processor.can_use_ability(slot, _gsm.game_state, ability_index):
+		return
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, _gsm.game_state)
+	if steps.is_empty():
+		_gsm.use_ability(player_index, slot, ability_index)
+		return
+	_start_effect_interaction("ability", player_index, steps, card, slot, ability_index)
+
+
+func _try_use_stadium_with_interaction(player_index: int) -> void:
+	if _gsm == null or _gsm.game_state.stadium_card == null:
+		return
+	var stadium_card: CardInstance = _gsm.game_state.stadium_card
+	var effect: BaseEffect = _gsm.effect_processor.get_effect(stadium_card.card_data.effect_id)
+	if effect == null:
+		_gsm.use_stadium_effect(player_index)
+		return
+	if not _gsm.can_use_stadium_effect(player_index):
+		return
+	var steps: Array[Dictionary] = effect.get_interaction_steps(stadium_card, _gsm.game_state)
+	if steps.is_empty():
+		_gsm.use_stadium_effect(player_index)
+		return
+	_start_effect_interaction("stadium", player_index, steps, stadium_card)
+
+
+func _try_use_attack_with_interaction(player_index: int, slot: PokemonSlot, attack_index: int) -> void:
+	if _gsm == null:
+		return
+	if not _gsm.can_use_attack(player_index, attack_index):
+		return
+	var card: CardInstance = slot.get_top_card()
+	if card == null:
+		return
+	var attack: Dictionary = card.card_data.attacks[attack_index]
+	var steps: Array[Dictionary] = []
+	var effects: Array[BaseEffect] = _gsm.effect_processor.get_attack_effects_for_slot(slot, attack_index)
+	for effect: BaseEffect in effects:
+		steps.append_array(effect.get_attack_interaction_steps(card, attack, _gsm.game_state))
+	if steps.is_empty():
+		_gsm.use_attack(player_index, attack_index)
+		return
+	_start_effect_interaction("attack", player_index, steps, card, slot, attack_index, {}, effects)
+
+
+func _try_start_evolve_trigger_ability_interaction(player_index: int, slot: PokemonSlot) -> void:
+	if _gsm == null or slot == null or slot.get_top_card() == null:
+		return
+	var steps: Array[Dictionary] = _gsm.get_evolve_ability_interaction_steps(slot)
+	if steps.is_empty():
+		return
+	_start_effect_interaction("ability", player_index, steps, slot.get_top_card(), slot, 0)
+
+
+## ===== 效果交互核心流程 =====
+
+func _start_effect_interaction(
+	kind: String,
+	player_index: int,
+	steps: Array[Dictionary],
+	card: CardInstance,
+	slot: PokemonSlot = null,
+	ability_index: int = -1,
+	attack_data: Dictionary = {},
+	attack_effects: Array[BaseEffect] = []
+) -> void:
+	_reset_effect_interaction()
+	_pending_effect_kind = kind
+	_pending_effect_player_index = player_index
+	_pending_effect_card = card
+	_pending_effect_slot = slot
+	_pending_effect_ability_index = ability_index
+	_pending_effect_attack_data = attack_data.duplicate(true)
+	_pending_effect_attack_effects = attack_effects.duplicate()
+	_pending_effect_steps = steps
+	_pending_effect_step_index = 0
+	_pending_effect_context = {}
+	_show_next_effect_interaction_step()
+
+
+func _show_next_effect_interaction_step() -> void:
+	if _pending_effect_card == null:
+		return
+	## 所有步骤完成 -> 执行效果
+	if _pending_effect_step_index >= _pending_effect_steps.size():
+		var success := false
+		match _pending_effect_kind:
+			"trainer":
+				success = _gsm.play_trainer(
+					_pending_effect_player_index,
+					_pending_effect_card,
+					[_pending_effect_context]
+				)
+			"play_stadium":
+				success = _gsm.play_stadium(
+					_pending_effect_player_index,
+					_pending_effect_card,
+					[_pending_effect_context]
+				)
+			"ability":
+				success = _gsm.use_ability(
+					_pending_effect_player_index,
+					_pending_effect_slot,
+					_pending_effect_ability_index,
+					[_pending_effect_context]
+				)
+			"stadium":
+				success = _gsm.use_stadium_effect(
+					_pending_effect_player_index,
+					[_pending_effect_context]
+				)
+			"attack":
+				success = _gsm.use_attack(
+					_pending_effect_player_index,
+					_pending_effect_ability_index,
+					[_pending_effect_context]
+				)
+			"granted_attack":
+				success = _gsm.use_granted_attack(
+					_pending_effect_player_index,
+					_pending_effect_slot,
+					_pending_effect_attack_data,
+					[_pending_effect_context]
+				)
+		_reset_effect_interaction()
+		return
+	## 还有步骤未完成 -> 设置 pending_choice 等待 AI 解决
+	_pending_choice = "effect_interaction"
+	var step: Dictionary = _pending_effect_steps[_pending_effect_step_index]
+	## 根据步骤类型设置对应的交互模式
+	if _effect_step_uses_field_assignment_ui(step):
+		_field_interaction_mode = "assignment"
+		_field_interaction_data = step.duplicate(true)
+		_field_interaction_assignment_entries.clear()
+		_field_interaction_assignment_selected_source_index = -1
+	elif _effect_step_uses_field_slot_ui(step):
+		_field_interaction_mode = "slot_select"
+		_field_interaction_data = step.duplicate(true)
+		_field_interaction_selected_indices.clear()
+	elif str(step.get("ui_mode", "")) == "card_assignment":
+		_field_interaction_mode = ""
+		_dialog_assignment_selected_source_index = -1
+		_dialog_assignment_assignments.clear()
+	else:
+		_field_interaction_mode = ""
+
+
+func _resolve_effect_step_chooser_player(step: Dictionary) -> int:
+	if step.has("chooser_player_index"):
+		var chooser_index: int = int(step.get("chooser_player_index", -1))
+		if chooser_index >= 0:
+			return chooser_index
+	if bool(step.get("opponent_chooses", false)) and _pending_effect_player_index >= 0:
+		return 1 - _pending_effect_player_index
+	return _pending_effect_player_index
+
+
+func _effect_step_uses_field_slot_ui(step: Dictionary) -> bool:
+	if str(step.get("ui_mode", "")) == "card_assignment":
+		return false
+	var items: Array = step.get("items", [])
+	if items.is_empty():
+		return false
+	for item: Variant in items:
+		if not (item is PokemonSlot):
+			return false
+	return true
+
+
+func _effect_step_uses_field_assignment_ui(step: Dictionary) -> bool:
+	if str(step.get("ui_mode", "")) != "card_assignment":
+		return false
+	var target_items: Array = step.get("target_items", [])
+	if target_items.is_empty():
+		return false
+	for item: Variant in target_items:
+		if not (item is PokemonSlot):
+			return false
+	return true
+
+
+## ===== AIStepResolver 调用的交互处理方法 =====
+
+func _handle_effect_interaction_choice(selected_indices: PackedInt32Array) -> void:
+	if _pending_effect_card == null or _pending_effect_step_index < 0 or _pending_effect_step_index >= _pending_effect_steps.size():
+		_reset_effect_interaction()
+		return
+	var step: Dictionary = _pending_effect_steps[_pending_effect_step_index]
+	var items_raw: Array = step.get("items", [])
+	var selected_items: Array = []
+	for selected_idx: int in selected_indices:
+		if selected_idx >= 0 and selected_idx < items_raw.size():
+			selected_items.append(items_raw[selected_idx])
+	_pending_effect_context[step.get("id", "step_%d" % _pending_effect_step_index)] = selected_items
+	_pending_effect_step_index += 1
+	_inject_followup_steps()
+	_show_next_effect_interaction_step()
+
+
+func _handle_field_slot_select_index(target_index: int) -> void:
+	var min_select: int = int(_field_interaction_data.get("min_select", 1))
+	var max_select: int = int(_field_interaction_data.get("max_select", 1))
+	if max_select <= 1 and min_select <= 1:
+		_field_interaction_selected_indices = [target_index]
+		_finalize_field_slot_selection()
+		return
+	if target_index in _field_interaction_selected_indices:
+		_field_interaction_selected_indices.erase(target_index)
+	else:
+		if max_select > 0 and _field_interaction_selected_indices.size() >= max_select:
+			return
+		_field_interaction_selected_indices.append(target_index)
+	if min_select == max_select and max_select > 1 and _field_interaction_selected_indices.size() == max_select:
+		_finalize_field_slot_selection()
+
+
+func _finalize_field_slot_selection() -> void:
+	var min_select: int = int(_field_interaction_data.get("min_select", 1))
+	if _field_interaction_selected_indices.size() < min_select:
+		return
+	var selected := PackedInt32Array(_field_interaction_selected_indices)
+	_field_interaction_mode = ""
+	_field_interaction_selected_indices.clear()
+	if _pending_choice == "effect_interaction":
+		_handle_effect_interaction_choice(selected)
+
+
+func _on_field_assignment_source_chosen(source_index: int) -> void:
+	var source_items: Array = _field_interaction_data.get("source_items", [])
+	if source_index < 0 or source_index >= source_items.size():
+		return
+	var assigned_index := _find_field_assignment_index_for_source(source_index)
+	if assigned_index >= 0:
+		_field_interaction_assignment_entries.remove_at(assigned_index)
+		if _field_interaction_assignment_selected_source_index == source_index:
+			_field_interaction_assignment_selected_source_index = -1
+		return
+	var max_assignments: int = int(_field_interaction_data.get("max_select", source_items.size()))
+	if max_assignments > 0 and _field_interaction_assignment_entries.size() >= max_assignments:
+		return
+	_field_interaction_assignment_selected_source_index = source_index
+
+
+func _handle_field_assignment_target_index(target_index: int) -> void:
+	if _field_interaction_assignment_selected_source_index < 0:
+		return
+	var source_items: Array = _field_interaction_data.get("source_items", [])
+	var target_items: Array = _field_interaction_data.get("target_items", [])
+	if _field_interaction_assignment_selected_source_index >= source_items.size():
+		return
+	if target_index < 0 or target_index >= target_items.size():
+		return
+	var exclude_map: Dictionary = _field_interaction_data.get("source_exclude_targets", {})
+	var excluded: Array = exclude_map.get(_field_interaction_assignment_selected_source_index, [])
+	if target_index in excluded:
+		return
+	_field_interaction_assignment_entries.append({
+		"source_index": _field_interaction_assignment_selected_source_index,
+		"source": source_items[_field_interaction_assignment_selected_source_index],
+		"target_index": target_index,
+		"target": target_items[target_index],
+	})
+	_field_interaction_assignment_selected_source_index = -1
+	var min_assignments: int = int(_field_interaction_data.get("min_select", 0))
+	var max_assignments: int = int(_field_interaction_data.get("max_select", 0))
+	if min_assignments == max_assignments and max_assignments > 0 and _field_interaction_assignment_entries.size() == max_assignments:
+		_finalize_field_assignment_selection()
+
+
+func _finalize_field_assignment_selection() -> void:
+	var min_select: int = int(_field_interaction_data.get("min_select", 0))
+	if _field_interaction_assignment_entries.size() < min_select:
+		return
+	if _pending_choice != "effect_interaction":
+		_field_interaction_mode = ""
+		return
+	var stored_assignments: Array[Dictionary] = []
+	for assignment: Dictionary in _field_interaction_assignment_entries:
+		stored_assignments.append(assignment.duplicate())
+	_field_interaction_mode = ""
+	_field_interaction_assignment_entries.clear()
+	_commit_effect_assignment_selection(stored_assignments)
+
+
+func _on_assignment_source_chosen(source_index: int) -> void:
+	var source_items: Array = _dialog_data.get("source_items", [])
+	if source_index < 0 or source_index >= source_items.size():
+		return
+	var assigned_index := _find_dialog_assignment_index_for_source(source_index)
+	if assigned_index >= 0:
+		_dialog_assignment_assignments.remove_at(assigned_index)
+		if _dialog_assignment_selected_source_index == source_index:
+			_dialog_assignment_selected_source_index = -1
+		return
+	var max_assignments: int = int(_dialog_data.get("max_select", source_items.size()))
+	if max_assignments > 0 and _dialog_assignment_assignments.size() >= max_assignments:
+		return
+	_dialog_assignment_selected_source_index = source_index
+
+
+func _on_assignment_target_chosen(target_index: int) -> void:
+	if _dialog_assignment_selected_source_index < 0:
+		return
+	var source_items: Array = _dialog_data.get("source_items", [])
+	var target_items: Array = _dialog_data.get("target_items", [])
+	if _dialog_assignment_selected_source_index >= source_items.size():
+		return
+	if target_index < 0 or target_index >= target_items.size():
+		return
+	var exclude_map: Dictionary = _dialog_data.get("source_exclude_targets", {})
+	var excluded: Array = exclude_map.get(_dialog_assignment_selected_source_index, [])
+	if target_index in excluded:
+		return
+	_dialog_assignment_assignments.append({
+		"source_index": _dialog_assignment_selected_source_index,
+		"source": source_items[_dialog_assignment_selected_source_index],
+		"target_index": target_index,
+		"target": target_items[target_index],
+	})
+	_dialog_assignment_selected_source_index = -1
+
+
+func _confirm_assignment_dialog() -> void:
+	var min_select: int = int(_dialog_data.get("min_select", 0))
+	var max_select: int = int(_dialog_data.get("max_select", 0))
+	var assignment_count: int = _dialog_assignment_assignments.size()
+	if assignment_count < min_select:
+		return
+	if max_select > 0 and assignment_count > max_select:
+		return
+	if _pending_effect_step_index < 0 or _pending_effect_step_index >= _pending_effect_steps.size():
+		return
+	var stored_assignments: Array[Dictionary] = []
+	for assignment: Dictionary in _dialog_assignment_assignments:
+		stored_assignments.append(assignment.duplicate())
+	_dialog_assignment_assignments.clear()
+	_commit_effect_assignment_selection(stored_assignments)
+
+
+func _commit_effect_assignment_selection(stored_assignments: Array[Dictionary]) -> void:
+	if _pending_effect_step_index < 0 or _pending_effect_step_index >= _pending_effect_steps.size():
+		return
+	var step: Dictionary = _pending_effect_steps[_pending_effect_step_index]
+	_pending_effect_context[step.get("id", "step_%d" % _pending_effect_step_index)] = stored_assignments
+	_pending_effect_step_index += 1
+	_inject_followup_steps()
+	_show_next_effect_interaction_step()
+
+
+func _inject_followup_steps() -> void:
+	if _pending_effect_kind != "attack" or _pending_effect_card == null:
+		return
+	if _pending_effect_attack_effects.is_empty():
+		return
+	var card: CardInstance = _pending_effect_card
+	var attack_index: int = _pending_effect_ability_index
+	if card.card_data == null or attack_index < 0 or attack_index >= card.card_data.attacks.size():
+		return
+	var attack: Dictionary = card.card_data.attacks[attack_index]
+	var followup_steps: Array[Dictionary] = []
+	for effect: BaseEffect in _pending_effect_attack_effects:
+		followup_steps.append_array(
+			effect.get_followup_attack_interaction_steps(card, attack, _gsm.game_state, _pending_effect_context)
+		)
+	if followup_steps.is_empty():
+		return
+	var existing_step_ids: Dictionary = {}
+	for i: int in range(_pending_effect_step_index, _pending_effect_steps.size()):
+		var existing_id: String = str(_pending_effect_steps[i].get("id", ""))
+		if existing_id != "":
+			existing_step_ids[existing_id] = true
+	var unique_followup_steps: Array[Dictionary] = []
+	for step: Dictionary in followup_steps:
+		var step_id: String = str(step.get("id", ""))
+		if step_id != "" and (_pending_effect_context.has(step_id) or existing_step_ids.has(step_id)):
+			continue
+		unique_followup_steps.append(step)
+		if step_id != "":
+			existing_step_ids[step_id] = true
+	if unique_followup_steps.is_empty():
+		return
+	var insert_pos: int = _pending_effect_step_index
+	for i: int in unique_followup_steps.size():
+		_pending_effect_steps.insert(insert_pos + i, unique_followup_steps[i])
+
+
+func _reset_effect_interaction() -> void:
+	_pending_effect_kind = ""
+	_pending_effect_player_index = -1
+	_pending_effect_card = null
+	_pending_effect_slot = null
+	_pending_effect_ability_index = -1
+	_pending_effect_attack_data.clear()
+	_pending_effect_attack_effects.clear()
+	_pending_effect_steps.clear()
+	_pending_effect_step_index = -1
+	_pending_effect_context.clear()
+	_field_interaction_mode = ""
+	_field_interaction_data.clear()
+	_field_interaction_selected_indices.clear()
+	_field_interaction_assignment_selected_source_index = -1
+	_field_interaction_assignment_entries.clear()
+	_dialog_assignment_selected_source_index = -1
+	_dialog_assignment_assignments.clear()
+	if _pending_choice == "effect_interaction":
+		_pending_choice = ""
+		_dialog_data.clear()
+
+
+func _find_field_assignment_index_for_source(source_index: int) -> int:
+	for i: int in _field_interaction_assignment_entries.size():
+		if int(_field_interaction_assignment_entries[i].get("source_index", -1)) == source_index:
+			return i
+	return -1
+
+
+func _find_dialog_assignment_index_for_source(source_index: int) -> int:
+	for i: int in _dialog_assignment_assignments.size():
+		if int(_dialog_assignment_assignments[i].get("source_index", -1)) == source_index:
+			return i
+	return -1
 
 
 func _bootstrap_pending_mulligan_prompt() -> bool:

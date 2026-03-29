@@ -5,6 +5,8 @@
 class_name EffectJetEnergy
 extends BaseEffect
 
+const AttackSelfLockUntilLeaveActive = preload("res://scripts/effects/pokemon_effects/AttackSelfLockUntilLeaveActive.gd")
+
 ## 此能量提供的能量类型
 const ENERGY_TYPE: String = "C"
 ## 此能量提供的能量数量
@@ -49,6 +51,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 
 	var old_active: PokemonSlot = player.active_pokemon
 	player.bench.remove_at(bench_index)
+	AttackSelfLockUntilLeaveActive.clear_for_slot(old_active)
 	player.bench.append(old_active)
 	player.active_pokemon = target_slot
 

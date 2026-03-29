@@ -69,7 +69,7 @@ theme_override_constants/separation = 8
 [node name="EmptyLabel" type="Label" parent="MarginContainer/VBox/ScrollContainer/DeckList"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "暂无卡组，点击右上方「+ 导入卡组」按钮导入"
+text = "暂无卡组，点击右上角“+ 导入卡组”按钮导入。"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -127,7 +127,7 @@ horizontal_alignment = 1
 
 [node name="HintLabel" type="Label" parent="ImportPanel/ImportBox/VBox"]
 layout_mode = 2
-text = "请输入 tcg.mik.moe 卡组链接或卡组ID："
+text = "请输入 tcg.mik.moe 卡组链接或卡组 ID。"
 
 [node name="UrlInput" type="LineEdit" parent="ImportPanel/ImportBox/VBox"]
 unique_name_in_owner = true

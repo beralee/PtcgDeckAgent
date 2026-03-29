@@ -317,49 +317,65 @@ func run_headless_duel(
 	var bridge := HeadlessMatchBridgeScript.new()
 	bridge.bind(gsm)
 	bridge.bootstrap_pending_setup()
+	var result: Dictionary = {}
 	var steps: int = 0
 	while steps < max_steps:
 		if gsm.game_state.is_game_over():
-			return _make_success_match_result(gsm, steps)
+			result = _make_success_match_result(gsm, steps)
+			break
 		var progressed: bool = false
 		if bridge.has_pending_prompt():
 			if bridge.can_resolve_pending_prompt():
 				progressed = bridge.resolve_pending_prompt()
 				if not progressed:
-					return _make_failed_match_result("invalid_state_transition", steps + 1, gsm)
+					result = _make_failed_match_result("invalid_state_transition", steps + 1, gsm)
+					break
 			else:
 				var pending_choice: String = bridge.get_pending_prompt_type()
 				if pending_choice == "effect_interaction":
 					if not bridge.has_method("supports_effect_interaction_execution") \
 							or not bool(bridge.call("supports_effect_interaction_execution")):
-						return _make_failed_match_result("unsupported_interaction_step", steps + 1, gsm)
+						result = _make_failed_match_result("unsupported_interaction_step", steps + 1, gsm)
+						break
 					var prompt_owner: int = bridge.get_pending_prompt_owner()
 					if prompt_owner < 0 or prompt_owner >= 2:
-						return _make_failed_match_result("invalid_state_transition", steps + 1, gsm)
+						result = _make_failed_match_result("invalid_state_transition", steps + 1, gsm)
+						break
 					var prompt_ai: AIOpponent = _get_ai_for_player(player_0_ai, player_1_ai, prompt_owner)
 					if prompt_ai == null:
-						return _make_failed_match_result("unsupported_prompt", steps + 1, gsm)
+						result = _make_failed_match_result("unsupported_prompt", steps + 1, gsm)
+						break
 					progressed = prompt_ai.run_single_step(bridge, gsm)
 					if not progressed:
-						return _make_failed_match_result("unsupported_interaction_step", steps + 1, gsm)
+						result = _make_failed_match_result("unsupported_interaction_step", steps + 1, gsm)
+						break
 				else:
-					return _make_failed_match_result("unsupported_prompt", steps + 1, gsm)
+					result = _make_failed_match_result("unsupported_prompt", steps + 1, gsm)
+					break
 		else:
 			var current_player: int = gsm.game_state.current_player_index
 			if current_player < 0 or current_player >= 2:
-				return _make_failed_match_result("invalid_state_transition", steps + 1, gsm)
+				result = _make_failed_match_result("invalid_state_transition", steps + 1, gsm)
+				break
 			var current_ai: AIOpponent = _get_ai_for_player(player_0_ai, player_1_ai, current_player)
 			if current_ai == null:
-				return _make_failed_match_result("invalid_state_transition", steps + 1, gsm)
+				result = _make_failed_match_result("invalid_state_transition", steps + 1, gsm)
+				break
 			progressed = current_ai.run_single_step(bridge, gsm)
 			if not progressed:
 				if _has_interactive_legal_action(current_ai, gsm):
-					return _make_failed_match_result("unsupported_interaction_step", steps + 1, gsm)
-				return _make_failed_match_result("stalled_no_progress", steps + 1, gsm)
+					result = _make_failed_match_result("unsupported_interaction_step", steps + 1, gsm)
+					break
+				result = _make_failed_match_result("stalled_no_progress", steps + 1, gsm)
+				break
 		if step_callback.is_valid():
 			step_callback.call(gsm)
 		steps += 1
-	return _make_failed_match_result("action_cap_reached", max_steps, gsm)
+	if result.is_empty():
+		result = _make_failed_match_result("action_cap_reached", max_steps, gsm)
+	## 释放 bridge（extends Control，非 RefCounted，必须显式释放）
+	bridge.free()
+	return result
 
 
 func _run_benchmark_match(
@@ -458,6 +474,13 @@ func _make_benchmark_agent(player_index: int, agent_config: Dictionary, comparis
 	var config_weights: Variant = agent_config.get("heuristic_weights", {})
 	if config_weights is Dictionary and not (config_weights as Dictionary).is_empty():
 		agent.heuristic_weights = (config_weights as Dictionary).duplicate(true)
+	var config_mcts: Variant = agent_config.get("mcts_config", {})
+	if config_mcts is Dictionary and not (config_mcts as Dictionary).is_empty():
+		agent.use_mcts = true
+		agent.mcts_config = (config_mcts as Dictionary).duplicate(true)
+	var value_net_path := str(agent_config.get("value_net_path", ""))
+	if value_net_path != "":
+		agent.value_net_path = value_net_path
 	return agent
 
 

@@ -40,6 +40,7 @@ var stadium_played_this_turn: bool = false
 var retreat_used_this_turn: bool = false
 var stadium_effect_used_turn: int = -1
 var stadium_effect_used_player: int = -1
+var stadium_effect_used_effect_id: String = ""
 
 ## VSTAR力量使用记录 [player_0, player_1]
 var vstar_power_used: Array[bool] = [false, false]

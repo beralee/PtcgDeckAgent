@@ -1,4 +1,3 @@
-## 卡组管理场景
 extends Control
 
 const CARD_IMAGE_DOWNLOADER := preload("res://scripts/network/CardImageDownloader.gd")
@@ -13,6 +12,10 @@ var _rename_dialog: AcceptDialog = null
 var _rename_input: LineEdit = null
 var _rename_error_label: Label = null
 var _rename_confirm_button: Button = null
+var _rename_target_deck: DeckData = null
+var _rename_ignore_deck_id: int = -1
+var _rename_context: String = ""
+var _rename_forced: bool = false
 
 
 func _ready() -> void:
@@ -25,7 +28,6 @@ func _ready() -> void:
 	CardDatabase.decks_changed.connect(_refresh_deck_list)
 	_refresh_deck_list()
 
-	# 创建导入器
 	_importer = DeckImporter.new()
 	add_child(_importer)
 	_importer.import_progress.connect(_on_import_progress)
@@ -41,7 +43,6 @@ func _ready() -> void:
 
 func _refresh_deck_list() -> void:
 	var deck_list_container: VBoxContainer = %DeckList
-	# 清除现有子节点（保留空提示）
 	for child: Node in deck_list_container.get_children():
 		if child != %EmptyLabel:
 			child.queue_free()
@@ -50,8 +51,7 @@ func _refresh_deck_list() -> void:
 	%EmptyLabel.visible = decks.is_empty()
 
 	for deck: DeckData in decks:
-		var item := _create_deck_item(deck)
-		deck_list_container.add_child(item)
+		deck_list_container.add_child(_create_deck_item(deck))
 
 
 func _create_deck_item(deck: DeckData) -> Control:
@@ -62,7 +62,6 @@ func _create_deck_item(deck: DeckData) -> Control:
 	hbox.add_theme_constant_override("separation", 12)
 	panel.add_child(hbox)
 
-	# 卡组信息
 	var info_vbox := VBoxContainer.new()
 	info_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hbox.add_child(info_vbox)
@@ -76,14 +75,18 @@ func _create_deck_item(deck: DeckData) -> Control:
 	detail_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
 	info_vbox.add_child(detail_label)
 
-	# 查看按钮
 	var btn_view := Button.new()
 	btn_view.text = "查看"
 	btn_view.custom_minimum_size = Vector2(70, 35)
 	btn_view.pressed.connect(_on_view_deck.bind(deck))
 	hbox.add_child(btn_view)
 
-	# 删除按钮
+	var btn_rename := Button.new()
+	btn_rename.text = "重命名"
+	btn_rename.custom_minimum_size = Vector2(90, 35)
+	btn_rename.pressed.connect(_on_rename_deck.bind(deck))
+	hbox.add_child(btn_rename)
+
 	var btn_delete := Button.new()
 	btn_delete.text = "删除"
 	btn_delete.custom_minimum_size = Vector2(70, 35)
@@ -92,8 +95,6 @@ func _create_deck_item(deck: DeckData) -> Control:
 
 	return panel
 
-
-# === 导入面板 ===
 
 func _on_import_pressed() -> void:
 	if _current_operation != "":
@@ -116,9 +117,10 @@ func _on_close_import() -> void:
 func _on_do_import() -> void:
 	if _panel_mode != "import":
 		return
+
 	var url: String = %UrlInput.text.strip_edges()
 	if url.is_empty():
-		%ProgressLabel.text = "请输入卡组链接"
+		%ProgressLabel.text = "请输入卡组链接或卡组 ID。"
 		return
 
 	_current_operation = "import"
@@ -126,13 +128,14 @@ func _on_do_import() -> void:
 	%BtnDoImport.disabled = true
 	%ProgressBar.visible = true
 	%ProgressBar.value = 0
-	%ProgressLabel.text = "正在导入..."
+	%ProgressLabel.text = "正在导入卡组..."
 	_importer.import_deck(url)
 
 
 func _on_sync_images_pressed() -> void:
 	if _current_operation != "":
 		return
+
 	_panel_mode = "sync_images"
 	_configure_operation_panel()
 	%ImportPanel.visible = true
@@ -140,7 +143,7 @@ func _on_sync_images_pressed() -> void:
 	_set_operation_busy(true)
 	%ProgressBar.visible = true
 	%ProgressBar.value = 0
-	%ProgressLabel.text = "正在同步本地卡图..."
+	%ProgressLabel.text = "正在同步卡图..."
 	_image_syncer.sync_cached_cards()
 
 
@@ -151,11 +154,12 @@ func _on_import_progress(current: int, total: int, message: String) -> void:
 
 
 func _on_import_completed(deck: DeckData, errors: PackedStringArray) -> void:
-	if _has_duplicate_import_deck_name(deck.deck_name):
+	if _has_duplicate_deck_name(deck.deck_name):
 		_pending_import_deck = deck
 		_pending_import_errors = PackedStringArray(errors)
 		_show_import_rename_dialog(deck.deck_name)
 		return
+
 	_finalize_import_save(deck, errors)
 
 
@@ -167,41 +171,74 @@ func _finalize_import_save(deck: DeckData, errors: PackedStringArray) -> void:
 	%BtnDoImport.disabled = false
 
 	if errors.is_empty():
-		%ProgressLabel.text = "导入成功: %s (%d 张)" % [deck.deck_name, deck.total_cards]
+		%ProgressLabel.text = "导入完成：%s（%d 张卡）" % [deck.deck_name, deck.total_cards]
 	else:
-		%ProgressLabel.text = "导入完成（有 %d 个警告）" % errors.size()
+		%ProgressLabel.text = "导入完成，包含 %d 条警告" % errors.size()
 		for err: String in errors:
-			push_warning("导入警告: %s" % err)
+			push_warning("导入警告：%s" % err)
 
 
-func _has_duplicate_import_deck_name(deck_name: String) -> bool:
+func _has_duplicate_deck_name(deck_name: String, ignored_deck_id: int = -1) -> bool:
 	var normalized_name: String = deck_name.strip_edges()
 	if normalized_name == "":
 		return false
+
 	for deck: DeckData in CardDatabase.get_all_decks():
+		if deck.id == ignored_deck_id:
+			continue
 		if deck.deck_name.strip_edges() == normalized_name:
 			return true
+
 	return false
 
 
-func _validate_import_deck_name(deck_name: String) -> String:
+func _validate_deck_name(deck_name: String, ignored_deck_id: int = -1) -> String:
 	var normalized_name: String = deck_name.strip_edges()
 	if normalized_name == "":
-		return "请输入新的卡组名称"
-	if _has_duplicate_import_deck_name(normalized_name):
-		return "卡组名称已存在，请输入其他名称"
+		return "请输入卡组名称。"
+	if _has_duplicate_deck_name(normalized_name, ignored_deck_id):
+		return "已有已保存卡组使用该名称。"
 	return ""
 
 
-func _show_import_rename_dialog(initial_name: String) -> void:
-	_close_import_rename_dialog()
+func _validate_import_deck_name(deck_name: String) -> String:
+	return _validate_deck_name(deck_name)
 
+
+func _on_rename_deck(deck: DeckData) -> void:
+	_show_rename_dialog(
+		deck.deck_name,
+		"重命名卡组",
+		"请输入新的卡组名称。",
+		deck.id
+	)
+	_rename_target_deck = deck
+	_rename_context = "existing"
+	_rename_forced = false
+
+
+func _show_import_rename_dialog(initial_name: String) -> void:
+	_show_rename_dialog(
+		initial_name,
+		"卡组名称重复",
+		"导入的卡组名称已存在，请输入一个不同的名称后再保存。",
+		-1
+	)
+	_rename_target_deck = _pending_import_deck
+	_rename_context = "import"
+	_rename_forced = true
+
+
+func _show_rename_dialog(initial_name: String, title: String, message_text: String, ignored_deck_id: int) -> void:
+	_close_rename_dialog(false)
+
+	_rename_ignore_deck_id = ignored_deck_id
 	_rename_dialog = AcceptDialog.new()
-	_rename_dialog.title = "卡组名称已存在"
+	_rename_dialog.title = title
 	_rename_dialog.ok_button_text = "确认"
 	_rename_dialog.dialog_hide_on_ok = false
-	_rename_dialog.close_requested.connect(_on_import_rename_close_requested)
-	_rename_dialog.confirmed.connect(_on_confirm_import_rename)
+	_rename_dialog.close_requested.connect(_on_rename_close_requested)
+	_rename_dialog.confirmed.connect(_on_confirm_rename)
 
 	var content := VBoxContainer.new()
 	content.custom_minimum_size = Vector2(360, 0)
@@ -209,13 +246,13 @@ func _show_import_rename_dialog(initial_name: String) -> void:
 	_rename_dialog.add_child(content)
 
 	var message := Label.new()
-	message.text = "导入的卡组名称与现有卡组重复，请输入一个新的唯一名称："
+	message.text = message_text
 	message.autowrap_mode = TextServer.AUTOWRAP_WORD
 	content.add_child(message)
 
 	_rename_input = LineEdit.new()
 	_rename_input.text = initial_name
-	_rename_input.text_changed.connect(_on_import_rename_text_changed)
+	_rename_input.text_changed.connect(_on_rename_text_changed)
 	content.add_child(_rename_input)
 
 	_rename_error_label = Label.new()
@@ -225,51 +262,86 @@ func _show_import_rename_dialog(initial_name: String) -> void:
 
 	add_child(_rename_dialog)
 	_rename_confirm_button = _rename_dialog.get_ok_button()
-	_on_import_rename_text_changed(initial_name)
+	_on_rename_text_changed(initial_name)
 
 	if is_inside_tree():
 		_rename_dialog.popup_centered()
 
 
-func _on_import_rename_text_changed(new_text: String) -> void:
-	var validation_error: String = _validate_import_deck_name(new_text)
+func _on_rename_text_changed(new_text: String) -> void:
+	var validation_error: String = _validate_deck_name(new_text, _rename_ignore_deck_id)
 	if _rename_error_label != null:
 		_rename_error_label.text = validation_error
 	if _rename_confirm_button != null:
 		_rename_confirm_button.disabled = validation_error != ""
 
 
-func _on_confirm_import_rename() -> void:
-	if _pending_import_deck == null or _rename_input == null:
+func _on_confirm_rename() -> void:
+	if _rename_target_deck == null or _rename_input == null:
 		return
 
 	var new_name: String = _rename_input.text.strip_edges()
-	var validation_error: String = _validate_import_deck_name(new_name)
+	var validation_error: String = _validate_deck_name(new_name, _rename_ignore_deck_id)
 	if validation_error != "":
-		_on_import_rename_text_changed(new_name)
+		_on_rename_text_changed(new_name)
 		return
 
-	var deck := _pending_import_deck
+	var deck := _rename_target_deck
+	var is_import_rename := _rename_context == "import"
 	var errors := PackedStringArray(_pending_import_errors)
 	deck.deck_name = new_name
-	_pending_import_deck = null
-	_pending_import_errors = PackedStringArray()
-	_close_import_rename_dialog()
-	_finalize_import_save(deck, errors)
+
+	if is_import_rename:
+		_pending_import_deck = null
+		_pending_import_errors = PackedStringArray()
+	else:
+		CardDatabase.save_deck(deck)
+
+	_close_rename_dialog()
+
+	if is_import_rename:
+		_finalize_import_save(deck, errors)
 
 
-func _on_import_rename_close_requested() -> void:
-	if _rename_dialog != null and is_instance_valid(_rename_dialog) and is_inside_tree():
-		_rename_dialog.popup_centered()
+func _on_rename_close_requested() -> void:
+	if _rename_forced:
+		if _rename_dialog != null and is_instance_valid(_rename_dialog) and is_inside_tree():
+			_rename_dialog.popup_centered()
+		return
+
+	_close_rename_dialog()
 
 
-func _close_import_rename_dialog() -> void:
+func _close_rename_dialog(clear_target: bool = true) -> void:
 	if _rename_dialog != null and is_instance_valid(_rename_dialog):
 		_rename_dialog.queue_free()
+
 	_rename_dialog = null
 	_rename_input = null
 	_rename_error_label = null
 	_rename_confirm_button = null
+	_rename_ignore_deck_id = -1
+	_rename_context = ""
+	_rename_forced = false
+
+	if clear_target:
+		_rename_target_deck = null
+
+
+func _on_import_rename_text_changed(new_text: String) -> void:
+	_on_rename_text_changed(new_text)
+
+
+func _on_confirm_import_rename() -> void:
+	_on_confirm_rename()
+
+
+func _on_import_rename_close_requested() -> void:
+	_on_rename_close_requested()
+
+
+func _close_import_rename_dialog() -> void:
+	_close_rename_dialog()
 
 
 func _on_import_failed(error_message: String) -> void:
@@ -277,7 +349,7 @@ func _on_import_failed(error_message: String) -> void:
 	_current_operation = ""
 	_set_operation_busy(false)
 	%BtnDoImport.disabled = false
-	%ProgressLabel.text = "导入失败: %s" % error_message
+	%ProgressLabel.text = "导入失败：%s" % error_message
 
 
 func _on_image_sync_progress(current: int, total: int, message: String) -> void:
@@ -297,25 +369,23 @@ func _on_image_sync_completed(stats: Dictionary, errors: PackedStringArray) -> v
 	var skipped := int(stats.get("skipped", 0))
 
 	if errors.is_empty():
-		%ProgressLabel.text = "同步完成: 共 %d 张，下载 %d 张，已存在 %d 张，补全 %d 张" % [
+		%ProgressLabel.text = "同步完成：共 %d 张，下载 %d 张，跳过 %d 张，更新 %d 张" % [
 			total, downloaded, skipped, updated
 		]
 	else:
-		%ProgressLabel.text = "同步完成: 共 %d 张，下载 %d 张，警告 %d 个" % [
+		%ProgressLabel.text = "同步完成：共 %d 张，下载 %d 张，警告 %d 条" % [
 			total, downloaded, errors.size()
 		]
 		for err: String in errors:
-			push_warning("卡图同步警告: %s" % err)
+			push_warning("卡图同步警告：%s" % err)
 
 
 func _on_image_sync_failed(error_message: String) -> void:
 	%ProgressBar.visible = false
 	_current_operation = ""
 	_set_operation_busy(false)
-	%ProgressLabel.text = "同步失败: %s" % error_message
+	%ProgressLabel.text = "同步失败：%s" % error_message
 
-
-# === 查看卡组 ===
 
 func _on_view_deck(deck: DeckData) -> void:
 	var dialog := AcceptDialog.new()
@@ -335,41 +405,43 @@ func _on_view_deck(deck: DeckData) -> void:
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(vbox)
 
-	# 显示卡组信息
 	var info_label := Label.new()
-	info_label.text = "ID: %d | 来源: %s\n总计: %d 张" % [deck.id, deck.source_url, deck.total_cards]
+	info_label.text = "ID: %d | 来源：%s\n总计：%d 张卡牌" % [deck.id, deck.source_url, deck.total_cards]
 	info_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	vbox.add_child(info_label)
 
-	# 分类显示卡牌
-	var categories := {"Pokemon": [], "Item": [], "Supporter": [], "Tool": [], "Stadium": [], "Basic Energy": [], "Special Energy": []}
-	for entry: Dictionary in deck.cards:
-		var ct: String = entry.get("card_type", "")
-		if categories.has(ct):
-			categories[ct].append(entry)
-		else:
-			categories["Item"].append(entry)  # 未知类型归入物品
-
-	var category_names := {
-		"Pokemon": "宝可梦", "Item": "物品", "Supporter": "支援者",
-		"Tool": "道具", "Stadium": "竞技场", "Basic Energy": "基本能量", "Special Energy": "特殊能量",
+	var categories := {
+		"Pokemon": [],
+		"Item": [],
+		"Supporter": [],
+		"Tool": [],
+		"Stadium": [],
+		"Basic Energy": [],
+		"Special Energy": []
 	}
+	for entry: Dictionary in deck.cards:
+		var card_type: String = entry.get("card_type", "")
+		if categories.has(card_type):
+			categories[card_type].append(entry)
+		else:
+			categories["Item"].append(entry)
 
-	for cat_key: String in categories:
-		var cat_cards: Array = categories[cat_key]
-		if cat_cards.is_empty():
+	for category_name: String in categories:
+		var category_cards: Array = categories[category_name]
+		if category_cards.is_empty():
 			continue
+
 		var total_count := 0
-		for c: Variant in cat_cards:
-			total_count += int(c.get("count", 0))
+		for card_entry: Variant in category_cards:
+			total_count += int(card_entry.get("count", 0))
 
-		var cat_label := Label.new()
-		cat_label.text = "\n== %s (%d张) ==" % [category_names.get(cat_key, cat_key), total_count]
-		vbox.add_child(cat_label)
+		var category_label := Label.new()
+		category_label.text = "\n== %s（%d）==" % [category_name, total_count]
+		vbox.add_child(category_label)
 
-		for entry: Variant in cat_cards:
+		for card_entry: Variant in category_cards:
 			var card_label := Label.new()
-			card_label.text = "  %s × %d" % [entry.get("name", "?"), entry.get("count", 0)]
+			card_label.text = "  %s × %d" % [card_entry.get("name", "?"), card_entry.get("count", 0)]
 			vbox.add_child(card_label)
 
 	add_child(dialog)
@@ -377,12 +449,10 @@ func _on_view_deck(deck: DeckData) -> void:
 	dialog.confirmed.connect(dialog.queue_free)
 
 
-# === 删除卡组 ===
-
 func _on_delete_deck(deck: DeckData) -> void:
 	var confirm := ConfirmationDialog.new()
 	confirm.title = "确认删除"
-	confirm.dialog_text = "确定要删除卡组「%s」吗？" % deck.deck_name
+	confirm.dialog_text = "确定要删除卡组“%s”吗？" % deck.deck_name
 	confirm.ok_button_text = "删除"
 	confirm.cancel_button_text = "取消"
 	confirm.confirmed.connect(func() -> void:

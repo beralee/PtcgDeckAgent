@@ -1,6 +1,8 @@
 class_name AttackReturnEnergyThenBenchDamage
 extends BaseEffect
 
+const AbilityPreventDamageFromBasicExEffect = preload("res://scripts/effects/pokemon_effects/AbilityPreventDamageFromBasicEx.gd")
+
 var damage_amount: int = 120
 var energy_return_count: int = 3
 var attack_index_to_match: int = -1
@@ -33,7 +35,7 @@ func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state:
 	return [
 		{
 			"id": "return_energy_to_deck",
-			"title": "选择 %d 个能量放回牌库（可选）" % energy_return_count,
+			"title": "Choose %d Energy to shuffle into the deck" % energy_return_count,
 			"items": energy_items,
 			"labels": energy_labels,
 			"min_select": 0,
@@ -42,7 +44,7 @@ func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state:
 		},
 		{
 			"id": "bench_target",
-			"title": "选择对手的1只备战宝可梦",
+			"title": "Choose 1 opponent Benched Pokemon",
 			"items": bench_items,
 			"labels": bench_labels,
 			"min_select": 1 if not bench_items.is_empty() else 0,
@@ -52,8 +54,8 @@ func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state:
 	]
 
 
-func execute_attack(attacker: PokemonSlot, _defender: PokemonSlot, _attack_index: int, state: GameState) -> void:
-	if not applies_to_attack_index(_attack_index):
+func execute_attack(attacker: PokemonSlot, _defender: PokemonSlot, attack_index: int, state: GameState) -> void:
+	if not applies_to_attack_index(attack_index):
 		return
 	var top: CardInstance = attacker.get_top_card()
 	if top == null:
@@ -62,12 +64,12 @@ func execute_attack(attacker: PokemonSlot, _defender: PokemonSlot, _attack_index
 	var opponent: PlayerState = state.players[1 - top.owner_index]
 	var ctx: Dictionary = get_attack_interaction_context()
 	var energy_raw: Array = ctx.get("return_energy_to_deck", [])
-	# 玩家必须选择恰好 energy_return_count 个能量才触发效果
 	if energy_raw.size() < energy_return_count:
 		return
+
 	var returned: Array[CardInstance] = []
 	for selected: Variant in energy_raw:
-		if not selected is CardInstance:
+		if not (selected is CardInstance):
 			continue
 		var energy: CardInstance = null
 		for attached: CardInstance in attacker.attached_energy:
@@ -80,19 +82,23 @@ func execute_attack(attacker: PokemonSlot, _defender: PokemonSlot, _attack_index
 		energy.face_up = false
 		player.deck.append(energy)
 		returned.append(energy)
+
 	if returned.size() < energy_return_count:
-		# 未能退回足够能量，回滚已退回的
-		for e: CardInstance in returned:
-			player.deck.erase(e)
-			attacker.attached_energy.append(e)
+		for energy: CardInstance in returned:
+			player.deck.erase(energy)
+			attacker.attached_energy.append(energy)
 		return
+
 	player.shuffle_deck()
 	var target_raw: Array = ctx.get("bench_target", [])
 	if target_raw.is_empty() or not (target_raw[0] is PokemonSlot):
 		return
 	var target: PokemonSlot = target_raw[0]
-	if target != null and target != opponent.active_pokemon:
-		DamageCalculator.new().apply_damage_to_slot(target, damage_amount)
+	if target == null or target == opponent.active_pokemon:
+		return
+	if AbilityPreventDamageFromBasicExEffect.prevents_target_damage(attacker, target, state):
+		return
+	DamageCalculator.new().apply_damage_to_slot(target, damage_amount)
 
 
 func _resolve_attack_index(card: CardInstance, attack: Dictionary) -> int:
@@ -105,4 +111,4 @@ func _resolve_attack_index(card: CardInstance, attack: Dictionary) -> int:
 
 
 func get_description() -> String:
-	return "可选择这只宝可梦身上附着的%d个能量放回牌库并重洗。如此做，给对手的1只备战宝可梦造成%d伤害。" % [energy_return_count, damage_amount]
+	return "You may shuffle %d Energy into your deck. If you do, deal %d damage to 1 opponent Benched Pokemon." % [energy_return_count, damage_amount]

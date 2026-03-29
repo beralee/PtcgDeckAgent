@@ -1,6 +1,8 @@
 class_name AttackBenchSnipe
 extends BaseEffect
 
+const AbilityPreventDamageFromBasicExEffect = preload("res://scripts/effects/pokemon_effects/AbilityPreventDamageFromBasicEx.gd")
+
 var snipe_damage: int = 90
 var snipe_count: int = 2
 var also_self_damage: int = 0
@@ -35,6 +37,8 @@ func execute_attack(
 		if AbilityBenchImmune.has_bench_immune(slot):
 			continue
 		if AttackCoinFlipPreventDamageAndEffectsNextTurn.prevents_attack_damage(slot, state):
+			continue
+		if AbilityPreventDamageFromBasicExEffect.prevents_target_damage(attacker, slot, state):
 			continue
 		slot.damage_counters += snipe_damage
 		targets_hit += 1

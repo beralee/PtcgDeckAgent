@@ -2,6 +2,8 @@
 class_name EffectSwitchCart
 extends BaseEffect
 
+const AttackSelfLockUntilLeaveActive = preload("res://scripts/effects/pokemon_effects/AttackSelfLockUntilLeaveActive.gd")
+
 
 func can_execute(card: CardInstance, state: GameState) -> bool:
 	var pi: int = card.owner_index
@@ -51,6 +53,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 		return
 
 	player.bench.erase(new_active)
+	AttackSelfLockUntilLeaveActive.clear_for_slot(old_active)
 	player.bench.append(old_active)
 	player.active_pokemon = new_active
 

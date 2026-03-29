@@ -34,6 +34,7 @@ func _clone_game_state(original: GameState) -> GameState:
 	cloned.retreat_used_this_turn = original.retreat_used_this_turn
 	cloned.stadium_effect_used_turn = original.stadium_effect_used_turn
 	cloned.stadium_effect_used_player = original.stadium_effect_used_player
+	cloned.stadium_effect_used_effect_id = original.stadium_effect_used_effect_id
 	cloned.vstar_power_used = original.vstar_power_used.duplicate()
 	cloned.last_knockout_turn_against = original.last_knockout_turn_against.duplicate()
 	cloned.shared_turn_flags = original.shared_turn_flags.duplicate(true)

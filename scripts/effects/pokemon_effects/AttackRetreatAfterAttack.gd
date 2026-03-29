@@ -3,6 +3,8 @@
 class_name AttackRetreatAfterAttack
 extends BaseEffect
 
+const AttackSelfLockUntilLeaveActive = preload("res://scripts/effects/pokemon_effects/AttackSelfLockUntilLeaveActive.gd")
+
 
 func execute_attack(
 	attacker: PokemonSlot,
@@ -22,6 +24,7 @@ func execute_attack(
 
 	# 将当前出战宝可梦移至备战区
 	player.bench.remove_at(0)
+	AttackSelfLockUntilLeaveActive.clear_for_slot(player.active_pokemon)
 	player.bench.append(player.active_pokemon)
 
 	# 将选定的备战宝可梦设为出战

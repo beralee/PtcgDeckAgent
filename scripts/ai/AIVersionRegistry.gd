@@ -25,6 +25,32 @@ func save_version(record: Dictionary) -> bool:
 	return _save_index(index)
 
 
+func publish_playable_version(record: Dictionary) -> bool:
+	var published_record := record.duplicate(true)
+	published_record["status"] = "playable"
+	return save_version(published_record)
+
+
+func generate_version_id(date_prefix: String = "") -> String:
+	var normalized_date := date_prefix.strip_edges()
+	if normalized_date.is_empty():
+		normalized_date = Time.get_datetime_string_from_system().substr(0, 10).replace("-", "")
+
+	var next_index := 1
+	var index_data: Variant = _load_index()
+	if index_data is Dictionary:
+		for version_key: Variant in (index_data as Dictionary).keys():
+			var version_id := str(version_key)
+			var parts := version_id.split("-")
+			if parts.size() != 3:
+				continue
+			if parts[0] != "AI" or parts[1] != normalized_date:
+				continue
+			next_index = maxi(next_index, int(parts[2]) + 1)
+
+	return "AI-%s-%02d" % [normalized_date, next_index]
+
+
 func get_version(version_id: String) -> Dictionary:
 	var index_data: Variant = _load_index()
 	if index_data == null:
@@ -59,6 +85,28 @@ func list_playable_versions() -> Array[Dictionary]:
 func get_latest_playable_version() -> Dictionary:
 	var versions := list_playable_versions()
 	return {} if versions.is_empty() else versions.back().duplicate(true)
+
+
+func get_latest_approved_version() -> Dictionary:
+	return get_latest_playable_version()
+
+
+func get_latest_approved_artifacts() -> Dictionary:
+	var latest := get_latest_approved_version()
+	if latest.is_empty():
+		return {}
+	return {
+		"version_id": str(latest.get("version_id", "")),
+		"display_name": str(latest.get("display_name", "")),
+		"status": str(latest.get("status", "")),
+		"agent_config_path": str(latest.get("agent_config_path", "")),
+		"value_net_path": str(latest.get("value_net_path", "")),
+		"source_run_id": str(latest.get("source_run_id", "")),
+		"lane_recipe_id": str(latest.get("lane_recipe_id", "")),
+		"parent_approved_baseline_id": str(latest.get("parent_approved_baseline_id", "")),
+		"benchmark_summary": (latest.get("benchmark_summary", {}) as Dictionary).duplicate(true),
+		"benchmark_quality_summary": (latest.get("benchmark_quality_summary", latest.get("benchmark_summary", {})) as Dictionary).duplicate(true),
+	}
 
 
 func _load_index() -> Variant:

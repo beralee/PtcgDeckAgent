@@ -96,10 +96,11 @@ func _run_one_match(
 	seed_value: int,
 	max_steps: int,
 	exporter = null,
-	force_heuristic: bool = false,
+	_export_training_data: bool = false,
 ) -> Dictionary:
-	var p0_ai := _make_agent(0, p0_config, force_heuristic)
-	var p1_ai := _make_agent(1, p1_config, force_heuristic)
+	## 进化搜索始终使用轻量 MCTS 加速对局评估
+	var p0_ai := _make_agent(0, p0_config, true)
+	var p1_ai := _make_agent(1, p1_config, true)
 
 	var gsm := GameStateMachine.new()
 	_apply_seed(gsm, seed_value)

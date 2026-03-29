@@ -1,14 +1,10 @@
-## 备战区伤害效果 - 对对方（或己方）备战宝可梦造成伤害
-## 适用: "对对方1只备战宝可梦造成20伤害"、"对对方全部备战宝可梦各造成10伤害"
-## 参数: bench_damage, target_all, target_side
 class_name EffectBenchDamage
 extends BaseEffect
 
-## 对每只备战宝可梦的伤害
+const AbilityPreventDamageFromBasicExEffect = preload("res://scripts/effects/pokemon_effects/AbilityPreventDamageFromBasicEx.gd")
+
 var bench_damage: int = 20
-## 是否对全部备战宝可梦造成伤害（false = 仅1只，简化自动选第1只）
 var target_all: bool = false
-## 目标方: "opponent" 或 "self"
 var target_side: String = "opponent"
 
 
@@ -22,28 +18,39 @@ func execute_attack(
 	attacker: PokemonSlot,
 	_defender: PokemonSlot,
 	_attack_index: int,
-	_state: GameState
+	state: GameState
 ) -> void:
 	var pi: int = attacker.get_top_card().owner_index
 	var target_pi: int = 1 - pi if target_side == "opponent" else pi
-	var target_player: PlayerState = _state.players[target_pi]
+	var target_player: PlayerState = state.players[target_pi]
 
 	if target_all:
-		# 对全部备战宝可梦造成伤害
 		for slot: PokemonSlot in target_player.bench:
-			if target_side == "opponent" and AbilityBenchImmune.has_bench_immune(slot):
+			if _is_opponent_bench_damage_blocked(attacker, slot, state):
 				continue
 			slot.damage_counters += bench_damage
-	else:
-		# 简化：对第一只备战宝可梦造成伤害
-		if not target_player.bench.is_empty():
-			var target_slot: PokemonSlot = target_player.bench[0]
-			if target_side != "opponent" or not AbilityBenchImmune.has_bench_immune(target_slot):
-				target_slot.damage_counters += bench_damage
+		return
+
+	if target_player.bench.is_empty():
+		return
+	var target_slot: PokemonSlot = target_player.bench[0]
+	if _is_opponent_bench_damage_blocked(attacker, target_slot, state):
+		return
+	target_slot.damage_counters += bench_damage
+
+
+func _is_opponent_bench_damage_blocked(attacker: PokemonSlot, target: PokemonSlot, state: GameState) -> bool:
+	if target_side != "opponent":
+		return false
+	if AbilityBenchImmune.has_bench_immune(target):
+		return true
+	if AttackCoinFlipPreventDamageAndEffectsNextTurn.prevents_attack_damage(target, state):
+		return true
+	return AbilityPreventDamageFromBasicExEffect.prevents_target_damage(attacker, target, state)
 
 
 func get_description() -> String:
-	var side_str: String = "对方" if target_side == "opponent" else "己方"
+	var side_str: String = "opponent" if target_side == "opponent" else "your"
 	if target_all:
-		return "对%s全部备战宝可梦各造成%d伤害" % [side_str, bench_damage]
-	return "对%s1只备战宝可梦造成%d伤害" % [side_str, bench_damage]
+		return "Deal %d damage to all %s Benched Pokemon." % [bench_damage, side_str]
+	return "Deal %d damage to 1 %s Benched Pokemon." % [bench_damage, side_str]

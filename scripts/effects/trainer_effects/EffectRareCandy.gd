@@ -5,7 +5,9 @@ extends BaseEffect
 
 const STAGE_ONE_BASIC_NAME_OVERRIDES := {
 	"比比鸟": "波波",
+	"呱头蛙": "呱呱泡蛙",
 	"Pidgeotto": "Pidgey",
+	"Frogadier": "Froakie",
 }
 
 

@@ -1,10 +1,12 @@
-﻿## BattleScene
+## BattleScene
 extends Control
 
 # ===================== Constants =====================
 const BENCH_SIZE := 5
 const BATTLE_CARD_VIEW := preload("res://scenes/battle/BattleCardView.gd")
 const AIOpponentScript := preload("res://scripts/ai/AIOpponent.gd")
+const AIVersionRegistryScript := preload("res://scripts/ai/AIVersionRegistry.gd")
+const AgentVersionStoreScript := preload("res://scripts/ai/AgentVersionStore.gd")
 const CARD_ASPECT := 0.716
 const BATTLE_RUNTIME_LOG_PATH := "user://logs/battle_runtime.log"
 const BATTLE_BACKDROP_RESOURCE := "res://assets/ui/background.png"
@@ -54,6 +56,8 @@ var _ai_step_scheduled: bool = false
 var _ai_followup_requested: bool = false
 var _ai_turn_marker: String = ""
 var _ai_actions_this_turn: int = 0
+var _ai_version_registry: RefCounted = AIVersionRegistryScript.new()
+var _agent_version_store: RefCounted = AgentVersionStoreScript.new()
 
 var _field_interaction_overlay: Control = null
 var _field_interaction_layout: VBoxContainer = null
@@ -3313,18 +3317,118 @@ func _setup_ai_for_tests() -> void:
 	_ai_actions_this_turn = 0
 
 
+func set_ai_version_registry_for_test(registry: RefCounted) -> void:
+	_ai_version_registry = registry
+
+
+func set_agent_version_store_for_test(store: RefCounted) -> void:
+	_agent_version_store = store
+
+
 func _ensure_ai_opponent() -> void:
 	if _ai_opponent == null:
-		_ai_opponent = AIOpponentScript.new()
-		_ai_opponent.configure(1, GameManager.ai_difficulty)
-		_ai_opponent.use_mcts = true
-		_ai_opponent.mcts_config = {
-			"branch_factor": 2,
-			"rollouts_per_sequence": 3,
-			"rollout_max_steps": 30,
-			"time_budget_ms": 2000,
-		}
+		_ai_opponent = _build_selected_ai_opponent()
+		_log_ai_loaded(
+			str(_ai_opponent.get_meta("ai_source", "default")),
+			str(_ai_opponent.get_meta("ai_version_id", "")),
+			str(_ai_opponent.get_meta("ai_display_name", "Default AI"))
+		)
 
+
+func _build_default_ai_opponent() -> AIOpponent:
+	var ai := AIOpponentScript.new()
+	ai.configure(1, GameManager.ai_difficulty)
+	ai.use_mcts = true
+	ai.mcts_config = {
+		"branch_factor": 2,
+		"rollouts_per_sequence": 3,
+		"rollout_max_steps": 30,
+		"time_budget_ms": 2000,
+	}
+	ai.set_meta("ai_source", "default")
+	ai.set_meta("ai_version_id", "")
+	ai.set_meta("ai_display_name", "Default AI")
+
+	return ai
+
+
+func _build_selected_ai_opponent() -> AIOpponent:
+	var selection: Dictionary = GameManager.ai_selection
+	var source := str(selection.get("source", "default"))
+	if source == "default":
+		return _build_default_ai_opponent()
+
+	var version_record := _resolve_selected_ai_version_record(selection)
+	if version_record.is_empty():
+		return _build_default_ai_opponent()
+
+	var agent_config_path := str(version_record.get("agent_config_path", selection.get("agent_config_path", "")))
+	if not _ai_path_exists(agent_config_path):
+		return _build_default_ai_opponent()
+
+	var agent_config := _load_selected_agent_config(agent_config_path)
+	if agent_config.is_empty():
+		return _build_default_ai_opponent()
+
+	var ai := _build_default_ai_opponent()
+	var config_weights: Variant = agent_config.get("heuristic_weights", {})
+	if config_weights is Dictionary and not (config_weights as Dictionary).is_empty():
+		ai.heuristic_weights = (config_weights as Dictionary).duplicate(true)
+
+	var config_mcts: Variant = agent_config.get("mcts_config", {})
+	if config_mcts is Dictionary and not (config_mcts as Dictionary).is_empty():
+		ai.use_mcts = true
+		ai.mcts_config = (config_mcts as Dictionary).duplicate(true)
+
+	var value_net_path := str(version_record.get("value_net_path", selection.get("value_net_path", agent_config.get("value_net_path", ""))))
+	if value_net_path != "":
+		if not _ai_path_exists(value_net_path):
+			return _build_default_ai_opponent()
+		ai.value_net_path = value_net_path
+
+	var version_id := str(version_record.get("version_id", selection.get("version_id", "")))
+	var display_name := str(version_record.get("display_name", selection.get("display_name", version_id)))
+	ai.set_meta("ai_source", source)
+	ai.set_meta("ai_version_id", version_id)
+	ai.set_meta("ai_display_name", display_name)
+
+	return ai
+
+
+func _resolve_selected_ai_version_record(selection: Dictionary) -> Dictionary:
+	var source := str(selection.get("source", "default"))
+	if source == "latest_trained":
+		if _ai_version_registry != null and _ai_version_registry.has_method("get_latest_playable_version"):
+			var latest: Variant = _ai_version_registry.call("get_latest_playable_version")
+			if latest is Dictionary:
+				return (latest as Dictionary).duplicate(true)
+		return {}
+	if source == "specific_version":
+		var version_id := str(selection.get("version_id", ""))
+		if version_id != "" and _ai_version_registry != null and _ai_version_registry.has_method("get_version"):
+			var version: Variant = _ai_version_registry.call("get_version", version_id)
+			if version is Dictionary and not (version as Dictionary).is_empty():
+				return (version as Dictionary).duplicate(true)
+	return {}
+
+
+func _load_selected_agent_config(agent_config_path: String) -> Dictionary:
+	if _agent_version_store == null or not _agent_version_store.has_method("load_version"):
+		return {}
+	var loaded: Variant = _agent_version_store.call("load_version", agent_config_path)
+	return (loaded as Dictionary).duplicate(true) if loaded is Dictionary else {}
+
+
+func _ai_path_exists(path: String) -> bool:
+	if path == "":
+		return false
+	if FileAccess.file_exists(path):
+		return true
+	return FileAccess.file_exists(ProjectSettings.globalize_path(path))
+
+
+func _log_ai_loaded(source: String, version_id: String, display_name: String) -> void:
+	_runtime_log("ai_loaded", "source=%s version=%s display=%s" % [source, version_id, display_name])
 
 func _reset_ai_action_counter_if_needed() -> void:
 	if _gsm == null or _gsm.game_state == null:

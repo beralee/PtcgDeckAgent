@@ -25,7 +25,7 @@ func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state:
 	var source_labels: Array[String] = []
 	for _i: int in counter_count:
 		var token_data := CardData.new()
-		token_data.name = "伤害指示物"
+		token_data.name = "Damage Counter"
 		token_data.card_type = "Item"
 		source_items.append(CardInstance.create(token_data, card.owner_index))
 		source_labels.append("10")
@@ -36,7 +36,7 @@ func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state:
 	return [
 		build_card_assignment_step(
 			"bench_damage_counters",
-			"将 %d 个伤害指示物任意分配给对方的备战宝可梦" % counter_count,
+			"Distribute %d damage counters among your opponent's Benched Pokemon" % counter_count,
 			source_items,
 			source_labels,
 			target_items,
@@ -47,8 +47,8 @@ func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state:
 	]
 
 
-func execute_attack(attacker: PokemonSlot, _defender: PokemonSlot, _attack_index: int, state: GameState) -> void:
-	if not applies_to_attack_index(_attack_index):
+func execute_attack(attacker: PokemonSlot, _defender: PokemonSlot, attack_index: int, state: GameState) -> void:
+	if not applies_to_attack_index(attack_index):
 		return
 	var top: CardInstance = attacker.get_top_card()
 	if top == null:
@@ -72,10 +72,8 @@ func _resolve_attack_index(card: CardInstance, attack: Dictionary) -> int:
 	for i: int in card.card_data.attacks.size():
 		if card.card_data.attacks[i] == attack:
 			return i
-	# 当通过巨龙无双等复制招式场景调用时，card 属于复制者而非源卡，
-	# 此时无法从 card.card_data.attacks 匹配，回退到显式提示。
 	return int(attack.get("_override_attack_index", -1))
 
 
 func get_description() -> String:
-	return "将 %d 个伤害指示物任意分配给对方的备战宝可梦。" % (total_damage / 10)
+	return "Distribute %d damage counters among your opponent's Benched Pokemon." % (total_damage / 10)

@@ -60,11 +60,11 @@ func test_bridge_declares_bridge_owned_prompt_handling_contract() -> String:
 	])
 
 
-func test_bridge_declares_effect_interaction_execution_unsupported() -> String:
+func test_bridge_declares_effect_interaction_execution_supported() -> String:
 	var bridge := HeadlessMatchBridgeScript.new()
 	return run_checks([
 		assert_true(bridge.has_method("supports_effect_interaction_execution"), "The extracted bridge should expose the effect-interaction execution capability contract"),
-		assert_false(bridge.supports_effect_interaction_execution(), "HeadlessMatchBridge should not claim effect interaction execution support yet"),
+		assert_true(bridge.supports_effect_interaction_execution(), "HeadlessMatchBridge should support effect interaction execution"),
 	])
 
 

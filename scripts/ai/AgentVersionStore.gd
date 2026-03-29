@@ -53,7 +53,19 @@ func load_latest() -> Dictionary:
 	var versions := list_versions()
 	if versions.is_empty():
 		return {}
-	return versions[versions.size() - 1]
+	## 取胜率最高的版本，胜率相同取时间最新的
+	var best: Dictionary = versions[0]
+	for v: Dictionary in versions:
+		var v_wr: float = float(v.get("win_rate_vs_parent", 0.0))
+		var b_wr: float = float(best.get("win_rate_vs_parent", 0.0))
+		if v_wr > b_wr:
+			best = v
+		elif v_wr == b_wr and str(v.get("timestamp", "")) > str(best.get("timestamp", "")):
+			best = v
+	print("[AgentVersionStore] 加载最优版本: %s (胜率 %.1f%%)" % [
+		str(best.get("version", "?")), float(best.get("win_rate_vs_parent", 0.0)) * 100.0
+	])
+	return best
 
 
 func list_versions() -> Array[Dictionary]:
@@ -72,7 +84,7 @@ func list_versions() -> Array[Dictionary]:
 		file_name = dir.get_next()
 	dir.list_dir_end()
 	results.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		return int(a.get("generation", 0)) < int(b.get("generation", 0))
+		return str(a.get("timestamp", "")) < str(b.get("timestamp", ""))
 	)
 	return results
 

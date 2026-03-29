@@ -5,11 +5,16 @@ const ITEM_LOCK_PREFIX := "item_lock_"
 
 var require_heads: bool = false
 var coin_flipper: CoinFlipper
+var attack_index_to_match: int = -1
 
 
 func _init(needs_heads: bool = false, flipper: CoinFlipper = null) -> void:
 	require_heads = needs_heads
 	coin_flipper = flipper if flipper != null else CoinFlipper.new()
+
+
+func applies_to_attack_index(attack_index: int) -> bool:
+	return attack_index_to_match == -1 or attack_index == attack_index_to_match
 
 
 func execute_attack(
@@ -18,6 +23,8 @@ func execute_attack(
 	_attack_index: int,
 	state: GameState
 ) -> void:
+	if attacker == null or not applies_to_attack_index(_attack_index):
+		return
 	var top: CardInstance = attacker.get_top_card()
 	if top == null:
 		return

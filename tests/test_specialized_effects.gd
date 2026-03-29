@@ -4,6 +4,7 @@ extends TestBase
 
 const EffectRecoverBasicEnergyEffect = preload("res://scripts/effects/trainer_effects/EffectRecoverBasicEnergy.gd")
 const EffectSearchBasicEnergyEffect = preload("res://scripts/effects/trainer_effects/EffectSearchBasicEnergy.gd")
+const EffectLanceEffect = preload("res://scripts/effects/trainer_effects/EffectLance.gd")
 const EffectHisuianHeavyBallEffect = preload("res://scripts/effects/trainer_effects/EffectHisuianHeavyBall.gd")
 const AbilityStarPortalEffect = preload("res://scripts/effects/pokemon_effects/AbilityStarPortal.gd")
 const AbilityAttachFromDeckEffect = preload("res://scripts/effects/pokemon_effects/AbilityAttachFromDeck.gd")
@@ -748,6 +749,36 @@ func test_rare_candy_accepts_pidgeot_without_pidgeotto_in_deck_or_cache() -> Str
 	])
 
 
+func test_rare_candy_accepts_greninja_ex_without_frogadier_in_cache() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	var effect := EffectRareCandy.new()
+	var card := CardInstance.create(_make_trainer_data("Rare Candy"), 0)
+	var greninja_cd: CardData = CardDatabase.get_card("CSV7C", "123")
+	var froakie_cd: CardData = CardDatabase.get_card("CSV2C", "028")
+	var greninja := CardInstance.create(greninja_cd, 0)
+	player.hand.append(greninja)
+
+	player.active_pokemon.pokemon_stack.clear()
+	player.active_pokemon.pokemon_stack.append(CardInstance.create(froakie_cd, 0))
+	player.active_pokemon.turn_played = 0
+
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
+	var stage2_items: Array = steps[0].get("items", []) if not steps.is_empty() else []
+	var target_items: Array = steps[1].get("items", []) if steps.size() > 1 else []
+	var can_execute: bool = effect.can_execute(card, state)
+	effect.execute(card, [], state)
+
+	return run_checks([
+		assert_not_null(greninja_cd, "CSV7C_123 should exist in the card database"),
+		assert_not_null(froakie_cd, "CSV2C_028 should exist in the card database"),
+		assert_true(can_execute, "Rare Candy should support Greninja ex even when Frogadier is missing from the local cache"),
+		assert_true(greninja in stage2_items, "Greninja ex should appear in the Rare Candy Stage 2 selection list"),
+		assert_true(player.active_pokemon in target_items, "Froakie should appear in the Rare Candy target list for Greninja ex"),
+		assert_eq(player.active_pokemon.get_pokemon_name(), greninja_cd.name, "Rare Candy should evolve Froakie directly into Greninja ex"),
+	])
+
+
 func test_tool_conditional_damage_checks_conditions() -> String:
 	var state := _make_state()
 	state.players[1].active_pokemon.get_card_data().mechanic = "ex"
@@ -820,7 +851,7 @@ func test_lightning_boost_applies_to_basic_lightning_attackers() -> String:
 	])
 
 
-func test_techno_radar_uses_two_discards_and_only_future_targets() -> String:
+func test_techno_radar_uses_one_discard_and_only_future_targets() -> String:
 	var state := _make_state()
 	var player: PlayerState = state.players[0]
 	player.hand.clear()
@@ -830,7 +861,7 @@ func test_techno_radar_uses_two_discards_and_only_future_targets() -> String:
 	var discard_a := CardInstance.create(_make_basic_pokemon_data("弃牌甲", "C"), 0)
 	var discard_b := CardInstance.create(_make_basic_pokemon_data("弃牌乙", "C"), 0)
 	var keep_card := CardInstance.create(_make_basic_pokemon_data("保留牌", "C"), 0)
-	player.hand.append_array([radar_card, discard_a, discard_b, keep_card])
+	player.hand.append_array([radar_card, discard_a, keep_card])
 
 	var future_a := CardInstance.create(_make_basic_pokemon_data("未来甲", "L"), 0)
 	future_a.card_data.is_tags = PackedStringArray([CardData.FUTURE_TAG])
@@ -843,7 +874,7 @@ func test_techno_radar_uses_two_discards_and_only_future_targets() -> String:
 	var steps: Array[Dictionary] = effect.get_interaction_steps(radar_card, state)
 	var can_execute := effect.can_execute(radar_card, state)
 	effect.execute(radar_card, [{
-		"discard_cards": [discard_a, discard_b],
+		"discard_cards": [discard_a],
 		"search_future_pokemon": [future_b, future_a],
 	}], state)
 
@@ -851,10 +882,37 @@ func test_techno_radar_uses_two_discards_and_only_future_targets() -> String:
 		assert_true(can_execute, "手牌有其他2张且牌库里有未来宝可梦时应可使用高科技雷达"),
 		assert_eq(steps.size(), 2, "高科技雷达应生成弃牌和检索两步交互"),
 		assert_true(discard_a in player.discard_pile, "应弃掉第一张选中的手牌"),
-		assert_true(discard_b in player.discard_pile, "应弃掉第二张选中的手牌"),
+		assert_eq(int(steps[0].get("min_select", -1)), 1, "Techno Radar should require discarding 1 card"),
+		assert_eq(int(steps[0].get("max_select", -1)), 1, "Techno Radar should allow discarding only 1 card"),
+		assert_false(discard_b in player.discard_pile, "Techno Radar should not discard an extra second hand card"),
 		assert_true(future_a in player.hand and future_b in player.hand, "应加入选中的未来宝可梦"),
 		assert_false(normal in player.hand, "不应加入非未来宝可梦"),
 		assert_true(keep_card in player.hand, "未选中的手牌应保留"),
+	])
+
+
+func test_techno_radar_can_use_with_one_other_hand_card() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.hand.clear()
+	player.deck.clear()
+
+	var radar_card := CardInstance.create(_make_trainer_data("高科技雷达"), 0)
+	var discard_card := CardInstance.create(_make_basic_pokemon_data("弃牌候选", "C"), 0)
+	player.hand.append_array([radar_card, discard_card])
+
+	var future_card := CardInstance.create(_make_basic_pokemon_data("未来宝可梦", "L"), 0)
+	future_card.card_data.is_tags = PackedStringArray([CardData.FUTURE_TAG])
+	player.deck.append(future_card)
+
+	var effect := EffectTechnoRadar.new()
+	var steps: Array[Dictionary] = effect.get_interaction_steps(radar_card, state)
+	var can_execute := effect.can_execute(radar_card, state)
+
+	return run_checks([
+		assert_true(can_execute, "高科技雷达在手牌只有1张其他卡时也应可使用"),
+		assert_eq(int(steps[0].get("min_select", -1)), 1, "高科技雷达应只要求弃1张手牌"),
+		assert_eq(int(steps[0].get("max_select", -1)), 1, "高科技雷达应只允许弃1张手牌"),
 	])
 
 
@@ -906,6 +964,40 @@ func test_basic_energy_recovery_and_search_effects() -> String:
 		assert_true(hand_a in player.discard_pile and hand_b in player.discard_pile, "超级能量回收应先弃掉2张手牌"),
 		assert_true(deck_r in player.hand and deck_g in player.hand, "大地容器应从牌库检索基础能量"),
 		assert_false(discard_special in player.hand, "特殊能量不应被基础能量回收效果检索"),
+	])
+
+
+func test_lance_searches_only_selected_dragon_pokemon() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.hand.clear()
+	player.deck.clear()
+
+	var dragon_a := CardInstance.create(_make_basic_pokemon_data("Dragon A", "N"), 0)
+	var dragon_b := CardInstance.create(_make_basic_pokemon_data("Dragon B", "N"), 0)
+	var dragon_c := CardInstance.create(_make_basic_pokemon_data("Dragon C", "N"), 0)
+	var non_dragon := CardInstance.create(_make_basic_pokemon_data("Non Dragon", "R"), 0)
+	player.deck.append_array([dragon_a, non_dragon, dragon_b, dragon_c])
+
+	var effect := EffectLanceEffect.new()
+	var supporter := CardInstance.create(_make_trainer_data("Lance", "Supporter"), 0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(supporter, state)
+	effect.execute(supporter, [{
+		"dragon_pokemon": [dragon_c, dragon_a],
+	}], state)
+
+	var step: Dictionary = steps[0] if not steps.is_empty() else {}
+	var items: Array = step.get("items", [])
+	return run_checks([
+		assert_true(effect.can_execute(supporter, state), "Lance should be playable when the deck contains Dragon Pokemon"),
+		assert_eq(steps.size(), 1, "Lance should generate one search step"),
+		assert_eq(int(step.get("min_select", -1)), 0, "Lance should allow choosing up to 3 Dragon Pokemon"),
+		assert_eq(int(step.get("max_select", -1)), 3, "Lance should allow selecting as many as 3 Dragon Pokemon"),
+		assert_true(dragon_a in items and dragon_b in items and dragon_c in items, "Lance should only offer Dragon Pokemon from the deck"),
+		assert_false(non_dragon in items, "Lance should not offer non-Dragon Pokemon"),
+		assert_true(dragon_a in player.hand and dragon_c in player.hand, "Lance should move the selected Dragon Pokemon to hand"),
+		assert_true(dragon_b in player.deck, "Lance should leave unselected Dragon Pokemon in the deck"),
+		assert_true(non_dragon in player.deck, "Lance should leave non-Dragon Pokemon in the deck"),
 	])
 
 
@@ -1289,6 +1381,68 @@ func test_ability_search_any_marks_once_per_turn_usage() -> String:
 	])
 
 
+func test_ability_search_any_requires_controller_turn() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.hand.clear()
+	player.deck.clear()
+	player.deck.append(CardInstance.create(_make_basic_pokemon_data("检索目标", "C"), 0))
+
+	var effect := AbilitySearchAny.new(1, true, false)
+	var slot := player.active_pokemon
+	state.current_player_index = 1
+	var can_use_on_opponent_turn := effect.can_use_ability(slot, state)
+	var hand_before := player.hand.size()
+	effect.execute_ability(slot, 0, [], state)
+
+	return run_checks([
+		assert_false(can_use_on_opponent_turn, "AbilitySearchAny should only be usable during its controller's turn"),
+		assert_eq(player.hand.size(), hand_before, "AbilitySearchAny should not move cards when called on the opponent's turn"),
+		assert_eq(player.deck.size(), 1, "AbilitySearchAny should leave the deck untouched on the opponent's turn"),
+	])
+
+
+func test_pidgeot_quick_search_is_shared_once_per_turn() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.hand.clear()
+	player.deck.clear()
+	player.bench.clear()
+	for i: int in 4:
+		player.deck.append(CardInstance.create(_make_basic_pokemon_data("音速搜索目标%d" % i, "C"), 0))
+
+	var pidgeot_cd := _make_basic_pokemon_data("Pidgeot ex", "C", 280, "Stage 2", "ex", "8105afde9792c2596166f318a480d041")
+	pidgeot_cd.abilities = [{"name": "音速搜索"}]
+	var active_slot := PokemonSlot.new()
+	active_slot.pokemon_stack.append(CardInstance.create(pidgeot_cd, 0))
+	active_slot.turn_played = 0
+	var bench_slot := PokemonSlot.new()
+	bench_slot.pokemon_stack.append(CardInstance.create(pidgeot_cd, 0))
+	bench_slot.turn_played = 0
+	player.active_pokemon = active_slot
+	player.bench.append(bench_slot)
+
+	var processor := EffectProcessor.new()
+	EffectRegistry.register_pokemon_card(processor, pidgeot_cd)
+
+	var can_use_first := processor.can_use_ability(active_slot, state, 0)
+	var used_first := processor.execute_ability_effect(active_slot, 0, [], state)
+	var can_reuse_same_turn := processor.can_use_ability(active_slot, state, 0)
+	var other_copy_can_use_same_turn := processor.can_use_ability(bench_slot, state, 0)
+	state.turn_number += 1
+	var other_copy_can_use_next_turn := processor.can_use_ability(bench_slot, state, 0)
+
+	return run_checks([
+		assert_true(can_use_first, "CSV4C_101 Quick Search should be usable before any copy has been used this turn"),
+		assert_true(used_first, "CSV4C_101 Quick Search should resolve through EffectProcessor"),
+		assert_eq(player.hand.size(), 1, "CSV4C_101 Quick Search should add exactly 1 card to hand"),
+		assert_false(can_reuse_same_turn, "CSV4C_101 Quick Search should not be reusable by the same Pidgeot ex this turn"),
+		assert_false(other_copy_can_use_same_turn, "CSV4C_101 should block other Quick Search copies for the rest of the turn"),
+		assert_true(active_slot.effects.any(func(e: Dictionary) -> bool: return e.get("type", "") == AbilitySearchAny.USED_KEY), "CSV4C_101 should still mark the used Pokemon for UI consumers"),
+		assert_true(other_copy_can_use_next_turn, "CSV4C_101 Quick Search should become usable again on a later turn"),
+	])
+
+
 func test_attack_search_and_attach_to_bench() -> String:
 	var state := _make_state()
 	var player: PlayerState = state.players[0]
@@ -1452,7 +1606,7 @@ func test_specialized_effect_descriptions_and_smoke() -> String:
 		AbilityLightningBoost.new(),
 		AbilityMetalMaker.new(),
 		AbilityOnBenchEnter.new(),
-		AbilityReduceAttackCost.new(),
+		AbilityPrizeCountColorlessReduction.new(),
 		AbilitySearchAny.new(),
 		AbilitySearchPokemonToBench.new(),
 		AbilityShuffleHandDraw.new(),

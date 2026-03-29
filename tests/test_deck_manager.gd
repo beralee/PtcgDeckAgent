@@ -79,6 +79,52 @@ func test_import_completed_requires_rename_before_saving_duplicate_name() -> Str
 	])
 
 
+func test_existing_deck_name_validation_ignores_current_deck() -> String:
+	_cleanup_decks([910005, 910006])
+	var current := _make_deck(910005, "Current Deck")
+	var other := _make_deck(910006, "Other Deck")
+	CardDatabase.save_deck(current)
+	CardDatabase.save_deck(other)
+
+	var scene: Control = DeckManagerScene.instantiate()
+	var keep_current_error: String = scene._validate_deck_name("  Current Deck  ", current.id)
+	var other_duplicate_error: String = scene._validate_deck_name("Other Deck", current.id)
+
+	_cleanup_decks([current.id, other.id])
+	scene.queue_free()
+
+	return run_checks([
+		assert_eq(keep_current_error, "", "current deck name should remain valid when ignoring self"),
+		assert_true(other_duplicate_error != "", "other deck name should still be rejected"),
+	])
+
+
+func test_confirm_existing_deck_rename_persists_trimmed_name() -> String:
+	_cleanup_decks([910007])
+	var deck := _make_deck(910007, "Old Deck Name")
+	CardDatabase.save_deck(deck)
+
+	var scene: Control = DeckManagerScene.instantiate()
+	scene._on_rename_deck(deck)
+
+	var initial_validation_error: String = scene._rename_error_label.text if scene._rename_error_label != null else "__missing__"
+	if scene._rename_input != null:
+		scene._rename_input.text = "  New Deck Name  "
+	scene._on_rename_text_changed("  New Deck Name  ")
+	scene._on_confirm_rename()
+
+	var saved: DeckData = CardDatabase.get_deck(deck.id)
+
+	_cleanup_decks([deck.id])
+	scene.queue_free()
+
+	return run_checks([
+		assert_eq(initial_validation_error, "", "existing deck name should be valid at dialog open"),
+		assert_not_null(saved, "renamed deck should still exist"),
+		assert_eq(saved.deck_name, "New Deck Name", "rename should persist the trimmed deck name"),
+	])
+
+
 func _make_deck(deck_id: int, deck_name: String) -> DeckData:
 	var deck := DeckData.new()
 	deck.id = deck_id

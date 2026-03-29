@@ -2,6 +2,7 @@ class_name RuleValidator
 extends RefCounted
 
 const ITEM_LOCK_PREFIX := "item_lock_"
+const AttackSelfLockUntilLeaveActiveEffect = preload("res://scripts/effects/pokemon_effects/AttackSelfLockUntilLeaveActive.gd")
 
 func can_attach_energy(state: GameState, player_index: int) -> bool:
 	if state.current_player_index != player_index:
@@ -148,6 +149,9 @@ func get_attack_unusable_reason(
 		return "本局已使用过 VSTAR 力量"
 
 	for effect_data: Dictionary in active.effects:
+		if effect_data.get("type", "") == AttackSelfLockUntilLeaveActiveEffect.EFFECT_TYPE:
+			if str(effect_data.get("attack_name", "")) == str(attack.get("name", "")):
+				return "该招式在离开战斗场前无法再次使用"
 		if effect_data.get("type", "") == "attack_lock" and int(effect_data.get("turn", -999)) == state.turn_number - 2:
 			if str(effect_data.get("attack_name", "")) == str(attack.get("name", "")):
 				return "该招式下回合无法再次使用"
@@ -156,13 +160,13 @@ func get_attack_unusable_reason(
 
 	var cost: String = CardData.normalize_attack_cost(attack.get("cost", ""))
 	if effect_processor != null:
-		var fire_reduction: int = AbilityReduceAttackCost.get_fire_cost_reduction(player)
-		if fire_reduction > 0:
-			cost = _remove_cost_symbols(cost, "R", fire_reduction)
 		var any_cost_modifier: int = effect_processor.get_attack_any_cost_modifier(active, attack, state)
 		var colorless_modifier: int = effect_processor.get_attack_colorless_cost_modifier(active, attack, state)
 		if colorless_modifier < 0:
 			cost = _remove_cost_symbols(cost, "C", -colorless_modifier)
+		elif colorless_modifier > 0:
+			for _i: int in colorless_modifier:
+				cost += "C"
 		# 任意属性减费：枚举所有可能的移除组合，只要有一种满足能量即可
 		if any_cost_modifier < 0:
 			var candidates: Array[String] = _get_all_any_cost_removals(cost, -any_cost_modifier)

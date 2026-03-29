@@ -4,6 +4,7 @@ class_name GameStateMachine
 extends RefCounted
 
 const AbilityAttachFromDeckEffect = preload("res://scripts/effects/pokemon_effects/AbilityAttachFromDeck.gd")
+const AttackSelfLockUntilLeaveActive = preload("res://scripts/effects/pokemon_effects/AttackSelfLockUntilLeaveActive.gd")
 
 ## 游戏状态变更信号
 signal state_changed(new_phase: GameState.GamePhase)
@@ -87,7 +88,6 @@ func start_game(deck_1: DeckData, deck_2: DeckData, force_first: int = -1) -> vo
 ## 根据 DeckData 构建 CardInstance 牌库并洗牌
 func _build_deck(player_index: int, deck_data: DeckData) -> void:
 	var player: PlayerState = game_state.players[player_index]
-	game_state.last_knockout_turn_against[player_index] = game_state.turn_number
 	CardInstance.reset_id_counter()
 	for entry: Dictionary in deck_data.cards:
 		var set_code: String = entry.get("set_code", "")
@@ -400,6 +400,10 @@ func _finalize_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -
 			_log_action(GameAction.ActionType.DRAW_CARD, player_index,
 				{"count": drawn}, "馈赠能量生效：抽取%d张卡牌（手牌到7张）" % drawn)
 
+	# 学习装置：战斗位昏厥时转移1张基本能量到持有学习装置的备战宝可梦
+	if is_active:
+		EffectExpShare.transfer_energy_on_knockout(slot, player)
+
 	_move_knocked_out_cards(slot, player)
 
 	# 从场上移除
@@ -481,6 +485,7 @@ func resolve_take_prize(player_index: int, slot_index: int) -> bool:
 		return false
 
 	_pending_prize_remaining -= 1
+	_pending_prize_remaining += _resolve_prize_take_effect(taken_prize, player)
 	_log_action(GameAction.ActionType.TAKE_PRIZE, player_index,
 		{
 			"count": 1,
@@ -532,6 +537,18 @@ func _clear_pending_prize_choice() -> void:
 	_pending_prize_knockout_is_active = false
 	_pending_prize_resume_mode = ""
 	_pending_prize_resume_player_index = -1
+
+
+func _resolve_prize_take_effect(taken_prize: CardInstance, player: PlayerState) -> int:
+	if taken_prize == null or taken_prize.card_data == null:
+		return 0
+	var effect: BaseEffect = effect_processor.get_effect(taken_prize.card_data.effect_id)
+	if effect == null or not effect.has_method("resolve_prize_take"):
+		return 0
+	var result: Variant = effect.call("resolve_prize_take", taken_prize, player, game_state)
+	if not (result is Dictionary):
+		return 0
+	return maxi(0, int((result as Dictionary).get("extra_prizes", 0)))
 
 
 func _move_knocked_out_cards(slot: PokemonSlot, player: PlayerState) -> void:
@@ -943,6 +960,7 @@ func can_use_stadium_effect(player_index: int) -> bool:
 	if (
 		game_state.stadium_effect_used_turn == game_state.turn_number
 		and game_state.stadium_effect_used_player == player_index
+		and game_state.stadium_effect_used_effect_id == game_state.stadium_card.card_data.effect_id
 	):
 		return false
 	return effect.can_execute(game_state.stadium_card, game_state)
@@ -959,6 +977,7 @@ func use_stadium_effect(player_index: int, targets: Array = []) -> bool:
 	effect.execute(stadium_card, targets, game_state)
 	game_state.stadium_effect_used_turn = game_state.turn_number
 	game_state.stadium_effect_used_player = player_index
+	game_state.stadium_effect_used_effect_id = stadium_card.card_data.effect_id
 
 	_log_action(GameAction.ActionType.USE_STADIUM, player_index,
 		{"card_name": stadium_card.card_data.name}, "玩家%d使用竞技场效果 %s" % [player_index, stadium_card.card_data.name])
@@ -998,6 +1017,7 @@ func retreat(player_index: int, energy_to_discard: Array[CardInstance], bench_sl
 
 	# 交换战斗宝可梦
 	player.bench.erase(bench_slot)
+	AttackSelfLockUntilLeaveActive.clear_for_slot(active)
 	player.bench.append(active)
 	player.active_pokemon = bench_slot
 

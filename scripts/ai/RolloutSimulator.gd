@@ -27,14 +27,16 @@ func run_rollout(gsm: GameStateMachine, perspective_player: int, max_steps: int 
 	var bridge := HeadlessMatchBridgeScript.new()
 	bridge.bind(cloned)
 
+	var result := {"winner_index": -1, "steps": 0, "completed": false}
 	var steps: int = 0
 	while steps < max_steps:
 		if cloned.game_state.is_game_over():
-			return {
+			result = {
 				"winner_index": cloned.game_state.winner_index,
 				"steps": steps,
 				"completed": true,
 			}
+			break
 		var progressed: bool = false
 		if bridge.has_pending_prompt():
 			if bridge.can_resolve_pending_prompt():
@@ -44,12 +46,18 @@ func run_rollout(gsm: GameStateMachine, perspective_player: int, max_steps: int 
 				var prompt_ai: AIOpponent = player_0_ai if prompt_owner == 0 else player_1_ai
 				progressed = prompt_ai.run_single_step(bridge, cloned)
 			if not progressed:
-				return {"winner_index": -1, "steps": steps + 1, "completed": false}
+				result = {"winner_index": -1, "steps": steps + 1, "completed": false}
+				break
 		else:
 			var current: int = cloned.game_state.current_player_index
 			var current_ai: AIOpponent = player_0_ai if current == 0 else player_1_ai
 			progressed = current_ai.run_single_step(bridge, cloned)
 			if not progressed:
-				return {"winner_index": -1, "steps": steps + 1, "completed": false}
+				result = {"winner_index": -1, "steps": steps + 1, "completed": false}
+				break
 		steps += 1
-	return {"winner_index": -1, "steps": max_steps, "completed": false}
+	if steps >= max_steps:
+		result = {"winner_index": -1, "steps": max_steps, "completed": false}
+	## 释放 bridge（extends Control，非 RefCounted，必须显式释放）
+	bridge.free()
+	return result

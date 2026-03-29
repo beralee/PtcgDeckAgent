@@ -5,6 +5,120 @@ const EvolutionEngineScript = preload("res://scripts/ai/EvolutionEngine.gd")
 const AIHeuristicsScript = preload("res://scripts/ai/AIHeuristics.gd")
 
 
+class FakeStore extends RefCounted:
+	var load_latest_calls := 0
+	var latest_record := {}
+	var saved_versions: Array[Dictionary] = []
+
+	func load_latest() -> Dictionary:
+		load_latest_calls += 1
+		return latest_record.duplicate(true)
+
+	func save_version(config: Dictionary, metadata: Dictionary = {}) -> String:
+		saved_versions.append({
+			"config": config.duplicate(true),
+			"metadata": metadata.duplicate(true),
+		})
+		return "user://ai_agents/fake_saved_agent.json"
+
+
+class FakeRunner extends RefCounted:
+	func run_batch(_mutant_config: Dictionary, _current_best: Dictionary, _deck_pairings: Array, _seed_set: Array, _max_steps: int, _export_data: bool) -> Dictionary:
+		return {
+			"agent_a_win_rate": 0.0,
+			"total_matches": 0,
+			"agent_a_wins": 0,
+			"agent_b_wins": 0,
+			"match_results": [],
+		}
+
+
+class FakeWinningRunner extends RefCounted:
+	func run_batch(_mutant_config: Dictionary, _current_best: Dictionary, _deck_pairings: Array, _seed_set: Array, _max_steps: int, _export_data: bool) -> Dictionary:
+		return {
+			"agent_a_win_rate": 0.625,
+			"total_matches": 24,
+			"agent_a_wins": 15,
+			"agent_b_wins": 9,
+			"match_results": [],
+		}
+
+
+func test_run_writes_phase1_progress_status_json() -> String:
+	var engine := EvolutionEngineScript.new()
+	var fake_store := FakeStore.new()
+	engine._store = fake_store
+	engine._runner = FakeWinningRunner.new()
+	engine.generations = 1
+	engine.progress_output_path = "user://evolution_progress_status_test.json"
+	var absolute_path := ProjectSettings.globalize_path(engine.progress_output_path)
+	if FileAccess.file_exists(engine.progress_output_path):
+		DirAccess.remove_absolute(absolute_path)
+
+	engine.run(EvolutionEngineScript.get_default_config())
+
+	if not FileAccess.file_exists(engine.progress_output_path):
+		return "phase1 progress status should be written to the configured output path"
+
+	var file := FileAccess.open(engine.progress_output_path, FileAccess.READ)
+	if file == null:
+		return "phase1 progress status should be readable after the run"
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if not parsed is Dictionary:
+		return "phase1 progress status should be valid JSON object"
+	var progress: Dictionary = parsed
+	DirAccess.remove_absolute(absolute_path)
+	return run_checks([
+		assert_eq(str(progress.get("phase", "")), "complete", "progress status should mark the phase complete after the evolution run"),
+		assert_eq(int(progress.get("generation_current", 0)), 1, "progress status should record the completed generation count"),
+		assert_eq(int(progress.get("generation_total", 0)), 1, "progress status should record the configured generation count"),
+		assert_eq(int(progress.get("total_matches_completed", 0)), 24, "progress status should accumulate completed matches across generations"),
+		assert_eq(int(progress.get("cumulative_agent_a_wins", 0)), 15, "progress status should accumulate agent_a wins"),
+		assert_eq(int(progress.get("cumulative_agent_b_wins", 0)), 9, "progress status should accumulate agent_b wins"),
+		assert_eq(float(progress.get("last_generation_win_rate", 0.0)), 0.625, "progress status should record the latest generation win rate"),
+		assert_eq(int(progress.get("accepted_generations", 0)), 1, "progress status should record accepted generation count"),
+	])
+
+
+func test_run_with_explicit_initial_config_bypasses_latest_store_lookup() -> String:
+	var engine := EvolutionEngineScript.new()
+	var fake_store := FakeStore.new()
+	fake_store.latest_record = {
+		"heuristic_weights": {"attack_base": 999.0},
+		"mcts_config": {"branch_factor": 5, "rollouts_per_sequence": 50, "rollout_max_steps": 200, "time_budget_ms": 9999},
+	}
+	engine._store = fake_store
+	engine._runner = FakeRunner.new()
+	engine.generations = 0
+	var explicit_config := {
+		"heuristic_weights": {"attack_base": 123.0},
+		"mcts_config": {"branch_factor": 2, "rollouts_per_sequence": 9, "rollout_max_steps": 111, "time_budget_ms": 3001},
+	}
+	var result: Dictionary = engine.run(explicit_config)
+	return run_checks([
+		assert_eq(fake_store.load_latest_calls, 0, "explicit initial_config should not trigger load_latest"),
+		assert_eq(float(result.get("best_config", {}).get("heuristic_weights", {}).get("attack_base", 0.0)), 123.0, "explicit config should remain the best config when no generations run"),
+	])
+
+
+func test_run_without_initial_config_loads_latest_store_once() -> String:
+	var engine := EvolutionEngineScript.new()
+	var fake_store := FakeStore.new()
+	fake_store.latest_record = {
+		"heuristic_weights": {"attack_base": 456.0},
+		"mcts_config": {"branch_factor": 4, "rollouts_per_sequence": 10, "rollout_max_steps": 88, "time_budget_ms": 3002},
+	}
+	engine._store = fake_store
+	engine._runner = FakeRunner.new()
+	engine.generations = 0
+	var result: Dictionary = engine.run({})
+	return run_checks([
+		assert_eq(fake_store.load_latest_calls, 1, "empty initial_config should trigger exactly one latest-store lookup"),
+		assert_eq(float(result.get("best_config", {}).get("heuristic_weights", {}).get("attack_base", 0.0)), 456.0, "latest-store heuristic config should seed the run"),
+	])
+
+
 func test_mutate_produces_different_weights() -> String:
 	var engine := EvolutionEngineScript.new()
 	var base_config := {
