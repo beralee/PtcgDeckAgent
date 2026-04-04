@@ -92,13 +92,23 @@ tests/       自动化测试、回归测试和批量审核入口
 
 ### 运行测试
 
-项目内置了 Godot 头less 测试入口：
+项目内置了分离的 Godot headless 测试入口：
 
 ```powershell
-& 'D:\ai\godot\Godot_v4.6.1-stable_win64_console.exe' --headless --path 'D:\ai\code\ptcgtrain' 'res://tests/TestRunner.tscn'
+# 功能回归
+& 'D:\ai\godot\Godot_v4.6.1-stable_win64_console.exe' --headless --path 'D:\ai\code\ptcgtrain' -s 'res://tests/FunctionalTestRunner.gd'
+
+# AI / 训练
+& 'D:\ai\godot\Godot_v4.6.1-stable_win64_console.exe' --headless --path 'D:\ai\code\ptcgtrain' -s 'res://tests/AITrainingTestRunner.gd'
 ```
 
-如果你本机的 Godot 路径不同，只需要替换可执行文件路径。
+定向 suite 运行示例：
+
+```powershell
+& 'D:\ai\godot\Godot_v4.6.1-stable_win64_console.exe' --headless --path 'D:\ai\code\ptcgtrain' -s 'res://tests/FunctionalTestRunner.gd' -- --suite=RuleValidator,GameStateMachine
+```
+
+兼容入口 `res://tests/TestRunner.tscn` 仍可使用，也支持 `--group=functional` / `--group=ai_training`。
 
 ## 文档入口
 

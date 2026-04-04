@@ -1,7 +1,7 @@
 param(
     [string]$GodotDir = "D:\ai\godot",
     [string]$ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path,
-    [string]$Scene = "res://tests/TestRunner.tscn"
+    [string]$Scene = "res://tests/FunctionalTestRunner.gd"
 )
 
 $ErrorActionPreference = "Stop"
@@ -31,9 +31,13 @@ $statusMatrixPath = Join-Path $env:APPDATA "Godot\app_userdata\PTCG Train\logs\c
 
 Write-Host "Godot:" $godotExe
 Write-Host "Project:" $projectRootPath
-Write-Host "Scene:" $Scene
+Write-Host "Entry:" $Scene
 
-& $godotExe --headless --path $projectRootPath $Scene
+if ([System.IO.Path]::GetExtension($Scene).ToLowerInvariant() -eq ".gd") {
+    & $godotExe --headless --path $projectRootPath -s $Scene
+} else {
+    & $godotExe --headless --path $projectRootPath $Scene
+}
 $exitCode = $LASTEXITCODE
 
 Write-Host "Exit code:" $exitCode

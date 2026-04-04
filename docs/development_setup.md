@@ -46,17 +46,27 @@
 
 ## 5. 测试入口
 
-### 运行完整测试场景
+### 运行测试
 
-项目通过 `res://tests/TestRunner.tscn` 汇总主要测试套件。
-
-示例命令：
+默认功能回归入口：
 
 ```powershell
-& 'D:\ai\godot\Godot_v4.6.1-stable_win64_console.exe' --headless --path 'D:\ai\code\ptcgtrain' 'res://tests/TestRunner.tscn'
+& 'D:\ai\godot\Godot_v4.6.1-stable_win64_console.exe' --headless --path 'D:\ai\code\ptcgtrain' -s 'res://tests/FunctionalTestRunner.gd'
 ```
 
-如果你本机的 Godot 路径不同，只需要替换可执行文件路径。
+AI/训练测试入口：
+
+```powershell
+& 'D:\ai\godot\Godot_v4.6.1-stable_win64_console.exe' --headless --path 'D:\ai\code\ptcgtrain' -s 'res://tests/AITrainingTestRunner.gd'
+```
+
+按 suite 定向运行功能测试：
+
+```powershell
+& 'D:\ai\godot\Godot_v4.6.1-stable_win64_console.exe' --headless --path 'D:\ai\code\ptcgtrain' -s 'res://tests/FunctionalTestRunner.gd' -- --suite=RuleValidator,GameStateMachine
+```
+
+兼容入口 `res://tests/TestRunner.tscn` 仍然保留，并支持 `--group=functional` / `--group=ai_training`，但日常修 bug 请优先使用专用入口，避免混跑。
 
 ### 重点测试类别
 
