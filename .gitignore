@@ -17,3 +17,17 @@ tcg-img-rules03-img1.png
 tcg-img-rules03-img1.png.import
 
 CLAUDE.md
+
+# Local Godot user:// mirrors and machine-specific API config
+.tmp_appdata/
+battle_review_api.json
+
+# Local runtime artifacts
+logs/
+.tmp_*.gd
+.tmp_*.gd.uid
+tests/tmp_*.gd
+tests/tmp_*.gd.uid
+
+# Local Python cache
+scripts/training/__pycache__/
