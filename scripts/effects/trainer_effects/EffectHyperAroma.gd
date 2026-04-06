@@ -1,12 +1,16 @@
-## 高级香氛 - 从牌库搜索最多3张1阶进化宝可梦加入手牌
 class_name EffectHyperAroma
 extends BaseEffect
 
 
 func can_execute(card: CardInstance, state: GameState) -> bool:
 	var player: PlayerState = state.players[card.owner_index]
-	for c: CardInstance in player.deck:
-		if c.card_data.is_pokemon() and c.card_data.stage == "Stage 1":
+	return not player.deck.is_empty()
+
+
+func can_headless_execute(card: CardInstance, state: GameState) -> bool:
+	var player: PlayerState = state.players[card.owner_index]
+	for deck_card: CardInstance in player.deck:
+		if deck_card.card_data.is_pokemon() and deck_card.card_data.stage == "Stage 1":
 			return true
 	return false
 
@@ -15,10 +19,12 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	var player: PlayerState = state.players[card.owner_index]
 	var items: Array = []
 	var labels: Array[String] = []
-	for c: CardInstance in player.deck:
-		if c.card_data.is_pokemon() and c.card_data.stage == "Stage 1":
-			items.append(c)
-			labels.append(c.card_data.name)
+	for deck_card: CardInstance in player.deck:
+		if deck_card.card_data.is_pokemon() and deck_card.card_data.stage == "Stage 1":
+			items.append(deck_card)
+			labels.append(deck_card.card_data.name)
+	if items.is_empty():
+		return [build_empty_search_resolution_step("牌库里没有1阶进化宝可梦。你仍可以使用这张卡。")]
 	return [{
 		"id": "search_cards",
 		"title": "选择最多3张1阶进化宝可梦",
@@ -30,34 +36,41 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	}]
 
 
+func get_followup_interaction_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
+	if not should_preview_empty_search_deck(resolved_context):
+		return []
+	var player: PlayerState = state.players[card.owner_index]
+	return [build_readonly_deck_preview_step("%s：查看剩余牌库" % card.card_data.name, player.deck)]
+
+
 func execute(card: CardInstance, targets: Array, state: GameState) -> void:
-	var pi: int = card.owner_index
-	var player: PlayerState = state.players[pi]
+	var player: PlayerState = state.players[card.owner_index]
 	var ctx: Dictionary = get_interaction_context(targets)
 
 	var found: Array[CardInstance] = []
 	var selected_raw: Array = ctx.get("search_cards", [])
-	for c: Variant in selected_raw:
-		if c is CardInstance and c in player.deck and c.card_data.is_pokemon() and c.card_data.stage == "Stage 1":
-			found.append(c)
+	var has_explicit_selection: bool = ctx.has("search_cards")
+	for entry: Variant in selected_raw:
+		if entry is CardInstance and entry in player.deck and entry.card_data.is_pokemon() and entry.card_data.stage == "Stage 1":
+			found.append(entry)
 			if found.size() >= 3:
 				break
 
-	if found.is_empty():
+	if found.is_empty() and not has_explicit_selection:
 		for deck_card: CardInstance in player.deck:
 			if deck_card.card_data.is_pokemon() and deck_card.card_data.stage == "Stage 1":
 				found.append(deck_card)
 				if found.size() >= 3:
 					break
 
-	for c: CardInstance in found:
-		player.deck.erase(c)
-	for c: CardInstance in found:
-		c.face_up = true
-		player.hand.append(c)
+	for found_card: CardInstance in found:
+		player.deck.erase(found_card)
+	for found_card: CardInstance in found:
+		found_card.face_up = true
+		player.hand.append(found_card)
 
 	player.shuffle_deck()
 
 
 func get_description() -> String:
-	return "从牌库检索最多3张1阶进化宝可梦加入手牌"
+	return "从牌库检索最多3张1阶进化宝可梦加入手牌。"

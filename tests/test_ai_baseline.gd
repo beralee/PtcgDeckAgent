@@ -432,6 +432,28 @@ func test_ai_legal_action_builder_enumerates_play_basic_to_bench_actions() -> St
 	])
 
 
+func test_ai_legal_action_builder_blocks_play_basic_to_bench_under_collapsed_stadium_limit() -> String:
+	var gsm := _make_ai_manual_gsm()
+	var builder: Variant = _new_legal_action_builder()
+	var player: PlayerState = gsm.game_state.players[0]
+	var active_slot := _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Lead"), 0))
+	var basic := CardInstance.create(_make_ai_pokemon_card_data("Bench Basic"), 0)
+	player.active_pokemon = active_slot
+	player.hand = [basic]
+	player.bench.clear()
+	for i: int in 4:
+		player.bench.append(_make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Bench %d" % i), 0)))
+	var stadium_card := CardInstance.create(_make_ai_trainer_card_data("Collapsed Stadium", "Stadium", "fb3628071280487676f79281696ffbd9"), 0)
+	gsm.game_state.stadium_card = stadium_card
+	gsm.game_state.stadium_owner_index = 0
+
+	var actions := _build_ai_actions(gsm)
+	return run_checks([
+		assert_not_null(builder, "AILegalActionBuilder should load"),
+		assert_eq(_count_actions_by_kind(actions, "play_basic_to_bench"), 0, "Collapsed Stadium在场且备战已满4只时，AI 不应枚举第5只上备战动作"),
+	])
+
+
 func test_ai_legal_action_builder_enumerates_evolve_actions() -> String:
 	var gsm := _make_ai_manual_gsm()
 	var builder: Variant = _new_legal_action_builder()

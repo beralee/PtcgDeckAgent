@@ -3,11 +3,13 @@ extends Control
 
 const FIRST_PLAYER_RANDOM := -1
 const FIRST_PLAYER_PLAYER_ONE := 0
+const FIRST_PLAYER_PLAYER_TWO := 1
 const AI_SOURCE_DEFAULT := 0
 const AI_SOURCE_LATEST := 1
 const AI_SOURCE_SPECIFIC := 2
 const BACKGROUND_DIR := "res://assets/ui"
 const DEFAULT_BACKGROUND := "res://assets/ui/background.png"
+const SETTINGS_PATH := "user://battle_setup.json"
 const BACKGROUND_CARD_SIZE := Vector2(188, 112)
 const AIVersionRegistryScript = preload("res://scripts/ai/AIVersionRegistry.gd")
 
@@ -22,11 +24,16 @@ var _playable_ai_versions: Array[Dictionary] = []
 
 func _ready() -> void:
 	%ModeOption.clear()
-	%ModeOption.add_item("双人操控", 0)
+	%ModeOption.add_item("自我练习", 0)
 	%ModeOption.add_item("AI 对战", 1)
+	%ModeOption.set_item_disabled(1, true)
 
-	_setup_ai_source_options()
-	_refresh_ai_version_options()
+	# AI 功能尚不成熟，隐藏相关控件
+	%AISourceLabel.visible = false
+	%AISourceOption.visible = false
+	%AIVersionLabel.visible = false
+	%AIVersionOption.visible = false
+
 	_setup_first_player_options()
 	_setup_background_gallery()
 
@@ -34,12 +41,14 @@ func _ready() -> void:
 	%BtnBack.pressed.connect(_on_back)
 
 	_refresh_deck_options()
+	_load_settings()
 
 
 func _setup_first_player_options() -> void:
 	%FirstPlayerOption.clear()
-	%FirstPlayerOption.add_item("随机先后攻", FIRST_PLAYER_RANDOM)
-	%FirstPlayerOption.add_item("玩家1卡组先攻", FIRST_PLAYER_PLAYER_ONE)
+	%FirstPlayerOption.add_item("随机先后攻")
+	%FirstPlayerOption.add_item("玩家1先攻")
+	%FirstPlayerOption.add_item("玩家2先攻")
 	%FirstPlayerOption.select(_first_player_option_index_from_choice(GameManager.first_player_choice))
 
 
@@ -291,11 +300,17 @@ func _refresh_deck_options() -> void:
 
 
 func _first_player_choice_from_option_index(option_index: int) -> int:
-	return FIRST_PLAYER_PLAYER_ONE if option_index == 1 else FIRST_PLAYER_RANDOM
+	match option_index:
+		1: return FIRST_PLAYER_PLAYER_ONE
+		2: return FIRST_PLAYER_PLAYER_TWO
+		_: return FIRST_PLAYER_RANDOM
 
 
 func _first_player_option_index_from_choice(choice: int) -> int:
-	return 1 if choice == FIRST_PLAYER_PLAYER_ONE else 0
+	match choice:
+		FIRST_PLAYER_PLAYER_ONE: return 1
+		FIRST_PLAYER_PLAYER_TWO: return 2
+		_: return 0
 
 
 func _apply_setup_selection() -> bool:
@@ -327,8 +342,57 @@ func _apply_setup_selection() -> bool:
 func _on_start() -> void:
 	if not _apply_setup_selection():
 		return
+	_save_settings()
 	GameManager.goto_battle()
 
 
 func _on_back() -> void:
 	GameManager.goto_main_menu()
+
+
+func _save_settings() -> void:
+	var deck1_idx: int = %Deck1Option.selected
+	var deck2_idx: int = %Deck2Option.selected
+	var data := {
+		"deck1_id": _deck_list[deck1_idx].id if deck1_idx >= 0 and deck1_idx < _deck_list.size() else -1,
+		"deck2_id": _deck_list[deck2_idx].id if deck2_idx >= 0 and deck2_idx < _deck_list.size() else -1,
+		"first_player_choice": _first_player_choice_from_option_index(%FirstPlayerOption.selected),
+		"background_path": _selected_background_path,
+	}
+	var file := FileAccess.open(SETTINGS_PATH, FileAccess.WRITE)
+	if file != null:
+		file.store_string(JSON.stringify(data, "\t"))
+		file.close()
+
+
+func _load_settings() -> void:
+	if not FileAccess.file_exists(SETTINGS_PATH):
+		return
+	var file := FileAccess.open(SETTINGS_PATH, FileAccess.READ)
+	if file == null:
+		return
+	var json := JSON.new()
+	if json.parse(file.get_as_text()) != OK:
+		return
+	var data: Variant = json.data
+	if not data is Dictionary:
+		return
+
+	# 恢复卡组选择
+	var deck1_id: int = int(data.get("deck1_id", -1))
+	var deck2_id: int = int(data.get("deck2_id", -1))
+	for i: int in _deck_list.size():
+		if _deck_list[i].id == deck1_id:
+			%Deck1Option.select(i)
+		if _deck_list[i].id == deck2_id:
+			%Deck2Option.select(i)
+
+	# 恢复先后攻
+	var fp_choice: int = int(data.get("first_player_choice", FIRST_PLAYER_RANDOM))
+	%FirstPlayerOption.select(_first_player_option_index_from_choice(fp_choice))
+
+	# 恢复背景
+	var bg_path: String = str(data.get("background_path", DEFAULT_BACKGROUND))
+	if bg_path in _battle_backgrounds:
+		_selected_background_path = bg_path
+		_refresh_background_selection()

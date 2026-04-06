@@ -346,6 +346,36 @@ func test_writes_match_json_on_finalize() -> String:
 	return result
 
 
+func test_match_json_persists_final_prize_counts() -> String:
+	_cleanup_root()
+	var recorder_result: Variant = _new_recorder()
+	if recorder_result is Dictionary and not bool((recorder_result as Dictionary).get("ok", false)):
+		return str((recorder_result as Dictionary).get("error", "Recorder setup failed"))
+
+	var recorder: Object = (recorder_result as Dictionary).get("value") as Object
+	recorder.call("start_match", _make_match_meta())
+	recorder.call("record_event", _make_event(0, "match_started"))
+	recorder.call("record_event", _make_event(1, "state_snapshot", {"snapshot_reason": "turn_start"}))
+	recorder.call("finalize_match", {
+		"winner_index": 1,
+		"reason": "prize_out",
+		"turn_count": 12,
+		"final_prize_counts": [2, 0],
+	})
+
+	var match_dir := _open_first_match_dir()
+	var data := _read_json_file(match_dir.path_join("match.json"))
+	var result_block: Dictionary = data.get("result", {})
+	var normalized_final_prize_counts: Array[int] = []
+	for count_variant: Variant in result_block.get("final_prize_counts", []):
+		normalized_final_prize_counts.append(int(count_variant))
+	var result := run_checks([
+		assert_eq(normalized_final_prize_counts, [2, 0], "match.json should persist final prize counts for replay summaries"),
+	])
+	_cleanup_root()
+	return result
+
+
 func test_refreshes_match_context_after_recording_start() -> String:
 	_cleanup_root()
 	var recorder_result: Variant = _new_recorder()
@@ -440,6 +470,29 @@ func test_exports_turns_json_grouped_by_turn() -> String:
 		assert_eq(key_choices.size(), 1, "turn bucket should keep compact key choice summaries"),
 		assert_eq(selected_labels, ["Attack"], "turn bucket should preserve selected option labels for fast review"),
 		assert_eq(key_actions.size(), 1, "turn bucket should keep compact key action summaries"),
+	])
+	_cleanup_root()
+	return result
+
+
+func test_turns_json_marks_turn_start_snapshot_presence() -> String:
+	_cleanup_root()
+	var recorder_result: Variant = _new_recorder()
+	if recorder_result is Dictionary and not bool((recorder_result as Dictionary).get("ok", false)):
+		return str((recorder_result as Dictionary).get("error", "Recorder setup failed"))
+
+	var recorder: Object = (recorder_result as Dictionary).get("value") as Object
+	recorder.call("start_match", _make_match_meta())
+	recorder.call("record_event", _make_event(0, "state_snapshot", {"snapshot_reason": "turn_start"}))
+	recorder.call("record_event", _make_event(1, "state_snapshot", {"snapshot_reason": "after_action_resolved"}))
+	recorder.call("finalize_match", {"winner_index": 0, "reason": "prize_out", "turn_count": 1})
+
+	var match_dir := _open_first_match_dir()
+	var turns_json := _read_json_file(match_dir.path_join("turns.json"))
+	var turns: Array = turns_json.get("turns", [])
+	var first_turn: Dictionary = turns[0] if not turns.is_empty() and turns[0] is Dictionary else {}
+	var result := run_checks([
+		assert_true(bool(first_turn.get("has_turn_start_snapshot", false)), "turns.json should mark turn_start availability for replay navigation"),
 	])
 	_cleanup_root()
 	return result

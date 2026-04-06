@@ -82,6 +82,38 @@ size_flags_horizontal = 4
 text = "宙斯帮我"
 theme_override_font_sizes/font_size = 11
 
+[node name="BtnReplayPrevTurn" type="Button" parent="TopBar/TopBarRow/TopBarRight/TopBarActions"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 4
+text = "上一回合"
+theme_override_font_sizes/font_size = 11
+
+[node name="BtnReplayNextTurn" type="Button" parent="TopBar/TopBarRow/TopBarRight/TopBarActions"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 4
+text = "下一回合"
+theme_override_font_sizes/font_size = 11
+
+[node name="BtnReplayContinue" type="Button" parent="TopBar/TopBarRow/TopBarRight/TopBarActions"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 4
+text = "从此处继续"
+theme_override_font_sizes/font_size = 11
+
+[node name="BtnReplayBackToList" type="Button" parent="TopBar/TopBarRow/TopBarRight/TopBarActions"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 4
+text = "返回复盘列表"
+theme_override_font_sizes/font_size = 11
+
 [node name="BtnBack" type="Button" parent="TopBar/TopBarRow/TopBarRight/TopBarActions"]
 unique_name_in_owner = true
 layout_mode = 2

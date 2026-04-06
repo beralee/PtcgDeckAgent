@@ -38,6 +38,7 @@ func _ensure_directories() -> void:
 func _seed_bundled_user_data() -> void:
 	_copy_missing_files_recursive(BUNDLED_CARDS_DIR, CARDS_DIR)
 	_copy_missing_files_recursive(BUNDLED_DECKS_DIR, DECKS_DIR)
+	_backfill_deck_strategy_from_bundled()
 
 
 func _copy_missing_files_recursive(source_dir_path: String, target_dir_path: String) -> void:
@@ -64,6 +65,55 @@ func _copy_missing_files_recursive(source_dir_path: String, target_dir_path: Str
 			_copy_file_if_missing(source_path, target_path)
 		entry = source_dir.get_next()
 	source_dir.list_dir_end()
+
+
+func _backfill_deck_strategy_from_bundled() -> void:
+	var bundled_dir := DirAccess.open(BUNDLED_DECKS_DIR)
+	if bundled_dir == null:
+		return
+	bundled_dir.list_dir_begin()
+	var entry := bundled_dir.get_next()
+	while entry != "":
+		if entry.ends_with(".json"):
+			var bundled_path := BUNDLED_DECKS_DIR.path_join(entry)
+			var user_path := DECKS_DIR.path_join(entry)
+			if FileAccess.file_exists(user_path):
+				_merge_strategy_field(bundled_path, user_path)
+		entry = bundled_dir.get_next()
+	bundled_dir.list_dir_end()
+
+
+func _merge_strategy_field(bundled_path: String, user_path: String) -> void:
+	var bf := FileAccess.open(bundled_path, FileAccess.READ)
+	if bf == null:
+		return
+	var bundled_data: Variant = JSON.parse_string(bf.get_as_text())
+	bf.close()
+	if not bundled_data is Dictionary:
+		return
+	var bundled_strategy: String = (bundled_data as Dictionary).get("strategy", "")
+	if bundled_strategy == "":
+		return
+
+	var uf := FileAccess.open(user_path, FileAccess.READ)
+	if uf == null:
+		return
+	var user_data: Variant = JSON.parse_string(uf.get_as_text())
+	uf.close()
+	if not user_data is Dictionary:
+		return
+
+	var user_dict := user_data as Dictionary
+	var existing: String = user_dict.get("strategy", "")
+	if existing != "":
+		return
+
+	user_dict["strategy"] = bundled_strategy
+	var wf := FileAccess.open(user_path, FileAccess.WRITE)
+	if wf == null:
+		return
+	wf.store_string(JSON.stringify(user_dict, "\t"))
+	wf.close()
 
 
 func _resolve_bundled_target_path(target_dir_path: String, entry_name: String) -> String:

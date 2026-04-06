@@ -2,6 +2,8 @@
 class_name AbilityVSTARSummon
 extends BaseEffect
 
+const BenchLimit = preload("res://scripts/engine/BenchLimitHelper.gd")
+
 var max_count: int = 2
 
 
@@ -19,7 +21,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 		return false
 
 	var player: PlayerState = state.players[pi]
-	if player.is_bench_full():
+	if BenchLimit.is_bench_full(state, player):
 		return false
 
 	return _has_valid_target(player.discard_pile)
@@ -27,7 +29,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 
 func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
-	var bench_space: int = 5 - player.bench.size()
+	var bench_space: int = BenchLimit.get_available_bench_space(state, player)
 	var actual_max: int = mini(max_count, bench_space)
 	if actual_max <= 0:
 		return []
@@ -65,7 +67,7 @@ func execute_ability(
 	var pi: int = top.owner_index
 	var player: PlayerState = state.players[pi]
 
-	var bench_space: int = 5 - player.bench.size()
+	var bench_space: int = BenchLimit.get_available_bench_space(state, player)
 	var actual_max: int = mini(max_count, bench_space)
 	if actual_max <= 0:
 		return
@@ -91,7 +93,7 @@ func execute_ability(
 
 	for poke_card: CardInstance in selected:
 		var discard_idx: int = player.discard_pile.find(poke_card)
-		if discard_idx == -1 or player.is_bench_full():
+		if discard_idx == -1 or BenchLimit.is_bench_full(state, player):
 			continue
 		player.discard_pile.remove_at(discard_idx)
 		poke_card.face_up = true

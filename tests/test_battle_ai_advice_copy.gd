@@ -117,8 +117,9 @@ func test_selecting_basic_pokemon_writes_readable_log_copy() -> String:
 
 func test_battle_scene_source_has_no_placeholder_copy() -> String:
 	var source := FileAccess.get_file_as_string("res://scenes/battle/BattleScene.gd")
+	var placeholder := "?" + "?" + "?"
 
 	return run_checks([
-		assert_false("???" in source, "BattleScene source should not contain placeholder question-mark copy"),
+		assert_false(placeholder in source, "BattleScene source should not contain placeholder question-mark copy"),
 		assert_false(char(0xFFFD) in source, "BattleScene source should not contain replacement characters"),
 	])

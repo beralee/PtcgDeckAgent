@@ -19,6 +19,9 @@ class FakeAIVersionRegistry extends RefCounted:
 func _make_scene_ready() -> Control:
 	var scene: Control = BattleSetupScene.instantiate()
 	scene.call("_ready")
+	# AI 控件在 _ready() 中被隐藏，测试需要手动初始化
+	scene.call("_setup_ai_source_options")
+	scene.call("_refresh_ai_version_options")
 	return scene
 
 

@@ -1,4 +1,3 @@
-## Search the deck for up to N Basic Energy cards and put them into the hand.
 class_name EffectSearchBasicEnergy
 extends BaseEffect
 
@@ -13,16 +12,12 @@ func _init(count: int = 2, cost: int = 0) -> void:
 
 func can_execute(card: CardInstance, state: GameState) -> bool:
 	var player: PlayerState = state.players[card.owner_index]
-	var other_hand_cards: int = 0
-	for hand_card: CardInstance in player.hand:
-		if hand_card != card:
-			other_hand_cards += 1
-	if other_hand_cards < discard_cost:
-		return false
-	for deck_card: CardInstance in player.deck:
-		if _is_basic_energy(deck_card):
-			return true
-	return false
+	return _can_pay_discard_cost(card, player) and not player.deck.is_empty()
+
+
+func can_headless_execute(card: CardInstance, state: GameState) -> bool:
+	var player: PlayerState = state.players[card.owner_index]
+	return _can_pay_discard_cost(card, player) and not _get_basic_energy_cards(player).is_empty()
 
 
 func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
@@ -47,12 +42,14 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			"allow_cancel": true,
 		})
 
-	var deck_items: Array = []
+	var deck_items: Array = _get_basic_energy_cards(player)
+	if deck_items.is_empty():
+		steps.append(build_empty_search_resolution_step("牌库里没有基础能量。你仍可以使用这张卡。"))
+		return steps
+
 	var deck_labels: Array[String] = []
-	for deck_card: CardInstance in player.deck:
-		if _is_basic_energy(deck_card):
-			deck_items.append(deck_card)
-			deck_labels.append(deck_card.card_data.name)
+	for deck_card: CardInstance in deck_items:
+		deck_labels.append(deck_card.card_data.name)
 	steps.append({
 		"id": "search_energy",
 		"title": "Choose up to %d Basic Energy cards" % search_count,
@@ -63,6 +60,13 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		"allow_cancel": true,
 	})
 	return steps
+
+
+func get_followup_interaction_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
+	if not should_preview_empty_search_deck(resolved_context):
+		return []
+	var player: PlayerState = state.players[card.owner_index]
+	return [build_readonly_deck_preview_step("%s：查看剩余牌库" % card.card_data.name, player.deck)]
 
 
 func execute(card: CardInstance, targets: Array, state: GameState) -> void:
@@ -95,11 +99,10 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 			if selected_energy.size() >= search_count:
 				break
 	if selected_energy.is_empty() and not has_explicit_selection:
-		for deck_card: CardInstance in player.deck:
-			if _is_basic_energy(deck_card):
-				selected_energy.append(deck_card)
-				if selected_energy.size() >= search_count:
-					break
+		for deck_card: CardInstance in _get_basic_energy_cards(player):
+			selected_energy.append(deck_card)
+			if selected_energy.size() >= search_count:
+				break
 
 	for energy_card: CardInstance in selected_energy:
 		player.deck.erase(energy_card)
@@ -119,3 +122,19 @@ func get_description() -> String:
 	if discard_cost > 0:
 		return "Discard %d card(s), then search your deck for up to %d Basic Energy cards." % [discard_cost, search_count]
 	return "Search your deck for up to %d Basic Energy cards." % search_count
+
+
+func _can_pay_discard_cost(card: CardInstance, player: PlayerState) -> bool:
+	var other_hand_cards: int = 0
+	for hand_card: CardInstance in player.hand:
+		if hand_card != card:
+			other_hand_cards += 1
+	return other_hand_cards >= discard_cost
+
+
+func _get_basic_energy_cards(player: PlayerState) -> Array:
+	var deck_items: Array = []
+	for deck_card: CardInstance in player.deck:
+		if _is_basic_energy(deck_card):
+			deck_items.append(deck_card)
+	return deck_items

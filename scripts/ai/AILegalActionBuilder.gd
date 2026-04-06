@@ -271,7 +271,7 @@ func _evaluate_trainer_action(gsm: GameStateMachine, player_index: int, card: Ca
 	var effect: BaseEffect = gsm.effect_processor.get_effect(card.card_data.effect_id)
 	if effect == null:
 		return {"allowed": true, "requires_interaction": false}
-	if not effect.can_execute(card, gsm.game_state):
+	if not effect.can_headless_execute(card, gsm.game_state):
 		return {"allowed": false, "requires_interaction": false}
 	return {
 		"allowed": true,

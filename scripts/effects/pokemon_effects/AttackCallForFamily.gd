@@ -6,6 +6,8 @@
 class_name AttackCallForFamily
 extends BaseEffect
 
+const BenchLimit = preload("res://scripts/engine/BenchLimitHelper.gd")
+
 ## 最多检索的基础宝可梦数量
 var search_count: int = 1
 ## 属性过滤（空字符串=任意属性）
@@ -25,7 +27,7 @@ func get_attack_interaction_steps(
 	if card == null:
 		return []
 	var player: PlayerState = state.players[card.owner_index]
-	var bench_space: int = 5 - player.bench.size()
+	var bench_space: int = BenchLimit.get_available_bench_space(state, player)
 	if bench_space <= 0 or player.deck.is_empty():
 		return []
 
@@ -63,7 +65,7 @@ func execute_attack(
 	var pi: int = top_card.owner_index
 	var player: PlayerState = state.players[pi]
 
-	var bench_space: int = 5 - player.bench.size()
+	var bench_space: int = BenchLimit.get_available_bench_space(state, player)
 	if bench_space <= 0:
 		player.shuffle_deck()
 		return
@@ -96,7 +98,8 @@ func execute_attack(
 	# 从牌库移除并放置到备战区
 	for poke_card: CardInstance in chosen:
 		player.deck.erase(poke_card)
-		if player.is_bench_full():
+		if BenchLimit.is_bench_full(state, player):
+			player.deck.append(poke_card)
 			break
 		poke_card.face_up = true
 		var slot := PokemonSlot.new()

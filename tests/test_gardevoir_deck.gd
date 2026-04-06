@@ -1002,3 +1002,67 @@ func test_gardevoir_deck_all_effect_ids_registered() -> String:
 		checks.append(assert_true(processor.get_effect(eid) != null, "道具 %s 应已注册" % eid))
 
 	return run_checks(checks)
+
+
+## ==================== 道具特性不受宝可梦特性压制影响 ====================
+
+func test_tool_granted_ability_not_blocked_by_flutter_mane() -> String:
+	var state := _make_state()
+	var processor := EffectProcessor.new()
+	processor.register_effect(AbilityVSTARSearch.FOREST_SEAL_EFFECT_ID, AbilityVSTARSearch.new())
+
+	# 振翼发在战斗场（玩家0）
+	var flutter_cd := _make_basic_pokemon_data("振翼发", "P", 90)
+	flutter_cd.abilities = [{"name": "暗夜振翼"}]
+	var flutter := _make_slot(flutter_cd, 0)
+	state.players[0].active_pokemon = flutter
+
+	# 对手战斗宝可梦V装备森林封印石
+	var opp_cd := _make_basic_pokemon_data("TestV", "P", 200, "Basic", "V")
+	opp_cd.abilities = [{"name": "Suppressed Ability"}]
+	opp_cd.effect_id = "test_v_opp"
+	var opp_active := _make_slot(opp_cd, 1)
+	var tool_cd := _make_trainer_data("森林封印石", "Tool", AbilityVSTARSearch.FOREST_SEAL_EFFECT_ID)
+	opp_active.attached_tool = CardInstance.create(tool_cd, 1)
+	state.players[1].active_pokemon = opp_active
+
+	# 宝可梦自身特性应被压制
+	var native_disabled := processor.is_ability_disabled(opp_active, state)
+	# 道具赋予特性（ability_index=1，因为有1个native ability）不应被压制
+	var tool_ability_usable := processor.can_use_ability(opp_active, state, 1)
+
+	return run_checks([
+		assert_true(native_disabled, "振翼发应压制对手战斗宝可梦的自身特性"),
+		assert_true(tool_ability_usable, "振翼发不应阻止道具（森林封印石）赋予的特性"),
+	])
+
+
+func test_tool_granted_ability_not_blocked_by_klefki() -> String:
+	var state := _make_state()
+	var processor := EffectProcessor.new()
+	processor.register_effect(AbilityVSTARSearch.FOREST_SEAL_EFFECT_ID, AbilityVSTARSearch.new())
+
+	# 钥圈儿在战斗场
+	var klefki_cd := _make_basic_pokemon_data("钥圈儿", "P", 70)
+	klefki_cd.abilities = [{"name": "恶作剧之锁"}]
+	var klefki := _make_slot(klefki_cd, 0)
+	state.players[0].active_pokemon = klefki
+
+	# 对手基础宝可梦V装备森林封印石
+	var opp_cd := _make_basic_pokemon_data("TestBasicV", "P", 200, "Basic", "V")
+	opp_cd.abilities = [{"name": "Locked Ability"}]
+	opp_cd.effect_id = "test_basic_v"
+	var opp_active := _make_slot(opp_cd, 1)
+	var tool_cd := _make_trainer_data("森林封印石", "Tool", AbilityVSTARSearch.FOREST_SEAL_EFFECT_ID)
+	opp_active.attached_tool = CardInstance.create(tool_cd, 1)
+	state.players[1].active_pokemon = opp_active
+
+	# 基础宝可梦自身特性应被锁
+	var native_disabled := processor.is_ability_disabled(opp_active, state)
+	# 道具赋予特性不应被锁
+	var tool_ability_usable := processor.can_use_ability(opp_active, state, 1)
+
+	return run_checks([
+		assert_true(native_disabled, "钥圈儿应锁住基础宝可梦的自身特性"),
+		assert_true(tool_ability_usable, "钥圈儿不应阻止道具（森林封印石）赋予的特性"),
+	])

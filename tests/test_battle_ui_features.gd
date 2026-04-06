@@ -63,6 +63,26 @@ class FakeBattleReviewService extends RefCounted:
 		return {"status": "started"}
 
 
+class FakeCoinAnimator extends Node:
+	var played_results: Array[bool] = []
+
+	func play(result: bool) -> void:
+		played_results.append(result)
+
+
+class SpyRetreatGameStateMachine extends GameStateMachine:
+	var retreat_calls: int = 0
+	var retreat_result: bool = true
+	var last_energy_to_discard: Array[CardInstance] = []
+	var last_bench_target: PokemonSlot = null
+
+	func retreat(_player_index: int, energy_to_discard: Array[CardInstance], bench_target: PokemonSlot) -> bool:
+		retreat_calls += 1
+		last_energy_to_discard = energy_to_discard.duplicate()
+		last_bench_target = bench_target
+		return retreat_result
+
+
 
 ## 构建测试用 CardData（宝可梦）
 func _make_pokemon_cd(pname: String, hp: int, energy: String) -> CardData:
@@ -146,6 +166,10 @@ func _make_battle_scene_stub() -> Control:
 	battle_scene.set("_my_discard_hud_value", Label.new())
 	battle_scene.set("_btn_end_turn", Button.new())
 	battle_scene.set("_btn_opponent_hand", Button.new())
+	battle_scene.set("_btn_replay_prev_turn", Button.new())
+	battle_scene.set("_btn_replay_next_turn", Button.new())
+	battle_scene.set("_btn_replay_continue", Button.new())
+	battle_scene.set("_btn_replay_back_to_list", Button.new())
 	battle_scene.set("_hud_end_turn_btn", Button.new())
 	battle_scene.set("_stadium_lbl", Label.new())
 	battle_scene.set("_btn_stadium_action", Button.new())
@@ -155,6 +179,111 @@ func _make_battle_scene_stub() -> Control:
 	battle_scene.set("_my_lost_value", Label.new())
 	battle_scene.set("_hand_container", HBoxContainer.new())
 	return battle_scene
+
+
+func _sample_raw_replay_snapshot() -> Dictionary:
+	return {
+		"event_type": "state_snapshot",
+		"turn_number": 6,
+		"phase": "main",
+		"player_index": 1,
+		"snapshot_reason": "turn_start",
+		"state": {
+			"turn_number": 6,
+			"phase": "main",
+			"current_player_index": 1,
+			"first_player_index": 0,
+			"winner_index": -1,
+			"win_reason": "",
+			"energy_attached_this_turn": false,
+			"supporter_used_this_turn": false,
+			"stadium_played_this_turn": false,
+			"retreat_used_this_turn": false,
+			"stadium_card": {},
+			"stadium_owner_index": -1,
+			"players": [
+				{
+					"player_index": 0,
+					"hand": [],
+					"deck": [],
+					"prizes": [],
+					"discard_pile": [],
+					"lost_zone": [],
+					"active": {
+						"damage_counters": 0,
+						"retreat_cost": 1,
+						"attached_energy": [],
+						"attached_tool": {},
+						"status_conditions": {"poisoned": false, "burned": false, "asleep": false, "paralyzed": false, "confused": false},
+						"effects": [],
+						"turn_played": 4,
+						"turn_evolved": -1,
+						"pokemon_stack": [{
+							"card_name": "Opponent Active",
+							"instance_id": 10,
+							"owner_index": 0,
+							"face_up": true,
+							"card_type": "Pokemon",
+							"stage": "Basic",
+							"hp": 70,
+							"energy_type": "P",
+							"effect_id": "",
+							"energy_provides": "",
+							"attacks": [],
+							"abilities": [],
+						}],
+					},
+					"bench": [],
+				},
+				{
+					"player_index": 1,
+					"hand": [{
+						"card_name": "Switch",
+						"instance_id": 20,
+						"owner_index": 1,
+						"face_up": true,
+						"card_type": "Trainer",
+						"stage": "",
+						"hp": 0,
+						"energy_type": "",
+						"effect_id": "",
+						"energy_provides": "",
+						"attacks": [],
+						"abilities": [],
+					}],
+					"deck": [],
+					"prizes": [],
+					"discard_pile": [],
+					"lost_zone": [],
+					"active": {
+						"damage_counters": 0,
+						"retreat_cost": 1,
+						"attached_energy": [],
+						"attached_tool": {},
+						"status_conditions": {"poisoned": false, "burned": false, "asleep": false, "paralyzed": false, "confused": false},
+						"effects": [],
+						"turn_played": 5,
+						"turn_evolved": -1,
+						"pokemon_stack": [{
+							"card_name": "Player Active",
+							"instance_id": 21,
+							"owner_index": 1,
+							"face_up": true,
+							"card_type": "Pokemon",
+							"stage": "Basic",
+							"hp": 120,
+							"energy_type": "R",
+							"effect_id": "",
+							"energy_provides": "",
+							"attacks": [{"name": "Test", "cost": "R", "damage": "30", "text": "", "is_vstar_power": false}],
+							"abilities": [],
+						}],
+					},
+					"bench": [],
+				},
+			],
+		},
+	}
 
 
 func _make_regidrago_vstar_cd() -> CardData:
@@ -249,10 +378,11 @@ func test_battle_setup_first_player_choice_mapping() -> String:
 
 	return run_checks([
 		assert_eq(setup._first_player_choice_from_option_index(0), -1, "第 0 项应映射为随机先后攻"),
-		assert_eq(setup._first_player_choice_from_option_index(1), 0, "第 1 项应映射为玩家1卡组先攻"),
+		assert_eq(setup._first_player_choice_from_option_index(1), 0, "第 1 项应映射为玩家1先攻"),
+		assert_eq(setup._first_player_choice_from_option_index(2), 1, "第 2 项应映射为玩家2先攻"),
 		assert_eq(setup._first_player_option_index_from_choice(-1), 0, "随机先后攻应回填到第 0 项"),
-		assert_eq(setup._first_player_option_index_from_choice(0), 1, "玩家1卡组先攻应回填到第 1 项"),
-		assert_eq(setup._first_player_option_index_from_choice(1), 0, "未在 UI 暴露的玩家2先攻应回退到随机项"),
+		assert_eq(setup._first_player_option_index_from_choice(0), 1, "玩家1先攻应回填到第 1 项"),
+		assert_eq(setup._first_player_option_index_from_choice(1), 2, "玩家2先攻应回填到第 2 项"),
 	])
 
 
@@ -288,6 +418,77 @@ func test_battle_scene_includes_zeus_help_button() -> String:
 	return run_checks([
 		assert_true(zeus_button is Button, "BattleScene 顶栏应包含宙斯帮我按钮"),
 		assert_true(back_button is Button, "BattleScene 顶栏应保留退出游戏按钮"),
+	])
+
+
+func test_battle_scene_includes_replay_navigation_buttons() -> String:
+	var scene: Control = load("res://scenes/battle/BattleScene.tscn").instantiate()
+	var prev_button := scene.find_child("BtnReplayPrevTurn", true, false)
+	var next_button := scene.find_child("BtnReplayNextTurn", true, false)
+
+	return run_checks([
+		assert_true(prev_button is Button, "BattleScene should expose BtnReplayPrevTurn"),
+		assert_true(next_button is Button, "BattleScene should expose BtnReplayNextTurn"),
+	])
+
+
+func test_battle_scene_replay_mode_blocks_live_hand_actions() -> String:
+	var battle_scene := _make_battle_scene_stub()
+	battle_scene.set("_battle_mode", "review_readonly")
+	battle_scene.set("_selected_hand_card", CardInstance.create(_make_trainer_cd("Any", "Item", ""), 0))
+	var can_act := bool(battle_scene.call("_can_accept_live_action"))
+
+	return run_checks([
+		assert_false(can_act, "Replay mode should block live actions"),
+	])
+
+
+func test_battle_scene_replay_next_turn_loads_adjacent_turn_start() -> String:
+	var battle_scene := _make_battle_scene_stub()
+	var replay_turn_numbers: Array[int] = [4, 6]
+	battle_scene.set("_battle_mode", "review_readonly")
+	battle_scene.set("_replay_match_dir", "res://tests/fixtures/match_review_fixture")
+	battle_scene.set("_replay_turn_numbers", replay_turn_numbers)
+	battle_scene.set("_replay_current_turn_index", 0)
+	battle_scene.call("_on_replay_next_turn_pressed")
+
+	return run_checks([
+		assert_eq(int(battle_scene.get("_replay_current_turn_index")), 1, "Next Turn should advance the replay turn index"),
+		assert_eq(int(battle_scene.get("_view_player")), 1, "Replay should follow the loaded turn's acting player"),
+	])
+
+
+func test_battle_scene_continue_from_here_switches_to_live_mode() -> String:
+	var battle_scene := _make_battle_scene_stub()
+	battle_scene.set("_gsm", GameStateMachine.new())
+	battle_scene.set("_battle_mode", "review_readonly")
+	battle_scene.set("_replay_loaded_raw_snapshot", _sample_raw_replay_snapshot())
+	battle_scene.call("_on_replay_continue_pressed")
+
+	var gsm := battle_scene.get("_gsm") as GameStateMachine
+	return run_checks([
+		assert_eq(str(battle_scene.get("_battle_mode")), "live", "Continue From Here should return the scene to live mode"),
+		assert_true(battle_scene.call("_can_accept_live_action"), "Continue From Here should re-enable live actions"),
+		assert_eq(gsm.game_state.turn_number, 6, "Continue From Here should load the replay turn into GameState"),
+	])
+
+
+func test_battle_scene_replay_mode_ignores_hand_card_clicks() -> String:
+	var battle_scene := _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.players = [PlayerState.new(), PlayerState.new()]
+	gsm.game_state.players[0].player_index = 0
+	gsm.game_state.players[1].player_index = 1
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_battle_mode", "review_readonly")
+	var hand_card := CardInstance.create(_make_pokemon_cd("Replay Test Basic", 70, "G"), 0)
+	gsm.game_state.players[0].hand = [hand_card]
+	battle_scene.call("_on_hand_card_clicked", hand_card, PanelContainer.new())
+
+	return run_checks([
+		assert_true(battle_scene.get("_selected_hand_card") == null, "Replay mode should ignore hand card clicks"),
 	])
 
 
@@ -455,6 +656,107 @@ func test_battle_scene_retreat_uses_field_slot_choice() -> String:
 	return run_checks([
 		assert_eq(str(scene.get("_pending_choice")), "retreat_bench", "Retreat should keep retreat_bench pending choice"),
 		assert_eq(str(scene.get("_field_interaction_mode")), "slot_select", "Retreat should use field slot selection"),
+	])
+
+
+func test_battle_scene_retreat_with_extra_energy_requires_energy_choice() -> String:
+	var scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	scene._gsm = gsm
+	scene._view_player = 0
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Active", 120, "C"), 0))
+	active.attached_energy.append(CardInstance.create(_make_energy_cd("Retreat 1", "C"), 0))
+	active.attached_energy.append(CardInstance.create(_make_energy_cd("Retreat 2", "C"), 0))
+	gsm.game_state.players[0].active_pokemon = active
+
+	var bench_a := PokemonSlot.new()
+	bench_a.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Bench A", 90, "C"), 0))
+	gsm.game_state.players[0].bench = [bench_a]
+
+	scene.call("_show_retreat_dialog", 0)
+
+	return run_checks([
+		assert_eq(str(scene.get("_pending_choice")), "retreat_energy", "Retreat with extra Energy should ask the player to choose the discard first"),
+		assert_true((scene.get("_dialog_overlay") as Panel).visible, "Retreat Energy selection should use the dialog overlay"),
+		assert_eq((scene.get("_dialog_items_data") as Array).size(), 2, "The retreat Energy prompt should include every attached Energy card"),
+		assert_eq(str(scene.get("_field_interaction_mode")), "", "Bench slot selection should wait until Energy is chosen"),
+	])
+
+
+func test_battle_scene_retreat_uses_player_selected_energy_cards() -> String:
+	var scene = _make_battle_scene_stub()
+	var gsm := SpyRetreatGameStateMachine.new()
+	gsm.game_state = GameState.new()
+	scene._gsm = gsm
+	scene._view_player = 0
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Active", 120, "C"), 0))
+	var energy_a := CardInstance.create(_make_energy_cd("Retreat A", "C"), 0)
+	var energy_b := CardInstance.create(_make_energy_cd("Retreat B", "C"), 0)
+	active.attached_energy.append(energy_a)
+	active.attached_energy.append(energy_b)
+	gsm.game_state.players[0].active_pokemon = active
+
+	var bench_a := PokemonSlot.new()
+	bench_a.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Bench A", 90, "C"), 0))
+	gsm.game_state.players[0].bench = [bench_a]
+
+	scene.call("_show_retreat_dialog", 0)
+	scene.call("_handle_dialog_choice", PackedInt32Array([1]))
+	scene.call("_handle_field_slot_select_index", 0)
+
+	return run_checks([
+		assert_eq(str(scene.get("_pending_choice")), "", "Retreat flow should resolve after the bench target is chosen"),
+		assert_eq(gsm.retreat_calls, 1, "Retreat confirmation should call GameStateMachine.retreat exactly once"),
+		assert_eq(gsm.last_energy_to_discard.size(), 1, "Retreat should discard exactly the selected Energy card"),
+		assert_eq(gsm.last_energy_to_discard[0], energy_b, "Retreat should pass the player-selected Energy card into GameStateMachine.retreat"),
+		assert_eq(gsm.last_bench_target, bench_a, "Retreat should keep using the selected bench target"),
+	])
+
+
+func test_battle_scene_retreat_rejects_overpaying_energy_selection() -> String:
+	var scene = _make_battle_scene_stub()
+	var gsm := SpyRetreatGameStateMachine.new()
+	gsm.game_state = GameState.new()
+	scene._gsm = gsm
+	scene._view_player = 0
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Active", 120, "C"), 0))
+	active.attached_energy.append(CardInstance.create(_make_energy_cd("Retreat A", "C"), 0))
+	active.attached_energy.append(CardInstance.create(_make_energy_cd("Retreat B", "C"), 0))
+	gsm.game_state.players[0].active_pokemon = active
+
+	var bench_a := PokemonSlot.new()
+	bench_a.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Bench A", 90, "C"), 0))
+	gsm.game_state.players[0].bench = [bench_a]
+
+	scene.call("_show_retreat_dialog", 0)
+	scene.call("_handle_dialog_choice", PackedInt32Array([0, 1]))
+
+	return run_checks([
+		assert_eq(str(scene.get("_pending_choice")), "retreat_energy", "Overpaying retreat Energy should keep the flow on the Energy selection step"),
+		assert_eq(str(scene.get("_field_interaction_mode")), "", "Overpaying retreat Energy should not advance to bench selection"),
+		assert_eq(gsm.retreat_calls, 0, "Overpaying retreat Energy should not call GameStateMachine.retreat"),
 	])
 
 
@@ -710,6 +1012,270 @@ func test_battle_scene_electric_generator_routes_real_effect_to_assignment_ui() 
 		assert_eq(str(battle_scene.get("_field_interaction_mode")), "assignment", "Electric Generator should route to field assignment UI"),
 		assert_eq(int(data.get("source_items", []).size()), 2, "Electric Generator should expose the revealed Lightning Energy cards as source items"),
 		assert_eq(int(data.get("target_items", []).size()), 2, "Electric Generator should expose valid Lightning bench targets on the field"),
+	])
+
+
+func test_battle_scene_buddy_poffin_card_dialog_clicks_select_distinct_candidates() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 3
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	player.deck = [
+		CardInstance.create(_make_pokemon_cd("Poffin A", 60, "G"), 0),
+		CardInstance.create(_make_pokemon_cd("Poffin B", 70, "W"), 0),
+	]
+
+	var poffin_card := CardInstance.create(_make_trainer_cd("Buddy Poffin", "Item", ""), 0)
+	var steps: Array[Dictionary] = [{
+		"id": "buddy_poffin_pokemon",
+		"title": "选择最多 2 张 HP 不高于 70 的基础宝可梦放入备战区",
+		"items": player.deck.duplicate(),
+		"labels": ["Poffin A (HP 60)", "Poffin B (HP 70)"],
+		"min_select": 0,
+		"max_select": 2,
+		"allow_cancel": true,
+	}]
+
+	battle_scene.call("_start_effect_interaction", "trainer", 0, steps, poffin_card)
+
+	var card_row: HBoxContainer = battle_scene.get("_dialog_card_row")
+	var first_card := card_row.get_child(0) as BattleCardView
+	var second_card := card_row.get_child(1) as BattleCardView
+	var left_connections: Array = first_card.left_clicked.get_connections()
+	var dialog_data: Dictionary = battle_scene.get("_dialog_data")
+	var manual_selected: Array = (battle_scene.get("_dialog_card_selected_indices") as Array).duplicate()
+	manual_selected.append(0)
+	var toggle_changed := bool(battle_scene.call("_toggle_dialog_card_choice", 0, 2))
+	var toggled_selection: Array = (battle_scene.get("_dialog_card_selected_indices") as Array).duplicate()
+	(battle_scene.get("_dialog_card_selected_indices") as Array).clear()
+	battle_scene.call("_on_dialog_card_chosen", 0)
+	var direct_selection: Array = (battle_scene.get("_dialog_card_selected_indices") as Array).duplicate()
+	battle_scene.call("_on_dialog_card_chosen", 1)
+	var second_selection: Array = (battle_scene.get("_dialog_card_selected_indices") as Array).duplicate()
+
+	return run_checks([
+		assert_true(bool(battle_scene.get("_dialog_card_mode")), "Buddy Poffin should render eligible basics in card dialog mode"),
+		assert_eq(card_row.get_child_count(), 2, "Buddy Poffin should show both eligible basics as clickable card choices"),
+		assert_eq(left_connections.size(), 1, "Buddy Poffin card choices should wire exactly one left-click handler per card"),
+		assert_eq(int(dialog_data.get("max_select", -1)), 2, "Buddy Poffin dialog should preserve max_select=2 in card mode"),
+		assert_eq(manual_selected, [0], "BattleScene card selection storage should accept appending a chosen index"),
+		assert_true(toggle_changed, "Buddy Poffin card toggle helper should report that selecting the first card succeeded"),
+		assert_eq(toggled_selection, [0], "Buddy Poffin card toggle helper should persist the selected index"),
+		assert_eq(direct_selection, [0], "Direct dialog choice handling should still select the first Buddy Poffin candidate"),
+		assert_eq(second_selection, [0, 1], "Clicking a second Buddy Poffin candidate should add the distinct second entry"),
+	])
+
+
+func test_battle_scene_nest_ball_without_target_can_preview_deck_then_consume() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 3
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	player.hand.clear()
+	player.deck.clear()
+	player.bench.clear()
+	var no_basic_target := CardInstance.create(_make_pokemon_cd("No Basic Target", 90, "C"), 0)
+	no_basic_target.card_data.stage = "Stage 1"
+	player.deck.append_array([
+		CardInstance.create(_make_trainer_cd("Deck Item", "Item", ""), 0),
+		no_basic_target,
+	])
+
+	var nest_ball := CardInstance.create(_make_trainer_cd("Nest Ball", "Item", ""), 0)
+	nest_ball.card_data.effect_id = "1af63a7e2cb7a79215474ad8db8fd8fd"
+	player.hand.append(nest_ball)
+
+	battle_scene.call("_try_play_trainer_with_interaction", 0, nest_ball)
+	var first_step_title := (battle_scene.get("_dialog_title") as Label).text
+	var first_dialog_items: Array = battle_scene.get("_dialog_items_data")
+
+	battle_scene.call("_handle_effect_interaction_choice", PackedInt32Array([1]))
+	var preview_title := (battle_scene.get("_dialog_title") as Label).text
+	var preview_dialog_data: Dictionary = battle_scene.get("_dialog_data")
+	var preview_items: Array = preview_dialog_data.get("card_items", [])
+	var utility_row: HBoxContainer = battle_scene.get("_dialog_utility_row")
+
+	battle_scene.call("_handle_effect_interaction_choice", PackedInt32Array())
+
+	return run_checks([
+		assert_true(bool((battle_scene.get("_dialog_overlay") as Panel).visible) or nest_ball in player.discard_pile, "Nest Ball should open a resolution flow instead of being blocked outright"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "After closing the deck preview, the trainer interaction should finish cleanly"),
+		assert_str_contains(first_step_title, "没有", "Nest Ball whiff dialog should explain that the deck has no valid Pokemon"),
+		assert_eq(first_dialog_items.size(), 2, "Nest Ball whiff dialog should offer continue and preview options"),
+		assert_str_contains(preview_title, "牌库", "Choosing preview should open a deck preview step"),
+		assert_true(bool(battle_scene.get("_dialog_card_mode")) or preview_dialog_data.get("presentation", "") == "cards", "Deck preview should render in card mode"),
+		assert_eq(preview_items.size(), 2, "Deck preview should show the remaining deck cards"),
+		assert_eq(utility_row.get_child_count(), 1, "Deck preview should expose a single close-and-continue utility action"),
+		assert_true(nest_ball in player.discard_pile, "Nest Ball should still be consumed after the deck preview closes"),
+		assert_eq(player.bench.size(), 0, "Nest Ball whiff preview should not add any Pokemon to the bench"),
+	])
+
+
+func legacy_battle_scene_earthen_vessel_empty_search_preview_can_be_opened_and_consumes_card() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	player.hand.clear()
+	player.deck.clear()
+	player.discard_pile.clear()
+	player.bench.clear()
+	player.deck.append_array([
+		CardInstance.create(_make_trainer_cd("Deck Item", "Item", ""), 0),
+		CardInstance.create(_make_pokemon_cd("Deck Pokemon", 90, "C"), 0),
+	])
+
+	var discard_cost := CardInstance.create(_make_trainer_cd("Discard Cost", "Item", ""), 0)
+	var earthen_vessel := CardInstance.create(_make_trainer_cd("Earthen Vessel", "Item", ""), 0)
+	earthen_vessel.card_data.effect_id = "e366f56ecd3f805a28294109a1a37453"
+	player.hand.append_array([earthen_vessel, discard_cost])
+
+	battle_scene.call("_try_play_trainer_with_interaction", 0, earthen_vessel)
+	var first_step_title := (battle_scene.get("_dialog_title") as Label).text
+
+	battle_scene.call("_handle_effect_interaction_choice", PackedInt32Array([0]))
+	var resolution_title := (battle_scene.get("_dialog_title") as Label).text
+	var resolution_items: Array = battle_scene.get("_dialog_items_data")
+
+	battle_scene.call("_handle_effect_interaction_choice", PackedInt32Array([1]))
+	var preview_title := (battle_scene.get("_dialog_title") as Label).text
+	var preview_dialog_data: Dictionary = battle_scene.get("_dialog_data")
+	var preview_items: Array = preview_dialog_data.get("card_items", [])
+
+	battle_scene.call("_handle_effect_interaction_choice", PackedInt32Array())
+
+	return run_checks([
+		assert_str_contains(first_step_title, "弃", "Earthen Vessel should still ask the player to pay its discard cost first"),
+		assert_str_contains(resolution_title, "没有", "After paying the discard cost, Earthen Vessel should explain that no Basic Energy were found"),
+		assert_eq(resolution_items.size(), 2, "Earthen Vessel whiffs should offer continue and preview options"),
+		assert_str_contains(preview_title, "牌库", "Choosing preview after an Earthen Vessel whiff should open the deck preview"),
+		assert_eq(preview_items.size(), 2, "Earthen Vessel whiff previews should show the remaining deck"),
+		assert_true(earthen_vessel in player.discard_pile, "Earthen Vessel should still be consumed after closing the empty-search preview"),
+		assert_true(discard_cost in player.discard_pile, "Earthen Vessel should still discard the paid cost card on a whiff"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "After closing the empty-search preview, the trainer interaction should finish cleanly"),
+	])
+
+
+func test_battle_scene_earthen_vessel_empty_search_preview_can_be_opened_and_consumes_card() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 3
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	player.hand.clear()
+	player.deck.clear()
+	player.discard_pile.clear()
+	player.bench.clear()
+	player.deck.append_array([
+		CardInstance.create(_make_trainer_cd("Deck Item", "Item", ""), 0),
+		CardInstance.create(_make_pokemon_cd("Deck Pokemon", 90, "C"), 0),
+	])
+
+	var discard_cost := CardInstance.create(_make_trainer_cd("Discard Cost", "Item", ""), 0)
+	var earthen_vessel := CardInstance.create(_make_trainer_cd("Earthen Vessel", "Item", ""), 0)
+	earthen_vessel.card_data.effect_id = "e366f56ecd3f805a28294109a1a37453"
+	player.hand.append_array([earthen_vessel, discard_cost])
+
+	battle_scene.call("_try_play_trainer_with_interaction", 0, earthen_vessel)
+	var first_step_title := (battle_scene.get("_dialog_title") as Label).text
+
+	battle_scene.call("_handle_effect_interaction_choice", PackedInt32Array([0]))
+	var resolution_title := (battle_scene.get("_dialog_title") as Label).text
+	var resolution_items: Array = battle_scene.get("_dialog_items_data")
+
+	battle_scene.call("_handle_effect_interaction_choice", PackedInt32Array([1]))
+	var preview_title := (battle_scene.get("_dialog_title") as Label).text
+	var preview_dialog_data: Dictionary = battle_scene.get("_dialog_data")
+	var preview_items: Array = preview_dialog_data.get("card_items", [])
+
+	battle_scene.call("_handle_effect_interaction_choice", PackedInt32Array())
+
+	return run_checks([
+		assert_true(first_step_title.findn("discard") >= 0, "Earthen Vessel should still ask the player to pay its discard cost first"),
+		assert_true(resolution_items.size() == 2, "After paying the discard cost, Earthen Vessel should enter the empty-search resolution step"),
+		assert_eq(resolution_items.size(), 2, "Earthen Vessel whiffs should offer continue and preview options"),
+		assert_true(preview_items.size() == 2, "Choosing preview after an Earthen Vessel whiff should open the deck preview"),
+		assert_eq(preview_items.size(), 2, "Earthen Vessel whiff previews should show the remaining deck"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "After closing the empty-search preview, the trainer interaction should finish cleanly"),
+		assert_true(discard_cost in player.discard_pile, "Earthen Vessel should still discard the paid cost card on a whiff"),
+		assert_false(earthen_vessel in player.hand, "Earthen Vessel should not remain in hand after the empty-search flow finishes"),
+		assert_true(earthen_vessel in player.discard_pile, "Earthen Vessel should still be consumed after closing the empty-search preview"),
+	])
+
+
+func test_battle_scene_try_play_trainer_with_interaction_respects_item_play_rules() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 1
+	gsm.game_state.phase = GameState.GamePhase.SETUP
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var nest_ball := CardInstance.create(_make_trainer_cd("Nest Ball", "Item", ""), 0)
+	nest_ball.card_data.effect_id = "1af63a7e2cb7a79215474ad8db8fd8fd"
+	player.hand.append(nest_ball)
+	player.deck.append(CardInstance.create(_make_pokemon_cd("Target", 70, "C"), 0))
+
+	battle_scene.call("_try_play_trainer_with_interaction", 0, nest_ball)
+	var log_list: ItemList = battle_scene.get("_log_list")
+	var latest_log := log_list.get_item_text(log_list.item_count - 1) if log_list != null and log_list.item_count > 0 else ""
+
+	return run_checks([
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "Items should not enter the interaction flow when the play rules currently forbid them"),
+		assert_true(nest_ball in player.hand, "Blocked trainer interactions should leave the card in hand"),
+		assert_true(latest_log.length() > 0, "Blocked trainer interactions should explain why the card cannot currently be used"),
 	])
 
 
@@ -1106,6 +1672,53 @@ func test_battle_scene_pokemon_catcher_heads_route_to_field_slots() -> String:
 		assert_eq(str(battle_scene.get("_field_interaction_mode")), "slot_select", "Pokemon Catcher on heads should route to field slot selection"),
 		assert_eq(str(battle_scene.get("_field_interaction_position")), "bottom", "Pokemon Catcher should move the field panel downward for opponent targets"),
 		assert_eq(int((battle_scene.get("_field_interaction_data") as Dictionary).get("items", []).size()), 2, "Pokemon Catcher should expose opponent bench targets on the field"),
+	])
+
+
+func test_battle_scene_pokemon_catcher_waits_for_coin_animation_before_field_slots() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+	var coin_animator := FakeCoinAnimator.new()
+	battle_scene.set("_coin_animator", coin_animator)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var opp_active := PokemonSlot.new()
+	opp_active.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Opp Active", 120, "C"), 1))
+	gsm.game_state.players[1].active_pokemon = opp_active
+	var opp_bench_a := PokemonSlot.new()
+	opp_bench_a.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Opp Bench A", 90, "C"), 1))
+	var opp_bench_b := PokemonSlot.new()
+	opp_bench_b.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Opp Bench B", 80, "C"), 1))
+	gsm.game_state.players[1].bench = [opp_bench_a, opp_bench_b]
+
+	var flipper := RiggedCoinFlipper.new([true])
+	flipper.coin_flipped.connect(func(result: bool) -> void:
+		battle_scene.call("_on_coin_flipped", result)
+	)
+	var effect := EffectPokemonCatcherScript.new(flipper)
+	var card := CardInstance.create(_make_trainer_cd("Pokemon Catcher", "Item", ""), 0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, gsm.game_state)
+	battle_scene.call("_start_effect_interaction", "trainer", 0, steps, card)
+
+	var delayed_pending_choice := str(battle_scene.get("_pending_choice"))
+	var delayed_field_mode := str(battle_scene.get("_field_interaction_mode"))
+	var delayed_coin_results: Array = coin_animator.played_results.duplicate()
+
+	battle_scene.call("_on_coin_animation_finished")
+
+	return run_checks([
+		assert_eq(delayed_pending_choice, "effect_interaction", "Coin-flip follow-up prompts should stay in effect_interaction while the animation is running"),
+		assert_eq(delayed_field_mode, "", "Pokemon Catcher should not show field slot selection before the coin animation finishes"),
+		assert_eq(delayed_coin_results, [true], "Pokemon Catcher should start the coin animation immediately after the shared flipper emits"),
+		assert_eq(str(battle_scene.get("_field_interaction_mode")), "slot_select", "Pokemon Catcher should show field slot selection after the coin animation finishes"),
+		assert_eq(int((battle_scene.get("_field_interaction_data") as Dictionary).get("items", []).size()), 2, "Pokemon Catcher should still expose opponent bench targets after the coin animation"),
 	])
 
 

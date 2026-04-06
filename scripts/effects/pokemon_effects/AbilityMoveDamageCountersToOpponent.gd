@@ -4,6 +4,9 @@ class_name AbilityMoveDamageCountersToOpponent
 extends BaseEffect
 
 const USED_FLAG_TYPE := "ability_move_counters_to_opp_used"
+const LUMINOUS_ENERGY_EFFECT_ID := "540ee48bb93584e4bfe3d7f5d0ee0efc"
+const LEGACY_ENERGY_EFFECT_ID := "6f31b7241a181631016466e561f148f3"
+const TEMPLE_OF_SINNOH_EFFECT_ID := "53864b068a4a1e8dce3c53c884b67efa"
 
 var max_counters: int = 3
 
@@ -21,7 +24,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 		if eff.get("type") == USED_FLAG_TYPE and eff.get("turn") == state.turn_number:
 			return false
 	# 必须附着恶能量
-	if not _has_dark_energy(pokemon):
+	if not _has_dark_energy(pokemon, state):
 		return false
 	# 己方场上至少有1只宝可梦有伤害指示物
 	var player: PlayerState = state.players[top.owner_index]
@@ -148,9 +151,45 @@ func execute_ability(
 	pokemon.effects.append({"type": USED_FLAG_TYPE, "turn": state.turn_number})
 
 
-func _has_dark_energy(pokemon: PokemonSlot) -> bool:
+func _has_dark_energy(pokemon: PokemonSlot, state: GameState = null) -> bool:
 	for energy: CardInstance in pokemon.attached_energy:
-		if energy.card_data != null and energy.card_data.energy_provides == "D":
+		if energy == null or energy.card_data == null:
+			continue
+		var energy_type: String = _get_attached_energy_type(pokemon, energy, state)
+		if energy_type == "D" or energy_type == "ANY":
+			return true
+	return false
+
+
+func _get_attached_energy_type(pokemon: PokemonSlot, energy: CardInstance, state: GameState = null) -> String:
+	if energy == null or energy.card_data == null:
+		return "C"
+	if _is_special_energy_suppressed(energy, state):
+		return "C"
+	match energy.card_data.effect_id:
+		LUMINOUS_ENERGY_EFFECT_ID:
+			return "C" if _luminous_energy_is_downgraded(pokemon, energy) else "ANY"
+		LEGACY_ENERGY_EFFECT_ID:
+			return "ANY"
+	var provides: String = energy.card_data.energy_provides
+	return provides if provides != "" else "C"
+
+
+func _is_special_energy_suppressed(energy: CardInstance, state: GameState = null) -> bool:
+	return (
+		energy.card_data.card_type == "Special Energy"
+		and state != null
+		and state.stadium_card != null
+		and state.stadium_card.card_data != null
+		and state.stadium_card.card_data.effect_id == TEMPLE_OF_SINNOH_EFFECT_ID
+	)
+
+
+func _luminous_energy_is_downgraded(pokemon: PokemonSlot, luminous_energy: CardInstance) -> bool:
+	if pokemon == null:
+		return false
+	for other: CardInstance in pokemon.attached_energy:
+		if other != luminous_energy and other != null and other.card_data != null and other.card_data.card_type == "Special Energy":
 			return true
 	return false
 

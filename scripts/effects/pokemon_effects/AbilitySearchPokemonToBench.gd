@@ -2,6 +2,8 @@
 class_name AbilitySearchPokemonToBench
 extends BaseEffect
 
+const BenchLimit = preload("res://scripts/engine/BenchLimitHelper.gd")
+
 var energy_filter: String = "L"
 var max_count: int = 2
 
@@ -23,7 +25,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 		if eff.get("type") == USED_KEY and eff.get("turn") == state.turn_number:
 			return false
 
-	if player.is_bench_full():
+	if BenchLimit.is_bench_full(state, player):
 		return false
 
 	return _has_matching_pokemon(player.deck)
@@ -31,7 +33,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 
 func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
-	var bench_space: int = 5 - player.bench.size()
+	var bench_space: int = BenchLimit.get_available_bench_space(state, player)
 	var actual_max: int = mini(max_count, bench_space)
 	if actual_max <= 0:
 		return []
@@ -68,7 +70,7 @@ func execute_ability(
 		return
 	var player: PlayerState = state.players[top.owner_index]
 
-	var bench_space: int = 5 - player.bench.size()
+	var bench_space: int = BenchLimit.get_available_bench_space(state, player)
 	var actual_max: int = mini(max_count, bench_space)
 	if actual_max <= 0:
 		return
@@ -88,7 +90,8 @@ func execute_ability(
 
 	for poke_card: CardInstance in found_pokemon:
 		player.deck.erase(poke_card)
-		if player.is_bench_full():
+		if BenchLimit.is_bench_full(state, player):
+			player.deck.append(poke_card)
 			break
 		poke_card.face_up = true
 		var slot := PokemonSlot.new()

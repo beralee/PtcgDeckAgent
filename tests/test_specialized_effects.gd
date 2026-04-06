@@ -203,6 +203,37 @@ func test_nest_ball_uses_selected_basic_pokemon() -> String:
 		assert_eq(player.bench.back().get_pokemon_name(), "基础乙", "应按选择将指定基础宝可梦放入备战区"),
 	])
 
+func test_nest_ball_respects_collapsed_stadium_live_bench_limit() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.deck.clear()
+	player.bench.clear()
+	for i: int in 4:
+		var bench_slot := PokemonSlot.new()
+		bench_slot.pokemon_stack.append(CardInstance.create(_make_basic_pokemon_data("已有备战%d" % i, "C", 70), 0))
+		player.bench.append(bench_slot)
+
+	var stadium := CardInstance.create(_make_trainer_data("崩塌的竞技场", "Stadium", "fb3628071280487676f79281696ffbd9"), 0)
+	state.stadium_card = stadium
+	state.stadium_owner_index = 0
+
+	var basic := CardInstance.create(_make_basic_pokemon_data("巢穴球目标", "C", 60), 0)
+	player.deck.append(basic)
+	var effect := EffectNestBall.new()
+	var card := CardInstance.create(_make_trainer_data("巢穴球"), 0)
+	var can_execute := effect.can_execute(card, state)
+	var steps := effect.get_interaction_steps(card, state)
+	effect.execute(card, [{
+		"basic_pokemon": [basic],
+	}], state)
+
+	return run_checks([
+		assert_false(can_execute, "崩塌的竞技场在场且已有4只备战时，巢穴球不应可用"),
+		assert_eq(steps.size(), 0, "崩塌的竞技场在场且已有4只备战时，巢穴球不应生成可选目标"),
+		assert_eq(player.bench.size(), 4, "巢穴球不应把备战区推进到第5只"),
+		assert_true(basic in player.deck, "巢穴球失败时不应把目标基础宝可梦移出牌库"),
+	])
+
 
 func test_search_deck_uses_selected_target() -> String:
 	var state := _make_state()
@@ -383,7 +414,7 @@ func test_look_top_cards_uses_selected_target() -> String:
 	])
 
 
-func test_look_top_cards_can_whiff_without_becoming_unplayable() -> String:
+func legacy_look_top_cards_can_whiff_without_becoming_unplayable() -> String:
 	var state := _make_state()
 	var player: PlayerState = state.players[0]
 	player.hand.clear()
@@ -403,6 +434,39 @@ func test_look_top_cards_can_whiff_without_becoming_unplayable() -> String:
 		assert_eq(int(steps[0].get("max_select", -1)), 0, "没有合法目标时最多选择数应为0"),
 		assert_eq(player.hand.size(), 0, "没有命中时不应凭空加入手牌"),
 		assert_eq(player.deck.size(), 7, "空结算后牌库数量应保持不变"),
+	])
+
+
+func test_look_top_cards_whiff_offers_empty_resolution_preview() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.hand.clear()
+	player.deck.clear()
+	for i: int in 7:
+		player.deck.append(CardInstance.create(_make_basic_pokemon_data("Top %d" % i, "C"), 0))
+
+	var effect := EffectLookTopCards.new(7, "Supporter", 1)
+	var card := CardInstance.create(_make_trainer_data("Pokegear 3.0"), 0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
+	var first_step: Dictionary = steps[0] if not steps.is_empty() else {}
+	var labels: Array = first_step.get("labels", [])
+	var followup: Array[Dictionary] = effect.get_followup_interaction_steps(card, state, {
+		"empty_search_resolution": ["view_deck"],
+	})
+	var preview_step: Dictionary = followup[0] if not followup.is_empty() else {}
+	var preview_items: Array = preview_step.get("items", [])
+
+	return run_checks([
+		assert_true(effect.can_execute(card, state), "Look-top effects should remain playable when the viewed cards miss"),
+		assert_false(effect.can_headless_execute(card, state), "AI should not treat look-top effects as headless-playable when they miss"),
+		assert_eq(steps.size(), 1, "Look-top whiffs should enter the shared empty-resolution flow"),
+		assert_eq(str(first_step.get("id", "")), "empty_search_resolution", "Look-top whiffs should reuse the shared empty-resolution id"),
+		assert_eq(labels.size(), 2, "Look-top whiffs should offer continue and preview options"),
+		assert_eq(str(labels[0]), "继续消耗", "Look-top whiffs should allow continuing to consume the card"),
+		assert_eq(str(labels[1]), "查看卡牌", "Look-top whiffs should allow previewing the viewed cards"),
+		assert_eq(followup.size(), 1, "Choosing to preview after a look-top whiff should open a readonly card preview"),
+		assert_eq(str(preview_step.get("presentation", "")), "cards", "Look-top whiff previews should use card presentation"),
+		assert_eq(preview_items.size(), 7, "Look-top whiff previews should show every looked-at card"),
 	])
 
 
@@ -1001,6 +1065,35 @@ func test_lance_searches_only_selected_dragon_pokemon() -> String:
 	])
 
 
+func test_lance_whiff_offers_empty_resolution_preview() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.hand.clear()
+	player.deck.clear()
+	player.deck.append_array([
+		CardInstance.create(_make_basic_pokemon_data("Non Dragon A", "R"), 0),
+		CardInstance.create(_make_trainer_data("Deck Item"), 0),
+	])
+
+	var effect := EffectLanceEffect.new()
+	var supporter := CardInstance.create(_make_trainer_data("Lance", "Supporter"), 0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(supporter, state)
+	var first_step: Dictionary = steps[0] if not steps.is_empty() else {}
+	var followup: Array[Dictionary] = effect.get_followup_interaction_steps(supporter, state, {
+		"empty_search_resolution": ["view_deck"],
+	})
+	var preview_step: Dictionary = followup[0] if not followup.is_empty() else {}
+
+	return run_checks([
+		assert_true(effect.can_execute(supporter, state), "Lance should still be playable when the deck has no Dragon Pokemon"),
+		assert_false(effect.can_headless_execute(supporter, state), "AI should not treat Lance as headless-playable when no Dragon Pokemon remain"),
+		assert_eq(steps.size(), 1, "Lance whiffs should enter the shared empty-resolution flow"),
+		assert_eq(str(first_step.get("id", "")), "empty_search_resolution", "Lance whiffs should reuse the shared empty-resolution id"),
+		assert_eq(followup.size(), 1, "Choosing to preview after a Lance whiff should open a readonly deck preview"),
+		assert_eq(int(preview_step.get("items", []).size()), 2, "Lance whiff previews should show the full remaining deck"),
+	])
+
+
 func test_up_to_effects_allow_zero_selection_without_fallback() -> String:
 	var state := _make_state()
 	var player: PlayerState = state.players[0]
@@ -1181,6 +1274,185 @@ func test_hisuian_heavy_ball_can_execute_without_basic_prize() -> String:
 		assert_true(effect.can_execute(card, state), "即使奖赏卡里没有基础宝可梦也应允许使用洗翠的沉重球"),
 		assert_true(effect.get_interaction_steps(card, state).is_empty(), "没有基础宝可梦时不应强制选择目标"),
 		assert_eq(player.prizes.size(), 2, "空结算时奖赏卡数量应保持不变"),
+	])
+
+
+func test_nest_ball_can_execute_without_basic_target_and_offer_resolution_dialog() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.bench.clear()
+	player.deck.clear()
+	player.deck.append(CardInstance.create(_make_trainer_data("Deck Item"), 0))
+	player.deck.append(CardInstance.create(_make_basic_pokemon_data("Stage 1 Only", "C", 90, "Stage 1"), 0))
+
+	var effect := EffectNestBall.new()
+	var card := CardInstance.create(_make_trainer_data("巢穴球"), 0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
+	var first_step: Dictionary = steps[0] if not steps.is_empty() else {}
+	var labels: Array = first_step.get("labels", [])
+	var first_label: String = str(labels[0]) if labels.size() > 0 else ""
+	var second_label: String = str(labels[1]) if labels.size() > 1 else ""
+
+	return run_checks([
+		assert_true(effect.can_execute(card, state), "即使牌库里没有可放到备战区的基础宝可梦，巢穴球也应允许使用"),
+		assert_eq(steps.size(), 1, "巢穴球空挥时应先弹出一个结算说明步骤"),
+		assert_eq(str(first_step.get("id", "")), "empty_search_resolution", "巢穴球空挥步骤应使用统一的无目标结算 id"),
+		assert_eq(labels.size(), 2, "巢穴球空挥步骤应提供继续和查看牌库两个选项"),
+		assert_eq(first_label, "继续消耗", "巢穴球空挥步骤应允许直接消耗卡牌"),
+		assert_eq(second_label, "查看牌库", "巢穴球空挥步骤应允许玩家查看剩余牌库"),
+	])
+
+
+func test_buddy_poffin_can_execute_without_target_and_offer_resolution_dialog() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.bench.clear()
+	player.deck.clear()
+	player.deck.append(CardInstance.create(_make_basic_pokemon_data("Big Basic", "C", 120), 0))
+	player.deck.append(CardInstance.create(_make_trainer_data("Deck Item"), 0))
+
+	var effect := EffectBuddyPoffin.new()
+	var card := CardInstance.create(_make_trainer_data("友好宝芬"), 0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
+	var first_step: Dictionary = steps[0] if not steps.is_empty() else {}
+	var labels: Array = first_step.get("labels", [])
+	var first_label: String = str(labels[0]) if labels.size() > 0 else ""
+	var second_label: String = str(labels[1]) if labels.size() > 1 else ""
+
+	return run_checks([
+		assert_true(effect.can_execute(card, state), "即使牌库里没有 HP70 以下的基础宝可梦，友好宝芬也应允许使用"),
+		assert_eq(steps.size(), 1, "友好宝芬空挥时应先弹出一个结算说明步骤"),
+		assert_eq(str(first_step.get("id", "")), "empty_search_resolution", "友好宝芬空挥步骤应复用统一的无目标结算 id"),
+		assert_eq(labels.size(), 2, "友好宝芬空挥步骤应提供继续和查看牌库两个选项"),
+		assert_eq(first_label, "继续消耗", "友好宝芬空挥步骤应允许直接消耗卡牌"),
+		assert_eq(second_label, "查看牌库", "友好宝芬空挥步骤应允许玩家查看剩余牌库"),
+	])
+
+
+func test_nest_ball_whiffs_after_continue_resolution_and_is_still_consumed() -> String:
+	var state := _make_state()
+	state.phase = GameState.GamePhase.MAIN
+	var player: PlayerState = state.players[0]
+	player.hand.clear()
+	player.deck.clear()
+	player.bench.clear()
+	player.deck.append(CardInstance.create(_make_trainer_data("Deck Item"), 0))
+	player.deck.append(CardInstance.create(_make_basic_pokemon_data("No Basic Target", "C", 90, "Stage 1"), 0))
+
+	var nest_ball := CardInstance.create(_make_trainer_data("巢穴球", "Item", "1af63a7e2cb7a79215474ad8db8fd8fd"), 0)
+	player.hand.append(nest_ball)
+
+	var gsm := GameStateMachine.new()
+	gsm.game_state = state
+	var used: bool = gsm.play_trainer(0, nest_ball, [{
+		"empty_search_resolution": ["continue"],
+	}])
+
+	return run_checks([
+		assert_true(used, "巢穴球在无目标时仍应可以被使用"),
+		assert_true(nest_ball in player.discard_pile, "巢穴球空挥后仍应进入弃牌区"),
+		assert_eq(player.bench.size(), 0, "巢穴球空挥后不应凭空放出宝可梦"),
+		assert_eq(player.deck.size(), 2, "巢穴球空挥后牌库张数应保持不变"),
+	])
+
+
+func test_search_deck_whiff_offers_empty_resolution_preview() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.hand.clear()
+	player.deck.clear()
+	player.deck.append_array([
+		CardInstance.create(_make_energy_data("Deck Fire", "R"), 0),
+		CardInstance.create(_make_trainer_data("Deck Item"), 0),
+	])
+
+	var effect := EffectSearchDeck.new(1, 0, "Pokemon")
+	var card := CardInstance.create(_make_trainer_data("Master Ball"), 0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
+	var first_step: Dictionary = steps[0] if not steps.is_empty() else {}
+	var followup: Array[Dictionary] = effect.get_followup_interaction_steps(card, state, {
+		"empty_search_resolution": ["view_deck"],
+	})
+
+	return run_checks([
+		assert_true(effect.can_execute(card, state), "SearchDeck should still be playable when the deck has no matching cards"),
+		assert_false(effect.can_headless_execute(card, state), "AI should not treat SearchDeck as headless-playable when no targets remain"),
+		assert_eq(steps.size(), 1, "SearchDeck whiffs should enter the shared empty-resolution flow"),
+		assert_eq(str(first_step.get("id", "")), "empty_search_resolution", "SearchDeck whiffs should reuse the shared empty-resolution id"),
+		assert_eq(followup.size(), 1, "Choosing to preview after a SearchDeck whiff should open a readonly deck preview"),
+		assert_eq(int(followup[0].get("items", []).size()), 2, "SearchDeck whiff previews should show the full remaining deck"),
+	])
+
+
+func test_search_basic_energy_whiff_offers_empty_resolution_and_still_pays_cost() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.hand.clear()
+	player.deck.clear()
+	player.discard_pile.clear()
+
+	var discard_card := CardInstance.create(_make_trainer_data("Discard Cost"), 0)
+	player.hand.append(discard_card)
+	player.deck.append_array([
+		CardInstance.create(_make_energy_data("Special Darkness", "D", "Special Energy"), 0),
+		CardInstance.create(_make_trainer_data("Deck Item"), 0),
+	])
+
+	var effect := EffectSearchBasicEnergyEffect.new(2, 1)
+	var card := CardInstance.create(_make_trainer_data("Earthen Vessel"), 0)
+	player.hand.append(card)
+	var can_execute_before: bool = effect.can_execute(card, state)
+	var can_headless_before: bool = effect.can_headless_execute(card, state)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
+	var resolution_step: Dictionary = steps[1] if steps.size() > 1 else {}
+	var labels: Array = resolution_step.get("labels", [])
+	var followup: Array[Dictionary] = effect.get_followup_interaction_steps(card, state, {
+		"empty_search_resolution": ["view_deck"],
+	})
+
+	effect.execute(card, [{
+		"discard_cards": [discard_card],
+		"empty_search_resolution": ["continue"],
+	}], state)
+
+	return run_checks([
+		assert_true(can_execute_before, "Basic-energy search should remain playable when the deck has no Basic Energy"),
+		assert_false(can_headless_before, "AI should not treat Basic-energy search as headless-playable when no Basic Energy remain"),
+		assert_eq(steps.size(), 2, "Whiffing Basic-energy search with a discard cost should keep the discard step and append empty resolution"),
+		assert_eq(str(resolution_step.get("id", "")), "empty_search_resolution", "Basic-energy search whiffs should reuse the shared empty-resolution id"),
+		assert_eq(str(labels[0]), "继续消耗", "Basic-energy search whiffs should allow players to continue consuming the card"),
+		assert_eq(str(labels[1]), "查看牌库", "Basic-energy search whiffs should allow players to preview the deck"),
+		assert_eq(followup.size(), 1, "Choosing to preview after a Basic-energy search whiff should open a readonly deck preview"),
+		assert_true(discard_card in player.discard_pile, "Whiffing Basic-energy search should still pay the discard cost"),
+		assert_false(player.hand.any(func(hand_card: CardInstance) -> bool: return hand_card != card and hand_card.card_data != null and hand_card.card_data.card_type == "Basic Energy"), "Whiffing Basic-energy search should not add any Basic Energy to hand"),
+	])
+
+
+func test_arven_whiff_offers_empty_resolution_preview() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.hand.clear()
+	player.deck.clear()
+	player.deck.append_array([
+		CardInstance.create(_make_basic_pokemon_data("Deck Pokemon", "C"), 0),
+		CardInstance.create(_make_energy_data("Deck Fire", "R"), 0),
+	])
+
+	var effect := EffectArven.new()
+	var card := CardInstance.create(_make_trainer_data("Arven", "Supporter"), 0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
+	var first_step: Dictionary = steps[0] if not steps.is_empty() else {}
+	var followup: Array[Dictionary] = effect.get_followup_interaction_steps(card, state, {
+		"empty_search_resolution": ["view_deck"],
+	})
+
+	return run_checks([
+		assert_true(effect.can_execute(card, state), "Arven should still be playable when the deck has no Item or Tool"),
+		assert_false(effect.can_headless_execute(card, state), "AI should not treat Arven as headless-playable when no Item or Tool remain"),
+		assert_eq(steps.size(), 1, "Arven whiffs should enter the shared empty-resolution flow"),
+		assert_eq(str(first_step.get("id", "")), "empty_search_resolution", "Arven whiffs should reuse the shared empty-resolution id"),
+		assert_eq(followup.size(), 1, "Choosing to preview after an Arven whiff should open a readonly deck preview"),
+		assert_eq(int(followup[0].get("items", []).size()), 2, "Arven whiff previews should show the full remaining deck"),
 	])
 
 
@@ -1635,6 +1907,39 @@ func test_interaction_steps_generated_for_common_trainers() -> String:
 		assert_eq(int(ultra_steps[0].get("max_select", 0)), 2, "高级球第一步应选择2张手牌"),
 		assert_eq(nest_steps.size(), 1, "巢穴球应生成一步交互"),
 		assert_eq(str(nest_steps[0].get("id", "")), "basic_pokemon", "巢穴球步骤 id 应正确"),
+	])
+
+
+func test_buddy_poffin_respects_collapsed_stadium_live_bench_limit() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.bench.clear()
+	player.deck.clear()
+	for i: int in 3:
+		var bench_slot := PokemonSlot.new()
+		bench_slot.pokemon_stack.append(CardInstance.create(_make_basic_pokemon_data("已有备战%d" % i, "C", 70), 0))
+		player.bench.append(bench_slot)
+
+	var poffin_a := CardInstance.create(_make_basic_pokemon_data("Poffin A", "C", 60), 0)
+	var poffin_b := CardInstance.create(_make_basic_pokemon_data("Poffin B", "W", 70), 0)
+	player.deck.append_array([poffin_a, poffin_b])
+
+	var stadium := CardInstance.create(_make_trainer_data("崩塌的竞技场", "Stadium", "fb3628071280487676f79281696ffbd9"), 0)
+	state.stadium_card = stadium
+	state.stadium_owner_index = 0
+
+	var effect := EffectBuddyPoffin.new()
+	var card := CardInstance.create(_make_trainer_data("友好宝芬"), 0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
+	effect.execute(card, [{
+		"buddy_poffin_pokemon": [poffin_a, poffin_b],
+	}], state)
+
+	return run_checks([
+		assert_eq(int(steps[0].get("max_select", -1)), 1, "崩塌的竞技场在场且已有3只备战时，友好宝芬最多只能选择1只"),
+		assert_eq(player.bench.size(), 4, "友好宝芬不应把备战区推进到第5只"),
+		assert_true(player.bench.any(func(slot: PokemonSlot) -> bool: return slot.get_pokemon_name() == "Poffin A"), "友好宝芬应只放入允许数量内的目标"),
+		assert_true(poffin_b in player.deck, "超出崩塌的竞技场上限的额外目标应留在牌库"),
 	])
 
 

@@ -45,6 +45,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			"min_select": 1,
 			"max_select": 1,
 			"allow_cancel": false,
+			"wait_for_coin_animation": true,
 		}]
 
 	return [{
@@ -55,6 +56,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		"min_select": 1,
 		"max_select": 1,
 		"allow_cancel": false,
+		"wait_for_coin_animation": true,
 	}]
 
 

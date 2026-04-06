@@ -55,6 +55,8 @@ func _build_turns_payload(events: Array) -> Dictionary:
 				"turn_number": turn_number,
 				"phase_sequence": [],
 				"snapshot_reasons": [],
+				"has_turn_start_snapshot": false,
+				"turn_start_event_index": -1,
 				"key_choices": [],
 				"key_actions": [],
 				"event_count": 0,
@@ -79,6 +81,10 @@ func _build_turns_payload(events: Array) -> Dictionary:
 					if not snapshot_reasons.has(snapshot_reason):
 						snapshot_reasons.append(snapshot_reason)
 						turn_data["snapshot_reasons"] = snapshot_reasons
+				if snapshot_reason == "turn_start":
+					turn_data["has_turn_start_snapshot"] = true
+					if int(turn_data.get("turn_start_event_index", -1)) < 0:
+						turn_data["turn_start_event_index"] = int(event.get("event_index", -1))
 			"choice_context":
 				var key_choices: Array = turn_data.get("key_choices", [])
 				key_choices.append(_summarize_choice_event(event))

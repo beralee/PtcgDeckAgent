@@ -217,6 +217,53 @@ func test_play_basic_to_bench() -> String:
 	])
 
 
+func test_play_basic_to_bench_respects_collapsed_stadium_limit() -> String:
+	var gsm := _make_gsm_with_decks()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 2
+	gsm.game_state.current_player_index = 0
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var stadium_cd := CardData.new()
+	stadium_cd.name = "Collapsed Stadium"
+	stadium_cd.card_type = "Stadium"
+	stadium_cd.effect_id = "fb3628071280487676f79281696ffbd9"
+	var stadium := CardInstance.create(stadium_cd, 0)
+	gsm.game_state.stadium_card = stadium
+	gsm.game_state.stadium_owner_index = 0
+
+	var active_cd := CardData.new()
+	active_cd.card_type = "Pokemon"
+	active_cd.stage = "Basic"
+	active_cd.hp = 60
+	active_cd.energy_type = "R"
+	var active_slot := PokemonSlot.new()
+	active_slot.pokemon_stack.append(CardInstance.create(active_cd, 0))
+	player.active_pokemon = active_slot
+
+	player.bench.clear()
+	for i: int in 4:
+		var bench_cd := CardData.new()
+		bench_cd.name = "Bench%d" % i
+		bench_cd.card_type = "Pokemon"
+		bench_cd.stage = "Basic"
+		bench_cd.hp = 60
+		bench_cd.energy_type = "R"
+		var bench_slot := PokemonSlot.new()
+		bench_slot.pokemon_stack.append(CardInstance.create(bench_cd, 0))
+		player.bench.append(bench_slot)
+
+	var card: CardInstance = player.deck.pop_back()
+	player.hand.append(card)
+	var result: bool = gsm.play_basic_to_bench(0, card)
+
+	return run_checks([
+		assert_false(result, "Collapsed Stadium在场时，第5只基础宝可梦不应能直接放到备战区"),
+		assert_eq(player.bench.size(), 4, "Collapsed Stadium在场时备战区应保持4只"),
+		assert_true(card in player.hand, "放置失败时卡牌应留在手牌"),
+	])
+
+
 func test_play_basic_to_bench_triggers_bench_enter_ability() -> String:
 	var gsm := _make_gsm_with_decks()
 	gsm.game_state.phase = GameState.GamePhase.MAIN

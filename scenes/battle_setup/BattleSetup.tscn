@@ -50,6 +50,7 @@ layout_mode = 2
 custom_minimum_size = Vector2(300, 35)
 
 [node name="AISourceLabel" type="Label" parent="VBoxContainer"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "AI 来源:"
 

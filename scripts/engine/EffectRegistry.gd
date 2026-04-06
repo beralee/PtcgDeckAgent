@@ -106,6 +106,10 @@ const EffectExpShareEffect = preload("res://scripts/effects/tool_effects/EffectE
 const EffectLeagueHQEffect = preload("res://scripts/effects/stadium_effects/EffectLeagueHQ.gd")
 const EffectLuminousEnergyEffect = preload("res://scripts/effects/energy_effects/EffectLuminousEnergy.gd")
 const EffectMagmaBasinEffect = preload("res://scripts/effects/stadium_effects/EffectMagmaBasin.gd")
+const EffectCrushingHammerEffect = preload("res://scripts/effects/trainer_effects/EffectCrushingHammer.gd")
+const EffectEriEffect = preload("res://scripts/effects/trainer_effects/EffectEri.gd")
+const EffectPennyEffect = preload("res://scripts/effects/trainer_effects/EffectPenny.gd")
+const EffectColressTenacityEffect = preload("res://scripts/effects/trainer_effects/EffectColressTenacity.gd")
 
 
 ## ==================== 主入口 ====================
@@ -340,6 +344,10 @@ static func _register_items(processor: EffectProcessor) -> void:
 	processor.register_effect("15b5bf0cc2edae9b9cd0bc24389ad355", EffectMirageGateEffect.new())
 	# 高级香氛
 	processor.register_effect("e8942749749a9d0069b3b47562ddb415", EffectHyperAromaEffect.new())
+	# 能量签：查看顶部7张，选1张能量加入手牌
+	processor.register_effect("543fc44ba3b2509b7165d86fc83cd14f", EffectLookTopCards.new(7, "Energy"))
+	# 粉碎之锤：投币正面弃对手1个能量
+	processor.register_effect("77a259dbcc81481b6d06e3fc18f29c3c", EffectCrushingHammerEffect.new(processor.coin_flipper))
 
 
 ## ==================== 支援者卡注册（register_effect）====================
@@ -384,6 +392,12 @@ static func _register_supporters(processor: EffectProcessor) -> void:
 	processor.register_effect("9c6f696e9eb8f0c53b5f1057141a1227", EffectColressExperimentEffect.new())
 	# 赛吉
 	processor.register_effect("08c2507538f1574c5ceda18017ab5031", EffectSalvatoreEffect.new())
+	# 枇琶：查看对手手牌，弃最多2张物品
+	processor.register_effect("aaf64ab87ad571cdf40cc78538c9c0b4", EffectEriEffect.new())
+	# 牡丹：选择己方1只基础宝可梦放回手牌
+	processor.register_effect("9fb5f53c9952d10b4fe26508ecbc644a", EffectPennyEffect.new())
+	# 阿克罗玛的执念：搜索竞技场和能量各1张
+	processor.register_effect("f7415384905a382f6f8ffe95dca595cb", EffectColressTenacityEffect.new())
 
 
 ## ==================== 道具卡注册（register_effect）====================
@@ -554,6 +568,12 @@ static func _get_ability_effect(ability_name: String) -> BaseEffect:
 		"恶作剧之锁":
 			# 钥圈儿：双方基础宝可梦特性无效化
 			return AbilityBasicLockEffect.new()
+		"初始化":
+			# 铁荆棘ex：压制规则宝可梦（非未来）特性
+			return AbilityIronThornsInit.new()
+		"变身启动":
+			# 百变怪：第一回合从牌库选基础宝可梦替换自身
+			return AbilityDittoTransform.new()
 		_:
 			return null
 
@@ -630,8 +650,8 @@ static func _get_attack_effects(processor: EffectProcessor, attack_name: String)
 		"灵骚":
 			return [AttackOpponentHandCountDamageEffect.new(60, true, 60)]
 		"月光手里剑":
-			# 对备战区2只宝可梦各90伤害，战斗宝可梦0伤害
-			return [AttackBenchSnipe.new(90, 2, 0), EffectDiscardEnergy.new(2)]
+			# 选择对手的2只宝可梦各90伤害 + 弃2能量
+			return [AttackMoonlightShuriken.new(90, 2), EffectDiscardEnergy.new(2)]
 		"双刃":
 			# 对备战区1只宝可梦120伤害，自身受30反伤
 			return [AttackBenchSnipe.new(120, 1, 30)]
@@ -711,6 +731,9 @@ static func _get_attack_effects(processor: EffectProcessor, attack_name: String)
 		"奇迹之力":
 			# 沙奈朵ex：190伤害+清除自身状态
 			return [AttackClearOwnStatusEffect.new()]
+		"伏特旋风":
+			# 铁荆棘ex：转移1个能量到备战区
+			return [AttackMoveEnergyToBench.new()]
 		_:
 			return []
 

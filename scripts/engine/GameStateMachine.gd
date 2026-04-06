@@ -3,6 +3,8 @@
 class_name GameStateMachine
 extends RefCounted
 
+const BenchLimit = preload("res://scripts/engine/BenchLimitHelper.gd")
+
 const AbilityAttachFromDeckEffect = preload("res://scripts/effects/pokemon_effects/AbilityAttachFromDeck.gd")
 const AttackSelfLockUntilLeaveActive = preload("res://scripts/effects/pokemon_effects/AttackSelfLockUntilLeaveActive.gd")
 
@@ -76,6 +78,10 @@ func start_game(deck_1: DeckData, deck_2: DeckData, force_first: int = -1) -> vo
 	_build_deck(0, deck_1)
 	_build_deck(1, deck_2)
 
+	# 记录双方初始卡牌总数
+	for pi: int in 2:
+		_expected_card_totals[pi] = count_player_total_cards(pi)
+
 	_log_action(GameAction.ActionType.GAME_START, -1, {
 		"first_player": game_state.first_player_index
 	}, "游戏开始，玩家%d先攻" % game_state.first_player_index)
@@ -83,6 +89,37 @@ func start_game(deck_1: DeckData, deck_2: DeckData, force_first: int = -1) -> vo
 	# 进入准备阶段
 	_enter_phase(GameState.GamePhase.SETUP)
 	_run_setup_phase()
+
+
+## 每位玩家初始卡牌总数（构建后记录，用于不变量检查）
+var _expected_card_totals: Array[int] = [0, 0]
+
+
+## 计算玩家在所有区域的卡牌总数
+func count_player_total_cards(player_index: int) -> int:
+	if game_state == null:
+		return 0
+	var player: PlayerState = game_state.players[player_index]
+	var total: int = player.deck.size() + player.hand.size() + player.prizes.size()
+	total += player.discard_pile.size() + player.lost_zone.size()
+	if player.active_pokemon != null:
+		total += player.active_pokemon.collect_all_cards().size()
+	for slot: PokemonSlot in player.bench:
+		total += slot.collect_all_cards().size()
+	if game_state.stadium_card != null and game_state.stadium_owner_index == player_index:
+		total += 1
+	return total
+
+
+## 验证双方卡牌总数不变量，如有异常则输出警告
+func _assert_card_totals(context: String) -> void:
+	for pi: int in 2:
+		if _expected_card_totals[pi] <= 0:
+			continue
+		var actual: int = count_player_total_cards(pi)
+		if actual != _expected_card_totals[pi]:
+			push_error("卡牌总数不变量违反！玩家%d在[%s]时: 期望=%d 实际=%d (差=%d)" % [
+				pi, context, _expected_card_totals[pi], actual, actual - _expected_card_totals[pi]])
 
 
 ## 根据 DeckData 构建 CardInstance 牌库并洗牌
@@ -219,7 +256,7 @@ func setup_place_bench_pokemon(player_index: int, card: CardInstance) -> bool:
 	var player: PlayerState = game_state.players[player_index]
 	if not card in player.hand:
 		return false
-	if player.is_bench_full():
+	if BenchLimit.is_bench_full(game_state, player):
 		return false
 
 	player.hand.erase(card)
@@ -270,6 +307,7 @@ func setup_complete(player_index: int) -> bool:
 # ===================== 回合流转 =====================
 
 func _start_turn() -> void:
+	_assert_card_totals("start_turn:%d" % (game_state.turn_number + 1))
 	var cp: int = game_state.current_player_index
 	game_state.turn_number += 1
 	game_state.energy_attached_this_turn = false
@@ -924,6 +962,7 @@ func play_trainer(player_index: int, card: CardInstance, targets: Array) -> bool
 
 	_log_action(GameAction.ActionType.PLAY_TRAINER, player_index,
 		{"card_name": card.card_data.name}, "玩家%d使用 %s" % [player_index, card.card_data.name])
+	_assert_card_totals("play_trainer:%s" % card.card_data.name)
 	_resolve_mid_turn_knockouts()
 	return true
 
@@ -975,6 +1014,7 @@ func play_stadium(player_index: int, card: CardInstance, targets: Array = []) ->
 
 	_log_action(GameAction.ActionType.PLAY_STADIUM, player_index,
 		{"card_name": card.card_data.name}, "玩家%d使出竞技场 %s" % [player_index, card.card_data.name])
+	_assert_card_totals("play_stadium:%s" % card.card_data.name)
 	_resolve_mid_turn_knockouts()
 	return true
 
@@ -1256,6 +1296,7 @@ func _calculate_attack_damage(
 
 ## 招式使用后的流程
 func _after_attack(player_index: int) -> void:
+	_assert_card_totals("after_attack:p%d" % player_index)
 	_enter_phase(GameState.GamePhase.POKEMON_CHECK)
 	_do_pokemon_check()
 	_clear_expired_attack_markers()

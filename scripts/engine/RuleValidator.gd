@@ -1,6 +1,8 @@
 class_name RuleValidator
 extends RefCounted
 
+const BenchLimit = preload("res://scripts/engine/BenchLimitHelper.gd")
+
 const ITEM_LOCK_PREFIX := "item_lock_"
 const AttackSelfLockUntilLeaveActiveEffect = preload("res://scripts/effects/pokemon_effects/AttackSelfLockUntilLeaveActive.gd")
 
@@ -255,7 +257,7 @@ func can_play_basic_to_bench(state: GameState, player_index: int, card: CardInst
 	if not card.card_data.is_basic_pokemon():
 		return false
 	var player: PlayerState = state.players[player_index]
-	return not player.is_bench_full()
+	return not BenchLimit.is_bench_full(state, player)
 
 
 func can_attach_tool(state: GameState, player_index: int, slot: PokemonSlot) -> bool:

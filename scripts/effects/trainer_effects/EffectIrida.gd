@@ -1,4 +1,3 @@
-## Irida - search a Water Pokemon and an Item card
 class_name EffectIrida
 extends BaseEffect
 
@@ -7,8 +6,13 @@ const WATER_ENERGY_TYPE: String = "W"
 
 func can_execute(card: CardInstance, state: GameState) -> bool:
 	var player: PlayerState = state.players[card.owner_index]
-	for c: CardInstance in player.deck:
-		var cd: CardData = c.card_data
+	return not player.deck.is_empty()
+
+
+func can_headless_execute(card: CardInstance, state: GameState) -> bool:
+	var player: PlayerState = state.players[card.owner_index]
+	for deck_card: CardInstance in player.deck:
+		var cd: CardData = deck_card.card_data
 		if cd.is_pokemon() and cd.energy_type == WATER_ENERGY_TYPE:
 			return true
 		if cd.card_type == "Item":
@@ -17,8 +21,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 
 
 func execute(card: CardInstance, targets: Array, state: GameState) -> void:
-	var pi: int = card.owner_index
-	var player: PlayerState = state.players[pi]
+	var player: PlayerState = state.players[card.owner_index]
 	var ctx: Dictionary = get_interaction_context(targets)
 
 	var found_water_pokemon: CardInstance = null
@@ -34,12 +37,12 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 		if item_selected in player.deck and item_selected.card_data.card_type == "Item":
 			found_item = item_selected
 
-	for c: CardInstance in player.deck:
-		var cd: CardData = c.card_data
+	for deck_card: CardInstance in player.deck:
+		var cd: CardData = deck_card.card_data
 		if found_water_pokemon == null and cd.is_pokemon() and cd.energy_type == WATER_ENERGY_TYPE:
-			found_water_pokemon = c
+			found_water_pokemon = deck_card
 		if found_item == null and cd.card_type == "Item":
-			found_item = c
+			found_item = deck_card
 		if found_water_pokemon != null and found_item != null:
 			break
 
@@ -62,13 +65,13 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	var pokemon_labels: Array[String] = []
 	var item_items: Array = []
 	var item_labels: Array[String] = []
-	for c: CardInstance in player.deck:
-		var cd: CardData = c.card_data
+	for deck_card: CardInstance in player.deck:
+		var cd: CardData = deck_card.card_data
 		if cd.is_pokemon() and cd.energy_type == WATER_ENERGY_TYPE:
-			pokemon_items.append(c)
+			pokemon_items.append(deck_card)
 			pokemon_labels.append(cd.name)
 		elif cd.card_type == "Item":
-			item_items.append(c)
+			item_items.append(deck_card)
 			item_labels.append(cd.name)
 	var steps: Array[Dictionary] = []
 	if not pokemon_items.is_empty():
@@ -91,7 +94,16 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			"max_select": 1,
 			"allow_cancel": true,
 		})
+	if steps.is_empty():
+		return [build_empty_search_resolution_step("牌库里没有水属性宝可梦或物品卡。你仍可以使用这张卡。")]
 	return steps
+
+
+func get_followup_interaction_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
+	if not should_preview_empty_search_deck(resolved_context):
+		return []
+	var player: PlayerState = state.players[card.owner_index]
+	return [build_readonly_deck_preview_step("%s：查看剩余牌库" % card.card_data.name, player.deck)]
 
 
 func get_description() -> String:

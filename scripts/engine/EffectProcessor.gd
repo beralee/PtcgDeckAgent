@@ -62,7 +62,7 @@ func register_pokemon_card(card: CardData) -> void:
 	_registered_pokemon_effect_ids[effect_id] = true
 
 
-func get_attack_effects_for_slot(attacker: PokemonSlot, _attack_index: int = 0) -> Array[BaseEffect]:
+func get_attack_effects_for_slot(attacker: PokemonSlot, attack_index: int = 0) -> Array[BaseEffect]:
 	var result: Array[BaseEffect] = []
 	if attacker == null or attacker.get_top_card() == null:
 		return result
@@ -70,6 +70,8 @@ func get_attack_effects_for_slot(attacker: PokemonSlot, _attack_index: int = 0) 
 	if not _attack_effect_registry.has(effect_id):
 		return result
 	for effect: BaseEffect in _attack_effect_registry[effect_id]:
+		if effect.has_method("applies_to_attack_index") and not bool(effect.call("applies_to_attack_index", attack_index)):
+			continue
 		result.append(effect)
 	return result
 
@@ -188,9 +190,11 @@ func execute_ability_effect(
 func can_use_ability(pokemon: PokemonSlot, state: GameState, ability_index: int = 0) -> bool:
 	if pokemon == null or pokemon.get_top_card() == null:
 		return false
-	if is_ability_disabled(pokemon, state):
-		return false
 	if ability_index < 0:
+		return false
+	# 道具赋予的特性不受"宝可梦特性压制"影响（振翼发、钥圈儿、铁荆棘等）
+	var native_count: int = pokemon.get_card_data().abilities.size() if pokemon.get_card_data() != null else 0
+	if ability_index < native_count and is_ability_disabled(pokemon, state):
 		return false
 	var effect: BaseEffect = get_ability_effect(pokemon, ability_index, state)
 	if effect == null or not effect.has_method("can_use_ability"):
@@ -599,6 +603,8 @@ func is_ability_disabled(slot: PokemonSlot, state: GameState = null) -> bool:
 		if AbilityBasicLock.is_locked_by_basic_lock(slot, state):
 			return true
 		if AbilityDisableOpponentAbility.is_locked_by_dark_wing(slot, state):
+			return true
+		if AbilityIronThornsInit.is_locked_by_init(slot, state):
 			return true
 	if slot.attached_tool != null and not is_tool_effect_suppressed(slot, state):
 		var tool_effect: BaseEffect = get_effect(slot.attached_tool.card_data.effect_id)

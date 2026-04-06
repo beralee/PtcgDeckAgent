@@ -32,7 +32,8 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		"labels": labels,
 		"min_select": 0,
 		"max_select": mini(_pending_heads_count, items.size()),
-		"allow_cancel": true,
+		"allow_cancel": false,
+		"wait_for_coin_animation": true,
 	}]
 
 

@@ -1,4 +1,3 @@
-## Lance - search your deck for up to 3 Dragon Pokemon and put them into your hand.
 class_name EffectLance
 extends BaseEffect
 
@@ -7,6 +6,11 @@ const MAX_SEARCH_COUNT: int = 3
 
 
 func can_execute(card: CardInstance, state: GameState) -> bool:
+	var player: PlayerState = state.players[card.owner_index]
+	return not player.deck.is_empty()
+
+
+func can_headless_execute(card: CardInstance, state: GameState) -> bool:
 	var player: PlayerState = state.players[card.owner_index]
 	for deck_card: CardInstance in player.deck:
 		if _is_dragon_pokemon(deck_card):
@@ -23,6 +27,8 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			continue
 		items.append(deck_card)
 		labels.append(deck_card.card_data.name)
+	if items.is_empty():
+		return [build_empty_search_resolution_step("牌库里没有龙属性宝可梦。你仍可以使用这张卡。")]
 	return [{
 		"id": "dragon_pokemon",
 		"title": "Choose up to 3 Dragon Pokemon",
@@ -32,6 +38,13 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		"max_select": mini(MAX_SEARCH_COUNT, items.size()),
 		"allow_cancel": true,
 	}]
+
+
+func get_followup_interaction_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
+	if not should_preview_empty_search_deck(resolved_context):
+		return []
+	var player: PlayerState = state.players[card.owner_index]
+	return [build_readonly_deck_preview_step("%s：查看剩余牌库" % card.card_data.name, player.deck)]
 
 
 func execute(card: CardInstance, targets: Array, state: GameState) -> void:

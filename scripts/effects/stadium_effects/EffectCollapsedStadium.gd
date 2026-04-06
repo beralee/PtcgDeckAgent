@@ -6,6 +6,7 @@ extends BaseEffect
 
 ## 竞技场生效时的备战区上限
 const BENCH_LIMIT: int = 4
+const EFFECT_ID: String = "fb3628071280487676f79281696ffbd9"
 const STEP_ID_PREFIX: String = "collapsed_stadium_discard_p"
 
 

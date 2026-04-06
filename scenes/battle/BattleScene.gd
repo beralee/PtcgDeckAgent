@@ -1,4 +1,4 @@
-## BattleScene
+﻿## BattleScene
 extends Control
 
 # ===================== Constants =====================
@@ -8,9 +8,26 @@ const AIOpponentScript := preload("res://scripts/ai/AIOpponent.gd")
 const AIVersionRegistryScript := preload("res://scripts/ai/AIVersionRegistry.gd")
 const AgentVersionStoreScript := preload("res://scripts/ai/AgentVersionStore.gd")
 const BattleRecorderScript := preload("res://scripts/engine/BattleRecorder.gd")
+const BattleReplaySnapshotLoaderScript := preload("res://scripts/engine/BattleReplaySnapshotLoader.gd")
+const BattleReplayStateRestorerScript := preload("res://scripts/engine/BattleReplayStateRestorer.gd")
 const BattleAdviceServiceScript := preload("res://scripts/engine/BattleAdviceService.gd")
 const BattleReviewArtifactStoreScript := preload("res://scripts/engine/BattleReviewArtifactStore.gd")
 const BattleReviewServiceScript := preload("res://scripts/engine/BattleReviewService.gd")
+const BattleSceneRefsScript := preload("res://scenes/battle/BattleSceneRefs.gd")
+const BattleI18nScript := preload("res://scripts/ui/battle/BattleI18n.gd")
+const BattleAdviceFormatterScript := preload("res://scripts/ui/battle/BattleAdviceFormatter.gd")
+const BattleAdviceControllerScript := preload("res://scripts/ui/battle/BattleAdviceController.gd")
+const BattleActionControllerScript := preload("res://scripts/ui/battle/BattleActionController.gd")
+const BattleDisplayControllerScript := preload("res://scripts/ui/battle/BattleDisplayController.gd")
+const BattleDialogControllerScript := preload("res://scripts/ui/battle/BattleDialogController.gd")
+const BattleEffectInteractionControllerScript := preload("res://scripts/ui/battle/BattleEffectInteractionController.gd")
+const BattleInteractionControllerScript := preload("res://scripts/ui/battle/BattleInteractionController.gd")
+const BattleLayoutControllerScript := preload("res://scripts/ui/battle/BattleLayoutController.gd")
+const BattleOverlayControllerScript := preload("res://scripts/ui/battle/BattleOverlayController.gd")
+const BattleReplayControllerScript := preload("res://scripts/ui/battle/BattleReplayController.gd")
+const BattleRecordingControllerScript := preload("res://scripts/ui/battle/BattleRecordingController.gd")
+const BattleRuntimeLogControllerScript := preload("res://scripts/ui/battle/BattleRuntimeLogController.gd")
+const BattleReviewFormatterScript := preload("res://scripts/ui/battle/BattleReviewFormatter.gd")
 const CARD_ASPECT := 0.716
 const BATTLE_RUNTIME_LOG_PATH := "user://logs/battle_runtime.log"
 const BATTLE_BACKDROP_RESOURCE := "res://assets/ui/background.png"
@@ -21,6 +38,11 @@ const CoinFlipAnimatorScript := preload("res://scenes/battle/CoinFlipAnimator.gd
 const AI_MAX_ACTIONS_PER_TURN := 20
 
 # ===================== State =====================
+# These scene-owned fields are intentionally accessed reflectively by extracted
+# battle controllers via scene.get()/set()/call(). Godot's static analyzer can't
+# follow those accesses, so suppress private-field false positives for the
+# declaration blocks and restore warnings before method bodies.
+@warning_ignore_start("unused_private_class_variable")
 var _gsm: GameStateMachine
 var _view_player: int = 0        # Two-player local mode currently visible player
 var _selected_hand_card: CardInstance = null
@@ -60,6 +82,13 @@ var _ai_step_scheduled: bool = false
 var _ai_followup_requested: bool = false
 var _ai_turn_marker: String = ""
 var _ai_actions_this_turn: int = 0
+var _battle_mode: String = "live"
+var _replay_match_dir: String = ""
+var _replay_turn_numbers: Array[int] = []
+var _replay_current_turn_index: int = -1
+var _replay_entry_source: String = ""
+var _replay_loaded_raw_snapshot: Dictionary = {}
+var _replay_loaded_view_snapshot: Dictionary = {}
 var _ai_version_registry: RefCounted = AIVersionRegistryScript.new()
 var _agent_version_store: RefCounted = AgentVersionStoreScript.new()
 
@@ -98,12 +127,28 @@ var _battle_review_busy: bool = false
 var _battle_review_progress_text: String = ""
 var _battle_review_winner_index: int = -1
 var _battle_review_reason: String = ""
+var _battle_review_formatter: RefCounted = BattleReviewFormatterScript.new()
+var _battle_advice_controller: RefCounted = BattleAdviceControllerScript.new()
 var _battle_advice_service: RefCounted = null
+var _battle_action_controller: RefCounted = BattleActionControllerScript.new()
+var _battle_display_controller: RefCounted = BattleDisplayControllerScript.new()
+var _battle_dialog_controller: RefCounted = BattleDialogControllerScript.new()
+var _battle_effect_interaction_controller: RefCounted = BattleEffectInteractionControllerScript.new()
+var _battle_interaction_controller: RefCounted = BattleInteractionControllerScript.new()
+var _battle_layout_controller: RefCounted = BattleLayoutControllerScript.new()
+var _battle_overlay_controller: RefCounted = BattleOverlayControllerScript.new()
+var _battle_replay_snapshot_loader: RefCounted = BattleReplaySnapshotLoaderScript.new()
+var _battle_replay_state_restorer: RefCounted = BattleReplayStateRestorerScript.new()
+var _battle_scene_refs: RefCounted = BattleSceneRefsScript.new()
+var _battle_replay_controller: RefCounted = BattleReplayControllerScript.new()
+var _battle_recording_controller: RefCounted = BattleRecordingControllerScript.new()
+var _battle_runtime_log_controller: RefCounted = BattleRuntimeLogControllerScript.new()
 var _battle_advice_last_result: Dictionary = {}
 var _battle_advice_busy: bool = false
 var _battle_advice_progress_text: String = ""
 var _battle_advice_initial_snapshot: Dictionary = {}
 var _battle_advice_pinned: bool = false
+var _battle_advice_formatter: RefCounted = BattleAdviceFormatterScript.new()
 var _battle_advice_panel: PanelContainer = null
 var _battle_advice_panel_title: Label = null
 var _battle_advice_panel_toggle_btn: Button = null
@@ -127,6 +172,10 @@ var _review_overlay_mode: String = ""
 @onready var _btn_ai_advice: Button = %BtnAiAdvice
 @onready var _btn_opponent_hand: Button = %BtnOpponentHand
 @onready var _btn_zeus_help: Button = %BtnZeusHelp
+@onready var _btn_replay_prev_turn: Button = %BtnReplayPrevTurn
+@onready var _btn_replay_next_turn: Button = %BtnReplayNextTurn
+@onready var _btn_replay_continue: Button = %BtnReplayContinue
+@onready var _btn_replay_back_to_list: Button = %BtnReplayBackToList
 @onready var _hud_end_turn_btn: Button = %HudEndTurnBtn
 @onready var _opp_hand_bar: PanelContainer = $MainArea/CenterField/OppHandBar
 @onready var _left_panel: VBoxContainer = $MainArea/LeftPanel
@@ -205,15 +254,16 @@ var _review_overlay_mode: String = ""
 @onready var _handover_lbl: Label = %HandoverLbl
 @onready var _handover_btn: Button = %HandoverBtn
 
-# Coin flip overlay (旧文本弹窗，保留作为后备)
+# Coin flip overlay
 @onready var _coin_overlay: Panel = %CoinFlipOverlay
 @onready var _coin_result_lbl: Label = %CoinResultLbl
 @onready var _coin_ok_btn: Button = %CoinOkBtn
 
-# 投币动画
+# Coin flip animation state
 var _coin_animator: Node = null
 var _coin_flip_queue: Array[bool] = []
 var _coin_animating: bool = false
+var _coin_animation_resume_effect_step: bool = false
 
 # Card detail overlay
 @onready var _detail_overlay: Panel = %DetailOverlay
@@ -231,6 +281,7 @@ var _coin_animating: bool = false
 @onready var _review_content: RichTextLabel = %ReviewContent
 @onready var _review_close_btn: Button = %ReviewCloseBtn
 @onready var _review_regenerate_btn: Button = %ReviewRegenerateBtn
+@warning_ignore_restore("unused_private_class_variable")
 
 
 # ===================== Lifecycle =====================
@@ -243,6 +294,17 @@ func _ready() -> void:
 	_btn_opponent_hand.pressed.connect(_on_opponent_hand_pressed)
 	_btn_ai_advice.pressed.connect(_on_ai_advice_pressed)
 	_btn_zeus_help.pressed.connect(_on_zeus_help_pressed)
+	_btn_replay_prev_turn.pressed.connect(_on_replay_prev_turn_pressed)
+	_btn_replay_next_turn.pressed.connect(_on_replay_next_turn_pressed)
+	_btn_replay_continue.pressed.connect(_on_replay_continue_pressed)
+	_btn_replay_back_to_list.pressed.connect(_on_replay_back_to_list_pressed)
+	_battle_scene_refs.call(
+		"bind_replay_buttons",
+		_btn_replay_prev_turn,
+		_btn_replay_next_turn,
+		_btn_replay_continue,
+		_btn_replay_back_to_list
+	)
 	_btn_back.pressed.connect(_on_back_pressed)
 	_dialog_confirm.pressed.connect(_on_dialog_confirm)
 	_dialog_cancel.pressed.connect(_on_dialog_cancel)
@@ -260,6 +322,10 @@ func _ready() -> void:
 	_left_panel.visible = false
 	_right_panel.visible = false
 	_btn_opponent_hand.visible = false
+	_btn_replay_prev_turn.visible = false
+	_btn_replay_next_turn.visible = false
+	_btn_replay_continue.visible = false
+	_btn_replay_back_to_list.visible = false
 	_opp_prize_hud_count.visible = false
 	_my_prize_hud_count.visible = false
 	for caption_path: String in [
@@ -287,7 +353,7 @@ func _ready() -> void:
 	if not get_viewport().size_changed.is_connected(_on_viewport_size_changed):
 		get_viewport().size_changed.connect(_on_viewport_size_changed)
 
-	# 投币动画
+	# Coin flip overlay setup
 	_coin_animator = CoinFlipAnimatorScript.new()
 	_coin_animator.set_anchors_preset(PRESET_FULL_RECT)
 	_coin_animator.z_index = 150
@@ -314,6 +380,10 @@ func _ready() -> void:
 	if stadium_sections != null:
 		stadium_sections.move_child(_stadium_center_section, 0)
 		stadium_sections.move_child(_lost_zone_section, 1)
+	_refresh_replay_controls()
+	var replay_launch: Dictionary = GameManager.consume_battle_replay_launch()
+	if not replay_launch.is_empty():
+		_apply_replay_launch(replay_launch)
 
 	# Discard pile interactions
 	_opp_discard.gui_input.connect(func(e: InputEvent) -> void:
@@ -326,7 +396,7 @@ func _ready() -> void:
 		if e is InputEventMouseButton:
 			var mbe := e as InputEventMouseButton
 			if mbe.pressed and mbe.button_index == MOUSE_BUTTON_LEFT:
-				_show_discard_pile(_view_player, "我方弃牌区")
+				_show_discard_pile(_view_player, "己方弃牌区")
 	)
 	if _opp_discard_preview != null:
 		_opp_discard_preview.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
@@ -338,7 +408,7 @@ func _ready() -> void:
 		)
 	if _my_discard_preview != null:
 		_my_discard_preview.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
-			_show_discard_pile(_view_player, "我方弃牌区")
+			_show_discard_pile(_view_player, "己方弃牌区")
 		)
 		_my_discard_preview.right_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
 			if cd != null:
@@ -377,7 +447,23 @@ func _ready() -> void:
 				_on_slot_input(e, "my_bench_%d" % idx)
 			)
 
-	_start_battle()
+	if not _is_review_mode():
+		_start_battle()
+
+
+func _build_game_state_machine() -> GameStateMachine:
+	var gsm := GameStateMachine.new()
+	gsm.state_changed.connect(_on_state_changed)
+	gsm.action_logged.connect(_on_action_logged)
+	gsm.player_choice_required.connect(_on_player_choice_required)
+	gsm.game_over.connect(_on_game_over)
+	gsm.coin_flipper.coin_flipped.connect(_on_coin_flipped)
+	return gsm
+
+
+func _ensure_game_state_machine() -> void:
+	if _gsm == null:
+		_gsm = _build_game_state_machine()
 
 
 func _start_battle() -> void:
@@ -395,12 +481,7 @@ func _start_battle() -> void:
 		]
 	)
 
-	_gsm = GameStateMachine.new()
-	_gsm.state_changed.connect(_on_state_changed)
-	_gsm.action_logged.connect(_on_action_logged)
-	_gsm.player_choice_required.connect(_on_player_choice_required)
-	_gsm.game_over.connect(_on_game_over)
-	_gsm.coin_flipper.coin_flipped.connect(_on_coin_flipped)
+	_gsm = _build_game_state_machine()
 
 	_setup_done = [false, false]
 	# Reset visible player before starting a new match.
@@ -482,21 +563,27 @@ func _apply_responsive_layout() -> void:
 
 	var center_width := maxf(0.0, viewport_size.x - side_width - right_width - log_width)
 	var bench_spacing: float = float(clampi(int(viewport_size.x * 0.004), 4, 10))
-	var play_h: float = _compute_play_card_height(viewport_size, center_width, bench_spacing)
-	var dialog_h: float = clampf(viewport_size.y * 0.24, 148.0, 220.0)
-	var detail_h: float = clampf(viewport_size.y * 0.5, 260.0, 460.0)
-	_play_card_size = Vector2(round(play_h * CARD_ASPECT), round(play_h))
-	_dialog_card_size = Vector2(round(dialog_h * CARD_ASPECT), round(dialog_h))
-	_detail_card_size = Vector2(round(detail_h * CARD_ASPECT), round(detail_h))
-	var preview_card_size := Vector2(roundf(_play_card_size.x * 0.9), roundf(_play_card_size.y * 0.9))
-	var prize_slot_size: Vector2 = preview_card_size
+	var measured_variant: Variant = _battle_layout_controller.call(
+		"measure_card_layout",
+		viewport_size,
+		center_width,
+		bench_spacing,
+		BENCH_SIZE,
+		CARD_ASPECT
+	)
+	var measured: Dictionary = measured_variant if measured_variant is Dictionary else {}
+	_play_card_size = measured.get("play_card_size", _play_card_size)
+	_dialog_card_size = measured.get("dialog_card_size", _dialog_card_size)
+	_detail_card_size = measured.get("detail_card_size", _detail_card_size)
+	var preview_card_size: Vector2 = measured.get("preview_card_size", Vector2(roundf(_play_card_size.x * 0.9), roundf(_play_card_size.y * 0.9)))
+	var prize_slot_size: Vector2 = measured.get("prize_slot_size", preview_card_size)
 
 	hand_area.custom_minimum_size = Vector2(0, _play_card_size.y + 10.0)
-	var stadium_height: float = roundf(clampf(viewport_size.y * 0.082, 54.0, 72.0) * (4.0 / 9.0))
-	var stadium_inner_vpad: int = clampi(int(stadium_height * 0.08), 1, 3)
-	var vstar_stack_gap: int = clampi(int(stadium_height * 0.08), 1, 2)
-	var vstar_panel_vpad: int = clampi(int(stadium_height * 0.06), 1, 2)
-	var prize_panel_height: float = roundf((preview_card_size.y * 2.0 + 24.0) * 0.95)
+	var stadium_height: float = float(measured.get("stadium_height", roundf(clampf(viewport_size.y * 0.082, 54.0, 72.0) * (4.0 / 9.0))))
+	var stadium_inner_vpad: int = int(measured.get("stadium_inner_vpad", clampi(int(stadium_height * 0.08), 1, 3)))
+	var vstar_stack_gap: int = int(measured.get("vstar_stack_gap", clampi(int(stadium_height * 0.08), 1, 2)))
+	var vstar_panel_vpad: int = int(measured.get("vstar_panel_vpad", clampi(int(stadium_height * 0.06), 1, 2)))
+	var prize_panel_height: float = float(measured.get("prize_panel_height", roundf((preview_card_size.y * 2.0 + 24.0) * 0.95)))
 	stadium_bar.custom_minimum_size = Vector2(0, stadium_height)
 	stadium_sections.offset_top = float(stadium_inner_vpad)
 	stadium_sections.offset_bottom = -float(stadium_inner_vpad)
@@ -519,14 +606,7 @@ func _apply_responsive_layout() -> void:
 	_my_hud_left.custom_minimum_size = Vector2(0, prize_panel_height)
 	var backdrop := get_node_or_null("BattleBackdrop") as TextureRect
 	if backdrop != null:
-		backdrop.anchor_left = 0.0
-		backdrop.anchor_top = 0.0
-		backdrop.anchor_right = 0.0
-		backdrop.anchor_bottom = 0.0
-		backdrop.offset_left = 0.0
-		backdrop.offset_top = 0.0
-		backdrop.offset_right = viewport_size.x - log_width
-		backdrop.offset_bottom = viewport_size.y
+		_battle_layout_controller.call("apply_backdrop_rect", backdrop, viewport_size, log_width)
 	_hand_container.add_theme_constant_override("separation", clampi(int(_play_card_size.x * 0.08), 4, 10))
 	_my_active.custom_minimum_size = _play_card_size
 	_opp_active.custom_minimum_size = _play_card_size
@@ -609,17 +689,14 @@ func _apply_responsive_layout() -> void:
 
 
 func _compute_play_card_height(viewport_size: Vector2, center_width: float, bench_spacing: float) -> float:
-	var reserved_vertical := \
-		clampf(viewport_size.y * 0.042, 26.0, 38.0) + \
-		clampf(viewport_size.y * 0.032, 24.0, 34.0) + \
-		92.0
-	var height_limited := (viewport_size.y - reserved_vertical) / 5.0
-
-	var bench_row_padding := 40.0
-	var usable_center_width := maxf(center_width - bench_row_padding, 0.0)
-	var width_limited := (usable_center_width - float(BENCH_SIZE - 1) * bench_spacing) / maxf(float(BENCH_SIZE) * CARD_ASPECT, 1.0)
-
-	return clampf(minf(height_limited, width_limited), 112.0, 192.0)
+	return _battle_layout_controller.call(
+		"compute_play_card_height",
+		viewport_size,
+		center_width,
+		bench_spacing,
+		BENCH_SIZE,
+		CARD_ASPECT
+	)
 
 
 func _install_battle_backdrop() -> void:
@@ -638,64 +715,23 @@ func _install_battle_backdrop() -> void:
 
 
 func _load_battle_backdrop_texture() -> Texture2D:
-	var backdrop_path := _resolve_battle_backdrop_path()
-	if ResourceLoader.exists(backdrop_path):
-		var backdrop_res := load(backdrop_path)
-		if backdrop_res is Texture2D:
-			return backdrop_res as Texture2D
-	if FileAccess.file_exists(backdrop_path):
-		var image := Image.load_from_file(ProjectSettings.globalize_path(backdrop_path))
-		if image != null and not image.is_empty():
-			return ImageTexture.create_from_image(image)
-
-	var gradient := Gradient.new()
-	gradient.colors = PackedColorArray([
-		Color("07131d"),
-		Color("102634"),
-		Color("16394a"),
-		Color("0b1825"),
-	])
-	gradient.offsets = PackedFloat32Array([0.0, 0.35, 0.7, 1.0])
-
-	var texture := GradientTexture2D.new()
-	texture.gradient = gradient
-	texture.width = 32
-	texture.height = 640
-	texture.fill = GradientTexture2D.FILL_LINEAR
-	texture.fill_from = Vector2(0.0, 0.0)
-	texture.fill_to = Vector2(1.0, 1.0)
-	return texture
+	return _battle_layout_controller.call(
+		"load_battle_backdrop_texture",
+		GameManager.selected_battle_background,
+		BATTLE_BACKDROP_RESOURCE
+	)
 
 
 func _resolve_battle_backdrop_path() -> String:
-	var backdrop_path := GameManager.selected_battle_background
-	if backdrop_path != "" and (ResourceLoader.exists(backdrop_path) or FileAccess.file_exists(backdrop_path)):
-		return backdrop_path
-	return BATTLE_BACKDROP_RESOURCE
+	return _battle_layout_controller.call(
+		"resolve_backdrop_path",
+		GameManager.selected_battle_background,
+		BATTLE_BACKDROP_RESOURCE
+	)
 
 
 func _load_card_back_texture(resource_path: String, is_player_side: bool) -> Texture2D:
-	var texture_res := load(resource_path)
-	if texture_res is Texture2D:
-		return texture_res as Texture2D
-
-	var gradient := Gradient.new()
-	gradient.colors = PackedColorArray([
-		Color("0a1d30") if is_player_side else Color("1b0714"),
-		Color("174d7a") if is_player_side else Color("4d1540"),
-		Color("f3d86b") if is_player_side else Color("ff93c9"),
-		Color("07111d") if is_player_side else Color("10060f"),
-	])
-	gradient.offsets = PackedFloat32Array([0.0, 0.42, 0.78, 1.0])
-
-	var texture := GradientTexture2D.new()
-	texture.gradient = gradient
-	texture.width = 256
-	texture.height = 356
-	texture.fill = GradientTexture2D.FILL_RADIAL
-	texture.fill_from = Vector2(0.5, 0.35)
-	texture.fill_to = Vector2(1.0, 1.0)
-	return texture
+	return _battle_layout_controller.call("load_card_back_texture", resource_path, is_player_side)
 
 func _apply_battle_surface_styles() -> void:
 	_style_panel(_opp_prizes_box, Color(0.05, 0.09, 0.13, 0.82), Color(0.37, 0.47, 0.64), 16)
@@ -1014,6 +1050,8 @@ func _insert_pile_preview(box: VBoxContainer, child_index: int, clickable: bool,
 
 func _on_state_changed(_new_phase: GameState.GamePhase) -> void:
 	_capture_battle_recording_context_if_ready()
+	if _new_phase == GameState.GamePhase.DRAW:
+		_record_battle_state_snapshot("turn_start")
 	_refresh_ui()
 	_check_two_player_handover()
 	_maybe_run_ai()
@@ -1050,7 +1088,7 @@ func _on_player_choice_required(choice_type: String, data: Dictionary) -> void:
 			_pending_choice = "mulligan_extra_draw"
 			_show_dialog(
 				"对手第 %d 次重抽" % count,
-				["玩家 %d 额外抽 1 张牌" % (beneficiary + 1), "不额外抽牌"],
+				["让玩家 %d 多抽 1 张牌" % (beneficiary + 1), "暂不额外抽牌"],
 				{"beneficiary": beneficiary}
 			)
 		"setup_ready":
@@ -1075,61 +1113,29 @@ func _on_player_choice_required(choice_type: String, data: Dictionary) -> void:
 				pi_hb,
 				bench_targets,
 				int(data.get("count", 0)),
-				str(data.get("source_name", "沉重接力棒"))
+				str(data.get("source_name", "重负球棒"))
 			)
 	_maybe_run_ai()
 
 
 func _start_prize_selection(player_index: int, count: int) -> void:
-	_pending_choice = "take_prize"
-	_pending_prize_player_index = player_index
-	_pending_prize_remaining = count
-	_pending_prize_animating = false
-	_refresh_ui()
-	_focus_prize_panel(player_index)
-	_log("请选择 1 张奖赏卡（剩余 %d 张）" % count)
+	_battle_overlay_controller.call("start_prize_selection", self, player_index, count)
 
 
 func _clear_prize_selection() -> void:
-	if _pending_choice == "take_prize":
-		_pending_choice = ""
-	_pending_prize_player_index = -1
-	_pending_prize_remaining = 0
-	_pending_prize_animating = false
-	_refresh_prize_titles()
+	_battle_overlay_controller.call("clear_prize_selection", self)
 
 
 func _refresh_prize_titles() -> void:
-	_update_prize_title(_opp_prizes_title, 1 - _view_player, "对方奖赏", false)
-	_update_prize_title(_my_prizes_title, _view_player, "己方奖赏", false)
-	_update_prize_title(_opp_prize_hud_title, 1 - _view_player, "对方奖赏", true)
-	_update_prize_title(_my_prize_hud_title, _view_player, "己方奖赏", true)
+	_battle_overlay_controller.call("refresh_prize_titles", self)
 
 
 func _update_prize_title(label: Label, player_index: int, default_text: String, is_hud: bool) -> void:
-	if label == null:
-		return
-	var is_pending := (
-		_pending_choice == "take_prize"
-		and _pending_prize_player_index == player_index
-		and _pending_prize_remaining > 0
-	)
-	label.text = "选择%d张奖赏卡" % _pending_prize_remaining if is_pending else default_text
-	label.add_theme_font_size_override("font_size", 15 if is_hud else 11)
-	var normal_color := Color(0.54, 0.9, 0.94, 0.9) if is_hud else Color(0.93, 0.97, 1.0, 0.9)
-	var active_color := Color(1.0, 0.87, 0.34, 1.0)
-	label.add_theme_color_override("font_color", active_color if is_pending else normal_color)
+	_battle_overlay_controller.call("update_prize_title", self, label, player_index, default_text, is_hud)
 
 
 func _focus_prize_panel(player_index: int) -> void:
-	var target_panel: Control = _my_hud_left if player_index == _view_player else _opp_hud_left
-	if target_panel == null or not is_inside_tree():
-		return
-	target_panel.pivot_offset = target_panel.size * 0.5
-	target_panel.scale = Vector2.ONE
-	var tween := create_tween()
-	tween.tween_property(target_panel, "scale", Vector2(1.05, 1.05), 0.10).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tween.tween_property(target_panel, "scale", Vector2.ONE, 0.14).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+	_battle_overlay_controller.call("focus_prize_panel", self, player_index)
 
 
 func _on_game_over(winner_index: int, reason: String) -> void:
@@ -1184,32 +1190,7 @@ func _setup_player_active(pi: int) -> void:
 
 
 func _show_setup_active_dialog(pi: int) -> void:
-	var player: PlayerState = _gsm.game_state.players[pi]
-	var basics: Array[CardInstance] = player.get_basic_pokemon_in_hand()
-	var items: Array[String] = []
-	for c: CardInstance in basics:
-		items.append("%s (HP %d)" % [c.card_data.name, c.card_data.hp])
-	_pending_choice = "setup_active_%d" % pi
-	var dialog_data := {
-		"basics": basics,
-		"player": pi,
-		"presentation": "cards",
-		"card_items": basics,
-		"choice_labels": items,
-	}
-	_ensure_ai_opponent()
-	var is_ai_prompt: bool = GameManager.current_mode == GameManager.GameMode.VS_AI and _ai_opponent != null and pi == _ai_opponent.player_index
-	if is_ai_prompt:
-		_dialog_data = dialog_data
-		_dialog_items_data = items
-		if _dialog_overlay != null:
-			_dialog_overlay.visible = false
-		if _dialog_cancel != null:
-			_dialog_cancel.visible = false
-	else:
-		_show_dialog("玩家 %d：选择战斗宝可梦" % (pi + 1), items, dialog_data)
-		_dialog_cancel.visible = false
-	_maybe_run_ai()
+	_battle_dialog_controller.call("show_setup_active_dialog", self, pi)
 
 
 func _after_setup_active(pi: int) -> void:
@@ -1218,43 +1199,7 @@ func _after_setup_active(pi: int) -> void:
 
 
 func _show_setup_bench_dialog(pi: int) -> void:
-	var player: PlayerState = _gsm.game_state.players[pi]
-	if player.is_bench_full():
-		_after_setup_bench(pi)
-		return
-	var basics: Array[CardInstance] = player.get_basic_pokemon_in_hand()
-	if basics.is_empty():
-		_after_setup_bench(pi)
-		return
-	var items: Array[String] = ["完成"]
-	for c: CardInstance in basics:
-		items.append("%s (HP %d)" % [c.card_data.name, c.card_data.hp])
-	var choice_indices: Array[int] = []
-	for card_idx: int in basics.size():
-		choice_indices.append(card_idx + 1)
-	_pending_choice = "setup_bench_%d" % pi
-	var dialog_data := {
-		"cards": basics,
-		"player": pi,
-		"presentation": "cards",
-		"card_items": basics,
-		"card_indices": choice_indices,
-		"choice_labels": items.slice(1),
-		"utility_actions": [{"label": "完成", "index": 0}],
-	}
-	_ensure_ai_opponent()
-	var is_ai_prompt: bool = GameManager.current_mode == GameManager.GameMode.VS_AI and _ai_opponent != null and pi == _ai_opponent.player_index
-	if is_ai_prompt:
-		_dialog_data = dialog_data
-		_dialog_items_data = items
-		if _dialog_overlay != null:
-			_dialog_overlay.visible = false
-		if _dialog_cancel != null:
-			_dialog_cancel.visible = false
-	else:
-		_show_dialog("玩家 %d：选择备战宝可梦（可选，最多 5 只）" % (pi + 1), items, dialog_data)
-		_dialog_cancel.visible = false
-	_maybe_run_ai()
+	_battle_dialog_controller.call("show_setup_bench_dialog", self, pi)
 
 
 func _after_setup_bench(pi: int) -> void:
@@ -1273,7 +1218,7 @@ func _after_setup_bench(pi: int) -> void:
 # ===================== Field Interactions =====================
 
 func _on_end_turn() -> void:
-	if _gsm == null or _is_field_interaction_active():
+	if not _can_accept_live_action() or _gsm == null or _is_field_interaction_active():
 		return
 	_selected_hand_card = null
 	_refresh_hand()
@@ -1282,7 +1227,7 @@ func _on_end_turn() -> void:
 
 
 func _on_stadium_action_pressed() -> void:
-	if _gsm == null or _is_field_interaction_active():
+	if not _can_accept_live_action() or _gsm == null or _is_field_interaction_active():
 		return
 	_try_use_stadium_with_interaction(_gsm.game_state.current_player_index)
 
@@ -1307,10 +1252,23 @@ func _on_back_pressed() -> void:
 
 
 func _on_zeus_help_pressed() -> void:
-	if _gsm == null or _gsm.game_state == null or _is_field_interaction_active():
+	if not _can_accept_live_action() or _gsm == null or _gsm.game_state == null or _is_field_interaction_active():
 		return
 	if _view_player < 0 or _view_player >= _gsm.game_state.players.size():
 		return
+	# 输出双方卡牌总数到日志，方便验证不变量
+	for pi: int in 2:
+		var total: int = _gsm.count_player_total_cards(pi)
+		_log("玩家%d卡牌总计: %d 张 (牌库%d 手牌%d 奖赏%d 弃牌%d 放逐%d 场上%d)" % [
+			pi,
+			total,
+			_gsm.game_state.players[pi].deck.size(),
+			_gsm.game_state.players[pi].hand.size(),
+			_gsm.game_state.players[pi].prizes.size(),
+			_gsm.game_state.players[pi].discard_pile.size(),
+			_gsm.game_state.players[pi].lost_zone.size(),
+			total - _gsm.game_state.players[pi].deck.size() - _gsm.game_state.players[pi].hand.size() - _gsm.game_state.players[pi].prizes.size() - _gsm.game_state.players[pi].discard_pile.size() - _gsm.game_state.players[pi].lost_zone.size(),
+		])
 	var player: PlayerState = _gsm.game_state.players[_view_player]
 	var deck_cards: Array = player.deck.duplicate()
 	if deck_cards.is_empty():
@@ -1341,46 +1299,7 @@ func _on_opponent_hand_pressed() -> void:
 
 
 func _show_opponent_hand_cards() -> void:
-	if _gsm == null or _gsm.game_state == null:
-		return
-	var opponent_index: int = 1 - _view_player
-	if opponent_index < 0 or opponent_index >= _gsm.game_state.players.size():
-		return
-	var player: PlayerState = _gsm.game_state.players[opponent_index]
-	_discard_title.text = "对手手牌（%d 张）" % player.hand.size()
-	_discard_list.clear()
-	if _discard_card_row != null:
-		_clear_container_children(_discard_card_row)
-		if player.hand.is_empty():
-			var empty_label := Label.new()
-			empty_label.text = "（空）"
-			_discard_card_row.add_child(empty_label)
-		else:
-			for hand_card: CardInstance in player.hand:
-				var card_view := BATTLE_CARD_VIEW.new()
-				card_view.custom_minimum_size = _dialog_card_size
-				card_view.set_clickable(true)
-				card_view.setup_from_instance(hand_card, BATTLE_CARD_VIEW.MODE_PREVIEW)
-				card_view.set_badges("", "")
-				card_view.set_info("", "")
-				card_view.left_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
-					if cd != null:
-						_show_card_detail(cd)
-				)
-				card_view.right_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
-					if cd != null:
-						_show_card_detail(cd)
-				)
-				_discard_card_row.add_child(card_view)
-	else:
-		if player.hand.is_empty():
-			_discard_list.add_item("（空）")
-		else:
-			for hand_card: CardInstance in player.hand:
-				var cd: CardData = hand_card.card_data
-				_discard_list.add_item("%s [%s]" % [cd.name, _card_type_cn(cd)])
-	_discard_overlay.visible = true
-	_runtime_log("show_opponent_hand", "player=%d count=%d" % [opponent_index, player.hand.size()])
+	_battle_overlay_controller.call("show_opponent_hand_cards", self)
 
 
 func _on_slot_input(event: InputEvent, slot_id: String) -> void:
@@ -1388,6 +1307,8 @@ func _on_slot_input(event: InputEvent, slot_id: String) -> void:
 		return
 	var mbe := event as InputEventMouseButton
 	if not mbe.pressed:
+		return
+	if not _can_accept_live_action():
 		return
 	if _handover_panel.visible:
 		_runtime_log("slot_input_blocked", "slot=%s reason=handover %s" % [slot_id, _state_snapshot()])
@@ -1480,11 +1401,12 @@ func _try_play_to_bench(player_index: int, card: CardInstance, _slot_id: String)
 		_selected_hand_card = null
 		_refresh_ui_after_successful_action()
 	else:
-		_log("无法将该宝可梦放入备战区")
+		_log("无法将这只宝可梦放到备战区")
 
 
 # ===================== Dialog State =====================
 
+@warning_ignore_start("unused_private_class_variable")
 var _dialog_data: Dictionary = {}
 var _dialog_items_data: Array = []
 var _dialog_card_scroll: ScrollContainer = null
@@ -1504,6 +1426,7 @@ var _dialog_assignment_selected_source_index: int = -1
 var _dialog_assignment_assignments: Array[Dictionary] = []
 var _discard_card_scroll: ScrollContainer = null
 var _discard_card_row: HBoxContainer = null
+@warning_ignore_restore("unused_private_class_variable")
 
 
 func _setup_dialog_gallery() -> void:
@@ -1550,7 +1473,7 @@ func _setup_dialog_gallery() -> void:
 	_dialog_vbox.move_child(_dialog_assignment_panel, buttons_row.get_index())
 
 	var source_title := Label.new()
-	source_title.text = "待分配卡牌"
+	source_title.text = "来源卡牌"
 	source_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_dialog_assignment_panel.add_child(source_title)
 
@@ -1568,7 +1491,7 @@ func _setup_dialog_gallery() -> void:
 	_dialog_assignment_source_scroll.add_child(_dialog_assignment_source_row)
 
 	var target_title := Label.new()
-	target_title.text = "附着目标"
+	target_title.text = "闂勫嫮娼冮惄顔界垼"
 	target_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_dialog_assignment_panel.add_child(target_title)
 
@@ -1615,456 +1538,79 @@ func _setup_discard_gallery() -> void:
 
 
 func _setup_field_interaction_panel() -> void:
-	_ensure_field_interaction_panel()
-	_update_field_interaction_panel_metrics()
-	_hide_field_interaction()
+	_battle_interaction_controller.call("setup_field_interaction_panel", self)
 
 
 func _ensure_field_interaction_panel() -> void:
-	if _field_interaction_overlay != null:
-		return
-
-	_field_interaction_overlay = Control.new()
-	_field_interaction_overlay.name = "FieldInteractionOverlay"
-	_field_interaction_overlay.set_anchors_preset(PRESET_FULL_RECT)
-	_field_interaction_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_field_interaction_overlay.z_index = 80
-	add_child(_field_interaction_overlay)
-
-	_field_interaction_layout = VBoxContainer.new()
-	_field_interaction_layout.set_anchors_preset(PRESET_FULL_RECT)
-	_field_interaction_layout.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_field_interaction_overlay.add_child(_field_interaction_layout)
-
-	_field_interaction_top_spacer = Control.new()
-	_field_interaction_top_spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_field_interaction_top_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_field_interaction_layout.add_child(_field_interaction_top_spacer)
-
-	var row := HBoxContainer.new()
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_field_interaction_layout.add_child(row)
-
-	_field_interaction_panel = PanelContainer.new()
-	_field_interaction_panel.name = "FieldInteractionPanel"
-	_field_interaction_panel.custom_minimum_size = Vector2(760, 136)
-	_field_interaction_panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_field_interaction_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(_field_interaction_panel)
-
-	_field_interaction_bottom_spacer = Control.new()
-	_field_interaction_bottom_spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_field_interaction_bottom_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_field_interaction_layout.add_child(_field_interaction_bottom_spacer)
-	_apply_field_interaction_position("center")
-
-	var panel_style := StyleBoxFlat.new()
-	panel_style.bg_color = Color(0.03, 0.06, 0.1, 0.92)
-	panel_style.border_color = Color(0.28, 0.82, 0.92, 0.88)
-	panel_style.set_border_width_all(2)
-	panel_style.set_corner_radius_all(18)
-	panel_style.shadow_color = Color(0.02, 0.04, 0.08, 0.42)
-	panel_style.shadow_size = 10
-	_field_interaction_panel.add_theme_stylebox_override("panel", panel_style)
-
-	var margin := MarginContainer.new()
-	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	margin.add_theme_constant_override("margin_left", 18)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_right", 18)
-	margin.add_theme_constant_override("margin_bottom", 12)
-	_field_interaction_panel.add_child(margin)
-
-	var vbox := VBoxContainer.new()
-	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vbox.add_theme_constant_override("separation", 8)
-	margin.add_child(vbox)
-
-	_field_interaction_title_lbl = Label.new()
-	_field_interaction_title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_field_interaction_title_lbl.add_theme_font_size_override("font_size", 16)
-	_field_interaction_title_lbl.add_theme_color_override("font_color", Color(0.95, 0.98, 1.0))
-	vbox.add_child(_field_interaction_title_lbl)
-
-	_field_interaction_status_lbl = Label.new()
-	_field_interaction_status_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_field_interaction_status_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_field_interaction_status_lbl.add_theme_font_size_override("font_size", 12)
-	_field_interaction_status_lbl.add_theme_color_override("font_color", Color(0.65, 0.9, 0.96))
-	vbox.add_child(_field_interaction_status_lbl)
-
-	_field_interaction_scroll = ScrollContainer.new()
-	_field_interaction_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	_field_interaction_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	_field_interaction_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_field_interaction_scroll.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_field_interaction_scroll.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vbox.add_child(_field_interaction_scroll)
-
-	_field_interaction_row = HBoxContainer.new()
-	_field_interaction_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_field_interaction_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_field_interaction_row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_field_interaction_row.add_theme_constant_override("separation", 14)
-	_field_interaction_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_field_interaction_scroll.add_child(_field_interaction_row)
-
-	_field_interaction_buttons = HBoxContainer.new()
-	_field_interaction_buttons.alignment = BoxContainer.ALIGNMENT_CENTER
-	_field_interaction_buttons.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_field_interaction_buttons.add_theme_constant_override("separation", 10)
-	_field_interaction_buttons.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vbox.add_child(_field_interaction_buttons)
-
-	_field_interaction_clear_btn = Button.new()
-	_field_interaction_clear_btn.text = "清空"
-	_field_interaction_clear_btn.custom_minimum_size = Vector2(110, 34)
-	_field_interaction_clear_btn.pressed.connect(_on_field_interaction_clear_pressed)
-	_field_interaction_buttons.add_child(_field_interaction_clear_btn)
-
-	_field_interaction_cancel_btn = Button.new()
-	_field_interaction_cancel_btn.text = "取消"
-	_field_interaction_cancel_btn.custom_minimum_size = Vector2(110, 34)
-	_field_interaction_cancel_btn.pressed.connect(_on_field_interaction_cancel_pressed)
-	_field_interaction_buttons.add_child(_field_interaction_cancel_btn)
-
-	_field_interaction_confirm_btn = Button.new()
-	_field_interaction_confirm_btn.text = "确认"
-	_field_interaction_confirm_btn.custom_minimum_size = Vector2(140, 34)
-	_field_interaction_confirm_btn.pressed.connect(_on_field_interaction_confirm_pressed)
-	_field_interaction_buttons.add_child(_field_interaction_confirm_btn)
+	_battle_interaction_controller.call("ensure_field_interaction_panel", self)
 
 
 func _hide_field_interaction() -> void:
-	_field_interaction_mode = ""
-	_field_interaction_data.clear()
-	_field_interaction_slot_index_by_id.clear()
-	_field_interaction_selected_indices.clear()
-	_field_interaction_assignment_selected_source_index = -1
-	_field_interaction_assignment_entries.clear()
-	_apply_field_interaction_position("center")
-	if _field_interaction_title_lbl != null:
-		_field_interaction_title_lbl.text = ""
-	if _field_interaction_status_lbl != null:
-		_field_interaction_status_lbl.text = ""
-	if _field_interaction_row != null:
-		_clear_container_children(_field_interaction_row)
-	if _field_interaction_overlay != null:
-		_field_interaction_overlay.visible = false
+	_battle_interaction_controller.call("hide_field_interaction", self)
 
 
 func _update_field_interaction_panel_metrics(viewport_size: Vector2 = Vector2.ZERO) -> void:
-	if _field_interaction_panel == null or _field_interaction_scroll == null or _field_interaction_row == null:
-		return
-	var effective_viewport: Vector2 = viewport_size
-	if effective_viewport == Vector2.ZERO and is_inside_tree():
-		effective_viewport = get_viewport().get_visible_rect().size
-	if effective_viewport == Vector2.ZERO:
-		effective_viewport = Vector2(1366, 768)
-	var card_height: float = _play_card_size.y if _play_card_size.y > 0.0 else 152.0
-	var strip_height: float = card_height + 8.0
-	var panel_width: float = clampf(effective_viewport.x * 0.54, 680.0, 980.0)
-	_field_interaction_panel.custom_minimum_size = Vector2(
-		panel_width,
-		maxf(strip_height + 86.0, 136.0)
-	)
-	_field_interaction_panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_field_interaction_scroll.custom_minimum_size = Vector2(0.0, strip_height)
-	_field_interaction_scroll.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_field_interaction_row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_apply_field_interaction_position(_field_interaction_position)
+	_battle_interaction_controller.call("update_field_interaction_panel_metrics", self, viewport_size)
 
 
 func _is_field_interaction_active() -> bool:
-	return _field_interaction_mode != ""
+	return _battle_interaction_controller.call("is_field_interaction_active", self)
 
 
 func _field_interaction_target_owner(slot: PokemonSlot) -> int:
-	if slot == null:
-		return -1
-	var top_card: CardInstance = slot.get_top_card()
-	return top_card.owner_index if top_card != null else -1
+	return _battle_interaction_controller.call("field_interaction_target_owner", self, slot)
 
 
 func _resolve_field_interaction_position(slots: Array) -> String:
-	var own_targets: int = 0
-	var opponent_targets: int = 0
-	for item: Variant in slots:
-		if not (item is PokemonSlot):
-			continue
-		var owner_index: int = _field_interaction_target_owner(item as PokemonSlot)
-		if owner_index == _view_player:
-			own_targets += 1
-		elif owner_index >= 0:
-			opponent_targets += 1
-	if own_targets > 0 and opponent_targets == 0:
-		return "top"
-	if opponent_targets > 0 and own_targets == 0:
-		return "bottom"
-	return "center"
+	return _battle_interaction_controller.call("resolve_field_interaction_position", self, slots)
 
 
-func _apply_field_interaction_position(position: String) -> void:
-	_field_interaction_position = position
-	if _field_interaction_top_spacer == null or _field_interaction_bottom_spacer == null:
-		return
-	match position:
-		"top":
-			_field_interaction_top_spacer.size_flags_stretch_ratio = 0.22
-			_field_interaction_bottom_spacer.size_flags_stretch_ratio = 6.45
-		"bottom":
-			_field_interaction_top_spacer.size_flags_stretch_ratio = 6.45
-			_field_interaction_bottom_spacer.size_flags_stretch_ratio = 0.22
-		_:
-			_field_interaction_top_spacer.size_flags_stretch_ratio = 1.0
-			_field_interaction_bottom_spacer.size_flags_stretch_ratio = 1.0
+func _apply_field_interaction_position(panel_position: String) -> void:
+	_battle_interaction_controller.call("apply_field_interaction_position", self, panel_position)
 
 
 func _show_field_slot_choice(title: String, items: Array, data: Dictionary = {}) -> void:
-	_ensure_field_interaction_panel()
-	_update_field_interaction_panel_metrics()
-	_hide_field_interaction()
-	_field_interaction_mode = "slot_select"
-	_field_interaction_data = data.duplicate(true)
-	_field_interaction_data["title"] = title
-	_field_interaction_data["items"] = items.duplicate()
-	_apply_field_interaction_position(_resolve_field_interaction_position(items))
-	_rebuild_field_slot_index_map(items)
-	_field_interaction_overlay.visible = true
-	_refresh_field_interaction_status()
-	_record_battle_event({
-		"event_type": "choice_context",
-		"prompt_source": "field_slot",
-		"prompt_type": str(data.get("prompt_type", _pending_choice)),
-		"title": title,
-		"items": items.duplicate(true),
-		"extra_data": data.duplicate(true),
-		"player_index": int(data.get("player", _gsm.game_state.current_player_index if _gsm != null and _gsm.game_state != null else -1)),
-		"turn_number": _gsm.game_state.turn_number if _gsm != null and _gsm.game_state != null else 0,
-		"phase": _recording_phase_name(),
-	})
+	_battle_interaction_controller.call("show_field_slot_choice", self, title, items, data)
 
 
 func _show_field_assignment_interaction(step: Dictionary) -> void:
-	_ensure_field_interaction_panel()
-	_update_field_interaction_panel_metrics()
-	_hide_field_interaction()
-	_field_interaction_mode = "assignment"
-	_field_interaction_data = step.duplicate(true)
-	_apply_field_interaction_position(_resolve_field_interaction_position(step.get("target_items", [])))
-	_rebuild_field_slot_index_map(step.get("target_items", []))
-	_build_field_assignment_source_cards()
-	_field_interaction_overlay.visible = true
-	_refresh_field_interaction_status()
-	_record_battle_event({
-		"event_type": "choice_context",
-		"prompt_source": "field_assignment",
-		"prompt_type": str(step.get("prompt_type", _pending_choice)),
-		"title": str(step.get("title", "请选择")),
-		"items": step.get("target_items", []).duplicate(true),
-		"extra_data": step.duplicate(true),
-		"player_index": int(step.get("player", _gsm.game_state.current_player_index if _gsm != null and _gsm.game_state != null else -1)),
-		"turn_number": _gsm.game_state.turn_number if _gsm != null and _gsm.game_state != null else 0,
-		"phase": _recording_phase_name(),
-	})
+	_battle_interaction_controller.call("show_field_assignment_interaction", self, step)
 
 
 func _rebuild_field_slot_index_map(items: Array) -> void:
-	_field_interaction_slot_index_by_id.clear()
-	for i: int in items.size():
-		var slot_variant: Variant = items[i]
-		if not (slot_variant is PokemonSlot):
-			continue
-		var slot_id := _slot_id_from_slot(slot_variant as PokemonSlot)
-		if slot_id != "":
-			_field_interaction_slot_index_by_id[slot_id] = i
+	_battle_interaction_controller.call("rebuild_field_slot_index_map", self, items)
 
 
 func _build_field_assignment_source_cards() -> void:
-	if _field_interaction_row == null:
-		return
-	_clear_container_children(_field_interaction_row)
-
-	var source_items: Array = _field_interaction_data.get("source_items", [])
-	var source_labels: Array = _field_interaction_data.get("source_labels", [])
-	var source_groups: Array = _field_interaction_data.get("source_groups", [])
-	if source_groups.is_empty():
-		for i: int in source_items.size():
-			_add_field_assignment_source_card(source_items, source_labels, i)
-		return
-
-	for group_index: int in source_groups.size():
-		var group: Dictionary = source_groups[group_index]
-		var slot_variant: Variant = group.get("slot")
-		var energy_indices: Array = group.get("energy_indices", [])
-		if group_index > 0:
-			var separator := VSeparator.new()
-			separator.custom_minimum_size = Vector2(2, 0)
-			separator.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			separator.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			_field_interaction_row.add_child(separator)
-		if slot_variant is PokemonSlot:
-			var header_view := BATTLE_CARD_VIEW.new()
-			header_view.custom_minimum_size = _play_card_size
-			header_view.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			header_view.set_clickable(false)
-			var slot: PokemonSlot = slot_variant as PokemonSlot
-			header_view.setup_from_card_data(slot.get_card_data(), _battle_card_mode_for_slot(slot))
-			header_view.set_badges()
-			header_view.set_battle_status(_build_battle_status(slot))
-			_field_interaction_row.add_child(header_view)
-		for energy_index_variant: Variant in energy_indices:
-			_add_field_assignment_source_card(source_items, source_labels, int(energy_index_variant))
+	_battle_interaction_controller.call("build_field_assignment_source_cards", self)
 
 
 func _add_field_assignment_source_card(source_items: Array, source_labels: Array, source_index: int) -> void:
-	if source_index < 0 or source_index >= source_items.size():
-		return
-	var source_view := BATTLE_CARD_VIEW.new()
-	source_view.custom_minimum_size = _play_card_size
-	source_view.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	source_view.set_clickable(true)
-	_setup_dialog_card_view(
-		source_view,
-		source_items[source_index],
-		str(source_labels[source_index]) if source_index < source_labels.size() else ""
-	)
-	source_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
-		_on_field_assignment_source_chosen(source_index)
-	)
-	source_view.right_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
-		if cd != null:
-			_show_card_detail(cd)
-	)
-	source_view.set_meta("field_assignment_source_index", source_index)
-	_field_interaction_row.add_child(source_view)
+	_battle_interaction_controller.call("add_field_assignment_source_card", self, source_items, source_labels, source_index)
 
 
 func _on_field_assignment_source_chosen(source_index: int) -> void:
-	var source_items: Array = _field_interaction_data.get("source_items", [])
-	if source_index < 0 or source_index >= source_items.size():
-		return
-	var assigned_index := _find_field_assignment_index_for_source(source_index)
-	if assigned_index >= 0:
-		_field_interaction_assignment_entries.remove_at(assigned_index)
-		if _field_interaction_assignment_selected_source_index == source_index:
-			_field_interaction_assignment_selected_source_index = -1
-		_refresh_field_interaction_status()
-		_refresh_ui()
-		return
-
-	var max_assignments: int = int(_field_interaction_data.get("max_select", source_items.size()))
-	if max_assignments > 0 and _field_interaction_assignment_entries.size() >= max_assignments:
-		_log("已达到最多可分配数量。")
-		return
-
-	if _field_interaction_assignment_selected_source_index == source_index:
-		_field_interaction_assignment_selected_source_index = -1
-	else:
-		_field_interaction_assignment_selected_source_index = source_index
-	_refresh_field_interaction_status()
-	_refresh_ui()
+	_battle_interaction_controller.call("on_field_assignment_source_chosen", self, source_index)
 
 
 func _find_field_assignment_index_for_source(source_index: int) -> int:
-	for i: int in _field_interaction_assignment_entries.size():
-		if int(_field_interaction_assignment_entries[i].get("source_index", -1)) == source_index:
-			return i
-	return -1
+	return _battle_interaction_controller.call("find_field_assignment_index_for_source", self, source_index)
 
 
 func _field_interaction_selected_slot_ids() -> Array[String]:
-	var result: Array[String] = []
-	if _field_interaction_mode == "slot_select":
-		var items: Array = _field_interaction_data.get("items", [])
-		for selected_index: int in _field_interaction_selected_indices:
-			if selected_index < 0 or selected_index >= items.size():
-				continue
-			var slot_variant: Variant = items[selected_index]
-			if slot_variant is PokemonSlot:
-				var slot_id := _slot_id_from_slot(slot_variant as PokemonSlot)
-				if slot_id != "":
-					result.append(slot_id)
-	elif _field_interaction_mode == "assignment":
-		for entry: Dictionary in _field_interaction_assignment_entries:
-			var target_variant: Variant = entry.get("target")
-			if target_variant is PokemonSlot:
-				var target_slot_id := _slot_id_from_slot(target_variant as PokemonSlot)
-				if target_slot_id != "":
-					result.append(target_slot_id)
-	return result
+	return _battle_interaction_controller.call("field_interaction_selected_slot_ids", self)
 
 
 func _refresh_field_interaction_status() -> void:
-	_ensure_field_interaction_panel()
-	if not _is_field_interaction_active():
-		_hide_field_interaction()
-		return
-	_field_interaction_overlay.visible = true
-	_field_interaction_title_lbl.text = str(_field_interaction_data.get("title", "请选择"))
-	var show_cards: bool = _field_interaction_mode == "assignment"
-	_field_interaction_scroll.visible = show_cards
-	if _field_interaction_buttons != null:
-		_field_interaction_buttons.visible = true
-
-	if _field_interaction_mode == "slot_select":
-		var min_select: int = int(_field_interaction_data.get("min_select", 1))
-		var max_select: int = int(_field_interaction_data.get("max_select", 1))
-		var selected_count := _field_interaction_selected_indices.size()
-		var status := "请直接点击战场上的高亮宝可梦。"
-		if max_select > 1 or min_select > 1:
-			status = "已选择 %d / %d" % [selected_count, min_select]
-			if max_select > 1:
-				status += "（最多 %d）" % max_select
-		_field_interaction_status_lbl.text = status
-		_field_interaction_clear_btn.visible = selected_count > 0 and max_select > 1
-		_field_interaction_cancel_btn.visible = bool(_field_interaction_data.get("allow_cancel", true))
-		_field_interaction_confirm_btn.visible = max_select > 1 or min_select > 1
-		_field_interaction_confirm_btn.disabled = selected_count < min_select
-	else:
-		_refresh_field_assignment_source_views()
-		var min_assignments: int = int(_field_interaction_data.get("min_select", 0))
-		var max_assignments: int = int(_field_interaction_data.get("max_select", 0))
-		var summary := "先选择中间卡牌，再点击战场上的目标宝可梦。"
-		if _field_interaction_assignment_selected_source_index >= 0:
-			var source_items: Array = _field_interaction_data.get("source_items", [])
-			if _field_interaction_assignment_selected_source_index < source_items.size():
-				var selected_source: Variant = source_items[_field_interaction_assignment_selected_source_index]
-				if selected_source is CardInstance:
-					summary = "当前选择：%s。请点击场上目标。" % (selected_source as CardInstance).card_data.name
-		if not _field_interaction_assignment_entries.is_empty():
-			summary += " 已完成 %d" % _field_interaction_assignment_entries.size()
-			if max_assignments > 0:
-				summary += " / %d" % max_assignments
-		_field_interaction_status_lbl.text = summary
-		_field_interaction_clear_btn.visible = not _field_interaction_assignment_entries.is_empty()
-		_field_interaction_cancel_btn.visible = bool(_field_interaction_data.get("allow_cancel", true))
-		_field_interaction_confirm_btn.visible = true
-		_field_interaction_confirm_btn.disabled = _field_interaction_assignment_entries.size() < min_assignments
+	_battle_interaction_controller.call("refresh_field_interaction_status", self)
 
 
 func _refresh_field_assignment_source_views() -> void:
-	if _field_interaction_row == null:
-		return
-	for child: Node in _field_interaction_row.get_children():
-		if not (child is BattleCardView):
-			continue
-		var card_view := child as BattleCardView
-		var idx: int = int(card_view.get_meta("field_assignment_source_index", -1))
-		card_view.set_selected(idx == _field_interaction_assignment_selected_source_index)
-		card_view.set_disabled(_find_field_assignment_index_for_source(idx) >= 0)
+	_battle_interaction_controller.call("refresh_field_assignment_source_views", self)
 
 
 func _on_field_interaction_clear_pressed() -> void:
-	if _field_interaction_mode == "slot_select":
-		_field_interaction_selected_indices.clear()
-	else:
-		_field_interaction_assignment_selected_source_index = -1
-		_field_interaction_assignment_entries.clear()
-	_refresh_field_interaction_status()
-	_refresh_ui()
+	_battle_interaction_controller.call("on_field_interaction_clear_pressed", self)
 
 
 func _on_field_interaction_cancel_pressed() -> void:
@@ -2079,14 +1625,7 @@ func _on_field_interaction_confirm_pressed() -> void:
 
 
 func _cancel_field_interaction() -> void:
-	var handled_choice := _pending_choice
-	_hide_field_interaction()
-	if handled_choice == "effect_interaction":
-		_reset_effect_interaction()
-		return
-	_pending_choice = ""
-	_dialog_data.clear()
-	_dialog_items_data.clear()
+	_battle_interaction_controller.call("cancel_field_interaction", self)
 
 
 func _slot_id_from_slot(slot: PokemonSlot) -> String:
@@ -2116,7 +1655,7 @@ func _setup_prize_viewer() -> void:
 		prize_slot.mouse_filter = Control.MOUSE_FILTER_STOP
 		var slot_index := i
 		prize_slot.gui_input.connect(func(event: InputEvent) -> void:
-			_on_prize_slot_input(event, 1 - _view_player, "对方奖赏卡", slot_index)
+			_on_prize_slot_input(event, 1 - _view_player, "对方奖赏", slot_index)
 		)
 	for i: int in _my_prize_slots.size():
 		var prize_slot: BattleCardView = _my_prize_slots[i]
@@ -2125,7 +1664,7 @@ func _setup_prize_viewer() -> void:
 		prize_slot.mouse_filter = Control.MOUSE_FILTER_STOP
 		var slot_index := i
 		prize_slot.gui_input.connect(func(event: InputEvent) -> void:
-			_on_prize_slot_input(event, _view_player, "己方奖赏卡", slot_index)
+			_on_prize_slot_input(event, _view_player, "己方奖赏", slot_index)
 		)
 
 
@@ -2209,207 +1748,22 @@ func _animate_prize_flip(prize_view: BattleCardView, prize_card: CardInstance, o
 
 
 func _show_dialog(title: String, items: Array, extra_data: Dictionary = {}) -> void:
-	_dialog_title.text = title
-	_dialog_list.clear()
-	_dialog_items_data = items
-	_dialog_data = extra_data
-	_dialog_multi_selected_indices.clear()
-	_dialog_card_selected_indices.clear()
-	_reset_dialog_assignment_state()
-	_dialog_assignment_mode = str(extra_data.get("ui_mode", "")) == "card_assignment"
-	_dialog_card_mode = false if _dialog_assignment_mode else _dialog_should_use_card_mode(items, extra_data)
-
-	if _dialog_assignment_mode:
-		_show_assignment_dialog(extra_data)
-	elif _dialog_card_mode:
-		_show_card_dialog(items, extra_data)
-	else:
-		_show_text_dialog(items, extra_data)
-
-	_dialog_overlay.visible = true
-	_dialog_cancel.visible = extra_data.get("allow_cancel", true)
-	_update_dialog_confirm_state()
-	_runtime_log(
-		"show_dialog",
-		"title=%s mode=%s items=%d %s" % [
-			title,
-			"assignment" if _dialog_assignment_mode else ("cards" if _dialog_card_mode else "list"),
-			items.size(),
-			_dialog_state_snapshot()
-		]
-	)
-	_record_battle_state_snapshot("before_choice_context", {
-		"prompt_source": "dialog",
-		"prompt_type": str(extra_data.get("prompt_type", _pending_choice)),
-		"title": title,
-	})
-	_record_battle_event({
-		"event_type": "choice_context",
-		"prompt_source": "dialog",
-		"prompt_type": str(extra_data.get("prompt_type", _pending_choice)),
-		"title": title,
-		"items": items.duplicate(true),
-		"extra_data": extra_data.duplicate(true),
-		"player_index": int(extra_data.get("player", _gsm.game_state.current_player_index if _gsm != null and _gsm.game_state != null else -1)),
-		"turn_number": _gsm.game_state.turn_number if _gsm != null and _gsm.game_state != null else 0,
-		"phase": _recording_phase_name(),
-	})
-	if not _dialog_assignment_mode and int(extra_data.get("max_select", 1)) > 1:
-		_log("已启用多选：先选择卡牌，再点击确认。")
-	return
+	_battle_dialog_controller.call("show_dialog", self, title, items, extra_data)
 
 func _dialog_should_use_card_mode(items: Array, extra_data: Dictionary) -> bool:
-	var presentation := str(extra_data.get("presentation", "auto"))
-	if presentation == "cards":
-		return true
-	if presentation == "list":
-		return false
-
-	var card_items: Array = extra_data.get("card_items", items)
-	for item: Variant in card_items:
-		if not _dialog_item_has_card_visual(item):
-			return false
-	return not card_items.is_empty()
+	return _battle_dialog_controller.call("dialog_should_use_card_mode", items, extra_data)
 
 
 func _show_text_dialog(items: Array, extra_data: Dictionary) -> void:
-	_dialog_card_scroll.visible = false
-	_dialog_assignment_panel.visible = false
-	_dialog_status_lbl.visible = false
-	_dialog_utility_row.visible = false
-	_dialog_confirm.visible = true
-	_dialog_list.visible = true
-	_clear_container_children(_dialog_utility_row)
-
-	for item: Variant in items:
-		_dialog_list.add_item(str(item))
-
-	_dialog_list.select_mode = ItemList.SELECT_TOGGLE if int(extra_data.get("max_select", 1)) > 1 else ItemList.SELECT_SINGLE
-	if _dialog_list.item_selected.is_connected(_on_dialog_item_selected):
-		_dialog_list.item_selected.disconnect(_on_dialog_item_selected)
-	if _dialog_list.multi_selected.is_connected(_on_dialog_item_multi_selected):
-		_dialog_list.multi_selected.disconnect(_on_dialog_item_multi_selected)
-	if _dialog_list.select_mode != ItemList.SELECT_SINGLE:
-		_dialog_list.multi_selected.connect(_on_dialog_item_multi_selected)
-	else:
-		_dialog_list.item_selected.connect(_on_dialog_item_selected)
+	_battle_dialog_controller.call("show_text_dialog", self, items, extra_data)
 
 
 func _show_card_dialog(items: Array, extra_data: Dictionary) -> void:
-	_dialog_list.visible = false
-	_dialog_card_scroll.visible = true
-	_dialog_assignment_panel.visible = false
-	_dialog_card_scroll.scroll_horizontal = 0
-	if _dialog_list.item_selected.is_connected(_on_dialog_item_selected):
-		_dialog_list.item_selected.disconnect(_on_dialog_item_selected)
-	if _dialog_list.multi_selected.is_connected(_on_dialog_item_multi_selected):
-		_dialog_list.multi_selected.disconnect(_on_dialog_item_multi_selected)
-
-	_clear_container_children(_dialog_card_row)
-	_clear_container_children(_dialog_utility_row)
-
-	var card_items: Array = extra_data.get("card_items", items)
-	var card_indices: Array = extra_data.get("card_indices", [])
-	var labels: Array = extra_data.get("choice_labels", items)
-	for i: int in card_items.size():
-		var real_index: int = i
-		if i < card_indices.size():
-			real_index = int(card_indices[i])
-		var card_view := BATTLE_CARD_VIEW.new()
-		card_view.custom_minimum_size = _dialog_card_size
-		card_view.set_clickable(true)
-		_setup_dialog_card_view(card_view, card_items[i], labels[i] if i < labels.size() else "")
-		card_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
-			_on_dialog_card_chosen(real_index)
-		)
-		card_view.right_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
-			if cd != null:
-				_show_card_detail(cd)
-		)
-		card_view.set_meta("dialog_choice_index", real_index)
-		_dialog_card_row.add_child(card_view)
-
-	var utility_actions: Array = extra_data.get("utility_actions", [])
-	_dialog_utility_row.visible = not utility_actions.is_empty()
-	for action_variant: Variant in utility_actions:
-		if not (action_variant is Dictionary):
-			continue
-		var action: Dictionary = action_variant
-		var button := Button.new()
-		button.custom_minimum_size = Vector2(140, 40)
-		button.text = str(action.get("label", "鎿嶄綔"))
-		var action_index: int = int(action.get("index", -1))
-		button.pressed.connect(func() -> void:
-			_confirm_dialog_selection(PackedInt32Array([action_index]))
-		)
-		_dialog_utility_row.add_child(button)
-
-	var min_select: int = int(extra_data.get("min_select", 1))
-	var max_select: int = int(extra_data.get("max_select", 1))
-	var show_confirm := max_select > 1 or min_select > 1
-	_dialog_confirm.visible = show_confirm
-	_dialog_status_lbl.visible = show_confirm
-	if show_confirm:
-		_update_dialog_status_text()
+	_battle_dialog_controller.call("show_card_dialog", self, items, extra_data)
 
 
 func _show_assignment_dialog(extra_data: Dictionary) -> void:
-	_dialog_list.visible = false
-	_dialog_card_scroll.visible = false
-	_dialog_assignment_panel.visible = true
-	_dialog_assignment_source_scroll.scroll_horizontal = 0
-	_dialog_assignment_target_scroll.scroll_horizontal = 0
-	_clear_container_children(_dialog_card_row)
-	_clear_container_children(_dialog_utility_row)
-	_clear_container_children(_dialog_assignment_source_row)
-	_clear_container_children(_dialog_assignment_target_row)
-	_reset_dialog_assignment_state()
-	_dialog_assignment_mode = true
-	_dialog_assignment_panel.visible = true
-
-	var source_items: Array = extra_data.get("source_items", [])
-	var source_labels: Array = extra_data.get("source_labels", [])
-	var source_groups: Array = extra_data.get("source_groups", [])
-
-	if not source_groups.is_empty():
-		# 分组模式：按宝可梦分组展示能量
-		_populate_grouped_source_items(source_items, source_labels, source_groups)
-	else:
-		# 默认平铺模式
-		for i: int in source_items.size():
-			_add_assignment_source_card(source_items, source_labels, i)
-
-	var target_items: Array = extra_data.get("target_items", [])
-	var target_labels: Array = extra_data.get("target_labels", [])
-	for i: int in target_items.size():
-		var target_view := BATTLE_CARD_VIEW.new()
-		target_view.custom_minimum_size = _dialog_card_size
-		target_view.set_clickable(true)
-		_setup_dialog_card_view(target_view, target_items[i], target_labels[i] if i < target_labels.size() else "")
-		target_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
-			_on_assignment_target_chosen(i)
-		)
-		target_view.right_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
-			if cd != null:
-				_show_card_detail(cd)
-		)
-		target_view.set_meta("assignment_target_index", i)
-		_dialog_assignment_target_row.add_child(target_view)
-
-	_dialog_utility_row.visible = true
-	var clear_button := Button.new()
-	clear_button.custom_minimum_size = Vector2(140, 40)
-	clear_button.text = "清空分配"
-	clear_button.pressed.connect(func() -> void:
-		_dialog_assignment_assignments.clear()
-		_dialog_assignment_selected_source_index = -1
-		_refresh_assignment_dialog_views()
-	)
-	_dialog_utility_row.add_child(clear_button)
-
-	_dialog_confirm.visible = true
-	_dialog_status_lbl.visible = false
-	_refresh_assignment_dialog_views()
+	_battle_dialog_controller.call("show_assignment_dialog", self, extra_data)
 
 
 func _populate_grouped_source_items(
@@ -2417,242 +1771,59 @@ func _populate_grouped_source_items(
 	source_labels: Array,
 	source_groups: Array
 ) -> void:
-	for gi: int in source_groups.size():
-		var group: Dictionary = source_groups[gi]
-		var slot: Variant = group.get("slot")
-		var indices: Array = group.get("energy_indices", [])
-		if not slot is PokemonSlot or indices.is_empty():
-			continue
-		# 组间分隔符
-		if gi > 0:
-			var sep := VSeparator.new()
-			sep.custom_minimum_size = Vector2(2, 0)
-			sep.size_flags_vertical = Control.SIZE_EXPAND_FILL
-			_dialog_assignment_source_row.add_child(sep)
-		# 宝可梦组头（不可点击）
-		var header_view := BATTLE_CARD_VIEW.new()
-		header_view.custom_minimum_size = _dialog_card_size
-		header_view.set_clickable(false)
-		var pokemon_slot: PokemonSlot = slot as PokemonSlot
-		header_view.setup_from_card_data(pokemon_slot.get_card_data(), _battle_card_mode_for_slot(pokemon_slot))
-		header_view.set_badges()
-		header_view.set_battle_status(_build_battle_status(pokemon_slot))
-		_dialog_assignment_source_row.add_child(header_view)
-		# 该宝可梦身上的能量卡（可点击）
-		for energy_idx: Variant in indices:
-			var i: int = int(energy_idx)
-			_add_assignment_source_card(source_items, source_labels, i)
+	_battle_dialog_controller.call("populate_grouped_source_items", self, source_items, source_labels, source_groups)
 
 
 func _add_assignment_source_card(source_items: Array, source_labels: Array, i: int) -> void:
-	var source_view := BATTLE_CARD_VIEW.new()
-	source_view.custom_minimum_size = _dialog_card_size
-	source_view.set_clickable(true)
-	var source_label: String = source_labels[i] if i < source_labels.size() else ""
-	_setup_dialog_card_view(source_view, source_items[i], source_label)
-	source_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
-		_on_assignment_source_chosen(i)
-	)
-	source_view.right_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
-		if cd != null:
-			_show_card_detail(cd)
-	)
-	source_view.set_meta("assignment_source_index", i)
-	_dialog_assignment_source_row.add_child(source_view)
+	_battle_dialog_controller.call("add_assignment_source_card", self, source_items, source_labels, i)
 
 
 func _on_assignment_source_chosen(source_index: int) -> void:
-	var source_items: Array = _dialog_data.get("source_items", [])
-	if source_index < 0 or source_index >= source_items.size():
-		return
-
-	var assigned_index := _find_assignment_index_for_source(source_index)
-	if assigned_index >= 0:
-		_dialog_assignment_assignments.remove_at(assigned_index)
-		if _dialog_assignment_selected_source_index == source_index:
-			_dialog_assignment_selected_source_index = -1
-		_refresh_assignment_dialog_views()
-		return
-
-	var max_assignments: int = int(_dialog_data.get("max_select", source_items.size()))
-	if max_assignments > 0 and _dialog_assignment_assignments.size() >= max_assignments:
-		_log("已达到最多可分配数量。")
-		return
-
-	if _dialog_assignment_selected_source_index == source_index:
-		_dialog_assignment_selected_source_index = -1
-	else:
-		_dialog_assignment_selected_source_index = source_index
-	_refresh_assignment_dialog_views()
+	_battle_dialog_controller.call("on_assignment_source_chosen", self, source_index)
 
 
 func _on_assignment_target_chosen(target_index: int) -> void:
-	if _dialog_assignment_selected_source_index < 0:
-		_log("请先选择1张要分配的卡。")
-		return
-	var source_items: Array = _dialog_data.get("source_items", [])
-	var target_items: Array = _dialog_data.get("target_items", [])
-	if _dialog_assignment_selected_source_index >= source_items.size():
-		return
-	if target_index < 0 or target_index >= target_items.size():
-		return
-	var exclude_map: Dictionary = _dialog_data.get("source_exclude_targets", {})
-	var excluded: Array = exclude_map.get(_dialog_assignment_selected_source_index, [])
-	if target_index in excluded:
-		_log("不能转移给能量来源的同一只宝可梦。")
-		return
-	_dialog_assignment_assignments.append({
-		"source_index": _dialog_assignment_selected_source_index,
-		"source": source_items[_dialog_assignment_selected_source_index],
-		"target_index": target_index,
-		"target": target_items[target_index],
-	})
-	_dialog_assignment_selected_source_index = -1
-	_refresh_assignment_dialog_views()
+	_battle_dialog_controller.call("on_assignment_target_chosen", self, target_index)
 
 
 func _refresh_assignment_dialog_views() -> void:
-	for child: Node in _dialog_assignment_source_row.get_children():
-		if not (child is BattleCardView):
-			continue
-		var card_view := child as BattleCardView
-		var idx: int = int(card_view.get_meta("assignment_source_index", -1))
-		card_view.set_selected(idx == _dialog_assignment_selected_source_index)
-		card_view.set_disabled(_find_assignment_index_for_source(idx) >= 0)
-
-	for child: Node in _dialog_assignment_target_row.get_children():
-		if not (child is BattleCardView):
-			continue
-		var target_view := child as BattleCardView
-		var idx: int = int(target_view.get_meta("assignment_target_index", -1))
-		target_view.set_selected(idx == _dialog_assignment_last_target_index())
-		target_view.set_disabled(false)
-
-	_update_assignment_dialog_state()
+	_battle_dialog_controller.call("refresh_assignment_dialog_views", self)
 
 
 func _update_assignment_dialog_state() -> void:
-	var min_assignments: int = int(_dialog_data.get("min_select", 0))
-	var max_assignments: int = int(_dialog_data.get("max_select", 0))
-	_dialog_confirm.disabled = _dialog_assignment_assignments.size() < min_assignments
-	var target_counts: Dictionary = {}
-	for assignment: Dictionary in _dialog_assignment_assignments:
-		var target: Variant = assignment.get("target")
-		if target == null:
-			continue
-		target_counts[target] = int(target_counts.get(target, 0)) + 1
-
-	var summary_parts: Array[String] = []
-	for target: Variant in target_counts.keys():
-		if target is PokemonSlot:
-			var slot: PokemonSlot = target as PokemonSlot
-			summary_parts.append("%s×%d" % [slot.get_pokemon_name(), int(target_counts[target])])
-
-	var summary: String = "已分配 %d" % _dialog_assignment_assignments.size()
-	if max_assignments > 0:
-		summary += " / %d" % max_assignments
-	summary += "。先选择左侧卡牌，再点击右侧目标。"
-	if _dialog_assignment_selected_source_index >= 0:
-		var source_items: Array = _dialog_data.get("source_items", [])
-		if _dialog_assignment_selected_source_index < source_items.size():
-			var selected_source: Variant = source_items[_dialog_assignment_selected_source_index]
-			if selected_source is CardInstance:
-				summary += " 当前选择：%s。" % (selected_source as CardInstance).card_data.name
-	if not summary_parts.is_empty():
-		summary += " 已分配到：" + ", ".join(summary_parts)
-	_dialog_assignment_summary_lbl.text = summary
+	_battle_dialog_controller.call("update_assignment_dialog_state", self)
 
 
 func _find_assignment_index_for_source(source_index: int) -> int:
-	for i: int in _dialog_assignment_assignments.size():
-		if int(_dialog_assignment_assignments[i].get("source_index", -1)) == source_index:
-			return i
-	return -1
+	return _battle_dialog_controller.call("find_assignment_index_for_source", self, source_index)
 
 
 func _dialog_assignment_last_target_index() -> int:
-	if _dialog_assignment_assignments.is_empty():
-		return -1
-	return int(_dialog_assignment_assignments.back().get("target_index", -1))
+	return _battle_dialog_controller.call("dialog_assignment_last_target_index", self)
 
 
 func _reset_dialog_assignment_state() -> void:
-	_dialog_assignment_mode = false
-	_dialog_assignment_selected_source_index = -1
-	_dialog_assignment_assignments.clear()
-	if _dialog_assignment_panel != null:
-		_dialog_assignment_panel.visible = false
-	if _dialog_assignment_summary_lbl != null:
-		_dialog_assignment_summary_lbl.text = ""
+	_battle_dialog_controller.call("reset_dialog_assignment_state", self)
 
 
 func _setup_dialog_card_view(card_view: BattleCardView, item: Variant, label: String) -> void:
-	if item is CardInstance:
-		card_view.setup_from_instance(item, BATTLE_CARD_VIEW.MODE_CHOICE)
-		card_view.set_info(item.card_data.name, _dialog_choice_subtitle(item, label))
-	elif item is CardData:
-		card_view.setup_from_card_data(item, BATTLE_CARD_VIEW.MODE_CHOICE)
-		card_view.set_info(item.name, _dialog_choice_subtitle(item, label))
-	elif item is PokemonSlot:
-		var slot: PokemonSlot = item
-		card_view.setup_from_card_data(slot.get_card_data(), _battle_card_mode_for_slot(slot))
-		card_view.set_badges()
-		card_view.set_battle_status(_build_battle_status(slot))
-	else:
-		card_view.setup_from_instance(null, BATTLE_CARD_VIEW.MODE_CHOICE)
-		card_view.set_info(str(label), "")
+	_battle_dialog_controller.call("setup_dialog_card_view", self, card_view, item, label)
 
 
 func _dialog_choice_subtitle(item: Variant, label: String) -> String:
-	if item is PokemonSlot:
-		var slot: PokemonSlot = item
-		return "HP %d/%d" % [_get_display_remaining_hp(slot), _get_display_max_hp(slot)]
-	if item is CardInstance:
-		var card: CardInstance = item
-		if label != "" and label != card.card_data.name:
-			return label
-		return _hand_card_subtext(card.card_data)
-	if item is CardData:
-		var data: CardData = item
-		if label != "" and label != data.name:
-			return label
-		return _hand_card_subtext(data)
-	return label
+	return _battle_dialog_controller.call("dialog_choice_subtitle", self, item, label)
 
 
 func _dialog_item_has_card_visual(item: Variant) -> bool:
-	return item is CardInstance or item is CardData or item is PokemonSlot
+	return _battle_dialog_controller.call("dialog_item_has_card_visual", item)
 
 
 func _selection_label_from_item(item: Variant, fallback: String = "") -> String:
-	if fallback.strip_edges() != "":
-		return fallback.strip_edges()
-	if item is PokemonSlot:
-		return (item as PokemonSlot).get_pokemon_name()
-	if item is CardInstance:
-		var card: CardInstance = item
-		return card.card_data.name if card.card_data != null else ""
-	if item is CardData:
-		return (item as CardData).name
-	if item is Dictionary:
-		var entry: Dictionary = item
-		for key: String in ["pokemon_name", "card_name", "name", "title"]:
-			var text := str(entry.get(key, "")).strip_edges()
-			if text != "":
-				return text
-	return str(item).strip_edges()
+	return _battle_dialog_controller.call("selection_label_from_item", item, fallback)
 
 
 func _selected_dialog_labels(sel_items: PackedInt32Array) -> Array[String]:
-	var labels: Array[String] = []
-	var choice_labels: Array = _dialog_data.get("choice_labels", _dialog_items_data)
-	for idx: int in sel_items:
-		if idx < 0:
-			continue
-		var item: Variant = _dialog_items_data[idx] if idx < _dialog_items_data.size() else null
-		var fallback := str(choice_labels[idx]) if idx < choice_labels.size() else ""
-		labels.append(_selection_label_from_item(item, fallback))
-	return labels
+	return _battle_dialog_controller.call("selected_dialog_labels", self, sel_items)
 
 
 func _selected_field_slot_labels(sel_items: PackedInt32Array) -> Array[String]:
@@ -2666,148 +1837,64 @@ func _selected_field_slot_labels(sel_items: PackedInt32Array) -> Array[String]:
 
 
 func _selected_assignment_labels(assignments: Array[Dictionary]) -> Array[String]:
-	var labels: Array[String] = []
-	for assignment: Dictionary in assignments:
-		var source_label := _selection_label_from_item(assignment.get("source"))
-		var target_label := _selection_label_from_item(assignment.get("target"))
-		if source_label != "" and target_label != "":
-			labels.append("%s -> %s" % [source_label, target_label])
-		elif source_label != "":
-			labels.append(source_label)
-		elif target_label != "":
-			labels.append(target_label)
-	return labels
+	return _battle_dialog_controller.call("selected_assignment_labels", assignments)
 
 
 func _on_dialog_card_chosen(real_index: int) -> void:
-	var min_select: int = int(_dialog_data.get("min_select", 1))
-	var max_select: int = int(_dialog_data.get("max_select", 1))
-	var is_multi := max_select > 1 or min_select > 1
-	if not is_multi:
-		_confirm_dialog_selection(PackedInt32Array([real_index]))
-		return
+	_battle_dialog_controller.call("on_dialog_card_chosen", self, real_index)
 
+
+func _on_dialog_card_left_signal(_ci: CardInstance, _cd: CardData, real_index: int) -> void:
+	_on_dialog_card_chosen(real_index)
+
+
+func _on_dialog_card_right_signal(_ci: CardInstance, cd: CardData) -> void:
+	if cd != null:
+		_show_card_detail(cd)
+
+
+func _toggle_dialog_card_choice(real_index: int, max_select: int) -> bool:
 	if real_index in _dialog_card_selected_indices:
 		_dialog_card_selected_indices.erase(real_index)
-	else:
-		if max_select > 0 and _dialog_card_selected_indices.size() >= max_select:
-			return
-		_dialog_card_selected_indices.append(real_index)
-
-	_sync_dialog_card_selection()
-	_update_dialog_confirm_state()
+		return true
+	if max_select > 0 and _dialog_card_selected_indices.size() >= max_select:
+		return false
+	_dialog_card_selected_indices.append(real_index)
+	return true
 
 
 func _sync_dialog_card_selection() -> void:
-	for child: Node in _dialog_card_row.get_children():
-		if not (child is BattleCardView):
-			continue
-		var card_view: BattleCardView = child
-		var idx: int = int(card_view.get_meta("dialog_choice_index", -1))
-		card_view.set_selected(idx in _dialog_card_selected_indices)
+	_battle_dialog_controller.call("sync_dialog_card_selection", self)
 
 
 func _update_dialog_confirm_state() -> void:
-	var min_select: int = int(_dialog_data.get("min_select", 1))
-	if _dialog_assignment_mode:
-		_update_assignment_dialog_state()
-		return
-	if _dialog_card_mode:
-		_dialog_confirm.disabled = _dialog_card_selected_indices.size() < min_select
-		_update_dialog_status_text()
-		return
-
-	if _dialog_list.select_mode == ItemList.SELECT_SINGLE:
-		_dialog_confirm.disabled = _dialog_list.get_selected_items().size() < min_select
-	else:
-		_dialog_confirm.disabled = _dialog_multi_selected_indices.size() < min_select
+	_battle_dialog_controller.call("update_dialog_confirm_state", self)
 
 
 func _update_dialog_status_text() -> void:
-	if _dialog_status_lbl == null or not _dialog_status_lbl.visible:
-		return
-	var min_select: int = int(_dialog_data.get("min_select", 1))
-	var max_select: int = int(_dialog_data.get("max_select", 1))
-	_dialog_status_lbl.text = "已选择 %d / %d" % [_dialog_card_selected_indices.size(), min_select]
-	if max_select > 1:
-		_dialog_status_lbl.text += "（最多 %d）" % max_select
+	_battle_dialog_controller.call("update_dialog_status_text", self)
 
 
 func _confirm_dialog_selection(sel_items: PackedInt32Array) -> void:
-	_runtime_log(
-		"confirm_dialog_selection",
-		"choice=%s selected=%s %s" % [_pending_choice, JSON.stringify(sel_items), _dialog_state_snapshot()]
-	)
-	_dialog_overlay.visible = false
-	_handle_dialog_choice(sel_items)
+	_battle_dialog_controller.call("confirm_dialog_selection", self, sel_items)
 
 
 func _on_dialog_item_selected(idx: int) -> void:
-	if _dialog_list.select_mode != ItemList.SELECT_SINGLE:
-		return
-	_dialog_confirm.disabled = false
-	if not _dialog_card_mode:
-		_confirm_dialog_selection(PackedInt32Array([idx]))
+	_battle_dialog_controller.call("on_dialog_item_selected", self, idx)
 
 
 func _on_dialog_item_multi_selected(idx: int, selected: bool) -> void:
-	if _dialog_list.select_mode == ItemList.SELECT_SINGLE:
-		return
-	if selected:
-		if idx not in _dialog_multi_selected_indices:
-			_dialog_multi_selected_indices.append(idx)
-	else:
-		_dialog_multi_selected_indices.erase(idx)
-	_update_dialog_confirm_state()
+	_battle_dialog_controller.call("on_dialog_item_multi_selected", self, idx, selected)
 
 func _on_dialog_confirm() -> void:
-	if _dialog_assignment_mode:
-		_confirm_assignment_dialog()
-		return
-	var sel_items := PackedInt32Array()
-	if _dialog_card_mode:
-		for selected_idx: int in _dialog_card_selected_indices:
-			sel_items.append(selected_idx)
-	else:
-		sel_items = _dialog_list.get_selected_items()
-	var min_select: int = int(_dialog_data.get("min_select", 1))
-	var max_select: int = int(_dialog_data.get("max_select", 1))
-	if sel_items.size() < min_select:
-		_log("至少选择 %d 项。" % min_select)
-		return
-	if max_select > 0 and sel_items.size() > max_select:
-		_log("最多选择 %d 项。" % max_select)
-		return
-	_confirm_dialog_selection(sel_items)
+	_battle_dialog_controller.call("on_dialog_confirm", self)
 
 func _on_dialog_cancel() -> void:
-	_runtime_log("dialog_cancel", "choice=%s %s" % [_pending_choice, _dialog_state_snapshot()])
-	_dialog_overlay.visible = false
-	_dialog_card_selected_indices.clear()
-	_reset_dialog_assignment_state()
-	if _pending_choice == "effect_interaction":
-		_reset_effect_interaction()
-	_pending_choice = ""
+	_battle_dialog_controller.call("on_dialog_cancel", self)
 
 
 func _confirm_assignment_dialog() -> void:
-	var min_select: int = int(_dialog_data.get("min_select", 0))
-	var max_select: int = int(_dialog_data.get("max_select", 0))
-	var assignment_count: int = _dialog_assignment_assignments.size()
-	if assignment_count < min_select:
-		_log("至少完成 %d 次分配。" % min_select)
-		return
-	if max_select > 0 and assignment_count > max_select:
-		_log("最多只能完成 %d 次分配。" % max_select)
-		return
-	if _pending_effect_step_index < 0 or _pending_effect_step_index >= _pending_effect_steps.size():
-		return
-	var stored_assignments: Array[Dictionary] = []
-	for assignment: Dictionary in _dialog_assignment_assignments:
-		stored_assignments.append(assignment.duplicate())
-	_dialog_overlay.visible = false
-	_reset_dialog_assignment_state()
-	_commit_effect_assignment_selection(stored_assignments)
+	_battle_dialog_controller.call("confirm_assignment_dialog", self)
 
 
 func _commit_effect_assignment_selection(stored_assignments: Array[Dictionary]) -> void:
@@ -2893,7 +1980,7 @@ func _handle_dialog_choice(selected_indices: PackedInt32Array) -> void:
 					_refresh_ui()
 					_check_two_player_handover()
 				else:
-					_log("无法派出该宝可梦")
+					_log("无法让这只宝可梦进化")
 		"heavy_baton_target":
 			var pi_hb: int = _dialog_data.get("player", 0)
 			var bench_raw_hb: Array = _dialog_data.get("bench", [])
@@ -2906,6 +1993,33 @@ func _handle_dialog_choice(selected_indices: PackedInt32Array) -> void:
 					_refresh_ui()
 				else:
 					_log("Invalid Heavy Baton target")
+		"retreat_energy":
+			var cp_energy: int = _dialog_data.get("player", 0)
+			var retreat_cost: int = int(_dialog_data.get("retreat_cost", 0))
+			var energy_options_raw: Array = _dialog_data.get("energy_options", [])
+			var energy_options: Array[CardInstance] = []
+			for option: Variant in energy_options_raw:
+				if option is CardInstance:
+					energy_options.append(option)
+			var chosen_energy: Array[CardInstance] = _resolve_retreat_energy_selection(selected_indices, energy_options)
+			var active_slot: PokemonSlot = null
+			if _gsm != null and _gsm.game_state != null and cp_energy >= 0 and cp_energy < _gsm.game_state.players.size():
+				active_slot = _gsm.game_state.players[cp_energy].active_pokemon
+			if active_slot == null or not _retreat_selection_is_valid(active_slot, chosen_energy, retreat_cost):
+				_log("当前选择的能量不符合撤退费用")
+				_show_retreat_energy_dialog(cp_energy, active_slot, retreat_cost)
+				return
+			if not _gsm.rule_validator.has_enough_energy_to_retreat(
+				active_slot,
+				chosen_energy,
+				retreat_cost,
+				_gsm.effect_processor,
+				_gsm.game_state
+			):
+				_log("当前选择的能量不足以支付撤退费用")
+				_show_retreat_energy_dialog(cp_energy, active_slot, retreat_cost)
+				return
+			_show_retreat_bench_choice(cp_energy, chosen_energy)
 		"retreat_bench":
 			var cp: int = _dialog_data.get("player", 0)
 			var bench_raw2: Array = _dialog_data.get("bench", [])
@@ -3016,16 +2130,7 @@ func _prompt_send_out_dialog(pi: int) -> void:
 
 
 func _show_send_out_dialog(pi: int) -> void:
-	var player: PlayerState = _gsm.game_state.players[pi]
-	_pending_choice = "send_out"
-	_dialog_data = {
-		"player": pi,
-		"bench": player.bench,
-		"allow_cancel": false,
-		"min_select": 1,
-		"max_select": 1,
-	}
-	_show_field_slot_choice("玩家 %d：选择要派出的宝可梦" % (pi + 1), player.bench, _dialog_data)
+	_battle_dialog_controller.call("show_send_out_dialog", self, pi)
 
 
 func _prompt_heavy_baton_dialog(
@@ -3054,22 +2159,10 @@ func _show_heavy_baton_dialog(
 	energy_count: int,
 	source_name: String
 ) -> void:
-	_pending_choice = "heavy_baton_target"
-	_dialog_data = {
-		"player": pi,
-		"bench": bench_targets.duplicate(),
-		"min_select": 1,
-		"max_select": 1,
-		"allow_cancel": false,
-	}
-	_show_field_slot_choice(
-		"%s：选择接收 %d 个能量的备战宝可梦" % [source_name, energy_count],
-		bench_targets,
-		_dialog_data
-	)
+	_battle_dialog_controller.call("show_heavy_baton_dialog", self, pi, bench_targets, energy_count, source_name)
 
 
-func _try_handle_field_interaction_slot_click(slot_id: String, target_slot: PokemonSlot) -> void:
+func _try_handle_field_interaction_slot_click(slot_id: String, _target_slot: PokemonSlot) -> void:
 	if not _is_field_interaction_active():
 		return
 	if not _field_interaction_slot_index_by_id.has(slot_id):
@@ -3085,80 +2178,19 @@ func _try_handle_field_interaction_slot_click(slot_id: String, target_slot: Poke
 
 
 func _handle_field_slot_select_index(target_index: int) -> void:
-	var min_select: int = int(_field_interaction_data.get("min_select", 1))
-	var max_select: int = int(_field_interaction_data.get("max_select", 1))
-	if max_select <= 1 and min_select <= 1:
-		_field_interaction_selected_indices = [target_index]
-		_finalize_field_slot_selection()
-		return
-	if target_index in _field_interaction_selected_indices:
-		_field_interaction_selected_indices.erase(target_index)
-	else:
-		if max_select > 0 and _field_interaction_selected_indices.size() >= max_select:
-			return
-		_field_interaction_selected_indices.append(target_index)
-	_refresh_field_interaction_status()
-	_refresh_ui()
-	if min_select == max_select and max_select > 1 and _field_interaction_selected_indices.size() == max_select:
-		_finalize_field_slot_selection()
+	_battle_interaction_controller.call("handle_field_slot_select_index", self, target_index)
 
 
 func _handle_field_assignment_target_index(target_index: int) -> void:
-	if _field_interaction_assignment_selected_source_index < 0:
-		_log("请先在中间面板选择1张卡。")
-		return
-	var source_items: Array = _field_interaction_data.get("source_items", [])
-	var target_items: Array = _field_interaction_data.get("target_items", [])
-	if _field_interaction_assignment_selected_source_index >= source_items.size():
-		return
-	if target_index < 0 or target_index >= target_items.size():
-		return
-	var exclude_map: Dictionary = _field_interaction_data.get("source_exclude_targets", {})
-	var excluded: Array = exclude_map.get(_field_interaction_assignment_selected_source_index, [])
-	if target_index in excluded:
-		_log("当前选择不能分配到该目标。")
-		return
-	_field_interaction_assignment_entries.append({
-		"source_index": _field_interaction_assignment_selected_source_index,
-		"source": source_items[_field_interaction_assignment_selected_source_index],
-		"target_index": target_index,
-		"target": target_items[target_index],
-	})
-	_field_interaction_assignment_selected_source_index = -1
-	_refresh_field_interaction_status()
-	_refresh_ui()
-	var min_assignments: int = int(_field_interaction_data.get("min_select", 0))
-	var max_assignments: int = int(_field_interaction_data.get("max_select", 0))
-	if min_assignments == max_assignments and max_assignments > 0 and _field_interaction_assignment_entries.size() == max_assignments:
-		_finalize_field_assignment_selection()
+	_battle_interaction_controller.call("handle_field_assignment_target_index", self, target_index)
 
 
 func _finalize_field_slot_selection() -> void:
-	var min_select: int = int(_field_interaction_data.get("min_select", 1))
-	if _field_interaction_selected_indices.size() < min_select:
-		_log("至少选择 %d 项。" % min_select)
-		return
-	var selected := PackedInt32Array(_field_interaction_selected_indices)
-	_hide_field_interaction()
-	if _pending_choice == "effect_interaction":
-		_handle_effect_interaction_choice(selected)
-	else:
-		_handle_dialog_choice(selected)
+	_battle_interaction_controller.call("finalize_field_slot_selection", self)
 
 
 func _finalize_field_assignment_selection() -> void:
-	var min_select: int = int(_field_interaction_data.get("min_select", 0))
-	if _field_interaction_assignment_entries.size() < min_select:
-		_log("至少完成 %d 次分配。" % min_select)
-		return
-	if _pending_choice != "effect_interaction":
-		_hide_field_interaction()
-		return
-	var stored_assignments: Array[Dictionary] = []
-	for assignment: Dictionary in _field_interaction_assignment_entries:
-		stored_assignments.append(assignment.duplicate())
-	_hide_field_interaction()
-	_commit_effect_assignment_selection(stored_assignments)
+	_battle_interaction_controller.call("finalize_field_assignment_selection", self)
 
 
 func _resolve_zeus_help_selected_cards(
@@ -3204,94 +2236,7 @@ func _apply_zeus_help(player_index: int, selected_cards: Array[CardInstance]) ->
 
 
 func _show_pokemon_action_dialog(cp: int, slot: PokemonSlot, include_attacks: bool) -> void:
-	var cd: CardData = slot.get_card_data()
-	var items: Array[String] = []
-	var actions: Array[Dictionary] = []
-
-	var effect: BaseEffect = _gsm.effect_processor.get_effect(cd.effect_id)
-	if effect != null:
-		for i: int in cd.abilities.size():
-			var ability: Dictionary = cd.abilities[i]
-			if not effect.has_method("can_use_ability"):
-				continue
-			var can_use: bool = _gsm.effect_processor.can_use_ability(slot, _gsm.game_state, i)
-			var ability_reason := "" if can_use else "%s 的特性当前无法使用" % cd.name
-			var prefix: String = "" if can_use else "[不可用] "
-			items.append("%s[特性] %s" % [prefix, ability.get("name", "")])
-			actions.append({
-				"type": "ability",
-				"slot": slot,
-				"ability_index": i,
-				"enabled": can_use,
-				"reason": ability_reason,
-			})
-
-	for granted: Dictionary in _gsm.effect_processor.get_granted_abilities(slot, _gsm.game_state):
-		var can_use_granted: bool = bool(granted.get("enabled", false))
-		var granted_name: String = str(granted.get("name", ""))
-		var granted_reason := "" if can_use_granted else "%s 的特性当前无法使用" % cd.name
-		var granted_prefix: String = "" if can_use_granted else "[不可用] "
-		items.append("%s[特性] %s" % [granted_prefix, granted_name])
-		actions.append({
-			"type": "ability",
-			"slot": slot,
-			"ability_index": int(granted.get("ability_index", cd.abilities.size())),
-			"enabled": can_use_granted,
-			"reason": granted_reason,
-		})
-
-	if include_attacks:
-		for i: int in cd.attacks.size():
-			var atk: Dictionary = cd.attacks[i]
-			var can: bool = _gsm.can_use_attack(cp, i)
-			var attack_reason := "" if can else _gsm.get_attack_unusable_reason(cp, i)
-			var prefix: String = "" if can else "[不可用] "
-			var preview_damage: int = _gsm.get_attack_preview_damage(cp, i)
-			var preview_text: String = ""
-			if String(atk.get("damage", "")) != "" or preview_damage > 0:
-				preview_text = " 预计伤害:%d" % preview_damage
-			items.append("%s[招式] %s [%s] %s%s" % [prefix, atk.get("name", ""), atk.get("cost", ""), atk.get("damage", ""), preview_text])
-			actions.append({
-				"type": "attack",
-				"slot": slot,
-				"attack_index": i,
-				"enabled": can,
-				"reason": attack_reason,
-			})
-		for granted_attack: Dictionary in _gsm.effect_processor.get_granted_attacks(slot, _gsm.game_state):
-			var granted_can_use: bool = _can_use_granted_attack(cp, slot, granted_attack)
-			var granted_prefix: String = "" if granted_can_use else "[不可用] "
-			var granted_reason: String = "" if granted_can_use else _get_granted_attack_unusable_reason(cp, slot, granted_attack)
-			items.append("%s[招式] %s [%s]" % [
-				granted_prefix,
-				str(granted_attack.get("name", "")),
-				str(granted_attack.get("cost", "")),
-			])
-			actions.append({
-				"type": "granted_attack",
-				"slot": slot,
-				"granted_attack": granted_attack,
-				"enabled": granted_can_use,
-				"reason": granted_reason,
-			})
-
-		if slot == _gsm.game_state.players[cp].active_pokemon:
-			var can_retreat: bool = _gsm.rule_validator.can_retreat(_gsm.game_state, cp)
-			var retreat_prefix: String = "" if can_retreat else "[不可用] "
-			items.append("%s[行动] 撤退" % retreat_prefix)
-			actions.append({
-				"type": "retreat",
-				"enabled": can_retreat,
-				"reason": "当前无法撤退",
-			})
-
-	if actions.is_empty():
-		_log("%s 当前没有可执行的行动" % cd.name)
-		return
-
-	_pending_choice = "pokemon_action"
-	_show_dialog("选择行动：%s" % cd.name, items, {"player": cp, "actions": actions})
-	_dialog_cancel.visible = true
+	_battle_dialog_controller.call("show_pokemon_action_dialog", self, cp, slot, include_attacks)
 
 
 func _show_attack_dialog(cp: int, active_slot: PokemonSlot) -> void:
@@ -3365,25 +2310,25 @@ func _can_use_granted_attack(player_index: int, slot: PokemonSlot, granted_attac
 
 func _get_granted_attack_unusable_reason(player_index: int, slot: PokemonSlot, granted_attack: Dictionary) -> String:
 	if _gsm == null or _gsm.game_state == null:
-		return "当前无法使用该招式"
+		return "当前无法执行该操作"
 	if player_index < 0 or player_index >= _gsm.game_state.players.size():
-		return "当前无法使用该招式"
+		return "当前无法执行该操作"
 	if _gsm.game_state.current_player_index != player_index:
 		return "当前不是你的回合"
 	if _gsm.game_state.phase != GameState.GamePhase.MAIN:
-		return "当前阶段无法使用招式"
+		return "当前阶段无法使用该招式"
 	if slot == null or slot.get_top_card() == null:
-		return "当前无法使用该招式"
+		return "当前无法执行该操作"
 	if slot != _gsm.game_state.players[player_index].active_pokemon:
-		return "只有战斗宝可梦可以使用该招式"
+		return "只有战斗宝可梦可以使用这个招式"
 	if slot.attached_tool == null:
-		return "当前没有可用的招式来源"
+		return "这只宝可梦没有附着工具"
 	if _gsm.effect_processor.is_tool_effect_suppressed(slot, _gsm.game_state):
-		return "当前该宝可梦道具效果被无效化"
+		return "这只宝可梦身上的道具效果当前不可用"
 	var cost: String = str(granted_attack.get("cost", ""))
 	if not _gsm.rule_validator.has_enough_energy(slot, cost, _gsm.effect_processor, _gsm.game_state):
-		return "能量不足，无法使用该招式"
-	return "当前无法使用该招式"
+		return "能量不足，无法满足这个招式的费用"
+	return "能量不足，无法使用该招式"
 
 
 func _try_start_evolve_trigger_ability_interaction(player_index: int, slot: PokemonSlot) -> void:
@@ -3395,86 +2340,146 @@ func _try_start_evolve_trigger_ability_interaction(player_index: int, slot: Poke
 	_start_effect_interaction("ability", player_index, steps, slot.get_top_card(), slot, 0)
 
 
-func _show_retreat_dialog(cp: int) -> void:
+func _retreat_requires_energy_choice(active: PokemonSlot, retreat_cost: int) -> bool:
+	if active == null or retreat_cost <= 0:
+		return false
+	if active.attached_energy.size() <= 1:
+		return false
+	return _retreat_has_valid_partial_subset(active.attached_energy, retreat_cost, 0, 0, 0)
+
+
+func _retreat_has_valid_partial_subset(
+	attached_energy: Array[CardInstance],
+	retreat_cost: int,
+	index: int,
+	provided: int,
+	used_count: int
+) -> bool:
+	if provided >= retreat_cost:
+		return used_count > 0 and used_count < attached_energy.size()
+	if index >= attached_energy.size():
+		return false
+	var next_provided := provided + _gsm.effect_processor.get_energy_colorless_count(attached_energy[index], _gsm.game_state)
+	if _retreat_has_valid_partial_subset(attached_energy, retreat_cost, index + 1, next_provided, used_count + 1):
+		return true
+	return _retreat_has_valid_partial_subset(attached_energy, retreat_cost, index + 1, provided, used_count)
+
+
+func _show_retreat_energy_dialog(cp: int, active: PokemonSlot, retreat_cost: int) -> void:
+	if _gsm == null or _gsm.game_state == null or active == null:
+		return
 	var player: PlayerState = _gsm.game_state.players[cp]
-	var active: PokemonSlot = player.active_pokemon
-	var cost: int = _gsm.effect_processor.get_effective_retreat_cost(active, _gsm.game_state)
+	var energy_options: Array[CardInstance] = active.attached_energy.duplicate()
+	var choice_labels: Array[String] = []
+	for energy: CardInstance in energy_options:
+		var label := energy.card_data.name
+		var provided := _gsm.effect_processor.get_energy_colorless_count(energy, _gsm.game_state)
+		if provided > 1:
+			label += " (%d)" % provided
+		choice_labels.append(label)
+	_pending_choice = "retreat_energy"
+	_show_dialog("选择要弃掉的能量", choice_labels, {
+		"player": cp,
+		"bench": player.bench,
+		"energy_options": energy_options,
+		"retreat_cost": retreat_cost,
+		"allow_cancel": true,
+		"min_select": 1,
+		"max_select": energy_options.size(),
+		"presentation": "cards",
+		"card_items": energy_options,
+		"choice_labels": choice_labels,
+		"prompt_type": "retreat_energy",
+	})
 
-	var energy_discard: Array[CardInstance] = []
-	var paid_units: int = 0
-	for energy: CardInstance in active.attached_energy:
-		if paid_units >= cost:
-			break
-		energy_discard.append(energy)
-		paid_units += _gsm.effect_processor.get_energy_colorless_count(energy)
 
+func _show_retreat_bench_choice(cp: int, energy_discard: Array[CardInstance]) -> void:
+	if _gsm == null or _gsm.game_state == null:
+		return
+	var player: PlayerState = _gsm.game_state.players[cp]
 	_pending_choice = "retreat_bench"
 	_dialog_data = {
 		"player": cp,
 		"bench": player.bench,
-		"energy_discard": energy_discard,
+		"energy_discard": energy_discard.duplicate(),
 		"allow_cancel": true,
 		"min_select": 1,
 		"max_select": 1,
+		"prompt_type": "retreat_bench",
 	}
-	_show_field_slot_choice(
-		"选择要换上的备战宝可梦（弃掉 %d 个能量）" % cost,
-		player.bench,
-		_dialog_data
-	)
+	_show_field_slot_choice("选择接替撤退的备战宝可梦", player.bench, _dialog_data)
+
+
+func _retreat_selection_is_valid(active: PokemonSlot, chosen_energy: Array[CardInstance], retreat_cost: int) -> bool:
+	if active == null:
+		return false
+	if retreat_cost <= 0:
+		return chosen_energy.is_empty()
+	if chosen_energy.is_empty():
+		return false
+	if not _gsm.rule_validator.has_enough_energy_to_retreat(
+		active,
+		chosen_energy,
+		retreat_cost,
+		_gsm.effect_processor,
+		_gsm.game_state
+	):
+		return false
+	for remove_index: int in chosen_energy.size():
+		var reduced_selection: Array[CardInstance] = chosen_energy.duplicate()
+		reduced_selection.remove_at(remove_index)
+		if _gsm.rule_validator.has_enough_energy_to_retreat(
+			active,
+			reduced_selection,
+			retreat_cost,
+			_gsm.effect_processor,
+			_gsm.game_state
+		):
+			return false
+	return true
+
+
+func _default_retreat_energy_selection(active: PokemonSlot, retreat_cost: int) -> Array[CardInstance]:
+	if active == null or retreat_cost <= 0:
+		return []
+	return active.attached_energy.duplicate()
+
+
+func _resolve_retreat_energy_selection(selected_indices: PackedInt32Array, energy_options: Array[CardInstance]) -> Array[CardInstance]:
+	var chosen_energy: Array[CardInstance] = []
+	for selected_index: int in selected_indices:
+		if selected_index < 0 or selected_index >= energy_options.size():
+			continue
+		chosen_energy.append(energy_options[selected_index])
+	return chosen_energy
+
+
+func _show_retreat_dialog(cp: int) -> void:
+	if _gsm == null or _gsm.game_state == null:
+		return
+	if cp < 0 or cp >= _gsm.game_state.players.size():
+		return
+	var player: PlayerState = _gsm.game_state.players[cp]
+	var active: PokemonSlot = player.active_pokemon
+	if active == null:
+		return
+	var retreat_cost: int = _gsm.effect_processor.get_effective_retreat_cost(active, _gsm.game_state)
+	if _retreat_requires_energy_choice(active, retreat_cost):
+		_show_retreat_energy_dialog(cp, active, retreat_cost)
+		return
+	_show_retreat_bench_choice(cp, _default_retreat_energy_selection(active, retreat_cost))
 
 
 func _show_handover_prompt(target_player: int, follow_up: Callable = Callable()) -> void:
-	if follow_up.is_valid():
-		_set_pending_handover_action(follow_up, "show_prompt_follow_up")
-	elif not _pending_handover_action.is_valid():
-		_set_pending_handover_action(Callable(), "show_prompt_generic")
-	else:
-		_runtime_log(
-			"handover_action_preserved",
-			"reason=show_prompt_generic target=%d %s" % [target_player, _state_snapshot()]
-		)
-	_set_handover_panel_visible(true, "show_prompt_target_%d" % target_player)
-	_handover_lbl.text = "请将设备交给玩家 %d" % (target_player + 1)
+	_battle_overlay_controller.call("show_handover_prompt", self, target_player, follow_up)
 
 
 func _check_two_player_handover() -> void:
-	if GameManager.current_mode != GameManager.GameMode.TWO_PLAYER:
-		_set_pending_handover_action(Callable(), "handover_check_non_two_player")
-		_set_handover_panel_visible(false, "handover_check_non_two_player")
-		return
-	if _gsm == null or _gsm.game_state.phase == GameState.GamePhase.GAME_OVER:
-		_set_pending_handover_action(Callable(), "handover_check_game_over")
-		_set_handover_panel_visible(false, "handover_check_game_over")
-		return
-	if _pending_handover_action.is_valid():
-		_runtime_log("handover_check_deferred", _state_snapshot())
-		return
-	var cp: int = _gsm.game_state.current_player_index
-	if cp != _view_player:
-		_show_handover_prompt(cp)
-		_runtime_log("handover_required", _state_snapshot())
-		return
-	_set_pending_handover_action(Callable(), "handover_check_aligned")
-	_set_handover_panel_visible(false, "handover_check_aligned")
+	_battle_overlay_controller.call("check_two_player_handover", self)
 
 
 func _on_handover_confirmed() -> void:
-	_runtime_log(
-		"handover_confirm_requested",
-		"follow_up_valid=%s %s" % [str(_pending_handover_action.is_valid()), _state_snapshot()]
-	)
-	_set_handover_panel_visible(false, "handover_confirm")
-	var follow_up := _pending_handover_action
-	_set_pending_handover_action(Callable(), "handover_confirm")
-	if follow_up.is_valid():
-		follow_up.call()
-	else:
-		var cp: int = _gsm.game_state.current_player_index
-		_view_player = cp
-		_refresh_ui()
-	_maybe_run_ai()
-	_runtime_log("handover_confirmed", _state_snapshot())
+	_battle_overlay_controller.call("on_handover_confirmed", self)
 
 
 func _refresh_ui_after_successful_action(check_handover: bool = false) -> void:
@@ -3495,123 +2500,50 @@ func _setup_ai_for_tests() -> void:
 	_ai_running = false
 	_ai_step_scheduled = false
 	_ai_followup_requested = false
+	_coin_animation_resume_effect_step = false
 	_ai_opponent = null
 	_ai_turn_marker = ""
 	_ai_actions_this_turn = 0
 
 
 func _set_battle_recording_output_root(root_path: String) -> void:
-	_battle_recording_output_root = root_path
-	if _battle_recorder != null and _battle_recorder.has_method("set_output_root"):
-		_battle_recorder.call("set_output_root", root_path)
+	_battle_recording_controller.call("set_battle_recording_output_root", self, root_path)
 
 
 func _should_record_local_battle() -> bool:
-	return GameManager.current_mode == GameManager.GameMode.TWO_PLAYER
+	return _battle_recording_controller.call("should_record_local_battle", self)
 
 
 func _can_capture_battle_recording_context() -> bool:
-	return (
-		_gsm != null
-		and _gsm.game_state != null
-		and _gsm.game_state.players.size() >= 2
-	)
+	return _battle_recording_controller.call("can_capture_battle_recording_context", self)
 
 
 func _capture_battle_recording_context_if_ready() -> void:
-	if not _battle_recording_started or _battle_recorder == null or not _can_capture_battle_recording_context():
-		return
-	if _battle_recorder.has_method("update_match_context"):
-		_battle_recorder.call("update_match_context", _build_battle_record_meta(), _build_battle_initial_state())
-	if _battle_recording_context_captured:
-		return
-	_battle_recording_context_captured = true
-	_record_battle_event({
-		"event_type": "match_started",
-		"player_index": -1,
-		"turn_number": _gsm.game_state.turn_number,
-		"phase": _recording_phase_name(),
-		"mode": "two_player",
-		"view_player": _view_player,
-	})
-	_record_battle_state_snapshot("match_start")
+	_battle_recording_controller.call("capture_battle_recording_context_if_ready", self)
 
 
 func _ensure_battle_recording_started() -> void:
-	if _battle_recording_started or not _should_record_local_battle() or _gsm == null or _gsm.game_state == null:
-		return
-	_battle_recorder = BattleRecorderScript.new()
-	if _battle_recorder == null:
-		return
-	if _battle_recording_output_root != "":
-		_battle_recorder.call("set_output_root", _battle_recording_output_root)
-	_battle_recorder.call("start_match", _build_battle_record_meta(), _build_battle_initial_state())
-	_battle_recording_started = true
-	_battle_advice_initial_snapshot = _build_battle_advice_initial_snapshot()
-	if _battle_recorder.has_method("get_match_dir"):
-		_battle_review_match_dir = str(_battle_recorder.call("get_match_dir"))
-	_capture_battle_recording_context_if_ready()
+	_battle_recording_controller.call("ensure_battle_recording_started", self)
 
 
 func _record_battle_event(event_data: Dictionary) -> void:
-	if not _battle_recording_started or _battle_recorder == null:
-		return
-	var sanitized: Variant = _sanitize_recording_value(event_data)
-	_battle_recorder.call("record_event", sanitized if sanitized is Dictionary else {})
+	_battle_recording_controller.call("record_battle_event", self, event_data)
 
 
 func _finalize_battle_recording(result_data: Dictionary) -> void:
-	if not _battle_recording_started or _battle_recorder == null:
-		return
-	_battle_recorder.call("finalize_match", result_data)
-	if _battle_recorder.has_method("get_match_dir"):
-		_battle_review_match_dir = str(_battle_recorder.call("get_match_dir"))
-	_battle_recording_started = false
-	_battle_recording_context_captured = false
+	_battle_recording_controller.call("finalize_battle_recording", self, result_data)
 
 
 func _show_match_end_dialog(winner_index: int, reason: String) -> void:
-	var summary := _match_end_summary_text(winner_index, reason)
-	var items: Array[String] = [summary]
-	var extra_data: Dictionary = {
-		"winner": winner_index,
-		"reason": reason,
-		"action": "game_over",
-	}
-	var review_action: Dictionary = _current_match_end_review_action()
-	if not review_action.is_empty():
-		items.append(str(review_action.get("label", "生成AI复盘")))
-		items.append("返回对战准备")
-		extra_data["review_action"] = str(review_action.get("kind", "generate"))
-	else:
-		items.append("返回对战准备")
-	_pending_choice = "game_over"
-	_show_dialog("游戏结束", items, extra_data)
+	_battle_dialog_controller.call("show_match_end_dialog", self, winner_index, reason)
 
 
 func _match_end_summary_text(winner_index: int, reason: String) -> String:
-	return "玩家 %d 获胜\n原因：%s" % [winner_index + 1, reason]
+	return _battle_dialog_controller.call("match_end_summary_text", winner_index, reason)
 
 
 func _current_match_end_review_action() -> Dictionary:
-	if not _should_offer_battle_review():
-		return {}
-	if _battle_review_busy:
-		return {
-			"kind": "busy",
-			"label": _battle_review_progress_text if _battle_review_progress_text != "" else "正在生成 AI 复盘...",
-		}
-	var cached_review: Dictionary = _load_cached_battle_review()
-	var cached_status := str(cached_review.get("status", ""))
-	if cached_status in ["completed", "partial_success"]:
-		_battle_review_last_review = cached_review
-		return {"kind": "view", "label": "查看AI复盘"}
-	if cached_status == "failed":
-		_battle_review_last_review = cached_review
-		return {"kind": "retry", "label": "生成失败，重试"}
-	if str(_battle_review_last_review.get("status", "")) == "failed":
-		return {"kind": "retry", "label": "生成失败，重试"}
-	return {"kind": "generate", "label": "生成AI复盘"}
+	return _battle_dialog_controller.call("current_match_end_review_action", self)
 
 
 func _should_offer_battle_review() -> bool:
@@ -3628,843 +2560,152 @@ func _load_cached_battle_review() -> Dictionary:
 
 
 func _ensure_battle_review_service() -> void:
-	if _battle_review_service != null:
-		return
-	_battle_review_service = BattleReviewServiceScript.new()
-	if _battle_review_service == null:
-		return
-	if _battle_review_service.has_method("configure_dependencies"):
-		_battle_review_service.call("configure_dependencies", null, null, _battle_review_store, null)
-	if _battle_review_service.has_signal("status_changed") and not _battle_review_service.status_changed.is_connected(_on_battle_review_status_changed):
-		_battle_review_service.status_changed.connect(_on_battle_review_status_changed)
-	if _battle_review_service.has_signal("review_completed") and not _battle_review_service.review_completed.is_connected(_on_battle_review_completed):
-		_battle_review_service.review_completed.connect(_on_battle_review_completed)
+	_battle_advice_controller.call("ensure_battle_review_service", self)
 
 
 func _begin_battle_review_generation() -> void:
-	if _battle_review_match_dir.strip_edges() == "":
-		_battle_review_last_review = {
-			"status": "failed",
-			"errors": [{"message": "match_dir unavailable"}],
-		}
-		_show_match_end_dialog(_battle_review_winner_index, _battle_review_reason)
-		return
-	_ensure_battle_review_service()
-	if _battle_review_service == null:
-		return
-	_battle_review_busy = true
-	_battle_review_progress_text = "正在筛选关键回合..."
-	_show_match_end_dialog(_battle_review_winner_index, _battle_review_reason)
-	_battle_review_service.call("generate_review", self, _battle_review_match_dir, GameManager.get_battle_review_api_config())
+	_battle_advice_controller.call("begin_battle_review_generation", self)
 
 
 func _on_battle_review_status_changed(status: String, context: Dictionary) -> void:
-	match status:
-		"selecting_turns":
-			_battle_review_busy = true
-			_battle_review_progress_text = "正在筛选关键回合..."
-		"analyzing_turn":
-			_battle_review_busy = true
-			var current_turn: int = int(context.get("turn_index", 0)) + 1
-			var total: int = int(context.get("total", 0))
-			_battle_review_progress_text = "正在分析回合 %d / %d..." % [current_turn, total]
-		"writing_review":
-			_battle_review_busy = true
-			_battle_review_progress_text = "正在写入 AI 复盘..."
-		"completed":
-			_battle_review_busy = false
-			_battle_review_progress_text = ""
-		"failed":
-			_battle_review_busy = false
-			_battle_review_progress_text = ""
-	_refresh_match_end_dialog_if_visible()
+	_battle_advice_controller.call("on_battle_review_status_changed", self, status, context)
 
 
 func _on_battle_review_completed(review: Dictionary) -> void:
-	_battle_review_last_review = review.duplicate(true)
-	_battle_review_busy = false
-	_battle_review_progress_text = ""
-	_refresh_match_end_dialog_if_visible()
+	_battle_advice_controller.call("on_battle_review_completed", self, review)
 
 
 func _refresh_match_end_dialog_if_visible() -> void:
-	if _pending_choice != "game_over" or _dialog_overlay == null or not _dialog_overlay.visible:
-		return
-	_show_match_end_dialog(_battle_review_winner_index, _battle_review_reason)
+	_battle_overlay_controller.call("refresh_match_end_dialog_if_visible", self)
 
 
 func _open_cached_battle_review() -> void:
-	var review: Dictionary = _load_cached_battle_review()
-	if review.is_empty():
-		review = _battle_review_last_review.duplicate(true)
-	if review.is_empty():
-		return
-	_show_battle_review_overlay(review)
+	_battle_overlay_controller.call("open_cached_battle_review", self)
 
 
 func _show_battle_review_overlay(review: Dictionary) -> void:
-	_review_title.text = "AI Review"
-	_review_content.text = _format_battle_review(review)
-	_review_overlay.visible = true
-	_review_regenerate_btn.disabled = _battle_review_busy
+	_battle_overlay_controller.call("show_battle_review_overlay", self, review)
 
 
 func _format_battle_review(review: Dictionary) -> String:
-	var lines: Array[String] = []
-	lines.append("[b]Status[/b] %s" % str(review.get("status", "")))
-	var selected_turns: Array = review.get("selected_turns", [])
-	var turn_reviews_by_number: Dictionary = {}
-	for turn_review_variant: Variant in review.get("turn_reviews", []):
-		if not (turn_review_variant is Dictionary):
-			continue
-		var turn_review: Dictionary = turn_review_variant
-		turn_reviews_by_number[int(turn_review.get("turn_number", 0))] = turn_review
-	lines.append("")
-	lines.append("[b]Winner Key Turn[/b]")
-	_append_review_side_v4(lines, selected_turns, "winner", turn_reviews_by_number)
-	lines.append("")
-	lines.append("[b]Loser Key Turn[/b]")
-	_append_review_side_v4(lines, selected_turns, "loser", turn_reviews_by_number)
-	var errors: Array = review.get("errors", [])
-	if not errors.is_empty():
-		lines.append("")
-		lines.append("[b]Errors[/b]")
-		for error_variant: Variant in errors:
-			if not (error_variant is Dictionary):
-				continue
-			lines.append("- %s" % str((error_variant as Dictionary).get("message", "")))
-	return "\n".join(lines)
-
-
-func _append_review_side(lines: Array[String], selected_turns: Array, side: String, turn_reviews_by_number: Dictionary) -> void:
-	var wrote_any := false
-	for turn_variant: Variant in selected_turns:
-		if not (turn_variant is Dictionary):
-			continue
-		var turn: Dictionary = turn_variant
-		if str(turn.get("side", "")) != side:
-			continue
-		wrote_any = true
-		var turn_number := int(turn.get("turn_number", 0))
-		lines.append("第 %d 回合: %s" % [turn_number, str(turn.get("reason", ""))])
-		var review_variant: Variant = turn_reviews_by_number.get(turn_number, {})
-		var turn_review: Dictionary = review_variant if review_variant is Dictionary else {}
-		var falls_short: Array = turn_review.get("why_current_line_falls_short", [])
-		if not falls_short.is_empty():
-			lines.append("当前线路的问题")
-			for item_variant: Variant in falls_short:
-				lines.append("- %s" % str(item_variant))
-		var better_line_variant: Variant = turn_review.get("better_line", {})
-		var better_line: Dictionary = better_line_variant if better_line_variant is Dictionary else {}
-		var goal := str(better_line.get("goal", ""))
-		if goal != "":
-			lines.append("目标: %s" % goal)
-		var steps: Array = better_line.get("steps", [])
-		for step_index: int in steps.size():
-			lines.append("%d. %s" % [step_index + 1, str(steps[step_index])])
-		for reason_variant: Variant in turn_review.get("why_better", []):
-			lines.append("- %s" % str(reason_variant))
-		lines.append("")
-	if not wrote_any:
-		lines.append("暂无")
+	return _battle_advice_controller.call("format_battle_review", self, review)
 
 
 func _on_review_regenerate_pressed() -> void:
-	if _review_overlay_mode == "advice":
-		_on_ai_advice_pressed()
-		return
-	_begin_battle_review_generation()
+	_battle_advice_controller.call("on_review_regenerate_pressed", self)
 
 
 func _setup_battle_advice_ui() -> void:
-	var review_buttons := _review_regenerate_btn.get_parent() as HBoxContainer
-	if review_buttons != null and _review_pin_btn == null:
-		_review_pin_btn = Button.new()
-		_review_pin_btn.name = "ReviewPinBtn"
-		_review_pin_btn.text = "固定到侧边"
-		review_buttons.add_child(_review_pin_btn)
-		review_buttons.move_child(_review_pin_btn, review_buttons.get_child_count() - 1)
-		_review_pin_btn.pressed.connect(_on_review_pin_pressed)
-		_style_hud_button(_review_pin_btn)
-		_review_pin_btn.visible = false
-
-	if _battle_advice_panel != null:
-		return
-
-	var log_panel := get_node_or_null("MainArea/LogPanel") as VBoxContainer
-	if log_panel == null:
-		return
-
-	_battle_advice_panel = PanelContainer.new()
-	_battle_advice_panel.name = "AdvicePanel"
-	_battle_advice_panel.visible = false
-	_battle_advice_panel.size_flags_vertical = Control.SIZE_FILL
-	_style_panel(_battle_advice_panel, Color(0.02, 0.08, 0.12, 0.86), Color(0.18, 0.62, 0.78, 0.9), 12)
-
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 8)
-	margin.add_theme_constant_override("margin_top", 8)
-	margin.add_theme_constant_override("margin_right", 8)
-	margin.add_theme_constant_override("margin_bottom", 8)
-	_battle_advice_panel.add_child(margin)
-
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 6)
-	margin.add_child(vbox)
-
-	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 6)
-	vbox.add_child(header)
-
-	_battle_advice_panel_title = Label.new()
-	_battle_advice_panel_title.text = "AI建议"
-	_battle_advice_panel_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header.add_child(_battle_advice_panel_title)
-
-	_battle_advice_panel_toggle_btn = Button.new()
-	_battle_advice_panel_toggle_btn.text = "折叠"
-	_battle_advice_panel_toggle_btn.pressed.connect(_on_battle_advice_panel_toggle_pressed)
-	_style_hud_button(_battle_advice_panel_toggle_btn)
-	header.add_child(_battle_advice_panel_toggle_btn)
-
-	_battle_advice_panel_content = RichTextLabel.new()
-	_battle_advice_panel_content.bbcode_enabled = true
-	_battle_advice_panel_content.fit_content = false
-	_battle_advice_panel_content.scroll_active = true
-	_battle_advice_panel_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	vbox.add_child(_battle_advice_panel_content)
-
-	log_panel.add_child(_battle_advice_panel)
-	log_panel.move_child(_battle_advice_panel, 1)
+	_battle_advice_controller.call("setup_battle_advice_ui", self)
 
 
 func _should_offer_battle_advice() -> bool:
-	return GameManager.current_mode == GameManager.GameMode.TWO_PLAYER
+	return _battle_advice_controller.call("should_offer_battle_advice", self)
 
 
 func _current_battle_advice_match_dir() -> String:
-	if _battle_review_match_dir.strip_edges() != "":
-		return _battle_review_match_dir
-	if _battle_recorder != null and _battle_recorder.has_method("get_match_dir"):
-		return str(_battle_recorder.call("get_match_dir"))
-	return ""
+	return _battle_advice_controller.call("current_battle_advice_match_dir", self)
 
 
 func _ensure_battle_advice_service() -> void:
-	if _battle_advice_service != null:
-		return
-	_battle_advice_service = BattleAdviceServiceScript.new()
-	if _battle_advice_service == null:
-		return
-	if _battle_advice_service.has_signal("status_changed") and not _battle_advice_service.status_changed.is_connected(_on_battle_advice_status_changed):
-		_battle_advice_service.status_changed.connect(_on_battle_advice_status_changed)
-	if _battle_advice_service.has_signal("advice_completed") and not _battle_advice_service.advice_completed.is_connected(_on_battle_advice_completed):
-		_battle_advice_service.advice_completed.connect(_on_battle_advice_completed)
+	_battle_advice_controller.call("ensure_battle_advice_service", self)
 
 
 func _on_ai_advice_pressed() -> void:
-	if not _should_offer_battle_advice() or _battle_advice_busy:
-		return
-
-	var match_dir := _current_battle_advice_match_dir()
-	if match_dir.strip_edges() == "":
-		_show_battle_advice_overlay({
-			"status": "failed",
-			"errors": [{"message": "match_dir unavailable"}],
-		})
-		return
-
-	if _battle_advice_initial_snapshot.is_empty():
-		_battle_advice_initial_snapshot = _build_battle_advice_initial_snapshot()
-
-	_ensure_battle_advice_service()
-	if _battle_advice_service == null:
-		return
-
-	_battle_advice_busy = true
-	_battle_advice_progress_text = "正在生成 AI 建议..."
-	_show_battle_advice_overlay({"status": "running"})
-	_battle_advice_service.call(
-		"generate_advice",
-		self,
-		match_dir,
-		_build_battle_state_snapshot(),
-		_battle_advice_initial_snapshot,
-		GameManager.get_battle_review_api_config(),
-		_view_player
-	)
-	_refresh_ui()
+	_battle_advice_controller.call("on_ai_advice_pressed", self)
 
 
 func _on_battle_advice_status_changed(status: String, _context: Dictionary) -> void:
-	if status == "completed" or status == "failed":
-		_battle_advice_busy = false
-		_battle_advice_progress_text = ""
-	else:
-		_battle_advice_busy = true
-		if _battle_advice_progress_text == "":
-			_battle_advice_progress_text = "正在生成 AI 建议..."
-	if _review_overlay_mode == "advice" and _review_overlay.visible:
-		_review_regenerate_btn.disabled = _battle_advice_busy
-		if _review_pin_btn != null:
-			_review_pin_btn.disabled = _battle_advice_busy
-	_refresh_ui()
+	_battle_advice_controller.call("on_battle_advice_status_changed", self, status, _context)
 
 
 func _on_battle_advice_completed(result: Dictionary) -> void:
-	_battle_advice_last_result = result.duplicate(true)
-	_battle_advice_busy = false
-	_battle_advice_progress_text = ""
-	_show_battle_advice_overlay(result)
-	_refresh_battle_advice_panel()
-	_refresh_ui()
+	_battle_advice_controller.call("on_battle_advice_completed", self, result)
 
 
 func _show_battle_advice_overlay(result: Dictionary) -> void:
-	_review_overlay_mode = "advice"
-	_review_title.text = "AI建议"
-	_review_regenerate_btn.visible = true
-	_review_regenerate_btn.text = "重新分析"
-	_review_regenerate_btn.disabled = _battle_advice_busy
-	if _review_pin_btn != null:
-		_review_pin_btn.visible = true
-		_review_pin_btn.disabled = _battle_advice_busy
-	_review_content.text = _format_battle_advice(result)
-	_review_overlay.visible = true
+	_battle_advice_controller.call("show_battle_advice_overlay", self, result)
 
 
 func _format_battle_advice(result: Dictionary) -> String:
-	var status := str(result.get("status", ""))
-	if status == "running":
-		return "[b]AI建议[/b]\n%s" % _battle_advice_progress_text
-
-	var lines: Array[String] = []
-	lines.append("[b]状态[/b] %s" % status)
-
-	if status == "failed":
-		lines.append("")
-		lines.append("[b]错误[/b]")
-		for error_variant: Variant in result.get("errors", []):
-			if error_variant is Dictionary:
-				lines.append("- %s" % str((error_variant as Dictionary).get("message", "")))
-		return "\n".join(lines)
-
-	var thesis := str(result.get("strategic_thesis", ""))
-	if thesis != "":
-		lines.append("")
-		lines.append("[b]核心判断[/b]")
-		lines.append(thesis)
-
-	_append_advice_step_block(lines, "本回合主线", result.get("current_turn_main_line", []))
-	_append_advice_branch_block(lines, "条件分支", result.get("conditional_branches", []))
-	_append_advice_goal_block(lines, "拿奖节奏判断", result.get("prize_plan", []))
-	_append_advice_string_list(lines, "原因说明", result.get("why_this_line", []))
-	_append_advice_risk_block(lines, "风险提醒", result.get("risk_watchouts", []))
-
-	var confidence := str(result.get("confidence", ""))
-	if confidence != "":
-		lines.append("")
-		lines.append("[b]置信度[/b] %s" % confidence)
-	return "\n".join(lines)
-
-
-func _append_advice_step_block(lines: Array[String], title: String, steps_variant: Variant) -> void:
-	if not (steps_variant is Array):
-		return
-	var steps: Array = steps_variant
-	if steps.is_empty():
-		return
-	lines.append("")
-	lines.append("[b]%s[/b]" % title)
-	for step_variant: Variant in steps:
-		if not (step_variant is Dictionary):
-			continue
-		var step: Dictionary = step_variant
-		lines.append("%d. %s" % [int(step.get("step", 0)), str(step.get("action", ""))])
-		var why := str(step.get("why", ""))
-		if why != "":
-			lines.append("   %s" % why)
-
-
-func _append_advice_branch_block(lines: Array[String], title: String, branches_variant: Variant) -> void:
-	if not (branches_variant is Array):
-		return
-	var branches: Array = branches_variant
-	if branches.is_empty():
-		return
-	lines.append("")
-	lines.append("[b]%s[/b]" % title)
-	for branch_variant: Variant in branches:
-		if not (branch_variant is Dictionary):
-			continue
-		var branch: Dictionary = branch_variant
-		lines.append("- 如果 %s" % str(branch.get("if", "")))
-		for step_variant: Variant in branch.get("then", []):
-			lines.append("  - %s" % str(step_variant))
-
-
-func _append_advice_goal_block(lines: Array[String], title: String, goals_variant: Variant) -> void:
-	if not (goals_variant is Array):
-		return
-	var goals: Array = goals_variant
-	if goals.is_empty():
-		return
-	lines.append("")
-	lines.append("[b]%s[/b]" % title)
-	for goal_variant: Variant in goals:
-		if not (goal_variant is Dictionary):
-			continue
-		var goal: Dictionary = goal_variant
-		lines.append("- [%s] %s" % [str(goal.get("horizon", "")), str(goal.get("goal", ""))])
-
-
-func _append_advice_string_list(lines: Array[String], title: String, values_variant: Variant) -> void:
-	if not (values_variant is Array):
-		return
-	var values: Array = values_variant
-	if values.is_empty():
-		return
-	lines.append("")
-	lines.append("[b]%s[/b]" % title)
-	for value_variant: Variant in values:
-		lines.append("- %s" % str(value_variant))
-
-
-func _append_advice_risk_block(lines: Array[String], title: String, risks_variant: Variant) -> void:
-	if not (risks_variant is Array):
-		return
-	var risks: Array = risks_variant
-	if risks.is_empty():
-		return
-	lines.append("")
-	lines.append("[b]%s[/b]" % title)
-	for risk_variant: Variant in risks:
-		if not (risk_variant is Dictionary):
-			continue
-		var risk: Dictionary = risk_variant
-		lines.append("- %s" % str(risk.get("risk", "")))
-		lines.append("  %s" % str(risk.get("mitigation", "")))
+	return _battle_advice_controller.call("format_battle_advice", self, result)
 
 
 func _on_review_pin_pressed() -> void:
-	_battle_advice_pinned = true
-	_refresh_battle_advice_panel()
+	_battle_advice_controller.call("on_review_pin_pressed", self)
 
 
 func _on_battle_advice_panel_toggle_pressed() -> void:
-	_battle_advice_panel_collapsed = not _battle_advice_panel_collapsed
-	_refresh_battle_advice_panel()
+	_battle_advice_controller.call("on_battle_advice_panel_toggle_pressed", self)
 
 
 func _refresh_battle_advice_panel() -> void:
-	if _battle_advice_panel == null or _battle_advice_panel_content == null:
-		return
-	var has_content := not _battle_advice_last_result.is_empty()
-	_battle_advice_panel.visible = _battle_advice_pinned and (has_content or _battle_advice_busy)
-	if not _battle_advice_panel.visible:
-		return
-	_battle_advice_panel_title.text = "AI建议"
-	_battle_advice_panel_toggle_btn.text = "展开" if _battle_advice_panel_collapsed else "折叠"
-	_battle_advice_panel_content.visible = not _battle_advice_panel_collapsed
-	if _battle_advice_busy and _battle_advice_last_result.is_empty():
-		_battle_advice_panel_content.text = "[b]AI建议[/b]\n%s" % _battle_advice_progress_text
-	else:
-		_battle_advice_panel_content.text = _format_battle_advice(_battle_advice_last_result)
-
-
-func _append_review_side_v2(lines: Array[String], selected_turns: Array, side: String, turn_reviews_by_number: Dictionary) -> void:
-	var wrote_any := false
-	for turn_variant: Variant in selected_turns:
-		if not (turn_variant is Dictionary):
-			continue
-		var turn: Dictionary = turn_variant
-		if str(turn.get("side", "")) != side:
-			continue
-		wrote_any = true
-		var turn_number := int(turn.get("turn_number", 0))
-		lines.append("第 %d 回合: %s" % [turn_number, str(turn.get("reason", ""))])
-		var review_variant: Variant = turn_reviews_by_number.get(turn_number, {})
-		var turn_review: Dictionary = review_variant if review_variant is Dictionary else {}
-		_append_review_turn_goal_v2(lines, turn_review)
-		_append_review_list_v2(lines, "根因链:", turn_review.get("root_causes", []))
-		_append_review_list_v2(lines, "当前线路的问题:", turn_review.get("why_current_line_falls_short", []))
-		_append_review_line_block_v2(lines, "最佳路线:", turn_review.get("best_line", {}))
-		_append_review_list_v2(lines, "为何更适合当前对局:", turn_review.get("why_this_is_best_in_matchup", []))
-		_append_review_list_v2(lines, "对手可能的回应:", turn_review.get("expected_opponent_response", []))
-		_append_review_list_v2(lines, "权衡与风险:", turn_review.get("tradeoffs_and_risks", []))
-		_append_review_line_block_v2(lines, "鍚庡绾胯矾:", turn_review.get("fallback_line_if_goal_misses", {}))
-		_append_review_legacy_block_v2(lines, turn_review)
-		var coach_takeaway := str(turn_review.get("coach_takeaway", ""))
-		if coach_takeaway != "":
-			lines.append("教练总结: %s" % coach_takeaway)
-		lines.append("")
-	if not wrote_any:
-		lines.append("暂无")
-
-
-func _append_review_turn_goal_v2(lines: Array[String], turn_review: Dictionary) -> void:
-	var turn_goal := str(turn_review.get("turn_goal", ""))
-	if turn_goal != "":
-		lines.append("回合目标: %s" % turn_goal)
-
-
-func _append_review_list_v2(lines: Array[String], title: String, values_variant: Variant) -> void:
-	if not (values_variant is Array):
-		return
-	var values: Array = values_variant
-	if values.is_empty():
-		return
-	lines.append(title)
-	for item_variant: Variant in values:
-		lines.append("- %s" % str(item_variant))
-
-
-func _append_review_line_block_v2(lines: Array[String], title: String, block_variant: Variant) -> void:
-	if not (block_variant is Dictionary):
-		return
-	var block: Dictionary = block_variant
-	var summary := str(block.get("summary", ""))
-	if summary != "":
-		lines.append("%s %s" % [title, summary])
-	var steps: Array = block.get("steps", [])
-	for step_index: int in steps.size():
-		lines.append("%d. %s" % [step_index + 1, str(steps[step_index])])
-
-
-func _append_review_legacy_block_v2(lines: Array[String], turn_review: Dictionary) -> void:
-	var better_line_variant: Variant = turn_review.get("better_line", {})
-	if better_line_variant is Dictionary:
-		var better_line: Dictionary = better_line_variant
-		var goal := str(better_line.get("goal", ""))
-		if goal != "":
-			lines.append("目标: %s" % goal)
-		var steps: Array = better_line.get("steps", [])
-		for step_index: int in steps.size():
-			lines.append("%d. %s" % [step_index + 1, str(steps[step_index])])
-	for reason_variant: Variant in turn_review.get("why_better", []):
-		lines.append("- %s" % str(reason_variant))
-
-
-func _append_review_side_v3(lines: Array[String], selected_turns: Array, side: String, turn_reviews_by_number: Dictionary) -> void:
-	var wrote_any := false
-	for turn_variant: Variant in selected_turns:
-		if not (turn_variant is Dictionary):
-			continue
-		var turn: Dictionary = turn_variant
-		if str(turn.get("side", "")) != side:
-			continue
-		wrote_any = true
-		var turn_number := int(turn.get("turn_number", 0))
-		lines.append("Turn %d: %s" % [turn_number, str(turn.get("reason", ""))])
-		var review_variant: Variant = turn_reviews_by_number.get(turn_number, {})
-		var turn_review: Dictionary = review_variant if review_variant is Dictionary else {}
-		var turn_goal := str(turn_review.get("turn_goal", ""))
-		if turn_goal != "":
-			lines.append("回合目标: %s" % turn_goal)
-		_append_review_array_block_v3(lines, "鏍规湰鍘熷洜", turn_review.get("root_causes", []))
-		_append_review_array_block_v3(lines, "\u8930\u64B3\u58A0\u7EFE\u80EF\u77FE\u9428\u52EF\u68F6\u68F0?", turn_review.get("why_current_line_falls_short", []))
-		_append_review_dict_block_v3(lines, "Best line", turn_review.get("best_line", {}))
-		_append_review_array_block_v3(lines, "Matchup reasons", turn_review.get("why_this_is_best_in_matchup", []))
-		_append_review_array_block_v3(lines, "Expected opponent response", turn_review.get("expected_opponent_response", []))
-		_append_review_array_block_v3(lines, "Tradeoffs and risks", turn_review.get("tradeoffs_and_risks", []))
-		_append_review_dict_block_v3(lines, "Fallback line", turn_review.get("fallback_line_if_goal_misses", {}))
-		var better_line_variant: Variant = turn_review.get("better_line", {})
-		if better_line_variant is Dictionary:
-			var better_line: Dictionary = better_line_variant
-			var goal := str(better_line.get("goal", ""))
-			if goal != "":
-				lines.append("目标: %s" % goal)
-			var steps: Array = better_line.get("steps", [])
-			for step_index: int in steps.size():
-				lines.append("%d. %s" % [step_index + 1, str(steps[step_index])])
-		for reason_variant: Variant in turn_review.get("why_better", []):
-			lines.append("- %s" % str(reason_variant))
-		var coach_takeaway := str(turn_review.get("coach_takeaway", ""))
-		if coach_takeaway != "":
-			lines.append("Coach takeaway: %s" % coach_takeaway)
-		lines.append("")
-	if not wrote_any:
-		lines.append("暂无")
-
-
-func _append_review_array_block_v3(lines: Array[String], title: String, values_variant: Variant) -> void:
-	if not (values_variant is Array):
-		return
-	var values: Array = values_variant
-	if values.is_empty():
-		return
-	lines.append(title)
-	for item_variant: Variant in values:
-		lines.append("- %s" % str(item_variant))
-
-
-func _append_review_dict_block_v3(lines: Array[String], title: String, block_variant: Variant) -> void:
-	if not (block_variant is Dictionary):
-		return
-	var block: Dictionary = block_variant
-	var summary := str(block.get("summary", ""))
-	if summary != "":
-		lines.append("%s: %s" % [title, summary])
-	var steps: Array = block.get("steps", [])
-	for step_index: int in steps.size():
-		lines.append("%d. %s" % [step_index + 1, str(steps[step_index])])
-
-
-func _append_review_side_v4(lines: Array[String], selected_turns: Array, side: String, turn_reviews_by_number: Dictionary) -> void:
-	var wrote_any := false
-	for turn_variant: Variant in selected_turns:
-		if not (turn_variant is Dictionary):
-			continue
-		var turn: Dictionary = turn_variant
-		if str(turn.get("side", "")) != side:
-			continue
-		wrote_any = true
-		var turn_number := int(turn.get("turn_number", 0))
-		lines.append("Turn %d: %s" % [turn_number, str(turn.get("reason", ""))])
-		var review_variant: Variant = turn_reviews_by_number.get(turn_number, {})
-		var turn_review: Dictionary = review_variant if review_variant is Dictionary else {}
-		var turn_goal := str(turn_review.get("turn_goal", ""))
-		if turn_goal != "":
-			lines.append("Goal: %s" % turn_goal)
-		var timing_window_variant: Variant = turn_review.get("timing_window", {})
-		var timing_window: Dictionary = timing_window_variant if timing_window_variant is Dictionary else {}
-		var timing_assessment := str(timing_window.get("assessment", ""))
-		if timing_assessment != "":
-			lines.append("Timing: %s" % timing_assessment)
-		_append_review_short_list_v4(lines, "Current line issues", turn_review.get("why_current_line_falls_short", []))
-		_append_review_best_line_v4(lines, turn_review.get("best_line", {}))
-		var coach_takeaway := str(turn_review.get("coach_takeaway", ""))
-		if coach_takeaway != "":
-			lines.append("Takeaway: %s" % coach_takeaway)
-		lines.append("")
-	if not wrote_any:
-		lines.append("None")
-
-
-func _append_review_short_list_v4(lines: Array[String], title: String, values_variant: Variant) -> void:
-	if not (values_variant is Array):
-		return
-	var values: Array = values_variant
-	if values.is_empty():
-		return
-	lines.append("%s:" % title)
-	for item_variant: Variant in values:
-		lines.append("- %s" % str(item_variant))
-
-
-func _append_review_best_line_v4(lines: Array[String], block_variant: Variant) -> void:
-	if not (block_variant is Dictionary):
-		return
-	var block: Dictionary = block_variant
-	var summary := str(block.get("summary", ""))
-	if summary != "":
-		lines.append("Best line: %s" % summary)
-	var steps: Array = block.get("steps", [])
-	for step_index: int in steps.size():
-		lines.append("%d. %s" % [step_index + 1, str(steps[step_index])])
+	_battle_advice_controller.call("refresh_battle_advice_panel", self)
 
 
 func _build_battle_record_meta() -> Dictionary:
-	var player_labels: Array[String] = []
-	for deck_id_variant: Variant in GameManager.selected_deck_ids:
-		var deck_id: int = int(deck_id_variant)
-		var deck: DeckData = CardDatabase.get_deck(deck_id)
-		if deck != null and deck.deck_name.strip_edges() != "":
-			player_labels.append(deck.deck_name)
-		else:
-			player_labels.append("player_%d" % player_labels.size())
-	return {
-		"mode": "two_player",
-		"player_types": ["human", "human"],
-		"selected_deck_ids": GameManager.selected_deck_ids.duplicate(),
-		"player_labels": player_labels,
-		"first_player_index": _gsm.game_state.first_player_index if _gsm != null and _gsm.game_state != null else GameManager.first_player_choice,
-	}
+	var meta_variant: Variant = _battle_recording_controller.call("build_battle_record_meta", self)
+	return meta_variant if meta_variant is Dictionary else {}
 
 
 func _build_battle_initial_state() -> Dictionary:
-	return _build_battle_state_snapshot()
+	var state_variant: Variant = _battle_recording_controller.call("build_battle_initial_state", self)
+	return state_variant if state_variant is Dictionary else {}
 
 
 func _build_battle_advice_initial_snapshot() -> Dictionary:
-	if _gsm == null or _gsm.game_state == null:
-		return {}
-	var state: GameState = _gsm.game_state
-	var players: Array[Dictionary] = []
-	for player_variant: Variant in state.players:
-		if not (player_variant is PlayerState):
-			continue
-		var player := player_variant as PlayerState
-		players.append({
-			"player_index": player.player_index,
-			"decklist": _serialize_card_list(player.deck),
-		})
-	return {"players": players}
+	return _battle_advice_controller.call("build_battle_advice_initial_snapshot", self)
 
 
 func _build_battle_state_snapshot() -> Dictionary:
-	if _gsm == null or _gsm.game_state == null:
-		return {}
-	var state: GameState = _gsm.game_state
-	return {
-		"turn_number": state.turn_number,
-		"phase": _recording_phase_name(),
-		"current_player_index": state.current_player_index,
-		"first_player_index": state.first_player_index,
-		"winner_index": state.winner_index,
-		"win_reason": state.win_reason,
-		"energy_attached_this_turn": state.energy_attached_this_turn,
-		"supporter_used_this_turn": state.supporter_used_this_turn,
-		"stadium_played_this_turn": state.stadium_played_this_turn,
-		"retreat_used_this_turn": state.retreat_used_this_turn,
-		"stadium_card": _serialize_card_instance(state.stadium_card),
-		"stadium_owner_index": state.stadium_owner_index,
-		"players": [
-			_build_battle_initial_player_state(state.players[0]) if state.players.size() > 0 else {},
-			_build_battle_initial_player_state(state.players[1]) if state.players.size() > 1 else {},
-		],
-	}
+	var snapshot_variant: Variant = _battle_recording_controller.call("build_battle_state_snapshot", self)
+	return snapshot_variant if snapshot_variant is Dictionary else {}
 
 
 func _build_battle_initial_player_state(player: PlayerState) -> Dictionary:
-	if player == null:
-		return {}
-	return {
-		"player_index": player.player_index,
-		"hand_count": player.hand.size(),
-		"deck_count": player.deck.size(),
-		"discard_count": player.discard_pile.size(),
-		"prize_count": player.prizes.size(),
-		"hand": _serialize_card_list(player.hand),
-		"deck": _serialize_card_list(player.deck),
-		"prizes": _serialize_card_list(player.prizes),
-		"discard_pile": _serialize_card_list(player.discard_pile),
-		"lost_zone": _serialize_card_list(player.lost_zone),
-		"active": _serialize_pokemon_slot(player.active_pokemon),
-		"bench": _serialize_slot_list(player.bench),
-	}
+	var state_variant: Variant = _battle_recording_controller.call("build_battle_initial_player_state", player)
+	return state_variant if state_variant is Dictionary else {}
 
 
 func _slot_record_names(slots: Array) -> Array[String]:
-	var names: Array[String] = []
-	for slot_variant: Variant in slots:
-		names.append(_slot_record_name(slot_variant as PokemonSlot if slot_variant is PokemonSlot else null))
-	return names
+	var names_variant: Variant = _battle_recording_controller.call("slot_record_names", slots)
+	return names_variant if names_variant is Array[String] else []
 
 
 func _slot_record_name(slot: PokemonSlot) -> String:
-	return slot.get_pokemon_name() if slot != null else ""
+	return str(_battle_recording_controller.call("slot_record_name", slot))
 
 
 func _recording_phase_name() -> String:
-	if _gsm == null or _gsm.game_state == null:
-		return ""
-	return str(_gsm.game_state.phase)
+	return str(_battle_recording_controller.call("recording_phase_name", self))
 
 
 func _record_battle_state_snapshot(snapshot_reason: String, extra_data: Dictionary = {}) -> void:
-	if not _battle_recording_started:
-		return
-	var event := {
-		"event_type": "state_snapshot",
-		"snapshot_reason": snapshot_reason,
-		"player_index": _gsm.game_state.current_player_index if _gsm != null and _gsm.game_state != null else -1,
-		"turn_number": _gsm.game_state.turn_number if _gsm != null and _gsm.game_state != null else 0,
-		"phase": _recording_phase_name(),
-		"state": _build_battle_state_snapshot(),
-	}
-	for key: Variant in extra_data.keys():
-		event[str(key)] = extra_data.get(key)
-	_record_battle_event(event)
+	_battle_recording_controller.call("record_battle_state_snapshot", self, snapshot_reason, extra_data)
 
 
 func _serialize_slot_list(slots: Array) -> Array[Dictionary]:
-	var serialized: Array[Dictionary] = []
-	for slot_variant: Variant in slots:
-		serialized.append(_serialize_pokemon_slot(slot_variant as PokemonSlot if slot_variant is PokemonSlot else null))
-	return serialized
+	var serialized_variant: Variant = _battle_recording_controller.call("serialize_slot_list", slots)
+	return serialized_variant if serialized_variant is Array[Dictionary] else []
 
 
 func _serialize_card_list(cards: Array) -> Array[Dictionary]:
-	var serialized: Array[Dictionary] = []
-	for card_variant: Variant in cards:
-		serialized.append(_serialize_card_instance(card_variant as CardInstance if card_variant is CardInstance else null))
-	return serialized
+	var serialized_variant: Variant = _battle_recording_controller.call("serialize_card_list", cards)
+	return serialized_variant if serialized_variant is Array[Dictionary] else []
 
 
 func _serialize_pokemon_slot(slot: PokemonSlot) -> Dictionary:
-	if slot == null:
-		return {}
-	return {
-		"pokemon_name": slot.get_pokemon_name(),
-		"prize_count": slot.get_prize_count(),
-		"damage_counters": slot.damage_counters,
-		"remaining_hp": slot.get_remaining_hp(),
-		"max_hp": slot.get_max_hp(),
-		"retreat_cost": slot.get_retreat_cost(),
-		"attached_energy": _serialize_card_list(slot.attached_energy),
-		"attached_tool": _serialize_card_instance(slot.attached_tool),
-		"status_conditions": slot.status_conditions.duplicate(true),
-		"effects": slot.effects.duplicate(true),
-		"turn_played": slot.turn_played,
-		"turn_evolved": slot.turn_evolved,
-		"pokemon_stack": _serialize_card_list(slot.pokemon_stack),
-	}
+	var serialized_variant: Variant = _battle_recording_controller.call("serialize_pokemon_slot", slot)
+	return serialized_variant if serialized_variant is Dictionary else {}
 
 
 func _serialize_card_instance(card: CardInstance) -> Dictionary:
-	if card == null:
-		return {}
-	var card_data := card.card_data
-	return {
-		"card_name": card_data.name if card_data != null else "",
-		"instance_id": card.instance_id,
-		"owner_index": card.owner_index,
-		"face_up": card.face_up,
-		"card_type": card_data.card_type if card_data != null else "",
-		"mechanic": card_data.mechanic if card_data != null else "",
-		"description": card_data.description if card_data != null else "",
-		"stage": card_data.stage if card_data != null else "",
-		"hp": card_data.hp if card_data != null else 0,
-		"energy_type": card_data.energy_type if card_data != null else "",
-		"effect_id": card_data.effect_id if card_data != null else "",
-		"energy_provides": card_data.energy_provides if card_data != null else "",
-		"attacks": card_data.attacks.duplicate(true) if card_data != null else [],
-		"abilities": card_data.abilities.duplicate(true) if card_data != null else [],
-	}
+	var serialized_variant: Variant = _battle_recording_controller.call("serialize_card_instance", card)
+	return serialized_variant if serialized_variant is Dictionary else {}
 
 
 func _sanitize_recording_value(value: Variant) -> Variant:
-	if value is Dictionary:
-		var sanitized_dict := {}
-		for key: Variant in (value as Dictionary).keys():
-			sanitized_dict[str(key)] = _sanitize_recording_value((value as Dictionary).get(key))
-		return sanitized_dict
-	if value is Array:
-		var sanitized_array: Array = []
-		for entry: Variant in value:
-			sanitized_array.append(_sanitize_recording_value(entry))
-		return sanitized_array
-	if value is PokemonSlot:
-		return _serialize_pokemon_slot(value)
-	if value is CardInstance:
-		return _serialize_card_instance(value)
-	if value is CardData:
-		var card_data: CardData = value
-		return {
-			"card_name": card_data.name,
-			"card_type": card_data.card_type,
-			"mechanic": card_data.mechanic,
-			"description": card_data.description,
-			"stage": card_data.stage,
-			"hp": card_data.hp,
-			"energy_type": card_data.energy_type,
-			"effect_id": card_data.effect_id,
-			"energy_provides": card_data.energy_provides,
-			"attacks": card_data.attacks.duplicate(true),
-			"abilities": card_data.abilities.duplicate(true),
-		}
-	return value
+	return _battle_recording_controller.call("sanitize_recording_value", self, value)
 
 
 func set_ai_version_registry_for_test(registry: RefCounted) -> void:
@@ -4645,6 +2886,7 @@ func _is_ui_blocking_ai() -> bool:
 	return (
 		dialog_blocks_ai
 		or (_handover_panel != null and _handover_panel.visible)
+		or _has_pending_coin_animation()
 		or (_pending_choice == "take_prize" and not _is_ai_prize_prompt())
 		or _pending_prize_animating
 		or (_field_interaction_overlay != null and _field_interaction_overlay.visible and not _is_ai_effect_prompt())
@@ -4712,169 +2954,23 @@ func _run_ai_step() -> void:
 
 
 func _on_hand_card_clicked(inst: CardInstance, _panel: PanelContainer) -> void:
-	_runtime_log(
-		"hand_card_clicked",
-		"card=%s selected_before=%s %s" % [
-			_card_instance_label(inst),
-			_card_instance_label(_selected_hand_card),
-			_state_snapshot()
-		]
-	)
-	if _is_field_interaction_active():
-		return
-	if _selected_hand_card == inst:
-		_selected_hand_card = null
-		_refresh_hand()
-		return
-
-	var cp: int = _gsm.game_state.current_player_index
-	var cd := inst.card_data
-
-	if cd.card_type == "Supporter":
-		if _gsm.rule_validator.can_play_supporter(_gsm.game_state, cp) or _gsm._can_play_supporter_exception(cp, inst):
-			_try_play_trainer_with_interaction(cp, inst)
-		else:
-			_log("当前不能使用支援者卡")
-		return
-	if cd.card_type == "Item":
-		_try_play_trainer_with_interaction(cp, inst)
-		return
-	if cd.card_type == "Stadium":
-		_try_play_stadium_with_interaction(cp, inst)
-		return
-	if cd.is_basic_pokemon():
-		_selected_hand_card = inst
-		_refresh_hand()
-		_log("已选中 %s，点击备战区进行放置" % cd.name)
-		return
-	if cd.is_pokemon() and cd.stage != "Basic":
-		_selected_hand_card = inst
-		_refresh_hand()
-		_log("已选中 %s，点击一只宝可梦进行进化" % cd.name)
-		return
-	if cd.card_type == "Basic Energy" or cd.card_type == "Special Energy":
-		_selected_hand_card = inst
-		_refresh_hand()
-		_log("已选中 %s，点击一只宝可梦附着能量" % cd.name)
-		return
-	if cd.card_type == "Tool":
-		_selected_hand_card = inst
-		_refresh_hand()
-		_log("已选中 %s，点击一只宝可梦附着道具" % cd.name)
-		return
+	_battle_action_controller.call("on_hand_card_clicked", self, inst, _panel)
 
 
 func _try_play_trainer_with_interaction(player_index: int, card: CardInstance) -> void:
-	var effect: BaseEffect = _gsm.effect_processor.get_effect(card.card_data.effect_id)
-	if effect == null:
-		if not _gsm.play_trainer(player_index, card, []):
-			_log("无法使用 %s" % card.card_data.name)
-		else:
-			_refresh_ui_after_successful_action()
-		return
-
-	if not effect.can_execute(card, _gsm.game_state):
-		_log("%s 当前无法使用" % card.card_data.name)
-		return
-
-	var steps: Array[Dictionary] = effect.get_interaction_steps(card, _gsm.game_state)
-	if steps.is_empty():
-		if not _gsm.play_trainer(player_index, card, []):
-			_log("无法使用 %s" % card.card_data.name)
-		else:
-			var empty_message: String = effect.get_empty_interaction_message(card, _gsm.game_state)
-			if empty_message != "":
-				_log(empty_message)
-			_refresh_ui_after_successful_action()
-		return
-
-	_start_effect_interaction("trainer", player_index, steps, card)
-	_maybe_run_ai()
+	_battle_action_controller.call("try_play_trainer_with_interaction", self, player_index, card)
 
 
 func _try_play_stadium_with_interaction(player_index: int, card: CardInstance) -> void:
-	var effect: BaseEffect = _gsm.effect_processor.get_effect(card.card_data.effect_id)
-	if effect == null:
-		if not _gsm.play_stadium(player_index, card):
-			_log("无法打出这张竞技场卡")
-		else:
-			_refresh_ui_after_successful_action()
-		return
-
-	var steps: Array[Dictionary] = effect.get_on_play_interaction_steps(card, _gsm.game_state)
-	if steps.is_empty():
-		if not _gsm.play_stadium(player_index, card):
-			_log("无法打出这张竞技场卡")
-		else:
-			_refresh_ui_after_successful_action()
-		return
-
-	_start_effect_interaction("play_stadium", player_index, steps, card)
-	_maybe_run_ai()
+	_battle_action_controller.call("try_play_stadium_with_interaction", self, player_index, card)
 
 
 func _try_use_ability_with_interaction(player_index: int, slot: PokemonSlot, ability_index: int) -> void:
-	var card: CardInstance = _gsm.effect_processor.get_ability_source_card(
-		slot,
-		ability_index,
-		_gsm.game_state
-	)
-	if card == null:
-		return
-	var effect: BaseEffect = _gsm.effect_processor.get_ability_effect(
-		slot,
-		ability_index,
-		_gsm.game_state
-	)
-	if effect == null:
-		if _gsm.use_ability(player_index, slot, ability_index):
-			_refresh_ui_after_successful_action(true)
-		else:
-			_log("%s 的特性当前无法使用" % card.card_data.name)
-		return
-	if not _gsm.effect_processor.can_use_ability(slot, _gsm.game_state, ability_index):
-		_log("%s 的特性当前无法使用" % card.card_data.name)
-		return
-	var steps: Array[Dictionary] = effect.get_interaction_steps(card, _gsm.game_state)
-	if steps.is_empty():
-		if _gsm.use_ability(player_index, slot, ability_index):
-			var ability_name: String = _gsm.effect_processor.get_ability_name(
-				slot,
-				ability_index,
-				_gsm.game_state
-			)
-			_log("已使用特性：%s" % ability_name)
-			_refresh_ui_after_successful_action(true)
-		else:
-			_log("%s 的特性当前没有可选目标" % card.card_data.name)
-		return
-	_start_effect_interaction("ability", player_index, steps, card, slot, ability_index)
-	_maybe_run_ai()
+	_battle_action_controller.call("try_use_ability_with_interaction", self, player_index, slot, ability_index)
 
 
 func _try_use_stadium_with_interaction(player_index: int) -> void:
-	if _gsm == null or _gsm.game_state.stadium_card == null:
-		return
-	var stadium_card: CardInstance = _gsm.game_state.stadium_card
-	var effect: BaseEffect = _gsm.effect_processor.get_effect(stadium_card.card_data.effect_id)
-	if effect == null:
-		if _gsm.use_stadium_effect(player_index):
-			_refresh_ui_after_successful_action()
-		else:
-			_log("当前竞技场效果无法使用")
-		return
-	if not _gsm.can_use_stadium_effect(player_index):
-		_log("当前竞技场效果无法使用")
-		return
-	var steps: Array[Dictionary] = effect.get_interaction_steps(stadium_card, _gsm.game_state)
-	if steps.is_empty():
-		if _gsm.use_stadium_effect(player_index):
-			_refresh_ui_after_successful_action()
-		else:
-			_log("当前竞技场效果无法使用")
-		return
-	_start_effect_interaction("stadium", player_index, steps, stadium_card)
-	_maybe_run_ai()
+	_battle_action_controller.call("try_use_stadium_with_interaction", self, player_index)
 
 
 func _start_effect_interaction(
@@ -4887,341 +2983,67 @@ func _start_effect_interaction(
 	attack_data: Dictionary = {},
 	attack_effects: Array[BaseEffect] = []
 ) -> void:
-	# Defensive reset so a previous interactive effect cannot leak state into the next one.
-	_reset_effect_interaction()
-	_pending_effect_kind = kind
-	_pending_effect_player_index = player_index
-	_pending_effect_card = card
-	_pending_effect_slot = slot
-	_pending_effect_ability_index = ability_index
-	_pending_effect_attack_data = attack_data.duplicate(true)
-	_pending_effect_attack_effects = attack_effects.duplicate()
-	_pending_effect_steps = steps
-	_pending_effect_step_index = 0
-	_pending_effect_context = {}
-	_runtime_log(
+	_battle_effect_interaction_controller.call(
 		"start_effect_interaction",
-		"kind=%s player=%d card=%s steps=%d" % [
-			kind,
-			player_index,
-			_card_instance_label(card),
-			steps.size()
-		]
+		self,
+		kind,
+		player_index,
+		steps,
+		card,
+		slot,
+		ability_index,
+		attack_data,
+		attack_effects
 	)
-	_show_next_effect_interaction_step()
 
 
 func _effect_step_uses_field_slot_ui(step: Dictionary) -> bool:
-	if str(step.get("ui_mode", "")) == "card_assignment":
-		return false
-	var items: Array = step.get("items", [])
-	if items.is_empty():
-		return false
-	for item: Variant in items:
-		if not (item is PokemonSlot):
-			return false
-	return true
+	return bool(_battle_effect_interaction_controller.call("effect_step_uses_field_slot_ui", self, step))
 
 
 func _effect_step_uses_field_assignment_ui(step: Dictionary) -> bool:
-	if str(step.get("ui_mode", "")) != "card_assignment":
-		return false
-	var target_items: Array = step.get("target_items", [])
-	if target_items.is_empty():
-		return false
-	for item: Variant in target_items:
-		if not (item is PokemonSlot):
-			return false
-	return true
+	return bool(_battle_effect_interaction_controller.call("effect_step_uses_field_assignment_ui", self, step))
 
 
 func _resolve_effect_step_chooser_player(step: Dictionary) -> int:
-	if step.has("chooser_player_index"):
-		var chooser_index: int = int(step.get("chooser_player_index", -1))
-		if chooser_index >= 0:
-			return chooser_index
-	if bool(step.get("opponent_chooses", false)) and _pending_effect_player_index >= 0:
-		return 1 - _pending_effect_player_index
-	return _pending_effect_player_index
+	return int(_battle_effect_interaction_controller.call("resolve_effect_step_chooser_player", self, step))
 
 
 func _hide_ai_owned_effect_step_ui(chooser_player: int) -> void:
-	if GameManager.current_mode != GameManager.GameMode.VS_AI:
-		return
-	_ensure_ai_opponent()
-	if _ai_opponent == null or chooser_player != _ai_opponent.player_index:
-		return
-	if _dialog_overlay != null:
-		_dialog_overlay.visible = false
-	if _dialog_cancel != null:
-		_dialog_cancel.visible = false
-	if _field_interaction_overlay != null:
-		_field_interaction_overlay.visible = false
+	_battle_effect_interaction_controller.call("hide_ai_owned_effect_step_ui", self, chooser_player)
 
 
 func _show_next_effect_interaction_step() -> void:
-	if _pending_effect_card == null:
-		_runtime_log("effect_step_skipped", "pending card missing")
-		return
-
-	if _pending_effect_step_index >= _pending_effect_steps.size():
-		var success := false
-		var resolved_player_index: int = _pending_effect_player_index
-		var followup_evolve_slot: PokemonSlot = null
-		match _pending_effect_kind:
-			"trainer":
-				success = _gsm.play_trainer(
-					_pending_effect_player_index,
-					_pending_effect_card,
-					[_pending_effect_context]
-				)
-				if success:
-					followup_evolve_slot = _get_trainer_followup_evolve_slot()
-			"play_stadium":
-				success = _gsm.play_stadium(
-					_pending_effect_player_index,
-					_pending_effect_card,
-					[_pending_effect_context]
-				)
-			"ability":
-				success = _gsm.use_ability(
-					_pending_effect_player_index,
-					_pending_effect_slot,
-					_pending_effect_ability_index,
-					[_pending_effect_context]
-				)
-			"stadium":
-				success = _gsm.use_stadium_effect(
-					_pending_effect_player_index,
-					[_pending_effect_context]
-				)
-			"attack":
-				success = _gsm.use_attack(
-					_pending_effect_player_index,
-					_pending_effect_ability_index,
-					[_pending_effect_context]
-				)
-			"granted_attack":
-				success = _gsm.use_granted_attack(
-					_pending_effect_player_index,
-					_pending_effect_slot,
-					_pending_effect_attack_data,
-					[_pending_effect_context]
-				)
-		if not success and _pending_effect_card != null:
-			_log("无法使用 %s" % _pending_effect_card.card_data.name)
-		_runtime_log("effect_interaction_complete", "success=%s %s" % [str(success), _state_snapshot()])
-		_reset_effect_interaction()
-		if success:
-			_refresh_ui()
-			if followup_evolve_slot != null:
-				_try_start_evolve_trigger_ability_interaction(resolved_player_index, followup_evolve_slot)
-				if _pending_choice == "effect_interaction":
-					return
-			_check_two_player_handover()
-			_maybe_run_ai()
-		else:
-			_refresh_ui()
-		return
-
-	var step: Dictionary = _pending_effect_steps[_pending_effect_step_index]
-	var chooser_player: int = _resolve_effect_step_chooser_player(step)
-	if (
-		GameManager.current_mode == GameManager.GameMode.TWO_PLAYER
-		and chooser_player >= 0
-		and chooser_player != _view_player
-	):
-		_pending_choice = "effect_interaction"
-		_show_handover_prompt(chooser_player, func() -> void:
-			_set_handover_panel_visible(false, "effect_step_handover_%d" % _pending_effect_step_index)
-			_view_player = chooser_player
-			_refresh_ui()
-			_show_next_effect_interaction_step()
-		)
-		return
-	if _effect_step_uses_field_assignment_ui(step):
-		_pending_choice = "effect_interaction"
-		_runtime_log(
-			"effect_step",
-			"step=%d/%d title=%s options=%d mode=field_assignment" % [
-				_pending_effect_step_index + 1,
-				_pending_effect_steps.size(),
-				str(step.get("title", "请选择")),
-				int(step.get("source_items", []).size())
-			]
-		)
-		_show_field_assignment_interaction(step)
-		_hide_ai_owned_effect_step_ui(chooser_player)
-		return
-	if _effect_step_uses_field_slot_ui(step):
-		_pending_choice = "effect_interaction"
-		_runtime_log(
-			"effect_step",
-			"step=%d/%d title=%s options=%d mode=field_slots" % [
-				_pending_effect_step_index + 1,
-				_pending_effect_steps.size(),
-				str(step.get("title", "请选择")),
-				int(step.get("items", []).size())
-			]
-		)
-		_show_field_slot_choice(str(step.get("title", "请选择")), step.get("items", []), step)
-		_hide_ai_owned_effect_step_ui(chooser_player)
-		return
-	if str(step.get("ui_mode", "")) == "card_assignment":
-		_pending_choice = "effect_interaction"
-		_runtime_log(
-			"effect_step",
-			"step=%d/%d title=%s options=%d mode=assignment" % [
-				_pending_effect_step_index + 1,
-				_pending_effect_steps.size(),
-				str(step.get("title", "请选择")),
-				int(step.get("source_items", []).size())
-			]
-		)
-		_show_dialog(str(step.get("title", "请选择")), [], step)
-		_hide_ai_owned_effect_step_ui(chooser_player)
-		return
-
-	var labels_raw: Array = step.get("labels", [])
-	var labels: Array[String] = []
-	for label: Variant in labels_raw:
-		labels.append(str(label))
-	var items_raw: Array = step.get("items", [])
-	var use_card_presentation := true
-	for item: Variant in items_raw:
-		if not _dialog_item_has_card_visual(item):
-			use_card_presentation = false
-			break
-
-	_pending_choice = "effect_interaction"
-	_runtime_log(
-		"effect_step",
-		"step=%d/%d title=%s options=%d" % [
-			_pending_effect_step_index + 1,
-			_pending_effect_steps.size(),
-			str(step.get("title", "请选择")),
-			items_raw.size()
-		]
-	)
-	_show_dialog(step.get("title", "请选择"), labels, {
-		"min_select": int(step.get("min_select", 1)),
-		"max_select": int(step.get("max_select", 1)),
-		"allow_cancel": step.get("allow_cancel", true),
-		"presentation": "cards" if use_card_presentation else "list",
-		"card_items": items_raw,
-		"choice_labels": labels,
-	})
-	_hide_ai_owned_effect_step_ui(chooser_player)
+	_battle_effect_interaction_controller.call("show_next_effect_interaction_step", self)
 
 
 func _handle_effect_interaction_choice(selected_indices: PackedInt32Array) -> void:
-	if _pending_effect_card == null or _pending_effect_step_index < 0 or _pending_effect_step_index >= _pending_effect_steps.size():
-		_runtime_log("effect_choice_ignored", "invalid pending state")
-		_reset_effect_interaction()
-		return
-
-	var step: Dictionary = _pending_effect_steps[_pending_effect_step_index]
-	var items_raw: Array = step.get("items", [])
-	var selected_items: Array = []
-	for selected_idx: int in selected_indices:
-		if selected_idx >= 0 and selected_idx < items_raw.size():
-			selected_items.append(items_raw[selected_idx])
-
-	_pending_effect_context[step.get("id", "step_%d" % _pending_effect_step_index)] = selected_items
-	_runtime_log(
-		"effect_choice",
-		"step=%s selected=%s" % [str(step.get("id", "step_%d" % _pending_effect_step_index)), JSON.stringify(selected_indices)]
-	)
-	_pending_effect_step_index += 1
-	_inject_followup_steps()
-	_show_next_effect_interaction_step()
-	_maybe_run_ai()
+	_battle_effect_interaction_controller.call("handle_effect_interaction_choice", self, selected_indices)
 
 
-## 在每个交互步骤完成后，检查所有招式效果是否有后续动态步骤需要追加。
-## 典型场景：巨龙无双选择招式后，被复制招式可能需要额外交互（如伤害指示物分配）。
+## After each interaction step completes, check whether the copied effect injected any follow-up dynamic steps.
+## Example: Regidrago VSTAR copying Dragapult ex may append a second assignment step for damage counters.
 func _inject_followup_steps() -> void:
-	if _pending_effect_kind != "attack" or _pending_effect_card == null:
-		return
-	if _pending_effect_attack_effects.is_empty():
-		return
-	var card: CardInstance = _pending_effect_card
-	var attack_index: int = _pending_effect_ability_index
-	if card.card_data == null or attack_index < 0 or attack_index >= card.card_data.attacks.size():
-		return
-	var attack: Dictionary = card.card_data.attacks[attack_index]
-	var followup_steps: Array[Dictionary] = []
-	for effect: BaseEffect in _pending_effect_attack_effects:
-		followup_steps.append_array(
-			effect.get_followup_attack_interaction_steps(card, attack, _gsm.game_state, _pending_effect_context)
-		)
-	if followup_steps.is_empty():
-		return
-	var existing_step_ids: Dictionary = {}
-	for i: int in range(_pending_effect_step_index, _pending_effect_steps.size()):
-		var existing_id: String = str(_pending_effect_steps[i].get("id", ""))
-		if existing_id != "":
-			existing_step_ids[existing_id] = true
-	var unique_followup_steps: Array[Dictionary] = []
-	for step: Dictionary in followup_steps:
-		var step_id: String = str(step.get("id", ""))
-		if step_id != "" and (_pending_effect_context.has(step_id) or existing_step_ids.has(step_id)):
-			continue
-		unique_followup_steps.append(step)
-		if step_id != "":
-			existing_step_ids[step_id] = true
-	if unique_followup_steps.is_empty():
-		return
-	# 将后续步骤插入到当前位置之后
-	var insert_pos: int = _pending_effect_step_index
-	for i: int in unique_followup_steps.size():
-		_pending_effect_steps.insert(insert_pos + i, unique_followup_steps[i])
-	_runtime_log(
-		"followup_steps_injected",
-		"count=%d total_steps=%d" % [unique_followup_steps.size(), _pending_effect_steps.size()]
-	)
+	_battle_effect_interaction_controller.call("inject_followup_steps", self)
 
 
 func _reset_effect_interaction() -> void:
-	_runtime_log("reset_effect_interaction", _effect_state_snapshot())
-	var clearing_effect_dialog: bool = _pending_choice == "effect_interaction"
-	var clearing_field_interaction: bool = _is_field_interaction_active()
-	_pending_effect_kind = ""
-	_pending_effect_player_index = -1
-	_pending_effect_card = null
-	_pending_effect_slot = null
-	_pending_effect_ability_index = -1
-	_pending_effect_attack_data.clear()
-	_pending_effect_attack_effects.clear()
-	_pending_effect_steps.clear()
-	_pending_effect_step_index = -1
-	_pending_effect_context.clear()
-	if clearing_field_interaction:
-		_hide_field_interaction()
-	if clearing_effect_dialog:
-		_pending_choice = ""
-		_dialog_data.clear()
-		_dialog_items_data.clear()
-		_dialog_multi_selected_indices.clear()
-		_dialog_card_selected_indices.clear()
-		_reset_dialog_assignment_state()
-		if _dialog_overlay != null:
-			_dialog_overlay.visible = false
+	_battle_effect_interaction_controller.call("reset_effect_interaction", self)
 
 
-func _set_handover_panel_visible(is_visible: bool, reason: String) -> void:
+func _set_handover_panel_visible(visible_state: bool, reason: String) -> void:
 	if _handover_panel == null:
 		return
-	if _handover_panel.visible == is_visible:
+	if _handover_panel.visible == visible_state:
 		_runtime_log(
 			"handover_visibility_noop",
-			"visible=%s reason=%s %s" % [str(is_visible), reason, _state_snapshot()]
+			"visible=%s reason=%s %s" % [str(visible_state), reason, _state_snapshot()]
 		)
 		return
-	_handover_panel.visible = is_visible
+	_handover_panel.visible = visible_state
 	_runtime_log(
 		"handover_visibility",
-		"visible=%s reason=%s %s" % [str(is_visible), reason, _state_snapshot()]
+		"visible=%s reason=%s %s" % [str(visible_state), reason, _state_snapshot()]
 	)
 
 
@@ -5250,533 +3072,280 @@ func _get_trainer_followup_evolve_slot() -> PokemonSlot:
 	return null
 
 
-func _refresh_ui() -> void:
-	if _gsm == null:
+func _is_review_mode() -> bool:
+	return _battle_mode == "review_readonly"
+
+
+func _can_accept_live_action() -> bool:
+	return not _is_review_mode()
+
+
+func _refresh_replay_controls() -> void:
+	_battle_replay_controller.call(
+		"refresh_controls",
+		_battle_scene_refs,
+		_battle_mode,
+		_replay_current_turn_index,
+		_replay_turn_numbers,
+		_replay_loaded_raw_snapshot
+	)
+
+
+func _apply_replay_launch(launch: Dictionary) -> void:
+	_battle_mode = "review_readonly"
+	var prepared_variant: Variant = _battle_replay_controller.call("prepare_launch", launch)
+	if not (prepared_variant is Dictionary):
 		return
-	var gs: GameState = _gsm.game_state
-	var cp: int = gs.current_player_index
-	var vp: int = _view_player
-	var op: int = 1 - vp
+	var prepared: Dictionary = prepared_variant
+	_replay_match_dir = str(prepared.get("match_dir", ""))
+	_replay_entry_source = str(prepared.get("entry_source", ""))
+	_replay_turn_numbers.clear()
+	for turn_variant: Variant in prepared.get("turn_numbers", []):
+		_replay_turn_numbers.append(int(turn_variant))
+	var entry_turn_number := int(prepared.get("entry_turn_number", 0))
+	_replay_current_turn_index = int(prepared.get("current_turn_index", -1))
+	_refresh_replay_controls()
+	if _replay_match_dir.strip_edges() != "" and entry_turn_number > 0:
+		_load_replay_turn(entry_turn_number)
 
-	var my: PlayerState = gs.players[vp]
-	var opp: PlayerState = gs.players[op]
 
-	_lbl_phase.text = "当前牌组：%s | 对手手牌：%d" % [_get_selected_deck_name(cp), opp.hand.size()]
-	_lbl_turn.text = "第 %d 回合 | 玩家 %d 行动" % [gs.turn_number, cp + 1]
-	if _btn_opponent_hand != null:
-		_btn_opponent_hand.visible = GameManager.current_mode == GameManager.GameMode.VS_AI
-	if _btn_ai_advice != null:
-		_btn_ai_advice.visible = GameManager.current_mode == GameManager.GameMode.TWO_PLAYER
-		_btn_ai_advice.disabled = _battle_advice_busy
+func _load_replay_turn(turn_number: int) -> void:
+	var replay_variant: Variant = _battle_replay_controller.call(
+		"load_turn",
+		_battle_replay_snapshot_loader,
+		_battle_replay_state_restorer,
+		_replay_match_dir,
+		turn_number,
+		_view_player
+	)
+	if not (replay_variant is Dictionary):
+		return
+	var replay: Dictionary = replay_variant
+	_replay_loaded_raw_snapshot = (replay.get("loaded_raw_snapshot", {}) as Dictionary).duplicate(true)
+	_replay_loaded_view_snapshot = (replay.get("loaded_view_snapshot", {}) as Dictionary).duplicate(true)
+	_view_player = int(replay.get("view_player_index", _view_player))
+	var restored_game_state: Variant = replay.get("restored_game_state", null)
+	if restored_game_state != null:
+		_ensure_game_state_machine()
+		_gsm.game_state = restored_game_state
+	_refresh_replay_controls()
+	_refresh_ui()
 
-	_opp_prizes.text = "x%d" % opp.prizes.size()
-	_opp_deck.text = "%d" % opp.deck.size()
-	_opp_discard.text = "%d" % opp.discard_pile.size()
-	_opp_hand_lbl.text = "对手手牌：%d" % opp.hand.size()
-	_opp_hand_bar.visible = false
-	_opp_prize_hud_count.text = "x%d" % opp.prizes.size()
-	_opp_deck_hud_value.text = "%d 张" % opp.deck.size()
-	_opp_discard_hud_value.text = "%d 张" % opp.discard_pile.size()
 
-	_my_prizes.text = "x%d" % my.prizes.size()
-	_my_deck.text = "%d" % my.deck.size()
-	_my_discard.text = "%d" % my.discard_pile.size()
-	_my_prize_hud_count.text = "x%d" % my.prizes.size()
-	_my_deck_hud_value.text = "%d 张" % my.deck.size()
-	_my_discard_hud_value.text = "%d 张" % my.discard_pile.size()
-	_refresh_prize_titles()
-	_update_side_previews(opp, my)
+func _on_replay_prev_turn_pressed() -> void:
+	var step_variant: Variant = _battle_replay_controller.call(
+		"step_previous_turn",
+		_replay_current_turn_index,
+		_replay_turn_numbers
+	)
+	if not (step_variant is Dictionary):
+		return
+	var step: Dictionary = step_variant
+	_replay_current_turn_index = int(step.get("current_turn_index", _replay_current_turn_index))
+	_load_replay_turn(int(step.get("turn_number", 0)))
 
-	_refresh_field_card_views(gs)
 
-	var is_my_turn: bool = cp == vp and gs.phase == GameState.GamePhase.MAIN
-	_btn_end_turn.disabled = not is_my_turn
-	_hud_end_turn_btn.disabled = _btn_end_turn.disabled
-	_refresh_stadium_area(gs, cp, is_my_turn)
-	_refresh_info_hud(gs, vp, op)
+func _on_replay_next_turn_pressed() -> void:
+	var step_variant: Variant = _battle_replay_controller.call(
+		"step_next_turn",
+		_replay_current_turn_index,
+		_replay_turn_numbers
+	)
+	if not (step_variant is Dictionary):
+		return
+	var step: Dictionary = step_variant
+	_replay_current_turn_index = int(step.get("current_turn_index", _replay_current_turn_index))
+	_load_replay_turn(int(step.get("turn_number", 0)))
 
-	_refresh_hand()
-	if _is_field_interaction_active():
-		_refresh_field_interaction_status()
-	_refresh_battle_advice_panel()
-	_runtime_log_ui_state_if_changed()
+
+func _register_effects_from_game_state(gs: GameState) -> void:
+	if gs == null or _gsm == null:
+		return
+	for player: PlayerState in gs.players:
+		var all_cards: Array[CardInstance] = []
+		all_cards.append_array(player.hand)
+		all_cards.append_array(player.deck)
+		all_cards.append_array(player.prizes)
+		all_cards.append_array(player.discard_pile)
+		all_cards.append_array(player.lost_zone)
+		if player.active_pokemon != null:
+			all_cards.append_array(player.active_pokemon.pokemon_stack)
+			all_cards.append_array(player.active_pokemon.attached_energy)
+			if player.active_pokemon.attached_tool != null:
+				all_cards.append(player.active_pokemon.attached_tool)
+		for bench_slot: PokemonSlot in player.bench:
+			if bench_slot == null:
+				continue
+			all_cards.append_array(bench_slot.pokemon_stack)
+			all_cards.append_array(bench_slot.attached_energy)
+			if bench_slot.attached_tool != null:
+				all_cards.append(bench_slot.attached_tool)
+		for card: CardInstance in all_cards:
+			if card != null and card.card_data != null:
+				_gsm.effect_processor.register_pokemon_card(card.card_data)
+
+
+func _on_replay_continue_pressed() -> void:
+	var restored_game_state: Variant = _battle_replay_controller.call(
+		"restore_live_game_state",
+		_battle_replay_state_restorer,
+		_replay_loaded_raw_snapshot
+	)
+	if restored_game_state == null:
+		return
+	_ensure_game_state_machine()
+	_gsm.game_state = restored_game_state
+	_register_effects_from_game_state(_gsm.game_state)
+	_clear_replay_ui_state()
+	_battle_mode = "live"
+	# 将 phase 推进到 MAIN 让玩家可以操作
+	if _gsm.game_state.phase != GameState.GamePhase.MAIN and _gsm.game_state.phase != GameState.GamePhase.GAME_OVER:
+		_gsm.game_state.phase = GameState.GamePhase.MAIN
+	_refresh_replay_controls()
+	_refresh_ui()
+	_check_two_player_handover()
+	_maybe_run_ai()
+
+
+func _on_replay_back_to_list_pressed() -> void:
+	if _is_review_mode():
+		GameManager.goto_replay_browser()
+
+
+func _clear_replay_ui_state() -> void:
+	var empty_state_variant: Variant = _battle_replay_controller.call("empty_state")
+	if empty_state_variant is Dictionary:
+		var empty_state: Dictionary = empty_state_variant
+		_replay_match_dir = str(empty_state.get("match_dir", ""))
+		_replay_turn_numbers.clear()
+		for turn_variant: Variant in empty_state.get("turn_numbers", []):
+			_replay_turn_numbers.append(int(turn_variant))
+		_replay_current_turn_index = int(empty_state.get("current_turn_index", -1))
+		_replay_entry_source = str(empty_state.get("entry_source", ""))
+		_replay_loaded_raw_snapshot = (empty_state.get("loaded_raw_snapshot", {}) as Dictionary).duplicate(true)
+		_replay_loaded_view_snapshot = (empty_state.get("loaded_view_snapshot", {}) as Dictionary).duplicate(true)
+	_pending_choice = ""
+	_set_pending_handover_action(Callable(), "replay_continue")
+	_set_handover_panel_visible(false, "replay_continue")
+	if _dialog_overlay != null:
+		_dialog_overlay.visible = false
+	if _review_overlay != null:
+		_review_overlay.visible = false
+
+
+func _refresh_ui() -> void:
+	_battle_display_controller.call("refresh_ui", self)
 
 
 func _get_selected_deck_name(player_index: int) -> String:
-	if player_index < 0 or player_index >= GameManager.selected_deck_ids.size():
-		return "未知卡组"
-	var deck_id: int = GameManager.selected_deck_ids[player_index]
-	var deck_data: DeckData = CardDatabase.get_deck(deck_id)
-	if deck_data != null and deck_data.deck_name != "":
-		return deck_data.deck_name
-	return "卡组 %d" % (player_index + 1)
+	return str(_battle_display_controller.call("get_selected_deck_name", player_index))
 
 
 func _update_side_previews(opp: PlayerState, my: PlayerState) -> void:
-	_update_prize_slots(
-		_opp_prize_slots,
-		opp.get_prize_layout(),
-		_pending_choice == "take_prize" and _pending_prize_player_index == (1 - _view_player) and not _pending_prize_animating
-	)
-	_update_prize_slots(
-		_my_prize_slots,
-		my.get_prize_layout(),
-		_pending_choice == "take_prize" and _pending_prize_player_index == _view_player and not _pending_prize_animating
-	)
-	_update_pile_preview(_opp_deck_preview, null, not opp.deck.is_empty())
-	_update_pile_preview(_my_deck_preview, null, not my.deck.is_empty())
-	_update_pile_preview(_opp_discard_preview, opp.discard_pile.back() if not opp.discard_pile.is_empty() else null, false)
-	_update_pile_preview(_my_discard_preview, my.discard_pile.back() if not my.discard_pile.is_empty() else null, false)
+	_battle_display_controller.call("update_side_previews", self, opp, my)
 
 
 func _refresh_stadium_area(gs: GameState, current_player: int, is_my_turn: bool) -> void:
-	if gs.stadium_card == null:
-		_stadium_lbl.visible = true
-		_stadium_lbl.text = "竞技场区域"
-		_btn_stadium_action.visible = false
-		_btn_stadium_action.disabled = true
-		return
-
-	var stadium_name: String = gs.stadium_card.card_data.name
-	var effect: BaseEffect = _gsm.effect_processor.get_effect(gs.stadium_card.card_data.effect_id)
-	var is_action_stadium := effect != null and effect.can_use_as_stadium_action(gs.stadium_card, gs)
-	if is_action_stadium:
-		_stadium_lbl.visible = false
-		_btn_stadium_action.visible = true
-		_btn_stadium_action.text = "使用竞技场%s" % stadium_name
-		_btn_stadium_action.disabled = not (is_my_turn and _gsm.can_use_stadium_effect(current_player))
-		return
-
-	_stadium_lbl.visible = true
-	_stadium_lbl.text = "竞技场：%s" % stadium_name
-	_btn_stadium_action.visible = false
-	_btn_stadium_action.disabled = true
+	_battle_display_controller.call("refresh_stadium_area", self, gs, current_player, is_my_turn)
 
 
 func _refresh_info_hud(gs: GameState, view_player: int, opponent_player: int) -> void:
-	var my_player: PlayerState = gs.players[view_player]
-	var opp_player: PlayerState = gs.players[opponent_player]
-	_apply_info_metric(_enemy_vstar_value, gs.vstar_power_used[opponent_player], "敌VSTAR 待命", "敌VSTAR 已用")
-	_apply_info_metric(_my_vstar_value, gs.vstar_power_used[view_player], "我VSTAR 待命", "我VSTAR 已用")
-	if _enemy_lost_value != null:
-		_enemy_lost_value.text = "敌放逐 %02d张" % opp_player.lost_zone.size()
-	if _my_lost_value != null:
-		_my_lost_value.text = "我放逐 %02d张" % my_player.lost_zone.size()
+	_battle_display_controller.call("refresh_info_hud", self, gs, view_player, opponent_player)
 
 
 func _apply_info_metric(label: Label, is_used: bool, ready_text: String, used_text: String) -> void:
-	if label == null:
-		return
-	label.text = used_text if is_used else ready_text
-	label.add_theme_color_override(
-		"font_color",
-		Color(0.98, 0.43, 0.43) if is_used else Color(0.41, 1.0, 0.75)
-	)
+	_battle_display_controller.call("apply_info_metric", label, is_used, ready_text, used_text)
 
 
 func _update_prize_slots(slots: Array[BattleCardView], prize_layout: Array, is_selectable: bool) -> void:
-	for i: int in slots.size():
-		var prize_view: BattleCardView = slots[i]
-		if prize_view == null:
-			continue
-		var prize_card: CardInstance = null
-		if i < prize_layout.size() and prize_layout[i] is CardInstance:
-			prize_card = prize_layout[i] as CardInstance
-		var filled := prize_card != null
-		prize_view.visible = true
-		if filled:
-			prize_view.setup_from_instance(prize_card, BATTLE_CARD_VIEW.MODE_PREVIEW)
-			prize_view.set_face_down(true)
-		else:
-			prize_view.setup_from_instance(null, BATTLE_CARD_VIEW.MODE_PREVIEW)
-			prize_view.set_face_down(true)
-		prize_view.set_selected(filled and is_selectable)
-		prize_view.set_disabled(not filled or (_pending_choice == "take_prize" and not is_selectable))
-		prize_view.self_modulate = Color(1, 1, 1, 1) if filled else Color(1, 1, 1, 0.02)
+	_battle_display_controller.call("update_prize_slots", self, slots, prize_layout, is_selectable)
 
 func _update_pile_preview(preview: BattleCardView, card: CardInstance, face_down: bool) -> void:
-	if preview == null:
-		return
-	if card != null:
-		preview.setup_from_instance(card, BATTLE_CARD_VIEW.MODE_PREVIEW)
-		preview.set_face_down(false)
-	else:
-		preview.setup_from_instance(null, BATTLE_CARD_VIEW.MODE_PREVIEW)
-		preview.set_face_down(face_down)
-	preview.set_selected(false)
-	preview.set_disabled(false)
-	preview.set_badges("", "")
-	preview.set_info("", "")
+	_battle_display_controller.call("update_pile_preview", preview, card, face_down)
 
 
 func _refresh_field_card_views(gs: GameState) -> void:
-	var vp: int = _view_player
-	var op: int = 1 - vp
-
-	_refresh_slot_card_view("my_active", gs.players[vp].active_pokemon, true)
-	_refresh_slot_card_view("opp_active", gs.players[op].active_pokemon, true)
-
-	for i: int in BENCH_SIZE:
-		var my_bench_slot: PokemonSlot = gs.players[vp].bench[i] if i < gs.players[vp].bench.size() else null
-		var opp_bench_slot: PokemonSlot = gs.players[op].bench[i] if i < gs.players[op].bench.size() else null
-		_refresh_slot_card_view("my_bench_%d" % i, my_bench_slot, false)
-		_refresh_slot_card_view("opp_bench_%d" % i, opp_bench_slot, false)
+	_battle_display_controller.call("refresh_field_card_views", self, gs)
 
 
 func _refresh_slot_card_view(slot_id: String, slot: PokemonSlot, is_active: bool) -> void:
-	var card_view = _slot_card_views.get(slot_id)
-	if card_view == null:
-		return
-	var slot_panel := card_view.get_parent() as PanelContainer
-	var is_selectable := _field_interaction_slot_index_by_id.has(slot_id)
-	var selected_slot_ids: Array[String] = _field_interaction_selected_slot_ids()
-	var is_selected := slot_id in selected_slot_ids
-	var should_disable := _is_field_interaction_active() and not is_selectable
-
-	if slot == null or slot.pokemon_stack.is_empty():
-		card_view.setup_from_instance(null, BATTLE_CARD_VIEW.MODE_SLOT_ACTIVE if is_active else BATTLE_CARD_VIEW.MODE_SLOT_BENCH)
-		card_view.set_badges()
-		card_view.clear_battle_status()
-		card_view.set_info("", "")
-		card_view.set_tilt_degrees(0.0)
-		card_view.set_disabled(false)
-		card_view.set_selected(false)
-		_apply_field_slot_style(slot_panel, slot_id, false, is_active)
-		return
-
-	var top_card: CardInstance = slot.get_top_card()
-	card_view.setup_from_instance(top_card, BATTLE_CARD_VIEW.MODE_SLOT_ACTIVE if is_active else BATTLE_CARD_VIEW.MODE_SLOT_BENCH)
-	card_view.set_disabled(should_disable)
-	card_view.set_selected(is_selected or is_selectable)
-	card_view.set_badges()
-	card_view.set_battle_status(_build_battle_status(slot))
-	card_view.set_tilt_degrees(USED_ABILITY_TILT_DEGREES if _slot_used_ability_this_turn(slot) else 0.0)
-	_apply_field_slot_style(slot_panel, slot_id, true, is_active)
+	_battle_display_controller.call("refresh_slot_card_view", self, slot_id, slot, is_active)
 
 func _apply_field_slot_style(panel: PanelContainer, slot_id: String, occupied: bool, is_active: bool) -> void:
-	if panel == null:
-		return
-	var is_player_slot := slot_id.begins_with("my_")
-	var is_selectable := _field_interaction_slot_index_by_id.has(slot_id)
-	var is_selected := slot_id in _field_interaction_selected_slot_ids()
-	var border_color := Color(0.52, 0.72, 0.58) if is_player_slot else Color(0.63, 0.68, 0.79)
-	if not is_active:
-		border_color = Color(0.32, 0.5, 0.44) if is_player_slot else Color(0.33, 0.39, 0.5)
-	var style := StyleBoxFlat.new()
-	style.set_corner_radius_all(18 if is_active else 16)
-	style.set_border_width_all(2)
-	if occupied:
-		if is_selected:
-			style.bg_color = Color(0.95, 0.75, 0.14, 0.12)
-			style.border_color = Color(0.98, 0.82, 0.22, 0.98)
-			style.set_border_width_all(3)
-		elif is_selectable:
-			style.bg_color = Color(0.14, 0.72, 0.84, 0.10)
-			style.border_color = Color(0.38, 0.88, 0.98, 0.94)
-		else:
-			style.bg_color = Color(0, 0, 0, 0)
-			style.border_color = Color(0, 0, 0, 0)
-	else:
-		style.bg_color = Color(0.04, 0.07, 0.1, 0.18)
-		style.border_color = Color(border_color.r, border_color.g, border_color.b, 0.65)
-	panel.add_theme_stylebox_override("panel", style)
+	_battle_display_controller.call("apply_field_slot_style", self, panel, slot_id, occupied, is_active)
 
 func _slot_overlay_text(slot: PokemonSlot) -> String:
-	var parts: Array[String] = []
-	parts.append("%d/%d" % [_get_display_remaining_hp(slot), _get_display_max_hp(slot)])
-	var energy_summary := _slot_energy_summary(slot)
-	if energy_summary != "":
-		parts.append(energy_summary)
-	if slot.attached_tool != null:
-		parts.append(slot.attached_tool.card_data.name)
-	return " | ".join(parts)
+	return str(_battle_display_controller.call("slot_overlay_text", self, slot))
 
 
 func _build_battle_status(slot: PokemonSlot) -> Dictionary:
-	var hp_current := _get_display_remaining_hp(slot)
-	var hp_max := maxi(_get_display_max_hp(slot), 1)
-	return {
-		"hp_current": hp_current,
-		"hp_max": hp_max,
-		"hp_ratio": float(hp_current) / float(hp_max),
-		"energy_icons": _slot_energy_icon_codes(slot),
-		"tool_name": slot.attached_tool.card_data.name if slot.attached_tool != null else "",
-		"ability_used_this_turn": _slot_used_ability_this_turn(slot),
-	}
+	var status_variant: Variant = _battle_display_controller.call("build_battle_status", self, slot)
+	return status_variant if status_variant is Dictionary else {}
 
 
 func _slot_used_ability_this_turn(slot: PokemonSlot) -> bool:
-	if slot == null or _gsm == null or _gsm.game_state == null:
-		return false
-	var current_turn: int = _gsm.game_state.turn_number
-	for effect_data: Dictionary in slot.effects:
-		if int(effect_data.get("turn", -999)) != current_turn:
-			continue
-		var effect_type: String = str(effect_data.get("type", ""))
-		if effect_type.contains("ability"):
-			return true
-	return false
+	return bool(_battle_display_controller.call("slot_used_ability_this_turn", self, slot))
 
 
 func _get_display_max_hp(slot: PokemonSlot) -> int:
-	if _gsm != null and _gsm.effect_processor != null and _gsm.game_state != null:
-		return _gsm.effect_processor.get_effective_max_hp(slot, _gsm.game_state)
-	return slot.get_max_hp()
+	return int(_battle_display_controller.call("get_display_max_hp", self, slot))
 
 
 func _get_display_remaining_hp(slot: PokemonSlot) -> int:
-	if _gsm != null and _gsm.effect_processor != null and _gsm.game_state != null:
-		return _gsm.effect_processor.get_effective_remaining_hp(slot, _gsm.game_state)
-	return slot.get_remaining_hp()
+	return int(_battle_display_controller.call("get_display_remaining_hp", self, slot))
 
 
 func _battle_card_mode_for_slot(slot: PokemonSlot) -> String:
-	if _gsm == null or _gsm.game_state == null:
-		return BATTLE_CARD_VIEW.MODE_SLOT_BENCH
-	for player: PlayerState in _gsm.game_state.players:
-		if player.active_pokemon == slot:
-			return BATTLE_CARD_VIEW.MODE_SLOT_ACTIVE
-	return BATTLE_CARD_VIEW.MODE_SLOT_BENCH
+	return str(_battle_display_controller.call("battle_card_mode_for_slot", self, slot))
 
 
 func _slot_energy_icon_codes(slot: PokemonSlot) -> Array[String]:
-	var codes: Array[String] = []
-	for energy: CardInstance in slot.attached_energy:
-		var energy_type := "C"
-		var provided_count := 1
-		if energy != null and energy.card_data != null:
-			if _gsm != null and _gsm.effect_processor != null:
-				energy_type = _gsm.effect_processor.get_energy_type(energy)
-				provided_count = _gsm.effect_processor.get_energy_colorless_count(energy)
-			else:
-				energy_type = energy.card_data.energy_provides if energy.card_data.energy_provides != "" else energy.card_data.energy_type
-		if energy_type == "":
-			energy_type = "C"
-		for _unit: int in maxi(provided_count, 1):
-			codes.append(energy_type)
-	return codes
+	var codes_variant: Variant = _battle_display_controller.call("slot_energy_icon_codes", self, slot)
+	return codes_variant if codes_variant is Array[String] else []
 
 
 func _slot_energy_summary(slot: PokemonSlot) -> String:
-	if slot.attached_energy.is_empty():
-		return ""
-
-	var emap := {
-		"R": "火",
-		"W": "水",
-		"G": "草",
-		"L": "雷",
-		"P": "超",
-		"F": "斗",
-		"D": "恶",
-		"M": "钢",
-		"N": "龙",
-		"C": "无",
-	}
-	var counts: Dictionary = {}
-	for energy: CardInstance in slot.attached_energy:
-		var energy_type := "C"
-		var provided_count := 1
-		if energy != null and energy.card_data != null:
-			if _gsm != null and _gsm.effect_processor != null:
-				energy_type = _gsm.effect_processor.get_energy_type(energy)
-				provided_count = _gsm.effect_processor.get_energy_colorless_count(energy)
-			else:
-				energy_type = energy.card_data.energy_provides if energy.card_data.energy_provides != "" else energy.card_data.energy_type
-			if energy_type == "":
-				energy_type = "C"
-		counts[energy_type] = int(counts.get(energy_type, 0)) + provided_count
-
-	var ordered_types := ["R", "W", "G", "L", "P", "F", "D", "M", "N", "C"]
-	var parts: Array[String] = []
-	for energy_type: String in ordered_types:
-		if counts.has(energy_type):
-			parts.append("%s x%d" % [emap.get(energy_type, energy_type), counts[energy_type]])
-
-	for key: Variant in counts.keys():
-		var energy_type := str(key)
-		if energy_type in ordered_types:
-			continue
-		parts.append("%s x%d" % [emap.get(energy_type, energy_type), counts[energy_type]])
-
-	return " ".join(parts)
+	return str(_battle_display_controller.call("slot_energy_summary", self, slot))
 
 
 func _refresh_slot_label(lbl: RichTextLabel, slot: PokemonSlot) -> void:
-	if slot == null or slot.pokemon_stack.is_empty():
-		lbl.text = "[空]"
-		return
-	var cd := slot.get_card_data()
-	var emap := {
-		"R":"火",
-		"W":"水",
-		"G":"草",
-		"L":"雷",
-		"P":"超",
-		"F":"斗",
-		"D":"恶",
-		"M":"钢",
-		"N":"龙",
-		"C":"无"
-	}
-	var energy_str := ""
-	var ecounts: Dictionary = {}
-	for e: CardInstance in slot.attached_energy:
-		var t := "C"
-		var provided_count := 1
-		if _gsm != null and _gsm.effect_processor != null:
-			t = _gsm.effect_processor.get_energy_type(e)
-			provided_count = _gsm.effect_processor.get_energy_colorless_count(e)
-		elif e.card_data.energy_provides != "":
-			t = e.card_data.energy_provides
-		ecounts[t] = ecounts.get(t, 0) + provided_count
-	var eparts: Array[String] = []
-	for k: String in ecounts:
-		eparts.append("%s x%d" % [emap.get(k, k), ecounts[k]])
-	energy_str = ", ".join(eparts) if not eparts.is_empty() else "无"
-
-	var status_parts: Array[String] = []
-	var snames := {
-		"poisoned":"中毒",
-		"burned":"灼伤",
-		"asleep":"睡眠",
-		"paralyzed":"麻痹",
-		"confused":"混乱"
-	}
-	for k: String in snames:
-		if slot.status_conditions.get(k, false):
-			status_parts.append(snames[k])
-
-	lbl.text = "[b]%s[/b]  HP:%d/%d\n能量：%s%s" % [
-		cd.name,
-		slot.get_remaining_hp(),
-		slot.get_max_hp(),
-		energy_str,
-		("  [" + ", ".join(status_parts) + "]") if not status_parts.is_empty() else ""
-	]
+	_battle_display_controller.call("refresh_slot_label", self, lbl, slot)
 
 
 func _refresh_bench(container: HBoxContainer, bench: Array[PokemonSlot]) -> void:
-	var children := container.get_children()
-	for i: int in children.size():
-		var slot_panel: Node = children[i]
-		var lbl: RichTextLabel = null
-		for sub: Node in slot_panel.get_children():
-			if sub is RichTextLabel:
-				lbl = sub as RichTextLabel
-				break
-		if lbl == null:
-			continue
-		if i < bench.size():
-			var s: PokemonSlot = bench[i]
-			lbl.text = "[b]%s[/b]\nHP:%d/%d" % [s.get_pokemon_name(), s.get_remaining_hp(), s.get_max_hp()]
-		else:
-			lbl.text = "[空]"
+	_battle_display_controller.call("refresh_bench", container, bench)
 
 
 func _refresh_hand() -> void:
-	if _gsm == null:
-		return
-	_clear_container_children(_hand_container)
-
-	var gs: GameState = _gsm.game_state
-	var cp: int = gs.current_player_index
-
-	if gs.phase == GameState.GamePhase.SETUP:
-		var setup_hand: Array[CardInstance] = gs.players[_view_player].hand
-		for inst: CardInstance in setup_hand:
-			_hand_container.add_child(_build_hand_card(inst))
-		return
-
-	if cp != _view_player:
-		var lbl := Label.new()
-		lbl.text = "等待对方操作..."
-		_hand_container.add_child(lbl)
-		return
-
-	var hand: Array[CardInstance] = gs.players[_view_player].hand
-	for inst: CardInstance in hand:
-		_hand_container.add_child(_build_hand_card(inst))
+	_battle_display_controller.call("refresh_hand", self)
 
 
 func _clear_container_children(container: Node) -> void:
-	if container == null:
-		return
-	for child: Node in container.get_children():
-		container.remove_child(child)
-		child.queue_free()
+	_battle_display_controller.call("clear_container_children", container)
 
 
 func _build_hand_card(inst: CardInstance) -> PanelContainer:
-	var card_view = BATTLE_CARD_VIEW.new()
-	card_view.custom_minimum_size = _play_card_size
-	card_view.setup_from_instance(inst, BATTLE_CARD_VIEW.MODE_HAND)
-	card_view.set_selected(_selected_hand_card == inst)
-	card_view.set_info(inst.card_data.name, _hand_card_subtext(inst.card_data))
-	card_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
-		_on_hand_card_clicked(inst, card_view)
-	)
-	card_view.right_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
-		_show_card_detail(inst.card_data)
-	)
-	return card_view
+	return _battle_display_controller.call("build_hand_card", self, inst)
 
 
 func _hand_card_subtext(cd: CardData) -> String:
-	var emap := {
-		"R":"火",
-		"W":"水",
-		"G":"草",
-		"L":"雷",
-		"P":"超",
-		"F":"斗",
-		"D":"恶",
-		"M":"钢",
-		"N":"龙",
-		"C":"无"
-	}
-	match cd.card_type:
-		"Pokemon":
-			return "%s / %s / HP%d" % [cd.stage, emap.get(cd.energy_type, "?"), cd.hp]
-		"Item":
-			return "物品"
-		"Supporter":
-			return "支援者"
-		"Tool":
-			return "宝可梦道具"
-		"Stadium":
-			return "竞技场"
-		"Basic Energy":
-			return "基本能量 / %s" % emap.get(cd.energy_provides, "")
-		"Special Energy":
-			return "特殊能量"
-		_:
-			return cd.card_type
+	return str(_battle_display_controller.call("hand_card_subtext", cd))
 
 
 func _slot_from_id(slot_id: String, gs: GameState) -> PokemonSlot:
-	var vp: int = _view_player
-	var op: int = 1 - vp
-	if slot_id == "my_active":
-		return gs.players[vp].active_pokemon
-	if slot_id == "opp_active":
-		return gs.players[op].active_pokemon
-	if slot_id.begins_with("my_bench_"):
-		var my_idx: int = int(slot_id.split("_")[-1])
-		var my_bench: Array[PokemonSlot] = gs.players[vp].bench
-		return my_bench[my_idx] if my_idx < my_bench.size() else null
-	if slot_id.begins_with("opp_bench_"):
-		var opp_idx: int = int(slot_id.split("_")[-1])
-		var opp_bench: Array[PokemonSlot] = gs.players[op].bench
-		return opp_bench[opp_idx] if opp_idx < opp_bench.size() else null
-	return null
+	return _battle_display_controller.call("slot_from_id", self, slot_id, gs)
+
+
+func _bt(key: String, params: Dictionary = {}) -> String:
+	return BattleI18nScript.t(key, params)
 
 
 func _log(msg: String) -> void:
-	_log_list.add_item(msg)
-	_log_list.ensure_current_is_visible()
-	while _log_list.item_count > 200:
-		_log_list.remove_item(0)
+	if _log_list != null:
+		_log_list.add_item(msg)
+		_log_list.ensure_current_is_visible()
+		while _log_list.item_count > 200:
+			_log_list.remove_item(0)
 	_runtime_log("ui_log", msg)
 
 
@@ -5788,9 +3357,29 @@ func _on_coin_flipped(result: bool) -> void:
 		_play_next_coin_animation()
 
 
+func _has_pending_coin_animation() -> bool:
+	return _coin_animating or not _coin_flip_queue.is_empty()
+
+
+func _delay_effect_step_until_coin_animation_finishes() -> void:
+	_coin_animation_resume_effect_step = true
+	_pending_choice = "effect_interaction"
+	_runtime_log("effect_step_waiting_for_coin_animation", _effect_state_snapshot())
+
+
 func _play_next_coin_animation() -> void:
 	if _coin_flip_queue.is_empty():
 		_coin_animating = false
+		if _coin_animation_resume_effect_step:
+			_coin_animation_resume_effect_step = false
+			_show_next_effect_interaction_step()
+		return
+	if _coin_animator == null or not _coin_animator.has_method("play"):
+		_coin_flip_queue.clear()
+		_coin_animating = false
+		if _coin_animation_resume_effect_step:
+			_coin_animation_resume_effect_step = false
+			_show_next_effect_interaction_step()
 		return
 	_coin_animating = true
 	var result: bool = _coin_flip_queue.pop_front()
@@ -5802,222 +3391,47 @@ func _on_coin_animation_finished() -> void:
 
 
 func _show_discard_pile(player_index: int, title: String) -> void:
-	if _gsm == null:
-		return
-	var player: PlayerState = _gsm.game_state.players[player_index]
-	_discard_title.text = "%s（%d 张）" % [title, player.discard_pile.size()]
-	_discard_list.clear()
-	if _discard_card_row != null:
-		_clear_container_children(_discard_card_row)
-		if player.discard_pile.is_empty():
-			var empty_label := Label.new()
-			empty_label.text = "（空）"
-			_discard_card_row.add_child(empty_label)
-		else:
-			var i: int = player.discard_pile.size() - 1
-			while i >= 0:
-				var card: CardInstance = player.discard_pile[i]
-				var card_view := BATTLE_CARD_VIEW.new()
-				card_view.custom_minimum_size = _dialog_card_size
-				card_view.set_clickable(true)
-				card_view.setup_from_instance(card, BATTLE_CARD_VIEW.MODE_PREVIEW)
-				card_view.set_badges("", "")
-				card_view.set_info("", "")
-				card_view.left_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
-					if cd != null:
-						_show_card_detail(cd)
-				)
-				card_view.right_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
-					if cd != null:
-						_show_card_detail(cd)
-				)
-				_discard_card_row.add_child(card_view)
-				i -= 1
-	else:
-		if player.discard_pile.is_empty():
-			_discard_list.add_item("（空）")
-		else:
-			var j: int = player.discard_pile.size() - 1
-			while j >= 0:
-				var listed_card: CardInstance = player.discard_pile[j]
-				var cd: CardData = listed_card.card_data
-				_discard_list.add_item("%s [%s]" % [cd.name, _card_type_cn(cd)])
-				j -= 1
-	_discard_overlay.visible = true
-	_runtime_log("show_discard", "player=%d title=%s count=%d" % [player_index, title, player.discard_pile.size()])
+	_battle_display_controller.call("show_discard_pile", self, player_index, title)
 
 
 func _show_prize_cards(player_index: int, title: String) -> void:
-	if _gsm == null:
-		return
-	var player: PlayerState = _gsm.game_state.players[player_index]
-	_discard_title.text = "%s（%d 张）" % [title, player.prizes.size()]
-	_discard_list.clear()
-	if _discard_card_row != null:
-		_clear_container_children(_discard_card_row)
-		if player.prizes.is_empty():
-			var empty_label := Label.new()
-			empty_label.text = "（空）"
-			_discard_card_row.add_child(empty_label)
-		else:
-			for prize: CardInstance in player.prizes:
-				var card_view := BATTLE_CARD_VIEW.new()
-				card_view.custom_minimum_size = _dialog_card_size
-				card_view.set_clickable(true)
-				card_view.setup_from_instance(prize, BATTLE_CARD_VIEW.MODE_PREVIEW)
-				card_view.set_badges("", "")
-				card_view.set_info("", "")
-				card_view.left_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
-					if cd != null:
-						_show_card_detail(cd)
-				)
-				card_view.right_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
-					if cd != null:
-						_show_card_detail(cd)
-				)
-				_discard_card_row.add_child(card_view)
-	else:
-		if player.prizes.is_empty():
-			_discard_list.add_item("（空）")
-		else:
-			for prize: CardInstance in player.prizes:
-				var cd: CardData = prize.card_data
-				_discard_list.add_item("%s [%s]" % [cd.name, _card_type_cn(cd)])
-	_discard_overlay.visible = true
-	_runtime_log("show_prizes", "player=%d title=%s count=%d" % [player_index, title, player.prizes.size()])
+	_battle_display_controller.call("show_prize_cards", self, player_index, title)
 
 
 func _show_deck_cards(player_index: int, title: String) -> void:
-	if _gsm == null:
-		return
-	var player: PlayerState = _gsm.game_state.players[player_index]
-	_discard_title.text = "%s（%d 张）" % [title, player.deck.size()]
-	_discard_list.clear()
-	if _discard_card_row != null:
-		_clear_container_children(_discard_card_row)
-		if player.deck.is_empty():
-			var empty_label := Label.new()
-			empty_label.text = "（空）"
-			_discard_card_row.add_child(empty_label)
-		else:
-			for deck_card: CardInstance in player.deck:
-				var card_view := BATTLE_CARD_VIEW.new()
-				card_view.custom_minimum_size = _dialog_card_size
-				card_view.set_clickable(true)
-				card_view.setup_from_instance(deck_card, BATTLE_CARD_VIEW.MODE_PREVIEW)
-				card_view.set_badges("", "")
-				card_view.set_info("", "")
-				card_view.left_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
-					if cd != null:
-						_show_card_detail(cd)
-				)
-				card_view.right_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
-					if cd != null:
-						_show_card_detail(cd)
-				)
-				_discard_card_row.add_child(card_view)
-	else:
-		if player.deck.is_empty():
-			_discard_list.add_item("（空）")
-		else:
-			for deck_card: CardInstance in player.deck:
-				var cd: CardData = deck_card.card_data
-				_discard_list.add_item("%s [%s]" % [cd.name, _card_type_cn(cd)])
-	_discard_overlay.visible = true
-	_runtime_log("show_deck", "player=%d title=%s count=%d" % [player_index, title, player.deck.size()])
+	_battle_display_controller.call("show_deck_cards", self, player_index, title)
 
 
 func _init_battle_runtime_log() -> void:
-	var logs_dir := ProjectSettings.globalize_path("user://logs")
-	DirAccess.make_dir_recursive_absolute(logs_dir)
-	var file := FileAccess.open(BATTLE_RUNTIME_LOG_PATH, FileAccess.WRITE)
-	if file == null:
-		push_warning("BattleScene：初始化运行日志失败：%s" % BATTLE_RUNTIME_LOG_PATH)
-		return
-	file.store_line("=== Battle Runtime Log %s ===" % Time.get_datetime_string_from_system())
-	file.close()
-	_runtime_log("session_start", "scene=%s mode=%s" % [name, str(GameManager.current_mode)])
+	_battle_runtime_log_controller.call("init_battle_runtime_log", self)
 
 
 func _runtime_log(event: String, detail: String = "") -> void:
-	var timestamp := Time.get_datetime_string_from_system()
-	var line := "[%s] %s" % [timestamp, event]
-	if detail != "":
-		line += " | %s" % detail
-	var file := FileAccess.open(BATTLE_RUNTIME_LOG_PATH, FileAccess.READ_WRITE)
-	if file == null:
-		return
-	file.seek_end()
-	file.store_line(line)
-	file.close()
+	_battle_runtime_log_controller.call("runtime_log", self, event, detail)
 
 
 func _runtime_log_ui_state_if_changed() -> void:
-	var signature := _state_snapshot()
-	if signature == _last_ui_state_signature:
-		return
-	_last_ui_state_signature = signature
-	_runtime_log("ui_state", signature)
+	_battle_runtime_log_controller.call("runtime_log_ui_state_if_changed", self)
 
 
 func _state_snapshot() -> String:
-	if _gsm == null:
-		return "gsm=null pending=%s overlays=%s" % [_pending_choice, _overlay_snapshot()]
-	var gs: GameState = _gsm.game_state
-	return "phase=%d turn=%d current=%d view=%d pending=%s selected=%s hand=%d/%d overlays=%s effect=%s" % [
-		gs.phase,
-		gs.turn_number,
-		gs.current_player_index,
-		_view_player,
-		_pending_choice,
-		_card_instance_label(_selected_hand_card),
-		gs.players[_view_player].hand.size() if _view_player < gs.players.size() else -1,
-		gs.players[1 - _view_player].hand.size() if gs.players.size() > 1 else -1,
-		_overlay_snapshot(),
-		_effect_state_snapshot(),
-	]
+	return str(_battle_runtime_log_controller.call("state_snapshot", self))
 
 
 func _dialog_state_snapshot() -> String:
-	return "dialog=%s pending=%s card_mode=%s assignment_mode=%s selected_cards=%s selected_list=%s assignments=%d allow_cancel=%s" % [
-		str(_dialog_overlay.visible),
-		_pending_choice,
-		str(_dialog_card_mode),
-		str(_dialog_assignment_mode),
-		JSON.stringify(_dialog_card_selected_indices),
-		JSON.stringify(_dialog_multi_selected_indices),
-		_dialog_assignment_assignments.size(),
-		str(_dialog_cancel.visible),
-	]
+	return str(_battle_runtime_log_controller.call("dialog_state_snapshot", self))
 
 
 func _overlay_snapshot() -> String:
-	return "dialog=%s handover=%s coin=%s detail=%s discard=%s" % [
-		str(_dialog_overlay.visible),
-		str(_handover_panel.visible),
-		str(_coin_overlay.visible),
-		str(_detail_overlay.visible),
-		str(_discard_overlay.visible),
-	]
+	return str(_battle_runtime_log_controller.call("overlay_snapshot", self))
 
 
 func _effect_state_snapshot() -> String:
-	return "kind=%s player=%d step=%d/%d card=%s ctx_keys=%d" % [
-		_pending_effect_kind,
-		_pending_effect_player_index,
-		_pending_effect_step_index,
-		_pending_effect_steps.size(),
-		_card_instance_label(_pending_effect_card),
-		_pending_effect_context.size(),
-	]
+	return str(_battle_runtime_log_controller.call("effect_state_snapshot", self))
 
 
 func _card_instance_label(card: CardInstance) -> String:
-	if card == null:
-		return "-"
-	if card.card_data == null:
-		return "null-data#%d" % card.instance_id
-	return "%s#%d" % [card.card_data.name, card.instance_id]
+	return str(_battle_runtime_log_controller.call("card_instance_label", card))
 
 
 func _card_type_cn(cd: CardData) -> String:

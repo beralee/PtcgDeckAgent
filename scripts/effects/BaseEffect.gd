@@ -1,52 +1,33 @@
-## 效果基类 - 所有卡牌效果脚本继承此类
 class_name BaseEffect
 extends RefCounted
 
 var _attack_interaction_context: Dictionary = {}
 
-## 效果需要的目标选择类型
+const EMPTY_SEARCH_CONTINUE := "continue"
+const EMPTY_SEARCH_VIEW_DECK := "view_deck"
+
+
 enum TargetType {
-	NONE,                ## 无需选择目标
-	OWN_ACTIVE,          ## 己方战斗宝可梦
-	OPP_ACTIVE,          ## 对方战斗宝可梦
-	OWN_BENCH,           ## 己方备战宝可梦（单选）
-	OPP_BENCH,           ## 对方备战宝可梦（单选）
-	OWN_ANY_POKEMON,     ## 己方任意宝可梦（单选）
-	OPP_ANY_POKEMON,     ## 对方任意宝可梦（单选）
-	ANY_POKEMON,         ## 任意一方宝可梦（单选）
-	HAND_CARD,           ## 手牌中的卡（单选）
-	DISCARD_CARD,        ## 弃牌区中的卡（单选）
-	ENERGY_ON_POKEMON,   ## 宝可梦上的能量
-	COIN_FLIP,           ## 需要投币
-	PLAYER_CHOICE,       ## 玩家自由选择
+	NONE,
+	OWN_ACTIVE,
+	OPP_ACTIVE,
+	OWN_BENCH,
+	OPP_BENCH,
+	OWN_ANY_POKEMON,
+	OPP_ANY_POKEMON,
+	ANY_POKEMON,
+	HAND_CARD,
+	DISCARD_CARD,
+	ENERGY_ON_POKEMON,
+	COIN_FLIP,
+	PLAYER_CHOICE,
 }
 
 
-## 获取效果所需的目标类型
 func get_target_type() -> TargetType:
 	return TargetType.NONE
 
 
-## 返回此效果所需的交互步骤。
-## 每个步骤 Dictionary 约定:
-## {
-##   "id": String,
-##   "title": String,
-##   "items": Array,
-##   "labels": Array[String],
-##   "min_select": int,
-##   "max_select": int,
-##   "allow_cancel": bool,
-## }
-##
-## 分配型步骤额外约定:
-## {
-##   "ui_mode": "card_assignment",
-##   "source_items": Array,
-##   "source_labels": Array[String],
-##   "target_items": Array,
-##   "target_labels": Array[String],
-## }
 func get_interaction_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
 	return []
 
@@ -63,8 +44,6 @@ func get_attack_interaction_steps(
 	return []
 
 
-## 在交互步骤被用户完成后，根据已收集的上下文返回后续交互步骤。
-## 用于支持动态链式交互（如巨龙无双选择招式后，被复制招式可能需要额外交互）。
 func get_followup_attack_interaction_steps(
 	_card: CardInstance,
 	_attack: Dictionary,
@@ -74,8 +53,14 @@ func get_followup_attack_interaction_steps(
 	return []
 
 
-## 从 targets 中提取交互上下文。
-## 约定 BattleScene 会将收集到的选择结果作为单个 Dictionary 放入 targets[0]。
+func get_followup_interaction_steps(
+	_card: CardInstance,
+	_state: GameState,
+	_resolved_context: Dictionary
+) -> Array[Dictionary]:
+	return []
+
+
 func get_interaction_context(targets: Array) -> Dictionary:
 	if targets.is_empty():
 		return {}
@@ -120,32 +105,30 @@ func build_card_assignment_step(
 	}
 
 
-## 检查效果是否可以执行（使用前验证）
 func can_execute(_card: CardInstance, _state: GameState) -> bool:
 	return true
 
 
-## 执行卡牌效果（训练家卡/特殊能量使用时调用）
+func can_headless_execute(card: CardInstance, state: GameState) -> bool:
+	return can_execute(card, state)
+
+
 func execute(_card: CardInstance, _targets: Array, _state: GameState) -> void:
 	pass
 
 
-## 使出到场上前需要的交互步骤（如崩塌的竞技场要求选择要弃掉的备战宝可梦）
 func get_on_play_interaction_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
 	return []
 
 
-## 使出到场上时执行的效果（如竞技场进场触发）
 func execute_on_play(_card: CardInstance, _state: GameState, _targets: Array = []) -> void:
 	pass
 
 
-## 当前在场上的竞技场是否可由玩家主动使用
 func can_use_as_stadium_action(_card: CardInstance, _state: GameState) -> bool:
 	return false
 
 
-## 执行招式附加效果（攻击时调用，在基础伤害结算后）
 func execute_attack(
 	_attacker: PokemonSlot,
 	_defender: PokemonSlot,
@@ -155,7 +138,6 @@ func execute_attack(
 	pass
 
 
-## 执行特性效果
 func execute_ability(
 	_pokemon: PokemonSlot,
 	_ability_index: int,
@@ -165,6 +147,59 @@ func execute_ability(
 	pass
 
 
-## 获取效果描述（用于UI提示）
 func get_description() -> String:
 	return ""
+
+
+func build_empty_search_resolution_step(title: String) -> Dictionary:
+	return build_empty_search_resolution_step_with_view_label(title, "查看牌库")
+
+
+func build_empty_search_resolution_step_with_view_label(title: String, view_label: String) -> Dictionary:
+	return {
+		"id": "empty_search_resolution",
+		"title": title,
+		"items": [EMPTY_SEARCH_CONTINUE, EMPTY_SEARCH_VIEW_DECK],
+		"labels": ["继续消耗", view_label],
+		"min_select": 1,
+		"max_select": 1,
+		"allow_cancel": false,
+	}
+
+
+func should_preview_empty_search_deck(resolved_context: Dictionary) -> bool:
+	var selected_raw: Array = resolved_context.get("empty_search_resolution", [])
+	if selected_raw.is_empty():
+		return false
+	return str(selected_raw[0]) == EMPTY_SEARCH_VIEW_DECK
+
+
+func build_readonly_card_preview_step(
+	title: String,
+	cards: Array[CardInstance],
+	close_label: String = "关闭并继续"
+) -> Dictionary:
+	var labels: Array[String] = []
+	for card: CardInstance in cards:
+		if card == null or card.card_data == null:
+			labels.append("")
+			continue
+		if card.card_data.is_pokemon():
+			labels.append("%s (HP %d)" % [card.card_data.name, card.card_data.hp])
+		else:
+			labels.append(card.card_data.name)
+	return {
+		"id": "empty_search_view_deck",
+		"title": title,
+		"items": cards.duplicate(),
+		"labels": labels,
+		"min_select": 0,
+		"max_select": 0,
+		"allow_cancel": false,
+		"presentation": "cards",
+		"utility_actions": [{"label": close_label, "index": -1}],
+	}
+
+
+func build_readonly_deck_preview_step(title: String, deck_cards: Array[CardInstance]) -> Dictionary:
+	return build_readonly_card_preview_step(title, deck_cards)

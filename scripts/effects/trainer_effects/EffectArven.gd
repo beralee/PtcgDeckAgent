@@ -1,4 +1,3 @@
-## 派帕 - 从牌库检索物品卡和宝可梦道具各1张，加入手牌
 class_name EffectArven
 extends BaseEffect
 
@@ -9,13 +8,13 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	var item_labels: Array[String] = []
 	var tool_cards: Array = []
 	var tool_labels: Array[String] = []
-	for c: CardInstance in player.deck:
-		if c.card_data.card_type == "Item":
-			item_cards.append(c)
-			item_labels.append(c.card_data.name)
-		elif c.card_data.card_type == "Tool":
-			tool_cards.append(c)
-			tool_labels.append(c.card_data.name)
+	for deck_card: CardInstance in player.deck:
+		if deck_card.card_data.card_type == "Item":
+			item_cards.append(deck_card)
+			item_labels.append(deck_card.card_data.name)
+		elif deck_card.card_data.card_type == "Tool":
+			tool_cards.append(deck_card)
+			tool_labels.append(deck_card.card_data.name)
 	var steps: Array[Dictionary] = []
 	if not item_cards.is_empty():
 		steps.append({
@@ -37,22 +36,34 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			"max_select": 1,
 			"allow_cancel": true,
 		})
+	if steps.is_empty():
+		return [build_empty_search_resolution_step("牌库里没有物品卡或宝可梦道具。你仍可以使用这张卡。")]
 	return steps
 
 
 func can_execute(card: CardInstance, state: GameState) -> bool:
-	## 牌库中至少有物品卡或宝可梦道具才可使用
 	var player: PlayerState = state.players[card.owner_index]
-	for c: CardInstance in player.deck:
-		if c.card_data.card_type == "Item" or c.card_data.card_type == "Tool":
+	return not player.deck.is_empty()
+
+
+func can_headless_execute(card: CardInstance, state: GameState) -> bool:
+	var player: PlayerState = state.players[card.owner_index]
+	for deck_card: CardInstance in player.deck:
+		if deck_card.card_data.card_type == "Item" or deck_card.card_data.card_type == "Tool":
 			return true
 	return false
 
 
-func execute(card: CardInstance, _targets: Array, state: GameState) -> void:
-	var pi: int = card.owner_index
-	var player: PlayerState = state.players[pi]
-	var ctx: Dictionary = get_interaction_context(_targets)
+func get_followup_interaction_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
+	if not should_preview_empty_search_deck(resolved_context):
+		return []
+	var player: PlayerState = state.players[card.owner_index]
+	return [build_readonly_deck_preview_step("%s：查看剩余牌库" % card.card_data.name, player.deck)]
+
+
+func execute(card: CardInstance, targets: Array, state: GameState) -> void:
+	var player: PlayerState = state.players[card.owner_index]
+	var ctx: Dictionary = get_interaction_context(targets)
 
 	var found_item: CardInstance = null
 	var found_tool: CardInstance = null
@@ -67,15 +78,14 @@ func execute(card: CardInstance, _targets: Array, state: GameState) -> void:
 		if selected_tool in player.deck and selected_tool.card_data.card_type == "Tool":
 			found_tool = selected_tool
 
-	for c: CardInstance in player.deck:
-		if found_item == null and c.card_data.card_type == "Item":
-			found_item = c
-		if found_tool == null and c.card_data.card_type == "Tool":
-			found_tool = c
+	for deck_card: CardInstance in player.deck:
+		if found_item == null and deck_card.card_data.card_type == "Item":
+			found_item = deck_card
+		if found_tool == null and deck_card.card_data.card_type == "Tool":
+			found_tool = deck_card
 		if found_item != null and found_tool != null:
 			break
 
-	## 将检索到的卡牌移出牌库并加入手牌
 	if found_item != null:
 		player.deck.erase(found_item)
 		found_item.face_up = true
@@ -86,9 +96,8 @@ func execute(card: CardInstance, _targets: Array, state: GameState) -> void:
 		found_tool.face_up = true
 		player.hand.append(found_tool)
 
-	## 检索后洗牌
 	player.shuffle_deck()
 
 
 func get_description() -> String:
-	return "从牌库检索物品卡和宝可梦道具各1张加入手牌"
+	return "从牌库检索物品卡和宝可梦道具各1张加入手牌。"

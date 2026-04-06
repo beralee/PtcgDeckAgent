@@ -1,6 +1,8 @@
 class_name AbilityPrizeToBenchAndExtraPrize
 extends BaseEffect
 
+const BenchLimit = preload("res://scripts/engine/BenchLimitHelper.gd")
+
 var coin_flipper: CoinFlipper = null
 
 
@@ -13,7 +15,7 @@ func resolve_prize_take(card: CardInstance, player: PlayerState, state: GameStat
 		return {"used": false, "extra_prizes": 0}
 	if card not in player.hand:
 		return {"used": false, "extra_prizes": 0}
-	if not card.is_basic_pokemon() or player.is_bench_full():
+	if not card.is_basic_pokemon() or BenchLimit.is_bench_full(state, player):
 		return {"used": false, "extra_prizes": 0}
 
 	player.hand.erase(card)

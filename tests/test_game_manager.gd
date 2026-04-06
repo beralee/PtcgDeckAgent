@@ -79,3 +79,21 @@ func test_battle_review_api_config_loads_user_file() -> String:
 		assert_eq(str(config.get("model", "")), "gpt-test", "GameManager should load model from user config"),
 		assert_eq(float(config.get("timeout_seconds", 0.0)), 45.0, "GameManager should load timeout_seconds from user config"),
 	])
+
+
+func test_battle_replay_launch_request_is_one_shot() -> String:
+	var manager: Node = _load_game_manager_script().new()
+	if not manager.has_method("set_battle_replay_launch") or not manager.has_method("consume_battle_replay_launch"):
+		return "GameManager should provide replay launch helpers"
+
+	manager.call("set_battle_replay_launch", {
+		"match_dir": "user://match_records/match_a",
+		"entry_turn_number": 6,
+	})
+	var launch: Dictionary = manager.call("consume_battle_replay_launch")
+
+	return run_checks([
+		assert_eq(str(launch.get("match_dir", "")), "user://match_records/match_a", "Replay launch should preserve match_dir"),
+		assert_eq(int(launch.get("entry_turn_number", 0)), 6, "Replay launch should preserve entry turn"),
+		assert_true((manager.call("consume_battle_replay_launch") as Dictionary).is_empty(), "Replay launch should be one-shot"),
+	])

@@ -22,6 +22,9 @@ extends Resource
 ## 总卡牌数
 @export var total_cards: int = 0
 
+## 打法思路（人工编辑，供 AI 分析时参考）
+@export var strategy: String = ""
+
 
 ## 从 API deck/detail 响应创建
 static func from_api_response(deck_id: int, data: Dictionary) -> DeckData:
@@ -105,6 +108,7 @@ func to_dict() -> Dictionary:
 		"deck_code": deck_code,
 		"cards": cards,
 		"total_cards": total_cards,
+		"strategy": strategy,
 	}
 
 
@@ -124,4 +128,5 @@ static func from_dict(d: Dictionary) -> DeckData:
 		if entry is Dictionary:
 			deck.cards.append(entry)
 	deck.total_cards = int(d.get("total_cards", 0))
+	deck.strategy = d.get("strategy", "")
 	return deck

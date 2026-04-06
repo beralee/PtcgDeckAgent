@@ -2,6 +2,8 @@
 class_name AttackReviveFromDiscardToBench
 extends BaseEffect
 
+const BenchLimit = preload("res://scripts/engine/BenchLimitHelper.gd")
+
 var max_count: int = 1
 var required_name: String = ""
 
@@ -19,7 +21,7 @@ func get_attack_interaction_steps(
 	if card == null:
 		return []
 	var player: PlayerState = state.players[card.owner_index]
-	var bench_space: int = 5 - player.bench.size()
+	var bench_space: int = BenchLimit.get_available_bench_space(state, player)
 	if bench_space <= 0:
 		return []
 	var actual_max: int = mini(max_count, bench_space)
@@ -56,7 +58,7 @@ func execute_attack(
 	if top == null:
 		return
 	var player: PlayerState = state.players[top.owner_index]
-	var bench_space: int = 5 - player.bench.size()
+	var bench_space: int = BenchLimit.get_available_bench_space(state, player)
 	if bench_space <= 0:
 		return
 
@@ -90,7 +92,7 @@ func execute_attack(
 				break
 
 	for card: CardInstance in chosen:
-		if player.is_bench_full():
+		if BenchLimit.is_bench_full(state, player):
 			break
 		player.discard_pile.erase(card)
 		card.face_up = true

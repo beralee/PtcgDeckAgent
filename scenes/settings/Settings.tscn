@@ -1,0 +1,116 @@
+[gd_scene load_steps=2 format=3 uid="uid://b4settings0001"]
+
+[ext_resource type="Script" path="res://scenes/settings/Settings.gd" id="1_script"]
+
+[node name="Settings" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.12, 0.14, 0.2, 1)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -220.0
+offset_right = 260.0
+offset_bottom = 220.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "设置"
+horizontal_alignment = 1
+
+[node name="SectionLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "ZenMux AI 配置"
+
+[node name="EndpointLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "API 地址:"
+
+[node name="EndpointInput" type="LineEdit" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(400, 35)
+placeholder_text = "https://api.example.com/v1"
+
+[node name="ApiKeyLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "API 密钥:"
+
+[node name="ApiKeyInput" type="LineEdit" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(400, 35)
+placeholder_text = "sk-..."
+secret = true
+
+[node name="ModelLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "模型名称:"
+
+[node name="ModelInput" type="LineEdit" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(400, 35)
+placeholder_text = "gpt-4o / claude-sonnet-4-20250514 等"
+
+[node name="TimeoutLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "请求超时 (秒):"
+
+[node name="TimeoutInput" type="SpinBox" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(120, 35)
+min_value = 5.0
+max_value = 300.0
+step = 5.0
+value = 30.0
+
+[node name="StatusLabel" type="Label" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="VBoxContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 10)
+
+[node name="HBox" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 20
+
+[node name="BtnSave" type="Button" parent="VBoxContainer/HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(140, 40)
+text = "保存"
+
+[node name="BtnBack" type="Button" parent="VBoxContainer/HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(140, 40)
+text = "返回"

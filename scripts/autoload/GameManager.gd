@@ -34,7 +34,13 @@ const SCENE_MAIN_MENU := "res://scenes/main_menu/MainMenu.tscn"
 const SCENE_DECK_MANAGER := "res://scenes/deck_manager/DeckManager.tscn"
 const SCENE_BATTLE_SETUP := "res://scenes/battle_setup/BattleSetup.tscn"
 const SCENE_BATTLE := "res://scenes/battle/BattleScene.tscn"
+const SCENE_DECK_EDITOR := "res://scenes/deck_editor/DeckEditor.tscn"
+const SCENE_REPLAY_BROWSER := "res://scenes/replay_browser/ReplayBrowser.tscn"
+const SCENE_SETTINGS := "res://scenes/settings/Settings.tscn"
 const BATTLE_REVIEW_API_CONFIG_PATH := "user://battle_review_api.json"
+
+var _battle_replay_launch: Dictionary = {}
+var _deck_editor_deck_id: int = -1
 
 
 ## 切换到指定场景
@@ -65,6 +71,35 @@ func goto_battle_setup() -> void:
 ## 切换到对战场景
 func goto_battle() -> void:
 	goto_scene(SCENE_BATTLE)
+
+
+func goto_deck_editor(deck_id: int) -> void:
+	_deck_editor_deck_id = deck_id
+	goto_scene(SCENE_DECK_EDITOR)
+
+
+func consume_deck_editor_id() -> int:
+	var id := _deck_editor_deck_id
+	_deck_editor_deck_id = -1
+	return id
+
+
+func goto_replay_browser() -> void:
+	goto_scene(SCENE_REPLAY_BROWSER)
+
+
+func goto_settings() -> void:
+	goto_scene(SCENE_SETTINGS)
+
+
+func set_battle_replay_launch(launch: Dictionary) -> void:
+	_battle_replay_launch = launch.duplicate(true)
+
+
+func consume_battle_replay_launch() -> Dictionary:
+	var launch := _battle_replay_launch.duplicate(true)
+	_battle_replay_launch = {}
+	return launch
 
 
 func get_battle_review_api_config_path() -> String:

@@ -19,6 +19,7 @@ func _make_state(turn: int = 2, first: int = 0, current: int = 0) -> GameState:
 	# 各放一只基础宝可梦
 	for pi: int in 2:
 		var cd := CardData.new()
+		cd.name = "Test Basic %d" % pi
 		cd.card_type = "Pokemon"
 		cd.stage = "Basic"
 		cd.hp = 100

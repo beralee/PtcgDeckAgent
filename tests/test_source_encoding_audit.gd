@@ -1,4 +1,3 @@
-## 源码编码审计测试 - 防止乱码和异常字符再次进入仓库
 class_name TestSourceEncodingAudit
 extends TestBase
 
@@ -100,7 +99,7 @@ func _is_allowed_target(path: String) -> bool:
 func _audit_file(path: String) -> String:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
-		return "无法打开文件: %s" % path
+		return "Unable to open source file: %s" % path
 
 	var text := file.get_as_text()
 	var lines := text.split("\n")
@@ -128,7 +127,7 @@ func _audit_file(path: String) -> String:
 func _check_placeholder_question_marks(path: String, line_number: int, line: String) -> String:
 	var marker := "?" + "?" + "?"
 	if marker in line:
-		return "检测到疑似占位乱码 %s 于 %s:%d" % [marker, path, line_number]
+		return "Detected placeholder mojibake %s at %s:%d" % [marker, path, line_number]
 	return ""
 
 
@@ -137,7 +136,7 @@ func _check_forbidden_ui_phrases(path: String, line_number: int, line: String) -
 		return ""
 	for phrase: String in BATTLE_SCENE_FORBIDDEN_UI_PHRASES:
 		if phrase in line:
-			return "检测到 BattleScene 英文回退文案 \"%s\" 于 %s:%d" % [phrase, path, line_number]
+			return "Detected forbidden BattleScene fallback copy \"%s\" at %s:%d" % [phrase, path, line_number]
 	return ""
 
 
@@ -145,7 +144,7 @@ func _check_known_mojibake(path: String, line_number: int, line: String) -> Stri
 	for i: int in line.length():
 		var cp := line.unicode_at(i)
 		if KNOWN_MOJIBAKE_CODEPOINTS.has(cp):
-			return "检测到疑似乱码标记 U+%04X 于 %s:%d" % [cp, path, line_number]
+			return "Detected mojibake marker U+%04X at %s:%d" % [cp, path, line_number]
 	return ""
 
 
@@ -154,7 +153,7 @@ func _check_line_codepoints(path: String, line_number: int, line: String) -> Str
 		var cp := line.unicode_at(j)
 		if _is_allowed_codepoint(cp):
 			continue
-		return "检测到异常字符 U+%04X 于 %s:%d" % [cp, path, line_number]
+		return "Detected unsupported codepoint U+%04X at %s:%d" % [cp, path, line_number]
 	return ""
 
 
