@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "5ban Graphics",
+	"attacks": [
+		{
+			"cost": "RC",
+			"damage": "60",
+			"is_vstar_power": false,
+			"name": "高温爆破",
+			"text": ""
+		},
+		{
+			"cost": "RRC",
+			"damage": "260",
+			"is_vstar_power": false,
+			"name": "烈火猛冲",
+			"text": "如果使用了这个招式的话，则这只宝可梦，在离开战斗场之前无法使用「烈火猛冲」。"
+		}
+	],
+	"card_index": "051",
+	"card_index_en": "38",
+	"card_type": "Pokemon",
+	"description": "【火】 高温爆破 60\n\n\n【火】【火】 烈火猛冲 260\n如果使用了这个招式的话，则这只宝可梦，在离开战斗场之前无法使用「烈火猛冲」。\n\n",
+	"effect_id": "2d2fed5a4681c1000b070227a730eaff",
+	"energy_provides": "",
+	"energy_type": "R",
+	"evolves_from": "",
+	"hp": 230,
+	"image_local_path": "user://cards/images/CSV7C/051.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV7C/051.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "ex",
+	"name": "破空焰ex",
+	"name_en": "Gouging Fire ex",
+	"rarity": "RR",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-01-16T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CSV7C",
+	"set_code_en": "TEF",
+	"stage": "Basic",
+	"weakness_energy": "W",
+	"weakness_value": "×2",
+	"yoren_code": "Y1387"
+}

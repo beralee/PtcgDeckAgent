@@ -12,18 +12,41 @@ func build_stage1_payload(match_dir: String) -> Dictionary:
 	var llm_digest := _read_json_file(match_dir.path_join("llm_digest.json"))
 	var turns_payload := _read_json_file(match_dir.path_join("turns.json"))
 	var match_payload := _read_json_file(match_dir.path_join("match.json"))
-	return {
-		"meta": llm_digest.get("meta", match_payload.get("meta", {})),
+	var meta: Dictionary = llm_digest.get("meta", match_payload.get("meta", {}))
+	var payload := {
+		"meta": meta,
 		"opening": llm_digest.get("opening", {}),
 		"turn_summaries": _compact_stage1_turn_summaries(llm_digest.get("turn_summaries", turns_payload.get("turns", []))),
 		"inflection_points": _compact_inflection_points(llm_digest.get("inflection_points", [])),
 		"result": match_payload.get("result", {}),
 	}
+	var strategies := _build_deck_strategies(match_payload.get("meta", {}))
+	if not strategies.is_empty():
+		payload["deck_strategies"] = strategies
+	return payload
 
 
 func build_turn_packet(match_dir: String, turn_number: int) -> Dictionary:
 	var turn_slice := _extractor.extract_turn(match_dir, turn_number)
 	return _context_builder.build_turn_packet(turn_slice)
+
+
+func _build_deck_strategies(meta: Dictionary) -> Array[Dictionary]:
+	var strategies: Array[Dictionary] = []
+	var deck_ids: Array = meta.get("selected_deck_ids", [])
+	var labels: Array = meta.get("player_labels", [])
+	for i: int in deck_ids.size():
+		var deck_id: int = int(deck_ids[i])
+		var deck: DeckData = CardDatabase.get_deck(deck_id) if deck_id > 0 else null
+		var label: String = str(labels[i]) if i < labels.size() else ""
+		var strategy: String = deck.strategy if deck != null else ""
+		if strategy != "":
+			strategies.append({
+				"player_index": i,
+				"deck_name": label,
+				"strategy": strategy,
+			})
+	return strategies
 
 
 func _read_json_file(path: String) -> Dictionary:

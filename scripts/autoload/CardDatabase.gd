@@ -9,6 +9,7 @@ const DECKS_DIR := "user://decks/"
 const BUNDLED_USER_DIR := "res://data/bundled_user/"
 const BUNDLED_CARDS_DIR := BUNDLED_USER_DIR + "cards/"
 const BUNDLED_DECKS_DIR := BUNDLED_USER_DIR + "decks/"
+const BUNDLED_MANIFEST := BUNDLED_USER_DIR + "_manifest.txt"
 
 ## 内存中的卡牌缓存 {uid -> CardData}
 var _card_cache: Dictionary = {}
@@ -36,51 +37,74 @@ func _ensure_directories() -> void:
 
 
 func _seed_bundled_user_data() -> void:
-	_copy_missing_files_recursive(BUNDLED_CARDS_DIR, CARDS_DIR)
-	_copy_missing_files_recursive(BUNDLED_DECKS_DIR, DECKS_DIR)
-	_backfill_deck_strategy_from_bundled()
-
-
-func _copy_missing_files_recursive(source_dir_path: String, target_dir_path: String) -> void:
-	var source_dir := DirAccess.open(source_dir_path)
-	if source_dir == null:
-		return
-	if not DirAccess.dir_exists_absolute(target_dir_path):
-		DirAccess.make_dir_recursive_absolute(target_dir_path)
-
-	source_dir.list_dir_begin()
-	var entry := source_dir.get_next()
-	while entry != "":
-		if entry.begins_with("."):
-			entry = source_dir.get_next()
+	var manifest := _load_bundled_manifest()
+	for bundled_path: String in manifest:
+		if bundled_path.ends_with(".import"):
 			continue
-		var source_path := source_dir_path.path_join(entry)
-		if source_dir.current_is_dir():
-			_copy_missing_files_recursive(source_path, target_dir_path.path_join(entry))
-		else:
-			if entry.ends_with(".import"):
-				entry = source_dir.get_next()
-				continue
-			var target_path := _resolve_bundled_target_path(target_dir_path, entry)
-			_copy_file_if_missing(source_path, target_path)
-		entry = source_dir.get_next()
-	source_dir.list_dir_end()
+		var relative := bundled_path.trim_prefix(BUNDLED_USER_DIR)
+		if relative.begins_with("cards/"):
+			var entry_name := relative.get_file()
+			var sub_dir := relative.trim_prefix("cards/").get_base_dir()
+			var target_dir := CARDS_DIR
+			if sub_dir != "":
+				target_dir = CARDS_DIR.path_join(sub_dir)
+			var target_path := _resolve_bundled_target_path(target_dir, entry_name)
+			_copy_file_if_missing(bundled_path, target_path)
+		elif relative.begins_with("decks/"):
+			var entry_name := relative.get_file()
+			var target_path := DECKS_DIR.path_join(entry_name)
+			_copy_file_if_missing(bundled_path, target_path)
+	_backfill_deck_strategy_from_bundled(manifest)
 
 
-func _backfill_deck_strategy_from_bundled() -> void:
-	var bundled_dir := DirAccess.open(BUNDLED_DECKS_DIR)
-	if bundled_dir == null:
-		return
-	bundled_dir.list_dir_begin()
-	var entry := bundled_dir.get_next()
+## 读取清单文件（导出后 DirAccess 无法遍历 pck，需要预生成清单）
+func _load_bundled_manifest() -> Array[String]:
+	var results: Array[String] = []
+	if not FileAccess.file_exists(BUNDLED_MANIFEST):
+		# 回退：编辑器中直接遍历目录生成清单
+		return _scan_bundled_dir_recursive(BUNDLED_USER_DIR)
+	var file := FileAccess.open(BUNDLED_MANIFEST, FileAccess.READ)
+	if file == null:
+		return results
+	var text := file.get_as_text()
+	file.close()
+	for line: String in text.split("\n"):
+		var trimmed := line.strip_edges()
+		if trimmed != "":
+			results.append(trimmed)
+	return results
+
+
+## 编辑器回退：递归遍历目录
+func _scan_bundled_dir_recursive(dir_path: String) -> Array[String]:
+	var results: Array[String] = []
+	var dir := DirAccess.open(dir_path)
+	if dir == null:
+		return results
+	dir.list_dir_begin()
+	var entry := dir.get_next()
 	while entry != "":
-		if entry.ends_with(".json"):
-			var bundled_path := BUNDLED_DECKS_DIR.path_join(entry)
-			var user_path := DECKS_DIR.path_join(entry)
-			if FileAccess.file_exists(user_path):
-				_merge_strategy_field(bundled_path, user_path)
-		entry = bundled_dir.get_next()
-	bundled_dir.list_dir_end()
+		if not entry.begins_with(".") and not entry.ends_with(".import"):
+			var full_path := dir_path.path_join(entry)
+			if dir.current_is_dir():
+				results.append_array(_scan_bundled_dir_recursive(full_path))
+			else:
+				results.append(full_path)
+		entry = dir.get_next()
+	dir.list_dir_end()
+	return results
+
+
+func _backfill_deck_strategy_from_bundled(manifest: Array[String]) -> void:
+	for bundled_path: String in manifest:
+		if not bundled_path.begins_with(BUNDLED_DECKS_DIR):
+			continue
+		if not bundled_path.ends_with(".json"):
+			continue
+		var entry_name := bundled_path.get_file()
+		var user_path := DECKS_DIR.path_join(entry_name)
+		if FileAccess.file_exists(user_path):
+			_merge_strategy_field(bundled_path, user_path)
 
 
 func _merge_strategy_field(bundled_path: String, user_path: String) -> void:
@@ -105,7 +129,7 @@ func _merge_strategy_field(bundled_path: String, user_path: String) -> void:
 
 	var user_dict := user_data as Dictionary
 	var existing: String = user_dict.get("strategy", "")
-	if existing != "":
+	if existing == bundled_strategy:
 		return
 
 	user_dict["strategy"] = bundled_strategy

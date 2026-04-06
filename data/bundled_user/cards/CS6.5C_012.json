@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "5ban Graphics",
+	"attacks": [
+		{
+			"cost": "R",
+			"damage": "",
+			"is_vstar_power": false,
+			"name": "奇异灯火",
+			"text": "使对手的战斗宝可梦陷入【灼伤】和【混乱】状态。"
+		},
+		{
+			"cost": "RRC",
+			"damage": "120",
+			"is_vstar_power": false,
+			"name": "魔法烈火",
+			"text": "将附着于这只宝可梦身上的2个能量，放于放逐区，给对手的1只备战宝可梦，也造成120点伤害。[备战宝可梦不计算弱点、抗性。]"
+		}
+	],
+	"card_index": "012",
+	"card_index_en": "27",
+	"card_type": "Pokemon",
+	"description": "【火】 奇异灯火 \n使对手的战斗宝可梦陷入【灼伤】和【混乱】状态。\n\n【火】【火】 魔法烈火 120\n将附着于这只宝可梦身上的2个能量，放于放逐区，给对手的1只备战宝可梦，也造成120点伤害。[备战宝可梦不计算弱点、抗性。]\n\n",
+	"effect_id": "21cad77ee66ee136c386e766736ec247",
+	"energy_provides": "",
+	"energy_type": "R",
+	"evolves_from": "",
+	"hp": 210,
+	"image_local_path": "user://cards/images/CS6.5C/012.png",
+	"image_url": "https://tcg.mik.moe/static/img/CS6.5C/012.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "V",
+	"name": "妖火红狐V",
+	"name_en": "Delphox V",
+	"rarity": "RR",
+	"regulation_expanded": true,
+	"regulation_mark": "F",
+	"regulation_standard": true,
+	"release_date": "2024-11-15T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CS6.5C",
+	"set_code_en": "LOR",
+	"stage": "Basic",
+	"weakness_energy": "W",
+	"weakness_value": "×2",
+	"yoren_code": "Y1157"
+}

@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "PLANETA Mochizuki",
+	"attacks": [
+		{
+			"cost": "P",
+			"damage": "30",
+			"is_vstar_power": false,
+			"name": "暗夜难明",
+			"text": "在下一个对手的回合，对手无法从手牌使出物品。"
+		},
+		{
+			"cost": "PC",
+			"damage": "60×",
+			"is_vstar_power": false,
+			"name": "灵骚",
+			"text": "查看对手的手牌，造成其中训练家张数×60伤害。"
+		}
+	],
+	"card_index": "054",
+	"card_index_en": "88",
+	"card_type": "Pokemon",
+	"description": "【超】 暗夜难明 30\n在下一个对手的回合，对手无法从手牌使出物品。\n\n【超】 灵骚 60×\n查看对手的手牌，造成其中训练家张数×60伤害。\n\n",
+	"effect_id": "ffe8874ed7810f9ecd8209d4a09ade59",
+	"energy_provides": "",
+	"energy_type": "P",
+	"evolves_from": "怨影娃娃",
+	"hp": 250,
+	"image_local_path": "user://cards/images/CSV1C/054.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV1C/054.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "ex",
+	"name": "诅咒娃娃ex",
+	"name_en": "Banette ex",
+	"rarity": "RR",
+	"regulation_expanded": true,
+	"regulation_mark": "G",
+	"regulation_standard": true,
+	"release_date": "2025-01-17T00:00:00+08:00",
+	"resistance_energy": "F",
+	"resistance_value": "-30",
+	"retreat_cost": 2,
+	"set_code": "CSV1C",
+	"set_code_en": "SVI",
+	"stage": "Stage 1",
+	"weakness_energy": "D",
+	"weakness_value": "×2",
+	"yoren_code": "Y1197"
+}

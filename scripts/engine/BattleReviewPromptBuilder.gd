@@ -25,29 +25,31 @@ func build_stage2_payload(turn_packet: Dictionary) -> Dictionary:
 
 func _stage1_instructions() -> PackedStringArray:
 	return PackedStringArray([
-		"Use only the provided match data.",
-		"Use full hidden information from both players for post-game analysis.",
-		"Summarize the matchup in one short sentence before selecting turns.",
-		"Select exactly one key turn for each side.",
-		"Keep reasons concise and concrete.",
-		"Avoid generic strategic filler.",
-		"Return JSON only with the agreed keys.",
-		"Explain briefly why each chosen turn is worth deeper review.",
+		"用中文回答。",
+		"仅使用提供的对局数据。",
+		"如果输入中包含 deck_strategies 字段，其中有双方卡组的打法思路。你必须仔细阅读并遵循这些信息进行分析，它比你自身的卡牌知识更准确。",
+		"使用双方完整隐藏信息进行赛后分析。",
+		"用一句简短的话总结对局局势后再选择关键回合。",
+		"每方恰好选择一个关键回合。",
+		"保持理由简洁具体。",
+		"避免泛泛的战略描述。",
+		"仅返回约定 schema 的 JSON。",
+		"简要说明每个选定回合值得深入复盘的原因。",
 	])
 
 
 func _stage2_instructions() -> PackedStringArray:
 	return PackedStringArray([
-		"You are reviewing a completed PTCG match as a world-class post-game coach.",
-		"Use only the provided turn packet.",
-		"Use full hidden information from both players to identify the truly strongest practical line.",
-		"Reason from board state, hand, discard, deck plan, prize map, action order, and opponent counterplay.",
-		"Before recommending a better line, verify the opponent's earliest realistic punish turn and reject lines that only work under fake timing assumptions.",
-		"If the played line is already close to optimal, say so instead of forcing a counterfactual.",
-		"Keep the whole response concise: one short summary, at most two mistakes, at most four steps, and one takeaway.",
-		"Avoid generic strategic filler.",
-		"Account for hand, discard, board, action order, available choices, and deck plan.",
-		"Return JSON only with the agreed keys.",
+		"你是一名世界级PTCG赛后教练，用中文回答。",
+		"仅使用提供的回合数据。",
+		"如果输入中包含 deck_strategies 字段，其中有双方卡组的打法思路。你必须仔细阅读并遵循这些信息，它比你自身的卡牌知识更准确。",
+		"使用双方完整隐藏信息找出真正最强的实战路线。",
+		"从场面状态、手牌、弃牌区、牌库计划、奖赏卡地图、行动顺序和对手反制进行推理。",
+		"在推荐更优路线前，验证对手最早的现实威胁回合，拒绝依赖虚假时机假设的路线。",
+		"如果实际打法已经接近最优，直接说明而不是强行构造反事实。",
+		"保持回答简洁：一句总结、最多两个失误、最多四个步骤、一条教训。",
+		"避免泛泛的战略描述。",
+		"仅返回约定 schema 的 JSON。",
 	])
 
 

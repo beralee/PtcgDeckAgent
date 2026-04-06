@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "变身启动",
+			"text": "如果这只宝可梦在战斗场上的话，则仅在最初的自己的回合可以使用1次。选择自己牌库中的1张【基础】宝可梦（除「百变怪」外）。然后，将这只宝可梦，以及放于其身上的所有卡牌放于弃牌区，将被选择的宝可梦放于这只宝可梦原先的位置。并重洗牌库。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "KIYOTAKA OSHIYAMA",
+	"attacks": [
+		{
+			"cost": "C",
+			"damage": "10",
+			"is_vstar_power": false,
+			"name": "粘粑粑",
+			"text": ""
+		}
+	],
+	"card_index": "132",
+	"card_index_en": "132",
+	"card_type": "Pokemon",
+	"description": "特性: 变身启动\n如果这只宝可梦在战斗场上的话，则仅在最初的自己的回合可以使用1次。选择自己牌库中的1张【基础】宝可梦（除「百变怪」外）。然后，将这只宝可梦，以及放于其身上的所有卡牌放于弃牌区，将被选择的宝可梦放于这只宝可梦原先的位置。并重洗牌库。\n\n 粘粑粑 10\n\n\n",
+	"effect_id": "63ea5ed31033f1cc5711c2f89bd92692",
+	"energy_provides": "",
+	"energy_type": "C",
+	"evolves_from": "",
+	"hp": 60,
+	"image_local_path": "user://cards/images/151C/132.png",
+	"image_url": "https://tcg.mik.moe/static/img/151C/132.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "百变怪",
+	"name_en": "Ditto",
+	"rarity": "R",
+	"regulation_expanded": true,
+	"regulation_mark": "G",
+	"regulation_standard": true,
+	"release_date": "2025-01-17T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "151C",
+	"set_code_en": "MEW",
+	"stage": "Basic",
+	"weakness_energy": "F",
+	"weakness_value": "×2",
+	"yoren_code": "Y1074"
+}

@@ -43,7 +43,8 @@ func generate_review(parent: Node, match_dir: String, api_config: Dictionary) ->
 	if _client != null and _client.has_method("set_timeout_seconds"):
 		_client.call("set_timeout_seconds", float(api_config.get("timeout_seconds", 30.0)))
 
-	var stage1_request: Dictionary = _prompt_builder.build_stage1_payload(_data_builder.build_stage1_payload(match_dir))
+	var stage1_data: Dictionary = _data_builder.build_stage1_payload(match_dir)
+	var stage1_request: Dictionary = _prompt_builder.build_stage1_payload(stage1_data)
 	stage1_request["model"] = str(api_config.get("model", ""))
 	_artifact_store.write_stage_debug(match_dir, "stage1_request.json", stage1_request)
 
@@ -52,7 +53,7 @@ func generate_review(parent: Node, match_dir: String, api_config: Dictionary) ->
 		str(api_config.get("endpoint", "")),
 		str(api_config.get("api_key", "")),
 		stage1_request,
-		_on_stage1_response.bind(parent, match_dir, api_config, stage1_request)
+		_on_stage1_response.bind(parent, match_dir, api_config, stage1_request, stage1_data)
 	)
 	if request_error != OK:
 		_latest_review = _finalize_failure(match_dir, api_config, [{
@@ -72,7 +73,8 @@ func _on_stage1_response(
 	parent: Node,
 	match_dir: String,
 	api_config: Dictionary,
-	stage1_request: Dictionary
+	stage1_request: Dictionary,
+	stage1_data: Dictionary
 ) -> void:
 	_artifact_store.write_stage_debug(match_dir, "stage1_response.json", response)
 	if _is_error_response(response):
@@ -91,6 +93,7 @@ func _on_stage1_response(
 		_latest_review = _finalize_failure(match_dir, api_config, invalid_turn_errors)
 		return
 
+	var deck_strategies: Array = stage1_data.get("deck_strategies", []) as Array
 	var review := {
 		"status": "running",
 		"generated_at": Time.get_datetime_string_from_system(),
@@ -102,6 +105,7 @@ func _on_stage1_response(
 		"selected_turns": selected_turns,
 		"turn_reviews": [],
 		"errors": [],
+		"_deck_strategies": deck_strategies,
 	}
 	_analyze_turn(parent, match_dir, api_config, review, 0)
 
@@ -126,6 +130,9 @@ func _analyze_turn(parent: Node, match_dir: String, api_config: Dictionary, revi
 	_set_status(Status.ANALYZING_TURN, {"turn_number": turn_number, "turn_index": turn_index, "total": selected_turns.size()})
 
 	var turn_packet: Dictionary = _data_builder.build_turn_packet(match_dir, turn_number)
+	var review_strategies: Array = review.get("_deck_strategies", []) as Array
+	if not review_strategies.is_empty():
+		turn_packet["deck_strategies"] = review_strategies
 	var stage2_request: Dictionary = _prompt_builder.build_stage2_payload(turn_packet)
 	stage2_request["model"] = str(api_config.get("model", ""))
 	_artifact_store.write_stage_debug(match_dir, "turn_%d_request.json" % turn_number, stage2_request)

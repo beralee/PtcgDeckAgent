@@ -2784,7 +2784,7 @@ func test_battle_scene_regidrago_copy_dragapult_real_choice_enters_assignment_ui
 	return run_checks([
 		assert_gte(phantom_index, 0, "Phantom Dive should appear in the copied attack options"),
 		assert_eq(pending_choice, "effect_interaction", "Selecting Phantom Dive should continue into the follow-up interaction flow"),
-		assert_eq(field_interaction_mode, "assignment", "Selecting Phantom Dive should switch into the field assignment interaction mode"),
+		assert_eq(field_interaction_mode, "counter_distribution", "Selecting Phantom Dive should switch into the counter distribution interaction mode"),
 		assert_true(has_assignment_step, "The queued follow-up step should be bench_damage_counters"),
 	])
 

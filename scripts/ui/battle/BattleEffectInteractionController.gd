@@ -41,8 +41,20 @@ func start_effect_interaction(
 	show_next_effect_interaction_step(scene)
 
 
+func effect_step_uses_counter_distribution_ui(_scene: Object, step: Dictionary) -> bool:
+	if str(step.get("ui_mode", "")) != "counter_distribution":
+		return false
+	var target_items: Array = step.get("target_items", [])
+	if target_items.is_empty():
+		return false
+	for item: Variant in target_items:
+		if not (item is PokemonSlot):
+			return false
+	return true
+
+
 func effect_step_uses_field_slot_ui(_scene: Object, step: Dictionary) -> bool:
-	if str(step.get("ui_mode", "")) == "card_assignment":
+	if str(step.get("ui_mode", "")) in ["card_assignment", "counter_distribution"]:
 		return false
 	var items: Array = step.get("items", [])
 	if items.is_empty():
@@ -122,6 +134,21 @@ func show_next_effect_interaction_step(scene: Object) -> void:
 			scene.call("_refresh_ui")
 			show_next_effect_interaction_step(scene)
 		)
+		return
+	if effect_step_uses_counter_distribution_ui(scene, step):
+		scene.set("_pending_choice", "effect_interaction")
+		scene.call(
+			"_runtime_log",
+			"effect_step",
+			"step=%d/%d title=%s counters=%d mode=counter_distribution" % [
+				pending_effect_step_index + 1,
+				pending_effect_steps.size(),
+				_step_title(scene, step),
+				int(step.get("total_counters", 0)),
+			]
+		)
+		scene.call("_show_field_counter_distribution", step)
+		hide_ai_owned_effect_step_ui(scene, chooser_player)
 		return
 	if effect_step_uses_field_assignment_ui(scene, step):
 		scene.set("_pending_choice", "effect_interaction")

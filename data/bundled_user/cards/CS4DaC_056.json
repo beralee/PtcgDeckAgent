@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "瞬步",
+			"text": "如果这只宝可梦在战斗场上的话，则在自己的回合可以使用1次。从自己的牌库上方抽取1张卡牌。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "PLANETA Mochizuki",
+	"attacks": [
+		{
+			"cost": "RC",
+			"damage": "20+",
+			"is_vstar_power": false,
+			"name": "燃烧回旋曲",
+			"text": "追加造成双方备战宝可梦数量×20点伤害。"
+		}
+	],
+	"card_index": "056",
+	"card_index_en": "22",
+	"card_type": "Pokemon",
+	"description": "特性: 瞬步\n如果这只宝可梦在战斗场上的话，则在自己的回合可以使用1次。从自己的牌库上方抽取1张卡牌。\n\n【火】 燃烧回旋曲 20+\n追加造成双方备战宝可梦数量×20点伤害。\n\n",
+	"effect_id": "3c6c028efc71a5e7ee0fbd2e8f70ece9",
+	"energy_provides": "",
+	"energy_type": "R",
+	"evolves_from": "",
+	"hp": 230,
+	"image_local_path": "user://cards/images/CS4DaC/056.png",
+	"image_url": "https://tcg.mik.moe/static/img/CS4DaC/056.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "V",
+	"name": "炎帝V",
+	"name_en": "Entei V",
+	"rarity": "无标记",
+	"regulation_expanded": true,
+	"regulation_mark": "F",
+	"regulation_standard": true,
+	"release_date": "2024-05-17T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 3,
+	"set_code": "CS4DaC",
+	"set_code_en": "BRS",
+	"stage": "Basic",
+	"weakness_energy": "W",
+	"weakness_value": "×2",
+	"yoren_code": "Y912"
+}

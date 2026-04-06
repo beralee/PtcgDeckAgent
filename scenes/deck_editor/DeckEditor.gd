@@ -704,7 +704,7 @@ func _on_ai_pressed() -> void:
 
 	# --- 针对卡组 ---
 	var target_header := Label.new()
-	target_header.text = "针对卡组（勾选要针对的对手卡组）"
+	target_header.text = "针对卡组（最多选2个，可选自身卡组用于内战优化）"
 	target_header.add_theme_font_size_override("font_size", 16)
 	root_vbox.add_child(target_header)
 
@@ -720,19 +720,30 @@ func _on_ai_pressed() -> void:
 	deck_grid.add_theme_constant_override("v_separation", 4)
 	root_vbox.add_child(deck_grid)
 
+	const MAX_TARGET_DECKS := 2
 	var deck_checks: Array[CheckBox] = []
 	var all_decks := CardDatabase.get_all_decks()
 	for d: DeckData in all_decks:
-		if d.id == _original_deck_id:
-			continue
 		var cb := CheckBox.new()
-		cb.text = "%s (%d张)" % [d.deck_name, d.total_cards]
+		var suffix := " (本卡组)" if d.id == _original_deck_id else ""
+		cb.text = "%s%s (%d张)" % [d.deck_name, suffix, d.total_cards]
 		deck_grid.add_child(cb)
 		deck_checks.append(cb)
 
+	# 限制最多选 MAX_TARGET_DECKS 个
+	for cb: CheckBox in deck_checks:
+		cb.toggled.connect(func(_pressed: bool) -> void:
+			var checked_count := 0
+			for c: CheckBox in deck_checks:
+				if c.button_pressed:
+					checked_count += 1
+			if checked_count > MAX_TARGET_DECKS:
+				cb.set_pressed_no_signal(false)
+		)
+
 	if deck_checks.is_empty():
 		var empty_label := Label.new()
-		empty_label.text = "（无其他卡组可选）"
+		empty_label.text = "（无卡组可选）"
 		empty_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
 		root_vbox.add_child(empty_label)
 
@@ -770,17 +781,11 @@ func _on_ai_pressed() -> void:
 	add_child(dialog)
 	dialog.popup_centered()
 
-	# 收集选中列表的引用，供确认回调使用
-	var other_decks: Array[DeckData] = []
-	for d: DeckData in all_decks:
-		if d.id != _original_deck_id:
-			other_decks.append(d)
-
 	dialog.confirmed.connect(func() -> void:
 		var selected_decks: Array[DeckData] = []
 		for i: int in deck_checks.size():
-			if deck_checks[i].button_pressed and i < other_decks.size():
-				selected_decks.append(other_decks[i])
+			if deck_checks[i].button_pressed and i < all_decks.size():
+				selected_decks.append(all_decks[i])
 		var selected_goals: Array[String] = []
 		for i: int in goal_checks.size():
 			if goal_checks[i].button_pressed and i < AI_GOALS.size():
@@ -843,11 +848,19 @@ func _build_ai_system_prompt() -> String:
 	lines.append("- 绝对不能在其他替换建议中出现\"加入 ACE SPEC 卡\"的情况（否则卡组会有 2 张 ACE SPEC，违规）")
 	lines.append("- 如果不需要换 ACE SPEC，就完全不要涉及任何 ACE SPEC 卡")
 	lines.append("")
+	lines.append("输出前必须自检（逐条验证，不通过则修改建议直到通过）：")
+	lines.append("1. 执行完所有 replacements 后，卡组中 ace_spec=true 的卡是否恰好 0 或 1 张？如果 >1 张则违规，必须删除多余的 ACE SPEC 替换")
+	lines.append("2. 执行完所有 replacements 后，每张非基本能量卡的数量是否 <=4？如果 >4 则违规，必须调整 add_count")
+	lines.append("3. 执行完所有 replacements 后，总卡数是否仍为 60？")
+	lines.append("")
 	lines.append("打法思路（strategy）字段说明：")
-	lines.append("- 输入数据中每套卡组可能附带 strategy 字段，由人工编写")
+	lines.append("- 输入数据中 current_deck 和每套 target_deck 都可能附带 strategy 字段，由人工编写")
 	lines.append("- 其中包含该卡组的核心战术、关键配合、各对局注意事项、单卡效果澄清等")
 	lines.append("- 你必须仔细阅读并遵循这些信息，它们比你自身的卡牌知识更准确")
+	lines.append("- 当前卡组的 strategy 描述了本卡组的打法——替换建议必须围绕这个核心战术，不能破坏核心引擎")
+	lines.append("- 对手卡组的 strategy 描述了对手的打法——你要据此判断哪些卡在该对局中有效、哪些无效")
 	lines.append("- 如果 strategy 中指出某张卡在特定对局无效（例如玛纳霏挡不住放指示物），你不得推荐该卡用于该对局")
+	lines.append("- 如果选择了本卡组作为针对对象（内战），重点优化先后攻差异和镜像对局中的关键卡位")
 	lines.append("- 如果 strategy 为空，则仅根据卡牌数据和通用 PTCG 知识分析，遇到不确定的效果交互请如实说明")
 	lines.append("")
 	lines.append("分析要求：")

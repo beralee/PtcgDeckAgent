@@ -1,0 +1,255 @@
+{
+	"cards": [
+		{
+			"card_index": "043",
+			"card_type": "Item",
+			"count": 3,
+			"effect_id": "1af63a7e2cb7a79215474ad8db8fd8fd",
+			"name": "巢穴球",
+			"name_en": "Nest Ball",
+			"set_code": "CSVH1C"
+		},
+		{
+			"card_index": "119",
+			"card_type": "Tool",
+			"count": 2,
+			"effect_id": "2614722b9b28d9df8fd769b926ec82f2",
+			"name": "招式学习器 能量涡轮",
+			"name_en": "Technical Machine: Turbo Energize",
+			"set_code": "CSV4C"
+		},
+		{
+			"card_index": "060",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "2f68195255c863293be4fad262bf23d2",
+			"name": "洗翠的沉重球",
+			"name_en": "Hisuian Heavy Ball",
+			"set_code": "CS5.5C"
+		},
+		{
+			"card_index": "183",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "3e6f1daf545dfed48d0588dd50792a2e",
+			"name": "夜间担架",
+			"name_en": "Night Stretcher",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "PSY",
+			"card_type": "Basic Energy",
+			"count": 2,
+			"effect_id": "41b2d1a95fafc35e4cf39383ffae928a",
+			"name": "基本超能量",
+			"name_en": "Psychic Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "165",
+			"card_type": "Pokemon",
+			"count": 3,
+			"effect_id": "4550f14d2ebd9d202a0c4ea5af9ec4d9",
+			"name": "幸福蛋ex",
+			"name_en": "Blissey ex",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "DAR",
+			"card_type": "Basic Energy",
+			"count": 3,
+			"effect_id": "46c769fc57a6c250c560df648bb779f8",
+			"name": "基本恶能量",
+			"name_en": "Darkness Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "121",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "4f25f668ee0ab45c68f6954324c73003",
+			"name": "厄诡椪 础石面具ex",
+			"name_en": "Cornerstone Mask Ogerpon ex",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 4,
+			"effect_id": "5bdbc985f9aa2e6f248b53f6f35d1d37",
+			"name": "派帕",
+			"name_en": "Arven",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "094",
+			"card_type": "Pokemon",
+			"count": 3,
+			"effect_id": "66fee12502043db7d92b97b0d62b0f59",
+			"name": "愿增猿",
+			"name_en": "Munkidori",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "113",
+			"card_type": "Item",
+			"count": 3,
+			"effect_id": "768b545a38fccd5e265093b5adce10af",
+			"name": "宝可装置3.0",
+			"name_en": "Pokégear 3.0",
+			"set_code": "CSV2C"
+		},
+		{
+			"card_index": "113",
+			"card_type": "Pokemon",
+			"count": 4,
+			"effect_id": "79513e01fbf5084d23e6c60232e2338c",
+			"name": "吉利蛋",
+			"name_en": "Chansey",
+			"set_code": "151C"
+		},
+		{
+			"card_index": "064",
+			"card_type": "Supporter",
+			"count": 2,
+			"effect_id": "8be6a0e0835e0caba9acb7bf8e9c9ce0",
+			"name": "黑连的关照",
+			"name_en": "Cheren's Care",
+			"set_code": "CS5.5C"
+		},
+		{
+			"card_index": "078",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "8c812520b47c53417bf960f22970dd18",
+			"name": "麒麟奇",
+			"name_en": "Girafarig",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "023",
+			"card_type": "Supporter",
+			"count": 2,
+			"effect_id": "8e1fa2c9018db938084c94c7c970d419",
+			"name": "老大的指令",
+			"name_en": "Boss's Orders",
+			"set_code": "CSVH1aC"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "8f655fea1f90164bfbccb7a95c223e17",
+			"name": "放逐吸尘器",
+			"name_en": "Lost Vacuum",
+			"set_code": "CS6bC"
+		},
+		{
+			"card_index": "024",
+			"card_type": "Special Energy",
+			"count": 4,
+			"effect_id": "9c04dd0addf56a7b2c88476bc8e45c0e",
+			"name": "双重涡轮能量",
+			"name_en": "Double Turbo Energy",
+			"set_code": "CSNC"
+		},
+		{
+			"card_index": "FIG",
+			"card_type": "Basic Energy",
+			"count": 2,
+			"effect_id": "9fedb80a97ddd5cc8b8022a21364c326",
+			"name": "基本斗能量",
+			"name_en": "Fighting Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "112",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "a337ed34a45e63c6d21d98c3d8e0cb6e",
+			"name": "高级球",
+			"name_en": "Ultra Ball",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "121",
+			"card_type": "Supporter",
+			"count": 2,
+			"effect_id": "aecd80ca2722885c3d062a2255346f3e",
+			"name": "博士的研究",
+			"name_en": "Professor's Research",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 4,
+			"effect_id": "af514f82d182aeae5327b2c360df703d",
+			"name": "奇树",
+			"name_en": "Iono",
+			"set_code": "CSV3C"
+		},
+		{
+			"card_index": "127",
+			"card_type": "Stadium",
+			"count": 2,
+			"effect_id": "c117bea3cc758d46430d6bef11062a56",
+			"name": "深钵镇",
+			"name_en": "Artazon",
+			"set_code": "CSV2C"
+		},
+		{
+			"card_index": "109",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "c9c948169525fbb3dce70c477ec7a90a",
+			"name": "厉害钓竿",
+			"name_en": "Super Rod",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "187",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "cd9192e99ba06596352434d53223514f",
+			"name": "英雄斗篷",
+			"name_en": "Hero's Cape",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "120",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "e228e825c541ce80e2507c557cb506c3",
+			"name": "招式学习器 退化",
+			"name_en": "Technical Machine: Devolution",
+			"set_code": "CSV5C"
+		},
+		{
+			"card_index": "115",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "e366f56ecd3f805a28294109a1a37453",
+			"name": "大地容器",
+			"name_en": "Earthen Vessel",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "141",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "fd252ce877c709e9e3161c56ef98aff8",
+			"name": "奇麒麟ex",
+			"name_en": "Farigiraf ex",
+			"set_code": "CSV7C"
+		}
+	],
+	"deck_code": "gSuc5f0v9hMCLYxtOy",
+	"deck_name": "幸福蛋",
+	"id": 581614,
+	"import_date": "2026-03-28T22:47:49",
+	"source_url": "https://tcg.mik.moe/decks/list/581614",
+	"total_cards": 60,
+	"variant_name": "幸福蛋",
+	"strategy": "核心战术：幸福蛋ex高HP（非ex基础320+勇气护符=320HP），配合愿增猿将自身伤害指示物移到对手身上。厄诡椪·础石面具ex提供特性防护。\n\n关键配合：\n- 吉利蛋→幸福蛋ex是核心，超高HP可以扛多次攻击\n- 愿增猿的特性每回合可将己方宝可梦上的伤害指示物移到对手宝可梦上\n- 厄诡椪·础石面具ex的特性让己方宝可梦不受对手特性效果影响\n- 英雄斗篷增加HP上限\n- 招式学习器·退化让对手进化宝可梦退回前阶\n- 黑连的关照可以检索多张宝可梦\n- 深钵镇场地让超能宝可梦免费撤退\n- 奇麒麟ex（从麒麟奇进化）可以锁对手物品\n\n开局计划：\n- T1 吉利蛋上前场顶着，后场铺愿增猿和厄诡椪\n- T2 进化幸福蛋ex，开始吸收伤害\n- 用招式学习器·能量涡轮从牌组加速贴能量\n\n极重要的规则澄清：\n- 愿增猿的特性是移动伤害指示物，不是造成伤害，对手的玛纳霏和防伤害效果都挡不住\n- 厄诡椪·础石面具ex的特性保护的是\"对手特性的效果\"，不保护招式效果\n\n对局要点：\n- vs 多龙巴鲁托：放指示物在高HP幸福蛋上效率低，但积累多了会被愿增猿反弹\n- vs 密勒顿：需要注意斗弱点\n- vs 控制卡组（铁荆棘）：粉碎之锤干扰能量很烦"
+}

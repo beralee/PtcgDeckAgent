@@ -1,0 +1,291 @@
+{
+	"cards": [
+		{
+			"card_index": "006",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "013d589bd3c3a4c3472231a966ff6786",
+			"name": "火焰鸟",
+			"name_en": "Moltres",
+			"set_code": "CS5aC"
+		},
+		{
+			"card_index": "020",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "09445b8c32fd4abef4230ebcdc964096",
+			"name": "光辉甲贺忍蛙",
+			"name_en": "Radiant Greninja",
+			"set_code": "CS6.5C"
+		},
+		{
+			"card_index": "109",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "0e2ffb26032237ddfb8895534fdaf39d",
+			"name": "振翼发",
+			"name_en": "Flutter Mane",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "126",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "11ca8ef52edb2599280e7d5827e9dfb1",
+			"name": "暗黑补丁",
+			"name_en": "Dark Patch",
+			"set_code": "CS5DC"
+		},
+		{
+			"card_index": "129",
+			"card_type": "Special Energy",
+			"count": 2,
+			"effect_id": "1323733f19cc04e54090b39bc1a393b8",
+			"name": "喷射能量",
+			"name_en": "Jet Energy",
+			"set_code": "CSV4C"
+		},
+		{
+			"card_index": "043",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "1af63a7e2cb7a79215474ad8db8fd8fd",
+			"name": "巢穴球",
+			"name_en": "Nest Ball",
+			"set_code": "CSVH1C"
+		},
+		{
+			"card_index": "105",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "1b951205e53e179bde0905c4a194d9ee",
+			"name": "怒鹦哥ex",
+			"name_en": "Squawkabilly ex",
+			"set_code": "CSV2C"
+		},
+		{
+			"card_index": "012",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "21cad77ee66ee136c386e766736ec247",
+			"name": "妖火红狐V",
+			"name_en": "Delphox V",
+			"set_code": "CS6.5C"
+		},
+		{
+			"card_index": "FIR",
+			"card_type": "Basic Energy",
+			"count": 6,
+			"effect_id": "22db5405bf0cce61a00aa8082cdd1e65",
+			"name": "基本火能量",
+			"name_en": "Fire Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "008",
+			"card_type": "Item",
+			"count": 3,
+			"effect_id": "294212d9c02dc0acb886a7ef01ebeac4",
+			"name": "能量转移",
+			"name_en": "Energy Switch",
+			"set_code": "CSVH1aC"
+		},
+		{
+			"card_index": "051",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "2d2fed5a4681c1000b070227a730eaff",
+			"name": "破空焰ex",
+			"name_en": "Gouging Fire ex",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "060",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "2f68195255c863293be4fad262bf23d2",
+			"name": "洗翠的沉重球",
+			"name_en": "Hisuian Heavy Ball",
+			"set_code": "CS5.5C"
+		},
+		{
+			"card_index": "056",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "3c6c028efc71a5e7ee0fbd2e8f70ece9",
+			"name": "炎帝V",
+			"name_en": "Entei V",
+			"set_code": "CS4DaC"
+		},
+		{
+			"card_index": "183",
+			"card_type": "Item",
+			"count": 2,
+			"effect_id": "3e6f1daf545dfed48d0588dd50792a2e",
+			"name": "夜间担架",
+			"name_en": "Night Stretcher",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "DAR",
+			"card_type": "Basic Energy",
+			"count": 3,
+			"effect_id": "46c769fc57a6c250c560df648bb779f8",
+			"name": "基本恶能量",
+			"name_en": "Darkness Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "151",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "49669fcf461deacebeb5755c11ec51f1",
+			"name": "梦幻ex",
+			"name_en": "Mew ex",
+			"set_code": "151C"
+		},
+		{
+			"card_index": "121",
+			"card_type": "Supporter",
+			"count": 4,
+			"effect_id": "651276c51911345aa091c1c7b87f3f4f",
+			"name": "奥琳博士的气魄",
+			"name_en": "Professor Sada's Vitality",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "094",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "66fee12502043db7d92b97b0d62b0f59",
+			"name": "愿增猿",
+			"name_en": "Munkidori",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "116",
+			"card_type": "Item",
+			"count": 3,
+			"effect_id": "8342fe3eeec6f897f3271be1aa26a412",
+			"name": "交替推车",
+			"name_en": "Switch Cart",
+			"set_code": "CS5DC"
+		},
+		{
+			"card_index": "023",
+			"card_type": "Supporter",
+			"count": 2,
+			"effect_id": "8e1fa2c9018db938084c94c7c970d419",
+			"name": "老大的指令",
+			"name_en": "Boss's Orders",
+			"set_code": "CSVH1aC"
+		},
+		{
+			"card_index": "096",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "90b0d1f117df6523fd92b9f3168d7f7e",
+			"name": "轰鸣月ex",
+			"name_en": "Roaring Moon ex",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "066",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "9fa9943ccda36f417ac3cb675177c216",
+			"name": "森林封印石",
+			"name_en": "Forest Seal Stone",
+			"set_code": "CS6.5C"
+		},
+		{
+			"card_index": "112",
+			"card_type": "Item",
+			"count": 3,
+			"effect_id": "a337ed34a45e63c6d21d98c3d8e0cb6e",
+			"name": "高级球",
+			"name_en": "Ultra Ball",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "111",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "a47d5a8ed00e14a2146fc511745d23b5",
+			"name": "朋友手册",
+			"name_en": "Pal Pad",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "135",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "ab6c3357e2b8a8385a68da738f41e0c1",
+			"name": "吉雉鸡ex",
+			"name_en": "Fezandipiti ex",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "121",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "aecd80ca2722885c3d062a2255346f3e",
+			"name": "博士的研究",
+			"name_en": "Professor's Research",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "af514f82d182aeae5327b2c360df703d",
+			"name": "奇树",
+			"name_en": "Iono",
+			"set_code": "CSV3C"
+		},
+		{
+			"card_index": "118",
+			"card_type": "Tool",
+			"count": 2,
+			"effect_id": "d1c2f018a644e662f2b6895fdfc29281",
+			"name": "勇气护符",
+			"name_en": "Bravery Charm",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "152",
+			"card_type": "Stadium",
+			"count": 4,
+			"effect_id": "d781c9da21b24ff7a1453150a534c9df",
+			"name": "熔岩瀑布之渊",
+			"name_en": "Magma Basin",
+			"set_code": "CS5DC"
+		},
+		{
+			"card_index": "115",
+			"card_type": "Item",
+			"count": 3,
+			"effect_id": "e366f56ecd3f805a28294109a1a37453",
+			"name": "大地容器",
+			"name_en": "Earthen Vessel",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "176",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "e92a86246f44351d023bd4fa271089aa",
+			"name": "秘密箱",
+			"name_en": "Secret Box",
+			"set_code": "CSV8C"
+		}
+	],
+	"deck_code": "hyrFRpJ6N2obrfKg0B",
+	"deck_name": "破空焰",
+	"id": 582754,
+	"import_date": "2026-03-28T21:35:25",
+	"source_url": "https://tcg.mik.moe/decks/list/582754",
+	"total_cards": 60,
+	"variant_name": "其他",
+	"strategy": "核心战术：破空焰ex是古代宝可梦，招式伤害高且配合熔岩瀑布之渊场地（古代宝可梦+20伤害）。多种古代打手轮换输出。\n\n关键配合：\n- 破空焰ex是主力打手，高伤害\n- 轰鸣月ex是副打手，可以对后场造成伤害\n- 振翼发是古代非规则打手\n- 熔岩瀑布之渊场地给古代宝可梦+20伤害（每只都加）\n- 奥琳博士的气魄：抽卡引擎，弃牌+抽牌\n- 能量转移管理能量分配\n- 暗黑补丁从弃牌区直接贴恶能量到后场\n- 妖火红狐V可以从弃牌区加速能量\n- 炎帝V可以从牌组加速火能量\n- 秘密箱（ACE SPEC）检索任意卡\n- 森林封印石贴在V宝可梦上检索任意卡\n\n开局计划：\n- T1 破空焰ex或其他基础古代宝可梦上场\n- T2 铺熔岩瀑布之渊，加速能量开始输出\n- 交替推车切换打手\n\n极重要的规则澄清：\n- 轰鸣月ex的招式如果打后场，是真正的伤害，可以被玛纳霏挡住\n- 愿增猿可以后期反推伤害指示物\n\n对局要点：\n- vs 沙奈朵：抢节奏快攻，愿增猿后期翻盘要注意\n- vs 多龙巴鲁托：被后场指示物压制\n- vs 水系：火弱点要用非火打手应对\n- 勇气护符增加基础宝可梦HP"
+}

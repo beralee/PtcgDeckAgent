@@ -1,0 +1,273 @@
+{
+	"cards": [
+		{
+			"card_index": "114",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "06bc00d5dcec33898dc6db2e4c4d10ec",
+			"name": "反击捕捉器",
+			"name_en": "Counter Catcher",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "020",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "09445b8c32fd4abef4230ebcdc964096",
+			"name": "光辉甲贺忍蛙",
+			"name_en": "Radiant Greninja",
+			"set_code": "CS6.5C"
+		},
+		{
+			"card_index": "WAT",
+			"card_type": "Basic Energy",
+			"count": 7,
+			"effect_id": "0cf075ae61b8a0b4e9151e5146c3aa26",
+			"name": "基本水能量",
+			"name_en": "Water Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "028",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "1785ef12e7e0d8684836a788a0a89e22",
+			"name": "呱呱泡蛙",
+			"name_en": "Froakie",
+			"set_code": "CSV2C"
+		},
+		{
+			"card_index": "043",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "1af63a7e2cb7a79215474ad8db8fd8fd",
+			"name": "巢穴球",
+			"name_en": "Nest Ball",
+			"set_code": "CSVH1C"
+		},
+		{
+			"card_index": "105",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "1b951205e53e179bde0905c4a194d9ee",
+			"name": "怒鹦哥ex",
+			"name_en": "Squawkabilly ex",
+			"set_code": "CSV2C"
+		},
+		{
+			"card_index": "083",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "2a4178f21ba2bf13285bbb43ecaaa472",
+			"name": "黑夜魔灵",
+			"name_en": "Dusknoir",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "060",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "2f68195255c863293be4fad262bf23d2",
+			"name": "洗翠的沉重球",
+			"name_en": "Hisuian Heavy Ball",
+			"set_code": "CS5.5C"
+		},
+		{
+			"card_index": "183",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "3e6f1daf545dfed48d0588dd50792a2e",
+			"name": "夜间担架",
+			"name_en": "Night Stretcher",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "151",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "49669fcf461deacebeb5755c11ec51f1",
+			"name": "梦幻ex",
+			"name_en": "Mew ex",
+			"set_code": "151C"
+		},
+		{
+			"card_index": "180",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "4ec261453212280d0eb03ed8254ca97f",
+			"name": "顶尖捕捉器",
+			"name_en": "Prime Catcher",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "138",
+			"card_type": "Supporter",
+			"count": 2,
+			"effect_id": "4f53ab6bf158fd1a8869ae037f4a0d6d",
+			"name": "珠贝",
+			"name_en": "Irida",
+			"set_code": "CS5DC"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "5d5d2589f2d9c19ef7364714766600d4",
+			"name": "甲贺忍蛙ex",
+			"name_en": "Greninja ex",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "003",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "63cf95979c653e65cbd502a4c0d3fbdd",
+			"name": "起源帕路奇亚V",
+			"name_en": "Origin Forme Palkia V",
+			"set_code": "CSNC"
+		},
+		{
+			"card_index": "063",
+			"card_type": "Item",
+			"count": 3,
+			"effect_id": "70d14b4a5a9c15581b8a0c8dfd325717",
+			"name": "健行鞋",
+			"name_en": "Trekking Shoes",
+			"set_code": "CS6.5C"
+		},
+		{
+			"card_index": "051",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "720fd5ca597f96db0f5f00d3ac16febb",
+			"name": "起源帕路奇亚VSTAR",
+			"name_en": "Origin Forme Palkia VSTAR",
+			"set_code": "CS5bC"
+		},
+		{
+			"card_index": "113",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "7c0b20e121c9d0e0d2d8a43524f7494e",
+			"name": "宝可梦交替",
+			"name_en": "Switch",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "199",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "8150af4062192998497e376ad931bea4",
+			"name": "丹瑜",
+			"name_en": "Carmine",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "034",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "8538726d6cdfad2fa3ca5f4b462c12c5",
+			"name": "能量回收",
+			"name_en": "Energy Retrieval",
+			"set_code": "CSVH1C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "8f655fea1f90164bfbccb7a95c223e17",
+			"name": "放逐吸尘器",
+			"name_en": "Lost Vacuum",
+			"set_code": "CS6bC"
+		},
+		{
+			"card_index": "112",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "a337ed34a45e63c6d21d98c3d8e0cb6e",
+			"name": "高级球",
+			"name_en": "Ultra Ball",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "135",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "ab6c3357e2b8a8385a68da738f41e0c1",
+			"name": "吉雉鸡ex",
+			"name_en": "Fezandipiti ex",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "082",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "ad031124df2ede62f945220fbbd680b3",
+			"name": "彷徨夜灵",
+			"name_en": "Dusclops",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 4,
+			"effect_id": "af514f82d182aeae5327b2c360df703d",
+			"name": "奇树",
+			"name_en": "Iono",
+			"set_code": "CSV3C"
+		},
+		{
+			"card_index": "081",
+			"card_type": "Pokemon",
+			"count": 3,
+			"effect_id": "ce6db179c3d166130e7a637581da3aa2",
+			"name": "夜巡灵",
+			"name_en": "Duskull",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "045",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "d3891abcfe3277c8811cde06741d3236",
+			"name": "神奇糖果",
+			"name_en": "Rare Candy",
+			"set_code": "CSVH1C"
+		},
+		{
+			"card_index": "115",
+			"card_type": "Item",
+			"count": 3,
+			"effect_id": "e366f56ecd3f805a28294109a1a37453",
+			"name": "大地容器",
+			"name_en": "Earthen Vessel",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "172",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "f2afef80b13b8f6a071facbcade0251c",
+			"name": "月月熊 赫月ex",
+			"name_en": "Bloodmoon Ursaluna ex",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "177",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "f866dfee26cd6b0dbbb52b74438d0a59",
+			"name": "友好宝芬",
+			"name_en": "Buddy-Buddy Poffin",
+			"set_code": "CSV7C"
+		}
+	],
+	"deck_code": "y1MtW402ZgAAeqwv34",
+	"deck_name": "起源帕路奇亚 黑夜魔灵",
+	"id": 577861,
+	"import_date": "2026-03-25T23:10:20",
+	"source_url": "https://tcg.mik.moe/decks/list/577861",
+	"total_cards": 60,
+	"variant_name": "起源帕路奇亚 黑夜魔灵",
+	"strategy": "核心战术：起源帕路奇亚VSTAR的招式「破灭震流」伤害=对手场上所有宝可梦身上的能量总数×20+60，后期爆发极高。黑夜魔灵线操控伤害指示物精准击杀。\n\n关键配合：\n- 起源帕路奇亚V→VSTAR是主力输出手，VSTAR技「星门」从弃牌区加速3个水能量到V宝可梦上\n- 黑夜魔灵（夜巡灵→彷徨夜灵→黑夜魔灵）特性移动伤害指示物补刀\n- 甲贺忍蛙ex（从呱呱泡蛙进化）可以隐身攻击\n- 光辉甲贺忍蛙的招式打后场20×2，能被对手玛纳霏挡\n- 月月熊·赫月ex作为非规则备选打手\n\n开局计划：\n- T1 帕路奇亚V+夜巡灵铺场\n- T2 进化VSTAR，使用星门加速能量\n- 逐步建立黑夜魔灵线\n\n对局要点：\n- vs 雷系（密勒顿）：雷弱点致命，需要快攻\n- vs 沙奈朵：伤害指示物操控互相博弈\n- 大地容器检索能量，夜间担架回收关键宝可梦"
+}

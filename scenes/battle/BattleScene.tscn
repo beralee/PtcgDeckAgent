@@ -1174,21 +1174,26 @@ text = "0"
 theme_override_font_sizes/font_size = 13
 horizontal_alignment = 1
 
-[node name="LogPanel" type="VBoxContainer" parent="MainArea"]
+[node name="LogPanel" type="PanelContainer" parent="MainArea"]
 layout_mode = 2
 custom_minimum_size = Vector2(180, 0)
+
+[node name="LogPanelVBox" type="VBoxContainer" parent="MainArea/LogPanel"]
+layout_mode = 2
 theme_override_constants/separation = 2
 
-[node name="LogTitle" type="Label" parent="MainArea/LogPanel"]
+[node name="LogTitle" type="Label" parent="MainArea/LogPanel/LogPanelVBox"]
 layout_mode = 2
 text = "操作日志"
 theme_override_font_sizes/font_size = 11
 
-[node name="LogList" type="ItemList" parent="MainArea/LogPanel"]
+[node name="LogList" type="RichTextLabel" parent="MainArea/LogPanel/LogPanelVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 10
+bbcode_enabled = true
+scroll_following = true
+theme_override_font_sizes/normal_font_size = 10
 
 [node name="DialogOverlay" type="Panel" parent="."]
 unique_name_in_owner = true
@@ -1207,7 +1212,7 @@ anchor_bottom = 1.0
 
 [node name="DialogBox" type="PanelContainer" parent="DialogOverlay/DialogCenter"]
 layout_mode = 2
-custom_minimum_size = Vector2(360, 280)
+custom_minimum_size = Vector2(360, 0)
 
 [node name="DialogVBox" type="VBoxContainer" parent="DialogOverlay/DialogCenter/DialogBox"]
 layout_mode = 1
@@ -1215,10 +1220,10 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 8.0
-offset_top = 8.0
+offset_top = 6.0
 offset_right = -8.0
-offset_bottom = -8.0
-theme_override_constants/separation = 8
+offset_bottom = -6.0
+theme_override_constants/separation = 4
 
 [node name="DialogTitle" type="Label" parent="DialogOverlay/DialogCenter/DialogBox/DialogVBox"]
 unique_name_in_owner = true

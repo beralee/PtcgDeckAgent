@@ -10,6 +10,8 @@ const AI_SOURCE_SPECIFIC := 2
 const BACKGROUND_DIR := "res://assets/ui"
 const DEFAULT_BACKGROUND := "res://assets/ui/background.png"
 const SETTINGS_PATH := "user://battle_setup.json"
+const DEFAULT_DECK1_ID := 575716  ## 喷火龙 大比鸟
+const DEFAULT_DECK2_ID := 578647  ## 沙奈朵
 const BACKGROUND_CARD_SIZE := Vector2(188, 112)
 const AIVersionRegistryScript = preload("res://scripts/ai/AIVersionRegistry.gd")
 
@@ -164,25 +166,20 @@ func _setup_background_gallery() -> void:
 	_refresh_background_gallery()
 
 
+## 导出后 DirAccess 无法遍历 pck 内的 res:// 目录，
+## 因此背景列表采用硬编码 + 运行时校验 ResourceLoader.exists()。
 func _list_available_background_paths() -> Array[String]:
+	var candidates: Array[String] = [
+		"res://assets/ui/background.png",
+		"res://assets/ui/background1.png",
+		"res://assets/ui/background2.png",
+		"res://assets/ui/background3.png",
+		"res://assets/ui/background4.png",
+	]
 	var results: Array[String] = []
-	var dir := DirAccess.open(BACKGROUND_DIR)
-	if dir != null:
-		dir.list_dir_begin()
-		while true:
-			var file_name := dir.get_next()
-			if file_name == "":
-				break
-			if dir.current_is_dir():
-				continue
-			var lower_name := file_name.to_lower()
-			if not lower_name.begins_with("background"):
-				continue
-			if not (lower_name.ends_with(".png") or lower_name.ends_with(".jpg") or lower_name.ends_with(".jpeg") or lower_name.ends_with(".webp")):
-				continue
-			results.append("%s/%s" % [BACKGROUND_DIR, file_name])
-		dir.list_dir_end()
-	results.sort()
+	for path: String in candidates:
+		if ResourceLoader.exists(path):
+			results.append(path)
 	if results.is_empty():
 		results.append(DEFAULT_BACKGROUND)
 	return results
@@ -367,6 +364,7 @@ func _save_settings() -> void:
 
 func _load_settings() -> void:
 	if not FileAccess.file_exists(SETTINGS_PATH):
+		_apply_default_deck_selection()
 		return
 	var file := FileAccess.open(SETTINGS_PATH, FileAccess.READ)
 	if file == null:
@@ -396,3 +394,11 @@ func _load_settings() -> void:
 	if bg_path in _battle_backgrounds:
 		_selected_background_path = bg_path
 		_refresh_background_selection()
+
+
+func _apply_default_deck_selection() -> void:
+	for i: int in _deck_list.size():
+		if _deck_list[i].id == DEFAULT_DECK1_ID:
+			%Deck1Option.select(i)
+		if _deck_list[i].id == DEFAULT_DECK2_ID:
+			%Deck2Option.select(i)

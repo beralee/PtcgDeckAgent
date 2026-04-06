@@ -1,0 +1,300 @@
+{
+	"cards": [
+		{
+			"card_index": "052",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "04653d073ffc3ca2202746e4f9aebabd",
+			"name": "玛纳霏",
+			"name_en": "Manaphy",
+			"set_code": "CS5bC"
+		},
+		{
+			"card_index": "114",
+			"card_type": "Item",
+			"count": 2,
+			"effect_id": "06bc00d5dcec33898dc6db2e4c4d10ec",
+			"name": "反击捕捉器",
+			"name_en": "Counter Catcher",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "194",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "08c2507538f1574c5ceda18017ab5031",
+			"name": "赛吉",
+			"name_en": "Salvatore",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "185",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "0b4cc131a19862f92acf71494f29a0ed",
+			"name": "紧急滑板",
+			"name_en": "Rescue Board",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "043",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "1af63a7e2cb7a79215474ad8db8fd8fd",
+			"name": "巢穴球",
+			"name_en": "Nest Ball",
+			"set_code": "CSVH1C"
+		},
+		{
+			"card_index": "FIR",
+			"card_type": "Basic Energy",
+			"count": 3,
+			"effect_id": "22db5405bf0cce61a00aa8082cdd1e65",
+			"name": "基本火能量",
+			"name_en": "Fire Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "183",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "3e6f1daf545dfed48d0588dd50792a2e",
+			"name": "夜间担架",
+			"name_en": "Night Stretcher",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "115",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "40d67cc66ad153ee1d54c6213c50b4a1",
+			"name": "学习装置",
+			"name_en": "Exp. Share",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "PSY",
+			"card_type": "Basic Energy",
+			"count": 4,
+			"effect_id": "41b2d1a95fafc35e4cf39383ffae928a",
+			"name": "基本超能量",
+			"name_en": "Psychic Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "158",
+			"card_type": "Pokemon",
+			"count": 4,
+			"effect_id": "4e13cd08de3b6d141ce8e2f09d17a3a4",
+			"name": "多龙奇",
+			"name_en": "Drakloak",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "159",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "52a205820de799a53a689f23cbeb8622",
+			"name": "多龙巴鲁托ex",
+			"name_en": "Dragapult ex",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "127",
+			"card_type": "Special Energy",
+			"count": 1,
+			"effect_id": "540ee48bb93584e4bfe3d7f5d0ee0efc",
+			"name": "夜光能量",
+			"name_en": "Luminous Energy",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "049",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "553639840a44f19ad83b89a892a21f98",
+			"name": "霓虹鱼V",
+			"name_en": "Lumineon V",
+			"set_code": "CS5bC"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 4,
+			"effect_id": "5bdbc985f9aa2e6f248b53f6f35d1d37",
+			"name": "派帕",
+			"name_en": "Arven",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "094",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "66fee12502043db7d92b97b0d62b0f59",
+			"name": "愿增猿",
+			"name_en": "Munkidori",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "028",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "68244d82147e13bb7d77116ffedf6162",
+			"name": "光辉胡地",
+			"name_en": "Radiant Alakazam",
+			"set_code": "CS6bC"
+		},
+		{
+			"card_index": "113",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "7c0b20e121c9d0e0d2d8a43524f7494e",
+			"name": "宝可梦交替",
+			"name_en": "Switch",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "053",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "82911221bcf50febdb02c331ccb793f4",
+			"name": "怨影娃娃",
+			"name_en": "Shuppet",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "023",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "8e1fa2c9018db938084c94c7c970d419",
+			"name": "老大的指令",
+			"name_en": "Boss's Orders",
+			"set_code": "CSVH1aC"
+		},
+		{
+			"card_index": "023",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "8ef5ff61fd97838af568f00fe3b0e3ea",
+			"name": "洛托姆V",
+			"name_en": "Rotom V",
+			"set_code": "CS6.5C"
+		},
+		{
+			"card_index": "066",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "9fa9943ccda36f417ac3cb675177c216",
+			"name": "森林封印石",
+			"name_en": "Forest Seal Stone",
+			"set_code": "CS6.5C"
+		},
+		{
+			"card_index": "112",
+			"card_type": "Item",
+			"count": 3,
+			"effect_id": "a337ed34a45e63c6d21d98c3d8e0cb6e",
+			"name": "高级球",
+			"name_en": "Ultra Ball",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "135",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "ab6c3357e2b8a8385a68da738f41e0c1",
+			"name": "吉雉鸡ex",
+			"name_en": "Fezandipiti ex",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 2,
+			"effect_id": "af514f82d182aeae5327b2c360df703d",
+			"name": "奇树",
+			"name_en": "Iono",
+			"set_code": "CSV3C"
+		},
+		{
+			"card_index": "128",
+			"card_type": "Stadium",
+			"count": 1,
+			"effect_id": "b87089abe625a7abb3c523074a8497df",
+			"name": "宝可梦联盟总部",
+			"name_en": "Pokémon League Headquarters",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "045",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "d3891abcfe3277c8811cde06741d3236",
+			"name": "神奇糖果",
+			"name_en": "Rare Candy",
+			"set_code": "CSVH1C"
+		},
+		{
+			"card_index": "120",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "e228e825c541ce80e2507c557cb506c3",
+			"name": "招式学习器 退化",
+			"name_en": "Technical Machine: Devolution",
+			"set_code": "CSV5C"
+		},
+		{
+			"card_index": "115",
+			"card_type": "Item",
+			"count": 2,
+			"effect_id": "e366f56ecd3f805a28294109a1a37453",
+			"name": "大地容器",
+			"name_en": "Earthen Vessel",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "157",
+			"card_type": "Pokemon",
+			"count": 4,
+			"effect_id": "e793842faf5a8017e5456f898b1bf9d2",
+			"name": "多龙梅西亚",
+			"name_en": "Dreepy",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "178",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "e8942749749a9d0069b3b47562ddb415",
+			"name": "高级香氛",
+			"name_en": "Hyper Aroma",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "177",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "f866dfee26cd6b0dbbb52b74438d0a59",
+			"name": "友好宝芬",
+			"name_en": "Buddy-Buddy Poffin",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "054",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "ffe8874ed7810f9ecd8209d4a09ade59",
+			"name": "诅咒娃娃ex",
+			"name_en": "Banette ex",
+			"set_code": "CSV1C"
+		}
+	],
+	"deck_code": "xeU9LtnGfYw1_d_TkL",
+	"deck_name": "多龙巴鲁托 诅咒娃娃",
+	"id": 580445,
+	"import_date": "2026-03-25T23:07:13",
+	"source_url": "https://tcg.mik.moe/decks/list/580445",
+	"total_cards": 60,
+	"variant_name": "多龙巴鲁托 诅咒娃娃",
+	"strategy": "【卡组定位】多龙巴鲁托ex指示物铺设 + 诅咒娃娃ex物品封锁/训练家惩罚的双线控制卡组。通过幻影潜袭不断向对手全场累积伤害指示物，同时用诅咒娃娃ex锁住对手物品使用并以手牌中训练家数量造成爆发伤害。愿增猿将己方指示物转移给对手精准补刀。\n\n【核心攻击手】\n多龙巴鲁托ex（二阶进化，太晶，320HP）：\n- 「喷射头击」无色1能打70，应急低费招式\n- 「幻影潜袭」火+超2能，打前场200伤害，同时将6个伤害指示物任意分配到对手备战宝可梦上\n- 极重要：放置的是伤害指示物，不是招式伤害，无视玛纳霏的浪花水帘\n- 进化线：多龙梅西亚(基础70HP) -> 多龙奇(一阶90HP) -> 多龙巴鲁托ex(二阶320HP)\n- 本卡组只带2张多龙巴鲁托ex，每一张都很珍贵\n\n诅咒娃娃ex（一阶进化，超属性，从怨影娃娃进化）：\n- 「暗夜难明」超1能打30，且下回合对手无法从手牌使出物品。这是核心封锁招式\n- 「灵骚」超+无色2能打60×对手手牌中训练家卡数量。对手手牌训练家越多伤害越高\n- 物品封锁后对手被迫囤积训练家在手中，再用灵骚惩罚 = 完美闭环\n- 被击倒给对手2张奖赏（ex规则）\n\n怨影娃娃（基础60HP，超属性）：\n- 「阴影包围」超1能打10，正面硬币则下回合对手无法使出物品\n- 未进化时也有概率封锁物品，可作为应急手段\n\n【指示物操控体系】\n愿增猿（基础110HP，超属性）：\n- 特性「亢奋脑力」：身上有恶能量时每回合1次，将己方场上1只宝可梦身上最多3个指示物转放到对手场上1只宝可梦\n- 核心补刀手段：多龙巴鲁托ex被打残后，用愿增猿把自己身上的指示物转给对手凑斩杀\n- 需要恶能量激活：夜光能量算所有属性可以满足\n\n光辉胡地（基础130HP，超属性，光辉宝可梦）：\n- 特性「伤痛汤匙」：每回合1次，将对手场上1只宝可梦身上最多2个伤害指示物转到对手另1只宝可梦\n- 微调对手场上指示物分布，凑齐击杀线\n\n【关键辅助宝可梦】\n多龙奇（一阶进化90HP）：\n- 特性「侦察指令」：每回合1次看牌库顶2张选1加手牌\n- 场上保留未进化的多龙奇提供持续过滤\n\n吉雉鸡ex（基础210HP，暗属性）：\n- 特性「化危为吉」：上回合己方有宝可梦昏厥时抽3张（每回合限1次）\n- 当多龙巴鲁托ex或诅咒娃娃ex被击倒后补充手牌\n- 招式「残忍箭矢」无色3能打对手任意1只100伤害\n\n玛纳霏（基础70HP）：\n- 特性「浪花水帘」：保护己方备战宝可梦不受对手招式伤害\n- 防止对手狙击后场的怨影娃娃、多龙梅西亚等脆皮\n\n霓虹鱼V（基础V 170HP）：\n- 特性「夜光信号」：从手牌放到备战区时检索1张支援者\n- 紧急找老大的指令等。注意V被击倒给2张奖赏\n\n洛托姆V（基础V 190HP）：\n- 特性「快速充电」：抽3张但回合结束。仅手牌极差时使用\n- 可贴森林封印石用VSTAR力量「星耀炼金术」检索任意1张卡\n\n【关键训练家卡】\n派帕(x4)：检索1物品+1道具，核心搜索引擎\n友好宝芬(x4)：检索最多2只HP<=70基础到备战区（多龙梅西亚70HP、怨影娃娃60HP、玛纳霏70HP）\n巢穴球(x4)：检索基础宝可梦到备战区\n高级球(x3)：弃1找任意宝可梦\n高级香氛(x1)：从牌库检索最多3张一阶进化宝可梦加手牌。可同时找多龙奇和诅咒娃娃ex\n神奇糖果(x1)：跳阶进化到二阶，本卡组只带1张，用于快速出多龙巴鲁托ex\n大地容器(x2)：弃1找最多2张基本能量\n反击捕捉器(x2)：奖赏卡比对手多时拉对手备战宝可梦到前场，不消耗支援者\n夜间担架(x1)：弃牌区回收1宝可梦或1基本能量\n宝可梦交替(x1)：切换前后场\n招式学习器·退化(x1)：无色1能让对手所有进化宝可梦退化1阶，配合指示物可造成击杀\n紧急滑板(x1)：撤退费-1，HP<=30时免费撤退\n学习装置(x1)：前场宝可梦被击倒时转移1张基本能量给装备者，保持能量续航\n森林封印石(x1)：贴V宝可梦后可用VSTAR力量检索任意1张卡\n赛吉(x1)：从牌库选1张进化卡（非特性宝可梦）直接进化，可T1进化。核心用途：T1直接将怨影娃娃进化为诅咒娃娃ex\n奇树(x2)：双方洗手牌按奖赏卡数抽牌\n老大的指令(x1)：拉对手备战到前场\n宝可梦联盟总部(x1)：场地卡，基础宝可梦使用招式费用+1无色能量。拖慢对手节奏\n\n【能量配置】\n基本超能量(x4)：供多龙巴鲁托ex和诅咒娃娃ex\n基本火能量(x3)：供多龙巴鲁托ex的幻影潜袭\n夜光能量(x1)：特殊能量，算所有属性，可激活愿增猿的亢奋脑力（需恶能量）\n\n【标准开局流程】\nT1（先攻不能用支援者和攻击）：\n- 理想开场：怨影娃娃或多龙梅西亚在前场\n- 友好宝芬/巢穴球铺基础宝可梦（多龙梅西亚、怨影娃娃、玛纳霏优先）\n- 如有赛吉：T1直接将怨影娃娃进化为诅咒娃娃ex（赛吉无视回合限制）\n- 派帕找所需道具\n\nT2 双线展开：\n- A线（多龙线）：多龙梅西亚进化多龙奇，或用神奇糖果直接出多龙巴鲁托ex\n- B线（封锁线）：诅咒娃娃ex上前场用「暗夜难明」封锁物品\n- 根据手牌和对手决定优先哪条线\n\n中期运营：\n- 多龙巴鲁托ex幻影潜袭持续铺指示物\n- 诅咒娃娃ex在对手囤积训练家后用灵骚爆发\n- 愿增猿转移己方残血宝可梦上的指示物给对手补刀\n- 光辉胡地微调指示物凑斩杀线\n\n【双线切换战术】\n本卡组的核心优势是双线压制：\n1. 多龙巴鲁托ex路线：高耐久(320HP)持续输出200+指示物\n2. 诅咒娃娃ex路线：封锁物品逼对手囤训练家，再灵骚爆发\n根据对局灵活切换：\n- 对手依赖物品展开（球类、糖果）-> 优先诅咒娃娃ex封锁\n- 对手后场多脆皮 -> 优先多龙巴鲁托ex铺指示物\n- 中后期诅咒娃娃ex封锁后观察对手手牌训练家数，5张以上灵骚打300+\n\n【伤害计算】\n- 幻影潜袭：前场200 + 后场6指示物(60)\n- 灵骚：60x对手手牌训练家数（3张=180, 4张=240, 5张=300）\n- 暗夜难明：30伤害+物品封锁\n- 愿增猿转移：最多30伤害（3个指示物）\n- 光辉胡地转移：最多20伤害（2个指示物）\n\n【奖赏卡交换】\n- 多龙巴鲁托ex被击倒 = 对手拿2张\n- 诅咒娃娃ex被击倒 = 对手拿2张\n- 吉雉鸡ex被击倒 = 对手拿2张\n- 其他宝可梦被击倒 = 对手拿1张\n- 注意：卡组中有3只ex+2只V，奖赏卡管理很重要\n- 尽量不让霓虹鱼V/洛托姆V被击倒\n\n【关键决策点】\n1. 先出多龙还是先出诅咒娃娃？看对手卡组：物品依赖重的先封锁，后场多的先铺指示物\n2. 幻影潜袭6指示物分配？集中到1-2个目标凑斩杀线，不要均匀分散\n3. 暗夜难明还是灵骚？对手训练家多就灵骚爆发，否则暗夜难明维持封锁\n4. 夜光能量贴给谁？优先贴愿增猿激活亢奋脑力，其次贴多龙巴鲁托ex当万能能量\n5. 何时用退化学习器？对手多只进化宝可梦有指示物时最大化价值\n6. 赛吉的时机？T1进化诅咒娃娃ex价值最高（绕过进化回合限制）\n\n【对局要点】\nvs 沙奈朵：优势。玛纳霏挡不住幻影潜袭的指示物。诅咒娃娃封锁物品压制沙奈朵的糖果和球。退化可让沙奈朵退回奇鲁莉安。\nvs 密勒顿/快攻：速度劣势。优先T2出多龙巴鲁托ex顶住压力。宝可梦联盟总部增加基础宝可梦招式费用可拖慢对手。\nvs 喷火龙：对手330伤害可一击倒多龙。需快速建立双线，用封锁拖延对手展开节奏。"
+}

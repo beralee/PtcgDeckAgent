@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "5ban Graphics",
+	"attacks": [
+		{
+			"cost": "W",
+			"damage": "170",
+			"is_vstar_power": false,
+			"name": "忍刃",
+			"text": "若希望，可选择自己牌库中任意1张卡牌，加入手牌。并重洗牌库。"
+		},
+		{
+			"cost": "WCC",
+			"damage": "",
+			"is_vstar_power": false,
+			"name": "分身连打",
+			"text": "将这只宝可梦身上附着的2个能量放于弃牌区，给对手的2只宝可梦，各造成120伤害。[备战宝可梦不计算弱点、抗性。]"
+		}
+	],
+	"card_index": "123",
+	"card_index_en": "106",
+	"card_type": "Pokemon",
+	"description": "【水】 忍刃 170\n若希望，可选择自己牌库中任意1张卡牌，加入手牌。并重洗牌库。\n\n【水】 分身连打 \n将这只宝可梦身上附着的2个能量放于弃牌区，给对手的2只宝可梦，各造成120伤害。[备战宝可梦不计算弱点、抗性。]\n\n",
+	"effect_id": "5d5d2589f2d9c19ef7364714766600d4",
+	"energy_provides": "",
+	"energy_type": "F",
+	"evolves_from": "呱头蛙",
+	"hp": 310,
+	"image_local_path": "user://cards/images/CSV7C/123.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV7C/123.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "ex",
+	"name": "甲贺忍蛙ex",
+	"name_en": "Greninja ex",
+	"rarity": "RR",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-01-16T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "CSV7C",
+	"set_code_en": "TWM",
+	"stage": "Stage 2",
+	"weakness_energy": "P",
+	"weakness_value": "×2",
+	"yoren_code": "Y1247"
+}

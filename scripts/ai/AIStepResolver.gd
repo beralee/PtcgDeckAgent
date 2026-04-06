@@ -15,6 +15,8 @@ func resolve_pending_step(battle_scene: Control, _gsm: GameStateMachine, player_
 	var chooser_player: int = int(battle_scene.call("_resolve_effect_step_chooser_player", step))
 	if chooser_player != player_index:
 		return false
+	if bool(battle_scene.call("_effect_step_uses_counter_distribution_ui", step)):
+		return _resolve_counter_distribution_step(battle_scene, step)
 	if bool(battle_scene.call("_effect_step_uses_field_assignment_ui", step)):
 		return _resolve_field_assignment_step(battle_scene, step)
 	if bool(battle_scene.call("_effect_step_uses_field_slot_ui", step)):
@@ -45,6 +47,17 @@ func _resolve_field_slot_step(battle_scene: Control, step: Dictionary) -> bool:
 		battle_scene.call("_handle_field_slot_select_index", index)
 	if str(battle_scene.get("_field_interaction_mode")) == "slot_select":
 		battle_scene.call("_finalize_field_slot_selection")
+	return true
+
+
+func _resolve_counter_distribution_step(battle_scene: Control, step: Dictionary) -> bool:
+	var total_counters: int = int(step.get("total_counters", 0))
+	var target_items: Array = step.get("target_items", [])
+	if total_counters <= 0 or target_items.is_empty():
+		return false
+	# AI: 把所有指示物放到第一个目标上
+	battle_scene.call("_on_counter_distribution_amount_chosen", total_counters)
+	battle_scene.call("_handle_counter_distribution_target", 0)
 	return true
 
 

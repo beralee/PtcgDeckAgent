@@ -21,30 +21,21 @@ func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state:
 	if opponent_bench.is_empty():
 		return []
 	var counter_count: int = total_damage / 10
-	var source_items: Array = []
-	var source_labels: Array[String] = []
-	for _i: int in counter_count:
-		var token_data := CardData.new()
-		token_data.name = "Damage Counter"
-		token_data.card_type = "Item"
-		source_items.append(CardInstance.create(token_data, card.owner_index))
-		source_labels.append("10")
 	var target_items: Array = opponent_bench.duplicate()
 	var target_labels: Array[String] = []
 	for slot: PokemonSlot in target_items:
 		target_labels.append(slot.get_pokemon_name())
-	return [
-		build_card_assignment_step(
-			"bench_damage_counters",
-			"Distribute %d damage counters among your opponent's Benched Pokemon" % counter_count,
-			source_items,
-			source_labels,
-			target_items,
-			target_labels,
-			counter_count,
-			counter_count
-		)
-	]
+	return [{
+		"id": "bench_damage_counters",
+		"title": "将%d个伤害指示物分配到对方备战区宝可梦" % counter_count,
+		"ui_mode": "counter_distribution",
+		"total_counters": counter_count,
+		"target_items": target_items,
+		"target_labels": target_labels,
+		"min_select": counter_count,
+		"max_select": counter_count,
+		"allow_cancel": true,
+	}]
 
 
 func execute_attack(attacker: PokemonSlot, _defender: PokemonSlot, attack_index: int, state: GameState) -> void:
@@ -76,4 +67,4 @@ func _resolve_attack_index(card: CardInstance, attack: Dictionary) -> int:
 
 
 func get_description() -> String:
-	return "Distribute %d damage counters among your opponent's Benched Pokemon." % (total_damage / 10)
+	return "将%d个伤害指示物以任意方式分配到对方备战区宝可梦。" % (total_damage / 10)

@@ -1,0 +1,228 @@
+{
+	"cards": [
+		{
+			"card_index": "051",
+			"card_type": "Supporter",
+			"count": 3,
+			"effect_id": "0a9bdf265647461dd5c6c827ffc19e61",
+			"name": "裁判",
+			"name_en": "Judge",
+			"set_code": "CSVH1C"
+		},
+		{
+			"card_index": "119",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "2614722b9b28d9df8fd769b926ec82f2",
+			"name": "招式学习器 能量涡轮",
+			"name_en": "Technical Machine: Turbo Energize",
+			"set_code": "CSV4C"
+		},
+		{
+			"card_index": "047",
+			"card_type": "Item",
+			"count": 2,
+			"effect_id": "3a6d419769778b40091e69fbd76737ec",
+			"name": "宝可梦捕捉器",
+			"name_en": "Pokémon Catcher",
+			"set_code": "CSVH1C"
+		},
+		{
+			"card_index": "LIG",
+			"card_type": "Basic Energy",
+			"count": 7,
+			"effect_id": "45550fd10011f6ade7eef16ba88788cf",
+			"name": "基本雷能量",
+			"name_en": "Lightning Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "180",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "4ec261453212280d0eb03ed8254ca97f",
+			"name": "顶尖捕捉器",
+			"name_en": "Prime Catcher",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "117",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "543fc44ba3b2509b7165d86fc83cd14f",
+			"name": "能量签",
+			"name_en": "Energy Loto",
+			"set_code": "CS5DC"
+		},
+		{
+			"card_index": "119",
+			"card_type": "Tool",
+			"count": 4,
+			"effect_id": "54920a273edba38ce45f3bc8f6e8ff25",
+			"name": "驱劲能量 未来",
+			"name_en": "Future Booster Energy Capsule",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 4,
+			"effect_id": "5bdbc985f9aa2e6f248b53f6f35d1d37",
+			"name": "派帕",
+			"name_en": "Arven",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "132",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "63ea5ed31033f1cc5711c2f89bd92692",
+			"name": "百变怪",
+			"name_en": "Ditto",
+			"set_code": "151C"
+		},
+		{
+			"card_index": "113",
+			"card_type": "Item",
+			"count": 2,
+			"effect_id": "66b2f1d77328b6578b1bf0d58d98f66b",
+			"name": "清除古龙水",
+			"name_en": "Canceling Cologne",
+			"set_code": "CS5aC"
+		},
+		{
+			"card_index": "113",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "768b545a38fccd5e265093b5adce10af",
+			"name": "宝可装置3.0",
+			"name_en": "Pokégear 3.0",
+			"set_code": "CSV2C"
+		},
+		{
+			"card_index": "108",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "77a259dbcc81481b6d06e3fc18f29c3c",
+			"name": "粉碎之锤",
+			"name_en": "Crushing Hammer",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "130",
+			"card_type": "Stadium",
+			"count": 3,
+			"effect_id": "7f4e493ec0d852a5bb31c02bdbdb2c4e",
+			"name": "放逐市",
+			"name_en": "Lost City",
+			"set_code": "CS6bC"
+		},
+		{
+			"card_index": "116",
+			"card_type": "Item",
+			"count": 2,
+			"effect_id": "8b0d4f541f256d67f0757efe4fc8b407",
+			"name": "高科技雷达",
+			"name_en": "Techno Radar",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "023",
+			"card_type": "Supporter",
+			"count": 3,
+			"effect_id": "8e1fa2c9018db938084c94c7c970d419",
+			"name": "老大的指令",
+			"name_en": "Boss's Orders",
+			"set_code": "CSVH1aC"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Item",
+			"count": 2,
+			"effect_id": "8f655fea1f90164bfbccb7a95c223e17",
+			"name": "放逐吸尘器",
+			"name_en": "Lost Vacuum",
+			"set_code": "CS6bC"
+		},
+		{
+			"card_index": "024",
+			"card_type": "Special Energy",
+			"count": 4,
+			"effect_id": "9c04dd0addf56a7b2c88476bc8e45c0e",
+			"name": "双重涡轮能量",
+			"name_en": "Double Turbo Energy",
+			"set_code": "CSNC"
+		},
+		{
+			"card_index": "124",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "9fb5f53c9952d10b4fe26508ecbc644a",
+			"name": "牡丹",
+			"name_en": "Penny",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "197",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "aaf64ab87ad571cdf40cc78538c9c0b4",
+			"name": "枇琶",
+			"name_en": "Eri",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "121",
+			"card_type": "Supporter",
+			"count": 2,
+			"effect_id": "aecd80ca2722885c3d062a2255346f3e",
+			"name": "博士的研究",
+			"name_en": "Professor's Research",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "af514f82d182aeae5327b2c360df703d",
+			"name": "奇树",
+			"name_en": "Iono",
+			"set_code": "CSV3C"
+		},
+		{
+			"card_index": "091",
+			"card_type": "Pokemon",
+			"count": 4,
+			"effect_id": "c3e026ae191f492d082d00898727d9c4",
+			"name": "铁荆棘ex",
+			"name_en": "Iron Thorns ex",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "115",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "e366f56ecd3f805a28294109a1a37453",
+			"name": "大地容器",
+			"name_en": "Earthen Vessel",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "191",
+			"card_type": "Supporter",
+			"count": 2,
+			"effect_id": "f7415384905a382f6f8ffe95dca595cb",
+			"name": "阿克罗玛的执念",
+			"name_en": "Colress's Tenacity",
+			"set_code": "CSV8C"
+		}
+	],
+	"deck_code": "6npP9oVVsXoeNSGxWD",
+	"deck_name": "铁荆棘",
+	"id": 579577,
+	"import_date": "2026-04-05T23:02:38",
+	"source_url": "https://tcg.mik.moe/decks/list/579577",
+	"total_cards": 60,
+	"variant_name": "铁荆棘",
+	"strategy": "核心战术：铁荆棘ex的招式根据对手手牌数量计算伤害，配合裁判和粉碎之锤进行手牌+能量干扰，是纯控制型卡组。\n\n关键配合：\n- 铁荆棘ex是唯一攻击手，招式伤害与对手手牌挂钩\n- 裁判让双方洗手牌各抽4张，配合铁荆棘计算伤害\n- 粉碎之锤（硬币正面）弃掉对手1个能量，严重干扰节奏\n- 驱劲能量·未来（道具）给未来宝可梦+20伤害\n- 宝可装置3.0从牌组直接贴能量加速\n- 双重涡轮能量应急加速但-20伤害\n- 放逐市将弃牌区卡放逐，阻止对手回收\n- 清除古龙水移除对手道具\n- 百变怪可以复制对手基础宝可梦的招式\n- 阿克罗玛的执念从弃牌区回收未来卡\n\n开局计划：\n- T1 铁荆棘ex上前场，贴能量准备\n- T2 裁判干扰+开始攻击\n- 持续用粉碎之锤和裁判压制对手资源\n\n对局要点：\n- vs 大比鸟线卡组：大比鸟特性每回合补卡，降低裁判效果\n- vs 放逐Box：对手手牌少但单奖赏交换拖节奏\n- 放逐吸尘器可以关闭对手场地和工具\n- 老大的指令拉对手后场弱目标"
+}

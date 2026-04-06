@@ -208,6 +208,7 @@ func show_text_dialog(scene: Object, items: Array, extra_data: Dictionary) -> vo
 	dialog_utility_row.visible = false
 	dialog_confirm.visible = true
 	dialog_list.visible = true
+	dialog_list.custom_minimum_size = Vector2(0, clampi(items.size() * 32, 60, 240))
 	scene.call("_clear_container_children", dialog_utility_row)
 	for item: Variant in items:
 		dialog_list.add_item(str(item))

@@ -389,6 +389,8 @@ func _resolve_headless_step(
 	var step_id: String = str(step.get("id", ""))
 	if step_id == "":
 		return null
+	if str(step.get("ui_mode", "")) == "counter_distribution":
+		return _resolve_headless_counter_distribution_step(gsm, step)
 	if str(step.get("ui_mode", "")) == "card_assignment":
 		return _resolve_headless_assignment_step(gsm, player_index, owner_index, step)
 
@@ -402,6 +404,24 @@ func _resolve_headless_step(
 	if selection.size() < min_select:
 		return null
 	return {step_id: selection}
+
+
+func _resolve_headless_counter_distribution_step(
+	gsm: GameStateMachine,
+	step: Dictionary
+) -> Variant:
+	var step_id: String = str(step.get("id", ""))
+	var total_counters: int = int(step.get("total_counters", 0))
+	var target_items_variant: Variant = step.get("target_items", [])
+	if not target_items_variant is Array:
+		return null
+	var target_items: Array = target_items_variant
+	if total_counters <= 0 or target_items.is_empty():
+		return null
+	var target: Variant = _pick_preferred_assignment_target(gsm, target_items)
+	if target == null:
+		target = target_items[0]
+	return {step_id: [{"target": target, "amount": total_counters * 10}]}
 
 
 func _resolve_headless_assignment_step(

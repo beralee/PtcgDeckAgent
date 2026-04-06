@@ -84,7 +84,7 @@ func start_game(deck_1: DeckData, deck_2: DeckData, force_first: int = -1) -> vo
 
 	_log_action(GameAction.ActionType.GAME_START, -1, {
 		"first_player": game_state.first_player_index
-	}, "游戏开始，玩家%d先攻" % game_state.first_player_index)
+	}, "游戏开始，玩家%d先攻" % (game_state.first_player_index + 1))
 
 	# 进入准备阶段
 	_enter_phase(GameState.GamePhase.SETUP)
@@ -153,7 +153,7 @@ func _deal_initial_hands() -> void:
 		var player: PlayerState = game_state.players[pi]
 		var drawn: Array[CardInstance] = player.draw_cards(7)
 		_log_action(GameAction.ActionType.DRAW_CARD, pi,
-			{"count": drawn.size()}, "玩家%d抽取初始手牌7张" % pi)
+			{"count": drawn.size()}, "玩家%d抽取初始手牌7张" % (pi + 1))
 
 	# 检查Mulligan
 	_check_mulligan()
@@ -203,7 +203,7 @@ func _do_mulligan(player_index: int) -> void:
 	# 重新抽7张
 	var drawn: Array[CardInstance] = player.draw_cards(7)
 	_log_action(GameAction.ActionType.MULLIGAN, player_index,
-		{"count": drawn.size()}, "玩家%d Mulligan，重新抽7张手牌" % player_index)
+		{"count": drawn.size()}, "玩家%d 重抽手牌（无基础宝可梦），重新抽7张" % (player_index + 1))
 
 
 ## 解决Mulligan后的选择（对手是否额外抽牌）
@@ -212,7 +212,7 @@ func resolve_mulligan_choice(beneficiary: int, draw_extra: bool) -> void:
 		var drawn: Array[CardInstance] = game_state.players[beneficiary].draw_cards(1)
 		if not drawn.is_empty():
 			_log_action(GameAction.ActionType.DRAW_CARD, beneficiary,
-				{"count": 1}, "玩家%d因对手Mulligan额外抽1张" % beneficiary)
+				{"count": 1}, "玩家%d因对手重抽额外抽1张" % (beneficiary + 1))
 
 	# 检查重抽后是否还需要Mulligan
 	var mulligan_player: int = 1 - beneficiary
@@ -245,7 +245,7 @@ func setup_place_active_pokemon(player_index: int, card: CardInstance) -> bool:
 
 	_log_action(GameAction.ActionType.SETUP_PLACE_ACTIVE, player_index,
 		{"card_name": card.card_data.name},
-		"玩家%d选择 %s 作为战斗宝可梦" % [player_index, card.card_data.name])
+		"玩家%d选择 %s 作为战斗宝可梦" % [player_index + 1, card.card_data.name])
 	return true
 
 
@@ -268,7 +268,7 @@ func setup_place_bench_pokemon(player_index: int, card: CardInstance) -> bool:
 
 	_log_action(GameAction.ActionType.SETUP_PLACE_BENCH, player_index,
 		{"card_name": card.card_data.name},
-		"玩家%d将 %s 放入备战区" % [player_index, card.card_data.name])
+		"玩家%d将 %s 放入备战区" % [player_index + 1, card.card_data.name])
 	return true
 
 
@@ -297,7 +297,7 @@ func setup_complete(player_index: int) -> bool:
 			prizes.append(prize)
 		player.set_prizes(prizes)
 		_log_action(GameAction.ActionType.SETUP_SET_PRIZES, pi,
-			{"count": prizes.size()}, "玩家%d摆放6张奖赏卡" % pi)
+			{"count": prizes.size()}, "玩家%d摆放6张奖赏卡" % (pi + 1))
 
 	# 开始第一回合
 	_start_turn()
@@ -316,7 +316,7 @@ func _start_turn() -> void:
 	game_state.retreat_used_this_turn = false
 
 	_log_action(GameAction.ActionType.TURN_START, cp,
-		{"turn": game_state.turn_number}, "第%d回合开始，玩家%d行动" % [game_state.turn_number, cp])
+		{"turn": game_state.turn_number}, "第%d回合开始，玩家%d行动" % [game_state.turn_number, cp + 1])
 
 	_enter_phase(GameState.GamePhase.DRAW)
 
@@ -328,7 +328,7 @@ func _start_turn() -> void:
 		return
 
 	_log_action(GameAction.ActionType.DRAW_CARD, cp,
-		{"count": 1}, "玩家%d抽1张牌" % cp)
+		{"count": 1}, "玩家%d抽1张牌" % (cp + 1))
 
 	# 进入主阶段
 	_enter_phase(GameState.GamePhase.MAIN)
@@ -342,7 +342,7 @@ func end_turn(player_index: int) -> void:
 		return
 
 	_log_action(GameAction.ActionType.TURN_END, player_index,
-		{}, "玩家%d结束回合" % player_index)
+		{}, "玩家%d结束回合" % (player_index + 1))
 
 	_enter_phase(GameState.GamePhase.POKEMON_CHECK)
 	_do_pokemon_check()
@@ -452,7 +452,7 @@ func _finalize_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -
 
 	_log_action(GameAction.ActionType.KNOCKOUT, player_index,
 		{"pokemon_name": pokemon_name, "prize_count": prize_count},
-		"玩家%d的 %s 昏厥" % [player_index, pokemon_name])
+		"玩家%d的 %s 昏厥" % [player_index + 1, pokemon_name])
 
 	# 对手拿取奖赏卡
 	var prizes_taken: Array[CardInstance] = []
@@ -492,7 +492,7 @@ func _finalize_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -
 	if not prizes_taken.is_empty():
 		_log_action(GameAction.ActionType.TAKE_PRIZE, opp_index,
 			{"count": prizes_taken.size()},
-			"玩家%d拿取%d张奖赏卡" % [opp_index, prizes_taken.size()])
+			"玩家%d拿取%d张奖赏卡" % [opp_index + 1, prizes_taken.size()])
 
 		var prize_action: GameAction = action_log.back()
 		if prize_action != null:
@@ -540,7 +540,7 @@ func resolve_take_prize(player_index: int, slot_index: int) -> bool:
 			"count": 1,
 			"card_name": taken_prize.card_data.name if taken_prize.card_data != null else ""
 		},
-		"玩家%d拿取1张奖赏卡" % player_index)
+		"玩家%d拿取1张奖赏卡" % (player_index + 1))
 
 	var taken_prize_action: GameAction = action_log.back()
 	if taken_prize_action != null:
@@ -751,7 +751,7 @@ func send_out_pokemon(player_index: int, bench_slot: PokemonSlot) -> bool:
 
 	_log_action(GameAction.ActionType.SEND_OUT, player_index,
 		{"pokemon_name": bench_slot.get_pokemon_name()},
-		"玩家%d派出 %s" % [player_index, bench_slot.get_pokemon_name()])
+		"玩家%d派出 %s" % [player_index + 1, bench_slot.get_pokemon_name()])
 
 	var send_out_action: GameAction = action_log.back()
 	if send_out_action != null:
@@ -787,7 +787,7 @@ func draw_card(player_index: int, count: int = 1) -> Array[CardInstance]:
 	var drawn: Array[CardInstance] = game_state.players[player_index].draw_cards(count)
 	if not drawn.is_empty():
 		_log_action(GameAction.ActionType.DRAW_CARD, player_index,
-			{"count": drawn.size()}, "玩家%d抽%d张牌" % [player_index, drawn.size()])
+			{"count": drawn.size()}, "玩家%d抽%d张牌" % [player_index + 1, drawn.size()])
 	return drawn
 
 
@@ -809,7 +809,7 @@ func play_basic_to_bench(
 
 	_log_action(GameAction.ActionType.PLAY_POKEMON, player_index,
 		{"card_name": card.card_data.name},
-		"玩家%d将 %s 放入备战区" % [player_index, card.card_data.name])
+		"玩家%d将 %s 放入备战区" % [player_index + 1, card.card_data.name])
 	if auto_trigger_bench_ability:
 		_try_auto_resolve_on_bench_enter_ability(player_index, slot)
 	return true
@@ -829,7 +829,7 @@ func evolve_pokemon(player_index: int, evolution: CardInstance, target_slot: Pok
 
 	_log_action(GameAction.ActionType.EVOLVE, player_index,
 		{"evolution": evolution.card_data.name, "base": target_slot.get_pokemon_name()},
-		"玩家%d将 %s 进化为 %s" % [player_index, target_slot.get_pokemon_name(), evolution.card_data.name])
+		"玩家%d将 %s 进化为 %s" % [player_index + 1, target_slot.get_pokemon_name(), evolution.card_data.name])
 	_try_auto_resolve_on_evolve_ability(player_index, target_slot)
 	return true
 
@@ -908,7 +908,7 @@ func attach_energy(player_index: int, energy: CardInstance, target_slot: Pokemon
 
 	_log_action(GameAction.ActionType.ATTACH_ENERGY, player_index,
 		{"energy": energy.card_data.name, "target": target_slot.get_pokemon_name()},
-		"玩家%d将 %s 附着到 %s" % [player_index, energy.card_data.name, target_slot.get_pokemon_name()])
+		"玩家%d将 %s 附着到 %s" % [player_index + 1, energy.card_data.name, target_slot.get_pokemon_name()])
 	return true
 
 
@@ -926,7 +926,7 @@ func attach_tool(player_index: int, tool_card: CardInstance, target_slot: Pokemo
 
 	_log_action(GameAction.ActionType.PLAY_TOOL, player_index,
 		{"tool": tool_card.card_data.name, "target": target_slot.get_pokemon_name()},
-		"玩家%d将 %s 附着到 %s" % [player_index, tool_card.card_data.name, target_slot.get_pokemon_name()])
+		"玩家%d将 %s 附着到 %s" % [player_index + 1, tool_card.card_data.name, target_slot.get_pokemon_name()])
 	return true
 
 
@@ -961,7 +961,7 @@ func play_trainer(player_index: int, card: CardInstance, targets: Array) -> bool
 		game_state.supporter_used_this_turn = true
 
 	_log_action(GameAction.ActionType.PLAY_TRAINER, player_index,
-		{"card_name": card.card_data.name}, "玩家%d使用 %s" % [player_index, card.card_data.name])
+		{"card_name": card.card_data.name}, "玩家%d使用 %s" % [player_index + 1, card.card_data.name])
 	_assert_card_totals("play_trainer:%s" % card.card_data.name)
 	_resolve_mid_turn_knockouts()
 	return true
@@ -1013,7 +1013,7 @@ func play_stadium(player_index: int, card: CardInstance, targets: Array = []) ->
 		stadium_effect.execute_on_play(card, game_state, targets)
 
 	_log_action(GameAction.ActionType.PLAY_STADIUM, player_index,
-		{"card_name": card.card_data.name}, "玩家%d使出竞技场 %s" % [player_index, card.card_data.name])
+		{"card_name": card.card_data.name}, "玩家%d使出竞技场 %s" % [player_index + 1, card.card_data.name])
 	_assert_card_totals("play_stadium:%s" % card.card_data.name)
 	_resolve_mid_turn_knockouts()
 	return true
@@ -1064,7 +1064,7 @@ func use_stadium_effect(player_index: int, targets: Array = []) -> bool:
 	game_state.stadium_effect_used_effect_id = stadium_card.card_data.effect_id
 
 	_log_action(GameAction.ActionType.USE_STADIUM, player_index,
-		{"card_name": stadium_card.card_data.name}, "玩家%d使用竞技场效果 %s" % [player_index, stadium_card.card_data.name])
+		{"card_name": stadium_card.card_data.name}, "玩家%d使用竞技场效果 %s" % [player_index + 1, stadium_card.card_data.name])
 	_resolve_mid_turn_knockouts()
 	return true
 
@@ -1113,7 +1113,7 @@ func retreat(player_index: int, energy_to_discard: Array[CardInstance], bench_sl
 			"to": bench_slot.get_pokemon_name(),
 			"energy_discarded": energy_to_discard.size()
 		},
-		"玩家%d将 %s 撤退，派出 %s" % [player_index, active.get_pokemon_name(), bench_slot.get_pokemon_name()])
+		"玩家%d将 %s 撤退，派出 %s" % [player_index + 1, active.get_pokemon_name(), bench_slot.get_pokemon_name()])
 	return true
 
 
@@ -1179,7 +1179,7 @@ func use_attack(player_index: int, attack_index: int, targets: Array = []) -> bo
 		damage_calculator.apply_damage_to_slot(defender, damage)
 		_log_action(GameAction.ActionType.DAMAGE_DEALT, player_index,
 			{"target": defender.get_pokemon_name(), "damage": damage},
-			"玩家%d使用 %s 对 %s 造成 %d 点伤害" % [player_index, attack_name, defender.get_pokemon_name(), damage])
+			"玩家%d使用 %s 对 %s 造成 %d 点伤害" % [player_index + 1, attack_name, defender.get_pokemon_name(), damage])
 
 	# VSTAR力量标记
 	if attack.get("is_vstar_power", false):
@@ -1189,7 +1189,7 @@ func use_attack(player_index: int, attack_index: int, targets: Array = []) -> bo
 	effect_processor.execute_attack_effect(attacker, attack_index, defender, game_state, targets)
 
 	_log_action(GameAction.ActionType.ATTACK, player_index,
-		{"attack_name": attack_name}, "玩家%d使用招式「%s」" % [player_index, attack_name])
+		{"attack_name": attack_name}, "玩家%d使用招式「%s」" % [player_index + 1, attack_name])
 
 	var attack_action: GameAction = action_log.back()
 	if attack_action != null:
@@ -1231,7 +1231,7 @@ func use_granted_attack(
 		return false
 
 	var attack_name: String = str(granted_attack.get("name", ""))
-	_log_action(GameAction.ActionType.ATTACK, player_index, {"attack_name": attack_name}, "玩家%d使用招式：%s" % [player_index, attack_name])
+	_log_action(GameAction.ActionType.ATTACK, player_index, {"attack_name": attack_name}, "玩家%d使用招式：%s" % [player_index + 1, attack_name])
 	var granted_attack_action: GameAction = action_log.back()
 	if granted_attack_action != null:
 		var granted_damage: int = int(granted_attack.get("damage", 0))
@@ -1364,7 +1364,7 @@ func _trigger_game_over(winner_index: int, reason: String) -> void:
 	_enter_phase(GameState.GamePhase.GAME_OVER)
 	game_state.set_game_over(winner_index, reason)
 	_log_action(GameAction.ActionType.GAME_END, winner_index,
-		{"reason": reason}, "游戏结束，玩家%d获胜（%s）" % [winner_index, reason])
+		{"reason": reason}, "游戏结束，玩家%d获胜（%s）" % [winner_index + 1, reason])
 	game_over.emit(winner_index, reason)
 
 

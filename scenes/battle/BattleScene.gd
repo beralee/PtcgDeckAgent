@@ -158,8 +158,8 @@ var _review_pin_btn: Button = null
 var _review_overlay_mode: String = ""
 
 # ===================== UI References =====================
-@onready var _log_list: ItemList = %LogList
-@onready var _log_title: Label = $MainArea/LogPanel/LogTitle
+@onready var _log_list: RichTextLabel = %LogList
+@onready var _log_title: Label = $MainArea/LogPanel/LogPanelVBox/LogTitle
 
 # Top status
 @onready var _lbl_phase: Label = %LblPhase
@@ -511,7 +511,7 @@ func _apply_responsive_layout() -> void:
 
 	var left_panel: VBoxContainer = $MainArea/LeftPanel
 	var right_panel: VBoxContainer = $MainArea/RightPanel
-	var log_panel: VBoxContainer = $MainArea/LogPanel
+	var log_panel: PanelContainer = $MainArea/LogPanel
 	var main_area: HBoxContainer = $MainArea
 	var hand_area: PanelContainer = $MainArea/CenterField/HandArea
 	var opp_hand_bar: PanelContainer = $MainArea/CenterField/OppHandBar
@@ -641,15 +641,14 @@ func _apply_responsive_layout() -> void:
 			preview.custom_minimum_size = preview_card_size
 
 	_dialog_box.custom_minimum_size = Vector2(
-		clampf(viewport_size.x * 0.62, 640.0, 1120.0),
-		clampf(viewport_size.y * 0.52, 360.0, 620.0)
+		clampf(viewport_size.x * 0.62, 640.0, 1120.0), 0
 	)
 	if _dialog_card_scroll != null:
-		_dialog_card_scroll.custom_minimum_size = Vector2(0, clampf(viewport_size.y * 0.29, 180.0, 300.0))
+		_dialog_card_scroll.custom_minimum_size = Vector2(0, _dialog_card_size.y + 2.0)
 	if _dialog_assignment_source_scroll != null:
-		_dialog_assignment_source_scroll.custom_minimum_size = Vector2(0, clampf(viewport_size.y * 0.22, 148.0, 230.0))
+		_dialog_assignment_source_scroll.custom_minimum_size = Vector2(0, _dialog_card_size.y + 2.0)
 	if _dialog_assignment_target_scroll != null:
-		_dialog_assignment_target_scroll.custom_minimum_size = Vector2(0, clampf(viewport_size.y * 0.22, 148.0, 230.0))
+		_dialog_assignment_target_scroll.custom_minimum_size = Vector2(0, _dialog_card_size.y + 2.0)
 
 	var detail_box: PanelContainer = $DetailOverlay/DetailCenter/DetailBox
 	detail_box.custom_minimum_size = Vector2(
@@ -780,6 +779,7 @@ func _apply_battle_surface_styles() -> void:
 	_btn_stadium_action.add_theme_font_size_override("font_size", 12)
 	_style_hud_button(_hud_end_turn_btn)
 	_style_hud_button(_btn_opponent_hand)
+	_style_hud_button(_btn_ai_advice)
 	_style_hud_button(_btn_zeus_help)
 	_style_hud_button(_btn_back)
 	for label: Label in [_lbl_phase, _lbl_turn]:
@@ -864,10 +864,18 @@ func _apply_battle_surface_styles() -> void:
 			label.add_theme_color_override("font_color", Color(0.93, 0.99, 1.0))
 			label.add_theme_color_override("font_outline_color", Color(0.02, 0.07, 0.12, 0.9))
 			label.add_theme_constant_override("outline_size", 1)
+	# 操作日志 — 与手牌区统一 HUD 风格
+	_style_panel($MainArea/LogPanel, Color(0.05, 0.09, 0.13, 0.88), Color(0.42, 0.58, 0.74))
 	if _log_title != null:
-		_log_title.add_theme_font_size_override("font_size", 17)
+		_log_title.add_theme_font_size_override("font_size", 16)
+		_log_title.add_theme_color_override("font_color", Color(0.72, 0.88, 0.96))
+		_log_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if _log_list != null:
-		_log_list.add_theme_font_size_override("font_size", 15)
+		_log_list.add_theme_font_size_override("normal_font_size", 15)
+		_log_list.add_theme_color_override("default_color", Color(0.82, 0.93, 0.98))
+		var log_list_bg := StyleBoxEmpty.new()
+		_log_list.add_theme_stylebox_override("normal", log_list_bg)
+		_log_list.add_theme_stylebox_override("focus", log_list_bg)
 	for label_path: String in [
 		"MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudRight/OppHudRightMargin/OppHudRightVBox/OppHudRightTitle",
 		"MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudRight/OppHudRightMargin/OppHudRightVBox/OppHudRightValue",
@@ -1260,7 +1268,7 @@ func _on_zeus_help_pressed() -> void:
 	for pi: int in 2:
 		var total: int = _gsm.count_player_total_cards(pi)
 		_log("玩家%d卡牌总计: %d 张 (牌库%d 手牌%d 奖赏%d 弃牌%d 放逐%d 场上%d)" % [
-			pi,
+			pi + 1,
 			total,
 			_gsm.game_state.players[pi].deck.size(),
 			_gsm.game_state.players[pi].hand.size(),
@@ -1437,16 +1445,17 @@ func _setup_dialog_gallery() -> void:
 	_dialog_card_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	_dialog_card_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_dialog_card_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_dialog_card_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_dialog_card_scroll.custom_minimum_size = Vector2(0, 252)
+	_dialog_card_scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_dialog_card_scroll.custom_minimum_size = Vector2(0, _dialog_card_size.y + 2.0)
 	_dialog_card_scroll.visible = false
 	_dialog_vbox.add_child(_dialog_card_scroll)
 	_dialog_vbox.move_child(_dialog_card_scroll, buttons_row.get_index())
 
 	_dialog_card_row = HBoxContainer.new()
 	_dialog_card_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_dialog_card_row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_dialog_card_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_dialog_card_row.add_theme_constant_override("separation", 14)
+	_dialog_card_row.add_theme_constant_override("separation", 10)
 	_dialog_card_scroll.add_child(_dialog_card_row)
 
 	_dialog_status_lbl = Label.new()
@@ -1620,6 +1629,8 @@ func _on_field_interaction_cancel_pressed() -> void:
 func _on_field_interaction_confirm_pressed() -> void:
 	if _field_interaction_mode == "slot_select":
 		_finalize_field_slot_selection()
+	elif _field_interaction_mode == "counter_distribution":
+		_battle_interaction_controller.call("finalize_counter_distribution", self)
 	else:
 		_finalize_field_assignment_selection()
 
@@ -2175,6 +2186,8 @@ func _try_handle_field_interaction_slot_click(slot_id: String, _target_slot: Pok
 			_handle_field_slot_select_index(target_index)
 		"assignment":
 			_handle_field_assignment_target_index(target_index)
+		"counter_distribution":
+			_handle_counter_distribution_target(target_index)
 
 
 func _handle_field_slot_select_index(target_index: int) -> void:
@@ -2183,6 +2196,18 @@ func _handle_field_slot_select_index(target_index: int) -> void:
 
 func _handle_field_assignment_target_index(target_index: int) -> void:
 	_battle_interaction_controller.call("handle_field_assignment_target_index", self, target_index)
+
+
+func _show_field_counter_distribution(step: Dictionary) -> void:
+	_battle_interaction_controller.call("show_field_counter_distribution", self, step)
+
+
+func _on_counter_distribution_amount_chosen(amount: int) -> void:
+	_battle_interaction_controller.call("on_counter_distribution_amount_chosen", self, amount)
+
+
+func _handle_counter_distribution_target(target_index: int) -> void:
+	_battle_interaction_controller.call("handle_counter_distribution_target", self, target_index)
 
 
 func _finalize_field_slot_selection() -> void:
@@ -3005,6 +3030,10 @@ func _effect_step_uses_field_assignment_ui(step: Dictionary) -> bool:
 	return bool(_battle_effect_interaction_controller.call("effect_step_uses_field_assignment_ui", self, step))
 
 
+func _effect_step_uses_counter_distribution_ui(step: Dictionary) -> bool:
+	return bool(_battle_effect_interaction_controller.call("effect_step_uses_counter_distribution_ui", self, step))
+
+
 func _resolve_effect_step_chooser_player(step: Dictionary) -> int:
 	return int(_battle_effect_interaction_controller.call("resolve_effect_step_chooser_player", self, step))
 
@@ -3342,10 +3371,12 @@ func _bt(key: String, params: Dictionary = {}) -> String:
 
 func _log(msg: String) -> void:
 	if _log_list != null:
-		_log_list.add_item(msg)
-		_log_list.ensure_current_is_visible()
-		while _log_list.item_count > 200:
-			_log_list.remove_item(0)
+		if _log_list.get_parsed_text().length() > 12000:
+			var full := _log_list.text
+			var cut := full.find("\n", full.length() / 3)
+			if cut >= 0:
+				_log_list.text = full.substr(cut + 1)
+		_log_list.append_text(msg + "\n")
 	_runtime_log("ui_log", msg)
 
 

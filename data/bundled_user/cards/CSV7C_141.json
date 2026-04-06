@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "尾甲",
+			"text": "这只宝可梦，不会受到对手【基础】宝可梦的「宝可梦【ex】」的招式的伤害。"
+		}
+	],
+	"ancient_trait": "Tera",
+	"artist": "5ban Graphics",
+	"attacks": [
+		{
+			"cost": "PCC",
+			"damage": "160",
+			"is_vstar_power": false,
+			"name": "恶劣光束",
+			"text": "给对手的1只备战宝可梦，也造成30伤害。[备战宝可梦不计算弱点、抗性。]"
+		}
+	],
+	"card_index": "141",
+	"card_index_en": "108",
+	"card_type": "Pokemon",
+	"description": "特性: 尾甲\n这只宝可梦，不会受到对手【基础】宝可梦的「宝可梦【ex】」的招式的伤害。\n\n【超】 恶劣光束 160\n给对手的1只备战宝可梦，也造成30伤害。[备战宝可梦不计算弱点、抗性。]\n\n",
+	"effect_id": "fd252ce877c709e9e3161c56ef98aff8",
+	"energy_provides": "",
+	"energy_type": "D",
+	"evolves_from": "麒麟奇",
+	"hp": 260,
+	"image_local_path": "user://cards/images/CSV7C/141.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV7C/141.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "ex",
+	"name": "奇麒麟ex",
+	"name_en": "Farigiraf ex",
+	"rarity": "RR",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-01-16T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CSV7C",
+	"set_code_en": "TEF",
+	"stage": "Stage 1",
+	"weakness_energy": "G",
+	"weakness_value": "×2",
+	"yoren_code": "Y1397"
+}

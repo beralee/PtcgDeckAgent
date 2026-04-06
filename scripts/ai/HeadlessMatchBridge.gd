@@ -404,7 +404,12 @@ func _show_next_effect_interaction_step() -> void:
 	_pending_choice = "effect_interaction"
 	var step: Dictionary = _pending_effect_steps[_pending_effect_step_index]
 	## 根据步骤类型设置对应的交互模式
-	if _effect_step_uses_field_assignment_ui(step):
+	if _effect_step_uses_counter_distribution_ui(step):
+		_field_interaction_mode = "counter_distribution"
+		_field_interaction_data = step.duplicate(true)
+		_field_interaction_assignment_entries.clear()
+		_field_interaction_assignment_selected_source_index = -1
+	elif _effect_step_uses_field_assignment_ui(step):
 		_field_interaction_mode = "assignment"
 		_field_interaction_data = step.duplicate(true)
 		_field_interaction_assignment_entries.clear()
@@ -431,8 +436,20 @@ func _resolve_effect_step_chooser_player(step: Dictionary) -> int:
 	return _pending_effect_player_index
 
 
+func _effect_step_uses_counter_distribution_ui(step: Dictionary) -> bool:
+	if str(step.get("ui_mode", "")) != "counter_distribution":
+		return false
+	var target_items: Array = step.get("target_items", [])
+	if target_items.is_empty():
+		return false
+	for item: Variant in target_items:
+		if not (item is PokemonSlot):
+			return false
+	return true
+
+
 func _effect_step_uses_field_slot_ui(step: Dictionary) -> bool:
-	if str(step.get("ui_mode", "")) == "card_assignment":
+	if str(step.get("ui_mode", "")) in ["card_assignment", "counter_distribution"]:
 		return false
 	var items: Array = step.get("items", [])
 	if items.is_empty():
@@ -556,6 +573,55 @@ func _finalize_field_assignment_selection() -> void:
 	_field_interaction_mode = ""
 	_field_interaction_assignment_entries.clear()
 	_commit_effect_assignment_selection(stored_assignments)
+
+
+func _on_counter_distribution_amount_chosen(amount: int) -> void:
+	var total_counters: int = int(_field_interaction_data.get("total_counters", 0))
+	var assigned_count: int = _get_counter_distribution_assigned_total()
+	var remaining: int = total_counters - assigned_count
+	if amount < 1 or amount > remaining:
+		return
+	_field_interaction_assignment_selected_source_index = amount
+
+
+func _handle_counter_distribution_target(target_index: int) -> void:
+	var selected_amount: int = _field_interaction_assignment_selected_source_index
+	if selected_amount <= 0:
+		return
+	var target_items: Array = _field_interaction_data.get("target_items", [])
+	if target_index < 0 or target_index >= target_items.size():
+		return
+	var target: Variant = target_items[target_index]
+	if not (target is PokemonSlot):
+		return
+	_field_interaction_assignment_entries.append({
+		"target_index": target_index,
+		"target": target,
+		"amount": selected_amount * 10,
+	})
+	_field_interaction_assignment_selected_source_index = -1
+	var total_counters: int = int(_field_interaction_data.get("total_counters", 0))
+	if _get_counter_distribution_assigned_total() >= total_counters:
+		_finalize_counter_distribution()
+
+
+func _finalize_counter_distribution() -> void:
+	if _pending_choice != "effect_interaction":
+		_field_interaction_mode = ""
+		return
+	var stored_assignments: Array[Dictionary] = []
+	for entry: Dictionary in _field_interaction_assignment_entries:
+		stored_assignments.append(entry.duplicate())
+	_field_interaction_mode = ""
+	_field_interaction_assignment_entries.clear()
+	_commit_effect_assignment_selection(stored_assignments)
+
+
+func _get_counter_distribution_assigned_total() -> int:
+	var total: int = 0
+	for entry: Dictionary in _field_interaction_assignment_entries:
+		total += int(entry.get("amount", 0)) / 10
+	return total
 
 
 func _on_assignment_source_chosen(source_index: int) -> void:

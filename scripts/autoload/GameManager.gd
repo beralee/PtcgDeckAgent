@@ -129,10 +129,10 @@ func get_battle_review_api_config() -> Dictionary:
 
 func _default_battle_review_api_config() -> Dictionary:
 	return {
-		"endpoint": "",
+		"endpoint": "https://zenmux.ai/api/v1",
 		"api_key": "",
-		"model": "",
-		"timeout_seconds": 30.0,
+		"model": "openai/gpt-5.4",
+		"timeout_seconds": 60.0,
 	}
 
 

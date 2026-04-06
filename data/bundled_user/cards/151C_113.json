@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "幸运奖励",
+			"text": "在自己的回合，当从反面朝上的自己的奖赏卡中拿取了这张卡牌时，如果自己的备战区有空位的话，则在加入手牌前可以使用。将这只宝可梦放于自己的备战区。然后，抛掷1次硬币如果为正面，则额外拿取1张奖赏卡。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "Taiga Kayama",
+	"attacks": [
+		{
+			"cost": "CCC",
+			"damage": "70",
+			"is_vstar_power": false,
+			"name": "重掴",
+			"text": ""
+		}
+	],
+	"card_index": "113",
+	"card_index_en": "113",
+	"card_type": "Pokemon",
+	"description": "特性: 幸运奖励\n在自己的回合，当从反面朝上的自己的奖赏卡中拿取了这张卡牌时，如果自己的备战区有空位的话，则在加入手牌前可以使用。将这只宝可梦放于自己的备战区。然后，抛掷1次硬币如果为正面，则额外拿取1张奖赏卡。\n\n 重掴 70\n\n\n",
+	"effect_id": "79513e01fbf5084d23e6c60232e2338c",
+	"energy_provides": "",
+	"energy_type": "C",
+	"evolves_from": "",
+	"hp": 110,
+	"image_local_path": "user://cards/images/151C/113.png",
+	"image_url": "https://tcg.mik.moe/static/img/151C/113.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "吉利蛋",
+	"name_en": "Chansey",
+	"rarity": "R",
+	"regulation_expanded": true,
+	"regulation_mark": "G",
+	"regulation_standard": true,
+	"release_date": "2025-01-17T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "151C",
+	"set_code_en": "MEW",
+	"stage": "Basic",
+	"weakness_energy": "F",
+	"weakness_value": "×2",
+	"yoren_code": "P113"
+}

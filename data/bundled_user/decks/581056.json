@@ -1,0 +1,246 @@
+{
+	"cards": [
+		{
+			"card_index": "043",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "1af63a7e2cb7a79215474ad8db8fd8fd",
+			"name": "巢穴球",
+			"name_en": "Nest Ball",
+			"set_code": "CSVH1C"
+		},
+		{
+			"card_index": "105",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "1b951205e53e179bde0905c4a194d9ee",
+			"name": "怒鹦哥ex",
+			"name_en": "Squawkabilly ex",
+			"set_code": "CSV2C"
+		},
+		{
+			"card_index": "FIR",
+			"card_type": "Basic Energy",
+			"count": 3,
+			"effect_id": "22db5405bf0cce61a00aa8082cdd1e65",
+			"name": "基本火能量",
+			"name_en": "Fire Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "008",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "294212d9c02dc0acb886a7ef01ebeac4",
+			"name": "能量转移",
+			"name_en": "Energy Switch",
+			"set_code": "CSVH1aC"
+		},
+		{
+			"card_index": "028",
+			"card_type": "Pokemon",
+			"count": 3,
+			"effect_id": "409898a79b38fe8ca279e7bdaf4fd52e",
+			"name": "厄诡椪 碧草面具ex",
+			"name_en": "Teal Mask Ogerpon ex",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "151",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "49669fcf461deacebeb5755c11ec51f1",
+			"name": "梦幻ex",
+			"name_en": "Mew ex",
+			"set_code": "151C"
+		},
+		{
+			"card_index": "203",
+			"card_type": "Stadium",
+			"count": 1,
+			"effect_id": "4e16157bfa88a41e823d058a732df8e0",
+			"name": "阻碍之塔",
+			"name_en": "Jamming Tower",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "180",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "4ec261453212280d0eb03ed8254ca97f",
+			"name": "顶尖捕捉器",
+			"name_en": "Prime Catcher",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "159",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "52a205820de799a53a689f23cbeb8622",
+			"name": "多龙巴鲁托ex",
+			"name_en": "Dragapult ex",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "044",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "5bb7158b704f6d30d43c8f68cc52f39c",
+			"name": "皮宝宝",
+			"name_en": "Cleffa",
+			"set_code": "CSV4C"
+		},
+		{
+			"card_index": "GRA",
+			"card_type": "Basic Energy",
+			"count": 7,
+			"effect_id": "5e2d0ce37ca0c539aa45908da10544a0",
+			"name": "基本草能量",
+			"name_en": "Grass Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "055",
+			"card_type": "Pokemon",
+			"count": 3,
+			"effect_id": "749d2f12d33057c8cc20e52c1b11bcbf",
+			"name": "雷吉铎拉戈VSTAR",
+			"name_en": "Regidrago VSTAR",
+			"set_code": "CS6.5C"
+		},
+		{
+			"card_index": "079",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "74b83ef8987d072950dfe3bde3364d87",
+			"name": "摔角鹰人",
+			"name_en": "Hawlucha",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "113",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "7c0b20e121c9d0e0d2d8a43524f7494e",
+			"name": "宝可梦交替",
+			"name_en": "Switch",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "023",
+			"card_type": "Supporter",
+			"count": 2,
+			"effect_id": "8e1fa2c9018db938084c94c7c970d419",
+			"name": "老大的指令",
+			"name_en": "Boss's Orders",
+			"set_code": "CSVH1aC"
+		},
+		{
+			"card_index": "007",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "8f4f913440ac17d759c061e4e6fcf947",
+			"name": "光辉喷火龙",
+			"name_en": "Radiant Charizard",
+			"set_code": "CS5.5C"
+		},
+		{
+			"card_index": "108",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "90c254f809637aea730f5ff97b143f44",
+			"name": "骑拉帝纳VSTAR",
+			"name_en": "Giratina VSTAR",
+			"set_code": "CS6bC"
+		},
+		{
+			"card_index": "054",
+			"card_type": "Pokemon",
+			"count": 3,
+			"effect_id": "90c9e117fa846938024ae15eb859f1b6",
+			"name": "雷吉铎拉戈V",
+			"name_en": "Regidrago V",
+			"set_code": "CS6.5C"
+		},
+		{
+			"card_index": "112",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "a337ed34a45e63c6d21d98c3d8e0cb6e",
+			"name": "高级球",
+			"name_en": "Ultra Ball",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "135",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "ab6c3357e2b8a8385a68da738f41e0c1",
+			"name": "吉雉鸡ex",
+			"name_en": "Fezandipiti ex",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "121",
+			"card_type": "Supporter",
+			"count": 4,
+			"effect_id": "aecd80ca2722885c3d062a2255346f3e",
+			"name": "博士的研究",
+			"name_en": "Professor's Research",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 3,
+			"effect_id": "af514f82d182aeae5327b2c360df703d",
+			"name": "奇树",
+			"name_en": "Iono",
+			"set_code": "CSV3C"
+		},
+		{
+			"card_index": "053",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "c3ada06b5a60fb63228d9f704109718b",
+			"name": "洗翠 黏美龙VSTAR",
+			"name_en": "Hisuian Goodra VSTAR",
+			"set_code": "CS5.5C"
+		},
+		{
+			"card_index": "109",
+			"card_type": "Item",
+			"count": 2,
+			"effect_id": "c9c948169525fbb3dce70c477ec7a90a",
+			"name": "厉害钓竿",
+			"name_en": "Super Rod",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "115",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "e366f56ecd3f805a28294109a1a37453",
+			"name": "大地容器",
+			"name_en": "Earthen Vessel",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "153",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "e45788bd7d9ffec5b3da3730d2dc806f",
+			"name": "双斧战龙",
+			"name_en": "Haxorus",
+			"set_code": "CSV8C"
+		}
+	],
+	"deck_code": "9G1nKwy5dkYcqcGgvx",
+	"deck_name": "雷吉铎拉戈",
+	"id": 581056,
+	"import_date": "2026-03-25T22:46:04",
+	"source_url": "https://tcg.mik.moe/decks/list/581056",
+	"total_cards": 60,
+	"variant_name": "雷吉铎拉戈",
+	"strategy": "核心战术：雷吉铎拉戈VSTAR复制弃牌区龙系宝可梦招式。与575653版本类似但卡位微调，增加了皮宝宝和光辉喷火龙。\n\n关键配合：\n- 雷吉铎拉戈V→VSTAR复制弃牌区龙系招式\n- 多龙巴鲁托ex的「幻影潜袭」送入弃牌区后被复制（放指示物效果也生效，玛纳霏挡不住）\n- 骑拉帝纳VSTAR的「迷失冲击」高伤害\n- 洗翠·黏美龙VSTAR可以锁特性\n- 厄诡椪·碧草面具ex从弃牌区加速能量\n- 皮宝宝的特性可以抽牌（翻硬币正面抽3张）\n- 光辉喷火龙是非规则备选打手，从弃牌区加速能量攻击\n\n开局计划：\n- T1 雷吉铎拉戈V上场，铺厄诡椪\n- T2 进化VSTAR，将龙系工具送入弃牌区\n- T3 根据对局选择复制哪个招式\n\n对局要点：\n- vs 沙奈朵：复制多龙招式放指示物有效\n- vs 喷火龙：需要抢节奏\n- 阻碍之塔关闭场地\n- VSTAR技「星辰标准」拿5能量到手，时机关键"
+}

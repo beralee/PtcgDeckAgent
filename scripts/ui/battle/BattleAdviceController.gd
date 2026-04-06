@@ -99,14 +99,15 @@ func setup_battle_advice_ui(scene: Object) -> void:
 
 	if scene.get("_battle_advice_panel") != null:
 		return
-	var log_panel := (scene as Node).get_node_or_null("MainArea/LogPanel") as VBoxContainer
+	var log_panel := (scene as Node).get_node_or_null("MainArea/LogPanel/LogPanelVBox") as VBoxContainer
 	if log_panel == null:
 		return
 
 	var battle_advice_panel := PanelContainer.new()
 	battle_advice_panel.name = "AdvicePanel"
 	battle_advice_panel.visible = false
-	battle_advice_panel.size_flags_vertical = Control.SIZE_FILL
+	battle_advice_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	battle_advice_panel.custom_minimum_size = Vector2(0, 36)
 	scene.call("_style_panel", battle_advice_panel, Color(0.02, 0.08, 0.12, 0.86), Color(0.18, 0.62, 0.78, 0.9), 12)
 
 	var margin := MarginContainer.new()
@@ -251,8 +252,14 @@ func show_battle_advice_overlay(scene: Object, result: Dictionary) -> void:
 	if review_pin_btn != null:
 		review_pin_btn.visible = true
 		review_pin_btn.disabled = bool(scene.get("_battle_advice_busy"))
+		var is_pinned: bool = bool(scene.get("_battle_advice_pinned"))
+		review_pin_btn.text = _bt(scene, "battle.review.unpin") if is_pinned else _bt(scene, "battle.review.pin")
 	review_content.text = format_battle_advice(scene, result)
-	review_overlay.visible = true
+	# 已固定到侧栏时不弹出中央覆盖层，直接更新侧栏
+	if bool(scene.get("_battle_advice_pinned")):
+		refresh_battle_advice_panel(scene)
+	else:
+		review_overlay.visible = true
 
 
 func format_battle_advice(scene: Object, result: Dictionary) -> String:
@@ -261,7 +268,13 @@ func format_battle_advice(scene: Object, result: Dictionary) -> String:
 
 
 func on_review_pin_pressed(scene: Object) -> void:
-	scene.set("_battle_advice_pinned", true)
+	var was_pinned: bool = bool(scene.get("_battle_advice_pinned"))
+	scene.set("_battle_advice_pinned", not was_pinned)
+	scene.set("_battle_advice_panel_collapsed", false)
+	# pin 时关闭中央覆盖层
+	var review_overlay: Panel = scene.get("_review_overlay")
+	if review_overlay != null and not was_pinned:
+		review_overlay.visible = false
 	refresh_battle_advice_panel(scene)
 
 
@@ -288,6 +301,12 @@ func refresh_battle_advice_panel(scene: Object) -> void:
 	battle_advice_panel_title.text = _bt(scene, "battle.top.ai_advice")
 	battle_advice_panel_toggle_btn.text = _bt(scene, "battle.advice.toggle_expand") if battle_advice_panel_collapsed else _bt(scene, "battle.advice.toggle_collapse")
 	battle_advice_panel_content.visible = not battle_advice_panel_collapsed
+	if battle_advice_panel_collapsed:
+		battle_advice_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		battle_advice_panel.custom_minimum_size = Vector2(0, 0)
+	else:
+		battle_advice_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		battle_advice_panel.custom_minimum_size = Vector2(0, 36)
 	if battle_advice_busy and battle_advice_last_result.is_empty():
 		battle_advice_panel_content.text = "[b]%s[/b]\n%s" % [_bt(scene, "battle.top.ai_advice"), str(scene.get("_battle_advice_progress_text"))]
 	else:

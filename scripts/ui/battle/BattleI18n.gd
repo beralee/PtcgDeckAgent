@@ -86,6 +86,7 @@ const STRINGS := {
 	"battle.advice.progress": "正在生成 AI 建议...",
 	"battle.advice.branch_prefix": "如果 {condition}",
 	"battle.review.pin": "固定到侧栏",
+	"battle.review.unpin": "取消固定",
 	"battle.review.title": "AI复盘",
 	"battle.review.status_label": "状态",
 	"battle.review.winner_heading": "获胜方关键回合",

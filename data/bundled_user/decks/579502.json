@@ -1,0 +1,300 @@
+{
+	"cards": [
+		{
+			"card_index": "052",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "04653d073ffc3ca2202746e4f9aebabd",
+			"name": "玛纳霏",
+			"name_en": "Manaphy",
+			"set_code": "CS5bC"
+		},
+		{
+			"card_index": "114",
+			"card_type": "Item",
+			"count": 2,
+			"effect_id": "06bc00d5dcec33898dc6db2e4c4d10ec",
+			"name": "反击捕捉器",
+			"name_en": "Counter Catcher",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "185",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "0b4cc131a19862f92acf71494f29a0ed",
+			"name": "紧急滑板",
+			"name_en": "Rescue Board",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "043",
+			"card_type": "Item",
+			"count": 3,
+			"effect_id": "1af63a7e2cb7a79215474ad8db8fd8fd",
+			"name": "巢穴球",
+			"name_en": "Nest Ball",
+			"set_code": "CSVH1C"
+		},
+		{
+			"card_index": "FIR",
+			"card_type": "Basic Energy",
+			"count": 5,
+			"effect_id": "22db5405bf0cce61a00aa8082cdd1e65",
+			"name": "基本火能量",
+			"name_en": "Fire Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "070",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "2df65fcd5de0d9d9e24486b059981cdf",
+			"name": "阿渡",
+			"name_en": "Lance",
+			"set_code": "CS6.5C"
+		},
+		{
+			"card_index": "183",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "3e6f1daf545dfed48d0588dd50792a2e",
+			"name": "夜间担架",
+			"name_en": "Night Stretcher",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "PSY",
+			"card_type": "Basic Energy",
+			"count": 2,
+			"effect_id": "41b2d1a95fafc35e4cf39383ffae928a",
+			"name": "基本超能量",
+			"name_en": "Psychic Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "119",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "43386015be5c073ba2e5b9d3692ece3f",
+			"name": "招式学习器 进化",
+			"name_en": "Technical Machine: Evolution",
+			"set_code": "CSV5C"
+		},
+		{
+			"card_index": "158",
+			"card_type": "Pokemon",
+			"count": 3,
+			"effect_id": "4e13cd08de3b6d141ce8e2f09d17a3a4",
+			"name": "多龙奇",
+			"name_en": "Drakloak",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "159",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "52a205820de799a53a689f23cbeb8622",
+			"name": "多龙巴鲁托ex",
+			"name_en": "Dragapult ex",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "128",
+			"card_type": "Stadium",
+			"count": 1,
+			"effect_id": "53864b068a4a1e8dce3c53c884b67efa",
+			"name": "神奥神殿",
+			"name_en": "Temple of Sinnoh",
+			"set_code": "CS5bC"
+		},
+		{
+			"card_index": "049",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "553639840a44f19ad83b89a892a21f98",
+			"name": "霓虹鱼V",
+			"name_en": "Lumineon V",
+			"set_code": "CS5bC"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 4,
+			"effect_id": "5bdbc985f9aa2e6f248b53f6f35d1d37",
+			"name": "派帕",
+			"name_en": "Arven",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "028",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "68244d82147e13bb7d77116ffedf6162",
+			"name": "光辉胡地",
+			"name_en": "Radiant Alakazam",
+			"set_code": "CS6bC"
+		},
+		{
+			"card_index": "125",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "73d5f46ecf3a6d71b23ce7bc1a28d4f4",
+			"name": "弗图博士的剧本",
+			"name_en": "Professor Turo's Scenario",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "075",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "767b6233bf90b98b7af190ea3b40d7a2",
+			"name": "喷火龙ex",
+			"name_en": "Charizard ex",
+			"set_code": "CSV5C"
+		},
+		{
+			"card_index": "004",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "7d8db29232cb263d7a9f27342814dff9",
+			"name": "小火龙",
+			"name_en": "Charmander",
+			"set_code": "151C"
+		},
+		{
+			"card_index": "015",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "80abbdd5ce75ddd713dab42752383acd",
+			"name": "火恐龙",
+			"name_en": "Charmeleon",
+			"set_code": "CSV5C"
+		},
+		{
+			"card_index": "023",
+			"card_type": "Supporter",
+			"count": 2,
+			"effect_id": "8e1fa2c9018db938084c94c7c970d419",
+			"name": "老大的指令",
+			"name_en": "Boss's Orders",
+			"set_code": "CSVH1aC"
+		},
+		{
+			"card_index": "023",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "8ef5ff61fd97838af568f00fe3b0e3ea",
+			"name": "洛托姆V",
+			"name_en": "Rotom V",
+			"set_code": "CS6.5C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "8f655fea1f90164bfbccb7a95c223e17",
+			"name": "放逐吸尘器",
+			"name_en": "Lost Vacuum",
+			"set_code": "CS6bC"
+		},
+		{
+			"card_index": "066",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "9fa9943ccda36f417ac3cb675177c216",
+			"name": "森林封印石",
+			"name_en": "Forest Seal Stone",
+			"set_code": "CS6.5C"
+		},
+		{
+			"card_index": "112",
+			"card_type": "Item",
+			"count": 3,
+			"effect_id": "a337ed34a45e63c6d21d98c3d8e0cb6e",
+			"name": "高级球",
+			"name_en": "Ultra Ball",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "135",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "ab6c3357e2b8a8385a68da738f41e0c1",
+			"name": "吉雉鸡ex",
+			"name_en": "Fezandipiti ex",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 2,
+			"effect_id": "af514f82d182aeae5327b2c360df703d",
+			"name": "奇树",
+			"name_en": "Iono",
+			"set_code": "CSV3C"
+		},
+		{
+			"card_index": "109",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "c9c948169525fbb3dce70c477ec7a90a",
+			"name": "厉害钓竿",
+			"name_en": "Super Rod",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "173",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "d324e01179ab048ed023bf4a20bf658d",
+			"name": "不公印章",
+			"name_en": "Unfair Stamp",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "045",
+			"card_type": "Item",
+			"count": 3,
+			"effect_id": "d3891abcfe3277c8811cde06741d3236",
+			"name": "神奇糖果",
+			"name_en": "Rare Candy",
+			"set_code": "CSVH1C"
+		},
+		{
+			"card_index": "035",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "e508908b9311c0ef5e70e9de44892e26",
+			"name": "能量输送",
+			"name_en": "Energy Search",
+			"set_code": "CSVH1C"
+		},
+		{
+			"card_index": "157",
+			"card_type": "Pokemon",
+			"count": 4,
+			"effect_id": "e793842faf5a8017e5456f898b1bf9d2",
+			"name": "多龙梅西亚",
+			"name_en": "Dreepy",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "177",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "f866dfee26cd6b0dbbb52b74438d0a59",
+			"name": "友好宝芬",
+			"name_en": "Buddy-Buddy Poffin",
+			"set_code": "CSV7C"
+		}
+	],
+	"deck_code": "S2bt45nMmJCVYCQ3Hs",
+	"deck_name": "多龙巴鲁托 喷火龙",
+	"id": 579502,
+	"import_date": "2026-03-28T21:29:22",
+	"source_url": "https://tcg.mik.moe/decks/list/579502",
+	"total_cards": 60,
+	"variant_name": "多龙巴鲁托 喷火龙",
+	"strategy": "核心战术：多龙巴鲁托ex「幻影潜袭」前场120+后场放6指示物，喷火龙ex「焚天灭地」330伤害一击倒。双打手体系，前期多龙压制后场，后期喷火龙收割。\n\n关键配合：\n- 多龙奇→多龙梅西亚→多龙巴鲁托ex（神奇糖果加速）\n- 小火龙→火恐龙→喷火龙ex（招式学习器·进化加速）\n- 光辉胡地移动伤害指示物配合多龙的后场指示物精准击杀\n- 霓虹鱼V加速能量\n\n极重要的规则澄清：\n- 多龙巴鲁托ex放的是伤害指示物（damage counters），不是伤害\n- 己方玛纳霏保护不了对手后场不被放指示物（玛纳霏只挡伤害）\n- 玛纳霏在此卡组中主要防对手光辉甲贺忍蛙等真正的后场招式伤害\n- 神奥神殿关闭V/VSTAR特性但不影响ex\n\n对局要点：\n- vs 沙奈朵：多龙压后场奇鲁莉安很有效\n- vs 放逐Box：多龙持续放指示物压制低HP花疗环环"
+}
