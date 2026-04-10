@@ -6,7 +6,7 @@ extends RefCounted
 const BenchLimit = preload("res://scripts/engine/BenchLimitHelper.gd")
 
 const AbilityAttachFromDeckEffect = preload("res://scripts/effects/pokemon_effects/AbilityAttachFromDeck.gd")
-const AttackSelfLockUntilLeaveActive = preload("res://scripts/effects/pokemon_effects/AttackSelfLockUntilLeaveActive.gd")
+
 
 ## 游戏状态变更信号
 signal state_changed(new_phase: GameState.GamePhase)
@@ -817,6 +817,8 @@ func play_basic_to_bench(
 
 ## 进化宝可梦
 func evolve_pokemon(player_index: int, evolution: CardInstance, target_slot: PokemonSlot) -> bool:
+	if not _slot_belongs_to_player(target_slot, player_index):
+		return false
 	if not rule_validator.can_evolve(game_state, player_index, target_slot, evolution):
 		return false
 
@@ -893,8 +895,20 @@ func _try_auto_resolve_on_bench_enter_ability(player_index: int, slot: PokemonSl
 		"Used ability: %s" % ability_name)
 
 
+## 检查目标槽位是否属于指定玩家（活跃或备战区）
+func _slot_belongs_to_player(slot: PokemonSlot, player_index: int) -> bool:
+	if slot == null:
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	if slot == player.active_pokemon:
+		return true
+	return slot in player.bench
+
+
 func attach_energy(player_index: int, energy: CardInstance, target_slot: PokemonSlot) -> bool:
 	if not rule_validator.can_attach_energy(game_state, player_index):
+		return false
+	if not _slot_belongs_to_player(target_slot, player_index):
 		return false
 
 	var player: PlayerState = game_state.players[player_index]
@@ -915,6 +929,8 @@ func attach_energy(player_index: int, energy: CardInstance, target_slot: Pokemon
 ## 附着道具卡到宝可梦
 func attach_tool(player_index: int, tool_card: CardInstance, target_slot: PokemonSlot) -> bool:
 	if not rule_validator.can_attach_tool(game_state, player_index, target_slot):
+		return false
+	if not _slot_belongs_to_player(target_slot, player_index):
 		return false
 
 	var player: PlayerState = game_state.players[player_index]
@@ -1096,12 +1112,9 @@ func retreat(player_index: int, energy_to_discard: Array[CardInstance], bench_sl
 		active.attached_energy.erase(energy)
 		player.discard_pile.append(energy)
 
-	# 清除特殊状态（撤退到备战区）
-	active.clear_all_status()
-
 	# 交换战斗宝可梦
 	player.bench.erase(bench_slot)
-	AttackSelfLockUntilLeaveActive.clear_for_slot(active)
+	active.clear_on_leave_active()
 	player.bench.append(active)
 	player.active_pokemon = bench_slot
 
@@ -1381,11 +1394,40 @@ func _log_action(
 	data: Dictionary,
 	description: String
 ) -> void:
+	var normalized_data: Dictionary = data.duplicate(true)
+	if action_type == GameAction.ActionType.DRAW_CARD:
+		normalized_data = _normalize_draw_action_data(player_index, normalized_data)
 	var action: GameAction = GameAction.create(
-		action_type, player_index, data, game_state.turn_number, description
+		action_type, player_index, normalized_data, game_state.turn_number, description
 	)
 	action_log.append(action)
 	action_logged.emit(action)
+
+
+func _normalize_draw_action_data(player_index: int, data: Dictionary) -> Dictionary:
+	if player_index < 0 or game_state == null or player_index >= game_state.players.size():
+		return data
+	if data.has("card_names") and data.has("card_instance_ids"):
+		return data
+	var normalized: Dictionary = data.duplicate(true)
+	var count: int = int(normalized.get("count", 0))
+	if count <= 0:
+		return normalized
+	var hand: Array[CardInstance] = game_state.players[player_index].hand
+	var drawn_cards: Array[CardInstance] = []
+	var start_index := maxi(0, hand.size() - count)
+	for idx: int in range(start_index, hand.size()):
+		var card := hand[idx]
+		if card is CardInstance:
+			drawn_cards.append(card)
+	var card_names: Array[String] = []
+	var card_instance_ids: Array[int] = []
+	for card: CardInstance in drawn_cards:
+		card_names.append(card.card_data.name if card.card_data != null else "")
+		card_instance_ids.append(card.instance_id)
+	normalized["card_names"] = card_names
+	normalized["card_instance_ids"] = card_instance_ids
+	return normalized
 
 
 ## 获取当前游戏状态（只读引用）

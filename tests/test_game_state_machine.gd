@@ -157,6 +157,71 @@ func test_draw_cards() -> String:
 	])
 
 
+func test_draw_card_action_includes_all_drawn_card_names() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	for card_name: String in ["Draw A", "Draw B", "Draw C", "Draw D", "Draw E", "Draw F", "Draw G"]:
+		var cd := CardData.new()
+		cd.name = card_name
+		cd.card_type = "Pokemon"
+		cd.stage = "Basic"
+		cd.hp = 60
+		cd.energy_type = "C"
+		gsm.game_state.players[0].deck.append(CardInstance.create(cd, 0))
+
+	var drawn: Array[CardInstance] = gsm.draw_card(0, 7)
+	var draw_action := _get_last_action_of_type(gsm.action_log, GameAction.ActionType.DRAW_CARD)
+
+	return run_checks([
+		assert_eq(drawn.size(), 7, "Should draw 7 cards for metadata logging"),
+		assert_not_null(draw_action, "Draw action should be logged"),
+		assert_eq(draw_action.data.get("count", 0), 7, "Draw action count should stay correct"),
+		assert_eq(
+			draw_action.data.get("card_names", []),
+			["Draw A", "Draw B", "Draw C", "Draw D", "Draw E", "Draw F", "Draw G"],
+			"Draw action should record drawn card names in order"
+		),
+	])
+
+
+func test_turn_start_draw_action_includes_drawn_card_names() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 0
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var top_cd := CardData.new()
+	top_cd.name = "Turn Start Draw"
+	top_cd.card_type = "Pokemon"
+	top_cd.stage = "Basic"
+	top_cd.hp = 60
+	top_cd.energy_type = "C"
+	gsm.game_state.players[0].deck = [CardInstance.create(top_cd, 0)]
+
+	gsm._start_turn()
+	var draw_action := _get_last_action_of_type(gsm.action_log, GameAction.ActionType.DRAW_CARD)
+
+	return run_checks([
+		assert_not_null(draw_action, "Turn-start draw should log a DRAW_CARD action"),
+		assert_eq(draw_action.data.get("count", 0), 1, "Turn-start draw count should remain 1"),
+		assert_eq(draw_action.data.get("card_names", []), ["Turn Start Draw"], "Turn-start draw should record the drawn card name"),
+	])
+
+
 func test_both_players_mulligan_do_not_redraw_initial_hands_twice() -> String:
 	var gsm := GameStateMachine.new()
 	gsm.game_state = GameState.new()
@@ -1436,6 +1501,44 @@ func test_evolve_charizard_triggers_infernal_reign_and_attaches_fire_energy() ->
 		assert_eq(bench_b.attached_energy.size(), 1, "One Fire Energy should be assignable to bench target B"),
 		assert_eq(ability_used, true, "Infernal Reign should resolve from assignment context"),
 		assert_eq(player.deck.filter(func(card: CardInstance) -> bool: return card.card_data.card_type == "Basic Energy" and card.card_data.energy_provides == "R").size(), 0, "All selected Fire Energy should leave the deck"),
+	])
+
+
+func test_second_player_first_turn_cannot_evolve_setup_pokemon() -> String:
+	var gsm := _make_gsm_with_decks()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 2
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.current_player_index = 1
+
+	var player: PlayerState = gsm.game_state.players[1]
+	var active_slot := PokemonSlot.new()
+	var basic_cd := CardData.new()
+	basic_cd.name = "Setup Basic"
+	basic_cd.card_type = "Pokemon"
+	basic_cd.stage = "Basic"
+	basic_cd.hp = 70
+	basic_cd.energy_type = "G"
+	active_slot.pokemon_stack.append(CardInstance.create(basic_cd, 1))
+	active_slot.turn_played = 0
+	player.active_pokemon = active_slot
+
+	var evo_cd := CardData.new()
+	evo_cd.name = "Setup Evolution"
+	evo_cd.card_type = "Pokemon"
+	evo_cd.stage = "Stage 1"
+	evo_cd.hp = 110
+	evo_cd.energy_type = "G"
+	evo_cd.evolves_from = "Setup Basic"
+	var evolution := CardInstance.create(evo_cd, 1)
+	player.hand.append(evolution)
+
+	var evolved: bool = gsm.evolve_pokemon(1, evolution, active_slot)
+
+	return run_checks([
+		assert_false(evolved, "后攻玩家第一回合不能进化开场放置的宝可梦"),
+		assert_eq(active_slot.get_pokemon_name(), "Setup Basic", "非法进化不应改变场上的宝可梦"),
+		assert_true(evolution in player.hand, "非法进化时进化牌应保留在手牌"),
 	])
 
 
