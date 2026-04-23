@@ -2170,3 +2170,97 @@ func test_llm_prompt_builder_rejects_invalid_intent() -> String:
 	return run_checks([
 		assert_true(plan.is_empty(), "无效intent应返回空plan（触发fallback）"),
 	])
+
+
+const RAGING_BOLT_LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategyRagingBoltLLM.gd"
+
+
+func test_raging_bolt_llm_strategy_exists_and_extends_rule_based() -> String:
+	var script := _load_script(RAGING_BOLT_LLM_SCRIPT_PATH)
+	if script == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var strategy: RefCounted = script.new()
+	return run_checks([
+		assert_eq(str(strategy.call("get_strategy_id")), "raging_bolt_ogerpon_llm",
+			"strategy_id应为raging_bolt_ogerpon_llm"),
+		assert_true(strategy.call("get_signature_names").size() > 0,
+			"签名名应继承自规则版"),
+	])
+
+
+func test_raging_bolt_llm_falls_back_to_rule_plan_when_no_cache() -> String:
+	var script := _load_script(RAGING_BOLT_LLM_SCRIPT_PATH)
+	if script == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var strategy: RefCounted = script.new()
+	var gs := _make_game_state(3)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_ogerpon_cd(), 0)
+	player.bench.append(_make_bolt_slot_with_energy(0, 0, 1))
+	for _i: int in 10:
+		player.deck.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	var plan: Dictionary = strategy.call("build_turn_plan", gs, 0, {})
+	return run_checks([
+		assert_eq(str(plan.get("intent", "")), "fuel_discard",
+			"无LLM缓存时应fallback到规则版plan"),
+	])
+
+
+func test_raging_bolt_llm_returns_cached_plan_when_available() -> String:
+	var script := _load_script(RAGING_BOLT_LLM_SCRIPT_PATH)
+	if script == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var strategy: RefCounted = script.new()
+	var fake_plan := {
+		"intent": "charge_bolt",
+		"phase": "",
+		"flags": {"llm_driven": true, "hand_has_sada": false, "hand_has_earthen_vessel": false,
+			"hand_has_energy_retrieval": false, "discard_has_fuel": false, "active_is_stuck": false},
+		"targets": {"primary_attacker_name": "Raging Bolt ex", "bridge_target_name": "Raging Bolt ex", "pivot_target_name": ""},
+		"constraints": {"forbid_draw_supporter_waste": true},
+		"context": {"source": "llm"},
+	}
+	strategy.set("_cached_llm_plan", fake_plan)
+	strategy.set("_cached_turn_number", 3)
+	var gs := _make_game_state(3)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_ogerpon_cd(), 0)
+	player.bench.append(_make_bolt_slot_with_energy(0, 0, 1))
+	for _i: int in 10:
+		player.deck.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	var plan: Dictionary = strategy.call("build_turn_plan", gs, 0, {})
+	return run_checks([
+		assert_eq(str(plan.get("intent", "")), "charge_bolt",
+			"有LLM缓存时应返回LLM plan"),
+		assert_true(bool(plan.get("flags", {}).get("llm_driven", false)),
+			"plan应标记为llm_driven"),
+	])
+
+
+func test_raging_bolt_llm_invalidates_cache_on_new_turn() -> String:
+	var script := _load_script(RAGING_BOLT_LLM_SCRIPT_PATH)
+	if script == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var strategy: RefCounted = script.new()
+	var fake_plan := {
+		"intent": "charge_bolt",
+		"phase": "",
+		"flags": {"llm_driven": true, "hand_has_sada": false, "hand_has_earthen_vessel": false,
+			"hand_has_energy_retrieval": false, "discard_has_fuel": false, "active_is_stuck": false},
+		"targets": {"primary_attacker_name": "Raging Bolt ex", "bridge_target_name": "Raging Bolt ex", "pivot_target_name": ""},
+		"constraints": {},
+		"context": {"source": "llm"},
+	}
+	strategy.set("_cached_llm_plan", fake_plan)
+	strategy.set("_cached_turn_number", 2)
+	var gs := _make_game_state(3)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_ogerpon_cd(), 0)
+	player.bench.append(_make_bolt_slot_with_energy(0, 0, 1))
+	for _i: int in 10:
+		player.deck.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	var plan: Dictionary = strategy.call("build_turn_plan", gs, 0, {})
+	return run_checks([
+		assert_eq(str(plan.get("intent", "")), "fuel_discard",
+			"回合号变化时应fallback到规则版（旧缓存失效）"),
+	])
