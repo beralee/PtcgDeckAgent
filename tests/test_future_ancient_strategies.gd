@@ -6,6 +6,7 @@ const FUTURE_BOX_SCRIPT_PATH := "res://scripts/ai/DeckStrategyFutureBox.gd"
 const IRON_THORNS_SCRIPT_PATH := "res://scripts/ai/DeckStrategyIronThorns.gd"
 const RAGING_BOLT_SCRIPT_PATH := "res://scripts/ai/DeckStrategyRagingBoltOgerpon.gd"
 const GOUGING_FIRE_SCRIPT_PATH := "res://scripts/ai/DeckStrategyGougingFireAncient.gd"
+const LLM_PROMPT_BUILDER_SCRIPT_PATH := "res://scripts/ai/LLMTurnPlanPromptBuilder.gd"
 
 
 func _load_script(script_path: String) -> GDScript:
@@ -329,7 +330,7 @@ func test_iron_thorns_cools_off_extra_ditto_and_churn_once_lock_is_online() -> S
 		0
 	)
 	var gear_score: float = strategy.score_action_absolute(
-		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Pokégear 3.0"), 0)},
+		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Pok\\u00e9gear 3.0"), 0)},
 		gs,
 		0
 	)
@@ -350,7 +351,7 @@ func test_iron_thorns_cools_off_extra_ditto_and_churn_once_lock_is_online() -> S
 	)
 	return run_checks([
 		assert_true(ditto_score <= 40.0, "Iron Thorns should cool off extra Ditto benching once the lock shell is already online"),
-		assert_true(gear_score <= 80.0, "Iron Thorns should sharply cool off Pokégear once the lock attacker is already live"),
+		assert_true(gear_score <= 80.0, "Iron Thorns should sharply cool off Pok\\u00e9gear once the lock attacker is already live"),
 		assert_true(cologne_score <= 80.0, "Iron Thorns should not spend turns on Cologne churn when the active lock is already established"),
 		assert_true(research_score <= 80.0, "Iron Thorns should cool off broad discard-draw once the lock shell is already online"),
 		assert_true(judge_score > research_score, "Iron Thorns should still prefer live disruption over generic churn while pressuring"),
@@ -497,7 +498,7 @@ func test_iron_thorns_cools_off_churn_once_lock_shell_is_online_even_before_atta
 		0
 	)
 	var gear_score: float = strategy.score_action_absolute(
-		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Pok茅gear 3.0"), 0)},
+		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Pok\u00e9gear 3.0"), 0)},
 		gs,
 		0
 	)
@@ -514,7 +515,7 @@ func test_iron_thorns_cools_off_churn_once_lock_shell_is_online_even_before_atta
 	return run_checks([
 		assert_true(ditto_score <= 40.0, "Iron Thorns should stop adding extra Ditto once an active lock shell and backup attacker are already assembled"),
 		assert_true(radar_score <= 100.0, "Iron Thorns should cool off Techno Radar once the lock shell is already formed, even before the attack cost is fully paid"),
-		assert_true(gear_score <= 80.0, "Iron Thorns should not keep spinning Pok茅gear after the active lock shell is already in place"),
+		assert_true(gear_score <= 80.0, "Iron Thorns should not keep spinning Pok\u00e9gear after the active lock shell is already in place"),
 		assert_true(research_score <= 80.0, "Iron Thorns should cool off broad draw churn once the active lock shell is already established"),
 		assert_true(judge_score > radar_score, "Iron Thorns should still prefer live disruption over more setup churn after the shell is formed"),
 	])
@@ -575,7 +576,7 @@ func test_iron_thorns_thin_deck_cools_off_setup_churn_even_if_active_isnt_lock()
 		0
 	)
 	var gear_score: float = strategy.score_action_absolute(
-		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Pokégear 3.0"), 0)},
+		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Pok\\u00e9gear 3.0"), 0)},
 		gs,
 		0
 	)
@@ -596,7 +597,7 @@ func test_iron_thorns_thin_deck_cools_off_setup_churn_even_if_active_isnt_lock()
 	)
 	return run_checks([
 		assert_true(ditto_score <= 40.0, "Iron Thorns should stop adding extra Ditto in thin-deck endgames once two lock attackers are already on board"),
-		assert_true(gear_score <= 80.0, "Iron Thorns should cool off Pokégear in thin-deck endgames once the shell is already formed"),
+		assert_true(gear_score <= 80.0, "Iron Thorns should cool off Pok\\u00e9gear in thin-deck endgames once the shell is already formed"),
 		assert_true(radar_score <= 100.0, "Iron Thorns should cool off Techno Radar in thin-deck endgames once two lock attackers are already online"),
 		assert_true(colress_score <= 100.0, "Iron Thorns should stop spending thin-deck turns on Tenacity-style setup churn after the shell is formed"),
 		assert_true(arven_score <= 120.0, "Iron Thorns should not keep searching setup tools in thin-deck endgames once the lock shell is already assembled"),
@@ -659,7 +660,7 @@ func test_iron_thorns_prioritizes_lost_city_as_a_real_stadium_action() -> String
 		0
 	)
 	var gear_score: float = strategy.score_action_absolute(
-		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Pokégear 3.0"), 0)},
+		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Pok\\u00e9gear 3.0"), 0)},
 		gs,
 		0
 	)
@@ -900,6 +901,7 @@ func test_raging_bolt_ogerpon_draw_engine_cools_off_once_bolt_is_ready() -> Stri
 	)
 	raging_bolt.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
 	raging_bolt.attached_energy.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	raging_bolt.attached_energy.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
 	player.active_pokemon = raging_bolt
 	var ogerpon := _make_slot(
 		_make_pokemon_cd(
@@ -916,7 +918,7 @@ func test_raging_bolt_ogerpon_draw_engine_cools_off_once_bolt_is_ready() -> Stri
 	player.bench.append(ogerpon)
 	player.hand.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
 	player.hand.append(CardInstance.create(_make_trainer_cd("Nest Ball"), 0))
-	player.hand.append(CardInstance.create(_make_trainer_cd("Pokegear 3.0"), 0))
+	player.hand.append(CardInstance.create(_make_trainer_cd("Pok\u00e9gear 3.0"), 0))
 	player.hand.append(CardInstance.create(_make_trainer_cd("Trekking Shoes"), 0))
 	player.hand.append(CardInstance.create(_make_trainer_cd("Bravery Charm", "Tool"), 0))
 	var ability_score: float = strategy.score_action_absolute(
@@ -951,7 +953,7 @@ func test_raging_bolt_burst_roar_cools_off_when_hand_is_already_stable() -> Stri
 		0
 	)
 	player.hand.append(CardInstance.create(_make_trainer_cd("Nest Ball"), 0))
-	player.hand.append(CardInstance.create(_make_trainer_cd("Pokegear 3.0"), 0))
+	player.hand.append(CardInstance.create(_make_trainer_cd("Pok\u00e9gear 3.0"), 0))
 	player.hand.append(CardInstance.create(_make_trainer_cd("Earthen Vessel"), 0))
 	player.hand.append(CardInstance.create(_make_trainer_cd("Trekking Shoes"), 0))
 	player.hand.append(CardInstance.create(_make_trainer_cd("Bravery Charm", "Tool"), 0))
@@ -995,7 +997,7 @@ func test_raging_bolt_churn_trainers_cool_off_once_bolt_is_online() -> String:
 	player.hand.append(CardInstance.create(_make_trainer_cd("Switch Cart"), 0))
 	player.hand.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
 	var gear_score: float = strategy.score_action_absolute(
-		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Pokegear 3.0"), 0)},
+		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Pok\u00e9gear 3.0"), 0)},
 		gs,
 		0
 	)
@@ -1106,7 +1108,7 @@ func test_raging_bolt_cools_off_churn_trainers_even_with_only_four_cards_once_pr
 		0
 	)
 	var gear_score: float = strategy.score_action_absolute(
-		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Pok茅gear 3.0"), 0)},
+		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Pok\u00e9gear 3.0"), 0)},
 		gs,
 		0
 	)
@@ -1117,12 +1119,12 @@ func test_raging_bolt_cools_off_churn_trainers_even_with_only_four_cards_once_pr
 	)
 	return run_checks([
 		assert_true(nest_score <= 80.0, "Raging Bolt should stop spending turns on fresh basics once one Bolt is online and a second is nearly ready"),
-		assert_true(gear_score <= 60.0, "Raging Bolt should sharply cool off Pok茅gear once its pressure line is already assembled"),
+		assert_true(gear_score <= 60.0, "Raging Bolt should sharply cool off Pok\u00e9gear once its pressure line is already assembled"),
 		assert_true(research_score <= 90.0, "Raging Bolt should not keep forcing broad churn draw once its current and next attacker are already mapped"),
 	])
 
 
-func test_raging_bolt_prefers_grass_to_backup_bolt_over_extra_ogerpon_once_primary_is_ready() -> String:
+func test_raging_bolt_prefers_grass_to_ogerpon_over_bolt_since_bolt_needs_lf() -> String:
 	var strategy := _new_strategy(RAGING_BOLT_SCRIPT_PATH)
 	if strategy == null:
 		return "DeckStrategyRagingBoltOgerpon.gd should exist before backup routing can be tested"
@@ -1179,8 +1181,8 @@ func test_raging_bolt_prefers_grass_to_backup_bolt_over_extra_ogerpon_once_prima
 	var ogerpon_score: float = strategy.score_interaction_target(ogerpon, assign_step, grass_context)
 	return run_checks([
 		assert_true(
-			backup_score > ogerpon_score,
-			"Raging Bolt should use spare Grass to finish the next Bolt before overfeeding Ogerpon once the primary attacker is already live"
+			ogerpon_score > backup_score,
+			"草能应给厄诡椪（真正用得到）而不是猛雷鼓（只需L+F），厄诡椪:%.1f 猛雷鼓:%.1f" % [ogerpon_score, backup_score]
 		),
 	])
 
@@ -1208,6 +1210,7 @@ func test_raging_bolt_late_game_cools_off_full_reload_trainers_when_deck_is_thin
 	)
 	primary_bolt.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
 	primary_bolt.attached_energy.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	primary_bolt.attached_energy.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
 	player.active_pokemon = primary_bolt
 	player.bench.append(_make_slot(
 		_make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210, "ex", [{"name": "Myriad Leaf Shower", "cost": "GGG", "damage": "30+"}]),
@@ -1544,4 +1547,626 @@ func test_aggressive_shells_do_not_score_like_copies() -> String:
 	return run_checks([
 		assert_true(raging_vessel > raging_magma, "Raging Bolt should lean harder on Vessel-style burst setup than Magma Basin"),
 		assert_true(gouging_magma > gouging_vessel, "Gouging Fire should lean harder on Magma Basin than Vessel"),
+	])
+
+
+func test_raging_bolt_attach_lf_beats_g_when_bolt_missing_exact_types() -> String:
+	var strategy := _new_strategy(RAGING_BOLT_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyRagingBoltOgerpon.gd should exist before exact-type routing can be tested"
+	var gs := _make_game_state(3)
+	var player := gs.players[0]
+	var rb_cd := _make_pokemon_cd(
+		"Raging Bolt ex", "Basic", "L", 240, "ex",
+		[{"name": "Burst Roar", "cost": "C", "damage": "0"}, {"name": "Bellowing Thunder", "cost": "LF", "damage": "70x"}],
+		["Ancient"]
+	)
+	var raging_bolt := _make_slot(rb_cd, 0)
+	player.active_pokemon = raging_bolt
+	var attach_l: float = strategy.score_action_absolute(
+		{"kind": "attach_energy", "card": CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0), "target_slot": raging_bolt},
+		gs, 0
+	)
+	var attach_f: float = strategy.score_action_absolute(
+		{"kind": "attach_energy", "card": CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0), "target_slot": raging_bolt},
+		gs, 0
+	)
+	var attach_g: float = strategy.score_action_absolute(
+		{"kind": "attach_energy", "card": CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0), "target_slot": raging_bolt},
+		gs, 0
+	)
+	return run_checks([
+		assert_true(attach_l > attach_g, "手贴 L 给猛雷鼓应优先于 G（攻击需要L）: L=%.0f G=%.0f" % [attach_l, attach_g]),
+		assert_true(attach_f > attach_g, "手贴 F 给猛雷鼓应优先于 G（攻击需要F）: F=%.0f G=%.0f" % [attach_f, attach_g]),
+	])
+
+
+func test_raging_bolt_greninja_discards_lf_when_bolt_missing_them() -> String:
+	var strategy := _new_strategy(RAGING_BOLT_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyRagingBoltOgerpon.gd should exist before Greninja discard routing can be tested"
+	var gs := _make_game_state(3)
+	var player := gs.players[0]
+	var rb_cd := _make_pokemon_cd(
+		"Raging Bolt ex", "Basic", "L", 240, "ex",
+		[{"name": "Burst Roar", "cost": "C", "damage": "0"}, {"name": "Bellowing Thunder", "cost": "LF", "damage": "70x"}],
+		["Ancient"]
+	)
+	var raging_bolt := _make_slot(rb_cd, 0)
+	player.active_pokemon = raging_bolt
+	var ogerpon_cd := _make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210, "ex", [{"name": "Teal Dance", "cost": "G", "damage": "0"}])
+	var ogerpon := _make_slot(ogerpon_cd, 0)
+	player.bench.append(ogerpon)
+	var l_card := CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0)
+	var f_card := CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0)
+	var g_card := CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0)
+	player.hand.append(l_card)
+	player.hand.append(f_card)
+	player.hand.append(g_card)
+	var l_score: float = strategy.call("_score_hand_discard_candidate", l_card, player)
+	var f_score: float = strategy.call("_score_hand_discard_candidate", f_card, player)
+	var g_score: float = strategy.call("_score_hand_discard_candidate", g_card, player)
+	return run_checks([
+		assert_true(l_score >= g_score, "忍蛙应优先弃L（奥琳博士补给猛雷鼓）: L=%.0f G=%.0f" % [l_score, g_score]),
+		assert_true(f_score >= g_score, "忍蛙应优先弃F（奥琳博士补给猛雷鼓）: F=%.0f G=%.0f" % [f_score, g_score]),
+	])
+
+
+func test_raging_bolt_earthen_vessel_search_prefers_lf_over_g() -> String:
+	var strategy := _new_strategy(RAGING_BOLT_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyRagingBoltOgerpon.gd should exist before Earthen Vessel search routing can be tested"
+	var gs := _make_game_state(3)
+	var player := gs.players[0]
+	var rb_cd := _make_pokemon_cd(
+		"Raging Bolt ex", "Basic", "L", 240, "ex",
+		[{"name": "Burst Roar", "cost": "C", "damage": "0"}, {"name": "Bellowing Thunder", "cost": "LF", "damage": "70x"}],
+		["Ancient"]
+	)
+	var raging_bolt := _make_slot(rb_cd, 0)
+	player.active_pokemon = raging_bolt
+	var search_step := {"id": "search_energy", "min_select": 0, "max_select": 2}
+	var ctx := {"game_state": gs, "player_index": 0}
+	var l_card := CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0)
+	var f_card := CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0)
+	var g_card := CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0)
+	var l_score: float = strategy.score_interaction_target(l_card, search_step, ctx)
+	var f_score: float = strategy.score_interaction_target(f_card, search_step, ctx)
+	var g_score: float = strategy.score_interaction_target(g_card, search_step, ctx)
+	return run_checks([
+		assert_true(l_score > g_score, "大地容器应优先检索L而非G（猛雷鼓需要L）: L=%.0f G=%.0f" % [l_score, g_score]),
+		assert_true(f_score > g_score, "大地容器应优先检索F而非G（猛雷鼓需要F）: F=%.0f G=%.0f" % [f_score, g_score]),
+	])
+
+
+func test_raging_bolt_attack_discard_protects_lf_on_bench_bolt() -> String:
+	var strategy := _new_strategy(RAGING_BOLT_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyRagingBoltOgerpon.gd should exist before attack-discard priority can be tested"
+	var gs := _make_game_state(4)
+	var player := gs.players[0]
+	var rb_cd := _make_pokemon_cd(
+		"Raging Bolt ex", "Basic", "L", 240, "ex",
+		[{"name": "Burst Roar", "cost": "C", "damage": "0"}, {"name": "Bellowing Thunder", "cost": "LF", "damage": "70x"}],
+		["Ancient"]
+	)
+	var ogerpon_cd := _make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210, "ex", [{"name": "Myriad Leaf Shower", "cost": "GGG", "damage": "30+"}])
+	var active_bolt := _make_slot(rb_cd, 0)
+	var active_l := CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0)
+	var active_f := CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0)
+	active_bolt.attached_energy.append(active_l)
+	active_bolt.attached_energy.append(active_f)
+	player.active_pokemon = active_bolt
+	var bench_bolt := _make_slot(rb_cd, 0)
+	var bench_l := CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0)
+	var bench_f := CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0)
+	bench_bolt.attached_energy.append(bench_l)
+	bench_bolt.attached_energy.append(bench_f)
+	player.bench.append(bench_bolt)
+	var ogerpon := _make_slot(ogerpon_cd, 0)
+	var ogerpon_g1 := CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0)
+	var ogerpon_g2 := CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0)
+	ogerpon.attached_energy.append(ogerpon_g1)
+	ogerpon.attached_energy.append(ogerpon_g2)
+	player.bench.append(ogerpon)
+	var ogerpon_g_score: float = strategy.call("_score_field_discard_candidate", ogerpon_g1, player)
+	var bench_l_score: float = strategy.call("_score_field_discard_candidate", bench_l, player)
+	var bench_f_score: float = strategy.call("_score_field_discard_candidate", bench_f, player)
+	return run_checks([
+		assert_true(ogerpon_g_score > bench_l_score, "攻击弃能：厄诡椪草能应先弃，备战猛雷鼓L应保留: G=%.0f bench_L=%.0f" % [ogerpon_g_score, bench_l_score]),
+		assert_true(ogerpon_g_score > bench_f_score, "攻击弃能：厄诡椪草能应先弃，备战猛雷鼓F应保留: G=%.0f bench_F=%.0f" % [ogerpon_g_score, bench_f_score]),
+	])
+
+
+func test_raging_bolt_sada_picks_lf_sources_over_g_from_discard() -> String:
+	var strategy := _new_strategy(RAGING_BOLT_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyRagingBoltOgerpon.gd should exist"
+	var gs := _make_game_state(4)
+	var player := gs.players[0]
+	var rb_cd := _make_pokemon_cd(
+		"Raging Bolt ex", "Basic", "L", 240, "ex",
+		[{"name": "Bellowing Thunder", "cost": "LF", "damage": "70x"}],
+		["Ancient"]
+	)
+	# Raging Bolt on bench with 0 energy (needs both L and F)
+	var bench_bolt := _make_slot(rb_cd, 0)
+	player.bench.append(bench_bolt)
+	# Discard pile: G G L F (G appears first in array order — old bug would pick G G)
+	var g1 := CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0)
+	var g2 := CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0)
+	var l1 := CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0)
+	var f1 := CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0)
+	player.discard_pile = [g1, g2, l1, f1]
+	var items: Array = [g1, g2, l1, f1]
+	var step := {"id": "sada_assignments", "max_select": 2}
+	var ctx := {"game_state": gs, "player_index": 0}
+	var picked: Array = strategy.call("pick_interaction_items", items, step, ctx)
+	var picked_types: Array[String] = []
+	for c: Variant in picked:
+		if c is CardInstance:
+			picked_types.append(str((c as CardInstance).card_data.energy_provides))
+	return run_checks([
+		assert_true("G" not in picked_types or picked_types.count("G") < 2,
+			"奥林博士源选择：弃牌区G在前时不应选2张G，实际选了: %s" % str(picked_types)),
+		assert_true("L" in picked_types,
+			"奥林博士源选择：应优先选L能量，实际: %s" % str(picked_types)),
+		assert_true("F" in picked_types,
+			"奥林博士源选择：应优先选F能量，实际: %s" % str(picked_types)),
+	])
+
+
+func test_raging_bolt_bellowing_thunder_discard_minimal_lethal_grass_first() -> String:
+	var strategy := _new_strategy(RAGING_BOLT_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyRagingBoltOgerpon.gd should exist"
+	var gs := _make_game_state(4)
+	var player := gs.players[0]
+	var rb_cd := _make_pokemon_cd(
+		"Raging Bolt ex", "Basic", "L", 240, "ex",
+		[{"name": "Bellowing Thunder", "cost": "LF", "damage": "70x"}],
+		["Ancient"]
+	)
+	# Active bolt with L + F (essential) + G (extra)
+	var active_bolt := _make_slot(rb_cd, 0)
+	var att_l := CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0)
+	var att_f := CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0)
+	var att_g := CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0)
+	active_bolt.attached_energy.append(att_l)
+	active_bolt.attached_energy.append(att_f)
+	active_bolt.attached_energy.append(att_g)
+	player.active_pokemon = active_bolt
+	# Opponent active: 130HP Pokemon (e.g. Radiant Greninja)
+	var greninja_cd := _make_pokemon_cd("Radiant Greninja", "Basic", "W", 130, "", [])
+	var opp_active := _make_slot(greninja_cd, 1)
+	gs.players[1].active_pokemon = opp_active
+	var items: Array = [att_l, att_f, att_g]
+	var step := {"id": "discard_basic_energy", "min_select": 0, "max_select": 3}
+	var ctx := {"game_state": gs, "player_index": 0}
+	var picked: Array = strategy.call("pick_interaction_items", items, step, ctx)
+	var picked_types: Array[String] = []
+	for c: Variant in picked:
+		if c is CardInstance:
+			picked_types.append(str((c as CardInstance).card_data.energy_provides))
+	return run_checks([
+		assert_true(picked.size() == 2,
+			"极雷轰弃能：打130HP目标只需弃2张(140伤害)，实际弃了: %d" % picked.size()),
+		assert_true("G" in picked_types,
+			"极雷轰弃能：应优先弃草能量，实际: %s" % str(picked_types)),
+	])
+
+
+func test_raging_bolt_assignment_grass_to_bolt_is_low() -> String:
+	var strategy := _new_strategy(RAGING_BOLT_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyRagingBoltOgerpon.gd should exist"
+	var gs := _make_game_state(4)
+	var player := gs.players[0]
+	var rb_cd := _make_pokemon_cd(
+		"Raging Bolt ex", "Basic", "L", 240, "ex",
+		[
+			{"name": "Burst Roar", "cost": "C", "damage": "0"},
+			{"name": "Bellowing Thunder", "cost": "LF", "damage": "70x"},
+		],
+		["Ancient"]
+	)
+	# Bolt with only 1 F energy (gap=1 count-wise, but needs L not G)
+	var bolt_slot := _make_slot(rb_cd, 0)
+	bolt_slot.attached_energy.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	player.active_pokemon = bolt_slot
+	var ogerpon_cd := _make_pokemon_cd(
+		"Teal Mask Ogerpon ex", "Basic", "G", 170, "ex",
+		[{"name": "Teal Dance", "cost": "G", "damage": "60"}]
+	)
+	var ogerpon_slot := _make_slot(ogerpon_cd, 0)
+	player.bench.append(ogerpon_slot)
+	var assign_step := {"id": "assignment_target"}
+	var grass_ctx := {
+		"game_state": gs,
+		"player_index": 0,
+		"source_card": CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0),
+	}
+	var bolt_g_score: float = strategy.score_interaction_target(bolt_slot, assign_step, grass_ctx)
+	var ogerpon_g_score: float = strategy.score_interaction_target(ogerpon_slot, assign_step, grass_ctx)
+	return run_checks([
+		assert_true(bolt_g_score <= 80.0,
+			"草能分配给猛雷鼓时评分应 <=80（草能不满足雷+格需求），实际: %.1f" % bolt_g_score),
+		assert_true(ogerpon_g_score > bolt_g_score,
+			"草能应优先给翠绿假面玄鸟，翠绿:%.1f > 猛雷鼓:%.1f" % [ogerpon_g_score, bolt_g_score]),
+	])
+
+
+func test_raging_bolt_squawkabilly_not_benched_after_turn_2() -> String:
+	var strategy := _new_strategy(RAGING_BOLT_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyRagingBoltOgerpon.gd should exist"
+	var squawk_cd := _make_pokemon_cd("Squawkabilly ex", "Basic", "C", 160, "ex", [])
+	var squawk_card := CardInstance.create(squawk_cd, 0)
+	var gs_turn1 := _make_game_state(4)
+	gs_turn1.turn_number = 1
+	var gs_turn4 := _make_game_state(4)
+	gs_turn4.turn_number = 4
+	var score_t1: float = strategy.call("score_action_absolute",
+		{"kind": "play_basic_to_bench", "card": squawk_card}, gs_turn1, 0)
+	var score_t4: float = strategy.call("score_action_absolute",
+		{"kind": "play_basic_to_bench", "card": squawk_card}, gs_turn4, 0)
+	return run_checks([
+		assert_true(score_t1 > 100.0,
+			"怒鹦哥第1回合应该下场，评分: %.1f" % score_t1),
+		assert_true(score_t4 < 0.0,
+			"怒鹦哥第4回合不应下场，评分应为负: %.1f" % score_t4),
+	])
+
+
+func test_raging_bolt_retreat_fuel_for_stuck_active() -> String:
+	var strategy := _new_strategy(RAGING_BOLT_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyRagingBoltOgerpon.gd should exist"
+	var gs := _make_game_state(4)
+	var player := gs.players[0]
+	var squawk_cd := _make_pokemon_cd("Squawkabilly ex", "Basic", "C", 160, "ex", [], [], 1)
+	var active := _make_slot(squawk_cd, 0)
+	player.active_pokemon = active
+	var rb_cd := _make_pokemon_cd(
+		"Raging Bolt ex", "Basic", "L", 240, "ex",
+		[{"name": "Bellowing Thunder", "cost": "LF", "damage": "70x"}],
+		["Ancient"]
+	)
+	var bench_bolt := _make_slot(rb_cd, 0)
+	bench_bolt.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	bench_bolt.attached_energy.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	bench_bolt.attached_energy.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
+	player.bench.append(bench_bolt)
+	var any_energy := CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0)
+	var score_active: float = strategy.call("score_action_absolute",
+		{"kind": "attach_energy", "card": any_energy, "target_slot": active}, gs, 0)
+	var score_bench: float = strategy.call("score_action_absolute",
+		{"kind": "attach_energy", "card": any_energy, "target_slot": bench_bolt}, gs, 0)
+	return run_checks([
+		assert_true(score_active >= 450.0,
+			"前场怒鹦哥无能量、后场有就绪猛雷鼓时，填能给前场撤退应高分: %.1f" % score_active),
+		assert_true(score_active > score_bench,
+			"撤退燃料(%.1f)应高于给已就绪后备猛雷鼓(%.1f)" % [score_active, score_bench]),
+	])
+
+
+func test_raging_bolt_bench_backup_bolt_in_pressure() -> String:
+	var strategy := _new_strategy(RAGING_BOLT_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyRagingBoltOgerpon.gd should exist"
+	var gs := _make_game_state(4)
+	var player := gs.players[0]
+	var rb_cd := _make_pokemon_cd(
+		"Raging Bolt ex", "Basic", "L", 240, "ex",
+		[{"name": "Bellowing Thunder", "cost": "LF", "damage": "70x"}],
+		["Ancient"]
+	)
+	var active_bolt := _make_slot(rb_cd, 0)
+	active_bolt.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	active_bolt.attached_energy.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	active_bolt.attached_energy.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
+	player.active_pokemon = active_bolt
+	var second_bolt_card := CardInstance.create(rb_cd, 0)
+	var score: float = strategy.call("score_action_absolute",
+		{"kind": "play_basic_to_bench", "card": second_bolt_card}, gs, 0)
+	return run_checks([
+		assert_true(score >= 350.0,
+			"PRESSURE阶段，场上只有1只猛雷鼓时应积极下第2只: %.1f" % score),
+	])
+
+
+# ============================================================
+#  Turn Plan / Turn Contract Tests
+# ============================================================
+
+func _make_raging_bolt_cd() -> CardData:
+	return _make_pokemon_cd(
+		"Raging Bolt ex", "Basic", "L", 240, "ex",
+		[{"name": "Bellowing Thunder", "cost": "LF", "damage": "70x"}],
+		["Ancient"]
+	)
+
+
+func _make_ogerpon_cd() -> CardData:
+	return _make_pokemon_cd(
+		"Teal Mask Ogerpon ex", "Basic", "G", 210, "ex",
+		[{"name": "Myriad Leaf Shower", "cost": "GGC", "damage": "30x"}]
+	)
+
+
+func _make_bolt_slot_with_energy(owner: int, l_count: int, f_count: int, g_count: int = 0) -> PokemonSlot:
+	var slot := _make_slot(_make_raging_bolt_cd(), owner)
+	for _i: int in l_count:
+		slot.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), owner))
+	for _i: int in f_count:
+		slot.attached_energy.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), owner))
+	for _i: int in g_count:
+		slot.attached_energy.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), owner))
+	return slot
+
+
+func test_raging_bolt_turn_plan_fuel_discard() -> String:
+	var strategy := _new_strategy(RAGING_BOLT_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyRagingBoltOgerpon.gd should exist"
+	var gs := _make_game_state(3)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_ogerpon_cd(), 0)
+	player.bench.append(_make_bolt_slot_with_energy(0, 0, 1))
+	for _i: int in 10:
+		player.deck.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	var plan: Dictionary = strategy.call("build_turn_plan", gs, 0, {})
+	return run_checks([
+		assert_eq(str(plan.get("intent", "")), "fuel_discard",
+			"弃牌堆0能量 + bolt在场 → intent应为fuel_discard"),
+	])
+
+
+func test_raging_bolt_turn_plan_charge_bolt() -> String:
+	var strategy := _new_strategy(RAGING_BOLT_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyRagingBoltOgerpon.gd should exist"
+	var gs := _make_game_state(3)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_ogerpon_cd(), 0)
+	player.bench.append(_make_bolt_slot_with_energy(0, 0, 1))
+	player.discard_pile.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	player.discard_pile.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	player.hand.append(CardInstance.create(_make_trainer_cd("Professor Sada's Vitality", "Supporter"), 0))
+	for _i: int in 10:
+		player.deck.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	var plan: Dictionary = strategy.call("build_turn_plan", gs, 0, {})
+	return run_checks([
+		assert_eq(str(plan.get("intent", "")), "charge_bolt",
+			"弃牌2能量 + 手有Sada + bolt在场 → intent应为charge_bolt"),
+	])
+
+
+func test_raging_bolt_turn_plan_emergency_retreat() -> String:
+	var strategy := _new_strategy(RAGING_BOLT_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyRagingBoltOgerpon.gd should exist"
+	var gs := _make_game_state(4)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_ogerpon_cd(), 0)
+	var ready_bolt := _make_bolt_slot_with_energy(0, 1, 1, 1)
+	player.bench.append(ready_bolt)
+	for _i: int in 10:
+		player.deck.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	var plan: Dictionary = strategy.call("build_turn_plan", gs, 0, {})
+	return run_checks([
+		assert_eq(str(plan.get("intent", "")), "emergency_retreat",
+			"前场非攻击手 + 后备就绪bolt → intent应为emergency_retreat"),
+	])
+
+
+func test_raging_bolt_turn_plan_convert_attack() -> String:
+	var strategy := _new_strategy(RAGING_BOLT_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyRagingBoltOgerpon.gd should exist"
+	var gs := _make_game_state(6)
+	var player := gs.players[0]
+	player.active_pokemon = _make_bolt_slot_with_energy(0, 1, 1, 1)
+	player.bench.append(_make_bolt_slot_with_energy(0, 1, 0, 1))
+	for _i: int in 10:
+		player.deck.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	var plan: Dictionary = strategy.call("build_turn_plan", gs, 0, {})
+	return run_checks([
+		assert_eq(str(plan.get("intent", "")), "convert_attack",
+			"两只near-ready bolt → intent应为convert_attack"),
+	])
+
+
+func test_raging_bolt_sada_boosted_in_charge_intent() -> String:
+	var strategy := _new_strategy(RAGING_BOLT_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyRagingBoltOgerpon.gd should exist"
+	var gs := _make_game_state(3)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_ogerpon_cd(), 0)
+	player.bench.append(_make_bolt_slot_with_energy(0, 0, 1))
+	player.discard_pile.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	player.discard_pile.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	var sada_card := CardInstance.create(_make_trainer_cd("Professor Sada's Vitality", "Supporter"), 0)
+	var iono_card := CardInstance.create(_make_trainer_cd("Iono", "Supporter"), 0)
+	player.hand.append(sada_card)
+	player.hand.append(iono_card)
+	for _i: int in 10:
+		player.deck.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	var plan: Dictionary = strategy.call("build_turn_plan", gs, 0, {})
+	var sada_score: float = strategy.call("score_action_absolute_with_plan",
+		{"kind": "play_trainer", "card": sada_card}, gs, 0, plan)
+	var iono_score: float = strategy.call("score_action_absolute_with_plan",
+		{"kind": "play_trainer", "card": iono_card}, gs, 0, plan)
+	return run_checks([
+		assert_eq(str(plan.get("intent", "")), "charge_bolt", "intent应为charge_bolt"),
+		assert_true(sada_score > iono_score,
+			"charge_bolt intent下 Sada(%.1f) 应高于 Iono(%.1f)" % [sada_score, iono_score]),
+	])
+
+
+func test_raging_bolt_ev_boosted_in_fuel_intent() -> String:
+	var strategy := _new_strategy(RAGING_BOLT_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyRagingBoltOgerpon.gd should exist"
+	var gs := _make_game_state(3)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_ogerpon_cd(), 0)
+	player.bench.append(_make_bolt_slot_with_energy(0, 0, 1))
+	var ev_card := CardInstance.create(_make_trainer_cd("Earthen Vessel"), 0)
+	player.hand.append(ev_card)
+	for _i: int in 10:
+		player.deck.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	var plan: Dictionary = strategy.call("build_turn_plan", gs, 0, {})
+	var ev_score_with_plan: float = strategy.call("score_action_absolute_with_plan",
+		{"kind": "play_trainer", "card": ev_card}, gs, 0, plan)
+	var ev_score_no_plan: float = strategy.call("score_action_absolute",
+		{"kind": "play_trainer", "card": ev_card}, gs, 0)
+	return run_checks([
+		assert_eq(str(plan.get("intent", "")), "fuel_discard", "intent应为fuel_discard"),
+		assert_true(ev_score_with_plan > ev_score_no_plan,
+			"fuel_discard intent下 EV有计划(%.1f) > 无计划(%.1f)" % [ev_score_with_plan, ev_score_no_plan]),
+	])
+
+
+func test_raging_bolt_draw_supporter_suppressed_when_sada_in_hand() -> String:
+	var strategy := _new_strategy(RAGING_BOLT_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyRagingBoltOgerpon.gd should exist"
+	var gs := _make_game_state(3)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_ogerpon_cd(), 0)
+	player.bench.append(_make_bolt_slot_with_energy(0, 0, 1))
+	player.discard_pile.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	player.discard_pile.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	var sada_card := CardInstance.create(_make_trainer_cd("Professor Sada's Vitality", "Supporter"), 0)
+	var iono_card := CardInstance.create(_make_trainer_cd("Iono", "Supporter"), 0)
+	player.hand.append(sada_card)
+	player.hand.append(iono_card)
+	for _i: int in 10:
+		player.deck.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	var plan: Dictionary = strategy.call("build_turn_plan", gs, 0, {})
+	var iono_with_plan: float = strategy.call("score_action_absolute_with_plan",
+		{"kind": "play_trainer", "card": iono_card}, gs, 0, plan)
+	var iono_no_plan: float = strategy.call("score_action_absolute",
+		{"kind": "play_trainer", "card": iono_card}, gs, 0)
+	return run_checks([
+		assert_true(iono_with_plan < iono_no_plan,
+			"手有Sada时 Iono有计划(%.1f) < 无计划(%.1f)，不应浪费支援者位" % [iono_with_plan, iono_no_plan]),
+	])
+
+
+func test_raging_bolt_handoff_prefers_ready_bolt() -> String:
+	var strategy := _new_strategy(RAGING_BOLT_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyRagingBoltOgerpon.gd should exist"
+	var gs := _make_game_state(5)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_ogerpon_cd(), 0)
+	var ready_bolt := _make_bolt_slot_with_energy(0, 1, 1, 1)
+	var empty_bolt := _make_bolt_slot_with_energy(0, 0, 0, 0)
+	player.bench.append(ready_bolt)
+	player.bench.append(empty_bolt)
+	for _i: int in 10:
+		player.deck.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	var step := {"id": "send_out"}
+	var ctx := {"game_state": gs, "player_index": 0}
+	var score_ready: float = strategy.call("score_handoff_target", ready_bolt, step, ctx)
+	var score_empty: float = strategy.call("score_handoff_target", empty_bolt, step, ctx)
+	return run_checks([
+		assert_true(score_ready > score_empty,
+			"send_out时就绪bolt(%.1f) > 空bolt(%.1f)" % [score_ready, score_empty]),
+		assert_true(score_ready >= 700.0,
+			"就绪bolt handoff分应>=700: %.1f" % score_ready),
+	])
+
+
+func test_raging_bolt_handoff_avoids_engine_pokemon() -> String:
+	var strategy := _new_strategy(RAGING_BOLT_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyRagingBoltOgerpon.gd should exist"
+	var gs := _make_game_state(5)
+	var player := gs.players[0]
+	player.active_pokemon = _make_bolt_slot_with_energy(0, 1, 1, 1)
+	var greninja := _make_slot(_make_pokemon_cd("Radiant Greninja", "Basic", "W", 130), 0)
+	var squawk := _make_slot(_make_pokemon_cd("Squawkabilly ex", "Basic", "C", 160, "ex"), 0)
+	var ogerpon := _make_slot(_make_ogerpon_cd(), 0)
+	player.bench.append(greninja)
+	player.bench.append(squawk)
+	player.bench.append(ogerpon)
+	for _i: int in 10:
+		player.deck.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	var step := {"id": "send_out"}
+	var ctx := {"game_state": gs, "player_index": 0}
+	var score_greninja: float = strategy.call("score_handoff_target", greninja, step, ctx)
+	var score_squawk: float = strategy.call("score_handoff_target", squawk, step, ctx)
+	var score_ogerpon: float = strategy.call("score_handoff_target", ogerpon, step, ctx)
+	return run_checks([
+		assert_true(score_ogerpon > score_greninja,
+			"send_out时ogerpon(%.1f) > greninja(%.1f)" % [score_ogerpon, score_greninja]),
+		assert_true(score_ogerpon > score_squawk,
+			"send_out时ogerpon(%.1f) > squawk(%.1f)" % [score_ogerpon, score_squawk]),
+		assert_true(score_greninja < 0.0,
+			"greninja不应被送上前场: %.1f" % score_greninja),
+	])
+
+
+func test_llm_prompt_builder_builds_payload_with_game_state() -> String:
+	var script := _load_script(LLM_PROMPT_BUILDER_SCRIPT_PATH)
+	if script == null:
+		return "LLMTurnPlanPromptBuilder.gd should exist"
+	var builder: RefCounted = script.new()
+	var gs := _make_game_state(3)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.hand.append(CardInstance.create(_make_trainer_cd("Professor Sada's Vitality", "Supporter"), 0))
+	player.discard_pile.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	for _i: int in 10:
+		player.deck.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	var payload: Dictionary = builder.call("build_request_payload", gs, 0)
+	return run_checks([
+		assert_true(payload.has("instructions"), "payload应包含instructions"),
+		assert_true(payload.has("response_format"), "payload应包含response_format"),
+		assert_true(str(payload.get("system_prompt_version", "")).begins_with("llm_turn_plan"),
+			"system_prompt_version应以llm_turn_plan开头"),
+	])
+
+
+func test_llm_prompt_builder_parses_valid_response() -> String:
+	var script := _load_script(LLM_PROMPT_BUILDER_SCRIPT_PATH)
+	if script == null:
+		return "LLMTurnPlanPromptBuilder.gd should exist"
+	var builder: RefCounted = script.new()
+	var response := {
+		"intent": "charge_bolt",
+		"primary_target": "Raging Bolt ex",
+		"priority_actions": ["play Sada", "attach energy to Bolt"],
+		"suppress_supporters": ["Iono"],
+		"reasoning": "弃牌堆有2能量，手有Sada",
+	}
+	var plan: Dictionary = builder.call("parse_llm_response_to_turn_plan", response)
+	return run_checks([
+		assert_eq(str(plan.get("intent", "")), "charge_bolt", "intent应映射"),
+		assert_true(plan.has("flags"), "plan应包含flags"),
+		assert_true(plan.has("targets"), "plan应包含targets"),
+		assert_eq(str(plan.get("targets", {}).get("primary_attacker_name", "")),
+			"Raging Bolt ex", "primary_target应映射到targets"),
+	])
+
+
+func test_llm_prompt_builder_rejects_invalid_intent() -> String:
+	var script := _load_script(LLM_PROMPT_BUILDER_SCRIPT_PATH)
+	if script == null:
+		return "LLMTurnPlanPromptBuilder.gd should exist"
+	var builder: RefCounted = script.new()
+	var response := {
+		"intent": "invalid_intent_name",
+		"primary_target": "",
+		"priority_actions": [],
+		"suppress_supporters": [],
+		"reasoning": "",
+	}
+	var plan: Dictionary = builder.call("parse_llm_response_to_turn_plan", response)
+	return run_checks([
+		assert_true(plan.is_empty(), "无效intent应返回空plan（触发fallback）"),
 	])
