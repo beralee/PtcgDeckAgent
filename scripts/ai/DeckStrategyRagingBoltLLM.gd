@@ -54,7 +54,7 @@ func build_turn_plan(game_state: GameState, player_index: int, context: Dictiona
 		return {}
 	var turn: int = int(game_state.turn_number)
 	if _cached_turn_number == turn and not _cached_llm_plan.is_empty():
-		return _cached_llm_plan
+		return _merge_llm_plan_with_real_state(game_state, player_index, context)
 	if turn != _cached_turn_number:
 		_cached_llm_plan.clear()
 		_cached_turn_number = turn
@@ -62,6 +62,24 @@ func build_turn_plan(game_state: GameState, player_index: int, context: Dictiona
 		if not _llm_pending:
 			_fire_llm_request(game_state, player_index)
 	return super.build_turn_plan(game_state, player_index, context)
+
+
+func _merge_llm_plan_with_real_state(game_state: GameState, player_index: int, context: Dictionary) -> Dictionary:
+	var rule_plan: Dictionary = super.build_turn_plan(game_state, player_index, context)
+	var merged: Dictionary = _cached_llm_plan.duplicate(true)
+	merged["flags"] = rule_plan.get("flags", {}).duplicate(true) if rule_plan.get("flags", {}) is Dictionary else {}
+	merged["flags"]["llm_driven"] = true
+	var suppress: Array = _cached_llm_plan.get("flags", {}).get("suppress_supporters", []) if _cached_llm_plan.get("flags", {}) is Dictionary else []
+	if suppress is Array and not suppress.is_empty():
+		merged["flags"]["suppress_supporters"] = suppress
+	if str(merged.get("phase", "")) == "":
+		merged["phase"] = str(rule_plan.get("phase", ""))
+	var intent: String = str(merged.get("intent", ""))
+	var hand_has_sada: bool = bool(merged["flags"].get("hand_has_sada", false))
+	if intent == "charge_bolt" and hand_has_sada:
+		merged["constraints"] = merged.get("constraints", {}).duplicate(true) if merged.get("constraints", {}) is Dictionary else {}
+		merged["constraints"]["forbid_draw_supporter_waste"] = true
+	return merged
 
 
 func _fire_llm_request(game_state: GameState, player_index: int) -> void:
