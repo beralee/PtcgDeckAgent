@@ -603,10 +603,21 @@ func _score_attack(action: Dictionary, game_state: GameState, player_index: int)
 	var active := player.active_pokemon
 	if active == null:
 		return 0.0
+	var attack_index := int(action.get("attack_index", -1))
+	var attack_data: Dictionary = {}
+	if active.get_card_data() != null and attack_index >= 0 and attack_index < active.get_card_data().attacks.size():
+		attack_data = active.get_card_data().attacks[attack_index]
 	var projected_damage := int(action.get("projected_damage", 0))
 	if projected_damage <= 0:
-		projected_damage = int(predict_attacker_damage(active).get("damage", 0))
+		if not attack_data.is_empty():
+			projected_damage = _parse_damage_text(str(attack_data.get("damage", "0")))
+		else:
+			projected_damage = int(predict_attacker_damage(active).get("damage", 0))
 	var attack_name := str(action.get("attack_name", ""))
+	if attack_name == "" and not attack_data.is_empty():
+		attack_name = str(attack_data.get("name", ""))
+	var is_phantom_dive := attack_index == 1 or attack_name in ["Phantom Dive", "幻影潜袭"] or projected_damage >= 200
+	var is_jet_head := attack_index == 0 or attack_name in ["Jet Head", "喷射头击"]
 	var score := 180.0 + float(projected_damage)
 	if opponent.active_pokemon != null and projected_damage >= opponent.active_pokemon.get_remaining_hp():
 		score += 420.0
@@ -617,13 +628,13 @@ func _score_attack(action: Dictionary, game_state: GameState, player_index: int)
 
 	if _slot_name(active) == DRAGAPULT_EX:
 		var phantom_dive_online: bool = _can_use_named_attack(active, "Phantom Dive")
-		if attack_name == "Phantom Dive" or projected_damage >= 200:
+		if is_phantom_dive:
 			score += 260.0
 			if _phantom_dive_has_pickoff(opponent):
 				score += 160.0
 			if phantom_dive_online:
 				score += 80.0
-		elif phantom_dive_online and attack_name == "Jet Head":
+		elif phantom_dive_online and is_jet_head:
 			score -= 220.0
 		else:
 			score += 40.0
@@ -901,7 +912,8 @@ func _can_use_named_attack(slot: PokemonSlot, attack_name: String) -> bool:
 	if slot == null or slot.get_card_data() == null:
 		return false
 	for attack: Dictionary in slot.get_card_data().attacks:
-		if str(attack.get("name", "")) != attack_name:
+		var candidate_name := str(attack.get("name", ""))
+		if candidate_name != attack_name and not (attack_name == "Phantom Dive" and candidate_name == "幻影潜袭"):
 			continue
 		return slot.attached_energy.size() >= str(attack.get("cost", "")).length()
 	return false

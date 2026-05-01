@@ -12,20 +12,36 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	var player: PlayerState = state.players[card.owner_index]
 	var prize_items: Array = []
 	var prize_labels: Array[String] = []
-	for prize_card: CardInstance in player.prizes:
+	var prize_card_items: Array = []
+	var prize_card_indices: Array[int] = []
+	var prize_card_labels: Array[String] = []
+	for prize_index: int in player.prizes.size():
+		var prize_card: CardInstance = player.prizes[prize_index]
+		prize_card_items.append(prize_card)
 		if prize_card.card_data != null and prize_card.card_data.is_basic_pokemon():
+			prize_card_indices.append(prize_items.size())
 			prize_items.append(prize_card)
-			prize_labels.append(prize_card.card_data.name)
-	if prize_items.is_empty():
-		return []
-
+			prize_labels.append("%s - Prize %d" % [prize_card.card_data.name, prize_index + 1])
+			prize_card_labels.append("Prize %d - Basic Pokemon, selectable" % (prize_index + 1))
+		else:
+			prize_card_indices.append(-1)
+			prize_card_labels.append("Prize %d - not a Basic Pokemon, view only" % (prize_index + 1))
+	var has_basic_prize := not prize_items.is_empty()
 	return [{
 		"id": "chosen_prize_basic",
-		"title": "Choose 1 Basic Pokemon from your Prize cards",
+		"title": "Look at your Prize cards. Choose 1 Basic Pokemon" if has_basic_prize else "Look at your Prize cards. No Basic Pokemon found",
 		"items": prize_items,
 		"labels": prize_labels,
-		"min_select": 1,
-		"max_select": 1,
+		"presentation": "cards",
+		"card_items": prize_card_items,
+		"card_indices": prize_card_indices,
+		"choice_labels": prize_card_labels,
+		"show_selectable_hints": true,
+		"card_selectable_hint": "Choose",
+		"card_disabled_badge": "View",
+		"utility_actions": [] if has_basic_prize else [{"label": "Done", "index": -1}],
+		"min_select": 1 if has_basic_prize else 0,
+		"max_select": 1 if has_basic_prize else 0,
 		"allow_cancel": true,
 	}]
 

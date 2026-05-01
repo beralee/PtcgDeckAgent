@@ -407,10 +407,20 @@ func _score_attack(action: Dictionary, game_state: GameState, player_index: int)
 	var active := player.active_pokemon
 	if active == null:
 		return 0.0
+	var attack_index := int(action.get("attack_index", -1))
+	var attack_data: Dictionary = {}
+	if active.get_card_data() != null and attack_index >= 0 and attack_index < active.get_card_data().attacks.size():
+		attack_data = active.get_card_data().attacks[attack_index]
 	var attack_name := str(action.get("attack_name", ""))
+	if attack_name == "" and not attack_data.is_empty():
+		attack_name = str(attack_data.get("name", ""))
 	var projected_damage := int(action.get("projected_damage", 0))
 	if projected_damage <= 0:
-		projected_damage = int(predict_attacker_damage(active).get("damage", 0))
+		if not attack_data.is_empty():
+			projected_damage = _parse_damage_text(str(attack_data.get("damage", "0")))
+		else:
+			projected_damage = int(predict_attacker_damage(active).get("damage", 0))
+	var is_phantom_dive := attack_index == 1 or attack_name in ["Phantom Dive", "幻影潜袭"] or projected_damage >= 200
 	var score := 180.0 + float(projected_damage)
 	if opponent.active_pokemon != null and projected_damage >= opponent.active_pokemon.get_remaining_hp():
 		score += 420.0
@@ -419,7 +429,7 @@ func _score_attack(action: Dictionary, game_state: GameState, player_index: int)
 			score += 320.0 if game_state.turn_number <= 2 else 220.0
 		if attack_name == "Poltergeist":
 			score += 140.0 if projected_damage >= 180 else 60.0
-	if _slot_name(active) == DRAGAPULT_EX and (attack_name == "Phantom Dive" or projected_damage >= 200):
+	if _slot_name(active) == DRAGAPULT_EX and is_phantom_dive:
 		score += 240.0
 		if _opponent_has_damage_counters(opponent):
 			score += 80.0

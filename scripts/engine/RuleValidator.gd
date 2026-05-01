@@ -241,11 +241,28 @@ func _fails_special_attack_usage_gate(
 	var card_data: CardData = active.get_card_data()
 	if card_data == null:
 		return ""
+	if attack_index < 0 or attack_index >= card_data.attacks.size():
+		return ""
+	var attack: Dictionary = card_data.attacks[attack_index]
+	var attack_name: String = str(attack.get("name", ""))
 	match card_data.effect_id:
 		"11e3c629e34562a7061a05c483eb5718":
-			if attack_index == 1 and state.players[player_index].lost_zone.size() < 10:
+			if _is_lost_mine(attack_name, attack_index) and state.players[player_index].lost_zone.size() < 10:
 				return "自己的放逐区没有达到 10 张，无法使用这个招式"
+		"90c254f809637aea730f5ff97b143f44":
+			if _is_giratina_star_requiem(attack_name, attack_index, true) and state.players[player_index].lost_zone.size() < 10:
+				return "自己的放逐区没有达到 10 张，无法使用这个招式"
+	if _is_giratina_star_requiem(attack_name, attack_index, false) and state.players[player_index].lost_zone.size() < 10:
+		return "自己的放逐区没有达到 10 张，无法使用这个招式"
 	return ""
+
+
+func _is_giratina_star_requiem(attack_name: String, attack_index: int, allow_index_fallback: bool) -> bool:
+	return attack_name in ["星耀安魂曲", "Star Requiem"] or (allow_index_fallback and attack_index == 1)
+
+
+func _is_lost_mine(attack_name: String, attack_index: int) -> bool:
+	return attack_name in ["放逐矿脉", "Lost Mine"] or attack_index == 1
 
 
 func has_enough_energy(

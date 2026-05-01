@@ -267,15 +267,26 @@ func show_card_dialog(scene: Object, items: Array, extra_data: Dictionary) -> vo
 	var card_items: Array = extra_data.get("card_items", items)
 	var card_indices: Array = extra_data.get("card_indices", [])
 	var labels: Array = extra_data.get("choice_labels", items)
+	var show_selectable_hints: bool = bool(extra_data.get("show_selectable_hints", false))
+	var selectable_hint: String = str(extra_data.get("card_selectable_hint", "可选"))
+	var disabled_badge: String = str(extra_data.get("card_disabled_badge", ""))
 	for i: int in card_items.size():
 		var real_index := i
 		if i < card_indices.size():
 			real_index = int(card_indices[i])
+		var disabled := real_index < 0
 		var card_view := BattleCardViewScript.new()
 		card_view.custom_minimum_size = dialog_card_size
 		card_view.set_clickable(card_click_selectable)
 		setup_dialog_card_view(scene, card_view, card_items[i], labels[i] if i < labels.size() else "")
-		if card_click_selectable:
+		if disabled:
+			card_view.set_disabled(true)
+			if disabled_badge != "":
+				card_view.set_badges(disabled_badge, "")
+		elif show_selectable_hints:
+			card_view.set_selectable_hint_text(selectable_hint)
+			card_view.set_selectable_hint(true)
+		if card_click_selectable and not disabled:
 			card_view.left_clicked.connect(Callable(scene, "_on_dialog_card_left_signal").bind(real_index))
 		card_view.right_clicked.connect(Callable(scene, "_on_dialog_card_right_signal"))
 		card_view.set_meta("dialog_choice_index", real_index)

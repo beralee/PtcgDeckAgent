@@ -669,6 +669,7 @@ func test_ai_legal_action_builder_enumerates_attack_actions() -> String:
 		assert_not_null(builder, "AILegalActionBuilder should load"),
 		assert_eq(_count_actions_by_kind(actions, "attack"), 1, "Builder should enumerate attacks that are currently usable"),
 		assert_true(_has_action(actions, "attack", {"attack_index": 0, "targets": []}), "Builder should include a normalized attack action"),
+		assert_true(_has_action(actions, "attack", {"attack_index": 0, "attack_name": "Zap", "projected_damage": 10}), "Builder should preserve attack metadata for downstream strategy scoring"),
 	])
 
 

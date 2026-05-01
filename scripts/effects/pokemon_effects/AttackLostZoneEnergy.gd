@@ -13,12 +13,17 @@ var discard_count: int = 2
 var to_lost_zone: bool = true
 ## 是否从全场宝可梦选择能量（true = 场上任意宝可梦；false = 仅攻击者自身）
 var from_field: bool = true
+var attack_index_to_match: int = -1
 
 
 func _init(count: int = 2, lost_zone: bool = true, field: bool = true) -> void:
 	discard_count = count
 	to_lost_zone = lost_zone
 	from_field = field
+
+
+func applies_to_attack_index(attack_index: int) -> bool:
+	return attack_index_to_match == -1 or attack_index == attack_index_to_match
 
 
 func get_attack_interaction_steps(
@@ -55,6 +60,8 @@ func execute_attack(
 	_attack_index: int,
 	state: GameState
 ) -> void:
+	if not applies_to_attack_index(_attack_index):
+		return
 	var top_card: CardInstance = attacker.get_top_card()
 	if top_card == null:
 		return

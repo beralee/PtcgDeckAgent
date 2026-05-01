@@ -1431,13 +1431,21 @@ func test_hisuian_heavy_ball_takes_basic_from_prizes_and_replaces_with_self() ->
 	var effect := EffectHisuianHeavyBallEffect.new()
 	var card := CardInstance.create(_make_trainer_data("Hisuian Heavy Ball"), 0)
 	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
+	var first_step: Dictionary = steps[0] if not steps.is_empty() else {}
+	var first_step_card_items: Array = first_step.get("card_items", [])
+	var first_step_choice_labels: Array = first_step.get("choice_labels", [])
+	var non_basic_label := str(first_step_choice_labels[1]) if first_step_choice_labels.size() > 1 else ""
 	effect.execute(card, [{
 		"chosen_prize_basic": [basic_prize],
 	}], state)
 
 	return run_checks([
 		assert_eq(steps.size(), 1, "Hisuian Heavy Ball should only ask for the prize Basic selection"),
-		assert_eq(str(steps[0].get("id", "")), "chosen_prize_basic", "The only interaction should be choosing the Basic Pokemon from prizes"),
+		assert_eq(str(first_step.get("id", "")), "chosen_prize_basic", "The only interaction should be choosing the Basic Pokemon from prizes"),
+		assert_eq(str(first_step.get("presentation", "")), "cards", "Hisuian Heavy Ball should use visible card presentation for prize contents"),
+		assert_eq(first_step_card_items.size(), 2, "Hisuian Heavy Ball should reveal every prize card in the prompt"),
+		assert_eq(first_step.get("card_indices", []), [0, -1], "Only Basic Pokemon prize cards should be selectable"),
+		assert_str_contains(non_basic_label, "view only", "Non-Basic prize cards should be clearly marked as view-only"),
 		assert_true(basic_prize in player.hand, "Hisuian Heavy Ball should move the chosen Basic Pokemon to hand"),
 		assert_eq(player.prizes.size(), 2, "Prize count should stay unchanged after the swap"),
 		assert_true(card in player.prizes, "The Heavy Ball itself should become the replacement prize card"),
@@ -1486,11 +1494,16 @@ func test_hisuian_heavy_ball_can_execute_without_basic_prize() -> String:
 
 	var effect := EffectHisuianHeavyBallEffect.new()
 	var card := CardInstance.create(_make_trainer_data("洗翠的沉重球"), 0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
+	var first_step: Dictionary = steps[0] if not steps.is_empty() else {}
 	effect.execute(card, [], state)
 
 	return run_checks([
 		assert_true(effect.can_execute(card, state), "即使奖赏卡里没有基础宝可梦也应允许使用洗翠的沉重球"),
-		assert_true(effect.get_interaction_steps(card, state).is_empty(), "没有基础宝可梦时不应强制选择目标"),
+		assert_eq(steps.size(), 1, "没有基础宝可梦时仍应展示奖赏卡给玩家查看"),
+		assert_eq(first_step.get("card_indices", []), [-1, -1], "没有基础宝可梦时所有奖赏卡都应仅可查看"),
+		assert_eq(int(first_step.get("min_select", -1)), 0, "没有基础宝可梦时不应强制选择目标"),
+		assert_eq(int(first_step.get("max_select", -1)), 0, "没有基础宝可梦时不应允许选择目标"),
 		assert_eq(player.prizes.size(), 2, "空结算时奖赏卡数量应保持不变"),
 	])
 

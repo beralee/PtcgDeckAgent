@@ -28,7 +28,11 @@ func get_attack_interaction_steps(
 		for energy: CardInstance in slot.attached_energy:
 			if energy.card_data.card_type == "Basic Energy":
 				items.append(energy)
-				labels.append("%s on %s" % [energy.card_data.name, slot.get_pokemon_name()])
+				labels.append("%s - attached to %s (%s)" % [
+					energy.card_data.name,
+					slot.get_pokemon_name(),
+					_slot_position_label(player, slot),
+				])
 	return [{
 		"id": "discard_basic_energy",
 		"title": "Choose any number of Basic Energy to discard",
@@ -87,6 +91,15 @@ func _resolve_attack_index(card: CardInstance, attack: Dictionary) -> int:
 		if card.card_data.attacks[i] == attack:
 			return i
 	return -1
+
+
+func _slot_position_label(player: PlayerState, slot: PokemonSlot) -> String:
+	if player.active_pokemon == slot:
+		return "Active"
+	var bench_index: int = player.bench.find(slot)
+	if bench_index >= 0:
+		return "Bench %d" % (bench_index + 1)
+	return "Pokemon"
 
 func get_description() -> String:
 	return "Discard any number of Basic Energy from your Pokemon. This attack does more damage for each discarded."
