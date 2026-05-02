@@ -174,7 +174,10 @@ func get_attack_effects_for_slot(attacker: PokemonSlot, attack_index: int = 0) -
 	var result: Array[BaseEffect] = []
 	if attacker == null or attacker.get_top_card() == null:
 		return result
-	var effect_id: String = attacker.get_card_data().effect_id
+	var card_data: CardData = attacker.get_card_data()
+	if card_data == null:
+		return result
+	var effect_id: String = card_data.effect_id
 	if not _attack_effect_registry.has(effect_id):
 		return result
 	for effect: BaseEffect in _attack_effect_registry[effect_id]:
