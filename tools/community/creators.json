@@ -1,0 +1,82 @@
+{
+  "bilibili": [
+    {
+      "name": "PTCG狗哥",
+      "uid": "5788410",
+      "space_url": "https://space.bilibili.com/5788410",
+      "default_role": "卡组教学",
+      "seed_videos": [
+        {
+          "title": "【16.0技巧】自爆如何玩的出神入化？",
+          "url": "https://www.bilibili.com/video/BV1FKdrBdEmY/",
+          "published_at": "2026-04-20T20:11:47+08:00",
+          "category": "卡组教学",
+          "summary": "围绕 16.0 自爆恶喷的操作技巧展开，适合想练这套牌的玩家先建立关键回合、资源使用和对局节奏的基本判断。"
+        },
+        {
+          "title": "【2连必看】一个视频让你小进阶沙奈朵",
+          "url": "https://www.bilibili.com/video/BV1dHo8YbEWE/",
+          "published_at": "2025-03-26T08:15:00+08:00",
+          "category": "卡组教学",
+          "summary": "围绕沙奈朵的进阶操作与对局细节做教学，适合已经入门后想把热门超能轴打稳的玩家。"
+        }
+      ]
+    },
+    {
+      "name": "月海513",
+      "uid": "2671094",
+      "space_url": "https://space.bilibili.com/2671094",
+      "default_role": "卡组教学/环境讲解",
+      "seed_videos": [
+        {
+          "title": "【月海513】16.0环境 达克莱伊/鸡狗猴卡组 构筑分享",
+          "url": "https://www.bilibili.com/video/BV1XRoXByEre/",
+          "published_at": "2026-04-26T01:25:20+08:00",
+          "category": "环境讲解",
+          "summary": "围绕 16.0 环境下达克莱伊/鸡狗猴轴的构筑分享，适合参考非最主流卡组如何组织攻击手与稳定组件。"
+        },
+        {
+          "title": "月聊越海：15.0环境恶喷卡组可携带单卡强度排行榜",
+          "url": "https://www.bilibili.com/video/BV1hPkgBUE3m/",
+          "published_at": "2026-01-20T01:16:03+08:00",
+          "category": "环境讲解",
+          "summary": "从单卡强度和构筑取舍角度聊恶喷组件，适合用来理解热门卡组的可替换位。"
+        },
+        {
+          "title": "月海513：北京大师赛卡组阵容选择推荐 第一篇",
+          "url": "https://www.bilibili.com/video/BV1ava6zYE1d/",
+          "published_at": "2025-09-04T12:00:00+08:00",
+          "category": "赛事备战",
+          "summary": "围绕大师赛备战选择卡组，适合参考大型赛事前的卡组池判断方法。"
+        }
+      ]
+    }
+  ],
+  "exclude_keywords": [
+    "拆卡",
+    "开盒",
+    "开箱",
+    "抽卡",
+    "抽奖",
+    "盲盒",
+    "福袋",
+    "价格",
+    "涨价",
+    "跌价",
+    "收卡",
+    "卖卡",
+    "带货"
+  ],
+  "include_keywords": [
+    "卡组",
+    "构筑",
+    "教学",
+    "思路",
+    "复盘",
+    "环境",
+    "对局",
+    "备战",
+    "大师赛",
+    "城市赛"
+  ]
+}

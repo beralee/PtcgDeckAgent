@@ -470,22 +470,32 @@ func _score_attack(action: Dictionary, game_state: GameState, player_index: int)
 	if active == null:
 		return 0.0
 	var opponent_active := game_state.players[1 - player_index].active_pokemon
+	var attack_index := int(action.get("attack_index", -1))
+	var attack_data: Dictionary = {}
+	if active.get_card_data() != null and attack_index >= 0 and attack_index < active.get_card_data().attacks.size():
+		attack_data = active.get_card_data().attacks[attack_index]
 	var attack_name := str(action.get("attack_name", ""))
+	if attack_name == "" and not attack_data.is_empty():
+		attack_name = str(attack_data.get("name", ""))
 	var projected_damage := int(action.get("projected_damage", 0))
 	if projected_damage <= 0:
-		projected_damage = int(predict_attacker_damage(active).get("damage", 0))
+		if not attack_data.is_empty():
+			projected_damage = _parse_damage_text(str(attack_data.get("damage", "0")))
+		else:
+			projected_damage = int(predict_attacker_damage(active).get("damage", 0))
+	var is_phantom_dive := attack_index == 1 or attack_name in ["Phantom Dive", "幻影潜袭"] or projected_damage >= 200
 	var score := 180.0 + float(projected_damage)
 	var misses_active_ko := opponent_active == null or projected_damage < opponent_active.get_remaining_hp()
 	if _slot_name(active) == DRAGAPULT_EX and misses_active_ko and _should_finish_charizard_before_first_dragapult_attack(player, game_state):
 		score -= 620.0
 	if _slot_name(active) == DRAGAPULT_EX and _can_slot_use_attack(active, "Phantom Dive"):
-		if attack_name == "Phantom Dive":
+		if is_phantom_dive:
 			score += 320.0
 		else:
 			score -= 220.0
 	if opponent_active != null and projected_damage >= opponent_active.get_remaining_hp():
 		score += 420.0
-	if _slot_name(active) == DRAGAPULT_EX and (attack_name == "Phantom Dive" or projected_damage >= 200):
+	if _slot_name(active) == DRAGAPULT_EX and is_phantom_dive:
 		score += 240.0
 	if _slot_name(active) == CHARIZARD_EX:
 		score += 160.0
@@ -1354,7 +1364,8 @@ func _can_slot_use_attack(slot: PokemonSlot, attack_name: String) -> bool:
 	if slot == null or slot.get_card_data() == null:
 		return false
 	for attack: Dictionary in slot.get_card_data().attacks:
-		if str(attack.get("name", "")) != attack_name:
+		var candidate_name := str(attack.get("name", ""))
+		if candidate_name != attack_name and not (attack_name == "Phantom Dive" and candidate_name == "幻影潜袭"):
 			continue
 		if slot.attached_energy.size() >= str(attack.get("cost", "")).length():
 			return true

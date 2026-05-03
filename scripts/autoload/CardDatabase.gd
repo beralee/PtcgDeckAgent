@@ -241,6 +241,13 @@ func get_card(set_code: String, card_index: String) -> CardData:
 			_card_cache[uid] = card
 			return card
 
+	var bundled_path := BUNDLED_CARDS_DIR + uid + ".json"
+	if FileAccess.file_exists(bundled_path):
+		var card := _load_card_from_file(bundled_path)
+		if card:
+			_card_cache[uid] = card
+			return card
+
 	return null
 
 

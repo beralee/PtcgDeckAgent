@@ -373,14 +373,29 @@ func _build_attack_actions(gsm: GameStateMachine, player_index: int, player: Pla
 	for attack_index: int in attacks.size():
 		if not gsm.can_use_attack(player_index, attack_index):
 			continue
+		var attack: Dictionary = attacks[attack_index]
+		var projected_damage: int = gsm.get_attack_preview_damage(player_index, attack_index)
 		var interaction_steps: Array[Dictionary] = _get_attack_interaction_steps(gsm, active, attack_index)
 		actions.append({
 			"kind": "attack",
 			"attack_index": attack_index,
+			"attack_name": str(attack.get("name", "")),
+			"projected_damage": projected_damage,
+			"projected_knockout": _attack_would_knock_out_active(gsm, player_index, projected_damage),
 			"targets": [],
 			"requires_interaction": not interaction_steps.is_empty(),
 		})
 	return actions
+
+
+func _attack_would_knock_out_active(gsm: GameStateMachine, player_index: int, projected_damage: int) -> bool:
+	if gsm == null or gsm.game_state == null:
+		return false
+	var opponent_index: int = 1 - player_index
+	if opponent_index < 0 or opponent_index >= gsm.game_state.players.size():
+		return false
+	var defender: PokemonSlot = gsm.game_state.players[opponent_index].active_pokemon
+	return defender != null and projected_damage >= defender.get_remaining_hp()
 
 
 func _build_granted_attack_actions(gsm: GameStateMachine, player_index: int, player: PlayerState) -> Array[Dictionary]:

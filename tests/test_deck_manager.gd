@@ -22,6 +22,61 @@ func test_deck_manager_uses_hud_visual_theme() -> String:
 	])
 
 
+func test_deck_manager_loads_three_latest_recommendation_articles() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	var articles: Array[Dictionary] = scene._load_recommendation_articles()
+	var deck_ids: Array = []
+	for article: Dictionary in articles:
+		deck_ids.append(scene._extract_recommendation_deck_id(article))
+
+	scene.queue_free()
+	return run_checks([
+		assert_eq(articles.size(), 3, "Deck manager should load the three embedded coach articles"),
+		assert_contains(deck_ids, 593481, "Embedded recommendations should include the Hangzhou Lost Box deck"),
+		assert_contains(deck_ids, 598722, "Embedded recommendations should include the Xi'an Dragapult deck"),
+		assert_contains(deck_ids, 599382, "Embedded recommendations should include the Chongqing Raging Bolt deck"),
+	])
+
+
+func test_deck_manager_renders_recommendations_above_deck_list() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene._apply_hud_theme()
+	scene._recommendation_articles = scene._load_recommendation_articles()
+	scene._ensure_recommendation_section()
+	scene._refresh_recommendation_cards()
+
+	var deck_list := scene.get_node("%DeckList") as VBoxContainer
+	var first_child: Node = deck_list.get_child(0) if deck_list.get_child_count() > 0 else null
+	var section := first_child as VBoxContainer
+	var cards: HBoxContainer = null
+	if section != null:
+		cards = section.get_node_or_null("RecommendationCards") as HBoxContainer
+	var section_name: String = section.name if section != null else ""
+	var card_count: int = cards.get_child_count() if cards != null else 0
+
+	scene.queue_free()
+	return run_checks([
+		assert_not_null(section, "Recommendation section should be inserted into the deck list"),
+		assert_eq(section_name, "RecommendationSection", "Recommendation section should sit before saved deck rows"),
+		assert_not_null(cards, "Recommendation section should include the card row"),
+		assert_eq(card_count, 3, "Recommendation section should render three cards"),
+	])
+
+
+func test_import_panel_close_button_hides_dialog_while_busy() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.get_node("%ImportPanel").visible = true
+	scene._current_operation = "import"
+
+	scene._on_close_import()
+	var panel_visible: bool = scene.get_node("%ImportPanel").visible
+
+	scene.queue_free()
+	return run_checks([
+		assert_false(panel_visible, "Close button should hide the import dialog even while an import is running"),
+	])
+
+
 func test_import_deck_name_validation_rejects_empty_and_duplicates() -> String:
 	_cleanup_decks([910001])
 	var existing := _make_deck(910001, "重复名称")

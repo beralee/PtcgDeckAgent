@@ -7,6 +7,8 @@ const CARD_TILE_WIDTH := 100
 const CARD_TILE_HEIGHT := 140
 const VIEW_GRID_COLUMNS := 6
 const RENAME_DIALOG_SIZE := Vector2i(460, 230)
+const COMMUNITY_DATA_PATH := "res://community/data/community-data.json"
+const MAX_RECOMMENDATION_CARDS := 3
 const HUD_ACCENT := Color(0.28, 0.92, 1.0, 1.0)
 const HUD_ACCENT_WARM := Color(1.0, 0.55, 0.24, 1.0)
 const HUD_DANGER := Color(1.0, 0.28, 0.22, 1.0)
@@ -35,10 +37,15 @@ var _rename_forced: bool = false
 var _texture_cache: Dictionary = {}
 var _failed_texture_paths: Dictionary = {}
 var _deck_view_dialog: RefCounted = DeckViewDialogScript.new()
+var _recommendation_articles: Array[Dictionary] = []
+var _recommendation_section: VBoxContainer = null
+var _recommendation_cards: HBoxContainer = null
 
 
 func _ready() -> void:
 	_apply_hud_theme()
+	_recommendation_articles = _load_recommendation_articles()
+	_ensure_recommendation_section()
 	%BtnImport.pressed.connect(_on_import_pressed)
 	%BtnSyncImages.pressed.connect(_on_sync_images_pressed)
 	%BtnBack.pressed.connect(_on_back_pressed)
@@ -191,10 +198,325 @@ func _hud_input_style(hover: bool) -> StyleBoxFlat:
 	return style
 
 
+func _load_recommendation_articles() -> Array[Dictionary]:
+	var articles: Array[Dictionary] = []
+	if not FileAccess.file_exists(COMMUNITY_DATA_PATH):
+		return articles
+
+	var raw_text := FileAccess.get_file_as_string(COMMUNITY_DATA_PATH)
+	var parsed: Variant = JSON.parse_string(raw_text)
+	if parsed is not Dictionary:
+		return articles
+
+	var root := parsed as Dictionary
+	var briefing_raw: Variant = root.get("environment_briefing", {})
+	var briefing: Dictionary = briefing_raw if briefing_raw is Dictionary else {}
+	var source_articles_raw: Variant = briefing.get("articles", [])
+	var source_articles: Array = source_articles_raw if source_articles_raw is Array else []
+	if source_articles.is_empty():
+		var single_article: Variant = briefing.get("article", {})
+		if single_article is Dictionary:
+			source_articles.append(single_article)
+
+	for article_raw: Variant in source_articles:
+		if article_raw is not Dictionary:
+			continue
+		var article := article_raw as Dictionary
+		if _extract_recommendation_import_url(article) == "":
+			continue
+		articles.append(article)
+
+	articles.sort_custom(_compare_recommendation_articles)
+	if articles.size() > MAX_RECOMMENDATION_CARDS:
+		articles.resize(MAX_RECOMMENDATION_CARDS)
+	return articles
+
+
+func _compare_recommendation_articles(a: Dictionary, b: Dictionary) -> bool:
+	var source_a := _as_dictionary(a.get("source", {}))
+	var source_b := _as_dictionary(b.get("source", {}))
+	var date_a := str(source_a.get("date", "")).replace(".", "")
+	var date_b := str(source_b.get("date", "")).replace(".", "")
+	if date_a != date_b:
+		return date_a > date_b
+	return int(source_a.get("players", 0)) > int(source_b.get("players", 0))
+
+
+func _as_dictionary(value: Variant) -> Dictionary:
+	return value if value is Dictionary else {}
+
+
+func _ensure_recommendation_section() -> void:
+	var deck_list_container := get_node_or_null("%DeckList") as VBoxContainer
+	if deck_list_container == null:
+		return
+	if _recommendation_section != null and is_instance_valid(_recommendation_section):
+		return
+
+	_recommendation_section = VBoxContainer.new()
+	_recommendation_section.name = "RecommendationSection"
+	_recommendation_section.add_theme_constant_override("separation", 10)
+	deck_list_container.add_child(_recommendation_section)
+	deck_list_container.move_child(_recommendation_section, 0)
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 12)
+	_recommendation_section.add_child(header)
+
+	var title_box := VBoxContainer.new()
+	title_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(title_box)
+
+	var title := Label.new()
+	title.text = "今日推荐练牌卡组"
+	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_color_override("font_color", HUD_TEXT)
+	title_box.add_child(title)
+
+	var subtitle := Label.new()
+	subtitle.text = "来自环境解读 skill，最多保留最近 3 篇；一键导入后直接开始测试。"
+	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD
+	subtitle.add_theme_color_override("font_color", HUD_TEXT_MUTED)
+	title_box.add_child(subtitle)
+
+	_recommendation_cards = HBoxContainer.new()
+	_recommendation_cards.name = "RecommendationCards"
+	_recommendation_cards.add_theme_constant_override("separation", 10)
+	_recommendation_cards.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_recommendation_section.add_child(_recommendation_cards)
+
+
+func _refresh_recommendation_cards() -> void:
+	_ensure_recommendation_section()
+	if _recommendation_section == null or _recommendation_cards == null:
+		return
+
+	for child: Node in _recommendation_cards.get_children():
+		_recommendation_cards.remove_child(child)
+		child.queue_free()
+
+	_recommendation_section.visible = not _recommendation_articles.is_empty()
+	if _recommendation_articles.is_empty():
+		return
+
+	for article: Dictionary in _recommendation_articles:
+		_recommendation_cards.add_child(_create_recommendation_card(article))
+
+
+func _create_recommendation_card(article: Dictionary) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(280, 248)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", _hud_panel_style(Color(0.030, 0.070, 0.098, 0.92), Color(1.0, 0.58, 0.24, 0.76), 16))
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	panel.add_child(vbox)
+
+	var hero := _as_dictionary(article.get("hero", {}))
+	var source := _as_dictionary(article.get("source", {}))
+	var deck_name := str(hero.get("deck_name", "推荐卡组"))
+	var title_text := str(hero.get("title", deck_name))
+	var tournament_text := str(hero.get("tournament", "近期赛事样本"))
+	var thesis := str(hero.get("thesis", "这套牌值得作为今天的练牌样本。"))
+	var import_url := _extract_recommendation_import_url(article)
+	var deck_id := _extract_recommendation_deck_id(article)
+
+	var meta := Label.new()
+	meta.text = "环境作业 · %s · %s人" % [str(source.get("city", "近期")), str(source.get("players", 0))]
+	meta.add_theme_font_size_override("font_size", 12)
+	meta.add_theme_color_override("font_color", HUD_ACCENT_WARM)
+	vbox.add_child(meta)
+
+	var title := Label.new()
+	title.text = title_text
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD
+	title.add_theme_font_size_override("font_size", 17)
+	title.add_theme_color_override("font_color", HUD_TEXT)
+	vbox.add_child(title)
+
+	var tournament := Label.new()
+	tournament.text = tournament_text
+	tournament.autowrap_mode = TextServer.AUTOWRAP_WORD
+	tournament.add_theme_font_size_override("font_size", 12)
+	tournament.add_theme_color_override("font_color", HUD_TEXT_MUTED)
+	vbox.add_child(tournament)
+
+	var thesis_label := Label.new()
+	thesis_label.text = thesis
+	thesis_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	thesis_label.add_theme_color_override("font_color", Color(0.78, 0.90, 0.96, 1.0))
+	vbox.add_child(thesis_label)
+
+	for bullet: String in _extract_recommendation_bullets(article):
+		var bullet_label := Label.new()
+		bullet_label.text = "• " + bullet
+		bullet_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+		bullet_label.add_theme_font_size_override("font_size", 12)
+		bullet_label.add_theme_color_override("font_color", HUD_TEXT_MUTED)
+		vbox.add_child(bullet_label)
+
+	var spacer := Control.new()
+	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vbox.add_child(spacer)
+
+	var button_row := HBoxContainer.new()
+	button_row.add_theme_constant_override("separation", 8)
+	vbox.add_child(button_row)
+
+	var import_button := Button.new()
+	import_button.text = "更新本地" if deck_id > 0 and CardDatabase.has_deck(deck_id) else "导入这套"
+	import_button.custom_minimum_size = Vector2(92, 34)
+	import_button.disabled = import_url == "" or _current_operation != ""
+	import_button.pressed.connect(_on_recommendation_import_pressed.bind(article))
+	button_row.add_child(import_button)
+	_style_hud_button(import_button, HUD_ACCENT_WARM)
+
+	var read_button := Button.new()
+	read_button.text = "查看解读"
+	read_button.custom_minimum_size = Vector2(92, 34)
+	read_button.pressed.connect(_on_recommendation_read_pressed.bind(article))
+	button_row.add_child(read_button)
+	_style_hud_button(read_button, HUD_ACCENT)
+
+	var open_button := Button.new()
+	open_button.text = "原卡表"
+	open_button.custom_minimum_size = Vector2(78, 34)
+	open_button.disabled = import_url == ""
+	open_button.pressed.connect(_on_recommendation_open_pressed.bind(article))
+	button_row.add_child(open_button)
+	_style_hud_button(open_button, HUD_ACCENT)
+
+	return panel
+
+
+func _extract_recommendation_bullets(article: Dictionary) -> PackedStringArray:
+	var result := PackedStringArray()
+	var sections_raw: Variant = article.get("sections", [])
+	var sections: Array = sections_raw if sections_raw is Array else []
+	for section_raw: Variant in sections:
+		if section_raw is not Dictionary:
+			continue
+		var section := section_raw as Dictionary
+		var heading := str(section.get("heading", ""))
+		var bullets_raw: Variant = section.get("bullets", [])
+		var bullets: Array = bullets_raw if bullets_raw is Array else []
+		if not heading.contains("今天怎么练") and result.size() > 0:
+			continue
+		for bullet_raw: Variant in bullets:
+			var bullet := str(bullet_raw).strip_edges()
+			if bullet == "":
+				continue
+			result.append(bullet)
+			if result.size() >= 2:
+				return result
+	return result
+
+
+func _extract_recommendation_import_url(article: Dictionary) -> String:
+	var snapshot := _as_dictionary(article.get("deck_snapshot", {}))
+	var import_url := str(snapshot.get("import_url", snapshot.get("source_url", ""))).strip_edges()
+	if import_url != "":
+		return import_url
+
+	var links_raw: Variant = article.get("links", [])
+	var links: Array = links_raw if links_raw is Array else []
+	for link_raw: Variant in links:
+		if link_raw is not Dictionary:
+			continue
+		var link := link_raw as Dictionary
+		var url := str(link.get("url", "")).strip_edges()
+		if url.contains("tcg.mik.moe/decks/list/"):
+			return url
+	return ""
+
+
+func _extract_recommendation_deck_id(article: Dictionary) -> int:
+	var snapshot := _as_dictionary(article.get("deck_snapshot", {}))
+	var raw_id: Variant = snapshot.get("deck_id", 0)
+	var deck_id := int(raw_id) if str(raw_id).is_valid_int() else 0
+	if deck_id > 0:
+		return deck_id
+	return DeckImporter.parse_deck_id(_extract_recommendation_import_url(article))
+
+
+func _show_recommendation_article_dialog(article: Dictionary) -> void:
+	var hero := _as_dictionary(article.get("hero", {}))
+	var dialog := AcceptDialog.new()
+	dialog.title = str(hero.get("deck_name", "环境解读"))
+	dialog.ok_button_text = "关闭"
+	dialog.size = Vector2i(680, 620)
+
+	var scroll := ScrollContainer.new()
+	scroll.anchors_preset = Control.PRESET_FULL_RECT
+	scroll.offset_left = 10
+	scroll.offset_top = 10
+	scroll.offset_right = -10
+	scroll.offset_bottom = -10
+	dialog.add_child(scroll)
+
+	var content := VBoxContainer.new()
+	content.custom_minimum_size = Vector2(630, 0)
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.add_theme_constant_override("separation", 10)
+	scroll.add_child(content)
+
+	var title := Label.new()
+	title.text = str(hero.get("title", "环境解读"))
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD
+	title.add_theme_font_size_override("font_size", 22)
+	content.add_child(title)
+
+	var thesis := Label.new()
+	thesis.text = str(hero.get("thesis", ""))
+	thesis.autowrap_mode = TextServer.AUTOWRAP_WORD
+	content.add_child(thesis)
+
+	var meta := Label.new()
+	meta.text = str(hero.get("tournament", ""))
+	meta.autowrap_mode = TextServer.AUTOWRAP_WORD
+	meta.add_theme_color_override("font_color", Color(0.55, 0.62, 0.70))
+	content.add_child(meta)
+
+	var sections_raw: Variant = article.get("sections", [])
+	var sections: Array = sections_raw if sections_raw is Array else []
+	for section_raw: Variant in sections:
+		if section_raw is not Dictionary:
+			continue
+		var section := section_raw as Dictionary
+		var separator := HSeparator.new()
+		content.add_child(separator)
+
+		var heading := Label.new()
+		heading.text = str(section.get("heading", ""))
+		heading.autowrap_mode = TextServer.AUTOWRAP_WORD
+		heading.add_theme_font_size_override("font_size", 17)
+		content.add_child(heading)
+
+		var body := Label.new()
+		body.text = str(section.get("body", ""))
+		body.autowrap_mode = TextServer.AUTOWRAP_WORD
+		content.add_child(body)
+
+		var bullets_raw: Variant = section.get("bullets", [])
+		var bullets: Array = bullets_raw if bullets_raw is Array else []
+		for bullet_raw: Variant in bullets:
+			var bullet := Label.new()
+			bullet.text = "• " + str(bullet_raw)
+			bullet.autowrap_mode = TextServer.AUTOWRAP_WORD
+			content.add_child(bullet)
+
+	add_child(dialog)
+	dialog.confirmed.connect(dialog.queue_free)
+	dialog.close_requested.connect(dialog.queue_free)
+	dialog.popup_centered()
+
+
 func _refresh_deck_list() -> void:
 	var deck_list_container: VBoxContainer = %DeckList
+	_refresh_recommendation_cards()
 	for child: Node in deck_list_container.get_children():
-		if child != %EmptyLabel:
+		if child != %EmptyLabel and child != _recommendation_section:
 			child.queue_free()
 
 	var decks := CardDatabase.get_all_decks()
@@ -272,9 +594,27 @@ func _on_import_pressed() -> void:
 	%ImportPanel.visible = true
 
 
-func _on_close_import() -> void:
-	if _current_operation != "":
+func _on_recommendation_import_pressed(article: Dictionary) -> void:
+	var import_url := _extract_recommendation_import_url(article)
+	if import_url == "":
 		return
+	_start_import_from_url(import_url, "正在导入推荐卡组...")
+
+
+func _on_recommendation_open_pressed(article: Dictionary) -> void:
+	var import_url := _extract_recommendation_import_url(article)
+	if import_url == "":
+		return
+	var err := OS.shell_open(import_url)
+	if err != OK:
+		push_warning("无法打开推荐卡表: %s" % import_url)
+
+
+func _on_recommendation_read_pressed(article: Dictionary) -> void:
+	_show_recommendation_article_dialog(article)
+
+
+func _on_close_import() -> void:
 	%ImportPanel.visible = false
 
 
@@ -287,12 +627,23 @@ func _on_do_import() -> void:
 		%ProgressLabel.text = "请输入卡组链接或卡组 ID。"
 		return
 
+	_start_import_from_url(url, "正在导入卡组...")
+
+
+func _start_import_from_url(url: String, progress_text: String) -> void:
+	if _current_operation != "":
+		return
+
 	_current_operation = "import"
+	_panel_mode = "import"
+	_configure_operation_panel()
 	_set_operation_busy(true)
+	%ImportPanel.visible = true
+	%UrlInput.text = url
 	%BtnDoImport.disabled = true
 	%ProgressBar.visible = true
 	%ProgressBar.value = 0
-	%ProgressLabel.text = "正在导入卡组..."
+	%ProgressLabel.text = progress_text
 	_importer.import_deck(url)
 
 
@@ -847,3 +1198,4 @@ func _set_operation_busy(busy: bool) -> void:
 	%BtnImport.disabled = busy
 	%BtnSyncImages.disabled = busy
 	%BtnBack.disabled = busy
+	_refresh_recommendation_cards()

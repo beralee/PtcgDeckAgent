@@ -594,6 +594,42 @@ func test_use_attack_discard_basic_energy_from_hand_applies_weakness_after_singl
 	])
 
 
+func test_discard_basic_energy_from_field_prompt_labels_energy_owner() -> String:
+	var gsm := _make_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	var attacker_cd := _make_basic_pokemon_data("Raging Bolt ex", "L", 240)
+	attacker_cd.attacks = [{"name": "Bellowing Thunder", "cost": "LF", "damage": "70x", "text": "", "is_vstar_power": false}]
+	var active_slot := PokemonSlot.new()
+	active_slot.pokemon_stack.append(CardInstance.create(attacker_cd, 0))
+	var active_energy := CardInstance.create(_make_energy_data("Lightning Energy", "L"), 0)
+	active_slot.attached_energy.append(active_energy)
+	player.active_pokemon = active_slot
+
+	var bench_slot := PokemonSlot.new()
+	bench_slot.pokemon_stack.append(CardInstance.create(_make_basic_pokemon_data("Teal Mask Ogerpon ex", "G", 210), 0))
+	var bench_energy := CardInstance.create(_make_energy_data("Grass Energy", "G"), 0)
+	bench_slot.attached_energy.append(bench_energy)
+	player.bench.append(bench_slot)
+
+	var effect := AttackDiscardBasicEnergyFromFieldDamage.new()
+	var steps: Array[Dictionary] = effect.get_attack_interaction_steps(
+		active_slot.get_top_card(),
+		attacker_cd.attacks[0],
+		gsm.game_state
+	)
+	var labels: Array = steps[0].get("labels", []) if not steps.is_empty() else []
+	var active_label := str(labels[0]) if labels.size() > 0 else ""
+	var bench_label := str(labels[1]) if labels.size() > 1 else ""
+
+	return run_checks([
+		assert_eq(steps.size(), 1, "Bellowing Thunder should prompt for field Basic Energy discards"),
+		assert_str_contains(active_label, "Raging Bolt ex", "Active energy label should include the owning Pokemon"),
+		assert_str_contains(active_label, "Active", "Active energy label should include the Active position"),
+		assert_str_contains(bench_label, "Teal Mask Ogerpon ex", "Bench energy label should include the owning Pokemon"),
+		assert_str_contains(bench_label, "Bench 1", "Bench energy label should include the bench position"),
+	])
+
+
 func test_use_attack_read_wind_draw_respects_selected_hand_card() -> String:
 	var gsm := _make_manual_gsm()
 	var player: PlayerState = gsm.game_state.players[0]

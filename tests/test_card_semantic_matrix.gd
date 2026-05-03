@@ -566,6 +566,39 @@ func test_attack_utility_families() -> String:
 	])
 
 
+func test_giratina_vstar_star_requiem_requires_ten_lost_zone_cards() -> String:
+	var state := _make_state()
+	state.phase = GameState.GamePhase.MAIN
+	var processor := EffectProcessor.new()
+	var validator := RuleValidator.new()
+	var player: PlayerState = state.players[0]
+	var giratina_cd := _make_basic_pokemon_data("Giratina VSTAR", "N", 280, "VSTAR", "VSTAR", "90c254f809637aea730f5ff97b143f44")
+	giratina_cd.attacks = [
+		{"name": "放逐冲击", "cost": "GP", "damage": "280", "text": "", "is_vstar_power": false},
+		{"name": "星耀安魂曲", "cost": "GP", "damage": "", "text": "", "is_vstar_power": true},
+	]
+	var giratina := _make_slot(giratina_cd, 0)
+	giratina.attached_energy.append(CardInstance.create(_make_energy_data("Grass", "G"), 0))
+	giratina.attached_energy.append(CardInstance.create(_make_energy_data("Psychic", "P"), 0))
+	player.active_pokemon = giratina
+
+	for i in range(9):
+		player.lost_zone.append(CardInstance.create(_make_basic_pokemon_data("Lost_%d" % i, "C"), 0))
+	var blocked_reason := validator.get_attack_unusable_reason(state, 0, 1, processor)
+	player.lost_zone.append(CardInstance.create(_make_basic_pokemon_data("Lost_9", "C"), 0))
+	var allowed_reason := validator.get_attack_unusable_reason(state, 0, 1, processor)
+	var defender := state.players[1].active_pokemon
+	processor.register_pokemon_card(giratina_cd)
+	processor.execute_attack_effect(giratina, 1, defender, state)
+
+	return run_checks([
+		assert_true(blocked_reason.contains("放逐区"), "Star Requiem should be blocked below 10 cards in the Lost Zone"),
+		assert_eq(allowed_reason, "", "Star Requiem should become usable at 10 Lost Zone cards"),
+		assert_eq(giratina.attached_energy.size(), 2, "Star Requiem should not also execute Lost Impact's energy-lost-zone effect"),
+		assert_eq(defender.damage_counters, defender.get_max_hp(), "Star Requiem should directly Knock Out the opposing Active Pokemon"),
+	])
+
+
 func test_disable_metal_and_stadium_families() -> String:
 	var state := _make_state()
 

@@ -108,6 +108,32 @@ func _make_game_state(turn: int = 2) -> GameState:
 	return gs
 
 
+func _make_ready_dragapult_attack_state(turn: int = 5) -> GameState:
+	var gs := _make_game_state(turn)
+	var dragapult_cd := _make_pokemon_cd(
+		"多龙巴鲁托ex",
+		"Stage 2",
+		"P",
+		320,
+		"多龙奇",
+		"ex",
+		[],
+		[
+			{"name": "喷射头击", "cost": "C", "damage": "70"},
+			{"name": "幻影潜袭", "cost": "RP", "damage": "200"}
+		]
+	)
+	dragapult_cd.name_en = "Dragapult ex"
+	dragapult_cd.evolves_from = "Drakloak"
+	gs.players[0].active_pokemon = _make_slot(dragapult_cd, 0)
+	gs.players[0].active_pokemon.attached_energy.append(CardInstance.create(_make_trainer_cd("Fire Energy", "Basic Energy"), 0))
+	gs.players[0].active_pokemon.attached_energy[-1].card_data.energy_provides = "R"
+	gs.players[0].active_pokemon.attached_energy.append(CardInstance.create(_make_trainer_cd("Psychic Energy", "Basic Energy"), 0))
+	gs.players[0].active_pokemon.attached_energy[-1].card_data.energy_provides = "P"
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Defender", "Basic", "C", 330), 1)
+	return gs
+
+
 func _best_card_name(strategy: RefCounted, items: Array, step_id: String, context: Dictionary) -> String:
 	var best_name := ""
 	var best_score := -INF
@@ -607,6 +633,17 @@ func test_dusknoir_phantom_dive_decisively_outranks_jet_head_once_online() -> St
 	])
 
 
+func test_dusknoir_scores_localized_dragapult_attack_index_as_phantom_dive() -> String:
+	var strategy := _new_strategy(DUSKNOIR_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultDusknoir.gd should exist before localized attack-index scoring can be verified"
+	var gs := _make_ready_dragapult_attack_state()
+	var phantom_score: float = strategy.score_action_absolute({"kind": "attack", "attack_index": 1}, gs, 0)
+	var jet_score: float = strategy.score_action_absolute({"kind": "attack", "attack_index": 0}, gs, 0)
+	return assert_true(phantom_score > jet_score,
+		"Localized Dragapult ex actions with only attack_index should still prefer the 200-damage Phantom Dive over Jet Head")
+
+
 func test_banette_search_prefers_banette_shell_over_dusknoir_shell() -> String:
 	var strategy := _new_strategy(BANETTE_SCRIPT_PATH)
 	if strategy == null:
@@ -668,6 +705,17 @@ func test_banette_attack_values_early_item_lock_pressure() -> String:
 	)
 	return assert_true(lock_score > poke_score,
 		"Against fast setup decks, Banette should value early item lock pressure above small generic damage upgrades")
+
+
+func test_banette_scores_localized_dragapult_attack_index_as_phantom_dive() -> String:
+	var strategy := _new_strategy(BANETTE_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultBanette.gd should exist before localized attack-index scoring can be verified"
+	var gs := _make_ready_dragapult_attack_state()
+	var phantom_score: float = strategy.score_action_absolute({"kind": "attack", "attack_index": 1}, gs, 0)
+	var jet_score: float = strategy.score_action_absolute({"kind": "attack", "attack_index": 0}, gs, 0)
+	return assert_true(phantom_score > jet_score,
+		"Localized Dragapult/Banette actions with only attack_index should still prefer Phantom Dive over Jet Head")
 
 
 func test_banette_board_evaluation_rewards_disruption_shell_presence() -> String:
@@ -1038,6 +1086,17 @@ func test_hybrid_attack_prefers_phantom_dive_once_it_is_live() -> String:
 		assert_true(phantom_score - jet_score >= 300.0,
 			"Phantom Dive should have a decisive margin over the first attack once both Energy are online"),
 	])
+
+
+func test_hybrid_scores_localized_dragapult_attack_index_as_phantom_dive() -> String:
+	var strategy := _new_strategy(HYBRID_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultCharizard.gd should exist before localized attack-index scoring can be verified"
+	var gs := _make_ready_dragapult_attack_state()
+	var phantom_score: float = strategy.score_action_absolute({"kind": "attack", "attack_index": 1}, gs, 0)
+	var jet_score: float = strategy.score_action_absolute({"kind": "attack", "attack_index": 0}, gs, 0)
+	return assert_true(phantom_score > jet_score,
+		"Localized Dragapult/Charizard actions with only attack_index should still prefer Phantom Dive over Jet Head")
 
 
 func test_hybrid_attack_cools_when_charizard_finish_window_is_live() -> String:

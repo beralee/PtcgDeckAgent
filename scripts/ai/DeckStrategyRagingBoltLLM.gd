@@ -3493,7 +3493,7 @@ func _fire_llm_request(game_state: GameState, player_index: int, legal_actions: 
 	if err != OK:
 		_llm_fail_count += 1
 		_disable_llm_for_turn(turn_at_request, "request start failed")
-		var reason := "鐠囬攱鐪伴崣鎴︹偓浣搞亼鐠? error=%d" % err
+		var reason := "request start failed: error=%d" % err
 		_audit_log("request_start_failed", {
 			"turn": turn_at_request,
 			"player_index": player_index,
@@ -3621,12 +3621,12 @@ func _on_llm_response(
 		})
 	else:
 		decision_tree = _prompt_builder.parse_llm_response_to_decision_tree(response)
-	if decision_tree.is_empty():
-		_llm_fail_count += 1
-		_disable_llm_for_turn(turn_at_request, "invalid or missing decision tree")
-		var reason := "閺冪姵纭剁憴锝嗙€介崘宕囩摜閺? %s" % str(response.get("error_type", response.keys()))
-		llm_thinking_failed.emit(turn_at_request, reason)
-		return
+		if decision_tree.is_empty():
+			_llm_fail_count += 1
+			_disable_llm_for_turn(turn_at_request, "invalid or missing decision tree")
+			var reason := "invalid or missing decision tree: %s" % str(response.get("error_type", response.keys()))
+			llm_thinking_failed.emit(turn_at_request, reason)
+			return
 	_last_llm_reasoning = reasoning
 	if turn_at_request == _cached_turn_number:
 		if not _llm_action_catalog.is_empty():

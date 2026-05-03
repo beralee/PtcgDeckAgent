@@ -665,6 +665,54 @@ func test_iono_play_trainer_logs_draw_card_actions_for_both_players() -> String:
 	])
 
 
+func test_iono_puts_shuffled_hand_on_bottom_without_redrawing_it() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 2
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var iono_cd := CardData.new()
+	iono_cd.name = "Iono"
+	iono_cd.card_type = "Supporter"
+	iono_cd.effect_id = "af514f82d182aeae5327b2c360df703d"
+	var iono := CardInstance.create(iono_cd, 0)
+	var old_hand_a := CardInstance.create(_make_basic_pokemon_card_data("Old Hand A"), 0)
+	var old_hand_b := CardInstance.create(_make_basic_pokemon_card_data("Old Hand B"), 0)
+	gsm.game_state.players[0].hand = [iono, old_hand_a, old_hand_b]
+	gsm.game_state.players[0].prizes.resize(2)
+	gsm.game_state.players[1].prizes.resize(1)
+
+	var fresh_top_a := CardInstance.create(_make_basic_pokemon_card_data("Fresh Top A"), 0)
+	var fresh_top_b := CardInstance.create(_make_basic_pokemon_card_data("Fresh Top B"), 0)
+	gsm.game_state.players[0].deck.append(fresh_top_a)
+	gsm.game_state.players[0].deck.append(fresh_top_b)
+	gsm.game_state.players[0].deck.append(CardInstance.create(_make_basic_pokemon_card_data("Fresh Bottom"), 0))
+	gsm.game_state.players[1].hand.append(CardInstance.create(_make_basic_pokemon_card_data("Opponent Old Hand"), 1))
+	gsm.game_state.players[1].deck.append(CardInstance.create(_make_basic_pokemon_card_data("Opponent Fresh Top"), 1))
+
+	var played: bool = gsm.play_trainer(0, iono, [])
+	var drawn_names: Array[String] = []
+	for card: CardInstance in gsm.game_state.players[0].hand:
+		drawn_names.append(card.card_data.name)
+
+	return run_checks([
+		assert_true(played, "Iono should resolve successfully"),
+		assert_true("Fresh Top A" in drawn_names, "Iono should draw from the original deck top"),
+		assert_true("Fresh Top B" in drawn_names, "Iono should draw from the original deck top before bottomed hand cards"),
+		assert_false("Old Hand A" in drawn_names, "Iono should not redraw cards just placed on the bottom of the deck"),
+		assert_false("Old Hand B" in drawn_names, "Iono should not redraw cards just placed on the bottom of the deck"),
+		assert_true(old_hand_a in gsm.game_state.players[0].deck, "Old hand card should be on the bottom segment of the deck"),
+		assert_true(old_hand_b in gsm.game_state.players[0].deck, "Old hand card should be on the bottom segment of the deck"),
+	])
+
+
 func test_trekking_shoes_discard_branch_logs_reveal_draw() -> String:
 	var gsm := GameStateMachine.new()
 	gsm.game_state = GameState.new()
@@ -2655,6 +2703,4 @@ func _get_actions_of_type(action_log: Array[GameAction], action_type: GameAction
 		if action != null and action.action_type == action_type:
 			matches.append(action)
 	return matches
-
-
 

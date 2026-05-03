@@ -91,6 +91,23 @@ func test_munkidori_luminous_energy_downgrades_with_other_special_energy() -> St
 	])
 
 
+func test_luminous_energy_pays_any_attack_energy_type() -> String:
+	var state := _make_state()
+	var processor := EffectProcessor.new()
+	var validator := RuleValidator.new()
+	var player: PlayerState = state.players[0]
+	var dragapult_cd := _make_basic_pokemon_data("Dragapult ex", "P", 320, "Stage 2", "ex")
+	dragapult_cd.attacks = [{"name": "Phantom Dive", "cost": "RP", "damage": "200", "text": "", "is_vstar_power": false}]
+	var dragapult := _make_slot(dragapult_cd, 0)
+	dragapult.attached_energy.append(CardInstance.create(_make_energy_data("Luminous Energy", "", "Special Energy", "540ee48bb93584e4bfe3d7f5d0ee0efc"), 0))
+	dragapult.attached_energy.append(CardInstance.create(_make_energy_data("Psychic Energy", "P"), 0))
+	player.active_pokemon = dragapult
+
+	return run_checks([
+		assert_true(validator.can_use_attack(state, 0, 0, processor), "Luminous Energy should satisfy the missing Fire cost while Psychic Energy pays Psychic"),
+	])
+
+
 func test_munkidori_ability_logs_counter_transfer_vfx_payload() -> String:
 	var gsm := GameStateMachine.new()
 	gsm.game_state = _make_state()

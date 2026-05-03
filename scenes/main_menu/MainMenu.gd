@@ -2,7 +2,7 @@ extends Control
 
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 const SwissTournamentScript := preload("res://scripts/tournament/SwissTournament.gd")
-const MENU_VERTICAL_SHIFT := 130.0
+const MENU_VERTICAL_SHIFT := 40.0
 const CHAMPION_PREVIEW_PLAYER_NAME := "冠军玩家"
 const CHAMPION_PREVIEW_DECK_ID := 575716
 const CHAMPION_PREVIEW_PLAYER_COUNT := 16

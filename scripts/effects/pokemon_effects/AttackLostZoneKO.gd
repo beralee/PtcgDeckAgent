@@ -2,10 +2,15 @@ class_name AttackLostZoneKO
 extends BaseEffect
 
 var min_lost_zone_count: int = 10
+var attack_index_to_match: int = -1
 
 
 func _init(min_count: int = 10) -> void:
 	min_lost_zone_count = min_count
+
+
+func applies_to_attack_index(attack_index: int) -> bool:
+	return attack_index_to_match == -1 or attack_index == attack_index_to_match
 
 
 func execute_attack(
@@ -14,6 +19,8 @@ func execute_attack(
 	_attack_index: int,
 	state: GameState
 ) -> void:
+	if not applies_to_attack_index(_attack_index):
+		return
 	var top_card: CardInstance = attacker.get_top_card()
 	if top_card == null:
 		return

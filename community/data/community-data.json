@@ -1,0 +1,1309 @@
+{
+  "generated_at": "2026-05-02T22:40:55+08:00",
+  "format": "FGH-CSV8C",
+  "environment_briefing": {
+    "name": "环境解读",
+    "title": "今日练牌任务：理解一套能惩罚热门环境的卡组",
+    "subtitle": "今天只看一件事：非主流放逐 Box 为什么值得导入游戏练。",
+    "updated_label": "每日自动生成",
+    "source_signals": [
+      {
+        "label": "环境靶子",
+        "value": "沙奈朵占比高",
+        "note": "高占比不是直接抄牌答案，而是今天练牌时最该被针对的靶子。"
+      },
+      {
+        "label": "今日卡表",
+        "value": "非主流放逐 Box",
+        "note": "今天只推一套可导入卡组，先把它打透，再决定要不要抄牌。"
+      },
+      {
+        "label": "赛事样本",
+        "value": "2026.05.01 杭州",
+        "note": "180 人参赛样本，优先看已结束、有名次、有卡表的比赛。"
+      },
+      {
+        "label": "练牌闭环",
+        "value": "复制链接导入游戏",
+        "note": "卡组管理支持 tcg.mik.moe 卡表链接；页面只负责给出今天最值得练的一套。"
+      }
+    ],
+    "article": {
+      "slug": "hangzhou-lost-toolbox",
+      "hero": {
+        "title": "杭州 180 人冠军：非主流放逐 Box 的工具箱化",
+        "deck_name": "非主流放逐 Box",
+        "variant_name": "其他",
+        "tournament": "2026.05.01 · 杭州 · 180 人 · 第 1 名",
+        "thesis": "它不是普通放逐 Box，而是把放逐启动、土龙抽牌和多属性攻击手合在一起的反环境工具箱。"
+      },
+      "source": {
+        "city": "杭州",
+        "date": "2026.05.01",
+        "players": 180,
+        "rank": 1,
+        "format": "FGH-CSV8C"
+      },
+      "sections": [
+        {
+          "heading": "今天的判断",
+          "body": "环境理解不是看谁占比最高就抄谁，而是判断热门卡组把环境推向了哪里。沙奈朵这类卡组占比高时，能稳定惩罚铺场、二奖点和关键进化链的构筑，反而会成为更值得研究的样本。",
+          "bullets": [
+            "样本来自 2026.05.01 杭州 城市赛，参赛人数 180，时间和样本量都足够新。",
+            "冠军牌被系统归到“其他”，这通常意味着它不是标准答案，而是针对环境做过重调的方案。"
+          ]
+        },
+        {
+          "heading": "它和主流放逐 Box 的差异",
+          "body": "主流放逐 Box 往往保留古月鸟、勾魂眼和顶尖捕捉器等一奖节奏组件；这套牌弱化了传统一奖消耗，转向花疗环环加阿克罗玛快速堆放逐，再用铁臂膀ex、轰鸣月ex、雷公V、月月熊ex按对局选择终结方式。",
+          "bullets": [
+            "明显加重的组件：土龙弟弟×2、土龙节节×2、基本恶能量×3、应急果冻×1。",
+            "主动降低或放弃的组件：宝可梦交替、基本超能量、深钵镇、古月鸟。",
+            "这说明它不追求经典放逐 Box 的一奖慢磨，而是追求更稳定地找到关键资源并用高冲击攻击手改变奖赏卡节奏。"
+          ]
+        },
+        {
+          "heading": "为什么它可能脱颖而出",
+          "body": "在沙奈朵常见的环境里，单纯跟着主流打一奖消耗并不一定占优。更有威胁的是用多属性攻击手，让对手的铺场和二奖点变成被惩罚的窗口。",
+          "bullets": [
+            "2-2 土龙轴把友好宝芬从铺花疗环环，扩展成铺抽牌引擎，长轮次比赛更不容易因断资源输掉。",
+            "秘密箱、城镇百货、洛托姆V和森林封印石提高找关键牌能力，牺牲部分传统攻击位来换稳定性。",
+            "多属性攻击手让对手难以只按一种防线规划，尤其适合攻击高占比热门牌的固定展开路线。"
+          ]
+        },
+        {
+          "heading": "今天怎么练",
+          "body": "这套牌的价值不在于立刻照抄 60 张，而在于学习它如何用近期赛事样本反推环境弱点。",
+          "bullets": [
+            "用这套思路练 5 局对沙奈朵：每局记录铁臂膀ex或轰鸣月ex第一次出手的回合，以及这次出手是否改变奖赏卡节奏。",
+            "复盘前两回合：花疗环环、阿克罗玛、土龙节节各抽到了多少资源，是否真的比传统放逐 Box 更稳。",
+            "不要先照抄 60 张。先理解它为本地环境做了什么取舍，再决定你是否也需要这些取舍。"
+          ]
+        }
+      ],
+      "deck_snapshot": {
+        "title": "卡组图片快照",
+        "source": "tcg.mik.moe",
+        "source_url": "https://tcg.mik.moe/decks/list/593481",
+        "import_url": "https://tcg.mik.moe/decks/list/593481",
+        "deck_id": 593481,
+        "deck_code": "ESdGjCVAEymXJmOgK9",
+        "cards": [
+          {
+            "name": "基本恶能量",
+            "count": 3,
+            "type": "Basic Energy",
+            "set_code": "CSVE1C",
+            "card_index": "DAR",
+            "image_url": "https://tcg.mik.moe/static/img/CSVE1C/DAR.png"
+          },
+          {
+            "name": "基本水能量",
+            "count": 3,
+            "type": "Basic Energy",
+            "set_code": "CSVE1C",
+            "card_index": "WAT",
+            "image_url": "https://tcg.mik.moe/static/img/CSVE1C/WAT.png"
+          },
+          {
+            "name": "基本雷能量",
+            "count": 2,
+            "type": "Basic Energy",
+            "set_code": "CSVE1C",
+            "card_index": "LIG",
+            "image_url": "https://tcg.mik.moe/static/img/CSVE1C/LIG.png"
+          },
+          {
+            "name": "交替推车",
+            "count": 4,
+            "type": "Item",
+            "set_code": "CS5DC",
+            "card_index": "116",
+            "image_url": "https://tcg.mik.moe/static/img/CS5DC/116.png"
+          },
+          {
+            "name": "厉害钓竿",
+            "count": 4,
+            "type": "Item",
+            "set_code": "CSV1C",
+            "card_index": "109",
+            "image_url": "https://tcg.mik.moe/static/img/CSV1C/109.png"
+          },
+          {
+            "name": "友好宝芬",
+            "count": 4,
+            "type": "Item",
+            "set_code": "CSV7C",
+            "card_index": "177",
+            "image_url": "https://tcg.mik.moe/static/img/CSV7C/177.png"
+          },
+          {
+            "name": "巢穴球",
+            "count": 4,
+            "type": "Item",
+            "set_code": "CSVH1C",
+            "card_index": "043",
+            "image_url": "https://tcg.mik.moe/static/img/CSVH1C/043.png"
+          },
+          {
+            "name": "幻象之门",
+            "count": 4,
+            "type": "Item",
+            "set_code": "CS6bC",
+            "card_index": "122",
+            "image_url": "https://tcg.mik.moe/static/img/CS6bC/122.png"
+          },
+          {
+            "name": "放逐吸尘器",
+            "count": 2,
+            "type": "Item",
+            "set_code": "CS6bC",
+            "card_index": "123",
+            "image_url": "https://tcg.mik.moe/static/img/CS6bC/123.png"
+          },
+          {
+            "name": "洗翠的沉重球",
+            "count": 1,
+            "type": "Item",
+            "set_code": "CS5.5C",
+            "card_index": "060",
+            "image_url": "https://tcg.mik.moe/static/img/CS5.5C/060.png"
+          },
+          {
+            "name": "秘密箱",
+            "count": 1,
+            "type": "Item",
+            "set_code": "CSV8C",
+            "card_index": "176",
+            "image_url": "https://tcg.mik.moe/static/img/CSV8C/176.png"
+          },
+          {
+            "name": "高级球",
+            "count": 1,
+            "type": "Item",
+            "set_code": "CSV1C",
+            "card_index": "112",
+            "image_url": "https://tcg.mik.moe/static/img/CSV1C/112.png"
+          },
+          {
+            "name": "光辉甲贺忍蛙",
+            "count": 1,
+            "type": "Pokemon",
+            "set_code": "CS6.5C",
+            "card_index": "020",
+            "image_url": "https://tcg.mik.moe/static/img/CS6.5C/020.png"
+          },
+          {
+            "name": "吉雉鸡ex",
+            "count": 1,
+            "type": "Pokemon",
+            "set_code": "CSV8C",
+            "card_index": "135",
+            "image_url": "https://tcg.mik.moe/static/img/CSV8C/135.png"
+          },
+          {
+            "name": "土龙弟弟",
+            "count": 2,
+            "type": "Pokemon",
+            "set_code": "CSV7C",
+            "card_index": "161",
+            "image_url": "https://tcg.mik.moe/static/img/CSV7C/161.png"
+          },
+          {
+            "name": "土龙节节",
+            "count": 2,
+            "type": "Pokemon",
+            "set_code": "CSV7C",
+            "card_index": "162",
+            "image_url": "https://tcg.mik.moe/static/img/CSV7C/162.png"
+          },
+          {
+            "name": "月月熊 赫月ex",
+            "count": 1,
+            "type": "Pokemon",
+            "set_code": "CSV8C",
+            "card_index": "172",
+            "image_url": "https://tcg.mik.moe/static/img/CSV8C/172.png"
+          },
+          {
+            "name": "洛托姆V",
+            "count": 1,
+            "type": "Pokemon",
+            "set_code": "CS6.5C",
+            "card_index": "023",
+            "image_url": "https://tcg.mik.moe/static/img/CS6.5C/023.png"
+          },
+          {
+            "name": "花疗环环",
+            "count": 4,
+            "type": "Pokemon",
+            "set_code": "CS6bC",
+            "card_index": "052",
+            "image_url": "https://tcg.mik.moe/static/img/CS6bC/052.png"
+          },
+          {
+            "name": "轰鸣月ex",
+            "count": 1,
+            "type": "Pokemon",
+            "set_code": "CSV6C",
+            "card_index": "096",
+            "image_url": "https://tcg.mik.moe/static/img/CSV6C/096.png"
+          },
+          {
+            "name": "铁包袱",
+            "count": 1,
+            "type": "Pokemon",
+            "set_code": "CSV6C",
+            "card_index": "042",
+            "image_url": "https://tcg.mik.moe/static/img/CSV6C/042.png"
+          },
+          {
+            "name": "铁臂膀ex",
+            "count": 1,
+            "type": "Pokemon",
+            "set_code": "CSV6C",
+            "card_index": "051",
+            "image_url": "https://tcg.mik.moe/static/img/CSV6C/051.png"
+          },
+          {
+            "name": "雷公V",
+            "count": 1,
+            "type": "Pokemon",
+            "set_code": "CS4DaC",
+            "card_index": "137",
+            "image_url": "https://tcg.mik.moe/static/img/CS4DaC/137.png"
+          },
+          {
+            "name": "城镇百货",
+            "count": 1,
+            "type": "Stadium",
+            "set_code": "CSV5C",
+            "card_index": "128",
+            "image_url": "https://tcg.mik.moe/static/img/CSV5C/128.png"
+          },
+          {
+            "name": "神奥神殿",
+            "count": 1,
+            "type": "Stadium",
+            "set_code": "CS5bC",
+            "card_index": "128",
+            "image_url": "https://tcg.mik.moe/static/img/CS5bC/128.png"
+          },
+          {
+            "name": "杜娟",
+            "count": 1,
+            "type": "Supporter",
+            "set_code": "CS5.5C",
+            "card_index": "065",
+            "image_url": "https://tcg.mik.moe/static/img/CS5.5C/065.png"
+          },
+          {
+            "name": "老大的指令",
+            "count": 1,
+            "type": "Supporter",
+            "set_code": "CSVH1aC",
+            "card_index": "023",
+            "image_url": "https://tcg.mik.moe/static/img/CSVH1aC/023.png"
+          },
+          {
+            "name": "阿克罗玛的实验",
+            "count": 4,
+            "type": "Supporter",
+            "set_code": "CS6bC",
+            "card_index": "125",
+            "image_url": "https://tcg.mik.moe/static/img/CS6bC/125.png"
+          },
+          {
+            "name": "应急果冻",
+            "count": 1,
+            "type": "Tool",
+            "set_code": "CS6.5C",
+            "card_index": "064",
+            "image_url": "https://tcg.mik.moe/static/img/CS6.5C/064.png"
+          },
+          {
+            "name": "森林封印石",
+            "count": 1,
+            "type": "Tool",
+            "set_code": "CS6.5C",
+            "card_index": "066",
+            "image_url": "https://tcg.mik.moe/static/img/CS6.5C/066.png"
+          },
+          {
+            "name": "紧急滑板",
+            "count": 1,
+            "type": "Tool",
+            "set_code": "CSV7C",
+            "card_index": "185",
+            "image_url": "https://tcg.mik.moe/static/img/CSV7C/185.png"
+          }
+        ]
+      },
+      "links": [
+        {
+          "label": "打开可导入卡表",
+          "url": "https://tcg.mik.moe/decks/list/593481"
+        },
+        {
+          "label": "查看其他统计",
+          "url": "https://tcg.mik.moe/decks/247?all=true"
+        },
+        {
+          "label": "查看赛事详情",
+          "url": "https://tcg.mik.moe/tournaments/3098"
+        }
+      ]
+    },
+    "articles": [
+      {
+        "slug": "hangzhou-lost-toolbox",
+        "hero": {
+          "title": "杭州 180 人冠军：非主流放逐 Box 的工具箱化",
+          "deck_name": "非主流放逐 Box",
+          "variant_name": "其他",
+          "tournament": "2026.05.01 · 杭州 · 180 人 · 第 1 名",
+          "thesis": "它不是普通放逐 Box，而是把放逐启动、土龙抽牌和多属性攻击手合在一起的反环境工具箱。"
+        },
+        "source": {
+          "city": "杭州",
+          "date": "2026.05.01",
+          "players": 180,
+          "rank": 1,
+          "format": "FGH-CSV8C"
+        },
+        "sections": [
+          {
+            "heading": "今天的判断",
+            "body": "环境理解不是看谁占比最高就抄谁，而是判断热门卡组把环境推向了哪里。沙奈朵这类卡组占比高时，能稳定惩罚铺场、二奖点和关键进化链的构筑，反而会成为更值得研究的样本。",
+            "bullets": [
+              "样本来自 2026.05.01 杭州 城市赛，参赛人数 180，时间和样本量都足够新。",
+              "冠军牌被系统归到“其他”，这通常意味着它不是标准答案，而是针对环境做过重调的方案。"
+            ]
+          },
+          {
+            "heading": "它和主流放逐 Box 的差异",
+            "body": "主流放逐 Box 往往保留古月鸟、勾魂眼和顶尖捕捉器等一奖节奏组件；这套牌弱化了传统一奖消耗，转向花疗环环加阿克罗玛快速堆放逐，再用铁臂膀ex、轰鸣月ex、雷公V、月月熊ex按对局选择终结方式。",
+            "bullets": [
+              "明显加重的组件：土龙弟弟×2、土龙节节×2、基本恶能量×3、应急果冻×1。",
+              "主动降低或放弃的组件：宝可梦交替、基本超能量、深钵镇、古月鸟。",
+              "这说明它不追求经典放逐 Box 的一奖慢磨，而是追求更稳定地找到关键资源并用高冲击攻击手改变奖赏卡节奏。"
+            ]
+          },
+          {
+            "heading": "为什么它可能脱颖而出",
+            "body": "在沙奈朵常见的环境里，单纯跟着主流打一奖消耗并不一定占优。更有威胁的是用多属性攻击手，让对手的铺场和二奖点变成被惩罚的窗口。",
+            "bullets": [
+              "2-2 土龙轴把友好宝芬从铺花疗环环，扩展成铺抽牌引擎，长轮次比赛更不容易因断资源输掉。",
+              "秘密箱、城镇百货、洛托姆V和森林封印石提高找关键牌能力，牺牲部分传统攻击位来换稳定性。",
+              "多属性攻击手让对手难以只按一种防线规划，尤其适合攻击高占比热门牌的固定展开路线。"
+            ]
+          },
+          {
+            "heading": "今天怎么练",
+            "body": "这套牌的价值不在于立刻照抄 60 张，而在于学习它如何用近期赛事样本反推环境弱点。",
+            "bullets": [
+              "用这套思路练 5 局对沙奈朵：每局记录铁臂膀ex或轰鸣月ex第一次出手的回合，以及这次出手是否改变奖赏卡节奏。",
+              "复盘前两回合：花疗环环、阿克罗玛、土龙节节各抽到了多少资源，是否真的比传统放逐 Box 更稳。",
+              "不要先照抄 60 张。先理解它为本地环境做了什么取舍，再决定你是否也需要这些取舍。"
+            ]
+          }
+        ],
+        "deck_snapshot": {
+          "title": "卡组图片快照",
+          "source": "tcg.mik.moe",
+          "source_url": "https://tcg.mik.moe/decks/list/593481",
+          "import_url": "https://tcg.mik.moe/decks/list/593481",
+          "deck_id": 593481,
+          "deck_code": "ESdGjCVAEymXJmOgK9",
+          "cards": [
+            {
+              "name": "基本恶能量",
+              "count": 3,
+              "type": "Basic Energy",
+              "set_code": "CSVE1C",
+              "card_index": "DAR",
+              "image_url": "https://tcg.mik.moe/static/img/CSVE1C/DAR.png"
+            },
+            {
+              "name": "基本水能量",
+              "count": 3,
+              "type": "Basic Energy",
+              "set_code": "CSVE1C",
+              "card_index": "WAT",
+              "image_url": "https://tcg.mik.moe/static/img/CSVE1C/WAT.png"
+            },
+            {
+              "name": "基本雷能量",
+              "count": 2,
+              "type": "Basic Energy",
+              "set_code": "CSVE1C",
+              "card_index": "LIG",
+              "image_url": "https://tcg.mik.moe/static/img/CSVE1C/LIG.png"
+            },
+            {
+              "name": "交替推车",
+              "count": 4,
+              "type": "Item",
+              "set_code": "CS5DC",
+              "card_index": "116",
+              "image_url": "https://tcg.mik.moe/static/img/CS5DC/116.png"
+            },
+            {
+              "name": "厉害钓竿",
+              "count": 4,
+              "type": "Item",
+              "set_code": "CSV1C",
+              "card_index": "109",
+              "image_url": "https://tcg.mik.moe/static/img/CSV1C/109.png"
+            },
+            {
+              "name": "友好宝芬",
+              "count": 4,
+              "type": "Item",
+              "set_code": "CSV7C",
+              "card_index": "177",
+              "image_url": "https://tcg.mik.moe/static/img/CSV7C/177.png"
+            },
+            {
+              "name": "巢穴球",
+              "count": 4,
+              "type": "Item",
+              "set_code": "CSVH1C",
+              "card_index": "043",
+              "image_url": "https://tcg.mik.moe/static/img/CSVH1C/043.png"
+            },
+            {
+              "name": "幻象之门",
+              "count": 4,
+              "type": "Item",
+              "set_code": "CS6bC",
+              "card_index": "122",
+              "image_url": "https://tcg.mik.moe/static/img/CS6bC/122.png"
+            },
+            {
+              "name": "放逐吸尘器",
+              "count": 2,
+              "type": "Item",
+              "set_code": "CS6bC",
+              "card_index": "123",
+              "image_url": "https://tcg.mik.moe/static/img/CS6bC/123.png"
+            },
+            {
+              "name": "洗翠的沉重球",
+              "count": 1,
+              "type": "Item",
+              "set_code": "CS5.5C",
+              "card_index": "060",
+              "image_url": "https://tcg.mik.moe/static/img/CS5.5C/060.png"
+            },
+            {
+              "name": "秘密箱",
+              "count": 1,
+              "type": "Item",
+              "set_code": "CSV8C",
+              "card_index": "176",
+              "image_url": "https://tcg.mik.moe/static/img/CSV8C/176.png"
+            },
+            {
+              "name": "高级球",
+              "count": 1,
+              "type": "Item",
+              "set_code": "CSV1C",
+              "card_index": "112",
+              "image_url": "https://tcg.mik.moe/static/img/CSV1C/112.png"
+            },
+            {
+              "name": "光辉甲贺忍蛙",
+              "count": 1,
+              "type": "Pokemon",
+              "set_code": "CS6.5C",
+              "card_index": "020",
+              "image_url": "https://tcg.mik.moe/static/img/CS6.5C/020.png"
+            },
+            {
+              "name": "吉雉鸡ex",
+              "count": 1,
+              "type": "Pokemon",
+              "set_code": "CSV8C",
+              "card_index": "135",
+              "image_url": "https://tcg.mik.moe/static/img/CSV8C/135.png"
+            },
+            {
+              "name": "土龙弟弟",
+              "count": 2,
+              "type": "Pokemon",
+              "set_code": "CSV7C",
+              "card_index": "161",
+              "image_url": "https://tcg.mik.moe/static/img/CSV7C/161.png"
+            },
+            {
+              "name": "土龙节节",
+              "count": 2,
+              "type": "Pokemon",
+              "set_code": "CSV7C",
+              "card_index": "162",
+              "image_url": "https://tcg.mik.moe/static/img/CSV7C/162.png"
+            },
+            {
+              "name": "月月熊 赫月ex",
+              "count": 1,
+              "type": "Pokemon",
+              "set_code": "CSV8C",
+              "card_index": "172",
+              "image_url": "https://tcg.mik.moe/static/img/CSV8C/172.png"
+            },
+            {
+              "name": "洛托姆V",
+              "count": 1,
+              "type": "Pokemon",
+              "set_code": "CS6.5C",
+              "card_index": "023",
+              "image_url": "https://tcg.mik.moe/static/img/CS6.5C/023.png"
+            },
+            {
+              "name": "花疗环环",
+              "count": 4,
+              "type": "Pokemon",
+              "set_code": "CS6bC",
+              "card_index": "052",
+              "image_url": "https://tcg.mik.moe/static/img/CS6bC/052.png"
+            },
+            {
+              "name": "轰鸣月ex",
+              "count": 1,
+              "type": "Pokemon",
+              "set_code": "CSV6C",
+              "card_index": "096",
+              "image_url": "https://tcg.mik.moe/static/img/CSV6C/096.png"
+            },
+            {
+              "name": "铁包袱",
+              "count": 1,
+              "type": "Pokemon",
+              "set_code": "CSV6C",
+              "card_index": "042",
+              "image_url": "https://tcg.mik.moe/static/img/CSV6C/042.png"
+            },
+            {
+              "name": "铁臂膀ex",
+              "count": 1,
+              "type": "Pokemon",
+              "set_code": "CSV6C",
+              "card_index": "051",
+              "image_url": "https://tcg.mik.moe/static/img/CSV6C/051.png"
+            },
+            {
+              "name": "雷公V",
+              "count": 1,
+              "type": "Pokemon",
+              "set_code": "CS4DaC",
+              "card_index": "137",
+              "image_url": "https://tcg.mik.moe/static/img/CS4DaC/137.png"
+            },
+            {
+              "name": "城镇百货",
+              "count": 1,
+              "type": "Stadium",
+              "set_code": "CSV5C",
+              "card_index": "128",
+              "image_url": "https://tcg.mik.moe/static/img/CSV5C/128.png"
+            },
+            {
+              "name": "神奥神殿",
+              "count": 1,
+              "type": "Stadium",
+              "set_code": "CS5bC",
+              "card_index": "128",
+              "image_url": "https://tcg.mik.moe/static/img/CS5bC/128.png"
+            },
+            {
+              "name": "杜娟",
+              "count": 1,
+              "type": "Supporter",
+              "set_code": "CS5.5C",
+              "card_index": "065",
+              "image_url": "https://tcg.mik.moe/static/img/CS5.5C/065.png"
+            },
+            {
+              "name": "老大的指令",
+              "count": 1,
+              "type": "Supporter",
+              "set_code": "CSVH1aC",
+              "card_index": "023",
+              "image_url": "https://tcg.mik.moe/static/img/CSVH1aC/023.png"
+            },
+            {
+              "name": "阿克罗玛的实验",
+              "count": 4,
+              "type": "Supporter",
+              "set_code": "CS6bC",
+              "card_index": "125",
+              "image_url": "https://tcg.mik.moe/static/img/CS6bC/125.png"
+            },
+            {
+              "name": "应急果冻",
+              "count": 1,
+              "type": "Tool",
+              "set_code": "CS6.5C",
+              "card_index": "064",
+              "image_url": "https://tcg.mik.moe/static/img/CS6.5C/064.png"
+            },
+            {
+              "name": "森林封印石",
+              "count": 1,
+              "type": "Tool",
+              "set_code": "CS6.5C",
+              "card_index": "066",
+              "image_url": "https://tcg.mik.moe/static/img/CS6.5C/066.png"
+            },
+            {
+              "name": "紧急滑板",
+              "count": 1,
+              "type": "Tool",
+              "set_code": "CSV7C",
+              "card_index": "185",
+              "image_url": "https://tcg.mik.moe/static/img/CSV7C/185.png"
+            }
+          ]
+        },
+        "links": [
+          {
+            "label": "打开可导入卡表",
+            "url": "https://tcg.mik.moe/decks/list/593481"
+          },
+          {
+            "label": "查看其他统计",
+            "url": "https://tcg.mik.moe/decks/247?all=true"
+          },
+          {
+            "label": "查看赛事详情",
+            "url": "https://tcg.mik.moe/tournaments/3098"
+          }
+        ]
+      },
+      {
+        "slug": "xian-dragapult-dusknoir",
+        "hero": {
+          "title": "西安 122 人冠军：多龙黑夜魔灵把伤害变成选择题",
+          "deck_name": "多龙巴鲁托 黑夜魔灵",
+          "variant_name": "多龙巴鲁托 黑夜魔灵",
+          "tournament": "2026.05.01 · 西安 · 122 人 · 第 1 名",
+          "thesis": "这套牌的重点不是单纯提高爆发，而是用多龙的铺伤和黑夜魔灵的自爆伤害，把对手的进化链和奖赏卡规划同时打乱。"
+        },
+        "source": {
+          "city": "西安",
+          "date": "2026.05.01",
+          "players": 122,
+          "rank": 1,
+          "format": "FGH-CSV8C"
+        },
+        "sections": [
+          {
+            "heading": "今天的判断",
+            "body": "多龙巴鲁托黑夜魔灵不是单纯靠二阶段牌体质取胜，而是用伤害指示物制造多个同时要回答的问题。沙奈朵、多龙和各类二阶段牌变多时，能把伤害分散到备战区并强行改写奖赏卡节奏的牌，会更容易逼对手犯错。",
+            "bullets": [
+              "样本来自 2026.05.01 西安 城市赛，参赛人数 122，冠军样本足够新。",
+              "它击穿的是一个有沙奈朵和喷火龙追赶的环境，因此重点不是“多龙很强”，而是它如何让进化牌失去舒服展开的回合。"
+            ]
+          },
+          {
+            "heading": "构筑上最值得看哪里",
+            "body": "这套牌保留了派帕、洛托姆V、森林封印石的稳定轴，但黑夜魔灵线没有无限堆厚，而是用 2-1-2 形成够用的爆点。它更像一套能稳定启动的多龙，而不是为了黑夜魔灵牺牲全部一致性的极端构筑。",
+            "bullets": [
+              "比主流同型更重视：夜巡灵×2、月月熊 赫月ex×1、老大的指令×2、弗图博士的剧本×1。",
+              "相对降低或放弃：部分传统一奖组件。",
+              "光辉胡地让多龙铺伤更有转化率，配合黑夜魔灵自爆伤害，可以把原本差一点的击倒线变成真实威胁。"
+            ]
+          },
+          {
+            "heading": "为什么它适合打热门环境",
+            "body": "沙奈朵和其他进化牌都需要在备战区保留关键组件。多龙的铺伤会逼对手提前进化、提前治疗或改变站位，而黑夜魔灵则让这些被铺过伤害的目标随时可能变成奖赏卡。",
+            "bullets": [
+              "对手如果铺得慢，会被多龙正面攻击拖住节奏；铺得快，又会给备战区伤害和黑夜魔灵制造目标。",
+              "月月熊赫月ex和老大的指令提高了终盘转换能力，说明这套牌重视最后两张奖赏卡怎么收。",
+              "练这套时不要只练第一只多龙怎么立起来，更要练“哪一回合该用黑夜魔灵换奖赏卡节奏”。"
+            ]
+          },
+          {
+            "heading": "今天怎么练",
+            "body": "训练重点是伤害计算和奖赏卡路径，而不是机械展开。",
+            "bullets": [
+              "练 5 局对沙奈朵：每局记录黑夜魔灵第一次自爆前，备战区已经有几个可被收掉的目标。",
+              "练 3 局对猛雷鼓或密勒顿：测试自己能否在高速度压力下仍然稳定立起第一只多龙。",
+              "复盘时只问一个问题：这局输是因为没有展开，还是因为伤害指示物没有放到会变成奖赏卡的位置。"
+            ]
+          }
+        ],
+        "deck_snapshot": {
+          "title": "卡组图片快照",
+          "source": "tcg.mik.moe",
+          "source_url": "https://tcg.mik.moe/decks/list/598722",
+          "import_url": "https://tcg.mik.moe/decks/list/598722",
+          "deck_id": 598722,
+          "deck_code": "SGg6TH89gJaSBA21EL",
+          "cards": [
+            {
+              "name": "基本火能量",
+              "count": 3,
+              "type": "Basic Energy",
+              "set_code": "CSVE1C",
+              "card_index": "FIR",
+              "image_url": "https://tcg.mik.moe/static/img/CSVE1C/FIR.png"
+            },
+            {
+              "name": "基本超能量",
+              "count": 3,
+              "type": "Basic Energy",
+              "set_code": "CSVE1C",
+              "card_index": "PSY",
+              "image_url": "https://tcg.mik.moe/static/img/CSVE1C/PSY.png"
+            },
+            {
+              "name": "友好宝芬",
+              "count": 4,
+              "type": "Item",
+              "set_code": "CSV7C",
+              "card_index": "177",
+              "image_url": "https://tcg.mik.moe/static/img/CSV7C/177.png"
+            },
+            {
+              "name": "反击捕捉器",
+              "count": 2,
+              "type": "Item",
+              "set_code": "CSV6C",
+              "card_index": "114",
+              "image_url": "https://tcg.mik.moe/static/img/CSV6C/114.png"
+            },
+            {
+              "name": "夜间担架",
+              "count": 2,
+              "type": "Item",
+              "set_code": "CSV8C",
+              "card_index": "183",
+              "image_url": "https://tcg.mik.moe/static/img/CSV8C/183.png"
+            },
+            {
+              "name": "大地容器",
+              "count": 1,
+              "type": "Item",
+              "set_code": "CSV6C",
+              "card_index": "115",
+              "image_url": "https://tcg.mik.moe/static/img/CSV6C/115.png"
+            },
+            {
+              "name": "宝可梦交替",
+              "count": 1,
+              "type": "Item",
+              "set_code": "CSV1C",
+              "card_index": "113",
+              "image_url": "https://tcg.mik.moe/static/img/CSV1C/113.png"
+            },
+            {
+              "name": "巢穴球",
+              "count": 3,
+              "type": "Item",
+              "set_code": "CSVH1C",
+              "card_index": "043",
+              "image_url": "https://tcg.mik.moe/static/img/CSVH1C/043.png"
+            },
+            {
+              "name": "放逐吸尘器",
+              "count": 1,
+              "type": "Item",
+              "set_code": "CS6bC",
+              "card_index": "123",
+              "image_url": "https://tcg.mik.moe/static/img/CS6bC/123.png"
+            },
+            {
+              "name": "神奇糖果",
+              "count": 4,
+              "type": "Item",
+              "set_code": "CSVH1C",
+              "card_index": "045",
+              "image_url": "https://tcg.mik.moe/static/img/CSVH1C/045.png"
+            },
+            {
+              "name": "高级球",
+              "count": 3,
+              "type": "Item",
+              "set_code": "CSV1C",
+              "card_index": "112",
+              "image_url": "https://tcg.mik.moe/static/img/CSV1C/112.png"
+            },
+            {
+              "name": "光辉胡地",
+              "count": 1,
+              "type": "Pokemon",
+              "set_code": "CS6bC",
+              "card_index": "028",
+              "image_url": "https://tcg.mik.moe/static/img/CS6bC/028.png"
+            },
+            {
+              "name": "吉雉鸡ex",
+              "count": 1,
+              "type": "Pokemon",
+              "set_code": "CSV8C",
+              "card_index": "135",
+              "image_url": "https://tcg.mik.moe/static/img/CSV8C/135.png"
+            },
+            {
+              "name": "多龙奇",
+              "count": 3,
+              "type": "Pokemon",
+              "set_code": "CSV8C",
+              "card_index": "158",
+              "image_url": "https://tcg.mik.moe/static/img/CSV8C/158.png"
+            },
+            {
+              "name": "多龙巴鲁托ex",
+              "count": 2,
+              "type": "Pokemon",
+              "set_code": "CSV8C",
+              "card_index": "159",
+              "image_url": "https://tcg.mik.moe/static/img/CSV8C/159.png"
+            },
+            {
+              "name": "多龙梅西亚",
+              "count": 4,
+              "type": "Pokemon",
+              "set_code": "CSV8C",
+              "card_index": "157",
+              "image_url": "https://tcg.mik.moe/static/img/CSV8C/157.png"
+            },
+            {
+              "name": "夜巡灵",
+              "count": 2,
+              "type": "Pokemon",
+              "set_code": "CSV8C",
+              "card_index": "081",
+              "image_url": "https://tcg.mik.moe/static/img/CSV8C/081.png"
+            },
+            {
+              "name": "彷徨夜灵",
+              "count": 1,
+              "type": "Pokemon",
+              "set_code": "CSV8C",
+              "card_index": "082",
+              "image_url": "https://tcg.mik.moe/static/img/CSV8C/082.png"
+            },
+            {
+              "name": "月月熊 赫月ex",
+              "count": 1,
+              "type": "Pokemon",
+              "set_code": "CSV8C",
+              "card_index": "172",
+              "image_url": "https://tcg.mik.moe/static/img/CSV8C/172.png"
+            },
+            {
+              "name": "洛托姆V",
+              "count": 1,
+              "type": "Pokemon",
+              "set_code": "CS6.5C",
+              "card_index": "023",
+              "image_url": "https://tcg.mik.moe/static/img/CS6.5C/023.png"
+            },
+            {
+              "name": "霓虹鱼V",
+              "count": 1,
+              "type": "Pokemon",
+              "set_code": "CS5bC",
+              "card_index": "049",
+              "image_url": "https://tcg.mik.moe/static/img/CS5bC/049.png"
+            },
+            {
+              "name": "黑夜魔灵",
+              "count": 2,
+              "type": "Pokemon",
+              "set_code": "CSV8C",
+              "card_index": "083",
+              "image_url": "https://tcg.mik.moe/static/img/CSV8C/083.png"
+            },
+            {
+              "name": "奇树",
+              "count": 2,
+              "type": "Supporter",
+              "set_code": "CSV3C",
+              "card_index": "123",
+              "image_url": "https://tcg.mik.moe/static/img/CSV3C/123.png"
+            },
+            {
+              "name": "弗图博士的剧本",
+              "count": 1,
+              "type": "Supporter",
+              "set_code": "CSV6C",
+              "card_index": "125",
+              "image_url": "https://tcg.mik.moe/static/img/CSV6C/125.png"
+            },
+            {
+              "name": "杜娟",
+              "count": 1,
+              "type": "Supporter",
+              "set_code": "CS5.5C",
+              "card_index": "065",
+              "image_url": "https://tcg.mik.moe/static/img/CS5.5C/065.png"
+            },
+            {
+              "name": "派帕",
+              "count": 4,
+              "type": "Supporter",
+              "set_code": "CSV1C",
+              "card_index": "123",
+              "image_url": "https://tcg.mik.moe/static/img/CSV1C/123.png"
+            },
+            {
+              "name": "老大的指令",
+              "count": 2,
+              "type": "Supporter",
+              "set_code": "CSVH1aC",
+              "card_index": "023",
+              "image_url": "https://tcg.mik.moe/static/img/CSVH1aC/023.png"
+            },
+            {
+              "name": "招式学习器 进化",
+              "count": 1,
+              "type": "Tool",
+              "set_code": "CSV5C",
+              "card_index": "119",
+              "image_url": "https://tcg.mik.moe/static/img/CSV5C/119.png"
+            },
+            {
+              "name": "森林封印石",
+              "count": 1,
+              "type": "Tool",
+              "set_code": "CS6.5C",
+              "card_index": "066",
+              "image_url": "https://tcg.mik.moe/static/img/CS6.5C/066.png"
+            },
+            {
+              "name": "璀璨结晶",
+              "count": 1,
+              "type": "Tool",
+              "set_code": "CSV8C",
+              "card_index": "186",
+              "image_url": "https://tcg.mik.moe/static/img/CSV8C/186.png"
+            },
+            {
+              "name": "紧急滑板",
+              "count": 1,
+              "type": "Tool",
+              "set_code": "CSV7C",
+              "card_index": "185",
+              "image_url": "https://tcg.mik.moe/static/img/CSV7C/185.png"
+            }
+          ]
+        },
+        "links": [
+          {
+            "label": "打开可导入卡表",
+            "url": "https://tcg.mik.moe/decks/list/598722"
+          },
+          {
+            "label": "查看多龙巴鲁托 黑夜魔灵统计",
+            "url": "https://tcg.mik.moe/decks/332?all=true"
+          },
+          {
+            "label": "查看赛事详情",
+            "url": "https://tcg.mik.moe/tournaments/3093"
+          }
+        ]
+      },
+      {
+        "slug": "chongqing-raging-bolt-ogerpon",
+        "hero": {
+          "title": "重庆冠军猛雷鼓：速度牌也可以带针对位",
+          "deck_name": "猛雷鼓 厄诡椪",
+          "variant_name": "猛雷鼓 厄诡椪",
+          "tournament": "2026.05.01 · 重庆 · 76 人 · 第 1 名",
+          "thesis": "猛雷鼓的价值不只是快，而是在稳定能量循环之外加入阻碍之塔和多攻击手，让热门进化牌来不及舒服展开。"
+        },
+        "source": {
+          "city": "重庆",
+          "date": "2026.05.01",
+          "players": 76,
+          "rank": 1,
+          "format": "FGH-CSV8C"
+        },
+        "sections": [
+          {
+            "heading": "今天的判断",
+            "body": "猛雷鼓厄诡椪是典型快攻，但这份重庆冠军样本的价值在于它没有只堆速度。它在主引擎之外加入阻碍之塔、宝可梦捕捉器和沙铁皮/爬地翅这样的分支攻击手，让对手不容易只按一种防线规划。",
+            "bullets": [
+              "样本来自 2026.05.01 重庆 城市赛，参赛人数 76，冠军牌能说明近期快攻仍然有压制力。",
+              "沙奈朵占比高时，能在对手完成资源循环前连续制造二奖压力的牌，天然会提高环境价值。"
+            ]
+          },
+          {
+            "heading": "构筑上最值得看哪里",
+            "body": "它保持 4 猛雷鼓ex、3 厄诡椪碧草面具ex和 4 奥琳博士的气魄的主轴，但没有把每个位置都投入一致性牌。部分位置被拿来做干扰和覆盖面，这让它更像一套有针对意识的快攻。",
+            "bullets": [
+              "比主流同型更重视：爬地翅×1、宝可梦捕捉器×3、阻碍之塔×1。",
+              "相对降低或放弃：高级球。",
+              "3 宝可梦捕捉器看起来有波动，但在快攻牌里，它的意义是把对手尚未准备好的二奖点提前拉上来。"
+            ]
+          },
+          {
+            "heading": "为什么它可能赢在近期环境",
+            "body": "如果环境里沙奈朵、多龙、帕路奇亚黑夜魔灵都需要两回合以上建立盘面，猛雷鼓就能用前两回合的高伤害迫使对手交资源防守。阻碍之塔还会让依赖工具的卡组付出额外成本。",
+            "bullets": [
+              "能量回收和大地容器保证攻击续航，避免快攻只打一波。",
+              "沙铁皮、爬地翅给了不同弱点和奖赏卡交换路线，减少被单一防守策略锁死的风险。",
+              "它不是教你无脑抢攻，而是教你在快攻里保留足够的针对位。"
+            ]
+          },
+          {
+            "heading": "今天怎么练",
+            "body": "训练重点是前两回合决策，以及每一张干扰牌是否真的帮你多拿了一张奖赏卡。",
+            "bullets": [
+              "练 5 局后攻：记录第一回合是否能形成真实击倒压力，不能的话缺的是能量、支援者还是换位。",
+              "每次使用宝可梦捕捉器都记录目标，如果目标不是二奖点或关键系统牌，就复盘这次投掷是否值得。",
+              "对沙奈朵练习时，重点测试能否在对手稳定启动前连续处理拉鲁拉丝/奇鲁莉安线。"
+            ]
+          }
+        ],
+        "deck_snapshot": {
+          "title": "卡组图片快照",
+          "source": "tcg.mik.moe",
+          "source_url": "https://tcg.mik.moe/decks/list/599382",
+          "import_url": "https://tcg.mik.moe/decks/list/599382",
+          "deck_id": 599382,
+          "deck_code": "VWdpQNMOEkRXRZ3tom",
+          "cards": [
+            {
+              "name": "基本斗能量",
+              "count": 3,
+              "type": "Basic Energy",
+              "set_code": "CSVE1C",
+              "card_index": "FIG",
+              "image_url": "https://tcg.mik.moe/static/img/CSVE1C/FIG.png"
+            },
+            {
+              "name": "基本草能量",
+              "count": 6,
+              "type": "Basic Energy",
+              "set_code": "CSVE1C",
+              "card_index": "GRA",
+              "image_url": "https://tcg.mik.moe/static/img/CSVE1C/GRA.png"
+            },
+            {
+              "name": "基本雷能量",
+              "count": 3,
+              "type": "Basic Energy",
+              "set_code": "CSVE1C",
+              "card_index": "LIG",
+              "image_url": "https://tcg.mik.moe/static/img/CSVE1C/LIG.png"
+            },
+            {
+              "name": "交替推车",
+              "count": 2,
+              "type": "Item",
+              "set_code": "CS5DC",
+              "card_index": "116",
+              "image_url": "https://tcg.mik.moe/static/img/CS5DC/116.png"
+            },
+            {
+              "name": "健行鞋",
+              "count": 3,
+              "type": "Item",
+              "set_code": "CS6.5C",
+              "card_index": "063",
+              "image_url": "https://tcg.mik.moe/static/img/CS6.5C/063.png"
+            },
+            {
+              "name": "夜间担架",
+              "count": 2,
+              "type": "Item",
+              "set_code": "CSV8C",
+              "card_index": "183",
+              "image_url": "https://tcg.mik.moe/static/img/CSV8C/183.png"
+            },
+            {
+              "name": "大地容器",
+              "count": 4,
+              "type": "Item",
+              "set_code": "CSV6C",
+              "card_index": "115",
+              "image_url": "https://tcg.mik.moe/static/img/CSV6C/115.png"
+            },
+            {
+              "name": "宝可梦捕捉器",
+              "count": 3,
+              "type": "Item",
+              "set_code": "CSVH1C",
+              "card_index": "047",
+              "image_url": "https://tcg.mik.moe/static/img/CSVH1C/047.png"
+            },
+            {
+              "name": "宝可装置3.0",
+              "count": 3,
+              "type": "Item",
+              "set_code": "CSV2C",
+              "card_index": "113",
+              "image_url": "https://tcg.mik.moe/static/img/CSV2C/113.png"
+            },
+            {
+              "name": "巢穴球",
+              "count": 4,
+              "type": "Item",
+              "set_code": "CSVH1C",
+              "card_index": "043",
+              "image_url": "https://tcg.mik.moe/static/img/CSVH1C/043.png"
+            },
+            {
+              "name": "放逐吸尘器",
+              "count": 1,
+              "type": "Item",
+              "set_code": "CS6bC",
+              "card_index": "123",
+              "image_url": "https://tcg.mik.moe/static/img/CS6bC/123.png"
+            },
+            {
+              "name": "朋友手册",
+              "count": 1,
+              "type": "Item",
+              "set_code": "CSV1C",
+              "card_index": "111",
+              "image_url": "https://tcg.mik.moe/static/img/CSV1C/111.png"
+            },
+            {
+              "name": "能量回收",
+              "count": 3,
+              "type": "Item",
+              "set_code": "CSVH1C",
+              "card_index": "034",
+              "image_url": "https://tcg.mik.moe/static/img/CSVH1C/034.png"
+            },
+            {
+              "name": "顶尖捕捉器",
+              "count": 1,
+              "type": "Item",
+              "set_code": "CSV7C",
+              "card_index": "180",
+              "image_url": "https://tcg.mik.moe/static/img/CSV7C/180.png"
+            },
+            {
+              "name": "光辉甲贺忍蛙",
+              "count": 1,
+              "type": "Pokemon",
+              "set_code": "CS6.5C",
+              "card_index": "020",
+              "image_url": "https://tcg.mik.moe/static/img/CS6.5C/020.png"
+            },
+            {
+              "name": "厄诡椪 碧草面具ex",
+              "count": 3,
+              "type": "Pokemon",
+              "set_code": "CSV8C",
+              "card_index": "028",
+              "image_url": "https://tcg.mik.moe/static/img/CSV8C/028.png"
+            },
+            {
+              "name": "吉雉鸡ex",
+              "count": 1,
+              "type": "Pokemon",
+              "set_code": "CSV8C",
+              "card_index": "135",
+              "image_url": "https://tcg.mik.moe/static/img/CSV8C/135.png"
+            },
+            {
+              "name": "怒鹦哥ex",
+              "count": 1,
+              "type": "Pokemon",
+              "set_code": "CSV2C",
+              "card_index": "105",
+              "image_url": "https://tcg.mik.moe/static/img/CSV2C/105.png"
+            },
+            {
+              "name": "沙铁皮",
+              "count": 1,
+              "type": "Pokemon",
+              "set_code": "CSV7C",
+              "card_index": "132",
+              "image_url": "https://tcg.mik.moe/static/img/CSV7C/132.png"
+            },
+            {
+              "name": "爬地翅",
+              "count": 1,
+              "type": "Pokemon",
+              "set_code": "CSV6C",
+              "card_index": "082",
+              "image_url": "https://tcg.mik.moe/static/img/CSV6C/082.png"
+            },
+            {
+              "name": "猛雷鼓ex",
+              "count": 4,
+              "type": "Pokemon",
+              "set_code": "CSV7C",
+              "card_index": "154",
+              "image_url": "https://tcg.mik.moe/static/img/CSV7C/154.png"
+            },
+            {
+              "name": "阻碍之塔",
+              "count": 1,
+              "type": "Stadium",
+              "set_code": "CSV8C",
+              "card_index": "203",
+              "image_url": "https://tcg.mik.moe/static/img/CSV8C/203.png"
+            },
+            {
+              "name": "奇树",
+              "count": 1,
+              "type": "Supporter",
+              "set_code": "CSV3C",
+              "card_index": "123",
+              "image_url": "https://tcg.mik.moe/static/img/CSV3C/123.png"
+            },
+            {
+              "name": "奥琳博士的气魄",
+              "count": 4,
+              "type": "Supporter",
+              "set_code": "CSV6C",
+              "card_index": "121",
+              "image_url": "https://tcg.mik.moe/static/img/CSV6C/121.png"
+            },
+            {
+              "name": "老大的指令",
+              "count": 1,
+              "type": "Supporter",
+              "set_code": "CSVH1aC",
+              "card_index": "023",
+              "image_url": "https://tcg.mik.moe/static/img/CSVH1aC/023.png"
+            },
+            {
+              "name": "勇气护符",
+              "count": 2,
+              "type": "Tool",
+              "set_code": "CSV1C",
+              "card_index": "118",
+              "image_url": "https://tcg.mik.moe/static/img/CSV1C/118.png"
+            }
+          ]
+        },
+        "links": [
+          {
+            "label": "打开可导入卡表",
+            "url": "https://tcg.mik.moe/decks/list/599382"
+          },
+          {
+            "label": "查看猛雷鼓 厄诡椪统计",
+            "url": "https://tcg.mik.moe/decks/333?all=true"
+          },
+          {
+            "label": "查看赛事详情",
+            "url": "https://tcg.mik.moe/tournaments/3108"
+          }
+        ]
+      }
+    ]
+  },
+  "sources": [
+    {
+      "name": "Cryst's Cards Database",
+      "url": "https://tcg.mik.moe/decks",
+      "note": "第三方简中 PTCG 环境、赛事与卡表统计，作为环境解读的主要数据源。"
+    }
+  ],
+  "notices": [
+    "环境与赛事数据来自第三方统计，可能与官方最终结果存在差异。",
+    "卡组导入以游戏内卡组管理的 tcg.mik.moe 链接解析能力为准。"
+  ]
+}

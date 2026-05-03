@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PTCG Deck Agent 环境教练</title>
+    <meta
+      name="description"
+      content="PTCG Deck Agent 的 AI 环境教练页，每日生成一份可导入游戏练习的简中 PTCG 环境作业。"
+    />
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./styles.css?v=coach-import" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <nav class="topbar" aria-label="页面导航">
+          <a class="brand" href="./" aria-label="PTCG Deck Agent 环境教练首页">
+            <span class="brand-mark">PTCG</span>
+            <span>
+              <strong>环境教练</strong>
+              <small>Daily Coach Board</small>
+            </span>
+          </a>
+          <div class="topbar-links">
+            <a href="#environment">今日任务</a>
+          </div>
+        </nav>
+
+        <section class="coach-card" aria-labelledby="briefing-title">
+          <div class="coach-avatar" aria-hidden="true">
+            <span>AI</span>
+          </div>
+          <div class="coach-copy">
+            <p id="briefing-name" class="eyebrow">环境解读</p>
+            <h1 id="briefing-title">正在生成今日环境作业...</h1>
+            <p id="briefing-message" class="lead">教练正在读取近期比赛和卡组统计。</p>
+          </div>
+          <dl class="generated-panel">
+            <div>
+              <dt>更新节奏</dt>
+              <dd id="updated-label">每日自动生成</dd>
+            </div>
+            <div>
+              <dt>数据时间</dt>
+              <dd id="generated-at">本地预览</dd>
+            </div>
+            <div>
+              <dt>当前格式</dt>
+              <dd id="format-label">同步中</dd>
+            </div>
+          </dl>
+        </section>
+      </header>
+
+      <main>
+        <section id="environment" class="section-block environment-section">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Daily Homework</p>
+              <h2>今日环境作业</h2>
+            </div>
+            <div id="briefing-links" class="link-row"></div>
+          </div>
+          <div id="source-signals" class="signal-grid" aria-live="polite"></div>
+          <article id="environment-article" class="article-shell"></article>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js?v=coach-import" defer></script>
+  </body>
+</html>
