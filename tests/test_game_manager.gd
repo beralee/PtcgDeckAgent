@@ -203,6 +203,30 @@ func test_deck_editor_return_context_is_one_shot() -> String:
 	])
 
 
+func test_desktop_window_size_preserves_windows_target_and_fits_small_screens() -> String:
+	var manager: Node = _load_game_manager_script().new()
+	var normal_size: Vector2i = manager.call("_fit_desktop_window_size", Vector2i(1600, 900), Vector2i(1920, 1080))
+	var small_size: Vector2i = manager.call("_fit_desktop_window_size", Vector2i(1600, 900), Vector2i(1366, 768))
+	var centered: Vector2i = manager.call("_center_desktop_window_position", Vector2i(1600, 900), Rect2i(Vector2i(0, 0), Vector2i(1920, 1080)))
+
+	return run_checks([
+		assert_eq(normal_size, Vector2i(1600, 900), "Large screens should keep the Windows-sized 1600x900 window"),
+		assert_eq(small_size, Vector2i(1280, 720), "Small desktop screens should get the largest fitting 16:9 window"),
+		assert_eq(centered, Vector2i(160, 90), "Desktop window should be centered in the usable screen area"),
+	])
+
+
+func test_desktop_window_startup_maximizes_on_macos_only() -> String:
+	var manager: Node = _load_game_manager_script().new()
+
+	return run_checks([
+		assert_true(bool(manager.call("_should_maximize_desktop_window", "macOS")), "macOS builds should start maximized to avoid tiny Retina startup windows"),
+		assert_true(bool(manager.call("_should_maximize_desktop_window", "OSX")), "Older macOS platform name should also be treated as macOS"),
+		assert_false(bool(manager.call("_should_maximize_desktop_window", "Windows")), "Windows should keep the configured 1600x900 startup size"),
+		assert_false(bool(manager.call("_should_maximize_desktop_window", "Linux")), "Linux should keep the configured 1600x900 startup size"),
+	])
+
+
 func test_resolve_selected_battle_deck_prefers_ai_deck_for_vs_ai_slot() -> String:
 	var test_deck_id := 990001
 	var previous_ids := GameManager.selected_deck_ids.duplicate()
