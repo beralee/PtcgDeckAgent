@@ -196,6 +196,7 @@ func _make_battle_scene_stub() -> Control:
 	battle_scene.set("_my_deck_hud_value", Label.new())
 	battle_scene.set("_my_discard_hud_value", Label.new())
 	battle_scene.set("_btn_end_turn", Button.new())
+	battle_scene.set("_btn_back", Button.new())
 	battle_scene.set("_btn_attack_vfx_preview", Button.new())
 	battle_scene.set("_btn_ai_advice", Button.new())
 	battle_scene.set("_btn_battle_discuss_ai", Button.new())
@@ -549,6 +550,54 @@ func test_battle_scene_includes_zeus_help_button() -> String:
 	return run_checks([
 		assert_true(zeus_button is Button, "BattleScene 顶栏应包含宙斯帮我按钮"),
 		assert_true(back_button is Button, "BattleScene 顶栏应保留退出游戏按钮"),
+	])
+
+
+func test_battle_scene_top_actions_match_end_turn_row_height() -> String:
+	var battle_scene := _make_battle_scene_stub()
+	var viewport_size := Vector2(1600, 900)
+	var stadium_height := 32.0
+	var action_height := 28.0
+	var resolved_top_height: float = battle_scene.call("_resolve_top_bar_height", viewport_size, stadium_height)
+
+	battle_scene.call("_apply_top_action_button_metrics", action_height, viewport_size)
+
+	var zeus_button := battle_scene.get("_btn_zeus_help") as Button
+	var opponent_hand_button := battle_scene.get("_btn_opponent_hand") as Button
+	var discuss_button := battle_scene.get("_btn_battle_discuss_ai") as Button
+	var back_button := battle_scene.get("_btn_back") as Button
+	var replay_button := battle_scene.get("_btn_replay_next_turn") as Button
+	var scene: Control = load("res://scenes/battle/BattleScene.tscn").instantiate()
+	scene.call("_apply_top_bar_space_metrics", viewport_size, back_button.custom_minimum_size.x, 4)
+	var top_bar_left := scene.get_node("TopBar/TopBarRow/TopBarLeft") as Control
+	var top_bar_center := scene.get_node("TopBar/TopBarRow/TopBarCenter") as Control
+	var top_bar_right := scene.get_node("TopBar/TopBarRow/TopBarRight") as Control
+	var top_bar_right_box := top_bar_right as BoxContainer
+	var top_bar_actions := scene.get_node("TopBar/TopBarRow/TopBarRight/TopBarActions") as HBoxContainer
+	var phase_label := scene.find_child("LblPhase", true, false) as Label
+	var turn_label := scene.find_child("LblTurn", true, false) as Label
+
+	return run_checks([
+		assert_eq(resolved_top_height, stadium_height, "Top bar should grow to the end-turn row height"),
+		assert_eq(zeus_button.custom_minimum_size.y, action_height, "Zeus help should use the same touch height as the end-turn button"),
+		assert_eq(back_button.custom_minimum_size.y, action_height, "Back button should use the same touch height as the end-turn button"),
+		assert_eq(replay_button.custom_minimum_size.y, action_height, "Replay buttons should share the top action touch height"),
+		assert_true(back_button.custom_minimum_size.x < 126.0, "Top action buttons should stay compact enough to leave room for match info"),
+		assert_eq(opponent_hand_button.custom_minimum_size.x, back_button.custom_minimum_size.x, "Opponent hand should match the back button width"),
+		assert_eq(discuss_button.custom_minimum_size.x, back_button.custom_minimum_size.x, "AI discussion should match the back button width"),
+		assert_eq(zeus_button.custom_minimum_size.x, back_button.custom_minimum_size.x, "Zeus help should match the back button width"),
+		assert_eq(top_bar_left.size_flags_horizontal, Control.SIZE_EXPAND_FILL, "Top left match info column should keep the equal-column layout"),
+		assert_eq(top_bar_center.size_flags_horizontal, Control.SIZE_EXPAND_FILL, "Top turn info column should keep the equal-column layout"),
+		assert_eq(top_bar_right.size_flags_horizontal, Control.SIZE_EXPAND_FILL, "Top action column should keep the equal-column layout"),
+		assert_true(top_bar_right_box is HBoxContainer, "Top action column should support right-aligning its child buttons"),
+		assert_eq(top_bar_right_box.alignment, BoxContainer.ALIGNMENT_END, "Top action column should place buttons at the right edge"),
+		assert_eq(top_bar_actions.size_flags_horizontal, Control.SIZE_SHRINK_END, "Top action buttons should not expand and cover match info"),
+		assert_eq(top_bar_actions.alignment, BoxContainer.ALIGNMENT_END, "Top action buttons should align to the right edge"),
+		assert_false(phase_label.clip_text, "Phase label should keep its text-driven minimum width"),
+		assert_false(turn_label.clip_text, "Turn label should keep its text-driven minimum width"),
+		assert_gt(phase_label.get_combined_minimum_size().x, 0.0, "Phase label should remain visible after top action layout"),
+		assert_gt(turn_label.get_combined_minimum_size().x, 0.0, "Turn label should remain visible after top action layout"),
+		assert_eq(zeus_button.get_theme_font_size("font_size"), 12, "Top action copy should match the HUD button font size"),
 	])
 
 

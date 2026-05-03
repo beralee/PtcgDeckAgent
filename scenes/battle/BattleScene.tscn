@@ -48,9 +48,10 @@ text = "第1回合 | 玩家1行动"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="TopBarRight" type="CenterContainer" parent="TopBar/TopBarRow" unique_id=2111565385]
+[node name="TopBarRight" type="HBoxContainer" parent="TopBar/TopBarRow" unique_id=2111565385]
 layout_mode = 2
 size_flags_horizontal = 3
+alignment = 2
 
 [node name="TopBarActions" type="HBoxContainer" parent="TopBar/TopBarRow/TopBarRight" unique_id=1726882485]
 layout_mode = 2

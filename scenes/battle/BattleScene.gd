@@ -640,10 +640,6 @@ func _apply_responsive_layout() -> void:
 	right_panel.custom_minimum_size = Vector2(right_width, 0)
 	log_panel.custom_minimum_size = Vector2(log_width, 0)
 
-	var top_bar_height: float = roundf(clampf(viewport_size.y * 0.042, 26.0, 38.0) * (2.0 / 3.0))
-	top_bar.offset_bottom = top_bar.offset_top + top_bar_height
-	main_area.offset_top = top_bar.offset_bottom + 4.0
-	_btn_back.custom_minimum_size = Vector2(clampf(viewport_size.x * 0.11, 126.0, 172.0), maxf(top_bar_height - 6.0, 18.0))
 	opp_hand_bar.custom_minimum_size = Vector2(0, clampf(viewport_size.y * 0.032, 24.0, 34.0))
 	field_area.add_theme_constant_override("separation", clampi(int(viewport_size.y * 0.004), 2, 6))
 	stadium_sections.add_theme_constant_override("separation", clampi(int(viewport_size.x * 0.006), 6, 14))
@@ -682,6 +678,11 @@ func _apply_responsive_layout() -> void:
 	var vstar_stack_gap: int = int(measured.get("vstar_stack_gap", clampi(int(stadium_height * 0.08), 1, 2)))
 	var vstar_panel_vpad: int = int(measured.get("vstar_panel_vpad", clampi(int(stadium_height * 0.06), 1, 2)))
 	var prize_panel_height: float = float(measured.get("prize_panel_height", roundf((preview_card_size.y * 2.0 + 24.0) * 0.95)))
+	var top_bar_height: float = _resolve_top_bar_height(viewport_size, stadium_height)
+	var action_button_height: float = maxf(top_bar_height - float(stadium_inner_vpad * 2), 18.0)
+	top_bar.offset_bottom = top_bar.offset_top + top_bar_height
+	main_area.offset_top = top_bar.offset_bottom + 4.0
+	_apply_top_action_button_metrics(action_button_height, viewport_size)
 	stadium_bar.custom_minimum_size = Vector2(0, stadium_height)
 	stadium_sections.offset_top = float(stadium_inner_vpad)
 	stadium_sections.offset_bottom = -float(stadium_inner_vpad)
@@ -783,6 +784,90 @@ func _apply_responsive_layout() -> void:
 
 	if _gsm != null:
 		_refresh_hand()
+
+
+func _resolve_top_bar_height(viewport_size: Vector2, stadium_height: float) -> float:
+	return maxf(roundf(clampf(viewport_size.y * 0.042, 26.0, 38.0) * (2.0 / 3.0)), stadium_height)
+
+
+func _apply_top_action_button_metrics(button_height: float, viewport_size: Vector2) -> void:
+	var resolved_height := maxf(button_height, 18.0)
+	var action_gap := _resolve_top_action_gap(viewport_size)
+	var action_width := _resolve_top_action_button_width(viewport_size, action_gap)
+	_apply_top_bar_space_metrics(viewport_size, action_width, action_gap)
+	var buttons := [
+		_btn_opponent_hand,
+		_btn_attack_vfx_preview,
+		_btn_ai_advice,
+		_btn_battle_discuss_ai,
+		_btn_zeus_help,
+		_btn_replay_prev_turn,
+		_btn_replay_next_turn,
+		_btn_replay_continue,
+		_btn_replay_back_to_list,
+		_btn_back,
+	]
+	for raw_button in buttons:
+		var button := raw_button as Button
+		if button == null:
+			continue
+		button.custom_minimum_size = Vector2(action_width, resolved_height)
+		button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		button.add_theme_font_size_override("font_size", 12)
+
+
+func _resolve_top_action_button_width(viewport_size: Vector2, action_gap: int = -1) -> float:
+	var resolved_gap := action_gap if action_gap >= 0 else _resolve_top_action_gap(viewport_size)
+	var top_bar_inner_width := maxf(viewport_size.x - 12.0, 0.0)
+	var right_column_width := floorf((top_bar_inner_width - float(_resolve_top_row_gap(viewport_size) * 2)) / 3.0)
+	var available_action_width := right_column_width - float(resolved_gap * 3)
+	var budgeted_button_width := floorf(available_action_width / 4.0)
+	return clampf(minf(clampf(viewport_size.x * 0.062, 76.0, 108.0), budgeted_button_width), 58.0, 108.0)
+
+
+func _resolve_top_row_gap(viewport_size: Vector2) -> int:
+	return clampi(int(viewport_size.x * 0.004), 4, 8)
+
+
+func _resolve_top_action_gap(viewport_size: Vector2) -> int:
+	return clampi(int(viewport_size.x * 0.003), 3, 6)
+
+
+func _apply_top_bar_space_metrics(viewport_size: Vector2, action_width: float = -1.0, action_gap: int = -1) -> void:
+	var top_bar_row := get_node_or_null("TopBar/TopBarRow") as HBoxContainer
+	var top_bar_left := get_node_or_null("TopBar/TopBarRow/TopBarLeft") as CenterContainer
+	var top_bar_center := get_node_or_null("TopBar/TopBarRow/TopBarCenter") as CenterContainer
+	var top_bar_right := get_node_or_null("TopBar/TopBarRow/TopBarRight") as Control
+	var top_bar_right_box := top_bar_right as BoxContainer
+	var top_bar_actions := get_node_or_null("TopBar/TopBarRow/TopBarRight/TopBarActions") as HBoxContainer
+	var resolved_action_width := action_width if action_width > 0.0 else _resolve_top_action_button_width(viewport_size)
+	var resolved_action_gap := action_gap if action_gap >= 0 else _resolve_top_action_gap(viewport_size)
+
+	if top_bar_row != null:
+		top_bar_row.add_theme_constant_override("separation", _resolve_top_row_gap(viewport_size))
+	if top_bar_actions != null:
+		top_bar_actions.add_theme_constant_override("separation", resolved_action_gap)
+		top_bar_actions.size_flags_horizontal = Control.SIZE_SHRINK_END
+		top_bar_actions.alignment = BoxContainer.ALIGNMENT_END
+
+	if top_bar_left != null:
+		top_bar_left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		top_bar_left.custom_minimum_size = Vector2.ZERO
+	if top_bar_center != null:
+		top_bar_center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		top_bar_center.custom_minimum_size = Vector2.ZERO
+	if top_bar_right != null:
+		top_bar_right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		top_bar_right.custom_minimum_size = Vector2.ZERO
+	if top_bar_right_box != null:
+		top_bar_right_box.alignment = BoxContainer.ALIGNMENT_END
+
+	for label: Label in [_lbl_phase, _lbl_turn]:
+		if label == null:
+			continue
+		label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		label.clip_text = false
+		label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 
 
 func _compute_play_card_height(viewport_size: Vector2, center_width: float, bench_spacing: float) -> float:
