@@ -53,6 +53,7 @@ const SCENE_TOURNAMENT_STANDINGS := "res://scenes/tournament/TournamentStandings
 const BATTLE_REVIEW_API_CONFIG_PATH := "user://battle_review_api.json"
 const BATTLE_SETUP_SETTINGS_PATH := "user://battle_setup.json"
 const TOURNAMENT_SAVE_PATH := "user://tournament_mode_save.json"
+const DESKTOP_WINDOW_SCREEN_MARGIN := Vector2i(48, 48)
 const DEFAULT_BATTLE_BGM_VOLUME_PERCENT := 20
 const DEFAULT_BATTLE_REVIEW_MODEL := "kimi-k2.6"
 const SUPPORTED_BATTLE_REVIEW_MODELS: Array[Dictionary] = [
@@ -100,20 +101,60 @@ var last_requested_scene_path: String = ""
 func _ready() -> void:
 	load_battle_setup_preferences()
 	reload_tournament_state_from_disk()
-	_ensure_desktop_window_size()
+	call_deferred("_ensure_desktop_window_size")
 
 
 func _ensure_desktop_window_size() -> void:
 	if DisplayServer.get_name() == "headless":
 		return
+	var current_mode := DisplayServer.window_get_mode()
+	if current_mode in [DisplayServer.WINDOW_MODE_FULLSCREEN, DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN]:
+		return
+	if _should_maximize_desktop_window(OS.get_name()):
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MAXIMIZED)
+		return
+
+	var desired := _configured_desktop_window_size()
+	if desired.x <= 0 or desired.y <= 0:
+		return
+
+	var screen_index := DisplayServer.window_get_current_screen()
+	var usable_rect := DisplayServer.screen_get_usable_rect(screen_index)
+	desired = _fit_desktop_window_size(desired, usable_rect.size)
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	DisplayServer.window_set_size(desired)
+	if usable_rect.size.x > 0 and usable_rect.size.y > 0:
+		DisplayServer.window_set_position(_center_desktop_window_position(desired, usable_rect))
+
+
+func _configured_desktop_window_size() -> Vector2i:
 	var desired_width := int(ProjectSettings.get_setting("display/window/size/window_width", ProjectSettings.get_setting("display/window/size/viewport_width", 1600)))
 	var desired_height := int(ProjectSettings.get_setting("display/window/size/window_height", ProjectSettings.get_setting("display/window/size/viewport_height", 900)))
-	if desired_width <= 0 or desired_height <= 0:
-		return
-	var desired := Vector2i(desired_width, desired_height)
-	var current := DisplayServer.window_get_size()
-	if current.x < desired.x or current.y < desired.y:
-		DisplayServer.window_set_size(desired)
+	return Vector2i(desired_width, desired_height)
+
+
+func _fit_desktop_window_size(desired: Vector2i, usable_size: Vector2i) -> Vector2i:
+	if desired.x <= 0 or desired.y <= 0:
+		return desired
+	if usable_size.x <= 0 or usable_size.y <= 0:
+		return desired
+	var max_size := Vector2i(
+		maxi(640, usable_size.x - DESKTOP_WINDOW_SCREEN_MARGIN.x),
+		maxi(360, usable_size.y - DESKTOP_WINDOW_SCREEN_MARGIN.y)
+	)
+	var scale := minf(1.0, minf(float(max_size.x) / float(desired.x), float(max_size.y) / float(desired.y)))
+	return Vector2i(maxi(640, roundi(float(desired.x) * scale)), maxi(360, roundi(float(desired.y) * scale)))
+
+
+func _center_desktop_window_position(window_size: Vector2i, usable_rect: Rect2i) -> Vector2i:
+	return usable_rect.position + Vector2i(
+		maxi(0, int((usable_rect.size.x - window_size.x) * 0.5)),
+		maxi(0, int((usable_rect.size.y - window_size.y) * 0.5))
+	)
+
+
+func _should_maximize_desktop_window(os_name: String) -> bool:
+	return os_name in ["macOS", "OSX"]
 
 
 ## 切换到指定场景
