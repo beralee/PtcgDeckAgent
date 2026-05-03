@@ -26,6 +26,34 @@ class AsyncFallbackProbeClient extends ZenMuxClient:
 		return OK
 
 
+class TlsRetryProbeClient extends ZenMuxClient:
+	var retry_called := false
+	var captured_parent_valid := false
+	var captured_url := ""
+	var captured_api_key := ""
+	var captured_payload: Dictionary = {}
+	var captured_tls_mode := ""
+
+	func _current_os_name() -> String:
+		return "Android"
+
+	func _request_json_payload_via_http_request(
+		parent: Node,
+		request_url: String,
+		api_key: String,
+		request_payload: Dictionary,
+		_callback: Callable,
+		tls_mode: String
+	) -> int:
+		retry_called = true
+		captured_parent_valid = parent != null and is_instance_valid(parent)
+		captured_url = request_url
+		captured_api_key = api_key
+		captured_payload = request_payload.duplicate(true)
+		captured_tls_mode = tls_mode
+		return OK
+
+
 func _load_client_script() -> Variant:
 	if not ResourceLoader.exists(ZenMuxClientPath):
 		return null
@@ -184,6 +212,72 @@ func test_configure_tls_supports_headless_https_fallback() -> String:
 	client.call("_configure_tls", request)
 	request.free()
 	return ""
+
+
+func test_android_tls_mode_uses_platform_store_before_unsafe_fallback() -> String:
+	var client_result: Variant = _new_client()
+	if client_result is Dictionary and not bool((client_result as Dictionary).get("ok", false)):
+		return str((client_result as Dictionary).get("error", "ZenMuxClient setup failed"))
+
+	var client: Object = (client_result as Dictionary).get("value") as Object
+	if not client.has_method("_initial_tls_mode_for_os"):
+		return "ZenMuxClient is missing _initial_tls_mode_for_os"
+	if not client.has_method("_should_retry_tls_with_unsafe"):
+		return "ZenMuxClient is missing _should_retry_tls_with_unsafe"
+
+	client.call("set_allow_unsafe_tls", true)
+	var android_tls_mode := String(client.call("_initial_tls_mode_for_os", "Android"))
+	var windows_tls_mode := String(client.call("_initial_tls_mode_for_os", "Windows"))
+	var retries_android_tls := bool(client.call(
+		"_should_retry_tls_with_unsafe",
+		{"request_result": HTTPRequest.RESULT_TLS_HANDSHAKE_ERROR},
+		"default",
+		"Android"
+	))
+	var ignores_other_errors := bool(client.call(
+		"_should_retry_tls_with_unsafe",
+		{"request_result": HTTPRequest.RESULT_CANT_CONNECT},
+		"default",
+		"Android"
+	))
+	client.call("set_allow_unsafe_tls", false)
+	var disabled_tls_mode := String(client.call("_initial_tls_mode_for_os", "Windows"))
+	return run_checks([
+		assert_eq(android_tls_mode, "default", "Android should try the platform TLS store first"),
+		assert_eq(windows_tls_mode, "unsafe", "Desktop should keep the existing unsafe TLS fallback path"),
+		assert_true(retries_android_tls, "Android TLS handshake failures should trigger one unsafe retry"),
+		assert_false(ignores_other_errors, "Non-TLS transport errors should not use the unsafe TLS retry path"),
+		assert_eq(disabled_tls_mode, "default", "Disabling unsafe TLS should keep strict TLS mode"),
+	])
+
+
+func test_android_tls_handshake_failure_starts_unsafe_retry() -> String:
+	var client := TlsRetryProbeClient.new()
+	var parent := Node.new()
+	var request := HTTPRequest.new()
+	request.set_meta("zenmux_request_url", "https://zenmux.ai/api/v1/chat/completions")
+	request.set_meta("zenmux_api_key", "test-key")
+	request.set_meta("zenmux_request_payload", {"model": "test-model", "messages": []})
+	request.set_meta("zenmux_tls_mode", "default")
+	parent.add_child(request)
+
+	var started := bool(client.call(
+		"_try_start_tls_retry_from_failed_request",
+		request,
+		Callable(),
+		{"request_result": HTTPRequest.RESULT_TLS_HANDSHAKE_ERROR}
+	))
+	var result := run_checks([
+		assert_true(started, "Android TLS handshake failure should start a retry"),
+		assert_true(client.retry_called, "Unsafe HTTP retry should be requested"),
+		assert_true(client.captured_parent_valid, "TLS retry should be attached to the same live parent node"),
+		assert_eq(client.captured_url, "https://zenmux.ai/api/v1/chat/completions", "TLS retry should reuse the failed request URL"),
+		assert_eq(client.captured_api_key, "test-key", "TLS retry should reuse the API key"),
+		assert_eq(str(client.captured_payload.get("model", "")), "test-model", "TLS retry should reuse the request payload"),
+		assert_eq(client.captured_tls_mode, "unsafe", "TLS retry should switch to unsafe TLS mode"),
+	])
+	parent.free()
+	return result
 
 
 func test_http_transport_failure_starts_python_fallback_asynchronously() -> String:

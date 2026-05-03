@@ -4,14 +4,19 @@ extends RefCounted
 
 const DeckStrategyMiraidonScript = preload("res://scripts/ai/DeckStrategyMiraidon.gd")
 const DeckStrategyCharizardExScript = preload("res://scripts/ai/DeckStrategyCharizardEx.gd")
+const DeckStrategyCharizardExLLMScript = preload("res://scripts/ai/DeckStrategyCharizardExLLM.gd")
 const DeckStrategyCharizardExBaselineScript = preload("res://scripts/ai/DeckStrategyCharizardExBaseline.gd")
 const DeckStrategyDragapultDusknoirScript = preload("res://scripts/ai/DeckStrategyDragapultDusknoir.gd")
+const DeckStrategyDragapultDusknoirLLMScript = preload("res://scripts/ai/DeckStrategyDragapultDusknoirLLM.gd")
 const DeckStrategyDragapultBanetteScript = preload("res://scripts/ai/DeckStrategyDragapultBanette.gd")
 const DeckStrategyDragapultCharizardScript = preload("res://scripts/ai/DeckStrategyDragapultCharizard.gd")
+const DeckStrategyDragapultCharizardLLMScript = preload("res://scripts/ai/DeckStrategyDragapultCharizardLLM.gd")
 const DeckStrategyRegidragoScript = preload("res://scripts/ai/DeckStrategyRegidrago.gd")
 const DeckStrategyLugiaArcheopsScript = preload("res://scripts/ai/DeckStrategyLugiaArcheops.gd")
+const DeckStrategyLugiaArcheopsLLMScript = preload("res://scripts/ai/DeckStrategyLugiaArcheopsLLM.gd")
 const DeckStrategyDialgaMetangScript = preload("res://scripts/ai/DeckStrategyDialgaMetang.gd")
 const DeckStrategyArceusGiratinaScript = preload("res://scripts/ai/DeckStrategyArceusGiratina.gd")
+const DeckStrategyArceusGiratinaLLMScript = preload("res://scripts/ai/DeckStrategyArceusGiratinaLLM.gd")
 const DeckStrategyPalkiaGholdengoScript = preload("res://scripts/ai/DeckStrategyPalkiaGholdengo.gd")
 const DeckStrategyPalkiaDusknoirScript = preload("res://scripts/ai/DeckStrategyPalkiaDusknoir.gd")
 const DeckStrategyLostBoxScript = preload("res://scripts/ai/DeckStrategyLostBox.gd")
@@ -19,21 +24,28 @@ const DeckStrategyFutureBoxScript = preload("res://scripts/ai/DeckStrategyFuture
 const DeckStrategyIronThornsScript = preload("res://scripts/ai/DeckStrategyIronThorns.gd")
 const DeckStrategyRagingBoltOgerponScript = preload("res://scripts/ai/DeckStrategyRagingBoltOgerpon.gd")
 const DeckStrategyRagingBoltLLMScript = preload("res://scripts/ai/DeckStrategyRagingBoltLLM.gd")
+const DeckStrategyMiraidonLLMScript = preload("res://scripts/ai/DeckStrategyMiraidonLLM.gd")
 const DeckStrategyBlisseyTankScript = preload("res://scripts/ai/DeckStrategyBlisseyTank.gd")
 const DeckStrategyGougingFireAncientScript = preload("res://scripts/ai/DeckStrategyGougingFireAncient.gd")
 const _GARDEVOIR_SCRIPT_PATH := "res://scripts/ai/DeckStrategyGardevoir.gd"
+const _GARDEVOIR_LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategyGardevoirLLM.gd"
 const _GARDEVOIR_SIGNATURES: Array[String] = ["沙奈朵ex", "奇鲁莉安", "拉鲁拉丝", "Gardevoir ex", "Kirlia", "Ralts"]
 
 const _STRATEGY_SCRIPTS := {
 	"charizard_ex": DeckStrategyCharizardExScript,
+	"charizard_ex_llm": DeckStrategyCharizardExLLMScript,
 	"charizard_ex_baseline": DeckStrategyCharizardExBaselineScript,
 	"dragapult_dusknoir": DeckStrategyDragapultDusknoirScript,
+	"dragapult_dusknoir_llm": DeckStrategyDragapultDusknoirLLMScript,
 	"dragapult_banette": DeckStrategyDragapultBanetteScript,
 	"dragapult_charizard": DeckStrategyDragapultCharizardScript,
+	"dragapult_charizard_llm": DeckStrategyDragapultCharizardLLMScript,
 	"regidrago": DeckStrategyRegidragoScript,
 	"lugia_archeops": DeckStrategyLugiaArcheopsScript,
+	"lugia_archeops_llm": DeckStrategyLugiaArcheopsLLMScript,
 	"dialga_metang": DeckStrategyDialgaMetangScript,
 	"arceus_giratina": DeckStrategyArceusGiratinaScript,
+	"arceus_giratina_llm": DeckStrategyArceusGiratinaLLMScript,
 	"palkia_gholdengo": DeckStrategyPalkiaGholdengoScript,
 	"palkia_dusknoir": DeckStrategyPalkiaDusknoirScript,
 	"lost_box": DeckStrategyLostBoxScript,
@@ -41,6 +53,7 @@ const _STRATEGY_SCRIPTS := {
 	"iron_thorns": DeckStrategyIronThornsScript,
 	"raging_bolt_ogerpon": DeckStrategyRagingBoltOgerponScript,
 	"raging_bolt_ogerpon_llm": DeckStrategyRagingBoltLLMScript,
+	"miraidon_llm": DeckStrategyMiraidonLLMScript,
 	"blissey_tank": DeckStrategyBlisseyTankScript,
 	"gouging_fire_ancient": DeckStrategyGougingFireAncientScript,
 	"miraidon": DeckStrategyMiraidonScript,
@@ -80,6 +93,8 @@ func detect_strategy_id_for_player(player: PlayerState) -> String:
 func create_strategy_by_id(strategy_id: String) -> RefCounted:
 	if strategy_id == "gardevoir":
 		return _instantiate_strategy_from_path(_GARDEVOIR_SCRIPT_PATH)
+	if strategy_id == "gardevoir_llm":
+		return _instantiate_strategy_from_path(_GARDEVOIR_LLM_SCRIPT_PATH)
 	var script: Variant = _STRATEGY_SCRIPTS.get(strategy_id, null)
 	if script is GDScript:
 		return (script as GDScript).new()

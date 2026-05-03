@@ -382,7 +382,21 @@ func _find_next_planned_bench_card(player: PlayerState, available_cards: Array[C
 	return null
 
 
+func _strategy_has_active_llm_plan(gsm: GameStateMachine) -> bool:
+	if gsm == null or gsm.game_state == null or _deck_strategy == null:
+		return false
+	if not _deck_strategy.has_method("has_llm_plan_for_turn"):
+		return false
+	return bool(_deck_strategy.call("has_llm_plan_for_turn", int(gsm.game_state.turn_number)))
+
+
 func _choose_best_action(gsm: GameStateMachine) -> Dictionary:
+	if _deck_strategy != null and _strategy_has_active_llm_plan(gsm):
+		_mcts_planned_sequence.clear()
+		_mcts_sequence_index = 0
+		var llm_planned_action: Dictionary = _choose_greedy_strategy_action(gsm)
+		if not llm_planned_action.is_empty():
+			return llm_planned_action
 	## 优先级 1：MCTS + 策略评估（v8）
 	if _deck_strategy != null and use_mcts:
 		return _choose_mcts_action(gsm)

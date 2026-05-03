@@ -21,11 +21,14 @@ const ENERGY_TYPE_ORDER: Array[String] = ["R", "W", "G", "L", "P", "F", "D", "M"
 
 ## 测试用卡牌系列前缀，不在编辑器中展示
 const EXCLUDED_SET_PREFIXES: Array[String] = ["UTEST"]
+const BATTLE_CARD_VIEW := preload("res://scenes/battle/BattleCardView.gd")
 
 ## 卡图尺寸（标准卡牌比例约 63:88）
 const CARD_WIDTH := 100
 const CARD_HEIGHT := 140
 const POOL_GRID_COLUMNS := 5
+const TILE_LONG_PRESS_SECONDS := 0.42
+const TILE_LONG_PRESS_MOVE_TOLERANCE := 18.0
 
 ## AI 优化方向选项
 const AI_GOALS: Array[Dictionary] = [
@@ -84,6 +87,22 @@ var _deck_discussion_dialog: AcceptDialog = null
 ## 纹理缓存
 var _texture_cache: Dictionary = {}
 var _failed_texture_paths: Dictionary = {}
+var _card_detail_overlay: Panel = null
+var _card_detail_box: PanelContainer = null
+var _card_detail_body: GridContainer = null
+var _card_detail_title: Label = null
+var _card_detail_card_view = null
+var _card_detail_content: RichTextLabel = null
+var _card_detail_text_panel: PanelContainer = null
+var _card_detail_close_btn: Button = null
+var _card_detail_reveal_tween: Tween = null
+var _tile_long_press_timer: Timer = null
+var _tile_long_press_active: bool = false
+var _tile_long_press_payload: Dictionary = {}
+var _tile_long_press_start: Vector2 = Vector2.ZERO
+var _tile_long_press_index: int = -1
+var _tile_long_press_consumed: bool = false
+var _suppress_next_tile_left_click: bool = false
 
 
 func _ready() -> void:
@@ -249,6 +268,9 @@ func _refresh_deck_grid() -> void:
 
 
 func _on_deck_tile_input(event: InputEvent, flat_index: int, set_code: String, card_index: String) -> void:
+	var payload := {"kind": "deck", "set_code": set_code, "card_index": card_index}
+	if _handle_tile_touch_detail_input(event, payload):
+		return
 	if not (event is InputEventMouseButton and (event as InputEventMouseButton).pressed):
 		return
 	var mb := event as InputEventMouseButton
@@ -257,6 +279,8 @@ func _on_deck_tile_input(event: InputEvent, flat_index: int, set_code: String, c
 		if card != null:
 			_show_card_detail(card)
 	elif mb.button_index == MOUSE_BUTTON_LEFT:
+		if _consume_suppressed_tile_left_click():
+			return
 		_on_deck_card_pressed(flat_index)
 
 
@@ -365,6 +389,9 @@ func _make_pool_tile(card: CardData) -> PanelContainer:
 
 
 func _on_pool_tile_input(event: InputEvent, uid: String) -> void:
+	var payload := {"kind": "pool", "uid": uid}
+	if _handle_tile_touch_detail_input(event, payload):
+		return
 	if not (event is InputEventMouseButton and (event as InputEventMouseButton).pressed):
 		return
 	var mb := event as InputEventMouseButton
@@ -373,7 +400,98 @@ func _on_pool_tile_input(event: InputEvent, uid: String) -> void:
 		if card != null:
 			_show_card_detail(card)
 	elif mb.button_index == MOUSE_BUTTON_LEFT:
+		if _consume_suppressed_tile_left_click():
+			return
 		_on_pool_card_pressed(uid)
+
+
+func _handle_tile_touch_detail_input(event: InputEvent, payload: Dictionary) -> bool:
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			_start_tile_long_press(payload, touch.position, touch.index)
+		else:
+			if _tile_long_press_active and touch.index == _tile_long_press_index:
+				var consumed := _tile_long_press_consumed
+				_cancel_tile_long_press(false)
+				return consumed
+		return false
+
+	if event is InputEventScreenDrag:
+		var drag := event as InputEventScreenDrag
+		if _tile_long_press_active and drag.index == _tile_long_press_index:
+			if _tile_long_press_consumed:
+				return true
+			if drag.position.distance_to(_tile_long_press_start) > TILE_LONG_PRESS_MOVE_TOLERANCE:
+				_cancel_tile_long_press()
+		return false
+
+	return false
+
+
+func _start_tile_long_press(payload: Dictionary, position: Vector2, touch_index: int) -> void:
+	if _resolve_tile_payload_card(payload) == null:
+		return
+	_ensure_tile_long_press_timer()
+	_tile_long_press_active = true
+	_tile_long_press_payload = payload.duplicate(true)
+	_tile_long_press_start = position
+	_tile_long_press_index = touch_index
+	_tile_long_press_consumed = false
+	if _tile_long_press_timer.is_inside_tree():
+		_tile_long_press_timer.start()
+
+
+func _cancel_tile_long_press(clear_suppression: bool = true) -> void:
+	if _tile_long_press_timer != null:
+		_tile_long_press_timer.stop()
+	_tile_long_press_active = false
+	_tile_long_press_payload = {}
+	_tile_long_press_index = -1
+	_tile_long_press_consumed = false
+	if clear_suppression:
+		_suppress_next_tile_left_click = false
+
+
+func _on_tile_long_press_timeout() -> void:
+	if not _tile_long_press_active:
+		return
+	var card := _resolve_tile_payload_card(_tile_long_press_payload)
+	if card == null:
+		_cancel_tile_long_press()
+		return
+	_tile_long_press_consumed = true
+	_suppress_next_tile_left_click = true
+	_show_card_detail(card)
+
+
+func _consume_suppressed_tile_left_click() -> bool:
+	if not _suppress_next_tile_left_click:
+		return false
+	_suppress_next_tile_left_click = false
+	return true
+
+
+func _resolve_tile_payload_card(payload: Dictionary) -> CardData:
+	if payload.get("card", null) is CardData:
+		return payload["card"] as CardData
+	match str(payload.get("kind", "")):
+		"deck":
+			return CardDatabase.get_card(str(payload.get("set_code", "")), str(payload.get("card_index", "")))
+		"pool":
+			return _find_pool_card(str(payload.get("uid", "")))
+	return null
+
+
+func _ensure_tile_long_press_timer() -> void:
+	if _tile_long_press_timer != null:
+		return
+	_tile_long_press_timer = Timer.new()
+	_tile_long_press_timer.name = "DeckTileLongPressTimer"
+	_tile_long_press_timer.one_shot = true
+	_tile_long_press_timer.wait_time = TILE_LONG_PRESS_SECONDS
+	_tile_long_press_timer.timeout.connect(_on_tile_long_press_timeout)
+	add_child(_tile_long_press_timer)
 
 
 func _on_pool_card_pressed(uid: String) -> void:
@@ -1424,30 +1542,270 @@ func _find_deck_entry_by_name(card_name: String) -> int:
 # -- 卡牌详情弹窗 --
 
 func _show_card_detail(card: CardData) -> void:
-	var dialog := AcceptDialog.new()
-	dialog.title = card.name
-	dialog.ok_button_text = "关闭"
-	dialog.size = Vector2i(500, 480)
+	if card == null:
+		return
+	_ensure_card_detail_overlay()
+	_apply_card_detail_overlay_metrics()
+	_card_detail_title.text = card.name
+	_card_detail_card_view.setup_from_card_data(card, BATTLE_CARD_VIEW.MODE_PREVIEW)
+	_card_detail_card_view.set_badges("", "")
+	_card_detail_card_view.set_info("", "")
+	_card_detail_content.text = _build_card_detail_bbcode(card)
+	_card_detail_overlay.visible = true
+	_play_card_detail_open_animation()
 
-	var scroll := ScrollContainer.new()
-	scroll.anchors_preset = Control.PRESET_FULL_RECT
-	scroll.offset_left = 8
-	scroll.offset_top = 8
-	scroll.offset_right = -8
-	scroll.offset_bottom = -8
-	dialog.add_child(scroll)
+func _ensure_card_detail_overlay() -> void:
+	if _card_detail_overlay != null and is_instance_valid(_card_detail_overlay):
+		return
 
-	var content := VBoxContainer.new()
-	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	content.add_theme_constant_override("separation", 6)
-	scroll.add_child(content)
+	_card_detail_overlay = Panel.new()
+	_card_detail_overlay.name = "DeckCardDetailOverlay"
+	_card_detail_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_card_detail_overlay.visible = false
+	_card_detail_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_card_detail_overlay.z_index = 200
+	add_child(_card_detail_overlay)
 
-	# 卡名与基本信息
-	var header := Label.new()
-	header.text = card.name
-	header.add_theme_font_size_override("font_size", 20)
-	content.add_child(header)
+	var center := CenterContainer.new()
+	center.name = "DeckCardDetailCenter"
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_PASS
+	_card_detail_overlay.add_child(center)
 
+	_card_detail_box = PanelContainer.new()
+	_card_detail_box.name = "DeckCardDetailBox"
+	_card_detail_box.mouse_filter = Control.MOUSE_FILTER_STOP
+	_card_detail_box.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_card_detail_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_card_detail_box.clip_contents = true
+	center.add_child(_card_detail_box)
+
+	var vbox := VBoxContainer.new()
+	vbox.name = "DeckCardDetailVBox"
+	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vbox.add_theme_constant_override("separation", 12)
+	_card_detail_box.add_child(vbox)
+
+	var header := HBoxContainer.new()
+	header.name = "DeckCardDetailHeader"
+	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_theme_constant_override("separation", 10)
+	vbox.add_child(header)
+
+	_card_detail_title = Label.new()
+	_card_detail_title.name = "DeckCardDetailTitle"
+	_card_detail_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_card_detail_title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	header.add_child(_card_detail_title)
+
+	_card_detail_close_btn = Button.new()
+	_card_detail_close_btn.name = "DeckCardDetailCloseButton"
+	_card_detail_close_btn.text = "X"
+	_card_detail_close_btn.tooltip_text = "关闭"
+	_card_detail_close_btn.focus_mode = Control.FOCUS_NONE
+	_card_detail_close_btn.size_flags_horizontal = Control.SIZE_SHRINK_END
+	_card_detail_close_btn.pressed.connect(_hide_card_detail)
+	header.add_child(_card_detail_close_btn)
+
+	_card_detail_body = GridContainer.new()
+	_card_detail_body.name = "DeckCardDetailBody"
+	_card_detail_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_card_detail_body.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_card_detail_body.add_theme_constant_override("h_separation", 18)
+	_card_detail_body.add_theme_constant_override("v_separation", 12)
+	vbox.add_child(_card_detail_body)
+
+	_card_detail_card_view = BATTLE_CARD_VIEW.new()
+	_card_detail_card_view.name = "DeckEditorDetailCardPreview"
+	_card_detail_card_view.set_clickable(false)
+	_card_detail_card_view.setup_from_instance(null, BATTLE_CARD_VIEW.MODE_PREVIEW)
+	_card_detail_card_view.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_card_detail_card_view.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_card_detail_body.add_child(_card_detail_card_view)
+
+	_card_detail_text_panel = PanelContainer.new()
+	_card_detail_text_panel.name = "DeckCardDetailTextPanel"
+	_card_detail_text_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_card_detail_text_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_card_detail_body.add_child(_card_detail_text_panel)
+
+	var text_margin := MarginContainer.new()
+	text_margin.name = "DeckCardDetailTextMargin"
+	text_margin.add_theme_constant_override("margin_left", 14)
+	text_margin.add_theme_constant_override("margin_top", 12)
+	text_margin.add_theme_constant_override("margin_right", 14)
+	text_margin.add_theme_constant_override("margin_bottom", 12)
+	_card_detail_text_panel.add_child(text_margin)
+
+	_card_detail_content = RichTextLabel.new()
+	_card_detail_content.name = "DeckCardDetailContent"
+	_card_detail_content.bbcode_enabled = true
+	_card_detail_content.scroll_active = true
+	_card_detail_content.selection_enabled = true
+	_card_detail_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_card_detail_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	text_margin.add_child(_card_detail_content)
+
+	_style_card_detail_overlay()
+
+
+func _apply_card_detail_overlay_metrics() -> void:
+	var viewport_size := Vector2(1280, 720)
+	if is_inside_tree() and get_viewport() != null:
+		viewport_size = get_viewport().get_visible_rect().size
+
+	var mobile_layout := viewport_size.x < 760.0
+	var outer_margin := 14.0 if mobile_layout else 32.0
+	var box_width := 760.0
+	var box_height := 560.0
+	var card_height := clampf(viewport_size.y * (0.42 if mobile_layout else 0.52), 240.0, 440.0)
+	var card_width := roundf(card_height * 0.716)
+	var text_width := clampf(viewport_size.x * 0.30, 300.0, 440.0)
+	var text_height := card_height
+
+	if mobile_layout:
+		box_width = maxf(300.0, viewport_size.x - outer_margin * 2.0)
+		card_width = minf(card_width, box_width - 44.0)
+		card_height = roundf(card_width / 0.716)
+		text_width = box_width - 44.0
+		text_height = maxf(150.0, viewport_size.y - card_height - 158.0)
+		box_height = minf(viewport_size.y - outer_margin * 2.0, card_height + text_height + 106.0)
+	else:
+		box_width = minf(viewport_size.x - outer_margin * 2.0, maxf(700.0, card_width + text_width + 82.0))
+		box_height = minf(viewport_size.y - outer_margin * 2.0, maxf(440.0, card_height + 86.0))
+		text_height = card_height
+
+	if _card_detail_box != null:
+		_card_detail_box.custom_minimum_size = Vector2(box_width, box_height)
+	if _card_detail_body != null:
+		_card_detail_body.columns = 1 if mobile_layout else 2
+		_card_detail_body.add_theme_constant_override("h_separation", 18)
+		_card_detail_body.add_theme_constant_override("v_separation", 12)
+	if _card_detail_card_view != null:
+		_card_detail_card_view.custom_minimum_size = Vector2(card_width, card_height)
+	if _card_detail_text_panel != null:
+		_card_detail_text_panel.custom_minimum_size = Vector2(text_width, text_height)
+	if _card_detail_content != null:
+		_card_detail_content.custom_minimum_size = Vector2(text_width - 28.0, text_height - 24.0)
+
+
+func _style_card_detail_overlay() -> void:
+	if _card_detail_overlay != null:
+		var overlay_style := StyleBoxFlat.new()
+		overlay_style.bg_color = Color(0.0, 0.02, 0.04, 0.74)
+		_card_detail_overlay.add_theme_stylebox_override("panel", overlay_style)
+
+	if _card_detail_box != null:
+		var box_style := StyleBoxFlat.new()
+		box_style.bg_color = Color(0.018, 0.038, 0.058, 0.98)
+		box_style.border_color = Color(0.94, 0.74, 0.34, 0.95)
+		box_style.set_border_width_all(2)
+		box_style.set_corner_radius_all(18)
+		box_style.shadow_color = Color(0.0, 0.0, 0.0, 0.55)
+		box_style.shadow_size = 28
+		box_style.shadow_offset = Vector2(0, 12)
+		box_style.content_margin_left = 18
+		box_style.content_margin_top = 14
+		box_style.content_margin_right = 18
+		box_style.content_margin_bottom = 16
+		_card_detail_box.add_theme_stylebox_override("panel", box_style)
+
+	if _card_detail_title != null:
+		_card_detail_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		_card_detail_title.add_theme_font_size_override("font_size", 20)
+		_card_detail_title.add_theme_color_override("font_color", Color(1.0, 0.92, 0.68))
+		_card_detail_title.add_theme_color_override("font_outline_color", Color(0.02, 0.04, 0.07, 0.95))
+		_card_detail_title.add_theme_constant_override("outline_size", 2)
+		var title_font := FontVariation.new()
+		title_font.base_font = ThemeDB.fallback_font
+		title_font.variation_embolden = 1.25
+		_card_detail_title.add_theme_font_override("font", title_font)
+
+	if _card_detail_text_panel != null:
+		var text_panel_style := StyleBoxFlat.new()
+		text_panel_style.bg_color = Color(0.03, 0.07, 0.09, 0.78)
+		text_panel_style.border_color = Color(0.19, 0.56, 0.68, 0.58)
+		text_panel_style.set_border_width_all(1)
+		text_panel_style.set_corner_radius_all(12)
+		text_panel_style.shadow_color = Color(0.0, 0.0, 0.0, 0.24)
+		text_panel_style.shadow_size = 10
+		text_panel_style.shadow_offset = Vector2(0, 4)
+		_card_detail_text_panel.add_theme_stylebox_override("panel", text_panel_style)
+
+	if _card_detail_content != null:
+		_card_detail_content.bbcode_enabled = true
+		_card_detail_content.scroll_active = true
+		_card_detail_content.selection_enabled = true
+		_card_detail_content.add_theme_font_size_override("normal_font_size", 14)
+		_card_detail_content.add_theme_color_override("default_color", Color(0.86, 0.94, 0.98))
+		_card_detail_content.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.4))
+		_card_detail_content.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+		_card_detail_content.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
+	if _card_detail_close_btn != null:
+		_style_card_detail_button(_card_detail_close_btn)
+
+
+func _style_card_detail_button(button: Button) -> void:
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color(0.01, 0.11, 0.18, 0.72)
+	normal.border_color = Color(0.16, 0.62, 0.76, 0.9)
+	normal.set_border_width_all(2)
+	normal.set_corner_radius_all(10)
+	var hover := normal.duplicate()
+	hover.bg_color = Color(0.04, 0.18, 0.28, 0.82)
+	hover.border_color = Color(0.37, 0.91, 0.98, 0.96)
+	var pressed := normal.duplicate()
+	pressed.bg_color = Color(0.03, 0.14, 0.22, 0.9)
+	pressed.border_color = Color(0.56, 0.94, 1.0, 1.0)
+	button.add_theme_stylebox_override("normal", normal)
+	button.add_theme_stylebox_override("hover", hover)
+	button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_color_override("font_color", Color(0.93, 0.99, 1.0))
+	button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0))
+	button.add_theme_color_override("font_pressed_color", Color(1.0, 1.0, 1.0))
+	button.add_theme_font_size_override("font_size", 14)
+	button.custom_minimum_size = Vector2(42, 32)
+
+
+func _hide_card_detail() -> void:
+	if _card_detail_overlay == null or not _card_detail_overlay.visible:
+		return
+	if _card_detail_reveal_tween != null:
+		_card_detail_reveal_tween.kill()
+		_card_detail_reveal_tween = null
+	if _card_detail_box == null or not is_inside_tree():
+		_card_detail_overlay.visible = false
+		return
+	_card_detail_box.pivot_offset = _card_detail_box.size * 0.5
+	_card_detail_reveal_tween = create_tween()
+	_card_detail_reveal_tween.set_parallel(true)
+	_card_detail_reveal_tween.tween_property(_card_detail_box, "modulate", Color(1, 1, 1, 0), 0.08)
+	_card_detail_reveal_tween.tween_property(_card_detail_box, "scale", Vector2(0.98, 0.98), 0.08).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	_card_detail_reveal_tween.finished.connect(func() -> void:
+		_card_detail_overlay.visible = false
+		_card_detail_box.modulate = Color(1, 1, 1, 1)
+		_card_detail_box.scale = Vector2.ONE
+	)
+
+
+func _play_card_detail_open_animation() -> void:
+	if _card_detail_box == null or not is_inside_tree():
+		return
+	if _card_detail_reveal_tween != null:
+		_card_detail_reveal_tween.kill()
+		_card_detail_reveal_tween = null
+	_card_detail_box.pivot_offset = _card_detail_box.size * 0.5
+	_card_detail_box.modulate = Color(1, 1, 1, 0)
+	_card_detail_box.scale = Vector2(0.94, 0.94)
+	_card_detail_reveal_tween = create_tween()
+	_card_detail_reveal_tween.set_parallel(true)
+	_card_detail_reveal_tween.tween_property(_card_detail_box, "modulate", Color(1, 1, 1, 1), 0.14)
+	_card_detail_reveal_tween.tween_property(_card_detail_box, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+func _build_card_detail_bbcode(card: CardData) -> String:
+	var lines: Array[String] = []
 	var meta_parts: PackedStringArray = []
 	meta_parts.append(card.card_type)
 	if card.mechanic != "":
@@ -1456,99 +1814,69 @@ func _show_card_detail(card: CardData) -> void:
 		meta_parts.append("%s %s" % [card.set_code, card.card_index])
 	if card.rarity != "":
 		meta_parts.append(card.rarity)
-	var meta_label := Label.new()
-	meta_label.text = " | ".join(meta_parts)
-	meta_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
-	content.add_child(meta_label)
+	lines.append("[color=#ffe8ad][b]%s[/b][/color]" % _bbcode_escape(" | ".join(meta_parts)))
 
-	# 宝可梦专属信息
 	if card.is_pokemon():
-		_add_separator(content)
 		var stat_parts: PackedStringArray = []
 		stat_parts.append("HP %d" % card.hp)
-		stat_parts.append("属性: %s" % _energy_display(card.energy_type))
-		stat_parts.append("阶段: %s" % card.stage)
-		stat_parts.append("撤退: %d" % card.retreat_cost)
-		var stat_label := Label.new()
-		stat_label.text = " | ".join(stat_parts)
-		content.add_child(stat_label)
-
+		stat_parts.append("属性 %s" % _energy_display(card.energy_type))
+		stat_parts.append("阶段 %s" % card.stage)
+		stat_parts.append("撤退 %d" % card.retreat_cost)
+		lines.append("")
+		lines.append("[color=#7adcf2][b]基本信息[/b][/color]")
+		lines.append(_bbcode_escape(" | ".join(stat_parts)))
 		if card.evolves_from != "":
-			var evo_label := Label.new()
-			evo_label.text = "从 %s 进化" % card.evolves_from
-			content.add_child(evo_label)
+			lines.append(_bbcode_escape("从 %s 进化" % card.evolves_from))
 
-		var weakness_text := ""
+		var weakness_text := "无"
 		if card.weakness_energy != "":
-			weakness_text = "弱点: %s %s" % [_energy_display(card.weakness_energy), card.weakness_value]
-		var resist_text := ""
+			weakness_text = "%s %s" % [_energy_display(card.weakness_energy), card.weakness_value]
+		var resist_text := "无"
 		if card.resistance_energy != "":
-			resist_text = "抗性: %s %s" % [_energy_display(card.resistance_energy), card.resistance_value]
-		if weakness_text != "" or resist_text != "":
-			var wr_label := Label.new()
-			wr_label.text = "  ".join([weakness_text, resist_text]).strip_edges()
-			content.add_child(wr_label)
+			resist_text = "%s %s" % [_energy_display(card.resistance_energy), card.resistance_value]
+		lines.append(_bbcode_escape("弱点 %s | 抗性 %s" % [weakness_text, resist_text]))
 
-		# 特性
 		for ab: Dictionary in card.abilities:
-			_add_separator(content)
-			var ab_title := Label.new()
-			ab_title.text = "[特性] %s" % ab.get("name", "")
-			ab_title.add_theme_color_override("font_color", Color(1.0, 0.7, 0.3))
-			content.add_child(ab_title)
-			if ab.get("text", "") != "":
-				var ab_text := Label.new()
-				ab_text.text = str(ab.get("text", ""))
-				ab_text.autowrap_mode = TextServer.AUTOWRAP_WORD
-				content.add_child(ab_text)
+			var ab_name := str(ab.get("name", "")).strip_edges()
+			var ab_text := str(ab.get("text", "")).strip_edges()
+			lines.append("")
+			lines.append("[color=#ffd782][b]特性: %s[/b][/color]" % _bbcode_escape(ab_name))
+			if ab_text != "":
+				lines.append(_bbcode_escape(ab_text))
 
-		# 招式
 		for atk: Dictionary in card.attacks:
-			_add_separator(content)
-			var cost_str: String = str(atk.get("cost", ""))
-			var dmg_str: String = str(atk.get("damage", ""))
-			var atk_header := Label.new()
+			var cost_str := str(atk.get("cost", "")).strip_edges()
+			var dmg_str := str(atk.get("damage", "")).strip_edges()
+			var atk_name := str(atk.get("name", "")).strip_edges()
+			var atk_text := str(atk.get("text", "")).strip_edges()
 			var parts: PackedStringArray = []
 			if cost_str != "":
 				parts.append("[%s]" % cost_str)
-			parts.append(str(atk.get("name", "")))
+			if atk_name != "":
+				parts.append(atk_name)
 			if dmg_str != "":
 				parts.append(dmg_str)
-			atk_header.text = " ".join(parts)
-			atk_header.add_theme_color_override("font_color", Color(0.5, 0.8, 1.0))
-			content.add_child(atk_header)
-			if atk.get("text", "") != "":
-				var atk_text := Label.new()
-				atk_text.text = str(atk.get("text", ""))
-				atk_text.autowrap_mode = TextServer.AUTOWRAP_WORD
-				content.add_child(atk_text)
+			lines.append("")
+			lines.append("[color=#86d7ff][b]招式: %s[/b][/color]" % _bbcode_escape(" ".join(parts)))
+			if atk_text != "":
+				lines.append(_bbcode_escape(atk_text))
 
-	# 训练家/能量描述
 	if card.description != "":
-		_add_separator(content)
-		var desc := Label.new()
-		desc.text = card.description
-		desc.autowrap_mode = TextServer.AUTOWRAP_WORD
-		content.add_child(desc)
+		lines.append("")
+		lines.append("[color=#7adcf2][b]文本[/b][/color]")
+		lines.append(_bbcode_escape(card.description))
 
-	# 效果 ID
 	if card.effect_id != "":
-		_add_separator(content)
-		var eid := Label.new()
-		eid.text = "效果ID: %s" % card.effect_id
-		eid.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
-		content.add_child(eid)
-
-	# 英文名
+		lines.append("")
+		lines.append("[color=#7a8d99]效果ID: %s[/color]" % _bbcode_escape(card.effect_id))
 	if card.name_en != "":
-		var en_label := Label.new()
-		en_label.text = "英文名: %s" % card.name_en
-		en_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
-		content.add_child(en_label)
+		lines.append("[color=#7a8d99]英文名: %s[/color]" % _bbcode_escape(card.name_en))
 
-	add_child(dialog)
-	dialog.popup_centered()
-	dialog.confirmed.connect(dialog.queue_free)
+	return "[color=#dceff8]%s[/color]" % "\n".join(lines)
+
+
+func _bbcode_escape(text: String) -> String:
+	return text.replace("[", "\\[").replace("]", "\\]")
 
 
 func _on_discuss_ai_pressed() -> void:

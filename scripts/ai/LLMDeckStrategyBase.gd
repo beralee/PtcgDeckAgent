@@ -1,6 +1,13 @@
 class_name LLMDeckStrategyBase
 extends "res://scripts/ai/DeckStrategyBase.gd"
 
+func set_deck_strategy_text(_strategy_text: String) -> void:
+	pass
+
+
+func get_deck_strategy_text() -> String:
+	return ""
+
 
 func _get_llm_prompt_builder() -> RefCounted:
 	return null
@@ -12,6 +19,10 @@ func get_llm_deck_strategy_prompt(_game_state: GameState, _player_index: int) ->
 
 func get_llm_setup_role_hint(_cd: CardData) -> String:
 	return "support"
+
+
+func pick_interaction_items(_items: Array, _step: Dictionary, _context: Dictionary = {}) -> Array:
+	return []
 
 
 func _configure_prompt_builder(game_state: GameState, player_index: int) -> void:

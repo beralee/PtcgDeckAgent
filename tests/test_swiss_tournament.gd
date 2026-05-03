@@ -60,20 +60,30 @@ func test_field_uses_supported_ai_decks_and_random_modes() -> String:
 	])
 
 
-func test_field_can_include_llm_raging_bolt_when_enabled() -> String:
+func test_field_can_include_all_llm_deck_variants_when_enabled() -> String:
 	var tournament := SwissTournamentScript.new()
 	tournament.setup("测试玩家", 575716, 16, 12345, true)
+	var expected_llm_decks := CardDatabase.get_supported_ai_deck_ids()
+	expected_llm_decks.sort()
+	var llm_deck_pool: Array = tournament.call("get_llm_deck_pool")
+	llm_deck_pool.sort()
 	var llm_count := 0
-	var llm_deck_mismatch := 0
+	var llm_deck_not_supported := 0
+	var missing_strategy_count := 0
 	for participant: Dictionary in tournament.participants:
 		if str(participant.get("ai_mode", "")) != "llm":
 			continue
 		llm_count += 1
-		if int(participant.get("deck_id", 0)) != 575718:
-			llm_deck_mismatch += 1
+		var deck_id := int(participant.get("deck_id", 0))
+		if not expected_llm_decks.has(deck_id):
+			llm_deck_not_supported += 1
+		if str(tournament.call("llm_strategy_id_for_deck_id", deck_id)) == "":
+			missing_strategy_count += 1
 	return run_checks([
-		assert_true(llm_count >= 1, "AI 设置测试通过后，比赛参赛池应至少引入一个 LLM 猛雷鼓对手"),
-		assert_eq(llm_deck_mismatch, 0, "LLM 对手目前只能使用猛雷鼓卡组 575718"),
+		assert_eq(llm_deck_pool, expected_llm_decks, "比赛模式 LLM 池应覆盖全部 8 套 AI 可选卡组"),
+		assert_true(llm_count >= 1, "AI 设置测试通过后，比赛参赛池应至少引入一个 LLM 对手"),
+		assert_eq(llm_deck_not_supported, 0, "LLM 对手只能使用 AI 可选卡组"),
+		assert_eq(missing_strategy_count, 0, "每个 LLM 对手卡组都必须能映射到对应 LLM strategy id"),
 	])
 
 
@@ -120,6 +130,6 @@ func test_llm_ai_simulation_rates_match_contract() -> String:
 	var tournament := SwissTournamentScript.new()
 	tournament.setup("测试玩家", 575716, 16, 12345, true)
 	return run_checks([
-		assert_eq(float(tournament._llm_win_probability_against_mode("strong")), 0.60, "LLM 猛雷鼓遇到规则版强 AI 应按 60% 胜率模拟"),
-		assert_eq(float(tournament._llm_win_probability_against_mode("weak")), 1.0, "LLM 猛雷鼓遇到弱 AI 应按 100% 胜率模拟"),
+		assert_eq(float(tournament._llm_win_probability_against_mode("strong")), 0.60, "LLM 对手遇到规则版强 AI 应按 60% 胜率模拟"),
+		assert_eq(float(tournament._llm_win_probability_against_mode("weak")), 1.0, "LLM 对手遇到弱 AI 应按 100% 胜率模拟"),
 	])

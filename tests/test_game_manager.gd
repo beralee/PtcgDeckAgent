@@ -157,11 +157,19 @@ func test_battle_review_api_config_restricts_models_to_supported_allowlist() -> 
 		"timeout_seconds": 30,
 	})
 	var deepseek_config: Dictionary = manager.call("get_battle_review_api_config")
+	_write_config({
+		"endpoint": "https://example.invalid/v1",
+		"api_key": "old-key",
+		"model": "deepseek/deepseek-v4-pro",
+		"timeout_seconds": 30,
+	})
+	var deepseek_pro_config: Dictionary = manager.call("get_battle_review_api_config")
 	_restore_config_text(original_config_text)
 
 	return run_checks([
 		assert_eq(str(unsupported_config.get("model", "")), "kimi-k2.6", "Unsupported models should fall back to the default model"),
-		assert_eq(str(deepseek_config.get("model", "")), "deepseek/deepseek-chat", "DeepSeek V4 Flash should map to the current non-thinking compatibility slug"),
+		assert_eq(str(deepseek_config.get("model", "")), "deepseek-v4-flash", "DeepSeek V4 Flash should remain selectable as its tested no-thinking slug"),
+		assert_eq(str(deepseek_pro_config.get("model", "")), "deepseek-v4-pro", "Provider-prefixed DeepSeek V4 Pro should normalize to the tested no-thinking slug"),
 	])
 
 

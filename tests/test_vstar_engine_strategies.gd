@@ -571,6 +571,35 @@ func test_lugia_search_prefers_cinccino_over_side_attacker_once_minccino_is_onli
 	return assert_eq(picked, "Cinccino", "With Minccino already online, Lugia should search the Cinccino attacker before a side attacker")
 
 
+func test_lugia_late_basic_search_prefers_bloodmoon_over_ogerpon_when_engine_online() -> String:
+	var strategy := _new_strategy(LUGIA_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyLugiaArcheops.gd should exist before late-game basic search priorities can be verified"
+	var gs := _make_game_state(7)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Lugia VSTAR", "VSTAR", "C", 280, "Lugia V", "V"), 0)
+	player.bench.append(_make_slot(_make_pokemon_cd("Archeops", "Stage 2", "C", 150, "Archen"), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd("Archeops", "Stage 2", "C", 150, "Archen"), 0))
+	player.prizes.clear()
+	for i: int in 2:
+		player.prizes.append(CardInstance.create(_make_trainer_cd("My Prize %d" % i), 0))
+	var items: Array = [
+		CardInstance.create(_make_pokemon_cd("Wellspring Mask Ogerpon ex", "Basic", "W", 210, "", "ex"), 0),
+		CardInstance.create(_make_pokemon_cd("Bloodmoon Ursaluna ex", "Basic", "C", 260, "", "ex"), 0),
+		CardInstance.create(_make_pokemon_cd("Iron Hands ex", "Basic", "L", 230, "", "ex"), 0),
+	]
+	var context := {"game_state": gs, "player_index": 0, "all_items": items}
+	var scored_pick := _best_card_name(strategy, items, "search_pokemon", context)
+	var direct_picks: Array = strategy.pick_interaction_items(items, {"id": "search_pokemon", "max_select": 1}, context)
+	var direct_pick := ""
+	if not direct_picks.is_empty() and direct_picks[0] is CardInstance:
+		direct_pick = str((direct_picks[0] as CardInstance).card_data.name)
+	return run_checks([
+		assert_eq(scored_pick, "Bloodmoon Ursaluna ex", "Late Lugia with Archeops online should search Bloodmoon before low-impact Ogerpon when only Basic options are available"),
+		assert_eq(direct_pick, "Bloodmoon Ursaluna ex", "Direct interaction picking should use the same late-game Lugia search priority"),
+	])
+
+
 func test_lugia_special_energy_attach_prefers_cinccino_over_iron_hands_once_engine_is_online() -> String:
 	var strategy := _new_strategy(LUGIA_SCRIPT_PATH)
 	if strategy == null:

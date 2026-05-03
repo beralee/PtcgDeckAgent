@@ -51,6 +51,8 @@ const SCENE_TOURNAMENT_SETUP := "res://scenes/tournament/TournamentSetup.tscn"
 const SCENE_TOURNAMENT_OVERVIEW := "res://scenes/tournament/TournamentOverview.tscn"
 const SCENE_TOURNAMENT_STANDINGS := "res://scenes/tournament/TournamentStandings.tscn"
 const BATTLE_REVIEW_API_CONFIG_PATH := "user://battle_review_api.json"
+const CANONICAL_BATTLE_REVIEW_USER_DIR_NAME := "PTCG Train"
+const BATTLE_REVIEW_API_CONFIG_FILE_NAME := "battle_review_api.json"
 const BATTLE_SETUP_SETTINGS_PATH := "user://battle_setup.json"
 const TOURNAMENT_SAVE_PATH := "user://tournament_mode_save.json"
 const DESKTOP_WINDOW_SCREEN_MARGIN := Vector2i(48, 48)
@@ -72,6 +74,14 @@ const SUPPORTED_BATTLE_REVIEW_MODELS: Array[Dictionary] = [
 	{
 		"id": "deepseek/deepseek-chat",
 		"label": "DeepSeek chat",
+	},
+	{
+		"id": "deepseek-v4-flash",
+		"label": "DeepSeek V4 Flash",
+	},
+	{
+		"id": "deepseek-v4-pro",
+		"label": "DeepSeek V4 Pro",
 	},
 	{
 		"id": "gpt-5.5",
@@ -295,13 +305,23 @@ func get_supported_battle_review_models() -> Array[Dictionary]:
 	return SUPPORTED_BATTLE_REVIEW_MODELS.duplicate(true)
 
 
+func get_battle_review_model_label(model_id: String) -> String:
+	var normalized := normalize_battle_review_model(model_id)
+	for model: Dictionary in SUPPORTED_BATTLE_REVIEW_MODELS:
+		if str(model.get("id", "")) == normalized:
+			return str(model.get("label", normalized))
+	return normalized
+
+
 func normalize_battle_review_model(model_id: String) -> String:
 	var normalized := model_id.strip_edges()
 	match normalized:
 		"deepseek-chat":
 			return "deepseek/deepseek-chat"
-		"deepseek-v4-flash", "deepseek/deepseek-v4-flash":
-			return "deepseek/deepseek-chat"
+		"deepseek/deepseek-v4-flash":
+			return "deepseek-v4-flash"
+		"deepseek/deepseek-v4-pro":
+			return "deepseek-v4-pro"
 	for model: Dictionary in SUPPORTED_BATTLE_REVIEW_MODELS:
 		if str(model.get("id", "")) == normalized:
 			return normalized
@@ -309,10 +329,26 @@ func normalize_battle_review_model(model_id: String) -> String:
 
 
 func get_battle_review_api_config() -> Dictionary:
+	return _load_battle_review_api_config_from_path(BATTLE_REVIEW_API_CONFIG_PATH)
+
+
+func get_llm_opponent_battle_review_api_config() -> Dictionary:
+	var canonical_path := _canonical_battle_review_api_config_path()
+	if canonical_path != "" and FileAccess.file_exists(canonical_path):
+		var canonical_config := _load_battle_review_api_config_from_path(canonical_path)
+		if str(canonical_config.get("api_key", "")).strip_edges() != "":
+			canonical_config["config_source_path"] = canonical_path
+			return canonical_config
+	var config := get_battle_review_api_config()
+	config["config_source_path"] = BATTLE_REVIEW_API_CONFIG_PATH
+	return config
+
+
+func _load_battle_review_api_config_from_path(path: String) -> Dictionary:
 	var config := _default_battle_review_api_config()
-	if not FileAccess.file_exists(BATTLE_REVIEW_API_CONFIG_PATH):
+	if path == "" or not FileAccess.file_exists(path):
 		return config
-	var file := FileAccess.open(BATTLE_REVIEW_API_CONFIG_PATH, FileAccess.READ)
+	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
 		return config
 	var raw_text := file.get_as_text()
@@ -333,6 +369,30 @@ func get_battle_review_api_config() -> Dictionary:
 	if parsed_dict.has("ai_test_signature"):
 		config["ai_test_signature"] = str(parsed_dict["ai_test_signature"])
 	return config
+
+
+func _canonical_battle_review_api_config_path() -> String:
+	var os_name := OS.get_name()
+	var base_dir := ""
+	match os_name:
+		"Windows":
+			base_dir = OS.get_environment("APPDATA")
+			if base_dir == "":
+				return ""
+			return base_dir.path_join("Godot").path_join("app_userdata").path_join(CANONICAL_BATTLE_REVIEW_USER_DIR_NAME).path_join(BATTLE_REVIEW_API_CONFIG_FILE_NAME)
+		"macOS":
+			base_dir = OS.get_environment("HOME")
+			if base_dir == "":
+				return ""
+			return base_dir.path_join("Library").path_join("Application Support").path_join("Godot").path_join("app_userdata").path_join(CANONICAL_BATTLE_REVIEW_USER_DIR_NAME).path_join(BATTLE_REVIEW_API_CONFIG_FILE_NAME)
+		_:
+			base_dir = OS.get_environment("XDG_DATA_HOME")
+			if base_dir == "":
+				var home_dir := OS.get_environment("HOME")
+				if home_dir == "":
+					return ""
+				base_dir = home_dir.path_join(".local").path_join("share")
+			return base_dir.path_join("godot").path_join("app_userdata").path_join(CANONICAL_BATTLE_REVIEW_USER_DIR_NAME).path_join(BATTLE_REVIEW_API_CONFIG_FILE_NAME)
 
 
 func _default_battle_review_api_config() -> Dictionary:
@@ -483,8 +543,12 @@ func prepare_current_tournament_battle() -> bool:
 	ai_deck_strategy = "generic"
 	ai_selection["display_name"] = str(current_tournament.participant_display_name(opponent_id))
 	if str(current_tournament.participant_ai_mode(opponent_id)) == "llm" and is_battle_review_ai_ready_for_llm_opponents():
-		ai_deck_strategy = "raging_bolt_ogerpon_llm"
-		ai_selection["display_name"] = "%s（LLM）" % str(current_tournament.participant_display_name(opponent_id))
+		var llm_strategy_id := ""
+		if current_tournament.has_method("participant_llm_strategy_id"):
+			llm_strategy_id = str(current_tournament.call("participant_llm_strategy_id", opponent_id))
+		if llm_strategy_id != "":
+			ai_deck_strategy = llm_strategy_id
+			ai_selection["display_name"] = "%s（LLM）" % str(current_tournament.participant_display_name(opponent_id))
 	var fixed_order_path := str(current_tournament.participant_fixed_order_path(opponent_id))
 	if fixed_order_path != "":
 		ai_selection["opening_mode"] = "fixed_order"

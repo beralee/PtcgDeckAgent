@@ -22,6 +22,7 @@ const EFFECT_ID_RULE_TAGS := {
 	"651276c51911345aa091c1c7b87f3f4f": ["energy_related", "supporter_related", "energy_acceleration"],
 	"8538726d6cdfad2fa3ca5f4b462c12c5": ["energy_related", "recover_to_hand"],
 	"409898a79b38fe8ca279e7bdaf4fd52e": ["energy_related", "draw", "ability_engine", "charge_engine", "safe_pre_attack", "productive_engine"],
+	"8ef5ff61fd97838af568f00fe3b0e3ea": ["draw", "ability_engine", "ends_turn"],
 	"768b545a38fccd5e265093b5adce10af": ["search_deck", "supporter_related"],
 	"a337ed34a45e63c6d21d98c3d8e0cb6e": ["search_deck", "discard"],
 	"d3891abcfe3277c8811cde06741d3236": ["evolution"],
@@ -77,7 +78,6 @@ func build_action_id_request_payload(
 	var prompt_actions: Array[Dictionary] = summarized_actions.duplicate(true)
 	prompt_actions.append_array(future_actions)
 	var legal_action_groups: Dictionary = _legal_action_groups(summarized_actions)
-	var future_action_groups: Dictionary = _legal_action_groups(future_actions)
 	var turn_tactical_facts: Dictionary = _turn_tactical_facts(game_state, player, player_index, summarized_actions, legal_action_groups, future_actions)
 	var candidate_routes: Array[Dictionary] = _route_candidate_builder.call("build_candidate_routes", summarized_actions, future_actions, turn_tactical_facts)
 	var payload := {
@@ -86,13 +86,11 @@ func build_action_id_request_payload(
 		"instructions": action_id_instructions(),
 		"game_state": _serialize_compact_game_state(game_state, player, opponent, player_index),
 		"legal_actions": prompt_actions,
-		"currently_legal_actions": summarized_actions,
 		"future_actions": future_actions,
 		"legal_action_groups": legal_action_groups,
-		"future_action_groups": future_action_groups,
 		"turn_tactical_facts": turn_tactical_facts,
-		"candidate_routes": candidate_routes,
-		"decision_tree_contract": _decision_tree_contract(),
+		"candidate_routes": _compact_candidate_routes(candidate_routes),
+		"supported_facts": _supported_tree_facts(),
 	}
 	if _deck_strategy_id != "":
 		payload["deck_strategy_id"] = _deck_strategy_id
@@ -229,6 +227,9 @@ func legal_action_reference(action: Dictionary, game_state: GameState, player_in
 		ref["requires_interaction"] = true
 	if bool(ref.get("requires_interaction", false)):
 		ref["interaction_schema"] = _interaction_schema_for_ref(ref)
+		var interaction_schema: Dictionary = ref.get("interaction_schema", {}) if ref.get("interaction_schema", {}) is Dictionary else {}
+		if interaction_schema.is_empty():
+			ref["interaction_contract"] = "This action requires an engine interaction but exposes no exact low-level schema; do not add interactions keys. Prefer selection_policy or avoid this optional action unless it is the only route."
 	ref["summary"] = _legal_action_summary(ref)
 	return ref
 
@@ -435,7 +436,7 @@ func fast_choice_instructions() -> PackedStringArray:
 		"For setup_active, selected_index is the hand index of the Active Pokemon. bench_indices is the ordered list of Basic Pokemon hand indices to place on Bench.",
 		"For send_out, selected_index is the bench index to promote to Active. bench_indices should be empty.",
 		"Use game_state only for quick public context: current board, opponent active, prize race, and energy/status/tool information.",
-		"Use deck_strategy_prompt for deck-specific priorities, but answer quickly. This prompt is for a 1-of-N choice, not a multi-step play sequence.",
+		"Use deck_strategy_prompt as the player's deck-specific play requirements when choosing among legal candidates, but answer quickly. This prompt is for a 1-of-N choice, not a multi-step play sequence.",
 		"Prefer a ready attacker or intended lead for send_out. Do not send out fragile engine Pokemon if a real attacker or pivot is available.",
 		"Prefer the deck's intended opener for setup Active, then bench core engines before optional support basics.",
 	])
@@ -443,50 +444,29 @@ func fast_choice_instructions() -> PackedStringArray:
 
 func action_id_instructions() -> PackedStringArray:
 	return PackedStringArray([
-		"Return one route-style priority-ordered decision_tree from legal_actions only. Use ids exactly; do not invent ids.",
-		"Read candidate_routes first. If a candidate route matches the turn, prefer using its route_action_id as a single branch action, for example {\"id\":\"route:primary_visible_engine\"}; the runtime expands it into exact currently legal action refs.",
-		"If turn_tactical_facts.gust_ko_opportunities is non-empty, treat the first listed opportunity as a top-priority prize route; use its route_action_id when candidate_routes exposes one, otherwise use the listed gust_action_id with selection_policy.opponent_bench_target followed by attack_action_id.",
-		"If no candidate route fits, build a route from exact legal_actions ids directly. Do not mix a candidate route id with duplicated copies of the same route actions.",
-		"legal_actions contains currently_legal_actions plus future_actions. currently_legal_actions are executable now. future_actions are standardized ids that may become executable after earlier same-turn setup such as attach, switch, retreat, search, or draw.",
-		"This must be a decision tree, not a serial script. Branches are checked in array order and only the first matching route executes.",
-		"Hard contract: every branch condition object must use {\"fact\":\"<supported_fact>\"}. Never use condition, label, natural-language predicates, or made-up facts.",
-		"Hard contract: hand_has_card and discard_has_card must include card/name. hand_has_type must include card_type or energy_type. active_attack_ready must include attack_name copied from legal_actions/game_state.",
-		"Hard contract: do not use can_attack as the first attack route. can_attack only means the phase permits attacking; attack-first routes must use active_attack_ready.",
-		"Hard contract: if the only ready attack is a hand-discard redraw/setup attack and turn_tactical_facts says the primary deck attack is reachable through visible search/setup, do not choose the redraw attack as the first branch.",
-		"Hard contract: if a route has active_attack_ready, or uses attack-enabling setup actions such as acceleration, resource search, charge abilities, pivot, or attach_energy to active, and an attack legal_action exists, that route must include an attack action before end_turn.",
-		"Hard contract: every action must be {\"id\":\"<exact legal_actions[].id>\"}. Never invent ids such as attack_active_index_1 or use_supporter:Card Name.",
-		"Hard contract: a single route may contain at most one manual attach_energy action because only one manual attachment is allowed per turn.",
-		"Hard contract: interactions must match the exact card_rules and interaction_hints for that legal action. Do not copy an interaction shape from a different card.",
-		"Preferred contract: for card-specific choices, provide selection_policy with human strategic intent, and only add low-level interactions when legal_action.interaction_schema names the exact key. The executor will compile selection_policy to deterministic interaction picks.",
-		"Examples: selection_policy.resource='basic_grass_energy_from_hand' for Ogerpon; selection_policy.discard='expendable_energy_or_duplicate_basic' and selection_policy.search=['Fighting Energy'] for Earthen Vessel; selection_policy.assignments for Sada-like acceleration.",
-		"For Sada-like acceleration, read turn_tactical_facts.sada_assignment_recommendations and prefer Energy types that fill the target Pokemon's missing attack cost; do not attach off-type Energy to a primary attacker when Lightning/Fighting or another listed missing cost is available.",
-		"For non-trivial turns, build route slots in this order when legal_actions contain them: primary_damage attack-now, safe setup/tool/charge before attack, supporter engine, search/resource engine, ability engine, pivot/gust, manual attach, preserve-hand fallback. Low-priority redraw/setup attacks belong near fallback, not first.",
-		"Each route may contain up to 8 actions. Put attack near the end after safe setup/charge/tool actions that do not consume or block the attack.",
-		"Bad->good: active_attack_ready -> end_turn is invalid; active_attack_ready -> optional safe setup/tool/charge ids -> exact attack id is correct.",
-		"Bad->good: attack-only while bench/search/charge actions are safe is too shallow; include those safe actions before attack when they improve prize pressure, survival, or next turn without losing the attack.",
-		"Use only visible game_state and legal_actions. Do not assume hidden deck, prizes, or opponent hand contents.",
-		"Read deck_strategy_hints when present. They contain the deck-specific turn shape and must override generic tempo habits.",
-		"Read turn_tactical_facts before deck_strategy_hints. Current legal actions and tactical facts override generic deck templates; if primary_attack_ready is false, build setup/search/attach routes toward primary_attack_name instead of using a low-value ready redraw attack.",
-		"If replan_context is present, this is a same-turn replan after draw/search/discard changed the hand. Re-evaluate the new legal_actions and current hand instead of continuing the old route.",
-		"Read each legal_action.card_rules, ability_rules, attack_rules, and interaction_hints. These are generated from the real card JSON and explain what every currently playable card can do.",
-		"Read legal_action.consumes_hand_card_ids, may_consume_hand_energy_symbols, and resource_conflicts. Do not put two resource-conflicting actions in the same route unless an earlier draw/search branch can replace the consumed resource.",
-		"Use legal_action_groups to ensure you considered attack, manual attach, engine/draw, search/setup, pivot/gust, and fallback actions.",
-		"Use future_actions to close a route when a currently illegal attack/retreat can become legal after prior actions. Do not use future_actions as the first step unless its prerequisite is already satisfied.",
-		"If future_actions includes future:attach_after_search and future:attack_after_search_attach, a legal search action can create the missing Energy route; prefer that over a low-value redraw attack.",
-		"If turn_tactical_facts.manual_attach_enables_primary_attack is true, prefer the exact best_manual_attach_to_primary_attack_action_id route before draw/filter abilities such as Greninja or Shoes.",
-		"If turn_tactical_facts.manual_attach_enables_best_active_attack is true, prefer best_manual_attach_to_best_active_attack_action_id followed by the resulting active attack; if best_active_attack_after_manual_attach.kos_opponent_active_after_best_manual_attach is true, treat it as a top conversion route.",
-		"If turn_tactical_facts.primary_attack_reachable_after_visible_engine is true, build a route using primary_attack_route and future_actions before falling back to shallow setup actions.",
-		"If turn_tactical_facts.no_deck_draw_lock is true, do not choose draw, search, discard-to-draw, or recovery churn unless it is the only legal way to avoid immediate loss.",
-		"Read turn_tactical_facts.safe_pre_primary_actions. These actions can usually be inserted before the primary route when they do not consume the same resource or block the attack.",
-		"Read turn_tactical_facts.productive_engine_actions. High-priority charge/draw/filter actions are not optional decoration: include them before end_turn or before a low-pressure attack when they build the board, find missing attack pieces, or increase damage without blocking the route.",
-		"If a legal ability attaches Energy and draws a card, consider it before attack/search/end_turn unless resource_conflicts says it consumes the only Energy needed for manual attach.",
-		"If a legal draw/filter Item is available and the primary attack is not ready or missing pieces, use it before ending the turn instead of preserving a large unplayed hand.",
-		"Also consider tool_or_modifier actions before combat when they improve the active or next attacker without consuming the attack.",
-		"If turn_tactical_facts.legal_survival_tool_actions is non-empty, treat those as safe pre-terminal actions for the exposed active or next attacker unless a stronger tool route is already chosen.",
-		"Prefer immediate KO/high prize pressure, but if safe setup/charge actions can happen before the attack without losing the attack, include them before attacking.",
-		"Resource budget: after safe setup and a winning or sufficient attack line are available, stop optional digging. Do not add draw/churn/discard actions unless they unlock attack, KO math, survival, or next-turn attacker continuity.",
+		"Return exactly one route-style priority-ordered decision_tree. Use only exact ids from legal_actions or candidate_routes.route_action_id; never invent ids.",
+		"Read candidate_routes first. Prefer one matching route_action_id as a branch action; do not mix a route id with duplicated copies of its actions.",
+		"If no candidate route fits, build from legal_actions. Actions with future=true are goals after same-turn setup; do not use future_actions as the first step unless their prerequisite is already satisfied.",
+		"Branches are checked in array order, first match only. Every branch condition must be a supported fact object, e.g. {\"fact\":\"always\"}.",
+		"Facts with parameters must be explicit: hand_has_card/discard_has_card need card or name; hand_has_type needs card_type or energy_type; active_attack_ready needs attack_name.",
+		"Do not lead an attack route with can_attack. Attack-first routes must use active_attack_ready with the exact attack_name.",
+		"Legal actions, card rules, resource conflicts, and current turn facts are hard constraints. deck_strategy_hints are player-authored play requirements, but they cannot make illegal or resource-conflicting actions valid.",
+		"Read turn_tactical_facts before deck_strategy_hints to test feasibility. Current facts override generic deck strategy text when they conflict.",
+		"Then treat deck_strategy_hints as a high-priority player-editable tactical preference layer, not optional flavor: when multiple legal candidate routes are reasonable, let it reorder route preference, setup/draw risk, attack timing, and fallback style.",
+		"candidate_routes.base_priority is an engine default, not a hard order. Player strategy may prefer a lower-base-priority route if it stays legal and tactically coherent; follow the player's stated play style when facts allow it.",
+		"Use candidate_routes and turn_tactical_facts for strategy: gust_ko_opportunities, primary_attack fields, best_manual_attach fields, redraw_attack_forbidden, no_deck_draw_lock, productive_engine_actions, safe_pre_primary_actions, legal_survival_tool_actions, resource_negative_actions, and sada_assignment_recommendations.",
+		"Read legal_action card_rules, ability_rules, attack_rules, interaction_schema, and resource fields when a card-specific choice matters.",
+		"Low-priority redraw/setup attacks are fallback only. If redraw_attack_forbidden is true or primary damage is visibly reachable, choose setup/resource preservation instead.",
+		"Attack setup routes must close with an attack when a legal attack action exists. Attack is terminal; put safe setup, tool, charge, search, gust, pivot, and attach before it.",
+		"turn_tactical_facts.turn_ending_actions are terminal. Do not choose them before productive bench/evolve/search/attach/tool/gust/attack setup unless no productive route remains.",
+		"A route may contain at most one manual attach_energy action. Respect consumes_hand_card_ids, may_consume_hand_energy_symbols, and resource_conflicts.",
+		"For card choices, prefer selection_policy. Add low-level interactions only when the legal_action.interaction_schema exposes the exact key; if interaction_schema is empty, do not add interactions.",
+		"Do not choose turn_tactical_facts.resource_negative_actions unless they are required by a stronger listed candidate route or no productive route remains.",
+		"Use legal_action_groups as a checklist for attack, manual attach, engine/draw, search/setup, pivot/gust, tool/modifier, and fallback lines.",
+		"For non-trivial turns, priority is: prize/KO route, primary damage conversion, safe setup before attack, supporter/search/ability engine, pivot/gust, manual attach setup, preserve resources.",
+		"If replan_context is present, re-evaluate current legal_actions and current hand; do not blindly continue an old route if facts changed.",
+		"Use only visible game_state, legal_actions, candidate_routes, turn_tactical_facts, replan_context, and deck_strategy_hints. Do not assume hidden deck, prizes, or opponent hand contents.",
 		"Return JSON only. Do not output reasoning, rationale, analysis, thinking, comments, or markdown.",
-		"Add interactions only when a legal action needs search/discard/assignment/gust choices and you know the exact schema key. Otherwise use selection_policy; do not invent generic interaction keys such as search or discard.",
 	])
 
 
@@ -634,8 +614,74 @@ func _decision_tree_contract() -> Dictionary:
 			{"bad": {"id": "attack_active_index_1"}, "why": "id was invented; copy exact legal_actions[].id"},
 			{"bad": {"id": "use_supporter:Card Name"}, "why": "supporter id was invented; copy exact play_trainer id"},
 			{"bad": {"id": "<supporter_id>", "interactions": {"search_targets": ["Energy"]}}, "why": "do not invent interaction keys; copy the shape implied by card_rules and interaction_hints"},
+			{"bad": {"id": "<action_with_empty_interaction_schema>", "interactions": {"discard_target": "c12"}}, "why": "interaction_schema is empty, so low-level interactions cannot be used"},
 		],
 	}
+
+
+func _supported_tree_facts() -> Array[String]:
+	return _string_array(_decision_tree_contract().get("supported_facts", []))
+
+
+func _compact_candidate_routes(routes: Array[Dictionary]) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for route: Dictionary in routes:
+		var compact := {
+			"id": str(route.get("id", "")),
+			"route_action_id": str(route.get("route_action_id", "")),
+			"type": str(route.get("type", "")),
+			"base_priority": int(route.get("priority", route.get("base_priority", 0))),
+			"strategy_adjustable": true,
+			"goal": str(route.get("goal", "")),
+			"description": str(route.get("description", "")),
+			"actions": _compact_route_actions(route.get("actions", [])),
+		}
+		var future_goals: Array[Dictionary] = _compact_route_future_goals(route.get("future_goals", []))
+		if not future_goals.is_empty():
+			compact["future_goals"] = future_goals
+		result.append(compact)
+	return result
+
+
+func _compact_route_actions(raw_actions: Variant) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if not (raw_actions is Array):
+		return result
+	for raw: Variant in raw_actions:
+		if not (raw is Dictionary):
+			continue
+		var action: Dictionary = raw
+		var action_id := str(action.get("id", action.get("action_id", "")))
+		if action_id == "":
+			continue
+		var compact := {"id": action_id}
+		if action.has("selection_policy"):
+			compact["selection_policy"] = action.get("selection_policy")
+		if action.has("interactions"):
+			compact["interactions"] = action.get("interactions")
+		result.append(compact)
+	return result
+
+
+func _compact_route_future_goals(raw_goals: Variant) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if not (raw_goals is Array):
+		return result
+	for raw: Variant in raw_goals:
+		if not (raw is Dictionary):
+			continue
+		var goal: Dictionary = raw
+		var compact := {}
+		for key: String in [
+			"id", "type", "attack_name", "attack_quality", "future", "position",
+			"prerequisite", "reachable_with_known_resources", "summary",
+			"target_position", "target_name", "game_winning",
+		]:
+			if goal.has(key):
+				compact[key] = goal.get(key)
+		if not compact.is_empty():
+			result.append(compact)
+	return result
 
 
 func _legal_action_groups(actions: Array[Dictionary]) -> Dictionary:
@@ -800,6 +846,15 @@ func _ref_rule_tags(ref: Dictionary) -> Array[String]:
 		var raw_rules: Variant = ref.get(key, {})
 		if not (raw_rules is Dictionary):
 			continue
+		var rules: Dictionary = raw_rules as Dictionary
+		if str(rules.get("effect_id", "")) == "8ef5ff61fd97838af568f00fe3b0e3ea":
+			_append_unique_string(tags, "ends_turn")
+		var rule_text := " ".join([
+			str(rules.get("text", "")),
+			str(rules.get("description", "")),
+		]).to_lower()
+		if _contains_any(rule_text, ["turn ends", "end your turn", "your turn ends", "ends your turn"]):
+			_append_unique_string(tags, "ends_turn")
 		var raw_tags: Variant = (raw_rules as Dictionary).get("tags", [])
 		if not (raw_tags is Array):
 			continue
@@ -1283,7 +1338,9 @@ func _turn_tactical_facts(
 ) -> Dictionary:
 	var facts := {
 		"deck_count": player.deck.size() if player != null else 0,
-		"no_deck_draw_lock": player != null and player.deck.is_empty(),
+		"hand_count": player.hand.size() if player != null else 0,
+		"no_deck_draw_lock": player != null and player.deck.size() <= 2,
+		"deck_draw_risk": player != null and player.deck.size() <= 12,
 		"attack_legal_now": not (legal_action_groups.get("attack", []) as Array).is_empty(),
 		"attack_reachable_after_manual_attach": false,
 		"primary_attack_ready": false,
@@ -1295,9 +1352,12 @@ func _turn_tactical_facts(
 		"primary_attack_route": [],
 		"safe_pre_primary_actions": [],
 		"productive_engine_actions": [],
+		"turn_ending_actions": [],
+		"resource_negative_actions": [],
 		"ready_attacks": [],
 		"ready_attack_is_low_value_redraw": false,
 		"only_ready_attack_is_low_value_redraw": false,
+		"redraw_attack_forbidden": false,
 		"attack_quality_by_action_id": _attack_quality_by_action_id(legal_actions, future_actions),
 		"best_manual_attach_energy_for_active_attack": "",
 		"best_manual_attach_to_best_active_attack_action_id": "",
@@ -1319,6 +1379,8 @@ func _turn_tactical_facts(
 		return facts
 	facts["safe_pre_primary_actions"] = _safe_pre_primary_actions(legal_actions)
 	facts["productive_engine_actions"] = _productive_engine_actions(legal_actions)
+	facts["turn_ending_actions"] = _turn_ending_actions(legal_actions)
+	facts["resource_negative_actions"] = _resource_negative_actions(game_state, player_index, legal_actions)
 	facts["legal_supporter_names"] = _legal_supporter_names(legal_actions)
 	facts["supporter_names_in_hand"] = _supporter_names_in_hand(player)
 	facts["sada_assignment_recommendations"] = _sada_assignment_recommendations(player)
@@ -1426,11 +1488,35 @@ func _turn_tactical_facts(
 		facts["primary_attack_reachable_after_search"] = _future_actions_include_primary_attack(future_actions, str(primary_option.get("attack_name", "")), "energy_search_then_manual_attach")
 		facts["primary_attack_reachable_after_visible_engine"] = _future_actions_include_primary_attack(future_actions, str(primary_option.get("attack_name", "")))
 		facts["primary_attack_route"] = _primary_attack_visible_engine_route(future_actions, str(primary_option.get("attack_name", "")))
+	facts["redraw_attack_forbidden"] = _redraw_attack_forbidden(facts)
 	facts["gust_ko_opportunities"] = _gust_ko_opportunities(game_state, player, player_index, legal_actions, future_actions)
 	var gust_routes: Array = facts.get("gust_ko_opportunities", [])
 	if not gust_routes.is_empty():
 		facts["best_gust_ko_route"] = (gust_routes[0] as Dictionary).duplicate(true)
 	return facts
+
+
+func _redraw_attack_forbidden(facts: Dictionary) -> bool:
+	if not bool(facts.get("only_ready_attack_is_low_value_redraw", false)):
+		return false
+	if bool(facts.get("primary_attack_ready", false)):
+		return true
+	if bool(facts.get("manual_attach_enables_primary_attack", false)):
+		return true
+	if bool(facts.get("primary_attack_reachable_after_visible_engine", false)):
+		return true
+	var productive_count := 0
+	for key: String in ["safe_pre_primary_actions", "productive_engine_actions", "legal_survival_tool_actions"]:
+		var raw: Variant = facts.get(key, [])
+		if raw is Array:
+			productive_count += (raw as Array).size()
+	var deck_count := int(facts.get("deck_count", 0))
+	var hand_count := int(facts.get("hand_count", 0))
+	if hand_count >= 4 and productive_count > 0:
+		return true
+	if deck_count <= 12:
+		return true
+	return deck_count <= 24 and hand_count >= 4
 
 
 func _opponent_active_slot(game_state: GameState, player_index: int) -> PokemonSlot:
@@ -1826,6 +1912,8 @@ func _safe_pre_primary_actions(legal_actions: Array[Dictionary]) -> Array[Dictio
 			break
 		var action_type := str(ref.get("type", ""))
 		var tags: Array[String] = _ref_rule_tags(ref)
+		if tags.has("ends_turn"):
+			continue
 		var reason := ""
 		if action_type == "attach_tool":
 			reason = "improves_survival_without_consuming_attack"
@@ -1851,6 +1939,8 @@ func _productive_engine_actions(legal_actions: Array[Dictionary]) -> Array[Dicti
 			break
 		var action_type := str(ref.get("type", ""))
 		var tags: Array[String] = _ref_rule_tags(ref)
+		if tags.has("ends_turn"):
+			continue
 		var priority := ""
 		var role := ""
 		var reason := ""
@@ -1902,8 +1992,78 @@ func _productive_engine_actions(legal_actions: Array[Dictionary]) -> Array[Dicti
 	return result
 
 
+func _turn_ending_actions(legal_actions: Array[Dictionary]) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for ref: Dictionary in legal_actions:
+		if result.size() >= 6:
+			break
+		var tags: Array[String] = _ref_rule_tags(ref)
+		if not tags.has("ends_turn"):
+			continue
+		result.append({
+			"id": str(ref.get("id", "")),
+			"type": str(ref.get("type", "")),
+			"card": str(ref.get("card", ref.get("pokemon", ""))),
+			"ability": str(ref.get("ability", "")),
+			"reason": "this action ends the turn; treat it as a fallback terminal route, not a pre-attack draw engine",
+		})
+	return result
+
+
+func _resource_negative_actions(game_state: GameState, player_index: int, legal_actions: Array[Dictionary]) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for ref: Dictionary in legal_actions:
+		if result.size() >= 6:
+			break
+		var reason := _resource_negative_reason(ref, game_state, player_index)
+		if reason == "":
+			continue
+		result.append({
+			"id": str(ref.get("id", "")),
+			"type": str(ref.get("type", "")),
+			"card": str(ref.get("card", ref.get("pokemon", ""))),
+			"reason": reason,
+			"instruction": "avoid this action unless it is required by a higher-priority route",
+		})
+	return result
+
+
+func _resource_negative_reason(ref: Dictionary, game_state: GameState, player_index: int) -> String:
+	var combined := _ref_combined_name(ref)
+	if combined.contains("lost vacuum") and not _lost_vacuum_has_external_value(game_state, player_index):
+		return "Lost Vacuum would spend a hand card without a visible opponent tool or harmful stadium target"
+	var schema: Dictionary = ref.get("interaction_schema", {}) if ref.get("interaction_schema", {}) is Dictionary else {}
+	if bool(ref.get("requires_interaction", false)) and schema.is_empty() and _looks_like_optional_remove_or_discard(ref):
+		return "requires interaction but no exact schema is available; likely optional resource-negative removal"
+	return ""
+
+
+func _looks_like_optional_remove_or_discard(ref: Dictionary) -> bool:
+	var combined := _ref_combined_name(ref)
+	return _name_has_any(combined, ["lost zone", "discard from your hand", "put into the lost zone", "tool", "stadium"]) \
+		and not _name_has_any(combined, ["search your deck", "draw", "attach", "recover", "switch"])
+
+
+func _lost_vacuum_has_external_value(game_state: GameState, player_index: int) -> bool:
+	if game_state == null:
+		return false
+	var opponent_index := 1 - player_index
+	if opponent_index >= 0 and opponent_index < game_state.players.size():
+		var opponent: PlayerState = game_state.players[opponent_index]
+		for slot: PokemonSlot in _player_slots(opponent):
+			if slot != null and slot.attached_tool != null:
+				return true
+	var stadium: CardInstance = game_state.stadium_card
+	if stadium == null or stadium.card_data == null:
+		return false
+	var stadium_name := _best_card_name(stadium.card_data)
+	return not _name_has_any(stadium_name, ["Magma Basin", "Temple of Sinnoh"])
+
+
 func _is_safe_charge_draw_ability_ref(ref: Dictionary, tags: Array[String]) -> bool:
 	if str(ref.get("type", "")) != "use_ability":
+		return false
+	if tags.has("ends_turn"):
 		return false
 	if tags.has("energy_related") and tags.has("draw") and not tags.has("discard"):
 		return true
@@ -1916,6 +2076,8 @@ func _is_safe_charge_draw_ability_ref(ref: Dictionary, tags: Array[String]) -> b
 
 func _is_draw_engine_ability_ref(ref: Dictionary, tags: Array[String]) -> bool:
 	if str(ref.get("type", "")) != "use_ability":
+		return false
+	if tags.has("ends_turn"):
 		return false
 	if tags.has("draw") and not tags.has("discard") and not tags.has("energy_related"):
 		return true
@@ -2375,24 +2537,18 @@ func _compact_slot(slot: PokemonSlot, position: String) -> Dictionary:
 
 
 func _compact_deck_strategy_prompt() -> PackedStringArray:
+	var max_deck_strategy_hint_lines := 18
 	var lines := PackedStringArray()
+	lines.append("【玩家打法要求】以下 deck_strategy_hints 来自玩家在卡组编辑器中提供或确认的打法思路；除非与 legal_actions、card_rules、resource_conflicts 或当前可见事实冲突，否则需要认真参考并尽量贯彻。")
 	for i: int in mini(_deck_strategy_prompt.size(), 3):
 		var line: String = str(_deck_strategy_prompt[i]).strip_edges()
 		if line != "":
 			lines.append(line)
 	for i: int in _deck_strategy_prompt.size():
-		if lines.size() >= 8:
+		if lines.size() >= max_deck_strategy_hint_lines:
 			break
 		var line: String = str(_deck_strategy_prompt[i]).strip_edges()
 		if line == "":
-			continue
-		if not (
-			line.contains("执行边界")
-			or line.contains("决策树形状")
-			or line.contains("兜底")
-			or line.contains("工具")
-			or line.contains("护符")
-		):
 			continue
 		if not (line in lines):
 			lines.append(line)
@@ -2607,6 +2763,8 @@ func _attack_quality_summary(raw_rules: Variant, attack_index: int) -> Dictionar
 	var has_damage := damage != ""
 	var is_draw_or_search := tags.has("draw") or tags.has("search_deck")
 	var is_discard := tags.has("discard")
+	var numeric_damage := _first_int_in_string(damage)
+	var scalable_damage := damage.contains("+") or damage.contains("×") or damage.to_lower().contains("x")
 	var discards_entire_hand := is_discard and (text.contains("hand") or text.contains("手牌") or text.contains("全部"))
 	if not has_damage and (is_draw_or_search or is_discard or attack_index == 0):
 		return {
@@ -2615,6 +2773,15 @@ func _attack_quality_summary(raw_rules: Variant, attack_index: int) -> Dictionar
 			"discard_entire_hand": discards_entire_hand,
 			"takes_prize": false,
 			"reason": "non-damage setup/redraw attack; use only when no productive setup or primary damage route exists",
+		}
+	if has_damage and attack_index == 0 and numeric_damage > 0 and numeric_damage <= 40 and not scalable_damage \
+			and (is_draw_or_search or is_discard or tags.has("energy_related")):
+		return {
+			"role": "setup_attack",
+			"terminal_priority": "low",
+			"discard_entire_hand": discards_entire_hand,
+			"takes_prize": false,
+			"reason": "low-damage setup attack; prefer board building, pivot, or primary damage routes when available",
 		}
 	if has_damage:
 		var role := "primary_damage" if attack_index > 0 else "chip_damage"
@@ -2682,6 +2849,8 @@ func _infer_rule_tags(cd: CardData, action_kind: String, text: String) -> Array[
 func _infer_text_tags(text: String) -> Array[String]:
 	var lower: String = text.to_lower()
 	var tags: Array[String] = []
+	if _contains_any(lower, ["turn ends", "end your turn", "your turn ends", "ends your turn", "your turn is over"]):
+		_append_tag(tags, "ends_turn")
 	if _contains_any(lower, ["牌库", "deck", "search", "选择自己牌库"]):
 		_append_tag(tags, "search_deck")
 	if _contains_any(lower, ["宝可梦", "pokemon"]):

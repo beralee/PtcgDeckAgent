@@ -52,6 +52,76 @@ func test_deck_editor_shows_strategy_button_and_hides_legacy_ai_button() -> Stri
 	])
 
 
+func test_card_detail_uses_preview_overlay() -> String:
+	var editor: Control = DeckEditorScript.new()
+	var card := _make_card("SV1", "007", "Detail Test", "Pokemon")
+	card.hp = 120
+	card.energy_type = "R"
+	card.stage = "Basic"
+	card.attacks = [{"name": "Quick Strike", "cost": "R", "damage": "30", "text": "Deal 30 damage."}]
+
+	editor.call("_show_card_detail", card)
+	var overlay := editor.get("_card_detail_overlay") as Panel
+	var box := editor.get("_card_detail_box") as PanelContainer
+	var body := editor.get("_card_detail_body") as GridContainer
+	var preview: Control = editor.get("_card_detail_card_view") as Control
+	var content := editor.get("_card_detail_content") as RichTextLabel
+
+	return run_checks([
+		assert_not_null(overlay, "Card detail should create an inline overlay"),
+		assert_true(overlay != null and overlay.visible, "Card detail overlay should be visible"),
+		assert_not_null(box, "Card detail should create a styled box"),
+		assert_not_null(body, "Card detail should use a responsive body grid"),
+		assert_not_null(preview, "Card detail should include the shared card preview"),
+		assert_true(content != null and content.text.contains("Quick Strike"), "Card detail should render attack text"),
+	])
+
+
+func test_tile_long_press_opens_detail_and_suppresses_click() -> String:
+	var editor: Control = DeckEditorScript.new()
+	var card := _make_card("SV1", "008", "Long Press Test", "Pokemon")
+	card.hp = 80
+
+	editor.call("_start_tile_long_press", {"card": card}, Vector2(8, 8), 0)
+	editor.call("_on_tile_long_press_timeout")
+	var drag := InputEventScreenDrag.new()
+	drag.index = 0
+	drag.position = Vector2(80, 8)
+	var drag_consumed := bool(editor.call("_handle_tile_touch_detail_input", drag, {"card": card}))
+	var overlay := editor.get("_card_detail_overlay") as Panel
+	var suppress_before := bool(editor.get("_suppress_next_tile_left_click"))
+	var consumed := bool(editor.call("_consume_suppressed_tile_left_click"))
+	var suppress_after := bool(editor.get("_suppress_next_tile_left_click"))
+
+	return run_checks([
+		assert_true(overlay != null and overlay.visible, "Long press should open card detail"),
+		assert_true(drag_consumed, "Dragging after detail opens should remain consumed"),
+		assert_true(suppress_before, "Long press should suppress the synthetic click"),
+		assert_true(consumed, "Suppressed click should be consumed once"),
+		assert_false(suppress_after, "Suppressed click flag should clear after consumption"),
+	])
+
+
+func test_tile_long_press_drag_cancel_prevents_detail() -> String:
+	var editor: Control = DeckEditorScript.new()
+	var card := _make_card("SV1", "009", "Drag Cancel Test", "Pokemon")
+	card.hp = 90
+	var drag := InputEventScreenDrag.new()
+	drag.index = 0
+	drag.position = Vector2(80, 8)
+
+	editor.call("_start_tile_long_press", {"card": card}, Vector2(8, 8), 0)
+	editor.call("_handle_tile_touch_detail_input", drag, {"card": card})
+	editor.call("_on_tile_long_press_timeout")
+	var overlay := editor.get("_card_detail_overlay") as Panel
+	var active := bool(editor.get("_tile_long_press_active"))
+
+	return run_checks([
+		assert_false(active, "Dragging beyond tolerance should cancel long press"),
+		assert_true(overlay == null or not overlay.visible, "Canceled long press should not open detail"),
+	])
+
+
 # -- _flat_index_to_entry_index --
 
 func test_flat_index_maps_to_correct_entry() -> String:

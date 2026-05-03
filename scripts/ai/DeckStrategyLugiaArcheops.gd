@@ -292,6 +292,13 @@ func get_search_priority(card: CardInstance) -> int:
 	return _search_score(card, null, -1)
 
 
+func pick_interaction_items(items: Array, step: Dictionary, context: Dictionary = {}) -> Array:
+	var step_id := str(step.get("id", ""))
+	if step_id in ["search_pokemon", "search_cards", "search_item"]:
+		return _pick_search_items_by_score(items, int(step.get("max_select", 1)), step, context)
+	return []
+
+
 func score_interaction_target(item: Variant, step: Dictionary, context: Dictionary = {}) -> float:
 	var step_id := str(step.get("id", ""))
 	if item is CardInstance:
@@ -309,6 +316,26 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 	if item is PokemonSlot and step_id in ["send_out", "switch_target", "self_switch_target", "pivot_target", "heavy_baton_target"]:
 		return _score_handoff_target(item as PokemonSlot, step_id, context)
 	return 0.0
+
+
+func _pick_search_items_by_score(items: Array, max_select: int, step: Dictionary, context: Dictionary) -> Array:
+	var limit := maxi(1, max_select)
+	var ranked: Array[Dictionary] = []
+	for item: Variant in items:
+		if item is CardInstance:
+			ranked.append({
+				"item": item,
+				"score": score_interaction_target(item, step, context),
+			})
+	ranked.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return float(a.get("score", 0.0)) > float(b.get("score", 0.0))
+	)
+	var picked: Array = []
+	for entry: Dictionary in ranked:
+		if picked.size() >= limit:
+			break
+		picked.append(entry.get("item"))
+	return picked
 
 
 func score_handoff_target(item: Variant, step: Dictionary, context: Dictionary = {}) -> float:
@@ -658,6 +685,8 @@ func _search_score(card: CardInstance, game_state: GameState, player_index: int)
 	var lugia_vstar_on_field := _count_named_on_field(player, LUGIA_VSTAR)
 	var lugia_vstar_in_hand := _count_named_in_hand(player, LUGIA_VSTAR)
 	var minccino_total := _count_named_on_field(player, MINCCINO) + _count_named_on_field(player, CINCCINO) + _count_named_in_hand(player, MINCCINO) + _count_named_in_hand(player, CINCCINO)
+	var engine_online := _count_named_on_field(player, ARCHEOPS) > 0
+	var phase := _detect_phase(game_state, player)
 	if lugia_on_field + lugia_in_hand == 0:
 		if name == LUGIA_V:
 			return 220 + _turn_contract_search_bonus(turn_contract, LUGIA_V)
@@ -682,11 +711,13 @@ func _search_score(card: CardInstance, game_state: GameState, player_index: int)
 		return 185
 	if name == MINCCINO and _count_named_on_field(player, MINCCINO) + _count_named_on_field(player, CINCCINO) == 0:
 		return 110 + _turn_contract_search_bonus(turn_contract, MINCCINO)
-	if name == IRON_HANDS_EX and _count_named_on_field(player, ARCHEOPS) > 0:
-		return 120
-	if name in [FEZANDIPITI_EX, WELLSPRING_OGERPON_EX, CORNERSTONE_OGERPON_EX, BLOODMOON_URSALUNA_EX] and (lugia_on_field + lugia_in_hand == 0 or minccino_total == 0):
+	if name == BLOODMOON_URSALUNA_EX and engine_online and phase == "late":
+		return 210
+	if name == IRON_HANDS_EX and engine_online:
+		return 160 if phase != "early" else 120
+	if name in [FEZANDIPITI_EX, WELLSPRING_OGERPON_EX, CORNERSTONE_OGERPON_EX, BLOODMOON_URSALUNA_EX] and (lugia_on_field + lugia_in_hand == 0 or (minccino_total == 0 and not engine_online)):
 		return 10
-	if name == BLOODMOON_URSALUNA_EX and _detect_phase(game_state, player) == "late":
+	if name == BLOODMOON_URSALUNA_EX and phase == "late":
 		return 130
 	return 20
 
@@ -784,6 +815,9 @@ func _detect_phase(game_state: GameState, player: PlayerState) -> String:
 	var archeops_count := _count_named_on_field(player, ARCHEOPS)
 	var ready_bench := _best_ready_bench(player)
 	var active_ready := player != null and player.active_pokemon != null and _attack_energy_gap(player.active_pokemon) <= 0 and _best_attack_damage(player.active_pokemon) > 0
+	var prizes_left := player.prizes.size() if player != null else 0
+	if prizes_left > 0 and prizes_left <= 2 and archeops_count >= 1:
+		return "late"
 	if game_state.turn_number <= 2 and archeops_count == 0 and not active_ready and ready_bench == null:
 		return "early"
 	if archeops_count >= 1:

@@ -9,6 +9,8 @@ const MODE_SLOT_ACTIVE := "slot_active"
 const MODE_SLOT_BENCH := "slot_bench"
 const MODE_CHOICE := "choice"
 const MODE_PREVIEW := "preview"
+const TOUCH_LONG_PRESS_SECONDS := 0.42
+const TOUCH_LONG_PRESS_MOVE_TOLERANCE := 18.0
 const ENERGY_ICON_TEXTURES := {
 	"R": preload("res://assets/ui/e-huo.png"),
 	"W": preload("res://assets/ui/e-shui.png"),
@@ -40,6 +42,12 @@ var _battle_status_active: bool = false
 var _battle_status: Dictionary = {}
 var _compact_preview: bool = false
 var _tilt_degrees: float = 0.0
+var _touch_long_press_timer: Timer = null
+var _touch_long_press_active: bool = false
+var _touch_long_press_index: int = -1
+var _touch_long_press_start: Vector2 = Vector2.ZERO
+var _touch_long_press_consumed: bool = false
+var _suppress_next_left_click: bool = false
 
 var _outer_margin: MarginContainer
 var _art_frame: PanelContainer
@@ -70,6 +78,7 @@ var _selection_badge: Label
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP if _clickable else Control.MOUSE_FILTER_IGNORE
 	_ensure_ui()
+	_ensure_touch_long_press_timer()
 	_refresh()
 	_apply_tilt()
 
@@ -146,6 +155,8 @@ func set_back_texture(texture: Texture2D) -> void:
 func set_clickable(clickable: bool) -> void:
 	_clickable = clickable
 	mouse_filter = Control.MOUSE_FILTER_STOP if clickable else Control.MOUSE_FILTER_IGNORE
+	if not clickable:
+		_cancel_touch_long_press()
 
 
 func set_compact_preview(compact: bool) -> void:
@@ -469,6 +480,17 @@ func _update_layout() -> void:
 func _ensure_ui() -> void:
 	if _texture_rect == null:
 		_build_ui()
+
+
+func _ensure_touch_long_press_timer() -> void:
+	if _touch_long_press_timer != null:
+		return
+	_touch_long_press_timer = Timer.new()
+	_touch_long_press_timer.name = "TouchLongPressTimer"
+	_touch_long_press_timer.one_shot = true
+	_touch_long_press_timer.wait_time = TOUCH_LONG_PRESS_SECONDS
+	_touch_long_press_timer.timeout.connect(_on_touch_long_press_timeout)
+	add_child(_touch_long_press_timer)
 
 
 func _make_badge_label() -> Label:
@@ -837,11 +859,72 @@ func _apply_tilt() -> void:
 func _gui_input(event: InputEvent) -> void:
 	if not _clickable:
 		return
+	if _handle_touch_inspect_input(event):
+		return
 	if event is InputEventMouseButton:
 		var mbe := event as InputEventMouseButton
 		if not mbe.pressed:
 			return
 		if mbe.button_index == MOUSE_BUTTON_LEFT:
+			if _suppress_next_left_click:
+				_suppress_next_left_click = false
+				accept_event()
+				return
 			left_clicked.emit(card_instance, card_data)
 		elif mbe.button_index == MOUSE_BUTTON_RIGHT:
 			right_clicked.emit(card_instance, card_data)
+
+
+func _handle_touch_inspect_input(event: InputEvent) -> bool:
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			_start_touch_long_press(touch.position, touch.index)
+		else:
+			if _touch_long_press_active and touch.index == _touch_long_press_index:
+				var consumed := _touch_long_press_consumed
+				_cancel_touch_long_press(false)
+				if consumed:
+					accept_event()
+				return consumed
+		return false
+
+	if event is InputEventScreenDrag:
+		var drag := event as InputEventScreenDrag
+		if _touch_long_press_active and drag.index == _touch_long_press_index:
+			if drag.position.distance_to(_touch_long_press_start) > TOUCH_LONG_PRESS_MOVE_TOLERANCE:
+				_cancel_touch_long_press()
+		return false
+
+	return false
+
+
+func _start_touch_long_press(position: Vector2, touch_index: int) -> void:
+	if card_data == null:
+		return
+	_ensure_touch_long_press_timer()
+	_touch_long_press_active = true
+	_touch_long_press_index = touch_index
+	_touch_long_press_start = position
+	_touch_long_press_consumed = false
+	if _touch_long_press_timer.is_inside_tree():
+		_touch_long_press_timer.start()
+
+
+func _cancel_touch_long_press(clear_suppression: bool = true) -> void:
+	if _touch_long_press_timer != null:
+		_touch_long_press_timer.stop()
+	_touch_long_press_active = false
+	_touch_long_press_index = -1
+	_touch_long_press_consumed = false
+	if clear_suppression:
+		_suppress_next_left_click = false
+
+
+func _on_touch_long_press_timeout() -> void:
+	if not _touch_long_press_active or not _clickable or card_data == null:
+		return
+	_touch_long_press_consumed = true
+	_suppress_next_left_click = true
+	right_clicked.emit(card_instance, card_data)
+	accept_event()

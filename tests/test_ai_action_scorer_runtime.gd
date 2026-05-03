@@ -18,6 +18,18 @@ class FakeActionScorer extends RefCounted:
 		last_features.append_array(action_vector)
 		return fixed_score
 
+	func score_delta(state_features: Array, action_vector: Array, _action_kind: String = "") -> float:
+		last_features = state_features.duplicate(true)
+		last_features.append_array(action_vector)
+		return fixed_score
+
+
+class FakeLLMPlanStrategy extends RefCounted:
+	var active_turn: int = 2
+
+	func has_llm_plan_for_turn(turn: int) -> bool:
+		return turn == active_turn
+
 
 func test_action_scorer_inference_combines_state_and_action_vectors() -> String:
 	var scorer = AIActionScorerScript.new()
@@ -48,4 +60,19 @@ func test_ai_opponent_applies_action_scorer_to_comprehensive_supported_kinds() -
 		assert_true(supported_score > 0.0, "supported action kinds should receive a learned action score"),
 		assert_true(supported_bench_score > 0.0, "expanded action coverage should include play_basic_to_bench"),
 		assert_eq(unsupported_score, 0.0, "unsupported action kinds should ignore the learned action score"),
+	])
+
+
+func test_ai_opponent_detects_active_llm_plan_before_mcts() -> String:
+	var ai = AIOpponentScript.new()
+	var strategy := FakeLLMPlanStrategy.new()
+	ai.set_deck_strategy(strategy)
+	var gsm := GameStateMachine.new()
+	gsm.game_state.turn_number = 2
+	var active_detected: bool = bool(ai.call("_strategy_has_active_llm_plan", gsm))
+	gsm.game_state.turn_number = 3
+	var inactive_detected: bool = bool(ai.call("_strategy_has_active_llm_plan", gsm))
+	return run_checks([
+		assert_true(active_detected, "active LLM plan should be detected so strong-mode MCTS can be bypassed"),
+		assert_false(inactive_detected, "non-current LLM plan should not disable MCTS"),
 	])

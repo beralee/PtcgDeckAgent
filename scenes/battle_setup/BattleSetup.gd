@@ -3,6 +3,7 @@ extends Control
 
 const DeckViewDialogScript := preload("res://scripts/ui/decks/DeckViewDialog.gd")
 const DeckDiscussionDialogScene := preload("res://scenes/deck_editor/DeckDiscussionDialog.tscn")
+const ZenMuxClientScript := preload("res://scripts/network/ZenMuxClient.gd")
 
 const FIRST_PLAYER_RANDOM := -1
 const FIRST_PLAYER_PLAYER_ONE := 0
@@ -20,7 +21,9 @@ const DEFAULT_DECK2_ID := 578647  ## 沙奈朵
 const MIRAIDON_DECK_ID := 575720
 const ARCEUS_GIRATINA_DECK_ID := 569061
 const LUGIA_ARCHEOPS_DECK_ID := 575657
+const RAGING_BOLT_OGERPON_DECK_ID := 575718
 const DRAGAPULT_CHARIZARD_DECK_ID := 579502
+const DRAGAPULT_DUSKNOIR_DECK_ID := 575723
 const BACKGROUND_CARD_SIZE := Vector2(188, 112)
 const AIVersionRegistryScript = preload("res://scripts/ai/AIVersionRegistry.gd")
 const AIFixedDeckOrderRegistryScript = preload("res://scripts/ai/AIFixedDeckOrderRegistry.gd")
@@ -47,6 +50,9 @@ var _deck_strategy_registry: RefCounted = DeckStrategyRegistryScript.new()
 var _pending_ai_strategy_variant_id: String = ""
 var _strategy_discussion_dialog: AcceptDialog = null
 var _strategy_discussion_signature := ""
+var _llm_model_test_client: ZenMuxClient = ZenMuxClientScript.new()
+var _pending_llm_model_test_config: Dictionary = {}
+var _llm_model_test_in_progress: bool = false
 
 
 func _ready() -> void:
@@ -64,6 +70,7 @@ func _ready() -> void:
 	%AIVersionLabel.visible = false
 	%AIVersionOption.visible = false
 	_setup_ai_preview_strength_options()
+	_setup_llm_model_options()
 
 	_setup_first_player_options()
 	_setup_background_gallery()
@@ -78,6 +85,12 @@ func _ready() -> void:
 	%Deck1EditButton.pressed.connect(_on_deck_edit_pressed.bind(0))
 	%Deck2ViewButton.pressed.connect(_on_deck_view_pressed.bind(1))
 	%Deck2EditButton.pressed.connect(_on_deck_edit_pressed.bind(1))
+	if not %AIStrategyOption.item_selected.is_connected(_on_ai_strategy_variant_changed):
+		%AIStrategyOption.item_selected.connect(_on_ai_strategy_variant_changed)
+	if not %LLMModelOption.item_selected.is_connected(_on_llm_model_changed):
+		%LLMModelOption.item_selected.connect(_on_llm_model_changed)
+	if not %BtnTestLLMModel.pressed.is_connected(_on_test_llm_model_pressed):
+		%BtnTestLLMModel.pressed.connect(_on_test_llm_model_pressed)
 	if not %BtnPreviewBgm.pressed.is_connected(_on_bgm_preview_pressed):
 		%BtnPreviewBgm.pressed.connect(_on_bgm_preview_pressed)
 
@@ -149,6 +162,16 @@ func _apply_hud_theme_recursive(node: Node) -> void:
 
 func _style_hud_label(label: Label) -> void:
 	if label.name == "Title":
+		return
+	if label.name == "AIModeStatusTitle":
+		label.add_theme_font_size_override("font_size", 17)
+		label.add_theme_color_override("font_color", Color(0.94, 1.0, 1.0, 1.0))
+		label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.62))
+		label.add_theme_constant_override("shadow_offset_y", 1)
+		return
+	if label.name == "AIModeStatusBody":
+		label.add_theme_font_size_override("font_size", 14)
+		label.add_theme_color_override("font_color", Color(0.72, 0.84, 0.90, 1.0))
 		return
 	if label.name.ends_with("SectionTitle"):
 		label.add_theme_font_size_override("font_size", 19)
@@ -294,6 +317,7 @@ func _refresh_ai_ui_visibility() -> void:
 	%AIPreviewStrengthOption.disabled = not is_ai
 	%Deck2EditButton.visible = not is_ai
 	_refresh_ai_strategy_variant_options()
+	_refresh_llm_model_controls()
 	_refresh_deck_action_buttons()
 
 
@@ -306,10 +330,14 @@ func _setup_ai_preview_strength_options() -> void:
 
 func _refresh_ai_strategy_variant_options() -> void:
 	var variants := _detect_ai_strategy_variants()
-	var show_variant := _is_ai_mode() and variants.size() > 1
+	var show_variant := _is_ai_mode() and variants.size() > 0
+	%AIStrategyLabel.text = "AI 工作方式"
 	%AIStrategyLabel.visible = show_variant
 	%AIStrategyOption.visible = show_variant
+	%AIStrategyOption.disabled = variants.size() <= 1
 	if not show_variant:
+		%AIStrategyOption.clear()
+		_refresh_llm_model_controls()
 		return
 	var prev_selected_id := ""
 	if %AIStrategyOption.selected >= 0 and %AIStrategyOption.selected < %AIStrategyOption.item_count:
@@ -324,33 +352,243 @@ func _refresh_ai_strategy_variant_options() -> void:
 	for i: int in %AIStrategyOption.item_count:
 		if str(%AIStrategyOption.get_item_metadata(i)) == restore_id:
 			%AIStrategyOption.select(i)
+			_refresh_llm_model_controls()
 			return
 	%AIStrategyOption.select(0)
+	_refresh_llm_model_controls()
 
 
 func _detect_ai_strategy_variants() -> Array[Dictionary]:
 	var deck := _selected_deck_for_slot(1)
 	if deck == null or _deck_strategy_registry == null:
 		return []
-	var base_id := ""
-	if _deck_strategy_registry.has_method("resolve_strategy_id_for_deck"):
+	var base_id := _selected_ai_strategy_id()
+	if base_id == "" and _deck_strategy_registry.has_method("resolve_strategy_id_for_deck"):
 		base_id = str(_deck_strategy_registry.call("resolve_strategy_id_for_deck", deck))
-	if base_id != "raging_bolt_ogerpon":
+	if base_id not in [
+		"raging_bolt_ogerpon",
+		"dragapult_charizard",
+		"miraidon",
+		"lugia_archeops",
+		"charizard_ex",
+		"arceus_giratina",
+		"gardevoir",
+		"dragapult_dusknoir",
+	]:
 		return []
-	var api_config: Dictionary = GameManager.get_battle_review_api_config()
-	var has_api := str(api_config.get("endpoint", "")).strip_edges() != "" and str(api_config.get("api_key", "")).strip_edges() != ""
-	if not has_api:
+	var labels_by_strategy := {
+		"charizard_ex": ["规则版喷火龙ex", "大模型版喷火龙ex"],
+		"arceus_giratina": ["规则版阿尔宙斯骑拉帝纳", "大模型版阿尔宙斯骑拉帝纳"],
+		"gardevoir": ["规则版沙奈朵", "大模型版沙奈朵"],
+		"dragapult_dusknoir": ["规则版多龙黑夜魔灵", "大模型版多龙黑夜魔灵"],
+		"dragapult_charizard": ["规则版多龙喷火龙", "大模型版多龙喷火龙"],
+		"miraidon": ["规则版密勒顿", "大模型版密勒顿"],
+		"lugia_archeops": ["规则版洛奇亚始祖大鸟", "大模型版洛奇亚始祖大鸟"],
+		"raging_bolt_ogerpon": ["规则版猛雷鼓", "大模型版猛雷鼓"],
+	}
+	var labels: Array = labels_by_strategy.get(base_id, [])
+	if labels.is_empty():
 		return []
-	return [
-		{"id": "raging_bolt_ogerpon", "label": "猛雷鼓 规则版"},
-		{"id": "raging_bolt_ogerpon_llm", "label": "猛雷鼓 LLM版"},
-	]
+	var variants: Array[Dictionary] = [{
+		"id": base_id,
+		"label": str(labels[0]),
+	}]
+	if _has_llm_api_configured():
+		variants.append({
+			"id": "%s_llm" % base_id,
+			"label": str(labels[1]),
+		})
+	return variants
 
 
 func _selected_ai_strategy_variant_id() -> String:
 	if not %AIStrategyOption.visible or %AIStrategyOption.selected < 0:
 		return ""
 	return str(%AIStrategyOption.get_item_metadata(%AIStrategyOption.selected))
+
+
+func _on_ai_strategy_variant_changed(_index: int) -> void:
+	_refresh_llm_model_controls()
+
+
+func _setup_llm_model_options() -> void:
+	%LLMModelOption.clear()
+	for model: Dictionary in GameManager.get_supported_battle_review_models():
+		var index: int = %LLMModelOption.get_item_count()
+		%LLMModelOption.add_item(str(model.get("label", model.get("id", ""))))
+		%LLMModelOption.set_item_metadata(index, str(model.get("id", "")))
+	_select_llm_model(str(GameManager.get_battle_review_api_config().get("model", "")))
+	_refresh_llm_model_controls()
+
+
+func _select_llm_model(model_id: String) -> void:
+	var normalized := GameManager.normalize_battle_review_model(model_id)
+	for index: int in %LLMModelOption.get_item_count():
+		if str(%LLMModelOption.get_item_metadata(index)) == normalized:
+			%LLMModelOption.select(index)
+			return
+	if %LLMModelOption.get_item_count() > 0:
+		%LLMModelOption.select(0)
+
+
+func _selected_llm_model_id() -> String:
+	var selected_index: int = %LLMModelOption.selected
+	if selected_index < 0:
+		return GameManager.normalize_battle_review_model("")
+	return GameManager.normalize_battle_review_model(str(%LLMModelOption.get_item_metadata(selected_index)))
+
+
+func _selected_llm_model_label() -> String:
+	return GameManager.get_battle_review_model_label(_selected_llm_model_id())
+
+
+func _has_llm_api_configured() -> bool:
+	var api_config: Dictionary = GameManager.get_battle_review_api_config()
+	return (
+		str(api_config.get("endpoint", "")).strip_edges() != ""
+		and str(api_config.get("api_key", "")).strip_edges() != ""
+	)
+
+
+func _is_selected_ai_strategy_llm() -> bool:
+	return _selected_ai_strategy_variant_id().ends_with("_llm")
+
+
+func _refresh_llm_model_controls() -> void:
+	var is_ai := _is_ai_mode()
+	var has_llm_api := _has_llm_api_configured()
+	var selected_is_llm := _is_selected_ai_strategy_llm()
+	var selected_model_label := _selected_llm_model_label()
+	_refresh_ai_mode_summary(is_ai, has_llm_api, selected_is_llm, selected_model_label)
+	%AIModelCurrentLabel.visible = is_ai and has_llm_api and selected_is_llm
+	%AIModelCurrentLabel.text = "当前大模型：%s" % selected_model_label
+	%LLMModelLabel.visible = is_ai and has_llm_api
+	%LLMModelRow.visible = is_ai and has_llm_api
+	%LLMModelOption.disabled = not is_ai or not has_llm_api
+	%BtnTestLLMModel.disabled = not is_ai or not has_llm_api or _llm_model_test_in_progress
+	if not is_ai or not has_llm_api:
+		%LLMModelStatus.text = ""
+	%LLMModelStatus.visible = is_ai and %LLMModelStatus.text.strip_edges() != ""
+	%BtnDiscussStrategyAI.visible = has_llm_api
+	%BtnDiscussStrategyAI.text = "与《%s》探讨策略" % selected_model_label
+
+
+func _refresh_ai_mode_summary(is_ai: bool, has_llm_api: bool, selected_is_llm: bool, selected_model_label: String) -> void:
+	%AIModeStatusTitle.visible = is_ai
+	%AIModeStatusBody.visible = is_ai
+	if not is_ai:
+		return
+	if selected_is_llm and has_llm_api:
+		%AIModeStatusTitle.text = "当前 AI：大模型增强"
+		%AIModeStatusBody.text = "使用 %s，会有思考时间，能力中等；需要有效的模型 API，完整配置请前往“AI 设置”。" % selected_model_label
+		%AIModeStatusTitle.add_theme_color_override("font_color", Color(1.0, 0.86, 0.52, 1.0))
+		return
+	%AIModeStatusTitle.text = "当前 AI：规则模型（默认）"
+	if has_llm_api:
+		%AIModeStatusBody.text = "速度快，能力较低，不用设置。已检测到大模型 API，可在 AI 工作方式中切换到大模型版。"
+	else:
+		%AIModeStatusBody.text = "速度快，能力较低，不用设置。未配置大模型 API 时，对战会直接使用本地规则模型。"
+	%AIModeStatusTitle.add_theme_color_override("font_color", Color(0.94, 1.0, 1.0, 1.0))
+
+
+func _on_llm_model_changed(_index: int) -> void:
+	_save_llm_model_selection("已切换为 %s" % _selected_llm_model_label())
+	_refresh_llm_model_controls()
+
+
+func _battle_review_config_with_selected_model() -> Dictionary:
+	var config: Dictionary = GameManager.get_battle_review_api_config()
+	config["model"] = _selected_llm_model_id()
+	var signature := GameManager.battle_review_ai_config_signature(config)
+	var still_tested := bool(config.get("ai_test_passed", false)) and str(config.get("ai_test_signature", "")) == signature
+	config["ai_test_passed"] = still_tested
+	config["ai_test_signature"] = signature if still_tested else ""
+	return config
+
+
+func _save_llm_model_selection(success_message: String = "") -> bool:
+	var config := _battle_review_config_with_selected_model()
+	return _write_battle_review_config(config, success_message)
+
+
+func _write_battle_review_config(config: Dictionary, success_message: String = "") -> bool:
+	var file := FileAccess.open(GameManager.get_battle_review_api_config_path(), FileAccess.WRITE)
+	if file == null:
+		%LLMModelStatus.text = "保存失败：无法写入 AI 配置"
+		%LLMModelStatus.add_theme_color_override("font_color", Color(1.0, 0.35, 0.25))
+		_refresh_llm_model_controls()
+		return false
+	file.store_string(JSON.stringify(config, "\t"))
+	file.close()
+	if success_message != "":
+		%LLMModelStatus.text = success_message
+		%LLMModelStatus.add_theme_color_override("font_color", Color(0.34, 1.0, 0.58))
+		_refresh_llm_model_controls()
+	return true
+
+
+func _on_test_llm_model_pressed() -> void:
+	var config := _battle_review_config_with_selected_model()
+	var endpoint := str(config.get("endpoint", "")).strip_edges()
+	var api_key := str(config.get("api_key", "")).strip_edges()
+	if endpoint == "" or api_key == "":
+		%LLMModelStatus.text = "测试失败：请先在 AI 设置填写 API 地址和密钥"
+		%LLMModelStatus.add_theme_color_override("font_color", Color(1.0, 0.35, 0.25))
+		_refresh_llm_model_controls()
+		return
+
+	_pending_llm_model_test_config = config.duplicate(true)
+	_llm_model_test_in_progress = true
+	%BtnTestLLMModel.disabled = true
+	%LLMModelStatus.text = "正在测试 %s..." % _selected_llm_model_label()
+	%LLMModelStatus.add_theme_color_override("font_color", Color(1.0, 0.86, 0.36))
+	_refresh_llm_model_controls()
+
+	_llm_model_test_client.set_timeout_seconds(float(config.get("timeout_seconds", 60.0)))
+	var error := _llm_model_test_client.request_json(
+		self,
+		endpoint,
+		api_key,
+		{
+			"model": _selected_llm_model_id(),
+			"messages": [{
+				"role": "system",
+				"content": "Return exactly one JSON object and nothing else.",
+			}, {
+				"role": "user",
+				"content": "Return exactly {\"ok\":true}.",
+			}],
+			"max_tokens": 80,
+		},
+		_on_test_llm_model_response
+	)
+	if error != OK:
+		_llm_model_test_in_progress = false
+		%BtnTestLLMModel.disabled = false
+		%LLMModelStatus.text = "测试失败：请求无法启动 (%d)" % error
+		%LLMModelStatus.add_theme_color_override("font_color", Color(1.0, 0.35, 0.25))
+		_refresh_llm_model_controls()
+
+
+func _on_test_llm_model_response(response: Dictionary) -> void:
+	_llm_model_test_in_progress = false
+	%BtnTestLLMModel.disabled = false
+	if str(response.get("status", "")) == "error":
+		%LLMModelStatus.text = "测试失败：%s" % str(response.get("message", "未知错误")).left(120)
+		%LLMModelStatus.add_theme_color_override("font_color", Color(1.0, 0.35, 0.25))
+		_refresh_llm_model_controls()
+		return
+	if bool(response.get("ok", false)):
+		var config := _pending_llm_model_test_config.duplicate(true)
+		config["model"] = _selected_llm_model_id()
+		config["ai_test_passed"] = true
+		config["ai_test_signature"] = GameManager.battle_review_ai_config_signature(config)
+		_write_battle_review_config(config, "测试通过：%s 可用，已保存" % _selected_llm_model_label())
+		_refresh_ai_strategy_variant_options()
+		return
+	%LLMModelStatus.text = "测试失败：模型返回格式不符合预期"
+	%LLMModelStatus.add_theme_color_override("font_color", Color(1.0, 0.35, 0.25))
+	_refresh_llm_model_controls()
 
 
 func _setup_first_player_options() -> void:
@@ -472,8 +710,12 @@ func _selected_ai_strategy_id() -> String:
 			return "arceus_giratina"
 		LUGIA_ARCHEOPS_DECK_ID:
 			return "lugia_archeops"
+		RAGING_BOLT_OGERPON_DECK_ID:
+			return "raging_bolt_ogerpon"
 		DRAGAPULT_CHARIZARD_DECK_ID:
 			return "dragapult_charizard"
+		DRAGAPULT_DUSKNOIR_DECK_ID:
+			return "dragapult_dusknoir"
 		DEFAULT_DECK1_ID:
 			return "charizard_ex"
 		_:
@@ -794,6 +1036,8 @@ func _apply_setup_selection() -> bool:
 	GameManager.first_player_choice = _first_player_choice_from_option_index(%FirstPlayerOption.selected)
 	GameManager.selected_battle_background = _selected_background_path if _selected_background_path != "" else DEFAULT_BACKGROUND
 	_sync_battle_music_preferences_from_ui()
+	if _is_ai_mode():
+		_save_llm_model_selection()
 	GameManager.mark_current_battle_as_non_tournament()
 
 	var ai_source := _ai_source_from_option_index(%AISourceOption.selected)
@@ -965,7 +1209,9 @@ func _refresh_deck_action_buttons() -> void:
 	%Deck1EditButton.disabled = _selected_deck_for_slot(0) == null
 	%Deck2ViewButton.disabled = _selected_deck_for_slot(1) == null
 	%Deck2EditButton.disabled = _is_ai_mode() or _selected_deck_for_slot(1) == null
-	%BtnDiscussStrategyAI.disabled = _selected_deck_for_slot(0) == null or _selected_deck_for_slot(1) == null
+	var has_llm_api := _has_llm_api_configured()
+	%BtnDiscussStrategyAI.visible = has_llm_api
+	%BtnDiscussStrategyAI.disabled = not has_llm_api or _selected_deck_for_slot(0) == null or _selected_deck_for_slot(1) == null
 
 
 func _mark_strategy_discussion_deck_changed() -> void:
@@ -992,6 +1238,8 @@ func _strategy_discussion_session_id(deck1: DeckData, deck2: DeckData) -> int:
 
 
 func _on_discuss_strategy_ai_pressed() -> void:
+	if not _has_llm_api_configured():
+		return
 	var deck1 := _selected_deck_for_slot(0)
 	var deck2 := _selected_deck_for_slot(1)
 	if deck1 == null or deck2 == null:

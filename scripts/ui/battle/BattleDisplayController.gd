@@ -3,6 +3,9 @@ extends RefCounted
 
 const BENCH_SIZE := 5
 const USED_ABILITY_TILT_DEGREES := 15.0
+const DISCARD_COLLECTION_PAGE_SIZE := 7
+const CARD_COLLECTION_WHEEL_HEIGHT := 52.0
+const CARD_COLLECTION_WHEEL_GRABBER_SIZE := Vector2i(60, 48)
 const BattleCardViewScript := preload("res://scenes/battle/BattleCardView.gd")
 
 
@@ -696,7 +699,7 @@ func show_discard_pile(scene: Object, player_index: int, title: String) -> void:
 	if gsm == null:
 		return
 	var player: PlayerState = gsm.game_state.players[player_index]
-	_show_card_collection(scene, title, player.discard_pile, true, "show_discard", player_index)
+	_show_card_collection(scene, title, player.discard_pile, true, "show_discard", player_index, DISCARD_COLLECTION_PAGE_SIZE)
 
 
 func show_prize_cards(scene: Object, player_index: int, title: String) -> void:
@@ -721,15 +724,29 @@ func _show_card_collection(
 	cards: Array,
 	reverse_order: bool,
 	event_name: String,
-	player_index: int
+	player_index: int,
+	requested_page_size: int = 0
 ) -> void:
 	var discard_title: Label = scene.get("_discard_title")
 	var discard_list: ItemList = scene.get("_discard_list")
+	var discard_card_scroll: ScrollContainer = scene.get("_discard_card_scroll")
 	var discard_card_row: HBoxContainer = scene.get("_discard_card_row")
+	var discard_utility_row: HBoxContainer = scene.get("_discard_utility_row")
 	var discard_overlay: Panel = scene.get("_discard_overlay")
-	var dialog_card_size: Vector2 = scene.get("_dialog_card_size")
+	var ordered_cards := _ordered_cards(cards, reverse_order)
+	var page_size := _resolve_card_collection_page_size(requested_page_size, ordered_cards.size())
+	var window_start := 0
+	var window_end := ordered_cards.size()
+	if page_size > 0:
+		window_end = mini(page_size, ordered_cards.size())
+	scene.set("_discard_card_page", window_start)
+	scene.set("_discard_card_page_size", page_size)
 	discard_title.text = _bt(scene, "battle.zone.count_title", {"title": title, "count": cards.size()})
 	discard_list.clear()
+	if discard_card_scroll != null:
+		discard_card_scroll.scroll_horizontal = 0
+		discard_card_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED if page_size > 0 else ScrollContainer.SCROLL_MODE_AUTO
+		discard_card_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	if discard_card_row != null:
 		clear_container_children(discard_card_row)
 		if cards.is_empty():
@@ -737,28 +754,16 @@ func _show_card_collection(
 			empty_label.text = _bt(scene, "battle.zone.empty")
 			discard_card_row.add_child(empty_label)
 		else:
-			for card_variant: Variant in _ordered_cards(cards, reverse_order):
-				var card: CardInstance = card_variant as CardInstance
-				var card_view := BattleCardViewScript.new()
-				card_view.custom_minimum_size = dialog_card_size
-				card_view.set_clickable(true)
-				card_view.setup_from_instance(card, BattleCardView.MODE_PREVIEW)
-				card_view.set_badges("", "")
-				card_view.set_info("", "")
-				card_view.left_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
-					if cd != null:
-						scene.call("_show_card_detail", cd)
-				)
-				card_view.right_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
-					if cd != null:
-						scene.call("_show_card_detail", cd)
-				)
-				discard_card_row.add_child(card_view)
+			_populate_card_collection_window(scene, discard_card_row, ordered_cards, window_start, window_end)
+		_rebuild_card_collection_wheel(scene, discard_utility_row, discard_card_row, ordered_cards, page_size)
 	else:
+		if discard_utility_row != null:
+			clear_container_children(discard_utility_row)
+			discard_utility_row.visible = false
 		if cards.is_empty():
 			discard_list.add_item(_bt(scene, "battle.zone.empty"))
 		else:
-			for card_variant: Variant in _ordered_cards(cards, reverse_order):
+			for card_variant: Variant in ordered_cards:
 				var listed_card: CardInstance = card_variant as CardInstance
 				var card_data: CardData = listed_card.card_data
 				discard_list.add_item("%s [%s]" % [card_data.name, scene.call("_card_type_cn", card_data)])
@@ -775,3 +780,173 @@ func _ordered_cards(cards: Array, reverse_order: bool) -> Array:
 		ordered.append(cards[index])
 		index -= 1
 	return ordered
+
+
+func _resolve_card_collection_page_size(requested_page_size: int, card_count: int) -> int:
+	if requested_page_size <= 0 or requested_page_size >= card_count:
+		return 0
+	return requested_page_size
+
+
+func _card_collection_window_range(card_count: int, window_size: int, window_start: int) -> Vector2i:
+	if card_count <= 0:
+		return Vector2i.ZERO
+	if window_size <= 0 or window_size >= card_count:
+		return Vector2i(0, card_count)
+	var max_start := maxi(0, card_count - window_size)
+	var resolved_start := clampi(window_start, 0, max_start)
+	return Vector2i(resolved_start, mini(card_count, resolved_start + window_size))
+
+
+func _populate_card_collection_window(scene: Object, card_row: HBoxContainer, ordered_cards: Array, window_start: int, window_end: int) -> void:
+	clear_container_children(card_row)
+	var dialog_card_size: Vector2 = scene.get("_dialog_card_size")
+	for i: int in range(window_start, window_end):
+		var card: CardInstance = ordered_cards[i] as CardInstance
+		if card == null:
+			continue
+		var card_view := BattleCardViewScript.new()
+		card_view.custom_minimum_size = dialog_card_size
+		card_view.set_clickable(true)
+		card_view.setup_from_instance(card, BattleCardView.MODE_PREVIEW)
+		card_view.set_badges("", "")
+		card_view.set_info("", "")
+		card_view.left_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
+			if cd != null:
+				scene.call("_show_card_detail", cd)
+		)
+		card_view.right_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
+			if cd != null:
+				scene.call("_show_card_detail", cd)
+		)
+		card_row.add_child(card_view)
+
+
+func _rebuild_card_collection_wheel(scene: Object, utility_row: HBoxContainer, card_row: HBoxContainer, ordered_cards: Array, page_size: int) -> void:
+	if utility_row == null:
+		return
+	clear_container_children(utility_row)
+	if page_size <= 0 or ordered_cards.size() <= page_size:
+		utility_row.visible = false
+		return
+	var max_window_start := maxi(0, ordered_cards.size() - page_size)
+	var window_start := clampi(int(scene.get("_discard_card_page")), 0, max_window_start)
+	scene.set("_discard_card_page", window_start)
+
+	var wheel_box := HBoxContainer.new()
+	wheel_box.custom_minimum_size = Vector2(0, CARD_COLLECTION_WHEEL_HEIGHT)
+	wheel_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	wheel_box.add_theme_constant_override("separation", 10)
+
+	var wheel := HSlider.new()
+	wheel.name = "DiscardCardWheel"
+	wheel.min_value = 0.0
+	wheel.max_value = float(max_window_start)
+	wheel.step = 1.0
+	wheel.value = float(window_start)
+	wheel.rounded = true
+	wheel.custom_minimum_size = Vector2(360, CARD_COLLECTION_WHEEL_HEIGHT)
+	wheel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	wheel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	wheel.focus_mode = Control.FOCUS_NONE
+	_style_card_collection_wheel(wheel)
+
+	var wheel_label := Label.new()
+	wheel_label.name = "DiscardCardWheelLabel"
+	wheel_label.custom_minimum_size = Vector2(132, CARD_COLLECTION_WHEEL_HEIGHT)
+	wheel_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	wheel_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	wheel_label.add_theme_font_size_override("font_size", 16)
+	wheel_label.add_theme_color_override("font_color", Color(0.86, 0.94, 1.0, 1.0))
+	_update_card_collection_wheel_label(wheel_label, window_start, page_size, ordered_cards.size())
+
+	wheel.value_changed.connect(func(value: float) -> void:
+		var next_start := clampi(int(round(value)), 0, maxi(0, ordered_cards.size() - page_size))
+		if next_start == int(scene.get("_discard_card_page")):
+			_update_card_collection_wheel_label(wheel_label, next_start, page_size, ordered_cards.size())
+			return
+		scene.set("_discard_card_page", next_start)
+		var visible_range := _card_collection_window_range(ordered_cards.size(), page_size, next_start)
+		_populate_card_collection_window(scene, card_row, ordered_cards, visible_range.x, visible_range.y)
+		_update_card_collection_wheel_label(wheel_label, next_start, page_size, ordered_cards.size())
+	)
+
+	wheel_box.add_child(wheel)
+	wheel_box.add_child(wheel_label)
+	utility_row.add_child(wheel_box)
+	utility_row.visible = true
+
+
+func _update_card_collection_wheel_label(label: Label, window_start: int, window_size: int, card_count: int) -> void:
+	var visible_range := _card_collection_window_range(card_count, window_size, window_start)
+	label.text = "%d-%d / %d" % [visible_range.x + 1, visible_range.y, card_count]
+
+
+func _style_card_collection_wheel(wheel: HSlider) -> void:
+	var slider_style := StyleBoxFlat.new()
+	slider_style.bg_color = Color(0.018, 0.038, 0.052, 0.96)
+	slider_style.border_color = Color(0.20, 0.78, 1.0, 0.74)
+	slider_style.border_width_left = 2
+	slider_style.border_width_right = 2
+	slider_style.border_width_top = 2
+	slider_style.border_width_bottom = 2
+	slider_style.corner_radius_top_left = 12
+	slider_style.corner_radius_top_right = 12
+	slider_style.corner_radius_bottom_left = 12
+	slider_style.corner_radius_bottom_right = 12
+	slider_style.shadow_color = Color(0.10, 0.64, 1.0, 0.18)
+	slider_style.shadow_size = 8
+	slider_style.content_margin_left = 10
+	slider_style.content_margin_right = 10
+	slider_style.content_margin_top = 8
+	slider_style.content_margin_bottom = 8
+	wheel.add_theme_stylebox_override("slider", slider_style)
+
+	var grabber_area := StyleBoxFlat.new()
+	grabber_area.bg_color = Color(0.18, 0.70, 0.95, 0.34)
+	grabber_area.border_color = Color(0.42, 0.90, 1.0, 0.62)
+	grabber_area.border_width_top = 1
+	grabber_area.border_width_bottom = 1
+	grabber_area.corner_radius_top_left = 10
+	grabber_area.corner_radius_top_right = 10
+	grabber_area.corner_radius_bottom_left = 10
+	grabber_area.corner_radius_bottom_right = 10
+	wheel.add_theme_stylebox_override("grabber_area", grabber_area)
+
+	var grabber_highlight_area := grabber_area.duplicate() as StyleBoxFlat
+	grabber_highlight_area.bg_color = Color(0.26, 0.84, 1.0, 0.48)
+	wheel.add_theme_stylebox_override("grabber_area_highlight", grabber_highlight_area)
+	wheel.add_theme_icon_override("grabber", _make_card_collection_wheel_grabber(Color(0.95, 0.78, 0.28, 1.0), Color(0.14, 0.18, 0.22, 1.0)))
+	wheel.add_theme_icon_override("grabber_highlight", _make_card_collection_wheel_grabber(Color(1.0, 0.86, 0.36, 1.0), Color(0.11, 0.15, 0.19, 1.0)))
+	wheel.add_theme_icon_override("grabber_disabled", _make_card_collection_wheel_grabber(Color(0.48, 0.52, 0.56, 0.9), Color(0.16, 0.17, 0.18, 0.9)))
+
+
+func _make_card_collection_wheel_grabber(fill: Color, border: Color) -> Texture2D:
+	var image := Image.create(CARD_COLLECTION_WHEEL_GRABBER_SIZE.x, CARD_COLLECTION_WHEEL_GRABBER_SIZE.y, false, Image.FORMAT_RGBA8)
+	image.fill(Color(0, 0, 0, 0))
+	var radius := 12.0
+	var image_size := Vector2(float(CARD_COLLECTION_WHEEL_GRABBER_SIZE.x), float(CARD_COLLECTION_WHEEL_GRABBER_SIZE.y))
+	for y: int in CARD_COLLECTION_WHEEL_GRABBER_SIZE.y:
+		for x: int in CARD_COLLECTION_WHEEL_GRABBER_SIZE.x:
+			if not _point_in_card_collection_rounded_rect(float(x), float(y), image_size, radius):
+				continue
+			var edge_distance := minf(minf(float(x), float(CARD_COLLECTION_WHEEL_GRABBER_SIZE.x - 1 - x)), minf(float(y), float(CARD_COLLECTION_WHEEL_GRABBER_SIZE.y - 1 - y)))
+			var pixel := fill
+			if edge_distance < 2.0:
+				pixel = border
+			elif y < CARD_COLLECTION_WHEEL_GRABBER_SIZE.y / 2:
+				pixel = fill.lerp(Color(1.0, 1.0, 1.0, fill.a), 0.18)
+			image.set_pixel(x, y, pixel)
+
+	var groove_color := Color(0.08, 0.11, 0.14, 0.60)
+	for groove_x: int in [23, 30, 37]:
+		for y: int in range(12, CARD_COLLECTION_WHEEL_GRABBER_SIZE.y - 12):
+			image.set_pixel(groove_x, y, groove_color)
+			image.set_pixel(groove_x + 1, y, Color(1.0, 1.0, 1.0, 0.16))
+	return ImageTexture.create_from_image(image)
+
+
+func _point_in_card_collection_rounded_rect(x: float, y: float, size: Vector2, radius: float) -> bool:
+	var inner_x := clampf(x, radius, size.x - radius - 1.0)
+	var inner_y := clampf(y, radius, size.y - radius - 1.0)
+	return Vector2(x, y).distance_to(Vector2(inner_x, inner_y)) <= radius

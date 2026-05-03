@@ -14,7 +14,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 [application]
 
-config/name="PTCG Train"
+config/name="PtcgDeckAgent"
 config/description="宝可梦集换式卡牌练牌模拟器"
 run/main_scene="res://scenes/main_menu/MainMenu.tscn"
 config/features=PackedStringArray("4.6")

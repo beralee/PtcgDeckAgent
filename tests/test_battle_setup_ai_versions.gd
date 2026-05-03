@@ -84,19 +84,312 @@ func _prime_deck_options(scene: Control) -> void:
 	deck2_option.select(1)
 
 
+func _snapshot_battle_review_config_file() -> Dictionary:
+	var path: String = GameManager.get_battle_review_api_config_path()
+	if not FileAccess.file_exists(path):
+		return {"exists": false, "text": ""}
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {"exists": false, "text": ""}
+	var text := file.get_as_text()
+	file.close()
+	return {"exists": true, "text": text}
+
+
+func _restore_battle_review_config_file(snapshot: Dictionary) -> void:
+	var path: String = GameManager.get_battle_review_api_config_path()
+	if bool(snapshot.get("exists", false)):
+		var file := FileAccess.open(path, FileAccess.WRITE)
+		if file != null:
+			file.store_string(str(snapshot.get("text", "")))
+			file.close()
+		return
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+
+
+func _write_battle_review_config_for_test(data: Dictionary) -> void:
+	var file := FileAccess.open(GameManager.get_battle_review_api_config_path(), FileAccess.WRITE)
+	if file != null:
+		file.store_string(JSON.stringify(data, "\t"))
+		file.close()
+
+
+func _variant_ids(variants: Array) -> Array[String]:
+	var ids: Array[String] = []
+	for variant: Dictionary in variants:
+		ids.append(str(variant.get("id", "")))
+	return ids
+
+
 func test_battle_setup_includes_ai_source_and_version_controls() -> String:
 	var scene := BattleSetupScene.instantiate()
 	var ai_source_label := scene.find_child("AISourceLabel", true, false)
 	var ai_source_option := scene.find_child("AISourceOption", true, false)
 	var ai_version_label := scene.find_child("AIVersionLabel", true, false)
 	var ai_version_option := scene.find_child("AIVersionOption", true, false)
+	var model_label := scene.find_child("LLMModelLabel", true, false)
+	var model_option := scene.find_child("LLMModelOption", true, false)
+	var model_test_button := scene.find_child("BtnTestLLMModel", true, false)
+	var ai_mode_status_title := scene.find_child("AIModeStatusTitle", true, false)
+	var ai_mode_status_body := scene.find_child("AIModeStatusBody", true, false)
 
 	return run_checks([
 		assert_true(ai_source_label is Label, "BattleSetup should include AISourceLabel"),
 		assert_true(ai_source_option is OptionButton, "BattleSetup should include AISourceOption"),
 		assert_true(ai_version_label is Label, "BattleSetup should include AIVersionLabel"),
 		assert_true(ai_version_option is OptionButton, "BattleSetup should include AIVersionOption"),
+		assert_true(ai_mode_status_title is Label, "BattleSetup should include the AI mode status title"),
+		assert_true(ai_mode_status_body is Label, "BattleSetup should include the AI mode status description"),
+		assert_true(model_label is Label, "BattleSetup should include the LLM model label"),
+		assert_true(model_option is OptionButton, "BattleSetup should include the LLM model dropdown"),
+		assert_true(model_test_button is Button, "BattleSetup should include the LLM model test button"),
 	])
+
+
+func test_battle_setup_llm_model_controls_show_in_ai_mode() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test({
+		"endpoint": "https://zenmux.ai/api/v1",
+		"api_key": "test-key",
+		"model": "kimi-k2.6",
+		"timeout_seconds": 60.0,
+		"ai_personality": "",
+		"ai_test_passed": false,
+		"ai_test_signature": "",
+	})
+	var scene := _make_scene_ready()
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	var model_row := scene.find_child("LLMModelRow", true, false) as HBoxContainer
+	var model_option := scene.find_child("LLMModelOption", true, false) as OptionButton
+	var discuss_button := scene.find_child("BtnDiscussStrategyAI", true, false) as Button
+	mode_option.select(0)
+	scene.call("_refresh_ai_ui_visibility")
+	var hidden_in_two_player := model_row.visible
+	mode_option.select(1)
+	scene.call("_refresh_ai_ui_visibility")
+	var expected_model_label := GameManager.get_battle_review_model_label(str(GameManager.get_battle_review_api_config().get("model", "")))
+
+	var result := run_checks([
+		assert_false(hidden_in_two_player, "LLM model controls should stay hidden outside VS_AI mode"),
+		assert_true(model_row.visible, "LLM model controls should show in VS_AI mode"),
+		assert_eq(model_option.get_item_count(), GameManager.get_supported_battle_review_models().size(), "LLM model dropdown should mirror AI settings model choices"),
+		assert_str_contains(discuss_button.text, expected_model_label, "Strategy discussion button should name the selected model"),
+	])
+	_restore_battle_review_config_file(snapshot)
+	return result
+
+
+func test_battle_setup_defaults_to_rules_model_without_llm_api() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test({
+		"endpoint": "https://zenmux.ai/api/v1",
+		"api_key": "",
+		"model": "kimi-k2.6",
+		"timeout_seconds": 60.0,
+		"ai_personality": "",
+		"ai_test_passed": false,
+		"ai_test_signature": "",
+	})
+	var scene := _make_scene_ready()
+	_prime_deck_options(scene)
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	var strategy_option := scene.find_child("AIStrategyOption", true, false) as OptionButton
+	var model_row := scene.find_child("LLMModelRow", true, false) as HBoxContainer
+	var discuss_button := scene.find_child("BtnDiscussStrategyAI", true, false) as Button
+	var status_title := scene.find_child("AIModeStatusTitle", true, false) as Label
+	var status_body := scene.find_child("AIModeStatusBody", true, false) as Label
+	mode_option.select(1)
+	scene.call("_refresh_ai_ui_visibility")
+
+	var result := run_checks([
+		assert_true(status_title.visible, "AI mode should show the current AI mode status"),
+		assert_str_contains(status_title.text, "规则模型", "No API configured should clearly identify the rules model"),
+		assert_str_contains(status_body.text, "速度快", "Rules model copy should state the speed tradeoff"),
+		assert_str_contains(status_body.text, "能力较低", "Rules model copy should state the capability tradeoff"),
+		assert_str_contains(status_body.text, "不用设置", "Rules model copy should state that no setup is required"),
+		assert_true(strategy_option.visible, "Supported AI decks should still show the current AI work mode"),
+		assert_true(strategy_option.disabled, "Without API there should be no LLM strategy to select"),
+		assert_eq(strategy_option.get_item_count(), 1, "Without API the strategy selector should only contain the rules model"),
+		assert_str_contains(strategy_option.get_item_text(0), "规则版", "The only available AI mode should be the rules variant"),
+		assert_false(model_row.visible, "LLM model controls should stay hidden until API is configured"),
+		assert_false(discuss_button.visible, "Strategy discussion should stay hidden until API is configured"),
+	])
+	_restore_battle_review_config_file(snapshot)
+	return result
+
+
+func test_battle_setup_llm_strategy_explains_api_and_thinking_cost() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test({
+		"endpoint": "https://zenmux.ai/api/v1",
+		"api_key": "test-key",
+		"model": "z-ai/glm-5.1",
+		"timeout_seconds": 60.0,
+		"ai_personality": "",
+		"ai_test_passed": false,
+		"ai_test_signature": "",
+	})
+	var scene := _make_scene_ready()
+	_prime_deck_options(scene)
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	var strategy_option := scene.find_child("AIStrategyOption", true, false) as OptionButton
+	var status_title := scene.find_child("AIModeStatusTitle", true, false) as Label
+	var status_body := scene.find_child("AIModeStatusBody", true, false) as Label
+	mode_option.select(1)
+	scene.call("_refresh_ai_ui_visibility")
+	strategy_option.select(1)
+	scene.call("_on_ai_strategy_variant_changed", 1)
+
+	var result := run_checks([
+		assert_str_contains(status_title.text, "大模型", "Selecting an LLM strategy should identify the LLM mode"),
+		assert_str_contains(status_body.text, "GLM 5.1", "LLM mode copy should name the selected model"),
+		assert_str_contains(status_body.text, "思考时间", "LLM mode copy should set wait-time expectations"),
+		assert_str_contains(status_body.text, "能力中等", "LLM mode copy should state the capability level"),
+		assert_str_contains(status_body.text, "模型 API", "LLM mode copy should explain the API requirement"),
+	])
+	_restore_battle_review_config_file(snapshot)
+	return result
+
+
+func test_battle_setup_strategy_variant_labels_are_readable_chinese() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test({
+		"endpoint": "https://zenmux.ai/api/v1",
+		"api_key": "test-key",
+		"model": "kimi-k2.6",
+		"timeout_seconds": 60.0,
+		"ai_personality": "",
+		"ai_test_passed": false,
+		"ai_test_signature": "",
+	})
+	var scene := _make_scene_ready()
+	_prime_deck_options(scene)
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	var strategy_option := scene.find_child("AIStrategyOption", true, false) as OptionButton
+	mode_option.select(1)
+	scene.call("_refresh_ai_ui_visibility")
+
+	var result := run_checks([
+		assert_true(strategy_option.visible, "Miraidon AI should expose strategy variant choices when API is configured"),
+		assert_eq(strategy_option.get_item_text(0), "规则版密勒顿", "Rules strategy label should be readable Chinese"),
+		assert_eq(strategy_option.get_item_text(1), "大模型版密勒顿", "LLM strategy label should be readable Chinese"),
+	])
+	_restore_battle_review_config_file(snapshot)
+	return result
+
+
+func test_battle_setup_all_strategy_variant_labels_use_chinese_naming() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test({
+		"endpoint": "https://zenmux.ai/api/v1",
+		"api_key": "test-key",
+		"model": "kimi-k2.6",
+		"timeout_seconds": 60.0,
+		"ai_personality": "",
+		"ai_test_passed": false,
+		"ai_test_signature": "",
+	})
+	var scene := _make_scene_ready()
+	_prime_deck_options(scene)
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	var deck2_option := scene.find_child("Deck2Option", true, false) as OptionButton
+	mode_option.select(1)
+	scene.call("_on_mode_changed", 1)
+
+	var expected_labels := {
+		575716: ["规则版喷火龙ex", "大模型版喷火龙ex"],
+		575720: ["规则版密勒顿", "大模型版密勒顿"],
+		569061: ["规则版阿尔宙斯骑拉帝纳", "大模型版阿尔宙斯骑拉帝纳"],
+		575657: ["规则版洛奇亚始祖大鸟", "大模型版洛奇亚始祖大鸟"],
+		578647: ["规则版沙奈朵", "大模型版沙奈朵"],
+		575718: ["规则版猛雷鼓", "大模型版猛雷鼓"],
+		579502: ["规则版多龙喷火龙", "大模型版多龙喷火龙"],
+		575723: ["规则版多龙黑夜魔灵", "大模型版多龙黑夜魔灵"],
+	}
+	var checks: Array[String] = []
+	for deck_id: int in expected_labels.keys():
+		scene.call("_select_option_for_deck_id", deck2_option, deck_id)
+		var variants: Array = scene.call("_detect_ai_strategy_variants")
+		var labels: Array[String] = []
+		for variant: Dictionary in variants:
+			labels.append(str(variant.get("label", "")))
+		checks.append(assert_eq(labels, expected_labels[deck_id], "Deck %d strategy labels should use Chinese rules/LLM naming" % deck_id))
+		for label: String in labels:
+			checks.append(assert_false(label.begins_with("Rules ") or label.begins_with("LLM "), "Strategy label should not expose English prefix: %s" % label))
+	_restore_battle_review_config_file(snapshot)
+	return run_checks(checks)
+
+
+func test_battle_setup_exposes_llm_variants_for_all_selectable_llm_decks() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test({
+		"endpoint": "https://zenmux.ai/api/v1",
+		"api_key": "test-key",
+		"model": "kimi-k2.6",
+		"timeout_seconds": 60.0,
+		"ai_personality": "",
+		"ai_test_passed": false,
+		"ai_test_signature": "",
+	})
+	var scene := _make_scene_ready()
+	_prime_deck_options(scene)
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	var deck2_option := scene.find_child("Deck2Option", true, false) as OptionButton
+	mode_option.select(1)
+	scene.call("_on_mode_changed", 1)
+
+	var expected := {
+		575716: "charizard_ex_llm",
+		575720: "miraidon_llm",
+		569061: "arceus_giratina_llm",
+		575657: "lugia_archeops_llm",
+		578647: "gardevoir_llm",
+		575718: "raging_bolt_ogerpon_llm",
+		579502: "dragapult_charizard_llm",
+		575723: "dragapult_dusknoir_llm",
+	}
+	var checks: Array[String] = []
+	for deck_id: int in expected.keys():
+		scene.call("_select_option_for_deck_id", deck2_option, deck_id)
+		var strategy_id := str(scene.call("_selected_ai_strategy_id"))
+		var variants: Array = scene.call("_detect_ai_strategy_variants")
+		var ids := _variant_ids(variants)
+		checks.append(assert_true(str(expected[deck_id]) in ids, "Deck %d should expose %s behind the API gate" % [deck_id, expected[deck_id]]))
+		checks.append(assert_eq(str(ids[0]) if not ids.is_empty() else "", strategy_id, "Deck %d should keep the rules strategy first" % deck_id))
+	_restore_battle_review_config_file(snapshot)
+	return run_checks(checks)
+
+
+func test_battle_setup_selected_llm_strategy_shows_current_model_name() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test({
+		"endpoint": "https://zenmux.ai/api/v1",
+		"api_key": "test-key",
+		"model": "z-ai/glm-5.1",
+		"timeout_seconds": 60.0,
+		"ai_personality": "",
+		"ai_test_passed": false,
+		"ai_test_signature": "",
+	})
+	var scene := _make_scene_ready()
+	_prime_deck_options(scene)
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	var strategy_option := scene.find_child("AIStrategyOption", true, false) as OptionButton
+	var current_model_label := scene.find_child("AIModelCurrentLabel", true, false) as Label
+	var discuss_button := scene.find_child("BtnDiscussStrategyAI", true, false) as Button
+	mode_option.select(1)
+	scene.call("_refresh_ai_ui_visibility")
+	strategy_option.select(1)
+	scene.call("_on_ai_strategy_variant_changed", 1)
+
+	var result := run_checks([
+		assert_true(current_model_label.visible, "Selecting an LLM strategy should reveal the current model label"),
+		assert_str_contains(current_model_label.text, "GLM 5.1", "Current model label should show the concrete model name"),
+		assert_str_contains(discuss_button.text, "GLM 5.1", "Discussion button should show the concrete model name"),
+	])
+	_restore_battle_review_config_file(snapshot)
+	return result
 
 
 func test_battle_setup_populates_ai_source_options() -> String:
@@ -452,12 +745,15 @@ func test_battle_setup_hides_legacy_ai_strategy_controls_even_in_ai_mode() -> St
 	var ai_strategy_option := scene.find_child("AIStrategyOption", true, false) as OptionButton
 	var dummy_deck := _make_deck(999, "TestDeck", "Pikachu")
 	scene.set("_ai_deck_list", [dummy_deck])
+	var deck2_option := scene.find_child("Deck2Option", true, false) as OptionButton
+	deck2_option.clear()
+	deck2_option.add_item("TestDeck")
+	deck2_option.select(0)
 	mode_option.select(1)
-	scene.call("_refresh_deck_options")
 	scene.call("_refresh_ai_ui_visibility")
 	return run_checks([
-		assert_false(ai_strategy_label.visible, "Deck-driven AI setup should not expose the legacy AI strategy label"),
-		assert_false(ai_strategy_option.visible, "Deck-driven AI setup should not expose the legacy AI strategy dropdown"),
+		assert_false(ai_strategy_label.visible, "Unsupported AI decks should not expose strategy variant labels"),
+		assert_false(ai_strategy_option.visible, "Unsupported AI decks should not expose strategy variant dropdowns"),
 	])
 
 

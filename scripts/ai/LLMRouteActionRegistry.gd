@@ -120,11 +120,17 @@ func best_route_action_id(routes_by_id: Dictionary) -> String:
 	for raw_key: Variant in routes_by_id.keys():
 		var route_id := str(raw_key)
 		var route: Dictionary = routes_by_id.get(raw_key, {}) if routes_by_id.get(raw_key, {}) is Dictionary else {}
-		var priority := int(route.get("priority", 0))
+		var priority := _route_base_priority(route)
 		if priority > best_priority:
 			best_priority = priority
 			best_id = route_id
 	return best_id
+
+
+func _route_base_priority(route: Dictionary) -> int:
+	if route.has("priority"):
+		return int(route.get("priority", 0))
+	return int(route.get("base_priority", 0))
 
 
 func _route_action_id(route: Dictionary) -> String:

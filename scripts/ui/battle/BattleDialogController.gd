@@ -14,6 +14,9 @@ const ENERGY_ICON_TEXTURES := {
 	"N": preload("res://assets/ui/e-long.png"),
 	"C": preload("res://assets/ui/e-wu.png"),
 }
+const DEFAULT_CARD_DIALOG_PAGE_SIZE := 7
+const CARD_DIALOG_WHEEL_HEIGHT := 52.0
+const CARD_DIALOG_WHEEL_GRABBER_SIZE := Vector2i(60, 48)
 
 
 func _bt(scene: Object, key: String, params: Dictionary = {}) -> String:
@@ -248,13 +251,20 @@ func show_card_dialog(scene: Object, items: Array, extra_data: Dictionary) -> vo
 	var dialog_confirm: Button = scene.get("_dialog_confirm")
 	var dialog_status_lbl: Label = scene.get("_dialog_status_lbl")
 	var dialog_card_size: Vector2 = scene.get("_dialog_card_size")
-	var card_click_selectable: bool = bool(extra_data.get("card_click_selectable", true))
 
 	dialog_list.visible = false
 	dialog_card_scroll.visible = true
 	dialog_assignment_panel.visible = false
 	dialog_card_scroll.scroll_horizontal = 0
-	dialog_card_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	var card_items: Array = extra_data.get("card_items", items)
+	var requested_page_size := resolve_card_dialog_page_size(extra_data, card_items.size())
+	if requested_page_size > 0:
+		scene.set("_dialog_card_page_size", requested_page_size)
+		scene.set("_dialog_card_page", 0)
+	else:
+		scene.set("_dialog_card_page_size", 0)
+		scene.set("_dialog_card_page", 0)
+	dialog_card_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED if int(scene.get("_dialog_card_page_size")) > 0 else ScrollContainer.SCROLL_MODE_AUTO
 	dialog_card_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	dialog_card_scroll.custom_minimum_size = Vector2(0, dialog_card_size.y + 2.0)
 	if dialog_list.item_selected.is_connected(Callable(scene, "_on_dialog_item_selected")):
@@ -264,13 +274,66 @@ func show_card_dialog(scene: Object, items: Array, extra_data: Dictionary) -> vo
 	scene.call("_clear_container_children", dialog_card_row)
 	scene.call("_clear_container_children", dialog_utility_row)
 
-	var card_items: Array = extra_data.get("card_items", items)
-	var card_indices: Array = extra_data.get("card_indices", [])
-	var labels: Array = extra_data.get("choice_labels", items)
-	var show_selectable_hints: bool = bool(extra_data.get("show_selectable_hints", false))
-	var selectable_hint: String = str(extra_data.get("card_selectable_hint", "可选"))
-	var disabled_badge: String = str(extra_data.get("card_disabled_badge", ""))
-	for i: int in card_items.size():
+	_populate_card_dialog_page(scene)
+	_rebuild_card_dialog_utility_row(scene)
+
+	var min_select := int(extra_data.get("min_select", 1))
+	var max_select := int(extra_data.get("max_select", 1))
+	var show_confirm := max_select > 1 or min_select > 1
+	dialog_confirm.visible = show_confirm
+	dialog_status_lbl.visible = show_confirm
+	if show_confirm:
+		update_dialog_status_text(scene)
+
+
+func resolve_card_dialog_page_size(extra_data: Dictionary, card_count: int) -> int:
+	var requested_page_size := 0
+	if extra_data.has("card_page_size"):
+		requested_page_size = int(extra_data.get("card_page_size", 0))
+	elif bool(extra_data.get("touch_paged", false)):
+		requested_page_size = DEFAULT_CARD_DIALOG_PAGE_SIZE
+	else:
+		requested_page_size = DEFAULT_CARD_DIALOG_PAGE_SIZE
+	if requested_page_size <= 0 or requested_page_size >= card_count:
+		return 0
+	return requested_page_size
+
+
+func card_dialog_window_range(card_count: int, window_size: int, window_start: int) -> Vector2i:
+	if card_count <= 0:
+		return Vector2i.ZERO
+	if window_size <= 0 or window_size >= card_count:
+		return Vector2i(0, card_count)
+	var max_start := maxi(0, card_count - window_size)
+	var resolved_start := clampi(window_start, 0, max_start)
+	return Vector2i(resolved_start, mini(card_count, resolved_start + window_size))
+
+
+func _populate_card_dialog_page(scene: Object) -> void:
+	var dialog_card_row: HBoxContainer = scene.get("_dialog_card_row")
+	var dialog_card_scroll: ScrollContainer = scene.get("_dialog_card_scroll")
+	var dialog_card_size: Vector2 = scene.get("_dialog_card_size")
+	var dialog_data: Dictionary = scene.get("_dialog_data")
+	var dialog_items_data: Array = scene.get("_dialog_items_data")
+	var card_items: Array = dialog_data.get("card_items", dialog_items_data)
+	var card_indices: Array = dialog_data.get("card_indices", [])
+	var labels: Array = dialog_data.get("choice_labels", dialog_items_data)
+	var card_click_selectable: bool = bool(dialog_data.get("card_click_selectable", true))
+	var show_selectable_hints: bool = bool(dialog_data.get("show_selectable_hints", false))
+	var selectable_hint: String = str(dialog_data.get("card_selectable_hint", "可选"))
+	var disabled_badge: String = str(dialog_data.get("card_disabled_badge", ""))
+	var page_size := int(scene.get("_dialog_card_page_size"))
+	var page := int(scene.get("_dialog_card_page"))
+	var start_index := 0
+	var end_index := card_items.size()
+	if page_size > 0:
+		var visible_range := card_dialog_window_range(card_items.size(), page_size, page)
+		start_index = visible_range.x
+		end_index = visible_range.y
+		scene.set("_dialog_card_page", start_index)
+	dialog_card_scroll.scroll_horizontal = 0
+	scene.call("_clear_container_children", dialog_card_row)
+	for i: int in range(start_index, end_index):
 		var real_index := i
 		if i < card_indices.size():
 			real_index = int(card_indices[i])
@@ -291,12 +354,70 @@ func show_card_dialog(scene: Object, items: Array, extra_data: Dictionary) -> vo
 		card_view.right_clicked.connect(Callable(scene, "_on_dialog_card_right_signal"))
 		card_view.set_meta("dialog_choice_index", real_index)
 		dialog_card_row.add_child(card_view)
+	sync_dialog_card_selection(scene)
 
-	var utility_actions: Array = extra_data.get("utility_actions", [])
-	dialog_utility_row.visible = not utility_actions.is_empty()
+
+func _rebuild_card_dialog_utility_row(scene: Object) -> void:
+	var dialog_utility_row: HBoxContainer = scene.get("_dialog_utility_row")
+	var dialog_data: Dictionary = scene.get("_dialog_data")
+	var dialog_items_data: Array = scene.get("_dialog_items_data")
+	var card_items: Array = dialog_data.get("card_items", dialog_items_data)
+	var page_size := int(scene.get("_dialog_card_page_size"))
+	scene.call("_clear_container_children", dialog_utility_row)
+	var has_controls := false
+	if page_size > 0 and card_items.size() > page_size:
+		has_controls = true
+		var max_window_start := maxi(0, card_items.size() - page_size)
+		var window_start := clampi(int(scene.get("_dialog_card_page")), 0, max_window_start)
+		scene.set("_dialog_card_page", window_start)
+
+		var wheel_box := HBoxContainer.new()
+		wheel_box.custom_minimum_size = Vector2(0, CARD_DIALOG_WHEEL_HEIGHT)
+		wheel_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		wheel_box.add_theme_constant_override("separation", 10)
+
+		var wheel := HSlider.new()
+		wheel.name = "CardDialogWheel"
+		wheel.min_value = 0.0
+		wheel.max_value = float(max_window_start)
+		wheel.step = 1.0
+		wheel.value = float(window_start)
+		wheel.rounded = true
+		wheel.custom_minimum_size = Vector2(360, CARD_DIALOG_WHEEL_HEIGHT)
+		wheel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		wheel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		wheel.focus_mode = Control.FOCUS_NONE
+		_style_card_dialog_wheel(wheel)
+
+		var wheel_label := Label.new()
+		wheel_label.name = "CardDialogWheelLabel"
+		wheel_label.custom_minimum_size = Vector2(132, CARD_DIALOG_WHEEL_HEIGHT)
+		wheel_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		wheel_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		wheel_label.add_theme_font_size_override("font_size", 16)
+		wheel_label.add_theme_color_override("font_color", Color(0.86, 0.94, 1.0, 1.0))
+		_update_card_dialog_wheel_label(wheel_label, window_start, page_size, card_items.size())
+
+		wheel.value_changed.connect(func(value: float) -> void:
+			var next_start := clampi(int(round(value)), 0, maxi(0, card_items.size() - page_size))
+			if next_start == int(scene.get("_dialog_card_page")):
+				_update_card_dialog_wheel_label(wheel_label, next_start, page_size, card_items.size())
+				return
+			scene.set("_dialog_card_page", next_start)
+			_populate_card_dialog_page(scene)
+			_update_card_dialog_wheel_label(wheel_label, next_start, page_size, card_items.size())
+			update_dialog_confirm_state(scene)
+		)
+
+		wheel_box.add_child(wheel)
+		wheel_box.add_child(wheel_label)
+		dialog_utility_row.add_child(wheel_box)
+
+	var utility_actions: Array = dialog_data.get("utility_actions", [])
 	for action_variant: Variant in utility_actions:
 		if not (action_variant is Dictionary):
 			continue
+		has_controls = true
 		var action: Dictionary = action_variant
 		var button := Button.new()
 		button.custom_minimum_size = Vector2(220, 52)
@@ -307,14 +428,82 @@ func show_card_dialog(scene: Object, items: Array, extra_data: Dictionary) -> vo
 			confirm_dialog_selection(scene, PackedInt32Array([action_index]))
 		)
 		dialog_utility_row.add_child(button)
+	dialog_utility_row.visible = has_controls
 
-	var min_select := int(extra_data.get("min_select", 1))
-	var max_select := int(extra_data.get("max_select", 1))
-	var show_confirm := max_select > 1 or min_select > 1
-	dialog_confirm.visible = show_confirm
-	dialog_status_lbl.visible = show_confirm
-	if show_confirm:
-		update_dialog_status_text(scene)
+
+func _update_card_dialog_wheel_label(label: Label, window_start: int, window_size: int, card_count: int) -> void:
+	var visible_range := card_dialog_window_range(card_count, window_size, window_start)
+	label.text = "%d-%d / %d" % [visible_range.x + 1, visible_range.y, card_count]
+
+
+func _style_card_dialog_wheel(wheel: HSlider) -> void:
+	var slider_style := StyleBoxFlat.new()
+	slider_style.bg_color = Color(0.018, 0.038, 0.052, 0.96)
+	slider_style.border_color = Color(0.20, 0.78, 1.0, 0.74)
+	slider_style.border_width_left = 2
+	slider_style.border_width_right = 2
+	slider_style.border_width_top = 2
+	slider_style.border_width_bottom = 2
+	slider_style.corner_radius_top_left = 12
+	slider_style.corner_radius_top_right = 12
+	slider_style.corner_radius_bottom_left = 12
+	slider_style.corner_radius_bottom_right = 12
+	slider_style.shadow_color = Color(0.10, 0.64, 1.0, 0.18)
+	slider_style.shadow_size = 8
+	slider_style.content_margin_left = 10
+	slider_style.content_margin_right = 10
+	slider_style.content_margin_top = 8
+	slider_style.content_margin_bottom = 8
+	wheel.add_theme_stylebox_override("slider", slider_style)
+
+	var grabber_area := StyleBoxFlat.new()
+	grabber_area.bg_color = Color(0.18, 0.70, 0.95, 0.34)
+	grabber_area.border_color = Color(0.42, 0.90, 1.0, 0.62)
+	grabber_area.border_width_top = 1
+	grabber_area.border_width_bottom = 1
+	grabber_area.corner_radius_top_left = 10
+	grabber_area.corner_radius_top_right = 10
+	grabber_area.corner_radius_bottom_left = 10
+	grabber_area.corner_radius_bottom_right = 10
+	wheel.add_theme_stylebox_override("grabber_area", grabber_area)
+
+	var grabber_highlight_area := grabber_area.duplicate() as StyleBoxFlat
+	grabber_highlight_area.bg_color = Color(0.26, 0.84, 1.0, 0.48)
+	wheel.add_theme_stylebox_override("grabber_area_highlight", grabber_highlight_area)
+	wheel.add_theme_icon_override("grabber", _make_card_dialog_wheel_grabber(Color(0.95, 0.78, 0.28, 1.0), Color(0.14, 0.18, 0.22, 1.0)))
+	wheel.add_theme_icon_override("grabber_highlight", _make_card_dialog_wheel_grabber(Color(1.0, 0.86, 0.36, 1.0), Color(0.11, 0.15, 0.19, 1.0)))
+	wheel.add_theme_icon_override("grabber_disabled", _make_card_dialog_wheel_grabber(Color(0.48, 0.52, 0.56, 0.9), Color(0.16, 0.17, 0.18, 0.9)))
+
+
+func _make_card_dialog_wheel_grabber(fill: Color, border: Color) -> Texture2D:
+	var image := Image.create(CARD_DIALOG_WHEEL_GRABBER_SIZE.x, CARD_DIALOG_WHEEL_GRABBER_SIZE.y, false, Image.FORMAT_RGBA8)
+	image.fill(Color(0, 0, 0, 0))
+	var radius := 12.0
+	var image_size := Vector2(float(CARD_DIALOG_WHEEL_GRABBER_SIZE.x), float(CARD_DIALOG_WHEEL_GRABBER_SIZE.y))
+	for y: int in CARD_DIALOG_WHEEL_GRABBER_SIZE.y:
+		for x: int in CARD_DIALOG_WHEEL_GRABBER_SIZE.x:
+			if not _point_in_rounded_rect(float(x), float(y), image_size, radius):
+				continue
+			var edge_distance := minf(minf(float(x), float(CARD_DIALOG_WHEEL_GRABBER_SIZE.x - 1 - x)), minf(float(y), float(CARD_DIALOG_WHEEL_GRABBER_SIZE.y - 1 - y)))
+			var pixel := fill
+			if edge_distance < 2.0:
+				pixel = border
+			elif y < CARD_DIALOG_WHEEL_GRABBER_SIZE.y / 2:
+				pixel = fill.lerp(Color(1.0, 1.0, 1.0, fill.a), 0.18)
+			image.set_pixel(x, y, pixel)
+
+	var groove_color := Color(0.08, 0.11, 0.14, 0.60)
+	for groove_x: int in [23, 30, 37]:
+		for y: int in range(12, CARD_DIALOG_WHEEL_GRABBER_SIZE.y - 12):
+			image.set_pixel(groove_x, y, groove_color)
+			image.set_pixel(groove_x + 1, y, Color(1.0, 1.0, 1.0, 0.16))
+	return ImageTexture.create_from_image(image)
+
+
+func _point_in_rounded_rect(x: float, y: float, size: Vector2, radius: float) -> bool:
+	var inner_x := clampf(x, radius, size.x - radius - 1.0)
+	var inner_y := clampf(y, radius, size.y - radius - 1.0)
+	return Vector2(x, y).distance_to(Vector2(inner_x, inner_y)) <= radius
 
 
 func show_action_hud_dialog(scene: Object, _items: Array, extra_data: Dictionary) -> void:
@@ -799,6 +988,10 @@ func on_dialog_card_chosen(scene: Object, real_index: int) -> void:
 	update_dialog_confirm_state(scene)
 
 
+func card_dialog_should_show_selectable_hint(_selected: bool) -> bool:
+	return false
+
+
 func sync_dialog_card_selection(scene: Object) -> void:
 	var dialog_card_row: HBoxContainer = scene.get("_dialog_card_row")
 	var selected_indices: Array = scene.get("_dialog_card_selected_indices")
@@ -809,7 +1002,7 @@ func sync_dialog_card_selection(scene: Object) -> void:
 		var idx := int(card_view.get_meta("dialog_choice_index", -1))
 		var selected := idx in selected_indices
 		card_view.set_selected(selected)
-		card_view.set_selectable_hint(not selected)
+		card_view.set_selectable_hint(card_dialog_should_show_selectable_hint(selected))
 
 
 func update_dialog_confirm_state(scene: Object) -> void:

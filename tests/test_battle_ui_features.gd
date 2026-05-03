@@ -586,15 +586,15 @@ func test_battle_scene_top_actions_match_end_turn_row_height() -> String:
 		assert_eq(opponent_hand_button.custom_minimum_size.x, back_button.custom_minimum_size.x, "Opponent hand should match the back button width"),
 		assert_eq(discuss_button.custom_minimum_size.x, back_button.custom_minimum_size.x, "AI discussion should match the back button width"),
 		assert_eq(zeus_button.custom_minimum_size.x, back_button.custom_minimum_size.x, "Zeus help should match the back button width"),
-		assert_eq(top_bar_left.size_flags_horizontal, Control.SIZE_EXPAND_FILL, "Top left match info column should keep the equal-column layout"),
-		assert_eq(top_bar_center.size_flags_horizontal, Control.SIZE_EXPAND_FILL, "Top turn info column should keep the equal-column layout"),
-		assert_eq(top_bar_right.size_flags_horizontal, Control.SIZE_EXPAND_FILL, "Top action column should keep the equal-column layout"),
+		assert_eq(top_bar_left.size_flags_horizontal, Control.SIZE_EXPAND_FILL, "Top left match info column should keep the original equal-column layout"),
+		assert_eq(top_bar_center.size_flags_horizontal, Control.SIZE_EXPAND_FILL, "Top turn info column should keep the original equal-column layout"),
+		assert_eq(top_bar_right.size_flags_horizontal, Control.SIZE_EXPAND_FILL, "Top action column should keep the original equal-column layout"),
 		assert_true(top_bar_right_box is HBoxContainer, "Top action column should support right-aligning its child buttons"),
-		assert_eq(top_bar_right_box.alignment, BoxContainer.ALIGNMENT_END, "Top action column should place buttons at the right edge"),
+		assert_eq(top_bar_right_box.alignment, BoxContainer.ALIGNMENT_END, "Top action column should place buttons at the right edge of its column"),
 		assert_eq(top_bar_actions.size_flags_horizontal, Control.SIZE_SHRINK_END, "Top action buttons should not expand and cover match info"),
 		assert_eq(top_bar_actions.alignment, BoxContainer.ALIGNMENT_END, "Top action buttons should align to the right edge"),
-		assert_false(phase_label.clip_text, "Phase label should keep its text-driven minimum width"),
-		assert_false(turn_label.clip_text, "Turn label should keep its text-driven minimum width"),
+		assert_false(phase_label.clip_text, "Phase label should keep its original text-driven minimum width inside CenterContainer"),
+		assert_false(turn_label.clip_text, "Turn label should keep its original text-driven minimum width inside CenterContainer"),
 		assert_gt(phase_label.get_combined_minimum_size().x, 0.0, "Phase label should remain visible after top action layout"),
 		assert_gt(turn_label.get_combined_minimum_size().x, 0.0, "Turn label should remain visible after top action layout"),
 		assert_eq(zeus_button.get_theme_font_size("font_size"), 12, "Top action copy should match the HUD button font size"),
@@ -2406,6 +2406,93 @@ func test_battle_scene_opponent_hand_viewer_shows_card_previews() -> String:
 		assert_true(discard_overlay.visible, "点击对手手牌后应打开只读预览层"),
 		assert_eq(discard_title.text, "对手手牌（2 张）", "预览层标题应显示对手手牌数量"),
 		assert_eq(discard_card_row.get_child_count(), 2, "预览层应按缩略卡图显示对手当前手牌"),
+	])
+
+
+func test_battle_scene_discard_viewer_uses_touch_wheel_window() -> String:
+	var scene := _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+	var discard_title := Label.new()
+	var discard_overlay := Panel.new()
+	var discard_list := ItemList.new()
+	var discard_scroll := ScrollContainer.new()
+	var discard_card_row := HBoxContainer.new()
+	var discard_utility_row := HBoxContainer.new()
+	scene.set("_discard_title", discard_title)
+	scene.set("_discard_overlay", discard_overlay)
+	scene.set("_discard_list", discard_list)
+	scene.set("_discard_card_scroll", discard_scroll)
+	scene.set("_discard_card_row", discard_card_row)
+	scene.set("_discard_utility_row", discard_utility_row)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	for i: int in range(10):
+		gsm.game_state.players[0].discard_pile.append(CardInstance.create(_make_pokemon_cd("己方弃牌%d" % i, 70, "C"), 0))
+	for i: int in range(8):
+		gsm.game_state.players[1].discard_pile.append(CardInstance.create(_make_pokemon_cd("对方弃牌%d" % i, 70, "C"), 1))
+
+	scene.call("_show_discard_pile", 0, "己方弃牌区")
+	var wheel := discard_utility_row.find_child("DiscardCardWheel", true, false) as HSlider
+	var wheel_label := discard_utility_row.find_child("DiscardCardWheelLabel", true, false) as Label
+	var first_card := discard_card_row.get_child(0) as BattleCardView if discard_card_row.get_child_count() > 0 else null
+	var seventh_card := discard_card_row.get_child(6) as BattleCardView if discard_card_row.get_child_count() > 6 else null
+	var initial_label := wheel_label.text if wheel_label != null else ""
+	if wheel != null:
+		wheel.value = 3.0
+		wheel.value_changed.emit(3.0)
+	var after_slide_first := discard_card_row.get_child(0) as BattleCardView if discard_card_row.get_child_count() > 0 else null
+	var after_slide_last := discard_card_row.get_child(6) as BattleCardView if discard_card_row.get_child_count() > 6 else null
+	var after_slide_label := wheel_label.text if wheel_label != null else ""
+
+	scene.call("_show_discard_pile", 1, "对方弃牌区")
+	var opponent_wheel := discard_utility_row.find_child("DiscardCardWheel", true, false) as HSlider
+	var opponent_label := discard_utility_row.find_child("DiscardCardWheelLabel", true, false) as Label
+
+	return run_checks([
+		assert_true(discard_overlay.visible, "打开弃牌区应显示预览层"),
+		assert_eq(discard_card_row.get_child_count(), 7, "弃牌区大牌堆应一屏最多显示7张卡"),
+		assert_eq(int(scene.get("_discard_card_page_size")), 7, "弃牌区应启用7张窗口模式"),
+		assert_not_null(wheel, "弃牌区超过7张时应显示滑轮"),
+		assert_true(discard_utility_row.visible, "弃牌区滑轮行应可见"),
+		assert_eq(discard_scroll.horizontal_scroll_mode, ScrollContainer.SCROLL_MODE_DISABLED, "滑轮模式下弃牌区不应再横向滚动"),
+		assert_eq(initial_label, "1-7 / 10", "滑轮标签应显示当前可见窗口"),
+		assert_eq(first_card.card_data.name if first_card != null and first_card.card_data != null else "", "己方弃牌9", "弃牌区初始窗口应从最新弃牌开始"),
+		assert_eq(seventh_card.card_data.name if seventh_card != null and seventh_card.card_data != null else "", "己方弃牌3", "弃牌区初始窗口应包含7张"),
+		assert_eq(after_slide_label, "4-10 / 10", "拖动滑轮后应更新可见范围标签"),
+		assert_eq(after_slide_first.card_data.name if after_slide_first != null and after_slide_first.card_data != null else "", "己方弃牌6", "拖动滑轮后应轮转到后续弃牌"),
+		assert_eq(after_slide_last.card_data.name if after_slide_last != null and after_slide_last.card_data != null else "", "己方弃牌0", "滑到末尾应显示最早弃牌"),
+		assert_not_null(opponent_wheel, "对方弃牌区也应使用同一套滑轮"),
+		assert_eq(opponent_label.text if opponent_label != null else "", "1-7 / 8", "对方弃牌区滑轮标签应按对方牌数刷新"),
+		assert_str_contains(discard_title.text, "对方弃牌区", "对方弃牌区标题应刷新为对方区域"),
+	])
+
+
+func test_battle_scene_llm_wait_hud_uses_model_specific_copy() -> String:
+	var scene := _make_battle_scene_stub()
+	var deepseek_text := str(scene.call("_llm_wait_hud_text_for_model", "deepseek/deepseek-v4-pro", 6, 12, 3))
+	var grok_text := str(scene.call("_llm_wait_hud_text_for_model", "x-ai/grok-4.2-fast-non-reasoning", 4, 8, 2))
+	var qwen_text := str(scene.call("_llm_wait_hud_text_for_model", "qwen/qwen3.6-plus", 3, 5, 1))
+	var gpt_text := str(scene.call("_llm_wait_hud_text_for_model", "gpt-5.5", 9, 1, 4))
+
+	return run_checks([
+		assert_str_contains(deepseek_text, "DeepSeek V4 Pro", "LLM wait HUD should show the concrete DeepSeek model"),
+		assert_str_contains(deepseek_text, "正在思考中", "DeepSeek wait HUD should use the thinking copy"),
+		assert_false(deepseek_text.contains("AI thinking"), "LLM wait HUD should no longer use the old English copy"),
+		assert_str_contains(grok_text, "Grok 4.2", "LLM wait HUD should compact Grok model names"),
+		assert_str_contains(grok_text, "正在挠头中", "Grok wait HUD should use a distinct playful copy"),
+		assert_str_contains(qwen_text, "Qwen 3.6 Plus", "LLM wait HUD should show Qwen model names"),
+		assert_str_contains(qwen_text, "正在排兵布阵", "Qwen wait HUD should use a strategy-flavored copy"),
+		assert_str_contains(gpt_text, "GPT-5.5", "LLM wait HUD should show GPT model names"),
+		assert_str_contains(gpt_text, "第 9 回合", "LLM wait HUD should keep turn context"),
 	])
 
 
@@ -5741,7 +5828,7 @@ func test_battle_scene_human_prize_prompt_blocks_field_actions_until_prize_taken
 	])
 
 
-func test_battle_scene_match_end_review_action_starts_review_instead_of_leaving_battle() -> String:
+func test_battle_scene_match_end_only_shows_centered_return_action() -> String:
 	var previous_mode: int = GameManager.current_mode
 	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
 
@@ -5753,22 +5840,100 @@ func test_battle_scene_match_end_review_action_starts_review_instead_of_leaving_
 	battle_scene.set("_battle_review_reason", "knockout")
 
 	battle_scene.call("_show_match_end_dialog", 0, "knockout")
-	var dialog_items: Array = battle_scene.get("_dialog_items_data")
-	battle_scene.call("_handle_dialog_choice", PackedInt32Array([1]))
+	var match_end_overlay := battle_scene.get("_match_end_overlay") as Panel
+	var ai_button := battle_scene.get("_match_end_ai_button") as Button
+	var review_button := battle_scene.get("_match_end_review_button") as Button
+	var learning_button := battle_scene.get("_match_end_learning_button") as Button
+	var return_button := battle_scene.get("_match_end_return_button") as Button
+	var stats_grid := battle_scene.get("_match_end_stats_grid") as GridContainer
+	var button_row := return_button.get_parent() as HBoxContainer if return_button != null else null
 
 	var generate_calls: Array = fake_review_service.generate_calls
-	var called_match_dir: String = str((generate_calls[0] as Dictionary).get("match_dir", "")) if not generate_calls.is_empty() and generate_calls[0] is Dictionary else ""
-	var review_busy: bool = bool(battle_scene.get("_battle_review_busy"))
-	var progress_text: String = str(battle_scene.get("_battle_review_progress_text"))
 	GameManager.current_mode = previous_mode
 
 	return run_checks([
-		assert_true(dialog_items.size() >= 3, "Match end dialog should include summary plus at least the AI review and return actions when review is available"),
-		assert_true("生成AI复盘" in dialog_items, "The match end dialog should include the AI review action"),
-		assert_eq(generate_calls.size(), 1, "Choosing the AI review action should start battle review generation"),
-		assert_eq(called_match_dir, "user://test_match_end_review", "Battle review generation should use the current match dir"),
-		assert_true(review_busy, "Choosing the AI review action should mark review generation as running"),
-		assert_eq(progress_text, "正在筛选关键回合...", "Choosing the AI review action should update match end progress text"),
+		assert_true(match_end_overlay != null and match_end_overlay.visible, "Match end should use the result screen overlay"),
+		assert_not_null(stats_grid, "Match end result screen should render stat cards"),
+		assert_true(stats_grid != null and stats_grid.get_child_count() >= 4, "Match end result screen should include the core match stats"),
+		assert_not_null(button_row, "Match end result screen should use a centered bottom button row"),
+		assert_eq(button_row.alignment if button_row != null else -1, BoxContainer.ALIGNMENT_CENTER, "Match end bottom button row should center its visible action"),
+		assert_not_null(ai_button, "Match end result screen should still own the AI quick-review button node for compatibility"),
+		assert_not_null(review_button, "Match end result screen should still own the AI review button node for compatibility"),
+		assert_not_null(learning_button, "Match end result screen should still own the learning button node for compatibility"),
+		assert_false(ai_button.visible if ai_button != null else true, "Match end should not show a manual AI quick-review button"),
+		assert_false(review_button.visible if review_button != null else true, "Match end should not show a manual AI review button"),
+		assert_false(learning_button.visible if learning_button != null else true, "Match end should not show a learning-pool button"),
+		assert_not_null(return_button, "Match end result screen should include a return action"),
+		assert_true(return_button.visible if return_button != null else false, "Match end should keep only the return action visible"),
+		assert_eq(return_button.text if return_button != null else "", "返回对战准备", "Single-match result screen should keep the return label"),
+		assert_eq(generate_calls.size(), 0, "Hidden AI review button should not start battle review generation"),
+	])
+
+
+func test_match_end_return_preserves_tournament_standings_route_when_active() -> String:
+	var previous_tournament := GameManager.current_tournament
+	var previous_tournament_deck_id := GameManager.tournament_selected_player_deck_id
+	var previous_in_progress := GameManager.tournament_battle_in_progress
+	var previous_mode: int = GameManager.current_mode
+	var previous_suppressed := bool(GameManager.get("suppress_scene_navigation_for_tests"))
+	GameManager.set_scene_navigation_suppressed_for_tests(true)
+	GameManager.clear_tournament()
+	GameManager.set_tournament_selected_player_deck_id(575716)
+	GameManager.start_swiss_tournament("测试玩家", 16)
+	var prepared := GameManager.prepare_current_tournament_battle()
+
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_battle_review_winner_index", 0)
+	battle_scene.set("_battle_review_reason", "knockout")
+	battle_scene.call("_on_match_end_return_pressed")
+
+	var requested_path := GameManager.consume_last_requested_scene_path()
+	var tournament_still_exists := GameManager.current_tournament != null
+	var active_after_return := GameManager.is_tournament_battle_active()
+	var summary: Dictionary = GameManager.current_tournament.last_round_summary if GameManager.current_tournament != null else {}
+
+	GameManager.clear_tournament()
+	GameManager.current_tournament = previous_tournament
+	GameManager.tournament_selected_player_deck_id = previous_tournament_deck_id
+	GameManager.tournament_battle_in_progress = previous_in_progress
+	GameManager.current_mode = previous_mode
+	GameManager.set_scene_navigation_suppressed_for_tests(previous_suppressed)
+
+	return run_checks([
+		assert_true(prepared, "Tournament test setup should prepare an active battle"),
+		assert_eq(requested_path, GameManager.SCENE_TOURNAMENT_STANDINGS, "Tournament match-end return should go to tournament standings"),
+		assert_true(tournament_still_exists, "Tournament match-end return should not clear the tournament object"),
+		assert_false(active_after_return, "Tournament match-end return should finalize the active battle"),
+		assert_false(summary.is_empty(), "Tournament match-end return should record the round summary before standings"),
+	])
+
+
+func test_battle_scene_match_end_quick_review_failure_falls_back_to_local_summary() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_battle_review_winner_index", 0)
+	battle_scene.set("_battle_review_reason", "knockout")
+	battle_scene.set("_view_player", 0)
+
+	battle_scene.call("_show_match_end_dialog", 0, "knockout")
+	battle_scene.call("_on_match_end_quick_review_completed", {
+		"status": "failed",
+		"errors": [{
+			"error_type": "python_fallback_timeout",
+			"message": "ZenMux Python fallback timed out",
+		}],
+	})
+	var result: Dictionary = battle_scene.get("_match_end_quick_review_result")
+	var ai_title := battle_scene.get("_match_end_ai_title") as Label
+	var ai_content := battle_scene.get("_match_end_ai_content") as RichTextLabel
+	var content_text := ai_content.text if ai_content != null else ""
+
+	return run_checks([
+		assert_eq(str(result.get("status", "")), "ai_failed_fallback", "Match end should replace failed AI review with local fallback"),
+		assert_true(bool(battle_scene.get("_match_end_quick_review_requested")), "Failed AI review should still count as handled"),
+		assert_false(bool(battle_scene.get("_match_end_quick_review_busy")), "Failed AI review should clear busy state"),
+		assert_eq(ai_title.text if ai_title != null else "", "本地赛后简评（AI暂不可用）", "Match end title should explain the AI fallback"),
+		assert_str_contains(content_text, "AI 快评超时", "Match end content should explain timeout fallback"),
+		assert_str_contains(content_text, "评分", "Match end content should still show a useful local score"),
 	])
 
 
@@ -6037,6 +6202,55 @@ func test_battle_scene_used_ability_tilt_adjusts_card_z_index() -> String:
 		assert_eq(used_label.text, "USED", "USED badge should render the expected text"),
 		assert_eq(int(card_view.rotation_degrees), 0, "Card root should remain upright"),
 		assert_eq(int(card_view.z_index), 0, "USED badge should not change card layering"),
+	])
+
+
+func test_battle_card_view_touch_long_press_opens_detail_without_left_click() -> String:
+	var card_view := BattleCardViewScript.new()
+	var card_data := _make_pokemon_cd("Touch Inspect", 70, "R")
+	card_view.setup_from_card_data(card_data, BattleCardViewScript.MODE_HAND)
+	var counters := {"left": 0, "right": 0}
+	card_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
+		counters["left"] = int(counters["left"]) + 1
+	)
+	card_view.right_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
+		counters["right"] = int(counters["right"]) + 1
+	)
+
+	card_view.call("_start_touch_long_press", Vector2(8, 8), 0)
+	card_view.call("_on_touch_long_press_timeout")
+	var suppresses_emulated_left := bool(card_view.get("_suppress_next_left_click"))
+	var left_click := InputEventMouseButton.new()
+	left_click.button_index = MOUSE_BUTTON_LEFT
+	left_click.pressed = true
+	card_view.call("_gui_input", left_click)
+
+	return run_checks([
+		assert_eq(int(counters["right"]), 1, "Long press should reuse the right-click detail signal"),
+		assert_true(suppresses_emulated_left, "Long press should suppress the next emulated left click"),
+		assert_eq(int(counters["left"]), 0, "Long press detail should not also select or play the card"),
+	])
+
+
+func test_battle_card_view_touch_drag_cancels_long_press_detail() -> String:
+	var card_view := BattleCardViewScript.new()
+	var card_data := _make_pokemon_cd("Touch Drag", 70, "R")
+	card_view.setup_from_card_data(card_data, BattleCardViewScript.MODE_HAND)
+	var detail_count := 0
+	card_view.right_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
+		detail_count += 1
+	)
+
+	card_view.call("_start_touch_long_press", Vector2(8, 8), 0)
+	var drag := InputEventScreenDrag.new()
+	drag.index = 0
+	drag.position = Vector2(48, 8)
+	card_view.call("_gui_input", drag)
+	card_view.call("_on_touch_long_press_timeout")
+
+	return run_checks([
+		assert_eq(detail_count, 0, "Dragging should cancel touch inspect so scrolling a card row does not open detail"),
+		assert_false(bool(card_view.get("_touch_long_press_active")), "Cancelled touch inspect should clear the active touch state"),
 	])
 
 

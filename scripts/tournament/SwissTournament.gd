@@ -6,17 +6,28 @@ const POINTS_DRAW := 1
 const POINTS_LOSS := 0
 const AIFixedDeckOrderRegistryScript := preload("res://scripts/ai/AIFixedDeckOrderRegistry.gd")
 
-const DEFAULT_AI_DECK_POOL: Array[int] = [575716, 575720, 569061, 575657, 578647, 575718]
-const LLM_RAGING_BOLT_DECK_ID := 575718
+const DEFAULT_AI_DECK_POOL: Array[int] = [569061, 575657, 575716, 575718, 575720, 575723, 578647, 579502]
+const LLM_STRATEGY_ID_BY_DECK_ID := {
+	569061: "arceus_giratina_llm",
+	575657: "lugia_archeops_llm",
+	575716: "charizard_ex_llm",
+	575718: "raging_bolt_ogerpon_llm",
+	575720: "miraidon_llm",
+	575723: "dragapult_dusknoir_llm",
+	578647: "gardevoir_llm",
+	579502: "dragapult_charizard_llm",
+}
 const LLM_OPPONENT_PROBABILITY := 0.12
 
 const DECK_RATINGS := {
-	575716: 1690.0,  # Charizard / Pidgeot
-	575720: 1630.0,  # Miraidon
 	569061: 1560.0,  # Arceus / Giratina
 	575657: 1510.0,  # Lugia / Archeops
-	578647: 1460.0,  # Gardevoir
+	575716: 1690.0,  # Charizard / Pidgeot
 	575718: 1430.0,  # Raging Bolt / Ogerpon
+	575720: 1630.0,  # Miraidon
+	575723: 1550.0,  # Dragapult / Dusknoir
+	578647: 1460.0,  # Gardevoir
+	579502: 1580.0,  # Dragapult / Charizard
 }
 
 const NAME_PREFIXES := [
@@ -176,6 +187,22 @@ func participant_ai_mode(participant_id: int) -> String:
 	return str(_participant_by_id(participant_id).get("ai_mode", "weak"))
 
 
+func participant_llm_strategy_id(participant_id: int) -> String:
+	return llm_strategy_id_for_deck_id(participant_deck_id(participant_id))
+
+
+func llm_strategy_id_for_deck_id(deck_id: int) -> String:
+	return str(LLM_STRATEGY_ID_BY_DECK_ID.get(deck_id, ""))
+
+
+func get_llm_deck_pool() -> Array[int]:
+	var result: Array[int] = []
+	for deck_id_variant: Variant in LLM_STRATEGY_ID_BY_DECK_ID.keys():
+		result.append(int(deck_id_variant))
+	result.sort()
+	return result
+
+
 func participant_deck_name(participant_id: int) -> String:
 	var deck_id := participant_deck_id(participant_id)
 	var deck := CardDatabase.get_ai_deck(deck_id)
@@ -294,11 +321,12 @@ func _build_field() -> void:
 	var ai_deck_pool := CardDatabase.get_supported_ai_deck_ids()
 	if ai_deck_pool.is_empty():
 		ai_deck_pool = DEFAULT_AI_DECK_POOL.duplicate()
+	var llm_deck_pool := _llm_deck_pool_from_ai_pool(ai_deck_pool)
 	var llm_inserted := false
 	for i: int in range(1, tournament_size):
 		var next_name := _generate_unique_name(used_names)
 		var next_ai_mode := _roll_ai_mode(i, llm_inserted)
-		var next_deck_id := LLM_RAGING_BOLT_DECK_ID if next_ai_mode == "llm" else int(ai_deck_pool[_rng.randi_range(0, ai_deck_pool.size() - 1)])
+		var next_deck_id := _roll_llm_deck_id(llm_deck_pool) if next_ai_mode == "llm" else int(ai_deck_pool[_rng.randi_range(0, ai_deck_pool.size() - 1)])
 		if next_ai_mode == "llm":
 			llm_inserted = true
 		participants.append(_make_participant(i, next_name, next_deck_id, false, next_ai_mode))
@@ -310,6 +338,22 @@ func _roll_ai_mode(participant_index: int, llm_inserted: bool) -> String:
 		if _rng.randf() < LLM_OPPONENT_PROBABILITY or (not llm_inserted and remaining_after_this <= 0):
 			return "llm"
 	return "strong" if _rng.randf() < 0.5 else "weak"
+
+
+func _llm_deck_pool_from_ai_pool(ai_deck_pool: Array) -> Array[int]:
+	var result: Array[int] = []
+	for deck_id_variant: Variant in ai_deck_pool:
+		var deck_id := int(deck_id_variant)
+		if LLM_STRATEGY_ID_BY_DECK_ID.has(deck_id):
+			result.append(deck_id)
+	if result.is_empty():
+		result = get_llm_deck_pool()
+	return result
+
+
+func _roll_llm_deck_id(llm_deck_pool: Array[int]) -> int:
+	var pool := llm_deck_pool if not llm_deck_pool.is_empty() else get_llm_deck_pool()
+	return int(pool[_rng.randi_range(0, pool.size() - 1)])
 
 
 func _make_participant(id: int, name: String, deck_id: int, is_player: bool, ai_mode: String = "weak") -> Dictionary:

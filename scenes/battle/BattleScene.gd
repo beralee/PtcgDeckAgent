@@ -16,6 +16,7 @@ const BattleReplaySnapshotLoaderScript := preload("res://scripts/engine/BattleRe
 const BattleReplayStateRestorerScript := preload("res://scripts/engine/BattleReplayStateRestorer.gd")
 const BattleAdviceServiceScript := preload("res://scripts/engine/BattleAdviceService.gd")
 const BattleLearningPoolStoreScript := preload("res://scripts/engine/BattleLearningPoolStore.gd")
+const MatchEndQuickReviewServiceScript := preload("res://scripts/engine/MatchEndQuickReviewService.gd")
 const BattleReviewArtifactStoreScript := preload("res://scripts/engine/BattleReviewArtifactStore.gd")
 const BattleReviewServiceScript := preload("res://scripts/engine/BattleReviewService.gd")
 const BattleSceneRefsScript := preload("res://scenes/battle/BattleSceneRefs.gd")
@@ -46,6 +47,8 @@ const USED_ABILITY_TILT_DEGREES := 15.0
 const CoinFlipAnimatorScript := preload("res://scenes/battle/CoinFlipAnimator.gd")
 const AI_MAX_ACTIONS_PER_TURN := 20
 const AI_ACTION_PAUSE_SECONDS := 2.0
+const SLOT_TOUCH_LONG_PRESS_SECONDS := 0.42
+const SLOT_TOUCH_LONG_PRESS_MOVE_TOLERANCE := 18.0
 
 # ===================== State =====================
 # These scene-owned fields are intentionally accessed reflectively by extracted
@@ -70,6 +73,14 @@ var _pending_effect_attack_effects: Array[BaseEffect] = []
 var _dialog_multi_selected_indices: Array[int] = []
 var _slot_card_views: Dictionary = {}
 var _detail_card_view = null
+var _detail_reveal_tween: Tween = null
+var _slot_touch_long_press_timer: Timer = null
+var _slot_touch_long_press_active: bool = false
+var _slot_touch_long_press_slot_id: String = ""
+var _slot_touch_long_press_index: int = -1
+var _slot_touch_long_press_start: Vector2 = Vector2.ZERO
+var _slot_touch_long_press_consumed: bool = false
+var _suppress_next_slot_left_click_id: String = ""
 
 var _setup_done: Array[bool] = [false, false]
 var _play_card_size: Vector2 = Vector2(130, 182)
@@ -167,6 +178,25 @@ var _battle_review_progress_text: String = ""
 var _battle_review_winner_index: int = -1
 var _battle_review_reason: String = ""
 var _battle_review_formatter: RefCounted = BattleReviewFormatterScript.new()
+var _match_end_stats: Dictionary = {}
+var _match_end_quick_review_service: RefCounted = null
+var _match_end_quick_review_result: Dictionary = {}
+var _match_end_quick_review_busy: bool = false
+var _match_end_quick_review_progress_text: String = ""
+var _match_end_quick_review_requested: bool = false
+var _match_end_overlay: Panel = null
+var _match_end_title: Label = null
+var _match_end_subtitle: Label = null
+var _match_end_reason: Label = null
+var _match_end_stats_grid: GridContainer = null
+var _match_end_player_summary: RichTextLabel = null
+var _match_end_action_summary: RichTextLabel = null
+var _match_end_ai_title: Label = null
+var _match_end_ai_content: RichTextLabel = null
+var _match_end_ai_button: Button = null
+var _match_end_review_button: Button = null
+var _match_end_learning_button: Button = null
+var _match_end_return_button: Button = null
 var _battle_advice_controller: RefCounted = BattleAdviceControllerScript.new()
 var _battle_advice_service: RefCounted = null
 var _battle_action_controller: RefCounted = BattleActionControllerScript.new()
@@ -417,9 +447,7 @@ func _ready() -> void:
 	_coin_ok_btn.pressed.connect(func() -> void:
 		_coin_overlay.visible = false
 	)
-	_detail_close_btn.pressed.connect(func() -> void:
-		_detail_overlay.visible = false
-	)
+	_detail_close_btn.pressed.connect(_hide_card_detail)
 	_discard_close_btn.pressed.connect(func() -> void:
 		_discard_overlay.visible = false
 	)
@@ -750,12 +778,24 @@ func _apply_responsive_layout() -> void:
 		_dialog_assignment_target_scroll.custom_minimum_size = Vector2(0, _dialog_card_size.y + 2.0)
 
 	var detail_box: PanelContainer = $DetailOverlay/DetailCenter/DetailBox
+	var detail_gap := clampi(int(viewport_size.x * 0.008), 10, 16)
+	var detail_text_width := clampf(viewport_size.x * 0.25, 300.0, 420.0)
+	var preferred_detail_width := _detail_card_size.x + detail_text_width + float(detail_gap) + 42.0
+	var preferred_detail_height := _detail_card_size.y + 84.0
 	detail_box.custom_minimum_size = Vector2(
-		clampf(viewport_size.x * 0.42, 420.0, 760.0),
-		clampf(viewport_size.y * 0.78, 440.0, 880.0)
+		minf(maxf(preferred_detail_width, 620.0), maxf(viewport_size.x - 32.0, 300.0)),
+		minf(maxf(preferred_detail_height, 460.0), maxf(viewport_size.y - 32.0, 300.0))
 	)
+	var detail_body := get_node_or_null("DetailOverlay/DetailCenter/DetailBox/DetailVBox/DetailBody") as HBoxContainer
+	if detail_body != null:
+		detail_body.add_theme_constant_override("separation", detail_gap)
 	if _detail_card_view != null:
 		_detail_card_view.custom_minimum_size = _detail_card_size
+	if _detail_content != null:
+		_detail_content.custom_minimum_size = Vector2(detail_text_width - 28.0, maxf(_detail_card_size.y - 24.0, 220.0))
+	var detail_text_panel := get_node_or_null("DetailOverlay/DetailCenter/DetailBox/DetailVBox/DetailBody/DetailTextPanel") as PanelContainer
+	if detail_text_panel != null:
+		detail_text_panel.custom_minimum_size = Vector2(detail_text_width, _detail_card_size.y)
 
 	if _dialog_card_row != null:
 		for child: Node in _dialog_card_row.get_children():
@@ -771,6 +811,8 @@ func _apply_responsive_layout() -> void:
 				(child as BattleCardView).custom_minimum_size = _dialog_card_size
 	if _discard_card_scroll != null:
 		_discard_card_scroll.custom_minimum_size = Vector2(0, clampf(viewport_size.y * 0.34, 220.0, 340.0))
+		if _discard_utility_row != null:
+			_discard_utility_row.custom_minimum_size = Vector2(0, 52.0)
 		var discard_box: PanelContainer = $DiscardOverlay/DiscardCenter/DiscardBox
 		discard_box.custom_minimum_size = Vector2(
 			clampf(viewport_size.x * 0.76, 820.0, 1280.0),
@@ -831,6 +873,14 @@ func _resolve_top_row_gap(viewport_size: Vector2) -> int:
 
 func _resolve_top_action_gap(viewport_size: Vector2) -> int:
 	return clampi(int(viewport_size.x * 0.003), 3, 6)
+
+
+func _resolve_top_status_width(viewport_size: Vector2) -> float:
+	return clampf(viewport_size.x * 0.2, 140.0, 340.0)
+
+
+func _resolve_top_turn_width(viewport_size: Vector2) -> float:
+	return clampf(viewport_size.x * 0.16, 126.0, 280.0)
 
 
 func _apply_top_bar_space_metrics(viewport_size: Vector2, action_width: float = -1.0, action_gap: int = -1) -> void:
@@ -1071,7 +1121,7 @@ func _apply_battle_surface_styles() -> void:
 		if label != null:
 			label.visible = false
 	_style_panel(_dialog_box, Color(0.05, 0.08, 0.11, 0.98), Color(0.38, 0.55, 0.72), 20)
-	_style_panel($DetailOverlay/DetailCenter/DetailBox, Color(0.05, 0.08, 0.11, 0.98), Color(0.65, 0.5, 0.27), 20)
+	_style_card_detail_overlay()
 	_style_panel($DiscardOverlay/DiscardCenter/DiscardBox, Color(0.05, 0.08, 0.11, 0.98), Color(0.5, 0.57, 0.72), 20)
 	_style_panel($CoinFlipOverlay/CoinCenter/CoinBox, Color(0.05, 0.08, 0.11, 0.98), Color(0.89, 0.78, 0.34), 18)
 	_style_panel($HandoverPanel/HandoverCenter/HandoverBox, Color(0.05, 0.08, 0.11, 0.98), Color(0.72, 0.72, 0.76), 18)
@@ -1098,6 +1148,68 @@ func _style_panel(panel: Control, bg_color: Color, border_color: Color, radius: 
 		(panel as PanelContainer).add_theme_stylebox_override("panel", style)
 	elif panel is Panel:
 		(panel as Panel).add_theme_stylebox_override("panel", style)
+
+
+func _style_card_detail_overlay() -> void:
+	if _detail_overlay != null:
+		_detail_overlay.self_modulate = Color(1, 1, 1, 1)
+		var overlay_style := StyleBoxFlat.new()
+		overlay_style.bg_color = Color(0.0, 0.02, 0.04, 0.74)
+		_detail_overlay.add_theme_stylebox_override("panel", overlay_style)
+
+	var detail_box := get_node_or_null("DetailOverlay/DetailCenter/DetailBox") as PanelContainer
+	if detail_box != null:
+		var box_style := StyleBoxFlat.new()
+		box_style.bg_color = Color(0.018, 0.038, 0.058, 0.98)
+		box_style.border_color = Color(0.94, 0.74, 0.34, 0.95)
+		box_style.set_border_width_all(2)
+		box_style.set_corner_radius_all(18)
+		box_style.shadow_color = Color(0.0, 0.0, 0.0, 0.55)
+		box_style.shadow_size = 28
+		box_style.shadow_offset = Vector2(0, 12)
+		box_style.content_margin_left = 18
+		box_style.content_margin_top = 14
+		box_style.content_margin_right = 18
+		box_style.content_margin_bottom = 16
+		detail_box.add_theme_stylebox_override("panel", box_style)
+
+	if _detail_title != null:
+		_detail_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		_detail_title.add_theme_font_size_override("font_size", 20)
+		_detail_title.add_theme_color_override("font_color", Color(1.0, 0.92, 0.68))
+		_detail_title.add_theme_color_override("font_outline_color", Color(0.02, 0.04, 0.07, 0.95))
+		_detail_title.add_theme_constant_override("outline_size", 2)
+		var title_font := FontVariation.new()
+		title_font.base_font = ThemeDB.fallback_font
+		title_font.variation_embolden = 1.25
+		_detail_title.add_theme_font_override("font", title_font)
+
+	if _detail_content != null:
+		_detail_content.bbcode_enabled = true
+		_detail_content.scroll_active = true
+		_detail_content.selection_enabled = true
+		_detail_content.add_theme_font_size_override("normal_font_size", 14)
+		_detail_content.add_theme_color_override("default_color", Color(0.86, 0.94, 0.98))
+		_detail_content.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.4))
+		_detail_content.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+		_detail_content.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
+	var detail_text_panel := get_node_or_null("DetailOverlay/DetailCenter/DetailBox/DetailVBox/DetailBody/DetailTextPanel") as PanelContainer
+	if detail_text_panel != null:
+		var text_panel_style := StyleBoxFlat.new()
+		text_panel_style.bg_color = Color(0.03, 0.07, 0.09, 0.78)
+		text_panel_style.border_color = Color(0.19, 0.56, 0.68, 0.58)
+		text_panel_style.set_border_width_all(1)
+		text_panel_style.set_corner_radius_all(12)
+		text_panel_style.shadow_color = Color(0.0, 0.0, 0.0, 0.24)
+		text_panel_style.shadow_size = 10
+		text_panel_style.shadow_offset = Vector2(0, 4)
+		detail_text_panel.add_theme_stylebox_override("panel", text_panel_style)
+
+	if _detail_close_btn != null:
+		_style_hud_button(_detail_close_btn)
+		_detail_close_btn.custom_minimum_size = Vector2(42, 32)
+		_detail_close_btn.add_theme_font_size_override("font_size", 14)
 
 
 func _style_hud_button(button: Button) -> void:
@@ -1162,15 +1274,82 @@ func _install_slot_card_view(slot_id: String, panel: PanelContainer, mode: Strin
 
 func _setup_detail_preview() -> void:
 	var detail_box: PanelContainer = $DetailOverlay/DetailCenter/DetailBox
-	detail_box.custom_minimum_size = Vector2(520, 620)
+	detail_box.custom_minimum_size = Vector2(760, 560)
 
 	var detail_vbox: VBoxContainer = $DetailOverlay/DetailCenter/DetailBox/DetailVBox
-	_detail_card_view = BATTLE_CARD_VIEW.new()
+	detail_vbox.add_theme_constant_override("separation", 12)
+
+	var detail_header := detail_vbox.get_node_or_null("DetailHeader") as HBoxContainer
+	if detail_header == null:
+		detail_header = HBoxContainer.new()
+		detail_header.name = "DetailHeader"
+		detail_header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		detail_header.add_theme_constant_override("separation", 10)
+		detail_vbox.add_child(detail_header)
+		detail_vbox.move_child(detail_header, 0)
+
+	if _detail_title.get_parent() != detail_header:
+		_detail_title.get_parent().remove_child(_detail_title)
+		detail_header.add_child(_detail_title)
+	_detail_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	if _detail_close_btn.get_parent() != detail_header:
+		_detail_close_btn.get_parent().remove_child(_detail_close_btn)
+		detail_header.add_child(_detail_close_btn)
+	_detail_close_btn.text = "X"
+	_detail_close_btn.tooltip_text = "Close"
+	_detail_close_btn.size_flags_horizontal = Control.SIZE_SHRINK_END
+
+	var detail_body := detail_vbox.get_node_or_null("DetailBody") as HBoxContainer
+	if detail_body == null:
+		detail_body = HBoxContainer.new()
+		detail_body.name = "DetailBody"
+		detail_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		detail_body.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		detail_body.add_theme_constant_override("separation", 18)
+		detail_vbox.add_child(detail_body)
+	else:
+		detail_body.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+
+	if _detail_card_view == null:
+		_detail_card_view = BATTLE_CARD_VIEW.new()
+		_detail_card_view.name = "DetailCardPreview"
+		_detail_card_view.set_clickable(false)
+		_detail_card_view.setup_from_instance(null, BATTLE_CARD_VIEW.MODE_PREVIEW)
+	if _detail_card_view.get_parent() != detail_body:
+		if _detail_card_view.get_parent() != null:
+			_detail_card_view.get_parent().remove_child(_detail_card_view)
+		detail_body.add_child(_detail_card_view)
+		detail_body.move_child(_detail_card_view, 0)
 	_detail_card_view.custom_minimum_size = _detail_card_size
-	_detail_card_view.set_clickable(false)
-	_detail_card_view.setup_from_instance(null, BATTLE_CARD_VIEW.MODE_PREVIEW)
-	detail_vbox.add_child(_detail_card_view)
-	detail_vbox.move_child(_detail_card_view, 1)
+	_detail_card_view.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_detail_card_view.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+
+	var detail_text_panel := detail_body.get_node_or_null("DetailTextPanel") as PanelContainer
+	if detail_text_panel == null:
+		detail_text_panel = PanelContainer.new()
+		detail_text_panel.name = "DetailTextPanel"
+		detail_text_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		detail_text_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		detail_body.add_child(detail_text_panel)
+	else:
+		detail_text_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+
+	var detail_text_margin := detail_text_panel.get_node_or_null("DetailTextMargin") as MarginContainer
+	if detail_text_margin == null:
+		detail_text_margin = MarginContainer.new()
+		detail_text_margin.name = "DetailTextMargin"
+		detail_text_margin.add_theme_constant_override("margin_left", 14)
+		detail_text_margin.add_theme_constant_override("margin_top", 12)
+		detail_text_margin.add_theme_constant_override("margin_right", 14)
+		detail_text_margin.add_theme_constant_override("margin_bottom", 12)
+		detail_text_panel.add_child(detail_text_margin)
+
+	if _detail_content.get_parent() != detail_text_margin:
+		_detail_content.get_parent().remove_child(_detail_content)
+		detail_text_margin.add_child(_detail_content)
+	_detail_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_detail_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 
 
 
@@ -1481,6 +1660,10 @@ func _on_game_over(winner_index: int, reason: String) -> void:
 	_refresh_ui()
 	_battle_review_winner_index = winner_index
 	_battle_review_reason = reason
+	_match_end_quick_review_result = {}
+	_match_end_quick_review_busy = false
+	_match_end_quick_review_progress_text = ""
+	_match_end_quick_review_requested = false
 	_record_battle_state_snapshot("match_end", {
 		"winner_index": winner_index,
 		"reason": reason,
@@ -1653,6 +1836,8 @@ func _on_zeus_help_pressed() -> void:
 		"card_items": deck_cards,
 		"deck_cards": deck_cards,
 		"choice_labels": labels,
+		"card_page_size": 7,
+		"touch_paged": true,
 	})
 
 
@@ -1669,11 +1854,6 @@ func _show_opponent_hand_cards() -> void:
 
 
 func _on_slot_input(event: InputEvent, slot_id: String) -> void:
-	if not event is InputEventMouseButton:
-		return
-	var mbe := event as InputEventMouseButton
-	if not mbe.pressed:
-		return
 	if _pending_choice == "take_prize":
 		_runtime_log("slot_input_blocked", "slot=%s reason=take_prize %s" % [slot_id, _state_snapshot()])
 		var prize_viewport := get_viewport()
@@ -1689,17 +1869,36 @@ func _on_slot_input(event: InputEvent, slot_id: String) -> void:
 			viewport.set_input_as_handled()
 		return
 
+	if _handle_slot_touch_detail_input(event, slot_id):
+		return
+
+	if not event is InputEventMouseButton:
+		return
+	var mbe := event as InputEventMouseButton
+	if not mbe.pressed:
+		return
+
 	if mbe.button_index == MOUSE_BUTTON_RIGHT:
 		_runtime_log("slot_right_click", "slot=%s %s" % [slot_id, _state_snapshot()])
-		var detail_state: GameState = _gsm.game_state if _gsm != null else null
-		if detail_state != null:
-			var detail_slot: PokemonSlot = _slot_from_id(slot_id, detail_state)
-			if detail_slot != null and not detail_slot.pokemon_stack.is_empty():
-				_show_card_detail(detail_slot.get_card_data())
+		_show_slot_card_detail(slot_id)
 		return
 
 	if mbe.button_index != MOUSE_BUTTON_LEFT:
 		return
+	if _slot_touch_long_press_active and _slot_touch_long_press_slot_id == slot_id:
+		var touch_viewport := get_viewport()
+		if touch_viewport != null:
+			touch_viewport.set_input_as_handled()
+		return
+	if _consume_suppressed_slot_left_click(slot_id):
+		var suppressed_viewport := get_viewport()
+		if suppressed_viewport != null:
+			suppressed_viewport.set_input_as_handled()
+		return
+	_handle_slot_left_click(slot_id)
+
+
+func _handle_slot_left_click(slot_id: String) -> void:
 	_runtime_log(
 		"slot_left_click",
 		"slot=%s selected=%s %s" % [slot_id, _card_instance_label(_selected_hand_card), _state_snapshot()]
@@ -1755,6 +1954,122 @@ func _on_slot_input(event: InputEvent, slot_id: String) -> void:
 		_show_pokemon_action_dialog(cp, target_slot, slot_id == "my_active")
 
 
+func _handle_slot_touch_detail_input(event: InputEvent, slot_id: String) -> bool:
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			if _start_slot_touch_long_press(slot_id, touch.position, touch.index):
+				var press_viewport := get_viewport()
+				if press_viewport != null:
+					press_viewport.set_input_as_handled()
+				return true
+		else:
+			if _slot_touch_long_press_active and touch.index == _slot_touch_long_press_index:
+				var consumed := _slot_touch_long_press_consumed
+				_cancel_slot_touch_long_press(false)
+				var release_viewport := get_viewport()
+				if release_viewport != null:
+					release_viewport.set_input_as_handled()
+				if consumed:
+					return true
+				_suppress_next_slot_left_click_id = slot_id
+				_handle_slot_left_click(slot_id)
+				return true
+		return false
+
+	if event is InputEventScreenDrag:
+		var drag := event as InputEventScreenDrag
+		if _slot_touch_long_press_active and drag.index == _slot_touch_long_press_index:
+			var drag_viewport := get_viewport()
+			if drag_viewport != null:
+				drag_viewport.set_input_as_handled()
+			if _slot_touch_long_press_consumed:
+				return true
+			if drag.position.distance_to(_slot_touch_long_press_start) > SLOT_TOUCH_LONG_PRESS_MOVE_TOLERANCE:
+				_suppress_next_slot_left_click_id = slot_id
+				_cancel_slot_touch_long_press(false)
+			return true
+		return false
+
+	return false
+
+
+func _start_slot_touch_long_press(slot_id: String, position: Vector2, touch_index: int) -> bool:
+	if _slot_card_data_for_detail(slot_id) == null:
+		return false
+	_ensure_slot_touch_long_press_timer()
+	_slot_touch_long_press_active = true
+	_slot_touch_long_press_slot_id = slot_id
+	_slot_touch_long_press_index = touch_index
+	_slot_touch_long_press_start = position
+	_slot_touch_long_press_consumed = false
+	if _slot_touch_long_press_timer.is_inside_tree():
+		_slot_touch_long_press_timer.start()
+	return true
+
+
+func _cancel_slot_touch_long_press(clear_suppression: bool = true) -> void:
+	if _slot_touch_long_press_timer != null:
+		_slot_touch_long_press_timer.stop()
+	_slot_touch_long_press_active = false
+	_slot_touch_long_press_slot_id = ""
+	_slot_touch_long_press_index = -1
+	_slot_touch_long_press_consumed = false
+	if clear_suppression:
+		_suppress_next_slot_left_click_id = ""
+
+
+func _on_slot_touch_long_press_timeout() -> void:
+	if not _slot_touch_long_press_active:
+		return
+	if _show_slot_card_detail(_slot_touch_long_press_slot_id):
+		_slot_touch_long_press_consumed = true
+		_suppress_next_slot_left_click_id = _slot_touch_long_press_slot_id
+		var viewport := get_viewport()
+		if viewport != null:
+			viewport.set_input_as_handled()
+	else:
+		_cancel_slot_touch_long_press()
+
+
+func _consume_suppressed_slot_left_click(slot_id: String) -> bool:
+	if _suppress_next_slot_left_click_id == "":
+		return false
+	if _suppress_next_slot_left_click_id != slot_id:
+		return false
+	_suppress_next_slot_left_click_id = ""
+	return true
+
+
+func _ensure_slot_touch_long_press_timer() -> void:
+	if _slot_touch_long_press_timer != null:
+		return
+	_slot_touch_long_press_timer = Timer.new()
+	_slot_touch_long_press_timer.name = "SlotTouchLongPressTimer"
+	_slot_touch_long_press_timer.one_shot = true
+	_slot_touch_long_press_timer.wait_time = SLOT_TOUCH_LONG_PRESS_SECONDS
+	_slot_touch_long_press_timer.timeout.connect(_on_slot_touch_long_press_timeout)
+	add_child(_slot_touch_long_press_timer)
+
+
+func _show_slot_card_detail(slot_id: String) -> bool:
+	var detail_card := _slot_card_data_for_detail(slot_id)
+	if detail_card == null:
+		return false
+	_show_card_detail(detail_card)
+	return true
+
+
+func _slot_card_data_for_detail(slot_id: String) -> CardData:
+	var detail_state: GameState = _gsm.game_state if _gsm != null else null
+	if detail_state == null:
+		return null
+	var detail_slot: PokemonSlot = _slot_from_id(slot_id, detail_state)
+	if detail_slot == null or detail_slot.pokemon_stack.is_empty():
+		return null
+	return detail_slot.get_card_data()
+
+
 func _try_play_to_bench(player_index: int, card: CardInstance, _slot_id: String) -> void:
 	var gs: GameState = _gsm.game_state
 	if gs.current_player_index != player_index:
@@ -1790,6 +2105,8 @@ var _dialog_card_row: HBoxContainer = null
 var _dialog_utility_row: HBoxContainer = null
 var _dialog_status_lbl: Label = null
 var _dialog_card_selected_indices: Array[int] = []
+var _dialog_card_page: int = 0
+var _dialog_card_page_size: int = 0
 var _dialog_card_mode: bool = false
 var _dialog_assignment_mode: bool = false
 var _dialog_assignment_panel: VBoxContainer = null
@@ -1802,6 +2119,9 @@ var _dialog_assignment_selected_source_index: int = -1
 var _dialog_assignment_assignments: Array[Dictionary] = []
 var _discard_card_scroll: ScrollContainer = null
 var _discard_card_row: HBoxContainer = null
+var _discard_utility_row: HBoxContainer = null
+var _discard_card_page: int = 0
+var _discard_card_page_size: int = 0
 @warning_ignore_restore("unused_private_class_variable")
 
 
@@ -1912,6 +2232,15 @@ func _setup_discard_gallery() -> void:
 	_discard_card_row.alignment = BoxContainer.ALIGNMENT_BEGIN
 	_discard_card_row.add_theme_constant_override("separation", 14)
 	_discard_card_scroll.add_child(_discard_card_row)
+
+	_discard_utility_row = HBoxContainer.new()
+	_discard_utility_row.name = "DiscardUtilityRow"
+	_discard_utility_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_discard_utility_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_discard_utility_row.add_theme_constant_override("separation", 12)
+	_discard_utility_row.visible = false
+	discard_vbox.add_child(_discard_utility_row)
+	discard_vbox.move_child(_discard_utility_row, close_btn.get_index())
 
 
 func _setup_field_interaction_panel() -> void:
@@ -2458,11 +2787,7 @@ func _handle_dialog_choice(selected_indices: PackedInt32Array) -> void:
 					"marked":
 						_log("该对局已在学习池中")
 			elif idx == return_action_index:
-				if GameManager.is_tournament_battle_active():
-					GameManager.clear_tournament()
-					GameManager.goto_main_menu()
-				else:
-					GameManager.goto_battle_setup()
+				_on_match_end_return_pressed()
 		"effect_interaction":
 			_handle_effect_interaction_choice(selected_indices)
 		_:
@@ -2997,11 +3322,26 @@ func _finalize_battle_recording(result_data: Dictionary) -> void:
 
 
 func _show_match_end_dialog(winner_index: int, reason: String) -> void:
-	_battle_dialog_controller.call("show_match_end_dialog", self, winner_index, reason)
+	_battle_overlay_controller.call("show_match_end_screen", self, winner_index, reason)
 
 
 func _match_end_summary_text(winner_index: int, reason: String) -> String:
 	return _battle_dialog_controller.call("match_end_summary_text", winner_index, reason)
+
+
+func _build_match_end_stats(winner_index: int, reason: String) -> Dictionary:
+	var stats_variant: Variant = _battle_overlay_controller.call("build_match_end_stats", self, winner_index, reason)
+	return stats_variant if stats_variant is Dictionary else {}
+
+
+func _match_end_quick_review_configured() -> bool:
+	var config := GameManager.get_battle_review_api_config()
+	return str(config.get("endpoint", "")).strip_edges() != "" and str(config.get("api_key", "")).strip_edges() != ""
+
+
+func _match_end_quick_review_model_label() -> String:
+	var config := GameManager.get_battle_review_api_config()
+	return GameManager.get_battle_review_model_label(str(config.get("model", "")))
 
 
 func _current_match_end_review_action() -> Dictionary:
@@ -3069,6 +3409,184 @@ func _on_battle_review_status_changed(status: String, context: Dictionary) -> vo
 
 func _on_battle_review_completed(review: Dictionary) -> void:
 	_battle_advice_controller.call("on_battle_review_completed", self, review)
+
+
+func _ensure_match_end_quick_review_service() -> void:
+	if _match_end_quick_review_service != null:
+		return
+	var service: RefCounted = MatchEndQuickReviewServiceScript.new()
+	_match_end_quick_review_service = service
+	if service == null:
+		return
+	if service.has_signal("status_changed") and not service.status_changed.is_connected(Callable(self, "_on_match_end_quick_review_status_changed")):
+		service.status_changed.connect(Callable(self, "_on_match_end_quick_review_status_changed"))
+	if service.has_signal("quick_review_completed") and not service.quick_review_completed.is_connected(Callable(self, "_on_match_end_quick_review_completed")):
+		service.quick_review_completed.connect(Callable(self, "_on_match_end_quick_review_completed"))
+
+
+func _begin_match_end_quick_review(force: bool = false) -> void:
+	if _match_end_quick_review_busy:
+		return
+	if _match_end_quick_review_requested and not force:
+		return
+	if not _match_end_quick_review_configured():
+		_match_end_quick_review_result = _local_match_end_quick_review()
+		_battle_overlay_controller.call("refresh_match_end_screen", self)
+		return
+	if _match_end_stats.is_empty():
+		_match_end_stats = _build_match_end_stats(_battle_review_winner_index, _battle_review_reason)
+	_ensure_match_end_quick_review_service()
+	if _match_end_quick_review_service == null:
+		_on_match_end_quick_review_completed({
+			"status": "failed",
+			"errors": [{
+				"message": "赛后快评服务不可用",
+				"error_type": "quick_review_service_unavailable",
+			}],
+		})
+		return
+	_match_end_quick_review_requested = true
+	_match_end_quick_review_busy = true
+	_match_end_quick_review_progress_text = "正在让 %s 快速点评..." % _match_end_quick_review_model_label()
+	_battle_overlay_controller.call("refresh_match_end_screen", self)
+	_match_end_quick_review_service.call(
+		"generate_quick_review",
+		self,
+		_build_match_end_quick_review_payload(),
+		GameManager.get_battle_review_api_config()
+	)
+
+
+func _build_match_end_quick_review_payload() -> Dictionary:
+	var stats := _match_end_stats.duplicate(true)
+	stats["deck_names"] = [
+		GameManager.resolve_battle_player_display_name(0),
+		GameManager.resolve_battle_player_display_name(1),
+	]
+	return stats
+
+
+func _on_match_end_quick_review_status_changed(status: String, _context: Dictionary) -> void:
+	if status == "running":
+		_match_end_quick_review_busy = true
+		if _match_end_quick_review_progress_text == "":
+			_match_end_quick_review_progress_text = "正在生成赛后快评..."
+	else:
+		_match_end_quick_review_busy = false
+		_match_end_quick_review_progress_text = ""
+	_battle_overlay_controller.call("refresh_match_end_screen", self)
+
+
+func _on_match_end_quick_review_completed(result: Dictionary) -> void:
+	var display_result := result.duplicate(true)
+	if str(display_result.get("status", "")) == "failed":
+		display_result = _match_end_quick_review_fallback_from_failure(display_result)
+	_match_end_quick_review_result = display_result
+	_match_end_quick_review_busy = false
+	_match_end_quick_review_progress_text = ""
+	_match_end_quick_review_requested = true
+	_battle_overlay_controller.call("refresh_match_end_screen", self)
+
+
+func _match_end_quick_review_fallback_from_failure(failed_result: Dictionary) -> Dictionary:
+	if _match_end_stats.is_empty():
+		_match_end_stats = _build_match_end_stats(_battle_review_winner_index, _battle_review_reason)
+	var fallback := _local_match_end_quick_review()
+	fallback["status"] = "ai_failed_fallback"
+	fallback["ai_error"] = _match_end_quick_review_error_message(failed_result)
+	fallback["failed_ai_result"] = failed_result.duplicate(true)
+	return fallback
+
+
+func _match_end_quick_review_error_message(result: Dictionary) -> String:
+	var error: Dictionary = {}
+	var errors_variant: Variant = result.get("errors", [])
+	if errors_variant is Array:
+		var errors_array := errors_variant as Array
+		if not errors_array.is_empty() and errors_array[0] is Dictionary:
+			error = errors_array[0] as Dictionary
+	var error_type := str(error.get("error_type", result.get("error_type", ""))).strip_edges()
+	var message := str(error.get("message", result.get("message", ""))).strip_edges()
+	var http_code := int(error.get("http_code", result.get("http_code", 0)))
+	var request_error := int(error.get("request_error", result.get("request_error", 0)))
+	var diagnostic := ("%s %s" % [error_type, message]).to_lower()
+	if diagnostic.contains("timeout") or diagnostic.contains("timed out"):
+		return "AI 快评超时，已使用本地统计简评。"
+	if diagnostic.contains("connect") or diagnostic.contains("resolve") or diagnostic.contains("network") or diagnostic.contains("tls") or diagnostic.contains("no response"):
+		return "AI 服务暂时连接不上，已使用本地统计简评。"
+	if http_code == 401 or http_code == 403:
+		return "AI 服务鉴权失败，已使用本地统计简评。请稍后检查 AI 设置里的 API Key。"
+	if http_code == 429:
+		return "AI 服务请求过于频繁，已使用本地统计简评。"
+	if http_code >= 500:
+		return "AI 服务暂时异常，已使用本地统计简评。"
+	if http_code > 0:
+		return "AI 服务返回 %d，已使用本地统计简评。" % http_code
+	if request_error != OK:
+		return "AI 快评请求未能发出，已使用本地统计简评。"
+	return "AI 快评暂不可用，已使用本地统计简评。"
+
+
+func _local_match_end_quick_review() -> Dictionary:
+	var is_win := _battle_review_winner_index == _view_player
+	var score := 58
+	var player_stats: Dictionary = _match_end_stats.get("view_player", {})
+	var opponent_stats: Dictionary = _match_end_stats.get("opponent", {})
+	score += 18 if is_win else -4
+	score += (int(player_stats.get("prizes_taken", 0)) - int(opponent_stats.get("prizes_taken", 0))) * 4
+	score += mini(10, int(player_stats.get("max_damage", 0)) / 30)
+	score = clampi(score, 35, 96)
+	return {
+		"status": "local",
+		"score": score,
+		"grade": _match_end_grade_for_score(score),
+		"headline": "胜利节奏不错" if is_win else "这盘有复盘价值",
+		"praise": "奖赏推进和终结点处理得比较明确。" if is_win else "至少保留了可复盘的数据，下一盘可以更早修正路线。",
+		"improvement": "继续留意关键资源是否提前兑现。" if is_win else "优先复盘前两回合的展开与奖赏路线。",
+		"next_goal": "下一盘保持同样的主线，同时减少无效点击。" if is_win else "下一盘把前两回合目标压缩成：站场、加速、制造第一次有效进攻。",
+	}
+
+
+func _match_end_grade_for_score(score: int) -> String:
+	if score >= 90:
+		return "S"
+	if score >= 78:
+		return "A"
+	if score >= 66:
+		return "B"
+	if score >= 52:
+		return "C"
+	return "D"
+
+
+func _on_match_end_quick_review_pressed() -> void:
+	_begin_match_end_quick_review(true)
+
+
+func _on_match_end_review_pressed() -> void:
+	var review_action := _current_match_end_review_action()
+	match str(review_action.get("kind", "")):
+		"generate", "retry":
+			_begin_battle_review_generation()
+		"view":
+			_open_cached_battle_review()
+
+
+func _on_match_end_learning_pressed() -> void:
+	var learning_action := _current_match_end_learning_action()
+	match str(learning_action.get("kind", "")):
+		"mark":
+			_mark_current_match_for_learning()
+		"marked":
+			_log("该对局已在学习池中")
+
+
+func _on_match_end_return_pressed() -> void:
+	if GameManager.is_tournament_battle_active():
+		GameManager.finalize_current_tournament_battle(_battle_review_winner_index, _battle_review_reason)
+		GameManager.goto_tournament_standings()
+	else:
+		GameManager.goto_battle_setup()
 
 
 func _refresh_match_end_dialog_if_visible() -> void:
@@ -4050,8 +4568,69 @@ func _update_llm_wait_hud(turn_number: int) -> void:
 	if _ai_llm_wait_started_msec > 0:
 		elapsed_sec = maxi(0, int((Time.get_ticks_msec() - _ai_llm_wait_started_msec) / 1000))
 	var dot_count := (elapsed_sec % 4) + 1
-	_ai_llm_wait_label.text = "AI thinking%s turn %d (%ds)" % [".".repeat(dot_count), turn_number, elapsed_sec]
+	_ai_llm_wait_label.text = _llm_wait_hud_text_for_model(_current_llm_wait_model_id(), turn_number, elapsed_sec, dot_count)
 	_ai_llm_wait_label.visible = true
+
+
+func _current_llm_wait_model_id() -> String:
+	var config: Dictionary = GameManager.get_llm_opponent_battle_review_api_config()
+	return str(config.get("model", "")).strip_edges()
+
+
+func _llm_wait_hud_text_for_model(model_id: String, turn_number: int, elapsed_sec: int, dot_count: int) -> String:
+	var model_name := _llm_wait_model_display_name(model_id)
+	var action := _llm_wait_action_text_for_model(model_id)
+	return "%s %s%s  第 %d 回合（%ds）" % [
+		model_name,
+		action,
+		".".repeat(maxi(1, dot_count)),
+		turn_number,
+		maxi(0, elapsed_sec),
+	]
+
+
+func _llm_wait_model_display_name(model_id: String) -> String:
+	var normalized := GameManager.normalize_battle_review_model(model_id)
+	var lower := normalized.to_lower()
+	if lower.contains("grok"):
+		return "Grok 4.2"
+	if lower.contains("deepseek-v4-pro"):
+		return "DeepSeek V4 Pro"
+	if lower.contains("deepseek-v4-flash"):
+		return "DeepSeek V4 Flash"
+	if lower.contains("deepseek"):
+		return "DeepSeek"
+	if lower.contains("glm"):
+		return "GLM 5.1"
+	if lower.contains("qwen"):
+		return "Qwen 3.6 Plus"
+	if lower.contains("kimi"):
+		return "Kimi K2.6"
+	if lower.contains("claude"):
+		return "Claude Sonnet 4.6"
+	if lower.contains("gpt-5.5"):
+		return "GPT-5.5"
+	var label := GameManager.get_battle_review_model_label(normalized).strip_edges()
+	return label if label != "" else "AI"
+
+
+func _llm_wait_action_text_for_model(model_id: String) -> String:
+	var normalized := GameManager.normalize_battle_review_model(model_id).to_lower()
+	if normalized.contains("grok"):
+		return "正在挠头中"
+	if normalized.contains("deepseek"):
+		return "正在思考中"
+	if normalized.contains("kimi"):
+		return "正在翻牌谱"
+	if normalized.contains("qwen"):
+		return "正在排兵布阵"
+	if normalized.contains("glm"):
+		return "正在计算胜线"
+	if normalized.contains("claude"):
+		return "正在整理思路"
+	if normalized.contains("gpt"):
+		return "正在读场面"
+	return "正在思考中"
 
 
 func _schedule_llm_wait_hud_tick(token: int, turn_number: int) -> void:
@@ -4683,7 +5262,10 @@ func _card_type_cn(cd: CardData) -> String:
 
 
 func _show_card_detail(cd: CardData) -> void:
-	_detail_title.text = cd.name
+	if cd == null:
+		return
+	if _detail_title != null:
+		_detail_title.text = cd.name
 	if _detail_card_view != null:
 		_detail_card_view.setup_from_card_data(cd, BATTLE_CARD_VIEW.MODE_PREVIEW)
 		_detail_card_view.set_badges("", "")
@@ -4740,5 +5322,45 @@ func _show_card_detail(cd: CardData) -> void:
 			lines.append("")
 			lines.append(cd.description)
 
-	_detail_content.text = "\n".join(lines)
+	if _detail_content != null:
+		_detail_content.text = "[color=#dceff8]%s[/color]" % "\n".join(lines)
 	_detail_overlay.visible = true
+	_play_card_detail_open_animation()
+
+
+func _hide_card_detail() -> void:
+	if _detail_overlay == null or not _detail_overlay.visible:
+		return
+	var detail_box := get_node_or_null("DetailOverlay/DetailCenter/DetailBox") as Control
+	if _detail_reveal_tween != null:
+		_detail_reveal_tween.kill()
+		_detail_reveal_tween = null
+	if detail_box == null or not is_inside_tree():
+		_detail_overlay.visible = false
+		return
+	detail_box.pivot_offset = detail_box.size * 0.5
+	_detail_reveal_tween = create_tween()
+	_detail_reveal_tween.set_parallel(true)
+	_detail_reveal_tween.tween_property(detail_box, "modulate", Color(1, 1, 1, 0), 0.08)
+	_detail_reveal_tween.tween_property(detail_box, "scale", Vector2(0.98, 0.98), 0.08).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	_detail_reveal_tween.finished.connect(func() -> void:
+		_detail_overlay.visible = false
+		detail_box.modulate = Color(1, 1, 1, 1)
+		detail_box.scale = Vector2.ONE
+	)
+
+
+func _play_card_detail_open_animation() -> void:
+	var detail_box := get_node_or_null("DetailOverlay/DetailCenter/DetailBox") as Control
+	if detail_box == null or not is_inside_tree():
+		return
+	if _detail_reveal_tween != null:
+		_detail_reveal_tween.kill()
+		_detail_reveal_tween = null
+	detail_box.pivot_offset = detail_box.size * 0.5
+	detail_box.modulate = Color(1, 1, 1, 0)
+	detail_box.scale = Vector2(0.94, 0.94)
+	_detail_reveal_tween = create_tween()
+	_detail_reveal_tween.set_parallel(true)
+	_detail_reveal_tween.tween_property(detail_box, "modulate", Color(1, 1, 1, 1), 0.14)
+	_detail_reveal_tween.tween_property(detail_box, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)

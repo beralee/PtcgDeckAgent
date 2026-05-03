@@ -103,6 +103,10 @@ func pick_interaction_items(
 	var intent_text: String = _intent_text_for_pick_step(step_id, queue_item)
 	if intent_text == "":
 		return {"has_plan": false, "items": []}
+	if bool(SEARCH_STEP_IDS.get(step_id, false)) and step_id == "search_energy":
+		var energy_picks: Array = _pick_energy_items_by_intent(items, intent_text, max_select)
+		if not energy_picks.is_empty():
+			return {"has_plan": true, "items": energy_picks}
 	var picked: Array = _pick_items_by_intent(items, intent_text, max_select)
 	if picked.is_empty():
 		return {"has_plan": false, "items": []}
@@ -235,7 +239,7 @@ func _find_selection_policy_spec(selection_policy: Dictionary, step_id: String) 
 			if selection_policy.has(key):
 				return selection_policy.get(key)
 	if bool(HAND_ENERGY_STEP_IDS.get(step_id, false)):
-		for key: String in [step_id, "energy_card_id", "selected_energy_card_id", "energy_card", "resource", "energy_type", "prefer"]:
+		for key: String in [step_id, "energy_card_id", "selected_energy_card_id", "energy_card", "resource", "energy_type", "prefer", "search_energy", "search_targets"]:
 			if selection_policy.has(key):
 				return selection_policy.get(key)
 	if bool(RECOVER_STEP_IDS.get(step_id, false)):
@@ -286,7 +290,7 @@ func _find_policy_interaction_spec(interactions: Dictionary, step_id: String) ->
 			if interactions.has(key):
 				return interactions.get(key)
 	if bool(HAND_ENERGY_STEP_IDS.get(step_id, false)):
-		for key: String in [step_id, "energy_card_id", "selected_energy_card_id", "energy_card", "basic_energy_from_hand", "energy_type"]:
+		for key: String in [step_id, "energy_card_id", "selected_energy_card_id", "energy_card", "basic_energy_from_hand", "energy_type", "search_energy", "search_targets"]:
 			if interactions.has(key):
 				return interactions.get(key)
 	if bool(RECOVER_STEP_IDS.get(step_id, false)):
@@ -557,9 +561,42 @@ func _pick_items_by_intent(items: Array, intent_text: String, max_select: int) -
 		for index: int in items.size():
 			if _item_matches_any_token(items[index], intent_text):
 				picked.append(items[index])
-				if picked.size() >= max_select:
-					break
+			if picked.size() >= max_select:
+				break
 	return picked
+
+
+func _pick_energy_items_by_intent(items: Array, intent_text: String, max_select: int) -> Array:
+	var desired_codes: Array[String] = []
+	for token: String in _split_intent_tokens(intent_text):
+		var code := _normalize_energy_token(token)
+		if code != "" and not desired_codes.has(code):
+			desired_codes.append(code)
+	var picked: Array = []
+	var used_indices: Dictionary = {}
+	for desired_code: String in desired_codes:
+		for index: int in items.size():
+			if bool(used_indices.get(index, false)):
+				continue
+			if _item_energy_code(items[index]) != desired_code:
+				continue
+			picked.append(items[index])
+			used_indices[index] = true
+			break
+		if picked.size() >= max_select:
+			return picked
+	return picked
+
+
+func _item_energy_code(item: Variant) -> String:
+	if item is CardInstance:
+		var card: CardInstance = item as CardInstance
+		if card.card_data != null and card.card_data.is_energy():
+			var provides := str(card.card_data.energy_provides).strip_edges()
+			if provides != "":
+				return provides
+			return _normalize_energy_token("%s %s" % [str(card.card_data.name_en), str(card.card_data.name)])
+	return _normalize_energy_token(str(item))
 
 
 func _item_matches_any_token(item: Variant, intent_text: String) -> bool:

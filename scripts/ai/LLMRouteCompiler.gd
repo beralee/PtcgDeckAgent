@@ -10,7 +10,9 @@ func compile_queue(
 	_game_state: Variant = null,
 	_player_index: int = -1
 ) -> Dictionary:
-	var no_deck_draw_lock := _player_deck_count(_game_state, _player_index) == 0
+	var deck_count := _player_deck_count(_game_state, _player_index)
+	var no_deck_draw_lock := deck_count >= 0 and deck_count <= 2
+	var low_value_redraw_lock := _low_value_redraw_locked(_game_state, _player_index, deck_count)
 	var original_queue: Array[Dictionary] = _copy_action_array(raw_queue)
 	var queue: Array[Dictionary] = _dedupe_route(original_queue)
 	var future_goals: Array[Dictionary] = []
@@ -26,6 +28,13 @@ func compile_queue(
 		queue.append({"type": "end_turn", "id": "end_turn", "action_id": "end_turn", "capability": "end_turn"})
 		notes.append("added_missing_terminal_end_turn")
 		terminal_index = _first_terminal_index(queue)
+	if terminal_index >= 0 and low_value_redraw_lock and _is_low_value_attack(queue[terminal_index]):
+		queue.remove_at(terminal_index)
+		notes.append("removed_low_value_attack_for_deck_or_hand_risk")
+		terminal_index = _first_terminal_index(queue)
+		if terminal_index < 0:
+			queue.append({"type": "end_turn", "id": "end_turn", "action_id": "end_turn", "capability": "end_turn"})
+			terminal_index = _first_terminal_index(queue)
 	var terminal_is_end_turn := terminal_index >= 0 and _is_end_turn_ref(queue[terminal_index])
 	var has_future_attack_goal := _future_goals_have_attack(future_goals)
 	var terminal_is_attack := (terminal_index >= 0 and _is_attack_ref(queue[terminal_index])) or has_future_attack_goal
@@ -295,6 +304,8 @@ func _insertion_priority(
 	var capability := _capability_for_ref(ref)
 	if capability == "attack":
 		return 950 if not has_attack else 0
+	if capability == "terminal_draw_ability":
+		return 0
 	if no_deck_draw_lock and _is_draw_or_deck_access_capability(capability):
 		return 0
 	if has_future_attack_goal:
@@ -354,6 +365,7 @@ func _is_draw_or_deck_access_capability(capability: String) -> bool:
 	return capability in [
 		"charge_and_draw",
 		"draw_ability",
+		"terminal_draw_ability",
 		"energy_search",
 		"discard_to_draw",
 		"draw_filter",
@@ -377,6 +389,29 @@ func _player_deck_count(game_state: Variant, player_index: int) -> int:
 	return (deck as Array).size() if deck is Array else -1
 
 
+func _player_hand_count(game_state: Variant, player_index: int) -> int:
+	if game_state == null or player_index < 0:
+		return -1
+	var players: Variant = game_state.get("players") if game_state is Object else null
+	if not (players is Array) or player_index >= (players as Array).size():
+		return -1
+	var player: Variant = (players as Array)[player_index]
+	if player == null:
+		return -1
+	var hand: Variant = player.get("hand") if player is Object else null
+	return (hand as Array).size() if hand is Array else -1
+
+
+func _low_value_redraw_locked(game_state: Variant, player_index: int, deck_count: int = -1) -> bool:
+	var known_deck_count := deck_count
+	if known_deck_count < 0:
+		known_deck_count = _player_deck_count(game_state, player_index)
+	if known_deck_count >= 0 and known_deck_count <= 12:
+		return true
+	var hand_count := _player_hand_count(game_state, player_index)
+	return known_deck_count >= 0 and known_deck_count <= 24 and hand_count >= 4
+
+
 func _capability_for_ref(ref: Dictionary) -> String:
 	var action_type := str(ref.get("type", ref.get("kind", "")))
 	if action_type == "end_turn" or _action_id(ref) == "end_turn":
@@ -398,6 +433,8 @@ func _capability_for_ref(ref: Dictionary) -> String:
 	var pokemon_name := str(ref.get("pokemon", ""))
 	var combined_name := _combined_ref_name(ref)
 	if action_type == "use_ability":
+		if tags.has("ends_turn") and tags.has("draw"):
+			return "terminal_draw_ability"
 		if _is_fezandipiti_ref(ref, combined_name):
 			return "draw_ability"
 		if tags.has("charge_engine") and tags.has("draw"):

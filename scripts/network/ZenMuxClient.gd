@@ -4,6 +4,8 @@ extends RefCounted
 const PYTHON_FALLBACK_RESOURCE_PATH := "res://scripts/tools/zenmux_request.py"
 const PYTHON_FALLBACK_USER_DIR := "user://tmp/zenmux"
 const PYTHON_FALLBACK_USER_SCRIPT := PYTHON_FALLBACK_USER_DIR + "/zenmux_request.py"
+const TLS_MODE_DEFAULT := "default"
+const TLS_MODE_UNSAFE := "unsafe"
 
 class PythonFallbackRequest:
 	extends Node
@@ -134,12 +136,26 @@ func request_json(parent: Node, endpoint: String, api_key: String, payload: Dict
 		if async_error == OK:
 			return OK
 
+	return _request_json_payload_via_http_request(parent, request_url, api_key, request_payload, callback, _initial_tls_mode())
+
+
+func _request_json_payload_via_http_request(
+	parent: Node,
+	request_url: String,
+	api_key: String,
+	request_payload: Dictionary,
+	callback: Callable,
+	tls_mode: String
+) -> int:
+	if parent == null or not is_instance_valid(parent):
+		return ERR_INVALID_PARAMETER
 	var request := HTTPRequest.new()
 	request.timeout = _timeout_seconds
-	_configure_tls(request)
+	_configure_tls(request, tls_mode)
 	_configure_proxy(request, request_url)
 	request.set_meta("zenmux_request_url", request_url)
 	request.set_meta("zenmux_api_key", api_key)
+	request.set_meta("zenmux_tls_mode", tls_mode)
 	parent.add_child(request)
 	request.request_completed.connect(_on_request_completed.bind(request, callback), CONNECT_ONE_SHOT)
 	request.set_meta("zenmux_request_payload", request_payload)
@@ -157,14 +173,33 @@ func request_json(parent: Node, endpoint: String, api_key: String, payload: Dict
 	return request_error
 
 
-func _configure_tls(request: HTTPRequest) -> void:
-	if request == null or not _allow_unsafe_tls:
+func _configure_tls(request: HTTPRequest, tls_mode: String = "") -> void:
+	var resolved_tls_mode := tls_mode if tls_mode != "" else _initial_tls_mode()
+	if request == null or resolved_tls_mode != TLS_MODE_UNSAFE:
 		return
 	if not request.has_method("set_tls_options"):
 		return
 	# Headless Godot on Windows can fail to load the system root store, which
 	# makes otherwise valid ZenMux HTTPS calls fail before the response layer.
 	request.call("set_tls_options", TLSOptions.client_unsafe())
+
+
+func _initial_tls_mode() -> String:
+	return _initial_tls_mode_for_os(_current_os_name())
+
+
+func _initial_tls_mode_for_os(os_name: String) -> String:
+	if not _allow_unsafe_tls:
+		return TLS_MODE_DEFAULT
+	if os_name == "Android":
+		# Some Android exports fail the explicit unsafe TLSOptions path, so try
+		# the platform TLS stack first and only retry unsafe after a handshake error.
+		return TLS_MODE_DEFAULT
+	return TLS_MODE_UNSAFE
+
+
+func _current_os_name() -> String:
+	return OS.get_name()
 
 
 func _configure_proxy(request: HTTPRequest, request_url: String) -> void:
@@ -469,6 +504,11 @@ func _on_request_completed(
 	var normalized := _parse_chat_response(response_code, response_text)
 	if result != HTTPRequest.RESULT_SUCCESS:
 		normalized = _parse_error_response(response_code, result, response_text)
+		normalized["tls_mode"] = str(request.get_meta("zenmux_tls_mode", TLS_MODE_DEFAULT)) if request != null else TLS_MODE_DEFAULT
+		if _try_start_tls_retry_from_failed_request(request, callback, normalized):
+			if is_instance_valid(request):
+				request.queue_free()
+			return
 		if _try_start_python_fallback_from_failed_request(request, callback, normalized):
 			if is_instance_valid(request):
 				request.queue_free()
@@ -481,12 +521,46 @@ func _on_request_completed(
 	if normalized.has("status") and String(normalized.get("status", "")) == "error":
 		normalized["proxy"] = _proxy_description()
 		normalized["unsafe_tls"] = _allow_unsafe_tls
+		if request != null:
+			normalized["tls_mode"] = str(request.get_meta("zenmux_tls_mode", TLS_MODE_DEFAULT))
 
 	if is_instance_valid(request):
 		request.queue_free()
 
 	if callback.is_valid():
 		callback.call(normalized)
+
+
+func _try_start_tls_retry_from_failed_request(request: HTTPRequest, callback: Callable, original_error: Dictionary) -> bool:
+	if request == null or not is_instance_valid(request):
+		return false
+	var parent := request.get_parent()
+	if parent == null or not is_instance_valid(parent):
+		return false
+	var tls_mode := str(request.get_meta("zenmux_tls_mode", TLS_MODE_DEFAULT))
+	if not _should_retry_tls_with_unsafe(original_error, tls_mode, _current_os_name()):
+		return false
+	var payload_variant: Variant = request.get_meta("zenmux_request_payload", {})
+	var request_payload: Dictionary = payload_variant if payload_variant is Dictionary else {}
+	var retry_error := _request_json_payload_via_http_request(
+		parent,
+		str(request.get_meta("zenmux_request_url", "")),
+		str(request.get_meta("zenmux_api_key", "")),
+		request_payload,
+		callback,
+		TLS_MODE_UNSAFE
+	)
+	return retry_error == OK
+
+
+func _should_retry_tls_with_unsafe(original_error: Dictionary, tls_mode: String, os_name: String) -> bool:
+	if not _allow_unsafe_tls:
+		return false
+	if os_name != "Android":
+		return false
+	if tls_mode != TLS_MODE_DEFAULT:
+		return false
+	return int(original_error.get("request_result", -1)) == HTTPRequest.RESULT_TLS_HANDSHAKE_ERROR
 
 
 func _try_start_python_fallback_from_failed_request(request: HTTPRequest, callback: Callable, original_error: Dictionary) -> bool:

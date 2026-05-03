@@ -1,6 +1,8 @@
 .godot/
 .import/
 .export/
+.godot_test_user/
+android/
 
 .claude/
 .codex/

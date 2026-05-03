@@ -34,20 +34,34 @@ func _run() -> void:
 		options["llm_wait_poll_seconds"] = float(args.get("llm-wait-poll-seconds"))
 	if args.has("llm-max-failures"):
 		options["llm_max_failures_per_strategy"] = int(args.get("llm-max-failures"))
+	if args.has("rule-deck-id"):
+		options["rule_deck_id"] = int(args.get("rule-deck-id"))
+	if args.has("llm-deck-id"):
+		options["llm_deck_id"] = int(args.get("llm-deck-id"))
+	if args.has("rule-strategy-id"):
+		options["rule_strategy_id"] = str(args.get("rule-strategy-id"))
+	if args.has("llm-strategy-id"):
+		options["llm_strategy_id"] = str(args.get("llm-strategy-id"))
 
 	var report: Dictionary
 	match mode:
 		"self_play", "self-play", "mirror":
-			report = await tool.call("run_llm_raging_bolt_self_play", games, options)
+			if options.has("llm_deck_id"):
+				options["player_0_deck_id"] = int(options.get("llm_deck_id"))
+				options["player_1_deck_id"] = int(options.get("llm_deck_id"))
+			if options.has("llm_strategy_id"):
+				options["player_0_strategy_id"] = str(options.get("llm_strategy_id"))
+				options["player_1_strategy_id"] = str(options.get("llm_strategy_id"))
+			report = await tool.call("run_llm_self_play", games, options)
 			report["mode"] = "self_play"
-		"miraidon", "rule_miraidon", "vs_miraidon":
-			report = await tool.call("run_rule_miraidon_vs_llm_raging_bolt", games, options)
-			report["mode"] = "miraidon"
+		"miraidon", "rule_miraidon", "vs_miraidon", "rule_vs_llm", "rule-vs-llm":
+			report = await tool.call("run_rule_vs_llm", games, options)
+			report["mode"] = "rule_vs_llm"
 		_:
 			report = {
 				"mode": mode,
 				"error": "unsupported mode",
-				"supported_modes": ["self_play", "miraidon"],
+				"supported_modes": ["self_play", "rule_vs_llm", "miraidon"],
 			}
 
 	var json_text := JSON.stringify(report, "\t")

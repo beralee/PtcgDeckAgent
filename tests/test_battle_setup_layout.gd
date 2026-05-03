@@ -18,6 +18,37 @@ func _force_two_player_mode(scene: Control) -> void:
 	scene.call("_refresh_ai_ui_visibility")
 
 
+func _snapshot_battle_review_config_file() -> Dictionary:
+	var path: String = GameManager.get_battle_review_api_config_path()
+	if not FileAccess.file_exists(path):
+		return {"exists": false, "text": ""}
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {"exists": false, "text": ""}
+	var text := file.get_as_text()
+	file.close()
+	return {"exists": true, "text": text}
+
+
+func _restore_battle_review_config_file(snapshot: Dictionary) -> void:
+	var path: String = GameManager.get_battle_review_api_config_path()
+	if bool(snapshot.get("exists", false)):
+		var file := FileAccess.open(path, FileAccess.WRITE)
+		if file != null:
+			file.store_string(str(snapshot.get("text", "")))
+			file.close()
+		return
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+
+
+func _write_battle_review_config_for_test(data: Dictionary) -> void:
+	var file := FileAccess.open(GameManager.get_battle_review_api_config_path(), FileAccess.WRITE)
+	if file != null:
+		file.store_string(JSON.stringify(data, "\t"))
+		file.close()
+
+
 func test_battle_setup_applies_hud_visual_theme() -> String:
 	var scene := BattleSetupScene.instantiate()
 	var tree := Engine.get_main_loop() as SceneTree
@@ -71,6 +102,16 @@ func test_battle_setup_uses_true_two_column_layout() -> String:
 
 
 func test_battle_setup_right_column_exposes_ai_strategy_discussion_button() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test({
+		"endpoint": "https://zenmux.ai/api/v1",
+		"api_key": "test-key",
+		"model": "kimi-k2.6",
+		"timeout_seconds": 60.0,
+		"ai_personality": "",
+		"ai_test_passed": false,
+		"ai_test_signature": "",
+	})
 	var scene := BattleSetupScene.instantiate()
 	var tree := Engine.get_main_loop() as SceneTree
 	tree.root.add_child(scene)
@@ -80,15 +121,27 @@ func test_battle_setup_right_column_exposes_ai_strategy_discussion_button() -> S
 
 	var result := run_checks([
 		assert_not_null(discuss_button, "Battle setup right column should expose the AI strategy discussion button"),
-		assert_eq(discuss_button.text, "与AI探讨策略", "Strategy discussion button should use the requested label"),
+		assert_str_contains(discuss_button.text, "Kimi K2.6", "Strategy discussion button should name the selected LLM model"),
+		assert_str_contains(discuss_button.text, "探讨策略", "Strategy discussion button should keep the strategy discussion action"),
 		assert_false(discuss_button.disabled, "Strategy discussion button should be enabled when two decks are selected"),
 	])
 
 	scene.queue_free()
+	_restore_battle_review_config_file(snapshot)
 	return result
 
 
 func test_battle_setup_strategy_discussion_uses_pair_session_and_resets_on_deck_change() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test({
+		"endpoint": "https://zenmux.ai/api/v1",
+		"api_key": "test-key",
+		"model": "kimi-k2.6",
+		"timeout_seconds": 60.0,
+		"ai_personality": "",
+		"ai_test_passed": false,
+		"ai_test_signature": "",
+	})
 	var scene := BattleSetupScene.instantiate()
 	var tree := Engine.get_main_loop() as SceneTree
 	tree.root.add_child(scene)
@@ -135,6 +188,7 @@ func test_battle_setup_strategy_discussion_uses_pair_session_and_resets_on_deck_
 	])
 
 	scene.queue_free()
+	_restore_battle_review_config_file(snapshot)
 	return result
 
 

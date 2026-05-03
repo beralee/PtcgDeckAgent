@@ -219,6 +219,19 @@ theme_override_constants/separation = 10
 layout_mode = 2
 text = "AI 与高级设置"
 
+[node name="AIModeStatusTitle" type="Label" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "当前 AI：规则模型（默认）"
+
+[node name="AIModeStatusBody" type="Label" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+autowrap_mode = 3
+text = "速度快，能力较低，不用设置。"
+
 [node name="AISourceLabel" type="Label" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -249,10 +262,47 @@ unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(320, 38)
 
+[node name="AIModelCurrentLabel" type="Label" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "当前大模型："
+
+[node name="LLMModelLabel" type="Label" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "大模型"
+
+[node name="LLMModelRow" type="HBoxContainer" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LLMModelOption" type="OptionButton" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox/LLMModelRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(210, 38)
+
+[node name="BtnTestLLMModel" type="Button" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox/LLMModelRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(102, 38)
+text = "测试"
+
+[node name="LLMModelStatus" type="Label" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+autowrap_mode = 3
+text = ""
+
 [node name="AiHelp" type="Label" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox"]
 layout_mode = 2
 autowrap_mode = 3
-text = "AI 相关选项只会在 AI 对战模式下显示和生效。"
+text = "AI 相关选项只会在 AI 对战模式下显示和生效。规则模型可直接开打；只有想使用大模型版 AI 或策略探讨时，才需要前往“AI 设置”完整配置 API 地址、密钥、性格等内容。"
 
 [node name="BtnDiscussStrategyAI" type="Button" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox"]
 unique_name_in_owner = true

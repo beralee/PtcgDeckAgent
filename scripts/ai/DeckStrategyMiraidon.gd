@@ -74,7 +74,7 @@ const SUPER_ROD := "厉害钓竿"
 const PRIME_CATCHER := "顶尖捕捉器"
 const BOSSS_ORDERS := "老大的指令"
 const PAIPA := "派帕"
-const CRYPTO_DECODE := "暗码迷解读"
+const CRYPTO_DECODE := "暗码迷的解读"
 const ARTAZON := "奇树"
 const SERENA := "星月"
 const BRAVERY_CHARM := "勇气护符"
@@ -215,8 +215,10 @@ func _abs_attach_energy(action: Dictionary, game_state: GameState, player: Playe
 	# 双重涡轮能量 — 铁臂膀ex 专属加速
 	# 双涡轮 = 2 无色能，正好填充铁臂膀的 LLC→LCCC 缺口
 	# 其他宝可梦不贴双涡轮（浪费特殊能量且-20伤害惩罚）
-	if str(energy_card.card_data.name) == DOUBLE_TURBO_ENERGY:
-		if target_name == IRON_HANDS_EX:
+	if _card_matches_name(energy_card.card_data, [DOUBLE_TURBO_ENERGY, "Double Turbo Energy"]):
+		if not _card_matches_name(target_slot.get_card_data(), [IRON_HANDS_EX, "Iron Hands ex"]):
+			return -180.0
+		if _card_matches_name(target_slot.get_card_data(), [IRON_HANDS_EX, "Iron Hands ex"]):
 			var gap: int = _get_attack_energy_gap(target_slot)
 			if gap > 0 and gap <= 2:
 				return 480.0  # 贴上去铁臂膀马上或差1能就能攻击
@@ -240,6 +242,8 @@ func _abs_attach_energy(action: Dictionary, game_state: GameState, player: Playe
 	# 3. 密勒顿ex 除非被拉到前场否则不贴
 	if energy_type == "L":
 		var gap: int = _get_attack_energy_gap(target_slot)
+		if not _is_miraidon_energy_target_card(target_slot.get_card_data()):
+			return -140.0
 
 		# 能量上限检查：已达到最贵招式费用的不再贴
 		if _is_energy_full(target_slot):
@@ -336,7 +340,7 @@ func _abs_attach_tool(action: Dictionary, player: PlayerState, phase: String = "
 	if tool_name == BRAVERY_CHARM:
 		if target_name in ALL_ATTACKER_NAMES or target_name in NON_RULE_ATTACKER:
 			return 200.0
-		return 50.0
+		return -80.0
 	if tool_name == EMERGENCY_BOARD:
 		if phase == "early" and target_slot == player.active_pokemon \
 			and target_name in [MIRAIDON_EX, MEW_EX]:
@@ -358,13 +362,13 @@ func _abs_attach_tool(action: Dictionary, player: PlayerState, phase: String = "
 			return 300.0
 		return -100.0
 	if tool_name == FOREST_SEAL_STONE:
-		if phase == "late" and (target_name == MEW_EX or target_name in SUPPORT_NAMES) and (
+		if not (target_name == RAIKOU_V or target_name == RAICHU_V or target_name == LUMINEON_V):
+			return -100.0
+		if phase == "late" and (
 			_can_slot_attack(player.active_pokemon) or _has_ready_attacker_on_bench(player)
 		):
 			return 60.0
-		if target_name == MEW_EX:
-			return 300.0
-		return 100.0
+		return 220.0
 	return 50.0
 
 
@@ -473,11 +477,15 @@ func _abs_play_trainer(action: Dictionary, game_state: GameState, player: Player
 		if tname == NEST_BALL:
 			if bench_full:
 				return 0.0
+			if _needs_generator_target_setup(player):
+				return 720.0
 			if _count_pokemon_on_field(player, MIRAIDON_EX) == 0:
 				return 650.0
 			if _should_prioritize_squawk_setup(player, game_state):
 				return 620.0
 		if tname == ELECTRIC_GENERATOR or tname == "Electric Generator":
+			if not _has_electric_generator_bench_target(player):
+				return 20.0
 			if _count_pokemon_on_field(player, MIRAIDON_EX) == 0:
 				return 320.0
 			if _should_prioritize_squawk_setup(player, game_state):
@@ -485,6 +493,8 @@ func _abs_play_trainer(action: Dictionary, game_state: GameState, player: Player
 
 	# 电气发生器 — 核心加速（牌库有雷能量时价值最高）
 	if tname == ELECTRIC_GENERATOR or tname == "Electric Generator":
+		if not _has_electric_generator_bench_target(player):
+			return 20.0
 		if player.deck.is_empty():
 			return 350.0
 		var deck_lightning: int = _count_lightning_in_deck(player)
@@ -515,7 +525,7 @@ func _abs_play_trainer(action: Dictionary, game_state: GameState, player: Player
 		return _abs_paipa(game_state, player, player_index, phase)
 
 	# 暗码迷解读 — 手牌刷新 + 干扰对手
-	if tname == CRYPTO_DECODE:
+	if _card_matches_name(card.card_data, [CRYPTO_DECODE, "Ciphermaniac's Codebreaking"]):
 		var hand_size: int = player.hand.size()
 		var base_score: float = 150.0
 		if hand_size <= 2:
@@ -534,6 +544,8 @@ func _abs_play_trainer(action: Dictionary, game_state: GameState, player: Player
 	if tname == NEST_BALL:
 		if bench_full:
 			return 0.0
+		if _needs_generator_target_setup(player):
+			return 700.0
 		var ready_attacker_online: bool = _can_slot_attack(player.active_pokemon) or _has_ready_attacker_on_bench(player)
 		var searchable_attackers_in_deck: int = _count_searchable_basic_attackers_in_deck(player)
 		if phase == "late" and ready_attacker_online and searchable_attackers_in_deck == 0:
@@ -887,8 +899,8 @@ func plan_opening_setup(player: PlayerState) -> Dictionary:
 	# 没有梦幻：低撤退费的攻击手上前场（雷公V=1费，闪电鸟=2费）
 	if active_index == -1:
 		var active_priority_order: Array[String] = [
-			RAIKOU_V, ZAPDOS, RAICHU_V, URSALUNA_EX,
-			SQUAWKABILLY_EX, KILOWATTREL_EX, IRON_HANDS_EX,
+			RAIKOU_V, ZAPDOS, SQUAWKABILLY_EX, KILOWATTREL_EX,
+			LUMINEON_V, RADIANT_GRENINJA, IRON_HANDS_EX, URSALUNA_EX, RAICHU_V,
 		]
 		for preferred: String in active_priority_order:
 			for b: Dictionary in basics:
@@ -1089,6 +1101,67 @@ func _find_bench_slot_by_name(player: PlayerState, pokemon_name: String) -> Poke
 		if slot != null and slot.get_pokemon_name() == pokemon_name:
 			return slot
 	return null
+
+
+func _card_matches_name(card_data: CardData, names: Array[String]) -> bool:
+	if card_data == null:
+		return false
+	var cname: String = str(card_data.name)
+	var ename: String = str(card_data.name_en)
+	for expected: String in names:
+		if cname == expected or ename == expected:
+			return true
+	return false
+
+
+func _is_lightning_basic_pokemon(card_data: CardData) -> bool:
+	if card_data == null:
+		return false
+	if str(card_data.card_type) != "Pokemon" or str(card_data.stage) != "Basic":
+		return false
+	if str(card_data.energy_type) == "L":
+		return true
+	return _card_matches_name(card_data, [
+		MIRAIDON_EX, IRON_HANDS_EX, ZAPDOS, RAIKOU_V, RAICHU_V,
+		"Miraidon ex", "Iron Hands ex", "Zapdos", "Raikou V", "Raichu V",
+	])
+
+
+func _is_miraidon_energy_target_card(card_data: CardData) -> bool:
+	return _card_matches_name(card_data, [
+		MIRAIDON_EX, IRON_HANDS_EX, ZAPDOS, RAIKOU_V, RAICHU_V, URSALUNA_EX,
+		"Miraidon ex", "Iron Hands ex", "Zapdos", "Raikou V", "Raichu V", "Bloodmoon Ursaluna ex",
+	])
+
+
+func _has_electric_generator_bench_target(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	for slot: PokemonSlot in player.bench:
+		if slot == null:
+			continue
+		if _is_lightning_basic_pokemon(slot.get_card_data()):
+			return true
+	return false
+
+
+func _needs_generator_target_setup(player: PlayerState) -> bool:
+	if player == null or player.bench.size() >= 5:
+		return false
+	if _has_electric_generator_bench_target(player):
+		return false
+	return _count_lightning_basics_in_deck(player) > 0
+
+
+func _has_heavy_baton_target(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	for slot: PokemonSlot in _get_all_slots(player):
+		if slot == null:
+			continue
+		if _card_matches_name(slot.get_card_data(), [IRON_HANDS_EX, "Iron Hands ex"]):
+			return true
+	return false
 
 
 func _max_useful_energy(slot: PokemonSlot) -> int:
@@ -1338,18 +1411,18 @@ func _abs_paipa(game_state: GameState, player: PlayerState, player_index: int, p
 		if card == null or card.card_data == null:
 			continue
 		var cname: String = str(card.card_data.name)
-		if cname == ELECTRIC_GENERATOR: deck_has_eg = true
-		elif cname == NEST_BALL: deck_has_nest = true
-		elif cname == HEAVY_BALL: deck_has_heavy = true
-		elif cname == SUPER_ROD: deck_has_rod = true
+		if cname == ELECTRIC_GENERATOR or cname == "Electric Generator": deck_has_eg = true
+		elif cname == NEST_BALL or cname == "Nest Ball": deck_has_nest = true
+		elif cname == HEAVY_BALL or cname == "Heavy Ball": deck_has_heavy = true
+		elif cname == SUPER_ROD or cname == "Super Rod": deck_has_rod = true
 
 	var best_item: float = 50.0
 	# 电气发生器是最高价值物品
 	if deck_has_eg and _count_lightning_in_deck(player) > 0:
-		best_item = maxf(best_item, 250.0)
+		best_item = maxf(best_item, 250.0 if _has_electric_generator_bench_target(player) else 80.0)
 	# 巢穴球/沉重球（板位有空）
 	if (deck_has_nest or deck_has_heavy) and player.bench.size() < 5:
-		best_item = maxf(best_item, 150.0)
+		best_item = maxf(best_item, 280.0 if _needs_generator_target_setup(player) else 150.0)
 	# 厉害钓竿
 	if deck_has_rod and _has_attacker_in_discard(game_state, player_index):
 		best_item = maxf(best_item, 120.0)
@@ -1363,10 +1436,10 @@ func _abs_paipa(game_state: GameState, player: PlayerState, player_index: int, p
 		if card == null or card.card_data == null:
 			continue
 		var cname: String = str(card.card_data.name)
-		if cname == HEAVY_BATON: deck_has_baton = true
-		elif cname == EMERGENCY_BOARD: deck_has_board = true
-		elif cname == BRAVERY_CHARM: deck_has_charm = true
-	if deck_has_baton and _count_pokemon_on_field(player, IRON_HANDS_EX) >= 1:
+		if cname == HEAVY_BATON or cname == "Heavy Baton": deck_has_baton = true
+		elif cname == EMERGENCY_BOARD or cname == "Emergency Board": deck_has_board = true
+		elif cname == BRAVERY_CHARM or cname == "Bravery Charm": deck_has_charm = true
+	if deck_has_baton and _has_heavy_baton_target(player):
 		best_tool = maxf(best_tool, 150.0)
 	if deck_has_board:
 		best_tool = maxf(best_tool, 80.0)
@@ -1420,10 +1493,7 @@ func _count_lightning_basics_in_deck(player: PlayerState) -> int:
 	## 牌库中雷属性基础宝可梦数（串联装置的搜索目标）
 	var count: int = 0
 	for card: CardInstance in player.deck:
-		if card != null and card.card_data != null \
-			and card.card_data.card_type == "Pokemon" \
-			and str(card.card_data.stage) == "Basic" \
-			and str(card.card_data.energy_type) == "L":
+		if card != null and _is_lightning_basic_pokemon(card.card_data):
 			count += 1
 	return count
 
@@ -1605,8 +1675,15 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 
 		# 物品搜索（派帕等）
 		if card_type == "Item":
-			if cname == ELECTRIC_GENERATOR or cname == "Electric Generator": return 500.0
-			if cname == NEST_BALL or cname == "Nest Ball": return 300.0
+			var player: PlayerState = _get_context_player(context)
+			if cname == ELECTRIC_GENERATOR or cname == "Electric Generator":
+				if player != null and not _has_electric_generator_bench_target(player):
+					return 60.0
+				return 500.0
+			if cname == NEST_BALL or cname == "Nest Ball":
+				if player != null and _needs_generator_target_setup(player):
+					return 700.0
+				return 300.0
 			if cname == SWITCH_CART: return 250.0
 			if cname == HEAVY_BALL or cname == "Heavy Ball": return 200.0
 			if cname == SUPER_ROD: return 150.0
@@ -1614,7 +1691,8 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 
 		# 道具搜索
 		if card_type == "Tool":
-			if cname == HEAVY_BATON: return 300.0
+			var player: PlayerState = _get_context_player(context)
+			if cname == HEAVY_BATON or cname == "Heavy Baton": return 300.0 if _has_heavy_baton_target(player) else 60.0
 			if cname == EMERGENCY_BOARD: return 250.0
 			if cname == BRAVERY_CHARM: return 200.0
 			if cname == FOREST_SEAL_STONE: return 150.0
@@ -1622,6 +1700,8 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 
 		# 能量
 		if card.card_data.is_energy():
+			if str(step.get("id", "")) == "top_cards":
+				return _score_ciphermaniac_top_card(card, _get_context_player(context), 0)
 			if str(card.card_data.energy_provides) == "L":
 				return 200.0
 			return 50.0
@@ -1638,6 +1718,8 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 
 func pick_interaction_items(items: Array, step: Dictionary, context: Dictionary = {}) -> Array:
 	var step_id: String = str(step.get("id", ""))
+	if step_id == "top_cards":
+		return _pick_ciphermaniac_top_cards(items, step, context)
 	if step_id != "own_bench_target":
 		return []
 	var best_slot: PokemonSlot = null
@@ -1651,6 +1733,79 @@ func pick_interaction_items(items: Array, step: Dictionary, context: Dictionary 
 			best_score = score
 			best_slot = slot
 	return [] if best_slot == null else [best_slot]
+
+
+func _pick_ciphermaniac_top_cards(items: Array, step: Dictionary, context: Dictionary = {}) -> Array:
+	var player: PlayerState = _get_context_player(context)
+	var max_select: int = int(step.get("max_select", 2))
+	if max_select <= 0:
+		return []
+	var picked: Array = []
+	for pick_index: int in max_select:
+		var best_card: CardInstance = null
+		var best_score := -INF
+		for item: Variant in items:
+			if not (item is CardInstance):
+				continue
+			var card: CardInstance = item as CardInstance
+			if card in picked:
+				continue
+			var score := _score_ciphermaniac_top_card(card, player, pick_index)
+			if score > best_score:
+				best_score = score
+				best_card = card
+		if best_card != null:
+			picked.append(best_card)
+	return picked
+
+
+func _score_ciphermaniac_top_card(card: CardInstance, player: PlayerState, pick_index: int) -> float:
+	if card == null or card.card_data == null:
+		return -INF
+	var cd: CardData = card.card_data
+	var is_first_pick := pick_index == 0
+	var empty_bench := player != null and player.bench.is_empty()
+	var has_miraidon := player != null and _count_pokemon_on_field(player, MIRAIDON_EX) > 0
+
+	# When the board is empty behind the active, the next draw must create a bench.
+	# Drawing Energy first loses to any early KO, as seen in LLM self-play.
+	if empty_bench and is_first_pick:
+		if not has_miraidon and _card_matches_name(cd, [MIRAIDON_EX, "Miraidon ex"]):
+			return 2200.0
+		if _card_matches_name(cd, [NEST_BALL, "Nest Ball"]):
+			return 2100.0
+		if _card_matches_name(cd, [RAIKOU_V, "Raikou V"]):
+			return 2000.0
+		if _card_matches_name(cd, [IRON_HANDS_EX, "Iron Hands ex"]):
+			return 1950.0
+		if _is_lightning_basic_pokemon(cd):
+			return 1800.0
+		if str(cd.card_type) == "Pokemon" and str(cd.stage) == "Basic":
+			return 1200.0
+		if cd.is_energy():
+			return -80.0
+
+	if not has_miraidon and _card_matches_name(cd, [MIRAIDON_EX, "Miraidon ex"]):
+		return 1200.0
+	if _card_matches_name(cd, [NEST_BALL, "Nest Ball"]):
+		return 1120.0 if player != null and player.bench.size() < 5 else 80.0
+	if _card_matches_name(cd, [IRON_HANDS_EX, "Iron Hands ex"]):
+		return 1040.0
+	if _card_matches_name(cd, [RAIKOU_V, "Raikou V"]):
+		return 1020.0
+	if _card_matches_name(cd, [ZAPDOS, "Zapdos"]):
+		return 900.0
+	if _card_matches_name(cd, [ELECTRIC_GENERATOR, "Electric Generator"]):
+		return 760.0 if player != null and _has_electric_generator_bench_target(player) else 260.0
+	if cd.is_energy() and str(cd.energy_provides) == "L":
+		return 620.0 if player != null and not player.bench.is_empty() else 120.0
+	if _card_matches_name(cd, [PAIPA, "Arven"]):
+		return 560.0
+	if _card_matches_name(cd, [HEAVY_BATON, "Heavy Baton"]):
+		return 520.0 if _has_heavy_baton_target(player) else 120.0
+	if str(cd.card_type) == "Pokemon" and str(cd.stage) == "Basic":
+		return 380.0
+	return score_interaction_target(card, {"id": "ciphermaniac_fallback"}, {"game_state": null, "player_index": -1})
 
 
 func score_handoff_target(item: Variant, step: Dictionary, context: Dictionary = {}) -> float:
@@ -1841,6 +1996,8 @@ func _score_energy_attach_target(slot: PokemonSlot, context: Dictionary = {}) ->
 		return 0.0
 	var sname: String = slot.get_pokemon_name()
 	var gap: int = _get_attack_energy_gap(slot)
+	if not _is_miraidon_energy_target_card(slot.get_card_data()):
+		return -200.0
 
 	# 能量上限检查：已达到最贵招式费用，不再用电枪贴
 	if _is_energy_full(slot):

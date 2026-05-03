@@ -36,6 +36,7 @@ func build_candidate_routes(
 	_append_route(routes, _build_engine_before_end_route(current_refs, context))
 	_append_route(routes, _build_manual_attach_setup_route(current_refs, context))
 	_append_route(routes, _build_basic_setup_route(current_refs, context))
+	_append_route(routes, _build_terminal_draw_fallback_route(current_refs))
 	_append_route(routes, _build_preserve_route(end_turn))
 	return routes
 
@@ -126,18 +127,20 @@ func _build_manual_attach_active_attack_route(actions: Array[Dictionary], contex
 	if attach.is_empty():
 		return {}
 	var best_attack: Dictionary = context.get("best_active_attack_after_manual_attach", {}) if context.get("best_active_attack_after_manual_attach", {}) is Dictionary else {}
+	if best_attack.is_empty() or _is_low_value_attack(best_attack):
+		return {}
 	var route_actions: Array[Dictionary] = [_action_ref(attach)]
 	_append_end_turn(route_actions, context)
 	var future_goals: Array[Dictionary] = _context_future_goals(context)
-	if not best_attack.is_empty():
-		future_goals.push_front({
-			"id": "goal:manual_attach_best_active_attack",
-			"type": "goal",
-			"attack_name": str(best_attack.get("attack_name", "")),
-			"attack_index": int(best_attack.get("attack_index", -1)),
-			"estimated_damage": int(best_attack.get("estimated_damage_after_best_manual_attach", 0)),
-			"kos_opponent_active": bool(best_attack.get("kos_opponent_active_after_best_manual_attach", false)),
-		})
+	future_goals.push_front({
+		"id": "goal:manual_attach_best_active_attack",
+		"type": "goal",
+		"attack_name": str(best_attack.get("attack_name", "")),
+		"attack_index": int(best_attack.get("attack_index", -1)),
+		"attack_quality": best_attack.get("attack_quality", {}),
+		"estimated_damage": int(best_attack.get("estimated_damage_after_best_manual_attach", 0)),
+		"kos_opponent_active": bool(best_attack.get("kos_opponent_active_after_best_manual_attach", false)),
+	})
 	return _route(
 		"manual_attach_to_active_attack",
 		"Manually attach the exact Energy that makes the best active attack live, then convert to that attack.",
@@ -227,6 +230,21 @@ func _build_basic_setup_route(actions: Array[Dictionary], context: Dictionary) -
 		"board_setup",
 		_context_future_goals(context)
 	)
+
+
+func _build_terminal_draw_fallback_route(actions: Array[Dictionary]) -> Dictionary:
+	for ref: Dictionary in _sort_by_priority(actions):
+		if _capability_for_ref(ref) != "terminal_draw_ability":
+			continue
+		return _route(
+			"terminal_draw_fallback",
+			"Use a draw ability that ends the turn only after no bench, evolution, search, attach, tool, gust, or attack route remains.",
+			[_action_ref(ref)],
+			160,
+			"fallback_terminal_draw",
+			[]
+		)
+	return {}
 
 
 func _build_preserve_route(end_turn: Dictionary) -> Dictionary:
@@ -360,6 +378,7 @@ func _is_draw_or_deck_access_capability(capability: String) -> bool:
 	return capability in [
 		"charge_and_draw",
 		"draw_ability",
+		"terminal_draw_ability",
 		"energy_search",
 		"discard_to_draw",
 		"draw_filter",
@@ -462,6 +481,8 @@ func _action_priority(ref: Dictionary) -> int:
 			return 800
 		"draw_ability":
 			return 780
+		"terminal_draw_ability":
+			return 160
 		"energy_search":
 			return 760
 		"discard_to_draw":
@@ -504,6 +525,16 @@ func _capability_for_ref(ref: Dictionary) -> String:
 	var tags: Array[String] = _ref_tags(ref)
 	var combined := _combined_ref_name(ref)
 	if action_type == "use_ability":
+		if tags.has("ends_turn") and tags.has("draw"):
+			return "terminal_draw_ability"
+		if tags.has("search_deck") and tags.has("pokemon_related"):
+			return "bench_search"
+		if tags.has("search_deck") and tags.has("bench_related"):
+			return "bench_search"
+		if tags.has("search_deck") and tags.has("energy_related"):
+			return "energy_search"
+		if tags.has("search_deck"):
+			return "search"
 		if _name_has_any(combined, ["fezandipiti"]):
 			return "draw_ability"
 		if tags.has("charge_engine") and tags.has("draw"):

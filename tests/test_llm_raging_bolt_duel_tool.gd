@@ -19,8 +19,14 @@ func test_duel_tool_loads_and_exposes_default_matchup() -> String:
 	return run_checks([
 		assert_eq(int(options.get("miraidon_deck_id", -1)), 575720, "Tool should default player 0 to Miraidon"),
 		assert_eq(int(options.get("raging_bolt_deck_id", -1)), 575718, "Tool should default player 1 to Raging Bolt"),
+		assert_eq(int(options.get("rule_deck_id", -1)), 575720, "Generic rule-vs-LLM options should default rules side to Miraidon"),
+		assert_eq(int(options.get("llm_deck_id", -1)), 575718, "Generic rule-vs-LLM options should default LLM side to Raging Bolt"),
+		assert_eq(str(options.get("rule_strategy_id", "")), "miraidon", "Generic rule side should use the rules strategy id"),
+		assert_eq(str(options.get("llm_strategy_id", "")), "raging_bolt_ogerpon_llm", "Generic LLM side should use the LLM strategy id"),
 		assert_eq(str(options.get("output_root", "")), "user://match_records/ai_duels", "Tool should record AI-vs-AI duel logs under a dedicated root"),
 		assert_true(bool(options.get("record_match", false)), "Tool should record match logs by default"),
+		assert_true(tool.has_method("run_rule_vs_llm"), "Tool should expose the generic rule-vs-LLM runner method"),
+		assert_true(tool.has_method("run_rule_miraidon_vs_llm_raging_bolt"), "Tool should keep the legacy Raging Bolt duel method for compatibility"),
 	])
 
 
@@ -39,6 +45,7 @@ func test_duel_tool_exposes_llm_raging_bolt_self_play_options() -> String:
 		assert_eq(int(options.get("player_1_deck_id", -1)), 575718, "Self-play player 1 should use Raging Bolt"),
 		assert_eq(str(options.get("player_0_strategy_id", "")), "raging_bolt_ogerpon_llm", "Self-play player 0 should use the LLM strategy"),
 		assert_eq(str(options.get("player_1_strategy_id", "")), "raging_bolt_ogerpon_llm", "Self-play player 1 should use the LLM strategy"),
+		assert_true(tool.has_method("run_llm_self_play"), "Tool should expose the generic LLM self-play runner method"),
 		assert_true(tool.has_method("run_llm_raging_bolt_self_play"), "Tool should expose the self-play runner method"),
 	])
 

@@ -63,6 +63,7 @@ func test_supported_ai_deck_ignores_user_override_and_reads_bundled_source() -> 
 	return run_checks([
 		assert_not_null(resolved, "Supported AI deck should still resolve"),
 		assert_eq(str(resolved.deck_name if resolved != null else ""), str(bundled_ai.deck_name), "Supported AI decks should resolve from bundled source, not user overrides"),
+		assert_str_contains(str(resolved.strategy if resolved != null else ""), "【玩家打法要求】", "Supported AI decks should expose the bundled player-requirement strategy text"),
 	])
 
 
@@ -81,6 +82,30 @@ func test_get_all_ai_decks_returns_supported_bundled_shortlist() -> String:
 		assert_eq(ai_decks.size(), expected_ids.size(), "AI deck list should expose exactly the backed-up AI deck set"),
 		assert_eq(ids, expected_ids, "AI deck list should match the backed-up AI deck set"),
 	])
+
+
+func test_bundled_ai_deck_default_strategies_are_player_requirement_seed_text() -> String:
+	var db := CardDatabaseScript.new()
+	var expected_keywords := {
+		569061: "星星诞生",
+		575657: "捕获香氛",
+		575716: "大比鸟ex",
+		575720: "串联装置",
+		575723: "咒怨炸弹",
+		578647: "精神拥抱",
+		579502: "幻影潜袭",
+	}
+	var checks: Array[String] = []
+	for deck_id_variant: Variant in expected_keywords.keys():
+		var deck_id := int(deck_id_variant)
+		var deck: DeckData = db._load_bundled_ai_deck(deck_id)
+		checks.append(assert_not_null(deck, "Bundled AI deck %d should load from install seed data" % deck_id))
+		if deck == null:
+			continue
+		var strategy_text := str(deck.strategy)
+		checks.append(assert_str_contains(strategy_text, "【玩家打法要求】", "Bundled AI deck %d should frame default strategy as player play requirements" % deck_id))
+		checks.append(assert_str_contains(strategy_text, str(expected_keywords[deck_id_variant]), "Bundled AI deck %d should contain its updated deck-specific plan" % deck_id))
+	return run_checks(checks)
 
 
 func _write_text(path: String, content: String) -> void:

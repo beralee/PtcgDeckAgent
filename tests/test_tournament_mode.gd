@@ -14,6 +14,47 @@ func _set_navigation_suppressed(suppressed: bool) -> void:
 		GameManager.call("set_scene_navigation_suppressed_for_tests", suppressed)
 
 
+func _snapshot_battle_review_config_file() -> Dictionary:
+	var path: String = GameManager.get_battle_review_api_config_path()
+	if not FileAccess.file_exists(path):
+		return {"exists": false, "text": ""}
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {"exists": false, "text": ""}
+	var text := file.get_as_text()
+	file.close()
+	return {"exists": true, "text": text}
+
+
+func _restore_battle_review_config_file(snapshot: Dictionary) -> void:
+	var path: String = GameManager.get_battle_review_api_config_path()
+	if bool(snapshot.get("exists", false)):
+		var file := FileAccess.open(path, FileAccess.WRITE)
+		if file != null:
+			file.store_string(str(snapshot.get("text", "")))
+			file.close()
+		return
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+
+
+func _write_ready_llm_config_for_test() -> void:
+	var config := {
+		"endpoint": "https://zenmux.ai/api/v1",
+		"api_key": "test-key",
+		"model": "kimi-k2.6",
+		"timeout_seconds": 60.0,
+		"ai_personality": "",
+		"ai_test_passed": true,
+		"ai_test_signature": "",
+	}
+	config["ai_test_signature"] = GameManager.battle_review_ai_config_signature(config)
+	var file := FileAccess.open(GameManager.get_battle_review_api_config_path(), FileAccess.WRITE)
+	if file != null:
+		file.store_string(JSON.stringify(config, "\t"))
+		file.close()
+
+
 func test_main_menu_exposes_tournament_entry() -> String:
 	var scene: Control = MainMenuScene.instantiate()
 	return run_checks([
@@ -335,6 +376,54 @@ func test_tournament_strong_ai_opponent_uses_fixed_opening_when_available() -> S
 	GameManager.selected_deck_ids = previous_selected_ids
 	GameManager.first_player_choice = previous_first
 	GameManager.ai_selection = previous_ai_selection
+	GameManager.current_tournament = previous_tournament
+	GameManager.tournament_selected_player_deck_id = previous_tournament_deck_id
+	return result
+
+
+func test_tournament_llm_opponent_uses_deck_matching_llm_variant() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	var previous_mode := GameManager.current_mode
+	var previous_selected_ids := GameManager.selected_deck_ids.duplicate()
+	var previous_first := GameManager.first_player_choice
+	var previous_ai_selection := GameManager.ai_selection.duplicate(true)
+	var previous_ai_deck_strategy := GameManager.ai_deck_strategy
+	var previous_tournament := GameManager.current_tournament
+	var previous_tournament_deck_id := GameManager.tournament_selected_player_deck_id
+
+	_write_ready_llm_config_for_test()
+	GameManager.clear_tournament()
+	var tournament := SwissTournamentScript.new()
+	tournament.setup("测试玩家", 575716, 16, 12345, true)
+	GameManager.current_tournament = tournament
+	GameManager.tournament_selected_player_deck_id = 575716
+	var pairing: Dictionary = tournament.prepare_next_round()
+	var opponent_id := int(pairing.get("player_b_id", -1))
+	if int(pairing.get("player_a_id", -1)) != int(tournament.player_participant_id):
+		opponent_id = int(pairing.get("player_a_id", -1))
+	for index: int in tournament.participants.size():
+		var participant: Dictionary = tournament.participants[index]
+		if int(participant.get("id", -1)) == opponent_id:
+			participant["deck_id"] = 575720
+			participant["ai_mode"] = "llm"
+			tournament.participants[index] = participant
+			break
+	var ok := GameManager.prepare_current_tournament_battle()
+
+	var result := run_checks([
+		assert_true(ok, "LLM 对手应能正常准备比赛对局"),
+		assert_eq(int(GameManager.selected_deck_ids[1]), 575720, "比赛对手卡组应保持为被抽到的密勒顿"),
+		assert_eq(GameManager.ai_deck_strategy, "miraidon_llm", "比赛模式应按对手 deck_id 选择对应 LLM strategy，而不是写死猛雷鼓"),
+		assert_str_contains(str(GameManager.ai_selection.get("display_name", "")), "LLM", "LLM 比赛对手显示名应标注 LLM"),
+	])
+
+	_restore_battle_review_config_file(snapshot)
+	GameManager.clear_tournament()
+	GameManager.current_mode = previous_mode
+	GameManager.selected_deck_ids = previous_selected_ids
+	GameManager.first_player_choice = previous_first
+	GameManager.ai_selection = previous_ai_selection
+	GameManager.ai_deck_strategy = previous_ai_deck_strategy
 	GameManager.current_tournament = previous_tournament
 	GameManager.tournament_selected_player_deck_id = previous_tournament_deck_id
 	return result

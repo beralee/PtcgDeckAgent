@@ -2,6 +2,9 @@ class_name TestLLMInteractionBridge
 extends TestBase
 
 const RAGING_BOLT_LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategyRagingBoltLLM.gd"
+const DRAGAPULT_CHARIZARD_LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategyDragapultCharizardLLM.gd"
+const MIRAIDON_LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategyMiraidonLLM.gd"
+const LUGIA_LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategyLugiaArcheopsLLM.gd"
 const LLM_DECK_STRATEGY_BASE_SCRIPT_PATH := "res://scripts/ai/LLMDeckStrategyBase.gd"
 const LLM_INTERACTION_BRIDGE_SCRIPT_PATH := "res://scripts/ai/LLMInteractionIntentBridge.gd"
 const LLM_DECISION_TREE_EXECUTOR_SCRIPT_PATH := "res://scripts/ai/LLMDecisionTreeExecutor.gd"
@@ -40,6 +43,57 @@ func _make_raging_bolt_cd() -> CardData:
 	return cd
 
 
+func _make_miraidon_cd() -> CardData:
+	var cd := _make_pokemon_cd("Miraidon ex", "Basic", "L", 220)
+	cd.name_en = "Miraidon ex"
+	cd.mechanic = "ex"
+	cd.attacks = [
+		{"name": "Tandem Unit", "cost": "", "damage": ""},
+		{"name": "Photon Blaster", "cost": "LLC", "damage": "220"},
+	]
+	return cd
+
+
+func _make_lugia_v_cd() -> CardData:
+	var cd := _make_pokemon_cd("Lugia V", "Basic", "C", 220)
+	cd.name_en = "Lugia V"
+	cd.mechanic = "V"
+	cd.attacks = [
+		{"name": "Read the Wind", "cost": "C", "damage": ""},
+		{"name": "Aero Dive", "cost": "CCCC", "damage": "130"},
+	]
+	return cd
+
+
+func _make_lugia_vstar_cd() -> CardData:
+	var cd := _make_pokemon_cd("Lugia VSTAR", "VSTAR", "C", 280)
+	cd.name_en = "Lugia VSTAR"
+	cd.mechanic = "VSTAR"
+	cd.abilities = [{"name": "Summoning Star", "text": "Put up to 2 Colorless Pokemon from your discard pile onto your Bench."}]
+	cd.attacks = [{"name": "Tempest Dive", "cost": "CCCC", "damage": "220"}]
+	return cd
+
+
+func _make_archeops_cd() -> CardData:
+	var cd := _make_pokemon_cd("Archeops", "Stage2", "C", 150)
+	cd.name_en = "Archeops"
+	cd.abilities = [{"name": "Primal Turbo", "text": "Search your deck for up to 2 Special Energy cards and attach them to 1 of your Pokemon."}]
+	return cd
+
+
+func _make_minccino_cd() -> CardData:
+	var cd := _make_pokemon_cd("Minccino", "Basic", "C", 70)
+	cd.name_en = "Minccino"
+	return cd
+
+
+func _make_cinccino_cd() -> CardData:
+	var cd := _make_pokemon_cd("Cinccino", "Stage1", "C", 110)
+	cd.name_en = "Cinccino"
+	cd.attacks = [{"name": "Special Roll", "cost": "CC", "damage": "70x"}]
+	return cd
+
+
 func _make_energy_cd(pname: String, energy_provides: String) -> CardData:
 	var cd := CardData.new()
 	cd.name = pname
@@ -55,6 +109,12 @@ func _make_trainer_cd(pname: String, card_type: String = "Item") -> CardData:
 	cd.name_en = pname
 	cd.card_type = card_type
 	cd.description = "%s rule text" % pname
+	return cd
+
+
+func _make_named_trainer_cd(pname: String, name_en: String, card_type: String = "Item") -> CardData:
+	var cd := _make_trainer_cd(pname, card_type)
+	cd.name_en = name_en
 	return cd
 
 
@@ -85,6 +145,21 @@ func _new_llm_strategy() -> RefCounted:
 	return script.new() if script != null else null
 
 
+func _new_dragapult_charizard_llm_strategy() -> RefCounted:
+	var script := _load_script(DRAGAPULT_CHARIZARD_LLM_SCRIPT_PATH)
+	return script.new() if script != null else null
+
+
+func _new_miraidon_llm_strategy() -> RefCounted:
+	var script := _load_script(MIRAIDON_LLM_SCRIPT_PATH)
+	return script.new() if script != null else null
+
+
+func _new_lugia_llm_strategy() -> RefCounted:
+	var script := _load_script(LUGIA_LLM_SCRIPT_PATH)
+	return script.new() if script != null else null
+
+
 func _new_route_compiler() -> RefCounted:
 	var script := _load_script(LLM_ROUTE_COMPILER_SCRIPT_PATH)
 	return script.new() if script != null else null
@@ -98,6 +173,17 @@ func _new_route_candidate_builder() -> RefCounted:
 func _new_route_action_registry() -> RefCounted:
 	var script := _load_script(LLM_ROUTE_ACTION_REGISTRY_SCRIPT_PATH)
 	return script.new() if script != null else null
+
+
+func _current_legal_actions_from_payload(payload: Dictionary) -> Array:
+	var result: Array = []
+	for raw: Variant in payload.get("legal_actions", []):
+		if not (raw is Dictionary):
+			continue
+		if bool((raw as Dictionary).get("future", false)):
+			continue
+		result.append(raw)
+	return result
 
 
 func _inject_llm_queue(strategy: RefCounted, turn: int, actions: Array) -> void:
@@ -278,6 +364,821 @@ func test_raging_bolt_llm_payload_uses_editable_deck_strategy_text() -> String:
 	])
 
 
+func test_dragapult_charizard_llm_payload_includes_deck_strategy_prompt() -> String:
+	var strategy := _new_dragapult_charizard_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyDragapultCharizardLLM.gd should exist"
+	var gs := _make_game_state(3)
+	gs.players[0].active_pokemon = _make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	gs.players[0].bench.append(_make_slot(_make_pokemon_cd("Charmander", "Basic", "R", 70), 0))
+	var raw_payload: Variant = strategy.call("build_llm_request_payload_for_test", gs, 0)
+	var payload: Dictionary = raw_payload if raw_payload is Dictionary else {}
+	var raw_prompt_lines: Variant = payload.get("deck_strategy_prompt", PackedStringArray())
+	var prompt_lines: PackedStringArray = raw_prompt_lines if raw_prompt_lines is PackedStringArray else PackedStringArray()
+	var prompt_text := "\n".join(prompt_lines)
+	return run_checks([
+		assert_eq(str(payload.get("deck_strategy_id", "")), "dragapult_charizard_llm", "Dragapult Charizard LLM payload should identify its deck strategy prompt"),
+		assert_true(prompt_lines.size() >= 8, "Dragapult Charizard LLM prompt should provide deck-specific tactical guidance"),
+		assert_str_contains(prompt_text, "Dragapult ex", "Prompt should name the primary spread attacker"),
+		assert_str_contains(prompt_text, "Charizard ex", "Prompt should name the acceleration/conversion attacker"),
+		assert_str_contains(prompt_text, "Rare Candy", "Prompt should cover Stage 2 conversion resources"),
+		assert_str_contains(prompt_text, "Boss", "Prompt should cover gust and prize targeting"),
+	])
+
+
+func test_dragapult_charizard_llm_registry_creates_variant() -> String:
+	var registry_script := _load_script("res://scripts/ai/DeckStrategyRegistry.gd")
+	if registry_script == null:
+		return "DeckStrategyRegistry.gd should load"
+	var registry: RefCounted = registry_script.new()
+	var strategy: RefCounted = registry.call("create_strategy_by_id", "dragapult_charizard_llm")
+	return run_checks([
+		assert_not_null(strategy, "Registry should create dragapult_charizard_llm"),
+		assert_eq(str(strategy.call("get_strategy_id")), "dragapult_charizard_llm", "LLM variant should report the registered strategy id"),
+	])
+
+
+func test_dragapult_charizard_llm_blocks_stage2_retreat_to_support() -> String:
+	var strategy := _new_dragapult_charizard_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyDragapultCharizardLLM.gd should exist"
+	var gs := _make_game_state(8)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Dragapult ex", "Stage2", "P", 320), 0)
+	var fez_slot := _make_slot(_make_pokemon_cd("Fezandipiti ex", "Basic", "D", 210), 0)
+	player.bench.append(fez_slot)
+	var action := {"kind": "retreat", "bench_target": fez_slot}
+	return run_checks([
+		assert_true(bool(strategy.call("_deck_should_block_exact_queue_match", {}, action, gs, 0)), "Dragapult LLM should block retreating a Stage 2 attacker into a support-only Pokemon"),
+		assert_true(float(strategy.call("score_action_absolute", action, gs, 0)) <= -1000.0, "Blocked Stage 2 retreat should stay blocked even through rules fallback"),
+	])
+
+
+func test_dragapult_charizard_llm_blocks_off_plan_support_energy_and_bad_tools() -> String:
+	var strategy := _new_dragapult_charizard_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyDragapultCharizardLLM.gd should exist"
+	var gs := _make_game_state(8)
+	var player := gs.players[0]
+	var dragapult_slot := _make_slot(_make_pokemon_cd("Dragapult ex", "Stage2", "P", 320), 0)
+	var rotom_slot := _make_slot(_make_pokemon_cd("Rotom V", "Basic", "L", 190), 0)
+	player.active_pokemon = dragapult_slot
+	player.bench.append(rotom_slot)
+	var fire := CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0)
+	var psychic := CardInstance.create(_make_energy_cd("Psychic Energy", "P"), 0)
+	var tm := CardInstance.create(_make_trainer_cd("Technical Machine: Evolution", "Tool"), 0)
+	var forest := CardInstance.create(_make_trainer_cd("Forest Seal Stone", "Tool"), 0)
+	strategy.set("_llm_action_catalog", {
+		"attach_energy:c%d:active" % int(psychic.instance_id): {
+			"id": "attach_energy:c%d:active" % int(psychic.instance_id),
+			"action_id": "attach_energy:c%d:active" % int(psychic.instance_id),
+			"type": "attach_energy",
+			"card": "Psychic Energy",
+			"position": "active",
+		},
+	})
+	var bad_support_attach := {"kind": "attach_energy", "card": fire, "target_slot": rotom_slot}
+	var bad_dragapult_attach := {"kind": "attach_energy", "card": fire, "target_slot": dragapult_slot}
+	var bad_tm_attach := {"kind": "attach_tool", "card": tm, "target_slot": dragapult_slot}
+	var bad_forest_attach := {"kind": "attach_tool", "card": forest, "target_slot": dragapult_slot}
+	return run_checks([
+		assert_true(bool(strategy.call("_deck_should_block_exact_queue_match", {}, bad_support_attach, gs, 0)), "Dragapult LLM should block attaching attack Energy to support-only Pokemon"),
+		assert_true(bool(strategy.call("_deck_should_block_exact_queue_match", {}, bad_dragapult_attach, gs, 0)), "Dragapult LLM should block Fire attach to Dragapult line while a Psychic attach is visible and no Psychic is attached"),
+		assert_true(bool(strategy.call("_deck_should_block_exact_queue_match", {}, bad_tm_attach, gs, 0)), "TM Evolution should not be attached to an already-evolved attacker"),
+		assert_true(bool(strategy.call("_deck_should_block_exact_queue_match", {}, bad_forest_attach, gs, 0)), "Forest Seal Stone should not be attached to non-V Stage 2 attackers"),
+		assert_true(float(strategy.call("score_action_absolute", bad_support_attach, gs, 0)) <= -1000.0, "Blocked support Energy attach should stay blocked through rules fallback"),
+	])
+
+
+func test_dragapult_charizard_llm_blocks_rotom_terminal_draw_when_deck_is_low() -> String:
+	var strategy := _new_dragapult_charizard_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyDragapultCharizardLLM.gd should exist"
+	var gs := _make_game_state(18)
+	var player := gs.players[0]
+	var rotom_slot := _make_slot(_make_pokemon_cd("Rotom V", "Basic", "L", 190), 0)
+	player.active_pokemon = rotom_slot
+	for i: int in 12:
+		player.deck.append(CardInstance.create(_make_trainer_cd("Deck filler %d" % i), 0))
+	var action := {"kind": "use_ability", "source_slot": rotom_slot, "ability_index": 0}
+	return run_checks([
+		assert_true(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "use_ability", "pokemon": "Rotom V"}, action, gs, 0)), "Rotom terminal draw should be blocked through LLM queue matching when deck is low"),
+		assert_true(float(strategy.call("score_action_absolute", action, gs, 0)) <= -1000.0, "Rotom terminal draw should be absolute-negative when deck is low"),
+	])
+
+
+func test_llm_contract_rejects_empty_schema_low_level_interactions() -> String:
+	var strategy := _new_dragapult_charizard_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyDragapultCharizardLLM.gd should exist"
+	var gs := _make_game_state(3)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	var vacuum_cd := _make_trainer_cd("Lost Vacuum", "Item")
+	vacuum_cd.effect_id = "8f655fea1f90164bfbccb7a95c223e17"
+	vacuum_cd.description = "Put 1 card from your hand into the Lost Zone. Choose a Pokemon Tool or Stadium in play and put it into the Lost Zone."
+	var vacuum := CardInstance.create(vacuum_cd, 0)
+	player.hand.append(vacuum)
+	var payload: Dictionary = strategy.call("build_action_id_request_payload_for_test", gs, 0, [
+		{"kind": "play_trainer", "card": vacuum, "targets": [], "requires_interaction": true},
+		{"kind": "end_turn"},
+	])
+	var vacuum_id := ""
+	var vacuum_schema: Dictionary = {}
+	for raw: Variant in _current_legal_actions_from_payload(payload):
+		if raw is Dictionary and str((raw as Dictionary).get("card", "")) == "Lost Vacuum":
+			vacuum_id = str((raw as Dictionary).get("id", ""))
+			vacuum_schema = (raw as Dictionary).get("interaction_schema", {}) if (raw as Dictionary).get("interaction_schema", {}) is Dictionary else {}
+	var contract_check: Dictionary = strategy.call("_validate_decision_tree_contract", {
+		"branches": [{
+			"when": [{"fact": "always"}],
+			"actions": [{"id": vacuum_id, "interactions": {"discard_target": "c%d" % int(vacuum.instance_id)}}],
+		}],
+		"fallback_actions": [{"id": "end_turn"}],
+	})
+	var sanitize_check: Dictionary = strategy.call("_sanitize_decision_tree_contract", {
+		"branches": [
+			{
+				"when": [{"fact": "always"}],
+				"actions": [{"id": vacuum_id, "interactions": {"discard_target": "c%d" % int(vacuum.instance_id)}}],
+			},
+			{
+				"when": [{"fact": "always"}],
+				"actions": [{"id": "end_turn"}],
+			},
+		],
+		"fallback_actions": [{"id": "end_turn"}],
+	})
+	var kept_branches: Array = (sanitize_check.get("tree", {}) as Dictionary).get("branches", [])
+	return run_checks([
+		assert_eq(vacuum_schema.size(), 0, "Lost Vacuum fixture should expose no exact low-level interaction schema"),
+		assert_false(bool(contract_check.get("valid", true)), "Contract validator should reject invented interactions when schema is empty"),
+		assert_true(bool(sanitize_check.get("valid", false)), "Sanitizer should prune the bad branch and keep a safe legal branch"),
+		assert_eq(kept_branches.size(), 1, "Only the safe branch should remain after pruning the empty-schema interaction"),
+	])
+
+
+func test_dragapult_charizard_llm_marks_and_blocks_dead_lost_vacuum() -> String:
+	var strategy := _new_dragapult_charizard_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyDragapultCharizardLLM.gd should exist"
+	var gs := _make_game_state(3)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	var basin := CardInstance.create(_make_trainer_cd("Magma Basin", "Stadium"), 0)
+	gs.stadium_card = basin
+	var vacuum_cd := _make_trainer_cd("Lost Vacuum", "Item")
+	vacuum_cd.effect_id = "8f655fea1f90164bfbccb7a95c223e17"
+	vacuum_cd.description = "Put 1 card from your hand into the Lost Zone. Choose a Pokemon Tool or Stadium in play and put it into the Lost Zone."
+	var vacuum := CardInstance.create(vacuum_cd, 0)
+	player.hand.append(vacuum)
+	var action := {"kind": "play_trainer", "card": vacuum, "targets": [], "requires_interaction": true}
+	var payload: Dictionary = strategy.call("build_action_id_request_payload_for_test", gs, 0, [action, {"kind": "end_turn"}])
+	var facts: Dictionary = payload.get("turn_tactical_facts", {})
+	var resource_negative: Array = facts.get("resource_negative_actions", []) if facts.get("resource_negative_actions", []) is Array else []
+	var found_negative := false
+	for raw: Variant in resource_negative:
+		if raw is Dictionary and str((raw as Dictionary).get("card", "")) == "Lost Vacuum":
+			found_negative = true
+	return run_checks([
+		assert_true(found_negative, "Prompt facts should mark no-value Lost Vacuum as resource-negative"),
+		assert_true(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "play_trainer", "card": "Lost Vacuum"}, action, gs, 0)), "Runtime queue guard should block dead Lost Vacuum"),
+		assert_true(float(strategy.call("score_action_absolute", action, gs, 0)) <= -1000.0, "Dead Lost Vacuum should stay blocked through rules fallback"),
+	])
+
+
+func test_dragapult_charizard_llm_preserves_missing_seed_search_cards_from_discard() -> String:
+	var strategy := _new_dragapult_charizard_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyDragapultCharizardLLM.gd should exist"
+	var gs := _make_game_state(3)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	var nest := CardInstance.create(_make_trainer_cd("Nest Ball", "Item"), 0)
+	var vacuum := CardInstance.create(_make_trainer_cd("Lost Vacuum", "Item"), 0)
+	player.hand.append(nest)
+	player.hand.append(vacuum)
+	var nest_priority := int(strategy.call("get_discard_priority_contextual", nest, gs, 0))
+	var vacuum_priority := int(strategy.call("get_discard_priority_contextual", vacuum, gs, 0))
+	return run_checks([
+		assert_true(nest_priority < vacuum_priority, "When Charmander is missing, Nest Ball should be protected while dead Lost Vacuum is discardable"),
+	])
+
+
+func test_dragapult_charizard_llm_discard_bridge_rejects_route_critical_seed_search() -> String:
+	var strategy := _new_dragapult_charizard_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyDragapultCharizardLLM.gd should exist"
+	var gs := _make_game_state(3)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	var nest := CardInstance.create(_make_trainer_cd("Nest Ball", "Item"), 0)
+	var vacuum := CardInstance.create(_make_trainer_cd("Lost Vacuum", "Item"), 0)
+	var rod := CardInstance.create(_make_trainer_cd("Super Rod", "Item"), 0)
+	player.hand.append(nest)
+	player.hand.append(vacuum)
+	player.hand.append(rod)
+	strategy.set("_cached_turn_number", 3)
+	strategy.set("_llm_queue_turn", 3)
+	strategy.set("_llm_decision_tree", {"actions": [{"id": "play_trainer:c99"}]})
+	strategy.set("_llm_action_queue", [{
+		"type": "play_trainer",
+		"action_id": "play_trainer:c99",
+		"card": "Ultra Ball",
+		"selection_policy": {"discard": ["Nest Ball", "Lost Vacuum"]},
+	}])
+	var picked: Array = strategy.call("pick_interaction_items", [nest, vacuum, rod], {"id": "discard_cards", "max_select": 2}, {
+		"game_state": gs,
+		"player_index": 0,
+	})
+	return run_checks([
+		assert_false(picked.has(nest), "Discard bridge should reject LLM attempts to discard the only seed-search card while Charmander is missing"),
+		assert_true(picked.has(vacuum), "Fallback discard policy should prefer dead Lost Vacuum over route-critical Nest Ball"),
+		assert_eq(picked.size(), 2, "Fallback discard policy should still satisfy a two-card discard cost"),
+	])
+
+
+func test_miraidon_llm_payload_includes_deck_strategy_prompt() -> String:
+	var strategy := _new_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyMiraidonLLM.gd should exist"
+	var gs := _make_game_state(3)
+	gs.players[0].active_pokemon = _make_slot(_make_miraidon_cd(), 0)
+	gs.players[0].bench.append(_make_slot(_make_pokemon_cd("Iron Hands ex", "Basic", "L", 230), 0))
+	var payload: Dictionary = strategy.call("build_llm_request_payload_for_test", gs, 0)
+	var prompt_lines: PackedStringArray = payload.get("deck_strategy_prompt", PackedStringArray())
+	var prompt_text := "\n".join(prompt_lines)
+	return run_checks([
+		assert_eq(str(payload.get("deck_strategy_id", "")), "miraidon_llm", "Miraidon LLM payload should identify its deck strategy prompt"),
+		assert_true(prompt_lines.size() >= 8, "Miraidon LLM prompt should provide deck-specific tactical guidance"),
+		assert_str_contains(prompt_text, "密勒顿", "Prompt should provide the Miraidon deck plan in Chinese"),
+		assert_str_contains(prompt_text, "Miraidon ex", "Prompt should name the setup engine"),
+		assert_str_contains(prompt_text, "Electric Generator", "Prompt should cover Generator timing"),
+		assert_str_contains(prompt_text, "Iron Hands ex", "Prompt should cover the main prize-race attacker"),
+		assert_str_contains(prompt_text, "Double Turbo Energy", "Prompt should cover Iron Hands acceleration policy"),
+	])
+
+
+func test_miraidon_llm_registry_creates_variant_without_replacing_rules() -> String:
+	var registry_script := _load_script("res://scripts/ai/DeckStrategyRegistry.gd")
+	if registry_script == null:
+		return "DeckStrategyRegistry.gd should load"
+	var registry: RefCounted = registry_script.new()
+	var rules_strategy: RefCounted = registry.call("create_strategy_by_id", "miraidon")
+	var llm_strategy: RefCounted = registry.call("create_strategy_by_id", "miraidon_llm")
+	return run_checks([
+		assert_not_null(rules_strategy, "Registry should keep the rules Miraidon strategy"),
+		assert_not_null(llm_strategy, "Registry should create miraidon_llm"),
+		assert_eq(str(rules_strategy.call("get_strategy_id")), "miraidon", "Rules strategy id should remain unchanged"),
+		assert_eq(str(llm_strategy.call("get_strategy_id")), "miraidon_llm", "LLM variant should report the registered strategy id"),
+	])
+
+
+func test_lugia_archeops_llm_payload_includes_deck_strategy_prompt() -> String:
+	var strategy := _new_lugia_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyLugiaArcheopsLLM.gd should exist"
+	strategy.call("set_deck_strategy_text", "custom Lugia player preference: prioritize second Minccino after Lugia V")
+	var gs := _make_game_state(3)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_lugia_v_cd(), 0)
+	player.bench.append(_make_slot(_make_minccino_cd(), 0))
+	var payload: Dictionary = strategy.call("build_llm_request_payload_for_test", gs, 0)
+	var prompt_lines: PackedStringArray = payload.get("deck_strategy_prompt", PackedStringArray())
+	var prompt_text := "\n".join(prompt_lines)
+	return run_checks([
+		assert_eq(str(payload.get("deck_strategy_id", "")), "lugia_archeops_llm", "Lugia LLM payload should identify its deck strategy prompt"),
+		assert_true(prompt_lines.size() >= 8, "Lugia LLM prompt should provide deck-specific tactical guidance"),
+		assert_str_contains(prompt_text, "Lugia VSTAR", "Prompt should name the primary shell evolution"),
+		assert_str_contains(prompt_text, "Summoning Star", "Prompt should cover the VSTAR conversion engine"),
+		assert_str_contains(prompt_text, "Archeops", "Prompt should cover the acceleration engine"),
+		assert_str_contains(prompt_text, "Special Energy", "Prompt should cover special energy resource policy"),
+		assert_str_contains(prompt_text, "custom Lugia player preference", "Prompt should preserve player-authored tactical text"),
+	])
+
+
+func test_lugia_archeops_llm_registry_creates_variant_without_replacing_rules() -> String:
+	var registry_script := _load_script("res://scripts/ai/DeckStrategyRegistry.gd")
+	if registry_script == null:
+		return "DeckStrategyRegistry.gd should load"
+	var registry: RefCounted = registry_script.new()
+	var rules_strategy: RefCounted = registry.call("create_strategy_by_id", "lugia_archeops")
+	var llm_strategy: RefCounted = registry.call("create_strategy_by_id", "lugia_archeops_llm")
+	return run_checks([
+		assert_not_null(rules_strategy, "Registry should keep the rules Lugia Archeops strategy"),
+		assert_not_null(llm_strategy, "Registry should create lugia_archeops_llm"),
+		assert_eq(str(rules_strategy.call("get_strategy_id")), "lugia_archeops", "Rules strategy id should remain unchanged"),
+		assert_eq(str(llm_strategy.call("get_strategy_id")), "lugia_archeops_llm", "LLM variant should report the registered strategy id"),
+	])
+
+
+func test_lugia_archeops_llm_preserves_rules_turn_contract_for_interaction_scoring() -> String:
+	var strategy := _new_lugia_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyLugiaArcheopsLLM.gd should exist"
+	var gs := _make_game_state(2)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Fezandipiti ex", "Basic", "D", 210), 0)
+	var contract: Dictionary = strategy.call("build_turn_plan", gs, 0)
+	var lugia_card := CardInstance.create(_make_lugia_v_cd(), 0)
+	var lugia_search_score: float = float(strategy.call("score_interaction_target", lugia_card, {"id": "search_pokemon"}, {
+		"game_state": gs,
+		"player_index": 0,
+		"turn_contract": contract,
+	}))
+	var search_priorities: Dictionary = contract.get("priorities", {}) if contract.get("priorities", {}) is Dictionary else {}
+	var search_names: Array = search_priorities.get("search", []) if search_priorities.get("search", []) is Array else []
+	return run_checks([
+		assert_eq(str(contract.get("intent", "")), "launch_shell", "Lugia wrapper should preserve the rules launch-shell turn plan"),
+		assert_true(search_names.size() > 0 and str(search_names[0]) == "Lugia V", "Rules turn contract should prioritize finding Lugia V when the shell owner is missing"),
+		assert_true(lugia_search_score >= 255.0, "Wrapper interaction scoring should forward the turn contract into the rules fallback"),
+	])
+
+
+func test_miraidon_llm_prioritizes_bench_setup_before_generator_without_target() -> String:
+	var strategy := _new_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyMiraidonLLM.gd should exist"
+	var gs := _make_game_state(2)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Lumineon V", "Basic", "W", 170), 0)
+	player.deck.append(CardInstance.create(_make_miraidon_cd(), 0))
+	player.deck.append(CardInstance.create(_make_energy_cd("Basic Lightning Energy", "L"), 0))
+	var generator := CardInstance.create(_make_trainer_cd("Electric Generator", "Item"), 0)
+	var nest := CardInstance.create(_make_trainer_cd("Nest Ball", "Item"), 0)
+	var baton := CardInstance.create(_make_trainer_cd("Heavy Baton", "Tool"), 0)
+	var context := {"game_state": gs, "player_index": 0}
+	var step := {"id": "item_search"}
+	var generator_search_score: float = float(strategy.call("score_interaction_target", generator, step, context))
+	var nest_search_score: float = float(strategy.call("score_interaction_target", nest, step, context))
+	var baton_search_score: float = float(strategy.call("score_interaction_target", baton, step, context))
+	var generator_action_score: float = float(strategy.call("score_action_absolute", {
+		"kind": "play_trainer",
+		"card": generator,
+		"targets": [],
+		"requires_interaction": true,
+	}, gs, 0))
+	return run_checks([
+		assert_true(nest_search_score > generator_search_score, "Nest Ball should outrank Electric Generator when there is no benched Lightning target"),
+		assert_true(generator_action_score < 100.0, "Electric Generator should be nearly blocked before a legal bench target exists"),
+		assert_true(baton_search_score < nest_search_score, "Heavy Baton should not compete with setup when Iron Hands ex is not on board"),
+	])
+
+
+func test_miraidon_llm_restores_generator_priority_with_benched_lightning_target() -> String:
+	var strategy := _new_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyMiraidonLLM.gd should exist"
+	var gs := _make_game_state(3)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Lumineon V", "Basic", "W", 170), 0)
+	player.bench.append(_make_slot(_make_pokemon_cd("Iron Hands ex", "Basic", "L", 230), 0))
+	player.deck.append(CardInstance.create(_make_energy_cd("Basic Lightning Energy", "L"), 0))
+	player.deck.append(CardInstance.create(_make_energy_cd("Basic Lightning Energy", "L"), 0))
+	player.deck.append(CardInstance.create(_make_energy_cd("Basic Lightning Energy", "L"), 0))
+	var generator := CardInstance.create(_make_trainer_cd("Electric Generator", "Item"), 0)
+	var nest := CardInstance.create(_make_trainer_cd("Nest Ball", "Item"), 0)
+	var baton := CardInstance.create(_make_trainer_cd("Heavy Baton", "Tool"), 0)
+	var context := {"game_state": gs, "player_index": 0}
+	var step := {"id": "item_search"}
+	var generator_search_score: float = float(strategy.call("score_interaction_target", generator, step, context))
+	var nest_search_score: float = float(strategy.call("score_interaction_target", nest, step, context))
+	var baton_search_score: float = float(strategy.call("score_interaction_target", baton, step, context))
+	var generator_action_score: float = float(strategy.call("score_action_absolute", {
+		"kind": "play_trainer",
+		"card": generator,
+		"targets": [],
+		"requires_interaction": true,
+	}, gs, 0))
+	return run_checks([
+		assert_true(generator_search_score > nest_search_score, "Electric Generator should regain priority after Iron Hands ex is benched"),
+		assert_true(generator_action_score >= 500.0, "Electric Generator should be a top action when it has a bench target and deck energy"),
+		assert_true(baton_search_score >= 300.0, "Heavy Baton should become a valid Arven tool target once Iron Hands ex is on board"),
+	])
+
+
+func test_miraidon_llm_ciphermaniac_empty_bench_tops_board_access_first() -> String:
+	var strategy := _new_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyMiraidonLLM.gd should exist"
+	var gs := _make_game_state(2)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Zapdos", "Basic", "L", 120), 0)
+	player.bench.clear()
+	var lightning := CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0)
+	var raikou := CardInstance.create(_make_pokemon_cd("Raikou V", "Basic", "L", 200), 0)
+	var iron_hands := CardInstance.create(_make_pokemon_cd("Iron Hands ex", "Basic", "L", 230), 0)
+	var miraidon := CardInstance.create(_make_miraidon_cd(), 0)
+	var picked: Array = strategy.call("pick_interaction_items", [lightning, raikou, iron_hands, miraidon], {
+		"id": "top_cards",
+		"max_select": 2,
+	}, {
+		"game_state": gs,
+		"player_index": 0,
+	})
+	var first_name := ""
+	var second_name := ""
+	if picked.size() >= 1 and picked[0] is CardInstance and (picked[0] as CardInstance).card_data != null:
+		first_name = str((picked[0] as CardInstance).card_data.name)
+	if picked.size() >= 2 and picked[1] is CardInstance and (picked[1] as CardInstance).card_data != null:
+		second_name = str((picked[1] as CardInstance).card_data.name)
+	var lightning_score: float = float(strategy.call("score_interaction_target", lightning, {"id": "top_cards"}, {"game_state": gs, "player_index": 0}))
+	var miraidon_score: float = float(strategy.call("score_interaction_target", miraidon, {"id": "top_cards"}, {"game_state": gs, "player_index": 0}))
+	return run_checks([
+		assert_eq(first_name, "Miraidon ex", "Ciphermaniac should make the next draw Miraidon ex when the bench is empty"),
+		assert_true(second_name in ["Raikou V", "Iron Hands ex"], "Second top card should be another real attacker, not Energy"),
+		assert_true(miraidon_score > lightning_score, "Empty-bench Ciphermaniac scoring must rank board access above Lightning Energy"),
+	])
+
+
+func test_miraidon_rules_recognizes_chinese_ciphermaniac_name() -> String:
+	var strategy := _new_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyMiraidonLLM.gd should exist"
+	var gs := _make_game_state(2)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Zapdos", "Basic", "L", 120), 0)
+	player.bench.clear()
+	var cipher := CardInstance.create(_make_named_trainer_cd("暗码迷的解读", "Ciphermaniac's Codebreaking", "Supporter"), 0)
+	var score: float = float(strategy.call("score_action_absolute", {
+		"kind": "play_trainer",
+		"card": cipher,
+		"targets": [],
+		"requires_interaction": true,
+	}, gs, 0))
+	return run_checks([
+		assert_true(score >= 300.0, "Rules fallback should recognize 暗码迷的解读 instead of missing it due to the old name typo"),
+	])
+
+
+func test_miraidon_llm_blocks_heavy_baton_queue_match_on_non_iron_hands() -> String:
+	var strategy := _new_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyMiraidonLLM.gd should exist"
+	var gs := _make_game_state(6)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_miraidon_cd(), 0)
+	var fez_cd := _make_pokemon_cd("吉雉鸡ex", "Basic", "D", 210)
+	fez_cd.name_en = "Fezandipiti ex"
+	var fez_slot := _make_slot(fez_cd, 0)
+	player.bench.append(fez_slot)
+	var baton_cd := _make_trainer_cd("沉重接力棒", "Tool")
+	baton_cd.name_en = "Heavy Baton"
+	var baton := CardInstance.create(baton_cd, 0)
+	var action := {"kind": "attach_tool", "card": baton, "target_slot": fez_slot, "requires_interaction": false}
+	var action_id: String = str(strategy.call("_action_id_for_action", action, gs, 0))
+	strategy.set("_llm_queue_turn", 6)
+	strategy.set("_llm_decision_tree", {"actions": [{"id": action_id}]})
+	strategy.set("_llm_action_queue", [{"type": "attach_tool", "action_id": action_id, "card": "Heavy Baton", "target": "Fezandipiti ex"}])
+	var score: float = float(strategy.call("score_action_absolute", action, gs, 0))
+	return run_checks([
+		assert_true(score < 10000.0, "Queued Heavy Baton must not override rules when the target is not Iron Hands ex"),
+	])
+
+
+func test_miraidon_llm_allows_heavy_baton_queue_match_on_iron_hands() -> String:
+	var strategy := _new_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyMiraidonLLM.gd should exist"
+	var gs := _make_game_state(6)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_miraidon_cd(), 0)
+	var iron_cd := _make_pokemon_cd("Iron Hands ex", "Basic", "L", 230)
+	iron_cd.name_en = "Iron Hands ex"
+	var iron_slot := _make_slot(iron_cd, 0)
+	player.bench.append(iron_slot)
+	var baton_cd := _make_trainer_cd("Heavy Baton", "Tool")
+	baton_cd.name_en = "Heavy Baton"
+	var baton := CardInstance.create(baton_cd, 0)
+	var action := {"kind": "attach_tool", "card": baton, "target_slot": iron_slot, "requires_interaction": false}
+	var action_id: String = str(strategy.call("_action_id_for_action", action, gs, 0))
+	strategy.set("_llm_queue_turn", 6)
+	strategy.set("_llm_decision_tree", {"actions": [{"id": action_id}]})
+	strategy.set("_llm_action_queue", [{"type": "attach_tool", "action_id": action_id, "card": "Heavy Baton", "target": "Iron Hands ex"}])
+	var score: float = float(strategy.call("score_action_absolute", action, gs, 0))
+	return run_checks([
+		assert_true(score >= 90000.0, "Queued Heavy Baton should still execute when targeting Iron Hands ex"),
+	])
+
+
+func test_miraidon_llm_blocks_survival_tools_on_support_pokemon() -> String:
+	var strategy := _new_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyMiraidonLLM.gd should exist"
+	var gs := _make_game_state(4)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_miraidon_cd(), 0)
+	var greninja_cd := _make_pokemon_cd("光辉甲贺忍蛙", "Basic", "W", 130)
+	greninja_cd.name_en = "Radiant Greninja"
+	var greninja_slot := _make_slot(greninja_cd, 0)
+	player.bench.append(greninja_slot)
+	var charm := CardInstance.create(_make_named_trainer_cd("勇气护符", "Bravery Charm", "Tool"), 0)
+	var charm_action := {"kind": "attach_tool", "card": charm, "target_slot": greninja_slot, "requires_interaction": false}
+	var charm_id: String = str(strategy.call("_action_id_for_action", charm_action, gs, 0))
+	strategy.set("_llm_queue_turn", 4)
+	strategy.set("_llm_decision_tree", {"actions": [{"id": charm_id}]})
+	strategy.set("_llm_action_queue", [{"type": "attach_tool", "action_id": charm_id, "card": "Bravery Charm", "target": "Radiant Greninja"}])
+	var charm_score: float = float(strategy.call("score_action_absolute", charm_action, gs, 0))
+	var stone := CardInstance.create(_make_named_trainer_cd("森林封印石", "Forest Seal Stone", "Tool"), 0)
+	var stone_action := {"kind": "attach_tool", "card": stone, "target_slot": greninja_slot, "requires_interaction": false}
+	var stone_id: String = str(strategy.call("_action_id_for_action", stone_action, gs, 0))
+	strategy.set("_llm_queue_turn", 4)
+	strategy.set("_llm_decision_tree", {"actions": [{"id": stone_id}]})
+	strategy.set("_llm_action_queue", [{"type": "attach_tool", "action_id": stone_id, "card": "Forest Seal Stone", "target": "Radiant Greninja"}])
+	var stone_score: float = float(strategy.call("score_action_absolute", stone_action, gs, 0))
+	return run_checks([
+		assert_true(charm_score < 10000.0, "Bravery Charm queue match should be blocked on support Pokemon"),
+		assert_true(stone_score < 10000.0, "Forest Seal Stone queue match should be blocked on non-V support Pokemon"),
+	])
+
+
+func test_miraidon_llm_allows_forest_seal_stone_on_raikou_v() -> String:
+	var strategy := _new_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyMiraidonLLM.gd should exist"
+	var gs := _make_game_state(4)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_miraidon_cd(), 0)
+	var raikou_cd := _make_pokemon_cd("雷公V", "Basic", "L", 200)
+	raikou_cd.name_en = "Raikou V"
+	var raikou_slot := _make_slot(raikou_cd, 0)
+	player.bench.append(raikou_slot)
+	var stone := CardInstance.create(_make_named_trainer_cd("森林封印石", "Forest Seal Stone", "Tool"), 0)
+	var stone_action := {"kind": "attach_tool", "card": stone, "target_slot": raikou_slot, "requires_interaction": false}
+	var stone_id: String = str(strategy.call("_action_id_for_action", stone_action, gs, 0))
+	strategy.set("_llm_queue_turn", 4)
+	strategy.set("_llm_decision_tree", {"actions": [{"id": stone_id}]})
+	strategy.set("_llm_action_queue", [{"type": "attach_tool", "action_id": stone_id, "card": "Forest Seal Stone", "target": "Raikou V"}])
+	var score: float = float(strategy.call("score_action_absolute", stone_action, gs, 0))
+	return run_checks([
+		assert_true(score >= 90000.0, "Forest Seal Stone should remain allowed on Raikou V"),
+	])
+
+
+func test_miraidon_llm_blocks_lightning_energy_queue_match_on_mew_ex() -> String:
+	var strategy := _new_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyMiraidonLLM.gd should exist"
+	var gs := _make_game_state(5)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_miraidon_cd(), 0)
+	var mew_cd := _make_pokemon_cd("Mew ex", "Basic", "P", 180)
+	var mew_slot := _make_slot(mew_cd, 0)
+	player.bench.append(mew_slot)
+	var lightning := CardInstance.create(_make_energy_cd("Basic Lightning Energy", "L"), 0)
+	var action := {"kind": "attach_energy", "card": lightning, "target_slot": mew_slot, "requires_interaction": false}
+	var generator_target_score: float = float(strategy.call("score_interaction_target", mew_slot, {"id": "attach_target"}, {
+		"game_state": gs,
+		"player_index": 0,
+	}))
+	var action_id: String = str(strategy.call("_action_id_for_action", action, gs, 0))
+	strategy.set("_llm_queue_turn", 5)
+	strategy.set("_llm_decision_tree", {"actions": [{"id": action_id}]})
+	strategy.set("_llm_action_queue", [{"type": "attach_energy", "action_id": action_id, "card": "Basic Lightning Energy", "target": "Mew ex"}])
+	var llm_score: float = float(strategy.call("score_action_absolute", action, gs, 0))
+	var rules_strategy := _new_miraidon_llm_strategy()
+	var rules_score: float = float(rules_strategy.call("score_action_absolute", action, gs, 0))
+	return run_checks([
+		assert_true(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "attach_energy"}, action, gs, 0)), "Miraidon LLM should block Lightning Energy on Mew ex"),
+		assert_true(generator_target_score < 0.0, "Electric Generator target scoring should reject Mew ex instead of treating it as a low-priority target"),
+		assert_true(llm_score < 10000.0, "Queued Lightning Energy to Mew ex must not receive forced LLM execution score"),
+		assert_true(rules_score < 0.0, "Rules fallback should also penalize Lightning Energy on Mew ex"),
+	])
+
+
+func test_miraidon_llm_blocks_double_turbo_queue_match_on_mew_ex() -> String:
+	var strategy := _new_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyMiraidonLLM.gd should exist"
+	var gs := _make_game_state(5)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_miraidon_cd(), 0)
+	var mew_slot := _make_slot(_make_pokemon_cd("Mew ex", "Basic", "P", 180), 0)
+	player.bench.append(mew_slot)
+	var dte_cd := _make_energy_cd("Double Turbo Energy", "")
+	dte_cd.card_type = "Special Energy"
+	var dte := CardInstance.create(dte_cd, 0)
+	var action := {"kind": "attach_energy", "card": dte, "target_slot": mew_slot, "requires_interaction": false}
+	var action_id: String = str(strategy.call("_action_id_for_action", action, gs, 0))
+	strategy.set("_llm_queue_turn", 5)
+	strategy.set("_llm_decision_tree", {"actions": [{"id": action_id}]})
+	strategy.set("_llm_action_queue", [{"type": "attach_energy", "action_id": action_id, "card": "Double Turbo Energy", "target": "Mew ex"}])
+	var llm_score: float = float(strategy.call("score_action_absolute", action, gs, 0))
+	var rules_strategy := _new_miraidon_llm_strategy()
+	var rules_score: float = float(rules_strategy.call("score_action_absolute", action, gs, 0))
+	return run_checks([
+		assert_true(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "attach_energy"}, action, gs, 0)), "Miraidon LLM should block Double Turbo Energy on Mew ex"),
+		assert_true(llm_score < 10000.0, "Queued Double Turbo Energy to Mew ex must not receive forced LLM execution score"),
+		assert_true(rules_score < 0.0, "Rules fallback should also penalize Double Turbo Energy on Mew ex"),
+	])
+
+
+func test_miraidon_llm_allows_double_turbo_queue_match_on_iron_hands() -> String:
+	var strategy := _new_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyMiraidonLLM.gd should exist"
+	var gs := _make_game_state(5)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_miraidon_cd(), 0)
+	var iron_slot := _make_slot(_make_pokemon_cd("Iron Hands ex", "Basic", "L", 230), 0)
+	player.bench.append(iron_slot)
+	var dte_cd := _make_energy_cd("Double Turbo Energy", "")
+	dte_cd.card_type = "Special Energy"
+	var dte := CardInstance.create(dte_cd, 0)
+	var action := {"kind": "attach_energy", "card": dte, "target_slot": iron_slot, "requires_interaction": false}
+	var action_id: String = str(strategy.call("_action_id_for_action", action, gs, 0))
+	strategy.set("_llm_queue_turn", 5)
+	strategy.set("_llm_decision_tree", {"actions": [{"id": action_id}]})
+	strategy.set("_llm_action_queue", [{"type": "attach_energy", "action_id": action_id, "card": "Double Turbo Energy", "target": "Iron Hands ex"}])
+	var score: float = float(strategy.call("score_action_absolute", action, gs, 0))
+	return run_checks([
+		assert_false(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "attach_energy"}, action, gs, 0)), "Miraidon LLM should keep Double Turbo Energy legal on Iron Hands ex"),
+		assert_true(score >= 90000.0, "Queued Double Turbo Energy should still execute when targeting Iron Hands ex"),
+	])
+
+
+func test_miraidon_llm_repairs_generator_after_miraidon_bench_branch() -> String:
+	var strategy := _new_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyMiraidonLLM.gd should exist"
+	var gs := _make_game_state(10)
+	var bad_tree := {
+		"actions": [{
+			"id": "play_trainer:c11",
+			"action_id": "play_trainer:c11",
+			"type": "play_trainer",
+			"card": "Electric Generator",
+		}],
+		"branches": [{
+			"actions": [{
+				"id": "play_basic_to_bench:c13",
+				"action_id": "play_basic_to_bench:c13",
+				"type": "play_basic_to_bench",
+				"card": "Miraidon ex",
+				"interactions": {"search_targets": ["Raikou V", "Iron Hands ex"]},
+				"selection_policy": {"search_targets": ["Raikou V", "Iron Hands ex"]},
+			}],
+			"then": {
+				"actions": [{
+					"id": "attach_energy:c28:active",
+					"action_id": "attach_energy:c28:active",
+					"type": "attach_energy",
+					"card": "Lightning Energy",
+				}],
+			},
+		}],
+	}
+	var repaired: Dictionary = strategy.call("_apply_deck_specific_llm_repairs", bad_tree, gs, 0)
+	var root_actions: Array = repaired.get("actions", [])
+	var branches: Array = repaired.get("branches", [])
+	var branch: Dictionary = branches[0] if not branches.is_empty() and branches[0] is Dictionary else {}
+	var branch_actions: Array = branch.get("actions", [])
+	var first: Dictionary = branch_actions[0] if branch_actions.size() > 0 and branch_actions[0] is Dictionary else {}
+	var second: Dictionary = branch_actions[1] if branch_actions.size() > 1 and branch_actions[1] is Dictionary else {}
+	return run_checks([
+		assert_true(root_actions.is_empty(), "Miraidon repair should move Electric Generator out of the parent pre-setup queue"),
+		assert_eq(str(first.get("id", "")), "play_basic_to_bench:c13", "Miraidon ex must be benched before Generator is played"),
+		assert_eq(str(second.get("id", "")), "play_trainer:c11", "Electric Generator should execute after the Miraidon bench setup"),
+		assert_false(first.has("interactions"), "Benching Miraidon ex must not carry fake Tandem Unit search interactions"),
+		assert_false(first.has("selection_policy"), "Benching Miraidon ex must not carry fake Tandem Unit selection policy"),
+	])
+
+
+func test_miraidon_llm_repairs_generator_after_opening_setup_actions() -> String:
+	var strategy := _new_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyMiraidonLLM.gd should exist"
+	var gs := _make_game_state(2)
+	var bad_tree := {
+		"actions": [
+			{
+				"id": "play_trainer:c9",
+				"action_id": "play_trainer:c9",
+				"type": "play_trainer",
+				"card": "Electric Generator",
+			},
+			{
+				"id": "play_trainer:c3",
+				"action_id": "play_trainer:c3",
+				"type": "play_trainer",
+				"card": "Nest Ball",
+				"selection_policy": {"search_targets": ["Iron Hands ex"]},
+			},
+			{
+				"id": "use_ability:bench_0:0",
+				"action_id": "use_ability:bench_0:0",
+				"type": "use_ability",
+				"pokemon": "Miraidon ex",
+				"ability": "Tandem Unit",
+			},
+			{"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+		],
+	}
+	var repaired: Dictionary = strategy.call("_apply_deck_specific_llm_repairs", bad_tree, gs, 0)
+	var actions: Array = repaired.get("actions", [])
+	var ids: Array[String] = []
+	for raw_action: Variant in actions:
+		if raw_action is Dictionary:
+			ids.append(str((raw_action as Dictionary).get("id", "")))
+	return run_checks([
+		assert_eq(ids[0], "play_trainer:c3", "Nest Ball should happen before Electric Generator so Generator has better bench targets"),
+		assert_eq(ids[1], "use_ability:bench_0:0", "Tandem Unit should happen before Electric Generator in the opening setup chain"),
+		assert_eq(ids[2], "play_trainer:c9", "Electric Generator should move after direct bench setup actions"),
+		assert_eq(ids[ids.size() - 1], "end_turn", "End turn should remain terminal after repair"),
+	])
+
+
+func test_miraidon_llm_repairs_missing_tandem_before_end_turn() -> String:
+	var strategy := _new_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyMiraidonLLM.gd should exist"
+	var gs := _make_game_state(4)
+	var player := gs.players[0]
+	var miraidon_cd := _make_miraidon_cd()
+	miraidon_cd.abilities = [{"name": "Tandem Unit", "text": "Search your deck for up to 2 Basic Lightning Pokemon and put them onto your Bench."}]
+	player.active_pokemon = _make_slot(miraidon_cd, 0)
+	var lightning := CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0)
+	player.hand.append(lightning)
+	for i: int in 4:
+		player.deck.append(CardInstance.create(_make_pokemon_cd("Deck Filler %d" % i), 0))
+	var attach_id := "attach_energy:c%d:active" % int(lightning.instance_id)
+	strategy.set("_llm_action_catalog", {
+		"use_ability:active:0": {
+			"id": "use_ability:active:0",
+			"action_id": "use_ability:active:0",
+			"type": "use_ability",
+			"pokemon": "Miraidon ex",
+			"ability": "Tandem Unit",
+		},
+		attach_id: {
+			"id": attach_id,
+			"action_id": attach_id,
+			"type": "attach_energy",
+			"card": "Lightning Energy",
+			"position": "active",
+		},
+		"end_turn": {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	})
+	var materialized: Dictionary = strategy.call("_materialize_action_refs_in_tree", {"actions": [{"id": attach_id}, {"id": "end_turn"}]})
+	var repair: Dictionary = strategy.call("_repair_missing_productive_engine_in_tree", materialized, gs, 0)
+	var actions: Array = (repair.get("tree", {}) as Dictionary).get("actions", [])
+	var ids: Array[String] = []
+	for raw_action: Variant in actions:
+		if raw_action is Dictionary:
+			ids.append(str((raw_action as Dictionary).get("action_id", (raw_action as Dictionary).get("id", ""))))
+	return run_checks([
+		assert_true(strategy.get("_llm_action_catalog").has("use_ability:active:0"), "Test catalog should expose the legal Tandem Unit action"),
+		assert_true(ids.has("use_ability:active:0"), "Miraidon LLM repair should insert missed Tandem Unit before ending"),
+		assert_eq(ids[ids.size() - 1], "end_turn", "End turn should remain terminal after inserting Tandem Unit"),
+	])
+
+
+func test_miraidon_llm_replans_after_benching_miraidon_ex() -> String:
+	var strategy := _new_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyMiraidonLLM.gd should exist"
+	var gs := _make_game_state(6)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Mew ex", "Basic", "P", 180), 0)
+	strategy.set("_cached_turn_number", 6)
+	strategy.set("_llm_queue_turn", 6)
+	strategy.set("_llm_decision_tree", {"actions": [{"id": "attach_energy:c28:active"}]})
+	strategy.set("_llm_action_queue", [{"type": "attach_energy", "action_id": "attach_energy:c28:active"}])
+	var before: Dictionary = strategy.call("make_llm_runtime_snapshot", gs, 0)
+	player.bench.append(_make_slot(_make_miraidon_cd(), 0))
+	var after: Dictionary = strategy.call("make_llm_runtime_snapshot", gs, 0)
+	strategy.call("observe_llm_runtime_state_change", before, after, {
+		"success": true,
+		"step_kind": "main_action",
+		"action_kind": "play_basic_to_bench",
+		"pending_choice_after": "",
+	})
+	var replan_context_by_turn: Dictionary = strategy.get("_llm_replan_context_by_turn")
+	var replan_context: Dictionary = replan_context_by_turn.get(6, {})
+	var trigger: Dictionary = replan_context.get("trigger", {})
+	return run_checks([
+		assert_eq(int(before.get("miraidon_count", -1)), 0, "Before snapshot should see no Miraidon ex on board"),
+		assert_eq(int(after.get("miraidon_count", -1)), 1, "After snapshot should see Miraidon ex on board"),
+		assert_eq(int(strategy.call("get_llm_replan_count")), 1, "Benching Miraidon ex should trigger a same-turn replan for Tandem Unit"),
+		assert_false(strategy.call("has_llm_plan_for_turn", 6), "Miraidon replan should clear stale follow-up queue"),
+		assert_eq(str(trigger.get("reason", "")), "miraidon_benched_tandem_unit_now_legal", "Replan context should record the Miraidon-specific trigger"),
+	])
+
+
+func test_miraidon_opening_keeps_raichu_v_out_of_active_when_pivot_exists() -> String:
+	var strategy := _new_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyMiraidonLLM.gd should exist"
+	var player := PlayerState.new()
+	player.hand.append(CardInstance.create(_make_pokemon_cd("雷丘V", "Basic", "L", 200), 0))
+	player.hand.append(CardInstance.create(_make_pokemon_cd("怒鹦哥ex", "Basic", "C", 160), 0))
+	player.hand.append(CardInstance.create(_make_pokemon_cd("铁臂膀ex", "Basic", "L", 230), 0))
+	var plan: Dictionary = strategy.call("plan_opening_setup", player)
+	return run_checks([
+		assert_eq(int(plan.get("active_hand_index", -1)), 1, "Opening setup should prefer Squawkabilly ex over early Raichu V as active"),
+	])
+
+
 func test_raging_bolt_action_id_hints_are_compact_and_complete() -> String:
 	var strategy := _new_llm_strategy()
 	if strategy == null:
@@ -290,15 +1191,65 @@ func test_raging_bolt_action_id_hints_are_compact_and_complete() -> String:
 	var hints: PackedStringArray = payload.get("deck_strategy_hints", PackedStringArray())
 	var hint_text := "\n".join(hints)
 	var instructions_text := "\n".join(payload.get("instructions", PackedStringArray()))
-	var contract: Dictionary = payload.get("decision_tree_contract", {})
+	var supported_facts: Array = payload.get("supported_facts", [])
 	return run_checks([
-		assert_true(hints.size() <= 8, "Action-id prompt should keep Raging Bolt hints compact"),
+		assert_true(hints.size() <= 18, "Action-id prompt should keep Raging Bolt hints compact while preserving player-edited strategy"),
 		assert_str_contains(hint_text, "决策树形状", "Compact hints should include the route template, not only deck flavor"),
 		assert_str_contains(hint_text, "勇气护符", "Compact hints should include tactical tool-before-attack guidance"),
 		assert_str_contains(hint_text, "card_rules、interaction_hints", "Compact hints should delegate per-card execution to card rules and interaction hints"),
 		assert_str_contains(hint_text, "下回合准备", "Compact hints should include resource budget guidance"),
-		assert_str_contains(instructions_text, "Bad->good", "Action-id prompt should include concrete bad-to-good repair examples"),
-		assert_true((contract.get("required_branch_slots_when_legal", []) as Array).size() >= 6, "Contract should expose fixed branch slots"),
+		assert_str_contains(instructions_text, "candidate_routes", "Action-id prompt should make route ids the primary compact planning surface"),
+		assert_str_contains(instructions_text, "player-authored play requirements", "Action-id prompt should treat deck hints as player requirements, not flavor text"),
+		assert_str_contains(instructions_text, "player-editable tactical preference layer", "Action-id prompt should let player strategy reorder legal candidate routes"),
+		assert_str_contains(instructions_text, "base_priority is an engine default, not a hard order", "Candidate route priority should be advisory rather than absolute"),
+		assert_str_contains(instructions_text, "selection_policy", "Action-id prompt should prefer compact selection policy over verbose low-level interactions"),
+		assert_true(supported_facts.has("active_attack_ready"), "Payload should expose supported decision-tree facts without shipping verbose contract examples"),
+	])
+
+
+func test_action_id_prompt_preserves_player_strategy_lines_without_keyword_filter() -> String:
+	var script := _load_script(LLM_TURN_PLAN_PROMPT_BUILDER_SCRIPT_PATH)
+	if script == null:
+		return "LLMTurnPlanPromptBuilder.gd should exist"
+	var builder: RefCounted = script.new()
+	var strategy_lines := PackedStringArray()
+	for i: int in 18:
+		strategy_lines.append("custom player strategy line %02d" % i)
+	builder.call("set_deck_strategy_prompt", "custom_strategy", strategy_lines)
+	var gs := _make_game_state(6)
+	gs.players[0].active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	var payload: Dictionary = builder.call("build_action_id_request_payload", gs, 0, [{"kind": "end_turn"}])
+	var hints: PackedStringArray = payload.get("deck_strategy_hints", PackedStringArray())
+	var hint_text := "\n".join(hints)
+	return run_checks([
+		assert_eq(hints.size(), 18, "Action-id prompt should preserve the player-requirement preface plus compact strategy lines"),
+		assert_str_contains(hint_text, "deck_strategy_hints 来自玩家", "Compact hints should explicitly frame deck strategy as player-authored requirements"),
+		assert_true(hints.has("custom player strategy line 00"), "Compact hints should include the first player line"),
+		assert_true(hints.has("custom player strategy line 16"), "Compact hints should not require special keywords to preserve player strategy"),
+		assert_false(hints.has("custom player strategy line 17"), "Compact hints should still cap player text to protect prompt size"),
+	])
+
+
+func test_compact_candidate_routes_expose_advisory_base_priority() -> String:
+	var script := _load_script(LLM_TURN_PLAN_PROMPT_BUILDER_SCRIPT_PATH)
+	if script == null:
+		return "LLMTurnPlanPromptBuilder.gd should exist"
+	var builder: RefCounted = script.new()
+	var routes: Array[Dictionary] = [{
+		"id": "engine_before_end",
+		"route_action_id": "route:engine_before_end",
+		"type": "candidate_route",
+		"priority": 700,
+		"goal": "engine_setup",
+		"description": "Use engine before ending.",
+		"actions": [{"id": "use_ability:bench_0:0"}, {"id": "end_turn"}],
+	}]
+	var compact: Array = builder.call("_compact_candidate_routes", routes)
+	var route: Dictionary = compact[0] if compact.size() > 0 and compact[0] is Dictionary else {}
+	return run_checks([
+		assert_eq(int(route.get("base_priority", 0)), 700, "Compact route should expose engine score as advisory base_priority"),
+		assert_false(route.has("priority"), "Compact route should not expose priority as a hard-looking LLM ordering signal"),
+		assert_true(bool(route.get("strategy_adjustable", false)), "Compact route should mark route order as adjustable by player strategy"),
 	])
 
 
@@ -403,7 +1354,7 @@ func test_action_id_prompt_uses_compact_legal_actions() -> String:
 	]
 	var payload: Dictionary = builder.call("build_action_id_request_payload", gs, 0, actions)
 	var legal_actions: Array = payload.get("legal_actions", [])
-	var currently_legal_actions: Array = payload.get("currently_legal_actions", [])
+	var current_actions: Array = _current_legal_actions_from_payload(payload)
 	var compact_state: Dictionary = payload.get("game_state", {})
 	var tactical_summary: Dictionary = compact_state.get("tactical_summary", {})
 	var my_state: Dictionary = compact_state.get("my", {})
@@ -412,12 +1363,14 @@ func test_action_id_prompt_uses_compact_legal_actions() -> String:
 	var my_hand: Array = my_state.get("hand", [])
 	var opponent_active: Dictionary = opponent_state.get("active", {})
 	var action_groups: Dictionary = payload.get("legal_action_groups", {})
-	var tree_contract: Dictionary = payload.get("decision_tree_contract", {})
 	var instruction_text := "\n".join(payload.get("instructions", PackedStringArray()))
 	return run_checks([
 		assert_eq(str(payload.get("system_prompt_version", "")), "llm_action_id_tree_v1", "Action-id prompt should use the compact schema"),
 		assert_false(payload.has("deck_capabilities"), "Action-id prompt should not send full deck capabilities every turn"),
 		assert_false(payload.has("deck_strategy_prompt"), "Action-id prompt should not send full deck strategy text every turn"),
+		assert_false(payload.has("currently_legal_actions"), "Action-id prompt should not duplicate current actions outside legal_actions"),
+		assert_false(payload.has("future_action_groups"), "Action-id prompt should not duplicate future action grouping"),
+		assert_false(payload.has("decision_tree_contract"), "Action-id prompt should not ship verbose contract examples in every payload"),
 		assert_true(payload.has("deck_strategy_hints"), "Action-id prompt should send compact deck-specific strategy hints"),
 		assert_false(payload.has("max_tokens"), "Action-id prompt should not cap output tokens because truncation breaks JSON"),
 		assert_eq(str(compact_state.get("battle_context_schema", "")), "battle_context_compact_v1", "Action-id prompt should use compact game state"),
@@ -433,11 +1386,10 @@ func test_action_id_prompt_uses_compact_legal_actions() -> String:
 		assert_true(not action_groups.is_empty(), "Action-id prompt should include low-token legal action groups"),
 		assert_true((action_groups.get("manual_attach", []) as Array).size() >= 1, "Legal action groups should expose manual attach candidates"),
 		assert_true((action_groups.get("attack", []) as Array).size() >= 1, "Legal action groups should expose attack candidates"),
-		assert_eq(str(tree_contract.get("branch_selection", "")), "first_matching_branch_only", "Prompt should explain decision-tree branch selection semantics"),
-		assert_true((tree_contract.get("route_checklist", []) as Array).size() >= 8, "Prompt should include a route checklist for richer tree planning"),
+		assert_true((payload.get("supported_facts", []) as Array).has("always"), "Prompt should keep a compact supported fact list"),
 		assert_false(((payload.get("response_format", {}) as Dictionary).get("required", []) as Array).has("reasoning"), "Action-id schema should not require reasoning/thinking output"),
-		assert_eq(currently_legal_actions.size(), 3, "Action-id prompt should preserve the exact currently legal actions"),
-		assert_true(legal_actions.size() >= currently_legal_actions.size(), "Action-id prompt may include generic future_actions alongside current legal actions"),
+		assert_eq(current_actions.size(), 3, "Action-id prompt should preserve exact current actions inside legal_actions"),
+		assert_true(legal_actions.size() >= current_actions.size(), "Action-id prompt may include generic future_actions alongside current legal actions"),
 		assert_str_contains(str((legal_actions[0] as Dictionary).get("id", "")), "attach_energy:", "Legal action id should be semantic and stable"),
 		assert_str_contains(instruction_text, "legal_actions", "Instructions should tell the model to choose from legal_actions"),
 		assert_str_contains(instruction_text, "future_actions", "Instructions should explain standardized future action ids"),
@@ -880,6 +1832,94 @@ func test_raging_bolt_llm_generic_future_attack_matches_real_attack_later() -> S
 	])
 
 
+func test_raging_bolt_llm_blocks_low_value_redraw_when_productive_actions_visible() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(6)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	for i: int in 4:
+		player.hand.append(CardInstance.create(_make_trainer_cd("Hand resource %d" % i), 0))
+	var low_attack := {
+		"id": "attack:0:bursting_roar",
+		"action_id": "attack:0:bursting_roar",
+		"type": "attack",
+		"attack_index": 0,
+		"attack_name": "Bursting Roar",
+		"attack_quality": {"role": "desperation_redraw", "terminal_priority": "low"},
+	}
+	strategy.set("_cached_turn_number", 6)
+	strategy.set("_llm_queue_turn", 6)
+	strategy.set("_llm_decision_tree", {"actions": [low_attack]})
+	strategy.set("_llm_action_catalog", {
+		"attack:0:bursting_roar": low_attack,
+		"attach_tool:c50:active": {"id": "attach_tool:c50:active", "action_id": "attach_tool:c50:active", "type": "attach_tool", "card": "Bravery Charm"},
+	})
+	var first_attack := {"kind": "attack", "attack_index": 0, "targets": [], "requires_interaction": false}
+	var matches: bool = bool(strategy.call("_queue_item_matches", low_attack, first_attack, gs, 0))
+	var score: float = float(strategy.call("score_action_absolute", first_attack, gs, 0))
+	return run_checks([
+		assert_false(matches, "Runtime queue guard should reject low-value redraw attacks when productive non-terminal actions are visible and hand is not empty"),
+		assert_true(score < 0.0, "Runtime score fallback should also veto the low-value redraw attack so rules do not reselect it after queue rejection"),
+	])
+
+
+func test_raging_bolt_llm_blocks_low_value_redraw_when_hand_has_productive_piece() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(2)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.hand.append(CardInstance.create(_make_pokemon_cd("Slither Wing", "Basic", "F", 140), 0))
+	player.hand.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
+	player.hand.append(CardInstance.create(_make_raging_bolt_cd(), 0))
+	player.hand.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	player.hand.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
+	var low_attack := {
+		"id": "attack:0:bursting_roar",
+		"action_id": "attack:0:bursting_roar",
+		"type": "attack",
+		"attack_index": 0,
+		"attack_name": "Bursting Roar",
+		"attack_rules": {"name": "Bursting Roar", "damage": "", "text": "Discard your hand and draw 6 cards."},
+	}
+	strategy.set("_cached_turn_number", 2)
+	strategy.set("_llm_queue_turn", 2)
+	strategy.set("_llm_decision_tree", {"actions": [low_attack]})
+	strategy.set("_llm_action_catalog", {"attack:0:bursting_roar": low_attack})
+	strategy.set("_llm_action_queue", [low_attack])
+	var first_attack := {"kind": "attack", "attack_index": 0, "targets": [], "requires_interaction": false}
+	var matches: bool = bool(strategy.call("_queue_item_matches", low_attack, first_attack, gs, 0))
+	var score: float = float(strategy.call("score_action_absolute", first_attack, gs, 0))
+	return run_checks([
+		assert_false(matches, "Low-value redraw should not match the LLM queue when hand contains productive non-energy pieces"),
+		assert_true(score < 0.0, "Score fallback should veto low-value redraw when it would discard productive Pokemon/resources"),
+	])
+
+
+func test_raging_bolt_llm_low_value_guard_does_not_block_non_bolt_text_attack() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(6)
+	var player := gs.players[0]
+	var greninja_cd := _make_pokemon_cd("Radiant Greninja", "Basic", "W", 130)
+	greninja_cd.attacks = [
+		{"name": "Moonlight Shuriken", "cost": "WWC", "damage": "", "text": "This attack does 90 damage to 2 of your opponent's Pokemon."},
+	]
+	player.active_pokemon = _make_slot(greninja_cd, 0)
+	for i: int in 4:
+		player.hand.append(CardInstance.create(_make_trainer_cd("Hand resource %d" % i), 0))
+	strategy.set("_llm_action_catalog", {
+		"use_ability:bench_0:0": {"id": "use_ability:bench_0:0", "action_id": "use_ability:bench_0:0", "type": "use_ability", "pokemon": "Teal Mask Ogerpon ex"},
+	})
+	var text_attack := {"kind": "attack", "attack_index": 0, "targets": [], "requires_interaction": false}
+	var score: float = float(strategy.call("score_action_absolute", text_attack, gs, 0))
+	return assert_true(score > -1000.0, "Low-value redraw guard must not veto non-Raging-Bolt text attacks such as Moonlight Shuriken")
+
+
 func test_raging_bolt_llm_payload_exposes_not_reachable_attack_facts() -> String:
 	var strategy := _new_llm_strategy()
 	if strategy == null:
@@ -985,7 +2025,7 @@ func test_llm_rejects_low_value_redraw_attack_when_primary_attack_is_search_reac
 		{"kind": "end_turn"},
 	])
 	var attack_id := ""
-	for raw: Variant in payload.get("currently_legal_actions", []):
+	for raw: Variant in _current_legal_actions_from_payload(payload):
 		if raw is Dictionary and str((raw as Dictionary).get("type", "")) == "attack":
 			attack_id = str((raw as Dictionary).get("id", ""))
 	strategy.set("_cached_turn_number", 9)
@@ -1218,7 +2258,7 @@ func test_raging_bolt_llm_exposes_recovery_and_fezandipiti_as_productive_actions
 	var found_fez := false
 	var found_stretcher := false
 	var stretcher_schema: Dictionary = {}
-	for raw_ref: Variant in payload.get("currently_legal_actions", []):
+	for raw_ref: Variant in _current_legal_actions_from_payload(payload):
 		if raw_ref is Dictionary and str((raw_ref as Dictionary).get("card", "")) == "Night Stretcher":
 			stretcher_schema = (raw_ref as Dictionary).get("interaction_schema", {})
 	for raw_action: Variant in productive:
@@ -1257,7 +2297,7 @@ func test_ogerpon_ability_schema_uses_hand_energy_not_search() -> String:
 		{"kind": "end_turn"},
 	])
 	var ability_ref: Dictionary = {}
-	for raw: Variant in payload.get("currently_legal_actions", []):
+	for raw: Variant in _current_legal_actions_from_payload(payload):
 		if raw is Dictionary and str((raw as Dictionary).get("id", "")) == "use_ability:bench_0:0":
 			ability_ref = raw
 	var schema: Dictionary = ability_ref.get("interaction_schema", {}) if ability_ref.get("interaction_schema", {}) is Dictionary else {}
@@ -1463,7 +2503,7 @@ func test_llm_materialization_preserves_selection_policy() -> String:
 		{"kind": "end_turn"},
 	])
 	var vessel_id := ""
-	for raw: Variant in payload.get("currently_legal_actions", []):
+	for raw: Variant in _current_legal_actions_from_payload(payload):
 		if raw is Dictionary and str((raw as Dictionary).get("card", "")) == "Earthen Vessel":
 			vessel_id = str((raw as Dictionary).get("id", ""))
 	var materialized: Dictionary = strategy.call("_materialize_action_refs_in_tree", {
@@ -1539,6 +2579,82 @@ func test_llm_route_candidate_builder_exposes_primary_engine_route() -> String:
 		assert_true(route_ids.has("use_ability:bench_0:0"), "Route should include charge/draw ability before ending"),
 		assert_true(route_ids.has("play_trainer:c52"), "Route should include visible energy search"),
 		assert_true(route_ids.has("end_turn"), "Setup route should have a terminal end_turn for executor safety"),
+	])
+
+
+func test_llm_route_candidate_builder_treats_pokemon_search_ability_as_setup() -> String:
+	var builder := _new_route_candidate_builder()
+	if builder == null:
+		return "LLMRouteCandidateBuilder.gd should exist"
+	var tandem := {
+		"id": "use_ability:active:0",
+		"action_id": "use_ability:active:0",
+		"type": "use_ability",
+		"pokemon": "Miraidon ex",
+		"ability": "Tandem Unit",
+		"card_rules": {"tags": ["search_deck", "pokemon_related", "bench_related"]},
+		"ability_rules": {"tags": ["search_deck", "pokemon_related", "bench_related"]},
+	}
+	var end_turn := {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"}
+	var routes: Array = builder.call("build_candidate_routes", [tandem, end_turn], [], {})
+	var engine_route: Dictionary = {}
+	for raw: Variant in routes:
+		if raw is Dictionary and str((raw as Dictionary).get("id", "")) == "engine_before_end":
+			engine_route = raw
+			break
+	var route_ids: Array[String] = []
+	for raw_action: Variant in engine_route.get("actions", []):
+		if raw_action is Dictionary:
+			route_ids.append(str((raw_action as Dictionary).get("id", "")))
+	return run_checks([
+		assert_false(engine_route.is_empty(), "Pokemon-search abilities should create a productive setup route"),
+		assert_true(route_ids.has("use_ability:active:0"), "Tandem Unit should be exposed before end_turn instead of being hidden as a generic ability"),
+		assert_true(route_ids.has("end_turn"), "Setup route should still terminate safely"),
+	])
+
+
+func test_llm_route_candidate_builder_demotes_turn_ending_draw_ability() -> String:
+	var builder := _new_route_candidate_builder()
+	if builder == null:
+		return "LLMRouteCandidateBuilder.gd should exist"
+	var rotom := {
+		"id": "use_ability:active:0",
+		"action_id": "use_ability:active:0",
+		"type": "use_ability",
+		"pokemon": "Rotom V",
+		"ability": "Quick Charge",
+		"card_rules": {"effect_id": "8ef5ff61fd97838af568f00fe3b0e3ea", "tags": ["draw", "ability_engine", "ends_turn"]},
+		"ability_rules": {"tags": ["draw", "ends_turn"]},
+	}
+	var poffin := {
+		"id": "play_trainer:c12",
+		"action_id": "play_trainer:c12",
+		"type": "play_trainer",
+		"card": "Buddy-Buddy Poffin",
+		"card_rules": {"tags": ["search_deck", "bench_related", "pokemon_related"]},
+	}
+	var end_turn := {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"}
+	var routes: Array = builder.call("build_candidate_routes", [rotom, poffin, end_turn], [], {})
+	var engine_route: Dictionary = {}
+	var terminal_route: Dictionary = {}
+	for raw: Variant in routes:
+		if raw is Dictionary:
+			var route := raw as Dictionary
+			if str(route.get("id", "")) == "engine_before_end":
+				engine_route = route
+			if str(route.get("id", "")) == "terminal_draw_fallback":
+				terminal_route = route
+	var engine_ids: Array[String] = []
+	for raw_action: Variant in engine_route.get("actions", []):
+		if raw_action is Dictionary:
+			engine_ids.append(str((raw_action as Dictionary).get("id", "")))
+	var terminal_actions: Array = terminal_route.get("actions", []) if terminal_route.get("actions", []) is Array else []
+	var first_terminal: Dictionary = terminal_actions[0] if not terminal_actions.is_empty() and terminal_actions[0] is Dictionary else {}
+	return run_checks([
+		assert_false(engine_ids.has("use_ability:active:0"), "Turn-ending draw ability must not be treated as a productive engine action"),
+		assert_true(engine_ids.has("play_trainer:c12"), "Non-terminal setup search should remain a productive engine action"),
+		assert_false(terminal_route.is_empty(), "Turn-ending draw ability should still be exposed as a low-priority fallback route"),
+		assert_eq(str(first_terminal.get("id", "")), "use_ability:active:0", "Fallback route should contain the terminal draw ability"),
 	])
 
 
@@ -1639,6 +2755,39 @@ func test_llm_route_candidate_builder_exposes_generic_active_attach_attack_route
 	])
 
 
+func test_llm_route_candidate_builder_skips_low_value_active_attach_route() -> String:
+	var builder := _new_route_candidate_builder()
+	if builder == null:
+		return "LLMRouteCandidateBuilder.gd should exist"
+	var attach := {
+		"id": "attach_energy:c21:active",
+		"action_id": "attach_energy:c21:active",
+		"type": "attach_energy",
+		"card": "Grass Energy",
+		"energy_type": "Grass",
+		"position": "active",
+	}
+	var end_turn := {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"}
+	var routes: Array = builder.call("build_candidate_routes", [attach, end_turn], [], {
+		"manual_attach_enables_best_active_attack": true,
+		"best_manual_attach_to_best_active_attack_action_id": "attach_energy:c21:active",
+		"best_active_attack_after_manual_attach": {
+			"attack_name": "Bursting Roar",
+			"attack_index": 0,
+			"estimated_damage_after_best_manual_attach": 0,
+			"kos_opponent_active_after_best_manual_attach": false,
+			"attack_quality": {"role": "desperation_redraw", "terminal_priority": "low"},
+		},
+	})
+	var saw_low_attach_route := false
+	for raw: Variant in routes:
+		if raw is Dictionary and str((raw as Dictionary).get("id", "")) == "manual_attach_to_active_attack":
+			saw_low_attach_route = true
+	return run_checks([
+		assert_false(saw_low_attach_route, "Candidate builder should not spend manual attach just to enable low-value redraw attack"),
+	])
+
+
 func test_llm_route_candidate_materializes_into_exact_actions() -> String:
 	var strategy := _new_llm_strategy()
 	if strategy == null:
@@ -1680,6 +2829,68 @@ func test_llm_route_candidate_materializes_into_exact_actions() -> String:
 		assert_eq(ids[0], "use_ability:bench_0:0", "Expanded route should preserve first action order"),
 		assert_eq(ids[1], "play_trainer:c52", "Expanded route should preserve search action order"),
 		assert_eq(ids[2], "end_turn", "Expanded route should preserve terminal action"),
+	])
+
+
+func test_llm_candidate_route_fallback_skips_low_value_active_attach_when_primary_route_exists() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var active_attach_route := {
+		"id": "route:manual_attach_to_active_attack",
+		"action_id": "route:manual_attach_to_active_attack",
+		"type": "route",
+		"candidate_route": true,
+		"priority": 975,
+		"goal": "manual_attach_to_active_attack",
+		"actions": [
+			{"id": "attach_energy:c21:active", "action_id": "attach_energy:c21:active", "type": "attach_energy", "position": "active"},
+			{"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+		],
+		"future_goals": [{
+			"id": "goal:manual_attach_best_active_attack",
+			"type": "goal",
+			"attack_name": "Bursting Roar",
+			"attack_quality": {"role": "desperation_redraw", "terminal_priority": "low"},
+		}],
+	}
+	var primary_route := {
+		"id": "route:primary_visible_engine",
+		"action_id": "route:primary_visible_engine",
+		"type": "route",
+		"candidate_route": true,
+		"priority": 900,
+		"goal": "setup_to_primary_attack",
+		"actions": [
+			{"id": "use_ability:bench_0:0", "action_id": "use_ability:bench_0:0", "type": "use_ability"},
+			{"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+		],
+		"future_goals": [{
+			"id": "future:attack_after_visible_engine:active:1:Thundering Bolt",
+			"type": "attack",
+			"future": true,
+			"attack_name": "Thundering Bolt",
+			"attack_quality": {"role": "primary_damage", "terminal_priority": "high"},
+		}],
+	}
+	strategy.set("_llm_route_candidates_by_id", {
+		"route:manual_attach_to_active_attack": active_attach_route,
+		"route:primary_visible_engine": primary_route,
+	})
+	strategy.set("_llm_action_catalog", {
+		"route:manual_attach_to_active_attack": active_attach_route,
+		"route:primary_visible_engine": primary_route,
+		"attach_energy:c21:active": {"id": "attach_energy:c21:active", "action_id": "attach_energy:c21:active", "type": "attach_energy", "position": "active"},
+		"use_ability:bench_0:0": {"id": "use_ability:bench_0:0", "action_id": "use_ability:bench_0:0", "type": "use_ability"},
+		"end_turn": {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	})
+	var tree: Dictionary = strategy.call("_candidate_route_fallback_tree")
+	var branches: Array = tree.get("branches", []) if tree.get("branches", []) is Array else []
+	var first_branch: Dictionary = branches[0] if not branches.is_empty() and branches[0] is Dictionary else {}
+	var actions: Array = first_branch.get("actions", []) if first_branch.get("actions", []) is Array else []
+	var first_action: Dictionary = actions[0] if not actions.is_empty() and actions[0] is Dictionary else {}
+	return run_checks([
+		assert_eq(str(first_action.get("id", "")), "route:primary_visible_engine", "Response-error fallback should prefer primary engine over low-value active attach"),
 	])
 
 
@@ -1842,6 +3053,46 @@ func test_llm_route_compiler_inserts_draw_and_recovery_before_end_turn() -> Stri
 	])
 
 
+func test_llm_route_compiler_does_not_insert_turn_ending_draw_before_setup() -> String:
+	var compiler := _new_route_compiler()
+	if compiler == null:
+		return "LLMRouteCompiler.gd should exist"
+	var catalog := {
+		"use_ability:active:0": {
+			"id": "use_ability:active:0",
+			"action_id": "use_ability:active:0",
+			"type": "use_ability",
+			"pokemon": "Rotom V",
+			"ability": "Quick Charge",
+			"card_rules": {"effect_id": "8ef5ff61fd97838af568f00fe3b0e3ea", "tags": ["draw", "ability_engine", "ends_turn"]},
+			"ability_rules": {"tags": ["draw", "ends_turn"]},
+		},
+		"play_trainer:c12": {
+			"id": "play_trainer:c12",
+			"action_id": "play_trainer:c12",
+			"type": "play_trainer",
+			"card": "Buddy-Buddy Poffin",
+			"card_rules": {"tags": ["search_deck", "bench_related", "pokemon_related"]},
+		},
+		"end_turn": {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	}
+	var result: Dictionary = compiler.call("compile_queue", [
+		{"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	], catalog)
+	var queue: Array = result.get("queue", [])
+	var ids: Array[String] = []
+	var capabilities: Array[String] = []
+	for raw_action: Variant in queue:
+		if raw_action is Dictionary:
+			ids.append(str((raw_action as Dictionary).get("action_id", "")))
+			capabilities.append(str((raw_action as Dictionary).get("capability", "")))
+	return run_checks([
+		assert_false(ids.has("use_ability:active:0"), "Compiler must not auto-insert Rotom-like turn-ending draw before end_turn"),
+		assert_true(ids.has("play_trainer:c12"), "Compiler should still insert visible setup search before end_turn"),
+		assert_false(capabilities.has("terminal_draw_ability"), "Terminal draw abilities should not be treated as safe insertions"),
+	])
+
+
 func test_llm_route_compiler_skips_future_actions_as_insertions() -> String:
 	var compiler := _new_route_compiler()
 	if compiler == null:
@@ -1940,6 +3191,50 @@ func test_llm_route_compiler_does_not_insert_churn_before_future_attack_goal() -
 		assert_false(ids.has("use_ability:bench_1:0"), "Compiler must not insert Greninja discard-draw before an exposed future attack goal"),
 		assert_false(ids.has("play_trainer:c32"), "Compiler must not insert Trekking Shoes before an exposed future attack goal"),
 		assert_false(ids.has("play_trainer:c33"), "Compiler must not insert recovery churn before an exposed future attack goal"),
+	])
+
+
+func test_llm_route_compiler_removes_low_value_redraw_attack_when_deck_is_risky() -> String:
+	var compiler := _new_route_compiler()
+	if compiler == null:
+		return "LLMRouteCompiler.gd should exist"
+	var gs := _make_game_state(7)
+	for i: int in 10:
+		gs.players[0].deck.append(CardInstance.create(_make_trainer_cd("Deck filler %d" % i), 0))
+	for i: int in 5:
+		gs.players[0].hand.append(CardInstance.create(_make_trainer_cd("Hand card %d" % i), 0))
+	var low_attack_id := "attack:0:bursting_roar"
+	var ogerpon_id := "use_ability:bench_0:0"
+	var catalog := {
+		low_attack_id: {
+			"id": low_attack_id,
+			"action_id": low_attack_id,
+			"type": "attack",
+			"attack_index": 0,
+			"attack_name": "Bursting Roar",
+			"attack_quality": {"role": "desperation_redraw", "terminal_priority": "low"},
+		},
+		ogerpon_id: {
+			"id": ogerpon_id,
+			"action_id": ogerpon_id,
+			"type": "use_ability",
+			"pokemon": "Teal Mask Ogerpon ex",
+			"card_rules": {"tags": ["energy_related", "draw", "charge_engine", "productive_engine"]},
+		},
+		"end_turn": {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	}
+	var result: Dictionary = compiler.call("compile_queue", [
+		{"id": low_attack_id, "action_id": low_attack_id, "type": "attack", "attack_index": 0, "attack_name": "Bursting Roar", "attack_quality": {"role": "desperation_redraw", "terminal_priority": "low"}},
+	], catalog, gs, 0)
+	var queue: Array = result.get("queue", [])
+	var ids: Array[String] = []
+	for raw_action: Variant in queue:
+		if raw_action is Dictionary:
+			ids.append(str((raw_action as Dictionary).get("action_id", "")))
+	return run_checks([
+		assert_false(ids.has(low_attack_id), "Deck-risk compiler must remove low-value redraw attacks instead of forcing deckout pressure"),
+		assert_true(ids.has(ogerpon_id), "After removing risky redraw, compiler should still preserve productive setup before ending"),
+		assert_true((result.get("notes", []) as Array).has("removed_low_value_attack_for_deck_or_hand_risk"), "Compile result should audit why the redraw attack was removed"),
 	])
 
 
@@ -2043,7 +3338,7 @@ func test_raging_bolt_llm_repairs_missing_safe_engine_before_terminal() -> Strin
 		{"kind": "end_turn"},
 	])
 	var attack_id := ""
-	for raw: Variant in payload.get("currently_legal_actions", []):
+	for raw: Variant in _current_legal_actions_from_payload(payload):
 		if raw is Dictionary and str((raw as Dictionary).get("type", "")) == "attack":
 			attack_id = str((raw as Dictionary).get("id", ""))
 	var materialized: Dictionary = strategy.call("_materialize_action_refs_in_tree", {"actions": [{"id": attack_id}]})
@@ -2120,7 +3415,7 @@ func test_llm_rejects_shallow_setup_branch_when_visible_engine_attack_is_reachab
 		{"kind": "end_turn"},
 	])
 	var nest_id := ""
-	for raw: Variant in payload.get("currently_legal_actions", []):
+	for raw: Variant in _current_legal_actions_from_payload(payload):
 		if raw is Dictionary and str((raw as Dictionary).get("card", "")) == "Nest Ball":
 			nest_id = str((raw as Dictionary).get("id", ""))
 	strategy.set("_cached_turn_number", 9)
@@ -2156,7 +3451,7 @@ func test_llm_payload_marks_hand_energy_resource_conflicts() -> String:
 	var ability_action := {"kind": "use_ability", "source_slot": player.active_pokemon, "ability_index": 0, "requires_interaction": true}
 	var attach_action := {"kind": "attach_energy", "card": grass, "target_slot": player.active_pokemon}
 	var payload: Dictionary = strategy.call("build_action_id_request_payload_for_test", gs, 0, [ability_action, attach_action, {"kind": "end_turn"}])
-	var current_actions: Array = payload.get("currently_legal_actions", [])
+	var current_actions: Array = _current_legal_actions_from_payload(payload)
 	var ability_ref: Dictionary = {}
 	var attach_ref: Dictionary = {}
 	for raw: Variant in current_actions:
@@ -2203,7 +3498,7 @@ func test_llm_post_processing_removes_resource_conflicting_actions() -> String:
 	var ability_action := {"kind": "use_ability", "source_slot": player.active_pokemon, "ability_index": 0, "requires_interaction": true}
 	var attach_action := {"kind": "attach_energy", "card": grass, "target_slot": player.active_pokemon}
 	var payload: Dictionary = strategy.call("build_action_id_request_payload_for_test", gs, 0, [ability_action, attach_action, {"kind": "end_turn"}])
-	var current_actions: Array = payload.get("currently_legal_actions", [])
+	var current_actions: Array = _current_legal_actions_from_payload(payload)
 	var ability_id := ""
 	var attach_id := ""
 	for raw_ref: Variant in current_actions:
@@ -3552,10 +4847,11 @@ func test_llm_queue_controls_earthen_vessel_search_targets() -> String:
 	var grass := CardInstance.create(_make_energy_cd("Basic Grass Energy", "G"), 0)
 	var fighting := CardInstance.create(_make_energy_cd("Basic Fighting Energy", "F"), 0)
 	var lightning := CardInstance.create(_make_energy_cd("Basic Lightning Energy", "L"), 0)
+	var second_lightning := CardInstance.create(_make_energy_cd("Basic Lightning Energy", "L"), 0)
 	_inject_llm_queue(strategy, 3, [
 		{"type": "play_trainer", "card": "Earthen Vessel", "search_target": "Basic Lightning Energy,Basic Fighting Energy"},
 	])
-	var picked: Array = strategy.call("pick_interaction_items", [grass, fighting, lightning], {"id": "search_energy", "max_select": 2}, {
+	var picked: Array = strategy.call("pick_interaction_items", [lightning, second_lightning, fighting, grass], {"id": "search_energy", "max_select": 2}, {
 		"game_state": gs,
 		"player_index": 0,
 		"pending_effect_kind": "trainer",

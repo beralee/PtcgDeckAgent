@@ -11,6 +11,10 @@ const MIRAIDON_DECK_ID := 575720
 const RAGING_BOLT_DECK_ID := 575718
 const MIRAIDON_STRATEGY_ID := "miraidon"
 const RAGING_BOLT_LLM_STRATEGY_ID := "raging_bolt_ogerpon_llm"
+const DEFAULT_RULE_DECK_ID := MIRAIDON_DECK_ID
+const DEFAULT_LLM_DECK_ID := RAGING_BOLT_DECK_ID
+const DEFAULT_RULE_STRATEGY_ID := MIRAIDON_STRATEGY_ID
+const DEFAULT_LLM_STRATEGY_ID := RAGING_BOLT_LLM_STRATEGY_ID
 
 const DEFAULT_MAX_STEPS := 260
 const DEFAULT_LLM_WAIT_POLL_SECONDS := 0.10
@@ -23,31 +27,55 @@ var output_root: String = "user://match_records/ai_duels"
 var _registry = DeckStrategyRegistryScript.new()
 
 
-func run_rule_miraidon_vs_llm_raging_bolt(games: int = 1, options: Dictionary = {}) -> Dictionary:
+func run_rule_vs_llm(games: int = 1, options: Dictionary = {}) -> Dictionary:
 	var normalized_games: int = maxi(games, 1)
 	var results: Array[Dictionary] = []
-	var wins := {"miraidon": 0, "raging_bolt_llm": 0, "draw_or_failed": 0}
+	var wins := {"rule_ai": 0, "llm_ai": 0, "draw_or_failed": 0}
 	for game_index: int in normalized_games:
 		var result: Dictionary = await _run_one_logged_duel(game_index, options)
 		results.append(result)
 		match int(result.get("winner_index", -1)):
 			0:
-				wins["miraidon"] = int(wins["miraidon"]) + 1
+				wins["rule_ai"] = int(wins["rule_ai"]) + 1
 			1:
-				wins["raging_bolt_llm"] = int(wins["raging_bolt_llm"]) + 1
+				wins["llm_ai"] = int(wins["llm_ai"]) + 1
 			_:
 				wins["draw_or_failed"] = int(wins["draw_or_failed"]) + 1
+	var report_options := build_default_options()
+	for key: Variant in options.keys():
+		report_options[str(key)] = options.get(key)
+	if options.has("miraidon_deck_id") and not options.has("rule_deck_id"):
+		report_options["rule_deck_id"] = int(options.get("miraidon_deck_id"))
+	if options.has("raging_bolt_deck_id") and not options.has("llm_deck_id"):
+		report_options["llm_deck_id"] = int(options.get("raging_bolt_deck_id"))
 	return {
 		"games": normalized_games,
 		"wins": wins,
 		"llm_health": _aggregate_llm_health(results, false),
-		"miraidon_win_rate": float(wins["miraidon"]) / float(normalized_games),
-		"raging_bolt_llm_win_rate": float(wins["raging_bolt_llm"]) / float(normalized_games),
+		"rule_win_rate": float(wins["rule_ai"]) / float(normalized_games),
+		"llm_win_rate": float(wins["llm_ai"]) / float(normalized_games),
+		"rule_deck_id": int(report_options.get("rule_deck_id", DEFAULT_RULE_DECK_ID)),
+		"llm_deck_id": int(report_options.get("llm_deck_id", DEFAULT_LLM_DECK_ID)),
+		"rule_strategy_id": str(report_options.get("rule_strategy_id", DEFAULT_RULE_STRATEGY_ID)),
+		"llm_strategy_id": str(report_options.get("llm_strategy_id", DEFAULT_LLM_STRATEGY_ID)),
 		"results": results,
 	}
 
 
-func run_llm_raging_bolt_self_play(games: int = 1, options: Dictionary = {}) -> Dictionary:
+func run_rule_miraidon_vs_llm_raging_bolt(games: int = 1, options: Dictionary = {}) -> Dictionary:
+	var report: Dictionary = await run_rule_vs_llm(games, options)
+	var wins: Dictionary = report.get("wins", {})
+	report["miraidon_win_rate"] = float(report.get("rule_win_rate", 0.0))
+	report["raging_bolt_llm_win_rate"] = float(report.get("llm_win_rate", 0.0))
+	report["legacy_wins"] = {
+		"miraidon": int(wins.get("rule_ai", 0)),
+		"raging_bolt_llm": int(wins.get("llm_ai", 0)),
+		"draw_or_failed": int(wins.get("draw_or_failed", 0)),
+	}
+	return report
+
+
+func run_llm_self_play(games: int = 1, options: Dictionary = {}) -> Dictionary:
 	var normalized_games: int = maxi(games, 1)
 	var results: Array[Dictionary] = []
 	var wins := {"player_0": 0, "player_1": 0, "draw_or_failed": 0}
@@ -71,10 +99,18 @@ func run_llm_raging_bolt_self_play(games: int = 1, options: Dictionary = {}) -> 
 	}
 
 
+func run_llm_raging_bolt_self_play(games: int = 1, options: Dictionary = {}) -> Dictionary:
+	return await run_llm_self_play(games, options)
+
+
 func build_default_options() -> Dictionary:
 	return {
 		"miraidon_deck_id": MIRAIDON_DECK_ID,
 		"raging_bolt_deck_id": RAGING_BOLT_DECK_ID,
+		"rule_deck_id": DEFAULT_RULE_DECK_ID,
+		"llm_deck_id": DEFAULT_LLM_DECK_ID,
+		"rule_strategy_id": DEFAULT_RULE_STRATEGY_ID,
+		"llm_strategy_id": DEFAULT_LLM_STRATEGY_ID,
 		"first_player_index": 0,
 		"seed": 20260426,
 		"max_steps": DEFAULT_MAX_STEPS,
@@ -86,13 +122,13 @@ func build_default_options() -> Dictionary:
 	}
 
 
-func build_self_play_options() -> Dictionary:
+func build_self_play_options(deck_id: int = RAGING_BOLT_DECK_ID, strategy_id: String = RAGING_BOLT_LLM_STRATEGY_ID) -> Dictionary:
 	var options := build_default_options()
 	options["mode"] = "llm_raging_bolt_self_play"
-	options["player_0_deck_id"] = RAGING_BOLT_DECK_ID
-	options["player_1_deck_id"] = RAGING_BOLT_DECK_ID
-	options["player_0_strategy_id"] = RAGING_BOLT_LLM_STRATEGY_ID
-	options["player_1_strategy_id"] = RAGING_BOLT_LLM_STRATEGY_ID
+	options["player_0_deck_id"] = deck_id
+	options["player_1_deck_id"] = deck_id
+	options["player_0_strategy_id"] = strategy_id
+	options["player_1_strategy_id"] = strategy_id
 	return options
 
 
@@ -101,18 +137,23 @@ func _run_one_logged_self_play(game_index: int, options: Dictionary) -> Dictiona
 	for key: Variant in options.keys():
 		merged_options[str(key)] = options.get(key)
 
-	var deck_id: int = int(merged_options.get("raging_bolt_deck_id", RAGING_BOLT_DECK_ID))
+	var player_0_deck_id: int = int(merged_options.get("player_0_deck_id", merged_options.get("raging_bolt_deck_id", RAGING_BOLT_DECK_ID)))
+	var player_1_deck_id: int = int(merged_options.get("player_1_deck_id", merged_options.get("raging_bolt_deck_id", RAGING_BOLT_DECK_ID)))
+	var player_0_strategy_id := str(merged_options.get("player_0_strategy_id", RAGING_BOLT_LLM_STRATEGY_ID))
+	var player_1_strategy_id := str(merged_options.get("player_1_strategy_id", RAGING_BOLT_LLM_STRATEGY_ID))
 	var seed: int = int(merged_options.get("seed", 20260426)) + game_index
 	var first_player_index: int = clampi(int(merged_options.get("first_player_index", 0)), 0, 1)
 	var max_steps: int = maxi(int(merged_options.get("max_steps", DEFAULT_MAX_STEPS)), 1)
 
 	var card_database = AutoloadResolverScript.get_card_database()
-	var deck: DeckData = card_database.get_deck(deck_id) if card_database != null else null
-	if deck == null:
+	var player_0_deck: DeckData = card_database.get_deck(player_0_deck_id) if card_database != null else null
+	var player_1_deck: DeckData = card_database.get_deck(player_1_deck_id) if card_database != null else null
+	if player_0_deck == null or player_1_deck == null:
 		return {
 			"winner_index": -1,
 			"failure_reason": "missing_deck",
-			"raging_bolt_deck_id": deck_id,
+			"player_0_deck_id": player_0_deck_id,
+			"player_1_deck_id": player_1_deck_id,
 		}
 
 	CardInstance.reset_id_counter()
@@ -125,16 +166,16 @@ func _run_one_logged_self_play(game_index: int, options: Dictionary) -> Dictiona
 		recorder = BattleRecorderScript.new()
 		var root_path := str(merged_options.get("output_root", output_root))
 		recorder.call("set_output_root", root_path)
-		recorder.call("start_match", _build_self_play_meta(seed, first_player_index, deck), {})
+		recorder.call("start_match", _build_self_play_meta(seed, first_player_index, player_0_deck, player_1_deck, player_0_strategy_id, player_1_strategy_id), {})
 		gsm.action_logged.connect(func(action: GameAction) -> void:
 			_record_action(recorder, gsm, action)
 		)
 
-	gsm.start_game(deck, deck, first_player_index)
+	gsm.start_game(player_0_deck, player_1_deck, first_player_index)
 	if recorder != null:
-		recorder.call("update_match_context", _build_self_play_meta(seed, first_player_index, deck), _serialize_state(gsm.game_state))
+		recorder.call("update_match_context", _build_self_play_meta(seed, first_player_index, player_0_deck, player_1_deck, player_0_strategy_id, player_1_strategy_id), _serialize_state(gsm.game_state))
 		recorder.call("record_event", _make_event(gsm, "match_started", -1, {
-			"mode": "llm_raging_bolt_self_play",
+			"mode": str(merged_options.get("mode", "llm_self_play")),
 			"seed": seed,
 		}))
 		_record_snapshot(recorder, gsm, "match_start")
@@ -143,8 +184,8 @@ func _run_one_logged_self_play(game_index: int, options: Dictionary) -> Dictiona
 	bridge.bind(gsm)
 	bridge.bootstrap_pending_setup()
 
-	var player_0_ai := _make_ai(0, RAGING_BOLT_LLM_STRATEGY_ID, deck)
-	var player_1_ai := _make_ai(1, RAGING_BOLT_LLM_STRATEGY_ID, deck)
+	var player_0_ai := _make_ai(0, player_0_strategy_id, player_0_deck)
+	var player_1_ai := _make_ai(1, player_1_strategy_id, player_1_deck)
 	var steps := 0
 	var failure_reason := ""
 	while steps < max_steps:
@@ -190,10 +231,10 @@ func _run_one_logged_self_play(game_index: int, options: Dictionary) -> Dictiona
 		"steps": steps,
 		"seed": seed,
 		"first_player_index": first_player_index,
-		"player_0_deck_id": deck_id,
-		"player_1_deck_id": deck_id,
-		"player_0_strategy_id": RAGING_BOLT_LLM_STRATEGY_ID,
-		"player_1_strategy_id": RAGING_BOLT_LLM_STRATEGY_ID,
+		"player_0_deck_id": player_0_deck_id,
+		"player_1_deck_id": player_1_deck_id,
+		"player_0_strategy_id": player_0_strategy_id,
+		"player_1_strategy_id": player_1_strategy_id,
 		"player_0_llm_audit_log_path": str(p0_strategy.call("get_llm_audit_log_path")) if p0_strategy != null and p0_strategy.has_method("get_llm_audit_log_path") else "",
 		"player_1_llm_audit_log_path": str(p1_strategy.call("get_llm_audit_log_path")) if p1_strategy != null and p1_strategy.has_method("get_llm_audit_log_path") else "",
 		"player_0_llm_stats": p0_strategy.call("get_llm_stats") if p0_strategy != null and p0_strategy.has_method("get_llm_stats") else {},
@@ -215,21 +256,29 @@ func _run_one_logged_duel(game_index: int, options: Dictionary) -> Dictionary:
 	for key: Variant in options.keys():
 		merged_options[str(key)] = options.get(key)
 
-	var miraidon_deck_id: int = int(merged_options.get("miraidon_deck_id", MIRAIDON_DECK_ID))
-	var raging_bolt_deck_id: int = int(merged_options.get("raging_bolt_deck_id", RAGING_BOLT_DECK_ID))
+	var rule_deck_id: int = int(merged_options.get("rule_deck_id", DEFAULT_RULE_DECK_ID))
+	var llm_deck_id: int = int(merged_options.get("llm_deck_id", DEFAULT_LLM_DECK_ID))
+	if options.has("miraidon_deck_id") and not options.has("rule_deck_id"):
+		rule_deck_id = int(options.get("miraidon_deck_id"))
+	if options.has("raging_bolt_deck_id") and not options.has("llm_deck_id"):
+		llm_deck_id = int(options.get("raging_bolt_deck_id"))
+	var rule_strategy_id := str(merged_options.get("rule_strategy_id", DEFAULT_RULE_STRATEGY_ID))
+	var llm_strategy_id := str(merged_options.get("llm_strategy_id", DEFAULT_LLM_STRATEGY_ID))
 	var seed: int = int(merged_options.get("seed", 20260426)) + game_index
 	var first_player_index: int = clampi(int(merged_options.get("first_player_index", 0)), 0, 1)
 	var max_steps: int = maxi(int(merged_options.get("max_steps", DEFAULT_MAX_STEPS)), 1)
 
 	var card_database = AutoloadResolverScript.get_card_database()
-	var miraidon_deck: DeckData = card_database.get_deck(miraidon_deck_id) if card_database != null else null
-	var raging_bolt_deck: DeckData = card_database.get_deck(raging_bolt_deck_id) if card_database != null else null
-	if miraidon_deck == null or raging_bolt_deck == null:
+	var rule_deck: DeckData = card_database.get_deck(rule_deck_id) if card_database != null else null
+	var llm_deck: DeckData = card_database.get_deck(llm_deck_id) if card_database != null else null
+	if rule_deck == null or llm_deck == null:
 		return {
 			"winner_index": -1,
 			"failure_reason": "missing_deck",
-			"miraidon_deck_id": miraidon_deck_id,
-			"raging_bolt_deck_id": raging_bolt_deck_id,
+			"rule_deck_id": rule_deck_id,
+			"llm_deck_id": llm_deck_id,
+			"miraidon_deck_id": rule_deck_id,
+			"raging_bolt_deck_id": llm_deck_id,
 		}
 
 	CardInstance.reset_id_counter()
@@ -242,14 +291,14 @@ func _run_one_logged_duel(game_index: int, options: Dictionary) -> Dictionary:
 		recorder = BattleRecorderScript.new()
 		var root_path := str(merged_options.get("output_root", output_root))
 		recorder.call("set_output_root", root_path)
-		recorder.call("start_match", _build_meta(seed, first_player_index, miraidon_deck, raging_bolt_deck), {})
+		recorder.call("start_match", _build_meta(seed, first_player_index, rule_deck, llm_deck, rule_strategy_id, llm_strategy_id), {})
 		gsm.action_logged.connect(func(action: GameAction) -> void:
 			_record_action(recorder, gsm, action)
 		)
 
-	gsm.start_game(miraidon_deck, raging_bolt_deck, first_player_index)
+	gsm.start_game(rule_deck, llm_deck, first_player_index)
 	if recorder != null:
-		recorder.call("update_match_context", _build_meta(seed, first_player_index, miraidon_deck, raging_bolt_deck), _serialize_state(gsm.game_state))
+		recorder.call("update_match_context", _build_meta(seed, first_player_index, rule_deck, llm_deck, rule_strategy_id, llm_strategy_id), _serialize_state(gsm.game_state))
 		recorder.call("record_event", _make_event(gsm, "match_started", -1, {
 			"mode": "ai_rule_vs_llm",
 			"seed": seed,
@@ -260,8 +309,8 @@ func _run_one_logged_duel(game_index: int, options: Dictionary) -> Dictionary:
 	bridge.bind(gsm)
 	bridge.bootstrap_pending_setup()
 
-	var miraidon_ai := _make_ai(0, MIRAIDON_STRATEGY_ID, miraidon_deck)
-	var raging_bolt_ai := _make_ai(1, RAGING_BOLT_LLM_STRATEGY_ID, raging_bolt_deck)
+	var rule_ai := _make_ai(0, rule_strategy_id, rule_deck)
+	var llm_ai := _make_ai(1, llm_strategy_id, llm_deck)
 	var steps := 0
 	var failure_reason := ""
 	while steps < max_steps:
@@ -273,13 +322,13 @@ func _run_one_logged_duel(game_index: int, options: Dictionary) -> Dictionary:
 				progressed = bridge.resolve_pending_prompt()
 			else:
 				var owner: int = bridge.get_pending_prompt_owner()
-				var prompt_ai: AIOpponent = miraidon_ai if owner == 0 else raging_bolt_ai
+				var prompt_ai: AIOpponent = rule_ai if owner == 0 else llm_ai
 				progressed = prompt_ai.run_single_step(bridge, gsm)
 				if progressed and recorder != null:
 					_record_ai_decision_trace(recorder, gsm, prompt_ai)
 		else:
 			var current_player: int = int(gsm.game_state.current_player_index)
-			var current_ai: AIOpponent = miraidon_ai if current_player == 0 else raging_bolt_ai
+			var current_ai: AIOpponent = rule_ai if current_player == 0 else llm_ai
 			await _prepare_llm_plan_if_needed(current_ai, gsm, merged_options)
 			progressed = current_ai.run_single_step(bridge, gsm)
 			if progressed and recorder != null:
@@ -297,7 +346,7 @@ func _run_one_logged_duel(game_index: int, options: Dictionary) -> Dictionary:
 	if failure_reason != "" and recorder != null:
 		recorder.call("record_event", _make_event(gsm, "match_failed", -1, {"failure_reason": failure_reason}))
 
-	var llm_strategy: Variant = raging_bolt_ai.get("_deck_strategy")
+	var llm_strategy: Variant = llm_ai.get("_deck_strategy")
 	var result := {
 		"winner_index": int(gsm.game_state.winner_index),
 		"reason": str(gsm.game_state.win_reason),
@@ -308,6 +357,14 @@ func _run_one_logged_duel(game_index: int, options: Dictionary) -> Dictionary:
 		"first_player_index": first_player_index,
 		"miraidon_player_index": 0,
 		"raging_bolt_llm_player_index": 1,
+		"rule_player_index": 0,
+		"llm_player_index": 1,
+		"rule_strategy_id": rule_strategy_id,
+		"llm_strategy_id": llm_strategy_id,
+		"rule_deck_id": rule_deck_id,
+		"llm_deck_id": llm_deck_id,
+		"miraidon_deck_id": rule_deck_id,
+		"raging_bolt_deck_id": llm_deck_id,
 		"llm_audit_log_path": str(llm_strategy.call("get_llm_audit_log_path")) if llm_strategy != null and llm_strategy.has_method("get_llm_audit_log_path") else "",
 		"llm_stats": llm_strategy.call("get_llm_stats") if llm_strategy != null and llm_strategy.has_method("get_llm_stats") else {},
 	}
@@ -415,27 +472,41 @@ func _add_llm_stats_to_health(health: Dictionary, raw_stats: Variant) -> void:
 			health["last_errors"] = errors
 
 
-func _build_meta(seed: int, first_player_index: int, miraidon_deck: DeckData, raging_bolt_deck: DeckData) -> Dictionary:
+func _build_meta(
+	seed: int,
+	first_player_index: int,
+	rule_deck: DeckData,
+	llm_deck: DeckData,
+	rule_strategy_id: String = DEFAULT_RULE_STRATEGY_ID,
+	llm_strategy_id: String = DEFAULT_LLM_STRATEGY_ID
+) -> Dictionary:
 	return {
 		"mode": "ai_rule_vs_llm",
 		"player_types": ["rules_ai", "llm_ai"],
-		"selected_deck_ids": [miraidon_deck.id, raging_bolt_deck.id],
-		"player_labels": ["规则密勒顿", "LLM猛雷鼓"],
-		"deck_names": [miraidon_deck.deck_name, raging_bolt_deck.deck_name],
-		"strategy_ids": [MIRAIDON_STRATEGY_ID, RAGING_BOLT_LLM_STRATEGY_ID],
+		"selected_deck_ids": [rule_deck.id, llm_deck.id],
+		"player_labels": ["Rules AI", "LLM AI"],
+		"deck_names": [rule_deck.deck_name, llm_deck.deck_name],
+		"strategy_ids": [rule_strategy_id, llm_strategy_id],
 		"first_player_index": first_player_index,
 		"seed": seed,
 	}
 
 
-func _build_self_play_meta(seed: int, first_player_index: int, raging_bolt_deck: DeckData) -> Dictionary:
+func _build_self_play_meta(
+	seed: int,
+	first_player_index: int,
+	player_0_deck: DeckData,
+	player_1_deck: DeckData,
+	player_0_strategy_id: String = RAGING_BOLT_LLM_STRATEGY_ID,
+	player_1_strategy_id: String = RAGING_BOLT_LLM_STRATEGY_ID
+) -> Dictionary:
 	return {
-		"mode": "llm_raging_bolt_self_play",
+		"mode": "llm_self_play",
 		"player_types": ["llm_ai", "llm_ai"],
-		"selected_deck_ids": [raging_bolt_deck.id, raging_bolt_deck.id],
-		"player_labels": ["LLM Raging Bolt P0", "LLM Raging Bolt P1"],
-		"deck_names": [raging_bolt_deck.deck_name, raging_bolt_deck.deck_name],
-		"strategy_ids": [RAGING_BOLT_LLM_STRATEGY_ID, RAGING_BOLT_LLM_STRATEGY_ID],
+		"selected_deck_ids": [player_0_deck.id, player_1_deck.id],
+		"player_labels": ["LLM AI P0", "LLM AI P1"],
+		"deck_names": [player_0_deck.deck_name, player_1_deck.deck_name],
+		"strategy_ids": [player_0_strategy_id, player_1_strategy_id],
 		"first_player_index": first_player_index,
 		"seed": seed,
 	}
