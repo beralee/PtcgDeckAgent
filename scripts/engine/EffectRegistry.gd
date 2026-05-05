@@ -35,12 +35,14 @@ const AttackAttachBasicEnergyFromDeckToSelfAndStatus = "res://scripts/effects/po
 const AttackBonusIfSelfStatus = "res://scripts/effects/pokemon_effects/AttackBonusIfSelfStatus.gd"
 const AbilitySubjugatingChains = "res://scripts/effects/pokemon_effects/AbilitySubjugatingChains.gd"
 const AttackDiscardAttachedEnergyFromSelf = "res://scripts/effects/pokemon_effects/AttackDiscardAttachedEnergyFromSelf.gd"
+const AttackSelfLockNextTurnEffect = "res://scripts/effects/pokemon_effects/AttackSelfLockNextTurn.gd"
 const AttackDragonLauncher = "res://scripts/effects/pokemon_effects/AttackDragonLauncher.gd"
 const EffectHisuianHeavyBallEffect = "res://scripts/effects/trainer_effects/EffectHisuianHeavyBall.gd"
 const EffectRecoverBasicEnergyEffect = "res://scripts/effects/trainer_effects/EffectRecoverBasicEnergy.gd"
 const EffectSearchBasicEnergyEffect = "res://scripts/effects/trainer_effects/EffectSearchBasicEnergy.gd"
 const EffectLanceEffect = "res://scripts/effects/trainer_effects/EffectLance.gd"
 const EffectDarkPatchEffect = "res://scripts/effects/trainer_effects/EffectDarkPatch.gd"
+const EffectEnergyStickerEffect = "res://scripts/effects/trainer_effects/EffectEnergySticker.gd"
 const AbilityStarPortalEffect = "res://scripts/effects/pokemon_effects/AbilityStarPortal.gd"
 const AbilityBonusDrawIfActiveEffect = "res://scripts/effects/pokemon_effects/AbilityBonusDrawIfActive.gd"
 const AbilityDrawIfActiveEffect = "res://scripts/effects/pokemon_effects/AbilityDrawIfActive.gd"
@@ -143,6 +145,7 @@ const EffectExpShareEffect = "res://scripts/effects/tool_effects/EffectExpShare.
 const EffectLeagueHQEffect = "res://scripts/effects/stadium_effects/EffectLeagueHQ.gd"
 const EffectLuminousEnergyEffect = "res://scripts/effects/energy_effects/EffectLuminousEnergy.gd"
 const EffectMagmaBasinEffect = "res://scripts/effects/stadium_effects/EffectMagmaBasin.gd"
+const EffectCyclingRoadEffect = "res://scripts/effects/stadium_effects/EffectCyclingRoad.gd"
 const EffectCrushingHammerEffect = "res://scripts/effects/trainer_effects/EffectCrushingHammer.gd"
 const EffectEriEffect = "res://scripts/effects/trainer_effects/EffectEri.gd"
 const EffectPennyEffect = "res://scripts/effects/trainer_effects/EffectPenny.gd"
@@ -173,9 +176,15 @@ const AttackChosenDefenderAttackLockNextTurnEffect = "res://scripts/effects/poke
 const AbilityAttachBasicEnergyFromDiscardToOwnEffect = "res://scripts/effects/pokemon_effects/AbilityAttachBasicEnergyFromDiscardToOwn.gd"
 const EffectEnhancedHammerEffect = "res://scripts/effects/trainer_effects/EffectEnhancedHammer.gd"
 const AttackFieldEnergyThresholdBonusEffect = "res://scripts/effects/pokemon_effects/AttackFieldEnergyThresholdBonus.gd"
+const AttackAncientDiscardCountDamageEffect = "res://scripts/effects/pokemon_effects/AttackAncientDiscardCountDamage.gd"
 const EffectLetterOfEncouragementEffect = "res://scripts/effects/trainer_effects/EffectLetterOfEncouragement.gd"
 const EffectLuxuriousCapeEffect = "res://scripts/effects/tool_effects/EffectLuxuriousCape.gd"
 const AttackSelfEnergyCountMultiplierBonusEffect = "res://scripts/effects/pokemon_effects/AttackSelfEnergyCountMultiplierBonus.gd"
+const AbilityOvervoltDischargeEffect = "res://scripts/effects/pokemon_effects/AbilityOvervoltDischarge.gd"
+const EffectGapejawBogEffect = "res://scripts/effects/stadium_effects/EffectGapejawBog.gd"
+const AbilityPlaceDamageCountersVSTAREffect = "res://scripts/effects/pokemon_effects/AbilityPlaceDamageCountersVSTAR.gd"
+const AttackBonusIfDefenderDamagedEffect = "res://scripts/effects/pokemon_effects/AttackBonusIfDefenderDamaged.gd"
+const AttackAttachBasicEnergyFromHandToOwnPokemonEffect = "res://scripts/effects/pokemon_effects/AttackAttachBasicEnergyFromHandToOwnPokemon.gd"
 ## ==================== 主入口 ====================
 
 ## 注册所有已知卡牌效果到 EffectProcessor
@@ -226,6 +235,8 @@ static func _bind_attack_index_if_supported(effect: BaseEffect, attack_index: in
 			continue
 		effect.set("attack_index_to_match", attack_index)
 		return
+	if effect.has_method("bind_default_attack_index"):
+		effect.call("bind_default_attack_index", attack_index)
 
 
 static func _register_pokemon_effect_overrides(processor: EffectProcessor, effect_id: String) -> void:
@@ -249,8 +260,12 @@ static func _register_pokemon_effect_overrides(processor: EffectProcessor, effec
 			processor.register_effect(effect_id, _instantiate_effect(AbilityStarPortalEffect))
 			processor.register_attack_effect(effect_id, AttackBenchCountDamage.new(20, "both"))
 		"63cf95979c653e65cbd502a4c0d3fbdd":
-			processor.register_attack_effect(effect_id, _instantiate_effect(AttackSearchDeckToHandEffect, [1, "Stadium"]))
-			processor.register_attack_effect(effect_id, AttackSelfLockNextTurn.new())
+			var palkia_search := _instantiate_effect(AttackSearchDeckToHandEffect, [1, "Stadium"])
+			_bind_attack_index_if_supported(palkia_search, 0)
+			processor.register_attack_effect(effect_id, palkia_search)
+			var palkia_lock := AttackSelfLockNextTurn.new()
+			_bind_attack_index_if_supported(palkia_lock, 1)
+			processor.register_attack_effect(effect_id, palkia_lock)
 		"8bcc42363d38245b8b408cfaafa1ba30":
 			processor.register_attack_effect(effect_id, _instantiate_effect(AttackCoinFlipMultiplierEffect, [20]))
 		"07f01f4f21033a1bbc058e4af555420a":
@@ -283,7 +298,9 @@ static func _register_pokemon_effect_overrides(processor: EffectProcessor, effec
 			processor.register_effect(effect_id, _instantiate_effect(AbilityMoveOpponentDamageCountersEffect))
 			processor.register_attack_effect(effect_id, _instantiate_effect(AttackOpponentHandCountDamageEffect, [20]))
 		"5fbf2a43fe0f6df85dd1b7eb420ac678":
-			processor.register_attack_effect(effect_id, _instantiate_effect(AttackAttachBasicEnergyFromDiscardEffect, ["M", 2]))
+			var dialga_attach := _instantiate_effect(AttackAttachBasicEnergyFromDiscardEffect, ["M", 2])
+			_bind_attack_index_if_supported(dialga_attach, 0)
+			processor.register_attack_effect(effect_id, dialga_attach)
 		"29f94ee004e4c312dbea4a7930d33544":
 			processor.register_attack_effect(effect_id, _instantiate_effect(AttackMillOpponentDeckEffect, [1, 0]))
 			processor.register_attack_effect(effect_id, EffectSelfDamage.new(90, 1))
@@ -332,7 +349,9 @@ static func _register_pokemon_effect_overrides(processor: EffectProcessor, effec
 			processor.register_effect(effect_id, _instantiate_effect(AbilityBenchEnterSwitchAndMoveEnergyEffect))
 		"ce6db179c3d166130e7a637581da3aa2":
 			# 渡魂：从弃牌区选择最多3张「夜巡灵」放到备战区
-			processor.register_attack_effect(effect_id, _instantiate_effect(AttackReviveFromDiscardToBenchEffect, [3, "夜巡灵"]))
+			var duskull_revive := _instantiate_effect(AttackReviveFromDiscardToBenchEffect, [3, "夜巡灵"])
+			_bind_attack_index_if_supported(duskull_revive, 0)
+			processor.register_attack_effect(effect_id, duskull_revive)
 		"ad031124df2ede62f945220fbbd680b3":
 			processor.register_effect(effect_id, _instantiate_effect(AbilitySelfKnockoutDamageCountersEffect, [5]))
 		"2a4178f21ba2bf13285bbb43ecaaa472":
@@ -384,11 +403,28 @@ static func _register_pokemon_effect_overrides(processor: EffectProcessor, effec
 		"0d7ccbc99ac0f5108c6c7d7d5506f64b":
 			processor.register_attack_effect(effect_id, _instantiate_effect(AttackFieldEnergyThresholdBonusEffect, [3, 70, 0]))
 			processor.register_attack_effect(effect_id, _instantiate_effect(AttackIgnoreWeaknessEffect, [0]))
+		"9a425a2ace730ecdd272b7ea6d0b9db1":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackAncientDiscardCountDamageEffect, [10, 0]))
 		"2f6f444122be1e8d9af6c5a134f66572":
 			processor.register_attack_effect(effect_id, _instantiate_effect(AttackMillOpponentDeckEffect, [2, 0]))
 			var chi_yu_attach := AttackSearchAndAttach.new("R", 3, "deck_search", 0, "bench")
 			chi_yu_attach.attack_index_to_match = 1
 			processor.register_attack_effect(effect_id, chi_yu_attach)
+		"a0383c4a4ff14425610be52afedf41ae":
+			processor.register_effect(effect_id, _instantiate_effect(AbilityPlaceDamageCountersVSTAREffect, [4]))
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackBonusIfDefenderDamagedEffect, [110, 0]))
+		"a8f9150f088068e75cc8acf87773691a":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackDiscardOpponentToolsEffect, [2, 0]))
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackDiscardAttachedEnergyFromSelf, [1, 1]))
+		"ebbb788ed6a19af88042c8b125d5b8a5":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackAttachBasicEnergyFromHandToOwnPokemonEffect, ["", 1, 0]))
+			var chansey_lock := _instantiate_effect(AttackSelfLockNextTurnEffect)
+			_bind_attack_index_if_supported(chansey_lock, 1)
+			processor.register_attack_effect(effect_id, chansey_lock)
+		"03866b81bfc30ea4727f58e792c6dd2a":
+			var magnemite_attach := _instantiate_effect(AttackAttachBasicEnergyFromDiscardEffect, ["L", 2, "own_bench"])
+			_bind_attack_index_if_supported(magnemite_attach, 0)
+			processor.register_attack_effect(effect_id, magnemite_attach)
 
 
 ## ==================== 物品卡注册（register_effect）====================
@@ -455,6 +491,8 @@ static func _register_items(processor: EffectProcessor) -> void:
 	processor.register_effect("294212d9c02dc0acb886a7ef01ebeac4", _instantiate_effect(EffectEnergySwitchEffect))
 	# Dark Patch
 	processor.register_effect("11ca8ef52edb2599280e7d5827e9dfb1", _instantiate_effect(EffectDarkPatchEffect))
+	# Energy Sticker
+	processor.register_effect("2b717e54cc20a24a70439066c4a24968", _instantiate_effect(EffectEnergyStickerEffect, [processor.coin_flipper]))
 	# Energy Search
 	processor.register_effect("e508908b9311c0ef5e70e9de44892e26", _instantiate_effect(EffectSearchBasicEnergyEffect, [1, 0]))
 	# Mirage Gate
@@ -577,6 +615,8 @@ static func _register_stadiums(processor: EffectProcessor) -> void:
 	processor.register_effect("59e1e1faa3ceb8c3ae801979a499532e", EffectStadiumDamageModifier.new(-30, "defense", "M"))
 	# Magma Basin
 	processor.register_effect("d781c9da21b24ff7a1453150a534c9df", _instantiate_effect(EffectMagmaBasinEffect))
+	# Cycling Road
+	processor.register_effect("79292d4ceeac1081fe39c155c677c7b3", _instantiate_effect(EffectCyclingRoadEffect))
 	# Temple of Sinnoh
 	processor.register_effect("53864b068a4a1e8dce3c53c884b67efa", _instantiate_effect(EffectTempleOfSinnohEffect))
 	# Gravity Mountain
@@ -589,6 +629,7 @@ static func _register_stadiums(processor: EffectProcessor) -> void:
 	processor.register_effect("b87089abe625a7abb3c523074a8497df", _instantiate_effect(EffectLeagueHQEffect))
 	processor.register_effect("ed39476ac2c269054525ab0b0f79d58c", _instantiate_effect("res://scripts/effects/stadium_effects/EffectMesagoza.gd", [processor.coin_flipper]))
 	processor.register_effect("2027b11b9630f8c24d2fdf19130a7111", _instantiate_effect(EffectMoonlitHillEffect))
+	processor.register_effect("8784f5412bf62ce1356d2480df0b139b", _instantiate_effect(EffectGapejawBogEffect))
 
 
 ## ==================== 特殊能量注册（register_effect）====================
@@ -721,6 +762,8 @@ static func _get_ability_effect(ability_name: String) -> BaseEffect:
 		"变身启动":
 			# 百变怪：第一回合从牌库选基础宝可梦替换自身
 			return AbilityDittoTransform.new()
+		"过量放电":
+			return _instantiate_effect(AbilityOvervoltDischargeEffect)
 		_:
 			return null
 
@@ -872,6 +915,8 @@ static func _get_attack_effects(processor: EffectProcessor, attack_name: String)
 		"瞬移破坏":
 			# 拉鲁拉丝：造成伤害后与备战宝可梦交换
 			return [_instantiate_effect(AttackSwitchSelfToBenchEffect)]
+		"互斥":
+			return [_instantiate_effect(AttackSwitchSelfToBenchEffect)]
 		"凶暴吼叫":
 			# 吼叫尾：自身伤害指示物数x20伤害到目标
 			return [_instantiate_effect(AttackSelfDamageCounterTargetDamageEffect, [20])]
@@ -900,13 +945,13 @@ static func _get_attack_effects(processor: EffectProcessor, attack_name: String)
 ## 返回格式：{ "items": int, "supporters": int, "tools": int, "stadiums": int, "energies": int }
 static func get_registered_count() -> Dictionary:
 	# 物品卡数量（硬编码，与 _register_items 保持同步）
-	var items_count: int = 23
+	var items_count: int = 24
 	# 支援者卡数量（硬编码，与 _register_supporters 保持同步）
 	var supporters_count: int = 11
 	# 道具数量（硬编码，与 _register_tools 保持同步）
 	var tools_count: int = 9
 	# 竞技场数量（硬编码，与 _register_stadiums 保持同步）
-	var stadiums_count: int = 5
+	var stadiums_count: int = 6
 	# 特殊能量数量（硬编码，与 _register_special_energies 保持同步）
 	var energies_count: int = 6
 

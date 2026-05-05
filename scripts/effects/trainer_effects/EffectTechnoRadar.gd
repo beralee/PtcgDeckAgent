@@ -21,7 +21,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 
 	var steps: Array[Dictionary] = [{
 		"id": "discard_cards",
-		"title": "Choose 1 card to discard",
+		"title": "选择1张手牌放入弃牌区",
 		"items": hand_items,
 		"labels": hand_labels,
 		"min_select": DISCARD_COUNT,
@@ -31,15 +31,16 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	if pokemon_items.is_empty():
 		steps.append(build_empty_search_resolution_step("牌库里没有未来宝可梦。你仍可以使用这张卡。"))
 		return steps
-	steps.append({
-		"id": "search_future_pokemon",
-		"title": "Choose up to 2 Future Pokemon",
-		"items": pokemon_items,
-		"labels": pokemon_labels,
-		"min_select": 0,
-		"max_select": mini(2, pokemon_items.size()),
-		"allow_cancel": true,
-	})
+	steps.append(build_full_library_search_step(
+		"search_future_pokemon",
+		"从牌库中选择最多2张未来宝可梦",
+		player.deck,
+		pokemon_items,
+		VISIBLE_SCOPE_OWN_FULL_DECK,
+		0,
+		mini(2, pokemon_items.size()),
+		{"allow_cancel": true}
+	))
 	return steps
 
 

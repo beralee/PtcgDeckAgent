@@ -32,7 +32,7 @@ func get_attack_interaction_steps(
 		labels.append(slot.get_pokemon_name())
 	return [{
 		"id": STEP_ID,
-		"title": "Choose 1 of your Benched Pokemon",
+		"title": "选择己方1只备战宝可梦",
 		"items": items,
 		"labels": labels,
 		"min_select": 1,

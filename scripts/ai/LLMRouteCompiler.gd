@@ -2,6 +2,10 @@ class_name LLMRouteCompiler
 extends RefCounted
 
 const MAX_INSERTED_ACTIONS := 4
+const ROUTE_ACTION_METADATA_KEYS: Array[String] = [
+	"allow_deck_draw_lock",
+	"deck_draw_lock_exception",
+]
 
 
 func compile_queue(
@@ -11,7 +15,7 @@ func compile_queue(
 	_player_index: int = -1
 ) -> Dictionary:
 	var deck_count := _player_deck_count(_game_state, _player_index)
-	var no_deck_draw_lock := deck_count >= 0 and deck_count <= 2
+	var no_deck_draw_lock := deck_count >= 0 and deck_count <= 12
 	var low_value_redraw_lock := _low_value_redraw_locked(_game_state, _player_index, deck_count)
 	var original_queue: Array[Dictionary] = _copy_action_array(raw_queue)
 	var queue: Array[Dictionary] = _dedupe_route(original_queue)
@@ -21,6 +25,24 @@ func compile_queue(
 	queue = executable_result.get("queue", queue)
 	future_goals = executable_result.get("future_goals", [])
 	notes.append_array(executable_result.get("notes", []))
+	queue = _inherit_candidate_route_action_metadata(queue, catalog)
+	if not (_queue_has_non_low_value_attack(queue) \
+			or _future_goals_have_attack(future_goals) \
+			or _queue_has_capability(queue, "defensive_gust") \
+			or _future_goals_allow_defensive_gust(future_goals)):
+		var gust_result: Dictionary = _remove_gust_without_attack_goal(queue)
+		queue = gust_result.get("queue", queue)
+		if int(gust_result.get("removed_count", 0)) > 0:
+			notes.append("removed_gust_without_attack_goal")
+	var hand_reset_result: Dictionary = _remove_hand_reset_before_visible_setup(queue, catalog, _game_state, _player_index)
+	queue = hand_reset_result.get("queue", queue)
+	if int(hand_reset_result.get("removed_count", 0)) > 0:
+		notes.append("removed_hand_reset_before_visible_setup")
+	if no_deck_draw_lock:
+		var draw_lock_result: Dictionary = _remove_deck_draw_risk_actions(queue)
+		queue = draw_lock_result.get("queue", queue)
+		if int(draw_lock_result.get("removed_count", 0)) > 0:
+			notes.append("removed_deck_draw_risk_actions")
 	var inserted_actions: Array[Dictionary] = []
 	var missed_actions: Array[Dictionary] = _missed_high_value_actions(queue, catalog, no_deck_draw_lock)
 	var terminal_index := _first_terminal_index(queue)
@@ -171,6 +193,52 @@ func _dedupe_route(actions: Array[Dictionary]) -> Array[Dictionary]:
 	return result
 
 
+func _inherit_candidate_route_action_metadata(queue: Array[Dictionary], catalog: Dictionary) -> Array[Dictionary]:
+	if queue.is_empty() or catalog.is_empty():
+		return queue
+	var metadata_by_action_id := _candidate_route_metadata_by_action_id(catalog)
+	if metadata_by_action_id.is_empty():
+		return queue
+	var result: Array[Dictionary] = []
+	for action: Dictionary in queue:
+		var action_id := _action_id(action)
+		if action_id == "" or not metadata_by_action_id.has(action_id):
+			result.append(action)
+			continue
+		var enriched := action.duplicate(true)
+		var metadata: Dictionary = metadata_by_action_id.get(action_id, {})
+		for key: String in ROUTE_ACTION_METADATA_KEYS:
+			if metadata.has(key) and not enriched.has(key):
+				enriched[key] = metadata.get(key)
+		result.append(enriched)
+	return result
+
+
+func _candidate_route_metadata_by_action_id(catalog: Dictionary) -> Dictionary:
+	var metadata_by_action_id: Dictionary = {}
+	for raw_key: Variant in catalog.keys():
+		var route: Dictionary = catalog.get(raw_key, {}) if catalog.get(raw_key, {}) is Dictionary else {}
+		if route.is_empty() or str(route.get("type", "")) != "route":
+			continue
+		var raw_actions: Variant = route.get("actions", [])
+		if not (raw_actions is Array):
+			continue
+		for raw_action: Variant in raw_actions:
+			if not (raw_action is Dictionary):
+				continue
+			var action: Dictionary = raw_action
+			var action_id := _action_id(action)
+			if action_id == "" or action_id == "end_turn":
+				continue
+			var metadata: Dictionary = metadata_by_action_id.get(action_id, {})
+			for key: String in ROUTE_ACTION_METADATA_KEYS:
+				if action.has(key):
+					metadata[key] = action.get(key)
+			if not metadata.is_empty():
+				metadata_by_action_id[action_id] = metadata
+	return metadata_by_action_id
+
+
 func _to_executable_route(queue: Array[Dictionary], catalog: Dictionary) -> Dictionary:
 	var result: Array[Dictionary] = []
 	var future_goals: Array[Dictionary] = []
@@ -208,9 +276,9 @@ func _resolve_virtual_action(action: Dictionary, catalog: Dictionary) -> Diction
 			continue
 		if action_type != "" and str(ref.get("type", ref.get("kind", ""))) != action_type:
 			continue
-		if card_query != "" and not _name_matches(str(ref.get("card", "")), card_query):
+		if card_query != "" and not _ref_matches_query(ref, card_query):
 			continue
-		if pokemon_query != "" and not _name_matches(str(ref.get("pokemon", ref.get("card", ""))), pokemon_query):
+		if pokemon_query != "" and not _ref_matches_query(ref, pokemon_query):
 			continue
 		var resolved: Dictionary = ref.duplicate(true)
 		resolved["id"] = action_id
@@ -222,6 +290,29 @@ func _resolve_virtual_action(action: Dictionary, catalog: Dictionary) -> Diction
 		resolved["capability"] = _capability_for_ref(resolved)
 		return resolved
 	return {}
+
+
+func _ref_matches_query(ref: Dictionary, query: String) -> bool:
+	var search_text := _ref_search_text(ref)
+	return _name_matches(search_text, query)
+
+
+func _ref_search_text(ref: Dictionary) -> String:
+	var parts: Array[String] = [
+		str(ref.get("id", ref.get("action_id", ""))),
+		str(ref.get("card", "")),
+		str(ref.get("pokemon", "")),
+		str(ref.get("target", "")),
+		str(ref.get("ability", "")),
+		str(ref.get("summary", "")),
+	]
+	for key: String in ["card_rules", "ability_rules", "attack_rules"]:
+		var raw_rules: Variant = ref.get(key, {})
+		if raw_rules is Dictionary:
+			var rules: Dictionary = raw_rules
+			for rule_key: String in ["name", "name_en", "text", "description", "effect_id"]:
+				parts.append(str(rules.get(rule_key, "")))
+	return " ".join(parts)
 
 
 func _missed_high_value_actions(queue: Array[Dictionary], catalog: Dictionary, no_deck_draw_lock: bool = false) -> Array[Dictionary]:
@@ -239,6 +330,10 @@ func _missed_high_value_actions(queue: Array[Dictionary], catalog: Dictionary, n
 			continue
 		var capability := _capability_for_ref(ref)
 		if capability == "manual_attach" and route_has_manual_attach:
+			continue
+		if no_deck_draw_lock and _is_draw_or_churn_ref(ref):
+			continue
+		if _is_hand_reset_draw_ref(ref):
 			continue
 		var priority := _insertion_priority(ref, false, false, false, no_deck_draw_lock)
 		if priority >= 300:
@@ -270,6 +365,10 @@ func _candidate_insertions(
 			continue
 		var capability := _capability_for_ref(ref)
 		if capability == "manual_attach" and route_has_manual_attach:
+			continue
+		if no_deck_draw_lock and _is_draw_or_churn_ref(ref):
+			continue
+		if _is_hand_reset_draw_ref(ref):
 			continue
 		var priority := _insertion_priority(ref, terminal_is_attack, has_attack, has_future_attack_goal, no_deck_draw_lock)
 		if priority <= 0:
@@ -306,7 +405,7 @@ func _insertion_priority(
 		return 950 if not has_attack else 0
 	if capability == "terminal_draw_ability":
 		return 0
-	if no_deck_draw_lock and _is_draw_or_deck_access_capability(capability):
+	if no_deck_draw_lock and _is_draw_or_churn_ref(ref):
 		return 0
 	if has_future_attack_goal:
 		match capability:
@@ -376,6 +475,177 @@ func _is_draw_or_deck_access_capability(capability: String) -> bool:
 	]
 
 
+func _is_draw_or_churn_capability(capability: String) -> bool:
+	return capability in [
+		"charge_and_draw",
+		"draw_ability",
+		"terminal_draw_ability",
+		"discard_to_draw",
+		"draw_filter",
+		"supporter_acceleration",
+	]
+
+
+func _is_draw_or_churn_ref(ref: Dictionary) -> bool:
+	if _is_draw_or_churn_capability(_capability_for_ref(ref)):
+		return true
+	var action_type := str(ref.get("type", ref.get("kind", "")))
+	if action_type == "use_ability":
+		var schema_text := _schema_or_interaction_search_text(ref)
+		if schema_text.contains("draw"):
+			return true
+		var schema: Dictionary = _schema_or_interactions(ref)
+		if schema.has("basic_energy_from_hand") or schema.has("energy_card_id"):
+			return true
+		if schema.has("discard_card") or schema.has("discard_cards"):
+			return true
+	var combined := _combined_ref_name(ref)
+	return _name_has_any(combined, [
+		"trekking shoes",
+		"concealed cards",
+		"teal dance",
+		"flip the script",
+		"碧草之舞",
+		"隐藏牌",
+		"隱藏牌",
+		"化危为吉",
+		"化危為吉",
+		"吉雉鸡",
+		"吉雉雞",
+		"光辉甲贺忍蛙",
+		"光輝甲賀忍蛙",
+		"厄诡椪",
+		"厄鬼椪",
+	])
+
+
+func _schema_or_interaction_search_text(ref: Dictionary) -> String:
+	var schema: Dictionary = _schema_or_interactions(ref)
+	if schema.is_empty():
+		return ""
+	return JSON.stringify(schema).to_lower()
+
+
+func _schema_or_interactions(ref: Dictionary) -> Dictionary:
+	var schema: Dictionary = ref.get("interaction_schema", {}) if ref.get("interaction_schema", {}) is Dictionary else {}
+	if not schema.is_empty():
+		return schema
+	return ref.get("interactions", {}) if ref.get("interactions", {}) is Dictionary else {}
+
+
+func _remove_deck_draw_risk_actions(queue: Array[Dictionary]) -> Dictionary:
+	var result: Array[Dictionary] = []
+	var removed: Array[Dictionary] = []
+	for action: Dictionary in queue:
+		if _is_end_turn_ref(action) \
+				or _is_attack_ref(action) \
+				or _is_deck_draw_lock_exception(action) \
+				or not _is_draw_or_churn_ref(action):
+			result.append(action)
+		else:
+			removed.append(action)
+	return {
+		"queue": result,
+		"removed_count": removed.size(),
+		"removed_actions": removed,
+	}
+
+
+func _is_deck_draw_lock_exception(ref: Dictionary) -> bool:
+	return bool(ref.get("allow_deck_draw_lock", false)) \
+		or str(ref.get("deck_draw_lock_exception", "")) != ""
+
+
+func _remove_gust_without_attack_goal(queue: Array[Dictionary]) -> Dictionary:
+	var result: Array[Dictionary] = []
+	var removed: Array[Dictionary] = []
+	for action: Dictionary in queue:
+		if _capability_for_ref(action) == "gust":
+			removed.append(action)
+			continue
+		result.append(action)
+	return {
+		"queue": result,
+		"removed_count": removed.size(),
+		"removed_actions": removed,
+	}
+
+
+func _future_goals_allow_defensive_gust(future_goals: Array[Dictionary]) -> bool:
+	for goal: Dictionary in future_goals:
+		var goal_id := str(goal.get("id", ""))
+		var goal_type := str(goal.get("type", ""))
+		if goal_id.contains("defensive_gust") or goal_type == "defensive_gust":
+			return true
+	return false
+
+
+func _remove_hand_reset_before_visible_setup(
+	queue: Array[Dictionary],
+	catalog: Dictionary,
+	game_state: Variant,
+	player_index: int
+) -> Dictionary:
+	if _hand_reset_route_allowed(queue, catalog, game_state, player_index):
+		return {"queue": queue, "removed_count": 0, "removed_actions": []}
+	var result: Array[Dictionary] = []
+	var removed: Array[Dictionary] = []
+	for action: Dictionary in queue:
+		if _is_hand_reset_draw_ref(action):
+			removed.append(action)
+			continue
+		result.append(action)
+	return {
+		"queue": result,
+		"removed_count": removed.size(),
+		"removed_actions": removed,
+	}
+
+
+func _hand_reset_route_allowed(
+	queue: Array[Dictionary],
+	catalog: Dictionary,
+	game_state: Variant,
+	player_index: int
+) -> bool:
+	if not _queue_has_hand_reset_draw(queue):
+		return true
+	if not _catalog_has_deterministic_setup(catalog):
+		return true
+	var hand_count := _player_hand_count(game_state, player_index)
+	if hand_count >= 0 and hand_count <= 3:
+		return true
+	return false
+
+
+func _queue_has_hand_reset_draw(queue: Array[Dictionary]) -> bool:
+	for action: Dictionary in queue:
+		if _is_hand_reset_draw_ref(action):
+			return true
+	return false
+
+
+func _catalog_has_deterministic_setup(catalog: Dictionary) -> bool:
+	for raw_key: Variant in catalog.keys():
+		var ref: Dictionary = catalog.get(raw_key, {}) if catalog.get(raw_key, {}) is Dictionary else {}
+		if ref.is_empty() or _is_end_turn_ref(ref) or _is_future_or_virtual_ref(ref):
+			continue
+		var capability := _capability_for_ref(ref)
+		if capability in [
+			"attach_tool",
+			"charge_and_draw",
+			"energy_search",
+			"resource_recovery",
+			"supporter_acceleration",
+			"bench_search",
+			"bench_basic",
+			"manual_attach",
+			"search",
+		]:
+			return true
+	return false
+
+
 func _player_deck_count(game_state: Variant, player_index: int) -> int:
 	if game_state == null or player_index < 0:
 		return -1
@@ -413,6 +683,9 @@ func _low_value_redraw_locked(game_state: Variant, player_index: int, deck_count
 
 
 func _capability_for_ref(ref: Dictionary) -> String:
+	var explicit_capability := str(ref.get("capability", "")).strip_edges()
+	if explicit_capability != "":
+		return explicit_capability
 	var action_type := str(ref.get("type", ref.get("kind", "")))
 	if action_type == "end_turn" or _action_id(ref) == "end_turn":
 		return "end_turn"
@@ -445,6 +718,8 @@ func _capability_for_ref(ref: Dictionary) -> String:
 			return "draw_ability"
 		return "ability"
 	if action_type == "play_trainer" or action_type == "play_stadium":
+		if tags.has("gust") or _name_has_any(combined_name, ["boss", "catcher", "prime catcher"]):
+			return "gust"
 		if _name_has_any(combined_name, ["professor sada"]):
 			return "supporter_acceleration"
 		if tags.has("recover_to_hand") or _name_has_any(combined_name, ["night stretcher", "energy retrieval"]):
@@ -482,6 +757,19 @@ func _combined_ref_name(ref: Dictionary) -> String:
 		parts.append(str(rules.get("name", "")))
 		parts.append(str(rules.get("text", "")))
 	return " ".join(parts).to_lower()
+
+
+func _is_hand_reset_draw_ref(ref: Dictionary) -> bool:
+	if _capability_for_ref(ref) != "draw_filter":
+		return false
+	var combined := _combined_ref_name(ref)
+	return _name_has_any(combined, [
+		"iono",
+		"professor's research",
+		"professors research",
+		"professor research",
+		"research",
+	])
 
 
 func _is_fezandipiti_ref(ref: Dictionary, combined_name: String = "") -> bool:
@@ -570,6 +858,13 @@ func _first_terminal_index(queue: Array[Dictionary]) -> int:
 func _queue_has_attack(queue: Array[Dictionary]) -> bool:
 	for action: Dictionary in queue:
 		if _is_attack_ref(action):
+			return true
+	return false
+
+
+func _queue_has_non_low_value_attack(queue: Array[Dictionary]) -> bool:
+	for action: Dictionary in queue:
+		if _is_attack_ref(action) and not _is_low_value_attack(action):
 			return true
 	return false
 

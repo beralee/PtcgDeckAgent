@@ -11,6 +11,7 @@ const MODE_CHOICE := "choice"
 const MODE_PREVIEW := "preview"
 const TOUCH_LONG_PRESS_SECONDS := 0.42
 const TOUCH_LONG_PRESS_MOVE_TOLERANCE := 18.0
+const CardImplementationStatusScript := preload("res://scripts/engine/CardImplementationStatus.gd")
 const ENERGY_ICON_TEXTURES := {
 	"R": preload("res://assets/ui/e-huo.png"),
 	"W": preload("res://assets/ui/e-shui.png"),
@@ -22,6 +23,13 @@ const ENERGY_ICON_TEXTURES := {
 	"M": preload("res://assets/ui/e-gang.png"),
 	"N": preload("res://assets/ui/e-long.png"),
 	"C": preload("res://assets/ui/e-wu.png"),
+}
+const STATUS_ICON_TEXTURES := {
+	"confused": preload("res://assets/ui/status_confusion.png"),
+	"burned": preload("res://assets/ui/status_burn.png"),
+	"poisoned": preload("res://assets/ui/status_poison.png"),
+	"asleep": preload("res://assets/ui/status_sleep.png"),
+	"paralyzed": preload("res://assets/ui/status_paralyzed.png"),
 }
 
 static var _texture_cache: Dictionary = {}
@@ -57,6 +65,8 @@ var _missing_art_panel: PanelContainer
 var _placeholder: Label
 var _top_left_badge: Label
 var _top_right_badge: Label
+var _implementation_badge_panel: PanelContainer
+var _implementation_badge_label: Label
 var _info_panel: PanelContainer
 var _title_label: Label
 var _subtitle_label: Label
@@ -66,6 +76,8 @@ var _status_used_label: Label
 var _status_hp_value_label: Label
 var _status_hp_bar_panel: PanelContainer
 var _status_hp_bar: ProgressBar
+var _status_condition_panel: PanelContainer
+var _status_condition_row: HBoxContainer
 var _status_energy_panel: PanelContainer
 var _status_energy_row: HBoxContainer
 var _status_tool_panel: PanelContainer
@@ -282,6 +294,9 @@ func _build_ui() -> void:
 	_top_left_badge = _make_badge_label()
 	badge_row.add_child(_top_left_badge)
 
+	_implementation_badge_panel = _make_implementation_badge()
+	badge_row.add_child(_implementation_badge_panel)
+
 	var spacer := Control.new()
 	_make_passthrough(spacer)
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -347,6 +362,16 @@ func _build_ui() -> void:
 	_status_hp_value_label.add_theme_font_override("font", hp_font)
 	_status_hp_value_label.add_theme_font_size_override("font_size", 12)
 	hp_bar_overlay.add_child(_status_hp_value_label)
+
+	_status_condition_panel = _make_status_panel()
+	_status_hud.add_child(_status_condition_panel)
+	var condition_margin := _make_status_margin(6, 3, 6, 3)
+	_status_condition_panel.add_child(condition_margin)
+	_status_condition_row = HBoxContainer.new()
+	_make_passthrough(_status_condition_row)
+	_status_condition_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_status_condition_row.add_theme_constant_override("separation", 2)
+	condition_margin.add_child(_status_condition_row)
 
 	_status_energy_panel = _make_status_panel()
 	_status_hud.add_child(_status_energy_panel)
@@ -501,6 +526,34 @@ func _make_badge_label() -> Label:
 	return label
 
 
+func _make_implementation_badge() -> PanelContainer:
+	var panel := PanelContainer.new()
+	_make_passthrough(panel)
+	panel.visible = false
+	panel.add_theme_stylebox_override("panel", _make_unimplemented_badge_style())
+
+	var margin := MarginContainer.new()
+	_make_passthrough(margin)
+	margin.add_theme_constant_override("margin_left", 7)
+	margin.add_theme_constant_override("margin_top", 2)
+	margin.add_theme_constant_override("margin_right", 7)
+	margin.add_theme_constant_override("margin_bottom", 2)
+	panel.add_child(margin)
+
+	_implementation_badge_label = Label.new()
+	_make_passthrough(_implementation_badge_label)
+	_implementation_badge_label.text = "未实现"
+	_implementation_badge_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_implementation_badge_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_implementation_badge_label.add_theme_font_size_override("font_size", 10)
+	var badge_font := FontVariation.new()
+	badge_font.base_font = ThemeDB.fallback_font
+	badge_font.variation_embolden = 1.1
+	_implementation_badge_label.add_theme_font_override("font", badge_font)
+	margin.add_child(_implementation_badge_label)
+	return panel
+
+
 func _make_status_panel(light: bool = false) -> PanelContainer:
 	var panel := PanelContainer.new()
 	_make_passthrough(panel)
@@ -536,6 +589,18 @@ func _make_selection_badge_style(selected: bool = true) -> StyleBoxFlat:
 	return style
 
 
+func _make_unimplemented_badge_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.22, 0.08, 0.02, 0.93)
+	style.border_color = Color(1.0, 0.44, 0.12, 0.88)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(8)
+	style.shadow_color = Color(1.0, 0.23, 0.04, 0.26)
+	style.shadow_size = 6
+	style.shadow_offset = Vector2(0, 1)
+	return style
+
+
 func _make_passthrough(control: Control) -> void:
 	control.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
@@ -557,6 +622,7 @@ func _refresh() -> void:
 		set_info(card_data.name, _default_subtitle())
 	else:
 		set_info("", "")
+	_update_implementation_badge()
 
 	if _battle_status_active:
 		_update_battle_status_ui()
@@ -674,6 +740,15 @@ func _update_battle_status_ui() -> void:
 	_status_hp_value_label.text = "%d/%d" % [hp_current, hp_max]
 	_status_hp_bar.value = hp_ratio * 100.0
 
+	var status_icons_raw: Variant = _battle_status.get("status_icons", [])
+	_clear_children(_status_condition_row)
+	var status_count := 0
+	for status_key_variant: Variant in status_icons_raw:
+		var status_key := str(status_key_variant)
+		_status_condition_row.add_child(_make_status_condition_icon(status_key))
+		status_count += 1
+	_status_condition_panel.visible = status_count > 0
+
 	var energy_icons_raw: Variant = _battle_status.get("energy_icons", [])
 	_clear_children(_status_energy_row)
 	var energy_count := 0
@@ -686,6 +761,18 @@ func _update_battle_status_ui() -> void:
 	var tool_name := str(_battle_status.get("tool_name", ""))
 	_status_tool_label.text = tool_name
 	_status_tool_panel.visible = tool_name != ""
+
+
+func _update_implementation_badge() -> void:
+	if _implementation_badge_panel == null:
+		return
+	var show_badge := card_data != null and not _face_down and CardImplementationStatusScript.is_unimplemented(card_data)
+	_implementation_badge_panel.visible = show_badge
+	if show_badge:
+		var reason := CardImplementationStatusScript.get_reason(card_data)
+		_implementation_badge_panel.tooltip_text = "未实现效果" if reason == "" else "未实现效果：%s" % reason
+	else:
+		_implementation_badge_panel.tooltip_text = ""
 
 
 func _clear_children(node: Node) -> void:
@@ -708,6 +795,26 @@ func _make_energy_icon(energy_code: String) -> Control:
 	var chip := Label.new()
 	_make_passthrough(chip)
 	chip.text = energy_code
+	chip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	chip.custom_minimum_size = Vector2(16, 14)
+	chip.add_theme_font_size_override("font_size", 9)
+	return chip
+
+
+func _make_status_condition_icon(status_key: String) -> Control:
+	var texture: Texture2D = STATUS_ICON_TEXTURES.get(status_key, null)
+	if texture != null:
+		var rect := TextureRect.new()
+		_make_passthrough(rect)
+		rect.texture = texture
+		rect.custom_minimum_size = Vector2(14, 14)
+		rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		return rect
+
+	var chip := Label.new()
+	_make_passthrough(chip)
+	chip.text = status_key.substr(0, 1).to_upper()
 	chip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	chip.custom_minimum_size = Vector2(16, 14)
 	chip.add_theme_font_size_override("font_size", 9)
@@ -781,6 +888,12 @@ func _update_style() -> void:
 	if _selection_badge != null:
 		_selection_badge.text = _selected_badge_text if _selected else _selectable_hint_text
 		_selection_badge.add_theme_color_override("font_color", Color(0.10, 0.06, 0.00, 1.0) if _selected else Color(0.01, 0.10, 0.14, 1.0))
+	if _implementation_badge_panel != null:
+		_implementation_badge_panel.add_theme_stylebox_override("panel", _make_unimplemented_badge_style())
+	if _implementation_badge_label != null:
+		_implementation_badge_label.add_theme_color_override("font_color", Color(1.0, 0.86, 0.66, 1.0))
+		_implementation_badge_label.add_theme_constant_override("outline_size", 1)
+		_implementation_badge_label.add_theme_color_override("font_outline_color", Color(0.10, 0.03, 0.00, 0.95))
 
 	var overlay_style := StyleBoxFlat.new()
 	overlay_style.bg_color = Color(0.05, 0.07, 0.11, 0.78)
@@ -815,6 +928,10 @@ func _apply_status_styles() -> void:
 	strip_style.bg_color = Color(0.04, 0.06, 0.1, 0.8)
 	strip_style.set_corner_radius_all(8)
 	_status_energy_panel.add_theme_stylebox_override("panel", strip_style)
+	var condition_style := StyleBoxFlat.new()
+	condition_style.bg_color = Color(0.04, 0.06, 0.1, 0.8)
+	condition_style.set_corner_radius_all(8)
+	_status_condition_panel.add_theme_stylebox_override("panel", condition_style)
 
 	var tool_style := StyleBoxFlat.new()
 	tool_style.bg_color = Color(0.94, 0.95, 0.9, 0.74)
@@ -872,10 +989,13 @@ func _gui_input(event: InputEvent) -> void:
 				return
 			left_clicked.emit(card_instance, card_data)
 		elif mbe.button_index == MOUSE_BUTTON_RIGHT:
-			right_clicked.emit(card_instance, card_data)
+			if _can_inspect_by_secondary_input():
+				right_clicked.emit(card_instance, card_data)
 
 
 func _handle_touch_inspect_input(event: InputEvent) -> bool:
+	if not _can_inspect_by_secondary_input():
+		return false
 	if event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
 		if touch.pressed:
@@ -899,8 +1019,12 @@ func _handle_touch_inspect_input(event: InputEvent) -> bool:
 	return false
 
 
+func _can_inspect_by_secondary_input() -> bool:
+	return display_mode == MODE_HAND and card_data != null
+
+
 func _start_touch_long_press(position: Vector2, touch_index: int) -> void:
-	if card_data == null:
+	if not _can_inspect_by_secondary_input():
 		return
 	_ensure_touch_long_press_timer()
 	_touch_long_press_active = true
@@ -922,7 +1046,7 @@ func _cancel_touch_long_press(clear_suppression: bool = true) -> void:
 
 
 func _on_touch_long_press_timeout() -> void:
-	if not _touch_long_press_active or not _clickable or card_data == null:
+	if not _touch_long_press_active or not _clickable or not _can_inspect_by_secondary_input():
 		return
 	_touch_long_press_consumed = true
 	_suppress_next_left_click = true

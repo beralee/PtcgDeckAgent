@@ -1133,6 +1133,63 @@ func test_ralts_bench_shuts_off_under_moderate_deck_out_pressure_once_attack_is_
 		"When only eight cards remain and an attacker is already online, rebuilding another Ralts line should cool off instead of outranking conversion (got %f)" % score)
 
 
+func test_late_rebuild_draw_abilities_shut_off_under_expanded_deck_out_lock() -> String:
+	var gs := _build_online_shell_without_attacker_state()
+	var player := gs.players[0]
+	player.hand.append(CardInstance.create(_make_energy_cd("Psychic Hand", "P"), 0))
+	player.hand.append(CardInstance.create(_make_energy_cd("Darkness Hand", "D"), 0))
+	for i: int in 12:
+		player.deck.append(CardInstance.create(_make_trainer_cd("ThinDeck%d" % i), 0))
+	var greninja := _make_slot(_make_placeholder_pokemon(DeckStrategyGardevoirScript.RADIANT_GRENINJA), 0)
+	player.bench.append(greninja)
+	var s := _new_strategy()
+	var kirlia_score: float = s.score_action_absolute(
+		{"kind": "use_ability", "source_slot": player.bench[1]},
+		gs,
+		0
+	)
+	var greninja_score: float = s.score_action_absolute(
+		{"kind": "use_ability", "source_slot": greninja},
+		gs,
+		0
+	)
+	return run_checks([
+		assert_true(kirlia_score <= 0.0,
+			"Once the stage2 shell is online and only twelve cards remain, Kirlia draw should be locked out during rebuild instead of causing late deck-out churn (got %f)" % kirlia_score),
+		assert_true(greninja_score <= 0.0,
+			"Once the stage2 shell is online and only twelve cards remain, Greninja draw should be locked out during rebuild instead of causing late deck-out churn (got %f)" % greninja_score),
+	])
+
+
+func test_late_rebuild_draw_abilities_stay_locked_after_recovery_lifts_deck_above_pressure_threshold() -> String:
+	var gs := _build_online_shell_without_attacker_state()
+	gs.turn_number = 30
+	var player := gs.players[0]
+	player.hand.append(CardInstance.create(_make_energy_cd("Psychic Hand", "P"), 0))
+	player.hand.append(CardInstance.create(_make_energy_cd("Darkness Hand", "D"), 0))
+	for i: int in 18:
+		player.deck.append(CardInstance.create(_make_trainer_cd("RecoveredDeck%d" % i), 0))
+	var greninja := _make_slot(_make_placeholder_pokemon(DeckStrategyGardevoirScript.RADIANT_GRENINJA), 0)
+	player.bench.append(greninja)
+	var s := _new_strategy()
+	var kirlia_score: float = s.score_action_absolute(
+		{"kind": "use_ability", "source_slot": player.bench[1]},
+		gs,
+		0
+	)
+	var greninja_score: float = s.score_action_absolute(
+		{"kind": "use_ability", "source_slot": greninja},
+		gs,
+		0
+	)
+	return run_checks([
+		assert_true(kirlia_score <= 0.0,
+			"After a long rebuild loop, Kirlia draw should remain locked even if recovery temporarily lifts the deck above the numeric pressure threshold (got %f)" % kirlia_score),
+		assert_true(greninja_score <= 0.0,
+			"After a long rebuild loop, Greninja draw should remain locked even if recovery temporarily lifts the deck above the numeric pressure threshold (got %f)" % greninja_score),
+	])
+
+
 func test_artazon_scores_as_live_opening_stadium_in_absolute_strategy_path() -> String:
 	var gs := _build_early_artazon_opening_state()
 	var s := _new_strategy()
@@ -1217,6 +1274,46 @@ func test_munkidori_ability_stays_negative_when_total_damage_exceeds_hp_but_sing
 		"Munkidori should stay negative when the board has 40 damage total but a single ability use can only move 30 damage (got %f)" % score)
 
 
+func test_munkidori_partial_headless_action_stays_negative_even_when_ko_math_exists() -> String:
+	var gs := _build_online_shell_attack_ready_state()
+	var s := _new_strategy()
+	var player := gs.players[0]
+	var opponent := gs.players[1]
+	player.active_pokemon.damage_counters = 30
+	player.bench.append(_make_slot(_require_card(MUNKIDORI_SET, MUNKIDORI_INDEX), 0))
+	var munkidori: PokemonSlot = player.bench[2]
+	munkidori.attached_energy.append(CardInstance.create(_make_energy_cd("Darkness A", "D"), 0))
+	opponent.active_pokemon.pokemon_stack[0].card_data.hp = 100
+	opponent.active_pokemon.damage_counters = 80
+	var partial_score: float = s.score_action_absolute(
+		{
+			"kind": "use_ability",
+			"source_slot": munkidori,
+			"targets": [{"source_pokemon": [player.active_pokemon]}],
+		},
+		gs,
+		0
+	)
+	var resolved_score: float = s.score_action_absolute(
+		{
+			"kind": "use_ability",
+			"source_slot": munkidori,
+			"targets": [{
+				"source_pokemon": [player.active_pokemon],
+				"target_damage_counters": [{"target": opponent.active_pokemon, "amount": 20}],
+			}],
+		},
+		gs,
+		0
+	)
+	return run_checks([
+		assert_true(partial_score < 0.0,
+			"Partial Munkidori source-only actions should not be treated as conversion KOs because they make no progress in headless play (got %f)" % partial_score),
+		assert_true(resolved_score > partial_score,
+			"A fully resolved Munkidori counter-transfer target should still score above the source-only stalled action (resolved=%f partial=%f)" % [resolved_score, partial_score]),
+	])
+
+
 func test_buddy_buddy_poffin_turns_negative_once_shell_and_attacker_are_online() -> String:
 	var gs := _build_online_shell_attack_ready_state()
 	var s := _new_strategy()
@@ -1227,6 +1324,131 @@ func test_buddy_buddy_poffin_turns_negative_once_shell_and_attacker_are_online()
 	)
 	return assert_true(score < 0.0,
 		"Once the shell and a ready attacker are online, Buddy-Buddy Poffin should be actively worse than ending turn or attacking (got %f)" % score)
+
+
+func test_continuity_contract_lifts_backup_ralts_before_nonfinal_attack() -> String:
+	var gs := _build_online_shell_state()
+	var player := gs.players[0]
+	var opponent := gs.players[1]
+	opponent.active_pokemon.pokemon_stack[0].card_data.hp = 220
+	for i: int in 12:
+		player.deck.append(CardInstance.create(_make_trainer_cd("ContinuityDeck%d" % i), 0))
+	player.hand.append(CardInstance.create(_require_card(RALTS_SET, RALTS_INDEX), 0))
+	_fill_prizes(player, 3)
+	_fill_prizes(opponent, 4)
+	var s := _new_strategy()
+	var turn_contract: Dictionary = s.build_turn_contract(gs, 0, {})
+	var ralts_action := {
+		"kind": "play_basic_to_bench",
+		"card": CardInstance.create(_require_card(RALTS_SET, RALTS_INDEX), 0),
+	}
+	var attack_action := {
+		"kind": "attack",
+		"projected_damage": 120,
+		"projected_knockout": false,
+	}
+	var ralts_score: float = s.score_action_absolute_with_plan(ralts_action, gs, 0, turn_contract)
+	var attack_score: float = s.score_action_absolute_with_plan(attack_action, gs, 0, turn_contract)
+	var continuity: Dictionary = s.build_continuity_contract(gs, 0, turn_contract)
+	return run_checks([
+		assert_true(bool(continuity.get("enabled", false)), "Continuity should be enabled while a ready attacker lacks a backup Ralts/Kirlia line"),
+		assert_true(bool(continuity.get("setup_debt", {}).get("need_backup_ralts_or_kirlia", false)), "Continuity debt should name the missing backup Ralts/Kirlia line"),
+		assert_true(ralts_score > attack_score, "Safe backup Ralts setup should outrank a non-final attack through score_action_absolute_with_plan (ralts=%f attack=%f)" % [ralts_score, attack_score]),
+	])
+
+
+func test_continuity_contract_does_not_delay_final_prize_ko() -> String:
+	var gs := _build_online_shell_state()
+	var player := gs.players[0]
+	var opponent := gs.players[1]
+	for i: int in 12:
+		player.deck.append(CardInstance.create(_make_trainer_cd("ContinuityDeck%d" % i), 0))
+	player.hand.append(CardInstance.create(_require_card(RALTS_SET, RALTS_INDEX), 0))
+	_fill_prizes(player, 1)
+	_fill_prizes(opponent, 4)
+	var s := _new_strategy()
+	var turn_contract: Dictionary = s.build_turn_contract(gs, 0, {})
+	var ralts_action := {
+		"kind": "play_basic_to_bench",
+		"card": CardInstance.create(_require_card(RALTS_SET, RALTS_INDEX), 0),
+	}
+	var attack_action := {
+		"kind": "attack",
+		"projected_damage": 120,
+		"projected_knockout": true,
+	}
+	var ralts_score: float = s.score_action_absolute_with_plan(ralts_action, gs, 0, turn_contract)
+	var attack_score: float = s.score_action_absolute_with_plan(attack_action, gs, 0, turn_contract)
+	var continuity: Dictionary = s.build_continuity_contract(gs, 0, turn_contract)
+	return run_checks([
+		assert_false(bool(continuity.get("enabled", false)), "Continuity should be disabled when the current attack takes the final prize"),
+		assert_true(attack_score > ralts_score, "Final-prize KO must not be delayed by optional setup (attack=%f ralts=%f)" % [attack_score, ralts_score]),
+	])
+
+
+func test_continuity_contract_does_not_delay_key_rulebox_ko() -> String:
+	var gs := _build_online_shell_state()
+	var player := gs.players[0]
+	var opponent := gs.players[1]
+	var rulebox_defender := _make_placeholder_pokemon("Rulebox Defender")
+	rulebox_defender.mechanic = "ex"
+	rulebox_defender.hp = 120
+	opponent.active_pokemon = _make_slot(rulebox_defender, 1)
+	for i: int in 12:
+		player.deck.append(CardInstance.create(_make_trainer_cd("ContinuityDeck%d" % i), 0))
+	player.hand.append(CardInstance.create(_require_card(RALTS_SET, RALTS_INDEX), 0))
+	_fill_prizes(player, 3)
+	_fill_prizes(opponent, 4)
+	var s := _new_strategy()
+	var turn_contract: Dictionary = s.build_turn_contract(gs, 0, {})
+	var ralts_action := {
+		"kind": "play_basic_to_bench",
+		"card": CardInstance.create(_require_card(RALTS_SET, RALTS_INDEX), 0),
+	}
+	var attack_action := {
+		"kind": "attack",
+		"projected_damage": 120,
+		"projected_knockout": true,
+	}
+	var ralts_score: float = s.score_action_absolute_with_plan(ralts_action, gs, 0, turn_contract)
+	var attack_score: float = s.score_action_absolute_with_plan(attack_action, gs, 0, turn_contract)
+	var continuity: Dictionary = s.build_continuity_contract(gs, 0, turn_contract)
+	return run_checks([
+		assert_false(bool(continuity.get("enabled", false)), "Continuity should be disabled for an immediate rule-box KO"),
+		assert_true(attack_score > ralts_score, "A key rule-box KO must not be delayed by optional setup (attack=%f ralts=%f)" % [attack_score, ralts_score]),
+	])
+
+
+func test_continuity_contract_stops_inflating_churn_when_debt_is_paid() -> String:
+	var gs := _build_online_shell_state()
+	var player := gs.players[0]
+	var opponent := gs.players[1]
+	var backup_scream_tail := _make_slot(_make_scream_tail_cd(), 0)
+	backup_scream_tail.attached_energy.append(CardInstance.create(_make_energy_cd("Psychic Backup", "P"), 0))
+	backup_scream_tail.attached_energy.append(CardInstance.create(_make_energy_cd("Darkness Backup", "D"), 0))
+	player.bench.append(_make_slot(_require_card(RALTS_SET, RALTS_INDEX), 0))
+	player.bench.append(backup_scream_tail)
+	player.discard_pile.append(CardInstance.create(_make_energy_cd("Psychic Fuel A", "P"), 0))
+	player.discard_pile.append(CardInstance.create(_make_energy_cd("Psychic Fuel B", "P"), 0))
+	player.discard_pile.append(CardInstance.create(_make_energy_cd("Psychic Fuel C", "P"), 0))
+	for i: int in 12:
+		player.deck.append(CardInstance.create(_make_trainer_cd("ContinuityDeck%d" % i), 0))
+	_fill_prizes(player, 3)
+	_fill_prizes(opponent, 4)
+	var s := _new_strategy()
+	var turn_contract: Dictionary = s.build_turn_contract(gs, 0, {})
+	var poffin_action := {
+		"kind": "play_trainer",
+		"card": CardInstance.create(_require_card(POFFIN_SET, POFFIN_INDEX), 0),
+	}
+	var direct_score: float = s.score_action_absolute(poffin_action, gs, 0)
+	var planned_score: float = s.score_action_absolute_with_plan(poffin_action, gs, 0, turn_contract)
+	var continuity: Dictionary = s.build_continuity_contract(gs, 0, turn_contract)
+	return run_checks([
+		assert_false(bool(continuity.get("enabled", false)), "Continuity should disable once backup line, fuel, and next attacker are already covered"),
+		assert_eq(planned_score, direct_score, "Paid continuity debt should not inflate Poffin or other churn actions"),
+		assert_true(planned_score <= 0.0, "Poffin should remain cooled off after continuity is complete (got %f)" % planned_score),
+	])
 
 
 func test_one_energy_attacker_body_is_not_counted_as_ready_attacker() -> String:
@@ -1278,6 +1500,52 @@ func test_psychic_embrace_cools_off_under_deck_out_pressure_when_ready_attacker_
 	)
 	return assert_true(score <= 80.0,
 		"Under deck-out pressure, extra Psychic Embrace should cool off when a ready attacker exists but the active Pokemon cannot pivot this turn (got %f)" % score)
+
+
+func test_psychic_embrace_scores_explicit_target_instead_of_abstract_best_target() -> String:
+	var gs := _make_game_state(18)
+	var player := gs.players[0]
+	var opponent := gs.players[1]
+	var gardevoir := _make_slot(_require_card(GARDEVOIR_SET, GARDEVOIR_INDEX), 0)
+	player.active_pokemon = gardevoir
+	var kirlia := _make_slot(_require_card(KIRLIA_SET, KIRLIA_INDEX), 0)
+	player.bench.append(kirlia)
+	var dead_scream_tail := _make_slot(_make_scream_tail_cd(), 0)
+	dead_scream_tail.damage_counters = 90
+	player.bench.append(dead_scream_tail)
+	var live_drifloon := _make_slot(_require_card(DRIFLOON_SET, DRIFLOON_INDEX), 0)
+	live_drifloon.damage_counters = 20
+	live_drifloon.attached_energy.append(CardInstance.create(_make_energy_cd("Psychic A", "P"), 0))
+	player.bench.append(live_drifloon)
+	for i: int in 4:
+		player.deck.append(CardInstance.create(_make_trainer_cd("DeckOutLock%d" % i), 0))
+	player.discard_pile.append(CardInstance.create(_make_energy_cd("Psychic Fuel A", "P"), 0))
+	opponent.active_pokemon.pokemon_stack[0].card_data.hp = 120
+	var s := _new_strategy()
+	var dead_target_score: float = s.score_action_absolute(
+		{
+			"kind": "use_ability",
+			"source_slot": gardevoir,
+			"targets": [{"embrace_energy": [player.discard_pile[0]], "embrace_target": [dead_scream_tail]}],
+		},
+		gs,
+		0
+	)
+	var live_target_score: float = s.score_action_absolute(
+		{
+			"kind": "use_ability",
+			"source_slot": gardevoir,
+			"targets": [{"embrace_energy": [player.discard_pile[0]], "embrace_target": [live_drifloon]}],
+		},
+		gs,
+		0
+	)
+	return run_checks([
+		assert_true(dead_target_score < 0.0,
+			"Explicit Psychic Embrace actions targeting a dead attacker should be rejected instead of borrowing score from a better abstract target (got %f)" % dead_target_score),
+		assert_true(live_target_score > dead_target_score,
+			"A live attacker target should still score above a dead explicit Embrace target (live=%f dead=%f)" % [live_target_score, dead_target_score]),
+	])
 
 
 func test_arven_turns_negative_once_shell_and_attacker_are_online() -> String:
@@ -1566,6 +1834,31 @@ func test_manual_attach_psychic_bridges_benched_drifloon_once_stage2_shell_is_on
 	])
 
 
+func test_manual_attach_psychic_starts_zero_energy_drifloon_close_loop_once_stage2_shell_is_online() -> String:
+	var gs := _build_online_shell_with_unready_attacker_body_state()
+	var player := gs.players[0]
+	player.bench.clear()
+	player.active_pokemon = _make_slot(_require_card(MUNKIDORI_SET, MUNKIDORI_INDEX), 0)
+	player.bench.append(_make_slot(_require_card(GARDEVOIR_SET, GARDEVOIR_INDEX), 0))
+	player.bench.append(_make_slot(_require_card(KIRLIA_SET, KIRLIA_INDEX), 0))
+	var drifloon := _make_slot(_require_card(DRIFLOON_SET, DRIFLOON_INDEX), 0)
+	drifloon.damage_counters = 20
+	player.bench.append(drifloon)
+	var s := _new_strategy()
+	var attach_score: float = s.score_action_absolute(
+		{"kind": "attach_energy", "card": CardInstance.create(_make_energy_cd("Psychic A", "P"), 0), "target_slot": drifloon},
+		gs,
+		0
+	)
+	var end_turn_score: float = s.score_action_absolute({"kind": "end_turn"}, gs, 0)
+	return run_checks([
+		assert_true(attach_score > 0.0,
+			"Once Gardevoir ex is online, zero-energy Drifloon should still accept the first manual Psychic attach to start the Embrace close-loop (got %f)" % attach_score),
+		assert_true(attach_score > end_turn_score,
+			"Starting the zero-energy Drifloon close-loop should outrank passing (attach=%f end=%f)" % [attach_score, end_turn_score]),
+	])
+
+
 func test_manual_attach_dark_bridges_benched_scream_tail_once_stage2_shell_is_online() -> String:
 	var gs := _build_online_shell_without_attacker_vs_weak_bench_state()
 	var player := gs.players[0]
@@ -1584,6 +1877,30 @@ func test_manual_attach_dark_bridges_benched_scream_tail_once_stage2_shell_is_on
 	)
 	return assert_true(attach_score >= 500.0,
 		"When the stage2 shell is online and Scream Tail is one Dark Energy short of a bench prize line, manual Dark attach should become a real bridge action (got %f)" % attach_score)
+
+
+func test_manual_attach_psychic_starts_benched_scream_tail_closed_loop_once_stage2_shell_is_online() -> String:
+	var gs := _build_online_shell_without_attacker_vs_weak_bench_state()
+	var player := gs.players[0]
+	player.bench.clear()
+	player.active_pokemon = _make_slot(_require_card(MUNKIDORI_SET, MUNKIDORI_INDEX), 0)
+	player.bench.append(_make_slot(_require_card(GARDEVOIR_SET, GARDEVOIR_INDEX), 0))
+	player.bench.append(_make_slot(_require_card(KIRLIA_SET, KIRLIA_INDEX), 0))
+	var scream_tail := _make_slot(_make_scream_tail_cd(), 0)
+	player.bench.append(scream_tail)
+	var s := _new_strategy()
+	var attach_score: float = s.score_action_absolute(
+		{"kind": "attach_energy", "card": CardInstance.create(_make_energy_cd("Psychic A", "P"), 0), "target_slot": scream_tail},
+		gs,
+		0
+	)
+	var end_turn_score: float = s.score_action_absolute({"kind": "end_turn"}, gs, 0)
+	return run_checks([
+		assert_true(attach_score > 0.0,
+			"Once the stage2 shell is online and Scream Tail has just been rebuilt, manual Psychic attach should start the Embrace close-loop instead of being dead tempo (got %f)" % attach_score),
+		assert_true(attach_score > end_turn_score,
+			"Starting the Scream Tail close-loop should outrank passing the turn (attach=%f end=%f)" % [attach_score, end_turn_score]),
+	])
 
 
 func test_handoff_prefers_scream_tail_owner_into_weak_bench_transition_shell() -> String:

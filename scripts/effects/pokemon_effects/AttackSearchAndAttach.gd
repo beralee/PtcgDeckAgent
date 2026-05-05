@@ -65,6 +65,21 @@ func get_attack_interaction_steps(
 			target_slot.get_max_hp(),
 		])
 
+	if search_mode == "deck_search":
+		return [build_full_library_card_assignment_step(
+			ASSIGNMENT_STEP_ID,
+			"选择要附着的能量并分配给目标宝可梦",
+			player.deck,
+			energy_items,
+			energy_labels,
+			target_items,
+			target_labels,
+			0,
+			mini(attach_count, energy_items.size()),
+			VISIBLE_SCOPE_OWN_FULL_DECK,
+			true
+		)]
+
 	return [build_card_assignment_step(
 		ASSIGNMENT_STEP_ID,
 		"选择要附着的能量并分配给目标宝可梦",

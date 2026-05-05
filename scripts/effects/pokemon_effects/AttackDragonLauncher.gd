@@ -36,7 +36,7 @@ func get_attack_interaction_steps(
 		labels.append(slot.get_pokemon_name())
 	return [{
 		"id": DISCARD_STEP_ID,
-		"title": "Choose up to %d Dreepy to discard" % max_count,
+		"title": "选择最多%d张多龙梅西亚放入弃牌区" % max_count,
 		"items": dreepy_slots,
 		"labels": labels,
 		"min_select": 0,
@@ -65,7 +65,7 @@ func get_followup_attack_interaction_steps(
 		labels.append(slot.get_pokemon_name())
 	return [{
 		"id": TARGET_STEP_ID,
-		"title": "Choose %d opponent Pokemon" % selected_count,
+		"title": "选择对手的%d只宝可梦" % selected_count,
 		"items": targets,
 		"labels": labels,
 		"min_select": selected_count,

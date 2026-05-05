@@ -60,9 +60,20 @@ func test_match_end_quick_review_builds_compact_llm_request() -> String:
 
 	var result: Dictionary = service.generate_quick_review(parent, {
 		"winner_index": 0,
+		"review_subject": {
+			"player_index": 0,
+			"label": "测试玩家",
+			"result": "win",
+			"review_instruction": "只评价当前玩家",
+		},
 		"turn_number": 7,
 		"view_player": {"prizes_taken": 6},
 		"opponent": {"prizes_taken": 4},
+		"quick_review_context": {
+			"key_moments": [{"turn_number": 5, "summary": "玩家1用 Boss's Orders 拿下两奖"}],
+			"last_turn": {"turn_number": 7, "key_actions": [{"description": "玩家1完成终结攻击"}]},
+		},
+		"deck_strategies": [{"player_index": 0, "deck_name": "测试牌", "strategy": "优先完成主攻手能量路线。"}],
 	}, {
 		"endpoint": "https://example.test",
 		"api_key": "secret",
@@ -73,14 +84,25 @@ func test_match_end_quick_review_builds_compact_llm_request() -> String:
 
 	var final_result: Dictionary = completed[0] if not completed.is_empty() else {}
 	var payload_summary: Dictionary = client.request_payload.get("match_summary", {})
+	var payload_context: Dictionary = payload_summary.get("quick_review_context", {})
+	var key_moments: Array = payload_context.get("key_moments", [])
+	var instructions: PackedStringArray = client.request_payload.get("instructions", PackedStringArray())
+	var instruction_text := ""
+	for instruction: String in instructions:
+		instruction_text += instruction + "\n"
 
 	return run_checks([
 		assert_eq(str(result.get("status", "")), "running", "Quick review should report that the request was started"),
 		assert_eq(client.requested_endpoint, "https://example.test", "Quick review should use the configured endpoint"),
 		assert_eq(client.requested_api_key, "secret", "Quick review should use the configured API key"),
 		assert_eq(str(client.request_payload.get("model", "")), "test-model", "Quick review should use the configured model"),
-		assert_eq(str(client.request_payload.get("system_prompt_version", "")), "match_end_quick_review_v1", "Quick review payload should carry a stable prompt version"),
+		assert_eq(str(client.request_payload.get("system_prompt_version", "")), "match_end_quick_review_v3", "Quick review payload should carry the player-focused quick review prompt version"),
 		assert_eq(int(payload_summary.get("turn_number", 0)), 7, "Quick review payload should include match stats"),
+		assert_false(key_moments.is_empty(), "Quick review payload should preserve compact key moments for professional review"),
+		assert_str_contains(instruction_text, "专业PTCG赛后教练", "Quick review prompt should ask for professional coaching"),
+		assert_str_contains(instruction_text, "review_subject", "Quick review prompt should force a single reviewed player"),
+		assert_str_contains(instruction_text, "不要平均评价双方", "Quick review prompt should not average both players"),
+		assert_str_contains(instruction_text, "奖赏计划、资源顺序、卡组主线执行", "Quick review prompt should score gameplay quality instead of only win/loss"),
 		assert_eq(str(final_result.get("status", "")), "completed", "Quick review result should be normalized to completed"),
 		assert_eq(int(final_result.get("score", 0)), 88, "Quick review should preserve the model score"),
 		assert_eq(str(final_result.get("headline", "")), "节奏明确", "Quick review should preserve the model headline"),

@@ -37,6 +37,7 @@ const AttackSwitchSelfToBenchScript = preload("res://scripts/effects/pokemon_eff
 const AttackAnyTargetDamageScript = preload("res://scripts/effects/pokemon_effects/AttackAnyTargetDamage.gd")
 const AttackSelfDamageCounterTargetDamageScript = preload("res://scripts/effects/pokemon_effects/AttackSelfDamageCounterTargetDamage.gd")
 const AttackTMEvolutionScript = preload("res://scripts/effects/pokemon_effects/AttackTMEvolution.gd")
+const AttackDiscardBasicEnergyFromFieldDamageScript = preload("res://scripts/effects/pokemon_effects/AttackDiscardBasicEnergyFromFieldDamage.gd")
 const AbilityMoveDamageCountersToOpponentScript = preload("res://scripts/effects/pokemon_effects/AbilityMoveDamageCountersToOpponent.gd")
 const AbilityMoveOpponentDamageCountersScript = preload("res://scripts/effects/pokemon_effects/AbilityMoveOpponentDamageCounters.gd")
 
@@ -550,6 +551,24 @@ func test_battle_scene_includes_zeus_help_button() -> String:
 	return run_checks([
 		assert_true(zeus_button is Button, "BattleScene 顶栏应包含宙斯帮我按钮"),
 		assert_true(back_button is Button, "BattleScene 顶栏应保留退出游戏按钮"),
+	])
+
+
+func test_battle_scene_handover_prompt_uses_large_hud_touch_targets() -> String:
+	var scene: Control = load("res://scenes/battle/BattleScene.tscn").instantiate()
+	scene.call("_style_handover_overlay")
+	var handover_box := scene.get_node("HandoverPanel/HandoverCenter/HandoverBox") as PanelContainer
+	var handover_label := scene.find_child("HandoverLbl", true, false) as Label
+	var handover_button := scene.find_child("HandoverBtn", true, false) as Button
+
+	return run_checks([
+		assert_true(handover_box.custom_minimum_size.x >= 520.0, "Handover prompt should use a wider HUD panel"),
+		assert_true(handover_box.custom_minimum_size.y >= 220.0, "Handover prompt should use a taller HUD panel"),
+		assert_true(handover_label.custom_minimum_size.y >= 72.0, "Handover prompt text should reserve readable vertical space"),
+		assert_true(handover_label.get_theme_font_size("font_size") >= 24, "Handover prompt text should be large enough on mobile"),
+		assert_true(handover_button.custom_minimum_size.y >= 68.0, "Handover confirmation should use a large touch target"),
+		assert_true(handover_button.custom_minimum_size.x >= 360.0, "Handover confirmation should be wide enough for clear tapping"),
+		assert_true(handover_button.has_theme_stylebox("normal"), "Handover confirmation should use the HUD button style"),
 	])
 
 
@@ -2409,7 +2428,7 @@ func test_battle_scene_opponent_hand_viewer_shows_card_previews() -> String:
 	])
 
 
-func test_battle_scene_discard_viewer_uses_touch_wheel_window() -> String:
+func test_battle_scene_discard_viewer_uses_hud_scrollbar_full_list() -> String:
 	var scene := _make_battle_scene_stub()
 	var gsm := GameStateMachine.new()
 	gsm.game_state = GameState.new()
@@ -2441,37 +2460,35 @@ func test_battle_scene_discard_viewer_uses_touch_wheel_window() -> String:
 		gsm.game_state.players[1].discard_pile.append(CardInstance.create(_make_pokemon_cd("对方弃牌%d" % i, 70, "C"), 1))
 
 	scene.call("_show_discard_pile", 0, "己方弃牌区")
-	var wheel := discard_utility_row.find_child("DiscardCardWheel", true, false) as HSlider
-	var wheel_label := discard_utility_row.find_child("DiscardCardWheelLabel", true, false) as Label
 	var first_card := discard_card_row.get_child(0) as BattleCardView if discard_card_row.get_child_count() > 0 else null
-	var seventh_card := discard_card_row.get_child(6) as BattleCardView if discard_card_row.get_child_count() > 6 else null
-	var initial_label := wheel_label.text if wheel_label != null else ""
-	if wheel != null:
-		wheel.value = 3.0
-		wheel.value_changed.emit(3.0)
-	var after_slide_first := discard_card_row.get_child(0) as BattleCardView if discard_card_row.get_child_count() > 0 else null
-	var after_slide_last := discard_card_row.get_child(6) as BattleCardView if discard_card_row.get_child_count() > 6 else null
-	var after_slide_label := wheel_label.text if wheel_label != null else ""
+	var tenth_card := discard_card_row.get_child(9) as BattleCardView if discard_card_row.get_child_count() > 9 else null
+	var first_player_card_count := discard_card_row.get_child_count()
+	var first_player_page_size := int(scene.get("_discard_card_page_size"))
+	var first_player_utility_visible := discard_utility_row.visible
+	var first_player_horizontal_mode := discard_scroll.horizontal_scroll_mode
+	var first_player_scroll_styled := discard_scroll.has_meta("hud_scrollbar_styled")
+	var first_player_wheel_present := discard_utility_row.find_child("DiscardCardWheel", true, false) != null
 
 	scene.call("_show_discard_pile", 1, "对方弃牌区")
-	var opponent_wheel := discard_utility_row.find_child("DiscardCardWheel", true, false) as HSlider
-	var opponent_label := discard_utility_row.find_child("DiscardCardWheelLabel", true, false) as Label
+	var opponent_first_card := discard_card_row.get_child(0) as BattleCardView if discard_card_row.get_child_count() > 0 else null
+	var opponent_last_card := discard_card_row.get_child(7) as BattleCardView if discard_card_row.get_child_count() > 7 else null
+	var opponent_card_count := discard_card_row.get_child_count()
+	var opponent_wheel_present := discard_utility_row.find_child("DiscardCardWheel", true, false) != null
 
 	return run_checks([
 		assert_true(discard_overlay.visible, "打开弃牌区应显示预览层"),
-		assert_eq(discard_card_row.get_child_count(), 7, "弃牌区大牌堆应一屏最多显示7张卡"),
-		assert_eq(int(scene.get("_discard_card_page_size")), 7, "弃牌区应启用7张窗口模式"),
-		assert_not_null(wheel, "弃牌区超过7张时应显示滑轮"),
-		assert_true(discard_utility_row.visible, "弃牌区滑轮行应可见"),
-		assert_eq(discard_scroll.horizontal_scroll_mode, ScrollContainer.SCROLL_MODE_DISABLED, "滑轮模式下弃牌区不应再横向滚动"),
-		assert_eq(initial_label, "1-7 / 10", "滑轮标签应显示当前可见窗口"),
+		assert_eq(first_player_card_count, 10, "弃牌区应把完整牌堆交给 HUD 滚动容器"),
+		assert_eq(first_player_page_size, 0, "弃牌区不应再启用7张窗口模式"),
+		assert_false(first_player_wheel_present, "弃牌区不应再创建旧滑轮"),
+		assert_false(first_player_utility_visible, "弃牌区不应为空滑轮保留底部工具行"),
+		assert_eq(first_player_horizontal_mode, ScrollContainer.SCROLL_MODE_AUTO, "弃牌区应使用原生横向滚动"),
+		assert_true(first_player_scroll_styled, "弃牌区应应用 HUD 滚动条样式"),
 		assert_eq(first_card.card_data.name if first_card != null and first_card.card_data != null else "", "己方弃牌9", "弃牌区初始窗口应从最新弃牌开始"),
-		assert_eq(seventh_card.card_data.name if seventh_card != null and seventh_card.card_data != null else "", "己方弃牌3", "弃牌区初始窗口应包含7张"),
-		assert_eq(after_slide_label, "4-10 / 10", "拖动滑轮后应更新可见范围标签"),
-		assert_eq(after_slide_first.card_data.name if after_slide_first != null and after_slide_first.card_data != null else "", "己方弃牌6", "拖动滑轮后应轮转到后续弃牌"),
-		assert_eq(after_slide_last.card_data.name if after_slide_last != null and after_slide_last.card_data != null else "", "己方弃牌0", "滑到末尾应显示最早弃牌"),
-		assert_not_null(opponent_wheel, "对方弃牌区也应使用同一套滑轮"),
-		assert_eq(opponent_label.text if opponent_label != null else "", "1-7 / 8", "对方弃牌区滑轮标签应按对方牌数刷新"),
+		assert_eq(tenth_card.card_data.name if tenth_card != null and tenth_card.card_data != null else "", "己方弃牌0", "弃牌区完整滚动列表应包含最早弃牌"),
+		assert_eq(opponent_card_count, 8, "对方弃牌区也应完整渲染所有可见弃牌"),
+		assert_false(opponent_wheel_present, "对方弃牌区也不应创建旧滑轮"),
+		assert_eq(opponent_first_card.card_data.name if opponent_first_card != null and opponent_first_card.card_data != null else "", "对方弃牌7", "对方弃牌区应从最新弃牌开始"),
+		assert_eq(opponent_last_card.card_data.name if opponent_last_card != null and opponent_last_card.card_data != null else "", "对方弃牌0", "对方弃牌区完整列表应包含最早弃牌"),
 		assert_str_contains(discard_title.text, "对方弃牌区", "对方弃牌区标题应刷新为对方区域"),
 	])
 
@@ -2493,6 +2510,7 @@ func test_battle_scene_llm_wait_hud_uses_model_specific_copy() -> String:
 		assert_str_contains(qwen_text, "正在排兵布阵", "Qwen wait HUD should use a strategy-flavored copy"),
 		assert_str_contains(gpt_text, "GPT-5.5", "LLM wait HUD should show GPT model names"),
 		assert_str_contains(gpt_text, "第 9 回合", "LLM wait HUD should keep turn context"),
+		assert_false(gpt_text.contains("（") or gpt_text.contains("）"), "LLM wait HUD should avoid full-width parentheses for Android glyph compatibility"),
 	])
 
 
@@ -2744,7 +2762,10 @@ func test_battle_scene_pokemon_action_dialog_uses_hud_cards_with_full_text() -> 
 	var list: ItemList = scene.get("_dialog_list")
 	var confirm: Button = scene.get("_dialog_confirm")
 	var row: HBoxContainer = scene.get("_dialog_card_row")
-	var stack: VBoxContainer = row.get_child(0) as VBoxContainer if row.get_child_count() > 0 else null
+	var preview_panel: PanelContainer = row.get_child(0) as PanelContainer if row.get_child_count() > 0 else null
+	var preview_card: BattleCardView = preview_panel.find_child("PokemonActionCardView", true, false) as BattleCardView if preview_panel != null else null
+	var expected_detail_size: Vector2 = scene.get("_detail_card_size")
+	var stack: VBoxContainer = row.get_child(1) as VBoxContainer if row.get_child_count() > 1 else null
 	var first_panel: PanelContainer = stack.get_child(0) as PanelContainer if stack != null and stack.get_child_count() > 0 else null
 	var first_margin: MarginContainer = first_panel.get_child(0) as MarginContainer if first_panel != null and first_panel.get_child_count() > 0 else null
 	var second_panel: PanelContainer = stack.get_child(1) as PanelContainer if stack != null and stack.get_child_count() > 1 else null
@@ -2778,6 +2799,10 @@ func test_battle_scene_pokemon_action_dialog_uses_hud_cards_with_full_text() -> 
 		assert_true(scroll.visible, "Pokemon action HUD should use the card scroll area"),
 		assert_false(list.visible, "Pokemon action HUD should hide the old ItemList"),
 		assert_false(confirm.visible, "Pokemon action HUD should select by clicking the HUD option"),
+		assert_true(preview_panel != null and preview_panel.name == "PokemonActionCardPreview", "Pokemon action HUD should show the Pokemon card on the left"),
+		assert_true(preview_card != null, "Pokemon action HUD should render a card preview beside the action list"),
+		assert_eq(preview_card.custom_minimum_size if preview_card != null else Vector2.ZERO, scene.get("_detail_card_size"), "Pokemon action card preview should match the card detail preview size"),
+		assert_false(bool(preview_card.get("_clickable")) if preview_card != null else true, "Pokemon action card preview should not steal action clicks"),
 		assert_eq(str(first_action.get("title", "")), "热血补给", "Ability HUD should show the ability name"),
 		assert_true(str(first_action.get("body", "")).contains("选择 1 张基本能量加入手牌"), "Ability HUD should show the full ability text"),
 		assert_eq(str(second_action.get("title", "")), "烈焰冲击", "Attack HUD should show the attack name"),
@@ -2786,13 +2811,139 @@ func test_battle_scene_pokemon_action_dialog_uses_hud_cards_with_full_text() -> 
 		assert_eq(attack_cost_icons.get_child_count() if attack_cost_icons != null else 0, 2, "Attack HUD should render one Energy icon per cost symbol"),
 		assert_true(attack_cost_icons.get_child(0) is TextureRect if attack_cost_icons != null and attack_cost_icons.get_child_count() > 0 else false, "Attack HUD should render Energy costs as texture icons"),
 		assert_true(attack_cost_icons.get_child(1) is TextureRect if attack_cost_icons != null and attack_cost_icons.get_child_count() > 1 else false, "Attack HUD should render Colorless cost as a texture icon"),
-		assert_true(three_action_height < 360.0, "Pokemon action HUD should be more compact than the old fixed 360px height"),
+		assert_true(three_action_height >= expected_detail_size.y, "Pokemon action HUD should reserve the full detail-card preview height"),
 		assert_eq(single_action_items.size(), 1, "Ability-only Pokemon action HUD should contain one option"),
-		assert_true(single_action_height < 120.0, "Ability-only Pokemon action HUD should shrink close to one option height"),
+		assert_true(single_action_height >= (preview_panel.custom_minimum_size.y if preview_panel != null else 0.0), "Ability-only Pokemon action HUD should stay tall enough for the card preview"),
 		assert_true(absf(six_action_height - 474.0) < 0.1, "Pokemon action HUD should cap visible height at five options"),
 		assert_eq(six_action_scroll_mode, ScrollContainer.SCROLL_MODE_AUTO, "Pokemon action HUD should only enable vertical scrolling above five options"),
 		assert_eq(first_panel.mouse_filter if first_panel != null else -1, Control.MOUSE_FILTER_STOP, "Whole action HUD option should receive clicks"),
 		assert_eq(first_margin.mouse_filter if first_margin != null else -1, Control.MOUSE_FILTER_IGNORE, "Action HUD contents should pass clicks through to the whole option"),
+	])
+
+
+func test_battle_scene_pokemon_action_dialog_shows_disabled_actions_when_none_are_executable() -> String:
+	var scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	scene._gsm = gsm
+	scene._view_player = 0
+
+	var passive_cd := _make_pokemon_cd("被动特性宝可梦", 90, "C")
+	passive_cd.effect_id = ""
+	passive_cd.abilities = [{"name": "在场光环", "text": "只要这只宝可梦在场，某些效果持续生效。"}]
+	passive_cd.attacks = []
+	var bench := PokemonSlot.new()
+	bench.pokemon_stack.append(CardInstance.create(passive_cd, 0))
+	gsm.game_state.players[0].bench = [bench]
+
+	scene.call("_show_pokemon_action_dialog", 0, bench, false)
+	var data: Dictionary = scene.get("_dialog_data")
+	var actions: Array = data.get("actions", [])
+	var action_items: Array = data.get("action_items", [])
+	var first_action: Dictionary = actions[0] if actions.size() > 0 and actions[0] is Dictionary else {}
+	var first_item: Dictionary = action_items[0] if action_items.size() > 0 and action_items[0] is Dictionary else {}
+
+	return run_checks([
+		assert_eq(str(scene.get("_pending_choice")), "pokemon_action", "Pokemon with no executable action should still open the action dialog"),
+		assert_eq(actions.size(), 1, "Passive-only Pokemon should still show its listed ability"),
+		assert_eq(str(first_action.get("type", "")), "ability", "Passive-only Pokemon should render the ability as an action row"),
+		assert_false(bool(first_action.get("enabled", true)), "Passive-only ability should be disabled instead of hidden"),
+		assert_eq(str(first_item.get("title", "")), "在场光环", "Disabled ability row should keep the ability name"),
+		assert_false(bool(first_item.get("enabled", true)), "Disabled ability HUD item should render grey"),
+	])
+
+
+func test_battle_scene_pokemon_action_dialog_shows_empty_disabled_row_for_no_text_actions() -> String:
+	var scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	scene._gsm = gsm
+	scene._view_player = 0
+
+	var vanilla_cd := _make_pokemon_cd("空白备战宝可梦", 90, "C")
+	vanilla_cd.abilities = []
+	vanilla_cd.attacks = []
+	var bench := PokemonSlot.new()
+	bench.pokemon_stack.append(CardInstance.create(vanilla_cd, 0))
+	gsm.game_state.players[0].bench = [bench]
+
+	scene.call("_show_pokemon_action_dialog", 0, bench, false)
+	var data: Dictionary = scene.get("_dialog_data")
+	var actions: Array = data.get("actions", [])
+	var action_items: Array = data.get("action_items", [])
+	var first_action: Dictionary = actions[0] if actions.size() > 0 and actions[0] is Dictionary else {}
+
+	return run_checks([
+		assert_eq(str(scene.get("_pending_choice")), "pokemon_action", "Pokemon with no listed actions should still open the action dialog"),
+		assert_eq(actions.size(), 1, "Pokemon with no listed actions should show one disabled placeholder"),
+		assert_eq(str(first_action.get("type", "")), "noop", "No-action placeholder should be inert"),
+		assert_false(bool(first_action.get("enabled", true)), "No-action placeholder should be disabled"),
+		assert_eq(str((action_items[0] as Dictionary).get("title", "")) if action_items.size() > 0 and action_items[0] is Dictionary else "", "当前没有可执行行动", "No-action placeholder should explain why the dialog opened"),
+	])
+
+
+func test_battle_scene_opponent_pokemon_clicks_open_card_detail() -> String:
+	var scene = _make_battle_scene_stub()
+	scene.set("_detail_title", Label.new())
+	scene.set("_detail_content", RichTextLabel.new())
+	scene.set("_detail_overlay", Panel.new())
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	scene._gsm = gsm
+	scene._view_player = 0
+
+	var active_cd := _make_pokemon_cd("对手战斗详情", 120, "L")
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(active_cd, 1))
+	gsm.game_state.players[1].active_pokemon = active
+	var bench_cd := _make_pokemon_cd("对手备战详情", 90, "C")
+	var bench := PokemonSlot.new()
+	bench.pokemon_stack.append(CardInstance.create(bench_cd, 1))
+	gsm.game_state.players[1].bench = [bench]
+
+	var left_click := InputEventMouseButton.new()
+	left_click.button_index = MOUSE_BUTTON_LEFT
+	left_click.pressed = true
+	scene.call("_on_slot_input", left_click, "opp_active")
+	var left_visible := (scene.get("_detail_overlay") as Panel).visible
+	var left_title := (scene.get("_detail_title") as Label).text
+
+	(scene.get("_detail_overlay") as Panel).visible = false
+	var right_click := InputEventMouseButton.new()
+	right_click.button_index = MOUSE_BUTTON_RIGHT
+	right_click.pressed = true
+	scene.call("_on_slot_input", right_click, "opp_bench_0")
+	var right_visible := (scene.get("_detail_overlay") as Panel).visible
+	var right_title := (scene.get("_detail_title") as Label).text
+
+	(scene.get("_detail_overlay") as Panel).visible = false
+	scene.set("_field_interaction_mode", "slot_select")
+	var blocked_by_field_choice: bool = not bool(scene.call("_try_show_opponent_slot_detail_input", left_click, "opp_active"))
+
+	return run_checks([
+		assert_true(left_visible, "Left-clicking an opponent Pokemon should open the card detail overlay"),
+		assert_eq(left_title, "对手战斗详情", "Opponent Active detail should show the clicked Pokemon"),
+		assert_true(right_visible, "Right-clicking an opponent Pokemon should open the card detail overlay"),
+		assert_eq(right_title, "对手备战详情", "Opponent Bench detail should show the clicked Pokemon"),
+		assert_true(blocked_by_field_choice, "Opponent Pokemon detail must not steal clicks from field-target selection flows"),
 	])
 
 
@@ -3470,7 +3621,7 @@ func test_battle_scene_earthen_vessel_empty_search_preview_can_be_opened_and_con
 	battle_scene.call("_handle_effect_interaction_choice", PackedInt32Array())
 
 	return run_checks([
-		assert_true(first_step_title.findn("discard") >= 0, "Earthen Vessel should still ask the player to pay its discard cost first"),
+		assert_true(first_step_title.findn("discard") >= 0 or first_step_title.find("弃") >= 0, "Earthen Vessel should still ask the player to pay its discard cost first"),
 		assert_true(resolution_items.size() == 2, "After paying the discard cost, Earthen Vessel should enter the empty-search resolution step"),
 		assert_eq(resolution_items.size(), 2, "Earthen Vessel whiffs should offer continue and preview options"),
 		assert_true(preview_items.size() == 2, "Choosing preview after an Earthen Vessel whiff should open the deck preview"),
@@ -3626,12 +3777,15 @@ func test_battle_scene_field_interaction_panel_metrics_follow_play_card_size() -
 
 	var panel: PanelContainer = battle_scene.get("_field_interaction_panel")
 	var scroll: ScrollContainer = battle_scene.get("_field_interaction_scroll")
+	var row: HBoxContainer = battle_scene.get("_field_interaction_row")
 
 	return run_checks([
-		assert_eq(scroll.custom_minimum_size.y, 164.0, "Field interaction card strip height should track battlefield card height"),
-		assert_eq(panel.custom_minimum_size.y, 250.0, "Field interaction panel height should be derived from the card strip instead of drifting"),
+		assert_eq(scroll.custom_minimum_size.y, 202.0, "Field interaction card strip should reserve touch scrollbar clearance below cards"),
+		assert_eq(panel.custom_minimum_size.y, 288.0, "Field interaction panel height should be derived from the card strip instead of drifting"),
 		assert_gte(panel.custom_minimum_size.x, 680.0, "Field interaction panel width should remain wide enough for multi-card assignment UI"),
 		assert_true(bool(scroll.size_flags_vertical & Control.SIZE_SHRINK_CENTER), "Field interaction scroll should shrink vertically"),
+		assert_eq(row.custom_minimum_size.y, 156.0, "Field interaction card row should stay card-height"),
+		assert_eq(row.size_flags_vertical, Control.SIZE_SHRINK_BEGIN, "Field interaction card row should start above the scrollbar lane"),
 		assert_true(bool(panel.size_flags_vertical & Control.SIZE_SHRINK_CENTER), "Field interaction panel should shrink vertically"),
 	])
 
@@ -3848,6 +4002,130 @@ func test_battle_scene_energy_switch_rejects_same_slot_target_in_field_assignmen
 		assert_eq(rejected_count, 0, "Energy Switch should reject assigning an energy back onto the same source Pokemon"),
 		assert_eq(accepted_entries.size(), 1, "Energy Switch should accept a different target Pokemon"),
 		assert_eq(accepted_target, bench, "Accepted assignment should point to the other Pokemon"),
+	])
+
+
+func test_battle_scene_raging_bolt_bellowing_thunder_uses_energy_multiselect_dialog() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var dialog_box := PanelContainer.new()
+	battle_scene.set("_dialog_box", dialog_box)
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var attacker_cd := _make_pokemon_cd("Raging Bolt ex", 240, "N")
+	attacker_cd.attacks = [
+		{"name": "Burst Roar", "cost": "C", "damage": "", "text": "", "is_vstar_power": false},
+		{"name": "Bellowing Thunder", "cost": "LF", "damage": "70x", "text": "", "is_vstar_power": false},
+	]
+	var attacker := PokemonSlot.new()
+	attacker.pokemon_stack.append(CardInstance.create(attacker_cd, 0))
+	attacker.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	gsm.game_state.players[0].active_pokemon = attacker
+
+	var bench_bolt := PokemonSlot.new()
+	bench_bolt.pokemon_stack.append(CardInstance.create(attacker_cd, 0))
+	bench_bolt.attached_energy.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	var bench_ogerpon_a := PokemonSlot.new()
+	bench_ogerpon_a.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Teal Mask Ogerpon ex", 210, "G"), 0))
+	bench_ogerpon_a.attached_energy.append(CardInstance.create(_make_energy_cd("Grass Energy A", "G"), 0))
+	var bench_ogerpon_b := PokemonSlot.new()
+	bench_ogerpon_b.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Teal Mask Ogerpon ex", 210, "G"), 0))
+	bench_ogerpon_b.attached_energy.append(CardInstance.create(_make_energy_cd("Grass Energy B", "G"), 0))
+	gsm.game_state.players[0].bench = [bench_bolt, bench_ogerpon_a, bench_ogerpon_b]
+
+	var effect := AttackDiscardBasicEnergyFromFieldDamageScript.new(70, 1)
+	var steps: Array[Dictionary] = effect.get_attack_interaction_steps(attacker.get_top_card(), attacker_cd.attacks[1], gsm.game_state)
+	var attack_effects: Array[BaseEffect] = [effect]
+	battle_scene.call("_start_effect_interaction", "attack", 0, steps, attacker.get_top_card(), attacker, 1, attacker_cd.attacks[1], attack_effects)
+	var card_row: HBoxContainer = battle_scene.get("_dialog_card_row")
+	var dialog_data: Dictionary = battle_scene.get("_dialog_data")
+	var dialog_items: Array = battle_scene.get("_dialog_items_data")
+	var dialog_card_size: Vector2 = battle_scene.get("_dialog_card_size")
+	var expected_compact_size := Vector2(maxf(92.0, dialog_card_size.x * 0.68), maxf(128.0, dialog_card_size.y * 0.68))
+	var dialog_overlay := battle_scene.get("_dialog_overlay") as Panel
+	var dialog_box_after_show := battle_scene.get("_dialog_box") as PanelContainer
+	var overlay_style := dialog_overlay.get_theme_stylebox("panel") as StyleBoxFlat if dialog_overlay != null else null
+	var dialog_box_style := dialog_box_after_show.get_theme_stylebox("panel") as StyleBoxFlat if dialog_box_after_show != null else null
+	var battlefield := card_row.find_child("EnergyDiscardBattlefield", true, false) as PanelContainer
+	var battlefield_style := battlefield.get_theme_stylebox("panel") as StyleBoxFlat if battlefield != null else null
+	var active_label := card_row.find_child("EnergyDiscardActiveLabel", true, false) as Label
+	var bench_label := card_row.find_child("EnergyDiscardBenchLabel", true, false) as Label
+	var active_lane := card_row.find_child("EnergyDiscardActiveLane", true, false) as HBoxContainer
+	var bench_lane := card_row.find_child("EnergyDiscardBenchLane", true, false) as HBoxContainer
+	var group_positions: Array[String] = []
+	var group_names: Array[String] = []
+	var energy_choice_indices: Array[int] = []
+	var pokemon_header_count := 0
+	var card_line_count := 0
+	var compact_card_count := 0
+	var wrong_compact_card_size_count := 0
+	var nodes: Array[Node] = card_row.get_children()
+	while not nodes.is_empty():
+		var node: Node = nodes.pop_front()
+		if node is PanelContainer and String(node.name).begins_with("EnergyDiscardGroup"):
+			group_positions.append(str(node.get_meta("energy_group_slot_position", "")))
+			group_names.append(str(node.get_meta("energy_group_pokemon_name", "")))
+		if node is HBoxContainer and String(node.name) == "EnergyGroupCardLine":
+			card_line_count += 1
+		if node is BattleCardView:
+			var card_view := node as BattleCardView
+			compact_card_count += 1
+			if card_view.custom_minimum_size != expected_compact_size:
+				wrong_compact_card_size_count += 1
+			var choice_index := int(card_view.get_meta("dialog_choice_index", -1))
+			if choice_index >= 0:
+				energy_choice_indices.append(choice_index)
+			elif card_view.card_data != null and card_view.card_data.card_type != "Basic Energy":
+				pokemon_header_count += 1
+		for nested: Node in node.get_children():
+			nodes.append(nested)
+	battle_scene.call("_on_dialog_card_chosen", 0)
+	var first_selection: Array = (battle_scene.get("_dialog_card_selected_indices") as Array).duplicate()
+	battle_scene.call("_on_dialog_card_chosen", 1)
+	var second_selection: Array = (battle_scene.get("_dialog_card_selected_indices") as Array).duplicate()
+
+	return run_checks([
+		assert_true(bool(battle_scene.get("_dialog_card_mode")), "Bellowing Thunder should open a card dialog for attached Energy"),
+		assert_eq(str(battle_scene.get("_field_interaction_mode")), "", "Bellowing Thunder should not mark field Pokemon as selectable or selected"),
+		assert_not_null(battlefield, "Bellowing Thunder should render the selection as one battlefield-style board"),
+		assert_not_null(active_label, "Bellowing Thunder should label the active Pokemon row"),
+		assert_not_null(bench_label, "Bellowing Thunder should label the bench row"),
+		assert_eq(active_label.text if active_label != null else "", "战斗宝可梦", "Bellowing Thunder active row label should be concise"),
+		assert_eq(bench_label.text if bench_label != null else "", "备战区", "Bellowing Thunder bench row label should be concise"),
+		assert_eq(active_label.get_theme_font_size("font_size") if active_label != null else -1, 14, "Bellowing Thunder row labels should use small text"),
+		assert_eq(bench_label.get_theme_font_size("font_size") if bench_label != null else -1, 14, "Bellowing Thunder row labels should use small text"),
+		assert_not_null(active_lane, "Bellowing Thunder should render the active Pokemon lane above the bench"),
+		assert_not_null(bench_lane, "Bellowing Thunder should render the bench lane below the active Pokemon"),
+		assert_true(active_lane != null and bench_lane != null and active_lane.get_index() < bench_lane.get_index(), "Bellowing Thunder should place the active lane above the bench lane"),
+		assert_eq(active_lane.get_child_count() if active_lane != null else -1, 1, "Bellowing Thunder battlefield should have one active slot on top"),
+		assert_eq(bench_lane.get_child_count() if bench_lane != null else -1, 3, "Bellowing Thunder battlefield should put bench slots on the lower lane"),
+		assert_eq(group_positions, ["战斗场", "备战区 1", "备战区 2", "备战区 3"], "Bellowing Thunder should distinguish duplicate Pokemon groups by field position"),
+		assert_eq(group_names, ["Raging Bolt ex", "Raging Bolt ex", "Teal Mask Ogerpon ex", "Teal Mask Ogerpon ex"], "Bellowing Thunder group metadata should keep duplicate Pokemon names distinct"),
+		assert_eq(overlay_style.bg_color.a if overlay_style != null else -1.0, 0.0, "Bellowing Thunder should not dim the battlefield behind the dialog"),
+		assert_true(dialog_box_style != null and is_equal_approx(dialog_box_style.bg_color.a, 0.94), "Bellowing Thunder dialog box should be nearly opaque for readability"),
+		assert_true(battlefield_style != null and is_equal_approx(battlefield_style.bg_color.a, 0.90), "Bellowing Thunder board wrapper should be nearly opaque for readability"),
+		assert_eq(battlefield_style.border_width_left if battlefield_style != null else -1, 0, "Bellowing Thunder board wrapper should not draw an extra outer border"),
+		assert_null(card_row.find_child("EnergyGroupSlotBadge", true, false), "Bellowing Thunder should not need explicit active/bench labels inside the WYSIWYG board"),
+		assert_eq(pokemon_header_count, 4, "Bellowing Thunder should render one non-clickable Pokemon card per Energy owner"),
+		assert_eq(card_line_count, 4, "Each Pokemon slot should put Pokemon and attached Energy on the same visual line"),
+		assert_eq(compact_card_count, 8, "Bellowing Thunder should render four Pokemon cards plus four Energy cards"),
+		assert_eq(wrong_compact_card_size_count, 0, "Pokemon cards and Energy cards should use the same compact card size"),
+		assert_null(card_row.find_child("EnergyGroupTitle", true, false), "Bellowing Thunder should not repeat Pokemon names in extra title text"),
+		assert_null(card_row.find_child("EnergyGroupSubtitle", true, false), "Bellowing Thunder should not show duplicate summary text inside each slot"),
+		assert_null(card_row.find_child("EnergyGroupAttachedLabel", true, false), "Bellowing Thunder should not need repeated attached-Energy instruction text"),
+		assert_eq(energy_choice_indices, [0, 1, 2, 3], "Bellowing Thunder should only make Energy cards selectable inside each Pokemon group"),
+		assert_eq(dialog_items.size(), 4, "Bellowing Thunder dialog items should be the selected Basic Energy cards"),
+		assert_eq(int(dialog_data.get("min_select", -1)), 0, "Bellowing Thunder should allow selecting no Energy"),
+		assert_eq(int(dialog_data.get("max_select", -1)), 4, "Bellowing Thunder should allow selecting any visible Basic Energy"),
+		assert_eq(first_selection, [0], "Clicking the first Energy should select it"),
+		assert_eq(second_selection, [0, 1], "Clicking the second Energy should multi-select it without needing Pokemon targets"),
 	])
 
 
@@ -4537,16 +4815,29 @@ func test_battle_scene_tm_evolution_routes_granted_attack_targets_to_field_ui() 
 	evo_cd.evolves_from = "Bench Basic"
 	evo_cd.hp = 110
 	evo_cd.energy_type = "R"
-	gsm.game_state.players[0].deck = [CardInstance.create(evo_cd, 0)]
+	var decoy_cd := _make_pokemon_cd("Wrong Evolution", 90, "G")
+	decoy_cd.stage = "Stage 1"
+	decoy_cd.evolves_from = "Other Basic"
+	gsm.game_state.players[0].deck = [
+		CardInstance.create(evo_cd, 0),
+		CardInstance.create(decoy_cd, 0),
+	]
 
 	var effect := AttackTMEvolutionScript.new(2)
 	var granted_attack: Dictionary = effect.get_granted_attacks(attacker, gsm.game_state)[0]
 	var steps: Array[Dictionary] = effect.get_granted_attack_interaction_steps(attacker, granted_attack, gsm.game_state)
 	var tool_card := CardInstance.create(_make_trainer_cd("TM Evolution", "Tool", ""), 0)
 	battle_scene.call("_start_effect_interaction", "granted_attack", 0, steps, tool_card, attacker, 0, granted_attack)
+	var dialog_data: Dictionary = battle_scene.get("_dialog_data")
+	var card_items: Array = dialog_data.get("card_items", [])
+	var card_indices: Array = dialog_data.get("card_indices", [])
+	battle_scene.call("_handle_effect_interaction_choice", PackedInt32Array([0]))
 
 	return run_checks([
-		assert_eq(str(battle_scene.get("_field_interaction_mode")), "slot_select", "TM Evolution should route bench target selection to field slot UI"),
+		assert_true(bool(battle_scene.get("_dialog_card_mode")), "TM Evolution should first show the searched deck as a card dialog"),
+		assert_eq(card_items.size(), 2, "TM Evolution should show the complete searched deck before target selection"),
+		assert_eq(card_indices, [0, -1], "TM Evolution should disable non-matching evolution cards in the full-deck view"),
+		assert_eq(str(battle_scene.get("_field_interaction_mode")), "slot_select", "After choosing the evolution card, TM Evolution should route bench target selection to field slot UI"),
 		assert_eq(str(battle_scene.get("_field_interaction_position")), "top", "TM Evolution should move the field panel upward for own bench targets"),
 	])
 
@@ -5908,6 +6199,54 @@ func test_match_end_return_preserves_tournament_standings_route_when_active() ->
 	])
 
 
+func test_tournament_game_over_shows_match_end_quick_review_before_standings() -> String:
+	var previous_tournament := GameManager.current_tournament
+	var previous_tournament_deck_id := GameManager.tournament_selected_player_deck_id
+	var previous_in_progress := GameManager.tournament_battle_in_progress
+	var previous_mode: int = GameManager.current_mode
+	var previous_suppressed := bool(GameManager.get("suppress_scene_navigation_for_tests"))
+	GameManager.set_scene_navigation_suppressed_for_tests(true)
+	GameManager.clear_tournament()
+	GameManager.set_tournament_selected_player_deck_id(575716)
+	GameManager.start_swiss_tournament("测试玩家", 16)
+	var prepared := GameManager.prepare_current_tournament_battle()
+	GameManager.consume_last_requested_scene_path()
+
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.turn_number = 4
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	for player_index: int in 2:
+		var player := PlayerState.new()
+		player.player_index = player_index
+		gsm.game_state.players.append(player)
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	battle_scene.call("_on_game_over", 0, "knockout")
+	var match_end_overlay := battle_scene.get("_match_end_overlay") as Panel
+	var return_button := battle_scene.get("_match_end_return_button") as Button
+	var requested_path := GameManager.consume_last_requested_scene_path()
+	var active_after_game_over := GameManager.is_tournament_battle_active()
+
+	GameManager.clear_tournament()
+	GameManager.current_tournament = previous_tournament
+	GameManager.tournament_selected_player_deck_id = previous_tournament_deck_id
+	GameManager.tournament_battle_in_progress = previous_in_progress
+	GameManager.current_mode = previous_mode
+	GameManager.set_scene_navigation_suppressed_for_tests(previous_suppressed)
+
+	return run_checks([
+		assert_true(prepared, "Tournament test setup should prepare an active battle"),
+		assert_true(match_end_overlay != null and match_end_overlay.visible, "Tournament game over should show the match-end quick review screen"),
+		assert_eq(return_button.text if return_button != null else "", "返回比赛积分", "Tournament match-end screen should return to standings"),
+		assert_eq(requested_path, "", "Tournament game over should not navigate away before the player sees the result screen"),
+		assert_true(active_after_game_over, "Tournament battle should remain active until the player presses return"),
+	])
+
+
 func test_battle_scene_match_end_quick_review_failure_falls_back_to_local_summary() -> String:
 	var battle_scene = _make_battle_scene_stub()
 	battle_scene.set("_battle_review_winner_index", 0)
@@ -5934,6 +6273,122 @@ func test_battle_scene_match_end_quick_review_failure_falls_back_to_local_summar
 		assert_eq(ai_title.text if ai_title != null else "", "本地赛后简评（AI暂不可用）", "Match end title should explain the AI fallback"),
 		assert_str_contains(content_text, "AI 快评超时", "Match end content should explain timeout fallback"),
 		assert_str_contains(content_text, "评分", "Match end content should still show a useful local score"),
+	])
+
+
+func test_battle_scene_match_end_quick_review_payload_uses_llm_digest() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var match_dir := "user://test_quick_review_digest_%d" % Time.get_ticks_usec()
+	var global_dir := ProjectSettings.globalize_path(match_dir)
+	DirAccess.make_dir_recursive_absolute(global_dir)
+	var digest := {
+		"meta": {"winner_index": 0, "total_turns": 6},
+		"opening": {"opening_tags": {"0": ["Raging Bolt ex"], "1": ["Entei V"]}},
+		"inflection_points": [{
+			"turn_number": 5,
+			"player_index": 0,
+			"kind": "multi_prize_knockout",
+			"summary": "玩家1用极雷轰拿下两奖",
+		}],
+		"critical_sequences": [{
+			"turn_number": 5,
+			"player_index": 0,
+			"kind": "knockout",
+			"summary": "极雷轰完成关键击倒",
+			"actions": ["玩家1使用极雷轰"],
+		}],
+		"turn_summaries": [{
+			"turn_number": 6,
+			"key_actions": [{"player_index": 0, "description": "玩家1完成终结攻击", "damage": 210}],
+			"key_choices": [{"player_index": 0, "title": "选择丢弃能量", "selected_labels": ["猛雷鼓ex 雷能量"]}],
+		}],
+	}
+	var file := FileAccess.open(match_dir.path_join("llm_digest.json"), FileAccess.WRITE)
+	if file == null:
+		return "failed to create quick review digest fixture"
+	file.store_string(JSON.stringify(digest))
+	file.close()
+	battle_scene.set("_battle_review_match_dir", match_dir)
+	battle_scene.set("_match_end_stats", {
+		"winner_index": 0,
+		"turn_number": 6,
+		"view_player": {"prizes_taken": 6, "max_damage": 210},
+		"opponent": {"prizes_taken": 4},
+	})
+
+	var payload: Dictionary = battle_scene.call("_build_match_end_quick_review_payload")
+	var subject: Dictionary = payload.get("review_subject", {})
+	var context: Dictionary = payload.get("quick_review_context", {})
+	var key_moments: Array = context.get("key_moments", [])
+	var last_turn: Dictionary = context.get("last_turn", {})
+	var last_actions: Array = last_turn.get("key_actions", [])
+	var first_moment: Dictionary = key_moments[0] if not key_moments.is_empty() and key_moments[0] is Dictionary else {}
+	var first_action: Dictionary = last_actions[0] if not last_actions.is_empty() and last_actions[0] is Dictionary else {}
+
+	DirAccess.remove_absolute(global_dir.path_join("llm_digest.json"))
+	DirAccess.remove_absolute(global_dir)
+	return run_checks([
+		assert_eq(str(subject.get("result", "")), "win", "Quick review should mark the current view player result"),
+		assert_str_contains(str(subject.get("review_instruction", "")), "只评价当前玩家", "Quick review should tell the LLM to focus on the current player"),
+		assert_false(context.is_empty(), "Quick review payload should include compact digest context when recording exists"),
+		assert_eq(str(first_moment.get("summary", "")), "玩家1用极雷轰拿下两奖", "Quick review should expose key moments to the LLM"),
+		assert_eq(int(last_turn.get("turn_number", 0)), 6, "Quick review should expose the last turn summary"),
+		assert_eq(str(first_action.get("description", "")), "玩家1完成终结攻击", "Quick review should keep concrete action descriptions"),
+	])
+
+
+func test_battle_scene_match_end_quick_review_payload_focuses_human_in_vs_ai_even_if_view_shifted() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var previous_ids: Array = GameManager.selected_deck_ids.duplicate()
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	GameManager.selected_deck_ids = [575716, 575720]
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_view_player", 1)
+	battle_scene.set("_match_end_stats", {
+		"winner_index": 0,
+		"view_player_index": 1,
+		"opponent_index": 0,
+		"is_view_player_winner": false,
+		"view_player": {"prizes_taken": 2, "max_damage": 120},
+		"opponent": {"prizes_taken": 6, "max_damage": 240},
+		"players": [
+			{"prizes_taken": 6, "max_damage": 240, "knockouts": 3},
+			{"prizes_taken": 2, "max_damage": 120, "knockouts": 1},
+		],
+	})
+
+	var payload: Dictionary = battle_scene.call("_build_match_end_quick_review_payload")
+	var subject: Dictionary = payload.get("review_subject", {})
+	var review_player: Dictionary = payload.get("view_player", {})
+	var review_opponent: Dictionary = payload.get("opponent", {})
+
+	GameManager.current_mode = previous_mode
+	GameManager.selected_deck_ids = previous_ids
+	return run_checks([
+		assert_eq(int(payload.get("view_player_index", -1)), 0, "VS_AI quick review should review the human/player side, not a shifted visible side"),
+		assert_eq(str(subject.get("result", "")), "win", "VS_AI quick review should preserve the human player's win"),
+		assert_eq(int(subject.get("player_index", -1)), 0, "VS_AI quick review subject should be player 0"),
+		assert_eq(int(review_player.get("prizes_taken", 0)), 6, "Quick review player stats should be normalized to the human side"),
+		assert_eq(int(review_opponent.get("prizes_taken", 0)), 2, "Quick review opponent stats should be normalized to the AI side"),
+	])
+
+
+func test_battle_scene_match_end_quick_review_busy_shows_generation_text_without_local_preview() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_match_end_quick_review_busy", true)
+	battle_scene.set("_match_end_quick_review_progress_text", "正在让 Kimi K2.6 快速点评...")
+	battle_scene.call("_show_match_end_dialog", 0, "knockout")
+
+	var result: Dictionary = battle_scene.get("_match_end_quick_review_result")
+	var ai_title := battle_scene.get("_match_end_ai_title") as Label
+	var ai_content := battle_scene.get("_match_end_ai_content") as RichTextLabel
+	var content_text := ai_content.text if ai_content != null else ""
+
+	return run_checks([
+		assert_true(result.is_empty(), "Busy quick review should not create a local preview result"),
+		assert_eq(ai_title.text if ai_title != null else "", "AI赛后快评", "Busy quick review should keep the AI title"),
+		assert_str_contains(content_text, "正在让", "Busy quick review should show generation progress"),
+		assert_false(content_text.contains("评分"), "Busy quick review should not show local score before AI returns"),
 	])
 
 
@@ -6205,6 +6660,114 @@ func test_battle_scene_used_ability_tilt_adjusts_card_z_index() -> String:
 	])
 
 
+func test_battle_card_view_status_icons_render_below_hp_and_clear() -> String:
+	var card_view := BattleCardViewScript.new()
+	card_view.custom_minimum_size = Vector2(120, 168)
+	card_view.size = Vector2(120, 168)
+	card_view.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_ACTIVE)
+	card_view.set_battle_status({
+		"hp_current": 90,
+		"hp_max": 120,
+		"hp_ratio": 0.75,
+		"status_icons": ["poisoned", "confused", "paralyzed"],
+		"energy_icons": ["D"],
+		"tool_name": "",
+		"ability_used_this_turn": false,
+	})
+
+	var hp_panel := card_view.get("_status_hp_bar_panel") as Control
+	var status_panel := card_view.get("_status_condition_panel") as Control
+	var status_row := card_view.get("_status_condition_row") as HBoxContainer
+	var energy_panel := card_view.get("_status_energy_panel") as Control
+	var hud := card_view.get("_status_hud") as VBoxContainer
+	var status_index := hud.get_children().find(status_panel) if hud != null else -1
+	var hp_index := hud.get_children().find(hp_panel) if hud != null else -1
+	var energy_index := hud.get_children().find(energy_panel) if hud != null else -1
+	var status_visible_with_conditions := status_panel != null and status_panel.visible
+	var child_count_with_conditions := status_row.get_child_count() if status_row != null else -1
+
+	card_view.set_battle_status({
+		"hp_current": 90,
+		"hp_max": 120,
+		"hp_ratio": 0.75,
+		"status_icons": [],
+		"energy_icons": ["D"],
+		"tool_name": "",
+		"ability_used_this_turn": false,
+	})
+	var status_visible_after_clear := status_panel != null and status_panel.visible
+	var child_count_after_clear := status_row.get_child_count() if status_row != null else -1
+
+	return run_checks([
+		assert_true(status_panel != null, "BattleCardView should expose a status condition panel"),
+		assert_true(status_row != null, "BattleCardView should expose a status condition row"),
+		assert_true(status_visible_with_conditions, "Status condition panel should show when status exists"),
+		assert_eq(child_count_with_conditions, 3, "BattleCardView should render one icon per active status"),
+		assert_false(status_visible_after_clear, "Status condition panel should hide when status clears"),
+		assert_eq(child_count_after_clear, 0, "Status condition row should not keep stale icons"),
+		assert_true(hp_index >= 0 and status_index == hp_index + 1, "Status condition row should sit directly below HP"),
+		assert_true(energy_index > status_index, "Energy row should stay below status condition row"),
+	])
+
+
+func test_battle_scene_battle_status_includes_active_status_icons() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var slot := PokemonSlot.new()
+	slot.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Status Probe", 100, "D"), 0))
+	slot.set_status("poisoned", true)
+	slot.set_status("burned", true)
+	slot.set_status("paralyzed", true)
+
+	var status: Dictionary = battle_scene.call("_build_battle_status", slot)
+	return run_checks([
+		assert_eq(status.get("status_icons", []), ["poisoned", "burned", "paralyzed"], "Battle status should expose active status icon keys in stable order"),
+	])
+
+
+func test_battle_card_view_marks_unimplemented_effect_card() -> String:
+	var card_view := BattleCardViewScript.new()
+	var card_data := CardData.new()
+	card_data.name = "Missing Effect Item"
+	card_data.card_type = "Item"
+	card_data.effect_id = "missing-ui-effect"
+	card_data.description = "Search your deck for any card."
+	card_view.setup_from_card_data(card_data, BattleCardViewScript.MODE_HAND)
+	var badge_panel := card_view.get("_implementation_badge_panel") as Control
+	var badge_label := card_view.get("_implementation_badge_label") as Label
+
+	return run_checks([
+		assert_true(badge_panel != null, "BattleCardView should expose an unimplemented badge panel"),
+		assert_true(badge_panel != null and badge_panel.visible, "Cards with missing effect implementation should show the unimplemented badge"),
+		assert_true(badge_label != null, "BattleCardView should expose an unimplemented badge label"),
+		assert_eq(badge_label.text, "未实现", "Unimplemented badge should use the expected HUD text"),
+	])
+
+
+func test_battle_card_view_hides_unimplemented_badge_for_basic_energy_and_face_down() -> String:
+	var card_view := BattleCardViewScript.new()
+	var energy := CardData.new()
+	energy.name = "Test Energy"
+	energy.card_type = "Basic Energy"
+	card_view.setup_from_card_data(energy, BattleCardViewScript.MODE_HAND)
+	var badge_panel := card_view.get("_implementation_badge_panel") as Control
+	var visible_for_energy := badge_panel != null and badge_panel.visible
+
+	var missing_item := CardData.new()
+	missing_item.name = "Hidden Missing Effect"
+	missing_item.card_type = "Item"
+	missing_item.effect_id = "missing-hidden-effect"
+	missing_item.description = "Draw cards."
+	card_view.setup_from_card_data(missing_item, BattleCardViewScript.MODE_HAND)
+	card_view.set_face_down(true)
+	var visible_face_down := badge_panel != null and badge_panel.visible
+
+	return run_checks([
+		assert_true(badge_panel != null, "BattleCardView should keep the unimplemented badge panel"),
+		assert_false(visible_for_energy, "Basic Energy should not show the unimplemented badge"),
+		assert_false(visible_face_down, "Face-down cards should not reveal implementation status"),
+	])
+
+
 func test_battle_card_view_touch_long_press_opens_detail_without_left_click() -> String:
 	var card_view := BattleCardViewScript.new()
 	var card_data := _make_pokemon_cd("Touch Inspect", 70, "R")
@@ -6229,6 +6792,28 @@ func test_battle_card_view_touch_long_press_opens_detail_without_left_click() ->
 		assert_eq(int(counters["right"]), 1, "Long press should reuse the right-click detail signal"),
 		assert_true(suppresses_emulated_left, "Long press should suppress the next emulated left click"),
 		assert_eq(int(counters["left"]), 0, "Long press detail should not also select or play the card"),
+	])
+
+
+func test_battle_card_view_secondary_inspect_is_hand_only() -> String:
+	var card_view := BattleCardViewScript.new()
+	var card_data := _make_pokemon_cd("Field Inspect Blocked", 70, "R")
+	card_view.setup_from_card_data(card_data, BattleCardViewScript.MODE_SLOT_ACTIVE)
+	var right_count := 0
+	card_view.right_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
+		right_count += 1
+	)
+
+	var right_click := InputEventMouseButton.new()
+	right_click.button_index = MOUSE_BUTTON_RIGHT
+	right_click.pressed = true
+	card_view.call("_gui_input", right_click)
+	card_view.call("_start_touch_long_press", Vector2(8, 8), 0)
+	card_view.call("_on_touch_long_press_timeout")
+
+	return run_checks([
+		assert_eq(right_count, 0, "Slot card views should not open card detail from right click or long press"),
+		assert_false(bool(card_view.get("_touch_long_press_active")), "Slot card views should not start touch inspect state"),
 	])
 
 

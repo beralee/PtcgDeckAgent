@@ -156,6 +156,37 @@ func score_action(action: Dictionary, context: Dictionary) -> float:
 	return score_action_absolute(action, context.get("game_state", null), int(context.get("player_index", -1))) - _estimate_heuristic_base(str(action.get("kind", "")))
 
 
+func build_continuity_contract(game_state: GameState, player_index: int, turn_contract: Dictionary = {}) -> Dictionary:
+	var disabled := {
+		"enabled": false,
+		"safe_setup_before_attack": false,
+		"setup_debt": {},
+		"action_bonuses": [],
+		"attack_penalty": 0.0,
+	}
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return disabled
+	var player: PlayerState = game_state.players[player_index]
+	var setup_debt := _build_charizard_continuity_setup_debt(player, game_state, player_index)
+	if not _has_immediate_charizard_ex_attack_window(player):
+		disabled["setup_debt"] = setup_debt
+		return disabled
+	if _charizard_continuity_terminal_attack_locked(game_state, player_index, turn_contract):
+		disabled["setup_debt"] = setup_debt
+		disabled["terminal_attack_locked"] = true
+		return disabled
+	var action_bonuses := _build_charizard_continuity_action_bonuses(player, setup_debt)
+	var enabled := _charizard_continuity_setup_debt_is_active(setup_debt) and not action_bonuses.is_empty()
+	return {
+		"enabled": enabled,
+		"safe_setup_before_attack": enabled,
+		"setup_debt": setup_debt,
+		"action_bonuses": action_bonuses,
+		"attack_penalty": 0.0,
+		"turn_intent": str(turn_contract.get("intent", "")),
+	}
+
+
 func score_handoff_target(item: Variant, step: Dictionary, context: Dictionary = {}) -> float:
 	var step_id := str(step.get("id", ""))
 	if item is PokemonSlot:
@@ -413,6 +444,9 @@ func _score_evolve(action: Dictionary, game_state: GameState, player_index: int)
 	var card: CardInstance = action.get("card")
 	if card == null or card.card_data == null:
 		return 0.0
+	var target_slot: PokemonSlot = action.get("target_slot")
+	if target_slot != null and not _slot_is_live(target_slot):
+		return -80.0
 	var player: PlayerState = game_state.players[player_index]
 	match _card_name(card):
 		CHARIZARD_EX:
@@ -516,12 +550,14 @@ func _score_attach_energy(action: Dictionary, game_state: GameState, player_inde
 	var energy_card: CardInstance = action.get("card")
 	if target_slot == null or energy_card == null or energy_card.card_data == null:
 		return 0.0
+	if not _slot_is_live(target_slot):
+		return -80.0
 	var player: PlayerState = game_state.players[player_index]
 	var energy_name := _card_name(energy_card)
 	if energy_name == DOUBLE_TURBO_ENERGY:
 		if _slot_name(target_slot) == PIDGEOT_EX:
 			return 120.0
-		return 40.0
+		return -20.0
 	if str(energy_card.card_data.energy_provides) == "R":
 		return _score_fire_attach_target(target_slot, player, game_state, player_index)
 	return 40.0
@@ -532,6 +568,8 @@ func _score_attach_tool(action: Dictionary, game_state: GameState, player_index:
 	var target_slot: PokemonSlot = action.get("target_slot")
 	if card == null or card.card_data == null or target_slot == null:
 		return 0.0
+	if not _slot_is_live(target_slot):
+		return -80.0
 	var player: PlayerState = game_state.players[player_index]
 	var tool_name := _card_name(card)
 	var target_name := _slot_name(target_slot)
@@ -635,6 +673,8 @@ func _score_retreat(action: Dictionary, player: PlayerState, game_state: GameSta
 	if active == null:
 		return 0.0
 	var target_slot: PokemonSlot = action.get("bench_target")
+	if target_slot != null and not _slot_is_live(target_slot):
+		return -80.0
 	if _should_block_opening_shell_retreat(active, target_slot, player, game_state):
 		return -40.0
 	if target_slot != null and target_slot.get_top_card() != null:
@@ -892,6 +932,9 @@ func _score_search_pokemon(card: CardInstance, context: Dictionary) -> float:
 		if _should_prioritize_rotom_before_second_charmander(player, game_state):
 			return 780.0
 		return 620.0 if _needs_early_rotom_setup(player, game_state) else 260.0
+	if name == RADIANT_CHARIZARD and _count_name(player, RADIANT_CHARIZARD) == 0:
+		if game_state != null and _opponent_prizes_taken(game_state, player_index) >= 4:
+			return 620.0
 	return float(get_search_priority(card))
 
 
@@ -904,8 +947,13 @@ func _score_manual_energy_target(slot: PokemonSlot, context: Dictionary) -> floa
 	var source_card: Variant = context.get("source_card", null)
 	if source_card is CardInstance:
 		var source_instance := source_card as CardInstance
-		if source_instance.card_data != null and str(source_instance.card_data.energy_provides) == "R":
+		if source_instance.card_data == null:
+			return 0.0
+		if _card_name(source_instance) == DOUBLE_TURBO_ENERGY:
+			return 120.0 if _slot_name(slot) == PIDGEOT_EX else -20.0
+		if str(source_instance.card_data.energy_provides) == "R":
 			return _score_fire_attach_target(slot, player, game_state, player_index, context)
+		return 40.0
 	return _score_fire_attach_target(slot, player, game_state, player_index, context)
 
 
@@ -1007,7 +1055,12 @@ func _score_damage_counter_target(slot: PokemonSlot) -> float:
 
 func _opening_priority(name: String, player: PlayerState) -> float:
 	var strong_fixed_opening := _should_force_charmander_active_for_strong_opening(player)
+	var radiant_shield_opening := _should_force_radiant_active_for_strong_opening(player)
 	match name:
+		RADIANT_CHARIZARD:
+			if radiant_shield_opening:
+				return 390.0
+			return 90.0
 		PIDGEY:
 			if strong_fixed_opening:
 				return 300.0
@@ -1024,8 +1077,6 @@ func _opening_priority(name: String, player: PlayerState) -> float:
 			return 120.0
 		MANAPHY:
 			return 120.0
-		RADIANT_CHARIZARD:
-			return 90.0
 	return 70.0
 
 
@@ -1044,6 +1095,21 @@ func _should_force_charmander_active_for_strong_opening(player: PlayerState) -> 
 		and _hand_has_name(player, "Fire Energy")
 		and _hand_has_name(player, RARE_CANDY)
 		and has_strong_finish_piece
+		and not _hand_has_name(player, ROTOM_V)
+	)
+
+
+func _should_force_radiant_active_for_strong_opening(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	return (
+		_hand_has_name(player, RADIANT_CHARIZARD)
+		and _hand_has_name(player, CHARMANDER)
+		and _hand_has_name(player, PIDGEY)
+		and _hand_has_name(player, BUDDY_BUDDY_POFFIN)
+		and _hand_has_name(player, ARVEN)
+		and _hand_has_name(player, "Fire Energy")
+		and _hand_has_name(player, RARE_CANDY)
 		and not _hand_has_name(player, ROTOM_V)
 	)
 
@@ -1121,6 +1187,8 @@ func _score_fire_attach_target(
 ) -> float:
 	if target_slot == null or target_slot.get_top_card() == null:
 		return 0.0
+	if not _slot_is_live(target_slot):
+		return -80.0
 	var name := _slot_name(target_slot)
 	var opponent_taken := _opponent_prizes_taken(game_state, player_index)
 	var early_double_stage2_online := game_state != null and int(game_state.turn_number) <= 3 and _count_name(player, CHARIZARD_EX) > 0 and _count_name(player, PIDGEOT_EX) > 0
@@ -1171,6 +1239,303 @@ func _score_fire_attach_target(
 	return 50.0
 
 
+func _build_charizard_continuity_setup_debt(player: PlayerState, game_state: GameState, player_index: int) -> Dictionary:
+	if player == null:
+		return {}
+	var bench_open := _live_bench_count(player) < 5
+	var line_count := _count_charizard_continuity_lines_on_field(player)
+	var backup_slot := _best_continuity_backup_charizard_slot(player)
+	var backup_name := _slot_name(backup_slot)
+	var backup_gap := _charizard_line_attack_gap(backup_slot)
+	var pidgey_count := _count_name(player, PIDGEY)
+	var pidgeot_count := _count_name(player, PIDGEOT_EX)
+	var has_stage2_access := _has_hand_or_deck_card(player, CHARIZARD_EX)
+	var has_pidgeot_access := _has_hand_or_deck_card(player, PIDGEOT_EX)
+	var has_candy_access := _has_hand_or_deck_card(player, RARE_CANDY)
+	var need_backup_seed := line_count < 2 and bench_open and _has_hand_or_deck_card(player, CHARMANDER)
+	var need_second_charmeleon := backup_name == CHARMANDER and _has_hand_or_deck_card(player, CHARMELEON)
+	var need_second_charizard := (
+		backup_slot != null
+		and backup_name != CHARIZARD_EX
+		and has_stage2_access
+		and (has_candy_access or backup_name == CHARMELEON)
+	)
+	var need_engine_seed := pidgeot_count == 0 and pidgey_count == 0 and bench_open and _has_hand_or_deck_card(player, PIDGEY)
+	var need_engine_online := pidgeot_count == 0 and pidgey_count > 0 and has_pidgeot_access and has_candy_access
+	var need_rare_candy := (
+		(need_second_charizard or need_engine_online)
+		and not _has_hand_card(player, RARE_CANDY)
+		and _deck_has(player, RARE_CANDY)
+	)
+	var need_search := (
+		need_backup_seed
+		or need_second_charmeleon
+		or need_second_charizard
+		or need_engine_seed
+		or need_engine_online
+		or need_rare_candy
+	)
+	var need_next_attacker_ready := backup_slot != null and backup_gap > 0 and backup_gap < 99
+	return {
+		"charizard_line_count": line_count,
+		"pidgey_count": pidgey_count,
+		"pidgeot_count": pidgeot_count,
+		"backup_attacker_name": backup_name,
+		"backup_attacker_gap": backup_gap,
+		"need_backup_attacker_seed": need_backup_seed,
+		"need_second_charmander": need_backup_seed,
+		"need_second_charmeleon": need_second_charmeleon,
+		"need_second_charizard_ex": need_second_charizard,
+		"need_engine_seed": need_engine_seed,
+		"need_engine_online": need_engine_online,
+		"need_rare_candy": need_rare_candy,
+		"need_arven_or_search": need_search and _has_charizard_continuity_search_access(player),
+		"need_second_attacker_energy": need_next_attacker_ready,
+		"need_next_attacker_ready": need_next_attacker_ready,
+		"final_prize_ko_available": _charizard_final_prize_ko_is_available(game_state, player_index),
+	}
+
+
+func _build_charizard_continuity_action_bonuses(player: PlayerState, setup_debt: Dictionary) -> Array[Dictionary]:
+	var bonuses: Array[Dictionary] = []
+	if player == null or setup_debt.is_empty():
+		return bonuses
+	var need_backup_seed := bool(setup_debt.get("need_backup_attacker_seed", false))
+	var need_engine_seed := bool(setup_debt.get("need_engine_seed", false))
+	var need_second_charmeleon := bool(setup_debt.get("need_second_charmeleon", false))
+	var need_second_charizard := bool(setup_debt.get("need_second_charizard_ex", false))
+	var need_engine_online := bool(setup_debt.get("need_engine_online", false))
+	var need_rare_candy := bool(setup_debt.get("need_rare_candy", false))
+	var need_search := bool(setup_debt.get("need_arven_or_search", false))
+	var need_next_attacker_ready := bool(setup_debt.get("need_next_attacker_ready", false))
+
+	if need_backup_seed:
+		bonuses.append(_charizard_continuity_bonus(
+			"play_basic_to_bench",
+			[CHARMANDER],
+			640.0,
+			"seed_backup_charmander_before_nonfinal_attack"
+		))
+	if need_engine_seed:
+		bonuses.append(_charizard_continuity_bonus(
+			"play_basic_to_bench",
+			[PIDGEY],
+			640.0,
+			"seed_pidgey_engine_before_nonfinal_attack"
+		))
+	if need_backup_seed or need_engine_seed:
+		bonuses.append(_charizard_continuity_bonus(
+			"play_trainer",
+			[BUDDY_BUDDY_POFFIN, NEST_BALL],
+			620.0,
+			"search_safe_basic_setup_before_nonfinal_attack"
+		))
+		bonuses.append(_charizard_continuity_bonus(
+			"play_trainer",
+			[ULTRA_BALL],
+			520.0,
+			"search_basic_or_stage2_bridge_before_nonfinal_attack"
+		))
+		bonuses.append(_charizard_continuity_bonus(
+			"play_trainer",
+			[ARVEN],
+			500.0,
+			"arven_safe_setup_before_nonfinal_attack"
+		))
+	if need_second_charmeleon:
+		bonuses.append(_charizard_continuity_bonus(
+			"evolve",
+			[CHARMELEON],
+			520.0,
+			"evolve_backup_charmeleon_before_nonfinal_attack"
+		))
+	if need_second_charizard or need_engine_online:
+		bonuses.append(_charizard_continuity_bonus(
+			"play_trainer",
+			[RARE_CANDY],
+			560.0,
+			"rare_candy_stage2_continuity_before_nonfinal_attack"
+		))
+		bonuses.append(_charizard_continuity_bonus(
+			"evolve",
+			[CHARIZARD_EX, PIDGEOT_EX],
+			540.0,
+			"finish_stage2_continuity_before_nonfinal_attack"
+		))
+	if need_rare_candy or need_search or need_second_charizard or need_engine_online:
+		bonuses.append(_charizard_continuity_bonus(
+			"play_trainer",
+			[ARVEN],
+			500.0,
+			"arven_finds_rare_candy_or_search_before_nonfinal_attack"
+		))
+		bonuses.append(_charizard_continuity_bonus(
+			"play_trainer",
+			[ULTRA_BALL],
+			460.0,
+			"ultra_ball_finds_stage2_continuity_before_nonfinal_attack"
+		))
+	if need_search and _count_name(player, PIDGEOT_EX) > 0:
+		bonuses.append(_charizard_continuity_bonus(
+			"use_ability",
+			[],
+			520.0,
+			"quick_search_finds_continuity_piece_before_nonfinal_attack",
+			{"target_names": [PIDGEOT_EX]}
+		))
+	if need_search and _has_live_forest_seal_target(player):
+		bonuses.append(_charizard_continuity_bonus(
+			"use_ability",
+			[],
+			420.0,
+			"forest_seal_finds_continuity_piece_before_nonfinal_attack",
+			{"target_names": [ROTOM_V, LUMINEON_V]}
+		))
+	if need_next_attacker_ready:
+		bonuses.append(_charizard_continuity_bonus(
+			"attach_energy",
+			["Fire Energy"],
+			420.0,
+			"attach_to_backup_attacker_before_nonfinal_attack",
+			{"target_names": [CHARMANDER, CHARMELEON]}
+		))
+		bonuses.append(_charizard_continuity_bonus(
+			"use_ability",
+			[],
+			420.0,
+			"infernal_reign_powers_backup_attacker_before_nonfinal_attack",
+			{"target_names": [CHARIZARD_EX]}
+		))
+	return bonuses
+
+
+func _charizard_continuity_bonus(
+	kind: String,
+	card_names: Array[String],
+	bonus: float,
+	reason: String,
+	extra: Dictionary = {}
+) -> Dictionary:
+	var rule := {
+		"kind": kind,
+		"bonus": bonus,
+		"reason": reason,
+	}
+	if not card_names.is_empty():
+		rule["card_names"] = card_names
+	for key: Variant in extra.keys():
+		rule[key] = extra[key]
+	return rule
+
+
+func _has_immediate_charizard_ex_attack_window(player: PlayerState) -> bool:
+	if player == null or player.active_pokemon == null:
+		return false
+	return _slot_name(player.active_pokemon) == CHARIZARD_EX and _can_slot_attack(player.active_pokemon)
+
+
+func _charizard_continuity_setup_debt_is_active(setup_debt: Dictionary) -> bool:
+	for key: String in [
+		"need_backup_attacker_seed",
+		"need_second_charmeleon",
+		"need_second_charizard_ex",
+		"need_engine_seed",
+		"need_engine_online",
+		"need_rare_candy",
+		"need_arven_or_search",
+		"need_second_attacker_energy",
+		"need_next_attacker_ready",
+	]:
+		if bool(setup_debt.get(key, false)):
+			return true
+	return false
+
+
+func _charizard_continuity_terminal_attack_locked(game_state: GameState, player_index: int, turn_contract: Dictionary) -> bool:
+	var flags: Dictionary = turn_contract.get("flags", {}) if turn_contract.get("flags", {}) is Dictionary else {}
+	var constraints: Dictionary = turn_contract.get("constraints", {}) if turn_contract.get("constraints", {}) is Dictionary else {}
+	for key: String in [
+		"final_prize_ko",
+		"final_prize_ko_available",
+		"critical_ko",
+		"critical_ko_available",
+		"key_ko",
+		"key_ko_available",
+		"must_attack",
+		"must_attack_if_available",
+		"force_attack",
+		"force_terminal_attack",
+	]:
+		if bool(turn_contract.get(key, false)) or bool(flags.get(key, false)) or bool(constraints.get(key, false)):
+			return true
+	return _charizard_final_prize_ko_is_available(game_state, player_index)
+
+
+func _charizard_final_prize_ko_is_available(game_state: GameState, player_index: int) -> bool:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	var opponent: PlayerState = _opponent(game_state, player_index)
+	if player == null or opponent == null or player.active_pokemon == null or opponent.active_pokemon == null:
+		return false
+	if _slot_name(player.active_pokemon) != CHARIZARD_EX or not _can_slot_attack(player.active_pokemon):
+		return false
+	if player.prizes.size() > opponent.active_pokemon.get_prize_count():
+		return false
+	var projected_damage := int(predict_attacker_damage(player.active_pokemon).get("damage", 0))
+	return projected_damage >= opponent.active_pokemon.get_remaining_hp()
+
+
+func _count_charizard_continuity_lines_on_field(player: PlayerState) -> int:
+	if player == null:
+		return 0
+	var count := 0
+	for slot: PokemonSlot in _all_slots(player):
+		if _slot_name(slot) in [CHARMANDER, CHARMELEON, CHARIZARD_EX]:
+			count += 1
+	return count
+
+
+func _best_continuity_backup_charizard_slot(player: PlayerState) -> PokemonSlot:
+	if player == null:
+		return null
+	var best: PokemonSlot = null
+	var best_gap := 99
+	for slot: PokemonSlot in _all_slots(player):
+		if slot == null or slot == player.active_pokemon:
+			continue
+		if _slot_name(slot) not in [CHARMANDER, CHARMELEON, CHARIZARD_EX]:
+			continue
+		var gap := _charizard_line_attack_gap(slot)
+		if best == null or gap < best_gap:
+			best = slot
+			best_gap = gap
+	return best
+
+
+func _charizard_line_attack_gap(slot: PokemonSlot) -> int:
+	if slot == null or slot.get_top_card() == null:
+		return 99
+	if _slot_name(slot) not in [CHARMANDER, CHARMELEON, CHARIZARD_EX]:
+		return 99
+	return maxi(0, 2 - slot.attached_energy.size())
+
+
+func _has_hand_or_deck_card(player: PlayerState, target_name: String) -> bool:
+	if player == null:
+		return false
+	return _has_hand_card(player, target_name) or _deck_has(player, target_name)
+
+
+func _has_charizard_continuity_search_access(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	for name: String in [ARVEN, BUDDY_BUDDY_POFFIN, NEST_BALL, ULTRA_BALL, RARE_CANDY]:
+		if _has_hand_or_deck_card(player, name):
+			return true
+	return _count_name(player, PIDGEOT_EX) > 0 or _has_live_forest_seal_target(player)
+
+
 func _estimate_heuristic_base(kind: String) -> float:
 	match kind:
 		"attack", "granted_attack":
@@ -1196,12 +1561,26 @@ func _opponent(game_state: GameState, player_index: int) -> PlayerState:
 
 func _all_slots(player: PlayerState) -> Array[PokemonSlot]:
 	var slots: Array[PokemonSlot] = []
-	if player.active_pokemon != null:
+	if _slot_is_live(player.active_pokemon):
 		slots.append(player.active_pokemon)
 	for slot: PokemonSlot in player.bench:
-		if slot != null:
+		if _slot_is_live(slot):
 			slots.append(slot)
 	return slots
+
+
+func _slot_is_live(slot: PokemonSlot) -> bool:
+	return slot != null and slot.get_top_card() != null and slot.get_remaining_hp() > 0
+
+
+func _live_bench_count(player: PlayerState) -> int:
+	if player == null:
+		return 0
+	var count := 0
+	for slot: PokemonSlot in player.bench:
+		if _slot_is_live(slot):
+			count += 1
+	return count
 
 
 func _count_name(player: PlayerState, target_name: String) -> int:
@@ -1567,6 +1946,11 @@ func _should_force_pidgeot_completion_before_direct_charizard_search(player: Pla
 		return false
 	if not _has_hand_card(player, CHARIZARD_EX) and _count_name(player, CHARIZARD_EX) == 0:
 		return false
+	var player_index := game_state.players.find(player)
+	if player_index >= 0:
+		var opponent := _opponent(game_state, player_index)
+		if _has_lightning_pressure(opponent) and _player_has_ready_stage2_target(player, CHARMANDER, CHARMELEON):
+			return false
 	return true
 
 
@@ -1841,7 +2225,7 @@ func _can_take_bench_prize(game_state: GameState, player_index: int) -> bool:
 		return false
 	var predicted_damage := int(predict_attacker_damage(active).get("damage", 0))
 	for slot: PokemonSlot in opponent.bench:
-		if slot != null and slot.get_top_card() != null and predicted_damage >= slot.get_remaining_hp():
+		if _slot_is_live(slot) and predicted_damage >= slot.get_remaining_hp():
 			return true
 	return false
 
@@ -1854,7 +2238,7 @@ func _can_attack_soon(player: PlayerState) -> bool:
 
 
 func _can_slot_attack(slot: PokemonSlot) -> bool:
-	if slot == null or slot.get_card_data() == null:
+	if not _slot_is_live(slot) or slot.get_card_data() == null:
 		return false
 	for attack: Dictionary in slot.get_card_data().attacks:
 		if slot.attached_energy.size() >= str(attack.get("cost", "")).length():
@@ -1863,7 +2247,7 @@ func _can_slot_attack(slot: PokemonSlot) -> bool:
 
 
 func _attack_gap(slot: PokemonSlot) -> int:
-	if slot == null or slot.get_card_data() == null or slot.get_card_data().attacks.is_empty():
+	if not _slot_is_live(slot) or slot.get_card_data() == null or slot.get_card_data().attacks.is_empty():
 		return 99
 	var best := 99
 	for attack: Dictionary in slot.get_card_data().attacks:
@@ -1873,7 +2257,7 @@ func _attack_gap(slot: PokemonSlot) -> int:
 
 
 func _retreat_gap(slot: PokemonSlot) -> int:
-	if slot == null or slot.get_card_data() == null:
+	if not _slot_is_live(slot) or slot.get_card_data() == null:
 		return 99
 	return maxi(0, int(slot.get_card_data().retreat_cost) - slot.attached_energy.size())
 
@@ -1894,7 +2278,7 @@ func _attack_gap_after_pending(slot: PokemonSlot, context: Dictionary, additiona
 
 
 func _retreat_gap_after_pending(slot: PokemonSlot, context: Dictionary, additional_energy: int = 0) -> int:
-	if slot == null or slot.get_card_data() == null:
+	if not _slot_is_live(slot) or slot.get_card_data() == null:
 		return 99
 	return maxi(0, _retreat_gap(slot) - _pending_assignment_count(slot, context) - additional_energy)
 
@@ -1905,7 +2289,7 @@ func _best_benched_charizard_slot(player: PlayerState) -> PokemonSlot:
 	var best: PokemonSlot = null
 	var best_gap := 99
 	for slot: PokemonSlot in player.bench:
-		if slot == null or _slot_name(slot) != CHARIZARD_EX:
+		if not _slot_is_live(slot) or _slot_name(slot) != CHARIZARD_EX:
 			continue
 		var gap := _attack_gap(slot)
 		if best == null or gap < best_gap:
@@ -1941,7 +2325,7 @@ func _should_block_opening_shell_retreat(active: PokemonSlot, target_slot: Pokem
 
 func _has_better_pivot(player: PlayerState) -> bool:
 	for slot: PokemonSlot in player.bench:
-		if slot == null or slot.get_top_card() == null:
+		if not _slot_is_live(slot):
 			continue
 		if _can_slot_attack(slot) or _slot_name(slot) in [CHARIZARD_EX, PIDGEOT_EX, RADIANT_CHARIZARD]:
 			return true
@@ -1950,7 +2334,7 @@ func _has_better_pivot(player: PlayerState) -> bool:
 
 func _has_bench_liability(player: PlayerState) -> bool:
 	for slot: PokemonSlot in player.bench:
-		if slot == null or slot.get_top_card() == null:
+		if not _slot_is_live(slot):
 			continue
 		if _slot_name(slot) in [ROTOM_V, LUMINEON_V] and slot.damage_counters == 0:
 			if not _is_combo_core_online(player) and _count_name(player, CHARIZARD_EX) == 0:
@@ -1967,7 +2351,7 @@ func _has_valuable_damage_counter_target(opponent: PlayerState) -> bool:
 	):
 		return true
 	for slot: PokemonSlot in opponent.bench:
-		if slot != null and slot.get_top_card() != null and (slot.get_remaining_hp() <= 130 or _is_two_prize_target(slot)):
+		if _slot_is_live(slot) and (slot.get_remaining_hp() <= 130 or _is_two_prize_target(slot)):
 			return true
 	return false
 

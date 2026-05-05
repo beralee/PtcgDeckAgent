@@ -26,9 +26,9 @@ func get_attack_interaction_steps(
 		return []
 	return [{
 		"id": STEP_ID,
-		"title": "Discard the Stadium for +%d damage?" % damage_bonus,
+		"title": "是否弃置场上的竞技场并追加%d伤害？" % damage_bonus,
 		"items": ["keep", "discard"],
-		"labels": ["Keep the Stadium", "Discard the Stadium"],
+		"labels": ["保留竞技场", "弃置竞技场"],
 		"min_select": 1,
 		"max_select": 1,
 		"allow_cancel": true,

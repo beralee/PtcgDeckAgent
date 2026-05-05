@@ -21,23 +21,22 @@ func can_headless_execute(card: CardInstance, state: GameState) -> bool:
 func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	var items: Array = []
-	var labels: Array[String] = []
 	for deck_card: CardInstance in player.deck:
 		if not _is_dragon_pokemon(deck_card):
 			continue
 		items.append(deck_card)
-		labels.append(deck_card.card_data.name)
 	if items.is_empty():
 		return [build_empty_search_resolution_step("牌库里没有龙属性宝可梦。你仍可以使用这张卡。")]
-	return [{
-		"id": "dragon_pokemon",
-		"title": "Choose up to 3 Dragon Pokemon",
-		"items": items,
-		"labels": labels,
-		"min_select": 0,
-		"max_select": mini(MAX_SEARCH_COUNT, items.size()),
-		"allow_cancel": true,
-	}]
+	return [build_full_library_search_step(
+		"dragon_pokemon",
+		"选择最多3张龙属性宝可梦",
+		player.deck,
+		items,
+		VISIBLE_SCOPE_OWN_FULL_DECK,
+		0,
+		mini(MAX_SEARCH_COUNT, items.size()),
+		{"allow_cancel": true}
+	)]
 
 
 func get_followup_interaction_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:

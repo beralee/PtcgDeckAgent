@@ -15,15 +15,16 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		labels.append("%s (HP %d)" % [c.card_data.name, c.card_data.hp])
 	if items.is_empty():
 		return [build_empty_search_resolution_step("牌库里没有可放到备战区的基础宝可梦。你仍可以使用巢穴球。")]
-	return [{
-		"id": "basic_pokemon",
-		"title": "选择 1 张基础宝可梦放入备战区",
-		"items": items,
-		"labels": labels,
-		"min_select": 1,
-		"max_select": 1,
-		"allow_cancel": true,
-	}]
+	return [build_full_library_search_step(
+		"basic_pokemon",
+		"选择 1 张基础宝可梦放入备战区",
+		player.deck,
+		items,
+		VISIBLE_SCOPE_OWN_FULL_DECK,
+		1,
+		1,
+		{"allow_cancel": true}
+	)]
 
 
 func can_execute(card: CardInstance, state: GameState) -> bool:

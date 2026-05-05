@@ -40,16 +40,23 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			target_items.append(slot)
 			target_labels.append(slot.get_pokemon_name())
 
+	if evo_items.is_empty() or target_items.is_empty():
+		return []
+
+	var evo_step := build_full_library_search_step(
+		"evolution_card",
+		"选择要进化的卡牌（无特性）",
+		player.deck,
+		evo_items,
+		VISIBLE_SCOPE_OWN_FULL_DECK,
+		1,
+		1,
+		{"allow_cancel": true}
+	)
+	evo_step["labels"] = evo_labels
+
 	return [
-		{
-			"id": "evolution_card",
-			"title": "选择要进化的卡牌（无特性）",
-			"items": evo_items,
-			"labels": evo_labels,
-			"min_select": 1,
-			"max_select": 1,
-			"allow_cancel": true,
-		},
+		evo_step,
 		{
 			"id": "target_pokemon",
 			"title": "选择要进化的宝可梦",

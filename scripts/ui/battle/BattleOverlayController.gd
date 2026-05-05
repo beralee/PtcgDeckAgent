@@ -2,6 +2,7 @@ class_name BattleOverlayController
 extends RefCounted
 
 const BattleCardViewScript := preload("res://scenes/battle/BattleCardView.gd")
+const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 
 
 func _bt(scene: Object, key: String, params: Dictionary = {}) -> String:
@@ -116,6 +117,7 @@ func show_opponent_hand_cards(scene: Object) -> void:
 	if discard_card_scroll != null:
 		discard_card_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 		discard_card_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		HudThemeScript.style_scroll_container(discard_card_scroll)
 	if discard_utility_row != null:
 		scene.call("_clear_container_children", discard_utility_row)
 		discard_utility_row.visible = false
@@ -615,7 +617,7 @@ func _refresh_match_end_buttons(scene: Object) -> void:
 		learning_button.disabled = true
 	if return_button != null:
 		return_button.visible = true
-		return_button.text = "返回对战准备"
+		return_button.text = "返回比赛积分" if GameManager.is_tournament_battle_active() else "返回对战准备"
 		return_button.disabled = false
 
 
@@ -632,9 +634,9 @@ func _format_match_end_quick_review(result: Dictionary) -> String:
 		return "[b]AI点评失败[/b]\n%s" % message
 	var fallback_note := ""
 	if status == "ai_failed_fallback":
-		var ai_error := str(result.get("ai_error", "AI 快评暂不可用，已使用本地统计简评。")).strip_edges()
+		var ai_error := str(result.get("ai_error", "AI 快评暂不可用，已使用本地专业快评。")).strip_edges()
 		if ai_error == "":
-			ai_error = "AI 快评暂不可用，已使用本地统计简评。"
+			ai_error = "AI 快评暂不可用，已使用本地专业快评。"
 		fallback_note = "[color=#ffd36a]%s[/color]\n\n" % ai_error
 	return fallback_note + "[b]评分 %d / 100  等级 %s[/b]\n%s\n\n[b]亮点[/b] %s\n[b]改进[/b] %s\n[b]下一盘目标[/b] %s" % [
 		int(result.get("score", 0)),

@@ -584,9 +584,7 @@ func _abs_play_trainer(action: Dictionary, game_state: GameState, player: Player
 
 	# 放逐吸尘器 — 移除对手道具/场地
 	if tname == LOST_VACUUM:
-		if game_state.stadium_card != null:
-			return 200.0  # 有场地可以移除
-		return 100.0
+		return _miraidon_lost_vacuum_score(game_state, player_index)
 
 	# 奇树（场地）— 搜基础宝可梦
 	if tname == ARTAZON:
@@ -610,6 +608,31 @@ func _abs_play_trainer(action: Dictionary, game_state: GameState, player: Player
 		return 150.0
 
 	return 50.0
+
+
+func _miraidon_lost_vacuum_score(game_state: GameState, player_index: int) -> float:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return 0.0
+	if _miraidon_opponent_has_attached_tool(game_state, player_index):
+		return 260.0
+	if game_state.stadium_card != null and game_state.stadium_card.card_data != null:
+		var stadium_name: String = str(game_state.stadium_card.card_data.name)
+		if game_state.stadium_owner_index >= 0 and game_state.stadium_owner_index != player_index:
+			if stadium_name == GRAVITY_MOUNTAIN:
+				return 30.0
+			return 160.0
+		return -40.0
+	return -60.0
+
+
+func _miraidon_opponent_has_attached_tool(game_state: GameState, player_index: int) -> bool:
+	var opponent_index: int = 1 - player_index
+	if opponent_index < 0 or opponent_index >= game_state.players.size():
+		return false
+	for slot: PokemonSlot in _get_all_slots(game_state.players[opponent_index]):
+		if slot != null and slot.attached_tool != null:
+			return true
+	return false
 
 
 func _abs_retreat(action: Dictionary, game_state: GameState, player: PlayerState, player_index: int) -> float:
@@ -734,9 +757,26 @@ func _abs_attack(action: Dictionary, game_state: GameState, player_index: int) -
 	# --- 雷丘V：弃全部雷能×60，一击毕命 ---
 	# 只有在能 KO 时才值得用（否则弃能量白亏）
 	if active_name == RAICHU_V:
+		var raichu_attack_name: String = str(action.get("attack_name", ""))
+		var is_fast_charge: bool = attack_index == 0 or raichu_attack_name in ["快速充能", "Fast Charge"]
+		var is_dynamic_spark: bool = attack_index == 1 or raichu_attack_name in ["强劲电光", "Dynamic Spark"]
+		var burst_damage: int = _miraidon_raichu_dynamic_spark_damage(player)
+		if is_dynamic_spark:
+			if burst_damage >= defender_hp:
+				return 1050.0 if defender_is_ex else 850.0
+			if burst_damage >= 180:
+				return 280.0 + float(burst_damage)
+			if burst_damage >= 120:
+				return 220.0 + float(burst_damage)
+			return 80.0
+		if is_fast_charge:
+			if burst_damage >= defender_hp or burst_damage >= 180:
+				return 10.0
+			if _count_attached_energy_type_units(active, "L") < 2 and _count_lightning_in_deck(player) > 0:
+				return 260.0
+			return 60.0
 		if damage >= defender_hp:
 			return 1000.0 if defender_is_ex else 800.0
-		# 打不死 = 弃掉所有能量还没收益，极差
 		return 80.0
 
 	# --- 通用攻击评估 ---
@@ -867,6 +907,325 @@ func get_mcts_config() -> Dictionary:
 	}
 
 
+func build_turn_plan(game_state: GameState, player_index: int, context: Dictionary = {}) -> Dictionary:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return {}
+	var player: PlayerState = game_state.players[player_index]
+	var setup_debt: Dictionary = _miraidon_build_continuity_setup_debt(player, game_state, player_index)
+	var phase: String = _detect_game_phase(int(game_state.turn_number), player)
+	var intent := "setup_board"
+	if _miraidon_final_prize_ko_available(game_state, player_index):
+		intent = "convert_attack"
+	elif _miraidon_has_immediate_attack_window(game_state, player_index) and _miraidon_continuity_debt_active(setup_debt):
+		intent = "pressure_expand"
+	elif bool(setup_debt.get("needs_primary_attacker", false)) or bool(setup_debt.get("needs_engine", false)):
+		intent = "launch_shell"
+	elif bool(setup_debt.get("needs_follow_up_energy", false)):
+		intent = "charge_follow_up"
+	var owner_name: String = _miraidon_best_turn_owner_name(player)
+	var bridge_name: String = _miraidon_best_bridge_target_name(player)
+	return {
+		"intent": intent,
+		"phase": phase,
+		"owner": {
+			"turn_owner_name": owner_name,
+			"bridge_target_name": bridge_name,
+			"pivot_target_name": owner_name,
+		},
+		"targets": {
+			"primary_attacker_name": owner_name,
+			"bridge_target_name": bridge_name,
+			"pivot_target_name": owner_name,
+		},
+		"flags": {
+			"immediate_attack_window": _miraidon_has_immediate_attack_window(game_state, player_index),
+			"final_prize_ko_available": _miraidon_final_prize_ko_available(game_state, player_index),
+			"real_attacker_count": int(setup_debt.get("real_attacker_count", 0)),
+			"ready_real_attacker_count": int(setup_debt.get("ready_real_attacker_count", 0)),
+		},
+		"constraints": {
+			"forbid_engine_churn": intent == "convert_attack",
+		},
+		"context": context.duplicate(true),
+	}
+
+
+func build_continuity_contract(game_state: GameState, player_index: int, turn_contract: Dictionary = {}) -> Dictionary:
+	var disabled: Dictionary = _miraidon_disabled_continuity_contract()
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return disabled
+	var player: PlayerState = game_state.players[player_index]
+	if not _miraidon_has_immediate_attack_window(game_state, player_index):
+		return disabled
+	var setup_debt: Dictionary = _miraidon_build_continuity_setup_debt(player, game_state, player_index)
+	if _miraidon_terminal_attack_locked(game_state, player_index, turn_contract):
+		disabled["setup_debt"] = setup_debt
+		disabled["terminal_attack_locked"] = true
+		return disabled
+	var action_bonuses: Array[Dictionary] = _miraidon_continuity_action_bonuses(player, setup_debt)
+	var enabled: bool = _miraidon_continuity_debt_active(setup_debt) and not action_bonuses.is_empty()
+	return {
+		"enabled": enabled,
+		"safe_setup_before_attack": enabled,
+		"setup_debt": setup_debt,
+		"action_bonuses": action_bonuses,
+		"attack_penalty": 0.0,
+	}
+
+
+func _miraidon_disabled_continuity_contract() -> Dictionary:
+	return {
+		"enabled": false,
+		"safe_setup_before_attack": false,
+		"setup_debt": {},
+		"action_bonuses": [],
+		"attack_penalty": 0.0,
+	}
+
+
+func _miraidon_build_continuity_setup_debt(player: PlayerState, game_state: GameState = null, player_index: int = -1) -> Dictionary:
+	if player == null:
+		return {}
+	var bench_open: bool = player.bench.size() < 5
+	var real_attacker_count: int = _miraidon_count_real_attackers(player)
+	var ready_real_attacker_count: int = _miraidon_count_ready_real_attackers(player)
+	var backup_attacker: PokemonSlot = _miraidon_best_follow_up_attacker(player)
+	var backup_gap: int = _get_attack_energy_gap(backup_attacker) if backup_attacker != null else 999
+	var baton_candidate: PokemonSlot = _miraidon_best_heavy_baton_candidate(player)
+	var needs_engine: bool = bench_open and _count_pokemon_on_field(player, MIRAIDON_EX) == 0
+	var needs_primary_attacker: bool = bench_open and _count_pokemon_on_field(player, IRON_HANDS_EX) == 0
+	var needs_backup_attacker: bool = bench_open and real_attacker_count < 2
+	var needs_more_ready_attackers: bool = ready_real_attacker_count < 2
+	var needs_follow_up_energy: bool = needs_more_ready_attackers and backup_attacker != null and backup_gap > 0 and backup_gap <= 3
+	var needs_generator_route: bool = needs_more_ready_attackers and _has_electric_generator_bench_target(player) and (needs_follow_up_energy or real_attacker_count < 2)
+	return {
+		"real_attacker_count": real_attacker_count,
+		"ready_real_attacker_count": ready_real_attacker_count,
+		"backup_attack_gap": backup_gap,
+		"needs_engine": needs_engine,
+		"needs_primary_attacker": needs_primary_attacker,
+		"needs_backup_attacker": needs_backup_attacker,
+		"needs_follow_up_energy": needs_follow_up_energy,
+		"needs_generator_route": needs_generator_route,
+		"needs_heavy_baton": baton_candidate != null,
+		"backup_target_name": backup_attacker.get_pokemon_name() if backup_attacker != null else "",
+		"baton_target_name": baton_candidate.get_pokemon_name() if baton_candidate != null else "",
+		"turn_number": int(game_state.turn_number) if game_state != null else 0,
+		"player_index": player_index,
+	}
+
+
+func _miraidon_continuity_action_bonuses(player: PlayerState, setup_debt: Dictionary) -> Array[Dictionary]:
+	var bonuses: Array[Dictionary] = []
+	var bench_open: bool = player != null and player.bench.size() < 5
+	if bench_open and bool(setup_debt.get("needs_engine", false)):
+		bonuses.append(_miraidon_continuity_bonus(
+			"play_basic_to_bench",
+			[MIRAIDON_EX],
+			260.0,
+			"Bench Miraidon ex before a non-terminal attack so Tandem Unit remains available."
+		))
+	if bench_open and bool(setup_debt.get("needs_primary_attacker", false)):
+		bonuses.append(_miraidon_continuity_bonus(
+			"play_basic_to_bench",
+			[IRON_HANDS_EX],
+			300.0,
+			"Bench Iron Hands ex before attacking so the prize-race line exists."
+		))
+	if bench_open and bool(setup_debt.get("needs_backup_attacker", false)):
+		bonuses.append(_miraidon_continuity_bonus(
+			"play_basic_to_bench",
+			[IRON_HANDS_EX, RAIKOU_V, ZAPDOS],
+			260.0,
+			"Bench a real follow-up attacker before taking a non-terminal attack."
+		))
+		bonuses.append(_miraidon_continuity_bonus(
+			"play_trainer",
+			[NEST_BALL, HEAVY_BALL, PAIPA],
+			190.0,
+			"Use search to find a real follow-up attacker before the attack ends the turn."
+		))
+	if bool(setup_debt.get("needs_follow_up_energy", false)):
+		bonuses.append(_miraidon_continuity_bonus(
+			"attach_energy",
+			[],
+			180.0,
+			"Attach to a real follow-up attacker before the active attack.",
+			{"target_names": [IRON_HANDS_EX, RAIKOU_V, ZAPDOS, RAICHU_V]}
+		))
+	if bool(setup_debt.get("needs_generator_route", false)):
+		bonuses.append(_miraidon_continuity_bonus(
+			"play_trainer",
+			[ELECTRIC_GENERATOR],
+			180.0,
+			"Resolve Electric Generator before attacking when the board still needs follow-up energy."
+		))
+	if bool(setup_debt.get("needs_heavy_baton", false)):
+		bonuses.append(_miraidon_continuity_bonus(
+			"attach_tool",
+			[HEAVY_BATON],
+			240.0,
+			"Attach Heavy Baton to Iron Hands before exposing it to a non-terminal prize trade.",
+			{"target_names": [IRON_HANDS_EX]}
+		))
+		bonuses.append(_miraidon_continuity_bonus(
+			"play_trainer",
+			[PAIPA],
+			120.0,
+			"Arven can fetch Heavy Baton for the Iron Hands follow-up lane."
+		))
+	if bool(setup_debt.get("needs_engine", false)) or bool(setup_debt.get("needs_primary_attacker", false)) or bool(setup_debt.get("needs_backup_attacker", false)):
+		bonuses.append(_miraidon_continuity_bonus(
+			"use_ability",
+			[MIRAIDON_EX],
+			180.0,
+			"Use Tandem Unit to complete the attacker chain before ending the turn by attacking."
+		))
+	return bonuses
+
+
+func _miraidon_continuity_bonus(kind: String, card_names: Array[String], bonus: float, reason: String, extra: Dictionary = {}) -> Dictionary:
+	var entry: Dictionary = {
+		"kind": kind,
+		"card_names": card_names.duplicate(),
+		"bonus": bonus,
+		"reason": reason,
+	}
+	for key: Variant in extra.keys():
+		entry[key] = extra[key]
+	return entry
+
+
+func _miraidon_continuity_debt_active(setup_debt: Dictionary) -> bool:
+	return bool(setup_debt.get("needs_engine", false)) \
+		or bool(setup_debt.get("needs_primary_attacker", false)) \
+		or bool(setup_debt.get("needs_backup_attacker", false)) \
+		or bool(setup_debt.get("needs_follow_up_energy", false)) \
+		or bool(setup_debt.get("needs_generator_route", false)) \
+		or bool(setup_debt.get("needs_heavy_baton", false))
+
+
+func _miraidon_terminal_attack_locked(game_state: GameState, player_index: int, turn_contract: Dictionary) -> bool:
+	var flags: Dictionary = turn_contract.get("flags", {}) if turn_contract.get("flags", {}) is Dictionary else {}
+	var constraints: Dictionary = turn_contract.get("constraints", {}) if turn_contract.get("constraints", {}) is Dictionary else {}
+	if bool(constraints.get("must_attack_if_available", false)):
+		return true
+	for key: String in ["final_prize_ko", "final_prize_ko_available", "critical_ko", "critical_ko_available", "force_terminal_attack"]:
+		if bool(turn_contract.get(key, false)) or bool(flags.get(key, false)):
+			return true
+	return _miraidon_final_prize_ko_available(game_state, player_index)
+
+
+func _miraidon_has_immediate_attack_window(game_state: GameState, player_index: int) -> bool:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	return player != null and player.active_pokemon != null and _can_slot_attack(player.active_pokemon)
+
+
+func _miraidon_final_prize_ko_available(game_state: GameState, player_index: int) -> bool:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	var opponent_index: int = 1 - player_index
+	if player == null or opponent_index < 0 or opponent_index >= game_state.players.size():
+		return false
+	if player.active_pokemon == null or not _can_slot_attack(player.active_pokemon):
+		return false
+	var opponent_active: PokemonSlot = game_state.players[opponent_index].active_pokemon
+	if opponent_active == null:
+		return false
+	if player.prizes.size() > opponent_active.get_prize_count():
+		return false
+	return _best_attack_damage(player.active_pokemon) >= opponent_active.get_remaining_hp()
+
+
+func _miraidon_count_real_attackers(player: PlayerState) -> int:
+	if player == null:
+		return 0
+	var count := 0
+	for slot: PokemonSlot in _get_all_slots(player):
+		if _miraidon_is_real_attacker_slot(slot):
+			count += 1
+	return count
+
+
+func _miraidon_count_ready_real_attackers(player: PlayerState) -> int:
+	if player == null:
+		return 0
+	var count := 0
+	for slot: PokemonSlot in _get_all_slots(player):
+		if _miraidon_is_real_attacker_slot(slot) and _can_slot_attack(slot):
+			count += 1
+	return count
+
+
+func _miraidon_is_real_attacker_slot(slot: PokemonSlot) -> bool:
+	if slot == null or slot.get_top_card() == null:
+		return false
+	var name: String = slot.get_pokemon_name()
+	return name in [IRON_HANDS_EX, RAIKOU_V, ZAPDOS, RAICHU_V, URSALUNA_EX]
+
+
+func _miraidon_best_follow_up_attacker(player: PlayerState) -> PokemonSlot:
+	if player == null:
+		return null
+	var best_slot: PokemonSlot = null
+	var best_score := -INF
+	for slot: PokemonSlot in _get_all_slots(player):
+		if slot == null or slot == player.active_pokemon or not _miraidon_is_real_attacker_slot(slot):
+			continue
+		var gap: int = _get_attack_energy_gap(slot)
+		var score: float = 600.0 - float(gap) * 90.0 + float(_count_attached_energy_units(slot)) * 25.0
+		if slot.get_pokemon_name() == IRON_HANDS_EX:
+			score += 80.0
+		if _has_tool(slot, HEAVY_BATON):
+			score += 60.0
+		if score > best_score:
+			best_score = score
+			best_slot = slot
+	return best_slot
+
+
+func _miraidon_best_heavy_baton_candidate(player: PlayerState) -> PokemonSlot:
+	if player == null:
+		return null
+	var best_slot: PokemonSlot = null
+	var best_energy := -1
+	for slot: PokemonSlot in _get_all_slots(player):
+		if slot == null or not _card_matches_name(slot.get_card_data(), [IRON_HANDS_EX, "Iron Hands ex"]):
+			continue
+		if slot.attached_tool != null or _has_tool(slot, HEAVY_BATON):
+			continue
+		var energy_count: int = _count_attached_energy_units(slot)
+		if energy_count < 2:
+			continue
+		if energy_count > best_energy:
+			best_energy = energy_count
+			best_slot = slot
+	return best_slot
+
+
+func _miraidon_best_turn_owner_name(player: PlayerState) -> String:
+	if player == null:
+		return ""
+	if player.active_pokemon != null and _can_slot_attack(player.active_pokemon):
+		return player.active_pokemon.get_pokemon_name()
+	var best: PokemonSlot = _miraidon_best_follow_up_attacker(player)
+	return best.get_pokemon_name() if best != null else ""
+
+
+func _miraidon_best_bridge_target_name(player: PlayerState) -> String:
+	var best: PokemonSlot = _miraidon_best_follow_up_attacker(player)
+	if best != null:
+		return best.get_pokemon_name()
+	if player != null and _count_pokemon_on_field(player, IRON_HANDS_EX) > 0:
+		return IRON_HANDS_EX
+	if player != null and _count_pokemon_on_field(player, RAIKOU_V) > 0:
+		return RAIKOU_V
+	return ""
+
+
 # ============================================================
 #  5. 开局规划
 # ============================================================
@@ -899,8 +1258,8 @@ func plan_opening_setup(player: PlayerState) -> Dictionary:
 	# 没有梦幻：低撤退费的攻击手上前场（雷公V=1费，闪电鸟=2费）
 	if active_index == -1:
 		var active_priority_order: Array[String] = [
-			RAIKOU_V, ZAPDOS, SQUAWKABILLY_EX, KILOWATTREL_EX,
-			LUMINEON_V, RADIANT_GRENINJA, IRON_HANDS_EX, URSALUNA_EX, RAICHU_V,
+			RAIKOU_V, SQUAWKABILLY_EX, IRON_HANDS_EX, ZAPDOS, KILOWATTREL_EX,
+			LUMINEON_V, RADIANT_GRENINJA, URSALUNA_EX, RAICHU_V,
 		]
 		for preferred: String in active_priority_order:
 			for b: Dictionary in basics:
@@ -1260,6 +1619,8 @@ func _predicted_damage_with_extra(slot: PokemonSlot, gap: int) -> int:
 func _has_tool(slot: PokemonSlot, tool_name: String) -> bool:
 	if slot == null:
 		return false
+	if slot.attached_tool != null and slot.attached_tool.card_data != null:
+		return _card_matches_name(slot.attached_tool.card_data, [tool_name])
 	for card: CardInstance in slot.attached_energy:
 		if card != null and card.card_data != null and str(card.card_data.name) == tool_name:
 			return true
@@ -1294,6 +1655,17 @@ func _count_attached_energy_type_units(slot: PokemonSlot, energy_type: String) -
 		if str(energy.card_data.energy_provides) == energy_type:
 			total += 1
 	return total
+
+
+func _miraidon_raichu_dynamic_spark_damage(player: PlayerState) -> int:
+	if player == null:
+		return 0
+	var lightning_units := 0
+	for slot: PokemonSlot in _get_all_slots(player):
+		if slot == null:
+			continue
+		lightning_units += _count_attached_energy_type_units(slot, "L")
+	return lightning_units * 60
 
 
 func _get_energy_unit_count(energy: CardInstance) -> int:
@@ -1583,7 +1955,7 @@ func _has_ready_attacker_on_bench(player: PlayerState) -> bool:
 			continue
 		var sname: String = slot.get_pokemon_name()
 		if sname in ALL_ATTACKER_NAMES or sname in NON_RULE_ATTACKER:
-			if _can_slot_attack(slot) or slot.attached_energy.size() >= 1:
+			if _can_slot_attack(slot):
 				return true
 	return false
 
@@ -1593,19 +1965,15 @@ func _score_boss_ko(game_state: GameState, player: PlayerState, player_index: in
 	var active: PokemonSlot = player.active_pokemon
 	if active == null or not _can_slot_attack(active):
 		return 0.0
-	var my_damage: int = 0
-	var cd: CardData = active.get_card_data()
-	if cd != null:
-		for attack: Dictionary in cd.attacks:
-			var dmg: int = int(str(attack.get("damage", "0")).strip_edges())
-			if dmg > my_damage:
-				my_damage = dmg
+	var my_damage: int = _miraidon_active_attack_damage_for_gust(game_state, player, player_index)
 	if my_damage <= 0:
 		return 0.0
 	var opponent_index: int = 1 - player_index
 	if opponent_index < 0 or opponent_index >= game_state.players.size():
 		return 0.0
 	var best_score: float = 0.0
+	var active_name: String = active.get_pokemon_name()
+	var amp_bonus_prize: float = 1.0 if active_name == IRON_HANDS_EX and _get_attack_gap_for_cost(active, "L") == 0 else 0.0
 	for slot: PokemonSlot in game_state.players[opponent_index].bench:
 		if slot == null or slot.get_top_card() == null:
 			continue
@@ -1613,7 +1981,7 @@ func _score_boss_ko(game_state: GameState, player: PlayerState, player_index: in
 			continue  # 打不死
 		var target_cd: CardData = slot.get_card_data()
 		var is_ex_v: bool = target_cd != null and (target_cd.mechanic == "ex" or target_cd.mechanic == "V")
-		var prize_value: float = 2.0 if is_ex_v else 1.0
+		var prize_value: float = (2.0 if is_ex_v else 1.0) + amp_bonus_prize
 		var opp_prizes_left: int = game_state.players[opponent_index].prizes.size()
 		# 拿了这个 KO 后对手还剩几张奖品（越少越值得）
 		var urgency_bonus: float = 0.0
@@ -1628,17 +1996,54 @@ func _score_boss_ko(game_state: GameState, player: PlayerState, player_index: in
 	return best_score
 
 
+func _miraidon_active_attack_damage_for_gust(game_state: GameState, player: PlayerState, player_index: int) -> int:
+	if game_state == null or player == null or player.active_pokemon == null:
+		return 0
+	var active: PokemonSlot = player.active_pokemon
+	if not _can_slot_attack(active):
+		return 0
+	var active_name: String = active.get_pokemon_name()
+	var zapdos_bonus: int = _miraidon_zapdos_damage_bonus(player, active)
+	if active_name == RAICHU_V and _get_attack_gap_for_cost(active, "LL") == 0:
+		return _miraidon_raichu_dynamic_spark_damage(player)
+	if active_name == RAIKOU_V and _get_attack_gap_for_cost(active, "L") == 0:
+		var opponent_index: int = 1 - player_index
+		var opponent_bench_count: int = game_state.players[opponent_index].bench.size() if opponent_index >= 0 and opponent_index < game_state.players.size() else 0
+		return 20 + (player.bench.size() + opponent_bench_count) * 20 + zapdos_bonus
+	if active_name == IRON_HANDS_EX:
+		var best_iron_hands_damage := 0
+		if _get_attack_gap_for_cost(active, "LL") == 0:
+			best_iron_hands_damage = maxi(best_iron_hands_damage, 160 + zapdos_bonus)
+		if _get_attack_gap_for_cost(active, "L") == 0:
+			best_iron_hands_damage = maxi(best_iron_hands_damage, 120 + zapdos_bonus)
+		if best_iron_hands_damage > 0:
+			return best_iron_hands_damage
+	var best_damage: int = _best_attack_damage(active)
+	if best_damage > 0:
+		return best_damage + zapdos_bonus
+	return 0
+
+
+func _miraidon_zapdos_damage_bonus(player: PlayerState, attacker: PokemonSlot) -> int:
+	if player == null or attacker == null:
+		return 0
+	if attacker.get_pokemon_name() == ZAPDOS:
+		return 0
+	if _count_pokemon_on_field(player, ZAPDOS) <= 0:
+		return 0
+	var cd: CardData = attacker.get_card_data()
+	if cd == null or str(cd.stage) != "Basic":
+		return 0
+	if str(cd.energy_type) != "L" and not _is_lightning_basic_pokemon(cd):
+		return 0
+	return 10
+
+
 func _can_ko_bench_target(game_state: GameState, player: PlayerState, player_index: int) -> bool:
 	var active: PokemonSlot = player.active_pokemon
 	if active == null:
 		return false
-	var my_damage: int = 0
-	var cd: CardData = active.get_card_data()
-	if cd != null:
-		for attack: Dictionary in cd.attacks:
-			var dmg: int = int(str(attack.get("damage", "0")).strip_edges())
-			if dmg > my_damage:
-				my_damage = dmg
+	var my_damage: int = _miraidon_active_attack_damage_for_gust(game_state, player, player_index)
 	if my_damage <= 0:
 		return false
 	var opponent_index: int = 1 - player_index

@@ -228,8 +228,19 @@ func show_next_effect_interaction_step(scene: Object) -> void:
 		"card_items": step.get("card_items", items_raw),
 		"card_indices": step.get("card_indices", []),
 		"card_click_selectable": step.get("card_click_selectable", true),
-		"choice_labels": labels,
+		"choice_labels": step.get("choice_labels", labels),
 	}
+	for passthrough_key: String in [
+		"card_groups",
+		"card_disabled_badge",
+		"show_selectable_hints",
+		"card_selectable_hint",
+		"visible_scope",
+	]:
+		if step.has(passthrough_key):
+			dialog_data[passthrough_key] = step.get(passthrough_key)
+	if not dialog_data.has("card_disabled_badge") and str(dialog_data.get("visible_scope", "")) == "own_full_deck":
+		dialog_data["card_disabled_badge"] = "不可选"
 	if step.has("utility_actions"):
 		dialog_data["utility_actions"] = step.get("utility_actions", [])
 	scene.call("_show_dialog", _step_title(scene, step), labels, dialog_data)

@@ -35,16 +35,18 @@ func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state:
 	return [
 		{
 			"id": "return_energy_to_deck",
-			"title": "Choose %d Energy to shuffle into the deck" % energy_return_count,
+			"title": "选择%d个能量洗回牌库" % energy_return_count,
 			"items": energy_items,
 			"labels": energy_labels,
+			"card_groups": build_attached_card_groups(player, energy_items),
+			"transparent_battlefield_dialog": true,
 			"min_select": 0,
 			"max_select": mini(energy_return_count, energy_items.size()) if can_return else 0,
 			"allow_cancel": true,
 		},
 		{
 			"id": "bench_target",
-			"title": "Choose 1 opponent Benched Pokemon",
+			"title": "选择对手的1只备战宝可梦",
 			"items": bench_items,
 			"labels": bench_labels,
 			"min_select": 1 if not bench_items.is_empty() else 0,

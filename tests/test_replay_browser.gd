@@ -72,13 +72,38 @@ func test_main_menu_uses_hud_buttons_shifted_down() -> String:
 	scene.call("_apply_main_menu_hud")
 	var menu := scene.get_node_or_null("VBoxContainer") as VBoxContainer
 	var start_button := scene.get_node_or_null("%BtnStartBattle") as Button
+	var deck_button := scene.get_node_or_null("%BtnDeckManager") as Button
 	var button_style := start_button.get_theme_stylebox("normal") as StyleBoxFlat if start_button != null else null
+	var deck_style := deck_button.get_theme_stylebox("normal") as StyleBoxFlat if deck_button != null else null
 
 	var result := run_checks([
-		assert_true(menu != null and absf(menu.offset_top - -135.0) < 0.1, "Main menu button group should sit 50px higher than the previous HUD position"),
-		assert_true(menu != null and absf(menu.offset_bottom - 215.0) < 0.1, "Main menu button group bottom should move with the top"),
+		assert_true(menu != null and absf(menu.offset_left - -170.0) < 0.1, "Main menu button group should be wide enough for the featured deck center action"),
+		assert_true(menu != null and absf(menu.offset_top - -87.0) < 0.1, "Main menu button group should move down by one button height"),
+		assert_true(menu != null and absf(menu.offset_right - 170.0) < 0.1, "Main menu button group should stay centered after the redesign"),
+		assert_true(menu != null and absf(menu.offset_bottom - 263.0) < 0.1, "Main menu button group bottom should move with the top"),
+		assert_null(scene.get_node_or_null("MainMenuButtonBackplate"), "Main menu actions should not add an extra backplate over the title background"),
 		assert_true(button_style != null and button_style.bg_color.a < 0.9 and button_style.border_color.a > 0.5, "Main menu buttons should use softer translucent HUD button styling"),
-		assert_eq(start_button.custom_minimum_size, Vector2(280, 48), "Main menu HUD buttons should be wider and taller than the old default buttons"),
+		assert_true(button_style != null and button_style.border_color.a > 0.85, "Start battle should use a high-emphasis primary color"),
+		assert_eq(start_button.custom_minimum_size, Vector2(312, 52), "Main menu start button should use the unified main action size"),
+		assert_true(deck_button != null and deck_button.get_index() == 1, "Deck center should be promoted directly below start battle"),
+		assert_eq(deck_button.custom_minimum_size if deck_button != null else Vector2.ZERO, Vector2(312, 52), "Deck center should keep the same size as the other main actions"),
+		assert_true(deck_style != null and deck_style.border_width_left >= 2 and deck_style.border_color.a > 0.9, "Deck center should use the strongest featured HUD border without changing size"),
+	])
+
+	scene.queue_free()
+	return result
+
+
+func test_main_menu_about_mentions_tcg_mik_dependency() -> String:
+	var scene: Control = load("res://scenes/main_menu/MainMenu.tscn").instantiate()
+	var about_text: String = scene.call("_format_about_text")
+
+	var result := run_checks([
+		assert_str_contains(about_text, "数据来源与感谢", "About dialog should include a data-source acknowledgement section"),
+		assert_str_contains(about_text, "tcg.mik.moe", "About dialog should credit tcg.mik.moe"),
+		assert_str_contains(about_text, "卡组导入", "About dialog should explain the deck import dependency"),
+		assert_str_contains(about_text, "赛事", "About dialog should mention tournament data usage"),
+		assert_str_contains(about_text, "没有官方从属或合作关系", "About dialog should avoid implying an official partnership"),
 	])
 
 	scene.queue_free()

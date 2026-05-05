@@ -197,7 +197,7 @@ func goto_main_menu() -> void:
 	goto_scene(SCENE_MAIN_MENU)
 
 
-## 切换到卡组管理
+## 切换到卡组中心
 func goto_deck_manager() -> void:
 	goto_scene(SCENE_DECK_MANAGER)
 

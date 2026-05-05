@@ -29,7 +29,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	var actual_pick: int = mini(pick_count, looked.size())
 	return [{
 		"id": STEP_ID,
-		"title": "Choose %d card(s) to put into your hand" % actual_pick,
+		"title": "选择%d张卡牌加入手牌" % actual_pick,
 		"items": looked,
 		"labels": labels,
 		"min_select": actual_pick,

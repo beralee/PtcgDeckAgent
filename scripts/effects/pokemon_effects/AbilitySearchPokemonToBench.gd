@@ -3,7 +3,6 @@ class_name AbilitySearchPokemonToBench
 extends BaseEffect
 
 const BenchLimit = preload("res://scripts/engine/BenchLimitHelper.gd")
-
 var energy_filter: String = "L"
 var max_count: int = 2
 
@@ -48,15 +47,16 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	if items.is_empty():
 		return []
 
-	return [{
-		"id": "bench_pokemon",
-		"title": "选择最多%d只放入备战区的宝可梦" % actual_max,
-		"items": items,
-		"labels": labels,
-		"min_select": 1,
-		"max_select": mini(actual_max, items.size()),
-		"allow_cancel": true,
-	}]
+	return [build_full_library_search_step(
+		"bench_pokemon",
+		"选择最多%d只放入备战区的宝可梦" % actual_max,
+		player.deck,
+		items,
+		VISIBLE_SCOPE_OWN_FULL_DECK,
+		1,
+		mini(actual_max, items.size()),
+		{"allow_cancel": true}
+	)]
 
 
 func execute_ability(

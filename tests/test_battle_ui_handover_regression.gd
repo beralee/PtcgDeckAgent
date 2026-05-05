@@ -178,7 +178,7 @@ func test_slot_input_is_blocked_while_handover_overlay_is_visible() -> String:
 	])
 
 
-func test_slot_touch_long_press_opens_card_detail_and_suppresses_click() -> String:
+func test_slot_touch_long_press_does_not_open_card_detail() -> String:
 	var scene := SlotDetailSpyBattleScene.new()
 	var gsm := GameStateMachine.new()
 	gsm.game_state = GameState.new()
@@ -209,14 +209,41 @@ func test_slot_touch_long_press_opens_card_detail_and_suppresses_click() -> Stri
 	release.position = Vector2(10, 10)
 	scene.call("_on_slot_input", release, "my_active")
 	var consumed := bool(scene.call("_consume_suppressed_slot_left_click", "my_active"))
-	var consumed_again := bool(scene.call("_consume_suppressed_slot_left_click", "my_active"))
 
 	return run_checks([
-		assert_eq(scene.shown_detail_cards.size(), 1, "Long pressing a battle slot should open card detail once"),
-		assert_eq(scene.shown_detail_cards[0].name if not scene.shown_detail_cards.is_empty() else "", "长按测试宝可梦", "Long press detail should use the slot's Pokemon card"),
-		assert_false(bool(scene.get("_slot_touch_long_press_active")), "Releasing after a consumed long press should clear the touch state"),
-		assert_true(consumed, "Long press should suppress the synthetic follow-up left click"),
-		assert_false(consumed_again, "Synthetic click suppression should be consumed only once"),
+		assert_eq(scene.shown_detail_cards.size(), 0, "Long pressing a battle slot should no longer open card detail"),
+		assert_eq(scene.action_dialog_calls, 0, "A field long press should not accidentally execute the tap action"),
+		assert_false(bool(scene.get("_slot_touch_long_press_active")), "Long press timeout should clear the slot touch state"),
+		assert_false(consumed, "Long press timeout should not leave stale synthetic-click suppression"),
+	])
+
+
+func test_slot_right_click_opens_action_dialog_without_card_detail() -> String:
+	var scene := SlotDetailSpyBattleScene.new()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.players = [PlayerState.new(), PlayerState.new()]
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+	scene.set("_pending_choice", "")
+	var handover_panel := Panel.new()
+	handover_panel.visible = false
+	scene.set("_handover_panel", handover_panel)
+
+	var active_slot := PokemonSlot.new()
+	active_slot.pokemon_stack.append(CardInstance.create(_make_touch_test_pokemon("右键行动测试"), 0))
+	gsm.game_state.players[0].active_pokemon = active_slot
+
+	var right_click := InputEventMouseButton.new()
+	right_click.pressed = true
+	right_click.button_index = MOUSE_BUTTON_RIGHT
+	scene.call("_on_slot_input", right_click, "my_active")
+
+	return run_checks([
+		assert_eq(scene.shown_detail_cards.size(), 0, "Right clicking a battle slot should not open card detail"),
+		assert_eq(scene.action_dialog_calls, 1, "Right clicking own Pokemon should open the action dialog"),
 	])
 
 

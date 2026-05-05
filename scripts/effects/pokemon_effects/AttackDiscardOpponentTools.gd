@@ -26,9 +26,11 @@ func get_attack_interaction_steps(card: CardInstance, _attack: Dictionary, state
 		return []
 	return [{
 		"id": STEP_ID,
-		"title": "Choose up to %d opponent Pokemon Tools to discard" % max_count,
+		"title": "选择对手场上最多%d张宝可梦道具放入弃牌区" % max_count,
 		"items": tools,
 		"labels": labels,
+		"card_groups": build_attached_card_groups(opponent, tools),
+		"transparent_battlefield_dialog": true,
 		"min_select": 0,
 		"max_select": mini(max_count, tools.size()),
 		"allow_cancel": true,

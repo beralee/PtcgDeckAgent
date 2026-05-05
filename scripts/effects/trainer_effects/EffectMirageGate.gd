@@ -34,15 +34,17 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			slot.get_max_hp(),
 		])
 
-	return [build_card_assignment_step(
+	return [build_full_library_card_assignment_step(
 		ASSIGNMENT_STEP_ID,
-		"Choose up to 2 different Basic Energy cards and attach them to your Pokemon",
+		"选择最多2张不同属性的基本能量并附着给己方宝可梦",
+		player.deck,
 		energy_items,
 		energy_labels,
 		target_items,
 		target_labels,
 		0,
 		mini(attach_count, energy_items.size()),
+		VISIBLE_SCOPE_OWN_FULL_DECK,
 		true
 	)]
 

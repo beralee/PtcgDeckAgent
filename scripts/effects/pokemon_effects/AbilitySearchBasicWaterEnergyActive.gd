@@ -35,15 +35,16 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	var labels: Array[String] = []
 	for energy: CardInstance in items:
 		labels.append(energy.card_data.name)
-	return [{
-		"id": STEP_ID,
-		"title": "选择最多%d张基本水能量加入手牌" % search_count,
-		"items": items,
-		"labels": labels,
-		"min_select": 0,
-		"max_select": mini(search_count, items.size()),
-		"allow_cancel": true,
-	}]
+	return [build_full_library_search_step(
+		STEP_ID,
+		"选择最多%d张基本水能量加入手牌" % search_count,
+		player.deck,
+		items,
+		VISIBLE_SCOPE_OWN_FULL_DECK,
+		0,
+		mini(search_count, items.size()),
+		{"allow_cancel": true}
+	)]
 
 
 func execute_ability(

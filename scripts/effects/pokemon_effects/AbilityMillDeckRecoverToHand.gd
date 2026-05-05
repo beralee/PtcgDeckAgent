@@ -37,7 +37,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		labels.append(entry.card_data.name)
 	return [{
 		"id": "recover_cards",
-		"title": "Choose up to %d card(s) to recover after milling" % recover_count,
+		"title": "查看将要弃置的卡，选择最多%d张加入手牌" % recover_count,
 		"items": items,
 		"labels": labels,
 		"min_select": 0,

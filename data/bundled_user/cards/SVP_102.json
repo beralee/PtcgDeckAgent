@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "ryoma uratsuka",
+	"attacks": [
+		{
+			"cost": "C",
+			"damage": "",
+			"is_vstar_power": false,
+			"name": "磁力充能",
+			"text": "选择自己弃牌区中最多2张「基本【4】能量」，附着于1只备战宝可梦身上。"
+		},
+		{
+			"cost": "LC",
+			"damage": "20",
+			"is_vstar_power": false,
+			"name": "高速球",
+			"text": ""
+		}
+	],
+	"card_index": "102",
+	"card_index_en": "65",
+	"card_type": "Pokemon",
+	"description": " 磁力充能 \n选择自己弃牌区中最多2张「基本【4】能量」，附着于1只备战宝可梦身上。\n\n【雷】 高速球 20\n\n\n",
+	"effect_id": "03866b81bfc30ea4727f58e792c6dd2a",
+	"energy_provides": "",
+	"energy_type": "L",
+	"evolves_from": "",
+	"hp": 50,
+	"image_local_path": "user://cards/images/SVP/102.png",
+	"image_url": "https://tcg.mik.moe/static/img/SVP/102.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "小磁怪",
+	"name_en": "Magnemite",
+	"rarity": "无标记",
+	"regulation_expanded": true,
+	"regulation_mark": "G",
+	"regulation_standard": true,
+	"release_date": "2025-11-07T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "SVP",
+	"set_code_en": "PAL",
+	"stage": "Basic",
+	"weakness_energy": "F",
+	"weakness_value": "×2",
+	"yoren_code": "P081"
+}

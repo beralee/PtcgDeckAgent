@@ -1445,7 +1445,7 @@ func test_hisuian_heavy_ball_takes_basic_from_prizes_and_replaces_with_self() ->
 		assert_eq(str(first_step.get("presentation", "")), "cards", "Hisuian Heavy Ball should use visible card presentation for prize contents"),
 		assert_eq(first_step_card_items.size(), 2, "Hisuian Heavy Ball should reveal every prize card in the prompt"),
 		assert_eq(first_step.get("card_indices", []), [0, -1], "Only Basic Pokemon prize cards should be selectable"),
-		assert_str_contains(non_basic_label, "view only", "Non-Basic prize cards should be clearly marked as view-only"),
+		assert_str_contains(non_basic_label, "仅查看", "Non-Basic prize cards should be clearly marked as view-only"),
 		assert_true(basic_prize in player.hand, "Hisuian Heavy Ball should move the chosen Basic Pokemon to hand"),
 		assert_eq(player.prizes.size(), 2, "Prize count should stay unchanged after the swap"),
 		assert_true(card in player.prizes, "The Heavy Ball itself should become the replacement prize card"),

@@ -1,0 +1,14 @@
+{
+	"deck_id": 575723,
+	"deck_name": "Dragapult Dusknoir",
+	"description": "Strong opening hand: Dreepy, Buddy-Buddy Poffin, Nest Ball, Fire Energy, Arven, Iono, Sparkling Crystal.",
+	"top_to_bottom": [
+		{"set_code": "CSV8C", "card_index": "157"},
+		{"set_code": "CSV7C", "card_index": "177"},
+		{"set_code": "CSVH1C", "card_index": "043"},
+		{"set_code": "CSVE1C", "card_index": "FIR"},
+		{"set_code": "CSV1C", "card_index": "123"},
+		{"set_code": "CSV3C", "card_index": "123"},
+		{"set_code": "CSV8C", "card_index": "186"}
+	]
+}

@@ -4,6 +4,7 @@ extends Node
 const AIOpponentScript = preload("res://scripts/ai/AIOpponent.gd")
 const HeadlessMatchBridgeScript = preload("res://scripts/ai/HeadlessMatchBridge.gd")
 const DeckStrategyRegistryScript = preload("res://scripts/ai/DeckStrategyRegistry.gd")
+const AIFixedDeckOrderRegistryScript = preload("res://scripts/ai/AIFixedDeckOrderRegistry.gd")
 const BattleRecorderScript = preload("res://scripts/engine/BattleRecorder.gd")
 const AutoloadResolverScript = preload("res://scripts/engine/AutoloadResolver.gd")
 
@@ -25,6 +26,7 @@ const DEFAULT_LLM_MAX_FAILURES_PER_STRATEGY := 2
 var output_root: String = "user://match_records/ai_duels"
 
 var _registry = DeckStrategyRegistryScript.new()
+var _fixed_order_registry = AIFixedDeckOrderRegistryScript.new()
 
 
 func run_rule_vs_llm(games: int = 1, options: Dictionary = {}) -> Dictionary:
@@ -114,9 +116,13 @@ func build_default_options() -> Dictionary:
 		"first_player_index": 0,
 		"seed": 20260426,
 		"max_steps": DEFAULT_MAX_STEPS,
+		"max_game_seconds": 0.0,
 		"llm_wait_timeout_seconds": DEFAULT_LLM_WAIT_TIMEOUT_SECONDS,
 		"llm_wait_poll_seconds": DEFAULT_LLM_WAIT_POLL_SECONDS,
 		"llm_max_failures_per_strategy": DEFAULT_LLM_MAX_FAILURES_PER_STRATEGY,
+		"strong_fixed_opening": false,
+		"rule_strong_fixed_opening": "",
+		"llm_strong_fixed_opening": "",
 		"record_match": true,
 		"output_root": output_root,
 	}
@@ -144,6 +150,8 @@ func _run_one_logged_self_play(game_index: int, options: Dictionary) -> Dictiona
 	var seed: int = int(merged_options.get("seed", 20260426)) + game_index
 	var first_player_index: int = clampi(int(merged_options.get("first_player_index", 0)), 0, 1)
 	var max_steps: int = maxi(int(merged_options.get("max_steps", DEFAULT_MAX_STEPS)), 1)
+	var max_game_seconds: float = maxf(float(merged_options.get("max_game_seconds", 0.0)), 0.0)
+	var started_msec := Time.get_ticks_msec()
 
 	var card_database = AutoloadResolverScript.get_card_database()
 	var player_0_deck: DeckData = card_database.get_deck(player_0_deck_id) if card_database != null else null
@@ -160,6 +168,10 @@ func _run_one_logged_self_play(game_index: int, options: Dictionary) -> Dictiona
 	var gsm := GameStateMachine.new()
 	_apply_seed(gsm, seed)
 	_set_forced_shuffle_seed(seed)
+	var player_0_strong: bool = _is_strong_fixed_opening_enabled(merged_options, "player_0")
+	var player_1_strong: bool = _is_strong_fixed_opening_enabled(merged_options, "player_1")
+	var player_0_fixed_path := _apply_fixed_order_if_enabled(gsm, 0, player_0_deck_id, player_0_strong)
+	var player_1_fixed_path := _apply_fixed_order_if_enabled(gsm, 1, player_1_deck_id, player_1_strong)
 
 	var recorder: RefCounted = null
 	if bool(merged_options.get("record_match", true)):
@@ -184,12 +196,15 @@ func _run_one_logged_self_play(game_index: int, options: Dictionary) -> Dictiona
 	bridge.bind(gsm)
 	bridge.bootstrap_pending_setup()
 
-	var player_0_ai := _make_ai(0, player_0_strategy_id, player_0_deck)
-	var player_1_ai := _make_ai(1, player_1_strategy_id, player_1_deck)
+	var player_0_ai := _make_ai(0, player_0_strategy_id, player_0_deck, player_0_strong)
+	var player_1_ai := _make_ai(1, player_1_strategy_id, player_1_deck, player_1_strong)
 	var steps := 0
 	var failure_reason := ""
 	while steps < max_steps:
 		if gsm.game_state.is_game_over():
+			break
+		if max_game_seconds > 0.0 and float(Time.get_ticks_msec() - started_msec) / 1000.0 >= max_game_seconds:
+			failure_reason = "wall_clock_cap_reached"
 			break
 		var progressed := false
 		if bridge.has_pending_prompt():
@@ -229,12 +244,15 @@ func _run_one_logged_self_play(game_index: int, options: Dictionary) -> Dictiona
 		"failure_reason": failure_reason,
 		"turn_number": int(gsm.game_state.turn_number),
 		"steps": steps,
+		"wall_clock_seconds": float(Time.get_ticks_msec() - started_msec) / 1000.0,
 		"seed": seed,
 		"first_player_index": first_player_index,
 		"player_0_deck_id": player_0_deck_id,
 		"player_1_deck_id": player_1_deck_id,
 		"player_0_strategy_id": player_0_strategy_id,
 		"player_1_strategy_id": player_1_strategy_id,
+		"player_0_fixed_order_path": player_0_fixed_path,
+		"player_1_fixed_order_path": player_1_fixed_path,
 		"player_0_llm_audit_log_path": str(p0_strategy.call("get_llm_audit_log_path")) if p0_strategy != null and p0_strategy.has_method("get_llm_audit_log_path") else "",
 		"player_1_llm_audit_log_path": str(p1_strategy.call("get_llm_audit_log_path")) if p1_strategy != null and p1_strategy.has_method("get_llm_audit_log_path") else "",
 		"player_0_llm_stats": p0_strategy.call("get_llm_stats") if p0_strategy != null and p0_strategy.has_method("get_llm_stats") else {},
@@ -267,6 +285,8 @@ func _run_one_logged_duel(game_index: int, options: Dictionary) -> Dictionary:
 	var seed: int = int(merged_options.get("seed", 20260426)) + game_index
 	var first_player_index: int = clampi(int(merged_options.get("first_player_index", 0)), 0, 1)
 	var max_steps: int = maxi(int(merged_options.get("max_steps", DEFAULT_MAX_STEPS)), 1)
+	var max_game_seconds: float = maxf(float(merged_options.get("max_game_seconds", 0.0)), 0.0)
+	var started_msec := Time.get_ticks_msec()
 
 	var card_database = AutoloadResolverScript.get_card_database()
 	var rule_deck: DeckData = card_database.get_deck(rule_deck_id) if card_database != null else null
@@ -285,6 +305,10 @@ func _run_one_logged_duel(game_index: int, options: Dictionary) -> Dictionary:
 	var gsm := GameStateMachine.new()
 	_apply_seed(gsm, seed)
 	_set_forced_shuffle_seed(seed)
+	var rule_strong: bool = _is_strong_fixed_opening_enabled(merged_options, "rule")
+	var llm_strong: bool = _is_strong_fixed_opening_enabled(merged_options, "llm")
+	var rule_fixed_path := _apply_fixed_order_if_enabled(gsm, 0, rule_deck_id, rule_strong)
+	var llm_fixed_path := _apply_fixed_order_if_enabled(gsm, 1, llm_deck_id, llm_strong)
 
 	var recorder: RefCounted = null
 	if bool(merged_options.get("record_match", true)):
@@ -309,12 +333,15 @@ func _run_one_logged_duel(game_index: int, options: Dictionary) -> Dictionary:
 	bridge.bind(gsm)
 	bridge.bootstrap_pending_setup()
 
-	var rule_ai := _make_ai(0, rule_strategy_id, rule_deck)
-	var llm_ai := _make_ai(1, llm_strategy_id, llm_deck)
+	var rule_ai := _make_ai(0, rule_strategy_id, rule_deck, rule_strong)
+	var llm_ai := _make_ai(1, llm_strategy_id, llm_deck, llm_strong)
 	var steps := 0
 	var failure_reason := ""
 	while steps < max_steps:
 		if gsm.game_state.is_game_over():
+			break
+		if max_game_seconds > 0.0 and float(Time.get_ticks_msec() - started_msec) / 1000.0 >= max_game_seconds:
+			failure_reason = "wall_clock_cap_reached"
 			break
 		var progressed := false
 		if bridge.has_pending_prompt():
@@ -353,6 +380,7 @@ func _run_one_logged_duel(game_index: int, options: Dictionary) -> Dictionary:
 		"failure_reason": failure_reason,
 		"turn_number": int(gsm.game_state.turn_number),
 		"steps": steps,
+		"wall_clock_seconds": float(Time.get_ticks_msec() - started_msec) / 1000.0,
 		"seed": seed,
 		"first_player_index": first_player_index,
 		"miraidon_player_index": 0,
@@ -365,6 +393,8 @@ func _run_one_logged_duel(game_index: int, options: Dictionary) -> Dictionary:
 		"llm_deck_id": llm_deck_id,
 		"miraidon_deck_id": rule_deck_id,
 		"raging_bolt_deck_id": llm_deck_id,
+		"rule_fixed_order_path": rule_fixed_path,
+		"llm_fixed_order_path": llm_fixed_path,
 		"llm_audit_log_path": str(llm_strategy.call("get_llm_audit_log_path")) if llm_strategy != null and llm_strategy.has_method("get_llm_audit_log_path") else "",
 		"llm_stats": llm_strategy.call("get_llm_stats") if llm_strategy != null and llm_strategy.has_method("get_llm_stats") else {},
 	}
@@ -379,9 +409,12 @@ func _run_one_logged_duel(game_index: int, options: Dictionary) -> Dictionary:
 	return result
 
 
-func _make_ai(player_index: int, strategy_id: String, deck: DeckData = null) -> AIOpponent:
+func _make_ai(player_index: int, strategy_id: String, deck: DeckData = null, strong_rules_only: bool = false) -> AIOpponent:
 	var ai := AIOpponentScript.new()
 	ai.configure(player_index, 1)
+	if strong_rules_only:
+		ai.use_mcts = false
+		ai.decision_runtime_mode = AIOpponentScript.DECISION_RUNTIME_RULES_ONLY
 	var strategy: RefCounted = _registry.call("create_strategy_by_id", strategy_id)
 	if strategy != null:
 		if deck != null and strategy.has_method("set_deck_strategy_text"):
@@ -390,6 +423,47 @@ func _make_ai(player_index: int, strategy_id: String, deck: DeckData = null) -> 
 			strategy.call("set_llm_host_node", self)
 		ai.set_deck_strategy(strategy)
 	return ai
+
+
+func _is_strong_fixed_opening_enabled(options: Dictionary, role: String) -> bool:
+	var global_enabled: bool = _option_bool(options.get("strong_fixed_opening", false), false)
+	match role:
+		"rule":
+			return _option_bool(options.get("rule_strong_fixed_opening", null), global_enabled)
+		"llm":
+			return _option_bool(options.get("llm_strong_fixed_opening", null), global_enabled)
+		"player_0":
+			return _option_bool(options.get("player_0_strong_fixed_opening", null), global_enabled)
+		"player_1":
+			return _option_bool(options.get("player_1_strong_fixed_opening", null), global_enabled)
+		_:
+			return global_enabled
+
+
+func _option_bool(value: Variant, fallback: bool) -> bool:
+	if value == null:
+		return fallback
+	if value is bool:
+		return bool(value)
+	if value is String:
+		var normalized := str(value).strip_edges().to_lower()
+		if normalized == "":
+			return fallback
+		return normalized in ["1", "true", "yes", "y", "on", "strong"]
+	return bool(value)
+
+
+func _apply_fixed_order_if_enabled(gsm: GameStateMachine, player_index: int, deck_id: int, enabled: bool) -> String:
+	if not enabled or gsm == null or _fixed_order_registry == null:
+		return ""
+	var fixed_order_path := str(_fixed_order_registry.call("get_fixed_order_path", deck_id))
+	if fixed_order_path == "":
+		return ""
+	var fixed_order: Array[Dictionary] = _fixed_order_registry.call("load_fixed_order_from_path", fixed_order_path)
+	if fixed_order.is_empty():
+		return ""
+	gsm.set_deck_order_override(player_index, fixed_order)
+	return fixed_order_path
 
 
 func _prepare_llm_plan_if_needed(ai: AIOpponent, gsm: GameStateMachine, options: Dictionary) -> void:

@@ -26,7 +26,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		target_labels.append(slot.get_pokemon_name())
 	return [build_card_assignment_step(
 		STEP_ID,
-		"Attach 1 Basic Energy from discard to your Pokemon",
+		"选择弃牌区1张基本能量附着给己方宝可梦",
 		source_items,
 		source_labels,
 		target_items,

@@ -30,7 +30,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		labels.append(slot.get_pokemon_name())
 	return [{
 		"id": STEP_ID,
-		"title": "Choose 1 of your Benched Darkness Pokemon to switch into the Active Spot",
+		"title": "选择1只己方备战区恶属性宝可梦换到战斗场",
 		"items": items,
 		"labels": labels,
 		"min_select": 1,

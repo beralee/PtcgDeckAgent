@@ -34,7 +34,7 @@ func get_attack_interaction_steps(
 	var required: int = mini(discard_count, items.size())
 	return [{
 		"id": STEP_ID,
-		"title": "Choose %d attached Energy to discard" % required,
+		"title": "选择要弃置的%d个附着能量" % required,
 		"items": items,
 		"labels": labels,
 		"min_select": required,

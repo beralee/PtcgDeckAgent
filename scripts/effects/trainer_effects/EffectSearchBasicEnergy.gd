@@ -34,7 +34,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			hand_labels.append(hand_card.card_data.name)
 		steps.append({
 			"id": "discard_cards",
-			"title": "Choose %d cards to discard" % discard_cost,
+			"title": "选择%d张手牌放入弃牌区" % discard_cost,
 			"items": hand_items,
 			"labels": hand_labels,
 			"min_select": discard_cost,
@@ -50,15 +50,16 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	var deck_labels: Array[String] = []
 	for deck_card: CardInstance in deck_items:
 		deck_labels.append(deck_card.card_data.name)
-	steps.append({
-		"id": "search_energy",
-		"title": "Choose up to %d Basic Energy cards" % search_count,
-		"items": deck_items,
-		"labels": deck_labels,
-		"min_select": 0,
-		"max_select": mini(search_count, deck_items.size()),
-		"allow_cancel": true,
-	})
+	steps.append(build_full_library_search_step(
+		"search_energy",
+		"从牌库中选择最多%d张基本能量" % search_count,
+		player.deck,
+		deck_items,
+		VISIBLE_SCOPE_OWN_FULL_DECK,
+		0,
+		mini(search_count, deck_items.size()),
+		{"allow_cancel": true}
+	))
 	return steps
 
 

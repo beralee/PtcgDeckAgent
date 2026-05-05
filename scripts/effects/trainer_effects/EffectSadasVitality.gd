@@ -19,7 +19,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		target_labels.append(slot.get_pokemon_name())
 	var step := build_card_assignment_step(
 		"sada_assignments",
-		"Attach up to 2 Basic Energy to your Ancient Pokemon",
+		"选择最多2张基本能量附着给古代宝可梦",
 		source_items,
 		source_labels,
 		target_items,

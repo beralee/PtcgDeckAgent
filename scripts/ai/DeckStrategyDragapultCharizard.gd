@@ -88,6 +88,24 @@ func get_mcts_config() -> Dictionary:
 	}
 
 
+func build_continuity_contract(game_state: GameState, player_index: int, turn_contract: Dictionary = {}) -> Dictionary:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return {"enabled": false, "safe_setup_before_attack": false, "setup_debt": {}, "action_bonuses": [], "attack_penalty": 0.0}
+	var player: PlayerState = game_state.players[player_index]
+	var setup_debt := _build_continuity_setup_debt(player, game_state)
+	var action_bonuses: Array[Dictionary] = []
+	if not setup_debt.is_empty():
+		action_bonuses = _continuity_action_bonuses(setup_debt)
+	return {
+		"enabled": true,
+		"safe_setup_before_attack": not setup_debt.is_empty(),
+		"setup_debt": setup_debt,
+		"action_bonuses": action_bonuses,
+		"attack_penalty": 0.0,
+		"turn_contract": turn_contract.duplicate(true),
+	}
+
+
 func plan_opening_setup(player: PlayerState) -> Dictionary:
 	var basics: Array[int] = []
 	for i: int in range(player.hand.size()):
@@ -278,6 +296,8 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 			if _is_charizard_energy_assignment_context(context):
 				return _score_charizard_energy_target(slot, context)
 			return _score_energy_target(slot, context)
+		if step_id in ["bench_damage_counters", "bench_target"]:
+			return _score_bench_counter_target(slot)
 		if step_id in ["send_out", "pivot_target", "self_switch_target"]:
 			return _score_handoff_target(slot, step_id, context)
 	return 0.0
@@ -295,15 +315,36 @@ func _score_basic_to_bench(action: Dictionary, game_state: GameState, player_ind
 		return 0.0
 	var player: PlayerState = game_state.players[player_index]
 	var name := _card_name(card)
+	var turn := int(game_state.turn_number)
 	if _should_shutdown_extra_setup(player, game_state):
 		match name:
-			DREEPY, CHARMANDER:
+			DREEPY:
+				return 360.0 if _needs_second_dragapult_seed(player, turn) else (20.0 if _count_name(player, name) == 0 else -10.0)
+			CHARMANDER:
 				return 20.0 if _count_name(player, name) == 0 else -10.0
 			ROTOM_V, LUMINEON_V, FEZANDIPITI_EX, RADIANT_ALAKAZAM, MANAPHY:
 				return -20.0
 		return 0.0
+	if _needs_charizard_continuity(player):
+		match name:
+			CHARMANDER:
+				return 560.0 if _count_name(player, CHARMANDER) + _count_name(player, CHARMELEON) == 0 else 260.0
+			DREEPY:
+				return 120.0 if _count_name(player, DREEPY) == 0 else 40.0
+			ROTOM_V, LUMINEON_V, FEZANDIPITI_EX, RADIANT_ALAKAZAM, MANAPHY:
+				return -20.0 if player.bench.size() >= 4 else 30.0
+	if _needs_dragapult_continuity(player):
+		match name:
+			DREEPY:
+				return 560.0 if _count_name(player, DREEPY) + _count_name(player, DRAKLOAK) == 0 else 280.0
+			CHARMANDER:
+				return 120.0 if _count_name(player, CHARMANDER) == 0 else 40.0
+			ROTOM_V, LUMINEON_V, FEZANDIPITI_EX, RADIANT_ALAKAZAM, MANAPHY:
+				return -20.0 if player.bench.size() >= 4 else 30.0
 	match name:
 		DREEPY:
+			if _needs_second_dragapult_seed(player, turn):
+				return 460.0
 			return 360.0 if _count_name(player, DREEPY) == 0 else 220.0
 		CHARMANDER:
 			return 340.0 if _count_name(player, CHARMANDER) == 0 else 200.0
@@ -469,6 +510,18 @@ func _score_attack(action: Dictionary, game_state: GameState, player_index: int)
 	var active := player.active_pokemon
 	if active == null:
 		return 0.0
+	if _is_tm_evolution_granted_attack_action(action):
+		var tm_targets := _tm_evolution_target_count(player)
+		if tm_targets <= 0:
+			return -40.0
+		var tm_score := 620.0 + 240.0 * float(tm_targets)
+		if _is_opening_setup_window(player, game_state):
+			tm_score += 260.0
+		if _count_name(player, DRAKLOAK) == 0:
+			tm_score += 120.0
+		if _count_name(player, CHARMELEON) == 0 and _deck_has(player, CHARMELEON):
+			tm_score += 90.0
+		return tm_score
 	var opponent_active := game_state.players[1 - player_index].active_pokemon
 	var attack_index := int(action.get("attack_index", -1))
 	var attack_data: Dictionary = {}
@@ -484,23 +537,59 @@ func _score_attack(action: Dictionary, game_state: GameState, player_index: int)
 		else:
 			projected_damage = int(predict_attacker_damage(active).get("damage", 0))
 	var is_phantom_dive := attack_index == 1 or attack_name in ["Phantom Dive", "幻影潜袭"] or projected_damage >= 200
+	var is_jet_head := attack_index == 0 or attack_name in ["Jet Head", "喷射头击"] or projected_damage == 70
+	var active_is_dragapult := _slot_name(active) == DRAGAPULT_EX
+	var phantom_dive_online := active_is_dragapult and _dragapult_phantom_dive_ready(active)
+	if active_is_dragapult and phantom_dive_online and is_jet_head:
+		return -1000.0
 	var score := 180.0 + float(projected_damage)
 	var misses_active_ko := opponent_active == null or projected_damage < opponent_active.get_remaining_hp()
 	if _slot_name(active) == DRAGAPULT_EX and misses_active_ko and _should_finish_charizard_before_first_dragapult_attack(player, game_state):
 		score -= 620.0
-	if _slot_name(active) == DRAGAPULT_EX and _can_slot_use_attack(active, "Phantom Dive"):
+	if active_is_dragapult and phantom_dive_online:
 		if is_phantom_dive:
-			score += 320.0
+			score += 620.0
 		else:
-			score -= 220.0
+			score -= 160.0
 	if opponent_active != null and projected_damage >= opponent_active.get_remaining_hp():
 		score += 420.0
 	if _slot_name(active) == DRAGAPULT_EX and is_phantom_dive:
-		score += 240.0
+		score += 280.0
+		if _phantom_dive_has_pickoff(game_state.players[1 - player_index]):
+			score += 220.0
 	if _slot_name(active) == CHARIZARD_EX:
 		score += 160.0
 		score += 20.0 * float(6 - game_state.players[1 - player_index].prizes.size())
 	return score
+
+
+func _is_tm_evolution_granted_attack_action(action: Dictionary) -> bool:
+	if str(action.get("kind", action.get("type", ""))) != "granted_attack":
+		return false
+	var granted_raw: Variant = action.get("granted_attack_data", {})
+	if not (granted_raw is Dictionary):
+		return false
+	var granted: Dictionary = granted_raw
+	return str(granted.get("id", "")) == "tm_evolution" or str(granted.get("name", "")) in ["Evolution", "进化", "杩涘寲"]
+
+
+func _tm_evolution_target_count(player: PlayerState) -> int:
+	if player == null:
+		return 0
+	var count := 0
+	var deck_has_drakloak := _deck_has(player, DRAKLOAK)
+	var deck_has_charmeleon := _deck_has(player, CHARMELEON)
+	for slot: PokemonSlot in player.bench:
+		if slot == null or slot.get_top_card() == null:
+			continue
+		match _slot_name(slot):
+			DREEPY:
+				if deck_has_drakloak:
+					count += 1
+			CHARMANDER:
+				if deck_has_charmeleon:
+					count += 1
+	return mini(count, 2)
 
 
 func _score_search_item(card: CardInstance, context: Dictionary) -> float:
@@ -656,6 +745,24 @@ func _score_search_pokemon(card: CardInstance, context: Dictionary) -> float:
 			return 900.0
 		if name == CHARIZARD_EX:
 			return 420.0
+	if _needs_charizard_continuity(player):
+		if name == CHARIZARD_EX and _count_name(player, CHARMANDER) + _count_name(player, CHARMELEON) > 0:
+			return 920.0
+		if name == CHARMELEON and _count_name(player, CHARMANDER) > 0:
+			return 800.0
+		if name == CHARMANDER and _count_name(player, CHARMANDER) + _count_name(player, CHARMELEON) == 0:
+			return 780.0
+		if name in [DREEPY, DRAKLOAK]:
+			return minf(float(get_search_priority(card)), 80.0)
+	if _needs_dragapult_continuity(player):
+		if name == DRAGAPULT_EX and _count_name(player, DREEPY) + _count_name(player, DRAKLOAK) > 0:
+			return 920.0
+		if name == DRAKLOAK and _count_name(player, DREEPY) > 0:
+			return 820.0
+		if name == DREEPY and _count_name(player, DREEPY) + _count_name(player, DRAKLOAK) == 0:
+			return 800.0
+		if name in [CHARMANDER, CHARMELEON]:
+			return minf(float(get_search_priority(card)), 80.0)
 	var dragapult_pressure := 0
 	if _count_name(player, DRAKLOAK) > 0:
 		dragapult_pressure += 2
@@ -724,6 +831,8 @@ func _score_infernal_reign_ability(player: PlayerState, game_state: GameState, p
 		return 560.0
 	if best_target_score >= 320.0:
 		return 500.0
+	if best_target_score <= 0.0:
+		return -20.0
 	if _count_name(player, DRAGAPULT_EX) == 0:
 		return 400.0
 	return 260.0
@@ -755,12 +864,12 @@ func _score_charizard_energy_target(slot: PokemonSlot, context: Dictionary) -> f
 			return maxf(base, 220.0)
 	match name:
 		CHARIZARD_EX:
+			if target_attack_gap_current == 0:
+				return -120.0
 			if target_attack_gap_after == 0:
 				return maxf(base, 620.0)
 			if target_attack_gap_after == 1:
 				return maxf(base, 520.0)
-			if target_attack_gap_current == 0:
-				return maxf(base, 160.0)
 		ROTOM_V, LUMINEON_V, FEZANDIPITI_EX, MANAPHY:
 			if not (slot == player.active_pokemon and _is_transition_pivot_active(slot)):
 				base = minf(base, 40.0)
@@ -851,6 +960,8 @@ func _score_arven(player: PlayerState, game_state: GameState, player_index: int)
 
 
 func _fire_attach_score(slot: PokemonSlot, player: PlayerState, turn: int, game_state: GameState = null) -> float:
+	if not _is_hybrid_energy_lane(slot):
+		return _active_retreat_attach_score(slot, player)
 	var pivot_to_charizard := _should_pivot_fire_to_charizard(player, turn)
 	var late_charizard_conversion := _is_late_charizard_conversion_window(player, game_state)
 	match _slot_name(slot):
@@ -876,10 +987,12 @@ func _fire_attach_score(slot: PokemonSlot, player: PlayerState, turn: int, game_
 			if pivot_to_charizard:
 				return 360.0
 			return 220.0 if turn >= 4 else 140.0
-	return 60.0
+	return -80.0
 
 
 func _psychic_attach_score(slot: PokemonSlot, player: PlayerState) -> float:
+	if not _is_hybrid_energy_lane(slot):
+		return _active_retreat_attach_score(slot, player)
 	match _slot_name(slot):
 		DRAGAPULT_EX:
 			return 460.0
@@ -889,7 +1002,21 @@ func _psychic_attach_score(slot: PokemonSlot, player: PlayerState) -> float:
 			return 180.0
 		CHARMANDER, CHARMELEON:
 			return 120.0
-	return 60.0
+	return -80.0
+
+
+func _is_hybrid_energy_lane(slot: PokemonSlot) -> bool:
+	return _slot_name(slot) in [DREEPY, DRAKLOAK, DRAGAPULT_EX, CHARMANDER, CHARMELEON, CHARIZARD_EX]
+
+
+func _active_retreat_attach_score(slot: PokemonSlot, player: PlayerState) -> float:
+	if player == null or slot == null or slot != player.active_pokemon:
+		return -10000.0
+	if player.bench.is_empty() or _retreat_gap(slot) <= 0:
+		return -10000.0
+	if _has_better_pivot(player):
+		return 280.0 if _retreat_gap(slot) <= 1 else 160.0
+	return 180.0 if _retreat_gap(slot) <= 1 else 90.0
 
 
 func _score_retreat(action: Dictionary, player: PlayerState, game_state: GameState = null) -> float:
@@ -923,6 +1050,152 @@ func _score_retreat(action: Dictionary, player: PlayerState, game_state: GameSta
 		if active_name in [DRAGAPULT_EX, CHARIZARD_EX]:
 			return 180.0
 	return 20.0
+
+
+func _build_continuity_setup_debt(player: PlayerState, game_state: GameState = null) -> Dictionary:
+	if player == null:
+		return {}
+	if _needs_charizard_continuity(player):
+		return _continuity_lane_debt("charizard", player, game_state)
+	if _needs_dragapult_continuity(player):
+		return _continuity_lane_debt("dragapult", player, game_state)
+	return {}
+
+
+func _continuity_lane_debt(lane: String, player: PlayerState, game_state: GameState = null) -> Dictionary:
+	var needed_basics: Array[String] = []
+	var needed_evolutions: Array[String] = []
+	var trainer_card_names: Array[String] = []
+	var energy_target_names: Array[String] = []
+	var ready_attackers := _ready_real_attacker_names(player)
+	if lane == "charizard":
+		var charizard_seed_count := _count_name(player, CHARMANDER) + _count_name(player, CHARMELEON)
+		if charizard_seed_count == 0:
+			needed_basics.append(CHARMANDER)
+		if _count_name(player, CHARMELEON) == 0 and _count_name(player, CHARIZARD_EX) == 0:
+			needed_evolutions.append(CHARMELEON)
+		if _count_name(player, CHARIZARD_EX) == 0:
+			needed_evolutions.append(CHARIZARD_EX)
+		trainer_card_names = [BUDDY_BUDDY_POFFIN, NEST_BALL, ULTRA_BALL, RARE_CANDY, TM_EVOLUTION, ARVEN]
+		energy_target_names = [CHARMANDER, CHARMELEON, CHARIZARD_EX]
+		return {
+			"lane": "charizard",
+			"missing_lane": "charizard",
+			"needed_basics": needed_basics,
+			"needed_evolutions": needed_evolutions,
+			"trainer_card_names": trainer_card_names,
+			"energy_target_names": energy_target_names,
+			"ready_attackers": ready_attackers,
+			"bench_space": 5 - player.bench.size(),
+			"turn_number": int(game_state.turn_number) if game_state != null else 0,
+			"reason": "continue into Charizard ex after first Dragapult ex",
+		}
+	if lane == "dragapult":
+		var dragapult_seed_count := _count_name(player, DREEPY) + _count_name(player, DRAKLOAK)
+		if dragapult_seed_count == 0:
+			needed_basics.append(DREEPY)
+		if _count_name(player, DRAKLOAK) == 0 and _count_name(player, DRAGAPULT_EX) == 0:
+			needed_evolutions.append(DRAKLOAK)
+		if _count_name(player, DRAGAPULT_EX) == 0:
+			needed_evolutions.append(DRAGAPULT_EX)
+		trainer_card_names = [BUDDY_BUDDY_POFFIN, NEST_BALL, ULTRA_BALL, RARE_CANDY, TM_EVOLUTION, LANCE, ARVEN]
+		energy_target_names = [DREEPY, DRAKLOAK, DRAGAPULT_EX]
+		return {
+			"lane": "dragapult",
+			"missing_lane": "dragapult",
+			"needed_basics": needed_basics,
+			"needed_evolutions": needed_evolutions,
+			"trainer_card_names": trainer_card_names,
+			"energy_target_names": energy_target_names,
+			"ready_attackers": ready_attackers,
+			"bench_space": 5 - player.bench.size(),
+			"turn_number": int(game_state.turn_number) if game_state != null else 0,
+			"reason": "continue into Dragapult ex after first Charizard ex",
+		}
+	return {}
+
+
+func _continuity_action_bonuses(setup_debt: Dictionary) -> Array[Dictionary]:
+	var lane := str(setup_debt.get("lane", ""))
+	var bonuses: Array[Dictionary] = []
+	if lane == "charizard":
+		bonuses.append({
+			"kind": "play_basic_to_bench",
+			"card_names": [CHARMANDER],
+			"bonus": 520.0,
+			"reason": "seed real Charizard ex second attacker before terminal attack",
+		})
+		bonuses.append({
+			"kind": "evolve",
+			"card_names": [CHARMELEON, CHARIZARD_EX],
+			"bonus": 360.0,
+			"reason": "finish real Charizard ex second attacker before terminal attack",
+		})
+		bonuses.append({
+			"kind": "play_trainer",
+			"card_names": [BUDDY_BUDDY_POFFIN, NEST_BALL, ULTRA_BALL, RARE_CANDY, TM_EVOLUTION, ARVEN],
+			"bonus": 260.0,
+			"reason": "search or evolve the Charizard ex second-attacker lane",
+		})
+		bonuses.append({
+			"kind": "attach_energy",
+			"target_names": [CHARMANDER, CHARMELEON, CHARIZARD_EX],
+			"bonus": 120.0,
+			"reason": "energy continuity belongs on real Charizard attackers",
+		})
+	elif lane == "dragapult":
+		bonuses.append({
+			"kind": "play_basic_to_bench",
+			"card_names": [DREEPY],
+			"bonus": 540.0,
+			"reason": "seed real Dragapult ex second attacker before terminal attack",
+		})
+		bonuses.append({
+			"kind": "evolve",
+			"card_names": [DRAKLOAK, DRAGAPULT_EX],
+			"bonus": 380.0,
+			"reason": "finish real Dragapult ex second attacker before terminal attack",
+		})
+		bonuses.append({
+			"kind": "play_trainer",
+			"card_names": [BUDDY_BUDDY_POFFIN, NEST_BALL, ULTRA_BALL, RARE_CANDY, TM_EVOLUTION, LANCE, ARVEN],
+			"bonus": 280.0,
+			"reason": "search or evolve the Dragapult ex second-attacker lane",
+		})
+		bonuses.append({
+			"kind": "attach_energy",
+			"target_names": [DREEPY, DRAKLOAK, DRAGAPULT_EX],
+			"bonus": 140.0,
+			"reason": "energy continuity belongs on real Dragapult attackers",
+		})
+	return bonuses
+
+
+func _needs_charizard_continuity(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	if _count_name(player, DRAGAPULT_EX) <= 0:
+		return false
+	return _count_name(player, CHARIZARD_EX) == 0
+
+
+func _needs_dragapult_continuity(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	if _count_name(player, CHARIZARD_EX) <= 0:
+		return false
+	return _count_name(player, DRAGAPULT_EX) == 0
+
+
+func _ready_real_attacker_names(player: PlayerState) -> Array[String]:
+	var names: Array[String] = []
+	if player == null:
+		return names
+	for slot: PokemonSlot in _all_slots(player):
+		var name := _slot_name(slot)
+		if name in [DRAGAPULT_EX, CHARIZARD_EX] and _can_slot_attack(slot) and name not in names:
+			names.append(name)
+	return names
 
 
 func _needs_dragapult_energy(player: PlayerState) -> bool:
@@ -1106,6 +1379,14 @@ func _is_opening_setup_window(player: PlayerState, game_state: GameState = null)
 	return true
 
 
+func _needs_second_dragapult_seed(player: PlayerState, turn: int) -> bool:
+	if player == null or turn > 3 or player.bench.size() >= 5:
+		return false
+	if _count_name(player, DRAGAPULT_EX) > 0:
+		return false
+	return _count_name(player, DREEPY) + _count_name(player, DRAKLOAK) < 2
+
+
 func _has_tm_targets(player: PlayerState) -> bool:
 	return _count_name(player, DREEPY) > 0 and _count_name(player, CHARMANDER) > 0
 
@@ -1196,6 +1477,34 @@ func _has_convertible_two_prize_bench_target(opponent: PlayerState) -> bool:
 		if _is_two_prize_target(slot) and slot.get_remaining_hp() <= 210:
 			return true
 	return false
+
+
+func _phantom_dive_has_pickoff(opponent: PlayerState) -> bool:
+	if opponent == null:
+		return false
+	for slot: PokemonSlot in opponent.bench:
+		if slot != null and slot.get_top_card() != null and slot.get_remaining_hp() <= 60:
+			return true
+	return false
+
+
+func _score_bench_counter_target(slot: PokemonSlot) -> float:
+	if slot == null or slot.get_top_card() == null:
+		return 0.0
+	var remaining_hp := slot.get_remaining_hp()
+	var prize_count := slot.get_prize_count()
+	var score := float(prize_count) * 180.0
+	if remaining_hp <= 60:
+		score += 900.0 + float(prize_count) * 220.0
+	elif remaining_hp <= 120:
+		score += 300.0 + float(prize_count) * 90.0
+	elif remaining_hp <= 180:
+		score += 140.0
+	if _is_rule_box(slot):
+		score += 120.0
+	score += float(slot.damage_counters) * 3.0
+	score -= float(remaining_hp) * 0.75
+	return score
 
 
 func _is_two_prize_target(slot: PokemonSlot) -> bool:
@@ -1370,6 +1679,19 @@ func _can_slot_use_attack(slot: PokemonSlot, attack_name: String) -> bool:
 		if slot.attached_energy.size() >= str(attack.get("cost", "")).length():
 			return true
 	return false
+
+
+func _dragapult_phantom_dive_ready(slot: PokemonSlot) -> bool:
+	return _slot_name(slot) == DRAGAPULT_EX and _attack_gap_for_index(slot, 1) <= 0
+
+
+func _attack_gap_for_index(slot: PokemonSlot, attack_index: int) -> int:
+	if slot == null or slot.get_card_data() == null:
+		return 99
+	if attack_index < 0 or attack_index >= slot.get_card_data().attacks.size():
+		return 99
+	var attack: Dictionary = slot.get_card_data().attacks[attack_index]
+	return maxi(0, str(attack.get("cost", "")).length() - slot.attached_energy.size())
 
 
 func _attack_gap(slot: PokemonSlot) -> int:

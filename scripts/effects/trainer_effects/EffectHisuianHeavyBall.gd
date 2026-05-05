@@ -21,15 +21,15 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		if prize_card.card_data != null and prize_card.card_data.is_basic_pokemon():
 			prize_card_indices.append(prize_items.size())
 			prize_items.append(prize_card)
-			prize_labels.append("%s - Prize %d" % [prize_card.card_data.name, prize_index + 1])
-			prize_card_labels.append("Prize %d - Basic Pokemon, selectable" % (prize_index + 1))
+			prize_labels.append("%s - 奖赏卡%d" % [prize_card.card_data.name, prize_index + 1])
+			prize_card_labels.append("奖赏卡%d - 基础宝可梦，可选择" % (prize_index + 1))
 		else:
 			prize_card_indices.append(-1)
-			prize_card_labels.append("Prize %d - not a Basic Pokemon, view only" % (prize_index + 1))
+			prize_card_labels.append("奖赏卡%d - 不能选择，仅查看" % (prize_index + 1))
 	var has_basic_prize := not prize_items.is_empty()
 	return [{
 		"id": "chosen_prize_basic",
-		"title": "Look at your Prize cards. Choose 1 Basic Pokemon" if has_basic_prize else "Look at your Prize cards. No Basic Pokemon found",
+		"title": "查看奖赏卡，选择1张基础宝可梦" if has_basic_prize else "查看奖赏卡，未找到基础宝可梦",
 		"items": prize_items,
 		"labels": prize_labels,
 		"presentation": "cards",
@@ -37,9 +37,9 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		"card_indices": prize_card_indices,
 		"choice_labels": prize_card_labels,
 		"show_selectable_hints": true,
-		"card_selectable_hint": "Choose",
-		"card_disabled_badge": "View",
-		"utility_actions": [] if has_basic_prize else [{"label": "Done", "index": -1}],
+		"card_selectable_hint": "可选",
+		"card_disabled_badge": "仅查看",
+		"utility_actions": [] if has_basic_prize else [{"label": "完成", "index": -1}],
 		"min_select": 1 if has_basic_prize else 0,
 		"max_select": 1 if has_basic_prize else 0,
 		"allow_cancel": true,
@@ -87,4 +87,4 @@ func _shuffle_cards(cards: Array[CardInstance]) -> void:
 
 
 func get_description() -> String:
-	return "Look at your Prize cards. If you find a Basic Pokemon there, put it into your hand and shuffle Hisuian Heavy Ball into your Prize cards."
+	return "查看自己的奖赏卡。若其中有基础宝可梦，则选择1张加入手牌，并将洗翠沉重球洗入奖赏卡。"

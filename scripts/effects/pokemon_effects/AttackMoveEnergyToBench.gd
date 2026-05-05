@@ -32,6 +32,8 @@ func get_attack_interaction_steps(
 			"title": "选择要转移的1个能量",
 			"items": energy_items,
 			"labels": energy_labels,
+			"card_groups": build_attached_card_groups(player, energy_items),
+			"transparent_battlefield_dialog": true,
 			"min_select": 1,
 			"max_select": 1,
 			"allow_cancel": true,

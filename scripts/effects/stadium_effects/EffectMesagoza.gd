@@ -27,7 +27,7 @@ func can_headless_execute(_card: CardInstance, state: GameState) -> bool:
 func get_preview_interaction_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
 	return [{
 		"id": "coin_flip_preview",
-		"title": "Flip a coin",
+		"title": "投掷1枚硬币",
 		"wait_for_coin_animation": true,
 		"preview_only": true,
 	}]
@@ -45,17 +45,19 @@ func get_interaction_steps(_card: CardInstance, state: GameState) -> Array[Dicti
 	for deck_card: CardInstance in items:
 		labels.append(deck_card.card_data.name)
 	if items.is_empty():
-		return [build_empty_search_resolution_step("No Pokemon found in deck.")]
-	return [{
-		"id": STEP_ID,
-		"title": "Choose 1 Pokemon from your deck",
-		"items": items,
-		"labels": labels,
-		"min_select": 1,
-		"max_select": 1,
-		"allow_cancel": true,
-		"wait_for_coin_animation": true,
-	}]
+		return [build_empty_search_resolution_step("牌库里没有宝可梦。")]
+	var step := build_full_library_search_step(
+		STEP_ID,
+		"从牌库中选择1张宝可梦加入手牌",
+		player.deck,
+		items,
+		VISIBLE_SCOPE_OWN_FULL_DECK,
+		1,
+		1,
+		{"allow_cancel": true}
+	)
+	step["wait_for_coin_animation"] = true
+	return [step]
 
 
 func execute(_card: CardInstance, targets: Array, state: GameState) -> void:
@@ -70,13 +72,15 @@ func execute(_card: CardInstance, targets: Array, state: GameState) -> void:
 	var ctx: Dictionary = get_interaction_context(targets)
 	var chosen: CardInstance = null
 	var raw: Array = ctx.get(STEP_ID, [])
-	if not raw.is_empty() and raw[0] is CardInstance and raw[0] in _matching_pokemon(player):
-		chosen = raw[0]
+	var matches: Array = _matching_pokemon(player)
+	for entry: Variant in raw:
+		if entry is CardInstance and entry in matches:
+			chosen = entry
+			break
 	if chosen == null and not ctx.has(STEP_ID):
-		var matches: Array = _matching_pokemon(player)
 		chosen = matches[0] if not matches.is_empty() else null
 	if chosen != null:
-		_move_public_cards_to_hand_with_log(state, state.current_player_index, [chosen], _card, "stadium", "search_to_hand", ["Pokemon"])
+		_move_public_cards_to_hand_with_log(state, state.current_player_index, [chosen], _card, "stadium", "search_to_hand", ["宝可梦"])
 	player.shuffle_deck()
 	_has_pending_flip = false
 

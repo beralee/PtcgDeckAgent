@@ -70,7 +70,9 @@ var _llm_replan_counts: Dictionary = {}
 var _llm_replan_context_by_turn: Dictionary = {}
 var _llm_replan_eligible_after_reject: Dictionary = {}
 var _llm_route_compiler_results_by_turn: Dictionary = {}
-var _llm_max_replans_per_turn: int = 2
+var _llm_max_replans_per_turn: int = 3
+var _llm_pending_interaction_queue_item: Dictionary = {}
+var _llm_pending_interaction_turn: int = -1
 var _fast_choice_pending: bool = false
 var _fast_choice_request_key: String = ""
 var _fast_choice_cache: Dictionary = {}
@@ -103,6 +105,7 @@ func build_action_id_request_payload_for_test(game_state: GameState, player_inde
 	var prompt_actions: Array = _select_llm_prompt_actions(legal_actions, game_state, player_index)
 	_llm_action_catalog = _build_action_catalog(prompt_actions, game_state, player_index)
 	var payload: Dictionary = _prompt_builder.build_action_id_request_payload(game_state, player_index, prompt_actions)
+	payload = _deck_augment_action_id_payload(payload, game_state, player_index)
 	_merge_payload_action_refs_into_catalog(payload)
 	_register_payload_candidate_routes(payload)
 	return payload
@@ -141,6 +144,16 @@ func log_runtime_action_result(
 		"action": _audit_logger.call("compact_action", action) if _audit_logger != null else action,
 		"queue_head": _audit_logger.call("compact_actions", action_queue.slice(0, mini(action_queue.size(), 5))) if _audit_logger != null else action_queue,
 	})
+	if success and matched_index >= 0 and matched_index < action_queue.size():
+		if _runtime_action_expects_effect_interaction(action, action_queue[matched_index]):
+			_llm_pending_interaction_queue_item = action_queue[matched_index].duplicate(true)
+			_llm_pending_interaction_turn = turn
+			_audit_log("pending_interaction_intent_stored", {
+				"turn": turn,
+				"player_index": player_index_override,
+				"queue_item": _audit_logger.call("compact_actions", [_llm_pending_interaction_queue_item]) if _audit_logger != null else [_llm_pending_interaction_queue_item],
+				"action": _audit_logger.call("compact_action", action) if _audit_logger != null else action,
+			})
 	if success:
 		_consume_llm_queue_after_action(action, matched_index, turn, game_state, player_index_override)
 	elif matched_index >= 0:
@@ -170,12 +183,17 @@ func make_llm_runtime_snapshot(game_state: GameState, player_index: int) -> Dict
 		"discard_count": player.discard_pile.size(),
 		"hand_ids": _card_instance_id_list(player.hand),
 		"hand_names": _card_name_list(player.hand),
+		"active_name": _slot_runtime_name(player.active_pokemon),
+		"bench_names": _bench_runtime_names(player),
 	}
 
 
 func observe_llm_runtime_state_change(before_snapshot: Dictionary, after_snapshot: Dictionary, context: Dictionary = {}) -> void:
 	if not bool(context.get("success", false)):
 		return
+	if str(context.get("step_kind", "")) == "effect_interaction" \
+			and str(context.get("pending_choice_after", "")) != "effect_interaction":
+		_clear_pending_interaction_intent()
 	if before_snapshot.is_empty() or after_snapshot.is_empty():
 		return
 	var turn := int(after_snapshot.get("turn", -1))
@@ -191,15 +209,18 @@ func observe_llm_runtime_state_change(before_snapshot: Dictionary, after_snapsho
 		return
 	if int(after_snapshot.get("current_player_index", -1)) != int(after_snapshot.get("player_index", -2)):
 		return
-	if int(_llm_replan_counts.get(turn, 0)) >= _llm_max_replans_per_turn:
-		return
 	var trigger: Dictionary = _llm_replan_trigger(before_snapshot, after_snapshot, context)
 	if not bool(trigger.get("should_replan", false)):
+		return
+	var replan_count := int(_llm_replan_counts.get(turn, 0))
+	var major_hand_refresh := _trigger_is_major_hand_refresh(trigger)
+	var ignore_replan_limit := bool(trigger.get("ignore_replan_limit", false))
+	if not ignore_replan_limit and replan_count >= _llm_max_replans_per_turn:
 		return
 	var remaining_queue_before_replan: Array[Dictionary] = _llm_action_queue.duplicate(true)
 	var completed_prefix_before_replan: Array = _llm_consumed_actions_by_turn.get(turn, [])
 	var route_goal := _route_goal_for_replan_context(remaining_queue_before_replan, completed_prefix_before_replan)
-	if _should_suppress_replan_for_live_conversion(after_snapshot, remaining_queue_before_replan, route_goal):
+	if not major_hand_refresh and not ignore_replan_limit and _should_suppress_replan_for_live_conversion(after_snapshot, remaining_queue_before_replan, route_goal):
 		_llm_action_queue = _prune_queue_to_live_terminal_conversion(after_snapshot, remaining_queue_before_replan)
 		_audit_log("replan_suppressed", {
 			"turn": turn,
@@ -210,7 +231,7 @@ func observe_llm_runtime_state_change(before_snapshot: Dictionary, after_snapsho
 			"after": after_snapshot,
 		})
 		return
-	_llm_replan_counts[turn] = int(_llm_replan_counts.get(turn, 0)) + 1
+	_llm_replan_counts[turn] = replan_count + 1
 	_llm_decision_tree.clear()
 	_llm_action_queue.clear()
 	_llm_action_catalog.clear()
@@ -219,6 +240,7 @@ func observe_llm_runtime_state_change(before_snapshot: Dictionary, after_snapsho
 	_llm_completed_queue_turns.erase(turn)
 	_llm_replan_eligible_after_reject.erase(turn)
 	_llm_route_compiler_results_by_turn.erase(turn)
+	_clear_pending_interaction_intent()
 	_llm_request_attempt_turn = -1
 	_logged_queue_score_matches.clear()
 	_llm_replan_context_by_turn[turn] = {
@@ -320,6 +342,29 @@ func _should_suppress_replan_for_live_conversion(
 	return false
 
 
+func _trigger_is_major_hand_refresh(trigger: Dictionary) -> bool:
+	var reason := str(trigger.get("reason", ""))
+	var added_count := 0
+	var removed_count := 0
+	var added_raw: Variant = trigger.get("added_ids", [])
+	var removed_raw: Variant = trigger.get("removed_ids", [])
+	if added_raw is Array:
+		added_count = (added_raw as Array).size()
+	if removed_raw is Array:
+		removed_count = (removed_raw as Array).size()
+	if reason.begins_with("hand_count_increased_"):
+		var parts := reason.split("_")
+		if parts.size() > 0 and int(parts[parts.size() - 1]) >= 4:
+			return true
+	if reason.begins_with("hand_gained_") and added_count >= 4:
+		return true
+	if reason == "deck_to_hand_resource_change" and added_count >= 4:
+		return true
+	if added_count >= 3 and removed_count >= 2:
+		return true
+	return false
+
+
 func _prune_queue_to_live_terminal_conversion(
 	after_snapshot: Dictionary,
 	remaining_queue: Array[Dictionary]
@@ -344,6 +389,8 @@ func is_fast_choice_pending() -> bool:
 
 
 func has_llm_plan_for_turn(turn: int) -> bool:
+	if _llm_pending_interaction_turn == turn and not _llm_pending_interaction_queue_item.is_empty():
+		return true
 	return _llm_queue_turn == turn \
 		and not _llm_decision_tree.is_empty() \
 		and not bool(_llm_completed_queue_turns.get(turn, false))
@@ -448,6 +495,7 @@ func build_turn_plan(game_state: GameState, player_index: int, context: Dictiona
 		_llm_replan_context_by_turn.clear()
 		_llm_replan_eligible_after_reject.clear()
 		_llm_route_compiler_results_by_turn.clear()
+		_clear_pending_interaction_intent()
 	return super.build_turn_plan(game_state, player_index, context)
 
 
@@ -472,6 +520,7 @@ func ensure_llm_request_fired(game_state: GameState, player_index: int, legal_ac
 		_llm_replan_context_by_turn.clear()
 		_llm_replan_eligible_after_reject.clear()
 		_llm_route_compiler_results_by_turn.clear()
+		_clear_pending_interaction_intent()
 	var retry_after_escape := bool(_llm_replan_eligible_after_reject.get(turn, false))
 	if _llm_request_attempt_turn == turn and not retry_after_escape:
 		_log_llm_request_skip(turn, player_index, "already_attempted_this_turn", legal_actions)
@@ -498,10 +547,28 @@ func score_action_absolute(action: Dictionary, game_state: GameState, player_ind
 	_sync_game_state_context(game_state, player_index, "score_action_absolute")
 	var active_queue: Array[Dictionary] = _select_current_action_queue(game_state, player_index)
 	if not active_queue.is_empty():
+		if _is_end_turn_action_ref(action) and (_should_block_llm_end_turn(game_state, player_index) or _route_compiler_blocks_end_turn(game_state)):
+			_audit_log("end_turn_runtime_blocked", {
+				"turn": int(game_state.turn_number) if game_state != null else _cached_turn_number,
+				"player_index": player_index,
+				"action": _audit_logger.call("compact_action", action) if _audit_logger != null else action,
+				"queue": _audit_logger.call("compact_actions", active_queue) if _audit_logger != null else active_queue,
+			})
+			return -10000.0
 		var queue_score: float = _score_from_queue(action, active_queue, game_state, player_index)
 		if queue_score > 0.0:
 			_log_queue_score_match_once(action, active_queue, queue_score, game_state, player_index)
 			return queue_score
+		if queue_score < 0.0:
+			return queue_score
+		if _active_queue_blocks_unmatched_action(active_queue, action, game_state, player_index):
+			_audit_log("queue_unmatched_action_blocked", {
+				"turn": int(game_state.turn_number) if game_state != null else _cached_turn_number,
+				"player_index": player_index,
+				"action": _audit_logger.call("compact_action", action) if _audit_logger != null else action,
+				"queue": _audit_logger.call("compact_actions", active_queue) if _audit_logger != null else active_queue,
+			})
+			return -9000.0
 	if _is_low_value_runtime_attack_action(action, game_state, player_index) \
 			and _should_block_low_value_runtime_attack_context(game_state, player_index):
 		_audit_log("low_value_attack_runtime_blocked", {
@@ -515,10 +582,57 @@ func score_action_absolute(action: Dictionary, game_state: GameState, player_ind
 	return super.score_action_absolute(action, game_state, player_index)
 
 
+func _active_queue_blocks_unmatched_action(
+	active_queue: Array[Dictionary],
+	action: Dictionary,
+	game_state: GameState,
+	player_index: int
+) -> bool:
+	if active_queue.is_empty() or game_state == null or player_index < 0:
+		return false
+	var head: Dictionary = active_queue[0]
+	if _is_attack_action_ref(head):
+		return not _is_attack_action_ref(action) or not _match_attack(head, action, game_state, player_index)
+	return false
+
+
+func _queued_attack_ref_is_currently_ready(ref: Dictionary, game_state: GameState, player_index: int) -> bool:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	if player == null or player.active_pokemon == null or player.active_pokemon.get_card_data() == null:
+		return false
+	var cd: CardData = player.active_pokemon.get_card_data()
+	var wanted_index := int(ref.get("attack_index", -1))
+	var wanted_name := str(ref.get("attack_name", "")).strip_edges()
+	for attack_index: int in cd.attacks.size():
+		if wanted_index >= 0 and attack_index != wanted_index:
+			continue
+		var attack: Dictionary = cd.attacks[attack_index]
+		if wanted_name != "" and str(attack.get("name", "")).strip_edges() != wanted_name:
+			continue
+		return _active_attack_cost_ready(player.active_pokemon, str(attack.get("cost", "")))
+	return _current_active_has_any_ready_attack(game_state, player_index)
+
+
+func _current_active_has_any_ready_attack(game_state: GameState, player_index: int) -> bool:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	if player == null or player.active_pokemon == null or player.active_pokemon.get_card_data() == null:
+		return false
+	var cd: CardData = player.active_pokemon.get_card_data()
+	for attack: Dictionary in cd.attacks:
+		if _active_attack_cost_ready(player.active_pokemon, str(attack.get("cost", ""))):
+			return true
+	return false
+
+
 func pick_interaction_items(items: Array, step: Dictionary, context: Dictionary = {}) -> Array:
 	var game_state: GameState = context.get("game_state")
 	_sync_game_state_context(game_state, int(context.get("player_index", -1)), "pick_interaction_items")
 	var active_queue: Array[Dictionary] = _select_current_action_queue(game_state, int(context.get("player_index", -1)))
+	active_queue = _queue_with_pending_interaction_intent(active_queue, game_state)
 	if not active_queue.is_empty():
 		var planned: Dictionary = _interaction_bridge.call(
 			"pick_interaction_items",
@@ -544,6 +658,7 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 	var game_state: GameState = context.get("game_state")
 	_sync_game_state_context(game_state, int(context.get("player_index", -1)), "score_interaction_target")
 	var active_queue: Array[Dictionary] = _select_current_action_queue(game_state, int(context.get("player_index", -1)))
+	active_queue = _queue_with_pending_interaction_intent(active_queue, game_state)
 	if not active_queue.is_empty():
 		var planned_score: Dictionary = _interaction_bridge.call(
 			"score_interaction_target",
@@ -629,14 +744,97 @@ func _compile_selected_action_queue(queue: Array[Dictionary], game_state: GameSt
 
 
 func _route_compiler_blocks_end_turn(game_state: GameState) -> bool:
-	var turn := int(game_state.turn_number) if game_state != null else _cached_turn_number
-	var result: Dictionary = _llm_route_compiler_results_by_turn.get(turn, {})
+	var result: Dictionary = _route_compiler_result_for_turn(game_state)
 	return bool(result.get("blocked_end_turn", false))
+
+
+func _route_compiler_result_for_turn(game_state: GameState) -> Dictionary:
+	var turn := int(game_state.turn_number) if game_state != null else _cached_turn_number
+	var raw_result: Variant = _llm_route_compiler_results_by_turn.get(turn, null)
+	if raw_result == null:
+		raw_result = _llm_route_compiler_results_by_turn.get(str(turn), {})
+	return raw_result if raw_result is Dictionary else {}
+
+
+func _route_compiler_has_future_attack_goals(game_state: GameState) -> bool:
+	var result: Dictionary = _route_compiler_result_for_turn(game_state)
+	var raw_goals: Variant = result.get("future_goals", [])
+	if not (raw_goals is Array):
+		return false
+	for raw_goal: Variant in raw_goals:
+		if raw_goal is Dictionary and _is_attack_action_ref(raw_goal as Dictionary):
+			return true
+	return false
+
+
+func _route_compiler_future_goals_allow_attack(action: Dictionary, game_state: GameState, player_index: int) -> bool:
+	var result: Dictionary = _route_compiler_result_for_turn(game_state)
+	var raw_goals: Variant = result.get("future_goals", [])
+	if not (raw_goals is Array):
+		return false
+	for raw_goal: Variant in raw_goals:
+		if not (raw_goal is Dictionary):
+			continue
+		var goal: Dictionary = raw_goal
+		if not _is_attack_action_ref(goal):
+			continue
+		if _future_attack_goal_matches_runtime_attack(goal, action, game_state, player_index):
+			return _is_current_action_high_pressure_attack_ref(action, game_state, player_index) \
+				or _deck_can_replace_end_turn_with_action(action, game_state, player_index)
+	return false
+
+
+func _future_attack_goal_matches_runtime_attack(goal: Dictionary, action: Dictionary, game_state: GameState, player_index: int) -> bool:
+	var goal_attack_index := int(goal.get("attack_index", -1))
+	var action_attack_index := int(action.get("attack_index", -1))
+	if goal_attack_index >= 0 and action_attack_index >= 0 and goal_attack_index != action_attack_index:
+		return false
+	var goal_attack_name := str(goal.get("attack_name", "")).strip_edges()
+	var action_attack_name := str(action.get("attack_name", "")).strip_edges()
+	if goal_attack_name != "" and action_attack_name != "" and not _name_contains(action_attack_name, goal_attack_name):
+		return false
+	var source_name := str(goal.get("source_pokemon", goal.get("pokemon", goal.get("card", "")))).strip_edges()
+	if source_name == "":
+		return true
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var active: PokemonSlot = game_state.players[player_index].active_pokemon
+	if active == null or active.get_card_data() == null:
+		return false
+	var cd: CardData = active.get_card_data()
+	return _name_contains(str(cd.name_en), source_name) or _name_contains(str(cd.name), source_name)
 
 
 func _score_from_queue(action: Dictionary, action_queue: Array[Dictionary], game_state: GameState, player_index: int) -> float:
 	for i: int in action_queue.size():
 		if _queue_item_matches(action_queue[i], action, game_state, player_index):
+			if _queue_prefix_blocks_skip(action_queue, i):
+				_audit_log("queue_prefix_skip_blocked", {
+					"turn": int(game_state.turn_number) if game_state != null else _cached_turn_number,
+					"player_index": player_index,
+					"matched_queue_index": i,
+					"action": _audit_logger.call("compact_action", action) if _audit_logger != null else action,
+					"skipped": _audit_logger.call("compact_actions", action_queue.slice(0, i)) if _audit_logger != null else action_queue.slice(0, i),
+				})
+				return -10000.0
+			if _is_end_turn_action_ref(action) and _queue_prefix_has_position_sensitive_actions(action_queue, i):
+				_audit_log("queue_terminal_skip_blocked", {
+					"turn": int(game_state.turn_number) if game_state != null else _cached_turn_number,
+					"player_index": player_index,
+					"matched_queue_index": i,
+					"action": _audit_logger.call("compact_action", action) if _audit_logger != null else action,
+					"skipped": _audit_logger.call("compact_actions", action_queue.slice(0, i)) if _audit_logger != null else action_queue.slice(0, i),
+				})
+				return -10000.0
+			if _is_low_value_runtime_attack_action(action, game_state, player_index) and _should_block_low_value_runtime_attack_context(game_state, player_index):
+				_audit_log("queue_low_value_attack_blocked", {
+					"turn": int(game_state.turn_number) if game_state != null else _cached_turn_number,
+					"player_index": player_index,
+					"matched_queue_index": i,
+					"action": _audit_logger.call("compact_action", action) if _audit_logger != null else action,
+					"queue_item": action_queue[i],
+				})
+				return -10000.0
 			return QUEUE_BASE_SCORE - (float(i) * QUEUE_STEP)
 	return 0.0
 
@@ -644,8 +842,50 @@ func _score_from_queue(action: Dictionary, action_queue: Array[Dictionary], game
 func _queue_index_for_action(action: Dictionary, action_queue: Array[Dictionary], game_state: GameState, player_index: int) -> int:
 	for i: int in action_queue.size():
 		if _queue_item_matches(action_queue[i], action, game_state, player_index):
+			if _queue_prefix_blocks_skip(action_queue, i):
+				return -1
 			return i
 	return -1
+
+
+func _queue_prefix_blocks_skip(action_queue: Array[Dictionary], matched_index: int) -> bool:
+	if matched_index <= 0:
+		return false
+	for i: int in matched_index:
+		var ref: Dictionary = action_queue[i]
+		if _queue_ref_allows_skip(ref):
+			continue
+		if _queue_ref_is_route_critical_for_skip(ref):
+			return true
+	return false
+
+
+func _queue_ref_allows_skip(ref: Dictionary) -> bool:
+	if bool(ref.get("optional", false)) or bool(ref.get("skip_if_unavailable", false)):
+		return true
+	var action_id := str(ref.get("action_id", ref.get("id", "")))
+	return action_id.begins_with("future:")
+
+
+func _queue_ref_is_route_critical_for_skip(ref: Dictionary) -> bool:
+	var action_id := str(ref.get("action_id", ref.get("id", ""))).strip_edges()
+	var action_type := str(ref.get("type", ref.get("kind", ""))).strip_edges()
+	var capability := str(ref.get("capability", "")).strip_edges()
+	if action_id.begins_with("attach_energy:") or action_type == "attach_energy":
+		return true
+	if action_id.begins_with("attack:") or action_type in ["attack", "granted_attack"]:
+		return true
+	if action_id.begins_with("retreat:") or action_type == "retreat":
+		return true
+	if action_type == "evolve":
+		return true
+	if capability in [
+		"manual_attach",
+		"pivot_to_attack",
+		"ready_backup_handoff_attack",
+	]:
+		return true
+	return false
 
 
 func _log_queue_score_match_once(action: Dictionary, action_queue: Array[Dictionary], score: float, game_state: GameState, player_index: int) -> void:
@@ -673,11 +913,15 @@ func _queue_item_matches(q: Dictionary, action: Dictionary, game_state: GameStat
 		if q_action_id == "end_turn":
 			if _is_end_turn_action_ref(action) and (_should_block_llm_end_turn(game_state, player_index) or _route_compiler_blocks_end_turn(game_state)):
 				return false
+			if _is_attack_action_ref(action) and _route_compiler_has_future_attack_goals(game_state):
+				return _route_compiler_future_goals_allow_attack(action, game_state, player_index)
 			if _is_current_action_high_pressure_attack_ref(action, game_state, player_index):
 				return true
 			if _deck_can_replace_end_turn_with_action(action, game_state, player_index):
 				return true
 		if actual_action_id == q_action_id:
+			if not _exact_queue_action_metadata_matches(q, action, game_state, player_index):
+				return false
 			if _should_block_low_value_llm_attack_ref(q, game_state, player_index):
 				return false
 			if _deck_should_block_exact_queue_match(q, action, game_state, player_index):
@@ -717,12 +961,30 @@ func _queue_item_matches(q: Dictionary, action: Dictionary, game_state: GameStat
 		"end_turn":
 			if _is_end_turn_action_ref(action) and (_should_block_llm_end_turn(game_state, player_index) or _route_compiler_blocks_end_turn(game_state)):
 				return false
+			if _is_attack_action_ref(action) and _route_compiler_has_future_attack_goals(game_state):
+				return _route_compiler_future_goals_allow_attack(action, game_state, player_index)
 			if _is_current_action_high_pressure_attack_ref(action, game_state, player_index):
 				return true
 			if _deck_can_replace_end_turn_with_action(action, game_state, player_index):
 				return true
 			return true
 	return false
+
+
+func _exact_queue_action_metadata_matches(q: Dictionary, action: Dictionary, game_state: GameState, player_index: int) -> bool:
+	var action_type := str(q.get("type", q.get("kind", ""))).strip_edges()
+	match action_type:
+		"attach_energy":
+			return _match_attach_energy(q, action, game_state, player_index)
+		"attach_tool", "evolve":
+			return _match_card_and_target(q, action, game_state, player_index)
+		"use_ability":
+			return _match_ability(q, action, game_state, player_index)
+		"retreat":
+			return _match_retreat(q, action, game_state, player_index)
+		"attack":
+			return _match_attack(q, action, game_state, player_index)
+	return true
 
 
 func _normalize_selected_action_queue(raw_queue: Array) -> Array[Dictionary]:
@@ -864,6 +1126,33 @@ func _is_terminal_runtime_action(action: Dictionary) -> bool:
 	return kind in ["attack", "granted_attack", "end_turn"]
 
 
+func _runtime_action_expects_effect_interaction(action: Dictionary, queue_item: Dictionary) -> bool:
+	if bool(action.get("requires_interaction", false)) or bool(queue_item.get("requires_interaction", false)):
+		return true
+	var schema: Variant = queue_item.get("interaction_schema", {})
+	if schema is Dictionary and not (schema as Dictionary).is_empty():
+		return true
+	var interactions: Variant = queue_item.get("interactions", {})
+	if interactions is Dictionary and not (interactions as Dictionary).is_empty():
+		return true
+	var selection_policy: Variant = queue_item.get("selection_policy", {})
+	return selection_policy is Dictionary and not (selection_policy as Dictionary).is_empty()
+
+
+func _queue_with_pending_interaction_intent(active_queue: Array[Dictionary], game_state: GameState) -> Array[Dictionary]:
+	var turn := int(game_state.turn_number) if game_state != null else _cached_turn_number
+	if _llm_pending_interaction_queue_item.is_empty() or turn != _llm_pending_interaction_turn:
+		return active_queue
+	var merged: Array[Dictionary] = [_llm_pending_interaction_queue_item.duplicate(true)]
+	merged.append_array(active_queue)
+	return merged
+
+
+func _clear_pending_interaction_intent() -> void:
+	_llm_pending_interaction_queue_item.clear()
+	_llm_pending_interaction_turn = -1
+
+
 func _llm_replan_trigger(before_snapshot: Dictionary, after_snapshot: Dictionary, context: Dictionary) -> Dictionary:
 	var before_ids: Array[String] = _string_array(before_snapshot.get("hand_ids", []))
 	var after_ids: Array[String] = _string_array(after_snapshot.get("hand_ids", []))
@@ -877,6 +1166,26 @@ func _llm_replan_trigger(before_snapshot: Dictionary, after_snapshot: Dictionary
 	var deck_trigger: Dictionary = _deck_replan_trigger_after_state_change(before_snapshot, after_snapshot, context)
 	if bool(deck_trigger.get("should_replan", false)):
 		return deck_trigger
+	var changed_card_count := added_ids.size() + removed_ids.size()
+	if _context_action_is_supporter(context) and changed_card_count >= 2:
+		return {
+			"should_replan": true,
+			"reason": "supporter_changed_%d_cards" % changed_card_count,
+			"ignore_replan_limit": true,
+			"added_ids": added_ids,
+			"removed_ids": removed_ids,
+			"action_card_name": str(context.get("action_card_name", "")),
+			"action_card_type": str(context.get("action_card_type", "")),
+		}
+	if _board_positions_changed(before_snapshot, after_snapshot) and _queue_has_position_sensitive_actions(_llm_action_queue):
+		return {
+			"should_replan": true,
+			"reason": "board_positions_changed_before_position_sensitive_queue",
+			"before_active": str(before_snapshot.get("active_name", "")),
+			"after_active": str(after_snapshot.get("active_name", "")),
+			"before_bench": before_snapshot.get("bench_names", []),
+			"after_bench": after_snapshot.get("bench_names", []),
+		}
 	if action_kind in ["play_basic_to_bench", "attach_energy", "attach_tool", "evolve"]:
 		return {"should_replan": false}
 	if action_kind in ["attack", "granted_attack", "end_turn"]:
@@ -902,6 +1211,72 @@ func _llm_replan_trigger(before_snapshot: Dictionary, after_snapshot: Dictionary
 	if abs(discard_delta) >= 2 and not added_ids.is_empty():
 		return {"should_replan": true, "reason": "discard_and_hand_resource_change"}
 	return {"should_replan": false}
+
+
+func _context_action_is_supporter(context: Dictionary) -> bool:
+	if str(context.get("action_card_type", "")).to_lower() == "supporter":
+		return true
+	var action_card_name := str(context.get("action_card_name", "")).to_lower()
+	return action_card_name in [
+		"professor's research",
+		"博士的研究",
+		"iono",
+		"奇树",
+		"judge",
+		"裁判",
+	]
+
+
+func _slot_runtime_name(slot: PokemonSlot) -> String:
+	if slot == null:
+		return ""
+	return str(slot.get_pokemon_name())
+
+
+func _bench_runtime_names(player: PlayerState) -> Array[String]:
+	var result: Array[String] = []
+	if player == null:
+		return result
+	for slot: PokemonSlot in player.bench:
+		result.append(_slot_runtime_name(slot))
+	return result
+
+
+func _board_positions_changed(before_snapshot: Dictionary, after_snapshot: Dictionary) -> bool:
+	if str(before_snapshot.get("active_name", "")) != str(after_snapshot.get("active_name", "")):
+		return true
+	return JSON.stringify(before_snapshot.get("bench_names", [])) != JSON.stringify(after_snapshot.get("bench_names", []))
+
+
+func _queue_has_position_sensitive_actions(queue: Array[Dictionary]) -> bool:
+	for action: Dictionary in queue:
+		if _queue_action_is_position_sensitive(action):
+			return true
+	return false
+
+
+func _queue_prefix_has_position_sensitive_actions(queue: Array[Dictionary], end_index: int) -> bool:
+	for i: int in range(mini(end_index, queue.size())):
+		if _queue_action_is_position_sensitive(queue[i]):
+			return true
+	return false
+
+
+func _queue_action_is_position_sensitive(action: Dictionary) -> bool:
+	var action_type := str(action.get("type", action.get("kind", "")))
+	var capability := str(action.get("capability", ""))
+	var action_id := str(action.get("action_id", action.get("id", "")))
+	if action_type in ["attach_energy", "attach_tool", "evolve", "use_ability", "retreat"]:
+		return true
+	if capability in ["manual_attach", "attach_energy", "attach_tool", "evolve", "use_ability", "retreat"]:
+		return true
+	if action.has("position") or action.has("target_position") or action.has("bench_position"):
+		return true
+	return action_id.begins_with("attach_energy:") \
+		or action_id.begins_with("attach_tool:") \
+		or action_id.begins_with("evolve:") \
+		or action_id.begins_with("use_ability:") \
+		or action_id.begins_with("retreat:")
 
 
 func _action_id_for_action(action: Dictionary, game_state: GameState, player_index: int) -> String:
@@ -1007,7 +1382,7 @@ func _candidate_route_advances_primary_attack(route: Dictionary) -> bool:
 	var goal := str(route.get("goal", ""))
 	if route_id.contains("primary_visible_engine") or route_id.contains("manual_attach_to_attack"):
 		return true
-	if goal in ["setup_to_primary_attack", "manual_attach_to_primary_attack"]:
+	if goal in ["setup_to_primary_attack", "manual_attach_to_primary_attack", "continuity_before_attack", "core_attacker_setup"]:
 		return true
 	for raw_goal: Variant in route.get("future_goals", []):
 		if not (raw_goal is Dictionary):
@@ -1628,6 +2003,8 @@ func _validate_route_resource_conflicts(route_action_ids: Array[String], path: S
 func _validate_action_interactions(action_id: String, ref: Dictionary, interactions: Dictionary, path: String, errors: Array[String]) -> void:
 	if interactions.is_empty():
 		return
+	if action_id.begins_with("future:"):
+		return
 	var schema: Dictionary = ref.get("interaction_schema", {}) if ref.get("interaction_schema", {}) is Dictionary else {}
 	if schema.is_empty():
 		errors.append("%s provides interactions for '%s' but that legal action exposes no interaction_schema; use selection_policy or omit low-level interactions" % [path, action_id])
@@ -1694,6 +2071,264 @@ func _repair_terminal_attack_routes_in_tree(
 		"changed_count": int(repair.get("changed_count", 0)),
 		"repair_notes": repair.get("repair_notes", []),
 	}
+
+
+func _repair_to_priority_candidate_route_in_tree(
+	tree: Dictionary,
+	game_state: GameState = null,
+	player_index: int = -1
+) -> Dictionary:
+	if tree.is_empty() or _llm_route_candidates_by_id.is_empty() or _llm_action_catalog.is_empty():
+		return {"tree": tree, "changed": false}
+	var route_id := _best_candidate_route_action_id_for_hard_preference()
+	if route_id == "":
+		return {"tree": tree, "changed": false}
+	var route: Dictionary = _llm_route_candidates_by_id.get(route_id, {}) if _llm_route_candidates_by_id.get(route_id, {}) is Dictionary else {}
+	if route.is_empty():
+		return {"tree": tree, "changed": false}
+	var route_goal := str(route.get("goal", ""))
+	var route_name := str(route.get("id", route.get("route_action_id", "")))
+	var route_is_defensive_gust := route_goal == "defensive_gust" or route_name.contains("defensive_gust")
+	var selected_queue := _selected_action_queue_for_route_repair(tree, game_state, player_index)
+	if route_is_defensive_gust:
+		if _selected_queue_contains_candidate_route(selected_queue, route, route_id):
+			return {"tree": tree, "changed": false}
+		if selected_queue.is_empty() and _tree_node_contains_action_subsequence(tree, [route_id]):
+			return {"tree": tree, "changed": false}
+	elif _selected_queue_contains_candidate_route(selected_queue, route, route_id):
+		return {"tree": tree, "changed": false}
+	elif selected_queue.is_empty() and _tree_contains_candidate_route_actions(tree, route):
+		return {"tree": tree, "changed": false}
+	var route_is_gust_ko := route_goal == "gust_ko" or route_name.contains("gust_ko")
+	var route_is_attack_conversion := route_goal in ["manual_attach_to_primary_attack", "manual_attach_to_active_attack", "pivot_to_attack"] \
+		or route_name.contains("manual_attach_to_attack") \
+		or route_name.contains("manual_attach_to_active_attack") \
+		or route_name.contains("pivot_to_primary_attack")
+	if not route_is_gust_ko \
+			and not route_is_defensive_gust \
+			and not route_is_attack_conversion \
+			and _selected_or_tree_contains_current_high_pressure_attack(selected_queue, tree, game_state, player_index):
+		return {"tree": tree, "changed": false}
+	var fallback_tree := _candidate_route_tree_for_route_id(route_id)
+	if fallback_tree.is_empty():
+		return {"tree": tree, "changed": false}
+	var materialized := _materialize_action_refs_in_tree(fallback_tree)
+	if materialized.is_empty():
+		return {"tree": tree, "changed": false}
+	return {
+		"tree": materialized,
+		"changed": true,
+		"route_id": route_id,
+		"route_goal": route_goal,
+		"route_priority": _candidate_route_base_priority(route),
+	}
+
+
+func _candidate_route_tree_for_route_id(route_id: String) -> Dictionary:
+	if route_id == "" or not _llm_action_catalog.has(route_id):
+		return {}
+	return {
+		"branches": [{
+			"when": [{"fact": "always"}],
+			"actions": [{"id": route_id}],
+		}],
+		"fallback_actions": [{"id": "end_turn"}],
+	}
+
+
+func _best_candidate_route_action_id_for_hard_preference() -> String:
+	var best_id := ""
+	var best_priority := -999999
+	for raw_key: Variant in _llm_route_candidates_by_id.keys():
+		var route_id := str(raw_key)
+		var route: Dictionary = _llm_route_candidates_by_id.get(raw_key, {}) if _llm_route_candidates_by_id.get(raw_key, {}) is Dictionary else {}
+		if not _candidate_route_should_hard_prefer(route):
+			continue
+		var priority := _candidate_route_base_priority(route)
+		if priority > best_priority:
+			best_priority = priority
+			best_id = route_id
+	return best_id
+
+
+func _candidate_route_should_hard_prefer(route: Dictionary) -> bool:
+	if route.is_empty():
+		return false
+	if _candidate_route_is_low_value_active_attach(route):
+		return false
+	var priority := _candidate_route_base_priority(route)
+	if priority < 970:
+		return false
+	var route_id := str(route.get("id", route.get("route_action_id", "")))
+	var goal := str(route.get("goal", ""))
+	if goal == "gust_ko" or route_id.contains("gust_ko"):
+		return true
+	if goal == "defensive_gust" or route_id.contains("defensive_gust"):
+		return true
+	if goal == "setup_to_primary_attack" or route_id.contains("primary_visible_engine"):
+		return _candidate_route_advances_primary_attack(route)
+	if goal in ["manual_attach_to_primary_attack", "pivot_to_attack"]:
+		return _candidate_route_advances_primary_attack(route)
+	if route_id.contains("manual_attach_to_attack") or route_id.contains("pivot_to_primary_attack"):
+		return _candidate_route_advances_primary_attack(route)
+	if route_id.contains("continuity_before_attack") or goal == "continuity_before_attack":
+		return true
+	if route_id.contains("core_attacker_setup") or goal == "core_attacker_setup":
+		return true
+	return false
+
+
+func _tree_contains_candidate_route_actions(tree: Dictionary, route: Dictionary) -> bool:
+	var route_action_ids := _candidate_route_non_end_action_ids(route)
+	if route_action_ids.is_empty():
+		return false
+	return _tree_node_contains_action_subsequence(tree, route_action_ids)
+
+
+func _candidate_route_non_end_action_ids(route: Dictionary) -> Array[String]:
+	var result: Array[String] = []
+	var raw_actions: Variant = route.get("actions", [])
+	if not (raw_actions is Array):
+		return result
+	for raw: Variant in raw_actions:
+		if not (raw is Dictionary):
+			continue
+		var action_id := _action_ref_id(raw as Dictionary)
+		if action_id == "" or action_id == "end_turn":
+			continue
+		result.append(action_id)
+	return result
+
+
+func _tree_node_contains_action_subsequence(node: Dictionary, desired_ids: Array[String]) -> bool:
+	if _action_array_contains_subsequence(node.get("actions", []), desired_ids):
+		return true
+	if _action_array_contains_subsequence(node.get("fallback_actions", node.get("fallback", [])), desired_ids):
+		return true
+	var raw_branches: Variant = node.get("branches", node.get("children", []))
+	if raw_branches is Array:
+		for raw_branch: Variant in raw_branches:
+			if not (raw_branch is Dictionary):
+				continue
+			var branch: Dictionary = raw_branch
+			if _action_array_contains_subsequence(branch.get("actions", []), desired_ids):
+				return true
+			if _action_array_contains_subsequence(branch.get("fallback_actions", []), desired_ids):
+				return true
+			var then_node: Variant = branch.get("then", {})
+			if then_node is Dictionary and _tree_node_contains_action_subsequence(then_node as Dictionary, desired_ids):
+				return true
+	return false
+
+
+func _action_array_contains_subsequence(raw_actions: Variant, desired_ids: Array[String]) -> bool:
+	if desired_ids.is_empty() or not (raw_actions is Array):
+		return false
+	var cursor := 0
+	for raw: Variant in raw_actions:
+		if not (raw is Dictionary):
+			continue
+		var action_id := _action_ref_id(raw as Dictionary)
+		if action_id == "" or action_id == "end_turn":
+			continue
+		if action_id == desired_ids[cursor]:
+			cursor += 1
+			if cursor >= desired_ids.size():
+				return true
+	return false
+
+
+func _selected_action_queue_for_route_repair(
+	tree: Dictionary,
+	game_state: GameState = null,
+	player_index: int = -1
+) -> Array[Dictionary]:
+	if tree.is_empty() or game_state == null or player_index < 0 or _decision_tree_executor == null:
+		return []
+	var raw_queue: Variant = _decision_tree_executor.call("select_action_queue", tree, game_state, player_index)
+	if not (raw_queue is Array):
+		return []
+	return _normalize_selected_action_queue(raw_queue as Array)
+
+
+func _selected_queue_contains_candidate_route(
+	selected_queue: Array[Dictionary],
+	route: Dictionary,
+	route_id: String
+) -> bool:
+	if selected_queue.is_empty():
+		return false
+	if route_id != "" and _action_array_contains_subsequence(selected_queue, [route_id]):
+		return true
+	var route_action_ids := _candidate_route_non_end_action_ids(route)
+	if route_action_ids.is_empty():
+		return false
+	return _action_array_contains_subsequence(selected_queue, route_action_ids)
+
+
+func _selected_or_tree_contains_current_high_pressure_attack(
+	selected_queue: Array[Dictionary],
+	tree: Dictionary,
+	game_state: GameState = null,
+	player_index: int = -1
+) -> bool:
+	if game_state == null or player_index < 0:
+		return false
+	if not selected_queue.is_empty():
+		return _action_array_contains_current_high_pressure_attack(selected_queue, game_state, player_index)
+	return _tree_contains_current_high_pressure_attack(tree, game_state, player_index)
+
+
+func _tree_contains_current_high_pressure_attack(
+	tree: Dictionary,
+	game_state: GameState = null,
+	player_index: int = -1
+) -> bool:
+	if tree.is_empty() or game_state == null or player_index < 0:
+		return false
+	return _tree_node_contains_current_high_pressure_attack(tree, game_state, player_index)
+
+
+func _tree_node_contains_current_high_pressure_attack(
+	node: Dictionary,
+	game_state: GameState,
+	player_index: int
+) -> bool:
+	if _action_array_contains_current_high_pressure_attack(node.get("actions", []), game_state, player_index):
+		return true
+	if _action_array_contains_current_high_pressure_attack(node.get("fallback_actions", node.get("fallback", [])), game_state, player_index):
+		return true
+	var raw_branches: Variant = node.get("branches", node.get("children", []))
+	if raw_branches is Array:
+		for raw_branch: Variant in raw_branches:
+			if not (raw_branch is Dictionary):
+				continue
+			var branch: Dictionary = raw_branch
+			if _action_array_contains_current_high_pressure_attack(branch.get("actions", []), game_state, player_index):
+				return true
+			if _action_array_contains_current_high_pressure_attack(branch.get("fallback_actions", []), game_state, player_index):
+				return true
+			var then_node: Variant = branch.get("then", {})
+			if then_node is Dictionary and _tree_node_contains_current_high_pressure_attack(then_node as Dictionary, game_state, player_index):
+				return true
+	return false
+
+
+func _action_array_contains_current_high_pressure_attack(
+	raw_actions: Variant,
+	game_state: GameState,
+	player_index: int
+) -> bool:
+	if not (raw_actions is Array):
+		return false
+	for raw: Variant in raw_actions:
+		if not (raw is Dictionary):
+			continue
+		var action: Dictionary = raw
+		if _is_attack_action_ref(action) and not bool(action.get("future", false)) \
+				and _is_current_action_high_pressure_attack_ref(action, game_state, player_index):
+			return true
+	return false
 
 
 func _apply_deck_specific_llm_repairs(tree: Dictionary, _game_state: GameState, _player_index: int) -> Dictionary:
@@ -1776,6 +2411,10 @@ func _deck_append_productive_engine_candidates(
 
 func _deck_is_setup_or_resource_card(_card_data: CardData) -> bool:
 	return false
+
+
+func _deck_augment_action_id_payload(payload: Dictionary, _game_state: GameState, _player_index: int) -> Dictionary:
+	return payload
 
 
 func _repair_terminal_attack_routes_in_node(
@@ -1945,7 +2584,7 @@ func _is_better_terminal_attack(candidate: Dictionary, current: Dictionary) -> b
 func _is_low_value_first_attack_ref(action: Dictionary) -> bool:
 	if not _is_attack_action_ref(action):
 		return false
-	if int(action.get("attack_index", -1)) != 0:
+	if _attack_index_from_ref(action) != 0:
 		return false
 	var attack_rules: Variant = action.get("attack_rules", {})
 	if attack_rules is Dictionary:
@@ -1967,7 +2606,7 @@ func _is_low_value_first_attack_ref(action: Dictionary) -> bool:
 func _is_raging_bolt_first_attack_ref(action: Dictionary, game_state: GameState = null, player_index: int = -1) -> bool:
 	if not _is_attack_action_ref(action):
 		return false
-	if int(action.get("attack_index", -1)) != 0:
+	if _attack_index_from_ref(action) != 0:
 		return false
 	if game_state != null and player_index >= 0 and player_index < game_state.players.size():
 		var active: PokemonSlot = game_state.players[player_index].active_pokemon
@@ -1984,6 +2623,18 @@ func _is_raging_bolt_first_attack_ref(action: Dictionary, game_state: GameState 
 		or _name_contains(attack_name, "Bursting Roar") \
 		or _name_contains(attack_name, "Burst Roar") \
 		or _name_contains(attack_name, "Roar")
+
+
+func _attack_index_from_ref(action: Dictionary) -> int:
+	if action.has("attack_index"):
+		return int(action.get("attack_index", -1))
+	var action_id := str(action.get("action_id", action.get("id", "")))
+	if not action_id.begins_with("attack:") and not action_id.begins_with("granted_attack:"):
+		return -1
+	var parts := action_id.split(":")
+	if parts.size() < 2:
+		return -1
+	return int(parts[1]) if parts[1].is_valid_int() else -1
 
 
 func _is_current_action_raging_bolt_burst_available(game_state: GameState, player_index: int) -> bool:
@@ -2042,6 +2693,8 @@ func _should_block_low_value_runtime_attack_context(game_state: GameState, playe
 	var player: PlayerState = game_state.players[player_index]
 	if player == null:
 		return false
+	if _low_value_redraw_dead_hand_fallback_allowed(game_state, player_index):
+		return false
 	if player.hand.size() >= 4 and _catalog_has_productive_non_terminal_action():
 		return true
 	if player.hand.size() >= 4 and _hand_has_non_energy_productive_piece(player):
@@ -2051,6 +2704,46 @@ func _should_block_low_value_runtime_attack_context(game_state: GameState, playe
 		return true
 	if deck_count >= 0 and deck_count <= 24 and player.hand.size() >= 4 and _deck_hand_has_recovery_or_pivot_piece(player):
 		return true
+	return false
+
+
+func _low_value_redraw_dead_hand_fallback_allowed(game_state: GameState, player_index: int) -> bool:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	if player == null or player.active_pokemon == null or player.active_pokemon.get_card_data() == null:
+		return false
+	var deck_count := _player_deck_count_for_llm(game_state, player_index)
+	if deck_count >= 0 and deck_count <= 24:
+		return false
+	if _hand_has_basic_energy(player):
+		return false
+	var active_cd: CardData = player.active_pokemon.get_card_data()
+	var low_ready := false
+	var non_low_ready := false
+	for attack_index: int in active_cd.attacks.size():
+		var attack: Dictionary = active_cd.attacks[attack_index]
+		if not _active_attack_cost_ready(player.active_pokemon, str(attack.get("cost", ""))):
+			continue
+		var ref := {
+			"type": "attack",
+			"attack_index": attack_index,
+			"attack_name": str(attack.get("name", "")),
+			"attack_rules": attack,
+		}
+		if _is_low_value_attack_ref_by_quality(ref):
+			low_ready = true
+		else:
+			non_low_ready = true
+	return low_ready and not non_low_ready
+
+
+func _hand_has_basic_energy(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	for card: CardInstance in player.hand:
+		if card != null and card.card_data != null and card.card_data.card_type == "Basic Energy":
+			return true
 	return false
 
 
@@ -2592,7 +3285,7 @@ func _repair_missing_productive_engine_in_tree(
 	if tree.is_empty() or _llm_action_catalog.is_empty():
 		return {"tree": tree, "added_count": 0, "added_actions": []}
 	var deck_count := _player_deck_count_for_llm(game_state, player_index)
-	var no_deck_draw_lock := deck_count >= 0 and deck_count <= 2
+	var no_deck_draw_lock := deck_count >= 0 and deck_count <= 12
 	var repair: Dictionary = _repair_missing_productive_engine_in_node(tree, no_deck_draw_lock)
 	return {
 		"tree": repair.get("node", tree),
@@ -2691,8 +3384,6 @@ func _productive_engine_candidates_for_route(
 	no_deck_draw_lock: bool = false
 ) -> Array[Dictionary]:
 	var candidates: Array[Dictionary] = []
-	if no_deck_draw_lock:
-		return candidates
 	var local_seen := seen_ids.duplicate(true)
 	_deck_append_productive_engine_candidates(candidates, local_seen, actions, has_attack, no_deck_draw_lock)
 	var result: Array[Dictionary] = []
@@ -2700,10 +3391,34 @@ func _productive_engine_candidates_for_route(
 		var candidate_id: String = _action_ref_id(candidate)
 		if candidate_id == "" or bool(seen_ids.get(candidate_id, false)):
 			continue
+		if no_deck_draw_lock and _is_optional_deck_draw_ref(candidate):
+			continue
 		if _candidate_conflicts_with_route(candidate, actions):
 			continue
 		result.append(candidate)
 	return result
+
+
+func _is_optional_deck_draw_ref(ref: Dictionary) -> bool:
+	if _action_ref_has_tag(ref, "draw"):
+		return true
+	var schema: Dictionary = ref.get("interaction_schema", {}) if ref.get("interaction_schema", {}) is Dictionary else {}
+	if schema.is_empty():
+		schema = ref.get("interactions", {}) if ref.get("interactions", {}) is Dictionary else {}
+	if not schema.is_empty():
+		var schema_text := JSON.stringify(schema).to_lower()
+		if schema_text.contains("draw"):
+			return true
+		if schema.has("basic_energy_from_hand") or schema.has("energy_card_id"):
+			return true
+		if schema.has("discard_card") or schema.has("discard_cards"):
+			return true
+	var search_text := _action_ref_search_text(ref)
+	return _name_contains(search_text, "Trekking Shoes") \
+		or _name_contains(search_text, "Radiant Greninja") \
+		or _name_contains(search_text, "Fezandipiti") \
+		or _name_contains(search_text, "Professor Sada") \
+		or _name_contains(search_text, "Iono")
 
 
 func _candidate_conflicts_with_route(candidate: Dictionary, actions: Array[Dictionary]) -> bool:
@@ -3128,9 +3843,9 @@ func _append_catalog_match(
 		var ref: Dictionary = _llm_action_catalog.get(action_id, {})
 		if str(ref.get("type", "")) != action_type:
 			continue
-		if card_query != "" and not _name_contains(str(ref.get("card", "")), card_query):
+		if card_query != "" and not _action_ref_matches_query(ref, card_query):
 			continue
-		if pokemon_query != "" and not _name_contains(str(ref.get("pokemon", "")), pokemon_query):
+		if pokemon_query != "" and not _action_ref_matches_query(ref, pokemon_query):
 			continue
 		var copy: Dictionary = ref.duplicate(true)
 		copy["id"] = action_id
@@ -3139,7 +3854,29 @@ func _append_catalog_match(
 			copy["interactions"] = interactions.duplicate(true)
 		target.append(copy)
 		seen_ids[action_id] = true
-		return
+	return
+
+
+func _action_ref_matches_query(ref: Dictionary, query: String) -> bool:
+	return _name_contains(_action_ref_search_text(ref), query)
+
+
+func _action_ref_search_text(ref: Dictionary) -> String:
+	var parts: Array[String] = [
+		str(ref.get("id", ref.get("action_id", ""))),
+		str(ref.get("card", "")),
+		str(ref.get("pokemon", "")),
+		str(ref.get("target", "")),
+		str(ref.get("ability", "")),
+		str(ref.get("summary", "")),
+	]
+	for key: String in ["card_rules", "ability_rules", "attack_rules"]:
+		var raw_rules: Variant = ref.get(key, {})
+		if raw_rules is Dictionary:
+			var rules: Dictionary = raw_rules
+			for rule_key: String in ["name", "name_en", "text", "description", "effect_id"]:
+				parts.append(str(rules.get(rule_key, "")))
+	return " ".join(parts)
 
 
 func _append_best_tool_action(target: Array[Dictionary], seen_ids: Dictionary) -> void:
@@ -3354,7 +4091,7 @@ func _append_virtual_ogerpon_ability(target: Array[Dictionary], seen_ids: Dictio
 	if bool(seen_ids.get("virtual:teal_mask_ogerpon_ability", false)):
 		return
 	for action: Dictionary in target:
-		if str(action.get("type", "")) == "use_ability" and _name_contains(str(action.get("pokemon", "")), "Teal Mask Ogerpon ex"):
+		if str(action.get("type", "")) == "use_ability" and _action_ref_matches_query(action, "Teal Mask Ogerpon ex"):
 			return
 	target.append({
 		"type": "use_ability",
@@ -3422,6 +4159,7 @@ func _reset_llm_match_state() -> void:
 	_llm_replan_context_by_turn.clear()
 	_llm_replan_eligible_after_reject.clear()
 	_llm_route_compiler_results_by_turn.clear()
+	_clear_pending_interaction_intent()
 	_fast_choice_pending = false
 	_fast_choice_request_key = ""
 	_fast_choice_cache.clear()
@@ -3691,12 +4429,13 @@ func _fire_llm_request(game_state: GameState, player_index: int, legal_actions: 
 	_configure_prompt_builder(game_state, player_index)
 	_llm_action_catalog = _build_action_catalog(prompt_actions, game_state, player_index)
 	var payload: Dictionary = _prompt_builder.call("build_action_id_request_payload", game_state, player_index, prompt_actions)
-	_merge_payload_action_refs_into_catalog(payload)
-	_register_payload_candidate_routes(payload)
 	payload["model"] = str(api_config.get("model", ""))
 	var turn_at_request: int = int(game_state.turn_number)
 	if _llm_replan_context_by_turn.has(turn_at_request):
 		payload["replan_context"] = _llm_replan_context_by_turn.get(turn_at_request, {})
+	payload = _deck_augment_action_id_payload(payload, game_state, player_index)
+	_merge_payload_action_refs_into_catalog(payload)
+	_register_payload_candidate_routes(payload)
 	_llm_soft_timeout_seconds = maxf(float(api_config.get("timeout_seconds", 60.0)), 0.0)
 	_client.set_timeout_seconds(_llm_soft_timeout_seconds)
 	_llm_request_turn = turn_at_request
@@ -3728,7 +4467,7 @@ func _fire_llm_request(game_state: GameState, player_index: int, legal_actions: 
 	if err != OK:
 		_llm_fail_count += 1
 		_disable_llm_for_turn(turn_at_request, "request start failed")
-		var reason := "鐠囬攱鐪伴崣鎴︹偓浣搞亼鐠? error=%d" % err
+		var reason := "LLM request start failed: error=%d" % err
 		_audit_log("request_start_failed", {
 			"turn": turn_at_request,
 			"player_index": player_index,
@@ -3868,7 +4607,7 @@ func _on_llm_response(
 	if decision_tree.is_empty():
 		_llm_fail_count += 1
 		_disable_llm_for_turn(turn_at_request, "invalid or missing decision tree")
-		var reason := "閺冪姵纭剁憴锝嗙€介崘宕囩摜閺? %s" % str(response.get("error_type", response.keys()))
+		var reason := "invalid or missing decision tree: %s" % str(response.get("error_type", response.keys()))
 		llm_thinking_failed.emit(turn_at_request, reason)
 		return
 	_last_llm_reasoning = reasoning
@@ -3925,6 +4664,17 @@ func _on_llm_response(
 						return
 		decision_tree = _materialize_action_refs_in_tree(decision_tree)
 		decision_tree = _apply_deck_specific_llm_repairs(decision_tree, game_state, player_index)
+		var priority_route_repair: Dictionary = _repair_to_priority_candidate_route_in_tree(decision_tree, game_state, player_index)
+		if bool(priority_route_repair.get("changed", false)):
+			decision_tree = priority_route_repair.get("tree", decision_tree)
+			_audit_log("contract_repaired", {
+				"turn": turn_at_request,
+				"player_index": player_index,
+				"reason": "forced stronger candidate route over weak selected route",
+				"route_id": str(priority_route_repair.get("route_id", "")),
+				"route_goal": str(priority_route_repair.get("route_goal", "")),
+				"route_priority": int(priority_route_repair.get("route_priority", 0)),
+			})
 		var terminal_attack_repair: Dictionary = _repair_terminal_attack_routes_in_tree(decision_tree)
 		if int(terminal_attack_repair.get("changed_count", 0)) > 0:
 			decision_tree = terminal_attack_repair.get("tree", decision_tree)

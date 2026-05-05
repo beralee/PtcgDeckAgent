@@ -31,15 +31,16 @@ func get_interaction_steps(_card: CardInstance, state: GameState) -> Array[Dicti
 			labels.append(deck_card.card_data.name)
 	if items.is_empty():
 		return []
-	return [{
-		"id": "town_store_tool",
-		"title": "选择1张宝可梦道具加入手牌",
-		"items": items,
-		"labels": labels,
-		"min_select": 1,
-		"max_select": 1,
-		"allow_cancel": true,
-	}]
+	return [build_full_library_search_step(
+		"town_store_tool",
+		"选择1张宝可梦道具加入手牌",
+		player.deck,
+		items,
+		VISIBLE_SCOPE_OWN_FULL_DECK,
+		1,
+		1,
+		{"allow_cancel": true}
+	)]
 
 
 ## 执行效果：从牌库中检索1张宝可梦道具加入手牌，然后洗牌
@@ -50,10 +51,13 @@ func execute(_card: CardInstance, targets: Array, state: GameState) -> void:
 	var selected_raw: Array = ctx.get("town_store_tool", [])
 
 	var tool_card: CardInstance = null
-	if not selected_raw.is_empty() and selected_raw[0] is CardInstance:
-		var candidate: CardInstance = selected_raw[0]
+	for entry: Variant in selected_raw:
+		if not (entry is CardInstance):
+			continue
+		var candidate: CardInstance = entry
 		if candidate in player.deck and candidate.card_data != null and candidate.card_data.card_type == "Tool":
 			tool_card = candidate
+			break
 	if tool_card == null:
 		for deck_card: CardInstance in player.deck:
 			if deck_card.card_data != null and deck_card.card_data.card_type == "Tool":

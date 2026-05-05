@@ -2973,3 +2973,477 @@ func test_turo_stays_live_for_spent_rotom_cleanup_once_combo_core_is_online() ->
 	)
 	return assert_true(score >= 180.0,
 		"Once the combo core is online, Turo should stay live as a cleanup card for a spent Rotom pivot (got %f)" % score)
+
+
+func test_continuity_contract_lifts_backup_charmander_before_nonfinal_attack() -> String:
+	var strategy := _new_strategy()
+	if strategy == null:
+		return "DeckStrategyCharizardEx.gd should exist before Charizard continuity can be verified"
+	var gs := _make_game_state(6)
+	var player: PlayerState = gs.players[0]
+	player.prizes = [
+		CardInstance.create(_make_trainer_cd("Prize A"), 0),
+		CardInstance.create(_make_trainer_cd("Prize B"), 0),
+		CardInstance.create(_make_trainer_cd("Prize C"), 0),
+	]
+	player.active_pokemon = _make_slot(_make_pokemon_cd(
+		"Charizard ex",
+		"Stage 2",
+		"R",
+		330,
+		"Charmeleon",
+		"ex",
+		[],
+		[{"name": "Burning Darkness", "cost": "RR", "damage": "180"}]
+	), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fire 1", "R"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fire 2", "R"), 0))
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(
+		"Pidgeot ex",
+		"Stage 2",
+		"C",
+		280,
+		"Pidgeotto",
+		"ex",
+		[{"name": "Quick Search", "text": "search"}]
+	), 0))
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var charmander := CardInstance.create(_make_pokemon_cd("Charmander", "Basic", "R", 70), 0)
+	player.hand.append(charmander)
+	var turn_contract := {"intent": "convert_attack"}
+	var continuity: Dictionary = strategy.build_continuity_contract(gs, 0, turn_contract)
+	var charmander_action := {
+		"kind": "play_basic_to_bench",
+		"card": charmander,
+	}
+	var attack_action := {
+		"kind": "attack",
+		"attack_name": "Burning Darkness",
+		"projected_damage": 180,
+		"projected_knockout": false,
+	}
+	var charmander_score: float = strategy.score_action_absolute_with_plan(charmander_action, gs, 0, turn_contract)
+	var attack_score: float = strategy.score_action_absolute_with_plan(attack_action, gs, 0, turn_contract)
+	var setup_debt: Dictionary = continuity.get("setup_debt", {}) if continuity.get("setup_debt", {}) is Dictionary else {}
+	return run_checks([
+		assert_true(bool(continuity.get("enabled", false)), "Charizard should expose continuity debt when the first attacker is live but no backup line exists"),
+		assert_true(bool(continuity.get("safe_setup_before_attack", false)), "Continuity should allow safe backup setup before a non-final attack"),
+		assert_true(bool(setup_debt.get("need_backup_attacker_seed", false)), "Continuity debt should name the missing second Charmander lane"),
+		assert_true(charmander_score > attack_score,
+			"Safe backup Charmander should outrank a non-final Charizard attack through score_action_absolute_with_plan (got %f vs %f)" % [charmander_score, attack_score]),
+	])
+
+
+func test_continuity_contract_lifts_pidgey_engine_seed_before_nonfinal_attack() -> String:
+	var strategy := _new_strategy()
+	if strategy == null:
+		return "DeckStrategyCharizardEx.gd should exist before Charizard engine continuity can be verified"
+	var gs := _make_game_state(6)
+	var player: PlayerState = gs.players[0]
+	player.prizes = [
+		CardInstance.create(_make_trainer_cd("Prize A"), 0),
+		CardInstance.create(_make_trainer_cd("Prize B"), 0),
+		CardInstance.create(_make_trainer_cd("Prize C"), 0),
+	]
+	player.active_pokemon = _make_slot(_make_pokemon_cd(
+		"Charizard ex",
+		"Stage 2",
+		"R",
+		330,
+		"Charmeleon",
+		"ex",
+		[],
+		[{"name": "Burning Darkness", "cost": "RR", "damage": "180"}]
+	), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fire 1", "R"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fire 2", "R"), 0))
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd("Charmander", "Basic", "R", 70), 0))
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var pidgey := CardInstance.create(_make_pokemon_cd("Pidgey", "Basic", "C", 60), 0)
+	player.hand.append(pidgey)
+	var turn_contract := {"intent": "convert_attack"}
+	var continuity: Dictionary = strategy.build_continuity_contract(gs, 0, turn_contract)
+	var pidgey_action := {
+		"kind": "play_basic_to_bench",
+		"card": pidgey,
+	}
+	var attack_action := {
+		"kind": "attack",
+		"attack_name": "Burning Darkness",
+		"projected_damage": 180,
+		"projected_knockout": false,
+	}
+	var pidgey_score: float = strategy.score_action_absolute_with_plan(pidgey_action, gs, 0, turn_contract)
+	var attack_score: float = strategy.score_action_absolute_with_plan(attack_action, gs, 0, turn_contract)
+	var setup_debt: Dictionary = continuity.get("setup_debt", {}) if continuity.get("setup_debt", {}) is Dictionary else {}
+	return run_checks([
+		assert_true(bool(setup_debt.get("need_engine_seed", false)), "Continuity debt should name the missing Pidgey/Pidgeot engine seed"),
+		assert_true(pidgey_score > attack_score,
+			"Safe Pidgey engine seed should outrank a non-final Charizard attack through score_action_absolute_with_plan (got %f vs %f)" % [pidgey_score, attack_score]),
+	])
+
+
+func test_continuity_contract_preserves_final_prize_knockout() -> String:
+	var strategy := _new_strategy()
+	if strategy == null:
+		return "DeckStrategyCharizardEx.gd should exist before Charizard final-prize continuity can be verified"
+	var gs := _make_game_state(8)
+	var player: PlayerState = gs.players[0]
+	player.prizes = [CardInstance.create(_make_trainer_cd("Prize"), 0)]
+	player.active_pokemon = _make_slot(_make_pokemon_cd(
+		"Charizard ex",
+		"Stage 2",
+		"R",
+		330,
+		"Charmeleon",
+		"ex",
+		[],
+		[{"name": "Burning Darkness", "cost": "RR", "damage": "180"}]
+	), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fire 1", "R"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fire 2", "R"), 0))
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(
+		"Pidgeot ex",
+		"Stage 2",
+		"C",
+		280,
+		"Pidgeotto",
+		"ex",
+		[{"name": "Quick Search", "text": "search"}]
+	), 0))
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 180, "", "ex"), 1)
+	var turn_contract := {"intent": "close_out_prizes", "final_prize_ko_available": true}
+	var continuity: Dictionary = strategy.build_continuity_contract(gs, 0, turn_contract)
+	var charmander_action := {
+		"kind": "play_basic_to_bench",
+		"card": CardInstance.create(_make_pokemon_cd("Charmander", "Basic", "R", 70), 0),
+	}
+	var attack_action := {
+		"kind": "attack",
+		"attack_name": "Burning Darkness",
+		"projected_damage": 180,
+		"projected_knockout": true,
+	}
+	var charmander_score: float = strategy.score_action_absolute_with_plan(charmander_action, gs, 0, turn_contract)
+	var attack_score: float = strategy.score_action_absolute_with_plan(attack_action, gs, 0, turn_contract)
+	return run_checks([
+		assert_false(bool(continuity.get("safe_setup_before_attack", false)), "Final-prize KO should disable pre-terminal continuity setup"),
+		assert_true(attack_score > charmander_score,
+			"Final-prize Charizard KO must not be delayed by optional backup setup (got attack=%f setup=%f)" % [attack_score, charmander_score]),
+	])
+
+
+func test_continuity_contract_stops_inflating_search_after_backup_and_engine_are_online() -> String:
+	var strategy := _new_strategy()
+	if strategy == null:
+		return "DeckStrategyCharizardEx.gd should exist before completed Charizard continuity can be verified"
+	var gs := _make_game_state(8)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd(
+		"Charizard ex",
+		"Stage 2",
+		"R",
+		330,
+		"Charmeleon",
+		"ex",
+		[],
+		[{"name": "Burning Darkness", "cost": "RR", "damage": "180"}]
+	), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fire 1", "R"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fire 2", "R"), 0))
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(
+		"Pidgeot ex",
+		"Stage 2",
+		"C",
+		280,
+		"Pidgeotto",
+		"ex",
+		[{"name": "Quick Search", "text": "search"}]
+	), 0))
+	var backup := _make_slot(_make_pokemon_cd(
+		"Charizard ex",
+		"Stage 2",
+		"R",
+		330,
+		"Charmeleon",
+		"ex",
+		[],
+		[{"name": "Burning Darkness", "cost": "RR", "damage": "180"}]
+	), 0)
+	backup.attached_energy.append(CardInstance.create(_make_energy_cd("Fire 3", "R"), 0))
+	backup.attached_energy.append(CardInstance.create(_make_energy_cd("Fire 4", "R"), 0))
+	player.bench.append(backup)
+	var turn_contract := {"intent": "convert_attack"}
+	var continuity: Dictionary = strategy.build_continuity_contract(gs, 0, turn_contract)
+	var nest_ball_action := {
+		"kind": "play_trainer",
+		"card": CardInstance.create(_make_trainer_cd("Nest Ball"), 0),
+	}
+	var direct_score: float = strategy.score_action_absolute(nest_ball_action, gs, 0)
+	var planned_score: float = strategy.score_action_absolute_with_plan(nest_ball_action, gs, 0, turn_contract)
+	return run_checks([
+		assert_false(bool(continuity.get("enabled", false)), "Continuity should turn off once Pidgeot and a ready backup Charizard are online"),
+		assert_eq(planned_score, direct_score, "Completed continuity should not inflate generic search/churn cards"),
+	])
+
+
+func test_continuity_energy_bonus_does_not_treat_double_turbo_as_charizard_attack_energy() -> String:
+	var strategy := _new_strategy()
+	if strategy == null:
+		return "DeckStrategyCharizardEx.gd should exist before Charizard continuity energy routing can be verified"
+	var gs := _make_game_state(8)
+	var player: PlayerState = gs.players[0]
+	player.prizes = [
+		CardInstance.create(_make_trainer_cd("Prize A"), 0),
+		CardInstance.create(_make_trainer_cd("Prize B"), 0),
+		CardInstance.create(_make_trainer_cd("Prize C"), 0),
+	]
+	player.active_pokemon = _make_slot(_make_pokemon_cd(
+		"Charizard ex",
+		"Stage 2",
+		"R",
+		330,
+		"Charmeleon",
+		"ex",
+		[],
+		[{"name": "Burning Darkness", "cost": "RR", "damage": "180"}]
+	), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fire 1", "R"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fire 2", "R"), 0))
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(
+		"Pidgeot ex",
+		"Stage 2",
+		"C",
+		280,
+		"Pidgeotto",
+		"ex",
+		[{"name": "Quick Search", "text": "search"}]
+	), 0))
+	var backup_charmander := _make_slot(_make_pokemon_cd("Charmander", "Basic", "R", 70), 0)
+	player.bench.append(backup_charmander)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var fire := CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0)
+	var dte := CardInstance.create(_make_energy_cd("Double Turbo Energy", "C"), 0)
+	var turn_contract := {"intent": "convert_attack"}
+	var continuity: Dictionary = strategy.build_continuity_contract(gs, 0, turn_contract)
+	var fire_score: float = strategy.score_action_absolute_with_plan({
+		"kind": "attach_energy",
+		"card": fire,
+		"target_slot": backup_charmander,
+	}, gs, 0, turn_contract)
+	var dte_score: float = strategy.score_action_absolute_with_plan({
+		"kind": "attach_energy",
+		"card": dte,
+		"target_slot": backup_charmander,
+	}, gs, 0, turn_contract)
+	var setup_debt: Dictionary = continuity.get("setup_debt", {}) if continuity.get("setup_debt", {}) is Dictionary else {}
+	return run_checks([
+		assert_true(bool(setup_debt.get("need_next_attacker_ready", false)), "Fixture should expose next-attacker continuity energy debt"),
+		assert_true(fire_score > dte_score + 300.0,
+			"Fire Energy should be the continuity attach for a backup Charizard lane, not Double Turbo (fire=%f dte=%f)" % [fire_score, dte_score]),
+		assert_true(dte_score <= 120.0,
+			"Double Turbo should keep only its narrow base value and not receive Charizard continuity energy bonus (got %f)" % dte_score),
+	])
+
+
+func test_manual_energy_target_does_not_route_double_turbo_to_charizard_line_as_fire() -> String:
+	var strategy := _new_strategy()
+	if strategy == null:
+		return "DeckStrategyCharizardEx.gd should exist before manual energy routing can be verified"
+	var gs := _make_game_state(6)
+	var player: PlayerState = gs.players[0]
+	var charmander := _make_slot(_make_pokemon_cd("Charmander", "Basic", "R", 70), 0)
+	var pidgeot := _make_slot(_make_pokemon_cd("Pidgeot ex", "Stage 2", "C", 280, "Pidgeotto", "ex"), 0)
+	player.active_pokemon = _make_slot(_make_pokemon_cd(
+		"Charizard ex",
+		"Stage 2",
+		"R",
+		330,
+		"Charmeleon",
+		"ex",
+		[],
+		[{"name": "Burning Darkness", "cost": "RR", "damage": "180"}]
+	), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fire 1", "R"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fire 2", "R"), 0))
+	player.bench.clear()
+	player.bench.append(charmander)
+	player.bench.append(pidgeot)
+	var dte := CardInstance.create(_make_energy_cd("Double Turbo Energy", "C"), 0)
+	var fire := CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0)
+	var step := {"id": "attach_energy_target"}
+	var dte_charmander_score: float = strategy.score_interaction_target(charmander, step, {
+		"game_state": gs,
+		"player_index": 0,
+		"source_card": dte,
+	})
+	var dte_pidgeot_score: float = strategy.score_interaction_target(pidgeot, step, {
+		"game_state": gs,
+		"player_index": 0,
+		"source_card": dte,
+	})
+	var fire_charmander_score: float = strategy.score_interaction_target(charmander, step, {
+		"game_state": gs,
+		"player_index": 0,
+		"source_card": fire,
+	})
+	return run_checks([
+		assert_true(fire_charmander_score > dte_charmander_score + 150.0,
+			"Manual Fire attach should be useful for Charmander, while DTE should not be scored as fire (fire=%f dte=%f)" % [fire_charmander_score, dte_charmander_score]),
+		assert_true(dte_pidgeot_score >= dte_charmander_score,
+			"DTE manual target should prefer its narrow Pidgeot use over the Charizard line (pidgeot=%f charmander=%f)" % [dte_pidgeot_score, dte_charmander_score]),
+	])
+
+
+func test_double_turbo_attach_stays_dead_without_pidgeot_ex_target() -> String:
+	var strategy := _new_strategy()
+	if strategy == null:
+		return "DeckStrategyCharizardEx.gd should exist before DTE attach routing can be verified"
+	var gs := _make_game_state(2)
+	var player: PlayerState = gs.players[0]
+	var charizard := _make_slot(_make_pokemon_cd(
+		"Charizard ex",
+		"Stage 2",
+		"R",
+		330,
+		"Charmeleon",
+		"ex",
+		[],
+		[{"name": "Burning Darkness", "cost": "RR", "damage": "180"}]
+	), 0)
+	var pidgey := _make_slot(_make_pokemon_cd("Pidgey", "Basic", "C", 60), 0)
+	var pidgeot := _make_slot(_make_pokemon_cd("Pidgeot ex", "Stage 2", "C", 280, "Pidgeotto", "ex"), 0)
+	player.active_pokemon = charizard
+	player.bench.clear()
+	player.bench.append(pidgey)
+	player.bench.append(pidgeot)
+	var dte := CardInstance.create(_make_energy_cd("Double Turbo Energy", "C"), 0)
+	var charizard_score: float = strategy.score_action_absolute({"kind": "attach_energy", "card": dte, "target_slot": charizard}, gs, 0)
+	var pidgey_score: float = strategy.score_action_absolute({"kind": "attach_energy", "card": dte, "target_slot": pidgey}, gs, 0)
+	var pidgeot_score: float = strategy.score_action_absolute({"kind": "attach_energy", "card": dte, "target_slot": pidgeot}, gs, 0)
+	return run_checks([
+		assert_true(charizard_score < 0.0,
+			"DTE should not be a live attach to Charizard ex because Burning Darkness needs Fire Energy (got %f)" % charizard_score),
+		assert_true(pidgey_score < 0.0,
+			"DTE should not drift onto Pidgey before it becomes Pidgeot ex (got %f)" % pidgey_score),
+		assert_true(pidgeot_score > pidgey_score + 100.0,
+			"DTE should keep only its narrow Pidgeot ex target window (pidgeot=%f pidgey=%f)" % [pidgeot_score, pidgey_score]),
+	])
+
+
+func test_continuity_ignores_knocked_out_backup_lane_before_nonfinal_attack() -> String:
+	var strategy := _new_strategy()
+	if strategy == null:
+		return "DeckStrategyCharizardEx.gd should exist before knocked-out continuity lanes can be verified"
+	var gs := _make_game_state(10)
+	var player: PlayerState = gs.players[0]
+	player.prizes = [
+		CardInstance.create(_make_trainer_cd("Prize A"), 0),
+		CardInstance.create(_make_trainer_cd("Prize B"), 0),
+		CardInstance.create(_make_trainer_cd("Prize C"), 0),
+	]
+	player.active_pokemon = _make_slot(_make_pokemon_cd(
+		"Charizard ex",
+		"Stage 2",
+		"R",
+		330,
+		"Charmeleon",
+		"ex",
+		[],
+		[{"name": "Burning Darkness", "cost": "RR", "damage": "180"}]
+	), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fire 1", "R"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fire 2", "R"), 0))
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(
+		"Pidgeot ex",
+		"Stage 2",
+		"C",
+		280,
+		"Pidgeotto",
+		"ex",
+		[{"name": "Quick Search", "text": "search"}]
+	), 0))
+	var dead_charmander := _make_slot(_make_pokemon_cd("Charmander", "Basic", "R", 70), 0)
+	dead_charmander.damage_counters = 70
+	player.bench.append(dead_charmander)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var fresh_charmander := CardInstance.create(_make_pokemon_cd("Charmander", "Basic", "R", 70), 0)
+	player.hand.append(fresh_charmander)
+	var turn_contract := {"intent": "convert_attack"}
+	var continuity: Dictionary = strategy.build_continuity_contract(gs, 0, turn_contract)
+	var setup_debt: Dictionary = continuity.get("setup_debt", {}) if continuity.get("setup_debt", {}) is Dictionary else {}
+	var seed_score: float = strategy.score_action_absolute_with_plan({
+		"kind": "play_basic_to_bench",
+		"card": fresh_charmander,
+	}, gs, 0, turn_contract)
+	var attack_score: float = strategy.score_action_absolute_with_plan({
+		"kind": "attack",
+		"attack_name": "Burning Darkness",
+		"projected_damage": 180,
+		"projected_knockout": false,
+	}, gs, 0, turn_contract)
+	return run_checks([
+		assert_true(bool(setup_debt.get("need_backup_attacker_seed", false)), "A knocked-out Charmander must not satisfy the backup Charizard lane debt"),
+		assert_true(seed_score > attack_score,
+			"Fresh backup Charmander should still outrank a non-final attack when the only backup lane is knocked out (setup=%f attack=%f)" % [seed_score, attack_score]),
+	])
+
+
+func test_dead_charizard_lane_targets_are_not_scored_for_evolve_or_energy() -> String:
+	var strategy := _new_strategy()
+	if strategy == null:
+		return "DeckStrategyCharizardEx.gd should exist before dead lane target scoring can be verified"
+	var gs := _make_game_state(10)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd(
+		"Charizard ex",
+		"Stage 2",
+		"R",
+		330,
+		"Charmeleon",
+		"ex",
+		[],
+		[{"name": "Burning Darkness", "cost": "RR", "damage": "180"}]
+	), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fire 1", "R"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fire 2", "R"), 0))
+	var dead_charmander := _make_slot(_make_pokemon_cd("Charmander", "Basic", "R", 70), 0)
+	dead_charmander.damage_counters = 70
+	var live_charmander := _make_slot(_make_pokemon_cd("Charmander", "Basic", "R", 70), 0)
+	player.bench.clear()
+	player.bench.append(dead_charmander)
+	player.bench.append(live_charmander)
+	var charmeleon := CardInstance.create(_make_pokemon_cd("Charmeleon", "Stage 1", "R", 90, "Charmander"), 0)
+	var fire := CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0)
+	var dead_evolve_score: float = strategy.score_action_absolute({
+		"kind": "evolve",
+		"card": charmeleon,
+		"target_slot": dead_charmander,
+	}, gs, 0)
+	var live_evolve_score: float = strategy.score_action_absolute({
+		"kind": "evolve",
+		"card": charmeleon,
+		"target_slot": live_charmander,
+	}, gs, 0)
+	var dead_attach_score: float = strategy.score_action_absolute({
+		"kind": "attach_energy",
+		"card": fire,
+		"target_slot": dead_charmander,
+	}, gs, 0)
+	var live_attach_score: float = strategy.score_action_absolute({
+		"kind": "attach_energy",
+		"card": fire,
+		"target_slot": live_charmander,
+	}, gs, 0)
+	return run_checks([
+		assert_true(live_evolve_score > dead_evolve_score + 300.0,
+			"Evolution scoring must reject a knocked-out Charmander target (live=%f dead=%f)" % [live_evolve_score, dead_evolve_score]),
+		assert_true(live_attach_score > dead_attach_score + 250.0,
+			"Energy scoring must reject a knocked-out Charmander target (live=%f dead=%f)" % [live_attach_score, dead_attach_score]),
+	])

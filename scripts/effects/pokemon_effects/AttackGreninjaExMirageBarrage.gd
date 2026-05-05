@@ -39,7 +39,7 @@ func get_attack_interaction_steps(
 
 	return [{
 		"id": "greninja_ex_discard_energy",
-		"title": "Choose 2 attached Energy to discard",
+		"title": "选择2个附着的能量放入弃牌区",
 		"items": energy_items,
 		"labels": energy_labels,
 		"min_select": mini(discard_count, energy_items.size()),
@@ -47,7 +47,7 @@ func get_attack_interaction_steps(
 		"allow_cancel": false,
 	}, {
 		"id": "greninja_ex_targets",
-		"title": "Choose up to 2 opponent Pokemon",
+		"title": "选择对手最多2只宝可梦",
 		"items": target_items,
 		"labels": target_labels,
 		"min_select": mini(2, target_items.size()),

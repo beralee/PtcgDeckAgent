@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "Shin Nagasawa",
+	"attacks": [
+		{
+			"cost": "D",
+			"damage": "",
+			"is_vstar_power": false,
+			"name": "深青坠击",
+			"text": "选择放于对手场上宝可梦身上最多2张「宝可梦道具」，放于弃牌区。"
+		},
+		{
+			"cost": "DDD",
+			"damage": "180",
+			"is_vstar_power": false,
+			"name": "暗影之刃",
+			"text": "选择附着于这只宝可梦身上的1个能量，放于弃牌区。"
+		}
+	],
+	"card_index": "007",
+	"card_index_en": "239",
+	"card_type": "Pokemon",
+	"description": "【恶】 深青坠击 \n选择放于对手场上宝可梦身上最多2张「宝可梦道具」，放于弃牌区。\n\n【恶】【恶】【恶】 暗影之刃 180\n选择附着于这只宝可梦身上的1个能量，放于弃牌区。\n\n",
+	"effect_id": "a8f9150f088068e75cc8acf87773691a",
+	"energy_provides": "",
+	"energy_type": "D",
+	"evolves_from": "",
+	"hp": 220,
+	"image_local_path": "user://cards/images/CSNC/007.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSNC/007.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "V",
+	"name": "洗翠 大剑鬼V",
+	"name_en": "Hisuian Samurott V",
+	"rarity": "无标记",
+	"regulation_expanded": true,
+	"regulation_mark": "F",
+	"regulation_standard": true,
+	"release_date": "2024-06-18T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CSNC",
+	"set_code_en": "SP",
+	"stage": "Basic",
+	"weakness_energy": "G",
+	"weakness_value": "×2",
+	"yoren_code": "Y930"
+}

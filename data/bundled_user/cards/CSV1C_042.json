@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "KIYOTAKA OSHIYAMA",
+	"attacks": [
+		{
+			"cost": "C",
+			"damage": "",
+			"is_vstar_power": false,
+			"name": "互斥",
+			"text": "将这只宝可梦与备战宝可梦互换。"
+		},
+		{
+			"cost": "L",
+			"damage": "10",
+			"is_vstar_power": false,
+			"name": "电球",
+			"text": ""
+		}
+	],
+	"card_index": "042",
+	"card_index_en": "63",
+	"card_type": "Pokemon",
+	"description": " 互斥 \n将这只宝可梦与备战宝可梦互换。\n\n【雷】 电球 10\n\n\n",
+	"effect_id": "e9a3c305a7c47f76158eb75ebd7777dc",
+	"energy_provides": "",
+	"energy_type": "L",
+	"evolves_from": "",
+	"hp": 60,
+	"image_local_path": "user://cards/images/CSV1C/042.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV1C/042.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "小磁怪",
+	"name_en": "Magnemite",
+	"rarity": "C",
+	"regulation_expanded": true,
+	"regulation_mark": "G",
+	"regulation_standard": true,
+	"release_date": "2025-01-17T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "CSV1C",
+	"set_code_en": "SVI",
+	"stage": "Basic",
+	"weakness_energy": "F",
+	"weakness_value": "×2",
+	"yoren_code": "P081"
+}

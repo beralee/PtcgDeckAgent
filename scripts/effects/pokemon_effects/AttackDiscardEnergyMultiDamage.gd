@@ -50,6 +50,8 @@ func get_attack_interaction_steps(
 		"title": "选择要弃置的能量",
 		"items": items,
 		"labels": labels,
+		"card_groups": build_attached_card_groups(player, items),
+		"transparent_battlefield_dialog": true,
 		"min_select": 0,
 		"max_select": items.size(),
 		"allow_cancel": true,

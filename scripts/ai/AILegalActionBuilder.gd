@@ -407,8 +407,7 @@ func _build_granted_attack_actions(gsm: GameStateMachine, player_index: int, pla
 		return actions
 	var granted_attacks: Array[Dictionary] = gsm.effect_processor.get_granted_attacks(active, gsm.game_state)
 	for ga: Dictionary in granted_attacks:
-		var cost: String = str(ga.get("cost", ""))
-		if cost != "" and not gsm.rule_validator.has_enough_energy(active, cost, gsm.effect_processor, gsm.game_state):
+		if not gsm.rule_validator.can_use_granted_attack(gsm.game_state, player_index, active, ga, gsm.effect_processor):
 			continue
 		var ga_steps: Array[Dictionary] = gsm.effect_processor.get_granted_attack_interaction_steps(active, ga, gsm.game_state)
 		actions.append({
@@ -1202,6 +1201,7 @@ func _pick_counter_distribution_assignments(_gsm: GameStateMachine, target_items
 	)
 	var remaining_damage: int = total_damage
 	var assignments: Array[Dictionary] = []
+	var assigned_ko_targets: Array[PokemonSlot] = []
 	for target: PokemonSlot in sorted_targets:
 		var damage_needed: int = _damage_needed_for_knockout(target)
 		if damage_needed <= 0 or damage_needed > remaining_damage:
@@ -1210,12 +1210,39 @@ func _pick_counter_distribution_assignments(_gsm: GameStateMachine, target_items
 			"target": target,
 			"amount": damage_needed,
 		})
+		assigned_ko_targets.append(target)
 		remaining_damage -= damage_needed
 	if assignments.is_empty():
 		return []
 	if remaining_damage > 0:
-		assignments[0]["amount"] = int(assignments[0].get("amount", 0)) + remaining_damage
+		var pressure_target := _pick_counter_pressure_target(pokemon_targets, assigned_ko_targets)
+		if pressure_target == null:
+			pressure_target = assignments[0].get("target")
+		var merged := false
+		for assignment: Dictionary in assignments:
+			if assignment.get("target") == pressure_target:
+				assignment["amount"] = int(assignment.get("amount", 0)) + remaining_damage
+				merged = true
+				break
+		if not merged:
+			assignments.append({
+				"target": pressure_target,
+				"amount": remaining_damage,
+			})
 	return assignments
+
+
+func _pick_counter_pressure_target(targets: Array[PokemonSlot], excluded: Array[PokemonSlot]) -> PokemonSlot:
+	var best_target: PokemonSlot = null
+	var best_score := -INF
+	for target: PokemonSlot in targets:
+		if target == null or target.get_top_card() == null or target in excluded:
+			continue
+		var score := float(target.get_prize_count()) * 160.0 + float(target.damage_counters) * 2.0 - float(target.get_remaining_hp()) * 0.6
+		if best_target == null or score > best_score:
+			best_target = target
+			best_score = score
+	return best_target
 
 
 func _damage_needed_for_knockout(target: PokemonSlot) -> int:

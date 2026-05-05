@@ -21,8 +21,20 @@ const MAGMA_BASIN: Array[String] = ["Magma Basin", "熔岩瀑布之渊"]
 const PHASE_LAUNCH := "launch"
 const PHASE_PRESSURE := "pressure"
 const PHASE_CONVERT := "convert"
-const POKEGEAR_30: Array[String] = ["Pok\u00e9gear 3.0", "宝可装置3.0"]
+const POKEGEAR_30: Array[String] = ["Pok\u00e9gear 3.0", "Pokegear 3.0", "宝可装置3.0"]
 const RADIANT_GRENINJA: Array[String] = ["Radiant Greninja", "光辉甲贺忍蛙"]
+const NIGHT_STRETCHER: Array[String] = ["Night Stretcher", "夜间担架", "夜晚担架"]
+const TREKKING_SHOES: Array[String] = ["Trekking Shoes", "健行鞋"]
+const HISUIAN_HEAVY_BALL: Array[String] = ["Hisuian Heavy Ball", "洗翠的沉重球"]
+const POKEMON_CATCHER: Array[String] = ["Pok\u00e9mon Catcher", "Pokemon Catcher", "宝可梦捕捉器"]
+const LOST_VACUUM: Array[String] = ["Lost Vacuum", "放逐吸尘器"]
+const PAL_PAD: Array[String] = ["Pal Pad", "朋友手册"]
+const IONO: Array[String] = ["Iono", "奇树"]
+const BOSS_ORDERS: Array[String] = ["Boss's Orders", "Boss's Orders (Ghetsis)", "老大的指令"]
+const PRIME_CATCHER: Array[String] = ["Prime Catcher", "顶尖捕捉器", "高级捕获器"]
+const TEMPLE_OF_SINNOH: Array[String] = ["Temple of Sinnoh", "神奥神殿"]
+const CONTINUITY_ENERGY_NAMES: Array[String] = ["Lightning Energy", "Fighting Energy", "Grass Energy"]
+const CONTINUITY_ENERGY_TYPES: Array[String] = ["L", "F", "G"]
 
 var _deck_strategy_text: String = ""
 
@@ -103,7 +115,9 @@ func score_action_absolute(action: Dictionary, game_state: GameState, player_ind
 		"use_ability":
 			base_score = _score_ability(action.get("source_slot"), game_state, player_index)
 		"play_trainer":
-			base_score = _score_trainer(action.get("card"), game_state, player_index)
+			base_score = _score_trainer_action(action, game_state, player_index)
+		"play_stadium":
+			base_score = _score_trainer_action(action, game_state, player_index)
 		"attack", "granted_attack":
 			base_score = _score_attack(action, game_state, player_index)
 		"retreat":
@@ -227,10 +241,14 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 		var card := item as CardInstance
 		if step_id in ["search_pokemon", "search_cards", "search_future_pokemon"]:
 			return float(get_search_priority(card))
+		if step_id == "look_top_cards":
+			return _score_supporter_candidate(card, context)
 		if step_id in ["discard_cards", "discard_card", "discard_energy", "discard_basic_energy"]:
 			return float(get_discard_priority_contextual(card, context.get("game_state"), int(context.get("player_index", -1))))
 		if step_id == "search_energy":
 			return _score_energy_search_candidate(card, context)
+		if step_id == "recover_energy":
+			return _score_energy_recovery_candidate(card, context)
 		return 40.0
 	if item is PokemonSlot:
 		var slot := item as PokemonSlot
@@ -248,6 +266,11 @@ func _score_bench_basic(card: CardInstance, game_state: GameState = null, player
 		return float(_setup_priority(name) * 3)
 	var base: float = float(_setup_priority(name) * 3)
 	var player: PlayerState = _get_player(game_state, player_index)
+	if player != null and _has_attack_ready_raging_bolt(player) and player.deck.size() > 8 and _current_phase(player) == PHASE_PRESSURE:
+		if _matches_name(name, RAGING_BOLT_EX) and _count_pokemon_on_field(player, RAGING_BOLT_EX) < 2:
+			return 900.0
+		if _matches_name(name, TEAL_MASK_OGERPON_EX) and _count_pokemon_on_field(player, TEAL_MASK_OGERPON_EX) < 2:
+			return 870.0
 	if player != null and _current_phase(player) != PHASE_LAUNCH:
 		if _matches_name(name, RAGING_BOLT_EX) and _count_pokemon_on_field(player, RAGING_BOLT_EX) < 2:
 			base += 120.0
@@ -263,10 +286,15 @@ func _score_attach_energy(card: CardInstance, target_slot: PokemonSlot, game_sta
 	var phase: String = _current_phase(player)
 	var energy_type: String = str(card.card_data.energy_provides)
 	if _slot_matches(target_slot, RAGING_BOLT_EX):
-		if energy_type not in ["L", "F"]:
-			# G(\u53ca\u5176\u4ed6\u7c7b\u578b)\u5bf9\u7311\u96f7\u9f13\u65e0\u7528\u2014\u2014\u6781\u96f7\u8f70\u53ea\u9700 L+F
-			return 80.0
+		var core_ready: bool = _raging_bolt_core_cost_ready(target_slot)
 		var gap: int = _preferred_attack_energy_gap(target_slot)
+		if energy_type not in ["L", "F"]:
+			if core_ready and gap == 1:
+				return 520.0 if phase != PHASE_LAUNCH else 430.0
+			return 110.0 if gap <= 0 else 10.0
+		var type_needed: bool = _energy_type_is_needed_for_attack(target_slot, energy_type)
+		if not core_ready and not type_needed:
+			return 60.0
 		if phase != PHASE_LAUNCH:
 			if gap == 1:
 				return 540.0
@@ -290,7 +318,7 @@ func _score_attach_energy(card: CardInstance, target_slot: PokemonSlot, game_sta
 		var retreat_cost: int = target_slot.get_card_data().retreat_cost if target_slot.get_card_data() != null else 0
 		if target_slot.attached_energy.size() < retreat_cost:
 			return 500.0
-	return 50.0
+	return -20.0
 
 
 func _score_attach_tool(card: CardInstance, target_slot: PokemonSlot) -> float:
@@ -298,10 +326,10 @@ func _score_attach_tool(card: CardInstance, target_slot: PokemonSlot) -> float:
 		return 0.0
 	if _card_matches(card, BRAVERY_CHARM):
 		if _slot_matches(target_slot, RAGING_BOLT_EX):
-			return 260.0
+			return 880.0
 		if _slot_matches(target_slot, TEAL_MASK_OGERPON_EX):
 			return 220.0
-	return 50.0
+	return -20.0
 
 
 func _score_trainer(card: CardInstance, game_state: GameState, player_index: int) -> float:
@@ -312,6 +340,10 @@ func _score_trainer(card: CardInstance, game_state: GameState, player_index: int
 	var phase: String = _current_phase(player)
 	var churn_cooldown: bool = _should_cool_off_churn_trainers(player)
 	if _matches_name(name, SADA):
+		if player.deck.size() <= 3 and _has_attack_ready_raging_bolt(player):
+			return 20.0
+		if _recovery_restores_missing_bolt_cost(player):
+			return 520.0 if phase != PHASE_CONVERT else 340.0
 		if _count_basic_energy_in_discard(player) >= 2 and _count_ancient_targets(player) >= 1:
 			if phase == PHASE_CONVERT:
 				return 170.0 if player.deck.size() <= 8 else 240.0
@@ -320,54 +352,94 @@ func _score_trainer(card: CardInstance, game_state: GameState, player_index: int
 			return 500.0
 		return 220.0 if phase != PHASE_LAUNCH else 260.0
 	if _matches_name(name, EARTHEN_VESSEL):
+		if _earthen_vessel_restores_missing_bolt_cost(player):
+			return 470.0 if phase != PHASE_CONVERT else 300.0
+		if _has_attack_ready_raging_bolt(player):
+			if player.deck.size() <= 10:
+				return -10.0
+			return 160.0 if _count_basic_energy_in_discard(player) < 2 else 40.0
 		if phase == PHASE_CONVERT:
 			return 90.0 if player.deck.size() <= 8 else 110.0
 		if phase == PHASE_PRESSURE and _has_follow_up_bolt(player):
 			return 180.0
+		if _count_basic_energy_in_discard(player) >= 3 and player.hand.size() >= 4:
+			return 170.0
 		return 390.0
 	if _matches_name(name, ENERGY_RETRIEVAL):
+		if _recovery_restores_missing_bolt_cost(player):
+			return 380.0 if phase != PHASE_CONVERT else 260.0
 		if phase == PHASE_CONVERT:
 			return 110.0 if player.deck.size() <= 8 else 120.0
 		if phase == PHASE_PRESSURE and _has_follow_up_bolt(player):
 			return 210.0
 		return 330.0 if _count_basic_energy_in_discard(player) >= 2 else 180.0
+	if _matches_name(name, NIGHT_STRETCHER):
+		return 260.0 if _night_stretcher_has_real_need(player) else -20.0
 	if _matches_name(name, NEST_BALL):
 		if phase != PHASE_LAUNCH and _bench_needs_backup(player):
 			return 320.0
 		if churn_cooldown:
 			return 20.0
 		return 260.0
-	if name == "Boss's Orders" or name == "Prime Catcher":
+	if _matches_name(name, BOSS_ORDERS) or _matches_name(name, PRIME_CATCHER):
+		if not _has_immediate_raging_bolt_attack_window(game_state, player_index):
+			return -30.0
 		if _opponent_has_low_hp_support(game_state, player_index):
 			return 520.0 if phase != PHASE_LAUNCH else 420.0
-		return 280.0 if phase != PHASE_LAUNCH else 230.0
-	if name == "Iono":
+		return 80.0 if phase != PHASE_LAUNCH else 20.0
+	if _matches_name(name, IONO):
 		if phase == PHASE_CONVERT and player.hand.size() > 3:
-			return 120.0
+			return 20.0 if player.deck.size() <= 8 else 90.0
 		return 260.0 if player.hand.size() <= 3 else 170.0
 	if _matches_name(name, POKEGEAR_30):
 		if churn_cooldown:
 			return 30.0
 		return 220.0 if not _hand_has_supporter(player) else 120.0
-	if name == "Trekking Shoes":
-		return 15.0 if churn_cooldown else 80.0
-	if name == "Hisuian Heavy Ball":
-		return 10.0 if churn_cooldown else 80.0
-	if name == "Pok\u00e9mon Catcher":
-		return 20.0 if churn_cooldown else 80.0
-	if name == "Temple of Sinnoh":
+	if _matches_name(name, TREKKING_SHOES):
+		if churn_cooldown or player.deck.size() <= 8:
+			return -10.0
+		return 80.0 if phase == PHASE_LAUNCH else 35.0
+	if _matches_name(name, HISUIAN_HEAVY_BALL):
+		if churn_cooldown or phase != PHASE_LAUNCH:
+			return -10.0
+		return 90.0 if _count_pokemon_on_field(player, RAGING_BOLT_EX) <= 0 else 30.0
+	if _matches_name(name, POKEMON_CATCHER):
+		if churn_cooldown or not _has_immediate_raging_bolt_attack_window(game_state, player_index):
+			return -10.0
+		return 140.0 if _opponent_has_low_hp_support(game_state, player_index) else 30.0
+	if _matches_name(name, LOST_VACUUM):
+		if not _has_immediate_raging_bolt_attack_window(game_state, player_index):
+			return -30.0
+		return 130.0 if _has_lost_vacuum_target(game_state, player_index) else -30.0
+	if _matches_name(name, PAL_PAD):
+		return 120.0 if _pal_pad_has_real_need(player) else -20.0
+	if _matches_name(name, TEMPLE_OF_SINNOH):
 		return 240.0 if _opponent_has_special_energy_attached(game_state, player_index) else 120.0
 	if _matches_name(name, BRAVERY_CHARM):
 		return 240.0
 	if _matches_name(name, SWITCH_CART):
+		if _has_ready_benched_raging_bolt(player):
+			return 620.0 if _active_is_non_attacker(player) else 360.0
 		if _active_is_non_attacker(player):
-			return 550.0
+			return 260.0
 		return 180.0 if phase == PHASE_CONVERT and _has_attack_ready_raging_bolt(player) else 230.0
 	if _matches_name(name, MAGMA_BASIN):
 		return 150.0
 	if _matches_name(name, PROFESSORS_RESEARCH):
 		return 70.0 if churn_cooldown else 150.0
-	return 80.0
+	return -10.0 if churn_cooldown else 20.0
+
+
+func _score_trainer_action(action: Dictionary, game_state: GameState, player_index: int) -> float:
+	var card: CardInstance = action.get("card")
+	var score: float = _score_trainer(card, game_state, player_index)
+	if card == null or card.card_data == null:
+		return score
+	var player: PlayerState = _get_player(game_state, player_index)
+	var name: String = str(card.card_data.name)
+	if _matches_name(name, POKEGEAR_30) and _pokegear_hits_only_low_value_supporter(action, player):
+		return -10.0
+	return score
 
 
 func _score_ability(source_slot: PokemonSlot, game_state: GameState, player_index: int) -> float:
@@ -378,6 +450,14 @@ func _score_ability(source_slot: PokemonSlot, game_state: GameState, player_inde
 	if _slot_matches(source_slot, TEAL_MASK_OGERPON_EX):
 		if not _hand_has_basic_energy(player, "G"):
 			return 30.0
+		if player.deck.size() <= 3:
+			return -10.0
+		if _has_attack_ready_raging_bolt(player) and player.deck.size() <= 8:
+			return -10.0
+		if _has_attack_ready_raging_bolt(player) and game_state.turn_number <= 4 and source_slot.count_energy_of_type("G") <= 0:
+			return 900.0
+		if _has_attack_ready_raging_bolt(player) and phase == PHASE_PRESSURE and player.deck.size() > 12 and source_slot.count_energy_of_type("G") <= 0:
+			return 900.0
 		if phase == PHASE_CONVERT:
 			if player.hand.size() >= 4:
 				return 20.0
@@ -409,6 +489,10 @@ func _score_ability(source_slot: PokemonSlot, game_state: GameState, player_inde
 			or _hand_has_basic_energy(player, "F")
 		if not has_any_energy:
 			return 5.0
+		if player.deck.size() <= 4:
+			return -10.0
+		if _has_attack_ready_raging_bolt(player) and (player.deck.size() <= 8 or phase == PHASE_CONVERT):
+			return -10.0
 		if phase == PHASE_LAUNCH and _count_ancient_targets(player) >= 1:
 			if _hand_has_supporter(player):
 				return 350.0
@@ -428,6 +512,16 @@ func _score_attack(action: Dictionary, game_state: GameState, player_index: int)
 	if projected_damage <= 0 and player != null and _slot_matches(player.active_pokemon, RAGING_BOLT_EX):
 		var attack_index: int = int(action.get("attack_index", -1))
 		var attack_name: String = str(action.get("attack_name", ""))
+		if _is_raging_bolt_redraw_attack(attack_index, attack_name):
+			if player.deck.size() <= 12:
+				return -100.0
+			if _has_attack_ready_raging_bolt(player) or _has_productive_setup_resource(player):
+				return -30.0
+			if phase != PHASE_LAUNCH:
+				return -20.0
+			if player.hand.size() <= 2 and player.deck.size() >= 20:
+				return 120.0
+			return 5.0
 		if attack_index == 1 or attack_name == "Bellowing Thunder":
 			projected_damage = _estimate_best_bellowing_thunder_damage(player, game_state, player_index)
 	if projected_damage <= 0:
@@ -440,7 +534,11 @@ func _score_attack(action: Dictionary, game_state: GameState, player_index: int)
 				return 10.0
 		return 80.0
 	if bool(action.get("projected_knockout", false)):
-		return 920.0
+		if _knockout_wins_game(game_state, player_index):
+			return 980.0
+		if player != null and player.deck.size() <= 8:
+			return 930.0
+		return 850.0
 	if phase == PHASE_CONVERT:
 		if projected_damage >= 200:
 			return 860.0
@@ -510,6 +608,8 @@ func _estimate_heuristic_base(kind: String) -> float:
 			return 180.0
 		"play_trainer":
 			return 110.0
+		"play_stadium":
+			return 90.0
 		"retreat":
 			return 90.0
 	return 10.0
@@ -521,6 +621,93 @@ func _count_basic_energy_in_discard(player: PlayerState) -> int:
 		if card != null and card.card_data != null and card.card_data.card_type == "Basic Energy":
 			count += 1
 	return count
+
+
+func _count_basic_energy_in_hand(player: PlayerState) -> int:
+	if player == null:
+		return 0
+	var count := 0
+	for card: CardInstance in player.hand:
+		if card != null and card.card_data != null and card.card_data.card_type == "Basic Energy":
+			count += 1
+	return count
+
+
+func _discard_has_basic_energy_type(player: PlayerState, energy_type: String) -> bool:
+	if player == null:
+		return false
+	for card: CardInstance in player.discard_pile:
+		if card == null or card.card_data == null:
+			continue
+		if card.card_data.card_type == "Basic Energy" and str(card.card_data.energy_provides) == energy_type:
+			return true
+	return false
+
+
+func _discard_has_pokemon(player: PlayerState, aliases: Array[String]) -> bool:
+	if player == null:
+		return false
+	for card: CardInstance in player.discard_pile:
+		if card != null and card.card_data != null and card.card_data.card_type == "Pokemon" and _matches_name(str(card.card_data.name), aliases):
+			return true
+	return false
+
+
+func _night_stretcher_has_real_need(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	if _count_pokemon_on_field(player, RAGING_BOLT_EX) <= 0 and _discard_has_pokemon(player, RAGING_BOLT_EX):
+		return true
+	if _count_pokemon_on_field(player, TEAL_MASK_OGERPON_EX) <= 0 and _discard_has_pokemon(player, TEAL_MASK_OGERPON_EX):
+		return true
+	for slot: PokemonSlot in player.get_all_pokemon():
+		if not _slot_matches(slot, RAGING_BOLT_EX):
+			continue
+		for energy_type: String in ["L", "F"]:
+			if _energy_type_is_needed_for_attack(slot, energy_type) and not _hand_has_basic_energy(player, energy_type) and _discard_has_basic_energy_type(player, energy_type):
+				return true
+	if not _has_attack_ready_raging_bolt(player) and _count_basic_energy_in_hand(player) <= 0 and _count_basic_energy_in_discard(player) > 0 and player.hand.size() <= 2:
+		return true
+	return false
+
+
+func _recovery_restores_missing_bolt_cost(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	for slot: PokemonSlot in player.get_all_pokemon():
+		if not _slot_matches(slot, RAGING_BOLT_EX):
+			continue
+		for energy_type: String in ["L", "F"]:
+			if _energy_type_is_needed_for_attack(slot, energy_type) and _discard_has_basic_energy_type(player, energy_type):
+				return true
+	return false
+
+
+func _earthen_vessel_restores_missing_bolt_cost(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	for slot: PokemonSlot in player.get_all_pokemon():
+		if not _slot_matches(slot, RAGING_BOLT_EX):
+			continue
+		for energy_type: String in ["L", "F"]:
+			if _energy_type_is_needed_for_attack(slot, energy_type) and not _hand_has_basic_energy(player, energy_type):
+				return true
+	return false
+
+
+func _pal_pad_has_real_need(player: PlayerState) -> bool:
+	if player == null or _hand_has_supporter(player):
+		return false
+	var attack_window: bool = _has_attack_ready_raging_bolt(player)
+	for card: CardInstance in player.discard_pile:
+		if card == null or card.card_data == null:
+			continue
+		var name: String = str(card.card_data.name)
+		if _matches_name(name, SADA):
+			return true
+		if attack_window and (_matches_name(name, BOSS_ORDERS) or _matches_name(name, PROFESSORS_RESEARCH)):
+			return true
+	return false
 
 
 func _count_ancient_targets(player: PlayerState) -> int:
@@ -576,25 +763,23 @@ func _attack_energy_gap(slot: PokemonSlot) -> int:
 func _preferred_attack_energy_gap(slot: PokemonSlot) -> int:
 	if slot == null or slot.get_card_data() == null or slot.get_card_data().attacks.is_empty():
 		return 999
-	if not _slot_matches(slot, RAGING_BOLT_EX):
-		return _attack_energy_gap(slot)
-	var attached: int = slot.attached_energy.size()
-	var best_damage := -1
-	var best_gap := 999
-	for attack: Dictionary in slot.get_card_data().attacks:
-		var damage_text: String = str(attack.get("damage", "0"))
-		var damage: int = _parse_damage_value(damage_text)
-		var effective_cost: int = str(attack.get("cost", "")).length()
-		# 极雷轰 "70x"：弃能×70 伤害，至少需要 1 张额外能量才有伤害
-		if damage > 0 and damage_text.ends_with("x"):
-			effective_cost += 1
-		var gap: int = maxi(0, effective_cost - attached)
-		if damage > best_damage:
-			best_damage = damage
-			best_gap = gap
-		elif damage == best_damage:
-			best_gap = mini(best_gap, gap)
-	return best_gap
+	if _slot_matches(slot, RAGING_BOLT_EX):
+		return _raging_bolt_pressure_gap(slot)
+	return _attack_energy_gap(slot)
+
+
+func _raging_bolt_pressure_gap(slot: PokemonSlot) -> int:
+	if slot == null:
+		return 999
+	var missing := 0
+	if slot.count_energy_of_type("L") <= 0:
+		missing += 1
+	if slot.count_energy_of_type("F") <= 0:
+		missing += 1
+	var total_after_core: int = slot.attached_energy.size() + missing
+	if total_after_core < 3:
+		missing += 3 - total_after_core
+	return missing
 
 
 func _active_is_non_attacker(player: PlayerState) -> bool:
@@ -630,6 +815,39 @@ func _has_attack_ready_raging_bolt(player: PlayerState) -> bool:
 		if _slot_matches(slot, RAGING_BOLT_EX) and _preferred_attack_energy_gap(slot) <= 0:
 			return true
 	return false
+
+
+func _has_ready_benched_raging_bolt(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	for slot: PokemonSlot in player.bench:
+		if _slot_matches(slot, RAGING_BOLT_EX) and _preferred_attack_energy_gap(slot) <= 0:
+			return true
+	return false
+
+
+func _has_immediate_raging_bolt_attack_window(game_state: GameState, player_index: int) -> bool:
+	var player: PlayerState = _get_player(game_state, player_index)
+	if player == null:
+		return false
+	if _slot_matches(player.active_pokemon, RAGING_BOLT_EX) and _preferred_attack_energy_gap(player.active_pokemon) <= 0:
+		return true
+	if not _has_ready_benched_raging_bolt(player):
+		return false
+	if _hand_has_card(player, SWITCH_CART):
+		return true
+	if game_state != null and not game_state.retreat_used_this_turn and _active_can_pay_retreat(player):
+		return true
+	return false
+
+
+func _active_can_pay_retreat(player: PlayerState) -> bool:
+	if player == null or player.active_pokemon == null or player.active_pokemon.get_card_data() == null:
+		return false
+	var retreat_cost: int = int(player.active_pokemon.get_card_data().retreat_cost)
+	if retreat_cost <= 0:
+		return true
+	return player.active_pokemon.attached_energy.size() >= retreat_cost
 
 
 func _should_cool_off_churn_trainers(player: PlayerState) -> bool:
@@ -705,7 +923,8 @@ func _estimate_best_bellowing_thunder_damage(player: PlayerState, game_state: Ga
 	var desired_count: int = _desired_bellowing_thunder_discard_count(
 		player,
 		_opponent_active_remaining_hp(game_state, player_index),
-		available.size()
+		available.size(),
+		int(game_state.turn_number) if game_state != null else -1
 	)
 	return estimate_bellowing_thunder_damage(desired_count)
 
@@ -716,18 +935,12 @@ func _pick_field_discard_items(cards: Array[CardInstance], player: PlayerState, 
 	var desired_count: int = _desired_bellowing_thunder_discard_count(
 		player,
 		_opponent_active_remaining_hp(context.get("game_state"), int(context.get("player_index", -1))),
-		cards.size()
+		cards.size(),
+		int(context.get("game_state").turn_number) if context.get("game_state") != null else -1
 	)
 	if desired_count <= 0:
 		return []
-	var sorted_cards: Array = cards.duplicate()
-	sorted_cards.sort_custom(func(a: CardInstance, b: CardInstance) -> bool:
-		var score_a: float = _score_field_discard_candidate(a, player)
-		var score_b: float = _score_field_discard_candidate(b, player)
-		if is_equal_approx(score_a, score_b):
-			return str(a.card_data.name) < str(b.card_data.name)
-		return score_a > score_b
-	)
+	var sorted_cards: Array = _ordered_field_discard_candidates(cards, player)
 	return sorted_cards.slice(0, mini(mini(max_select, desired_count), sorted_cards.size()))
 
 
@@ -746,12 +959,14 @@ func _pick_hand_discard_items(cards: Array[CardInstance], player: PlayerState, m
 	return sorted_cards.slice(0, mini(mini(max_select, desired_count), sorted_cards.size()))
 
 
-func _desired_bellowing_thunder_discard_count(player: PlayerState, target_hp: int, available_count: int) -> int:
+func _desired_bellowing_thunder_discard_count(player: PlayerState, target_hp: int, available_count: int, turn_number: int = -1) -> int:
 	if player == null or available_count <= 0:
 		return 0
 	if target_hp <= 0:
 		return 0
 	var lethal_count: int = int(ceili(float(target_hp) / 70.0))
+	if turn_number > 0 and turn_number <= 4:
+		lethal_count = maxi(lethal_count, 3)
 	return mini(available_count, maxi(1, lethal_count))
 
 
@@ -775,17 +990,85 @@ func _score_field_discard_candidate(card: CardInstance, player: PlayerState) -> 
 	if holder == null:
 		return 0.0
 	var energy_type: String = str(card.card_data.energy_provides)
+	var protected_core_ids := _raging_bolt_core_energy_ids_to_preserve(player)
+	if energy_type == "G":
+		if _slot_matches(holder, TEAL_MASK_OGERPON_EX):
+			return 1040.0
+		if _slot_matches(holder, RAGING_BOLT_EX):
+			return 1020.0
+		return 1000.0
 	if holder == player.active_pokemon and _slot_matches(holder, RAGING_BOLT_EX):
-		if _energy_card_is_essential_for_attack(holder, card):
+		if bool(protected_core_ids.get(card.instance_id, false)):
 			return 20.0
-		return 620.0 if energy_type == "G" else 420.0
+		return 760.0
 	if _slot_matches(holder, TEAL_MASK_OGERPON_EX):
-		return 920.0 if energy_type == "G" else 780.0
+		return 700.0
 	if _slot_matches(holder, RAGING_BOLT_EX):
-		if _energy_card_is_essential_for_attack(holder, card):
+		if bool(protected_core_ids.get(card.instance_id, false)):
 			return 180.0
-		return 720.0 if energy_type == "G" else 640.0
+		return 900.0
 	return 500.0
+
+
+func _ordered_field_discard_candidates(cards: Array[CardInstance], player: PlayerState) -> Array:
+	var buckets: Array = [[], [], [], [], [], [], []]
+	var protected_core_ids := _raging_bolt_core_energy_ids_to_preserve(player)
+	for card: CardInstance in cards:
+		if card == null or card.card_data == null:
+			continue
+		var holder: PokemonSlot = _find_energy_holder(player, card)
+		if holder == null:
+			continue
+		var energy_type: String = str(card.card_data.energy_provides)
+		var bucket_index := 4
+		if energy_type == "G":
+			bucket_index = 0
+		elif _slot_matches(holder, RAGING_BOLT_EX) and holder != player.active_pokemon and not bool(protected_core_ids.get(card.instance_id, false)):
+			bucket_index = 1
+		elif holder == player.active_pokemon and _slot_matches(holder, RAGING_BOLT_EX) and not bool(protected_core_ids.get(card.instance_id, false)):
+			bucket_index = 2
+		elif _slot_matches(holder, TEAL_MASK_OGERPON_EX):
+			bucket_index = 3
+		elif holder == player.active_pokemon and _slot_matches(holder, RAGING_BOLT_EX):
+			bucket_index = 5
+		elif _slot_matches(holder, RAGING_BOLT_EX):
+			bucket_index = 6
+		(buckets[bucket_index] as Array).append(card)
+	var ordered: Array = []
+	for bucket: Array in buckets:
+		bucket.sort_custom(func(a: CardInstance, b: CardInstance) -> bool:
+			var name_a := str(a.card_data.name) if a != null and a.card_data != null else ""
+			var name_b := str(b.card_data.name) if b != null and b.card_data != null else ""
+			if name_a == name_b:
+				return int(a.instance_id) < int(b.instance_id)
+			return name_a < name_b
+		)
+		ordered.append_array(bucket)
+	return ordered
+
+
+func _raging_bolt_core_energy_ids_to_preserve(player: PlayerState) -> Dictionary:
+	var protected := {}
+	if player == null:
+		return protected
+	for slot: PokemonSlot in player.get_all_pokemon():
+		if slot == null or not _slot_matches(slot, RAGING_BOLT_EX):
+			continue
+		var preserved_lightning: CardInstance = null
+		var preserved_fighting: CardInstance = null
+		for energy: CardInstance in slot.attached_energy:
+			if energy == null or energy.card_data == null:
+				continue
+			var energy_type := str(energy.card_data.energy_provides)
+			if energy_type == "L" and preserved_lightning == null:
+				preserved_lightning = energy
+			elif energy_type == "F" and preserved_fighting == null:
+				preserved_fighting = energy
+		if preserved_lightning != null:
+			protected[preserved_lightning.instance_id] = true
+		if preserved_fighting != null:
+			protected[preserved_fighting.instance_id] = true
+	return protected
 
 
 func _score_hand_discard_candidate(card: CardInstance, player: PlayerState) -> float:
@@ -882,6 +1165,12 @@ func _energy_card_is_essential_for_attack(slot: PokemonSlot, card: CardInstance)
 	return slot.count_energy_of_type(energy_type) <= required
 
 
+func _raging_bolt_core_cost_ready(slot: PokemonSlot) -> bool:
+	if slot == null or not _slot_matches(slot, RAGING_BOLT_EX):
+		return false
+	return slot.count_energy_of_type("L") >= 1 and slot.count_energy_of_type("F") >= 1
+
+
 func _preferred_attack_requirements(slot: PokemonSlot) -> Dictionary:
 	var requirements := {}
 	if slot == null or slot.get_card_data() == null:
@@ -910,6 +1199,18 @@ func _opponent_active_remaining_hp(game_state: GameState, player_index: int) -> 
 	return opponent.active_pokemon.get_remaining_hp()
 
 
+func _knockout_wins_game(game_state: GameState, player_index: int) -> bool:
+	var player: PlayerState = _get_player(game_state, player_index)
+	if player == null or game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var opponent: PlayerState = game_state.players[1 - player_index]
+	if opponent == null or opponent.active_pokemon == null:
+		return false
+	if player.prizes.is_empty():
+		return false
+	return player.prizes.size() <= opponent.active_pokemon.get_prize_count()
+
+
 func _is_basic_pokemon(card: CardInstance) -> bool:
 	return card != null and card.card_data != null and card.card_data.card_type == "Pokemon" and str(card.card_data.stage) == "Basic"
 
@@ -926,6 +1227,34 @@ func _matches_name(name: String, aliases: Array[String]) -> bool:
 	for alias: String in aliases:
 		if name == alias:
 			return true
+	return false
+
+
+func _is_raging_bolt_redraw_attack(attack_index: int, attack_name: String) -> bool:
+	if attack_index == 0:
+		return true
+	return attack_name in ["Burst Roar", "飞溅咆哮"]
+
+
+func _has_productive_setup_resource(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	if _hand_has_card(player, SADA) and _count_basic_energy_in_discard(player) >= 1 and _count_ancient_targets(player) >= 1:
+		return true
+	if _hand_has_card(player, EARTHEN_VESSEL):
+		return true
+	if _hand_has_card(player, ENERGY_RETRIEVAL) and _count_basic_energy_in_discard(player) >= 2:
+		return true
+	if _hand_has_card(player, NEST_BALL) and _bench_needs_backup(player):
+		return true
+	if _count_pokemon_on_field(player, TEAL_MASK_OGERPON_EX) >= 1 and _hand_has_basic_energy(player, "G"):
+		return true
+	for slot: PokemonSlot in player.get_all_pokemon():
+		if not _slot_matches(slot, RAGING_BOLT_EX):
+			continue
+		for energy_type: String in ["L", "F"]:
+			if _energy_type_is_needed_for_attack(slot, energy_type) and _hand_has_basic_energy(player, energy_type):
+				return true
 	return false
 
 
@@ -953,6 +1282,77 @@ func _score_energy_search_candidate(card: CardInstance, context: Dictionary) -> 
 			if _slot_matches(slot, TEAL_MASK_OGERPON_EX):
 				return 300.0
 	return 100.0
+
+
+func _score_energy_recovery_candidate(card: CardInstance, context: Dictionary) -> float:
+	if card == null or card.card_data == null:
+		return 40.0
+	var player: PlayerState = _get_player(context.get("game_state"), int(context.get("player_index", -1)))
+	var energy_type: String = str(card.card_data.energy_provides)
+	if player == null:
+		return 40.0
+	var missing_bolt_cost: bool = false
+	for slot: PokemonSlot in player.get_all_pokemon():
+		if _slot_matches(slot, RAGING_BOLT_EX) and _energy_type_is_needed_for_attack(slot, energy_type):
+			return 780.0 if energy_type in ["L", "F"] else 240.0
+		if _slot_matches(slot, RAGING_BOLT_EX):
+			for required_type: String in ["L", "F"]:
+				if _energy_type_is_needed_for_attack(slot, required_type):
+					missing_bolt_cost = true
+	if not missing_bolt_cost and energy_type == "G" and _count_pokemon_on_field(player, TEAL_MASK_OGERPON_EX) > 0:
+		return 620.0
+	if energy_type in ["L", "F"]:
+		return 420.0
+	if energy_type == "G" and _count_pokemon_on_field(player, TEAL_MASK_OGERPON_EX) > 0:
+		return 320.0
+	return 120.0
+
+
+func _score_supporter_candidate(card: CardInstance, context: Dictionary) -> float:
+	var player: PlayerState = _get_player(context.get("game_state"), int(context.get("player_index", -1)))
+	return _score_supporter_candidate_for_player(card, player)
+
+
+func _score_supporter_candidate_for_player(card: CardInstance, player: PlayerState) -> float:
+	if card == null or card.card_data == null:
+		return 0.0
+	if card.card_data.card_type != "Supporter":
+		return 0.0
+	var name: String = str(card.card_data.name)
+	if _matches_name(name, SADA):
+		return 900.0
+	if _matches_name(name, PROFESSORS_RESEARCH):
+		if player != null and player.hand.size() <= 3 and player.deck.size() > 8:
+			return 420.0
+		return 120.0
+	if _matches_name(name, IONO):
+		if player != null and player.hand.size() <= 3 and player.deck.size() > 8:
+			return 360.0
+		return 100.0
+	if _matches_name(name, BOSS_ORDERS):
+		return 260.0 if player != null and _has_attack_ready_raging_bolt(player) else -80.0
+	return 60.0
+
+
+func _pokegear_hits_only_low_value_supporter(action: Dictionary, player: PlayerState) -> bool:
+	var saw_supporter := false
+	var saw_good_supporter := false
+	var targets: Array = action.get("targets", [])
+	for target_group: Variant in targets:
+		if not (target_group is Dictionary):
+			continue
+		var cards: Array = (target_group as Dictionary).get("look_top_cards", [])
+		for item: Variant in cards:
+			if not (item is CardInstance):
+				continue
+			var card := item as CardInstance
+			if card.card_data == null or card.card_data.card_type != "Supporter":
+				continue
+			saw_supporter = true
+			var score: float = _score_supporter_candidate_for_player(card, player)
+			if score >= 300.0:
+				saw_good_supporter = true
+	return saw_supporter and not saw_good_supporter
 
 
 func _hand_has_basic_energy(player: PlayerState, energy_type: String) -> bool:
@@ -984,6 +1384,18 @@ func _opponent_has_special_energy_attached(game_state: GameState, player_index: 
 		for energy: CardInstance in slot.attached_energy:
 			if energy != null and energy.card_data != null and energy.card_data.card_type == "Special Energy":
 				return true
+	return false
+
+
+func _has_lost_vacuum_target(game_state: GameState, player_index: int) -> bool:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	if game_state.stadium_card != null and game_state.stadium_owner_index >= 0 and game_state.stadium_owner_index != player_index:
+		return true
+	var opponent: PlayerState = game_state.players[1 - player_index]
+	for slot: PokemonSlot in opponent.get_all_pokemon():
+		if slot != null and slot.attached_tool != null:
+			return true
 	return false
 
 
@@ -1065,6 +1477,225 @@ func build_turn_plan(game_state: GameState, player_index: int, context: Dictiona
 		"constraints": constraints,
 		"context": context.duplicate(true),
 	}
+
+
+func build_continuity_contract(game_state: GameState, player_index: int, turn_contract: Dictionary = {}) -> Dictionary:
+	var disabled := {
+		"enabled": false,
+		"safe_setup_before_attack": false,
+		"setup_debt": {},
+		"action_bonuses": [],
+		"attack_penalty": 0.0,
+	}
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return disabled
+	var player: PlayerState = game_state.players[player_index]
+	if not _has_immediate_raging_bolt_attack_window(game_state, player_index):
+		return disabled
+	var setup_debt: Dictionary = _build_continuity_setup_debt(player)
+	if _continuity_terminal_attack_locked(game_state, player_index, turn_contract):
+		disabled["setup_debt"] = setup_debt
+		disabled["terminal_attack_locked"] = true
+		return disabled
+	var action_bonuses: Array[Dictionary] = _build_continuity_action_bonuses(player, setup_debt)
+	var enabled: bool = _continuity_setup_debt_is_active(setup_debt) and not action_bonuses.is_empty()
+	return {
+		"enabled": enabled,
+		"safe_setup_before_attack": enabled,
+		"setup_debt": setup_debt,
+		"action_bonuses": action_bonuses,
+		"attack_penalty": 0.0,
+	}
+
+
+func _build_continuity_setup_debt(player: PlayerState) -> Dictionary:
+	var bolts_on_field: int = _count_pokemon_on_field(player, RAGING_BOLT_EX)
+	var ogerpon_on_field: int = _count_pokemon_on_field(player, TEAL_MASK_OGERPON_EX)
+	var backup_bolt: PokemonSlot = _best_continuity_backup_bolt(player)
+	var backup_gap: int = _preferred_attack_energy_gap(backup_bolt) if backup_bolt != null else 999
+	var field_basic_energy: int = _count_basic_energy_attached_to_field(player)
+	var ogerpon_with_grass: int = _count_ogerpon_with_grass_energy(player)
+	var bench_open: bool = player != null and not player.is_bench_full()
+	var needs_second_bolt: bool = bolts_on_field < 2 and bench_open
+	var needs_ogerpon: bool = ogerpon_on_field < 1 and bench_open
+	var needs_ogerpon_charge: bool = ogerpon_on_field > 0 and ogerpon_with_grass < ogerpon_on_field and _hand_has_basic_energy(player, "G")
+	var needs_follow_up_energy: bool = backup_bolt != null and backup_gap > 0
+	var needs_field_energy: bool = field_basic_energy < 5 or needs_follow_up_energy or needs_ogerpon_charge
+	var needs_discard_fuel: bool = _count_basic_energy_in_discard(player) < 2
+	return {
+		"ready_raging_bolt_count": _count_ready_raging_bolts(player),
+		"raging_bolt_count": bolts_on_field,
+		"ogerpon_count": ogerpon_on_field,
+		"ogerpon_with_grass_energy_count": ogerpon_with_grass,
+		"field_basic_energy_count": field_basic_energy,
+		"discard_basic_energy_count": _count_basic_energy_in_discard(player),
+		"backup_raging_bolt_gap": backup_gap,
+		"needs_second_raging_bolt": needs_second_bolt,
+		"needs_ogerpon": needs_ogerpon,
+		"needs_ogerpon_charge": needs_ogerpon_charge,
+		"needs_follow_up_energy": needs_follow_up_energy,
+		"needs_field_energy": needs_field_energy,
+		"needs_discard_fuel": needs_discard_fuel,
+	}
+
+
+func _build_continuity_action_bonuses(player: PlayerState, setup_debt: Dictionary) -> Array[Dictionary]:
+	var bonuses: Array[Dictionary] = []
+	var needs_second_bolt: bool = bool(setup_debt.get("needs_second_raging_bolt", false))
+	var needs_ogerpon: bool = bool(setup_debt.get("needs_ogerpon", false))
+	var needs_follow_up_energy: bool = bool(setup_debt.get("needs_follow_up_energy", false))
+	var needs_field_energy: bool = bool(setup_debt.get("needs_field_energy", false))
+	var needs_discard_fuel: bool = bool(setup_debt.get("needs_discard_fuel", false))
+	if player != null and not player.is_bench_full():
+		if needs_second_bolt:
+			bonuses.append(_continuity_bonus(
+				"play_basic_to_bench",
+				RAGING_BOLT_EX,
+				240.0,
+				"Bench a second Raging Bolt before a non-terminal attack.",
+				{"target_names": RAGING_BOLT_EX}
+			))
+		if needs_ogerpon:
+			bonuses.append(_continuity_bonus(
+				"play_basic_to_bench",
+				TEAL_MASK_OGERPON_EX,
+				210.0,
+				"Bench Teal Mask Ogerpon so future Grass attachments become field Energy.",
+				{"target_names": TEAL_MASK_OGERPON_EX}
+			))
+		if needs_second_bolt or needs_ogerpon:
+			bonuses.append(_continuity_bonus(
+				"play_trainer",
+				NEST_BALL,
+				170.0,
+				"Use search to fill missing Raging Bolt/Ogerpon continuity pieces.",
+				{"search_names": RAGING_BOLT_EX + TEAL_MASK_OGERPON_EX}
+			))
+	if bool(setup_debt.get("needs_ogerpon_charge", false)):
+		bonuses.append(_continuity_bonus(
+			"use_ability",
+			TEAL_MASK_OGERPON_EX,
+			220.0,
+			"Use Teal Mask Ogerpon to put Grass Energy on board before Bellowing Thunder.",
+			{"pokemon_names": TEAL_MASK_OGERPON_EX, "energy_types": ["G"]}
+		))
+	if needs_follow_up_energy or needs_field_energy:
+		bonuses.append(_continuity_bonus(
+			"attach_energy",
+			CONTINUITY_ENERGY_NAMES,
+			160.0,
+			"Attach a basic Energy to keep a follow-up Raging Bolt or Bellowing Thunder fuel online.",
+			{"target_names": RAGING_BOLT_EX, "energy_types": CONTINUITY_ENERGY_TYPES, "prefer_non_active": true}
+		))
+	if (needs_follow_up_energy or needs_field_energy) and _count_basic_energy_in_discard(player) >= 1 and _count_ancient_targets(player) >= 1:
+		bonuses.append(_continuity_bonus(
+			"play_trainer",
+			SADA,
+			190.0,
+			"Use Professor Sada's Vitality to charge Ancient follow-up attackers before attacking.",
+			{"target_names": RAGING_BOLT_EX}
+		))
+	if needs_follow_up_energy or needs_field_energy or needs_discard_fuel:
+		bonuses.append(_continuity_bonus(
+			"play_trainer",
+			EARTHEN_VESSEL,
+			150.0,
+			"Use Earthen Vessel to find basic Energy for the next attacker or discard fuel.",
+			{"energy_types": CONTINUITY_ENERGY_TYPES}
+		))
+	if (needs_follow_up_energy or needs_field_energy) and _count_basic_energy_in_discard(player) >= 2:
+		bonuses.append(_continuity_bonus(
+			"play_trainer",
+			ENERGY_RETRIEVAL,
+			130.0,
+			"Recover basic Energy to preserve the follow-up attack chain.",
+			{"energy_types": CONTINUITY_ENERGY_TYPES}
+		))
+	return bonuses
+
+
+func _continuity_bonus(kind: String, card_names: Array[String], bonus: float, reason: String, extra: Dictionary = {}) -> Dictionary:
+	var entry: Dictionary = {
+		"kind": kind,
+		"card_names": card_names.duplicate(),
+		"bonus": bonus,
+		"reason": reason,
+	}
+	for key: Variant in extra.keys():
+		entry[key] = extra[key]
+	return entry
+
+
+func _continuity_setup_debt_is_active(setup_debt: Dictionary) -> bool:
+	return bool(setup_debt.get("needs_second_raging_bolt", false)) \
+		or bool(setup_debt.get("needs_ogerpon", false)) \
+		or bool(setup_debt.get("needs_ogerpon_charge", false)) \
+		or bool(setup_debt.get("needs_follow_up_energy", false)) \
+		or bool(setup_debt.get("needs_field_energy", false)) \
+		or bool(setup_debt.get("needs_discard_fuel", false))
+
+
+func _continuity_terminal_attack_locked(game_state: GameState, player_index: int, turn_contract: Dictionary) -> bool:
+	var flags: Dictionary = turn_contract.get("flags", {}) if turn_contract.get("flags", {}) is Dictionary else {}
+	var constraints: Dictionary = turn_contract.get("constraints", {}) if turn_contract.get("constraints", {}) is Dictionary else {}
+	if bool(constraints.get("must_attack_if_available", false)):
+		return true
+	for key: String in ["final_prize_ko", "final_prize_ko_available", "critical_ko", "critical_ko_available", "key_ko", "key_ko_available", "force_terminal_attack"]:
+		if bool(turn_contract.get(key, false)) or bool(flags.get(key, false)):
+			return true
+	return _raging_bolt_final_prize_ko_is_available(game_state, player_index)
+
+
+func _raging_bolt_final_prize_ko_is_available(game_state: GameState, player_index: int) -> bool:
+	var player: PlayerState = _get_player(game_state, player_index)
+	if player == null or not _has_immediate_raging_bolt_attack_window(game_state, player_index):
+		return false
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var opponent: PlayerState = game_state.players[1 - player_index]
+	if opponent == null or opponent.active_pokemon == null:
+		return false
+	if player.prizes.is_empty() or player.prizes.size() > opponent.active_pokemon.get_prize_count():
+		return false
+	return _estimate_best_bellowing_thunder_damage(player, game_state, player_index) >= opponent.active_pokemon.get_remaining_hp()
+
+
+func _best_continuity_backup_bolt(player: PlayerState) -> PokemonSlot:
+	if player == null:
+		return null
+	var best_slot: PokemonSlot = null
+	var best_gap := 999
+	for slot: PokemonSlot in player.get_all_pokemon():
+		if slot == null or slot == player.active_pokemon or not _slot_matches(slot, RAGING_BOLT_EX):
+			continue
+		var gap: int = _preferred_attack_energy_gap(slot)
+		if gap < best_gap:
+			best_slot = slot
+			best_gap = gap
+	return best_slot
+
+
+func _count_basic_energy_attached_to_field(player: PlayerState) -> int:
+	if player == null:
+		return 0
+	var count := 0
+	for slot: PokemonSlot in player.get_all_pokemon():
+		if slot == null:
+			continue
+		for energy: CardInstance in slot.attached_energy:
+			if energy != null and energy.card_data != null and energy.card_data.card_type == "Basic Energy":
+				count += 1
+	return count
+
+
+func _count_ogerpon_with_grass_energy(player: PlayerState) -> int:
+	if player == null:
+		return 0
+	var count := 0
+	for slot: PokemonSlot in player.get_all_pokemon():
+		if _slot_matches(slot, TEAL_MASK_OGERPON_EX) and slot.count_energy_of_type("G") > 0:
+			count += 1
+	return count
 
 
 func _find_best_charge_bolt_name(player: PlayerState) -> String:
@@ -1219,7 +1850,7 @@ func _bonus_convert_attack(kind: String, action: Dictionary, game_state: GameSta
 		var card: CardInstance = action.get("card")
 		if card != null and card.card_data != null:
 			var name: String = str(card.card_data.name)
-			if (name == "Boss's Orders" or name == "Prime Catcher") and bool(flags.get("opponent_has_value_target", false)):
+			if (_matches_name(name, BOSS_ORDERS) or _matches_name(name, PRIME_CATCHER)) and bool(flags.get("opponent_has_value_target", false)):
 				return 60.0
 	return 0.0
 
@@ -1235,17 +1866,27 @@ func score_handoff_target(item: Variant, step: Dictionary, context: Dictionary =
 	var slot: PokemonSlot = item as PokemonSlot
 	if slot == null or slot.get_card_data() == null:
 		return 0.0
+	var player: PlayerState = _get_player(context.get("game_state"), int(context.get("player_index", -1)))
+	var has_other_bolt := false
+	if player != null:
+		for bench_slot: PokemonSlot in player.bench:
+			if bench_slot != null and bench_slot != slot and _slot_matches(bench_slot, RAGING_BOLT_EX):
+				has_other_bolt = true
+				break
 	if _slot_matches(slot, RAGING_BOLT_EX):
 		var gap: int = _preferred_attack_energy_gap(slot)
 		if gap <= 0:
-			return 800.0
+			return 850.0
 		if gap == 1:
-			return 500.0
-		return 250.0
+			return 650.0
+		if gap == 2:
+			return 460.0
+		return 330.0
 	if _slot_matches(slot, TEAL_MASK_OGERPON_EX):
-		return 300.0 if slot.count_energy_of_type("G") >= 1 else 180.0
+		var ogerpon_score := 300.0 if slot.count_energy_of_type("G") >= 1 else 180.0
+		return mini(ogerpon_score, 240.0) if has_other_bolt else ogerpon_score
 	if _slot_matches(slot, SLITHER_WING):
-		return 200.0
+		return 120.0 if has_other_bolt else 200.0
 	if _slot_matches(slot, SQUAWKABILLY_EX) or _slot_matches(slot, RADIANT_GRENINJA) or _slot_matches(slot, IRON_BUNDLE):
 		return -50.0
 	return 40.0

@@ -92,6 +92,30 @@ class TurnContractActionStrategy extends RefCounted:
 		return 200.0 if str(_action.get("kind", "")) == "evolve" else 20.0
 
 
+class ContinuityContractStrategy extends DeckStrategyBase:
+	func score_action_absolute(action: Dictionary, _game_state: GameState, _player_index: int) -> float:
+		match str(action.get("kind", "")):
+			"attack":
+				return 500.0
+			"play_trainer":
+				return 300.0
+		return 0.0
+
+	func build_continuity_contract(_game_state: GameState, _player_index: int, _turn_contract: Dictionary = {}) -> Dictionary:
+		return {
+			"enabled": true,
+			"safe_setup_before_attack": true,
+			"attack_penalty": 120.0,
+			"setup_debt": {"need_backup_attacker_seed": true},
+			"action_bonuses": [{
+				"kind": "play_trainer",
+				"card_names": ["Buddy-Buddy Poffin"],
+				"bonus": 260.0,
+				"reason": "seed backup before terminal attack",
+			}],
+		}
+
+
 class EndTurnAuthorityStrategy extends RefCounted:
 	func score_action_absolute_with_plan(action: Dictionary, _game_state: GameState, _player_index: int, _turn_plan: Dictionary = {}) -> float:
 		return 90000.0 if str(action.get("kind", "")) == "end_turn" else 100.0
@@ -421,6 +445,31 @@ func test_greedy_combo_bias_can_prefer_setup_chain_over_isolated_attack_peak() -
 	])
 	return assert_eq(str((best.get("action", {}) as Dictionary).get("kind", "")), "play_trainer",
 		"Combo-aware greedy selection should be able to prefer a setup chain over a slightly higher isolated attack score")
+
+
+func test_continuity_contract_can_lift_safe_setup_before_terminal_attack() -> String:
+	var gsm := _make_manual_gsm()
+	var strategy := ContinuityContractStrategy.new()
+	var poffin := CardInstance.create(_make_item_cd("Buddy-Buddy Poffin"), 0)
+	var poffin_action := {"kind": "play_trainer", "card": poffin}
+	var attack_action := {"kind": "attack", "projected_knockout": false}
+	var turn_contract := {"intent": "convert_attack"}
+	var poffin_score: float = strategy.score_action_absolute_with_plan(poffin_action, gsm.game_state, 0, turn_contract)
+	var attack_score: float = strategy.score_action_absolute_with_plan(attack_action, gsm.game_state, 0, turn_contract)
+	return run_checks([
+		assert_true(poffin_score > attack_score, "Continuity contract should let safe setup outrank a non-final terminal attack"),
+		assert_eq(poffin_score, 560.0, "Continuity bonus should be added through the shared plan-aware score path"),
+		assert_eq(attack_score, 380.0, "Continuity attack penalty should cool off non-final terminal attacks"),
+	])
+
+
+func test_continuity_contract_does_not_penalize_final_prize_attack() -> String:
+	var gsm := _make_manual_gsm()
+	gsm.game_state.players[0].set_prizes([CardInstance.create(_make_item_cd("Prize"), 0)])
+	var strategy := ContinuityContractStrategy.new()
+	var attack_action := {"kind": "attack", "projected_knockout": true}
+	var attack_score: float = strategy.score_action_absolute_with_plan(attack_action, gsm.game_state, 0, {"intent": "close_out_prizes"})
+	return assert_eq(attack_score, 500.0, "Continuity contract should not delay a final-prize knockout attack")
 
 
 func test_step_resolver_prefers_handoff_contract_for_switch_targets() -> String:

@@ -12,6 +12,8 @@ const BOOST_PER_POKEMON: int = 10
 const LIGHTNING_TYPE: String = "L"
 ## 基础阶段标识
 const BASIC_STAGE: String = "Basic"
+## 闪电鸟本体不受“电气象征”加伤。
+const ZAPDOS_NAMES: Array[String] = ["闪电鸟", "Zapdos"]
 
 
 ## 被动特性无需主动执行
@@ -31,6 +33,8 @@ func execute_ability(
 static func get_lightning_boost(player: PlayerState, attacker: PokemonSlot) -> int:
 	# 检查攻击者是否为基础雷宝可梦
 	if not _is_basic_lightning(attacker):
+		return 0
+	if _is_zapdos(attacker):
 		return 0
 
 	var total_boost: int = 0
@@ -81,6 +85,19 @@ static func _has_electric_symbol(slot: PokemonSlot) -> bool:
 			var ab_name: Variant = ability.get("name", "")
 			if ab_name is String and (ab_name as String).contains(ABILITY_NAME):
 				return true
+	return false
+
+
+static func _is_zapdos(slot: PokemonSlot) -> bool:
+	if slot == null:
+		return false
+	var top: CardInstance = slot.get_top_card()
+	if top == null or top.card_data == null:
+		return false
+	var cd: CardData = top.card_data
+	for candidate: String in ZAPDOS_NAMES:
+		if cd.name == candidate or cd.name_en == candidate:
+			return true
 	return false
 
 

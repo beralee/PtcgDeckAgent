@@ -39,7 +39,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	var max_select: int = mini(pick_count, items.size())
 	return [{
 		"id": "look_top_cards",
-		"title": "Choose up to %d matching card(s)" % pick_count,
+		"title": "选择最多%d张符合条件的卡" % pick_count,
 		"items": items,
 		"labels": labels,
 		"min_select": 1 if max_select > 0 else 0,

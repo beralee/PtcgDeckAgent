@@ -10,6 +10,8 @@ const AttackKODefenderIfHasSpecialEnergyEffect = preload("res://scripts/effects/
 const AttackDistributedBenchCountersEffect = preload("res://scripts/effects/pokemon_effects/AttackDistributedBenchCounters.gd")
 const AttackLostZoneEnergyEffect = preload("res://scripts/effects/pokemon_effects/AttackLostZoneEnergy.gd")
 const AttackDiscardEnergyMultiDamageEffect = preload("res://scripts/effects/pokemon_effects/AttackDiscardEnergyMultiDamage.gd")
+const AttackSearchEnergyFromDeckToSelfEffect = preload("res://scripts/effects/pokemon_effects/AttackSearchEnergyFromDeckToSelf.gd")
+const AttackCallForFamilyEffect = preload("res://scripts/effects/pokemon_effects/AttackCallForFamily.gd")
 
 const DRAW_TO_N_UIDS := ["151C_151", "CS5aC_105"]
 const THUNDEROUS_BENCH_COUNT_UIDS := ["CS4DaC_137", "CS5bC_051"]
@@ -295,11 +297,23 @@ func test_raichu_v_registry_uses_exact_discard_energy_multi_damage_effect() -> S
 	var bench_lightning := CardInstance.create(_make_energy_data("Bench Lightning", "L"), 0)
 	player.bench[0].attached_energy = [bench_lightning]
 
+	var fast_effects: Array[BaseEffect] = processor.get_attack_effects_for_slot(attacker, 0)
+	var fast_search_effect: AttackSearchEnergyFromDeckToSelfEffect = null
+	var fast_discard_effect: AttackDiscardEnergyMultiDamageEffect = null
+	for effect: BaseEffect in fast_effects:
+		if effect is AttackSearchEnergyFromDeckToSelfEffect:
+			fast_search_effect = effect as AttackSearchEnergyFromDeckToSelfEffect
+		if effect is AttackDiscardEnergyMultiDamageEffect:
+			fast_discard_effect = effect as AttackDiscardEnergyMultiDamageEffect
+
 	var effects: Array[BaseEffect] = processor.get_attack_effects_for_slot(attacker, 1)
 	var discard_effect: AttackDiscardEnergyMultiDamageEffect = null
+	var second_search_effect: AttackSearchEnergyFromDeckToSelfEffect = null
 	for effect: BaseEffect in effects:
 		if effect is AttackDiscardEnergyMultiDamageEffect:
 			discard_effect = effect as AttackDiscardEnergyMultiDamageEffect
+		if effect is AttackSearchEnergyFromDeckToSelfEffect:
+			second_search_effect = effect as AttackSearchEnergyFromDeckToSelfEffect
 			break
 
 	if discard_effect != null:
@@ -313,11 +327,238 @@ func test_raichu_v_registry_uses_exact_discard_energy_multi_damage_effect() -> S
 		discard_effect.clear_attack_interaction_context()
 
 	return run_checks([
+		assert_not_null(fast_search_effect, "Raichu V's Fast Charge should register the deck-to-self energy search effect"),
+		assert_null(fast_discard_effect, "Raichu V's Fast Charge should not include Strong Electric's discard effect"),
 		assert_not_null(discard_effect, "Raichu V's Strong Electric should register AttackDiscardEnergyMultiDamage"),
+		assert_null(second_search_effect, "Raichu V's Strong Electric should not include Fast Charge's deck search effect"),
 		assert_false(active_lightning_a in attacker.attached_energy, "Selected Lightning on the attacker should be discarded"),
 		assert_true(active_lightning_b in attacker.attached_energy, "Unselected Lightning on the attacker should stay attached"),
 		assert_false(bench_lightning in player.bench[0].attached_energy, "Selected Lightning on the bench should be discarded"),
 		assert_eq(player.discard_pile.size(), 2, "Raichu V's Strong Electric should discard every selected Lightning Energy"),
+	])
+
+
+func test_attack_name_registered_effects_without_custom_index_are_scoped() -> String:
+	var processor := EffectProcessor.new()
+	var minccino_cd: CardData = CardDatabase.get_card("CS6bC", "117")
+	processor.register_pokemon_card(minccino_cd)
+
+	var attacker := PokemonSlot.new()
+	attacker.pokemon_stack.append(CardInstance.create(minccino_cd, 0))
+
+	var first_effects: Array[BaseEffect] = processor.get_attack_effects_for_slot(attacker, 0)
+	var second_effects: Array[BaseEffect] = processor.get_attack_effects_for_slot(attacker, 1)
+	var first_has_call := false
+	var second_has_call := false
+	for effect: BaseEffect in first_effects:
+		if effect is AttackCallForFamilyEffect:
+			first_has_call = true
+	for effect: BaseEffect in second_effects:
+		if effect is AttackCallForFamilyEffect:
+			second_has_call = true
+
+	return run_checks([
+		assert_not_null(minccino_cd, "CS6bC_117 should exist in the card database"),
+		assert_true(first_has_call, "Call for Family should be registered for the first attack"),
+		assert_false(second_has_call, "Call for Family should not leak onto the second attack"),
+	])
+
+
+func test_all_multi_attack_cards_scope_attack_effect_instances_to_one_slot() -> String:
+	var failures: Array[String] = []
+	var checked_cards := 0
+	for card: CardData in CardDatabase.get_all_cards():
+		if card == null or not card.is_pokemon() or card.attacks.size() <= 1:
+			continue
+		var processor := EffectProcessor.new()
+		processor.register_pokemon_card(card)
+		var attacker := PokemonSlot.new()
+		attacker.pokemon_stack.append(CardInstance.create(card, 0))
+		attacker.turn_played = 0
+
+		var effect_slots: Dictionary = {}
+		var effect_names: Dictionary = {}
+		for attack_index: int in card.attacks.size():
+			for effect: BaseEffect in processor.get_attack_effects_for_slot(attacker, attack_index):
+				var effect_id := effect.get_instance_id()
+				if not effect_slots.has(effect_id):
+					effect_slots[effect_id] = []
+					effect_names[effect_id] = _effect_debug_name(effect)
+				(effect_slots[effect_id] as Array).append(attack_index)
+
+		for effect_id: Variant in effect_slots.keys():
+			var slots: Array = effect_slots[effect_id]
+			if slots.size() > 1:
+				failures.append("%s_%s %s effect %s appears on attacks %s" % [
+					card.set_code,
+					card.card_index,
+					card.name_en if card.name_en != "" else card.name,
+					effect_names.get(effect_id, ""),
+					str(slots),
+				])
+		checked_cards += 1
+
+	return run_checks([
+		assert_eq(failures.size(), 0, "Attack effects should not leak across attacks on multi-attack cards: %s" % "; ".join(failures.slice(0, 8))),
+		assert_gt(checked_cards, 0, "The all-card attack effect scope audit should inspect at least one multi-attack Pokemon"),
+	])
+
+
+func _effect_debug_name(effect: BaseEffect) -> String:
+	if effect == null:
+		return "<null>"
+	var script: Script = effect.get_script()
+	if script != null and script.resource_path != "":
+		return script.resource_path.get_file().get_basename()
+	return effect.get_class()
+
+
+func test_known_override_attack_effects_are_bound_to_text_matching_attack_slots() -> String:
+	var checks: Array[String] = []
+	var palkia := _attack_effect_flags("CSNC", "003")
+	var dialga := _attack_effect_flags("CSNC", "008")
+	var duskull := _attack_effect_flags("CSV8C", "081")
+
+	checks.append(assert_true(_flag_has(palkia, 0, "AttackSearchDeckToHand"), "Origin Forme Palkia V's Domain Search should search a Stadium on attack 0"))
+	checks.append(assert_false(_flag_has(palkia, 1, "AttackSearchDeckToHand"), "Origin Forme Palkia V's Stadium search should not leak onto Hydro Break"))
+	checks.append(assert_true(_flag_has(palkia, 1, "AttackSelfLockNextTurn"), "Origin Forme Palkia V's Hydro Break should self-lock on attack 1"))
+	checks.append(assert_false(_flag_has(palkia, 0, "AttackSelfLockNextTurn"), "Origin Forme Palkia V's self-lock should not leak onto Domain Search"))
+	checks.append(assert_true(_flag_has(dialga, 0, "AttackAttachBasicEnergyFromDiscard"), "Origin Forme Dialga V's Metal Coating should attach Metal Energy on attack 0"))
+	checks.append(assert_false(_flag_has(dialga, 1, "AttackAttachBasicEnergyFromDiscard"), "Origin Forme Dialga V's Metal Coating effect should not leak onto Temporal Rupture"))
+	checks.append(assert_true(_flag_has(duskull, 0, "AttackReviveFromDiscardToBench"), "Duskull's Spiritborne Evolution should revive Duskull on attack 0"))
+	checks.append(assert_false(_flag_has(duskull, 1, "AttackReviveFromDiscardToBench"), "Duskull's revive effect should not leak onto its damage attack"))
+	return run_checks(checks)
+
+
+func _attack_effect_flags(set_code: String, card_index: String) -> Dictionary:
+	var result: Dictionary = {}
+	var card: CardData = CardDatabase.get_card(set_code, card_index)
+	if card == null:
+		return result
+	var processor := EffectProcessor.new()
+	processor.register_pokemon_card(card)
+	var attacker := PokemonSlot.new()
+	attacker.pokemon_stack.append(CardInstance.create(card, 0))
+	for attack_index: int in card.attacks.size():
+		var names: Array[String] = []
+		for effect: BaseEffect in processor.get_attack_effects_for_slot(attacker, attack_index):
+			names.append(_effect_debug_name(effect))
+		result[attack_index] = names
+	return result
+
+
+func _flag_has(flags: Dictionary, attack_index: int, effect_name: String) -> bool:
+	return effect_name in (flags.get(attack_index, []) as Array)
+
+
+func test_lugia_v_second_attack_does_not_trigger_read_wind_draw() -> String:
+	var processor := EffectProcessor.new()
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	var lugia_cd: CardData = CardDatabase.get_card("CS6aC", "102")
+	if lugia_cd == null:
+		return run_checks([
+			assert_not_null(lugia_cd, "CS6aC_102 Lugia V should exist in the card database"),
+		])
+	processor.register_pokemon_card(lugia_cd)
+
+	var attacker := PokemonSlot.new()
+	attacker.pokemon_stack.append(CardInstance.create(lugia_cd, 0))
+	attacker.turn_played = 0
+	player.active_pokemon = attacker
+	player.hand.clear()
+	player.deck.clear()
+	player.discard_pile.clear()
+	state.stadium_card = null
+	state.stadium_owner_index = -1
+
+	var keep_card := CardInstance.create(_make_basic_pokemon_data("KeepInHand", "C", 60), 0)
+	player.hand.append(keep_card)
+	for i in range(3):
+		player.deck.append(CardInstance.create(_make_basic_pokemon_data("DeckDraw_%d" % i, "C", 60), 0))
+
+	var first_effects: Array[BaseEffect] = processor.get_attack_effects_for_slot(attacker, 0)
+	var second_effects: Array[BaseEffect] = processor.get_attack_effects_for_slot(attacker, 1)
+	var first_has_read_wind := false
+	var first_has_stadium_discard := false
+	var second_has_read_wind := false
+	var second_has_stadium_discard := false
+	for effect: BaseEffect in first_effects:
+		if effect is AttackReadWindDraw:
+			first_has_read_wind = true
+		if effect is AttackOptionalDiscardStadium:
+			first_has_stadium_discard = true
+	for effect: BaseEffect in second_effects:
+		if effect is AttackReadWindDraw:
+			second_has_read_wind = true
+		if effect is AttackOptionalDiscardStadium:
+			second_has_stadium_discard = true
+
+	processor.execute_attack_effect(attacker, 1, state.players[1].active_pokemon, state, [])
+
+	return run_checks([
+		assert_true(first_has_read_wind, "Lugia V's first attack should register Read the Wind draw effect"),
+		assert_false(first_has_stadium_discard, "Lugia V's first attack should not include Aero Dive's Stadium effect"),
+		assert_true(second_has_stadium_discard, "Lugia V's second attack should register the optional Stadium discard effect"),
+		assert_false(second_has_read_wind, "Lugia V's second attack should not include Read the Wind draw effect"),
+		assert_true(keep_card in player.hand, "Lugia V's second attack should not discard a hand card"),
+		assert_eq(player.hand.size(), 1, "Lugia V's second attack should not draw cards"),
+		assert_eq(player.deck.size(), 3, "Lugia V's second attack should leave the deck unchanged"),
+		assert_eq(player.discard_pile.size(), 0, "Lugia V's second attack should not create a discard when no Stadium is present"),
+	])
+
+
+func test_lugia_v_second_attack_stadium_discard_is_optional() -> String:
+	var processor := EffectProcessor.new()
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	var lugia_cd: CardData = CardDatabase.get_card("CS6aC", "102")
+	if lugia_cd == null:
+		return run_checks([
+			assert_not_null(lugia_cd, "CS6aC_102 Lugia V should exist in the card database"),
+		])
+	processor.register_pokemon_card(lugia_cd)
+
+	var attacker := PokemonSlot.new()
+	attacker.pokemon_stack.append(CardInstance.create(lugia_cd, 0))
+	attacker.turn_played = 0
+	player.active_pokemon = attacker
+
+	var stadium := CardInstance.create(_make_trainer_data("Fixture Stadium", "Stadium"), 0)
+	state.stadium_card = stadium
+	state.stadium_owner_index = 0
+
+	var second_effects: Array[BaseEffect] = processor.get_attack_effects_for_slot(attacker, 1)
+	var stadium_effect: AttackOptionalDiscardStadium = null
+	for effect: BaseEffect in second_effects:
+		if effect is AttackOptionalDiscardStadium:
+			stadium_effect = effect as AttackOptionalDiscardStadium
+			break
+
+	var steps: Array[Dictionary] = []
+	var wrong_attack_steps: Array[Dictionary] = []
+	if stadium_effect != null:
+		steps = stadium_effect.get_attack_interaction_steps(attacker.get_top_card(), lugia_cd.attacks[1], state)
+		var first_attack: Dictionary = lugia_cd.attacks[0].duplicate()
+		first_attack["index"] = 0
+		wrong_attack_steps = stadium_effect.get_attack_interaction_steps(attacker.get_top_card(), first_attack, state)
+
+	processor.execute_attack_effect(attacker, 1, state.players[1].active_pokemon, state, [{
+		AttackOptionalDiscardStadium.STEP_ID: ["keep"],
+	}])
+	var kept_after_keep_choice := state.stadium_card == stadium
+	processor.execute_attack_effect(attacker, 1, state.players[1].active_pokemon, state, [{
+		AttackOptionalDiscardStadium.STEP_ID: ["discard"],
+	}])
+
+	return run_checks([
+		assert_not_null(stadium_effect, "Lugia V's second attack should expose the Stadium discard effect"),
+		assert_eq(steps.size(), 1, "Lugia V's second attack should ask whether to discard the Stadium when one is in play"),
+		assert_eq(wrong_attack_steps.size(), 0, "The second attack's Stadium effect should not create a prompt for Lugia V's first attack"),
+		assert_eq(steps[0].get("id", "") if not steps.is_empty() else "", AttackOptionalDiscardStadium.STEP_ID, "The optional Stadium prompt should use a stable interaction id"),
+		assert_true(kept_after_keep_choice, "Choosing to keep the Stadium should leave it in play"),
+		assert_null(state.stadium_card, "Choosing to discard the Stadium should remove it from play"),
+		assert_true(stadium in player.discard_pile, "Discarded Stadium should move to its owner's discard pile"),
 	])
 
 

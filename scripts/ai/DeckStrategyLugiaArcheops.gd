@@ -82,11 +82,17 @@ func plan_opening_setup(player: PlayerState) -> Dictionary:
 	)
 	var active_index: int = int(basics[0].get("index", -1))
 	var bench_indices: Array[int] = []
+	var bench_names: Array[String] = []
+	var active_name := _card_name(player.hand[active_index]) if active_index >= 0 and active_index < player.hand.size() else ""
 	for entry: Dictionary in basics:
 		var idx: int = int(entry.get("index", -1))
 		if idx == active_index:
 			continue
+		var bench_name := _card_name(player.hand[idx]) if idx >= 0 and idx < player.hand.size() else ""
+		if not _should_bench_opening_basic(bench_name, active_name, bench_names):
+			continue
 		bench_indices.append(idx)
+		bench_names.append(bench_name)
 		if bench_indices.size() >= 5:
 			break
 	return {"active_hand_index": active_index, "bench_hand_indices": bench_indices}
@@ -182,6 +188,40 @@ func build_turn_plan(game_state: GameState, player_index: int, context: Dictiona
 	}
 
 
+func build_continuity_contract(game_state: GameState, player_index: int, turn_contract: Dictionary = {}) -> Dictionary:
+	var disabled := {
+		"enabled": false,
+		"safe_setup_before_attack": false,
+		"setup_debt": {},
+		"action_bonuses": [],
+		"attack_penalty": 0.0,
+	}
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return disabled
+	var player: PlayerState = game_state.players[player_index]
+	var resolved_contract: Dictionary = turn_contract.duplicate(true)
+	if resolved_contract.is_empty():
+		resolved_contract = build_turn_contract(game_state, player_index, {"prompt_kind": "continuity_contract"})
+	var setup_debt := _build_continuity_setup_debt(game_state, player_index, player)
+	if not _has_immediate_attack_window(player):
+		disabled["setup_debt"] = setup_debt
+		return disabled
+	if _lugia_continuity_terminal_attack_locked(game_state, player_index, resolved_contract):
+		disabled["setup_debt"] = setup_debt
+		disabled["terminal_attack_locked"] = true
+		return disabled
+	var action_bonuses := _build_continuity_action_bonuses(player, setup_debt)
+	var enabled := _continuity_setup_debt_is_active(setup_debt) and not action_bonuses.is_empty()
+	return {
+		"enabled": enabled,
+		"safe_setup_before_attack": enabled,
+		"setup_debt": setup_debt,
+		"action_bonuses": action_bonuses,
+		"attack_penalty": 0.0,
+		"turn_intent": str(resolved_contract.get("intent", "")),
+	}
+
+
 func score_action_absolute(action: Dictionary, game_state: GameState, player_index: int) -> float:
 	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
 		return 0.0
@@ -195,9 +235,9 @@ func score_action_absolute(action: Dictionary, game_state: GameState, player_ind
 		"play_stadium":
 			return _score_stadium(action.get("card", null), game_state, player, player_index, phase)
 		"play_trainer":
-			return _score_trainer(action.get("card", null), player, phase)
+			return _score_trainer(action.get("card", null), player, phase, game_state, player_index)
 		"attach_energy":
-			return _score_attach(action.get("card", null), action.get("target_slot", null), player, phase)
+			return _score_attach(action.get("card", null), action.get("target_slot", null), player, phase, game_state)
 		"use_ability":
 			return _score_use_ability(action.get("source_slot", null), game_state, player, phase)
 		"retreat":
@@ -279,8 +319,8 @@ func get_discard_priority_contextual(card: CardInstance, game_state: GameState, 
 		return priority
 	var player: PlayerState = game_state.players[player_index]
 	var name := _card_name(card)
-	if name == ARCHEOPS and _count_named_in_discard(player, ARCHEOPS) >= 2:
-		return 120
+	if name == ARCHEOPS and not _needs_archeops_discard_setup(player):
+		return 90
 	if name == LUGIA_VSTAR and _count_named_on_field(player, LUGIA_V) > 0 and _count_named_on_field(player, LUGIA_VSTAR) == 0:
 		return 10
 	if card.card_data.card_type == "Special Energy" and _count_total_special_energy(player) <= 3:
@@ -313,6 +353,8 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 			return _summon_target_score(card)
 	if item is PokemonSlot and step_id in ["assignment_target", "energy_assignment"]:
 		return _assignment_target_score(item as PokemonSlot, context)
+	if item is PokemonSlot and step_id in ["opponent_switch_target", "opponent_bench_target"]:
+		return _score_opponent_switch_target(item as PokemonSlot, context)
 	if item is PokemonSlot and step_id in ["send_out", "switch_target", "self_switch_target", "pivot_target", "heavy_baton_target"]:
 		return _score_handoff_target(item as PokemonSlot, step_id, context)
 	return 0.0
@@ -340,6 +382,8 @@ func _pick_search_items_by_score(items: Array, max_select: int, step: Dictionary
 
 func score_handoff_target(item: Variant, step: Dictionary, context: Dictionary = {}) -> float:
 	var step_id := str(step.get("id", ""))
+	if item is PokemonSlot and step_id in ["opponent_switch_target", "opponent_bench_target"]:
+		return _score_opponent_switch_target(item as PokemonSlot, context)
 	if item is PokemonSlot and step_id in ["send_out", "switch_target", "self_switch_target", "pivot_target", "heavy_baton_target"]:
 		return _score_handoff_target(item as PokemonSlot, step_id, context)
 	return score_interaction_target(item, step, context)
@@ -363,6 +407,18 @@ func _setup_priority(name: String, player: PlayerState) -> float:
 	return 100.0
 
 
+func _should_bench_opening_basic(name: String, active_name: String, bench_names: Array[String]) -> bool:
+	if name == LUGIA_V or name == MINCCINO:
+		return true
+	var owner_present := active_name == LUGIA_V or bench_names.has(LUGIA_V)
+	var minccino_present := active_name == MINCCINO or bench_names.has(MINCCINO)
+	if owner_present and minccino_present:
+		return false
+	if bench_names.is_empty() and active_name != LUGIA_V:
+		return true
+	return false
+
+
 func _score_play_basic(card: CardInstance, game_state: GameState, player_index: int, player: PlayerState, phase: String) -> float:
 	if card == null or card.card_data == null or player.is_bench_full():
 		return 0.0
@@ -370,6 +426,7 @@ func _score_play_basic(card: CardInstance, game_state: GameState, player_index: 
 	var owner_missing := _count_named_on_field(player, LUGIA_V) + _count_named_on_field(player, LUGIA_VSTAR) == 0
 	var owner_in_hand := _count_named_in_hand(player, LUGIA_V) > 0
 	var cool_off_padding := _should_cool_off_post_launch_padding(player, phase)
+	var core_shell_pressure := _lugia_core_shell_pressure(player)
 	if name == LUGIA_V:
 		if owner_missing:
 			return 640.0 if phase == "early" else 520.0
@@ -384,19 +441,23 @@ func _score_play_basic(card: CardInstance, game_state: GameState, player_index: 
 		return 10.0
 	if owner_missing and not owner_in_hand and phase == "early":
 		if name == LUMINEON_V:
-			return 70.0
+			return 120.0
 		if name in [IRON_HANDS_EX, FEZANDIPITI_EX, BLOODMOON_URSALUNA_EX, WELLSPRING_OGERPON_EX, CORNERSTONE_OGERPON_EX]:
 			return 20.0
+	if core_shell_pressure and name in [LUMINEON_V, FEZANDIPITI_EX, IRON_HANDS_EX, BLOODMOON_URSALUNA_EX, WELLSPRING_OGERPON_EX, CORNERSTONE_OGERPON_EX]:
+		if name == FEZANDIPITI_EX and player.prizes.size() > 0 and player.prizes.size() < 6:
+			return 65.0
+		return 0.0
 	if name == IRON_HANDS_EX:
-		return 180.0 if phase != "early" else 140.0
+		return 180.0 if _count_named_on_field(player, ARCHEOPS) > 0 and phase != "early" else 40.0
 	if name == BLOODMOON_URSALUNA_EX:
-		return 170.0 if phase == "late" else 80.0
+		return 170.0 if phase == "late" else 20.0
 	if name == LUMINEON_V:
-		return 140.0 if phase == "early" else 70.0
+		return 90.0 if phase == "early" and _count_named_on_field(player, LUGIA_VSTAR) == 0 else 20.0
 	if name == FEZANDIPITI_EX:
-		return 110.0
+		return 95.0 if player.prizes.size() > 0 and player.prizes.size() < 6 else 25.0
 	if name == WELLSPRING_OGERPON_EX or name == CORNERSTONE_OGERPON_EX:
-		return 120.0 if phase == "late" else 70.0
+		return 120.0 if phase == "late" and _count_named_on_field(player, ARCHEOPS) > 0 else 15.0
 	return 80.0
 
 
@@ -453,7 +514,13 @@ func _score_stadium(card: CardInstance, game_state: GameState, player: PlayerSta
 	return 0.0
 
 
-func _score_trainer(card: CardInstance, player: PlayerState, phase: String) -> float:
+func _score_trainer(
+	card: CardInstance,
+	player: PlayerState,
+	phase: String,
+	game_state: GameState = null,
+	player_index: int = -1
+) -> float:
 	if card == null or card.card_data == null:
 		return 0.0
 	var name := _card_name(card)
@@ -462,7 +529,7 @@ func _score_trainer(card: CardInstance, player: PlayerState, phase: String) -> f
 	var cool_off_churn := _should_cool_off_post_launch_padding(player, phase)
 	var cool_off_draw_churn := _should_cool_off_draw_churn(player, phase)
 	if cool_off_draw_churn:
-		if name in [PROFESSORS_RESEARCH, IONO, GREAT_BALL, CARMINE]:
+		if name in [PROFESSORS_RESEARCH, IONO, GREAT_BALL, CARMINE, ULTRA_BALL, CAPTURING_AROMA]:
 			return 0.0
 	if cool_off_churn:
 		if name == PROFESSORS_RESEARCH:
@@ -479,36 +546,43 @@ func _score_trainer(card: CardInstance, player: PlayerState, phase: String) -> f
 			return 20.0
 	if name == ULTRA_BALL:
 		if owner_missing and owner_in_hand:
-			if _count_named_in_discard(player, ARCHEOPS) < 2 and (_has_card_named(player.deck, ARCHEOPS) or _count_named_in_hand(player, ARCHEOPS) > 0):
+			if _needs_archeops_discard_setup(player):
 				return 250.0
 			return 120.0
-		if _count_named_in_discard(player, ARCHEOPS) < 2 and (_has_card_named(player.deck, ARCHEOPS) or _count_named_in_hand(player, ARCHEOPS) > 0):
+		if _needs_archeops_discard_setup(player):
 			return 560.0
 		if _count_named_on_field(player, LUGIA_V) > 0 and _count_named_on_field(player, LUGIA_VSTAR) == 0:
 			return 440.0
 		return 240.0
 	if name == CAPTURING_AROMA:
 		if owner_missing and owner_in_hand:
-			if _count_named_in_discard(player, ARCHEOPS) < 2:
+			if _needs_archeops_discard_setup(player):
 				return 230.0
 			return 110.0
 		if _count_named_on_field(player, LUGIA_V) == 0 and _count_named_on_field(player, LUGIA_VSTAR) == 0:
 			return 360.0
 		if _count_named_on_field(player, LUGIA_V) > 0 and _count_named_on_field(player, LUGIA_VSTAR) == 0:
 			return 380.0
-		if _count_named_in_discard(player, ARCHEOPS) < 2:
+		if _needs_archeops_discard_setup(player):
 			return 320.0
 		return 160.0
 	if name == GREAT_BALL:
 		return 210.0 if phase == "early" else 110.0
 	if name == PROFESSORS_RESEARCH:
-		return 220.0 if player.hand.size() <= 4 or _count_named_in_discard(player, ARCHEOPS) < 2 else 130.0
+		return 220.0 if player.hand.size() <= 4 or _needs_archeops_discard_setup(player) else 130.0
 	if name == IONO:
 		return 170.0
 	if name == CARMINE:
 		return 190.0 if phase == "early" else 80.0
 	if name == JACQ:
 		return 230.0 if _count_named_on_field(player, LUGIA_V) > 0 and _count_named_on_field(player, LUGIA_VSTAR) == 0 else 110.0
+	if name == BOSSS_ORDERS:
+		var gust_target := _best_gust_ko_target(game_state, player_index)
+		if gust_target != null:
+			return 760.0 + float(gust_target.get_prize_count()) * 120.0
+		if _has_ready_attacker(player) and phase == "late":
+			return 160.0
+		return 0.0
 	return 90.0
 
 
@@ -521,7 +595,7 @@ func _score_supporter_card(card: CardInstance, context: Dictionary) -> float:
 		return float(get_search_priority(card))
 	var player: PlayerState = game_state.players[player_index]
 	var phase := _detect_phase(game_state, player)
-	var score := _score_trainer(card, player, phase)
+	var score := _score_trainer(card, player, phase, game_state, player_index)
 	var name := _card_name(card)
 	if name == JACQ and _count_named_on_field(player, LUGIA_V) > 0 and _count_named_on_field(player, LUGIA_VSTAR) == 0:
 		score += 40.0
@@ -532,15 +606,22 @@ func _score_supporter_card(card: CardInstance, context: Dictionary) -> float:
 	return score
 
 
-func _score_attach(card: CardInstance, target_slot: PokemonSlot, player: PlayerState, phase: String) -> float:
+func _score_attach(
+	card: CardInstance,
+	target_slot: PokemonSlot,
+	player: PlayerState,
+	phase: String,
+	game_state: GameState = null
+) -> float:
 	if card == null or card.card_data == null or target_slot == null:
 		return 0.0
 	var source_name := _card_name(card)
 	var target_name := _slot_name(target_slot)
 	var archeops_online := _count_named_on_field(player, ARCHEOPS) > 0
 	var owner_missing := _count_named_on_field(player, LUGIA_V) + _count_named_on_field(player, LUGIA_VSTAR) == 0
-	if owner_missing and phase == "early" and target_name not in [LUGIA_V, LUGIA_VSTAR]:
-		return 10.0 if card.card_data.is_energy() else 0.0
+	var initial_launch_window := game_state == null or game_state.turn_number <= 2
+	if owner_missing and phase == "early" and initial_launch_window and target_name not in [LUGIA_V, LUGIA_VSTAR]:
+		return 0.0
 	if source_name == DOUBLE_TURBO_ENERGY:
 		if target_name == LUGIA_V or target_name == LUGIA_VSTAR:
 			return 420.0 if _attack_energy_gap(target_slot) > 0 else 90.0
@@ -695,18 +776,18 @@ func _search_score(card: CardInstance, game_state: GameState, player_index: int)
 		if name == MINCCINO:
 			return 150
 	if lugia_on_field == 0 and lugia_in_hand > 0:
-		if name == ARCHEOPS and _count_named_in_discard(player, ARCHEOPS) + _count_named_in_hand(player, ARCHEOPS) < 2:
+		if _archeops_search_candidate_is_needed(player, name):
 			return 215
 		if name == MINCCINO and minccino_total == 0:
 			return 185
 		if name == LUGIA_VSTAR and lugia_vstar_on_field + lugia_vstar_in_hand == 0:
 			return 70
-	if name == ARCHEOPS and _count_named_in_discard(player, ARCHEOPS) < 2:
-		return 160 + _turn_contract_search_bonus(turn_contract, ARCHEOPS)
 	if name == LUGIA_V and _count_named_on_field(player, LUGIA_V) + _count_named_on_field(player, LUGIA_VSTAR) == 0:
 		return 150 + _turn_contract_search_bonus(turn_contract, LUGIA_V)
 	if name == LUGIA_VSTAR and _count_named_on_field(player, LUGIA_V) > 0 and _count_named_on_field(player, LUGIA_VSTAR) == 0:
-		return 170 + _turn_contract_search_bonus(turn_contract, LUGIA_VSTAR)
+		return 260 + _turn_contract_search_bonus(turn_contract, LUGIA_VSTAR)
+	if _archeops_search_candidate_is_needed(player, name):
+		return 160 + _turn_contract_search_bonus(turn_contract, ARCHEOPS)
 	if name == CINCCINO and _count_named_on_field(player, MINCCINO) > 0 and _count_named_on_field(player, CINCCINO) == 0:
 		return 185
 	if name == MINCCINO and _count_named_on_field(player, MINCCINO) + _count_named_on_field(player, CINCCINO) == 0:
@@ -775,6 +856,31 @@ func _assignment_target_score(slot: PokemonSlot, context: Dictionary) -> float:
 	return 90.0
 
 
+func _score_opponent_switch_target(slot: PokemonSlot, context: Dictionary) -> float:
+	if slot == null:
+		return 0.0
+	var game_state: GameState = context.get("game_state", null)
+	var player_index := int(context.get("player_index", -1))
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return 0.0
+	var player: PlayerState = game_state.players[player_index]
+	if player == null or player.active_pokemon == null or _attack_energy_gap(player.active_pokemon) > 0:
+		return 0.0
+	var projected_damage := _best_attack_damage(player.active_pokemon)
+	if projected_damage <= 0:
+		return 0.0
+	var score := 0.0
+	var can_ko := projected_damage >= slot.get_remaining_hp()
+	if can_ko:
+		score += 520.0
+		score += float(slot.get_prize_count()) * 180.0
+	else:
+		score -= 120.0
+	score += float(slot.damage_counters) * 1.5
+	score -= float(slot.get_remaining_hp()) * 0.35
+	return score
+
+
 func _tool_pressure(player: PlayerState) -> float:
 	if player == null:
 		return 0.0
@@ -809,6 +915,247 @@ func _collapsed_cleanup_value(player: PlayerState) -> float:
 	return value
 
 
+
+
+func _build_continuity_setup_debt(game_state: GameState, player_index: int, player: PlayerState) -> Dictionary:
+	var archeops_field := _count_named_on_field(player, ARCHEOPS)
+	var archeops_discard := _count_named_in_discard(player, ARCHEOPS)
+	var archeops_hand := _count_named_in_hand(player, ARCHEOPS)
+	var lugia_vstar_field := _count_named_on_field(player, LUGIA_VSTAR)
+	var backup_seed_count := _continuity_backup_seed_count(player)
+	var ready_backup_count := _continuity_ready_backup_count(player)
+	var minccino_field := _count_named_on_field(player, MINCCINO)
+	var cinccino_field := _count_named_on_field(player, CINCCINO)
+	var best_backup := _best_continuity_backup_attacker(player)
+	var backup_gap := _attack_energy_gap(best_backup) if best_backup != null else 999
+	var vstar_unused := player_index >= 0 \
+		and player_index < game_state.vstar_power_used.size() \
+		and not bool(game_state.vstar_power_used[player_index])
+	var bench_open := player != null and not player.is_bench_full()
+	var has_archeops_route := vstar_unused \
+		and (archeops_discard > 0 or archeops_hand > 0 or _has_card_named(player.deck, ARCHEOPS))
+	var needs_second_archeops := archeops_field < 2 and has_archeops_route
+	var needs_archeops_discard := needs_second_archeops and archeops_discard < mini(2, 2 - archeops_field)
+	var needs_summoning_star := lugia_vstar_field > 0 and vstar_unused and archeops_field < 2 and archeops_discard > 0
+	var needs_backup_seed := backup_seed_count == 0 and bench_open
+	var needs_cinccino_evolution := minccino_field > 0 \
+		and cinccino_field == 0 \
+		and (_count_named_in_hand(player, CINCCINO) > 0 or _has_card_named(player.deck, CINCCINO))
+	var needs_backup_energy := best_backup != null \
+		and backup_gap > 0 \
+		and (archeops_field > 0 or _hand_has_special_energy(player) or _count_special_energy_in_deck(player) > 0)
+	return {
+		"archeops_on_field_count": archeops_field,
+		"archeops_in_discard_count": archeops_discard,
+		"archeops_in_hand_count": archeops_hand,
+		"backup_attacker_seed_count": backup_seed_count,
+		"ready_backup_attacker_count": ready_backup_count,
+		"backup_attacker_energy_gap": backup_gap,
+		"needs_second_archeops": needs_second_archeops,
+		"needs_archeops_discard_or_search": needs_archeops_discard,
+		"needs_summoning_star": needs_summoning_star,
+		"needs_backup_attacker_seed": needs_backup_seed,
+		"needs_cinccino_evolution": needs_cinccino_evolution,
+		"needs_second_attacker_energy": needs_backup_energy,
+		"continuity_complete": archeops_field >= 2 and ready_backup_count > 0,
+	}
+
+
+func _build_continuity_action_bonuses(player: PlayerState, setup_debt: Dictionary) -> Array[Dictionary]:
+	var bonuses: Array[Dictionary] = []
+	if bool(setup_debt.get("needs_summoning_star", false)):
+		bonuses.append(_continuity_bonus(
+			"use_ability",
+			[],
+			620.0,
+			"summon_second_archeops_before_nonterminal_attack",
+			{"target_names": [LUGIA_VSTAR]}
+		))
+	if bool(setup_debt.get("needs_second_archeops", false)) or bool(setup_debt.get("needs_archeops_discard_or_search", false)):
+		bonuses.append(_continuity_bonus(
+			"play_trainer",
+			[ULTRA_BALL, CAPTURING_AROMA, GREAT_BALL],
+			560.0,
+			"complete_dual_archeops_engine_before_nonterminal_attack"
+		))
+		bonuses.append(_continuity_bonus(
+			"play_trainer",
+			[PROFESSORS_RESEARCH, CARMINE, JACQ],
+			260.0,
+			"advance_archeops_discard_search_line_before_nonterminal_attack"
+		))
+	if bool(setup_debt.get("needs_backup_attacker_seed", false)):
+		bonuses.append(_continuity_bonus(
+			"play_basic_to_bench",
+			[LUGIA_V, MINCCINO, IRON_HANDS_EX, BLOODMOON_URSALUNA_EX, WELLSPRING_OGERPON_EX, CORNERSTONE_OGERPON_EX],
+			480.0,
+			"seed_backup_lugia_or_main_attacker_before_nonterminal_attack"
+		))
+		bonuses.append(_continuity_bonus(
+			"play_trainer",
+			[ULTRA_BALL, CAPTURING_AROMA, GREAT_BALL],
+			360.0,
+			"search_backup_lugia_or_main_attacker_before_nonterminal_attack"
+		))
+	if bool(setup_debt.get("needs_cinccino_evolution", false)):
+		bonuses.append(_continuity_bonus(
+			"evolve",
+			[CINCCINO],
+			430.0,
+			"evolve_backup_cinccino_before_nonterminal_attack"
+		))
+		bonuses.append(_continuity_bonus(
+			"play_trainer",
+			[ULTRA_BALL, CAPTURING_AROMA, GREAT_BALL, JACQ],
+			330.0,
+			"search_cinccino_backup_attacker_before_nonterminal_attack"
+		))
+	if bool(setup_debt.get("needs_second_attacker_energy", false)):
+		bonuses.append(_continuity_bonus(
+			"use_ability",
+			[],
+			330.0,
+			"archeops_relay_energy_to_followup_attacker_before_nonterminal_attack",
+			{"target_names": [ARCHEOPS]}
+		))
+		bonuses.append(_continuity_bonus(
+			"attach_energy",
+			[DOUBLE_TURBO_ENERGY, GIFT_ENERGY, JET_ENERGY, MIST_ENERGY, V_GUARD_ENERGY, LEGACY_ENERGY],
+			440.0,
+			"manual_relay_special_energy_to_followup_attacker_before_nonterminal_attack",
+			{"target_names": [LUGIA_V, LUGIA_VSTAR, CINCCINO, IRON_HANDS_EX, BLOODMOON_URSALUNA_EX, WELLSPRING_OGERPON_EX, CORNERSTONE_OGERPON_EX]}
+		))
+	return bonuses
+
+
+func _continuity_bonus(kind: String, card_names: Array[String], bonus: float, reason: String, extra: Dictionary = {}) -> Dictionary:
+	var entry := {
+		"kind": kind,
+		"card_names": card_names.duplicate(),
+		"bonus": bonus,
+		"reason": reason,
+	}
+	for key: Variant in extra.keys():
+		entry[key] = extra[key]
+	return entry
+
+
+func _continuity_setup_debt_is_active(setup_debt: Dictionary) -> bool:
+	return bool(setup_debt.get("needs_second_archeops", false)) \
+		or bool(setup_debt.get("needs_archeops_discard_or_search", false)) \
+		or bool(setup_debt.get("needs_summoning_star", false)) \
+		or bool(setup_debt.get("needs_backup_attacker_seed", false)) \
+		or bool(setup_debt.get("needs_cinccino_evolution", false)) \
+		or bool(setup_debt.get("needs_second_attacker_energy", false))
+
+
+func _lugia_continuity_terminal_attack_locked(game_state: GameState, player_index: int, turn_contract: Dictionary) -> bool:
+	var flags: Dictionary = turn_contract.get("flags", {}) if turn_contract.get("flags", {}) is Dictionary else {}
+	var constraints: Dictionary = turn_contract.get("constraints", {}) if turn_contract.get("constraints", {}) is Dictionary else {}
+	if bool(constraints.get("must_attack_if_available", false)):
+		return true
+	for key: String in ["final_prize_ko", "final_prize_ko_available", "critical_ko", "critical_ko_available", "key_ko", "key_ko_available", "force_terminal_attack"]:
+		if bool(turn_contract.get(key, false)) or bool(flags.get(key, false)):
+			return true
+	return _lugia_final_prize_ko_is_available(game_state, player_index)
+
+
+func _lugia_final_prize_ko_is_available(game_state: GameState, player_index: int) -> bool:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	if player == null or player.prizes.is_empty() or player.active_pokemon == null:
+		return false
+	var opponent: PlayerState = game_state.players[1 - player_index]
+	if opponent == null or opponent.active_pokemon == null:
+		return false
+	if player.prizes.size() > opponent.active_pokemon.get_prize_count():
+		return false
+	if _attack_energy_gap(player.active_pokemon) > 0:
+		return false
+	return _best_attack_damage(player.active_pokemon) >= opponent.active_pokemon.get_remaining_hp()
+
+
+func _has_immediate_attack_window(player: PlayerState) -> bool:
+	if player == null or player.active_pokemon == null:
+		return false
+	return _attack_energy_gap(player.active_pokemon) <= 0 and _best_attack_damage(player.active_pokemon) > 0
+
+
+func _continuity_backup_seed_count(player: PlayerState) -> int:
+	if player == null:
+		return 0
+	var count := 0
+	for slot: PokemonSlot in player.bench:
+		if _is_continuity_backup_seed(slot):
+			count += 1
+	return count
+
+
+func _continuity_ready_backup_count(player: PlayerState) -> int:
+	if player == null:
+		return 0
+	var count := 0
+	for slot: PokemonSlot in player.bench:
+		if slot == null or _attack_energy_gap(slot) > 0:
+			continue
+		if _best_attack_damage(slot) > 0 and _is_continuity_energy_target(slot):
+			count += 1
+	return count
+
+
+func _best_continuity_backup_attacker(player: PlayerState) -> PokemonSlot:
+	if player == null:
+		return null
+	var best_slot: PokemonSlot = null
+	var best_score := -INF
+	for slot: PokemonSlot in player.bench:
+		if not _is_continuity_energy_target(slot):
+			continue
+		var gap := _attack_energy_gap(slot)
+		if gap >= 99:
+			continue
+		var score := -float(gap) * 120.0 + float(_best_attack_damage(slot))
+		var slot_name := _slot_name(slot)
+		if slot_name == CINCCINO:
+			score += 90.0
+		elif slot_name == LUGIA_VSTAR or slot_name == LUGIA_V:
+			score += 70.0
+		elif slot_name == IRON_HANDS_EX:
+			score += 60.0
+		if score > best_score:
+			best_score = score
+			best_slot = slot
+	return best_slot
+
+
+func _is_continuity_backup_seed(slot: PokemonSlot) -> bool:
+	var slot_name := _slot_name(slot)
+	return slot_name in [LUGIA_V, LUGIA_VSTAR, MINCCINO, CINCCINO, IRON_HANDS_EX, BLOODMOON_URSALUNA_EX, WELLSPRING_OGERPON_EX, CORNERSTONE_OGERPON_EX]
+
+
+func _is_continuity_energy_target(slot: PokemonSlot) -> bool:
+	var slot_name := _slot_name(slot)
+	return slot_name in [LUGIA_V, LUGIA_VSTAR, CINCCINO, IRON_HANDS_EX, BLOODMOON_URSALUNA_EX, WELLSPRING_OGERPON_EX, CORNERSTONE_OGERPON_EX]
+
+
+func _hand_has_special_energy(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	for card: CardInstance in player.hand:
+		if card != null and card.card_data != null and str(card.card_data.card_type) == "Special Energy":
+			return true
+	return false
+
+
+func _count_special_energy_in_deck(player: PlayerState) -> int:
+	if player == null:
+		return 0
+	var count := 0
+	for card: CardInstance in player.deck:
+		if card != null and card.card_data != null and str(card.card_data.card_type) == "Special Energy":
+			count += 1
+	return count
 
 
 func _detect_phase(game_state: GameState, player: PlayerState) -> String:
@@ -972,7 +1319,7 @@ func _should_cool_off_post_launch_padding(player: PlayerState, phase: String) ->
 
 
 func _has_deck_out_pressure(player: PlayerState) -> bool:
-	return player != null and player.deck.size() > 0 and player.deck.size() <= 10
+	return player != null and player.deck.size() > 0 and player.deck.size() <= 14
 
 
 func _has_ready_attacker(player: PlayerState) -> bool:
@@ -985,6 +1332,65 @@ func _has_ready_attacker(player: PlayerState) -> bool:
 
 func _should_cool_off_draw_churn(player: PlayerState, phase: String) -> bool:
 	return _has_deck_out_pressure(player) and _should_cool_off_post_launch_padding(player, phase) and _has_ready_attacker(player)
+
+
+func _needs_archeops_discard_setup(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	if _count_named_on_field(player, ARCHEOPS) > 0:
+		return false
+	var staged_count := _count_named_in_discard(player, ARCHEOPS) + _count_named_in_hand(player, ARCHEOPS)
+	if staged_count >= 2:
+		return false
+	return _has_card_named(player.deck, ARCHEOPS) or _count_named_in_hand(player, ARCHEOPS) > 0
+
+
+func _archeops_search_candidate_is_needed(player: PlayerState, candidate_name: String) -> bool:
+	if player == null or candidate_name != ARCHEOPS:
+		return false
+	if _count_named_on_field(player, ARCHEOPS) > 0:
+		return false
+	return _count_named_in_discard(player, ARCHEOPS) + _count_named_in_hand(player, ARCHEOPS) < 2
+
+
+func _lugia_core_shell_pressure(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	var lugia_line := _count_named_on_field(player, LUGIA_V) + _count_named_on_field(player, LUGIA_VSTAR)
+	var minccino_line := _count_named_on_field(player, MINCCINO) + _count_named_on_field(player, CINCCINO)
+	if lugia_line == 0 or minccino_line == 0:
+		return true
+	if _count_named_on_field(player, LUGIA_VSTAR) == 0:
+		return true
+	if _count_named_on_field(player, ARCHEOPS) == 0 and _count_named_in_discard(player, ARCHEOPS) < 2:
+		return true
+	return false
+
+
+func _best_gust_ko_target(game_state: GameState, player_index: int) -> PokemonSlot:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return null
+	var player: PlayerState = game_state.players[player_index]
+	var opponent: PlayerState = game_state.players[1 - player_index]
+	if player == null or opponent == null or player.active_pokemon == null:
+		return null
+	if _attack_energy_gap(player.active_pokemon) > 0:
+		return null
+	var projected_damage := _best_attack_damage(player.active_pokemon)
+	if projected_damage <= 0:
+		return null
+	var best: PokemonSlot = null
+	var best_score := -INF
+	for slot: PokemonSlot in opponent.bench:
+		if slot == null or slot.get_remaining_hp() <= 0:
+			continue
+		if projected_damage < slot.get_remaining_hp():
+			continue
+		var score := float(slot.get_prize_count()) * 300.0 + float(slot.damage_counters) * 1.5 - float(slot.get_remaining_hp()) * 0.25
+		if score > best_score:
+			best_score = score
+			best = slot
+	return best
 
 
 func _attack_energy_gap(slot: PokemonSlot) -> int:

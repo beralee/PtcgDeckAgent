@@ -17,25 +17,27 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			tool_labels.append(deck_card.card_data.name)
 	var steps: Array[Dictionary] = []
 	if not item_cards.is_empty():
-		steps.append({
-			"id": "search_item",
-			"title": "选择1张物品卡加入手牌",
-			"items": item_cards,
-			"labels": item_labels,
-			"min_select": 1,
-			"max_select": 1,
-			"allow_cancel": true,
-		})
+		steps.append(build_full_library_search_step(
+			"search_item",
+			"选择1张物品卡加入手牌",
+			player.deck,
+			item_cards,
+			VISIBLE_SCOPE_OWN_FULL_DECK,
+			1,
+			1,
+			{"allow_cancel": true}
+		))
 	if not tool_cards.is_empty():
-		steps.append({
-			"id": "search_tool",
-			"title": "选择1张宝可梦道具加入手牌",
-			"items": tool_cards,
-			"labels": tool_labels,
-			"min_select": 1,
-			"max_select": 1,
-			"allow_cancel": true,
-		})
+		steps.append(build_full_library_search_step(
+			"search_tool",
+			"选择1张宝可梦道具加入手牌",
+			player.deck,
+			tool_cards,
+			VISIBLE_SCOPE_OWN_FULL_DECK,
+			1,
+			1,
+			{"allow_cancel": true}
+		))
 	if steps.is_empty():
 		return [build_empty_search_resolution_step("牌库里没有物品卡或宝可梦道具。你仍可以使用这张卡。")]
 	return steps
@@ -68,15 +70,21 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	var found_item: CardInstance = null
 	var found_tool: CardInstance = null
 	var item_raw: Array = ctx.get("search_item", [])
-	if not item_raw.is_empty() and item_raw[0] is CardInstance:
-		var selected_item: CardInstance = item_raw[0]
+	for entry: Variant in item_raw:
+		if not (entry is CardInstance):
+			continue
+		var selected_item: CardInstance = entry
 		if selected_item in player.deck and selected_item.card_data.card_type == "Item":
 			found_item = selected_item
+			break
 	var tool_raw: Array = ctx.get("search_tool", [])
-	if not tool_raw.is_empty() and tool_raw[0] is CardInstance:
-		var selected_tool: CardInstance = tool_raw[0]
+	for entry: Variant in tool_raw:
+		if not (entry is CardInstance):
+			continue
+		var selected_tool: CardInstance = entry
 		if selected_tool in player.deck and selected_tool.card_data.card_type == "Tool":
 			found_tool = selected_tool
+			break
 
 	for deck_card: CardInstance in player.deck:
 		if found_item == null and deck_card.card_data.card_type == "Item":

@@ -26,7 +26,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		if hand_card == card:
 			continue
 		hand_items.append(hand_card)
-		hand_labels.append(hand_card.card_data.name if hand_card.card_data != null else "Unknown Card")
+		hand_labels.append(hand_card.card_data.name if hand_card.card_data != null else "未知卡牌")
 	steps.append({
 		"id": "discard_cards",
 		"title": "选择3张手牌放入弃牌区",
@@ -54,15 +54,16 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		if items.is_empty():
 			continue
 		added_search_step = true
-		steps.append({
-			"id": search_def[0],
-			"title": search_def[2],
-			"items": items,
-			"labels": labels,
-			"min_select": 0,
-			"max_select": 1,
-			"allow_cancel": true,
-		})
+		steps.append(build_full_library_search_step(
+			str(search_def[0]),
+			str(search_def[2]),
+			player.deck,
+			items,
+			VISIBLE_SCOPE_OWN_FULL_DECK,
+			0,
+			1,
+			{"allow_cancel": true}
+		))
 	if not added_search_step:
 		steps.append(build_empty_search_resolution_step("牌库里没有可检索的物品、道具、支援者或竞技场卡。你仍可以使用这张卡。"))
 	return steps

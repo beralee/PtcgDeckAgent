@@ -10,7 +10,7 @@ func get_granted_attacks(_pokemon: PokemonSlot, _state: GameState) -> Array[Dict
 		"name": "退化",
 		"cost": "C",
 		"damage": "",
-		"text": "Devolve each of your opponent's evolved Pokemon by putting the highest Stage Evolution card on it into your opponent's hand.",
+		"text": "令对手所有进化宝可梦退化，将每只宝可梦最上方的进化卡放回对手手牌。",
 	}]
 
 
@@ -38,4 +38,4 @@ func _devolve_slot(owner: PlayerState, slot: PokemonSlot) -> void:
 
 
 func get_description() -> String:
-	return "Grants a temporary attack that devolves each of your opponent's evolved Pokemon."
+	return "赋予临时招式：令对手所有进化宝可梦退化。"

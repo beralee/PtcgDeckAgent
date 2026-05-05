@@ -2,6 +2,7 @@ extends Control
 
 const MatchRecordIndexScript = preload("res://scripts/engine/MatchRecordIndex.gd")
 const BattleReplayLocatorScript = preload("res://scripts/engine/BattleReplayLocator.gd")
+const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 const HUD_ACCENT := Color(0.28, 0.92, 1.0, 1.0)
 const HUD_DANGER := Color(1.0, 0.28, 0.22, 1.0)
 const HUD_TEXT := Color(0.92, 0.98, 1.0, 1.0)
@@ -32,6 +33,7 @@ func _apply_hud_theme() -> void:
 	var back_button := get_node_or_null("%BtnBack") as Button
 	if back_button != null:
 		_style_hud_button(back_button, HUD_ACCENT)
+	HudThemeScript.apply_scrollbars_recursive(self)
 
 
 func _ensure_hud_frame() -> void:

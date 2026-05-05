@@ -53,7 +53,7 @@ func get_attack_interaction_steps(
 	return [
 		{
 			"id": ENERGY_STEP_ID,
-			"title": "Choose 2 attached Energy to put into the Lost Zone",
+			"title": "选择2个附着的能量放入放逐区",
 			"items": energy_items,
 			"labels": energy_labels,
 			"min_select": ENERGY_COUNT,
@@ -62,7 +62,7 @@ func get_attack_interaction_steps(
 		},
 		{
 			"id": TARGET_STEP_ID,
-			"title": "Choose 1 opponent Benched Pokemon",
+			"title": "选择对手的1只备战宝可梦",
 			"items": target_items,
 			"labels": target_labels,
 			"min_select": 1,

@@ -25,15 +25,16 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			labels.append(deck_card.card_data.name)
 	if items.is_empty():
 		return [build_empty_search_resolution_step("牌库里没有1阶进化宝可梦。你仍可以使用这张卡。")]
-	return [{
-		"id": "search_cards",
-		"title": "选择最多3张1阶进化宝可梦",
-		"items": items,
-		"labels": labels,
-		"min_select": 1,
-		"max_select": mini(3, items.size()),
-		"allow_cancel": true,
-	}]
+	return [build_full_library_search_step(
+		"search_cards",
+		"选择最多3张1阶进化宝可梦",
+		player.deck,
+		items,
+		VISIBLE_SCOPE_OWN_FULL_DECK,
+		1,
+		mini(3, items.size()),
+		{"allow_cancel": true}
+	)]
 
 
 func get_followup_interaction_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:

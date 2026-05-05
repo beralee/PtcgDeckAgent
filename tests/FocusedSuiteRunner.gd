@@ -4,6 +4,7 @@ extends SceneTree
 func _initialize() -> void:
 	var args: Dictionary = _parse_args(OS.get_cmdline_user_args())
 	var suite_script_path: String = str(args.get("suite-script", ""))
+	var test_filter: String = str(args.get("test-filter", args.get("test", ""))).strip_edges()
 	if suite_script_path == "":
 		print("Missing --suite-script")
 		quit(2)
@@ -12,6 +13,10 @@ func _initialize() -> void:
 	var suite_script: GDScript = load(suite_script_path)
 	if suite_script == null:
 		print("Unable to load suite script: %s" % suite_script_path)
+		quit(2)
+		return
+	if not suite_script.can_instantiate():
+		print("Unable to instantiate suite script after load: %s" % suite_script_path)
 		quit(2)
 		return
 
@@ -29,7 +34,10 @@ func _initialize() -> void:
 		var method_name: String = str(method.get("name", ""))
 		if not method_name.begins_with("test_"):
 			continue
+		if test_filter != "" and method_name.find(test_filter) == -1:
+			continue
 		total += 1
+		print("RUN %s" % method_name)
 		var result: Variant = suite.call(method_name)
 		var message: String = str(result)
 		if message == "":
@@ -37,6 +45,11 @@ func _initialize() -> void:
 		else:
 			failed += 1
 			print("FAIL %s :: %s" % [method_name, message])
+
+	if total == 0:
+		print("No tests matched filter '%s' in %s" % [test_filter, suite_script_path])
+		quit(2)
+		return
 
 	print("Total: %d | Failed: %d" % [total, failed])
 	quit(1 if failed > 0 else 0)

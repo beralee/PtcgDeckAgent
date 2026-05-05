@@ -48,6 +48,20 @@ const BATTLE_SCENE_FORBIDDEN_UI_PHRASES := [
 	"Missing selected deck data",
 ]
 
+const EFFECT_UI_FORBIDDEN_PHRASES := [
+	"Choose cards from your deck to put into your hand",
+	"Choose up to 2 Basic Energy cards from your deck and assign them to your Benched Pokemon",
+	"Devolve each of your opponent's evolved Pokemon",
+	"Grants a temporary attack that devolves",
+	"Basic Pokemon, selectable",
+	"not a Basic Pokemon, view only",
+	"card_selectable_hint\": \"Choose",
+	"card_disabled_badge\": \"View",
+	"Unknown Card",
+	"Discard Stadium",
+	"Keep Stadium",
+]
+
 
 func test_no_suspicious_source_characters() -> String:
 	var targets: Array[String] = []
@@ -109,6 +123,10 @@ func _audit_file(path: String) -> String:
 		if forbidden_phrase_error != "":
 			return forbidden_phrase_error
 
+		var forbidden_effect_copy_error := _check_forbidden_effect_ui_phrases(path, i + 1, line)
+		if forbidden_effect_copy_error != "":
+			return forbidden_effect_copy_error
+
 		var placeholder_error := _check_placeholder_question_marks(path, i + 1, line)
 		if placeholder_error != "":
 			return placeholder_error
@@ -137,6 +155,15 @@ func _check_forbidden_ui_phrases(path: String, line_number: int, line: String) -
 	for phrase: String in BATTLE_SCENE_FORBIDDEN_UI_PHRASES:
 		if phrase in line:
 			return "Detected forbidden BattleScene fallback copy \"%s\" at %s:%d" % [phrase, path, line_number]
+	return ""
+
+
+func _check_forbidden_effect_ui_phrases(path: String, line_number: int, line: String) -> String:
+	if not path.begins_with("res://scripts/effects"):
+		return ""
+	for phrase: String in EFFECT_UI_FORBIDDEN_PHRASES:
+		if phrase in line:
+			return "Detected forbidden effect UI copy \"%s\" at %s:%d" % [phrase, path, line_number]
 	return ""
 
 

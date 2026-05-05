@@ -160,11 +160,12 @@ func test_setup_mew_ex_active_for_raikou_opening() -> String:
 # ============================================================
 
 func test_score_electric_generator_high() -> String:
-	## 电气发生器 >= 500（牌库有雷能量时）
+	## 电气发生器 >= 500（牌库有雷能量且有备战雷系目标时）
 	var gs := _make_game_state()
 	# 牌库放入雷能量（电气发生器的翻牌目标）
 	for i: int in 5:
 		gs.players[0].deck.append(CardInstance.create(_make_energy_cd("基本雷能量", "L"), 0))
+	gs.players[0].bench.append(_make_slot(_make_pokemon_cd("铁臂膀ex", "Basic", "L", 230, "", "ex"), 0))
 	var s := _new_strategy()
 	var score: float = s.score_action_absolute(
 		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("电气发生器"), 0)},
@@ -376,6 +377,129 @@ func test_late_forest_seal_stone_on_mew_stays_low_with_ready_attacker() -> Strin
 	)
 
 
+func test_lost_vacuum_stays_below_attack_when_only_own_tool_is_available() -> String:
+	var gs := _make_game_state(6)
+	var player: PlayerState = gs.players[0]
+	var raichu := _make_slot(_make_pokemon_cd(DeckStrategyMiraidonScript.RAICHU_V, "Basic", "L", 200, "", "V", [],
+		[{"name": "Dynamic Spark", "cost": "LL", "damage": "60"}], 1), 0)
+	raichu.attached_energy.append(CardInstance.create(_make_energy_cd("L1", "L"), 0))
+	raichu.attached_energy.append(CardInstance.create(_make_energy_cd("L2", "L"), 0))
+	raichu.attached_tool = CardInstance.create(_make_tool_cd(DeckStrategyMiraidonScript.FOREST_SEAL_STONE), 0)
+	player.active_pokemon = raichu
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Big Target", "Basic", "C", 300, "", "ex"), 1)
+	var s := _new_strategy()
+	var vacuum_score: float = s.score_action_absolute(
+		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd(DeckStrategyMiraidonScript.LOST_VACUUM), 0)},
+		gs,
+		0
+	)
+	var attack_score: float = s.score_action_absolute(
+		{
+			"kind": "attack",
+			"attack_index": 0,
+			"attack_name": "Dynamic Spark",
+			"projected_damage": 60,
+			"projected_knockout": false,
+		},
+		gs,
+		0
+	)
+	return assert_true(
+		vacuum_score < attack_score,
+		"Lost Vacuum should not beat an available attack when it can only remove our own tool (vacuum=%f attack=%f)" % [vacuum_score, attack_score]
+	)
+
+
+func test_raichu_prefers_dynamic_spark_over_fast_charge_when_burst_pressure_available() -> String:
+	var gs := _make_game_state(8)
+	var player: PlayerState = gs.players[0]
+	var raichu := _make_slot(_make_pokemon_cd(DeckStrategyMiraidonScript.RAICHU_V, "Basic", "L", 200, "", "V", [],
+		[
+			{"name": "Fast Charge", "cost": "L", "damage": ""},
+			{"name": "Dynamic Spark", "cost": "LL", "damage": "60x"},
+		], 1), 0)
+	raichu.attached_energy.append(CardInstance.create(_make_energy_cd("L1", "L"), 0))
+	raichu.attached_energy.append(CardInstance.create(_make_energy_cd("L2", "L"), 0))
+	player.active_pokemon = raichu
+	var bench_raikou := _make_slot(_make_pokemon_cd(DeckStrategyMiraidonScript.RAIKOU_V, "Basic", "L", 200, "", "V",
+		[], [{"name": "Lightning Rondo", "cost": "LC", "damage": "120"}], 1), 0)
+	bench_raikou.attached_energy.append(CardInstance.create(_make_energy_cd("L3", "L"), 0))
+	bench_raikou.attached_energy.append(CardInstance.create(_make_energy_cd("L4", "L"), 0))
+	player.bench.append(bench_raikou)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Big Target", "Basic", "C", 240, "", "ex"), 1)
+	var s := _new_strategy()
+	var fast_charge_score: float = s.score_action_absolute(
+		{"kind": "attack", "attack_index": 0, "attack_name": "Fast Charge", "projected_damage": 0},
+		gs,
+		0
+	)
+	var dynamic_spark_score: float = s.score_action_absolute(
+		{"kind": "attack", "attack_index": 1, "attack_name": "Dynamic Spark", "projected_damage": 0},
+		gs,
+		0
+	)
+	return assert_true(
+		dynamic_spark_score > fast_charge_score,
+		"Raichu V should choose Dynamic Spark over Fast Charge when board lightning can create burst pressure (dynamic=%f fast=%f)" % [dynamic_spark_score, fast_charge_score]
+	)
+
+
+func test_boss_prioritizes_raichu_burst_ko_on_benched_ex() -> String:
+	var gs := _make_game_state(8)
+	var player: PlayerState = gs.players[0]
+	var raichu := _make_slot(_make_pokemon_cd(DeckStrategyMiraidonScript.RAICHU_V, "Basic", "L", 200, "", "V", [],
+		[
+			{"name": "Fast Charge", "cost": "L", "damage": ""},
+			{"name": "Dynamic Spark", "cost": "LL", "damage": "60x"},
+		], 1), 0)
+	raichu.attached_energy.append(CardInstance.create(_make_energy_cd("L1", "L"), 0))
+	raichu.attached_energy.append(CardInstance.create(_make_energy_cd("L2", "L"), 0))
+	player.active_pokemon = raichu
+	var bench_raikou := _make_slot(_make_pokemon_cd(DeckStrategyMiraidonScript.RAIKOU_V, "Basic", "L", 200, "", "V",
+		[], [{"name": "Lightning Rondo", "cost": "LC", "damage": "120"}], 1), 0)
+	bench_raikou.attached_energy.append(CardInstance.create(_make_energy_cd("L3", "L"), 0))
+	bench_raikou.attached_energy.append(CardInstance.create(_make_energy_cd("L4", "L"), 0))
+	player.bench.append(bench_raikou)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Big Active", "Basic", "C", 300, "", "ex"), 1)
+	gs.players[1].bench.append(_make_slot(_make_pokemon_cd("Bench ex Target", "Basic", "G", 210, "", "ex"), 1))
+	var s := _new_strategy()
+	var boss_score: float = s.score_action_absolute(
+		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd(DeckStrategyMiraidonScript.BOSSS_ORDERS, "Supporter"), 0)},
+		gs,
+		0
+	)
+	var attack_score: float = s.score_action_absolute(
+		{"kind": "attack", "attack_index": 1, "attack_name": "Dynamic Spark", "projected_damage": 240, "projected_knockout": false},
+		gs,
+		0
+	)
+	return assert_true(
+		boss_score > attack_score,
+		"Boss should beat attacking active when Raichu burst can KO a benched ex (boss=%f attack=%f)" % [boss_score, attack_score]
+	)
+
+
+func test_switch_cart_does_not_treat_one_energy_bench_as_ready_attacker() -> String:
+	var gs := _make_game_state(2)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd(DeckStrategyMiraidonScript.MEW_EX, "Basic", "P", 180, "", "ex",
+		[{"name": "Restart"}], [], 0), 0)
+	var raikou := _make_slot(_make_pokemon_cd(DeckStrategyMiraidonScript.RAIKOU_V, "Basic", "L", 200, "", "V",
+		[{"name": "Fleet Feet"}], [{"name": "Lightning Rondo", "cost": "LC", "damage": "120"}], 1), 0)
+	raikou.attached_energy.append(CardInstance.create(_make_energy_cd("L1", "L"), 0))
+	player.bench.append(raikou)
+	var s := _new_strategy()
+	var switch_score: float = s.score_action_absolute(
+		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd(DeckStrategyMiraidonScript.SWITCH_CART), 0)},
+		gs,
+		0
+	)
+	return assert_true(
+		switch_score < 300.0,
+		"Switch Cart should not get ready-attacker priority when the bench attacker still misses energy (score=%f)" % switch_score
+	)
+
+
 func test_retreat_mew_into_ready_raikou_before_squawk() -> String:
 	## 雷公已经就绪时，梦幻应先撤到雷公，不该先开怒鹦哥
 	var gs := _make_game_state(2)
@@ -514,6 +638,91 @@ func test_retreat_unready_raichu_into_ready_raikou_before_building_zapdos() -> S
 	return assert_true(
 		retreat_score > attach_score,
 		"打不了的雷丘应先退到 ready 雷公，而不是继续养闪电鸟（retreat=%f attach=%f）" % [retreat_score, attach_score]
+	)
+
+
+func test_continuity_contract_promotes_second_attacker_before_nonfinal_attack() -> String:
+	var gs := _make_game_state(6)
+	var player: PlayerState = gs.players[0]
+	var raikou := _make_slot(_make_pokemon_cd(DeckStrategyMiraidonScript.RAIKOU_V, "Basic", "L", 200, "", "V",
+		[{"name": "Fleet Feet"}], [{"name": "Lightning Rondo", "cost": "LC", "damage": "120"}], 1), 0)
+	raikou.attached_energy.append(CardInstance.create(_make_energy_cd("L1", "L"), 0))
+	raikou.attached_energy.append(CardInstance.create(_make_energy_cd("L2", "L"), 0))
+	player.active_pokemon = raikou
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyMiraidonScript.MIRAIDON_EX, "Basic", "L", 220, "", "ex",
+		[{"name": "Tandem Unit"}], [{"name": "Photon Blaster", "cost": "LLC", "damage": "220"}]), 0))
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Big Target", "Basic", "C", 300, "", "ex"), 1)
+	var s := _new_strategy()
+	var bench_iron_hands: float = s.score_action_absolute_with_plan(
+		{
+			"kind": "play_basic_to_bench",
+			"card": CardInstance.create(_make_pokemon_cd(DeckStrategyMiraidonScript.IRON_HANDS_EX, "Basic", "L", 230, "", "ex", [],
+				[{"name": "Amp You Very Much", "cost": "LLC", "damage": "160"}], 4), 0),
+		},
+		gs,
+		0,
+		{}
+	)
+	var attack_score: float = s.score_action_absolute_with_plan(
+		{
+			"kind": "attack",
+			"attack_index": 0,
+			"attack_name": "Lightning Rondo",
+			"projected_damage": 120,
+			"projected_knockout": false,
+		},
+		gs,
+		0,
+		{}
+	)
+	return assert_true(
+		bench_iron_hands > attack_score,
+		"Miraidon continuity should bench a real second attacker before a non-final attack (bench=%f attack=%f)" % [bench_iron_hands, attack_score]
+	)
+
+
+func test_continuity_contract_promotes_heavy_baton_before_nonfinal_attack() -> String:
+	var gs := _make_game_state(6)
+	var player: PlayerState = gs.players[0]
+	var raikou := _make_slot(_make_pokemon_cd(DeckStrategyMiraidonScript.RAIKOU_V, "Basic", "L", 200, "", "V",
+		[{"name": "Fleet Feet"}], [{"name": "Lightning Rondo", "cost": "LC", "damage": "120"}], 1), 0)
+	raikou.attached_energy.append(CardInstance.create(_make_energy_cd("L1", "L"), 0))
+	raikou.attached_energy.append(CardInstance.create(_make_energy_cd("L2", "L"), 0))
+	var iron_hands := _make_slot(_make_pokemon_cd(DeckStrategyMiraidonScript.IRON_HANDS_EX, "Basic", "L", 230, "", "ex", [],
+		[{"name": "Amp You Very Much", "cost": "LLC", "damage": "160"}], 4), 0)
+	iron_hands.attached_energy.append(CardInstance.create(_make_energy_cd("L3", "L"), 0))
+	iron_hands.attached_energy.append(CardInstance.create(_make_energy_cd("L4", "L"), 0))
+	player.active_pokemon = raikou
+	player.bench.clear()
+	player.bench.append(iron_hands)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Big Target", "Basic", "C", 300, "", "ex"), 1)
+	var s := _new_strategy()
+	var baton_score: float = s.score_action_absolute_with_plan(
+		{
+			"kind": "attach_tool",
+			"card": CardInstance.create(_make_tool_cd(DeckStrategyMiraidonScript.HEAVY_BATON), 0),
+			"target_slot": iron_hands,
+		},
+		gs,
+		0,
+		{}
+	)
+	var attack_score: float = s.score_action_absolute_with_plan(
+		{
+			"kind": "attack",
+			"attack_index": 0,
+			"attack_name": "Lightning Rondo",
+			"projected_damage": 120,
+			"projected_knockout": false,
+		},
+		gs,
+		0,
+		{}
+	)
+	return assert_true(
+		baton_score > attack_score,
+		"Miraidon continuity should attach Heavy Baton before a non-final attack when Iron Hands is the follow-up lane (baton=%f attack=%f)" % [baton_score, attack_score]
 	)
 
 

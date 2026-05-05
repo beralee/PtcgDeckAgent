@@ -1,6 +1,7 @@
 class_name DeckViewDialog
 extends RefCounted
 
+const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 const CARD_TILE_WIDTH := 100
 const CARD_TILE_HEIGHT := 140
 const VIEW_GRID_COLUMNS := 6
@@ -53,6 +54,7 @@ func show_deck(host: Node, deck: DeckData) -> void:
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	HudThemeScript.style_scroll_container(scroll)
 	outer.add_child(scroll)
 
 	var grid := GridContainer.new()
@@ -109,10 +111,12 @@ func _create_view_tile(card_name: String, set_code: String, card_index: String) 
 	panel.add_theme_stylebox_override("panel", sb)
 
 	var vbox := VBoxContainer.new()
+	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_theme_constant_override("separation", 2)
 	panel.add_child(vbox)
 
 	var tex_rect := TextureRect.new()
+	tex_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tex_rect.custom_minimum_size = Vector2(CARD_TILE_WIDTH - 8, CARD_TILE_HEIGHT - 8)
 	tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -127,6 +131,7 @@ func _create_view_tile(card_name: String, set_code: String, card_index: String) 
 	vbox.add_child(tex_rect)
 
 	var label := Label.new()
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.text = card_name
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 11)
@@ -158,6 +163,7 @@ func _show_card_detail(host: Node, card: CardData) -> void:
 	scroll.offset_top = 8
 	scroll.offset_right = -8
 	scroll.offset_bottom = -8
+	HudThemeScript.style_scroll_container(scroll)
 	dialog.add_child(scroll)
 
 	var content := VBoxContainer.new()

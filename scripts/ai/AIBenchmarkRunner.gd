@@ -339,7 +339,7 @@ func run_headless_duel(
 					break
 			else:
 				var pending_choice: String = bridge.get_pending_prompt_type()
-				if pending_choice == "effect_interaction" or pending_choice == "heavy_baton_target" or pending_choice == "send_out":
+				if pending_choice == "effect_interaction" or pending_choice == "heavy_baton_target" or pending_choice == "exp_share_target" or pending_choice == "send_out":
 					if not bridge.has_method("supports_effect_interaction_execution") \
 							or not bool(bridge.call("supports_effect_interaction_execution")):
 						if pending_choice != "effect_interaction":
@@ -357,10 +357,12 @@ func run_headless_duel(
 						break
 					progressed = prompt_ai.run_single_step(bridge, gsm)
 					if not progressed:
-						if pending_choice == "heavy_baton_target" or pending_choice == "send_out":
+						if pending_choice == "heavy_baton_target" or pending_choice == "exp_share_target" or pending_choice == "send_out":
 							result = _make_failed_match_result("unsupported_prompt", steps + 1, gsm)
+							_attach_bridge_failure_diagnostics(result, bridge, gsm)
 							break
 						result = _make_failed_match_result("unsupported_interaction_step", steps + 1, gsm)
+						_attach_bridge_failure_diagnostics(result, bridge, gsm)
 						break
 					_record_decision_trace_if_available(decision_exporter, prompt_ai)
 				else:
@@ -376,9 +378,12 @@ func run_headless_duel(
 				result = _make_failed_match_result("invalid_state_transition", steps + 1, gsm)
 				break
 			progressed = current_ai.run_single_step(bridge, gsm)
-			if not progressed and gsm.game_state != null and gsm.game_state.phase == GameState.GamePhase.MAIN and _has_interactive_legal_action(current_ai, gsm):
-				result = _make_failed_match_result("unsupported_interaction_step", steps + 1, gsm)
-				break
+			if not progressed and gsm.game_state != null and gsm.game_state.phase == GameState.GamePhase.MAIN:
+				var interactive_legal_actions := _get_interactive_legal_action_debug_names(current_ai, gsm)
+				if not interactive_legal_actions.is_empty():
+					result = _make_failed_match_result("unsupported_interaction_step", steps + 1, gsm)
+					_attach_bridge_failure_diagnostics(result, bridge, gsm, null, interactive_legal_actions)
+					break
 			if not progressed:
 				# AI 无法选择动作时尝试强制 end_turn（可能有交互式合法动作但 AI 不会用）
 				if gsm.game_state != null and gsm.game_state.phase == GameState.GamePhase.MAIN:
@@ -397,6 +402,50 @@ func run_headless_duel(
 	## 释放 bridge（extends Control，非 RefCounted，必须显式释放）
 	bridge.free()
 	return result
+
+
+func _attach_bridge_failure_diagnostics(
+	result: Dictionary,
+	bridge: Control,
+	gsm: GameStateMachine,
+	current_ai: AIOpponent = null,
+	precomputed_interactive_actions: Array[String] = []
+) -> void:
+	var diagnostics := {}
+	if gsm != null and gsm.game_state != null:
+		diagnostics["turn_number"] = int(gsm.game_state.turn_number)
+		diagnostics["current_player_index"] = int(gsm.game_state.current_player_index)
+		diagnostics["phase"] = int(gsm.game_state.phase)
+	if bridge != null:
+		diagnostics["pending_choice"] = str(bridge.get("_pending_choice"))
+		diagnostics["pending_effect_kind"] = str(bridge.get("_pending_effect_kind"))
+		diagnostics["pending_effect_step_index"] = int(bridge.get("_pending_effect_step_index"))
+		var steps_variant: Variant = bridge.get("_pending_effect_steps")
+		var step_index := int(diagnostics.get("pending_effect_step_index", -1))
+		if steps_variant is Array and step_index >= 0 and step_index < (steps_variant as Array).size():
+			var step: Variant = (steps_variant as Array)[step_index]
+			if step is Dictionary:
+				diagnostics["pending_effect_step_id"] = str((step as Dictionary).get("id", ""))
+				diagnostics["pending_effect_step_type"] = str((step as Dictionary).get("type", ""))
+	if not precomputed_interactive_actions.is_empty():
+		diagnostics["interactive_legal_actions"] = precomputed_interactive_actions
+	elif current_ai != null and gsm != null:
+		diagnostics["interactive_legal_actions"] = _get_interactive_legal_action_debug_names(current_ai, gsm)
+	result["failure_diagnostics"] = diagnostics
+
+
+func _action_debug_name(action: Dictionary) -> String:
+	var card: Variant = action.get("card", null)
+	if card is CardInstance:
+		var cd: CardData = (card as CardInstance).card_data
+		if cd != null:
+			return cd.name_en if cd.name_en != "" else cd.name
+	var source: Variant = action.get("source_slot", null)
+	if source is PokemonSlot:
+		var slot: PokemonSlot = source
+		if slot.get_card_data() != null:
+			return slot.get_card_data().name_en if slot.get_card_data().name_en != "" else slot.get_card_data().name
+	return str(action.get("attack_name", action.get("name", "")))
 
 
 func _record_decision_trace_if_available(decision_exporter, ai: AIOpponent) -> void:
@@ -631,13 +680,21 @@ func _get_ai_for_player(player_0_ai: AIOpponent, player_1_ai: AIOpponent, player
 
 
 func _has_interactive_legal_action(ai: AIOpponent, gsm: GameStateMachine) -> bool:
+	return not _get_interactive_legal_action_debug_names(ai, gsm).is_empty()
+
+
+func _get_interactive_legal_action_debug_names(ai: AIOpponent, gsm: GameStateMachine) -> Array[String]:
+	var interactive_actions: Array[String] = []
 	if ai == null or gsm == null:
-		return false
+		return interactive_actions
 	var actions: Array[Dictionary] = ai.get_legal_actions(gsm)
 	for action: Dictionary in actions:
 		if bool(action.get("requires_interaction", false)):
-			return true
-	return false
+			interactive_actions.append("%s:%s" % [
+				str(action.get("kind", "")),
+				_action_debug_name(action),
+			])
+	return interactive_actions
 
 
 func _collect_ai_event_counters(player_0_ai: AIOpponent, player_1_ai: AIOpponent) -> Dictionary:

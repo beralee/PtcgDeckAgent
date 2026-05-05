@@ -50,7 +50,7 @@ func _render() -> void:
 	var summary_lines: Array[String] = []
 	if not player.is_empty():
 		if player_is_champion:
-			summary_lines.append("恭喜你，%s！你以第 1 名完成本次比赛，正式获得冠军。" % str(player.get("name", "玩家")))
+			summary_lines.append(_champion_title_text(tournament, player))
 			summary_lines.append("这不是单局胜利，而是整场瑞士轮稳定表现的结果。")
 			summary_lines.append("最终积分：%d" % int(player.get("points", 0)))
 		else:
@@ -104,15 +104,33 @@ func _set_champion_banner_visible(visible: bool) -> void:
 
 
 func _render_champion_banner(tournament: RefCounted, player: Dictionary) -> void:
-	var player_name := str(player.get("name", tournament.player_name if tournament != null else "玩家"))
 	var record := "%d-%d-%d" % [
 		int(player.get("wins", 0)),
 		int(player.get("losses", 0)),
 		int(player.get("draws", 0)),
 	]
 	%ChampionKicker.text = "TOURNAMENT CHAMPION"
-	%ChampionTitle.text = "恭喜，%s 获得冠军！" % player_name
+	%ChampionTitle.text = _champion_title_text(tournament, player)
 	%ChampionSubtitle.text = "最终战绩 %s，积分 %d。你的卡组赢下了整场比赛。" % [record, int(player.get("points", 0))]
+
+
+func _champion_title_text(tournament: RefCounted, player: Dictionary) -> String:
+	var player_name := str(player.get("name", tournament.player_name if tournament != null else "玩家")).strip_edges()
+	if player_name == "":
+		player_name = "玩家"
+	return "恭喜，%s使用%s获得冠军！" % [player_name, _champion_deck_display(tournament, player)]
+
+
+func _champion_deck_display(tournament: RefCounted, player: Dictionary) -> String:
+	if tournament == null:
+		return "参赛卡组"
+	var participant_id := int(player.get("id", tournament.player_participant_id))
+	var deck_name := str(tournament.participant_deck_name(participant_id)).strip_edges()
+	if deck_name == "":
+		return "参赛卡组"
+	if deck_name.ends_with("卡组"):
+		return deck_name
+	return "%s卡组" % deck_name
 
 
 func _normalize_standings(standings_variant: Variant) -> Array:

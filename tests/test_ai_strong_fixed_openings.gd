@@ -10,10 +10,14 @@ const MIRAIDON_DECK_ID := 575720
 const CHARIZARD_DECK_ID := 575716
 const LUGIA_DECK_ID := 575657
 const ARCEUS_DECK_ID := 569061
+const DRAGAPULT_DUSKNOIR_DECK_ID := 575723
+const DRAGAPULT_CHARIZARD_DECK_ID := 579502
 
 const CHARIZARD_FIXED_ORDER_PATH := "res://data/bundled_user/ai_fixed_deck_orders/575716.json"
 const LUGIA_FIXED_ORDER_PATH := "res://data/bundled_user/ai_fixed_deck_orders/575657.json"
 const ARCEUS_FIXED_ORDER_PATH := "res://data/bundled_user/ai_fixed_deck_orders/569061.json"
+const DRAGAPULT_DUSKNOIR_FIXED_ORDER_PATH := "res://data/bundled_user/ai_fixed_deck_orders/575723.json"
+const DRAGAPULT_CHARIZARD_FIXED_ORDER_PATH := "res://data/bundled_user/ai_fixed_deck_orders/579502.json"
 
 
 func _make_ai_for_deck(player_index: int, deck_id: int) -> AIOpponent:
@@ -330,6 +334,22 @@ func _load_fixed_order(path: String) -> Array[Dictionary]:
 	return registry.load_fixed_order_from_path(path)
 
 
+func _append_fixed_order_checks(
+	checks: Array[String],
+	label: String,
+	path: String,
+	expected: Array[Dictionary]
+) -> void:
+	var fixed_order := _load_fixed_order(path)
+	checks.append(assert_eq(fixed_order.size(), expected.size(), "%s fixed order should contain the requested opening hand only" % label))
+	var compare_count: int = mini(fixed_order.size(), expected.size())
+	for i: int in range(compare_count):
+		var actual: Dictionary = fixed_order[i]
+		var wanted: Dictionary = expected[i]
+		checks.append(assert_eq(str(actual.get("set_code", "")), str(wanted.get("set_code", "")), "%s opening card %d set_code should match" % [label, i + 1]))
+		checks.append(assert_eq(str(actual.get("card_index", "")), str(wanted.get("card_index", "")), "%s opening card %d card_index should match" % [label, i + 1]))
+
+
 func _miraidon_low_pressure_fixed_order() -> Array[Dictionary]:
 	return [
 		{"set_code": "CS6.5C", "card_index": "020"}, # Radiant Greninja
@@ -347,6 +367,67 @@ func _miraidon_low_pressure_fixed_order() -> Array[Dictionary]:
 		{"set_code": "CSV3C", "card_index": "123"}, # Iono
 		{"set_code": "CSV7C", "card_index": "191"}, # Ciphermaniac's Codebreaking (turn-1 draw)
 	]
+
+
+func test_dragapult_strong_fixed_order_files_match_requested_opening_hands() -> String:
+	var registry := AIFixedDeckOrderRegistryScript.new()
+	var checks: Array[String] = [
+		assert_eq(
+			registry.get_fixed_order_path(DRAGAPULT_DUSKNOIR_DECK_ID),
+			DRAGAPULT_DUSKNOIR_FIXED_ORDER_PATH,
+			"Dragapult Dusknoir strong AI should bind a fixed opening path"
+		),
+		assert_eq(
+			registry.get_fixed_order_path(DRAGAPULT_CHARIZARD_DECK_ID),
+			DRAGAPULT_CHARIZARD_FIXED_ORDER_PATH,
+			"Dragapult Charizard strong AI should bind a fixed opening path"
+		),
+	]
+	_append_fixed_order_checks(checks, "Dragapult Dusknoir", DRAGAPULT_DUSKNOIR_FIXED_ORDER_PATH, [
+		{"set_code": "CSV8C", "card_index": "157"}, # Dreepy
+		{"set_code": "CSV7C", "card_index": "177"}, # Buddy-Buddy Poffin
+		{"set_code": "CSVH1C", "card_index": "043"}, # Nest Ball
+		{"set_code": "CSVE1C", "card_index": "FIR"}, # Fire Energy
+		{"set_code": "CSV1C", "card_index": "123"}, # Arven
+		{"set_code": "CSV3C", "card_index": "123"}, # Iono
+		{"set_code": "CSV8C", "card_index": "186"}, # Sparkling Crystal
+	])
+	_append_fixed_order_checks(checks, "Dragapult Charizard", DRAGAPULT_CHARIZARD_FIXED_ORDER_PATH, [
+		{"set_code": "CSV8C", "card_index": "157"}, # Dreepy
+		{"set_code": "CSV7C", "card_index": "177"}, # Buddy-Buddy Poffin
+		{"set_code": "CSVH1C", "card_index": "043"}, # Nest Ball
+		{"set_code": "CSVE1C", "card_index": "PSY"}, # Psychic Energy
+		{"set_code": "CSV1C", "card_index": "123"}, # Arven
+		{"set_code": "CSV3C", "card_index": "123"}, # Iono
+		{"set_code": "CSV5C", "card_index": "119"}, # Technical Machine: Evolution
+		{"set_code": "CS5bC", "card_index": "052"}, # Manaphy
+		{"set_code": "CSV6C", "card_index": "114"}, # Counter Catcher
+		{"set_code": "CSV7C", "card_index": "185"}, # Rescue Board
+		{"set_code": "CS5bC", "card_index": "128"}, # Temple of Sinnoh
+		{"set_code": "CSV6C", "card_index": "125"}, # Professor Turo's Scenario
+		{"set_code": "CS6bC", "card_index": "123"}, # Lost Vacuum
+		{"set_code": "CS6.5C", "card_index": "023"}, # Rotom V
+		{"set_code": "CS6.5C", "card_index": "066"}, # Forest Seal Stone
+		{"set_code": "CSV8C", "card_index": "157"}, # Dreepy
+		{"set_code": "151C", "card_index": "004"}, # Charmander
+		{"set_code": "CSV8C", "card_index": "158"}, # Drakloak
+		{"set_code": "CSV8C", "card_index": "159"}, # Dragapult ex
+		{"set_code": "CSVE1C", "card_index": "FIR"}, # Fire Energy
+		{"set_code": "CSVH1C", "card_index": "045"}, # Rare Candy
+		{"set_code": "CSV5C", "card_index": "075"}, # Charizard ex
+		{"set_code": "CSVE1C", "card_index": "FIR"}, # Fire Energy
+		{"set_code": "CSV1C", "card_index": "112"}, # Ultra Ball
+		{"set_code": "CS6.5C", "card_index": "070"}, # Lance
+		{"set_code": "CSV7C", "card_index": "177"}, # Buddy-Buddy Poffin
+		{"set_code": "CSVH1C", "card_index": "043"}, # Nest Ball
+		{"set_code": "CSV1C", "card_index": "123"}, # Arven
+		{"set_code": "CSV8C", "card_index": "158"}, # Drakloak
+		{"set_code": "CSV8C", "card_index": "157"}, # Dreepy
+		{"set_code": "CSVE1C", "card_index": "PSY"}, # Psychic Energy
+		{"set_code": "CSVE1C", "card_index": "FIR"}, # Fire Energy
+		{"set_code": "CSVH1C", "card_index": "045"}, # Rare Candy
+	])
+	return run_checks(checks)
 
 
 func test_charizard_strong_fixed_order_hits_t2_charizard_and_pidgeot_board() -> String:

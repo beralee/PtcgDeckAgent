@@ -68,15 +68,17 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	if not on_evolve_only and target_filter == "own_one":
 		min_assignments = 1
 
-	return [build_card_assignment_step(
+	return [build_full_library_card_assignment_step(
 		ASSIGNMENT_STEP_ID,
 		"选择能量并分配到己方宝可梦",
+		player.deck,
 		matching_energy_cards,
 		energy_labels,
 		target_items,
 		target_labels,
 		min_assignments,
 		mini(max_count, matching_energy_cards.size()),
+		VISIBLE_SCOPE_OWN_FULL_DECK,
 		true
 	)]
 
@@ -149,6 +151,8 @@ func _matches_energy(card: CardInstance) -> bool:
 		return cd.card_type == "Special Energy"
 	if energy_type == "Basic Energy":
 		return cd.card_type == "Basic Energy"
+	if cd.card_type != "Basic Energy":
+		return false
 	return cd.energy_provides == energy_type or cd.energy_type == energy_type
 
 

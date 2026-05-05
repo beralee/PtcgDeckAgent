@@ -100,8 +100,29 @@ text = "基础设置"
 layout_mode = 2
 text = "模式"
 
+[node name="ModeSegment" type="HBoxContainer" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/LeftColumn/LeftMargin/LeftVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="ModeTwoPlayerButton" type="Button" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/LeftColumn/LeftMargin/LeftVBox/ModeSegment"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(150, 42)
+text = "自己练牌"
+
+[node name="ModeAIButton" type="Button" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/LeftColumn/LeftMargin/LeftVBox/ModeSegment"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(150, 42)
+text = "AI 对战"
+
 [node name="ModeOption" type="OptionButton" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/LeftColumn/LeftMargin/LeftVBox"]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
 custom_minimum_size = Vector2(320, 38)
 
@@ -114,8 +135,16 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
+[node name="Deck1PickerButton" type="Button" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/LeftColumn/LeftMargin/LeftVBox/Deck1Row"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(320, 54)
+text = "选择卡组"
+
 [node name="Deck1Option" type="OptionButton" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/LeftColumn/LeftMargin/LeftVBox/Deck1Row"]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(320, 38)
@@ -142,8 +171,16 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
+[node name="Deck2PickerButton" type="Button" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/LeftColumn/LeftMargin/LeftVBox/Deck2Row"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(320, 54)
+text = "选择卡组"
+
 [node name="Deck2Option" type="OptionButton" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/LeftColumn/LeftMargin/LeftVBox/Deck2Row"]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(320, 38)
@@ -170,8 +207,36 @@ text = "编辑"
 layout_mode = 2
 text = "先后手"
 
+[node name="FirstPlayerSegment" type="HBoxContainer" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/LeftColumn/LeftMargin/LeftVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="FirstPlayerRandomButton" type="Button" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/LeftColumn/LeftMargin/LeftVBox/FirstPlayerSegment"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(96, 42)
+text = "随机"
+
+[node name="FirstPlayerOneButton" type="Button" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/LeftColumn/LeftMargin/LeftVBox/FirstPlayerSegment"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(96, 42)
+text = "玩家1先攻"
+
+[node name="FirstPlayerTwoButton" type="Button" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/LeftColumn/LeftMargin/LeftVBox/FirstPlayerSegment"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(96, 42)
+text = "玩家2先攻"
+
 [node name="FirstPlayerOption" type="OptionButton" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/LeftColumn/LeftMargin/LeftVBox"]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
 custom_minimum_size = Vector2(320, 38)
 
@@ -223,7 +288,7 @@ text = "AI 与高级设置"
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
-text = "当前 AI：规则模型（默认）"
+text = "当前 AI: 规则模型(默认)"
 
 [node name="AIModeStatusBody" type="Label" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox"]
 unique_name_in_owner = true
@@ -257,8 +322,16 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "AI 策略"
 
+[node name="AIStrategySegment" type="HBoxContainer" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
 [node name="AIStrategyOption" type="OptionButton" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox"]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
 custom_minimum_size = Vector2(320, 38)
 
@@ -266,7 +339,7 @@ custom_minimum_size = Vector2(320, 38)
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
-text = "当前大模型："
+text = "当前大模型:"
 
 [node name="LLMModelLabel" type="Label" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox"]
 unique_name_in_owner = true
@@ -362,7 +435,7 @@ text = "试听"
 [node name="NoDeckWarning" type="Label" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/RightColumn/RightMargin/RightVBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "请先在卡组管理中导入至少两个卡组"
+text = "请先在卡组中心导入至少两个卡组"
 horizontal_alignment = 1
 visible = false
 

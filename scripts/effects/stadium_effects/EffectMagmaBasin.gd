@@ -32,7 +32,7 @@ func get_interaction_steps(_card: CardInstance, state: GameState) -> Array[Dicti
 		])
 	return [build_card_assignment_step(
 		ASSIGNMENT_ID,
-		"Attach 1 Basic Fire Energy to a Benched Fire Pokemon",
+		"选择弃牌区1张基本火能量附着给备战区火属性宝可梦",
 		source_items,
 		source_labels,
 		target_items,

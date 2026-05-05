@@ -1,6 +1,8 @@
 class_name BattleAdviceController
 extends RefCounted
 
+const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
+
 const BattleAdviceServiceScript := preload("res://scripts/engine/BattleAdviceService.gd")
 const BattleReviewServiceScript := preload("res://scripts/engine/BattleReviewService.gd")
 
@@ -141,6 +143,7 @@ func setup_battle_advice_ui(scene: Object) -> void:
 	battle_advice_panel_content.fit_content = false
 	battle_advice_panel_content.scroll_active = true
 	battle_advice_panel_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	HudThemeScript.style_scrollable_control(battle_advice_panel_content)
 	vbox.add_child(battle_advice_panel_content)
 
 	log_panel.add_child(battle_advice_panel)

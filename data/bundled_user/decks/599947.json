@@ -1,0 +1,273 @@
+{
+	"cards": [
+		{
+			"card_index": "057",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "03bcecb40c957575e16b4af22b08b7bd",
+			"name": "闪电鸟",
+			"name_en": "Zapdos",
+			"set_code": "CS6aC"
+		},
+		{
+			"card_index": "114",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "06bc00d5dcec33898dc6db2e4c4d10ec",
+			"name": "反击捕捉器",
+			"name_en": "Counter Catcher",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "185",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "0b4cc131a19862f92acf71494f29a0ed",
+			"name": "紧急滑板",
+			"name_en": "Rescue Board",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "128",
+			"card_type": "Stadium",
+			"count": 1,
+			"effect_id": "13b3caaa408a85dfd1e2a5ad797e8b8a",
+			"name": "城镇百货",
+			"name_en": "Town Store",
+			"set_code": "CSV5C"
+		},
+		{
+			"card_index": "043",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "1af63a7e2cb7a79215474ad8db8fd8fd",
+			"name": "巢穴球",
+			"name_en": "Nest Ball",
+			"set_code": "CSVH1C"
+		},
+		{
+			"card_index": "105",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "1b951205e53e179bde0905c4a194d9ee",
+			"name": "怒鹦哥ex",
+			"name_en": "Squawkabilly ex",
+			"set_code": "CSV2C"
+		},
+		{
+			"card_index": "107",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "2234845fbc2e11ab95587e1b393bb318",
+			"name": "电气发生器",
+			"name_en": "Electric Generator",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "050",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "27fbc2c429b05bd8206cd0c7f5d39b11",
+			"name": "密勒顿ex",
+			"name_en": "Miraidon ex",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "060",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "2f68195255c863293be4fad262bf23d2",
+			"name": "洗翠的沉重球",
+			"name_en": "Hisuian Heavy Ball",
+			"set_code": "CS5.5C"
+		},
+		{
+			"card_index": "0301",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "4199cbca54aa793f2f94b509355a8909",
+			"name": "三合一磁怪",
+			"name_en": "",
+			"set_code": "CBB5C"
+		},
+		{
+			"card_index": "LIG",
+			"card_type": "Basic Energy",
+			"count": 15,
+			"effect_id": "45550fd10011f6ade7eef16ba88788cf",
+			"name": "基本雷能量",
+			"name_en": "Lightning Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "151",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "49669fcf461deacebeb5755c11ec51f1",
+			"name": "梦幻ex",
+			"name_en": "Mew ex",
+			"set_code": "151C"
+		},
+		{
+			"card_index": "019",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "4c9d0366a3633bc11a4612a3ef1624cf",
+			"name": "雷丘V",
+			"name_en": "Raichu V",
+			"set_code": "CS5aC"
+		},
+		{
+			"card_index": "180",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "4ec261453212280d0eb03ed8254ca97f",
+			"name": "顶尖捕捉器",
+			"name_en": "Prime Catcher",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "049",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "553639840a44f19ad83b89a892a21f98",
+			"name": "霓虹鱼V",
+			"name_en": "Lumineon V",
+			"set_code": "CS5bC"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 4,
+			"effect_id": "5bdbc985f9aa2e6f248b53f6f35d1d37",
+			"name": "派帕",
+			"name_en": "Arven",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "116",
+			"card_type": "Item",
+			"count": 2,
+			"effect_id": "8342fe3eeec6f897f3271be1aa26a412",
+			"name": "交替推车",
+			"name_en": "Switch Cart",
+			"set_code": "CS5DC"
+		},
+		{
+			"card_index": "023",
+			"card_type": "Supporter",
+			"count": 3,
+			"effect_id": "8e1fa2c9018db938084c94c7c970d419",
+			"name": "老大的指令",
+			"name_en": "Boss's Orders",
+			"set_code": "CSVH1aC"
+		},
+		{
+			"card_index": "023",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "8ef5ff61fd97838af568f00fe3b0e3ea",
+			"name": "洛托姆V",
+			"name_en": "Rotom V",
+			"set_code": "CS6.5C"
+		},
+		{
+			"card_index": "137",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "9296cfa33d6dc517d8e12f62ad96cb75",
+			"name": "雷公V",
+			"name_en": "Raikou V",
+			"set_code": "CS4DaC"
+		},
+		{
+			"card_index": "024",
+			"card_type": "Special Energy",
+			"count": 2,
+			"effect_id": "9c04dd0addf56a7b2c88476bc8e45c0e",
+			"name": "双重涡轮能量",
+			"name_en": "Double Turbo Energy",
+			"set_code": "CSNC"
+		},
+		{
+			"card_index": "066",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "9fa9943ccda36f417ac3cb675177c216",
+			"name": "森林封印石",
+			"name_en": "Forest Seal Stone",
+			"set_code": "CS6.5C"
+		},
+		{
+			"card_index": "112",
+			"card_type": "Item",
+			"count": 3,
+			"effect_id": "a337ed34a45e63c6d21d98c3d8e0cb6e",
+			"name": "高级球",
+			"name_en": "Ultra Ball",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "135",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "ab6c3357e2b8a8385a68da738f41e0c1",
+			"name": "吉雉鸡ex",
+			"name_en": "Fezandipiti ex",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "af514f82d182aeae5327b2c360df703d",
+			"name": "奇树",
+			"name_en": "Iono",
+			"set_code": "CSV3C"
+		},
+		{
+			"card_index": "118",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "d1c2f018a644e662f2b6895fdfc29281",
+			"name": "勇气护符",
+			"name_en": "Bravery Charm",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "042",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "e9a3c305a7c47f76158eb75ebd7777dc",
+			"name": "小磁怪",
+			"name_en": "Magnemite",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "051",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "e9f0c124fc2e352af2408a7e61862b95",
+			"name": "铁臂膀ex",
+			"name_en": "Iron Hands ex",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "172",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "f2afef80b13b8f6a071facbcade0251c",
+			"name": "月月熊 赫月ex",
+			"name_en": "Bloodmoon Ursaluna ex",
+			"set_code": "CSV8C"
+		}
+	],
+	"deck_code": "6fE5rrsq7a71hTccKS",
+	"deck_name": "密勒顿16.5",
+	"id": 599947,
+	"import_date": "2026-05-03T21:04:14",
+	"source_url": "https://tcg.mik.moe/decks/list/599947",
+	"strategy": "",
+	"total_cards": 60,
+	"variant_name": "密勒顿"
+}

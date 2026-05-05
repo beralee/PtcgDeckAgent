@@ -53,7 +53,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 
 	return [build_card_assignment_step(
 		STEP_ID,
-		"Choose 1 Basic Energy to move to another Pokemon",
+		"选择1个基本能量转附给其他宝可梦",
 		energy_items,
 		energy_labels,
 		target_items,

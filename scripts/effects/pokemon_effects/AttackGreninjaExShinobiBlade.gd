@@ -31,7 +31,7 @@ func get_attack_interaction_steps(
 
 	return [{
 		"id": "greninja_ex_search_card",
-		"title": "Choose up to 1 card from your deck",
+		"title": "从牌库中选择最多1张卡加入手牌",
 		"items": items,
 		"labels": labels,
 		"min_select": 0,

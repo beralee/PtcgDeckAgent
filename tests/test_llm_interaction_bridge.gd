@@ -140,6 +140,21 @@ func _make_game_state(turn: int = 3) -> GameState:
 	return gs
 
 
+func _fill_player_deck(player: PlayerState, count: int = 30) -> void:
+	if player == null:
+		return
+	for i: int in count:
+		player.deck.append(CardInstance.create(_make_trainer_cd("Deck filler %d" % i), player.player_index))
+
+
+func _set_prizes_remaining(player: PlayerState, count: int) -> void:
+	if player == null:
+		return
+	player.prizes.clear()
+	for i: int in count:
+		player.prizes.append(CardInstance.create(_make_trainer_cd("Prize filler %d" % i), player.player_index))
+
+
 func _new_llm_strategy() -> RefCounted:
 	var script := _load_script(RAGING_BOLT_LLM_SCRIPT_PATH)
 	return script.new() if script != null else null
@@ -450,6 +465,44 @@ func test_dragapult_charizard_llm_blocks_off_plan_support_energy_and_bad_tools()
 	])
 
 
+func test_dragapult_charizard_llm_blocks_opening_energy_to_benched_manaphy() -> String:
+	var strategy := _new_dragapult_charizard_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyDragapultCharizardLLM.gd should exist"
+	var gs := _make_game_state(1)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	var manaphy := _make_slot(_make_pokemon_cd("Manaphy", "Basic", "W", 70), 0)
+	player.bench.append(manaphy)
+	var fire := CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0)
+	var active_attach := {"kind": "attach_energy", "card": fire, "target_slot": player.active_pokemon}
+	var manaphy_attach := {"kind": "attach_energy", "card": fire, "target_slot": manaphy}
+	return run_checks([
+		assert_false(bool(strategy.call("_deck_should_block_exact_queue_match", {}, active_attach, gs, 0)),
+			"LLM Dragapult/Charizard should allow opening Fire attachment to active Dreepy"),
+		assert_true(bool(strategy.call("_deck_should_block_exact_queue_match", {}, manaphy_attach, gs, 0)),
+			"LLM Dragapult/Charizard should hard-block opening Fire attachment to benched Manaphy"),
+		assert_true(float(strategy.call("score_action_absolute", manaphy_attach, gs, 0)) <= -5000.0,
+			"Benched Manaphy Energy attachment should stay blocked even through LLM/rules fallback"),
+	])
+
+
+func test_dragapult_charizard_llm_allows_active_support_energy_for_retreat() -> String:
+	var strategy := _new_dragapult_charizard_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyDragapultCharizardLLM.gd should exist"
+	var gs := _make_game_state(4)
+	var player := gs.players[0]
+	var manaphy_cd := _make_pokemon_cd("Manaphy", "Basic", "W", 70)
+	manaphy_cd.retreat_cost = 1
+	player.active_pokemon = _make_slot(manaphy_cd, 0)
+	player.bench.append(_make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0))
+	var fire := CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0)
+	var active_attach := {"kind": "attach_energy", "card": fire, "target_slot": player.active_pokemon}
+	return assert_false(bool(strategy.call("_deck_should_block_exact_queue_match", {}, active_attach, gs, 0)),
+		"LLM Dragapult/Charizard should allow Energy on active support only when it can pay retreat into the attacker lane")
+
+
 func test_dragapult_charizard_llm_blocks_rotom_terminal_draw_when_deck_is_low() -> String:
 	var strategy := _new_dragapult_charizard_llm_strategy()
 	if strategy == null:
@@ -545,6 +598,32 @@ func test_dragapult_charizard_llm_marks_and_blocks_dead_lost_vacuum() -> String:
 		assert_true(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "play_trainer", "card": "Lost Vacuum"}, action, gs, 0)), "Runtime queue guard should block dead Lost Vacuum"),
 		assert_true(float(strategy.call("score_action_absolute", action, gs, 0)) <= -1000.0, "Dead Lost Vacuum should stay blocked through rules fallback"),
 	])
+
+
+func test_llm_prompt_marks_dead_gust_as_resource_negative_without_damage_attack() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(10)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	var catcher_cd := _make_trainer_cd("Pokemon Catcher", "Item")
+	catcher_cd.description = "Switch 1 of your opponent's Benched Pokemon with their Active Pokemon."
+	var catcher := CardInstance.create(catcher_cd, 0)
+	player.hand.append(catcher)
+	var low_attack := {"kind": "attack", "attack_index": 0, "targets": [], "requires_interaction": true}
+	var payload: Dictionary = strategy.call("build_action_id_request_payload_for_test", gs, 0, [
+		{"kind": "play_trainer", "card": catcher, "targets": [], "requires_interaction": true},
+		low_attack,
+		{"kind": "end_turn"},
+	])
+	var facts: Dictionary = payload.get("turn_tactical_facts", {}) if payload.get("turn_tactical_facts", {}) is Dictionary else {}
+	var resource_negative: Array = facts.get("resource_negative_actions", []) if facts.get("resource_negative_actions", []) is Array else []
+	var found_catcher := false
+	for raw: Variant in resource_negative:
+		if raw is Dictionary and str((raw as Dictionary).get("card", "")).contains("Catcher"):
+			found_catcher = true
+	return assert_true(found_catcher, "Prompt facts should mark gust effects as resource-negative when no non-low-value damage attack is available")
 
 
 func test_dragapult_charizard_llm_preserves_missing_seed_search_cards_from_discard() -> String:
@@ -997,6 +1076,178 @@ func test_miraidon_llm_allows_double_turbo_queue_match_on_iron_hands() -> String
 	])
 
 
+func test_miraidon_llm_blocks_retreat_to_unready_raichu_or_support() -> String:
+	var strategy := _new_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyMiraidonLLM.gd should exist"
+	var gs := _make_game_state(4)
+	var player := gs.players[0]
+	var raikou_cd := _make_pokemon_cd("Raikou V", "Basic", "L", 200)
+	raikou_cd.name_en = "Raikou V"
+	raikou_cd.mechanic = "V"
+	raikou_cd.attacks = [{"name": "Lightning Rondo", "cost": "LC", "damage": "20+"}]
+	player.active_pokemon = _make_slot(raikou_cd, 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	var raichu_cd := _make_pokemon_cd("Raichu V", "Basic", "L", 200)
+	raichu_cd.name_en = "Raichu V"
+	raichu_cd.mechanic = "V"
+	raichu_cd.attacks = [
+		{"name": "Fast Charge", "cost": "L", "damage": ""},
+		{"name": "Dynamic Spark", "cost": "LL", "damage": "60x"},
+	]
+	var raichu_slot := _make_slot(raichu_cd, 0)
+	var fez_cd := _make_pokemon_cd("Fezandipiti ex", "Basic", "D", 210)
+	fez_cd.name_en = "Fezandipiti ex"
+	fez_cd.mechanic = "ex"
+	var fez_slot := _make_slot(fez_cd, 0)
+	player.bench.append(raichu_slot)
+	player.bench.append(fez_slot)
+	var raichu_retreat := {"kind": "retreat", "bench_target": raichu_slot, "requires_interaction": false}
+	var support_retreat := {"kind": "retreat", "bench_target": fez_slot, "requires_interaction": false}
+	return run_checks([
+		assert_true(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "retreat"}, raichu_retreat, gs, 0)), "Miraidon LLM should block retreating to unready Raichu V"),
+		assert_true(float(strategy.call("score_action_absolute", raichu_retreat, gs, 0)) <= -1000.0, "Unready Raichu retreat should stay blocked outside exact queue scoring"),
+		assert_true(float(strategy.call("score_action", raichu_retreat, {"game_state": gs, "player_index": 0})) <= -1000.0, "Unready Raichu retreat should stay blocked through score_action fallback"),
+		assert_true(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "retreat"}, support_retreat, gs, 0)), "Miraidon LLM should block retreating into support padding without an attack closure"),
+		assert_true(float(strategy.call("score_action_absolute", support_retreat, gs, 0)) <= -1000.0, "Support retreat should stay blocked outside exact queue scoring"),
+	])
+
+
+func test_miraidon_llm_allows_retreat_to_ready_real_attackers() -> String:
+	var strategy := _new_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyMiraidonLLM.gd should exist"
+	var gs := _make_game_state(6)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Mew ex", "Basic", "P", 180), 0)
+	var iron_cd := _make_pokemon_cd("Iron Hands ex", "Basic", "L", 230)
+	iron_cd.name_en = "Iron Hands ex"
+	iron_cd.mechanic = "ex"
+	iron_cd.attacks = [{"name": "Arm Press", "cost": "LLC", "damage": "160"}]
+	var iron_slot := _make_slot(iron_cd, 0)
+	iron_slot.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	iron_slot.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	iron_slot.attached_energy.append(CardInstance.create(_make_energy_cd("Double Turbo Energy", "C"), 0))
+	var raikou_cd := _make_pokemon_cd("Raikou V", "Basic", "L", 200)
+	raikou_cd.name_en = "Raikou V"
+	raikou_cd.mechanic = "V"
+	raikou_cd.attacks = [{"name": "Lightning Rondo", "cost": "LC", "damage": "20+"}]
+	var raikou_slot := _make_slot(raikou_cd, 0)
+	raikou_slot.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	raikou_slot.attached_energy.append(CardInstance.create(_make_energy_cd("Double Turbo Energy", "C"), 0))
+	var miraidon := _make_slot(_make_miraidon_cd(), 0)
+	miraidon.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	miraidon.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	miraidon.attached_energy.append(CardInstance.create(_make_energy_cd("Double Turbo Energy", "C"), 0))
+	var raichu_cd := _make_pokemon_cd("Raichu V", "Basic", "L", 200)
+	raichu_cd.name_en = "Raichu V"
+	raichu_cd.mechanic = "V"
+	raichu_cd.attacks = [{"name": "Dynamic Spark", "cost": "LL", "damage": "60x"}]
+	var ready_raichu := _make_slot(raichu_cd, 0)
+	ready_raichu.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	ready_raichu.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	player.bench.append(iron_slot)
+	player.bench.append(raikou_slot)
+	player.bench.append(miraidon)
+	player.bench.append(ready_raichu)
+	var iron_retreat := {"kind": "retreat", "bench_target": iron_slot, "requires_interaction": false}
+	var raikou_retreat := {"kind": "retreat", "bench_target": raikou_slot, "requires_interaction": false}
+	var miraidon_retreat := {"kind": "retreat", "bench_target": miraidon, "requires_interaction": false}
+	var raichu_retreat := {"kind": "retreat", "bench_target": ready_raichu, "requires_interaction": false}
+	return run_checks([
+		assert_false(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "retreat"}, iron_retreat, gs, 0)), "Ready Iron Hands ex should remain a legal retreat target"),
+		assert_false(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "retreat"}, raikou_retreat, gs, 0)), "Ready Raikou V should remain a legal retreat target"),
+		assert_false(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "retreat"}, miraidon_retreat, gs, 0)), "Ready Miraidon ex should remain a legal retreat target"),
+		assert_true(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "retreat"}, raichu_retreat, gs, 0)), "Raichu V retreat still needs a separate prize-math finisher hook before it is allowed"),
+	])
+
+
+func test_miraidon_llm_blocks_raichu_fast_charge_when_productive_setup_visible() -> String:
+	var strategy := _new_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyMiraidonLLM.gd should exist"
+	var gs := _make_game_state(8)
+	var player := gs.players[0]
+	var raichu_cd := _make_pokemon_cd("Raichu V", "Basic", "L", 200)
+	raichu_cd.name_en = "Raichu V"
+	raichu_cd.attacks = [
+		{"name": "Fast Charge", "cost": "", "damage": ""},
+		{"name": "Dynamic Spark", "cost": "L", "damage": "60x"},
+	]
+	player.active_pokemon = _make_slot(raichu_cd, 0)
+	player.hand.append(CardInstance.create(_make_trainer_cd("Nest Ball", "Item"), 0))
+	player.hand.append(CardInstance.create(_make_trainer_cd("Electric Generator", "Item"), 0))
+	player.hand.append(CardInstance.create(_make_pokemon_cd("Iron Hands ex", "Basic", "L", 230), 0))
+	player.hand.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	strategy.set("_llm_queue_turn", 8)
+	strategy.set("_llm_decision_tree", {"actions": [{"id": "attack:0:Fast Charge"}]})
+	strategy.set("_llm_action_queue", [{"type": "attack", "attack_index": 0, "attack_name": "Fast Charge"}])
+	var fast_charge_action := {"kind": "attack", "attack_index": 0, "requires_interaction": false}
+	var score: float = float(strategy.call("score_action_absolute", fast_charge_action, gs, 0))
+	return run_checks([
+		assert_true(score <= -1000.0, "Raichu V Fast Charge should not receive forced LLM execution when the hand has productive setup pieces"),
+	])
+
+
+func test_miraidon_llm_end_turn_queue_can_execute_generator_with_bench_target() -> String:
+	var strategy := _new_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyMiraidonLLM.gd should exist"
+	var gs := _make_game_state(9)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_miraidon_cd(), 0)
+	player.bench.append(_make_slot(_make_pokemon_cd("Iron Hands ex", "Basic", "L", 230), 0))
+	var generator := CardInstance.create(_make_trainer_cd("Electric Generator", "Item"), 0)
+	var generator_action := {"kind": "play_trainer", "card": generator, "targets": [], "requires_interaction": true}
+	strategy.set("_llm_queue_turn", 9)
+	strategy.set("_llm_decision_tree", {"actions": [{"id": "end_turn"}]})
+	strategy.set("_llm_action_queue", [{"type": "end_turn", "action_id": "end_turn", "id": "end_turn"}])
+	var score: float = float(strategy.call("score_action_absolute", generator_action, gs, 0))
+	return run_checks([
+		assert_true(score >= 90000.0, "A weak end_turn LLM queue should allow Electric Generator when a valid bench Lightning attacker exists"),
+	])
+
+
+func test_miraidon_llm_repairs_productive_engine_before_terminal_attack() -> String:
+	var strategy := _new_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyMiraidonLLM.gd should exist"
+	var gs := _make_game_state(10)
+	strategy.set("_llm_action_catalog", {
+		"play_trainer:c11": {
+			"id": "play_trainer:c11",
+			"action_id": "play_trainer:c11",
+			"type": "play_trainer",
+			"card": "Electric Generator",
+			"card_rules": {"name": "Electric Generator", "name_en": "Electric Generator"},
+		},
+		"attack:1:Photon Blaster": {
+			"id": "attack:1:Photon Blaster",
+			"action_id": "attack:1:Photon Blaster",
+			"type": "attack",
+			"attack_index": 1,
+			"attack_name": "Photon Blaster",
+		},
+	})
+	var repair: Dictionary = strategy.call("_repair_missing_productive_engine_in_tree", {
+		"actions": [{
+			"id": "attack:1:Photon Blaster",
+			"action_id": "attack:1:Photon Blaster",
+			"type": "attack",
+			"attack_index": 1,
+			"attack_name": "Photon Blaster",
+		}],
+	}, gs, 0)
+	var actions: Array = (repair.get("tree", {}) as Dictionary).get("actions", [])
+	var first_id := str((actions[0] as Dictionary).get("id", "")) if actions.size() > 0 and actions[0] is Dictionary else ""
+	var last_id := str((actions[actions.size() - 1] as Dictionary).get("id", "")) if actions.size() > 0 and actions[actions.size() - 1] is Dictionary else ""
+	return run_checks([
+		assert_true(int(repair.get("added_count", 0)) >= 1, "Miraidon repair should add productive engines before terminal attacks"),
+		assert_eq(first_id, "play_trainer:c11", "Electric Generator should be inserted before attacking when it is visible and non-conflicting"),
+		assert_eq(last_id, "attack:1:Photon Blaster", "The terminal attack should remain at the end of the repaired route"),
+	])
+
+
 func test_miraidon_llm_repairs_generator_after_miraidon_bench_branch() -> String:
 	var strategy := _new_miraidon_llm_strategy()
 	if strategy == null:
@@ -1163,6 +1414,259 @@ func test_miraidon_llm_replans_after_benching_miraidon_ex() -> String:
 		assert_false(strategy.call("has_llm_plan_for_turn", 6), "Miraidon replan should clear stale follow-up queue"),
 		assert_eq(str(trigger.get("reason", "")), "miraidon_benched_tandem_unit_now_legal", "Replan context should record the Miraidon-specific trigger"),
 	])
+
+
+func test_raging_bolt_llm_replans_after_benching_main_attacker_before_manual_attach() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(6)
+	var player := gs.players[0]
+	var ogerpon_cd := _make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210)
+	ogerpon_cd.name_en = "Teal Mask Ogerpon ex"
+	player.active_pokemon = _make_slot(ogerpon_cd, 0)
+	strategy.set("_cached_turn_number", 6)
+	strategy.set("_llm_queue_turn", 6)
+	strategy.set("_llm_decision_tree", {"actions": [{"id": "attach_energy:c28:active"}, {"id": "end_turn"}]})
+	strategy.set("_llm_action_queue", [
+		{"type": "attach_energy", "action_id": "attach_energy:c28:active", "capability": "manual_attach"},
+		{"type": "end_turn", "action_id": "end_turn", "capability": "end_turn"},
+	])
+	var before: Dictionary = strategy.call("make_llm_runtime_snapshot", gs, 0)
+	player.bench.append(_make_slot(_make_raging_bolt_cd(), 0))
+	var after: Dictionary = strategy.call("make_llm_runtime_snapshot", gs, 0)
+	strategy.call("observe_llm_runtime_state_change", before, after, {
+		"success": true,
+		"step_kind": "main_action",
+		"action_kind": "play_basic_to_bench",
+		"pending_choice_after": "",
+	})
+	var replan_context_by_turn: Dictionary = strategy.get("_llm_replan_context_by_turn")
+	var replan_context: Dictionary = replan_context_by_turn.get(6, {})
+	var trigger: Dictionary = replan_context.get("trigger", {})
+	return run_checks([
+		assert_eq(int(before.get("raging_bolt_count", -1)), 0, "Before snapshot should see no Raging Bolt on board"),
+		assert_eq(int(after.get("raging_bolt_count", -1)), 1, "After snapshot should see the newly benched Raging Bolt"),
+		assert_false(bool(after.get("active_is_raging_bolt", true)), "The active support Pokemon should force attach-target replanning"),
+		assert_eq(int(strategy.call("get_llm_replan_count")), 1, "Benching Raging Bolt behind a support active should clear stale manual-attach routes"),
+		assert_false(strategy.call("has_llm_plan_for_turn", 6), "Raging Bolt replan should clear the stale attach-to-active queue"),
+		assert_eq(str(trigger.get("reason", "")), "raging_bolt_benched_retarget_attack_energy", "Replan context should record the Raging Bolt retarget trigger"),
+	])
+
+
+func test_raging_bolt_llm_blocks_attack_energy_attach_to_support_active_when_bolt_benched() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(7)
+	var player := gs.players[0]
+	var ogerpon_cd := _make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210)
+	ogerpon_cd.name_en = "Teal Mask Ogerpon ex"
+	player.active_pokemon = _make_slot(ogerpon_cd, 0)
+	player.bench.append(_make_slot(_make_raging_bolt_cd(), 0))
+	var fighting := CardInstance.create(_make_energy_cd("Basic Fighting Energy", "F"), 0)
+	player.hand.append(fighting)
+	var attach_action := {"kind": "attach_energy", "card": fighting, "target_slot": player.active_pokemon}
+	strategy.set("_cached_turn_number", 7)
+	strategy.set("_llm_queue_turn", 7)
+	strategy.set("_llm_decision_tree", {"actions": [{"id": "attach_energy:c%d:active" % int(fighting.instance_id)}]})
+	strategy.set("_llm_action_queue", [{"type": "attach_energy", "action_id": "attach_energy:c%d:active" % int(fighting.instance_id)}])
+	var score: float = float(strategy.call("score_action_absolute", attach_action, gs, 0))
+	return run_checks([
+		assert_true(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "attach_energy"}, attach_action, gs, 0)), "Queued Fighting attach to support active should not be treated as a valid Raging Bolt plan step"),
+		assert_true(score <= -1000.0, "Rules fallback should also reject spending Fighting on support active while Raging Bolt is benched (score=%f)" % score),
+	])
+
+
+func test_raging_bolt_llm_blocks_attack_energy_attach_to_support_active_when_bolt_in_hand() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(7)
+	var player := gs.players[0]
+	var ogerpon_cd := _make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210)
+	ogerpon_cd.name_en = "Teal Mask Ogerpon ex"
+	player.active_pokemon = _make_slot(ogerpon_cd, 0)
+	var fighting := CardInstance.create(_make_energy_cd("Basic Fighting Energy", "F"), 0)
+	player.hand.append(fighting)
+	player.hand.append(CardInstance.create(_make_raging_bolt_cd(), 0))
+	var attach_action := {"kind": "attach_energy", "card": fighting, "target_slot": player.active_pokemon}
+	var score: float = float(strategy.call("score_action_absolute", attach_action, gs, 0))
+	return assert_true(score <= -1000.0,
+		"Core Fighting/Lightning Energy should be preserved for Raging Bolt when the main attacker is still in hand (score=%f)" % score)
+
+
+func test_raging_bolt_llm_blocks_grass_attach_to_bolt_missing_core_cost() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(9)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	var grass := CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0)
+	player.hand.append(grass)
+	var grass_attach := {"kind": "attach_energy", "card": grass, "target_slot": player.active_pokemon}
+	var score_missing_cost: float = float(strategy.call("score_action_absolute", grass_attach, gs, 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	var score_after_core_ready: float = float(strategy.call("score_action_absolute", grass_attach, gs, 0))
+	return run_checks([
+		assert_true(score_missing_cost <= -1000.0, "Grass attach to Raging Bolt should be blocked while Lightning/Fighting attack cost is still missing (score=%f)" % score_missing_cost),
+		assert_true(score_after_core_ready > -1000.0, "Grass attach may be considered only after Raging Bolt already has Lightning/Fighting core cost (score=%f)" % score_after_core_ready),
+	])
+
+
+func test_llm_queue_exact_action_id_rejects_stale_position_target_after_pivot() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(7)
+	var player := gs.players[0]
+	var ogerpon_cd := _make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210)
+	ogerpon_cd.name_en = "Teal Mask Ogerpon ex"
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(ogerpon_cd, 0))
+	var fighting := CardInstance.create(_make_energy_cd("Basic Fighting Energy", "F"), 0)
+	var q := {
+		"type": "attach_energy",
+		"action_id": "attach_energy:c%d:bench_0" % int(fighting.instance_id),
+		"card": "Fighting Energy",
+		"position": "bench_0",
+		"target": "Raging Bolt ex",
+	}
+	var stale_action := {"kind": "attach_energy", "card": fighting, "target_slot": player.bench[0]}
+	return assert_false(bool(strategy.call("_queue_item_matches", q, stale_action, gs, 0)),
+		"Exact action ids must still reject stale position plans when pivoting changed bench_0 from Raging Bolt to Ogerpon")
+
+
+func test_raging_bolt_llm_queue_retargets_same_energy_attach_to_active_bolt() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(7)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Lightning Energy", "L"), 0))
+	var fighting := CardInstance.create(_make_energy_cd("Basic Fighting Energy", "F"), 0)
+	var q := {
+		"type": "attach_energy",
+		"action_id": "attach_energy:c%d:bench_0" % int(fighting.instance_id),
+		"card": "Fighting Energy",
+		"position": "bench_0",
+		"target": "Raging Bolt ex",
+	}
+	var runtime_action := {"kind": "attach_energy", "card": fighting, "target_slot": player.active_pokemon}
+	return assert_true(bool(strategy.call("_queue_item_matches", q, runtime_action, gs, 0)),
+		"Raging Bolt LLM should treat same-card L/F attach retargeted to active Raging Bolt as queue-consumable")
+
+
+func test_llm_blocks_end_turn_skipping_position_sensitive_followup_after_pivot() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(8)
+	var player := gs.players[0]
+	var ogerpon_cd := _make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210)
+	ogerpon_cd.name_en = "Teal Mask Ogerpon ex"
+	var ogerpon := _make_slot(ogerpon_cd, 0)
+	var bolt := _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon = ogerpon
+	player.bench.clear()
+	player.bench.append(bolt)
+	strategy.set("_cached_turn_number", 8)
+	strategy.set("_llm_queue_turn", 8)
+	strategy.set("_llm_decision_tree", {"actions": [{"id": "attach_energy:c44:bench_0"}, {"id": "end_turn"}]})
+	strategy.set("_llm_action_queue", [
+		{"type": "attach_energy", "action_id": "attach_energy:c44:bench_0", "position": "bench_0", "target": "Raging Bolt ex"},
+		{"type": "end_turn", "action_id": "end_turn"},
+	])
+	strategy.set("_llm_action_catalog", {
+		"attach_energy:c44:bench_0": {"type": "attach_energy", "action_id": "attach_energy:c44:bench_0", "position": "bench_0", "target": "Raging Bolt ex"},
+		"end_turn": {"type": "end_turn", "action_id": "end_turn"},
+	})
+	var before: Dictionary = strategy.call("make_llm_runtime_snapshot", gs, 0)
+	player.active_pokemon = bolt
+	player.bench[0] = ogerpon
+	var after: Dictionary = strategy.call("make_llm_runtime_snapshot", gs, 0)
+	var active_queue: Array[Dictionary] = strategy.call("_select_current_action_queue", gs, 0)
+	var prefix_sensitive := bool(strategy.call("_queue_prefix_has_position_sensitive_actions", active_queue, 1))
+	var direct_queue_score := float(strategy.call("_score_from_queue", {"kind": "end_turn"}, active_queue, gs, 0))
+	var end_turn_score := float(strategy.call("score_action_absolute", {"kind": "end_turn"}, gs, 0))
+	return run_checks([
+		assert_eq(str(before.get("active_name", "")), "Teal Mask Ogerpon ex", "Before snapshot should capture active identity"),
+		assert_eq(str(after.get("active_name", "")), "Raging Bolt ex", "After snapshot should capture switched-in attacker"),
+		assert_true(prefix_sensitive, "Queued attach before end_turn should be position-sensitive: %s" % JSON.stringify(active_queue)),
+		assert_true(direct_queue_score <= -1000.0, "Direct queue scoring should block terminal skip over position-sensitive prefix (score=%f queue=%s)" % [direct_queue_score, JSON.stringify(active_queue)]),
+		assert_true(end_turn_score <= -1000.0, "End turn must not receive queue ownership by skipping a stale position-sensitive attach after pivot (score=%f)" % end_turn_score),
+	])
+
+
+func test_llm_queue_blocks_nonterminal_skip_over_required_prefix() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(6)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	var stretcher := CardInstance.create(_make_trainer_cd("Night Stretcher", "Item"), 0)
+	var queue: Array[Dictionary] = [
+		{"id": "attach_energy:c43:active", "action_id": "attach_energy:c43:active", "type": "attach_energy", "card": "Fighting Energy", "target": "Raging Bolt ex"},
+		{"type": "play_trainer", "card": "Night Stretcher"},
+		{"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	]
+	var stretcher_action := {"kind": "play_trainer", "card": stretcher, "targets": [], "requires_interaction": true}
+	var score := float(strategy.call("_score_from_queue", stretcher_action, queue, gs, 0))
+	var matched_index := int(strategy.call("_queue_index_for_action", stretcher_action, queue, gs, 0))
+	return run_checks([
+		assert_true(score <= -1000.0, "Runtime queue scoring must not skip a required manual attach to execute a later trainer (score=%f)" % score),
+		assert_eq(matched_index, -1, "Runtime queue consumption must not mark skipped required prefix actions as consumed"),
+	])
+
+
+func test_llm_queue_allows_noncritical_prefix_skip_to_reach_later_action() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(2)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	var nest_ball := CardInstance.create(_make_trainer_cd("Nest Ball", "Item"), 0)
+	var queue: Array[Dictionary] = [
+		{"type": "play_trainer", "card": "Switch Cart"},
+		{"type": "play_trainer", "card": "Nest Ball", "capability": "bench_search"},
+		{"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	]
+	var nest_action := {"kind": "play_trainer", "card": nest_ball, "targets": [], "requires_interaction": true}
+	var score := float(strategy.call("_score_from_queue", nest_action, queue, gs, 0))
+	var matched_index := int(strategy.call("_queue_index_for_action", nest_action, queue, gs, 0))
+	return run_checks([
+		assert_true(score > 0.0, "Runtime queue scoring should allow skipping a non-critical setup prefix to continue the route (score=%f)" % score),
+		assert_eq(matched_index, 1, "Runtime queue consumption may consume a skipped non-critical prefix once a later setup action executes"),
+	])
+
+
+func test_llm_queue_blocks_unmatched_action_when_attack_head_is_ready() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(12)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Lightning Energy", "L"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Fighting Energy", "F"), 0))
+	var attack_queue: Array[Dictionary] = [{
+		"id": "attack:1:Thundering Bolt",
+		"action_id": "attack:1:Thundering Bolt",
+		"type": "attack",
+		"attack_index": 1,
+		"attack_name": "Thundering Bolt",
+	}]
+	var ogerpon := CardInstance.create(_make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210), 0)
+	var unrelated_setup := {"kind": "play_basic_to_bench", "card": ogerpon}
+	var blocked := bool(strategy.call("_active_queue_blocks_unmatched_action", attack_queue, unrelated_setup, gs, 0))
+	return assert_true(blocked,
+		"Runtime ownership must block unrelated setup when the selected queue head is a ready attack")
 
 
 func test_miraidon_opening_keeps_raichu_v_out_of_active_when_pivot_exists() -> String:
@@ -1452,6 +1956,7 @@ func test_action_id_prompt_includes_json_rule_hints_for_every_playable_card() ->
 	var charm_ref: Dictionary = legal_actions[3]
 	var nest_rules: Dictionary = nest_ref.get("card_rules", {})
 	var shoes_rules: Dictionary = shoes_ref.get("card_rules", {})
+	var shoes_schema: Dictionary = shoes_ref.get("interaction_schema", {}) if shoes_ref.get("interaction_schema", {}) is Dictionary else {}
 	var vessel_rules: Dictionary = vessel_ref.get("card_rules", {})
 	var vessel_interaction_schema: Dictionary = vessel_ref.get("interaction_schema", {})
 	var charm_rules: Dictionary = charm_ref.get("card_rules", {})
@@ -1463,6 +1968,8 @@ func test_action_id_prompt_includes_json_rule_hints_for_every_playable_card() ->
 		assert_true(nest_rule_text == str(nest_cd.description) or nest_rule_text.contains("Search your deck"), "Nest Ball rule text should come from card JSON description"),
 		assert_true(not shoes_rules.is_empty(), "Trekking Shoes action should include card_rules generated from card JSON"),
 		assert_true((shoes_rules.get("tags", []) as Array).has("draw"), "Trekking Shoes rule tags should indicate draw/filter behavior"),
+		assert_false((shoes_rules.get("tags", []) as Array).has("recover_to_hand"), "Trekking Shoes should not be modeled as discard recovery just because it can put a card into hand"),
+		assert_false(shoes_schema.has("night_stretcher_choice"), "Trekking Shoes should not expose recovery interaction schema"),
 		assert_false(shoes_rules.has("play_hint"), "Card rule layer should not include per-card tactical play hints"),
 		assert_true((vessel_rules.get("tags", []) as Array).has("search_deck"), "Earthen Vessel rule tags should indicate deck search"),
 		assert_true((vessel_rules.get("tags", []) as Array).has("energy_related"), "Earthen Vessel rule tags should indicate energy search"),
@@ -1503,6 +2010,63 @@ func test_action_id_response_materializes_local_action_catalog() -> String:
 		assert_eq(str((queue[0] as Dictionary).get("action_id", "")), action_id, "Materialized queue should preserve action_id for exact matching"),
 		assert_eq(str((queue[1] as Dictionary).get("action_id", "")), "end_turn", "Non-terminal materialized queue should close with end_turn"),
 		assert_true(score >= 90000.0, "Materialized action id should score as the selected LLM action"),
+	])
+
+
+func test_raging_bolt_llm_blocks_bravery_charm_on_support_pokemon() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(7)
+	var player := gs.players[0]
+	var squawk_cd := _make_pokemon_cd("Squawkabilly ex", "Basic", "C", 160)
+	squawk_cd.name_en = "Squawkabilly ex"
+	squawk_cd.mechanic = "ex"
+	player.active_pokemon = _make_slot(squawk_cd, 0)
+	var charm := CardInstance.create(_make_trainer_cd("Bravery Charm", "Tool"), 0)
+	var support_action := {"kind": "attach_tool", "card": charm, "target_slot": player.active_pokemon}
+	var support_score: float = float(strategy.call("score_action_absolute", support_action, gs, 0))
+	var bolt_slot := _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon = bolt_slot
+	var bolt_action := {"kind": "attach_tool", "card": charm, "target_slot": bolt_slot}
+	var bolt_score: float = float(strategy.call("score_action_absolute", bolt_action, gs, 0))
+	return run_checks([
+		assert_true(support_score <= -1000.0, "Raging Bolt LLM must not protect two-prize support Pokemon with Bravery Charm"),
+		assert_true(bolt_score > -1000.0, "Raging Bolt LLM should still allow Bravery Charm on the main attacker"),
+	])
+
+
+func test_raging_bolt_llm_blocks_early_two_prize_support_bench() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(2)
+	_set_prizes_remaining(gs.players[1], 6)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	var squawk_cd := _make_pokemon_cd("Squawkabilly ex", "Basic", "C", 160)
+	squawk_cd.name_en = "Squawkabilly ex"
+	squawk_cd.mechanic = "ex"
+	var fez_cd := _make_pokemon_cd("Fezandipiti ex", "Basic", "D", 210)
+	fez_cd.name_en = "Fezandipiti ex"
+	fez_cd.mechanic = "ex"
+	var bolt_cd := _make_raging_bolt_cd()
+	var squawk := CardInstance.create(squawk_cd, 0)
+	var fez := CardInstance.create(fez_cd, 0)
+	var bolt := CardInstance.create(bolt_cd, 0)
+	var empty_bench_squawk_score: float = float(strategy.call("score_action_absolute", {"kind": "play_basic_to_bench", "card": squawk}, gs, 0))
+	player.bench.append(_make_slot(_make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210), 0))
+	var squawk_score: float = float(strategy.call("score_action_absolute", {"kind": "play_basic_to_bench", "card": squawk}, gs, 0))
+	var early_fez_score: float = float(strategy.call("score_action_absolute", {"kind": "play_basic_to_bench", "card": fez}, gs, 0))
+	_set_prizes_remaining(gs.players[1], 4)
+	var comeback_fez_score: float = float(strategy.call("score_action_absolute", {"kind": "play_basic_to_bench", "card": fez}, gs, 0))
+	var bolt_score: float = float(strategy.call("score_action_absolute", {"kind": "play_basic_to_bench", "card": bolt}, gs, 0))
+	return run_checks([
+		assert_true(empty_bench_squawk_score > -1000.0, "Raging Bolt LLM should allow a support Basic when the bench is empty and losing by no-Basic is the larger risk"),
+		assert_true(squawk_score <= -1000.0, "Raging Bolt LLM should not bench Squawkabilly as a passive two-prize liability"),
+		assert_true(early_fez_score <= -1000.0, "Raging Bolt LLM should not bench Fezandipiti before the opponent has taken prizes"),
+		assert_true(comeback_fez_score > -1000.0, "Raging Bolt LLM should allow Fezandipiti after a knockout enables its comeback role"),
+		assert_true(bolt_score > -1000.0, "Raging Bolt LLM should still allow benching backup Raging Bolt attackers"),
 	])
 
 
@@ -1802,7 +2366,7 @@ func test_llm_end_turn_queue_converts_to_active_ko_attack() -> String:
 	var end_score: float = float(strategy.call("score_action_absolute", end_turn_action, gs, 0))
 	return run_checks([
 		assert_true(attack_score >= 90000.0, "End-turn placeholder should convert to a now-legal high-pressure active attack"),
-		assert_eq(end_score, 0.0, "Actual end_turn should be blocked while an active KO attack is ready"),
+		assert_true(end_score <= -1000.0, "Actual end_turn should be hard-blocked while an active KO attack is ready"),
 	])
 
 
@@ -1841,6 +2405,7 @@ func test_raging_bolt_llm_blocks_low_value_redraw_when_productive_actions_visibl
 	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
 	for i: int in 4:
 		player.hand.append(CardInstance.create(_make_trainer_cd("Hand resource %d" % i), 0))
+	player.hand.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
 	var low_attack := {
 		"id": "attack:0:bursting_roar",
 		"action_id": "attack:0:bursting_roar",
@@ -1862,6 +2427,99 @@ func test_raging_bolt_llm_blocks_low_value_redraw_when_productive_actions_visibl
 	return run_checks([
 		assert_false(matches, "Runtime queue guard should reject low-value redraw attacks when productive non-terminal actions are visible and hand is not empty"),
 		assert_true(score < 0.0, "Runtime score fallback should also veto the low-value redraw attack so rules do not reselect it after queue rejection"),
+	])
+
+
+func test_raging_bolt_llm_allows_dead_hand_redraw_after_safe_setup() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(6)
+	var player := gs.players[0]
+	_fill_player_deck(player)
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	player.hand.append(CardInstance.create(_make_named_trainer_cd("Professor Sada's Vitality", "Professor Sada's Vitality", "Supporter"), 0))
+	player.hand.append(CardInstance.create(_make_trainer_cd("Energy Retrieval"), 0))
+	for i: int in 30:
+		player.deck.append(CardInstance.create(_make_trainer_cd("Deck filler %d" % i), 0))
+	var greninja_cd := _make_pokemon_cd("Radiant Greninja", "Basic", "W", 130)
+	greninja_cd.name_en = "Radiant Greninja"
+	var greninja := CardInstance.create(greninja_cd, 0)
+	player.hand.append(greninja)
+	var first_attack := {"kind": "attack", "attack_index": 0, "targets": [], "requires_interaction": false}
+	var low_attack := {
+		"type": "attack",
+		"attack_index": 0,
+		"attack_name": "Bursting Roar",
+		"attack_quality": {"role": "desperation_redraw", "terminal_priority": "low"},
+	}
+	strategy.set("_cached_turn_number", 6)
+	strategy.set("_llm_queue_turn", 6)
+	strategy.set("_llm_decision_tree", {"actions": [low_attack]})
+	strategy.set("_llm_action_catalog", {"low_attack": low_attack})
+	strategy.set("_llm_action_queue", [low_attack])
+	var allow_dead_hand := bool(strategy.call("_low_value_redraw_dead_hand_fallback_allowed", gs, 0))
+	var block_context := bool(strategy.call("_should_block_low_value_runtime_attack_context", gs, 0))
+	var matches: bool = bool(strategy.call("_queue_item_matches", low_attack, first_attack, gs, 0))
+	var score: float = float(strategy.call("score_action_absolute", first_attack, gs, 0))
+	var payload: Dictionary = strategy.call("build_action_id_request_payload_for_test", gs, 0, [
+		{"kind": "play_basic_to_bench", "card": greninja},
+		first_attack,
+		{"kind": "end_turn"},
+	])
+	var facts: Dictionary = payload.get("turn_tactical_facts", {})
+	var attack_route_actions: Array[String] = []
+	for raw_route: Variant in payload.get("candidate_routes", []):
+		if not (raw_route is Dictionary):
+			continue
+		var route: Dictionary = raw_route
+		if str(route.get("id", "")) != "attack_now":
+			continue
+		for raw_action: Variant in route.get("actions", []):
+			if raw_action is Dictionary:
+				attack_route_actions.append(str((raw_action as Dictionary).get("id", "")))
+	var route_has_safe_setup := attack_route_actions.size() >= 2 and str(attack_route_actions[0]).begins_with("play_basic_to_bench:")
+	var route_closes_with_redraw := attack_route_actions.size() >= 2 and str(attack_route_actions[attack_route_actions.size() - 1]).begins_with("attack:0")
+	return run_checks([
+		assert_true(matches, "Dead-hand redraw should remain executable when no Energy or primary route is visible (allow=%s block=%s)" % [str(allow_dead_hand), str(block_context)]),
+		assert_true(score > 0.0, "Runtime score should allow low-value redraw as dead-hand fallback (score=%f)" % score),
+		assert_true(bool(facts.get("redraw_attack_recommended", false)), "Prompt facts should recommend redraw when only low attack is ready, hand has no Energy, and deck is safe"),
+		assert_true(attack_route_actions.size() >= 2, "Candidate attack route should exist for dead-hand redraw"),
+		assert_true(route_has_safe_setup, "Dead-hand redraw route should bench safe basics before discarding the hand: %s" % JSON.stringify(attack_route_actions)),
+		assert_true(route_closes_with_redraw, "Dead-hand redraw route should close with the listed redraw attack: %s" % JSON.stringify(attack_route_actions)),
+	])
+
+
+func test_raging_bolt_llm_payload_does_not_present_grass_attach_as_primary_setup() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(12)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	var grass := CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0)
+	player.hand.append(grass)
+	var attach_action := {"kind": "attach_energy", "card": grass, "target_slot": player.active_pokemon}
+	var payload: Dictionary = strategy.call("build_action_id_request_payload_for_test", gs, 0, [
+		attach_action,
+		{"kind": "attack", "attack_index": 0, "targets": [], "requires_interaction": false},
+		{"kind": "end_turn"},
+	])
+	var facts: Dictionary = payload.get("turn_tactical_facts", {})
+	var misleading_attach_route := false
+	for raw_route: Variant in payload.get("candidate_routes", []):
+		if not (raw_route is Dictionary):
+			continue
+		for raw_action: Variant in (raw_route as Dictionary).get("actions", []):
+			if raw_action is Dictionary and str((raw_action as Dictionary).get("id", "")).begins_with("attach_energy:"):
+				misleading_attach_route = true
+	return run_checks([
+		assert_eq(str(facts.get("primary_attack_name", "")), "Thundering Bolt", "Raging Bolt primary attack should remain the second attack"),
+		assert_true((facts.get("primary_attack_missing_cost", []) as Array).has("Lightning"), "Primary facts should still require Lightning"),
+		assert_true((facts.get("primary_attack_missing_cost", []) as Array).has("Fighting"), "Primary facts should still require Fighting"),
+		assert_eq(str(facts.get("best_manual_attach_energy_for_active_attack", "")), "", "Grass must not be surfaced as the best attach just because the low redraw attack has Colorless cost"),
+		assert_false(misleading_attach_route, "Candidate routes must not teach LLM to attach Grass to Raging Bolt as primary setup while L/F are missing"),
 	])
 
 
@@ -1896,6 +2554,67 @@ func test_raging_bolt_llm_blocks_low_value_redraw_when_hand_has_productive_piece
 	return run_checks([
 		assert_false(matches, "Low-value redraw should not match the LLM queue when hand contains productive non-energy pieces"),
 		assert_true(score < 0.0, "Score fallback should veto low-value redraw when it would discard productive Pokemon/resources"),
+	])
+
+
+func test_raging_bolt_llm_blocks_queued_support_attack_without_attack_quality() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(22)
+	var player := gs.players[0]
+	var slither_cd := _make_pokemon_cd("Slither Wing", "Basic", "F", 140)
+	slither_cd.name_en = "Slither Wing"
+	slither_cd.is_tags = ["Ancient"]
+	slither_cd.attacks = [
+		{"name": "Tread Flat", "cost": "F", "damage": "", "text": "Discard the top card of your opponent's deck."},
+		{"name": "Burning Turbulence", "cost": "FF", "damage": "120", "text": ""},
+	]
+	player.active_pokemon = _make_slot(slither_cd, 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	player.hand.append(CardInstance.create(_make_trainer_cd("Earthen Vessel", "Item"), 0))
+	player.hand.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	player.hand.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
+	player.hand.append(CardInstance.create(_make_raging_bolt_cd(), 0))
+	var runtime_attack := {"kind": "attack", "attack_index": 0, "targets": [], "requires_interaction": false}
+	var runtime_attack_id := str(strategy.call("_action_id_for_action", runtime_attack, gs, 0))
+	var queued_support_attack := {
+		"id": runtime_attack_id,
+		"action_id": runtime_attack_id,
+		"type": "attack",
+		"attack_index": 0,
+		"attack_name": "Tread Flat",
+	}
+	strategy.set("_cached_turn_number", 22)
+	strategy.set("_llm_queue_turn", 22)
+	strategy.set("_llm_decision_tree", {"actions": [queued_support_attack]})
+	strategy.set("_llm_action_catalog", {runtime_attack_id: queued_support_attack})
+	strategy.set("_llm_action_queue", [queued_support_attack])
+	var matches: bool = bool(strategy.call("_queue_item_matches", queued_support_attack, runtime_attack, gs, 0))
+	var score: float = float(strategy.call("score_action_absolute", runtime_attack, gs, 0))
+	return run_checks([
+		assert_true(matches, "Exact id without attack_quality may still match before queue scoring"),
+		assert_true(score <= -1000.0, "Queue scoring must still veto low-value support attacks when productive Raging Bolt setup exists (score=%f)" % score),
+	])
+
+
+func test_raging_bolt_llm_blocks_id_only_first_attack_queue_when_burst_ready() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(20)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Lightning Energy", "L"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Fighting Energy", "F"), 0))
+	var queued_first_attack := {"id": "attack:0:bursting_roar", "action_id": "attack:0:bursting_roar", "type": "attack"}
+	var runtime_first_attack := {"kind": "attack", "attack_index": 0, "targets": [], "requires_interaction": false}
+	var runtime_burst_attack := {"kind": "attack", "attack_index": 1, "targets": [], "requires_interaction": true}
+	return run_checks([
+		assert_true(bool(strategy.call("_deck_should_block_exact_queue_match", queued_first_attack, runtime_first_attack, gs, 0)),
+			"ID-only queued first attack should still be recognized and blocked when Raging Bolt burst is ready"),
+		assert_true(bool(strategy.call("_deck_queue_item_matches_action", queued_first_attack, runtime_burst_attack, gs, 0)),
+			"ID-only queued first attack should be allowed to match the stronger ready burst attack"),
 	])
 
 
@@ -2102,6 +2821,7 @@ func test_raging_bolt_llm_exposes_safe_ogerpon_before_simple_primary_route() -> 
 		return "DeckStrategyRagingBoltLLM.gd should exist"
 	var gs := _make_game_state(9)
 	var player := gs.players[0]
+	_fill_player_deck(player)
 	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
 	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
 	var ogerpon_cd := _make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210)
@@ -2183,12 +2903,50 @@ func test_raging_bolt_llm_exposes_active_ogerpon_manual_attach_ko_route() -> Str
 	])
 
 
+func test_raging_bolt_llm_exposes_extra_manual_attach_for_burst_ko() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(14)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	var fighting := CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0)
+	player.hand.append(fighting)
+	var raikou_cd := _make_pokemon_cd("Raikou V", "Basic", "L", 200)
+	raikou_cd.name_en = "Raikou V"
+	gs.players[1].active_pokemon = _make_slot(raikou_cd, 1)
+	var attach_action := {"kind": "attach_energy", "card": fighting, "target_slot": player.active_pokemon}
+	var expected_attach_id: String = str(strategy.call("_action_id_for_action", attach_action, gs, 0))
+	var payload: Dictionary = strategy.call("build_action_id_request_payload_for_test", gs, 0, [
+		attach_action,
+		{"kind": "attack", "attack_index": 1, "targets": [], "requires_interaction": true},
+		{"kind": "end_turn"},
+	])
+	var facts: Dictionary = payload.get("turn_tactical_facts", {})
+	var best_attack: Dictionary = facts.get("best_active_attack_after_manual_attach", {}) if facts.get("best_active_attack_after_manual_attach", {}) is Dictionary else {}
+	var routes: Array = payload.get("candidate_routes", [])
+	var route_seen := false
+	for raw: Variant in routes:
+		if raw is Dictionary and str((raw as Dictionary).get("id", "")) in ["manual_attach_to_active_attack", "manual_attach_to_attack"]:
+			route_seen = true
+	return run_checks([
+		assert_true(bool(facts.get("manual_attach_enables_best_active_attack", false)), "Ready Raging Bolt should still expose extra manual attach when it turns 140 into 210 KO damage"),
+		assert_eq(str(facts.get("best_manual_attach_to_best_active_attack_action_id", "")), expected_attach_id, "The exact extra Fighting attach id should be provided"),
+		assert_eq(int(best_attack.get("estimated_damage_after_best_manual_attach", 0)), 210, "Burst damage projection should count board basic Energy plus the extra attach"),
+		assert_true(bool(best_attack.get("kos_opponent_active_after_best_manual_attach", false)), "Extra attach should be marked as active KO conversion"),
+		assert_true(route_seen, "Candidate routes should expose a manual attach attack route for extra burst damage KO"),
+	])
+
+
 func test_raging_bolt_llm_exposes_productive_engine_actions_from_card_rules() -> String:
 	var strategy := _new_llm_strategy()
 	if strategy == null:
 		return "DeckStrategyRagingBoltLLM.gd should exist"
 	var gs := _make_game_state(9)
 	var player := gs.players[0]
+	_fill_player_deck(player)
 	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
 	var ogerpon_cd := _make_pokemon_cd("厄诡椪 碧草面具ex", "Basic", "G", 210)
 	ogerpon_cd.name_en = "Teal Mask Ogerpon ex"
@@ -2229,12 +2987,119 @@ func test_raging_bolt_llm_exposes_productive_engine_actions_from_card_rules() ->
 	])
 
 
+func test_raging_bolt_llm_low_deck_prompt_facts_hide_draw_churn_engines() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(18)
+	var player := gs.players[0]
+	player.deck.clear()
+	for i: int in 5:
+		player.deck.append(CardInstance.create(_make_trainer_cd("Low deck filler %d" % i), 0))
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	var ogerpon_cd := _make_pokemon_cd("厄诡椪 碧草面具ex", "Basic", "G", 210)
+	ogerpon_cd.name_en = "Teal Mask Ogerpon ex"
+	ogerpon_cd.effect_id = "409898a79b38fe8ca279e7bdaf4fd52e"
+	ogerpon_cd.abilities = [{"name": "碧草之舞", "text": "Attach a Basic Grass Energy from your hand to this Pokemon. Then draw a card."}]
+	var ogerpon := _make_slot(ogerpon_cd, 0)
+	player.bench.append(ogerpon)
+	var shoes_cd := _make_trainer_cd("Trekking Shoes", "Item")
+	shoes_cd.effect_id = "70d14b4a5a9c15581b8a0c8dfd325717"
+	shoes_cd.description = "Look at the top card of your deck. Put it into your hand or discard it and draw a card."
+	var shoes := CardInstance.create(shoes_cd, 0)
+	var stretcher_cd := _make_trainer_cd("Night Stretcher", "Item")
+	stretcher_cd.effect_id = "3e6f1daf545dfed48d0588dd50792a2e"
+	stretcher_cd.description = "Put a Pokemon or Basic Energy from your discard pile into your hand."
+	var stretcher := CardInstance.create(stretcher_cd, 0)
+	player.hand.append(shoes)
+	player.hand.append(stretcher)
+	player.hand.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
+	player.discard_pile.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	var payload: Dictionary = strategy.call("build_action_id_request_payload_for_test", gs, 0, [
+		{"kind": "use_ability", "source_slot": ogerpon, "ability_index": 0, "requires_interaction": true},
+		{"kind": "play_trainer", "card": shoes, "targets": [], "requires_interaction": true},
+		{"kind": "play_trainer", "card": stretcher, "targets": [], "requires_interaction": true},
+		{"kind": "end_turn"},
+	])
+	var facts: Dictionary = payload.get("turn_tactical_facts", {})
+	var safe: Array = facts.get("safe_pre_primary_actions", [])
+	var productive: Array = facts.get("productive_engine_actions", [])
+	var saw_ogerpon_safe := false
+	var saw_ogerpon_productive := false
+	var saw_shoes_productive := false
+	var saw_stretcher_productive := false
+	var route_has_draw_churn := false
+	for raw_safe: Variant in safe:
+		if raw_safe is Dictionary and str((raw_safe as Dictionary).get("id", "")) == "use_ability:bench_0:0":
+			saw_ogerpon_safe = true
+	for raw_productive: Variant in productive:
+		if not (raw_productive is Dictionary):
+			continue
+		var action: Dictionary = raw_productive
+		if str(action.get("id", "")) == "use_ability:bench_0:0":
+			saw_ogerpon_productive = true
+		if str(action.get("card", "")) == "Trekking Shoes":
+			saw_shoes_productive = true
+		if str(action.get("card", "")) == "Night Stretcher":
+			saw_stretcher_productive = true
+	for raw_route: Variant in payload.get("candidate_routes", []):
+		if not (raw_route is Dictionary):
+			continue
+		for raw_action: Variant in (raw_route as Dictionary).get("actions", []):
+			if not (raw_action is Dictionary):
+				continue
+			var action_id := str((raw_action as Dictionary).get("id", ""))
+			if action_id == "use_ability:bench_0:0" or action_id.begins_with("play_trainer:c%d" % int(shoes.instance_id)):
+				route_has_draw_churn = true
+	return run_checks([
+		assert_true(bool(facts.get("no_deck_draw_lock", false)), "Test payload should enable low-deck draw lock"),
+		assert_false(saw_ogerpon_safe, "Low-deck prompt facts must not advertise Ogerpon charge-and-draw as safe setup"),
+		assert_false(saw_ogerpon_productive, "Low-deck prompt facts must not advertise Ogerpon charge-and-draw as productive setup"),
+		assert_false(saw_shoes_productive, "Low-deck prompt facts must not advertise Trekking Shoes as productive setup"),
+		assert_true(saw_stretcher_productive, "Low-deck prompt facts should still expose non-draw recovery actions"),
+		assert_false(route_has_draw_churn, "Low-deck candidate routes must not include optional draw/churn actions"),
+	])
+
+
+func test_raging_bolt_llm_empty_deck_prompt_keeps_draw_lock() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(18)
+	var player := gs.players[0]
+	player.deck.clear()
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	var shoes_cd := _make_trainer_cd("Trekking Shoes", "Item")
+	shoes_cd.effect_id = "70d14b4a5a9c15581b8a0c8dfd325717"
+	shoes_cd.description = "Look at the top card of your deck. Put it into your hand or discard it and draw a card."
+	var shoes := CardInstance.create(shoes_cd, 0)
+	player.hand.append(shoes)
+	var payload: Dictionary = strategy.call("build_action_id_request_payload_for_test", gs, 0, [
+		{"kind": "play_trainer", "card": shoes, "targets": [], "requires_interaction": true},
+		{"kind": "end_turn"},
+	])
+	var facts: Dictionary = payload.get("turn_tactical_facts", {})
+	var route_has_shoes := false
+	for raw_route: Variant in payload.get("candidate_routes", []):
+		if not (raw_route is Dictionary):
+			continue
+		for raw_action: Variant in (raw_route as Dictionary).get("actions", []):
+			if raw_action is Dictionary and str((raw_action as Dictionary).get("id", "")) == "play_trainer:c%d" % int(shoes.instance_id):
+				route_has_shoes = true
+	return run_checks([
+		assert_true(bool(facts.get("no_deck_draw_lock", false)), "Empty deck must still enable no-deck-draw lock"),
+		assert_true(bool(facts.get("deck_draw_risk", false)), "Empty deck is maximum draw risk"),
+		assert_false(route_has_shoes, "Empty-deck candidate routes must not include optional Trekking Shoes"),
+	])
+
+
 func test_raging_bolt_llm_exposes_recovery_and_fezandipiti_as_productive_actions() -> String:
 	var strategy := _new_llm_strategy()
 	if strategy == null:
 		return "DeckStrategyRagingBoltLLM.gd should exist"
 	var gs := _make_game_state(10)
 	var player := gs.players[0]
+	_fill_player_deck(player)
 	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
 	var fez_cd := _make_pokemon_cd("Fezandipiti ex", "Basic", "D", 210)
 	fez_cd.name_en = "Fezandipiti ex"
@@ -2283,6 +3148,7 @@ func test_ogerpon_ability_schema_uses_hand_energy_not_search() -> String:
 		return "DeckStrategyRagingBoltLLM.gd should exist"
 	var gs := _make_game_state(9)
 	var player := gs.players[0]
+	_fill_player_deck(player)
 	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
 	var ogerpon_cd := _make_pokemon_cd("厄诡椪 碧草面具ex", "Basic", "G", 210)
 	ogerpon_cd.name_en = "Teal Mask Ogerpon ex"
@@ -2307,12 +3173,59 @@ func test_ogerpon_ability_schema_uses_hand_energy_not_search() -> String:
 	for raw_action: Variant in productive:
 		if raw_action is Dictionary and str((raw_action as Dictionary).get("id", "")) == "use_ability:bench_0:0":
 			productive_interactions = (raw_action as Dictionary).get("interactions", {})
+	var false_energy_search_future := false
+	for raw_future: Variant in payload.get("future_actions", []):
+		if not (raw_future is Dictionary):
+			continue
+		var prerequisite_actions: Array = (raw_future as Dictionary).get("prerequisite_actions", []) if (raw_future as Dictionary).get("prerequisite_actions", []) is Array else []
+		if prerequisite_actions.has("use_ability:bench_0:0") and str((raw_future as Dictionary).get("prerequisite", "")) == "energy_search_then_manual_attach":
+			false_energy_search_future = true
 	return run_checks([
 		assert_true(schema.has("basic_energy_from_hand"), "Ogerpon ability should expose a hand-energy selection schema"),
 		assert_true(schema.has("energy_card_id"), "Ogerpon ability should allow exact hand energy card id selection"),
 		assert_false(schema.has("search_energy"), "Ogerpon ability should not be modeled as deck energy search"),
 		assert_false(schema.has("search_targets"), "Ogerpon ability should not expose search target schema"),
 		assert_true(productive_interactions.has("basic_energy_from_hand"), "Productive facts should include an executable hand-energy interaction template"),
+		assert_false(false_energy_search_future, "Future attack projection must not treat Ogerpon hand-energy ability as a deck Energy search"),
+	])
+
+
+func test_ogerpon_bench_action_is_not_modeled_as_deck_search() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(9)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	var ogerpon_cd := _make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210)
+	ogerpon_cd.name_en = "Teal Mask Ogerpon ex"
+	ogerpon_cd.effect_id = "409898a79b38fe8ca279e7bdaf4fd52e"
+	ogerpon_cd.description = "Ability: Teal Dance. Attach a Basic Grass Energy from your hand to this Pokemon. Then draw a card from the top of your deck."
+	var ogerpon := CardInstance.create(ogerpon_cd, 0)
+	player.hand.append(ogerpon)
+	var payload: Dictionary = strategy.call("build_action_id_request_payload_for_test", gs, 0, [
+		{"kind": "play_basic_to_bench", "card": ogerpon},
+		{"kind": "end_turn"},
+	])
+	var bench_ref: Dictionary = {}
+	for raw: Variant in _current_legal_actions_from_payload(payload):
+		if raw is Dictionary and str((raw as Dictionary).get("id", "")) == "play_basic_to_bench:c0":
+			bench_ref = raw
+	var rules: Dictionary = bench_ref.get("card_rules", {}) if bench_ref.get("card_rules", {}) is Dictionary else {}
+	var tags: Array = rules.get("tags", []) if rules.get("tags", []) is Array else []
+	var schema: Dictionary = bench_ref.get("interaction_schema", {}) if bench_ref.get("interaction_schema", {}) is Dictionary else {}
+	var future_actions: Array = payload.get("future_actions", []) if payload.get("future_actions", []) is Array else []
+	var false_search_future := false
+	for raw_future: Variant in future_actions:
+		if raw_future is Dictionary:
+			var prerequisite_actions: Array = (raw_future as Dictionary).get("prerequisite_actions", []) if (raw_future as Dictionary).get("prerequisite_actions", []) is Array else []
+			if prerequisite_actions.has("play_basic_to_bench:c0"):
+				false_search_future = true
+	return run_checks([
+		assert_false(tags.has("search_deck"), "Benching Teal Mask Ogerpon must not be exposed as deck search just because its ability draws from deck top"),
+		assert_false(bool(bench_ref.get("requires_interaction", false)), "Benching Teal Mask Ogerpon should be a direct action without search interaction"),
+		assert_false(schema.has("search_energy"), "Benching Teal Mask Ogerpon should not expose energy-search schema"),
+		assert_false(false_search_future, "Future attack projection must not treat benching Ogerpon as a deterministic Energy search prerequisite"),
 	])
 
 
@@ -2451,6 +3364,49 @@ func test_llm_selection_policy_controls_earthen_vessel_search_and_discard() -> S
 	])
 
 
+func test_llm_selection_policy_controls_generic_deck_search_targets() -> String:
+	var bridge_script := _load_script(LLM_INTERACTION_BRIDGE_SCRIPT_PATH)
+	if bridge_script == null:
+		return "LLMInteractionIntentBridge.gd should exist"
+	var bridge: RefCounted = bridge_script.new()
+	var gs := _make_game_state(9)
+	var player := gs.players[0]
+	var nest := CardInstance.create(_make_trainer_cd("Nest Ball", "Item"), 0)
+	var iron_bundle := CardInstance.create(_make_pokemon_cd("Iron Bundle", "Basic", "W", 100), 0)
+	var raging_bolt := CardInstance.create(_make_raging_bolt_cd(), 0)
+	var ogerpon := CardInstance.create(_make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210), 0)
+	player.hand.append(nest)
+	player.deck.append(iron_bundle)
+	player.deck.append(raging_bolt)
+	player.deck.append(ogerpon)
+	var result: Dictionary = bridge.call("pick_interaction_items", [iron_bundle, raging_bolt, ogerpon], {
+		"id": "search_cards",
+		"max_select": 1,
+	}, {
+		"game_state": gs,
+		"player_index": 0,
+		"pending_effect_kind": "trainer",
+		"pending_effect_card": nest,
+	}, [{
+		"type": "play_trainer",
+		"card": "Nest Ball",
+		"action_id": "play_trainer:c%d" % int(nest.instance_id),
+		"interactions": {
+			"search_targets": {"items": ["Raging Bolt ex", "Teal Mask Ogerpon ex"]},
+		},
+		"selection_policy": {
+			"prefer": "Raging Bolt ex",
+		},
+	}])
+	var picked: Array = result.get("items", [])
+	var picked_card: Variant = picked[0] if not picked.is_empty() else null
+	return run_checks([
+		assert_true(bool(result.get("has_plan", false)), "Generic deck search should honor search_targets/prefer intent from queued LLM routes"),
+		assert_eq(picked.size(), 1, "Nest Ball search should pick exactly one Basic Pokemon"),
+		assert_true(picked_card == raging_bolt, "Nest Ball should pick the route-critical Raging Bolt instead of the first legal Basic"),
+	])
+
+
 func test_llm_selection_policy_controls_night_stretcher_recovery_choice() -> String:
 	var bridge_script := _load_script(LLM_INTERACTION_BRIDGE_SCRIPT_PATH)
 	if bridge_script == null:
@@ -2579,6 +3535,62 @@ func test_llm_route_candidate_builder_exposes_primary_engine_route() -> String:
 		assert_true(route_ids.has("use_ability:bench_0:0"), "Route should include charge/draw ability before ending"),
 		assert_true(route_ids.has("play_trainer:c52"), "Route should include visible energy search"),
 		assert_true(route_ids.has("end_turn"), "Setup route should have a terminal end_turn for executor safety"),
+	])
+
+
+func test_llm_route_candidate_primary_engine_excludes_hand_reset_draw() -> String:
+	var builder := _new_route_candidate_builder()
+	if builder == null:
+		return "LLMRouteCandidateBuilder.gd should exist"
+	var iono := {
+		"id": "play_trainer:c49",
+		"action_id": "play_trainer:c49",
+		"type": "play_trainer",
+		"card": "Iono",
+		"card_rules": {"name_en": "Iono", "tags": ["draw"]},
+	}
+	var vessel := {
+		"id": "play_trainer:c52",
+		"action_id": "play_trainer:c52",
+		"type": "play_trainer",
+		"card": "Earthen Vessel",
+		"card_rules": {"name_en": "Earthen Vessel", "tags": ["search_deck", "energy_related", "discard"]},
+	}
+	var attach := {
+		"id": "attach_energy:c16:active",
+		"action_id": "attach_energy:c16:active",
+		"type": "attach_energy",
+		"card": "Lightning Energy",
+		"position": "active",
+	}
+	var end_turn := {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"}
+	var future_attack := {
+		"id": "future:attack_after_visible_engine:active:1:thundering_bolt",
+		"action_id": "future:attack_after_visible_engine:active:1:thundering_bolt",
+		"type": "attack",
+		"future": true,
+		"attack_name": "Thundering Bolt",
+		"attack_quality": {"role": "primary_damage", "terminal_priority": "high"},
+	}
+	var routes: Array = builder.call("build_candidate_routes", [iono, vessel, attach, end_turn], [future_attack], {
+		"primary_attack_reachable_after_visible_engine": true,
+		"primary_attack_route": ["energy_search", "manual_attach", "Thundering Bolt"],
+		"best_manual_attach_to_primary_attack_action_id": "attach_energy:c16:active",
+	})
+	var primary_ids: Array[String] = []
+	for raw_route: Variant in routes:
+		if not (raw_route is Dictionary):
+			continue
+		var route: Dictionary = raw_route
+		if str(route.get("id", "")) != "primary_visible_engine":
+			continue
+		for raw_action: Variant in route.get("actions", []):
+			if raw_action is Dictionary:
+				primary_ids.append(str((raw_action as Dictionary).get("id", "")))
+	return run_checks([
+		assert_true(primary_ids.has("play_trainer:c52"), "Primary route should keep deterministic energy search"),
+		assert_true(primary_ids.has("attach_energy:c16:active"), "Primary route should keep the cost-filling manual attach"),
+		assert_false(primary_ids.has("play_trainer:c49"), "Primary route must not reset a playable hand with Iono before visible setup"),
 	])
 
 
@@ -2714,6 +3726,209 @@ func test_llm_route_candidate_builder_exposes_manual_attach_to_attack_route() ->
 	])
 
 
+func test_llm_route_candidate_builder_adds_basic_before_attack_when_bench_empty() -> String:
+	var builder := _new_route_candidate_builder()
+	if builder == null:
+		return "LLMRouteCandidateBuilder.gd should exist"
+	var bench_basic := {
+		"id": "play_basic_to_bench:c58",
+		"action_id": "play_basic_to_bench:c58",
+		"type": "play_basic_to_bench",
+		"card": "Raging Bolt ex",
+	}
+	var attack := {
+		"id": "attack:1:Thundering Bolt",
+		"action_id": "attack:1:Thundering Bolt",
+		"type": "attack",
+		"attack_name": "Thundering Bolt",
+		"attack_index": 1,
+		"attack_quality": {"role": "primary_damage", "terminal_priority": "high"},
+	}
+	var end_turn := {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"}
+	var routes: Array = builder.call("build_candidate_routes", [bench_basic, attack, end_turn], [], {
+		"own_bench_count": 0,
+	})
+	var attack_route: Dictionary = {}
+	for raw: Variant in routes:
+		if raw is Dictionary and str((raw as Dictionary).get("id", "")) == "attack_now":
+			attack_route = raw
+			break
+	var ids: Array[String] = []
+	for raw_action: Variant in attack_route.get("actions", []):
+		if raw_action is Dictionary:
+			ids.append(str((raw_action as Dictionary).get("id", "")))
+	return run_checks([
+		assert_false(attack_route.is_empty(), "Attack route should still exist"),
+		assert_eq(ids[0], "play_basic_to_bench:c58", "When the bench is empty, attack routes should bench a Basic before attacking to avoid no-Basic loss"),
+		assert_eq(ids[1], "attack:1:Thundering Bolt", "Attack should remain terminal after the survival bench action"),
+	])
+
+
+func test_llm_route_candidate_builder_prefers_deterministic_gust_over_coin_flip_catcher() -> String:
+	var builder := _new_route_candidate_builder()
+	if builder == null:
+		return "LLMRouteCandidateBuilder.gd should exist"
+	var catcher := {
+		"id": "play_trainer:c8",
+		"action_id": "play_trainer:c8",
+		"type": "play_trainer",
+		"card": "Pokemon Catcher",
+		"card_rules": {"name_en": "Pokemon Catcher", "effect_id": "3a6d419769778b40091e69fbd76737ec", "tags": ["gust"]},
+	}
+	var boss := {
+		"id": "play_trainer:c41",
+		"action_id": "play_trainer:c41",
+		"type": "play_trainer",
+		"card": "Boss's Orders",
+		"card_rules": {"name_en": "Boss's Orders", "effect_id": "8e1fa2c9018db938084c94c7c970d419", "tags": ["gust"]},
+	}
+	var attack := {
+		"id": "attack:1:Thundering Bolt",
+		"action_id": "attack:1:Thundering Bolt",
+		"type": "attack",
+		"attack_name": "Thundering Bolt",
+		"attack_index": 1,
+		"attack_quality": {"role": "primary_damage", "terminal_priority": "high"},
+	}
+	var end_turn := {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"}
+	var routes: Array = builder.call("build_candidate_routes", [catcher, boss, attack, end_turn], [], {
+		"gust_ko_opportunities": [
+			{
+				"gust_action_id": "play_trainer:c8",
+				"attack_action_id": "attack:1:Thundering Bolt",
+				"gust_reliability": "coin_flip",
+				"gust_deterministic": false,
+				"target_position": "bench_3",
+				"target_name": "Mew ex",
+				"target_hp_remaining": 60,
+				"target_prize_count": 2,
+				"game_winning": true,
+			},
+			{
+				"gust_action_id": "play_trainer:c41",
+				"attack_action_id": "attack:1:Thundering Bolt",
+				"gust_reliability": "deterministic",
+				"gust_deterministic": true,
+				"target_position": "bench_3",
+				"target_name": "Mew ex",
+				"target_hp_remaining": 60,
+				"target_prize_count": 2,
+				"game_winning": true,
+			},
+		],
+	})
+	var gust_route: Dictionary = {}
+	for raw: Variant in routes:
+		if raw is Dictionary and str((raw as Dictionary).get("id", "")) == "gust_ko":
+			gust_route = raw
+			break
+	var route_actions: Array = gust_route.get("actions", []) if gust_route.get("actions", []) is Array else []
+	var first_action: Dictionary = route_actions[0] if not route_actions.is_empty() and route_actions[0] is Dictionary else {}
+	return run_checks([
+		assert_false(gust_route.is_empty(), "Candidate builder should expose a gust KO route"),
+		assert_eq(str(first_action.get("id", "")), "play_trainer:c41", "Deterministic Boss gust should outrank coin-flip Pokemon Catcher for the same KO"),
+		assert_true(bool(first_action.get("gust_deterministic", false)), "Route action should preserve deterministic gust metadata for prompt/runtime repair"),
+		assert_eq(int(gust_route.get("priority", 0)), 990, "Deterministic gust KO routes should remain hard-preference candidates"),
+	])
+
+
+func test_llm_route_candidate_builder_exposes_defensive_gust_stall_route() -> String:
+	var builder := _new_route_candidate_builder()
+	if builder == null:
+		return "LLMRouteCandidateBuilder.gd should exist"
+	var boss := {
+		"id": "play_trainer:c41",
+		"action_id": "play_trainer:c41",
+		"type": "play_trainer",
+		"card": "Boss's Orders",
+		"card_rules": {"name_en": "Boss's Orders", "effect_id": "8e1fa2c9018db938084c94c7c970d419", "tags": ["gust"]},
+	}
+	var end_turn := {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"}
+	var routes: Array = builder.call("build_candidate_routes", [boss, end_turn], [], {
+		"defensive_gust_opportunities": [{
+			"gust_action_id": "play_trainer:c41",
+			"target_position": "bench_2",
+			"target_name": "Iron Hands ex",
+			"opponent_active_name": "Raikou V",
+			"selection_policy": {
+				"opponent_bench_target": "bench_2",
+			},
+		}],
+	})
+	var route: Dictionary = {}
+	for raw: Variant in routes:
+		if raw is Dictionary and str((raw as Dictionary).get("id", "")) == "defensive_gust_stall":
+			route = raw
+			break
+	var route_actions: Array = route.get("actions", []) if route.get("actions", []) is Array else []
+	var first_action: Dictionary = route_actions[0] if not route_actions.is_empty() and route_actions[0] is Dictionary else {}
+	return run_checks([
+		assert_false(route.is_empty(), "Candidate builder should expose a defensive gust route when no attack route is available"),
+		assert_eq(str(first_action.get("id", "")), "play_trainer:c41", "Defensive gust route should use the deterministic gust action"),
+		assert_eq(str(first_action.get("capability", "")), "defensive_gust", "Defensive gust should survive route compilation without requiring an attack goal"),
+		assert_eq(int(route.get("priority", 0)), 975, "Defensive gust should be strong enough for hard route repair when it is generated"),
+	])
+
+
+func test_llm_route_candidate_builder_suppresses_low_value_attack_when_productive_setup_exists() -> String:
+	var builder := _new_route_candidate_builder()
+	if builder == null:
+		return "LLMRouteCandidateBuilder.gd should exist"
+	var low_attack := {
+		"id": "attack:0:bursting_roar",
+		"action_id": "attack:0:bursting_roar",
+		"type": "attack",
+		"attack_name": "Bursting Roar",
+		"attack_index": 0,
+		"attack_quality": {"role": "desperation_redraw", "terminal_priority": "low"},
+	}
+	var vessel := {
+		"id": "play_trainer:c52",
+		"action_id": "play_trainer:c52",
+		"type": "play_trainer",
+		"card": "Earthen Vessel",
+		"card_rules": {"tags": ["search_deck", "energy_related", "discard", "productive_engine"]},
+	}
+	var end_turn := {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"}
+	var routes: Array = builder.call("build_candidate_routes", [low_attack, vessel, end_turn], [], {
+		"only_ready_attack_is_low_value_redraw": true,
+	})
+	var saw_attack_now := false
+	var saw_engine_route := false
+	for raw: Variant in routes:
+		if raw is Dictionary:
+			var route := raw as Dictionary
+			saw_attack_now = saw_attack_now or str(route.get("id", "")) == "attack_now"
+			saw_engine_route = saw_engine_route or str(route.get("id", "")) == "engine_before_end"
+	return run_checks([
+		assert_false(saw_attack_now, "Candidate builder must not expose low-value redraw attack-now when productive setup exists"),
+		assert_true(saw_engine_route, "Productive setup route should remain available after suppressing redraw attack"),
+	])
+
+
+func test_llm_route_candidate_builder_suppresses_low_value_attack_when_deck_draw_is_risky() -> String:
+	var builder := _new_route_candidate_builder()
+	if builder == null:
+		return "LLMRouteCandidateBuilder.gd should exist"
+	var low_attack := {
+		"id": "attack:0:bursting_roar",
+		"action_id": "attack:0:bursting_roar",
+		"type": "attack",
+		"attack_name": "Bursting Roar",
+		"attack_index": 0,
+		"attack_quality": {"role": "desperation_redraw", "terminal_priority": "low"},
+	}
+	var end_turn := {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"}
+	var routes: Array = builder.call("build_candidate_routes", [low_attack, end_turn], [], {
+		"deck_draw_risk": true,
+	})
+	var saw_attack_now := false
+	for raw: Variant in routes:
+		if raw is Dictionary and str((raw as Dictionary).get("id", "")) == "attack_now":
+			saw_attack_now = true
+	return assert_false(saw_attack_now, "Low-deck candidate builder must not offer redraw attack-now even when no other route exists")
+
+
 func test_llm_route_candidate_builder_exposes_generic_active_attach_attack_route() -> String:
 	var builder := _new_route_candidate_builder()
 	if builder == null:
@@ -2752,6 +3967,184 @@ func test_llm_route_candidate_builder_exposes_generic_active_attach_attack_route
 		assert_eq(str(route.get("route_action_id", "")), "route:manual_attach_to_active_attack", "Generic active attack route should be selectable"),
 		assert_eq(str(first_action.get("id", "")), "attach_energy:c21:active", "Generic route should start with the exact cost-filling attach"),
 		assert_true(bool(first_goal.get("kos_opponent_active", false)), "Route goal should preserve the active KO projection"),
+	])
+
+
+func test_llm_route_candidate_builder_exposes_pivot_attack_route() -> String:
+	var builder := _new_route_candidate_builder()
+	if builder == null:
+		return "LLMRouteCandidateBuilder.gd should exist"
+	var current_actions: Array[Dictionary] = [
+		{
+			"id": "use_ability:bench_4:0",
+			"action_id": "use_ability:bench_4:0",
+			"type": "use_ability",
+			"pokemon": "Localized Ogerpon",
+			"card_rules": {"name_en": "Teal Mask Ogerpon ex", "tags": ["energy_related", "draw", "charge_engine"]},
+		},
+		{
+			"id": "attach_energy:c43:bench_1",
+			"action_id": "attach_energy:c43:bench_1",
+			"type": "attach_energy",
+			"card": "Fighting Energy",
+			"energy_type": "Fighting",
+			"position": "bench_1",
+			"target": "Raging Bolt ex",
+		},
+		{
+			"id": "retreat:bench_1:c21",
+			"action_id": "retreat:bench_1:c21",
+			"type": "retreat",
+			"bench_position": "bench_1",
+			"bench_target": "Raging Bolt ex",
+		},
+		{"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	]
+	var future_actions: Array[Dictionary] = [
+		{
+			"id": "future:attack_after_pivot:bench_1:1:thundering_bolt",
+			"action_id": "future:attack_after_pivot:bench_1:1:thundering_bolt",
+			"type": "attack",
+			"future": true,
+			"prerequisite": "pivot_to_bench_attacker",
+			"position": "bench_1",
+			"attack_name": "Thundering Bolt",
+			"reachable_with_known_resources": true,
+			"best_manual_attach_energy": "Fighting",
+			"attack_quality": {"role": "primary_damage", "terminal_priority": "high"},
+		},
+	]
+	var routes: Array = builder.call("build_candidate_routes", current_actions, future_actions, {
+		"no_deck_draw_lock": false,
+		"safe_pre_primary_actions": [{"id": "use_ability:bench_4:0"}],
+	})
+	var route: Dictionary = {}
+	for raw_route: Variant in routes:
+		if raw_route is Dictionary and str((raw_route as Dictionary).get("id", "")) == "pivot_to_primary_attack":
+			route = raw_route
+			break
+	var action_ids: Array[String] = []
+	for raw_action: Variant in route.get("actions", []):
+		if raw_action is Dictionary:
+			action_ids.append(str((raw_action as Dictionary).get("id", "")))
+	return run_checks([
+		assert_false(route.is_empty(), "Candidate builder should expose a same-turn pivot-to-attack route"),
+		assert_true(action_ids.has("use_ability:bench_4:0"), "Pivot attack route should keep safe pre-primary charge actions"),
+		assert_true(action_ids.has("attach_energy:c43:bench_1"), "Pivot attack route should attach the missing Energy to the bench attacker"),
+		assert_true(action_ids.has("retreat:bench_1:c21"), "Pivot attack route should include the exact pivot action"),
+		assert_true(action_ids.has("end_turn"), "Pivot attack route should close with end_turn so runtime can replace it with the now-legal attack"),
+	])
+
+
+func test_llm_route_candidate_builder_prefers_attack_cost_energy_for_setup_attach() -> String:
+	var builder := _new_route_candidate_builder()
+	if builder == null:
+		return "LLMRouteCandidateBuilder.gd should exist"
+	var current_actions: Array[Dictionary] = [
+		{
+			"id": "attach_energy:c10:active",
+			"action_id": "attach_energy:c10:active",
+			"type": "attach_energy",
+			"card": "Grass Energy",
+			"energy_type": "Grass",
+			"position": "active",
+			"target": "Raging Bolt ex",
+		},
+		{
+			"id": "attach_energy:c11:active",
+			"action_id": "attach_energy:c11:active",
+			"type": "attach_energy",
+			"card": "Lightning Energy",
+			"energy_type": "Lightning",
+			"position": "active",
+			"target": "Raging Bolt ex",
+		},
+		{"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	]
+	var routes: Array = builder.call("build_candidate_routes", current_actions, [], {
+		"primary_attack_missing_cost": ["Lightning", "Fighting"],
+	})
+	var setup_route: Dictionary = {}
+	for raw_route: Variant in routes:
+		if raw_route is Dictionary and str((raw_route as Dictionary).get("id", "")) == "manual_attach_setup":
+			setup_route = raw_route
+			break
+	var action_ids: Array[String] = []
+	for raw_action: Variant in setup_route.get("actions", []):
+		if raw_action is Dictionary:
+			action_ids.append(str((raw_action as Dictionary).get("id", "")))
+	return run_checks([
+		assert_false(setup_route.is_empty(), "Manual attach setup route should be exposed when attach actions exist"),
+		assert_eq(action_ids[0], "attach_energy:c11:active", "Setup attach should prefer Energy that reduces the primary attack cost over off-plan Energy"),
+	])
+
+
+func test_llm_route_candidate_builder_skips_off_cost_active_setup_attach_when_primary_needs_specific_energy() -> String:
+	var builder := _new_route_candidate_builder()
+	if builder == null:
+		return "LLMRouteCandidateBuilder.gd should exist"
+	var current_actions: Array[Dictionary] = [
+		{
+			"id": "attach_energy:c10:active",
+			"action_id": "attach_energy:c10:active",
+			"type": "attach_energy",
+			"card": "Grass Energy",
+			"energy_type": "Grass",
+			"position": "active",
+			"target": "Raging Bolt ex",
+		},
+		{"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	]
+	var routes: Array = builder.call("build_candidate_routes", current_actions, [], {
+		"primary_attack_missing_cost": ["Lightning", "Fighting"],
+	})
+	var saw_setup_route := false
+	for raw_route: Variant in routes:
+		if raw_route is Dictionary and str((raw_route as Dictionary).get("id", "")) == "manual_attach_setup":
+			saw_setup_route = true
+			break
+	return assert_false(
+		saw_setup_route,
+		"Manual attach setup route must not expose off-cost active attach when the primary attack still needs specific Energy"
+	)
+
+
+func test_llm_route_candidate_builder_low_deck_lock_excludes_schema_draw_abilities() -> String:
+	var builder := _new_route_candidate_builder()
+	if builder == null:
+		return "LLMRouteCandidateBuilder.gd should exist"
+	var current_actions: Array[Dictionary] = [
+		{
+			"id": "use_ability:bench_0:0",
+			"action_id": "use_ability:bench_0:0",
+			"type": "use_ability",
+			"pokemon": "Radiant Greninja",
+			"requires_interaction": true,
+			"interaction_schema": {"discard_card": {"type": "string"}},
+		},
+		{
+			"id": "use_ability:bench_1:0",
+			"action_id": "use_ability:bench_1:0",
+			"type": "use_ability",
+			"pokemon": "Teal Mask Ogerpon ex",
+			"requires_interaction": true,
+			"interaction_schema": {"basic_energy_from_hand": {"type": "string", "note": "Then draw a card."}},
+		},
+		{"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	]
+	var routes: Array = builder.call("build_candidate_routes", current_actions, [], {
+		"no_deck_draw_lock": true,
+	})
+	var route_ids: Array[String] = []
+	for raw_route: Variant in routes:
+		if raw_route is Dictionary:
+			for raw_action: Variant in (raw_route as Dictionary).get("actions", []):
+				if raw_action is Dictionary:
+					route_ids.append(str((raw_action as Dictionary).get("id", "")))
+	return run_checks([
+		assert_false(route_ids.has("use_ability:bench_0:0"), "Low-deck candidate routes must not expose discard-to-draw abilities"),
+		assert_false(route_ids.has("use_ability:bench_1:0"), "Low-deck candidate routes must not expose charge-and-draw abilities"),
+		assert_true(route_ids.has("end_turn"), "Low-deck candidate builder should still preserve the safe end-turn fallback"),
 	])
 
 
@@ -2894,6 +4287,506 @@ func test_llm_candidate_route_fallback_skips_low_value_active_attach_when_primar
 	])
 
 
+func test_llm_priority_candidate_route_repair_forces_pivot_attack_over_end() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var attach := {
+		"id": "attach_energy:c31:bench_1",
+		"action_id": "attach_energy:c31:bench_1",
+		"type": "attach_energy",
+		"position": "bench_1",
+		"energy_type": "F",
+	}
+	var retreat := {
+		"id": "retreat:active:bench_1",
+		"action_id": "retreat:active:bench_1",
+		"type": "retreat",
+		"bench_position": "bench_1",
+	}
+	var end_turn := {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"}
+	var pivot_route := {
+		"id": "route:pivot_to_primary_attack",
+		"action_id": "route:pivot_to_primary_attack",
+		"type": "route",
+		"candidate_route": true,
+		"priority": 970,
+		"goal": "pivot_to_attack",
+		"actions": [attach, retreat, end_turn],
+		"future_goals": [{
+			"id": "future:attack_after_pivot:bench_1:1:Thundering Bolt",
+			"type": "attack",
+			"future": true,
+			"attack_name": "Thundering Bolt",
+			"attack_quality": {"role": "primary_damage", "terminal_priority": "high"},
+		}],
+	}
+	strategy.set("_llm_route_candidates_by_id", {"route:pivot_to_primary_attack": pivot_route})
+	strategy.set("_llm_action_catalog", {
+		"route:pivot_to_primary_attack": pivot_route,
+		"attach_energy:c31:bench_1": attach,
+		"retreat:active:bench_1": retreat,
+		"end_turn": end_turn,
+	})
+	var weak_tree := {
+		"branches": [{
+			"when": [{"fact": "always"}],
+			"actions": [end_turn],
+		}],
+		"fallback_actions": [end_turn],
+	}
+	var repair: Dictionary = strategy.call("_repair_to_priority_candidate_route_in_tree", weak_tree)
+	var repaired_tree: Dictionary = repair.get("tree", {}) if repair.get("tree", {}) is Dictionary else {}
+	var branches: Array = repaired_tree.get("branches", []) if repaired_tree.get("branches", []) is Array else []
+	var first_branch: Dictionary = branches[0] if not branches.is_empty() and branches[0] is Dictionary else {}
+	var actions: Array = first_branch.get("actions", []) if first_branch.get("actions", []) is Array else []
+	var ids: Array[String] = []
+	for raw: Variant in actions:
+		if raw is Dictionary:
+			ids.append(str((raw as Dictionary).get("id", "")))
+	return run_checks([
+		assert_true(bool(repair.get("changed", false)), "Priority candidate repair should override a weak end-turn tree when a primary pivot attack route exists"),
+		assert_eq(ids.size(), 3, "Repaired tree should expand the route into exact executable actions"),
+		assert_eq(ids[0], "attach_energy:c31:bench_1", "Repaired pivot route should preserve the bench attach first"),
+		assert_eq(ids[1], "retreat:active:bench_1", "Repaired pivot route should preserve the pivot second"),
+		assert_eq(ids[2], "end_turn", "Repaired pivot route should keep conversion terminal"),
+	])
+
+
+func test_llm_priority_candidate_route_repair_ignores_unselected_branch_route() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(14)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	var sada := {
+		"id": "play_trainer:c28",
+		"action_id": "play_trainer:c28",
+		"type": "play_trainer",
+		"card": "Professor Sada's Vitality",
+		"capability": "supporter_acceleration",
+	}
+	var end_turn := {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"}
+	var route := {
+		"id": "route:raging_bolt_primary_visible_engine",
+		"action_id": "route:raging_bolt_primary_visible_engine",
+		"type": "route",
+		"candidate_route": true,
+		"priority": 988,
+		"goal": "setup_to_primary_attack",
+		"actions": [sada, end_turn],
+		"future_goals": [{
+			"id": "future:attack_after_visible_engine:active:1:Thundering Bolt",
+			"type": "attack",
+			"future": true,
+			"attack_name": "Thundering Bolt",
+			"attack_quality": {"role": "primary_damage", "terminal_priority": "high"},
+		}],
+	}
+	strategy.set("_llm_route_candidates_by_id", {"route:raging_bolt_primary_visible_engine": route})
+	strategy.set("_llm_action_catalog", {
+		"route:raging_bolt_primary_visible_engine": route,
+		"play_trainer:c28": sada,
+		"end_turn": end_turn,
+	})
+	var weak_tree := {
+		"branches": [
+			{
+				"when": [{"fact": "always"}],
+				"actions": [end_turn],
+			},
+			{
+				"when": [{"fact": "hand_has_card", "card": "Nonexistent Setup Card"}],
+				"actions": [sada, end_turn],
+			},
+		],
+		"fallback_actions": [end_turn],
+	}
+	var repair: Dictionary = strategy.call("_repair_to_priority_candidate_route_in_tree", weak_tree, gs, 0)
+	var repaired_tree: Dictionary = repair.get("tree", {}) if repair.get("tree", {}) is Dictionary else {}
+	var branches: Array = repaired_tree.get("branches", []) if repaired_tree.get("branches", []) is Array else []
+	var first_branch: Dictionary = branches[0] if not branches.is_empty() and branches[0] is Dictionary else {}
+	var actions: Array = first_branch.get("actions", []) if first_branch.get("actions", []) is Array else []
+	var ids: Array[String] = []
+	for raw: Variant in actions:
+		if raw is Dictionary:
+			ids.append(str((raw as Dictionary).get("id", "")))
+	return run_checks([
+		assert_true(bool(repair.get("changed", false)), "Priority route repair should ignore candidate actions in a branch whose conditions are not selected"),
+		assert_eq(ids, ["play_trainer:c28", "end_turn"], "Selected always branch should be replaced by the visible-engine route"),
+	])
+
+
+func test_llm_priority_candidate_route_repair_forces_gust_ko_over_plain_attack() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(8)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	var gust := {
+		"id": "play_trainer:c9",
+		"action_id": "play_trainer:c9",
+		"type": "play_trainer",
+		"card": "Boss's Orders",
+		"capability": "gust",
+		"selection_policy": {"target_position": "bench_1"},
+	}
+	var attack := {
+		"id": "attack:1:Thundering Bolt",
+		"action_id": "attack:1:Thundering Bolt",
+		"type": "attack",
+		"attack_index": 1,
+		"attack_name": "Thundering Bolt",
+		"attack_quality": {"role": "primary_damage", "terminal_priority": "high"},
+	}
+	var route := {
+		"id": "route:gust_ko",
+		"action_id": "route:gust_ko",
+		"type": "route",
+		"candidate_route": true,
+		"priority": 990,
+		"goal": "gust_ko",
+		"actions": [gust, attack],
+	}
+	strategy.set("_llm_route_candidates_by_id", {"route:gust_ko": route})
+	strategy.set("_llm_action_catalog", {
+		"route:gust_ko": route,
+		"play_trainer:c9": gust,
+		"attack:1:Thundering Bolt": attack,
+	})
+	var weak_tree := {
+		"branches": [{
+			"when": [{"fact": "active_attack_ready", "attack_name": "Thundering Bolt"}],
+			"actions": [attack],
+		}],
+		"fallback_actions": [{"id": "end_turn"}],
+	}
+	var repair: Dictionary = strategy.call("_repair_to_priority_candidate_route_in_tree", weak_tree, gs, 0)
+	var repaired_tree: Dictionary = repair.get("tree", {}) if repair.get("tree", {}) is Dictionary else {}
+	var branches: Array = repaired_tree.get("branches", []) if repaired_tree.get("branches", []) is Array else []
+	var first_branch: Dictionary = branches[0] if not branches.is_empty() and branches[0] is Dictionary else {}
+	var actions: Array = first_branch.get("actions", []) if first_branch.get("actions", []) is Array else []
+	var ids: Array[String] = []
+	for raw: Variant in actions:
+		if raw is Dictionary:
+			ids.append(str((raw as Dictionary).get("id", "")))
+	return run_checks([
+		assert_true(bool(repair.get("changed", false)), "Gust KO route should override a plain high-pressure attack because the attack target matters"),
+		assert_eq(ids, ["play_trainer:c9", "attack:1:Thundering Bolt"], "Repaired gust route should execute gust before the same attack"),
+	])
+
+
+func test_llm_priority_candidate_route_repair_keeps_defensive_gust_capability() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gust := {
+		"id": "play_trainer:c19",
+		"action_id": "play_trainer:c19",
+		"type": "play_trainer",
+		"card": "Prime Catcher",
+		"capability": "defensive_gust",
+		"selection_policy": {"opponent_switch_target": "bench_3", "switch_target": "bench_0"},
+		"card_rules": {"tags": ["gust"]},
+	}
+	var end_turn := {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"}
+	var route := {
+		"id": "route:defensive_gust_stall",
+		"action_id": "route:defensive_gust_stall",
+		"type": "route",
+		"candidate_route": true,
+		"priority": 975,
+		"goal": "defensive_gust",
+		"actions": [gust, end_turn],
+	}
+	var pal_pad := {
+		"id": "play_trainer:c46",
+		"action_id": "play_trainer:c46",
+		"type": "play_trainer",
+		"card": "Pal Pad",
+	}
+	strategy.set("_llm_route_candidates_by_id", {"route:defensive_gust_stall": route})
+	strategy.set("_llm_action_catalog", {
+		"route:defensive_gust_stall": route,
+		"play_trainer:c19": {"id": "play_trainer:c19", "action_id": "play_trainer:c19", "type": "play_trainer", "card": "Prime Catcher", "capability": "gust", "card_rules": {"tags": ["gust"]}},
+		"play_trainer:c46": pal_pad,
+		"end_turn": end_turn,
+	})
+	var weak_tree := {
+		"actions": [
+			{"id": "play_trainer:c19", "interactions": {"opponent_switch_target": "bench_3", "switch_target": "bench_0"}},
+			{"id": "play_trainer:c46"},
+			{"id": "end_turn"},
+		],
+	}
+	var repair: Dictionary = strategy.call("_repair_to_priority_candidate_route_in_tree", weak_tree)
+	var repaired_tree: Dictionary = repair.get("tree", {}) if repair.get("tree", {}) is Dictionary else {}
+	var branches: Array = repaired_tree.get("branches", []) if repaired_tree.get("branches", []) is Array else []
+	var first_branch: Dictionary = branches[0] if not branches.is_empty() and branches[0] is Dictionary else {}
+	var actions: Array = first_branch.get("actions", []) if first_branch.get("actions", []) is Array else []
+	var first_action: Dictionary = actions[0] if not actions.is_empty() and actions[0] is Dictionary else {}
+	return run_checks([
+		assert_true(bool(repair.get("changed", false)), "Defensive gust route should replace a raw gust action so compiler preserves defensive intent"),
+		assert_eq(str(first_action.get("id", "")), "play_trainer:c19", "Repaired defensive route should still execute the same gust card"),
+		assert_eq(str(first_action.get("capability", "")), "defensive_gust", "Repaired defensive route must carry defensive_gust capability"),
+		assert_eq(actions.size(), 2, "Repaired defensive route should not keep unrelated filler actions like Pal Pad"),
+	])
+
+
+func test_llm_priority_candidate_route_repair_forces_attach_ko_over_ready_attack() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(14)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	var attach := {
+		"id": "attach_energy:c44:active",
+		"action_id": "attach_energy:c44:active",
+		"type": "attach_energy",
+		"card": "Fighting Energy",
+		"position": "active",
+		"capability": "manual_attach",
+	}
+	var attack := {
+		"id": "attack:1:Thundering Bolt",
+		"action_id": "attack:1:Thundering Bolt",
+		"type": "attack",
+		"attack_index": 1,
+		"attack_name": "Thundering Bolt",
+		"attack_quality": {"role": "primary_damage", "terminal_priority": "high"},
+	}
+	var end_turn := {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"}
+	var route := {
+		"id": "route:manual_attach_to_attack",
+		"action_id": "route:manual_attach_to_attack",
+		"type": "route",
+		"candidate_route": true,
+		"priority": 980,
+		"goal": "manual_attach_to_primary_attack",
+		"actions": [attach, end_turn],
+	}
+	strategy.set("_llm_route_candidates_by_id", {"route:manual_attach_to_attack": route})
+	strategy.set("_llm_action_catalog", {
+		"route:manual_attach_to_attack": route,
+		"attach_energy:c44:active": attach,
+		"attack:1:Thundering Bolt": attack,
+		"end_turn": end_turn,
+	})
+	var weak_tree := {
+		"branches": [{
+			"when": [{"fact": "active_attack_ready", "attack_name": "Thundering Bolt"}],
+			"actions": [attack],
+		}],
+		"fallback_actions": [end_turn],
+	}
+	var repair: Dictionary = strategy.call("_repair_to_priority_candidate_route_in_tree", weak_tree, gs, 0)
+	var repaired_tree: Dictionary = repair.get("tree", {}) if repair.get("tree", {}) is Dictionary else {}
+	var branches: Array = repaired_tree.get("branches", []) if repaired_tree.get("branches", []) is Array else []
+	var first_branch: Dictionary = branches[0] if not branches.is_empty() and branches[0] is Dictionary else {}
+	var actions: Array = first_branch.get("actions", []) if first_branch.get("actions", []) is Array else []
+	var ids: Array[String] = []
+	for raw: Variant in actions:
+		if raw is Dictionary:
+			ids.append(str((raw as Dictionary).get("id", "")))
+	return run_checks([
+		assert_true(bool(repair.get("changed", false)), "Manual attach KO route should override a ready but lower-damage current attack"),
+		assert_eq(ids, ["attach_energy:c44:active", "end_turn"], "Repaired route should preserve attach then conversion terminal"),
+	])
+
+
+func test_raging_bolt_llm_productive_engine_repair_respects_deck_draw_risk() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var shoes := {
+		"id": "play_trainer:c32",
+		"action_id": "play_trainer:c32",
+		"type": "play_trainer",
+		"card": "Trekking Shoes",
+		"card_rules": {"tags": ["draw", "discard", "filter_engine"]},
+	}
+	var end_turn := {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"}
+	strategy.set("_llm_action_catalog", {
+		"play_trainer:c32": shoes,
+		"end_turn": end_turn,
+	})
+	var tree := {"actions": [end_turn]}
+	var risky_gs := _make_game_state(10)
+	for i: int in 12:
+		risky_gs.players[0].deck.append(CardInstance.create(_make_trainer_cd("Risk deck %d" % i), 0))
+	var safe_gs := _make_game_state(10)
+	for i: int in 13:
+		safe_gs.players[0].deck.append(CardInstance.create(_make_trainer_cd("Safe deck %d" % i), 0))
+	var risky_repair: Dictionary = strategy.call("_repair_missing_productive_engine_in_tree", tree, risky_gs, 0)
+	var safe_repair: Dictionary = strategy.call("_repair_missing_productive_engine_in_tree", tree, safe_gs, 0)
+	var safe_added: Array = safe_repair.get("added_actions", []) if safe_repair.get("added_actions", []) is Array else []
+	var safe_first_id := ""
+	if not safe_added.is_empty() and safe_added[0] is Dictionary:
+		safe_first_id = str((safe_added[0] as Dictionary).get("id", ""))
+	return run_checks([
+		assert_eq(int(risky_repair.get("added_count", 0)), 0, "Productive-engine repair must not insert draw/filter actions once deck_draw_risk is active"),
+		assert_eq(int(safe_repair.get("added_count", 0)), 1, "Productive-engine repair should still insert safe draw/filter above the risk threshold"),
+		assert_eq(safe_first_id, "play_trainer:c32", "Safe-threshold repair should insert the visible Trekking Shoes action"),
+	])
+
+
+func test_raging_bolt_llm_low_deck_rules_fallback_blocks_unplanned_draw_ability() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(18)
+	var player := gs.players[0]
+	player.deck.clear()
+	for i: int in 5:
+		player.deck.append(CardInstance.create(_make_trainer_cd("Deck filler %d" % i), 0))
+	var ogerpon_cd := _make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210)
+	ogerpon_cd.name_en = "Teal Mask Ogerpon ex"
+	var ogerpon_slot := _make_slot(ogerpon_cd, 0)
+	player.bench.append(ogerpon_slot)
+	var score := float(strategy.call("score_action_absolute", {
+		"kind": "use_ability",
+		"source_slot": ogerpon_slot,
+		"ability_index": 0,
+	}, gs, 0))
+	return assert_true(score <= -1000.0, "Raging Bolt LLM rules fallback must block unplanned Ogerpon draw ability once deck is locked")
+
+
+func test_raging_bolt_llm_retargets_core_energy_from_doomed_active_to_backup() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(8)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.damage_counters = 160
+	var backup := _make_slot(_make_raging_bolt_cd(), 0)
+	player.bench.append(backup)
+	var lightning := CardInstance.create(_make_energy_cd("Basic Lightning Energy", "L"), 0)
+	var active_attach := {"kind": "attach_energy", "card": lightning, "target_slot": player.active_pokemon}
+	var backup_attach := {"kind": "attach_energy", "card": lightning, "target_slot": backup}
+	var active_score := float(strategy.call("score_action_absolute", active_attach, gs, 0))
+	var backup_score := float(strategy.call("score_action_absolute", backup_attach, gs, 0))
+	return run_checks([
+		assert_true(active_score <= -1000.0, "Do not spend a lone core Energy on a doomed active Raging Bolt when it still cannot attack (score=%f)" % active_score),
+		assert_true(backup_score >= 88000.0, "The same core Energy should be retargeted to a backup Raging Bolt handoff attacker (score=%f)" % backup_score),
+	])
+
+
+func test_raging_bolt_llm_allows_doomed_active_attach_when_it_enables_burst() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(8)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.damage_counters = 160
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Fighting Energy", "F"), 0))
+	player.bench.append(_make_slot(_make_raging_bolt_cd(), 0))
+	var lightning := CardInstance.create(_make_energy_cd("Basic Lightning Energy", "L"), 0)
+	var active_attach := {"kind": "attach_energy", "card": lightning, "target_slot": player.active_pokemon}
+	var active_score := float(strategy.call("score_action_absolute", active_attach, gs, 0))
+	return assert_true(active_score > -1000.0, "A doomed active may still receive the missing core Energy when that attach completes Thundering Bolt (score=%f)" % active_score)
+
+
+func test_raging_bolt_llm_payload_exposes_ready_backup_handoff_route() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(8)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.damage_counters = 230
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Fighting Energy", "F"), 0))
+	var backup := _make_slot(_make_raging_bolt_cd(), 0)
+	backup.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Lightning Energy", "L"), 0))
+	backup.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Fighting Energy", "F"), 0))
+	player.bench.append(backup)
+	var prime_cd := _make_trainer_cd("Prime Catcher", "Item")
+	prime_cd.name_en = "Prime Catcher"
+	var prime := CardInstance.create(prime_cd, 0)
+	player.hand.append(prime)
+	var payload: Dictionary = strategy.call("build_action_id_request_payload_for_test", gs, 0, [
+		{"kind": "play_trainer", "card": prime, "requires_interaction": true},
+		{"kind": "end_turn"},
+	])
+	var route: Dictionary = {}
+	for raw_route: Variant in payload.get("candidate_routes", []):
+		if raw_route is Dictionary and str((raw_route as Dictionary).get("route_action_id", "")) == "route:raging_bolt_ready_backup_handoff":
+			route = raw_route
+			break
+	var route_actions: Array = route.get("actions", []) if route.get("actions", []) is Array else []
+	var first_action: Dictionary = route_actions[0] if not route_actions.is_empty() and route_actions[0] is Dictionary else {}
+	var policy: Dictionary = first_action.get("selection_policy", {}) if first_action.get("selection_policy", {}) is Dictionary else {}
+	var fallback_tree: Dictionary = strategy.call("_candidate_route_fallback_tree")
+	var branches: Array = fallback_tree.get("branches", []) if fallback_tree.get("branches", []) is Array else []
+	var fallback_actions: Array = (branches[0] as Dictionary).get("actions", []) if not branches.is_empty() and branches[0] is Dictionary and (branches[0] as Dictionary).get("actions", []) is Array else []
+	var fallback_first: Dictionary = fallback_actions[0] if not fallback_actions.is_empty() and fallback_actions[0] is Dictionary else {}
+	return run_checks([
+		assert_true(not route.is_empty(), "Payload should expose a ready-backup Raging Bolt handoff route when Prime Catcher can pivot to it"),
+		assert_true(str(first_action.get("id", "")).begins_with("play_trainer:"), "Ready-backup handoff route should start from the exact Prime Catcher action"),
+		assert_eq(str(policy.get("own_bench_target", "")), "bench_0", "Ready-backup handoff route should specify the own bench target for switch effects"),
+		assert_eq(str(fallback_first.get("id", "")), "route:raging_bolt_ready_backup_handoff", "Fallback repair should prefer ready-backup handoff over active setup/end routes"),
+	])
+
+
+func test_raging_bolt_llm_visible_engine_route_skips_future_sada_ref() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(8)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Fighting Energy", "F"), 0))
+	var payload := {
+		"legal_actions": [
+			{"id": "play_trainer:c54", "action_id": "play_trainer:c54", "type": "play_trainer", "card": "Earthen Vessel"},
+			{"id": "attach_energy:c15:active", "action_id": "attach_energy:c15:active", "type": "attach_energy", "card": "Lightning Energy", "target": "Raging Bolt ex"},
+			{"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+			{"id": "play_trainer:c28", "action_id": "play_trainer:c28", "type": "play_trainer", "card": "Professor Sada's Vitality", "summary": "future: play Professor Sada's Vitality after this turn creates basic Energy in discard"},
+		],
+		"future_actions": [{
+			"id": "future:attack_after_attach:active:1:Thundering Bolt",
+			"action_id": "future:attack_after_attach:active:1:Thundering Bolt",
+			"type": "attack",
+			"future": true,
+			"attack_index": 1,
+			"attack_name": "Thundering Bolt",
+			"source_pokemon": "Raging Bolt ex",
+		}],
+		"turn_tactical_facts": {
+			"primary_attack_name": "Thundering Bolt",
+			"primary_attack_reachable_after_visible_engine": true,
+			"primary_attack_route": ["energy_search", "discard_energy_acceleration_supporter", "manual_attach", "Thundering Bolt"],
+			"best_manual_attach_to_primary_attack_action_id": "attach_energy:c15:active",
+			"deck_count": 15,
+		},
+		"candidate_routes": [{"route_action_id": "route:preserve_end", "goal": "fallback", "actions": [{"id": "end_turn"}]}],
+	}
+	var augmented: Dictionary = strategy.call("_deck_augment_action_id_payload", payload, gs, 0)
+	var route: Dictionary = {}
+	for raw_route: Variant in augmented.get("candidate_routes", []):
+		if raw_route is Dictionary and str((raw_route as Dictionary).get("route_action_id", "")) == "route:raging_bolt_primary_visible_engine":
+			route = raw_route
+			break
+	var ids: Array[String] = []
+	for raw_action: Variant in route.get("actions", []):
+		if raw_action is Dictionary:
+			ids.append(str((raw_action as Dictionary).get("id", "")))
+	return run_checks([
+		assert_true(not route.is_empty(), "Visible-engine route should still be generated"),
+		assert_false(ids.has("play_trainer:c28"), "Visible-engine route must not enqueue a future-only Sada ref as an immediate action"),
+		assert_true(ids.has("play_trainer:c54"), "Visible-engine route should keep the executable Earthen Vessel action"),
+		assert_true(ids.has("attach_energy:c15:active"), "Visible-engine route should keep the executable missing Lightning attach"),
+	])
+
+
 func test_llm_route_action_registry_registers_and_expands_routes_generically() -> String:
 	var registry := _new_route_action_registry()
 	if registry == null:
@@ -2920,7 +4813,12 @@ func test_llm_route_action_registry_registers_and_expands_routes_generically() -
 			"priority": 900,
 			"actions": [
 				{"id": "use_ability:bench_0:0"},
-				{"id": "play_trainer:c52", "selection_policy": {"search": ["Fighting Energy"]}},
+				{
+					"id": "play_trainer:c52",
+					"selection_policy": {"search": ["Fighting Energy"]},
+					"allow_deck_draw_lock": true,
+					"deck_draw_lock_exception": "primary_attack_unlock",
+				},
 				{"id": "end_turn"},
 			],
 		}],
@@ -2929,14 +4827,18 @@ func test_llm_route_action_registry_registers_and_expands_routes_generically() -
 	var routes_by_id: Dictionary = registered.get("routes_by_id", {})
 	var expanded: Array = registry.call("materialize_action_ref_array", [{"id": "route:primary_visible_engine"}], registered_catalog)
 	var second_policy: Dictionary = {}
+	var second_action: Dictionary = {}
 	if expanded.size() >= 2 and expanded[1] is Dictionary:
-		second_policy = (expanded[1] as Dictionary).get("selection_policy", {})
+		second_action = expanded[1] as Dictionary
+		second_policy = second_action.get("selection_policy", {})
 	return run_checks([
 		assert_true(registered_catalog.has("route:primary_visible_engine"), "Shared registry should add route id to action catalog"),
 		assert_true(routes_by_id.has("route:primary_visible_engine"), "Shared registry should return route map"),
 		assert_eq(expanded.size(), 3, "Shared registry should expand route into exact actions"),
 		assert_eq(str((expanded[0] as Dictionary).get("id", "")), "use_ability:bench_0:0", "Expanded route should preserve order"),
 		assert_false(second_policy.is_empty(), "Shared registry should preserve route action selection_policy"),
+		assert_true(bool(second_action.get("allow_deck_draw_lock", false)), "Shared registry should preserve route action deck-draw-lock metadata"),
+		assert_eq(str(second_action.get("deck_draw_lock_exception", "")), "primary_attack_unlock", "Shared registry should preserve deck-draw-lock exception reason"),
 		assert_eq(str(registry.call("best_route_action_id", routes_by_id)), "route:primary_visible_engine", "Shared registry should expose best route id"),
 	])
 
@@ -2976,6 +4878,148 @@ func test_llm_route_compiler_inserts_safe_engine_before_end_turn() -> String:
 		assert_eq(str(first.get("action_id", "")), ogerpon_id, "Route compiler should insert a charge/draw engine before premature end_turn"),
 		assert_eq(str(first.get("capability", "")), "charge_and_draw", "Inserted Ogerpon ability should be tagged as charge_and_draw"),
 		assert_true(int((result.get("inserted_actions", []) as Array).size()) > 0, "Compile result should report inserted actions"),
+	])
+
+
+func test_llm_route_compiler_removes_gust_without_attack_goal() -> String:
+	var compiler := _new_route_compiler()
+	if compiler == null:
+		return "LLMRouteCompiler.gd should exist"
+	var boss_id := "play_trainer:c41"
+	var attach_id := "attach_energy:c16:active"
+	var catalog := {
+		boss_id: {
+			"id": boss_id,
+			"action_id": boss_id,
+			"type": "play_trainer",
+			"card": "Boss's Orders",
+			"card_rules": {"tags": ["gust"]},
+		},
+		attach_id: {
+			"id": attach_id,
+			"action_id": attach_id,
+			"type": "attach_energy",
+			"card": "Lightning Energy",
+			"position": "active",
+		},
+		"end_turn": {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	}
+	var result: Dictionary = compiler.call("compile_queue", [
+		{"id": boss_id, "action_id": boss_id, "type": "play_trainer", "card": "Boss's Orders", "card_rules": {"tags": ["gust"]}},
+		{"id": attach_id, "action_id": attach_id, "type": "attach_energy", "card": "Lightning Energy", "position": "active"},
+		{"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	], catalog)
+	var ids: Array[String] = []
+	for raw_action: Variant in result.get("queue", []):
+		if raw_action is Dictionary:
+			ids.append(str((raw_action as Dictionary).get("action_id", "")))
+	return run_checks([
+		assert_false(ids.has(boss_id), "Compiler must remove gust-only resource spend when the route has no attack or future attack goal"),
+		assert_true(ids.has(attach_id), "Compiler should preserve non-gust setup actions in the same route"),
+		assert_true((result.get("notes", []) as Array).has("removed_gust_without_attack_goal"), "Compile result should audit removed gust-only actions"),
+	])
+
+
+func test_llm_route_compiler_preserves_defensive_gust_capability() -> String:
+	var compiler := _new_route_compiler()
+	if compiler == null:
+		return "LLMRouteCompiler.gd should exist"
+	var boss_id := "play_trainer:c41"
+	var catalog := {
+		boss_id: {
+			"id": boss_id,
+			"action_id": boss_id,
+			"type": "play_trainer",
+			"card": "Boss's Orders",
+			"capability": "defensive_gust",
+			"card_rules": {"tags": ["gust"]},
+		},
+		"end_turn": {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	}
+	var result: Dictionary = compiler.call("compile_queue", [
+		{"id": boss_id, "action_id": boss_id, "type": "play_trainer", "card": "Boss's Orders", "capability": "defensive_gust", "card_rules": {"tags": ["gust"]}},
+		{"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	], catalog)
+	var ids: Array[String] = []
+	for raw_action: Variant in result.get("queue", []):
+		if raw_action is Dictionary:
+			ids.append(str((raw_action as Dictionary).get("action_id", "")))
+	return run_checks([
+		assert_true(ids.has(boss_id), "Compiler should preserve a defensive gust route even without a current attack"),
+		assert_false((result.get("notes", []) as Array).has("removed_gust_without_attack_goal"), "Defensive gust routes should not be audited as removed gust-only actions"),
+	])
+
+
+func test_llm_route_compiler_does_not_auto_insert_hand_reset_supporter() -> String:
+	var compiler := _new_route_compiler()
+	if compiler == null:
+		return "LLMRouteCompiler.gd should exist"
+	var catalog := {
+		"play_trainer:c49": {
+			"id": "play_trainer:c49",
+			"action_id": "play_trainer:c49",
+			"type": "play_trainer",
+			"card": "Iono",
+			"card_rules": {"name_en": "Iono", "tags": ["draw"]},
+		},
+		"play_trainer:c52": {
+			"id": "play_trainer:c52",
+			"action_id": "play_trainer:c52",
+			"type": "play_trainer",
+			"card": "Earthen Vessel",
+			"card_rules": {"name_en": "Earthen Vessel", "tags": ["search_deck", "energy_related", "discard"]},
+		},
+		"end_turn": {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	}
+	var result: Dictionary = compiler.call("compile_queue", [
+		{"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	], catalog)
+	var ids: Array[String] = []
+	for raw_action: Variant in result.get("queue", []):
+		if raw_action is Dictionary:
+			ids.append(str((raw_action as Dictionary).get("action_id", "")))
+	return run_checks([
+		assert_false(ids.has("play_trainer:c49"), "Compiler must not auto-insert Iono/Research hand reset into a visible setup route"),
+		assert_true(ids.has("play_trainer:c52"), "Compiler should still insert deterministic visible setup engines"),
+	])
+
+
+func test_llm_route_compiler_removes_selected_hand_reset_when_setup_is_visible() -> String:
+	var compiler := _new_route_compiler()
+	if compiler == null:
+		return "LLMRouteCompiler.gd should exist"
+	var gs := _make_game_state(0)
+	for i: int in 5:
+		gs.players[0].hand.append(CardInstance.create(_make_trainer_cd("Hand card %d" % i), 0))
+	var catalog := {
+		"play_trainer:c49": {
+			"id": "play_trainer:c49",
+			"action_id": "play_trainer:c49",
+			"type": "play_trainer",
+			"card": "Iono",
+			"card_rules": {"name_en": "Iono", "tags": ["draw"]},
+		},
+		"play_trainer:c52": {
+			"id": "play_trainer:c52",
+			"action_id": "play_trainer:c52",
+			"type": "play_trainer",
+			"card": "Earthen Vessel",
+			"card_rules": {"name_en": "Earthen Vessel", "tags": ["search_deck", "energy_related", "discard"]},
+		},
+		"end_turn": {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	}
+	var result: Dictionary = compiler.call("compile_queue", [
+		{"id": "play_trainer:c49", "action_id": "play_trainer:c49", "type": "play_trainer", "card": "Iono", "card_rules": {"name_en": "Iono", "tags": ["draw"]}},
+		{"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	], catalog, gs, 0)
+	var ids: Array[String] = []
+	for raw_action: Variant in result.get("queue", []):
+		if raw_action is Dictionary:
+			ids.append(str((raw_action as Dictionary).get("action_id", "")))
+	return run_checks([
+		assert_false(ids.has("play_trainer:c49"), "Compiler should strip selected Iono/Research when deterministic setup is visible and hand is not dead"),
+		assert_true(ids.has("play_trainer:c52"), "Compiler should replace the hand reset with deterministic setup when available"),
+		assert_true((result.get("notes", []) as Array).has("removed_hand_reset_before_visible_setup"), "Compile result should audit removed hand-reset actions"),
 	])
 
 
@@ -3233,8 +5277,164 @@ func test_llm_route_compiler_removes_low_value_redraw_attack_when_deck_is_risky(
 			ids.append(str((raw_action as Dictionary).get("action_id", "")))
 	return run_checks([
 		assert_false(ids.has(low_attack_id), "Deck-risk compiler must remove low-value redraw attacks instead of forcing deckout pressure"),
-		assert_true(ids.has(ogerpon_id), "After removing risky redraw, compiler should still preserve productive setup before ending"),
+		assert_false(ids.has(ogerpon_id), "Low-deck compiler must not replace risky redraw with another deck-draw engine"),
 		assert_true((result.get("notes", []) as Array).has("removed_low_value_attack_for_deck_or_hand_risk"), "Compile result should audit why the redraw attack was removed"),
+	])
+
+
+func test_llm_route_compiler_removes_explicit_draw_actions_when_deck_is_locked() -> String:
+	var compiler := _new_route_compiler()
+	if compiler == null:
+		return "LLMRouteCompiler.gd should exist"
+	var gs := _make_game_state(7)
+	for i: int in 4:
+		gs.players[0].deck.append(CardInstance.create(_make_trainer_cd("Deck filler %d" % i), 0))
+	var shoes_id := "play_trainer:c31"
+	var greninja_id := "use_ability:bench_0:0"
+	var ogerpon_id := "use_ability:bench_1:0"
+	var fez_id := "use_ability:bench_2:0"
+	var catalog := {
+		shoes_id: {
+			"id": shoes_id,
+			"action_id": shoes_id,
+			"type": "play_trainer",
+			"card": "Trekking Shoes",
+			"card_rules": {"tags": ["draw", "discard", "filter_engine"]},
+		},
+		greninja_id: {
+			"id": greninja_id,
+			"action_id": greninja_id,
+			"type": "use_ability",
+			"pokemon": "Radiant Greninja",
+			"requires_interaction": true,
+			"interaction_schema": {"discard_card": {"type": "string"}},
+		},
+		ogerpon_id: {
+			"id": ogerpon_id,
+			"action_id": ogerpon_id,
+			"type": "use_ability",
+			"pokemon": "厄诡椪 碧草面具ex",
+			"ability": "碧草之舞",
+		},
+		fez_id: {
+			"id": fez_id,
+			"action_id": fez_id,
+			"type": "use_ability",
+			"pokemon": "吉雉鸡ex",
+			"ability": "化危为吉",
+		},
+		"end_turn": {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	}
+	var result: Dictionary = compiler.call("compile_queue", [
+		{"id": shoes_id, "action_id": shoes_id, "type": "play_trainer", "card": "Trekking Shoes", "card_rules": {"tags": ["draw", "discard", "filter_engine"]}},
+		{"id": greninja_id, "action_id": greninja_id, "type": "use_ability", "pokemon": "Radiant Greninja", "interaction_schema": {"discard_card": {"type": "string"}}},
+		{"id": ogerpon_id, "action_id": ogerpon_id, "type": "use_ability", "pokemon": "厄诡椪 碧草面具ex", "ability": "碧草之舞"},
+		{"id": fez_id, "action_id": fez_id, "type": "use_ability", "pokemon": "吉雉鸡ex", "ability": "化危为吉"},
+		{"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	], catalog, gs, 0)
+	var ids: Array[String] = []
+	for raw_action: Variant in result.get("queue", []):
+		if raw_action is Dictionary:
+			ids.append(str((raw_action as Dictionary).get("action_id", "")))
+	return run_checks([
+		assert_false(ids.has(shoes_id), "Low-deck compiler must remove explicit Trekking Shoes from the LLM route"),
+		assert_false(ids.has(greninja_id), "Low-deck compiler must remove explicit discard-to-draw abilities from the LLM route"),
+		assert_false(ids.has(ogerpon_id), "Low-deck compiler must remove explicit Ogerpon charge-and-draw abilities from the LLM route"),
+		assert_false(ids.has(fez_id), "Low-deck compiler must remove explicit Fezandipiti draw abilities from the LLM route"),
+		assert_true(ids.has("end_turn"), "Low-deck compiler should preserve terminal end_turn after removing risky draw actions"),
+		assert_true((result.get("notes", []) as Array).has("removed_deck_draw_risk_actions"), "Compile result should audit deck-draw risk removals"),
+	])
+
+
+func test_llm_route_compiler_preserves_attack_unlock_supporter_under_deck_lock() -> String:
+	var compiler := _new_route_compiler()
+	if compiler == null:
+		return "LLMRouteCompiler.gd should exist"
+	var gs := _make_game_state(16)
+	for i: int in 8:
+		gs.players[0].deck.append(CardInstance.create(_make_trainer_cd("Deck filler %d" % i), 0))
+	var sada_id := "play_trainer:c30"
+	var catalog := {
+		sada_id: {
+			"id": sada_id,
+			"action_id": sada_id,
+			"type": "play_trainer",
+			"card": "Professor Sada's Vitality",
+			"capability": "supporter_acceleration",
+			"allow_deck_draw_lock": true,
+			"deck_draw_lock_exception": "primary_attack_unlock",
+		},
+		"end_turn": {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	}
+	var result: Dictionary = compiler.call("compile_queue", [
+		{
+			"id": sada_id,
+			"action_id": sada_id,
+			"type": "play_trainer",
+			"card": "Professor Sada's Vitality",
+			"capability": "supporter_acceleration",
+			"allow_deck_draw_lock": true,
+			"deck_draw_lock_exception": "primary_attack_unlock",
+		},
+		{"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	], catalog, gs, 0)
+	var ids: Array[String] = []
+	for raw_action: Variant in result.get("queue", []):
+		if raw_action is Dictionary:
+			ids.append(str((raw_action as Dictionary).get("action_id", "")))
+	return run_checks([
+		assert_true(ids.has(sada_id), "Low-deck compiler should preserve a marked Sada action when it unlocks the primary attack"),
+		assert_false((result.get("notes", []) as Array).has("removed_deck_draw_risk_actions"), "Preserved attack-unlock Sada should not be audited as removed draw risk"),
+	])
+
+
+func test_llm_route_compiler_inherits_route_deck_lock_exception_for_exact_action() -> String:
+	var compiler := _new_route_compiler()
+	if compiler == null:
+		return "LLMRouteCompiler.gd should exist"
+	var gs := _make_game_state(18)
+	for i: int in 8:
+		gs.players[0].deck.append(CardInstance.create(_make_trainer_cd("Deck filler %d" % i), 0))
+	var sada_id := "play_trainer:c27"
+	var route_id := "route:raging_bolt_primary_visible_engine"
+	var catalog := {
+		sada_id: {
+			"id": sada_id,
+			"action_id": sada_id,
+			"type": "play_trainer",
+			"card": "Professor Sada's Vitality",
+			"capability": "supporter_acceleration",
+		},
+		route_id: {
+			"id": route_id,
+			"action_id": route_id,
+			"type": "route",
+			"candidate_route": true,
+			"goal": "setup_to_primary_attack",
+			"priority": 988,
+			"actions": [{
+				"id": sada_id,
+				"action_id": sada_id,
+				"type": "play_trainer",
+				"card": "Professor Sada's Vitality",
+				"capability": "supporter_acceleration",
+				"allow_deck_draw_lock": true,
+				"deck_draw_lock_exception": "primary_attack_unlock",
+			}, {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"}],
+		},
+		"end_turn": {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	}
+	var result: Dictionary = compiler.call("compile_queue", [
+		{"id": sada_id, "action_id": sada_id, "type": "play_trainer", "card": "Professor Sada's Vitality", "capability": "supporter_acceleration"},
+		{"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	], catalog, gs, 0)
+	var ids: Array[String] = []
+	for raw_action: Variant in result.get("queue", []):
+		if raw_action is Dictionary:
+			ids.append(str((raw_action as Dictionary).get("action_id", "")))
+	return run_checks([
+		assert_true(ids.has(sada_id), "Low-deck compiler should inherit route metadata when LLM outputs the exact Sada action instead of the route id"),
+		assert_false((result.get("notes", []) as Array).has("removed_deck_draw_risk_actions"), "Inherited route metadata should prevent false deck-draw-risk removal"),
 	])
 
 
@@ -3249,8 +5449,12 @@ func test_llm_route_compiler_resolves_virtual_and_removes_future_from_queue() ->
 			"id": real_ogerpon_id,
 			"action_id": real_ogerpon_id,
 			"type": "use_ability",
-			"pokemon": "Teal Mask Ogerpon ex",
-			"card_rules": {"tags": ["energy_related", "draw", "charge_engine", "productive_engine"]},
+			"pokemon": "厄诡椪 碧草面具ex",
+			"card_rules": {
+				"name": "厄诡椪 碧草面具ex",
+				"name_en": "Teal Mask Ogerpon ex",
+				"tags": ["energy_related", "draw", "charge_engine", "productive_engine"],
+			},
 		},
 		"play_trainer:c52": {
 			"id": "play_trainer:c52",
@@ -3325,6 +5529,7 @@ func test_raging_bolt_llm_repairs_missing_safe_engine_before_terminal() -> Strin
 		return "DeckStrategyRagingBoltLLM.gd should exist"
 	var gs := _make_game_state(9)
 	var player := gs.players[0]
+	_fill_player_deck(player)
 	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
 	var ogerpon_cd := _make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210)
 	ogerpon_cd.name_en = "Teal Mask Ogerpon ex"
@@ -3361,6 +5566,7 @@ func test_raging_bolt_llm_repairs_missing_filter_engine_before_end_turn() -> Str
 		return "DeckStrategyRagingBoltLLM.gd should exist"
 	var gs := _make_game_state(9)
 	var player := gs.players[0]
+	_fill_player_deck(player)
 	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
 	var shoes_cd := _make_trainer_cd("Trekking Shoes", "Item")
 	shoes_cd.effect_id = "70d14b4a5a9c15581b8a0c8dfd325717"
@@ -3819,7 +6025,7 @@ func test_llm_replans_after_large_hand_change_from_effect() -> String:
 	])
 
 
-func test_llm_suppresses_replan_when_terminal_burst_attack_is_ready() -> String:
+func test_llm_suppresses_minor_replan_when_terminal_burst_attack_is_ready() -> String:
 	var strategy := _new_llm_strategy()
 	if strategy == null:
 		return "DeckStrategyRagingBoltLLM.gd should exist"
@@ -3828,13 +6034,15 @@ func test_llm_suppresses_replan_when_terminal_burst_attack_is_ready() -> String:
 	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
 	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Lightning Energy", "L"), 0))
 	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Fighting Energy", "F"), 0))
+	var grass := CardInstance.create(_make_energy_cd("Basic Grass Energy", "G"), 0)
+	player.hand.append(grass)
 	strategy.set("_cached_turn_number", 6)
 	strategy.set("_llm_queue_turn", 6)
 	strategy.set("_llm_decision_tree", {"actions": [{"id": "end_turn"}]})
 	strategy.set("_llm_action_queue", [{"type": "end_turn", "action_id": "end_turn", "capability": "end_turn"}])
 	var before: Dictionary = strategy.call("make_llm_runtime_snapshot", gs, 0)
+	player.hand.erase(grass)
 	player.hand.append(CardInstance.create(_make_trainer_cd("Nest Ball", "Item"), 0))
-	player.hand.append(CardInstance.create(_make_energy_cd("Basic Grass Energy", "G"), 0))
 	var after: Dictionary = strategy.call("make_llm_runtime_snapshot", gs, 0)
 	strategy.call("observe_llm_runtime_state_change", before, after, {
 		"success": true,
@@ -3843,8 +6051,84 @@ func test_llm_suppresses_replan_when_terminal_burst_attack_is_ready() -> String:
 	})
 	return run_checks([
 		assert_true(bool(after.get("raging_bolt_burst_ready", false)), "Runtime snapshot should know the primary burst attack is already ready"),
-		assert_eq(int(strategy.call("get_llm_replan_count")), 0, "Large hand gain should not interrupt a ready terminal attack queue"),
+		assert_eq(int(strategy.call("get_llm_replan_count")), 0, "Minor one-card churn should not interrupt a ready terminal attack queue"),
 		assert_true(strategy.call("has_llm_plan_for_turn", 6), "Suppressed replan should keep the existing conversion queue"),
+	])
+
+
+func test_llm_replans_after_major_hand_refresh_even_when_terminal_burst_is_ready() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(6)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Lightning Energy", "L"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Fighting Energy", "F"), 0))
+	player.hand.append(CardInstance.create(_make_trainer_cd("Iono", "Supporter"), 0))
+	player.hand.append(CardInstance.create(_make_trainer_cd("Professor's Research", "Supporter"), 0))
+	player.hand.append(CardInstance.create(_make_energy_cd("Basic Grass Energy", "G"), 0))
+	strategy.set("_cached_turn_number", 6)
+	strategy.set("_llm_queue_turn", 6)
+	strategy.set("_llm_decision_tree", {"actions": [{"id": "end_turn"}]})
+	strategy.set("_llm_action_queue", [{"type": "end_turn", "action_id": "end_turn", "capability": "end_turn"}])
+	var before: Dictionary = strategy.call("make_llm_runtime_snapshot", gs, 0)
+	player.hand.clear()
+	for i: int in 7:
+		player.hand.append(CardInstance.create(_make_trainer_cd("Drawn Card %d" % i, "Item"), 0))
+	var after: Dictionary = strategy.call("make_llm_runtime_snapshot", gs, 0)
+	strategy.call("observe_llm_runtime_state_change", before, after, {
+		"success": true,
+		"step_kind": "main_action",
+		"action_kind": "play_trainer",
+		"pending_choice_after": "",
+	})
+	var replan_context_by_turn: Dictionary = strategy.get("_llm_replan_context_by_turn")
+	var replan_context: Dictionary = replan_context_by_turn.get(6, {})
+	return run_checks([
+		assert_true(bool(after.get("raging_bolt_burst_ready", false)), "Runtime snapshot should still know the burst attack is ready"),
+		assert_eq(int(strategy.call("get_llm_replan_count")), 1, "Professor/Iono-style hand refresh should force a same-turn replan even when a terminal attack is ready"),
+		assert_false(strategy.call("has_llm_plan_for_turn", 6), "Major hand refresh replan should clear the stale queue"),
+		assert_eq(str((replan_context.get("trigger", {}) as Dictionary).get("reason", "")), "hand_gained_7_cards", "Replan context should record the major hand refresh trigger"),
+	])
+
+
+func test_llm_supporter_hand_refresh_ignores_replan_limit() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(6)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.hand.append(CardInstance.create(_make_trainer_cd("Iono", "Supporter"), 0))
+	player.hand.append(CardInstance.create(_make_trainer_cd("Professor's Research", "Supporter"), 0))
+	player.hand.append(CardInstance.create(_make_energy_cd("Basic Grass Energy", "G"), 0))
+	strategy.set("_cached_turn_number", 6)
+	strategy.set("_llm_queue_turn", 6)
+	strategy.set("_llm_decision_tree", {"actions": [{"id": "end_turn"}]})
+	strategy.set("_llm_action_queue", [{"type": "end_turn", "action_id": "end_turn", "capability": "end_turn"}])
+	strategy.set("_llm_replan_counts", {6: 3})
+	var before: Dictionary = strategy.call("make_llm_runtime_snapshot", gs, 0)
+	player.hand.clear()
+	for i: int in 6:
+		player.hand.append(CardInstance.create(_make_trainer_cd("Fresh Card %d" % i, "Item"), 0))
+	var after: Dictionary = strategy.call("make_llm_runtime_snapshot", gs, 0)
+	strategy.call("observe_llm_runtime_state_change", before, after, {
+		"success": true,
+		"step_kind": "main_action",
+		"action_kind": "play_trainer",
+		"action_card_name": "Professor's Research",
+		"action_card_type": "Supporter",
+		"pending_choice_after": "",
+	})
+	var replan_context_by_turn: Dictionary = strategy.get("_llm_replan_context_by_turn")
+	var replan_context: Dictionary = replan_context_by_turn.get(6, {})
+	var trigger: Dictionary = replan_context.get("trigger", {})
+	return run_checks([
+		assert_eq(int(strategy.call("get_llm_replan_count")), 4, "Supporter hand refresh should ignore the ordinary per-turn replan budget"),
+		assert_false(strategy.call("has_llm_plan_for_turn", 6), "Forced Supporter refresh replan should still clear stale decisions"),
+		assert_eq(str(trigger.get("reason", "")), "supporter_changed_9_cards", "Trigger should explicitly record the Supporter hand-refresh reason"),
+		assert_true(bool(trigger.get("ignore_replan_limit", false)), "Supporter hand-refresh trigger should bypass the replan limit"),
 	])
 
 
@@ -3893,8 +6177,8 @@ func test_llm_allows_second_replan_after_second_large_hand_change() -> String:
 		"pending_choice_after": "",
 	})
 	return run_checks([
-		assert_eq(int(strategy.call("get_llm_replan_count")), 2, "Two large same-turn hand changes should each be allowed to request replanning"),
-		assert_true(strategy.call("has_llm_plan_for_turn", 6), "The third large hand change should keep the current plan once the replan budget is spent"),
+		assert_eq(int(strategy.call("get_llm_replan_count")), 3, "Three large same-turn hand changes should be allowed under the generic replan budget"),
+		assert_false(strategy.call("has_llm_plan_for_turn", 6), "The third large hand change should clear the stale plan under the generic budget"),
 	])
 
 
@@ -4029,6 +6313,7 @@ func test_action_id_tree_locks_selected_queue_after_first_selection() -> String:
 		return "DeckStrategyRagingBoltLLM.gd should exist"
 	var gs := _make_game_state(6)
 	var player := gs.players[0]
+	_fill_player_deck(player)
 	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
 	var iono := CardInstance.create(_make_trainer_cd("Iono", "Supporter"), 0)
 	var energy := CardInstance.create(_make_energy_cd("Basic Lightning Energy", "L"), 0)
@@ -4107,7 +6392,11 @@ func test_llm_queue_requires_exact_action_id_for_duplicate_card_names() -> Strin
 		return "DeckStrategyRagingBoltLLM.gd should exist"
 	var gs := _make_game_state(6)
 	var player := gs.players[0]
+	_fill_player_deck(player)
 	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Lightning Energy", "L"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Fighting Energy", "F"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Grass Energy", "G"), 0))
 	var catcher_cd := _make_trainer_cd("Pok茅mon Catcher", "Item")
 	var catcher_1 := CardInstance.create(catcher_cd, 0)
 	var catcher_2 := CardInstance.create(catcher_cd, 0)
@@ -4132,6 +6421,9 @@ func test_llm_queue_consumes_head_and_forces_end_turn_after_short_route() -> Str
 	var gs := _make_game_state(6)
 	var player := gs.players[0]
 	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Lightning Energy", "L"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Fighting Energy", "F"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Grass Energy", "G"), 0))
 	var catcher := CardInstance.create(_make_trainer_cd("Pok茅mon Catcher", "Item"), 0)
 	player.hand.append(catcher)
 	var catcher_action := {"kind": "play_trainer", "card": catcher, "requires_interaction": true}
@@ -4149,14 +6441,14 @@ func test_llm_queue_consumes_head_and_forces_end_turn_after_short_route() -> Str
 	var initial_queue: Array = strategy.call("get_llm_action_queue")
 	strategy.call("log_runtime_action_result", catcher_action, true, gs, 0, 6)
 	var remaining_queue: Array = strategy.call("get_llm_action_queue")
-	var end_turn_score: float = float(strategy.call("score_action_absolute", {"kind": "end_turn"}, gs, 0))
+	player.active_pokemon.attached_energy.clear()
+	var initial_first_id := str((initial_queue[0] as Dictionary).get("action_id", "")) if initial_queue.size() > 0 and initial_queue[0] is Dictionary else ""
+	var remaining_first_id := str((remaining_queue[0] as Dictionary).get("action_id", "")) if remaining_queue.size() > 0 and remaining_queue[0] is Dictionary else ""
 	return run_checks([
-		assert_eq(initial_queue.size(), 2, "A non-terminal LLM route should be closed with an automatic end_turn"),
-		assert_eq(str((initial_queue[0] as Dictionary).get("action_id", "")), catcher_id, "The first queued action should be the LLM-selected trainer"),
-		assert_eq(str((initial_queue[1] as Dictionary).get("action_id", "")), "end_turn", "The short route should append end_turn"),
-		assert_eq(remaining_queue.size(), 1, "Successful execution should consume the queue head"),
-		assert_eq(str((remaining_queue[0] as Dictionary).get("action_id", "")), "end_turn", "After the short route action, only end_turn should remain"),
-		assert_true(end_turn_score > 0.0, "The remaining end_turn should outscore rule fallback actions"),
+		assert_eq(initial_queue.size(), 1, "A gust-only route without an attack goal should be reduced to the safe end_turn"),
+		assert_eq(initial_first_id, "end_turn", "The reduced route should preserve end_turn"),
+		assert_eq(remaining_queue.size(), 0, "Logging the removed gust action should clear the reduced one-step fallback queue"),
+		assert_eq(remaining_first_id, "", "No queued action should remain after the reduced fallback is cleared"),
 	])
 
 
@@ -4864,6 +7156,158 @@ func test_llm_queue_controls_earthen_vessel_search_targets() -> String:
 	])
 
 
+func test_llm_bridge_raging_bolt_burst_discards_enough_energy_for_ko() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(9)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Raikou V", "Basic", "L", 200), 1)
+	gs.players[1].active_pokemon.damage_counters = 0
+	var fighting_active := CardInstance.create(_make_energy_cd("Basic Fighting Energy", "F"), 0)
+	var lightning_active := CardInstance.create(_make_energy_cd("Basic Lightning Energy", "L"), 0)
+	var fighting_bench := CardInstance.create(_make_energy_cd("Basic Fighting Energy", "F"), 0)
+	_inject_llm_queue(strategy, 9, [
+		{"type": "attack", "card": "Raging Bolt ex", "attack_index": 1, "attack_name": "Thundering Bolt"},
+	])
+	var picked: Array = strategy.call("pick_interaction_items", [fighting_active, lightning_active, fighting_bench], {"id": "discard_basic_energy", "max_select": 3}, {
+		"game_state": gs,
+		"player_index": 0,
+		"pending_effect_kind": "attack",
+		"pending_effect_card": player.active_pokemon.get_top_card(),
+	})
+	return run_checks([
+		assert_eq(picked.size(), 3, "Raging Bolt burst should discard enough visible basic Energy to KO a 200 HP active"),
+		assert_true(picked.has(fighting_active), "Burst discard should include active Fighting Energy"),
+		assert_true(picked.has(lightning_active), "Burst discard should include active Lightning Energy"),
+		assert_true(picked.has(fighting_bench), "Burst discard should include the third board Energy when it is needed for KO"),
+	])
+
+
+func test_llm_raging_bolt_burst_discards_grass_then_backup_surplus_energy() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(9)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	var backup_bolt := _make_slot(_make_raging_bolt_cd(), 0)
+	var ogerpon := _make_slot(_make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210), 0)
+	player.bench.append(backup_bolt)
+	player.bench.append(ogerpon)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 280), 1)
+	var active_lightning := CardInstance.create(_make_energy_cd("Active Lightning Energy", "L"), 0)
+	var active_fighting := CardInstance.create(_make_energy_cd("Active Fighting Energy", "F"), 0)
+	var backup_core_lightning := CardInstance.create(_make_energy_cd("Backup Core Lightning Energy", "L"), 0)
+	var backup_core_fighting := CardInstance.create(_make_energy_cd("Backup Core Fighting Energy", "F"), 0)
+	var backup_extra_lightning := CardInstance.create(_make_energy_cd("Backup Extra Lightning Energy", "L"), 0)
+	var backup_extra_fighting := CardInstance.create(_make_energy_cd("Backup Extra Fighting Energy", "F"), 0)
+	var grass := CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0)
+	player.active_pokemon.attached_energy.append_array([active_lightning, active_fighting])
+	backup_bolt.attached_energy.append_array([
+		backup_core_lightning,
+		backup_core_fighting,
+		backup_extra_lightning,
+		backup_extra_fighting,
+	])
+	ogerpon.attached_energy.append(grass)
+	_inject_llm_queue(strategy, 9, [
+		{
+			"type": "attack",
+			"card": "Raging Bolt ex",
+			"attack_index": 1,
+			"attack_name": "Thundering Bolt",
+			"interactions": {"discard_basic_energy": ["Active Lightning Energy", "Active Fighting Energy"]},
+		},
+	])
+	var picked: Array = strategy.call("pick_interaction_items", [
+		backup_core_lightning,
+		active_lightning,
+		backup_extra_fighting,
+		active_fighting,
+		backup_extra_lightning,
+		backup_core_fighting,
+		grass,
+	], {"id": "discard_basic_energy", "max_select": 7}, {
+		"game_state": gs,
+		"player_index": 0,
+		"pending_effect_kind": "attack",
+		"pending_effect_card": player.active_pokemon.get_top_card(),
+	})
+	return run_checks([
+		assert_eq(picked.size(), 4, "280 HP should require exactly 4 Energy discarded for Bellowing Thunder"),
+		assert_true(picked.has(grass), "Burst discard should always spend Grass Energy before core Raging Bolt Energy"),
+		assert_true(picked.has(backup_extra_lightning), "Burst discard should use surplus Lightning on backup Raging Bolt before protected core Energy"),
+		assert_true(picked.has(backup_extra_fighting), "Burst discard should use surplus Fighting on backup Raging Bolt before protected core Energy"),
+		assert_false(picked.has(backup_core_lightning), "Burst discard should preserve one Lightning on backup Raging Bolt for the next turn"),
+		assert_false(picked.has(backup_core_fighting), "Burst discard should preserve one Fighting on backup Raging Bolt for the next turn"),
+	])
+
+
+func test_llm_pending_interaction_keeps_consumed_earthen_vessel_intent() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(3)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	var vessel := CardInstance.create(_make_trainer_cd("Earthen Vessel", "Item"), 0)
+	var grass := CardInstance.create(_make_energy_cd("Basic Grass Energy", "G"), 0)
+	var fighting := CardInstance.create(_make_energy_cd("Basic Fighting Energy", "F"), 0)
+	var lightning := CardInstance.create(_make_energy_cd("Basic Lightning Energy", "L"), 0)
+	var vessel_action := {
+		"kind": "play_trainer",
+		"card": vessel,
+		"requires_interaction": true,
+	}
+	var vessel_action_id: String = str(strategy.call("_action_id_for_action", vessel_action, gs, 0))
+	strategy.set("_cached_turn_number", 3)
+	strategy.set("_llm_queue_turn", 3)
+	strategy.set("_llm_decision_tree", {"actions": [{"id": vessel_action_id}]})
+	strategy.set("_llm_action_queue", [])
+	var completed_turns := {}
+	completed_turns[3] = true
+	strategy.set("_llm_completed_queue_turns", completed_turns)
+	strategy.set("_llm_pending_interaction_turn", 3)
+	strategy.set("_llm_pending_interaction_queue_item", {
+		"action_id": vessel_action_id,
+		"kind": "play_trainer",
+		"card": "Earthen Vessel",
+		"interactions": {"discard_card": "Basic Grass Energy", "search_energy": ["Basic Lightning Energy", "Basic Fighting Energy"]},
+	})
+	var search_picked: Array = strategy.call("pick_interaction_items", [grass, fighting, lightning], {"id": "search_energy", "max_select": 2}, {
+		"game_state": gs,
+		"player_index": 0,
+		"pending_effect_kind": "trainer",
+		"pending_effect_card": vessel,
+	})
+	var discard_picked: Array = strategy.call("pick_interaction_items", [grass, fighting, lightning], {"id": "discard_cards", "max_select": 1}, {
+		"game_state": gs,
+		"player_index": 0,
+		"pending_effect_kind": "trainer",
+		"pending_effect_card": vessel,
+	})
+	strategy.call("observe_llm_runtime_state_change", strategy.call("make_llm_runtime_snapshot", gs, 0), strategy.call("make_llm_runtime_snapshot", gs, 0), {
+		"success": true,
+		"step_kind": "effect_interaction",
+		"pending_choice_after": "",
+	})
+	var pending_item: Dictionary = strategy.get("_llm_pending_interaction_queue_item")
+	var search_first_is_lightning: bool = search_picked.size() > 0 and search_picked[0] == lightning
+	var search_second_is_fighting: bool = search_picked.size() > 1 and search_picked[1] == fighting
+	var discard_first_is_grass: bool = discard_picked.size() > 0 and discard_picked[0] == grass
+	return run_checks([
+		assert_eq(strategy.call("get_llm_action_queue").size(), 0, "Main action queue may be consumed before its effect interaction resolves"),
+		assert_eq(search_picked.size(), 2, "Consumed queue head should still drive the pending Earthen Vessel search"),
+		assert_true(search_first_is_lightning, "Pending Earthen Vessel intent should preserve Lightning as first search target"),
+		assert_true(search_second_is_fighting, "Pending Earthen Vessel intent should preserve Fighting as second search target"),
+		assert_eq(discard_picked.size(), 1, "Consumed queue head should still drive the pending Earthen Vessel discard"),
+		assert_true(discard_first_is_grass, "Pending Earthen Vessel intent should preserve Grass as discard fuel"),
+		assert_true(pending_item.is_empty(), "Pending interaction intent should clear after effect interaction finishes"),
+	])
+
+
 func test_llm_tree_nested_interactions_control_search_targets() -> String:
 	var strategy := _new_llm_strategy()
 	if strategy == null:
@@ -5148,5 +7592,760 @@ func test_llm_prompt_exposes_gust_ko_opportunity_and_route() -> String:
 		assert_eq(str((opportunities[0] as Dictionary).get("target_position", "")), "bench_0", "Gust KO fact should name the opponent bench position"),
 		assert_true(bool((opportunities[0] as Dictionary).get("game_winning", false)), "Gust KO fact should flag game-winning prize routes"),
 		assert_true(has_gust_route, "Candidate route builder should expose a route:gust_ko wrapper"),
+	])
+
+
+func test_llm_prompt_sorts_deterministic_gust_before_coin_flip_catcher() -> String:
+	var script := _load_script(LLM_TURN_PLAN_PROMPT_BUILDER_SCRIPT_PATH)
+	if script == null:
+		return "LLMTurnPlanPromptBuilder.gd should exist"
+	var builder: RefCounted = script.new()
+	var gs := _make_game_state(5)
+	var player := gs.players[0]
+	var opponent := gs.players[1]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Lightning Energy", "L"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Fighting Energy", "F"), 0))
+	for i: int in 2:
+		player.prizes.append(CardInstance.create(_make_trainer_cd("Prize%d" % i, "Item"), 0))
+	var target_cd := _make_pokemon_cd("Low Bench ex", "Basic", "C", 180)
+	target_cd.mechanic = "ex"
+	var bench_target := _make_slot(target_cd, 1)
+	bench_target.damage_counters = 120
+	opponent.bench.append(bench_target)
+	var catcher_cd := _make_trainer_cd("Pokemon Catcher", "Item")
+	catcher_cd.name_en = "Pokemon Catcher"
+	catcher_cd.effect_id = "3a6d419769778b40091e69fbd76737ec"
+	var catcher := CardInstance.create(catcher_cd, 0)
+	var boss_cd := _make_trainer_cd("Boss's Orders", "Supporter")
+	boss_cd.effect_id = "8e1fa2c9018db938084c94c7c970d419"
+	var boss := CardInstance.create(boss_cd, 0)
+	player.hand.append(catcher)
+	player.hand.append(boss)
+	var legal_actions := [
+		{"kind": "play_trainer", "card": catcher, "targets": [], "requires_interaction": true},
+		{"kind": "play_trainer", "card": boss, "targets": [], "requires_interaction": true},
+		{"kind": "attack", "attack_index": 1, "targets": [], "requires_interaction": true},
+		{"kind": "end_turn"},
+	]
+	var payload: Dictionary = builder.call("build_action_id_request_payload", gs, 0, legal_actions)
+	var legal_refs: Array = payload.get("legal_actions", []) if payload.get("legal_actions", []) is Array else []
+	var boss_action_id := ""
+	var catcher_action_id := ""
+	for raw: Variant in legal_refs:
+		if not (raw is Dictionary):
+			continue
+		var ref: Dictionary = raw
+		if str(ref.get("card", "")) == "Boss's Orders":
+			boss_action_id = str(ref.get("id", ""))
+		if str(ref.get("card", "")) == "Pokemon Catcher":
+			catcher_action_id = str(ref.get("id", ""))
+	var facts: Dictionary = payload.get("turn_tactical_facts", {})
+	var opportunities: Array = facts.get("gust_ko_opportunities", []) if facts.get("gust_ko_opportunities", []) is Array else []
+	var first_opp: Dictionary = opportunities[0] if not opportunities.is_empty() and opportunities[0] is Dictionary else {}
+	return run_checks([
+		assert_true(boss_action_id != "", "Prompt legal refs should include Boss's Orders"),
+		assert_true(catcher_action_id != "", "Prompt legal refs should include Pokemon Catcher"),
+		assert_eq(str(first_opp.get("gust_action_id", "")), boss_action_id, "Deterministic Boss gust should be the first KO opportunity"),
+		assert_true(bool(first_opp.get("gust_deterministic", false)), "First gust KO opportunity should be marked deterministic"),
+	])
+
+
+func test_llm_prompt_exposes_defensive_gust_when_no_attack_and_opponent_active_is_loaded() -> String:
+	var script := _load_script(LLM_TURN_PLAN_PROMPT_BUILDER_SCRIPT_PATH)
+	if script == null:
+		return "LLMTurnPlanPromptBuilder.gd should exist"
+	var builder: RefCounted = script.new()
+	var gs := _make_game_state(12)
+	var player := gs.players[0]
+	var opponent := gs.players[1]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	var boss_cd := _make_trainer_cd("Boss's Orders", "Supporter")
+	boss_cd.effect_id = "8e1fa2c9018db938084c94c7c970d419"
+	var boss := CardInstance.create(boss_cd, 0)
+	player.hand.append(boss)
+	var raikou_cd := _make_pokemon_cd("Raikou V", "Basic", "L", 200)
+	raikou_cd.retreat_cost = 1
+	opponent.active_pokemon = _make_slot(raikou_cd, 1)
+	opponent.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 1))
+	opponent.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 1))
+	var iron_hands_cd := _make_pokemon_cd("Iron Hands ex", "Basic", "L", 230)
+	iron_hands_cd.retreat_cost = 4
+	opponent.bench.append(_make_slot(iron_hands_cd, 1))
+	var mew_cd := _make_pokemon_cd("Mew ex", "Basic", "P", 180)
+	mew_cd.retreat_cost = 0
+	opponent.bench.append(_make_slot(mew_cd, 1))
+	var legal_actions := [
+		{"kind": "play_trainer", "card": boss, "targets": [], "requires_interaction": true},
+		{"kind": "end_turn"},
+	]
+	var payload: Dictionary = builder.call("build_action_id_request_payload", gs, 0, legal_actions)
+	var facts: Dictionary = payload.get("turn_tactical_facts", {})
+	var opportunities: Array = facts.get("defensive_gust_opportunities", []) if facts.get("defensive_gust_opportunities", []) is Array else []
+	var routes: Array = payload.get("candidate_routes", []) if payload.get("candidate_routes", []) is Array else []
+	var has_route := false
+	for raw: Variant in routes:
+		if raw is Dictionary and str((raw as Dictionary).get("id", "")) == "defensive_gust_stall":
+			has_route = true
+			break
+	var first_opp: Dictionary = opportunities[0] if not opportunities.is_empty() and opportunities[0] is Dictionary else {}
+	return run_checks([
+		assert_false(opportunities.is_empty(), "Prompt should expose defensive gust when no attack is legal and opponent active is energized"),
+		assert_eq(str(first_opp.get("target_name", "")), "Iron Hands ex", "Defensive gust should prefer a low-energy high-retreat stall target"),
+		assert_true(has_route, "Candidate routes should include the defensive gust stall wrapper"),
+	])
+
+
+func test_llm_runtime_end_turn_conversion_respects_future_attack_goal_source() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(7)
+	var player := gs.players[0]
+	var opponent := gs.players[1]
+	var squawk_cd := _make_pokemon_cd("Squawkabilly ex", "Basic", "C", 160)
+	squawk_cd.name_en = "Squawkabilly ex"
+	squawk_cd.mechanic = "ex"
+	squawk_cd.attacks = [{"name": "Motivate", "cost": "C", "damage": "20"}]
+	player.active_pokemon = _make_slot(squawk_cd, 0)
+	player.bench.append(_make_slot(_make_raging_bolt_cd(), 0))
+	opponent.active_pokemon = _make_slot(_make_pokemon_cd("Low HP Opponent", "Basic", "C", 20), 1)
+	var future_goal := {
+		"id": "future:attack_after_pivot:bench_0:1:Thundering Bolt",
+		"action_id": "future:attack_after_pivot:bench_0:1:Thundering Bolt",
+		"type": "attack",
+		"future": true,
+		"attack_index": 1,
+		"attack_name": "Thundering Bolt",
+		"source_pokemon": "Raging Bolt ex",
+		"reachable_with_known_resources": true,
+		"attack_quality": {"role": "primary_damage", "terminal_priority": "high"},
+	}
+	strategy.set("_llm_decision_tree", {"branches": [{"when": [{"fact": "always"}], "actions": [{"id": "end_turn"}]}]})
+	strategy.set("_llm_action_queue", [{"id": "end_turn", "action_id": "end_turn", "type": "end_turn", "capability": "end_turn"}])
+	strategy.set("_llm_queue_turn", 7)
+	var catalog := {
+		"end_turn": {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	}
+	catalog[str(future_goal.get("id"))] = future_goal
+	strategy.set("_llm_action_catalog", catalog)
+	var raw_queue: Array[Dictionary] = [
+		future_goal,
+		{"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	]
+	var compiled_queue: Array = strategy.call("_compile_selected_action_queue", raw_queue, gs, 0)
+	strategy.set("_llm_action_queue", compiled_queue)
+	var squawk_attack := {"kind": "attack", "attack_index": 0, "attack_name": "Motivate", "requires_interaction": true}
+	var score: float = float(strategy.call("score_action_absolute", squawk_attack, gs, 0))
+	var has_future_goals: bool = bool(strategy.call("_route_compiler_has_future_attack_goals", gs))
+	return run_checks([
+		assert_true(has_future_goals, "Test setup should expose route compiler future attack goals"),
+		assert_true(score < 10000.0,
+			"end_turn must not convert a future Raging Bolt attack goal into the current support Pokemon attack (score=%f)" % score),
+	])
+
+
+func test_llm_runtime_blocks_end_turn_score_when_compiler_blocks_terminal() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(7)
+	gs.players[0].active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	strategy.set("_llm_decision_tree", {"branches": [{"when": [{"fact": "always"}], "actions": [{"id": "end_turn"}]}]})
+	strategy.set("_llm_action_queue", [{"id": "end_turn", "action_id": "end_turn", "type": "end_turn", "capability": "end_turn"}])
+	strategy.set("_llm_queue_turn", 7)
+	var compiler_results := {}
+	compiler_results[7] = {"blocked_end_turn": true}
+	strategy.set("_llm_route_compiler_results_by_turn", compiler_results)
+	var end_turn_score: float = float(strategy.call("score_action_absolute", {"kind": "end_turn"}, gs, 0))
+	return assert_true(end_turn_score <= -1000.0,
+		"Blocked compiler terminal must be actively negative-scored, not merely ignored by queue matching (score=%f)" % end_turn_score)
+
+
+func test_raging_bolt_llm_blocks_greninja_when_only_core_energy_would_be_discarded() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(8)
+	var player := gs.players[0]
+	var ogerpon_cd := _make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210)
+	ogerpon_cd.name_en = "Teal Mask Ogerpon ex"
+	var greninja_cd := _make_pokemon_cd("Radiant Greninja", "Basic", "W", 130)
+	greninja_cd.name_en = "Radiant Greninja"
+	player.active_pokemon = _make_slot(ogerpon_cd, 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_raging_bolt_cd(), 0))
+	player.bench.append(_make_slot(greninja_cd, 0))
+	player.hand.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	player.hand.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	player.hand.append(CardInstance.create(_make_trainer_cd("Lost Vacuum"), 0))
+	var greninja_action := {
+		"kind": "use_ability",
+		"source_slot": player.bench[1],
+		"ability_index": 0,
+		"requires_interaction": true,
+	}
+	var blocked: bool = bool(strategy.call("_is_core_energy_preservation_risk_action", greninja_action, gs, 0))
+	player.hand.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
+	var allowed_with_grass: bool = bool(strategy.call("_is_core_energy_preservation_risk_action", greninja_action, gs, 0))
+	return run_checks([
+		assert_true(blocked, "Greninja draw must be blocked when it can only discard the unique Lightning/Fighting needed for Raging Bolt's next attack"),
+		assert_false(allowed_with_grass, "Greninja draw should remain available when Grass Energy can be discarded instead of route-critical core Energy"),
+	])
+
+
+func test_raging_bolt_llm_blocks_hand_reset_that_shuffles_missing_core_energy() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(8)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	var iono_cd := _make_named_trainer_cd("奇树", "Iono", "Supporter")
+	var iono := CardInstance.create(iono_cd, 0)
+	player.hand.append(iono)
+	player.hand.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	player.hand.append(CardInstance.create(_make_trainer_cd("Lost Vacuum"), 0))
+	player.hand.append(CardInstance.create(_make_trainer_cd("Pal Pad"), 0))
+	var iono_action := {
+		"kind": "play_trainer",
+		"card": iono,
+		"requires_interaction": false,
+	}
+	var blocked: bool = bool(strategy.call("_is_core_energy_preservation_risk_action", iono_action, gs, 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	var allowed_when_ready: bool = bool(strategy.call("_is_core_energy_preservation_risk_action", iono_action, gs, 0))
+	return run_checks([
+		assert_true(blocked, "Iono/Research-style hand reset must be blocked while hand contains the missing Fighting Energy for Raging Bolt"),
+		assert_false(allowed_when_ready, "Hand reset should not be blocked by core preservation once Raging Bolt already has Lightning + Fighting"),
+	])
+
+
+func test_llm_runtime_end_turn_conversion_allows_matching_future_attack_goal() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(7)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Lightning Energy", "L"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Fighting Energy", "F"), 0))
+	var future_goal := {
+		"id": "future:attack_after_pivot:active:1:Thundering Bolt",
+		"action_id": "future:attack_after_pivot:active:1:Thundering Bolt",
+		"type": "attack",
+		"future": true,
+		"attack_index": 1,
+		"attack_name": "Thundering Bolt",
+		"source_pokemon": "Raging Bolt ex",
+		"reachable_with_known_resources": true,
+		"attack_quality": {"role": "primary_damage", "terminal_priority": "high"},
+	}
+	strategy.set("_llm_decision_tree", {"branches": [{"when": [{"fact": "always"}], "actions": [{"id": "end_turn"}]}]})
+	strategy.set("_llm_action_queue", [{"id": "end_turn", "action_id": "end_turn", "type": "end_turn", "capability": "end_turn"}])
+	strategy.set("_llm_queue_turn", 7)
+	var catalog := {
+		"end_turn": {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	}
+	catalog[str(future_goal.get("id"))] = future_goal
+	strategy.set("_llm_action_catalog", catalog)
+	var raw_queue: Array[Dictionary] = [
+		future_goal,
+		{"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	]
+	var compiled_queue: Array = strategy.call("_compile_selected_action_queue", raw_queue, gs, 0)
+	strategy.set("_llm_action_queue", compiled_queue)
+	var burst_attack := {"kind": "attack", "attack_index": 1, "attack_name": "Thundering Bolt", "requires_interaction": true}
+	var score: float = float(strategy.call("score_action_absolute", burst_attack, gs, 0))
+	return assert_true(score >= 90000.0,
+		"end_turn may convert to the matching future Raging Bolt attack goal after setup (score=%f)" % score)
+
+
+func test_raging_bolt_llm_handoff_prefers_backup_bolt_over_charged_support() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(9)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Knocked Out Placeholder", "Basic", "C", 50), 0)
+	var bolt := _make_slot(_make_raging_bolt_cd(), 0)
+	var ogerpon_cd := _make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210)
+	ogerpon_cd.name_en = "Teal Mask Ogerpon ex"
+	var ogerpon := _make_slot(ogerpon_cd, 0)
+	ogerpon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Grass Energy", "G"), 0))
+	player.bench.append(ogerpon)
+	player.bench.append(bolt)
+	var context := {"game_state": gs, "player_index": 0}
+	var bolt_score: float = float(strategy.call("score_handoff_target", bolt, {"id": "send_out"}, context))
+	var ogerpon_score: float = float(strategy.call("score_handoff_target", ogerpon, {"id": "send_out"}, context))
+	return assert_true(bolt_score > ogerpon_score,
+		"send_out should preserve prize-race attack continuity by preferring backup Raging Bolt over a charged support pivot (bolt=%f ogerpon=%f)" % [bolt_score, ogerpon_score])
+
+
+func test_raging_bolt_llm_blocks_switch_cart_when_only_support_targets_exist() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(2)
+	var player := gs.players[0]
+	var ogerpon_cd := _make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210)
+	ogerpon_cd.name_en = "Teal Mask Ogerpon ex"
+	var greninja_cd := _make_pokemon_cd("Radiant Greninja", "Basic", "W", 130)
+	greninja_cd.name_en = "Radiant Greninja"
+	player.active_pokemon = _make_slot(ogerpon_cd, 0)
+	player.bench.append(_make_slot(greninja_cd, 0))
+	var switch_cart_cd := _make_named_trainer_cd("Switch Cart", "Switch Cart", "Item")
+	var switch_cart := CardInstance.create(switch_cart_cd, 0)
+	var switch_action := {"kind": "play_trainer", "card": switch_cart, "requires_interaction": true}
+	var blocked_score: float = float(strategy.call("score_action_absolute", switch_action, gs, 0))
+	player.bench.append(_make_slot(_make_raging_bolt_cd(), 0))
+	var allowed_score: float = float(strategy.call("score_action_absolute", switch_action, gs, 0))
+	return run_checks([
+		assert_true(blocked_score <= -1000.0,
+			"Switch Cart should be blocked when it can only promote fragile support engines (score=%f)" % blocked_score),
+		assert_true(allowed_score > -1000.0,
+			"Switch Cart should remain available when a Raging Bolt or real pivot target exists (score=%f)" % allowed_score),
+	])
+
+
+func test_raging_bolt_llm_switch_target_prefers_attacker_over_support_engine() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(2)
+	var player := gs.players[0]
+	var ogerpon_cd := _make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210)
+	ogerpon_cd.name_en = "Teal Mask Ogerpon ex"
+	var greninja_cd := _make_pokemon_cd("Radiant Greninja", "Basic", "W", 130)
+	greninja_cd.name_en = "Radiant Greninja"
+	player.active_pokemon = _make_slot(ogerpon_cd, 0)
+	var greninja := _make_slot(greninja_cd, 0)
+	var bolt := _make_slot(_make_raging_bolt_cd(), 0)
+	player.bench.append(greninja)
+	player.bench.append(bolt)
+	var context := {"game_state": gs, "player_index": 0}
+	var bolt_score: float = float(strategy.call("score_interaction_target", bolt, {"id": "switch_target"}, context))
+	var greninja_score: float = float(strategy.call("score_interaction_target", greninja, {"id": "switch_target"}, context))
+	return run_checks([
+		assert_true(bolt_score > greninja_score,
+			"Switch target should prefer the attacker/pivot over Radiant Greninja (bolt=%f greninja=%f)" % [bolt_score, greninja_score]),
+		assert_true(greninja_score <= -1000.0,
+			"Radiant Greninja should not be selected as a casual active pivot target (score=%f)" % greninja_score),
+	])
+
+
+func test_raging_bolt_llm_pick_switch_target_prefers_attacker_without_llm_low_level_target() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(14)
+	var player := gs.players[0]
+	var squawk_cd := _make_pokemon_cd("Squawkabilly ex", "Basic", "C", 160)
+	squawk_cd.name_en = "Squawkabilly ex"
+	squawk_cd.mechanic = "ex"
+	var greninja_cd := _make_pokemon_cd("Radiant Greninja", "Basic", "W", 130)
+	greninja_cd.name_en = "Radiant Greninja"
+	player.active_pokemon = _make_slot(squawk_cd, 0)
+	var greninja := _make_slot(greninja_cd, 0)
+	var ogerpon_cd := _make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210)
+	ogerpon_cd.name_en = "Teal Mask Ogerpon ex"
+	var ogerpon := _make_slot(ogerpon_cd, 0)
+	ogerpon.attached_energy.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
+	var bolt := _make_slot(_make_raging_bolt_cd(), 0)
+	bolt.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	player.bench.append(greninja)
+	player.bench.append(ogerpon)
+	player.bench.append(bolt)
+	var picked: Array = strategy.call("pick_interaction_items", [greninja, ogerpon, bolt], {"id": "switch_target", "max_select": 1}, {
+		"game_state": gs,
+		"player_index": 0,
+	})
+	var picked_slot: Variant = picked[0] if not picked.is_empty() else null
+	return run_checks([
+		assert_eq(picked.size(), 1, "Switch Cart target picker should choose one pivot target"),
+		assert_true(picked_slot == bolt, "Switch Cart without a low-level LLM target should still promote Raging Bolt over Radiant Greninja"),
+	])
+
+
+func test_raging_bolt_llm_payload_exposes_continuity_route_before_nonfinal_attack() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(8)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
+	_fill_player_deck(player, 20)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Iron Hands ex", "Basic", "L", 230), 1)
+	var backup_bolt := CardInstance.create(_make_raging_bolt_cd(), 0)
+	var ogerpon_cd := _make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210)
+	ogerpon_cd.name_en = "Teal Mask Ogerpon ex"
+	var ogerpon := CardInstance.create(ogerpon_cd, 0)
+	var nest_cd := _make_trainer_cd("Nest Ball", "Item")
+	nest_cd.effect_id = "1af63a7e2cb7a79215474ad8db8fd8fd"
+	var nest := CardInstance.create(nest_cd, 0)
+	player.hand.append(backup_bolt)
+	player.hand.append(ogerpon)
+	player.hand.append(nest)
+	var payload: Dictionary = strategy.call("build_action_id_request_payload_for_test", gs, 0, [
+		{"kind": "play_basic_to_bench", "card": backup_bolt},
+		{"kind": "play_basic_to_bench", "card": ogerpon},
+		{"kind": "play_trainer", "card": nest, "requires_interaction": true},
+		{"kind": "attack", "attack_index": 1, "source_slot": player.active_pokemon, "targets": [], "requires_interaction": true},
+		{"kind": "end_turn"},
+	])
+	var facts: Dictionary = payload.get("turn_tactical_facts", {}) if payload.get("turn_tactical_facts", {}) is Dictionary else {}
+	var continuity: Dictionary = facts.get("continuity_contract", {}) if facts.get("continuity_contract", {}) is Dictionary else {}
+	var route: Dictionary = {}
+	for raw_route: Variant in payload.get("candidate_routes", []):
+		if raw_route is Dictionary and str((raw_route as Dictionary).get("route_action_id", "")) == "route:continuity_before_attack":
+			route = raw_route
+			break
+	var route_action_ids: Array[String] = []
+	for raw_action: Variant in route.get("actions", []):
+		if raw_action is Dictionary:
+			route_action_ids.append(str((raw_action as Dictionary).get("id", "")))
+	var first_action := route_action_ids[0] if not route_action_ids.is_empty() else ""
+	var last_action := route_action_ids[route_action_ids.size() - 1] if not route_action_ids.is_empty() else ""
+	return run_checks([
+		assert_true(bool(continuity.get("enabled", false)), "Continuity contract should be visible in LLM tactical facts before a non-final attack"),
+		assert_true(not route.is_empty(), "Payload should expose route:continuity_before_attack as a selectable route action"),
+		assert_true(first_action.begins_with("play_basic_to_bench:"), "Continuity route should start by filling backup board before attacking: %s" % JSON.stringify(route_action_ids)),
+		assert_true(last_action.begins_with("attack:1"), "Continuity route should still close with Raging Bolt's primary attack: %s" % JSON.stringify(route_action_ids)),
+		assert_true(strategy.get("_llm_route_candidates_by_id").has("route:continuity_before_attack"), "Runtime route registry should register the continuity route id"),
+	])
+
+
+func test_raging_bolt_llm_candidate_fallback_prefers_continuity_route_over_shallow_attack() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(8)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
+	_fill_player_deck(player, 20)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Iron Hands ex", "Basic", "L", 230), 1)
+	var backup_bolt := CardInstance.create(_make_raging_bolt_cd(), 0)
+	player.hand.append(backup_bolt)
+	var payload: Dictionary = strategy.call("build_action_id_request_payload_for_test", gs, 0, [
+		{"kind": "play_basic_to_bench", "card": backup_bolt},
+		{"kind": "attack", "attack_index": 1, "source_slot": player.active_pokemon, "targets": [], "requires_interaction": true},
+		{"kind": "end_turn"},
+	])
+	var fallback_tree: Dictionary = strategy.call("_candidate_route_fallback_tree")
+	var branches: Array = fallback_tree.get("branches", []) if fallback_tree.get("branches", []) is Array else []
+	var first_branch: Dictionary = branches[0] if not branches.is_empty() and branches[0] is Dictionary else {}
+	var actions: Array = first_branch.get("actions", []) if first_branch.get("actions", []) is Array else []
+	var first_action: Dictionary = actions[0] if not actions.is_empty() and actions[0] is Dictionary else {}
+	return run_checks([
+		assert_true(not payload.is_empty(), "Payload fixture should build successfully"),
+		assert_eq(str(first_action.get("id", "")), "route:continuity_before_attack", "Fallback repair should prefer continuity-before-attack over a shallow attack-only route"),
+	])
+
+
+func test_raging_bolt_llm_payload_exposes_core_attacker_route_before_support_draw() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(2)
+	var player := gs.players[0]
+	var fez_cd := _make_pokemon_cd("Fezandipiti ex", "Basic", "D", 210)
+	fez_cd.name_en = "Fezandipiti ex"
+	player.active_pokemon = _make_slot(fez_cd, 0)
+	_fill_player_deck(player, 20)
+	var nest_cd := _make_trainer_cd("Nest Ball", "Item")
+	nest_cd.effect_id = "1af63a7e2cb7a79215474ad8db8fd8fd"
+	var nest := CardInstance.create(nest_cd, 0)
+	player.hand.append(nest)
+	var payload: Dictionary = strategy.call("build_action_id_request_payload_for_test", gs, 0, [
+		{"kind": "play_trainer", "card": nest, "requires_interaction": true},
+		{"kind": "end_turn"},
+	])
+	var facts: Dictionary = payload.get("turn_tactical_facts", {}) if payload.get("turn_tactical_facts", {}) is Dictionary else {}
+	var core_setup: Dictionary = facts.get("core_attacker_setup", {}) if facts.get("core_attacker_setup", {}) is Dictionary else {}
+	var route: Dictionary = {}
+	for raw_route: Variant in payload.get("candidate_routes", []):
+		if raw_route is Dictionary and str((raw_route as Dictionary).get("route_action_id", "")) == "route:core_attacker_setup":
+			route = raw_route
+			break
+	var route_actions: Array = route.get("actions", []) if route.get("actions", []) is Array else []
+	var first_route_action: Dictionary = route_actions[0] if not route_actions.is_empty() and route_actions[0] is Dictionary else {}
+	var selection_policy: Dictionary = first_route_action.get("selection_policy", {}) if first_route_action.get("selection_policy", {}) is Dictionary else {}
+	var policy_text := JSON.stringify(selection_policy)
+	var fallback_tree: Dictionary = strategy.call("_candidate_route_fallback_tree")
+	var branches: Array = fallback_tree.get("branches", []) if fallback_tree.get("branches", []) is Array else []
+	var first_branch: Dictionary = branches[0] if not branches.is_empty() and branches[0] is Dictionary else {}
+	var actions: Array = first_branch.get("actions", []) if first_branch.get("actions", []) is Array else []
+	var first_action: Dictionary = actions[0] if not actions.is_empty() and actions[0] is Dictionary else {}
+	return run_checks([
+		assert_true(bool(core_setup.get("needs_first_raging_bolt", false)), "Core setup facts should flag missing first Raging Bolt"),
+		assert_true(bool(core_setup.get("core_route_available", false)), "Core setup facts should expose a legal Raging Bolt access route"),
+		assert_true(not route.is_empty(), "Payload should expose route:core_attacker_setup before support draw routes"),
+		assert_str_contains(policy_text, "Raging Bolt ex", "Core search route should carry selection_policy that prefers Raging Bolt ex"),
+		assert_eq(str(first_action.get("id", "")), "route:core_attacker_setup", "Fallback repair should prefer first-attacker setup over preserve/end or support draw"),
+	])
+
+
+func test_raging_bolt_llm_blocks_core_energy_attach_to_support_when_bolt_searchable() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(2)
+	var player := gs.players[0]
+	var fez_cd := _make_pokemon_cd("Fezandipiti ex", "Basic", "D", 210)
+	fez_cd.name_en = "Fezandipiti ex"
+	player.active_pokemon = _make_slot(fez_cd, 0)
+	var nest_cd := _make_trainer_cd("Nest Ball", "Item")
+	nest_cd.effect_id = "1af63a7e2cb7a79215474ad8db8fd8fd"
+	player.hand.append(CardInstance.create(nest_cd, 0))
+	var lightning := CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0)
+	player.hand.append(lightning)
+	var attach_to_support := {
+		"kind": "attach_energy",
+		"card": lightning,
+		"target_slot": player.active_pokemon,
+	}
+	var blocked_score: float = float(strategy.call("score_action_absolute", attach_to_support, gs, 0))
+	player.bench.append(_make_slot(_make_raging_bolt_cd(), 0))
+	var allowed_score: float = float(strategy.call("score_action_absolute", attach_to_support, gs, 0))
+	return run_checks([
+		assert_true(blocked_score <= -1000.0,
+			"Lightning/Fighting should be preserved instead of attached to support active when Raging Bolt is searchable (score=%f)" % blocked_score),
+		assert_true(allowed_score <= -1000.0,
+			"Lightning/Fighting should still not be attached to support once Raging Bolt exists on bench (score=%f)" % allowed_score),
+	])
+
+
+func test_raging_bolt_llm_blocks_any_energy_attach_to_support_engine_slot() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(10)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	var squawk_cd := _make_pokemon_cd("Squawkabilly ex", "Basic", "C", 160)
+	squawk_cd.name_en = "Squawkabilly ex"
+	var squawk := _make_slot(squawk_cd, 0)
+	player.bench.append(squawk)
+	var grass := CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0)
+	player.hand.append(grass)
+	var score: float = float(strategy.call("score_action_absolute", {
+		"kind": "attach_energy",
+		"card": grass,
+		"target_slot": squawk,
+	}, gs, 0))
+	return assert_true(score <= -1000.0, "Raging Bolt LLM should not attach even Grass to passive support engines like Squawkabilly (score=%f)" % score)
+
+
+func test_raging_bolt_llm_search_fallback_picks_core_attacker_without_pending_queue() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(2)
+	var player := gs.players[0]
+	var fez_cd := _make_pokemon_cd("Fezandipiti ex", "Basic", "D", 210)
+	fez_cd.name_en = "Fezandipiti ex"
+	player.active_pokemon = _make_slot(fez_cd, 0)
+	strategy.set("_llm_decision_tree", {"branches": [{"when": [{"fact": "always"}], "actions": [{"id": "play_trainer:c1"}]}]})
+	strategy.set("_llm_action_queue", [{"id": "play_trainer:c1", "action_id": "play_trainer:c1", "type": "play_trainer"}])
+	strategy.set("_llm_queue_turn", 2)
+	var ogerpon_cd := _make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210)
+	ogerpon_cd.name_en = "Teal Mask Ogerpon ex"
+	var ogerpon := CardInstance.create(ogerpon_cd, 0)
+	var bolt := CardInstance.create(_make_raging_bolt_cd(), 0)
+	var picked: Array = strategy.call("pick_interaction_items", [ogerpon, bolt], {"id": "search_targets", "max_select": 1}, {
+		"game_state": gs,
+		"player_index": 0,
+	})
+	return run_checks([
+		assert_eq(picked.size(), 1, "Core search fallback should choose one search target"),
+		assert_true(picked[0] == bolt, "When no Raging Bolt is on board, deferred search fallback must pick Raging Bolt over Ogerpon"),
+	])
+
+
+func test_raging_bolt_llm_payload_exposes_core_recovery_route_from_night_stretcher() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(12)
+	var player := gs.players[0]
+	var fez_cd := _make_pokemon_cd("Fezandipiti ex", "Basic", "D", 210)
+	fez_cd.name_en = "Fezandipiti ex"
+	player.active_pokemon = _make_slot(fez_cd, 0)
+	player.discard_pile.append(CardInstance.create(_make_raging_bolt_cd(), 0))
+	var stretcher_cd := _make_trainer_cd("Night Stretcher", "Item")
+	stretcher_cd.effect_id = "3e6f1daf545dfed48d0588dd50792a2e"
+	var stretcher := CardInstance.create(stretcher_cd, 0)
+	player.hand.append(stretcher)
+	var payload: Dictionary = strategy.call("build_action_id_request_payload_for_test", gs, 0, [
+		{"kind": "play_trainer", "card": stretcher, "requires_interaction": true},
+		{"kind": "end_turn"},
+	])
+	var route: Dictionary = {}
+	for raw_route: Variant in payload.get("candidate_routes", []):
+		if raw_route is Dictionary and str((raw_route as Dictionary).get("route_action_id", "")) == "route:core_attacker_setup":
+			route = raw_route
+			break
+	var route_actions: Array = route.get("actions", []) if route.get("actions", []) is Array else []
+	var first_route_action: Dictionary = route_actions[0] if not route_actions.is_empty() and route_actions[0] is Dictionary else {}
+	var fallback_tree: Dictionary = strategy.call("_candidate_route_fallback_tree")
+	var branches: Array = fallback_tree.get("branches", []) if fallback_tree.get("branches", []) is Array else []
+	var first_branch: Dictionary = branches[0] if not branches.is_empty() and branches[0] is Dictionary else {}
+	var actions: Array = first_branch.get("actions", []) if first_branch.get("actions", []) is Array else []
+	var first_action: Dictionary = actions[0] if not actions.is_empty() and actions[0] is Dictionary else {}
+	return run_checks([
+		assert_true(not route.is_empty(), "Night Stretcher should expose a core attacker recovery route when Raging Bolt is in discard"),
+		assert_true(str(first_route_action.get("id", "")).begins_with("play_trainer:"), "Core recovery route should start with Night Stretcher"),
+		assert_str_contains(JSON.stringify(first_route_action.get("selection_policy", {})), "Raging Bolt ex", "Core recovery route should recover Raging Bolt first"),
+		assert_eq(str(first_action.get("id", "")), "route:core_attacker_setup", "Fallback repair should prefer recovering the primary attacker over support draw"),
+	])
+
+
+func test_raging_bolt_llm_payload_adds_visible_engine_attack_route_when_generic_route_is_missing() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(20)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	var payload := {
+		"legal_actions": [
+			{"id": "play_trainer:c30", "action_id": "play_trainer:c30", "type": "play_trainer", "card": "Professor Sada's Vitality"},
+			{"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+		],
+		"future_actions": [{
+			"id": "future:attack_after_visible_engine:active:1:Thundering Bolt",
+			"action_id": "future:attack_after_visible_engine:active:1:Thundering Bolt",
+			"type": "attack",
+			"future": true,
+			"attack_index": 1,
+			"attack_name": "Thundering Bolt",
+			"source_pokemon": "Raging Bolt ex",
+		}],
+		"turn_tactical_facts": {
+			"primary_attack_name": "Thundering Bolt",
+			"primary_attack_reachable_after_visible_engine": true,
+			"primary_attack_route": ["discard_energy_acceleration_supporter", "Thundering Bolt"],
+			"deck_count": 8,
+		},
+		"candidate_routes": [{"route_action_id": "route:preserve_end", "goal": "fallback", "actions": [{"id": "end_turn"}]}],
+	}
+	var augmented: Dictionary = strategy.call("_deck_augment_action_id_payload", payload, gs, 0)
+	var route: Dictionary = {}
+	for raw_route: Variant in augmented.get("candidate_routes", []):
+		if raw_route is Dictionary and str((raw_route as Dictionary).get("route_action_id", "")) == "route:raging_bolt_primary_visible_engine":
+			route = raw_route
+			break
+	var route_actions: Array = route.get("actions", []) if route.get("actions", []) is Array else []
+	var first_action: Dictionary = route_actions[0] if not route_actions.is_empty() and route_actions[0] is Dictionary else {}
+	var last_action: Dictionary = route_actions[route_actions.size() - 1] if not route_actions.is_empty() and route_actions[route_actions.size() - 1] is Dictionary else {}
+	var future_goals: Array = route.get("future_goals", []) if route.get("future_goals", []) is Array else []
+	var first_goal: Dictionary = future_goals[0] if not future_goals.is_empty() and future_goals[0] is Dictionary else {}
+	return run_checks([
+		assert_true(not route.is_empty(), "Raging Bolt wrapper should add a deck-specific visible-engine attack route when generic routes miss it"),
+		assert_eq(str(first_action.get("id", "")), "play_trainer:c30", "Visible-engine route should start from the legal Sada action"),
+		assert_true(bool(first_action.get("allow_deck_draw_lock", false)), "Attack-unlocking Sada route should survive low-deck draw lock"),
+		assert_eq(str(last_action.get("id", "")), "end_turn", "Visible-engine route should close with end_turn for runtime attack conversion"),
+		assert_eq(str(first_goal.get("attack_name", "")), "Thundering Bolt", "Visible-engine route should carry the future burst attack goal"),
+	])
+
+
+func test_raging_bolt_llm_blocks_queued_ogerpon_draw_when_deck_is_low() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(18)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	var ogerpon_cd := _make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210)
+	ogerpon_cd.name_en = "Teal Mask Ogerpon ex"
+	var ogerpon := _make_slot(ogerpon_cd, 0)
+	player.bench.append(ogerpon)
+	_fill_player_deck(player, 6)
+	strategy.set("_llm_decision_tree", {"branches": [{"when": [{"fact": "always"}], "actions": [{"id": "use_ability:bench_0:0"}]}]})
+	strategy.set("_llm_action_queue", [{"id": "use_ability:bench_0:0", "action_id": "use_ability:bench_0:0", "type": "use_ability", "pokemon": "Teal Mask Ogerpon ex"}])
+	strategy.set("_llm_queue_turn", 18)
+	var score: float = float(strategy.call("score_action_absolute", {
+		"kind": "use_ability",
+		"source_slot": ogerpon,
+		"ability_index": 0,
+	}, gs, 0))
+	return assert_true(score <= -1000.0, "Low-deck draw discipline must block queued Ogerpon draw before LLM queue score wins (score=%f)" % score)
+
+
+func test_raging_bolt_llm_blocks_non_ko_boss_when_burst_is_ready() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(12)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
+	var iron_hands_cd := _make_pokemon_cd("Iron Hands ex", "Basic", "L", 230)
+	iron_hands_cd.name_en = "Iron Hands ex"
+	iron_hands_cd.mechanic = "ex"
+	gs.players[1].bench.append(_make_slot(iron_hands_cd, 1))
+	var boss_cd := _make_trainer_cd("Boss's Orders", "Supporter")
+	boss_cd.name_en = "Boss's Orders"
+	var boss := CardInstance.create(boss_cd, 0)
+	var score: float = float(strategy.call("score_action_absolute", {"kind": "play_trainer", "card": boss}, gs, 0))
+	return assert_true(score <= -1000.0, "Boss should be blocked when ready burst cannot KO the gust target (score=%f)" % score)
+
+
+func test_raging_bolt_llm_allows_boss_when_burst_kos_bench_target() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(12)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
+	var iron_hands_cd := _make_pokemon_cd("Iron Hands ex", "Basic", "L", 230)
+	iron_hands_cd.name_en = "Iron Hands ex"
+	iron_hands_cd.mechanic = "ex"
+	gs.players[1].bench.append(_make_slot(iron_hands_cd, 1))
+	var boss_cd := _make_trainer_cd("Boss's Orders", "Supporter")
+	boss_cd.name_en = "Boss's Orders"
+	var boss := CardInstance.create(boss_cd, 0)
+	var score: float = float(strategy.call("score_action_absolute", {"kind": "play_trainer", "card": boss}, gs, 0))
+	return assert_true(score > -1000.0, "Boss should remain legal when burst can KO a benched prize target (score=%f)" % score)
+
+
+func test_raging_bolt_llm_prime_catcher_own_target_prefers_ready_bolt() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(12)
+	var player := gs.players[0]
+	var ogerpon_cd := _make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210)
+	ogerpon_cd.name_en = "Teal Mask Ogerpon ex"
+	player.active_pokemon = _make_slot(ogerpon_cd, 0)
+	var bolt := _make_slot(_make_raging_bolt_cd(), 0)
+	bolt.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	bolt.attached_energy.append(CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0))
+	var greninja_cd := _make_pokemon_cd("Radiant Greninja", "Basic", "W", 130)
+	greninja_cd.name_en = "Radiant Greninja"
+	var greninja := _make_slot(greninja_cd, 0)
+	player.bench.append(greninja)
+	player.bench.append(bolt)
+	var context := {"game_state": gs, "player_index": 0}
+	var bolt_score: float = float(strategy.call("score_interaction_target", bolt, {"id": "own_bench_target"}, context))
+	var greninja_score: float = float(strategy.call("score_interaction_target", greninja, {"id": "own_bench_target"}, context))
+	return run_checks([
+		assert_true(bolt_score > greninja_score, "Prime Catcher own target should prefer ready Raging Bolt (bolt=%f greninja=%f)" % [bolt_score, greninja_score]),
+		assert_true(greninja_score <= -1000.0, "Prime Catcher own target should reject Radiant Greninja as casual pivot (score=%f)" % greninja_score),
 	])
 

@@ -21,6 +21,8 @@ const JUDGE := "Judge"
 const SWITCH := "Switch"
 const MAXIMUM_BELT := "Maximum Belt"
 const CHOICE_BELT := "Choice Belt"
+const LOST_CITY := "Lost City"
+const LOST_VACUUM := "Lost Vacuum"
 const DOUBLE_TURBO_ENERGY := "Double Turbo Energy"
 const GRASS_ENERGY := "Grass Energy"
 const PSYCHIC_ENERGY := "Psychic Energy"
@@ -142,7 +144,13 @@ func get_search_priority(card: CardInstance) -> int:
 func pick_interaction_items(items: Array, step: Dictionary, context: Dictionary = {}) -> Array:
 	var game_state: GameState = context.get("game_state", null)
 	if game_state != null and has_llm_plan_for_turn(int(game_state.turn_number)):
+		var pre_guarded: Array = _arceus_giratina_guarded_interaction_items(items, step, context, [])
+		if not pre_guarded.is_empty():
+			return pre_guarded
 		var planned: Array = super.pick_interaction_items(items, step, context)
+		var guarded: Array = _arceus_giratina_guarded_interaction_items(items, step, context, planned)
+		if not guarded.is_empty():
+			return guarded
 		if not planned.is_empty():
 			return planned
 	return _rules.call("pick_interaction_items", items, step, context) if _rules != null and _rules.has_method("pick_interaction_items") else []
@@ -165,6 +173,116 @@ func score_handoff_target(item: Variant, step: Dictionary, context: Dictionary =
 	if _rules != null and _rules.has_method("score_handoff_target"):
 		return _rules_score_handoff_target(item, step, context)
 	return score_interaction_target(item, step, context)
+
+
+func _arceus_giratina_guarded_interaction_items(items: Array, step: Dictionary, context: Dictionary, planned: Array) -> Array:
+	var game_state: GameState = context.get("game_state", null)
+	var player_index := int(context.get("player_index", -1))
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return []
+	if _is_search_interaction_step(step) and _should_force_arceus_vstar_launch_search(items, game_state, player_index):
+		return _select_arceus_vstar_launch_search_items(items, step)
+	if _is_discard_interaction_step(step) and _arceus_launch_discard_needs_guard(planned, game_state, player_index):
+		return _select_arceus_safe_discard_items(items, step)
+	return []
+
+
+func _is_search_interaction_step(step: Dictionary) -> bool:
+	var step_id := str(step.get("id", "")).to_lower()
+	return step_id.contains("search") or step_id.contains("pokemon")
+
+
+func _is_discard_interaction_step(step: Dictionary) -> bool:
+	return str(step.get("id", "")).to_lower().contains("discard")
+
+
+func _should_force_arceus_vstar_launch_search(items: Array, game_state: GameState, player_index: int) -> bool:
+	if not _items_have_name(items, ARCEUS_VSTAR):
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	if player == null or player.active_pokemon == null:
+		return false
+	if not _slot_best_name_equals(player.active_pokemon, ARCEUS_V):
+		return false
+	return _count_field_name(player, ARCEUS_VSTAR) == 0
+
+
+func _select_arceus_vstar_launch_search_items(items: Array, step: Dictionary) -> Array:
+	var max_select := maxi(int(step.get("max_select", 1)), 1)
+	var picked: Array = []
+	_append_first_named_item(picked, items, ARCEUS_VSTAR, max_select)
+	_append_first_named_item(picked, items, DOUBLE_TURBO_ENERGY, max_select)
+	_append_first_named_item(picked, items, GRASS_ENERGY, max_select)
+	_append_first_named_item(picked, items, PSYCHIC_ENERGY, max_select)
+	return picked.slice(0, mini(max_select, picked.size()))
+
+
+func _arceus_launch_discard_needs_guard(planned: Array, game_state: GameState, player_index: int) -> bool:
+	var player: PlayerState = game_state.players[player_index]
+	if player == null or player.active_pokemon == null:
+		return false
+	if not _slot_best_name_equals(player.active_pokemon, ARCEUS_V):
+		return false
+	if _count_field_name(player, ARCEUS_VSTAR) > 0:
+		return false
+	if _arceus_launch_queue_discards_critical_piece():
+		return true
+	if planned.is_empty():
+		return false
+	for item: Variant in planned:
+		if _variant_name_matches_any(item, [ARCEUS_VSTAR, DOUBLE_TURBO_ENERGY]):
+			return true
+	return false
+
+
+func _arceus_launch_queue_discards_critical_piece() -> bool:
+	for action: Dictionary in _llm_action_queue:
+		var interactions: Dictionary = action.get("interactions", {}) if action.get("interactions", {}) is Dictionary else {}
+		var discard_targets: Array = interactions.get("discard_cards", []) if interactions.get("discard_cards", []) is Array else []
+		for raw_target: Variant in discard_targets:
+			var target_name := _variant_best_name(raw_target)
+			if _name_equals_any(target_name, [ARCEUS_VSTAR, DOUBLE_TURBO_ENERGY]):
+				return true
+	return false
+
+
+func _select_arceus_safe_discard_items(items: Array, step: Dictionary) -> Array:
+	var max_select := maxi(int(step.get("max_select", 1)), 1)
+	var preferred: Array = []
+	var acceptable: Array = []
+	var protected: Array = []
+	for item: Variant in items:
+		if _variant_name_matches_any(item, [ARCEUS_VSTAR, DOUBLE_TURBO_ENERGY, ARCEUS_V]):
+			protected.append(item)
+		elif _variant_name_matches_any(item, [LOST_CITY, LOST_VACUUM, JUDGE, IONO, RADIANT_GARDEVOIR, SKWOVET]):
+			preferred.append(item)
+		else:
+			acceptable.append(item)
+	var picked: Array = []
+	for bucket: Array in [preferred, acceptable, protected]:
+		for item: Variant in bucket:
+			if picked.size() >= max_select:
+				return picked
+			picked.append(item)
+	return picked
+
+
+func _append_first_named_item(target: Array, items: Array, query: String, max_select: int) -> void:
+	if target.size() >= max_select:
+		return
+	for item: Variant in items:
+		if target.has(item):
+			continue
+		if _variant_name_matches_any(item, [query]):
+			target.append(item)
+			return
+
+
+func _items_have_name(items: Array, query: String) -> bool:
+	for item: Variant in items:
+		if _variant_name_matches_any(item, [query]):
+			return true
+	return false
 
 
 func make_llm_runtime_snapshot(game_state: GameState, player_index: int) -> Dictionary:
@@ -268,6 +386,289 @@ func _deck_is_setup_or_resource_card(card_data: CardData) -> bool:
 	return _is_arceus_giratina_setup_card(card_data)
 
 
+func _deck_augment_action_id_payload(payload: Dictionary, game_state: GameState, player_index: int) -> Dictionary:
+	var result := payload.duplicate(true)
+	var facts: Dictionary = result.get("turn_tactical_facts", {}) if result.get("turn_tactical_facts", {}) is Dictionary else {}
+	facts = facts.duplicate(true)
+	var shell := _arceus_giratina_shell_fact(result, game_state, player_index)
+	if not shell.is_empty():
+		facts["arceus_giratina_shell"] = shell
+	result["turn_tactical_facts"] = facts
+	var routes: Array = result.get("candidate_routes", []) if result.get("candidate_routes", []) is Array else []
+	var updated_routes := routes.duplicate(true)
+	var setup_draw_route := _arceus_giratina_setup_draw_candidate_route(result, game_state, player_index)
+	if not setup_draw_route.is_empty():
+		updated_routes.push_front(setup_draw_route)
+	var launch_route := _arceus_giratina_launch_candidate_route(result, shell)
+	if not launch_route.is_empty():
+		updated_routes.push_front(launch_route)
+	result["candidate_routes"] = _dedupe_arceus_giratina_candidate_routes(updated_routes)
+	return result
+
+
+func _arceus_giratina_shell_fact(payload: Dictionary, game_state: GameState, player_index: int) -> Dictionary:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return {}
+	var player: PlayerState = game_state.players[player_index]
+	if player == null:
+		return {}
+	var legal_actions: Array = payload.get("legal_actions", []) if payload.get("legal_actions", []) is Array else []
+	var active_name := _slot_best_name(player.active_pokemon)
+	var search_ref := _first_payload_ref_any(legal_actions, "play_trainer", [ULTRA_BALL, CAPTURING_AROMA])
+	var evolve_ref := _first_payload_ref(legal_actions, "evolve", ARCEUS_VSTAR)
+	var starbirth_ref := _first_payload_ref_any(legal_actions, "use_ability", [ARCEUS_VSTAR, "Starbirth", "Star Birth"])
+	var attach_ref := _first_payload_ref_any(legal_actions, "attach_energy", [DOUBLE_TURBO_ENERGY, JET_ENERGY, GRASS_ENERGY, PSYCHIC_ENERGY])
+	var trinity_nova_ref := _first_payload_ref(legal_actions, "attack", "Trinity Nova")
+	if trinity_nova_ref.is_empty():
+		trinity_nova_ref = _first_payload_ref(legal_actions, "attack", "三重新星")
+	var setup_draw_ref := _first_payload_setup_draw_attack_ref(legal_actions)
+	var needs_launch := _name_equals_any(active_name, [ARCEUS_V]) \
+		and _count_field_name(player, ARCEUS_VSTAR) == 0
+	return {
+		"active_name": active_name,
+		"active_is_arceus_v": needs_launch,
+		"active_is_arceus_vstar": _name_equals_any(active_name, [ARCEUS_VSTAR]),
+		"arceus_vstar_field_count": _count_field_name(player, ARCEUS_VSTAR),
+		"giratina_field_count": _count_field_name(player, GIRATINA_V) + _count_field_name(player, GIRATINA_VSTAR),
+		"giratina_vstar_field_count": _count_field_name(player, GIRATINA_VSTAR),
+		"needs_arceus_vstar_launch": needs_launch,
+		"arceus_vstar_search_action_id": _ag_action_ref_id(search_ref),
+		"arceus_vstar_evolve_action_id": _ag_action_ref_id(evolve_ref),
+		"starbirth_action_id": _ag_action_ref_id(starbirth_ref),
+		"launch_attach_action_id": _ag_action_ref_id(attach_ref),
+		"trinity_nova_attack_id": _ag_action_ref_id(trinity_nova_ref),
+		"giratina_setup_draw_attack_id": _ag_action_ref_id(setup_draw_ref),
+		"launch_route_available": needs_launch and (not search_ref.is_empty() or not evolve_ref.is_empty() or not starbirth_ref.is_empty() or not attach_ref.is_empty()),
+		"launch_priority": "Before Giratina VSTAR padding, finish active Arceus V into Arceus VSTAR so Starbirth and Trinity Nova can own the prize race.",
+	}
+
+
+func _arceus_giratina_launch_candidate_route(payload: Dictionary, shell: Dictionary) -> Dictionary:
+	if shell.is_empty() or not bool(shell.get("launch_route_available", false)):
+		return {}
+	var legal_actions: Array = payload.get("legal_actions", []) if payload.get("legal_actions", []) is Array else []
+	var route_actions: Array[Dictionary] = []
+	var seen_ids: Dictionary = {}
+	for action_id: String in [
+		str(shell.get("arceus_vstar_search_action_id", "")),
+		str(shell.get("arceus_vstar_evolve_action_id", "")),
+		str(shell.get("starbirth_action_id", "")),
+		str(shell.get("launch_attach_action_id", "")),
+		str(shell.get("trinity_nova_attack_id", "")),
+	]:
+		if action_id.strip_edges() == "" or bool(seen_ids.get(action_id, false)):
+			continue
+		var ref := _payload_ref_by_ag_id(legal_actions, action_id)
+		if ref.is_empty():
+			continue
+		var route_ref := _arceus_giratina_route_ref(ref, _selection_policy_for_arceus_launch_ref(ref))
+		if route_ref.is_empty():
+			continue
+		route_actions.append(route_ref)
+		seen_ids[action_id] = true
+	if route_actions.is_empty():
+		return {}
+	if not _route_actions_include_terminal(route_actions):
+		route_actions.append({"id": "end_turn", "action_id": "end_turn", "type": "end_turn"})
+	return {
+		"id": "arceus_vstar_launch",
+		"route_action_id": "route:arceus_vstar_launch",
+		"type": "candidate_route",
+		"base_priority": 1320,
+		"priority": 1320,
+		"goal": "finish_arceus_vstar_launch",
+		"description": "Finish active Arceus V into Arceus VSTAR/Starbirth/Trinity Nova before spending the same search route on Giratina VSTAR or support padding.",
+		"actions": route_actions,
+		"future_goals": [{
+			"id": "goal:active_arceus_vstar_trinity_nova",
+			"type": "goal",
+			"attack_name": "Trinity Nova",
+			"target_role": "active_arceus_vstar",
+			"reason": "Strong fixed Arceus/Giratina only races Miraidon if the active Arceus V becomes the first VSTAR attacker.",
+		}],
+		"contract": "Select this route when arceus_giratina_shell.needs_arceus_vstar_launch is true.",
+	}
+
+
+func _arceus_giratina_setup_draw_candidate_route(payload: Dictionary, game_state: GameState, player_index: int) -> Dictionary:
+	if not _active_giratina_setup_draw_only_safe_progress(game_state, player_index):
+		return {}
+	var legal_actions: Array = payload.get("legal_actions", []) if payload.get("legal_actions", []) is Array else []
+	var attack_ref := _first_payload_setup_draw_attack_ref(legal_actions)
+	if attack_ref.is_empty():
+		return {}
+	var route_ref := _arceus_giratina_route_ref(attack_ref, _giratina_setup_draw_selection_policy())
+	if route_ref.is_empty():
+		return {}
+	route_ref["allow_low_value_attack_when_only_progress"] = true
+	return {
+		"id": "giratina_setup_draw_rebuild",
+		"route_action_id": "route:giratina_setup_draw_rebuild",
+		"type": "candidate_route",
+		"base_priority": 880,
+		"priority": 880,
+		"goal": "rebuild_with_giratina_setup_draw",
+		"description": "Use Giratina V setup draw only when no non-draw setup/search/attach route remains and ending would make no progress.",
+		"actions": [route_ref],
+		"future_goals": [{
+			"id": "goal:find_arceus_or_giratina_conversion_piece",
+			"type": "goal",
+			"prefer": [ARCEUS_VSTAR, GIRATINA_VSTAR, DOUBLE_TURBO_ENERGY, GRASS_ENERGY, PSYCHIC_ENERGY, SWITCH],
+		}],
+		"contract": "Select this only when the active Giratina V setup draw is the only safe progress route.",
+	}
+
+
+func _selection_policy_for_arceus_launch_ref(ref: Dictionary) -> Dictionary:
+	var action_type := str(ref.get("type", ref.get("kind", "")))
+	if action_type == "play_trainer":
+		return _arceus_vstar_search_selection_policy()
+	if action_type == "use_ability":
+		return _starbirth_launch_selection_policy()
+	if action_type == "attack":
+		return _trinity_nova_assignment_selection_policy()
+	return {}
+
+
+func _arceus_vstar_search_selection_policy() -> Dictionary:
+	return {
+		"search": {"prefer": [ARCEUS_VSTAR, DOUBLE_TURBO_ENERGY, GRASS_ENERGY, PSYCHIC_ENERGY, SWITCH]},
+		"search_targets": {"prefer": [ARCEUS_VSTAR, DOUBLE_TURBO_ENERGY, GRASS_ENERGY, PSYCHIC_ENERGY, SWITCH]},
+		"search_pokemon": {"prefer": [ARCEUS_VSTAR, GIRATINA_V, GIRATINA_VSTAR, BIDOOF]},
+		"discard_cards": {
+			"prefer": [LOST_CITY, LOST_VACUUM, JUDGE, IONO, RADIANT_GARDEVOIR, SKWOVET],
+			"preserve": [ARCEUS_VSTAR, DOUBLE_TURBO_ENERGY, ARCEUS_V, GIRATINA_V],
+		},
+		"reason": "The active Arceus V launch is the bottleneck; search Arceus VSTAR before Giratina VSTAR or support cards.",
+	}
+
+
+func _starbirth_launch_selection_policy() -> Dictionary:
+	return {
+		"search": {"prefer": [DOUBLE_TURBO_ENERGY, GRASS_ENERGY, PSYCHIC_ENERGY, GIRATINA_VSTAR, SWITCH, MAXIMUM_BELT]},
+		"search_cards": {"prefer": [DOUBLE_TURBO_ENERGY, GRASS_ENERGY, PSYCHIC_ENERGY, GIRATINA_VSTAR, SWITCH, MAXIMUM_BELT]},
+		"search_targets": {"prefer": [DOUBLE_TURBO_ENERGY, GRASS_ENERGY, PSYCHIC_ENERGY, GIRATINA_VSTAR, SWITCH, MAXIMUM_BELT]},
+	}
+
+
+func _trinity_nova_assignment_selection_policy() -> Dictionary:
+	return {
+		"search_energy": {"prefer": [GRASS_ENERGY, PSYCHIC_ENERGY, GRASS_ENERGY]},
+		"search_targets": {"prefer": [GRASS_ENERGY, PSYCHIC_ENERGY, GRASS_ENERGY]},
+		"energy_assignments": {
+			"prefer_targets": [GIRATINA_V, GIRATINA_VSTAR, ARCEUS_V, ARCEUS_VSTAR],
+			"prefer_energy": [GRASS_ENERGY, PSYCHIC_ENERGY],
+		},
+	}
+
+
+func _giratina_setup_draw_selection_policy() -> Dictionary:
+	return {
+		"search_targets": {"prefer": [ARCEUS_VSTAR, GIRATINA_VSTAR, DOUBLE_TURBO_ENERGY, GRASS_ENERGY, PSYCHIC_ENERGY, SWITCH, BOSSS_ORDERS]},
+		"reason": "This setup draw is allowed only because ending has no progress; take conversion pieces, not padding.",
+	}
+
+
+func _arceus_giratina_route_ref(ref: Dictionary, selection_policy: Dictionary = {}) -> Dictionary:
+	var action_id := _ag_action_ref_id(ref)
+	if action_id == "":
+		return {}
+	var result := {
+		"id": action_id,
+		"action_id": action_id,
+		"type": str(ref.get("type", ref.get("kind", ""))),
+		"kind": str(ref.get("type", ref.get("kind", ""))),
+		"capability": str(ref.get("capability", "")),
+	}
+	if ref.has("attack_name"):
+		result["attack_name"] = ref.get("attack_name")
+	if ref.has("card"):
+		result["card"] = ref.get("card")
+	if ref.has("target"):
+		result["target"] = ref.get("target")
+	if not selection_policy.is_empty():
+		result["selection_policy"] = selection_policy
+	return result
+
+
+func _first_payload_ref_any(legal_actions: Array, action_type: String, queries: Array[String]) -> Dictionary:
+	for query: String in queries:
+		var ref := _first_payload_ref(legal_actions, action_type, query)
+		if not ref.is_empty():
+			return ref
+	return {}
+
+
+func _first_payload_ref(legal_actions: Array, action_type: String, query: String) -> Dictionary:
+	for raw: Variant in legal_actions:
+		if not (raw is Dictionary):
+			continue
+		var ref: Dictionary = raw
+		if bool(ref.get("future", false)):
+			continue
+		if str(ref.get("type", ref.get("kind", ""))) != action_type:
+			continue
+		if _ref_has_any_name(ref, [query]):
+			return ref
+	return {}
+
+
+func _first_payload_setup_draw_attack_ref(legal_actions: Array) -> Dictionary:
+	for raw: Variant in legal_actions:
+		if not (raw is Dictionary):
+			continue
+		var ref: Dictionary = raw
+		if bool(ref.get("future", false)):
+			continue
+		if str(ref.get("type", ref.get("kind", ""))) != "attack":
+			continue
+		var attack_name := str(ref.get("attack_name", ""))
+		var quality: Dictionary = ref.get("attack_quality", {}) if ref.get("attack_quality", {}) is Dictionary else {}
+		if _name_contains(attack_name, ABYSS_SEEKING) or str(quality.get("role", "")) == "setup_draw":
+			return ref
+	return {}
+
+
+func _payload_ref_by_ag_id(legal_actions: Array, action_id: String) -> Dictionary:
+	for raw: Variant in legal_actions:
+		if not (raw is Dictionary):
+			continue
+		var ref: Dictionary = raw
+		if _ag_action_ref_id(ref) == action_id:
+			return ref
+	return {}
+
+
+func _ag_action_ref_id(ref: Dictionary) -> String:
+	return str(ref.get("id", ref.get("action_id", "")))
+
+
+func _route_actions_include_terminal(actions: Array[Dictionary]) -> bool:
+	for action: Dictionary in actions:
+		var action_type := str(action.get("type", action.get("kind", "")))
+		if action_type in ["attack", "granted_attack", "end_turn"]:
+			return true
+		if _ag_action_ref_id(action) == "end_turn":
+			return true
+	return false
+
+
+func _dedupe_arceus_giratina_candidate_routes(routes: Array) -> Array:
+	var result: Array = []
+	var seen: Dictionary = {}
+	for raw_route: Variant in routes:
+		if not (raw_route is Dictionary):
+			continue
+		var route: Dictionary = raw_route
+		var route_id := str(route.get("route_action_id", route.get("id", "")))
+		if route_id != "" and bool(seen.get(route_id, false)):
+			continue
+		if route_id != "":
+			seen[route_id] = true
+		result.append(route)
+	return result
+
+
 func _deck_append_short_route_followups(target: Array[Dictionary], seen_ids: Dictionary) -> void:
 	_append_arceus_giratina_setup_catalog(target, seen_ids, false)
 
@@ -296,6 +697,8 @@ func _deck_should_block_exact_queue_match(_queued_action: Dictionary, runtime_ac
 		return true
 	if kind == "retreat" and _is_bad_arceus_giratina_retreat(runtime_action, game_state, player_index):
 		return true
+	if kind in ["attack", "granted_attack"] and _should_allow_arceus_giratina_setup_draw_attack(runtime_action, game_state, player_index):
+		return false
 	if _is_low_value_arceus_giratina_llm_action(runtime_action, game_state, player_index):
 		return true
 	return false
@@ -320,6 +723,8 @@ func _deck_is_low_value_runtime_attack_action(action: Dictionary, game_state: Ga
 func _is_low_value_arceus_giratina_llm_action(action: Dictionary, game_state: GameState, player_index: int) -> bool:
 	var kind := str(action.get("kind", action.get("type", "")))
 	if kind in ["attack", "granted_attack"] and _is_low_value_giratina_v_setup_draw(action, game_state, player_index):
+		if _should_allow_arceus_giratina_setup_draw_attack(action, game_state, player_index):
+			return false
 		return true
 	if kind == "use_ability" and _runtime_action_has_any_name(action, [BIBAREL, SKWOVET]):
 		return _is_unsafe_optional_deck_draw(game_state, player_index)
@@ -388,6 +793,51 @@ func _is_low_value_giratina_v_setup_draw(action: Dictionary, game_state: GameSta
 		return true
 	if player.hand.size() >= 4 and _llm_queue_has_concrete_arceus_giratina_progress():
 		return true
+	return false
+
+
+func _should_allow_arceus_giratina_setup_draw_attack(action: Dictionary, game_state: GameState, player_index: int) -> bool:
+	if not _is_giratina_v_setup_draw_attack(action, game_state, player_index):
+		return false
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	if player == null:
+		return false
+	var deck_count := _player_deck_count(game_state, player_index)
+	if deck_count >= 0 and deck_count <= 12:
+		return false
+	if player.hand.size() > 2:
+		return false
+	if _has_ready_named_attacker(player, [ARCEUS_VSTAR, GIRATINA_VSTAR, IRON_LEAVES_EX]):
+		return false
+	return not _catalog_has_non_draw_productive_arceus_giratina_action()
+
+
+func _active_giratina_setup_draw_only_safe_progress(game_state: GameState, player_index: int) -> bool:
+	return _should_allow_arceus_giratina_setup_draw_attack({"kind": "attack", "attack_index": 0, "attack_name": ABYSS_SEEKING}, game_state, player_index)
+
+
+func _catalog_has_non_draw_productive_arceus_giratina_action() -> bool:
+	for raw_key: Variant in _llm_action_catalog.keys():
+		var ref: Dictionary = _llm_action_catalog.get(raw_key, {})
+		if ref.is_empty() or bool(ref.get("future", false)):
+			continue
+		var action_type := str(ref.get("type", ref.get("kind", "")))
+		if action_type in ["end_turn", "attack", "granted_attack", "route"]:
+			continue
+		if action_type in ["play_basic_to_bench", "evolve", "attach_energy", "attach_tool", "retreat"]:
+			return true
+		if action_type == "play_trainer":
+			if _ref_has_any_name(ref, [ULTRA_BALL, NEST_BALL, CAPTURING_AROMA, SWITCH]):
+				return true
+			if _ref_has_any_name(ref, [IONO, JUDGE, BOSSS_ORDERS, LOST_VACUUM, LOST_CITY]):
+				continue
+			return true
+		if action_type == "use_ability":
+			if _ref_has_any_name(ref, [ARCEUS_VSTAR]):
+				return true
+			continue
 	return false
 
 
@@ -734,7 +1184,7 @@ func _player_deck_safe_for_optional_draw(player: PlayerState) -> bool:
 	return player != null and player.deck.size() > 8
 
 
-func _has_ready_named_attacker(player: PlayerState, names: Array[String]) -> bool:
+func _has_ready_named_attacker(player: PlayerState, names: Array) -> bool:
 	if player == null:
 		return false
 	if player.active_pokemon != null and _slot_name_matches_any(player.active_pokemon, names) and _slot_can_attack(player.active_pokemon):
@@ -749,7 +1199,7 @@ func _slot_can_attack(slot: PokemonSlot) -> bool:
 	return bool(predict_attacker_damage(slot).get("can_attack", false)) if slot != null else false
 
 
-func _ref_has_any_name(ref: Dictionary, queries: Array[String]) -> bool:
+func _ref_has_any_name(ref: Dictionary, queries: Array) -> bool:
 	var combined := " ".join([
 		str(ref.get("id", ref.get("action_id", ""))),
 		str(ref.get("card", "")),
@@ -784,7 +1234,7 @@ func _ref_has_any_name(ref: Dictionary, queries: Array[String]) -> bool:
 	return false
 
 
-func _runtime_action_has_any_name(action: Dictionary, queries: Array[String]) -> bool:
+func _runtime_action_has_any_name(action: Dictionary, queries: Array) -> bool:
 	var combined := " ".join([
 		str(action.get("card", "")),
 		str(action.get("pokemon", "")),
@@ -807,12 +1257,33 @@ func _runtime_action_has_any_name(action: Dictionary, queries: Array[String]) ->
 	return false
 
 
+func _variant_name_matches_any(item: Variant, queries: Array) -> bool:
+	return _name_equals_any(_variant_best_name(item), queries)
+
+
+func _variant_best_name(item: Variant) -> String:
+	if item is CardInstance:
+		var card := item as CardInstance
+		return _best_card_name(card.card_data) if card.card_data != null else ""
+	if item is CardData:
+		return _best_card_name(item as CardData)
+	if item is PokemonSlot:
+		return _slot_best_name(item as PokemonSlot)
+	if item is Dictionary:
+		var data: Dictionary = item
+		var name_en := str(data.get("name_en", ""))
+		if name_en.strip_edges() != "":
+			return name_en
+		return str(data.get("name", data.get("card", data.get("pokemon", ""))))
+	return str(item)
+
+
 func _slot_is_support_only(slot: PokemonSlot) -> bool:
 	return _slot_name_matches_any(slot, [BIDOOF, BIBAREL, SKWOVET, RADIANT_GARDEVOIR])
 
 
-func _slot_name_matches_any(slot: PokemonSlot, queries: Array[String]) -> bool:
-	return _name_matches_any(_slot_best_name(slot), queries)
+func _slot_name_matches_any(slot: PokemonSlot, queries: Array) -> bool:
+	return _name_equals_any(_slot_best_name(slot), queries)
 
 
 func _slot_best_name(slot: PokemonSlot) -> String:
@@ -821,11 +1292,21 @@ func _slot_best_name(slot: PokemonSlot) -> String:
 	return _best_card_name(slot.get_card_data())
 
 
-func _name_matches_any(name: String, queries: Array[String]) -> bool:
+func _name_matches_any(name: String, queries: Array) -> bool:
 	if name.strip_edges() == "":
 		return false
 	for query: String in queries:
 		if _name_contains(name, query):
+			return true
+	return false
+
+
+func _name_equals_any(name: String, queries: Array) -> bool:
+	var normalized_name := name.strip_edges().to_lower()
+	if normalized_name == "":
+		return false
+	for query: String in queries:
+		if normalized_name == query.strip_edges().to_lower():
 			return true
 	return false
 

@@ -49,9 +49,11 @@ func materialize_candidate_route_actions(raw_actions: Variant, action_catalog: D
 			continue
 		ref["id"] = action_id
 		ref["action_id"] = action_id
-		for key: String in ["interactions", "selection_policy", "capability"]:
-			if raw_ref.has(key):
-				ref[key] = raw_ref.get(key)
+		for raw_key: Variant in raw_ref.keys():
+			var key := str(raw_key)
+			if key in ["id", "action_id"]:
+				continue
+			ref[key] = raw_ref.get(raw_key)
 		result.append(ref)
 	return result
 

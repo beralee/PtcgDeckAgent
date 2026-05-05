@@ -2,9 +2,13 @@ class_name BaseEffect
 extends RefCounted
 
 var _attack_interaction_context: Dictionary = {}
+var _default_attack_index_to_match: int = -1
 
 const EMPTY_SEARCH_CONTINUE := "continue"
 const EMPTY_SEARCH_VIEW_DECK := "view_deck"
+const VISIBLE_SCOPE_OWN_FULL_DECK := "own_full_deck"
+const DEFAULT_FULL_LIBRARY_DISABLED_BADGE := "不可选"
+const DEFAULT_FULL_LIBRARY_SELECTABLE_LABEL := "可选"
 
 
 enum TargetType {
@@ -161,6 +165,95 @@ func clear_attack_interaction_context() -> void:
 	_attack_interaction_context.clear()
 
 
+func bind_default_attack_index(attack_index: int) -> void:
+	_default_attack_index_to_match = attack_index
+
+
+func applies_to_attack_index(attack_index: int) -> bool:
+	return _default_attack_index_to_match < 0 or _default_attack_index_to_match == attack_index
+
+
+func build_full_library_search_step(
+	step_id: String,
+	title: String,
+	visible_cards: Array,
+	legal_items: Array,
+	visible_scope: String,
+	min_select: int = 1,
+	max_select: int = 1,
+	options: Dictionary = {}
+) -> Dictionary:
+	var resolved_scope := visible_scope.strip_edges()
+	if resolved_scope == "":
+		push_error("build_full_library_search_step requires an explicit visible_scope")
+
+	var card_indices: Array[int] = []
+	for card: Variant in visible_cards:
+		card_indices.append(legal_items.find(card))
+
+	var legal_labels: Array[String] = []
+	for item: Variant in legal_items:
+		legal_labels.append(_full_library_search_label_for_item(item))
+
+	var disabled_badge := str(options.get("card_disabled_badge", DEFAULT_FULL_LIBRARY_DISABLED_BADGE))
+	var selectable_label := str(options.get("selectable_label", DEFAULT_FULL_LIBRARY_SELECTABLE_LABEL))
+	var disabled_label := str(options.get("disabled_label", disabled_badge))
+	var choice_labels: Array[String] = []
+	if options.has("choice_labels"):
+		for label: Variant in options.get("choice_labels", []):
+			choice_labels.append(str(label))
+	else:
+		for i: int in visible_cards.size():
+			var label := _full_library_search_label_for_item(visible_cards[i])
+			var suffix := selectable_label if card_indices[i] >= 0 else disabled_label
+			choice_labels.append("%s - %s" % [label, suffix])
+
+	var step := {
+		"id": step_id,
+		"title": title,
+		"items": legal_items.duplicate(),
+		"labels": legal_labels,
+		"presentation": "cards",
+		"card_items": visible_cards.duplicate(),
+		"card_indices": card_indices,
+		"choice_labels": choice_labels,
+		"visible_scope": resolved_scope,
+		"card_disabled_badge": disabled_badge,
+		"card_selectable_hint": str(options.get("card_selectable_hint", selectable_label)),
+		"min_select": min_select,
+		"max_select": max_select,
+		"allow_cancel": bool(options.get("allow_cancel", true)),
+		"visible_count": visible_cards.size(),
+		"selectable_count": legal_items.size(),
+	}
+	if options.has("show_selectable_hints"):
+		step["show_selectable_hints"] = bool(options.get("show_selectable_hints", false))
+	if options.has("card_click_selectable"):
+		step["card_click_selectable"] = bool(options.get("card_click_selectable", true))
+	if options.has("utility_actions"):
+		step["utility_actions"] = (options.get("utility_actions", []) as Array).duplicate(true)
+	if options.has("prompt_type"):
+		step["prompt_type"] = str(options.get("prompt_type", ""))
+	return step
+
+
+func _full_library_search_label_for_item(item: Variant) -> String:
+	if item is CardInstance:
+		var card: CardInstance = item
+		return card.card_data.name if card.card_data != null else ""
+	if item is CardData:
+		return (item as CardData).name
+	if item is PokemonSlot:
+		return (item as PokemonSlot).get_pokemon_name()
+	if item is Dictionary:
+		var entry: Dictionary = item
+		for key: String in ["card_name", "pokemon_name", "name", "title"]:
+			var text := str(entry.get(key, "")).strip_edges()
+			if text != "":
+				return text
+	return str(item).strip_edges()
+
+
 func build_card_assignment_step(
 	step_id: String,
 	title: String,
@@ -184,6 +277,70 @@ func build_card_assignment_step(
 		"max_select": max_assignments,
 		"allow_cancel": allow_cancel,
 	}
+
+
+func build_full_library_card_assignment_step(
+	step_id: String,
+	title: String,
+	visible_source_cards: Array,
+	source_items: Array,
+	source_labels: Array[String],
+	target_items: Array,
+	target_labels: Array[String],
+	min_assignments: int,
+	max_assignments: int,
+	visible_scope: String,
+	allow_cancel: bool = true,
+	options: Dictionary = {}
+) -> Dictionary:
+	var step := build_card_assignment_step(
+		step_id,
+		title,
+		source_items,
+		source_labels,
+		target_items,
+		target_labels,
+		min_assignments,
+		max_assignments,
+		allow_cancel
+	)
+	return add_full_library_source_metadata_to_assignment_step(
+		step,
+		visible_source_cards,
+		source_items,
+		visible_scope,
+		options
+	)
+
+
+func add_full_library_source_metadata_to_assignment_step(
+	step: Dictionary,
+	visible_source_cards: Array,
+	source_items: Array,
+	visible_scope: String,
+	options: Dictionary = {}
+) -> Dictionary:
+	var source_step := build_full_library_search_step(
+		str(step.get("id", "")),
+		str(step.get("title", "")),
+		visible_source_cards,
+		source_items,
+		visible_scope,
+		int(step.get("min_select", 0)),
+		int(step.get("max_select", source_items.size())),
+		options
+	)
+	step["source_card_items"] = (source_step.get("card_items", []) as Array).duplicate()
+	step["source_card_indices"] = (source_step.get("card_indices", []) as Array).duplicate()
+	step["source_choice_labels"] = (source_step.get("choice_labels", []) as Array).duplicate()
+	step["source_visible_scope"] = str(source_step.get("visible_scope", ""))
+	step["source_card_disabled_badge"] = str(source_step.get("card_disabled_badge", ""))
+	step["source_card_selectable_hint"] = str(source_step.get("card_selectable_hint", ""))
+	step["source_visible_count"] = int(source_step.get("visible_count", visible_source_cards.size()))
+	step["source_selectable_count"] = int(source_step.get("selectable_count", source_items.size()))
+	if not step.has("visible_scope"):
+		step["visible_scope"] = str(source_step.get("visible_scope", ""))
+	return step
 
 
 func can_execute(_card: CardInstance, _state: GameState) -> bool:
@@ -284,3 +441,27 @@ func build_readonly_card_preview_step(
 
 func build_readonly_deck_preview_step(title: String, deck_cards: Array[CardInstance]) -> Dictionary:
 	return build_readonly_card_preview_step(title, deck_cards)
+
+
+func build_attached_card_groups(player: PlayerState, card_items: Array) -> Array[Dictionary]:
+	var groups: Array[Dictionary] = []
+	if player == null:
+		return groups
+	for slot: PokemonSlot in player.get_all_pokemon():
+		if slot == null:
+			continue
+		var group_indices: Array[int] = []
+		for i: int in card_items.size():
+			var item: Variant = card_items[i]
+			if not (item is CardInstance):
+				continue
+			var card_item := item as CardInstance
+			if card_item in slot.attached_energy or slot.attached_tool == card_item:
+				group_indices.append(i)
+		if not group_indices.is_empty():
+			groups.append({
+				"slot": slot,
+				"card_indices": group_indices,
+				"energy_indices": group_indices,
+			})
+	return groups

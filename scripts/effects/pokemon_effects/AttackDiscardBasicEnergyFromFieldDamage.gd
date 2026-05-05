@@ -3,6 +3,7 @@ extends BaseEffect
 
 var damage_per_energy: int = 70
 var attack_index_to_match: int = -1
+const DISCARD_STEP_ID := "discard_basic_energy"
 
 
 func _init(per_energy: int = 70, match_attack_index: int = -1) -> void:
@@ -24,30 +25,39 @@ func get_attack_interaction_steps(
 	var player: PlayerState = state.players[state.current_player_index]
 	var items: Array = []
 	var labels: Array[String] = []
+	var card_groups: Array[Dictionary] = []
 	for slot: PokemonSlot in player.get_all_pokemon():
+		var group_indices: Array[int] = []
 		for energy: CardInstance in slot.attached_energy:
 			if energy.card_data.card_type == "Basic Energy":
+				group_indices.append(items.size())
 				items.append(energy)
-				labels.append("%s - attached to %s (%s)" % [
-					energy.card_data.name,
+				labels.append("%s (%s)" % [
 					slot.get_pokemon_name(),
 					_slot_position_label(player, slot),
 				])
+		if not group_indices.is_empty():
+			card_groups.append({"slot": slot, "energy_indices": group_indices})
+
 	return [{
-		"id": "discard_basic_energy",
-		"title": "Choose any number of Basic Energy to discard",
+		"id": DISCARD_STEP_ID,
+		"title": "选择要丢弃的基本能量",
 		"items": items,
 		"labels": labels,
 		"min_select": 0,
 		"max_select": items.size(),
 		"allow_cancel": true,
+		"presentation": "cards",
+		"card_items": items,
+		"card_groups": card_groups,
+		"transparent_battlefield_dialog": true,
 	}]
 
 
 func get_damage_bonus(attacker: PokemonSlot, state: GameState) -> int:
 	var ctx: Dictionary = get_attack_interaction_context()
-	var selected_raw: Array = ctx.get("discard_basic_energy", [])
-	return (selected_raw.size() - 1) * damage_per_energy
+	var selected: Array[CardInstance] = _selected_basic_energy_from_context(ctx)
+	return (selected.size() - 1) * damage_per_energy
 
 
 func execute_attack(
@@ -63,12 +73,10 @@ func execute_attack(
 		return
 	var player: PlayerState = state.players[top.owner_index]
 	var ctx: Dictionary = get_attack_interaction_context()
-	var selected_raw: Array = ctx.get("discard_basic_energy", [])
+	var selected_raw: Array[CardInstance] = _selected_basic_energy_from_context(ctx)
 	var selected_ids: Dictionary = {}
-	for entry: Variant in selected_raw:
-		if entry is CardInstance:
-			var selected: CardInstance = entry
-			selected_ids[selected.instance_id] = true
+	for selected: CardInstance in selected_raw:
+		selected_ids[selected.instance_id] = true
 	if selected_ids.is_empty():
 		return
 	var candidate_slots: Array[PokemonSlot] = player.get_all_pokemon().duplicate()
@@ -100,6 +108,29 @@ func _slot_position_label(player: PlayerState, slot: PokemonSlot) -> String:
 	if bench_index >= 0:
 		return "Bench %d" % (bench_index + 1)
 	return "Pokemon"
+
+
+func _selected_basic_energy_from_context(ctx: Dictionary) -> Array[CardInstance]:
+	var selected_raw: Array = ctx.get(DISCARD_STEP_ID, [])
+	var selected: Array[CardInstance] = []
+	var seen_ids: Dictionary = {}
+	for entry: Variant in selected_raw:
+		var energy: CardInstance = null
+		if entry is CardInstance:
+			energy = entry as CardInstance
+		elif entry is Dictionary:
+			var source: Variant = (entry as Dictionary).get("source")
+			if source is CardInstance:
+				energy = source as CardInstance
+		if energy == null:
+			continue
+		if energy.card_data == null or energy.card_data.card_type != "Basic Energy":
+			continue
+		if seen_ids.has(energy.instance_id):
+			continue
+		seen_ids[energy.instance_id] = true
+		selected.append(energy)
+	return selected
 
 func get_description() -> String:
 	return "Discard any number of Basic Energy from your Pokemon. This attack does more damage for each discarded."

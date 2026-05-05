@@ -38,7 +38,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			labels.append(hand_card.card_data.name)
 	return [{
 		"id": "basic_energy_from_hand",
-		"title": "Choose 1 Basic Energy to attach",
+		"title": "选择1张要附着的基本能量",
 		"items": items,
 		"labels": labels,
 		"min_select": 1,

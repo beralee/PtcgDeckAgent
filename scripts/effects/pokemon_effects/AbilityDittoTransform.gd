@@ -28,22 +28,21 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
 	var items: Array = []
-	var labels: Array[String] = []
 	for c: CardInstance in player.deck:
 		if _is_valid_replacement(c):
 			items.append(c)
-			labels.append(c.card_data.name)
 	if items.is_empty():
 		return []
-	return [{
-		"id": "transform_target",
-		"title": "选择1张基础宝可梦替换百变怪",
-		"items": items,
-		"labels": labels,
-		"min_select": 1,
-		"max_select": 1,
-		"allow_cancel": true,
-	}]
+	return [build_full_library_search_step(
+		"transform_target",
+		"选择1张基础宝可梦替换百变怪",
+		player.deck,
+		items,
+		VISIBLE_SCOPE_OWN_FULL_DECK,
+		1,
+		1,
+		{"allow_cancel": true}
+	)]
 
 
 func execute_ability(
@@ -115,7 +114,11 @@ func _is_valid_replacement(c: CardInstance) -> bool:
 	if c == null or c.card_data == null:
 		return false
 	var cd: CardData = c.card_data
-	return cd.is_pokemon() and cd.stage == "Basic" and cd.name != "百变怪"
+	if not cd.is_basic_pokemon():
+		return false
+	var name := cd.name.strip_edges()
+	var name_en := cd.name_en.strip_edges().to_lower()
+	return name != "百变怪" and name.to_lower() != "ditto" and name_en != "ditto"
 
 
 func get_description() -> String:

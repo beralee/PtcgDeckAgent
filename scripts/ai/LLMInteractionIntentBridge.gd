@@ -57,29 +57,55 @@ const _ENERGY_ALIASES := {
 	"lightning": "L",
 	"electric": "L",
 	"lightning energy": "L",
+	"雷": "L",
+	"雷能量": "L",
+	"基本雷能量": "L",
 	"l": "L",
 	"fighting": "F",
 	"fighting energy": "F",
+	"斗": "F",
+	"斗能量": "F",
+	"基本斗能量": "F",
 	"f": "F",
 	"grass": "G",
 	"grass energy": "G",
+	"草": "G",
+	"草能量": "G",
+	"基本草能量": "G",
 	"g": "G",
 	"fire": "R",
 	"fire energy": "R",
+	"火": "R",
+	"火能量": "R",
+	"基本火能量": "R",
 	"r": "R",
 	"water": "W",
 	"water energy": "W",
+	"水": "W",
+	"水能量": "W",
+	"基本水能量": "W",
 	"w": "W",
 	"psychic": "P",
 	"psychic energy": "P",
+	"超": "P",
+	"超能量": "P",
+	"基本超能量": "P",
 	"p": "P",
 	"dark": "D",
 	"dark energy": "D",
+	"恶": "D",
+	"恶能量": "D",
+	"基本恶能量": "D",
 	"d": "D",
 	"metal": "M",
 	"metal energy": "M",
+	"钢": "M",
+	"钢能量": "M",
+	"基本钢能量": "M",
 	"m": "M",
 	"colorless": "C",
+	"无": "C",
+	"无色": "C",
 	"c": "C",
 }
 
@@ -100,6 +126,10 @@ func pick_interaction_items(
 		var sada_picks: Array = _pick_sada_energy_sources_by_attack_need(items, step, context, max_select)
 		if not sada_picks.is_empty():
 			return {"has_plan": true, "items": sada_picks}
+	if _queue_item_is_raging_bolt_burst_attack(queue_item, context) and _is_attack_energy_discard_step(step_id):
+		var burst_picks: Array = _pick_raging_bolt_burst_energy_for_ko(items, context, max_select)
+		if not burst_picks.is_empty():
+			return {"has_plan": true, "items": burst_picks}
 	var intent_text: String = _intent_text_for_pick_step(step_id, queue_item)
 	if intent_text == "":
 		return {"has_plan": false, "items": []}
@@ -205,7 +235,7 @@ func _nested_interaction_text(queue_item: Dictionary, step_id: String) -> String
 func _interaction_spec_to_text(spec: Variant) -> String:
 	if spec is Dictionary:
 		var dict: Dictionary = spec
-		for key: String in ["prefer", "cards", "targets", "search_target", "discard_choice", "energy_type", "target", "card", "resource"]:
+		for key: String in ["prefer", "items", "item", "cards", "targets", "search_target", "search_targets", "discard_choice", "energy_type", "target", "card", "resource"]:
 			if not dict.has(key):
 				continue
 			var text := _interaction_spec_to_text(dict.get(key))
@@ -235,7 +265,7 @@ func _find_selection_policy_spec(selection_policy: Dictionary, step_id: String) 
 			if selection_policy.has(key):
 				return selection_policy.get(key)
 	if bool(SEARCH_STEP_IDS.get(step_id, false)):
-		for key: String in ["search", "search_energy", "search_targets", "search_cards", "find"]:
+		for key: String in ["search", "search_energy", "search_targets", "search_cards", "find", "prefer"]:
 			if selection_policy.has(key):
 				return selection_policy.get(key)
 	if bool(HAND_ENERGY_STEP_IDS.get(step_id, false)):
@@ -286,7 +316,7 @@ func _find_policy_interaction_spec(interactions: Dictionary, step_id: String) ->
 			if interactions.has(key):
 				return interactions.get(key)
 	if bool(SEARCH_STEP_IDS.get(step_id, false)):
-		for key: String in ["search_cards", "search_pokemon", "search_item", "search_tool", "search_energy", "search_supporter", "stage2_card"]:
+		for key: String in ["search_cards", "search_targets", "search_pokemon", "search_item", "search_tool", "search_energy", "search_supporter", "stage2_card", "target"]:
 			if interactions.has(key):
 				return interactions.get(key)
 	if bool(HAND_ENERGY_STEP_IDS.get(step_id, false)):
@@ -320,6 +350,58 @@ func _queue_item_is_sada(queue_item: Dictionary, context: Dictionary) -> bool:
 		card_text += " %s %s %s" % [str(cd.name), str(cd.name_en), str(cd.effect_id)]
 	var lower := card_text.to_lower()
 	return lower.contains("professor sada") or lower.contains("sada") or lower.contains("奥琳") or lower.contains("651276c51911345aa091c1c7b87f3f4f")
+
+
+func _queue_item_is_raging_bolt_burst_attack(queue_item: Dictionary, context: Dictionary) -> bool:
+	var text := "%s %s %s" % [
+		str(queue_item.get("card", "")),
+		str(queue_item.get("pokemon", "")),
+		str(queue_item.get("attack_name", "")),
+	]
+	var pending_card: Variant = context.get("pending_effect_card", null)
+	if pending_card is CardInstance and (pending_card as CardInstance).card_data != null:
+		var cd: CardData = (pending_card as CardInstance).card_data
+		text += " %s %s" % [str(cd.name), str(cd.name_en)]
+	var lower := text.to_lower()
+	return (lower.contains("raging bolt") or lower.contains("猛雷鼓")) \
+		and (lower.contains("thundering bolt") or lower.contains("极雷轰") or int(queue_item.get("attack_index", -1)) == 1)
+
+
+func _is_attack_energy_discard_step(step_id: String) -> bool:
+	return step_id in ["discard_basic_energy", "attack_energy_discard", "discard_energy", "discard_cards"]
+
+
+func _pick_raging_bolt_burst_energy_for_ko(items: Array, context: Dictionary, max_select: int) -> Array:
+	if max_select <= 0:
+		return []
+	var basic_energy_items: Array = []
+	for item: Variant in items:
+		if item is CardInstance and (item as CardInstance).card_data != null and (item as CardInstance).card_data.is_energy():
+			basic_energy_items.append(item)
+	if basic_energy_items.is_empty():
+		return []
+	var opponent_hp := _opponent_active_remaining_hp(context)
+	if opponent_hp <= 0:
+		return []
+	var needed := ceili(float(opponent_hp) / 70.0)
+	needed = clampi(needed, 1, max_select)
+	if basic_energy_items.size() < needed:
+		return []
+	return basic_energy_items.slice(0, needed)
+
+
+func _opponent_active_remaining_hp(context: Dictionary) -> int:
+	var game_state: GameState = context.get("game_state")
+	var player_index := int(context.get("player_index", -1))
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return 0
+	var opponent_index := 1 - player_index
+	if opponent_index < 0 or opponent_index >= game_state.players.size():
+		return 0
+	var opponent: PlayerState = game_state.players[opponent_index]
+	if opponent == null or opponent.active_pokemon == null:
+		return 0
+	return opponent.active_pokemon.get_remaining_hp()
 
 
 func _pick_sada_energy_sources_by_attack_need(items: Array, _step: Dictionary, context: Dictionary, max_select: int) -> Array:
@@ -524,7 +606,7 @@ func _find_relevant_queue_item(context: Dictionary, action_queue: Array) -> Dict
 
 
 func _queue_item_matches_pending_effect(queue_item: Dictionary, pending_card: Variant, pending_kind: String) -> bool:
-	var q_type: String = str(queue_item.get("type", ""))
+	var q_type: String = str(queue_item.get("type", queue_item.get("kind", "")))
 	if pending_kind == "trainer" and q_type != "play_trainer":
 		return false
 	if pending_kind in ["ability", "stadium"] and q_type not in ["use_ability", "play_stadium"]:

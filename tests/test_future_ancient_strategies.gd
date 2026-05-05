@@ -764,6 +764,8 @@ func test_raging_bolt_prioritizes_ogerpon_ability_and_energy_routing_by_type() -
 	)
 	player.bench.append(ogerpon)
 	player.hand.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
+	for i: int in 12:
+		player.deck.append(CardInstance.create(_make_trainer_cd("Filler%d" % i), 0))
 	var ability_score: float = strategy.score_action_absolute(
 		{"kind": "use_ability", "source_slot": ogerpon, "ability_index": 0},
 		gs,
@@ -818,6 +820,8 @@ func test_raging_bolt_real_attack_mix_keeps_setup_focus_before_thunder_is_online
 	player.active_pokemon = raging_bolt
 	player.bench.append(ogerpon)
 	player.hand.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
+	for i: int in 12:
+		player.deck.append(CardInstance.create(_make_trainer_cd("Filler%d" % i), 0))
 	var ability_score: float = strategy.score_action_absolute(
 		{"kind": "use_ability", "source_slot": ogerpon, "ability_index": 0},
 		gs,
@@ -1717,7 +1721,7 @@ func test_raging_bolt_sada_picks_lf_sources_over_g_from_discard() -> String:
 	])
 
 
-func test_raging_bolt_bellowing_thunder_discard_minimal_lethal_grass_first() -> String:
+func test_raging_bolt_bellowing_thunder_discard_early_turn_keeps_sada_fuel_grass_first() -> String:
 	var strategy := _new_strategy(RAGING_BOLT_SCRIPT_PATH)
 	if strategy == null:
 		return "DeckStrategyRagingBoltOgerpon.gd should exist"
@@ -1750,8 +1754,8 @@ func test_raging_bolt_bellowing_thunder_discard_minimal_lethal_grass_first() -> 
 		if c is CardInstance:
 			picked_types.append(str((c as CardInstance).card_data.energy_provides))
 	return run_checks([
-		assert_true(picked.size() == 2,
-			"极雷轰弃能：打130HP目标只需弃2张(140伤害)，实际弃了: %d" % picked.size()),
+		assert_true(picked.size() == 3,
+			"极雷轰弃能：前期小奖也应额外弃能制造奥琳续航燃料，实际弃了: %d" % picked.size()),
 		assert_true("G" in picked_types,
 			"极雷轰弃能：应优先弃草能量，实际: %s" % str(picked_types)),
 	])

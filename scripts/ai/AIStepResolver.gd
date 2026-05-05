@@ -185,12 +185,25 @@ func _resolve_counter_distribution_step(
 	var total_counters: int = int(step.get("total_counters", 0))
 	var target_items: Array = step.get("target_items", [])
 	if total_counters <= 0 or target_items.is_empty():
-		return false
+		if battle_scene.has_method("_finalize_counter_distribution"):
+			battle_scene.call("_finalize_counter_distribution")
+		return true
+	var assignments: Array[Dictionary] = _build_counter_distribution_assignments(
+		target_items,
+		total_counters,
+		step,
+		context,
+		state_features
+	)
+	if assignments.is_empty():
+		if battle_scene.has_method("_finalize_counter_distribution"):
+			battle_scene.call("_finalize_counter_distribution")
+		return true
 	var picked := PackedInt32Array()
-	var best_index: int = _best_legal_target_index(target_items, [], step, context, state_features)
-	if best_index < 0:
-		best_index = 0
-	picked.append(best_index)
+	for assignment: Dictionary in assignments:
+		var target_index := int(assignment.get("target_index", -1))
+		if target_index >= 0:
+			picked.append(target_index)
 	_record_interaction_decision(
 		target_items,
 		step,
@@ -199,9 +212,102 @@ func _resolve_counter_distribution_step(
 		picked,
 		"counter_distribution"
 	)
-	battle_scene.call("_on_counter_distribution_amount_chosen", total_counters)
-	battle_scene.call("_handle_counter_distribution_target", best_index)
+	for assignment: Dictionary in assignments:
+		var target_index := int(assignment.get("target_index", -1))
+		var counters := int(assignment.get("counters", 0))
+		if target_index < 0 or counters <= 0:
+			continue
+		battle_scene.call("_on_counter_distribution_amount_chosen", counters)
+		battle_scene.call("_handle_counter_distribution_target", target_index)
 	return true
+
+
+func _build_counter_distribution_assignments(
+	target_items: Array,
+	total_counters: int,
+	step: Dictionary,
+	context: Dictionary = {},
+	state_features: Array[float] = []
+) -> Array[Dictionary]:
+	if total_counters <= 0 or target_items.is_empty():
+		return []
+	var candidates: Array[Dictionary] = []
+	for i: int in target_items.size():
+		var item: Variant = target_items[i]
+		if not (item is PokemonSlot):
+			continue
+		var slot := item as PokemonSlot
+		if slot.get_top_card() == null or slot.get_remaining_hp() <= 0:
+			continue
+		var counters_needed := int(ceil(float(slot.get_remaining_hp()) / 10.0))
+		candidates.append({
+			"index": i,
+			"slot": slot,
+			"counters_needed": counters_needed,
+			"score": _score_interaction_candidate(slot, step, context, state_features),
+			"prizes": slot.get_prize_count(),
+		})
+	if candidates.is_empty():
+		return []
+
+	var remaining := total_counters
+	var allocations: Dictionary = {}
+	var knocked_out: Dictionary = {}
+	var ko_candidates := candidates.duplicate(true)
+	ko_candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var value_a := float(a.get("score", 0.0)) + float(a.get("prizes", 1)) * 520.0 - float(a.get("counters_needed", 99)) * 35.0
+		var value_b := float(b.get("score", 0.0)) + float(b.get("prizes", 1)) * 520.0 - float(b.get("counters_needed", 99)) * 35.0
+		if is_equal_approx(value_a, value_b):
+			var need_a := int(a.get("counters_needed", 99))
+			var need_b := int(b.get("counters_needed", 99))
+			if need_a == need_b:
+				return int(a.get("index", -1)) < int(b.get("index", -1))
+			return need_a < need_b
+		return value_a > value_b
+	)
+	for candidate: Dictionary in ko_candidates:
+		var target_index := int(candidate.get("index", -1))
+		var counters_needed := int(candidate.get("counters_needed", 99))
+		if counters_needed <= 0 or counters_needed > remaining:
+			continue
+		allocations[target_index] = int(allocations.get(target_index, 0)) + counters_needed
+		knocked_out[target_index] = true
+		remaining -= counters_needed
+		if remaining <= 0:
+			break
+
+	if remaining > 0:
+		var pressure_target: Dictionary = {}
+		for candidate: Dictionary in candidates:
+			var target_index := int(candidate.get("index", -1))
+			if knocked_out.has(target_index) and candidates.size() > knocked_out.size():
+				continue
+			if pressure_target.is_empty() or _counter_pressure_value(candidate) > _counter_pressure_value(pressure_target):
+				pressure_target = candidate
+		if not pressure_target.is_empty():
+			var target_index := int(pressure_target.get("index", -1))
+			allocations[target_index] = int(allocations.get(target_index, 0)) + remaining
+
+	var result: Array[Dictionary] = []
+	for target_index_variant: Variant in allocations.keys():
+		var target_index := int(target_index_variant)
+		var counters := int(allocations.get(target_index, 0))
+		if counters <= 0:
+			continue
+		result.append({
+			"target_index": target_index,
+			"target": target_items[target_index],
+			"counters": counters,
+			"amount": counters * 10,
+		})
+	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return int(a.get("target_index", -1)) < int(b.get("target_index", -1))
+	)
+	return result
+
+
+func _counter_pressure_value(candidate: Dictionary) -> float:
+	return float(candidate.get("score", 0.0)) + float(candidate.get("prizes", 1)) * 160.0 - float(candidate.get("counters_needed", 99)) * 10.0
 
 
 func _resolve_field_assignment_step(

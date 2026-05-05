@@ -56,7 +56,7 @@ layout_mode = 2
 [node name="Title" type="Label" parent="MarginContainer/VBox/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "卡组管理"
+text = "卡组中心"
 
 [node name="BtnImport" type="Button" parent="MarginContainer/VBox/Header"]
 unique_name_in_owner = true
@@ -70,17 +70,23 @@ layout_mode = 2
 custom_minimum_size = Vector2(120, 35)
 text = "同步卡图"
 
-[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBox"]
+[node name="DeckScroll" type="ScrollContainer" parent="MarginContainer/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
+horizontal_scroll_mode = 0
 
-[node name="DeckList" type="VBoxContainer" parent="MarginContainer/VBox/ScrollContainer"]
+[node name="DeckScrollMargin" type="MarginContainer" parent="MarginContainer/VBox/DeckScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_right = 40
+
+[node name="DeckList" type="VBoxContainer" parent="MarginContainer/VBox/DeckScroll/DeckScrollMargin"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
-[node name="EmptyLabel" type="Label" parent="MarginContainer/VBox/ScrollContainer/DeckList"]
+[node name="EmptyLabel" type="Label" parent="MarginContainer/VBox/DeckScroll/DeckScrollMargin/DeckList"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "暂无卡组，点击右上角“+ 导入卡组”按钮导入。"

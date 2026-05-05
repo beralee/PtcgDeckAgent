@@ -23,7 +23,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 
 	var steps: Array[Dictionary] = [{
 		"id": TARGET_STEP_ID,
-		"title": "Choose 1 damaged Colorless Pokemon to return to your hand",
+		"title": "选择1只受伤的无色宝可梦放回手牌",
 		"items": target_items,
 		"labels": target_labels,
 		"min_select": 1,
@@ -39,7 +39,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			replacement_labels.append(_build_slot_label(slot))
 		steps.append({
 			"id": REPLACEMENT_STEP_ID,
-			"title": "Choose a new Active Pokemon",
+		"title": "选择新的战斗宝可梦",
 			"items": replacement_items,
 			"labels": replacement_labels,
 			"min_select": 1,

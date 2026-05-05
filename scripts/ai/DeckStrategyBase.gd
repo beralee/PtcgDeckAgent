@@ -77,6 +77,14 @@ func build_turn_contract(_game_state: GameState, _player_index: int, _context: D
 	return _normalize_turn_contract(build_turn_plan(_game_state, _player_index, _context))
 
 
+func build_continuity_contract(
+	_game_state: GameState,
+	_player_index: int,
+	_turn_contract: Dictionary = {}
+) -> Dictionary:
+	return {}
+
+
 func score_action_absolute_with_plan(
 	action: Dictionary,
 	game_state: GameState,
@@ -87,6 +95,7 @@ func score_action_absolute_with_plan(
 	_set_turn_plan_context(turn_contract)
 	_set_turn_contract_context(turn_contract)
 	var score: float = score_action_absolute(action, game_state, player_index)
+	score += _score_continuity_action_bonus(action, game_state, player_index, turn_contract)
 	_clear_turn_plan_context()
 	_clear_turn_contract_context()
 	return score
@@ -169,6 +178,125 @@ func _normalize_turn_contract(turn_plan: Dictionary) -> Dictionary:
 	if not normalized.has("context") or not (normalized.get("context", {}) is Dictionary):
 		normalized["context"] = {}
 	return normalized
+
+
+func _score_continuity_action_bonus(
+	action: Dictionary,
+	game_state: GameState,
+	player_index: int,
+	turn_contract: Dictionary
+) -> float:
+	var continuity: Dictionary = _normalize_continuity_contract(
+		build_continuity_contract(game_state, player_index, turn_contract)
+	)
+	if not bool(continuity.get("enabled", false)):
+		return 0.0
+	var bonus := 0.0
+	var action_bonuses: Variant = continuity.get("action_bonuses", [])
+	if action_bonuses is Array:
+		for rule_variant: Variant in action_bonuses:
+			if not (rule_variant is Dictionary):
+				continue
+			var rule: Dictionary = rule_variant
+			if _continuity_action_matches(action, rule):
+				bonus += float(rule.get("bonus", 0.0))
+	if bool(continuity.get("safe_setup_before_attack", false)) and _is_continuity_terminal_attack(action):
+		if not _is_continuity_final_prize_attack(action, game_state, player_index):
+			bonus -= float(continuity.get("attack_penalty", 0.0))
+	return bonus
+
+
+func _normalize_continuity_contract(contract: Dictionary) -> Dictionary:
+	var normalized: Dictionary = contract.duplicate(true)
+	normalized["enabled"] = bool(normalized.get("enabled", false))
+	normalized["safe_setup_before_attack"] = bool(normalized.get("safe_setup_before_attack", false))
+	if not (normalized.get("setup_debt", {}) is Dictionary):
+		normalized["setup_debt"] = {}
+	if not (normalized.get("action_bonuses", []) is Array):
+		normalized["action_bonuses"] = []
+	if not normalized.has("attack_penalty"):
+		normalized["attack_penalty"] = 0.0
+	return normalized
+
+
+func _continuity_action_matches(action: Dictionary, rule: Dictionary) -> bool:
+	var kind := str(rule.get("kind", ""))
+	if kind != "" and str(action.get("kind", "")) != kind:
+		return false
+	var action_ids: Array[String] = _continuity_string_array(rule.get("action_ids", []))
+	if not action_ids.is_empty():
+		var id := str(action.get("id", action.get("action_id", "")))
+		if not action_ids.has(id):
+			return false
+	var card_names: Array[String] = _continuity_string_array(rule.get("card_names", []))
+	if not card_names.is_empty() and not card_names.has(_continuity_action_card_name(action)):
+		return false
+	var attack_names: Array[String] = _continuity_string_array(rule.get("attack_names", []))
+	if not attack_names.is_empty() and not attack_names.has(_continuity_action_attack_name(action)):
+		return false
+	var target_names: Array[String] = _continuity_string_array(rule.get("target_names", []))
+	if not target_names.is_empty() and not target_names.has(_continuity_action_target_name(action)):
+		return false
+	return true
+
+
+func _continuity_string_array(value: Variant) -> Array[String]:
+	var result: Array[String] = []
+	if value is Array:
+		for item: Variant in value:
+			var text := str(item)
+			if text != "":
+				result.append(text)
+	elif str(value) != "":
+		result.append(str(value))
+	return result
+
+
+func _continuity_action_card_name(action: Dictionary) -> String:
+	var card: Variant = action.get("card", null)
+	if card is CardInstance:
+		return _cname(card)
+	if card is CardData:
+		var cd: CardData = card
+		return cd.name_en if cd.name_en != "" else cd.name
+	for key: String in ["card_name", "name", "source_name"]:
+		var value := str(action.get(key, ""))
+		if value != "":
+			return value
+	return ""
+
+
+func _continuity_action_attack_name(action: Dictionary) -> String:
+	var attack_name := str(action.get("attack_name", ""))
+	if attack_name != "":
+		return attack_name
+	var granted: Variant = action.get("granted_attack_data", {})
+	if granted is Dictionary:
+		return str((granted as Dictionary).get("name", ""))
+	return ""
+
+
+func _continuity_action_target_name(action: Dictionary) -> String:
+	var target: Variant = action.get("target_slot", null)
+	if target is PokemonSlot:
+		return _slot_name(target)
+	var source: Variant = action.get("source_slot", null)
+	if source is PokemonSlot:
+		return _slot_name(source)
+	return str(action.get("target_name", action.get("target", "")))
+
+
+func _is_continuity_terminal_attack(action: Dictionary) -> bool:
+	return str(action.get("kind", "")) in ["attack", "granted_attack"]
+
+
+func _is_continuity_final_prize_attack(action: Dictionary, game_state: GameState, player_index: int) -> bool:
+	if not bool(action.get("projected_knockout", false)):
+		return false
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	return player != null and player.prizes.size() <= 1
 
 
 # ============================================================

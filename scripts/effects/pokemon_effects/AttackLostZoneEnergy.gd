@@ -48,6 +48,8 @@ func get_attack_interaction_steps(
 		"title": "选择 %d 个能量放入放逐区" % discard_count,
 		"items": items,
 		"labels": labels,
+		"card_groups": build_attached_card_groups(player, items),
+		"transparent_battlefield_dialog": true,
 		"min_select": mini(discard_count, items.size()),
 		"max_select": mini(discard_count, items.size()),
 		"allow_cancel": false,

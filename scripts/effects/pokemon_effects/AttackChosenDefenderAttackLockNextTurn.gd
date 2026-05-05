@@ -24,7 +24,7 @@ func get_attack_interaction_steps(card: CardInstance, _attack: Dictionary, state
 		return []
 	return [{
 		"id": STEP_ID,
-		"title": "Choose one attack the Defending Pokemon cannot use next turn",
+		"title": "选择对手战斗宝可梦下回合不能使用的1个招式",
 		"items": items,
 		"labels": labels,
 		"min_select": 1,

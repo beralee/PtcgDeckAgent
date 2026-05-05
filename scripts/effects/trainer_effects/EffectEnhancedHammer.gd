@@ -16,9 +16,11 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		labels.append("%s - %s" % [_energy_holder_name(opponent, energy), energy.card_data.name])
 	return [{
 		"id": STEP_ID,
-		"title": "Choose an opponent Special Energy to discard",
+		"title": "选择对手场上1个特殊能量放入弃牌区",
 		"items": items,
 		"labels": labels,
+		"card_groups": build_attached_card_groups(opponent, items),
+		"transparent_battlefield_dialog": true,
 		"min_select": 1,
 		"max_select": 1,
 		"allow_cancel": true,

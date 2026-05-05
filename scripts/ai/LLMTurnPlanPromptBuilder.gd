@@ -16,6 +16,7 @@ const VALID_ACTION_TYPES: Array[String] = [
 
 const EFFECT_ID_RULE_TAGS := {
 	"1af63a7e2cb7a79215474ad8db8fd8fd": ["search_deck", "bench_related", "pokemon_related"],
+	"f866dfee26cd6b0dbbb52b74438d0a59": ["search_deck", "bench_related", "pokemon_related"],
 	"70d14b4a5a9c15581b8a0c8dfd325717": ["draw", "discard", "filter_engine", "productive_engine"],
 	"e366f56ecd3f805a28294109a1a37453": ["search_deck", "energy_related", "discard"],
 	"3e6f1daf545dfed48d0588dd50792a2e": ["recover_to_hand", "energy_related", "pokemon_related"],
@@ -25,9 +26,11 @@ const EFFECT_ID_RULE_TAGS := {
 	"8ef5ff61fd97838af568f00fe3b0e3ea": ["draw", "ability_engine", "ends_turn"],
 	"768b545a38fccd5e265093b5adce10af": ["search_deck", "supporter_related"],
 	"a337ed34a45e63c6d21d98c3d8e0cb6e": ["search_deck", "discard"],
+	"5bdbc985f9aa2e6f248b53f6f35d1d37": ["search_deck", "item_related", "tool_related", "supporter_related"],
 	"d3891abcfe3277c8811cde06741d3236": ["evolution"],
 	"8e1fa2c9018db938084c94c7c970d419": ["gust"],
 	"4ec261453212280d0eb03ed8254ca97f": ["gust", "switch_or_retreat"],
+	"06bc00d5dcec33898dc6db2e4c4d10ec": ["gust"],
 	"8342fe3eeec6f897f3271be1aa26a412": ["switch_or_retreat"],
 	"d1c2f018a644e662f2b6895fdfc29281": ["tool_modifier", "hp_boost", "basic_pokemon_only"],
 }
@@ -223,7 +226,8 @@ func legal_action_reference(action: Dictionary, game_state: GameState, player_in
 			ref["bench_position"] = _resolve_slot_position(bench_slot as PokemonSlot, game_state, player_index)
 		ref["discard_energy_count"] = (action.get("energy_to_discard", []) as Array).size() if action.get("energy_to_discard", []) is Array else 0
 	_annotate_action_resource_use(ref, action, game_state, player_index)
-	if _ref_rule_tags_require_interaction(ref):
+	var interaction_tags: Array[String] = _ref_rule_tags(ref)
+	if _ref_rule_tags_require_interaction(ref) or _is_hand_energy_attach_ability_ref(ref, interaction_tags):
 		ref["requires_interaction"] = true
 	if bool(ref.get("requires_interaction", false)):
 		ref["interaction_schema"] = _interaction_schema_for_ref(ref)
@@ -454,9 +458,9 @@ func action_id_instructions() -> PackedStringArray:
 		"Read turn_tactical_facts before deck_strategy_hints to test feasibility. Current facts override generic deck strategy text when they conflict.",
 		"Then treat deck_strategy_hints as a high-priority player-editable tactical preference layer, not optional flavor: when multiple legal candidate routes are reasonable, let it reorder route preference, setup/draw risk, attack timing, and fallback style.",
 		"candidate_routes.base_priority is an engine default, not a hard order. Player strategy may prefer a lower-base-priority route if it stays legal and tactically coherent; follow the player's stated play style when facts allow it.",
-		"Use candidate_routes and turn_tactical_facts for strategy: gust_ko_opportunities, primary_attack fields, best_manual_attach fields, redraw_attack_forbidden, no_deck_draw_lock, productive_engine_actions, safe_pre_primary_actions, legal_survival_tool_actions, resource_negative_actions, and sada_assignment_recommendations.",
+		"Use candidate_routes and turn_tactical_facts for strategy: gust_ko_opportunities, defensive_gust_opportunities, core_attacker_setup, continuity_contract, primary_attack fields, best_manual_attach fields, redraw_attack_forbidden, redraw_attack_recommended, no_deck_draw_lock, productive_engine_actions, safe_pre_primary_actions, legal_survival_tool_actions, resource_negative_actions, and sada_assignment_recommendations.",
 		"Read legal_action card_rules, ability_rules, attack_rules, interaction_schema, and resource fields when a card-specific choice matters.",
-		"Low-priority redraw/setup attacks are fallback only. If redraw_attack_forbidden is true or primary damage is visibly reachable, choose setup/resource preservation instead.",
+		"Low-priority redraw/setup attacks are fallback only. If redraw_attack_forbidden is true or primary damage is visibly reachable, choose setup/resource preservation instead. If redraw_attack_recommended is true, use safe bench/tool setup first, then the listed redraw attack rather than passing.",
 		"Attack setup routes must close with an attack when a legal attack action exists. Attack is terminal; put safe setup, tool, charge, search, gust, pivot, and attach before it.",
 		"turn_tactical_facts.turn_ending_actions are terminal. Do not choose them before productive bench/evolve/search/attach/tool/gust/attack setup unless no productive route remains.",
 		"A route may contain at most one manual attach_energy action. Respect consumes_hand_card_ids, may_consume_hand_energy_symbols, and resource_conflicts.",
@@ -936,6 +940,10 @@ func _legal_energy_search_action_ids(current_refs: Array[Dictionary]) -> Array[S
 	for ref: Dictionary in current_refs:
 		if not (str(ref.get("type", "")) in ["play_trainer", "play_stadium", "use_ability"]):
 			continue
+		var schema: Dictionary = _ref_interaction_schema_or_hints(ref)
+		if str(ref.get("type", "")) == "use_ability" \
+				and (schema.has("basic_energy_from_hand") or schema.has("energy_card_id")):
+			continue
 		var tags: Array[String] = _ref_rule_tags(ref)
 		if not (tags.has("search_deck") and tags.has("energy_related")):
 			continue
@@ -943,6 +951,16 @@ func _legal_energy_search_action_ids(current_refs: Array[Dictionary]) -> Array[S
 		if action_id != "":
 			_append_unique_string(result, action_id)
 	return result
+
+
+func _ref_interaction_schema_or_hints(ref: Dictionary) -> Dictionary:
+	var schema: Variant = ref.get("interaction_schema", {})
+	if schema is Dictionary and not (schema as Dictionary).is_empty():
+		return schema as Dictionary
+	var interactions: Variant = ref.get("interactions", {})
+	if interactions is Dictionary:
+		return interactions as Dictionary
+	return {}
 
 
 func _legal_energy_discard_engine_action_ids(current_refs: Array[Dictionary]) -> Array[String]:
@@ -1339,7 +1357,8 @@ func _turn_tactical_facts(
 	var facts := {
 		"deck_count": player.deck.size() if player != null else 0,
 		"hand_count": player.hand.size() if player != null else 0,
-		"no_deck_draw_lock": player != null and player.deck.size() <= 2,
+		"own_bench_count": player.bench.size() if player != null else 0,
+		"no_deck_draw_lock": player != null and player.deck.size() <= 12,
 		"deck_draw_risk": player != null and player.deck.size() <= 12,
 		"attack_legal_now": not (legal_action_groups.get("attack", []) as Array).is_empty(),
 		"attack_reachable_after_manual_attach": false,
@@ -1357,6 +1376,7 @@ func _turn_tactical_facts(
 		"ready_attacks": [],
 		"ready_attack_is_low_value_redraw": false,
 		"only_ready_attack_is_low_value_redraw": false,
+		"redraw_attack_recommended": false,
 		"redraw_attack_forbidden": false,
 		"attack_quality_by_action_id": _attack_quality_by_action_id(legal_actions, future_actions),
 		"best_manual_attach_energy_for_active_attack": "",
@@ -1373,12 +1393,15 @@ func _turn_tactical_facts(
 		"legal_action_priorities": _non_empty_action_groups(legal_action_groups),
 		"gust_ko_opportunities": [],
 		"best_gust_ko_route": {},
+		"defensive_gust_opportunities": [],
+		"best_defensive_gust_route": {},
 		"sada_assignment_recommendations": [],
 	}
 	if game_state == null or player == null:
 		return facts
-	facts["safe_pre_primary_actions"] = _safe_pre_primary_actions(legal_actions)
-	facts["productive_engine_actions"] = _productive_engine_actions(legal_actions)
+	var no_deck_draw_lock := bool(facts.get("no_deck_draw_lock", false))
+	facts["safe_pre_primary_actions"] = _safe_pre_primary_actions(legal_actions, no_deck_draw_lock)
+	facts["productive_engine_actions"] = _productive_engine_actions(legal_actions, no_deck_draw_lock)
 	facts["turn_ending_actions"] = _turn_ending_actions(legal_actions)
 	facts["resource_negative_actions"] = _resource_negative_actions(game_state, player_index, legal_actions)
 	facts["legal_supporter_names"] = _legal_supporter_names(legal_actions)
@@ -1422,7 +1445,19 @@ func _turn_tactical_facts(
 			var best_for_attack: Dictionary = _best_manual_attach_for_cost(cost, attached_counts, hand_energy_symbols)
 			option["best_manual_attach_energy"] = str(best_for_attack.get("energy", ""))
 			option["missing_cost_after_best_manual_attach"] = best_for_attack.get("missing", missing_now)
-			if (option["missing_cost_after_best_manual_attach"] as Array).is_empty():
+			if missing_now.is_empty() and str(option.get("best_manual_attach_energy", "")) == "":
+				var scaling_attach: Dictionary = _best_manual_attach_for_damage_scaling(
+					legal_actions,
+					active,
+					attack,
+					player,
+					opponent_active
+				)
+				if not scaling_attach.is_empty():
+					option["best_manual_attach_energy"] = str(scaling_attach.get("energy", ""))
+			var missing_after_attach: Array = option["missing_cost_after_best_manual_attach"]
+			var quality_is_low := str(quality.get("terminal_priority", "")) == "low"
+			if missing_after_attach.is_empty() and not quality_is_low:
 				var projected_damage := _estimated_active_attack_damage_after_manual_attach(
 					active,
 					attack,
@@ -1440,13 +1475,14 @@ func _turn_tactical_facts(
 						best_after_attach_score = route_score
 						best_after_attach_attack = option.duplicate(true)
 						best_after_attach_attack["best_manual_attach_action_id"] = attach_action_id
-		var after_missing: Array = option["missing_cost_after_best_manual_attach"]
-		if after_missing.size() < best_missing_count:
-			best_missing_count = after_missing.size()
-			best_missing = []
-			for value: Variant in after_missing:
-				best_missing.append(str(value))
-			best_attach = str(option.get("best_manual_attach_energy", ""))
+		if str(quality.get("terminal_priority", "")) != "low":
+			var after_missing: Array = option["missing_cost_after_best_manual_attach"]
+			if after_missing.size() < best_missing_count:
+				best_missing_count = after_missing.size()
+				best_missing = []
+				for value: Variant in after_missing:
+					best_missing.append(str(value))
+				best_attach = str(option.get("best_manual_attach_energy", ""))
 		if _is_primary_attack_quality(quality) and (primary_option.is_empty() or i > int(primary_option.get("attack_index", -1))):
 			primary_option = option
 		if missing_now.is_empty() and legal_id != "":
@@ -1488,15 +1524,22 @@ func _turn_tactical_facts(
 		facts["primary_attack_reachable_after_search"] = _future_actions_include_primary_attack(future_actions, str(primary_option.get("attack_name", "")), "energy_search_then_manual_attach")
 		facts["primary_attack_reachable_after_visible_engine"] = _future_actions_include_primary_attack(future_actions, str(primary_option.get("attack_name", "")))
 		facts["primary_attack_route"] = _primary_attack_visible_engine_route(future_actions, str(primary_option.get("attack_name", "")))
+	facts["redraw_attack_recommended"] = _redraw_attack_recommended(facts, player)
 	facts["redraw_attack_forbidden"] = _redraw_attack_forbidden(facts)
 	facts["gust_ko_opportunities"] = _gust_ko_opportunities(game_state, player, player_index, legal_actions, future_actions)
 	var gust_routes: Array = facts.get("gust_ko_opportunities", [])
 	if not gust_routes.is_empty():
 		facts["best_gust_ko_route"] = (gust_routes[0] as Dictionary).duplicate(true)
+	facts["defensive_gust_opportunities"] = _defensive_gust_opportunities(game_state, player, player_index, legal_actions)
+	var defensive_gust_routes: Array = facts.get("defensive_gust_opportunities", [])
+	if not defensive_gust_routes.is_empty():
+		facts["best_defensive_gust_route"] = (defensive_gust_routes[0] as Dictionary).duplicate(true)
 	return facts
 
 
 func _redraw_attack_forbidden(facts: Dictionary) -> bool:
+	if bool(facts.get("redraw_attack_recommended", false)):
+		return false
 	if not bool(facts.get("only_ready_attack_is_low_value_redraw", false)):
 		return false
 	if bool(facts.get("primary_attack_ready", false)):
@@ -1517,6 +1560,21 @@ func _redraw_attack_forbidden(facts: Dictionary) -> bool:
 	if deck_count <= 12:
 		return true
 	return deck_count <= 24 and hand_count >= 4
+
+
+func _redraw_attack_recommended(facts: Dictionary, player: PlayerState) -> bool:
+	if player == null:
+		return false
+	if not bool(facts.get("only_ready_attack_is_low_value_redraw", false)):
+		return false
+	if bool(facts.get("primary_attack_ready", false)) \
+			or bool(facts.get("manual_attach_enables_primary_attack", false)) \
+			or bool(facts.get("primary_attack_reachable_after_manual_attach", false)) \
+			or bool(facts.get("primary_attack_reachable_after_visible_engine", false)):
+		return false
+	if int(facts.get("deck_count", 0)) <= 24:
+		return false
+	return _basic_energy_symbols_in_hand(player).is_empty()
 
 
 func _opponent_active_slot(game_state: GameState, player_index: int) -> PokemonSlot:
@@ -1567,13 +1625,14 @@ func _estimated_active_attack_damage_after_manual_attach(
 	var combined := "%s %s %s" % [damage_text, str(attack.get("text", "")), str(attack.get("name", ""))]
 	var lower := combined.to_lower()
 	var damage := base_damage
+	var extra_energy_count := 1 if attach_energy_word.strip_edges() != "" else 0
 	if _looks_like_both_active_energy_bonus(lower):
-		damage = base_damage + (_energy_multiplier_from_text(combined, 30) * (_slot_attached_energy_count(active) + 1 + _slot_attached_energy_count(opponent_active)))
+		damage = base_damage + (_energy_multiplier_from_text(combined, 30) * (_slot_attached_energy_count(active) + extra_energy_count + _slot_attached_energy_count(opponent_active)))
 	elif lower.contains("x") or lower.contains("×") or lower.contains("脳"):
 		if _name_has_any(lower, ["thundering bolt", "raging bolt", "basic energy", "discard"]):
-			damage = base_damage * (_count_board_basic_energy(player) + 1)
+			damage = base_damage * (_count_board_basic_energy(player) + extra_energy_count)
 		else:
-			damage = base_damage * maxi(1, _slot_attached_energy_count(active) + 1)
+			damage = base_damage * maxi(1, _slot_attached_energy_count(active) + extra_energy_count)
 	return _apply_simple_weakness(damage, active.get_card_data(), opponent_active)
 
 
@@ -1709,6 +1768,8 @@ func _gust_ko_opportunities(
 	if attacks.is_empty():
 		return result
 	for gust_ref: Dictionary in gust_actions:
+		var gust_reliability := _gust_reliability_for_ref(gust_ref)
+		var gust_deterministic := gust_reliability == "deterministic"
 		for attack_ref: Dictionary in attacks:
 			var damage := _estimated_attack_damage_for_ref(attack_ref, player)
 			if damage <= 0:
@@ -1725,6 +1786,8 @@ func _gust_ko_opportunities(
 				result.append({
 					"gust_action_id": str(gust_ref.get("id", "")),
 					"attack_action_id": str(attack_ref.get("id", "")),
+					"gust_reliability": gust_reliability,
+					"gust_deterministic": gust_deterministic,
 					"target_position": target_position,
 					"target_name": str(target.get_pokemon_name()),
 					"target_hp_remaining": remaining_hp,
@@ -1751,6 +1814,10 @@ func _sort_gust_ko_desc(a: Dictionary, b: Dictionary) -> bool:
 	var b_win := bool(b.get("game_winning", false))
 	if a_win != b_win:
 		return a_win
+	var a_det := bool(a.get("gust_deterministic", true))
+	var b_det := bool(b.get("gust_deterministic", true))
+	if a_det != b_det:
+		return a_det
 	var a_prizes := int(a.get("target_prize_count", 0))
 	var b_prizes := int(b.get("target_prize_count", 0))
 	if a_prizes != b_prizes:
@@ -1762,6 +1829,99 @@ func _sort_gust_ko_desc(a: Dictionary, b: Dictionary) -> bool:
 	return str(a.get("target_position", "")) < str(b.get("target_position", ""))
 
 
+func _defensive_gust_opportunities(
+	game_state: GameState,
+	_player: PlayerState,
+	player_index: int,
+	legal_actions: Array[Dictionary]
+) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return result
+	var opponent_index := 1 - player_index
+	if opponent_index < 0 or opponent_index >= game_state.players.size():
+		return result
+	var opponent: PlayerState = game_state.players[opponent_index]
+	if opponent == null or opponent.active_pokemon == null or opponent.bench.is_empty():
+		return result
+	if not _legal_damage_attacks(legal_actions).is_empty():
+		return result
+	var active_energy_count := opponent.active_pokemon.attached_energy.size()
+	if active_energy_count <= 0 and opponent.prizes.size() > 2:
+		return result
+	var gust_actions: Array[Dictionary] = []
+	for gust_ref: Dictionary in _legal_gust_actions(legal_actions):
+		if _gust_reliability_for_ref(gust_ref) == "deterministic":
+			gust_actions.append(gust_ref)
+	if gust_actions.is_empty():
+		return result
+	for gust_ref: Dictionary in gust_actions:
+		for bench_index: int in opponent.bench.size():
+			var target: PokemonSlot = opponent.bench[bench_index]
+			if target == null or target.get_card_data() == null:
+				continue
+			var target_position := "bench_%d" % bench_index
+			var score := _defensive_gust_target_score(target)
+			result.append({
+				"gust_action_id": str(gust_ref.get("id", "")),
+				"gust_reliability": "deterministic",
+				"gust_deterministic": true,
+				"target_position": target_position,
+				"target_name": str(target.get_pokemon_name()),
+				"target_hp_remaining": target.get_remaining_hp(),
+				"target_prize_count": target.get_prize_count(),
+				"target_energy_count": target.attached_energy.size(),
+				"target_retreat_cost": _slot_retreat_cost(target),
+				"opponent_active_name": str(opponent.active_pokemon.get_pokemon_name()),
+				"opponent_active_energy_count": active_energy_count,
+				"score": score,
+				"selection_policy": {
+					"gust_target": target_position,
+					"opponent_bench_target": target_position,
+					"opponent_switch_target": target_position,
+					"target_position": target_position,
+				},
+				"why": "no current attack route; gust a low-energy bench target to break the opponent active attack threat",
+			})
+	result.sort_custom(Callable(self, "_sort_defensive_gust_desc"))
+	if result.size() > 4:
+		result.resize(4)
+	return result
+
+
+func _sort_defensive_gust_desc(a: Dictionary, b: Dictionary) -> bool:
+	var a_score := int(a.get("score", 0))
+	var b_score := int(b.get("score", 0))
+	if a_score != b_score:
+		return a_score > b_score
+	var a_energy := int(a.get("target_energy_count", 99))
+	var b_energy := int(b.get("target_energy_count", 99))
+	if a_energy != b_energy:
+		return a_energy < b_energy
+	return str(a.get("target_position", "")) < str(b.get("target_position", ""))
+
+
+func _defensive_gust_target_score(slot: PokemonSlot) -> int:
+	if slot == null or slot.get_card_data() == null:
+		return -9999
+	var score := 1000
+	score -= slot.attached_energy.size() * 220
+	score += _slot_retreat_cost(slot) * 45
+	var cd: CardData = slot.get_card_data()
+	var name_text := "%s %s" % [str(cd.name_en), str(cd.name)]
+	if _name_has_any(name_text, ["fezandipiti", "lumineon", "squawkabilly", "radiant greninja"]):
+		score += 80
+	if _name_has_any(name_text, ["mew ex"]):
+		score -= 120
+	return score
+
+
+func _slot_retreat_cost(slot: PokemonSlot) -> int:
+	if slot == null or slot.get_card_data() == null:
+		return 0
+	return int(slot.get_card_data().retreat_cost)
+
+
 func _legal_gust_actions(legal_actions: Array[Dictionary]) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for ref: Dictionary in legal_actions:
@@ -1771,7 +1931,35 @@ func _legal_gust_actions(legal_actions: Array[Dictionary]) -> Array[Dictionary]:
 		var combined := _ref_combined_name(ref)
 		if tags.has("gust") or _name_has_any(combined, ["boss", "catcher"]):
 			result.append(ref)
+	result.sort_custom(Callable(self, "_sort_gust_action_desc"))
 	return result
+
+
+func _sort_gust_action_desc(a: Dictionary, b: Dictionary) -> bool:
+	var a_rank := _gust_reliability_rank(_gust_reliability_for_ref(a))
+	var b_rank := _gust_reliability_rank(_gust_reliability_for_ref(b))
+	if a_rank != b_rank:
+		return a_rank > b_rank
+	return str(a.get("id", "")) < str(b.get("id", ""))
+
+
+func _gust_reliability_for_ref(ref: Dictionary) -> String:
+	var rules: Dictionary = ref.get("card_rules", {}) if ref.get("card_rules", {}) is Dictionary else {}
+	var effect_id := str(rules.get("effect_id", ref.get("effect_id", "")))
+	if effect_id == "3a6d419769778b40091e69fbd76737ec":
+		return "coin_flip"
+	var combined := _ref_combined_name(ref)
+	if _name_has_any(combined, ["pokemon catcher"]):
+		return "coin_flip"
+	return "deterministic"
+
+
+func _gust_reliability_rank(reliability: String) -> int:
+	if reliability == "deterministic":
+		return 2
+	if reliability == "coin_flip":
+		return 1
+	return 0
 
 
 func _legal_damage_attacks(legal_actions: Array[Dictionary]) -> Array[Dictionary]:
@@ -1905,7 +2093,7 @@ func _first_int_in_string(text: String) -> int:
 	return int(digits) if digits.is_valid_int() else 0
 
 
-func _safe_pre_primary_actions(legal_actions: Array[Dictionary]) -> Array[Dictionary]:
+func _safe_pre_primary_actions(legal_actions: Array[Dictionary], no_deck_draw_lock: bool = false) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for ref: Dictionary in legal_actions:
 		if result.size() >= 6:
@@ -1913,6 +2101,8 @@ func _safe_pre_primary_actions(legal_actions: Array[Dictionary]) -> Array[Dictio
 		var action_type := str(ref.get("type", ""))
 		var tags: Array[String] = _ref_rule_tags(ref)
 		if tags.has("ends_turn"):
+			continue
+		if no_deck_draw_lock and _is_optional_deck_draw_fact_ref(ref, tags):
 			continue
 		var reason := ""
 		if action_type == "attach_tool":
@@ -1932,7 +2122,7 @@ func _safe_pre_primary_actions(legal_actions: Array[Dictionary]) -> Array[Dictio
 	return result
 
 
-func _productive_engine_actions(legal_actions: Array[Dictionary]) -> Array[Dictionary]:
+func _productive_engine_actions(legal_actions: Array[Dictionary], no_deck_draw_lock: bool = false) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for ref: Dictionary in legal_actions:
 		if result.size() >= 10:
@@ -1940,6 +2130,8 @@ func _productive_engine_actions(legal_actions: Array[Dictionary]) -> Array[Dicti
 		var action_type := str(ref.get("type", ""))
 		var tags: Array[String] = _ref_rule_tags(ref)
 		if tags.has("ends_turn"):
+			continue
+		if no_deck_draw_lock and _is_optional_deck_draw_fact_ref(ref, tags):
 			continue
 		var priority := ""
 		var role := ""
@@ -1992,6 +2184,38 @@ func _productive_engine_actions(legal_actions: Array[Dictionary]) -> Array[Dicti
 	return result
 
 
+func _is_optional_deck_draw_fact_ref(ref: Dictionary, tags: Array[String]) -> bool:
+	if tags.has("draw"):
+		return true
+	var schema: Dictionary = ref.get("interaction_schema", {}) if ref.get("interaction_schema", {}) is Dictionary else {}
+	if not schema.is_empty():
+		var schema_text := JSON.stringify(schema).to_lower()
+		if schema_text.contains("draw"):
+			return true
+		if schema.has("basic_energy_from_hand") or schema.has("energy_card_id"):
+			return true
+	var combined := _ref_combined_name(ref)
+	return combined.contains("trekking shoes") \
+		or combined.contains("radiant greninja") \
+		or combined.contains("teal mask ogerpon") \
+		or combined.contains("ogerpon") \
+		or combined.contains("fezandipiti") \
+		or combined.contains("碧草之舞") \
+		or combined.contains("隐藏牌") \
+		or combined.contains("隱藏牌") \
+		or combined.contains("化危为吉") \
+		or combined.contains("化危為吉") \
+		or combined.contains("吉雉鸡") \
+		or combined.contains("吉雉雞") \
+		or combined.contains("光辉甲贺忍蛙") \
+		or combined.contains("光輝甲賀忍蛙") \
+		or combined.contains("厄诡椪") \
+		or combined.contains("厄鬼椪") \
+		or combined.contains("professor sada") \
+		or combined.contains("professor's research") \
+		or combined.contains("iono")
+
+
 func _turn_ending_actions(legal_actions: Array[Dictionary]) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for ref: Dictionary in legal_actions:
@@ -2015,7 +2239,7 @@ func _resource_negative_actions(game_state: GameState, player_index: int, legal_
 	for ref: Dictionary in legal_actions:
 		if result.size() >= 6:
 			break
-		var reason := _resource_negative_reason(ref, game_state, player_index)
+		var reason := _resource_negative_reason(ref, game_state, player_index, legal_actions)
 		if reason == "":
 			continue
 		result.append({
@@ -2028,14 +2252,30 @@ func _resource_negative_actions(game_state: GameState, player_index: int, legal_
 	return result
 
 
-func _resource_negative_reason(ref: Dictionary, game_state: GameState, player_index: int) -> String:
+func _resource_negative_reason(
+	ref: Dictionary,
+	game_state: GameState,
+	player_index: int,
+	legal_actions: Array[Dictionary] = []
+) -> String:
 	var combined := _ref_combined_name(ref)
 	if combined.contains("lost vacuum") and not _lost_vacuum_has_external_value(game_state, player_index):
 		return "Lost Vacuum would spend a hand card without a visible opponent tool or harmful stadium target"
+	if _is_gust_ref(ref) and _legal_damage_attacks(legal_actions).is_empty():
+		return "gust/switch effect would spend a resource without a current non-low-value damage attack; preserve it unless a listed route needs it"
 	var schema: Dictionary = ref.get("interaction_schema", {}) if ref.get("interaction_schema", {}) is Dictionary else {}
 	if bool(ref.get("requires_interaction", false)) and schema.is_empty() and _looks_like_optional_remove_or_discard(ref):
 		return "requires interaction but no exact schema is available; likely optional resource-negative removal"
 	return ""
+
+
+func _is_gust_ref(ref: Dictionary) -> bool:
+	if str(ref.get("type", "")) not in ["play_trainer", "play_stadium", "use_ability"]:
+		return false
+	var tags: Array[String] = _ref_rule_tags(ref)
+	var combined := _ref_combined_name(ref)
+	return tags.has("gust") \
+		or _name_has_any(combined, ["boss", "catcher", "prime catcher", "counter catcher"])
 
 
 func _looks_like_optional_remove_or_discard(ref: Dictionary) -> bool:
@@ -2230,6 +2470,44 @@ func _legal_manual_attach_id_for_energy(legal_actions: Array[Dictionary], energy
 		if ref_symbol == requested_symbol:
 			return str(ref.get("id", ""))
 	return ""
+
+
+func _best_manual_attach_for_damage_scaling(
+	legal_actions: Array[Dictionary],
+	active: PokemonSlot,
+	attack: Dictionary,
+	player: PlayerState,
+	opponent_active: PokemonSlot
+) -> Dictionary:
+	var opponent_hp := opponent_active.get_remaining_hp() if opponent_active != null else 0
+	if opponent_hp <= 0:
+		return {}
+	var current_damage := _estimated_active_attack_damage_after_manual_attach(active, attack, player, opponent_active, "")
+	var best: Dictionary = {}
+	var best_score := -999999
+	for ref: Dictionary in legal_actions:
+		if str(ref.get("type", "")) != "attach_energy":
+			continue
+		if str(ref.get("position", "")) != "active":
+			continue
+		var energy_word := str(ref.get("energy_type", ""))
+		if energy_word == "":
+			energy_word = str(ref.get("card", ""))
+		var projected := _estimated_active_attack_damage_after_manual_attach(active, attack, player, opponent_active, energy_word)
+		if projected <= current_damage:
+			continue
+		if not (current_damage < opponent_hp and projected >= opponent_hp):
+			continue
+		var score := projected
+		score += 10000
+		if score > best_score:
+			best_score = score
+			best = {
+				"action_id": str(ref.get("id", "")),
+				"energy": _energy_word(_energy_symbol(energy_word)),
+				"projected_damage": projected,
+			}
+	return best
 
 
 func _best_manual_attach_for_cost(cost: String, attached_counts: Dictionary, hand_energy_symbols: Array[String]) -> Dictionary:
@@ -2704,7 +2982,7 @@ func _ability_rule_summary(action: Dictionary) -> Dictionary:
 	var ability: Dictionary = cd.abilities[ability_index]
 	var text: String = _compact_rule_text(str(ability.get("text", "")), 180)
 	var combined_text := "%s %s" % [str(ability.get("name", "")), text]
-	var tags: Array[String] = _infer_text_tags(combined_text)
+	var tags: Array[String] = _infer_rule_tags(cd, "use_ability", combined_text)
 	return {
 		"name": str(ability.get("name", "")),
 		"text": text,
@@ -2814,7 +3092,12 @@ func _compact_rule_text(text: String, limit: int) -> String:
 
 func _infer_rule_tags(cd: CardData, action_kind: String, text: String) -> Array[String]:
 	var tags: Array[String] = _infer_text_tags(text)
-	for tag: String in EFFECT_ID_RULE_TAGS.get(str(cd.effect_id), []):
+	var effect_tags: Array = EFFECT_ID_RULE_TAGS.get(str(cd.effect_id), [])
+	if _should_remove_draw_only_search_tag(tags, effect_tags, text):
+		tags.erase("search_deck")
+	if _should_remove_non_discard_recovery_tag(tags, effect_tags, text):
+		tags.erase("recover_to_hand")
+	for tag: String in effect_tags:
 		_append_tag(tags, tag)
 	match action_kind:
 		"play_basic_to_bench":
@@ -2844,6 +3127,28 @@ func _infer_rule_tags(cd: CardData, action_kind: String, text: String) -> Array[
 	if cd.is_energy():
 		_append_tag(tags, "energy_resource")
 	return tags
+
+
+func _should_remove_draw_only_search_tag(tags: Array[String], effect_tags: Array, text: String) -> bool:
+	if not tags.has("search_deck"):
+		return false
+	if effect_tags.has("search_deck"):
+		return false
+	if not effect_tags.has("draw"):
+		return false
+	var lower := text.to_lower()
+	return not lower.contains("search")
+
+
+func _should_remove_non_discard_recovery_tag(tags: Array[String], effect_tags: Array, text: String) -> bool:
+	if not tags.has("recover_to_hand"):
+		return false
+	if effect_tags.has("recover_to_hand"):
+		return false
+	if not (effect_tags.has("draw") or effect_tags.has("search_deck")):
+		return false
+	var lower := text.to_lower()
+	return not (lower.contains("discard pile") or lower.contains("from your discard"))
 
 
 func _infer_text_tags(text: String) -> Array[String]:

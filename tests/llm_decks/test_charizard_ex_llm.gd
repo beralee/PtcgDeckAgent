@@ -281,8 +281,37 @@ func test_charizard_ex_llm_marks_rare_candy_and_stage2_route_intent() -> String:
 		assert_true(followup_cards.has("Charizard ex"), "Charizard hook should add Charizard ex evolution to short-route followups"),
 		assert_true(followup_cards.has("Pidgeot ex"), "Charizard hook should add Pidgeot ex evolution to short-route followups"),
 		assert_true(bool(strategy.call("_deck_is_setup_or_resource_card", rare_candy.card_data)), "Rare Candy should be marked as setup/resource"),
-		assert_true(bool(strategy.call("_deck_action_ref_enables_attack", {"type": "play_trainer", "card": "Rare Candy"})), "Rare Candy route refs should be treated as attack-enabling setup"),
+		assert_true(bool(strategy.call("_deck_action_ref_enables_attack", {"type": "play_trainer", "card": "Rare Candy", "requires_interaction": true, "interaction_schema": {"stage2_card": {}, "target_pokemon": {}}})), "Rare Candy route refs should be attack-enabling only when a real Stage 2 target is exposed"),
 		assert_str_contains(hints_text, "Rare Candy", "Action-id prompt hints should include Rare Candy route guidance"),
+	])
+
+
+func test_charizard_ex_llm_blocks_noop_rare_candy_and_prioritizes_rotom_after_core_seeds() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyCharizardExLLM.gd should exist"
+	var gs := _make_game_state(2)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Charmander", "Basic", "R", 70), 0)
+	player.bench.append(_make_slot(_make_pokemon_cd("Pidgey", "Basic", "C", 60), 0))
+	var rare_candy := CardInstance.create(_make_trainer_cd("Rare Candy"), 0)
+	var noop_candy := {"kind": "play_trainer", "card": rare_candy, "requires_interaction": false}
+	var valid_candy := {"kind": "play_trainer", "card": rare_candy, "requires_interaction": true}
+	var rotom := CardInstance.create(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0)
+	var extra_charmander := CardInstance.create(_make_pokemon_cd("Charmander", "Basic", "R", 70), 0)
+	var context := {"game_state": gs, "player_index": 0}
+	var rotom_score: float = strategy.call("_charizard_llm_search_item_score", rotom, context)
+	var charmander_score: float = strategy.call("_charizard_llm_search_item_score", extra_charmander, context)
+	var nest_policy: Dictionary = strategy.call("_charizard_basic_search_policy_for_ref", {"card": "Nest Ball"}, {"charmander_count": 1, "pidgey_count": 1, "rotom_v_count": 0})
+	var nest_prefer: Array = []
+	var nest_search_raw: Variant = nest_policy.get("search", {})
+	if nest_search_raw is Dictionary:
+		nest_prefer = (nest_search_raw as Dictionary).get("prefer", [])
+	return run_checks([
+		assert_true(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "play_trainer"}, noop_candy, gs, 0)), "LLM queue guard should block Rare Candy actions that expose no target or interaction"),
+		assert_false(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "play_trainer"}, valid_candy, gs, 0)), "LLM queue guard should allow Rare Candy when the engine will resolve a real interaction"),
+		assert_true(rotom_score > charmander_score, "After Charmander and Pidgey are already established, Nest Ball search should value Rotom V draw setup above extra Charmander padding"),
+		assert_eq(str(nest_prefer[0]) if not nest_prefer.is_empty() else "", "Rotom V", "Nest Ball policy should put Rotom V first after the two core seeds exist"),
 	])
 
 

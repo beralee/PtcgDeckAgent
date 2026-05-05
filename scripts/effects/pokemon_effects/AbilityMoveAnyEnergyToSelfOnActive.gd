@@ -29,9 +29,11 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		source_labels.append("%s - %s" % [_energy_owner_name(player, energy), energy.card_data.name])
 	return [{
 		"id": STEP_ID,
-		"title": "Move any amount of your Energy to this Pokemon",
+		"title": "选择任意数量的己方能量转附到这只宝可梦身上",
 		"items": source_items,
 		"labels": source_labels,
+		"card_groups": build_attached_card_groups(player, source_items),
+		"transparent_battlefield_dialog": true,
 		"min_select": 0,
 		"max_select": source_items.size(),
 		"allow_cancel": true,

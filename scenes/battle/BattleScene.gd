@@ -38,6 +38,7 @@ const BattleRecordingControllerScript := preload("res://scripts/ui/battle/Battle
 const BattleRuntimeLogControllerScript := preload("res://scripts/ui/battle/BattleRuntimeLogController.gd")
 const BattleReviewFormatterScript := preload("res://scripts/ui/battle/BattleReviewFormatter.gd")
 const DeckDiscussionDialogScene := preload("res://scenes/deck_editor/DeckDiscussionDialog.tscn")
+const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 const CARD_ASPECT := 0.716
 const BATTLE_RUNTIME_LOG_PATH := "user://logs/battle_runtime.log"
 const BATTLE_BACKDROP_RESOURCE := "res://assets/ui/background.png"
@@ -49,6 +50,7 @@ const AI_MAX_ACTIONS_PER_TURN := 20
 const AI_ACTION_PAUSE_SECONDS := 2.0
 const SLOT_TOUCH_LONG_PRESS_SECONDS := 0.42
 const SLOT_TOUCH_LONG_PRESS_MOVE_TOLERANCE := 18.0
+const HAND_SCROLL_PANEL_PADDING := 18.0
 
 # ===================== State =====================
 # These scene-owned fields are intentionally accessed reflectively by extracted
@@ -420,7 +422,9 @@ func _ready() -> void:
 			caption.visible = false
 	_opp_hand_bar.visible = false
 	($MainArea/CenterField/HandArea/HandVBox as VBoxContainer).add_theme_constant_override("separation", 0)
+	_hand_scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_hand_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_hand_container.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_hand_container.alignment = BoxContainer.ALIGNMENT_CENTER
 	_setup_side_previews()
 	_install_field_card_views()
@@ -700,7 +704,11 @@ func _apply_responsive_layout() -> void:
 	var preview_card_size: Vector2 = measured.get("preview_card_size", Vector2(roundf(_play_card_size.x * 0.9), roundf(_play_card_size.y * 0.9)))
 	var prize_slot_size: Vector2 = measured.get("prize_slot_size", preview_card_size)
 
-	hand_area.custom_minimum_size = Vector2(0, _play_card_size.y + 10.0)
+	var hand_scroll_height := _hand_scroll_height_with_scrollbar(_play_card_size.y)
+	hand_area.custom_minimum_size = Vector2(0, hand_scroll_height + HAND_SCROLL_PANEL_PADDING)
+	_hand_scroll.custom_minimum_size = Vector2(0, hand_scroll_height)
+	_hand_container.custom_minimum_size = Vector2(0, _play_card_size.y)
+	_hand_container.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	var stadium_height: float = float(measured.get("stadium_height", roundf(clampf(viewport_size.y * 0.082, 54.0, 72.0) * (4.0 / 9.0))))
 	var stadium_inner_vpad: int = int(measured.get("stadium_inner_vpad", clampi(int(stadium_height * 0.08), 1, 3)))
 	var vstar_stack_gap: int = int(measured.get("vstar_stack_gap", clampi(int(stadium_height * 0.08), 1, 2)))
@@ -771,11 +779,19 @@ func _apply_responsive_layout() -> void:
 		clampf(viewport_size.x * 0.62, 640.0, 1120.0), 0
 	)
 	if _dialog_card_scroll != null:
-		_dialog_card_scroll.custom_minimum_size = Vector2(0, _dialog_card_size.y + 2.0)
+		_dialog_card_scroll.custom_minimum_size = Vector2(0, _dialog_card_scroll_height())
 	if _dialog_assignment_source_scroll != null:
-		_dialog_assignment_source_scroll.custom_minimum_size = Vector2(0, _dialog_card_size.y + 2.0)
+		_dialog_assignment_source_scroll.custom_minimum_size = Vector2(0, _dialog_card_scroll_height())
 	if _dialog_assignment_target_scroll != null:
-		_dialog_assignment_target_scroll.custom_minimum_size = Vector2(0, _dialog_card_size.y + 2.0)
+		_dialog_assignment_target_scroll.custom_minimum_size = Vector2(0, _dialog_card_scroll_height())
+	if _dialog_card_scroll != null and _dialog_card_row != null:
+		_battle_dialog_controller.call("reset_dialog_card_row_metrics", _dialog_card_scroll, _dialog_card_row, _dialog_card_size)
+	if _dialog_assignment_source_scroll != null and _dialog_assignment_source_row != null:
+		_battle_dialog_controller.call("reset_dialog_card_row_metrics", _dialog_assignment_source_scroll, _dialog_assignment_source_row, _dialog_card_size)
+	if _dialog_assignment_target_scroll != null and _dialog_assignment_target_row != null:
+		_battle_dialog_controller.call("reset_dialog_card_row_metrics", _dialog_assignment_target_scroll, _dialog_assignment_target_row, _dialog_card_size)
+	if _dialog_overlay != null and _dialog_overlay.visible:
+		_battle_dialog_controller.call("compact_dialog_box_to_content", self)
 
 	var detail_box: PanelContainer = $DetailOverlay/DetailCenter/DetailBox
 	var detail_gap := clampi(int(viewport_size.x * 0.008), 10, 16)
@@ -1124,7 +1140,7 @@ func _apply_battle_surface_styles() -> void:
 	_style_card_detail_overlay()
 	_style_panel($DiscardOverlay/DiscardCenter/DiscardBox, Color(0.05, 0.08, 0.11, 0.98), Color(0.5, 0.57, 0.72), 20)
 	_style_panel($CoinFlipOverlay/CoinCenter/CoinBox, Color(0.05, 0.08, 0.11, 0.98), Color(0.89, 0.78, 0.34), 18)
-	_style_panel($HandoverPanel/HandoverCenter/HandoverBox, Color(0.05, 0.08, 0.11, 0.98), Color(0.72, 0.72, 0.76), 18)
+	_style_handover_overlay()
 	_style_panel(_my_active, Color(0.04, 0.07, 0.1, 0.88), Color(0.52, 0.72, 0.58), 18)
 	_style_panel(_opp_active, Color(0.04, 0.07, 0.1, 0.88), Color(0.63, 0.68, 0.79), 18)
 
@@ -1134,6 +1150,7 @@ func _apply_battle_surface_styles() -> void:
 		_style_panel(bench_panel, Color(0.04, 0.07, 0.1, 0.76), Color(0.33, 0.39, 0.5), 16)
 	_hand_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	_hand_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	HudThemeScript.apply_scrollbars_recursive(self)
 
 
 func _style_panel(panel: Control, bg_color: Color, border_color: Color, radius: int = 18) -> void:
@@ -1210,6 +1227,43 @@ func _style_card_detail_overlay() -> void:
 		_style_hud_button(_detail_close_btn)
 		_detail_close_btn.custom_minimum_size = Vector2(42, 32)
 		_detail_close_btn.add_theme_font_size_override("font_size", 14)
+
+
+func _style_handover_overlay() -> void:
+	var handover_panel := get_node_or_null("HandoverPanel") as Panel
+	var handover_box := get_node_or_null("HandoverPanel/HandoverCenter/HandoverBox") as PanelContainer
+	var handover_vbox := get_node_or_null("HandoverPanel/HandoverCenter/HandoverBox/HandoverVBox") as VBoxContainer
+	var handover_label := get_node_or_null("HandoverPanel/HandoverCenter/HandoverBox/HandoverVBox/HandoverLbl") as Label
+	var handover_button := get_node_or_null("HandoverPanel/HandoverCenter/HandoverBox/HandoverVBox/HandoverBtn") as Button
+	if handover_label == null:
+		handover_label = _handover_lbl
+	if handover_button == null:
+		handover_button = _handover_btn
+	if handover_panel != null:
+		handover_panel.self_modulate = Color(0.0, 0.015, 0.03, 0.76)
+	if handover_box != null:
+		handover_box.custom_minimum_size = Vector2(520, 220)
+		handover_box.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		handover_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		_style_panel(handover_box, Color(0.035, 0.065, 0.09, 0.98), Color(0.36, 0.86, 1.0, 0.92), 22)
+	if handover_vbox != null:
+		handover_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+		handover_vbox.add_theme_constant_override("separation", 18)
+	if handover_label != null:
+		handover_label.custom_minimum_size = Vector2(460, 72)
+		handover_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		handover_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		handover_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		handover_label.add_theme_font_size_override("font_size", 24)
+		handover_label.add_theme_color_override("font_color", Color(0.96, 0.99, 1.0, 1.0))
+		handover_label.add_theme_color_override("font_outline_color", Color(0.0, 0.08, 0.12, 0.9))
+		handover_label.add_theme_constant_override("outline_size", 2)
+	if handover_button != null:
+		_style_hud_button(handover_button)
+		handover_button.custom_minimum_size = Vector2(360, 68)
+		handover_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		handover_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		handover_button.add_theme_font_size_override("font_size", 20)
 
 
 func _style_hud_button(button: Button) -> void:
@@ -1625,11 +1679,34 @@ func _on_player_choice_required(choice_type: String, data: Dictionary) -> void:
 			for slot: Variant in bench_raw:
 				if slot is PokemonSlot:
 					bench_targets.append(slot)
+			var source_energy_hb: Array[CardInstance] = []
+			for energy_variant: Variant in data.get("source_energy", []):
+				if energy_variant is CardInstance:
+					source_energy_hb.append(energy_variant)
 			_prompt_heavy_baton_dialog(
 				pi_hb,
 				bench_targets,
 				int(data.get("count", 0)),
-				str(data.get("source_name", "重负球棒"))
+				str(data.get("source_name", "重负球棒")),
+				data.get("source_slot", null) as PokemonSlot,
+				source_energy_hb
+			)
+		"exp_share_target":
+			var pi_exp: int = data.get("player", 0)
+			var bench_raw_exp: Array = data.get("bench", [])
+			var bench_targets_exp: Array[PokemonSlot] = []
+			for slot_exp: Variant in bench_raw_exp:
+				if slot_exp is PokemonSlot:
+					bench_targets_exp.append(slot_exp)
+			var source_energy_exp: Array[CardInstance] = []
+			for energy_exp: Variant in data.get("source_energy", []):
+				if energy_exp is CardInstance:
+					source_energy_exp.append(energy_exp)
+			_prompt_exp_share_dialog(
+				pi_exp,
+				bench_targets_exp,
+				data.get("source_slot", null) as PokemonSlot,
+				source_energy_exp
 			)
 	_maybe_run_ai()
 
@@ -1679,13 +1756,12 @@ func _on_game_over(winner_index: int, reason: String) -> void:
 	if _battle_recorder != null and _battle_recorder.has_method("get_match_dir"):
 		_battle_review_match_dir = str(_battle_recorder.call("get_match_dir"))
 	if GameManager.is_tournament_battle_active():
-		GameManager.finalize_current_tournament_battle(winner_index, reason)
 		_finalize_battle_recording({
 			"winner_index": winner_index,
 			"reason": reason,
 			"turn_number": _gsm.game_state.turn_number if _gsm != null and _gsm.game_state != null else 0,
 		})
-		GameManager.goto_tournament_standings()
+		_show_match_end_dialog(winner_index, reason)
 		return
 	_show_match_end_dialog(winner_index, reason)
 	_finalize_battle_recording({
@@ -1836,8 +1912,6 @@ func _on_zeus_help_pressed() -> void:
 		"card_items": deck_cards,
 		"deck_cards": deck_cards,
 		"choice_labels": labels,
-		"card_page_size": 7,
-		"touch_paged": true,
 	})
 
 
@@ -1860,13 +1934,15 @@ func _on_slot_input(event: InputEvent, slot_id: String) -> void:
 		if prize_viewport != null:
 			prize_viewport.set_input_as_handled()
 		return
-	if not _can_accept_live_action():
-		return
 	if _handover_panel.visible:
 		_runtime_log("slot_input_blocked", "slot=%s reason=handover %s" % [slot_id, _state_snapshot()])
 		var viewport := get_viewport()
 		if viewport != null:
 			viewport.set_input_as_handled()
+		return
+	if _try_show_opponent_slot_detail_input(event, slot_id):
+		return
+	if not _can_accept_live_action():
 		return
 
 	if _handle_slot_touch_detail_input(event, slot_id):
@@ -1879,8 +1955,8 @@ func _on_slot_input(event: InputEvent, slot_id: String) -> void:
 		return
 
 	if mbe.button_index == MOUSE_BUTTON_RIGHT:
-		_runtime_log("slot_right_click", "slot=%s %s" % [slot_id, _state_snapshot()])
-		_show_slot_card_detail(slot_id)
+		_runtime_log("slot_right_click_action", "slot=%s %s" % [slot_id, _state_snapshot()])
+		_show_slot_pokemon_action_if_available(slot_id)
 		return
 
 	if mbe.button_index != MOUSE_BUTTON_LEFT:
@@ -1954,15 +2030,50 @@ func _handle_slot_left_click(slot_id: String) -> void:
 		_show_pokemon_action_dialog(cp, target_slot, slot_id == "my_active")
 
 
+func _try_show_opponent_slot_detail_input(event: InputEvent, slot_id: String) -> bool:
+	if not slot_id.begins_with("opp_"):
+		return false
+	if _is_field_interaction_active() or _draw_reveal_active:
+		return false
+	if not (event is InputEventMouseButton):
+		return false
+	var mbe := event as InputEventMouseButton
+	if not mbe.pressed or not (mbe.button_index == MOUSE_BUTTON_LEFT or mbe.button_index == MOUSE_BUTTON_RIGHT):
+		return false
+	if not _show_slot_card_detail(slot_id):
+		return false
+	_runtime_log("opponent_slot_card_detail", "slot=%s button=%d %s" % [slot_id, int(mbe.button_index), _state_snapshot()])
+	var detail_viewport := get_viewport()
+	if detail_viewport != null:
+		detail_viewport.set_input_as_handled()
+	return true
+
+
+func _show_slot_pokemon_action_if_available(slot_id: String) -> bool:
+	if not slot_id.begins_with("my_"):
+		return false
+	if _selected_hand_card != null or _is_field_interaction_active():
+		return false
+	var gs: GameState = _gsm.game_state if _gsm != null else null
+	if gs == null:
+		return false
+	var target_slot: PokemonSlot = _slot_from_id(slot_id, gs)
+	if target_slot == null:
+		return false
+	var cp: int = gs.current_player_index
+	_show_pokemon_action_dialog(cp, target_slot, slot_id == "my_active")
+	return true
+
+
 func _handle_slot_touch_detail_input(event: InputEvent, slot_id: String) -> bool:
 	if event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
 		if touch.pressed:
-			if _start_slot_touch_long_press(slot_id, touch.position, touch.index):
-				var press_viewport := get_viewport()
-				if press_viewport != null:
-					press_viewport.set_input_as_handled()
-				return true
+			_start_slot_touch_action_press(slot_id, touch.position, touch.index)
+			var press_viewport := get_viewport()
+			if press_viewport != null:
+				press_viewport.set_input_as_handled()
+			return true
 		else:
 			if _slot_touch_long_press_active and touch.index == _slot_touch_long_press_index:
 				var consumed := _slot_touch_long_press_consumed
@@ -1983,15 +2094,22 @@ func _handle_slot_touch_detail_input(event: InputEvent, slot_id: String) -> bool
 			var drag_viewport := get_viewport()
 			if drag_viewport != null:
 				drag_viewport.set_input_as_handled()
-			if _slot_touch_long_press_consumed:
-				return true
 			if drag.position.distance_to(_slot_touch_long_press_start) > SLOT_TOUCH_LONG_PRESS_MOVE_TOLERANCE:
 				_suppress_next_slot_left_click_id = slot_id
-				_cancel_slot_touch_long_press(false)
+				_slot_touch_long_press_consumed = true
 			return true
 		return false
 
 	return false
+
+
+func _start_slot_touch_action_press(slot_id: String, position: Vector2, touch_index: int) -> void:
+	_cancel_slot_touch_long_press(false)
+	_slot_touch_long_press_active = true
+	_slot_touch_long_press_slot_id = slot_id
+	_slot_touch_long_press_index = touch_index
+	_slot_touch_long_press_start = position
+	_slot_touch_long_press_consumed = false
 
 
 func _start_slot_touch_long_press(slot_id: String, position: Vector2, touch_index: int) -> bool:
@@ -2020,16 +2138,7 @@ func _cancel_slot_touch_long_press(clear_suppression: bool = true) -> void:
 
 
 func _on_slot_touch_long_press_timeout() -> void:
-	if not _slot_touch_long_press_active:
-		return
-	if _show_slot_card_detail(_slot_touch_long_press_slot_id):
-		_slot_touch_long_press_consumed = true
-		_suppress_next_slot_left_click_id = _slot_touch_long_press_slot_id
-		var viewport := get_viewport()
-		if viewport != null:
-			viewport.set_input_as_handled()
-	else:
-		_cancel_slot_touch_long_press()
+	_cancel_slot_touch_long_press(false)
 
 
 func _consume_suppressed_slot_left_click(slot_id: String) -> bool:
@@ -2125,8 +2234,26 @@ var _discard_card_page_size: int = 0
 @warning_ignore_restore("unused_private_class_variable")
 
 
+func _card_scrollbar_clearance_height() -> float:
+	return float(HudThemeScript.SCROLLBAR_TOUCH_THICKNESS + HudThemeScript.CARD_SCROLLBAR_CLEARANCE_PADDING)
+
+
+func _card_scroll_height_with_scrollbar(card_height: float) -> float:
+	return maxf(0.0, card_height) + _card_scrollbar_clearance_height()
+
+
+func _hand_scroll_height_with_scrollbar(card_height: float) -> float:
+	return maxf(0.0, card_height) + float(HudThemeScript.CARD_SCROLLBAR_CLEARANCE_PADDING)
+
+
+func _dialog_card_scroll_height() -> float:
+	return _card_scroll_height_with_scrollbar(_dialog_card_size.y)
+
+
 func _setup_dialog_gallery() -> void:
-	_dialog_box.custom_minimum_size = Vector2(860, 420)
+	_dialog_box.custom_minimum_size = Vector2(860, 0)
+	_dialog_box.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_dialog_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var buttons_row: Control = _dialog_confirm.get_parent()
 
 	_dialog_card_scroll = ScrollContainer.new()
@@ -2134,8 +2261,9 @@ func _setup_dialog_gallery() -> void:
 	_dialog_card_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_dialog_card_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_dialog_card_scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	_dialog_card_scroll.custom_minimum_size = Vector2(0, _dialog_card_size.y + 2.0)
+	_dialog_card_scroll.custom_minimum_size = Vector2(0, _dialog_card_scroll_height())
 	_dialog_card_scroll.visible = false
+	HudThemeScript.style_scroll_container(_dialog_card_scroll)
 	_dialog_vbox.add_child(_dialog_card_scroll)
 	_dialog_vbox.move_child(_dialog_card_scroll, buttons_row.get_index())
 
@@ -2178,13 +2306,18 @@ func _setup_dialog_gallery() -> void:
 	_dialog_assignment_source_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	_dialog_assignment_source_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_dialog_assignment_source_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_dialog_assignment_source_scroll.custom_minimum_size = Vector2(0, 186)
+	_dialog_assignment_source_scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_dialog_assignment_source_scroll.custom_minimum_size = Vector2(0, _dialog_card_scroll_height())
+	HudThemeScript.style_scroll_container(_dialog_assignment_source_scroll)
 	_dialog_assignment_panel.add_child(_dialog_assignment_source_scroll)
 
 	_dialog_assignment_source_row = HBoxContainer.new()
 	_dialog_assignment_source_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_dialog_assignment_source_row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_dialog_assignment_source_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	_dialog_assignment_source_row.add_theme_constant_override("separation", 14)
+	_dialog_assignment_source_row.custom_minimum_size = Vector2(0, _dialog_card_size.y)
+	_dialog_assignment_source_row.size = Vector2(0, _dialog_card_size.y)
 	_dialog_assignment_source_scroll.add_child(_dialog_assignment_source_row)
 
 	var target_title := Label.new()
@@ -2196,13 +2329,18 @@ func _setup_dialog_gallery() -> void:
 	_dialog_assignment_target_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	_dialog_assignment_target_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_dialog_assignment_target_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_dialog_assignment_target_scroll.custom_minimum_size = Vector2(0, 186)
+	_dialog_assignment_target_scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_dialog_assignment_target_scroll.custom_minimum_size = Vector2(0, _dialog_card_scroll_height())
+	HudThemeScript.style_scroll_container(_dialog_assignment_target_scroll)
 	_dialog_assignment_panel.add_child(_dialog_assignment_target_scroll)
 
 	_dialog_assignment_target_row = HBoxContainer.new()
 	_dialog_assignment_target_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_dialog_assignment_target_row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_dialog_assignment_target_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	_dialog_assignment_target_row.add_theme_constant_override("separation", 14)
+	_dialog_assignment_target_row.custom_minimum_size = Vector2(0, _dialog_card_size.y)
+	_dialog_assignment_target_row.size = Vector2(0, _dialog_card_size.y)
 	_dialog_assignment_target_scroll.add_child(_dialog_assignment_target_row)
 
 	_dialog_assignment_summary_lbl = Label.new()
@@ -2224,6 +2362,7 @@ func _setup_discard_gallery() -> void:
 	_discard_card_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_discard_card_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_discard_card_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	HudThemeScript.style_scroll_container(_discard_card_scroll)
 	discard_vbox.add_child(_discard_card_scroll)
 	discard_vbox.move_child(_discard_card_scroll, close_btn.get_index())
 
@@ -2620,6 +2759,55 @@ func _commit_effect_assignment_selection(stored_assignments: Array[Dictionary]) 
 	_show_next_effect_interaction_step()
 
 
+func _commit_heavy_baton_assignment(stored_assignments: Array[Dictionary]) -> void:
+	var pi_hb: int = int(_dialog_data.get("player", -1))
+	var target_slot: PokemonSlot = null
+	var selected_energy: Array[CardInstance] = []
+	for assignment: Dictionary in stored_assignments:
+		var source: Variant = assignment.get("source")
+		var target: Variant = assignment.get("target")
+		if source is CardInstance and source not in selected_energy:
+			selected_energy.append(source)
+		if target_slot == null and target is PokemonSlot:
+			target_slot = target
+	if target_slot == null:
+		_log("Invalid Heavy Baton target")
+		return
+	var resolved := false
+	if selected_energy.is_empty():
+		resolved = _gsm.resolve_heavy_baton_choice(pi_hb, target_slot)
+	else:
+		resolved = _gsm.resolve_heavy_baton_choice_with_energy(pi_hb, target_slot, selected_energy)
+	if resolved:
+		_pending_choice = ""
+		_refresh_ui()
+		_maybe_run_ai()
+	else:
+		_log("Invalid Heavy Baton target")
+
+
+func _commit_exp_share_assignment(stored_assignments: Array[Dictionary]) -> void:
+	var pi_exp: int = int(_dialog_data.get("player", -1))
+	var target_slot: PokemonSlot = null
+	var selected_energy: CardInstance = null
+	for assignment: Dictionary in stored_assignments:
+		var source: Variant = assignment.get("source")
+		var target: Variant = assignment.get("target")
+		if selected_energy == null and source is CardInstance:
+			selected_energy = source
+		if target_slot == null and target is PokemonSlot:
+			target_slot = target
+	if target_slot == null:
+		_log("Invalid Exp. Share target")
+		return
+	if _gsm.resolve_exp_share_choice(pi_exp, target_slot, selected_energy):
+		_pending_choice = ""
+		_refresh_ui()
+		_maybe_run_ai()
+	else:
+		_log("Invalid Exp. Share target")
+
+
 func _handle_dialog_choice(selected_indices: PackedInt32Array) -> void:
 	var idx: int = selected_indices[0] if not selected_indices.is_empty() else -1
 	var handled_choice := _pending_choice
@@ -2869,12 +3057,16 @@ func _prompt_heavy_baton_dialog(
 	pi: int,
 	bench_targets: Array[PokemonSlot],
 	energy_count: int,
-	source_name: String
+	source_name: String,
+	source_slot: PokemonSlot = null,
+	source_energy: Array[CardInstance] = []
 ) -> void:
 	_pending_choice = "heavy_baton_target"
 	var dialog_data := {
 		"player": pi,
 		"bench": bench_targets.duplicate(),
+		"source_slot": source_slot,
+		"source_energy": source_energy.duplicate(),
 		"min_select": 1,
 		"max_select": 1,
 		"allow_cancel": false,
@@ -2898,21 +3090,75 @@ func _prompt_heavy_baton_dialog(
 			_set_handover_panel_visible(false, "heavy_baton_follow_up")
 			_view_player = _preferred_live_view_player(pi)
 			_refresh_ui()
-			_show_heavy_baton_dialog(pi, bench_targets, energy_count, source_name)
+			_show_heavy_baton_dialog(pi, bench_targets, energy_count, source_name, source_slot, source_energy)
 		)
 		return
 	_view_player = _preferred_live_view_player(pi)
 	_refresh_ui()
-	_show_heavy_baton_dialog(pi, bench_targets, energy_count, source_name)
+	_show_heavy_baton_dialog(pi, bench_targets, energy_count, source_name, source_slot, source_energy)
 
 
 func _show_heavy_baton_dialog(
 	pi: int,
 	bench_targets: Array[PokemonSlot],
 	energy_count: int,
-	source_name: String
+	source_name: String,
+	source_slot: PokemonSlot = null,
+	source_energy: Array[CardInstance] = []
 ) -> void:
-	_battle_dialog_controller.call("show_heavy_baton_dialog", self, pi, bench_targets, energy_count, source_name)
+	_battle_dialog_controller.call("show_heavy_baton_dialog", self, pi, bench_targets, energy_count, source_name, source_slot, source_energy)
+
+
+func _prompt_exp_share_dialog(
+	pi: int,
+	bench_targets: Array[PokemonSlot],
+	source_slot: PokemonSlot,
+	source_energy: Array[CardInstance]
+) -> void:
+	_pending_choice = "exp_share_target"
+	var dialog_data := {
+		"player": pi,
+		"bench": bench_targets.duplicate(),
+		"source_slot": source_slot,
+		"source_energy": source_energy.duplicate(),
+		"min_select": 1,
+		"max_select": 1,
+		"allow_cancel": false,
+	}
+	_ensure_ai_opponent()
+	var is_ai_prompt: bool = GameManager.current_mode == GameManager.GameMode.VS_AI and _ai_opponent != null and pi == _ai_opponent.player_index
+	if is_ai_prompt:
+		_dialog_data = dialog_data
+		_dialog_items_data = bench_targets.duplicate()
+		_hide_field_interaction()
+		if _dialog_overlay != null:
+			_dialog_overlay.visible = false
+		if _dialog_cancel != null:
+			_dialog_cancel.visible = false
+		_set_handover_panel_visible(false, "exp_share_ai_owned")
+		_refresh_ui()
+		_maybe_run_ai()
+		return
+	if GameManager.current_mode == GameManager.GameMode.TWO_PLAYER and pi != _view_player:
+		_show_handover_prompt(pi, func() -> void:
+			_set_handover_panel_visible(false, "exp_share_follow_up")
+			_view_player = _preferred_live_view_player(pi)
+			_refresh_ui()
+			_show_exp_share_dialog(pi, bench_targets, source_slot, source_energy)
+		)
+		return
+	_view_player = _preferred_live_view_player(pi)
+	_refresh_ui()
+	_show_exp_share_dialog(pi, bench_targets, source_slot, source_energy)
+
+
+func _show_exp_share_dialog(
+	pi: int,
+	bench_targets: Array[PokemonSlot],
+	source_slot: PokemonSlot,
+	source_energy: Array[CardInstance]
+) -> void:
+	_battle_dialog_controller.call("show_exp_share_dialog", self, pi, bench_targets, source_slot, source_energy)
 
 
 func _try_handle_field_interaction_slot_click(slot_id: String, _target_slot: PokemonSlot) -> void:
@@ -3072,45 +3318,25 @@ func _try_use_granted_attack_with_interaction(player_index: int, slot: PokemonSl
 func _can_use_granted_attack(player_index: int, slot: PokemonSlot, granted_attack: Dictionary) -> bool:
 	if _gsm == null or _gsm.game_state == null:
 		return false
-	if player_index < 0 or player_index >= _gsm.game_state.players.size():
-		return false
-	if _gsm.game_state.current_player_index != player_index:
-		return false
-	if _gsm.game_state.phase != GameState.GamePhase.MAIN:
-		return false
-	if slot == null or slot.get_top_card() == null:
-		return false
-	if slot != _gsm.game_state.players[player_index].active_pokemon:
-		return false
-	if slot.attached_tool == null:
-		return false
-	if _gsm.effect_processor.is_tool_effect_suppressed(slot, _gsm.game_state):
-		return false
-	var cost: String = str(granted_attack.get("cost", ""))
-	return _gsm.rule_validator.has_enough_energy(slot, cost, _gsm.effect_processor, _gsm.game_state)
+	return _gsm.rule_validator.can_use_granted_attack(
+		_gsm.game_state,
+		player_index,
+		slot,
+		granted_attack,
+		_gsm.effect_processor
+	)
 
 
 func _get_granted_attack_unusable_reason(player_index: int, slot: PokemonSlot, granted_attack: Dictionary) -> String:
 	if _gsm == null or _gsm.game_state == null:
 		return "当前无法执行该操作"
-	if player_index < 0 or player_index >= _gsm.game_state.players.size():
-		return "当前无法执行该操作"
-	if _gsm.game_state.current_player_index != player_index:
-		return "当前不是你的回合"
-	if _gsm.game_state.phase != GameState.GamePhase.MAIN:
-		return "当前阶段无法使用该招式"
-	if slot == null or slot.get_top_card() == null:
-		return "当前无法执行该操作"
-	if slot != _gsm.game_state.players[player_index].active_pokemon:
-		return "只有战斗宝可梦可以使用这个招式"
-	if slot.attached_tool == null:
-		return "这只宝可梦没有附着工具"
-	if _gsm.effect_processor.is_tool_effect_suppressed(slot, _gsm.game_state):
-		return "这只宝可梦身上的道具效果当前不可用"
-	var cost: String = str(granted_attack.get("cost", ""))
-	if not _gsm.rule_validator.has_enough_energy(slot, cost, _gsm.effect_processor, _gsm.game_state):
-		return "能量不足，无法满足这个招式的费用"
-	return "能量不足，无法使用该招式"
+	return _gsm.rule_validator.get_granted_attack_unusable_reason(
+		_gsm.game_state,
+		player_index,
+		slot,
+		granted_attack,
+		_gsm.effect_processor
+	)
 
 
 func _try_start_evolve_trigger_ability_interaction(player_index: int, slot: PokemonSlot) -> void:
@@ -3433,6 +3659,8 @@ func _begin_match_end_quick_review(force: bool = false) -> void:
 		_match_end_quick_review_result = _local_match_end_quick_review()
 		_battle_overlay_controller.call("refresh_match_end_screen", self)
 		return
+	if force:
+		_match_end_quick_review_result = {}
 	if _match_end_stats.is_empty():
 		_match_end_stats = _build_match_end_stats(_battle_review_winner_index, _battle_review_reason)
 	_ensure_match_end_quick_review_service()
@@ -3459,11 +3687,269 @@ func _begin_match_end_quick_review(force: bool = false) -> void:
 
 func _build_match_end_quick_review_payload() -> Dictionary:
 	var stats := _match_end_stats.duplicate(true)
+	_normalize_match_end_quick_review_stats(stats)
 	stats["deck_names"] = [
 		GameManager.resolve_battle_player_display_name(0),
 		GameManager.resolve_battle_player_display_name(1),
 	]
+	stats["review_subject"] = _match_end_quick_review_subject(stats)
+	var digest_context := _match_end_quick_review_digest_context()
+	if not digest_context.is_empty():
+		stats["quick_review_context"] = digest_context
+	var deck_strategies := _match_end_quick_review_deck_strategies()
+	if not deck_strategies.is_empty():
+		stats["deck_strategies"] = deck_strategies
 	return stats
+
+
+func _normalize_match_end_quick_review_stats(stats: Dictionary) -> void:
+	var subject_index := _match_end_quick_review_subject_player_index(stats)
+	var opponent_index := 1 - subject_index
+	var players_variant: Variant = stats.get("players", [])
+	if players_variant is Array:
+		var players: Array = players_variant
+		if subject_index >= 0 and subject_index < players.size() and players[subject_index] is Dictionary:
+			stats["view_player"] = (players[subject_index] as Dictionary).duplicate(true)
+		if opponent_index >= 0 and opponent_index < players.size() and players[opponent_index] is Dictionary:
+			stats["opponent"] = (players[opponent_index] as Dictionary).duplicate(true)
+	stats["view_player_index"] = subject_index
+	stats["opponent_index"] = opponent_index
+	stats["is_view_player_winner"] = int(stats.get("winner_index", -1)) == subject_index
+	stats["result_label"] = "胜利" if bool(stats.get("is_view_player_winner", false)) else "失败"
+
+
+func _match_end_quick_review_subject_player_index(stats: Dictionary = {}) -> int:
+	if GameManager.current_mode == GameManager.GameMode.VS_AI or GameManager.is_tournament_battle_active():
+		return 0
+	return clampi(int(stats.get("view_player_index", _view_player)), 0, 1)
+
+
+func _match_end_quick_review_subject(stats: Dictionary) -> Dictionary:
+	var subject_index := _match_end_quick_review_subject_player_index(stats)
+	var opponent_index := int(stats.get("opponent_index", 1 - subject_index))
+	var is_winner := bool(stats.get("is_view_player_winner", int(stats.get("winner_index", -1)) == subject_index))
+	var subject_stats: Dictionary = stats.get("view_player", {})
+	var opponent_stats: Dictionary = stats.get("opponent", {})
+	return {
+		"role": "current_view_player",
+		"player_index": subject_index,
+		"label": GameManager.resolve_battle_player_display_name(subject_index),
+		"deck_name": _match_end_quick_review_deck_name(subject_index),
+		"opponent_index": opponent_index,
+		"opponent_label": GameManager.resolve_battle_player_display_name(opponent_index),
+		"opponent_deck_name": _match_end_quick_review_deck_name(opponent_index),
+		"result": "win" if is_winner else "loss",
+		"result_label": "胜利" if is_winner else "失败",
+		"prizes_taken": int(subject_stats.get("prizes_taken", 0)),
+		"opponent_prizes_taken": int(opponent_stats.get("prizes_taken", 0)),
+		"review_instruction": "只评价当前玩家的胜负原因、打牌过程和下一盘改进；对手只作为当前玩家需要应对的压力或窗口。",
+	}
+
+
+func _match_end_quick_review_deck_name(player_index: int) -> String:
+	var deck: DeckData = GameManager.resolve_selected_battle_deck(player_index)
+	return deck.deck_name if deck != null else ""
+
+
+func _match_end_quick_review_digest_context() -> Dictionary:
+	var digest := _read_match_end_quick_review_digest()
+	if digest.is_empty():
+		return {}
+	var context := {
+		"meta": digest.get("meta", {}),
+		"opening": digest.get("opening", {}),
+		"key_moments": _quick_review_key_moments_from_digest(digest),
+		"critical_sequences": _quick_review_compact_sequences(digest.get("critical_sequences", []), 3),
+		"recent_turns": _quick_review_recent_turns(digest.get("turn_summaries", []), 3),
+	}
+	var last_turn := _quick_review_last_turn(digest.get("turn_summaries", []))
+	if not last_turn.is_empty():
+		context["last_turn"] = last_turn
+	return context
+
+
+func _read_match_end_quick_review_digest() -> Dictionary:
+	var match_dir := _battle_review_match_dir.strip_edges()
+	if match_dir == "":
+		return {}
+	var path := match_dir.path_join("llm_digest.json")
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {}
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	return parsed if parsed is Dictionary else {}
+
+
+func _quick_review_key_moments_from_digest(digest: Dictionary) -> Array[Dictionary]:
+	var moments: Array[Dictionary] = []
+	var points_variant: Variant = digest.get("inflection_points", [])
+	if points_variant is Array:
+		for point_variant: Variant in points_variant:
+			if not (point_variant is Dictionary):
+				continue
+			var point: Dictionary = point_variant
+			var summary := str(point.get("summary", "")).strip_edges()
+			if summary == "":
+				continue
+			moments.append({
+				"turn_number": int(point.get("turn_number", 0)),
+				"player_index": int(point.get("player_index", -1)),
+				"kind": str(point.get("kind", "")),
+				"summary": summary.left(160),
+			})
+			if moments.size() >= 4:
+				return moments
+	if not moments.is_empty():
+		return moments
+	var sequences_variant: Variant = digest.get("critical_sequences", [])
+	if sequences_variant is Array:
+		for sequence_variant: Variant in sequences_variant:
+			if not (sequence_variant is Dictionary):
+				continue
+			var sequence: Dictionary = sequence_variant
+			var summary := str(sequence.get("summary", "")).strip_edges()
+			if summary == "":
+				var actions: Array = sequence.get("actions", [])
+				for action_variant: Variant in actions:
+					var action_text := str(action_variant).strip_edges()
+					if action_text != "":
+						summary = action_text
+						break
+			if summary == "":
+				continue
+			moments.append({
+				"turn_number": int(sequence.get("turn_number", 0)),
+				"player_index": int(sequence.get("player_index", -1)),
+				"kind": str(sequence.get("kind", "critical_sequence")),
+				"summary": summary.left(160),
+			})
+			if moments.size() >= 3:
+				return moments
+	return moments
+
+
+func _quick_review_compact_sequences(sequences_variant: Variant, max_items: int) -> Array[Dictionary]:
+	var compact: Array[Dictionary] = []
+	if not (sequences_variant is Array):
+		return compact
+	for sequence_variant: Variant in sequences_variant:
+		if not (sequence_variant is Dictionary):
+			continue
+		var sequence: Dictionary = sequence_variant
+		compact.append({
+			"turn_number": int(sequence.get("turn_number", 0)),
+			"player_index": int(sequence.get("player_index", -1)),
+			"kind": str(sequence.get("kind", "")),
+			"summary": str(sequence.get("summary", "")).left(160),
+			"actions": _quick_review_compact_string_array(sequence.get("actions", []), 4),
+		})
+		if compact.size() >= max_items:
+			break
+	return compact
+
+
+func _quick_review_recent_turns(turns_variant: Variant, max_items: int) -> Array[Dictionary]:
+	var turns: Array = turns_variant if turns_variant is Array else []
+	var recent: Array[Dictionary] = []
+	var start_index: int = maxi(0, turns.size() - max_items)
+	for i: int in range(start_index, turns.size()):
+		var turn_variant: Variant = turns[i]
+		if turn_variant is Dictionary:
+			recent.append(_quick_review_compact_turn(turn_variant as Dictionary))
+	return recent
+
+
+func _quick_review_last_turn(turns_variant: Variant) -> Dictionary:
+	if not (turns_variant is Array):
+		return {}
+	var turns: Array = turns_variant
+	for i: int in range(turns.size() - 1, -1, -1):
+		if turns[i] is Dictionary:
+			return _quick_review_compact_turn(turns[i] as Dictionary)
+	return {}
+
+
+func _quick_review_compact_turn(turn: Dictionary) -> Dictionary:
+	return {
+		"turn_number": int(turn.get("turn_number", 0)),
+		"key_actions": _quick_review_compact_action_summaries(turn.get("key_actions", []), 4),
+		"key_choices": _quick_review_compact_choice_summaries(turn.get("key_choices", []), 3),
+	}
+
+
+func _quick_review_compact_action_summaries(actions_variant: Variant, max_items: int) -> Array[Dictionary]:
+	var compact: Array[Dictionary] = []
+	if not (actions_variant is Array):
+		return compact
+	for action_variant: Variant in actions_variant:
+		if not (action_variant is Dictionary):
+			continue
+		var action: Dictionary = action_variant
+		var description := str(action.get("description", "")).strip_edges()
+		if description == "":
+			continue
+		compact.append({
+			"player_index": int(action.get("player_index", -1)),
+			"description": description.left(160),
+			"attack_name": str(action.get("attack_name", "")),
+			"damage": int(action.get("damage", 0)),
+			"prize_count": int(action.get("prize_count", 0)),
+		})
+		if compact.size() >= max_items:
+			break
+	return compact
+
+
+func _quick_review_compact_choice_summaries(choices_variant: Variant, max_items: int) -> Array[Dictionary]:
+	var compact: Array[Dictionary] = []
+	if not (choices_variant is Array):
+		return compact
+	for choice_variant: Variant in choices_variant:
+		if not (choice_variant is Dictionary):
+			continue
+		var choice: Dictionary = choice_variant
+		compact.append({
+			"player_index": int(choice.get("player_index", -1)),
+			"title": str(choice.get("title", "")).left(120),
+			"selected_labels": _quick_review_compact_string_array(choice.get("selected_labels", []), 4),
+			"option_labels": _quick_review_compact_string_array(choice.get("option_labels", []), 6),
+		})
+		if compact.size() >= max_items:
+			break
+	return compact
+
+
+func _quick_review_compact_string_array(values_variant: Variant, max_items: int) -> Array[String]:
+	var compact: Array[String] = []
+	if not (values_variant is Array):
+		return compact
+	for value_variant: Variant in values_variant:
+		var value := str(value_variant).strip_edges()
+		if value == "":
+			continue
+		compact.append(value.left(120))
+		if compact.size() >= max_items:
+			break
+	return compact
+
+
+func _match_end_quick_review_deck_strategies() -> Array[Dictionary]:
+	var strategies: Array[Dictionary] = []
+	for player_index: int in range(GameManager.selected_deck_ids.size()):
+		var deck_id: int = int(GameManager.selected_deck_ids[player_index])
+		var deck: DeckData = CardDatabase.get_deck(deck_id) if deck_id > 0 else null
+		if deck == null:
+			continue
+		var strategy := deck.strategy.strip_edges()
+		if strategy == "":
+			continue
+		strategies.append({
+			"player_index": player_index,
+			"deck_name": deck.deck_name,
+			"strategy": strategy.left(700),
+		})
+	return strategies
 
 
 func _on_match_end_quick_review_status_changed(status: String, _context: Dictionary) -> void:
@@ -3511,40 +3997,79 @@ func _match_end_quick_review_error_message(result: Dictionary) -> String:
 	var request_error := int(error.get("request_error", result.get("request_error", 0)))
 	var diagnostic := ("%s %s" % [error_type, message]).to_lower()
 	if diagnostic.contains("timeout") or diagnostic.contains("timed out"):
-		return "AI 快评超时，已使用本地统计简评。"
+		return "AI 快评超时，已使用本地专业快评。"
 	if diagnostic.contains("connect") or diagnostic.contains("resolve") or diagnostic.contains("network") or diagnostic.contains("tls") or diagnostic.contains("no response"):
-		return "AI 服务暂时连接不上，已使用本地统计简评。"
+		return "AI 服务暂时连接不上，已使用本地专业快评。"
 	if http_code == 401 or http_code == 403:
-		return "AI 服务鉴权失败，已使用本地统计简评。请稍后检查 AI 设置里的 API Key。"
+		return "AI 服务鉴权失败，已使用本地专业快评。请稍后检查 AI 设置里的 API Key。"
 	if http_code == 429:
-		return "AI 服务请求过于频繁，已使用本地统计简评。"
+		return "AI 服务请求过于频繁，已使用本地专业快评。"
 	if http_code >= 500:
-		return "AI 服务暂时异常，已使用本地统计简评。"
+		return "AI 服务暂时异常，已使用本地专业快评。"
 	if http_code > 0:
-		return "AI 服务返回 %d，已使用本地统计简评。" % http_code
+		return "AI 服务返回 %d，已使用本地专业快评。" % http_code
 	if request_error != OK:
-		return "AI 快评请求未能发出，已使用本地统计简评。"
-	return "AI 快评暂不可用，已使用本地统计简评。"
+		return "AI 快评请求未能发出，已使用本地专业快评。"
+	return "AI 快评暂不可用，已使用本地专业快评。"
 
 
 func _local_match_end_quick_review() -> Dictionary:
-	var is_win := _battle_review_winner_index == _view_player
-	var score := 58
-	var player_stats: Dictionary = _match_end_stats.get("view_player", {})
-	var opponent_stats: Dictionary = _match_end_stats.get("opponent", {})
-	score += 18 if is_win else -4
-	score += (int(player_stats.get("prizes_taken", 0)) - int(opponent_stats.get("prizes_taken", 0))) * 4
-	score += mini(10, int(player_stats.get("max_damage", 0)) / 30)
-	score = clampi(score, 35, 96)
+	var review_stats := _match_end_stats.duplicate(true)
+	_normalize_match_end_quick_review_stats(review_stats)
+	var subject_index := _match_end_quick_review_subject_player_index(review_stats)
+	var is_win := _battle_review_winner_index == subject_index
+	var player_stats: Dictionary = review_stats.get("view_player", {})
+	var opponent_stats: Dictionary = review_stats.get("opponent", {})
+	var prize_gap := int(player_stats.get("prizes_taken", 0)) - int(opponent_stats.get("prizes_taken", 0))
+	var score := 56
+	score += 14 if is_win else -8
+	score += prize_gap * 5
+	score += mini(8, int(player_stats.get("max_damage", 0)) / 40)
+	score += mini(6, int(player_stats.get("knockouts", 0)) * 2)
+	score += mini(6, int(player_stats.get("tempo_actions", 0)) / 2)
+	score = clampi(score, 32, 95)
+	var digest_context := _match_end_quick_review_digest_context()
+	var key_moment := _quick_review_primary_key_moment_text(digest_context.get("key_moments", []))
+	var headline := ""
+	var praise := ""
+	var improvement := ""
+	var next_goal := ""
+	if is_win:
+		headline = "主线兑现到位，奖赏节奏领先"
+		praise = "关键节点处理清楚：%s。" % key_moment if key_moment != "" else "奖赏推进、攻击兑现和终结节奏比较明确。"
+		improvement = "继续检查前两回合是否有更少资源消耗的同等攻击路线。"
+		next_goal = "下一盘保持主攻手成型速度，同时避免在攻击已成立后继续无效挖牌。"
+	else:
+		headline = "需要复盘关键窗口的资源顺序"
+		praise = "这盘至少留下了明确的复盘节点：%s。" % key_moment if key_moment != "" else "本局统计足够定位奖赏差和启动节奏问题。"
+		improvement = "优先倒推关键节点前一回合：是否应先找攻击手、能量、换位或保留干扰资源。"
+		next_goal = "下一盘把前两回合目标压缩成：稳定站场、完成能量路线、制造第一次有效击倒。"
 	return {
 		"status": "local",
 		"score": score,
 		"grade": _match_end_grade_for_score(score),
-		"headline": "胜利节奏不错" if is_win else "这盘有复盘价值",
-		"praise": "奖赏推进和终结点处理得比较明确。" if is_win else "至少保留了可复盘的数据，下一盘可以更早修正路线。",
-		"improvement": "继续留意关键资源是否提前兑现。" if is_win else "优先复盘前两回合的展开与奖赏路线。",
-		"next_goal": "下一盘保持同样的主线，同时减少无效点击。" if is_win else "下一盘把前两回合目标压缩成：站场、加速、制造第一次有效进攻。",
+		"headline": headline,
+		"praise": praise,
+		"improvement": improvement,
+		"next_goal": next_goal,
+		"key_moment": key_moment,
 	}
+
+
+func _quick_review_primary_key_moment_text(moments_variant: Variant) -> String:
+	if not (moments_variant is Array):
+		return ""
+	var moments: Array = moments_variant
+	for moment_variant: Variant in moments:
+		if not (moment_variant is Dictionary):
+			continue
+		var moment: Dictionary = moment_variant
+		var summary := str(moment.get("summary", "")).strip_edges()
+		if summary == "":
+			continue
+		var turn_number := int(moment.get("turn_number", 0))
+		return "第%d回合 %s" % [turn_number, summary] if turn_number > 0 else summary
+	return ""
 
 
 func _match_end_grade_for_score(score: int) -> String:
@@ -4580,7 +5105,7 @@ func _current_llm_wait_model_id() -> String:
 func _llm_wait_hud_text_for_model(model_id: String, turn_number: int, elapsed_sec: int, dot_count: int) -> String:
 	var model_name := _llm_wait_model_display_name(model_id)
 	var action := _llm_wait_action_text_for_model(model_id)
-	return "%s %s%s  第 %d 回合（%ds）" % [
+	return "%s %s%s  第 %d 回合 (%ds)" % [
 		model_name,
 		action,
 		".".repeat(maxi(1, dot_count)),

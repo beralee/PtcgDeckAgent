@@ -5,6 +5,9 @@ extends TestBase
 const DUSKNOIR_SCRIPT_PATH := "res://scripts/ai/DeckStrategyDragapultDusknoir.gd"
 const BANETTE_SCRIPT_PATH := "res://scripts/ai/DeckStrategyDragapultBanette.gd"
 const HYBRID_SCRIPT_PATH := "res://scripts/ai/DeckStrategyDragapultCharizard.gd"
+const AIStepResolverScript = preload("res://scripts/ai/AIStepResolver.gd")
+const HeadlessMatchBridgeScript = preload("res://scripts/ai/HeadlessMatchBridge.gd")
+const MCTSPlannerScript = preload("res://scripts/ai/MCTSPlanner.gd")
 const REQUIRED_METHODS := [
 	"get_strategy_id",
 	"get_signature_names",
@@ -158,6 +161,26 @@ func _best_slot_name(strategy: RefCounted, items: Array, step_id: String, contex
 	return best_name
 
 
+func _continuity_bonus_card_names(continuity: Dictionary, reason_fragment: String = "") -> Array[String]:
+	var names: Array[String] = []
+	var raw_bonuses: Variant = continuity.get("action_bonuses", [])
+	if not (raw_bonuses is Array):
+		return names
+	for raw_bonus: Variant in raw_bonuses:
+		if not (raw_bonus is Dictionary):
+			continue
+		var bonus := raw_bonus as Dictionary
+		var reason := str(bonus.get("reason", ""))
+		if reason_fragment != "" and not reason.contains(reason_fragment):
+			continue
+		var raw_names: Variant = bonus.get("card_names", [])
+		if not (raw_names is Array):
+			continue
+		for raw_name: Variant in raw_names:
+			names.append(str(raw_name))
+	return names
+
+
 func test_dragapult_strategy_scripts_load_and_implement_contract() -> String:
 	var checks: Array[String] = []
 	for entry: Dictionary in [
@@ -243,6 +266,241 @@ func test_dusknoir_search_item_prefers_rare_candy_when_dragapult_jump_is_live() 
 	)
 	return assert_eq(picked_name, "Rare Candy",
 		"The Dusknoir shell should use Arven/item search to jump straight into Dragapult ex when the payoff is already available")
+
+
+func test_dusknoir_opening_nest_ball_prefers_rotom_when_poffin_covers_seeds() -> String:
+	var strategy := _new_strategy(DUSKNOIR_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultDusknoir.gd should exist before opening Nest Ball priorities can be verified"
+	var gs := _make_game_state(1)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	player.hand.append(CardInstance.create(_make_trainer_cd("Buddy-Buddy Poffin"), 0))
+	player.deck.append(CardInstance.create(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0))
+	var items: Array = [
+		CardInstance.create(_make_pokemon_cd("Duskull", "Basic", "P", 60), 0),
+		CardInstance.create(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0),
+		CardInstance.create(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0),
+	]
+	var picked_name := _best_card_name(
+		strategy,
+		items,
+		"basic_pokemon",
+		{"game_state": gs, "player_index": 0, "all_items": items}
+	)
+	var nest_score: float = strategy.score_action_absolute(
+		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Nest Ball"), 0)},
+		gs,
+		0
+	)
+	return run_checks([
+		assert_eq(picked_name, "Rotom V", "Opening Nest Ball should find Rotom V because Poffin can cover Dreepy/Duskull seeds"),
+		assert_true(nest_score >= 400.0, "Opening Nest Ball should stay high-value when it unlocks Rotom V draw (got %f)" % nest_score),
+	])
+
+
+func test_dusknoir_opening_nest_ball_prefers_rotom_after_poffin_seeded_board() -> String:
+	var strategy := _new_strategy(DUSKNOIR_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultDusknoir.gd should exist before post-Poffin Nest Ball priorities can be verified"
+	var gs := _make_game_state(1)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd("Duskull", "Basic", "P", 60), 0))
+	player.deck.append(CardInstance.create(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0))
+	var items: Array = [
+		CardInstance.create(_make_pokemon_cd("Duskull", "Basic", "P", 60), 0),
+		CardInstance.create(_make_pokemon_cd("Tatsugiri", "Basic", "W", 70), 0),
+		CardInstance.create(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0),
+	]
+	var picked_name := _best_card_name(
+		strategy,
+		items,
+		"basic_pokemon",
+		{"game_state": gs, "player_index": 0, "all_items": items}
+	)
+	return assert_eq(picked_name, "Rotom V",
+		"Once Dreepy and Duskull are already seeded, Nest Ball should convert into Rotom V instead of padding another support Basic")
+
+
+func test_dusknoir_opening_nest_ball_still_finds_rotom_after_poffin_seeds_dreepy_only() -> String:
+	var strategy := _new_strategy(DUSKNOIR_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultDusknoir.gd should exist before post-Poffin Dreepy-only Nest Ball priorities can be verified"
+	var gs := _make_game_state(1)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0))
+	player.deck.append(CardInstance.create(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0))
+	var items: Array = [
+		CardInstance.create(_make_pokemon_cd("Duskull", "Basic", "P", 60), 0),
+		CardInstance.create(_make_pokemon_cd("Tatsugiri", "Basic", "W", 70), 0),
+		CardInstance.create(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0),
+	]
+	var picked_name := _best_card_name(
+		strategy,
+		items,
+		"basic_pokemon",
+		{"game_state": gs, "player_index": 0, "all_items": items}
+	)
+	return assert_eq(picked_name, "Rotom V",
+		"After Poffin uses both slots on Dreepy backups, Nest Ball should still convert into Rotom V instead of falling back to Duskull")
+
+
+func test_dusknoir_opening_nest_ball_still_finds_first_dreepy_before_rotom() -> String:
+	var strategy := _new_strategy(DUSKNOIR_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultDusknoir.gd should exist before first-Dreepy Nest Ball priorities can be verified"
+	var gs := _make_game_state(1)
+	var player: PlayerState = gs.players[0]
+	player.deck.append(CardInstance.create(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0))
+	var items: Array = [
+		CardInstance.create(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0),
+		CardInstance.create(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0),
+	]
+	var picked_name := _best_card_name(
+		strategy,
+		items,
+		"basic_pokemon",
+		{"game_state": gs, "player_index": 0, "all_items": items}
+	)
+	return assert_eq(picked_name, "Dreepy",
+		"Nest Ball should still find the first Dreepy before choosing Rotom V")
+
+
+func test_dusknoir_poffin_beats_rotom_terminal_draw_before_opening_seeds() -> String:
+	var strategy := _new_strategy(DUSKNOIR_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultDusknoir.gd should exist before opening Poffin-vs-Rotom ordering can be verified"
+	var gs := _make_game_state(1)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	var rotom := _make_slot(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0)
+	player.bench = [rotom]
+	player.hand.append(CardInstance.create(_make_trainer_cd("Buddy-Buddy Poffin"), 0))
+	player.deck.append(CardInstance.create(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0))
+	var poffin_score: float = strategy.score_action_absolute(
+		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Buddy-Buddy Poffin"), 0)},
+		gs,
+		0
+	)
+	var rotom_score: float = strategy.score_action_absolute(
+		{"kind": "use_ability", "source_slot": rotom},
+		gs,
+		0
+	)
+	return run_checks([
+		assert_true(poffin_score >= 500.0,
+			"Opening Poffin should stay a real setup action after Nest Ball finds Rotom V (got %f)" % poffin_score),
+		assert_true(poffin_score > rotom_score,
+			"Poffin must happen before Rotom V's terminal draw while backup Dreepy seeds are still missing (%f vs %f)" % [poffin_score, rotom_score]),
+	])
+
+
+func test_dusknoir_poffin_prefers_backup_dreepy_over_duskull_in_opening() -> String:
+	var strategy := _new_strategy(DUSKNOIR_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultDusknoir.gd should exist before opening Poffin target priorities can be verified"
+	var gs := _make_game_state(1)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	player.deck.append(CardInstance.create(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0))
+	var dreepy := CardInstance.create(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	var duskull := CardInstance.create(_make_pokemon_cd("Duskull", "Basic", "P", 60), 0)
+	var dreepy_score: float = strategy.score_interaction_target(
+		dreepy,
+		{"id": "buddy_poffin_pokemon"},
+		{"game_state": gs, "player_index": 0, "all_items": [dreepy, duskull]}
+	)
+	var duskull_score: float = strategy.score_interaction_target(
+		duskull,
+		{"id": "buddy_poffin_pokemon"},
+		{"game_state": gs, "player_index": 0, "all_items": [dreepy, duskull]}
+	)
+	return assert_true(dreepy_score > duskull_score,
+		"Opening Poffin should fill backup Dreepy lines before Duskull when the Dragapult line is thin (%f vs %f)" % [dreepy_score, duskull_score])
+
+
+func test_dusknoir_opening_fire_attach_beats_rotom_terminal_draw() -> String:
+	var strategy := _new_strategy(DUSKNOIR_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultDusknoir.gd should exist before opening attach-vs-Rotom ordering can be verified"
+	var gs := _make_game_state(1)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	var rotom := _make_slot(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0)
+	player.bench = [rotom]
+	var fire := CardInstance.create(_make_trainer_cd("Fire Energy", "Basic Energy"), 0)
+	fire.card_data.energy_provides = "R"
+	var attach_score: float = strategy.score_action_absolute(
+		{"kind": "attach_energy", "card": fire, "target_slot": player.active_pokemon},
+		gs,
+		0
+	)
+	var rotom_score: float = strategy.score_action_absolute(
+		{"kind": "use_ability", "source_slot": rotom},
+		gs,
+		0
+	)
+	return assert_true(attach_score > rotom_score,
+		"Opening should attach Fire to Dreepy before using Rotom V's terminal draw (%f vs %f)" % [attach_score, rotom_score])
+
+
+func test_dusknoir_second_turn_poffin_prefers_duskull_after_dreepy_lines_are_seeded() -> String:
+	var strategy := _new_strategy(DUSKNOIR_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultDusknoir.gd should exist before second-turn Duskull Poffin priorities can be verified"
+	var gs := _make_ready_dragapult_attack_state(3)
+	var player: PlayerState = gs.players[0]
+	player.bench.append(_make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0))
+	player.deck.append(CardInstance.create(_make_pokemon_cd("Duskull", "Basic", "P", 60), 0))
+	var dreepy := CardInstance.create(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	var duskull := CardInstance.create(_make_pokemon_cd("Duskull", "Basic", "P", 60), 0)
+	var dreepy_score: float = strategy.score_interaction_target(
+		dreepy,
+		{"id": "buddy_poffin_pokemon"},
+		{"game_state": gs, "player_index": 0, "all_items": [dreepy, duskull]}
+	)
+	var duskull_score: float = strategy.score_interaction_target(
+		duskull,
+		{"id": "buddy_poffin_pokemon"},
+		{"game_state": gs, "player_index": 0, "all_items": [dreepy, duskull]}
+	)
+	var poffin_score: float = strategy.score_action_absolute(
+		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Buddy-Buddy Poffin"), 0)},
+		gs,
+		0
+	)
+	var attack_score: float = strategy.score_action_absolute({"kind": "attack", "attack_index": 1}, gs, 0)
+	return run_checks([
+		assert_true(duskull_score > dreepy_score,
+			"Once multiple Dreepy lines are seeded, Poffin should pivot to Duskull follow-up (%f vs %f)" % [duskull_score, dreepy_score]),
+		assert_true(poffin_score > attack_score,
+			"Ready Dragapult should still use safe Poffin setup for Duskull before a nonterminal attack (%f vs %f)" % [poffin_score, attack_score]),
+	])
+
+
+func test_dusknoir_opening_retreat_does_not_discard_fire_from_dreepy_without_ready_attacker() -> String:
+	var strategy := _new_strategy(DUSKNOIR_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultDusknoir.gd should exist before opening retreat discipline can be verified"
+	var gs := _make_game_state(1)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	var fire := CardInstance.create(_make_trainer_cd("Fire Energy", "Basic Energy"), 0)
+	fire.card_data.energy_provides = "R"
+	player.active_pokemon.attached_energy.append(fire)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0))
+	var retreat_score: float = strategy.score_action_absolute({"kind": "retreat"}, gs, 0)
+	return assert_true(retreat_score <= -500.0,
+		"Opening should not retreat an energy-loaded Dreepy and discard the Fire needed for Dragapult setup (got %f)" % retreat_score)
 
 
 func test_dusknoir_search_tool_prefers_sparkling_crystal_when_dragapult_needs_one_attachment() -> String:
@@ -450,6 +708,88 @@ func test_dusknoir_turn_plan_does_not_fall_back_to_launch_shell_after_first_drag
 		"Once the first Dragapult ex is online, the turn intent should not fall back to launch_shell")
 
 
+func test_dusknoir_continuity_contract_bonuses_dreepy_search_before_noncritical_attack() -> String:
+	var strategy := _new_strategy(DUSKNOIR_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultDusknoir.gd should exist before continuity setup can be verified"
+	var gs := _make_ready_dragapult_attack_state(3)
+	var player: PlayerState = gs.players[0]
+	player.deck.append(CardInstance.create(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0))
+	var turn_contract: Dictionary = strategy.build_turn_contract(gs, 0, {"prompt_kind": "action_selection"})
+	var continuity: Dictionary = strategy.build_continuity_contract(gs, 0, turn_contract)
+	var debt: Dictionary = continuity.get("setup_debt", {}) if continuity.get("setup_debt", {}) is Dictionary else {}
+	var bonus_cards := _continuity_bonus_card_names(continuity, "backup_dragapult")
+	var dreepy := CardInstance.create(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	var dreepy_score: float = strategy.score_interaction_target(
+		dreepy,
+		{"id": "buddy_poffin_pokemon"},
+		{"game_state": gs, "player_index": 0, "all_items": [dreepy]}
+	)
+	return run_checks([
+		assert_true(strategy.has_method("build_continuity_contract"),
+			"Dragapult Dusknoir should expose the deck-local continuity contract hook"),
+		assert_true(bool(continuity.get("enabled", false)),
+			"Continuity contract should be enabled for valid Dragapult Dusknoir turns"),
+		assert_true(bool(continuity.get("safe_setup_before_attack", false)),
+			"Missing backup Dragapult lines should be marked as safe pre-attack setup before a nonlethal Phantom Dive"),
+		assert_true(bool(debt.get("needs_backup_dragapult_line", false)),
+			"A ready first Dragapult ex with no second line should record backup Dragapult setup debt"),
+		assert_false(bool(debt.get("needs_duskull_line", true)),
+			"Backup Dragapult debt should take priority before the Duskull support line"),
+		assert_true("Buddy-Buddy Poffin" in bonus_cards,
+			"Backup Dragapult continuity should bonus Buddy-Buddy Poffin"),
+		assert_true("Nest Ball" in bonus_cards,
+			"Backup Dragapult continuity should bonus Nest Ball search for Dreepy"),
+		assert_true("Ultra Ball" in bonus_cards,
+			"Backup Dragapult continuity should bonus Ultra Ball search for Dreepy"),
+		assert_eq(float(continuity.get("attack_penalty", -1.0)), 0.0,
+			"Deck-local continuity should leave terminal attack penalties to the shared layer"),
+		assert_true(dreepy_score >= 700.0,
+			"Buddy-Buddy Poffin target selection should still strongly prefer Dreepy while the second Dragapult line is missing (got %f)" % dreepy_score),
+	])
+
+
+func test_dusknoir_continuity_contract_pivots_poffin_to_duskull_after_two_dragapult_lines() -> String:
+	var strategy := _new_strategy(DUSKNOIR_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultDusknoir.gd should exist before Duskull continuity setup can be verified"
+	var gs := _make_ready_dragapult_attack_state(3)
+	var player: PlayerState = gs.players[0]
+	player.bench.append(_make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0))
+	player.deck.append(CardInstance.create(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0))
+	player.deck.append(CardInstance.create(_make_pokemon_cd("Duskull", "Basic", "P", 60), 0))
+	var continuity: Dictionary = strategy.build_continuity_contract(gs, 0, strategy.build_turn_contract(gs, 0))
+	var debt: Dictionary = continuity.get("setup_debt", {}) if continuity.get("setup_debt", {}) is Dictionary else {}
+	var duskull_bonus_cards := _continuity_bonus_card_names(continuity, "duskull")
+	var backup_bonus_cards := _continuity_bonus_card_names(continuity, "backup_dragapult")
+	var dreepy := CardInstance.create(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	var duskull := CardInstance.create(_make_pokemon_cd("Duskull", "Basic", "P", 60), 0)
+	var dreepy_score: float = strategy.score_interaction_target(
+		dreepy,
+		{"id": "buddy_poffin_pokemon"},
+		{"game_state": gs, "player_index": 0, "all_items": [dreepy, duskull]}
+	)
+	var duskull_score: float = strategy.score_interaction_target(
+		duskull,
+		{"id": "buddy_poffin_pokemon"},
+		{"game_state": gs, "player_index": 0, "all_items": [dreepy, duskull]}
+	)
+	return run_checks([
+		assert_false(bool(debt.get("needs_backup_dragapult_line", true)),
+			"Once Dragapult ex plus one backup Dreepy line exist, continuity should stop asking for more Dreepy lines"),
+		assert_true(bool(debt.get("needs_duskull_line", false)),
+			"After two Dragapult lines are present, missing Duskull should become the remaining setup debt"),
+		assert_true("Buddy-Buddy Poffin" in duskull_bonus_cards,
+			"Duskull continuity should keep Buddy-Buddy Poffin live before a noncritical attack"),
+		assert_false("Nest Ball" in duskull_bonus_cards or "Ultra Ball" in duskull_bonus_cards,
+			"Duskull continuity should not advertise Nest Ball or Ultra Ball as Duskull setup routes"),
+		assert_true(backup_bonus_cards.is_empty(),
+			"Two Dragapult lines should clear backup-Dreepy continuity bonuses"),
+		assert_true(duskull_score > dreepy_score,
+			"Buddy-Buddy Poffin target selection should pivot from Dreepy to Duskull once two Dragapult lines are seeded (%f vs %f)" % [duskull_score, dreepy_score]),
+	])
+
+
 func test_dusknoir_poffin_cools_once_first_dragapult_is_online() -> String:
 	var strategy := _new_strategy(DUSKNOIR_SCRIPT_PATH)
 	if strategy == null:
@@ -470,13 +810,36 @@ func test_dusknoir_poffin_cools_once_first_dragapult_is_online() -> String:
 	player.active_pokemon.attached_energy[-1].card_data.energy_provides = "R"
 	player.active_pokemon.attached_energy.append(CardInstance.create(_make_trainer_cd("Psychic Energy", "Basic Energy"), 0))
 	player.active_pokemon.attached_energy[-1].card_data.energy_provides = "P"
+	player.bench.append(_make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0))
 	var poffin_score: float = strategy.score_action_absolute(
 		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Buddy-Buddy Poffin"), 0)},
 		gs,
 		0
 	)
 	return assert_true(poffin_score <= 40.0,
-		"Once the first Dragapult ex is already online, Buddy-Buddy Poffin should cool off instead of re-entering the shell loop (got %f)" % poffin_score)
+		"Once the first Dragapult ex and backup Dreepy lines are already online, Buddy-Buddy Poffin should cool off instead of re-entering the shell loop (got %f)" % poffin_score)
+
+
+func test_dusknoir_ready_dragapult_uses_poffin_before_nonlethal_attack_when_backups_missing() -> String:
+	var strategy := _new_strategy(DUSKNOIR_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultDusknoir.gd should exist before attack-before-setup ordering can be verified"
+	var gs := _make_ready_dragapult_attack_state(3)
+	var player: PlayerState = gs.players[0]
+	player.deck.append(CardInstance.create(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0))
+	var poffin_score: float = strategy.score_action_absolute(
+		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Buddy-Buddy Poffin"), 0)},
+		gs,
+		0
+	)
+	var attack_score: float = strategy.score_action_absolute({"kind": "attack", "attack_index": 1}, gs, 0)
+	return run_checks([
+		assert_true(poffin_score >= 1100.0,
+			"With a ready Dragapult but no backup Dreepy lines, Poffin should be treated as safe pre-attack setup (got %f)" % poffin_score),
+		assert_true(poffin_score > attack_score,
+			"Nonlethal Phantom Dive should wait until Poffin seeds backup Dreepy lines (%f vs %f)" % [poffin_score, attack_score]),
+	])
 
 
 func test_dusknoir_rotom_draw_goes_dead_once_ready_dragapult_and_support_shell_are_online() -> String:
@@ -551,6 +914,60 @@ func test_dusknoir_extra_support_benching_goes_dead_once_ready_dragapult_is_onli
 		"Once Dragapult ex is already converting and the support shell exists, extra support basics should stop looking like productive setup (got %f)" % score)
 
 
+func test_dusknoir_bench_energy_only_goes_to_dragapult_lane() -> String:
+	var strategy := _new_strategy(DUSKNOIR_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultDusknoir.gd should exist before bench energy discipline can be verified"
+	var gs := _make_game_state(4)
+	var player: PlayerState = gs.players[0]
+	var dreepy := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	var rotom := _make_slot(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0)
+	var duskull := _make_slot(_make_pokemon_cd("Duskull", "Basic", "P", 60), 0)
+	player.bench = [dreepy, rotom, duskull]
+	var psychic := CardInstance.create(_make_trainer_cd("Psychic Energy", "Basic Energy"), 0)
+	psychic.card_data.energy_provides = "P"
+	var dreepy_score: float = strategy.score_action_absolute({"kind": "attach_energy", "card": psychic, "target_slot": dreepy}, gs, 0)
+	var rotom_score: float = strategy.score_action_absolute({"kind": "attach_energy", "card": psychic, "target_slot": rotom}, gs, 0)
+	var duskull_score: float = strategy.score_action_absolute({"kind": "attach_energy", "card": psychic, "target_slot": duskull}, gs, 0)
+	return run_checks([
+		assert_true(dreepy_score >= 300.0,
+			"Benched energy should remain productive on the Dragapult lane (got %f)" % dreepy_score),
+		assert_true(rotom_score <= 0.0,
+			"Benched Rotom V should not receive manual energy unless it is active and retreating (got %f)" % rotom_score),
+		assert_true(duskull_score <= 0.0,
+			"Benched Duskull/Dusknoir support line should not receive manual energy (got %f)" % duskull_score),
+	])
+
+
+func test_dusknoir_active_support_can_receive_energy_only_to_retreat() -> String:
+	var strategy := _new_strategy(DUSKNOIR_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultDusknoir.gd should exist before active retreat energy discipline can be verified"
+	var gs := _make_game_state(5)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V", [], [], 1), 0)
+	var dragapult := _make_slot(_make_pokemon_cd(
+		"Dragapult ex",
+		"Stage 2",
+		"P",
+		320,
+		"Drakloak",
+		"ex",
+		[],
+		[{"name": "Phantom Dive", "cost": "RP", "damage": "200"}]
+	), 0)
+	dragapult.attached_energy.append(CardInstance.create(_make_trainer_cd("Fire Energy", "Basic Energy"), 0))
+	dragapult.attached_energy[-1].card_data.energy_provides = "R"
+	dragapult.attached_energy.append(CardInstance.create(_make_trainer_cd("Psychic Energy", "Basic Energy"), 0))
+	dragapult.attached_energy[-1].card_data.energy_provides = "P"
+	player.bench.append(dragapult)
+	var psychic := CardInstance.create(_make_trainer_cd("Psychic Energy 2", "Basic Energy"), 0)
+	psychic.card_data.energy_provides = "P"
+	var score: float = strategy.score_action_absolute({"kind": "attach_energy", "card": psychic, "target_slot": player.active_pokemon}, gs, 0)
+	return assert_true(score >= 250.0,
+		"Active support Pokemon may receive energy only when it immediately pays retreat into the attacker (got %f)" % score)
+
+
 func test_dusknoir_counter_distribution_prefers_damaged_bench_pickoff() -> String:
 	var strategy := _new_strategy(DUSKNOIR_SCRIPT_PATH)
 	if strategy == null:
@@ -568,6 +985,25 @@ func test_dusknoir_counter_distribution_prefers_damaged_bench_pickoff() -> Strin
 	)
 	return assert_eq(picked_name, "Pidgey",
 		"The Dusknoir shell should spend spread counters to finish a damaged bench prize first")
+
+
+func test_dusknoir_bench_target_alias_uses_phantom_counter_distribution() -> String:
+	var strategy := _new_strategy(DUSKNOIR_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultDusknoir.gd should exist before bench-target alias scoring can be verified"
+	var gs := _make_game_state(5)
+	var weak_bench := _make_slot(_make_pokemon_cd("Pidgey", "Basic", "C", 60), 1)
+	weak_bench.damage_counters = 50
+	var healthy_bench := _make_slot(_make_pokemon_cd("Squawkabilly ex", "Basic", "C", 160, "", "ex"), 1)
+	var targets: Array = [healthy_bench, weak_bench]
+	var picked_name := _best_slot_name(
+		strategy,
+		targets,
+		"bench_target",
+		{"game_state": gs, "player_index": 0, "all_items": targets}
+	)
+	return assert_eq(picked_name, "Pidgey",
+		"The real Phantom Dive bench_target step should use the same damaged-bench pickoff policy as counter distribution")
 
 
 func test_dusknoir_attack_values_phantom_dive_when_bench_pickoffs_exist() -> String:
@@ -628,6 +1064,8 @@ func test_dusknoir_phantom_dive_decisively_outranks_jet_head_once_online() -> St
 	return run_checks([
 		assert_true(phantom_score > jet_score,
 			"Once Dragapult ex can use Phantom Dive, the Dusknoir shell should not fall back to Jet Head"),
+		assert_true(jet_score <= -500.0,
+			"Jet Head should be hard-banned once Phantom Dive is online (got %f)" % jet_score),
 		assert_true(phantom_score - jet_score >= 300.0,
 			"Phantom Dive should have a decisive margin over Jet Head once both Energy are online"),
 	])
@@ -640,8 +1078,12 @@ func test_dusknoir_scores_localized_dragapult_attack_index_as_phantom_dive() -> 
 	var gs := _make_ready_dragapult_attack_state()
 	var phantom_score: float = strategy.score_action_absolute({"kind": "attack", "attack_index": 1}, gs, 0)
 	var jet_score: float = strategy.score_action_absolute({"kind": "attack", "attack_index": 0}, gs, 0)
-	return assert_true(phantom_score > jet_score,
-		"Localized Dragapult ex actions with only attack_index should still prefer the 200-damage Phantom Dive over Jet Head")
+	return run_checks([
+		assert_true(phantom_score > jet_score,
+			"Localized Dragapult ex actions with only attack_index should still prefer the 200-damage Phantom Dive over Jet Head"),
+		assert_true(jet_score <= -500.0,
+			"Localized Jet Head should also be hard-banned once Phantom Dive is online (got %f)" % jet_score),
+	])
 
 
 func test_banette_search_prefers_banette_shell_over_dusknoir_shell() -> String:
@@ -828,6 +1270,156 @@ func test_hybrid_opening_prefers_dreepy_active_over_support_rule_box() -> String
 	])
 
 
+func test_hybrid_early_bench_second_dreepy_before_support_basic() -> String:
+	var strategy := _new_strategy(HYBRID_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultCharizard.gd should exist before early Dreepy benching can be verified"
+	var gs := _make_game_state(2)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd("Charmander", "Basic", "R", 70), 0))
+	var dreepy_score: float = strategy.score_action_absolute(
+		{"kind": "play_basic_to_bench", "card": CardInstance.create(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)},
+		gs,
+		0
+	)
+	var rotom_score: float = strategy.score_action_absolute(
+		{"kind": "play_basic_to_bench", "card": CardInstance.create(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0)},
+		gs,
+		0
+	)
+	return run_checks([
+		assert_true(dreepy_score >= 420.0,
+			"Early hybrid setup should bench a second Dragapult seed while there is only one Dreepy line (got %f)" % dreepy_score),
+		assert_true(dreepy_score > rotom_score,
+			"Early second Dreepy should outrank support basics before the Dragapult line is stable"),
+	])
+
+
+func test_hybrid_continuity_contract_seeds_charizard_after_ready_dragapult() -> String:
+	var strategy := _new_strategy(HYBRID_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultCharizard.gd should exist before hybrid continuity setup can be verified"
+	var gs := _make_ready_dragapult_attack_state(4)
+	var player: PlayerState = gs.players[0]
+	player.bench.clear()
+	var continuity: Dictionary = strategy.build_continuity_contract(gs, 0, {})
+	var debt: Dictionary = continuity.get("setup_debt", {}) if continuity.get("setup_debt", {}) is Dictionary else {}
+	var needed_basics: Array = debt.get("needed_basics", []) if debt.get("needed_basics", []) is Array else []
+	var bonus_cards := _continuity_bonus_card_names(continuity, "Charizard")
+	var items: Array = [
+		CardInstance.create(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0),
+		CardInstance.create(_make_pokemon_cd("Charmander", "Basic", "R", 70), 0),
+		CardInstance.create(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0),
+	]
+	var picked_name := _best_card_name(
+		strategy,
+		items,
+		"basic_pokemon",
+		{"game_state": gs, "player_index": 0, "all_items": items}
+	)
+	var charmander_score: float = strategy.score_action_absolute(
+		{"kind": "play_basic_to_bench", "card": CardInstance.create(_make_pokemon_cd("Charmander", "Basic", "R", 70), 0)},
+		gs,
+		0
+	)
+	var dreepy_score: float = strategy.score_action_absolute(
+		{"kind": "play_basic_to_bench", "card": CardInstance.create(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)},
+		gs,
+		0
+	)
+	return run_checks([
+		assert_true(bool(continuity.get("enabled", false)),
+			"Continuity contract should be enabled for valid Dragapult Charizard turns"),
+		assert_true(bool(continuity.get("safe_setup_before_attack", false)),
+			"Ready Dragapult ex should still request safe setup before terminal attack while Charizard is missing"),
+		assert_eq(str(debt.get("lane", "")), "charizard",
+			"Ready Dragapult ex should create Charizard-line setup debt"),
+		assert_true("Charmander" in needed_basics,
+			"Charizard-line setup debt should request a real Charmander seed"),
+		assert_true("Charmander" in bonus_cards,
+			"Continuity contract should bonus benching Charmander before attacking"),
+		assert_true("Buddy-Buddy Poffin" in bonus_cards,
+			"Continuity contract should bonus search trainers that find the missing Charmander"),
+		assert_eq(picked_name, "Charmander",
+			"After first Dragapult ex is made, single Basic search should pivot to Charmander instead of padding Dreepy/support"),
+		assert_true(charmander_score > dreepy_score,
+			"After first Dragapult ex is made, benching Charmander should outrank padding another Dreepy (%f vs %f)" % [charmander_score, dreepy_score]),
+	])
+
+
+func test_hybrid_continuity_contract_seeds_dragapult_after_ready_charizard() -> String:
+	var strategy := _new_strategy(HYBRID_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultCharizard.gd should exist before reverse hybrid continuity setup can be verified"
+	var gs := _make_game_state(5)
+	var player: PlayerState = gs.players[0]
+	var charizard := _make_slot(_make_pokemon_cd(
+		"Charizard ex",
+		"Stage 2",
+		"R",
+		330,
+		"Charmeleon",
+		"ex",
+		[],
+		[{"name": "Burning Darkness", "cost": "RR", "damage": "180"}]
+	), 0)
+	charizard.attached_energy.append(CardInstance.create(_make_trainer_cd("Fire Energy A", "Basic Energy"), 0))
+	charizard.attached_energy[-1].card_data.energy_provides = "R"
+	charizard.attached_energy.append(CardInstance.create(_make_trainer_cd("Fire Energy B", "Basic Energy"), 0))
+	charizard.attached_energy[-1].card_data.energy_provides = "R"
+	player.active_pokemon = charizard
+	player.bench.clear()
+	var continuity: Dictionary = strategy.build_continuity_contract(gs, 0, {})
+	var debt: Dictionary = continuity.get("setup_debt", {}) if continuity.get("setup_debt", {}) is Dictionary else {}
+	var needed_basics: Array = debt.get("needed_basics", []) if debt.get("needed_basics", []) is Array else []
+	var bonus_cards := _continuity_bonus_card_names(continuity, "Dragapult")
+	var items: Array = [
+		CardInstance.create(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0),
+		CardInstance.create(_make_pokemon_cd("Charmander", "Basic", "R", 70), 0),
+		CardInstance.create(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0),
+	]
+	var picked_name := _best_card_name(
+		strategy,
+		items,
+		"basic_pokemon",
+		{"game_state": gs, "player_index": 0, "all_items": items}
+	)
+	return run_checks([
+		assert_true(bool(continuity.get("safe_setup_before_attack", false)),
+			"Ready Charizard ex should still request safe setup before terminal attack while Dragapult is missing"),
+		assert_eq(str(debt.get("lane", "")), "dragapult",
+			"Ready Charizard ex should create Dragapult-line setup debt"),
+		assert_true("Dreepy" in needed_basics,
+			"Dragapult-line setup debt should request a real Dreepy seed"),
+		assert_true("Dreepy" in bonus_cards,
+			"Continuity contract should bonus benching Dreepy before attacking"),
+		assert_true("Lance" in bonus_cards,
+			"Continuity contract should bonus Dragon search that repairs the Dragapult line"),
+		assert_eq(picked_name, "Dreepy",
+			"After first Charizard ex is made, single Basic search should pivot to Dreepy instead of padding fire/support"),
+	])
+
+
+func test_hybrid_continuity_contract_keeps_phantom_dive_attack_penalty_neutral() -> String:
+	var strategy := _new_strategy(HYBRID_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultCharizard.gd should exist before Phantom Dive continuity can be verified"
+	var gs := _make_ready_dragapult_attack_state(5)
+	var continuity: Dictionary = strategy.build_continuity_contract(gs, 0, {})
+	var phantom_score: float = strategy.score_action_absolute({"kind": "attack", "attack_index": 1}, gs, 0)
+	var jet_score: float = strategy.score_action_absolute({"kind": "attack", "attack_index": 0}, gs, 0)
+	return run_checks([
+		assert_eq(float(continuity.get("attack_penalty", -1.0)), 0.0,
+			"Deck-local continuity should not apply a blanket attack penalty that can disturb Phantom Dive selection"),
+		assert_true(phantom_score > jet_score,
+			"Phantom Dive must remain the preferred Dragapult ex attack while continuity setup exists"),
+		assert_true(jet_score <= -500.0,
+			"Jet Head should remain hard-banned once Phantom Dive is online (got %f)" % jet_score),
+	])
+
+
 func test_hybrid_scores_rare_candy_for_charizard_stabilization() -> String:
 	var strategy := _new_strategy(HYBRID_SCRIPT_PATH)
 	if strategy == null:
@@ -966,6 +1558,123 @@ func test_hybrid_attach_energy_prefers_dragapult_lane_before_charizard_finisher(
 		"Before Charizard is stabilized, the hybrid shell should invest early manual energy into the Dragapult pressure lane")
 
 
+func test_hybrid_bench_energy_only_goes_to_dragapult_or_charizard_lanes() -> String:
+	var strategy := _new_strategy(HYBRID_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultCharizard.gd should exist before hybrid bench energy discipline can be verified"
+	var gs := _make_game_state(4)
+	var player: PlayerState = gs.players[0]
+	var dreepy := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	var charmander := _make_slot(_make_pokemon_cd("Charmander", "Basic", "R", 70), 0)
+	var rotom := _make_slot(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0)
+	var fez := _make_slot(_make_pokemon_cd("Fezandipiti ex", "Basic", "D", 210, "", "ex"), 0)
+	player.bench = [dreepy, charmander, rotom, fez]
+	var fire := CardInstance.create(_make_trainer_cd("Fire Energy", "Basic Energy"), 0)
+	fire.card_data.energy_provides = "R"
+	var dreepy_score: float = strategy.score_action_absolute({"kind": "attach_energy", "card": fire, "target_slot": dreepy}, gs, 0)
+	var charmander_score: float = strategy.score_action_absolute({"kind": "attach_energy", "card": fire, "target_slot": charmander}, gs, 0)
+	var rotom_score: float = strategy.score_action_absolute({"kind": "attach_energy", "card": fire, "target_slot": rotom}, gs, 0)
+	var fez_score: float = strategy.score_action_absolute({"kind": "attach_energy", "card": fire, "target_slot": fez}, gs, 0)
+	return run_checks([
+		assert_true(dreepy_score > 0.0,
+			"Benched energy should remain available for the Dragapult lane"),
+		assert_true(charmander_score > 0.0,
+			"Benched energy should remain available for the Charizard lane"),
+		assert_true(rotom_score <= 0.0,
+			"Benched Rotom V should not receive manual energy unless active-retreating (got %f)" % rotom_score),
+		assert_true(fez_score <= 0.0,
+			"Benched Fezandipiti ex should not receive manual energy unless active-retreating (got %f)" % fez_score),
+	])
+
+
+func test_hybrid_opening_fire_attach_prefers_active_dreepy_over_benched_manaphy() -> String:
+	var strategy := _new_strategy(HYBRID_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultCharizard.gd should exist before opening Fire attachment routing can be verified"
+	var gs := _make_game_state(1)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	var manaphy := _make_slot(_make_pokemon_cd("Manaphy", "Basic", "W", 70), 0)
+	player.bench = [manaphy]
+	var fire := CardInstance.create(_make_trainer_cd("Fire Energy", "Basic Energy"), 0)
+	fire.card_data.energy_provides = "R"
+	var active_score: float = strategy.score_action_absolute({"kind": "attach_energy", "card": fire, "target_slot": player.active_pokemon}, gs, 0)
+	var manaphy_score: float = strategy.score_action_absolute({"kind": "attach_energy", "card": fire, "target_slot": manaphy}, gs, 0)
+	return run_checks([
+		assert_true(active_score >= 300.0,
+			"Opening Fire attachment should build the active Dreepy/Dragapult lane (got %f)" % active_score),
+		assert_true(manaphy_score <= -5000.0,
+			"Benched Manaphy must be hard-banned as an Energy target when it is not active-retreating (got %f)" % manaphy_score),
+		assert_true(active_score > manaphy_score,
+			"Active Dreepy should decisively outrank benched Manaphy for opening Fire attachment"),
+	])
+
+
+func test_hybrid_mcts_ranking_uses_deck_strategy_to_block_benched_fezandipiti_energy() -> String:
+	var strategy := _new_strategy(HYBRID_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultCharizard.gd should exist before MCTS strategy ranking can be verified"
+	var gs := _make_game_state(1)
+	var gsm := GameStateMachine.new()
+	gsm.game_state = gs
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	var fez := _make_slot(_make_pokemon_cd("Fezandipiti ex", "Basic", "D", 210, "", "ex"), 0)
+	player.bench = [fez]
+	var fire := CardInstance.create(_make_trainer_cd("Fire Energy", "Basic Energy"), 0)
+	fire.card_data.energy_provides = "R"
+	var active_attach := {"kind": "attach_energy", "card": fire, "target_slot": player.active_pokemon}
+	var fez_attach := {"kind": "attach_energy", "card": fire, "target_slot": fez}
+	var planner = MCTSPlannerScript.new()
+	planner.deck_strategy = strategy
+	var ranked: Array = planner._score_and_rank_actions(gsm, 0, [fez_attach, active_attach])
+	var active_score := -INF
+	var fez_score := INF
+	for entry: Dictionary in ranked:
+		var action: Dictionary = entry.get("action", {})
+		if action.get("target_slot") == player.active_pokemon:
+			active_score = float(entry.get("score", 0.0))
+		if action.get("target_slot") == fez:
+			fez_score = float(entry.get("score", 0.0))
+	return run_checks([
+		assert_true(active_score > 0.0,
+			"MCTS should keep productive Fire attachment to the Dragapult lane positive (got %f)" % active_score),
+		assert_true(fez_score <= -5000.0,
+			"MCTS ranking must consume deck-local attach bans and reject benched Fezandipiti ex energy (got %f)" % fez_score),
+		assert_true(active_score > fez_score,
+			"MCTS top-K ranking should not let generic attach heuristics outrank deck-local support-target bans"),
+	])
+
+
+func test_hybrid_active_support_can_receive_energy_only_to_retreat() -> String:
+	var strategy := _new_strategy(HYBRID_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultCharizard.gd should exist before hybrid active retreat energy discipline can be verified"
+	var gs := _make_game_state(5)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V", [], [], 1), 0)
+	var dragapult := _make_slot(_make_pokemon_cd(
+		"Dragapult ex",
+		"Stage 2",
+		"P",
+		320,
+		"Drakloak",
+		"ex",
+		[],
+		[{"name": "Phantom Dive", "cost": "RP", "damage": "200"}]
+	), 0)
+	dragapult.attached_energy.append(CardInstance.create(_make_trainer_cd("Fire Energy", "Basic Energy"), 0))
+	dragapult.attached_energy[-1].card_data.energy_provides = "R"
+	dragapult.attached_energy.append(CardInstance.create(_make_trainer_cd("Psychic Energy", "Basic Energy"), 0))
+	dragapult.attached_energy[-1].card_data.energy_provides = "P"
+	player.bench.append(dragapult)
+	var fire := CardInstance.create(_make_trainer_cd("Fire Energy 2", "Basic Energy"), 0)
+	fire.card_data.energy_provides = "R"
+	var score: float = strategy.score_action_absolute({"kind": "attach_energy", "card": fire, "target_slot": player.active_pokemon}, gs, 0)
+	return assert_true(score >= 250.0,
+		"Active support Pokemon may receive energy only when it immediately pays retreat into a real attacker (got %f)" % score)
+
+
 func test_hybrid_attach_energy_pivots_to_charizard_when_dragapult_lane_is_already_online() -> String:
 	var strategy := _new_strategy(HYBRID_SCRIPT_PATH)
 	if strategy == null:
@@ -1083,6 +1792,8 @@ func test_hybrid_attack_prefers_phantom_dive_once_it_is_live() -> String:
 	return run_checks([
 		assert_true(phantom_score > jet_score,
 			"Once Dragapult ex can use Phantom Dive, the hybrid shell should not fall back to its lower-pressure first attack"),
+		assert_true(jet_score <= -500.0,
+			"The hybrid shell should hard-ban Jet Head once Phantom Dive is online (got %f)" % jet_score),
 		assert_true(phantom_score - jet_score >= 300.0,
 			"Phantom Dive should have a decisive margin over the first attack once both Energy are online"),
 	])
@@ -1095,8 +1806,128 @@ func test_hybrid_scores_localized_dragapult_attack_index_as_phantom_dive() -> St
 	var gs := _make_ready_dragapult_attack_state()
 	var phantom_score: float = strategy.score_action_absolute({"kind": "attack", "attack_index": 1}, gs, 0)
 	var jet_score: float = strategy.score_action_absolute({"kind": "attack", "attack_index": 0}, gs, 0)
-	return assert_true(phantom_score > jet_score,
-		"Localized Dragapult/Charizard actions with only attack_index should still prefer Phantom Dive over Jet Head")
+	return run_checks([
+		assert_true(phantom_score > jet_score,
+			"Localized Dragapult/Charizard actions with only attack_index should still prefer Phantom Dive over Jet Head"),
+		assert_true(jet_score <= -500.0,
+			"Localized hybrid Jet Head should also be hard-banned once Phantom Dive is online (got %f)" % jet_score),
+	])
+
+
+func test_hybrid_counter_distribution_prefers_damaged_bench_pickoff() -> String:
+	var strategy := _new_strategy(HYBRID_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultCharizard.gd should exist before hybrid bench-target scoring can be verified"
+	var gs := _make_game_state(5)
+	var weak_bench := _make_slot(_make_pokemon_cd("Pidgey", "Basic", "C", 60), 1)
+	weak_bench.damage_counters = 50
+	var healthy_bench := _make_slot(_make_pokemon_cd("Squawkabilly ex", "Basic", "C", 160, "", "ex"), 1)
+	var targets: Array = [healthy_bench, weak_bench]
+	var picked_name := _best_slot_name(
+		strategy,
+		targets,
+		"bench_target",
+		{"game_state": gs, "player_index": 0, "all_items": targets}
+	)
+	return assert_eq(picked_name, "Pidgey",
+		"The hybrid shell should spend Phantom Dive bench counters to finish a damaged bench prize first")
+
+
+func test_counter_distribution_resolver_splits_multiple_bench_kos() -> String:
+	var strategy := _new_strategy(DUSKNOIR_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultDusknoir.gd should exist before resolver counter distribution can be verified"
+	var resolver = AIStepResolverScript.new()
+	resolver.set_deck_strategy(strategy)
+	var gs := _make_game_state(5)
+	var damaged_a := _make_slot(_make_pokemon_cd("Pidgey", "Basic", "C", 60), 1)
+	damaged_a.damage_counters = 30
+	var damaged_b := _make_slot(_make_pokemon_cd("Sobble", "Basic", "W", 60), 1)
+	damaged_b.damage_counters = 30
+	var healthy_ex := _make_slot(_make_pokemon_cd("Squawkabilly ex", "Basic", "C", 160, "", "ex"), 1)
+	var targets: Array = [healthy_ex, damaged_a, damaged_b]
+	var assignments: Array = resolver._build_counter_distribution_assignments(
+		targets,
+		6,
+		{"id": "bench_damage_counters"},
+		{"game_state": gs, "player_index": 0, "all_items": targets},
+		[]
+	)
+	var assigned_by_name := {}
+	for assignment: Dictionary in assignments:
+		var target_variant: Variant = assignment.get("target", null)
+		if target_variant is PokemonSlot:
+			var target := target_variant as PokemonSlot
+			assigned_by_name[target.get_pokemon_name()] = int(assignment.get("amount", 0))
+	return run_checks([
+		assert_eq(assigned_by_name.get("Pidgey", 0), 30,
+			"Resolver should spend exactly 3 counters to finish the first damaged bench Pokemon"),
+		assert_eq(assigned_by_name.get("Sobble", 0), 30,
+			"Resolver should split Phantom Dive counters to finish the second damaged bench Pokemon instead of overkilling one target"),
+		assert_eq(assigned_by_name.get("Squawkabilly ex", 0), 0,
+			"Resolver should not pressure a healthy ex before available exact bench KOs"),
+	])
+
+
+func test_counter_distribution_resolver_uses_leftover_on_next_best_target() -> String:
+	var strategy := _new_strategy(HYBRID_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultCharizard.gd should exist before resolver leftover counter routing can be verified"
+	var resolver = AIStepResolverScript.new()
+	resolver.set_deck_strategy(strategy)
+	var gs := _make_game_state(5)
+	var damaged_prize := _make_slot(_make_pokemon_cd("Pidgey", "Basic", "C", 60), 1)
+	damaged_prize.damage_counters = 30
+	var pressure_target := _make_slot(_make_pokemon_cd("Squawkabilly ex", "Basic", "C", 160, "", "ex"), 1)
+	var low_value_target := _make_slot(_make_pokemon_cd("Bidoof", "Basic", "C", 70), 1)
+	var targets: Array = [pressure_target, damaged_prize, low_value_target]
+	var assignments: Array = resolver._build_counter_distribution_assignments(
+		targets,
+		6,
+		{"id": "bench_damage_counters"},
+		{"game_state": gs, "player_index": 0, "all_items": targets},
+		[]
+	)
+	var assigned_by_name := {}
+	for assignment: Dictionary in assignments:
+		var target_variant: Variant = assignment.get("target", null)
+		if target_variant is PokemonSlot:
+			var target := target_variant as PokemonSlot
+			assigned_by_name[target.get_pokemon_name()] = int(assignment.get("amount", 0))
+	return run_checks([
+		assert_eq(assigned_by_name.get("Pidgey", 0), 30,
+			"Resolver should first reserve exact counters for the available bench KO"),
+		assert_eq(assigned_by_name.get("Squawkabilly ex", 0), 30,
+			"Resolver should put leftover counters on the highest-value surviving target"),
+		assert_eq(assigned_by_name.get("Bidoof", 0), 0,
+			"Resolver should not scatter leftover counters onto lower-value healthy targets"),
+	])
+
+
+func test_counter_distribution_resolver_skips_when_no_surviving_targets_remain() -> String:
+	var resolver = AIStepResolverScript.new()
+	var bridge = HeadlessMatchBridgeScript.new()
+	var defeated_target := _make_slot(_make_pokemon_cd("Squawkabilly ex", "Basic", "C", 160, "", "ex"), 1)
+	defeated_target.damage_counters = 16
+	var step := {
+		"id": "bench_damage_counters",
+		"ui_mode": "counter_distribution",
+		"total_counters": 6,
+		"target_items": [defeated_target],
+	}
+	bridge.set("_pending_choice", "effect_interaction")
+	bridge.set("_pending_effect_steps", [step])
+	bridge.set("_pending_effect_step_index", 0)
+	bridge.set("_field_interaction_mode", "counter_distribution")
+	bridge.set("_field_interaction_data", step)
+	var resolved: bool = resolver._resolve_counter_distribution_step(bridge, step, {}, [])
+	var context: Dictionary = bridge.get("_pending_effect_context")
+	var assignments: Array = context.get("bench_damage_counters", [])
+	bridge.free()
+	return run_checks([
+		assert_true(resolved, "Resolver should treat a no-surviving-target counter prompt as handled instead of dirtying the benchmark"),
+		assert_eq(assignments.size(), 0, "No surviving bench targets should produce an empty counter assignment"),
+	])
 
 
 func test_hybrid_attack_cools_when_charizard_finish_window_is_live() -> String:
@@ -1222,6 +2053,142 @@ func test_hybrid_infernal_reign_assignment_prefers_readying_charizard() -> Strin
 			"Infernal Reign should treat benched Charizard ex as a premium readying target in the hybrid shell (got %f)" % charizard_score),
 		assert_true(charizard_score > dragapult_score,
 			"When Dragapult is already carrying the Psychic half, Infernal Reign should finish Charizard before feeding extra Fire into Dragapult"),
+	])
+
+
+func test_hybrid_infernal_reign_refuses_third_fire_on_ready_charizard() -> String:
+	var strategy := _new_strategy(HYBRID_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultCharizard.gd should exist before Infernal Reign overfill discipline can be verified"
+	var gs := _make_game_state(6)
+	var player: PlayerState = gs.players[0]
+	var charizard := _make_slot(_make_pokemon_cd(
+		"Charizard ex",
+		"Stage 2",
+		"R",
+		330,
+		"Charmeleon",
+		"ex",
+		[{"name": "Infernal Reign", "text": "attach fire"}],
+		[{"name": "Burning Darkness", "cost": "RR", "damage": "180"}]
+	), 0)
+	charizard.attached_energy.append(CardInstance.create(_make_trainer_cd("Fire 1", "Basic Energy"), 0))
+	charizard.attached_energy[-1].card_data.energy_provides = "R"
+	charizard.attached_energy.append(CardInstance.create(_make_trainer_cd("Fire 2", "Basic Energy"), 0))
+	charizard.attached_energy[-1].card_data.energy_provides = "R"
+	player.active_pokemon = charizard
+	var fire := CardInstance.create(_make_trainer_cd("Fire 3", "Basic Energy"), 0)
+	fire.card_data.energy_provides = "R"
+	var charizard_score: float = strategy.score_interaction_target(
+		charizard,
+		{"id": "energy_assignments"},
+		{"game_state": gs, "player_index": 0, "source_slot": charizard, "source_card": fire, "all_items": [charizard]}
+	)
+	return assert_true(charizard_score <= 0.0,
+		"Infernal Reign should not place a third Fire on a Charizard ex that already satisfies its attack cost (got %f)" % charizard_score)
+
+
+func test_hybrid_infernal_reign_pending_assignment_prevents_charizard_overfill() -> String:
+	var strategy := _new_strategy(HYBRID_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultCharizard.gd should exist before pending Infernal Reign overfill discipline can be verified"
+	var gs := _make_game_state(6)
+	var player: PlayerState = gs.players[0]
+	var charizard := _make_slot(_make_pokemon_cd(
+		"Charizard ex",
+		"Stage 2",
+		"R",
+		330,
+		"Charmeleon",
+		"ex",
+		[{"name": "Infernal Reign", "text": "attach fire"}],
+		[{"name": "Burning Darkness", "cost": "RR", "damage": "180"}]
+	), 0)
+	charizard.attached_energy.append(CardInstance.create(_make_trainer_cd("Fire 1", "Basic Energy"), 0))
+	charizard.attached_energy[-1].card_data.energy_provides = "R"
+	player.active_pokemon = charizard
+	var fire := CardInstance.create(_make_trainer_cd("Fire 2", "Basic Energy"), 0)
+	fire.card_data.energy_provides = "R"
+	var charizard_score: float = strategy.score_interaction_target(
+		charizard,
+		{"id": "energy_assignments"},
+		{
+			"game_state": gs,
+			"player_index": 0,
+			"source_slot": charizard,
+			"source_card": fire,
+			"all_items": [charizard],
+			"pending_assignment_counts": {charizard.get_instance_id(): 1},
+		}
+	)
+	return assert_true(charizard_score <= 0.0,
+		"Infernal Reign should account for pending assignments and stop once Charizard ex is attack-ready (got %f)" % charizard_score)
+
+
+func test_hybrid_infernal_reign_goes_dead_when_only_overfill_targets_remain() -> String:
+	var strategy := _new_strategy(HYBRID_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultCharizard.gd should exist before Infernal Reign ability overfill discipline can be verified"
+	var gs := _make_game_state(6)
+	var player: PlayerState = gs.players[0]
+	var charizard := _make_slot(_make_pokemon_cd(
+		"Charizard ex",
+		"Stage 2",
+		"R",
+		330,
+		"Charmeleon",
+		"ex",
+		[{"name": "Infernal Reign", "text": "attach fire"}],
+		[{"name": "Burning Darkness", "cost": "RR", "damage": "180"}]
+	), 0)
+	charizard.attached_energy.append(CardInstance.create(_make_trainer_cd("Fire 1", "Basic Energy"), 0))
+	charizard.attached_energy[-1].card_data.energy_provides = "R"
+	charizard.attached_energy.append(CardInstance.create(_make_trainer_cd("Fire 2", "Basic Energy"), 0))
+	charizard.attached_energy[-1].card_data.energy_provides = "R"
+	player.active_pokemon = charizard
+	player.deck.append(CardInstance.create(_make_trainer_cd("Fire 3", "Basic Energy"), 0))
+	player.deck[-1].card_data.energy_provides = "R"
+	var ability_score: float = strategy.score_action_absolute({"kind": "use_ability", "source_slot": charizard}, gs, 0)
+	return assert_true(ability_score <= 0.0,
+		"Infernal Reign should cool off when every visible target would only overfill an already-ready Charizard ex (got %f)" % ability_score)
+
+
+func test_hybrid_infernal_reign_refuses_benched_support_targets() -> String:
+	var strategy := _new_strategy(HYBRID_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategyDragapultCharizard.gd should exist before Infernal Reign support-target discipline can be verified"
+	var gs := _make_game_state(5)
+	var player: PlayerState = gs.players[0]
+	var charizard := _make_slot(_make_pokemon_cd(
+		"Charizard ex",
+		"Stage 2",
+		"R",
+		330,
+		"Charmeleon",
+		"ex",
+		[{"name": "Infernal Reign", "text": "attach fire"}],
+		[{"name": "Burning Darkness", "cost": "RR", "damage": "180"}]
+	), 0)
+	var rotom := _make_slot(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0)
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	player.bench = [charizard, rotom]
+	var fire := CardInstance.create(_make_trainer_cd("Fire Energy", "Basic Energy"), 0)
+	fire.card_data.energy_provides = "R"
+	var charizard_score: float = strategy.score_interaction_target(
+		charizard,
+		{"id": "energy_assignments"},
+		{"game_state": gs, "player_index": 0, "source_slot": charizard, "source_card": fire, "all_items": [charizard, rotom]}
+	)
+	var rotom_score: float = strategy.score_interaction_target(
+		rotom,
+		{"id": "energy_assignments"},
+		{"game_state": gs, "player_index": 0, "source_slot": charizard, "source_card": fire, "all_items": [charizard, rotom]}
+	)
+	return run_checks([
+		assert_true(charizard_score > 0.0,
+			"Infernal Reign should still attach to a real Charizard attacker"),
+		assert_true(rotom_score <= 0.0,
+			"Infernal Reign should not place Fire on benched Rotom V support (got %f)" % rotom_score),
 	])
 
 

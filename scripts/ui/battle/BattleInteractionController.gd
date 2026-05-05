@@ -2,6 +2,7 @@ class_name BattleInteractionController
 extends RefCounted
 
 const BattleCardViewScript := preload("res://scenes/battle/BattleCardView.gd")
+const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 
 
 func _bt(scene: Object, key: String, params: Dictionary = {}) -> String:
@@ -102,6 +103,7 @@ func ensure_field_interaction_panel(scene: Object) -> void:
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	scroll.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	HudThemeScript.style_scroll_container(scroll)
 	vbox.add_child(scroll)
 	scene.set("_field_interaction_scroll", scroll)
 
@@ -180,14 +182,41 @@ func update_field_interaction_panel_metrics(scene: Object, viewport_size: Vector
 		effective_viewport = Vector2(1366, 768)
 	var play_card_size: Vector2 = scene.get("_play_card_size")
 	var card_height: float = play_card_size.y if play_card_size.y > 0.0 else 152.0
-	var strip_height: float = card_height + 8.0
+	var strip_height: float = _field_card_scroll_height(card_height)
 	var panel_width: float = clampf(effective_viewport.x * 0.54, 680.0, 980.0)
 	panel.custom_minimum_size = Vector2(panel_width, maxf(strip_height + 86.0, 136.0))
 	panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	scroll.custom_minimum_size = Vector2(0.0, strip_height)
 	scroll.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	reset_field_interaction_row_metrics(scene)
 	apply_field_interaction_position(scene, str(scene.get("_field_interaction_position")))
+
+
+func _field_card_scroll_height(card_height: float) -> float:
+	return maxf(0.0, card_height) + float(HudThemeScript.SCROLLBAR_TOUCH_THICKNESS + HudThemeScript.CARD_SCROLLBAR_CLEARANCE_PADDING)
+
+
+func prepare_field_card_view(scene: Object, card_view: BattleCardView) -> void:
+	var play_card_size: Vector2 = scene.get("_play_card_size")
+	if play_card_size.y <= 0.0:
+		play_card_size = Vector2(109, 152)
+	card_view.custom_minimum_size = play_card_size
+	card_view.size = play_card_size
+	card_view.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+
+
+func reset_field_interaction_row_metrics(scene: Object) -> void:
+	var row: HBoxContainer = scene.get("_field_interaction_row")
+	if row == null:
+		return
+	var play_card_size: Vector2 = scene.get("_play_card_size")
+	var card_height: float = play_card_size.y if play_card_size.y > 0.0 else 152.0
+	row.custom_minimum_size = Vector2(0.0, card_height)
+	row.size = Vector2(row.size.x, card_height)
+	row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	for child: Node in row.get_children():
+		if child is BattleCardView:
+			prepare_field_card_view(scene, child as BattleCardView)
 
 
 func is_field_interaction_active(scene: Object) -> bool:
@@ -314,59 +343,370 @@ func build_field_assignment_source_cards(scene: Object) -> void:
 	var source_items: Array = interaction_data.get("source_items", [])
 	var source_labels: Array = interaction_data.get("source_labels", [])
 	var source_groups: Array = interaction_data.get("source_groups", [])
+	var source_card_items: Array = interaction_data.get("source_card_items", [])
+	var source_card_indices: Array = interaction_data.get("source_card_indices", [])
+	var source_choice_labels: Array = interaction_data.get("source_choice_labels", [])
+	var disabled_badge := str(interaction_data.get("source_card_disabled_badge", interaction_data.get("card_disabled_badge", "")))
 	if source_groups.is_empty():
-		for i: int in source_items.size():
-			add_field_assignment_source_card(scene, source_items, source_labels, i)
+		if not source_card_items.is_empty():
+			for i: int in _visible_card_display_order(source_card_items, source_card_indices):
+				var real_index := i
+				if i < source_card_indices.size():
+					real_index = int(source_card_indices[i])
+				var display_label := str(source_choice_labels[i]) if i < source_choice_labels.size() else ""
+				add_field_assignment_source_card(
+					scene,
+					source_items,
+					source_labels,
+					real_index,
+					source_card_items[i],
+					display_label,
+					real_index < 0,
+					disabled_badge
+				)
+		else:
+			for i: int in source_items.size():
+				add_field_assignment_source_card(scene, source_items, source_labels, i)
 		return
 
-	for group_index: int in source_groups.size():
-		var group: Dictionary = source_groups[group_index]
+	build_grouped_field_assignment_source_board(scene, row, source_items, source_labels, source_groups)
+
+
+func build_grouped_field_assignment_source_board(
+	scene: Object,
+	row: HBoxContainer,
+	source_items: Array,
+	source_labels: Array,
+	source_groups: Array
+) -> void:
+	var compact_size := grouped_field_source_card_size(scene)
+	var has_active := false
+	var has_bench := false
+	for group_variant: Variant in source_groups:
+		if group_variant is Dictionary:
+			var group: Dictionary = group_variant
+			if grouped_field_source_indices(group).is_empty():
+				continue
+			var slot_variant: Variant = group.get("slot")
+			if not (slot_variant is PokemonSlot):
+				continue
+			if grouped_field_source_slot_lane(scene, slot_variant as PokemonSlot) == "bench":
+				has_bench = true
+			else:
+				has_active = true
+	update_grouped_field_source_metrics(scene, compact_size, has_active, has_bench)
+
+	var board := PanelContainer.new()
+	board.name = "FieldEnergySourceBattlefield"
+	board.custom_minimum_size = Vector2(grouped_field_source_board_width(scene, source_groups, compact_size), grouped_field_source_board_height(compact_size, has_active, has_bench))
+	board.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	board.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	board.add_theme_stylebox_override("panel", grouped_field_source_board_style())
+	row.add_child(board)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 10)
+	margin.add_theme_constant_override("margin_right", 10)
+	margin.add_theme_constant_override("margin_top", 8)
+	margin.add_theme_constant_override("margin_bottom", 8)
+	board.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	margin.add_child(box)
+
+	var active_lane: HBoxContainer = null
+	if has_active:
+		box.add_child(grouped_field_source_lane_label("战斗宝可梦"))
+		active_lane = HBoxContainer.new()
+		active_lane.name = "FieldEnergySourceActiveLane"
+		active_lane.alignment = BoxContainer.ALIGNMENT_CENTER
+		active_lane.add_theme_constant_override("separation", 10)
+		box.add_child(active_lane)
+
+	var bench_lane: HBoxContainer = null
+	if has_bench:
+		box.add_child(grouped_field_source_lane_label("备战区"))
+		bench_lane = HBoxContainer.new()
+		bench_lane.name = "FieldEnergySourceBenchLane"
+		bench_lane.alignment = BoxContainer.ALIGNMENT_CENTER
+		bench_lane.add_theme_constant_override("separation", 10)
+		box.add_child(bench_lane)
+
+	var sorted_groups := grouped_field_source_sorted_groups(scene, source_groups)
+	for group_index: int in sorted_groups.size():
+		var group: Dictionary = sorted_groups[group_index]
 		var slot_variant: Variant = group.get("slot")
-		var energy_indices: Array = group.get("energy_indices", [])
-		if group_index > 0:
-			var separator := VSeparator.new()
-			separator.custom_minimum_size = Vector2(2, 0)
-			separator.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			separator.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			row.add_child(separator)
-		if slot_variant is PokemonSlot:
-			var header_view := BattleCardViewScript.new()
-			header_view.custom_minimum_size = scene.get("_play_card_size")
-			header_view.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			header_view.set_clickable(false)
-			var slot: PokemonSlot = slot_variant
-			header_view.setup_from_card_data(slot.get_card_data(), scene.call("_battle_card_mode_for_slot", slot))
-			header_view.set_badges()
-			header_view.set_battle_status(scene.call("_build_battle_status", slot))
-			row.add_child(header_view)
-		for energy_index_variant: Variant in energy_indices:
-			add_field_assignment_source_card(scene, source_items, source_labels, int(energy_index_variant))
+		if not (slot_variant is PokemonSlot):
+			continue
+		var indices := grouped_field_source_indices(group)
+		if indices.is_empty():
+			continue
+		var slot := slot_variant as PokemonSlot
+		var panel := create_grouped_field_source_slot_panel(scene, source_items, source_labels, slot, indices, group_index, compact_size)
+		if grouped_field_source_slot_lane(scene, slot) == "bench" and bench_lane != null:
+			bench_lane.add_child(panel)
+		elif active_lane != null:
+			active_lane.add_child(panel)
 
 
-func add_field_assignment_source_card(scene: Object, source_items: Array, source_labels: Array, source_index: int) -> void:
-	if source_index < 0 or source_index >= source_items.size():
+func grouped_field_source_card_size(scene: Object) -> Vector2:
+	var play_card_size: Vector2 = scene.get("_play_card_size")
+	if play_card_size.y <= 0.0:
+		play_card_size = Vector2(109, 152)
+	return Vector2(maxf(72.0, play_card_size.x * 0.62), maxf(100.0, play_card_size.y * 0.62))
+
+
+func grouped_field_source_board_height(card_size: Vector2, has_active: bool, has_bench: bool) -> float:
+	var lane_count := 0
+	if has_active:
+		lane_count += 1
+	if has_bench:
+		lane_count += 1
+	lane_count = maxi(1, lane_count)
+	return (card_size.y + 18.0) * float(lane_count) + 22.0 * float(lane_count) + 22.0
+
+
+func update_grouped_field_source_metrics(scene: Object, card_size: Vector2, has_active: bool, has_bench: bool) -> void:
+	var panel: PanelContainer = scene.get("_field_interaction_panel")
+	var scroll: ScrollContainer = scene.get("_field_interaction_scroll")
+	var row: HBoxContainer = scene.get("_field_interaction_row")
+	if panel == null or scroll == null or row == null:
+		return
+	var source_height := grouped_field_source_board_height(card_size, has_active, has_bench)
+	var scroll_height := source_height + float(HudThemeScript.SCROLLBAR_TOUCH_THICKNESS + HudThemeScript.CARD_SCROLLBAR_CLEARANCE_PADDING)
+	scroll.custom_minimum_size = Vector2(0, scroll_height)
+	row.custom_minimum_size = Vector2(0, source_height)
+	row.size = Vector2(row.size.x, source_height)
+	panel.custom_minimum_size = Vector2(panel.custom_minimum_size.x, maxf(panel.custom_minimum_size.y, scroll_height + 92.0))
+
+
+func grouped_field_source_board_width(scene: Object, source_groups: Array, card_size: Vector2) -> float:
+	var active_width := 0.0
+	var bench_width := 0.0
+	var bench_count := 0
+	for group_variant: Variant in source_groups:
+		if not (group_variant is Dictionary):
+			continue
+		var group: Dictionary = group_variant
+		var slot_variant: Variant = group.get("slot")
+		if not (slot_variant is PokemonSlot):
+			continue
+		var width := grouped_field_source_group_width(card_size, grouped_field_source_indices(group).size())
+		if grouped_field_source_slot_lane(scene, slot_variant as PokemonSlot) == "bench":
+			if bench_count > 0:
+				bench_width += 10.0
+			bench_width += width
+			bench_count += 1
+		else:
+			active_width = maxf(active_width, width)
+	return maxf(360.0, maxf(active_width, bench_width)) + 20.0
+
+
+func grouped_field_source_group_width(card_size: Vector2, source_count: int) -> float:
+	var card_count := source_count + 1
+	return maxf(160.0, card_size.x * float(card_count) + 8.0 * float(maxi(0, card_count - 1)) + 18.0)
+
+
+func grouped_field_source_board_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.03, 0.06, 0.10, 0.96)
+	style.border_color = Color(0.28, 0.72, 0.82, 0.55)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(12)
+	return style
+
+
+func grouped_field_source_group_style(group_index: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.02, 0.05, 0.08, 0.96)
+	style.border_color = Color(0.24, 0.68, 0.78, 0.78) if group_index % 2 == 0 else Color(0.78, 0.55, 0.22, 0.78)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(10)
+	return style
+
+
+func grouped_field_source_lane_label(text: String) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_color_override("font_color", Color(0.70, 0.86, 0.92, 0.9))
+	return label
+
+
+func create_grouped_field_source_slot_panel(
+	scene: Object,
+	source_items: Array,
+	source_labels: Array,
+	slot: PokemonSlot,
+	indices: Array,
+	group_index: int,
+	card_size: Vector2
+) -> PanelContainer:
+	var group_panel := PanelContainer.new()
+	group_panel.name = "FieldEnergySourceGroup%d" % group_index
+	group_panel.custom_minimum_size = Vector2(grouped_field_source_group_width(card_size, indices.size()), card_size.y + 18.0)
+	group_panel.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	group_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	group_panel.add_theme_stylebox_override("panel", grouped_field_source_group_style(group_index))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 6)
+	margin.add_theme_constant_override("margin_right", 6)
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_theme_constant_override("margin_bottom", 6)
+	group_panel.add_child(margin)
+
+	var line := HBoxContainer.new()
+	line.alignment = BoxContainer.ALIGNMENT_CENTER
+	line.add_theme_constant_override("separation", 8)
+	margin.add_child(line)
+
+	var header := BattleCardViewScript.new()
+	prepare_grouped_field_source_card_view(header, card_size)
+	header.set_clickable(false)
+	header.setup_from_card_data(slot.get_card_data(), scene.call("_battle_card_mode_for_slot", slot))
+	header.set_badges()
+	header.set_battle_status(scene.call("_build_battle_status", slot))
+	line.add_child(header)
+
+	for source_idx_variant: Variant in indices:
+		var source_index := int(source_idx_variant)
+		if source_index < 0 or source_index >= source_items.size():
+			continue
+		var source_view := BattleCardViewScript.new()
+		prepare_grouped_field_source_card_view(source_view, card_size)
+		source_view.set_clickable(true)
+		scene.call(
+			"_setup_dialog_card_view",
+			source_view,
+			source_items[source_index],
+			source_labels[source_index] if source_index < source_labels.size() else ""
+		)
+		source_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
+			scene.call("_on_field_assignment_source_chosen", source_index)
+		)
+		source_view.right_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
+			if cd != null:
+				scene.call("_show_card_detail", cd)
+		)
+		source_view.set_meta("field_assignment_source_index", source_index)
+		source_view.set_meta("field_assignment_source_disabled", false)
+		line.add_child(source_view)
+	return group_panel
+
+
+func prepare_grouped_field_source_card_view(card_view: BattleCardView, card_size: Vector2) -> void:
+	card_view.custom_minimum_size = card_size
+	card_view.size = card_size
+	card_view.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+
+
+func grouped_field_source_indices(group: Dictionary) -> Array:
+	var indices: Array = group.get("card_indices", [])
+	if indices.is_empty():
+		indices = group.get("energy_indices", [])
+	return indices
+
+
+func grouped_field_source_sorted_groups(scene: Object, source_groups: Array) -> Array:
+	var sorted := source_groups.duplicate()
+	sorted.sort_custom(func(a: Variant, b: Variant) -> bool:
+		return grouped_field_source_group_order(scene, a) < grouped_field_source_group_order(scene, b)
+	)
+	return sorted
+
+
+func grouped_field_source_group_order(scene: Object, group_variant: Variant) -> int:
+	if not (group_variant is Dictionary):
+		return 9999
+	var slot_variant: Variant = (group_variant as Dictionary).get("slot")
+	if not (slot_variant is PokemonSlot):
+		return 9999
+	var slot := slot_variant as PokemonSlot
+	var gsm: Variant = scene.get("_gsm")
+	if gsm == null or gsm.game_state == null:
+		return 9999
+	for player: PlayerState in gsm.game_state.players:
+		if player.active_pokemon == slot:
+			return 0
+		var bench_index := player.bench.find(slot)
+		if bench_index >= 0:
+			return 100 + bench_index
+	return 9999
+
+
+func grouped_field_source_slot_lane(scene: Object, slot: PokemonSlot) -> String:
+	var gsm: Variant = scene.get("_gsm")
+	if gsm == null or gsm.game_state == null:
+		return "unknown"
+	for player: PlayerState in gsm.game_state.players:
+		if player.active_pokemon == slot:
+			return "active"
+		if player.bench.find(slot) >= 0:
+			return "bench"
+	return "unknown"
+
+
+func _visible_card_display_order(card_items: Array, card_indices: Array) -> Array[int]:
+	var selectable: Array[int] = []
+	var disabled: Array[int] = []
+	for i: int in card_items.size():
+		var real_index := i
+		if i < card_indices.size():
+			real_index = int(card_indices[i])
+		if real_index >= 0:
+			selectable.append(i)
+		else:
+			disabled.append(i)
+	selectable.append_array(disabled)
+	return selectable
+
+
+func add_field_assignment_source_card(
+	scene: Object,
+	source_items: Array,
+	source_labels: Array,
+	source_index: int,
+	display_item: Variant = null,
+	display_label: String = "",
+	disabled: bool = false,
+	disabled_badge: String = ""
+) -> void:
+	if (source_index < 0 or source_index >= source_items.size()) and display_item == null:
 		return
 	var row: HBoxContainer = scene.get("_field_interaction_row")
 	if row == null:
 		return
 	var source_view := BattleCardViewScript.new()
-	source_view.custom_minimum_size = scene.get("_play_card_size")
-	source_view.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	source_view.set_clickable(true)
+	prepare_field_card_view(scene, source_view)
+	source_view.set_clickable(not disabled)
+	var source_item: Variant = display_item if display_item != null else source_items[source_index]
+	var source_label: String = display_label
+	if source_label == "" and source_index >= 0 and source_index < source_labels.size():
+		source_label = str(source_labels[source_index])
 	scene.call(
 		"_setup_dialog_card_view",
 		source_view,
-		source_items[source_index],
-		str(source_labels[source_index]) if source_index < source_labels.size() else ""
+		source_item,
+		source_label
 	)
-	source_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
-		scene.call("_on_field_assignment_source_chosen", source_index)
-	)
+	if disabled:
+		source_view.set_disabled(true)
+		if disabled_badge != "":
+			source_view.set_badges(disabled_badge, "")
+	else:
+		source_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
+			scene.call("_on_field_assignment_source_chosen", source_index)
+		)
 	source_view.right_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
 		if cd != null:
 			scene.call("_show_card_detail", cd)
 	)
 	source_view.set_meta("field_assignment_source_index", source_index)
+	source_view.set_meta("field_assignment_source_disabled", disabled)
 	row.add_child(source_view)
 
 
@@ -543,16 +883,31 @@ func refresh_field_assignment_source_views(scene: Object) -> void:
 	if row == null:
 		return
 	var selected_source_index := int(scene.get("_field_interaction_assignment_selected_source_index"))
-	for child: Node in row.get_children():
-		if not (child is BattleCardView):
-			continue
-		var card_view := child as BattleCardView
-		var idx: int = int(card_view.get_meta("field_assignment_source_index", -1))
-		var source_selected := idx == selected_source_index
-		var source_assigned := find_field_assignment_index_for_source(scene, idx) >= 0
-		card_view.set_selected(source_selected)
-		card_view.set_selectable_hint(not source_selected and not source_assigned)
-		card_view.set_disabled(source_assigned)
+	refresh_field_assignment_source_views_in_node(scene, row, selected_source_index)
+
+
+func refresh_field_assignment_source_views_in_node(scene: Object, node: Node, selected_source_index: int) -> void:
+	for child: Node in node.get_children():
+		if child is BattleCardView:
+			refresh_single_field_assignment_source_view(scene, child as BattleCardView, selected_source_index)
+		else:
+			refresh_field_assignment_source_views_in_node(scene, child, selected_source_index)
+
+
+func refresh_single_field_assignment_source_view(scene: Object, card_view: BattleCardView, selected_source_index: int) -> void:
+	if not card_view.has_meta("field_assignment_source_index"):
+		return
+	if bool(card_view.get_meta("field_assignment_source_disabled", false)):
+		card_view.set_selected(false)
+		card_view.set_selectable_hint(false)
+		card_view.set_disabled(true)
+		return
+	var idx: int = int(card_view.get_meta("field_assignment_source_index", -1))
+	var source_selected := idx == selected_source_index
+	var source_assigned := find_field_assignment_index_for_source(scene, idx) >= 0
+	card_view.set_selected(source_selected)
+	card_view.set_selectable_hint(not source_selected and not source_assigned)
+	card_view.set_disabled(source_assigned)
 
 
 func on_field_interaction_clear_pressed(scene: Object) -> void:

@@ -34,15 +34,16 @@ func get_interaction_steps(_card: CardInstance, state: GameState) -> Array[Dicti
 			labels.append(deck_card.card_data.name)
 	if items.is_empty():
 		return []
-	return [{
-		"id": "artazon_pokemon",
-		"title": "选择1只基础宝可梦放到备战区",
-		"items": items,
-		"labels": labels,
-		"min_select": 1,
-		"max_select": 1,
-		"allow_cancel": true,
-	}]
+	return [build_full_library_search_step(
+		"artazon_pokemon",
+		"选择1只基础宝可梦放到备战区",
+		player.deck,
+		items,
+		VISIBLE_SCOPE_OWN_FULL_DECK,
+		1,
+		1,
+		{"allow_cancel": true}
+	)]
 
 
 func execute(_card: CardInstance, targets: Array, state: GameState) -> void:
@@ -52,10 +53,13 @@ func execute(_card: CardInstance, targets: Array, state: GameState) -> void:
 	var selected_raw: Array = ctx.get("artazon_pokemon", [])
 
 	var chosen: CardInstance = null
-	if not selected_raw.is_empty() and selected_raw[0] is CardInstance:
-		var candidate: CardInstance = selected_raw[0] as CardInstance
+	for entry: Variant in selected_raw:
+		if not (entry is CardInstance):
+			continue
+		var candidate: CardInstance = entry
 		if candidate in player.deck and _is_valid_pokemon(candidate):
 			chosen = candidate
+			break
 	if chosen == null:
 		for deck_card: CardInstance in player.deck:
 			if _is_valid_pokemon(deck_card):

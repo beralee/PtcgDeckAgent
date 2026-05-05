@@ -21,7 +21,7 @@ func get_interaction_steps(_card: CardInstance, state: GameState) -> Array[Dicti
 		labels.append(energy.card_data.name)
 	return [{
 		"id": STEP_ID,
-		"title": "Discard 1 Basic Psychic Energy to heal all your Pokemon",
+		"title": "选择1张手牌中的基本超能量放入弃牌区，回复己方所有宝可梦",
 		"items": items,
 		"labels": labels,
 		"min_select": 1,

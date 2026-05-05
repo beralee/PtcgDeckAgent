@@ -28,15 +28,17 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			slot.get_remaining_hp(),
 			slot.get_max_hp(),
 		])
-	return [build_card_assignment_step(
+	return [build_full_library_card_assignment_step(
 		ASSIGNMENT_ID,
-		"Attach up to 2 Basic Darkness Energy cards to your Darkness Pokemon",
+		"选择最多2张基本恶能量附着给恶属性宝可梦",
+		player.deck,
 		source_items,
 		source_labels,
 		target_items,
 		target_labels,
 		1,
 		mini(2, source_items.size()),
+		VISIBLE_SCOPE_OWN_FULL_DECK,
 		true
 	)]
 

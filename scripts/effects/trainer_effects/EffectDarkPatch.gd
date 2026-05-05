@@ -27,7 +27,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		])
 	return [build_card_assignment_step(
 		ASSIGNMENT_ID,
-		"Attach 1 Basic Darkness Energy to a Benched Darkness Pokemon",
+		"选择弃牌区1张基本恶能量附着给备战区恶属性宝可梦",
 		source_items,
 		source_labels,
 		target_items,

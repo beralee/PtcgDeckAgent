@@ -35,6 +35,7 @@ const RARE_CANDY := "Rare Candy"
 const BUDDY_BUDDY_POFFIN := "Buddy-Buddy Poffin"
 const ULTRA_BALL := "Ultra Ball"
 const NEST_BALL := "Nest Ball"
+const SWITCH := "Switch"
 const EARTHEN_VESSEL := "Earthen Vessel"
 const COUNTER_CATCHER := "Counter Catcher"
 const NIGHT_STRETCHER := "Night Stretcher"
@@ -180,6 +181,46 @@ func build_turn_contract(game_state: GameState, player_index: int, context: Dict
 	priorities["attach"] = attach_priority
 	contract["priorities"] = priorities
 	return contract
+
+
+func build_continuity_contract(game_state: GameState, player_index: int, turn_contract: Dictionary = {}) -> Dictionary:
+	var continuity := {
+		"enabled": false,
+		"safe_setup_before_attack": false,
+		"setup_debt": {},
+		"action_bonuses": [],
+		"attack_penalty": 0.0,
+	}
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return continuity
+	var player: PlayerState = game_state.players[player_index]
+	var resolved_contract: Dictionary = turn_contract.duplicate(true)
+	if resolved_contract.is_empty():
+		resolved_contract = build_turn_contract(game_state, player_index, {"prompt_kind": "continuity_contract"})
+	var setup_debt := _dragapult_continuity_setup_debt(player, game_state)
+	var action_bonuses: Array[Dictionary] = []
+	if bool(setup_debt.get("needs_backup_dragapult_line", false)):
+		action_bonuses.append({
+			"kind": "play_trainer",
+			"card_names": [BUDDY_BUDDY_POFFIN, NEST_BALL, ULTRA_BALL],
+			"target_card_names": [DREEPY],
+			"bonus": 760.0,
+			"reason": "seed_backup_dragapult_line_before_noncritical_attack",
+		})
+	if bool(setup_debt.get("needs_duskull_line", false)):
+		action_bonuses.append({
+			"kind": "play_trainer",
+			"card_names": [BUDDY_BUDDY_POFFIN],
+			"target_card_names": [DUSKULL],
+			"bonus": 700.0,
+			"reason": "seed_duskull_support_line_before_noncritical_attack",
+		})
+	continuity["enabled"] = true
+	continuity["safe_setup_before_attack"] = not action_bonuses.is_empty() and not _has_closing_active_attack(game_state, player_index)
+	continuity["setup_debt"] = setup_debt
+	continuity["action_bonuses"] = action_bonuses
+	continuity["turn_intent"] = str(resolved_contract.get("intent", ""))
+	return continuity
 
 
 func plan_opening_setup(player: PlayerState) -> Dictionary:
@@ -356,18 +397,34 @@ func get_search_priority(card: CardInstance) -> int:
 	return int(SEARCH_PRIORITY.get(_card_name(card), 20))
 
 
+func pick_interaction_items(items: Array, step: Dictionary, context: Dictionary = {}) -> Array:
+	var step_id := str(step.get("id", ""))
+	var max_select := int(step.get("max_select", items.size()))
+	if max_select <= 0 or items.is_empty():
+		return []
+	if step_id in ["bench_damage_counters", "bench_target"]:
+		return _pick_bench_counter_targets(items, max_select)
+	if step_id == "self_ko_target":
+		return _pick_self_ko_targets(items, max_select, context)
+	return []
+
+
 func score_interaction_target(item: Variant, step: Dictionary, context: Dictionary = {}) -> float:
 	var step_id := str(step.get("id", ""))
 	if item is CardInstance:
 		var card := item as CardInstance
 		if card.card_data == null:
 			return 0.0
+		if step_id == "stage2_card":
+			return _score_search_pokemon(card, context, step_id)
+		if step_id == "search_cards":
+			return _score_search_card(card, context)
 		if step_id == "search_item":
 			return _score_search_item(card, context)
 		if step_id == "search_tool":
 			return _score_search_tool(card, context)
-		if step_id in ["search_pokemon", "search_cards", "bench_pokemon", "basic_pokemon", "buddy_poffin_pokemon"]:
-			return _score_search_pokemon(card, context)
+		if step_id in ["search_pokemon", "bench_pokemon", "basic_pokemon", "buddy_poffin_pokemon"]:
+			return _score_search_pokemon(card, context, step_id)
 		if step_id in ["discard_card", "discard_cards", "discard_energy"]:
 			var game_state: GameState = context.get("game_state", null)
 			var player_index := int(context.get("player_index", -1))
@@ -377,11 +434,67 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 		var slot := item as PokemonSlot
 		if step_id in ["attach_energy_target", "energy_target"]:
 			return _score_attach_target(slot, context)
-		if step_id in ["send_out", "pivot_target"]:
+		if step_id in ["send_out", "pivot_target", "self_switch_target", "switch_target"]:
 			return _score_send_out(slot)
-		if step_id == "bench_damage_counters":
+		if step_id in ["bench_damage_counters", "bench_target"]:
 			return _score_bench_counter_target(slot)
+		if step_id == "self_ko_target":
+			return _score_dusk_blast_target(slot, context)
 	return 0.0
+
+
+func _pick_bench_counter_targets(items: Array, max_select: int) -> Array:
+	var scored: Array[Dictionary] = []
+	for i: int in items.size():
+		var item: Variant = items[i]
+		if not (item is PokemonSlot):
+			continue
+		var score := _score_bench_counter_target(item as PokemonSlot)
+		if score <= 0.0:
+			continue
+		scored.append({
+			"index": i,
+			"item": item,
+			"score": score,
+		})
+	scored.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var score_a := float(a.get("score", 0.0))
+		var score_b := float(b.get("score", 0.0))
+		if is_equal_approx(score_a, score_b):
+			return int(a.get("index", -1)) < int(b.get("index", -1))
+		return score_a > score_b
+	)
+	var picked: Array = []
+	for i: int in mini(max_select, scored.size()):
+		picked.append(scored[i].get("item"))
+	return picked
+
+
+func _pick_self_ko_targets(items: Array, max_select: int, context: Dictionary) -> Array:
+	var scored: Array[Dictionary] = []
+	for i: int in items.size():
+		var item: Variant = items[i]
+		if not (item is PokemonSlot):
+			continue
+		var score := _score_dusk_blast_target(item as PokemonSlot, context)
+		if score <= 0.0:
+			continue
+		scored.append({
+			"index": i,
+			"item": item,
+			"score": score,
+		})
+	scored.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var score_a := float(a.get("score", 0.0))
+		var score_b := float(b.get("score", 0.0))
+		if is_equal_approx(score_a, score_b):
+			return int(a.get("index", -1)) < int(b.get("index", -1))
+		return score_a > score_b
+	)
+	var picked: Array = []
+	for i: int in mini(max_select, scored.size()):
+		picked.append(scored[i].get("item"))
+	return picked
 
 
 func _resolved_turn_contract(game_state: GameState, player_index: int, context: Dictionary = {}) -> Dictionary:
@@ -452,9 +565,29 @@ func _score_trainer(action: Dictionary, game_state: GameState, player_index: int
 	var flags: Dictionary = turn_contract.get("flags", {}) if turn_contract.get("flags", {}) is Dictionary else {}
 	var intent := str(turn_contract.get("intent", ""))
 	var immediate_attack_window: bool = bool(flags.get("immediate_attack_window", false))
-	if _should_shutdown_extra_setup(player, game_state):
+	if _under_deck_out_pressure(player, game_state):
 		match name:
 			BUDDY_BUDDY_POFFIN, NEST_BALL:
+				return -10.0
+			ULTRA_BALL:
+				return 40.0 if _count_name(player, DRAGAPULT_EX) == 0 else -10.0
+			ARVEN:
+				return 180.0 if _has_live_dusk_blast_conversion_target(game_state, player_index) else 30.0
+			IONO, ROXANNE:
+				return 40.0 if opponent.prizes.size() <= 2 else -10.0
+			MELA:
+				return 80.0 if _fire_energy_in_discard(player) and _needs_dragapult_energy(player) else -10.0
+			EARTHEN_VESSEL:
+				return 120.0 if _needs_dragapult_energy(player) else -10.0
+			NIGHT_STRETCHER:
+				return 120.0 if _has_core_piece_in_discard(player) else -10.0
+	if _should_shutdown_extra_setup(player, game_state):
+		match name:
+			BUDDY_BUDDY_POFFIN:
+				if _should_use_poffin_for_duskull_followup(player, game_state):
+					return 1180.0
+				return 1220.0 if _should_use_poffin_for_dreepy_backups(player, game_state) else 20.0
+			NEST_BALL:
 				return 20.0
 			ULTRA_BALL:
 				return 80.0 if _count_name(player, DREEPY) == 0 or _count_name(player, DUSKULL) == 0 else 30.0
@@ -474,6 +607,10 @@ func _score_trainer(action: Dictionary, game_state: GameState, player_index: int
 		ARVEN:
 			return _score_arven(player, game_state, player_index)
 		BUDDY_BUDDY_POFFIN:
+			if _should_use_poffin_for_dreepy_backups(player, game_state):
+				return 1220.0 if immediate_attack_window else 560.0
+			if _should_use_poffin_for_duskull_followup(player, game_state):
+				return 1180.0 if immediate_attack_window else 520.0
 			if _count_name(player, DRAGAPULT_EX) > 0 and intent in ["bridge_to_attack", "convert_attack", "rebuild_dragapult"]:
 				return 30.0
 			if player.bench.size() >= 5:
@@ -487,7 +624,15 @@ func _score_trainer(action: Dictionary, game_state: GameState, player_index: int
 		NEST_BALL:
 			if _count_name(player, DRAGAPULT_EX) > 0 and intent in ["bridge_to_attack", "convert_attack", "rebuild_dragapult"]:
 				return 60.0
+			if _should_prioritize_rotom_v_for_opening_nest(player, game_state):
+				return 410.0
 			return 340.0 if player.bench.size() < 5 and (_count_name(player, DREEPY) == 0 or _count_name(player, DUSKULL) == 0) else 150.0
+		SWITCH:
+			if _has_ready_dragapult_promotion(player):
+				return 520.0
+			if player.active_pokemon != null and _slot_name(player.active_pokemon) in [TATSUGIRI, ROTOM_V, LUMINEON_V, FEZANDIPITI_EX, RADIANT_ALAKAZAM]:
+				return 260.0 if _best_ready_dragapult_slot(player) != null else 120.0
+			return 70.0
 		ULTRA_BALL:
 			return 360.0 if intent in ["force_first_dragapult", "bridge_to_attack"] else (320.0 if _count_name(player, DRAGAPULT_EX) == 0 or _count_name(player, DUSKNOIR) == 0 else 180.0)
 		EARTHEN_VESSEL:
@@ -516,11 +661,8 @@ func _score_attach_energy(action: Dictionary, game_state: GameState, player_inde
 	var card: CardInstance = action.get("card")
 	if target_slot == null or card == null or card.card_data == null:
 		return 0.0
-	var energy_type := str(card.card_data.energy_provides)
 	var player: PlayerState = game_state.players[player_index]
-	if energy_type in ["R", "P"]:
-		return _dragapult_energy_score(target_slot, player)
-	return 40.0
+	return _dragapult_energy_score(target_slot, player)
 
 
 func _score_attach_tool(action: Dictionary, game_state: GameState, player_index: int) -> float:
@@ -535,8 +677,14 @@ func _score_attach_tool(action: Dictionary, game_state: GameState, player_index:
 	match tool_name:
 		SPARKLING_CRYSTAL:
 			if target_name == DRAGAPULT_EX:
-				return 520.0
-			return 80.0
+				return 540.0
+			if target_name == DRAKLOAK:
+				return 460.0 if _has_live_dragapult_stage2_route(player) else 260.0
+			if target_name == DREEPY:
+				return 420.0 if _has_live_dragapult_stage2_route(player) else 220.0
+			if target_name in [TATSUGIRI, ROTOM_V, LUMINEON_V, FEZANDIPITI_EX, RADIANT_ALAKAZAM, DUSKULL, DUSCLOPS, DUSKNOIR]:
+				return -20.0
+			return 40.0
 		RESCUE_BOARD:
 			if target_name in [DUSKULL, TATSUGIRI, ROTOM_V] or target_slot == game_state.players[player_index].active_pokemon:
 				return 340.0 if target_slot == game_state.players[player_index].active_pokemon else 280.0
@@ -567,6 +715,12 @@ func _score_use_ability(action: Dictionary, game_state: GameState, player_index:
 	var opponent: PlayerState = game_state.players[1 - player_index]
 	if _is_forest_seal_stone_ability(source_slot, ability_index):
 		return _score_forest_seal_stone_ability(player, game_state, player_index)
+	if _under_deck_out_pressure(player, game_state):
+		match _slot_name(source_slot):
+			DRAKLOAK:
+				return 30.0
+			ROTOM_V, LUMINEON_V, FEZANDIPITI_EX, TATSUGIRI:
+				return -20.0
 	if _should_shutdown_extra_setup(player, game_state):
 		match _slot_name(source_slot):
 			ROTOM_V:
@@ -581,10 +735,12 @@ func _score_use_ability(action: Dictionary, game_state: GameState, player_index:
 		DRAKLOAK:
 			return 430.0
 		DUSKNOIR:
-			return 440.0 if _has_dusk_blast_target(opponent) else 120.0
+			return _score_dusk_blast_ability(source_slot, opponent, game_state, player_index)
 		DUSCLOPS:
-			return 300.0 if _has_dusk_blast_target(opponent) else 100.0
+			return _score_dusk_blast_ability(source_slot, opponent, game_state, player_index)
 		ROTOM_V:
+			if _has_hand_card(player, BUDDY_BUDDY_POFFIN) and _should_use_poffin_for_dreepy_backups(player, game_state):
+				return 70.0
 			return 340.0 if _count_name(player, DRAGAPULT_EX) == 0 and player.hand.size() <= 5 else 90.0
 		LUMINEON_V:
 			return 300.0 if not _has_supporter_in_hand(player) else 110.0
@@ -617,7 +773,11 @@ func _score_attack(action: Dictionary, game_state: GameState, player_index: int)
 	if attack_name == "" and not attack_data.is_empty():
 		attack_name = str(attack_data.get("name", ""))
 	var is_phantom_dive := attack_index == 1 or attack_name in ["Phantom Dive", "幻影潜袭"] or projected_damage >= 200
-	var is_jet_head := attack_index == 0 or attack_name in ["Jet Head", "喷射头击"]
+	var is_jet_head := attack_index == 0 or attack_name in ["Jet Head", "喷射头击"] or projected_damage == 70
+	var active_is_dragapult := _slot_name(active) == DRAGAPULT_EX
+	var phantom_dive_online := active_is_dragapult and _dragapult_phantom_dive_ready(active)
+	if active_is_dragapult and phantom_dive_online and is_jet_head:
+		return -1000.0
 	var score := 180.0 + float(projected_damage)
 	if opponent.active_pokemon != null and projected_damage >= opponent.active_pokemon.get_remaining_hp():
 		score += 420.0
@@ -626,21 +786,43 @@ func _score_attack(action: Dictionary, game_state: GameState, player_index: int)
 	elif projected_damage > 0:
 		score += 80.0
 
-	if _slot_name(active) == DRAGAPULT_EX:
-		var phantom_dive_online: bool = _can_use_named_attack(active, "Phantom Dive")
+	if active_is_dragapult:
 		if is_phantom_dive:
-			score += 260.0
+			score += 520.0
 			if _phantom_dive_has_pickoff(opponent):
-				score += 160.0
+				score += 220.0
 			if phantom_dive_online:
-				score += 80.0
-		elif phantom_dive_online and is_jet_head:
-			score -= 220.0
+				score += 180.0
 		else:
-			score += 40.0
+			score -= 120.0
 	if _slot_name(active) == DUSKNOIR and projected_damage >= 150:
 		score += 90.0
+	if projected_damage > 0 and _under_deck_out_pressure(player, game_state):
+		score += 180.0
 	return score
+
+
+func _score_search_card(card: CardInstance, context: Dictionary) -> float:
+	if card == null or card.card_data == null:
+		return 0.0
+	var card_type := str(card.card_data.card_type)
+	if card_type == "Pokemon":
+		return _score_search_pokemon(card, context)
+	if card_type == "Tool":
+		return _score_search_tool(card, context)
+	if card_type in ["Item", "Stadium", "Supporter"]:
+		var game_state: GameState = context.get("game_state", null)
+		var player_index := int(context.get("player_index", -1))
+		if game_state != null and player_index >= 0 and player_index < game_state.players.size():
+			return _score_trainer({"card": card}, game_state, player_index)
+	if card.card_data.is_energy():
+		var game_state: GameState = context.get("game_state", null)
+		var player_index := int(context.get("player_index", -1))
+		var player: PlayerState = game_state.players[player_index] if game_state != null and player_index >= 0 and player_index < game_state.players.size() else null
+		if player != null and _needs_dragapult_energy(player):
+			return 320.0
+		return 80.0
+	return float(get_search_priority(card))
 
 
 func _score_search_item(card: CardInstance, context: Dictionary) -> float:
@@ -705,13 +887,25 @@ func _score_search_tool(card: CardInstance, context: Dictionary) -> float:
 	return 90.0
 
 
-func _score_search_pokemon(card: CardInstance, context: Dictionary) -> float:
+func _score_search_pokemon(card: CardInstance, context: Dictionary, step_id: String = "") -> float:
 	var game_state: GameState = context.get("game_state", null)
 	var player_index := int(context.get("player_index", -1))
 	var player: PlayerState = game_state.players[player_index] if game_state != null and player_index >= 0 and player_index < game_state.players.size() else null
 	var name := _card_name(card)
 	if player == null:
 		return float(get_search_priority(card))
+	if step_id == "buddy_poffin_pokemon" and _should_use_poffin_for_dreepy_backups(player, game_state):
+		if name == DREEPY:
+			return 780.0
+		if name == DUSKULL:
+			return 360.0 if _count_name(player, DUSKULL) == 0 else 80.0
+	if step_id == "buddy_poffin_pokemon" and _should_use_poffin_for_duskull_followup(player, game_state):
+		if name == DUSKULL:
+			return 780.0
+		if name == DREEPY:
+			return 180.0
+	if step_id == "basic_pokemon" and _should_prioritize_rotom_v_for_opening_nest(player, game_state) and name == ROTOM_V:
+		return 760.0
 	if _should_shutdown_extra_setup(player, game_state):
 		match name:
 			DREEPY:
@@ -735,6 +929,110 @@ func _score_search_pokemon(card: CardInstance, context: Dictionary) -> float:
 	if name == TATSUGIRI and _count_name(player, TATSUGIRI) == 0:
 		return 220.0
 	return float(get_search_priority(card))
+
+
+func _should_prioritize_rotom_v_for_opening_nest(player: PlayerState, game_state: GameState) -> bool:
+	if player == null:
+		return false
+	if player.bench.size() >= 5 or _count_name(player, ROTOM_V) > 0:
+		return false
+	if _count_name(player, DRAGAPULT_EX) > 0 or not _deck_has(player, ROTOM_V):
+		return false
+	if game_state != null and int(game_state.turn_number) > 2:
+		return false
+	if _dreepy_family_line_count(player) >= 2:
+		return true
+	if _count_name(player, DREEPY) + _count_name(player, DRAKLOAK) <= 0:
+		return false
+	if _has_hand_card(player, BUDDY_BUDDY_POFFIN):
+		return true
+	return _count_name(player, DUSKULL) > 0
+
+
+func _should_use_poffin_for_dreepy_backups(player: PlayerState, game_state: GameState) -> bool:
+	if player == null:
+		return false
+	if player.bench.size() >= 5 or not _deck_has(player, DREEPY):
+		return false
+	if _under_deck_out_pressure(player, game_state):
+		return false
+	if _dreepy_family_line_count(player) >= 2:
+		return false
+	if game_state != null and int(game_state.turn_number) > 6:
+		return false
+	return _count_name(player, DREEPY) + _count_name(player, DRAKLOAK) + _count_name(player, DRAGAPULT_EX) > 0
+
+
+func _should_use_poffin_for_duskull_followup(player: PlayerState, game_state: GameState) -> bool:
+	if player == null:
+		return false
+	if player.bench.size() >= 5 or not _deck_has(player, DUSKULL):
+		return false
+	if _under_deck_out_pressure(player, game_state):
+		return false
+	if _count_name(player, DUSKULL) + _count_name(player, DUSCLOPS) + _count_name(player, DUSKNOIR) > 0:
+		return false
+	if _dreepy_family_line_count(player) < 2:
+		return false
+	if game_state != null and int(game_state.turn_number) > 6:
+		return false
+	return true
+
+
+func _dreepy_family_line_count(player: PlayerState) -> int:
+	if player == null:
+		return 0
+	return _count_name(player, DREEPY) + _count_name(player, DRAKLOAK) + _count_name(player, DRAGAPULT_EX)
+
+
+func _dragapult_continuity_setup_debt(player: PlayerState, game_state: GameState) -> Dictionary:
+	var dreepy_lines := _dreepy_family_line_count(player)
+	var duskull_lines := 0
+	if player != null:
+		duskull_lines = _count_name(player, DUSKULL) + _count_name(player, DUSCLOPS) + _count_name(player, DUSKNOIR)
+	var has_bench_space := player != null and player.bench.size() < 5
+	var search_safe := not _under_deck_out_pressure(player, game_state)
+	var needs_backup_dragapult_line := (
+		player != null
+		and has_bench_space
+		and search_safe
+		and _count_name(player, DRAGAPULT_EX) > 0
+		and dreepy_lines < 2
+		and _deck_has(player, DREEPY)
+	)
+	var needs_duskull_line := (
+		player != null
+		and has_bench_space
+		and search_safe
+		and dreepy_lines >= 2
+		and duskull_lines == 0
+		and _deck_has(player, DUSKULL)
+	)
+	return {
+		"ready_dragapult": player != null and _best_ready_dragapult_slot(player) != null,
+		"dreepy_family_lines": dreepy_lines,
+		"duskull_family_lines": duskull_lines,
+		"needs_backup_dragapult_line": needs_backup_dragapult_line,
+		"needs_duskull_line": needs_duskull_line,
+		"deck_has_dreepy": player != null and _deck_has(player, DREEPY),
+		"deck_has_duskull": player != null and _deck_has(player, DUSKULL),
+	}
+
+
+func _has_closing_active_attack(game_state: GameState, player_index: int) -> bool:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	var opponent: PlayerState = game_state.players[1 - player_index]
+	if player.active_pokemon == null or opponent.active_pokemon == null:
+		return false
+	var attack_info := predict_attacker_damage(player.active_pokemon)
+	if not bool(attack_info.get("can_attack", false)):
+		return false
+	if int(attack_info.get("damage", 0)) < opponent.active_pokemon.get_remaining_hp():
+		return false
+	var prizes_remaining := player.prizes.size()
+	return prizes_remaining > 0 and opponent.active_pokemon.get_prize_count() >= prizes_remaining
 
 
 func _score_attach_target(slot: PokemonSlot, context: Dictionary) -> float:
@@ -767,13 +1065,19 @@ func _score_send_out(slot: PokemonSlot) -> float:
 func _score_bench_counter_target(slot: PokemonSlot) -> float:
 	if slot == null or slot.get_top_card() == null:
 		return 0.0
-	var score := float(slot.get_prize_count()) * 120.0
-	if slot.get_remaining_hp() <= 60:
-		score += 220.0
-	elif slot.get_remaining_hp() <= 130:
-		score += 160.0
-	score += float(slot.damage_counters) * 2.4
-	score -= float(slot.get_remaining_hp())
+	var remaining_hp := slot.get_remaining_hp()
+	var prize_count := slot.get_prize_count()
+	var score := float(prize_count) * 180.0
+	if remaining_hp <= 60:
+		score += 900.0 + float(prize_count) * 220.0
+	elif remaining_hp <= 120:
+		score += 300.0 + float(prize_count) * 90.0
+	elif remaining_hp <= 180:
+		score += 140.0
+	if _is_rule_box(slot):
+		score += 120.0
+	score += float(slot.damage_counters) * 3.0
+	score -= float(remaining_hp) * 0.75
 	return score
 
 
@@ -858,6 +1162,8 @@ func _dragapult_energy_score(target_slot: PokemonSlot, player: PlayerState) -> f
 	if target_slot == null or target_slot.get_top_card() == null:
 		return 0.0
 	var name := _slot_name(target_slot)
+	if not _is_dragapult_energy_lane(target_slot):
+		return _active_retreat_attach_score(target_slot, player)
 	var has_crystal := _slot_has_tool(target_slot, SPARKLING_CRYSTAL)
 	match name:
 		DRAGAPULT_EX:
@@ -869,8 +1175,24 @@ func _dragapult_energy_score(target_slot: PokemonSlot, player: PlayerState) -> f
 		DRAKLOAK:
 			return 420.0 if _count_name(player, DRAGAPULT_EX) == 0 else 260.0
 		DREEPY:
+			if target_slot == player.active_pokemon and target_slot.attached_energy.is_empty() and _count_name(player, DRAGAPULT_EX) == 0:
+				return 520.0
 			return 360.0 if _count_name(player, DRAGAPULT_EX) == 0 else 220.0
-	return 60.0
+	return -80.0
+
+
+func _is_dragapult_energy_lane(slot: PokemonSlot) -> bool:
+	return _slot_name(slot) in [DREEPY, DRAKLOAK, DRAGAPULT_EX]
+
+
+func _active_retreat_attach_score(slot: PokemonSlot, player: PlayerState) -> float:
+	if player == null or slot == null or slot != player.active_pokemon:
+		return -10000.0
+	if player.bench.is_empty() or _retreat_gap(slot) <= 0:
+		return -10000.0
+	if _has_ready_dragapult_promotion(player):
+		return 280.0 if _retreat_gap(slot) <= 1 else 160.0
+	return 180.0 if _retreat_gap(slot) <= 1 else 90.0
 
 
 func _score_retreat(player: PlayerState, game_state: GameState, player_index: int) -> float:
@@ -880,9 +1202,19 @@ func _score_retreat(player: PlayerState, game_state: GameState, player_index: in
 	if turn_contract.is_empty() and game_state != null:
 		turn_contract = build_turn_contract(game_state, player_index, {"prompt_kind": "action_selection", "kind": "retreat"})
 	var flags: Dictionary = turn_contract.get("flags", {}) if turn_contract.get("flags", {}) is Dictionary else {}
-	if _slot_name(player.active_pokemon) in [TATSUGIRI, ROTOM_V, DUSKULL]:
-		return 260.0 if bool(flags.get("bridge_to_attack", false)) or bool(flags.get("convert_attack", false)) else (220.0 if not player.bench.is_empty() else 80.0)
-	return 60.0
+	var active_name := _slot_name(player.active_pokemon)
+	var ready_promotion := _has_ready_dragapult_promotion(player)
+	if active_name in [DREEPY, DRAKLOAK]:
+		if ready_promotion:
+			return 260.0
+		return -700.0 if player.active_pokemon.attached_energy.size() > 0 else -160.0
+	if active_name == DRAGAPULT_EX:
+		return 80.0 if ready_promotion else -120.0
+	if active_name in [TATSUGIRI, ROTOM_V, DUSKULL, LUMINEON_V, FEZANDIPITI_EX, RADIANT_ALAKAZAM]:
+		if ready_promotion or bool(flags.get("convert_attack", false)):
+			return 260.0
+		return -180.0
+	return -80.0
 
 
 func _best_ready_dragapult_slot(player: PlayerState) -> PokemonSlot:
@@ -892,10 +1224,31 @@ func _best_ready_dragapult_slot(player: PlayerState) -> PokemonSlot:
 	return null
 
 
+func _has_ready_dragapult_promotion(player: PlayerState) -> bool:
+	if player == null or player.active_pokemon == null:
+		return false
+	if _slot_name(player.active_pokemon) == DRAGAPULT_EX and _can_slot_attack(player.active_pokemon):
+		return false
+	for slot: PokemonSlot in player.bench:
+		if _slot_name(slot) == DRAGAPULT_EX and _can_slot_attack(slot):
+			return true
+	return false
+
+
 func _rare_candy_dragapult_live(player: PlayerState) -> bool:
 	if _count_name(player, DREEPY) + _count_name(player, DRAKLOAK) <= 0:
 		return false
 	if not (_has_hand_card(player, RARE_CANDY) or _deck_has(player, RARE_CANDY)):
+		return false
+	return _has_hand_card(player, DRAGAPULT_EX) or _deck_has(player, DRAGAPULT_EX)
+
+
+func _has_live_dragapult_stage2_route(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	if _count_name(player, DRAGAPULT_EX) > 0:
+		return true
+	if _count_name(player, DREEPY) + _count_name(player, DRAKLOAK) <= 0:
 		return false
 	return _has_hand_card(player, DRAGAPULT_EX) or _deck_has(player, DRAGAPULT_EX)
 
@@ -1018,6 +1371,23 @@ func _should_shutdown_extra_setup(player: PlayerState, game_state: GameState = n
 	return true
 
 
+func _under_deck_out_pressure(player: PlayerState, game_state: GameState = null) -> bool:
+	if player == null:
+		return false
+	if player.deck.size() > 12:
+		return false
+	if game_state != null and int(game_state.turn_number) <= 6:
+		return false
+	return _best_ready_dragapult_slot(player) != null
+
+
+func _has_live_dusk_blast_conversion_target(game_state: GameState, player_index: int) -> bool:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var opponent: PlayerState = game_state.players[1 - player_index]
+	return _best_dusk_blast_target_score(opponent, {"game_state": game_state, "player_index": player_index}) >= 650.0
+
+
 func _needs_dragapult_energy(player: PlayerState) -> bool:
 	for slot: PokemonSlot in _all_slots(player):
 		if _slot_name(slot) in [DREEPY, DRAKLOAK, DRAGAPULT_EX] and _attack_gap(slot) > 0:
@@ -1082,13 +1452,105 @@ func _phantom_dive_has_pickoff(opponent: PlayerState) -> bool:
 	return false
 
 
-func _has_dusk_blast_target(opponent: PlayerState) -> bool:
-	if opponent.active_pokemon != null and (opponent.active_pokemon.get_remaining_hp() <= 130 or _is_two_prize_target(opponent.active_pokemon)):
-		return true
+func _score_dusk_blast_ability(source_slot: PokemonSlot, opponent: PlayerState, game_state: GameState, player_index: int) -> float:
+	var context := {
+		"game_state": game_state,
+		"player_index": player_index,
+		"source_slot": source_slot,
+	}
+	var best_score := _best_dusk_blast_target_score(opponent, context)
+	if _slot_name(source_slot) == DUSKNOIR:
+		if best_score >= 650.0:
+			return 520.0
+		if best_score >= 350.0:
+			return 360.0
+		return -40.0
+	if _slot_name(source_slot) == DUSCLOPS:
+		if best_score >= 650.0:
+			return 430.0
+		if best_score >= 350.0:
+			return 260.0
+		return -60.0
+	return 0.0
+
+
+func _best_dusk_blast_target_score(opponent: PlayerState, context: Dictionary) -> float:
+	if opponent == null:
+		return -INF
+	var best_score := -INF
+	if opponent.active_pokemon != null:
+		best_score = maxf(best_score, _score_dusk_blast_target(opponent.active_pokemon, context))
 	for slot: PokemonSlot in opponent.bench:
-		if slot != null and slot.get_top_card() != null and (slot.get_remaining_hp() <= 130 or _is_two_prize_target(slot)):
-			return true
-	return false
+		if slot != null and slot.get_top_card() != null:
+			best_score = maxf(best_score, _score_dusk_blast_target(slot, context))
+	return best_score
+
+
+func _score_dusk_blast_target(slot: PokemonSlot, context: Dictionary) -> float:
+	if slot == null or slot.get_top_card() == null:
+		return 0.0
+	var remaining_hp := slot.get_remaining_hp()
+	var blast_damage := _dusk_blast_damage(context.get("source_slot", null))
+	var prize_count := slot.get_prize_count()
+	var score := float(prize_count) * 100.0
+	if remaining_hp <= blast_damage:
+		if _is_closing_dusk_blast_prize(prize_count, context):
+			score += 700.0
+			return score
+		if prize_count >= 2:
+			score += 650.0
+			score += 120.0
+			return score
+		score += 180.0
+		return score
+	var game_state: GameState = context.get("game_state", null)
+	var player_index := int(context.get("player_index", -1))
+	if game_state != null and player_index >= 0 and player_index < game_state.players.size():
+		var player: PlayerState = game_state.players[player_index]
+		var opponent: PlayerState = game_state.players[1 - player_index]
+		var active := player.active_pokemon
+		var source_slot: PokemonSlot = context.get("source_slot", null)
+		if active != null and active != source_slot and slot == opponent.active_pokemon:
+			var attack_info: Dictionary = predict_attacker_damage(active)
+			if bool(attack_info.get("can_attack", false)):
+				var follow_up_damage := int(attack_info.get("damage", 0))
+				if remaining_hp <= blast_damage + follow_up_damage:
+					score += 420.0
+					if slot.get_prize_count() >= 2:
+						score += 80.0
+					return score
+	score -= 180.0
+	score -= float(remaining_hp) * 0.25
+	return score
+
+
+func _is_closing_dusk_blast_prize(prize_count: int, context: Dictionary) -> bool:
+	if prize_count <= 0:
+		return false
+	var game_state: GameState = context.get("game_state", null)
+	var player_index := int(context.get("player_index", -1))
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var prizes_remaining := game_state.players[player_index].prizes.size()
+	if prizes_remaining <= 0:
+		return false
+	return prize_count >= prizes_remaining
+
+
+func _dusk_blast_damage(source_slot: Variant) -> int:
+	if source_slot is PokemonSlot:
+		match _slot_name(source_slot as PokemonSlot):
+			DUSCLOPS:
+				return 50
+			DUSKNOIR:
+				return 130
+	return 130
+
+
+func _has_dusk_blast_target(opponent: PlayerState, source_slot: PokemonSlot = null, context: Dictionary = {}) -> bool:
+	var target_context := context.duplicate()
+	target_context["source_slot"] = source_slot
+	return _best_dusk_blast_target_score(opponent, target_context) >= 350.0
 
 
 func _opponent_has_damage_counters(opponent: PlayerState) -> bool:
@@ -1160,6 +1622,19 @@ func _can_slot_attack(slot: PokemonSlot) -> bool:
 	return false
 
 
+func _dragapult_phantom_dive_ready(slot: PokemonSlot) -> bool:
+	return _slot_name(slot) == DRAGAPULT_EX and _attack_gap_for_index(slot, 1) <= 0
+
+
+func _attack_gap_for_index(slot: PokemonSlot, attack_index: int) -> int:
+	if slot == null or slot.get_card_data() == null:
+		return 99
+	if attack_index < 0 or attack_index >= slot.get_card_data().attacks.size():
+		return 99
+	var attack: Dictionary = slot.get_card_data().attacks[attack_index]
+	return maxi(0, str(attack.get("cost", "")).length() - slot.attached_energy.size())
+
+
 func _attack_gap(slot: PokemonSlot) -> int:
 	if slot == null or slot.get_card_data() == null or slot.get_card_data().attacks.is_empty():
 		return 99
@@ -1183,6 +1658,10 @@ func _slot_has_tool(slot: PokemonSlot, tool_name: String) -> bool:
 
 func _is_two_prize_target(slot: PokemonSlot) -> bool:
 	return slot != null and slot.get_prize_count() >= 2
+
+
+func _is_rule_box(slot: PokemonSlot) -> bool:
+	return slot != null and slot.get_card_data() != null and str(slot.get_card_data().mechanic) != ""
 
 
 func _estimate_heuristic_base(kind: String) -> float:

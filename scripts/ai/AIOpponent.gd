@@ -210,6 +210,8 @@ func run_single_step(battle_scene: Control, gsm: GameStateMachine) -> bool:
 		return _run_take_prize_step(battle_scene, gsm)
 	if pending_choice == "heavy_baton_target":
 		return _run_heavy_baton_step(battle_scene, gsm)
+	if pending_choice == "exp_share_target":
+		return _run_exp_share_step(battle_scene, gsm)
 	if pending_choice == "send_out":
 		if bridge_handles_prompts and _is_bridge_owned_prompt(pending_choice):
 			return false
@@ -252,10 +254,18 @@ func run_single_step(battle_scene: Control, gsm: GameStateMachine) -> bool:
 	var executed := _execute_action(battle_scene, gsm, action)
 	if _deck_strategy != null and _deck_strategy.has_method("log_runtime_action_result"):
 		_deck_strategy.call("log_runtime_action_result", action, executed, gsm.game_state, player_index, audit_turn)
+	var action_card: CardInstance = action.get("card", null)
+	var action_card_name := ""
+	var action_card_type := ""
+	if action_card != null and action_card.card_data != null:
+		action_card_name = str(action_card.card_data.name_en) if str(action_card.card_data.name_en) != "" else str(action_card.card_data.name)
+		action_card_type = str(action_card.card_data.card_type)
 	_notify_llm_runtime_state_change(llm_before_action, gsm, {
 		"success": executed,
 		"step_kind": "main_action",
 		"action_kind": str(action.get("kind", "")),
+		"action_card_name": action_card_name,
+		"action_card_type": action_card_type,
 		"pending_choice_before": pending_choice,
 		"pending_choice_after": str(battle_scene.get("_pending_choice")),
 	})
@@ -840,7 +850,52 @@ func _run_heavy_baton_step(battle_scene: Control, gsm: GameStateMachine) -> bool
 		best_slot = bench_slots[0]
 	if str(battle_scene.get("_pending_choice")) == "heavy_baton_target":
 		_clear_consumed_prompt(battle_scene)
-	if gsm.resolve_heavy_baton_choice(player_index_hb, best_slot):
+	var source_energy_raw: Array = dialog_data.get("source_energy", [])
+	var selected_energy: Array[CardInstance] = []
+	for energy_variant: Variant in source_energy_raw:
+		if energy_variant is CardInstance:
+			selected_energy.append(energy_variant)
+			if selected_energy.size() >= EffectToolHeavyBaton.MAX_ENERGY_TRANSFER:
+				break
+	var resolved := false
+	if selected_energy.is_empty():
+		resolved = gsm.resolve_heavy_baton_choice(player_index_hb, best_slot)
+	else:
+		resolved = gsm.resolve_heavy_baton_choice_with_energy(player_index_hb, best_slot, selected_energy)
+	if resolved:
+		if battle_scene.has_method("_refresh_ui_after_successful_action"):
+			battle_scene.call("_refresh_ui_after_successful_action", false, player_index)
+		elif battle_scene.has_method("_refresh_ui"):
+			battle_scene.call("_refresh_ui")
+		return true
+	return false
+
+
+func _run_exp_share_step(battle_scene: Control, gsm: GameStateMachine) -> bool:
+	if battle_scene == null or gsm == null or gsm.game_state == null:
+		return false
+	var dialog_data: Dictionary = battle_scene.get("_dialog_data")
+	var player_index_exp: int = int(dialog_data.get("player", -1))
+	if player_index_exp != player_index or player_index_exp >= gsm.game_state.players.size():
+		return false
+	var bench_raw: Array = dialog_data.get("bench", [])
+	var bench_slots: Array[PokemonSlot] = []
+	for slot_variant: Variant in bench_raw:
+		if slot_variant is PokemonSlot:
+			bench_slots.append(slot_variant)
+	if bench_slots.is_empty():
+		return false
+	var best_slot: PokemonSlot = _pick_best_handoff_target(bench_slots, gsm, "exp_share_target")
+	if best_slot == null:
+		best_slot = bench_slots[0]
+	var selected_energy: CardInstance = null
+	for energy_variant: Variant in dialog_data.get("source_energy", []):
+		if energy_variant is CardInstance:
+			selected_energy = energy_variant
+			break
+	if str(battle_scene.get("_pending_choice")) == "exp_share_target":
+		_clear_consumed_prompt(battle_scene)
+	if gsm.resolve_exp_share_choice(player_index_exp, best_slot, selected_energy):
 		if battle_scene.has_method("_refresh_ui_after_successful_action"):
 			battle_scene.call("_refresh_ui_after_successful_action", false, player_index)
 		elif battle_scene.has_method("_refresh_ui"):

@@ -39,8 +39,8 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	var energy_cards: Array[CardInstance] = _filter_matching_energy(viewed_cards)
 	if energy_cards.is_empty():
 		return [build_empty_search_resolution_step_with_view_label(
-			"Metal Maker: no Basic Metal Energy found in the top %d cards. You may still view them." % look_count,
-			"View cards"
+		"金属制造者：牌库上方%d张没有基本钢能量。你仍可以查看这些卡。" % look_count,
+		"查看卡牌"
 		)]
 
 	var target_items: Array = []
@@ -66,7 +66,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 
 	return [build_card_assignment_step(
 		ASSIGNMENT_STEP_ID,
-		"Metal Maker: assign any Basic Metal Energy from the top %d cards" % look_count,
+		"金属制造者：从牌库上方%d张中的基本钢能量选择附着目标" % look_count,
 		energy_cards,
 		energy_labels,
 		target_items,
@@ -88,9 +88,9 @@ func get_followup_interaction_steps(
 		return []
 	var player: PlayerState = state.players[card.owner_index]
 	return [build_readonly_card_preview_step(
-		"Metal Maker: viewed cards",
+			"金属制造者：查看到的卡牌",
 		_peek_top_cards(player),
-		"Close and continue"
+			"关闭并继续"
 	)]
 
 

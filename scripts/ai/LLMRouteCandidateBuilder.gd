@@ -19,18 +19,28 @@ func build_candidate_routes(
 		"future_actions": future_refs,
 		"primary_attack_route": tactical_facts.get("primary_attack_route", []),
 		"primary_attack_reachable": bool(tactical_facts.get("primary_attack_reachable_after_visible_engine", false)),
+		"primary_attack_missing_cost": tactical_facts.get("primary_attack_missing_cost", []),
 		"primary_attack_reachable_after_manual_attach": bool(tactical_facts.get("primary_attack_reachable_after_manual_attach", false)),
 		"best_manual_attach_to_primary_attack_action_id": str(tactical_facts.get("best_manual_attach_to_primary_attack_action_id", "")),
+		"best_manual_attach_energy_for_active_attack": str(tactical_facts.get("best_manual_attach_energy_for_active_attack", "")),
 		"manual_attach_enables_best_active_attack": bool(tactical_facts.get("manual_attach_enables_best_active_attack", false)),
 		"best_manual_attach_to_best_active_attack_action_id": str(tactical_facts.get("best_manual_attach_to_best_active_attack_action_id", "")),
 		"best_active_attack_after_manual_attach": tactical_facts.get("best_active_attack_after_manual_attach", {}),
 		"only_low_ready_attack": bool(tactical_facts.get("only_ready_attack_is_low_value_redraw", false)),
+		"redraw_attack_forbidden": bool(tactical_facts.get("redraw_attack_forbidden", false)),
+		"redraw_attack_recommended": bool(tactical_facts.get("redraw_attack_recommended", false)),
+		"deck_draw_risk": bool(tactical_facts.get("deck_draw_risk", false)),
 		"gust_ko_opportunities": tactical_facts.get("gust_ko_opportunities", []),
+		"defensive_gust_opportunities": tactical_facts.get("defensive_gust_opportunities", []),
 		"no_deck_draw_lock": bool(tactical_facts.get("no_deck_draw_lock", false)),
+		"own_bench_count": int(tactical_facts.get("own_bench_count", -1)),
+		"safe_pre_primary_actions": tactical_facts.get("safe_pre_primary_actions", []),
 	}
 	_append_route(routes, _build_gust_ko_route(current_refs, context))
+	_append_route(routes, _build_defensive_gust_route(current_refs, context))
 	_append_route(routes, _build_manual_attach_attack_route(current_refs, context))
 	_append_route(routes, _build_manual_attach_active_attack_route(current_refs, context))
+	_append_route(routes, _build_pivot_attack_route(current_refs, future_refs, context))
 	_append_route(routes, _build_attack_now_route(current_refs, context))
 	_append_route(routes, _build_primary_engine_route(current_refs, future_refs, context))
 	_append_route(routes, _build_engine_before_end_route(current_refs, context))
@@ -38,14 +48,15 @@ func build_candidate_routes(
 	_append_route(routes, _build_basic_setup_route(current_refs, context))
 	_append_route(routes, _build_terminal_draw_fallback_route(current_refs))
 	_append_route(routes, _build_preserve_route(end_turn))
-	return routes
+	return _sorted_limited_routes(routes)
 
 
 func _build_gust_ko_route(actions: Array[Dictionary], context: Dictionary) -> Dictionary:
 	var opportunities: Array = context.get("gust_ko_opportunities", []) if context.get("gust_ko_opportunities", []) is Array else []
 	if opportunities.is_empty():
 		return {}
-	var opportunity: Dictionary = opportunities[0] if opportunities[0] is Dictionary else {}
+	var sorted_opportunities := _sorted_gust_ko_opportunities(opportunities, actions)
+	var opportunity: Dictionary = sorted_opportunities[0] if not sorted_opportunities.is_empty() else {}
 	if opportunity.is_empty():
 		return {}
 	var gust: Dictionary = _find_action_by_id(actions, str(opportunity.get("gust_action_id", "")))
@@ -53,6 +64,9 @@ func _build_gust_ko_route(actions: Array[Dictionary], context: Dictionary) -> Di
 	if gust.is_empty() or attack.is_empty():
 		return {}
 	var gust_ref: Dictionary = gust.duplicate(true)
+	var gust_deterministic := bool(opportunity.get("gust_deterministic", _gust_reliability_for_ref(gust_ref) == "deterministic"))
+	gust_ref["gust_reliability"] = str(opportunity.get("gust_reliability", _gust_reliability_for_ref(gust_ref)))
+	gust_ref["gust_deterministic"] = gust_deterministic
 	var selection_policy: Dictionary = gust_ref.get("selection_policy", {}) if gust_ref.get("selection_policy", {}) is Dictionary else {}
 	var policy_from_opportunity: Dictionary = opportunity.get("selection_policy", {}) if opportunity.get("selection_policy", {}) is Dictionary else {}
 	for key: String in policy_from_opportunity.keys():
@@ -62,7 +76,7 @@ func _build_gust_ko_route(actions: Array[Dictionary], context: Dictionary) -> Di
 		"gust_ko",
 		"Gust a damaged bench Pokemon that the listed attack can KO now; prioritize game-winning prize routes.",
 		[_action_ref(gust_ref), _action_ref(attack)],
-		990,
+		990 if gust_deterministic else 850,
 		"gust_ko",
 		[{
 			"id": "goal:gust_ko_target",
@@ -70,7 +84,82 @@ func _build_gust_ko_route(actions: Array[Dictionary], context: Dictionary) -> Di
 			"target_position": str(opportunity.get("target_position", "")),
 			"target_name": str(opportunity.get("target_name", "")),
 			"game_winning": bool(opportunity.get("game_winning", false)),
+			"gust_reliability": str(opportunity.get("gust_reliability", "")),
+			"gust_deterministic": gust_deterministic,
 		}]
+	)
+
+
+func _build_defensive_gust_route(actions: Array[Dictionary], context: Dictionary) -> Dictionary:
+	var opportunities: Array = context.get("defensive_gust_opportunities", []) if context.get("defensive_gust_opportunities", []) is Array else []
+	if opportunities.is_empty():
+		return {}
+	var opportunity: Dictionary = opportunities[0] if opportunities[0] is Dictionary else {}
+	if opportunity.is_empty():
+		return {}
+	var gust: Dictionary = _find_action_by_id(actions, str(opportunity.get("gust_action_id", "")))
+	if gust.is_empty():
+		return {}
+	var gust_ref: Dictionary = gust.duplicate(true)
+	gust_ref["gust_reliability"] = "deterministic"
+	gust_ref["gust_deterministic"] = true
+	gust_ref["capability"] = "defensive_gust"
+	var selection_policy: Dictionary = gust_ref.get("selection_policy", {}) if gust_ref.get("selection_policy", {}) is Dictionary else {}
+	var policy_from_opportunity: Dictionary = opportunity.get("selection_policy", {}) if opportunity.get("selection_policy", {}) is Dictionary else {}
+	for key: String in policy_from_opportunity.keys():
+		selection_policy[key] = policy_from_opportunity.get(key)
+	gust_ref["selection_policy"] = selection_policy
+	var route_actions: Array[Dictionary] = [_action_ref(gust_ref)]
+	_append_end_turn(route_actions, context)
+	return _route(
+		"defensive_gust_stall",
+		"No attack route is available; gust a low-energy/high-retreat bench target to break the opponent active attack threat.",
+		route_actions,
+		975,
+		"defensive_gust",
+		[{
+			"id": "goal:defensive_gust_target",
+			"type": "goal",
+			"target_position": str(opportunity.get("target_position", "")),
+			"target_name": str(opportunity.get("target_name", "")),
+			"opponent_active_name": str(opportunity.get("opponent_active_name", "")),
+		}]
+	)
+
+
+func _build_pivot_attack_route(
+	actions: Array[Dictionary],
+	future_actions: Array[Dictionary],
+	context: Dictionary
+) -> Dictionary:
+	var future_attack: Dictionary = _best_reachable_pivot_attack(future_actions)
+	if future_attack.is_empty():
+		return {}
+	var bench_position := str(future_attack.get("position", ""))
+	if bench_position == "":
+		return {}
+	var route_actions: Array[Dictionary] = []
+	_append_action_refs(route_actions, _safe_pre_primary_action_refs(actions, context))
+	var attach_energy := str(future_attack.get("best_manual_attach_energy", ""))
+	if attach_energy != "":
+		var attach: Dictionary = _find_manual_attach_to_position(actions, bench_position, attach_energy)
+		if attach.is_empty():
+			return {}
+		_append_action_ref(route_actions, attach)
+	var pivot: Dictionary = _find_pivot_to_position(actions, bench_position)
+	if pivot.is_empty():
+		return {}
+	_append_action_ref(route_actions, pivot)
+	_append_end_turn(route_actions, context)
+	var future_goals: Array[Dictionary] = _context_future_goals(context)
+	future_goals.push_front(_action_ref(future_attack))
+	return _route(
+		"pivot_to_primary_attack",
+		"Charge or pivot to the reachable bench attacker, then let the runtime convert end_turn into the now-legal attack.",
+		route_actions,
+		970 if _future_attack_is_primary(future_attack) else 880,
+		"pivot_to_attack",
+		future_goals
 	)
 
 
@@ -78,13 +167,22 @@ func _build_attack_now_route(actions: Array[Dictionary], context: Dictionary) ->
 	var attack: Dictionary = _best_attack(actions)
 	if attack.is_empty():
 		return {}
+	if _is_low_value_attack(attack) and _should_suppress_low_value_attack_route(actions, context):
+		return {}
 	if bool(context.get("only_low_ready_attack", false)) \
 			and (bool(context.get("primary_attack_reachable", false)) \
 			or bool(context.get("primary_attack_reachable_after_manual_attach", false)) \
 			or bool(context.get("manual_attach_enables_best_active_attack", false))):
 		return {}
 	var route_actions: Array[Dictionary] = []
-	_append_action_refs(route_actions, _safe_pre_attack_actions(actions, bool(context.get("no_deck_draw_lock", false))))
+	if _is_low_value_attack(attack) and bool(context.get("redraw_attack_recommended", false)):
+		_append_action_refs(route_actions, _safe_pre_low_value_redraw_actions(actions, bool(context.get("no_deck_draw_lock", false))))
+	else:
+		_append_action_refs(route_actions, _safe_pre_attack_actions(
+			actions,
+			bool(context.get("no_deck_draw_lock", false)),
+			int(context.get("own_bench_count", -1))
+		))
 	_append_action_ref(route_actions, attack)
 	return _route(
 		"attack_now",
@@ -94,6 +192,32 @@ func _build_attack_now_route(actions: Array[Dictionary], context: Dictionary) ->
 		"attack",
 		_context_future_goals(context)
 	)
+
+
+func _should_suppress_low_value_attack_route(actions: Array[Dictionary], context: Dictionary) -> bool:
+	if bool(context.get("redraw_attack_forbidden", false)):
+		return true
+	if bool(context.get("deck_draw_risk", false)):
+		return true
+	if bool(context.get("primary_attack_reachable", false)) \
+			or bool(context.get("primary_attack_reachable_after_manual_attach", false)) \
+			or bool(context.get("manual_attach_enables_best_active_attack", false)):
+		return true
+	if bool(context.get("redraw_attack_recommended", false)):
+		return false
+	return _has_productive_non_terminal_action(actions)
+
+
+func _has_productive_non_terminal_action(actions: Array[Dictionary]) -> bool:
+	for ref: Dictionary in actions:
+		if bool(ref.get("future", false)):
+			continue
+		var capability := _capability_for_ref(ref)
+		if capability in ["end_turn", "attack", "low_value_attack", "terminal_draw_ability"]:
+			continue
+		if capability != "":
+			return true
+	return false
 
 
 func _build_manual_attach_attack_route(actions: Array[Dictionary], context: Dictionary) -> Dictionary:
@@ -161,7 +285,7 @@ func _build_primary_engine_route(
 		return {}
 	var route_actions: Array[Dictionary] = []
 	_append_action_refs(route_actions, _engine_actions(actions, true, bool(context.get("no_deck_draw_lock", false))))
-	_append_best_manual_attach(route_actions, actions)
+	_append_best_manual_attach(route_actions, actions, context)
 	_append_end_turn(route_actions, context)
 	if route_actions.size() <= 1:
 		return {}
@@ -172,7 +296,7 @@ func _build_primary_engine_route(
 		"primary_visible_engine",
 		"Build the visible primary attack route with search, draw, acceleration, and attach before ending.",
 		route_actions,
-		900,
+		980,
 		"setup_to_primary_attack",
 		future_goals
 	)
@@ -196,7 +320,7 @@ func _build_engine_before_end_route(actions: Array[Dictionary], context: Diction
 
 func _build_manual_attach_setup_route(actions: Array[Dictionary], context: Dictionary) -> Dictionary:
 	var route_actions: Array[Dictionary] = []
-	_append_best_manual_attach(route_actions, actions)
+	_append_best_manual_attach(route_actions, actions, context)
 	_append_action_refs(route_actions, _safe_non_attach_setup_actions(actions, bool(context.get("no_deck_draw_lock", false))))
 	_append_end_turn(route_actions, context)
 	if route_actions.size() <= 1:
@@ -216,6 +340,8 @@ func _build_basic_setup_route(actions: Array[Dictionary], context: Dictionary) -
 	for ref: Dictionary in _sort_by_priority(actions):
 		if route_actions.size() >= 4:
 			break
+		if bool(context.get("no_deck_draw_lock", false)) and _is_draw_or_churn_ref(ref):
+			continue
 		if _capability_for_ref(ref) not in ["bench_basic", "bench_search", "attach_tool"]:
 			continue
 		_append_action_ref(route_actions, ref)
@@ -261,7 +387,7 @@ func _build_preserve_route(end_turn: Dictionary) -> Dictionary:
 
 
 func _append_route(routes: Array[Dictionary], route: Dictionary) -> void:
-	if route.is_empty() or routes.size() >= MAX_ROUTES:
+	if route.is_empty():
 		return
 	var ids := _route_action_ids(route.get("actions", []))
 	if ids.is_empty():
@@ -270,6 +396,22 @@ func _append_route(routes: Array[Dictionary], route: Dictionary) -> void:
 		if _same_string_array(_route_action_ids(existing.get("actions", [])), ids):
 			return
 	routes.append(route)
+
+
+func _sorted_limited_routes(routes: Array[Dictionary]) -> Array[Dictionary]:
+	var result: Array[Dictionary] = routes.duplicate(true)
+	result.sort_custom(Callable(self, "_sort_route_priority_desc"))
+	if result.size() > MAX_ROUTES:
+		result.resize(MAX_ROUTES)
+	return result
+
+
+func _sort_route_priority_desc(a: Dictionary, b: Dictionary) -> bool:
+	var left := int(a.get("priority", 0))
+	var right := int(b.get("priority", 0))
+	if left != right:
+		return left > right
+	return str(a.get("id", "")) < str(b.get("id", ""))
 
 
 func _route(
@@ -320,15 +462,33 @@ func _clean_route_actions(actions: Array[Dictionary]) -> Array[Dictionary]:
 	return result
 
 
-func _safe_pre_attack_actions(actions: Array[Dictionary], no_deck_draw_lock: bool = false) -> Array[Dictionary]:
+func _safe_pre_attack_actions(
+	actions: Array[Dictionary],
+	no_deck_draw_lock: bool = false,
+	own_bench_count: int = -1
+) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for ref: Dictionary in _sort_by_priority(actions):
 		if result.size() >= 3:
 			break
 		var capability := _capability_for_ref(ref)
-		if no_deck_draw_lock and capability in ["charge_and_draw", "draw_ability"]:
+		if no_deck_draw_lock and _is_draw_or_churn_ref(ref):
 			continue
-		if capability in ["attach_tool", "charge_and_draw", "draw_ability"]:
+		if capability in ["attach_tool", "charge_and_draw", "draw_ability"] \
+				or (own_bench_count == 0 and capability == "bench_basic"):
+			result.append(ref)
+	return result
+
+
+func _safe_pre_low_value_redraw_actions(actions: Array[Dictionary], no_deck_draw_lock: bool = false) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for ref: Dictionary in _sort_by_priority(actions):
+		if result.size() >= 3:
+			break
+		var capability := _capability_for_ref(ref)
+		if no_deck_draw_lock and _is_draw_or_churn_ref(ref):
+			continue
+		if capability in ["bench_basic", "bench_search", "attach_tool", "charge_and_draw"]:
 			result.append(ref)
 	return result
 
@@ -354,7 +514,9 @@ func _engine_actions(actions: Array[Dictionary], include_manual_support: bool, n
 		if result.size() >= 6:
 			break
 		var capability := _capability_for_ref(ref)
-		if no_deck_draw_lock and _is_draw_or_deck_access_capability(capability):
+		if no_deck_draw_lock and _is_draw_or_churn_ref(ref):
+			continue
+		if include_manual_support and _is_hand_reset_draw_ref(ref):
 			continue
 		if capability in allowed:
 			result.append(ref)
@@ -367,10 +529,33 @@ func _safe_non_attach_setup_actions(actions: Array[Dictionary], no_deck_draw_loc
 		if result.size() >= 3:
 			break
 		var capability := _capability_for_ref(ref)
-		if no_deck_draw_lock and _is_draw_or_deck_access_capability(capability):
+		if no_deck_draw_lock and _is_draw_or_churn_ref(ref):
 			continue
 		if capability in ["attach_tool", "charge_and_draw", "draw_ability", "bench_basic", "bench_search"]:
 			result.append(ref)
+	return result
+
+
+func _safe_pre_primary_action_refs(actions: Array[Dictionary], context: Dictionary) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	var raw_safe: Variant = context.get("safe_pre_primary_actions", [])
+	if not (raw_safe is Array):
+		return result
+	for raw: Variant in raw_safe:
+		if result.size() >= 2:
+			break
+		if not (raw is Dictionary):
+			continue
+		var safe_ref: Dictionary = raw
+		var action_id := str(safe_ref.get("id", ""))
+		if action_id == "":
+			continue
+		var action: Dictionary = _find_action_by_id(actions, action_id)
+		if action.is_empty():
+			continue
+		if bool(context.get("no_deck_draw_lock", false)) and _is_draw_or_churn_ref(action):
+			continue
+		_append_action_ref(result, action)
 	return result
 
 
@@ -389,11 +574,132 @@ func _is_draw_or_deck_access_capability(capability: String) -> bool:
 	]
 
 
-func _append_best_manual_attach(route_actions: Array[Dictionary], actions: Array[Dictionary]) -> void:
+func _is_draw_or_churn_capability(capability: String) -> bool:
+	return capability in [
+		"charge_and_draw",
+		"draw_ability",
+		"terminal_draw_ability",
+		"discard_to_draw",
+		"draw_filter",
+		"supporter_acceleration",
+	]
+
+
+func _is_draw_or_churn_ref(ref: Dictionary) -> bool:
+	if _is_draw_or_churn_capability(_capability_for_ref(ref)):
+		return true
+	var action_type := str(ref.get("type", ref.get("kind", "")))
+	if action_type == "use_ability":
+		var schema_text := _schema_or_interaction_search_text(ref)
+		if schema_text.contains("draw"):
+			return true
+		var schema: Dictionary = _schema_or_interactions(ref)
+		if schema.has("basic_energy_from_hand") or schema.has("energy_card_id"):
+			return true
+		if schema.has("discard_card") or schema.has("discard_cards"):
+			return true
+	var combined := _combined_ref_name(ref)
+	return _name_has_any(combined, [
+		"trekking shoes",
+		"concealed cards",
+		"teal dance",
+		"flip the script",
+		"碧草之舞",
+		"隐藏牌",
+		"隱藏牌",
+		"化危为吉",
+		"化危為吉",
+		"吉雉鸡",
+		"吉雉雞",
+		"光辉甲贺忍蛙",
+		"光輝甲賀忍蛙",
+		"厄诡椪",
+		"厄鬼椪",
+	])
+
+
+func _is_hand_reset_draw_ref(ref: Dictionary) -> bool:
+	if _capability_for_ref(ref) != "draw_filter":
+		return false
+	var combined := _combined_ref_name(ref)
+	return _name_has_any(combined, [
+		"iono",
+		"professor's research",
+		"professors research",
+		"professor research",
+		"research",
+	])
+
+
+func _schema_or_interaction_search_text(ref: Dictionary) -> String:
+	var schema: Dictionary = _schema_or_interactions(ref)
+	if schema.is_empty():
+		return ""
+	return JSON.stringify(schema).to_lower()
+
+
+func _schema_or_interactions(ref: Dictionary) -> Dictionary:
+	var schema: Dictionary = ref.get("interaction_schema", {}) if ref.get("interaction_schema", {}) is Dictionary else {}
+	if not schema.is_empty():
+		return schema
+	return ref.get("interactions", {}) if ref.get("interactions", {}) is Dictionary else {}
+
+
+func _append_best_manual_attach(route_actions: Array[Dictionary], actions: Array[Dictionary], context: Dictionary = {}) -> void:
+	var attack_cost_attach: Dictionary = _best_manual_attach_for_primary_cost(actions, context)
+	if not attack_cost_attach.is_empty():
+		_append_action_ref(route_actions, attack_cost_attach)
+		return
+	if _primary_attach_requires_specific_energy(context):
+		return
 	for ref: Dictionary in _sort_by_priority(actions):
 		if _capability_for_ref(ref) == "manual_attach":
 			_append_action_ref(route_actions, ref)
 			return
+
+
+func _best_manual_attach_for_primary_cost(actions: Array[Dictionary], context: Dictionary) -> Dictionary:
+	var desired_symbols := _desired_primary_attach_symbols(context)
+	if desired_symbols.is_empty():
+		return {}
+	for ref: Dictionary in _sort_by_priority(actions):
+		if _capability_for_ref(ref) != "manual_attach":
+			continue
+		if str(ref.get("position", "")) != "active":
+			continue
+		var ref_symbol := _energy_symbol_from_word(str(ref.get("energy_type", "")))
+		if ref_symbol == "":
+			ref_symbol = _energy_symbol_from_word(str(ref.get("card", "")))
+		if desired_symbols.has(ref_symbol):
+			return ref
+	return {}
+
+
+func _desired_primary_attach_symbols(context: Dictionary) -> Array[String]:
+	var desired_symbols: Array[String] = []
+	var best_energy := _energy_symbol_from_word(str(context.get("best_manual_attach_energy_for_active_attack", "")))
+	if best_energy != "":
+		_append_unique_symbol(desired_symbols, best_energy)
+	var raw_missing: Variant = context.get("primary_attack_missing_cost", [])
+	if raw_missing is Array:
+		for raw: Variant in raw_missing:
+			_append_unique_symbol(desired_symbols, _energy_symbol_from_word(str(raw)))
+	elif raw_missing is PackedStringArray:
+		for raw_string: String in raw_missing:
+			_append_unique_symbol(desired_symbols, _energy_symbol_from_word(raw_string))
+	return desired_symbols
+
+
+func _primary_attach_requires_specific_energy(context: Dictionary) -> bool:
+	for symbol: String in _desired_primary_attach_symbols(context):
+		if symbol != "" and symbol != "C":
+			return true
+	return false
+
+
+func _append_unique_symbol(target: Array[String], symbol: String) -> void:
+	if symbol != "" and not target.has(symbol):
+		target.append(symbol)
 
 
 func _append_end_turn(route_actions: Array[Dictionary], context: Dictionary) -> void:
@@ -426,6 +732,102 @@ func _best_attack(actions: Array[Dictionary]) -> Dictionary:
 			best_score = score
 			best = ref
 	return best
+
+
+func _best_reachable_pivot_attack(future_actions: Array[Dictionary]) -> Dictionary:
+	var best: Dictionary = {}
+	var best_score := -999999
+	for ref: Dictionary in future_actions:
+		if str(ref.get("type", "")) != "attack":
+			continue
+		if str(ref.get("prerequisite", "")) != "pivot_to_bench_attacker":
+			continue
+		if not bool(ref.get("reachable_with_known_resources", false)):
+			continue
+		if _is_low_value_attack(ref):
+			continue
+		var score := _action_priority(ref)
+		if _future_attack_is_primary(ref):
+			score += 250
+		if score > best_score:
+			best_score = score
+			best = ref
+	return best
+
+
+func _future_attack_is_primary(ref: Dictionary) -> bool:
+	var quality: Dictionary = ref.get("attack_quality", {}) if ref.get("attack_quality", {}) is Dictionary else {}
+	return str(quality.get("role", "")) == "primary_damage" or str(quality.get("terminal_priority", "")) == "high"
+
+
+func _find_manual_attach_to_position(actions: Array[Dictionary], position: String, energy_word: String) -> Dictionary:
+	var requested_symbol := _energy_symbol_from_word(energy_word)
+	if requested_symbol == "":
+		return {}
+	for ref: Dictionary in _sort_by_priority(actions):
+		if str(ref.get("type", "")) != "attach_energy":
+			continue
+		if str(ref.get("position", "")) != position:
+			continue
+		var ref_symbol := _energy_symbol_from_word(str(ref.get("energy_type", "")))
+		if ref_symbol == "":
+			ref_symbol = _energy_symbol_from_word(str(ref.get("card", "")))
+		if ref_symbol == requested_symbol:
+			return ref
+	return {}
+
+
+func _find_pivot_to_position(actions: Array[Dictionary], position: String) -> Dictionary:
+	for ref: Dictionary in _sort_by_priority(actions):
+		if str(ref.get("type", "")) == "retreat" and str(ref.get("bench_position", "")) == position:
+			return ref
+	for ref: Dictionary in _sort_by_priority(actions):
+		if str(ref.get("type", "")) == "retreat" and _action_id(ref).contains(":%s:" % position):
+			return ref
+	return {}
+
+
+func _energy_symbol_from_word(energy_word: String) -> String:
+	var lower := energy_word.strip_edges().to_lower()
+	if lower == "":
+		return ""
+	if lower in ["l", "lightning"]:
+		return "L"
+	if lower in ["f", "fighting"]:
+		return "F"
+	if lower in ["g", "grass"]:
+		return "G"
+	if lower in ["r", "fire"]:
+		return "R"
+	if lower in ["p", "psychic"]:
+		return "P"
+	if lower in ["w", "water"]:
+		return "W"
+	if lower in ["d", "dark", "darkness"]:
+		return "D"
+	if lower in ["m", "metal"]:
+		return "M"
+	if lower in ["c", "colorless"]:
+		return "C"
+	if lower.contains("lightning"):
+		return "L"
+	if lower.contains("fighting"):
+		return "F"
+	if lower.contains("grass"):
+		return "G"
+	if lower.contains("fire"):
+		return "R"
+	if lower.contains("psychic"):
+		return "P"
+	if lower.contains("water"):
+		return "W"
+	if lower.contains("dark"):
+		return "D"
+	if lower.contains("metal"):
+		return "M"
+	if lower.contains("colorless"):
+		return "C"
+	return ""
 
 
 func _best_future_primary_attack(future_actions: Array[Dictionary]) -> Dictionary:
@@ -633,6 +1035,56 @@ func _context_future_goals(context: Dictionary) -> Array[Dictionary]:
 	return result
 
 
+func _sorted_gust_ko_opportunities(opportunities: Array, actions: Array[Dictionary]) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for raw: Variant in opportunities:
+		if not (raw is Dictionary):
+			continue
+		var opportunity: Dictionary = (raw as Dictionary).duplicate(true)
+		var gust: Dictionary = _find_action_by_id(actions, str(opportunity.get("gust_action_id", "")))
+		var reliability := str(opportunity.get("gust_reliability", ""))
+		if reliability == "" and not gust.is_empty():
+			reliability = _gust_reliability_for_ref(gust)
+		if reliability == "":
+			reliability = "deterministic"
+		opportunity["gust_reliability"] = reliability
+		opportunity["gust_deterministic"] = reliability == "deterministic"
+		result.append(opportunity)
+	result.sort_custom(Callable(self, "_sort_gust_ko_opportunity_desc"))
+	return result
+
+
+func _sort_gust_ko_opportunity_desc(a: Dictionary, b: Dictionary) -> bool:
+	var a_win := bool(a.get("game_winning", false))
+	var b_win := bool(b.get("game_winning", false))
+	if a_win != b_win:
+		return a_win
+	var a_det := bool(a.get("gust_deterministic", true))
+	var b_det := bool(b.get("gust_deterministic", true))
+	if a_det != b_det:
+		return a_det
+	var a_prizes := int(a.get("target_prize_count", 0))
+	var b_prizes := int(b.get("target_prize_count", 0))
+	if a_prizes != b_prizes:
+		return a_prizes > b_prizes
+	var a_hp := int(a.get("target_hp_remaining", 9999))
+	var b_hp := int(b.get("target_hp_remaining", 9999))
+	if a_hp != b_hp:
+		return a_hp < b_hp
+	return str(a.get("target_position", "")) < str(b.get("target_position", ""))
+
+
+func _gust_reliability_for_ref(ref: Dictionary) -> String:
+	var rules: Dictionary = ref.get("card_rules", {}) if ref.get("card_rules", {}) is Dictionary else {}
+	var effect_id := str(rules.get("effect_id", ref.get("effect_id", "")))
+	if effect_id == "3a6d419769778b40091e69fbd76737ec":
+		return "coin_flip"
+	var combined := _combined_ref_name(ref)
+	if _name_has_any(combined, ["pokemon catcher"]):
+		return "coin_flip"
+	return "deterministic"
+
+
 func _find_action_by_id(actions: Array[Dictionary], action_id: String) -> Dictionary:
 	for ref: Dictionary in actions:
 		if _action_id(ref) == action_id:
@@ -645,7 +1097,7 @@ func _action_ref(ref: Dictionary) -> Dictionary:
 	var result := {
 		"id": action_id,
 		"type": str(ref.get("type", ref.get("kind", ""))),
-		"capability": _capability_for_ref(ref),
+		"capability": str(ref.get("capability", _capability_for_ref(ref))),
 	}
 	for key: String in [
 		"card", "pokemon", "target", "position", "attack_name", "ability",
@@ -653,6 +1105,7 @@ func _action_ref(ref: Dictionary) -> Dictionary:
 		"interactions", "resource_conflicts", "consumes_hand_card_ids",
 		"may_consume_hand_energy_symbols", "consumes_hand_energy_symbol",
 		"future", "prerequisite", "reachable_with_known_resources",
+		"gust_reliability", "gust_deterministic",
 	]:
 		if ref.has(key):
 			result[key] = ref.get(key)

@@ -16,7 +16,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 func get_preview_interaction_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
 	return [{
 		"id": "coin_flip_preview",
-		"title": "Flip 2 coins",
+		"title": "投掷2枚硬币",
 		"wait_for_coin_animation": true,
 		"preview_only": true,
 	}]
@@ -36,7 +36,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 
 	return [{
 		"id": "discard_to_top",
-		"title": "Choose up to %d card(s) to put on top of your deck" % _pending_heads_count,
+		"title": "选择最多%d张卡放回牌库上方" % _pending_heads_count,
 		"items": items,
 		"labels": labels,
 		"min_select": 0,

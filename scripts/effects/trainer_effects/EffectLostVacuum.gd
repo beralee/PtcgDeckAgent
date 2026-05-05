@@ -28,6 +28,9 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 				continue
 			target_items.append(slot.attached_tool)
 			target_labels.append("玩家%d %s上的道具：%s" % [slot_pi, slot.get_pokemon_name(), slot.attached_tool.card_data.name])
+	var target_groups: Array[Dictionary] = []
+	for slot_pi: int in 2:
+		target_groups.append_array(build_attached_card_groups(state.players[slot_pi], target_items))
 
 	return [
 		{
@@ -44,6 +47,8 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			"title": "选择1张场上的宝可梦道具或竞技场放入放逐区",
 			"items": target_items,
 			"labels": target_labels,
+			"card_groups": target_groups,
+			"transparent_battlefield_dialog": true,
 			"min_select": 1,
 			"max_select": 1,
 			"allow_cancel": true,

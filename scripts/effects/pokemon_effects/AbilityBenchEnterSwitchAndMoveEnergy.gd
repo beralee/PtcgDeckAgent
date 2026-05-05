@@ -31,14 +31,16 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			if energy == null or energy.card_data == null:
 				continue
 			energy_items.append(energy)
-			energy_labels.append("%s from %s" % [energy.card_data.name, slot.get_pokemon_name()])
+			energy_labels.append("%s（来自%s）" % [energy.card_data.name, slot.get_pokemon_name()])
 	if energy_items.is_empty():
 		return []
 	return [{
 		"id": STEP_ID,
-		"title": "Choose any amount of Energy to move onto this Pokemon",
+		"title": "选择任意数量的能量转附到这只宝可梦身上",
 		"items": energy_items,
 		"labels": energy_labels,
+		"card_groups": build_attached_card_groups(player, energy_items),
+		"transparent_battlefield_dialog": true,
 		"min_select": 0,
 		"max_select": energy_items.size(),
 		"allow_cancel": true,

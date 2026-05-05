@@ -35,6 +35,29 @@ func _make_card(set_code: String, card_index: String, card_name: String, card_ty
 	return card
 
 
+func _find_descendant_by_name(root: Node, node_name: String) -> Node:
+	if root == null:
+		return null
+	if root.name == node_name:
+		return root
+	for child: Node in root.get_children():
+		var found := _find_descendant_by_name(child, node_name)
+		if found != null:
+			return found
+	return null
+
+
+func _count_blocking_descendant_controls(root: Control) -> int:
+	var count := 0
+	for child: Node in root.get_children():
+		if child is Control:
+			var control := child as Control
+			if control.mouse_filter != Control.MOUSE_FILTER_IGNORE:
+				count += 1
+			count += _count_blocking_descendant_controls(control)
+	return count
+
+
 func test_deck_editor_shows_strategy_button_and_hides_legacy_ai_button() -> String:
 	var editor: Control = DeckEditorScene.instantiate()
 	var strategy_button := editor.get_node_or_null("%BtnStrategy") as Button
@@ -49,6 +72,17 @@ func test_deck_editor_shows_strategy_button_and_hides_legacy_ai_button() -> Stri
 		assert_true(strategy_button.visible, "打法思路按钮应在卡组编辑页面可见"),
 		assert_false(ai_button.visible, "AI 分析按钮应从界面隐藏"),
 		assert_true(discuss_button.visible, "与 AI 探讨按钮应保持可见"),
+	])
+
+
+func test_card_tile_children_pass_mouse_events_to_tile() -> String:
+	var editor: Control = DeckEditorScript.new()
+	var tile := editor.call("_create_card_tile", "右键详情测试", "SV1", "001", false) as PanelContainer
+	var blocking_descendants := _count_blocking_descendant_controls(tile)
+
+	return run_checks([
+		assert_eq(tile.mouse_filter, Control.MOUSE_FILTER_STOP, "Card tile should receive mouse input on its outer panel"),
+		assert_eq(blocking_descendants, 0, "Card tile image and labels should pass mouse input through so right-click detail works anywhere on the card"),
 	])
 
 
@@ -74,6 +108,41 @@ func test_card_detail_uses_preview_overlay() -> String:
 		assert_not_null(body, "Card detail should use a responsive body grid"),
 		assert_not_null(preview, "Card detail should include the shared card preview"),
 		assert_true(content != null and content.text.contains("Quick Strike"), "Card detail should render attack text"),
+	])
+
+
+func test_card_detail_preview_marks_unimplemented_effect_card() -> String:
+	var editor: Control = DeckEditorScript.new()
+	var card := _make_card("UTEST", "101", "Missing Detail Effect", "Item")
+	card.effect_id = "missing-detail-effect"
+	card.description = "Search your deck for a card."
+
+	editor.call("_show_card_detail", card)
+	var preview: Control = editor.get("_card_detail_card_view") as Control
+	var badge_panel := preview.get("_implementation_badge_panel") as Control if preview != null else null
+	var badge_label := preview.get("_implementation_badge_label") as Label if preview != null else null
+
+	return run_checks([
+		assert_not_null(preview, "Card detail should include the shared preview card"),
+		assert_true(badge_panel != null and badge_panel.visible, "Deck editor detail preview should mark unimplemented effect cards"),
+		assert_true(badge_label != null and badge_label.text == "未实现", "Deck editor detail preview badge should use the HUD text"),
+	])
+
+
+func test_card_tile_marks_unimplemented_effect_card() -> String:
+	var editor: Control = DeckEditorScript.new()
+	var card := _make_card("UTEST", "102", "Missing Tile Effect", "Item")
+	card.effect_id = "missing-tile-effect"
+	card.description = "Draw cards."
+	var holder := Control.new()
+
+	var badge := editor.call("_add_unimplemented_tile_badge", holder, card) as PanelContainer
+	var label := _find_descendant_by_name(badge, "UnimplementedBadgeLabel") as Label
+
+	return run_checks([
+		assert_not_null(badge, "Deck editor card tiles should add a badge for unimplemented effect cards"),
+		assert_eq(badge.name, "UnimplementedBadge", "Tile badge should have a stable node name for tests and future styling"),
+		assert_true(label != null and label.text == "未实现", "Tile badge should render the expected HUD text"),
 	])
 
 

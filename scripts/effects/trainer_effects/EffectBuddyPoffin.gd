@@ -16,15 +16,16 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		labels.append("%s (HP %d)" % [c.card_data.name, c.card_data.hp])
 	if items.is_empty():
 		return [build_empty_search_resolution_step("牌库里没有 HP70 以下的基础宝可梦。你仍可以使用友好宝芬。")]
-	return [{
-		"id": "buddy_poffin_pokemon",
-		"title": "选择最多 2 张 HP 不高于 70 的基础宝可梦放入备战区",
-		"items": items,
-		"labels": labels,
-		"min_select": 0,
-		"max_select": mini(2, bench_space),
-		"allow_cancel": true,
-	}]
+	return [build_full_library_search_step(
+		"buddy_poffin_pokemon",
+		"选择最多 2 张 HP 不高于 70 的基础宝可梦放入备战区",
+		player.deck,
+		items,
+		VISIBLE_SCOPE_OWN_FULL_DECK,
+		0,
+		mini(2, bench_space),
+		{"allow_cancel": true}
+	)]
 
 
 func can_execute(card: CardInstance, state: GameState) -> bool:

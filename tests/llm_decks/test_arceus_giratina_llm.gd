@@ -145,6 +145,15 @@ func _card_names(items: Array) -> Array[String]:
 	return names
 
 
+func _route_ids(payload: Dictionary) -> Array[String]:
+	var ids: Array[String] = []
+	var routes: Array = payload.get("candidate_routes", []) if payload.get("candidate_routes", []) is Array else []
+	for raw_route: Variant in routes:
+		if raw_route is Dictionary:
+			ids.append(str((raw_route as Dictionary).get("route_action_id", (raw_route as Dictionary).get("id", ""))))
+	return ids
+
+
 func _fill_deck(player: PlayerState, count: int, owner: int = 0) -> void:
 	player.deck.clear()
 	for i: int in count:
@@ -640,4 +649,169 @@ func test_arceus_giratina_llm_boss_requires_attack_pressure() -> String:
 	return run_checks([
 		assert_true(no_pressure_score <= -1000.0, "Boss's Orders should be blocked when the LLM queue has no attack pressure"),
 		assert_true(attack_route_score > -1000.0, "Boss's Orders should remain legal when the LLM queue includes an attack route"),
+	])
+
+
+func test_arceus_giratina_llm_payload_promotes_active_arceus_vstar_launch_route() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyArceusGiratinaLLM.gd should instantiate"
+	var gs := _make_game_state(4)
+	var player := gs.players[0]
+	var active_arceus := _make_slot(_make_pokemon_cd(
+		"Arceus V",
+		"Basic",
+		"C",
+		220,
+		"",
+		"V",
+		[],
+		[{"name": "Trinity Charge", "cost": "CC", "damage": "0"}, {"name": "Power Edge", "cost": "CCC", "damage": "130"}],
+		2
+	), 0)
+	active_arceus.attached_energy.append(CardInstance.create(_make_energy_cd("Double Turbo Energy", "", "Special Energy"), 0))
+	player.active_pokemon = active_arceus
+	var giratina := _giratina_v_slot(0)
+	player.bench.append(giratina)
+	var ultra := CardInstance.create(_make_trainer_cd("Ultra Ball"), 0)
+	var giratina_vstar := CardInstance.create(_make_pokemon_cd("Giratina VSTAR", "VSTAR", "P", 280, "Giratina V", "V"), 0)
+	var payload: Dictionary = strategy.build_action_id_request_payload_for_test(gs, 0, [
+		{"kind": "play_trainer", "card": ultra},
+		{"kind": "evolve", "card": giratina_vstar, "target_slot": giratina},
+		{"kind": "end_turn"},
+	])
+	var routes := _route_ids(payload)
+	var facts: Dictionary = payload.get("turn_tactical_facts", {})
+	var shell: Dictionary = facts.get("arceus_giratina_shell", {}) if facts.get("arceus_giratina_shell", {}) is Dictionary else {}
+	var first_route: Dictionary = (payload.get("candidate_routes", []) as Array)[0] if payload.get("candidate_routes", []) is Array and (payload.get("candidate_routes", []) as Array).size() > 0 else {}
+	var first_actions: Array = first_route.get("actions", []) if first_route.get("actions", []) is Array else []
+	var first_action_policy: Dictionary = first_actions[0].get("selection_policy", {}) if first_actions.size() > 0 and first_actions[0] is Dictionary else {}
+	var search_targets: Dictionary = first_action_policy.get("search_targets", {}) if first_action_policy.get("search_targets", {}) is Dictionary else {}
+	return run_checks([
+		assert_true(bool(shell.get("needs_arceus_vstar_launch", false)), "Payload should expose that active Arceus V still needs VSTAR launch"),
+		assert_true(routes.size() > 0 and routes[0] == "route:arceus_vstar_launch", "Arceus VSTAR launch route should outrank Giratina padding routes"),
+		assert_true("Arceus VSTAR" in search_targets.get("prefer", []), "Launch route search policy should explicitly prefer Arceus VSTAR"),
+	])
+
+
+func test_arceus_giratina_llm_strict_field_counts_do_not_promote_basic_v_as_vstar() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyArceusGiratinaLLM.gd should instantiate"
+	var gs := _make_game_state(4)
+	var player := gs.players[0]
+	var active_arceus := _make_slot(_make_pokemon_cd(
+		"Arceus V",
+		"Basic",
+		"C",
+		220,
+		"",
+		"V",
+		[],
+		[{"name": "Trinity Charge", "cost": "CC", "damage": "0"}, {"name": "Power Edge", "cost": "CCC", "damage": "130"}],
+		2
+	), 0)
+	active_arceus.attached_energy.append(CardInstance.create(_make_energy_cd("Double Turbo Energy", "", "Special Energy"), 0))
+	active_arceus.attached_energy.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
+	player.active_pokemon = active_arceus
+	var vstar_names: Array[String] = ["Arceus VSTAR"]
+	return run_checks([
+		assert_eq(int(strategy.call("_count_field_name", player, "Arceus VSTAR")), 0, "Basic Arceus V must not satisfy Arceus VSTAR field count"),
+		assert_false(bool(strategy.call("_has_ready_named_attacker", player, vstar_names)), "Basic Arceus V must not satisfy ready VSTAR attacker checks"),
+	])
+
+
+func test_arceus_giratina_llm_search_guard_prefers_arceus_vstar_over_giratina_vstar_for_launch() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyArceusGiratinaLLM.gd should instantiate"
+	var gs := _make_game_state(4)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Arceus V", "Basic", "C", 220, "", "V"), 0)
+	player.bench.append(_giratina_v_slot(0))
+	var search_ref := {
+		"id": "play_trainer:c1",
+		"action_id": "play_trainer:c1",
+		"type": "play_trainer",
+		"kind": "play_trainer",
+		"card": "Ultra Ball",
+		"interactions": {"search_targets": ["Giratina VSTAR"]},
+	}
+	strategy.set("_llm_queue_turn", int(gs.turn_number))
+	strategy.set("_llm_decision_tree", {"actions": [search_ref]})
+	strategy.set("_llm_action_queue", [search_ref])
+	strategy.set("_llm_action_catalog", {"play_trainer:c1": search_ref})
+	var arceus_vstar := CardInstance.create(_make_pokemon_cd("Arceus VSTAR", "VSTAR", "C", 280, "Arceus V", "V"), 0)
+	var giratina_vstar := CardInstance.create(_make_pokemon_cd("Giratina VSTAR", "VSTAR", "P", 280, "Giratina V", "V"), 0)
+	var picked: Array = strategy.pick_interaction_items(
+		[giratina_vstar, arceus_vstar],
+		{"id": "search_pokemon", "max_select": 1},
+		{"game_state": gs, "player_index": 0}
+	)
+	var picked_names := _card_names(picked)
+	return run_checks([
+		assert_eq(picked_names, ["Arceus VSTAR"], "Launch search guard should override stale Giratina VSTAR intent and take active Arceus VSTAR first"),
+	])
+
+
+func test_arceus_giratina_llm_discard_guard_preserves_launch_arceus_vstar() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyArceusGiratinaLLM.gd should instantiate"
+	var gs := _make_game_state(4)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Arceus V", "Basic", "C", 220, "", "V"), 0)
+	var arceus_vstar := CardInstance.create(_make_pokemon_cd("Arceus VSTAR", "VSTAR", "C", 280, "Arceus V", "V"), 0)
+	var judge := CardInstance.create(_make_trainer_cd("Judge", "Supporter"), 0)
+	var lost_city := CardInstance.create(_make_trainer_cd("Lost City", "Stadium"), 0)
+	var search_ref := {
+		"id": "play_trainer:c1",
+		"action_id": "play_trainer:c1",
+		"type": "play_trainer",
+		"kind": "play_trainer",
+		"card": "Ultra Ball",
+		"interactions": {"discard_cards": ["Arceus VSTAR", "Judge"], "search_targets": ["Giratina VSTAR"]},
+	}
+	strategy.set("_llm_queue_turn", int(gs.turn_number))
+	strategy.set("_llm_decision_tree", {"actions": [search_ref]})
+	strategy.set("_llm_action_queue", [search_ref])
+	strategy.set("_llm_action_catalog", {"play_trainer:c1": search_ref})
+	var picked: Array = strategy.pick_interaction_items(
+		[arceus_vstar, judge, lost_city],
+		{"id": "discard_cards", "max_select": 2},
+		{"game_state": gs, "player_index": 0}
+	)
+	var picked_names := _card_names(picked)
+	return run_checks([
+		assert_false("Arceus VSTAR" in picked_names, "Discard guard should preserve the launch Arceus VSTAR when safe discard fodder exists"),
+		assert_eq(picked_names.size(), 2, "Discard guard should still provide the required two Ultra Ball discards"),
+	])
+
+
+func test_arceus_giratina_llm_abyss_seeking_allowed_as_only_safe_progress_with_poor_hand() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyArceusGiratinaLLM.gd should instantiate"
+	var gs := _make_game_state(18)
+	var player := gs.players[0]
+	player.active_pokemon = _giratina_v_setup_draw_slot(0)
+	_fill_deck(player, 18, 0)
+	player.hand = [CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0)]
+	var attack_action := {"kind": "attack", "attack_index": 0, "attack_name": "Abyss Seeking"}
+	var attack_id: String = str(strategy.call("_action_id_for_action", attack_action, gs, 0))
+	var attack_ref := {
+		"id": attack_id,
+		"action_id": attack_id,
+		"type": "attack",
+		"kind": "attack",
+		"attack_index": 0,
+		"attack_name": "Abyss Seeking",
+	}
+	strategy.set("_llm_queue_turn", int(gs.turn_number))
+	strategy.set("_llm_decision_tree", {"actions": [attack_ref]})
+	strategy.set("_llm_action_queue", [attack_ref])
+	strategy.set("_llm_action_catalog", {attack_id: attack_ref})
+	var attack_score: float = strategy.score_action_absolute(attack_action, gs, 0)
+	return run_checks([
+		assert_true(attack_score >= 90000.0, "Abyss Seeking should not be converted into end_turn when it is the only safe progress route"),
 	])

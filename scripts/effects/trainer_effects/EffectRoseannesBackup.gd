@@ -16,7 +16,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		labels.append("%s - %s" % [_category(discard_card), discard_card.card_data.name])
 	return [{
 		"id": STEP_ID,
-		"title": "Choose up to 1 Pokemon, Tool, Stadium, and Energy from discard",
+		"title": "从弃牌区选择最多1张宝可梦、道具、竞技场和能量",
 		"items": items,
 		"labels": labels,
 		"min_select": 0,

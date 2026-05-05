@@ -19,21 +19,16 @@ func get_attack_interaction_steps(
 	if player.deck.is_empty():
 		return []
 
-	var items: Array = []
-	var labels: Array[String] = []
-	for deck_card: CardInstance in player.deck:
-		items.append(deck_card)
-		labels.append("%s [%s]" % [deck_card.card_data.name, deck_card.card_data.card_type])
-
-	return [{
-		"id": "search_cards",
-		"title": "从牌库中选择1张牌放回牌库顶",
-		"items": items,
-		"labels": labels,
-		"min_select": 1,
-		"max_select": mini(search_count, items.size()),
-		"allow_cancel": true,
-	}]
+	return [build_full_library_search_step(
+		"search_cards",
+		"从牌库中选择1张牌放回牌库顶",
+		player.deck,
+		player.deck,
+		VISIBLE_SCOPE_OWN_FULL_DECK,
+		1,
+		mini(search_count, player.deck.size()),
+		{"allow_cancel": true}
+	)]
 
 
 func execute_attack(

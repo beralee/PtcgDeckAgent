@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "过量放电",
+			"text": "在自己的回合可以使用1次，如果使用了，则令这只宝可梦【昏厥】。选择自己弃牌区中最多3张基本能量，以任意方式附着于自己的【雷】宝可梦身上。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "Nisota Niso",
+	"attacks": [
+		{
+			"cost": "LC",
+			"damage": "40",
+			"is_vstar_power": false,
+			"name": "雷电球",
+			"text": ""
+		}
+	],
+	"card_index": "0301",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "特性: 过量放电\n在自己的回合可以使用1次，如果使用了，则令这只宝可梦【昏厥】。选择自己弃牌区中最多3张基本能量，以任意方式附着于自己的【雷】宝可梦身上。\n\n【雷】 雷电球 40\n\n\n",
+	"effect_id": "4199cbca54aa793f2f94b509355a8909",
+	"energy_provides": "",
+	"energy_type": "L",
+	"evolves_from": "小磁怪",
+	"hp": 100,
+	"image_local_path": "user://cards/images/CBB5C/0301.png",
+	"image_url": "https://tcg.mik.moe/static/img/CBB5C/0301.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "三合一磁怪",
+	"name_en": "",
+	"rarity": "●",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-04-24T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "CBB5C",
+	"set_code_en": "",
+	"stage": "Stage 1",
+	"weakness_energy": "F",
+	"weakness_value": "×2",
+	"yoren_code": "P082"
+}

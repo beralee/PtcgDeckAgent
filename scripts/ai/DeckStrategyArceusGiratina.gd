@@ -284,6 +284,273 @@ func build_turn_contract(game_state: GameState, player_index: int, context: Dict
 	return contract
 
 
+func build_continuity_contract(game_state: GameState, player_index: int, turn_contract: Dictionary = {}) -> Dictionary:
+	var disabled := {
+		"enabled": false,
+		"safe_setup_before_attack": false,
+		"setup_debt": {},
+		"action_bonuses": [],
+		"attack_penalty": 0.0,
+	}
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return disabled
+	var player: PlayerState = game_state.players[player_index]
+	var setup_debt := _build_arceus_continuity_setup_debt(player)
+	if not _has_arceus_continuity_attack_window(player):
+		disabled["setup_debt"] = setup_debt
+		return disabled
+	var resolved_contract: Dictionary = turn_contract.duplicate(true)
+	if resolved_contract.is_empty():
+		resolved_contract = build_turn_contract(game_state, player_index, {"prompt_kind": "continuity_contract"})
+	if _arceus_continuity_terminal_attack_locked(game_state, player_index, resolved_contract):
+		disabled["setup_debt"] = setup_debt
+		disabled["terminal_attack_locked"] = true
+		return disabled
+	var action_bonuses := _build_arceus_continuity_action_bonuses(player, setup_debt)
+	var enabled := _arceus_continuity_setup_debt_is_active(setup_debt) and not action_bonuses.is_empty()
+	return {
+		"enabled": enabled,
+		"safe_setup_before_attack": enabled,
+		"setup_debt": setup_debt,
+		"action_bonuses": action_bonuses,
+		"attack_penalty": 260.0 if enabled else 0.0,
+		"turn_intent": str(resolved_contract.get("intent", "")),
+	}
+
+
+func _build_arceus_continuity_setup_debt(player: PlayerState) -> Dictionary:
+	var arceus_total := _count_arceus_total(player)
+	var arceus_vstar_count := _count_named_on_field(player, ARCEUS_VSTAR)
+	var giratina_total := _count_giratina_total(player)
+	var giratina_vstar_count := _count_named_on_field(player, GIRATINA_VSTAR)
+	var backup_arceus := _backup_arceus_slot(player)
+	var giratina := _best_giratina_slot(player)
+	var bench_open := player != null and not player.is_bench_full()
+	var backup_arceus_gap := _attack_energy_gap(backup_arceus) if backup_arceus != null else 999
+	var giratina_gap := _attack_energy_gap(giratina) if giratina != null else 999
+	var need_backup_seed := bench_open and (arceus_total < 2 or giratina_total < 1)
+	var need_arceus_vstar := arceus_total > arceus_vstar_count
+	var need_backup_arceus_energy := backup_arceus != null and backup_arceus_gap > 0
+	var need_giratina_vstar := giratina != null and _slot_name(giratina) == GIRATINA_V and giratina_vstar_count == 0
+	var need_giratina_grass := giratina != null and _attached_energy_type_count(giratina, "G") <= 0
+	var need_giratina_psychic := giratina != null and _attached_energy_type_count(giratina, "P") <= 0
+	var need_giratina_energy := giratina != null and (giratina_gap > 0 or need_giratina_grass or need_giratina_psychic)
+	var need_engine := _count_named_on_field(player, BIBAREL) == 0 or _count_named_on_field(player, SKWOVET) == 0
+	var need_search_loop := need_backup_seed or need_arceus_vstar or need_giratina_vstar or need_giratina_energy or need_engine
+	var continuity_complete := _target_formation_complete(player)
+	return {
+		"ready_arceus_count": _count_ready_named_attackers(player, [ARCEUS_V, ARCEUS_VSTAR]),
+		"ready_giratina_count": _count_ready_named_attackers(player, [GIRATINA_V, GIRATINA_VSTAR]),
+		"arceus_total": arceus_total,
+		"arceus_vstar_count": arceus_vstar_count,
+		"giratina_total": giratina_total,
+		"giratina_vstar_count": giratina_vstar_count,
+		"backup_arceus_gap": backup_arceus_gap,
+		"giratina_gap": giratina_gap,
+		"continuity_complete": continuity_complete,
+		"need_trinity_nova_route": not continuity_complete and _count_named_on_field(player, ARCEUS_VSTAR) > 0 and (need_backup_seed or need_backup_arceus_energy or need_giratina_energy),
+		"need_second_attacker_seed": need_backup_seed,
+		"need_arceus_vstar_route": need_arceus_vstar,
+		"need_backup_arceus_energy": need_backup_arceus_energy,
+		"need_second_attacker_energy": need_backup_arceus_energy or need_giratina_energy,
+		"need_giratina_vstar_conversion": need_giratina_vstar,
+		"need_giratina_energy": need_giratina_energy,
+		"need_giratina_grass_energy": need_giratina_grass,
+		"need_giratina_psychic_energy": need_giratina_psychic,
+		"need_double_turbo_for_arceus": backup_arceus != null and _slot_is(backup_arceus, [ARCEUS_V, ARCEUS_VSTAR]) and backup_arceus_gap > 1,
+		"need_engine_online": need_engine,
+		"need_vstar_evolution_or_search_loop": need_search_loop,
+	}
+
+
+func _build_arceus_continuity_action_bonuses(player: PlayerState, setup_debt: Dictionary) -> Array[Dictionary]:
+	var bonuses: Array[Dictionary] = []
+	if player == null or bool(setup_debt.get("continuity_complete", false)):
+		return bonuses
+	if player != null and not player.is_bench_full() and bool(setup_debt.get("need_second_attacker_seed", false)):
+		if _count_arceus_total(player) < 2:
+			bonuses.append(_arceus_continuity_bonus(
+				"play_basic_to_bench",
+				[ARCEUS_V],
+				520.0,
+				"Bench a second Arceus line before a non-terminal Trinity attack."
+			))
+		if _count_giratina_total(player) < 1:
+			bonuses.append(_arceus_continuity_bonus(
+				"play_basic_to_bench",
+				[GIRATINA_V],
+				560.0,
+				"Bench Giratina V so Trinity Nova has a real finisher target."
+			))
+		bonuses.append(_arceus_continuity_bonus(
+			"play_trainer",
+			[NEST_BALL],
+			420.0,
+			"Use basic search to seed the backup Arceus/Giratina attacker line.",
+			{"search_names": [ARCEUS_V, GIRATINA_V]}
+		))
+	if bool(setup_debt.get("need_arceus_vstar_route", false)):
+		bonuses.append(_arceus_continuity_bonus(
+			"evolve",
+			[ARCEUS_VSTAR],
+			340.0,
+			"Evolve an Arceus VSTAR before attacking so the relay line stays live.",
+			{"target_names": [ARCEUS_V]}
+		))
+	if bool(setup_debt.get("need_giratina_vstar_conversion", false)):
+		bonuses.append(_arceus_continuity_bonus(
+			"evolve",
+			[GIRATINA_VSTAR],
+			360.0,
+			"Convert Giratina V into Giratina VSTAR before a non-final Arceus attack.",
+			{"target_names": [GIRATINA_V]}
+		))
+	if bool(setup_debt.get("need_engine_online", false)):
+		if _count_bibarel_line_total(player) == 0 and not player.is_bench_full():
+			bonuses.append(_arceus_continuity_bonus(
+				"play_basic_to_bench",
+				[BIDOOF],
+				330.0,
+				"Seed Bibarel before attacking so the next turn is not dead."
+			))
+		if _count_named_on_field(player, BIBAREL) == 0:
+			bonuses.append(_arceus_continuity_bonus(
+				"evolve",
+				[BIBAREL],
+				320.0,
+				"Evolve Bibarel before attacking to close the draw-engine loop.",
+				{"target_names": [BIDOOF]}
+			))
+		if _count_named_on_field(player, SKWOVET) == 0 and not player.is_bench_full():
+			bonuses.append(_arceus_continuity_bonus(
+				"play_basic_to_bench",
+				[SKWOVET],
+				300.0,
+				"Bench Skwovet before attacking to pair with Bibarel."
+			))
+	if bool(setup_debt.get("need_backup_arceus_energy", false)):
+		bonuses.append(_arceus_continuity_bonus(
+			"attach_energy",
+			[DOUBLE_TURBO_ENERGY],
+			260.0,
+			"Attach Double Turbo to the backup Arceus before the current attack when it does not block the attack.",
+			{"target_names": [ARCEUS_V, ARCEUS_VSTAR]}
+		))
+		bonuses.append(_arceus_continuity_bonus(
+			"attach_energy",
+			[GRASS_ENERGY, PSYCHIC_ENERGY, JET_ENERGY],
+			170.0,
+			"Attach a basic Energy to backup Arceus so a second Trinity route remains possible.",
+			{"target_names": [ARCEUS_V, ARCEUS_VSTAR]}
+		))
+	if bool(setup_debt.get("need_giratina_energy", false)):
+		var giratina_energy_names: Array[String] = []
+		if bool(setup_debt.get("need_giratina_grass_energy", false)):
+			giratina_energy_names.append(GRASS_ENERGY)
+		if bool(setup_debt.get("need_giratina_psychic_energy", false)):
+			giratina_energy_names.append(PSYCHIC_ENERGY)
+		if giratina_energy_names.is_empty():
+			giratina_energy_names = [GRASS_ENERGY, PSYCHIC_ENERGY]
+		bonuses.append(_arceus_continuity_bonus(
+			"attach_energy",
+			giratina_energy_names,
+			300.0,
+			"Attach exact Grass/Psychic Energy to Giratina before attacking.",
+			{"target_names": [GIRATINA_V, GIRATINA_VSTAR]}
+		))
+	if bool(setup_debt.get("need_vstar_evolution_or_search_loop", false)):
+		bonuses.append(_arceus_continuity_bonus(
+			"play_trainer",
+			[ULTRA_BALL, CAPTURING_AROMA],
+			360.0,
+			"Keep search live for VSTAR conversion, backup attacker, or exact Energy continuity.",
+			{"search_names": [ARCEUS_VSTAR, GIRATINA_VSTAR, ARCEUS_V, GIRATINA_V, GRASS_ENERGY, PSYCHIC_ENERGY]}
+		))
+		bonuses.append(_arceus_continuity_bonus(
+			"use_ability",
+			[],
+			300.0,
+			"Use Starbirth to close the VSTAR/search/energy continuity loop before attacking.",
+			{"target_names": [ARCEUS_VSTAR]}
+		))
+	return bonuses
+
+
+func _arceus_continuity_bonus(kind: String, card_names: Array, bonus: float, reason: String, extra: Dictionary = {}) -> Dictionary:
+	var entry := {
+		"kind": kind,
+		"card_names": card_names.duplicate(),
+		"bonus": bonus,
+		"reason": reason,
+	}
+	for key: Variant in extra.keys():
+		entry[key] = extra[key]
+	return entry
+
+
+func _arceus_continuity_setup_debt_is_active(setup_debt: Dictionary) -> bool:
+	if bool(setup_debt.get("continuity_complete", false)):
+		return false
+	return bool(setup_debt.get("need_trinity_nova_route", false)) \
+		or bool(setup_debt.get("need_second_attacker_seed", false)) \
+		or bool(setup_debt.get("need_arceus_vstar_route", false)) \
+		or bool(setup_debt.get("need_second_attacker_energy", false)) \
+		or bool(setup_debt.get("need_giratina_vstar_conversion", false)) \
+		or bool(setup_debt.get("need_giratina_energy", false)) \
+		or bool(setup_debt.get("need_engine_online", false)) \
+		or bool(setup_debt.get("need_vstar_evolution_or_search_loop", false))
+
+
+func _arceus_continuity_terminal_attack_locked(game_state: GameState, player_index: int, turn_contract: Dictionary) -> bool:
+	var flags: Dictionary = turn_contract.get("flags", {}) if turn_contract.get("flags", {}) is Dictionary else {}
+	var constraints: Dictionary = turn_contract.get("constraints", {}) if turn_contract.get("constraints", {}) is Dictionary else {}
+	if bool(constraints.get("must_attack_if_available", false)):
+		return true
+	for key: String in ["final_prize_ko", "final_prize_ko_available", "critical_ko", "critical_ko_available", "key_ko", "key_ko_available", "force_terminal_attack"]:
+		if bool(turn_contract.get(key, false)) or bool(flags.get(key, false)):
+			return true
+	return _arceus_final_prize_ko_is_available(game_state, player_index)
+
+
+func _arceus_final_prize_ko_is_available(game_state: GameState, player_index: int) -> bool:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	if player == null or player.prizes.is_empty() or player.active_pokemon == null:
+		return false
+	var opponent: PlayerState = game_state.players[1 - player_index]
+	if opponent == null or opponent.active_pokemon == null:
+		return false
+	if player.prizes.size() > opponent.active_pokemon.get_prize_count():
+		return false
+	if _attack_energy_gap(player.active_pokemon) > 0:
+		return false
+	var estimated_damage := _estimate_active_damage_against_target(player, game_state, opponent.active_pokemon)
+	if estimated_damage <= 0:
+		estimated_damage = _best_attack_damage(player.active_pokemon)
+		if _count_attached_named_energy(player.active_pokemon, DOUBLE_TURBO_ENERGY) > 0:
+			estimated_damage -= 20
+	return estimated_damage >= opponent.active_pokemon.get_remaining_hp()
+
+
+func _has_arceus_continuity_attack_window(player: PlayerState) -> bool:
+	if player == null or player.active_pokemon == null:
+		return false
+	if not _slot_is(player.active_pokemon, [ARCEUS_V, ARCEUS_VSTAR, GIRATINA_VSTAR]):
+		return false
+	return _attack_energy_gap(player.active_pokemon) <= 0 and _best_attack_damage(player.active_pokemon) > 0
+
+
+func _count_ready_named_attackers(player: PlayerState, names: Array[String]) -> int:
+	var count := 0
+	for slot: PokemonSlot in _all_slots(player):
+		if slot == null or not _slot_is(slot, names):
+			continue
+		if _attack_energy_gap(slot) <= 0 and _best_attack_damage(slot) > 0:
+			count += 1
+	return count
+
+
 func score_action_absolute(action: Dictionary, game_state: GameState, player_index: int) -> float:
 	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
 		return 0.0
@@ -797,7 +1064,12 @@ func _score_trainer(action: Dictionary, game_state: GameState, player: PlayerSta
 	if exact_launch_conversion_search_cooloff and name in [ULTRA_BALL, NEST_BALL, CAPTURING_AROMA]:
 		return 0.0
 	if exact_trinity_nova_line and name in [ULTRA_BALL, NEST_BALL, CAPTURING_AROMA, IONO, JUDGE, SWITCH, LOST_CITY, LOST_VACUUM]:
-		return 0.0
+		var stuck_shell_redraw := name in [IONO, JUDGE] \
+			and severe_shell_gap \
+			and player.hand.size() <= 4 \
+			and not _player_is_ahead_in_prizes(game_state, player_index)
+		if not stuck_shell_redraw:
+			return 0.0
 	if immediate_handoff_window and name in [ULTRA_BALL, NEST_BALL, CAPTURING_AROMA, IONO, JUDGE]:
 		return 0.0
 	if name == ULTRA_BALL:

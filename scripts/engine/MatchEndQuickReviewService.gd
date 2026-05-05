@@ -6,7 +6,7 @@ signal quick_review_completed(result: Dictionary)
 
 const ZenMuxClientScript := preload("res://scripts/network/ZenMuxClient.gd")
 
-const PROMPT_VERSION := "match_end_quick_review_v1"
+const PROMPT_VERSION := "match_end_quick_review_v3"
 
 var _client = ZenMuxClientScript.new()
 var _busy := false
@@ -96,10 +96,15 @@ func _build_payload(model: String, match_summary: Dictionary) -> Dictionary:
 		"system_prompt_version": PROMPT_VERSION,
 		"response_format": _response_schema(),
 		"instructions": PackedStringArray([
-			"你是PTCG赛后教练，用中文回答。",
-			"只使用提供的赛后统计与行动摘要，不要假装知道没有给出的隐藏信息。",
-			"给出一个粗略分数即可，不需要精确判定每一步。",
-			"胜利时强调成就感和可复用的成功点；失败时强调可执行的下一盘目标。",
+			"你是专业PTCG赛后教练，用中文给当前玩家做快速但有实战价值的复盘。",
+			"只使用提供的赛后统计、quick_review_context、deck_strategies 和行动摘要；不要假装知道没有给出的隐藏信息。",
+			"必须先读取 match_summary.review_subject，并以其中的 player_index、deck_name、result/result_label 作为唯一复盘对象和胜负结论。",
+			"不要平均评价双方，也不要给对手单独写亮点或改进；提到对手时，只能用于解释当前玩家为什么赢/输、哪里该应对、哪里错过窗口。",
+			"如果 review_subject.result 是 win，不能把当前玩家写成输家；如果是 loss，不能把当前玩家写成赢家。",
+			"优先阅读 quick_review_context.key_moments、last_turn、recent_turns、critical_sequences；普通统计只能作为辅助。",
+			"评分衡量当前玩家的打牌质量，不是单纯输赢：奖赏计划、资源顺序、卡组主线执行、关键窗口处理和终结质量都要纳入判断。",
+			"评价要专业具体：尽量点出可见的回合、卡名、选择或资源窗口；避免“继续保持”“注意资源”这种空话。",
+			"当前玩家胜利时，指出最可复用的赢点和仍可优化的细节；当前玩家失败时，指出最优先复盘的关键窗口和下一盘可执行目标。",
 			"保持非常简短：一句标题、一条亮点、一条改进点、一条下一盘目标。",
 			"只返回符合 schema 的 JSON。",
 		]),

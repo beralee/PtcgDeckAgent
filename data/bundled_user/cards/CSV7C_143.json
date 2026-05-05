@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "hncl",
+	"attacks": [
+		{
+			"cost": "DD",
+			"damage": "70+",
+			"is_vstar_power": false,
+			"name": "报仇箭羽",
+			"text": "追加造成自己弃牌区中「古代」卡牌张数×10伤害。"
+		},
+		{
+			"cost": "DCCC",
+			"damage": "120",
+			"is_vstar_power": false,
+			"name": "高速之翼",
+			"text": ""
+		}
+	],
+	"card_index": "143",
+	"card_index_en": "65",
+	"card_type": "Pokemon",
+	"description": "【恶】【恶】 报仇箭羽 70+\n追加造成自己弃牌区中「古代」卡牌张数×10伤害。\n\n【恶】 高速之翼 120\n\n\n",
+	"effect_id": "9a425a2ace730ecdd272b7ea6d0b9db1",
+	"energy_provides": "",
+	"energy_type": "D",
+	"evolves_from": "",
+	"hp": 140,
+	"image_local_path": "user://cards/images/CSV7C/143.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV7C/143.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "轰鸣月",
+	"name_en": "Roaring Moon",
+	"rarity": "R",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-01-16T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CSV7C",
+	"set_code_en": "PRE",
+	"stage": "Basic",
+	"weakness_energy": "G",
+	"weakness_value": "×2",
+	"yoren_code": "P1005"
+}

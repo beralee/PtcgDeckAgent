@@ -18,21 +18,16 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		return []
 
 	var pick_count: int = mini(TOP_CARD_COUNT, player.deck.size())
-	var deck_items: Array = []
-	var deck_labels: Array[String] = []
-	for deck_card: CardInstance in player.deck:
-		deck_items.append(deck_card)
-		deck_labels.append(deck_card.card_data.name)
-
-	return [{
-		"id": "top_cards",
-		"title": "按顺序选择要放在牌库顶的牌（先点最上面）",
-		"items": deck_items,
-		"labels": deck_labels,
-		"min_select": pick_count,
-		"max_select": pick_count,
-		"allow_cancel": true,
-	}]
+	return [build_full_library_search_step(
+		"top_cards",
+		"按顺序选择要放在牌库顶的牌（先点最上面）",
+		player.deck,
+		player.deck,
+		VISIBLE_SCOPE_OWN_FULL_DECK,
+		pick_count,
+		pick_count,
+		{"allow_cancel": true}
+	)]
 
 
 func execute(card: CardInstance, targets: Array, state: GameState) -> void:

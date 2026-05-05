@@ -1666,6 +1666,52 @@ func test_heavy_baton_transfers_basic_energy_before_knockout_discard() -> String
 	])
 
 
+func test_heavy_baton_does_not_transfer_on_non_attack_knockout() -> String:
+	var gsm := _make_gsm_with_decks()
+	gsm.game_state.phase = GameState.GamePhase.POKEMON_CHECK
+	gsm.game_state.turn_number = 2
+	gsm.game_state.current_player_index = 0
+
+	var defender_cd := CardData.new()
+	defender_cd.name = "Non Attack KO Holder"
+	defender_cd.card_type = "Pokemon"
+	defender_cd.stage = "Basic"
+	defender_cd.hp = 100
+	defender_cd.energy_type = "F"
+	defender_cd.retreat_cost = 4
+	var defender_slot := PokemonSlot.new()
+	defender_slot.pokemon_stack.append(CardInstance.create(defender_cd, 1))
+	defender_slot.damage_counters = 100
+
+	var tool_cd := CardData.new()
+	tool_cd.name = "Heavy Baton"
+	tool_cd.card_type = "Tool"
+	tool_cd.effect_id = "heavy_baton_non_attack_test"
+	defender_slot.attached_tool = CardInstance.create(tool_cd, 1)
+
+	for energy_type: String in ["F", "F", "F"]:
+		defender_slot.attached_energy.append(CardInstance.create(_make_test_energy(energy_type), 1))
+	gsm.effect_processor.register_effect("heavy_baton_non_attack_test", EffectToolHeavyBaton.new())
+	gsm.game_state.players[1].active_pokemon = defender_slot
+
+	var bench_cd := CardData.new()
+	bench_cd.name = "Bench Receiver"
+	bench_cd.card_type = "Pokemon"
+	bench_cd.stage = "Basic"
+	bench_cd.hp = 100
+	bench_cd.energy_type = "F"
+	var bench_slot := PokemonSlot.new()
+	bench_slot.pokemon_stack.append(CardInstance.create(bench_cd, 1))
+	gsm.game_state.players[1].bench.append(bench_slot)
+
+	gsm._check_all_knockouts()
+
+	return run_checks([
+		assert_eq(bench_slot.attached_energy.size(), 0, "Heavy Baton should not move Energy when the KO was not caused by attack damage"),
+		assert_eq(gsm.game_state.players[1].discard_pile.filter(func(card: CardInstance) -> bool: return card.card_data.card_type == "Basic Energy").size(), 3, "All attached Basic Energy should be discarded for a non-attack KO"),
+	])
+
+
 func test_attack_extra_prize_takes_one_additional_prize_on_knockout() -> String:
 	var gsm := _make_gsm_with_decks()
 	gsm.game_state.phase = GameState.GamePhase.MAIN

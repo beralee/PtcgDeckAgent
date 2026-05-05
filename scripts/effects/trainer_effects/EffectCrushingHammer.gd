@@ -22,7 +22,7 @@ func can_execute(_card: CardInstance, state: GameState) -> bool:
 func get_preview_interaction_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
 	return [{
 		"id": "coin_flip_preview",
-		"title": "Flip a coin",
+		"title": "投掷1枚硬币",
 		"wait_for_coin_animation": true,
 		"preview_only": true,
 	}]
@@ -35,19 +35,21 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	if not _pending_heads:
 		return []
 	var opp: PlayerState = state.players[1 - card.owner_index]
-	var slot_items: Array = []
-	var slot_labels: Array[String] = []
+	var energy_items: Array = []
+	var energy_labels: Array[String] = []
 	for slot: PokemonSlot in opp.get_all_pokemon():
-		if not slot.attached_energy.is_empty():
-			slot_items.append(slot)
-			slot_labels.append("%s (%d能量)" % [slot.get_pokemon_name(), slot.attached_energy.size()])
-	if slot_items.is_empty():
+		for energy: CardInstance in slot.attached_energy:
+			energy_items.append(energy)
+			energy_labels.append("%s - %s" % [slot.get_pokemon_name(), energy.card_data.name])
+	if energy_items.is_empty():
 		return []
 	return [{
 		"id": "target_pokemon",
-		"title": "选择对手要弃掉能量的宝可梦",
-		"items": slot_items,
-		"labels": slot_labels,
+		"title": "选择对手要弃掉的能量",
+		"items": energy_items,
+		"labels": energy_labels,
+		"card_groups": build_attached_card_groups(opp, energy_items),
+		"transparent_battlefield_dialog": true,
 		"min_select": 1,
 		"max_select": 1,
 		"allow_cancel": false,
@@ -67,12 +69,21 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	var opp: PlayerState = state.players[1 - card.owner_index]
 	var ctx: Dictionary = get_interaction_context(targets)
 	var target_slot: PokemonSlot = null
+	var target_energy: CardInstance = null
 
 	var raw: Array = ctx.get("target_pokemon", [])
-	if not raw.is_empty() and raw[0] is PokemonSlot:
-		var selected: PokemonSlot = raw[0]
-		if selected in opp.get_all_pokemon() and not selected.attached_energy.is_empty():
-			target_slot = selected
+	if not raw.is_empty():
+		if raw[0] is CardInstance:
+			var selected_energy := raw[0] as CardInstance
+			for slot: PokemonSlot in opp.get_all_pokemon():
+				if selected_energy in slot.attached_energy:
+					target_slot = slot
+					target_energy = selected_energy
+					break
+		elif raw[0] is PokemonSlot:
+			var selected: PokemonSlot = raw[0]
+			if selected in opp.get_all_pokemon() and not selected.attached_energy.is_empty():
+				target_slot = selected
 
 	if target_slot == null:
 		for slot: PokemonSlot in opp.get_all_pokemon():
@@ -84,7 +95,8 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 		_has_pending_flip = false
 		return
 
-	var energy: CardInstance = target_slot.attached_energy.pop_back()
+	var energy: CardInstance = target_energy if target_energy != null else target_slot.attached_energy.back()
+	target_slot.attached_energy.erase(energy)
 	opp.discard_card(energy)
 	_has_pending_flip = false
 

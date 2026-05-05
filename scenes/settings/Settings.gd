@@ -2,6 +2,7 @@
 extends Control
 
 const ZenMuxClientScript := preload("res://scripts/network/ZenMuxClient.gd")
+const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 const HUD_ACCENT := Color(0.28, 0.92, 1.0, 1.0)
 const HUD_ACCENT_WARM := Color(1.0, 0.55, 0.24, 1.0)
 const HUD_TEXT := Color(0.92, 0.98, 1.0, 1.0)
@@ -66,7 +67,9 @@ func _sync_hud_frame_to_form() -> void:
 
 
 func _apply_hud_theme_recursive(node: Node) -> void:
-	if node is Button:
+	if node is ScrollContainer:
+		HudThemeScript.style_scroll_container(node as ScrollContainer)
+	elif node is Button:
 		var accent := HUD_ACCENT_WARM if node.name == "BtnSave" else HUD_ACCENT
 		_style_hud_button(node as Button, accent)
 	elif node is OptionButton:
@@ -77,6 +80,8 @@ func _apply_hud_theme_recursive(node: Node) -> void:
 		_style_hud_spin_box(node as SpinBox)
 	elif node is Label:
 		_style_hud_label(node as Label)
+	elif node is Control:
+		HudThemeScript.style_scrollable_control(node as Control)
 	for child: Node in node.get_children():
 		_apply_hud_theme_recursive(child)
 

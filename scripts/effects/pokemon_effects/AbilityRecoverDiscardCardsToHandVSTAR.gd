@@ -34,7 +34,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		labels.append(discard_card.card_data.name)
 	return [{
 		"id": STEP_ID,
-		"title": "Choose up to %d %s card(s) from your discard pile" % [recover_count, card_type_filter],
+		"title": "从弃牌区选择最多%d张%s卡加入手牌" % [recover_count, _card_type_label(card_type_filter)],
 		"items": items,
 		"labels": labels,
 		"min_select": 0,
@@ -91,6 +91,28 @@ func _get_recoverable_cards(player: PlayerState) -> Array:
 		if card.card_data.card_type == card_type_filter:
 			result.append(card)
 	return result
+
+
+func _card_type_label(card_type: String) -> String:
+	match card_type:
+		"Pokemon":
+			return "宝可梦"
+		"Item":
+			return "物品"
+		"Tool":
+			return "宝可梦道具"
+		"Stadium":
+			return "竞技场"
+		"Supporter":
+			return "支援者"
+		"Basic Energy":
+			return "基本能量"
+		"Special Energy":
+			return "特殊能量"
+		"Energy":
+			return "能量"
+		_:
+			return "符合条件的"
 
 
 func get_description() -> String:

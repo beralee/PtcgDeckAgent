@@ -108,6 +108,28 @@ func _attached_energy(name: String, provides: String) -> CardInstance:
 	return CardInstance.create(_make_energy_cd(name, provides), 0)
 
 
+func _set_prize_count(player: PlayerState, count: int, owner: int = 0) -> void:
+	player.prizes.clear()
+	for i: int in count:
+		player.prizes.append(CardInstance.create(_make_trainer_cd("Prize%d" % i), owner))
+
+
+func _make_dragapult_ex_cd() -> CardData:
+	return _make_pokemon_cd(
+		"Dragapult ex",
+		"Stage 2",
+		"N",
+		320,
+		"Drakloak",
+		"ex",
+		[],
+		[
+			{"name": "Jet Head", "cost": "C", "damage": "70"},
+			{"name": "Phantom Dive", "cost": "RP", "damage": "200"},
+		]
+	)
+
+
 func test_script_loads_and_reports_stable_strategy_id() -> String:
 	var runtime_script := _load_script(RUNTIME_SCRIPT_PATH)
 	var rules_script := _load_script(RULES_SCRIPT_PATH)
@@ -166,6 +188,7 @@ func test_prompt_and_setup_hooks_cover_dragapult_dusknoir_plan() -> String:
 		assert_str_contains(prompt_text, "Dusknoir", "Prompt should cover the Dusknoir conversion lane"),
 		assert_str_contains(prompt_text, "Spread targeting policy", "Prompt should include spread target policy"),
 		assert_str_contains(prompt_text, "self-KO", "Prompt should gate Dusknoir self-KO conversion"),
+		assert_str_contains(prompt_text, "Technical Machine: Devolution", "Prompt should cover TM lines for Arven searches"),
 		assert_str_contains(prompt_text, "custom player note", "Prompt should include editable strategy text"),
 		assert_str_contains(dreepy_hint, "priority opener", "Dreepy setup hint should mark the main opener role"),
 		assert_str_contains(dusknoir_hint, "self-KO conversion", "Dusknoir setup hint should warn about conversion gating"),
@@ -205,7 +228,44 @@ func test_spread_target_policy_prefers_damaged_bench_prize_map() -> String:
 	opponent.bench.append(healthy_basic)
 	var damaged_score: float = float(llm.call("score_interaction_target", damaged_two_prizer, {"id": "bench_damage_counters"}, {"game_state": gs, "player_index": 0}))
 	var healthy_score: float = float(llm.call("score_interaction_target", healthy_basic, {"id": "bench_damage_counters"}, {"game_state": gs, "player_index": 0}))
-	return assert_true(damaged_score > healthy_score, "Spread counter scoring should prefer a damaged multi-prize bench conversion target")
+	var picked: Array = llm.call("pick_interaction_items", [healthy_basic, damaged_two_prizer], {"id": "bench_damage_counters", "max_select": 1}, {"game_state": gs, "player_index": 0})
+	return run_checks([
+		assert_true(damaged_score > healthy_score, "Spread counter scoring should prefer a damaged multi-prize bench conversion target"),
+		assert_true(picked.size() == 1 and picked[0] == damaged_two_prizer, "Spread counter fallback should pick the conversion target from actual options"),
+	])
+
+
+func test_dusknoir_self_ko_target_selection_prefers_high_value_conversion() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(7)
+	var player: PlayerState = gs.players[0]
+	var dragapult := _make_slot(_make_dragapult_ex_cd(), 0)
+	dragapult.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	dragapult.attached_energy.append(_attached_energy("Psychic Energy", "P"))
+	var dusknoir := _make_slot(_make_pokemon_cd("Dusknoir", "Stage 2", "P", 160, "Dusclops", "", [{"name": "Cursed Blast"}]), 0)
+	player.active_pokemon = dragapult
+	player.bench.clear()
+	player.bench.append(dusknoir)
+	var opponent: PlayerState = gs.players[1]
+	var low_prize_active := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 1)
+	low_prize_active.damage_counters = 20
+	var iron_hands := _make_slot(_make_pokemon_cd("Iron Hands ex", "Basic", "L", 230, "", "ex"), 1)
+	iron_hands.damage_counters = 120
+	var low_prize_bench := _make_slot(_make_pokemon_cd("Tynamo", "Basic", "L", 40), 1)
+	opponent.active_pokemon = low_prize_active
+	opponent.bench.clear()
+	opponent.bench.append(low_prize_bench)
+	opponent.bench.append(iron_hands)
+	var context := {"game_state": gs, "player_index": 0, "source_slot": dusknoir}
+	var iron_score: float = float(llm.call("score_interaction_target", iron_hands, {"id": "self_ko_target"}, context))
+	var low_score: float = float(llm.call("score_interaction_target", low_prize_active, {"id": "self_ko_target"}, context))
+	var picked: Array = llm.call("pick_interaction_items", [low_prize_active, low_prize_bench, iron_hands], {"id": "self_ko_target", "max_select": 1}, context)
+	return run_checks([
+		assert_true(iron_score > low_score, "Dusknoir self-KO target scoring should prefer a damaged two-prize conversion"),
+		assert_true(picked.size() == 1 and picked[0] == iron_hands, "Dusknoir self-KO fallback should pick the high-value target from actual options"),
+	])
 
 
 func test_dusknoir_self_ko_conversion_gating_blocks_empty_damage_plan() -> String:
@@ -270,6 +330,121 @@ func test_active_llm_queue_blocks_bad_dragapult_dusknoir_escape_actions() -> Str
 	])
 
 
+func test_dragapult_llm_replaces_ready_jet_head_with_phantom_dive() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(7)
+	var player: PlayerState = gs.players[0]
+	var dragapult := _make_slot(_make_dragapult_ex_cd(), 0)
+	dragapult.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	dragapult.attached_energy.append(_attached_energy("Psychic Energy", "P"))
+	player.active_pokemon = dragapult
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var jet_head := {
+		"action_id": "attack:0",
+		"id": "attack:0",
+		"type": "attack",
+		"kind": "attack",
+		"attack_index": 0,
+		"attack_name": "Jet Head",
+		"projected_damage": 70,
+	}
+	var phantom_dive := {
+		"action_id": "attack:1",
+		"id": "attack:1",
+		"type": "attack",
+		"kind": "attack",
+		"attack_index": 1,
+		"attack_name": "Phantom Dive",
+		"projected_damage": 200,
+	}
+	_activate_llm_queue(llm, int(gs.turn_number), [jet_head])
+	llm.set("_llm_action_catalog", {
+		"attack:0": jet_head,
+		"attack:1": phantom_dive,
+	})
+	var jet_score: float = float(llm.call("score_action_absolute", jet_head, gs, 0))
+	var phantom_score: float = float(llm.call("score_action_absolute", phantom_dive, gs, 0))
+	var preferred: Dictionary = llm.call("_deck_preferred_terminal_attack_for", jet_head, gs, 0)
+	return run_checks([
+		assert_true(jet_score <= -1000.0, "A queued Jet Head should be blocked when Phantom Dive is ready"),
+		assert_true(phantom_score >= 10000.0, "A queued Jet Head plan should allow the ready Phantom Dive replacement to own execution"),
+		assert_eq(int(preferred.get("attack_index", -1)), 1, "Terminal attack repair should replace Jet Head with Phantom Dive"),
+	])
+
+
+func test_energy_ready_dragapult_blocks_jet_head_without_active_queue() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(9)
+	var player: PlayerState = gs.players[0]
+	var dragapult := _make_slot(_make_dragapult_ex_cd(), 0)
+	dragapult.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	dragapult.attached_energy.append(_attached_energy("Psychic Energy", "P"))
+	player.active_pokemon = dragapult
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var jet_head := {
+		"kind": "attack",
+		"attack_index": 0,
+		"attack_name": "Jet Head",
+		"projected_damage": 70,
+	}
+	var phantom_dive := {
+		"kind": "attack",
+		"attack_index": 1,
+		"attack_name": "Phantom Dive",
+		"projected_damage": 200,
+	}
+	return run_checks([
+		assert_true(float(llm.call("score_action_absolute", jet_head, gs, 0)) <= -1000.0, "Jet Head should be blocked whenever Phantom Dive is fully powered"),
+		assert_true(float(llm.call("score_action_absolute", phantom_dive, gs, 0)) > -1000.0, "Phantom Dive should remain available as the primary terminal attack"),
+		assert_true(bool(llm.call("_deck_should_block_exact_queue_match", jet_head, jet_head, gs, 0)), "Queue-level guard should also reject exact Jet Head ids"),
+		assert_false(bool(llm.call("_deck_should_block_exact_queue_match", phantom_dive, phantom_dive, gs, 0)), "Queue-level guard should not reject the ready Phantom Dive action"),
+	])
+
+
+func test_setup_repair_inserts_poffin_before_terminal_attack() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(4)
+	var player: PlayerState = gs.players[0]
+	var dragapult := _make_slot(_make_dragapult_ex_cd(), 0)
+	dragapult.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	dragapult.attached_energy.append(_attached_energy("Psychic Energy", "P"))
+	player.active_pokemon = dragapult
+	player.hand.append(CardInstance.create(_make_trainer_cd("Buddy-Buddy Poffin"), 0))
+	var poffin_ref := {
+		"id": "play_trainer:poffin",
+		"action_id": "play_trainer:poffin",
+		"type": "play_trainer",
+		"kind": "play_trainer",
+		"card": "Buddy-Buddy Poffin",
+	}
+	var attack_ref := {
+		"id": "attack:1",
+		"action_id": "attack:1",
+		"type": "attack",
+		"kind": "attack",
+		"attack_index": 1,
+		"attack_name": "Phantom Dive",
+	}
+	llm.set("_llm_action_catalog", {
+		"play_trainer:poffin": poffin_ref,
+		"attack:1": attack_ref,
+	})
+	var repair: Dictionary = llm.call("_repair_missing_productive_engine_in_tree", {"actions": [attack_ref]}, gs, 0)
+	var repaired_tree: Dictionary = repair.get("tree", {})
+	var actions: Array = repaired_tree.get("actions", [])
+	return run_checks([
+		assert_true(actions.size() >= 2, "Repair should add a setup action before the terminal attack"),
+		assert_eq(str((actions[0] as Dictionary).get("action_id", "")), "play_trainer:poffin", "Poffin should be inserted before attacking when it is a visible safe setup action"),
+		assert_eq(str((actions[actions.size() - 1] as Dictionary).get("action_id", "")), "attack:1", "The terminal Phantom Dive should remain last after setup repair"),
+	])
+
+
 func test_bad_dragapult_dusknoir_targets_block_before_queue_or_fallback_scores() -> String:
 	var llm := _new_strategy(LLM_SCRIPT_PATH)
 	if llm == null:
@@ -285,6 +460,8 @@ func test_bad_dragapult_dusknoir_targets_block_before_queue_or_fallback_scores()
 	player.bench.append(fezandipiti)
 	var crystal := CardInstance.create(_make_trainer_cd("Sparkling Crystal", "Tool"), 0)
 	var psychic := CardInstance.create(_make_energy_cd("Psychic Energy", "P"), 0)
+	var lightning := CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0)
+	var fire := CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0)
 	var bad_crystal := {
 		"action_id": "attach_tool:test_bad_crystal",
 		"id": "attach_tool:test_bad_crystal",
@@ -293,6 +470,8 @@ func test_bad_dragapult_dusknoir_targets_block_before_queue_or_fallback_scores()
 		"target_slot": fezandipiti,
 	}
 	var bad_energy := {"kind": "attach_energy", "card": psychic, "target_slot": duskull}
+	var bad_lightning_to_dragapult_line := {"kind": "attach_energy", "card": lightning, "target_slot": dreepy}
+	var good_fire_to_dragapult_line := {"kind": "attach_energy", "card": fire, "target_slot": dreepy}
 	_activate_llm_queue(llm, int(gs.turn_number), [bad_crystal])
 	var queued_bad_crystal_score: float = float(llm.call("score_action_absolute", bad_crystal, gs, 0))
 	llm.set("_llm_queue_turn", -1)
@@ -301,6 +480,8 @@ func test_bad_dragapult_dusknoir_targets_block_before_queue_or_fallback_scores()
 	var fallback_bad_crystal_absolute: float = float(llm.call("score_action_absolute", bad_crystal, gs, 0))
 	var fallback_bad_crystal_score: float = float(llm.call("score_action", bad_crystal, {"game_state": gs, "player_index": 0}))
 	var fallback_bad_energy_score: float = float(llm.call("score_action", bad_energy, {"game_state": gs, "player_index": 0}))
+	var fallback_bad_lightning_score: float = float(llm.call("score_action", bad_lightning_to_dragapult_line, {"game_state": gs, "player_index": 0}))
+	var fallback_good_fire_score: float = float(llm.call("score_action_absolute", good_fire_to_dragapult_line, gs, 0))
 	var compact_bad_crystal := {"kind": "attach_tool", "card": {"name_en": "Sparkling Crystal"}, "target": {"name_en": "Fezandipiti ex"}}
 	var compact_bad_energy := {"kind": "attach_energy", "card": {"name_en": "Psychic Energy"}, "target": {"name_en": "Duskull"}}
 	var compact_bad_crystal_score: float = float(llm.call("score_action", compact_bad_crystal, {"game_state": gs, "player_index": 0}))
@@ -310,6 +491,8 @@ func test_bad_dragapult_dusknoir_targets_block_before_queue_or_fallback_scores()
 		assert_true(fallback_bad_crystal_absolute <= -1000.0, "Bad tool targets should remain blocked after the LLM queue has cleared"),
 		assert_true(fallback_bad_crystal_score <= -1000.0, "Fallback score_action should not re-enable bad Sparkling Crystal targets"),
 		assert_true(fallback_bad_energy_score <= -1000.0, "Fallback score_action should not re-enable Duskull/Dusclops/Dusknoir energy targets when Dragapult line exists"),
+		assert_true(fallback_bad_lightning_score <= -1000.0, "Fallback score_action should block off-type energy on the Dragapult line"),
+		assert_true(fallback_good_fire_score > -1000.0, "Fallback score_action should still allow Fire energy on the Dragapult line"),
 		assert_true(compact_bad_crystal_score <= -1000.0, "Compact fallback actions should still block Sparkling Crystal on support Pokemon"),
 		assert_true(compact_bad_energy_score <= -1000.0, "Compact fallback actions should still block energy on the Dusknoir line"),
 	])
@@ -341,6 +524,148 @@ func test_tool_assignment_blocks_forest_seal_and_sparkling_crystal_bad_targets()
 		assert_true(bool(llm.call("_deck_should_block_exact_queue_match", {}, {"kind": "attach_tool", "card": forest_seal, "target_slot": dragapult}, gs, 0)), "Forest Seal Stone should not attach to Dragapult ex"),
 		assert_false(bool(llm.call("_deck_should_block_exact_queue_match", {}, {"kind": "attach_tool", "card": forest_seal, "target_slot": rotom}, gs, 0)), "Forest Seal Stone should be allowed on Rotom V"),
 		assert_false(bool(llm.call("_deck_should_block_exact_queue_match", {}, {"kind": "attach_tool", "card": forest_seal, "target_slot": lumineon}, gs, 0)), "Forest Seal Stone should be allowed on Lumineon V"),
+	])
+
+
+func test_tm_devolution_requires_real_opponent_devolution_window() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(4)
+	var player: PlayerState = gs.players[0]
+	var opponent: PlayerState = gs.players[1]
+	var dreepy := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	player.active_pokemon = dreepy
+	opponent.active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	opponent.bench.clear()
+	var tm_dev := CardInstance.create(_make_trainer_cd("Technical Machine: Devolution", "Tool"), 0)
+	var attach_tm := {"kind": "attach_tool", "card": tm_dev, "target_slot": dreepy}
+	var blocked_without_window := bool(llm.call("_deck_should_block_exact_queue_match", {}, attach_tm, gs, 0))
+	var damaged_stage1 := _make_slot(_make_pokemon_cd("Drakloak", "Stage 1", "N", 90, "Dreepy"), 1)
+	damaged_stage1.damage_counters = 40
+	opponent.bench.append(damaged_stage1)
+	var blocked_with_window := bool(llm.call("_deck_should_block_exact_queue_match", {}, attach_tm, gs, 0))
+	return run_checks([
+		assert_true(blocked_without_window, "TM Devolution should not attach early when the opponent has no evolved damaged target"),
+		assert_false(blocked_with_window, "TM Devolution should remain available once a real devolution prize window exists"),
+	])
+
+
+func test_dusknoir_self_ko_does_not_give_opponent_final_prize() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(12)
+	var player: PlayerState = gs.players[0]
+	var opponent: PlayerState = gs.players[1]
+	var dusknoir := _make_slot(_make_pokemon_cd(
+		"Dusknoir",
+		"Stage 2",
+		"P",
+		160,
+		"Dusclops",
+		"",
+		[{"name": "Cursed Blast", "text": "Place 13 damage counters."}]
+	), 0)
+	var dragapult := _make_slot(_make_dragapult_ex_cd(), 0)
+	dragapult.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	dragapult.attached_energy.append(_attached_energy("Psychic Energy", "P"))
+	player.active_pokemon = dragapult
+	player.bench.clear()
+	player.bench.append(dusknoir)
+	opponent.active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var iron_hands := _make_slot(_make_pokemon_cd("Iron Hands ex", "Basic", "L", 230, "", "ex"), 1)
+	iron_hands.damage_counters = 120
+	opponent.bench.clear()
+	opponent.bench.append(iron_hands)
+	var blast_action := {"kind": "use_ability", "source_slot": dusknoir, "ability_index": 0}
+	_set_prize_count(player, 3, 0)
+	_set_prize_count(opponent, 1, 1)
+	var blocked_when_not_closing := bool(llm.call("_deck_should_block_exact_queue_match", {}, blast_action, gs, 0))
+	_set_prize_count(player, 2, 0)
+	var blocked_when_closing := bool(llm.call("_deck_should_block_exact_queue_match", {}, blast_action, gs, 0))
+	return run_checks([
+		assert_true(blocked_when_not_closing, "Dusknoir self-KO should be blocked when it gives the opponent their final prize and does not win immediately"),
+		assert_false(blocked_when_closing, "Dusknoir self-KO should remain allowed when the blast takes enough prizes to win first"),
+	])
+
+
+func test_ready_dragapult_allows_second_line_but_blocks_support_padding() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(8)
+	var player: PlayerState = gs.players[0]
+	var dragapult := _make_slot(_make_dragapult_ex_cd(), 0)
+	dragapult.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	dragapult.attached_energy.append(_attached_energy("Psychic Energy", "P"))
+	var duskull := _make_slot(_make_pokemon_cd("Duskull", "Basic", "P", 60), 0)
+	var rotom := _make_slot(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0)
+	player.active_pokemon = dragapult
+	player.bench.clear()
+	player.bench.append(duskull)
+	player.bench.append(rotom)
+	player.hand.append(CardInstance.create(_make_trainer_cd("Arven", "Supporter"), 0))
+	player.hand.append(CardInstance.create(_make_trainer_cd("Rare Candy", "Item"), 0))
+	var poffin := {"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Buddy-Buddy Poffin", "Item"), 0)}
+	var nest := {"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Nest Ball", "Item"), 0)}
+	var dreepy_card := CardInstance.create(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	var dreepy_setup := {"kind": "play_basic_to_bench", "card": dreepy_card}
+	var fez_setup := {"kind": "play_basic_to_bench", "card": CardInstance.create(_make_pokemon_cd("Fezandipiti ex", "Basic", "D", 210, "", "ex"), 0)}
+	var rotom_draw := {"kind": "use_ability", "source_slot": rotom, "ability_index": 0}
+	var poffin_score: float = float(llm.call("score_action_absolute", poffin, gs, 0))
+	var nest_score: float = float(llm.call("score_action_absolute", nest, gs, 0))
+	var dreepy_setup_score: float = float(llm.call("score_action_absolute", dreepy_setup, gs, 0))
+	var fez_setup_score: float = float(llm.call("score_action_absolute", fez_setup, gs, 0))
+	var rotom_draw_score: float = float(llm.call("score_action_absolute", rotom_draw, gs, 0))
+	var dreepy_slot := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	player.bench.append(dreepy_slot)
+	var drakloak_evolve := {"kind": "evolve", "card": CardInstance.create(_make_pokemon_cd("Drakloak", "Stage 1", "N", 90, "Dreepy"), 0), "target_slot": dreepy_slot}
+	var drakloak_evolve_score: float = float(llm.call("score_action_absolute", drakloak_evolve, gs, 0))
+	return run_checks([
+		assert_true(poffin_score > -1000.0, "Poffin should remain available when ready Dragapult still lacks a backup Dreepy line"),
+		assert_true(nest_score > -1000.0, "Nest Ball should remain available when it can establish the backup line"),
+		assert_true(dreepy_setup_score > -1000.0, "Direct Dreepy bench should remain a high-value second-line action"),
+		assert_true(drakloak_evolve_score > -1000.0, "Drakloak evolution should remain allowed to mature the second line"),
+		assert_true(fez_setup_score <= -1000.0, "Low-value support benching should be blocked even while the backup line is still missing"),
+		assert_true(rotom_draw_score <= -1000.0, "Rotom terminal draw should not steal the turn from attack or second-line setup"),
+	])
+
+
+func test_ready_dragapult_blocks_extra_setup_and_rotom_draw() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(10)
+	var player: PlayerState = gs.players[0]
+	var dragapult := _make_slot(_make_dragapult_ex_cd(), 0)
+	dragapult.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	dragapult.attached_energy.append(_attached_energy("Psychic Energy", "P"))
+	var drakloak := _make_slot(_make_pokemon_cd("Drakloak", "Stage 1", "N", 90, "Dreepy"), 0)
+	var duskull := _make_slot(_make_pokemon_cd("Duskull", "Basic", "P", 60), 0)
+	var rotom := _make_slot(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0)
+	player.active_pokemon = dragapult
+	player.bench.clear()
+	player.bench.append(drakloak)
+	player.bench.append(duskull)
+	player.bench.append(rotom)
+	player.hand.append(CardInstance.create(_make_trainer_cd("Arven", "Supporter"), 0))
+	player.hand.append(CardInstance.create(_make_trainer_cd("Rare Candy", "Item"), 0))
+	player.hand.append(CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0))
+	player.hand.append(CardInstance.create(_make_energy_cd("Psychic Energy", "P"), 0))
+	var poffin := {"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Buddy-Buddy Poffin", "Item"), 0)}
+	var nest := {"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Nest Ball", "Item"), 0)}
+	var extra_dreepy := {"kind": "play_basic_to_bench", "card": CardInstance.create(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)}
+	var extra_fez := {"kind": "play_basic_to_bench", "card": CardInstance.create(_make_pokemon_cd("Fezandipiti ex", "Basic", "D", 210, "", "ex"), 0)}
+	var rotom_draw := {"kind": "use_ability", "source_slot": rotom, "ability_index": 0}
+	var drakloak_draw := {"kind": "use_ability", "source_slot": drakloak, "ability_index": 0}
+	return run_checks([
+		assert_true(float(llm.call("score_action_absolute", poffin, gs, 0)) <= -1000.0, "Poffin should be blocked after ready Dragapult already has a backup line"),
+		assert_true(float(llm.call("score_action_absolute", nest, gs, 0)) <= -1000.0, "Nest Ball should be blocked after ready Dragapult already has a backup line"),
+		assert_true(float(llm.call("score_action_absolute", extra_dreepy, gs, 0)) <= -1000.0, "Extra Dreepy should be blocked once the second line is already present"),
+		assert_true(float(llm.call("score_action_absolute", extra_fez, gs, 0)) <= -1000.0, "Extra support Pokemon should be blocked once the attacker and backup are online"),
+		assert_true(float(llm.call("score_action_absolute", rotom_draw, gs, 0)) <= -1000.0, "Rotom draw should not replace attacking once Phantom Dive is ready"),
+		assert_true(float(llm.call("score_action_absolute", drakloak_draw, gs, 0)) > -1000.0, "Drakloak draw remains a valid engine action"),
 	])
 
 

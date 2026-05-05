@@ -9,10 +9,10 @@ const MAX_ATTACH := 2
 func get_granted_attacks(_pokemon: PokemonSlot, _state: GameState) -> Array[Dictionary]:
 	return [{
 		"id": GRANTED_ATTACK_ID,
-		"name": "Turbo Energize",
+		"name": "能量涡轮",
 		"cost": "C",
 		"damage": "",
-		"text": "Search your deck for up to 2 Basic Energy cards and attach them to your Benched Pokemon in any way. Then shuffle your deck.",
+		"text": "从牌库中选择最多2张基本能量，以任意方式附着给自己的备战宝可梦。然后重洗牌库。",
 	}]
 
 
@@ -42,15 +42,17 @@ func get_granted_attack_interaction_steps(
 	for slot: PokemonSlot in target_items:
 		target_labels.append(slot.get_pokemon_name())
 
-	return [build_card_assignment_step(
+	return [build_full_library_card_assignment_step(
 		STEP_ID,
-		"Choose up to 2 Basic Energy cards from your deck and assign them to your Benched Pokemon",
+		"从牌库中选择最多2张基本能量并分配给备战宝可梦",
+		player.deck,
 		energy_items,
 		energy_labels,
 		target_items,
 		target_labels,
 		0,
 		mini(MAX_ATTACH, energy_items.size()),
+		VISIBLE_SCOPE_OWN_FULL_DECK,
 		true
 	)]
 

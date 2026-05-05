@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "残月星耀",
+			"text": "在自己的回合可以使用。给对手的1只宝可梦身上，放置4个伤害指示物。[对战中，己方的VSTAR力量只能使用1次。]"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "5ban Graphics",
+	"attacks": [
+		{
+			"cost": "DD",
+			"damage": "110+",
+			"is_vstar_power": false,
+			"name": "残忍之刃",
+			"text": "如果对手的战斗宝可梦身上放置有伤害指示物的话，则追加造成110点伤害。"
+		}
+	],
+	"card_index": "086",
+	"card_index_en": "102",
+	"card_type": "Pokemon",
+	"description": "特性: 残月星耀\n在自己的回合可以使用。给对手的1只宝可梦身上，放置4个伤害指示物。[对战中，己方的VSTAR力量只能使用1次。]\n\n【恶】【恶】 残忍之刃 110+\n如果对手的战斗宝可梦身上放置有伤害指示物的话，则追加造成110点伤害。\n\n",
+	"effect_id": "a0383c4a4ff14425610be52afedf41ae",
+	"energy_provides": "",
+	"energy_type": "D",
+	"evolves_from": "洗翠 大剑鬼V",
+	"hp": 270,
+	"image_local_path": "user://cards/images/CS5aC/086.png",
+	"image_url": "https://tcg.mik.moe/static/img/CS5aC/086.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "V",
+	"name": "洗翠 大剑鬼VSTAR",
+	"name_en": "Hisuian Samurott VSTAR",
+	"rarity": "RRR",
+	"regulation_expanded": true,
+	"regulation_mark": "F",
+	"regulation_standard": true,
+	"release_date": "2024-06-18T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CS5aC",
+	"set_code_en": "ASR",
+	"stage": "VSTAR",
+	"weakness_energy": "G",
+	"weakness_value": "×2",
+	"yoren_code": "Y1018"
+}

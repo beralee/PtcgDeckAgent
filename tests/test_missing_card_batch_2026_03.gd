@@ -2277,6 +2277,98 @@ func test_csv7c_154_raging_bolt_ex_discards_hand_and_scales_with_discarded_energ
 	return "CSV7C_154 missing discard-energy damage effect"
 
 
+func test_csv7c_154_raging_bolt_ex_bellowing_thunder_uses_energy_multiselect_dialog() -> String:
+	var processor := EffectProcessor.new()
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	var attacker_cd := _make_basic_pokemon_data("CSV7C_154 Raging Bolt ex", "N", 240, "Basic", "ex", "e96bb407c5f18bb9eec55487e70395fd")
+	attacker_cd.attacks = [
+		{"name": "Burst Roar", "cost": "C", "damage": "", "text": "", "is_vstar_power": false},
+		{"name": "Bellowing Thunder", "cost": "LF", "damage": "70x", "text": "", "is_vstar_power": false},
+	]
+	processor.register_pokemon_card(attacker_cd)
+	var attacker := _make_slot(attacker_cd, 0)
+	var bench := player.bench[0]
+	bench.pokemon_stack.clear()
+	bench.pokemon_stack.append(CardInstance.create(_make_basic_pokemon_data("Teal Mask Ogerpon ex", "G", 210), 0))
+	var active_energy := CardInstance.create(_make_energy_data("Basic L", "L"), 0)
+	var bench_energy := CardInstance.create(_make_energy_data("Basic F", "F"), 0)
+	var special_energy := CardInstance.create(_make_energy_data("Special Energy", "C", "Special Energy"), 0)
+	attacker.attached_energy.append(active_energy)
+	attacker.attached_energy.append(special_energy)
+	bench.attached_energy.append(bench_energy)
+	player.active_pokemon = attacker
+
+	var damage_effects: Array[BaseEffect] = processor.get_attack_effects_for_slot(attacker, 1)
+	for effect: BaseEffect in damage_effects:
+		if effect is AttackDiscardBasicEnergyFromFieldDamage:
+			var steps: Array[Dictionary] = effect.get_attack_interaction_steps(attacker.get_top_card(), attacker_cd.attacks[1], state)
+			var step: Dictionary = steps[0] if not steps.is_empty() else {}
+			var items: Array = step.get("items", [])
+			var labels: Array = step.get("labels", [])
+			var card_items: Array = step.get("card_items", [])
+			var card_groups: Array = step.get("card_groups", [])
+			return run_checks([
+				assert_eq(str(step.get("id", "")), "discard_basic_energy", "Bellowing Thunder should keep the discard step id for effect context compatibility"),
+				assert_eq(str(step.get("ui_mode", "")), "", "Bellowing Thunder should not use field assignment UI because no target Pokemon is chosen"),
+				assert_eq(str(step.get("presentation", "")), "cards", "Bellowing Thunder should render attached Basic Energy as multi-select cards"),
+				assert_eq(items.size(), 2, "Bellowing Thunder should expose only Basic Energy as selectable cards"),
+				assert_eq(card_items, items, "Bellowing Thunder card dialog should render the same selectable Energy cards"),
+				assert_eq(card_groups.size(), 2, "Bellowing Thunder should group selectable Energy under the Pokemon they are attached to"),
+				assert_eq((card_groups[0] as Dictionary).get("slot"), attacker, "First Energy group should be the active Pokemon"),
+				assert_eq((card_groups[1] as Dictionary).get("slot"), bench, "Second Energy group should be the benched Pokemon"),
+				assert_eq(int(step.get("min_select", -1)), 0, "Bellowing Thunder should allow discarding zero Basic Energy"),
+				assert_eq(int(step.get("max_select", -1)), 2, "Bellowing Thunder should allow selecting any number of visible Basic Energy"),
+				assert_eq(items[0], active_energy, "Active Basic Energy should be the first selectable card"),
+				assert_eq(items[1], bench_energy, "Bench Basic Energy should be the second selectable card"),
+				assert_str_contains(str(labels[0]), "Raging Bolt ex", "Active Energy subtitle should show its owning Pokemon"),
+				assert_str_contains(str(labels[0]), "Active", "Active Energy subtitle should show Active position"),
+				assert_str_contains(str(labels[1]), "Teal Mask Ogerpon ex", "Bench Energy subtitle should show its owning Pokemon"),
+				assert_str_contains(str(labels[1]), "Bench 1", "Bench Energy subtitle should show bench position"),
+			])
+	return "CSV7C_154 missing discard-energy damage effect"
+
+
+func test_csv7c_154_raging_bolt_ex_damage_accepts_assignment_ui_context() -> String:
+	var processor := EffectProcessor.new()
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.discard_pile.clear()
+	var attacker_cd := _make_basic_pokemon_data("CSV7C_154 Raging Bolt ex", "N", 240, "Basic", "ex", "e96bb407c5f18bb9eec55487e70395fd")
+	attacker_cd.attacks = [
+		{"name": "Burst Roar", "cost": "C", "damage": "", "text": "", "is_vstar_power": false},
+		{"name": "Bellowing Thunder", "cost": "LF", "damage": "70x", "text": "", "is_vstar_power": false},
+	]
+	processor.register_pokemon_card(attacker_cd)
+	var attacker := _make_slot(attacker_cd, 0)
+	var bench := player.bench[0]
+	var e1 := CardInstance.create(_make_energy_data("Basic L", "L"), 0)
+	var e2 := CardInstance.create(_make_energy_data("Basic F", "F"), 0)
+	attacker.attached_energy.append(e1)
+	bench.attached_energy.append(e2)
+	player.active_pokemon = attacker
+
+	var damage_effects: Array[BaseEffect] = processor.get_attack_effects_for_slot(attacker, 1)
+	for effect: BaseEffect in damage_effects:
+		if effect is AttackDiscardBasicEnergyFromFieldDamage:
+			effect.set_attack_interaction_context([{
+				"discard_basic_energy": [
+					{"source": e1, "target": attacker},
+					{"source": e2, "target": bench},
+				],
+			}])
+			var bonus: int = int(effect.call("get_damage_bonus", attacker, state))
+			effect.execute_attack(attacker, state.players[1].active_pokemon, 1, state)
+			effect.clear_attack_interaction_context()
+			return run_checks([
+				assert_eq(bonus, 70, "Bellowing Thunder should count assignment sources for damage"),
+				assert_true(e1 in player.discard_pile and e2 in player.discard_pile, "Bellowing Thunder should discard assignment sources"),
+				assert_eq(attacker.attached_energy.size(), 0, "Bellowing Thunder should remove selected active Energy"),
+				assert_eq(bench.attached_energy.size(), 0, "Bellowing Thunder should remove selected bench Energy"),
+			])
+	return "CSV7C_154 missing discard-energy damage effect"
+
+
 func test_csv7c_154_raging_bolt_ex_damage_uses_selected_energy_in_attack_flow() -> String:
 	var gsm := GameStateMachine.new()
 	gsm.game_state = _make_state()
@@ -4316,6 +4408,39 @@ func test_csv3c_125_giacomo_discards_one_special_energy_from_each_opponent_pokem
 		assert_contains(opponent.discard_pile, bench_special, "CSV3C_125 should discard the chosen Special Energy from the opponent Benched Pokemon"),
 		assert_contains(opponent.active_pokemon.attached_energy, active_basic, "CSV3C_125 should leave Basic Energy attached"),
 		assert_true(giacomo in player.discard_pile, "CSV3C_125 itself should go to the discard pile after use"),
+	])
+
+
+func test_csv3c_125_giacomo_flat_selection_still_discards_each_source() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+	var player: PlayerState = state.players[0]
+	var opponent: PlayerState = state.players[1]
+	player.hand.clear()
+	opponent.discard_pile.clear()
+
+	var giacomo_cd: CardData = CardDatabase.get_card("CSV3C", "125")
+	var giacomo := CardInstance.create(giacomo_cd, 0)
+	player.hand.append(giacomo)
+
+	var active_special_a := CardInstance.create(_make_energy_data("Mist A", "C", "Special Energy"), 1)
+	var active_special_b := CardInstance.create(_make_energy_data("Mist B", "C", "Special Energy"), 1)
+	var bench_special := CardInstance.create(_make_energy_data("Jet", "C", "Special Energy"), 1)
+	opponent.active_pokemon.attached_energy.clear()
+	opponent.active_pokemon.attached_energy.append_array([active_special_a, active_special_b])
+	opponent.bench[0].attached_energy.clear()
+	opponent.bench[0].attached_energy.append(bench_special)
+
+	var played := gsm.play_trainer(0, giacomo, [{
+		"discard_special_energy": [active_special_a, active_special_b],
+	}])
+
+	return run_checks([
+		assert_true(played, "CSV3C_125 should resolve from flat energy selection UI"),
+		assert_contains(opponent.discard_pile, active_special_a, "CSV3C_125 should discard one selected Special Energy from the active source"),
+		assert_contains(opponent.discard_pile, bench_special, "CSV3C_125 should fill a missing source and discard one Special Energy from the bench"),
+		assert_contains(opponent.active_pokemon.attached_energy, active_special_b, "CSV3C_125 should not discard two Special Energy from the same Pokemon"),
 	])
 
 

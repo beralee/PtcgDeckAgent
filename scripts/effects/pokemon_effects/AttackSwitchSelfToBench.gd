@@ -2,6 +2,13 @@
 class_name AttackSwitchSelfToBench
 extends BaseEffect
 
+var attack_index_to_match: int = -1
+
+
+func applies_to_attack_index(attack_index: int) -> bool:
+	return attack_index_to_match < 0 or attack_index == attack_index_to_match
+
+
 func get_attack_interaction_steps(
 	card: CardInstance,
 	_attack: Dictionary,
@@ -19,7 +26,7 @@ func get_attack_interaction_steps(
 		labels.append(slot.get_pokemon_name())
 	return [{
 		"id": "switch_target",
-		"title": "Choose a Benched Pokemon to switch with",
+		"title": "选择1只备战宝可梦与这只宝可梦互换",
 		"items": items,
 		"labels": labels,
 		"min_select": 1,

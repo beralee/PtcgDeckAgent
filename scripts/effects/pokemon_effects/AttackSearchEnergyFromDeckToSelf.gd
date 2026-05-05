@@ -21,22 +21,21 @@ func get_attack_interaction_steps(
 		return []
 	var player: PlayerState = state.players[card.owner_index]
 	var items: Array = []
-	var labels: Array[String] = []
 	for deck_card: CardInstance in player.deck:
 		if _matches_energy(deck_card):
 			items.append(deck_card)
-			labels.append(deck_card.card_data.name)
 	if items.is_empty():
 		return []
-	return [{
-		"id": STEP_ID,
-		"title": "选择最多%d张要附着的能量" % mini(max_count, items.size()),
-		"items": items,
-		"labels": labels,
-		"min_select": 1,
-		"max_select": mini(max_count, items.size()),
-		"allow_cancel": true,
-	}]
+	return [build_full_library_search_step(
+		STEP_ID,
+		"选择最多%d张要附着的能量" % mini(max_count, items.size()),
+		player.deck,
+		items,
+		VISIBLE_SCOPE_OWN_FULL_DECK,
+		1,
+		mini(max_count, items.size()),
+		{"allow_cancel": true}
+	)]
 
 
 func execute_attack(

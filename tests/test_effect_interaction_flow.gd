@@ -617,16 +617,24 @@ func test_discard_basic_energy_from_field_prompt_labels_energy_owner() -> String
 		attacker_cd.attacks[0],
 		gsm.game_state
 	)
-	var labels: Array = steps[0].get("labels", []) if not steps.is_empty() else []
+	var step: Dictionary = steps[0] if not steps.is_empty() else {}
+	var items: Array = step.get("items", [])
+	var labels: Array = step.get("labels", [])
+	var card_groups: Array = step.get("card_groups", [])
 	var active_label := str(labels[0]) if labels.size() > 0 else ""
 	var bench_label := str(labels[1]) if labels.size() > 1 else ""
 
 	return run_checks([
 		assert_eq(steps.size(), 1, "Bellowing Thunder should prompt for field Basic Energy discards"),
-		assert_str_contains(active_label, "Raging Bolt ex", "Active energy label should include the owning Pokemon"),
-		assert_str_contains(active_label, "Active", "Active energy label should include the Active position"),
-		assert_str_contains(bench_label, "Teal Mask Ogerpon ex", "Bench energy label should include the owning Pokemon"),
-		assert_str_contains(bench_label, "Bench 1", "Bench energy label should include the bench position"),
+		assert_eq(str(step.get("ui_mode", "")), "", "Bellowing Thunder should not enter field assignment UI"),
+		assert_eq(str(step.get("presentation", "")), "cards", "Bellowing Thunder should use a card multi-select dialog"),
+		assert_eq(items, [active_energy, bench_energy], "Bellowing Thunder should list attached Basic Energy cards as selectable items"),
+		assert_eq((card_groups[0] as Dictionary).get("slot"), active_slot, "Active Energy should be grouped under the active Pokemon"),
+		assert_eq((card_groups[1] as Dictionary).get("slot"), bench_slot, "Bench Energy should be grouped under the bench Pokemon"),
+		assert_str_contains(active_label, "Raging Bolt ex", "Active energy subtitle should include the owning Pokemon"),
+		assert_str_contains(active_label, "Active", "Active energy subtitle should include the Active position"),
+		assert_str_contains(bench_label, "Teal Mask Ogerpon ex", "Bench energy subtitle should include the owning Pokemon"),
+		assert_str_contains(bench_label, "Bench 1", "Bench energy subtitle should include the bench position"),
 	])
 
 

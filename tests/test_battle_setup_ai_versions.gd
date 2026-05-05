@@ -147,6 +147,36 @@ func test_battle_setup_includes_ai_source_and_version_controls() -> String:
 	])
 
 
+func test_battle_setup_mode_uses_hud_segment_buttons() -> String:
+	var scene := _make_scene_ready()
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	var mode_segment := scene.find_child("ModeSegment", true, false) as HBoxContainer
+	var two_player_button := scene.find_child("ModeTwoPlayerButton", true, false) as Button
+	var ai_button := scene.find_child("ModeAIButton", true, false) as Button
+	var preview_option := scene.find_child("AIPreviewStrengthOption", true, false) as OptionButton
+
+	if ai_button != null:
+		ai_button.pressed.emit()
+	var selected_after_ai := mode_option.selected
+	var ai_controls_visible := preview_option.visible
+	if two_player_button != null:
+		two_player_button.pressed.emit()
+	var selected_after_two_player := mode_option.selected
+	var two_player_controls_hidden := not preview_option.visible
+
+	return run_checks([
+		assert_true(mode_segment is HBoxContainer, "BattleSetup should expose mode choices as a HUD segment"),
+		assert_false(mode_option.visible, "Legacy mode dropdown should stay hidden behind the HUD segment"),
+		assert_eq(mode_segment.get_child_count() if mode_segment != null else 0, 2, "Mode segment should contain two choices"),
+		assert_eq(two_player_button.text if two_player_button != null else "", mode_option.get_item_text(0), "Two-player mode button should mirror the hidden option label"),
+		assert_eq(ai_button.text if ai_button != null else "", mode_option.get_item_text(1), "AI mode button should mirror the hidden option label"),
+		assert_eq(selected_after_ai, 1, "Pressing AI mode should update the hidden mode option"),
+		assert_true(ai_controls_visible, "Pressing AI mode should refresh AI-only setup controls"),
+		assert_eq(selected_after_two_player, 0, "Pressing two-player mode should update the hidden mode option"),
+		assert_true(two_player_controls_hidden, "Pressing two-player mode should hide AI-only setup controls"),
+	])
+
+
 func test_battle_setup_llm_model_controls_show_in_ai_mode() -> String:
 	var snapshot := _snapshot_battle_review_config_file()
 	_write_battle_review_config_for_test({
@@ -194,6 +224,7 @@ func test_battle_setup_defaults_to_rules_model_without_llm_api() -> String:
 	var scene := _make_scene_ready()
 	_prime_deck_options(scene)
 	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	var strategy_segment := scene.find_child("AIStrategySegment", true, false) as HBoxContainer
 	var strategy_option := scene.find_child("AIStrategyOption", true, false) as OptionButton
 	var model_row := scene.find_child("LLMModelRow", true, false) as HBoxContainer
 	var discuss_button := scene.find_child("BtnDiscussStrategyAI", true, false) as Button
@@ -201,17 +232,25 @@ func test_battle_setup_defaults_to_rules_model_without_llm_api() -> String:
 	var status_body := scene.find_child("AIModeStatusBody", true, false) as Label
 	mode_option.select(1)
 	scene.call("_refresh_ai_ui_visibility")
+	var strategy_button: Button = null
+	if strategy_segment != null and strategy_segment.get_child_count() > 0:
+		strategy_button = strategy_segment.get_child(0) as Button
 
 	var result := run_checks([
 		assert_true(status_title.visible, "AI mode should show the current AI mode status"),
 		assert_str_contains(status_title.text, "规则模型", "No API configured should clearly identify the rules model"),
+		assert_false(status_title.text.contains("："), "AI mode title should avoid full-width colon for Android glyph compatibility"),
 		assert_str_contains(status_body.text, "速度快", "Rules model copy should state the speed tradeoff"),
 		assert_str_contains(status_body.text, "能力较低", "Rules model copy should state the capability tradeoff"),
 		assert_str_contains(status_body.text, "不用设置", "Rules model copy should state that no setup is required"),
-		assert_true(strategy_option.visible, "Supported AI decks should still show the current AI work mode"),
+		assert_true(strategy_segment != null and strategy_segment.visible, "Supported AI decks should still show the current AI work mode"),
+		assert_false(strategy_option.visible, "Legacy strategy dropdown should stay hidden behind the HUD segment"),
 		assert_true(strategy_option.disabled, "Without API there should be no LLM strategy to select"),
 		assert_eq(strategy_option.get_item_count(), 1, "Without API the strategy selector should only contain the rules model"),
 		assert_str_contains(strategy_option.get_item_text(0), "规则版", "The only available AI mode should be the rules variant"),
+		assert_eq(strategy_segment.get_child_count() if strategy_segment != null else 0, 1, "Without API the HUD segment should only contain the rules model"),
+		assert_true(strategy_button != null and strategy_button.disabled, "The single rules-mode segment should be shown as the locked current mode"),
+		assert_eq(strategy_button.text if strategy_button != null else "", strategy_option.get_item_text(0), "HUD segment should mirror the hidden strategy label"),
 		assert_false(model_row.visible, "LLM model controls should stay hidden until API is configured"),
 		assert_false(discuss_button.visible, "Strategy discussion should stay hidden until API is configured"),
 	])
@@ -243,6 +282,7 @@ func test_battle_setup_llm_strategy_explains_api_and_thinking_cost() -> String:
 
 	var result := run_checks([
 		assert_str_contains(status_title.text, "大模型", "Selecting an LLM strategy should identify the LLM mode"),
+		assert_false(status_title.text.contains("："), "LLM mode title should avoid full-width colon for Android glyph compatibility"),
 		assert_str_contains(status_body.text, "GLM 5.1", "LLM mode copy should name the selected model"),
 		assert_str_contains(status_body.text, "思考时间", "LLM mode copy should set wait-time expectations"),
 		assert_str_contains(status_body.text, "能力中等", "LLM mode copy should state the capability level"),
@@ -266,14 +306,24 @@ func test_battle_setup_strategy_variant_labels_are_readable_chinese() -> String:
 	var scene := _make_scene_ready()
 	_prime_deck_options(scene)
 	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	var strategy_segment := scene.find_child("AIStrategySegment", true, false) as HBoxContainer
 	var strategy_option := scene.find_child("AIStrategyOption", true, false) as OptionButton
 	mode_option.select(1)
 	scene.call("_refresh_ai_ui_visibility")
+	var rules_button: Button = null
+	var llm_button: Button = null
+	if strategy_segment != null and strategy_segment.get_child_count() > 0:
+		rules_button = strategy_segment.get_child(0) as Button
+	if strategy_segment != null and strategy_segment.get_child_count() > 1:
+		llm_button = strategy_segment.get_child(1) as Button
 
 	var result := run_checks([
-		assert_true(strategy_option.visible, "Miraidon AI should expose strategy variant choices when API is configured"),
+		assert_true(strategy_segment != null and strategy_segment.visible, "Miraidon AI should expose strategy variant choices when API is configured"),
+		assert_false(strategy_option.visible, "Legacy strategy dropdown should stay hidden when the HUD segment is visible"),
 		assert_eq(strategy_option.get_item_text(0), "规则版密勒顿", "Rules strategy label should be readable Chinese"),
 		assert_eq(strategy_option.get_item_text(1), "大模型版密勒顿", "LLM strategy label should be readable Chinese"),
+		assert_eq(rules_button.text if rules_button != null else "", "规则版密勒顿", "Rules segment button should mirror the readable Chinese label"),
+		assert_eq(llm_button.text if llm_button != null else "", "大模型版密勒顿", "LLM segment button should mirror the readable Chinese label"),
 	])
 	_restore_battle_review_config_file(snapshot)
 	return result
@@ -377,6 +427,7 @@ func test_battle_setup_selected_llm_strategy_shows_current_model_name() -> Strin
 	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
 	var strategy_option := scene.find_child("AIStrategyOption", true, false) as OptionButton
 	var current_model_label := scene.find_child("AIModelCurrentLabel", true, false) as Label
+	var redundant_model_label := scene.find_child("LLMModelLabel", true, false) as Label
 	var discuss_button := scene.find_child("BtnDiscussStrategyAI", true, false) as Button
 	mode_option.select(1)
 	scene.call("_refresh_ai_ui_visibility")
@@ -386,7 +437,10 @@ func test_battle_setup_selected_llm_strategy_shows_current_model_name() -> Strin
 	var result := run_checks([
 		assert_true(current_model_label.visible, "Selecting an LLM strategy should reveal the current model label"),
 		assert_str_contains(current_model_label.text, "GLM 5.1", "Current model label should show the concrete model name"),
+		assert_false(current_model_label.text.contains("："), "Current model label should avoid full-width colon for Android glyph compatibility"),
+		assert_false(redundant_model_label.visible, "Selecting an LLM strategy should not show a redundant standalone model label"),
 		assert_str_contains(discuss_button.text, "GLM 5.1", "Discussion button should show the concrete model name"),
+		assert_false(discuss_button.text.contains("《") or discuss_button.text.contains("》"), "Discussion button should avoid guillemets for Android glyph compatibility"),
 	])
 	_restore_battle_review_config_file(snapshot)
 	return result
@@ -742,6 +796,7 @@ func test_battle_setup_hides_legacy_ai_strategy_controls_even_in_ai_mode() -> St
 	var scene := _make_scene_ready()
 	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
 	var ai_strategy_label := scene.find_child("AIStrategyLabel", true, false) as Label
+	var ai_strategy_segment := scene.find_child("AIStrategySegment", true, false) as HBoxContainer
 	var ai_strategy_option := scene.find_child("AIStrategyOption", true, false) as OptionButton
 	var dummy_deck := _make_deck(999, "TestDeck", "Pikachu")
 	scene.set("_ai_deck_list", [dummy_deck])
@@ -753,6 +808,7 @@ func test_battle_setup_hides_legacy_ai_strategy_controls_even_in_ai_mode() -> St
 	scene.call("_refresh_ai_ui_visibility")
 	return run_checks([
 		assert_false(ai_strategy_label.visible, "Unsupported AI decks should not expose strategy variant labels"),
+		assert_false(ai_strategy_segment.visible, "Unsupported AI decks should not expose strategy variant segments"),
 		assert_false(ai_strategy_option.visible, "Unsupported AI decks should not expose strategy variant dropdowns"),
 	])
 
@@ -798,9 +854,11 @@ func test_battle_setup_ai_view_button_keeps_normal_preview_for_weak_mode() -> St
 	return result
 
 
-func test_battle_setup_ai_view_button_uses_placeholder_for_strong_mode() -> String:
+func test_battle_setup_ai_view_button_uses_normal_preview_for_strong_mode() -> String:
 	var scene := _make_scene_ready()
 	_prime_deck_options(scene)
+	var fake_dialog := FakeDeckViewDialog.new()
+	scene.set("_deck_view_dialog", fake_dialog)
 	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
 	var preview_option := scene.find_child("AIPreviewStrengthOption", true, false) as OptionButton
 	mode_option.select(1)
@@ -811,12 +869,14 @@ func test_battle_setup_ai_view_button_uses_placeholder_for_strong_mode() -> Stri
 
 	var placeholder_opened := false
 	for child: Node in scene.get_children():
-		if child is AcceptDialog and (child as AcceptDialog).title == "强 AI 占位":
-			placeholder_opened = (child as AcceptDialog).dialog_text == "hello world"
+		if child is AcceptDialog:
+			placeholder_opened = true
 			break
 
 	var result := run_checks([
-		assert_true(placeholder_opened, "Strong AI preview mode should open the hello world placeholder dialog"),
+		assert_false(placeholder_opened, "Strong AI preview mode should not open a placeholder dialog"),
+		assert_eq(fake_dialog.shown_decks.size(), 1, "Strong AI preview mode should use the normal deck preview dialog"),
+		assert_eq(fake_dialog.shown_decks[0].id if not fake_dialog.shown_decks.is_empty() else -1, 575720, "Strong AI preview mode should preview the selected AI deck"),
 	])
 	scene.queue_free()
 	return result

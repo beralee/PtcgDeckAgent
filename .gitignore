@@ -27,6 +27,7 @@ battle_review_api.json
 # Local runtime artifacts
 logs/
 tmp/
+tmp_benchmark_logs/
 detail.jsonl
 __pycache__/
 .tmp_*.gd

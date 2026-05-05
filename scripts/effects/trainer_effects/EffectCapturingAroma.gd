@@ -22,7 +22,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 func get_preview_interaction_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
 	return [{
 		"id": "coin_flip_preview",
-		"title": "Flip a coin",
+		"title": "投掷1枚硬币",
 		"wait_for_coin_animation": true,
 		"preview_only": true,
 	}]
@@ -39,7 +39,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		var cd: CardData = deck_card.card_data
 		if _pending_flip_heads and cd.is_evolution_pokemon():
 			items.append(deck_card)
-			labels.append("%s (%s)" % [cd.name, cd.stage])
+			labels.append("%s (%s)" % [cd.name, _stage_label(cd.stage)])
 		elif not _pending_flip_heads and cd.is_basic_pokemon():
 			items.append(deck_card)
 			labels.append("%s (基础)" % cd.name)
@@ -57,16 +57,18 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			"wait_for_coin_animation": true,
 		}]
 
-	return [{
-		"id": "searched_pokemon",
-		"title": "捕获香氛投币结果：%s" % result_label,
-		"items": items,
-		"labels": labels,
-		"min_select": 1,
-		"max_select": 1,
-		"allow_cancel": false,
-		"wait_for_coin_animation": true,
-	}]
+	var step := build_full_library_search_step(
+		"searched_pokemon",
+		"捕获香氛投币结果：%s" % result_label,
+		player.deck,
+		items,
+		VISIBLE_SCOPE_OWN_FULL_DECK,
+		1,
+		1,
+		{"allow_cancel": false}
+	)
+	step["wait_for_coin_animation"] = true
+	return [step]
 
 
 func execute(card: CardInstance, targets: Array, state: GameState) -> void:
@@ -110,3 +112,15 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 
 func get_description() -> String:
 	return "抛掷1次硬币。如果为正面则从自己牌库中选择1张进化宝可梦，如果为反面则从自己牌库中选择1张基础宝可梦，在给对手看过之后，加入手牌。并重洗牌库。"
+
+
+func _stage_label(stage: String) -> String:
+	match stage:
+		"Basic":
+			return "基础"
+		"Stage 1":
+			return "1阶进化"
+		"Stage 2":
+			return "2阶进化"
+		_:
+			return stage

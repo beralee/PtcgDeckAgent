@@ -29,14 +29,14 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	for slot: PokemonSlot in opponent.get_all_pokemon():
 		if slot.damage_counters >= 10:
 			source_items.append(slot)
-			source_labels.append("%s (%d damage)" % [slot.get_pokemon_name(), slot.damage_counters])
+			source_labels.append("%s（%d伤害）" % [slot.get_pokemon_name(), slot.damage_counters])
 		target_items.append(slot)
-		target_labels.append("%s (%d damage)" % [slot.get_pokemon_name(), slot.damage_counters])
+		target_labels.append("%s（%d伤害）" % [slot.get_pokemon_name(), slot.damage_counters])
 
 	return [
 		{
 			"id": "source_pokemon",
-			"title": "Choose the source opponent Pokemon",
+			"title": "选择要移走伤害指示物的对手宝可梦",
 			"items": source_items,
 			"labels": source_labels,
 			"min_select": 1,
@@ -45,7 +45,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		},
 		{
 			"id": "target_pokemon",
-			"title": "Choose the destination opponent Pokemon",
+			"title": "选择要放置伤害指示物的对手宝可梦",
 			"items": target_items,
 			"labels": target_labels,
 			"exclude_selected_from_step_ids": ["source_pokemon"],
@@ -55,9 +55,9 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		},
 		{
 			"id": "counter_count",
-			"title": "Choose how many counters to move",
+			"title": "选择要移动的伤害指示物数量",
 			"items": [1, 2],
-			"labels": ["Move 1 counter", "Move 2 counters"],
+			"labels": ["移动1个伤害指示物", "移动2个伤害指示物"],
 			"min_select": 1,
 			"max_select": 1,
 			"allow_cancel": true,

@@ -22,6 +22,8 @@ func _run() -> void:
 		options["seed"] = int(args.get("seed"))
 	if args.has("max-steps"):
 		options["max_steps"] = int(args.get("max-steps"))
+	if args.has("max-game-seconds"):
+		options["max_game_seconds"] = float(args.get("max-game-seconds"))
 	if args.has("first-player"):
 		options["first_player_index"] = int(args.get("first-player"))
 	if args.has("llm-timeout"):
@@ -34,6 +36,12 @@ func _run() -> void:
 		options["llm_wait_poll_seconds"] = float(args.get("llm-wait-poll-seconds"))
 	if args.has("llm-max-failures"):
 		options["llm_max_failures_per_strategy"] = int(args.get("llm-max-failures"))
+	if args.has("strong-fixed-opening"):
+		options["strong_fixed_opening"] = _parse_bool(str(args.get("strong-fixed-opening")))
+	if args.has("rule-strong-fixed-opening"):
+		options["rule_strong_fixed_opening"] = _parse_bool(str(args.get("rule-strong-fixed-opening")))
+	if args.has("llm-strong-fixed-opening"):
+		options["llm_strong_fixed_opening"] = _parse_bool(str(args.get("llm-strong-fixed-opening")))
 	if args.has("rule-deck-id"):
 		options["rule_deck_id"] = int(args.get("rule-deck-id"))
 	if args.has("llm-deck-id"):
@@ -64,7 +72,7 @@ func _run() -> void:
 				"supported_modes": ["self_play", "rule_vs_llm", "miraidon"],
 			}
 
-	var json_text := JSON.stringify(report, "\t")
+	var json_text := JSON.stringify(_json_ascii_safe(report), "\t")
 	var json_output := str(args.get("json-output", DEFAULT_JSON_OUTPUT))
 	if json_output != "":
 		_write_text(json_output, json_text)
@@ -88,6 +96,11 @@ func _parse_args(raw_args: PackedStringArray) -> Dictionary:
 	return parsed
 
 
+func _parse_bool(value: String) -> bool:
+	var normalized := value.strip_edges().to_lower()
+	return normalized in ["1", "true", "yes", "y", "on", "strong"]
+
+
 func _write_text(path: String, text: String) -> void:
 	var normalized_path := path.strip_edges()
 	if normalized_path == "":
@@ -104,3 +117,32 @@ func _write_text(path: String, text: String) -> void:
 		return
 	file.store_string(text)
 	file.close()
+
+
+func _json_ascii_safe(value: Variant) -> Variant:
+	if value is Dictionary:
+		var safe_dict := {}
+		for raw_key: Variant in (value as Dictionary).keys():
+			safe_dict[str(raw_key)] = _json_ascii_safe((value as Dictionary).get(raw_key))
+		return safe_dict
+	if value is Array:
+		var safe_array: Array = []
+		for raw_item: Variant in value:
+			safe_array.append(_json_ascii_safe(raw_item))
+		return safe_array
+	if value is String:
+		return _ascii_safe_string(str(value))
+	return value
+
+
+func _ascii_safe_string(text: String) -> String:
+	var parts := PackedStringArray()
+	for i: int in text.length():
+		var code := text.unicode_at(i)
+		if code >= 32 and code <= 126:
+			parts.append(text.substr(i, 1))
+		elif code in [9, 10, 13]:
+			parts.append(" ")
+		else:
+			parts.append("?")
+	return "".join(parts)

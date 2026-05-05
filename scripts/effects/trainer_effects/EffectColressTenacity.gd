@@ -36,25 +36,27 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 
 	var steps: Array[Dictionary] = []
 	if not stadium_items.is_empty():
-		steps.append({
-			"id": "search_stadium",
-			"title": "选择1张竞技场卡加入手牌",
-			"items": stadium_items,
-			"labels": stadium_labels,
-			"min_select": 0,
-			"max_select": 1,
-			"allow_cancel": true,
-		})
+		steps.append(build_full_library_search_step(
+			"search_stadium",
+			"选择1张竞技场卡加入手牌",
+			player.deck,
+			stadium_items,
+			VISIBLE_SCOPE_OWN_FULL_DECK,
+			0,
+			1,
+			{"allow_cancel": true}
+		))
 	if not energy_items.is_empty():
-		steps.append({
-			"id": "search_energy",
-			"title": "选择1张能量卡加入手牌",
-			"items": energy_items,
-			"labels": energy_labels,
-			"min_select": 0,
-			"max_select": 1,
-			"allow_cancel": true,
-		})
+		steps.append(build_full_library_search_step(
+			"search_energy",
+			"选择1张能量卡加入手牌",
+			player.deck,
+			energy_items,
+			VISIBLE_SCOPE_OWN_FULL_DECK,
+			0,
+			1,
+			{"allow_cancel": true}
+		))
 	if steps.is_empty():
 		return [build_empty_search_resolution_step("牌库里没有竞技场卡或能量卡。你仍可以使用这张卡。")]
 	return steps
@@ -74,18 +76,24 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	var revealed_cards: Array[CardInstance] = []
 	var public_labels: Array[String] = []
 	var stadium_raw: Array = ctx.get("search_stadium", [])
-	if not stadium_raw.is_empty() and stadium_raw[0] is CardInstance:
-		var selected_stadium: CardInstance = stadium_raw[0]
+	for entry: Variant in stadium_raw:
+		if not (entry is CardInstance):
+			continue
+		var selected_stadium: CardInstance = entry
 		if selected_stadium in player.deck and selected_stadium.card_data.card_type == "Stadium":
 			revealed_cards.append(selected_stadium)
 			public_labels.append("竞技场卡")
+			break
 
 	var energy_raw: Array = ctx.get("search_energy", [])
-	if not energy_raw.is_empty() and energy_raw[0] is CardInstance:
-		var selected_energy: CardInstance = energy_raw[0]
+	for entry: Variant in energy_raw:
+		if not (entry is CardInstance):
+			continue
+		var selected_energy: CardInstance = entry
 		if selected_energy in player.deck and selected_energy.card_data.is_energy():
 			revealed_cards.append(selected_energy)
 			public_labels.append("能量卡")
+			break
 
 	_move_public_cards_to_hand_with_log(
 		state,

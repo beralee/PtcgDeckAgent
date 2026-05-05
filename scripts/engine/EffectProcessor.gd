@@ -813,22 +813,24 @@ func process_pokemon_check(state: GameState) -> Array[PokemonSlot]:
 	var damaged_slots: Array[PokemonSlot] = []
 	for pi: int in 2:
 		var player: PlayerState = state.players[pi]
-		for slot: PokemonSlot in player.get_all_pokemon():
-			var took_damage := false
-			if slot.status_conditions.get("poisoned", false):
-				slot.damage_counters += 10
-				took_damage = true
-			if slot.status_conditions.get("burned", false):
-				slot.damage_counters += 20
-				took_damage = true
-				if coin_flipper.flip():
-					slot.status_conditions["burned"] = false
-			if slot.status_conditions.get("asleep", false) and coin_flipper.flip():
-				slot.status_conditions["asleep"] = false
-			if slot.status_conditions.get("paralyzed", false):
-				slot.status_conditions["paralyzed"] = false
-			if took_damage:
-				damaged_slots.append(slot)
+		var slot: PokemonSlot = player.active_pokemon
+		if slot == null:
+			continue
+		var took_damage := false
+		if slot.status_conditions.get("poisoned", false):
+			slot.damage_counters += 10
+			took_damage = true
+		if slot.status_conditions.get("burned", false):
+			slot.damage_counters += 20
+			took_damage = true
+			if coin_flipper.flip():
+				slot.status_conditions["burned"] = false
+		if slot.status_conditions.get("asleep", false) and coin_flipper.flip():
+			slot.status_conditions["asleep"] = false
+		if pi == state.current_player_index and slot.status_conditions.get("paralyzed", false):
+			slot.status_conditions["paralyzed"] = false
+		if took_damage:
+			damaged_slots.append(slot)
 	return damaged_slots
 
 

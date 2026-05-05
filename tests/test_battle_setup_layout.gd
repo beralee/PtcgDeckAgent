@@ -9,10 +9,19 @@ func _set_navigation_suppressed(suppressed: bool) -> void:
 		GameManager.call("set_scene_navigation_suppressed_for_tests", suppressed)
 
 
+func _ensure_mode_option_items(scene: Control) -> void:
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	if mode_option == null or mode_option.item_count > 0:
+		return
+	mode_option.add_item("自己练牌", 0)
+	mode_option.add_item("AI 对战", 1)
+
+
 func _force_two_player_mode(scene: Control) -> void:
 	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
 	if mode_option == null:
 		return
+	_ensure_mode_option_items(scene)
 	mode_option.select(0)
 	scene.call("_refresh_deck_options")
 	scene.call("_refresh_ai_ui_visibility")
@@ -211,6 +220,187 @@ func test_battle_setup_includes_per_player_deck_view_and_edit_actions() -> Strin
 	])
 
 	scene.queue_free()
+	return result
+
+
+func test_battle_setup_uses_hud_deck_picker_buttons() -> String:
+	var scene := BattleSetupScene.instantiate()
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	_force_two_player_mode(scene)
+
+	var deck1_picker := scene.find_child("Deck1PickerButton", true, false) as Button
+	var deck2_picker := scene.find_child("Deck2PickerButton", true, false) as Button
+	var deck1_option := scene.find_child("Deck1Option", true, false) as OptionButton
+	var deck2_option := scene.find_child("Deck2Option", true, false) as OptionButton
+
+	var result := run_checks([
+		assert_not_null(deck1_picker, "Player 1 deck selection should use a custom HUD picker button"),
+		assert_not_null(deck2_picker, "Player 2 deck selection should use a custom HUD picker button"),
+		assert_true(deck1_picker != null and deck1_picker.custom_minimum_size.y >= 50.0, "Deck picker buttons should be tall enough for mobile taps"),
+		assert_true(deck2_picker != null and deck2_picker.custom_minimum_size.y >= 50.0, "Opponent deck picker button should be tall enough for mobile taps"),
+		assert_true(deck1_option != null and not deck1_option.visible, "Legacy deck OptionButton should stay hidden behind the custom picker"),
+		assert_true(deck2_option != null and not deck2_option.visible, "Opponent legacy OptionButton should stay hidden behind the custom picker"),
+	])
+
+	scene.queue_free()
+	return result
+
+
+func test_battle_setup_deck_picker_categories_keep_recent_and_all_only() -> String:
+	var scene := BattleSetupScene.instantiate()
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	_force_two_player_mode(scene)
+
+	var old_deck := DeckData.new()
+	old_deck.id = 901001
+	old_deck.deck_name = "旧卡组"
+	old_deck.total_cards = 60
+	old_deck.import_date = "2026-05-01T10:00:00"
+	var recent_deck := DeckData.new()
+	recent_deck.id = 901002
+	recent_deck.deck_name = "最近卡组"
+	recent_deck.total_cards = 60
+	recent_deck.import_date = "2026-05-02T10:00:00"
+	var latest_deck := DeckData.new()
+	latest_deck.id = 901003
+	latest_deck.deck_name = "最新卡组"
+	latest_deck.total_cards = 60
+	latest_deck.import_date = "2026-05-05T10:00:00"
+	scene.set("_deck_list", [old_deck, recent_deck, latest_deck])
+	scene.set("_deck_usage_stats", {
+		str(old_deck.id): {"use_count": 8, "last_used": "2026-05-02T12:00:00"},
+		str(recent_deck.id): {"use_count": 2, "last_used": "2026-05-04T12:00:00"},
+	})
+
+	var recent: Array = scene.call("_decks_for_picker", 0, "recent", "")
+	var all_decks: Array = scene.call("_decks_for_picker", 0, "all", "")
+	var latest_meta := str(scene.call("_deck_picker_card_meta", latest_deck))
+	scene.call("_ensure_deck_picker_overlay")
+	var tabs := scene.get("_deck_picker_tabs") as Dictionary
+
+	var result := run_checks([
+		assert_true(tabs.has("recent"), "Deck picker should keep the recent category"),
+		assert_true(tabs.has("all"), "Deck picker should keep the all category"),
+		assert_false(tabs.has("frequent"), "Deck picker should remove the frequent category"),
+		assert_eq((recent[0] as DeckData).id, recent_deck.id, "Recent category should sort by last_used descending"),
+		assert_eq((all_decks[0] as DeckData).id, latest_deck.id, "All category should sort by import_date descending"),
+		assert_false(latest_meta.contains("60张"), "Deck picker card meta should not waste space on total card count"),
+		assert_false(latest_meta.contains("导入"), "Deck picker card meta should not display import timestamps"),
+	])
+
+	scene.queue_free()
+	return result
+
+
+func test_battle_setup_uses_hud_first_player_segment() -> String:
+	var scene := BattleSetupScene.instantiate()
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	_force_two_player_mode(scene)
+
+	var segment := scene.find_child("FirstPlayerSegment", true, false) as HBoxContainer
+	var random_button := scene.find_child("FirstPlayerRandomButton", true, false) as Button
+	var player_one_button := scene.find_child("FirstPlayerOneButton", true, false) as Button
+	var player_two_button := scene.find_child("FirstPlayerTwoButton", true, false) as Button
+	var option := scene.find_child("FirstPlayerOption", true, false) as OptionButton
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	_ensure_mode_option_items(scene)
+
+	scene.call("_on_first_player_segment_pressed", 1)
+	var selected_after_player_one := option.selected if option != null else -1
+	scene.call("_on_first_player_segment_pressed", 2)
+	var selected_after_player_two := option.selected if option != null else -1
+	var pvp_player_one_label := player_one_button.text if player_one_button != null else ""
+	var pvp_player_two_label := player_two_button.text if player_two_button != null else ""
+	if mode_option != null:
+		mode_option.select(1)
+	scene.call("_refresh_ai_ui_visibility")
+	var ai_player_one_label := player_one_button.text if player_one_button != null else ""
+	var ai_player_two_label := player_two_button.text if player_two_button != null else ""
+	if mode_option != null:
+		mode_option.select(0)
+	scene.call("_refresh_ai_ui_visibility")
+	var restored_player_one_label := player_one_button.text if player_one_button != null else ""
+	var restored_player_two_label := player_two_button.text if player_two_button != null else ""
+
+	var result := run_checks([
+		assert_not_null(segment, "First-player selection should expose a HUD segmented control"),
+		assert_true(option != null and not option.visible, "Legacy first-player OptionButton should stay hidden behind the HUD segment"),
+		assert_true(random_button != null and random_button.custom_minimum_size.y >= 42.0, "Random first-player button should be mobile tappable"),
+		assert_eq(pvp_player_one_label, "玩家1先攻", "Player 1 first-player segment should use readable Chinese"),
+		assert_eq(pvp_player_two_label, "玩家2先攻", "Player 2 first-player segment should use readable Chinese"),
+		assert_eq(ai_player_one_label, "玩家先攻", "AI battle should label the player first option clearly"),
+		assert_eq(ai_player_two_label, "AI先攻", "AI battle should label the AI first option clearly"),
+		assert_eq(restored_player_one_label, "玩家1先攻", "Switching back to two-player mode should restore player 1 label"),
+		assert_eq(restored_player_two_label, "玩家2先攻", "Switching back to two-player mode should restore player 2 label"),
+		assert_eq(selected_after_player_one, 1, "Pressing player 1 segment should update the legacy option state"),
+		assert_eq(selected_after_player_two, 2, "Pressing player 2 segment should update the legacy option state"),
+	])
+
+	scene.queue_free()
+	return result
+
+
+func test_battle_setup_uses_hud_ai_strategy_segment() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test({
+		"endpoint": "https://zenmux.ai/api/v1",
+		"api_key": "test-key",
+		"model": "kimi-k2.6",
+		"timeout_seconds": 60.0,
+		"ai_personality": "",
+		"ai_test_passed": false,
+		"ai_test_signature": "",
+	})
+	var scene := BattleSetupScene.instantiate()
+	scene.call("_ready")
+
+	var player_deck := DeckData.new()
+	player_deck.id = 575716
+	player_deck.deck_name = "Player Test Deck"
+	player_deck.total_cards = 60
+	var ai_deck := DeckData.new()
+	ai_deck.id = 575720
+	ai_deck.deck_name = "AI Test Deck"
+	ai_deck.total_cards = 60
+	scene.set("_deck_list", [player_deck])
+	scene.set("_ai_deck_list", [ai_deck])
+
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	var deck2_option := scene.find_child("Deck2Option", true, false) as OptionButton
+	mode_option.select(1)
+	scene.call("_refresh_deck_options")
+	scene.call("_select_option_for_deck_id", deck2_option, ai_deck.id)
+	scene.call("_refresh_ai_strategy_variant_options")
+
+	var segment := scene.find_child("AIStrategySegment", true, false) as HBoxContainer
+	var option := scene.find_child("AIStrategyOption", true, false) as OptionButton
+	var first_button: Button = null
+	var second_button: Button = null
+	if segment != null and segment.get_child_count() > 0:
+		first_button = segment.get_child(0) as Button
+	if segment != null and segment.get_child_count() > 1:
+		second_button = segment.get_child(1) as Button
+
+	scene.call("_on_ai_strategy_segment_pressed", 1)
+	var selected_after_llm := ""
+	if option != null and option.selected >= 0 and option.selected < option.item_count:
+		selected_after_llm = str(option.get_item_metadata(option.selected))
+
+	var result := run_checks([
+		assert_not_null(segment, "AI strategy selection should expose a HUD segmented control"),
+		assert_true(segment != null and segment.visible, "AI strategy segmented control should be visible in VS_AI mode"),
+		assert_true(option != null and not option.visible, "Legacy AI strategy OptionButton should stay hidden behind the HUD segment"),
+		assert_eq(segment.get_child_count() if segment != null else 0, 2, "Configured LLM API should expose rules and LLM strategy buttons"),
+		assert_true(first_button != null and first_button.custom_minimum_size.y >= 42.0, "Rules strategy button should be mobile tappable"),
+		assert_true(second_button != null and second_button.custom_minimum_size.y >= 42.0, "LLM strategy button should be mobile tappable"),
+		assert_eq(selected_after_llm, "miraidon_llm", "Pressing the LLM strategy segment should update the hidden strategy state"),
+	])
+
+	scene.queue_free()
+	_restore_battle_review_config_file(snapshot)
 	return result
 
 

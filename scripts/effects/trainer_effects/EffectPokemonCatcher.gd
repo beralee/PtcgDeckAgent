@@ -17,7 +17,7 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 func get_preview_interaction_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
 	return [{
 		"id": "coin_flip_preview",
-		"title": "Flip a coin",
+		"title": "投掷1枚硬币",
 		"wait_for_coin_animation": true,
 		"preview_only": true,
 	}]
@@ -36,7 +36,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		labels.append("%s (HP %d/%d)" % [slot.get_pokemon_name(), slot.get_remaining_hp(), slot.get_max_hp()])
 	return [{
 		"id": "opponent_bench_target",
-		"title": "Choose 1 opponent Benched Pokemon",
+		"title": "选择对手的1只备战宝可梦",
 		"items": items,
 		"labels": labels,
 		"min_select": 1,

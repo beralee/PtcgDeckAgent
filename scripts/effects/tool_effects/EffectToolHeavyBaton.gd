@@ -23,8 +23,6 @@ func can_trigger(slot: PokemonSlot) -> bool:
 func get_transferable_energy(slot: PokemonSlot) -> Array[CardInstance]:
 	var result: Array[CardInstance] = []
 	for energy: CardInstance in slot.attached_energy:
-		if result.size() >= MAX_ENERGY_TRANSFER:
-			break
 		# 仅转移基本能量（card_type == "Basic Energy"）
 		if energy.card_data != null and energy.card_data.card_type == "Basic Energy":
 			result.append(energy)
@@ -36,11 +34,15 @@ func get_transferable_energy(slot: PokemonSlot) -> Array[CardInstance]:
 ## to_slot: 接收能量的备战宝可梦槽位
 ## energies: 要转移的能量卡列表（由外部调用者提供，应是 get_transferable_energy 的子集）
 func transfer_energy(from_slot: PokemonSlot, to_slot: PokemonSlot, energies: Array[CardInstance]) -> void:
+	var moved := 0
 	for energy: CardInstance in energies:
+		if moved >= MAX_ENERGY_TRANSFER:
+			break
 		var idx: int = from_slot.attached_energy.find(energy)
 		if idx != -1:
 			from_slot.attached_energy.remove_at(idx)
 			to_slot.attached_energy.append(energy)
+			moved += 1
 
 
 func get_description() -> String:

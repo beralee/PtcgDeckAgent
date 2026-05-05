@@ -39,7 +39,7 @@ func get_attack_interaction_steps(
 	var name_str: String = "\"%s\"" % required_name if required_name != "" else "Pokemon"
 	return [{
 		"id": "revive_from_discard",
-		"title": "Choose up to %d %s from your discard pile to put onto your Bench" % [actual_max, name_str],
+		"title": "从弃牌区选择最多%d张%s放到备战区" % [actual_max, name_str],
 		"items": items,
 		"labels": labels,
 		"min_select": 0,

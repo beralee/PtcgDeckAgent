@@ -103,6 +103,8 @@ func test_tournament_scenes_instantiate() -> String:
 		assert_not_null(overview, "TournamentOverview 应可实例化"),
 		assert_not_null(standings, "TournamentStandings 应可实例化"),
 		assert_true(deck_select.find_child("DeckOption", true, false) is OptionButton, "DeckSelect 应包含 DeckOption"),
+		assert_true(deck_select.find_child("DeckPickerButton", true, false) is Button, "DeckSelect 应包含 HUD 卡组选择按钮"),
+		assert_null(deck_select.find_child("SelectedDeckCard", true, false), "DeckSelect 不应再显示重复的已选卡组卡片"),
 		assert_true(setup.find_child("SizeOption", true, false) is OptionButton, "TournamentSetup 应包含 SizeOption"),
 		assert_true(setup.find_child("RoundInfoLabel", true, false) is Label, "TournamentSetup 应显示预计轮数"),
 		assert_true(overview.find_child("RosterText", true, false) is TextEdit, "TournamentOverview 应包含参赛名单文本框"),
@@ -135,6 +137,26 @@ func test_tournament_scenes_use_hud_visual_theme() -> String:
 		checks.append(assert_true(button_style != null and button_style.border_color.a > 0.8, "%s primary action should use HUD button styling" % scene.name))
 		scene.queue_free()
 	return run_checks(checks)
+
+
+func test_tournament_deck_select_opens_hud_deck_picker() -> String:
+	var scene: Control = TournamentDeckSelectScene.instantiate()
+	scene.call("_ready")
+	scene.call("_on_deck_picker_pressed")
+	var overlay := scene.find_child("DeckPickerOverlay", true, false) as Control
+	var grid := scene.find_child("DeckPickerGrid", true, false) as GridContainer
+	var picker_button := scene.find_child("DeckPickerButton", true, false) as Button
+	var overlay_visible := overlay != null and overlay.visible
+	var grid_has_content := grid != null and grid.get_child_count() > 0
+	var picker_style := picker_button.get_theme_stylebox("normal") as StyleBoxFlat if picker_button != null else null
+
+	scene.queue_free()
+	return run_checks([
+		assert_true(overlay_visible, "比赛模式卡组选择应打开 HUD 弹层"),
+		assert_not_null(grid, "比赛模式卡组选择弹层应包含卡组网格"),
+		assert_true(grid_has_content, "比赛模式卡组选择弹层应渲染可选卡组或空状态"),
+		assert_true(picker_style != null and picker_style.border_color.a > 0.5, "比赛模式卡组选择按钮应使用 HUD 样式"),
+	])
 
 
 func test_tournament_final_page_celebrates_player_champion() -> String:
@@ -186,10 +208,14 @@ func test_tournament_final_page_celebrates_player_champion() -> String:
 	var banner := scene.find_child("ChampionBanner", true, false) as Control
 	var champion_title := scene.find_child("ChampionTitle", true, false) as Label
 	var summary_text := scene.find_child("SummaryText", true, false) as RichTextLabel
+	var champion_deck_display := tournament.participant_deck_name(0)
+	if not champion_deck_display.ends_with("卡组"):
+		champion_deck_display = "%s卡组" % champion_deck_display
+	var expected_champion_title := "恭喜，冠军玩家使用%s获得冠军！" % champion_deck_display
 	var result := run_checks([
 		assert_true(banner != null and banner.visible, "玩家最终排名第 1 时应显示冠军横幅"),
-		assert_true(champion_title != null and champion_title.text.find("获得冠军") >= 0, "冠军横幅应明确恭喜玩家获得冠军"),
-		assert_true(summary_text != null and summary_text.text.find("恭喜你") >= 0, "最终摘要应包含直接面向玩家的祝贺文案"),
+		assert_eq(champion_title.text if champion_title != null else "", expected_champion_title, "冠军横幅应明确写出玩家和夺冠卡组"),
+		assert_true(summary_text != null and summary_text.text.find(expected_champion_title) >= 0, "最终摘要应复用冠军横幅的祝贺文案"),
 	])
 	scene.queue_free()
 	GameManager.clear_tournament()

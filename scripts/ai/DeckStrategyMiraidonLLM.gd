@@ -58,6 +58,8 @@ func plan_opening_setup(player: PlayerState) -> Dictionary:
 
 
 func score_action_absolute(action: Dictionary, game_state: GameState, player_index: int) -> float:
+	if _should_block_miraidon_retreat(action, game_state, player_index):
+		return -10000.0
 	if game_state != null and has_llm_plan_for_turn(int(game_state.turn_number)):
 		var llm_score := super.score_action_absolute(action, game_state, player_index)
 		if llm_score >= 10000.0 or llm_score <= -1000.0:
@@ -67,8 +69,11 @@ func score_action_absolute(action: Dictionary, game_state: GameState, player_ind
 
 func score_action(action: Dictionary, context: Dictionary) -> float:
 	var game_state: GameState = context.get("game_state", null)
+	var player_index := int(context.get("player_index", -1))
+	if _should_block_miraidon_retreat(action, game_state, player_index):
+		return -10000.0
 	if game_state != null and has_llm_plan_for_turn(int(game_state.turn_number)):
-		var absolute := score_action_absolute(action, game_state, int(context.get("player_index", -1)))
+		var absolute := score_action_absolute(action, game_state, player_index)
 		return absolute - _rules_heuristic_base(str(action.get("kind", "")))
 	return _rules.call("score_action", action, context) if _rules != null and _rules.has_method("score_action") else 0.0
 
@@ -211,7 +216,7 @@ func _deck_replan_trigger_after_state_change(before_snapshot: Dictionary, after_
 	}
 
 
-func _deck_should_block_exact_queue_match(queued_action: Dictionary, runtime_action: Dictionary, _game_state: GameState, _player_index: int) -> bool:
+func _deck_should_block_exact_queue_match(queued_action: Dictionary, runtime_action: Dictionary, game_state: GameState, player_index: int) -> bool:
 	var q_kind := str(queued_action.get("type", queued_action.get("kind", "")))
 	var runtime_kind := str(runtime_action.get("kind", ""))
 	if q_kind != "" and q_kind != runtime_kind and q_kind != "action_ref":
@@ -220,6 +225,137 @@ func _deck_should_block_exact_queue_match(queued_action: Dictionary, runtime_act
 		return _should_block_miraidon_energy_attach(runtime_action)
 	if runtime_kind == "attach_tool":
 		return _should_block_miraidon_tool_attach(runtime_action)
+	if runtime_kind == "retreat":
+		return _should_block_miraidon_retreat(runtime_action, game_state, player_index)
+	return false
+
+
+func _deck_can_replace_end_turn_with_action(action: Dictionary, game_state: GameState, player_index: int) -> bool:
+	return _miraidon_runtime_action_is_productive(action, game_state, player_index)
+
+
+func _deck_action_ref_enables_attack(ref: Dictionary) -> bool:
+	var action_type := _action_ref_type(ref)
+	var card_name := _action_ref_card_name(ref)
+	if _is_electric_generator_ref(ref) or _is_tandem_unit_ref(ref):
+		return true
+	if action_type == "play_basic_to_bench" and _is_miraidon_attacker_name(card_name):
+		return true
+	if action_type == "play_trainer":
+		return _name_contains(card_name, "Nest Ball") \
+			or _name_contains(card_name, "Ultra Ball") \
+			or _name_contains(card_name, "Arven") \
+			or _name_contains(card_name, "Forest Seal Stone")
+	return false
+
+
+func _deck_is_low_value_runtime_attack_action(action: Dictionary, game_state: GameState, player_index: int) -> bool:
+	if int(action.get("attack_index", -1)) != 0:
+		return false
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	if player == null or player.active_pokemon == null or player.active_pokemon.get_card_data() == null:
+		return false
+	var active_name := _best_card_name(player.active_pokemon.get_card_data())
+	if _name_contains(active_name, "Raichu V"):
+		return true
+	var attacks: Array = player.active_pokemon.get_card_data().attacks
+	if attacks.is_empty():
+		return false
+	var attack_name := str((attacks[0] as Dictionary).get("name", ""))
+	return _name_contains(attack_name, "Fast Charge")
+
+
+func _deck_hand_card_is_productive_piece(card_data: CardData) -> bool:
+	if card_data == null:
+		return false
+	var name := _best_card_name(card_data)
+	return _is_miraidon_attacker_name(name) \
+		or _name_contains(name, "Electric Generator") \
+		or _name_contains(name, "Nest Ball") \
+		or _name_contains(name, "Ultra Ball") \
+		or _name_contains(name, "Arven") \
+		or _name_contains(name, "Forest Seal Stone") \
+		or _name_contains(name, "Heavy Baton") \
+		or _name_contains(name, "Bravery Charm") \
+		or _name_contains(name, "Prime Catcher") \
+		or _name_contains(name, "Boss")
+
+
+func _deck_is_high_pressure_attack_action(action: Dictionary, game_state: GameState, player_index: int) -> bool:
+	if str(action.get("kind", action.get("type", ""))) not in ["attack", "granted_attack"]:
+		return false
+	if _deck_is_low_value_runtime_attack_action(action, game_state, player_index):
+		return false
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	if player == null or player.active_pokemon == null or player.active_pokemon.get_card_data() == null:
+		return false
+	var active_name := _best_card_name(player.active_pokemon.get_card_data())
+	if _is_iron_hands_name(active_name) or _name_contains(active_name, "Raichu V"):
+		return true
+	var prediction: Dictionary = predict_attacker_damage(player.active_pokemon)
+	var opponent_hp := _opponent_active_hp(game_state, player_index)
+	return opponent_hp > 0 and int(prediction.get("damage", 0)) >= opponent_hp
+
+
+func _deck_should_block_end_turn(game_state: GameState, player_index: int) -> bool:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	if _catalog_has_miraidon_productive_engine(game_state, player_index):
+		return true
+	return false
+
+
+func _should_block_miraidon_retreat(action: Dictionary, game_state: GameState, player_index: int) -> bool:
+	if str(action.get("kind", action.get("type", ""))) != "retreat":
+		return false
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	if bool(game_state.retreat_used_this_turn):
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	if player == null:
+		return false
+	var bench_target: PokemonSlot = action.get("bench_target", null)
+	if bench_target == null or bench_target.get_card_data() == null:
+		return true
+	return not _is_ready_miraidon_retreat_attacker(bench_target)
+
+
+func _is_ready_miraidon_retreat_attacker(slot: PokemonSlot) -> bool:
+	if slot == null or slot.get_card_data() == null:
+		return false
+	var name := _best_card_name(slot.get_card_data())
+	var is_allowed_attacker := _is_iron_hands_name(name) \
+		or _name_contains(name, "Miraidon ex") or _name_contains(name, "密勒顿ex") \
+		or _name_contains(name, "Raikou V") or _name_contains(name, "雷公V")
+	return is_allowed_attacker and _slot_has_ready_damage_attack(slot)
+
+
+func _slot_has_ready_damage_attack(slot: PokemonSlot) -> bool:
+	if slot == null or slot.get_card_data() == null:
+		return false
+	var attached_count := slot.attached_energy.size()
+	for attack: Dictionary in slot.get_card_data().attacks:
+		var cost_len := str(attack.get("cost", "")).length()
+		if attached_count < cost_len:
+			continue
+		if _attack_has_damage_text(str(attack.get("damage", ""))):
+			return true
+	return false
+
+
+func _attack_has_damage_text(raw_damage: String) -> bool:
+	var text := raw_damage.strip_edges()
+	if text == "":
+		return false
+	for i: int in text.length():
+		var code := text.unicode_at(i)
+		if code >= 48 and code <= 57:
+			return true
 	return false
 
 
@@ -379,24 +515,117 @@ func _deck_append_productive_engine_candidates(
 	target: Array[Dictionary],
 	seen_ids: Dictionary,
 	_actions: Array[Dictionary],
-	has_attack: bool,
-	_no_deck_draw_lock: bool
+	_has_attack: bool,
+	no_deck_draw_lock: bool
 ) -> void:
-	if has_attack:
-		return
 	for raw_key: Variant in _llm_action_catalog.keys():
 		var action_id := str(raw_key)
 		if action_id == "" or bool(seen_ids.get(action_id, false)):
 			continue
 		var ref: Dictionary = _llm_action_catalog.get(raw_key, {}) if _llm_action_catalog.get(raw_key, {}) is Dictionary else {}
-		if ref.is_empty() or not _is_tandem_unit_ref(ref):
+		if ref.is_empty() or not _is_miraidon_productive_engine_ref(ref, no_deck_draw_lock):
 			continue
 		var copy: Dictionary = ref.duplicate(true)
 		copy["id"] = action_id
 		copy["action_id"] = action_id
-		copy["capability"] = "bench_search"
 		target.append(copy)
 		seen_ids[action_id] = true
+
+
+func _miraidon_runtime_action_is_productive(action: Dictionary, game_state: GameState, player_index: int) -> bool:
+	var kind := str(action.get("kind", action.get("type", "")))
+	if kind == "use_ability":
+		return _runtime_action_is_tandem_unit(action)
+	if kind == "play_trainer":
+		var card: CardInstance = action.get("card", null)
+		if card == null or card.card_data == null:
+			return false
+		var card_name := _best_card_name(card.card_data)
+		if _name_contains(card_name, "Electric Generator"):
+			return _has_miraidon_generator_target(game_state, player_index)
+		return _name_contains(card_name, "Nest Ball") \
+			or _name_contains(card_name, "Ultra Ball") \
+			or _name_contains(card_name, "Arven") \
+			or _name_contains(card_name, "Forest Seal Stone")
+	if kind == "play_basic_to_bench":
+		var basic: CardInstance = action.get("card", null)
+		return basic != null and basic.card_data != null and _is_miraidon_attacker_name(_best_card_name(basic.card_data))
+	if kind == "attach_tool":
+		if _should_block_miraidon_tool_attach(action):
+			return false
+		var tool: CardInstance = action.get("card", null)
+		return tool != null and tool.card_data != null and _name_contains(_best_card_name(tool.card_data), "Heavy Baton")
+	return false
+
+
+func _runtime_action_is_tandem_unit(action: Dictionary) -> bool:
+	var source_slot: PokemonSlot = action.get("source_slot", null)
+	if source_slot != null and source_slot.get_card_data() != null and _name_contains(_best_card_name(source_slot.get_card_data()), "Miraidon ex"):
+		return true
+	var text := "%s %s %s" % [
+		str(action.get("id", action.get("action_id", ""))),
+		str(action.get("pokemon", "")),
+		str(action.get("ability", "")),
+	]
+	return _name_contains(text, "Tandem Unit") or _name_contains(text, "Miraidon ex")
+
+
+func _is_miraidon_productive_engine_ref(ref: Dictionary, no_deck_draw_lock: bool) -> bool:
+	if _is_tandem_unit_ref(ref) or _is_electric_generator_ref(ref):
+		return true
+	var action_type := _action_ref_type(ref)
+	var card_name := _action_ref_card_name(ref)
+	if action_type == "play_basic_to_bench":
+		return _is_miraidon_attacker_name(card_name)
+	if action_type == "play_trainer":
+		if _name_contains(card_name, "Iono") and no_deck_draw_lock:
+			return false
+		return _name_contains(card_name, "Nest Ball") \
+			or _name_contains(card_name, "Ultra Ball") \
+			or _name_contains(card_name, "Arven") \
+			or _name_contains(card_name, "Forest Seal Stone") \
+			or _name_contains(card_name, "Heavy Baton") \
+			or _name_contains(card_name, "Bravery Charm")
+	return false
+
+
+func _catalog_has_miraidon_productive_engine(game_state: GameState, player_index: int) -> bool:
+	for raw_key: Variant in _llm_action_catalog.keys():
+		var ref: Dictionary = _llm_action_catalog.get(raw_key, {}) if _llm_action_catalog.get(raw_key, {}) is Dictionary else {}
+		if ref.is_empty() or _is_future_action_ref(ref):
+			continue
+		if not _is_miraidon_productive_engine_ref(ref, false):
+			continue
+		if _is_electric_generator_ref(ref) and not _has_miraidon_generator_target(game_state, player_index):
+			continue
+		return true
+	return false
+
+
+func _has_miraidon_generator_target(game_state: GameState, player_index: int) -> bool:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	if player == null:
+		return false
+	for slot: PokemonSlot in player.bench:
+		if slot == null or slot.get_card_data() == null:
+			continue
+		if _is_miraidon_energy_target_name(_best_card_name(slot.get_card_data())):
+			return true
+	return false
+
+
+func _opponent_active_hp(game_state: GameState, player_index: int) -> int:
+	if game_state == null:
+		return 0
+	var opponent_index := 1 - player_index
+	if opponent_index < 0 or opponent_index >= game_state.players.size():
+		return 0
+	var active: PokemonSlot = game_state.players[opponent_index].active_pokemon
+	if active == null or active.get_card_data() == null:
+		return 0
+	return max(0, int(active.get_card_data().hp) - int(active.damage_counters) * 10)
 
 
 func _dictionary_array(raw_actions: Variant) -> Array[Dictionary]:

@@ -27,7 +27,7 @@ func get_attack_interaction_steps(card: CardInstance, _attack: Dictionary, state
 		return []
 	return [{
 		"id": STEP_ID,
-		"title": "Choose an opponent Pokemon to receive moved damage counters",
+		"title": "选择要放置伤害指示物的对手宝可梦",
 		"items": items,
 		"labels": labels,
 		"min_select": 1,

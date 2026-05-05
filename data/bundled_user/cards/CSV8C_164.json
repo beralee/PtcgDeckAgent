@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "HYOGONOSUKE",
+	"attacks": [
+		{
+			"cost": "C",
+			"damage": "",
+			"is_vstar_power": false,
+			"name": "幸运附着",
+			"text": "选择自己手牌中的1张基本能量，附着于自己的宝可梦身上。"
+		},
+		{
+			"cost": "CCC",
+			"damage": "80",
+			"is_vstar_power": false,
+			"name": "潜力",
+			"text": "在下一个自己的回合，这只宝可梦无法使用招式。"
+		}
+	],
+	"card_index": "164",
+	"card_index_en": "133",
+	"card_type": "Pokemon",
+	"description": " 幸运附着 \n选择自己手牌中的1张基本能量，附着于自己的宝可梦身上。\n\n 潜力 80\n在下一个自己的回合，这只宝可梦无法使用招式。\n\n",
+	"effect_id": "ebbb788ed6a19af88042c8b125d5b8a5",
+	"energy_provides": "",
+	"energy_type": "C",
+	"evolves_from": "",
+	"hp": 120,
+	"image_local_path": "user://cards/images/CSV8C/164.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV8C/164.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "吉利蛋",
+	"name_en": "Chansey",
+	"rarity": "C",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-03-13T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CSV8C",
+	"set_code_en": "TWM",
+	"stage": "Basic",
+	"weakness_energy": "F",
+	"weakness_value": "×2",
+	"yoren_code": "P113"
+}

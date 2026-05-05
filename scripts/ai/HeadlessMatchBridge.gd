@@ -78,7 +78,7 @@ func get_pending_prompt_owner() -> int:
 	match _pending_choice:
 		"mulligan_extra_draw":
 			return int(_dialog_data.get("beneficiary", -1))
-		"take_prize", "send_out", "heavy_baton_target":
+		"take_prize", "send_out", "heavy_baton_target", "exp_share_target":
 			return int(_dialog_data.get("player", -1))
 		_ when _pending_choice.begins_with("setup_active_") or _pending_choice.begins_with("setup_bench_"):
 			return int(_dialog_data.get("player", -1))
@@ -335,22 +335,13 @@ func _try_use_attack_with_interaction(player_index: int, slot: PokemonSlot, atta
 func _try_use_granted_attack_with_interaction(player_index: int, slot: PokemonSlot, granted_attack: Dictionary) -> bool:
 	if _gsm == null or _gsm.game_state == null:
 		return false
-	if player_index < 0 or player_index >= _gsm.game_state.players.size():
-		return false
-	if _gsm.game_state.current_player_index != player_index:
-		return false
-	if _gsm.game_state.phase != GameState.GamePhase.MAIN:
-		return false
-	if slot == null or slot.get_top_card() == null:
-		return false
-	if slot != _gsm.game_state.players[player_index].active_pokemon:
-		return false
-	if slot.attached_tool == null:
-		return false
-	if _gsm.effect_processor.is_tool_effect_suppressed(slot, _gsm.game_state):
-		return false
-	var cost: String = str(granted_attack.get("cost", ""))
-	if not _gsm.rule_validator.has_enough_energy(slot, cost, _gsm.effect_processor, _gsm.game_state):
+	if not _gsm.rule_validator.can_use_granted_attack(
+		_gsm.game_state,
+		player_index,
+		slot,
+		granted_attack,
+		_gsm.effect_processor
+	):
 		return false
 	var steps: Array[Dictionary] = _gsm.effect_processor.get_granted_attack_interaction_steps(
 		slot,

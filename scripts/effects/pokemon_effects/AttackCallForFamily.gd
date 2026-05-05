@@ -33,24 +33,23 @@ func get_attack_interaction_steps(
 
 	var actual_max: int = mini(search_count, bench_space)
 	var items: Array = []
-	var labels: Array[String] = []
 	for deck_card: CardInstance in player.deck:
 		if _is_matching_basic_pokemon(deck_card):
 			items.append(deck_card)
-			labels.append(deck_card.card_data.name)
 	if items.is_empty():
 		return []
 
 	var filter_str: String = "【%s】" % energy_filter if energy_filter != "" else ""
-	return [{
-		"id": "search_basic_pokemon",
-		"title": "从牌库中选择最多%d只%s基础宝可梦放到备战区" % [actual_max, filter_str],
-		"items": items,
-		"labels": labels,
-		"min_select": 0,
-		"max_select": mini(actual_max, items.size()),
-		"allow_cancel": true,
-	}]
+	return [build_full_library_search_step(
+		"search_basic_pokemon",
+		"从牌库中选择最多%d只%s基础宝可梦放到备战区" % [actual_max, filter_str],
+		player.deck,
+		items,
+		VISIBLE_SCOPE_OWN_FULL_DECK,
+		0,
+		mini(actual_max, items.size()),
+		{"allow_cancel": true}
+	)]
 
 
 func execute_attack(

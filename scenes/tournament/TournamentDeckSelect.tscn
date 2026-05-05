@@ -44,7 +44,7 @@ grow_vertical = 2
 
 [node name="Panel" type="PanelContainer" parent="Center"]
 layout_mode = 2
-custom_minimum_size = Vector2(560, 320)
+custom_minimum_size = Vector2(720, 420)
 
 [node name="Margin" type="MarginContainer" parent="Center/Panel"]
 layout_mode = 2
@@ -74,8 +74,16 @@ horizontal_alignment = 1
 
 [node name="DeckOption" type="OptionButton" parent="Center/Panel/Margin/VBox"]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
 custom_minimum_size = Vector2(0, 42)
+
+[node name="DeckPickerButton" type="Button" parent="Center/Panel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 58)
+text = "选择卡组"
 
 [node name="SelectedDeckLabel" type="Label" parent="Center/Panel/Margin/VBox"]
 unique_name_in_owner = true

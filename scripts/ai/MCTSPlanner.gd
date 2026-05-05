@@ -110,6 +110,7 @@ func plan_turn(gsm: GameStateMachine, player_index: int, config: Dictionary = {}
 	if gsm == null or gsm.game_state == null:
 		return [{"kind": "end_turn"}]
 	clear_execution_failure_diagnostics()
+	_sync_deck_strategy_helpers()
 
 	var branch_factor: int = int(config.get("branch_factor", DEFAULT_BRANCH_FACTOR))
 	var max_actions: int = int(config.get("max_actions_per_turn", DEFAULT_MAX_ACTIONS))
@@ -258,6 +259,7 @@ func _score_and_rank_actions(
 	player_index: int,
 	actions: Array[Dictionary]
 ) -> Array:
+	_sync_deck_strategy_helpers()
 	var scored: Array = []
 	var state_features: Array = []
 	if gsm != null and gsm.game_state != null:
@@ -282,6 +284,11 @@ func _score_and_rank_actions(
 		return float(a.get("score", 0.0)) > float(b.get("score", 0.0))
 	)
 	return scored
+
+
+func _sync_deck_strategy_helpers() -> void:
+	if _heuristics != null:
+		_heuristics.deck_strategy = deck_strategy
 
 
 func _score_action_with_model(action_kind: String, state_features: Array, features: Dictionary) -> float:
@@ -1034,22 +1041,13 @@ func _can_use_granted_attack(
 ) -> bool:
 	if gsm == null or gsm.game_state == null:
 		return false
-	if player_index < 0 or player_index >= gsm.game_state.players.size():
-		return false
-	if gsm.game_state.current_player_index != player_index:
-		return false
-	if gsm.game_state.phase != GameState.GamePhase.MAIN:
-		return false
-	if source_slot == null or source_slot.get_top_card() == null:
-		return false
-	if source_slot != gsm.game_state.players[player_index].active_pokemon:
-		return false
-	if source_slot.attached_tool == null:
-		return false
-	if gsm.effect_processor.is_tool_effect_suppressed(source_slot, gsm.game_state):
-		return false
-	var cost: String = str(granted_attack_data.get("cost", ""))
-	return gsm.rule_validator.has_enough_energy(source_slot, cost, gsm.effect_processor, gsm.game_state)
+	return gsm.rule_validator.can_use_granted_attack(
+		gsm.game_state,
+		player_index,
+		source_slot,
+		granted_attack_data,
+		gsm.effect_processor
+	)
 
 
 func _legacy_unused_serialize_action_block(action: Dictionary = {}) -> Dictionary:

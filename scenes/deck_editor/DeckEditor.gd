@@ -22,6 +22,8 @@ const ENERGY_TYPE_ORDER: Array[String] = ["R", "W", "G", "L", "P", "F", "D", "M"
 ## 测试用卡牌系列前缀，不在编辑器中展示
 const EXCLUDED_SET_PREFIXES: Array[String] = ["UTEST"]
 const BATTLE_CARD_VIEW := preload("res://scenes/battle/BattleCardView.gd")
+const CardImplementationStatusScript := preload("res://scripts/engine/CardImplementationStatus.gd")
+const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 
 ## 卡图尺寸（标准卡牌比例约 63:88）
 const CARD_WIDTH := 100
@@ -135,6 +137,7 @@ func _ready() -> void:
 	_refresh_deck_grid()
 	_refresh_pool_grid()
 	_update_footer()
+	HudThemeScript.apply_scrollbars_recursive(self)
 
 
 # -- 分类构建 --
@@ -558,14 +561,21 @@ func _create_card_tile(card_name: String, set_code: String, card_index: String, 
 	_apply_tile_style(panel, selected)
 
 	var vbox := VBoxContainer.new()
+	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_theme_constant_override("separation", 2)
 	panel.add_child(vbox)
 
+	var art_holder := Control.new()
+	art_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	art_holder.custom_minimum_size = Vector2(CARD_WIDTH - 8, CARD_HEIGHT - 8)
+	art_holder.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	vbox.add_child(art_holder)
+
 	var tex_rect := TextureRect.new()
-	tex_rect.custom_minimum_size = Vector2(CARD_WIDTH - 8, CARD_HEIGHT - 8)
+	tex_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tex_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
 	tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	tex_rect.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 
 	var texture := _load_card_texture(set_code, card_index)
 	if texture != null:
@@ -575,9 +585,13 @@ func _create_card_tile(card_name: String, set_code: String, card_index: String, 
 		var placeholder := PlaceholderTexture2D.new()
 		placeholder.size = Vector2(CARD_WIDTH - 8, CARD_HEIGHT - 8)
 		tex_rect.texture = placeholder
-	vbox.add_child(tex_rect)
+	art_holder.add_child(tex_rect)
+
+	var card := _resolve_card_for_tile(set_code, card_index)
+	_add_unimplemented_tile_badge(art_holder, card)
 
 	var label := Label.new()
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.text = card_name
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 11)
@@ -586,6 +600,72 @@ func _create_card_tile(card_name: String, set_code: String, card_index: String, 
 	vbox.add_child(label)
 
 	return panel
+
+
+func _resolve_card_for_tile(set_code: String, card_index: String) -> CardData:
+	if Engine.has_singleton("CardDatabase"):
+		var card_database := Engine.get_singleton("CardDatabase")
+		if card_database != null and card_database.has_method("get_card"):
+			var card: Variant = card_database.call("get_card", set_code, card_index)
+			return card as CardData
+	if CardDatabase != null and CardDatabase.has_method("get_card"):
+		return CardDatabase.get_card(set_code, card_index)
+	return null
+
+
+func _add_unimplemented_tile_badge(parent: Control, card: CardData) -> PanelContainer:
+	if parent == null or card == null or not CardImplementationStatusScript.is_unimplemented(card):
+		return null
+
+	var badge := PanelContainer.new()
+	badge.name = "UnimplementedBadge"
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	badge.offset_left = 4
+	badge.offset_top = 4
+	badge.offset_right = 56
+	badge.offset_bottom = 25
+	badge.add_theme_stylebox_override("panel", _make_unimplemented_tile_badge_style())
+	var reason := CardImplementationStatusScript.get_reason(card)
+	badge.tooltip_text = "未实现效果" if reason == "" else "未实现效果：%s" % reason
+	parent.add_child(badge)
+
+	var margin := MarginContainer.new()
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_theme_constant_override("margin_left", 6)
+	margin.add_theme_constant_override("margin_top", 1)
+	margin.add_theme_constant_override("margin_right", 6)
+	margin.add_theme_constant_override("margin_bottom", 1)
+	badge.add_child(margin)
+
+	var label := Label.new()
+	label.name = "UnimplementedBadgeLabel"
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.text = "未实现"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 10)
+	label.add_theme_color_override("font_color", Color(1.0, 0.86, 0.66, 1.0))
+	label.add_theme_constant_override("outline_size", 1)
+	label.add_theme_color_override("font_outline_color", Color(0.10, 0.03, 0.00, 0.95))
+	var badge_font := FontVariation.new()
+	badge_font.base_font = ThemeDB.fallback_font
+	badge_font.variation_embolden = 1.1
+	label.add_theme_font_override("font", badge_font)
+	margin.add_child(label)
+	return badge
+
+
+func _make_unimplemented_tile_badge_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.22, 0.08, 0.02, 0.93)
+	style.border_color = Color(1.0, 0.44, 0.12, 0.88)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(8)
+	style.shadow_color = Color(1.0, 0.23, 0.04, 0.26)
+	style.shadow_size = 6
+	style.shadow_offset = Vector2(0, 1)
+	return style
 
 
 func _apply_tile_style(panel: PanelContainer, selected: bool) -> void:
@@ -871,6 +951,7 @@ func _on_strategy_pressed() -> void:
 	text_edit.add_theme_stylebox_override("normal", input_normal)
 	text_edit.add_theme_stylebox_override("focus", input_focus)
 	text_edit.add_theme_stylebox_override("read_only", input_normal)
+	HudThemeScript.style_scrollable_control(text_edit)
 	editor_panel.add_child(text_edit)
 
 	var actions := HBoxContainer.new()
@@ -961,6 +1042,7 @@ func _on_ai_pressed() -> void:
 	scroll.offset_top = 8
 	scroll.offset_right = -8
 	scroll.offset_bottom = -8
+	HudThemeScript.style_scroll_container(scroll)
 	dialog.add_child(scroll)
 
 	var root_vbox := VBoxContainer.new()
@@ -1644,6 +1726,7 @@ func _ensure_card_detail_overlay() -> void:
 	_card_detail_content.selection_enabled = true
 	_card_detail_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_card_detail_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	HudThemeScript.style_scrollable_control(_card_detail_content)
 	text_margin.add_child(_card_detail_content)
 
 	_style_card_detail_overlay()

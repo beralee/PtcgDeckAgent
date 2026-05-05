@@ -3,6 +3,7 @@ extends AcceptDialog
 signal assistant_response_finished
 
 const DeckDiscussionServiceScript = preload("res://scripts/engine/DeckDiscussionService.gd")
+const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 
 const DIALOG_SIZE := Vector2i(980, 760)
 const DIALOG_MIN_SIZE := Vector2i(820, 620)
@@ -316,6 +317,7 @@ func _apply_visual_style() -> void:
 	_style_icon_button(%AttachButton)
 	_style_button(%ResetButton, false)
 	_style_button(%SendButton, true)
+	HudThemeScript.apply_scrollbars_recursive(self)
 
 
 func _make_panel_style(bg: Color, border: Color, radius: int, margin: int, shadow_size: int = 0) -> StyleBoxFlat:

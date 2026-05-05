@@ -1,6 +1,11 @@
 class_name TestImportedTournamentCards
 extends TestBase
 
+const EffectCyclingRoadScript = preload("res://scripts/effects/stadium_effects/EffectCyclingRoad.gd")
+const EffectEnergyStickerScript = preload("res://scripts/effects/trainer_effects/EffectEnergySticker.gd")
+const CYCLING_ROAD_DISCARD_ID := "cycling_road_discard"
+const ENERGY_STICKER_ASSIGNMENT_ID := "energy_sticker_assignment"
+
 const IMPORTED_CARD_PATHS := [
 	"res://data/bundled_user/cards/CS6.5C_033.json",
 	"res://data/bundled_user/cards/CS5DC_111.json",
@@ -21,16 +26,44 @@ const IMPORTED_CARD_PATHS := [
 	"res://data/bundled_user/cards/CS5aC_104.json",
 	"res://data/bundled_user/cards/CSV3C_031.json",
 	"res://data/bundled_user/cards/CSV4C_117.json",
+	"res://data/bundled_user/cards/CSV5C_114.json",
+	"res://data/bundled_user/cards/CSV6C_115.json",
+	"res://data/bundled_user/cards/CSV6C_121.json",
+	"res://data/bundled_user/cards/CSV6C_127.json",
+	"res://data/bundled_user/cards/CSV7C_143.json",
 ]
 
 
-func test_imported_cards_exist_and_sandy_shocks_is_ancient() -> String:
+class RiggedCoinFlipper extends CoinFlipper:
+	var _results: Array[bool] = []
+
+	func _init(results: Array[bool]) -> void:
+		_results = results.duplicate()
+
+	func flip() -> bool:
+		if _results.is_empty():
+			return false
+		var result: bool = _results.pop_front()
+		coin_flipped.emit(result)
+		return result
+
+
+func test_imported_cards_exist_and_ancient_tags_apply() -> String:
 	var checks: Array[String] = []
 	for path: String in IMPORTED_CARD_PATHS:
 		checks.append(assert_true(FileAccess.file_exists(path), "%s should be bundled" % path))
 	var sandy := _load_card("res://data/bundled_user/cards/CSV7C_132.json")
+	var roaring_moon := _load_card("res://data/bundled_user/cards/CSV7C_143.json")
+	var earthen_vessel := _load_card("res://data/bundled_user/cards/CSV6C_115.json")
+	var sadas_vitality := _load_card("res://data/bundled_user/cards/CSV6C_121.json")
 	checks.append(assert_not_null(sandy, "Sandy Shocks card data should load"))
 	checks.append(assert_true(sandy.is_ancient_pokemon(), "Sandy Shocks should be tagged Ancient"))
+	checks.append(assert_not_null(roaring_moon, "Roaring Moon card data should load"))
+	checks.append(assert_true(roaring_moon.is_ancient_pokemon(), "Roaring Moon should be tagged Ancient"))
+	checks.append(assert_not_null(earthen_vessel, "Earthen Vessel card data should load"))
+	checks.append(assert_true(earthen_vessel.has_tag(CardData.ANCIENT_TAG), "Earthen Vessel should be tagged Ancient"))
+	checks.append(assert_not_null(sadas_vitality, "Professor Sada's Vitality card data should load"))
+	checks.append(assert_true(sadas_vitality.has_tag(CardData.ANCIENT_TAG), "Professor Sada's Vitality should be tagged Ancient"))
 	return run_checks(checks)
 
 
@@ -45,6 +78,8 @@ func test_imported_static_trainer_tool_stadium_effects_are_registered() -> Strin
 		assert_not_null(processor.get_effect("3f2231d269066792b860d31b568aaf2a"), "Luxurious Cape should be registered"),
 		assert_not_null(processor.get_effect("ed39476ac2c269054525ab0b0f79d58c"), "Mesagoza should be registered"),
 		assert_not_null(processor.get_effect("2027b11b9630f8c24d2fdf19130a7111"), "Moonlit Hill should be registered"),
+		assert_not_null(processor.get_effect("2b717e54cc20a24a70439066c4a24968"), "Energy Sticker should be registered"),
+		assert_not_null(processor.get_effect("79292d4ceeac1081fe39c155c677c7b3"), "Cycling Road should be registered"),
 	])
 
 
@@ -58,6 +93,7 @@ func test_pokemon_effect_id_overrides_register_attack_and_ability_effects() -> S
 		_load_card("res://data/bundled_user/cards/CS6.5C_029.json"),
 		_load_card("res://data/bundled_user/cards/CSV7C_038.json"),
 		_load_card("res://data/bundled_user/cards/CSV7C_132.json"),
+		_load_card("res://data/bundled_user/cards/CSV7C_143.json"),
 		_load_card("res://data/bundled_user/cards/CSV3C_031.json"),
 		_load_card("res://data/bundled_user/cards/CSV7C_147.json"),
 	]
@@ -71,8 +107,107 @@ func test_pokemon_effect_id_overrides_register_attack_and_ability_effects() -> S
 		assert_true(processor.has_attack_effect("5a6897e20f399a4a0e2403f06a0c3e55"), "Ralts lock should register"),
 		assert_not_null(processor.get_effect("15eb5f310fd523c4c468e4519e30ae70"), "Blaziken ability should register"),
 		assert_true(processor.has_attack_effect("0d7ccbc99ac0f5108c6c7d7d5506f64b"), "Sandy Shocks attack should register"),
+		assert_true(processor.has_attack_effect("9a425a2ace730ecdd272b7ea6d0b9db1"), "Roaring Moon attack should register"),
 		assert_true(processor.has_attack_effect("2f6f444122be1e8d9af6c5a134f66572"), "Chi-Yu attacks should register"),
 		assert_true(processor.get_effect("daab918dc820662c599221a8a1d85114") is AbilityMetalMaker, "Metang Metal Maker should register by effect_id"),
+	])
+
+
+func test_energy_sticker_heads_attaches_selected_basic_energy_to_bench() -> String:
+	var state := _make_state()
+	var player := state.players[0]
+	var bench_a := _make_slot(_pokemon("Bench A", "D", 100), 0)
+	var bench_b := _make_slot(_pokemon("Bench B", "D", 100), 0)
+	player.bench.append(bench_a)
+	player.bench.append(bench_b)
+	var energy_a := CardInstance.create(_energy("Darkness A", "D"), 0)
+	var energy_b := CardInstance.create(_energy("Darkness B", "D"), 0)
+	player.discard_pile.append(energy_a)
+	player.discard_pile.append(energy_b)
+	var sticker := CardInstance.create(_load_card("res://data/bundled_user/cards/CSV5C_114.json"), 0)
+	var effect := EffectEnergyStickerScript.new(RiggedCoinFlipper.new([true]))
+	var steps := effect.get_interaction_steps(sticker, state)
+	effect.execute(sticker, [{
+		ENERGY_STICKER_ASSIGNMENT_ID: [
+			{"source": energy_b, "target": bench_b},
+		],
+	}], state)
+	return run_checks([
+		assert_eq(steps.size(), 1, "Energy Sticker should ask for discard Energy and bench target on heads"),
+		assert_true(energy_b in bench_b.attached_energy, "Selected Basic Energy should attach to selected Benched Pokemon"),
+		assert_false(energy_b in player.discard_pile, "Attached Energy should leave discard"),
+		assert_true(energy_a in player.discard_pile, "Unselected Energy should remain in discard"),
+		assert_false(energy_a in bench_a.attached_energy, "Unselected Energy should not attach to fallback target"),
+	])
+
+
+func test_energy_sticker_tails_has_no_attachment_choice_or_effect() -> String:
+	var state := _make_state()
+	var player := state.players[0]
+	var bench := _make_slot(_pokemon("Bench", "D", 100), 0)
+	player.bench.append(bench)
+	var energy := CardInstance.create(_energy("Darkness", "D"), 0)
+	player.discard_pile.append(energy)
+	var sticker := CardInstance.create(_load_card("res://data/bundled_user/cards/CSV5C_114.json"), 0)
+	var effect := EffectEnergyStickerScript.new(RiggedCoinFlipper.new([false]))
+	var steps := effect.get_interaction_steps(sticker, state)
+	effect.execute(sticker, [], state)
+	return run_checks([
+		assert_eq(steps.size(), 0, "Energy Sticker should not ask for a target on tails"),
+		assert_true(energy in player.discard_pile, "Energy should stay in discard on tails"),
+		assert_false(energy in bench.attached_energy, "No Energy should attach on tails"),
+	])
+
+
+func test_cycling_road_discards_basic_energy_to_draw_once_per_turn() -> String:
+	var gsm := _make_gsm()
+	var state := gsm.game_state
+	var player := state.players[0]
+	var hand_energy := CardInstance.create(_energy("Darkness Energy", "D"), 0)
+	var draw_card := CardInstance.create(_trainer("Drawn Card", "Item"), 0)
+	player.hand.append(hand_energy)
+	player.deck.append(draw_card)
+	var cycling_road := CardInstance.create(_load_card("res://data/bundled_user/cards/CSV6C_127.json"), 0)
+	state.stadium_card = cycling_road
+	state.stadium_owner_index = 0
+	var can_before := gsm.can_use_stadium_effect(0)
+	var success := gsm.use_stadium_effect(0, [{CYCLING_ROAD_DISCARD_ID: [hand_energy]}])
+	var can_after := gsm.can_use_stadium_effect(0)
+	return run_checks([
+		assert_true(can_before, "Cycling Road should be usable with Basic Energy in hand and cards in deck"),
+		assert_true(success, "Cycling Road should resolve through GameStateMachine stadium action"),
+		assert_true(hand_energy in player.discard_pile, "Selected Basic Energy should be discarded from hand"),
+		assert_false(hand_energy in player.hand, "Discarded Basic Energy should leave hand"),
+		assert_true(draw_card in player.hand, "Cycling Road should draw 1 card"),
+		assert_false(can_after, "Cycling Road should be once per player per turn"),
+	])
+
+
+func test_roaring_moon_revenge_fletching_counts_ancient_cards_in_discard() -> String:
+	var state := _make_state()
+	var processor := EffectProcessor.new()
+	var roaring_moon := _load_card("res://data/bundled_user/cards/CSV7C_143.json")
+	var roaring_moon_ex := _load_card("res://data/bundled_user/cards/CSV6C_096.json")
+	var earthen_vessel := _load_card("res://data/bundled_user/cards/CSV6C_115.json")
+	var sadas_vitality := _load_card("res://data/bundled_user/cards/CSV6C_121.json")
+	processor.register_pokemon_card(roaring_moon)
+	var player := state.players[0]
+	var attacker := _make_slot(roaring_moon, 0)
+	player.active_pokemon = attacker
+	player.discard_pile.append(CardInstance.create(roaring_moon, 0))
+	player.discard_pile.append(CardInstance.create(roaring_moon_ex, 0))
+	player.discard_pile.append(CardInstance.create(earthen_vessel, 0))
+	player.discard_pile.append(CardInstance.create(sadas_vitality, 0))
+	player.discard_pile.append(CardInstance.create(_trainer("Non Ancient", "Item"), 0))
+	var defender := _make_slot(_pokemon("Defender", "C", 200), 1)
+	state.players[1].active_pokemon = defender
+	return run_checks([
+		assert_true(roaring_moon.is_ancient_pokemon(), "Roaring Moon should be Ancient before damage math"),
+		assert_true(earthen_vessel.has_tag(CardData.ANCIENT_TAG), "Earthen Vessel should count as an Ancient card in discard"),
+		assert_true(sadas_vitality.has_tag(CardData.ANCIENT_TAG), "Professor Sada's Vitality should count as an Ancient card in discard"),
+		assert_true(processor.has_attack_effect(roaring_moon.effect_id), "Roaring Moon should have a registered attack effect"),
+		assert_eq(processor.get_attack_damage_modifier(attacker, defender, roaring_moon.attacks[0], state), 40, "Revenge Fletching should add 10 per Ancient card in own discard"),
+		assert_eq(processor.get_attack_damage_modifier(attacker, defender, roaring_moon.attacks[1], state), 0, "Speed Wing should not receive Revenge Fletching bonus"),
 	])
 
 

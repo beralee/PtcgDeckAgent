@@ -142,6 +142,63 @@ func can_use_attack(
 	return get_attack_unusable_reason(state, player_index, attack_index, effect_processor) == ""
 
 
+func can_use_granted_attack(
+	state: GameState,
+	player_index: int,
+	slot: PokemonSlot,
+	granted_attack: Dictionary,
+	effect_processor: EffectProcessor = null
+) -> bool:
+	return get_granted_attack_unusable_reason(state, player_index, slot, granted_attack, effect_processor) == ""
+
+
+func get_granted_attack_unusable_reason(
+	state: GameState,
+	player_index: int,
+	slot: PokemonSlot,
+	granted_attack: Dictionary,
+	effect_processor: EffectProcessor = null
+) -> String:
+	if state == null:
+		return "当前无法执行该操作"
+	if player_index < 0 or player_index >= state.players.size():
+		return "当前无法执行该操作"
+	if state.current_player_index != player_index:
+		return "当前不是你的回合"
+	if state.phase != GameState.GamePhase.MAIN:
+		return "当前阶段无法使用该招式"
+	if slot == null or slot.get_top_card() == null:
+		return "当前无法执行该操作"
+	var player: PlayerState = state.players[player_index]
+	if slot != player.active_pokemon:
+		return "只有战斗宝可梦可以使用这个招式"
+	if _is_effectively_knocked_out(slot, state, effect_processor):
+		return "当前战斗宝可梦已昏厥"
+	var opponent_index: int = 1 - player_index
+	if opponent_index < 0 or opponent_index >= state.players.size():
+		return "对手没有战斗宝可梦"
+	if state.players[opponent_index].active_pokemon == null:
+		return "对手没有战斗宝可梦"
+	if slot.status_conditions.get("asleep", false):
+		return "睡眠状态下不能攻击"
+	if slot.status_conditions.get("paralyzed", false):
+		return "麻痹状态下不能攻击"
+	if (
+		state.turn_number == 1
+		and player_index == state.first_player_index
+		and not _allows_first_player_attack_on_first_turn(granted_attack)
+	):
+		return "先攻玩家首回合不能攻击"
+	if slot.attached_tool == null:
+		return "这只宝可梦没有附着工具"
+	if effect_processor != null and effect_processor.is_tool_effect_suppressed(slot, state):
+		return "这只宝可梦身上的道具效果当前不可用"
+	var cost: String = str(granted_attack.get("cost", ""))
+	if not has_enough_energy(slot, cost, effect_processor, state):
+		return "能量不足，无法满足这个招式的费用"
+	return ""
+
+
 func get_attack_unusable_reason(
 	state: GameState,
 	player_index: int,
@@ -161,9 +218,9 @@ func get_attack_unusable_reason(
 		return "当前战斗宝可梦已昏厥"
 	var opponent_index: int = 1 - player_index
 	if opponent_index < 0 or opponent_index >= state.players.size():
-		return "Opponent has no Active Pokemon"
+		return "对手没有战斗宝可梦"
 	if state.players[opponent_index].active_pokemon == null:
-		return "Opponent has no Active Pokemon"
+		return "对手没有战斗宝可梦"
 
 	if active.status_conditions.get("asleep", false):
 		return "睡眠状态下不能攻击"

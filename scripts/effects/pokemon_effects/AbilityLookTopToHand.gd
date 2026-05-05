@@ -47,7 +47,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			labels.append(deck_card.card_data.name)
 	return [{
 		"id": "look_top_pick",
-		"title": "Choose up to 1 card from the top %d" % look_count,
+		"title": "从牌库上方%d张中选择最多1张加入手牌" % look_count,
 		"items": items,
 		"labels": labels,
 		"min_select": 0,

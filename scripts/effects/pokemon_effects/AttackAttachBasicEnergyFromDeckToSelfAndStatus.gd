@@ -37,11 +37,11 @@ func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state:
 		return []
 	return [build_card_assignment_step(
 		ASSIGNMENT_ID,
-		"Choose up to %d Basic %s Energy cards to attach to this Pokemon" % [attach_count, energy_type],
+		"选择最多%d张基本%s能量附着给这只宝可梦" % [attach_count, energy_type],
 		source_items,
 		source_labels,
 		[self_slot],
-		["%s (self)" % self_slot.get_pokemon_name()],
+		["%s（自身）" % self_slot.get_pokemon_name()],
 		0,
 		mini(attach_count, source_items.size()),
 		true

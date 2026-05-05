@@ -367,6 +367,7 @@ func _run_matchup_for_deck(
 			"winner_index": winner_index,
 			"turn_count": int(result.get("turn_count", 0)),
 			"failure_reason": failure_reason,
+			"failure_diagnostics": result.get("failure_diagnostics", {}),
 			"terminated_by_cap": bool(result.get("terminated_by_cap", false)),
 			"stalled": bool(result.get("stalled", false)),
 		})

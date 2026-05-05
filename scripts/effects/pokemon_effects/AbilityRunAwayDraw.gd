@@ -38,7 +38,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		])
 	return [{
 		"id": REPLACEMENT_STEP_ID,
-		"title": "Choose a new Active Pokemon",
+		"title": "选择新的战斗宝可梦",
 		"items": player.bench.duplicate(),
 		"labels": labels,
 		"min_select": 1,

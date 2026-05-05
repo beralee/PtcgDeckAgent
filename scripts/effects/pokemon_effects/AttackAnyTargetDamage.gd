@@ -22,7 +22,7 @@ func get_attack_interaction_steps(
 		labels.append(slot.get_pokemon_name())
 	return [{
 		"id": "any_target",
-		"title": "Choose 1 opponent Pokemon",
+		"title": "选择对手的1只宝可梦",
 		"items": items,
 		"labels": labels,
 		"min_select": 1,
