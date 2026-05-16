@@ -268,7 +268,27 @@ func test_opponent_bench_target_prefers_raikou_ko_over_bulky_charizard_piece() -
 	)
 
 
-func test_boss_scores_high_when_raikou_can_ko_opponent_bench_basic() -> String:
+func test_boss_scores_high_when_iron_hands_amp_can_ko_opponent_bench_basic() -> String:
+	var strategy := _new_strategy()
+	var gs := _game_state(4)
+	var player: PlayerState = gs.players[0]
+	var opponent: PlayerState = gs.players[1]
+	var iron_hands := _slot(_iron_hands(), 0)
+	_attach(iron_hands, "L", 4)
+	player.active_pokemon = iron_hands
+	player.bench.append(_slot(_miraidon(), 0))
+	player.bench.append(_slot(_raikou(), 0))
+	opponent.active_pokemon = _slot(_pidgeot(), 1)
+	opponent.bench.append(_slot(_charmander(), 1))
+	opponent.bench.append(_slot(_pidgeot(), 1))
+	var boss := _card(_trainer("Boss's Orders", "Supporter"))
+
+	var score: float = strategy.score_action_absolute({"kind": "play_trainer", "card": boss}, gs, 0)
+
+	return assert_true(score >= 700.0, "Boss should be a premium action when Iron Hands can Amp a bench basic for an extra prize (score=%f)" % score)
+
+
+func test_boss_stays_controlled_when_raikou_only_takes_one_bench_prize() -> String:
 	var strategy := _new_strategy()
 	var gs := _game_state(4)
 	var player: PlayerState = gs.players[0]
@@ -285,7 +305,7 @@ func test_boss_scores_high_when_raikou_can_ko_opponent_bench_basic() -> String:
 
 	var score: float = strategy.score_action_absolute({"kind": "play_trainer", "card": boss}, gs, 0)
 
-	return assert_true(score >= 650.0, "Boss should be a premium action when Raikou can take a bench prize (score=%f)" % score)
+	return assert_true(score <= 300.0, "Raikou one-prize gust should not outrank setup against Bomb Charizard (score=%f)" % score)
 
 
 func test_area_zero_tera_board_allows_benching_past_five() -> String:
@@ -325,7 +345,7 @@ func test_tandem_unit_uses_area_zero_extra_bench_slots() -> String:
 	return assert_true(score >= 400.0, "Tandem Unit should keep using Area Zero's extra bench space instead of treating five as full (score=%f)" % score)
 
 
-func test_area_zero_is_premium_once_pikachu_is_on_board() -> String:
+func test_area_zero_is_useful_once_pikachu_is_on_board() -> String:
 	var strategy := _new_strategy()
 	var gs := _game_state(2)
 	var player: PlayerState = gs.players[0]
@@ -336,4 +356,4 @@ func test_area_zero_is_premium_once_pikachu_is_on_board() -> String:
 
 	var score: float = strategy.score_action_absolute({"kind": "play_stadium", "card": area_zero}, gs, 0)
 
-	return assert_true(score >= 650.0, "Area Zero should be a premium setup stadium after Pikachu ex unlocks the Tera bench shell (score=%f)" % score)
+	return assert_true(score >= 250.0, "Area Zero should stay useful after Pikachu ex unlocks the Tera bench shell without outranking primary attack setup (score=%f)" % score)

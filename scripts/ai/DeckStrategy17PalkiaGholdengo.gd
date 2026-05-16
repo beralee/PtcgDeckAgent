@@ -442,7 +442,7 @@ func _score_palkia_gholdengo_trainer(
 		if _needs_poffin_basics(player):
 			score = maxf(score, 560.0)
 		else:
-			score = minf(maxf(score, 260.0), 300.0)
+			score = minf(maxf(score, 120.0), 160.0)
 	if name == NEST_BALL:
 		score = maxf(score, 540.0 if _needs_opening_basics(player) else 250.0)
 	if name == ULTRA_BALL:
@@ -500,6 +500,12 @@ func _score_palkia_gholdengo_attach(action: Dictionary, player: PlayerState, bas
 	if target_name in [GHOLDENGO_EX, GIMMIGHOUL]:
 		if energy_type == METAL_ENERGY and not _has_attached_energy_type(target, METAL_ENERGY):
 			score = maxf(score, 980.0 if target_name == GHOLDENGO_EX else 760.0)
+			if target == player.active_pokemon and target_name == GIMMIGHOUL:
+				score = maxf(score, 940.0)
+			elif target_name == GIMMIGHOUL \
+					and _slot_name(player.active_pokemon) == GIMMIGHOUL \
+					and not _has_attached_energy_type(player.active_pokemon, METAL_ENERGY):
+				score = minf(score, 620.0)
 		elif energy_type != METAL_ENERGY and not _has_attached_energy_type(target, METAL_ENERGY):
 			score = minf(score, 180.0 if target_name == GIMMIGHOUL and target.attached_energy.is_empty() else 90.0)
 		elif _has_attached_energy_type(target, METAL_ENERGY):
@@ -512,7 +518,9 @@ func _score_palkia_gholdengo_attach(action: Dictionary, player: PlayerState, bas
 	if target_name in [MANAPHY, RADIANT_GRENINJA, FEZANDIPITI_EX, IRON_BUNDLE] and target != player.active_pokemon:
 		score = minf(score, 80.0)
 	if target == player.active_pokemon and _active_support_is_blocking(player):
-		if _active_needs_retreat_energy(player) and _has_bench_pivot_ready_after_retreat(player):
+		if target_name == GIMMIGHOUL and energy_type == METAL_ENERGY:
+			score = maxf(score, 940.0)
+		elif _active_needs_retreat_energy(player) and _has_bench_pivot_ready_after_retreat(player):
 			score = maxf(score, 930.0)
 		elif _needs_opening_basics(player):
 			score = minf(score, 220.0)
@@ -534,6 +542,10 @@ func _score_gholdengo_make_it_rain(
 	var remaining_hp := _opponent_active_remaining_hp(game_state, player_index)
 	if burst_damage >= remaining_hp:
 		return score + 820.0
+	if burst_damage <= 50:
+		score = minf(score, 220.0)
+	elif burst_damage < 150:
+		score = minf(score, 320.0)
 	if _best_energy_recovery_gain_from_hand(player) > 0:
 		var projected_after_recovery := (hand_energy + _best_energy_recovery_gain_from_hand(player)) * 50
 		if projected_after_recovery > burst_damage:

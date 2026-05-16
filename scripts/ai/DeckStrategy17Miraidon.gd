@@ -284,7 +284,7 @@ func _score_play_basic_v17(action: Dictionary, game_state: GameState, player: Pl
 	if _is_latias(card): return 500.0 if _count_on_field(player, [LATIAS, LATIAS_ID]) == 0 else 120.0
 	if _is_pikachu(card):
 		if _count_on_field(player, [PIKACHU_ID]) == 0:
-			return 720.0 if _has_area_zero_access_v17(player, game_state) else 480.0
+			return 460.0 if _has_area_zero_access_v17(player, game_state) else 390.0
 		return 180.0
 	if _is_raichu(card): return 360.0 if turn >= 4 else 130.0
 	if _is_squawk(card): return 430.0 if turn <= 2 else 80.0
@@ -380,13 +380,11 @@ func _score_trainer_v17(action: Dictionary, game_state: GameState, player: Playe
 	if _matches(card, [V17_NEST_BALL]):
 		if bench_full: return 0.0
 		if player != null and _count_on_field(player, [MIRAIDON, "CSV1C_050"]) == 0: return 720.0
-		if player != null and _needs_pikachu_area_zero_shell_v17(player, game_state): return 680.0
 		if player != null and _area_zero_in_play_v17(game_state) and _bench_space_v17(game_state, player) > 0: return 560.0
 		if player != null and not _has_generator_attacker_target(player): return 620.0
 		return 420.0 if turn <= 2 else 240.0
 	if _matches(card, [V17_ULTRA_BALL, V17_HEAVY_BALL]):
 		if player != null and _count_on_field(player, [MIRAIDON, "CSV1C_050"]) == 0: return 720.0
-		if player != null and _needs_pikachu_area_zero_shell_v17(player, game_state): return 660.0
 		if player != null and not _has_generator_attacker_target(player): return 620.0
 		return 420.0 if turn <= 2 else 240.0
 	if _matches(card, [V17_ELECTRIC_GENERATOR, "CSV1C_107"]):
@@ -404,18 +402,20 @@ func _score_trainer_v17(action: Dictionary, game_state: GameState, player: Playe
 		return 120.0
 	if _matches(card, [V17_BOSS, V17_COUNTER_CATCHER]):
 		var gust_score := _best_opponent_bench_target_score_v17(game_state, player_index)
-		if gust_score >= 780.0:
-			return 660.0
+		if player != null and _is_iron_hands(player.active_pokemon) and _iron_hands_amp_ready_v17(player.active_pokemon) and gust_score >= 780.0:
+			return 780.0
+		if _gust_can_close_game_v17(game_state, player, player_index):
+			return 720.0
 		return 690.0 if _can_current_attacker_take_prize(game_state, player, player_index) else 130.0
 	if _matches(card, [V17_NIGHT_STRETCHER]): return 210.0
 	if _matches(card, [AREA_ZERO_ID]):
 		if player != null and _area_zero_in_play_v17(game_state):
 			return 30.0
-		if player != null and _has_tera_on_field_v17(player):
-			return 760.0 if player.bench.size() >= 4 else 680.0
 		if player != null and _count_on_field(player, [PIKACHU_ID]) > 0:
-			return 680.0
-		return 220.0
+			return 420.0 if player.bench.size() >= 5 else 280.0
+		if player != null and _has_tera_on_field_v17(player):
+			return 380.0 if player.bench.size() >= 5 else 260.0
+		return 120.0
 	return V17_UNHANDLED
 
 
@@ -502,9 +502,7 @@ func _search_card_score(card: CardInstance, step: Dictionary, context: Dictionar
 	if _is_latias(card): return 680.0 if player != null and _count_on_field(player, [LATIAS, LATIAS_ID]) == 0 else 180.0
 	if _is_pikachu(card):
 		if player != null and _count_on_field(player, [PIKACHU_ID]) == 0:
-			if _has_area_zero_access_v17(player, context.get("game_state", null)) or player.bench.size() >= 4:
-				return 1010.0 if is_bench_search or is_basic_search else 760.0
-			return 720.0 if is_bench_search or is_basic_search else 620.0
+			return 520.0
 		return 260.0
 	if _is_raichu(card): return 440.0
 	if _is_squawk(card): return 520.0 if player != null and player.bench.size() <= 3 else 120.0
@@ -614,6 +612,25 @@ func _best_opponent_bench_target_score_v17(game_state: GameState, player_index: 
 	for slot: PokemonSlot in game_state.players[opponent_index].bench:
 		best = maxf(best, _opponent_target_score_v17(slot, context))
 	return best
+
+
+func _gust_can_close_game_v17(game_state: GameState, player: PlayerState, player_index: int) -> bool:
+	if game_state == null or player == null or player.prizes.is_empty() or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	if player.active_pokemon == null or not _can_attack_v17(player.active_pokemon):
+		return false
+	var opponent_index := 1 - player_index
+	if opponent_index < 0 or opponent_index >= game_state.players.size():
+		return false
+	var damage := _current_attacker_damage_for_targeting_v17(game_state, player, player_index)
+	if damage <= 0:
+		return false
+	for slot: PokemonSlot in game_state.players[opponent_index].bench:
+		if slot == null or slot.get_top_card() == null:
+			continue
+		if slot.get_remaining_hp() <= damage and slot.get_prize_count() >= player.prizes.size():
+			return true
+	return false
 
 
 func _opponent_target_role_score_v17(slot: PokemonSlot) -> float:

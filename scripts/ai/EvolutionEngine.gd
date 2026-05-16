@@ -137,15 +137,26 @@ func run(initial_config: Dictionary = {}) -> Dictionary:
 			current_best["interaction_scorer_path"] = interaction_scorer_path
 		## 导出训练数据时使用更大的步数上限确保对局能完成
 		var effective_max_steps: int = 500 if export_training_data else max_steps_per_match
-		var result: Dictionary = _runner.run_batch(
-			mutant_config,
-			current_best,
-			deck_pairings,
-			seed_set,
-			effective_max_steps,
-			export_training_data,
-			export_action_training_data,
-		)
+		var result: Dictionary = {}
+		if export_action_training_data:
+			result = _runner.run_batch(
+				mutant_config,
+				current_best,
+				deck_pairings,
+				seed_set,
+				effective_max_steps,
+				export_training_data,
+				export_action_training_data,
+			)
+		else:
+			result = _runner.run_batch(
+				mutant_config,
+				current_best,
+				deck_pairings,
+				seed_set,
+				effective_max_steps,
+				export_training_data,
+			)
 		var mutant_wr: float = float(result.get("agent_a_win_rate", 0.0))
 		var accepted: bool = mutant_wr > 0.5
 		var total_matches: int = int(result.get("total_matches", 0))

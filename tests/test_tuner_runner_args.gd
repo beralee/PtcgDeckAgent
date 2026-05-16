@@ -108,11 +108,13 @@ func test_apply_engine_options_switches_to_miraidon_focus_pairings() -> String:
 		"export_action_data": true,
 	})
 	return run_checks([
-		assert_eq(engine.deck_pairings.size(), 2, "Miraidon focus pipeline should only schedule two pairings"),
+		assert_eq(engine.deck_pairings.size(), 3, "Miraidon focus pipeline should schedule the full focus pairing pool"),
 		assert_eq(int((engine.deck_pairings[0] as Array)[0]), 575720, "Miraidon focus should keep Miraidon as the optimized deck"),
 		assert_eq(int((engine.deck_pairings[0] as Array)[1]), 578647, "First Miraidon focus opponent should be Gardevoir"),
 		assert_eq(int((engine.deck_pairings[1] as Array)[0]), 575720, "Second Miraidon focus pairing should still start with Miraidon"),
 		assert_eq(int((engine.deck_pairings[1] as Array)[1]), 575716, "Second Miraidon focus opponent should be Charizard ex"),
+		assert_eq(int((engine.deck_pairings[2] as Array)[0]), 575720, "Third Miraidon focus pairing should still start with Miraidon"),
+		assert_eq(int((engine.deck_pairings[2] as Array)[1]), 569061, "Third Miraidon focus opponent should be Arceus Giratina"),
 		assert_eq(str(engine.action_scorer_path), "user://models/action_scorer_v2.json", "_apply_engine_options should forward action_scorer_path to the engine"),
 		assert_true(bool(engine.export_action_training_data), "_apply_engine_options should forward export_action_data to the engine"),
 	])

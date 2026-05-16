@@ -190,6 +190,67 @@ func test_low_damage_make_it_rain_waits_for_energy_recovery_or_draw() -> String:
 	])
 
 
+func test_opening_metal_attach_prefers_active_gimmighoul_over_bench_copy() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Gimmighoul", "P", 70, "Basic", "", "", 2), 0)
+	var bench_gimmighoul := _slot(_pokemon("Gimmighoul", "P", 70, "Basic", "", "", 2), 0)
+	player.bench.append(bench_gimmighoul)
+	player.hand.append(_card(_pokemon("Gholdengo ex", "M", 260, "Stage 1", "ex", "Gimmighoul", 2), 0))
+	var metal := _card(_energy("Basic Metal Energy", "M"), 0)
+
+	var active_attach_score: float = strategy.score_action_absolute({
+		"kind": "attach_energy",
+		"card": metal,
+		"target_slot": player.active_pokemon,
+	}, gs, 0)
+	var bench_attach_score: float = strategy.score_action_absolute({
+		"kind": "attach_energy",
+		"card": metal,
+		"target_slot": bench_gimmighoul,
+	}, gs, 0)
+
+	return assert_true(active_attach_score > bench_attach_score + 100.0, "Opening Metal should go to the active Gimmighoul so the next-turn Gholdengo can attack (active=%f bench=%f)" % [active_attach_score, bench_attach_score])
+
+
+func test_redundant_poffin_is_not_a_midgame_action_after_two_gimmighoul() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Gimmighoul", "P", 70, "Basic", "", "", 2), 0)
+	player.bench.append(_slot(_pokemon("Gimmighoul", "P", 70, "Basic", "", "", 2), 0))
+	var poffin := _card(_trainer("Buddy-Buddy Poffin"), 0)
+
+	var poffin_score: float = strategy.score_action_absolute({
+		"kind": "play_trainer",
+		"card": poffin,
+	}, gs, 0)
+
+	return assert_true(poffin_score <= 180.0, "Once two Gimmighoul are online, extra Poffin should stop filling low-HP support liabilities (poffin=%f)" % poffin_score)
+
+
+func test_one_energy_make_it_rain_is_not_a_premium_nonlethal_attack() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Gholdengo ex", "M", 260, "Stage 1", "ex", "Gimmighoul", 2), 0)
+	_attach(player.active_pokemon, "M", 1)
+	player.hand.append(_card(_energy("Basic Metal Energy", "M"), 0))
+	for i: int in 20:
+		player.deck.append(_card(_trainer("Deck filler %d" % i), 0))
+
+	var attack_score: float = strategy.score_action_absolute({
+		"kind": "attack",
+		"source_slot": player.active_pokemon,
+		"attack_index": 0,
+		"attack_name": "Make It Rain",
+		"projected_damage": 50,
+	}, gs, 0)
+
+	return assert_true(attack_score <= 260.0, "A one-Energy nonlethal Make It Rain should preserve fuel instead of ending the turn as a premium attack (attack=%f)" % attack_score)
+
+
 func test_gholdengo_draws_before_nonlethal_make_it_rain_when_not_thin() -> String:
 	var strategy := StrategyPalkiaGholdengo.new()
 	var gs := _game_state()

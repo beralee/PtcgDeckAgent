@@ -173,7 +173,7 @@ func test_noctowl_trainer_search_delays_glass_trumpet_without_discard_energy() -
 	var player: PlayerState = gs.players[0]
 	player.active_pokemon = _make_slot(_make_pokemon_cd("澶箰宸存垐鏂痚x", "", "Basic", "C", 230, "CSV9C", "175", "ex"), 0)
 	var glass := CardInstance.create(_make_trainer_cd("鐜荤拑鍠囧彮", "Glass Trumpet", "Item", "CSV9C", "178"), 0)
-	var vessel := CardInstance.create(_make_trainer_cd("澶у湴瀹瑰櫒", "Earthen Vessel", "Item", "CSV6C", "115"), 0)
+	var vessel := CardInstance.create(_make_trainer_cd("大地容器", "Earthen Vessel", "Item", "CSV6C", "115"), 0)
 	var step := {"id": "csv9c_noctowl_trainers", "max_select": 2}
 	var context := {"game_state": gs, "player_index": 0}
 	var glass_score: float = strategy.score_interaction_target(glass, step, context)
