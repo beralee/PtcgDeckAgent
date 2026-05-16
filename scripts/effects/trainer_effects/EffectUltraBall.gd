@@ -87,7 +87,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 		if chosen in player.deck and chosen.card_data.is_pokemon():
 			selected_pokemon = chosen
 
-	if selected_pokemon == null and not has_explicit_search_selection:
+	if selected_pokemon == null and (not has_explicit_search_selection or not selected_raw.is_empty()):
 		for deck_card: CardInstance in _get_pokemon_cards(player):
 			selected_pokemon = deck_card
 			break

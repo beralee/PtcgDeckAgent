@@ -8395,7 +8395,7 @@ func test_battle_scene_portrait_match_end_quick_review_busy_uses_scrollable_prog
 	battle_scene.rotation_degrees = 90.0
 	battle_scene.position = Vector2(1600.0, 0.0)
 	battle_scene.set("_match_end_quick_review_busy", true)
-	battle_scene.set("_match_end_quick_review_progress_text", "姝ｅ湪璁?Kimi K2.6 蹇€熺偣璇?..")
+	battle_scene.set("_match_end_quick_review_progress_text", "正在生成 Kimi K2.6 快评...")
 	battle_scene.call("_show_match_end_dialog", 0, "knockout")
 
 	var result: Dictionary = battle_scene.get("_match_end_quick_review_result")

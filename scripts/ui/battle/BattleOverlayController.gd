@@ -775,8 +775,8 @@ func _refresh_match_end_ai_panel(scene: Object) -> void:
 		ai_content.text = _format_match_end_quick_review(result)
 		return
 	if configured:
-		ai_title.text = "AI璧涘悗蹇瘎"
-		ai_content.text = "[color=#9feaff]姝ｅ湪鍑嗗 %s 蹇€熺偣璇?..[/color]" % model_label
+		ai_title.text = "AI赛后快评"
+		ai_content.text = "[color=#9feaff]正在生成 %s 快评...[/color]" % model_label
 		return
 	ai_title.text = "赛后快评"
 	ai_content.text = "AI未配置。当前只显示本地统计；在AI设置里填好模型后，结算时会自动给出简短点评和评分。"

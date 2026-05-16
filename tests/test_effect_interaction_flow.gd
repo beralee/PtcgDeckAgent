@@ -594,6 +594,43 @@ func test_use_attack_discard_basic_energy_from_hand_applies_weakness_after_singl
 	])
 
 
+func test_use_attack_discard_basic_energy_from_hand_applies_weakness_to_full_scaled_damage() -> String:
+	var gsm := _make_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	var defender_player: PlayerState = gsm.game_state.players[1]
+
+	var attacker_cd := _make_basic_pokemon_data("Gholdengo ex", "M", 260, "Basic", "gholdengo_test_full_weakness")
+	attacker_cd.attacks = [{"name": "Make It Rain", "cost": "M", "damage": "50x", "text": "", "is_vstar_power": false}]
+	var attacker_slot := PokemonSlot.new()
+	attacker_slot.pokemon_stack.append(CardInstance.create(attacker_cd, 0))
+	attacker_slot.attached_energy.append(CardInstance.create(_make_energy_data("Metal Energy", "M"), 0))
+	player.active_pokemon = attacker_slot
+
+	var defender_cd := _make_basic_pokemon_data("Weak Defender", "C", 400)
+	defender_cd.weakness_energy = "M"
+	defender_cd.weakness_value = "x2"
+	var defender_slot := PokemonSlot.new()
+	defender_slot.pokemon_stack.append(CardInstance.create(defender_cd, 1))
+	defender_player.active_pokemon = defender_slot
+
+	player.hand.clear()
+	player.discard_pile.clear()
+	var chosen_a := CardInstance.create(_make_energy_data("Chosen Metal", "M"), 0)
+	var chosen_b := CardInstance.create(_make_energy_data("Chosen Water", "W"), 0)
+	player.hand.append(chosen_a)
+	player.hand.append(chosen_b)
+	gsm.effect_processor.register_attack_effect("gholdengo_test_full_weakness", AttackDiscardBasicEnergyFromHandDamage.new(50))
+
+	var result: bool = gsm.use_attack(0, 0, [{
+		"discard_basic_energy": [chosen_a, chosen_b],
+	}])
+
+	return run_checks([
+		assert_true(result, "Attack should resolve with two selected basic energy cards"),
+		assert_eq(defender_slot.damage_counters, 200, "Weakness must apply to the full 100 scaled damage, not only the printed 50 base damage"),
+	])
+
+
 func test_discard_basic_energy_from_field_prompt_labels_energy_owner() -> String:
 	var gsm := _make_manual_gsm()
 	var player: PlayerState = gsm.game_state.players[0]

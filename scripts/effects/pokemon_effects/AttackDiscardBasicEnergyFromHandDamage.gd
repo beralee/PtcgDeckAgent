@@ -47,29 +47,41 @@ func execute_attack(
 	if top == null:
 		return
 	var player: PlayerState = state.players[top.owner_index]
-	var discarded_cards: Array[CardInstance] = []
 	var ctx: Dictionary = get_attack_interaction_context()
+	var discarded_cards: Array[CardInstance] = _selected_basic_energy_from_context(ctx, player)
+	discarded_cards = _discard_cards_from_hand_with_log(state, top.owner_index, discarded_cards, top, "attack")
+
+
+func get_damage_bonus(attacker: PokemonSlot, state: GameState) -> int:
+	if attacker == null or state == null:
+		return -damage_per_card
+	var top: CardInstance = attacker.get_top_card()
+	if top == null:
+		return -damage_per_card
+	var player: PlayerState = state.players[top.owner_index]
+	var selected_cards: Array[CardInstance] = _selected_basic_energy_from_context(get_attack_interaction_context(), player)
+	return (selected_cards.size() - 1) * damage_per_card
+
+
+func _selected_basic_energy_from_context(ctx: Dictionary, player: PlayerState) -> Array[CardInstance]:
+	var selected: Array[CardInstance] = []
+	if player == null:
+		return selected
 	if ctx.has("discard_basic_energy"):
 		var selected_raw: Array = ctx.get("discard_basic_energy", [])
 		for entry: Variant in selected_raw:
 			if not entry is CardInstance:
 				continue
 			var selected_card: CardInstance = entry
-			if selected_card in discarded_cards:
+			if selected_card in selected:
 				continue
 			if selected_card in player.hand and _is_basic_energy(selected_card):
-				discarded_cards.append(selected_card)
-	else:
-		for hand_card: CardInstance in player.hand:
-			if _is_basic_energy(hand_card):
-				discarded_cards.append(hand_card)
-
-	discarded_cards = _discard_cards_from_hand_with_log(state, top.owner_index, discarded_cards, top, "attack")
-
-	# Base damage has already applied one 50x segment.
-	var total_damage: int = discarded_cards.size() * damage_per_card
-	var delta: int = total_damage - damage_per_card
-	defender.damage_counters = max(0, defender.damage_counters + delta)
+				selected.append(selected_card)
+		return selected
+	for hand_card: CardInstance in player.hand:
+		if _is_basic_energy(hand_card):
+			selected.append(hand_card)
+	return selected
 
 
 func _is_basic_energy(card: CardInstance) -> bool:

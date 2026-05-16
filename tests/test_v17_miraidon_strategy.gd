@@ -124,6 +124,31 @@ func _latias() -> CardData:
 	], 2, "Basic", "CSV9C", "078")
 
 
+func _pikachu() -> CardData:
+	var cd := _pokemon("Pikachu ex", "L", 200, "ex", [{"name": "Resolute Heart"}], [
+		{"name": "Topaz Bolt", "cost": "GLM", "damage": "300"},
+	], 1, "Basic", "CSV9C", "054")
+	cd.ancient_trait = "Tera"
+	cd.effect_id = "cd845155473716c29f29efa29da0a869"
+	return cd
+
+
+func _area_zero() -> CardData:
+	var cd := _trainer("Area Zero Underdepths", "Stadium")
+	cd.set_code = "CSV9C"
+	cd.card_index = "207"
+	cd.effect_id = "701eb0ccb34fe3d319ea1307bc36c1ef"
+	return cd
+
+
+func _charmander() -> CardData:
+	return _pokemon("Charmander", "R", 70, "", [], [], 1, "Basic", "151C", "004")
+
+
+func _pidgeot() -> CardData:
+	return _pokemon("Pidgeot ex", "C", 280, "ex", [], [], 0, "Stage 2", "CSV4C", "101")
+
+
 func _card_name(card: CardInstance) -> String:
 	if card == null or card.card_data == null:
 		return ""
@@ -215,3 +240,100 @@ func test_tandem_unit_recognizes_english_miraidon_when_targets_exist() -> String
 	var score: float = strategy.score_action_absolute({"kind": "use_ability", "source_slot": miraidon, "ability_index": 0}, gs, 0)
 
 	return assert_true(score >= 500.0, "Tandem Unit should remain a high-priority setup ability when deck targets exist (score=%f)" % score)
+
+
+func test_opponent_bench_target_prefers_raikou_ko_over_bulky_charizard_piece() -> String:
+	var strategy := _new_strategy()
+	var gs := _game_state(4)
+	var player: PlayerState = gs.players[0]
+	var opponent: PlayerState = gs.players[1]
+	var raikou := _slot(_raikou(), 0)
+	_attach(raikou, "L", 2)
+	player.active_pokemon = raikou
+	player.bench.append(_slot(_miraidon(), 0))
+	player.bench.append(_slot(_iron_hands(), 0))
+	opponent.active_pokemon = _slot(_pidgeot(), 1)
+	var charmander := _slot(_charmander(), 1)
+	var pidgeot := _slot(_pidgeot(), 1)
+	opponent.bench.append(charmander)
+	opponent.bench.append(pidgeot)
+	var step := {"id": "opponent_bench_target", "max_select": 1}
+
+	var charmander_score: float = strategy.score_interaction_target(charmander, step, _ctx(gs))
+	var pidgeot_score: float = strategy.score_interaction_target(pidgeot, step, _ctx(gs))
+
+	return assert_true(
+		charmander_score > pidgeot_score + 400.0,
+		"Boss/Counter target selection should pull a Raikou KO target before a bulky evolution body (charmander=%f pidgeot=%f)" % [charmander_score, pidgeot_score]
+	)
+
+
+func test_boss_scores_high_when_raikou_can_ko_opponent_bench_basic() -> String:
+	var strategy := _new_strategy()
+	var gs := _game_state(4)
+	var player: PlayerState = gs.players[0]
+	var opponent: PlayerState = gs.players[1]
+	var raikou := _slot(_raikou(), 0)
+	_attach(raikou, "L", 2)
+	player.active_pokemon = raikou
+	player.bench.append(_slot(_miraidon(), 0))
+	player.bench.append(_slot(_iron_hands(), 0))
+	opponent.active_pokemon = _slot(_pidgeot(), 1)
+	opponent.bench.append(_slot(_charmander(), 1))
+	opponent.bench.append(_slot(_pidgeot(), 1))
+	var boss := _card(_trainer("Boss's Orders", "Supporter"))
+
+	var score: float = strategy.score_action_absolute({"kind": "play_trainer", "card": boss}, gs, 0)
+
+	return assert_true(score >= 650.0, "Boss should be a premium action when Raikou can take a bench prize (score=%f)" % score)
+
+
+func test_area_zero_tera_board_allows_benching_past_five() -> String:
+	var strategy := _new_strategy()
+	var gs := _game_state(2)
+	gs.stadium_card = _card(_area_zero(), 0)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_mew(), 0)
+	player.bench.append(_slot(_pikachu(), 0))
+	player.bench.append(_slot(_miraidon(), 0))
+	player.bench.append(_slot(_raikou(), 0))
+	player.bench.append(_slot(_latias(), 0))
+	player.bench.append(_slot(_mew(), 0))
+	var iron_hands := _card(_iron_hands())
+
+	var score: float = strategy.score_action_absolute({"kind": "play_basic_to_bench", "card": iron_hands}, gs, 0)
+
+	return assert_true(score >= 500.0, "Area Zero plus own Tera should let Miraidon keep filling the Bench past five (score=%f)" % score)
+
+
+func test_tandem_unit_uses_area_zero_extra_bench_slots() -> String:
+	var strategy := _new_strategy()
+	var gs := _game_state(2)
+	gs.stadium_card = _card(_area_zero(), 0)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_mew(), 0)
+	var miraidon := _slot(_miraidon(), 0)
+	player.bench.append(_slot(_pikachu(), 0))
+	player.bench.append(miraidon)
+	player.bench.append(_slot(_raikou(), 0))
+	player.bench.append(_slot(_latias(), 0))
+	player.bench.append(_slot(_mew(), 0))
+	player.deck.append(_card(_iron_hands()))
+
+	var score: float = strategy.score_action_absolute({"kind": "use_ability", "source_slot": miraidon, "ability_index": 0}, gs, 0)
+
+	return assert_true(score >= 400.0, "Tandem Unit should keep using Area Zero's extra bench space instead of treating five as full (score=%f)" % score)
+
+
+func test_area_zero_is_premium_once_pikachu_is_on_board() -> String:
+	var strategy := _new_strategy()
+	var gs := _game_state(2)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_mew(), 0)
+	player.bench.append(_slot(_pikachu(), 0))
+	player.bench.append(_slot(_miraidon(), 0))
+	var area_zero := _card(_area_zero())
+
+	var score: float = strategy.score_action_absolute({"kind": "play_stadium", "card": area_zero}, gs, 0)
+
+	return assert_true(score >= 650.0, "Area Zero should be a premium setup stadium after Pikachu ex unlocks the Tera bench shell (score=%f)" % score)

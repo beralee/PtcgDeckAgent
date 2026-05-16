@@ -490,6 +490,65 @@ func test_energy_search_prefers_core_metal_and_water_before_off_type_fuel() -> S
 	])
 
 
+func test_gust_ko_line_outranks_hitting_large_dragapult_active() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	var opponent: PlayerState = gs.players[1]
+	player.active_pokemon = _slot(_pokemon("Gholdengo ex", "M", 260, "Stage 1", "ex", "Gimmighoul", 2), 0)
+	_attach(player.active_pokemon, "M", 1)
+	for i: int in 4:
+		player.hand.append(_card(_energy("Basic Energy %d" % i, "M"), 0))
+	var boss := _card(_trainer("Boss's Orders", "Supporter"), 0)
+	player.hand.append(boss)
+	opponent.active_pokemon = _slot(_pokemon("Dragapult ex", "N", 320, "Stage 2", "ex", "Drakloak", 2), 1)
+	opponent.bench.append(_slot(_pokemon("Lumineon V", "W", 170, "Basic", "V", "", 2), 1))
+
+	var attack_score: float = strategy.score_action_absolute({
+		"kind": "attack",
+		"source_slot": player.active_pokemon,
+		"attack_index": 0,
+		"attack_name": "Make It Rain",
+		"projected_damage": 200,
+	}, gs, 0)
+	var boss_score: float = strategy.score_action_absolute({
+		"kind": "play_trainer",
+		"card": boss,
+	}, gs, 0)
+
+	return assert_true(boss_score > attack_score + 150.0, "Gholdengo should gust a bench KO instead of dumping four Energy into a nonlethal Dragapult active (boss=%f attack=%f)" % [boss_score, attack_score])
+
+
+func test_gust_target_picker_prefers_reachable_two_prize_bench_target() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	var opponent: PlayerState = gs.players[1]
+	player.active_pokemon = _slot(_pokemon("Gholdengo ex", "M", 260, "Stage 1", "ex", "Gimmighoul", 2), 0)
+	_attach(player.active_pokemon, "M", 1)
+	for i: int in 4:
+		player.hand.append(_card(_energy("Basic Energy %d" % i, "M"), 0))
+	opponent.active_pokemon = _slot(_pokemon("Dragapult ex", "N", 320, "Stage 2", "ex", "Drakloak", 2), 1)
+	var dusknoir := _slot(_pokemon("Dusknoir", "P", 160, "Stage 2", "", "Dusclops", 3), 1)
+	var lumineon := _slot(_pokemon("Lumineon V", "W", 170, "Basic", "V", "", 2), 1)
+	var dragapult := _slot(_pokemon("Dragapult ex", "N", 320, "Stage 2", "ex", "Drakloak", 2), 1)
+	opponent.bench.append(dusknoir)
+	opponent.bench.append(lumineon)
+	opponent.bench.append(dragapult)
+
+	var context := {"game_state": gs, "player_index": 0}
+	var picked: Array = strategy.pick_interaction_items(
+		opponent.bench,
+		{"id": "opponent_bench_target", "max_select": 1},
+		context
+	)
+	var picked_name := ""
+	if not picked.is_empty() and picked[0] is PokemonSlot:
+		picked_name = (picked[0] as PokemonSlot).get_card_data().name_en
+
+	return assert_eq(picked_name, "Lumineon V", "Gust target selection should prefer a reachable two-prize KO before a bulky Dragapult ex or one-prize engine")
+
+
 func test_trace_regression_never_routes_energy_evolution_or_handoff_to_knocked_out_slots() -> String:
 	var strategy := StrategyPalkiaGholdengo.new()
 	var gs := _game_state()

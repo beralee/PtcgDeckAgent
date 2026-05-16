@@ -1,6 +1,8 @@
 class_name DeckStrategy17Miraidon
 extends "res://scripts/ai/DeckStrategyMiraidon.gd"
 
+const BenchLimit = preload("res://scripts/engine/BenchLimitHelper.gd")
+
 const V17_UNHANDLED := -987654321.0
 
 const MIRAIDON := "Miraidon ex"
@@ -167,6 +169,8 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 		var slot := item as PokemonSlot
 		if step_id.contains("assign") or step_id.contains("attach") or step_id.contains("energy"):
 			return _generator_target_score(slot, context)
+		if _is_opponent_target_step_v17(step_id):
+			return _opponent_target_score_v17(slot, context)
 		if step_id.contains("switch") or step_id.contains("send") or step_id.contains("active") or step_id.contains("handoff") or step_id.contains("target"):
 			return _handoff_target_score_v17(slot, step_id, context)
 		return _slot_score(slot)
@@ -271,14 +275,17 @@ func _score_play_basic_v17(action: Dictionary, game_state: GameState, player: Pl
 	var card: CardInstance = action.get("card", null)
 	if card == null or card.card_data == null or not _is_known_pokemon(card):
 		return V17_UNHANDLED
-	if player == null or player.bench.size() >= 5:
+	if player == null or _bench_is_full_v17(game_state, player):
 		return 0.0
 	var turn := int(game_state.turn_number) if game_state != null else 0
 	if _is_miraidon(card): return 720.0 if _count_on_field(player, [MIRAIDON, "CSV1C_050"]) == 0 else 220.0
 	if _is_iron_hands(card): return 640.0 if _count_on_field(player, [IRON_HANDS, "CSV6C_051"]) == 0 else 230.0
 	if _is_raikou(card): return 610.0 if _count_on_field(player, [RAIKOU, "CS4DaC_137"]) == 0 else 220.0
 	if _is_latias(card): return 500.0 if _count_on_field(player, [LATIAS, LATIAS_ID]) == 0 else 120.0
-	if _is_pikachu(card): return 390.0
+	if _is_pikachu(card):
+		if _count_on_field(player, [PIKACHU_ID]) == 0:
+			return 720.0 if _has_area_zero_access_v17(player, game_state) else 480.0
+		return 180.0
 	if _is_raichu(card): return 360.0 if turn >= 4 else 130.0
 	if _is_squawk(card): return 430.0 if turn <= 2 else 80.0
 	if _is_fezandipiti(card): return 300.0
@@ -341,7 +348,7 @@ func _score_ability_v17(action: Dictionary, game_state: GameState, player: Playe
 	if _is_miraidon(source):
 		if _action_has_empty_bench_selection(action):
 			return 10.0
-		if player == null or player.bench.size() >= 5:
+		if player == null or _bench_is_full_v17(game_state, player):
 			return 25.0
 		if _count_lightning_basics_in_deck(player) <= 0:
 			return 20.0
@@ -369,10 +376,17 @@ func _score_trainer_v17(action: Dictionary, game_state: GameState, player: Playe
 	if card == null or card.card_data == null:
 		return 0.0
 	var turn := int(game_state.turn_number) if game_state != null else 0
-	var bench_full := player != null and player.bench.size() >= 5
-	if _matches(card, [V17_NEST_BALL, V17_ULTRA_BALL, V17_HEAVY_BALL]):
+	var bench_full := player != null and _bench_is_full_v17(game_state, player)
+	if _matches(card, [V17_NEST_BALL]):
 		if bench_full: return 0.0
 		if player != null and _count_on_field(player, [MIRAIDON, "CSV1C_050"]) == 0: return 720.0
+		if player != null and _needs_pikachu_area_zero_shell_v17(player, game_state): return 680.0
+		if player != null and _area_zero_in_play_v17(game_state) and _bench_space_v17(game_state, player) > 0: return 560.0
+		if player != null and not _has_generator_attacker_target(player): return 620.0
+		return 420.0 if turn <= 2 else 240.0
+	if _matches(card, [V17_ULTRA_BALL, V17_HEAVY_BALL]):
+		if player != null and _count_on_field(player, [MIRAIDON, "CSV1C_050"]) == 0: return 720.0
+		if player != null and _needs_pikachu_area_zero_shell_v17(player, game_state): return 660.0
 		if player != null and not _has_generator_attacker_target(player): return 620.0
 		return 420.0 if turn <= 2 else 240.0
 	if _matches(card, [V17_ELECTRIC_GENERATOR, "CSV1C_107"]):
@@ -389,9 +403,19 @@ func _score_trainer_v17(action: Dictionary, game_state: GameState, player: Playe
 			return 500.0
 		return 120.0
 	if _matches(card, [V17_BOSS, V17_COUNTER_CATCHER]):
+		var gust_score := _best_opponent_bench_target_score_v17(game_state, player_index)
+		if gust_score >= 780.0:
+			return 660.0
 		return 690.0 if _can_current_attacker_take_prize(game_state, player, player_index) else 130.0
 	if _matches(card, [V17_NIGHT_STRETCHER]): return 210.0
-	if _matches(card, [AREA_ZERO_ID]): return 260.0 if player != null and _count_on_field(player, [PIKACHU_ID]) > 0 else 120.0
+	if _matches(card, [AREA_ZERO_ID]):
+		if player != null and _area_zero_in_play_v17(game_state):
+			return 30.0
+		if player != null and _has_tera_on_field_v17(player):
+			return 760.0 if player.bench.size() >= 4 else 680.0
+		if player != null and _count_on_field(player, [PIKACHU_ID]) > 0:
+			return 680.0
+		return 220.0
 	return V17_UNHANDLED
 
 
@@ -476,7 +500,12 @@ func _search_card_score(card: CardInstance, step: Dictionary, context: Dictionar
 			return 940.0 if is_bench_search else 640.0
 		return 300.0
 	if _is_latias(card): return 680.0 if player != null and _count_on_field(player, [LATIAS, LATIAS_ID]) == 0 else 180.0
-	if _is_pikachu(card): return 520.0
+	if _is_pikachu(card):
+		if player != null and _count_on_field(player, [PIKACHU_ID]) == 0:
+			if _has_area_zero_access_v17(player, context.get("game_state", null)) or player.bench.size() >= 4:
+				return 1010.0 if is_bench_search or is_basic_search else 760.0
+			return 720.0 if is_bench_search or is_basic_search else 620.0
+		return 260.0
 	if _is_raichu(card): return 440.0
 	if _is_squawk(card): return 520.0 if player != null and player.bench.size() <= 3 else 120.0
 	if _is_lumineon(card): return -80.0
@@ -546,6 +575,59 @@ func _handoff_target_score_v17(slot: PokemonSlot, step_id: String, context: Dict
 	return score
 
 
+func _is_opponent_target_step_v17(step_id: String) -> bool:
+	var lowered := step_id.to_lower()
+	return lowered.contains("opponent") or lowered.contains("enemy") or lowered.contains("gust")
+
+
+func _opponent_target_score_v17(slot: PokemonSlot, context: Dictionary = {}) -> float:
+	if slot == null or slot.get_top_card() == null:
+		return 0.0
+	var game_state: GameState = context.get("game_state", null)
+	var player_index := int(context.get("player_index", -1))
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return _opponent_target_role_score_v17(slot)
+	var player: PlayerState = game_state.players[player_index]
+	var damage := _current_attacker_damage_for_targeting_v17(game_state, player, player_index)
+	var remaining_hp := slot.get_remaining_hp()
+	var prize_count := slot.get_prize_count()
+	var role_score := _opponent_target_role_score_v17(slot)
+	if damage > 0 and remaining_hp <= damage:
+		var score := 880.0 + float(prize_count) * 180.0 + role_score
+		if player != null and _is_iron_hands(player.active_pokemon) and _iron_hands_amp_ready_v17(player.active_pokemon):
+			score += 260.0
+		score -= float(remaining_hp) * 0.08
+		return score
+	var pressure := 140.0 + role_score * 0.6 + float(prize_count) * 80.0
+	pressure -= float(remaining_hp) * 0.18
+	return pressure
+
+
+func _best_opponent_bench_target_score_v17(game_state: GameState, player_index: int) -> float:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return 0.0
+	var opponent_index := 1 - player_index
+	if opponent_index < 0 or opponent_index >= game_state.players.size():
+		return 0.0
+	var best := 0.0
+	var context := {"game_state": game_state, "player_index": player_index}
+	for slot: PokemonSlot in game_state.players[opponent_index].bench:
+		best = maxf(best, _opponent_target_score_v17(slot, context))
+	return best
+
+
+func _opponent_target_role_score_v17(slot: PokemonSlot) -> float:
+	if slot == null or slot.get_top_card() == null:
+		return 0.0
+	if _matches(slot, ["Charmander", "Pidgey", "Duskull", "Cleffa"]):
+		return 260.0
+	if _matches(slot, ["Pidgeot ex", "Dusknoir", "Dusclops", "Rotom V", LUMINEON]):
+		return 220.0
+	if _matches(slot, ["Charizard ex"]):
+		return 120.0
+	return 40.0
+
+
 func _slot_score(slot: PokemonSlot) -> float:
 	if _is_iron_hands(slot): return 500.0
 	if _is_raikou(slot): return 470.0
@@ -563,6 +645,55 @@ func _context_player(context: Dictionary) -> PlayerState:
 	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
 		return null
 	return game_state.players[player_index]
+
+
+func _bench_limit_v17(game_state: GameState, player: PlayerState) -> int:
+	if game_state == null or player == null:
+		return 5
+	return BenchLimit.get_bench_limit_for_player(game_state, player)
+
+
+func _bench_space_v17(game_state: GameState, player: PlayerState) -> int:
+	if player == null:
+		return 0
+	return maxi(0, _bench_limit_v17(game_state, player) - player.bench.size())
+
+
+func _bench_is_full_v17(game_state: GameState, player: PlayerState) -> bool:
+	return player == null or _bench_space_v17(game_state, player) <= 0
+
+
+func _area_zero_in_play_v17(game_state: GameState) -> bool:
+	return game_state != null and game_state.stadium_card != null and _matches(game_state.stadium_card, [AREA_ZERO_ID])
+
+
+func _has_area_zero_in_hand_v17(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	for card: CardInstance in player.hand:
+		if _matches(card, [AREA_ZERO_ID]):
+			return true
+	return false
+
+
+func _has_area_zero_access_v17(player: PlayerState, game_state: GameState) -> bool:
+	return _area_zero_in_play_v17(game_state) or _has_area_zero_in_hand_v17(player)
+
+
+func _has_tera_on_field_v17(player: PlayerState) -> bool:
+	for slot: PokemonSlot in _all_slots_v17(player):
+		var cd := _card_data(slot)
+		if cd != null and cd.is_tera_pokemon():
+			return true
+	return false
+
+
+func _needs_pikachu_area_zero_shell_v17(player: PlayerState, game_state: GameState) -> bool:
+	if player == null or _count_on_field(player, [PIKACHU_ID]) > 0:
+		return false
+	if not _has_area_zero_access_v17(player, game_state):
+		return false
+	return player.bench.size() >= 3 or _count_on_field(player, [MIRAIDON, "CSV1C_050"]) > 0
 
 
 func _card_data(item: Variant) -> CardData:
@@ -803,6 +934,39 @@ func _best_attack_damage_v17(slot: PokemonSlot, extra_lightning: int = 0) -> int
 	return best
 
 
+func _current_attacker_damage_for_targeting_v17(game_state: GameState, player: PlayerState, player_index: int) -> int:
+	if player == null or player.active_pokemon == null or not _can_attack_v17(player.active_pokemon):
+		return 0
+	return _visible_board_damage_v17(player.active_pokemon, game_state, player_index)
+
+
+func _visible_board_damage_v17(slot: PokemonSlot, game_state: GameState, player_index: int, extra_lightning: int = 0) -> int:
+	if slot == null or not _can_attack_with_extra_v17(slot, extra_lightning):
+		return 0
+	if _is_raikou(slot):
+		return 20 + 20 * _total_bench_count_v17(game_state)
+	return _best_attack_damage_v17(slot, extra_lightning)
+
+
+func _can_attack_with_extra_v17(slot: PokemonSlot, extra_lightning: int) -> bool:
+	return _attack_gap(slot, extra_lightning) == 0
+
+
+func _total_bench_count_v17(game_state: GameState) -> int:
+	if game_state == null:
+		return 0
+	var total := 0
+	for player: PlayerState in game_state.players:
+		total += player.bench.size()
+	return total
+
+
+func _iron_hands_amp_ready_v17(slot: PokemonSlot) -> bool:
+	if slot == null or not _is_iron_hands(slot):
+		return false
+	return _attack_gap_for_cost(slot, "LCCC") == 0
+
+
 func _parse_damage_v17(raw_damage: String) -> int:
 	var digits := ""
 	for i: int in raw_damage.length():
@@ -916,7 +1080,7 @@ func _can_current_attacker_take_prize(game_state: GameState, player: PlayerState
 	if player == null or player.active_pokemon == null or game_state == null or not _can_attack_v17(player.active_pokemon):
 		return false
 	var defender := _opponent_active(game_state, player_index)
-	return defender != null and _best_attack_damage_v17(player.active_pokemon) >= defender.get_remaining_hp()
+	return defender != null and _current_attacker_damage_for_targeting_v17(game_state, player, player_index) >= defender.get_remaining_hp()
 
 
 func _opponent_active(game_state: GameState, player_index: int) -> PokemonSlot:
@@ -942,7 +1106,7 @@ func _revenge_bonus(slot: PokemonSlot, context: Dictionary) -> float:
 
 func _retreat_target_is_better_prize_line(target: PokemonSlot, game_state: GameState, player_index: int) -> bool:
 	var defender := _opponent_active(game_state, player_index)
-	return defender != null and _can_attack_v17(target) and _best_attack_damage_v17(target) >= defender.get_remaining_hp()
+	return defender != null and _can_attack_v17(target) and _visible_board_damage_v17(target, game_state, player_index) >= defender.get_remaining_hp()
 
 
 func _damage_for_attack_action(active: PokemonSlot, attack_index: int, attack_name: String, player: PlayerState) -> int:

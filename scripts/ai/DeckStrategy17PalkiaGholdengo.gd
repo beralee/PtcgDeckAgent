@@ -236,6 +236,13 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 		var slot := item as PokemonSlot
 		if not _slot_is_live(slot):
 			return -100000.0
+		if step_id.contains("opponent_bench") or step_id.contains("gust"):
+			return _score_palkia_gholdengo_gust_target(
+				slot,
+				_player_from_context(context),
+				context.get("game_state", null),
+				int(context.get("player_index", -1))
+			)
 		if step_id.contains("attach") or step_id.contains("assign") or step_id.contains("energy"):
 			var name := _slot_name(slot)
 			if name == GHOLDENGO_EX:
@@ -454,7 +461,11 @@ func _score_palkia_gholdengo_trainer(
 		score = maxf(score, 320.0 if _discard_basic_energy_count(player) >= 1 else 120.0)
 		score = _score_make_it_rain_recovery_trainer(name, player, game_state, player_index, score)
 	if name == BOSS_ORDERS or name == COUNTER_CATCHER:
-		score = maxf(score, 560.0 if _can_current_attacker_take_ko(game_state, player_index) else 120.0)
+		var gust_ko_score := _best_gust_ko_action_score(player, game_state, player_index)
+		if gust_ko_score > 0.0:
+			score = maxf(score, gust_ko_score)
+		else:
+			score = maxf(score, 560.0 if _can_current_attacker_take_ko(game_state, player_index) else 120.0)
 	if name == SWITCH:
 		score = maxf(score, 300.0 if _has_ready_bench_attacker(player, game_state, player_index) else 80.0)
 	if name == FULL_METAL_LAB:
@@ -469,7 +480,9 @@ func _score_palkia_gholdengo_trainer(
 	if _deck_is_critical(player):
 		if name == CIPHERMANIACS_CODEBREAKING:
 			score = minf(score, 40.0)
-		if name in [BOSS_ORDERS, COUNTER_CATCHER] and not _can_current_attacker_take_ko(game_state, player_index):
+		if name in [BOSS_ORDERS, COUNTER_CATCHER] \
+				and not _can_current_attacker_take_ko(game_state, player_index) \
+				and _best_gust_ko_action_score(player, game_state, player_index) <= 0.0:
 			score = minf(score, 70.0)
 	return score
 
@@ -781,6 +794,87 @@ func _palkia_gholdengo_handoff_score(slot: PokemonSlot, player: PlayerState, gam
 	if name in [MANAPHY, RADIANT_GRENINJA, FEZANDIPITI_EX, IRON_BUNDLE]:
 		return 55.0
 	return super.score_handoff_target(slot, {"id": "handoff"}, {"game_state": game_state, "player_index": player_index})
+
+
+func _best_gust_ko_action_score(player: PlayerState, game_state: GameState, player_index: int) -> float:
+	if player == null or game_state == null:
+		return 0.0
+	var opponent_index := 1 - player_index
+	if opponent_index < 0 or opponent_index >= game_state.players.size():
+		return 0.0
+	var damage := _current_attacker_damage_available(player, game_state)
+	if damage <= 0:
+		return 0.0
+	var best_target_score := 0.0
+	for slot: PokemonSlot in game_state.players[opponent_index].bench:
+		if not _slot_is_live(slot):
+			continue
+		if damage < slot.get_remaining_hp():
+			continue
+		best_target_score = maxf(best_target_score, _score_palkia_gholdengo_gust_target(slot, player, game_state, player_index))
+	if best_target_score <= 0.0:
+		return 0.0
+	return 1120.0 + best_target_score * 0.45
+
+
+func _score_palkia_gholdengo_gust_target(
+	slot: PokemonSlot,
+	player: PlayerState,
+	game_state: GameState,
+	player_index: int
+) -> float:
+	if not _slot_is_live(slot):
+		return -100000.0
+	var remaining_hp := slot.get_remaining_hp()
+	var prize_value := _target_prize_value(slot)
+	var damage := _current_attacker_damage_available(player, game_state)
+	var score := 120.0 + float(prize_value) * 180.0 + _opponent_target_role_bonus(slot)
+	if damage >= remaining_hp:
+		score += 950.0 + float(prize_value) * 360.0 - float(remaining_hp) * 0.35
+	else:
+		score += float(mini(damage, remaining_hp)) * 0.80 - float(remaining_hp) * 0.20
+	return score
+
+
+func _current_attacker_damage_available(player: PlayerState, game_state: GameState) -> int:
+	if player == null or player.active_pokemon == null:
+		return 0
+	if _slot_name(player.active_pokemon) == GHOLDENGO_EX:
+		if not _has_attached_energy_type(player.active_pokemon, METAL_ENERGY):
+			return 0
+		return _basic_energy_in_hand(player) * 50
+	return _predict_attack_with_board(player.active_pokemon, game_state)
+
+
+func _target_prize_value(slot: PokemonSlot) -> int:
+	if slot == null or slot.get_card_data() == null:
+		return 1
+	var mechanic := str(slot.get_card_data().mechanic).to_lower()
+	if mechanic.contains("vmax"):
+		return 3
+	if mechanic.contains("ex") or mechanic.contains(" v") or mechanic == "v" or mechanic.contains("vstar"):
+		return 2
+	return 1
+
+
+func _opponent_target_role_bonus(slot: PokemonSlot) -> float:
+	if slot == null or slot.get_card_data() == null:
+		return 0.0
+	var cd := slot.get_card_data()
+	var name := ("%s %s" % [str(cd.name), str(cd.name_en)]).to_lower()
+	if name.contains("lumineon") or name.contains("fezandipiti"):
+		return 180.0
+	if name.contains("dusknoir"):
+		return 240.0
+	if name.contains("dusclops") or name.contains("drakloak"):
+		return 170.0
+	if name.contains("dragapult"):
+		return 120.0
+	if cd.stage == "Stage 2":
+		return 140.0
+	if cd.stage == "Stage 1":
+		return 80.0
+	return 0.0
 
 
 func _can_current_attacker_take_ko(game_state: GameState, player_index: int) -> bool:
