@@ -2,6 +2,15 @@ class_name TestBattleAIAdviceCopy
 extends TestBase
 
 const BattleSceneScript = preload("res://scenes/battle/BattleScene.gd")
+const BATTLE_SCENE_SOURCE_PATHS := [
+	"res://scenes/battle/BattleScene.gd",
+	"res://scenes/battle/BattleSceneRuntime.gd",
+	"res://scenes/battle/runtime/BattleSceneDialogInteractionReviewRuntime.gd",
+	"res://scenes/battle/runtime/BattleSceneSetupEffectAiRuntime.gd",
+	"res://scenes/battle/runtime/BattleSceneBoardActionRuntime.gd",
+	"res://scenes/battle/runtime/BattleSceneSharedHudAiRuntime.gd",
+	"res://scenes/battle/runtime/BattleSceneRuntimeFoundation.gd",
+]
 
 
 func _u(codepoints: Array[int]) -> String:
@@ -9,6 +18,13 @@ func _u(codepoints: Array[int]) -> String:
 	for codepoint: int in codepoints:
 		text += char(codepoint)
 	return text
+
+
+func _battle_scene_source_text() -> String:
+	var source := ""
+	for path: String in BATTLE_SCENE_SOURCE_PATHS:
+		source += "\n# %s\n%s" % [path, FileAccess.get_file_as_string(path)]
+	return source
 
 
 func _make_scene_stub() -> Control:
@@ -124,7 +140,7 @@ func test_selecting_basic_pokemon_writes_readable_log_copy() -> String:
 
 
 func test_battle_scene_source_has_no_placeholder_copy() -> String:
-	var source := FileAccess.get_file_as_string("res://scenes/battle/BattleScene.gd")
+	var source := _battle_scene_source_text()
 	var placeholder := "?" + "?" + "?"
 
 	return run_checks([

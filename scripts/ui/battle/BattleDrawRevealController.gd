@@ -6,6 +6,7 @@ const BattleCardViewScript := preload("res://scenes/battle/BattleCardView.gd")
 const HUMAN_CONFIRM_HINT := "Click to continue"
 const AI_HOLD_HINT := "AI drawing..."
 const AI_AUTO_CONTINUE_SECONDS := 0.6
+const TURN_START_AUTO_CONTINUE_SECONDS := 0.18
 const REVEAL_SCALE := Vector2(2.0, 2.0)
 const REVEAL_STAGGER_SECONDS := 0.08
 const FLY_TO_HAND_SECONDS := 0.08
@@ -106,9 +107,10 @@ func _begin_single_card_reveal(scene: Object, card: CardInstance, player_index: 
 	overlay.visible = true
 	_set_hint_text(overlay, "")
 	var keep_face_down: bool = _should_keep_face_down(scene, player_index)
+	var reveal_scale := _reveal_scale(scene)
 
 	if scene is Node and (scene as Node).is_inside_tree():
-		var tween: Tween = _create_reveal_tween(scene, card_view, _center_position(scene, card_view), REVEAL_SCALE, keep_face_down)
+		var tween: Tween = _create_reveal_tween(scene, card_view, _center_position(scene, card_view), reveal_scale, keep_face_down)
 		tween.finished.connect(func() -> void:
 			_enter_hold_state(scene, player_index)
 		)
@@ -116,7 +118,7 @@ func _begin_single_card_reveal(scene: Object, card: CardInstance, player_index: 
 
 	card_view.position = _center_position(scene, card_view)
 	card_view.set_face_down(keep_face_down)
-	card_view.scale = REVEAL_SCALE
+	card_view.scale = reveal_scale
 	_enter_hold_state(scene, player_index)
 
 
@@ -176,7 +178,7 @@ func _enter_hold_state(scene: Object, player_index: int) -> void:
 		scene.set("_draw_reveal_waiting_for_confirm", false)
 		_set_hint_text(overlay, AI_HOLD_HINT if _is_ai_reveal(scene, player_index) else "")
 		if scene is Node and (scene as Node).is_inside_tree():
-			var timer: SceneTreeTimer = (scene as Node).get_tree().create_timer(AI_AUTO_CONTINUE_SECONDS)
+			var timer: SceneTreeTimer = (scene as Node).get_tree().create_timer(_auto_continue_delay_seconds(scene, player_index))
 			scene.set("_draw_reveal_resume_timer", timer)
 			timer.timeout.connect(func() -> void:
 				run_auto_continue(scene)
@@ -378,6 +380,8 @@ func _ensure_overlay(scene: Object) -> Control:
 	scene.set("_draw_reveal_overlay", overlay)
 	if overlay.get_parent() == null and scene is Node:
 		(scene as Node).add_child(overlay)
+	if scene.has_method("_apply_portrait_popup_text_metrics"):
+		scene.call("_apply_portrait_popup_text_metrics")
 	return overlay
 
 
@@ -472,19 +476,51 @@ func _batch_stack_position(scene: Object, card_view: Control, index: int, total:
 	var batch_center: Vector2 = _center_position(scene, card_view) + _card_visual_size(card_view) * 0.5
 	if anchor_rect.size != Vector2.ZERO:
 		batch_center = anchor_rect.position + anchor_rect.size * 0.5
-	var row: int = index / BATCH_MAX_COLUMNS
-	var row_count: int = int(ceil(float(total) / float(BATCH_MAX_COLUMNS)))
-	var row_items: int = mini(BATCH_MAX_COLUMNS, total - row * BATCH_MAX_COLUMNS)
-	var total_height: float = row_count * card_size.y + maxi(0, row_count - 1) * BATCH_CARD_GAP.y
-	var row_width: float = row_items * card_size.x + maxi(0, row_items - 1) * BATCH_CARD_GAP.x
-	var column: int = index % BATCH_MAX_COLUMNS
-	var top_left_y: float = batch_center.y - total_height * 0.5 + row * (card_size.y + BATCH_CARD_GAP.y)
-	var top_left_x: float = batch_center.x - row_width * 0.5 + column * (card_size.x + BATCH_CARD_GAP.x)
+	var columns := _batch_column_count(scene, card_view, total)
+	var gap := _batch_card_gap(scene)
+	var row: int = index / columns
+	var row_count: int = int(ceil(float(total) / float(columns)))
+	var row_items: int = mini(columns, total - row * columns)
+	var total_height: float = row_count * card_size.y + maxi(0, row_count - 1) * gap.y
+	var row_width: float = row_items * card_size.x + maxi(0, row_items - 1) * gap.x
+	var column: int = index % columns
+	var top_left_y: float = batch_center.y - total_height * 0.5 + row * (card_size.y + gap.y)
+	var top_left_x: float = batch_center.x - row_width * 0.5 + column * (card_size.x + gap.x)
 	return Vector2(top_left_x, top_left_y)
 
 
 func _batch_reveal_scale(scene: Object, card_view: Control, total: int) -> Vector2:
+	return _reveal_scale(scene)
+
+
+func _reveal_scale(scene: Object) -> Vector2:
+	if _is_portrait_reveal_layout(scene):
+		return Vector2.ONE
 	return REVEAL_SCALE
+
+
+func _is_portrait_reveal_layout(scene: Object) -> bool:
+	return scene != null and scene.has_method("_is_portrait_battle_layout_active") and bool(scene.call("_is_portrait_battle_layout_active"))
+
+
+func _batch_column_count(scene: Object, card_view: Control, total: int) -> int:
+	var max_columns := mini(BATCH_MAX_COLUMNS, maxi(total, 1))
+	if not _is_portrait_reveal_layout(scene):
+		return max_columns
+	var anchor_rect := _get_reveal_anchor_rect(scene)
+	if anchor_rect.size.x <= 0.0:
+		return max_columns
+	var gap := _batch_card_gap(scene)
+	var card_width := maxf(_card_visual_size(card_view).x * _batch_reveal_scale(scene, card_view, total).x, 1.0)
+	var available_width := maxf(anchor_rect.size.x - BATCH_AREA_PADDING.x * 2.0, card_width)
+	var columns_fit := int(floor((available_width + gap.x) / (card_width + gap.x)))
+	return clampi(columns_fit, 1, max_columns)
+
+
+func _batch_card_gap(scene: Object) -> Vector2:
+	if _is_portrait_reveal_layout(scene):
+		return Vector2.ZERO
+	return BATCH_CARD_GAP
 
 
 func _hand_target_anchor(scene: Object, player_index: int) -> Control:
@@ -562,24 +598,58 @@ func _get_reveal_anchor_rect(scene: Object) -> Rect2:
 	if not (scene is Node):
 		return Rect2()
 	var scene_node: Node = scene as Node
+	if scene_node.has_method("_draw_reveal_anchor_rect"):
+		var custom_rect_variant: Variant = scene_node.call("_draw_reveal_anchor_rect")
+		if custom_rect_variant is Rect2:
+			var custom_rect: Rect2 = custom_rect_variant
+			if custom_rect.size != Vector2.ZERO:
+				return _local_rect_to_global_bounds(scene_node, custom_rect)
+	if scene_node is Control:
+		var scene_control := scene_node as Control
+		if scene_control.size != Vector2.ZERO:
+			return Rect2(scene_control.global_position, scene_control.size)
 	var main_area: Control = scene_node.get_node_or_null("MainArea") as Control
 	if main_area != null:
-		var anchor_rect := Rect2(main_area.global_position, main_area.size)
-		var log_panel: Control = scene_node.get_node_or_null("MainArea/LogPanel") as Control
-		if log_panel != null:
-			var usable_width: float = clampf(log_panel.global_position.x - anchor_rect.position.x, 0.0, anchor_rect.size.x)
-			if usable_width > 0.0:
-				anchor_rect.size.x = usable_width
-		var hand_area: Control = scene_node.get_node_or_null("MainArea/CenterField/HandArea") as Control
-		if hand_area != null:
-			var usable_height: float = clampf(hand_area.global_position.y - anchor_rect.position.y, 0.0, anchor_rect.size.y)
-			if usable_height > 0.0:
-				anchor_rect.size.y = usable_height
-		return anchor_rect
+		return Rect2(main_area.global_position, main_area.size)
 	var center_field: Control = _get_center_field(scene)
 	if center_field != null:
 		return Rect2(center_field.global_position, center_field.size)
 	return Rect2()
+
+
+func _local_rect_to_global_bounds(scene_node: Node, local_rect: Rect2) -> Rect2:
+	if not scene_node is CanvasItem:
+		return local_rect
+	var canvas_item := scene_node as CanvasItem
+	var x0 := local_rect.position.x
+	var y0 := local_rect.position.y
+	var x1 := local_rect.position.x + local_rect.size.x
+	var y1 := local_rect.position.y + local_rect.size.y
+	var transform := canvas_item.get_global_transform()
+	var points: Array[Vector2] = [
+		transform * Vector2(x0, y0),
+		transform * Vector2(x1, y0),
+		transform * Vector2(x0, y1),
+		transform * Vector2(x1, y1),
+	]
+	var min_point: Vector2 = points[0]
+	var max_point: Vector2 = points[0]
+	for point: Vector2 in points:
+		min_point.x = minf(min_point.x, point.x)
+		min_point.y = minf(min_point.y, point.y)
+		max_point.x = maxf(max_point.x, point.x)
+		max_point.y = maxf(max_point.y, point.y)
+	min_point = _snap_vector2_to_zero(min_point)
+	max_point = _snap_vector2_to_zero(max_point)
+	return Rect2(min_point, max_point - min_point)
+
+
+func _snap_vector2_to_zero(value: Vector2) -> Vector2:
+	if absf(value.x) < 0.001:
+		value.x = 0.0
+	if absf(value.y) < 0.001:
+		value.y = 0.0
+	return value
 
 
 func _should_defer_for_handover(scene: Object, player_index: int) -> bool:
@@ -620,7 +690,20 @@ func _should_keep_face_down(scene: Object, player_index: int) -> bool:
 
 
 func _should_auto_continue(scene: Object, player_index: int) -> bool:
-	return _is_ai_reveal(scene, player_index) or _is_hidden_two_player_reveal(scene, player_index)
+	return _is_turn_start_draw_reveal(scene) or _is_ai_reveal(scene, player_index) or _is_hidden_two_player_reveal(scene, player_index)
+
+
+func _auto_continue_delay_seconds(scene: Object, player_index: int) -> float:
+	if _is_turn_start_draw_reveal(scene) and not _is_ai_reveal(scene, player_index):
+		return TURN_START_AUTO_CONTINUE_SECONDS
+	return AI_AUTO_CONTINUE_SECONDS
+
+
+func _is_turn_start_draw_reveal(scene: Object) -> bool:
+	var action: GameAction = scene.get("_draw_reveal_current_action") as GameAction
+	if action == null or action.action_type != GameAction.ActionType.DRAW_CARD:
+		return false
+	return bool(action.data.get("turn_start", false)) or str(action.data.get("draw_source", "")) == "turn_start"
 
 
 func _back_texture_for_player(scene: Object, player_index: int) -> Texture2D:

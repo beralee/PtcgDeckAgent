@@ -29,7 +29,7 @@ func execute_attack(
 		rng.randomize()
 		if rng.randi_range(0, 1) == 0:
 			return
-	defender.set_status(status_name, true)
+	_apply_special_status(defender, status_name, _state)
 
 
 func get_description() -> String:

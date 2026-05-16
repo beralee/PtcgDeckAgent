@@ -4,6 +4,8 @@ extends TestBase
 const RULES_SCRIPT_PATH := "res://scripts/ai/DeckStrategyDragapultDusknoir.gd"
 const LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategyDragapultDusknoirLLM.gd"
 const RUNTIME_SCRIPT_PATH := "res://scripts/ai/DeckStrategyLLMRuntimeBase.gd"
+const RouteBuilderScript = preload("res://scripts/ai/LLMRouteCandidateBuilder.gd")
+const PromptBuilderScript = preload("res://scripts/ai/LLMTurnPlanPromptBuilder.gd")
 
 
 func _load_script(script_path: String) -> GDScript:
@@ -235,6 +237,33 @@ func test_spread_target_policy_prefers_damaged_bench_prize_map() -> String:
 	])
 
 
+func test_spread_target_policy_marks_loaded_followup_attacker_for_next_phantom_dive_ko() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(6)
+	var player: PlayerState = gs.players[0]
+	var dragapult := _make_slot(_make_dragapult_ex_cd(), 0)
+	dragapult.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	dragapult.attached_energy.append(_attached_energy("Psychic Energy", "P"))
+	player.active_pokemon = dragapult
+	var opponent: PlayerState = gs.players[1]
+	var iron_hands := _make_slot(_make_pokemon_cd("Iron Hands ex", "Basic", "L", 230, "", "ex"), 1)
+	iron_hands.attached_energy.append(_attached_energy("Double Turbo Energy", "C"))
+	var squawkabilly := _make_slot(_make_pokemon_cd("Squawkabilly ex", "Basic", "C", 160, "", "ex"), 1)
+	opponent.bench.clear()
+	opponent.bench.append(squawkabilly)
+	opponent.bench.append(iron_hands)
+	var context := {"game_state": gs, "player_index": 0}
+	var iron_score: float = float(llm.call("score_interaction_target", iron_hands, {"id": "bench_damage_counters"}, context))
+	var squawk_score: float = float(llm.call("score_interaction_target", squawkabilly, {"id": "bench_damage_counters"}, context))
+	var picked: Array = llm.call("pick_interaction_items", [squawkabilly, iron_hands], {"id": "bench_damage_counters", "max_select": 1}, context)
+	return run_checks([
+		assert_true(iron_score > squawk_score, "Phantom Dive spread should pre-mark a loaded 230 HP follow-up attacker so the next 200 damage attack can KO it"),
+		assert_true(picked.size() == 1 and picked[0] == iron_hands, "Spread counter fallback should choose the loaded follow-up attacker over a low-impact support ex"),
+	])
+
+
 func test_dusknoir_self_ko_target_selection_prefers_high_value_conversion() -> String:
 	var llm := _new_strategy(LLM_SCRIPT_PATH)
 	if llm == null:
@@ -330,6 +359,172 @@ func test_active_llm_queue_blocks_bad_dragapult_dusknoir_escape_actions() -> Str
 	])
 
 
+func test_opening_resource_investment_avoids_exposed_active_dreepy_when_backup_exists() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(2)
+	var player: PlayerState = gs.players[0]
+	var active_dreepy := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	var bench_dreepy := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	player.active_pokemon = active_dreepy
+	player.bench.clear()
+	player.bench.append(bench_dreepy)
+	var fire := CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0)
+	var crystal := CardInstance.create(_make_trainer_cd("Sparkling Crystal", "Tool"), 0)
+	var fire_to_active := {"action_id": "attach_energy:fire:active", "id": "attach_energy:fire:active", "type": "attach_energy", "kind": "attach_energy", "card": fire, "target_slot": active_dreepy}
+	var fire_to_bench := {"action_id": "attach_energy:fire:bench_0", "id": "attach_energy:fire:bench_0", "type": "attach_energy", "kind": "attach_energy", "card": fire, "target_slot": bench_dreepy}
+	var crystal_to_active := {"action_id": "attach_tool:crystal:active", "id": "attach_tool:crystal:active", "type": "attach_tool", "kind": "attach_tool", "card": crystal, "target_slot": active_dreepy}
+	var crystal_to_bench := {"action_id": "attach_tool:crystal:bench_0", "id": "attach_tool:crystal:bench_0", "type": "attach_tool", "kind": "attach_tool", "card": crystal, "target_slot": bench_dreepy}
+	var serialized_fire_to_active := {"action_id": "attach_energy:fire:active", "id": "attach_energy:fire:active", "type": "attach_energy", "kind": "attach_energy", "card": fire, "position": "active"}
+	var serialized_crystal_to_active := {"action_id": "attach_tool:crystal:active", "id": "attach_tool:crystal:active", "type": "attach_tool", "kind": "attach_tool", "card": crystal, "position": "active"}
+	var fire_active_score: float = float(llm.call("score_action_absolute", fire_to_active, gs, 0))
+	var fire_bench_score: float = float(llm.call("score_action_absolute", fire_to_bench, gs, 0))
+	var crystal_active_score: float = float(llm.call("score_action_absolute", crystal_to_active, gs, 0))
+	var crystal_bench_score: float = float(llm.call("score_action_absolute", crystal_to_bench, gs, 0))
+	_activate_llm_queue(llm, int(gs.turn_number), [fire_to_active])
+	var redirected_fire_bench_score: float = float(llm.call("score_action_absolute", fire_to_bench, gs, 0))
+	var llm_crystal := _new_strategy(LLM_SCRIPT_PATH)
+	_activate_llm_queue(llm_crystal, int(gs.turn_number), [crystal_to_active])
+	var redirected_crystal_bench_score: float = float(llm_crystal.call("score_action_absolute", crystal_to_bench, gs, 0))
+	var direct_crystal_redirect := bool(llm_crystal.call("_deck_queue_item_matches_action", crystal_to_active, crystal_to_bench, gs, 0))
+	var serialized_llm := _new_strategy(LLM_SCRIPT_PATH)
+	_activate_llm_queue(serialized_llm, int(gs.turn_number), [serialized_fire_to_active])
+	var serialized_fire_redirect_score: float = float(serialized_llm.call("score_action_absolute", fire_to_bench, gs, 0))
+	var serialized_crystal_llm := _new_strategy(LLM_SCRIPT_PATH)
+	_activate_llm_queue(serialized_crystal_llm, int(gs.turn_number), [serialized_crystal_to_active])
+	var serialized_crystal_redirect_score: float = float(serialized_crystal_llm.call("score_action_absolute", crystal_to_bench, gs, 0))
+	return run_checks([
+		assert_true(fire_active_score <= -1000.0, "Opening Fire/Psychic attach should not invest in an exposed active Dreepy when a benched Dreepy can become the attacker"),
+		assert_true(fire_bench_score > -1000.0, "Opening Fire/Psychic attach should remain available on the benched Dreepy line"),
+		assert_true(crystal_active_score <= -1000.0, "Sparkling Crystal should not be attached to the exposed active Dreepy when a benched Dreepy can carry the route"),
+		assert_true(crystal_bench_score > -1000.0, "Sparkling Crystal should remain available on the benched Dreepy line"),
+		assert_true(redirected_fire_bench_score >= 10000.0, "An LLM queue that named exposed active Dreepy should redirect the same Energy to a benched Dreepy instead of escaping to end_turn"),
+		assert_true(direct_crystal_redirect, "Deck hook should allow Sparkling Crystal redirection from exposed active Dreepy to benched Dreepy"),
+		assert_true(redirected_crystal_bench_score >= 10000.0, "An LLM queue that named exposed active Dreepy should redirect Sparkling Crystal to a benched Dreepy instead of escaping to end_turn; score=%s" % redirected_crystal_bench_score),
+		assert_true(serialized_fire_redirect_score >= 10000.0, "Serialized active-position Energy refs should also redirect to the benched Dreepy route line"),
+		assert_true(serialized_crystal_redirect_score >= 10000.0, "Serialized active-position Sparkling Crystal refs should also redirect to the benched Dreepy route line"),
+	])
+
+
+func test_midgame_resource_investment_avoids_exposed_active_drakloak_when_backup_exists() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(6)
+	var player: PlayerState = gs.players[0]
+	var active_drakloak := _make_slot(_make_pokemon_cd("Drakloak", "Stage 1", "N", 90, "Dreepy"), 0)
+	var bench_dreepy := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	player.active_pokemon = active_drakloak
+	player.bench.clear()
+	player.bench.append(bench_dreepy)
+	var psychic := CardInstance.create(_make_energy_cd("Psychic Energy", "P"), 0)
+	var crystal := CardInstance.create(_make_trainer_cd("Sparkling Crystal", "Tool"), 0)
+	var psychic_to_active := {"action_id": "attach_energy:psychic:active", "id": "attach_energy:psychic:active", "type": "attach_energy", "kind": "attach_energy", "card": psychic, "target_slot": active_drakloak}
+	var psychic_to_bench := {"action_id": "attach_energy:psychic:bench_0", "id": "attach_energy:psychic:bench_0", "type": "attach_energy", "kind": "attach_energy", "card": psychic, "target_slot": bench_dreepy}
+	var crystal_to_active := {"action_id": "attach_tool:crystal:active", "id": "attach_tool:crystal:active", "type": "attach_tool", "kind": "attach_tool", "card": crystal, "target_slot": active_drakloak}
+	var crystal_to_bench := {"action_id": "attach_tool:crystal:bench_0", "id": "attach_tool:crystal:bench_0", "type": "attach_tool", "kind": "attach_tool", "card": crystal, "target_slot": bench_dreepy}
+	return run_checks([
+		assert_true(float(llm.call("score_action_absolute", psychic_to_active, gs, 0)) <= -1000.0, "Midgame Energy attach should not invest in exposed active Drakloak when a benched Dreepy can become the attacker"),
+		assert_true(float(llm.call("score_action_absolute", psychic_to_bench, gs, 0)) > -1000.0, "Midgame Energy attach should remain available on the benched Dreepy line"),
+		assert_true(float(llm.call("score_action_absolute", crystal_to_active, gs, 0)) <= -1000.0, "Sparkling Crystal should not be attached to exposed active Drakloak when a benched Dreepy can carry the route"),
+		assert_true(float(llm.call("score_action_absolute", crystal_to_bench, gs, 0)) > -1000.0, "Sparkling Crystal should remain available on the benched Dreepy line"),
+	])
+
+
+func test_dragapult_resource_investment_keeps_energy_and_crystal_on_same_line() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(2)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Tatsugiri", "Basic", "W", 70), 0)
+	var energized_dreepy := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	var empty_dreepy := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	energized_dreepy.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	player.bench.clear()
+	player.bench.append(empty_dreepy)
+	player.bench.append(energized_dreepy)
+	var crystal := CardInstance.create(_make_trainer_cd("Sparkling Crystal", "Tool"), 0)
+	var crystal_to_empty := {"kind": "attach_tool", "card": crystal, "target_slot": empty_dreepy}
+	var crystal_to_energized := {"kind": "attach_tool", "card": crystal, "target_slot": energized_dreepy}
+	var crystal_empty_score: float = float(llm.call("score_action_absolute", crystal_to_empty, gs, 0))
+	var crystal_energized_score: float = float(llm.call("score_action_absolute", crystal_to_energized, gs, 0))
+	var crystal_holder := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	var no_crystal_dreepy := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	crystal_holder.attached_tool = CardInstance.create(_make_trainer_cd("Sparkling Crystal", "Tool"), 0)
+	player.bench.clear()
+	player.bench.append(crystal_holder)
+	player.bench.append(no_crystal_dreepy)
+	var fire := CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0)
+	var fire_to_crystal := {"kind": "attach_energy", "card": fire, "target_slot": crystal_holder}
+	var fire_to_no_crystal := {"kind": "attach_energy", "card": fire, "target_slot": no_crystal_dreepy}
+	return run_checks([
+		assert_true(crystal_empty_score <= -1000.0, "Sparkling Crystal should not split away from an existing Fire/Psychic Dragapult line"),
+		assert_true(crystal_energized_score > -1000.0, "Sparkling Crystal should remain available on the Dreepy line that already has route Energy"),
+		assert_true(float(llm.call("score_action_absolute", fire_to_no_crystal, gs, 0)) <= -1000.0, "Fire/Psychic Energy should not split away from an existing Sparkling Crystal Dragapult line"),
+		assert_true(float(llm.call("score_action_absolute", fire_to_crystal, gs, 0)) > -1000.0, "Fire/Psychic Energy should remain available on the Sparkling Crystal Dreepy line"),
+	])
+
+
+func test_duplicate_backup_energy_does_not_consume_attach_before_missing_energy_draw() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(4)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0)
+	var crystal_line := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	crystal_line.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	crystal_line.attached_tool = CardInstance.create(_make_trainer_cd("Sparkling Crystal", "Tool"), 0)
+	var empty_backup := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	player.bench.clear()
+	player.bench.append(crystal_line)
+	player.bench.append(empty_backup)
+	player.hand.append(CardInstance.create(_make_trainer_cd("Iono", "Supporter"), 0))
+	player.hand.append(CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0))
+	for i in range(6):
+		player.deck.append(CardInstance.create(_make_energy_cd("Psychic Energy", "P"), 0))
+	var duplicate_fire_to_backup := {"kind": "attach_energy", "card": CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0), "target_slot": empty_backup}
+	var iono := {"kind": "play_trainer", "card": player.hand[0]}
+	return run_checks([
+		assert_true(float(llm.call("score_action_absolute", duplicate_fire_to_backup, gs, 0)) <= -1000.0, "Do not spend the manual attach on duplicate backup Fire while a Sparkling Crystal line needs Psychic and Iono can dig first"),
+		assert_true(float(llm.call("score_action_absolute", iono, gs, 0)) > -1000.0, "Iono should remain available when the only visible attach is a low-priority duplicate backup Energy"),
+	])
+
+
+func test_basic_setup_route_includes_arven_search_before_end_turn() -> String:
+	var builder := RouteBuilderScript.new()
+	var actions: Array[Dictionary] = [
+		{"id": "play_trainer:poffin", "action_id": "play_trainer:poffin", "kind": "play_trainer", "type": "play_trainer", "card": "Buddy-Buddy Poffin", "card_rules": {"name": "Buddy-Buddy Poffin", "tags": ["search_deck", "pokemon_related"]}},
+		{"id": "play_trainer:nest", "action_id": "play_trainer:nest", "kind": "play_trainer", "type": "play_trainer", "card": "Nest Ball", "card_rules": {"name": "Nest Ball", "tags": ["search_deck", "pokemon_related"]}},
+		{"id": "play_trainer:arven", "action_id": "play_trainer:arven", "kind": "play_trainer", "type": "play_trainer", "card": "Arven", "card_rules": {"name": "Arven", "tags": ["search_deck", "tool_or_modifier"]}},
+		{"id": "end_turn", "action_id": "end_turn", "kind": "end_turn", "type": "end_turn"},
+	]
+	var routes: Array = builder.call("build_candidate_routes", actions, [], {})
+	var setup_route: Dictionary = {}
+	for raw_route: Variant in routes:
+		if not (raw_route is Dictionary):
+			continue
+		var route: Dictionary = raw_route as Dictionary
+		var candidate_ids: Array[String] = []
+		for raw_action: Variant in route.get("actions", []):
+			if raw_action is Dictionary:
+				candidate_ids.append(str((raw_action as Dictionary).get("action_id", (raw_action as Dictionary).get("id", ""))))
+		if candidate_ids.has("play_trainer:arven") and candidate_ids.has("end_turn"):
+			setup_route = route
+			break
+	var route_ids: Array[String] = []
+	for raw_action: Variant in setup_route.get("actions", []):
+		if raw_action is Dictionary:
+			route_ids.append(str((raw_action as Dictionary).get("action_id", (raw_action as Dictionary).get("id", ""))))
+	return run_checks([
+		assert_false(setup_route.is_empty(), "A setup candidate route should include Arven-style setup search before preserving the turn"),
+		assert_true(route_ids.has("play_trainer:arven"), "Setup route should include Arven-style setup search before preserving the turn"),
+		assert_true(not route_ids.is_empty() and route_ids[route_ids.size() - 1] == "end_turn", "Setup route should still end only after setup/search actions"),
+	])
+
+
 func test_dragapult_llm_replaces_ready_jet_head_with_phantom_dive() -> String:
 	var llm := _new_strategy(LLM_SCRIPT_PATH)
 	if llm == null:
@@ -402,6 +597,365 @@ func test_energy_ready_dragapult_blocks_jet_head_without_active_queue() -> Strin
 		assert_true(float(llm.call("score_action_absolute", phantom_dive, gs, 0)) > -1000.0, "Phantom Dive should remain available as the primary terminal attack"),
 		assert_true(bool(llm.call("_deck_should_block_exact_queue_match", jet_head, jet_head, gs, 0)), "Queue-level guard should also reject exact Jet Head ids"),
 		assert_false(bool(llm.call("_deck_should_block_exact_queue_match", phantom_dive, phantom_dive, gs, 0)), "Queue-level guard should not reject the ready Phantom Dive action"),
+	])
+
+
+func test_dragapult_uses_draw_supporter_before_fallback_jet_head_when_missing_psychic() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(6)
+	var player: PlayerState = gs.players[0]
+	var dragapult := _make_slot(_make_dragapult_ex_cd(), 0)
+	dragapult.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	player.active_pokemon = dragapult
+	player.hand.append(CardInstance.create(_make_trainer_cd("Iono", "Supporter"), 0))
+	for i: int in 10:
+		player.deck.append(CardInstance.create(_make_trainer_cd("DeckCard%d" % i), 0))
+	var jet_head := {
+		"kind": "attack",
+		"attack_index": 0,
+		"attack_name": "Jet Head",
+		"projected_damage": 70,
+	}
+	gs.supporter_used_this_turn = false
+	var blocked_score: float = float(llm.call("score_action_absolute", jet_head, gs, 0))
+	gs.supporter_used_this_turn = true
+	var fallback_score: float = float(llm.call("score_action_absolute", jet_head, gs, 0))
+	return run_checks([
+		assert_true(blocked_score <= -1000.0, "Jet Head should wait for a live Iono route when Phantom Dive only misses Psychic"),
+		assert_true(fallback_score > -1000.0, "Jet Head should remain a fallback after the supporter draw window is gone"),
+	])
+
+
+func test_dragapult_requires_real_fire_and_psychic_for_phantom_dive_pressure() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(9)
+	var player: PlayerState = gs.players[0]
+	var dragapult := _make_slot(_make_dragapult_ex_cd(), 0)
+	dragapult.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	dragapult.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	player.active_pokemon = dragapult
+	var phantom_dive := {
+		"kind": "attack",
+		"attack_index": 1,
+		"attack_name": "Phantom Dive",
+		"projected_damage": 200,
+	}
+	return run_checks([
+		assert_false(bool(llm.call("_active_dragapult_pressure_ready", gs, 0)), "Two Fire Energy should not be treated as a ready R/P Phantom Dive cost"),
+		assert_false(bool(llm.call("_is_dragapult_phantom_dive_attack_action", phantom_dive, gs, 0)), "Phantom Dive action repair should require the exact Fire plus Psychic energy mix"),
+	])
+
+
+func test_sparkling_crystal_counts_as_missing_phantom_dive_cost() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(10)
+	var player: PlayerState = gs.players[0]
+	var dragapult := _make_slot(_make_dragapult_ex_cd(), 0)
+	dragapult.attached_energy.append(_attached_energy("Psychic Energy", "P"))
+	dragapult.attached_tool = CardInstance.create(_make_trainer_cd("Sparkling Crystal", "Tool"), 0)
+	player.active_pokemon = dragapult
+	var phantom_dive := {
+		"kind": "attack",
+		"attack_index": 1,
+		"attack_name": "Phantom Dive",
+		"projected_damage": 200,
+	}
+	var jet_head := {
+		"kind": "attack",
+		"attack_index": 0,
+		"attack_name": "Jet Head",
+		"projected_damage": 70,
+	}
+	return run_checks([
+		assert_true(bool(llm.call("_active_dragapult_pressure_ready", gs, 0)), "Sparkling Crystal plus one Psychic Energy should count as ready for Phantom Dive"),
+		assert_true(bool(llm.call("_is_dragapult_phantom_dive_attack_action", phantom_dive, gs, 0)), "Phantom Dive repair should honor Sparkling Crystal cost reduction"),
+		assert_true(float(llm.call("score_action_absolute", jet_head, gs, 0)) <= -1000.0, "Jet Head should be blocked when Sparkling Crystal makes Phantom Dive ready"),
+	])
+
+
+func test_rotom_terminal_draw_blocked_when_dragapult_line_can_attach_energy() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(8)
+	var player: PlayerState = gs.players[0]
+	var dragapult := _make_slot(_make_dragapult_ex_cd(), 0)
+	var rotom := _make_slot(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0)
+	player.active_pokemon = dragapult
+	player.bench.clear()
+	player.bench.append(rotom)
+	player.hand.append(CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0))
+	var rotom_draw := {
+		"id": "use_ability:bench_0:0",
+		"action_id": "use_ability:bench_0:0",
+		"type": "use_ability",
+		"kind": "use_ability",
+		"source_slot": rotom,
+		"ability_index": 0,
+	}
+	var fire_attach := {
+		"kind": "attach_energy",
+		"card": CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0),
+		"target_slot": dragapult,
+	}
+	return run_checks([
+		assert_true(bool(llm.call("_dragapult_line_manual_attach_available", gs, 0)), "A Dragapult line with missing Fire/Psychic and hand Energy should expose a manual attach obligation"),
+		assert_true(bool(llm.call("_deck_should_block_exact_queue_match", rotom_draw, rotom_draw, gs, 0)), "Rotom terminal draw should not consume the turn before a visible Dragapult-line manual attach"),
+		assert_true(float(llm.call("score_action_absolute", rotom_draw, gs, 0)) <= -1000.0, "The absolute scorer should suppress terminal Rotom draw before the attach window is used"),
+		assert_true(bool(llm.call("_deck_can_replace_end_turn_with_action", fire_attach, gs, 0)), "Runtime repair should be allowed to replace an end-turn queue with the missing manual attach"),
+	])
+
+
+func test_serialized_rotom_draw_ref_blocked_before_missing_psychic_attach() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(8)
+	var player: PlayerState = gs.players[0]
+	var dreepy := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	dreepy.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	player.active_pokemon = dreepy
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0))
+	player.hand.append(CardInstance.create(_make_energy_cd("Psychic Energy", "P"), 0))
+	var serialized_rotom_draw := {
+		"id": "use_ability:bench_0:0",
+		"action_id": "use_ability:bench_0:0",
+		"type": "use_ability",
+		"kind": "use_ability",
+		"source_slot": {
+			"pokemon_name": "洛托姆V",
+			"pokemon_stack": [{"card_name": "洛托姆V", "name_en": "Rotom V"}],
+		},
+		"ability_index": 0,
+	}
+	return run_checks([
+		assert_true(bool(llm.call("_dragapult_line_manual_attach_available", gs, 0)), "A Fire-attached Dreepy with Psychic in hand should expose a missing-cost manual attach"),
+		assert_true(bool(llm.call("_deck_should_block_exact_queue_match", serialized_rotom_draw, serialized_rotom_draw, gs, 0)), "Serialized Rotom refs from action traces should still be recognized and blocked"),
+		assert_true(float(llm.call("score_action_absolute", serialized_rotom_draw, gs, 0)) <= -1000.0, "Serialized Rotom terminal draw should be suppressed before attaching missing Psychic"),
+	])
+
+
+func test_iono_blocked_when_dragapult_line_can_attach_missing_energy() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(8)
+	var player: PlayerState = gs.players[0]
+	var drakloak := _make_slot(_make_pokemon_cd("Drakloak", "Stage 1", "P", 90, "Dreepy"), 0)
+	drakloak.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	player.active_pokemon = drakloak
+	player.hand.append(CardInstance.create(_make_energy_cd("Psychic Energy", "P"), 0))
+	var iono := {
+		"id": "play_trainer:c10",
+		"action_id": "play_trainer:c10",
+		"type": "play_trainer",
+		"kind": "play_trainer",
+		"card": CardInstance.create(_make_trainer_cd("Iono", "Supporter"), 0),
+	}
+	return run_checks([
+		assert_true(bool(llm.call("_dragapult_line_manual_attach_available", gs, 0)), "Missing Psychic on the active Drakloak should be attachable before shuffle-draw"),
+		assert_true(float(llm.call("score_action_absolute", iono, gs, 0)) <= -1000.0, "Iono should not shuffle away the visible missing Psychic before manual attach"),
+	])
+
+
+func test_iono_blocked_when_crystal_can_complete_dragapult_route() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(12)
+	var player: PlayerState = gs.players[0]
+	var dragapult := _make_slot(_make_dragapult_ex_cd(), 0)
+	dragapult.attached_energy.append(_attached_energy("Psychic Energy", "P"))
+	player.active_pokemon = dragapult
+	player.hand.append(CardInstance.create(_make_trainer_cd("Sparkling Crystal", "Tool"), 0))
+	var iono := {
+		"id": "play_trainer:c10",
+		"action_id": "play_trainer:c10",
+		"type": "play_trainer",
+		"kind": "play_trainer",
+		"card": CardInstance.create(_make_trainer_cd("Iono", "Supporter"), 0),
+	}
+	return run_checks([
+		assert_true(bool(llm.call("_dragapult_crystal_attach_available", gs, 0)), "Sparkling Crystal in hand should expose a route-critical tool attach before shuffle-draw"),
+		assert_true(float(llm.call("score_action_absolute", iono, gs, 0)) <= -1000.0, "Iono should not shuffle away Sparkling Crystal before it completes the Dragapult attack route"),
+	])
+
+
+func test_earthen_vessel_energy_search_prefers_missing_fire_for_active_dragapult() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(10)
+	var player: PlayerState = gs.players[0]
+	var dragapult := _make_slot(_make_dragapult_ex_cd(), 0)
+	dragapult.attached_energy.append(_attached_energy("Psychic Energy", "P"))
+	player.active_pokemon = dragapult
+	var fire := CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0)
+	var psychic_a := CardInstance.create(_make_energy_cd("Psychic Energy", "P"), 0)
+	var psychic_b := CardInstance.create(_make_energy_cd("Psychic Energy", "P"), 0)
+	var picked: Array = llm.call("pick_interaction_items", [psychic_a, psychic_b, fire], {"id": "search_energy", "max_select": 2}, {"game_state": gs, "player_index": 0})
+	var first_name := ""
+	if not picked.is_empty() and picked[0] is CardInstance and (picked[0] as CardInstance).card_data != null:
+		first_name = (picked[0] as CardInstance).card_data.name_en
+	return run_checks([
+		assert_eq(first_name, "Fire Energy", "Earthen Vessel should search the missing Fire before duplicate Psychic when active Dragapult already has Psychic"),
+		assert_true(picked.has(fire), "Missing Fire Energy should be included in the search picks"),
+	])
+
+
+func test_send_out_prefers_powered_dragapult_over_rotom_support() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(14)
+	var player: PlayerState = gs.players[0]
+	var rotom := _make_slot(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0)
+	var duskull := _make_slot(_make_pokemon_cd("Duskull", "Basic", "P", 60), 0)
+	var dragapult := _make_slot(_make_dragapult_ex_cd(), 0)
+	dragapult.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	dragapult.attached_energy.append(_attached_energy("Psychic Energy", "P"))
+	player.active_pokemon = null
+	player.bench.clear()
+	player.bench.append(rotom)
+	player.bench.append(duskull)
+	player.bench.append(dragapult)
+	var step := {"id": "send_out", "use_slot_selection_ui": true}
+	var context := {"game_state": gs, "player_index": 0, "all_items": player.bench}
+	var dragapult_score: float = float(llm.call("score_handoff_target", dragapult, step, context))
+	var rotom_score: float = float(llm.call("score_handoff_target", rotom, step, context))
+	var duskull_score: float = float(llm.call("score_handoff_target", duskull, step, context))
+	return run_checks([
+		assert_true(dragapult_score > rotom_score, "Send-out scoring should not promote Rotom V over a powered Phantom Dive attacker"),
+		assert_true(dragapult_score > duskull_score, "Send-out scoring should choose the powered Dragapult before low-value Duskull shielding"),
+	])
+
+
+func test_send_out_uses_rotom_to_cover_unready_dragapult_seeds() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(6)
+	var player: PlayerState = gs.players[0]
+	var rotom := _make_slot(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0)
+	var dreepy := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	var drakloak := _make_slot(_make_pokemon_cd("Drakloak", "Stage 1", "P", 90, "Dreepy"), 0)
+	var duskull := _make_slot(_make_pokemon_cd("Duskull", "Basic", "P", 60), 0)
+	player.active_pokemon = null
+	player.bench.clear()
+	player.bench.append(rotom)
+	player.bench.append(dreepy)
+	player.bench.append(drakloak)
+	player.bench.append(duskull)
+	var step := {"id": "send_out", "use_slot_selection_ui": true}
+	var context := {"game_state": gs, "player_index": 0, "all_items": player.bench}
+	var rotom_score: float = float(llm.call("score_handoff_target", rotom, step, context))
+	var dreepy_score: float = float(llm.call("score_handoff_target", dreepy, step, context))
+	var drakloak_score: float = float(llm.call("score_handoff_target", drakloak, step, context))
+	var duskull_score: float = float(llm.call("score_handoff_target", duskull, step, context))
+	return run_checks([
+		assert_true(rotom_score > dreepy_score, "After a seed KO, send-out should use Rotom V as a pressure buffer instead of exposing unready Dreepy"),
+		assert_true(rotom_score > drakloak_score, "After a seed KO, send-out should protect unready Drakloak from being promoted into a free prize"),
+		assert_true(rotom_score > duskull_score, "Rotom V buffer should still outrank low-value Duskull send-out when preserving the Dragapult line"),
+	])
+
+
+func test_switch_action_blocks_serialized_support_only_target() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(10)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Dreepy", "Basic", "P", 70), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd("Drakloak", "Stage 1", "P", 90, "Dreepy"), 0))
+	var bad_switch := {
+		"id": "play_trainer:c30",
+		"action_id": "play_trainer:c30",
+		"type": "play_trainer",
+		"kind": "play_trainer",
+		"card": {"card_name": "宝可梦交替", "name_en": "Switch", "card_type": "Item"},
+		"targets": [{
+			"self_switch_target": [{
+				"pokemon_name": "洛托姆V",
+				"pokemon_stack": [{"card_name": "洛托姆V", "name_en": "Rotom V"}],
+			}],
+		}],
+	}
+	var good_switch := bad_switch.duplicate(true)
+	good_switch["targets"] = [{
+		"self_switch_target": [{
+			"pokemon_name": "多龙奇",
+			"pokemon_stack": [{"card_name": "多龙奇", "name_en": "Drakloak"}],
+		}],
+	}]
+	return run_checks([
+		assert_true(float(llm.call("score_action_absolute", bad_switch, gs, 0)) <= -1000.0, "Switch should not promote Rotom V while a Dragapult line exists"),
+		assert_true(float(llm.call("score_action_absolute", good_switch, gs, 0)) > -1000.0, "Switch should remain available when it promotes the Dragapult line"),
+	])
+
+
+func test_switch_blocks_empty_dragapult_line_when_route_resource_line_exists() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(8)
+	var player: PlayerState = gs.players[0]
+	var active_dragapult := _make_slot(_make_dragapult_ex_cd(), 0)
+	active_dragapult.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	var empty_dreepy := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	var resource_dreepy := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	resource_dreepy.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	resource_dreepy.attached_tool = CardInstance.create(_make_trainer_cd("Sparkling Crystal", "Tool"), 0)
+	player.active_pokemon = active_dragapult
+	player.bench.clear()
+	player.bench.append(empty_dreepy)
+	player.bench.append(resource_dreepy)
+	var switch_to_empty := {
+		"id": "play_trainer:switch",
+		"action_id": "play_trainer:switch",
+		"type": "play_trainer",
+		"kind": "play_trainer",
+		"card": CardInstance.create(_make_trainer_cd("Switch", "Item"), 0),
+		"targets": [{"self_switch_target": [empty_dreepy]}],
+	}
+	var switch_to_resource := switch_to_empty.duplicate(true)
+	switch_to_resource["targets"] = [{"self_switch_target": [resource_dreepy]}]
+	return run_checks([
+		assert_true(float(llm.call("score_action_absolute", switch_to_empty, gs, 0)) <= -1000.0, "Switch should not move from a route-resource Dragapult line into an empty Dreepy line"),
+		assert_true(float(llm.call("score_action_absolute", switch_to_resource, gs, 0)) > -1000.0, "Switch should remain available when it promotes the Dragapult line carrying route resources"),
+	])
+
+
+func test_gust_resources_blocked_without_attack_or_dusknoir_conversion_window() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(12)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_dragapult_ex_cd(), 0)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Raikou V", "Basic", "L", 200, "", "V"), 1)
+	var boss := {
+		"id": "play_trainer:boss",
+		"action_id": "play_trainer:boss",
+		"type": "play_trainer",
+		"kind": "play_trainer",
+		"card": CardInstance.create(_make_trainer_cd("Boss's Orders", "Supporter"), 0),
+	}
+	var blocked_score: float = float(llm.call("score_action_absolute", boss, gs, 0))
+	player.active_pokemon.attached_energy.append(_attached_energy("Psychic Energy", "P"))
+	player.active_pokemon.attached_tool = CardInstance.create(_make_trainer_cd("Sparkling Crystal", "Tool"), 0)
+	var ready_score: float = float(llm.call("score_action_absolute", boss, gs, 0))
+	return run_checks([
+		assert_true(blocked_score <= -1000.0, "Boss should be preserved when there is no active attack or Dusknoir conversion window"),
+		assert_true(ready_score > -1000.0, "Boss should remain available once Phantom Dive is ready through Sparkling Crystal"),
 	])
 
 
@@ -504,19 +1058,22 @@ func test_tool_assignment_blocks_forest_seal_and_sparkling_crystal_bad_targets()
 		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
 	var gs := _make_game_state(6)
 	var player: PlayerState = gs.players[0]
+	var tatsugiri := _make_slot(_make_pokemon_cd("Tatsugiri", "Basic", "W", 70), 0)
 	var dreepy := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
 	var dragapult := _make_slot(_make_pokemon_cd("Dragapult ex", "Stage 2", "N", 320, "Drakloak", "ex"), 0)
 	var duskull := _make_slot(_make_pokemon_cd("Duskull", "Basic", "P", 60), 0)
 	var rotom := _make_slot(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0)
 	var lumineon := _make_slot(_make_pokemon_cd("Lumineon V", "Basic", "W", 170, "", "V"), 0)
-	player.active_pokemon = dreepy
+	player.active_pokemon = tatsugiri
 	player.bench.clear()
+	player.bench.append(dreepy)
 	player.bench.append(dragapult)
 	player.bench.append(duskull)
 	player.bench.append(rotom)
 	player.bench.append(lumineon)
 	var crystal := CardInstance.create(_make_trainer_cd("Sparkling Crystal", "Tool"), 0)
 	var forest_seal := CardInstance.create(_make_trainer_cd("Forest Seal Stone", "Tool"), 0)
+	var forest_to_rotom := {"kind": "attach_tool", "card": forest_seal, "target_slot": rotom}
 	return run_checks([
 		assert_true(bool(llm.call("_deck_should_block_exact_queue_match", {}, {"kind": "attach_tool", "card": crystal, "target_slot": duskull}, gs, 0)), "Sparkling Crystal should not attach to Duskull"),
 		assert_false(bool(llm.call("_deck_should_block_exact_queue_match", {}, {"kind": "attach_tool", "card": crystal, "target_slot": dreepy}, gs, 0)), "Sparkling Crystal should be allowed on Dreepy"),
@@ -524,6 +1081,7 @@ func test_tool_assignment_blocks_forest_seal_and_sparkling_crystal_bad_targets()
 		assert_true(bool(llm.call("_deck_should_block_exact_queue_match", {}, {"kind": "attach_tool", "card": forest_seal, "target_slot": dragapult}, gs, 0)), "Forest Seal Stone should not attach to Dragapult ex"),
 		assert_false(bool(llm.call("_deck_should_block_exact_queue_match", {}, {"kind": "attach_tool", "card": forest_seal, "target_slot": rotom}, gs, 0)), "Forest Seal Stone should be allowed on Rotom V"),
 		assert_false(bool(llm.call("_deck_should_block_exact_queue_match", {}, {"kind": "attach_tool", "card": forest_seal, "target_slot": lumineon}, gs, 0)), "Forest Seal Stone should be allowed on Lumineon V"),
+		assert_true(bool(llm.call("_deck_can_replace_end_turn_with_action", forest_to_rotom, gs, 0)), "Forest Seal Stone on a V carrier should remain a non-terminal setup replacement before end_turn"),
 	])
 
 
@@ -545,9 +1103,11 @@ func test_tm_devolution_requires_real_opponent_devolution_window() -> String:
 	damaged_stage1.damage_counters = 40
 	opponent.bench.append(damaged_stage1)
 	var blocked_with_window := bool(llm.call("_deck_should_block_exact_queue_match", {}, attach_tm, gs, 0))
+	var can_replace_end_with_tm := bool(llm.call("_deck_can_replace_end_turn_with_action", attach_tm, gs, 0))
 	return run_checks([
 		assert_true(blocked_without_window, "TM Devolution should not attach early when the opponent has no evolved damaged target"),
 		assert_false(blocked_with_window, "TM Devolution should remain available once a real devolution prize window exists"),
+		assert_false(can_replace_end_with_tm, "TM Devolution is a tactical tool and should not be injected as generic setup before end_turn"),
 	])
 
 
@@ -669,6 +1229,43 @@ func test_ready_dragapult_blocks_extra_setup_and_rotom_draw() -> String:
 	])
 
 
+func test_ready_dragapult_blocks_nonterminal_setup_but_allows_prize_gust() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(10)
+	var player: PlayerState = gs.players[0]
+	var dragapult := _make_slot(_make_dragapult_ex_cd(), 0)
+	dragapult.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	dragapult.attached_energy.append(_attached_energy("Psychic Energy", "P"))
+	player.active_pokemon = dragapult
+	var opponent: PlayerState = gs.players[1]
+	var full_miraidon := _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var raichu := _make_slot(_make_pokemon_cd("Raichu V", "Basic", "L", 200, "", "V"), 1)
+	opponent.active_pokemon = _make_slot(_make_pokemon_cd("Iron Hands ex", "Basic", "L", 230, "", "ex"), 1)
+	opponent.bench.clear()
+	opponent.bench.append(full_miraidon)
+	opponent.bench.append(raichu)
+	var arven := {"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Arven", "Supporter"), 0)}
+	var end_turn := {"kind": "end_turn"}
+	var bad_gust := {
+		"kind": "play_trainer",
+		"card": CardInstance.create(_make_trainer_cd("Counter Catcher", "Item"), 0),
+		"targets": [{"opponent_bench_target": [full_miraidon]}],
+	}
+	var prize_gust := {
+		"kind": "play_trainer",
+		"card": CardInstance.create(_make_trainer_cd("Counter Catcher", "Item"), 0),
+		"targets": [{"opponent_bench_target": [raichu]}],
+	}
+	return run_checks([
+		assert_true(float(llm.call("score_action_absolute", arven, gs, 0)) <= -1000.0, "Arven should not replace a ready Phantom Dive attack window"),
+		assert_true(float(llm.call("score_action_absolute", end_turn, gs, 0)) <= -1000.0, "End turn should be blocked while Phantom Dive is ready"),
+		assert_true(float(llm.call("score_action_absolute", bad_gust, gs, 0)) <= -1000.0, "Gust should be blocked when it does not create a Phantom Dive prize target"),
+		assert_true(float(llm.call("score_action_absolute", prize_gust, gs, 0)) > -1000.0, "Gust remains allowed when it pulls a 200 HP multi-prize Phantom Dive target"),
+	])
+
+
 func test_rare_candy_interaction_scores_finish_dragapult_before_dusknoir_without_conversion() -> String:
 	var llm := _new_strategy(LLM_SCRIPT_PATH)
 	if llm == null:
@@ -697,6 +1294,333 @@ func test_rare_candy_interaction_scores_finish_dragapult_before_dusknoir_without
 		assert_true(dragapult_score > dusknoir_setup_score, "Rare Candy should prefer first Dragapult ex before Dusknoir when no conversion exists"),
 		assert_true(dreepy_target_score > duskull_target_score, "Rare Candy target selection should prefer Dreepy for the main Stage 2 line"),
 		assert_true(dusknoir_conversion_score > dragapult_score, "Dusknoir may outrank Dragapult when Rare Candy creates an immediate prize conversion"),
+	])
+
+
+func test_rare_candy_targets_dragapult_line_with_existing_route_resources() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(4)
+	var player: PlayerState = gs.players[0]
+	var exposed_empty_dreepy := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	var routed_dreepy := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	routed_dreepy.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	routed_dreepy.attached_energy.append(_attached_energy("Psychic Energy", "P"))
+	routed_dreepy.attached_tool = CardInstance.create(_make_trainer_cd("Sparkling Crystal", "Tool"), 0)
+	player.active_pokemon = exposed_empty_dreepy
+	player.bench.clear()
+	player.bench.append(routed_dreepy)
+	var dragapult_card := CardInstance.create(_make_dragapult_ex_cd(), 0)
+	var context := {
+		"game_state": gs,
+		"player_index": 0,
+		"stage2_card": [dragapult_card],
+	}
+	var exposed_score: float = float(llm.call("score_interaction_target", exposed_empty_dreepy, {"id": "target_pokemon"}, context))
+	var routed_score: float = float(llm.call("score_interaction_target", routed_dreepy, {"id": "target_pokemon"}, context))
+	return run_checks([
+		assert_true(routed_score > exposed_score, "Rare Candy target selection should keep Dragapult ex on the Fire/Psychic/Sparkling Crystal line"),
+		assert_true(exposed_score < 1200.0, "An exposed empty Dreepy should be downgraded when another Dragapult line already carries route resources"),
+	])
+
+
+func test_forest_seal_search_prefers_dragapult_for_ready_rare_candy_attack_route() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(2)
+	var player: PlayerState = gs.players[0]
+	var dreepy := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	dreepy.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	dreepy.attached_tool = CardInstance.create(_make_trainer_cd("Sparkling Crystal", "Tool"), 0)
+	player.active_pokemon = dreepy
+	player.hand.append(CardInstance.create(_make_trainer_cd("Rare Candy", "Item"), 0))
+	var poffin := CardInstance.create(_make_trainer_cd("Buddy-Buddy Poffin", "Item"), 0)
+	var fire_energy := CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0)
+	var dragapult := CardInstance.create(_make_dragapult_ex_cd(), 0)
+	var items: Array = [poffin, fire_energy, dragapult]
+	var context := {"game_state": gs, "player_index": 0}
+	var picked: Array = llm.call("pick_interaction_items", items, {"id": "search_cards", "max_select": 1}, context)
+	var dragapult_score: float = float(llm.call("score_interaction_target", dragapult, {"id": "search_cards"}, context))
+	var poffin_score: float = float(llm.call("score_interaction_target", poffin, {"id": "search_cards"}, context))
+	return run_checks([
+		assert_eq(picked.size(), 1, "Forest Seal Stone search should select exactly one card"),
+		assert_true(picked[0] == dragapult, "Forest Seal Stone should fetch Dragapult ex when Rare Candy plus Sparkling Crystal creates an immediate Phantom Dive route"),
+		assert_true(dragapult_score > poffin_score, "Immediate Dragapult ex conversion should outrank extra setup Pokemon search"),
+	])
+
+
+func test_basic_search_prefers_forest_seal_carrier_when_star_search_completes_dragapult() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(2)
+	var player: PlayerState = gs.players[0]
+	var dreepy := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	dreepy.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	dreepy.attached_tool = CardInstance.create(_make_trainer_cd("Sparkling Crystal", "Tool"), 0)
+	player.active_pokemon = dreepy
+	player.hand.append(CardInstance.create(_make_trainer_cd("Rare Candy", "Item"), 0))
+	player.hand.append(CardInstance.create(_make_trainer_cd("Forest Seal Stone", "Tool"), 0))
+	var extra_dreepy := CardInstance.create(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	var duskull := CardInstance.create(_make_pokemon_cd("Duskull", "Basic", "P", 60), 0)
+	var rotom := CardInstance.create(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0)
+	var items: Array = [extra_dreepy, duskull, rotom]
+	var context := {"game_state": gs, "player_index": 0}
+	var picked: Array = llm.call("pick_interaction_items", items, {"id": "basic_pokemon", "max_select": 1}, context)
+	var rotom_score: float = float(llm.call("score_interaction_target", rotom, {"id": "basic_pokemon"}, context))
+	var dreepy_score: float = float(llm.call("score_interaction_target", extra_dreepy, {"id": "basic_pokemon"}, context))
+	return run_checks([
+		assert_eq(picked.size(), 1, "Basic Pokemon search should select one Forest Seal carrier"),
+		assert_true(picked[0] == rotom, "Nest Ball-style search should fetch Rotom V when Forest Seal Stone can complete Rare Candy Dragapult ex"),
+		assert_true(rotom_score > dreepy_score, "Forest Seal Stone carrier should outrank extra Dreepy when the current line is already live"),
+	])
+
+
+func test_basic_search_anticipates_arven_forest_seal_carrier_opening() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(2)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	player.hand.append(CardInstance.create(_make_trainer_cd("Arven", "Supporter"), 0))
+	player.hand.append(CardInstance.create(_make_trainer_cd("Sparkling Crystal", "Tool"), 0))
+	var extra_dreepy := CardInstance.create(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	var duskull := CardInstance.create(_make_pokemon_cd("Duskull", "Basic", "P", 60), 0)
+	var rotom := CardInstance.create(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0)
+	var items: Array = [extra_dreepy, duskull, rotom]
+	var context := {"game_state": gs, "player_index": 0}
+	var picked: Array = llm.call("pick_interaction_items", items, {"id": "basic_pokemon", "max_select": 1}, context)
+	return run_checks([
+		assert_eq(picked.size(), 1, "Opening basic Pokemon search should pick one target"),
+		assert_true(picked[0] == rotom, "Nest Ball before Arven should anticipate Rotom V as the Forest Seal Stone carrier when the Dragapult line is already seeded"),
+	])
+
+
+func test_basic_search_prefers_rotom_buffer_over_fezandipiti_under_miraidon_pressure() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(6)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	var opponent: PlayerState = gs.players[1]
+	opponent.active_pokemon = _make_slot(_make_pokemon_cd("Raikou V", "Basic", "L", 200, "", "V"), 1)
+	opponent.active_pokemon.attached_energy.append(_attached_energy("Lightning Energy", "L"))
+	var rotom := CardInstance.create(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0)
+	var fezandipiti := CardInstance.create(_make_pokemon_cd("Fezandipiti ex", "Basic", "D", 210, "", "ex"), 0)
+	var duskull := CardInstance.create(_make_pokemon_cd("Duskull", "Basic", "P", 60), 0)
+	var items: Array = [fezandipiti, duskull, rotom]
+	var context := {"game_state": gs, "player_index": 0}
+	var picked: Array = llm.call("pick_interaction_items", items, {"id": "basic_pokemon", "max_select": 1}, context)
+	var rotom_score: float = float(llm.call("score_interaction_target", rotom, {"id": "basic_pokemon"}, context))
+	var fez_score: float = float(llm.call("score_interaction_target", fezandipiti, {"id": "basic_pokemon"}, context))
+	return run_checks([
+		assert_eq(picked.size(), 1, "Basic search should still select a single Pokemon under pressure"),
+		assert_true(picked[0] == rotom, "Nest Ball-style search should find Rotom V as a buffer instead of Fezandipiti ex while Dreepy is exposed to Miraidon pressure"),
+		assert_true(rotom_score > fez_score, "Rotom V buffer should outrank Fezandipiti ex comeback draw when the Dragapult seed needs protection"),
+	])
+
+
+func test_arven_item_search_prefers_nest_ball_when_forest_seal_needs_carrier() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(2)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	player.hand.append(CardInstance.create(_make_trainer_cd("Arven", "Supporter"), 0))
+	player.hand.append(CardInstance.create(_make_trainer_cd("Sparkling Crystal", "Tool"), 0))
+	var nest_ball := CardInstance.create(_make_trainer_cd("Nest Ball", "Item"), 0)
+	var rare_candy := CardInstance.create(_make_trainer_cd("Rare Candy", "Item"), 0)
+	var context := {"game_state": gs, "player_index": 0}
+	var nest_score: float = float(llm.call("score_interaction_target", nest_ball, {"id": "search_item"}, context))
+	var rare_candy_score: float = float(llm.call("score_interaction_target", rare_candy, {"id": "search_item"}, context))
+	return run_checks([
+		assert_true(nest_score > rare_candy_score, "Arven should fetch Nest Ball before Rare Candy when Forest Seal Stone still needs a V carrier"),
+	])
+
+
+func test_bad_prefix_attach_does_not_block_later_forest_carrier_search() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(2)
+	var player: PlayerState = gs.players[0]
+	var active_dreepy := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	var backup_dreepy := _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	player.active_pokemon = active_dreepy
+	player.bench.append(backup_dreepy)
+	player.hand.append(CardInstance.create(_make_trainer_cd("Forest Seal Stone", "Tool"), 0))
+	player.hand.append(CardInstance.create(_make_trainer_cd("Rare Candy", "Item"), 0))
+	var fire_energy := CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0)
+	var nest_card := CardInstance.create(_make_trainer_cd("Nest Ball", "Item"), 0)
+	var bad_attach := {
+		"id": "attach_energy:fire:active",
+		"action_id": "attach_energy:fire:active",
+		"kind": "attach_energy",
+		"type": "attach_energy",
+		"card": fire_energy,
+		"target_slot": active_dreepy,
+	}
+	var serialized_bad_attach := {
+		"id": "attach_energy:fire:active",
+		"action_id": "attach_energy:fire:active",
+		"kind": "attach_energy",
+		"type": "attach_energy",
+		"card": "Fire Energy",
+		"position": "active",
+		"target": "Dreepy",
+	}
+	var nest_action := {
+		"id": "play_trainer:nest",
+		"action_id": "play_trainer:nest",
+		"kind": "play_trainer",
+		"type": "play_trainer",
+		"card": nest_card,
+		"card_rules": {"name": "Nest Ball", "tags": ["search_deck", "pokemon_related"]},
+	}
+	var queue: Array[Dictionary] = [bad_attach, nest_action, {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"}]
+	var serialized_queue: Array[Dictionary] = [serialized_bad_attach, nest_action, {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"}]
+	var nest_score := float(llm.call("_score_from_queue", nest_action, queue, gs, 0))
+	var serialized_nest_score := float(llm.call("_score_from_queue", nest_action, serialized_queue, gs, 0))
+	return run_checks([
+		assert_true(bool(llm.call("_deck_should_block_exact_queue_match", bad_attach, bad_attach, gs, 0)), "The exposed active Dreepy attach is intentionally blocked by the deck hook"),
+		assert_true(bool(llm.call("_deck_should_block_exact_queue_match", serialized_bad_attach, serialized_bad_attach, gs, 0)), "Serialized active-position attach refs should resolve to the exposed active Dreepy"),
+		assert_true(nest_score > 0.0, "A blocked bad attach prefix should not prevent executing the later Nest Ball carrier-search action"),
+		assert_true(serialized_nest_score > 0.0, "Serialized bad attach prefixes should not block later carrier-search actions either"),
+	])
+
+
+func test_forest_seal_attach_replans_for_star_search_action_surface() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var before := {"turn": 2, "hand_count": 5, "deck_count": 40, "discard_count": 0, "hand_ids": ["forest"], "hand_names": ["Forest Seal Stone"]}
+	var after := {"turn": 2, "hand_count": 4, "deck_count": 40, "discard_count": 0, "hand_ids": [], "hand_names": []}
+	var trigger: Dictionary = llm.call("_deck_replan_trigger_after_state_change", before, after, {
+		"success": true,
+		"step_kind": "main_action",
+		"action_kind": "attach_tool",
+		"action_card_name": "Forest Seal Stone",
+		"action_card_type": "Tool",
+	})
+	return run_checks([
+		assert_true(bool(trigger.get("should_replan", false)), "Forest Seal Stone attach should immediately replan because it unlocks Star Alchemy"),
+		assert_true(bool(trigger.get("ignore_replan_limit", false)), "Forest Seal replan should bypass the normal same-turn limit"),
+		assert_eq(str(trigger.get("reason", "")), "forest_seal_unlocked_star_search", "Forest Seal replan reason should be explicit"),
+	])
+
+
+func test_forest_seal_blocks_rotom_quick_search_until_star_search_used() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(2)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Dreepy", "Basic", "N", 70), 0)
+	var rotom := _make_slot(_make_pokemon_cd("Rotom V", "Basic", "L", 190, "", "V"), 0)
+	rotom.attached_tool = CardInstance.create(_make_trainer_cd("Forest Seal Stone", "Tool"), 0)
+	player.bench.append(rotom)
+	player.hand.append(CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0))
+	player.hand.append(CardInstance.create(_make_trainer_cd("Sparkling Crystal", "Tool"), 0))
+	var quick_search := {
+		"id": "use_ability:bench_0:0",
+		"action_id": "use_ability:bench_0:0",
+		"kind": "use_ability",
+		"type": "use_ability",
+		"pokemon": "Rotom V",
+		"ability_index": 0,
+	}
+	var star_search := {
+		"id": "use_ability:bench_0:1",
+		"action_id": "use_ability:bench_0:1",
+		"kind": "use_ability",
+		"type": "use_ability",
+		"pokemon": "Rotom V",
+		"ability_index": 1,
+	}
+	var queue: Array[Dictionary] = [quick_search, star_search, {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"}]
+	var prefix_blocks_star := bool(llm.call("_queue_prefix_blocks_skip", queue, 1, gs, 0))
+	return run_checks([
+		assert_true(bool(llm.call("_deck_should_block_exact_queue_match", quick_search, quick_search, gs, 0)), "Rotom Quick Search should not consume the turn before Forest Seal Star Search"),
+		assert_false(bool(llm.call("_deck_should_block_exact_queue_match", star_search, star_search, gs, 0)), "Forest Seal Star Search should remain executable"),
+		assert_true(bool(llm.call("_deck_queue_item_matches_action", quick_search, star_search, gs, 0)), "Forest Seal Star Search should be allowed to replace a queued Rotom Quick Search"),
+		assert_false(prefix_blocks_star, "Blocked Quick Search should not prevent the later Star Search queue item from matching"),
+		])
+
+
+func test_prompt_builder_describes_forest_seal_star_search_as_tool_search() -> String:
+	var builder = PromptBuilderScript.new()
+	var gs := _make_game_state(2)
+	var player: PlayerState = gs.players[0]
+	var rotom := _make_slot(_make_pokemon_cd(
+		"Rotom V",
+		"Basic",
+		"L",
+		190,
+		"",
+		"V",
+		[{"name": "Fast Charge", "text": "Draw 3 cards. Your turn ends."}]
+	), 0)
+	player.active_pokemon = rotom
+	var forest_cd := _make_trainer_cd("Forest Seal Stone", "Tool")
+	forest_cd.effect_id = "9fa9943ccda36f417ac3cb675177c216"
+	forest_cd.description = "The Pokemon V this card is attached to may use this VSTAR Power. [Ability] Star Alchemy: Search your deck for a card and put it into your hand."
+	var forest := CardInstance.create(forest_cd, 0)
+	rotom.attached_tool = forest
+	var ref: Dictionary = builder.legal_action_reference({
+		"kind": "use_ability",
+		"source_slot": rotom,
+		"ability_index": 1,
+		"ability_source_card": forest,
+		"ability_name": "Star Alchemy",
+		"ability_text": forest_cd.description,
+		"requires_interaction": true,
+	}, gs, 0)
+	var card_rules: Dictionary = ref.get("card_rules", {}) if ref.get("card_rules", {}) is Dictionary else {}
+	var ability_rules: Dictionary = ref.get("ability_rules", {}) if ref.get("ability_rules", {}) is Dictionary else {}
+	var schema: Dictionary = ref.get("interaction_schema", {}) if ref.get("interaction_schema", {}) is Dictionary else {}
+	var route_builder = RouteBuilderScript.new()
+	var routes: Array[Dictionary] = route_builder.build_candidate_routes([ref, {"id": "end_turn", "type": "end_turn"}], [], {})
+	var route_action_ids: Array[String] = []
+	for route: Dictionary in routes:
+		for action: Dictionary in route.get("actions", []):
+			route_action_ids.append(str(action.get("id", "")))
+	return run_checks([
+		assert_eq(str(ref.get("ability", "")), "Star Alchemy", "Prompt ref should expose Forest Seal Stone's granted ability name"),
+		assert_eq(str(ref.get("card", "")), "Forest Seal Stone", "Prompt ref should use Forest Seal Stone as the ability source card"),
+		assert_true((card_rules.get("tags", []) as Array).has("search_deck"), "Forest Seal Stone card rules should carry search_deck tags"),
+		assert_true((ability_rules.get("tags", []) as Array).has("search_deck"), "Forest Seal Stone ability rules should carry search_deck tags"),
+		assert_true(schema.has("search_targets"), "Star Search should expose a search schema, not Rotom's discard draw schema"),
+		assert_false(schema.has("discard_cards"), "Star Search should not inherit Rotom Quick Search discard schema"),
+		assert_true(route_action_ids.has("use_ability:active:1"), "Route builder should include Star Search as productive setup before end_turn"),
+	])
+
+
+func test_ultra_ball_discard_protects_missing_dragapult_energy() -> String:
+	var llm := _new_strategy(LLM_SCRIPT_PATH)
+	if llm == null:
+		return "DeckStrategyDragapultDusknoirLLM.gd should instantiate"
+	var gs := _make_game_state(8)
+	var player: PlayerState = gs.players[0]
+	var dragapult := _make_slot(_make_dragapult_ex_cd(), 0)
+	dragapult.attached_energy.append(_attached_energy("Psychic Energy", "P"))
+	player.active_pokemon = dragapult
+	var fire := CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0)
+	var iono := CardInstance.create(_make_trainer_cd("Iono", "Supporter"), 0)
+	var tm_devolution := CardInstance.create(_make_trainer_cd("Technical Machine: Devolution", "Tool"), 0)
+	var items: Array = [fire, iono, tm_devolution]
+	var context := {"game_state": gs, "player_index": 0}
+	var picked: Array = llm.call("pick_interaction_items", items, {"id": "discard_cards", "max_select": 1}, context)
+	var fire_score: float = float(llm.call("score_interaction_target", fire, {"id": "discard_cards"}, context))
+	var iono_score: float = float(llm.call("score_interaction_target", iono, {"id": "discard_cards"}, context))
+	return run_checks([
+		assert_eq(picked.size(), 1, "Discard interaction should choose one card"),
+		assert_true(picked[0] != fire, "Ultra Ball discard should preserve Fire Energy when active Dragapult ex already has Psychic and needs Fire"),
+		assert_true(fire_score < iono_score, "Route-critical missing Dragapult Energy should score lower than expendable supporter discard"),
 	])
 
 

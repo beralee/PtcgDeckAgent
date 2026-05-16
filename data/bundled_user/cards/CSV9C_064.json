@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "Tera",
+	"artist": "5ban Graphics",
+	"attacks": [
+		{
+			"cost": "LC",
+			"damage": "110+",
+			"is_vstar_power": false,
+			"name": "冲天丝线",
+			"text": "如果对手的战斗宝可梦是「宝可梦【ex】・V」的话，则追加造成110伤害。"
+		},
+		{
+			"cost": "GLF",
+			"damage": "180",
+			"is_vstar_power": false,
+			"name": "雷击石",
+			"text": "将这只宝可梦身上附着的能量，全部放于弃牌区。在下一个对手的回合，对手无法从手牌使出物品。"
+		}
+	],
+	"card_index": "064",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "【雷】【无】 冲天丝线 110+\n如果对手的战斗宝可梦是「宝可梦【ex】・V」的话，则追加造成110伤害。\n\n【草】【雷】【斗】 雷击石 180\n将这只宝可梦身上附着的能量，全部放于弃牌区。在下一个对手的回合，对手无法从手牌使出物品。\n\n\n",
+	"effect_id": "cfe54f4650db054ec2eec6dfcaaff88a",
+	"energy_provides": "",
+	"energy_type": "L",
+	"evolves_from": "电电虫",
+	"hp": 260,
+	"image_local_path": "user://cards/images/CSV9C/064.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/064.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "ex",
+	"name": "电蜘蛛ex",
+	"name_en": "",
+	"rarity": "RR",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Stage 1",
+	"weakness_energy": "F",
+	"weakness_value": "×2",
+	"yoren_code": "Y1505"
+}

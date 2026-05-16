@@ -1,0 +1,264 @@
+{
+	"cards": [
+		{
+			"card_index": "114",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "06bc00d5dcec33898dc6db2e4c4d10ec",
+			"name": "反击捕捉器",
+			"name_en": "Counter Catcher",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "185",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "0b4cc131a19862f92acf71494f29a0ed",
+			"name": "紧急滑板",
+			"name_en": "Rescue Board",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "024",
+			"card_type": "Pokemon",
+			"count": 4,
+			"effect_id": "144b6904892dc89e3efb81067c5668c4",
+			"name": "裹蜜虫",
+			"name_en": "Dipplin",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "013",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "1b1e45dbcbf4b21a5af893ad492b7c66",
+			"name": "虫滚泥",
+			"name_en": "Rellor",
+			"set_code": "CSV4C"
+		},
+		{
+			"card_index": "125",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "1b9696068a599e81c705bcb3648f0213",
+			"name": "滨名的后援",
+			"name_en": "Roseanne's Backup",
+			"set_code": "CS5bC"
+		},
+		{
+			"card_index": "022",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "266f2933c7baa1b640d9b55a38c76db4",
+			"name": "轰擂金刚猩",
+			"name_en": "Rillaboom",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "189",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "2e07a9870350b611a3d21ab2053dfa2a",
+			"name": "极限腰带",
+			"name_en": "Maximum Belt",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "201",
+			"card_type": "Stadium",
+			"count": 4,
+			"effect_id": "357d55b54ded5db071b55ebe165749fc",
+			"name": "祭典会场",
+			"name_en": "Festival Grounds",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "183",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "3e6f1daf545dfed48d0588dd50792a2e",
+			"name": "夜间担架",
+			"name_en": "Night Stretcher",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "119",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "43386015be5c073ba2e5b9d3692ece3f",
+			"name": "招式学习器 进化",
+			"name_en": "Technical Machine: Evolution",
+			"set_code": "CSV5C"
+		},
+		{
+			"card_index": "031",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "4e41398ab9262f85910de1d9b3a4f027",
+			"name": "虫甲圣",
+			"name_en": "Rabsca",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 4,
+			"effect_id": "5bdbc985f9aa2e6f248b53f6f35d1d37",
+			"name": "派帕",
+			"name_en": "Arven",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "GRA",
+			"card_type": "Basic Energy",
+			"count": 6,
+			"effect_id": "5e2d0ce37ca0c539aa45908da10544a0",
+			"name": "基本草能量",
+			"name_en": "Grass Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "113",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "66b2f1d77328b6578b1bf0d58d98f66b",
+			"name": "清除古龙水",
+			"name_en": "Canceling Cologne",
+			"set_code": "CS5aC"
+		},
+		{
+			"card_index": "113",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "7c0b20e121c9d0e0d2d8a43524f7494e",
+			"name": "宝可梦交替",
+			"name_en": "Switch",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "023",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "8e1fa2c9018db938084c94c7c970d419",
+			"name": "老大的指令",
+			"name_en": "Boss's Orders",
+			"set_code": "CSVH1aC"
+		},
+		{
+			"card_index": "021",
+			"card_type": "Pokemon",
+			"count": 4,
+			"effect_id": "936b27cc51f950a455c824375d621421",
+			"name": "啪咚猴",
+			"name_en": "Thwackey",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "020",
+			"card_type": "Pokemon",
+			"count": 4,
+			"effect_id": "958f6339da9ddd0f59a5adbb62fd9439",
+			"name": "敲音猴",
+			"name_en": "Grookey",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "023",
+			"card_type": "Pokemon",
+			"count": 4,
+			"effect_id": "95d820ef31a7e8ad71a89fcf8fb85c90",
+			"name": "啃果虫",
+			"name_en": "Applin",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "112",
+			"card_type": "Item",
+			"count": 2,
+			"effect_id": "a337ed34a45e63c6d21d98c3d8e0cb6e",
+			"name": "高级球",
+			"name_en": "Ultra Ball",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "111",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "a47d5a8ed00e14a2146fc511745d23b5",
+			"name": "朋友手册",
+			"name_en": "Pal Pad",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "182",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "adf4d1157e58b1421d1b6d0871b2fc88",
+			"name": "捕虫套装",
+			"name_en": "Bug Catching Set",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 3,
+			"effect_id": "af514f82d182aeae5327b2c360df703d",
+			"name": "奇树",
+			"name_en": "Iono",
+			"set_code": "CSV3C"
+		},
+		{
+			"card_index": "193",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "b79ddb9a6aab6d346f6a1f71b7fcd3de",
+			"name": "水莲的照顾",
+			"name_en": "Lana's Aid",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "198",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "d4a94445aa981c2f84e4df9b0525eeb0",
+			"name": "乌栗",
+			"name_en": "Kieran",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "117",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "e242d711feffd98f3fbb5c511d00d667",
+			"name": "不服输头带",
+			"name_en": "Defiance Band",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "050",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "f474805425d4849d8dc4c8c1e1af750a",
+			"name": "活力头带",
+			"name_en": "Vitality Band",
+			"set_code": "CSVH1C"
+		},
+		{
+			"card_index": "177",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "f866dfee26cd6b0dbbb52b74438d0a59",
+			"name": "友好宝芬",
+			"name_en": "Buddy-Buddy Poffin",
+			"set_code": "CSV7C"
+		}
+	],
+	"deck_code": "Fido5773wAat4aT_qP",
+	"deck_name": "祭典乐舞Box",
+	"id": 602769,
+	"import_date": "2026-05-06T22:23:37",
+	"source_url": "https://tcg.mik.moe/decks/list/602769",
+	"strategy": "",
+	"total_cards": 60,
+	"variant_name": "祭典乐舞Box"
+}

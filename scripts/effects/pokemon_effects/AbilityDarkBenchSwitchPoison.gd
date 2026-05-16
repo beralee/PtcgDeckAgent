@@ -84,7 +84,7 @@ func execute_ability(
 	old_active.clear_on_leave_active()
 	player.bench[bench_idx] = old_active
 	player.active_pokemon = selected
-	player.active_pokemon.status_conditions["poisoned"] = true
+	_apply_special_status(player.active_pokemon, "poisoned", state)
 	state.shared_turn_flags[USED_FLAG_PREFIX + str(pi)] = state.turn_number
 
 

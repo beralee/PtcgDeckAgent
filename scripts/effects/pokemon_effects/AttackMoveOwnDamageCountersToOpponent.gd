@@ -45,6 +45,8 @@ func execute_attack(attacker: PokemonSlot, _defender: PokemonSlot, _attack_index
 	var target: PokemonSlot = _resolve_target(opponent)
 	if target == null:
 		return
+	if target in opponent.bench and AbilityBenchImmune.prevents_opponent_attack_damage_or_effect(target, attacker, state):
+		return
 	var moved_total: int = 0
 	for slot: PokemonSlot in player.get_all_pokemon():
 		var moved: int = mini(damage_per_pokemon, slot.damage_counters)

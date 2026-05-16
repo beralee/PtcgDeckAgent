@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "反等离子",
+			"text": "如果对手的弃牌区中，有名字中带有「阿克罗玛」的卡牌的话，则这只宝可梦使用「三重冰霜」所需能量，变为1个【无】能量。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "Shiburingaru",
+	"attacks": [
+		{
+			"cost": "WWMMC",
+			"damage": "",
+			"is_vstar_power": false,
+			"name": "三重冰霜",
+			"text": "将这只宝可梦身上附着的所有能量放于弃牌区，给对手的3只宝可梦，各造成110伤害。[备战宝可梦不计算弱点、抗性。]"
+		}
+	],
+	"card_index": "147",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "特性: 反等离子\n如果对手的弃牌区中，有名字中带有「阿克罗玛」的卡牌的话，则这只宝可梦使用「三重冰霜」所需能量，变为1个【无】能量。\n\n【水】【水】【钢】【钢】【无】 三重冰霜\n将这只宝可梦身上附着的所有能量放于弃牌区，给对手的3只宝可梦，各造成110伤害。[备战宝可梦不计算弱点、抗性。]\n\n\n",
+	"effect_id": "5ed7ff97aa96afb6a023ad8ce6636eba",
+	"energy_provides": "",
+	"energy_type": "N",
+	"evolves_from": "",
+	"hp": 130,
+	"image_local_path": "user://cards/images/CSV9C/147.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/147.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "酋雷姆",
+	"name_en": "",
+	"rarity": "U",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Basic",
+	"weakness_energy": "",
+	"weakness_value": "",
+	"yoren_code": "P646"
+}

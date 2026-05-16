@@ -97,6 +97,8 @@ func _base_score(action: Dictionary, features: Dictionary) -> float:
 			return _w("evolve", 170.0)
 		"use_ability":
 			return _w("use_ability", 160.0)
+		"use_stadium_effect":
+			return _w("use_ability", 160.0)
 		"play_stadium":
 			return _w("play_stadium", 120.0)
 		"play_trainer":

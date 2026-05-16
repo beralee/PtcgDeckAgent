@@ -11,7 +11,10 @@ const BUNDLED_USER_DIR := "res://data/bundled_user/"
 const BUNDLED_CARDS_DIR := BUNDLED_USER_DIR + "cards/"
 const BUNDLED_DECKS_DIR := BUNDLED_USER_DIR + "decks/"
 const BUNDLED_MANIFEST := BUNDLED_USER_DIR + "_manifest.txt"
-const SUPPORTED_AI_DECK_IDS: Array[int] = [569061, 575657, 575716, 575718, 575720, 575723, 578647, 579502]
+const SUPPORTED_AI_DECK_IDS: Array[int] = [
+	569061, 575657, 575716, 575718, 575720, 575723, 578647, 579502,
+	1700002, 1700003, 1700004, 1700005, 1700007, 1700008, 1700011,
+]
 
 ## 内存中的卡牌缓存 {uid -> CardData}
 var _card_cache: Dictionary = {}
@@ -30,16 +33,29 @@ func _ready() -> void:
 	_load_all_ai_decks()
 
 
+func _current_deck_edit_timestamp() -> int:
+	return int(Time.get_unix_time_from_system() * 1000.0)
+
+
+func _file_modified_edit_timestamp(path: String) -> int:
+	var modified_unix := int(FileAccess.get_modified_time(path))
+	if modified_unix <= 0:
+		return 0
+	return modified_unix * 1000
+
+
+func _ensure_user_data_dir(dir_path: String) -> void:
+	var absolute_path := ProjectSettings.globalize_path(dir_path)
+	if not DirAccess.dir_exists_absolute(absolute_path):
+		DirAccess.make_dir_recursive_absolute(absolute_path)
+
+
 ## 确保数据目录存在
 func _ensure_directories() -> void:
-	if not DirAccess.dir_exists_absolute(CARDS_DIR):
-		DirAccess.make_dir_recursive_absolute(CARDS_DIR)
-	if not DirAccess.dir_exists_absolute(CARD_IMAGES_DIR):
-		DirAccess.make_dir_recursive_absolute(CARD_IMAGES_DIR)
-	if not DirAccess.dir_exists_absolute(DECKS_DIR):
-		DirAccess.make_dir_recursive_absolute(DECKS_DIR)
-	if not DirAccess.dir_exists_absolute(AI_DECKS_DIR):
-		DirAccess.make_dir_recursive_absolute(AI_DECKS_DIR)
+	_ensure_user_data_dir(CARDS_DIR)
+	_ensure_user_data_dir(CARD_IMAGES_DIR)
+	_ensure_user_data_dir(DECKS_DIR)
+	_ensure_user_data_dir(AI_DECKS_DIR)
 
 
 func _seed_bundled_user_data() -> void:
@@ -352,11 +368,13 @@ func _save_card_to_file(card: CardData) -> void:
 
 ## 保存卡组
 func save_deck(deck: DeckData) -> void:
+	_ensure_directories()
 	var path := DECKS_DIR + "%d.json" % deck.id
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
 		push_error("CardDatabase: 无法写入卡组文件 %s" % path)
 		return
+	deck.updated_at = _current_deck_edit_timestamp()
 	file.store_string(JSON.stringify(deck.to_dict(), "\t"))
 	file.close()
 	_deck_cache[deck.id] = deck
@@ -364,6 +382,7 @@ func save_deck(deck: DeckData) -> void:
 
 
 func save_ai_deck(deck: DeckData) -> void:
+	_ensure_directories()
 	if deck != null and SUPPORTED_AI_DECK_IDS.has(deck.id):
 		var bundled_ai_deck := _load_bundled_ai_deck(deck.id)
 		if bundled_ai_deck != null:
@@ -374,6 +393,7 @@ func save_ai_deck(deck: DeckData) -> void:
 	if file == null:
 		push_error("CardDatabase: 无法写入 AI 卡组文件 %s" % path)
 		return
+	deck.updated_at = _current_deck_edit_timestamp()
 	file.store_string(JSON.stringify(deck.to_dict(), "\t"))
 	file.close()
 	_ai_deck_cache[deck.id] = deck
@@ -424,6 +444,7 @@ func get_all_ai_decks() -> Array[DeckData]:
 		var deck: DeckData = _ai_deck_cache.get(deck_id)
 		if deck != null:
 			result.append(deck)
+	result.sort_custom(_compare_ai_decks_by_created_time_desc)
 	return result
 
 
@@ -440,6 +461,27 @@ func has_ai_deck(deck_id: int) -> bool:
 
 func get_supported_ai_deck_ids() -> Array[int]:
 	return SUPPORTED_AI_DECK_IDS.duplicate()
+
+
+func _compare_ai_decks_by_created_time_desc(a: DeckData, b: DeckData) -> bool:
+	var a_release := _generated_ai_deck_release_key(a)
+	var b_release := _generated_ai_deck_release_key(b)
+	if a_release != b_release:
+		return a_release > b_release
+	var a_import := str(a.import_date) if a != null else ""
+	var b_import := str(b.import_date) if b != null else ""
+	if a_import == b_import:
+		var a_id := int(a.id) if a != null else 0
+		var b_id := int(b.id) if b != null else 0
+		return a_id > b_id
+	return a_import > b_import
+
+
+func _generated_ai_deck_release_key(deck: DeckData) -> int:
+	var deck_id := int(deck.id) if deck != null else 0
+	if deck_id < 1000000:
+		return 0
+	return int(floor(float(deck_id) / 100000.0))
 
 
 ## 从文件系统加载所有卡组
@@ -517,7 +559,10 @@ func _load_deck_from_file(path: String) -> DeckData:
 		return null
 	if json.data is not Dictionary:
 		return null
-	return DeckData.from_dict(json.data)
+	var deck := DeckData.from_dict(json.data)
+	if deck.updated_at <= 0:
+		deck.updated_at = _file_modified_edit_timestamp(path)
+	return deck
 
 
 ## 为指定卡组构建完整的 CardInstance 列表（用于开始对战）

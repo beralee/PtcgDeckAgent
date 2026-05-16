@@ -107,11 +107,11 @@ func execute_attack(
 		slot.attached_tool = null
 
 	for target: PokemonSlot in selected_targets:
-		if target in opponent.bench and AbilityBenchImmune.has_bench_immune(target):
+		if target in opponent.bench and AbilityBenchImmune.prevents_opponent_attack_damage_or_effect(target, attacker, state):
 			continue
 		if AttackCoinFlipPreventDamageAndEffectsNextTurn.prevents_attack_damage(target, state):
 			continue
-		DamageCalculator.new().apply_damage_to_slot(target, damage_amount)
+		DamageCalculator.new().apply_damage_to_slot(target, _calculate_attack_target_damage(attacker, target, damage_amount, state))
 
 
 func _get_benched_dreepy(player: PlayerState) -> Array[PokemonSlot]:

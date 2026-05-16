@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "祭典乐舞",
+			"text": "如果场上有「祭典会场」的话，则这只宝可梦，可以连续使用2次拥有的招式。（如果第1次的招式令对手的战斗宝可梦【昏厥】的话，则在下一只对手的宝可梦被放于战斗场后，继续使用第2次招式。）"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "saino misaki",
+	"attacks": [
+		{
+			"cost": "CC",
+			"damage": "10",
+			"is_vstar_power": false,
+			"name": "潮旋",
+			"text": "抛掷1次硬币如果为正面，则选择对手战斗宝可梦身上附着的1个能量，放于弃牌区。"
+		}
+	],
+	"card_index": "050",
+	"card_index_en": "44",
+	"card_type": "Pokemon",
+	"description": "特性: 祭典乐舞\n如果场上有「祭典会场」的话，则这只宝可梦，可以连续使用2次拥有的招式。（如果第1次的招式令对手的战斗宝可梦【昏厥】的话，则在下一只对手的宝可梦被放于战斗场后，继续使用第2次招式。）\n\n 潮旋 10\n抛掷1次硬币如果为正面，则选择对手战斗宝可梦身上附着的1个能量，放于弃牌区。\n\n",
+	"effect_id": "7580acd5669bac12cb1af8007d2e6a6a",
+	"energy_provides": "",
+	"energy_type": "W",
+	"evolves_from": "",
+	"hp": 50,
+	"image_local_path": "user://cards/images/CSV8C/050.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV8C/050.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "角金鱼",
+	"name_en": "Goldeen",
+	"rarity": "C",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-03-13T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "CSV8C",
+	"set_code_en": "TWM",
+	"stage": "Basic",
+	"weakness_energy": "L",
+	"weakness_value": "×2",
+	"yoren_code": "P118"
+}

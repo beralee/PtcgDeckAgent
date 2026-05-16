@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "Tomomi Ozaki",
+	"attacks": [
+		{
+			"cost": "G",
+			"damage": "10",
+			"is_vstar_power": false,
+			"name": "踢飞",
+			"text": ""
+		},
+		{
+			"cost": "GG",
+			"damage": "30",
+			"is_vstar_power": false,
+			"name": "木枝突刺",
+			"text": ""
+		}
+	],
+	"card_index": "020",
+	"card_index_en": "14",
+	"card_type": "Pokemon",
+	"description": "【草】 踢飞 10\n\n\n【草】【草】 木枝突刺 30\n\n\n",
+	"effect_id": "958f6339da9ddd0f59a5adbb62fd9439",
+	"energy_provides": "",
+	"energy_type": "G",
+	"evolves_from": "",
+	"hp": 70,
+	"image_local_path": "user://cards/images/CSV8C/020.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV8C/020.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "敲音猴",
+	"name_en": "Grookey",
+	"rarity": "C",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-03-13T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "CSV8C",
+	"set_code_en": "TWM",
+	"stage": "Basic",
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"yoren_code": "P810"
+}

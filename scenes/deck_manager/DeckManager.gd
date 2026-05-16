@@ -25,6 +25,11 @@ const IMPORT_RESULT_AUTO_CLOSE_SECONDS := 1.4
 const REMOTE_RECOMMENDATION_PREFETCH_STEPS := 6
 const DECK_CENTER_SCROLLBAR_RIGHT_CLEARANCE := 40
 const RECOMMENDATION_DETAIL_SCROLLBAR_RIGHT_CLEARANCE := 34
+const HUD_BUTTON_FONT_SIZE := 23
+const HUD_BUTTON_COMPACT_FONT_SIZE := 21
+const HUD_BUTTON_MIN_HEIGHT := 63.0
+const HUD_BUTTON_COMPACT_MIN_HEIGHT := 57.0
+const HUD_BUTTON_TEXT_HORIZONTAL_PADDING := 34.0
 
 const ENERGY_TYPE_LABELS: Dictionary = {
 	"R": "火", "W": "水", "G": "草", "L": "雷",
@@ -205,9 +210,11 @@ func _hud_button_style(accent: Color, hover: bool, pressed: bool) -> StyleBoxFla
 
 
 func _style_hud_button(button: Button, accent: Color, compact: bool = false) -> void:
-	var min_height := 38.0 if compact else 42.0
-	button.custom_minimum_size = Vector2(button.custom_minimum_size.x, maxf(button.custom_minimum_size.y, min_height))
-	button.add_theme_font_size_override("font_size", 14 if compact else 15)
+	var font_size := HUD_BUTTON_COMPACT_FONT_SIZE if compact else HUD_BUTTON_FONT_SIZE
+	var min_height := HUD_BUTTON_COMPACT_MIN_HEIGHT if compact else HUD_BUTTON_MIN_HEIGHT
+	var min_width := _hud_button_min_width_for_text(button.text, font_size)
+	button.custom_minimum_size = Vector2(maxf(button.custom_minimum_size.x, min_width), maxf(button.custom_minimum_size.y, min_height))
+	button.add_theme_font_size_override("font_size", font_size)
 	button.add_theme_color_override("font_color", Color(0.96, 0.99, 1.0, 1.0))
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
 	button.add_theme_color_override("font_pressed_color", Color(0.08, 0.12, 0.16, 1.0))
@@ -217,6 +224,19 @@ func _style_hud_button(button: Button, accent: Color, compact: bool = false) -> 
 	button.add_theme_stylebox_override("pressed", _hud_button_style(accent, true, true))
 	button.add_theme_stylebox_override("disabled", _hud_button_style(Color(0.26, 0.31, 0.36, 1.0), false, false))
 	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
+
+func _hud_button_min_width_for_text(text: String, font_size: int) -> float:
+	var units := 0.0
+	for i: int in text.length():
+		var code := text.unicode_at(i)
+		if code <= 0x20:
+			units += 0.35
+		elif code < 0x80:
+			units += 0.62
+		else:
+			units += 1.0
+	return ceilf(units * float(font_size) + HUD_BUTTON_TEXT_HORIZONTAL_PADDING)
 
 
 func _style_hud_line_edit(input: LineEdit) -> void:
@@ -1145,6 +1165,53 @@ func _close_recommendation_detail_overlay() -> void:
 	_recommendation_detail_overlay = null
 
 
+func _compare_decks_by_edit_time_desc(a: DeckData, b: DeckData) -> bool:
+	var a_time := _deck_edit_timestamp(a)
+	var b_time := _deck_edit_timestamp(b)
+	if a_time == b_time:
+		var a_import := str(a.import_date) if a != null else ""
+		var b_import := str(b.import_date) if b != null else ""
+		if a_import == b_import:
+			var a_name := str(a.deck_name) if a != null else ""
+			var b_name := str(b.deck_name) if b != null else ""
+			if a_name == b_name:
+				var a_id := int(a.id) if a != null else 0
+				var b_id := int(b.id) if b != null else 0
+				return a_id < b_id
+			return a_name < b_name
+		return a_import > b_import
+	return a_time > b_time
+
+
+func _deck_edit_timestamp(deck: DeckData) -> int:
+	if deck == null:
+		return 0
+	return int(deck.updated_at)
+
+
+func _deck_row_date_label(deck: DeckData) -> String:
+	if _deck_edit_timestamp(deck) > 0:
+		return "编辑于"
+	return "导入于"
+
+
+func _deck_row_date_text(deck: DeckData) -> String:
+	if deck == null:
+		return ""
+	var timestamp := _deck_edit_timestamp(deck)
+	if timestamp <= 0:
+		return str(deck.import_date).substr(0, 10)
+	var unix_seconds := timestamp
+	if timestamp > 100000000000:
+		unix_seconds = int(timestamp / 1000)
+	var datetime := Time.get_datetime_dict_from_unix_time(unix_seconds)
+	return "%04d-%02d-%02d" % [
+		int(datetime.get("year", 0)),
+		int(datetime.get("month", 0)),
+		int(datetime.get("day", 0)),
+	]
+
+
 func _refresh_deck_list() -> void:
 	var deck_list_container: VBoxContainer = %DeckList
 	_refresh_recommendation_cards()
@@ -1153,6 +1220,7 @@ func _refresh_deck_list() -> void:
 			child.queue_free()
 
 	var decks := CardDatabase.get_all_decks()
+	decks.sort_custom(_compare_decks_by_edit_time_desc)
 	%EmptyLabel.visible = decks.is_empty()
 
 	for deck: DeckData in decks:
@@ -1173,15 +1241,11 @@ func _create_deck_item(deck: DeckData) -> Control:
 	hbox.add_child(info_vbox)
 
 	var name_label := Label.new()
-	name_label.text = deck.deck_name
-	name_label.add_theme_font_size_override("font_size", 16)
+	name_label.text = "%s | %s %s" % [deck.deck_name, _deck_row_date_label(deck), _deck_row_date_text(deck)]
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	name_label.add_theme_font_size_override("font_size", 23)
 	name_label.add_theme_color_override("font_color", HUD_TEXT)
 	info_vbox.add_child(name_label)
-
-	var detail_label := Label.new()
-	detail_label.text = "%d 张卡牌 | 导入于 %s" % [deck.total_cards, deck.import_date.substr(0, 10)]
-	detail_label.add_theme_color_override("font_color", HUD_TEXT_MUTED)
-	info_vbox.add_child(detail_label)
 
 	var btn_view := Button.new()
 	btn_view.text = "查看"
@@ -1442,6 +1506,8 @@ func _show_rename_dialog(initial_name: String, title: String, message_text: Stri
 
 	add_child(_rename_dialog)
 	_rename_confirm_button = _rename_dialog.get_ok_button()
+	if _rename_confirm_button != null:
+		_style_hud_button(_rename_confirm_button, HUD_ACCENT_WARM)
 	_on_rename_text_changed(initial_name)
 
 	if is_inside_tree():
@@ -1868,7 +1934,10 @@ func _on_delete_deck(deck: DeckData) -> void:
 	)
 	confirm.canceled.connect(confirm.queue_free)
 	add_child(confirm)
-	confirm.popup_centered()
+	_style_hud_button(confirm.get_ok_button(), HUD_DANGER)
+	_style_hud_button(confirm.get_cancel_button(), HUD_SECONDARY)
+	if is_inside_tree():
+		confirm.popup_centered()
 
 
 func _on_back_pressed() -> void:

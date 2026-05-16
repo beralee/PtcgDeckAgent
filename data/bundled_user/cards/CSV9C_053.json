@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "埋入雪中",
+			"text": "在自己的回合，当将这张卡牌从手牌使出放于备战区时，可使用1次。将场上的竞技场放于弃牌区。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "Yuya Oka",
+	"attacks": [
+		{
+			"cost": "WWC",
+			"damage": "120",
+			"is_vstar_power": false,
+			"name": "冰柱环",
+			"text": "选择这只宝可梦身上附着的1个能量，放回手牌。"
+		}
+	],
+	"card_index": "053",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "特性: 埋入雪中\n在自己的回合，当将这张卡牌从手牌使出放于备战区时，可使用1次。将场上的竞技场放于弃牌区。\n\n【水】【水】【无】 冰柱环 120\n选择这只宝可梦身上附着的1个能量，放回手牌。\n\n\n",
+	"effect_id": "f518a7e573241c14cc225cc14d6094d3",
+	"energy_provides": "",
+	"energy_type": "W",
+	"evolves_from": "",
+	"hp": 120,
+	"image_local_path": "user://cards/images/CSV9C/053.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/053.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "古剑豹",
+	"name_en": "",
+	"rarity": "R",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Basic",
+	"weakness_energy": "M",
+	"weakness_value": "×2",
+	"yoren_code": "P1002"
+}

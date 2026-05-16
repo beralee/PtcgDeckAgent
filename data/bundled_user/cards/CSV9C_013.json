@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "熟成充能",
+			"text": "在自己的回合可以使用1次。选择自己手牌中的1张「基本【草】能量」，附着于自己的宝可梦身上。然后，回复被附着能量的宝可梦「30」HP。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "5ban Graphics",
+	"attacks": [
+		{
+			"cost": "CC",
+			"damage": "30+",
+			"is_vstar_power": false,
+			"name": "蜜糖风暴",
+			"text": "追加造成自己所有宝可梦身上附着的【草】能量数量×30伤害。"
+		}
+	],
+	"card_index": "013",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "特性: 熟成充能\n在自己的回合可以使用1次。选择自己手牌中的1张「基本【草】能量」，附着于自己的宝可梦身上。然后，回复被附着能量的宝可梦「30」HP。\n\n【无】【无】 蜜糖风暴 30+\n追加造成自己所有宝可梦身上附着的【草】能量数量×30伤害。\n\n\n",
+	"effect_id": "e2114e7b76f6dbbe76ce0aaf2a65bc9c",
+	"energy_provides": "",
+	"energy_type": "G",
+	"evolves_from": "裹蜜虫",
+	"hp": 330,
+	"image_local_path": "user://cards/images/CSV9C/013.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/013.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "ex",
+	"name": "蜜集大蛇ex",
+	"name_en": "",
+	"rarity": "RR",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 3,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Stage 2",
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"yoren_code": "Y1500"
+}

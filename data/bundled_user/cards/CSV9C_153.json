@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "突进进化",
+			"text": "只要这只宝可梦，在战斗场上，则即使是最初的自己的回合，以及刚被放出的回合也可进行进化。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "Naoyo Kimura",
+	"attacks": [
+		{
+			"cost": "CC",
+			"damage": "30",
+			"is_vstar_power": false,
+			"name": "突击",
+			"text": "给这只宝可梦也造成10伤害。"
+		}
+	],
+	"card_index": "153",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "特性: 突进进化\n只要这只宝可梦，在战斗场上，则即使是最初的自己的回合，以及刚被放出的回合也可进行进化。\n\n【无】【无】 突击 30\n给这只宝可梦也造成10伤害。\n\n\n",
+	"effect_id": "f37aecbe63a1039fb481286c9b6fcc3c",
+	"energy_provides": "",
+	"energy_type": "C",
+	"evolves_from": "",
+	"hp": 50,
+	"image_local_path": "user://cards/images/CSV9C/153.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/153.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "伊布",
+	"name_en": "",
+	"rarity": "C",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Basic",
+	"weakness_energy": "F",
+	"weakness_value": "×2",
+	"yoren_code": "P133"
+}

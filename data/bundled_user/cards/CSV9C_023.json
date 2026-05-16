@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "胜利声援",
+			"text": "只要这只宝可梦在场上，自己【火】属性的进化宝可梦所使用的招式，给对手战斗宝可梦造成的伤害「+10」。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "0313",
+	"attacks": [
+		{
+			"cost": "RC",
+			"damage": "30",
+			"is_vstar_power": false,
+			"name": "火焰",
+			"text": ""
+		}
+	],
+	"card_index": "023",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "特性: 胜利声援\n只要这只宝可梦在场上，自己【火】属性的进化宝可梦所使用的招式，给对手战斗宝可梦造成的伤害「+10」。\n\n【火】【无】 火焰 30\n\n\n",
+	"effect_id": "ae135beb7f4c42139fc38a4f9203db09",
+	"energy_provides": "",
+	"energy_type": "R",
+	"evolves_from": "",
+	"hp": 70,
+	"image_local_path": "user://cards/images/CSV9C/023.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/023.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "比克提尼",
+	"name_en": "",
+	"rarity": "U",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Basic",
+	"weakness_energy": "W",
+	"weakness_value": "×2",
+	"yoren_code": "P494"
+}

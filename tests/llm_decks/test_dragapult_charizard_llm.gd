@@ -2,6 +2,7 @@ class_name TestDragapultCharizardLLM
 extends TestBase
 
 const LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategyDragapultCharizardLLM.gd"
+const RouteBuilderScript = preload("res://scripts/ai/LLMRouteCandidateBuilder.gd")
 
 
 func _load_script(script_path: String) -> GDScript:
@@ -54,6 +55,22 @@ func _make_dragapult_ex_cd() -> CardData:
 			{"name": "Phantom Dive", "cost": "RP", "damage": "200", "text": "Put 6 damage counters on your opponent's Benched Pokemon in any way you like."},
 		]
 	)
+
+
+func _make_charizard_ex_cd() -> CardData:
+	var cd := _make_pokemon_cd(
+		"Charizard ex",
+		"Stage 2",
+		"D",
+		330,
+		"Charmeleon",
+		"ex",
+		[
+			{"name": "Burning Darkness", "cost": "RR", "damage": "180+", "text": "This attack does 30 more damage for each Prize card your opponent has taken."},
+		]
+	)
+	cd.abilities.append({"name": "Infernal Reign", "text": "When you evolve this Pokemon from your hand, attach up to 3 Basic Fire Energy from your deck to your Pokemon."})
+	return cd
 
 
 func _make_trainer_cd(pname: String, card_type: String = "Item") -> CardData:
@@ -160,6 +177,32 @@ func test_ready_dragapult_replaces_queued_jet_head_with_phantom_dive() -> String
 	])
 
 
+func test_dragapult_phantom_dive_requires_fire_and_psychic_not_two_fire() -> String:
+	var strategy := _new_strategy()
+	if strategy == null:
+		return "DeckStrategyDragapultCharizardLLM.gd should instantiate"
+	var gs := _make_game_state(7)
+	var player: PlayerState = gs.players[0]
+	var dragapult := _make_slot(_make_dragapult_ex_cd(), 0)
+	dragapult.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	dragapult.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	player.active_pokemon = dragapult
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var jet_head := _attack_ref(0, "Jet Head", 70)
+	var phantom_dive := _attack_ref(1, "Phantom Dive", 200)
+	_activate_llm_queue(strategy, int(gs.turn_number), [jet_head])
+	strategy.set("_llm_action_catalog", {
+		"attack:0": jet_head,
+		"attack:1": phantom_dive,
+	})
+	var preferred: Dictionary = strategy.call("_deck_preferred_terminal_attack_for", jet_head, gs, 0)
+	return run_checks([
+		assert_false(bool(strategy.call("_is_dragapult_phantom_dive_attack_action", phantom_dive, gs, 0)), "Phantom Dive must require Fire plus Psychic, not just two attached Energy"),
+		assert_false(bool(strategy.call("_active_dragapult_pressure_ready", gs, 0)), "Dragapult pressure should not be ready with Fire+Fire"),
+		assert_true(preferred.is_empty(), "Jet Head should not be repaired into an illegal Phantom Dive when Psychic is missing"),
+	])
+
+
 func test_payload_marks_jet_head_low_and_adds_phantom_route() -> String:
 	var strategy := _new_strategy()
 	if strategy == null:
@@ -193,6 +236,142 @@ func test_payload_marks_jet_head_low_and_adds_phantom_route() -> String:
 		assert_true(bool(policy.get("jet_head_forbidden", false)), "Payload should mark Jet Head forbidden while Phantom Dive is ready"),
 		assert_eq(str(jet_quality.get("terminal_priority", "")), "low", "Jet Head should be exposed as low-priority terminal damage"),
 		assert_true(has_phantom_route, "Payload should expose a deck-local Phantom Dive candidate route"),
+	])
+
+
+func test_primary_engine_route_prefers_intent_best_manual_attach() -> String:
+	var builder := RouteBuilderScript.new()
+	var actions: Array[Dictionary] = [
+		{
+			"id": "play_trainer:energy_search",
+			"action_id": "play_trainer:energy_search",
+			"type": "play_trainer",
+			"kind": "play_trainer",
+			"card": "Energy Search",
+			"card_rules": {"tags": ["search_deck", "energy_related"]},
+		},
+		{
+			"id": "attach_energy:fire:active",
+			"action_id": "attach_energy:fire:active",
+			"type": "attach_energy",
+			"kind": "attach_energy",
+			"card": "Fire Energy",
+			"energy_type": "R",
+			"position": "active",
+		},
+		{
+			"id": "attach_energy:psychic:active",
+			"action_id": "attach_energy:psychic:active",
+			"type": "attach_energy",
+			"kind": "attach_energy",
+			"card": "Psychic Energy",
+			"energy_type": "P",
+			"position": "active",
+		},
+		{"id": "end_turn", "action_id": "end_turn", "type": "end_turn", "kind": "end_turn"},
+	]
+	var future_actions: Array[Dictionary] = [{
+		"id": "future:attack_after_visible_engine:active:1:Phantom_Dive",
+		"action_id": "future:attack_after_visible_engine:active:1:Phantom_Dive",
+		"type": "attack",
+		"kind": "attack",
+		"future": true,
+		"attack_name": "Phantom Dive",
+		"attack_quality": {"role": "primary_damage", "terminal_priority": "high"},
+	}]
+	var routes: Array = builder.call("build_candidate_routes", actions, future_actions, {
+		"primary_attack_reachable_after_visible_engine": true,
+		"primary_attack_missing_cost": ["Fire", "Psychic"],
+		"best_manual_attach_energy_for_active_attack": "Fire",
+		"intent_summary": {
+			"best_manual_attach": {
+				"action_id": "attach_energy:psychic:active",
+				"target_position": "active",
+				"marginal_value": "high",
+			},
+		},
+	})
+	var primary_route: Dictionary = {}
+	for raw_route: Variant in routes:
+		if raw_route is Dictionary and str((raw_route as Dictionary).get("route_action_id", "")) == "route:primary_visible_engine":
+			primary_route = raw_route as Dictionary
+			break
+	var route_ids: Array[String] = []
+	for raw_action: Variant in primary_route.get("actions", []):
+		if raw_action is Dictionary:
+			route_ids.append(str((raw_action as Dictionary).get("action_id", (raw_action as Dictionary).get("id", ""))))
+	return run_checks([
+		assert_false(primary_route.is_empty(), "Primary engine route should be generated"),
+		assert_true(route_ids.has("attach_energy:psychic:active"), "Primary route should use the intent planner's exact best Psychic attach"),
+		assert_false(route_ids.has("attach_energy:fire:active"), "Primary route should not fall back to Fire when intent marks Psychic as best"),
+	])
+
+
+func test_charizard_acceleration_blocks_nonfinal_attack() -> String:
+	var strategy := _new_strategy()
+	if strategy == null:
+		return "DeckStrategyDragapultCharizardLLM.gd should instantiate"
+	var gs := _make_game_state(10)
+	var player: PlayerState = gs.players[0]
+	var active_charizard := _make_slot(_make_charizard_ex_cd(), 0)
+	active_charizard.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	active_charizard.attached_energy.append(_attached_energy("Fire Energy", "R"))
+	player.active_pokemon = active_charizard
+	var bench_charizard := _make_slot(_make_charizard_ex_cd(), 0)
+	bench_charizard.turn_evolved = int(gs.turn_number)
+	player.bench.append(bench_charizard)
+	for i: int in 6:
+		player.deck.append(_attached_energy("Fire Energy", "R"))
+	for i: int in 4:
+		player.prizes.append(CardInstance.create(_make_trainer_cd("Prize%d" % i), 0))
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Iron Hands ex", "Basic", "L", 230, "", "ex"), 1)
+	var attack := _attack_ref(0, "Burning Darkness", 270)
+	var ability := {
+		"id": "use_ability:bench_0:0",
+		"action_id": "use_ability:bench_0:0",
+		"type": "use_ability",
+		"kind": "use_ability",
+		"source_slot": bench_charizard,
+		"pokemon": "Charizard ex",
+		"ability": "Infernal Reign",
+		"ability_index": 0,
+	}
+	return run_checks([
+		assert_true(bool(strategy.call("_should_block_attack_for_charizard_acceleration", attack, gs, 0)), "Non-final attack should wait for a pending Charizard ex acceleration ability"),
+		assert_true(float(strategy.call("score_action_absolute", attack, gs, 0)) <= -1000.0, "Runtime scoring should block the premature attack"),
+		assert_true(float(strategy.call("score_action_absolute", ability, gs, 0)) >= 80000.0, "Pending Charizard acceleration should outrank the queued attack plan"),
+	])
+
+
+func test_ultra_ball_policy_and_discard_fallback_preserve_key_supporters() -> String:
+	var strategy := _new_strategy()
+	if strategy == null:
+		return "DeckStrategyDragapultCharizardLLM.gd should instantiate"
+	var gs := _make_game_state(12)
+	var player: PlayerState = gs.players[0]
+	var ultra := CardInstance.create(_make_trainer_cd("Ultra Ball"), 0)
+	var iono := CardInstance.create(_make_trainer_cd("Iono", "Supporter"), 0)
+	var boss := CardInstance.create(_make_trainer_cd("Boss's Orders", "Supporter"), 0)
+	var manaphy := CardInstance.create(_make_pokemon_cd("Manaphy", "Basic", "W", 70), 0)
+	var temple := CardInstance.create(_make_trainer_cd("Temple of Sinnoh", "Stadium"), 0)
+	player.hand.append_array([iono, boss, manaphy, temple, ultra])
+	var payload: Dictionary = strategy.call("build_action_id_request_payload_for_test", gs, 0, [
+		{"kind": "play_trainer", "card": ultra},
+		{"kind": "end_turn"},
+	])
+	var ultra_policy: Dictionary = {}
+	for raw_ref: Variant in payload.get("legal_actions", []):
+		if raw_ref is Dictionary and str((raw_ref as Dictionary).get("id", "")).begins_with("play_trainer:"):
+			ultra_policy = (raw_ref as Dictionary).get("selection_policy", {}) if (raw_ref as Dictionary).get("selection_policy", {}) is Dictionary else {}
+	var iono_score := int(strategy.call("get_discard_priority_contextual", iono, gs, 0))
+	var boss_score := int(strategy.call("get_discard_priority_contextual", boss, gs, 0))
+	var manaphy_score := int(strategy.call("get_discard_priority_contextual", manaphy, gs, 0))
+	var temple_score := int(strategy.call("get_discard_priority_contextual", temple, gs, 0))
+	return run_checks([
+		assert_false(ultra_policy.is_empty(), "Ultra Ball prompt refs should carry a selection_policy"),
+		assert_true(ultra_policy.has("discard_cards"), "Ultra Ball policy should expose deterministic discard preferences"),
+		assert_true(manaphy_score > iono_score, "Discard fallback should prefer expendable Manaphy over Iono"),
+		assert_true(temple_score > boss_score, "Discard fallback should prefer expendable Stadium over Boss's Orders"),
 	])
 
 

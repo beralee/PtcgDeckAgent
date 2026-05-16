@@ -1,0 +1,22 @@
+{
+	"deck_id": 1700003,
+	"deck_name": "17.0 Water Turtle",
+	"description": "V17 strong opening. First 7 cards form the launch hand; cards 8-13 are controlled prize cards; cards 14-15 bridge the first draw window. Terapagos cannot attack on the going-second first turn, so this line targets guaranteed T2 damage through Irida, Area Zero, Noctowl and Glass Trumpet/Palkia pressure.",
+	"top_to_bottom": [
+		{"set_code": "CSV9C", "card_index": "175"},
+		{"set_code": "CSV9C", "card_index": "154"},
+		{"set_code": "CSV9C", "card_index": "161"},
+		{"set_code": "CS5DC", "card_index": "138"},
+		{"set_code": "CSV9C", "card_index": "207"},
+		{"set_code": "CSVE1C", "card_index": "WAT"},
+		{"set_code": "CSV9C", "card_index": "155"},
+		{"set_code": "CSVH1aC", "card_index": "023"},
+		{"set_code": "CS6bC", "card_index": "123"},
+		{"set_code": "CS6aC", "card_index": "127"},
+		{"set_code": "CSV8C", "card_index": "198"},
+		{"set_code": "CS5aC", "card_index": "113"},
+		{"set_code": "CS5.5C", "card_index": "060"},
+		{"set_code": "CSV9C", "card_index": "178"},
+		{"set_code": "CSVH1C", "card_index": "043"}
+	]
+}

@@ -1,6 +1,9 @@
 class_name DeckStrategyBase
 extends RefCounted
 
+const AIIntentPlannerCoordinatorScript = preload("res://scripts/ai/intent/AIIntentPlannerCoordinator.gd")
+const RESOURCE_PAID_OWNER_RETREAT_PENALTY := 7000.0
+
 var _turn_plan_context: Dictionary = {}
 var _turn_contract_context: Dictionary = {}
 
@@ -27,6 +30,15 @@ func get_value_net() -> RefCounted:
 
 func get_mcts_config() -> Dictionary:
 	return {}
+
+
+func get_intent_planner_profile() -> Dictionary:
+	return {}
+
+
+func build_intent_facts(game_state: GameState, player_index: int, legal_action_refs: Array = []) -> Dictionary:
+	var coordinator: RefCounted = AIIntentPlannerCoordinatorScript.new()
+	return coordinator.call("build_facts", game_state, player_index, legal_action_refs, get_intent_planner_profile())
 
 
 func plan_opening_setup(_player: PlayerState) -> Dictionary:
@@ -96,6 +108,7 @@ func score_action_absolute_with_plan(
 	_set_turn_contract_context(turn_contract)
 	var score: float = score_action_absolute(action, game_state, player_index)
 	score += _score_continuity_action_bonus(action, game_state, player_index, turn_contract)
+	score += _score_resource_paid_owner_retreat_guard(action, game_state, player_index, turn_contract)
 	_clear_turn_plan_context()
 	_clear_turn_contract_context()
 	return score
@@ -235,8 +248,15 @@ func _continuity_action_matches(action: Dictionary, rule: Dictionary) -> bool:
 	if not attack_names.is_empty() and not attack_names.has(_continuity_action_attack_name(action)):
 		return false
 	var target_names: Array[String] = _continuity_string_array(rule.get("target_names", []))
-	if not target_names.is_empty() and not target_names.has(_continuity_action_target_name(action)):
-		return false
+	if not target_names.is_empty():
+		var action_target_names: Array[String] = _continuity_action_target_names(action)
+		var has_target_match := false
+		for action_target_name: String in action_target_names:
+			if target_names.has(action_target_name):
+				has_target_match = true
+				break
+		if not has_target_match:
+			return false
 	return true
 
 
@@ -277,13 +297,49 @@ func _continuity_action_attack_name(action: Dictionary) -> String:
 
 
 func _continuity_action_target_name(action: Dictionary) -> String:
+	var names: Array[String] = _continuity_action_target_names(action)
+	if not names.is_empty():
+		return names[0]
+	return ""
+
+
+func _continuity_action_target_names(action: Dictionary) -> Array[String]:
+	var names: Array[String] = []
 	var target: Variant = action.get("target_slot", null)
 	if target is PokemonSlot:
-		return _slot_name(target)
+		names.append(_slot_name(target))
 	var source: Variant = action.get("source_slot", null)
 	if source is PokemonSlot:
-		return _slot_name(source)
-	return str(action.get("target_name", action.get("target", "")))
+		names.append(_slot_name(source))
+	for key: String in ["target_name", "target"]:
+		var value := str(action.get(key, ""))
+		if value != "":
+			names.append(value)
+	var targets: Variant = action.get("targets", [])
+	if targets is Array:
+		for target_entry: Variant in targets:
+			_collect_continuity_target_names(target_entry, names)
+	return names
+
+
+func _collect_continuity_target_names(value: Variant, names: Array[String]) -> void:
+	if value is Dictionary:
+		for nested: Variant in (value as Dictionary).values():
+			_collect_continuity_target_names(nested, names)
+	elif value is Array:
+		for nested: Variant in value:
+			_collect_continuity_target_names(nested, names)
+	elif value is PokemonSlot:
+		names.append(_slot_name(value))
+	elif value is CardInstance:
+		names.append(_cname(value))
+	elif value is CardData:
+		var cd: CardData = value
+		names.append(cd.name_en if cd.name_en != "" else cd.name)
+	else:
+		var text := str(value)
+		if text != "":
+			names.append(text)
 
 
 func _is_continuity_terminal_attack(action: Dictionary) -> bool:
@@ -297,6 +353,95 @@ func _is_continuity_final_prize_attack(action: Dictionary, game_state: GameState
 		return false
 	var player: PlayerState = game_state.players[player_index]
 	return player != null and player.prizes.size() <= 1
+
+
+func _score_resource_paid_owner_retreat_guard(
+	action: Dictionary,
+	game_state: GameState,
+	player_index: int,
+	turn_contract: Dictionary
+) -> float:
+	if str(action.get("kind", "")) != "retreat":
+		return 0.0
+	var discards: Variant = action.get("energy_to_discard", [])
+	if not (discards is Array) or (discards as Array).is_empty():
+		return 0.0
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return 0.0
+	var player: PlayerState = game_state.players[player_index]
+	if player == null or player.active_pokemon == null:
+		return 0.0
+	var target: Variant = action.get("bench_target", null)
+	if not (target is PokemonSlot):
+		return 0.0
+	var active: PokemonSlot = player.active_pokemon
+	var target_slot: PokemonSlot = target as PokemonSlot
+	if not _slot_matches_turn_contract_route_name(active, turn_contract):
+		return 0.0
+	if _slot_matches_turn_contract_route_name(target_slot, turn_contract) and not _slot_has_printed_ready_attack(active) and _slot_has_printed_ready_attack(target_slot):
+		return 0.0
+	return -RESOURCE_PAID_OWNER_RETREAT_PENALTY
+
+
+func _slot_matches_turn_contract_route_name(slot: PokemonSlot, turn_contract: Dictionary) -> bool:
+	if slot == null or turn_contract.is_empty():
+		return false
+	for route_name: String in _turn_contract_route_names(turn_contract):
+		if _slot_label_matches(slot, route_name):
+			return true
+	return false
+
+
+func _turn_contract_route_names(turn_contract: Dictionary) -> Array[String]:
+	var names: Array[String] = []
+	var owner: Variant = turn_contract.get("owner", {})
+	if owner is Dictionary:
+		for key: String in ["turn_owner_name", "bridge_target_name", "pivot_target_name"]:
+			_append_unique_contract_name(names, str((owner as Dictionary).get(key, "")))
+	var targets: Variant = turn_contract.get("targets", {})
+	if targets is Dictionary:
+		for key: String in ["primary_attacker_name", "bridge_target_name", "pivot_target_name"]:
+			_append_unique_contract_name(names, str((targets as Dictionary).get(key, "")))
+	for key: String in ["turn_owner_name", "bridge_target_name", "pivot_target_name", "primary_attacker_name"]:
+		_append_unique_contract_name(names, str(turn_contract.get(key, "")))
+	return names
+
+
+func _append_unique_contract_name(names: Array[String], value: String) -> void:
+	var text := value.strip_edges()
+	if text != "" and not names.has(text):
+		names.append(text)
+
+
+func _slot_label_matches(slot: PokemonSlot, candidate: String) -> bool:
+	var wanted := candidate.strip_edges().to_lower()
+	if wanted == "" or slot == null:
+		return false
+	var cd: CardData = slot.get_card_data()
+	if cd == null:
+		return false
+	var labels: Array[String] = [str(cd.name), str(cd.name_en), str(cd.effect_id)]
+	if str(cd.set_code) != "" and str(cd.card_index) != "":
+		labels.append("%s_%s" % [str(cd.set_code), str(cd.card_index)])
+	for label: String in labels:
+		if label.strip_edges().to_lower() == wanted:
+			return true
+	return false
+
+
+func _slot_has_printed_ready_attack(slot: PokemonSlot) -> bool:
+	if slot == null:
+		return false
+	var cd: CardData = slot.get_card_data()
+	if cd == null:
+		return false
+	for attack: Dictionary in cd.attacks:
+		var cost := CardData.normalize_attack_cost(str(attack.get("cost", "")))
+		if cost == "":
+			continue
+		if slot.attached_energy.size() >= cost.length():
+			return true
+	return false
 
 
 # ============================================================

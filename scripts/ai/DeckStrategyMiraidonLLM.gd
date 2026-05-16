@@ -179,6 +179,33 @@ func get_llm_setup_role_hint(cd: CardData) -> String:
 	return "support"
 
 
+func get_intent_planner_profile() -> Dictionary:
+	return {
+		"primary_attackers": ["Miraidon ex", "Iron Hands ex", "Raikou V", "Zapdos", "Raichu V"],
+		"secondary_attackers": ["Bloodmoon Ursaluna ex", "Mew ex"],
+		"support_only": ["Squawkabilly ex", "Lumineon V", "Radiant Greninja"],
+		"energy_banks": ["Raichu V"],
+		"energy_needs": {
+			"Miraidon ex": {"L": 2, "C": 1},
+			"Iron Hands ex": {"L": 2, "C": 1},
+			"Raikou V": {"L": 1, "C": 1},
+			"Zapdos": {"L": 1},
+			"Raichu V": {"L": 1},
+			"Bloodmoon Ursaluna ex": {"C": 3},
+			"Mew ex": {"C": 1},
+		},
+		"primary_attacks": [
+			{"pokemon": "Miraidon ex", "attack": "Photon Blaster"},
+			{"pokemon": "Iron Hands ex", "attack": "Amp You Very Much"},
+			{"pokemon": "Raikou V", "attack": "Lightning Rondo"},
+			{"pokemon": "Raichu V", "attack": "Dynamic Spark"},
+		],
+		"scaling_attackers": ["Raichu V", "Raikou V"],
+		"setup_draw_attacks": [{"pokemon": "Raichu V", "attack": "Fast Charge"}],
+		"low_value_attacks": [{"pokemon": "Raichu V", "attack": "Fast Charge"}],
+	}
+
+
 func get_llm_deck_strategy_prompt(game_state: GameState, player_index: int) -> PackedStringArray:
 	var lines := PackedStringArray()
 	lines.append("【卡组定位】密勒顿是高速雷系基础宝可梦卡组。先铺 Miraidon ex 和真实攻击手，再把 Electric Generator 命中的能量转化成立刻进攻，用 Iron Hands ex、Raikou V、Zapdos、Raichu V、Bloodmoon Ursaluna ex 赢奖赏竞速。")

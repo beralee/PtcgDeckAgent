@@ -67,11 +67,11 @@ func execute_attack(
 	for target: PokemonSlot in targets:
 		if AttackCoinFlipPreventDamageAndEffectsNextTurn.prevents_attack_damage(target, state):
 			continue
-		if AbilityBenchImmune.has_bench_immune(target) and target != opponent.active_pokemon:
+		if target != opponent.active_pokemon and AbilityBenchImmune.prevents_opponent_attack_damage_or_effect(target, attacker, state):
 			continue
 		if AbilityPreventDamageFromBasicExEffect.prevents_target_damage(attacker, target, state):
 			continue
-		target.damage_counters += snipe_damage
+		target.damage_counters += _calculate_attack_target_damage(attacker, target, snipe_damage, state)
 
 
 func get_description() -> String:

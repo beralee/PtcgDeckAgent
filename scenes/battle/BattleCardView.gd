@@ -3,6 +3,7 @@ extends PanelContainer
 
 signal left_clicked(card_instance: CardInstance, card_data: CardData)
 signal right_clicked(card_instance: CardInstance, card_data: CardData)
+signal hand_drag_input(event: InputEvent)
 
 const MODE_HAND := "hand"
 const MODE_SLOT_ACTIVE := "slot_active"
@@ -11,6 +12,9 @@ const MODE_CHOICE := "choice"
 const MODE_PREVIEW := "preview"
 const TOUCH_LONG_PRESS_SECONDS := 0.42
 const TOUCH_LONG_PRESS_MOVE_TOLERANCE := 18.0
+const HAND_PRIMARY_CLICK_MOVE_TOLERANCE := 12.0
+const CARD_GALLERY_VERTICAL_CLICK_TOLERANCE := 36.0
+const ENERGY_ROW_MINIMUM_LAYOUT_GAP := 4
 const CardImplementationStatusScript := preload("res://scripts/engine/CardImplementationStatus.gd")
 const ENERGY_ICON_TEXTURES := {
 	"R": preload("res://assets/ui/e-huo.png"),
@@ -31,9 +35,36 @@ const STATUS_ICON_TEXTURES := {
 	"asleep": preload("res://assets/ui/status_sleep.png"),
 	"paralyzed": preload("res://assets/ui/status_paralyzed.png"),
 }
+const STATUS_REFERENCE_CARD_HEIGHT := 168.0
+
+class EnergyIconControl:
+	extends Control
+
+	var texture: Texture2D = null
+
+	func _get_minimum_size() -> Vector2:
+		return custom_minimum_size
+
+	func _draw() -> void:
+		if texture == null:
+			return
+		var texture_size := texture.get_size()
+		if texture_size.x <= 0.0 or texture_size.y <= 0.0 or size.x <= 0.0 or size.y <= 0.0:
+			return
+		var draw_scale := minf(size.x / texture_size.x, size.y / texture_size.y)
+		var draw_size := texture_size * draw_scale
+		var draw_position := (size - draw_size) * 0.5
+		draw_texture_rect(texture, Rect2(draw_position, draw_size), false)
 
 static var _texture_cache: Dictionary = {}
 static var _failed_texture_paths: Dictionary = {}
+
+
+func _get_minimum_size() -> Vector2:
+	if _field_slot_minimum_locked:
+		return Vector2.ZERO
+	return Vector2.ZERO
+
 
 var card_instance: CardInstance = null
 var card_data: CardData = null
@@ -50,14 +81,23 @@ var _battle_status_active: bool = false
 var _battle_status: Dictionary = {}
 var _compact_preview: bool = false
 var _tilt_degrees: float = 0.0
+var _portrait_status_metrics_enabled: bool = false
+var _status_text_scale: float = 1.0
+var _field_slot_layout_size: Vector2 = Vector2.ZERO
+var _field_slot_minimum_locked: bool = false
 var _touch_long_press_timer: Timer = null
 var _touch_long_press_active: bool = false
 var _touch_long_press_index: int = -1
 var _touch_long_press_start: Vector2 = Vector2.ZERO
 var _touch_long_press_consumed: bool = false
 var _suppress_next_left_click: bool = false
+var _secondary_inspect_enabled: bool = false
+var _hand_primary_press_active: bool = false
+var _hand_primary_press_start: Vector2 = Vector2.ZERO
+var _hand_primary_press_cancelled: bool = false
 
 var _outer_margin: MarginContainer
+var _aspect_container: AspectRatioContainer
 var _art_frame: PanelContainer
 
 var _texture_rect: TextureRect
@@ -98,6 +138,7 @@ func _ready() -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
 		_apply_tilt()
+		_apply_responsive_status_metrics()
 
 
 func setup_from_instance(inst: CardInstance = null, mode: String = MODE_HAND) -> void:
@@ -171,6 +212,10 @@ func set_clickable(clickable: bool) -> void:
 		_cancel_touch_long_press()
 
 
+func set_secondary_inspect_enabled(enabled: bool) -> void:
+	_secondary_inspect_enabled = enabled
+
+
 func set_compact_preview(compact: bool) -> void:
 	_compact_preview = compact
 	_ensure_ui()
@@ -178,9 +223,45 @@ func set_compact_preview(compact: bool) -> void:
 	_update_style()
 
 
+func set_wide_preview(wide: bool) -> void:
+	_ensure_ui()
+	_aspect_container.stretch_mode = AspectRatioContainer.STRETCH_COVER if wide else AspectRatioContainer.STRETCH_FIT
+
+
 func set_tilt_degrees(degrees: float) -> void:
 	_tilt_degrees = degrees
 	_apply_tilt()
+
+
+func set_portrait_status_metrics_enabled(enabled: bool) -> void:
+	if _portrait_status_metrics_enabled == enabled:
+		return
+	_portrait_status_metrics_enabled = enabled
+	_apply_responsive_status_metrics()
+	if _battle_status_active:
+		_update_battle_status_ui()
+
+
+func set_status_text_scale(scale: float) -> void:
+	var normalized := clampf(scale, 0.5, 1.25)
+	if is_equal_approx(_status_text_scale, normalized):
+		return
+	_status_text_scale = normalized
+	_apply_responsive_status_metrics()
+
+
+func set_field_slot_layout_size(layout_size: Vector2) -> void:
+	var normalized := Vector2.ZERO
+	if layout_size.x > 0.0 and layout_size.y > 0.0:
+		normalized = layout_size
+	var was_locked := _field_slot_minimum_locked
+	_field_slot_layout_size = normalized
+	_field_slot_minimum_locked = normalized != Vector2.ZERO and (display_mode == MODE_SLOT_ACTIVE or display_mode == MODE_SLOT_BENCH)
+	if was_locked != _field_slot_minimum_locked:
+		update_minimum_size()
+	_apply_responsive_status_metrics()
+	if _battle_status_active:
+		_update_battle_status_ui()
 
 
 func set_badges(left_text: String = "", right_text: String = "") -> void:
@@ -225,19 +306,19 @@ func _build_ui() -> void:
 	_outer_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(_outer_margin)
 
-	var aspect := AspectRatioContainer.new()
-	_make_passthrough(aspect)
-	aspect.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	aspect.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	aspect.ratio = 0.716
-	aspect.stretch_mode = AspectRatioContainer.STRETCH_FIT
-	_outer_margin.add_child(aspect)
+	_aspect_container = AspectRatioContainer.new()
+	_make_passthrough(_aspect_container)
+	_aspect_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_aspect_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_aspect_container.ratio = 0.716
+	_aspect_container.stretch_mode = AspectRatioContainer.STRETCH_FIT
+	_outer_margin.add_child(_aspect_container)
 
 	_art_frame = PanelContainer.new()
 	_make_passthrough(_art_frame)
 	_art_frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_art_frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	aspect.add_child(_art_frame)
+	_aspect_container.add_child(_art_frame)
 
 	_texture_rect = TextureRect.new()
 	_make_passthrough(_texture_rect)
@@ -313,6 +394,8 @@ func _build_ui() -> void:
 
 	_status_hud = VBoxContainer.new()
 	_make_passthrough(_status_hud)
+	_status_hud.alignment = BoxContainer.ALIGNMENT_END
+	_status_hud.size_flags_vertical = Control.SIZE_SHRINK_END
 	_status_hud.add_theme_constant_override("separation", 3)
 	overlay_vbox.add_child(_status_hud)
 
@@ -324,6 +407,7 @@ func _build_ui() -> void:
 	_make_passthrough(_status_used_label)
 	_status_used_label.text = "USED"
 	_status_used_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_status_used_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_status_used_label.add_theme_font_size_override("font_size", 10)
 	var used_font := FontVariation.new()
 	used_font.base_font = ThemeDB.fallback_font
@@ -356,6 +440,7 @@ func _build_ui() -> void:
 	_status_hp_value_label.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_status_hp_value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_status_hp_value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_status_hp_value_label.clip_text = true
 	var hp_font := FontVariation.new()
 	hp_font.base_font = ThemeDB.fallback_font
 	hp_font.variation_embolden = 1.2
@@ -379,6 +464,7 @@ func _build_ui() -> void:
 	_status_energy_panel.add_child(energy_margin)
 	_status_energy_row = HBoxContainer.new()
 	_make_passthrough(_status_energy_row)
+	_status_energy_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	_status_energy_row.add_theme_constant_override("separation", 2)
 	energy_margin.add_child(_status_energy_row)
 
@@ -389,6 +475,9 @@ func _build_ui() -> void:
 	_status_tool_label = Label.new()
 	_make_passthrough(_status_tool_label)
 	_status_tool_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_status_tool_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_status_tool_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_status_tool_label.clip_text = true
 	_status_tool_label.add_theme_font_size_override("font_size", 9)
 	tool_margin.add_child(_status_tool_label)
 
@@ -741,26 +830,34 @@ func _update_battle_status_ui() -> void:
 	_status_hp_bar.value = hp_ratio * 100.0
 
 	var status_icons_raw: Variant = _battle_status.get("status_icons", [])
-	_clear_children(_status_condition_row)
-	var status_count := 0
-	for status_key_variant: Variant in status_icons_raw:
-		var status_key := str(status_key_variant)
-		_status_condition_row.add_child(_make_status_condition_icon(status_key))
-		status_count += 1
-	_status_condition_panel.visible = status_count > 0
+	var status_total: int = 0
+	if status_icons_raw is Array:
+		status_total = (status_icons_raw as Array).size()
 
 	var energy_icons_raw: Variant = _battle_status.get("energy_icons", [])
-	_clear_children(_status_energy_row)
-	var energy_count := 0
-	for energy_code_variant: Variant in energy_icons_raw:
-		var energy_code := str(energy_code_variant)
-		_status_energy_row.add_child(_make_energy_icon(energy_code))
-		energy_count += 1
-	_status_energy_panel.visible = energy_count > 0
+	var energy_total: int = 0
+	if energy_icons_raw is Array:
+		energy_total = (energy_icons_raw as Array).size()
 
 	var tool_name := str(_battle_status.get("tool_name", ""))
 	_status_tool_label.text = tool_name
+	_status_condition_panel.visible = status_total > 0
+	_status_energy_panel.visible = energy_total > 0
 	_status_tool_panel.visible = tool_name != ""
+
+	_clear_children(_status_condition_row)
+	for status_key_variant: Variant in status_icons_raw:
+		var status_key := str(status_key_variant)
+		_status_condition_row.add_child(_make_status_condition_icon(status_key, status_total))
+
+	_clear_children(_status_energy_row)
+	var energy_marker_count := maxi(energy_total, 1)
+	var energy_marker_size := _energy_marker_icon_size(energy_marker_count)
+	_status_energy_row.add_theme_constant_override("separation", _energy_marker_separation(energy_marker_count))
+	_status_energy_row.custom_minimum_size = Vector2(0, energy_marker_size)
+	for energy_icon_variant: Variant in energy_icons_raw:
+		_status_energy_row.add_child(_make_energy_icon(energy_icon_variant, energy_total))
+	_apply_responsive_status_metrics()
 
 
 func _update_implementation_badge() -> void:
@@ -781,34 +878,101 @@ func _clear_children(node: Node) -> void:
 		child.queue_free()
 
 
-func _make_energy_icon(energy_code: String) -> Control:
+func _make_energy_icon(energy_icon: Variant, energy_count: int = 1) -> Control:
+	var energy_code := _energy_icon_code(energy_icon)
+	var provided_count := _energy_icon_provided_count(energy_icon)
+	var icon_size := _energy_marker_icon_size(energy_count)
 	var texture: Texture2D = ENERGY_ICON_TEXTURES.get(energy_code, null)
 	if texture != null:
-		var rect := TextureRect.new()
+		var rect := EnergyIconControl.new()
 		_make_passthrough(rect)
+		rect.set_meta("energy_icon_slot", true)
+		rect.set_meta("energy_provided_count", provided_count)
 		rect.texture = texture
-		rect.custom_minimum_size = Vector2(14, 14)
-		rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-		rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		return rect
+		rect.custom_minimum_size = Vector2(icon_size, icon_size)
+		rect.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		rect.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		if provided_count <= 1:
+			return rect
+
+		var slot := Control.new()
+		_make_passthrough(slot)
+		slot.set_meta("energy_icon_slot", true)
+		slot.set_meta("energy_provided_count", provided_count)
+		slot.custom_minimum_size = Vector2(icon_size, icon_size)
+		slot.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		slot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		slot.clip_contents = true
+		rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+		rect.custom_minimum_size = Vector2.ZERO
+		slot.add_child(rect)
+		_add_energy_count_badge(slot, provided_count, icon_size)
+		return slot
 
 	var chip := Label.new()
 	_make_passthrough(chip)
-	chip.text = energy_code
+	chip.set_meta("energy_label_chip", true)
+	chip.set_meta("energy_provided_count", provided_count)
+	chip.text = energy_code if provided_count <= 1 else "%s×%d" % [energy_code, provided_count]
 	chip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	chip.custom_minimum_size = Vector2(16, 14)
-	chip.add_theme_font_size_override("font_size", 9)
+	chip.custom_minimum_size = Vector2(icon_size, icon_size)
+	chip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	chip.add_theme_font_size_override("font_size", maxi(7, roundi(float(icon_size) * 0.72)))
 	return chip
 
 
-func _make_status_condition_icon(status_key: String) -> Control:
+func _energy_icon_code(energy_icon: Variant) -> String:
+	if energy_icon is Dictionary:
+		var data := energy_icon as Dictionary
+		var code := str(data.get("code", "C"))
+		return code if code != "" else "C"
+	var code := str(energy_icon)
+	return code if code != "" else "C"
+
+
+func _energy_icon_provided_count(energy_icon: Variant) -> int:
+	if energy_icon is Dictionary:
+		var data := energy_icon as Dictionary
+		return maxi(int(data.get("count", 1)), 1)
+	return 1
+
+
+func _add_energy_count_badge(slot: Control, provided_count: int, icon_size: int) -> void:
+	if slot == null or provided_count <= 1:
+		return
+	var badge := Label.new()
+	_make_passthrough(badge)
+	badge.set_meta("energy_count_badge", true)
+	badge.text = "×%d" % provided_count
+	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	badge.custom_minimum_size = Vector2(maxi(1, roundi(float(icon_size) * 0.72)), maxi(1, roundi(float(icon_size) * 0.52)))
+	badge.size_flags_horizontal = Control.SIZE_SHRINK_END
+	badge.size_flags_vertical = Control.SIZE_SHRINK_END
+	badge.add_theme_font_size_override("font_size", maxi(1, roundi(float(icon_size) * 0.48)))
+	badge.add_theme_color_override("font_color", Color(0.96, 1.0, 1.0, 1.0))
+	badge.add_theme_color_override("font_outline_color", Color(0.0, 0.04, 0.07, 0.95))
+	badge.add_theme_constant_override("outline_size", 2)
+	badge.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	badge.offset_left = -badge.custom_minimum_size.x
+	badge.offset_top = -badge.custom_minimum_size.y
+	badge.offset_right = 0.0
+	badge.offset_bottom = 0.0
+	slot.add_child(badge)
+
+
+func _make_status_condition_icon(status_key: String, status_count: int = 1) -> Control:
+	var icon_size := _battle_marker_icon_size(status_count)
 	var texture: Texture2D = STATUS_ICON_TEXTURES.get(status_key, null)
 	if texture != null:
 		var rect := TextureRect.new()
 		_make_passthrough(rect)
 		rect.texture = texture
-		rect.custom_minimum_size = Vector2(14, 14)
-		rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		rect.custom_minimum_size = Vector2(icon_size, icon_size)
+		rect.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		rect.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		return rect
 
@@ -816,9 +980,328 @@ func _make_status_condition_icon(status_key: String) -> Control:
 	_make_passthrough(chip)
 	chip.text = status_key.substr(0, 1).to_upper()
 	chip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	chip.custom_minimum_size = Vector2(16, 14)
-	chip.add_theme_font_size_override("font_size", 9)
+	chip.custom_minimum_size = Vector2(icon_size + 2, icon_size)
+	chip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	chip.add_theme_font_size_override("font_size", maxi(7, roundi(float(icon_size) * 0.72)))
 	return chip
+
+
+func _status_ui_scale() -> float:
+	var card_height := _status_card_height()
+	if card_height <= 0.0:
+		return 1.0
+	return clampf(card_height / STATUS_REFERENCE_CARD_HEIGHT, 0.46, 1.9)
+
+
+func _status_card_height() -> float:
+	if _field_slot_layout_size.y > 0.0:
+		return _field_slot_layout_size.y
+	if custom_minimum_size.y > 0.0:
+		return custom_minimum_size.y
+	return size.y
+
+
+func _status_card_width() -> float:
+	if _field_slot_layout_size.x > 0.0:
+		return _field_slot_layout_size.x
+	if custom_minimum_size.x > 0.0:
+		return custom_minimum_size.x
+	return size.x
+
+
+func _portrait_status_slot_height() -> float:
+	return maxf(_status_card_height() / 5.0, 1.0)
+
+
+func _status_overlay_available_height() -> float:
+	var outer_pad := 0.0 if _compact_preview else 4.0
+	var overlay_vertical_margin := 12.0
+	return maxf(_status_card_height() - outer_pad * 2.0 - overlay_vertical_margin, 1.0)
+
+
+func _visible_status_row_count() -> int:
+	if not _battle_status_active:
+		return 0
+	var count := 1
+	if _status_used_panel != null and _status_used_panel.visible:
+		count += 1
+	if _status_condition_panel != null and _status_condition_panel.visible:
+		count += 1
+	if _status_energy_panel != null and _status_energy_panel.visible:
+		count += 1
+	if _status_tool_panel != null and _status_tool_panel.visible:
+		count += 1
+	return count
+
+
+func _effective_status_slot_height(base_slot_height: float) -> float:
+	var visible_rows := maxi(_visible_status_row_count(), 1)
+	var available_per_row := _status_overlay_available_height() / float(visible_rows)
+	return maxf(minf(base_slot_height, available_per_row), 1.0)
+
+
+func _status_vertical_margin_for_slot(slot_height: float) -> int:
+	return clampi(roundi(slot_height * 0.08), 1, 8)
+
+
+func _portrait_status_hp_font_size(hp_overlay_height: float) -> int:
+	return clampi(roundi(hp_overlay_height * 0.66), 9, 48)
+
+
+func _portrait_status_tool_font_size(slot_height: float, scale: float) -> int:
+	var tool_margin_v := clampi(roundi(2.0 * scale), 1, 5)
+	var height_limited_size := clampi(roundi(maxf(slot_height - float(tool_margin_v * 2), 1.0) * 0.58), 9, 44)
+	if _status_tool_label == null or _status_tool_label.text == "":
+		return height_limited_size
+	var card_width := _status_card_width()
+	if card_width <= 0.0:
+		return height_limited_size
+	var margin_h := clampi(roundi(8.0 * scale), 2, 14)
+	var available_width := maxf(card_width - float(margin_h * 2), 1.0)
+	var glyph_count := maxi(_status_tool_label.text.length(), 1)
+	var width_limited_size := floori(available_width / (float(glyph_count) * 0.92))
+	return clampi(mini(height_limited_size, width_limited_size), 9, 44)
+
+
+func _status_label_font_variation(label: Label, embolden: float) -> void:
+	if label == null:
+		return
+	var base_font := ThemeDB.get_fallback_font()
+	var current_font := label.get_theme_font("font")
+	if current_font is FontVariation:
+		var current_variation := current_font as FontVariation
+		if current_variation.base_font != null:
+			base_font = current_variation.base_font
+	elif current_font != null:
+		base_font = current_font
+	var font := FontVariation.new()
+	font.base_font = base_font
+	font.variation_embolden = embolden
+	label.add_theme_font_override("font", font)
+
+
+func _scaled_status_font_size(base_size: int, min_size: int, max_size: int) -> int:
+	return clampi(roundi(float(base_size) * _status_text_scale), min_size, max_size)
+
+
+func _status_row_height_multiplier() -> float:
+	return 1.0
+
+
+func _status_content_multiplier() -> float:
+	return 1.0
+
+
+func _status_base_hp_overlay_height() -> float:
+	if _portrait_status_metrics_enabled:
+		var slot_height := _effective_status_slot_height(_portrait_status_slot_height())
+		return maxf(slot_height - float(_status_vertical_margin_for_slot(slot_height) * 2), 1.0)
+	return clampf(16.0 * _status_ui_scale(), 8.0, 32.0)
+
+
+func _status_hp_overlay_height() -> float:
+	return _status_base_hp_overlay_height() * _status_row_height_multiplier()
+
+
+func _status_icon_size() -> int:
+	var hp_height := _status_base_hp_overlay_height()
+	var target_size := minf(14.0 * _status_ui_scale(), hp_height - 4.0) * _status_content_multiplier()
+	var max_size := 52 if _portrait_status_metrics_enabled else 26
+	return clampi(roundi(target_size), 5, max_size)
+
+
+func _battle_marker_icon_size(icon_count: int = 1) -> int:
+	var count := maxi(icon_count, 1)
+	var card_width := _status_card_width()
+	var scale := _status_ui_scale()
+	var margin_h := clampi(roundi(6.0 * scale), 2, 12)
+	var separation := clampi(roundi(4.0 * scale), 2, 8)
+	var base_size := roundi(float(_status_icon_size()) * 0.77)
+	var max_size := 20
+	if _portrait_status_metrics_enabled:
+		var slot_height := _effective_status_slot_height(_portrait_status_slot_height())
+		var content_height := maxf(slot_height - float(_status_vertical_margin_for_slot(slot_height) * 2), 1.0)
+		base_size = _scaled_status_font_size(_portrait_status_hp_font_size(content_height), 7, 48)
+		max_size = 48
+	if card_width <= 0.0:
+		return clampi(base_size, 4, max_size)
+	var available_width := maxf(card_width - float(margin_h * 2) - float(maxi(count - 1, 0) * separation), 1.0)
+	var fit_size := floori(available_width / float(count))
+	return clampi(mini(base_size, fit_size), 4, max_size)
+
+
+func _energy_marker_icon_size(icon_count: int = 1) -> int:
+	var count := maxi(icon_count, 1)
+	var base_size := _battle_marker_icon_size(1)
+	var available_height := roundi(maxf(_status_base_hp_overlay_height(), 1.0))
+	var card_width := _status_card_width()
+	if card_width <= 0.0:
+		return clampi(mini(base_size, available_height), 1, 48)
+	var scale := _status_ui_scale()
+	var margin_h := clampi(roundi(6.0 * scale), 2, 12)
+	var separation := _energy_marker_separation(count)
+	var layout_gap := maxi(separation, ENERGY_ROW_MINIMUM_LAYOUT_GAP)
+	var available_width := maxf(card_width - float(margin_h * 2) - float(maxi(count - 1, 0) * layout_gap), 1.0)
+	var fit_size := floori(available_width / float(count))
+	return clampi(mini(mini(base_size, available_height), fit_size), 1, 48)
+
+
+func _energy_marker_separation(icon_count: int = 1) -> int:
+	var count := maxi(icon_count, 1)
+	var scale := _status_ui_scale()
+	var base_separation := clampi(roundi(2.0 * scale), 1, 6)
+	if count <= 1:
+		return base_separation
+	var card_width := _status_card_width()
+	if card_width <= 0.0:
+		return base_separation
+	var margin_h := clampi(roundi(6.0 * scale), 2, 12)
+	var available_width := maxf(card_width - float(margin_h * 2), 1.0)
+	var base_icon_size := _battle_marker_icon_size(1)
+	if float(base_icon_size * count + base_separation * (count - 1)) > available_width:
+		return 0
+	var min_icon_size := 1.0
+	var max_fit_separation := floori((available_width - min_icon_size * float(count)) / float(count - 1))
+	return clampi(mini(base_separation, max_fit_separation), 0, base_separation)
+
+
+func _apply_energy_icon_size_to_row(icon_size: int) -> void:
+	if _status_energy_row == null:
+		return
+	for child: Node in _status_energy_row.get_children():
+		var control := child as Control
+		if control == null:
+			continue
+		if bool(control.get_meta("energy_label_chip", false)):
+			control.custom_minimum_size = Vector2(icon_size, icon_size)
+			if control is Label:
+				(control as Label).add_theme_font_size_override("font_size", maxi(1, roundi(float(icon_size) * 0.72)))
+		else:
+			control.custom_minimum_size = Vector2(icon_size, icon_size)
+		control.queue_redraw()
+		for nested_child: Node in control.get_children():
+			var nested_control := nested_child as Control
+			if nested_control == null or not bool(nested_control.get_meta("energy_icon_slot", false)):
+				continue
+			nested_control.custom_minimum_size = Vector2.ZERO
+			nested_control.queue_redraw()
+		_resize_energy_count_badges(control, icon_size)
+
+
+func _resize_energy_count_badges(control: Control, icon_size: int) -> void:
+	if control == null:
+		return
+	for child: Node in control.get_children():
+		var badge := child as Label
+		if badge == null or not bool(badge.get_meta("energy_count_badge", false)):
+			continue
+		badge.custom_minimum_size = Vector2(maxi(1, roundi(float(icon_size) * 0.72)), maxi(1, roundi(float(icon_size) * 0.52)))
+		badge.add_theme_font_size_override("font_size", maxi(1, roundi(float(icon_size) * 0.48)))
+		badge.offset_left = -badge.custom_minimum_size.x
+		badge.offset_top = -badge.custom_minimum_size.y
+		badge.offset_right = 0.0
+		badge.offset_bottom = 0.0
+
+
+func _apply_responsive_status_metrics() -> void:
+	if _status_hud == null:
+		return
+	var scale := _status_ui_scale()
+	var height_multiplier := _status_row_height_multiplier()
+	var content_multiplier := _status_content_multiplier()
+	var margin_h := clampi(roundi(6.0 * scale), 2, 12)
+	var margin_v := clampi(roundi(3.0 * scale), 1, 6)
+	var portrait_slot_height := _portrait_status_slot_height()
+	var effective_slot_height := portrait_slot_height
+	if _portrait_status_metrics_enabled:
+		effective_slot_height = _effective_status_slot_height(portrait_slot_height)
+		margin_v = _status_vertical_margin_for_slot(effective_slot_height)
+	var base_hp_overlay_height := _status_base_hp_overlay_height()
+	var hp_overlay_height := base_hp_overlay_height * height_multiplier
+	var base_icon_size := minf(14.0 * scale, base_hp_overlay_height - 4.0)
+	var row_panel_height := (maxf(base_hp_overlay_height, base_icon_size) + float(margin_v * 2)) * height_multiplier
+	var shared_tool_font_size := _scaled_status_font_size(clampi(roundi(9.0 * scale * content_multiplier), 6, 44), 5, 44)
+	if _portrait_status_metrics_enabled:
+		row_panel_height = effective_slot_height
+		hp_overlay_height = maxf(effective_slot_height - float(margin_v * 2), 1.0)
+		_status_hud.add_theme_constant_override("separation", 0)
+		shared_tool_font_size = _scaled_status_font_size(_portrait_status_tool_font_size(effective_slot_height, scale), 7, 44)
+	else:
+		_status_hud.add_theme_constant_override("separation", clampi(roundi(3.0 * scale), 1, 7))
+	if _status_used_label != null:
+		_status_used_label.add_theme_font_size_override("font_size", shared_tool_font_size)
+	if _status_hp_value_label != null:
+		if _portrait_status_metrics_enabled:
+			var hp_font_size := _scaled_status_font_size(_portrait_status_hp_font_size(hp_overlay_height), 7, 48)
+			_status_hp_value_label.add_theme_font_size_override("font_size", hp_font_size)
+			_status_hp_value_label.add_theme_constant_override("outline_size", clampi(roundi(float(hp_font_size) * 0.085), 2, 4))
+			_status_hp_value_label.add_theme_color_override("font_outline_color", Color(0.0, 0.02, 0.04, 0.96))
+			_status_label_font_variation(_status_hp_value_label, 1.62)
+		else:
+			_status_hp_value_label.add_theme_font_size_override("font_size", _scaled_status_font_size(clampi(roundi(12.0 * scale * content_multiplier), 7, 48), 6, 48))
+			_status_hp_value_label.add_theme_constant_override("outline_size", 0)
+			_status_label_font_variation(_status_hp_value_label, 1.2)
+	if _status_tool_label != null:
+		if _portrait_status_metrics_enabled:
+			var tool_font_size := shared_tool_font_size
+			_status_tool_label.add_theme_font_size_override("font_size", tool_font_size)
+			_status_tool_label.add_theme_color_override("font_color", Color(0.04, 0.06, 0.07, 1.0))
+			_status_tool_label.add_theme_constant_override("outline_size", clampi(roundi(float(tool_font_size) * 0.06), 1, 3))
+			_status_tool_label.add_theme_color_override("font_outline_color", Color(1.0, 1.0, 0.94, 0.82))
+			_status_label_font_variation(_status_tool_label, 0.0)
+		else:
+			_status_tool_label.add_theme_font_size_override("font_size", shared_tool_font_size)
+			_status_tool_label.add_theme_constant_override("outline_size", 0)
+			_status_label_font_variation(_status_tool_label, 0.0)
+	if _status_condition_row != null:
+		_status_condition_row.add_theme_constant_override("separation", clampi(roundi(2.0 * scale), 1, 6))
+		_status_condition_row.custom_minimum_size = Vector2(0, _battle_marker_icon_size())
+	if _status_energy_row != null:
+		var energy_icon_count := maxi(_status_energy_row.get_child_count(), 1)
+		var energy_icon_size := _energy_marker_icon_size(energy_icon_count)
+		_status_energy_row.add_theme_constant_override("separation", _energy_marker_separation(energy_icon_count))
+		_status_energy_row.custom_minimum_size = Vector2(0, energy_icon_size)
+		_apply_energy_icon_size_to_row(energy_icon_size)
+		_status_energy_row.update_minimum_size()
+		_status_energy_row.queue_sort()
+	var hp_overlay: Control = null
+	if _status_hp_bar != null:
+		hp_overlay = _status_hp_bar.get_parent() as Control
+	if hp_overlay != null:
+		hp_overlay.custom_minimum_size = Vector2(0, hp_overlay_height)
+	if _status_hp_bar != null:
+		_status_hp_bar.offset_top = margin_v
+		_status_hp_bar.offset_bottom = -margin_v
+	if _status_used_panel != null:
+		_status_used_panel.custom_minimum_size = Vector2(0, row_panel_height)
+	if _status_hp_bar_panel != null:
+		_status_hp_bar_panel.custom_minimum_size = Vector2(0, row_panel_height)
+	if _status_condition_panel != null:
+		_status_condition_panel.custom_minimum_size = Vector2(0, row_panel_height)
+	if _status_energy_panel != null:
+		_status_energy_panel.custom_minimum_size = Vector2(0, row_panel_height)
+	if _status_tool_panel != null:
+		_status_tool_panel.custom_minimum_size = Vector2(0, row_panel_height)
+	for panel_raw in [_status_used_panel, _status_hp_bar_panel, _status_condition_panel, _status_energy_panel]:
+		var panel := panel_raw as PanelContainer
+		var margin: MarginContainer = null
+		if panel != null and panel.get_child_count() > 0:
+			margin = panel.get_child(0) as MarginContainer
+		if margin == null:
+			continue
+		margin.add_theme_constant_override("margin_left", margin_h)
+		margin.add_theme_constant_override("margin_right", margin_h)
+		margin.add_theme_constant_override("margin_top", margin_v)
+		margin.add_theme_constant_override("margin_bottom", margin_v)
+	var tool_margin: MarginContainer = null
+	if _status_tool_panel != null and _status_tool_panel.get_child_count() > 0:
+		tool_margin = _status_tool_panel.get_child(0) as MarginContainer
+	if tool_margin != null:
+		tool_margin.add_theme_constant_override("margin_left", clampi(roundi(8.0 * scale), 2, 14))
+		tool_margin.add_theme_constant_override("margin_right", clampi(roundi(8.0 * scale), 2, 14))
+		tool_margin.add_theme_constant_override("margin_top", clampi(roundi(2.0 * scale), 1, 5))
+		tool_margin.add_theme_constant_override("margin_bottom", clampi(roundi(2.0 * scale), 1, 5))
 
 
 func _update_style() -> void:
@@ -940,7 +1423,8 @@ func _apply_status_styles() -> void:
 	_status_tool_label.modulate = Color(0.1, 0.12, 0.14)
 	_status_hp_value_label.modulate = Color(1, 1, 1)
 	_status_hp_value_label.add_theme_color_override("font_color", Color(0.98, 0.99, 1.0))
-	_status_hp_value_label.add_theme_constant_override("outline_size", 0)
+	if not _portrait_status_metrics_enabled:
+		_status_hp_value_label.add_theme_constant_override("outline_size", 0)
 
 	var bar_panel_style := StyleBoxFlat.new()
 	bar_panel_style.bg_color = Color(0.04, 0.06, 0.1, 0.86)
@@ -976,7 +1460,12 @@ func _apply_tilt() -> void:
 func _gui_input(event: InputEvent) -> void:
 	if not _clickable:
 		return
+	var release_primary_click := display_mode == MODE_HAND or bool(get_meta("card_gallery_drag_input_enabled", false))
+	if release_primary_click:
+		hand_drag_input.emit(event)
 	if _handle_touch_inspect_input(event):
+		return
+	if release_primary_click and _handle_hand_primary_click_input(event):
 		return
 	if event is InputEventMouseButton:
 		var mbe := event as InputEventMouseButton
@@ -988,9 +1477,95 @@ func _gui_input(event: InputEvent) -> void:
 				accept_event()
 				return
 			left_clicked.emit(card_instance, card_data)
+			accept_event()
 		elif mbe.button_index == MOUSE_BUTTON_RIGHT:
 			if _can_inspect_by_secondary_input():
 				right_clicked.emit(card_instance, card_data)
+				accept_event()
+
+
+func _handle_hand_primary_click_input(event: InputEvent) -> bool:
+	if event is InputEventMouseButton:
+		var mbe := event as InputEventMouseButton
+		if mbe.button_index != MOUSE_BUTTON_LEFT:
+			return false
+		if mbe.pressed:
+			_hand_primary_press_active = true
+			_hand_primary_press_start = _primary_click_event_position(event)
+			_hand_primary_press_cancelled = false
+			accept_event()
+			return true
+		if _hand_primary_press_active:
+			var cancelled := _hand_primary_press_cancelled
+			_hand_primary_press_active = false
+			_hand_primary_press_cancelled = false
+			if cancelled:
+				accept_event()
+				return true
+			if _suppress_next_left_click:
+				_suppress_next_left_click = false
+				accept_event()
+				return true
+			left_clicked.emit(card_instance, card_data)
+			accept_event()
+			return true
+		return false
+
+	if event is InputEventMouseMotion and _hand_primary_press_active:
+		_update_hand_primary_click_motion(_primary_click_event_position(event))
+		return false
+
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			_hand_primary_press_active = true
+			_hand_primary_press_start = touch.position
+			_hand_primary_press_cancelled = false
+			accept_event()
+			return true
+		if _hand_primary_press_active:
+			var cancelled := _hand_primary_press_cancelled
+			_hand_primary_press_active = false
+			_hand_primary_press_cancelled = false
+			if cancelled:
+				accept_event()
+				return true
+			if _suppress_next_left_click:
+				_suppress_next_left_click = false
+				accept_event()
+				return true
+			left_clicked.emit(card_instance, card_data)
+			accept_event()
+			return true
+		return false
+
+	if event is InputEventScreenDrag and _hand_primary_press_active:
+		_update_hand_primary_click_motion((event as InputEventScreenDrag).position)
+		return false
+
+	return false
+
+
+func _update_hand_primary_click_motion(position: Vector2) -> void:
+	var delta := position - _hand_primary_press_start
+	if bool(get_meta("card_gallery_drag_input_enabled", false)):
+		# Card galleries scroll horizontally. Vertical touch jitter on phones should not
+		# cancel a card tap unless it is clearly no longer a tap.
+		if absf(delta.x) > HAND_PRIMARY_CLICK_MOVE_TOLERANCE or absf(delta.y) > CARD_GALLERY_VERTICAL_CLICK_TOLERANCE:
+			_hand_primary_press_cancelled = true
+		return
+	if delta.length() > HAND_PRIMARY_CLICK_MOVE_TOLERANCE:
+		_hand_primary_press_cancelled = true
+
+
+func _primary_click_event_position(event: InputEvent) -> Vector2:
+	if event is InputEventMouse:
+		return (event as InputEventMouse).global_position
+	if event is InputEventScreenTouch:
+		return (event as InputEventScreenTouch).position
+	if event is InputEventScreenDrag:
+		return (event as InputEventScreenDrag).position
+	return Vector2.ZERO
 
 
 func _handle_touch_inspect_input(event: InputEvent) -> bool:
@@ -1005,6 +1580,8 @@ func _handle_touch_inspect_input(event: InputEvent) -> bool:
 				var consumed := _touch_long_press_consumed
 				_cancel_touch_long_press(false)
 				if consumed:
+					_hand_primary_press_active = false
+					_hand_primary_press_cancelled = false
 					accept_event()
 				return consumed
 		return false
@@ -1020,7 +1597,7 @@ func _handle_touch_inspect_input(event: InputEvent) -> bool:
 
 
 func _can_inspect_by_secondary_input() -> bool:
-	return display_mode == MODE_HAND and card_data != null
+	return card_data != null and (display_mode == MODE_HAND or _secondary_inspect_enabled)
 
 
 func _start_touch_long_press(position: Vector2, touch_index: int) -> void:

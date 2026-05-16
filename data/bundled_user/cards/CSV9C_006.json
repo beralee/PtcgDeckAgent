@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "突然切削",
+			"text": "在自己的回合，当将这张卡牌从手牌使出放于备战区时，可使用1次。将对手牌库上方1张卡牌放于弃牌区。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "PLANETA Tsuji",
+	"attacks": [
+		{
+			"cost": "GCC",
+			"damage": "120+",
+			"is_vstar_power": false,
+			"name": "复仇粉碎",
+			"text": "追加造成对手已经获得的奖赏卡张数×30伤害。"
+		}
+	],
+	"card_index": "006",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "特性: 突然切削\n在自己的回合，当将这张卡牌从手牌使出放于备战区时，可使用1次。将对手牌库上方1张卡牌放于弃牌区。\n\n【草】【无】【无】 复仇粉碎 120+\n追加造成对手已经获得的奖赏卡张数×30伤害。\n\n\n",
+	"effect_id": "3a842d03df3719f7c72c2c0b48d7fd7d",
+	"energy_provides": "",
+	"energy_type": "G",
+	"evolves_from": "",
+	"hp": 190,
+	"image_local_path": "user://cards/images/CSV9C/006.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/006.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "ex",
+	"name": "铁蚁ex",
+	"name_en": "",
+	"rarity": "RR",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Basic",
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"yoren_code": "Y1499"
+}

@@ -144,9 +144,31 @@ func _on_player_choice_required(choice_type: String, data: Dictionary) -> void:
 		"send_out_pokemon":
 			_pending_choice = "send_out"
 			_dialog_data = {"player": int(data.get("player", -1))}
+		"bench_limit_cleanup":
+			_resolve_bench_limit_cleanup(data)
 		_:
 			_pending_choice = choice_type
 			_dialog_data = data.duplicate(true)
+
+
+func _resolve_bench_limit_cleanup(data: Dictionary) -> void:
+	if _gsm == null:
+		return
+	var context: Dictionary = {}
+	for raw_step: Variant in data.get("steps", []):
+		if not (raw_step is Dictionary):
+			continue
+		var step: Dictionary = raw_step
+		var step_id := str(step.get("id", ""))
+		if step_id == "":
+			continue
+		var items: Array = step.get("items", [])
+		var required := int(step.get("min_select", 1))
+		var selected: Array = []
+		for index: int in range(maxi(items.size() - required, 0), items.size()):
+			selected.append(items[index])
+		context[step_id] = selected
+	_gsm.enforce_current_bench_limits("bench_limit_cleanup", int(data.get("player", -1)), "", -1, [context])
 
 
 func _begin_setup_flow(start_player_index: int = 0) -> void:
@@ -227,12 +249,14 @@ func _try_play_to_bench(player_index: int, basic_card: CardInstance, _source: St
 		_gsm.effect_processor.register_pokemon_card(basic_card.card_data)
 	var bench_effect: BaseEffect = _gsm.effect_processor.get_effect(basic_card.card_data.effect_id) if basic_card != null and basic_card.card_data != null else null
 	var bench_steps: Array[Dictionary] = []
-	if bench_effect is AbilityOnBenchEnter or bench_effect is AbilityBenchDamageOnPlay:
+	var is_bench_enter_ability := bench_effect != null and bench_effect.has_method("is_bench_enter_ability") and bool(bench_effect.call("is_bench_enter_ability"))
+	if is_bench_enter_ability:
 		bench_steps = bench_effect.get_interaction_steps(basic_card, gs)
-	var auto_trigger_bench_ability: bool = bench_steps.is_empty()
+	var auto_trigger_bench_ability: bool = is_bench_enter_ability and bench_steps.is_empty()
+	var should_start_bench_interaction: bool = is_bench_enter_ability and not bench_steps.is_empty()
 	if not _gsm.play_basic_to_bench(player_index, basic_card, auto_trigger_bench_ability):
 		return false
-	if not auto_trigger_bench_ability:
+	if should_start_bench_interaction:
 		var player: PlayerState = _gsm.game_state.players[player_index]
 		var bench_slot: PokemonSlot = player.bench.back() if not player.bench.is_empty() else null
 		if bench_slot != null:
@@ -632,6 +656,12 @@ func _handle_counter_distribution_target(target_index: int) -> void:
 	var target: Variant = target_items[target_index]
 	if not (target is PokemonSlot):
 		return
+	var max_assignments: int = int(_field_interaction_data.get("max_assignments", 0))
+	if max_assignments > 0 and _field_interaction_assignment_entries.size() >= max_assignments:
+		return
+	var max_per_target: int = int(_field_interaction_data.get("max_assignments_per_target", 0))
+	if max_per_target > 0 and _count_assignments_for_target_index(_field_interaction_assignment_entries, target_index) >= max_per_target:
+		return
 	_field_interaction_assignment_entries.append({
 		"target_index": target_index,
 		"target": target,
@@ -639,7 +669,9 @@ func _handle_counter_distribution_target(target_index: int) -> void:
 	})
 	_field_interaction_assignment_selected_source_index = -1
 	var total_counters: int = int(_field_interaction_data.get("total_counters", 0))
-	if _get_counter_distribution_assigned_total() >= total_counters:
+	var assigned_total: int = _get_counter_distribution_assigned_total()
+	var reached_assignment_limit := max_assignments > 0 and _field_interaction_assignment_entries.size() >= max_assignments
+	if assigned_total >= total_counters or (bool(_field_interaction_data.get("allow_partial", false)) and reached_assignment_limit):
 		_finalize_counter_distribution()
 
 
@@ -731,20 +763,44 @@ func _commit_effect_assignment_selection(stored_assignments: Array[Dictionary]) 
 
 
 func _inject_followup_steps() -> void:
-	if _pending_effect_kind != "attack" or _pending_effect_card == null:
-		return
-	if _pending_effect_attack_effects.is_empty():
+	if _pending_effect_card == null or _gsm == null or _gsm.effect_processor == null:
 		return
 	var card: CardInstance = _pending_effect_card
-	var attack_index: int = _pending_effect_ability_index
-	if card.card_data == null or attack_index < 0 or attack_index >= card.card_data.attacks.size():
+	if card.card_data == null:
 		return
-	var attack: Dictionary = card.card_data.attacks[attack_index]
 	var followup_steps: Array[Dictionary] = []
-	for effect: BaseEffect in _pending_effect_attack_effects:
-		followup_steps.append_array(
-			effect.get_followup_attack_interaction_steps(card, attack, _gsm.game_state, _pending_effect_context)
-		)
+	match _pending_effect_kind:
+		"attack":
+			if _pending_effect_attack_effects.is_empty():
+				return
+			var attack_index: int = _pending_effect_ability_index
+			if attack_index < 0 or attack_index >= card.card_data.attacks.size():
+				return
+			var attack: Dictionary = card.card_data.attacks[attack_index]
+			for effect: BaseEffect in _pending_effect_attack_effects:
+				followup_steps.append_array(
+					effect.get_followup_attack_interaction_steps(card, attack, _gsm.game_state, _pending_effect_context)
+				)
+		"trainer", "play_stadium", "stadium":
+			var trainer_effect: BaseEffect = _gsm.effect_processor.get_effect(card.card_data.effect_id)
+			if trainer_effect != null:
+				followup_steps.append_array(
+					trainer_effect.get_followup_interaction_steps(card, _gsm.game_state, _pending_effect_context)
+				)
+		"ability":
+			if _pending_effect_slot == null or _pending_effect_ability_index < 0:
+				return
+			var ability_effect: BaseEffect = _gsm.effect_processor.get_ability_effect(
+				_pending_effect_slot,
+				_pending_effect_ability_index,
+				_gsm.game_state
+			)
+			if ability_effect != null:
+				followup_steps.append_array(
+					ability_effect.get_followup_interaction_steps(card, _gsm.game_state, _pending_effect_context)
+				)
+		_:
+			return
 	if followup_steps.is_empty():
 		return
 	var existing_step_ids: Dictionary = {}

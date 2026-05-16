@@ -5,6 +5,7 @@ const AILegalActionBuilderScript = preload("res://scripts/ai/AILegalActionBuilde
 const MCTSPlannerScript = preload("res://scripts/ai/MCTSPlanner.gd")
 const AbilityMoveOpponentDamageCountersScript = preload("res://scripts/effects/pokemon_effects/AbilityMoveOpponentDamageCounters.gd")
 const EffectCapturingAromaScript = preload("res://scripts/effects/trainer_effects/EffectCapturingAroma.gd")
+const EffectArtazonScript = preload("res://scripts/effects/stadium_effects/EffectArtazon.gd")
 const EffectRareCandyScript = preload("res://scripts/effects/trainer_effects/EffectRareCandy.gd")
 
 
@@ -28,6 +29,11 @@ class ExactDiscardSubsetStrategy extends RefCounted:
 			if item in chosen:
 				selected.append(item)
 		return selected
+
+
+class RefuseAllInteractionStrategy extends RefCounted:
+	func pick_interaction_items(_items: Array, _step: Dictionary, _context: Dictionary = {}) -> Array:
+		return []
 
 
 class ExactBenchSubsetStrategy extends RefCounted:
@@ -207,6 +213,107 @@ func test_builder_generates_headless_nest_ball_targets() -> String:
 		assert_false(bool(action.get("requires_interaction", true)), "Nest Ball should no longer require headless interaction"),
 		assert_eq(selected.size(), 1, "Nest Ball should synthesize a single selected basic Pokemon"),
 		assert_eq((selected[0] as CardInstance).card_data.name, "Miraidon ex", "Nest Ball should prefer the lightning basic target"),
+	])
+
+
+func test_builder_enumerates_use_stadium_effect_actions() -> String:
+	var gsm := _make_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	player.active_pokemon = _make_slot(CardInstance.create(_make_pokemon_card_data("Lead"), 0))
+	var artazon_id := "c117bea3cc758d46430d6bef11062a56"
+	gsm.effect_processor.register_effect(artazon_id, EffectArtazonScript.new())
+	var artazon := CardInstance.create(_make_trainer_card_data("Artazon", "Stadium", artazon_id), 1)
+	gsm.game_state.stadium_card = artazon
+	gsm.game_state.stadium_owner_index = 1
+	player.deck = [
+		CardInstance.create(_make_pokemon_card_data("Drifloon", "P"), 0),
+	]
+	var action := _find_action(_build_actions(gsm), "use_stadium_effect", func(candidate: Dictionary) -> bool:
+		return candidate.get("card") == artazon
+	)
+	var targets: Array = action.get("targets", [])
+	var ctx: Dictionary = {} if targets.is_empty() else targets[0]
+	var selected: Array = ctx.get("artazon_pokemon", [])
+	return run_checks([
+		assert_false(action.is_empty(), "Builder should enumerate active stadium effects as legal AI actions"),
+		assert_false(bool(action.get("requires_interaction", true)), "Headless builder should synthesize deterministic Artazon targets"),
+		assert_eq(selected.size(), 1, "Artazon should select one searchable basic Pokemon"),
+		assert_eq((selected[0] as CardInstance).card_data.name, "Drifloon", "Artazon should search from the current player's deck, not the stadium owner's deck"),
+	])
+
+
+func test_builder_treats_effective_hp_tool_holder_as_live() -> String:
+	var gsm := _make_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	var active_cd := _make_pokemon_card_data("Scream Tail", "P")
+	active_cd.hp = 90
+	active_cd.attacks = [
+		{"name": "Roaring Scream", "cost": "PP", "damage": "20x", "is_vstar_power": false},
+	]
+	var active := _make_slot(CardInstance.create(active_cd, 0))
+	active.attached_energy = [
+		CardInstance.create(_make_energy_card_data("Psychic Energy", "P"), 0),
+		CardInstance.create(_make_energy_card_data("Psychic Energy", "P"), 0),
+	]
+	active.attached_tool = CardInstance.create(_make_trainer_card_data("Bravery Charm", "Tool", "d1c2f018a644e662f2b6895fdfc29281"), 0)
+	active.damage_counters = 100
+	player.active_pokemon = active
+	var defender_cd := _make_pokemon_card_data("Mew ex", "P")
+	defender_cd.hp = 180
+	gsm.game_state.players[1].active_pokemon = _make_slot(CardInstance.create(defender_cd, 1))
+	var attack_action := _find_action(_build_actions(gsm), "attack", func(candidate: Dictionary) -> bool:
+		return str(candidate.get("attack_name", "")) == "Roaring Scream"
+	)
+	return run_checks([
+		assert_true(active.is_knocked_out(), "Raw base HP should consider this Scream Tail knocked out"),
+		assert_false(gsm.effect_processor.is_effectively_knocked_out(active, gsm.game_state), "Bravery Charm should keep the attacker effectively live"),
+		assert_false(attack_action.is_empty(), "AI legal-action builder must expose attacks for effect-HP-live Pokemon"),
+	])
+
+
+func test_builder_registers_visible_pokemon_ability_before_enumerating_actions() -> String:
+	var gsm := _make_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	player.active_pokemon = _make_slot(CardInstance.create(_make_pokemon_card_data("Lead"), 0))
+	var refinement_name := "\u7cbe\u70bc"
+	var kirlia_cd := _make_pokemon_card_data("Kirlia", "P", "4abd956bdf3e956fcf679120601760ff", [
+		{"name": refinement_name, "text": "Discard a card and draw 2 cards."},
+	])
+	var ralts_cd := _make_pokemon_card_data("Ralts", "P")
+	var kirlia := _make_slot(CardInstance.create(ralts_cd, 0))
+	kirlia.pokemon_stack.append(CardInstance.create(kirlia_cd, 0))
+	player.bench = [kirlia]
+	player.hand = [CardInstance.create(_make_energy_card_data("Psychic Energy", "P"), 0)]
+	var ability_action := _find_action(_build_actions(gsm), "use_ability", func(candidate: Dictionary) -> bool:
+		return candidate.get("source_slot") == kirlia
+	)
+	return run_checks([
+		assert_false(ability_action.is_empty(), "Builder should register visible Pokemon card effects before exposing ability actions"),
+		assert_eq(str(ability_action.get("ability_name", "")), refinement_name, "Kirlia Refinement metadata should survive action construction"),
+	])
+
+
+func test_builder_keeps_interactive_ability_when_headless_target_selection_fails() -> String:
+	var gsm := _make_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	player.active_pokemon = _make_slot(CardInstance.create(_make_pokemon_card_data("Lead"), 0))
+	var refinement_name := "\u7cbe\u70bc"
+	var kirlia_cd := _make_pokemon_card_data("Kirlia", "P", "4abd956bdf3e956fcf679120601760ff", [
+		{"name": refinement_name, "text": "Discard a card and draw 2 cards."},
+	])
+	var ralts_cd := _make_pokemon_card_data("Ralts", "P")
+	var kirlia := _make_slot(CardInstance.create(ralts_cd, 0))
+	kirlia.pokemon_stack.append(CardInstance.create(kirlia_cd, 0))
+	player.bench = [kirlia]
+	player.hand = [CardInstance.create(_make_energy_card_data("Psychic Energy", "P"), 0)]
+	var builder = AILegalActionBuilderScript.new()
+	builder.set_deck_strategy(RefuseAllInteractionStrategy.new())
+	var ability_action := _find_action(builder.build_actions(gsm, 0), "use_ability", func(candidate: Dictionary) -> bool:
+		return str(candidate.get("ability_name", "")) == refinement_name
+	)
+	return run_checks([
+		assert_false(ability_action.is_empty(), "Builder should keep a legal ability visible even when strategy refuses a preview discard"),
+		assert_true(bool(ability_action.get("requires_interaction", false)), "Failed preview selection should expose the ability as interactive instead of dropping it"),
 	])
 
 
@@ -535,6 +642,64 @@ func test_builder_generates_headless_tandem_unit_targets() -> String:
 	])
 
 
+func test_builder_keeps_tandem_unit_legal_when_no_targets_exist() -> String:
+	var gsm := _make_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	var miraidon := CardInstance.create(_make_pokemon_card_data(
+		"Miraidon ex",
+		"L",
+		"27fbc2c429b05bd8206cd0c7f5d39b11",
+		[{"name": "串联装置", "text": ""}]
+	), 0)
+	gsm.effect_processor.register_pokemon_card(miraidon.card_data)
+	player.active_pokemon = _make_slot(miraidon)
+	player.deck = [
+		CardInstance.create(_make_pokemon_card_data("Fire Basic", "R"), 0),
+		CardInstance.create(_make_energy_card_data("Basic Lightning Energy", "L"), 0),
+	]
+
+	var action := _find_action(_build_actions(gsm), "use_ability", func(candidate: Dictionary) -> bool:
+		return candidate.get("source_slot") == player.active_pokemon
+	)
+	var targets: Array = action.get("targets", [])
+	var ctx: Dictionary = {} if targets.is_empty() else targets[0]
+	var selected: Array = ctx.get("bench_pokemon", [])
+
+	return run_checks([
+		assert_false(action.is_empty(), "Tandem Unit should remain a legal headless action with no matching deck targets"),
+		assert_false(bool(action.get("requires_interaction", true)), "Headless Tandem Unit should auto-resolve an empty up-to search"),
+		assert_eq(selected.size(), 0, "Headless Tandem Unit should choose zero cards when no legal target exists"),
+	])
+
+
+func test_builder_exposes_forest_seal_granted_ability_source_metadata() -> String:
+	var gsm := _make_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	var rotom_cd := _make_pokemon_card_data(
+		"Rotom V",
+		"L",
+		"8ef5ff61fd97838af568f00fe3b0e3ea",
+		[{"name": "Fast Charge", "text": "Draw 3 cards. Your turn ends."}]
+	)
+	rotom_cd.mechanic = "V"
+	player.active_pokemon = _make_slot(CardInstance.create(rotom_cd, 0))
+	var forest_cd := _make_trainer_card_data("Forest Seal Stone", "Tool", "9fa9943ccda36f417ac3cb675177c216")
+	forest_cd.description = "The Pokemon V this card is attached to may use this VSTAR Power. [Ability] Star Alchemy: Search your deck for a card and put it into your hand."
+	var forest := CardInstance.create(forest_cd, 0)
+	player.active_pokemon.attached_tool = forest
+	player.deck.append(CardInstance.create(_make_trainer_card_data("Rare Candy", "Item", ""), 0))
+	var actions := _build_actions(gsm)
+	var star_action := _find_action(actions, "use_ability", func(candidate: Dictionary) -> bool:
+		return candidate.get("source_slot") == player.active_pokemon and int(candidate.get("ability_index", -1)) == 1
+	)
+	return run_checks([
+		assert_false(star_action.is_empty(), "Forest Seal Stone should grant a legal VSTAR search ability to Rotom V"),
+		assert_eq(star_action.get("ability_source_card", null), forest, "Granted ability should keep Forest Seal Stone as the source card"),
+		assert_true(str(star_action.get("ability_name", "")) != "", "Granted ability should expose a non-empty ability name"),
+		assert_true(str(star_action.get("ability_text", "")).contains("Search your deck"), "Granted ability should expose the tool search text"),
+	])
+
+
 func test_builder_uses_search_priority_fallback_when_interaction_scoring_is_missing() -> String:
 	var gsm := _make_manual_gsm()
 	var builder = AILegalActionBuilderScript.new()
@@ -759,6 +924,35 @@ func test_builder_excludes_knocked_out_slots_from_attach_and_attack_actions() ->
 	return run_checks([
 		assert_eq(dead_attach_targets.size(), 0, "AI builder should not target knocked out slots with attach actions"),
 		assert_eq(attack_actions.size(), 0, "AI builder should not expose attack or granted-attack lines from a knocked out Active Pokemon"),
+	])
+
+
+func test_builder_exposes_tm_evolution_granted_attack_with_energy_and_evolvable_bench() -> String:
+	var gsm := _make_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+	var active_cd := _make_pokemon_card_data("Klefki", "P")
+	active_cd.attacks = [{"name": "Drop Shot", "cost": "C", "damage": "10"}]
+	var ralts_cd := _make_pokemon_card_data("Ralts", "P")
+	var kirlia_cd := _make_pokemon_card_data("Kirlia", "P")
+	kirlia_cd.stage = "Stage 1"
+	kirlia_cd.evolves_from = "Ralts"
+	player.active_pokemon = _make_slot(CardInstance.create(active_cd, 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_card_data("Psychic Energy", "P"), 0))
+	var tm_cd: CardData = CardDatabase.get_card("CSV5C", "119")
+	if tm_cd == null:
+		return "TM Evolution should exist for granted-attack regression"
+	player.active_pokemon.attached_tool = CardInstance.create(tm_cd, 0)
+	player.bench = [_make_slot(CardInstance.create(ralts_cd, 0))]
+	player.deck = [CardInstance.create(kirlia_cd, 0)]
+	opponent.active_pokemon = _make_slot(CardInstance.create(_make_pokemon_card_data("Target", "L"), 1))
+	var actions := _build_actions(gsm)
+	var granted_actions: Array = actions.filter(func(action: Dictionary) -> bool:
+		return str(action.get("kind", "")) == "granted_attack"
+	)
+	return run_checks([
+		assert_eq(granted_actions.size(), 1, "TM Evolution should be exposed as a granted attack when Active has C energy and an evolvable Bench target"),
+		assert_eq(str((granted_actions[0] as Dictionary).get("granted_attack_data", {}).get("id", "")), "tm_evolution", "Granted attack should use the TM Evolution effect id"),
 	])
 
 

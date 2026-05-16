@@ -6,6 +6,7 @@ const AbilityAttachFromDeckEffect = preload("res://scripts/effects/pokemon_effec
 const AttackSearchDeckToTopEffect = preload("res://scripts/effects/pokemon_effects/AttackSearchDeckToTop.gd")
 const AttackBenchCountDamageEffect = preload("res://scripts/effects/pokemon_effects/AttackBenchCountDamage.gd")
 const AttackGreninjaExMirageBarrageEffect = preload("res://scripts/effects/pokemon_effects/AttackGreninjaExMirageBarrage.gd")
+const AttackReturnToDeckEffect = preload("res://scripts/effects/pokemon_effects/AttackReturnToDeck.gd")
 
 
 class ScriptedRuleValidator extends RuleValidator:
@@ -275,10 +276,12 @@ func test_turn_start_draw_action_includes_drawn_card_names() -> String:
 		assert_not_null(draw_action, "Turn-start draw should log a DRAW_CARD action"),
 		assert_eq(draw_action.data.get("count", 0), 1, "Turn-start draw count should remain 1"),
 		assert_eq(draw_action.data.get("card_names", []), ["Turn Start Draw"], "Turn-start draw should record the drawn card name"),
+		assert_eq(draw_action.data.get("draw_source", ""), "turn_start", "Turn-start draw should be tagged for UI reveal auto-continue"),
+		assert_eq(draw_action.data.get("turn_start", false), true, "Turn-start draw should carry a boolean turn_start flag"),
 	])
 
 
-func test_first_player_first_turn_skips_turn_start_draw() -> String:
+func test_first_player_first_turn_draws_but_keeps_first_turn_restrictions() -> String:
 	var gsm := GameStateMachine.new()
 	gsm.game_state = GameState.new()
 	gsm.game_state.current_player_index = 0
@@ -290,8 +293,29 @@ func test_first_player_first_turn_skips_turn_start_draw() -> String:
 		player.player_index = pi
 		gsm.game_state.players.append(player)
 
+	var active_cd := CardData.new()
+	active_cd.name = "First Turn Attacker"
+	active_cd.card_type = "Pokemon"
+	active_cd.stage = "Basic"
+	active_cd.hp = 60
+	active_cd.energy_type = "C"
+	active_cd.attacks = [{"name": "First Turn Attack", "cost": "", "damage": "10", "is_vstar_power": false}]
+	var active_slot := PokemonSlot.new()
+	active_slot.pokemon_stack.append(CardInstance.create(active_cd, 0))
+	gsm.game_state.players[0].active_pokemon = active_slot
+
+	var opponent_cd := CardData.new()
+	opponent_cd.name = "Opponent Active"
+	opponent_cd.card_type = "Pokemon"
+	opponent_cd.stage = "Basic"
+	opponent_cd.hp = 60
+	opponent_cd.energy_type = "C"
+	var opponent_slot := PokemonSlot.new()
+	opponent_slot.pokemon_stack.append(CardInstance.create(opponent_cd, 1))
+	gsm.game_state.players[1].active_pokemon = opponent_slot
+
 	var top_cd := CardData.new()
-	top_cd.name = "Should Stay In Deck"
+	top_cd.name = "First Turn Draw"
 	top_cd.card_type = "Pokemon"
 	top_cd.stage = "Basic"
 	top_cd.hp = 60
@@ -302,11 +326,17 @@ func test_first_player_first_turn_skips_turn_start_draw() -> String:
 	var draw_action := _get_last_action_of_type(gsm.action_log, GameAction.ActionType.DRAW_CARD)
 
 	return run_checks([
-		assert_null(draw_action, "First player's first turn should not log a DRAW_CARD action"),
-		assert_eq(gsm.game_state.players[0].hand.size(), 0, "First player's first turn should not add a card to hand"),
-		assert_eq(gsm.game_state.players[0].deck.size(), 1, "First player's first turn should leave the deck unchanged"),
-		assert_eq(gsm.game_state.phase, GameState.GamePhase.MAIN, "Skipping the draw should still advance into main phase"),
+		assert_not_null(draw_action, "First player's first turn should log a DRAW_CARD action"),
+		assert_eq(draw_action.data.get("count", 0), 1, "First player's first turn should draw exactly one card"),
+		assert_eq(draw_action.data.get("card_names", []), ["First Turn Draw"], "First player's first turn should record the drawn card name"),
+		assert_eq(draw_action.data.get("draw_source", ""), "turn_start", "First player's first turn draw should be tagged for UI reveal auto-continue"),
+		assert_eq(draw_action.data.get("turn_start", false), true, "First player's first turn draw should carry a boolean turn_start flag"),
+		assert_eq(gsm.game_state.players[0].hand.size(), 1, "First player's first turn should add one card to hand"),
+		assert_eq(gsm.game_state.players[0].deck.size(), 0, "First player's first turn should remove the drawn card from deck"),
+		assert_eq(gsm.game_state.phase, GameState.GamePhase.MAIN, "The draw should still advance into main phase"),
 		assert_eq(gsm.game_state.turn_number, 1, "Turn number should still advance to the first turn"),
+		assert_false(gsm.rule_validator.can_play_supporter(gsm.game_state, 0), "First player still cannot play a Supporter on first turn"),
+		assert_false(gsm.can_use_attack(0, 0), "First player still cannot attack on first turn"),
 	])
 
 
@@ -433,6 +463,40 @@ func test_ultra_ball_logs_hand_discard_action_for_reveal_animation() -> String:
 		assert_eq(discard_action.data.get("source_zone", ""), "hand", "Ultra Ball discard animation should be marked as hand-origin"),
 		assert_eq(discard_action.data.get("count", 0), 2, "Ultra Ball should log both discarded cost cards"),
 		assert_eq(discard_action.data.get("card_names", []), ["Ultra Cost A", "Ultra Cost B"], "Ultra Ball should preserve discard order in the reveal metadata"),
+	])
+
+
+func test_ultra_ball_play_trainer_allows_explicit_empty_search() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 3
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var ultra_cd := CardData.new()
+	ultra_cd.name = "Ultra Ball"
+	ultra_cd.card_type = "Item"
+	ultra_cd.effect_id = "a337ed34a45e63c6d21d98c3d8e0cb6e"
+	var ultra_ball := CardInstance.create(ultra_cd, 0)
+	var discard_a := CardInstance.create(_make_basic_pokemon_card_data("Ultra Cost A"), 0)
+	var discard_b := CardInstance.create(_make_basic_pokemon_card_data("Ultra Cost B"), 0)
+	var target := CardInstance.create(_make_basic_pokemon_card_data("Search Target"), 0)
+	gsm.game_state.players[0].hand = [ultra_ball, discard_a, discard_b]
+	gsm.game_state.players[0].deck = [target]
+
+	var played: bool = gsm.play_trainer(0, ultra_ball, [{"discard_cards": [discard_a, discard_b], "search_pokemon": []}])
+
+	return run_checks([
+		assert_true(played, "Ultra Ball should resolve when the player chooses to take no Pokemon"),
+		assert_true(discard_a in gsm.game_state.players[0].discard_pile, "Ultra Ball should discard the first cost card"),
+		assert_true(discard_b in gsm.game_state.players[0].discard_pile, "Ultra Ball should discard the second cost card"),
+		assert_true(ultra_ball in gsm.game_state.players[0].discard_pile, "Ultra Ball itself should go to discard after resolving"),
+		assert_false(target in gsm.game_state.players[0].hand, "Empty Ultra Ball search should not add the Pokemon to hand"),
+		assert_true(target in gsm.game_state.players[0].deck, "Empty Ultra Ball search should leave the Pokemon in deck"),
 	])
 
 
@@ -949,7 +1013,7 @@ func test_play_basic_to_bench_respects_collapsed_stadium_limit() -> String:
 	])
 
 
-func test_play_basic_to_bench_triggers_bench_enter_ability() -> String:
+func test_play_basic_to_bench_exposes_interactive_bench_enter_ability_choice() -> String:
 	var gsm := _make_gsm_with_decks()
 	gsm.game_state.phase = GameState.GamePhase.MAIN
 	gsm.game_state.turn_number = 2
@@ -972,7 +1036,8 @@ func test_play_basic_to_bench_triggers_bench_enter_ability() -> String:
 	var supporter_cd := CardData.new()
 	supporter_cd.name = "Supporter"
 	supporter_cd.card_type = "Supporter"
-	player.deck.append(CardInstance.create(supporter_cd, 0))
+	var supporter := CardInstance.create(supporter_cd, 0)
+	player.deck.append(supporter)
 	player.deck.append(CardInstance.create(active_cd, 0))
 
 	var lumineon_cd := CardData.new()
@@ -988,10 +1053,98 @@ func test_play_basic_to_bench_triggers_bench_enter_ability() -> String:
 	player.hand.append(lumineon)
 
 	var result: bool = gsm.play_basic_to_bench(0, lumineon)
+	var benched_lumineon: PokemonSlot = player.bench[0] if player.bench.size() > 0 else null
+	var effect: BaseEffect = gsm.effect_processor.get_ability_effect(benched_lumineon, 0, gsm.game_state)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(lumineon, gsm.game_state) if effect != null else []
+	var auto_added_supporter := player.hand.any(func(card: CardInstance) -> bool: return card.card_data.card_type == "Supporter")
+	var explicit_result := gsm.use_ability(0, benched_lumineon, 0, [supporter])
 	return run_checks([
 		assert_eq(result, true, "Lumineon V should bench successfully"),
 		assert_eq(player.bench.size(), 1, "Lumineon V should enter the bench"),
-		assert_true(player.hand.any(func(card: CardInstance) -> bool: return card.card_data.card_type == "Supporter"), "Luminous Sign should add a Supporter to hand"),
+		assert_false(auto_added_supporter, "Luminous Sign should wait for explicit player choice instead of auto-searching"),
+		assert_true(steps.size() > 0, "Luminous Sign should expose a Supporter search choice after bench entry"),
+		assert_true(explicit_result, "Explicit Luminous Sign use should resolve after selecting a Supporter"),
+		assert_true(player.hand.any(func(card: CardInstance) -> bool: return card == supporter), "Explicit Luminous Sign should add the selected Supporter to hand"),
+	])
+
+
+func test_cs5bc_049_lumineon_v_aqua_return_prompts_own_replacement() -> String:
+	var gsm := _make_gsm_with_decks()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 2
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+
+	var choice_events: Array[Dictionary] = []
+	gsm.player_choice_required.connect(func(choice_type: String, data: Dictionary) -> void:
+		choice_events.append({"type": choice_type, "data": data.duplicate(true)})
+	)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+
+	var lumineon_cd := CardData.new()
+	lumineon_cd.name = "霓虹鱼V"
+	lumineon_cd.name_en = "Lumineon V"
+	lumineon_cd.card_type = "Pokemon"
+	lumineon_cd.stage = "Basic"
+	lumineon_cd.hp = 170
+	lumineon_cd.energy_type = "W"
+	lumineon_cd.mechanic = "V"
+	lumineon_cd.effect_id = "553639840a44f19ad83b89a892a21f98"
+	lumineon_cd.attacks = [{"name": "水流回转", "cost": "WCC", "damage": "120", "is_vstar_power": false}]
+	gsm.effect_processor.register_pokemon_card(lumineon_cd)
+	var attack_registered: bool = gsm.effect_processor.has_attack_effect(lumineon_cd.effect_id)
+
+	var lumineon_card := CardInstance.create(lumineon_cd, 0)
+	var active_slot := PokemonSlot.new()
+	active_slot.pokemon_stack.append(lumineon_card)
+	var attached_energy: Array[CardInstance] = []
+	for _i: int in 3:
+		var energy := CardInstance.create(_make_test_energy("W"), 0)
+		active_slot.attached_energy.append(energy)
+		attached_energy.append(energy)
+	player.active_pokemon = active_slot
+
+	var replacement_cd := _make_basic_pokemon_card_data("Replacement")
+	var replacement_slot := PokemonSlot.new()
+	replacement_slot.pokemon_stack.append(CardInstance.create(replacement_cd, 0))
+	player.bench.append(replacement_slot)
+
+	var defender_cd := CardData.new()
+	defender_cd.name = "Large Defender"
+	defender_cd.card_type = "Pokemon"
+	defender_cd.stage = "Basic"
+	defender_cd.hp = 300
+	defender_cd.energy_type = "C"
+	var defender_slot := PokemonSlot.new()
+	defender_slot.pokemon_stack.append(CardInstance.create(defender_cd, 1))
+	opponent.active_pokemon = defender_slot
+	for i: int in 6:
+		player.prizes.append(CardInstance.create(replacement_cd, 0))
+		opponent.prizes.append(CardInstance.create(defender_cd, 1))
+
+	var attacked: bool = gsm.use_attack(0, 0)
+	var prompt: Dictionary = choice_events[0] if not choice_events.is_empty() else {}
+	var returned_all_cards := lumineon_card in player.deck
+	for energy: CardInstance in attached_energy:
+		returned_all_cards = returned_all_cards and energy in player.deck
+	var phase_after_attack := gsm.game_state.phase
+	var active_after_attack := player.active_pokemon
+	var sent_out: bool = gsm.send_out_pokemon(0, replacement_slot)
+
+	return run_checks([
+		assert_true(attack_registered, "CS5bC_049 水流回转 should register an attack effect from its attack name"),
+		assert_true(attacked, "Lumineon V should use Aqua Return successfully"),
+		assert_true(returned_all_cards, "Aqua Return should shuffle Lumineon V and all attached Energy back into the deck"),
+		assert_eq(str(prompt.get("type", "")), "send_out_pokemon", "Self-removal from the Active Spot should request a replacement"),
+		assert_eq(int((prompt.get("data", {}) as Dictionary).get("player", -1)), 0, "The attacking player should choose the replacement"),
+		assert_null(active_after_attack, "Aqua Return should leave the attacking player's Active Spot empty before replacement"),
+		assert_eq(phase_after_attack, GameState.GamePhase.KNOCKOUT_REPLACE, "Game should wait for the attacking player to send out from Bench"),
+		assert_true(sent_out, "The attacking player should be able to send out a Benched Pokemon after Aqua Return"),
+		assert_eq(player.active_pokemon, replacement_slot, "Selected Benched Pokemon should become Active"),
+		assert_eq(gsm.game_state.current_player_index, 1, "After replacement, the turn should pass to the opponent"),
+		assert_eq(gsm.game_state.phase, GameState.GamePhase.MAIN, "Opponent turn should continue normally after replacement"),
 	])
 
 
@@ -2405,6 +2558,222 @@ func test_charizard_burning_darkness_does_not_discard_energy_and_only_counts_tak
 		assert_eq(attacker_slot.attached_energy.size(), 2, "Burning Darkness should not discard Energy"),
 		assert_eq(player.discard_pile.size(), 0, "Burning Darkness should not move Energy to discard"),
 		assert_false(defender_slot.is_knocked_out(), "A 230 HP target should survive the first 180 damage attack"),
+	])
+
+
+func test_mew_ex_genome_hacking_copies_charizard_prize_damage_bonus() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 2
+
+	CardInstance.reset_id_counter()
+	for pi: int in 2:
+		var player_state := PlayerState.new()
+		player_state.player_index = pi
+		gsm.game_state.players.append(player_state)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+
+	var mew_cd := CardData.new()
+	mew_cd.name = "梦幻ex"
+	mew_cd.name_en = "Mew ex"
+	mew_cd.card_type = "Pokemon"
+	mew_cd.stage = "Basic"
+	mew_cd.hp = 180
+	mew_cd.energy_type = "P"
+	mew_cd.effect_id = "49669fcf461deacebeb5755c11ec51f1"
+	mew_cd.mechanic = "ex"
+	mew_cd.abilities = [{"name": "再起动", "text": ""}]
+	mew_cd.attacks = [{
+		"name": "基因侵入",
+		"cost": "CCC",
+		"damage": "",
+		"text": "选择对手战斗宝可梦所拥有的1个招式，作为这个招式使用。",
+		"is_vstar_power": false,
+	}]
+	gsm.effect_processor.register_pokemon_card(mew_cd)
+
+	var charizard_cd := CardData.new()
+	charizard_cd.name = "喷火龙ex"
+	charizard_cd.name_en = "Charizard ex"
+	charizard_cd.card_type = "Pokemon"
+	charizard_cd.stage = "Stage 2"
+	charizard_cd.hp = 330
+	charizard_cd.energy_type = "D"
+	charizard_cd.effect_id = "767b6233bf90b98b7af190ea3b40d7a2"
+	charizard_cd.mechanic = "ex"
+	charizard_cd.abilities = [{"name": "烈炎支配", "text": ""}]
+	charizard_cd.attacks = [{
+		"name": "燃烧黑暗",
+		"cost": "RR",
+		"damage": "180+",
+		"text": "追加造成对手已经获得的奖赏卡张数×30伤害。",
+		"is_vstar_power": false,
+	}]
+	gsm.effect_processor.register_pokemon_card(charizard_cd)
+
+	var mew_slot := PokemonSlot.new()
+	mew_slot.pokemon_stack.append(CardInstance.create(mew_cd, 0))
+	for i: int in 3:
+		mew_slot.attached_energy.append(CardInstance.create(_make_test_energy("C"), 0))
+	player.active_pokemon = mew_slot
+
+	var charizard_slot := PokemonSlot.new()
+	charizard_slot.pokemon_stack.append(CardInstance.create(charizard_cd, 1))
+	opponent.active_pokemon = charizard_slot
+
+	for i: int in 6:
+		var player_prize_cd := CardData.new()
+		player_prize_cd.name = "PlayerPrize%d" % i
+		player_prize_cd.card_type = "Pokemon"
+		player_prize_cd.stage = "Basic"
+		player_prize_cd.hp = 60
+		player_prize_cd.energy_type = "C"
+		player.prizes.append(CardInstance.create(player_prize_cd, 0))
+
+	var opponent_prize_cd := CardData.new()
+	opponent_prize_cd.name = "OpponentPrize"
+	opponent_prize_cd.card_type = "Pokemon"
+	opponent_prize_cd.stage = "Basic"
+	opponent_prize_cd.hp = 60
+	opponent_prize_cd.energy_type = "C"
+	opponent.prizes.append(CardInstance.create(opponent_prize_cd, 1))
+
+	var copied_option := {
+		"source_effect_id": charizard_cd.effect_id,
+		"attack_index": 0,
+		"attack": charizard_cd.attacks[0],
+	}
+	var attacked: bool = gsm.use_attack(0, 0, [{"copied_attack": [copied_option]}])
+	var damage_action: GameAction = _get_last_action_of_type(gsm.action_log, GameAction.ActionType.DAMAGE_DEALT)
+
+	return run_checks([
+		assert_true(gsm.effect_processor.has_attack_effect(mew_cd.effect_id), "Mew ex should register Genome Hacking as an attack effect"),
+		assert_true(gsm.effect_processor.has_attack_effect(charizard_cd.effect_id), "Charizard ex should register Burning Darkness as an attack effect"),
+		assert_eq(attacked, true, "Mew ex should be able to use Genome Hacking"),
+		assert_eq(charizard_slot.damage_counters, 330, "Genome Hacking should copy Burning Darkness as 180 + 5 prizes * 30"),
+		assert_not_null(damage_action, "Copied attack damage should be logged"),
+		assert_eq(int(damage_action.data.get("damage", -1)) if damage_action != null else -1, 330, "Damage log should record the copied dynamic damage"),
+	])
+
+
+func test_mew_ex_genome_hacking_copies_dragapult_phantom_dive_bench_counters() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 2
+
+	CardInstance.reset_id_counter()
+	for pi: int in 2:
+		var player_state := PlayerState.new()
+		player_state.player_index = pi
+		gsm.game_state.players.append(player_state)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+
+	var mew_cd := CardData.new()
+	mew_cd.name = "梦幻ex"
+	mew_cd.name_en = "Mew ex"
+	mew_cd.card_type = "Pokemon"
+	mew_cd.stage = "Basic"
+	mew_cd.hp = 180
+	mew_cd.energy_type = "P"
+	mew_cd.effect_id = "49669fcf461deacebeb5755c11ec51f1"
+	mew_cd.mechanic = "ex"
+	mew_cd.abilities = [{"name": "再起动", "text": ""}]
+	mew_cd.attacks = [{
+		"name": "基因侵入",
+		"cost": "CCC",
+		"damage": "",
+		"text": "选择对手战斗宝可梦所拥有的1个招式，作为这个招式使用。",
+		"is_vstar_power": false,
+	}]
+	gsm.effect_processor.register_pokemon_card(mew_cd)
+
+	var dragapult_cd := CardData.new()
+	dragapult_cd.name = "多龙巴鲁托ex"
+	dragapult_cd.name_en = "Dragapult ex"
+	dragapult_cd.card_type = "Pokemon"
+	dragapult_cd.stage = "Stage 2"
+	dragapult_cd.hp = 320
+	dragapult_cd.energy_type = "N"
+	dragapult_cd.effect_id = "52a205820de799a53a689f23cbeb8622"
+	dragapult_cd.mechanic = "ex"
+	dragapult_cd.attacks = [
+		{"name": "喷射头击", "cost": "P", "damage": "70", "text": "", "is_vstar_power": false},
+		{
+			"name": "幻影潜袭",
+			"cost": "RP",
+			"damage": "200",
+			"text": "将6个伤害指示物，以任意方式放置于对手的备战宝可梦身上。",
+			"is_vstar_power": false,
+		},
+	]
+	gsm.effect_processor.register_pokemon_card(dragapult_cd)
+
+	var mew_slot := PokemonSlot.new()
+	mew_slot.pokemon_stack.append(CardInstance.create(mew_cd, 0))
+	for i: int in 3:
+		mew_slot.attached_energy.append(CardInstance.create(_make_test_energy("C"), 0))
+	player.active_pokemon = mew_slot
+
+	var dragapult_slot := PokemonSlot.new()
+	dragapult_slot.pokemon_stack.append(CardInstance.create(dragapult_cd, 1))
+	opponent.active_pokemon = dragapult_slot
+
+	var bench_a_cd := CardData.new()
+	bench_a_cd.name = "Bench A"
+	bench_a_cd.card_type = "Pokemon"
+	bench_a_cd.stage = "Basic"
+	bench_a_cd.hp = 100
+	bench_a_cd.energy_type = "W"
+	var bench_a := PokemonSlot.new()
+	bench_a.pokemon_stack.append(CardInstance.create(bench_a_cd, 1))
+
+	var bench_b_cd := CardData.new()
+	bench_b_cd.name = "Bench B"
+	bench_b_cd.card_type = "Pokemon"
+	bench_b_cd.stage = "Basic"
+	bench_b_cd.hp = 100
+	bench_b_cd.energy_type = "W"
+	var bench_b := PokemonSlot.new()
+	bench_b.pokemon_stack.append(CardInstance.create(bench_b_cd, 1))
+	opponent.bench = [bench_a, bench_b]
+
+	var copied_option := {
+		"source_effect_id": dragapult_cd.effect_id,
+		"attack_index": 1,
+		"attack": dragapult_cd.attacks[1],
+	}
+	var mew_effect := AttackCopyAttack.new(gsm.effect_processor)
+	var followup_steps := mew_effect.get_followup_attack_interaction_steps(
+		mew_slot.get_top_card(),
+		mew_cd.attacks[0],
+		gsm.game_state,
+		{"copied_attack": [copied_option]}
+	)
+	var attacked: bool = gsm.use_attack(0, 0, [{
+		"copied_attack": [copied_option],
+		"bench_damage_counters": [
+			{"target": bench_a, "amount": 40},
+			{"target": bench_b, "amount": 20},
+		],
+	}])
+
+	return run_checks([
+		assert_eq(followup_steps.size(), 1, "Mew ex copying Phantom Dive should expose the Bench counter distribution follow-up"),
+		assert_eq(str(followup_steps[0].get("id", "")) if not followup_steps.is_empty() else "", "bench_damage_counters", "The copied Phantom Dive follow-up should use the standard counter distribution step"),
+		assert_eq(attacked, true, "Mew ex should be able to copy Dragapult ex Phantom Dive"),
+		assert_eq(dragapult_slot.damage_counters, 200, "Copied Phantom Dive should deal 200 damage to the opposing Active"),
+		assert_eq(bench_a.damage_counters, 40, "Copied Phantom Dive should place selected counters on the first Benched Pokemon"),
+		assert_eq(bench_b.damage_counters, 20, "Copied Phantom Dive should place selected counters on the second Benched Pokemon"),
 	])
 
 

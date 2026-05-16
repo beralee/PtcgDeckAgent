@@ -10,6 +10,11 @@ func _bt(scene: Object, key: String, params: Dictionary = {}) -> String:
 
 
 func start_prize_selection(scene: Object, player_index: int, count: int) -> void:
+	if count <= 0:
+		clear_prize_selection(scene)
+		if scene.has_method("_refresh_ui"):
+			scene.call("_refresh_ui")
+		return
 	scene.set("_pending_choice", "take_prize")
 	scene.set("_pending_prize_player_index", player_index)
 	scene.set("_pending_prize_remaining", count)
@@ -133,6 +138,7 @@ func show_opponent_hand_cards(scene: Object) -> void:
 				card_view.custom_minimum_size = dialog_card_size
 				card_view.set_clickable(true)
 				card_view.setup_from_instance(hand_card, BattleCardView.MODE_PREVIEW)
+				card_view.set_secondary_inspect_enabled(true)
 				card_view.set_badges("", "")
 				card_view.set_info("", "")
 				card_view.left_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
@@ -151,6 +157,11 @@ func show_opponent_hand_cards(scene: Object) -> void:
 			for hand_card: CardInstance in player.hand:
 				var card_data: CardData = hand_card.card_data
 				discard_list.add_item("%s [%s]" % [card_data.name, scene.call("_card_type_cn", card_data)])
+				discard_list.set_item_metadata(discard_list.item_count - 1, card_data)
+	if scene.has_method("_apply_discard_collection_metrics"):
+		scene.call("_apply_discard_collection_metrics")
+	if scene.has_method("_apply_portrait_popup_text_metrics"):
+		scene.call("_apply_portrait_popup_text_metrics")
 	discard_overlay.visible = true
 	scene.call("_runtime_log", "show_opponent_hand", "player=%d count=%d" % [opponent_index, player.hand.size()])
 
@@ -167,6 +178,8 @@ func show_handover_prompt(scene: Object, target_player: int, follow_up: Callable
 			"reason=show_prompt_generic target=%d %s" % [target_player, scene.call("_state_snapshot")]
 		)
 	scene.call("_set_handover_panel_visible", true, "show_prompt_target_%d" % target_player)
+	if scene.has_method("_raise_handover_overlay_for_input"):
+		scene.call("_raise_handover_overlay_for_input")
 	var handover_label: Label = scene.get("_handover_lbl")
 	handover_label.text = _bt(scene, "battle.handover.prompt", {"player": target_player + 1})
 
@@ -177,12 +190,30 @@ func check_two_player_handover(scene: Object) -> void:
 		scene.call("_set_pending_handover_action", Callable(), "handover_check_non_two_player")
 		scene.call("_set_handover_panel_visible", false, "handover_check_non_two_player")
 		return
-	if gsm == null or gsm.game_state.phase == GameState.GamePhase.GAME_OVER:
+	if gsm == null or gsm.game_state == null or gsm.game_state.phase == GameState.GamePhase.GAME_OVER:
 		scene.call("_set_pending_handover_action", Callable(), "handover_check_game_over")
 		scene.call("_set_handover_panel_visible", false, "handover_check_game_over")
 		return
 	if (scene.get("_pending_handover_action") as Callable).is_valid():
 		scene.call("_runtime_log", "handover_check_deferred", scene.call("_state_snapshot"))
+		return
+	if _should_defer_handover_during_setup(scene, gsm):
+		scene.call("_set_pending_handover_action", Callable(), "handover_check_setup_deferred")
+		scene.call("_set_handover_panel_visible", false, "handover_check_setup_deferred")
+		scene.call("_runtime_log", "handover_check_setup_deferred", scene.call("_state_snapshot"))
+		return
+	var pending_choice := str(scene.get("_pending_choice"))
+	if pending_choice == "take_prize" and int(scene.get("_pending_prize_remaining")) > 0:
+		var prize_player := int(scene.get("_pending_prize_player_index"))
+		if prize_player >= 0 and prize_player != int(scene.get("_view_player")):
+			show_handover_prompt(scene, prize_player, func() -> void:
+				scene.set("_view_player", prize_player)
+				scene.call("_refresh_ui")
+			)
+			scene.call("_runtime_log", "handover_prize_required", scene.call("_state_snapshot"))
+			return
+		scene.call("_set_pending_handover_action", Callable(), "handover_prize_aligned")
+		scene.call("_set_handover_panel_visible", false, "handover_prize_aligned")
 		return
 	var current_player: int = gsm.game_state.current_player_index
 	if current_player != int(scene.get("_view_player")):
@@ -191,6 +222,17 @@ func check_two_player_handover(scene: Object) -> void:
 		return
 	scene.call("_set_pending_handover_action", Callable(), "handover_check_aligned")
 	scene.call("_set_handover_panel_visible", false, "handover_check_aligned")
+
+
+func _should_defer_handover_during_setup(scene: Object, gsm: Variant) -> bool:
+	if gsm == null or gsm.game_state == null:
+		return false
+	var pending_choice := str(scene.get("_pending_choice"))
+	if pending_choice == "mulligan_extra_draw":
+		return true
+	if pending_choice.begins_with("setup_active_") or pending_choice.begins_with("setup_bench_"):
+		return true
+	return gsm.game_state.phase == GameState.GamePhase.SETUP
 
 
 func on_handover_confirmed(scene: Object) -> void:
@@ -242,6 +284,8 @@ func show_battle_review_overlay(scene: Object, review: Dictionary) -> void:
 	review_content.text = str(scene.call("_format_battle_review", review))
 	review_overlay.visible = true
 	regenerate_button.disabled = bool(scene.get("_battle_review_busy"))
+	if scene.has_method("_apply_portrait_popup_text_metrics"):
+		scene.call("_apply_portrait_popup_text_metrics")
 
 
 func show_match_end_screen(scene: Object, winner_index: int, reason: String) -> void:
@@ -285,20 +329,71 @@ func refresh_match_end_screen(scene: Object) -> void:
 	if reason_label != null:
 		reason_label.text = "结束原因：%s" % str(stats.get("reason_text", ""))
 
-	var viewport_size := Vector2(1280, 720)
-	if scene is Node and (scene as Node).is_inside_tree():
-		viewport_size = (scene as Node).get_viewport().get_visible_rect().size
+	var viewport_size := _match_end_viewport_size(scene)
 	var box: PanelContainer = match_end_overlay.get_node_or_null("MatchEndCenter/MatchEndBox") as PanelContainer
 	if box != null:
-		box.custom_minimum_size = Vector2(minf(maxf(viewport_size.x - 28.0, 320.0), 980.0), 0)
+		if _match_end_uses_compact_portrait(scene):
+			box.custom_minimum_size = Vector2(_match_end_box_width(scene, viewport_size), _match_end_portrait_review_modal_height(scene, viewport_size))
+			box.add_theme_stylebox_override("panel", _match_end_handover_box_style())
+		else:
+			box.custom_minimum_size = Vector2(_match_end_box_width(scene, viewport_size), 0)
+			box.add_theme_stylebox_override("panel", _match_end_box_style(Color(1.0, 0.75, 0.22, 0.95)))
 
 	_refresh_match_end_stat_cards(scene, stats, viewport_size)
 	_refresh_match_end_summary_text(scene, stats)
+	var compact_portrait := _match_end_uses_compact_portrait(scene)
+	if not compact_portrait and scene.has_method("_restore_portrait_popup_text_metrics"):
+		scene.call("_restore_portrait_popup_text_metrics")
+	_set_match_end_ai_panel_visible(scene, true)
 	_refresh_match_end_ai_panel(scene)
+	_apply_match_end_ai_panel_metrics(scene, viewport_size, compact_portrait)
 	_refresh_match_end_buttons(scene)
 	var buttons := match_end_overlay.get_node_or_null("MatchEndCenter/MatchEndBox/MarginContainer/MatchEndRoot/MatchEndButtons") as HBoxContainer
 	if buttons != null:
 		buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+	if _match_end_uses_compact_portrait(scene) and scene.has_method("_apply_portrait_popup_text_metrics"):
+		scene.call("_apply_portrait_popup_text_metrics")
+
+
+func _match_end_viewport_size(scene: Object) -> Vector2:
+	if scene != null and scene.has_method("_is_portrait_popup_text_profile_active") and bool(scene.call("_is_portrait_popup_text_profile_active")) and scene.has_method("_portrait_popup_content_size"):
+		var portrait_size_variant: Variant = scene.call("_portrait_popup_content_size")
+		if portrait_size_variant is Vector2 and (portrait_size_variant as Vector2).x > 0.0 and (portrait_size_variant as Vector2).y > 0.0:
+			return portrait_size_variant as Vector2
+	if scene is Node and (scene as Node).is_inside_tree():
+		return (scene as Node).get_viewport().get_visible_rect().size
+	return Vector2(1280, 720)
+
+
+func _match_end_uses_compact_portrait(scene: Object) -> bool:
+	return scene != null and scene.has_method("_is_portrait_popup_text_profile_active") and bool(scene.call("_is_portrait_popup_text_profile_active"))
+
+
+func _match_end_box_width(scene: Object, viewport_size: Vector2) -> float:
+	if _match_end_uses_compact_portrait(scene) and scene.has_method("_portrait_popup_near_width"):
+		return float(scene.call("_portrait_popup_near_width"))
+	return minf(maxf(viewport_size.x - 28.0, 320.0), 980.0)
+
+
+func _match_end_compact_modal_width(scene: Object, viewport_size: Vector2) -> float:
+	if scene != null and scene.has_method("_portrait_popup_compact_width"):
+		return float(scene.call("_portrait_popup_compact_width"))
+	return minf(maxf(viewport_size.x * 0.84, 260.0), 520.0)
+
+
+func _match_end_handover_modal_height(viewport_size: Vector2) -> float:
+	return maxf(220.0, viewport_size.y * 0.22)
+
+
+func _match_end_portrait_review_modal_height(scene: Object, viewport_size: Vector2) -> float:
+	if scene != null and scene.has_method("_portrait_match_end_review_modal_height"):
+		return float(scene.call("_portrait_match_end_review_modal_height", viewport_size))
+	return minf(maxf(520.0, viewport_size.y * 0.62), maxf(viewport_size.y - 24.0, 520.0))
+
+
+func _match_end_handover_button_size(scene: Object, viewport_size: Vector2) -> Vector2:
+	var compact_width := _match_end_compact_modal_width(scene, viewport_size)
+	return Vector2(maxf(compact_width - 96.0, 180.0), 112.0)
 
 
 func build_match_end_stats(scene: Object, winner_index: int, reason: String) -> Dictionary:
@@ -511,10 +606,16 @@ func _refresh_match_end_stat_cards(scene: Object, stats: Dictionary, viewport_si
 	var grid: GridContainer = scene.get("_match_end_stats_grid")
 	if grid == null:
 		return
-	grid.columns = 2 if viewport_size.x < 760.0 else 4
+	var compact_portrait := _match_end_uses_compact_portrait(scene)
+	grid.columns = 2 if compact_portrait or viewport_size.x < 760.0 else 4
 	_clear_children(grid)
 	var view_stats: Dictionary = stats.get("view_player", {})
 	var opponent_stats: Dictionary = stats.get("opponent", {})
+	if compact_portrait:
+		var compact_prize_text := "我方 %d/6  对方 %d/6" % [int(view_stats.get("prizes_taken", 0)), int(opponent_stats.get("prizes_taken", 0))]
+		_add_match_end_stat_card(grid, "回合", str(stats.get("turn_number", 0)), "本局总回合", Color(0.34, 0.78, 1.0, 1.0))
+		_add_match_end_stat_card(grid, "奖赏", compact_prize_text, "奖赏进度", Color(1.0, 0.76, 0.24, 1.0))
+		return
 	var prize_text := "%d-%d" % [int(view_stats.get("prizes_taken", 0)), int(opponent_stats.get("prizes_taken", 0))]
 	var damage_text := "%d" % int(view_stats.get("max_damage", 0))
 	var action_text := "%d" % int(view_stats.get("tempo_actions", 0))
@@ -562,6 +663,15 @@ func _add_match_end_stat_card(parent: GridContainer, label: String, value: Strin
 func _refresh_match_end_summary_text(scene: Object, stats: Dictionary) -> void:
 	var player_summary: RichTextLabel = scene.get("_match_end_player_summary")
 	var action_summary: RichTextLabel = scene.get("_match_end_action_summary")
+	var compact_portrait := _match_end_uses_compact_portrait(scene)
+	_set_match_end_text_panel_visible(player_summary, true)
+	_set_match_end_text_panel_visible(action_summary, not compact_portrait)
+	if compact_portrait:
+		if player_summary != null:
+			player_summary.text = "[b]提示[/b]\n%s" % _match_end_takeaway(stats)
+		if action_summary != null:
+			action_summary.text = ""
+		return
 	var view_stats: Dictionary = stats.get("view_player", {})
 	var opponent_stats: Dictionary = stats.get("opponent", {})
 	if player_summary != null:
@@ -575,6 +685,73 @@ func _refresh_match_end_summary_text(scene: Object, stats: Dictionary) -> void:
 			"训练家 %d 次，特性 %d 次，贴能 %d 次" % [int(view_stats.get("trainers", 0)), int(view_stats.get("abilities", 0)), int(view_stats.get("energy_attaches", 0))],
 			_match_end_takeaway(stats),
 		]
+
+
+func _set_match_end_text_panel_visible(text: RichTextLabel, visible: bool) -> void:
+	if text == null:
+		return
+	text.visible = visible
+	var margin := text.get_parent()
+	if margin != null and margin.get_parent() is Control:
+		(margin.get_parent() as Control).visible = visible
+
+
+func _set_match_end_ai_panel_visible(scene: Object, visible: bool) -> void:
+	var overlay: Node = scene.get("_match_end_overlay")
+	if overlay != null:
+		var panel := overlay.find_child("MatchEndAiPanel", true, false) as Control
+		if panel != null:
+			panel.visible = visible
+	var ai_title: Label = scene.get("_match_end_ai_title")
+	if ai_title == null:
+		return
+	ai_title.visible = visible
+	var ai_content: RichTextLabel = scene.get("_match_end_ai_content")
+	if ai_content != null:
+		ai_content.visible = visible
+	var node: Node = ai_title
+	while node != null:
+		if str(node.name) == "MatchEndAiPanel" and node is Control:
+			(node as Control).visible = visible
+			return
+		node = node.get_parent()
+
+
+func _apply_match_end_ai_panel_metrics(scene: Object, viewport_size: Vector2, compact_portrait: bool) -> void:
+	var ai_title: Label = scene.get("_match_end_ai_title")
+	var ai_content: RichTextLabel = scene.get("_match_end_ai_content")
+	if ai_content == null:
+		return
+	var ai_panel: Control = null
+	var node: Node = ai_content
+	while node != null:
+		if str(node.name) == "MatchEndAiPanel" and node is Control:
+			ai_panel = node as Control
+			break
+		node = node.get_parent()
+	if compact_portrait:
+		var content_height := clampf(viewport_size.y * 0.17, 126.0, 210.0)
+		if ai_panel != null:
+			ai_panel.custom_minimum_size = Vector2(0, content_height + 58.0)
+			ai_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		if ai_title != null:
+			ai_title.add_theme_font_size_override("font_size", 17)
+		ai_content.fit_content = false
+		ai_content.scroll_active = true
+		ai_content.custom_minimum_size = Vector2(0, content_height)
+		ai_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		ai_content.add_theme_font_size_override("normal_font_size", 13)
+		return
+	if ai_panel != null:
+		ai_panel.custom_minimum_size = Vector2.ZERO
+		ai_panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	if ai_title != null:
+		ai_title.add_theme_font_size_override("font_size", 16)
+	ai_content.fit_content = true
+	ai_content.scroll_active = false
+	ai_content.custom_minimum_size = Vector2.ZERO
+	ai_content.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	ai_content.add_theme_font_size_override("normal_font_size", 14)
 
 
 func _refresh_match_end_ai_panel(scene: Object) -> void:
@@ -596,6 +773,10 @@ func _refresh_match_end_ai_panel(scene: Object) -> void:
 		else:
 			ai_title.text = "AI赛后快评" if configured else "本地赛后简评"
 		ai_content.text = _format_match_end_quick_review(result)
+		return
+	if configured:
+		ai_title.text = "AI璧涘悗蹇瘎"
+		ai_content.text = "[color=#9feaff]姝ｅ湪鍑嗗 %s 蹇€熺偣璇?..[/color]" % model_label
 		return
 	ai_title.text = "赛后快评"
 	ai_content.text = "AI未配置。当前只显示本地统计；在AI设置里填好模型后，结算时会自动给出简短点评和评分。"
@@ -619,6 +800,23 @@ func _refresh_match_end_buttons(scene: Object) -> void:
 		return_button.visible = true
 		return_button.text = "返回比赛积分" if GameManager.is_tournament_battle_active() else "返回对战准备"
 		return_button.disabled = false
+		if _match_end_uses_compact_portrait(scene):
+			return_button.custom_minimum_size = _match_end_handover_button_size(scene, _match_end_viewport_size(scene))
+			return_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			return_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			return_button.add_theme_font_size_override("font_size", 20)
+			if scene.has_method("_style_hud_button"):
+				scene.call("_style_hud_button", return_button)
+			else:
+				_apply_match_end_handover_button_style(return_button)
+		else:
+			return_button.custom_minimum_size = Vector2(240, 54)
+			return_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			return_button.add_theme_font_size_override("font_size", 16)
+			return_button.add_theme_stylebox_override("normal", _match_end_button_style(Color(0.64, 0.72, 0.84, 1.0), false, false))
+			return_button.add_theme_stylebox_override("hover", _match_end_button_style(Color(0.64, 0.72, 0.84, 1.0), true, false))
+			return_button.add_theme_stylebox_override("pressed", _match_end_button_style(Color(0.64, 0.72, 0.84, 1.0), true, true))
+			return_button.add_theme_stylebox_override("disabled", _match_end_button_disabled_style())
 
 
 func _format_match_end_quick_review(result: Dictionary) -> String:
@@ -842,6 +1040,18 @@ func _match_end_box_style(accent: Color) -> StyleBoxFlat:
 	return style
 
 
+func _match_end_handover_box_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.035, 0.065, 0.09, 0.98)
+	style.border_color = Color(0.36, 0.86, 1.0, 0.92)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(22)
+	style.shadow_color = Color(0, 0, 0, 0.55)
+	style.shadow_size = 30
+	style.shadow_offset = Vector2(0, 12)
+	return style
+
+
 func _match_end_inner_panel_style(accent: Color) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.025, 0.065, 0.085, 0.88)
@@ -884,3 +1094,30 @@ func _match_end_button_disabled_style() -> StyleBoxFlat:
 	style.set_border_width_all(1)
 	style.set_corner_radius_all(10)
 	return style
+
+
+func _apply_match_end_handover_button_style(button: Button) -> void:
+	if button == null:
+		return
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color(0.01, 0.11, 0.18, 0.72)
+	normal.border_color = Color(0.16, 0.62, 0.76, 0.9)
+	normal.set_border_width_all(2)
+	normal.set_corner_radius_all(10)
+	var hover := normal.duplicate()
+	hover.bg_color = Color(0.04, 0.18, 0.28, 0.82)
+	hover.border_color = Color(0.37, 0.91, 0.98, 0.96)
+	var pressed := normal.duplicate()
+	pressed.bg_color = Color(0.03, 0.14, 0.22, 0.9)
+	pressed.border_color = Color(0.56, 0.94, 1.0, 1.0)
+	var disabled := normal.duplicate()
+	disabled.bg_color = Color(0.04, 0.08, 0.12, 0.45)
+	disabled.border_color = Color(0.22, 0.31, 0.38, 0.6)
+	button.add_theme_stylebox_override("normal", normal)
+	button.add_theme_stylebox_override("hover", hover)
+	button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_stylebox_override("disabled", disabled)
+	button.add_theme_color_override("font_color", Color(0.93, 0.99, 1.0))
+	button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0))
+	button.add_theme_color_override("font_pressed_color", Color(1.0, 1.0, 1.0))
+	button.add_theme_color_override("font_disabled_color", Color(0.48, 0.58, 0.63))

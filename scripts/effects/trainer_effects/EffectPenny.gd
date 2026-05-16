@@ -2,17 +2,23 @@
 class_name EffectPenny
 extends BaseEffect
 
+const CSV9CEffects = preload("res://scripts/effects/CSV9CEffects.gd")
+
 const TARGET_STEP_ID := "penny_target"
 const REPLACEMENT_STEP_ID := "penny_replacement"
 
 
 func can_execute(card: CardInstance, state: GameState) -> bool:
 	var player: PlayerState = state.players[card.owner_index]
+	if CSV9CEffects.player_field_return_to_hand_blocked(card.owner_index, state):
+		return false
 	return not _get_valid_targets(player).is_empty()
 
 
 func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
+	if CSV9CEffects.player_field_return_to_hand_blocked(card.owner_index, state):
+		return []
 	var targets: Array[PokemonSlot] = _get_valid_targets(player)
 	if targets.is_empty():
 		return []
@@ -53,6 +59,8 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 
 func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	var player: PlayerState = state.players[card.owner_index]
+	if CSV9CEffects.player_field_return_to_hand_blocked(card.owner_index, state):
+		return
 	var ctx: Dictionary = get_interaction_context(targets)
 	var target: PokemonSlot = _get_selected_target(ctx, player)
 	if target == null:

@@ -75,11 +75,19 @@ func test_resolve_matchup_sweep_deck_ids_filters_anchor_and_excludes() -> String
 		"exclude_deck_ids": [575720, 578647],
 		"explicit_deck_ids": [],
 	})
+	var discovered_ids: Array[int] = AITrainingTestRunnerScript._discover_bundled_deck_ids()
+	var excluded_count := 0
+	if discovered_ids.has(575720):
+		excluded_count += 1
+	if discovered_ids.has(578647):
+		excluded_count += 1
 	return run_checks([
-		assert_eq(deck_ids.size(), 17, "Bundled deck sweep should keep the 17 non-anchor, non-gardevoir decks"),
+		assert_eq(deck_ids.size(), discovered_ids.size() - excluded_count, "Bundled deck sweep should keep all bundled decks except anchor and excludes"),
 		assert_false(deck_ids.has(575720), "Anchor deck should not appear in the sweep list"),
 		assert_false(deck_ids.has(578647), "Excluded deck ids should be removed from the sweep list"),
 		assert_true(deck_ids.has(575716), "Other bundled decks should remain in the sweep list"),
+		assert_true(deck_ids.has(1700001), "17.0 generated-id decks should remain in the sweep list"),
+		assert_true(deck_ids.has(1700012), "The last 17.0 generated-id deck should remain in the sweep list"),
 		assert_true(deck_ids.has(582754), "The last bundled deck should remain in the sweep list"),
 	])
 

@@ -16,7 +16,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 config/name="PtcgDeckAgent"
 config/description="宝可梦集换式卡牌练牌模拟器"
-config/version="0.2.1"
+config/version="0.3"
 run/main_scene="res://scenes/main_menu/MainMenu.tscn"
 config/features=PackedStringArray("4.6")
 
@@ -24,6 +24,7 @@ config/features=PackedStringArray("4.6")
 
 BattleMusicManager="*res://scripts/autoload/BattleMusicManager.gd"
 CardDatabase="*res://scripts/autoload/CardDatabase.gd"
+FontBootstrap="*res://scripts/autoload/FontBootstrap.gd"
 GameManager="*res://scripts/autoload/GameManager.gd"
 
 [display]
@@ -32,6 +33,7 @@ window/size/viewport_width=1600
 window/size/viewport_height=900
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+window/handheld/orientation=6
 window/size/window_width=1600
 window/size/window_height=900
 

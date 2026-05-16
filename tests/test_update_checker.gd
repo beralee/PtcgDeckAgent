@@ -42,8 +42,8 @@ func test_update_checker_and_app_version_scripts_load() -> String:
 		assert_not_null(update_instance, "UpdateChecker.gd should instantiate"),
 		assert_not_null(feedback_instance, "FeedbackClient.gd should instantiate"),
 		assert_not_null(user_visit_instance, "UserVisitClient.gd should instantiate"),
-		assert_eq(str(app_version_script.VERSION), "0.2.1", "AppVersion should expose the current version"),
-		assert_eq(str(app_version_script.DISPLAY_VERSION), "v0.2.1", "AppVersion should expose display version"),
+		assert_eq(str(app_version_script.VERSION), "0.3", "AppVersion should expose the current version"),
+		assert_eq(str(app_version_script.DISPLAY_VERSION), "v0.3", "AppVersion should expose display version"),
 		assert_eq(str(feedback_script.ENDPOINT_URL), "http://fc.skillserver.cn/ptcg", "Feedback client should use the production cloud function endpoint"),
 		assert_eq(str(user_visit_script.ENDPOINT_URL), "http://fc.skillserver.cn/userptcg", "User visit client should use the production cloud function endpoint"),
 		assert_eq(str(visit_payload.get("client_id", "")), "client-test", "User visit payload should include a stable client id"),
@@ -225,9 +225,13 @@ func test_auto_check_uses_24_hour_interval() -> String:
 	var update_script := load(UpdateCheckerPath)
 	var now: int = int(Time.get_unix_time_from_system())
 	var interval: int = int(update_script.CHECK_INTERVAL_SECONDS)
+	var failure_interval: int = int(update_script.CHECK_FAILURE_INTERVAL_SECONDS)
 	var checks := run_checks([
 		assert_false(bool(checker.call("_should_check_now", {"last_checked_at": now})), "Automatic checks should be throttled within 24 hours"),
 		assert_true(bool(checker.call("_should_check_now", {"last_checked_at": now - interval - 1})), "Automatic checks should run after 24 hours"),
+		assert_false(bool(checker.call("_should_check_now", {"last_failed_at": now})), "Failed automatic checks should be throttled briefly"),
+		assert_true(bool(checker.call("_should_check_now", {"last_failed_at": now - failure_interval - 1})), "Failed automatic checks should retry after 3 hours"),
+		assert_false(bool(checker.call("_should_check_now", {"last_checked_at": now, "last_failed_at": now - failure_interval - 1})), "A newer successful check should keep the 24 hour throttle"),
 		assert_true(bool(checker.call("_should_check_now", {})), "Missing state should allow automatic checks"),
 	])
 	checker.free()
@@ -263,8 +267,8 @@ func test_update_available_uses_current_version() -> String:
 		return str((checker_result as Dictionary).get("error", "checker setup failed"))
 	var checker: Object = (checker_result as Dictionary).get("value") as Object
 	var checks := run_checks([
-		assert_true(bool(checker.call("is_update_available", {"latest_version": "0.2.2"})), "0.2.2 should be available over current 0.2.1"),
-		assert_false(bool(checker.call("is_update_available", {"latest_version": "0.2.1"})), "Current version should not be treated as an update"),
+		assert_true(bool(checker.call("is_update_available", {"latest_version": "0.3.1"})), "0.3.1 should be available over current 0.3"),
+		assert_false(bool(checker.call("is_update_available", {"latest_version": "0.3"})), "Current version should not be treated as an update"),
 	])
 	checker.free()
 	return checks

@@ -14,10 +14,13 @@ func build_candidate_routes(
 	var future_refs: Array[Dictionary] = _dictionary_array(future_actions)
 	var routes: Array[Dictionary] = []
 	var end_turn: Dictionary = _find_action_by_id(current_refs, "end_turn")
+	var intent_summary: Dictionary = tactical_facts.get("intent_summary", {}) if tactical_facts.get("intent_summary", {}) is Dictionary else {}
+	var intent_best_attach: Dictionary = intent_summary.get("best_manual_attach", {}) if intent_summary.get("best_manual_attach", {}) is Dictionary else {}
 	var context := {
 		"end_turn": end_turn,
 		"future_actions": future_refs,
 		"primary_attack_route": tactical_facts.get("primary_attack_route", []),
+		"primary_attack_name": str(tactical_facts.get("primary_attack_name", "")),
 		"primary_attack_reachable": bool(tactical_facts.get("primary_attack_reachable_after_visible_engine", false)),
 		"primary_attack_missing_cost": tactical_facts.get("primary_attack_missing_cost", []),
 		"primary_attack_reachable_after_manual_attach": bool(tactical_facts.get("primary_attack_reachable_after_manual_attach", false)),
@@ -35,6 +38,9 @@ func build_candidate_routes(
 		"no_deck_draw_lock": bool(tactical_facts.get("no_deck_draw_lock", false)),
 		"own_bench_count": int(tactical_facts.get("own_bench_count", -1)),
 		"safe_pre_primary_actions": tactical_facts.get("safe_pre_primary_actions", []),
+		"intent_best_manual_attach_action_id": str(intent_best_attach.get("action_id", "")),
+		"intent_best_manual_attach_marginal_value": str(intent_best_attach.get("marginal_value", "")),
+		"intent_best_manual_attach_target_position": str(intent_best_attach.get("target_position", "")),
 	}
 	_append_route(routes, _build_gust_ko_route(current_refs, context))
 	_append_route(routes, _build_defensive_gust_route(current_refs, context))
@@ -230,14 +236,22 @@ func _build_manual_attach_attack_route(actions: Array[Dictionary], context: Dict
 	if attach.is_empty():
 		return {}
 	var route_actions: Array[Dictionary] = [_action_ref(attach)]
-	_append_end_turn(route_actions, context)
+	var future_attack := _best_future_attack_after_manual_attach(context)
+	if future_attack.is_empty():
+		_append_end_turn(route_actions, context)
+	else:
+		_append_action_ref(route_actions, future_attack)
+		_append_end_turn(route_actions, context)
+	var future_goals: Array[Dictionary] = _context_future_goals(context)
+	if not future_attack.is_empty():
+		future_goals.push_front(_action_ref(future_attack))
 	return _route(
 		"manual_attach_to_attack",
 		"Manually attach the exact missing Energy that makes the primary attack live, then convert to the attack.",
 		route_actions,
 		980,
 		"manual_attach_to_primary_attack",
-		_context_future_goals(context)
+		future_goals
 	)
 
 
@@ -284,14 +298,15 @@ func _build_primary_engine_route(
 	if primary_future_attack.is_empty() and not bool(context.get("primary_attack_reachable", false)):
 		return {}
 	var route_actions: Array[Dictionary] = []
-	_append_action_refs(route_actions, _engine_actions(actions, true, bool(context.get("no_deck_draw_lock", false))))
+	_append_action_refs(route_actions, _engine_actions(actions, false, bool(context.get("no_deck_draw_lock", false))))
 	_append_best_manual_attach(route_actions, actions, context)
+	var future_goals: Array[Dictionary] = _context_future_goals(context)
+	if not primary_future_attack.is_empty():
+		_append_action_ref(route_actions, primary_future_attack)
+		future_goals.append(_action_ref(primary_future_attack))
 	_append_end_turn(route_actions, context)
 	if route_actions.size() <= 1:
 		return {}
-	var future_goals: Array[Dictionary] = _context_future_goals(context)
-	if not primary_future_attack.is_empty():
-		future_goals.append(_action_ref(primary_future_attack))
 	return _route(
 		"primary_visible_engine",
 		"Build the visible primary attack route with search, draw, acceleration, and attach before ending.",
@@ -342,7 +357,7 @@ func _build_basic_setup_route(actions: Array[Dictionary], context: Dictionary) -
 			break
 		if bool(context.get("no_deck_draw_lock", false)) and _is_draw_or_churn_ref(ref):
 			continue
-		if _capability_for_ref(ref) not in ["bench_basic", "bench_search", "attach_tool"]:
+		if _capability_for_ref(ref) not in ["bench_basic", "bench_search", "search", "energy_search", "attach_tool"]:
 			continue
 		_append_action_ref(route_actions, ref)
 	_append_end_turn(route_actions, context)
@@ -516,7 +531,7 @@ func _engine_actions(actions: Array[Dictionary], include_manual_support: bool, n
 		var capability := _capability_for_ref(ref)
 		if no_deck_draw_lock and _is_draw_or_churn_ref(ref):
 			continue
-		if include_manual_support and _is_hand_reset_draw_ref(ref):
+		if _is_hand_reset_draw_ref(ref):
 			continue
 		if capability in allowed:
 			result.append(ref)
@@ -646,6 +661,10 @@ func _schema_or_interactions(ref: Dictionary) -> Dictionary:
 
 
 func _append_best_manual_attach(route_actions: Array[Dictionary], actions: Array[Dictionary], context: Dictionary = {}) -> void:
+	var intent_attach: Dictionary = _best_intent_manual_attach(actions, context)
+	if not intent_attach.is_empty():
+		_append_action_ref(route_actions, intent_attach)
+		return
 	var attack_cost_attach: Dictionary = _best_manual_attach_for_primary_cost(actions, context)
 	if not attack_cost_attach.is_empty():
 		_append_action_ref(route_actions, attack_cost_attach)
@@ -658,7 +677,33 @@ func _append_best_manual_attach(route_actions: Array[Dictionary], actions: Array
 			return
 
 
+func _best_intent_manual_attach(actions: Array[Dictionary], context: Dictionary) -> Dictionary:
+	var action_id := str(context.get("intent_best_manual_attach_action_id", ""))
+	if action_id == "":
+		return {}
+	var marginal := str(context.get("intent_best_manual_attach_marginal_value", ""))
+	if marginal not in ["high", "medium"]:
+		return {}
+	var ref: Dictionary = _find_action_by_id(actions, action_id)
+	if ref.is_empty() or _capability_for_ref(ref) != "manual_attach":
+		return {}
+	var target_position := str(context.get("intent_best_manual_attach_target_position", ""))
+	if target_position != "" and str(ref.get("position", "")) != "" and str(ref.get("position", "")) != target_position:
+		return {}
+	var desired_symbols := _desired_primary_attach_symbols(context)
+	if not desired_symbols.is_empty():
+		var ref_symbol := _energy_symbol_for_ref(ref)
+		if ref_symbol != "" and not desired_symbols.has(ref_symbol) and _primary_attach_requires_specific_energy(context):
+			return {}
+	return ref
+
+
 func _best_manual_attach_for_primary_cost(actions: Array[Dictionary], context: Dictionary) -> Dictionary:
+	var exact_attach_id := str(context.get("best_manual_attach_to_primary_attack_action_id", ""))
+	if exact_attach_id != "":
+		var exact_attach: Dictionary = _find_action_by_id(actions, exact_attach_id)
+		if not exact_attach.is_empty() and _capability_for_ref(exact_attach) == "manual_attach":
+			return exact_attach
 	var desired_symbols := _desired_primary_attach_symbols(context)
 	if desired_symbols.is_empty():
 		return {}
@@ -673,6 +718,17 @@ func _best_manual_attach_for_primary_cost(actions: Array[Dictionary], context: D
 		if desired_symbols.has(ref_symbol):
 			return ref
 	return {}
+
+
+func _energy_symbol_for_ref(ref: Dictionary) -> String:
+	var symbol := _energy_symbol_from_word(str(ref.get("energy_type", "")))
+	if symbol != "":
+		return symbol
+	symbol = _energy_symbol_from_word(str(ref.get("card", "")))
+	if symbol != "":
+		return symbol
+	var card_rules: Dictionary = ref.get("card_rules", {}) if ref.get("card_rules", {}) is Dictionary else {}
+	return _energy_symbol_from_word(str(card_rules.get("energy_provides", "")))
 
 
 func _desired_primary_attach_symbols(context: Dictionary) -> Array[String]:
@@ -725,13 +781,75 @@ func _best_attack(actions: Array[Dictionary]) -> Dictionary:
 	for ref: Dictionary in actions:
 		if str(ref.get("type", "")) not in ["attack", "granted_attack"]:
 			continue
-		var score := _action_priority(ref)
-		if _is_low_value_attack(ref):
-			score -= 500
+		var score := _attack_ref_score(ref)
 		if score > best_score:
 			best_score = score
 			best = ref
 	return best
+
+
+func _attack_ref_score(ref: Dictionary) -> int:
+	var score := _action_priority(ref)
+	var quality: Dictionary = ref.get("attack_quality", {}) if ref.get("attack_quality", {}) is Dictionary else {}
+	var role := str(quality.get("role", ""))
+	var terminal_priority := str(quality.get("terminal_priority", ""))
+	if terminal_priority == "high":
+		score += 3000
+	elif terminal_priority == "medium":
+		score += 500
+	elif terminal_priority == "low":
+		score -= 1200
+	if role == "primary_damage":
+		score += 2000
+	elif role == "finisher":
+		score += 1800
+	elif role == "scaling_damage":
+		score += 1700
+	elif role == "chip_damage":
+		score += 100
+	elif role in ["setup_attack", "setup_draw", "desperation_redraw"]:
+		score -= 900
+	if _attack_ref_is_damage_counter_scaling(ref):
+		score += 2400
+	score += mini(_attack_damage_number(ref), 500)
+	score += maxi(0, int(ref.get("attack_index", -1))) * 60
+	if _is_low_value_attack(ref):
+		score -= 500
+	return score
+
+
+func _attack_ref_is_damage_counter_scaling(ref: Dictionary) -> bool:
+	var parts: Array[String] = [
+		str(ref.get("attack_name", "")),
+		str(ref.get("name", "")),
+		str(ref.get("text", "")),
+		str(ref.get("description", "")),
+		str(ref.get("damage", "")),
+	]
+	var rules: Dictionary = ref.get("attack_rules", {}) if ref.get("attack_rules", {}) is Dictionary else {}
+	parts.append(str(rules.get("name", "")))
+	parts.append(str(rules.get("text", "")))
+	parts.append(str(rules.get("description", "")))
+	parts.append(str(rules.get("damage", "")))
+	var text := " ".join(parts).to_lower()
+	if text.contains("damage counter") or text.contains("伤害指示物"):
+		return text.contains("x") or text.contains("×") or text.contains("数量") or text.contains("number")
+	return false
+
+
+func _attack_damage_number(ref: Dictionary) -> int:
+	var damage := str(ref.get("damage", "")).strip_edges()
+	if damage == "":
+		var rules: Dictionary = ref.get("attack_rules", {}) if ref.get("attack_rules", {}) is Dictionary else {}
+		damage = str(rules.get("damage", "")).strip_edges()
+	var digits := ""
+	for i: int in damage.length():
+		var ch := damage.substr(i, 1)
+		if ch >= "0" and ch <= "9":
+			digits += ch
+		elif digits != "":
+			break
+	return int(digits) if digits.is_valid_int() else 0
 
 
 func _best_reachable_pivot_attack(future_actions: Array[Dictionary]) -> Dictionary:
@@ -848,6 +966,32 @@ func _best_future_primary_attack(future_actions: Array[Dictionary]) -> Dictionar
 	return best
 
 
+func _best_future_attack_after_manual_attach(context: Dictionary) -> Dictionary:
+	var future_actions: Array[Dictionary] = _dictionary_array(context.get("future_actions", []))
+	var primary_name := str(context.get("primary_attack_name", "")).strip_edges()
+	var best: Dictionary = {}
+	var best_score := -999999
+	for ref: Dictionary in future_actions:
+		if str(ref.get("type", "")) != "attack":
+			continue
+		if str(ref.get("prerequisite", "")) != "manual_attach_to_active":
+			continue
+		if bool(ref.get("reachable_with_known_resources", true)) == false:
+			continue
+		if _is_low_value_attack(ref):
+			continue
+		var attack_name := str(ref.get("attack_name", "")).strip_edges()
+		var score := _action_priority(ref)
+		if _future_attack_is_primary(ref):
+			score += 500
+		if primary_name != "" and attack_name != "" and _names_overlap(attack_name, primary_name):
+			score += 750
+		if score > best_score:
+			best_score = score
+			best = ref
+	return best
+
+
 func _sort_by_priority(actions: Array[Dictionary]) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for ref: Dictionary in actions:
@@ -946,7 +1090,7 @@ func _capability_for_ref(ref: Dictionary) -> String:
 		if tags.has("draw"):
 			return "draw_ability"
 		return "ability"
-	if action_type == "play_trainer" or action_type == "play_stadium":
+	if action_type == "play_trainer" or action_type == "play_stadium" or action_type == "use_stadium_effect":
 		if tags.has("gust") or _name_has_any(combined, ["boss", "catcher"]):
 			return "gust"
 		if _name_has_any(combined, ["professor sada"]):
@@ -1172,3 +1316,11 @@ func _name_has_any(text: String, needles: Array[String]) -> bool:
 		if lower.contains(needle.to_lower()):
 			return true
 	return false
+
+
+func _names_overlap(left: String, right: String) -> bool:
+	var left_lower := left.strip_edges().to_lower()
+	var right_lower := right.strip_edges().to_lower()
+	if left_lower == "" or right_lower == "":
+		return false
+	return left_lower.contains(right_lower) or right_lower.contains(left_lower)

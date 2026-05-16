@@ -68,7 +68,12 @@ layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="ListContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ScrollContainer"]
+[node name="ReplayScrollMargin" type="MarginContainer" parent="MarginContainer/VBoxContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_right = 40
+
+[node name="ListContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ScrollContainer/ReplayScrollMargin"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3

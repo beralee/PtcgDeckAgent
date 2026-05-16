@@ -491,6 +491,50 @@ func test_csv8c_136_pecharunt_ex_subjugating_chains_switches_bench_dark_and_pois
 	])
 
 
+func test_csv8c_136_pecharunt_ex_subjugating_chains_can_trigger_from_active() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+	var player: PlayerState = state.players[0]
+	var pecharunt_cd := _make_basic_pokemon_data("Pecharunt ex", "D", 190, "Basic", "ex", "e92d1881bfe5e0b957b87c93cd757fc7")
+	pecharunt_cd.name_en = "Pecharunt ex"
+	pecharunt_cd.abilities = [{"name": "Subjugating Chains", "text": "Switch 1 of your Benched Darkness Pokemon, except any Pecharunt ex, with your Active Pokemon. The new Active Pokemon is now Poisoned."}]
+	pecharunt_cd.attacks = [{"name": "Irritated Outburst", "cost": "DD", "damage": "60x", "text": "This attack does 60 damage for each Prize card your opponent has taken.", "is_vstar_power": false}]
+	var pecharunt := _make_slot(pecharunt_cd, 0)
+	var dark_target := _make_slot(_make_basic_pokemon_data("Bench Dark", "D", 120), 0)
+	var excluded_copy := _make_slot(pecharunt_cd, 0)
+	player.active_pokemon = pecharunt
+	player.bench.clear()
+	player.bench.append(dark_target)
+	player.bench.append(excluded_copy)
+	gsm.effect_processor.register_pokemon_card(pecharunt_cd)
+
+	var effect: BaseEffect = gsm.effect_processor.get_effect(pecharunt_cd.effect_id)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(pecharunt.get_top_card(), state) if effect != null else []
+	var can_use := gsm.effect_processor.can_use_ability(pecharunt, state, 0)
+	var actions := AILegalActionBuilder.new().build_actions(gsm, 0)
+	var ai_has_active_source := false
+	for action: Dictionary in actions:
+		if action.get("kind", "") == "use_ability" and action.get("source_slot", null) == pecharunt:
+			ai_has_active_source = true
+			break
+
+	var used := gsm.use_ability(0, pecharunt, 0, [{"subjugating_chains_target": [dark_target]}])
+
+	return run_checks([
+		assert_true(effect is AbilitySubjugatingChains, "CSV8C_136 should register Subjugating Chains by effect_id"),
+		assert_true(can_use, "CSV8C_136 should be usable while Pecharunt ex is Active"),
+		assert_eq(steps.size(), 1, "CSV8C_136 should expose a target selection step from Active"),
+		assert_true((steps[0].get("items", []) as Array).has(dark_target), "CSV8C_136 should allow choosing a Benched Darkness Pokemon"),
+		assert_false((steps[0].get("items", []) as Array).has(excluded_copy), "CSV8C_136 should not allow choosing another Pecharunt ex"),
+		assert_true(ai_has_active_source, "AILegalActionBuilder should enumerate Subjugating Chains from the Active Pecharunt ex"),
+		assert_true(used, "GameStateMachine should resolve Subjugating Chains from the Active Pecharunt ex"),
+		assert_eq(player.active_pokemon, dark_target, "CSV8C_136 should switch the chosen Benched Darkness Pokemon into the Active Spot"),
+		assert_true(player.active_pokemon.status_conditions.get("poisoned", false), "CSV8C_136 should Poison the new Active Pokemon"),
+		assert_true(pecharunt in player.bench, "The original Active Pecharunt ex should move to the Bench"),
+	])
+
+
 func test_csv8c_136_pecharunt_ex_can_use_ability_with_equivalent_bench_slot_reference() -> String:
 	var gsm := GameStateMachine.new()
 	gsm.game_state = _make_state()
@@ -1386,6 +1430,7 @@ func test_csv8c_067_wellspring_mask_ogerpon_ex_attack_family() -> String:
 	processor.register_pokemon_card(card_data)
 	var state := _make_state()
 	var attacker := _make_slot(card_data, 0)
+	state.players[0].active_pokemon = attacker
 	var defender := state.players[1].active_pokemon
 	var bench_target := state.players[1].bench[0]
 	var energy1 := CardInstance.create(_make_energy_data("Water", "W"), 0)
@@ -1399,6 +1444,27 @@ func test_csv8c_067_wellspring_mask_ogerpon_ex_attack_family() -> String:
 	processor.execute_attack_effect(attacker, 0, defender, state)
 	var lock_applied := defender.effects.any(func(e: Dictionary) -> bool: return e.get("type", "") == "retreat_lock")
 
+	var attack_effects: Array[BaseEffect] = processor.get_attack_effects_for_slot(attacker, 1)
+	var pump_effect: BaseEffect = null
+	for effect: BaseEffect in attack_effects:
+		if effect.has_method("get_followup_attack_interaction_steps"):
+			pump_effect = effect
+			break
+	var pump_card: CardInstance = attacker.get_top_card()
+	var pump_steps: Array[Dictionary] = pump_effect.get_attack_interaction_steps(pump_card, card_data.attacks[1], state) if pump_effect != null else []
+	var short_followup: Array[Dictionary] = pump_effect.get_followup_attack_interaction_steps(
+		pump_card,
+		card_data.attacks[1],
+		state,
+		{"return_energy_to_deck": [energy1, energy2]}
+	) if pump_effect != null else []
+	var full_followup: Array[Dictionary] = pump_effect.get_followup_attack_interaction_steps(
+		pump_card,
+		card_data.attacks[1],
+		state,
+		{"return_energy_to_deck": [energy1, energy2, energy3]}
+	) if pump_effect != null else []
+
 	processor.execute_attack_effect(attacker, 1, defender, state, [{
 		"return_energy_to_deck": [energy1, energy2, energy3],
 		"bench_target": [bench_target],
@@ -1407,7 +1473,43 @@ func test_csv8c_067_wellspring_mask_ogerpon_ex_attack_family() -> String:
 	return run_checks([
 		assert_true(processor.has_attack_effect(card_data.effect_id), "CSV8C_067 should register scripted attacks"),
 		assert_true(lock_applied, "CSV8C_067 first attack should stop retreat next turn"),
+		assert_eq(int(pump_steps[0].get("min_select", -1)) if not pump_steps.is_empty() else -1, 3, "CSV8C_067 second attack should require exactly 3 returned Energy for the optional bench effect"),
+		assert_true(short_followup.is_empty(), "CSV8C_067 should not ask for a bench target unless 3 Energy were selected"),
+		assert_eq(str(full_followup[0].get("id", "")) if not full_followup.is_empty() else "", "bench_target", "CSV8C_067 should ask for a bench target after selecting 3 Energy"),
+		assert_eq(attacker.attached_energy.size(), 0, "CSV8C_067 second attack should remove the 3 selected Energy from the attacker"),
+		assert_true(energy1 in state.players[0].deck and energy2 in state.players[0].deck and energy3 in state.players[0].deck, "CSV8C_067 second attack should shuffle selected Energy into the deck"),
 		assert_eq(bench_target.damage_counters, 120, "CSV8C_067 second attack should place 120 on the chosen bench target when energy is returned"),
+	])
+
+
+func test_csv8c_067_torrential_pump_returns_energy_when_bench_damage_is_prevented() -> String:
+	var processor := EffectProcessor.new()
+	var card_data := _make_basic_pokemon_data("CSV8C_067 Wellspring Mask Ogerpon ex", "W", 210, "Basic", "ex", "14cf8080c35f652fe13a579f1b50542a")
+	card_data.attacks = [
+		{"name": "Bind Up", "cost": "C", "damage": "20", "text": "", "is_vstar_power": false},
+		{"name": "Torrential Pump", "cost": "WCC", "damage": "100", "text": "", "is_vstar_power": false},
+	]
+	processor.register_pokemon_card(card_data)
+	var state := _make_state()
+	var attacker := _make_slot(card_data, 0)
+	state.players[0].active_pokemon = attacker
+	var protected_cd := _make_basic_pokemon_data("Protected Farigiraf ex", "D", 260, "Stage 1", "ex", "fd252ce877c709e9e3161c56ef98aff8")
+	var protected_bench := _make_slot(protected_cd, 1)
+	state.players[1].bench = [protected_bench]
+	var energy1 := CardInstance.create(_make_energy_data("Water", "W"), 0)
+	var energy2 := CardInstance.create(_make_energy_data("Colorless1", "C"), 0)
+	var energy3 := CardInstance.create(_make_energy_data("Colorless2", "C"), 0)
+	attacker.attached_energy = [energy1, energy2, energy3]
+
+	processor.execute_attack_effect(attacker, 1, state.players[1].active_pokemon, state, [{
+		"return_energy_to_deck": [energy1, energy2, energy3],
+		"bench_target": [protected_bench],
+	}])
+
+	return run_checks([
+		assert_eq(attacker.attached_energy.size(), 0, "Torrential Pump should still pay the optional Energy return before prevention is checked"),
+		assert_true(energy1 in state.players[0].deck and energy2 in state.players[0].deck and energy3 in state.players[0].deck, "Torrential Pump should shuffle selected Energy into the deck even if bench damage is prevented"),
+		assert_eq(protected_bench.damage_counters, 0, "Protected Bench Pokemon should prevent the 120 bench damage"),
 	])
 
 
@@ -2888,6 +2990,97 @@ func test_legacy_energy_reduces_prizes_e2e() -> String:
 
 	return run_checks([
 		assert_eq(prizes_taken, 1, "遗赠能量应使ex宝可梦昏厥时对手只拿1张奖赏卡（正常2张减1张）"),
+	])
+
+
+func test_legacy_energy_zero_prize_knockout_does_not_request_prize() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+
+	var defender_cd := _make_basic_pokemon_data("Legacy One-Prizer", "C", 10, "Basic", "", "legacy_zero_def")
+	defender_cd.attacks = [{"name": "Hit", "cost": "C", "damage": "10", "text": "", "is_vstar_power": false}]
+	var defender := _make_slot(defender_cd, 1)
+	var legacy_cd := _make_energy_data("Legacy Energy", "", "Special Energy", "6f31b7241a181631016466e561f148f3")
+	defender.attached_energy.append(CardInstance.create(legacy_cd, 1))
+	state.players[1].active_pokemon = defender
+	state.players[1].bench = [_make_slot(_make_basic_pokemon_data("Replacement", "C", 100), 1)]
+
+	var attacker_cd := _make_basic_pokemon_data("Attacker", "C", 200)
+	attacker_cd.attacks = [{"name": "KO Hit", "cost": "C", "damage": "200", "text": "", "is_vstar_power": false}]
+	state.players[0].active_pokemon = _make_slot(attacker_cd, 0)
+	state.players[0].active_pokemon.attached_energy.append(CardInstance.create(_make_energy_data("C1", "C"), 0))
+
+	var prizes_before: int = state.players[0].prizes.size()
+	var attack_ok: bool = gsm.use_attack(0, 0)
+
+	return run_checks([
+		assert_true(attack_ok, "Legacy Energy zero-prize scenario should execute the KO attack"),
+		assert_eq(state.players[0].prizes.size(), prizes_before, "A 1-prize Pokemon with Legacy Energy should give up 0 prize cards"),
+		assert_eq(int(gsm.get("_pending_prize_remaining")), 0, "Zero-prize KO should not leave a pending prize count"),
+		assert_eq(int(gsm.get("_pending_prize_player_index")), -1, "Zero-prize KO should not leave a pending prize player"),
+		assert_eq(state.phase, GameState.GamePhase.KNOCKOUT_REPLACE, "The KO flow should continue to send-out replacement instead of waiting on prizes"),
+	])
+
+
+func test_legacy_energy_does_not_reduce_or_consume_on_non_attack_damage_knockout() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+
+	var defender_cd := _make_basic_pokemon_data("Legacy Status KO", "C", 10, "Basic", "", "legacy_status_def")
+	var defender := _make_slot(defender_cd, 1)
+	var legacy_cd := _make_energy_data("Legacy Energy", "", "Special Energy", "6f31b7241a181631016466e561f148f3")
+	defender.attached_energy.append(CardInstance.create(legacy_cd, 1))
+	defender.damage_counters = 10
+	state.players[1].active_pokemon = defender
+	state.players[1].bench = [_make_slot(_make_basic_pokemon_data("Replacement", "C", 100), 1)]
+	state.phase = GameState.GamePhase.POKEMON_CHECK
+
+	gsm.call("_check_all_knockouts")
+
+	return run_checks([
+		assert_eq(int(gsm.get("_pending_prize_remaining")), 1, "Legacy Energy should not reduce prizes for a non-attack-damage knockout"),
+		assert_eq(int(gsm.get("_pending_prize_player_index")), 0, "The opponent should still be prompted to take the normal 1 Prize"),
+		assert_false(bool(state.shared_turn_flags.get("legacy_energy_prize_reduction_used_1", false)), "Legacy Energy should not be consumed when its reduction did not apply"),
+	])
+
+
+func test_legacy_energy_still_applies_to_later_simultaneous_attack_damage_knockouts() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+	var attack_effect_id := "test_multi_bench_attack_damage_legacy"
+	var attacker_cd := _make_basic_pokemon_data("Multi Bench Attacker", "W", 210, "Basic", "ex", attack_effect_id)
+	attacker_cd.attacks = [{"name": "Dual Bench Hit", "cost": "WW", "damage": "", "text": "", "is_vstar_power": false}]
+	gsm.effect_processor.register_attack_effect(attack_effect_id, AttackGreninjaExMirageBarrage.new(0, 120, 2))
+	var attacker := _make_slot(attacker_cd, 0)
+	var energy1 := CardInstance.create(_make_energy_data("Water1", "W"), 0)
+	var energy2 := CardInstance.create(_make_energy_data("Water2", "W"), 0)
+	attacker.attached_energy = [energy1, energy2]
+	state.players[0].active_pokemon = attacker
+
+	state.players[1].active_pokemon = _make_slot(_make_basic_pokemon_data("Safe Active", "C", 300), 1)
+	var normal_bench := _make_slot(_make_basic_pokemon_data("Normal Bench", "C", 120), 1)
+	var legacy_bench := _make_slot(_make_basic_pokemon_data("Legacy Bench", "C", 120), 1)
+	var legacy_cd := _make_energy_data("Legacy Energy", "", "Special Energy", "6f31b7241a181631016466e561f148f3")
+	legacy_bench.attached_energy.append(CardInstance.create(legacy_cd, 1))
+	state.players[1].bench = [normal_bench, legacy_bench]
+	var prizes_before: int = state.players[0].prizes.size()
+
+	var attack_ok := gsm.use_attack(0, 0, [{
+		"greninja_ex_discard_energy": [energy1, energy2],
+		"greninja_ex_targets": [normal_bench, legacy_bench],
+	}])
+	var first_prize_pending: int = int(gsm.get("_pending_prize_remaining"))
+	var first_take_ok := gsm.resolve_take_prize(0, 0)
+
+	return run_checks([
+		assert_true(attack_ok, "The multi-bench attack should execute"),
+		assert_eq(first_prize_pending, 1, "The first normal Bench KO should request one Prize"),
+		assert_true(first_take_ok, "The first Prize should resolve and continue pending knockout checks"),
+		assert_eq(state.players[0].prizes.size(), prizes_before - 1, "The later simultaneous Legacy Energy KO should reduce to 0 Prizes, not request a second Prize"),
+		assert_eq(int(gsm.get("_pending_prize_remaining")), 0, "The simultaneous Legacy KO should not leave a second prize prompt"),
 	])
 
 

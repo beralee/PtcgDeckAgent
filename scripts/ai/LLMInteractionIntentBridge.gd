@@ -609,7 +609,9 @@ func _queue_item_matches_pending_effect(queue_item: Dictionary, pending_card: Va
 	var q_type: String = str(queue_item.get("type", queue_item.get("kind", "")))
 	if pending_kind == "trainer" and q_type != "play_trainer":
 		return false
-	if pending_kind in ["ability", "stadium"] and q_type not in ["use_ability", "play_stadium"]:
+	if pending_kind == "ability" and q_type != "use_ability":
+		return false
+	if pending_kind == "stadium" and q_type not in ["use_stadium_effect", "play_stadium"]:
 		return false
 	if pending_kind in ["attack", "granted_attack"] and q_type not in ["attack"]:
 		return false

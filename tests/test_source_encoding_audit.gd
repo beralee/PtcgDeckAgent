@@ -5,6 +5,7 @@ extends TestBase
 const ROOT_TARGETS := [
 	"res://scripts",
 	"res://scenes",
+	"res://data",
 	"res://tests",
 	"res://docs",
 	"res://project.godot",
@@ -150,7 +151,11 @@ func _check_placeholder_question_marks(path: String, line_number: int, line: Str
 
 
 func _check_forbidden_ui_phrases(path: String, line_number: int, line: String) -> String:
-	if not path.ends_with("scenes/battle/BattleScene.gd"):
+	if not (
+		path.ends_with("scenes/battle/BattleScene.gd")
+		or path.ends_with("scenes/battle/BattleSceneRuntime.gd")
+		or path.begins_with("res://scenes/battle/runtime/")
+	):
 		return ""
 	for phrase: String in BATTLE_SCENE_FORBIDDEN_UI_PHRASES:
 		if phrase in line:
@@ -191,11 +196,13 @@ func _is_allowed_codepoint(codepoint: int) -> bool:
 		return true
 	if codepoint >= 32 and codepoint <= 126:
 		return true
-	if codepoint >= 0x00B7 and codepoint <= 0x00D7:
+	if codepoint >= 0x00A0 and codepoint <= 0x00FF:
 		return true
 	if codepoint >= 0x2000 and codepoint <= 0x206F:
 		return true
 	if codepoint >= 0x2190 and codepoint <= 0x22FF:
+		return true
+	if codepoint >= 0x25A0 and codepoint <= 0x25FF:
 		return true
 	if codepoint >= 0x3000 and codepoint <= 0x303F:
 		return true
@@ -206,5 +213,7 @@ func _is_allowed_codepoint(codepoint: int) -> bool:
 	if codepoint >= 0x4E00 and codepoint <= 0x9FFF:
 		return true
 	if codepoint >= 0xFF00 and codepoint <= 0xFFEF:
+		return true
+	if codepoint >= 0xE000 and codepoint <= 0xF8FF:
 		return true
 	return false

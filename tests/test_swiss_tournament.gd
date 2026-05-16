@@ -63,10 +63,17 @@ func test_field_uses_supported_ai_decks_and_random_modes() -> String:
 func test_field_can_include_all_llm_deck_variants_when_enabled() -> String:
 	var tournament := SwissTournamentScript.new()
 	tournament.setup("测试玩家", 575716, 16, 12345, true)
-	var expected_llm_decks := CardDatabase.get_supported_ai_deck_ids()
-	expected_llm_decks.sort()
+	var supported_ids := CardDatabase.get_supported_ai_deck_ids()
 	var llm_deck_pool: Array = tournament.call("get_llm_deck_pool")
 	llm_deck_pool.sort()
+	var llm_pool_not_supported := 0
+	var llm_pool_missing_strategy := 0
+	for deck_id_variant: Variant in llm_deck_pool:
+		var pool_deck_id := int(deck_id_variant)
+		if not supported_ids.has(pool_deck_id):
+			llm_pool_not_supported += 1
+		if str(tournament.call("llm_strategy_id_for_deck_id", pool_deck_id)) == "":
+			llm_pool_missing_strategy += 1
 	var llm_count := 0
 	var llm_deck_not_supported := 0
 	var missing_strategy_count := 0
@@ -75,16 +82,31 @@ func test_field_can_include_all_llm_deck_variants_when_enabled() -> String:
 			continue
 		llm_count += 1
 		var deck_id := int(participant.get("deck_id", 0))
-		if not expected_llm_decks.has(deck_id):
+		if not supported_ids.has(deck_id):
 			llm_deck_not_supported += 1
 		if str(tournament.call("llm_strategy_id_for_deck_id", deck_id)) == "":
 			missing_strategy_count += 1
-	return run_checks([
-		assert_eq(llm_deck_pool, expected_llm_decks, "比赛模式 LLM 池应覆盖全部 8 套 AI 可选卡组"),
+	var expected_v17_llm := {
+		1700002: "v17_archaludon_dialga_llm",
+		1700003: "v17_water_turtle_llm",
+		1700004: "v17_palkia_gholdengo_llm",
+		1700005: "v17_bomb_charizard_llm",
+		1700007: "v17_miraidon_llm",
+		1700008: "v17_dragapult_dusknoir_llm",
+		1700011: "v17_regidrago_llm",
+	}
+	var checks: Array[String] = [
+		assert_true(llm_deck_pool.size() >= 15, "LLM pool should keep all old and v17 strategy-backed LLM deck variants"),
+		assert_eq(llm_pool_not_supported, 0, "LLM pool should stay inside the supported AI deck list"),
+		assert_eq(llm_pool_missing_strategy, 0, "Every LLM pool deck should map to an LLM strategy id"),
 		assert_true(llm_count >= 1, "AI 设置测试通过后，比赛参赛池应至少引入一个 LLM 对手"),
 		assert_eq(llm_deck_not_supported, 0, "LLM 对手只能使用 AI 可选卡组"),
 		assert_eq(missing_strategy_count, 0, "每个 LLM 对手卡组都必须能映射到对应 LLM strategy id"),
-	])
+	]
+	for deck_id: int in expected_v17_llm.keys():
+		checks.append(assert_true(deck_id in llm_deck_pool, "LLM pool should include v17 deck %d" % deck_id))
+		checks.append(assert_eq(str(tournament.call("llm_strategy_id_for_deck_id", deck_id)), str(expected_v17_llm[deck_id]), "v17 deck %d should map to its LLM strategy" % deck_id))
+	return run_checks(checks)
 
 
 func test_strong_ai_always_beats_weak_ai_in_simulation() -> String:

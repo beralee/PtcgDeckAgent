@@ -38,6 +38,37 @@ func test_miraidon_tandem_unit_shows_full_deck_with_disabled_non_targets() -> St
 	])
 
 
+func test_miraidon_tandem_unit_without_targets_still_shows_full_deck() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.bench.clear()
+	player.hand.clear()
+	player.deck.clear()
+	var wrong_type := CardInstance.create(_make_basic_pokemon_data("Colorless Basic", "C"), 0)
+	var wrong_stage := CardInstance.create(_make_pokemon_data("Lightning Stage 1", "L", "Stage 1"), 0)
+	var wrong_card_type := CardInstance.create(_make_energy_data("Lightning Energy", "L"), 0)
+	player.deck.append_array([wrong_type, wrong_stage, wrong_card_type])
+
+	var effect := AbilitySearchPokemonToBenchScript.new("L", 2)
+	var can_use_before := effect.can_use_ability(player.active_pokemon, state)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(player.active_pokemon.get_top_card(), state)
+	var step: Dictionary = steps[0] if not steps.is_empty() else {}
+
+	effect.execute_ability(player.active_pokemon, 0, [{"bench_pokemon": []}], state)
+
+	return run_checks([
+		assert_true(can_use_before, "Tandem Unit should remain usable when the deck has no matching Basic Lightning Pokemon"),
+		assert_eq(steps.size(), 1, "Tandem Unit should still open the full-deck search step"),
+		_assert_full_deck_step_shape(step, 3, 0, [-1, -1, -1], "Tandem Unit empty search"),
+		assert_eq(int(step.get("min_select", -1)), 0, "Empty Tandem Unit search should allow selecting zero cards"),
+		assert_eq(int(step.get("max_select", -1)), 2, "Empty Tandem Unit search keeps the up-to-two contract for confirmation UI"),
+		assert_true(bool(step.get("force_confirm", false)), "Empty Tandem Unit search should keep a confirm button even when no card is selectable"),
+		assert_eq(player.bench.size(), 0, "No Pokemon should be benched when no legal target is selected"),
+		assert_true(wrong_type in player.deck and wrong_stage in player.deck and wrong_card_type in player.deck, "All non-target cards should remain in deck"),
+		assert_false(effect.can_use_ability(player.active_pokemon, state), "Using the empty Tandem Unit search should still consume the once-per-turn ability"),
+	])
+
+
 func test_chien_pao_shivery_chill_shows_full_deck_with_disabled_non_water_energy() -> String:
 	var state := _make_state()
 	var player: PlayerState = state.players[0]

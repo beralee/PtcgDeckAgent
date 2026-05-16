@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "平稳境地",
+			"text": "只要这只宝可梦在场上，对手场上的宝可梦，以及放于其身上的所有卡牌，都无法被放回手牌。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "Taira Akitsu",
+	"attacks": [
+		{
+			"cost": "WCC",
+			"damage": "100",
+			"is_vstar_power": false,
+			"name": "水炮飞溅",
+			"text": ""
+		}
+	],
+	"card_index": "039",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "特性: 平稳境地\n只要这只宝可梦在场上，对手场上的宝可梦，以及放于其身上的所有卡牌，都无法被放回手牌。\n\n【水】【无】【无】 水炮飞溅 100\n\n\n",
+	"effect_id": "88b2885578a73494f1eed7c2b53e67c7",
+	"energy_provides": "",
+	"energy_type": "W",
+	"evolves_from": "丑丑鱼",
+	"hp": 120,
+	"image_local_path": "user://cards/images/CSV9C/039.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/039.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "美纳斯",
+	"name_en": "",
+	"rarity": "U",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Stage 1",
+	"weakness_energy": "L",
+	"weakness_value": "×2",
+	"yoren_code": "P350"
+}

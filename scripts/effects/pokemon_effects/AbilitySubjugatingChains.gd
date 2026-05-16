@@ -13,7 +13,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	if state.current_player_index != pi:
 		return false
 	var player: PlayerState = state.players[pi]
-	if _find_bench_index(player, pokemon) == -1:
+	if not _is_source_in_play(player, pokemon):
 		return false
 	if int(state.shared_turn_flags.get("%s_%d" % [SHARED_KEY, pi], -1)) == state.turn_number:
 		return false
@@ -71,7 +71,7 @@ func execute_ability(
 	old_active.clear_on_leave_active()
 	player.bench.append(old_active)
 	player.active_pokemon = chosen
-	player.active_pokemon.set_status("poisoned", true)
+	_apply_special_status(player.active_pokemon, "poisoned", state)
 	state.shared_turn_flags["%s_%d" % [SHARED_KEY, pi]] = state.turn_number
 
 
@@ -110,6 +110,19 @@ func _find_bench_index(player: PlayerState, candidate: PokemonSlot) -> int:
 		if bench_top != null and bench_top.instance_id == candidate_id:
 			return i
 	return -1
+
+
+func _is_source_in_play(player: PlayerState, candidate: PokemonSlot) -> bool:
+	if player == null or candidate == null:
+		return false
+	if candidate == player.active_pokemon:
+		return true
+	var candidate_top: CardInstance = candidate.get_top_card()
+	var candidate_id: int = candidate_top.instance_id if candidate_top != null else -1
+	var active_top: CardInstance = player.active_pokemon.get_top_card() if player.active_pokemon != null else null
+	if candidate_id != -1 and active_top != null and active_top.instance_id == candidate_id:
+		return true
+	return _find_bench_index(player, candidate) != -1
 
 
 func get_description() -> String:

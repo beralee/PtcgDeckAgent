@@ -134,7 +134,7 @@ func log_runtime_action_result(
 		action_queue = _llm_action_queue.duplicate(true)
 	if action_queue.is_empty() and game_state != null and player_index_override >= 0:
 		action_queue = _select_current_action_queue(game_state, player_index_override)
-	var matched_index := _queue_index_for_action(action, action_queue, game_state, player_index_override)
+	var matched_index := _queue_index_for_action(action, action_queue, game_state, player_index_override, false)
 	_audit_log("runtime_action_result", {
 		"turn": turn,
 		"player_index": player_index_override,
@@ -591,7 +591,13 @@ func _active_queue_blocks_unmatched_action(
 	if active_queue.is_empty() or game_state == null or player_index < 0:
 		return false
 	var head: Dictionary = active_queue[0]
+	if _queue_ref_is_route_critical_for_skip(head):
+		if _queue_item_matches(head, action, game_state, player_index):
+			return false
+		return true
 	if _is_attack_action_ref(head):
+		if _deck_queue_item_matches_action(head, action, game_state, player_index):
+			return false
 		return not _is_attack_action_ref(action) or not _match_attack(head, action, game_state, player_index)
 	return false
 
@@ -808,7 +814,7 @@ func _future_attack_goal_matches_runtime_attack(goal: Dictionary, action: Dictio
 func _score_from_queue(action: Dictionary, action_queue: Array[Dictionary], game_state: GameState, player_index: int) -> float:
 	for i: int in action_queue.size():
 		if _queue_item_matches(action_queue[i], action, game_state, player_index):
-			if _queue_prefix_blocks_skip(action_queue, i):
+			if _queue_prefix_blocks_skip(action_queue, i, game_state, player_index):
 				_audit_log("queue_prefix_skip_blocked", {
 					"turn": int(game_state.turn_number) if game_state != null else _cached_turn_number,
 					"player_index": player_index,
@@ -839,21 +845,29 @@ func _score_from_queue(action: Dictionary, action_queue: Array[Dictionary], game
 	return 0.0
 
 
-func _queue_index_for_action(action: Dictionary, action_queue: Array[Dictionary], game_state: GameState, player_index: int) -> int:
+func _queue_index_for_action(action: Dictionary, action_queue: Array[Dictionary], game_state: GameState, player_index: int, apply_block_hooks: bool = true) -> int:
 	for i: int in action_queue.size():
-		if _queue_item_matches(action_queue[i], action, game_state, player_index):
-			if _queue_prefix_blocks_skip(action_queue, i):
+		if _queue_item_matches(action_queue[i], action, game_state, player_index, apply_block_hooks):
+			if _queue_prefix_blocks_skip(action_queue, i, game_state, player_index, apply_block_hooks):
 				return -1
 			return i
 	return -1
 
 
-func _queue_prefix_blocks_skip(action_queue: Array[Dictionary], matched_index: int) -> bool:
+func _queue_prefix_blocks_skip(
+	action_queue: Array[Dictionary],
+	matched_index: int,
+	game_state: GameState = null,
+	player_index: int = -1,
+	apply_block_hooks: bool = true
+) -> bool:
 	if matched_index <= 0:
 		return false
 	for i: int in matched_index:
 		var ref: Dictionary = action_queue[i]
 		if _queue_ref_allows_skip(ref):
+			continue
+		if apply_block_hooks and _deck_should_block_exact_queue_match(ref, ref, game_state, player_index):
 			continue
 		if _queue_ref_is_route_critical_for_skip(ref):
 			return true
@@ -874,6 +888,8 @@ func _queue_ref_is_route_critical_for_skip(ref: Dictionary) -> bool:
 	if action_id.begins_with("attach_energy:") or action_type == "attach_energy":
 		return true
 	if action_id.begins_with("attack:") or action_type in ["attack", "granted_attack"]:
+		return true
+	if action_id.begins_with("use_ability:") or action_type == "use_ability":
 		return true
 	if action_id.begins_with("retreat:") or action_type == "retreat":
 		return true
@@ -906,12 +922,12 @@ func _log_queue_score_match_once(action: Dictionary, action_queue: Array[Diction
 	})
 
 
-func _queue_item_matches(q: Dictionary, action: Dictionary, game_state: GameState, player_index: int) -> bool:
+func _queue_item_matches(q: Dictionary, action: Dictionary, game_state: GameState, player_index: int, apply_block_hooks: bool = true) -> bool:
 	var q_action_id: String = str(q.get("action_id", q.get("id", ""))).strip_edges()
 	if q_action_id != "":
 		var actual_action_id: String = _action_id_for_action(action, game_state, player_index)
 		if q_action_id == "end_turn":
-			if _is_end_turn_action_ref(action) and (_should_block_llm_end_turn(game_state, player_index) or _route_compiler_blocks_end_turn(game_state)):
+			if apply_block_hooks and _is_end_turn_action_ref(action) and (_should_block_llm_end_turn(game_state, player_index) or _route_compiler_blocks_end_turn(game_state)):
 				return false
 			if _is_attack_action_ref(action) and _route_compiler_has_future_attack_goals(game_state):
 				return _route_compiler_future_goals_allow_attack(action, game_state, player_index)
@@ -922,9 +938,9 @@ func _queue_item_matches(q: Dictionary, action: Dictionary, game_state: GameStat
 		if actual_action_id == q_action_id:
 			if not _exact_queue_action_metadata_matches(q, action, game_state, player_index):
 				return false
-			if _should_block_low_value_llm_attack_ref(q, game_state, player_index):
+			if apply_block_hooks and _should_block_low_value_llm_attack_ref(q, game_state, player_index):
 				return false
-			if _deck_should_block_exact_queue_match(q, action, game_state, player_index):
+			if apply_block_hooks and _deck_should_block_exact_queue_match(q, action, game_state, player_index):
 				return false
 			return true
 		if _deck_queue_item_matches_action(q, action, game_state, player_index):
@@ -948,18 +964,18 @@ func _queue_item_matches(q: Dictionary, action: Dictionary, game_state: GameStat
 			return _match_card_name(q, action)
 		"evolve":
 			return _match_card_and_target(q, action, game_state, player_index)
-		"play_trainer", "play_stadium":
+		"play_trainer", "play_stadium", "use_stadium_effect":
 			return _match_card_name(q, action)
 		"use_ability":
 			return _match_ability(q, action, game_state, player_index)
 		"retreat":
 			return _match_retreat(q, action, game_state, player_index)
 		"attack":
-			if _should_block_low_value_llm_attack_ref(q, game_state, player_index):
+			if apply_block_hooks and _should_block_low_value_llm_attack_ref(q, game_state, player_index):
 				return false
 			return _match_attack(q, action, game_state, player_index)
 		"end_turn":
-			if _is_end_turn_action_ref(action) and (_should_block_llm_end_turn(game_state, player_index) or _route_compiler_blocks_end_turn(game_state)):
+			if apply_block_hooks and _is_end_turn_action_ref(action) and (_should_block_llm_end_turn(game_state, player_index) or _route_compiler_blocks_end_turn(game_state)):
 				return false
 			if _is_attack_action_ref(action) and _route_compiler_has_future_attack_goals(game_state):
 				return _route_compiler_future_goals_allow_attack(action, game_state, player_index)
@@ -1077,11 +1093,13 @@ func _consume_llm_queue_after_action(
 		_llm_action_queue.clear()
 		_llm_decision_tree.clear()
 		_llm_queue_turn = -1
+		var escape_bypasses_limit := _deck_escape_action_bypasses_replan_limit(action, game_state, player_index)
 		if _is_terminal_runtime_action(action):
 			_llm_completed_queue_turns[turn] = true
-		elif int(_llm_replan_counts.get(turn, 0)) < _llm_max_replans_per_turn:
+		elif int(_llm_replan_counts.get(turn, 0)) < _llm_max_replans_per_turn or escape_bypasses_limit:
 			_llm_completed_queue_turns.erase(turn)
-			_llm_replan_counts[turn] = int(_llm_replan_counts.get(turn, 0)) + 1
+			if not escape_bypasses_limit:
+				_llm_replan_counts[turn] = int(_llm_replan_counts.get(turn, 0)) + 1
 			_llm_replan_eligible_after_reject[turn] = true
 			_llm_request_attempt_turn = -1
 		else:
@@ -1089,6 +1107,7 @@ func _consume_llm_queue_after_action(
 		_audit_log("queue_cleared_after_escape", {
 			"turn": turn,
 			"player_index": player_index,
+			"escape_bypasses_limit": escape_bypasses_limit,
 			"cleared_queue": _audit_logger.call("compact_actions", stale_queue.slice(0, mini(stale_queue.size(), 5))) if _audit_logger != null else stale_queue,
 		})
 		return
@@ -1181,6 +1200,15 @@ func _llm_replan_trigger(before_snapshot: Dictionary, after_snapshot: Dictionary
 		return {
 			"should_replan": true,
 			"reason": "board_positions_changed_before_position_sensitive_queue",
+			"before_active": str(before_snapshot.get("active_name", "")),
+			"after_active": str(after_snapshot.get("active_name", "")),
+			"before_bench": before_snapshot.get("bench_names", []),
+			"after_bench": after_snapshot.get("bench_names", []),
+		}
+	if action_kind == "evolve" and _board_positions_changed(before_snapshot, after_snapshot):
+		return {
+			"should_replan": true,
+			"reason": "evolution_changed_action_surface",
 			"before_active": str(before_snapshot.get("active_name", "")),
 			"after_active": str(after_snapshot.get("active_name", "")),
 			"before_bench": before_snapshot.get("bench_names", []),
@@ -1811,7 +1839,7 @@ func _branch_is_shallow_setup_route(branch: Dictionary) -> bool:
 	var action_type := str(ref.get("type", ""))
 	if action_type in ["attack", "granted_attack", "end_turn"]:
 		return false
-	return action_type in ["play_basic_to_bench", "play_trainer", "play_stadium", "use_ability", "attach_tool", "attach_energy"]
+	return action_type in ["play_basic_to_bench", "play_trainer", "play_stadium", "use_stadium_effect", "use_ability", "attach_tool", "attach_energy"]
 
 
 func _branch_is_attack_setup_route(branch: Dictionary) -> bool:
@@ -2343,6 +2371,10 @@ func _deck_replan_trigger_after_state_change(_before_snapshot: Dictionary, _afte
 	return {"should_replan": false}
 
 
+func _deck_escape_action_bypasses_replan_limit(_action: Dictionary, _game_state: GameState, _player_index: int) -> bool:
+	return false
+
+
 func _deck_pruned_live_terminal_conversion_queue(_snapshot: Dictionary, _remaining_queue: Array[Dictionary]) -> Array[Dictionary]:
 	return []
 
@@ -2388,6 +2420,10 @@ func _deck_estimate_multiplier_attack_damage(_action: Dictionary, _game_state: G
 
 
 func _deck_should_block_end_turn(_game_state: GameState, _player_index: int) -> bool:
+	return false
+
+
+func _deck_should_skip_llm_for_local_rules(_game_state: GameState, _player_index: int, _legal_actions: Array) -> bool:
 	return false
 
 
@@ -2811,7 +2847,7 @@ func _catalog_has_productive_non_terminal_action() -> bool:
 			continue
 		if _action_ref_has_tag(ref, "ends_turn"):
 			continue
-		if action_type in ["play_trainer", "play_stadium", "use_ability", "attach_energy", "attach_tool", "play_basic_to_bench", "retreat", "evolve"]:
+		if action_type in ["play_trainer", "play_stadium", "use_stadium_effect", "use_ability", "attach_energy", "attach_tool", "play_basic_to_bench", "retreat", "evolve"]:
 			return true
 	return false
 
@@ -4174,6 +4210,8 @@ func _should_skip_llm_for_local_rules(
 ) -> bool:
 	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
 		return true
+	if _deck_should_skip_llm_for_local_rules(game_state, player_index, legal_actions):
+		return true
 	if legal_actions.is_empty():
 		return false
 	var productive: Array[Dictionary] = []
@@ -4341,7 +4379,7 @@ func _append_prompt_action(
 
 func _is_hand_visibility_action(action: Dictionary) -> bool:
 	var kind: String = str(action.get("kind", ""))
-	return kind in ["play_trainer", "play_stadium", "play_basic_to_bench", "attach_tool", "evolve"]
+	return kind in ["play_trainer", "play_stadium", "use_stadium_effect", "play_basic_to_bench", "attach_tool", "evolve"]
 
 
 func _hand_action_visibility_key(action: Dictionary) -> String:

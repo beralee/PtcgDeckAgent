@@ -39,6 +39,7 @@ var _update_checker: Node = null
 var _feedback_client: Node = null
 var _user_visit_client: Node = null
 var _update_button: Button = null
+var _update_button_flash_tween: Tween = null
 var _feedback_button: Button = null
 var _manual_update_button: Button = null
 var _about_button: Button = null
@@ -88,6 +89,8 @@ func _notification(what: int) -> void:
 		_resize_hud_modal_panel()
 		if _corner_action_hover_button != null:
 			_position_corner_action_label(_corner_action_hover_button)
+	elif what == NOTIFICATION_PREDELETE:
+		_stop_update_button_flash(false)
 
 
 func _apply_main_menu_hud() -> void:
@@ -390,19 +393,19 @@ func _ensure_update_button() -> void:
 	_update_button.name = "UpdateButton"
 	_update_button.visible = false
 	_update_button.text = "发现新版本"
-	_update_button.custom_minimum_size = Vector2(180, 38)
+	_update_button.custom_minimum_size = Vector2(240, 44)
 	_update_button.layout_mode = 1
 	_update_button.anchor_left = 0.5
 	_update_button.anchor_top = 1.0
 	_update_button.anchor_right = 0.5
 	_update_button.anchor_bottom = 1.0
-	_update_button.offset_left = -90.0
-	_update_button.offset_top = -76.0
-	_update_button.offset_right = 90.0
-	_update_button.offset_bottom = -38.0
+	_update_button.offset_left = -120.0
+	_update_button.offset_top = -84.0
+	_update_button.offset_right = 120.0
+	_update_button.offset_bottom = -40.0
 	_update_button.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_update_button.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_update_button.add_theme_font_size_override("font_size", 14)
+	_update_button.add_theme_font_size_override("font_size", 16)
 	_update_button.add_theme_color_override("font_color", Color(0.96, 0.99, 1.0, 1.0))
 	_update_button.add_theme_color_override("font_hover_color", Color.WHITE)
 	_update_button.add_theme_color_override("font_pressed_color", Color(0.03, 0.07, 0.10, 1.0))
@@ -412,6 +415,27 @@ func _ensure_update_button() -> void:
 	_update_button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	_update_button.pressed.connect(_on_update_button_pressed)
 	add_child(_update_button)
+
+
+func _start_update_button_flash() -> void:
+	if _update_button == null or not is_instance_valid(_update_button):
+		return
+	_stop_update_button_flash(false)
+	_update_button.modulate = Color.WHITE
+	_update_button_flash_tween = create_tween()
+	_update_button_flash_tween.set_loops()
+	_update_button_flash_tween.set_trans(Tween.TRANS_SINE)
+	_update_button_flash_tween.set_ease(Tween.EASE_IN_OUT)
+	_update_button_flash_tween.tween_property(_update_button, "modulate", Color(1.0, 0.78, 0.24, 0.42), 0.45)
+	_update_button_flash_tween.tween_property(_update_button, "modulate", Color.WHITE, 0.45)
+
+
+func _stop_update_button_flash(reset_modulate: bool = true) -> void:
+	if _update_button_flash_tween != null:
+		_update_button_flash_tween.kill()
+		_update_button_flash_tween = null
+	if reset_modulate and _update_button != null and is_instance_valid(_update_button):
+		_update_button.modulate = Color.WHITE
 
 
 func _start_update_check(force: bool = false) -> void:
@@ -441,6 +465,7 @@ func _on_update_available(info: Dictionary) -> void:
 		var display_version := str(info.get("display_version", "v%s" % str(info.get("latest_version", ""))))
 		_update_button.text = "发现新版本 %s" % display_version
 		_update_button.visible = true
+		_start_update_button_flash()
 	if was_manual:
 		_show_update_dialog(_available_update)
 
@@ -451,6 +476,7 @@ func _on_no_update(info: Dictionary) -> void:
 	_set_manual_update_busy(false)
 	_available_update = {}
 	if _update_button != null:
+		_stop_update_button_flash()
 		_update_button.visible = false
 	if was_manual:
 		var display_version := str(info.get("display_version", AppVersionScript.DISPLAY_VERSION))
@@ -1197,6 +1223,7 @@ func _ignore_current_update_version() -> void:
 	if _update_checker != null:
 		_update_checker.ignore_version(str(_available_update.get("latest_version", "")))
 	if _update_button != null:
+		_stop_update_button_flash()
 		_update_button.visible = false
 
 

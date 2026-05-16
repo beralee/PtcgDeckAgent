@@ -171,7 +171,69 @@ func test_play_basic_to_bench_in_main() -> String:
 	])
 
 
-## 测试：非当前玩家无法放备战宝可梦
+## Regression: activated first-turn draw abilities should not auto-fire on bench placement.
+func test_play_basic_to_bench_does_not_auto_use_first_turn_draw_ability() -> String:
+	var gsm := _make_gsm()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 1
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+
+	var player: PlayerState = gsm.game_state.players[0]
+	player.hand.clear()
+	player.deck.clear()
+	player.discard_pile.clear()
+	player.bench.clear()
+
+	var active_cd := CardData.new()
+	active_cd.name = "Active"
+	active_cd.card_type = "Pokemon"
+	active_cd.stage = "Basic"
+	active_cd.hp = 70
+	active_cd.energy_type = "C"
+	var active_slot := PokemonSlot.new()
+	active_slot.pokemon_stack.append(CardInstance.create(active_cd, 0))
+	player.active_pokemon = active_slot
+
+	var squawk_cd := CardData.new()
+	squawk_cd.name = "Squawkabilly ex"
+	squawk_cd.name_en = "Squawkabilly ex"
+	squawk_cd.card_type = "Pokemon"
+	squawk_cd.stage = "Basic"
+	squawk_cd.hp = 160
+	squawk_cd.energy_type = "C"
+	squawk_cd.effect_id = "squawk_first_turn_draw_test"
+	squawk_cd.mechanic = "ex"
+	squawk_cd.abilities = [{"name": "Squawk and Seize", "text": ""}]
+	gsm.effect_processor.register_effect(squawk_cd.effect_id, AbilityFirstTurnDraw.new(6))
+	var squawk := CardInstance.create(squawk_cd, 0)
+	player.hand.append(squawk)
+
+	for i: int in 2:
+		var hand_cd := CardData.new()
+		hand_cd.name = "Kept Hand %d" % i
+		hand_cd.card_type = "Item"
+		player.hand.append(CardInstance.create(hand_cd, 0))
+	for i: int in 6:
+		var deck_cd := CardData.new()
+		deck_cd.name = "Draw %d" % i
+		deck_cd.card_type = "Item"
+		player.deck.append(CardInstance.create(deck_cd, 0))
+
+	var result: bool = gsm.play_basic_to_bench(0, squawk)
+	var bench_slot: PokemonSlot = player.bench[0] if not player.bench.is_empty() else null
+
+	return run_checks([
+		assert_true(result, "Squawkabilly ex should bench successfully"),
+		assert_eq(player.bench.size(), 1, "Squawkabilly ex should enter the bench"),
+		assert_eq(player.hand.size(), 2, "Benching Squawkabilly ex should not discard and redraw the remaining hand"),
+		assert_eq(player.discard_pile.size(), 0, "Benching Squawkabilly ex should not discard the current hand"),
+		assert_eq(player.deck.size(), 6, "Benching Squawkabilly ex should not draw cards from the deck"),
+		assert_true(gsm.effect_processor.can_use_ability(bench_slot, gsm.game_state, 0), "Squawkabilly ex Ability should remain available for explicit player selection"),
+		assert_false(bench_slot.effects.any(func(e: Dictionary) -> bool: return e.get("type", "") == AbilityFirstTurnDraw.USED_KEY), "Squawkabilly ex Ability should not be marked used by bench placement"),
+	])
+
+
 func test_play_basic_to_bench_wrong_player_fails() -> String:
 	var gsm := _make_gsm()
 	var p0: PlayerState = gsm.game_state.players[0]

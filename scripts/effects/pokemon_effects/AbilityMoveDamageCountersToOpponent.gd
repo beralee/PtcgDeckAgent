@@ -53,6 +53,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		"labels": source_labels,
 		"min_select": 1,
 		"max_select": 1,
+		"requires_followup_interaction": true,
 		"allow_cancel": true,
 	}]
 

@@ -95,7 +95,7 @@ func execute_attack(
 
 	player.shuffle_deck()
 	if attached_count_local > 0:
-		attacker.set_status(status_name, true)
+		_apply_special_status(attacker, status_name, state)
 
 
 func _get_matching_basic_energy(player: PlayerState) -> Array:

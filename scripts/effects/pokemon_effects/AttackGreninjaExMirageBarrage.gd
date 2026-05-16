@@ -101,11 +101,11 @@ func execute_attack(
 			selected_targets[target.get_instance_id()] = target
 
 	for target: PokemonSlot in selected_targets.values():
-		if target in opponent.bench and AbilityBenchImmune.has_bench_immune(target):
+		if target in opponent.bench and AbilityBenchImmune.prevents_opponent_attack_damage_or_effect(target, attacker, state):
 			continue
 		if AttackCoinFlipPreventDamageAndEffectsNextTurn.prevents_attack_damage(target, state):
 			continue
-		target.damage_counters += damage_amount
+		target.damage_counters += _calculate_attack_target_damage(attacker, target, damage_amount, state)
 
 
 func _resolve_attack_index(card: CardInstance, attack: Dictionary) -> int:

@@ -34,6 +34,7 @@ var first_player_choice: int = -1
 var selected_battle_background: String = "res://assets/ui/background.png"
 var selected_battle_music_id: String = "none"
 var battle_bgm_volume_percent: int = 20
+var battle_layout_mode: String = "auto"
 
 ## 当前游戏状态（对战中有效）
 var game_state: GameState = null
@@ -57,7 +58,13 @@ const BATTLE_SETUP_SETTINGS_PATH := "user://battle_setup.json"
 const TOURNAMENT_SAVE_PATH := "user://tournament_mode_save.json"
 const DESKTOP_WINDOW_SCREEN_MARGIN := Vector2i(48, 48)
 const DEFAULT_BATTLE_BGM_VOLUME_PERCENT := 20
+const BATTLE_LAYOUT_AUTO := "auto"
+const BATTLE_LAYOUT_LANDSCAPE := "landscape"
+const BATTLE_LAYOUT_PORTRAIT := "portrait"
+const BATTLE_LAYOUT_DESKTOP_MIN_LANDSCAPE := Vector2i(640, 360)
+const BATTLE_LAYOUT_DESKTOP_MIN_PORTRAIT := Vector2i(360, 640)
 const DEFAULT_BATTLE_REVIEW_MODEL := "kimi-k2.6"
+const DEFAULT_AI_PERSONALITY := "是一个大逗比，臭牌篓子"
 const SUPPORTED_BATTLE_REVIEW_MODELS: Array[Dictionary] = [
 	{
 		"id": "kimi-k2.6",
@@ -111,6 +118,7 @@ var last_requested_scene_path: String = ""
 func _ready() -> void:
 	load_battle_setup_preferences()
 	reload_tournament_state_from_disk()
+	call_deferred("apply_non_battle_orientation")
 	call_deferred("_ensure_desktop_window_size")
 
 
@@ -130,11 +138,99 @@ func _ensure_desktop_window_size() -> void:
 
 	var screen_index := DisplayServer.window_get_current_screen()
 	var usable_rect := DisplayServer.screen_get_usable_rect(screen_index)
-	desired = _fit_desktop_window_size(desired, usable_rect.size)
+	desired = _desktop_window_size_for_os(OS.get_name(), desired, usable_rect.size)
 	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 	DisplayServer.window_set_size(desired)
 	if usable_rect.size.x > 0 and usable_rect.size.y > 0:
 		DisplayServer.window_set_position(_center_desktop_window_position(desired, usable_rect))
+
+
+func apply_battle_layout_orientation(mode: String = "") -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	var normalized := sanitize_battle_layout_mode(mode if mode != "" else battle_layout_mode)
+	if _is_mobile_runtime():
+		_apply_handheld_battle_orientation(normalized)
+		return
+	_apply_desktop_battle_window_shape(normalized)
+
+
+func apply_non_battle_orientation() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	if _is_mobile_runtime():
+		DisplayServer.screen_set_orientation(non_battle_handheld_orientation())
+		return
+	_ensure_desktop_window_size()
+
+
+func non_battle_handheld_orientation() -> int:
+	return DisplayServer.SCREEN_SENSOR_LANDSCAPE
+
+
+func battle_handheld_orientation_for_mode(mode: String) -> int:
+	match sanitize_battle_layout_mode(mode):
+		BATTLE_LAYOUT_PORTRAIT:
+			return DisplayServer.SCREEN_SENSOR_PORTRAIT
+		BATTLE_LAYOUT_LANDSCAPE:
+			return DisplayServer.SCREEN_SENSOR_LANDSCAPE
+		_:
+			return DisplayServer.SCREEN_SENSOR
+
+
+func battle_layout_desktop_window_size_for_mode(
+	mode: String,
+	configured_size: Vector2i,
+	usable_size: Vector2i = Vector2i.ZERO
+) -> Vector2i:
+	var normalized := sanitize_battle_layout_mode(mode)
+	var desired := configured_size
+	var portrait := normalized == BATTLE_LAYOUT_PORTRAIT
+	if normalized == BATTLE_LAYOUT_AUTO:
+		return _fit_desktop_window_size(configured_size, usable_size)
+	if portrait:
+		desired = _oriented_window_size(configured_size, true)
+	else:
+		desired = _oriented_window_size(configured_size, false)
+	return _fit_desktop_window_size_with_min(
+		desired,
+		usable_size,
+		BATTLE_LAYOUT_DESKTOP_MIN_PORTRAIT if portrait else BATTLE_LAYOUT_DESKTOP_MIN_LANDSCAPE
+	)
+
+
+func _apply_handheld_battle_orientation(mode: String) -> void:
+	DisplayServer.screen_set_orientation(battle_handheld_orientation_for_mode(mode))
+
+
+func _apply_desktop_battle_window_shape(mode: String) -> void:
+	if mode == BATTLE_LAYOUT_AUTO:
+		return
+	var current_mode := DisplayServer.window_get_mode()
+	if current_mode in [DisplayServer.WINDOW_MODE_FULLSCREEN, DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN]:
+		return
+	if _should_maximize_desktop_window(OS.get_name()):
+		return
+	var configured := _configured_desktop_window_size()
+	if configured.x <= 0 or configured.y <= 0:
+		return
+	var screen_index := DisplayServer.window_get_current_screen()
+	var usable_rect := DisplayServer.screen_get_usable_rect(screen_index)
+	var desired := _battle_desktop_window_size_for_os(OS.get_name(), mode, configured, usable_rect.size)
+	if desired.x <= 0 or desired.y <= 0:
+		return
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	DisplayServer.window_set_size(desired)
+	if usable_rect.size.x > 0 and usable_rect.size.y > 0:
+		DisplayServer.window_set_position(_center_desktop_window_position(desired, usable_rect))
+
+
+func _oriented_window_size(size: Vector2i, portrait: bool) -> Vector2i:
+	if portrait and size.x > size.y:
+		return Vector2i(size.y, size.x)
+	if not portrait and size.y > size.x:
+		return Vector2i(size.y, size.x)
+	return size
 
 
 func _configured_desktop_window_size() -> Vector2i:
@@ -144,16 +240,78 @@ func _configured_desktop_window_size() -> Vector2i:
 
 
 func _fit_desktop_window_size(desired: Vector2i, usable_size: Vector2i) -> Vector2i:
+	return _fit_desktop_window_size_with_min(desired, usable_size, BATTLE_LAYOUT_DESKTOP_MIN_LANDSCAPE)
+
+
+func _desktop_window_size_for_os(os_name: String, desired: Vector2i, usable_size: Vector2i) -> Vector2i:
+	if _should_use_large_windowed_desktop_launch(os_name):
+		return _largest_windowed_size_with_aspect(
+			desired,
+			usable_size,
+			DESKTOP_WINDOW_SCREEN_MARGIN,
+			BATTLE_LAYOUT_DESKTOP_MIN_LANDSCAPE
+		)
+	return _fit_desktop_window_size(desired, usable_size)
+
+
+func _battle_desktop_window_size_for_os(
+	os_name: String,
+	mode: String,
+	configured_size: Vector2i,
+	usable_size: Vector2i
+) -> Vector2i:
+	var normalized := sanitize_battle_layout_mode(mode)
+	var desired := configured_size
+	var min_size := BATTLE_LAYOUT_DESKTOP_MIN_LANDSCAPE
+	if normalized == BATTLE_LAYOUT_PORTRAIT:
+		desired = _oriented_window_size(configured_size, true)
+		min_size = BATTLE_LAYOUT_DESKTOP_MIN_PORTRAIT
+	elif normalized == BATTLE_LAYOUT_LANDSCAPE:
+		desired = _oriented_window_size(configured_size, false)
+	if _should_use_large_windowed_desktop_launch(os_name):
+		return _largest_windowed_size_with_aspect(
+			desired,
+			usable_size,
+			DESKTOP_WINDOW_SCREEN_MARGIN,
+			min_size
+		)
+	return _fit_desktop_window_size_with_min(desired, usable_size, min_size)
+
+
+func _fit_desktop_window_size_with_min(desired: Vector2i, usable_size: Vector2i, min_size: Vector2i) -> Vector2i:
 	if desired.x <= 0 or desired.y <= 0:
 		return desired
 	if usable_size.x <= 0 or usable_size.y <= 0:
 		return desired
 	var max_size := Vector2i(
-		maxi(640, usable_size.x - DESKTOP_WINDOW_SCREEN_MARGIN.x),
-		maxi(360, usable_size.y - DESKTOP_WINDOW_SCREEN_MARGIN.y)
+		maxi(min_size.x, usable_size.x - DESKTOP_WINDOW_SCREEN_MARGIN.x),
+		maxi(min_size.y, usable_size.y - DESKTOP_WINDOW_SCREEN_MARGIN.y)
 	)
 	var scale := minf(1.0, minf(float(max_size.x) / float(desired.x), float(max_size.y) / float(desired.y)))
-	return Vector2i(maxi(640, roundi(float(desired.x) * scale)), maxi(360, roundi(float(desired.y) * scale)))
+	return Vector2i(maxi(min_size.x, roundi(float(desired.x) * scale)), maxi(min_size.y, roundi(float(desired.y) * scale)))
+
+
+func _largest_windowed_size_with_aspect(
+	desired: Vector2i,
+	usable_size: Vector2i,
+	margin: Vector2i,
+	min_size: Vector2i
+) -> Vector2i:
+	if desired.x <= 0 or desired.y <= 0:
+		return desired
+	if usable_size.x <= 0 or usable_size.y <= 0:
+		return desired
+	var aspect := float(desired.x) / maxf(float(desired.y), 1.0)
+	var max_size := Vector2i(
+		maxi(min_size.x, usable_size.x - margin.x),
+		maxi(min_size.y, usable_size.y - margin.y)
+	)
+	var target_width := max_size.x
+	var target_height := roundi(float(target_width) / aspect)
+	if target_height > max_size.y:
+		target_height = max_size.y
+		target_width = roundi(float(target_height) * aspect)
+	return Vector2i(maxi(min_size.x, target_width), maxi(min_size.y, target_height))
 
 
 func _center_desktop_window_position(window_size: Vector2i, usable_rect: Rect2i) -> Vector2i:
@@ -164,7 +322,19 @@ func _center_desktop_window_position(window_size: Vector2i, usable_rect: Rect2i)
 
 
 func _should_maximize_desktop_window(os_name: String) -> bool:
+	# macOS maximized windows can report a different effective viewport than the
+	# configured battle window, which breaks the landscape hand rail on 16:10
+	# displays. Keep desktop launch windowed and let explicit fullscreen stay
+	# user-controlled.
+	return false
+
+
+func _should_use_large_windowed_desktop_launch(os_name: String) -> bool:
 	return os_name in ["macOS", "OSX"]
+
+
+func _is_mobile_runtime() -> bool:
+	return OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
 
 
 ## 切换到指定场景
@@ -189,7 +359,13 @@ func consume_last_requested_scene_path() -> String:
 
 
 func _deferred_goto_scene(path: String) -> void:
+	if _should_apply_non_battle_orientation_before_scene_change(path):
+		apply_non_battle_orientation()
 	get_tree().change_scene_to_file(path)
+
+
+func _should_apply_non_battle_orientation_before_scene_change(path: String) -> bool:
+	return path != SCENE_BATTLE
 
 
 ## 切换到主菜单
@@ -272,6 +448,7 @@ func goto_tournament_standings() -> void:
 func load_battle_setup_preferences() -> void:
 	selected_battle_music_id = "none"
 	battle_bgm_volume_percent = DEFAULT_BATTLE_BGM_VOLUME_PERCENT
+	battle_layout_mode = BATTLE_LAYOUT_AUTO
 	if not FileAccess.file_exists(BATTLE_SETUP_SETTINGS_PATH):
 		return
 	var file := FileAccess.open(BATTLE_SETUP_SETTINGS_PATH, FileAccess.READ)
@@ -285,6 +462,15 @@ func load_battle_setup_preferences() -> void:
 		return
 	selected_battle_music_id = str(data.get("battle_music_id", selected_battle_music_id))
 	battle_bgm_volume_percent = clampi(int(data.get("battle_bgm_volume_percent", battle_bgm_volume_percent)), 0, 100)
+	battle_layout_mode = sanitize_battle_layout_mode(str(data.get("battle_layout_mode", battle_layout_mode)))
+
+
+func sanitize_battle_layout_mode(mode: String) -> String:
+	match mode:
+		BATTLE_LAYOUT_LANDSCAPE, BATTLE_LAYOUT_PORTRAIT:
+			return mode
+		_:
+			return BATTLE_LAYOUT_AUTO
 
 
 func set_battle_replay_launch(launch: Dictionary) -> void:
@@ -401,7 +587,7 @@ func _default_battle_review_api_config() -> Dictionary:
 		"api_key": "",
 		"model": DEFAULT_BATTLE_REVIEW_MODEL,
 		"timeout_seconds": 60.0,
-		"ai_personality": "",
+		"ai_personality": DEFAULT_AI_PERSONALITY,
 		"ai_test_passed": false,
 		"ai_test_signature": "",
 	}

@@ -54,6 +54,8 @@ func effect_step_uses_counter_distribution_ui(_scene: Object, step: Dictionary) 
 
 
 func effect_step_uses_field_slot_ui(_scene: Object, step: Dictionary) -> bool:
+	if bool(step.get("force_dialog", false)):
+		return false
 	if str(step.get("ui_mode", "")) in ["card_assignment", "counter_distribution"]:
 		return false
 	var items: Array = step.get("items", [])
@@ -107,7 +109,8 @@ func hide_ai_owned_effect_step_ui(scene: Object, chooser_player: int) -> void:
 
 func show_next_effect_interaction_step(scene: Object) -> void:
 	var pending_effect_card: CardInstance = scene.get("_pending_effect_card")
-	if pending_effect_card == null:
+	var pending_effect_kind: String = str(scene.get("_pending_effect_kind"))
+	if pending_effect_card == null and pending_effect_kind != "bench_limit_cleanup":
 		scene.call("_runtime_log", "effect_step_skipped", "pending card missing")
 		return
 
@@ -202,6 +205,7 @@ func show_next_effect_interaction_step(scene: Object) -> void:
 	var items_raw: Array = step.get("items", [])
 	var presentation: String = str(step.get("presentation", "auto"))
 	var use_card_presentation := presentation == "cards"
+	var use_action_hud_presentation := presentation == "action_hud"
 	if presentation == "auto":
 		use_card_presentation = true
 		for item: Variant in items_raw:
@@ -224,18 +228,22 @@ func show_next_effect_interaction_step(scene: Object) -> void:
 		"min_select": int(step.get("min_select", 1)),
 		"max_select": int(step.get("max_select", 1)),
 		"allow_cancel": step.get("allow_cancel", true),
-		"presentation": "cards" if use_card_presentation else "list",
+		"presentation": "action_hud" if use_action_hud_presentation else ("cards" if use_card_presentation else "list"),
 		"card_items": step.get("card_items", items_raw),
 		"card_indices": step.get("card_indices", []),
 		"card_click_selectable": step.get("card_click_selectable", true),
 		"choice_labels": step.get("choice_labels", labels),
 	}
 	for passthrough_key: String in [
+		"action_items",
 		"card_groups",
 		"card_disabled_badge",
 		"show_selectable_hints",
 		"card_selectable_hint",
+		"pokemon_card",
+		"pokemon_card_data",
 		"visible_scope",
+		"force_confirm",
 	]:
 		if step.has(passthrough_key):
 			dialog_data[passthrough_key] = step.get(passthrough_key)
@@ -249,9 +257,14 @@ func show_next_effect_interaction_step(scene: Object) -> void:
 
 func handle_effect_interaction_choice(scene: Object, selected_indices: PackedInt32Array) -> void:
 	var pending_effect_card: CardInstance = scene.get("_pending_effect_card")
+	var pending_effect_kind: String = str(scene.get("_pending_effect_kind"))
 	var pending_effect_step_index: int = int(scene.get("_pending_effect_step_index"))
 	var pending_effect_steps: Array[Dictionary] = scene.get("_pending_effect_steps")
-	if pending_effect_card == null or pending_effect_step_index < 0 or pending_effect_step_index >= pending_effect_steps.size():
+	if (
+		(pending_effect_card == null and pending_effect_kind != "bench_limit_cleanup")
+		or pending_effect_step_index < 0
+		or pending_effect_step_index >= pending_effect_steps.size()
+	):
 		scene.call("_runtime_log", "effect_choice_ignored", "invalid pending state")
 		scene.call("_reset_effect_interaction")
 		return
@@ -396,6 +409,8 @@ func _finish_effect_interaction(scene: Object) -> void:
 			success = gsm.use_attack(pending_effect_player_index, pending_effect_ability_index, [pending_effect_context])
 		"granted_attack":
 			success = gsm.use_granted_attack(pending_effect_player_index, pending_effect_slot, pending_effect_attack_data, [pending_effect_context])
+		"bench_limit_cleanup":
+			success = gsm.enforce_current_bench_limits("bench_limit_cleanup", pending_effect_player_index, "", -1, [pending_effect_context])
 	if not success and pending_effect_card != null:
 		scene.call("_log", _bt(scene, "battle.log.cannot_use_card", {"name": pending_effect_card.card_data.name}))
 	scene.call("_runtime_log", "effect_interaction_complete", "success=%s %s" % [str(success), scene.call("_state_snapshot")])

@@ -80,6 +80,7 @@ func build_actions(
 	actions.append_array(_build_evolve_actions(gsm, player_index, player))
 	actions.append_array(_build_play_trainer_actions(gsm, player_index, player, allow_side_effectful_headless_resolution))
 	actions.append_array(_build_play_stadium_actions(gsm, player_index, player))
+	actions.append_array(_build_use_stadium_effect_actions(gsm, player_index, allow_side_effectful_headless_resolution))
 	actions.append_array(_build_use_ability_actions(gsm, player_index, player, allow_side_effectful_headless_resolution))
 	actions.append_array(_build_retreat_actions(gsm, player_index, player))
 	actions.append_array(_build_attack_actions(gsm, player_index, player))
@@ -90,14 +91,14 @@ func build_actions(
 
 func _build_attach_tool_actions(gsm: GameStateMachine, player_index: int, player: PlayerState) -> Array[Dictionary]:
 	var actions: Array[Dictionary] = []
-	var slots: Array[PokemonSlot] = _get_player_slots(player)
+	var slots: Array[PokemonSlot] = _get_player_slots(gsm, player)
 	for card: CardInstance in player.hand:
 		if card == null or card.card_data == null or card.card_data.card_type != "Tool":
 			continue
 		for target_slot: PokemonSlot in slots:
 			if target_slot == null:
 				continue
-			if not gsm.rule_validator.can_attach_tool(gsm.game_state, player_index, target_slot, gsm.effect_processor):
+			if not gsm.rule_validator.can_attach_tool(gsm.game_state, player_index, target_slot, gsm.effect_processor, card):
 				continue
 			actions.append({
 				"kind": "attach_tool",
@@ -109,11 +110,11 @@ func _build_attach_tool_actions(gsm: GameStateMachine, player_index: int, player
 
 func _build_attach_energy_actions(gsm: GameStateMachine, player_index: int, player: PlayerState) -> Array[Dictionary]:
 	var actions: Array[Dictionary] = []
-	if not gsm.rule_validator.can_attach_energy(gsm.game_state, player_index):
-		return actions
-	var slots: Array[PokemonSlot] = _get_player_slots(player)
+	var slots: Array[PokemonSlot] = _get_player_slots(gsm, player)
 	for card: CardInstance in player.hand:
 		if card == null or card.card_data == null or not card.card_data.is_energy():
+			continue
+		if not gsm.rule_validator.can_attach_energy(gsm.game_state, player_index, card, gsm.effect_processor):
 			continue
 		for target_slot: PokemonSlot in slots:
 			actions.append({
@@ -140,7 +141,7 @@ func _build_play_basic_to_bench_actions(gsm: GameStateMachine, player_index: int
 
 func _build_evolve_actions(gsm: GameStateMachine, player_index: int, player: PlayerState) -> Array[Dictionary]:
 	var actions: Array[Dictionary] = []
-	var slots: Array[PokemonSlot] = _get_player_slots(player)
+	var slots: Array[PokemonSlot] = _get_player_slots(gsm, player)
 	for card: CardInstance in player.hand:
 		if card == null or card.card_data == null or not card.card_data.is_pokemon():
 			continue
@@ -212,7 +213,7 @@ func _build_play_stadium_actions(gsm: GameStateMachine, player_index: int, playe
 	for card: CardInstance in player.hand:
 		if card == null or card.card_data == null or card.card_data.card_type != "Stadium":
 			continue
-		if not gsm.rule_validator.can_play_stadium(gsm.game_state, player_index, card):
+		if not gsm.rule_validator.can_play_stadium(gsm.game_state, player_index, card, gsm.effect_processor):
 			continue
 		var effect: BaseEffect = gsm.effect_processor.get_effect(card.card_data.effect_id)
 		actions.append({
@@ -224,6 +225,49 @@ func _build_play_stadium_actions(gsm: GameStateMachine, player_index: int, playe
 	return actions
 
 
+func _build_use_stadium_effect_actions(
+	gsm: GameStateMachine,
+	player_index: int,
+	allow_side_effectful_headless_resolution: bool
+) -> Array[Dictionary]:
+	var actions: Array[Dictionary] = []
+	if gsm == null or gsm.game_state == null or gsm.game_state.stadium_card == null:
+		return actions
+	if not gsm.can_use_stadium_effect(player_index):
+		return actions
+	var stadium_card: CardInstance = gsm.game_state.stadium_card
+	if stadium_card == null or stadium_card.card_data == null:
+		return actions
+	var effect: BaseEffect = gsm.effect_processor.get_effect(stadium_card.card_data.effect_id)
+	var targets: Array = []
+	var requires_interaction := false
+	if effect != null:
+		var preview_steps: Array[Dictionary] = _get_effect_interaction_preview_steps(
+			effect,
+			stadium_card,
+			gsm.game_state,
+			allow_side_effectful_headless_resolution
+		)
+		requires_interaction = not preview_steps.is_empty()
+		if requires_interaction and _can_headless_auto_resolve_steps(preview_steps, allow_side_effectful_headless_resolution):
+			var headless_targets: Variant = _build_headless_targets_from_steps(
+				gsm,
+				player_index,
+				player_index,
+				preview_steps
+			)
+			if headless_targets != null:
+				targets = headless_targets
+				requires_interaction = false
+	actions.append({
+		"kind": "use_stadium_effect",
+		"card": stadium_card,
+		"targets": targets,
+		"requires_interaction": requires_interaction,
+	})
+	return actions
+
+
 func _build_use_ability_actions(
 	gsm: GameStateMachine,
 	player_index: int,
@@ -231,7 +275,7 @@ func _build_use_ability_actions(
 	allow_side_effectful_headless_resolution: bool
 ) -> Array[Dictionary]:
 	var actions: Array[Dictionary] = []
-	for slot: PokemonSlot in _get_player_slots(player):
+	for slot: PokemonSlot in _get_player_slots(gsm, player):
 		actions.append_array(_build_slot_ability_actions(gsm, player_index, slot, allow_side_effectful_headless_resolution))
 	return actions
 
@@ -243,10 +287,12 @@ func _build_slot_ability_actions(
 	allow_side_effectful_headless_resolution: bool
 ) -> Array[Dictionary]:
 	var actions: Array[Dictionary] = []
-	if not _is_live_slot(slot):
+	if not _is_live_slot_for_gsm(gsm, slot):
 		return actions
 	var state: GameState = gsm.game_state
 	var card_data: CardData = slot.get_card_data()
+	if card_data != null and gsm.effect_processor != null:
+		gsm.effect_processor.register_pokemon_card(card_data)
 	for ability_index: int in card_data.abilities.size():
 		if not gsm.effect_processor.can_use_ability(slot, state, ability_index):
 			continue
@@ -270,7 +316,7 @@ func _build_slot_ability_actions(
 					"ability_index": ability_index,
 					"targets": [],
 					"requires_interaction": true,
-				})
+				}.merged(_ability_action_metadata(gsm, state, slot, ability_index, source_card, effect), true))
 				continue
 			var headless_targets: Variant = _build_headless_targets_for_ability(
 				gsm,
@@ -281,6 +327,13 @@ func _build_slot_ability_actions(
 				allow_side_effectful_headless_resolution
 			)
 			if headless_targets == null:
+				actions.append({
+					"kind": "use_ability",
+					"source_slot": slot,
+					"ability_index": ability_index,
+					"targets": [],
+					"requires_interaction": true,
+				}.merged(_ability_action_metadata(gsm, state, slot, ability_index, source_card, effect), true))
 				continue
 			targets = headless_targets
 			requires_interaction = false
@@ -290,7 +343,7 @@ func _build_slot_ability_actions(
 			"ability_index": ability_index,
 			"targets": targets,
 			"requires_interaction": requires_interaction,
-		})
+		}.merged(_ability_action_metadata(gsm, state, slot, ability_index, source_card, effect), true))
 	for granted: Dictionary in gsm.effect_processor.get_granted_abilities(slot, state):
 		var ability_index: int = int(granted.get("ability_index", -1))
 		if ability_index < 0 or not gsm.effect_processor.can_use_ability(slot, state, ability_index):
@@ -315,7 +368,7 @@ func _build_slot_ability_actions(
 					"ability_index": ability_index,
 					"targets": [],
 					"requires_interaction": true,
-				})
+				}.merged(_ability_action_metadata(gsm, state, slot, ability_index, source_card, effect), true))
 				continue
 			var headless_targets: Variant = _build_headless_targets_for_ability(
 				gsm,
@@ -326,6 +379,13 @@ func _build_slot_ability_actions(
 				allow_side_effectful_headless_resolution
 			)
 			if headless_targets == null:
+				actions.append({
+					"kind": "use_ability",
+					"source_slot": slot,
+					"ability_index": ability_index,
+					"targets": [],
+					"requires_interaction": true,
+				}.merged(_ability_action_metadata(gsm, state, slot, ability_index, source_card, effect), true))
 				continue
 			targets = headless_targets
 			requires_interaction = false
@@ -335,8 +395,40 @@ func _build_slot_ability_actions(
 			"ability_index": ability_index,
 			"targets": targets,
 			"requires_interaction": requires_interaction,
-		})
+		}.merged(_ability_action_metadata(gsm, state, slot, ability_index, source_card, effect), true))
 	return actions
+
+
+func _ability_action_metadata(
+	gsm: GameStateMachine,
+	state: GameState,
+	slot: PokemonSlot,
+	ability_index: int,
+	source_card: CardInstance,
+	effect: BaseEffect
+) -> Dictionary:
+	var meta := {}
+	if source_card != null:
+		meta["ability_source_card"] = source_card
+		if source_card.card_data != null:
+			meta["ability_source_name"] = source_card.card_data.name
+			meta["ability_source_name_en"] = source_card.card_data.name_en
+			if source_card.card_data.effect_id == "9fa9943ccda36f417ac3cb675177c216":
+				meta["ability_name"] = "Star Alchemy"
+				meta["ability_text"] = source_card.card_data.description
+	var ability_name := ""
+	if gsm != null and gsm.effect_processor != null:
+		ability_name = str(gsm.effect_processor.get_ability_name(slot, ability_index, state))
+	if ability_name != "":
+		meta["ability_name"] = ability_name
+	if not meta.has("ability_text") and slot != null and slot.get_card_data() != null:
+		var abilities: Array = slot.get_card_data().abilities
+		if ability_index >= 0 and ability_index < abilities.size():
+			var ability: Dictionary = abilities[ability_index]
+			meta["ability_text"] = str(ability.get("text", ""))
+	if effect != null and effect.has_method("get_description") and not meta.has("ability_text"):
+		meta["ability_text"] = str(effect.call("get_description"))
+	return meta
 
 
 func _build_retreat_actions(gsm: GameStateMachine, player_index: int, player: PlayerState) -> Array[Dictionary]:
@@ -344,12 +436,12 @@ func _build_retreat_actions(gsm: GameStateMachine, player_index: int, player: Pl
 	if not gsm.rule_validator.can_retreat(gsm.game_state, player_index, gsm.effect_processor):
 		return actions
 	var active: PokemonSlot = player.active_pokemon
-	if not _is_live_slot(active):
+	if not _is_live_slot_for_gsm(gsm, active):
 		return actions
 	var cost: int = gsm.effect_processor.get_effective_retreat_cost(active, gsm.game_state)
 	var discards: Array[Array] = _get_minimal_retreat_discards(gsm, active, cost)
 	for bench_slot: PokemonSlot in player.bench:
-		if not _is_live_slot(bench_slot):
+		if not _is_live_slot_for_gsm(gsm, bench_slot):
 			continue
 		for discard_variant: Array in discards:
 			var discard_cards: Array[CardInstance] = []
@@ -367,7 +459,7 @@ func _build_retreat_actions(gsm: GameStateMachine, player_index: int, player: Pl
 func _build_attack_actions(gsm: GameStateMachine, player_index: int, player: PlayerState) -> Array[Dictionary]:
 	var actions: Array[Dictionary] = []
 	var active: PokemonSlot = player.active_pokemon
-	if not _is_live_slot(active):
+	if not _is_live_slot_for_gsm(gsm, active):
 		return actions
 	var attacks: Array = active.get_card_data().attacks
 	for attack_index: int in attacks.size():
@@ -395,13 +487,13 @@ func _attack_would_knock_out_active(gsm: GameStateMachine, player_index: int, pr
 	if opponent_index < 0 or opponent_index >= gsm.game_state.players.size():
 		return false
 	var defender: PokemonSlot = gsm.game_state.players[opponent_index].active_pokemon
-	return defender != null and projected_damage >= defender.get_remaining_hp()
+	return defender != null and projected_damage >= _remaining_hp_for_gsm(gsm, defender)
 
 
 func _build_granted_attack_actions(gsm: GameStateMachine, player_index: int, player: PlayerState) -> Array[Dictionary]:
 	var actions: Array[Dictionary] = []
 	var active: PokemonSlot = player.active_pokemon
-	if not _is_live_slot(active):
+	if not _is_live_slot_for_gsm(gsm, active):
 		return actions
 	if gsm.effect_processor == null:
 		return actions
@@ -421,18 +513,34 @@ func _build_granted_attack_actions(gsm: GameStateMachine, player_index: int, pla
 	return actions
 
 
-func _get_player_slots(player: PlayerState) -> Array[PokemonSlot]:
+func _get_player_slots(gsm: GameStateMachine, player: PlayerState) -> Array[PokemonSlot]:
 	var slots: Array[PokemonSlot] = []
-	if _is_live_slot(player.active_pokemon):
+	if _is_live_slot_for_gsm(gsm, player.active_pokemon):
 		slots.append(player.active_pokemon)
 	for bench_slot: PokemonSlot in player.bench:
-		if _is_live_slot(bench_slot):
+		if _is_live_slot_for_gsm(gsm, bench_slot):
 			slots.append(bench_slot)
 	return slots
 
 
 func _is_live_slot(slot: PokemonSlot) -> bool:
 	return slot != null and slot.get_top_card() != null and slot.get_remaining_hp() > 0
+
+
+func _is_live_slot_for_gsm(gsm: GameStateMachine, slot: PokemonSlot) -> bool:
+	if slot == null or slot.get_top_card() == null:
+		return false
+	if gsm != null and gsm.effect_processor != null:
+		return not gsm.effect_processor.is_effectively_knocked_out(slot, gsm.game_state)
+	return slot.get_remaining_hp() > 0
+
+
+func _remaining_hp_for_gsm(gsm: GameStateMachine, slot: PokemonSlot) -> int:
+	if slot == null:
+		return 0
+	if gsm != null and gsm.effect_processor != null:
+		return gsm.effect_processor.get_effective_remaining_hp(slot, gsm.game_state)
+	return slot.get_remaining_hp()
 
 
 func _evaluate_trainer_action(
@@ -445,10 +553,10 @@ func _evaluate_trainer_action(
 		return {"allowed": false, "requires_interaction": false, "preview_steps": []}
 	if card.card_data.card_type != "Item" and card.card_data.card_type != "Supporter":
 		return {"allowed": false, "requires_interaction": false, "preview_steps": []}
-	if card.card_data.card_type == "Item" and not gsm.rule_validator.can_play_item(gsm.game_state, player_index):
+	if card.card_data.card_type == "Item" and not gsm.rule_validator.can_play_item(gsm.game_state, player_index, card, gsm.effect_processor):
 		return {"allowed": false, "requires_interaction": false, "preview_steps": []}
 	if card.card_data.card_type == "Supporter":
-		if not gsm.rule_validator.can_play_supporter(gsm.game_state, player_index) and not gsm._can_play_supporter_exception(player_index, card):
+		if not gsm.rule_validator.can_play_supporter(gsm.game_state, player_index, card, gsm.effect_processor) and not gsm._can_play_supporter_exception(player_index, card):
 			return {"allowed": false, "requires_interaction": false, "preview_steps": []}
 	if not card in gsm.game_state.players[player_index].hand:
 		return {"allowed": false, "requires_interaction": false, "preview_steps": []}
@@ -582,6 +690,9 @@ func _can_headless_auto_resolve_steps(
 ) -> bool:
 	if steps.is_empty():
 		return true
+	for step: Dictionary in steps:
+		if bool(step.get("requires_followup_interaction", false)):
+			return false
 	if allow_side_effectful_headless_resolution:
 		return true
 	for step: Dictionary in steps:
@@ -893,7 +1004,7 @@ func _select_headless_items(
 			if not prioritized_tools.is_empty():
 				return prioritized_tools
 			return [] if items.is_empty() else [items[0]]
-		"bench_pokemon", "basic_pokemon", "buddy_poffin_pokemon":
+		"bench_pokemon", "basic_pokemon", "buddy_poffin_pokemon", "artazon_pokemon":
 			var planned_bench: Array = _pick_items_with_strategy(items, step_id, max_select, strategy_context)
 			if not planned_bench.is_empty():
 				return planned_bench
@@ -917,6 +1028,11 @@ func _select_headless_items(
 			var planned_sources: Array = _pick_items_with_strategy(items, step_id, max_select, strategy_context)
 			if not planned_sources.is_empty():
 				return planned_sources
+			return items.slice(0, mini(max_select, items.size()))
+		"night_stretcher_choice", "recover_target", "recover_card", "recover_targets":
+			var planned_recovery: Array = _pick_items_with_strategy(items, step_id, max_select, strategy_context)
+			if not planned_recovery.is_empty():
+				return planned_recovery
 			return items.slice(0, mini(max_select, items.size()))
 		"embrace_target":
 			# 沙奈朵 Psychic Embrace 目标选择

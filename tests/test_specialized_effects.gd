@@ -155,6 +155,53 @@ func test_ultra_ball_uses_selected_discard_and_selected_pokemon() -> String:
 	])
 
 
+func test_ultra_ball_search_step_allows_taking_no_pokemon() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.hand.clear()
+	var ultra_ball := CardInstance.create(_make_trainer_data("Ultra Ball", "Item", "a337ed34a45e63c6d21d98c3d8e0cb6e"), 0)
+	player.hand.append(ultra_ball)
+	player.hand.append(CardInstance.create(_make_trainer_data("Discard A"), 0))
+	player.hand.append(CardInstance.create(_make_trainer_data("Discard B"), 0))
+	player.deck.clear()
+	player.deck.append(CardInstance.create(_make_basic_pokemon_data("Search Target", "C", 90), 0))
+
+	var steps: Array[Dictionary] = EffectUltraBall.new().get_interaction_steps(ultra_ball, state)
+	var search_step: Dictionary = steps[1] if steps.size() > 1 else {}
+	return run_checks([
+		assert_eq(int(search_step.get("min_select", -1)), 0, "Ultra Ball search should allow choosing no Pokemon"),
+		assert_eq(int(search_step.get("max_select", -1)), 1, "Ultra Ball search should still allow taking at most one Pokemon"),
+		assert_true(bool(search_step.get("force_confirm", false)), "Ultra Ball search needs a confirm button so the player can take no Pokemon"),
+	])
+
+
+func test_ultra_ball_explicit_empty_search_discards_cost_without_taking_pokemon() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.hand.clear()
+	var ultra_ball := CardInstance.create(_make_trainer_data("Ultra Ball", "Item", "a337ed34a45e63c6d21d98c3d8e0cb6e"), 0)
+	var discard_a := CardInstance.create(_make_trainer_data("Discard A"), 0)
+	var discard_b := CardInstance.create(_make_trainer_data("Discard B"), 0)
+	player.hand.append(ultra_ball)
+	player.hand.append(discard_a)
+	player.hand.append(discard_b)
+	player.deck.clear()
+	var target := CardInstance.create(_make_basic_pokemon_data("Search Target", "C", 90), 0)
+	player.deck.append(target)
+
+	EffectUltraBall.new().execute(ultra_ball, [{
+		"discard_cards": [discard_a, discard_b],
+		"search_pokemon": [],
+	}], state)
+
+	return run_checks([
+		assert_true(discard_a in player.discard_pile, "Ultra Ball should still discard the first paid cost card"),
+		assert_true(discard_b in player.discard_pile, "Ultra Ball should still discard the second paid cost card"),
+		assert_false(target in player.hand, "Explicit empty Ultra Ball search should not put a Pokemon into hand"),
+		assert_true(target in player.deck, "Explicit empty Ultra Ball search should leave the Pokemon in the deck"),
+	])
+
+
 func test_ciphermaniac_places_selected_cards_on_top_in_order() -> String:
 	var state := _make_state()
 	var player: PlayerState = state.players[0]
@@ -2180,6 +2227,101 @@ func test_buddy_poffin_respects_collapsed_stadium_live_bench_limit() -> String:
 	])
 
 
+func test_cs6ac_127_thorton_exposes_choices_and_uses_selected_targets() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.discard_pile.clear()
+	player.bench.clear()
+
+	var discard_first := CardInstance.create(_make_basic_pokemon_data("Discard First", "C", 60), 0)
+	var discard_stage1 := CardInstance.create(_make_basic_pokemon_data("Discard Stage 1", "C", 90, "Stage 1"), 0)
+	var discard_chosen := CardInstance.create(_make_basic_pokemon_data("Discard Chosen", "D", 70), 0)
+	player.discard_pile.append_array([discard_first, discard_stage1, discard_chosen])
+
+	var bench_first := PokemonSlot.new()
+	bench_first.pokemon_stack.append(CardInstance.create(_make_basic_pokemon_data("Bench First", "C", 80), 0))
+
+	var bench_stage1 := PokemonSlot.new()
+	bench_stage1.pokemon_stack.append(CardInstance.create(_make_basic_pokemon_data("Bench Stage 1", "C", 100, "Stage 1"), 0))
+
+	var bench_chosen := PokemonSlot.new()
+	var old_top := CardInstance.create(_make_basic_pokemon_data("Bench Chosen Old", "R", 90), 0)
+	bench_chosen.pokemon_stack.append(old_top)
+	var attached_energy := CardInstance.create(_make_energy_data("Attached Energy", "R"), 0)
+	var attached_tool := CardInstance.create(_make_trainer_data("Attached Tool", "Tool"), 0)
+	bench_chosen.attached_energy.append(attached_energy)
+	bench_chosen.attached_tool = attached_tool
+	bench_chosen.damage_counters = 30
+	bench_chosen.set_status("poisoned", true)
+	player.bench.append_array([bench_first, bench_stage1, bench_chosen])
+
+	var effect := EffectThorton.new()
+	var thorton := CardInstance.create(_make_trainer_data("Thorton", "Supporter", "05b9dc8ee5c16c46da20f47a04907856"), 0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(thorton, state)
+
+	effect.execute(thorton, [{
+		"thorton_discard_pokemon": [discard_chosen],
+		"thorton_field_pokemon": [bench_chosen],
+	}], state)
+
+	return run_checks([
+		assert_eq(steps.size(), 2, "Thorton should request discard and field Pokemon selections"),
+		assert_true((steps[0].get("items", []) as Array).has(discard_chosen), "Discard step should include Basic Pokemon from discard"),
+		assert_false((steps[0].get("items", []) as Array).has(discard_stage1), "Discard step should exclude non-Basic Pokemon"),
+		assert_true((steps[1].get("items", []) as Array).has(bench_chosen), "Field step should include Basic Pokemon in play"),
+		assert_false((steps[1].get("items", []) as Array).has(bench_stage1), "Field step should exclude non-Basic Pokemon in play"),
+		assert_eq(bench_chosen.get_pokemon_name(), "Discard Chosen", "Thorton should replace the selected field Pokemon with the selected discard Pokemon"),
+		assert_true(old_top in player.discard_pile, "The replaced Basic Pokemon should go to discard"),
+		assert_true(discard_first in player.discard_pile, "Unselected discard Basic should stay in discard"),
+		assert_false(discard_chosen in player.discard_pile, "Selected discard Basic should leave discard"),
+		assert_true(attached_energy in bench_chosen.attached_energy, "Attached Energy should remain on the slot"),
+		assert_eq(bench_chosen.attached_tool, attached_tool, "Attached Tool should remain on the slot"),
+		assert_eq(bench_chosen.damage_counters, 30, "Damage counters should remain on the slot"),
+		assert_true(bool(bench_chosen.status_conditions.get("poisoned", false)), "Special conditions should remain on the slot"),
+	])
+
+
+func test_cs6ac_127_thorton_registered_and_gsm_uses_interaction_context() -> String:
+	var gsm := GameStateMachine.new()
+	var state := _make_state()
+	state.phase = GameState.GamePhase.MAIN
+	gsm.game_state = state
+	var player: PlayerState = state.players[0]
+	player.hand.clear()
+	player.discard_pile.clear()
+	player.bench.clear()
+
+	var discard_first := CardInstance.create(_make_basic_pokemon_data("Discard First", "C", 60), 0)
+	var discard_chosen := CardInstance.create(_make_basic_pokemon_data("Discard Chosen", "D", 70), 0)
+	player.discard_pile.append_array([discard_first, discard_chosen])
+
+	var bench_first := PokemonSlot.new()
+	bench_first.pokemon_stack.append(CardInstance.create(_make_basic_pokemon_data("Bench First", "C", 80), 0))
+	var bench_chosen := PokemonSlot.new()
+	var old_top := CardInstance.create(_make_basic_pokemon_data("Bench Chosen Old", "R", 90), 0)
+	bench_chosen.pokemon_stack.append(old_top)
+	player.bench.append_array([bench_first, bench_chosen])
+
+	var thorton := CardInstance.create(_make_trainer_data("Thorton", "Supporter", "05b9dc8ee5c16c46da20f47a04907856"), 0)
+	player.hand.append(thorton)
+	var effect: BaseEffect = gsm.effect_processor.get_effect(thorton.card_data.effect_id)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(thorton, state) if effect != null else []
+	var played := gsm.play_trainer(0, thorton, [{
+		"thorton_discard_pokemon": [discard_chosen],
+		"thorton_field_pokemon": [bench_chosen],
+	}])
+
+	return run_checks([
+		assert_true(effect is EffectThorton, "CS6aC_127 should register to EffectThorton"),
+		assert_eq(steps.size(), 2, "Registered Thorton should expose two interaction steps"),
+		assert_true(played, "Thorton should resolve through GameStateMachine"),
+		assert_eq(bench_chosen.get_pokemon_name(), "Discard Chosen", "GameStateMachine should pass Thorton interaction context into the effect"),
+		assert_true(old_top in player.discard_pile, "Selected field Basic should be discarded"),
+		assert_true(thorton in player.discard_pile, "Played Supporter should be discarded after resolving"),
+		assert_false(discard_chosen in player.discard_pile, "Selected discard Basic should not remain in discard"),
+	])
+
+
 func test_specialized_effect_descriptions_and_smoke() -> String:
 	var effects: Array[BaseEffect] = [
 		EffectCounterCatcher.new(),
@@ -2202,6 +2344,7 @@ func test_specialized_effect_descriptions_and_smoke() -> String:
 		EffectIono.new(),
 		EffectCiphermaniac.new(),
 		EffectProfTuro.new(),
+		EffectThorton.new(),
 		EffectSerena.new(),
 		EffectIrida.new(),
 		EffectJacq.new(),

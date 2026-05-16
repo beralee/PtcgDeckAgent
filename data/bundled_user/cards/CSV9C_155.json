@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "寻找宝石",
+			"text": "在自己的回合，当将这张卡牌从手牌使出并进行进化时，如果自己场上有「太晶」宝可梦的话，则可以使用1次。选择自己牌库中最多2张训练家，在给对手看过之后，加入手牌。并重洗牌库。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "matazo",
+	"attacks": [
+		{
+			"cost": "CC",
+			"damage": "60",
+			"is_vstar_power": false,
+			"name": "高速之翼",
+			"text": ""
+		}
+	],
+	"card_index": "155",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "特性: 寻找宝石\n在自己的回合，当将这张卡牌从手牌使出并进行进化时，如果自己场上有「太晶」宝可梦的话，则可以使用1次。选择自己牌库中最多2张训练家，在给对手看过之后，加入手牌。并重洗牌库。\n\n【无】【无】 高速之翼 60\n\n\n",
+	"effect_id": "f9c6499bbad853ebcb1ca8e3364fc677",
+	"energy_provides": "",
+	"energy_type": "C",
+	"evolves_from": "咕咕",
+	"hp": 100,
+	"image_local_path": "user://cards/images/CSV9C/155.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/155.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "猫头夜鹰",
+	"name_en": "",
+	"rarity": "R",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "F",
+	"resistance_value": "-30",
+	"retreat_cost": 1,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Stage 1",
+	"weakness_energy": "L",
+	"weakness_value": "×2",
+	"yoren_code": "P164"
+}

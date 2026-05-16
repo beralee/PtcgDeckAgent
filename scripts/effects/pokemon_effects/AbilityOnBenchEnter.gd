@@ -11,6 +11,10 @@ func _init(eff_type: String = "search_supporter") -> void:
 	effect_type = eff_type
 
 
+func is_bench_enter_ability() -> bool:
+	return true
+
+
 func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	var top: CardInstance = pokemon.get_top_card()
 	if top == null:

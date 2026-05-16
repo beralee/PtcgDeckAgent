@@ -6,7 +6,7 @@ const DeckSuggestionClientScript := preload("res://scripts/network/DeckSuggestio
 
 func test_deck_suggestion_client_builds_cloud_payload() -> String:
 	var payload: Dictionary = DeckSuggestionClientScript.build_payload("current-rec", PackedStringArray(["seen-a", "seen-b"]), {
-		"app_version": "v0.2.1",
+		"app_version": "v0.2.2",
 		"platform": "Windows",
 		"source": "test",
 		"requested_at": 123,
@@ -17,7 +17,7 @@ func test_deck_suggestion_client_builds_cloud_payload() -> String:
 		assert_eq(str(payload.get("current_id", "")), "current-rec", "Payload should include current recommendation id"),
 		assert_eq(exclude_ids.size(), 2, "Payload should include cached recommendation ids"),
 		assert_contains(exclude_ids, "seen-a", "Payload should preserve excluded ids"),
-		assert_eq(str(payload.get("app_version", "")), "v0.2.1", "Payload should include app version"),
+		assert_eq(str(payload.get("app_version", "")), "v0.2.2", "Payload should include app version"),
 		assert_eq(str(payload.get("platform", "")), "Windows", "Payload should include platform"),
 		assert_eq(str(payload.get("source", "")), "test", "Payload should include request source"),
 		assert_eq(int(payload.get("requested_at", 0)), 123, "Payload should include request timestamp"),

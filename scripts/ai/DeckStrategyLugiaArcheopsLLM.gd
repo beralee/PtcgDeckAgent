@@ -180,6 +180,31 @@ func score_handoff_target(item: Variant, step: Dictionary, context: Dictionary =
 	return score_interaction_target(item, step, context)
 
 
+func get_intent_planner_profile() -> Dictionary:
+	return {
+		"primary_attackers": [LUGIA_VSTAR, CINCCINO],
+		"secondary_attackers": [IRON_HANDS_EX, BLOODMOON_URSALUNA_EX],
+		"support_only": [ARCHEOPS, LUMINEON_V, FEZANDIPITI_EX],
+		"evolution_lines": [
+			{"basic": LUGIA_V, "stages": [LUGIA_VSTAR], "role": "engine_owner_primary_attacker", "desired_count": 1, "energy": {"C": 4}},
+			{"basic": MINCCINO, "stages": [CINCCINO], "role": "scaling_attacker", "desired_count": 2, "energy": {"C": 2}},
+		],
+		"energy_needs": {
+			LUGIA_V: {"C": 4},
+			LUGIA_VSTAR: {"C": 4},
+			MINCCINO: {"C": 2},
+			CINCCINO: {"C": 2},
+			IRON_HANDS_EX: {"L": 3},
+		},
+		"primary_attacks": [
+			{"pokemon": LUGIA_VSTAR, "attack": "Tempest Dive"},
+			{"pokemon": CINCCINO, "attack": "Special Roll"},
+		],
+		"setup_draw_attacks": [{"pokemon": LUGIA_V, "attack": "Read the Wind"}],
+		"scaling_attackers": [CINCCINO],
+	}
+
+
 func make_llm_runtime_snapshot(game_state: GameState, player_index: int) -> Dictionary:
 	var snapshot: Dictionary = super.make_llm_runtime_snapshot(game_state, player_index)
 	if snapshot.is_empty() or game_state == null or player_index < 0 or player_index >= game_state.players.size():
@@ -316,6 +341,14 @@ func _deck_should_block_exact_queue_match(queued_action: Dictionary, runtime_act
 	return false
 
 
+func _deck_queue_item_matches_action(queued_action: Dictionary, runtime_action: Dictionary, game_state: GameState, player_index: int) -> bool:
+	var queued_kind := str(queued_action.get("kind", queued_action.get("type", "")))
+	var runtime_kind := str(runtime_action.get("kind", runtime_action.get("type", "")))
+	if queued_kind == "attach_energy" and runtime_kind == "attach_energy":
+		return _lugia_queued_attach_accepts_runtime_special(queued_action, runtime_action, game_state, player_index)
+	return false
+
+
 func _deck_replan_trigger_after_state_change(before_snapshot: Dictionary, after_snapshot: Dictionary, context: Dictionary) -> Dictionary:
 	var before_archeops := int(before_snapshot.get("archeops_field_count", 0))
 	var after_archeops := int(after_snapshot.get("archeops_field_count", 0))
@@ -328,8 +361,21 @@ func _deck_replan_trigger_after_state_change(before_snapshot: Dictionary, after_
 		}
 	var before_ready := int(before_snapshot.get("ready_attacker_count", 0))
 	var after_ready := int(after_snapshot.get("ready_attacker_count", 0))
+	var after_backup_ready := int(after_snapshot.get("ready_backup_attacker_count", 0))
 	var before_energy := int(before_snapshot.get("field_energy_count", 0))
 	var after_energy := int(after_snapshot.get("field_energy_count", 0))
+	if str(context.get("action_kind", "")) == "evolve" \
+			and _name_contains(str(context.get("action_card_name", "")), LUGIA_VSTAR) \
+			and after_archeops > 0 \
+			and after_ready <= after_backup_ready:
+		return {
+			"should_replan": true,
+			"reason": "lugia_vstar_evolved_needs_primal_turbo",
+			"ignore_replan_limit": true,
+			"after_archeops_field_count": after_archeops,
+			"after_ready_attacker_count": after_ready,
+			"after_ready_backup_attacker_count": after_backup_ready,
+		}
 	if after_ready > before_ready and after_energy > before_energy:
 		return {
 			"should_replan": true,
@@ -982,7 +1028,8 @@ func _lugia_ready_backup_handoff_candidate_route(payload: Dictionary, game_state
 		"route_action_id": "route:lugia_ready_backup_handoff",
 		"type": "candidate_route",
 		"priority": 990,
-		"goal": "ready_backup_handoff_attack",
+		"goal": "pivot_to_attack",
+		"deck_goal": "ready_backup_handoff_attack",
 		"description": "Pivot from a non-attacking active into the charged Lugia/Cinccino side attacker before any extra draw or padding.",
 		"actions": [pivot_action, {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"}],
 		"future_goals": [_lugia_attack_future_goal("future:lugia_attack_after_handoff:%s" % bench_position, bench_position)],
@@ -1844,6 +1891,41 @@ func _is_bad_lugia_energy_attach(action: Dictionary) -> bool:
 	if _slot_is_bad_lugia_energy_assignment_target(target_slot):
 		return str(card.card_data.card_type) == "Special Energy" or card.card_data.is_energy()
 	return false
+
+
+func _lugia_queued_attach_accepts_runtime_special(queued_action: Dictionary, runtime_action: Dictionary, game_state: GameState, player_index: int) -> bool:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	if not _ref_is_special_energy(queued_action):
+		return false
+	var card: CardInstance = runtime_action.get("card", null)
+	if card == null or card.card_data == null or str(card.card_data.card_type) != "Special Energy":
+		return false
+	var target_slot: PokemonSlot = runtime_action.get("target_slot", null)
+	if target_slot == null or _slot_is_bad_lugia_energy_assignment_target(target_slot):
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	if player == null:
+		return false
+	var queued_position := str(queued_action.get("position", ""))
+	if queued_position == "active":
+		return target_slot == player.active_pokemon and _lugia_special_attach_still_improves_attacker(target_slot)
+	var queued_target := str(queued_action.get("target", ""))
+	if queued_target != "" and _name_contains(_slot_best_name(target_slot), queued_target):
+		return _lugia_special_attach_still_improves_attacker(target_slot)
+	return false
+
+
+func _lugia_special_attach_still_improves_attacker(slot: PokemonSlot) -> bool:
+	if slot == null:
+		return false
+	if _slot_name_matches_any(slot, [LUGIA_V, LUGIA_VSTAR]):
+		return slot.attached_energy.size() < 4
+	if _slot_name_matches_any(slot, [CINCCINO]):
+		return slot.attached_energy.size() < 5
+	if _slot_name_matches_any(slot, [IRON_HANDS_EX, BLOODMOON_URSALUNA_EX]):
+		return slot.attached_energy.size() < 4
+	return _slot_attack_energy_gap(slot) > 0
 
 
 func _is_bad_lugia_retreat(action: Dictionary, game_state: GameState, player_index: int) -> bool:

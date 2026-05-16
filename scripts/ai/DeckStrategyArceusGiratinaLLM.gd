@@ -175,6 +175,37 @@ func score_handoff_target(item: Variant, step: Dictionary, context: Dictionary =
 	return score_interaction_target(item, step, context)
 
 
+func get_intent_planner_profile() -> Dictionary:
+	return {
+		"primary_attackers": [ARCEUS_VSTAR, GIRATINA_VSTAR],
+		"secondary_attackers": [IRON_LEAVES_EX],
+		"support_only": [BIDOOF, BIBAREL, SKWOVET, RADIANT_GARDEVOIR],
+		"evolution_lines": [
+			{"basic": ARCEUS_V, "stages": [ARCEUS_VSTAR], "role": "launch_attacker_energy_engine", "desired_count": 1, "energy": {"C": 3}},
+			{"basic": GIRATINA_V, "stages": [GIRATINA_VSTAR], "role": "primary_attacker", "desired_count": 1, "energy": {"G": 1, "P": 1, "C": 1}},
+			{"basic": BIDOOF, "stages": [BIBAREL], "role": "draw_engine", "desired_count": 1, "energy": {}},
+		],
+		"energy_needs": {
+			ARCEUS_V: {"C": 3},
+			ARCEUS_VSTAR: {"C": 3},
+			GIRATINA_V: {"G": 1, "P": 1, "C": 1},
+			GIRATINA_VSTAR: {"G": 1, "P": 1, "C": 1},
+			IRON_LEAVES_EX: {"G": 3},
+		},
+		"primary_attacks": [
+			{"pokemon": ARCEUS_VSTAR, "attack": "Trinity Nova"},
+			{"pokemon": GIRATINA_VSTAR, "attack": "Lost Impact"},
+			{"pokemon": IRON_LEAVES_EX, "attack": "Prism Edge"},
+		],
+		"setup_draw_attacks": [
+			{"pokemon": GIRATINA_V, "attack": ABYSS_SEEKING},
+		],
+		"low_value_attacks": [
+			{"pokemon": ARCEUS_V, "attack": "Trinity Charge"},
+		],
+	}
+
+
 func _arceus_giratina_guarded_interaction_items(items: Array, step: Dictionary, context: Dictionary, planned: Array) -> Array:
 	var game_state: GameState = context.get("game_state", null)
 	var player_index := int(context.get("player_index", -1))

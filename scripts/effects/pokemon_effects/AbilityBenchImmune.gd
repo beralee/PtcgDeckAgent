@@ -41,5 +41,17 @@ static func has_bench_immune(slot: PokemonSlot) -> bool:
 	return false
 
 
+static func prevents_opponent_attack_damage_or_effect(
+	target: PokemonSlot,
+	attacker: PokemonSlot,
+	state: GameState
+) -> bool:
+	if target == null:
+		return false
+	if has_bench_immune(target):
+		return true
+	return AbilityTeamBenchShield.protects_bench_target(target, attacker, state)
+
+
 func get_description() -> String:
 	return "特性【毫不在意】：此宝可梦在备战区时，不受对手招式伤害。"

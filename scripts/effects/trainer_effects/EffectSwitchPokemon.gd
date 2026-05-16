@@ -92,6 +92,7 @@ func _switch(state: GameState, pi: int, chosen_target: PokemonSlot = null) -> vo
 	old_active.clear_on_leave_active()
 	player.bench.append(old_active)
 	player.active_pokemon = new_active
+	new_active.mark_entered_active_from_bench(state.turn_number)
 
 
 func get_description() -> String:

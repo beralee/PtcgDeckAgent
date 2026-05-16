@@ -7,10 +7,18 @@ const TEXT_MUTED := Color(0.64, 0.76, 0.86, 1.0)
 const SCROLLBAR_COMPACT_THICKNESS := 16
 const SCROLLBAR_DESKTOP_THICKNESS := 22
 const SCROLLBAR_TOUCH_THICKNESS := 32
+const SCROLLBAR_PORTRAIT_TOUCH_THICKNESS := 80
 const SCROLLBAR_COMPACT_GRAB_MIN := 36
 const SCROLLBAR_DESKTOP_GRAB_MIN := 48
 const SCROLLBAR_TOUCH_GRAB_MIN := 64
+const SCROLLBAR_PORTRAIT_TOUCH_GRAB_MIN := 160
 const CARD_SCROLLBAR_CLEARANCE_PADDING := 14
+const TOUCH_BUTTON_MIN_HEIGHT := 56
+const TOUCH_BUTTON_MIN_WIDTH := 148
+const TOUCH_TITLE_FONT_SIZE := 20
+const TOUCH_BODY_FONT_SIZE := 16
+const TOUCH_BUTTON_FONT_SIZE := 18
+const TOUCH_DIALOG_MARGIN := 12
 
 
 static func apply(root: Node) -> void:
@@ -95,7 +103,7 @@ static func style_scroll_bar(bar: ScrollBar, profile: String = "auto") -> void:
 	bar.set_meta("hud_scrollbar_thickness", thickness)
 	bar.set_meta("hud_scrollbar_minimum_grab", minimum_grab)
 	bar.mouse_filter = Control.MOUSE_FILTER_STOP
-	bar.custom_minimum_size = _scrollbar_minimum_size(bar.custom_minimum_size, thickness, is_vertical)
+	bar.custom_minimum_size = _scrollbar_minimum_size(_scrollbar_base_minimum_size(bar), thickness, is_vertical)
 	bar.add_theme_constant_override("minimum_grab_size", minimum_grab)
 	bar.add_theme_stylebox_override("scroll", scrollbar_track_style(is_vertical, false, thickness))
 	bar.add_theme_stylebox_override("scroll_focus", scrollbar_track_style(is_vertical, true, thickness))
@@ -126,7 +134,7 @@ static func _resolved_scroll_profile(profile: String) -> String:
 	var normalized := profile.strip_edges().to_lower()
 	if normalized == "" or normalized == "auto":
 		return "touch" if _is_touch_runtime() else "default"
-	if normalized in ["compact", "default", "touch"]:
+	if normalized in ["compact", "default", "touch", "portrait_touch"]:
 		return normalized
 	return "default"
 
@@ -135,10 +143,28 @@ static func _is_touch_runtime() -> bool:
 	return OS.has_feature("mobile") or OS.has_feature("web_android") or OS.has_feature("web_ios")
 
 
+static func should_use_touch_profile(viewport_size: Vector2 = Vector2.ZERO) -> bool:
+	if _is_touch_runtime():
+		return true
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		return false
+	return viewport_size.y > viewport_size.x
+
+
+static func scrollbar_thickness_for_profile(profile: String = "auto") -> int:
+	return _scrollbar_thickness(_resolved_scroll_profile(profile))
+
+
+static func scrollbar_minimum_grab_for_profile(profile: String = "auto") -> int:
+	return _scrollbar_minimum_grab(_resolved_scroll_profile(profile))
+
+
 static func _scrollbar_thickness(profile: String) -> int:
 	match profile:
 		"compact":
 			return SCROLLBAR_COMPACT_THICKNESS
+		"portrait_touch":
+			return SCROLLBAR_PORTRAIT_TOUCH_THICKNESS
 		"touch":
 			return SCROLLBAR_TOUCH_THICKNESS
 		_:
@@ -149,6 +175,8 @@ static func _scrollbar_minimum_grab(profile: String) -> int:
 	match profile:
 		"compact":
 			return SCROLLBAR_COMPACT_GRAB_MIN
+		"portrait_touch":
+			return SCROLLBAR_PORTRAIT_TOUCH_GRAB_MIN
 		"touch":
 			return SCROLLBAR_TOUCH_GRAB_MIN
 		_:
@@ -162,6 +190,16 @@ static func _scrollbar_minimum_size(current: Vector2, thickness: int, vertical: 
 	else:
 		result.y = maxf(result.y, float(thickness))
 	return result
+
+
+static func _scrollbar_base_minimum_size(bar: ScrollBar) -> Vector2:
+	if bar.has_meta("hud_scrollbar_base_minimum_size"):
+		var stored: Variant = bar.get_meta("hud_scrollbar_base_minimum_size")
+		if stored is Vector2:
+			return stored
+	var base_size := bar.custom_minimum_size
+	bar.set_meta("hud_scrollbar_base_minimum_size", base_size)
+	return base_size
 
 
 static func _style_panel(panel: PanelContainer) -> void:

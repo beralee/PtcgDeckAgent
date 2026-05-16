@@ -94,9 +94,11 @@ func test_get_card_keys() -> String:
 
 func test_to_dict_from_dict_roundtrip() -> String:
 	var original := _make_valid_deck()
+	original.updated_at = 1778553600000
 	var restored := DeckData.from_dict(original.to_dict())
 	return run_checks([
 		assert_eq(restored.id, original.id, "ID"),
+		assert_eq(restored.updated_at, original.updated_at, "updated_at"),
 		assert_eq(restored.deck_name, original.deck_name, "名称"),
 		assert_eq(restored.total_cards, original.total_cards, "总数"),
 		assert_eq(restored.cards.size(), original.cards.size(), "条目数"),

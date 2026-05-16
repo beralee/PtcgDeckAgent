@@ -60,37 +60,6 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "编辑卡组"
 
-[node name="BtnSave" type="Button" parent="MarginContainer/VBox/Header"]
-unique_name_in_owner = true
-layout_mode = 2
-custom_minimum_size = Vector2(90, 35)
-text = "保存"
-
-[node name="BtnStrategy" type="Button" parent="MarginContainer/VBox/Header"]
-unique_name_in_owner = true
-layout_mode = 2
-custom_minimum_size = Vector2(100, 35)
-text = "打法思路"
-
-[node name="BtnAI" type="Button" parent="MarginContainer/VBox/Header"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-custom_minimum_size = Vector2(100, 35)
-text = "AI 分析"
-
-[node name="BtnDiscussAI" type="Button" parent="MarginContainer/VBox/Header"]
-unique_name_in_owner = true
-layout_mode = 2
-custom_minimum_size = Vector2(110, 35)
-text = "与AI探讨"
-
-[node name="BtnBack" type="Button" parent="MarginContainer/VBox/Header"]
-unique_name_in_owner = true
-layout_mode = 2
-custom_minimum_size = Vector2(90, 35)
-text = "返回"
-
 [node name="ContentHBox" type="HBoxContainer" parent="MarginContainer/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -99,7 +68,7 @@ theme_override_constants/separation = 8
 [node name="LeftPanel" type="VBoxContainer" parent="MarginContainer/VBox/ContentHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_stretch_ratio = 0.33
+size_flags_stretch_ratio = 0.41
 theme_override_constants/separation = 4
 
 [node name="LeftTitle" type="Label" parent="MarginContainer/VBox/ContentHBox/LeftPanel"]
@@ -110,9 +79,12 @@ text = "当前卡组 (0张)"
 [node name="DeckTabBar" type="HBoxContainer" parent="MarginContainer/VBox/ContentHBox/LeftPanel"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/separation = 4
+custom_minimum_size = Vector2(0, 54)
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
 
 [node name="DeckScroll" type="ScrollContainer" parent="MarginContainer/VBox/ContentHBox/LeftPanel"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 
@@ -120,14 +92,14 @@ size_flags_vertical = 3
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-columns = 4
+columns = 5
 theme_override_constants/h_separation = 6
 theme_override_constants/v_separation = 6
 
 [node name="MiddlePanel" type="VBoxContainer" parent="MarginContainer/VBox/ContentHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_stretch_ratio = 0.35
+size_flags_stretch_ratio = 0.43
 theme_override_constants/separation = 4
 
 [node name="MiddleTitle" type="Label" parent="MarginContainer/VBox/ContentHBox/MiddlePanel"]
@@ -137,9 +109,12 @@ text = "可选卡牌库"
 [node name="PoolTabBar" type="HBoxContainer" parent="MarginContainer/VBox/ContentHBox/MiddlePanel"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/separation = 4
+custom_minimum_size = Vector2(0, 54)
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
 
 [node name="PoolScroll" type="ScrollContainer" parent="MarginContainer/VBox/ContentHBox/MiddlePanel"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 
@@ -152,13 +127,14 @@ theme_override_constants/separation = 8
 [node name="RightPanel" type="VBoxContainer" parent="MarginContainer/VBox/ContentHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_stretch_ratio = 0.32
+size_flags_stretch_ratio = 0.16
 theme_override_constants/separation = 4
 
 [node name="RightTitle" type="Label" parent="MarginContainer/VBox/ContentHBox/RightPanel"]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
-text = "AI 建议"
+text = ""
 
 [node name="AIScroll" type="ScrollContainer" parent="MarginContainer/VBox/ContentHBox/RightPanel"]
 layout_mode = 2
@@ -169,6 +145,57 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 4
+
+[node name="ActionButtons" type="VBoxContainer" parent="MarginContainer/VBox/ContentHBox/RightPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="BtnReplace" type="Button" parent="MarginContainer/VBox/ContentHBox/RightPanel/ActionButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 104)
+size_flags_horizontal = 3
+disabled = true
+clip_text = true
+text = "替换卡牌"
+
+[node name="BtnSave" type="Button" parent="MarginContainer/VBox/ContentHBox/RightPanel/ActionButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 104)
+size_flags_horizontal = 3
+text = "保存"
+
+[node name="BtnStrategy" type="Button" parent="MarginContainer/VBox/ContentHBox/RightPanel/ActionButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 104)
+size_flags_horizontal = 3
+text = "打法思路"
+
+[node name="BtnAI" type="Button" parent="MarginContainer/VBox/ContentHBox/RightPanel/ActionButtons"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+custom_minimum_size = Vector2(0, 104)
+size_flags_horizontal = 3
+text = "AI 分析"
+
+[node name="BtnDiscussAI" type="Button" parent="MarginContainer/VBox/ContentHBox/RightPanel/ActionButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 104)
+size_flags_horizontal = 3
+text = "与AI探讨"
+
+[node name="BtnBack" type="Button" parent="MarginContainer/VBox/ContentHBox/RightPanel/ActionButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 104)
+size_flags_horizontal = 3
+text = "返回"
 
 [node name="Footer" type="HBoxContainer" parent="MarginContainer/VBox"]
 layout_mode = 2
@@ -181,13 +208,6 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = ""
-
-[node name="BtnReplace" type="Button" parent="MarginContainer/VBox/Footer"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-custom_minimum_size = Vector2(200, 35)
-text = "替换"
 
 [node name="UnsavedDialog" type="ConfirmationDialog" parent="."]
 unique_name_in_owner = true

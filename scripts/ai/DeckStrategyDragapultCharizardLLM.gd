@@ -1,6 +1,7 @@
 extends "res://scripts/ai/DeckStrategyLLMRuntimeBase.gd"
 
 const DragapultCharizardRulesScript = preload("res://scripts/ai/DeckStrategyDragapultCharizard.gd")
+const IntentUtil = preload("res://scripts/ai/intent/AIIntentPlannerUtil.gd")
 
 const DRAGAPULT_CHARIZARD_LLM_ID := "dragapult_charizard_llm"
 
@@ -62,6 +63,8 @@ func build_turn_contract(game_state: GameState, player_index: int, context: Dict
 func score_action_absolute(action: Dictionary, game_state: GameState, player_index: int) -> float:
 	if _is_bad_dragapult_charizard_plan_action(action, game_state, player_index):
 		return -10000.0
+	if _is_charizard_acceleration_action(action) and _should_prioritize_charizard_acceleration(game_state, player_index):
+		return 89500.0
 	if game_state != null and has_llm_plan_for_turn(int(game_state.turn_number)):
 		if _is_tm_evolution_granted_attack_action(action) and _llm_queue_has_opening_chip_attack(game_state, player_index):
 			return 90000.0
@@ -100,6 +103,10 @@ func get_discard_priority_contextual(card: CardInstance, game_state: GameState, 
 		return priority
 	if _is_critical_seed_search_card(card.card_data, game_state, player_index):
 		return mini(priority, 8)
+	if _is_dragapult_charizard_protected_resource(card.card_data):
+		return mini(priority, 18)
+	if _is_dragapult_charizard_expendable_discard(card.card_data, game_state, player_index):
+		return maxi(priority, 180)
 	if _name_contains(_best_card_name(card.card_data), "Lost Vacuum") and _is_dead_dragapult_charizard_lost_vacuum_board(game_state, player_index):
 		return maxi(priority, 240)
 	return priority
@@ -167,6 +174,31 @@ func get_llm_setup_role_hint(cd: CardData) -> String:
 	if _name_contains(name, "Manaphy"):
 		return "bench protection tech; open only if forced"
 	return "support"
+
+
+func get_intent_planner_profile() -> Dictionary:
+	return {
+		"primary_attackers": ["Dragapult ex", "Charizard ex"],
+		"secondary_attackers": ["Radiant Charizard"],
+		"support_only": ["Rotom V", "Lumineon V", "Fezandipiti ex", "Radiant Alakazam", "Manaphy"],
+		"evolution_lines": [
+			{"basic": "Dreepy", "stages": ["Drakloak", "Dragapult ex"], "role": "primary_attacker", "desired_count": 2, "energy": {"R": 1, "P": 1}},
+			{"basic": "Charmander", "stages": ["Charmeleon", "Charizard ex"], "role": "secondary_attacker", "desired_count": 2, "energy": {"R": 2}},
+		],
+		"energy_needs": {
+			"Dreepy": {"R": 1, "P": 1},
+			"Drakloak": {"R": 1, "P": 1},
+			"Dragapult ex": {"R": 1, "P": 1},
+			"Charmander": {"R": 2},
+			"Charmeleon": {"R": 2},
+			"Charizard ex": {"R": 2},
+		},
+		"primary_attacks": [
+			{"pokemon": "Dragapult ex", "attack": "Phantom Dive"},
+			{"pokemon": "Charizard ex", "attack": "Burning Darkness"},
+		],
+		"low_value_attacks": [{"pokemon": "Dragapult ex", "attack": "Jet Head"}],
+	}
 
 
 func get_llm_deck_strategy_prompt(game_state: GameState, player_index: int) -> PackedStringArray:
@@ -313,6 +345,7 @@ func _deck_augment_action_id_payload(payload: Dictionary, game_state: GameState,
 	if not continuity.is_empty():
 		facts["continuity_contract"] = _compact_continuity_contract_for_llm(continuity)
 	result["turn_tactical_facts"] = facts
+	result = _apply_dragapult_charizard_selection_policies(result, game_state, player_index)
 	var routes: Array = result.get("candidate_routes", []) if result.get("candidate_routes", []) is Array else []
 	var updated_routes := routes.duplicate(true)
 	var continuity_route := _dragapult_charizard_continuity_candidate_route(result, continuity, game_state, player_index)
@@ -324,7 +357,10 @@ func _deck_augment_action_id_payload(payload: Dictionary, game_state: GameState,
 	var phantom_route := _dragapult_charizard_phantom_dive_candidate_route(result, attack_policy, game_state, player_index)
 	if not phantom_route.is_empty():
 		updated_routes.push_front(phantom_route)
-	result["candidate_routes"] = updated_routes
+	result["candidate_routes"] = _apply_dragapult_charizard_selection_policies_to_routes(
+		updated_routes,
+		_dragapult_charizard_policy_by_action_id(result.get("legal_actions", []))
+	)
 	return result
 
 
@@ -373,6 +409,164 @@ func _mark_dragapult_attack_quality_by_action_id(facts: Dictionary, attack_polic
 	facts["attack_quality_by_action_id"] = quality_by_id
 	if bool(attack_policy.get("jet_head_forbidden", false)):
 		facts["redraw_attack_forbidden"] = true
+
+
+func _apply_dragapult_charizard_selection_policies(payload: Dictionary, game_state: GameState, player_index: int) -> Dictionary:
+	var result := payload.duplicate(true)
+	var legal_actions: Array = result.get("legal_actions", []) if result.get("legal_actions", []) is Array else []
+	var enriched_actions: Array = []
+	for raw_action: Variant in legal_actions:
+		if not (raw_action is Dictionary):
+			enriched_actions.append(raw_action)
+			continue
+		var ref: Dictionary = (raw_action as Dictionary).duplicate(true)
+		var policy := _dragapult_charizard_selection_policy_for_ref(ref, game_state, player_index)
+		if not policy.is_empty():
+			ref = _merge_dragapult_charizard_selection_policy(ref, policy)
+		enriched_actions.append(ref)
+	result["legal_actions"] = enriched_actions
+	result["candidate_routes"] = _apply_dragapult_charizard_selection_policies_to_routes(
+		result.get("candidate_routes", []),
+		_dragapult_charizard_policy_by_action_id(enriched_actions)
+	)
+	return result
+
+
+func _dragapult_charizard_policy_by_action_id(actions: Variant) -> Dictionary:
+	var by_id := {}
+	if not (actions is Array):
+		return by_id
+	for raw_action: Variant in actions:
+		if not (raw_action is Dictionary):
+			continue
+		var ref: Dictionary = raw_action
+		var action_id := _payload_action_id(ref)
+		if action_id == "":
+			continue
+		var policy: Dictionary = ref.get("selection_policy", {}) if ref.get("selection_policy", {}) is Dictionary else {}
+		if not policy.is_empty():
+			by_id[action_id] = policy.duplicate(true)
+	return by_id
+
+
+func _apply_dragapult_charizard_selection_policies_to_routes(routes: Variant, policy_by_id: Dictionary) -> Array:
+	var enriched_routes: Array = []
+	if not (routes is Array):
+		return enriched_routes
+	for raw_route: Variant in routes:
+		if not (raw_route is Dictionary):
+			enriched_routes.append(raw_route)
+			continue
+		var route: Dictionary = (raw_route as Dictionary).duplicate(true)
+		var route_actions: Array = route.get("actions", []) if route.get("actions", []) is Array else []
+		var enriched_actions: Array = []
+		for raw_action: Variant in route_actions:
+			if not (raw_action is Dictionary):
+				enriched_actions.append(raw_action)
+				continue
+			var action: Dictionary = (raw_action as Dictionary).duplicate(true)
+			var action_id := _payload_action_id(action)
+			if action_id != "" and policy_by_id.has(action_id):
+				action = _merge_dragapult_charizard_selection_policy(action, policy_by_id.get(action_id, {}))
+			enriched_actions.append(action)
+		route["actions"] = enriched_actions
+		enriched_routes.append(route)
+	return enriched_routes
+
+
+func _dragapult_charizard_selection_policy_for_ref(ref: Dictionary, game_state: GameState, player_index: int) -> Dictionary:
+	var kind := str(ref.get("type", ref.get("kind", "")))
+	if kind == "play_trainer":
+		if _ref_has_any_name(ref, ["Ultra Ball"]):
+			return {
+				"discard_cards": {"prefer": _dragapult_charizard_ultra_ball_discard_prefer()},
+				"discard_policy": {"prefer": _dragapult_charizard_ultra_ball_discard_prefer()},
+				"search_targets": _dragapult_charizard_search_targets(game_state, player_index),
+			}
+		if _ref_has_any_name(ref, ["Buddy-Buddy Poffin", "Nest Ball"]):
+			return {"search_targets": _dragapult_charizard_basic_search_targets(game_state, player_index)}
+		if _ref_has_any_name(ref, ["Energy Search"]):
+			return {"search_energy": _dragapult_charizard_energy_search_targets(game_state, player_index)}
+		if _ref_has_any_name(ref, ["Night Stretcher", "Super Rod"]):
+			return {"recover_target": ["Dragapult ex", "Charizard ex", "Dreepy", "Charmander", "Psychic Energy", "Fire Energy"]}
+	if kind == "use_ability" and _is_charizard_acceleration_action(ref):
+		return {"energy_assignments": "Charizard ex,Dragapult ex,Drakloak,Dreepy,Charmander"}
+	return {}
+
+
+func _merge_dragapult_charizard_selection_policy(ref: Dictionary, policy: Dictionary) -> Dictionary:
+	var result := ref.duplicate(true)
+	var merged: Dictionary = result.get("selection_policy", {}) if result.get("selection_policy", {}) is Dictionary else {}
+	merged = merged.duplicate(true)
+	for key: String in policy.keys():
+		merged[key] = policy.get(key)
+	if not merged.is_empty():
+		result["selection_policy"] = merged
+	return result
+
+
+func _dragapult_charizard_ultra_ball_discard_prefer() -> Array[String]:
+	return [
+		"Manaphy",
+		"Temple of Sinnoh",
+		"Radiant Alakazam",
+		"Rescue Board",
+		"Unfair Stamp",
+		"Night Stretcher",
+		"extra Dragapult ex",
+		"extra Charizard ex",
+	]
+
+
+func _dragapult_charizard_search_targets(game_state: GameState, player_index: int) -> Array[String]:
+	var targets: Array[String] = []
+	if game_state != null and player_index >= 0 and player_index < game_state.players.size():
+		var player: PlayerState = game_state.players[player_index]
+		if player != null:
+			if _count_field_name(player, "Dragapult ex") == 0:
+				targets.append("Dragapult ex")
+			if _count_field_name(player, "Charizard ex") == 0:
+				targets.append("Charizard ex")
+			if _count_field_name(player, "Drakloak") == 0:
+				targets.append("Drakloak")
+			if _count_field_name(player, "Dreepy") == 0:
+				targets.append("Dreepy")
+			if _count_field_name(player, "Charmander") == 0:
+				targets.append("Charmander")
+	for fallback: String in ["Dragapult ex", "Charizard ex", "Drakloak", "Dreepy", "Charmander"]:
+		if not targets.has(fallback):
+			targets.append(fallback)
+	return targets
+
+
+func _dragapult_charizard_basic_search_targets(game_state: GameState, player_index: int) -> Array[String]:
+	var targets: Array[String] = []
+	if game_state != null and player_index >= 0 and player_index < game_state.players.size():
+		var player: PlayerState = game_state.players[player_index]
+		if player != null:
+			if _count_field_name(player, "Dreepy") == 0:
+				targets.append("Dreepy")
+			if _count_field_name(player, "Charmander") == 0:
+				targets.append("Charmander")
+	for fallback: String in ["Dreepy", "Charmander"]:
+		if not targets.has(fallback):
+			targets.append(fallback)
+	return targets
+
+
+func _dragapult_charizard_energy_search_targets(game_state: GameState, player_index: int) -> Array[String]:
+	var targets: Array[String] = []
+	if game_state != null and player_index >= 0 and player_index < game_state.players.size():
+		var player: PlayerState = game_state.players[player_index]
+		if player != null and player.active_pokemon != null:
+			if _slot_name_matches_any(player.active_pokemon, ["Dreepy", "Drakloak", "Dragapult ex"]) and not _slot_has_energy(player.active_pokemon, "Psychic"):
+				targets.append("Psychic Energy")
+			if _slot_name_matches_any(player.active_pokemon, ["Dreepy", "Drakloak", "Dragapult ex", "Charmander", "Charmeleon", "Charizard ex"]) and not _slot_has_energy(player.active_pokemon, "Fire"):
+				targets.append("Fire Energy")
+	for fallback: String in ["Psychic Energy", "Fire Energy"]:
+		if not targets.has(fallback):
+			targets.append(fallback)
+	return targets
 
 
 func _dragapult_charizard_tm_evolution_candidate_route(payload: Dictionary, game_state: GameState, player_index: int) -> Dictionary:
@@ -756,13 +950,18 @@ func _active_core_attack_ready(game_state: GameState, player_index: int) -> bool
 	var player: PlayerState = game_state.players[player_index]
 	if player == null or player.active_pokemon == null:
 		return false
-	var active_name := _slot_best_name(player.active_pokemon)
-	if not _name_matches_any(active_name, ["Dragapult ex", "Charizard ex"]):
+	if not _slot_name_matches_any(player.active_pokemon, ["Dragapult ex", "Charizard ex"]):
 		return false
-	var prediction: Dictionary = predict_attacker_damage(player.active_pokemon)
-	if not bool(prediction.get("can_attack", false)):
+	var cd: CardData = player.active_pokemon.get_card_data()
+	if cd == null:
 		return false
-	return int(prediction.get("damage", 0)) >= 160
+	for attack_index: int in cd.attacks.size():
+		var attack: Dictionary = cd.attacks[attack_index] if cd.attacks[attack_index] is Dictionary else {}
+		if _parse_damage_value(str(attack.get("damage", ""))) < 160:
+			continue
+		if _slot_attack_index_cost_ready(player.active_pokemon, attack_index):
+			return true
+	return false
 
 
 func _catalog_has_dragapult_charizard_setup_action() -> bool:
@@ -831,6 +1030,8 @@ func _should_block_rotom_terminal_draw(game_state: GameState, player_index: int)
 
 
 func _is_bad_dragapult_charizard_plan_action(action: Dictionary, game_state: GameState, player_index: int) -> bool:
+	if _should_block_attack_for_charizard_acceleration(action, game_state, player_index):
+		return true
 	if _is_bad_dragapult_low_value_attack(action, game_state, player_index):
 		return true
 	if _is_opening_chip_attack_with_tm_evolution_ready(action, game_state, player_index):
@@ -848,6 +1049,96 @@ func _is_bad_dragapult_charizard_plan_action(action: Dictionary, game_state: Gam
 	if _is_bad_dragapult_charizard_optional_draw(action, game_state, player_index):
 		return true
 	return _is_rotom_terminal_draw_ref(action) and _should_block_rotom_terminal_draw(game_state, player_index)
+
+
+func _should_block_attack_for_charizard_acceleration(action: Dictionary, game_state: GameState, player_index: int) -> bool:
+	if not _is_attack_action_ref(action):
+		return false
+	if not _charizard_acceleration_available(game_state, player_index):
+		return false
+	if _attack_wins_game(action, game_state, player_index):
+		return false
+	return _charizard_acceleration_has_target(game_state, player_index)
+
+
+func _is_charizard_acceleration_action(action: Dictionary) -> bool:
+	if str(action.get("kind", action.get("type", ""))) != "use_ability":
+		return false
+	var source_slot: PokemonSlot = action.get("source_slot", null)
+	if _slot_name_matches_any(source_slot, ["Charizard ex"]):
+		return true
+	return _ref_has_any_name(action, ["Charizard ex", "Infernal Reign", "烈炎支配"])
+
+
+func _should_prioritize_charizard_acceleration(game_state: GameState, player_index: int) -> bool:
+	return _charizard_acceleration_available(game_state, player_index) \
+		and _charizard_acceleration_has_target(game_state, player_index)
+
+
+func _charizard_acceleration_available(game_state: GameState, player_index: int) -> bool:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	if player == null or not _player_deck_has_fire_energy(player):
+		return false
+	for slot: PokemonSlot in player.get_all_pokemon():
+		if _slot_charizard_acceleration_pending(slot, int(game_state.turn_number)):
+			return true
+	return false
+
+
+func _slot_charizard_acceleration_pending(slot: PokemonSlot, turn_number: int) -> bool:
+	if not _slot_name_matches_any(slot, ["Charizard ex"]):
+		return false
+	if slot.turn_evolved != turn_number:
+		return false
+	for effect: Dictionary in slot.effects:
+		if str(effect.get("type", "")) == "ability_attach_from_deck_evolved" and int(effect.get("turn", -999)) == turn_number:
+			return false
+	return true
+
+
+func _charizard_acceleration_has_target(game_state: GameState, player_index: int) -> bool:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	if player == null:
+		return false
+	for slot: PokemonSlot in player.get_all_pokemon():
+		if _slot_needs_charizard_fire_acceleration(slot):
+			return true
+	return false
+
+
+func _slot_needs_charizard_fire_acceleration(slot: PokemonSlot) -> bool:
+	if slot == null or slot.get_top_card() == null:
+		return false
+	if _slot_name_matches_any(slot, ["Charizard ex"]):
+		return _slot_energy_count(slot, "Fire") < 2
+	if _slot_name_matches_any(slot, ["Charmander", "Charmeleon"]):
+		return _slot_energy_count(slot, "Fire") < 2
+	if _slot_name_matches_any(slot, ["Dreepy", "Drakloak", "Dragapult ex"]):
+		return _slot_energy_count(slot, "Fire") < 1
+	return false
+
+
+func _player_deck_has_fire_energy(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	for card: CardInstance in player.deck:
+		if _card_is_energy(card, "Fire"):
+			return true
+	return false
+
+
+func _slot_energy_count(slot: PokemonSlot, query: String) -> int:
+	if slot == null:
+		return 0
+	var count := 0
+	for energy: CardInstance in slot.attached_energy:
+		if _card_is_energy(energy, query):
+			count += 1
+	return count
 
 
 func _is_bad_dragapult_low_value_attack(action: Dictionary, game_state: GameState, player_index: int) -> bool:
@@ -899,6 +1190,10 @@ func _llm_queue_has_opening_chip_attack(game_state: GameState, player_index: int
 	for queued_action: Dictionary in _llm_action_queue:
 		if _is_opening_chip_attack_with_tm_evolution_ready(queued_action, game_state, player_index):
 			return true
+	if _llm_decision_tree.get("actions", []) is Array:
+		for raw_action: Variant in _llm_decision_tree.get("actions", []):
+			if raw_action is Dictionary and _is_opening_chip_attack_with_tm_evolution_ready(raw_action as Dictionary, game_state, player_index):
+				return true
 	return false
 
 
@@ -997,13 +1292,25 @@ func _catalog_attack_ref_for_dragapult_index(attack_index: int) -> Dictionary:
 
 
 func _dragapult_attack_index_cost_ready(slot: PokemonSlot, attack_index: int) -> bool:
+	return _slot_attack_index_cost_ready(slot, attack_index)
+
+
+func _slot_attack_index_cost_ready(slot: PokemonSlot, attack_index: int) -> bool:
 	if slot == null or slot.get_card_data() == null:
 		return false
 	var attacks: Array = slot.get_card_data().attacks
 	if attack_index < 0 or attack_index >= attacks.size():
 		return false
 	var attack: Dictionary = attacks[attack_index] if attacks[attack_index] is Dictionary else {}
-	return slot.attached_energy.size() >= str(attack.get("cost", "")).length()
+	var attached_counts := {}
+	for energy: CardInstance in slot.attached_energy:
+		if energy == null or energy.card_data == null:
+			continue
+		var symbol := IntentUtil.energy_symbol(energy.card_data.energy_provides)
+		if symbol == "":
+			continue
+		attached_counts[symbol] = int(attached_counts.get(symbol, 0)) + 1
+	return IntentUtil.missing_cost(IntentUtil.cost_counts(attack.get("cost", "")), attached_counts).is_empty()
 
 
 func _runtime_attack_name(action: Dictionary, active_slot: PokemonSlot, attack_index: int) -> String:
@@ -1027,10 +1334,7 @@ func _active_dragapult_pressure_ready(game_state: GameState, player_index: int) 
 		return false
 	if not _slot_name_matches_any(player.active_pokemon, ["Dragapult ex"]):
 		return false
-	if _dragapult_attack_index_cost_ready(player.active_pokemon, 1):
-		return true
-	var prediction: Dictionary = predict_attacker_damage(player.active_pokemon)
-	return bool(prediction.get("can_attack", false)) and int(prediction.get("damage", 0)) >= 180
+	return _dragapult_attack_index_cost_ready(player.active_pokemon, 1)
 
 
 func _is_bad_dragapult_charizard_over_setup(action: Dictionary, game_state: GameState, player_index: int) -> bool:
@@ -1321,6 +1625,32 @@ func _best_dragapult_charizard_discard_fallback(items: Array, step: Dictionary, 
 			break
 		result.append(entry.get("card"))
 	return result
+
+
+func _is_dragapult_charizard_protected_resource(card_data: CardData) -> bool:
+	if card_data == null:
+		return false
+	var name := _best_card_name(card_data)
+	if card_data.is_energy() and _name_matches_any(name, ["Fire Energy", "Psychic Energy"]):
+		return true
+	return _name_matches_any(name, [
+		"Dreepy", "Drakloak", "Dragapult ex",
+		"Charmander", "Charmeleon", "Charizard ex",
+		"Rare Candy", "Buddy-Buddy Poffin", "Nest Ball", "Ultra Ball",
+		"Arven", "Lance", "Energy Search",
+		"Iono", "Boss's Orders", "Counter Catcher",
+	])
+
+
+func _is_dragapult_charizard_expendable_discard(card_data: CardData, game_state: GameState, player_index: int) -> bool:
+	if card_data == null:
+		return false
+	var name := _best_card_name(card_data)
+	if _name_matches_any(name, ["Manaphy", "Radiant Alakazam", "Temple of Sinnoh", "Rescue Board"]):
+		return true
+	if _name_matches_any(name, ["Lost Vacuum"]):
+		return _is_dead_dragapult_charizard_lost_vacuum_board(game_state, player_index)
+	return false
 
 
 func _is_bad_dragapult_charizard_lost_vacuum(action: Dictionary, game_state: GameState, player_index: int) -> bool:

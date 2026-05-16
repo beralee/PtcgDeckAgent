@@ -1,6 +1,8 @@
 class_name AttackReturnSelfAllCardsToHand
 extends BaseEffect
 
+const CSV9CEffects = preload("res://scripts/effects/CSV9CEffects.gd")
+
 const REPLACEMENT_STEP_ID := "return_self_replacement"
 
 
@@ -10,6 +12,8 @@ func get_attack_interaction_steps(
 	state: GameState
 ) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
+	if CSV9CEffects.player_field_return_to_hand_blocked(card.owner_index, state):
+		return []
 	if player.bench.is_empty():
 		return []
 	var items: Array = []
@@ -38,6 +42,8 @@ func execute_attack(
 	if top == null:
 		return
 	var player: PlayerState = state.players[top.owner_index]
+	if CSV9CEffects.player_field_return_to_hand_blocked(top.owner_index, state):
+		return
 	var replacement: PokemonSlot = _resolve_replacement(player)
 
 	for card: CardInstance in attacker.collect_all_cards():

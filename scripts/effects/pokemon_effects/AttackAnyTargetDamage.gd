@@ -50,9 +50,11 @@ func execute_attack(
 		target = defender
 	if AttackCoinFlipPreventDamageAndEffectsNextTurn.prevents_attack_damage(target, state):
 		return
+	if target in opponent.bench and AbilityBenchImmune.prevents_opponent_attack_damage_or_effect(target, attacker, state):
+		return
 	if AbilityPreventDamageFromBasicExEffect.prevents_target_damage(attacker, target, state):
 		return
-	target.damage_counters += damage_amount
+	target.damage_counters += _calculate_attack_target_damage(attacker, target, damage_amount, state)
 
 
 func get_description() -> String:

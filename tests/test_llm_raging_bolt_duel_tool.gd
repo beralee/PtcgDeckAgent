@@ -67,15 +67,34 @@ func test_duel_tool_make_ai_accepts_generic_llm_strategy_ids() -> String:
 	var dragapult_strategy: Variant = dragapult_ai.get("_deck_strategy") if dragapult_ai != null else null
 	var charizard_strategy: Variant = charizard_ai.get("_deck_strategy") if charizard_ai != null else null
 	var arceus_strategy: Variant = arceus_ai.get("_deck_strategy") if arceus_ai != null else null
+	var v17_strategy_ids := [
+		"v17_archaludon_dialga_llm",
+		"v17_water_turtle_llm",
+		"v17_palkia_gholdengo_llm",
+		"v17_bomb_charizard_llm",
+		"v17_miraidon_llm",
+		"v17_dragapult_dusknoir_llm",
+		"v17_regidrago_llm",
+	]
+	var v17_strategies: Array = []
+	for strategy_id: String in v17_strategy_ids:
+		var ai: AIOpponent = tool.call("_make_ai", 1, strategy_id, null, true)
+		v17_strategies.append(ai.get("_deck_strategy") if ai != null else null)
 	tool.queue_free()
-	return run_checks([
+	var checks: Array[String] = [
 		assert_not_null(dragapult_strategy, "Generic duel tool should install Dragapult Charizard LLM strategy"),
 		assert_true(dragapult_strategy != null and dragapult_strategy.has_method("get_llm_stats"), "Dragapult Charizard strategy should expose LLM runtime stats"),
 		assert_not_null(charizard_strategy, "Generic duel tool should install Charizard ex LLM strategy"),
 		assert_true(charizard_strategy != null and charizard_strategy.has_method("get_llm_stats"), "Charizard ex strategy should expose LLM runtime stats"),
 		assert_not_null(arceus_strategy, "Generic duel tool should install Arceus Giratina LLM strategy"),
 		assert_true(arceus_strategy != null and arceus_strategy.has_method("get_llm_stats"), "Arceus Giratina strategy should expose LLM runtime stats"),
-	])
+	]
+	for index: int in range(v17_strategy_ids.size()):
+		var strategy_id := str(v17_strategy_ids[index])
+		var strategy: Variant = v17_strategies[index]
+		checks.append(assert_not_null(strategy, "Generic duel tool should install %s" % strategy_id))
+		checks.append(assert_true(strategy != null and strategy.has_method("get_llm_stats"), "%s should expose LLM runtime stats" % strategy_id))
+	return run_checks(checks)
 
 
 func test_standalone_self_play_runner_scripts_load() -> String:

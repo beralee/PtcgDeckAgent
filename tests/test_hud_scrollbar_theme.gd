@@ -56,7 +56,7 @@ func test_hud_scroll_container_applies_style_on_ready() -> String:
 	return result
 
 
-func test_battle_setup_background_gallery_uses_hud_scrollbar_style() -> String:
+func test_battle_setup_background_gallery_hides_scrollbar_and_uses_drag_scroll() -> String:
 	var scene := BattleSetupScene.instantiate()
 	var tree := Engine.get_main_loop() as SceneTree
 	tree.root.add_child(scene)
@@ -64,11 +64,26 @@ func test_battle_setup_background_gallery_uses_hud_scrollbar_style() -> String:
 
 	var gallery := scene.find_child("BackgroundGallery", true, false) as ScrollContainer
 	var hbar := gallery.get_h_scroll_bar() if gallery != null else null
+	var row := scene.find_child("BackgroundGalleryRow", true, false) as Control
+	if gallery != null:
+		gallery.size = Vector2(220, 132)
+		gallery.scroll_horizontal = 0
+	if row != null:
+		row.custom_minimum_size = Vector2(1600, 112)
+	var wheel_event := InputEventMouseButton.new()
+	wheel_event.button_index = MOUSE_BUTTON_WHEEL_DOWN
+	wheel_event.pressed = true
+	if gallery != null:
+		scene.call("_handle_background_gallery_drag_input", wheel_event)
+	var custom_scroll := int(gallery.get_meta("background_gallery_custom_scroll", gallery.scroll_horizontal)) if gallery != null else 0
 	var result := run_checks([
 		assert_not_null(gallery, "Battle setup should still expose the background gallery scroll area"),
 		assert_true(gallery != null and gallery.has_meta("hud_scrollbar_styled"), "Battle setup gallery should receive shared HUD scrollbar styling"),
-		assert_true(hbar != null and hbar.has_theme_stylebox_override("grabber"), "Battle setup gallery horizontal bar should use the HUD grabber"),
-		assert_true(hbar != null and float(hbar.custom_minimum_size.y) >= 22.0, "Battle setup gallery horizontal drag target should be wider than the default theme"),
+		assert_eq(gallery.horizontal_scroll_mode if gallery != null else -1, ScrollContainer.SCROLL_MODE_DISABLED, "Battle setup gallery should disable the native horizontal bar and use custom drag scrolling"),
+		assert_true(gallery != null and bool(gallery.get_meta("background_gallery_drag_scroll_enabled", false)), "Battle setup gallery should advertise custom drag scrolling"),
+		assert_true(hbar != null and hbar.has_meta("background_gallery_hidden_scrollbar"), "Battle setup gallery should explicitly hide its native horizontal bar"),
+		assert_true(hbar != null and not hbar.visible, "Battle setup gallery horizontal bar should not be visible after switching to drag scroll"),
+		assert_true(gallery != null and custom_scroll > 0, "Battle setup gallery should still move through custom wheel scrolling while the native bar is disabled"),
 	])
 
 	scene.queue_free()
@@ -77,6 +92,7 @@ func test_battle_setup_background_gallery_uses_hud_scrollbar_style() -> String:
 
 func test_battle_card_scroll_height_reserves_touch_clearance() -> String:
 	var scene := BattleSceneScript.new()
+	scene.set("_active_battle_layout_mode", "landscape")
 	var card_height := 128.0
 	var expected_clearance := float(HudThemeScript.SCROLLBAR_TOUCH_THICKNESS + HudThemeScript.CARD_SCROLLBAR_CLEARANCE_PADDING)
 	var scroll_height := float(scene.call("_card_scroll_height_with_scrollbar", card_height))
@@ -90,6 +106,7 @@ func test_battle_card_scroll_height_reserves_touch_clearance() -> String:
 
 func test_battle_hand_scroll_height_keeps_single_scrollbar_width_compact() -> String:
 	var scene := BattleSceneScript.new()
+	scene.set("_active_battle_layout_mode", "landscape")
 	var card_height := 128.0
 	var dialog_scroll_height := float(scene.call("_card_scroll_height_with_scrollbar", card_height))
 	var hand_scroll_height := float(scene.call("_hand_scroll_height_with_scrollbar", card_height))

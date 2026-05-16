@@ -34,7 +34,7 @@ func execute_attack(
 	for slot: PokemonSlot in opp_player.bench:
 		if targets_hit >= snipe_count:
 			break
-		if AbilityBenchImmune.has_bench_immune(slot):
+		if AbilityBenchImmune.prevents_opponent_attack_damage_or_effect(slot, attacker, state):
 			continue
 		if AttackCoinFlipPreventDamageAndEffectsNextTurn.prevents_attack_damage(slot, state):
 			continue

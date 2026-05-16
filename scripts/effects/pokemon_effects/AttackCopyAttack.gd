@@ -73,7 +73,73 @@ func get_damage_bonus(_attacker: PokemonSlot, _state: GameState) -> int:
 	if option.is_empty():
 		return 0
 	var attack: Dictionary = option.get("attack", {})
-	return DamageCalculator.new().parse_damage(str(attack.get("damage", "")))
+	var total: int = DamageCalculator.new().parse_damage(str(attack.get("damage", "")))
+	if _processor != null:
+		total += _processor.get_attack_damage_bonus_by_id(
+			str(option.get("source_effect_id", "")),
+			int(option.get("attack_index", -1)),
+			_attacker,
+			_state,
+			[get_attack_interaction_context()],
+			AttackCopyAttack
+		)
+	return total
+
+
+func ignores_weakness_and_resistance(attacker: PokemonSlot, state: GameState, _attack_index: int = -1) -> bool:
+	var option: Dictionary = _get_selected_option()
+	if option.is_empty() or _processor == null:
+		return false
+	return _processor.attack_effect_id_ignores_weakness_and_resistance(
+		str(option.get("source_effect_id", "")),
+		int(option.get("attack_index", -1)),
+		attacker,
+		state,
+		[get_attack_interaction_context()],
+		AttackCopyAttack
+	)
+
+
+func ignores_weakness(attacker: PokemonSlot, state: GameState, _attack_index: int = -1) -> bool:
+	var option: Dictionary = _get_selected_option()
+	if option.is_empty() or _processor == null:
+		return false
+	return _processor.attack_effect_id_ignores_weakness(
+		str(option.get("source_effect_id", "")),
+		int(option.get("attack_index", -1)),
+		attacker,
+		state,
+		[get_attack_interaction_context()],
+		AttackCopyAttack
+	)
+
+
+func ignores_resistance(attacker: PokemonSlot, state: GameState, _attack_index: int = -1) -> bool:
+	var option: Dictionary = _get_selected_option()
+	if option.is_empty() or _processor == null:
+		return false
+	return _processor.attack_effect_id_ignores_resistance(
+		str(option.get("source_effect_id", "")),
+		int(option.get("attack_index", -1)),
+		attacker,
+		state,
+		[get_attack_interaction_context()],
+		AttackCopyAttack
+	)
+
+
+func ignores_defender_effects(attacker: PokemonSlot, state: GameState, _attack_index: int = -1) -> bool:
+	var option: Dictionary = _get_selected_option()
+	if option.is_empty() or _processor == null:
+		return false
+	return _processor.attack_effect_id_ignores_defender_effects(
+		str(option.get("source_effect_id", "")),
+		int(option.get("attack_index", -1)),
+		attacker,
+		state,
+		[get_attack_interaction_context()],
+		AttackCopyAttack
+	)
 
 
 func execute_attack(

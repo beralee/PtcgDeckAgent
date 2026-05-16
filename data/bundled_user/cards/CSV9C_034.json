@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "Tera",
+	"artist": "5ban Graphics",
+	"attacks": [
+		{
+			"cost": "R",
+			"damage": "30+",
+			"is_vstar_power": false,
+			"name": "深渊炽火",
+			"text": "追加造成自己弃牌区中能量张数×20伤害。"
+		},
+		{
+			"cost": "RPM",
+			"damage": "280",
+			"is_vstar_power": false,
+			"name": "紫水晶之怒",
+			"text": "将这只宝可梦身上附着的能量，全部放于弃牌区。"
+		}
+	],
+	"card_index": "034",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "【火】 深渊炽火 30+\n追加造成自己弃牌区中能量张数×20伤害。\n\n【火】【超】【钢】 紫水晶之怒 280\n将这只宝可梦身上附着的能量，全部放于弃牌区。\n\n\n",
+	"effect_id": "a533d02d029bd799e8c425beecd3ffaa",
+	"energy_provides": "",
+	"energy_type": "R",
+	"evolves_from": "炭小侍",
+	"hp": 270,
+	"image_local_path": "user://cards/images/CSV9C/034.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/034.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "ex",
+	"name": "苍炎刃鬼ex",
+	"name_en": "",
+	"rarity": "RR",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Stage 1",
+	"weakness_energy": "W",
+	"weakness_value": "×2",
+	"yoren_code": "Y1503"
+}

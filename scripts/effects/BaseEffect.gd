@@ -165,6 +165,64 @@ func clear_attack_interaction_context() -> void:
 	_attack_interaction_context.clear()
 
 
+func _apply_special_status(slot: PokemonSlot, status_name: String, state: GameState) -> bool:
+	if slot == null or status_name.strip_edges() == "":
+		return false
+	if _special_status_prevented(slot, state):
+		slot.clear_all_status()
+		return false
+	slot.set_status(status_name, true)
+	return true
+
+
+func _special_status_prevented(slot: PokemonSlot, state: GameState) -> bool:
+	if slot == null or state == null:
+		return false
+	var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null)
+	if processor != null and processor.has_method("prevents_special_status"):
+		return bool(processor.call("prevents_special_status", slot, state))
+	return EffectFestivalGrounds.prevents_special_status(slot, state) or EffectToolAncientBoosterEnergyCapsule.protects(slot, state)
+
+
+func _calculate_attack_target_damage(
+	attacker: PokemonSlot,
+	target: PokemonSlot,
+	damage_amount: int,
+	state: GameState
+) -> int:
+	if attacker == null or target == null or state == null or damage_amount <= 0:
+		return 0
+	if not _is_opponent_active_target(attacker, target, state):
+		return damage_amount
+	var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null)
+	if processor == null or not processor.has_method("get_attacker_modifier"):
+		return damage_amount
+	var pseudo_attack := {"damage": str(damage_amount)}
+	var attacker_modifier: int = int(processor.call("get_attacker_modifier", attacker, state, target))
+	var defender_modifier: int = 0
+	if processor.has_method("get_defender_modifier"):
+		defender_modifier = int(processor.call("get_defender_modifier", target, state, attacker))
+	return DamageCalculator.new().calculate_damage(
+		attacker,
+		target,
+		pseudo_attack,
+		state,
+		0,
+		attacker_modifier,
+		defender_modifier
+	)
+
+
+func _is_opponent_active_target(attacker: PokemonSlot, target: PokemonSlot, state: GameState) -> bool:
+	var top: CardInstance = attacker.get_top_card() if attacker != null else null
+	if top == null or top.owner_index < 0 or top.owner_index >= state.players.size():
+		return false
+	var opponent_index: int = 1 - top.owner_index
+	if opponent_index < 0 or opponent_index >= state.players.size():
+		return false
+	return target == state.players[opponent_index].active_pokemon
+
+
 func bind_default_attack_index(attack_index: int) -> void:
 	_default_attack_index_to_match = attack_index
 
@@ -234,6 +292,8 @@ func build_full_library_search_step(
 		step["utility_actions"] = (options.get("utility_actions", []) as Array).duplicate(true)
 	if options.has("prompt_type"):
 		step["prompt_type"] = str(options.get("prompt_type", ""))
+	if options.has("force_confirm"):
+		step["force_confirm"] = bool(options.get("force_confirm", false))
 	return step
 
 

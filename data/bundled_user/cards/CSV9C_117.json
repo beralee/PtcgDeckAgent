@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "YASHIRO Nanaco",
+	"attacks": [
+		{
+			"cost": "D",
+			"damage": "",
+			"is_vstar_power": false,
+			"name": "踏平",
+			"text": "将对手牌库上方1张卡牌放于弃牌区。"
+		},
+		{
+			"cost": "DC",
+			"damage": "20",
+			"is_vstar_power": false,
+			"name": "咬住",
+			"text": ""
+		}
+	],
+	"card_index": "117",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "【恶】 踏平\n将对手牌库上方1张卡牌放于弃牌区。\n\n【恶】【无】 咬住 20\n\n\n",
+	"effect_id": "66e063ab0666db09ce429dc6974b8df8",
+	"energy_provides": "",
+	"energy_type": "D",
+	"evolves_from": "",
+	"hp": 70,
+	"image_local_path": "user://cards/images/CSV9C/117.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/117.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "单首龙",
+	"name_en": "",
+	"rarity": "C",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Basic",
+	"weakness_energy": "G",
+	"weakness_value": "×2",
+	"yoren_code": "P633"
+}

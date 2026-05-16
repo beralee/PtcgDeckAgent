@@ -2,13 +2,112 @@ class_name BattleDisplayController
 extends RefCounted
 
 const BENCH_SIZE := 5
+const MAX_BENCH_SIZE := 8
 const USED_ABILITY_TILT_DEGREES := 15.0
+const PORTRAIT_HAND_INFO_FONT_SCALE := 3.0
+const PORTRAIT_HAND_INFO_FALLBACK_FONT_SIZE := 16
+const PORTRAIT_HAND_INFO_MAX_LINES := 2
 const BattleCardViewScript := preload("res://scenes/battle/BattleCardView.gd")
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 
 
 func _bt(scene: Object, key: String, params: Dictionary = {}) -> String:
 	return str(scene.call("_bt", key, params))
+
+
+func _scene_control(scene: Object, property_name: String, node_name: String) -> Control:
+	var value: Variant = scene.get(property_name)
+	if value is Control:
+		return value as Control
+	if scene is Node:
+		return (scene as Node).find_child(node_name, true, false) as Control
+	return null
+
+
+func _scene_label(scene: Object, property_name: String, node_name: String) -> Label:
+	return _scene_control(scene, property_name, node_name) as Label
+
+
+func _scene_button(scene: Object, property_name: String, node_name: String) -> Button:
+	return _scene_control(scene, property_name, node_name) as Button
+
+
+func _is_portrait_battle_layout(scene: Object) -> bool:
+	return scene != null and scene.has_method("_is_portrait_battle_layout_active") and bool(scene.call("_is_portrait_battle_layout_active"))
+
+
+func _portrait_hand_info_size(scene: Object, hand_container: HBoxContainer) -> Vector2:
+	var width := 0.0
+	var height := 0.0
+	var hand_scroll := _scene_control(scene, "_hand_scroll", "HandScroll") as ScrollContainer
+	if hand_scroll != null:
+		width = maxf(width, maxf(hand_scroll.custom_minimum_size.x, 0.0))
+		height = maxf(height, maxf(hand_scroll.custom_minimum_size.y, 0.0))
+	if hand_container != null:
+		width = maxf(width, maxf(hand_container.custom_minimum_size.x, 0.0))
+		height = maxf(height, maxf(hand_container.custom_minimum_size.y, 0.0))
+	var play_card_size_variant: Variant = scene.get("_play_card_size") if scene != null else null
+	if play_card_size_variant is Vector2:
+		height = maxf(height, (play_card_size_variant as Vector2).y)
+	if width <= 0.0 and hand_scroll != null:
+		width = maxf(width, hand_scroll.size.x)
+	if width <= 0.0 and hand_container != null:
+		width = maxf(width, hand_container.size.x)
+	if width <= 0.0 and scene is Control:
+		width = (scene as Control).size.x
+	if height <= 0.0:
+		height = 96.0
+	return Vector2(width, height)
+
+
+func _apply_portrait_hand_info_label_metrics(scene: Object, hand_container: HBoxContainer, label: Label) -> void:
+	if label == null:
+		return
+	var fixed_size := _portrait_hand_info_size(scene, hand_container)
+	label.clip_text = true
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	label.custom_minimum_size = fixed_size
+	label.max_lines_visible = PORTRAIT_HAND_INFO_MAX_LINES
+	if not _is_portrait_battle_layout(scene):
+		label.autowrap_mode = TextServer.AUTOWRAP_OFF
+		if hand_container != null:
+			hand_container.alignment = BoxContainer.ALIGNMENT_CENTER
+			hand_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			hand_container.custom_minimum_size.x = maxf(hand_container.custom_minimum_size.x, fixed_size.x)
+		return
+	var base_font_size := label.get_theme_font_size("font_size")
+	if base_font_size <= 0:
+		base_font_size = PORTRAIT_HAND_INFO_FALLBACK_FONT_SIZE
+	label.add_theme_font_size_override("font_size", maxi(roundi(float(base_font_size) * PORTRAIT_HAND_INFO_FONT_SCALE), PORTRAIT_HAND_INFO_FALLBACK_FONT_SIZE * 3))
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	if hand_container != null:
+		hand_container.alignment = BoxContainer.ALIGNMENT_CENTER
+		hand_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		hand_container.custom_minimum_size.x = maxf(hand_container.custom_minimum_size.x, fixed_size.x)
+
+
+func _restore_portrait_hand_card_row_metrics(scene: Object, hand_container: HBoxContainer) -> void:
+	if hand_container == null:
+		return
+	if _is_portrait_battle_layout(scene):
+		hand_container.alignment = BoxContainer.ALIGNMENT_BEGIN
+		hand_container.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		hand_container.custom_minimum_size.x = 0.0
+	else:
+		hand_container.alignment = BoxContainer.ALIGNMENT_CENTER
+		hand_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		hand_container.custom_minimum_size.x = 0.0
+	var play_card_size_variant: Variant = scene.get("_play_card_size") if scene != null else null
+	if play_card_size_variant is Vector2 and (play_card_size_variant as Vector2).y > 0.0:
+		hand_container.custom_minimum_size.y = (play_card_size_variant as Vector2).y
+
+
+func _prize_hud_text(count: int) -> String:
+	return "奖赏卡\n剩余%d张" % count
 
 
 func refresh_ui(scene: Object) -> void:
@@ -25,61 +124,81 @@ func refresh_ui(scene: Object) -> void:
 	var opponent: PlayerState = gs.players[opponent_player]
 	var opponent_visible_discard: Array[CardInstance] = _visible_discard_pile(scene, opponent_player, opponent.discard_pile)
 	var my_visible_discard: Array[CardInstance] = _visible_discard_pile(scene, view_player, my_player.discard_pile)
-	var phase_label: Label = scene.get("_lbl_phase")
-	var turn_label: Label = scene.get("_lbl_turn")
-	phase_label.text = _bt(scene, "battle.top.phase_line", {
+	var phase_label: Label = _scene_label(scene, "_lbl_phase", "LblPhase")
+	var turn_label: Label = _scene_label(scene, "_lbl_turn", "LblTurn")
+	var full_phase_line := _bt(scene, "battle.top.phase_line", {
 		"deck": get_selected_deck_name(current_player),
 		"count": opponent.hand.size(),
 	})
-	turn_label.text = _bt(scene, "battle.top.turn_line", {
+	var full_turn_line := _bt(scene, "battle.top.turn_line", {
 		"turn": gs.turn_number,
 		"player": get_display_player_name(current_player),
 	})
+	var portrait_layout := _is_portrait_battle_layout(scene)
+	var portrait_phase_line := _bt(scene, "battle.top.portrait_phase_line", {
+		"count": opponent.hand.size(),
+	})
+	var portrait_turn_line := _bt(scene, "battle.top.portrait_turn_line", {
+		"turn": gs.turn_number,
+		"side": "我方" if current_player == view_player else "对方",
+	})
+	if phase_label != null:
+		phase_label.text = "%s\n%s" % [portrait_turn_line, portrait_phase_line] if portrait_layout else full_phase_line
+		phase_label.tooltip_text = full_phase_line
+	if turn_label != null:
+		turn_label.visible = not portrait_layout
+		turn_label.text = portrait_turn_line if portrait_layout else full_turn_line
+		turn_label.tooltip_text = full_turn_line
 
-	var opponent_hand_button: Button = scene.get("_btn_opponent_hand")
+	var opponent_hand_button: Button = _scene_button(scene, "_btn_opponent_hand", "BtnOpponentHand")
 	if opponent_hand_button != null:
 		opponent_hand_button.visible = (not bool(scene.call("_is_review_mode"))) and GameManager.current_mode == GameManager.GameMode.VS_AI
-	var attack_vfx_preview_button: Button = scene.get("_btn_attack_vfx_preview")
+	var attack_vfx_preview_button: Button = _scene_button(scene, "_btn_attack_vfx_preview", "BtnAttackVfxPreview")
 	if attack_vfx_preview_button != null:
 		attack_vfx_preview_button.visible = false
-	var ai_advice_button: Button = scene.get("_btn_ai_advice")
+	var ai_advice_button: Button = _scene_button(scene, "_btn_ai_advice", "BtnAIAdvice")
 	if ai_advice_button != null:
 		ai_advice_button.visible = false
 		ai_advice_button.disabled = bool(scene.get("_battle_advice_busy"))
-	var battle_discuss_button: Button = scene.get("_btn_battle_discuss_ai")
+	var battle_discuss_button: Button = _scene_button(scene, "_btn_battle_discuss_ai", "BtnBattleDiscussAI")
 	if battle_discuss_button != null:
 		battle_discuss_button.visible = not bool(scene.call("_is_review_mode"))
-	var zeus_help_button: Button = scene.get("_btn_zeus_help")
+	var zeus_help_button: Button = _scene_button(scene, "_btn_zeus_help", "BtnZeusHelp")
 	if zeus_help_button != null:
 		zeus_help_button.visible = not bool(scene.call("_is_review_mode"))
 
-	var opp_prizes: Label = scene.get("_opp_prizes")
-	var opp_deck: Label = scene.get("_opp_deck")
-	var opp_discard: Label = scene.get("_opp_discard")
-	var opp_hand_label: Label = scene.get("_opp_hand_lbl")
-	var opp_hand_bar: PanelContainer = scene.get("_opp_hand_bar")
-	var opp_prize_hud_count: Label = scene.get("_opp_prize_hud_count")
-	var opp_deck_hud_value: Label = scene.get("_opp_deck_hud_value")
-	var opp_discard_hud_value: Label = scene.get("_opp_discard_hud_value")
-	opp_prizes.text = "x%d" % opponent.prizes.size()
-	opp_deck.text = "%d" % opponent.deck.size()
-	opp_discard.text = "%d" % opponent_visible_discard.size()
-	opp_hand_label.text = _bt(scene, "battle.top.opponent_hand_count", {"count": opponent.hand.size()})
-	opp_hand_bar.visible = false
-	opp_prize_hud_count.text = "x%d" % opponent.prizes.size()
+	var opp_prizes: Label = _scene_label(scene, "_opp_prizes", "OppPrizesCount")
+	var opp_deck: Label = _scene_label(scene, "_opp_deck", "OppDeck")
+	var opp_discard: Label = _scene_label(scene, "_opp_discard", "OppDiscard")
+	var opp_hand_label: Label = _scene_label(scene, "_opp_hand_lbl", "OppHandLbl")
+	var opp_hand_bar: PanelContainer = _scene_control(scene, "_opp_hand_bar", "OppHandBar") as PanelContainer
+	var opp_prize_hud_count: Label = _scene_label(scene, "_opp_prize_hud_count", "OppHudLeftValue")
+	var opp_deck_hud_value: Label = _scene_label(scene, "_opp_deck_hud_value", "OppDeckHudValue")
+	var opp_discard_hud_value: Label = _scene_label(scene, "_opp_discard_hud_value", "OppDiscardHudValue")
+	if opp_prizes != null:
+		opp_prizes.text = "x%d" % opponent.prizes.size()
+	if opp_deck != null:
+		opp_deck.text = "%d" % opponent.deck.size()
+	if opp_discard != null:
+		opp_discard.text = "%d" % opponent_visible_discard.size()
+	if opp_hand_label != null:
+		opp_hand_label.text = _bt(scene, "battle.top.opponent_hand_count", {"count": opponent.hand.size()})
+	if opp_hand_bar != null:
+		opp_hand_bar.visible = false
+	opp_prize_hud_count.text = _prize_hud_text(opponent.prizes.size())
 	opp_deck_hud_value.text = _bt(scene, "battle.top.card_count", {"count": opponent.deck.size()})
 	opp_discard_hud_value.text = _bt(scene, "battle.top.card_count", {"count": opponent_visible_discard.size()})
 
-	var my_prizes: Label = scene.get("_my_prizes")
-	var my_deck: Label = scene.get("_my_deck")
-	var my_discard: Label = scene.get("_my_discard")
-	var my_prize_hud_count: Label = scene.get("_my_prize_hud_count")
-	var my_deck_hud_value: Label = scene.get("_my_deck_hud_value")
-	var my_discard_hud_value: Label = scene.get("_my_discard_hud_value")
+	var my_prizes: Label = _scene_label(scene, "_my_prizes", "MyPrizesCount")
+	var my_deck: Label = _scene_label(scene, "_my_deck", "MyDeck")
+	var my_discard: Label = _scene_label(scene, "_my_discard", "MyDiscard")
+	var my_prize_hud_count: Label = _scene_label(scene, "_my_prize_hud_count", "MyHudLeftValue")
+	var my_deck_hud_value: Label = _scene_label(scene, "_my_deck_hud_value", "MyDeckHudValue")
+	var my_discard_hud_value: Label = _scene_label(scene, "_my_discard_hud_value", "MyDiscardHudValue")
 	my_prizes.text = "x%d" % my_player.prizes.size()
 	my_deck.text = "%d" % my_player.deck.size()
 	my_discard.text = "%d" % my_visible_discard.size()
-	my_prize_hud_count.text = "x%d" % my_player.prizes.size()
+	my_prize_hud_count.text = _prize_hud_text(my_player.prizes.size())
 	my_deck_hud_value.text = _bt(scene, "battle.top.card_count", {"count": my_player.deck.size()})
 	my_discard_hud_value.text = _bt(scene, "battle.top.card_count", {"count": my_visible_discard.size()})
 
@@ -89,10 +208,12 @@ func refresh_ui(scene: Object) -> void:
 	refresh_field_card_views(scene, gs)
 
 	var is_my_turn: bool = (not bool(scene.call("_is_review_mode"))) and current_player == view_player and gs.phase == GameState.GamePhase.MAIN
-	var end_turn_button: Button = scene.get("_btn_end_turn")
-	var hud_end_turn_button: Button = scene.get("_hud_end_turn_btn")
-	end_turn_button.disabled = not is_my_turn
-	hud_end_turn_button.disabled = end_turn_button.disabled
+	var end_turn_button: Button = _scene_button(scene, "_btn_end_turn", "BtnEndTurn")
+	var hud_end_turn_button: Button = _scene_button(scene, "_hud_end_turn_btn", "HudEndTurnBtn")
+	if end_turn_button != null:
+		end_turn_button.disabled = not is_my_turn
+	if hud_end_turn_button != null:
+		hud_end_turn_button.disabled = not is_my_turn
 	refresh_stadium_area(scene, gs, current_player, is_my_turn)
 	refresh_info_hud(scene, gs, view_player, opponent_player)
 
@@ -166,13 +287,18 @@ func _apply_back_textures(slots: Array[BattleCardView], texture: Texture2D) -> v
 
 
 func refresh_stadium_area(scene: Object, gs: GameState, current_player: int, is_my_turn: bool) -> void:
-	var stadium_label: Label = scene.get("_stadium_lbl")
-	var stadium_action_button: Button = scene.get("_btn_stadium_action")
+	if scene.has_method("_refresh_stadium_card_hud"):
+		scene.call("_refresh_stadium_card_hud", gs, current_player, is_my_turn)
+		return
+	var stadium_label: Label = _scene_label(scene, "_stadium_lbl", "StadiumLbl")
+	var stadium_action_button: Button = _scene_button(scene, "_btn_stadium_action", "BtnStadiumAction")
 	if gs.stadium_card == null:
-		stadium_label.visible = true
-		stadium_label.text = _bt(scene, "battle.stadium.none")
-		stadium_action_button.visible = false
-		stadium_action_button.disabled = true
+		if stadium_label != null:
+			stadium_label.visible = true
+			stadium_label.text = _bt(scene, "battle.stadium.none")
+		if stadium_action_button != null:
+			stadium_action_button.visible = false
+			stadium_action_button.disabled = true
 		return
 
 	var stadium_name: String = gs.stadium_card.card_data.name
@@ -180,16 +306,20 @@ func refresh_stadium_area(scene: Object, gs: GameState, current_player: int, is_
 	var effect: BaseEffect = gsm.effect_processor.get_effect(gs.stadium_card.card_data.effect_id)
 	var is_action_stadium: bool = effect != null and effect.can_use_as_stadium_action(gs.stadium_card, gs)
 	if is_action_stadium:
-		stadium_label.visible = false
-		stadium_action_button.visible = true
-		stadium_action_button.text = _bt(scene, "battle.stadium.action_button", {"name": stadium_name})
-		stadium_action_button.disabled = not (is_my_turn and gsm.can_use_stadium_effect(current_player))
+		if stadium_label != null:
+			stadium_label.visible = false
+		if stadium_action_button != null:
+			stadium_action_button.visible = true
+			stadium_action_button.text = _bt(scene, "battle.stadium.action_button", {"name": stadium_name})
+			stadium_action_button.disabled = not (is_my_turn and gsm.can_use_stadium_effect(current_player))
 		return
 
-	stadium_label.visible = true
-	stadium_label.text = _bt(scene, "battle.stadium.label", {"name": stadium_name})
-	stadium_action_button.visible = false
-	stadium_action_button.disabled = true
+	if stadium_label != null:
+		stadium_label.visible = true
+		stadium_label.text = _bt(scene, "battle.stadium.label", {"name": stadium_name})
+	if stadium_action_button != null:
+		stadium_action_button.visible = false
+		stadium_action_button.disabled = true
 
 
 func refresh_info_hud(scene: Object, gs: GameState, view_player: int, opponent_player: int) -> void:
@@ -293,10 +423,17 @@ func _visible_discard_pile(scene: Object, player_index: int, actual_discard: Arr
 func refresh_field_card_views(scene: Object, gs: GameState) -> void:
 	var view_player: int = int(scene.get("_view_player"))
 	var opponent_player: int = 1 - view_player
+	var bench_display_size: Variant = BENCH_SIZE
+	if scene.has_method("_current_bench_display_sizes"):
+		bench_display_size = scene.call("_current_bench_display_sizes")
+	elif scene.has_method("_current_bench_display_size"):
+		bench_display_size = int(scene.call("_current_bench_display_size"))
+	if scene.has_method("_sync_bench_slot_visibility"):
+		scene.call("_sync_bench_slot_visibility", bench_display_size)
 	refresh_slot_card_view(scene, "my_active", gs.players[view_player].active_pokemon, true)
 	refresh_slot_card_view(scene, "opp_active", gs.players[opponent_player].active_pokemon, true)
 
-	for i: int in BENCH_SIZE:
+	for i: int in MAX_BENCH_SIZE:
 		var my_bench_slot: PokemonSlot = gs.players[view_player].bench[i] if i < gs.players[view_player].bench.size() else null
 		var opp_bench_slot: PokemonSlot = gs.players[opponent_player].bench[i] if i < gs.players[opponent_player].bench.size() else null
 		refresh_slot_card_view(scene, "my_bench_%d" % i, my_bench_slot, false)
@@ -308,7 +445,12 @@ func refresh_slot_card_view(scene: Object, slot_id: String, slot: PokemonSlot, i
 	var card_view: BattleCardView = slot_card_views.get(slot_id)
 	if card_view == null:
 		return
+	# Field Pokemon use the same readable HP/USED/Tool status metrics in both layouts.
+	card_view.set_status_text_scale(1.0 if _is_portrait_battle_layout(scene) else 0.8)
 	var slot_panel := card_view.get_parent() as PanelContainer
+	if card_view.has_method("set_field_slot_layout_size"):
+		card_view.call("set_field_slot_layout_size", _field_slot_layout_size(scene, slot_panel, card_view))
+	card_view.set_portrait_status_metrics_enabled(true)
 	var field_slot_index_map: Dictionary = scene.get("_field_interaction_slot_index_by_id")
 	var is_selectable := field_slot_index_map.has(slot_id)
 	var selected_slot_ids: Array[String] = scene.call("_field_interaction_selected_slot_ids")
@@ -329,6 +471,8 @@ func refresh_slot_card_view(scene: Object, slot_id: String, slot: PokemonSlot, i
 
 	var top_card: CardInstance = slot.get_top_card()
 	card_view.setup_from_instance(top_card, BattleCardView.MODE_SLOT_ACTIVE if is_active else BattleCardView.MODE_SLOT_BENCH)
+	if card_view.has_method("set_field_slot_layout_size"):
+		card_view.call("set_field_slot_layout_size", _field_slot_layout_size(scene, slot_panel, card_view))
 	card_view.set_disabled(should_disable)
 	card_view.set_selected(is_selected)
 	card_view.set_selectable_hint(is_selectable and not is_selected)
@@ -336,6 +480,19 @@ func refresh_slot_card_view(scene: Object, slot_id: String, slot: PokemonSlot, i
 	card_view.set_battle_status(build_battle_status(scene, slot))
 	card_view.set_tilt_degrees(USED_ABILITY_TILT_DEGREES if slot_used_ability_this_turn(scene, slot) else 0.0)
 	apply_field_slot_style(scene, slot_panel, slot_id, true, is_active)
+
+
+func _field_slot_layout_size(scene: Object, slot_panel: PanelContainer, card_view: BattleCardView) -> Vector2:
+	if slot_panel != null and slot_panel.custom_minimum_size.x > 0.0 and slot_panel.custom_minimum_size.y > 0.0:
+		return slot_panel.custom_minimum_size
+	if card_view != null and card_view.custom_minimum_size.x > 0.0 and card_view.custom_minimum_size.y > 0.0:
+		return card_view.custom_minimum_size
+	var play_card_size_variant: Variant = scene.get("_play_card_size")
+	if play_card_size_variant is Vector2:
+		var play_card_size := play_card_size_variant as Vector2
+		if play_card_size.x > 0.0 and play_card_size.y > 0.0:
+			return play_card_size
+	return Vector2.ZERO
 
 
 func apply_field_slot_style(scene: Object, panel: PanelContainer, slot_id: String, occupied: bool, is_active: bool) -> void:
@@ -585,8 +742,11 @@ func refresh_hand(scene: Object) -> void:
 	if bool(scene.get("_draw_reveal_active")) and not bool(scene.get("_draw_reveal_allow_hand_refresh_during_fly")):
 		scene.set("_draw_reveal_pending_hand_refresh", true)
 		return
-	var hand_container: HBoxContainer = scene.get("_hand_container")
+	var hand_container: HBoxContainer = _scene_control(scene, "_hand_container", "HandContainer") as HBoxContainer
+	if hand_container == null:
+		return
 	clear_container_children(hand_container)
+	_restore_portrait_hand_card_row_metrics(scene, hand_container)
 
 	var gs: GameState = gsm.game_state
 	var current_player: int = gs.current_player_index
@@ -604,6 +764,7 @@ func refresh_hand(scene: Object) -> void:
 			if latest_opponent_action_text != "" and latest_opponent_action_turn_number == gs.turn_number
 			else _bt(scene, "battle.hand.waiting")
 		)
+		_apply_portrait_hand_info_label_metrics(scene, hand_container, waiting_label)
 		hand_container.add_child(waiting_label)
 		return
 	var current_reveal: GameAction = scene.get("_draw_reveal_current_action") as GameAction
@@ -645,8 +806,15 @@ func build_hand_card(scene: Object, inst: CardInstance) -> PanelContainer:
 	card_view.setup_from_instance(inst, BattleCardView.MODE_HAND)
 	card_view.set_selected(scene.get("_selected_hand_card") == inst)
 	card_view.set_info(inst.card_data.name, hand_card_subtext(inst.card_data))
+	if scene.has_method("_handle_hand_drag_scroll_input"):
+		card_view.hand_drag_input.connect(func(event: InputEvent) -> void:
+			scene.call("_handle_hand_drag_scroll_input", event, "hand_card_gui")
+		)
 	card_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
-		scene.call("_on_hand_card_clicked", inst, card_view)
+		if scene.has_method("_show_hand_card_detail"):
+			scene.call("_show_hand_card_detail", inst)
+		else:
+			scene.call("_show_card_detail", inst.card_data)
 	)
 	card_view.right_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
 		scene.call("_show_card_detail", inst.card_data)
@@ -712,6 +880,14 @@ func show_discard_pile(scene: Object, player_index: int, title: String) -> void:
 	_show_card_collection(scene, title, player.discard_pile, true, "show_discard", player_index)
 
 
+func show_lost_zone(scene: Object, player_index: int, title: String) -> void:
+	var gsm: Variant = scene.get("_gsm")
+	if gsm == null:
+		return
+	var player: PlayerState = gsm.game_state.players[player_index]
+	_show_card_collection(scene, title, player.lost_zone, true, "show_lost_zone", player_index)
+
+
 func show_prize_cards(scene: Object, player_index: int, title: String) -> void:
 	var gsm: Variant = scene.get("_gsm")
 	if gsm == null:
@@ -748,10 +924,19 @@ func _show_card_collection(
 	discard_title.text = _bt(scene, "battle.zone.count_title", {"title": title, "count": cards.size()})
 	discard_list.clear()
 	if discard_card_scroll != null:
+		var show_visible_scrollbar := _card_collection_uses_visible_scrollbar(scene)
 		discard_card_scroll.scroll_horizontal = 0
 		discard_card_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 		discard_card_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-		HudThemeScript.style_scroll_container(discard_card_scroll)
+		discard_card_scroll.set_meta("card_gallery_drag_keep_scrollbars_visible", show_visible_scrollbar)
+		if scene.has_method("_set_card_gallery_drag_scroll_active"):
+			scene.call("_set_card_gallery_drag_scroll_active", discard_card_scroll, true)
+		HudThemeScript.style_scroll_container(discard_card_scroll, _card_collection_scroll_profile(scene))
+		if show_visible_scrollbar:
+			if scene.has_method("_restore_card_gallery_scrollbars_for"):
+				scene.call("_restore_card_gallery_scrollbars_for", discard_card_scroll)
+		elif scene.has_method("_hide_card_gallery_scrollbars_for"):
+			scene.call("_hide_card_gallery_scrollbars_for", discard_card_scroll)
 	if discard_card_row != null:
 		clear_container_children(discard_card_row)
 		if cards.is_empty():
@@ -774,6 +959,11 @@ func _show_card_collection(
 				var listed_card: CardInstance = card_variant as CardInstance
 				var card_data: CardData = listed_card.card_data
 				discard_list.add_item("%s [%s]" % [card_data.name, scene.call("_card_type_cn", card_data)])
+				discard_list.set_item_metadata(discard_list.item_count - 1, card_data)
+	if scene.has_method("_apply_discard_collection_metrics"):
+		scene.call("_apply_discard_collection_metrics")
+	if scene.has_method("_apply_portrait_popup_text_metrics"):
+		scene.call("_apply_portrait_popup_text_metrics")
 	discard_overlay.visible = true
 	scene.call("_runtime_log", event_name, "player=%d title=%s count=%d" % [player_index, title, cards.size()])
 
@@ -800,14 +990,29 @@ func _populate_card_collection(scene: Object, card_row: HBoxContainer, ordered_c
 		card_view.custom_minimum_size = dialog_card_size
 		card_view.set_clickable(true)
 		card_view.setup_from_instance(card, BattleCardView.MODE_PREVIEW)
+		card_view.set_secondary_inspect_enabled(true)
 		card_view.set_badges("", "")
 		card_view.set_info("", "")
+		if scene.has_method("_configure_card_gallery_card_view"):
+			scene.call("_configure_card_gallery_card_view", card_view, scene.get("_discard_card_scroll"), "discard_collection")
 		card_view.left_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
+			if scene.has_method("_is_card_gallery_drag_click_suppressed") and bool(scene.call("_is_card_gallery_drag_click_suppressed")):
+				return
 			if cd != null:
 				scene.call("_show_card_detail", cd)
 		)
 		card_view.right_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
+			if scene.has_method("_is_card_gallery_drag_click_suppressed") and bool(scene.call("_is_card_gallery_drag_click_suppressed")):
+				return
 			if cd != null:
 				scene.call("_show_card_detail", cd)
 		)
 		card_row.add_child(card_view)
+
+
+func _card_collection_uses_visible_scrollbar(scene: Object) -> bool:
+	return scene != null and scene.has_method("_is_portrait_popup_text_profile_active") and bool(scene.call("_is_portrait_popup_text_profile_active"))
+
+
+func _card_collection_scroll_profile(scene: Object) -> String:
+	return "portrait_touch" if _card_collection_uses_visible_scrollbar(scene) else "touch"

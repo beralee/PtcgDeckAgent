@@ -371,6 +371,132 @@ func test_lugia_llm_blocks_bad_retreat_and_low_deck_research() -> String:
 	])
 
 
+func test_lugia_llm_ready_backup_handoff_route_is_attack_pivot() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyLugiaArcheopsLLM.gd should instantiate"
+	var gs := _make_game_state(10)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_lugia_vstar_cd(), 0)
+	var archeops_a := _make_slot(_archeops_cd(), 0)
+	var archeops_b := _make_slot(_archeops_cd(), 0)
+	var cinccino := _make_slot(_cinccino_cd(), 0)
+	cinccino.attached_energy.append(CardInstance.create(_make_energy_cd("Gift Energy"), 0))
+	cinccino.attached_energy.append(CardInstance.create(_make_energy_cd("Double Turbo Energy"), 0))
+	player.bench.append(archeops_a)
+	player.bench.append(archeops_b)
+	player.bench.append(cinccino)
+	_fill_deck(player, 20)
+	var payload: Dictionary = strategy.call("build_action_id_request_payload_for_test", gs, 0, [
+		{"kind": "retreat", "bench_target": cinccino},
+		{"kind": "end_turn"},
+	])
+	var route := _find_route(payload, "route:lugia_ready_backup_handoff")
+	var actions := _route_action_ids(route)
+	return run_checks([
+		assert_true(not route.is_empty(), "Payload should expose a ready-backup handoff route when active cannot attack"),
+		assert_eq(str(route.get("goal", "")), "pivot_to_attack", "Ready-backup route should be hard-preferred as an attack pivot"),
+		assert_true(not actions.is_empty() and actions[0].begins_with("retreat:"), "Ready-backup route should pivot before any padding action"),
+	])
+
+
+func test_lugia_llm_vstar_evolution_replans_for_primal_turbo_after_limit() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyLugiaArcheopsLLM.gd should instantiate"
+	var before_snapshot := {
+		"turn": 12,
+		"active_name": "Lugia V",
+		"bench_names": ["Archeops", "Archeops", "Lumineon V"],
+		"archeops_field_count": 2,
+		"ready_attacker_count": 0,
+		"ready_backup_attacker_count": 0,
+		"field_energy_count": 2,
+	}
+	var after_snapshot := before_snapshot.duplicate(true)
+	after_snapshot["active_name"] = "Lugia VSTAR"
+	var trigger: Dictionary = strategy.call("_deck_replan_trigger_after_state_change", before_snapshot, after_snapshot, {
+		"action_kind": "evolve",
+		"action_card_name": "Lugia VSTAR",
+	})
+	return run_checks([
+		assert_true(bool(trigger.get("should_replan", false)), "Lugia VSTAR evolution with Archeops online should force a fresh Primal Turbo plan"),
+		assert_eq(str(trigger.get("reason", "")), "lugia_vstar_evolved_needs_primal_turbo", "The trigger should explain the missing energy-conversion window"),
+		assert_true(bool(trigger.get("ignore_replan_limit", false)), "This replan must bypass the per-turn limit after a draw/search-heavy route"),
+	])
+
+
+func test_lugia_llm_manual_attach_can_substitute_special_energy_before_draw() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyLugiaArcheopsLLM.gd should instantiate"
+	var gs := _make_game_state(12)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_lugia_v_cd(), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Double Turbo Energy"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Jet Energy"), 0))
+	_fill_deck(player, 16)
+	strategy.set("_cached_turn_number", 12)
+	strategy.set("_llm_queue_turn", 12)
+	strategy.set("_llm_decision_tree", {"actions": [{"type": "play_trainer"}, {"type": "attach_energy"}]})
+	strategy.set("_llm_action_catalog", {"queued": {"id": "queued"}})
+	strategy.set("_llm_action_queue", [
+		{"kind": "play_trainer", "action_id": "play_trainer:c39", "capability": "discard_to_draw", "card": "Professor's Research"},
+		{"kind": "attach_energy", "action_id": "attach_energy:c1:active", "capability": "manual_attach", "card": "Jet Energy", "position": "active", "target": "Lugia V"},
+		{"kind": "end_turn", "action_id": "end_turn"},
+	])
+	var gift_attach := {
+		"kind": "attach_energy",
+		"card": CardInstance.create(_make_energy_cd("Gift Energy"), 0),
+		"target_slot": player.active_pokemon,
+	}
+	var attach_score: float = strategy.call("score_action_absolute", gift_attach, gs, 0)
+	return assert_true(attach_score > 10000.0, "Any useful Special Energy attach to active Lugia should be treated as the queued manual attach before non-critical discard draw")
+
+
+func test_lugia_llm_attack_cannot_skip_queued_primal_turbo() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyLugiaArcheopsLLM.gd should instantiate"
+	var gs := _make_game_state(8)
+	var player: PlayerState = gs.players[0]
+	var cinccino := _make_slot(_cinccino_cd(), 0)
+	cinccino.attached_energy.append(CardInstance.create(_make_energy_cd("Gift Energy"), 0))
+	cinccino.attached_energy.append(CardInstance.create(_make_energy_cd("Double Turbo Energy"), 0))
+	player.active_pokemon = cinccino
+	player.bench.append(_make_slot(_lugia_v_cd(), 0))
+	player.bench.append(_make_slot(_archeops_cd(), 0))
+	_fill_deck(player, 20)
+	strategy.set("_cached_turn_number", 8)
+	strategy.set("_llm_queue_turn", 8)
+	strategy.set("_llm_decision_tree", {"actions": [{"type": "use_ability"}, {"type": "attack"}]})
+	strategy.set("_llm_action_catalog", {"queued": {"id": "queued"}})
+	strategy.set("_llm_action_queue", [
+		{"type": "use_ability", "kind": "use_ability", "capability": "ability", "pokemon": "Archeops"},
+		{"type": "attack", "kind": "attack", "attack_name": "Special Roll"},
+	])
+	var attack_action := {
+		"kind": "attack",
+		"attack_index": 0,
+		"attack_name": "Special Roll",
+		"attack_rules": _cinccino_cd().attacks[0],
+		"projected_damage": 140,
+	}
+	var unplanned_attack := {
+		"kind": "attack",
+		"attack_index": 1,
+		"attack_name": "Pound",
+		"attack_rules": {"name": "Pound", "cost": "C", "damage": "10"},
+		"projected_damage": 10,
+	}
+	var attack_score: float = strategy.call("score_action_absolute", attack_action, gs, 0)
+	var unplanned_attack_score: float = strategy.call("score_action_absolute", unplanned_attack, gs, 0)
+	return run_checks([
+		assert_true(attack_score <= -1000.0, "Lugia route must not skip queued Primal Turbo before attacking"),
+		assert_true(unplanned_attack_score <= -1000.0, "Lugia route must not allow an unplanned fallback attack while Primal Turbo is queued"),
+	])
+
+
 func test_lugia_llm_end_turn_repair_does_not_insert_unready_lugia_retreat() -> String:
 	var strategy := _new_llm_strategy()
 	if strategy == null:

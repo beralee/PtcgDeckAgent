@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "风扇呼唤",
+			"text": "只有在最初的自己的回合可以使用1次。选择自己牌库中，最多3张HP在「100」及以下的【无】宝可梦，在给对手看过之后，加入手牌。并重洗牌库。在这个回合，如果已经使用了其他的「风扇呼唤」的话，则无法使用这个特性。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "Toshinao Aoki",
+	"attacks": [
+		{
+			"cost": "C",
+			"damage": "70",
+			"is_vstar_power": false,
+			"name": "突击登陆",
+			"text": "如果场上没有竞技场的话，则这个招式失败。"
+		}
+	],
+	"card_index": "161",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "特性: 风扇呼唤\n只有在最初的自己的回合可以使用1次。选择自己牌库中，最多3张HP在「100」及以下的【无】宝可梦，在给对手看过之后，加入手牌。并重洗牌库。在这个回合，如果已经使用了其他的「风扇呼唤」的话，则无法使用这个特性。\n\n【无】 突击登陆 70\n如果场上没有竞技场的话，则这个招式失败。\n\n\n",
+	"effect_id": "617649459c3795af10c38e477e35ba73",
+	"energy_provides": "",
+	"energy_type": "C",
+	"evolves_from": "",
+	"hp": 70,
+	"image_local_path": "user://cards/images/CSV9C/161.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/161.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "旋转洛托姆",
+	"name_en": "",
+	"rarity": "C",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "F",
+	"resistance_value": "-30",
+	"retreat_cost": 1,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Basic",
+	"weakness_energy": "L",
+	"weakness_value": "×2",
+	"yoren_code": "P479"
+}

@@ -13,18 +13,26 @@ class RefreshHandSceneStub extends Control:
 	var _draw_reveal_current_action: GameAction = null
 	var _draw_reveal_visible_instance_ids: Array[int] = []
 	var _draw_reveal_queue: Array = []
+	var _hand_scroll: ScrollContainer = ScrollContainer.new()
 	var _hand_container: HBoxContainer = HBoxContainer.new()
 	var _view_player: int = 0
 	var _latest_opponent_action_text: String = ""
 	var _latest_opponent_action_turn_number: int = -1
 	var _selected_hand_card: CardInstance = null
 	var _play_card_size: Vector2 = Vector2(130, 182)
+	var _portrait_active: bool = false
 
 	func _init() -> void:
-		add_child(_hand_container)
+		_hand_scroll.name = "HandScroll"
+		_hand_container.name = "HandContainer"
+		_hand_scroll.add_child(_hand_container)
+		add_child(_hand_scroll)
 
 	func _bt(key: String, params: Dictionary = {}) -> String:
 		return BattleI18n.t(key, params)
+
+	func _is_portrait_battle_layout_active() -> bool:
+		return _portrait_active
 
 
 func _make_refresh_hand_scene_stub(current_player: int, turn_number: int) -> RefreshHandSceneStub:
@@ -179,4 +187,42 @@ func test_refresh_hand_falls_back_to_waiting_text_when_opponent_has_no_current_t
 	var label := hand_container.get_child(0) as Label
 	return run_checks([
 		assert_eq(label.text, BattleI18n.t("battle.hand.waiting"), "The hand area should fall back to the waiting copy before the opponent logs a new action this turn"),
+	])
+
+
+func test_refresh_hand_enlarges_and_centers_portrait_waiting_text() -> String:
+	var controller := BattleDisplayControllerScript.new()
+	var scene := _make_refresh_hand_scene_stub(1, 8)
+	scene._portrait_active = true
+	scene._hand_scroll.custom_minimum_size = Vector2(360, 120)
+
+	controller.call("refresh_hand", scene)
+
+	var hand_container: HBoxContainer = scene._hand_container
+	var label := hand_container.get_child(0) as Label
+	var font_size := label.get_theme_font_size("font_size")
+	return run_checks([
+		assert_eq(label.horizontal_alignment, HORIZONTAL_ALIGNMENT_CENTER, "Portrait hand info text should be horizontally centered"),
+		assert_eq(label.vertical_alignment, VERTICAL_ALIGNMENT_CENTER, "Portrait hand info text should be vertically centered"),
+		assert_gte(font_size, 48, "Portrait hand info text should be at least three times the default label size"),
+		assert_gte(label.custom_minimum_size.x, 360.0, "Portrait hand info label should fill the hand scroll width"),
+		assert_gte(label.custom_minimum_size.y, 120.0, "Portrait hand info label should fill the hand scroll height"),
+		assert_eq(hand_container.alignment, BoxContainer.ALIGNMENT_CENTER, "Portrait hand info should be centered within the hand row"),
+	])
+
+
+func test_refresh_hand_restores_portrait_card_row_after_waiting_text() -> String:
+	var controller := BattleDisplayControllerScript.new()
+	var scene := _make_refresh_hand_scene_stub(1, 8)
+	scene._portrait_active = true
+	scene._hand_scroll.custom_minimum_size = Vector2(360, 120)
+
+	controller.call("refresh_hand", scene)
+	scene._gsm.game_state.current_player_index = 0
+	controller.call("refresh_hand", scene)
+
+	return run_checks([
+		assert_eq(scene._hand_container.alignment, BoxContainer.ALIGNMENT_BEGIN, "Portrait hand card row should return to left-start alignment after the waiting label is removed"),
+		assert_eq(scene._hand_container.size_flags_horizontal, Control.SIZE_SHRINK_BEGIN, "Portrait hand card row should return to shrink-begin sizing for horizontal scrolling"),
+		assert_eq(scene._hand_container.custom_minimum_size.x, 0.0, "Portrait hand card row should not keep the waiting label's full-width minimum"),
 	])

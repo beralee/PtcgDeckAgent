@@ -4,6 +4,7 @@ extends RefCounted
 const LLMDecisionTreeExecutorScript = preload("res://scripts/ai/LLMDecisionTreeExecutor.gd")
 const LLMDeckCapabilityExtractorScript = preload("res://scripts/ai/LLMDeckCapabilityExtractor.gd")
 const LLMRouteCandidateBuilderScript = preload("res://scripts/ai/LLMRouteCandidateBuilder.gd")
+const AIIntentPlannerCoordinatorScript = preload("res://scripts/ai/intent/AIIntentPlannerCoordinator.gd")
 
 const SCHEMA_VERSION := "llm_decision_tree_v1"
 const ACTION_ID_SCHEMA_VERSION := "llm_action_id_tree_v1"
@@ -11,7 +12,7 @@ const FAST_CHOICE_SCHEMA_VERSION := "llm_fast_choice_v1"
 
 const VALID_ACTION_TYPES: Array[String] = [
 	"play_basic_to_bench", "attach_energy", "attach_tool", "evolve",
-	"play_trainer", "play_stadium", "use_ability", "retreat", "attack", "end_turn",
+	"play_trainer", "play_stadium", "use_stadium_effect", "use_ability", "retreat", "attack", "granted_attack", "end_turn",
 ]
 
 const EFFECT_ID_RULE_TAGS := {
@@ -23,10 +24,14 @@ const EFFECT_ID_RULE_TAGS := {
 	"651276c51911345aa091c1c7b87f3f4f": ["energy_related", "supporter_related", "energy_acceleration"],
 	"8538726d6cdfad2fa3ca5f4b462c12c5": ["energy_related", "recover_to_hand"],
 	"409898a79b38fe8ca279e7bdaf4fd52e": ["energy_related", "draw", "ability_engine", "charge_engine", "safe_pre_attack", "productive_engine"],
+	"4abd956bdf3e956fcf679120601760ff": ["draw", "discard", "filter_engine", "productive_engine"],
+	"c117bea3cc758d46430d6bef11062a56": ["search_deck", "bench_related", "pokemon_related", "productive_engine"],
+	"d781c9da21b24ff7a1453150a534c9df": ["energy_related", "energy_acceleration", "damage_counters", "productive_engine"],
 	"8ef5ff61fd97838af568f00fe3b0e3ea": ["draw", "ability_engine", "ends_turn"],
 	"768b545a38fccd5e265093b5adce10af": ["search_deck", "supporter_related"],
 	"a337ed34a45e63c6d21d98c3d8e0cb6e": ["search_deck", "discard"],
 	"5bdbc985f9aa2e6f248b53f6f35d1d37": ["search_deck", "item_related", "tool_related", "supporter_related"],
+	"9fa9943ccda36f417ac3cb675177c216": ["search_deck", "tool_related", "ability_engine", "productive_engine", "vstar_power"],
 	"d3891abcfe3277c8811cde06741d3236": ["evolution"],
 	"8e1fa2c9018db938084c94c7c970d419": ["gust"],
 	"4ec261453212280d0eb03ed8254ca97f": ["gust", "switch_or_retreat"],
@@ -37,13 +42,19 @@ const EFFECT_ID_RULE_TAGS := {
 
 var _capability_extractor: RefCounted = LLMDeckCapabilityExtractorScript.new()
 var _route_candidate_builder: RefCounted = LLMRouteCandidateBuilderScript.new()
+var _intent_planner_coordinator: RefCounted = AIIntentPlannerCoordinatorScript.new()
 var _deck_strategy_id: String = ""
 var _deck_strategy_prompt: PackedStringArray = PackedStringArray()
+var _intent_planner_profile: Dictionary = {}
 
 
 func set_deck_strategy_prompt(strategy_id: String, prompt_lines: PackedStringArray) -> void:
 	_deck_strategy_id = strategy_id
 	_deck_strategy_prompt = prompt_lines
+
+
+func set_intent_planner_profile(profile: Dictionary) -> void:
+	_intent_planner_profile = profile.duplicate(true)
 
 
 func build_request_payload(game_state: GameState, player_index: int) -> Dictionary:
@@ -82,6 +93,8 @@ func build_action_id_request_payload(
 	prompt_actions.append_array(future_actions)
 	var legal_action_groups: Dictionary = _legal_action_groups(summarized_actions)
 	var turn_tactical_facts: Dictionary = _turn_tactical_facts(game_state, player, player_index, summarized_actions, legal_action_groups, future_actions)
+	var intent_facts: Dictionary = _intent_planner_coordinator.call("build_facts", game_state, player_index, summarized_actions, _intent_planner_profile)
+	turn_tactical_facts["intent_summary"] = _compact_intent_summary(intent_facts)
 	var candidate_routes: Array[Dictionary] = _route_candidate_builder.call("build_candidate_routes", summarized_actions, future_actions, turn_tactical_facts)
 	var payload := {
 		"system_prompt_version": ACTION_ID_SCHEMA_VERSION,
@@ -92,6 +105,7 @@ func build_action_id_request_payload(
 		"future_actions": future_actions,
 		"legal_action_groups": legal_action_groups,
 		"turn_tactical_facts": turn_tactical_facts,
+		"intent_facts": intent_facts,
 		"candidate_routes": _compact_candidate_routes(candidate_routes),
 		"supported_facts": _supported_tree_facts(),
 	}
@@ -201,16 +215,29 @@ func legal_action_reference(action: Dictionary, game_state: GameState, player_in
 			ref["energy_type"] = _energy_word(str(cd.energy_provides))
 	var target_slot: Variant = action.get("target_slot")
 	if target_slot is PokemonSlot:
+		var target_cd: CardData = (target_slot as PokemonSlot).get_card_data()
 		ref["target"] = str((target_slot as PokemonSlot).get_pokemon_name())
+		if target_cd != null:
+			ref["target_name_en"] = str(target_cd.name_en)
 		ref["position"] = _resolve_slot_position(target_slot as PokemonSlot, game_state, player_index)
 	var source_slot: Variant = action.get("source_slot")
 	if source_slot is PokemonSlot:
-		ref["pokemon"] = str((source_slot as PokemonSlot).get_pokemon_name())
-		ref["position"] = _resolve_slot_position(source_slot as PokemonSlot, game_state, player_index)
 		var source_cd: CardData = (source_slot as PokemonSlot).get_card_data()
+		ref["pokemon"] = str((source_slot as PokemonSlot).get_pokemon_name())
+		if source_cd != null:
+			ref["pokemon_name_en"] = str(source_cd.name_en)
+		ref["position"] = _resolve_slot_position(source_slot as PokemonSlot, game_state, player_index)
 		if source_cd != null:
 			ref["card_rules"] = _card_rule_summary(source_cd, kind)
 	if kind == "use_ability":
+		var ability_source_card: Variant = action.get("ability_source_card")
+		if ability_source_card is CardInstance and (ability_source_card as CardInstance).card_data != null:
+			var ability_source_cd: CardData = (ability_source_card as CardInstance).card_data
+			ref["ability_source_card"] = _best_card_name(ability_source_cd)
+			ref["ability_source_card_type"] = str(ability_source_cd.card_type)
+			ref["card"] = _best_card_name(ability_source_cd)
+			ref["card_type"] = str(ability_source_cd.card_type)
+			ref["card_rules"] = _card_rule_summary(ability_source_cd, kind)
 		ref["ability_index"] = int(action.get("ability_index", -1))
 		ref["ability"] = _ability_name_for_action(action)
 		ref["ability_rules"] = _ability_rule_summary(action)
@@ -222,7 +249,10 @@ func legal_action_reference(action: Dictionary, game_state: GameState, player_in
 	if kind == "retreat":
 		var bench_slot: Variant = action.get("bench_target")
 		if bench_slot is PokemonSlot:
+			var bench_cd: CardData = (bench_slot as PokemonSlot).get_card_data()
 			ref["bench_target"] = str((bench_slot as PokemonSlot).get_pokemon_name())
+			if bench_cd != null:
+				ref["bench_target_name_en"] = str(bench_cd.name_en)
 			ref["bench_position"] = _resolve_slot_position(bench_slot as PokemonSlot, game_state, player_index)
 		ref["discard_energy_count"] = (action.get("energy_to_discard", []) as Array).size() if action.get("energy_to_discard", []) is Array else 0
 	_annotate_action_resource_use(ref, action, game_state, player_index)
@@ -244,6 +274,8 @@ func action_id_for_action(action: Dictionary, game_state: GameState, player_inde
 		"attach_energy", "attach_tool", "evolve":
 			return "%s:%s:%s" % [kind, _card_instance_token(action.get("card")), _slot_token(action.get("target_slot"), game_state, player_index)]
 		"play_basic_to_bench", "play_trainer", "play_stadium":
+			return "%s:%s" % [kind, _card_instance_token(action.get("card"))]
+		"use_stadium_effect":
 			return "%s:%s" % [kind, _card_instance_token(action.get("card"))]
 		"use_ability":
 			return "%s:%s:%d" % [kind, _slot_token(action.get("source_slot"), game_state, player_index), int(action.get("ability_index", -1))]
@@ -456,9 +488,10 @@ func action_id_instructions() -> PackedStringArray:
 		"Do not lead an attack route with can_attack. Attack-first routes must use active_attack_ready with the exact attack_name.",
 		"Legal actions, card rules, resource conflicts, and current turn facts are hard constraints. deck_strategy_hints are player-authored play requirements, but they cannot make illegal or resource-conflicting actions valid.",
 		"Read turn_tactical_facts before deck_strategy_hints to test feasibility. Current facts override generic deck strategy text when they conflict.",
+		"Read intent_facts as the shared rules/LLM planner layer for attack quality, energy target value, evolution continuity, hard_blocks, soft_penalties, and route_hints. Do not choose an action listed in intent_facts.hard_blocks unless no legal productive alternative exists.",
 		"Then treat deck_strategy_hints as a high-priority player-editable tactical preference layer, not optional flavor: when multiple legal candidate routes are reasonable, let it reorder route preference, setup/draw risk, attack timing, and fallback style.",
 		"candidate_routes.base_priority is an engine default, not a hard order. Player strategy may prefer a lower-base-priority route if it stays legal and tactically coherent; follow the player's stated play style when facts allow it.",
-		"Use candidate_routes and turn_tactical_facts for strategy: gust_ko_opportunities, defensive_gust_opportunities, core_attacker_setup, continuity_contract, primary_attack fields, best_manual_attach fields, redraw_attack_forbidden, redraw_attack_recommended, no_deck_draw_lock, productive_engine_actions, safe_pre_primary_actions, legal_survival_tool_actions, resource_negative_actions, and sada_assignment_recommendations.",
+		"Use candidate_routes, turn_tactical_facts, and intent_facts for strategy: gust_ko_opportunities, defensive_gust_opportunities, core_attacker_setup, continuity_contract, primary_attack fields, best_manual_attach fields, redraw_attack_forbidden, redraw_attack_recommended, no_deck_draw_lock, productive_engine_actions, safe_pre_primary_actions, legal_survival_tool_actions, resource_negative_actions, attack_intents, energy_intents, evolution_intents, and sada_assignment_recommendations.",
 		"Read legal_action card_rules, ability_rules, attack_rules, interaction_schema, and resource fields when a card-specific choice matters.",
 		"Low-priority redraw/setup attacks are fallback only. If redraw_attack_forbidden is true or primary damage is visibly reachable, choose setup/resource preservation instead. If redraw_attack_recommended is true, use safe bench/tool setup first, then the listed redraw attack rather than passing.",
 		"Attack setup routes must close with an attack when a legal attack action exists. Attack is terminal; put safe setup, tool, charge, search, gust, pivot, and attach before it.",
@@ -469,7 +502,7 @@ func action_id_instructions() -> PackedStringArray:
 		"Use legal_action_groups as a checklist for attack, manual attach, engine/draw, search/setup, pivot/gust, tool/modifier, and fallback lines.",
 		"For non-trivial turns, priority is: prize/KO route, primary damage conversion, safe setup before attack, supporter/search/ability engine, pivot/gust, manual attach setup, preserve resources.",
 		"If replan_context is present, re-evaluate current legal_actions and current hand; do not blindly continue an old route if facts changed.",
-		"Use only visible game_state, legal_actions, candidate_routes, turn_tactical_facts, replan_context, and deck_strategy_hints. Do not assume hidden deck, prizes, or opponent hand contents.",
+		"Use only visible game_state, legal_actions, candidate_routes, turn_tactical_facts, intent_facts, replan_context, and deck_strategy_hints. Do not assume hidden deck, prizes, or opponent hand contents.",
 		"Return JSON only. Do not output reasoning, rationale, analysis, thinking, comments, or markdown.",
 	])
 
@@ -647,6 +680,32 @@ func _compact_candidate_routes(routes: Array[Dictionary]) -> Array[Dictionary]:
 	return result
 
 
+func _compact_intent_summary(intent_facts: Dictionary) -> Dictionary:
+	var summary := {
+		"best_attack": {},
+		"best_manual_attach": {},
+		"hard_block_count": 0,
+		"soft_penalty_count": 0,
+	}
+	var route_hints: Array = intent_facts.get("route_hints", []) if intent_facts.get("route_hints", []) is Array else []
+	for raw: Variant in route_hints:
+		if not (raw is Dictionary):
+			continue
+		var hint: Dictionary = raw
+		match str(hint.get("type", "")):
+			"best_attack":
+				if (summary.get("best_attack", {}) as Dictionary).is_empty():
+					summary["best_attack"] = hint.duplicate(true)
+			"best_manual_attach":
+				if (summary.get("best_manual_attach", {}) as Dictionary).is_empty():
+					summary["best_manual_attach"] = hint.duplicate(true)
+	var hard_blocks: Array = intent_facts.get("hard_blocks", []) if intent_facts.get("hard_blocks", []) is Array else []
+	var soft_penalties: Array = intent_facts.get("soft_penalties", []) if intent_facts.get("soft_penalties", []) is Array else []
+	summary["hard_block_count"] = hard_blocks.size()
+	summary["soft_penalty_count"] = soft_penalties.size()
+	return summary
+
+
 func _compact_route_actions(raw_actions: Variant) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	if not (raw_actions is Array):
@@ -730,10 +789,17 @@ func _legal_action_group_name(action: Dictionary) -> String:
 			return "search_or_setup"
 		"end_turn":
 			return "fallback"
-		"play_trainer", "play_stadium", "use_ability":
+		"play_trainer", "play_stadium", "use_stadium_effect", "use_ability":
+			var tags: Array[String] = _ref_rule_tags(action)
 			if _text_has_any(text, ["boss", "catcher", "switch", "cart", "retreat", "prime catcher"]):
 				return "pivot_or_gust"
-			if _text_has_any(text, ["ball", "poffin", "vessel", "artazon", "candy", "search", "bench", "evolve"]):
+			if tags.has("gust") or tags.has("switch_or_retreat"):
+				return "pivot_or_gust"
+			if tags.has("draw") or tags.has("filter_engine") or tags.has("charge_engine") or tags.has("energy_acceleration"):
+				return "engine_or_draw"
+			if tags.has("search_deck") or tags.has("bench_related") or tags.has("evolution"):
+				return "search_or_setup"
+			if _text_has_any(text, ["ball", "poffin", "vessel", "artazon", "candy", "search", "evolve"]):
 				return "search_or_setup"
 			if _text_has_any(text, ["iono", "research", "sada", "greninja", "squawkabilly", "shoes", "draw", "energy switch", "ogerpon"]):
 				return "engine_or_draw"
@@ -938,7 +1004,7 @@ func _unique_string_array(values: Array) -> Array[String]:
 func _legal_energy_search_action_ids(current_refs: Array[Dictionary]) -> Array[String]:
 	var result: Array[String] = []
 	for ref: Dictionary in current_refs:
-		if not (str(ref.get("type", "")) in ["play_trainer", "play_stadium", "use_ability"]):
+		if not (str(ref.get("type", "")) in ["play_trainer", "play_stadium", "use_stadium_effect", "use_ability"]):
 			continue
 		var schema: Dictionary = _ref_interaction_schema_or_hints(ref)
 		if str(ref.get("type", "")) == "use_ability" \
@@ -1925,7 +1991,7 @@ func _slot_retreat_cost(slot: PokemonSlot) -> int:
 func _legal_gust_actions(legal_actions: Array[Dictionary]) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for ref: Dictionary in legal_actions:
-		if str(ref.get("type", "")) not in ["play_trainer", "play_stadium"]:
+		if str(ref.get("type", "")) not in ["play_trainer", "play_stadium", "use_stadium_effect"]:
 			continue
 		var tags: Array[String] = _ref_rule_tags(ref)
 		var combined := _ref_combined_name(ref)
@@ -2270,7 +2336,7 @@ func _resource_negative_reason(
 
 
 func _is_gust_ref(ref: Dictionary) -> bool:
-	if str(ref.get("type", "")) not in ["play_trainer", "play_stadium", "use_ability"]:
+	if str(ref.get("type", "")) not in ["play_trainer", "play_stadium", "use_stadium_effect", "use_ability"]:
 		return false
 	var tags: Array[String] = _ref_rule_tags(ref)
 	var combined := _ref_combined_name(ref)
@@ -2945,10 +3011,13 @@ func _legal_action_summary(ref: Dictionary) -> String:
 			return "evolve %s %s into %s" % [str(ref.get("position", "")), str(ref.get("target", "")), str(ref.get("card", ""))]
 		"play_trainer", "play_stadium":
 			return "play %s" % str(ref.get("card", ""))
+		"use_stadium_effect":
+			return "use stadium effect %s" % str(ref.get("card", ""))
 		"use_ability":
 			return "use %s ability %s from %s" % [str(ref.get("pokemon", "")), str(ref.get("ability", "")), str(ref.get("position", ""))]
 		"retreat":
-			return "retreat to %s %s" % [str(ref.get("bench_position", "")), str(ref.get("bench_target", ""))]
+			var bench_name := str(ref.get("bench_target_name_en", ref.get("bench_target", "")))
+			return "retreat to %s %s" % [str(ref.get("bench_position", "")), bench_name]
 		"attack", "granted_attack":
 			return "attack with %s" % str(ref.get("attack_name", ""))
 		"end_turn":
@@ -2976,6 +3045,24 @@ func _ability_rule_summary(action: Dictionary) -> Dictionary:
 	var ability_index: int = int(action.get("ability_index", -1))
 	if not (source_slot is PokemonSlot):
 		return {}
+	var action_ability_name := str(action.get("ability_name", ""))
+	var action_ability_text := str(action.get("ability_text", ""))
+	if action_ability_name != "" or action_ability_text != "":
+		var source_cd_for_action: CardData = null
+		var ability_source_card: Variant = action.get("ability_source_card")
+		if ability_source_card is CardInstance and (ability_source_card as CardInstance).card_data != null:
+			source_cd_for_action = (ability_source_card as CardInstance).card_data
+		else:
+			source_cd_for_action = (source_slot as PokemonSlot).get_card_data()
+		var text_from_action: String = _compact_rule_text(action_ability_text, 180)
+		var combined_from_action := "%s %s" % [action_ability_name, text_from_action]
+		var tags_from_action: Array[String] = _infer_rule_tags(source_cd_for_action, "use_ability", combined_from_action) if source_cd_for_action != null else _infer_text_tags(combined_from_action)
+		return {
+			"name": action_ability_name,
+			"text": text_from_action,
+			"tags": tags_from_action,
+			"interaction_hints": _interaction_hints_for_tags(tags_from_action),
+		}
 	var cd: CardData = (source_slot as PokemonSlot).get_card_data()
 	if cd == null or ability_index < 0 or ability_index >= cd.abilities.size():
 		return {}
@@ -3011,6 +3098,7 @@ func _attack_rule_summary(action: Dictionary, game_state: GameState, player_inde
 	var combined_text := "%s %s %s" % [str(attack_data.get("name", "")), str(attack_data.get("damage", "")), text]
 	var tags: Array[String] = _infer_text_tags(combined_text)
 	return {
+		"id": str(attack_data.get("id", "")),
 		"name": str(attack_data.get("name", "")),
 		"cost": str(attack_data.get("cost", "")),
 		"damage": str(attack_data.get("damage", "")),
@@ -3108,8 +3196,9 @@ func _infer_rule_tags(cd: CardData, action_kind: String, text: String) -> Array[
 			_append_tag(tags, "manual_energy")
 		"attach_tool":
 			_append_tag(tags, "tool_modifier")
-		"play_stadium":
+		"play_stadium", "use_stadium_effect":
 			_append_tag(tags, "stadium_modifier")
+			_append_tag(tags, "stadium_action")
 		"use_ability":
 			_append_tag(tags, "ability")
 		"attack", "granted_attack":
@@ -3447,6 +3536,9 @@ func _energy_word(code: String) -> String:
 
 
 func _ability_name_for_action(action: Dictionary) -> String:
+	var action_ability_name := str(action.get("ability_name", ""))
+	if action_ability_name != "":
+		return action_ability_name
 	var source_slot: Variant = action.get("source_slot")
 	var ability_index: int = int(action.get("ability_index", -1))
 	if not (source_slot is PokemonSlot):

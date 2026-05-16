@@ -10,6 +10,8 @@ extends Resource
 @export var source_url: String = ""
 ## 导入时间
 @export var import_date: String = ""
+## Last local edit time in Unix milliseconds. 0 means unknown.
+@export var updated_at: int = 0
 ## 卡组变体名
 @export var variant_name: String = ""
 ## 卡组代码
@@ -32,6 +34,7 @@ static func from_api_response(deck_id: int, data: Dictionary) -> DeckData:
 	deck.id = deck_id
 	deck.source_url = "https://tcg.mik.moe/decks/list/%d" % deck_id
 	deck.import_date = Time.get_datetime_string_from_system()
+	deck.updated_at = int(Time.get_unix_time_from_system() * 1000.0)
 	deck.deck_code = data.get("deckCode", "")
 
 	var variant_raw: Variant = data.get("variant")
@@ -104,6 +107,7 @@ func to_dict() -> Dictionary:
 		"deck_name": deck_name,
 		"source_url": source_url,
 		"import_date": import_date,
+		"updated_at": updated_at,
 		"variant_name": variant_name,
 		"deck_code": deck_code,
 		"cards": cards,
@@ -119,6 +123,7 @@ static func from_dict(d: Dictionary) -> DeckData:
 	deck.deck_name = d.get("deck_name", "")
 	deck.source_url = d.get("source_url", "")
 	deck.import_date = d.get("import_date", "")
+	deck.updated_at = int(d.get("updated_at", 0))
 	deck.variant_name = d.get("variant_name", "")
 	deck.deck_code = d.get("deck_code", "")
 	var cards_raw: Variant = d.get("cards")

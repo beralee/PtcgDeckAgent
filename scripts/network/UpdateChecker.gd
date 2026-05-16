@@ -7,6 +7,7 @@ const MANIFEST_URL := "https://ptcg.skillserver.cn/dist/updates/latest.json"
 const DEFAULT_DOWNLOAD_PAGE_URL := "https://ptcg.skillserver.cn/"
 const STATE_PATH := "user://update_check_state.json"
 const CHECK_INTERVAL_SECONDS := 24 * 60 * 60
+const CHECK_FAILURE_INTERVAL_SECONDS := 3 * 60 * 60
 
 signal update_available(info: Dictionary)
 signal no_update(info: Dictionary)
@@ -33,6 +34,7 @@ func check_for_updates(force: bool = false) -> int:
 
 	_ensure_http_request()
 	if _http_request == null:
+		_record_check_failure()
 		check_failed.emit("无法创建更新检查请求")
 		return ERR_CANT_CREATE
 
@@ -46,7 +48,7 @@ func check_for_updates(force: bool = false) -> int:
 	if err != OK:
 		_is_checking = false
 		_force_current_check = false
-		_record_check_attempt()
+		_record_check_failure()
 		check_failed.emit("更新检查启动失败：%d" % err)
 	return err
 
@@ -145,29 +147,30 @@ func _on_manifest_response(result: int, response_code: int, _headers: PackedStri
 	_is_checking = false
 	_force_current_check = false
 	if result != HTTPRequest.RESULT_SUCCESS:
-		_record_check_attempt()
+		_record_check_failure()
 		check_failed.emit("更新检查失败：result=%d" % result)
 		return
 	if response_code < 200 or response_code >= 300:
-		_record_check_attempt()
+		_record_check_failure()
 		check_failed.emit("更新检查失败：HTTP %d" % response_code)
 		return
 
 	var json := JSON.new()
 	var parse_err := json.parse(body.get_string_from_utf8())
 	if parse_err != OK or not (json.data is Dictionary):
-		_record_check_attempt()
+		_record_check_failure()
 		check_failed.emit("更新信息解析失败")
 		return
 
 	var info := normalize_manifest(json.data as Dictionary)
 	if info.is_empty():
-		_record_check_attempt()
+		_record_check_failure()
 		check_failed.emit("更新信息缺少版本号")
 		return
 
 	var state := _load_state()
 	state["last_checked_at"] = int(Time.get_unix_time_from_system())
+	state.erase("last_failed_at")
 	state["latest_info"] = info
 	_save_state(state)
 
@@ -185,9 +188,12 @@ func _is_version_ignored(info: Dictionary, state: Dictionary) -> bool:
 
 func _should_check_now(state: Dictionary) -> bool:
 	var last_checked_at := int(state.get("last_checked_at", 0))
+	var last_failed_at := int(state.get("last_failed_at", 0))
+	var now := int(Time.get_unix_time_from_system())
+	if last_failed_at > 0 and last_failed_at >= last_checked_at:
+		return now - last_failed_at >= CHECK_FAILURE_INTERVAL_SECONDS
 	if last_checked_at <= 0:
 		return true
-	var now := int(Time.get_unix_time_from_system())
 	return now - last_checked_at >= CHECK_INTERVAL_SECONDS
 
 
@@ -196,9 +202,9 @@ func _cached_update_info(state: Dictionary) -> Dictionary:
 	return (latest_info as Dictionary).duplicate(true) if latest_info is Dictionary else {}
 
 
-func _record_check_attempt() -> void:
+func _record_check_failure() -> void:
 	var state := _load_state()
-	state["last_checked_at"] = int(Time.get_unix_time_from_system())
+	state["last_failed_at"] = int(Time.get_unix_time_from_system())
 	_save_state(state)
 
 

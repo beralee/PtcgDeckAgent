@@ -20,7 +20,7 @@ func execute_attack(
 	if defender != null and EffectMistEnergy.has_mist_energy(defender):
 		return
 	if coin_flipper.flip():
-		defender.set_status(status_name, true)
+		_apply_special_status(defender, status_name, _state)
 
 
 func get_description() -> String:

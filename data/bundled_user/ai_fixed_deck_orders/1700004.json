@@ -1,0 +1,22 @@
+{
+	"deck_id": 1700004,
+	"deck_name": "17.0 Palkia Gholdengo",
+	"description": "V17 strong opening. First 7 cards form the launch hand; cards 8-13 are controlled prize cards; cards 14-15 bridge the first draw window. Goal: Gimmighoul/Palkia setup, attach Metal to the Gholdengo line, then T2 evolve and attack with Energy Search Pro support or pivot to Palkia VSTAR.",
+	"top_to_bottom": [
+		{"set_code": "CSV9C", "card_index": "096"},
+		{"set_code": "CSNC", "card_index": "003"},
+		{"set_code": "CSV4C", "card_index": "089"},
+		{"set_code": "CSVE1C", "card_index": "MET"},
+		{"set_code": "CSVE1C", "card_index": "WAT"},
+		{"set_code": "CSV7C", "card_index": "177"},
+		{"set_code": "CS5DC", "card_index": "138"},
+		{"set_code": "CS5bC", "card_index": "052"},
+		{"set_code": "CS5aC", "card_index": "113"},
+		{"set_code": "CSV7C", "card_index": "202"},
+		{"set_code": "CSV7C", "card_index": "202"},
+		{"set_code": "CSVH1aC", "card_index": "023"},
+		{"set_code": "CSV6C", "card_index": "042"},
+		{"set_code": "CSV9C", "card_index": "176"},
+		{"set_code": "CSV3C", "card_index": "115"}
+	]
+}

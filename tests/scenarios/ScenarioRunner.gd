@@ -358,12 +358,11 @@ func _advance_forced_turn_start_phases(gsm: GameStateMachine, tracked_player_ind
 	if int(gsm.game_state.current_player_index) != tracked_player_index:
 		return []
 	if gsm.game_state.phase == GameState.GamePhase.DRAW:
-		if not gsm.game_state.is_first_turn_of_first_player():
-			var player: PlayerState = gsm.game_state.players[tracked_player_index]
-			var drawn: Array[CardInstance] = player.draw_cards(1)
-			if drawn.is_empty():
-				gsm.game_state.set_game_over(1 - tracked_player_index, "deck_out")
-				return []
+		var player: PlayerState = gsm.game_state.players[tracked_player_index]
+		var drawn: Array[CardInstance] = player.draw_cards(1)
+		if drawn.is_empty():
+			gsm.game_state.set_game_over(1 - tracked_player_index, "deck_out")
+			return []
 		gsm.game_state.phase = GameState.GamePhase.MAIN
 	return []
 

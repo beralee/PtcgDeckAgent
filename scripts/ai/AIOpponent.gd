@@ -14,6 +14,7 @@ const AIActionScorerScript = preload("res://scripts/ai/AIActionScorer.gd")
 const AIInteractionScorerScript = preload("res://scripts/ai/AIInteractionScorer.gd")
 const AIInteractionFeatureEncoderScript = preload("res://scripts/ai/AIInteractionFeatureEncoder.gd")
 const AIHandoffScoringScript = preload("res://scripts/ai/AIHandoffScoring.gd")
+const LLMTurnPlanPromptBuilderScript = preload("res://scripts/ai/LLMTurnPlanPromptBuilder.gd")
 const AutoloadResolverScript = preload("res://scripts/engine/AutoloadResolver.gd")
 const DeckStrategyRegistryScript = preload("res://scripts/ai/DeckStrategyRegistry.gd")
 const _GARDEVOIR_STRATEGY_SCRIPT_PATH := "res://scripts/ai/DeckStrategyGardevoir.gd"
@@ -22,6 +23,7 @@ const _MIRAIDON_STRATEGY_SCRIPT_PATH := "res://scripts/ai/DeckStrategyMiraidon.g
 const ACTION_SCORER_SUPPORTED_KINDS := {
 	"play_trainer": true,
 	"play_stadium": true,
+	"use_stadium_effect": true,
 	"play_basic_to_bench": true,
 	"evolve": true,
 	"use_ability": true,
@@ -50,6 +52,7 @@ var _feature_extractor = AIFeatureExtractorScript.new()
 var _step_resolver = AIStepResolverScript.new()
 var _heuristics = AIHeuristicsScript.new()
 var _interaction_feature_encoder = AIInteractionFeatureEncoderScript.new()
+var _intent_prompt_builder = LLMTurnPlanPromptBuilderScript.new()
 var _planned_setup_bench_ids: Array[int] = []
 var _last_legal_actions: Array[Dictionary] = []
 var _last_decision_trace = null
@@ -483,7 +486,7 @@ func _augment_action_for_scoring(gsm: GameStateMachine, action: Dictionary) -> D
 		"attach_energy":
 			var player: PlayerState = gsm.game_state.players[player_index]
 			scored_action["is_active_target"] = action.get("target_slot") == player.active_pokemon
-		"play_trainer", "play_stadium", "use_ability", "evolve", "retreat", "play_basic_to_bench", "attach_tool":
+		"play_trainer", "play_stadium", "use_stadium_effect", "use_ability", "evolve", "retreat", "play_basic_to_bench", "attach_tool":
 			scored_action["productive"] = true
 	return scored_action
 
@@ -697,6 +700,15 @@ func _execute_action(battle_scene: Control, gsm: GameStateMachine, action: Dicti
 			if gsm.play_stadium(player_index, action.get("card"), action.get("targets", [])):
 				_after_successful_action(battle_scene)
 				return true
+		"use_stadium_effect":
+			if bool(action.get("requires_interaction", false)):
+				if battle_scene != null and battle_scene.has_method("_try_use_stadium_with_interaction"):
+					var use_stadium_result: Variant = battle_scene.call("_try_use_stadium_with_interaction", player_index)
+					return bool(use_stadium_result) if typeof(use_stadium_result) == TYPE_BOOL else true
+				return false
+			if gsm.use_stadium_effect(player_index, action.get("targets", [])):
+				_after_successful_action(battle_scene)
+				return true
 		"use_ability":
 			if bool(action.get("requires_interaction", false)):
 				if battle_scene != null and battle_scene.has_method("_try_use_ability_with_interaction"):
@@ -761,6 +773,14 @@ func _run_take_prize_step(battle_scene: Control, gsm: GameStateMachine) -> bool:
 	var prize_player_index: int = int(battle_scene.get("_pending_prize_player_index"))
 	if prize_player_index != player_index or gsm.game_state == null:
 		return false
+	if int(battle_scene.get("_pending_prize_remaining")) <= 0:
+		_clear_consumed_prompt(battle_scene)
+		battle_scene.set("_pending_prize_player_index", -1)
+		battle_scene.set("_pending_prize_remaining", 0)
+		battle_scene.set("_pending_prize_animating", false)
+		if battle_scene.has_method("_refresh_ui"):
+			battle_scene.call("_refresh_ui")
+		return true
 	var player: PlayerState = gsm.game_state.players[player_index]
 	var prize_layout: Array = player.get_prize_layout()
 	for slot_index: int in prize_layout.size():
@@ -1155,7 +1175,9 @@ func _choose_greedy_strategy_action(gsm: GameStateMachine) -> Dictionary:
 		if float(scored_end_turn.get("score", 0.0)) > float(best.get("score", 0.0)):
 			_record_decision_trace_from_choice(gsm, actions, scored_actions, end_turn_action, false, _resolve_decision_runtime_mode(), turn_contract)
 			return end_turn_action
-	if float(best.get("score", 0.0)) > 0.0:
+	# Deck strategies may use negative scores as relative priorities. If end_turn
+	# was blocked even harder above, keep the best productive action instead.
+	if not best.get("action", {}).is_empty():
 		var chosen: Dictionary = best.get("action", {})
 		# 攻击/granted_attack 是终结动作 — 执行前记录 trace
 		_record_decision_trace_from_choice(gsm, actions, scored_actions, chosen, false, _resolve_decision_runtime_mode(), turn_contract)
@@ -1200,7 +1222,11 @@ func _score_runtime_candidates(candidate_actions: Array[Dictionary], gsm: GameSt
 	var scored_candidates: Array[Dictionary] = []
 	var state_features: Array = _encode_state_features(gsm.game_state if gsm != null else null)
 	var runtime_mode := _resolve_decision_runtime_mode()
-	for action: Dictionary in candidate_actions:
+	var intent_context: Dictionary = _build_intent_score_context(candidate_actions, gsm)
+	var intent_ids: Array = intent_context.get("ids_by_index", []) if intent_context.get("ids_by_index", []) is Array else []
+	var intent_adjustments: Dictionary = intent_context.get("adjustments", {}) if intent_context.get("adjustments", {}) is Dictionary else {}
+	for action_index: int in candidate_actions.size():
+		var action: Dictionary = candidate_actions[action_index]
 		var augmented: Dictionary = _augment_action_for_scoring(gsm, action)
 		var features: Dictionary = _feature_extractor.build_context(gsm, player_index, augmented)
 		var absolute_score := 0.0
@@ -1209,6 +1235,12 @@ func _score_runtime_candidates(candidate_actions: Array[Dictionary], gsm: GameSt
 				absolute_score = float(_deck_strategy.call("score_action_absolute_with_plan", augmented, gsm.game_state, player_index, turn_contract))
 			else:
 				absolute_score = _deck_strategy.score_action_absolute(augmented, gsm.game_state, player_index)
+		var intent_action_id := str(intent_ids[action_index]) if action_index < intent_ids.size() else ""
+		var intent_score_adjustment := float(intent_adjustments.get(intent_action_id, 0.0))
+		absolute_score += intent_score_adjustment
+		if intent_score_adjustment != 0.0:
+			features["intent_score_adjustment"] = intent_score_adjustment
+			features["intent_action_id"] = intent_action_id
 		var learned_action_score := 0.0
 		if runtime_mode == DECISION_RUNTIME_RULES_PLUS_LEARNED:
 			learned_action_score = _score_action_with_action_scorer(
@@ -1223,10 +1255,75 @@ func _score_runtime_candidates(candidate_actions: Array[Dictionary], gsm: GameSt
 			"runtime_score": absolute_score + learned_action_score,
 			"absolute_score": absolute_score,
 			"learned_action_score": learned_action_score,
+			"intent_score_adjustment": intent_score_adjustment,
 			"features": features.duplicate(true),
 			"runtime_mode": runtime_mode,
 		})
 	return scored_candidates
+
+
+func _build_intent_score_context(candidate_actions: Array[Dictionary], gsm: GameStateMachine) -> Dictionary:
+	if candidate_actions.is_empty() or gsm == null or gsm.game_state == null:
+		return {}
+	if _deck_strategy == null or not _deck_strategy.has_method("get_intent_planner_profile"):
+		return {}
+	var profile: Dictionary = _deck_strategy.call("get_intent_planner_profile")
+	if profile.is_empty():
+		return {}
+	var refs: Array[Dictionary] = []
+	var ids_by_index: Array[String] = []
+	for action: Dictionary in candidate_actions:
+		var ref: Dictionary = _intent_prompt_builder.call("legal_action_reference", action, gsm.game_state, player_index)
+		refs.append(ref)
+		ids_by_index.append(str(ref.get("id", "")))
+	if refs.is_empty():
+		return {}
+	var facts: Dictionary = _deck_strategy.call("build_intent_facts", gsm.game_state, player_index, refs) if _deck_strategy.has_method("build_intent_facts") else {}
+	return {
+		"ids_by_index": ids_by_index,
+		"adjustments": _intent_score_adjustments_from_facts(facts),
+	}
+
+
+func _intent_score_adjustments_from_facts(facts: Dictionary) -> Dictionary:
+	var adjustments := {}
+	if facts.is_empty():
+		return adjustments
+	var hard_blocks: Array = facts.get("hard_blocks", []) if facts.get("hard_blocks", []) is Array else []
+	for raw_block: Variant in hard_blocks:
+		if not (raw_block is Dictionary):
+			continue
+		var block: Dictionary = raw_block
+		var action_id := str(block.get("action_id", ""))
+		if action_id != "":
+			adjustments[action_id] = float(adjustments.get(action_id, 0.0)) - 6000.0
+	var soft_penalties: Array = facts.get("soft_penalties", []) if facts.get("soft_penalties", []) is Array else []
+	for raw_penalty: Variant in soft_penalties:
+		if not (raw_penalty is Dictionary):
+			continue
+		var penalty: Dictionary = raw_penalty
+		var action_id := str(penalty.get("action_id", ""))
+		if action_id == "":
+			continue
+		var delta := -450.0 if str(penalty.get("type", "")) == "wrong_energy_attribute" else -250.0
+		adjustments[action_id] = float(adjustments.get(action_id, 0.0)) + delta
+	var route_hints: Array = facts.get("route_hints", []) if facts.get("route_hints", []) is Array else []
+	for raw_hint: Variant in route_hints:
+		if not (raw_hint is Dictionary):
+			continue
+		var hint: Dictionary = raw_hint
+		var action_id := str(hint.get("action_id", ""))
+		if action_id == "":
+			continue
+		match str(hint.get("type", "")):
+			"best_attack":
+				adjustments[action_id] = float(adjustments.get(action_id, 0.0)) + 180.0
+			"best_manual_attach":
+				var attach_bonus := 180.0 if str(hint.get("marginal_value", "")) == "high" else 70.0
+				adjustments[action_id] = float(adjustments.get(action_id, 0.0)) + attach_bonus
+			"high_priority_evolution":
+				adjustments[action_id] = float(adjustments.get(action_id, 0.0)) + 180.0
+	return adjustments
 
 
 func _pick_best_scored_absolute(scored_candidates: Array[Dictionary]) -> Dictionary:
@@ -1376,6 +1473,9 @@ func _resolve_mcts_action(gsm: GameStateMachine, planned_action: Dictionary) -> 
 				if _match_card_id(action, card_id):
 					return action
 			"play_stadium":
+				if _match_card_id(action, card_id):
+					return action
+			"use_stadium_effect":
 				if _match_card_id(action, card_id):
 					return action
 			"retreat":

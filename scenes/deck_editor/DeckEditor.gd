@@ -28,7 +28,18 @@ const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 ## 卡图尺寸（标准卡牌比例约 63:88）
 const CARD_WIDTH := 100
 const CARD_HEIGHT := 140
-const POOL_GRID_COLUMNS := 5
+const CARD_GRID_COLUMNS := 5
+const CARD_GRID_GAP := 6
+const CARD_LABEL_AREA_HEIGHT := 20
+const CARD_TILE_INSET := 8
+const CARD_IMAGE_HEIGHT_RATIO := 1.4
+const CARD_MIN_WIDTH := 72
+const CARD_GRID_LAYOUT_REFRESH_PASSES := 4
+const CATEGORY_TAB_HEIGHT := 54
+const CATEGORY_TAB_FONT_SIZE := 18
+const CATEGORY_TAB_GAP := 8
+const ACTION_BUTTON_HEIGHT := 104
+const ACTION_BUTTON_FONT_SIZE := 30
 const TILE_LONG_PRESS_SECONDS := 0.42
 const TILE_LONG_PRESS_MOVE_TOLERANCE := 18.0
 
@@ -105,6 +116,9 @@ var _tile_long_press_start: Vector2 = Vector2.ZERO
 var _tile_long_press_index: int = -1
 var _tile_long_press_consumed: bool = false
 var _suppress_next_tile_left_click: bool = false
+var _deck_card_tile_size := Vector2(CARD_WIDTH, CARD_HEIGHT)
+var _pool_card_tile_size := Vector2(CARD_WIDTH, CARD_HEIGHT)
+var _card_grid_layout_refresh_passes_remaining := 0
 
 
 func _ready() -> void:
@@ -134,10 +148,105 @@ func _ready() -> void:
 	_build_deck_categories()
 	_build_tab_bar(%DeckTabBar, _deck_tab_buttons, true)
 	_build_tab_bar(%PoolTabBar, _pool_tab_buttons, false)
+	_sync_card_grid_columns()
 	_refresh_deck_grid()
 	_refresh_pool_grid()
 	_update_footer()
+	_style_editor_action_buttons()
 	HudThemeScript.apply_scrollbars_recursive(self)
+	resized.connect(_on_editor_resized)
+	%DeckScroll.resized.connect(_on_card_grid_area_resized)
+	%PoolScroll.resized.connect(_on_card_grid_area_resized)
+	_start_card_grid_metrics_refresh()
+
+
+func _style_editor_action_buttons() -> void:
+	var buttons: Array[Button] = [%BtnReplace, %BtnSave, %BtnStrategy, %BtnAI, %BtnDiscussAI, %BtnBack]
+	for button: Button in buttons:
+		if button == null:
+			continue
+		var accent := HudThemeScript.ACCENT_WARM if button.name in ["BtnReplace", "BtnSave"] else HudThemeScript.ACCENT
+		button.custom_minimum_size = Vector2(0, ACTION_BUTTON_HEIGHT)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.clip_text = true
+		button.add_theme_font_size_override("font_size", ACTION_BUTTON_FONT_SIZE)
+		button.add_theme_color_override("font_color", Color(0.96, 0.99, 1.0, 1.0))
+		button.add_theme_color_override("font_hover_color", Color.WHITE)
+		button.add_theme_color_override("font_pressed_color", Color(0.08, 0.12, 0.16, 1.0))
+		button.add_theme_color_override("font_disabled_color", Color(0.44, 0.50, 0.56, 1.0))
+		button.add_theme_stylebox_override("normal", HudThemeScript.button_style(accent, false, false))
+		button.add_theme_stylebox_override("hover", HudThemeScript.button_style(accent, true, false))
+		button.add_theme_stylebox_override("pressed", HudThemeScript.button_style(accent, true, true))
+		button.add_theme_stylebox_override("disabled", HudThemeScript.button_style(Color(0.26, 0.31, 0.36, 1.0), false, false))
+		button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
+
+func _on_editor_resized() -> void:
+	_queue_card_grid_metrics_refresh()
+
+
+func _on_card_grid_area_resized() -> void:
+	_queue_card_grid_metrics_refresh()
+
+
+func _queue_card_grid_metrics_refresh(force_refresh: bool = false) -> void:
+	call_deferred("_refresh_card_grid_metrics", force_refresh)
+
+
+func _start_card_grid_metrics_refresh() -> void:
+	_queue_card_grid_metrics_refresh(true)
+	_card_grid_layout_refresh_passes_remaining = CARD_GRID_LAYOUT_REFRESH_PASSES
+	_queue_card_grid_layout_refresh_pass()
+
+
+func _queue_card_grid_layout_refresh_pass() -> void:
+	if not is_inside_tree():
+		return
+	get_tree().process_frame.connect(_run_card_grid_layout_refresh_pass, CONNECT_ONE_SHOT)
+
+
+func _run_card_grid_layout_refresh_pass() -> void:
+	if not is_inside_tree():
+		return
+	_refresh_card_grid_metrics(true)
+	_card_grid_layout_refresh_passes_remaining -= 1
+	if _card_grid_layout_refresh_passes_remaining > 0:
+		_queue_card_grid_layout_refresh_pass()
+
+
+func _sync_card_grid_columns() -> void:
+	%DeckGrid.columns = CARD_GRID_COLUMNS
+	%DeckGrid.add_theme_constant_override("h_separation", CARD_GRID_GAP)
+	%DeckGrid.add_theme_constant_override("v_separation", CARD_GRID_GAP)
+
+
+func _refresh_card_grid_metrics(force_refresh: bool = false) -> void:
+	var next_deck_size := _calculate_card_tile_size(%DeckScroll)
+	var next_pool_size := _calculate_card_tile_size(%PoolScroll)
+	var changed := not next_deck_size.is_equal_approx(_deck_card_tile_size) \
+		or not next_pool_size.is_equal_approx(_pool_card_tile_size)
+	_deck_card_tile_size = next_deck_size
+	_pool_card_tile_size = next_pool_size
+	_sync_card_grid_columns()
+	if force_refresh or changed:
+		_refresh_deck_grid()
+		_refresh_pool_grid()
+
+
+func _calculate_card_tile_size(scroll: ScrollContainer) -> Vector2:
+	var available_width := 0.0
+	if scroll != null:
+		available_width = scroll.size.x
+		if available_width <= 0.0 and scroll.get_parent() is Control:
+			available_width = (scroll.get_parent() as Control).size.x
+	if available_width <= 0.0:
+		return Vector2(CARD_WIDTH, CARD_HEIGHT)
+	var scrollbar_clearance := float(HudThemeScript.scrollbar_thickness_for_profile("auto") + HudThemeScript.CARD_SCROLLBAR_CLEARANCE_PADDING)
+	var gap_total := float(CARD_GRID_GAP * (CARD_GRID_COLUMNS - 1))
+	var tile_width := floorf((available_width - scrollbar_clearance - gap_total) / float(CARD_GRID_COLUMNS))
+	tile_width = maxf(float(CARD_MIN_WIDTH), tile_width)
+	var image_height := roundf(tile_width * CARD_IMAGE_HEIGHT_RATIO)
+	return Vector2(tile_width, image_height)
 
 
 # -- 分类构建 --
@@ -210,6 +319,7 @@ func _build_tab_bar(tab_bar: HBoxContainer, buttons: Array[Button], is_deck: boo
 	for child: Node in tab_bar.get_children():
 		child.queue_free()
 
+	_style_category_tab_bar(tab_bar)
 	var active := _deck_active_tab if is_deck else _pool_active_tab
 
 	for i: int in CATEGORY_TABS.size():
@@ -223,12 +333,39 @@ func _build_tab_bar(tab_bar: HBoxContainer, buttons: Array[Button], is_deck: boo
 		btn.text = "%s(%d)" % [tab_label, count]
 		btn.toggle_mode = true
 		btn.button_pressed = (i == active)
+		_style_category_tab_button(btn)
 		if is_deck:
 			btn.pressed.connect(_on_deck_tab_pressed.bind(i))
 		else:
 			btn.pressed.connect(_on_pool_tab_pressed.bind(i))
 		tab_bar.add_child(btn)
 		buttons.append(btn)
+
+
+func _style_category_tab_bar(tab_bar: HBoxContainer) -> void:
+	if tab_bar == null:
+		return
+	tab_bar.custom_minimum_size = Vector2(0, CATEGORY_TAB_HEIGHT)
+	tab_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tab_bar.add_theme_constant_override("separation", CATEGORY_TAB_GAP)
+
+
+func _style_category_tab_button(button: Button) -> void:
+	if button == null:
+		return
+	button.custom_minimum_size = Vector2(0, CATEGORY_TAB_HEIGHT)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.size_flags_stretch_ratio = 1.0
+	button.clip_text = true
+	button.add_theme_font_size_override("font_size", CATEGORY_TAB_FONT_SIZE)
+	button.add_theme_color_override("font_color", Color(0.90, 0.98, 1.0, 1.0))
+	button.add_theme_color_override("font_hover_color", Color.WHITE)
+	button.add_theme_color_override("font_pressed_color", Color(0.06, 0.10, 0.13, 1.0))
+	button.add_theme_stylebox_override("normal", HudThemeScript.button_style(HudThemeScript.ACCENT, false, false))
+	button.add_theme_stylebox_override("hover", HudThemeScript.button_style(HudThemeScript.ACCENT, true, false))
+	button.add_theme_stylebox_override("pressed", HudThemeScript.button_style(HudThemeScript.ACCENT_WARM, true, true))
+	button.add_theme_stylebox_override("hover_pressed", HudThemeScript.button_style(HudThemeScript.ACCENT_WARM, true, true))
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 
 
 func _on_deck_tab_pressed(tab_index: int) -> void:
@@ -265,7 +402,7 @@ func _refresh_deck_grid() -> void:
 		var card_index: String = entry.get("card_index", "")
 		var is_selected := (flat_idx == _selected_deck_index)
 
-		var tile := _create_card_tile(card_name, set_code, card_index, is_selected)
+		var tile := _create_card_tile(card_name, set_code, card_index, is_selected, _deck_card_tile_size)
 		tile.gui_input.connect(_on_deck_tile_input.bind(flat_idx, set_code, card_index))
 		%DeckGrid.add_child(tile)
 
@@ -377,16 +514,17 @@ func _refresh_pool_grid_pokemon(cards: Array) -> void:
 
 func _create_pool_sub_grid() -> GridContainer:
 	var grid := GridContainer.new()
-	grid.columns = POOL_GRID_COLUMNS
-	grid.add_theme_constant_override("h_separation", 6)
-	grid.add_theme_constant_override("v_separation", 6)
+	grid.columns = CARD_GRID_COLUMNS
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	grid.add_theme_constant_override("h_separation", CARD_GRID_GAP)
+	grid.add_theme_constant_override("v_separation", CARD_GRID_GAP)
 	return grid
 
 
 func _make_pool_tile(card: CardData) -> PanelContainer:
 	var uid := card.get_uid()
 	var is_selected := (uid == _selected_pool_uid)
-	var tile := _create_card_tile(card.name, card.set_code, card.card_index, is_selected)
+	var tile := _create_card_tile(card.name, card.set_code, card.card_index, is_selected, _pool_card_tile_size)
 	tile.gui_input.connect(_on_pool_tile_input.bind(uid))
 	return tile
 
@@ -554,9 +692,19 @@ func _ordered_pokemon_cards(cards: Array) -> Array:
 
 # -- 卡图块创建 --
 
-func _create_card_tile(card_name: String, set_code: String, card_index: String, selected: bool) -> PanelContainer:
+func _create_card_tile(
+	card_name: String,
+	set_code: String,
+	card_index: String,
+	selected: bool,
+	tile_size: Vector2 = Vector2.ZERO
+) -> PanelContainer:
+	var tile_width := int(roundf(tile_size.x)) if tile_size.x > 0.0 else CARD_WIDTH
+	var image_height := int(roundf(tile_size.y)) if tile_size.y > 0.0 else CARD_HEIGHT
+	var art_width := maxi(tile_width - CARD_TILE_INSET, 1)
+	var art_height := maxi(image_height - CARD_TILE_INSET, 1)
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(CARD_WIDTH, CARD_HEIGHT + 20)
+	panel.custom_minimum_size = Vector2(tile_width, image_height + CARD_LABEL_AREA_HEIGHT)
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	_apply_tile_style(panel, selected)
 
@@ -567,7 +715,7 @@ func _create_card_tile(card_name: String, set_code: String, card_index: String, 
 
 	var art_holder := Control.new()
 	art_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	art_holder.custom_minimum_size = Vector2(CARD_WIDTH - 8, CARD_HEIGHT - 8)
+	art_holder.custom_minimum_size = Vector2(art_width, art_height)
 	art_holder.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	vbox.add_child(art_holder)
 
@@ -583,7 +731,7 @@ func _create_card_tile(card_name: String, set_code: String, card_index: String, 
 	else:
 		# 无图时显示灰底占位
 		var placeholder := PlaceholderTexture2D.new()
-		placeholder.size = Vector2(CARD_WIDTH - 8, CARD_HEIGHT - 8)
+		placeholder.size = Vector2(art_width, art_height)
 		tex_rect.texture = placeholder
 	art_holder.add_child(tex_rect)
 
@@ -594,12 +742,16 @@ func _create_card_tile(card_name: String, set_code: String, card_index: String, 
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.text = card_name
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 11)
+	label.add_theme_font_size_override("font_size", _card_tile_label_font_size(tile_width))
 	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	label.custom_minimum_size = Vector2(CARD_WIDTH - 8, 0)
+	label.custom_minimum_size = Vector2(art_width, 0)
 	vbox.add_child(label)
 
 	return panel
+
+
+func _card_tile_label_font_size(tile_width: int) -> int:
+	return clampi(roundi(float(tile_width) * 0.11), 10, 16)
 
 
 func _resolve_card_for_tile(set_code: String, card_index: String) -> CardData:
@@ -740,9 +892,13 @@ func _update_footer() -> void:
 	%SelectionLabel.text = "  ".join(parts) if parts.size() > 0 else ""
 
 	var can_replace := deck_name != "" and pool_name != ""
-	%BtnReplace.visible = can_replace
+	%BtnReplace.visible = true
+	%BtnReplace.disabled = not can_replace
+	%BtnReplace.text = "替换卡牌"
 	if can_replace:
-		%BtnReplace.text = "替换：%s → %s" % [deck_name, pool_name]
+		%BtnReplace.tooltip_text = "%s → %s" % [deck_name, pool_name]
+	else:
+		%BtnReplace.tooltip_text = "先在左侧卡组中选一张卡，再在中间卡牌库中选择替换目标"
 
 
 func _get_selected_deck_card_name() -> String:
@@ -1478,7 +1634,8 @@ func _refresh_ai_panel(core_keep: String) -> void:
 	for child: Node in %AIList.get_children():
 		child.queue_free()
 
-	%RightTitle.text = "AI 建议"
+	%RightTitle.text = ""
+	%RightTitle.visible = false
 
 	# 总体思路
 	if _ai_summary != "":

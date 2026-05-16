@@ -873,6 +873,8 @@ func test_ultra_ball_requires_two_card_multiselect_step() -> String:
 		assert_eq(str(steps[0].get("id", "")), "discard_cards", "Ultra Ball first step should discard cards"),
 		assert_eq(int(steps[0].get("min_select", 0)), 2, "Ultra Ball should require discarding exactly 2 cards"),
 		assert_eq(int(steps[0].get("max_select", 0)), 2, "Ultra Ball should allow selecting exactly 2 cards"),
+		assert_eq(int(steps[1].get("min_select", -1)), 0, "Ultra Ball search step should allow taking no Pokemon"),
+		assert_true(bool(steps[1].get("force_confirm", false)), "Ultra Ball search step should keep confirm visible for an empty take"),
 		assert_eq(discard_items.size(), 2, "Ultra Ball discard step should exclude the Ultra Ball card itself"),
 	])
 

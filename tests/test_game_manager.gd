@@ -93,7 +93,7 @@ func test_battle_review_api_config_uses_defaults_when_file_is_missing() -> Strin
 		assert_eq(str(config.get("api_key", "")), "", "missing config file should keep default api_key"),
 		assert_eq(str(config.get("model", "")), "kimi-k2.6", "missing config file should keep default no-reasoning model"),
 		assert_eq(float(config.get("timeout_seconds", 0.0)), 60.0, "missing config file should keep default timeout"),
-		assert_eq(str(config.get("ai_personality", "")), "", "missing config file should keep default AI personality"),
+		assert_eq(str(config.get("ai_personality", "")), "是一个大逗比，臭牌篓子", "missing config file should use default AI personality"),
 	])
 
 
@@ -135,7 +135,7 @@ func test_battle_review_api_config_migrates_missing_ai_personality() -> String:
 
 	return run_checks([
 		assert_true(config.has("ai_personality"), "Old config files should be upgraded in memory with ai_personality"),
-		assert_eq(str(config.get("ai_personality", "")), "", "Old config files should use an empty AI personality by default"),
+		assert_eq(str(config.get("ai_personality", "")), "是一个大逗比，臭牌篓子", "Old config files should use default AI personality when missing"),
 	])
 
 
@@ -224,14 +224,25 @@ func test_desktop_window_size_preserves_windows_target_and_fits_small_screens() 
 	])
 
 
-func test_desktop_window_startup_maximizes_on_macos_only() -> String:
+func test_desktop_window_startup_uses_large_windowed_macos_size_without_maximize() -> String:
 	var manager: Node = _load_game_manager_script().new()
 
 	return run_checks([
-		assert_true(bool(manager.call("_should_maximize_desktop_window", "macOS")), "macOS builds should start maximized to avoid tiny Retina startup windows"),
-		assert_true(bool(manager.call("_should_maximize_desktop_window", "OSX")), "Older macOS platform name should also be treated as macOS"),
+		assert_false(bool(manager.call("_should_maximize_desktop_window", "macOS")), "macOS builds should stay windowed instead of entering maximized mode"),
+		assert_false(bool(manager.call("_should_maximize_desktop_window", "OSX")), "Older macOS platform name should also stay windowed"),
+		assert_true(bool(manager.call("_should_use_large_windowed_desktop_launch", "macOS")), "macOS builds should use a large windowed launch size"),
+		assert_true(bool(manager.call("_should_use_large_windowed_desktop_launch", "OSX")), "Older macOS platform name should use a large windowed launch size"),
 		assert_false(bool(manager.call("_should_maximize_desktop_window", "Windows")), "Windows should keep the configured 1600x900 startup size"),
 		assert_false(bool(manager.call("_should_maximize_desktop_window", "Linux")), "Linux should keep the configured 1600x900 startup size"),
+	])
+
+
+func test_navigation_does_not_apply_battle_orientation_before_battle_scene_loads() -> String:
+	var manager: Node = _load_game_manager_script().new()
+
+	return run_checks([
+		assert_false(bool(manager.call("_should_apply_non_battle_orientation_before_scene_change", GameManager.SCENE_BATTLE)), "Entering battle should not rotate the current setup scene before the scene change"),
+		assert_true(bool(manager.call("_should_apply_non_battle_orientation_before_scene_change", GameManager.SCENE_BATTLE_SETUP)), "Leaving battle should restore non-battle orientation before showing setup"),
 	])
 
 

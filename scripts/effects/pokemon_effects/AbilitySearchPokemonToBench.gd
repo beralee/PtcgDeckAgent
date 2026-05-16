@@ -27,7 +27,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	if BenchLimit.is_bench_full(state, player):
 		return false
 
-	return _has_matching_pokemon(player.deck)
+	return true
 
 
 func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
@@ -44,18 +44,15 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			items.append(deck_card)
 			labels.append("%s (HP %d)" % [deck_card.card_data.name, deck_card.card_data.hp])
 
-	if items.is_empty():
-		return []
-
 	return [build_full_library_search_step(
 		"bench_pokemon",
 		"选择最多%d只放入备战区的宝可梦" % actual_max,
 		player.deck,
 		items,
 		VISIBLE_SCOPE_OWN_FULL_DECK,
-		1,
-		mini(actual_max, items.size()),
-		{"allow_cancel": true}
+		0,
+		actual_max,
+		{"allow_cancel": true, "force_confirm": true}
 	)]
 
 
@@ -86,6 +83,7 @@ func execute_ability(
 
 	if found_pokemon.is_empty():
 		player.shuffle_deck()
+		_mark_used(pokemon, state)
 		return
 
 	for poke_card: CardInstance in found_pokemon:
@@ -100,18 +98,14 @@ func execute_ability(
 		player.bench.append(slot)
 
 	player.shuffle_deck()
+	_mark_used(pokemon, state)
 
+
+func _mark_used(pokemon: PokemonSlot, state: GameState) -> void:
 	pokemon.effects.append({
 		"type": USED_KEY,
 		"turn": state.turn_number,
 	})
-
-
-func _has_matching_pokemon(deck: Array[CardInstance]) -> bool:
-	for card: CardInstance in deck:
-		if _matches_pokemon(card):
-			return true
-	return false
 
 
 func _matches_pokemon(card: CardInstance) -> bool:

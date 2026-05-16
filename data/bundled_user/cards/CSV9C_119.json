@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "Tera",
+	"artist": "5ban Graphics",
+	"attacks": [
+		{
+			"cost": "DC",
+			"damage": "200",
+			"is_vstar_power": false,
+			"name": "粉碎头击",
+			"text": "将对手牌库上方3张卡牌放于弃牌区。"
+		},
+		{
+			"cost": "PDMC",
+			"damage": "130",
+			"is_vstar_power": false,
+			"name": "黑曜石",
+			"text": "给对手的2只备战宝可梦，也各造成130伤害。[备战宝可梦不计算弱点、抗性。]"
+		}
+	],
+	"card_index": "119",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "【恶】【无】 粉碎头击 200\n将对手牌库上方3张卡牌放于弃牌区。\n\n【超】【恶】【钢】【无】 黑曜石 130\n给对手的2只备战宝可梦，也各造成130伤害。[备战宝可梦不计算弱点、抗性。]\n\n\n",
+	"effect_id": "fa9e235782bba9bdb62005106bbdd6d9",
+	"energy_provides": "",
+	"energy_type": "D",
+	"evolves_from": "双首暴龙",
+	"hp": 330,
+	"image_local_path": "user://cards/images/CSV9C/119.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/119.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "ex",
+	"name": "三首恶龙ex",
+	"name_en": "",
+	"rarity": "RR",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 3,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Stage 2",
+	"weakness_energy": "G",
+	"weakness_value": "×2",
+	"yoren_code": "Y1510"
+}

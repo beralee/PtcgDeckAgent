@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "Felicia Chen",
+	"attacks": [
+		{
+			"cost": "F",
+			"damage": "30",
+			"is_vstar_power": false,
+			"name": "扫堂腿",
+			"text": "抛掷1次硬币如果为正面，则选择对手战斗宝可梦身上附着的1个能量，放于弃牌区。"
+		},
+		{
+			"cost": "FC",
+			"damage": "70",
+			"is_vstar_power": false,
+			"name": "百万吨重拳",
+			"text": ""
+		}
+	],
+	"card_index": "098",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "【斗】 扫堂腿 30\n抛掷1次硬币如果为正面，则选择对手战斗宝可梦身上附着的1个能量，放于弃牌区。\n\n【斗】【无】 百万吨重拳 70\n\n\n",
+	"effect_id": "5f360b6881fbb857e809ca402ffdfda4",
+	"energy_provides": "",
+	"energy_type": "F",
+	"evolves_from": "猴怪",
+	"hp": 110,
+	"image_local_path": "user://cards/images/CSV9C/098.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/098.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "火暴猴",
+	"name_en": "",
+	"rarity": "C",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Stage 1",
+	"weakness_energy": "P",
+	"weakness_value": "×2",
+	"yoren_code": "P057"
+}

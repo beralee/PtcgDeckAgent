@@ -237,10 +237,34 @@ func test_battle_setup_uses_hud_deck_picker_buttons() -> String:
 	var result := run_checks([
 		assert_not_null(deck1_picker, "Player 1 deck selection should use a custom HUD picker button"),
 		assert_not_null(deck2_picker, "Player 2 deck selection should use a custom HUD picker button"),
-		assert_true(deck1_picker != null and deck1_picker.custom_minimum_size.y >= 50.0, "Deck picker buttons should be tall enough for mobile taps"),
-		assert_true(deck2_picker != null and deck2_picker.custom_minimum_size.y >= 50.0, "Opponent deck picker button should be tall enough for mobile taps"),
+		assert_true(deck1_picker != null and deck1_picker.custom_minimum_size.y >= 68.0, "Deck picker buttons should be tall enough for the larger one-line labels"),
+		assert_true(deck2_picker != null and deck2_picker.custom_minimum_size.y >= 68.0, "Opponent deck picker button should be tall enough for the larger one-line labels"),
+		assert_true(deck1_picker != null and deck1_picker.get_theme_font_size("font_size") >= 28, "Deck picker buttons should double the previous compact font size"),
+		assert_true(deck2_picker != null and deck2_picker.get_theme_font_size("font_size") >= 28, "Opponent deck picker button should double the previous compact font size"),
+		assert_true(deck1_picker != null and "\n" not in deck1_picker.text, "Deck picker buttons should only show the deck name"),
+		assert_true(deck2_picker != null and "\n" not in deck2_picker.text, "Opponent deck picker buttons should only show the deck name"),
 		assert_true(deck1_option != null and not deck1_option.visible, "Legacy deck OptionButton should stay hidden behind the custom picker"),
 		assert_true(deck2_option != null and not deck2_option.visible, "Opponent legacy OptionButton should stay hidden behind the custom picker"),
+	])
+
+	scene.queue_free()
+	return result
+
+
+func test_battle_setup_background_gallery_is_compact_drag_area() -> String:
+	var scene := BattleSetupScene.instantiate()
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	_force_two_player_mode(scene)
+	scene.call("_apply_hud_theme")
+
+	var background_gallery := scene.find_child("BackgroundGallery", true, false) as ScrollContainer
+
+	var result := run_checks([
+		assert_not_null(background_gallery, "Battle setup should expose the background gallery"),
+		assert_true(background_gallery != null and background_gallery.custom_minimum_size.y <= 140.0, "Background gallery should be close to thumbnail height without a large empty lower area"),
+		assert_eq(background_gallery.horizontal_scroll_mode if background_gallery != null else -1, ScrollContainer.SCROLL_MODE_DISABLED, "Background gallery should not show the native horizontal scrollbar"),
+		assert_true(background_gallery != null and bool(background_gallery.get_meta("background_gallery_drag_scroll_enabled", false)), "Background gallery should keep drag scrolling enabled after removing the native bar"),
 	])
 
 	scene.queue_free()
@@ -257,17 +281,20 @@ func test_battle_setup_deck_picker_categories_keep_recent_and_all_only() -> Stri
 	old_deck.id = 901001
 	old_deck.deck_name = "旧卡组"
 	old_deck.total_cards = 60
-	old_deck.import_date = "2026-05-01T10:00:00"
+	old_deck.import_date = "2026-05-06T10:00:00"
+	old_deck.updated_at = 1000
 	var recent_deck := DeckData.new()
 	recent_deck.id = 901002
 	recent_deck.deck_name = "最近卡组"
 	recent_deck.total_cards = 60
 	recent_deck.import_date = "2026-05-02T10:00:00"
+	recent_deck.updated_at = 2000
 	var latest_deck := DeckData.new()
 	latest_deck.id = 901003
 	latest_deck.deck_name = "最新卡组"
 	latest_deck.total_cards = 60
-	latest_deck.import_date = "2026-05-05T10:00:00"
+	latest_deck.import_date = "2026-05-01T10:00:00"
+	latest_deck.updated_at = 3000
 	scene.set("_deck_list", [old_deck, recent_deck, latest_deck])
 	scene.set("_deck_usage_stats", {
 		str(old_deck.id): {"use_count": 8, "last_used": "2026-05-02T12:00:00"},
@@ -279,15 +306,23 @@ func test_battle_setup_deck_picker_categories_keep_recent_and_all_only() -> Stri
 	var latest_meta := str(scene.call("_deck_picker_card_meta", latest_deck))
 	scene.call("_ensure_deck_picker_overlay")
 	var tabs := scene.get("_deck_picker_tabs") as Dictionary
+	scene.set("_deck_picker_slot_index", 0)
+	scene.set("_deck_picker_category", "all")
+	scene.set("_deck_picker_search", "")
+	scene.call("_refresh_deck_picker")
+	var grid := scene.get("_deck_picker_grid") as GridContainer
+	var first_card_button := grid.get_child(0) as Button if grid != null and grid.get_child_count() > 0 else null
 
 	var result := run_checks([
 		assert_true(tabs.has("recent"), "Deck picker should keep the recent category"),
 		assert_true(tabs.has("all"), "Deck picker should keep the all category"),
 		assert_false(tabs.has("frequent"), "Deck picker should remove the frequent category"),
 		assert_eq((recent[0] as DeckData).id, recent_deck.id, "Recent category should sort by last_used descending"),
-		assert_eq((all_decks[0] as DeckData).id, latest_deck.id, "All category should sort by import_date descending"),
+		assert_eq((all_decks[0] as DeckData).id, latest_deck.id, "All category should sort by latest edit time descending"),
 		assert_false(latest_meta.contains("60张"), "Deck picker card meta should not waste space on total card count"),
 		assert_false(latest_meta.contains("导入"), "Deck picker card meta should not display import timestamps"),
+		assert_true(first_card_button != null and "\n" not in first_card_button.text, "Deck picker list entries should show only the deck name"),
+		assert_true(first_card_button != null and first_card_button.get_theme_font_size("font_size") >= 24, "Deck picker list entries should use larger readable labels"),
 	])
 
 	scene.queue_free()

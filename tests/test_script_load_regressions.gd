@@ -30,6 +30,92 @@ func test_benchmark_runner_and_game_state_machine_scripts_load() -> String:
 	])
 
 
+func test_font_bootstrap_loads_bundled_chinese_font() -> String:
+	var font_script := load("res://scripts/autoload/FontBootstrap.gd")
+	var instance: Node = font_script.new() as Node if font_script != null and font_script.can_instantiate() else null
+	var font: Font = instance.call("_load_cjk_font") as Font if instance != null else null
+	var label := Label.new()
+	var rich_text := RichTextLabel.new()
+	var plain_node := Node.new()
+	if instance != null and font != null:
+		instance.set("_cjk_font", font)
+		instance.call("_apply_font_to_control", label)
+		instance.call("_apply_font_to_control", rich_text)
+		instance.call("_apply_font_to_control", plain_node)
+	var label_has_override := label.has_theme_font_override("font")
+	var rich_text_has_override := rich_text.has_theme_font_override("normal_font")
+	label.queue_free()
+	rich_text.queue_free()
+	plain_node.queue_free()
+	return run_checks([
+		assert_not_null(font_script, "FontBootstrap.gd should load without compile errors"),
+		assert_not_null(instance, "FontBootstrap.gd should instantiate without compile errors"),
+		assert_not_null(font, "Bundled CJK font should load on clean runtime startup"),
+		assert_true(font.has_char("宝".unicode_at(0)) if font != null else false, "Bundled CJK font should cover Simplified Chinese glyphs"),
+		assert_true(font.has_char("梦".unicode_at(0)) if font != null else false, "Bundled CJK font should cover game title glyphs"),
+		assert_true(label_has_override, "FontBootstrap should force the bundled CJK font onto standard Control text"),
+		assert_true(rich_text_has_override, "FontBootstrap should force the bundled CJK font onto RichTextLabel body text"),
+	])
+
+
+func test_battle_ui_coordinator_scripts_load() -> String:
+	var stadium_hud_script := load("res://scripts/ui/battle/display/BattleStadiumHudCoordinator.gd")
+	var surface_styler_script := load("res://scripts/ui/battle/display/BattleSurfaceStyler.gd")
+	var detail_coordinator_script := load("res://scripts/ui/battle/display/BattleCardDetailCoordinator.gd")
+	var deck_shuffle_animator_script := load("res://scripts/ui/battle/display/BattleDeckShuffleAnimator.gd")
+	var popup_text_scaler_script := load("res://scripts/ui/battle/display/BattlePopupTextScaler.gd")
+	var discussion_builder_script := load("res://scripts/ui/battle/advice/BattleDiscussionContextBuilder.gd")
+	var layout_debug_reporter_script := load("res://scripts/ui/battle/layouts/BattleLayoutDebugReporter.gd")
+	var drag_scroll_coordinator_script := load("res://scripts/ui/battle/interactions/BattleDragScrollCoordinator.gd")
+	var stadium_hud_instance = stadium_hud_script.new() if stadium_hud_script != null and stadium_hud_script.can_instantiate() else null
+	var surface_styler_instance = surface_styler_script.new() if surface_styler_script != null and surface_styler_script.can_instantiate() else null
+	var detail_coordinator_instance = detail_coordinator_script.new() if detail_coordinator_script != null and detail_coordinator_script.can_instantiate() else null
+	var deck_shuffle_animator_instance = deck_shuffle_animator_script.new() if deck_shuffle_animator_script != null and deck_shuffle_animator_script.can_instantiate() else null
+	var popup_text_scaler_instance = popup_text_scaler_script.new() if popup_text_scaler_script != null and popup_text_scaler_script.can_instantiate() else null
+	var discussion_builder_instance = discussion_builder_script.new() if discussion_builder_script != null and discussion_builder_script.can_instantiate() else null
+	var layout_debug_reporter_instance = layout_debug_reporter_script.new() if layout_debug_reporter_script != null and layout_debug_reporter_script.can_instantiate() else null
+	var drag_scroll_coordinator_instance = drag_scroll_coordinator_script.new() if drag_scroll_coordinator_script != null and drag_scroll_coordinator_script.can_instantiate() else null
+	return run_checks([
+		assert_not_null(stadium_hud_script, "BattleStadiumHudCoordinator.gd should load without compile errors"),
+		assert_not_null(surface_styler_script, "BattleSurfaceStyler.gd should load without compile errors"),
+		assert_not_null(detail_coordinator_script, "BattleCardDetailCoordinator.gd should load without compile errors"),
+		assert_not_null(deck_shuffle_animator_script, "BattleDeckShuffleAnimator.gd should load without compile errors"),
+		assert_not_null(popup_text_scaler_script, "BattlePopupTextScaler.gd should load without compile errors"),
+		assert_not_null(discussion_builder_script, "BattleDiscussionContextBuilder.gd should load without compile errors"),
+		assert_not_null(layout_debug_reporter_script, "BattleLayoutDebugReporter.gd should load without compile errors"),
+		assert_not_null(drag_scroll_coordinator_script, "BattleDragScrollCoordinator.gd should load without compile errors"),
+		assert_not_null(stadium_hud_instance, "BattleStadiumHudCoordinator.gd should instantiate without compile errors"),
+		assert_not_null(surface_styler_instance, "BattleSurfaceStyler.gd should instantiate without compile errors"),
+		assert_not_null(detail_coordinator_instance, "BattleCardDetailCoordinator.gd should instantiate without compile errors"),
+		assert_not_null(deck_shuffle_animator_instance, "BattleDeckShuffleAnimator.gd should instantiate without compile errors"),
+		assert_not_null(popup_text_scaler_instance, "BattlePopupTextScaler.gd should instantiate without compile errors"),
+		assert_not_null(discussion_builder_instance, "BattleDiscussionContextBuilder.gd should instantiate without compile errors"),
+		assert_not_null(layout_debug_reporter_instance, "BattleLayoutDebugReporter.gd should instantiate without compile errors"),
+		assert_not_null(drag_scroll_coordinator_instance, "BattleDragScrollCoordinator.gd should instantiate without compile errors"),
+	])
+
+
+func test_battle_scene_runtime_script_loads() -> String:
+	var scene_script := load("res://scenes/battle/BattleScene.gd")
+	var runtime_script := load("res://scenes/battle/BattleSceneRuntime.gd")
+	var dialog_runtime_script := load("res://scenes/battle/runtime/BattleSceneDialogInteractionReviewRuntime.gd")
+	var setup_runtime_script := load("res://scenes/battle/runtime/BattleSceneSetupEffectAiRuntime.gd")
+	var board_runtime_script := load("res://scenes/battle/runtime/BattleSceneBoardActionRuntime.gd")
+	var shared_runtime_script := load("res://scenes/battle/runtime/BattleSceneSharedHudAiRuntime.gd")
+	var scene_instance = scene_script.new() if scene_script != null and scene_script.can_instantiate() else null
+
+	return run_checks([
+		assert_not_null(shared_runtime_script, "BattleSceneSharedHudAiRuntime.gd should load without compile errors"),
+		assert_not_null(board_runtime_script, "BattleSceneBoardActionRuntime.gd should load without compile errors"),
+		assert_not_null(setup_runtime_script, "BattleSceneSetupEffectAiRuntime.gd should load without compile errors"),
+		assert_not_null(dialog_runtime_script, "BattleSceneDialogInteractionReviewRuntime.gd should load without compile errors"),
+		assert_not_null(runtime_script, "BattleSceneRuntime.gd should load without compile errors"),
+		assert_not_null(scene_script, "BattleScene.gd should load without compile errors"),
+		assert_not_null(scene_instance, "BattleScene.gd should instantiate without compile errors"),
+		assert_true(scene_instance != null and scene_instance.has_method("_show_match_end_dialog"), "BattleScene runtime should expose match-end overlay methods"),
+	])
+
+
 func test_raging_bolt_llm_self_play_tool_scripts_load() -> String:
 	var tool_script := load("res://scripts/tools/RagingBoltLLMSelfPlayTool.gd")
 	var runner_script := load("res://scripts/tools/run_raging_bolt_llm_self_play.gd")
@@ -81,6 +167,28 @@ func test_non_raging_llm_variants_extend_generic_runtime() -> String:
 		assert_false(miraidon_source.to_lower().contains("raging_bolt"), "Miraidon LLM wrapper must not contain Raging Bolt-specific references"),
 		assert_false(lugia_source.to_lower().contains("raging_bolt"), "Lugia Archeops LLM wrapper must not contain Raging Bolt-specific references"),
 	])
+
+
+func test_v17_llm_variants_extend_shared_v17_runtime() -> String:
+	var v17_base_source := FileAccess.get_file_as_string("res://scripts/ai/DeckStrategy17LLMBase.gd")
+	var wrapper_paths := [
+		"res://scripts/ai/DeckStrategy17ArchaludonDialgaLLM.gd",
+		"res://scripts/ai/DeckStrategy17WaterTurtleLLM.gd",
+		"res://scripts/ai/DeckStrategy17PalkiaGholdengoLLM.gd",
+		"res://scripts/ai/DeckStrategy17BombCharizardLLM.gd",
+		"res://scripts/ai/DeckStrategy17MiraidonLLM.gd",
+		"res://scripts/ai/DeckStrategy17DragapultDusknoirLLM.gd",
+		"res://scripts/ai/DeckStrategy17RegidragoLLM.gd",
+	]
+	var checks: Array[String] = [
+		assert_true(v17_base_source.contains("DeckStrategyLLMRuntimeBase.gd"), "Shared v17 LLM base should extend the generic LLM runtime base"),
+		assert_false(v17_base_source.contains("DeckStrategyRagingBoltLLM.gd"), "Shared v17 LLM base must not inherit the Raging Bolt variant"),
+	]
+	for wrapper_path: String in wrapper_paths:
+		var source := FileAccess.get_file_as_string(wrapper_path)
+		checks.append(assert_true(source.contains("DeckStrategy17LLMBase.gd"), "%s should extend the shared v17 LLM base" % wrapper_path))
+		checks.append(assert_false(source.contains("DeckStrategyRagingBoltLLM.gd"), "%s must not inherit the Raging Bolt variant" % wrapper_path))
+	return run_checks(checks)
 
 
 func test_llm_runtime_core_uses_deck_hooks_for_deck_specific_logic() -> String:
@@ -209,3 +317,35 @@ func test_arceus_giratina_llm_strategy_loads() -> String:
 		assert_not_null(registry_instance, "Registry should create arceus_giratina_llm"),
 		assert_eq(str(registry_instance.call("get_strategy_id")) if registry_instance != null and registry_instance.has_method("get_strategy_id") else "", "arceus_giratina_llm", "Registered Arceus Giratina LLM variant should report its strategy id"),
 	])
+
+
+func test_v17_llm_strategy_variants_load_and_register() -> String:
+	var cases := {
+		"v17_archaludon_dialga_llm": ["res://scripts/ai/DeckStrategy17ArchaludonDialga.gd", "res://scripts/ai/DeckStrategy17ArchaludonDialgaLLM.gd"],
+		"v17_water_turtle_llm": ["res://scripts/ai/DeckStrategy17WaterTurtle.gd", "res://scripts/ai/DeckStrategy17WaterTurtleLLM.gd"],
+		"v17_palkia_gholdengo_llm": ["res://scripts/ai/DeckStrategy17PalkiaGholdengo.gd", "res://scripts/ai/DeckStrategy17PalkiaGholdengoLLM.gd"],
+		"v17_bomb_charizard_llm": ["res://scripts/ai/DeckStrategy17BombCharizard.gd", "res://scripts/ai/DeckStrategy17BombCharizardLLM.gd"],
+		"v17_miraidon_llm": ["res://scripts/ai/DeckStrategy17Miraidon.gd", "res://scripts/ai/DeckStrategy17MiraidonLLM.gd"],
+		"v17_dragapult_dusknoir_llm": ["res://scripts/ai/DeckStrategy17DragapultDusknoir.gd", "res://scripts/ai/DeckStrategy17DragapultDusknoirLLM.gd"],
+		"v17_regidrago_llm": ["res://scripts/ai/DeckStrategy17Regidrago.gd", "res://scripts/ai/DeckStrategy17RegidragoLLM.gd"],
+	}
+	var registry_script := load("res://scripts/ai/DeckStrategyRegistry.gd")
+	var registry = registry_script.new() if registry_script != null and registry_script.can_instantiate() else null
+	var checks: Array[String] = [
+		assert_not_null(registry_script, "DeckStrategyRegistry.gd should load after registering v17 LLM variants"),
+		assert_not_null(registry, "DeckStrategyRegistry.gd should instantiate after registering v17 LLM variants"),
+	]
+	for strategy_id: String in cases.keys():
+		var paths: Array = cases[strategy_id]
+		var rules_script := load(str(paths[0]))
+		var llm_script := load(str(paths[1]))
+		var llm_instance = llm_script.new() if llm_script != null and llm_script.can_instantiate() else null
+		var registry_instance = registry.call("create_strategy_by_id", strategy_id) if registry != null else null
+		checks.append(assert_not_null(rules_script, "%s rules script should load without compile errors" % strategy_id))
+		checks.append(assert_not_null(llm_script, "%s LLM script should load without compile errors" % strategy_id))
+		checks.append(assert_not_null(llm_instance, "%s LLM script should instantiate without compile errors" % strategy_id))
+		checks.append(assert_eq(str(llm_instance.call("get_strategy_id")) if llm_instance != null and llm_instance.has_method("get_strategy_id") else "", strategy_id, "%s should report its strategy id" % strategy_id))
+		checks.append(assert_not_null(registry_instance, "Registry should create %s" % strategy_id))
+		checks.append(assert_eq(str(registry_instance.call("get_strategy_id")) if registry_instance != null and registry_instance.has_method("get_strategy_id") else "", strategy_id, "Registered %s should report its strategy id" % strategy_id))
+		checks.append(assert_true(registry_instance != null and registry_instance.has_method("get_llm_stats"), "%s should expose LLM runtime stats" % strategy_id))
+	return run_checks(checks)

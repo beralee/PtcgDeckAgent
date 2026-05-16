@@ -24,7 +24,7 @@ offset_bottom = 26.0
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="TopBarLeft" type="CenterContainer" parent="TopBar/TopBarRow" unique_id=1615225463]
+[node name="TopBarLeft" type="MarginContainer" parent="TopBar/TopBarRow" unique_id=1615225463]
 layout_mode = 2
 size_flags_horizontal = 3
 
@@ -36,7 +36,7 @@ text = "当前回合：卡组"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="TopBarCenter" type="CenterContainer" parent="TopBar/TopBarRow" unique_id=123299486]
+[node name="TopBarCenter" type="MarginContainer" parent="TopBar/TopBarRow" unique_id=123299486]
 layout_mode = 2
 size_flags_horizontal = 3
 
@@ -91,6 +91,22 @@ layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 11
 text = "宙斯帮我"
+
+[node name="BtnBattleLayout" type="Button" parent="TopBar/TopBarRow/TopBarRight/TopBarActions"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 11
+text = "布局"
+
+[node name="BtnBattleMore" type="Button" parent="TopBar/TopBarRow/TopBarRight/TopBarActions"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 11
+text = "更多"
 
 [node name="BtnReplayPrevTurn" type="Button" parent="TopBar/TopBarRow/TopBarRight/TopBarActions" unique_id=427289465]
 unique_name_in_owner = true
@@ -376,7 +392,7 @@ text = "战区数据"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="OppHudDataRow" type="HBoxContainer" parent="MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudRight/OppHudRightMargin/OppHudRightVBox" unique_id=979787187]
+[node name="OppHudDataRow" type="VBoxContainer" parent="MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudRight/OppHudRightMargin/OppHudRightVBox" unique_id=979787187]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 6
@@ -828,7 +844,7 @@ text = "战区数据"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="MyHudDataRow" type="HBoxContainer" parent="MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudRight/MyHudRightMargin/MyHudRightVBox" unique_id=1968166679]
+[node name="MyHudDataRow" type="VBoxContainer" parent="MainArea/CenterField/FieldArea/MyField/MyFieldShell/MyHudRight/MyHudRightMargin/MyHudRightVBox" unique_id=1968166679]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 6

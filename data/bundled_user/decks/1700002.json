@@ -1,0 +1,193 @@
+{
+    "cards":  [
+                  {
+                      "card_index":  "020",
+                      "card_type":  "Pokemon",
+                      "count":  1,
+                      "effect_id":  "09445b8c32fd4abef4230ebcdc964096",
+                      "name":  "光辉甲贺忍蛙",
+                      "name_en":  "Radiant Greninja",
+                      "set_code":  "CS6.5C"
+                  },
+                  {
+                      "card_index":  "043",
+                      "card_type":  "Item",
+                      "count":  4,
+                      "effect_id":  "1af63a7e2cb7a79215474ad8db8fd8fd",
+                      "name":  "巢穴球",
+                      "name_en":  "Nest Ball",
+                      "set_code":  "CSVH1C"
+                  },
+                  {
+                      "card_index":  "MET",
+                      "card_type":  "Basic Energy",
+                      "count":  10,
+                      "effect_id":  "4557c01497b81767fdaa0004089ecfb3",
+                      "name":  "基本钢能量",
+                      "name_en":  "Metal Energy",
+                      "set_code":  "CSVE1C"
+                  },
+                  {
+                      "card_index":  "151",
+                      "card_type":  "Pokemon",
+                      "count":  1,
+                      "effect_id":  "49669fcf461deacebeb5755c11ec51f1",
+                      "name":  "梦幻ex",
+                      "name_en":  "Mew ex",
+                      "set_code":  "151C"
+                  },
+                  {
+                      "card_index":  "180",
+                      "card_type":  "Item",
+                      "count":  1,
+                      "effect_id":  "4ec261453212280d0eb03ed8254ca97f",
+                      "name":  "顶尖捕捉器",
+                      "name_en":  "Prime Catcher",
+                      "set_code":  "CSV7C"
+                  },
+                  {
+                      "card_index":  "008",
+                      "card_type":  "Pokemon",
+                      "count":  2,
+                      "effect_id":  "5fbf2a43fe0f6df85dd1b7eb420ac678",
+                      "name":  "起源帝牙卢卡V",
+                      "name_en":  "Origin Forme Dialga V",
+                      "set_code":  "CSNC"
+                  },
+                  {
+                      "card_index":  "113",
+                      "card_type":  "Item",
+                      "count":  2,
+                      "effect_id":  "768b545a38fccd5e265093b5adce10af",
+                      "name":  "宝可装置3.0",
+                      "name_en":  "Pokégear 3.0",
+                      "set_code":  "CSV2C"
+                  },
+                  {
+                      "card_index":  "023",
+                      "card_type":  "Supporter",
+                      "count":  4,
+                      "effect_id":  "8e1fa2c9018db938084c94c7c970d419",
+                      "name":  "老大的指令",
+                      "name_en":  "Boss\u0027s Orders",
+                      "set_code":  "CSVH1aC"
+                  },
+                  {
+                      "card_index":  "112",
+                      "card_type":  "Item",
+                      "count":  3,
+                      "effect_id":  "a337ed34a45e63c6d21d98c3d8e0cb6e",
+                      "name":  "高级球",
+                      "name_en":  "Ultra Ball",
+                      "set_code":  "CSV1C"
+                  },
+                  {
+                      "card_index":  "121",
+                      "card_type":  "Supporter",
+                      "count":  4,
+                      "effect_id":  "aecd80ca2722885c3d062a2255346f3e",
+                      "name":  "博士的研究",
+                      "name_en":  "Professor\u0027s Research",
+                      "set_code":  "CSV1C"
+                  },
+                  {
+                      "card_index":  "123",
+                      "card_type":  "Supporter",
+                      "count":  3,
+                      "effect_id":  "af514f82d182aeae5327b2c360df703d",
+                      "name":  "奇树",
+                      "name_en":  "Iono",
+                      "set_code":  "CSV3C"
+                  },
+                  {
+                      "card_index":  "096",
+                      "card_type":  "Pokemon",
+                      "count":  2,
+                      "effect_id":  "e470ac9bf3503ca157a8679c91e19fb1",
+                      "name":  "起源帝牙卢卡VSTAR",
+                      "name_en":  "Origin Forme Dialga VSTAR",
+                      "set_code":  "CS5bC"
+                  },
+                  {
+                      "card_index":  "136",
+                      "card_type":  "Pokemon",
+                      "count":  4,
+                      "effect_id":  "4a142a526975994a83d3accdc12058a0",
+                      "name":  "铝钢龙",
+                      "name_en":  "",
+                      "set_code":  "CSV9C"
+                  },
+                  {
+                      "card_index":  "138",
+                      "card_type":  "Pokemon",
+                      "count":  4,
+                      "effect_id":  "ecce5b1818ae13630c3a09449489c424",
+                      "name":  "铝钢桥龙ex",
+                      "name_en":  "",
+                      "set_code":  "CSV9C"
+                  },
+                  {
+                      "card_index":  "203",
+                      "card_type":  "Stadium",
+                      "count":  3,
+                      "effect_id":  "4e16157bfa88a41e823d058a732df8e0",
+                      "name":  "阻碍之塔",
+                      "name_en":  "Jamming Tower",
+                      "set_code":  "CSV8C"
+                  },
+                  {
+                      "card_index":  "125",
+                      "card_type":  "Supporter",
+                      "count":  1,
+                      "effect_id":  "73d5f46ecf3a6d71b23ce7bc1a28d4f4",
+                      "name":  "弗图博士的剧本",
+                      "name_en":  "Professor Turo\u0027s Scenario",
+                      "set_code":  "CSV6C"
+                  },
+                  {
+                      "card_index":  "183",
+                      "card_type":  "Item",
+                      "count":  4,
+                      "effect_id":  "3e6f1daf545dfed48d0588dd50792a2e",
+                      "name":  "夜间担架",
+                      "name_en":  "Night Stretcher",
+                      "set_code":  "CSV8C"
+                  },
+                  {
+                      "card_index":  "114",
+                      "card_type":  "Item",
+                      "count":  2,
+                      "effect_id":  "06bc00d5dcec33898dc6db2e4c4d10ec",
+                      "name":  "反击捕捉器",
+                      "name_en":  "Counter Catcher",
+                      "set_code":  "CSV6C"
+                  },
+                  {
+                      "card_index":  "135",
+                      "card_type":  "Pokemon",
+                      "count":  1,
+                      "effect_id":  "ab6c3357e2b8a8385a68da738f41e0c1",
+                      "name":  "吉雉鸡ex",
+                      "name_en":  "Fezandipiti ex",
+                      "set_code":  "CSV8C"
+                  },
+                  {
+                      "card_index":  "115",
+                      "card_type":  "Item",
+                      "count":  4,
+                      "effect_id":  "e366f56ecd3f805a28294109a1a37453",
+                      "name":  "大地容器",
+                      "name_en":  "Earthen Vessel",
+                      "set_code":  "CSV6C"
+                  }
+              ],
+    "deck_code":  "1Lupx1CC3jfOLB_wKx",
+    "deck_name":  "17.0 铝钢桥龙",
+    "id":  1700002,
+    "import_date":  "2026-05-16T17:40:02",
+    "source_url":  "https://tcg.mik.moe/decks/list/561444",
+    "strategy":  "核心战术：起源帝牙卢卡VSTAR的招式「星辰时钟」（VSTAR技）可以让你在这个回合之后再进行一个额外回合。配合高伤害的「金属爆裂」招式（打220弃2能量），通过额外回合实现连续攻击。\n\n关键配合：\n- 铁哑铃→金属怪→起源帝牙卢卡VSTAR 进化线\n- 金属怪的特性可以从牌组拿钢能量到手\n- 15张基本钢能量保证能量供给\n- 厉害钓竿回收弃牌区宝可梦和能量\n- 博士的研究+奇树大量抽卡保证手牌\n- 梦幻ex可以复制对手的招式\n\n开局计划：\n- T1 铁哑铃上场，尽量铺多只\n- T2 进化金属怪开始拿能量\n- T3 进化帝牙卢卡VSTAR，准备VSTAR技时机\n\nVSTAR技使用时机极其关键：\n- 在对手场面关键宝可梦残血或即将成型时使用\n- 额外回合可以连续击倒2只宝可梦，直接拿4张奖赏卡\n- 一旦使用就不能再用，必须确保这个额外回合能拿到足够奖赏\n\n对局要点：\n- vs 喷火龙：钢打火弱点但对手330伤害可一击倒\n- vs 沙奈朵：需要注意超系打手\n- 光辉甲贺忍蛙的后场招式伤害可以被玛纳霏挡\n- 藏玛然特可以关闭对手特性（上前场时）\n- 宝可装置3.0从牌组直接贴能量",
+    "total_cards":  60,
+    "variant_name":  "起源帝牙卢卡",
+    "updated_at":  1778925611000
+}

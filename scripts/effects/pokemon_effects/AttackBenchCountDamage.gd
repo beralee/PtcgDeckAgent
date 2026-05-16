@@ -10,11 +10,24 @@ extends BaseEffect
 var damage_per_bench: int = 30
 ## 统计方："self"、"opponent" 或 "both"
 var count_side: String = "both"
+var attack_index_to_match: int = -1
+## 乘算型面板伤害（例如 20×）会被 DamageCalculator 先解析出 20，这里需要扣回这 1 份基础值。
+var replaces_printed_multiplier_base: bool = false
 
 
-func _init(per_bench: int = 20, side: String = "both") -> void:
+func _init(per_bench: int = 20, side: String = "both", replace_printed_base: bool = false) -> void:
 	damage_per_bench = per_bench
 	count_side = side
+	replaces_printed_multiplier_base = replace_printed_base
+
+
+func bind_default_attack_index(attack_index: int) -> void:
+	if attack_index_to_match == -1:
+		attack_index_to_match = attack_index
+
+
+func applies_to_attack_index(attack_index: int) -> bool:
+	return attack_index_to_match == -1 or attack_index_to_match == attack_index
 
 
 func get_damage_bonus(attacker: PokemonSlot, state: GameState) -> int:
@@ -30,7 +43,10 @@ func get_damage_bonus(attacker: PokemonSlot, state: GameState) -> int:
 			bench_count = state.players[1 - pi].bench.size()
 		"both":
 			bench_count = state.players[pi].bench.size() + state.players[1 - pi].bench.size()
-	return damage_per_bench * bench_count
+	var damage: int = damage_per_bench * bench_count
+	if replaces_printed_multiplier_base:
+		damage -= damage_per_bench
+	return damage
 
 
 func execute_attack(

@@ -121,6 +121,16 @@ class EndTurnAuthorityStrategy extends RefCounted:
 		return 90000.0 if str(action.get("kind", "")) == "end_turn" else 100.0
 
 
+class NegativePayoffBeatsBlockedEndTurnStrategy extends RefCounted:
+	func score_action_absolute_with_plan(action: Dictionary, _game_state: GameState, _player_index: int, _turn_plan: Dictionary = {}) -> float:
+		match str(action.get("kind", "")):
+			"attack":
+				return -9820.0
+			"end_turn":
+				return -10000.0
+		return -16000.0
+
+
 class TurnPlanInteractionStrategy extends RefCounted:
 	func build_turn_plan(_game_state: GameState, _player_index: int, _context: Dictionary = {}) -> Dictionary:
 		return {
@@ -582,6 +592,35 @@ func test_ai_opponent_allows_strategy_to_force_end_turn() -> String:
 	return run_checks([
 		assert_eq(str(chosen.get("kind", "")), "end_turn", "Deck strategy should be able to force queued end_turn over ordinary rule actions"),
 		assert_eq(float(end_turn_trace.get("absolute_score", 0.0)), 90000.0, "End turn trace should preserve the deck-local queue score"),
+	])
+
+
+func test_ai_opponent_keeps_negative_payoff_over_more_blocked_end_turn() -> String:
+	var gsm := _make_manual_gsm()
+	var ai = AIOpponentScript.new()
+	ai.player_index = 0
+	ai.decision_runtime_mode = "rules_only"
+	var builder := FixedLegalActionBuilder.new()
+	builder.actions = [
+		{"kind": "play_trainer"},
+		{"kind": "attack", "attack_name": "payoff", "projected_damage": 240, "projected_knockout": true},
+		{"kind": "end_turn"},
+	]
+	ai._legal_action_builder = builder
+	ai.call("set_deck_strategy", NegativePayoffBeatsBlockedEndTurnStrategy.new())
+	var chosen: Dictionary = ai._choose_greedy_strategy_action(gsm)
+	var trace = ai.get_last_decision_trace()
+	var attack_trace: Dictionary = {}
+	var end_turn_trace: Dictionary = {}
+	for scored_action: Dictionary in trace.scored_actions:
+		if str(scored_action.get("kind", "")) == "attack":
+			attack_trace = scored_action
+		elif str(scored_action.get("kind", "")) == "end_turn":
+			end_turn_trace = scored_action
+	return run_checks([
+		assert_eq(str(chosen.get("kind", "")), "attack", "A negative payoff action should beat an even more strongly blocked end_turn"),
+		assert_eq(float(attack_trace.get("absolute_score", 0.0)), -9820.0, "Attack trace should preserve its relative blocked-score value"),
+		assert_eq(float(end_turn_trace.get("absolute_score", 0.0)), -10000.0, "End turn should stay lower than the payoff action"),
 	])
 
 

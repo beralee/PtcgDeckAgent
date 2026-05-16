@@ -26,7 +26,8 @@ battle_review_api.json
 
 # Local runtime artifacts
 logs/
-tmp/
+tmp/*
+!tmp/.gdignore
 tmp_benchmark_logs/
 detail.jsonl
 __pycache__/

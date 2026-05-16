@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "球形护盾",
+			"text": "只要这只宝可梦在场上，自己所有的备战宝可梦，不受到对手宝可梦的招式的伤害和效果影响。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "mingo",
+	"attacks": [
+		{
+			"cost": "G",
+			"damage": "10+",
+			"is_vstar_power": false,
+			"name": "精神强念",
+			"text": "追加造成对手战斗宝可梦身上附着的能量数量×30伤害。"
+		}
+	],
+	"card_index": "031",
+	"card_index_en": "24",
+	"card_type": "Pokemon",
+	"description": "特性: 球形护盾\n只要这只宝可梦在场上，自己所有的备战宝可梦，不受到对手宝可梦的招式的伤害和效果影响。\n\n【草】 精神强念 10+\n追加造成对手战斗宝可梦身上附着的能量数量×30伤害。\n\n",
+	"effect_id": "4e41398ab9262f85910de1d9b3a4f027",
+	"energy_provides": "",
+	"energy_type": "G",
+	"evolves_from": "虫滚泥",
+	"hp": 70,
+	"image_local_path": "user://cards/images/CSV7C/031.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV7C/031.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "虫甲圣",
+	"name_en": "Rabsca",
+	"rarity": "U",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-01-16T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "CSV7C",
+	"set_code_en": "TEF",
+	"stage": "Stage 1",
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"yoren_code": "P0954"
+}

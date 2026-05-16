@@ -233,6 +233,31 @@ func test_llm_interaction_bridge_script_loads() -> String:
 	])
 
 
+func test_llm_decision_tree_executor_keeps_granted_attack_actions() -> String:
+	var script := _load_script(LLM_DECISION_TREE_EXECUTOR_SCRIPT_PATH)
+	if script == null:
+		return "LLMDecisionTreeExecutor.gd should exist"
+	var executor: RefCounted = script.new()
+	var gs := _make_game_state(4)
+	var queue: Array = executor.call("select_action_queue", {
+		"actions": [{
+			"id": "granted_attack:-1:tm_evolution",
+			"type": "granted_attack",
+			"attack_name": "Evolution",
+			"interactions": {"search_targets": ["Kirlia", "Kirlia"]},
+		}],
+		"fallback_actions": [{"id": "end_turn"}],
+	}, gs, 0)
+	if queue.is_empty():
+		return "Executor should not drop granted_attack actions from the selected queue"
+	var first: Dictionary = queue[0] if queue[0] is Dictionary else {}
+	return run_checks([
+		assert_eq(str(first.get("type", "")), "granted_attack", "Granted attack type should survive normalization"),
+		assert_eq(str(first.get("action_id", "")), "granted_attack:-1:tm_evolution", "Granted attack action id should survive normalization"),
+		assert_eq(str(first.get("attack_name", "")), "Evolution", "Granted attack metadata should survive normalization"),
+	])
+
+
 func test_llm_prompt_builder_includes_full_battle_context_without_hidden_opponent_hand() -> String:
 	var script := _load_script(LLM_TURN_PLAN_PROMPT_BUILDER_SCRIPT_PATH)
 	if script == null:
@@ -3538,6 +3563,88 @@ func test_llm_route_candidate_builder_exposes_primary_engine_route() -> String:
 	])
 
 
+func test_llm_route_candidate_attack_now_prefers_primary_attack_over_first_attack() -> String:
+	var builder := _new_route_candidate_builder()
+	if builder == null:
+		return "LLMRouteCandidateBuilder.gd should exist"
+	var weak_attack := {
+		"id": "attack:0:gust",
+		"action_id": "attack:0:gust",
+		"type": "attack",
+		"attack_index": 0,
+		"attack_name": "Gust",
+		"damage": "10",
+		"attack_quality": {"role": "chip_damage", "terminal_priority": "medium"},
+	}
+	var strong_attack := {
+		"id": "attack:1:balloon_blast",
+		"action_id": "attack:1:balloon_blast",
+		"type": "attack",
+		"attack_index": 1,
+		"attack_name": "Balloon Blast",
+		"damage": "120",
+		"attack_quality": {"role": "primary_damage", "terminal_priority": "high"},
+	}
+	var routes: Array = builder.call("build_candidate_routes", [weak_attack, strong_attack, {"id": "end_turn", "type": "end_turn"}], [], {})
+	var attack_route: Dictionary = {}
+	for raw: Variant in routes:
+		if raw is Dictionary and str((raw as Dictionary).get("id", "")) == "attack_now":
+			attack_route = raw
+			break
+	var ids: Array[String] = []
+	for raw_action: Variant in attack_route.get("actions", []):
+		if raw_action is Dictionary:
+			ids.append(str((raw_action as Dictionary).get("id", "")))
+	var terminal_id := ids[ids.size() - 1] if not ids.is_empty() else ""
+	return run_checks([
+		assert_false(attack_route.is_empty(), "Attack-now route should be available when legal attacks exist"),
+		assert_eq(terminal_id, "attack:1:balloon_blast", "Attack-now route should choose the high-priority primary attack, not the first listed chip attack"),
+	])
+
+
+func test_llm_route_candidate_attack_now_prefers_damage_counter_scaling_attack() -> String:
+	var builder := _new_route_candidate_builder()
+	if builder == null:
+		return "LLMRouteCandidateBuilder.gd should exist"
+	var slap := {
+		"id": "attack:0:巴掌",
+		"action_id": "attack:0:巴掌",
+		"type": "attack",
+		"attack_index": 0,
+		"attack_name": "巴掌",
+		"damage": "30",
+		"attack_quality": {"role": "chip_damage", "terminal_priority": "medium"},
+	}
+	var roar := {
+		"id": "attack:1:凶暴吼叫",
+		"action_id": "attack:1:凶暴吼叫",
+		"type": "attack",
+		"attack_index": 1,
+		"attack_name": "凶暴吼叫",
+		"damage": "",
+		"attack_rules": {
+			"name": "凶暴吼叫",
+			"text": "给对手的1只宝可梦，造成这只宝可梦身上放置的伤害指示物数量×20伤害。",
+			"damage": "",
+		},
+		"attack_quality": {"role": "utility_attack", "terminal_priority": "medium"},
+	}
+	var routes: Array = builder.call("build_candidate_routes", [slap, roar, {"id": "end_turn", "type": "end_turn"}], [], {})
+	var attack_route: Dictionary = {}
+	for raw: Variant in routes:
+		if raw is Dictionary and str((raw as Dictionary).get("id", "")) == "attack_now":
+			attack_route = raw
+			break
+	var ids: Array[String] = []
+	for raw_action: Variant in attack_route.get("actions", []):
+		if raw_action is Dictionary:
+			ids.append(str((raw_action as Dictionary).get("id", "")))
+	var terminal_id := ids[ids.size() - 1] if not ids.is_empty() else ""
+	return run_checks([
+		assert_eq(terminal_id, "attack:1:凶暴吼叫", "Damage-counter scaling attacks should outrank first-slot chip attacks in attack_now routes"),
+	])
+
+
 func test_llm_route_candidate_primary_engine_excludes_hand_reset_draw() -> String:
 	var builder := _new_route_candidate_builder()
 	if builder == null:
@@ -3718,10 +3825,16 @@ func test_llm_route_candidate_builder_exposes_manual_attach_to_attack_route() ->
 				attack_now_seen = true
 	var route_actions: Array = attach_route.get("actions", []) if attach_route.get("actions", []) is Array else []
 	var first_action: Dictionary = route_actions[0] if not route_actions.is_empty() and route_actions[0] is Dictionary else {}
+	var route_action_ids: Array[String] = []
+	for raw_action: Variant in route_actions:
+		if raw_action is Dictionary:
+			route_action_ids.append(str((raw_action as Dictionary).get("id", "")))
 	return run_checks([
 		assert_false(attach_route.is_empty(), "Candidate builder should expose direct manual attach into primary attack"),
 		assert_eq(str(attach_route.get("route_action_id", "")), "route:manual_attach_to_attack", "Manual attach route should be selectable by route_action_id"),
 		assert_eq(str(first_action.get("id", "")), "attach_energy:c44:active", "Manual attach attack route should start with the exact cost-filling attach id"),
+		assert_true(route_action_ids.has("future:attack_after_attach:active:1:thundering_bolt"), "Manual attach attack route should close with the resulting future primary attack, not only end_turn"),
+		assert_eq(route_action_ids[route_action_ids.size() - 1], "end_turn", "Manual attach attack route should keep terminal end_turn as executor safety after the future attack goal"),
 		assert_false(attack_now_seen, "Low-value redraw attack-now route should not outrank a direct primary attach route"),
 	])
 

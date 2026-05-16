@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "otumami",
+	"attacks": [
+		{
+			"cost": "M",
+			"damage": "10+",
+			"is_vstar_power": false,
+			"name": "惩罚巨钳",
+			"text": "追加造成对手场上拥有特性的宝可梦数量×50伤害。"
+		},
+		{
+			"cost": "MM",
+			"damage": "70",
+			"is_vstar_power": false,
+			"name": "居合劈",
+			"text": ""
+		}
+	],
+	"card_index": "081",
+	"card_index_en": "205",
+	"card_type": "Pokemon",
+	"description": "【钢】 惩罚巨钳 10+\n追加造成对手场上拥有特性的宝可梦数量×50伤害。\n\n【钢】【钢】 居合劈 70\n\n\n",
+	"effect_id": "0fc11aeb024998d63c530b67f99c8bbb",
+	"energy_provides": "",
+	"energy_type": "M",
+	"evolves_from": "飞天螳螂",
+	"hp": 140,
+	"image_local_path": "user://cards/images/CSV4C/081.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV4C/081.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "巨钳螳螂",
+	"name_en": "Scizor",
+	"rarity": "R",
+	"regulation_expanded": true,
+	"regulation_mark": "G",
+	"regulation_standard": true,
+	"release_date": "2025-07-18T00:00:00+08:00",
+	"resistance_energy": "G",
+	"resistance_value": "-30",
+	"retreat_cost": 2,
+	"set_code": "CSV4C",
+	"set_code_en": "OBF",
+	"stage": "Stage 1",
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"yoren_code": "P212"
+}

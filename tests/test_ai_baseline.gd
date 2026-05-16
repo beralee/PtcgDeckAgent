@@ -1678,6 +1678,34 @@ func test_battle_scene_schedules_ai_for_mulligan_setup_prompt() -> String:
 	])
 
 
+func test_battle_scene_mulligan_bonus_prompt_is_mandatory_single_choice() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var scene := _make_setup_ready_battle_scene()
+	var gsm := SpyGameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.SETUP
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.players = [_make_player_state(0), _make_player_state(1)]
+	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
+	scene.set("_gsm", gsm)
+
+	scene._on_player_choice_required("mulligan_extra_draw", {"beneficiary": 0, "mulligan_count": 2})
+	var dialog_items: Array = scene.get("_dialog_items_data")
+	var dialog_data: Dictionary = scene.get("_dialog_data")
+	var cancel_button := scene.get("_dialog_cancel") as Button
+	scene._handle_dialog_choice_legacy(PackedInt32Array([-1]))
+	GameManager.current_mode = previous_mode
+
+	return run_checks([
+		assert_eq(dialog_items.size(), 1, "Mulligan bonus prompt should expose only the extra-draw action"),
+		assert_false(bool(dialog_data.get("allow_cancel", true)), "Mulligan bonus prompt should not allow cancellation"),
+		assert_true(cancel_button != null and not cancel_button.visible, "Mulligan bonus prompt should hide the cancel button"),
+		assert_eq(gsm.mulligan_resolve_calls, 1, "Mulligan bonus prompt should resolve through the GSM"),
+		assert_eq(gsm.resolved_beneficiary, 0, "Mulligan bonus prompt should keep the configured beneficiary"),
+		assert_true(gsm.resolved_draw_extra, "Mulligan bonus prompt should always draw the extra card"),
+	])
+
+
 func test_battle_scene_schedules_ai_for_setup_active_prompt_target_player() -> String:
 	var previous_mode: int = GameManager.current_mode
 	var scene := _make_setup_ready_battle_scene()

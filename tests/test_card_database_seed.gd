@@ -74,13 +74,25 @@ func test_get_all_ai_decks_returns_supported_bundled_shortlist() -> String:
 	db._ai_deck_cache = {}
 	var ai_decks: Array[DeckData] = db.get_all_ai_decks()
 	var ids: Array[int] = []
+	var leading_ids: Array[int] = []
 	for deck: DeckData in ai_decks:
 		ids.append(deck.id)
+		if leading_ids.size() < 7:
+			leading_ids.append(deck.id)
 	ids.sort()
-	var expected_ids := [569061, 575657, 575716, 575718, 575720, 575723, 578647, 579502]
+	var expected_ids := [
+		569061, 575657, 575716, 575718, 575720, 575723, 578647, 579502,
+		1700002, 1700003, 1700004, 1700005, 1700007, 1700008, 1700011,
+	]
+	var expected_leading_ids := [
+		1700002, 1700003, 1700004, 1700005, 1700007, 1700008, 1700011,
+	]
+	leading_ids.sort()
+	expected_leading_ids.sort()
 	return run_checks([
 		assert_eq(ai_decks.size(), expected_ids.size(), "AI deck list should expose exactly the backed-up AI deck set"),
 		assert_eq(ids, expected_ids, "AI deck list should match the backed-up AI deck set"),
+		assert_eq(leading_ids, expected_leading_ids, "AI deck list should sort the seven 17.0 supported AI decks first"),
 	])
 
 
@@ -147,6 +159,128 @@ func test_miraidon_165_is_bundled_as_default_install_deck() -> String:
 	checks.append(assert_true(seen_magnemite, "Bundled Miraidon 16.5 deck should include CSV1C_042 Magnemite"))
 	checks.append(assert_eq(missing_card_data.size(), 0, "All Miraidon 16.5 deck cards should have bundled card JSON: %s" % str(missing_card_data)))
 	checks.append(assert_eq(missing_images.size(), 0, "All Miraidon 16.5 deck cards should have bundled images: %s" % str(missing_images)))
+	return run_checks(checks)
+
+
+func test_festival_lead_box_is_bundled_as_default_install_deck() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var deck_path := "res://data/bundled_user/decks/602769.json"
+	var checks: Array[String] = [
+		assert_true(deck_path in manifest, "Festival Lead Box deck should be listed in the bundled seed manifest"),
+		assert_true("res://data/bundled_user/cards/CSV8C_020.json" in manifest, "Festival Lead Box Grookey should be listed in the bundled seed manifest"),
+		assert_true("res://data/bundled_user/cards/CSV8C_024.json" in manifest, "Festival Lead Box Dipplin should be listed in the bundled seed manifest"),
+		assert_true("res://data/bundled_user/cards/CSV8C_201.json" in manifest, "Festival Lead Box Festival Grounds should be listed in the bundled seed manifest"),
+		assert_true("res://data/bundled_user/cards/images/CSV8C/020.png.bin" in manifest, "Festival Lead Box Grookey image should be listed in the bundled seed manifest"),
+	]
+	var raw := FileAccess.get_file_as_string(deck_path)
+	var parsed: Variant = JSON.parse_string(raw)
+	if not parsed is Dictionary:
+		checks.append("Festival Lead Box bundled deck JSON should parse")
+		return run_checks(checks)
+	var deck := parsed as Dictionary
+	var seen_grookey := false
+	var seen_dipplin := false
+	var seen_festival_grounds := false
+	var missing_card_data: Array[String] = []
+	var missing_images: Array[String] = []
+	for entry: Dictionary in deck.get("cards", []):
+		var set_code := str(entry.get("set_code", ""))
+		var card_index := str(entry.get("card_index", ""))
+		var card_id := "%s_%s" % [set_code, card_index]
+		if card_id == "CSV8C_020":
+			seen_grookey = true
+		elif card_id == "CSV8C_024":
+			seen_dipplin = true
+		elif card_id == "CSV8C_201":
+			seen_festival_grounds = true
+		if not FileAccess.file_exists("res://data/bundled_user/cards/%s.json" % card_id):
+			missing_card_data.append(card_id)
+		if not FileAccess.file_exists("res://data/bundled_user/cards/images/%s/%s.png.bin" % [set_code, card_index]):
+			missing_images.append(card_id)
+	checks.append(assert_eq(int(deck.get("id", -1)), 602769, "Bundled Festival Lead Box deck id should match the imported deck"))
+	checks.append(assert_eq(str(deck.get("deck_name", "")), "祭典乐舞Box", "Bundled Festival Lead Box deck name should match the imported deck"))
+	checks.append(assert_true(seen_grookey, "Bundled Festival Lead Box should include CSV8C_020 Grookey"))
+	checks.append(assert_true(seen_dipplin, "Bundled Festival Lead Box should include CSV8C_024 Dipplin"))
+	checks.append(assert_true(seen_festival_grounds, "Bundled Festival Lead Box should include CSV8C_201 Festival Grounds"))
+	checks.append(assert_eq(missing_card_data.size(), 0, "All Festival Lead Box deck cards should have bundled card JSON: %s" % str(missing_card_data)))
+	checks.append(assert_eq(missing_images.size(), 0, "All Festival Lead Box deck cards should have bundled images: %s" % str(missing_images)))
+	return run_checks(checks)
+
+
+func test_version_170_user_decks_are_bundled_with_generated_ids() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var generated_to_source := {
+		1700001: 544317,
+		1700002: 561444,
+		1700003: 569061,
+		1700004: 575479,
+		1700005: 575716,
+		1700006: 575718,
+		1700007: 575720,
+		1700008: 575723,
+		1700009: 579502,
+		1700010: 580091,
+		1700011: 581056,
+		1700012: 591123,
+	}
+	var checks: Array[String] = []
+	for deck_id_variant: Variant in generated_to_source.keys():
+		var deck_id := int(deck_id_variant)
+		var source_id := int(generated_to_source[deck_id_variant])
+		var deck_path := "res://data/bundled_user/decks/%d.json" % deck_id
+		checks.append(assert_true(deck_path in manifest, "17.0 deck %d should be listed in the bundled seed manifest" % deck_id))
+		checks.append(assert_true(FileAccess.file_exists(deck_path), "17.0 deck %d bundled JSON should exist" % deck_id))
+		checks.append(assert_false(deck_id == source_id, "17.0 deck %d should use a generated id instead of its source id" % deck_id))
+
+		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(deck_path))
+		if not parsed is Dictionary:
+			checks.append("17.0 deck %d bundled JSON should parse" % deck_id)
+			continue
+		var deck := parsed as Dictionary
+		var total_count := 0
+		for entry_variant: Variant in deck.get("cards", []):
+			if entry_variant is Dictionary:
+				total_count += int((entry_variant as Dictionary).get("count", 0))
+		checks.append(assert_eq(int(deck.get("id", -1)), deck_id, "17.0 deck file %d should keep its generated id in JSON" % deck_id))
+		checks.append(assert_true(str(deck.get("deck_name", "")).begins_with("17.0 "), "17.0 deck %d should keep the versioned display name" % deck_id))
+		checks.append(assert_eq(str(deck.get("source_url", "")), "https://tcg.mik.moe/decks/list/%d" % source_id, "17.0 deck %d should keep source traceability" % deck_id))
+		checks.append(assert_eq(int(deck.get("total_cards", -1)), 60, "17.0 deck %d total_cards should be 60" % deck_id))
+		checks.append(assert_eq(total_count, 60, "17.0 deck %d card counts should add up to 60" % deck_id))
+	return run_checks(checks)
+
+
+func test_recent_card_audit_batch_is_bundled_as_default_install_cards() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_ids := [
+		"CSNC_020",
+		"CSV8C_050",
+		"CSV7C_030",
+		"CSV3C_086",
+	]
+	var expected_effect_ids := {
+		"CSNC_020": "2e5819cd4e1c354b8a9945525c54ec71",
+		"CSV8C_050": "7580acd5669bac12cb1af8007d2e6a6a",
+		"CSV7C_030": "c2d6b5ec0bc365112105fea079a22fd7",
+		"CSV3C_086": "f189ac39dca6332f0b3af7b65cea8220",
+	}
+	var checks: Array[String] = []
+	for card_id: String in card_ids:
+		var parts := card_id.split("_", false, 1)
+		var set_code := str(parts[0])
+		var card_index := str(parts[1])
+		var card_path := "res://data/bundled_user/cards/%s.json" % card_id
+		var image_path := "res://data/bundled_user/cards/images/%s/%s.png.bin" % [set_code, card_index]
+		checks.append(assert_true(card_path in manifest, "%s should be listed in bundled seed manifest" % card_id))
+		checks.append(assert_true(image_path in manifest, "%s image should be listed in bundled seed manifest" % card_id))
+		checks.append(assert_true(FileAccess.file_exists(card_path), "%s bundled card JSON should exist" % card_id))
+		checks.append(assert_true(FileAccess.file_exists(image_path), "%s bundled card image should exist" % card_id))
+		var card: CardData = db.get_card(set_code, card_index)
+		checks.append(assert_not_null(card, "%s should load through CardDatabase bundled fallback" % card_id))
+		if card != null:
+			checks.append(assert_eq(str(card.effect_id), str(expected_effect_ids[card_id]), "%s should keep the implemented effect id" % card_id))
 	return run_checks(checks)
 
 

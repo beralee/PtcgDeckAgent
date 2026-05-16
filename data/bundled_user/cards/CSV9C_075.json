@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "奇迹之吻",
+			"text": "只要这只宝可梦在场上，每当对手的战斗宝可梦【昏厥】时，自己抛掷1次硬币。如果为正面，则多拿取1张奖赏卡。这个效果，无论拥有这个特性的宝可梦有多少只，都不会叠加。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "Narano",
+	"attacks": [
+		{
+			"cost": "CCC",
+			"damage": "140",
+			"is_vstar_power": false,
+			"name": "高速之翼",
+			"text": ""
+		}
+	],
+	"card_index": "075",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "特性: 奇迹之吻\n只要这只宝可梦在场上，每当对手的战斗宝可梦【昏厥】时，自己抛掷1次硬币。如果为正面，则多拿取1张奖赏卡。这个效果，无论拥有这个特性的宝可梦有多少只，都不会叠加。\n\n【无】【无】【无】 高速之翼 140\n\n\n",
+	"effect_id": "019d762a760de48f1bb05528db2766f3",
+	"energy_provides": "",
+	"energy_type": "P",
+	"evolves_from": "波克基古",
+	"hp": 140,
+	"image_local_path": "user://cards/images/CSV9C/075.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/075.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "波克基斯",
+	"name_en": "",
+	"rarity": "R",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Stage 2",
+	"weakness_energy": "M",
+	"weakness_value": "×2",
+	"yoren_code": "P468"
+}

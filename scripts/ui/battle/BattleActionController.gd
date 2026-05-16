@@ -29,7 +29,7 @@ func on_hand_card_clicked(scene: Object, inst: CardInstance, _panel: PanelContai
 	var current_player: int = gsm.game_state.current_player_index
 	var card_data: CardData = inst.card_data
 	if card_data.card_type == "Supporter":
-		if gsm.rule_validator.can_play_supporter(gsm.game_state, current_player) or gsm._can_play_supporter_exception(current_player, inst):
+		if gsm.rule_validator.can_play_supporter(gsm.game_state, current_player, inst, gsm.effect_processor) or gsm._can_play_supporter_exception(current_player, inst):
 			try_play_trainer_with_interaction(scene, current_player, inst)
 		else:
 			scene.call("_log", _bt(scene, "battle.log.supporter_unavailable"))
@@ -64,11 +64,11 @@ func on_hand_card_clicked(scene: Object, inst: CardInstance, _panel: PanelContai
 func try_play_trainer_with_interaction(scene: Object, player_index: int, card: CardInstance) -> void:
 	var gsm: Variant = scene.get("_gsm")
 	var card_type: String = card.card_data.card_type
-	if card_type == "Item" and not gsm.rule_validator.can_play_item(gsm.game_state, player_index):
+	if card_type == "Item" and not gsm.rule_validator.can_play_item(gsm.game_state, player_index, card, gsm.effect_processor):
 		scene.call("_log", _bt(scene, "battle.log.card_currently_unavailable", {"name": card.card_data.name}))
 		return
 	if card_type == "Supporter":
-		if not gsm.rule_validator.can_play_supporter(gsm.game_state, player_index) and not gsm._can_play_supporter_exception(player_index, card):
+		if not gsm.rule_validator.can_play_supporter(gsm.game_state, player_index, card, gsm.effect_processor) and not gsm._can_play_supporter_exception(player_index, card):
 			scene.call("_log", _bt(scene, "battle.log.supporter_unavailable"))
 			return
 	var effect: BaseEffect = gsm.effect_processor.get_effect(card.card_data.effect_id)
@@ -97,6 +97,9 @@ func try_play_trainer_with_interaction(scene: Object, player_index: int, card: C
 
 func try_play_stadium_with_interaction(scene: Object, player_index: int, card: CardInstance) -> void:
 	var gsm: Variant = scene.get("_gsm")
+	if not gsm.rule_validator.can_play_stadium(gsm.game_state, player_index, card, gsm.effect_processor):
+		scene.call("_log", _bt(scene, "battle.log.cannot_play_stadium"))
+		return
 	var effect: BaseEffect = gsm.effect_processor.get_effect(card.card_data.effect_id)
 	if effect == null:
 		if not gsm.play_stadium(player_index, card):

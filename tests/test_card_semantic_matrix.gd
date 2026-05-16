@@ -1278,6 +1278,65 @@ func test_dragon_copy_filters_vstar_power_attacks() -> String:
 	])
 
 
+func test_dragon_copy_interaction_uses_action_hud_with_apex_cost() -> String:
+	var processor := EffectProcessor.new()
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+
+	var regidrago_cd := _make_regidrago_vstar_data()
+	processor.register_pokemon_card(regidrago_cd)
+	var attacker := PokemonSlot.new()
+	attacker.pokemon_stack.append(CardInstance.create(regidrago_cd, 0))
+	player.active_pokemon = attacker
+
+	var dragapult_cd := _make_dragon_pokemon_data(
+		"Dragapult ex", 320, "52a205820de799a53a689f23cbeb8622",
+		[
+			{"name": "Jet Headbutt", "cost": "C", "damage": "70", "text": "Deal 70 damage.", "is_vstar_power": false},
+			{"name": "Phantom Dive", "cost": "RP", "damage": "200", "text": "Put 6 damage counters on your opponent's Benched Pokemon.", "is_vstar_power": false},
+		]
+	)
+	processor.register_pokemon_card(dragapult_cd)
+	player.discard_pile.append(CardInstance.create(dragapult_cd, 0))
+
+	var effects: Array[BaseEffect] = processor.get_attack_effects_for_slot(attacker, 0)
+	var dragon_effect: AttackUseDiscardDragonAttackEffect = null
+	for fx: BaseEffect in effects:
+		if fx is AttackUseDiscardDragonAttackEffect:
+			dragon_effect = fx
+			break
+	if dragon_effect == null:
+		return "巨龙无双效果未注册到 EffectProcessor"
+
+	var steps: Array[Dictionary] = dragon_effect.get_attack_interaction_steps(attacker.get_top_card(), regidrago_cd.attacks[0], state)
+	if steps.is_empty():
+		return "巨龙无双应生成复制招式选择步骤"
+	var step: Dictionary = steps[0]
+	var action_items: Array = step.get("action_items", [])
+	var copied_items: Array = step.get("items", [])
+	var phantom_action: Dictionary = {}
+	var all_costs_are_apex := true
+	for action: Variant in action_items:
+		if not (action is Dictionary):
+			all_costs_are_apex = false
+			continue
+		var action_dict: Dictionary = action
+		if str(action_dict.get("cost", "")) != "GGR":
+			all_costs_are_apex = false
+		if str(action_dict.get("title", "")) == "Phantom Dive":
+			phantom_action = action_dict
+
+	return run_checks([
+		assert_eq(str(step.get("presentation", "")), "action_hud", "巨龙无双复制招式选择应复用宝可梦行动 HUD"),
+		assert_eq(action_items.size(), copied_items.size(), "每个可复制招式都应有一个 HUD 选项"),
+		assert_true(all_costs_are_apex, "HUD 上所有复制招式的能量费用都应显示为巨龙无双费用"),
+		assert_false(phantom_action.is_empty(), "HUD 中应显示 Phantom Dive"),
+		assert_eq(str(phantom_action.get("cost", "")), "GGR", "Phantom Dive 在巨龙无双 HUD 中应显示 GGR 费用"),
+		assert_true(str(phantom_action.get("meta", "")).contains("Dragapult ex"), "HUD 元信息应显示弃牌区来源宝可梦"),
+		assert_true(str(phantom_action.get("body", "")).contains("damage counters"), "HUD 正文应显示被复制招式效果文本"),
+	])
+
+
 ## 测试7：弃牌区无龙系宝可梦时交互步骤应为空
 func test_dragon_copy_empty_discard_returns_no_steps() -> String:
 	var processor := EffectProcessor.new()

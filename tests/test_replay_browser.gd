@@ -42,8 +42,14 @@ func test_replay_browser_and_ai_settings_use_hud_panels() -> String:
 	var settings_endpoint := settings_scene.get_node_or_null("%EndpointInput") as LineEdit
 	var settings_save := settings_scene.get_node_or_null("%BtnSave") as Button
 	var settings_form := settings_scene.get_node_or_null("VBoxContainer") as Control
+	var settings_guide := settings_scene.find_child("ZenMuxGuideBody", true, false) as Label
+	var settings_troubleshooting := settings_scene.find_child("ZenMuxTroubleBody", true, false) as Label
+	var default_endpoint_button := settings_scene.find_child("BtnUseZenMuxDefault", true, false) as Button
+	var open_zenmux_button := settings_scene.find_child("BtnOpenZenMux", true, false) as Button
 	var endpoint_style := settings_endpoint.get_theme_stylebox("normal") as StyleBoxFlat if settings_endpoint != null else null
 	var save_style := settings_save.get_theme_stylebox("normal") as StyleBoxFlat if settings_save != null else null
+	if default_endpoint_button != null:
+		default_endpoint_button.pressed.emit()
 
 	var result := run_checks([
 		assert_true(replay_style != null and replay_style.bg_color.a < 0.9, "Replay browser should use a translucent HUD frame"),
@@ -51,6 +57,12 @@ func test_replay_browser_and_ai_settings_use_hud_panels() -> String:
 		assert_true(settings_frame != null and settings_form != null and settings_frame.offset_bottom > settings_form.offset_bottom + 50.0, "AI settings HUD frame should extend below the button row"),
 		assert_true(endpoint_style != null and endpoint_style.bg_color.a < 1.0, "AI settings inputs should use translucent HUD styling"),
 		assert_true(save_style != null and save_style.border_color.a > 0.8, "AI settings buttons should use explicit HUD borders"),
+		assert_true(settings_guide != null and settings_guide.text.contains("https://zenmux.ai/api/v1"), "AI settings should explain the exact ZenMux endpoint to enter"),
+		assert_true(settings_guide != null and settings_guide.text.contains("测试连接"), "AI settings should guide players to validate the configuration"),
+		assert_true(settings_troubleshooting != null and settings_troubleshooting.text.contains("401"), "AI settings should include common ZenMux failure explanations"),
+		assert_eq(settings_endpoint.text if settings_endpoint != null else "", "https://zenmux.ai/api/v1", "AI settings default endpoint button should fill the ZenMux API address"),
+		assert_true(open_zenmux_button != null and open_zenmux_button.text.contains("zenmux.ai"), "AI settings should expose a direct ZenMux website button"),
+		assert_eq(str(open_zenmux_button.get_meta("external_url", "")) if open_zenmux_button != null else "", "https://zenmux.ai", "ZenMux website button should point to the ZenMux homepage"),
 	])
 
 	replay_scene.queue_free()
@@ -119,6 +131,14 @@ func test_replay_browser_renders_rows_from_record_index() -> String:
 	var first_row := list_container.get_child(0) if list_container != null and list_container.get_child_count() > 0 else null
 	var replay_button := first_row.find_child("ReplayButton", true, false) if first_row != null else null
 	var delete_button := first_row.find_child("DeleteButton", true, false) if first_row != null else null
+	var row_panel := first_row as PanelContainer
+	var label_fonts: Array[int] = []
+	if first_row != null:
+		for label_node: Node in _find_labels_recursive(first_row):
+			label_fonts.append((label_node as Label).get_theme_font_size("font_size"))
+	label_fonts.sort()
+	var smallest_label_font := label_fonts[0] if label_fonts.size() > 0 else 0
+	var largest_label_font := label_fonts[label_fonts.size() - 1] if label_fonts.size() > 0 else 0
 
 	# 收集行内所有 Label 的文本
 	var all_text := ""
@@ -132,6 +152,11 @@ func test_replay_browser_renders_rows_from_record_index() -> String:
 		assert_true(replay_button is Button, "ReplayBrowser rows should include a Replay button"),
 		assert_false((replay_button as Button).disabled, "Replay button should be enabled once locator support is wired"),
 		assert_true(delete_button is Button, "ReplayBrowser rows should include a Delete button"),
+		assert_true(row_panel != null and row_panel.custom_minimum_size.y >= 76.0, "Replay rows should use the same readable card height as the deck center"),
+		assert_true(largest_label_font >= 23, "Replay row primary text should match the deck center list size"),
+		assert_true(smallest_label_font >= 18, "Replay row secondary text should be readable instead of tiny metadata text"),
+		assert_true(replay_button is Button and (replay_button as Button).get_theme_font_size("font_size") >= 21, "Replay row action buttons should use deck-center compact button text size"),
+		assert_true(replay_button is Button and (replay_button as Button).custom_minimum_size.y >= 57.0, "Replay row action buttons should use deck-center compact touch height"),
 		assert_true(all_text.contains("Player A"), "Replay rows should include player names"),
 		assert_true(all_text.contains("Player B"), "Replay rows should include player names"),
 		assert_true(all_text.contains("2026-04-04"), "Replay rows should include the recorded time"),

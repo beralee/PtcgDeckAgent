@@ -9,15 +9,40 @@ const DIALOG_SIZE := Vector2i(980, 760)
 const DIALOG_MIN_SIZE := Vector2i(820, 620)
 const MAX_BUBBLE_WIDTH := 620.0
 const MIN_BUBBLE_WIDTH := 320.0
+const PORTRAIT_DIALOG_MIN_SIZE := Vector2i(300, 570)
+const PORTRAIT_DIALOG_MARGIN_RATIO := 0.01
+const PORTRAIT_DIALOG_WIDTH_RATIO := 0.99
+const PORTRAIT_DIALOG_HEIGHT_RATIO := 0.68
+const PORTRAIT_REFERENCE_LOGICAL_WIDTH := 900.0
+const PORTRAIT_MAX_TOUCH_SCALE := 1.85
+const PORTRAIT_MIN_BUBBLE_WIDTH := 240.0
 const HEADER_COMPACT_BOTTOM := 166.0
 const HEADER_BATTLE_BOTTOM := 126.0
 const TRANSCRIPT_TOP := 180.0
 const TRANSCRIPT_BATTLE_TOP := 144.0
 const TRANSCRIPT_BOTTOM := -164.0
 const TRANSCRIPT_BOTTOM_WITH_SUGGESTIONS := -206.0
+const PORTRAIT_HEADER_BOTTOM := 106.0
+const PORTRAIT_TRANSCRIPT_TOP := 118.0
+const PORTRAIT_TRANSCRIPT_BOTTOM := -190.0
+const PORTRAIT_TRANSCRIPT_BOTTOM_WITH_SUGGESTIONS := -246.0
+const PORTRAIT_SUGGESTIONS_TOP := -238.0
+const PORTRAIT_SUGGESTIONS_BOTTOM := -186.0
+const PORTRAIT_INPUT_TOP := -178.0
+const PORTRAIT_COMPOSER_HEIGHT := 236.0
+const PORTRAIT_QUESTION_INPUT_HEIGHT := 154.0
+const PORTRAIT_ACTION_BUTTON_HEIGHT := 154.0
+const PORTRAIT_ACTION_BUTTON_WIDTH := 82.0
+const PORTRAIT_INPUT_PANEL_MARGIN := 4.0
+const PORTRAIT_RESET_BUTTON_WIDTH := 0.0
+const PORTRAIT_SEND_BUTTON_WIDTH := 0.0
+const PORTRAIT_RESET_BUTTON_FONT_SIZE := 34.0
+const PORTRAIT_SEND_BUTTON_FONT_SIZE := 36.0
 const STREAM_CHARS_PER_TICK := 8
 const STREAM_INTERVAL_SECONDS := 0.018
 const PENDING_TEXT := "正在分析当前卡组和你的问题..."
+const PROFILE_DESKTOP := "desktop"
+const PROFILE_PORTRAIT_TOUCH := "portrait_touch"
 const COLOR_PANEL := Color(0.035, 0.055, 0.095, 0.98)
 const COLOR_SURFACE := Color(0.055, 0.085, 0.135, 0.92)
 const COLOR_SURFACE_2 := Color(0.075, 0.105, 0.17, 0.94)
@@ -37,6 +62,10 @@ var _stream_body: RichTextLabel = null
 var _stream_full_text := ""
 var _stream_index := 0
 var _stream_metadata: Dictionary = {}
+var _layout_profile := PROFILE_DESKTOP
+var _portrait_frame_rect := Rect2()
+var _portrait_popup_rect := Rect2i()
+var _portrait_touch_scale := 1.0
 
 
 func _ready() -> void:
@@ -89,6 +118,256 @@ func _clamp_dialog_position(target: Vector2i) -> Vector2i:
 	)
 
 
+func apply_desktop_profile() -> void:
+	_layout_profile = PROFILE_DESKTOP
+	_portrait_frame_rect = Rect2()
+	_portrait_popup_rect = Rect2i()
+	_portrait_touch_scale = 1.0
+	_set_portrait_composer_stack(false)
+	min_size = DIALOG_MIN_SIZE
+	size = DIALOG_SIZE
+	var root := get_node_or_null("Root") as Control
+	if root != null:
+		root.offset_left = 18.0
+		root.offset_top = 16.0
+		root.offset_right = -18.0
+		root.offset_bottom = -16.0
+	if has_node("%TitleLabel"):
+		%TitleLabel.offset_top = 8.0
+		%TitleLabel.offset_bottom = 42.0
+		%TitleLabel.add_theme_font_size_override("font_size", 24)
+	if has_node("%CloseButton"):
+		%CloseButton.offset_left = -44.0
+		%CloseButton.offset_top = 8.0
+		%CloseButton.offset_right = -8.0
+		%CloseButton.offset_bottom = 44.0
+	if has_node("%HeaderPanel"):
+		%HeaderPanel.visible = true
+	if has_node("%AttachButton"):
+		%AttachButton.visible = true
+		%AttachButton.custom_minimum_size = Vector2(48, 48)
+	if has_node("%ComposerRow"):
+		%ComposerRow.add_theme_constant_override("separation", 12)
+	var input_vbox := get_node_or_null("Root/InputPanel/InputVBox") as VBoxContainer
+	if input_vbox != null:
+		input_vbox.add_theme_constant_override("separation", 8)
+	var actions := _actions_container()
+	if actions != null:
+		actions.add_theme_constant_override("separation", 8)
+		actions.alignment = BoxContainer.ALIGNMENT_END
+		actions.custom_minimum_size = Vector2.ZERO
+		actions.size_flags_horizontal = Control.SIZE_SHRINK_END
+		actions.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	if has_node("%QuestionInput"):
+		%QuestionInput.custom_minimum_size = Vector2(0, 78)
+		%QuestionInput.add_theme_font_size_override("font_size", 15)
+	if has_node("%InputPanel"):
+		%InputPanel.custom_minimum_size = Vector2(0, 158)
+		%InputPanel.offset_top = -146.0
+	if has_node("%InputLabel"):
+		%InputLabel.add_theme_font_size_override("font_size", 13)
+	if has_node("%ResetButton"):
+		%ResetButton.text = "清空对话"
+		%ResetButton.custom_minimum_size = Vector2(110, 48)
+		%ResetButton.add_theme_font_size_override("font_size", 14)
+		_style_button(%ResetButton, false)
+	if has_node("%SendButton"):
+		%SendButton.text = "发送"
+		%SendButton.custom_minimum_size = Vector2(98, 48)
+		%SendButton.add_theme_font_size_override("font_size", 14)
+		_style_button(%SendButton, true)
+	if has_node("%SuggestionButtons"):
+		%SuggestionButtons.add_theme_constant_override("separation", 6)
+	if has_node("%SuggestionsPanel"):
+		%SuggestionsPanel.offset_top = -198.0
+		%SuggestionsPanel.offset_bottom = -154.0
+	_apply_battle_layout()
+	_refresh_existing_message_metrics()
+	HudThemeScript.apply_scrollbars_recursive(self)
+
+
+func prepare_for_portrait_popup(frame_rect: Rect2) -> Rect2i:
+	return _apply_portrait_profile(frame_rect)
+
+
+func popup_for_viewport(frame_rect: Rect2, portrait: bool = false) -> void:
+	if portrait:
+		var popup_rect := _apply_portrait_profile(frame_rect)
+		if is_inside_tree():
+			popup(popup_rect)
+			position = popup_rect.position
+		size = popup_rect.size
+		return
+	apply_desktop_profile()
+	if is_inside_tree():
+		popup_centered(DIALOG_SIZE)
+	size = DIALOG_SIZE
+
+
+func _apply_portrait_profile(frame_rect: Rect2) -> Rect2i:
+	_layout_profile = PROFILE_PORTRAIT_TOUCH
+	if frame_rect.size == Vector2.ZERO:
+		frame_rect = Rect2(Vector2.ZERO, Vector2(390, 844))
+	_portrait_frame_rect = frame_rect
+	_portrait_touch_scale = _portrait_touch_scale_for_frame(frame_rect)
+	_portrait_popup_rect = _portrait_popup_rect_for_frame(frame_rect)
+	min_size = Vector2i(
+		mini(PORTRAIT_DIALOG_MIN_SIZE.x, _portrait_popup_rect.size.x),
+		mini(PORTRAIT_DIALOG_MIN_SIZE.y, _portrait_popup_rect.size.y)
+	)
+	size = _portrait_popup_rect.size
+	_set_portrait_composer_stack(false)
+	var root_margin := _portrait_px(8.0)
+	var root_height := maxf(float(_portrait_popup_rect.size.y) - root_margin * 2.0, 1.0)
+	var title_top := _portrait_px(6.0)
+	var title_height := _portrait_px(58.0)
+	var close_size := _portrait_px(76.0)
+	var transcript_top := title_top + title_height + _portrait_px(14.0)
+	var input_height := minf(_portrait_px(PORTRAIT_COMPOSER_HEIGHT), root_height * 0.78)
+	var input_panel_margin := roundi(_portrait_px(PORTRAIT_INPUT_PANEL_MARGIN))
+	var suggestion_height := _portrait_px(72.0)
+	var panel_gap := _portrait_px(12.0)
+	var input_top := -input_height
+	var has_suggestions := has_node("%SuggestionButtons") and %SuggestionButtons.get_child_count() > 0
+	var can_show_suggestions := root_height - input_height - panel_gap - suggestion_height - panel_gap - transcript_top >= _portrait_px(44.0)
+	var show_suggestions := has_suggestions and can_show_suggestions
+	var suggestion_top := input_top - panel_gap - suggestion_height
+	var suggestion_bottom := input_top - panel_gap
+	var transcript_bottom := suggestion_top - panel_gap if show_suggestions else input_top - panel_gap
+	var root := get_node_or_null("Root") as Control
+	if root != null:
+		root.offset_left = root_margin
+		root.offset_top = root_margin
+		root.offset_right = -root_margin
+		root.offset_bottom = -root_margin
+	if has_node("%TitleLabel"):
+		%TitleLabel.offset_top = title_top
+		%TitleLabel.offset_bottom = title_top + title_height
+		%TitleLabel.add_theme_font_size_override("font_size", _portrait_font_size(34.0))
+	if has_node("%CloseButton"):
+		%CloseButton.offset_left = -close_size
+		%CloseButton.offset_top = title_top
+		%CloseButton.offset_right = 0.0
+		%CloseButton.offset_bottom = title_top + close_size
+		%CloseButton.custom_minimum_size = Vector2(close_size, close_size)
+		%CloseButton.add_theme_font_size_override("font_size", _portrait_font_size(28.0))
+	if has_node("%HeaderPanel"):
+		%HeaderPanel.visible = false
+	if has_node("%HeaderVBox"):
+		%HeaderVBox.add_theme_constant_override("separation", roundi(_portrait_px(8.0)))
+	if has_node("%DeckNameLabel"):
+		%DeckNameLabel.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		%DeckNameLabel.clip_text = true
+		%DeckNameLabel.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		%DeckNameLabel.add_theme_font_size_override("font_size", _portrait_font_size(28.0))
+	if has_node("%StatusLabel"):
+		%StatusLabel.add_theme_font_size_override("font_size", _portrait_font_size(24.0))
+	if has_node("%TranscriptScroll"):
+		%TranscriptScroll.offset_top = transcript_top
+		%TranscriptScroll.offset_bottom = transcript_bottom
+	if has_node("%SuggestionsPanel"):
+		%SuggestionsPanel.visible = show_suggestions
+		%SuggestionsPanel.offset_top = suggestion_top
+		%SuggestionsPanel.offset_bottom = suggestion_bottom
+		%SuggestionsPanel.add_theme_constant_override("separation", roundi(_portrait_px(8.0)))
+	if has_node("%SuggestionButtons"):
+		%SuggestionButtons.add_theme_constant_override("separation", roundi(_portrait_px(8.0)))
+	if has_node("%InputPanel"):
+		%InputPanel.custom_minimum_size = Vector2(0, input_height)
+		%InputPanel.offset_top = input_top
+		%InputPanel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.028, 0.044, 0.072, 0.97), Color(0.18, 0.68, 0.82, 0.48), 16, input_panel_margin, 12))
+	if has_node("%InputLabel"):
+		%InputLabel.add_theme_font_size_override("font_size", _portrait_font_size(24.0))
+	if has_node("%AttachButton"):
+		%AttachButton.visible = false
+	if has_node("%ComposerRow"):
+		%ComposerRow.add_theme_constant_override("separation", roundi(_portrait_px(8.0)))
+	var input_vbox := get_node_or_null("Root/InputPanel/InputVBox") as VBoxContainer
+	if input_vbox != null:
+		input_vbox.add_theme_constant_override("separation", roundi(_portrait_px(10.0)))
+		input_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var actions := _actions_container()
+	var action_gap := _portrait_px(8.0)
+	var button_width := _portrait_px(PORTRAIT_ACTION_BUTTON_WIDTH)
+	var action_width := button_width * 2.0 + action_gap
+	var question_height := _portrait_px(PORTRAIT_QUESTION_INPUT_HEIGHT)
+	if actions != null:
+		actions.add_theme_constant_override("separation", roundi(action_gap))
+		actions.alignment = BoxContainer.ALIGNMENT_END
+		actions.custom_minimum_size = Vector2(action_width, question_height)
+		actions.size_flags_horizontal = Control.SIZE_SHRINK_END
+		actions.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		actions.size_flags_stretch_ratio = 0.0
+	if has_node("%QuestionInput"):
+		%QuestionInput.custom_minimum_size = Vector2(0, question_height)
+		%QuestionInput.add_theme_font_size_override("font_size", _portrait_font_size(34.0))
+	if has_node("%ResetButton"):
+		_apply_portrait_action_button(%ResetButton, "清空", false, button_width)
+	if has_node("%SendButton"):
+		_apply_portrait_action_button(%SendButton, "发送", true, button_width)
+	_refresh_existing_message_metrics()
+	_refresh_suggestion_button_metrics()
+	HudThemeScript.apply_scrollbars_recursive(self, "portrait_touch")
+	return _portrait_popup_rect
+
+
+func _portrait_popup_rect_for_frame(frame_rect: Rect2) -> Rect2i:
+	var margin := maxf(_portrait_px(4.0), minf(frame_rect.size.x, frame_rect.size.y) * PORTRAIT_DIALOG_MARGIN_RATIO)
+	var available_width := maxf(frame_rect.size.x - margin * 2.0, 1.0)
+	var available_height := maxf(frame_rect.size.y - margin * 2.0, 1.0)
+	var popup_width := minf(available_width, maxf(PORTRAIT_DIALOG_MIN_SIZE.x, frame_rect.size.x * PORTRAIT_DIALOG_WIDTH_RATIO))
+	var popup_height := minf(available_height, maxf(PORTRAIT_DIALOG_MIN_SIZE.y, frame_rect.size.y * PORTRAIT_DIALOG_HEIGHT_RATIO))
+	var popup_position := Vector2(
+		frame_rect.position.x + (frame_rect.size.x - popup_width) * 0.5,
+		frame_rect.position.y + (frame_rect.size.y - popup_height) * 0.5
+	)
+	return Rect2i(
+		Vector2i(roundi(popup_position.x), roundi(popup_position.y)),
+		Vector2i(roundi(popup_width), roundi(popup_height))
+	)
+
+
+func _portrait_touch_scale_for_frame(frame_rect: Rect2) -> float:
+	if frame_rect.size.x <= 0.0 or frame_rect.size.y <= 0.0:
+		return 1.0
+	if frame_rect.size.x >= frame_rect.size.y:
+		return 1.0
+	return clampf(frame_rect.size.x / PORTRAIT_REFERENCE_LOGICAL_WIDTH, 1.0, PORTRAIT_MAX_TOUCH_SCALE)
+
+
+func _portrait_px(value: float) -> float:
+	return roundf(value * _portrait_touch_scale)
+
+
+func _portrait_font_size(value: float) -> int:
+	return maxi(1, roundi(value * _portrait_touch_scale))
+
+
+func _actions_container() -> HBoxContainer:
+	var actions := get_node_or_null("Root/InputPanel/InputVBox/ComposerRow/Actions") as HBoxContainer
+	if actions != null:
+		return actions
+	return get_node_or_null("Root/InputPanel/InputVBox/Actions") as HBoxContainer
+
+
+func _set_portrait_composer_stack(enabled: bool) -> void:
+	var input_vbox := get_node_or_null("Root/InputPanel/InputVBox") as VBoxContainer
+	var composer_row := get_node_or_null("Root/InputPanel/InputVBox/ComposerRow") as HBoxContainer
+	var actions := _actions_container()
+	if input_vbox == null or composer_row == null or actions == null:
+		return
+	var target_parent: Node = input_vbox if enabled else composer_row
+	if actions.get_parent() == target_parent:
+		return
+	var current_parent := actions.get_parent()
+	if current_parent != null:
+		current_parent.remove_child(actions)
+	actions.owner = null
+	target_parent.add_child(actions)
+	if enabled:
+		input_vbox.move_child(actions, mini(composer_row.get_index() + 1, input_vbox.get_child_count() - 1))
+
+
 func setup_for_deck(deck: DeckData) -> void:
 	_stop_stream_timer()
 	_stream_body = null
@@ -105,7 +384,7 @@ func setup_for_deck(deck: DeckData) -> void:
 	_apply_fixed_window_size.call_deferred()
 	_reload_transcript()
 	_refresh_suggestion_buttons([])
-	%QuestionInput.call_deferred("grab_focus")
+	call_deferred("_deferred_grab_question_focus")
 
 
 func setup_for_match(player_deck: DeckData, opponent_deck: DeckData, opponent_label: String = "AI 卡组", session_id: int = 0, reset_session: bool = false) -> void:
@@ -133,7 +412,7 @@ func setup_for_match(player_deck: DeckData, opponent_deck: DeckData, opponent_la
 	_apply_fixed_window_size.call_deferred()
 	_reload_transcript()
 	_refresh_suggestion_buttons([])
-	%QuestionInput.call_deferred("grab_focus")
+	call_deferred("_deferred_grab_question_focus")
 
 
 func setup_for_battle_context(view_deck: DeckData, battle_context: Dictionary, session_id: int = 0, reset_session: bool = false, context_provider: Callable = Callable()) -> void:
@@ -162,7 +441,7 @@ func setup_for_battle_context(view_deck: DeckData, battle_context: Dictionary, s
 	_apply_fixed_window_size.call_deferred()
 	_reload_transcript()
 	_refresh_suggestion_buttons([])
-	%QuestionInput.call_deferred("grab_focus")
+	call_deferred("_deferred_grab_question_focus")
 
 
 func _make_battle_session_deck(view_deck: DeckData, battle_context: Dictionary, session_id: int) -> DeckData:
@@ -238,11 +517,18 @@ func _match_session_id(player_deck_id: int, opponent_deck_id: int, opponent_labe
 
 
 func _apply_fixed_window_size() -> void:
+	if _layout_profile == PROFILE_PORTRAIT_TOUCH:
+		if _portrait_frame_rect.size != Vector2.ZERO:
+			_apply_portrait_profile(_portrait_frame_rect)
+		return
 	min_size = DIALOG_MIN_SIZE
 	size = DIALOG_SIZE
 
 
 func _apply_compact_layout() -> void:
+	if _layout_profile == PROFILE_PORTRAIT_TOUCH:
+		_apply_portrait_profile(_portrait_frame_rect)
+		return
 	if has_node("%HeaderPanel"):
 		%HeaderPanel.offset_bottom = HEADER_COMPACT_BOTTOM
 	if has_node("%SummaryLabel"):
@@ -253,7 +539,11 @@ func _apply_compact_layout() -> void:
 
 
 func _apply_battle_layout() -> void:
+	if _layout_profile == PROFILE_PORTRAIT_TOUCH:
+		_apply_portrait_profile(_portrait_frame_rect)
+		return
 	if has_node("%HeaderPanel"):
+		%HeaderPanel.offset_top = 54.0
 		%HeaderPanel.offset_bottom = HEADER_BATTLE_BOTTOM
 	if has_node("%SummaryLabel"):
 		%SummaryLabel.visible = false
@@ -318,6 +608,8 @@ func _apply_visual_style() -> void:
 	_style_button(%ResetButton, false)
 	_style_button(%SendButton, true)
 	HudThemeScript.apply_scrollbars_recursive(self)
+	if _layout_profile == PROFILE_PORTRAIT_TOUCH:
+		_apply_portrait_profile(_portrait_frame_rect)
 
 
 func _make_panel_style(bg: Color, border: Color, radius: int, margin: int, shadow_size: int = 0) -> StyleBoxFlat:
@@ -337,6 +629,11 @@ func _make_panel_style(bg: Color, border: Color, radius: int, margin: int, shado
 func _style_button(button: Button, primary: bool) -> void:
 	if button == null:
 		return
+	if _is_portrait_profile() and (button == get_node_or_null("%ResetButton") or button == get_node_or_null("%SendButton")):
+		var portrait_primary := button == get_node_or_null("%SendButton")
+		var portrait_text := "发送" if portrait_primary else "清空"
+		_apply_portrait_action_button(button, portrait_text, portrait_primary, maxf(button.custom_minimum_size.x, 1.0))
+		return
 	var normal_bg := Color(0.08, 0.13, 0.18, 0.96)
 	var hover_bg := Color(0.11, 0.18, 0.24, 0.98)
 	var pressed_bg := Color(0.05, 0.10, 0.14, 1.0)
@@ -355,6 +652,40 @@ func _style_button(button: Button, primary: bool) -> void:
 	button.add_theme_color_override("font_pressed_color", Color(0.86, 0.98, 1.0, 1.0))
 	button.add_theme_color_override("font_disabled_color", Color(0.46, 0.54, 0.60, 1.0))
 	button.add_theme_font_size_override("font_size", 14)
+
+
+func _apply_portrait_action_button(button: Button, text: String, primary: bool, width: float) -> void:
+	if button == null:
+		return
+	var font_size := _portrait_font_size(PORTRAIT_SEND_BUTTON_FONT_SIZE if primary else PORTRAIT_RESET_BUTTON_FONT_SIZE)
+	var button_height := _portrait_px(PORTRAIT_ACTION_BUTTON_HEIGHT)
+	var radius := roundi(_portrait_px(8.0))
+	var margin := roundi(_portrait_px(2.0))
+	var normal_bg := Color(0.08, 0.13, 0.18, 0.96)
+	var hover_bg := Color(0.11, 0.18, 0.24, 0.98)
+	var pressed_bg := Color(0.05, 0.10, 0.14, 1.0)
+	var border := Color(0.22, 0.34, 0.42, 0.9)
+	if primary:
+		normal_bg = Color(0.02, 0.55, 0.62, 1.0)
+		hover_bg = Color(0.07, 0.70, 0.76, 1.0)
+		pressed_bg = Color(0.02, 0.40, 0.48, 1.0)
+		border = Color(0.50, 1.0, 0.96, 0.65)
+	button.text = text
+	button.custom_minimum_size = Vector2(width, button_height)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	button.size_flags_stretch_ratio = 1.0
+	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	button.clip_text = false
+	button.add_theme_stylebox_override("normal", _make_panel_style(normal_bg, border, radius, margin, 0))
+	button.add_theme_stylebox_override("hover", _make_panel_style(hover_bg, border, radius, margin, 0))
+	button.add_theme_stylebox_override("pressed", _make_panel_style(pressed_bg, border, radius, margin, 0))
+	button.add_theme_stylebox_override("disabled", _make_panel_style(Color(0.05, 0.07, 0.09, 0.80), Color(0.12, 0.15, 0.18, 0.8), radius, margin, 0))
+	button.add_theme_color_override("font_color", Color(0.93, 0.99, 1.0, 1.0))
+	button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
+	button.add_theme_color_override("font_pressed_color", Color(0.86, 0.98, 1.0, 1.0))
+	button.add_theme_color_override("font_disabled_color", Color(0.46, 0.54, 0.60, 1.0))
+	button.add_theme_font_size_override("font_size", font_size)
 
 
 func _style_icon_button(button: Button) -> void:
@@ -419,7 +750,8 @@ func _add_hint_message(role: String, content: String) -> void:
 
 func _create_avatar(label_text: String, user: bool) -> Control:
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(58, 58)
+	var avatar_size := _avatar_size()
+	panel.custom_minimum_size = Vector2(avatar_size, avatar_size)
 	panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	var bg := Color(0.08, 0.16, 0.25, 0.96) if not user else Color(0.22, 0.12, 0.04, 0.96)
 	var border := Color(0.28, 0.78, 1.0, 0.85) if not user else Color(1.0, 0.62, 0.18, 0.90)
@@ -428,7 +760,7 @@ func _create_avatar(label_text: String, user: bool) -> Control:
 	label.text = label_text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 26)
+	label.add_theme_font_size_override("font_size", _portrait_font_size(30.0) if _is_portrait_profile() else 26)
 	label.add_theme_color_override("font_color", Color(0.95, 0.99, 1.0, 1.0))
 	panel.add_child(label)
 	return panel
@@ -438,7 +770,7 @@ func _add_message_bubble(role: String, content: String, metadata: Dictionary) ->
 	var outer := HBoxContainer.new()
 	outer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	outer.alignment = BoxContainer.ALIGNMENT_END if role == "user" else BoxContainer.ALIGNMENT_BEGIN
-	outer.add_theme_constant_override("separation", 12)
+	outer.add_theme_constant_override("separation", 8 if _is_portrait_profile() else 12)
 	%TranscriptList.add_child(outer)
 
 	var bubble_width := _bubble_width()
@@ -449,7 +781,7 @@ func _add_message_bubble(role: String, content: String, metadata: Dictionary) ->
 		Color(0.05, 0.37, 0.43, 0.96) if role == "user" else Color(0.07, 0.105, 0.17, 0.95),
 		Color(0.32, 0.90, 0.92, 0.52) if role == "user" else Color(0.22, 0.38, 0.56, 0.78),
 		14,
-		12,
+		_bubble_margin(),
 		6
 	)
 	panel.add_theme_stylebox_override("panel", style)
@@ -467,11 +799,11 @@ func _add_message_bubble(role: String, content: String, metadata: Dictionary) ->
 	body.fit_content = true
 	body.scroll_active = false
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	body.custom_minimum_size = Vector2(maxf(bubble_width - 24.0, MIN_BUBBLE_WIDTH - 24.0), 0)
+	body.custom_minimum_size = Vector2(maxf(bubble_width - float(_bubble_margin() * 2), _portrait_px(PORTRAIT_MIN_BUBBLE_WIDTH - 32.0)), 0)
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.add_theme_color_override("default_color", COLOR_TEXT)
-	body.add_theme_font_size_override("normal_font_size", 15)
-	body.add_theme_font_size_override("bold_font_size", 15)
+	body.add_theme_font_size_override("normal_font_size", _body_font_size())
+	body.add_theme_font_size_override("bold_font_size", _body_font_size())
 	body.text = _message_to_bbcode(content)
 	vbox.add_child(body)
 
@@ -486,6 +818,7 @@ func _add_message_bubble(role: String, content: String, metadata: Dictionary) ->
 		var math_title := Label.new()
 		math_title.text = "推导："
 		math_title.add_theme_color_override("font_color", Color(0.8, 0.86, 0.95))
+		math_title.add_theme_font_size_override("font_size", _footer_font_size())
 		vbox.add_child(math_title)
 		for step_variant: Variant in math_steps_variant:
 			var step_label := RichTextLabel.new()
@@ -495,6 +828,7 @@ func _add_message_bubble(role: String, content: String, metadata: Dictionary) ->
 			step_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			step_label.text = _message_to_bbcode("- %s" % str(step_variant))
 			step_label.add_theme_color_override("default_color", Color(0.82, 0.82, 0.86))
+			step_label.add_theme_font_size_override("normal_font_size", _body_font_size())
 			vbox.add_child(step_label)
 
 	var footer_parts: PackedStringArray = []
@@ -512,7 +846,7 @@ func _add_message_bubble(role: String, content: String, metadata: Dictionary) ->
 		footer.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		footer.text = " | ".join(footer_parts)
 		footer.add_theme_color_override("font_color", Color(0.65, 0.7, 0.78))
-		footer.add_theme_font_size_override("font_size", 12)
+		footer.add_theme_font_size_override("font_size", _footer_font_size())
 		vbox.add_child(footer)
 	return body
 
@@ -531,16 +865,21 @@ func _refresh_suggestion_buttons(suggestions: Array[String], preserve_existing: 
 		has_visible_suggestion = true
 		var button := Button.new()
 		button.text = suggestion
-		button.custom_minimum_size = Vector2(0, 32)
+		button.custom_minimum_size = Vector2(0, 44 if _is_portrait_profile() else 32)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.clip_text = _is_portrait_profile()
 		_style_chip_button(button)
+		_apply_suggestion_button_profile(button)
 		button.pressed.connect(func() -> void:
 			%QuestionInput.text = suggestion
 			%QuestionInput.grab_focus()
 		)
 		%SuggestionButtons.add_child(button)
 	%SuggestionsPanel.visible = has_visible_suggestion
-	%TranscriptScroll.offset_bottom = TRANSCRIPT_BOTTOM_WITH_SUGGESTIONS if has_visible_suggestion else TRANSCRIPT_BOTTOM
+	if _is_portrait_profile():
+		_apply_portrait_profile(_portrait_frame_rect)
+	else:
+		%TranscriptScroll.offset_bottom = TRANSCRIPT_BOTTOM_WITH_SUGGESTIONS if has_visible_suggestion else TRANSCRIPT_BOTTOM
 
 
 func _on_send_pressed() -> void:
@@ -753,12 +1092,112 @@ func _queue_scroll_to_bottom() -> void:
 
 
 func _scroll_to_bottom_after_layout() -> void:
+	if not is_inside_tree():
+		return
 	await get_tree().process_frame
+	if not is_inside_tree():
+		return
 	await get_tree().process_frame
+	if not is_inside_tree():
+		return
 	%TranscriptScroll.scroll_vertical = int(%TranscriptScroll.get_v_scroll_bar().max_value)
 
 
+func _deferred_grab_question_focus() -> void:
+	if not is_inside_tree() or not has_node("%QuestionInput"):
+		return
+	%QuestionInput.grab_focus()
+
+
+func _is_portrait_profile() -> bool:
+	return _layout_profile == PROFILE_PORTRAIT_TOUCH
+
+
+func _body_font_size() -> int:
+	return _portrait_font_size(30.0) if _is_portrait_profile() else 15
+
+
+func _code_font_size() -> int:
+	return _portrait_font_size(27.0) if _is_portrait_profile() else 14
+
+
+func _heading_font_size() -> int:
+	return _portrait_font_size(36.0) if _is_portrait_profile() else 16
+
+
+func _footer_font_size() -> int:
+	return _portrait_font_size(22.0) if _is_portrait_profile() else 12
+
+
+func _avatar_size() -> float:
+	return _portrait_px(68.0) if _is_portrait_profile() else 58.0
+
+
+func _bubble_margin() -> int:
+	return roundi(_portrait_px(18.0)) if _is_portrait_profile() else 12
+
+
+func _refresh_existing_message_metrics() -> void:
+	if not has_node("%TranscriptList"):
+		return
+	var bubble_width := _bubble_width()
+	for row_node: Node in %TranscriptList.get_children():
+		var row := row_node as HBoxContainer
+		if row == null:
+			continue
+		row.add_theme_constant_override("separation", 8 if _is_portrait_profile() else 12)
+		for child: Node in row.get_children():
+			var panel := child as PanelContainer
+			if panel == null or panel.get_child_count() <= 0:
+				continue
+			var direct_child := panel.get_child(0)
+			if direct_child is Label:
+				var avatar_size := _avatar_size()
+				panel.custom_minimum_size = Vector2(avatar_size, avatar_size)
+				(direct_child as Label).add_theme_font_size_override("font_size", _portrait_font_size(30.0) if _is_portrait_profile() else 26)
+				continue
+			if not (direct_child is VBoxContainer):
+				continue
+			panel.custom_minimum_size = Vector2(bubble_width, 0)
+			var vbox := direct_child as VBoxContainer
+			for vbox_child: Node in vbox.get_children():
+				if vbox_child is RichTextLabel:
+					var rich := vbox_child as RichTextLabel
+					rich.custom_minimum_size = Vector2(maxf(bubble_width - float(_bubble_margin() * 2), _portrait_px(PORTRAIT_MIN_BUBBLE_WIDTH - 32.0)), 0)
+					rich.add_theme_font_size_override("normal_font_size", _body_font_size())
+					rich.add_theme_font_size_override("bold_font_size", _body_font_size())
+				elif vbox_child is Label:
+					(vbox_child as Label).add_theme_font_size_override("font_size", _footer_font_size())
+
+
+func _refresh_suggestion_button_metrics() -> void:
+	if not has_node("%SuggestionButtons"):
+		return
+	for child: Node in %SuggestionButtons.get_children():
+		if child is Button:
+			_apply_suggestion_button_profile(child as Button)
+
+
+func _apply_suggestion_button_profile(button: Button) -> void:
+	if button == null:
+		return
+	if _is_portrait_profile():
+		button.custom_minimum_size = Vector2(0, _portrait_px(72.0))
+		button.add_theme_font_size_override("font_size", _portrait_font_size(26.0))
+		button.clip_text = true
+		return
+	button.custom_minimum_size = Vector2(0, 32)
+	button.add_theme_font_size_override("font_size", 13)
+
+
 func _bubble_width() -> float:
+	if _is_portrait_profile():
+		var min_width := _portrait_px(PORTRAIT_MIN_BUBBLE_WIDTH)
+		var root_margin := _portrait_px(14.0)
+		var inner_width := maxf(float(size.x) - root_margin * 2.0, min_width)
+		var available_width := maxf(inner_width - _avatar_size() - _portrait_px(24.0), min_width)
+		var max_width := maxf(min_width, inner_width - _avatar_size() - _portrait_px(12.0))
+		return clampf(available_width, min_width, max_width)
 	var available_width := float(size.x) - 150.0
 	return clampf(available_width * 0.72, MIN_BUBBLE_WIDTH, MAX_BUBBLE_WIDTH)
 
@@ -793,7 +1232,7 @@ func _message_to_bbcode(content: String) -> String:
 			out.append("[color=#aab3c5]----------------[/color]")
 			continue
 		if in_code_block:
-			out.append("[font_size=14][color=#d7deea]%s[/color][/font_size]" % _escape_bbcode(line))
+			out.append("[font_size=%d][color=#d7deea]%s[/color][/font_size]" % [_code_font_size(), _escape_bbcode(line)])
 			continue
 		var stripped := line.strip_edges()
 		if stripped.begins_with("### "):
@@ -808,7 +1247,7 @@ func _message_to_bbcode(content: String) -> String:
 
 
 func _heading_bbcode(text: String) -> String:
-	return "[font_size=16][color=#ffffff]%s[/color][/font_size]" % _escape_bbcode(text)
+	return "[font_size=%d][color=#ffffff]%s[/color][/font_size]" % [_heading_font_size(), _escape_bbcode(text)]
 
 
 func _inline_markdown_to_bbcode(line: String) -> String:

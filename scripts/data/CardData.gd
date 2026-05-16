@@ -220,6 +220,38 @@ func is_ancient_pokemon() -> bool:
 	return is_pokemon() and has_tag(ANCIENT_TAG)
 
 
+func is_tera_pokemon() -> bool:
+	if not is_pokemon():
+		return false
+	if ancient_trait == "Tera" or mechanic == "Tera" or has_tag("Tera") or has_tag("Terastal") or has_tag("太晶"):
+		return true
+	if effect_id in [
+		"a533d02d029bd799e8c425beecd3ffaa",
+		"cd845155473716c29f29efa29da0a869",
+		"cfe54f4650db054ec2eec6dfcaaff88a",
+		"317cdd81106733967d562ad538a7983a",
+		"fa9e235782bba9bdb62005106bbdd6d9",
+		"0f9c649bb3f59a7a342b53cdc78952a4",
+		"1e48ba6c2140461745fc407bf34f5598",
+		"92770a887520f6c4528cf57ae82392b3",
+		"689549e631f4f93ecf618a215c628bd1",
+		"27d1eb5f7abc237f462328c2ff00fdf3",
+		"61fb0755be18f5fcdc6a30781d5fc05e",
+		"62619a01b9dd1e1dec71d6f6557c9cb8",
+		"c09bd406f26faeab1683244e53bab0b4",
+		"5de19cbd4b2d1ff80ba14d6d89246ae9",
+	]:
+		return true
+	for attack: Dictionary in attacks:
+		var seen_types: Dictionary = {}
+		for symbol: String in normalize_attack_cost(str(attack.get("cost", ""))):
+			if symbol != "C":
+				seen_types[symbol] = true
+		if seen_types.size() >= 3:
+			return true
+	return false
+
+
 ## 从 API JSON 数据创建 CardData
 static func from_api_json(json: Dictionary) -> CardData:
 	var card := CardData.new()

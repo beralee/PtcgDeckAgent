@@ -53,6 +53,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	old_active.clear_on_leave_active()
 	player.bench.append(old_active)
 	player.active_pokemon = new_active
+	new_active.mark_entered_active_from_bench(state.turn_number)
 
 	# 治疗换入备战区的宝可梦（即原战斗宝可梦）30HP
 	old_active.damage_counters = maxi(0, old_active.damage_counters - 30)

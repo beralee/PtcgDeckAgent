@@ -15,9 +15,11 @@ const VALID_ACTION_TYPES: Dictionary = {
 	"evolve": true,
 	"play_trainer": true,
 	"play_stadium": true,
+	"use_stadium_effect": true,
 	"use_ability": true,
 	"retreat": true,
 	"attack": true,
+	"granted_attack": true,
 	"end_turn": true,
 }
 

@@ -54,6 +54,8 @@ func execute_attack(attacker: PokemonSlot, _defender: PokemonSlot, attack_index:
 		var target: Variant = assignment.get("target", null)
 		var amount: int = int(assignment.get("amount", 10))
 		if target is PokemonSlot and target in opponent.bench:
+			if AbilityBenchImmune.prevents_opponent_attack_damage_or_effect(target, attacker, state):
+				continue
 			(target as PokemonSlot).damage_counters += max(0, amount)
 
 

@@ -20,6 +20,8 @@ func get_attack_interaction_steps(card: CardInstance, _attack: Dictionary, state
 	var player: PlayerState = state.players[card.owner_index]
 	var items: Array = []
 	var labels: Array[String] = []
+	var action_items: Array[Dictionary] = []
+	var apex_cost := str(_attack.get("cost", ""))
 	for discard_card: CardInstance in player.discard_pile:
 		var card_data: CardData = discard_card.card_data
 		if card_data == null or not card_data.is_pokemon() or card_data.energy_type != "N":
@@ -38,6 +40,7 @@ func get_attack_interaction_steps(card: CardInstance, _attack: Dictionary, state
 				"attack": copied_attack,
 			})
 			labels.append("%s - %s" % [card_data.name, str(copied_attack.get("name", ""))])
+			action_items.append(_build_copied_attack_action_item(card_data, copied_attack, apex_cost))
 	if items.is_empty():
 		return []
 	return [{
@@ -45,6 +48,8 @@ func get_attack_interaction_steps(card: CardInstance, _attack: Dictionary, state
 		"title": "选择弃牌区中龙系宝可梦的1个招式",
 		"items": items,
 		"labels": labels,
+		"presentation": "action_hud",
+		"action_items": action_items,
 		"min_select": 1,
 		"max_select": 1,
 		"allow_cancel": true,
@@ -85,13 +90,84 @@ func get_followup_attack_interaction_steps(
 
 
 ## ==================== 伤害计算 ====================
-## 返回被复制招式的基础伤害值（作为伤害加值，因为巨龙无双本身 damage 为空）
+## 返回被复制招式的基础伤害值和动态伤害加值（作为伤害加值，因为巨龙无双本身 damage 为空）
 func get_damage_bonus(_attacker: PokemonSlot, _state: GameState) -> int:
 	var option: Dictionary = _get_selected_option()
 	if option.is_empty():
 		return 0
 	var attack: Dictionary = option.get("attack", {})
-	return DamageCalculator.new().parse_damage(str(attack.get("damage", "")))
+	var total: int = DamageCalculator.new().parse_damage(str(attack.get("damage", "")))
+	var source_effect_id := _get_selected_source_effect_id(option)
+	if _processor != null and source_effect_id != "":
+		total += _processor.get_attack_damage_bonus_by_id(
+			source_effect_id,
+			int(option.get("attack_index", -1)),
+			_attacker,
+			_state,
+			[get_attack_interaction_context()],
+			AttackUseDiscardDragonAttack
+		)
+	return total
+
+
+func ignores_weakness_and_resistance(attacker: PokemonSlot, state: GameState, _attack_index: int = -1) -> bool:
+	var option: Dictionary = _get_selected_option()
+	var source_effect_id := _get_selected_source_effect_id(option)
+	if source_effect_id == "" or _processor == null:
+		return false
+	return _processor.attack_effect_id_ignores_weakness_and_resistance(
+		source_effect_id,
+		int(option.get("attack_index", -1)),
+		attacker,
+		state,
+		[get_attack_interaction_context()],
+		AttackUseDiscardDragonAttack
+	)
+
+
+func ignores_weakness(attacker: PokemonSlot, state: GameState, _attack_index: int = -1) -> bool:
+	var option: Dictionary = _get_selected_option()
+	var source_effect_id := _get_selected_source_effect_id(option)
+	if source_effect_id == "" or _processor == null:
+		return false
+	return _processor.attack_effect_id_ignores_weakness(
+		source_effect_id,
+		int(option.get("attack_index", -1)),
+		attacker,
+		state,
+		[get_attack_interaction_context()],
+		AttackUseDiscardDragonAttack
+	)
+
+
+func ignores_resistance(attacker: PokemonSlot, state: GameState, _attack_index: int = -1) -> bool:
+	var option: Dictionary = _get_selected_option()
+	var source_effect_id := _get_selected_source_effect_id(option)
+	if source_effect_id == "" or _processor == null:
+		return false
+	return _processor.attack_effect_id_ignores_resistance(
+		source_effect_id,
+		int(option.get("attack_index", -1)),
+		attacker,
+		state,
+		[get_attack_interaction_context()],
+		AttackUseDiscardDragonAttack
+	)
+
+
+func ignores_defender_effects(attacker: PokemonSlot, state: GameState, _attack_index: int = -1) -> bool:
+	var option: Dictionary = _get_selected_option()
+	var source_effect_id := _get_selected_source_effect_id(option)
+	if source_effect_id == "" or _processor == null:
+		return false
+	return _processor.attack_effect_id_ignores_defender_effects(
+		source_effect_id,
+		int(option.get("attack_index", -1)),
+		attacker,
+		state,
+		[get_attack_interaction_context()],
+		AttackUseDiscardDragonAttack
+	)
 
 
 ## ==================== 效果执行 ====================
@@ -134,6 +210,37 @@ func _get_selected_option() -> Dictionary:
 	if selected_raw.is_empty() or not (selected_raw[0] is Dictionary):
 		return {}
 	return selected_raw[0]
+
+
+func _get_selected_source_effect_id(option: Dictionary) -> String:
+	var source_card: Variant = option.get("source_card", null)
+	if not (source_card is CardInstance):
+		return ""
+	var source_instance: CardInstance = source_card
+	if source_instance.card_data == null or source_instance.card_data.effect_id == _OWN_EFFECT_ID:
+		return ""
+	return source_instance.card_data.effect_id
+
+
+func _build_copied_attack_action_item(source_data: CardData, copied_attack: Dictionary, apex_cost: String) -> Dictionary:
+	var attack_name := str(copied_attack.get("name", ""))
+	var damage_text := str(copied_attack.get("damage", "")).strip_edges()
+	var meta := source_data.name
+	if damage_text != "":
+		meta = "%s  %s" % [source_data.name, damage_text]
+	var body := str(copied_attack.get("text", "")).strip_edges()
+	if body == "":
+		body = "使用这只弃牌区龙宝可梦的招式效果。"
+	return {
+		"type": "attack",
+		"kind": "招式",
+		"title": attack_name,
+		"meta": meta,
+		"body": body,
+		"cost": apex_cost,
+		"enabled": true,
+		"reason": "",
+	}
 
 
 func get_description() -> String:

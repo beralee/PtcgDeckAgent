@@ -1,0 +1,53 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "Ryuta Fuse",
+	"attacks": [
+		{
+			"cost": "CC",
+			"damage": "30+",
+			"is_vstar_power": false,
+			"name": "波状猛攻",
+			"text": "在上一个自己的回合，如果这只宝可梦以外的「古代」宝可梦使用了招式的话，则追加造成150伤害。"
+		},
+		{
+			"cost": "FFC",
+			"damage": "110",
+			"is_vstar_power": false,
+			"name": "头突",
+			"text": ""
+		}
+	],
+	"card_index": "112",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "【无】【无】 波状猛攻 30+\n在上一个自己的回合，如果这只宝可梦以外的「古代」宝可梦使用了招式的话，则追加造成150伤害。\n\n【斗】【斗】【无】 头突 110\n\n\n",
+	"effect_id": "41dd160743c1707676c4faa6759c718b",
+	"energy_provides": "",
+	"energy_type": "F",
+	"evolves_from": "",
+	"hp": 130,
+	"image_local_path": "user://cards/images/CSV9C/112.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/112.png",
+	"is_tags": [
+		"Ancient"
+	],
+	"label": "Ancient",
+	"mechanic": "",
+	"name": "故勒顿",
+	"name_en": "",
+	"rarity": "U",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Basic",
+	"weakness_energy": "P",
+	"weakness_value": "×2",
+	"yoren_code": "P1007"
+}

@@ -5,6 +5,14 @@ class_name AttackIgnoreDefenderEffects
 extends BaseEffect
 
 
+func ignores_defender_effects(
+	_attacker: PokemonSlot,
+	_state: GameState,
+	attack_index: int
+) -> bool:
+	return applies_to_attack_index(attack_index)
+
+
 func execute_attack(
 	_attacker: PokemonSlot,
 	defender: PokemonSlot,

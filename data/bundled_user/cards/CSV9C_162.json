@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "卷曲厚壁",
+			"text": "只要这只宝可梦，和自己其他的「爆炸头水牛」在场上，自己所有【无】属性的【基础】宝可梦，受到对手宝可梦的招式的伤害「-60」。这个效果，无论拥有这个特性的宝可梦有多少只，都不会叠加。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "GOSSAN",
+	"attacks": [
+		{
+			"cost": "CCC",
+			"damage": "130",
+			"is_vstar_power": false,
+			"name": "潜力",
+			"text": "在下一个自己的回合，这只宝可梦无法使用招式。"
+		}
+	],
+	"card_index": "162",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "特性: 卷曲厚壁\n只要这只宝可梦，和自己其他的「爆炸头水牛」在场上，自己所有【无】属性的【基础】宝可梦，受到对手宝可梦的招式的伤害「-60」。这个效果，无论拥有这个特性的宝可梦有多少只，都不会叠加。\n\n【无】【无】【无】 潜力 130\n在下一个自己的回合，这只宝可梦无法使用招式。\n\n\n",
+	"effect_id": "06ff860de906282c96487b440ecfd05e",
+	"energy_provides": "",
+	"energy_type": "C",
+	"evolves_from": "",
+	"hp": 100,
+	"image_local_path": "user://cards/images/CSV9C/162.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/162.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "爆炸头水牛",
+	"name_en": "",
+	"rarity": "U",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Basic",
+	"weakness_energy": "F",
+	"weakness_value": "×2",
+	"yoren_code": "P626"
+}

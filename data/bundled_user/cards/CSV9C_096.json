@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "Scav",
+	"attacks": [
+		{
+			"cost": "C",
+			"damage": "",
+			"is_vstar_power": false,
+			"name": "小使者",
+			"text": "选择自己牌库中最多2张基本能量，在给对手看过之后，加入手牌。并重洗牌库。"
+		},
+		{
+			"cost": "CCC",
+			"damage": "50",
+			"is_vstar_power": false,
+			"name": "撞击",
+			"text": ""
+		}
+	],
+	"card_index": "096",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "【无】 小使者\n选择自己牌库中最多2张基本能量，在给对手看过之后，加入手牌。并重洗牌库。\n\n【无】【无】【无】 撞击 50\n\n\n",
+	"effect_id": "6c6c611ae3397c524ea28fec85c1f8b8",
+	"energy_provides": "",
+	"energy_type": "P",
+	"evolves_from": "",
+	"hp": 70,
+	"image_local_path": "user://cards/images/CSV9C/096.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/096.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "索财灵",
+	"name_en": "",
+	"rarity": "C",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "F",
+	"resistance_value": "-30",
+	"retreat_cost": 2,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Basic",
+	"weakness_energy": "D",
+	"weakness_value": "×2",
+	"yoren_code": "P0999"
+}

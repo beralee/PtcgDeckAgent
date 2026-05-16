@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "合金建设",
+			"text": "在自己的回合，当将这张卡牌从手牌使出并进行进化时，可使用1次。选择自己弃牌区中最多2张「基本【钢】能量」，以任意方式附着于自己的【钢】宝可梦身上。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "5ban Graphics",
+	"attacks": [
+		{
+			"cost": "MMM",
+			"damage": "220",
+			"is_vstar_power": false,
+			"name": "金属防卫",
+			"text": "在下一个对手的回合，这只宝可梦的弱点，全部消除。"
+		}
+	],
+	"card_index": "138",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "特性: 合金建设\n在自己的回合，当将这张卡牌从手牌使出并进行进化时，可使用1次。选择自己弃牌区中最多2张「基本【钢】能量」，以任意方式附着于自己的【钢】宝可梦身上。\n\n【钢】【钢】【钢】 金属防卫 220\n在下一个对手的回合，这只宝可梦的弱点，全部消除。\n\n\n",
+	"effect_id": "ecce5b1818ae13630c3a09449489c424",
+	"energy_provides": "",
+	"energy_type": "M",
+	"evolves_from": "铝钢龙",
+	"hp": 300,
+	"image_local_path": "user://cards/images/CSV9C/138.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/138.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "ex",
+	"name": "铝钢桥龙ex",
+	"name_en": "",
+	"rarity": "RR",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "G",
+	"resistance_value": "-30",
+	"retreat_cost": 2,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Stage 1",
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"yoren_code": "Y1511"
+}

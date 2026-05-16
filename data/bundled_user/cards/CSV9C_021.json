@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "kodama",
+	"attacks": [
+		{
+			"cost": "RC",
+			"damage": "50",
+			"is_vstar_power": false,
+			"name": "振翅",
+			"text": ""
+		},
+		{
+			"cost": "RRC",
+			"damage": "100+",
+			"is_vstar_power": false,
+			"name": "闪耀烈焰",
+			"text": "如果自己的备战区中有「太晶」宝可梦的话，则追加造成100伤害。"
+		}
+	],
+	"card_index": "021",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "【火】【无】 振翅 50\n\n【火】【火】【无】 闪耀烈焰 100+\n如果自己的备战区中有「太晶」宝可梦的话，则追加造成100伤害。\n\n\n",
+	"effect_id": "c155af5a80a873be25372736b49b5829",
+	"energy_provides": "",
+	"energy_type": "R",
+	"evolves_from": "",
+	"hp": 130,
+	"image_local_path": "user://cards/images/CSV9C/021.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/021.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "凤王",
+	"name_en": "",
+	"rarity": "C",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "F",
+	"resistance_value": "-30",
+	"retreat_cost": 2,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Basic",
+	"weakness_energy": "L",
+	"weakness_value": "×2",
+	"yoren_code": "P250"
+}

@@ -8,13 +8,25 @@
     "CSV6C_065": [
         "Ancient"
     ],
+    "CSV6C_066": [
+        "Future"
+    ],
+    "CSV6C_080": [
+        "Ancient"
+    ],
     "CSV6C_082": [
+        "Ancient"
+    ],
+    "CSV6C_095": [
         "Ancient"
     ],
     "CSV6C_096": [
         "Ancient"
     ],
     "CSV6C_115": [
+        "Ancient"
+    ],
+    "CSV6C_118": [
         "Ancient"
     ],
     "CSV6C_121": [
@@ -35,16 +47,28 @@
     "CSV7C_111": [
         "Future"
     ],
-    "CSV7C_153": [
-        "Future"
-    ],
-    "CSV7C_154": [
+    "CSV7C_131": [
         "Ancient"
     ],
     "CSV7C_132": [
         "Ancient"
     ],
     "CSV7C_143": [
+        "Ancient"
+    ],
+    "CSV7C_152": [
+        "Ancient"
+    ],
+    "CSV7C_153": [
+        "Future"
+    ],
+    "CSV7C_154": [
+        "Ancient"
+    ],
+    "CSV7C_195": [
+        "Ancient"
+    ],
+    "CSV9C_112": [
         "Ancient"
     ]
 }

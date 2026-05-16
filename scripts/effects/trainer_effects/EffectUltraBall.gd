@@ -37,9 +37,9 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		player.deck,
 		pokemon_items,
 		VISIBLE_SCOPE_OWN_FULL_DECK,
+		0,
 		1,
-		1,
-		{"allow_cancel": true}
+		{"allow_cancel": true, "force_confirm": true}
 	))
 	return steps
 
@@ -81,12 +81,13 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 
 	var selected_pokemon: CardInstance = null
 	var selected_raw: Array = ctx.get("search_pokemon", [])
+	var has_explicit_search_selection: bool = ctx.has("search_pokemon")
 	if not selected_raw.is_empty() and selected_raw[0] is CardInstance:
 		var chosen: CardInstance = selected_raw[0]
 		if chosen in player.deck and chosen.card_data.is_pokemon():
 			selected_pokemon = chosen
 
-	if selected_pokemon == null:
+	if selected_pokemon == null and not has_explicit_search_selection:
 		for deck_card: CardInstance in _get_pokemon_cards(player):
 			selected_pokemon = deck_card
 			break

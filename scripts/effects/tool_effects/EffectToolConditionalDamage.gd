@@ -11,25 +11,27 @@ func _init(bonus: int = 0, cond: String = "") -> void:
 	condition = cond
 
 
-func is_active(attacker_slot: PokemonSlot, state: GameState) -> bool:
+func is_active(attacker_slot: PokemonSlot, state: GameState, defender: PokemonSlot = null) -> bool:
 	var top: CardInstance = attacker_slot.get_top_card()
 	if top == null:
 		return false
 	var attacker_pi: int = top.owner_index
 	var opponent_pi: int = 1 - attacker_pi
+	if defender != null and defender != state.players[opponent_pi].active_pokemon:
+		return false
 
 	match condition:
 		"ex":
-			var opp_active: PokemonSlot = state.players[opponent_pi].active_pokemon
-			if opp_active == null:
+			var target_ex: PokemonSlot = _get_target(attacker_slot, state, defender)
+			if target_ex == null:
 				return false
-			var opp_data: CardData = opp_active.get_card_data()
+			var opp_data: CardData = target_ex.get_card_data()
 			return opp_data != null and opp_data.mechanic == "ex"
 		"V":
-			var opp_active_v: PokemonSlot = state.players[opponent_pi].active_pokemon
-			if opp_active_v == null:
+			var target_v: PokemonSlot = _get_target(attacker_slot, state, defender)
+			if target_v == null:
 				return false
-			var opp_data_v: CardData = opp_active_v.get_card_data()
+			var opp_data_v: CardData = target_v.get_card_data()
 			return opp_data_v != null and opp_data_v.mechanic in ["V", "VSTAR", "VMAX"]
 		"prize_behind":
 			return state.players[attacker_pi].prizes.size() > state.players[opponent_pi].prizes.size()
@@ -41,6 +43,19 @@ func is_active(attacker_slot: PokemonSlot, state: GameState) -> bool:
 
 func get_bonus() -> int:
 	return damage_bonus
+
+
+func get_attack_modifier(attacker_slot: PokemonSlot, state: GameState, defender: PokemonSlot = null) -> int:
+	return damage_bonus if is_active(attacker_slot, state, defender) else 0
+
+
+func _get_target(attacker_slot: PokemonSlot, state: GameState, defender: PokemonSlot = null) -> PokemonSlot:
+	if defender != null:
+		return defender
+	var top: CardInstance = attacker_slot.get_top_card()
+	if top == null:
+		return null
+	return state.players[1 - top.owner_index].active_pokemon
 
 
 func get_description() -> String:

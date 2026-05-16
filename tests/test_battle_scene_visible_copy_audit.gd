@@ -2,7 +2,15 @@ class_name TestBattleSceneVisibleCopyAudit
 extends TestBase
 
 
-const BATTLE_SCENE_PATH := "res://scenes/battle/BattleScene.gd"
+const BATTLE_SCENE_SOURCE_PATHS := [
+	"res://scenes/battle/BattleScene.gd",
+	"res://scenes/battle/BattleSceneRuntime.gd",
+	"res://scenes/battle/runtime/BattleSceneDialogInteractionReviewRuntime.gd",
+	"res://scenes/battle/runtime/BattleSceneSetupEffectAiRuntime.gd",
+	"res://scenes/battle/runtime/BattleSceneBoardActionRuntime.gd",
+	"res://scenes/battle/runtime/BattleSceneSharedHudAiRuntime.gd",
+	"res://scenes/battle/runtime/BattleSceneRuntimeFoundation.gd",
+]
 
 
 func _u(codepoints: Array[int]) -> String:
@@ -29,19 +37,20 @@ func _suspicious_markers() -> Array[String]:
 
 
 func test_battle_scene_visible_copy_contains_no_mojibake() -> String:
-	var source := FileAccess.get_file_as_string(BATTLE_SCENE_PATH)
-	var lines := source.split("\n")
 	var hits: Array[String] = []
 	var markers := _suspicious_markers()
-	for i: int in lines.size():
-		var line := lines[i]
-		if char(0xFFFD) in line:
-			hits.append("%d:%s" % [i + 1, line.strip_edges()])
-			continue
-		for marker: String in markers:
-			if marker in line:
-				hits.append("%d:%s" % [i + 1, line.strip_edges()])
-				break
+	for path: String in BATTLE_SCENE_SOURCE_PATHS:
+		var source := FileAccess.get_file_as_string(path)
+		var lines := source.split("\n")
+		for i: int in lines.size():
+			var line := lines[i]
+			if char(0xFFFD) in line:
+				hits.append("%s:%d:%s" % [path, i + 1, line.strip_edges()])
+				continue
+			for marker: String in markers:
+				if marker in line:
+					hits.append("%s:%d:%s" % [path, i + 1, line.strip_edges()])
+					break
 	if hits.is_empty():
 		return ""
 	return "BattleScene still contains mojibake lines\n%s" % "\n".join(hits)

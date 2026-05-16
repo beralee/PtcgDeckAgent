@@ -4,9 +4,24 @@ extends RefCounted
 const BattleCardViewScript := preload("res://scenes/battle/BattleCardView.gd")
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 
+const FIELD_INTERACTION_CONFIRM_ACCENT := Color(1.0, 0.62, 0.28, 1.0)
+const FIELD_INTERACTION_SECONDARY_ACCENT := Color(0.36, 0.86, 1.0, 1.0)
+const FIELD_INTERACTION_PORTRAIT_BUTTON_WIDTH := 112.0
+const FIELD_INTERACTION_OVERLAY_Z_INDEX := 300
+
 
 func _bt(scene: Object, key: String, params: Dictionary = {}) -> String:
 	return str(scene.call("_bt", key, params))
+
+
+func mark_modal_input_consumed(scene: Object, reason: String = "field_interaction") -> void:
+	if scene != null and scene.has_method("_mark_modal_input_consumed"):
+		scene.call("_mark_modal_input_consumed", reason)
+
+
+func _apply_scene_popup_text_metrics(scene: Object) -> void:
+	if scene != null and scene.has_method("_apply_portrait_popup_text_metrics"):
+		scene.call("_apply_portrait_popup_text_metrics")
 
 
 func setup_field_interaction_panel(scene: Object) -> void:
@@ -17,13 +32,15 @@ func setup_field_interaction_panel(scene: Object) -> void:
 
 func ensure_field_interaction_panel(scene: Object) -> void:
 	if scene.get("_field_interaction_overlay") != null:
+		raise_field_interaction_overlay(scene)
 		return
 
 	var overlay := Control.new()
 	overlay.name = "FieldInteractionOverlay"
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	overlay.z_index = 80
+	overlay.z_as_relative = false
+	overlay.z_index = FIELD_INTERACTION_OVERLAY_Z_INDEX
 	(scene as Node).add_child(overlay)
 	scene.set("_field_interaction_overlay", overlay)
 
@@ -144,6 +161,20 @@ func ensure_field_interaction_panel(scene: Object) -> void:
 	confirm_button.pressed.connect(Callable(scene, "_on_field_interaction_confirm_pressed"))
 	buttons.add_child(confirm_button)
 	scene.set("_field_interaction_confirm_btn", confirm_button)
+	raise_field_interaction_overlay(scene)
+
+
+func raise_field_interaction_overlay(scene: Object) -> void:
+	var overlay := scene.get("_field_interaction_overlay") as Control
+	if overlay == null:
+		return
+	overlay.z_as_relative = false
+	overlay.z_index = FIELD_INTERACTION_OVERLAY_Z_INDEX
+	if scene is Node and overlay.get_parent() == scene:
+		var parent := scene as Node
+		var last_index := parent.get_child_count() - 1
+		if last_index >= 0 and overlay.get_index() != last_index:
+			parent.move_child(overlay, last_index)
 
 
 func hide_field_interaction(scene: Object) -> void:
@@ -176,41 +207,142 @@ func update_field_interaction_panel_metrics(scene: Object, viewport_size: Vector
 	if panel == null or scroll == null or row == null:
 		return
 	var effective_viewport: Vector2 = viewport_size
-	if effective_viewport == Vector2.ZERO and (scene as Node).is_inside_tree():
+	if effective_viewport == Vector2.ZERO and scene != null and scene.has_method("_is_portrait_popup_text_profile_active") and bool(scene.call("_is_portrait_popup_text_profile_active")) and scene.has_method("_portrait_popup_content_size"):
+		var portrait_size_variant: Variant = scene.call("_portrait_popup_content_size")
+		if portrait_size_variant is Vector2 and (portrait_size_variant as Vector2).x > 0.0 and (portrait_size_variant as Vector2).y > 0.0:
+			effective_viewport = portrait_size_variant as Vector2
+	if effective_viewport == Vector2.ZERO and scene is Node and (scene as Node).is_inside_tree():
 		effective_viewport = (scene as CanvasItem).get_viewport().get_visible_rect().size
 	if effective_viewport == Vector2.ZERO:
 		effective_viewport = Vector2(1366, 768)
-	var play_card_size: Vector2 = scene.get("_play_card_size")
-	var card_height: float = play_card_size.y if play_card_size.y > 0.0 else 152.0
-	var strip_height: float = _field_card_scroll_height(card_height)
-	var panel_width: float = clampf(effective_viewport.x * 0.54, 680.0, 980.0)
-	panel.custom_minimum_size = Vector2(panel_width, maxf(strip_height + 86.0, 136.0))
+	var field_card_size := field_interaction_card_size(scene)
+	var card_height: float = field_card_size.y if field_card_size.y > 0.0 else 152.0
+	var touch_profile := bool(HudThemeScript.should_use_touch_profile(effective_viewport))
+	var scroll_profile := _field_scroll_profile(effective_viewport)
+	var clearance_profile := "portrait_touch" if effective_viewport.y > effective_viewport.x else "touch"
+	var strip_height: float = _field_card_scroll_height(card_height, clearance_profile)
+	var horizontal_margin := float(HudThemeScript.TOUCH_DIALOG_MARGIN) if touch_profile else 24.0
+	var max_panel_width := maxf(effective_viewport.x - horizontal_margin * 2.0, 280.0)
+	var target_panel_width := effective_viewport.x * (0.94 if touch_profile else 0.54)
+	var min_panel_width := 320.0 if touch_profile else 680.0
+	var panel_width: float = minf(clampf(target_panel_width, min_panel_width, 980.0), max_panel_width)
+	var control_extra_height := 126.0 if touch_profile else 86.0
+	panel.custom_minimum_size = Vector2(panel_width, maxf(strip_height + control_extra_height, 136.0))
 	panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	scroll.custom_minimum_size = Vector2(0.0, strip_height)
 	scroll.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	reset_field_interaction_row_metrics(scene)
+	HudThemeScript.style_scroll_container(scroll, scroll_profile)
+	_apply_field_interaction_touch_metrics(scene, touch_profile, effective_viewport.y > effective_viewport.x)
+	if field_interaction_uses_grouped_assignment_sources(scene):
+		build_field_assignment_source_cards(scene)
+		refresh_field_assignment_source_views(scene)
+	else:
+		reset_field_interaction_row_metrics(scene)
 	apply_field_interaction_position(scene, str(scene.get("_field_interaction_position")))
+	_apply_scene_popup_text_metrics(scene)
 
 
-func _field_card_scroll_height(card_height: float) -> float:
-	return maxf(0.0, card_height) + float(HudThemeScript.SCROLLBAR_TOUCH_THICKNESS + HudThemeScript.CARD_SCROLLBAR_CLEARANCE_PADDING)
+func _apply_field_interaction_touch_metrics(scene: Object, touch_profile: bool, portrait_profile: bool = false) -> void:
+	var title_label: Label = scene.get("_field_interaction_title_lbl")
+	if title_label != null:
+		title_label.add_theme_font_size_override("font_size", 18 if touch_profile else 16)
+	var status_label: Label = scene.get("_field_interaction_status_lbl")
+	if status_label != null:
+		status_label.add_theme_font_size_override("font_size", HudThemeScript.TOUCH_BODY_FONT_SIZE if touch_profile else 12)
+	var button_specs: Array[Dictionary] = [
+		{"button": scene.get("_field_interaction_clear_btn"), "role": "secondary"},
+		{"button": scene.get("_field_interaction_cancel_btn"), "role": "secondary"},
+		{"button": scene.get("_field_interaction_confirm_btn"), "role": "primary"},
+	]
+	for spec: Dictionary in button_specs:
+		var button := spec.get("button", null) as Button
+		if button == null:
+			continue
+		_style_field_interaction_button(button, str(spec.get("role", "secondary")), touch_profile, portrait_profile)
+
+
+func _style_field_interaction_button(button: Button, role: String, touch_profile: bool, portrait_profile: bool) -> void:
+	var primary := role == "primary"
+	var accent := FIELD_INTERACTION_CONFIRM_ACCENT if primary else FIELD_INTERACTION_SECONDARY_ACCENT
+	var minimum_width := 140.0 if primary else 110.0
+	var minimum_height := 34.0
+	var font_size := 14
+	if touch_profile:
+		minimum_width = FIELD_INTERACTION_PORTRAIT_BUTTON_WIDTH if portrait_profile else float(HudThemeScript.TOUCH_BUTTON_MIN_WIDTH)
+		minimum_height = float(HudThemeScript.TOUCH_BUTTON_MIN_HEIGHT)
+		font_size = HudThemeScript.TOUCH_BUTTON_FONT_SIZE
+	button.custom_minimum_size = Vector2(minimum_width, minimum_height)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL if portrait_profile else Control.SIZE_SHRINK_CENTER
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	button.add_theme_font_size_override("font_size", font_size)
+	button.add_theme_color_override("font_color", Color(0.96, 0.99, 1.0, 1.0))
+	button.add_theme_color_override("font_hover_color", Color.WHITE)
+	button.add_theme_color_override("font_pressed_color", Color.WHITE)
+	button.add_theme_color_override("font_disabled_color", Color(0.46, 0.55, 0.60, 1.0))
+	button.add_theme_stylebox_override("normal", _field_interaction_button_style(accent, false, false))
+	button.add_theme_stylebox_override("hover", _field_interaction_button_style(accent, true, false))
+	button.add_theme_stylebox_override("pressed", _field_interaction_button_style(accent, true, true))
+	button.add_theme_stylebox_override("disabled", _field_interaction_button_style(Color(0.28, 0.34, 0.40, 1.0), false, false))
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	button.set_meta("field_interaction_hud_button", true)
+	button.set_meta("field_interaction_hud_role", role)
+
+
+func _field_interaction_button_style(accent: Color, hover: bool, pressed: bool) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(accent.r, accent.g, accent.b, 0.30) if pressed else Color(0.025, 0.075, 0.105, 0.95)
+	if hover and not pressed:
+		style.bg_color = Color(0.045, 0.13, 0.17, 0.98)
+	style.border_color = accent
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(14)
+	style.shadow_color = Color(accent.r, accent.g, accent.b, 0.26 if hover else 0.14)
+	style.shadow_size = 10 if hover else 5
+	style.content_margin_left = 14
+	style.content_margin_right = 14
+	style.content_margin_top = 10
+	style.content_margin_bottom = 10
+	return style
+
+
+func _field_scroll_profile(viewport_size: Vector2) -> String:
+	if viewport_size.y > viewport_size.x:
+		return "portrait_touch"
+	return "touch" if HudThemeScript.should_use_touch_profile(viewport_size) else "auto"
+
+
+func _field_card_scroll_height(card_height: float, scroll_profile: String = "touch") -> float:
+	return maxf(0.0, card_height) + float(HudThemeScript.scrollbar_thickness_for_profile(scroll_profile) + HudThemeScript.CARD_SCROLLBAR_CLEARANCE_PADDING)
 
 
 func prepare_field_card_view(scene: Object, card_view: BattleCardView) -> void:
+	var card_size := field_interaction_card_size(scene)
+	if card_size.y <= 0.0:
+		card_size = Vector2(109, 152)
+	card_view.custom_minimum_size = card_size
+	card_view.size = card_size
+	card_view.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+
+
+func field_interaction_card_size(scene: Object) -> Vector2:
 	var play_card_size: Vector2 = scene.get("_play_card_size")
 	if play_card_size.y <= 0.0:
 		play_card_size = Vector2(109, 152)
-	card_view.custom_minimum_size = play_card_size
-	card_view.size = play_card_size
-	card_view.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	var portrait_active := scene != null and scene.has_method("_is_portrait_popup_text_profile_active") and bool(scene.call("_is_portrait_popup_text_profile_active"))
+	if not portrait_active:
+		return play_card_size
+	var dialog_card_size: Vector2 = scene.get("_dialog_card_size")
+	if dialog_card_size.y <= 0.0:
+		return play_card_size
+	return Vector2(maxf(play_card_size.x, dialog_card_size.x), maxf(play_card_size.y, dialog_card_size.y))
 
 
 func reset_field_interaction_row_metrics(scene: Object) -> void:
 	var row: HBoxContainer = scene.get("_field_interaction_row")
 	if row == null:
 		return
-	var play_card_size: Vector2 = scene.get("_play_card_size")
-	var card_height: float = play_card_size.y if play_card_size.y > 0.0 else 152.0
+	var field_card_size := field_interaction_card_size(scene)
+	var card_height: float = field_card_size.y if field_card_size.y > 0.0 else 152.0
 	row.custom_minimum_size = Vector2(0.0, card_height)
 	row.size = Vector2(row.size.x, card_height)
 	row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
@@ -280,6 +412,7 @@ func show_field_slot_choice(scene: Object, title: String, items: Array, data: Di
 	rebuild_field_slot_index_map(scene, items)
 	var overlay: Control = scene.get("_field_interaction_overlay")
 	if overlay != null:
+		raise_field_interaction_overlay(scene)
 		overlay.visible = true
 	refresh_field_interaction_status(scene)
 	scene.call("_record_battle_event", {
@@ -306,6 +439,7 @@ func show_field_assignment_interaction(scene: Object, step: Dictionary) -> void:
 	build_field_assignment_source_cards(scene)
 	var overlay: Control = scene.get("_field_interaction_overlay")
 	if overlay != null:
+		raise_field_interaction_overlay(scene)
 		overlay.visible = true
 	refresh_field_interaction_status(scene)
 	scene.call("_record_battle_event", {
@@ -452,10 +586,24 @@ func build_grouped_field_assignment_source_board(
 
 
 func grouped_field_source_card_size(scene: Object) -> Vector2:
-	var play_card_size: Vector2 = scene.get("_play_card_size")
+	var play_card_size := field_interaction_card_size(scene)
 	if play_card_size.y <= 0.0:
 		play_card_size = Vector2(109, 152)
-	return Vector2(maxf(72.0, play_card_size.x * 0.62), maxf(100.0, play_card_size.y * 0.62))
+	var portrait_active := scene.has_method("_is_portrait_popup_text_profile_active") and bool(scene.call("_is_portrait_popup_text_profile_active"))
+	if portrait_active:
+		return Vector2(maxf(104.0, play_card_size.x * 0.86), maxf(146.0, play_card_size.y * 0.86))
+	return Vector2(maxf(92.0, play_card_size.x * 0.68), maxf(128.0, play_card_size.y * 0.68))
+
+
+func field_interaction_uses_grouped_assignment_sources(scene: Object) -> bool:
+	if str(scene.get("_field_interaction_mode")) != "assignment":
+		return false
+	var interaction_variant: Variant = scene.get("_field_interaction_data")
+	if not (interaction_variant is Dictionary):
+		return false
+	var interaction_data: Dictionary = interaction_variant
+	var source_groups: Array = interaction_data.get("source_groups", [])
+	return not source_groups.is_empty()
 
 
 func grouped_field_source_board_height(card_size: Vector2, has_active: bool, has_bench: bool) -> float:
@@ -475,11 +623,19 @@ func update_grouped_field_source_metrics(scene: Object, card_size: Vector2, has_
 	if panel == null or scroll == null or row == null:
 		return
 	var source_height := grouped_field_source_board_height(card_size, has_active, has_bench)
-	var scroll_height := source_height + float(HudThemeScript.SCROLLBAR_TOUCH_THICKNESS + HudThemeScript.CARD_SCROLLBAR_CLEARANCE_PADDING)
+	var viewport_size := Vector2.ZERO
+	if scene is Node and (scene as Node).is_inside_tree():
+		viewport_size = (scene as Node).get_viewport().get_visible_rect().size
+	var portrait_active := scene.has_method("_is_portrait_popup_text_profile_active") and bool(scene.call("_is_portrait_popup_text_profile_active"))
+	var scroll_profile := "portrait_touch" if portrait_active else _field_scroll_profile(viewport_size)
+	var clearance_profile := "portrait_touch" if portrait_active else "touch"
+	var scroll_height := source_height + float(HudThemeScript.scrollbar_thickness_for_profile(clearance_profile) + HudThemeScript.CARD_SCROLLBAR_CLEARANCE_PADDING)
 	scroll.custom_minimum_size = Vector2(0, scroll_height)
+	HudThemeScript.style_scroll_container(scroll, scroll_profile)
 	row.custom_minimum_size = Vector2(0, source_height)
 	row.size = Vector2(row.size.x, source_height)
-	panel.custom_minimum_size = Vector2(panel.custom_minimum_size.x, maxf(panel.custom_minimum_size.y, scroll_height + 92.0))
+	var control_extra_height := 190.0 if portrait_active else 92.0
+	panel.custom_minimum_size = Vector2(panel.custom_minimum_size.x, maxf(panel.custom_minimum_size.y, scroll_height + control_extra_height))
 
 
 func grouped_field_source_board_width(scene: Object, source_groups: Array, card_size: Vector2) -> float:
@@ -601,6 +757,7 @@ func create_grouped_field_source_slot_panel(
 func prepare_grouped_field_source_card_view(card_view: BattleCardView, card_size: Vector2) -> void:
 	card_view.custom_minimum_size = card_size
 	card_view.size = card_size
+	card_view.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	card_view.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 
 
@@ -711,6 +868,7 @@ func add_field_assignment_source_card(
 
 
 func on_field_assignment_source_chosen(scene: Object, source_index: int) -> void:
+	mark_modal_input_consumed(scene, "field_assignment_source")
 	var interaction_data: Dictionary = scene.get("_field_interaction_data")
 	var source_items: Array = interaction_data.get("source_items", [])
 	if source_index < 0 or source_index >= source_items.size():
@@ -782,6 +940,7 @@ func refresh_field_interaction_status(scene: Object) -> void:
 		return
 	var overlay: Control = scene.get("_field_interaction_overlay")
 	if overlay != null:
+		raise_field_interaction_overlay(scene)
 		overlay.visible = true
 	var interaction_data: Dictionary = scene.get("_field_interaction_data")
 	var title_label: Label = scene.get("_field_interaction_title_lbl")
@@ -820,6 +979,7 @@ func refresh_field_interaction_status(scene: Object) -> void:
 		if confirm_button != null:
 			confirm_button.visible = max_select > 1 or min_select > 1
 			confirm_button.disabled = selected_count < min_select
+		_apply_scene_popup_text_metrics(scene)
 		return
 
 	if mode == "counter_distribution":
@@ -849,6 +1009,7 @@ func refresh_field_interaction_status(scene: Object) -> void:
 		if confirm_button != null:
 			confirm_button.visible = allow_partial and assigned_count >= min_counters and remaining > 0
 			confirm_button.disabled = assigned_count < min_counters
+		_apply_scene_popup_text_metrics(scene)
 		return
 
 	refresh_field_assignment_source_views(scene)
@@ -876,6 +1037,7 @@ func refresh_field_interaction_status(scene: Object) -> void:
 	if confirm_button != null:
 		confirm_button.visible = true
 		confirm_button.disabled = assignment_entries.size() < min_assignments
+	_apply_scene_popup_text_metrics(scene)
 
 
 func refresh_field_assignment_source_views(scene: Object) -> void:
@@ -911,6 +1073,7 @@ func refresh_single_field_assignment_source_view(scene: Object, card_view: Battl
 
 
 func on_field_interaction_clear_pressed(scene: Object) -> void:
+	mark_modal_input_consumed(scene, "field_interaction_clear")
 	var mode := str(scene.get("_field_interaction_mode"))
 	if mode == "slot_select":
 		_replace_int_array(scene, "_field_interaction_selected_indices", [])
@@ -926,6 +1089,7 @@ func on_field_interaction_clear_pressed(scene: Object) -> void:
 
 
 func cancel_field_interaction(scene: Object) -> void:
+	mark_modal_input_consumed(scene, "field_interaction_cancel")
 	var handled_choice := str(scene.get("_pending_choice"))
 	hide_field_interaction(scene)
 	if handled_choice == "effect_interaction":
@@ -937,6 +1101,7 @@ func cancel_field_interaction(scene: Object) -> void:
 
 
 func handle_field_slot_select_index(scene: Object, target_index: int) -> void:
+	mark_modal_input_consumed(scene, "field_slot_select")
 	var interaction_data: Dictionary = scene.get("_field_interaction_data")
 	var selected_indices: Array = scene.get("_field_interaction_selected_indices")
 	var min_select: int = int(interaction_data.get("min_select", 1))
@@ -959,6 +1124,7 @@ func handle_field_slot_select_index(scene: Object, target_index: int) -> void:
 
 
 func handle_field_assignment_target_index(scene: Object, target_index: int) -> void:
+	mark_modal_input_consumed(scene, "field_assignment_target")
 	var selected_source_index := int(scene.get("_field_interaction_assignment_selected_source_index"))
 	if selected_source_index < 0:
 		scene.call("_log", "请选择 1 个目标")
@@ -997,6 +1163,7 @@ func handle_field_assignment_target_index(scene: Object, target_index: int) -> v
 
 
 func finalize_field_slot_selection(scene: Object) -> void:
+	mark_modal_input_consumed(scene, "field_slot_confirm")
 	var interaction_data: Dictionary = scene.get("_field_interaction_data")
 	var selected_indices: Array = scene.get("_field_interaction_selected_indices")
 	var min_select: int = int(interaction_data.get("min_select", 1))
@@ -1012,6 +1179,7 @@ func finalize_field_slot_selection(scene: Object) -> void:
 
 
 func finalize_field_assignment_selection(scene: Object) -> void:
+	mark_modal_input_consumed(scene, "field_assignment_confirm")
 	var interaction_data: Dictionary = scene.get("_field_interaction_data")
 	var assignment_entries: Array = scene.get("_field_interaction_assignment_entries")
 	var min_select: int = int(interaction_data.get("min_select", 0))
@@ -1043,6 +1211,7 @@ func show_field_counter_distribution(scene: Object, step: Dictionary) -> void:
 	_build_counter_distribution_buttons(scene)
 	var overlay: Control = scene.get("_field_interaction_overlay")
 	if overlay != null:
+		raise_field_interaction_overlay(scene)
 		overlay.visible = true
 	refresh_field_interaction_status(scene)
 	scene.call("_record_battle_event", {
@@ -1090,12 +1259,14 @@ func _build_counter_distribution_buttons(scene: Object) -> void:
 		btn.add_theme_font_size_override("font_size", 18)
 		var captured_amount: int = amount
 		btn.pressed.connect(func() -> void:
+			mark_modal_input_consumed(scene, "counter_distribution_amount")
 			scene.call("_on_counter_distribution_amount_chosen", captured_amount)
 		)
 		row.add_child(btn)
 
 
 func on_counter_distribution_amount_chosen(scene: Object, amount: int) -> void:
+	mark_modal_input_consumed(scene, "counter_distribution_amount")
 	var interaction_data: Dictionary = scene.get("_field_interaction_data")
 	var total_counters: int = int(interaction_data.get("total_counters", 0))
 	var assigned_count: int = _get_counter_distribution_assigned_total(scene)
@@ -1141,7 +1312,8 @@ func handle_counter_distribution_target(scene: Object, target_index: int) -> voi
 	_build_counter_distribution_buttons(scene)
 	refresh_field_interaction_status(scene)
 	scene.call("_refresh_ui")
-	if assigned_count >= total_counters or (bool(interaction_data.get("allow_partial", false)) and max_assignments == 1):
+	var reached_assignment_limit := max_assignments > 0 and assignment_entries.size() >= max_assignments
+	if assigned_count >= total_counters or (bool(interaction_data.get("allow_partial", false)) and reached_assignment_limit):
 		finalize_counter_distribution(scene)
 
 

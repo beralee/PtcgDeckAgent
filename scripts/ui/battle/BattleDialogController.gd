@@ -15,9 +15,18 @@ const ENERGY_ICON_TEXTURES := {
 	"N": preload("res://assets/ui/e-long.png"),
 	"C": preload("res://assets/ui/e-wu.png"),
 }
+const TEXT_HUD_OPTION_SIZE := Vector2(760, 74)
+const PORTRAIT_TEXT_HUD_OPTION_HEIGHT := 128.0
+const PORTRAIT_TEXT_HUD_OPTION_HORIZONTAL_INSET := 48.0
+
 
 func _bt(scene: Object, key: String, params: Dictionary = {}) -> String:
 	return str(scene.call("_bt", key, params))
+
+
+func mark_modal_input_consumed(scene: Object, reason: String = "dialog") -> void:
+	if scene != null and scene.has_method("_mark_modal_input_consumed"):
+		scene.call("_mark_modal_input_consumed", reason)
 
 
 func _replace_int_array(scene: Object, property_name: String, values: Array) -> void:
@@ -37,6 +46,191 @@ func _replace_dictionary_array(scene: Object, property_name: String, values: Arr
 		if value_variant is Dictionary:
 			target.append((value_variant as Dictionary).duplicate(true))
 	scene.set(property_name, target)
+
+
+func setup_dialog_gallery(scene: Object) -> void:
+	var dialog_box := scene.get("_dialog_box") as Control
+	var dialog_confirm := scene.get("_dialog_confirm") as Button
+	var dialog_vbox := scene.get("_dialog_vbox") as VBoxContainer
+	if dialog_box == null or dialog_confirm == null or dialog_vbox == null:
+		return
+	dialog_box.custom_minimum_size = Vector2(860, 0)
+	dialog_box.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	dialog_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var buttons_row := dialog_confirm.get_parent() as Control
+	if buttons_row == null:
+		return
+	var dialog_card_size: Vector2 = scene.get("_dialog_card_size")
+
+	var dialog_card_scroll := ScrollContainer.new()
+	dialog_card_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	dialog_card_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	dialog_card_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	dialog_card_scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	dialog_card_scroll.custom_minimum_size = Vector2(0, float(scene.call("_card_gallery_scroll_height", dialog_card_size.y)))
+	dialog_card_scroll.visible = false
+	HudThemeScript.style_scroll_container(dialog_card_scroll)
+	dialog_vbox.add_child(dialog_card_scroll)
+	dialog_vbox.move_child(dialog_card_scroll, buttons_row.get_index())
+	scene.set("_dialog_card_scroll", dialog_card_scroll)
+
+	var dialog_card_row := HBoxContainer.new()
+	dialog_card_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	dialog_card_row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	dialog_card_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	dialog_card_row.add_theme_constant_override("separation", 10)
+	dialog_card_scroll.add_child(dialog_card_row)
+	scene.set("_dialog_card_row", dialog_card_row)
+	scene.call("_configure_card_gallery_drag_scroll", dialog_card_scroll, dialog_card_row, "dialog_cards")
+
+	var dialog_status_lbl := Label.new()
+	dialog_status_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	dialog_status_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	dialog_status_lbl.visible = false
+	dialog_vbox.add_child(dialog_status_lbl)
+	dialog_vbox.move_child(dialog_status_lbl, buttons_row.get_index())
+	scene.set("_dialog_status_lbl", dialog_status_lbl)
+
+	var dialog_utility_row := HBoxContainer.new()
+	dialog_utility_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	dialog_utility_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	dialog_utility_row.add_theme_constant_override("separation", 12)
+	dialog_utility_row.visible = false
+	dialog_vbox.add_child(dialog_utility_row)
+	dialog_vbox.move_child(dialog_utility_row, buttons_row.get_index())
+	scene.set("_dialog_utility_row", dialog_utility_row)
+
+	var dialog_assignment_panel := VBoxContainer.new()
+	dialog_assignment_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	dialog_assignment_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	dialog_assignment_panel.add_theme_constant_override("separation", 8)
+	dialog_assignment_panel.visible = false
+	dialog_vbox.add_child(dialog_assignment_panel)
+	dialog_vbox.move_child(dialog_assignment_panel, buttons_row.get_index())
+	scene.set("_dialog_assignment_panel", dialog_assignment_panel)
+
+	var source_title := Label.new()
+	source_title.text = "来源卡牌"
+	source_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	dialog_assignment_panel.add_child(source_title)
+
+	var dialog_assignment_source_scroll := ScrollContainer.new()
+	dialog_assignment_source_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	dialog_assignment_source_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	dialog_assignment_source_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	dialog_assignment_source_scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	dialog_assignment_source_scroll.custom_minimum_size = Vector2(0, float(scene.call("_dialog_card_scroll_height")))
+	HudThemeScript.style_scroll_container(dialog_assignment_source_scroll)
+	dialog_assignment_panel.add_child(dialog_assignment_source_scroll)
+	scene.set("_dialog_assignment_source_scroll", dialog_assignment_source_scroll)
+
+	var dialog_assignment_source_row := HBoxContainer.new()
+	dialog_assignment_source_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	dialog_assignment_source_row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	dialog_assignment_source_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	dialog_assignment_source_row.add_theme_constant_override("separation", 14)
+	dialog_assignment_source_row.custom_minimum_size = Vector2(0, dialog_card_size.y)
+	dialog_assignment_source_row.size = Vector2(0, dialog_card_size.y)
+	dialog_assignment_source_scroll.add_child(dialog_assignment_source_row)
+	scene.set("_dialog_assignment_source_row", dialog_assignment_source_row)
+
+	var target_title := Label.new()
+	target_title.text = "目标卡牌"
+	target_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	dialog_assignment_panel.add_child(target_title)
+
+	var dialog_assignment_target_scroll := ScrollContainer.new()
+	dialog_assignment_target_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	dialog_assignment_target_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	dialog_assignment_target_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	dialog_assignment_target_scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	dialog_assignment_target_scroll.custom_minimum_size = Vector2(0, float(scene.call("_dialog_card_scroll_height")))
+	HudThemeScript.style_scroll_container(dialog_assignment_target_scroll)
+	dialog_assignment_panel.add_child(dialog_assignment_target_scroll)
+	scene.set("_dialog_assignment_target_scroll", dialog_assignment_target_scroll)
+
+	var dialog_assignment_target_row := HBoxContainer.new()
+	dialog_assignment_target_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	dialog_assignment_target_row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	dialog_assignment_target_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	dialog_assignment_target_row.add_theme_constant_override("separation", 14)
+	dialog_assignment_target_row.custom_minimum_size = Vector2(0, dialog_card_size.y)
+	dialog_assignment_target_row.size = Vector2(0, dialog_card_size.y)
+	dialog_assignment_target_scroll.add_child(dialog_assignment_target_row)
+	scene.set("_dialog_assignment_target_row", dialog_assignment_target_row)
+
+	var dialog_assignment_summary_lbl := Label.new()
+	dialog_assignment_summary_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	dialog_assignment_summary_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	dialog_assignment_panel.add_child(dialog_assignment_summary_lbl)
+	scene.set("_dialog_assignment_summary_lbl", dialog_assignment_summary_lbl)
+
+
+func setup_discard_gallery(scene: Object) -> void:
+	var scene_node := scene as Node
+	if scene_node == null:
+		return
+	if scene.get("_discard_overlay") == null:
+		scene.set("_discard_overlay", scene_node.find_child("DiscardOverlay", true, false) as Panel)
+	if scene.get("_discard_title") == null:
+		scene.set("_discard_title", scene_node.find_child("DiscardTitle", true, false) as Label)
+	if scene.get("_discard_list") == null:
+		scene.set("_discard_list", scene_node.find_child("DiscardList", true, false) as ItemList)
+	if scene.get("_discard_close_btn") == null:
+		scene.set("_discard_close_btn", scene_node.find_child("DiscardCloseBtn", true, false) as Button)
+	var discard_box := scene_node.get_node_or_null("DiscardOverlay/DiscardCenter/DiscardBox") as PanelContainer
+	if discard_box == null:
+		return
+	discard_box.custom_minimum_size = Vector2(860, 0)
+	discard_box.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	discard_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+
+	var discard_vbox := scene_node.get_node_or_null("DiscardOverlay/DiscardCenter/DiscardBox/DiscardVBox") as VBoxContainer
+	if discard_vbox == null:
+		return
+	var close_btn := scene.get("_discard_close_btn") as Button
+	discard_vbox.add_theme_constant_override("separation", 10)
+	var discard_list := scene.get("_discard_list") as ItemList
+	if discard_list != null:
+		discard_list.visible = false
+	var dialog_card_size: Vector2 = scene.get("_dialog_card_size")
+
+	var discard_card_scroll := ScrollContainer.new()
+	discard_card_scroll.name = "DiscardCardScroll"
+	discard_card_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	discard_card_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	discard_card_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	discard_card_scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	discard_card_scroll.custom_minimum_size = Vector2(0, float(scene.call("_card_gallery_scroll_height", dialog_card_size.y)))
+	HudThemeScript.style_scroll_container(discard_card_scroll)
+	discard_vbox.add_child(discard_card_scroll)
+	if close_btn != null:
+		discard_vbox.move_child(discard_card_scroll, close_btn.get_index())
+	scene.set("_discard_card_scroll", discard_card_scroll)
+
+	var discard_card_row := HBoxContainer.new()
+	discard_card_row.name = "DiscardCardRow"
+	discard_card_row.custom_minimum_size = Vector2(0, dialog_card_size.y)
+	discard_card_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	discard_card_row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	discard_card_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	discard_card_row.add_theme_constant_override("separation", 14)
+	discard_card_scroll.add_child(discard_card_row)
+	scene.set("_discard_card_row", discard_card_row)
+	scene.call("_configure_card_gallery_drag_scroll", discard_card_scroll, discard_card_row, "discard_collection")
+
+	var discard_utility_row := HBoxContainer.new()
+	discard_utility_row.name = "DiscardUtilityRow"
+	discard_utility_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	discard_utility_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	discard_utility_row.add_theme_constant_override("separation", 12)
+	discard_utility_row.visible = false
+	discard_vbox.add_child(discard_utility_row)
+	if close_btn != null:
+		discard_vbox.move_child(discard_utility_row, close_btn.get_index())
+	scene.set("_discard_utility_row", discard_utility_row)
+	scene.call("_style_discard_collection_overlay")
+	scene.call("_apply_discard_collection_metrics")
 
 
 func dialog_item_has_card_visual(item: Variant) -> bool:
@@ -77,6 +271,15 @@ func selection_label_from_item(item: Variant, fallback: String = "") -> String:
 			if text != "":
 				return text
 	return str(item).strip_edges()
+
+
+func dialog_label_at(labels: Array, index: int) -> String:
+	if index < 0 or index >= labels.size():
+		return ""
+	var label: Variant = labels[index]
+	if label == null or dialog_item_has_card_visual(label):
+		return ""
+	return str(label)
 
 
 func selected_dialog_labels(scene: Object, sel_items: PackedInt32Array) -> Array[String]:
@@ -180,8 +383,12 @@ func show_dialog(scene: Object, title: String, items: Array, extra_data: Diction
 
 	apply_dialog_surface_style(scene, bool(extra_data.get("transparent_battlefield_dialog", false)) or not (extra_data.get("card_groups", []) as Array).is_empty())
 	style_dialog_footer_buttons(scene)
+	if scene.has_method("_apply_portrait_popup_text_metrics"):
+		scene.call("_apply_portrait_popup_text_metrics")
 	dialog_overlay.modulate = Color(1, 1, 1, 0)
 	dialog_overlay.visible = true
+	if scene.has_method("_raise_dialog_overlay_for_input"):
+		scene.call("_raise_dialog_overlay_for_input")
 	dialog_cancel.visible = bool(extra_data.get("allow_cancel", true))
 	update_dialog_confirm_state(scene)
 	compact_dialog_box_to_content(scene)
@@ -353,6 +560,41 @@ func compact_visible_dialog_scroll(scene: Object, property_name: String) -> void
 	scroll.update_minimum_size()
 
 
+func _is_portrait_text_dialog(scene: Object) -> bool:
+	return scene != null \
+		and scene.has_method("_is_portrait_popup_text_profile_active") \
+		and bool(scene.call("_is_portrait_popup_text_profile_active"))
+
+
+func _text_hud_option_size(scene: Object) -> Vector2:
+	if not _is_portrait_text_dialog(scene):
+		return TEXT_HUD_OPTION_SIZE
+	var option_width := _portrait_text_hud_option_width(scene)
+	return Vector2(option_width, PORTRAIT_TEXT_HUD_OPTION_HEIGHT)
+
+
+func _portrait_text_hud_option_width(scene: Object) -> float:
+	var dialog_box := scene.get("_dialog_box") as Control
+	var box_width := 0.0
+	if dialog_box != null:
+		box_width = dialog_box.custom_minimum_size.x
+	if box_width <= 0.0 and scene.has_method("_portrait_popup_content_size"):
+		var content_size_variant: Variant = scene.call("_portrait_popup_content_size")
+		if content_size_variant is Vector2:
+			var content_size: Vector2 = content_size_variant
+			box_width = content_size.x
+	if box_width <= 0.0:
+		return 320.0
+	return maxf(box_width - PORTRAIT_TEXT_HUD_OPTION_HORIZONTAL_INSET, 1.0)
+
+
+func _text_hud_scroll_height(scene: Object, action_count: int) -> float:
+	if not _is_portrait_text_dialog(scene):
+		return _action_hud_scroll_height(action_count)
+	var visible_count: int = clampi(action_count, 1, 5)
+	return float(visible_count) * PORTRAIT_TEXT_HUD_OPTION_HEIGHT + float(maxi(visible_count - 1, 0)) * 8.0 + 2.0
+
+
 func show_text_dialog(scene: Object, items: Array, extra_data: Dictionary) -> void:
 	var dialog_card_scroll: ScrollContainer = scene.get("_dialog_card_scroll")
 	var dialog_assignment_panel: VBoxContainer = scene.get("_dialog_assignment_panel")
@@ -372,8 +614,10 @@ func show_text_dialog(scene: Object, items: Array, extra_data: Dictionary) -> vo
 	dialog_card_scroll.scroll_vertical = 0
 	dialog_card_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	dialog_card_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO if items.size() > 5 else ScrollContainer.SCROLL_MODE_DISABLED
-	dialog_card_scroll.custom_minimum_size = Vector2(0, _action_hud_scroll_height(items.size()))
-	HudThemeScript.style_scroll_container(dialog_card_scroll, "touch")
+	if scene.has_method("_set_card_gallery_drag_scroll_active"):
+		scene.call("_set_card_gallery_drag_scroll_active", dialog_card_scroll, false)
+	dialog_card_scroll.custom_minimum_size = Vector2(0, _text_hud_scroll_height(scene, items.size()))
+	HudThemeScript.style_scroll_container(dialog_card_scroll, _dialog_scroll_profile(scene))
 	scene.call("_clear_container_children", dialog_card_row)
 	scene.call("_clear_container_children", dialog_utility_row)
 	for item: Variant in items:
@@ -453,7 +697,8 @@ func _dialog_button_style(accent: Color, hover: bool, pressed: bool) -> StyleBox
 
 func _build_text_hud_option(scene: Object, label_text: String, option_index: int) -> PanelContainer:
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(760, 74)
+	var option_size := _text_hud_option_size(scene)
+	panel.custom_minimum_size = option_size
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	panel.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -463,25 +708,26 @@ func _build_text_hud_option(scene: Object, label_text: String, option_index: int
 			var mouse_event := event as InputEventMouseButton
 			if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
 				on_text_hud_option_pressed(scene, option_index)
+				panel.accept_event()
 	)
 
 	var margin := MarginContainer.new()
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_theme_constant_override("margin_left", 14)
 	margin.add_theme_constant_override("margin_right", 14)
-	margin.add_theme_constant_override("margin_top", 9)
-	margin.add_theme_constant_override("margin_bottom", 9)
+	margin.add_theme_constant_override("margin_top", 14 if _is_portrait_text_dialog(scene) else 9)
+	margin.add_theme_constant_override("margin_bottom", 14 if _is_portrait_text_dialog(scene) else 9)
 	panel.add_child(margin)
 
 	var row := HBoxContainer.new()
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_theme_constant_override("separation", 12)
+	row.add_theme_constant_override("separation", 14 if _is_portrait_text_dialog(scene) else 12)
 	margin.add_child(row)
 
 	var index_label := Label.new()
 	index_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	index_label.custom_minimum_size = Vector2(44, 42)
+	index_label.custom_minimum_size = Vector2(62, 62) if _is_portrait_text_dialog(scene) else Vector2(44, 42)
 	index_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	index_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	index_label.text = str(option_index + 1)
@@ -562,9 +808,20 @@ func show_card_dialog(scene: Object, items: Array, extra_data: Dictionary) -> vo
 	scene.set("_dialog_card_page", 0)
 	dialog_card_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	dialog_card_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	dialog_card_scroll.custom_minimum_size = Vector2(0, _card_dialog_scroll_height(dialog_card_size))
-	HudThemeScript.style_scroll_container(dialog_card_scroll)
-	recreate_dialog_card_row(scene, dialog_card_scroll, dialog_card_size)
+	var show_visible_scrollbar := _card_dialog_uses_visible_scrollbar(scene)
+	dialog_card_scroll.set_meta("card_gallery_drag_keep_scrollbars_visible", show_visible_scrollbar)
+	if scene.has_method("_set_card_gallery_drag_scroll_active"):
+		scene.call("_set_card_gallery_drag_scroll_active", dialog_card_scroll, true)
+	dialog_card_scroll.custom_minimum_size = Vector2(0, _card_dialog_scroll_height(dialog_card_size, scene))
+	HudThemeScript.style_scroll_container(dialog_card_scroll, _dialog_scroll_profile(scene))
+	if show_visible_scrollbar:
+		if scene.has_method("_restore_card_gallery_scrollbars_for"):
+			scene.call("_restore_card_gallery_scrollbars_for", dialog_card_scroll)
+	elif scene.has_method("_hide_card_gallery_scrollbars_for"):
+		scene.call("_hide_card_gallery_scrollbars_for", dialog_card_scroll)
+	var recreated_card_row := recreate_dialog_card_row(scene, dialog_card_scroll, dialog_card_size)
+	if scene.has_method("_configure_card_gallery_drag_scroll"):
+		scene.call("_configure_card_gallery_drag_scroll", dialog_card_scroll, recreated_card_row, "dialog_cards")
 	if dialog_list.item_selected.is_connected(Callable(scene, "_on_dialog_item_selected")):
 		dialog_list.item_selected.disconnect(Callable(scene, "_on_dialog_item_selected"))
 	if dialog_list.multi_selected.is_connected(Callable(scene, "_on_dialog_item_multi_selected")):
@@ -577,7 +834,7 @@ func show_card_dialog(scene: Object, items: Array, extra_data: Dictionary) -> vo
 
 	var min_select := int(extra_data.get("min_select", 1))
 	var max_select := int(extra_data.get("max_select", 1))
-	var show_confirm := max_select > 1 or min_select > 1
+	var show_confirm := bool(extra_data.get("force_confirm", false)) or max_select > 1 or min_select > 1
 	dialog_confirm.visible = show_confirm
 	dialog_status_lbl.visible = show_confirm
 	if show_confirm:
@@ -605,7 +862,7 @@ func _populate_card_dialog_cards(scene: Object) -> void:
 		var grouped_height := grouped_card_dialog_scroll_height(dialog_card_size, card_items, card_groups, scene)
 		dialog_card_scroll.custom_minimum_size = Vector2(0, grouped_height)
 		dialog_card_scroll.size = Vector2(dialog_card_scroll.size.x, grouped_height)
-		dialog_card_row.custom_minimum_size = Vector2(0, grouped_height - float(HudThemeScript.SCROLLBAR_TOUCH_THICKNESS + HudThemeScript.CARD_SCROLLBAR_CLEARANCE_PADDING))
+		dialog_card_row.custom_minimum_size = Vector2(0, grouped_height - grouped_card_dialog_scrollbar_clearance(scene))
 		dialog_card_row.size = Vector2(dialog_card_row.size.x, dialog_card_row.custom_minimum_size.y)
 		populate_grouped_card_dialog_items(scene, card_items, labels, card_groups, card_click_selectable)
 		sync_dialog_card_selection(scene)
@@ -618,7 +875,7 @@ func _populate_card_dialog_cards(scene: Object) -> void:
 		var card_view := BattleCardViewScript.new()
 		prepare_dialog_card_view(card_view, dialog_card_size)
 		card_view.set_clickable(card_click_selectable)
-		setup_dialog_card_view(scene, card_view, card_items[i], labels[i] if i < labels.size() else "")
+		setup_dialog_card_view(scene, card_view, card_items[i], dialog_label_at(labels, i))
 		if disabled:
 			card_view.set_disabled(true)
 			if disabled_badge != "":
@@ -626,6 +883,8 @@ func _populate_card_dialog_cards(scene: Object) -> void:
 		elif show_selectable_hints:
 			card_view.set_selectable_hint_text(selectable_hint)
 			card_view.set_selectable_hint(true)
+		if scene.has_method("_configure_card_gallery_card_view"):
+			scene.call("_configure_card_gallery_card_view", card_view, dialog_card_scroll, "dialog_cards")
 		if card_click_selectable and not disabled:
 			card_view.left_clicked.connect(Callable(scene, "_on_dialog_card_left_signal").bind(real_index))
 		card_view.right_clicked.connect(Callable(scene, "_on_dialog_card_right_signal"))
@@ -643,6 +902,7 @@ func populate_grouped_card_dialog_items(
 	card_click_selectable: bool
 ) -> void:
 	var dialog_card_row: HBoxContainer = scene.get("_dialog_card_row")
+	var dialog_card_scroll: ScrollContainer = scene.get("_dialog_card_scroll")
 	var dialog_card_size: Vector2 = scene.get("_dialog_card_size")
 	var energy_card_size := grouped_energy_card_size(dialog_card_size)
 	var has_ungrouped := grouped_card_dialog_has_ungrouped(card_items, card_groups)
@@ -728,7 +988,9 @@ func populate_grouped_card_dialog_items(
 			var card_view := BattleCardViewScript.new()
 			prepare_grouped_energy_card_view(card_view, energy_card_size)
 			card_view.set_clickable(card_click_selectable)
-			setup_dialog_card_view(scene, card_view, card_items[item_index], labels[item_index] if item_index < labels.size() else "")
+			setup_dialog_card_view(scene, card_view, card_items[item_index], dialog_label_at(labels, item_index))
+			if scene.has_method("_configure_card_gallery_card_view"):
+				scene.call("_configure_card_gallery_card_view", card_view, dialog_card_scroll, "dialog_cards")
 			if card_click_selectable:
 				card_view.left_clicked.connect(Callable(scene, "_on_dialog_card_left_signal").bind(item_index))
 			card_view.right_clicked.connect(Callable(scene, "_on_dialog_card_right_signal"))
@@ -737,7 +999,7 @@ func populate_grouped_card_dialog_items(
 
 
 func grouped_card_dialog_scroll_height(card_size: Vector2, card_items: Array = [], card_groups: Array = [], scene: Object = null) -> float:
-	return grouped_card_dialog_content_height(card_size, grouped_card_dialog_visible_lane_count(scene, card_groups, grouped_card_dialog_has_ungrouped(card_items, card_groups))) + float(HudThemeScript.SCROLLBAR_TOUCH_THICKNESS + HudThemeScript.CARD_SCROLLBAR_CLEARANCE_PADDING)
+	return grouped_card_dialog_content_height(card_size, grouped_card_dialog_visible_lane_count(scene, card_groups, grouped_card_dialog_has_ungrouped(card_items, card_groups))) + grouped_card_dialog_scrollbar_clearance(scene)
 
 
 func grouped_card_dialog_content_height(card_size: Vector2, visible_lane_count: int = 2) -> float:
@@ -920,6 +1182,8 @@ func create_grouped_card_dialog_slot_panel(
 		prepare_grouped_energy_card_view(card_view, energy_card_size)
 		card_view.set_clickable(card_click_selectable)
 		setup_dialog_card_view(scene, card_view, card_items[real_index], "")
+		if scene.has_method("_configure_card_gallery_card_view"):
+			scene.call("_configure_card_gallery_card_view", card_view, scene.get("_dialog_card_scroll"), "dialog_cards")
 		if card_click_selectable:
 			card_view.left_clicked.connect(Callable(scene, "_on_dialog_card_left_signal").bind(real_index))
 		card_view.right_clicked.connect(Callable(scene, "_on_dialog_card_right_signal"))
@@ -1018,8 +1282,31 @@ func grouped_card_dialog_battlefield_style() -> StyleBoxFlat:
 	return style
 
 
-func _card_dialog_scroll_height(card_size: Vector2) -> float:
-	return card_size.y + float(HudThemeScript.SCROLLBAR_TOUCH_THICKNESS + HudThemeScript.CARD_SCROLLBAR_CLEARANCE_PADDING)
+func _card_dialog_scroll_height(card_size: Vector2, scene: Object = null) -> float:
+	if _card_dialog_uses_visible_scrollbar(scene) and scene != null and scene.has_method("_dialog_card_scroll_height"):
+		return float(scene.call("_dialog_card_scroll_height"))
+	return card_size.y
+
+
+func grouped_card_dialog_scrollbar_clearance(scene: Object = null) -> float:
+	if _card_dialog_uses_visible_scrollbar(scene) and scene != null and scene.has_method("_card_scrollbar_clearance_height"):
+		return float(scene.call("_card_scrollbar_clearance_height"))
+	return 0.0
+
+
+func _card_dialog_uses_visible_scrollbar(scene: Object = null) -> bool:
+	return scene != null and scene.has_method("_is_portrait_popup_text_profile_active") and bool(scene.call("_is_portrait_popup_text_profile_active"))
+
+
+func _dialog_scroll_profile(scene: Object = null) -> String:
+	if scene != null and scene.has_method("_is_portrait_popup_text_profile_active") and bool(scene.call("_is_portrait_popup_text_profile_active")):
+		return "portrait_touch"
+	if scene is Node and (scene as Node).is_inside_tree():
+		var viewport_size := (scene as Node).get_viewport().get_visible_rect().size
+		if viewport_size.y > viewport_size.x:
+			return "portrait_touch"
+		return "touch" if HudThemeScript.should_use_touch_profile(viewport_size) else "auto"
+	return "touch"
 
 
 func recreate_dialog_card_row(scene: Object, dialog_card_scroll: ScrollContainer, dialog_card_size: Vector2) -> HBoxContainer:
@@ -1077,6 +1364,7 @@ func _rebuild_card_dialog_utility_row(scene: Object) -> void:
 		style_dialog_button(button, "primary")
 		var action_index := int(action.get("index", -1))
 		button.pressed.connect(func() -> void:
+			mark_modal_input_consumed(scene, "dialog_utility_action")
 			confirm_dialog_selection(scene, PackedInt32Array([action_index]))
 		)
 		dialog_utility_row.add_child(button)
@@ -1104,6 +1392,8 @@ func show_action_hud_dialog(scene: Object, _items: Array, extra_data: Dictionary
 	var preview_size := _action_hud_preview_card_size(scene)
 	dialog_card_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	dialog_card_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO if action_items.size() > 5 else ScrollContainer.SCROLL_MODE_DISABLED
+	if scene.has_method("_set_card_gallery_drag_scroll_active"):
+		scene.call("_set_card_gallery_drag_scroll_active", dialog_card_scroll, false)
 	var scroll_height := _action_hud_scroll_height(action_items.size())
 	if has_preview:
 		scroll_height = maxf(scroll_height, preview_size.y + 18.0)
@@ -1212,7 +1502,9 @@ func _build_action_hud_option(scene: Object, action: Dictionary, action_index: i
 		if event is InputEventMouseButton:
 			var mouse_event := event as InputEventMouseButton
 			if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
+				mark_modal_input_consumed(scene, "action_hud_option")
 				confirm_dialog_selection(scene, PackedInt32Array([action_index]))
+				panel.accept_event()
 	)
 
 	var margin := MarginContainer.new()
@@ -1314,7 +1606,7 @@ func _action_hud_accent(action_type: String, enabled: bool) -> Color:
 	if not enabled:
 		return Color(0.34, 0.38, 0.42, 1.0)
 	match action_type:
-		"ability":
+		"ability", "stadium_ability":
 			return Color(0.35, 0.80, 0.95, 1.0)
 		"attack", "granted_attack":
 			return Color(1.0, 0.48, 0.24, 1.0)
@@ -1374,6 +1666,8 @@ func show_assignment_dialog(scene: Object, extra_data: Dictionary) -> void:
 	dialog_list.visible = false
 	dialog_card_scroll.visible = false
 	dialog_assignment_panel.visible = true
+	if scene.has_method("_set_card_gallery_drag_scroll_active"):
+		scene.call("_set_card_gallery_drag_scroll_active", dialog_card_scroll, false)
 	dialog_assignment_source_scroll.scroll_horizontal = 0
 	dialog_assignment_target_scroll.scroll_horizontal = 0
 	scene.call("_clear_container_children", dialog_card_row)
@@ -1418,7 +1712,7 @@ func show_assignment_dialog(scene: Object, extra_data: Dictionary) -> void:
 		var target_view := BattleCardViewScript.new()
 		prepare_dialog_card_view(target_view, dialog_card_size)
 		target_view.set_clickable(true)
-		setup_dialog_card_view(scene, target_view, target_items[i], target_labels[i] if i < target_labels.size() else "")
+		setup_dialog_card_view(scene, target_view, target_items[i], dialog_label_at(target_labels, i))
 		target_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
 			scene.call("_on_assignment_target_chosen", i)
 		)
@@ -1543,7 +1837,7 @@ func reset_grouped_assignment_source_metrics(scroll: ScrollContainer, row: HBoxC
 	var grouped_height := grouped_card_dialog_scroll_height(dialog_card_size, source_items, source_groups, scene)
 	scroll.custom_minimum_size = Vector2(0, grouped_height)
 	scroll.size = Vector2(scroll.size.x, grouped_height)
-	row.custom_minimum_size = Vector2(0, grouped_height - float(HudThemeScript.SCROLLBAR_TOUCH_THICKNESS + HudThemeScript.CARD_SCROLLBAR_CLEARANCE_PADDING))
+	row.custom_minimum_size = Vector2(0, grouped_height - grouped_card_dialog_scrollbar_clearance(scene))
 	row.size = Vector2(row.size.x, row.custom_minimum_size.y)
 
 
@@ -1596,7 +1890,7 @@ func create_grouped_assignment_source_slot_panel(
 		var source_view := BattleCardViewScript.new()
 		prepare_grouped_energy_card_view(source_view, energy_card_size)
 		source_view.set_clickable(true)
-		setup_dialog_card_view(scene, source_view, source_items[source_index], source_labels[source_index] if source_index < source_labels.size() else "")
+		setup_dialog_card_view(scene, source_view, source_items[source_index], dialog_label_at(source_labels, source_index))
 		source_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
 			scene.call("_on_assignment_source_chosen", source_index)
 		)
@@ -1899,6 +2193,7 @@ func update_dialog_status_text(scene: Object) -> void:
 
 
 func confirm_dialog_selection(scene: Object, sel_items: PackedInt32Array) -> void:
+	mark_modal_input_consumed(scene, "dialog_confirm_selection")
 	scene.call(
 		"_runtime_log",
 		"confirm_dialog_selection",
@@ -1934,6 +2229,7 @@ func on_dialog_item_multi_selected(scene: Object, idx: int, selected: bool) -> v
 
 
 func on_dialog_confirm(scene: Object) -> void:
+	mark_modal_input_consumed(scene, "dialog_confirm")
 	if bool(scene.get("_dialog_assignment_mode")):
 		confirm_assignment_dialog(scene)
 		return
@@ -1963,6 +2259,15 @@ func on_dialog_confirm(scene: Object) -> void:
 
 
 func on_dialog_cancel(scene: Object) -> void:
+	mark_modal_input_consumed(scene, "dialog_cancel")
+	var dialog_data: Dictionary = scene.get("_dialog_data")
+	if not bool(dialog_data.get("allow_cancel", true)):
+		scene.call(
+			"_runtime_log",
+			"dialog_cancel_blocked",
+			"choice=%s %s" % [scene.get("_pending_choice"), scene.call("_dialog_state_snapshot")]
+		)
+		return
 	scene.call(
 		"_runtime_log",
 		"dialog_cancel",
@@ -1978,6 +2283,7 @@ func on_dialog_cancel(scene: Object) -> void:
 
 
 func confirm_assignment_dialog(scene: Object) -> void:
+	mark_modal_input_consumed(scene, "assignment_confirm")
 	var dialog_data: Dictionary = scene.get("_dialog_data")
 	var min_select := int(dialog_data.get("min_select", 0))
 	var max_select := int(dialog_data.get("max_select", 0))
@@ -2269,6 +2575,10 @@ func show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlot, inclu
 	var actions: Array[Dictionary] = []
 	var action_items: Array[Dictionary] = []
 	var effect: BaseEffect = gsm.effect_processor.get_effect(card_data.effect_id)
+	var is_active_slot := false
+	if gsm != null and gsm.game_state != null and cp >= 0 and cp < gsm.game_state.players.size():
+		is_active_slot = slot == gsm.game_state.players[cp].active_pokemon
+	var should_list_attacks := include_attacks or not is_active_slot
 	for i: int in card_data.abilities.size():
 		var ability: Dictionary = card_data.abilities[i]
 		var ability_name := str(ability.get("name", ""))
@@ -2315,12 +2625,16 @@ func show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlot, inclu
 			can_use_granted,
 			granted_reason
 		))
-	if include_attacks:
+	if should_list_attacks:
 		for i: int in card_data.attacks.size():
 			var attack: Dictionary = card_data.attacks[i]
-			var can_use_attack: bool = gsm.can_use_attack(cp, i)
-			var attack_reason: String = "" if can_use_attack else gsm.get_attack_unusable_reason(cp, i)
-			var preview_damage: int = gsm.get_attack_preview_damage(cp, i)
+			var can_use_attack := false
+			var attack_reason := "只有战斗区宝可梦可以使用招式"
+			var preview_damage := 0
+			if include_attacks and is_active_slot:
+				can_use_attack = gsm.can_use_attack(cp, i)
+				attack_reason = "" if can_use_attack else gsm.get_attack_unusable_reason(cp, i)
+				preview_damage = gsm.get_attack_preview_damage(cp, i)
 			items.append("%s[招式] %s [%s] %s" % [
 				"" if can_use_attack else "[不可用] ",
 				str(attack.get("name", "")),
@@ -2345,8 +2659,11 @@ func show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlot, inclu
 				str(attack.get("cost", ""))
 			))
 		for granted_attack: Dictionary in gsm.effect_processor.get_granted_attacks(slot, gsm.game_state):
-			var granted_can_use: bool = bool(scene.call("_can_use_granted_attack", cp, slot, granted_attack))
-			var granted_reason: String = "" if granted_can_use else str(scene.call("_get_granted_attack_unusable_reason", cp, slot, granted_attack))
+			var granted_can_use := false
+			var granted_reason := "只有战斗区宝可梦可以使用招式"
+			if include_attacks and is_active_slot:
+				granted_can_use = bool(scene.call("_can_use_granted_attack", cp, slot, granted_attack))
+				granted_reason = "" if granted_can_use else str(scene.call("_get_granted_attack_unusable_reason", cp, slot, granted_attack))
 			items.append("%s[招式] %s [%s]" % [
 				"" if granted_can_use else "[不可用] ",
 				str(granted_attack.get("name", "")),
@@ -2369,7 +2686,7 @@ func show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlot, inclu
 				granted_reason,
 				str(granted_attack.get("cost", ""))
 			))
-		if slot == gsm.game_state.players[cp].active_pokemon:
+		if include_attacks and is_active_slot:
 			var can_retreat: bool = gsm.rule_validator.can_retreat(gsm.game_state, cp, gsm.effect_processor)
 			var retreat_cost: int = gsm.effect_processor.get_effective_retreat_cost(slot, gsm.game_state)
 			items.append("%s[行动] 撤退" % ("" if can_retreat else "[不可用] "))
@@ -2419,6 +2736,54 @@ func show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlot, inclu
 		dialog_cancel.visible = true
 
 
+func show_stadium_action_dialog(scene: Object, cp: int) -> void:
+	var gsm: Variant = scene.get("_gsm")
+	if gsm == null or gsm.game_state == null or gsm.game_state.stadium_card == null:
+		return
+	var state: GameState = gsm.game_state
+	var stadium_card: CardInstance = state.stadium_card
+	if stadium_card == null or stadium_card.card_data == null:
+		return
+	var card_data: CardData = stadium_card.card_data
+	var effect: BaseEffect = gsm.effect_processor.get_effect(card_data.effect_id)
+	var is_action := effect != null and effect.can_use_as_stadium_action(stadium_card, state)
+	var can_use: bool = is_action and bool(gsm.can_use_stadium_effect(cp))
+	var reason := "" if can_use else _stadium_action_unusable_reason(state, cp, is_action)
+	var ability_title := _stadium_action_title(card_data)
+	var ability_body := _stadium_action_body(card_data, effect)
+	var prefix := "" if can_use else "[不可用] "
+	var items: Array[String] = ["%s[特性] %s" % [prefix, ability_title]]
+	var actions: Array[Dictionary] = [{
+		"type": "stadium_ability",
+		"enabled": can_use,
+		"reason": reason,
+	}]
+	var action_items: Array[Dictionary] = [
+		_build_pokemon_action_item(
+			"stadium_ability",
+			"特性",
+			ability_title,
+			"竞技场",
+			ability_body,
+			can_use,
+			reason
+		)
+	]
+	scene.set("_pending_choice", "pokemon_action")
+	show_dialog(scene, "选择行动：%s" % card_data.name, items, {
+		"player": cp,
+		"actions": actions,
+		"action_items": action_items,
+		"pokemon_card": stadium_card,
+		"pokemon_card_data": card_data,
+		"presentation": "action_hud",
+		"allow_cancel": true,
+	})
+	var dialog_cancel: Button = scene.get("_dialog_cancel")
+	if dialog_cancel != null:
+		dialog_cancel.visible = true
+
+
 func _build_pokemon_action_item(
 	action_type: String,
 	kind: String,
@@ -2439,6 +2804,50 @@ func _build_pokemon_action_item(
 		"enabled": enabled,
 		"reason": reason,
 	}
+
+
+func _stadium_action_title(card_data: CardData) -> String:
+	if card_data != null and not card_data.abilities.is_empty():
+		var ability: Dictionary = card_data.abilities[0]
+		var ability_name := str(ability.get("name", "")).strip_edges()
+		if ability_name != "":
+			return ability_name
+	return "竞技场效果"
+
+
+func _stadium_action_body(card_data: CardData, effect: BaseEffect) -> String:
+	if card_data != null and not card_data.abilities.is_empty():
+		var ability: Dictionary = card_data.abilities[0]
+		var ability_text := str(ability.get("text", "")).strip_edges()
+		if ability_text != "":
+			return ability_text
+	if effect != null:
+		var effect_text := effect.get_description().strip_edges()
+		if effect_text != "":
+			return effect_text
+	if card_data != null and card_data.description.strip_edges() != "":
+		return card_data.description.strip_edges()
+	return "这张竞技场当前没有可主动使用的效果。"
+
+
+func _stadium_action_unusable_reason(state: GameState, cp: int, is_action: bool) -> String:
+	if not is_action:
+		return "这张竞技场没有可主动使用的能力"
+	if state == null:
+		return "当前无法使用该竞技场能力"
+	if state.current_player_index != cp:
+		return "当前不是该玩家的回合"
+	if state.phase != GameState.GamePhase.MAIN:
+		return "只能在主要阶段使用"
+	if (
+		state.stadium_card != null
+		and state.stadium_card.card_data != null
+		and state.stadium_effect_used_turn == state.turn_number
+		and state.stadium_effect_used_player == cp
+		and state.stadium_effect_used_effect_id == state.stadium_card.card_data.effect_id
+	):
+		return "本回合已经使用过该竞技场能力"
+	return "当前无法使用该竞技场能力"
 
 
 func _attack_damage_meta_text(attack: Dictionary, preview_damage: int) -> String:

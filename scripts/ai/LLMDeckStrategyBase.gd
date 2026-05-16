@@ -31,6 +31,8 @@ func _configure_prompt_builder(game_state: GameState, player_index: int) -> void
 		return
 	if prompt_builder.has_method("set_deck_strategy_prompt"):
 		prompt_builder.call("set_deck_strategy_prompt", get_strategy_id(), get_llm_deck_strategy_prompt(game_state, player_index))
+	if prompt_builder.has_method("set_intent_planner_profile"):
+		prompt_builder.call("set_intent_planner_profile", get_intent_planner_profile())
 
 
 func _fast_choice_key(prompt_kind: String, game_state: GameState, player_index: int) -> String:
@@ -192,11 +194,28 @@ func _match_target_slot(q: Dictionary, action: Dictionary, game_state: GameState
 	var target_slot: Variant = action.get("target_slot")
 	if not (target_slot is PokemonSlot):
 		return q_pos == "" and q_target == ""
-	if q_pos != "" and q_pos != _resolve_slot_position(target_slot as PokemonSlot, game_state, player_index):
-		return false
-	if q_target != "" and not _name_contains(str((target_slot as PokemonSlot).get_pokemon_name()), q_target):
+	if q_pos != "":
+		if q_pos != _resolve_slot_position(target_slot as PokemonSlot, game_state, player_index):
+			return false
+		if q_target != "" and not _target_name_matches_slot_or_evolution(q_target, target_slot as PokemonSlot):
+			return false
+		return true
+	if q_target != "" and not _target_name_matches_slot_or_evolution(q_target, target_slot as PokemonSlot):
 		return false
 	return true
+
+
+func _target_name_matches_slot_or_evolution(q_target: String, target_slot: PokemonSlot) -> bool:
+	if target_slot == null:
+		return false
+	var slot_name := str(target_slot.get_pokemon_name())
+	if _name_contains(slot_name, q_target):
+		return true
+	var cd := target_slot.get_card_data()
+	if cd == null:
+		return false
+	var evolves_from := str(cd.evolves_from).strip_edges()
+	return evolves_from != "" and (_name_contains(evolves_from, q_target) or _name_contains(q_target, evolves_from))
 
 
 func _match_ability(q: Dictionary, action: Dictionary, game_state: GameState, _player_index: int) -> bool:
@@ -236,8 +255,16 @@ func _match_retreat(q: Dictionary, action: Dictionary, game_state: GameState, pl
 	var q_bench_pos: String = str(q.get("bench_position", q.get("position", ""))).strip_edges()
 	var q_bench_target: String = str(q.get("bench_target", q.get("target", ""))).strip_edges()
 	var bench_index: int = int(action.get("bench_index", -1))
-	if q_bench_pos != "" and q_bench_pos != "bench_%d" % bench_index:
-		return false
+	if bench_index < 0:
+		var action_pos := str(action.get("bench_position", action.get("position", ""))).strip_edges()
+		if action_pos.begins_with("bench_"):
+			bench_index = int(action_pos.trim_prefix("bench_"))
+	if bench_index < 0 and game_state != null and player_index >= 0 and player_index < game_state.players.size():
+		var action_target: Variant = action.get("bench_target", null)
+		if action_target is PokemonSlot:
+			bench_index = game_state.players[player_index].bench.find(action_target)
+	if q_bench_pos != "":
+		return q_bench_pos == "bench_%d" % bench_index
 	if q_bench_target == "" or game_state == null or player_index < 0 or player_index >= game_state.players.size():
 		return true
 	var player: PlayerState = game_state.players[player_index]

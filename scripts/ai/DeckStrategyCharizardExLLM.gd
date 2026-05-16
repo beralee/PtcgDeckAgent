@@ -383,6 +383,31 @@ func get_llm_setup_role_hint(cd: CardData) -> String:
 	return "support"
 
 
+func get_intent_planner_profile() -> Dictionary:
+	return {
+		"primary_attackers": [CHARIZARD_EX, RADIANT_CHARIZARD],
+		"secondary_attackers": [],
+		"support_only": [PIDGEY, PIDGEOT_EX, DUSKULL, DUSCLOPS, DUSKNOIR, ROTOM_V, LUMINEON_V, FEZANDIPITI_EX, MANAPHY],
+		"evolution_lines": [
+			{"basic": CHARMANDER, "stages": [CHARMELEON, CHARIZARD_EX], "role": "primary_attacker_energy_engine", "desired_count": 2, "energy": {"R": 2}},
+			{"basic": PIDGEY, "stages": [PIDGEOT_EX], "role": "search_engine", "desired_count": 1, "energy": {}},
+			{"basic": DUSKULL, "stages": [DUSCLOPS, DUSKNOIR], "role": "conversion_support", "desired_count": 1, "energy": {}},
+		],
+		"energy_needs": {
+			CHARMANDER: {"R": 2},
+			CHARMELEON: {"R": 2},
+			CHARIZARD_EX: {"R": 2},
+			RADIANT_CHARIZARD: {"R": 1},
+		},
+		"primary_attacks": [
+			{"pokemon": CHARIZARD_EX, "attack": "Burning Darkness"},
+			{"pokemon": RADIANT_CHARIZARD, "attack": "Combustion Blast"},
+		],
+		"setup_draw_attacks": [],
+		"low_value_attacks": [],
+	}
+
+
 func get_llm_deck_strategy_prompt(game_state: GameState, player_index: int) -> PackedStringArray:
 	var custom_text := get_deck_strategy_text().strip_edges()
 	if custom_text != "":

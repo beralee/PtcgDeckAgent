@@ -373,7 +373,7 @@ func test_attach_psychic_energy_always_negative() -> String:
 	])
 
 
-func test_psychic_energy_never_hand_attach() -> String:
+func test_psychic_energy_manual_attach_allows_active_drifloon_emergency_line() -> String:
 	## 超能量永不手贴 — 无论目标是谁
 	var gs := _make_game_state(4)
 	var drifloon_cd := _make_pokemon_cd("飘飘球", "Basic", "P", 70, "", "", [], [{"name": "Spin", "cost": "PC", "damage": "30"}])
@@ -387,8 +387,8 @@ func test_psychic_energy_never_hand_attach() -> String:
 	var score_drifloon: float = s.score_action({"kind": "attach_energy", "card": psychic, "target_slot": drifloon_slot}, _ctx(gs))
 	var score_gard: float = s.score_action({"kind": "attach_energy", "card": psychic, "target_slot": gard_slot}, _ctx(gs))
 	return run_checks([
-		assert_true(score_drifloon < -200.0, "超能量手贴给飘飘球应大负分 (got %f)" % score_drifloon),
-		assert_true(score_gard < -200.0, "超能量手贴给沙奈朵应大负分 (got %f)" % score_gard),
+		assert_true(score_drifloon > 0.0, "Active Drifloon can receive emergency Psychic attachment when it opens an attack line (got %f)" % score_drifloon),
+		assert_true(score_gard < -200.0, "Psychic manual attachment to Gardevoir ex should stay strongly negative (got %f)" % score_gard),
 	])
 
 

@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "Jiro Sasumo",
+	"attacks": [
+		{
+			"cost": "C",
+			"damage": "40×",
+			"is_vstar_power": false,
+			"name": "漫反射",
+			"text": "造成对手所有宝可梦身上附着的特殊能量张数×40伤害。"
+		},
+		{
+			"cost": "FC",
+			"damage": "60",
+			"is_vstar_power": false,
+			"name": "力量宝石",
+			"text": ""
+		}
+	],
+	"card_index": "106",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "【无】 漫反射 40×\n造成对手所有宝可梦身上附着的特殊能量张数×40伤害。\n\n【斗】【无】 力量宝石 60\n\n\n",
+	"effect_id": "0d1257d702d294733db17470d04e546c",
+	"energy_provides": "",
+	"energy_type": "F",
+	"evolves_from": "",
+	"hp": 110,
+	"image_local_path": "user://cards/images/CSV9C/106.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/106.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "蒂安希",
+	"name_en": "",
+	"rarity": "U",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Basic",
+	"weakness_energy": "G",
+	"weakness_value": "×2",
+	"yoren_code": "P719"
+}

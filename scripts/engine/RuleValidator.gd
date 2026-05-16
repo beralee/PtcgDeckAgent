@@ -2,22 +2,37 @@ class_name RuleValidator
 extends RefCounted
 
 const BenchLimit = preload("res://scripts/engine/BenchLimitHelper.gd")
+const CSV9CEffects = preload("res://scripts/effects/CSV9CEffects.gd")
 
 const ITEM_LOCK_PREFIX := "item_lock_"
 const AttackSelfLockUntilLeaveActiveEffect = preload("res://scripts/effects/pokemon_effects/AttackSelfLockUntilLeaveActive.gd")
 
-func can_attach_energy(state: GameState, player_index: int) -> bool:
+func can_attach_energy(
+	state: GameState,
+	player_index: int,
+	card: CardInstance = null,
+	effect_processor: EffectProcessor = null
+) -> bool:
 	if state.current_player_index != player_index:
 		return false
 	if state.phase != GameState.GamePhase.MAIN:
+		return false
+	if effect_processor != null and card != null and effect_processor.prevents_card_from_hand(player_index, card, state):
 		return false
 	return not state.energy_attached_this_turn
 
 
-func can_play_supporter(state: GameState, player_index: int) -> bool:
+func can_play_supporter(
+	state: GameState,
+	player_index: int,
+	card: CardInstance = null,
+	effect_processor: EffectProcessor = null
+) -> bool:
 	if state.current_player_index != player_index:
 		return false
 	if state.phase != GameState.GamePhase.MAIN:
+		return false
+	if effect_processor != null and card != null and effect_processor.prevents_card_from_hand(player_index, card, state):
 		return false
 	if state.supporter_used_this_turn:
 		return false
@@ -26,18 +41,32 @@ func can_play_supporter(state: GameState, player_index: int) -> bool:
 	return true
 
 
-func can_play_item(state: GameState, player_index: int) -> bool:
+func can_play_item(
+	state: GameState,
+	player_index: int,
+	card: CardInstance = null,
+	effect_processor: EffectProcessor = null
+) -> bool:
 	if state.current_player_index != player_index:
 		return false
 	if state.phase != GameState.GamePhase.MAIN:
+		return false
+	if effect_processor != null and card != null and effect_processor.prevents_card_from_hand(player_index, card, state):
 		return false
 	return int(state.shared_turn_flags.get("%s%d" % [ITEM_LOCK_PREFIX, player_index], -1)) != state.turn_number
 
 
-func can_play_stadium(state: GameState, player_index: int, card: CardInstance) -> bool:
+func can_play_stadium(
+	state: GameState,
+	player_index: int,
+	card: CardInstance,
+	effect_processor: EffectProcessor = null
+) -> bool:
 	if state.current_player_index != player_index:
 		return false
 	if state.phase != GameState.GamePhase.MAIN:
+		return false
+	if effect_processor != null and card != null and effect_processor.prevents_card_from_hand(player_index, card, state):
 		return false
 	if state.stadium_played_this_turn:
 		return false
@@ -59,9 +88,10 @@ func can_evolve(
 		return false
 	if slot == null or _is_effectively_knocked_out(slot, state, effect_processor):
 		return false
-	if state.is_first_turn_for_player(player_index):
+	var early_evolution_allowed := effect_processor != null and effect_processor.slot_allows_early_evolution(slot, player_index, state)
+	if state.is_first_turn_for_player(player_index) and not early_evolution_allowed:
 		return false
-	if slot.turn_played == state.turn_number:
+	if slot.turn_played == state.turn_number and not early_evolution_allowed:
 		return false
 	if slot.turn_evolved == state.turn_number:
 		return false
@@ -256,6 +286,8 @@ func get_attack_unusable_reason(
 			var locked_attack_name: String = str(effect_data.get("attack_name", ""))
 			if locked_attack_name != "" and locked_attack_name != str(attack.get("name", "")):
 				continue
+			if not _defender_attack_lock_applies(active, effect_data):
+				continue
 			return "受到上回合效果影响，无法攻击"
 
 	var cost: String = CardData.normalize_attack_cost(attack.get("cost", ""))
@@ -309,9 +341,30 @@ func _fails_special_attack_usage_gate(
 		"90c254f809637aea730f5ff97b143f44":
 			if _is_giratina_star_requiem(attack_name, attack_index, true) and state.players[player_index].lost_zone.size() < 10:
 				return "自己的放逐区没有达到 10 张，无法使用这个招式"
+	var effect_id := str(card_data.effect_id)
+	if effect_id in ["317cdd81106733967d562ad538a7983a", "61fb0755be18f5fcdc6a30781d5fc05e"] and attack_index == 1 and CSV9CEffects.angelite_locked(active, state):
+		return "This attack cannot be used because Angelite was used during your previous turn."
+	if effect_id in ["1e48ba6c2140461745fc407bf34f5598", "5de19cbd4b2d1ff80ba14d6d89246ae9"] and attack_index == 0 and state.is_first_turn_for_player(player_index) and player_index != state.first_player_index:
+		return "This attack cannot be used during the second player's first turn."
 	if _is_giratina_star_requiem(attack_name, attack_index, false) and state.players[player_index].lost_zone.size() < 10:
 		return "自己的放逐区没有达到 10 张，无法使用这个招式"
 	return ""
+
+
+func _defender_attack_lock_applies(active: PokemonSlot, effect_data: Dictionary) -> bool:
+	var mode := str(effect_data.get("mode", ""))
+	if mode == "":
+		return true
+	var cd: CardData = active.get_card_data() if active != null else null
+	if cd == null:
+		return false
+	match mode:
+		"evolved_only":
+			return cd.is_evolution_pokemon()
+		"pokemon_v_only":
+			return cd.mechanic in ["V", "VSTAR", "VMAX"] or cd.has_tag("V") or cd.has_tag("VSTAR") or cd.has_tag("VMAX")
+		_:
+			return true
 
 
 func _is_giratina_star_requiem(attack_name: String, attack_index: int, allow_index_fallback: bool) -> bool:
@@ -395,7 +448,8 @@ func can_attach_tool(
 	state: GameState,
 	player_index: int,
 	slot: PokemonSlot,
-	effect_processor: EffectProcessor = null
+	effect_processor: EffectProcessor = null,
+	tool_card: CardInstance = null
 ) -> bool:
 	if state.current_player_index != player_index:
 		return false
@@ -403,6 +457,11 @@ func can_attach_tool(
 		return false
 	if slot == null or _is_effectively_knocked_out(slot, state, effect_processor):
 		return false
+	if effect_processor != null and tool_card != null and effect_processor.prevents_card_from_hand(player_index, tool_card, state):
+		return false
+	if effect_processor != null and tool_card != null and effect_processor.has_method("can_attach_tool_to_slot"):
+		if not bool(effect_processor.call("can_attach_tool_to_slot", slot, tool_card, state)):
+			return false
 	return slot.attached_tool == null
 
 

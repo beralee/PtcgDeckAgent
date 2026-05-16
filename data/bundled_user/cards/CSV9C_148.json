@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "Yuka Morii",
+	"attacks": [
+		{
+			"cost": "C",
+			"damage": "",
+			"is_vstar_power": false,
+			"name": "营养素",
+			"text": "回复自己1只宝可梦「30」HP。"
+		},
+		{
+			"cost": "GR",
+			"damage": "20+",
+			"is_vstar_power": false,
+			"name": "打滚",
+			"text": "抛掷1次硬币如果为正面，则追加造成30伤害。"
+		}
+	],
+	"card_index": "148",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "【无】 营养素\n回复自己1只宝可梦「30」HP。\n\n【草】【火】 打滚 20+\n抛掷1次硬币如果为正面，则追加造成30伤害。\n\n\n",
+	"effect_id": "950970c1b38c30b33bbb5aa5c3353b48",
+	"energy_provides": "",
+	"energy_type": "N",
+	"evolves_from": "",
+	"hp": 40,
+	"image_local_path": "user://cards/images/CSV9C/148.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/148.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "啃果虫",
+	"name_en": "",
+	"rarity": "C",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Basic",
+	"weakness_energy": "",
+	"weakness_value": "",
+	"yoren_code": "P840"
+}

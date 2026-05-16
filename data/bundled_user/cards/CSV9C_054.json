@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "顽强之心",
+			"text": "当这只宝可梦的HP为全满的状态下，这只宝可梦受到招式的伤害而【昏厥】时，这只宝可梦不会【昏厥】，而是以剩余HP为「10」的状态留在场上。"
+		}
+	],
+	"ancient_trait": "Tera",
+	"artist": "aky CG Works",
+	"attacks": [
+		{
+			"cost": "GLM",
+			"damage": "300",
+			"is_vstar_power": false,
+			"name": "黄晶伏特",
+			"text": "选择这只宝可梦身上附着的3个能量，放于弃牌区。"
+		}
+	],
+	"card_index": "054",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "特性: 顽强之心\n当这只宝可梦的HP为全满的状态下，这只宝可梦受到招式的伤害而【昏厥】时，这只宝可梦不会【昏厥】，而是以剩余HP为「10」的状态留在场上。\n\n【草】【雷】【钢】 黄晶伏特 300\n选择这只宝可梦身上附着的3个能量，放于弃牌区。\n\n\n",
+	"effect_id": "cd845155473716c29f29efa29da0a869",
+	"energy_provides": "",
+	"energy_type": "L",
+	"evolves_from": "",
+	"hp": 200,
+	"image_local_path": "user://cards/images/CSV9C/054.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/054.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "ex",
+	"name": "皮卡丘ex",
+	"name_en": "",
+	"rarity": "RR",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Basic",
+	"weakness_energy": "F",
+	"weakness_value": "×2",
+	"yoren_code": "Y1223"
+}

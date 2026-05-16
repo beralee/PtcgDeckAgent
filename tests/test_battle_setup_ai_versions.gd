@@ -356,6 +356,13 @@ func test_battle_setup_all_strategy_variant_labels_use_chinese_naming() -> Strin
 		575718: ["规则版猛雷鼓", "大模型版猛雷鼓"],
 		579502: ["规则版多龙喷火龙", "大模型版多龙喷火龙"],
 		575723: ["规则版多龙黑夜魔灵", "大模型版多龙黑夜魔灵"],
+		1700002: ["规则版17.0铝钢桥龙", "大模型版17.0铝钢桥龙"],
+		1700003: ["规则版17.0水龙龟", "大模型版17.0水龙龟"],
+		1700004: ["规则版17.0水龙赛富豪", "大模型版17.0水龙赛富豪"],
+		1700005: ["规则版17.0自爆恶喷", "大模型版17.0自爆恶喷"],
+		1700007: ["规则版17.0密勒顿", "大模型版17.0密勒顿"],
+		1700008: ["规则版17.0多龙黑夜魔灵", "大模型版17.0多龙黑夜魔灵"],
+		1700011: ["规则版17.0龙柱", "大模型版17.0龙柱"],
 	}
 	var checks: Array[String] = []
 	for deck_id: int in expected_labels.keys():
@@ -398,6 +405,13 @@ func test_battle_setup_exposes_llm_variants_for_all_selectable_llm_decks() -> St
 		575718: "raging_bolt_ogerpon_llm",
 		579502: "dragapult_charizard_llm",
 		575723: "dragapult_dusknoir_llm",
+		1700002: "v17_archaludon_dialga_llm",
+		1700003: "v17_water_turtle_llm",
+		1700004: "v17_palkia_gholdengo_llm",
+		1700005: "v17_bomb_charizard_llm",
+		1700007: "v17_miraidon_llm",
+		1700008: "v17_dragapult_dusknoir_llm",
+		1700011: "v17_regidrago_llm",
 	}
 	var checks: Array[String] = []
 	for deck_id: int in expected.keys():
@@ -539,6 +553,77 @@ func test_battle_setup_ai_mode_limits_ai_decks_to_supported_shortlist() -> Strin
 		assert_true(575718 in resolved_ids, "AI deck list should include Raging Bolt / Ogerpon"),
 		assert_true(579502 in resolved_ids, "AI deck list should include Dragapult / Charizard"),
 		assert_true(575723 in resolved_ids, "AI deck list should include Dragapult / Dusknoir"),
+		assert_true(1700002 in resolved_ids, "AI deck list should include 17.0 Archaludon / Dialga"),
+		assert_true(1700003 in resolved_ids, "AI deck list should include 17.0 Water turtle"),
+		assert_true(1700004 in resolved_ids, "AI deck list should include 17.0 Palkia / Gholdengo"),
+		assert_true(1700005 in resolved_ids, "AI deck list should include 17.0 Bomb Charizard"),
+		assert_true(1700007 in resolved_ids, "AI deck list should include 17.0 Miraidon"),
+		assert_true(1700008 in resolved_ids, "AI deck list should include 17.0 Dragapult / Dusknoir"),
+		assert_true(1700011 in resolved_ids, "AI deck list should include 17.0 Regidrago"),
+	])
+
+
+func test_battle_setup_ai_mode_lists_v17_ai_decks_first() -> String:
+	var scene := _make_scene_ready()
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	var deck2_option := scene.find_child("Deck2Option", true, false) as OptionButton
+	mode_option.select(1)
+	scene.call("_on_mode_changed", 1)
+
+	var leading_ids: Array[int] = []
+	for i: int in mini(7, deck2_option.item_count):
+		var metadata: Variant = deck2_option.get_item_metadata(i)
+		leading_ids.append(int(metadata))
+	leading_ids.sort()
+	var expected_leading_ids := [
+		1700002, 1700003, 1700004, 1700005, 1700007, 1700008, 1700011,
+	]
+	expected_leading_ids.sort()
+
+	return run_checks([
+		assert_eq(leading_ids, expected_leading_ids, "Battle setup AI deck dropdown should show the seven 17.0 AI decks first"),
+	])
+
+
+func test_battle_setup_ai_mode_selects_first_v17_ai_deck_by_default() -> String:
+	var scene := _make_scene_ready()
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	var deck2_option := scene.find_child("Deck2Option", true, false) as OptionButton
+	mode_option.select(1)
+	scene.call("_on_mode_changed", 1)
+
+	var selected_id := int(deck2_option.get_item_metadata(deck2_option.selected)) if deck2_option.selected >= 0 else -1
+	return run_checks([
+		assert_true(selected_id >= 1700000 and selected_id < 1800000, "Switching to AI mode should default to a 17.0 AI deck instead of an old supported deck"),
+	])
+
+
+func test_battle_setup_ai_deck_picker_opens_all_with_v17_ai_decks_first() -> String:
+	var scene := _make_scene_ready()
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	mode_option.select(1)
+	scene.call("_on_mode_changed", 1)
+
+	var picker_category := str(scene.call("_default_deck_picker_category", 1))
+	var all_decks: Array = scene.call("_decks_for_picker", 1, "all", "")
+	var recent_decks: Array = scene.call("_decks_for_picker", 1, "recent", "")
+	var leading_all_ids: Array[int] = []
+	var leading_recent_ids: Array[int] = []
+	for i: int in mini(7, all_decks.size()):
+		leading_all_ids.append(int((all_decks[i] as DeckData).id))
+	for i: int in mini(7, recent_decks.size()):
+		leading_recent_ids.append(int((recent_decks[i] as DeckData).id))
+	leading_all_ids.sort()
+	leading_recent_ids.sort()
+	var expected_leading_ids := [
+		1700002, 1700003, 1700004, 1700005, 1700007, 1700008, 1700011,
+	]
+	expected_leading_ids.sort()
+
+	return run_checks([
+		assert_eq(picker_category, "all", "AI deck picker should open on the creation-time ordered full list"),
+		assert_eq(leading_all_ids, expected_leading_ids, "AI deck picker All category should show the seven 17.0 decks first"),
+		assert_eq(leading_recent_ids, expected_leading_ids, "AI deck picker Recent category should not push old AI decks ahead of the 17.0 deck set"),
 	])
 
 

@@ -49,6 +49,22 @@ func test_battle_i18n_interpolates_phase_header() -> String:
 	])
 
 
+func test_battle_i18n_interpolates_portrait_top_headers() -> String:
+	var script: Variant = _load_i18n()
+	if script == null:
+		return "BattleI18n script should exist"
+	var phase_value: Variant = script.call("t", "battle.top.portrait_phase_line", {"count": 5})
+	var turn_value: Variant = script.call("t", "battle.top.portrait_turn_line", {
+		"turn": 12,
+		"side": _u([0x5BF9, 0x65B9]),
+	})
+
+	return run_checks([
+		assert_eq(str(phase_value), _u([0x5BF9, 0x624B, 0x20, 0x35, 0x5F20]), "Portrait top phase header should keep only opponent hand count"),
+		assert_eq(str(turn_value), _u([0x54, 0x31, 0x32, 0x20, 0x5BF9, 0x65B9]), "Portrait top turn header should use a compact turn/player token"),
+	])
+
+
 func test_battle_i18n_returns_key_when_missing() -> String:
 	var script: Variant = _load_i18n()
 	if script == null:

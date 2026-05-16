@@ -3,6 +3,10 @@ extends TestBase
 
 const HeadlessMatchBridgeScript = preload("res://scripts/ai/HeadlessMatchBridge.gd")
 const AIOpponentScript = preload("res://scripts/ai/AIOpponent.gd")
+const AIStepResolverScript = preload("res://scripts/ai/AIStepResolver.gd")
+const AILegalActionBuilderScript = preload("res://scripts/ai/AILegalActionBuilder.gd")
+const AbilityMoveDamageCountersToOpponentScript = preload("res://scripts/effects/pokemon_effects/AbilityMoveDamageCountersToOpponent.gd")
+const AbilityFirstTurnDrawScript = preload("res://scripts/effects/pokemon_effects/AbilityFirstTurnDraw.gd")
 
 
 class SetupCompletionSpyGameStateMachine extends GameStateMachine:
@@ -68,6 +72,18 @@ func _make_basic_card(name: String) -> CardInstance:
 	return CardInstance.create(card, 0)
 
 
+func _make_basic_card_with_ability(name: String, ability_name: String, effect_id: String, owner: int = 0) -> CardInstance:
+	var card := CardData.new()
+	card.name = name
+	card.card_type = "Pokemon"
+	card.stage = "Basic"
+	card.hp = 110
+	card.energy_type = "P"
+	card.effect_id = effect_id
+	card.abilities = [{"name": ability_name, "text": ""}]
+	return CardInstance.create(card, owner)
+
+
 func _make_filler_card(name: String) -> CardInstance:
 	var card := CardData.new()
 	card.name = name
@@ -128,6 +144,192 @@ func test_bridge_declares_effect_interaction_execution_supported() -> String:
 	return run_checks([
 		assert_true(bridge.has_method("supports_effect_interaction_execution"), "The extracted bridge should expose the effect-interaction execution capability contract"),
 		assert_true(bridge.supports_effect_interaction_execution(), "HeadlessMatchBridge should support effect interaction execution"),
+	])
+
+
+func test_bridge_injects_ability_followup_counter_distribution_steps() -> String:
+	var bridge := HeadlessMatchBridgeScript.new()
+	var gsm := _make_gsm()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 2
+	var effect := AbilityMoveDamageCountersToOpponentScript.new(3)
+	gsm.effect_processor.register_effect("munkidori_headless_followup_test", effect)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+	var munkidori := _make_slot(_make_basic_card_with_ability("Munkidori", "Adrena-Brain", "munkidori_headless_followup_test", 0))
+	munkidori.attached_energy.append(_make_energy_card("Darkness Energy", "D", 0))
+	var source := _make_slot(_make_basic_card("Drifloon"))
+	source.damage_counters = 30
+	player.active_pokemon = munkidori
+	player.bench = [source]
+	var opponent_active_data := CardData.new()
+	opponent_active_data.name = "Iron Hands ex"
+	opponent_active_data.card_type = "Pokemon"
+	opponent_active_data.stage = "Basic"
+	opponent_active_data.hp = 230
+	opponent.active_pokemon = _make_slot(CardInstance.create(opponent_active_data, 1))
+	opponent.bench.clear()
+	bridge.bind(gsm)
+
+	var steps := effect.get_interaction_steps(munkidori.get_top_card(), gsm.game_state)
+	bridge._start_effect_interaction("ability", 0, steps, munkidori.get_top_card(), munkidori, 0)
+	bridge._handle_effect_interaction_choice(PackedInt32Array([0]))
+	var injected_step_ids: Array[String] = []
+	for step: Dictionary in bridge.get("_pending_effect_steps"):
+		injected_step_ids.append(str(step.get("id", "")))
+	bridge._on_counter_distribution_amount_chosen(3)
+	bridge._handle_counter_distribution_target(0)
+
+	return run_checks([
+		assert_true(injected_step_ids.has("target_damage_counters"), "Headless ability interaction should inject Munkidori's damage-counter follow-up step"),
+		assert_eq(source.damage_counters, 0, "Headless follow-up should remove selected counters from the damaged own Pokemon"),
+		assert_eq(opponent.active_pokemon.damage_counters, 30, "Headless follow-up should place selected counters onto the opponent target"),
+		assert_eq(str(bridge.get("_pending_choice")), "", "Resolved follow-up should clear the effect interaction prompt"),
+	])
+
+
+func test_bridge_finalizes_munkidori_partial_counter_distribution_after_one_assignment() -> String:
+	var bridge := HeadlessMatchBridgeScript.new()
+	var gsm := _make_gsm()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 2
+	var effect := AbilityMoveDamageCountersToOpponentScript.new(3)
+	gsm.effect_processor.register_effect("munkidori_partial_followup_test", effect)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+	var munkidori := _make_slot(_make_basic_card_with_ability("Munkidori", "Adrena-Brain", "munkidori_partial_followup_test", 0))
+	munkidori.attached_energy.append(_make_energy_card("Darkness Energy", "D", 0))
+	var source := _make_slot(_make_basic_card("Drifloon"))
+	source.damage_counters = 30
+	player.active_pokemon = munkidori
+	player.bench = [source]
+	opponent.active_pokemon = _make_slot(_make_basic_card("Damaged Target"))
+	opponent.bench.clear()
+	bridge.bind(gsm)
+
+	var steps := effect.get_interaction_steps(munkidori.get_top_card(), gsm.game_state)
+	bridge._start_effect_interaction("ability", 0, steps, munkidori.get_top_card(), munkidori, 0)
+	bridge._handle_effect_interaction_choice(PackedInt32Array([0]))
+	bridge._on_counter_distribution_amount_chosen(1)
+	bridge._handle_counter_distribution_target(0)
+
+	return run_checks([
+		assert_eq(source.damage_counters, 20, "Munkidori should allow moving only one damage counter from the source"),
+		assert_eq(opponent.active_pokemon.damage_counters, 10, "The partial counter assignment should still resolve onto the opponent target"),
+		assert_eq(str(bridge.get("_pending_choice")), "", "A partial one-target Munkidori assignment should complete the prompt instead of leaving AI stuck"),
+	])
+
+
+func test_step_resolver_executes_headless_ability_followup_counter_distribution() -> String:
+	var bridge := HeadlessMatchBridgeScript.new()
+	var resolver := AIStepResolverScript.new()
+	var gsm := _make_gsm()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 2
+	var effect := AbilityMoveDamageCountersToOpponentScript.new(3)
+	gsm.effect_processor.register_effect("munkidori_step_resolver_followup_test", effect)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+	var munkidori := _make_slot(_make_basic_card_with_ability("Munkidori", "Adrena-Brain", "munkidori_step_resolver_followup_test", 0))
+	munkidori.attached_energy.append(_make_energy_card("Darkness Energy", "D", 0))
+	var source := _make_slot(_make_basic_card("Drifloon"))
+	source.damage_counters = 30
+	player.active_pokemon = munkidori
+	player.bench = [source]
+	var opponent_active_data := CardData.new()
+	opponent_active_data.name = "Iron Hands ex"
+	opponent_active_data.card_type = "Pokemon"
+	opponent_active_data.stage = "Basic"
+	opponent_active_data.hp = 230
+	opponent.active_pokemon = _make_slot(CardInstance.create(opponent_active_data, 1))
+	opponent.bench.clear()
+	bridge.bind(gsm)
+
+	var steps := effect.get_interaction_steps(munkidori.get_top_card(), gsm.game_state)
+	bridge._start_effect_interaction("ability", 0, steps, munkidori.get_top_card(), munkidori, 0)
+	var resolved_source := resolver.resolve_pending_step(bridge, gsm, 0, [])
+	var pending_after_source := str(bridge.get("_pending_choice"))
+	var mode_after_source := str(bridge.get("_field_interaction_mode"))
+	var resolved_target := resolver.resolve_pending_step(bridge, gsm, 0, [])
+
+	return run_checks([
+		assert_true(resolved_source, "AIStepResolver should resolve Munkidori's source selection"),
+		assert_eq(pending_after_source, "effect_interaction", "Source selection should leave the injected target step pending"),
+		assert_eq(mode_after_source, "counter_distribution", "Injected follow-up should become a counter-distribution prompt"),
+		assert_true(resolved_target, "AIStepResolver should resolve Munkidori's counter-distribution target"),
+		assert_eq(source.damage_counters, 0, "Resolver follow-up should remove counters from the selected source"),
+		assert_eq(opponent.active_pokemon.damage_counters, 30, "Resolver follow-up should place counters onto the selected opponent target"),
+		assert_eq(str(bridge.get("_pending_choice")), "", "Resolver follow-up should complete the ability interaction"),
+	])
+
+
+func test_counter_distribution_resolver_respects_munkidori_single_target_limit() -> String:
+	var resolver := AIStepResolverScript.new()
+	var pressure_target := _make_slot(_make_basic_card("Pressure Target"))
+	pressure_target.pokemon_stack[0].card_data.hp = 200
+	var prize_target := _make_slot(_make_basic_card("Prize Target"))
+	prize_target.pokemon_stack[0].card_data.hp = 100
+	prize_target.damage_counters = 90
+	var targets: Array = [pressure_target, prize_target]
+	var assignments: Array = resolver._build_counter_distribution_assignments(
+		targets,
+		3,
+		{
+			"id": "target_damage_counters",
+			"ui_mode": "counter_distribution",
+			"max_assignments": 1,
+			"allow_partial": true,
+		},
+		{},
+		[]
+	)
+	var first_assignment: Dictionary = assignments[0] if not assignments.is_empty() else {}
+
+	return run_checks([
+		assert_eq(assignments.size(), 1, "Munkidori counter planning must choose exactly one opponent target"),
+		assert_eq(first_assignment.get("target"), prize_target, "The single target should be the available prize target, not a leftover-pressure target"),
+		assert_eq(int(first_assignment.get("amount", 0)), 10, "With partial movement allowed, Munkidori should move only the counters needed for the one-target KO"),
+	])
+
+
+func test_legal_action_builder_keeps_followup_ability_runtime_interactive() -> String:
+	var gsm := _make_gsm()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.turn_number = 2
+	var effect := AbilityMoveDamageCountersToOpponentScript.new(3)
+	gsm.effect_processor.register_effect("munkidori_builder_followup_test", effect)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+	var munkidori := _make_slot(_make_basic_card_with_ability("Munkidori", "Adrena-Brain", "munkidori_builder_followup_test", 0))
+	munkidori.attached_energy.append(_make_energy_card("Darkness Energy", "D", 0))
+	var source := _make_slot(_make_basic_card("Drifloon"))
+	source.damage_counters = 30
+	player.active_pokemon = munkidori
+	player.bench = [source]
+	var opponent_active_data := CardData.new()
+	opponent_active_data.name = "Iron Hands ex"
+	opponent_active_data.card_type = "Pokemon"
+	opponent_active_data.stage = "Basic"
+	opponent_active_data.hp = 230
+	opponent.active_pokemon = _make_slot(CardInstance.create(opponent_active_data, 1))
+	opponent.bench.clear()
+
+	var builder := AILegalActionBuilderScript.new()
+	var actions: Array[Dictionary] = builder.build_actions(gsm, 0, false)
+	var ability_action: Dictionary = {}
+	for action: Dictionary in actions:
+		if str(action.get("kind", "")) == "use_ability" and action.get("source_slot") == munkidori:
+			ability_action = action
+			break
+	return run_checks([
+		assert_false(ability_action.is_empty(), "Munkidori ability should be legal when it has Dark Energy and a damaged own source"),
+		assert_true(bool(ability_action.get("requires_interaction", false)), "Follow-up abilities must remain bridge-interactive instead of being pre-resolved without target placement"),
+		assert_true((ability_action.get("targets", []) as Array).is_empty(), "Builder should not pre-resolve partial Munkidori targets without the follow-up counter placement"),
 	])
 
 
@@ -474,4 +676,46 @@ func test_bridge_starts_bench_entry_effect_interaction_for_iron_leaves_ex() -> S
 		assert_true(handled, "Headless bridge should accept playing Iron Leaves ex to the Bench"),
 		assert_eq(str(bridge.get("_pending_choice")), "effect_interaction", "Bench-entry on-play abilities should enter effect_interaction in headless mode"),
 		assert_eq(bridge.get_pending_prompt_owner(), 0, "The bench-entry interaction should belong to the acting player"),
+	])
+
+
+func test_bridge_does_not_auto_use_first_turn_draw_when_played_to_bench() -> String:
+	var bridge := HeadlessMatchBridgeScript.new()
+	var gsm := _make_gsm()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 1
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.players[0].active_pokemon = _make_slot(_make_basic_card("Active"))
+
+	var squawk_cd := CardData.new()
+	squawk_cd.name = "Squawkabilly ex"
+	squawk_cd.name_en = "Squawkabilly ex"
+	squawk_cd.card_type = "Pokemon"
+	squawk_cd.stage = "Basic"
+	squawk_cd.hp = 160
+	squawk_cd.energy_type = "C"
+	squawk_cd.mechanic = "ex"
+	squawk_cd.effect_id = "headless_squawk_first_turn_draw"
+	squawk_cd.abilities = [{"name": "Squawk and Seize", "text": ""}]
+	gsm.effect_processor.register_effect(squawk_cd.effect_id, AbilityFirstTurnDrawScript.new(6))
+	var squawk := CardInstance.create(squawk_cd, 0)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	player.hand = [squawk, _make_filler_card("Keep A"), _make_filler_card("Keep B")]
+	for i: int in 6:
+		player.deck.append(_make_filler_card("Draw %d" % i))
+
+	bridge.bind(gsm)
+	var handled := bridge._try_play_to_bench(0, squawk, "")
+	var bench_slot: PokemonSlot = player.bench[0] if not player.bench.is_empty() else null
+
+	return run_checks([
+		assert_true(handled, "Headless bridge should allow Squawkabilly ex to enter the Bench"),
+		assert_eq(str(bridge.get("_pending_choice")), "", "Activated first-turn draw should not create a bench-entry interaction prompt"),
+		assert_eq(player.hand.size(), 2, "Headless bench placement should not discard and redraw the remaining hand"),
+		assert_eq(player.discard_pile.size(), 0, "Headless bench placement should not discard the current hand"),
+		assert_eq(player.deck.size(), 6, "Headless bench placement should not draw cards"),
+		assert_true(gsm.effect_processor.can_use_ability(bench_slot, gsm.game_state, 0), "The Ability should remain available for an explicit use_ability action"),
+		assert_false(bench_slot.effects.any(func(e: Dictionary) -> bool: return e.get("type", "") == AbilityFirstTurnDrawScript.USED_KEY), "The Ability should not be marked used by headless bench placement"),
 	])

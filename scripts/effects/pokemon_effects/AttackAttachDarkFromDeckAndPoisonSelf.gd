@@ -86,7 +86,7 @@ func execute_attack(
 		attacker.attached_energy.append(energy_card)
 	player.shuffle_deck()
 	if not selected.is_empty():
-		attacker.status_conditions["poisoned"] = true
+		_apply_special_status(attacker, "poisoned", state)
 
 
 func get_description() -> String:

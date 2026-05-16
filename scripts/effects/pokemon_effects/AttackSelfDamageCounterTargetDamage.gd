@@ -57,12 +57,18 @@ func execute_attack(
 			target = t
 	if target == null:
 		return
+	if target in opponent.bench and AbilityBenchImmune.prevents_opponent_attack_damage_or_effect(target, attacker, state):
+		return
 
 	# 计算伤害：自身伤害指示物数量（每10HP=1个指示物）x damage_per_counter
 	var counter_count: int = attacker.damage_counters / 10
 	var damage: int = counter_count * damage_per_counter
 	if damage > 0:
-		target.damage_counters += damage
+		var final_damage := _calculate_attack_target_damage(attacker, target, damage, state)
+		target.damage_counters += final_damage
+		var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null)
+		if processor != null and processor.has_method("record_effect_damage"):
+			processor.call("record_effect_damage", top.owner_index, target, final_damage, state, "self_damage_counter_attack")
 
 
 func get_description() -> String:

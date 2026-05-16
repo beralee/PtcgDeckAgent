@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "chibi",
+	"attacks": [
+		{
+			"cost": "D",
+			"damage": "",
+			"is_vstar_power": false,
+			"name": "踏平",
+			"text": "将对手牌库上方2张卡牌放于弃牌区。"
+		},
+		{
+			"cost": "DCC",
+			"damage": "60",
+			"is_vstar_power": false,
+			"name": "暗之牙",
+			"text": ""
+		}
+	],
+	"card_index": "118",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "【恶】 踏平\n将对手牌库上方2张卡牌放于弃牌区。\n\n【恶】【无】【无】 暗之牙 60\n\n\n",
+	"effect_id": "1bf2a3fb6a8f4abebdb7a88992026b7d",
+	"energy_provides": "",
+	"energy_type": "D",
+	"evolves_from": "单首龙",
+	"hp": 100,
+	"image_local_path": "user://cards/images/CSV9C/118.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/118.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "双首暴龙",
+	"name_en": "",
+	"rarity": "C",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Stage 1",
+	"weakness_energy": "G",
+	"weakness_value": "×2",
+	"yoren_code": "P634"
+}

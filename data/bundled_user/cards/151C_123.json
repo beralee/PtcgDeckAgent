@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "Hideki Ishikawa",
+	"attacks": [
+		{
+			"cost": "G",
+			"damage": "20",
+			"is_vstar_power": false,
+			"name": "辅助斩",
+			"text": "选择自己弃牌区中的1张「基本【草】能量」，附着于备战宝可梦身上。"
+		},
+		{
+			"cost": "GCC",
+			"damage": "70",
+			"is_vstar_power": false,
+			"name": "薄片利刃",
+			"text": ""
+		}
+	],
+	"card_index": "123",
+	"card_index_en": "123",
+	"card_type": "Pokemon",
+	"description": "【草】 辅助斩 20\n选择自己弃牌区中的1张「基本【草】能量」，附着于备战宝可梦身上。\n\n【草】 薄片利刃 70\n\n\n",
+	"effect_id": "fe8b1bda35af50a16e59e2dcd7cd473f",
+	"energy_provides": "",
+	"energy_type": "G",
+	"evolves_from": "",
+	"hp": 70,
+	"image_local_path": "user://cards/images/151C/123.png",
+	"image_url": "https://tcg.mik.moe/static/img/151C/123.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "飞天螳螂",
+	"name_en": "Scyther",
+	"rarity": "U",
+	"regulation_expanded": true,
+	"regulation_mark": "G",
+	"regulation_standard": true,
+	"release_date": "2025-01-17T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 0,
+	"set_code": "151C",
+	"set_code_en": "MEW",
+	"stage": "Basic",
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"yoren_code": "P123"
+}

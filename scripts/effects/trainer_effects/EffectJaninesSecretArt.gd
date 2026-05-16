@@ -72,7 +72,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 
 	player.shuffle_deck()
 	if active_poisoned and player.active_pokemon != null:
-		player.active_pokemon.set_status("poisoned", true)
+		_apply_special_status(player.active_pokemon, "poisoned", state)
 
 
 func _resolve_assignments(player: PlayerState, ctx: Dictionary) -> Array[Dictionary]:

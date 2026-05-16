@@ -27,6 +27,20 @@ const DeckStrategyRagingBoltLLMScript = preload("res://scripts/ai/DeckStrategyRa
 const DeckStrategyMiraidonLLMScript = preload("res://scripts/ai/DeckStrategyMiraidonLLM.gd")
 const DeckStrategyBlisseyTankScript = preload("res://scripts/ai/DeckStrategyBlisseyTank.gd")
 const DeckStrategyGougingFireAncientScript = preload("res://scripts/ai/DeckStrategyGougingFireAncient.gd")
+const DeckStrategy17ArchaludonDialgaScript = preload("res://scripts/ai/DeckStrategy17ArchaludonDialga.gd")
+const DeckStrategy17ArchaludonDialgaLLMScript = preload("res://scripts/ai/DeckStrategy17ArchaludonDialgaLLM.gd")
+const DeckStrategy17WaterTurtleScript = preload("res://scripts/ai/DeckStrategy17WaterTurtle.gd")
+const DeckStrategy17WaterTurtleLLMScript = preload("res://scripts/ai/DeckStrategy17WaterTurtleLLM.gd")
+const DeckStrategy17PalkiaGholdengoScript = preload("res://scripts/ai/DeckStrategy17PalkiaGholdengo.gd")
+const DeckStrategy17PalkiaGholdengoLLMScript = preload("res://scripts/ai/DeckStrategy17PalkiaGholdengoLLM.gd")
+const DeckStrategy17BombCharizardScript = preload("res://scripts/ai/DeckStrategy17BombCharizard.gd")
+const DeckStrategy17BombCharizardLLMScript = preload("res://scripts/ai/DeckStrategy17BombCharizardLLM.gd")
+const DeckStrategy17MiraidonScript = preload("res://scripts/ai/DeckStrategy17Miraidon.gd")
+const DeckStrategy17MiraidonLLMScript = preload("res://scripts/ai/DeckStrategy17MiraidonLLM.gd")
+const DeckStrategy17DragapultDusknoirScript = preload("res://scripts/ai/DeckStrategy17DragapultDusknoir.gd")
+const DeckStrategy17DragapultDusknoirLLMScript = preload("res://scripts/ai/DeckStrategy17DragapultDusknoirLLM.gd")
+const DeckStrategy17RegidragoScript = preload("res://scripts/ai/DeckStrategy17Regidrago.gd")
+const DeckStrategy17RegidragoLLMScript = preload("res://scripts/ai/DeckStrategy17RegidragoLLM.gd")
 const _GARDEVOIR_SCRIPT_PATH := "res://scripts/ai/DeckStrategyGardevoir.gd"
 const _GARDEVOIR_LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategyGardevoirLLM.gd"
 const _GARDEVOIR_SIGNATURES: Array[String] = ["沙奈朵ex", "奇鲁莉安", "拉鲁拉丝", "Gardevoir ex", "Kirlia", "Ralts"]
@@ -56,7 +70,31 @@ const _STRATEGY_SCRIPTS := {
 	"miraidon_llm": DeckStrategyMiraidonLLMScript,
 	"blissey_tank": DeckStrategyBlisseyTankScript,
 	"gouging_fire_ancient": DeckStrategyGougingFireAncientScript,
+	"v17_archaludon_dialga": DeckStrategy17ArchaludonDialgaScript,
+	"v17_archaludon_dialga_llm": DeckStrategy17ArchaludonDialgaLLMScript,
+	"v17_water_turtle": DeckStrategy17WaterTurtleScript,
+	"v17_water_turtle_llm": DeckStrategy17WaterTurtleLLMScript,
+	"v17_palkia_gholdengo": DeckStrategy17PalkiaGholdengoScript,
+	"v17_palkia_gholdengo_llm": DeckStrategy17PalkiaGholdengoLLMScript,
+	"v17_bomb_charizard": DeckStrategy17BombCharizardScript,
+	"v17_bomb_charizard_llm": DeckStrategy17BombCharizardLLMScript,
+	"v17_miraidon": DeckStrategy17MiraidonScript,
+	"v17_miraidon_llm": DeckStrategy17MiraidonLLMScript,
+	"v17_dragapult_dusknoir": DeckStrategy17DragapultDusknoirScript,
+	"v17_dragapult_dusknoir_llm": DeckStrategy17DragapultDusknoirLLMScript,
+	"v17_regidrago": DeckStrategy17RegidragoScript,
+	"v17_regidrago_llm": DeckStrategy17RegidragoLLMScript,
 	"miraidon": DeckStrategyMiraidonScript,
+}
+
+const _STRATEGY_ID_BY_DECK_ID := {
+	1700002: "v17_archaludon_dialga",
+	1700003: "v17_water_turtle",
+	1700004: "v17_palkia_gholdengo",
+	1700005: "v17_bomb_charizard",
+	1700007: "v17_miraidon",
+	1700008: "v17_dragapult_dusknoir",
+	1700011: "v17_regidrago",
 }
 
 const _STRATEGY_ORDER: Array[String] = [
@@ -111,6 +149,9 @@ func create_strategy_for_player(player: PlayerState) -> RefCounted:
 func resolve_strategy_id_for_deck(deck: DeckData) -> String:
 	if deck == null:
 		return ""
+	var deck_strategy_id := str(_STRATEGY_ID_BY_DECK_ID.get(int(deck.id), ""))
+	if deck_strategy_id != "":
+		return deck_strategy_id
 	var visible_names: Dictionary = {}
 	for name: String in _collect_deck_names(deck):
 		visible_names[name] = true

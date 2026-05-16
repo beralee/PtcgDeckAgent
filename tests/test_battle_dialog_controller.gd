@@ -97,12 +97,32 @@ class DialogSceneStub:
 		_last_dialog_choice = selected_indices
 
 
+class FakeStadiumActionEffect extends BaseEffect:
+	func can_use_as_stadium_action(_card: CardInstance, _state: GameState) -> bool:
+		return true
+
+	func can_execute(_card: CardInstance, _state: GameState) -> bool:
+		return true
+
+	func get_description() -> String:
+		return "每回合可以使用1次竞技场能力。"
+
+
 func _make_test_card(name: String) -> CardInstance:
 	var card_data := CardData.new()
 	card_data.name = name
 	card_data.card_type = "Pokemon"
 	card_data.stage = "Basic"
 	card_data.hp = 60
+	return CardInstance.create(card_data, 0)
+
+
+func _make_test_stadium(name: String, effect_id: String) -> CardInstance:
+	var card_data := CardData.new()
+	card_data.name = name
+	card_data.card_type = "Stadium"
+	card_data.effect_id = effect_id
+	card_data.description = "竞技场测试效果"
 	return CardInstance.create(card_data, 0)
 
 
@@ -144,6 +164,41 @@ func test_card_dialog_does_not_show_selectable_hint() -> String:
 	])
 
 
+func test_stadium_action_dialog_uses_pokemon_action_hud() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var scene := DialogSceneStub.new()
+	var gsm := GameStateMachine.new()
+	var stadium := _make_test_stadium("测试竞技场", "test_stadium_action")
+	var effect := FakeStadiumActionEffect.new()
+	gsm.effect_processor.register_effect(stadium.card_data.effect_id, effect)
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 3
+	gsm.game_state.stadium_card = stadium
+	scene.set("_gsm", gsm)
+
+	controller.call("show_stadium_action_dialog", scene, 0)
+
+	var dialog_data: Dictionary = scene.get("_dialog_data")
+	var actions: Array = dialog_data.get("actions", [])
+	var action_items: Array = dialog_data.get("action_items", [])
+	var first_action: Dictionary = actions[0] if actions.size() > 0 and actions[0] is Dictionary else {}
+	var first_item: Dictionary = action_items[0] if action_items.size() > 0 and action_items[0] is Dictionary else {}
+	var preview_panel := scene._dialog_card_row.find_child("PokemonActionCardPreview", true, false) as PanelContainer
+
+	var result := run_checks([
+		assert_eq(scene.get("_pending_choice"), "pokemon_action", "Stadium action should reuse the Pokemon action dialog choice path"),
+		assert_eq(str(first_action.get("type", "")), "stadium_ability", "Stadium action should expose a dedicated ability-like action type"),
+		assert_true(bool(first_action.get("enabled", false)), "Usable Stadium action should be enabled"),
+		assert_eq(str(first_item.get("kind", "")), "特性", "Stadium action HUD should present the effect as an ability"),
+		assert_eq(str(first_item.get("meta", "")), "竞技场", "Stadium action HUD should mark the source as Stadium"),
+		assert_eq(dialog_data.get("pokemon_card", null), stadium, "Stadium action HUD should use the live Stadium card preview"),
+		assert_not_null(preview_panel, "Stadium action HUD should render the same left-side card preview as Pokemon actions"),
+	])
+	scene.free()
+	return result
+
+
 func test_text_dialog_uses_large_hud_options_and_footer_buttons() -> String:
 	var controller := BattleDialogControllerScript.new()
 	var scene := DialogSceneStub.new()
@@ -169,6 +224,26 @@ func test_text_dialog_uses_large_hud_options_and_footer_buttons() -> String:
 		assert_false(confirm.visible, "Single-choice text HUD dialogs should submit by tapping the option"),
 		assert_true(cancel.custom_minimum_size.y >= 56.0, "Dialog cancel buttons should use the larger HUD touch target"),
 		assert_eq(Array(scene._last_dialog_choice), [1], "Tapping a text HUD option should preserve the original choice index"),
+	])
+	scene.free()
+	return result
+
+
+func test_dialog_cancel_is_ignored_when_cancel_is_disallowed() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var scene := DialogSceneStub.new()
+
+	controller.call("show_dialog", scene, "Choose", ["Only option"], {
+		"presentation": "list",
+		"allow_cancel": false,
+	})
+	scene.set("_pending_choice", "mandatory_choice")
+	controller.call("on_dialog_cancel", scene)
+
+	var result := run_checks([
+		assert_true(scene._dialog_overlay.visible, "Mandatory dialogs should stay visible when cancel is requested"),
+		assert_eq(scene.get("_pending_choice"), "mandatory_choice", "Mandatory dialogs should keep their pending choice after cancel"),
+		assert_false(scene._dialog_cancel.visible, "Mandatory dialogs should keep the cancel button hidden"),
 	])
 	scene.free()
 	return result
@@ -203,7 +278,7 @@ func test_text_dialog_multi_select_uses_large_confirm_button() -> String:
 	return result
 
 
-func test_card_dialog_large_choice_sets_render_hud_scrollbar() -> String:
+func test_card_dialog_large_choice_sets_rendered_drag_gallery() -> String:
 	var controller := BattleDialogControllerScript.new()
 	var scene := DialogSceneStub.new()
 	var cards: Array = []
@@ -226,11 +301,11 @@ func test_card_dialog_large_choice_sets_render_hud_scrollbar() -> String:
 
 	var result := run_checks([
 		assert_eq(card_row.get_child_count(), 8, "Large card dialogs should render the full selectable card set"),
-		assert_eq(rendered_names, ["Choice 1", "Choice 2", "Choice 3", "Choice 4", "Choice 5", "Choice 6", "Choice 7", "Choice 8"], "The HUD scrollbar should replace paged windows without hiding choices"),
+		assert_eq(rendered_names, ["Choice 1", "Choice 2", "Choice 3", "Choice 4", "Choice 5", "Choice 6", "Choice 7", "Choice 8"], "The drag gallery should replace paged windows without hiding choices"),
 		assert_eq(card_row.alignment, BoxContainer.ALIGNMENT_CENTER, "Card dialog rows should keep cards centered when the choice set is narrower than the dialog"),
 		assert_eq(card_row.size_flags_horizontal, Control.SIZE_EXPAND_FILL, "Card dialog rows should fill horizontally so centered card groups remain centered"),
-		assert_eq(card_scroll.horizontal_scroll_mode, ScrollContainer.SCROLL_MODE_AUTO, "Card dialogs should use native horizontal scrolling"),
-		assert_true(card_scroll.has_meta("hud_scrollbar_styled"), "Card dialogs should apply the shared HUD scrollbar style"),
+		assert_eq(card_scroll.horizontal_scroll_mode, ScrollContainer.SCROLL_MODE_AUTO, "Card dialogs should preserve ScrollContainer horizontal scrolling semantics"),
+		assert_true(card_scroll.has_meta("hud_scrollbar_styled"), "Card dialogs should keep the shared scroll container contract even when the visible bar is hidden"),
 		assert_false(utility_row.find_child("CardDialogWheel", true, false) != null, "Large card dialogs should not create the old wheel slider"),
 		assert_false(utility_row.visible, "Large card dialogs should not reserve a wheel utility row when there are no utility actions"),
 	])
@@ -255,7 +330,7 @@ func test_card_dialog_resets_stale_dialog_box_height() -> String:
 	var compact_height := scene._dialog_box.custom_minimum_size.y
 	var result := run_checks([
 		assert_true(compact_height > 0.0 and compact_height < 420.0, "Card dialogs should replace stale fixed height with compact content height"),
-		assert_true(scene._dialog_card_scroll.custom_minimum_size.y > scene._dialog_card_size.y, "Card dialogs should only reserve explicit height for the HUD scrollbar inside the card scroller"),
+		assert_true(absf(scene._dialog_card_scroll.custom_minimum_size.y - scene._dialog_card_size.y) <= 0.1, "Card dialogs should not reserve a visible scrollbar lane after drag scrolling is enabled"),
 	])
 	scene.free()
 	return result

@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "toriyufu",
+	"attacks": [
+		{
+			"cost": "G",
+			"damage": "60",
+			"is_vstar_power": false,
+			"name": "鼓击",
+			"text": "在下一个对手的回合，受到这个招式影响的宝可梦，使用招式所需能量和【撤退】所需能量，各增加1个【无】能量。"
+		},
+		{
+			"cost": "GG",
+			"damage": "180",
+			"is_vstar_power": false,
+			"name": "木槌",
+			"text": "给这只宝可梦也造成50伤害。"
+		}
+	],
+	"card_index": "022",
+	"card_index_en": "16",
+	"card_type": "Pokemon",
+	"description": "【草】 鼓击 60\n在下一个对手的回合，受到这个招式影响的宝可梦，使用招式所需能量和【撤退】所需能量，各增加1个【无】能量。\n\n【草】【草】 木槌 180\n给这只宝可梦也造成50伤害。\n\n",
+	"effect_id": "266f2933c7baa1b640d9b55a38c76db4",
+	"energy_provides": "",
+	"energy_type": "G",
+	"evolves_from": "啪咚猴",
+	"hp": 180,
+	"image_local_path": "user://cards/images/CSV8C/022.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV8C/022.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "轰擂金刚猩",
+	"name_en": "Rillaboom",
+	"rarity": "U",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-03-13T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 4,
+	"set_code": "CSV8C",
+	"set_code_en": "TWM",
+	"stage": "Stage 2",
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"yoren_code": "P812"
+}

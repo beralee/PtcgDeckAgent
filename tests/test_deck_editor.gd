@@ -75,6 +75,64 @@ func test_deck_editor_shows_strategy_button_and_hides_legacy_ai_button() -> Stri
 	])
 
 
+func test_deck_editor_scroll_nodes_are_unique_for_runtime_metrics() -> String:
+	var editor: Control = DeckEditorScene.instantiate()
+	var deck_scroll := editor.get_node_or_null("%DeckScroll") as ScrollContainer
+	var pool_scroll := editor.get_node_or_null("%PoolScroll") as ScrollContainer
+	editor.queue_free()
+
+	return run_checks([
+		assert_not_null(deck_scroll, "DeckEditor runtime sizing needs %DeckScroll to resolve"),
+		assert_not_null(pool_scroll, "DeckEditor runtime sizing needs %PoolScroll to resolve"),
+	])
+
+
+func test_category_tab_buttons_use_hud_expand_layout() -> String:
+	var editor: Control = DeckEditorScript.new()
+	var tab_bar := HBoxContainer.new()
+	var buttons: Array[Button] = []
+	var pool_categories: Array[Array] = []
+	for _i: int in 6:
+		pool_categories.append([])
+	editor.set("_pool_by_category", pool_categories)
+
+	editor.call("_build_tab_bar", tab_bar, buttons, false)
+	var first := buttons[0] if buttons.size() > 0 else null
+	var normal_style := first.get_theme_stylebox("normal") if first != null else null
+	var pressed_style := first.get_theme_stylebox("pressed") if first != null else null
+
+	var result := run_checks([
+		assert_eq(buttons.size(), 6, "Deck editor should create one expanding HUD tab per category"),
+		assert_eq(tab_bar.custom_minimum_size.y, 54.0, "Category tab bar should be tall enough for HUD buttons"),
+		assert_eq(tab_bar.get_theme_constant("separation"), 8, "Category tabs should use the larger HUD gap"),
+		assert_not_null(first, "Category tab should be created"),
+		assert_eq(first.custom_minimum_size.y if first != null else 0.0, 54.0, "Category tab buttons should be taller"),
+		assert_eq(first.size_flags_horizontal if first != null else 0, Control.SIZE_EXPAND_FILL, "Category tab buttons should expand to fill the row"),
+		assert_eq(first.get_theme_font_size("font_size") if first != null else 0, 18, "Category tab text should be larger"),
+		assert_not_null(normal_style, "Category tab should have HUD normal styling"),
+		assert_not_null(pressed_style, "Category tab should have HUD active styling"),
+	])
+	tab_bar.free()
+	editor.free()
+	return result
+
+
+func test_card_tile_metrics_expand_for_five_column_grid() -> String:
+	var editor: Control = DeckEditorScript.new()
+	var scroll := ScrollContainer.new()
+	scroll.size = Vector2(633, 500)
+	var tile_size: Vector2 = editor.call("_calculate_card_tile_size", scroll)
+	var grid_content_width := tile_size.x * 5.0 + 6.0 * 4.0
+	scroll.free()
+	editor.free()
+
+	return run_checks([
+		assert_gt(tile_size.x, 110.0, "Five-column deck editor tiles should grow beyond the old fixed 100px width when the panel is wider"),
+		assert_gt(grid_content_width, 570.0, "Five-column grid should use the available panel width instead of leaving a fixed-size blank strip"),
+		assert_eq(roundi(tile_size.y), roundi(tile_size.x * 1.4), "Tile image height should keep the card aspect ratio after resizing"),
+	])
+
+
 func test_card_tile_children_pass_mouse_events_to_tile() -> String:
 	var editor: Control = DeckEditorScript.new()
 	var tile := editor.call("_create_card_tile", "右键详情测试", "SV1", "001", false) as PanelContainer

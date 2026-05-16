@@ -3,65 +3,67 @@
 class_name EffectThorton
 extends BaseEffect
 
+const DISCARD_STEP_ID := "thorton_discard_pokemon"
+const FIELD_STEP_ID := "thorton_field_pokemon"
+
 
 func can_execute(card: CardInstance, state: GameState) -> bool:
 	var player: PlayerState = state.players[card.owner_index]
 
 	## 弃牌区必须有基础宝可梦
-	var has_basic_in_discard: bool = false
-	for c: CardInstance in player.discard_pile:
-		if c.card_data.is_basic_pokemon():
-			has_basic_in_discard = true
-			break
-
-	if not has_basic_in_discard:
+	if _get_basic_pokemon_in_discard(player).is_empty():
 		return false
 
 	## 场上必须有基础宝可梦（战斗区或备战区的顶层为基础宝可梦）
-	if player.active_pokemon != null:
-		var active_data: CardData = player.active_pokemon.get_card_data()
-		if active_data != null and active_data.is_basic_pokemon():
-			return true
-
-	for slot: PokemonSlot in player.bench:
-		var slot_data: CardData = slot.get_card_data()
-		if slot_data != null and slot_data.is_basic_pokemon():
-			return true
-
-	return false
+	return not _get_basic_pokemon_slots_in_play(player).is_empty()
 
 
-func execute(card: CardInstance, _targets: Array, state: GameState) -> void:
+func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	var player: PlayerState = state.players[card.owner_index]
+	var discard_targets: Array[CardInstance] = _get_basic_pokemon_in_discard(player)
+	var field_targets: Array[PokemonSlot] = _get_basic_pokemon_slots_in_play(player)
+	if discard_targets.is_empty() or field_targets.is_empty():
+		return []
+
+	var discard_labels: Array[String] = []
+	for discard_card: CardInstance in discard_targets:
+		discard_labels.append(_build_card_label(discard_card))
+
+	var field_labels: Array[String] = []
+	for slot: PokemonSlot in field_targets:
+		field_labels.append(_build_slot_label(slot, player))
+
+	return [{
+		"id": DISCARD_STEP_ID,
+		"title": "选择弃牌区的1只基础宝可梦",
+		"items": discard_targets,
+		"labels": discard_labels,
+		"presentation": "cards",
+		"min_select": 1,
+		"max_select": 1,
+		"allow_cancel": true,
+	}, {
+		"id": FIELD_STEP_ID,
+		"title": "选择场上的1只基础宝可梦进行互换",
+		"items": field_targets,
+		"labels": field_labels,
+		"min_select": 1,
+		"max_select": 1,
+		"allow_cancel": true,
+	}]
+
+
+func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	var pi: int = card.owner_index
 	var player: PlayerState = state.players[pi]
+	var ctx: Dictionary = get_interaction_context(targets)
 
-	## TODO: 需要UI交互让玩家从弃牌区选择基础宝可梦
-	## 简化：自动选弃牌区第一张基础宝可梦
-	var from_discard: CardInstance = null
-	for c: CardInstance in player.discard_pile:
-		if c.card_data.is_basic_pokemon():
-			from_discard = c
-			break
+	var from_discard: CardInstance = _get_selected_discard_pokemon(ctx, player)
 
 	if from_discard == null:
 		return
 
-	## TODO: 需要UI交互让玩家选择场上哪只基础宝可梦被替换
-	## 简化：优先选备战区第一只基础宝可梦，若无则选战斗宝可梦（若也是基础）
-	var target_slot: PokemonSlot = null
-	var is_active: bool = false
-
-	for slot: PokemonSlot in player.bench:
-		var slot_data: CardData = slot.get_card_data()
-		if slot_data != null and slot_data.is_basic_pokemon():
-			target_slot = slot
-			break
-
-	if target_slot == null and player.active_pokemon != null:
-		var active_data: CardData = player.active_pokemon.get_card_data()
-		if active_data != null and active_data.is_basic_pokemon():
-			target_slot = player.active_pokemon
-			is_active = true
+	var target_slot: PokemonSlot = _get_selected_field_pokemon(ctx, player)
 
 	if target_slot == null:
 		return
@@ -89,3 +91,68 @@ func execute(card: CardInstance, _targets: Array, state: GameState) -> void:
 
 func get_description() -> String:
 	return "从弃牌区选1只基础宝可梦，与场上1只基础宝可梦互换，继承所有附属卡和状态"
+
+
+func _get_basic_pokemon_in_discard(player: PlayerState) -> Array[CardInstance]:
+	var targets: Array[CardInstance] = []
+	for c: CardInstance in player.discard_pile:
+		if c != null and c.card_data != null and c.card_data.is_basic_pokemon():
+			targets.append(c)
+	return targets
+
+
+func _get_basic_pokemon_slots_in_play(player: PlayerState) -> Array[PokemonSlot]:
+	var targets: Array[PokemonSlot] = []
+	for slot: PokemonSlot in player.bench:
+		if _is_basic_pokemon_slot(slot):
+			targets.append(slot)
+	if _is_basic_pokemon_slot(player.active_pokemon):
+		targets.append(player.active_pokemon)
+	return targets
+
+
+func _is_basic_pokemon_slot(slot: PokemonSlot) -> bool:
+	if slot == null:
+		return false
+	var data: CardData = slot.get_card_data()
+	return data != null and data.is_basic_pokemon()
+
+
+func _get_selected_discard_pokemon(ctx: Dictionary, player: PlayerState) -> CardInstance:
+	var valid_targets: Array[CardInstance] = _get_basic_pokemon_in_discard(player)
+	var selected_raw: Array = ctx.get(DISCARD_STEP_ID, [])
+	if not selected_raw.is_empty() and selected_raw[0] is CardInstance:
+		var candidate: CardInstance = selected_raw[0]
+		if candidate in valid_targets:
+			return candidate
+	if not valid_targets.is_empty():
+		return valid_targets[0]
+	return null
+
+
+func _get_selected_field_pokemon(ctx: Dictionary, player: PlayerState) -> PokemonSlot:
+	var valid_targets: Array[PokemonSlot] = _get_basic_pokemon_slots_in_play(player)
+	var selected_raw: Array = ctx.get(FIELD_STEP_ID, [])
+	if not selected_raw.is_empty() and selected_raw[0] is PokemonSlot:
+		var candidate: PokemonSlot = selected_raw[0]
+		if candidate in valid_targets:
+			return candidate
+	if not valid_targets.is_empty():
+		return valid_targets[0]
+	return null
+
+
+func _build_card_label(card: CardInstance) -> String:
+	if card == null or card.card_data == null:
+		return ""
+	return "%s (HP %d)" % [card.card_data.name, card.card_data.hp]
+
+
+func _build_slot_label(slot: PokemonSlot, player: PlayerState) -> String:
+	var zone := "战斗场" if slot == player.active_pokemon else "备战区"
+	return "%s: %s (HP %d/%d)" % [
+		zone,
+		slot.get_pokemon_name(),
+		slot.get_remaining_hp(),
+		slot.get_max_hp(),
+	]

@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "Teeziro",
+	"attacks": [
+		{
+			"cost": "C",
+			"damage": "",
+			"is_vstar_power": false,
+			"name": "垂尾",
+			"text": "选择自己弃牌区中的1张宝可梦，在给对手看过之后，加入手牌。"
+		},
+		{
+			"cost": "PC",
+			"damage": "30",
+			"is_vstar_power": false,
+			"name": "撞击",
+			"text": ""
+		}
+	],
+	"card_index": "071",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "【无】 垂尾\n选择自己弃牌区中的1张宝可梦，在给对手看过之后，加入手牌。\n\n【超】【无】 撞击 30\n\n\n",
+	"effect_id": "ccc3bb652f886672fac7b4b0561492d9",
+	"energy_provides": "",
+	"energy_type": "P",
+	"evolves_from": "",
+	"hp": 80,
+	"image_local_path": "user://cards/images/CSV9C/071.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/071.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "呆呆兽",
+	"name_en": "",
+	"rarity": "C",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "F",
+	"resistance_value": "-30",
+	"retreat_cost": 2,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Basic",
+	"weakness_energy": "D",
+	"weakness_value": "×2",
+	"yoren_code": "P079"
+}

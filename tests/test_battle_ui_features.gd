@@ -3,7 +3,10 @@ class_name TestBattleUIFeatures
 extends TestBase
 
 const BattleSceneScript = preload("res://scenes/battle/BattleScene.gd")
+const BattleScenePacked = preload("res://scenes/battle/BattleScene.tscn")
 const BattleCardViewScript = preload("res://scenes/battle/BattleCardView.gd")
+const BattleDisplayControllerScript = preload("res://scripts/ui/battle/BattleDisplayController.gd")
+const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 const BattleSetupScript = preload("res://scenes/battle_setup/BattleSetup.gd")
 const BattleSetupScene = preload("res://scenes/battle_setup/BattleSetup.tscn")
 const AIOpponentScript = preload("res://scripts/ai/AIOpponent.gd")
@@ -66,11 +69,52 @@ class FakeBattleReviewService extends RefCounted:
 		return {"status": "started"}
 
 
+class FakeBattleRecorder extends RefCounted:
+	var events: Array[Dictionary] = []
+
+	func record_event(event_data: Dictionary) -> void:
+		events.append(event_data.duplicate(true))
+
+
 class FakeCoinAnimator extends Node:
 	var played_results: Array[bool] = []
 
 	func play(result: bool) -> void:
 		played_results.append(result)
+
+
+class FakeHandCardScene extends RefCounted:
+	var _play_card_size := Vector2(130, 182)
+	var _selected_hand_card: CardInstance = null
+	var detail_calls: int = 0
+	var hand_detail_calls: int = 0
+	var execute_calls: int = 0
+	var last_hand_detail_card: CardInstance = null
+	var last_detail_card: CardData = null
+
+	func _show_hand_card_detail(inst: CardInstance) -> void:
+		hand_detail_calls += 1
+		last_hand_detail_card = inst
+
+	func _show_card_detail(cd: CardData) -> void:
+		detail_calls += 1
+		last_detail_card = cd
+
+	func _on_hand_card_clicked(_inst: CardInstance, _panel: PanelContainer) -> void:
+		execute_calls += 1
+
+
+class FakeStadiumActionEffect extends BaseEffect:
+	var execute_calls: int = 0
+
+	func can_use_as_stadium_action(_card: CardInstance, _state: GameState) -> bool:
+		return true
+
+	func can_execute(_card: CardInstance, _state: GameState) -> bool:
+		return true
+
+	func execute(_card: CardInstance, _targets: Array, _state: GameState) -> void:
+		execute_calls += 1
 
 
 class SpyRetreatGameStateMachine extends GameStateMachine:
@@ -158,6 +202,7 @@ func _make_energy_cd(ename: String, provides: String) -> CardData:
 
 func _make_battle_scene_stub() -> Control:
 	var battle_scene = BattleSceneScript.new()
+	battle_scene.set("_active_battle_layout_mode", "landscape")
 	battle_scene.set("_dialog_title", Label.new())
 	battle_scene.set("_dialog_list", ItemList.new())
 	battle_scene.set("_dialog_card_scroll", ScrollContainer.new())
@@ -242,6 +287,482 @@ func _seed_battle_scene_discard_previews(scene: Control) -> void:
 	scene.add_child(opp_preview)
 	scene.set("_my_discard_preview", my_preview)
 	scene.set("_opp_discard_preview", opp_preview)
+
+
+func _prepare_detail_scene() -> Control:
+	var scene: Control = BattleScenePacked.instantiate()
+	scene.set("_detail_overlay", scene.find_child("DetailOverlay", true, false))
+	scene.set("_detail_title", scene.find_child("DetailTitle", true, false))
+	scene.set("_detail_content", scene.find_child("DetailContent", true, false))
+	scene.set("_detail_close_btn", scene.find_child("DetailCloseBtn", true, false))
+	scene.set("_handover_panel", scene.find_child("HandoverPanel", true, false))
+	scene.set("_hand_container", HBoxContainer.new())
+	scene.call("_setup_detail_preview")
+	return scene
+
+
+func test_hand_card_view_left_click_opens_detail_confirmation_without_executing() -> String:
+	var display_controller := BattleDisplayControllerScript.new()
+	var fake_scene := FakeHandCardScene.new()
+	var card := CardInstance.create(_make_trainer_cd("Confirm Tool", "Tool", ""), 0)
+
+	var card_view := display_controller.call("build_hand_card", fake_scene, card) as BattleCardView
+	card_view.left_clicked.emit(card, card.card_data)
+	card_view.right_clicked.emit(card, card.card_data)
+
+	var result := run_checks([
+		assert_eq(fake_scene.hand_detail_calls, 1, "Left-clicking a hand card should open the hand detail confirmation flow"),
+		assert_eq(fake_scene.execute_calls, 0, "Left-clicking a hand card should not immediately execute the old hand action"),
+		assert_eq(fake_scene.last_hand_detail_card, card, "The confirmation flow should keep the exact hand card instance"),
+		assert_eq(fake_scene.detail_calls, 1, "Right-clicking should remain a readonly card detail action"),
+		assert_eq(fake_scene.last_detail_card, card.card_data, "Readonly detail should receive the clicked card data"),
+	])
+	card_view.free()
+	return result
+
+
+func test_hand_card_detail_use_and_cancel_gate_original_execution() -> String:
+	var scene := _prepare_detail_scene()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+
+	var card := CardInstance.create(_make_trainer_cd("Confirm Tool", "Tool", ""), 0)
+	gsm.game_state.players[0].hand = [card]
+
+	scene.call("_show_hand_card_detail", card)
+	var action_bar := scene.find_child("DetailActionBar", true, false) as Control
+	var use_button := scene.find_child("DetailUseButton", true, false) as Button
+	var cancel_button := scene.find_child("DetailCancelButton", true, false) as Button
+	var opened_confirmation: bool = action_bar != null and action_bar.visible and use_button != null and use_button.visible and cancel_button != null and cancel_button.visible
+	var no_selection_before_use: bool = scene.get("_selected_hand_card") == null
+
+	scene.call("_on_detail_cancel_pressed")
+	var no_selection_after_cancel: bool = scene.get("_selected_hand_card") == null
+
+	scene.call("_show_hand_card_detail", card)
+	scene.call("_on_detail_use_pressed")
+	var selected_after_use: bool = scene.get("_selected_hand_card") == card
+
+	var result := run_checks([
+		assert_true(opened_confirmation, "Hand detail should show large Use/Cancel actions for an actionable hand card"),
+		assert_true(no_selection_before_use, "Opening detail should not select or use the hand card"),
+		assert_true(no_selection_after_cancel, "Cancel should leave the hand card unselected and unused"),
+		assert_true(selected_after_use, "Use should call the original hand-card execution path"),
+	])
+	scene.free()
+	return result
+
+
+func test_pokemon_and_energy_hand_cards_directly_enter_selected_state() -> String:
+	var scene := _prepare_detail_scene()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+
+	var basic := CardInstance.create(_make_pokemon_cd("Direct Basic", 70, "G"), 0)
+	var energy := CardInstance.create(_make_energy_cd("Direct Grass Energy", "G"), 0)
+	gsm.game_state.players[0].hand = [basic, energy]
+
+	scene.call("_show_hand_card_detail", basic)
+	var selected_basic: bool = scene.get("_selected_hand_card") == basic
+	var detail_hidden_after_basic: bool = not ((scene.find_child("DetailOverlay", true, false) as Control).visible)
+
+	scene.call("_show_hand_card_detail", energy)
+	var selected_energy: bool = scene.get("_selected_hand_card") == energy
+	var detail_hidden_after_energy: bool = not ((scene.find_child("DetailOverlay", true, false) as Control).visible)
+
+	var result := run_checks([
+		assert_true(selected_basic, "Pokemon hand cards should directly enter the old selected-card state"),
+		assert_true(detail_hidden_after_basic, "Pokemon hand cards should not open the confirmation detail popup"),
+		assert_true(selected_energy, "Energy hand cards should directly enter the old selected-card state"),
+		assert_true(detail_hidden_after_energy, "Energy hand cards should not open the confirmation detail popup"),
+	])
+	scene.free()
+	return result
+
+
+func test_hand_card_left_click_waits_for_release_and_drag_suppresses_click() -> String:
+	var display_controller := BattleDisplayControllerScript.new()
+	var fake_scene := FakeHandCardScene.new()
+	var card := CardInstance.create(_make_trainer_cd("Scrollable Tool", "Tool", ""), 0)
+	var card_view := display_controller.call("build_hand_card", fake_scene, card) as BattleCardView
+
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = Vector2(24, 24)
+	press.global_position = Vector2(24, 24)
+	card_view.call("_gui_input", press)
+	var calls_after_press := fake_scene.hand_detail_calls
+
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = Vector2(24, 24)
+	release.global_position = Vector2(24, 24)
+	card_view.call("_gui_input", release)
+	var calls_after_release := fake_scene.hand_detail_calls
+
+	press.global_position = Vector2(200, 24)
+	press.position = Vector2(200, 24)
+	card_view.call("_gui_input", press)
+	var drag := InputEventMouseMotion.new()
+	drag.position = Vector2(40, 24)
+	drag.global_position = Vector2(40, 24)
+	card_view.call("_gui_input", drag)
+	release.global_position = Vector2(40, 24)
+	release.position = Vector2(40, 24)
+	card_view.call("_gui_input", release)
+	var calls_after_drag_release := fake_scene.hand_detail_calls
+
+	var result := run_checks([
+		assert_eq(calls_after_press, 0, "Hand cards should not open detail on mouse press so the row can start dragging"),
+		assert_eq(calls_after_release, 1, "Hand cards should open detail on release when no drag happened"),
+		assert_eq(calls_after_drag_release, 1, "Dragging a hand card should scroll instead of opening the card detail"),
+	])
+	card_view.free()
+	return result
+
+
+func test_battle_hand_scroll_uses_drag_scroller_without_native_bar() -> String:
+	var scene: Control = BattleScenePacked.instantiate()
+	var hand_scroll := scene.find_child("HandScroll", true, false) as ScrollContainer
+	scene.set("_hand_scroll", hand_scroll)
+	scene.call("_setup_hand_drag_scroll")
+	var hbar := hand_scroll.get_h_scroll_bar() if hand_scroll != null else null
+	var vbar := hand_scroll.get_v_scroll_bar() if hand_scroll != null else null
+
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.global_position = Vector2(220, 24)
+	var press_consumed := bool(scene.call("_handle_hand_drag_scroll_input", press))
+	var drag := InputEventMouseMotion.new()
+	drag.global_position = Vector2(80, 24)
+	var drag_consumed := bool(scene.call("_handle_hand_drag_scroll_input", drag))
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.global_position = Vector2(80, 24)
+	var release_consumed := bool(scene.call("_handle_hand_drag_scroll_input", release))
+
+	var result := run_checks([
+		assert_eq(hand_scroll.horizontal_scroll_mode, ScrollContainer.SCROLL_MODE_AUTO, "Hand row should keep ScrollContainer sizing semantics while hiding the native bar"),
+		assert_eq(hand_scroll.vertical_scroll_mode, ScrollContainer.SCROLL_MODE_DISABLED, "Hand row should disable vertical scrolling"),
+		assert_true(bool(hand_scroll.get_meta("hand_drag_scroll_enabled", false)), "Hand row should mark the drag-scroll contract for layout tests"),
+		assert_true(hbar != null and bool(hbar.get_meta("hand_hidden_scrollbar", false)) and hbar.mouse_filter == Control.MOUSE_FILTER_IGNORE, "Hand horizontal scrollbar should be hidden and non-interactive"),
+		assert_true(vbar != null and bool(vbar.get_meta("hand_hidden_scrollbar", false)) and vbar.mouse_filter == Control.MOUSE_FILTER_IGNORE, "Hand vertical scrollbar should be hidden and non-interactive"),
+		assert_true(press_consumed, "Hand drag should consume the initial press so native ScrollContainer drag does not fight the custom drag"),
+		assert_true(drag_consumed, "Horizontal drag past the threshold should be consumed by the hand scroller"),
+		assert_true(release_consumed, "Release after a drag should be consumed to suppress accidental card use"),
+		assert_true(bool(scene.call("_is_hand_drag_click_suppressed")), "Release after a drag should suppress follow-up hand-card clicks briefly"),
+	])
+	scene.free()
+	return result
+
+
+func test_battle_hand_drag_tracks_pointer_direction_after_press() -> String:
+	var scene: Control = BattleScenePacked.instantiate()
+	var hand_scroll := scene.find_child("HandScroll", true, false) as ScrollContainer
+	scene.set("_hand_scroll", hand_scroll)
+	scene.call("_setup_hand_drag_scroll")
+	_prepare_overflowing_hand_scroll_for_drag_test(hand_scroll)
+	hand_scroll.scroll_horizontal = 300
+	var start_scroll := hand_scroll.scroll_horizontal
+
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.global_position = Vector2(200, 24)
+	scene.call("_handle_hand_drag_scroll_input", press)
+
+	var drag_left := InputEventMouseMotion.new()
+	drag_left.global_position = Vector2(120, 24)
+	scene.call("_input", drag_left)
+	var scroll_after_left_drag := hand_scroll.scroll_horizontal
+
+	var drag_right := InputEventMouseMotion.new()
+	drag_right.global_position = Vector2(260, 24)
+	scene.call("_input", drag_right)
+	var scroll_after_right_drag := hand_scroll.scroll_horizontal
+
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.global_position = Vector2(260, 24)
+	scene.call("_input", release)
+
+	var result := run_checks([
+		assert_true(scroll_after_left_drag > start_scroll, "Dragging the pointer left should move the hand rail toward later cards"),
+		assert_true(scroll_after_right_drag < start_scroll, "Dragging the pointer right should move the hand rail back toward earlier cards"),
+		assert_false(bool(scene.get("_hand_drag_active")), "Global hand drag capture should end on release"),
+	])
+	scene.free()
+	return result
+
+
+func test_card_gallery_drag_scroll_suppresses_card_click() -> String:
+	var scene: Control = BattleScenePacked.instantiate()
+	var scroll := ScrollContainer.new()
+	var row := HBoxContainer.new()
+	scene.add_child(scroll)
+	scroll.add_child(row)
+	scene.call("_configure_card_gallery_drag_scroll", scroll, row, "test_gallery")
+	scene.call("_set_card_gallery_drag_scroll_active", scroll, true)
+	var hbar := scroll.get_h_scroll_bar()
+	var scrollbar_hidden := hbar != null and bool(hbar.get_meta("card_gallery_hidden_scrollbar", false)) and not hbar.visible
+	_prepare_overflowing_hand_scroll_for_drag_test(scroll)
+	scroll.scroll_horizontal = 300
+	var start_scroll := scroll.scroll_horizontal
+
+	var clicked := {"count": 0}
+	var card_view := BattleCardViewScript.new()
+	card_view.setup_from_instance(CardInstance.create(_make_pokemon_cd("Gallery Card", 60, "C"), 0), BattleCardViewScript.MODE_PREVIEW)
+	card_view.set_clickable(true)
+	scene.call("_configure_card_gallery_card_view", card_view, scroll, "test_gallery")
+	card_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
+		clicked["count"] += 1
+	)
+	row.add_child(card_view)
+
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = Vector2(220, 24)
+	press.global_position = Vector2(220, 24)
+	card_view.call("_gui_input", press)
+
+	var drag := InputEventMouseMotion.new()
+	drag.position = Vector2(80, 24)
+	drag.global_position = Vector2(80, 24)
+	card_view.call("_gui_input", drag)
+	var scroll_after_drag := scroll.scroll_horizontal
+
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = Vector2(80, 24)
+	release.global_position = Vector2(80, 24)
+	card_view.call("_gui_input", release)
+
+	var result := run_checks([
+		assert_true(scrollbar_hidden, "Card-gallery scrolls should hide the visible horizontal scrollbar when drag scrolling is active"),
+		assert_true(scroll_after_drag > start_scroll, "Dragging a card-gallery card left should scroll toward later cards"),
+		assert_eq(clicked["count"], 0, "Dragging a card-gallery card should not trigger card selection/detail"),
+		assert_true(bool(scene.call("_is_card_gallery_drag_click_suppressed")), "Gallery drag release should suppress follow-up card clicks briefly"),
+	])
+	scene.free()
+	return result
+
+
+func test_card_gallery_click_without_drag_still_clicks_card() -> String:
+	var scene: Control = BattleScenePacked.instantiate()
+	var scroll := ScrollContainer.new()
+	var row := HBoxContainer.new()
+	scene.add_child(scroll)
+	scroll.add_child(row)
+	scene.call("_configure_card_gallery_drag_scroll", scroll, row, "test_gallery")
+	scene.call("_set_card_gallery_drag_scroll_active", scroll, true)
+	_prepare_overflowing_hand_scroll_for_drag_test(scroll)
+
+	var clicked := {"count": 0}
+	var card_view := BattleCardViewScript.new()
+	card_view.setup_from_instance(CardInstance.create(_make_pokemon_cd("Gallery Card", 60, "C"), 0), BattleCardViewScript.MODE_PREVIEW)
+	card_view.set_clickable(true)
+	scene.call("_configure_card_gallery_card_view", card_view, scroll, "test_gallery")
+	card_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
+		clicked["count"] += 1
+	)
+	row.add_child(card_view)
+
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = Vector2(220, 24)
+	press.global_position = Vector2(220, 24)
+	card_view.call("_gui_input", press)
+
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = Vector2(220, 24)
+	release.global_position = Vector2(220, 24)
+	card_view.call("_gui_input", release)
+
+	var result := run_checks([
+		assert_eq(clicked["count"], 1, "A card-gallery tap without drag should keep the original card click behavior"),
+		assert_false(bool(scene.call("_is_card_gallery_drag_click_suppressed")), "A plain card-gallery tap should not suppress clicks"),
+	])
+	scene.free()
+	return result
+
+
+func test_card_gallery_vertical_touch_jitter_still_clicks_card() -> String:
+	var scene: Control = BattleScenePacked.instantiate()
+	var scroll := ScrollContainer.new()
+	var row := HBoxContainer.new()
+	scene.add_child(scroll)
+	scroll.add_child(row)
+	scene.call("_configure_card_gallery_drag_scroll", scroll, row, "test_gallery")
+	scene.call("_set_card_gallery_drag_scroll_active", scroll, true)
+	_prepare_overflowing_hand_scroll_for_drag_test(scroll)
+	scroll.scroll_horizontal = 120
+	var start_scroll := scroll.scroll_horizontal
+
+	var clicked := {"count": 0}
+	var card_view := BattleCardViewScript.new()
+	card_view.setup_from_instance(CardInstance.create(_make_pokemon_cd("Gallery Card", 60, "C"), 0), BattleCardViewScript.MODE_PREVIEW)
+	card_view.set_clickable(true)
+	scene.call("_configure_card_gallery_card_view", card_view, scroll, "test_gallery")
+	card_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
+		clicked["count"] += 1
+	)
+	row.add_child(card_view)
+
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = Vector2(220, 24)
+	press.global_position = Vector2(220, 24)
+	card_view.call("_gui_input", press)
+
+	var jitter := InputEventMouseMotion.new()
+	jitter.position = Vector2(224, 48)
+	jitter.global_position = Vector2(224, 48)
+	card_view.call("_gui_input", jitter)
+
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = Vector2(224, 48)
+	release.global_position = Vector2(224, 48)
+	card_view.call("_gui_input", release)
+
+	var result := run_checks([
+		assert_eq(clicked["count"], 1, "Vertical touch jitter in a horizontal card gallery should still count as a card tap"),
+		assert_eq(scroll.scroll_horizontal, start_scroll, "Vertical jitter should not move the horizontal card gallery"),
+		assert_false(bool(scene.call("_is_card_gallery_drag_click_suppressed")), "Vertical jitter should not leave gallery drag click suppression active"),
+	])
+	scene.free()
+	return result
+
+
+func test_card_gallery_inactive_scroll_does_not_capture_action_hud_drag() -> String:
+	var scene: Control = BattleScenePacked.instantiate()
+	var scroll := ScrollContainer.new()
+	var row := HBoxContainer.new()
+	scene.add_child(scroll)
+	scroll.add_child(row)
+	scene.call("_configure_card_gallery_drag_scroll", scroll, row, "test_gallery")
+	scene.call("_set_card_gallery_drag_scroll_active", scroll, false)
+	_prepare_overflowing_hand_scroll_for_drag_test(scroll)
+	scroll.scroll_horizontal = 300
+
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.global_position = Vector2(220, 24)
+	var press_consumed := bool(scene.call("_handle_card_gallery_drag_scroll_input", press, scroll, "test_gallery"))
+
+	var drag := InputEventMouseMotion.new()
+	drag.global_position = Vector2(80, 24)
+	var drag_consumed := bool(scene.call("_handle_card_gallery_drag_scroll_input", drag, scroll, "test_gallery"))
+
+	var result := run_checks([
+		assert_false(press_consumed, "Inactive card-gallery scrolls should not capture action HUD presses"),
+		assert_false(drag_consumed, "Inactive card-gallery scrolls should not capture action HUD drags"),
+		assert_eq(scroll.scroll_horizontal, 300, "Inactive card-gallery scrolls should not move"),
+	])
+	scene.free()
+	return result
+
+
+func test_discard_collection_viewer_uses_shared_card_gallery_drag_scroll() -> String:
+	var scene: Control = BattleScenePacked.instantiate()
+	scene.set("_view_player", 0)
+	scene.call("_setup_discard_gallery")
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	for player_index: int in 2:
+		var player := PlayerState.new()
+		player.player_index = player_index
+		gsm.game_state.players.append(player)
+	for i: int in range(8):
+		gsm.game_state.players[0].discard_pile.append(CardInstance.create(_make_pokemon_cd("Gallery Discard %d" % i, 70, "C"), 0))
+	scene.set("_gsm", gsm)
+
+	scene.call("_show_discard_pile", 0, "Discard")
+	var scroll := scene.get("_discard_card_scroll") as ScrollContainer
+	var row := scene.get("_discard_card_row") as HBoxContainer
+	var first_card := row.get_child(0) as BattleCardView if row != null and row.get_child_count() > 0 else null
+	var drag_enabled := scroll != null and bool(scroll.get_meta("card_gallery_drag_scroll_enabled", false))
+	var drag_active := scroll != null and bool(scroll.get_meta("card_gallery_drag_scroll_active", false))
+	var card_input_enabled := first_card != null and bool(first_card.get_meta("card_gallery_drag_input_enabled", false))
+	var start_scroll := scroll.scroll_horizontal
+
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = Vector2(220, 24)
+	press.global_position = Vector2(220, 24)
+	first_card.call("_gui_input", press)
+
+	var drag := InputEventMouseMotion.new()
+	drag.position = Vector2(60, 24)
+	drag.global_position = Vector2(60, 24)
+	first_card.call("_gui_input", drag)
+	var scroll_after_drag := scroll.scroll_horizontal
+
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = Vector2(60, 24)
+	release.global_position = Vector2(60, 24)
+	first_card.call("_gui_input", release)
+
+	var result := run_checks([
+		assert_true(drag_enabled, "Discard collection scroll should opt into shared card-gallery drag scrolling"),
+		assert_true(drag_active, "Discard collection scroll should be active while the viewer is open"),
+		assert_true(card_input_enabled, "Discard collection card views should forward pointer input to shared drag scrolling"),
+		assert_true(scroll_after_drag > start_scroll, "Dragging a discard collection card should scroll the collection row"),
+		assert_true(bool(scene.call("_is_card_gallery_drag_click_suppressed")), "Dragging a discard collection card should suppress card detail clicks briefly"),
+	])
+	scene.queue_free()
+	return result
+
+
+func _prepare_overflowing_hand_scroll_for_drag_test(hand_scroll: ScrollContainer) -> void:
+	if hand_scroll == null:
+		return
+	hand_scroll.size = Vector2(400, 200)
+	hand_scroll.custom_minimum_size = Vector2(400, 200)
+	var hand_content := hand_scroll.get_child(0) as Control if hand_scroll.get_child_count() > 0 else null
+	if hand_content != null:
+		hand_content.size = Vector2(1400, 180)
+		hand_content.custom_minimum_size = Vector2(1400, 180)
+	var hbar := hand_scroll.get_h_scroll_bar()
+	if hbar != null:
+		hbar.min_value = 0.0
+		hbar.max_value = 1000.0
+		hbar.page = 400.0
 
 
 func _attach_test_center_field(scene: Control, position: Vector2, size: Vector2) -> Control:
@@ -554,6 +1075,274 @@ func test_battle_scene_includes_zeus_help_button() -> String:
 	])
 
 
+func test_battle_scene_vstar_lost_huds_use_image_vstar_and_compact_lost_style() -> String:
+	var scene: Control = BattleSceneScript.new()
+	var vstar_label := Label.new()
+	var vstar_panel := PanelContainer.new()
+	vstar_panel.name = "InfoMyVstar"
+	vstar_panel.add_child(vstar_label)
+	vstar_panel.custom_minimum_size = Vector2(100, 30)
+	var lost_label := Label.new()
+	var lost_panel := PanelContainer.new()
+	lost_panel.name = "InfoMyLost"
+	lost_panel.add_child(lost_label)
+	lost_panel.custom_minimum_size = Vector2(100, 30)
+
+	scene.call("_set_vstar_hud_value", vstar_label, false)
+	var ready_visible := vstar_label.visible
+	var ready_image := vstar_panel.find_child("HudImageTexture", true, false) as TextureRect
+	var ready_modulate := ready_image.modulate if ready_image != null else Color.TRANSPARENT
+	scene.call("_set_vstar_hud_value", vstar_label, true)
+	var used_visible := vstar_label.visible
+	var used_image := vstar_panel.find_child("HudImageTexture", true, false) as TextureRect
+	var used_modulate := used_image.modulate if used_image != null else Color.TRANSPARENT
+	scene.call("_set_lost_zone_hud_value", lost_label, 7)
+	var lost_text := lost_label.text
+	scene.call("_apply_vstar_lost_hud_metrics", vstar_panel)
+	var first_scaled_size := vstar_panel.custom_minimum_size
+	scene.call("_apply_vstar_lost_hud_metrics", vstar_panel)
+	var second_scaled_size := vstar_panel.custom_minimum_size
+	var texture_size := ready_image.texture.get_size() if ready_image != null and ready_image.texture != null else Vector2.ZERO
+	var expected_vstar_width := roundf(first_scaled_size.y * texture_size.x / texture_size.y) if texture_size.y > 0.0 else -1.0
+
+	var result := run_checks([
+		assert_false(ready_visible, "VSTAR HUD label should be hidden when the PNG is present"),
+		assert_false(used_visible, "Used VSTAR HUD should still hide the text label"),
+		assert_true(ready_image != null and ready_image.texture != null, "VSTAR HUD should create a PNG texture layer"),
+		assert_true(used_modulate.r < ready_modulate.r and used_modulate.g < ready_modulate.g and used_modulate.b < ready_modulate.b, "Used VSTAR HUD image should be visibly dimmed"),
+		assert_true(absf(used_modulate.r - used_modulate.g) <= 0.04 and absf(used_modulate.g - used_modulate.b) <= 0.04, "Used VSTAR HUD image should use a low-saturation gray tint"),
+		assert_eq(lost_text, "LOST 区：7张", "Lost Zone HUD should show the localized LOST count"),
+		assert_true(texture_size.y > 0.0 and absf(first_scaled_size.x - expected_vstar_width) <= 1.0, "VSTAR HUD metrics should preserve the PNG aspect ratio"),
+		assert_eq(second_scaled_size, first_scaled_size, "Repeated styling should not keep resizing VSTAR/lost HUDs"),
+	])
+
+	vstar_panel.queue_free()
+	lost_panel.queue_free()
+	scene.queue_free()
+	return result
+
+
+func test_battle_scene_vstar_hud_uses_stable_texture_variants() -> String:
+	var scene: Control = BattleSceneScript.new()
+	var panel_a := PanelContainer.new()
+	panel_a.name = "InfoMyVstar"
+	panel_a.custom_minimum_size = Vector2(100, 30)
+	panel_a.set_meta("_vstar_hud_texture_index", 1)
+	var panel_b := PanelContainer.new()
+	panel_b.name = "InfoEnemyVstar"
+	panel_b.custom_minimum_size = Vector2(100, 30)
+	panel_b.set_meta("_vstar_hud_texture_index", 2)
+
+	var image_a := scene.call("_ensure_vstar_hud_image", panel_a) as TextureRect
+	var first_texture := image_a.texture if image_a != null else null
+	var image_a_again := scene.call("_ensure_vstar_hud_image", panel_a) as TextureRect
+	var second_texture := image_a_again.texture if image_a_again != null else null
+	var image_b := scene.call("_ensure_vstar_hud_image", panel_b) as TextureRect
+	var enemy_texture := image_b.texture if image_b != null else null
+
+	var result := run_checks([
+		assert_true(first_texture != null, "VSTAR HUD should load a texture variant"),
+		assert_eq(second_texture, first_texture, "VSTAR HUD should keep the same random variant for one panel"),
+		assert_true(enemy_texture != null and enemy_texture != first_texture, "Different VSTAR HUD panels can use different variants"),
+	])
+
+	panel_a.queue_free()
+	panel_b.queue_free()
+	scene.queue_free()
+	return result
+
+
+func test_battle_scene_vstar_hud_texture_follows_player_view() -> String:
+	var scene: Control = BattleSceneScript.new()
+	var my_label := Label.new()
+	var my_panel := PanelContainer.new()
+	my_panel.name = "InfoMyVstar"
+	my_panel.custom_minimum_size = Vector2(100, 30)
+	my_panel.add_child(my_label)
+	var enemy_label := Label.new()
+	var enemy_panel := PanelContainer.new()
+	enemy_panel.name = "InfoEnemyVstar"
+	enemy_panel.custom_minimum_size = Vector2(100, 30)
+	enemy_panel.add_child(enemy_label)
+	var gsm := GameStateMachine.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.vstar_power_used = [false, false]
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	scene.set("_my_vstar_value", my_label)
+	scene.set("_enemy_vstar_value", enemy_label)
+	scene.set("_gsm", gsm)
+	scene.call("_set_vstar_hud_texture_index_for_player", 0, 1)
+	scene.call("_set_vstar_hud_texture_index_for_player", 1, 2)
+
+	scene.set("_view_player", 0)
+	scene.call("_refresh_vstar_lost_hud_values")
+	var my_image_view0 := my_panel.find_child("HudImageTexture", true, false) as TextureRect
+	var enemy_image_view0 := enemy_panel.find_child("HudImageTexture", true, false) as TextureRect
+	var player0_texture := my_image_view0.texture if my_image_view0 != null else null
+	var player1_texture := enemy_image_view0.texture if enemy_image_view0 != null else null
+
+	scene.set("_view_player", 1)
+	scene.call("_refresh_vstar_lost_hud_values")
+	var my_image_view1 := my_panel.find_child("HudImageTexture", true, false) as TextureRect
+	var enemy_image_view1 := enemy_panel.find_child("HudImageTexture", true, false) as TextureRect
+
+	var result := run_checks([
+		assert_true(player0_texture != null and player1_texture != null, "VSTAR HUD should bind textures for both players"),
+		assert_true(player0_texture != player1_texture, "Fixture should use two distinct player VSTAR textures"),
+		assert_eq(my_image_view1.texture if my_image_view1 != null else null, player1_texture, "My VSTAR HUD should switch to the current view player's texture"),
+		assert_eq(enemy_image_view1.texture if enemy_image_view1 != null else null, player0_texture, "Enemy VSTAR HUD should keep the opponent player's texture"),
+	])
+
+	my_panel.queue_free()
+	enemy_panel.queue_free()
+	scene.queue_free()
+	return result
+
+
+func test_battle_scene_end_turn_button_uses_stadium_hud_style() -> String:
+	var scene: Control = load("res://scenes/battle/BattleScene.tscn").instantiate()
+	scene.call("_style_end_turn_hud_buttons")
+	var button := scene.find_child("HudEndTurnBtn", true, false) as Button
+	var image := button.get_node_or_null("EndTurnImage") as TextureRect if button != null else null
+	var normal_style := button.get_theme_stylebox("normal") if button != null else null
+	var hover_style := button.get_theme_stylebox("hover") if button != null else null
+	var disabled_style := button.get_theme_stylebox("disabled") if button != null else null
+
+	var result := run_checks([
+		assert_eq(button.text if button != null else "missing", "结束我的回合", "End-turn HUD button should return to the readable text label"),
+		assert_null(image, "End-turn HUD button should not keep the image layer"),
+		assert_true(normal_style is StyleBoxFlat, "End-turn HUD button should use a normal HUD stylebox"),
+		assert_true(hover_style is StyleBoxFlat, "End-turn HUD button should use a hover HUD stylebox"),
+		assert_true(disabled_style is StyleBoxFlat, "End-turn HUD button should use a disabled HUD stylebox"),
+	])
+
+	scene.queue_free()
+	return result
+
+
+func test_battle_scene_stadium_hud_uses_card_preview_and_used_badge() -> String:
+	var scene: Control = load("res://scenes/battle/BattleScene.tscn").instantiate()
+	var gsm := GameStateMachine.new()
+	var stadium_cd := _make_trainer_cd("Test Stadium", "Stadium", "fixture")
+	stadium_cd.effect_id = "test_stadium_action"
+	var stadium := CardInstance.create(stadium_cd, 0)
+	var effect := FakeStadiumActionEffect.new()
+	gsm.effect_processor.register_effect(stadium_cd.effect_id, effect)
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 3
+	gsm.game_state.stadium_card = stadium
+	gsm.game_state.stadium_owner_index = 0
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+
+	scene.call("_refresh_stadium_card_hud", gsm.game_state, 0, true)
+	var card_view := scene.get("_stadium_card_view") as BattleCardView
+	var label := scene.find_child("StadiumLbl", true, false) as Label
+	var button := scene.find_child("BtnStadiumAction", true, false) as Button
+	var action_row := scene.find_child("StadiumActionRow", true, false) as HBoxContainer
+	var overlay := scene.find_child("StadiumCardOverlay", true, false) as Control
+	var top_left: Label = null
+	var top_right: Label = null
+	if card_view != null:
+		top_left = card_view.get("_top_left_badge") as Label
+		top_right = card_view.get("_top_right_badge") as Label
+	var before_used_badge := top_left.text if top_left != null else "missing"
+	var before_use_badge := top_right.text if top_right != null else "missing"
+
+	gsm.game_state.stadium_effect_used_turn = gsm.game_state.turn_number
+	gsm.game_state.stadium_effect_used_player = 0
+	gsm.game_state.stadium_effect_used_effect_id = stadium_cd.effect_id
+	scene.call("_refresh_stadium_card_hud", gsm.game_state, 0, true)
+	var after_used_badge := top_left.text if top_left != null else "missing"
+	gsm.game_state.turn_number += 1
+	gsm.game_state.current_player_index = 1
+	scene.call("_refresh_stadium_card_hud", gsm.game_state, 1, false)
+	var next_turn_badge := top_left.text if top_left != null else "missing"
+	var stadium_center := scene.find_child("StadiumCenterSection", true, false) as Control
+
+	var result := run_checks([
+		assert_not_null(card_view, "Stadium HUD should create a card preview view"),
+		assert_true(card_view.visible, "Stadium card preview should be visible when a Stadium is in play"),
+		assert_true(overlay != null and card_view.get_parent() == overlay, "Stadium card preview should live in the floating overlay"),
+		assert_false(action_row != null and action_row.is_ancestor_of(card_view), "Stadium card preview should not expand the compact Stadium HUD row"),
+		assert_eq(card_view.card_instance, stadium, "Stadium card preview should bind the live Stadium card"),
+		assert_false(label.visible, "Legacy Stadium label should be hidden when the card preview is active"),
+		assert_false(button.visible, "Legacy Stadium action button should be hidden when the card preview is active"),
+		assert_true(stadium_center == null or stadium_center.self_modulate.a < 0.01, "Legacy Stadium HUD panel should not draw behind the live Stadium card"),
+		assert_eq(before_used_badge, "", "Unused Stadium action should not show the USED badge"),
+		assert_eq(before_use_badge, "USE", "Available Stadium action should expose a compact use hint"),
+		assert_eq(after_used_badge, "USED", "Used Stadium action should mark the live card preview as USED"),
+		assert_eq(next_turn_badge, "", "Stadium USED badge should clear once the next turn starts"),
+	])
+
+	scene.queue_free()
+	return result
+
+
+func test_battle_scene_empty_stadium_restores_compact_hud_without_card_overlay() -> String:
+	var scene: Control = load("res://scenes/battle/BattleScene.tscn").instantiate()
+	var gsm := GameStateMachine.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+	scene.call("_refresh_stadium_card_hud", gsm.game_state, 0, true)
+
+	var card_view := scene.get("_stadium_card_view") as BattleCardView
+	var label := scene.find_child("StadiumLbl", true, false) as Label
+	var button := scene.find_child("BtnStadiumAction", true, false) as Button
+	var stadium_center := scene.find_child("StadiumCenterSection", true, false) as Control
+
+	var result := run_checks([
+		assert_true(card_view == null or not card_view.visible, "Live Stadium card preview should stay hidden before a Stadium is played"),
+		assert_true(label.visible, "Compact Stadium label should return before a Stadium is played"),
+		assert_true(label.text != "", "Compact Stadium label should keep readable HUD text"),
+		assert_false(button.visible, "Legacy compact Stadium action button should stay hidden in the placeholder state"),
+		assert_true(stadium_center == null or stadium_center.self_modulate.a > 0.99, "Compact Stadium HUD panel should return before a Stadium is played"),
+	])
+
+	scene.queue_free()
+	return result
+
+
+func test_battle_scene_landscape_empty_stadium_keeps_hidden_placeholder() -> String:
+	var scene: Control = load("res://scenes/battle/BattleScene.tscn").instantiate()
+	var gsm := GameStateMachine.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+	scene.call("_apply_landscape_layout_impl", Vector2(1600, 900))
+	scene.call("_refresh_stadium_card_hud", gsm.game_state, 0, true)
+
+	var label := scene.find_child("StadiumLbl", true, false) as Label
+	var stadium_center := scene.find_child("StadiumCenterSection", true, false) as Control
+	var action_row := scene.find_child("StadiumActionRow", true, false) as Control
+
+	var result := run_checks([
+		assert_not_null(stadium_center, "Landscape empty Stadium placeholder node should still exist"),
+		assert_true(action_row != null and action_row.visible, "Landscape empty Stadium placeholder should keep its row in layout"),
+		assert_false(label.visible if label != null else true, "Landscape should hide the 'no Stadium' label"),
+		assert_true(stadium_center != null and stadium_center.self_modulate.a < 0.01, "Landscape should hide the empty Stadium HUD surface without deleting it"),
+	])
+	scene.queue_free()
+	return result
+
+
 func test_battle_scene_handover_prompt_uses_large_hud_touch_targets() -> String:
 	var scene: Control = load("res://scenes/battle/BattleScene.tscn").instantiate()
 	scene.call("_style_handover_overlay")
@@ -576,10 +1365,12 @@ func test_battle_scene_top_actions_match_end_turn_row_height() -> String:
 	var battle_scene := _make_battle_scene_stub()
 	var viewport_size := Vector2(1600, 900)
 	var stadium_height := 32.0
-	var action_height := 28.0
-	var resolved_top_height: float = battle_scene.call("_resolve_top_bar_height", viewport_size, stadium_height)
+	var stadium_inner_vpad := 2
+	var legacy_action_height := stadium_height - float(stadium_inner_vpad * 2)
+	var action_height: float = battle_scene.call("_resolve_hud_action_button_height", stadium_height, stadium_inner_vpad)
+	var resolved_top_height: float = battle_scene.call("_resolve_top_bar_height", viewport_size, stadium_height, action_height, stadium_inner_vpad)
 
-	battle_scene.call("_apply_top_action_button_metrics", action_height, viewport_size)
+	battle_scene.call("_apply_top_action_button_metrics", legacy_action_height, viewport_size)
 
 	var zeus_button := battle_scene.get("_btn_zeus_help") as Button
 	var opponent_hand_button := battle_scene.get("_btn_opponent_hand") as Button
@@ -597,7 +1388,8 @@ func test_battle_scene_top_actions_match_end_turn_row_height() -> String:
 	var turn_label := scene.find_child("LblTurn", true, false) as Label
 
 	return run_checks([
-		assert_eq(resolved_top_height, stadium_height, "Top bar should grow to the end-turn row height"),
+		assert_eq(action_height, 44.0, "HUD action buttons should use a mobile-friendly minimum touch height"),
+		assert_eq(resolved_top_height, action_height + float(stadium_inner_vpad * 2), "Top bar should grow to contain the enlarged end-turn row height"),
 		assert_eq(zeus_button.custom_minimum_size.y, action_height, "Zeus help should use the same touch height as the end-turn button"),
 		assert_eq(back_button.custom_minimum_size.y, action_height, "Back button should use the same touch height as the end-turn button"),
 		assert_eq(replay_button.custom_minimum_size.y, action_height, "Replay buttons should share the top action touch height"),
@@ -982,6 +1774,67 @@ func test_battle_scene_turn_start_draw_starts_reveal_and_defers_hand_refresh() -
 	])
 
 
+func test_battle_scene_turn_start_snapshot_records_after_drawn_card_enters_hand() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 1
+	gsm.game_state.phase = GameState.GamePhase.DRAW
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var active_cd := _make_pokemon_cd("Opening Active", 70, "C")
+	var active_slot := PokemonSlot.new()
+	active_slot.pokemon_stack.append(CardInstance.create(active_cd, 0))
+	gsm.game_state.players[0].active_pokemon = active_slot
+	gsm.game_state.players[0].hand = _make_named_deck_cards(0, [
+		"Hand 1",
+		"Hand 2",
+		"Hand 3",
+		"Hand 4",
+		"Hand 5",
+		"Hand 6",
+	])
+
+	var drawn_card := CardInstance.create(_make_pokemon_cd("Turn Draw", 70, "C"), 0)
+	gsm.game_state.players[0].hand.append(drawn_card)
+	var recorder := FakeBattleRecorder.new()
+	battle_scene.set("_battle_recorder", recorder)
+	battle_scene.set("_battle_recording_started", true)
+	battle_scene.set("_battle_recording_context_captured", true)
+
+	var action := GameAction.create(
+		GameAction.ActionType.DRAW_CARD,
+		0,
+		{"count": 1, "card_names": ["Turn Draw"], "card_instance_ids": [drawn_card.instance_id]},
+		1,
+		"draw one"
+	)
+	battle_scene.call("_on_action_logged", action)
+
+	var turn_start_snapshot: Dictionary = {}
+	for event: Dictionary in recorder.events:
+		if str(event.get("event_type", "")) == "state_snapshot" and str(event.get("snapshot_reason", "")) == "turn_start":
+			turn_start_snapshot = event
+			break
+	var players: Array = turn_start_snapshot.get("state", {}).get("players", [])
+	var player_state: Dictionary = players[0] if players.size() > 0 and players[0] is Dictionary else {}
+	var active_state: Dictionary = player_state.get("active", {})
+
+	return run_checks([
+		assert_false(turn_start_snapshot.is_empty(), "Turn-start snapshot should be recorded from the turn-start draw action"),
+		assert_eq(int(player_state.get("hand_count", -1)), 7, "Turn-start snapshot should include the card drawn for turn"),
+		assert_eq(str(active_state.get("pokemon_name", "")), "Opening Active", "Turn-start snapshot should still show the setup Active Pokemon"),
+	])
+
+
 func test_battle_scene_turn_start_draw_waits_for_player_click_before_hand_refresh() -> String:
 	var previous_mode: int = GameManager.current_mode
 	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
@@ -1030,6 +1883,65 @@ func test_battle_scene_turn_start_draw_waits_for_player_click_before_hand_refres
 		assert_eq(reveal_active_after, false, "Reveal should finish after player confirmation"),
 		assert_eq(pending_after, false, "Hand refresh deferral should clear after the reveal completes"),
 		assert_eq(hand_container.get_child_count(), 1, "Confirmed draw reveal should finally render the drawn hand card"),
+	])
+
+
+func test_battle_scene_marked_turn_start_draw_auto_continues_for_human() -> String:
+	var previous_mode: int = GameManager.current_mode
+	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
+
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var drawn_card := CardInstance.create(_make_pokemon_cd("Turn Start Auto", 70, "C"), 0)
+	gsm.game_state.players[0].hand = [drawn_card]
+
+	var action := GameAction.create(
+		GameAction.ActionType.DRAW_CARD,
+		0,
+		{
+			"count": 1,
+			"card_names": ["Turn Start Auto"],
+			"card_instance_ids": [drawn_card.instance_id],
+			"turn_start": true,
+			"draw_source": "turn_start",
+		},
+		1,
+		"turn start draw"
+	)
+	battle_scene.call("_on_action_logged", action)
+	battle_scene.call("_refresh_hand")
+
+	var waiting_before: Variant = battle_scene.get("_draw_reveal_waiting_for_confirm")
+	var auto_pending_before: Variant = battle_scene.get("_draw_reveal_auto_continue_pending")
+	var controller: RefCounted = battle_scene.get("_battle_draw_reveal_controller")
+	var has_auto_continue := controller != null and controller.has_method("run_auto_continue")
+	if has_auto_continue:
+		controller.call("run_auto_continue", battle_scene)
+
+	var reveal_active_after: Variant = battle_scene.get("_draw_reveal_active")
+	var pending_after: Variant = battle_scene.get("_draw_reveal_pending_hand_refresh")
+	var hand_container: HBoxContainer = battle_scene.get("_hand_container")
+	GameManager.current_mode = previous_mode
+
+	return run_checks([
+		assert_eq(waiting_before, false, "Human turn-start draw should not wait indefinitely for a click"),
+		assert_eq(auto_pending_before, true, "Human turn-start draw should auto-continue after the reveal"),
+		assert_eq(has_auto_continue, true, "Draw reveal controller should expose a run_auto_continue entrypoint"),
+		assert_eq(reveal_active_after, false, "Auto-continued human turn-start draw should finish cleanly"),
+		assert_eq(pending_after, false, "Turn-start auto-continue should flush the deferred hand refresh"),
+		assert_eq(hand_container.get_child_count(), 1, "Auto-continued turn-start draw should render the drawn card into hand"),
 	])
 
 
@@ -1936,7 +2848,6 @@ func test_battle_scene_batch_draw_layout_wraps_after_four_cards() -> String:
 		Vector2(180, 872)
 	)
 	var main_area: Control = layout.get("main_area")
-	var log_panel: Control = layout.get("log_panel")
 	var controller: RefCounted = battle_scene.get("_battle_draw_reveal_controller")
 	var positions: Array[Vector2] = []
 	var scale_probe := BattleCardViewScript.new()
@@ -1949,7 +2860,7 @@ func test_battle_scene_batch_draw_layout_wraps_after_four_cards() -> String:
 		card_view.custom_minimum_size = Vector2(130, 182)
 		positions.append(controller.call("_batch_stack_position", battle_scene, card_view, index, 7))
 
-	var center_x: float = main_area.global_position.x + (log_panel.global_position.x - main_area.global_position.x) * 0.5
+	var center_x: float = main_area.global_position.x + main_area.size.x * 0.5
 	var first_row_y: float = positions[0].y
 	var second_row_y: float = positions[4].y
 	var first_row_center_x := (positions[0].x + positions[3].x + scaled_width) * 0.5
@@ -1970,8 +2881,8 @@ func test_battle_scene_batch_draw_layout_wraps_after_four_cards() -> String:
 		assert_true(absf(positions[3].x - (positions[2].x + scaled_width)) < 0.01, "First-row cards should touch without extra horizontal gap"),
 		assert_true(absf(positions[5].x - (positions[4].x + scaled_width)) < 0.01, "Second-row cards should touch without extra horizontal gap"),
 		assert_true(absf(positions[6].x - (positions[5].x + scaled_width)) < 0.01, "Second-row cards should touch without extra horizontal gap"),
-		assert_true(absf(first_row_center_x - center_x) < 0.01, "The first row should stay centered inside MainArea without using FieldArea"),
-		assert_true(absf(second_row_center_x - center_x) < 0.01, "The second row should also be centered inside MainArea without using FieldArea"),
+		assert_true(absf(first_row_center_x - center_x) < 0.01, "The first row should stay centered on the current screen instead of avoiding HUD strips"),
+		assert_true(absf(second_row_center_x - center_x) < 0.01, "The second row should also stay centered on the current screen"),
 	])
 
 
@@ -1989,7 +2900,6 @@ func test_battle_scene_batch_draw_layout_centers_short_second_row_independently(
 		Vector2(180, 872)
 	)
 	var main_area: Control = layout.get("main_area")
-	var log_panel: Control = layout.get("log_panel")
 	var controller: RefCounted = battle_scene.get("_battle_draw_reveal_controller")
 	var card_view := BattleCardViewScript.new()
 	card_view.custom_minimum_size = Vector2(130, 182)
@@ -2000,14 +2910,63 @@ func test_battle_scene_batch_draw_layout_centers_short_second_row_independently(
 	var second_row_left: Vector2 = controller.call("_batch_stack_position", battle_scene, card_view, 4, 7)
 	var first_row_right: Vector2 = controller.call("_batch_stack_position", battle_scene, card_view, 3, 7)
 	var second_row_right: Vector2 = controller.call("_batch_stack_position", battle_scene, card_view, 6, 7)
-	var center_x: float = main_area.global_position.x + (log_panel.global_position.x - main_area.global_position.x) * 0.5
+	var center_x: float = main_area.global_position.x + main_area.size.x * 0.5
 	var second_row_center_x := (second_row_left.x + second_row_right.x + scaled_width) * 0.5
 
 	return run_checks([
 		assert_true(second_row_left.x > first_row_left.x, "A three-card second row should not left-align with the four-card first row"),
 		assert_true(second_row_right.x + scaled_width < first_row_right.x + scaled_width, "A three-card second row should end earlier than the four-card first row"),
-		assert_true(absf(second_row_center_x - center_x) < 0.01, "A shorter second row should still be independently centered inside MainArea"),
+		assert_true(absf(second_row_center_x - center_x) < 0.01, "A shorter second row should still be independently centered on the current screen"),
 	])
+
+
+func test_battle_scene_portrait_draw_reveal_uses_hand_sized_scale() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.size = Vector2(390, 844)
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	var controller: RefCounted = battle_scene.get("_battle_draw_reveal_controller")
+	var card_view := BattleCardViewScript.new()
+	card_view.custom_minimum_size = Vector2(108, 150)
+
+	var single_scale: Vector2 = controller.call("_reveal_scale", battle_scene)
+	var batch_scale: Vector2 = controller.call("_batch_reveal_scale", battle_scene, card_view, 7)
+
+	return run_checks([
+		assert_eq(single_scale, Vector2.ONE, "Portrait single-card draw reveal should keep cards at hand-card size"),
+		assert_eq(batch_scale, Vector2.ONE, "Portrait batch draw reveal should keep cards at hand-card size"),
+	])
+
+
+func test_battle_scene_portrait_batch_draw_layout_fits_visible_screen() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.size = Vector2(390, 844)
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	var controller: RefCounted = battle_scene.get("_battle_draw_reveal_controller")
+	var card_view := BattleCardViewScript.new()
+	card_view.custom_minimum_size = Vector2(108, 150)
+	var scale: Vector2 = controller.call("_batch_reveal_scale", battle_scene, card_view, 7)
+	var visual_size := card_view.custom_minimum_size * scale
+	var anchor_rect: Rect2 = controller.call("_get_reveal_anchor_rect", battle_scene)
+	var positions: Array[Vector2] = []
+	var checks: Array[String] = [
+		assert_eq(scale, Vector2.ONE, "Portrait batch reveal should not enlarge cards beyond hand size"),
+	]
+	for index: int in 7:
+		var position: Vector2 = controller.call("_batch_stack_position", battle_scene, card_view, index, 7)
+		positions.append(position)
+		checks.append(assert_gte(position.x, anchor_rect.position.x, "Portrait reveal card %d should not overflow left" % [index + 1]))
+		checks.append(assert_gte(position.y, anchor_rect.position.y, "Portrait reveal card %d should not overflow top" % [index + 1]))
+		checks.append(assert_true(position.x + visual_size.x <= anchor_rect.position.x + anchor_rect.size.x + 0.01, "Portrait reveal card %d should not overflow right" % [index + 1]))
+		checks.append(assert_true(position.y + visual_size.y <= anchor_rect.position.y + anchor_rect.size.y + 0.01, "Portrait reveal card %d should not overflow bottom" % [index + 1]))
+
+	var center_x := anchor_rect.position.x + anchor_rect.size.x * 0.5
+	var first_row_center := (positions[0].x + positions[2].x + visual_size.x) * 0.5
+	checks.append(assert_eq(positions[0].y, positions[1].y, "Portrait batch reveal should keep the first row aligned"))
+	checks.append(assert_eq(positions[1].y, positions[2].y, "Portrait batch reveal should place three cards on the first narrow-screen row"))
+	checks.append(assert_gt(positions[3].y, positions[0].y, "Portrait batch reveal should wrap the fourth card to the second row on narrow screens"))
+	checks.append(assert_true(absf(first_row_center - center_x) < 0.01, "Portrait batch reveal first row should stay centered"))
+
+	return run_checks(checks)
 
 
 func test_battle_scene_draw_reveal_blocks_live_actions() -> String:
@@ -2069,7 +3028,7 @@ func test_battle_scene_draw_reveal_shade_does_not_swallow_confirm_click() -> Str
 	])
 
 
-func test_battle_scene_draw_reveal_centers_on_mainarea_without_handarea_instead_of_fieldarea_or_viewport() -> String:
+func test_battle_scene_draw_reveal_centers_on_current_screen_instead_of_avoiding_hud_areas() -> String:
 	var battle_scene = _make_battle_scene_stub()
 	var layout := _attach_test_main_area_with_hand_area(
 		battle_scene,
@@ -2083,22 +3042,18 @@ func test_battle_scene_draw_reveal_centers_on_mainarea_without_handarea_instead_
 		Vector2(180, 872)
 	)
 	var main_area: Control = layout.get("main_area")
-	var hand_area: Control = layout.get("hand_area")
-	var log_panel: Control = layout.get("log_panel")
 	var controller: RefCounted = battle_scene.get("_battle_draw_reveal_controller")
 	var card_view := BattleCardViewScript.new()
 	card_view.custom_minimum_size = Vector2(130, 182)
 
 	var centered_position: Variant = controller.call("_center_position", battle_scene, card_view)
-	var reveal_height := hand_area.global_position.y - main_area.global_position.y
-	var reveal_width := log_panel.global_position.x - main_area.global_position.x
 	var expected := Vector2(
-		main_area.global_position.x + (reveal_width - 130.0) * 0.5,
-		main_area.global_position.y + (reveal_height - 182.0) * 0.5
+		main_area.global_position.x + (main_area.size.x - 130.0) * 0.5,
+		main_area.global_position.y + (main_area.size.y - 182.0) * 0.5
 	)
 
 	return run_checks([
-		assert_eq(centered_position, expected, "Draw reveals should center within MainArea while excluding both the bottom HandArea and the right LogPanel"),
+		assert_eq(centered_position, expected, "Draw reveals should center on the current screen instead of avoiding hand/log HUD areas"),
 	])
 
 
@@ -2143,6 +3098,75 @@ func test_battle_scene_two_player_turn_start_draw_waits_for_handover_before_reve
 		assert_true(handover_visible_before, "Two-player turn start should still be waiting on the handover confirmation"),
 		assert_eq(reveal_active_before, false, "Turn-start draw reveal should stay deferred until the handover is confirmed"),
 		assert_eq(reveal_active_after, true, "After the handover confirmation, the deferred draw reveal should begin"),
+	])
+
+
+func test_battle_scene_two_player_setup_view_alignment_resumes_deferred_turn_start_draw() -> String:
+	var previous_mode: int = GameManager.current_mode
+	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
+
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 1
+	gsm.game_state.phase = GameState.GamePhase.DRAW
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 1)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var setup_hand: Array[CardInstance] = _make_named_deck_cards(0, [
+		"Setup Hand 1",
+		"Setup Hand 2",
+		"Setup Hand 3",
+		"Setup Hand 4",
+		"Setup Hand 5",
+		"Setup Hand 6",
+	])
+	var drawn_card := CardInstance.create(_make_pokemon_cd("First Turn Draw After Setup", 70, "C"), 0)
+	setup_hand.append(drawn_card)
+	gsm.game_state.players[0].hand = setup_hand
+
+	var action := GameAction.create(
+		GameAction.ActionType.DRAW_CARD,
+		0,
+		{"count": 1, "card_names": ["First Turn Draw After Setup"], "card_instance_ids": [drawn_card.instance_id]},
+		1,
+		"turn start draw after setup"
+	)
+	battle_scene.call("_on_action_logged", action)
+
+	var reveal_active_before_alignment: Variant = battle_scene.get("_draw_reveal_active")
+	var queue_size_before_alignment: int = (battle_scene.get("_draw_reveal_queue") as Array).size()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_view_player", 0)
+	battle_scene.call("_refresh_hand")
+	var hand_container: HBoxContainer = battle_scene.get("_hand_container")
+	var visible_count_before_resume := hand_container.get_child_count()
+
+	battle_scene.call("_check_two_player_handover")
+	var reveal_active_after_alignment: Variant = battle_scene.get("_draw_reveal_active")
+	var auto_pending_after_alignment: Variant = battle_scene.get("_draw_reveal_auto_continue_pending")
+	var controller: RefCounted = battle_scene.get("_battle_draw_reveal_controller")
+	var has_auto_continue := controller != null and controller.has_method("run_auto_continue")
+	if has_auto_continue:
+		controller.call("run_auto_continue", battle_scene)
+	var visible_count_after_resume := hand_container.get_child_count()
+	GameManager.current_mode = previous_mode
+
+	return run_checks([
+		assert_eq(reveal_active_before_alignment, false, "Setup-time turn-start draw should initially defer while the view still belongs to the other player"),
+		assert_eq(queue_size_before_alignment, 1, "Deferred turn-start draw should stay queued until the visible player is realigned"),
+		assert_eq(visible_count_before_resume, 6, "Precondition: queued draw hides the new card before reveal resumes"),
+		assert_eq(reveal_active_after_alignment, true, "Realigning to the current player should resume the deferred turn-start draw reveal"),
+		assert_eq(auto_pending_after_alignment, true, "Resumed turn-start draw should auto-continue instead of waiting for a click"),
+		assert_eq(has_auto_continue, true, "Draw reveal controller should expose a run_auto_continue entrypoint"),
+		assert_eq(visible_count_after_resume, 7, "Auto-continued setup turn-start draw should render all seven hand cards"),
 	])
 
 
@@ -2360,6 +3384,32 @@ func test_battle_scene_opponent_hand_button_only_visible_in_vs_ai() -> String:
 	])
 
 
+func test_battle_scene_prize_hud_count_uses_two_line_mobile_text() -> String:
+	var scene := _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.turn_number = 1
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	gsm.game_state.players[0].prizes = _make_named_deck_cards(0, ["My Prize 1", "My Prize 2", "My Prize 3", "My Prize 4"])
+	gsm.game_state.players[1].prizes = _make_named_deck_cards(1, ["Opp Prize 1", "Opp Prize 2"])
+	scene._gsm = gsm
+	scene._view_player = 0
+
+	scene.call("_refresh_ui")
+	var my_prize_hud_count := scene.get("_my_prize_hud_count") as Label
+	var opp_prize_hud_count := scene.get("_opp_prize_hud_count") as Label
+
+	return run_checks([
+		assert_eq(my_prize_hud_count.text if my_prize_hud_count != null else "", "奖赏卡\n剩余4张", "Self prize HUD should show title and remaining count on two lines"),
+		assert_eq(opp_prize_hud_count.text if opp_prize_hud_count != null else "", "奖赏卡\n剩余2张", "Opponent prize HUD should show title and remaining count on two lines"),
+	])
+
+
 func test_battle_scene_two_player_hides_old_ai_and_vfx_buttons() -> String:
 	var scene := _make_battle_scene_stub()
 	var gsm := GameStateMachine.new()
@@ -2468,14 +3518,19 @@ func test_battle_scene_discard_viewer_uses_hud_scrollbar_full_list() -> String:
 	var first_player_horizontal_mode := discard_scroll.horizontal_scroll_mode
 	var first_player_scroll_styled := discard_scroll.has_meta("hud_scrollbar_styled")
 	var first_player_wheel_present := discard_utility_row.find_child("DiscardCardWheel", true, false) != null
+	var first_player_hbar := discard_scroll.get_h_scroll_bar()
+	var first_player_scrollbar_hidden := first_player_hbar != null and bool(first_player_hbar.get_meta("card_gallery_hidden_scrollbar", false)) and not first_player_hbar.visible
 
 	scene.call("_show_discard_pile", 1, "对方弃牌区")
 	var opponent_first_card := discard_card_row.get_child(0) as BattleCardView if discard_card_row.get_child_count() > 0 else null
 	var opponent_last_card := discard_card_row.get_child(7) as BattleCardView if discard_card_row.get_child_count() > 7 else null
 	var opponent_card_count := discard_card_row.get_child_count()
 	var opponent_wheel_present := discard_utility_row.find_child("DiscardCardWheel", true, false) != null
+	var collection_checks: Array[String] = [
+		assert_true(first_player_scrollbar_hidden, "Discard viewer should hide the visible horizontal scrollbar and rely on drag scrolling"),
+	]
 
-	return run_checks([
+	collection_checks.append_array([
 		assert_true(discard_overlay.visible, "打开弃牌区应显示预览层"),
 		assert_eq(first_player_card_count, 10, "弃牌区应把完整牌堆交给 HUD 滚动容器"),
 		assert_eq(first_player_page_size, 0, "弃牌区不应再启用7张窗口模式"),
@@ -2490,6 +3545,185 @@ func test_battle_scene_discard_viewer_uses_hud_scrollbar_full_list() -> String:
 		assert_eq(opponent_first_card.card_data.name if opponent_first_card != null and opponent_first_card.card_data != null else "", "对方弃牌7", "对方弃牌区应从最新弃牌开始"),
 		assert_eq(opponent_last_card.card_data.name if opponent_last_card != null and opponent_last_card.card_data != null else "", "对方弃牌0", "对方弃牌区完整列表应包含最早弃牌"),
 		assert_str_contains(discard_title.text, "对方弃牌区", "对方弃牌区标题应刷新为对方区域"),
+	])
+
+
+	return run_checks(collection_checks)
+
+
+func test_battle_scene_lost_zone_click_reuses_discard_viewer() -> String:
+	var scene := _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+	var discard_title := Label.new()
+	var discard_overlay := Panel.new()
+	var discard_list := ItemList.new()
+	var discard_scroll := ScrollContainer.new()
+	var discard_card_row := HBoxContainer.new()
+	var discard_utility_row := HBoxContainer.new()
+	scene.set("_discard_title", discard_title)
+	scene.set("_discard_overlay", discard_overlay)
+	scene.set("_discard_list", discard_list)
+	scene.set("_discard_card_scroll", discard_scroll)
+	scene.set("_discard_card_row", discard_card_row)
+	scene.set("_discard_utility_row", discard_utility_row)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	gsm.game_state.players[1].lost_zone.append(CardInstance.create(_make_pokemon_cd("Lost A", 70, "C"), 1))
+	gsm.game_state.players[1].lost_zone.append(CardInstance.create(_make_pokemon_cd("Lost B", 70, "C"), 1))
+
+	var click := InputEventMouseButton.new()
+	click.pressed = true
+	click.button_index = MOUSE_BUTTON_LEFT
+	scene.call("_on_lost_zone_open_control_input", click, true)
+	var first_card := discard_card_row.get_child(0) as BattleCardView if discard_card_row.get_child_count() > 0 else null
+	var second_card := discard_card_row.get_child(1) as BattleCardView if discard_card_row.get_child_count() > 1 else null
+
+	return run_checks([
+		assert_true(discard_overlay.visible, "Clicking LOST should open the shared card collection viewer"),
+		assert_str_contains(discard_title.text, "LOST", "LOST viewer title should identify the LOST zone"),
+		assert_eq(discard_card_row.get_child_count(), 2, "LOST viewer should render every card in the zone"),
+		assert_eq(first_card.card_data.name if first_card != null and first_card.card_data != null else "", "Lost B", "LOST viewer should show the most recent lost card first like discard"),
+		assert_eq(second_card.card_data.name if second_card != null and second_card.card_data != null else "", "Lost A", "LOST viewer should include older lost cards"),
+	])
+
+
+func test_battle_scene_discard_viewer_uses_compact_hud_surface() -> String:
+	var scene: Control = BattleScenePacked.instantiate()
+	scene.set("_view_player", 0)
+	scene.call("_setup_discard_gallery")
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	for player_index: int in 2:
+		var player := PlayerState.new()
+		player.player_index = player_index
+		gsm.game_state.players.append(player)
+	for i: int in range(3):
+		gsm.game_state.players[0].discard_pile.append(CardInstance.create(_make_pokemon_cd("紧凑弃牌%d" % i, 70, "C"), 0))
+	scene.set("_gsm", gsm)
+
+	scene.call("_show_discard_pile", 0, "己方弃牌区")
+	var discard_box := scene.find_child("DiscardBox", true, false) as PanelContainer
+	var discard_title := scene.find_child("DiscardTitle", true, false) as Label
+	var discard_scroll := scene.get("_discard_card_scroll") as ScrollContainer
+	var close_button := scene.find_child("DiscardCloseBtn", true, false) as Button
+	var dialog_card_size: Vector2 = scene.get("_dialog_card_size")
+	var expected_scroll_height := float(scene.call("_card_gallery_scroll_height", dialog_card_size.y))
+	var result := run_checks([
+		assert_true(discard_box != null and discard_box.size_flags_vertical == Control.SIZE_SHRINK_CENTER, "Discard viewer should behave like the compact card-choice HUD instead of filling vertical space"),
+		assert_true(discard_box != null and discard_box.custom_minimum_size.y <= 1.0, "Discard viewer box should not force the old tall minimum height"),
+		assert_true(discard_scroll != null and discard_scroll.size_flags_vertical == Control.SIZE_SHRINK_BEGIN, "Discard viewer card row should shrink to one card lane"),
+		assert_true(discard_scroll != null and absf(discard_scroll.custom_minimum_size.y - expected_scroll_height) <= 0.1, "Discard viewer should use a one-row card gallery height without a visible scrollbar lane"),
+		assert_true(discard_title != null and discard_title.get_theme_font_size("font_size") >= 18, "Discard viewer title should use readable HUD text"),
+		assert_true(close_button != null and close_button.custom_minimum_size.y >= 54.0, "Discard viewer close button should be a touch-sized HUD button"),
+		assert_true(close_button != null and close_button.get_theme_font_size("font_size") >= 17, "Discard viewer close button text should be readable"),
+	])
+	scene.queue_free()
+	return result
+
+
+func test_battle_scene_discard_card_right_click_opens_topmost_detail_overlay() -> String:
+	var scene := _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+
+	var discard_title := Label.new()
+	var discard_overlay := Panel.new()
+	var detail_overlay := Panel.new()
+	detail_overlay.visible = false
+	var discard_list := ItemList.new()
+	var discard_scroll := ScrollContainer.new()
+	var discard_card_row := HBoxContainer.new()
+	var discard_utility_row := HBoxContainer.new()
+	scene.add_child(discard_overlay)
+	scene.add_child(detail_overlay)
+	scene.set("_discard_title", discard_title)
+	scene.set("_discard_overlay", discard_overlay)
+	scene.set("_detail_overlay", detail_overlay)
+	scene.set("_detail_title", Label.new())
+	scene.set("_detail_content", RichTextLabel.new())
+	scene.set("_discard_list", discard_list)
+	scene.set("_discard_card_scroll", discard_scroll)
+	scene.set("_discard_card_row", discard_card_row)
+	scene.set("_discard_utility_row", discard_utility_row)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	gsm.game_state.players[0].discard_pile.append(CardInstance.create(_make_pokemon_cd("Discard Detail Target", 70, "C"), 0))
+
+	scene.call("_show_discard_pile", 0, "己方弃牌区")
+	var card_view := discard_card_row.get_child(0) as BattleCardView if discard_card_row.get_child_count() > 0 else null
+	var right_click := InputEventMouseButton.new()
+	right_click.button_index = MOUSE_BUTTON_RIGHT
+	right_click.pressed = true
+	if card_view != null:
+		card_view.call("_gui_input", right_click)
+
+	return run_checks([
+		assert_not_null(card_view, "Discard viewer should render discard cards as clickable card previews"),
+		assert_true(detail_overlay.visible, "Right-clicking a discard card should open card detail"),
+		assert_true(detail_overlay.z_index > discard_overlay.z_index, "Card detail overlay should render above the discard viewer overlay"),
+		assert_true(detail_overlay.get_index() > discard_overlay.get_index(), "Card detail overlay should be moved to the front among root overlays"),
+	])
+
+
+func test_battle_scene_discard_item_list_right_click_opens_card_detail() -> String:
+	var scene := _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+
+	var discard_overlay := Panel.new()
+	var detail_overlay := Panel.new()
+	detail_overlay.visible = false
+	var discard_list := ItemList.new()
+	scene.add_child(discard_overlay)
+	scene.add_child(detail_overlay)
+	scene.set("_discard_title", Label.new())
+	scene.set("_discard_overlay", discard_overlay)
+	scene.set("_detail_overlay", detail_overlay)
+	scene.set("_detail_title", Label.new())
+	scene.set("_detail_content", RichTextLabel.new())
+	scene.set("_discard_list", discard_list)
+	scene.set("_discard_card_scroll", null)
+	scene.set("_discard_card_row", null)
+	scene.set("_discard_utility_row", null)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	gsm.game_state.players[0].discard_pile.append(CardInstance.create(_make_pokemon_cd("Fallback Detail Target", 70, "C"), 0))
+
+	scene.call("_show_discard_pile", 0, "己方弃牌区")
+	scene.call("_on_discard_list_item_clicked", 0, Vector2.ZERO, MOUSE_BUTTON_RIGHT)
+
+	return run_checks([
+		assert_eq(discard_list.item_count, 1, "Fallback discard list should keep a visible card row"),
+		assert_true(detail_overlay.visible, "Right-clicking a fallback discard list item should open card detail"),
+		assert_true(detail_overlay.z_index > discard_overlay.z_index, "Fallback card detail should also render above the discard viewer"),
 	])
 
 
@@ -2821,6 +4055,64 @@ func test_battle_scene_pokemon_action_dialog_uses_hud_cards_with_full_text() -> 
 	])
 
 
+func test_battle_scene_bench_pokemon_action_dialog_lists_attacks_as_disabled() -> String:
+	var scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	scene._gsm = gsm
+	scene._view_player = 0
+
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Active Guard", 120, "C"), 0))
+	gsm.game_state.players[0].active_pokemon = active
+	var bench_cd := _make_pokemon_cd("Bench Skill Viewer", 90, "R")
+	var bench := PokemonSlot.new()
+	bench.pokemon_stack.append(CardInstance.create(bench_cd, 0))
+	gsm.game_state.players[0].bench = [bench]
+	gsm.game_state.players[1].active_pokemon = PokemonSlot.new()
+	gsm.game_state.players[1].active_pokemon.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Target", 100, "C"), 1))
+
+	scene.call("_show_pokemon_action_dialog", 0, bench, false)
+	var data: Dictionary = scene.get("_dialog_data")
+	var actions: Array = data.get("actions", [])
+	var action_items: Array = data.get("action_items", [])
+	var attack_count := 0
+	var disabled_attack_count := 0
+	var attack_item_count := 0
+	var first_attack_reason := ""
+	for action_variant: Variant in actions:
+		if not (action_variant is Dictionary):
+			continue
+		var action: Dictionary = action_variant
+		if str(action.get("type", "")) != "attack":
+			continue
+		attack_count += 1
+		if not bool(action.get("enabled", true)):
+			disabled_attack_count += 1
+		if first_attack_reason == "":
+			first_attack_reason = str(action.get("reason", ""))
+	for item_variant: Variant in action_items:
+		if not (item_variant is Dictionary):
+			continue
+		var item: Dictionary = item_variant
+		if str(item.get("type", "")) == "attack":
+			attack_item_count += 1
+
+	return run_checks([
+		assert_eq(str(scene.get("_pending_choice")), "pokemon_action", "Benched Pokemon click should still open the Pokemon action HUD"),
+		assert_eq(attack_count, bench_cd.attacks.size(), "Benched Pokemon HUD should list all printed attacks for reading"),
+		assert_eq(disabled_attack_count, bench_cd.attacks.size(), "Benched Pokemon attacks should be visible but disabled"),
+		assert_eq(attack_item_count, bench_cd.attacks.size(), "Benched Pokemon action cards should include attack text rows"),
+		assert_true(first_attack_reason.strip_edges() != "", "Disabled bench attacks should explain why they cannot be used"),
+	])
+
+
 func test_battle_scene_pokemon_action_dialog_shows_disabled_actions_when_none_are_executable() -> String:
 	var scene = _make_battle_scene_stub()
 	var gsm := GameStateMachine.new()
@@ -3038,6 +4330,67 @@ func test_battle_scene_heavy_baton_uses_field_slot_choice() -> String:
 	return run_checks([
 		assert_eq(str(scene.get("_pending_choice")), "heavy_baton_target", "Heavy Baton should keep heavy_baton_target pending choice"),
 		assert_eq(str(scene.get("_field_interaction_mode")), "slot_select", "Heavy Baton should use field slot selection"),
+	])
+
+
+func test_exp_share_assignment_keeps_follow_up_prize_prompt() -> String:
+	var previous_mode: int = GameManager.current_mode
+	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
+
+	var scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.POKEMON_CHECK
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 1)
+	gsm.player_choice_required.connect(scene._on_player_choice_required)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var attacker := PokemonSlot.new()
+	attacker.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Attacker", 120, "C"), 0))
+	gsm.game_state.players[0].active_pokemon = attacker
+	for prize_index: int in 6:
+		gsm.game_state.players[0].prizes.append(CardInstance.create(_make_pokemon_cd("Prize %d" % prize_index, 60, "C"), 0))
+
+	var knocked_out := PokemonSlot.new()
+	knocked_out.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Knocked Out Active", 60, "C"), 1))
+	knocked_out.damage_counters = 60
+	var energy_a := CardInstance.create(_make_energy_cd("Basic Energy A", "C"), 1)
+	var energy_b := CardInstance.create(_make_energy_cd("Basic Energy B", "C"), 1)
+	knocked_out.attached_energy.append(energy_a)
+	knocked_out.attached_energy.append(energy_b)
+	gsm.game_state.players[1].active_pokemon = knocked_out
+
+	var exp_share_target := PokemonSlot.new()
+	exp_share_target.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Exp Share Bench", 100, "C"), 1))
+	var exp_share_card := CardInstance.create(_make_trainer_cd("Exp. Share", "Tool", ""), 1)
+	exp_share_card.card_data.effect_id = "40d67cc66ad153ee1d54c6213c50b4a1"
+	exp_share_target.attached_tool = exp_share_card
+	gsm.game_state.players[1].bench = [exp_share_target]
+
+	gsm.call("_handle_knockout", 1, knocked_out, true)
+	var initial_pending: String = str(scene.get("_pending_choice"))
+	var assignments: Array[Dictionary] = [{
+		"source": energy_a,
+		"target": exp_share_target,
+	}]
+	scene.call("_commit_exp_share_assignment", assignments)
+	var pending_after_commit: String = str(scene.get("_pending_choice"))
+	var active_after_commit: PokemonSlot = gsm.game_state.players[1].active_pokemon
+	var transferred: bool = energy_a in exp_share_target.attached_energy
+
+	GameManager.current_mode = previous_mode
+	return run_checks([
+		assert_eq(initial_pending, "exp_share_target", "Exp. Share knockout should first wait for the energy-transfer prompt"),
+		assert_true(transferred, "Exp. Share should move the selected Basic Energy to the target"),
+		assert_eq(active_after_commit, null, "The knocked-out Active should be removed before the replacement prompt"),
+		assert_eq(pending_after_commit, "take_prize", "Resolving Exp. Share must preserve the follow-up prize prompt instead of clearing all pending choices"),
 	])
 
 
@@ -3302,10 +4655,13 @@ func test_battle_scene_buddy_poffin_card_dialog_clicks_select_distinct_candidate
 	var toggle_changed := bool(battle_scene.call("_toggle_dialog_card_choice", 0, 2))
 	var toggled_selection: Array = (battle_scene.get("_dialog_card_selected_indices") as Array).duplicate()
 	(battle_scene.get("_dialog_card_selected_indices") as Array).clear()
+	battle_scene.set("_modal_input_slot_suppress_until_msec", 0)
 	battle_scene.call("_on_dialog_card_chosen", 0)
 	var direct_selection: Array = (battle_scene.get("_dialog_card_selected_indices") as Array).duplicate()
+	var modal_suppression_after_first_multi_select := int(battle_scene.get("_modal_input_slot_suppress_until_msec"))
 	battle_scene.call("_on_dialog_card_chosen", 1)
 	var second_selection: Array = (battle_scene.get("_dialog_card_selected_indices") as Array).duplicate()
+	var modal_suppression_after_second_multi_select := int(battle_scene.get("_modal_input_slot_suppress_until_msec"))
 
 	return run_checks([
 		assert_true(bool(battle_scene.get("_dialog_card_mode")), "Buddy Poffin should render eligible basics in card dialog mode"),
@@ -3317,6 +4673,243 @@ func test_battle_scene_buddy_poffin_card_dialog_clicks_select_distinct_candidate
 		assert_eq(toggled_selection, [0], "Buddy Poffin card toggle helper should persist the selected index"),
 		assert_eq(direct_selection, [0], "Direct dialog choice handling should still select the first Buddy Poffin candidate"),
 		assert_eq(second_selection, [0, 1], "Clicking a second Buddy Poffin candidate should add the distinct second entry"),
+		assert_eq(modal_suppression_after_first_multi_select, 0, "Multi-select card dialogs should not arm modal slot suppression while the dialog remains open"),
+		assert_eq(modal_suppression_after_second_multi_select, 0, "Consecutive multi-select card taps should not be swallowed by modal slot suppression"),
+	])
+
+
+func test_portrait_card_search_dialog_restores_large_horizontal_scrollbar() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 3
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	for i: int in 8:
+		player.deck.append(CardInstance.create(_make_pokemon_cd("Search Target %d" % i, 60, "C"), 0))
+
+	var search_card := CardInstance.create(_make_trainer_cd("Nest Ball", "Item", ""), 0)
+	var steps: Array[Dictionary] = [{
+		"id": "basic_pokemon",
+		"title": "Select a Basic Pokemon",
+		"items": player.deck.duplicate(),
+		"labels": [],
+		"min_select": 1,
+		"max_select": 1,
+		"allow_cancel": true,
+	}]
+
+	battle_scene.call("_start_effect_interaction", "trainer", 0, steps, search_card)
+
+	var scroll: ScrollContainer = battle_scene.get("_dialog_card_scroll")
+	var row := battle_scene.get("_dialog_card_row") as HBoxContainer
+	var first_card := row.get_child(0) as BattleCardView if row != null and row.get_child_count() > 0 else null
+	var dialog_card_size: Vector2 = battle_scene.get("_dialog_card_size")
+	var hbar := scroll.get_h_scroll_bar() if scroll != null else null
+	var expected_height := float(battle_scene.call("_dialog_card_scroll_height"))
+	var drag_active := scroll != null and bool(scroll.get_meta("card_gallery_drag_scroll_active", false))
+	var keeps_scrollbar_visible := scroll != null and bool(scroll.get_meta("card_gallery_drag_keep_scrollbars_visible", false))
+	var card_input_enabled := first_card != null and bool(first_card.get_meta("card_gallery_drag_input_enabled", false))
+	if scroll != null:
+		scroll.size = Vector2(400, scroll.custom_minimum_size.y)
+	if row != null:
+		row.size = Vector2(1400, row.size.y)
+		row.custom_minimum_size = Vector2(1400, row.custom_minimum_size.y)
+	if hbar != null:
+		hbar.min_value = 0.0
+		hbar.max_value = 1000.0
+		hbar.page = 400.0
+	scroll.scroll_horizontal = 120
+	var start_scroll := scroll.scroll_horizontal
+
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = Vector2(220, 24)
+	press.global_position = Vector2(220, 24)
+	var press_consumed := bool(battle_scene.call("_handle_card_gallery_drag_scroll_input", press, scroll, "dialog_cards"))
+
+	var drag := InputEventMouseMotion.new()
+	drag.position = Vector2(60, 24)
+	drag.global_position = Vector2(60, 24)
+	var drag_consumed := bool(battle_scene.call("_handle_card_gallery_drag_scroll_input", drag, scroll, "dialog_cards"))
+	var scroll_after_drag := scroll.scroll_horizontal if scroll != null else start_scroll
+
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = Vector2(60, 24)
+	release.global_position = Vector2(60, 24)
+	battle_scene.call("_handle_card_gallery_drag_scroll_input", release, scroll, "dialog_cards")
+
+	return run_checks([
+		assert_true(bool(battle_scene.get("_dialog_card_mode")), "Portrait deck-search choices should still use the visual card dialog"),
+		assert_eq(scroll.horizontal_scroll_mode if scroll != null else -1, ScrollContainer.SCROLL_MODE_AUTO, "Portrait card search should keep native horizontal scrolling available"),
+		assert_true(drag_active, "Portrait card search should activate card-gallery drag scrolling"),
+		assert_true(keeps_scrollbar_visible, "Portrait card search drag scrolling should keep the visible scrollbar available"),
+		assert_true(card_input_enabled, "Portrait card-search card previews should forward pointer input to shared drag scrolling"),
+		assert_false(bool(hbar.get_meta("card_gallery_hidden_scrollbar", false)) if hbar != null else true, "Portrait card search should restore the visible horizontal scrollbar"),
+		assert_eq(str(hbar.get_meta("hud_scrollbar_profile", "")) if hbar != null else "", "portrait_touch", "Portrait card search scrollbar should use the large touch HUD profile"),
+		assert_gte(hbar.custom_minimum_size.y if hbar != null else 0.0, float(HudThemeScript.SCROLLBAR_PORTRAIT_TOUCH_THICKNESS), "Portrait card search horizontal scrollbar should be large enough to grab on mobile"),
+		assert_true(absf(scroll.custom_minimum_size.y - expected_height) <= 0.1 if scroll != null else false, "Portrait card search should reserve space below cards for the large scrollbar"),
+		assert_gt(scroll.custom_minimum_size.y if scroll != null else 0.0, dialog_card_size.y, "Portrait card search row should be taller than a bare card lane because the scrollbar is visible"),
+		assert_true(press_consumed, "Portrait card search drag handler should consume the initial press while the scrollbar remains visible"),
+		assert_true(drag_consumed, "Portrait card search drag handler should consume horizontal drag while the scrollbar remains visible"),
+		assert_true(scroll_after_drag > start_scroll, "Portrait card search should move horizontally when dragged while the scrollbar remains visible"),
+	])
+
+
+func test_portrait_discard_viewer_restores_large_horizontal_scrollbar() -> String:
+	var battle_scene: Control = BattleScenePacked.instantiate()
+	battle_scene.set("_view_player", 0)
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	battle_scene.call("_setup_discard_gallery")
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 3
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	for i: int in 10:
+		gsm.game_state.players[0].discard_pile.append(CardInstance.create(_make_pokemon_cd("Portrait Discard %d" % i, 60, "C"), 0))
+	battle_scene.set("_gsm", gsm)
+
+	battle_scene.call("_show_discard_pile", 0, "Discard")
+	var scroll: ScrollContainer = battle_scene.get("_discard_card_scroll")
+	var row := battle_scene.get("_discard_card_row") as HBoxContainer
+	var first_card := row.get_child(0) as BattleCardView if row != null and row.get_child_count() > 0 else null
+	var dialog_card_size: Vector2 = battle_scene.get("_dialog_card_size")
+	var hbar := scroll.get_h_scroll_bar() if scroll != null else null
+	var expected_height := float(battle_scene.call("_dialog_card_scroll_height"))
+	var drag_active := scroll != null and bool(scroll.get_meta("card_gallery_drag_scroll_active", false))
+	var keeps_scrollbar_visible := scroll != null and bool(scroll.get_meta("card_gallery_drag_keep_scrollbars_visible", false))
+	var card_input_enabled := first_card != null and bool(first_card.get_meta("card_gallery_drag_input_enabled", false))
+	if scroll != null:
+		scroll.size = Vector2(400, scroll.custom_minimum_size.y)
+	if row != null:
+		row.size = Vector2(1600, row.size.y)
+		row.custom_minimum_size = Vector2(1600, row.custom_minimum_size.y)
+	if hbar != null:
+		hbar.min_value = 0.0
+		hbar.max_value = 1200.0
+		hbar.page = 400.0
+	scroll.scroll_horizontal = 120
+	var start_scroll := scroll.scroll_horizontal
+
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = Vector2(220, 24)
+	press.global_position = Vector2(220, 24)
+	var press_consumed := bool(battle_scene.call("_handle_card_gallery_drag_scroll_input", press, scroll, "discard_collection"))
+
+	var drag := InputEventMouseMotion.new()
+	drag.position = Vector2(60, 24)
+	drag.global_position = Vector2(60, 24)
+	var drag_consumed := bool(battle_scene.call("_handle_card_gallery_drag_scroll_input", drag, scroll, "discard_collection"))
+	var scroll_after_drag := scroll.scroll_horizontal if scroll != null else start_scroll
+
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = Vector2(60, 24)
+	release.global_position = Vector2(60, 24)
+	battle_scene.call("_handle_card_gallery_drag_scroll_input", release, scroll, "discard_collection")
+
+	var result := run_checks([
+		assert_eq(scroll.horizontal_scroll_mode if scroll != null else -1, ScrollContainer.SCROLL_MODE_AUTO, "Portrait discard viewer should keep native horizontal scrolling available"),
+		assert_true(drag_active, "Portrait discard viewer should keep card-gallery drag scrolling active"),
+		assert_true(keeps_scrollbar_visible, "Portrait discard viewer drag scrolling should keep the visible scrollbar available"),
+		assert_true(card_input_enabled, "Portrait discard viewer cards should forward pointer input to shared drag scrolling"),
+		assert_false(bool(hbar.get_meta("card_gallery_hidden_scrollbar", false)) if hbar != null else true, "Portrait discard viewer should restore the visible horizontal scrollbar"),
+		assert_eq(str(hbar.get_meta("hud_scrollbar_profile", "")) if hbar != null else "", "portrait_touch", "Portrait discard viewer scrollbar should use the large touch HUD profile"),
+		assert_gte(hbar.custom_minimum_size.y if hbar != null else 0.0, float(HudThemeScript.SCROLLBAR_PORTRAIT_TOUCH_THICKNESS), "Portrait discard viewer horizontal scrollbar should be large enough to grab on mobile"),
+		assert_true(absf(scroll.custom_minimum_size.y - expected_height) <= 0.1 if scroll != null else false, "Portrait discard viewer should reserve space below cards for the large scrollbar"),
+		assert_gt(scroll.custom_minimum_size.y if scroll != null else 0.0, dialog_card_size.y, "Portrait discard viewer row should be taller than a bare card lane because the scrollbar is visible"),
+		assert_true(press_consumed, "Portrait discard viewer drag handler should consume the initial press while the scrollbar remains visible"),
+		assert_true(drag_consumed, "Portrait discard viewer drag handler should consume horizontal drag while the scrollbar remains visible"),
+		assert_true(scroll_after_drag > start_scroll, "Portrait discard viewer should move horizontally when dragged while the scrollbar remains visible"),
+	])
+	battle_scene.queue_free()
+	return result
+
+
+func test_battle_scene_superior_energy_retrieval_multi_select_keeps_second_tap_live() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 3
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var superior_card := CardInstance.create(_make_trainer_cd("超级能量回收", "Item", ""), 0)
+	player.hand = [
+		superior_card,
+		CardInstance.create(_make_pokemon_cd("Discard Cost A", 60, "C"), 0),
+		CardInstance.create(_make_pokemon_cd("Discard Cost B", 70, "C"), 0),
+	]
+	player.discard_pile = [
+		CardInstance.create(_make_energy_cd("Water Energy", "W"), 0),
+		CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0),
+		CardInstance.create(_make_energy_cd("Psychic Energy", "P"), 0),
+	]
+
+	var effect := preload("res://scripts/effects/trainer_effects/EffectRecoverBasicEnergy.gd").new(4, 2)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(superior_card, gsm.game_state)
+	battle_scene.call("_start_effect_interaction", "trainer", 0, steps, superior_card)
+
+	battle_scene.set("_modal_input_slot_suppress_until_msec", 0)
+	battle_scene.call("_on_dialog_card_chosen", 0)
+	var discard_cost_first_selection: Array = (battle_scene.get("_dialog_card_selected_indices") as Array).duplicate()
+	var discard_cost_suppression_after_first := int(battle_scene.get("_modal_input_slot_suppress_until_msec"))
+	battle_scene.call("_on_dialog_card_chosen", 1)
+	var discard_cost_second_selection: Array = (battle_scene.get("_dialog_card_selected_indices") as Array).duplicate()
+	var discard_cost_suppression_after_second := int(battle_scene.get("_modal_input_slot_suppress_until_msec"))
+
+	battle_scene.call("_on_dialog_confirm")
+	var second_step_id := str(((battle_scene.get("_pending_effect_steps") as Array)[int(battle_scene.get("_pending_effect_step_index"))] as Dictionary).get("id", ""))
+	battle_scene.set("_modal_input_slot_suppress_until_msec", 0)
+	battle_scene.call("_on_dialog_card_chosen", 0)
+	var recover_first_selection: Array = (battle_scene.get("_dialog_card_selected_indices") as Array).duplicate()
+	var recover_suppression_after_first := int(battle_scene.get("_modal_input_slot_suppress_until_msec"))
+	battle_scene.call("_on_dialog_card_chosen", 1)
+	var recover_second_selection: Array = (battle_scene.get("_dialog_card_selected_indices") as Array).duplicate()
+	var recover_suppression_after_second := int(battle_scene.get("_modal_input_slot_suppress_until_msec"))
+
+	return run_checks([
+		assert_eq(discard_cost_first_selection, [0], "Superior Energy Retrieval should select the first discard-cost card immediately"),
+		assert_eq(discard_cost_second_selection, [0, 1], "Superior Energy Retrieval should select the second discard-cost card without requiring an extra tap"),
+		assert_eq(discard_cost_suppression_after_first, 0, "Discard-cost multi-select should not arm modal slot suppression while the dialog remains open"),
+		assert_eq(discard_cost_suppression_after_second, 0, "Discard-cost consecutive card taps should stay live"),
+		assert_eq(second_step_id, "recover_energy", "Superior Energy Retrieval should advance to the discard-pile Energy recovery step"),
+		assert_eq(recover_first_selection, [0], "Superior Energy Retrieval should select the first discard-pile Energy immediately"),
+		assert_eq(recover_second_selection, [0, 1], "Superior Energy Retrieval should select the second discard-pile Energy without requiring an extra tap"),
+		assert_eq(recover_suppression_after_first, 0, "Recovery multi-select should not arm modal slot suppression while the dialog remains open"),
+		assert_eq(recover_suppression_after_second, 0, "Recovery consecutive card taps should stay live"),
 	])
 
 
@@ -3827,6 +5420,151 @@ func test_battle_scene_field_interaction_metrics_preserve_top_position() -> Stri
 	])
 
 
+func test_battle_scene_landscape_grouped_energy_switch_sources_keep_room_after_layout_refresh() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_play_card_size", Vector2(112, 156))
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Active", 120, "L"), 0))
+	active.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Active", "L"), 0))
+	gsm.game_state.players[0].active_pokemon = active
+
+	var bench := PokemonSlot.new()
+	bench.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Bench", 90, "L"), 0))
+	bench.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Bench", "L"), 0))
+	gsm.game_state.players[0].bench = [bench]
+
+	var effect := EffectEnergySwitchScript.new()
+	var card := CardInstance.create(_make_trainer_cd("Energy Switch", "Item", ""), 0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, gsm.game_state)
+	battle_scene.call("_start_effect_interaction", "trainer", 0, steps, card)
+	battle_scene.call("_update_field_interaction_panel_metrics", Vector2(1366, 768))
+
+	var row := battle_scene.get("_field_interaction_row") as HBoxContainer
+	var scroll := battle_scene.get("_field_interaction_scroll") as ScrollContainer
+	var board := row.find_child("FieldEnergySourceBattlefield", true, false) as PanelContainer if row != null else null
+	var cancel_button := battle_scene.get("_field_interaction_cancel_btn") as Button
+	var confirm_button := battle_scene.get("_field_interaction_confirm_btn") as Button
+	var cancel_style := cancel_button.get_theme_stylebox("normal") as StyleBoxFlat if cancel_button != null else null
+	var confirm_style := confirm_button.get_theme_stylebox("normal") as StyleBoxFlat if confirm_button != null else null
+	var source_card_count := 0
+	var narrow_source_count := 0
+	var short_source_count := 0
+	var nodes: Array[Node] = []
+	if row != null:
+		nodes.append(row)
+	while not nodes.is_empty():
+		var node: Node = nodes.pop_front()
+		if node is BattleCardView and node.has_meta("field_assignment_source_index"):
+			var source_view := node as BattleCardView
+			source_card_count += 1
+			if source_view.custom_minimum_size.x < 92.0:
+				narrow_source_count += 1
+			if source_view.custom_minimum_size.y < 128.0:
+				short_source_count += 1
+		for child: Node in node.get_children():
+			nodes.append(child)
+
+	return run_checks([
+		assert_not_null(board, "Energy Switch should render grouped source cards inside a battlefield-style board"),
+		assert_true(row != null and board != null and row.custom_minimum_size.y >= board.custom_minimum_size.y, "Landscape metric refresh should not collapse the grouped Energy Switch source board back to one card lane"),
+		assert_true(scroll != null and row != null and scroll.custom_minimum_size.y > row.custom_minimum_size.y, "Grouped source scroll should keep room for horizontal scrollbar clearance"),
+		assert_eq(source_card_count, 2, "Energy Switch should render both attached Basic Energy cards as source choices"),
+		assert_eq(narrow_source_count, 0, "Grouped field source cards should not use the old narrow mini-card width"),
+		assert_eq(short_source_count, 0, "Grouped field source cards should keep the same readable minimum height as grouped dialog cards"),
+		assert_true(cancel_button != null and bool(cancel_button.get_meta("field_interaction_hud_button", false)), "Landscape field-assignment cancel button should use the unified HUD button style"),
+		assert_true(confirm_button != null and bool(confirm_button.get_meta("field_interaction_hud_button", false)), "Landscape field-assignment confirm button should use the unified HUD button style"),
+		assert_true(cancel_style != null and cancel_style.border_color.a > 0.8, "Landscape field-assignment cancel button should have a visible HUD border"),
+		assert_true(confirm_style != null and confirm_style.border_color.a > 0.8, "Landscape field-assignment confirm button should have a visible HUD border"),
+	])
+
+
+func test_battle_scene_portrait_grouped_energy_switch_sources_keep_touch_room_after_layout_refresh() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+	var battle_scene: Control = BattleScenePacked.instantiate()
+	battle_scene.set("_view_player", 0)
+	battle_scene.call("_apply_portrait_layout", Vector2(390, 844))
+	battle_scene.call("_setup_field_interaction_panel")
+
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	battle_scene.set("_gsm", gsm)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Portrait Active", 120, "L"), 0))
+	active.attached_energy.append(CardInstance.create(_make_energy_cd("Portrait Lightning Active", "L"), 0))
+	gsm.game_state.players[0].active_pokemon = active
+
+	var bench := PokemonSlot.new()
+	bench.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Portrait Bench", 90, "L"), 0))
+	bench.attached_energy.append(CardInstance.create(_make_energy_cd("Portrait Lightning Bench", "L"), 0))
+	gsm.game_state.players[0].bench = [bench]
+
+	var effect := EffectEnergySwitchScript.new()
+	var card := CardInstance.create(_make_trainer_cd("Energy Switch", "Item", ""), 0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, gsm.game_state)
+	if steps.is_empty():
+		battle_scene.queue_free()
+		GameManager.battle_layout_mode = previous_layout
+		return assert_true(false, "Energy Switch should create an assignment step when attached Energy exists")
+	battle_scene.call("_show_field_assignment_interaction", steps[0])
+	battle_scene.call("_update_field_interaction_panel_metrics", Vector2(390, 844))
+
+	var row := battle_scene.get("_field_interaction_row") as HBoxContainer
+	var scroll := battle_scene.get("_field_interaction_scroll") as ScrollContainer
+	var panel := battle_scene.get("_field_interaction_panel") as PanelContainer
+	var board := row.find_child("FieldEnergySourceBattlefield", true, false) as PanelContainer if row != null else null
+	var source_card_count := 0
+	var narrow_source_count := 0
+	var short_source_count := 0
+	var flexible_source_count := 0
+	var nodes: Array[Node] = []
+	if row != null:
+		nodes.append(row)
+	while not nodes.is_empty():
+		var node: Node = nodes.pop_front()
+		if node is BattleCardView and node.has_meta("field_assignment_source_index"):
+			var source_view := node as BattleCardView
+			source_card_count += 1
+			if source_view.custom_minimum_size.x < 104.0:
+				narrow_source_count += 1
+			if source_view.custom_minimum_size.y < 146.0:
+				short_source_count += 1
+			if source_view.size_flags_horizontal != Control.SIZE_SHRINK_CENTER:
+				flexible_source_count += 1
+		for child: Node in node.get_children():
+			nodes.append(child)
+
+	var result := run_checks([
+		assert_not_null(board, "Portrait Energy Switch should render grouped source cards inside the battlefield-style board"),
+		assert_true(row != null and board != null and row.custom_minimum_size.y >= board.custom_minimum_size.y, "Portrait metric refresh should not collapse the grouped Energy Switch source board back to one card lane"),
+		assert_true(scroll != null and row != null and scroll.custom_minimum_size.y > row.custom_minimum_size.y, "Portrait grouped source scroll should keep room for horizontal scrollbar clearance"),
+		assert_true(panel != null and scroll != null and panel.custom_minimum_size.y >= scroll.custom_minimum_size.y + 180.0, "Portrait grouped source panel should reserve room for the large popup controls below the board"),
+		assert_eq(source_card_count, 2, "Portrait Energy Switch should render both attached Basic Energy cards as source choices"),
+		assert_eq(narrow_source_count, 0, "Portrait grouped field source cards should keep the wider touch-card minimum"),
+		assert_eq(short_source_count, 0, "Portrait grouped field source cards should keep the taller touch-card minimum"),
+		assert_eq(flexible_source_count, 0, "Portrait grouped field source cards should use fixed horizontal sizing inside the scroll board"),
+	])
+	battle_scene.queue_free()
+	GameManager.battle_layout_mode = previous_layout
+	return result
+
+
 func test_battle_scene_electric_generator_allows_two_field_assignments() -> String:
 	var battle_scene = _make_battle_scene_stub()
 	var gsm := GameStateMachine.new()
@@ -3863,10 +5601,18 @@ func test_battle_scene_electric_generator_allows_two_field_assignments() -> Stri
 	battle_scene.call("_handle_field_assignment_target_index", 1)
 
 	var assignments: Array = battle_scene.get("_field_interaction_assignment_entries")
+	var cancel_button := battle_scene.get("_field_interaction_cancel_btn") as Button
+	var confirm_button := battle_scene.get("_field_interaction_confirm_btn") as Button
+	var cancel_style := cancel_button.get_theme_stylebox("normal") as StyleBoxFlat if cancel_button != null else null
+	var confirm_style := confirm_button.get_theme_stylebox("normal") as StyleBoxFlat if confirm_button != null else null
 
 	return run_checks([
 		assert_eq(assignments.size(), 2, "Electric Generator should keep accepting a second assignment when two Lightning Energy cards are revealed"),
 		assert_eq(str(battle_scene.get("_field_interaction_mode")), "assignment", "Electric Generator should stay in assignment mode until the player confirms"),
+		assert_true(cancel_button != null and bool(cancel_button.get_meta("field_interaction_hud_button", false)), "Electric Generator assignment cancel should use the unified HUD button style"),
+		assert_true(confirm_button != null and bool(confirm_button.get_meta("field_interaction_hud_button", false)), "Electric Generator assignment confirm should use the unified HUD button style"),
+		assert_true(cancel_style != null and cancel_style.border_color.a > 0.8, "Electric Generator assignment cancel should have a visible HUD border"),
+		assert_true(confirm_style != null and confirm_style.border_color.a > 0.8, "Electric Generator assignment confirm should have a visible HUD border"),
 	])
 
 
@@ -4644,6 +6390,63 @@ func test_battle_scene_sadas_vitality_routes_real_effect_to_assignment_ui() -> S
 	])
 
 
+func test_battle_scene_sadas_vitality_field_assignment_confirm_resolves_effect() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.turn_number = 2
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var raging_bolt := PokemonSlot.new()
+	var raging_bolt_cd := _make_pokemon_cd("Raging Bolt ex", 240, "N")
+	raging_bolt_cd.is_tags = PackedStringArray(["Ancient"])
+	raging_bolt.pokemon_stack.append(CardInstance.create(raging_bolt_cd, 0))
+	gsm.game_state.players[0].active_pokemon = raging_bolt
+
+	var energy := CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0)
+	var second_energy := CardInstance.create(_make_energy_cd("Fighting Energy", "F"), 0)
+	gsm.game_state.players[0].discard_pile = [energy, second_energy]
+	for i: int in 3:
+		gsm.game_state.players[0].deck.append(CardInstance.create(_make_pokemon_cd("Sada Draw %d" % i, 60, "C"), 0))
+
+	var sada_cd := _make_trainer_cd("Professor Sada's Vitality", "Supporter", "")
+	sada_cd.effect_id = "651276c51911345aa091c1c7b87f3f4f"
+	var sada := CardInstance.create(sada_cd, 0)
+	gsm.game_state.players[0].hand.append(sada)
+
+	var effect := EffectSadasVitalityScript.new()
+	var steps: Array[Dictionary] = effect.get_interaction_steps(sada, gsm.game_state)
+	battle_scene.call("_start_effect_interaction", "trainer", 0, steps, sada)
+	battle_scene.call("_on_field_assignment_source_chosen", 0)
+	battle_scene.call("_handle_field_assignment_target_index", 0)
+	var confirm_button := battle_scene.get("_field_interaction_confirm_btn") as Button
+	var overlay := battle_scene.get("_field_interaction_overlay") as Control
+	var enabled_after_assignment := confirm_button != null and not confirm_button.disabled
+	if confirm_button != null:
+		confirm_button.emit_signal("pressed")
+
+	var result := run_checks([
+		assert_true(enabled_after_assignment, "Sada field assignment confirm should enable after one legal energy assignment"),
+		assert_true(overlay != null and int(overlay.z_index) >= 300 and not overlay.z_as_relative, "Field assignment overlay should sit above portrait HUD/input layers"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "Confirm should finish the pending effect interaction"),
+		assert_true(energy in raging_bolt.attached_energy, "Confirm should attach the selected discard Energy to Raging Bolt"),
+		assert_false(energy in gsm.game_state.players[0].discard_pile, "Attached Energy should leave the discard pile"),
+		assert_true(second_energy in gsm.game_state.players[0].discard_pile, "Unselected discard Energy should remain when confirming fewer than the max assignments"),
+		assert_true(sada in gsm.game_state.players[0].discard_pile, "Sada should be discarded after resolving"),
+		assert_eq(gsm.game_state.players[0].hand.size(), 3, "Sada should draw three cards after attaching Energy"),
+	])
+	battle_scene.free()
+	return result
+
+
 func test_battle_scene_attach_from_deck_routes_real_effect_to_assignment_ui() -> String:
 	var battle_scene = _make_battle_scene_stub()
 	var gsm := GameStateMachine.new()
@@ -4705,7 +6508,8 @@ func test_battle_scene_attack_switch_self_to_bench_routes_real_attack_to_field_s
 	var effect := AttackSwitchSelfToBenchScript.new()
 	var attack_data := {"name": "Switch Strike"}
 	var steps: Array[Dictionary] = effect.get_attack_interaction_steps(attacker_card, attack_data, gsm.game_state)
-	battle_scene.call("_start_effect_interaction", "attack", 0, steps, attacker_card, attacker, 0)
+	var attack_effects: Array[BaseEffect] = [effect]
+	battle_scene.call("_start_effect_interaction", "attack", 0, steps, attacker_card, attacker, 0, {}, attack_effects)
 
 	return run_checks([
 		assert_eq(str(battle_scene.get("_field_interaction_mode")), "slot_select", "Self-switch attacks should route to field slot selection"),
@@ -5009,8 +6813,8 @@ func test_battle_scene_prize_selection_titles_highlight_and_reset() -> String:
 	scene.call("_refresh_prize_titles")
 
 	return run_checks([
-		assert_eq(pending_my_text, "点左侧奖赏卡：选2张", "Prize selection should replace the player title with the highlighted count prompt"),
-		assert_eq(pending_my_hud_text, "点左侧奖赏卡：选2张", "Prize selection should also update the field HUD title"),
+		assert_eq(pending_my_text, "选择奖赏卡：选2张", "Prize selection should replace the player title with the highlighted count prompt"),
+		assert_eq(pending_my_hud_text, "选择奖赏卡：选2张", "Prize selection should also update the field HUD title"),
 		assert_eq(pending_opp_text, "对方奖赏", "The non-selecting side should keep its default title"),
 		assert_eq(pending_my_color, Color(1.0, 0.87, 0.34, 1.0), "Prize selection title should switch to the highlight color"),
 		assert_eq(pending_my_hud_color, Color(1.0, 0.87, 0.34, 1.0), "Prize selection HUD title should switch to the highlight color"),
@@ -5207,7 +7011,11 @@ func test_battle_scene_regidrago_copy_dragapult_injects_followup_assignment_step
 	var initial_steps: Array = battle_scene.get("_pending_effect_steps")
 	var copied_step: Dictionary = initial_steps[0] if not initial_steps.is_empty() else {}
 	var copied_items: Array = copied_step.get("items", [])
+	var dialog_data: Dictionary = battle_scene.get("_dialog_data")
+	var action_items: Array = dialog_data.get("action_items", [])
 	var phantom_option: Dictionary = {}
+	var phantom_action: Dictionary = {}
+	var all_action_costs_are_apex := true
 	for item: Variant in copied_items:
 		if not (item is Dictionary):
 			continue
@@ -5215,6 +7023,15 @@ func test_battle_scene_regidrago_copy_dragapult_injects_followup_assignment_step
 		if str(attack.get("name", "")) == "Phantom Dive":
 			phantom_option = item
 			break
+	for action: Variant in action_items:
+		if not (action is Dictionary):
+			all_action_costs_are_apex = false
+			continue
+		var action_dict: Dictionary = action
+		if str(action_dict.get("cost", "")) != "GGR":
+			all_action_costs_are_apex = false
+		if str(action_dict.get("title", "")) == "Phantom Dive":
+			phantom_action = action_dict
 
 	battle_scene.set("_pending_effect_context", {"copied_attack": [phantom_option]})
 	battle_scene.set("_pending_effect_step_index", 1)
@@ -5238,8 +7055,14 @@ func test_battle_scene_regidrago_copy_dragapult_injects_followup_assignment_step
 
 	return run_checks([
 		assert_false(initial_steps.is_empty(), "巨龙无双应先进入复制招式交互"),
+		assert_eq(str(dialog_data.get("presentation", "")), "action_hud", "巨龙无双复制招式弹窗应复用宝可梦行动 HUD"),
+		assert_eq(action_items.size(), copied_items.size(), "巨龙无双 HUD 应为每个可复制招式显示一个选项"),
+		assert_true(all_action_costs_are_apex, "巨龙无双 HUD 的招式费用应统一显示为巨龙无双费用"),
 		assert_eq(pending_attack_effects.size(), 1, "攻击交互状态应保留原始攻击效果，供后续步骤注入使用"),
 		assert_false(phantom_option.is_empty(), "复制招式列表中应包含 Phantom Dive"),
+		assert_false(phantom_action.is_empty(), "HUD 选项中应包含 Phantom Dive"),
+		assert_eq(str(phantom_action.get("cost", "")), "GGR", "Phantom Dive HUD 费用应显示巨龙无双的 GGR"),
+		assert_true(str(phantom_action.get("meta", "")).contains("Dragapult ex"), "Phantom Dive HUD 元信息应显示来源宝可梦"),
 		assert_true(has_followup, "选中 Phantom Dive 后应注入 bench_damage_counters 分配步骤"),
 	])
 
@@ -5604,7 +7427,8 @@ func test_battle_scene_return_energy_then_bench_damage_routes_second_step_to_opp
 
 	var effect := AttackReturnEnergyThenBenchDamageScript.new(120, -1, 3)
 	var steps: Array[Dictionary] = effect.get_attack_interaction_steps(attacker_card, {}, gsm.game_state)
-	battle_scene.call("_start_effect_interaction", "attack", 0, steps, attacker_card, attacker, 0)
+	var attack_effects: Array[BaseEffect] = [effect]
+	battle_scene.call("_start_effect_interaction", "attack", 0, steps, attacker_card, attacker, 0, {}, attack_effects)
 	battle_scene.call("_handle_effect_interaction_choice", PackedInt32Array([0, 1, 2]))
 
 	return run_checks([
@@ -6119,11 +7943,14 @@ func test_battle_scene_human_prize_prompt_blocks_field_actions_until_prize_taken
 	])
 
 
-func test_battle_scene_match_end_only_shows_centered_return_action() -> String:
+func test_battle_scene_landscape_match_end_keeps_full_summary_with_centered_return_action() -> String:
 	var previous_mode: int = GameManager.current_mode
+	var previous_layout: String = GameManager.battle_layout_mode
 	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_LANDSCAPE
 
 	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_active_battle_layout_mode", "landscape")
 	var fake_review_service := FakeBattleReviewService.new()
 	battle_scene.set("_battle_review_service", fake_review_service)
 	battle_scene.set("_battle_review_match_dir", "user://test_match_end_review")
@@ -6137,27 +7964,189 @@ func test_battle_scene_match_end_only_shows_centered_return_action() -> String:
 	var learning_button := battle_scene.get("_match_end_learning_button") as Button
 	var return_button := battle_scene.get("_match_end_return_button") as Button
 	var stats_grid := battle_scene.get("_match_end_stats_grid") as GridContainer
+	var action_summary := battle_scene.get("_match_end_action_summary") as RichTextLabel
+	var ai_title := battle_scene.get("_match_end_ai_title") as Label
+	var ai_content := battle_scene.get("_match_end_ai_content") as RichTextLabel
 	var button_row := return_button.get_parent() as HBoxContainer if return_button != null else null
+	var non_battle_orientation_restored := bool(battle_scene.get("_match_end_non_battle_orientation_restored"))
+	var quick_review_requested := bool(battle_scene.get("_match_end_quick_review_requested"))
 
 	var generate_calls: Array = fake_review_service.generate_calls
 	GameManager.current_mode = previous_mode
+	GameManager.battle_layout_mode = previous_layout
 
 	return run_checks([
 		assert_true(match_end_overlay != null and match_end_overlay.visible, "Match end should use the result screen overlay"),
 		assert_not_null(stats_grid, "Match end result screen should render stat cards"),
-		assert_true(stats_grid != null and stats_grid.get_child_count() >= 4, "Match end result screen should include the core match stats"),
+		assert_eq(stats_grid.get_child_count() if stats_grid != null else -1, 4, "Landscape match end should keep the full stat summary"),
+		assert_not_null(action_summary, "Landscape match end should keep the action summary panel"),
+		assert_not_null(ai_title, "Landscape match end should keep the quick-review title panel"),
+		assert_not_null(ai_content, "Landscape match end should keep the quick-review content panel"),
 		assert_not_null(button_row, "Match end result screen should use a centered bottom button row"),
 		assert_eq(button_row.alignment if button_row != null else -1, BoxContainer.ALIGNMENT_CENTER, "Match end bottom button row should center its visible action"),
-		assert_not_null(ai_button, "Match end result screen should still own the AI quick-review button node for compatibility"),
-		assert_not_null(review_button, "Match end result screen should still own the AI review button node for compatibility"),
-		assert_not_null(learning_button, "Match end result screen should still own the learning button node for compatibility"),
-		assert_false(ai_button.visible if ai_button != null else true, "Match end should not show a manual AI quick-review button"),
-		assert_false(review_button.visible if review_button != null else true, "Match end should not show a manual AI review button"),
-		assert_false(learning_button.visible if learning_button != null else true, "Match end should not show a learning-pool button"),
+		assert_true(ai_button != null and not ai_button.visible, "Match end should keep the removed AI quick-review button hidden"),
+		assert_true(review_button != null and not review_button.visible, "Match end should keep the removed AI review button hidden"),
+		assert_true(learning_button != null and not learning_button.visible, "Match end should keep the removed learning-pool button hidden"),
 		assert_not_null(return_button, "Match end result screen should include a return action"),
 		assert_true(return_button.visible if return_button != null else false, "Match end should keep only the return action visible"),
 		assert_eq(return_button.text if return_button != null else "", "返回对战准备", "Single-match result screen should keep the return label"),
+		assert_true(non_battle_orientation_restored, "Match end should restore non-battle orientation before keeping the player on the result screen"),
+		assert_false(quick_review_requested, "Local landscape quick review should not count as a remote AI request"),
 		assert_eq(generate_calls.size(), 0, "Hidden AI review button should not start battle review generation"),
+	])
+
+
+func test_battle_scene_portrait_match_end_keeps_compact_summary_with_scrollable_quick_review() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	battle_scene.set("_rotated_portrait_canvas_active", true)
+	battle_scene.rotation_degrees = 90.0
+	battle_scene.position = Vector2(1600.0, 0.0)
+	battle_scene.set("_battle_review_winner_index", 0)
+	battle_scene.set("_battle_review_reason", "knockout")
+
+	battle_scene.call("_show_match_end_dialog", 0, "knockout")
+	var match_end_overlay := battle_scene.get("_match_end_overlay") as Panel
+	var ai_button := battle_scene.get("_match_end_ai_button") as Button
+	var review_button := battle_scene.get("_match_end_review_button") as Button
+	var learning_button := battle_scene.get("_match_end_learning_button") as Button
+	var return_button := battle_scene.get("_match_end_return_button") as Button
+	var stats_grid := battle_scene.get("_match_end_stats_grid") as GridContainer
+	var action_summary := battle_scene.get("_match_end_action_summary") as RichTextLabel
+	var ai_title := battle_scene.get("_match_end_ai_title") as Label
+	var ai_content := battle_scene.get("_match_end_ai_content") as RichTextLabel
+	var action_panel: Control = null
+	if action_summary != null and action_summary.get_parent() != null:
+		action_panel = action_summary.get_parent().get_parent() as Control
+	var ai_panel: Control = null
+	var ai_node: Node = ai_title
+	while ai_node != null:
+		if str(ai_node.name) == "MatchEndAiPanel" and ai_node is Control:
+			ai_panel = ai_node as Control
+			break
+		ai_node = ai_node.get_parent()
+	var quick_review_requested := bool(battle_scene.get("_match_end_quick_review_requested"))
+	var quick_review_result: Dictionary = battle_scene.get("_match_end_quick_review_result")
+	var quick_review_configured := bool(battle_scene.call("_match_end_quick_review_configured"))
+	var quick_review_state_valid := (quick_review_configured and quick_review_result.is_empty()) or ((not quick_review_configured) and not quick_review_result.is_empty())
+	var non_battle_orientation_restored := bool(battle_scene.get("_match_end_non_battle_orientation_restored"))
+	var rotation_after_match_end: float = float(battle_scene.rotation_degrees)
+	var position_after_match_end: Vector2 = battle_scene.position
+
+	GameManager.current_mode = previous_mode
+	GameManager.battle_layout_mode = previous_layout
+	return run_checks([
+		assert_true(match_end_overlay != null and match_end_overlay.visible, "Portrait match end should use the result screen overlay"),
+		assert_eq(stats_grid.get_child_count() if stats_grid != null else -1, 2, "Portrait compact match end should show only the essential stat cards"),
+		assert_true(action_panel != null and not action_panel.visible, "Portrait compact match end should hide the action summary panel"),
+		assert_true(ai_panel != null and ai_panel.visible, "Portrait compact match end should show the AI quick-review panel"),
+		assert_true(ai_title != null and ai_title.visible, "Portrait compact match end should show the AI quick-review title"),
+		assert_true(ai_content != null and ai_content.visible, "Portrait compact match end should show the AI quick-review content"),
+		assert_true(ai_content != null and ai_content.text != "", "Portrait compact match end should render quick-review text immediately"),
+		assert_true(ai_content != null and ai_content.scroll_active, "Portrait quick-review content should scroll inside a fixed panel"),
+		assert_true(ai_content != null and not ai_content.fit_content, "Portrait quick-review content should not grow the result modal"),
+		assert_true(ai_content != null and ai_content.custom_minimum_size.y >= 126.0, "Portrait quick-review content should keep a readable touch-height area"),
+		assert_true(ai_button != null and not ai_button.visible, "Portrait compact match end should hide the AI quick-review button"),
+		assert_true(review_button != null and not review_button.visible, "Portrait compact match end should hide the AI review button"),
+		assert_true(learning_button != null and not learning_button.visible, "Portrait compact match end should hide the learning-pool button"),
+		assert_true(return_button != null and return_button.visible, "Portrait compact match end should keep the return action visible"),
+		assert_false(non_battle_orientation_restored, "Portrait match end should keep battle orientation while the result overlay is still in BattleScene"),
+		assert_true(absf(rotation_after_match_end - 90.0) <= 0.001, "Portrait match end should not clear the rotated battle canvas transform"),
+		assert_eq(position_after_match_end, Vector2(1600.0, 0.0), "Portrait match end should keep the rotated battle canvas anchored in place"),
+		assert_false(quick_review_requested, "Portrait immediate match end should not count as a completed remote AI request before the service responds"),
+		assert_true(quick_review_state_valid, "Portrait compact match end should either prepare local review text or keep a pending remote AI review state"),
+	])
+
+
+func test_battle_scene_portrait_match_end_matches_handover_modal_metrics() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+
+	var scene: Control = BattleScenePacked.instantiate()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.turn_number = 4
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	for player_index: int in 2:
+		var player := PlayerState.new()
+		player.player_index = player_index
+		gsm.game_state.players.append(player)
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+	scene.call("_apply_portrait_layout", Vector2(390, 844))
+	scene.call("_style_handover_overlay")
+	scene.call("_show_match_end_dialog", 0, "knockout")
+
+	var handover_box := scene.get_node("HandoverPanel/HandoverCenter/HandoverBox") as PanelContainer
+	var handover_button := scene.find_child("HandoverBtn", true, false) as Button
+	var match_end_overlay := scene.get("_match_end_overlay") as Panel
+	var match_end_box := match_end_overlay.get_node_or_null("MatchEndCenter/MatchEndBox") as PanelContainer if match_end_overlay != null else null
+	var return_button := scene.get("_match_end_return_button") as Button
+	var handover_box_style := handover_box.get_theme_stylebox("panel") as StyleBoxFlat if handover_box != null else null
+	var match_end_box_style := match_end_box.get_theme_stylebox("panel") as StyleBoxFlat if match_end_box != null else null
+	var handover_button_style := handover_button.get_theme_stylebox("normal") as StyleBoxFlat if handover_button != null else null
+	var return_button_style := return_button.get_theme_stylebox("normal") as StyleBoxFlat if return_button != null else null
+	var near_width := float(scene.call("_portrait_popup_near_width"))
+	var review_height := float(scene.call("_portrait_match_end_review_modal_height", Vector2(390, 844)))
+
+	GameManager.current_mode = previous_mode
+	GameManager.battle_layout_mode = previous_layout
+	var result := run_checks([
+		assert_not_null(match_end_box, "Portrait match end should create a result modal box"),
+		assert_true(match_end_box != null and match_end_box.custom_minimum_size.x >= near_width - 0.1, "Portrait match end box should use the near-width modal for readable quick review text"),
+		assert_true(match_end_box != null and handover_box != null and match_end_box.custom_minimum_size.y > handover_box.custom_minimum_size.y, "Portrait match end box should be taller than the handover prompt to fit quick review"),
+		assert_true(match_end_box != null and absf(match_end_box.custom_minimum_size.y - review_height) <= 0.1, "Portrait match end box should use the dedicated quick-review modal height"),
+		assert_true(return_button != null and handover_button != null and return_button.custom_minimum_size.x >= handover_button.custom_minimum_size.x, "Portrait match end return button should remain at least as wide as the handover button"),
+		assert_true(return_button != null and handover_button != null and absf(return_button.custom_minimum_size.y - handover_button.custom_minimum_size.y) <= 0.1, "Portrait match end return button should match the handover button height"),
+		assert_true(return_button != null and handover_button != null and return_button.get_theme_font_size("font_size") >= handover_button.get_theme_font_size("font_size"), "Portrait match end return button text should be at least as readable as the handover button"),
+		assert_true(match_end_box_style != null and handover_box_style != null and match_end_box_style.bg_color.is_equal_approx(handover_box_style.bg_color), "Portrait match end box should use the handover modal surface color"),
+		assert_true(match_end_box_style != null and handover_box_style != null and match_end_box_style.border_color.is_equal_approx(handover_box_style.border_color), "Portrait match end box should use the handover modal border color"),
+		assert_true(return_button_style != null and handover_button_style != null and return_button_style.bg_color.is_equal_approx(handover_button_style.bg_color), "Portrait match end return button should use the handover HUD button surface"),
+		assert_true(return_button_style != null and handover_button_style != null and return_button_style.border_color.is_equal_approx(handover_button_style.border_color), "Portrait match end return button should use the handover HUD button border"),
+	])
+
+	scene.queue_free()
+	return result
+
+
+func test_battle_scene_match_end_restores_landscape_ai_metrics_after_portrait_refresh() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	battle_scene.call("_show_match_end_dialog", 0, "knockout")
+	var ai_content := battle_scene.get("_match_end_ai_content") as RichTextLabel
+	var portrait_scroll_active := ai_content != null and ai_content.scroll_active
+	var portrait_fit_content := ai_content != null and ai_content.fit_content
+
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_LANDSCAPE
+	battle_scene.set("_active_battle_layout_mode", "landscape")
+	var coordinator: RefCounted = battle_scene.get("_battle_overlay_coordinator")
+	if coordinator != null:
+		coordinator.call("refresh_match_end_screen")
+	var landscape_scroll_active := ai_content != null and ai_content.scroll_active
+	var landscape_fit_content := ai_content != null and ai_content.fit_content
+	var landscape_font_size := ai_content.get_theme_font_size("normal_font_size") if ai_content != null else -1
+
+	GameManager.current_mode = previous_mode
+	GameManager.battle_layout_mode = previous_layout
+	return run_checks([
+		assert_true(portrait_scroll_active, "Portrait match end should start with a scrollable AI quick-review panel"),
+		assert_false(portrait_fit_content, "Portrait match end should use fixed AI content height"),
+		assert_false(landscape_scroll_active, "Landscape refresh should restore fit-content AI quick-review behavior"),
+		assert_true(landscape_fit_content, "Landscape refresh should let the AI quick-review panel size like the original landscape UI"),
+		assert_eq(landscape_font_size, 14, "Landscape refresh should restore the original quick-review font size after portrait scaling"),
 	])
 
 
@@ -6199,7 +8188,7 @@ func test_match_end_return_preserves_tournament_standings_route_when_active() ->
 	])
 
 
-func test_tournament_game_over_shows_match_end_quick_review_before_standings() -> String:
+func test_tournament_game_over_shows_match_end_before_standings() -> String:
 	var previous_tournament := GameManager.current_tournament
 	var previous_tournament_deck_id := GameManager.tournament_selected_player_deck_id
 	var previous_in_progress := GameManager.tournament_battle_in_progress
@@ -6240,14 +8229,14 @@ func test_tournament_game_over_shows_match_end_quick_review_before_standings() -
 
 	return run_checks([
 		assert_true(prepared, "Tournament test setup should prepare an active battle"),
-		assert_true(match_end_overlay != null and match_end_overlay.visible, "Tournament game over should show the match-end quick review screen"),
+		assert_true(match_end_overlay != null and match_end_overlay.visible, "Tournament game over should show the match-end screen"),
 		assert_eq(return_button.text if return_button != null else "", "返回比赛积分", "Tournament match-end screen should return to standings"),
 		assert_eq(requested_path, "", "Tournament game over should not navigate away before the player sees the result screen"),
 		assert_true(active_after_game_over, "Tournament battle should remain active until the player presses return"),
 	])
 
 
-func test_battle_scene_match_end_quick_review_failure_falls_back_to_local_summary() -> String:
+func test_battle_scene_landscape_match_end_quick_review_failure_updates_ai_panel() -> String:
 	var battle_scene = _make_battle_scene_stub()
 	battle_scene.set("_battle_review_winner_index", 0)
 	battle_scene.set("_battle_review_reason", "knockout")
@@ -6264,15 +8253,16 @@ func test_battle_scene_match_end_quick_review_failure_falls_back_to_local_summar
 	var result: Dictionary = battle_scene.get("_match_end_quick_review_result")
 	var ai_title := battle_scene.get("_match_end_ai_title") as Label
 	var ai_content := battle_scene.get("_match_end_ai_content") as RichTextLabel
-	var content_text := ai_content.text if ai_content != null else ""
+	var return_button := battle_scene.get("_match_end_return_button") as Button
 
 	return run_checks([
 		assert_eq(str(result.get("status", "")), "ai_failed_fallback", "Match end should replace failed AI review with local fallback"),
 		assert_true(bool(battle_scene.get("_match_end_quick_review_requested")), "Failed AI review should still count as handled"),
 		assert_false(bool(battle_scene.get("_match_end_quick_review_busy")), "Failed AI review should clear busy state"),
-		assert_eq(ai_title.text if ai_title != null else "", "本地赛后简评（AI暂不可用）", "Match end title should explain the AI fallback"),
-		assert_str_contains(content_text, "AI 快评超时", "Match end content should explain timeout fallback"),
-		assert_str_contains(content_text, "评分", "Match end content should still show a useful local score"),
+		assert_true(ai_title != null and ai_title.visible, "Landscape match end should keep the AI title panel after quick-review failure"),
+		assert_true(ai_content != null and ai_content.visible, "Landscape match end should keep AI content after quick-review failure"),
+		assert_str_contains(ai_content.text if ai_content != null else "", "评分", "Landscape match end should show the fallback review content"),
+		assert_true(return_button != null and return_button.visible, "Match end should keep the return action visible after quick-review failure"),
 	])
 
 
@@ -6373,7 +8363,7 @@ func test_battle_scene_match_end_quick_review_payload_focuses_human_in_vs_ai_eve
 	])
 
 
-func test_battle_scene_match_end_quick_review_busy_shows_generation_text_without_local_preview() -> String:
+func test_battle_scene_landscape_match_end_quick_review_busy_keeps_progress_panel() -> String:
 	var battle_scene = _make_battle_scene_stub()
 	battle_scene.set("_match_end_quick_review_busy", true)
 	battle_scene.set("_match_end_quick_review_progress_text", "正在让 Kimi K2.6 快速点评...")
@@ -6382,13 +8372,49 @@ func test_battle_scene_match_end_quick_review_busy_shows_generation_text_without
 	var result: Dictionary = battle_scene.get("_match_end_quick_review_result")
 	var ai_title := battle_scene.get("_match_end_ai_title") as Label
 	var ai_content := battle_scene.get("_match_end_ai_content") as RichTextLabel
-	var content_text := ai_content.text if ai_content != null else ""
+	var return_button := battle_scene.get("_match_end_return_button") as Button
 
 	return run_checks([
 		assert_true(result.is_empty(), "Busy quick review should not create a local preview result"),
-		assert_eq(ai_title.text if ai_title != null else "", "AI赛后快评", "Busy quick review should keep the AI title"),
-		assert_str_contains(content_text, "正在让", "Busy quick review should show generation progress"),
-		assert_false(content_text.contains("评分"), "Busy quick review should not show local score before AI returns"),
+		assert_true(ai_title != null and ai_title.visible, "Landscape match end should show AI progress title"),
+		assert_true(ai_content != null and ai_content.visible, "Landscape match end should show AI progress content"),
+		assert_str_contains(ai_content.text if ai_content != null else "", "Kimi K2.6", "Landscape match end should keep the model progress text"),
+		assert_true(return_button != null and return_button.visible, "Match end should keep the return action visible while quick-review state is busy"),
+	])
+
+
+func test_battle_scene_portrait_match_end_quick_review_busy_uses_scrollable_progress_panel() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	battle_scene.set("_rotated_portrait_canvas_active", true)
+	battle_scene.rotation_degrees = 90.0
+	battle_scene.position = Vector2(1600.0, 0.0)
+	battle_scene.set("_match_end_quick_review_busy", true)
+	battle_scene.set("_match_end_quick_review_progress_text", "姝ｅ湪璁?Kimi K2.6 蹇€熺偣璇?..")
+	battle_scene.call("_show_match_end_dialog", 0, "knockout")
+
+	var result: Dictionary = battle_scene.get("_match_end_quick_review_result")
+	var ai_title := battle_scene.get("_match_end_ai_title") as Label
+	var ai_content := battle_scene.get("_match_end_ai_content") as RichTextLabel
+	var return_button := battle_scene.get("_match_end_return_button") as Button
+	var quick_review_requested := bool(battle_scene.get("_match_end_quick_review_requested"))
+
+	GameManager.current_mode = previous_mode
+	GameManager.battle_layout_mode = previous_layout
+	return run_checks([
+		assert_true(result.is_empty(), "Portrait busy quick review should not create a local preview result"),
+		assert_false(quick_review_requested, "Portrait busy quick review should not start a duplicate remote request"),
+		assert_true(ai_title != null and ai_title.visible, "Portrait match end should show AI progress title"),
+		assert_true(ai_content != null and ai_content.visible, "Portrait match end should show AI progress content"),
+		assert_true(ai_content != null and ai_content.scroll_active, "Portrait progress content should use the same fixed scrollable panel"),
+		assert_true(ai_content != null and not ai_content.fit_content, "Portrait progress content should not resize the result modal"),
+		assert_str_contains(ai_content.text if ai_content != null else "", "Kimi K2.6", "Portrait match end should keep the model progress text"),
+		assert_true(return_button != null and return_button.visible, "Portrait match end should keep the return action visible while quick-review state is busy"),
 	])
 
 
@@ -6660,6 +8686,58 @@ func test_battle_scene_used_ability_tilt_adjusts_card_z_index() -> String:
 	])
 
 
+func test_battle_card_view_used_energy_hp_rows_keep_fixed_bottom_stack_metrics() -> String:
+	var card_view := BattleCardViewScript.new()
+	card_view.custom_minimum_size = Vector2(137, 192)
+	card_view.size = Vector2(137, 192)
+	card_view.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_ACTIVE)
+	card_view.set_battle_status({
+		"hp_current": 150,
+		"hp_max": 200,
+		"hp_ratio": 0.75,
+		"status_icons": [],
+		"energy_icons": ["R", "C"],
+		"tool_name": "",
+		"ability_used_this_turn": true,
+	})
+
+	var hud := card_view.get("_status_hud") as VBoxContainer
+	var used_panel := card_view.get("_status_used_panel") as Control
+	var hp_panel := card_view.get("_status_hp_bar_panel") as Control
+	var status_panel := card_view.get("_status_condition_panel") as Control
+	var energy_panel := card_view.get("_status_energy_panel") as Control
+	var children := hud.get_children() if hud != null else []
+	var used_index := children.find(used_panel)
+	var hp_index := children.find(hp_panel)
+	var energy_index := children.find(energy_panel)
+	var last_visible: Control = null
+	for child_variant: Variant in children:
+		var child := child_variant as Control
+		if child != null and child.visible:
+			last_visible = child
+
+	var used_height := used_panel.custom_minimum_size.y if used_panel != null else -1.0
+	var hp_height := hp_panel.custom_minimum_size.y if hp_panel != null else -2.0
+	var energy_height := energy_panel.custom_minimum_size.y if energy_panel != null else -3.0
+	var hud_alignment := int(hud.alignment) if hud != null else -1
+
+	var result := run_checks([
+		assert_true(hud != null, "Battle status HUD should exist"),
+		assert_eq(hud_alignment, int(BoxContainer.ALIGNMENT_END), "Battle status HUD rows should stay anchored to the bottom"),
+		assert_true(used_panel != null and used_panel.visible, "USED row should be visible after an ability is used"),
+		assert_true(energy_panel != null and energy_panel.visible, "Energy row should be visible when Energy is attached"),
+		assert_true(status_panel != null and not status_panel.visible, "Empty status row should not reserve a visible slot"),
+		assert_true(absf(used_height - hp_height) < 0.1, "USED row should reserve the same height as HP"),
+		assert_true(absf(energy_height - hp_height) < 0.1, "Energy row should reserve the same height as HP"),
+		assert_true(used_index >= 0 and hp_index == used_index + 1, "USED row should stack directly above HP"),
+		assert_true(energy_index > hp_index, "Energy row should remain below HP in the battle HUD order"),
+		assert_true(last_visible == energy_panel, "Bottom visible battle HUD row should remain stable when USED and Energy are both present"),
+	])
+
+	card_view.queue_free()
+	return result
+
+
 func test_battle_card_view_status_icons_render_below_hp_and_clear() -> String:
 	var card_view := BattleCardViewScript.new()
 	card_view.custom_minimum_size = Vector2(120, 168)
@@ -6708,6 +8786,984 @@ func test_battle_card_view_status_icons_render_below_hp_and_clear() -> String:
 		assert_true(hp_index >= 0 and status_index == hp_index + 1, "Status condition row should sit directly below HP"),
 		assert_true(energy_index > status_index, "Energy row should stay below status condition row"),
 	])
+
+
+func test_battle_card_view_status_hud_scales_with_portrait_card_size() -> String:
+	var small_card := BattleCardViewScript.new()
+	small_card.custom_minimum_size = Vector2(120, 168)
+	small_card.size = Vector2(120, 168)
+	small_card.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_ACTIVE)
+	small_card.set_battle_status({
+		"hp_current": 120,
+		"hp_max": 120,
+		"hp_ratio": 1.0,
+		"status_icons": ["poisoned"],
+		"energy_icons": ["L"],
+		"tool_name": "",
+		"ability_used_this_turn": false,
+	})
+	var small_hp_label := small_card.get("_status_hp_value_label") as Label
+	var small_energy_row := small_card.get("_status_energy_row") as HBoxContainer
+	var small_icon: Control = null
+	if small_energy_row != null and small_energy_row.get_child_count() > 0:
+		small_icon = small_energy_row.get_child(0) as Control
+
+	var large_card := BattleCardViewScript.new()
+	large_card.custom_minimum_size = Vector2(214, 300)
+	large_card.size = Vector2(214, 300)
+	large_card.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_ACTIVE)
+	large_card.set_battle_status({
+		"hp_current": 200,
+		"hp_max": 200,
+		"hp_ratio": 1.0,
+		"status_icons": ["poisoned"],
+		"energy_icons": ["L"],
+		"tool_name": "",
+		"ability_used_this_turn": false,
+	})
+	var large_hp_label := large_card.get("_status_hp_value_label") as Label
+	var large_energy_row := large_card.get("_status_energy_row") as HBoxContainer
+	var large_icon: Control = null
+	if large_energy_row != null and large_energy_row.get_child_count() > 0:
+		large_icon = large_energy_row.get_child(0) as Control
+
+	var result := run_checks([
+		assert_true(small_hp_label != null and large_hp_label != null, "BattleCardView should expose HP labels for status scaling"),
+		assert_gt(large_hp_label.get_theme_font_size("font_size"), small_hp_label.get_theme_font_size("font_size"), "Portrait-size cards should scale up the HP text"),
+		assert_true(small_icon != null and large_icon != null, "BattleCardView should expose energy icons for status scaling"),
+		assert_gt(large_icon.custom_minimum_size.x, small_icon.custom_minimum_size.x, "Portrait-size cards should scale up energy icons"),
+	])
+
+	small_card.queue_free()
+	large_card.queue_free()
+	return result
+
+
+func test_battle_card_view_portrait_status_rows_follow_card_size() -> String:
+	var base_card := BattleCardViewScript.new()
+	base_card.custom_minimum_size = Vector2(214, 300)
+	base_card.size = Vector2(214, 300)
+	base_card.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_ACTIVE)
+	base_card.set_battle_status({
+		"hp_current": 170,
+		"hp_max": 220,
+		"hp_ratio": 0.77,
+		"status_icons": ["poisoned"],
+		"energy_icons": ["R", "C"],
+		"tool_name": "勇气护符",
+		"ability_used_this_turn": false,
+	})
+
+	var portrait_card := BattleCardViewScript.new()
+	portrait_card.custom_minimum_size = Vector2(214, 300)
+	portrait_card.size = Vector2(214, 300)
+	portrait_card.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_ACTIVE)
+	portrait_card.set_portrait_status_metrics_enabled(true)
+	portrait_card.set_battle_status({
+		"hp_current": 170,
+		"hp_max": 220,
+		"hp_ratio": 0.77,
+		"status_icons": ["poisoned"],
+		"energy_icons": ["R", "C"],
+		"tool_name": "勇气护符",
+		"ability_used_this_turn": false,
+	})
+
+	var base_hp_font := (base_card.get("_status_hp_value_label") as Label).get_theme_font_size("font_size")
+	var base_tool_font := (base_card.get("_status_tool_label") as Label).get_theme_font_size("font_size")
+	var base_status_row := base_card.get("_status_condition_row") as HBoxContainer
+	var base_energy_row := base_card.get("_status_energy_row") as HBoxContainer
+	var base_status_icon := base_status_row.get_child(0) as Control if base_status_row != null and base_status_row.get_child_count() > 0 else null
+	var base_energy_icon := base_energy_row.get_child(0) as Control if base_energy_row != null and base_energy_row.get_child_count() > 0 else null
+	var portrait_hp := (portrait_card.get("_status_hp_bar_panel") as Control).custom_minimum_size.y
+	var portrait_status := (portrait_card.get("_status_condition_panel") as Control).custom_minimum_size.y
+	var portrait_energy := (portrait_card.get("_status_energy_panel") as Control).custom_minimum_size.y
+	var portrait_tool := (portrait_card.get("_status_tool_panel") as Control).custom_minimum_size.y
+	var portrait_hp_font := (portrait_card.get("_status_hp_value_label") as Label).get_theme_font_size("font_size")
+	var portrait_tool_font := (portrait_card.get("_status_tool_label") as Label).get_theme_font_size("font_size")
+	var portrait_status_row := portrait_card.get("_status_condition_row") as HBoxContainer
+	var portrait_energy_row := portrait_card.get("_status_energy_row") as HBoxContainer
+	var portrait_status_icon := portrait_status_row.get_child(0) as Control if portrait_status_row != null and portrait_status_row.get_child_count() > 0 else null
+	var portrait_energy_icon := portrait_energy_row.get_child(0) as Control if portrait_energy_row != null and portrait_energy_row.get_child_count() > 0 else null
+	var expected_portrait_slot_height := portrait_card.custom_minimum_size.y / 5.0
+
+	var result := run_checks([
+		assert_true(absf(portrait_hp - expected_portrait_slot_height) <= 0.1, "Portrait HP slot should be one fifth of the card height"),
+		assert_true(absf(portrait_status - expected_portrait_slot_height) <= 0.1, "Portrait status slot should be one fifth of the card height"),
+		assert_true(absf(portrait_energy - expected_portrait_slot_height) <= 0.1, "Portrait Energy slot should be one fifth of the card height"),
+		assert_true(absf(portrait_tool - expected_portrait_slot_height) <= 0.1, "Portrait Tool text slot should be one fifth of the card height"),
+		assert_gt(portrait_hp_font, base_hp_font, "Portrait HP text should use the fixed one-fifth slot to become more readable"),
+		assert_gt(portrait_tool_font, base_tool_font, "Portrait Tool text should use the fixed one-fifth slot to become more readable"),
+		assert_true(portrait_status_icon != null and base_status_icon != null and portrait_status_icon.custom_minimum_size.y > base_status_icon.custom_minimum_size.y, "Portrait status icons should use the fixed one-fifth slot to become more readable"),
+		assert_true(portrait_energy_icon != null and base_energy_icon != null and portrait_energy_icon.custom_minimum_size.y > base_energy_icon.custom_minimum_size.y, "Portrait Energy icons should use the fixed one-fifth slot to become more readable"),
+		assert_true(portrait_status_icon != null and portrait_energy_icon != null and absf(portrait_status_icon.custom_minimum_size.y - portrait_energy_icon.custom_minimum_size.y) <= 0.1, "Portrait status and Energy icons should share the same enlarged metric"),
+	])
+
+	base_card.queue_free()
+	portrait_card.queue_free()
+	return result
+
+
+func test_battle_card_view_portrait_status_slots_are_one_fifth_of_card_height() -> String:
+	var card_view := BattleCardViewScript.new()
+	card_view.custom_minimum_size = Vector2(214, 300)
+	card_view.size = Vector2(214, 300)
+	card_view.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_BENCH)
+	card_view.set_portrait_status_metrics_enabled(true)
+	card_view.set_battle_status({
+		"hp_current": 170,
+		"hp_max": 220,
+		"hp_ratio": 0.77,
+		"status_icons": ["poisoned"],
+		"energy_icons": ["R", "C"],
+		"tool_name": "Tool text",
+		"ability_used_this_turn": true,
+	})
+
+	var used_panel := card_view.get("_status_used_panel") as Control
+	var hp_panel := card_view.get("_status_hp_bar_panel") as Control
+	var status_panel := card_view.get("_status_condition_panel") as Control
+	var energy_panel := card_view.get("_status_energy_panel") as Control
+	var tool_panel := card_view.get("_status_tool_panel") as Control
+	var status_hud := card_view.get("_status_hud") as VBoxContainer
+	var expected_height := minf(card_view.custom_minimum_size.y / 5.0, (card_view.custom_minimum_size.y - 20.0) / 5.0)
+	var visible_stack_height := 0.0
+	for panel: Control in [used_panel, hp_panel, status_panel, energy_panel, tool_panel]:
+		if panel != null and panel.visible:
+			visible_stack_height += panel.custom_minimum_size.y
+
+	var result := run_checks([
+		assert_true(used_panel != null and absf(used_panel.custom_minimum_size.y - expected_height) <= 0.1, "Portrait ability-used text slot should fit the available status overlay height"),
+		assert_true(hp_panel != null and absf(hp_panel.custom_minimum_size.y - expected_height) <= 0.1, "Portrait HP slot should fit the available status overlay height"),
+		assert_true(status_panel != null and absf(status_panel.custom_minimum_size.y - expected_height) <= 0.1, "Portrait special-condition slot should fit the available status overlay height"),
+		assert_true(energy_panel != null and absf(energy_panel.custom_minimum_size.y - expected_height) <= 0.1, "Portrait Energy slot should fit the available status overlay height"),
+		assert_true(tool_panel != null and absf(tool_panel.custom_minimum_size.y - expected_height) <= 0.1, "Portrait text/tool slot should fit the available status overlay height"),
+		assert_true(visible_stack_height <= card_view.custom_minimum_size.y - 20.0 + 0.1, "All visible portrait status rows should fit inside the card overlay"),
+		assert_eq(status_hud.get_theme_constant("separation") if status_hud != null else -1, 0, "Portrait field status slots should not add extra vertical gap beyond the fitted slots"),
+	])
+
+	card_view.queue_free()
+	return result
+
+
+func test_battle_card_view_portrait_status_text_uses_large_readable_metrics() -> String:
+	var card_view := BattleCardViewScript.new()
+	card_view.custom_minimum_size = Vector2(214, 300)
+	card_view.size = Vector2(214, 300)
+	card_view.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_BENCH)
+	card_view.set_portrait_status_metrics_enabled(true)
+	card_view.set_battle_status({
+		"hp_current": 170,
+		"hp_max": 220,
+		"hp_ratio": 0.77,
+		"status_icons": [],
+		"energy_icons": [],
+		"tool_name": "勇气护符",
+		"ability_used_this_turn": true,
+	})
+
+	var slot_height := card_view.custom_minimum_size.y / 5.0
+	var used_label := card_view.get("_status_used_label") as Label
+	var hp_label := card_view.get("_status_hp_value_label") as Label
+	var tool_label := card_view.get("_status_tool_label") as Label
+	var hp_font := hp_label.get_theme_font("font") as FontVariation if hp_label != null else null
+	var tool_font := tool_label.get_theme_font("font") as FontVariation if tool_label != null else null
+	var tool_regular_weight := tool_font == null or tool_font.variation_embolden <= 0.05
+	var used_matches_tool_size := used_label != null and tool_label != null and absf(float(used_label.get_theme_font_size("font_size") - tool_label.get_theme_font_size("font_size"))) <= 0.1
+
+	var result := run_checks([
+		assert_true(hp_label != null and hp_label.get_theme_font_size("font_size") >= roundi(slot_height * 0.52), "Portrait HP text should use most of the fixed status slot height"),
+		assert_true(tool_label != null and tool_label.get_theme_font_size("font_size") >= roundi(slot_height * 0.45), "Portrait Tool text should be large enough in the fixed status slot"),
+		assert_true(used_matches_tool_size, "Portrait USED text should match the Tool text size"),
+		assert_true(hp_label != null and hp_label.get_theme_constant("outline_size") >= 2, "Portrait HP text should use a readable outline on the HP bar"),
+		assert_true(tool_label != null and tool_label.get_theme_constant("outline_size") >= 1, "Portrait Tool text should use a subtle outline for thicker glyphs"),
+		assert_true(hp_font != null and hp_font.variation_embolden >= 1.45, "Portrait HP text should use a heavier font variation"),
+		assert_true(tool_regular_weight, "Portrait Tool text should use regular font weight"),
+	])
+
+	card_view.queue_free()
+	return result
+
+
+func test_battle_card_view_landscape_used_text_matches_tool_metrics() -> String:
+	var card_view := BattleCardViewScript.new()
+	card_view.custom_minimum_size = Vector2(137, 192)
+	card_view.size = Vector2(137, 192)
+	card_view.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_ACTIVE)
+	card_view.set_battle_status({
+		"hp_current": 150,
+		"hp_max": 200,
+		"hp_ratio": 0.75,
+		"status_icons": [],
+		"energy_icons": [],
+		"tool_name": "Tool",
+		"ability_used_this_turn": true,
+	})
+
+	var used_label := card_view.get("_status_used_label") as Label
+	var tool_label := card_view.get("_status_tool_label") as Label
+	var tool_font := tool_label.get_theme_font("font") as FontVariation if tool_label != null else null
+	var tool_regular_weight := tool_font == null or tool_font.variation_embolden <= 0.05
+	var used_matches_tool_size := used_label != null and tool_label != null and absf(float(used_label.get_theme_font_size("font_size") - tool_label.get_theme_font_size("font_size"))) <= 0.1
+
+	var result := run_checks([
+		assert_true(used_matches_tool_size, "Landscape USED text should match the Tool text size"),
+		assert_true(tool_regular_weight, "Landscape Tool text should use regular font weight"),
+	])
+
+	card_view.queue_free()
+	return result
+
+
+func test_battle_card_view_landscape_used_energy_tool_does_not_expand_card_minimum() -> String:
+	var card_view := BattleCardViewScript.new()
+	card_view.custom_minimum_size = Vector2(64, 90)
+	card_view.size = Vector2(64, 90)
+	card_view.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_ACTIVE)
+	card_view.set_status_text_scale(0.8)
+	card_view.set_portrait_status_metrics_enabled(true)
+	card_view.set_battle_status({
+		"hp_current": 150,
+		"hp_max": 200,
+		"hp_ratio": 0.75,
+		"status_icons": [],
+		"energy_icons": ["R", "C", "L"],
+		"tool_name": "Tool",
+		"ability_used_this_turn": false,
+	})
+	var before_minimum := card_view.get_combined_minimum_size()
+	card_view.set_battle_status({
+		"hp_current": 150,
+		"hp_max": 200,
+		"hp_ratio": 0.75,
+		"status_icons": [],
+		"energy_icons": ["R", "C", "L"],
+		"tool_name": "Tool",
+		"ability_used_this_turn": true,
+	})
+	var after_minimum := card_view.get_combined_minimum_size()
+	var used_panel := card_view.get("_status_used_panel") as Control
+	var hp_panel := card_view.get("_status_hp_bar_panel") as Control
+	var energy_panel := card_view.get("_status_energy_panel") as Control
+	var tool_panel := card_view.get("_status_tool_panel") as Control
+	var visible_stack_height := 0.0
+	for panel: Control in [used_panel, hp_panel, energy_panel, tool_panel]:
+		if panel != null and panel.visible:
+			visible_stack_height += panel.custom_minimum_size.y
+	var available_status_height := card_view.custom_minimum_size.y - 20.0
+
+	var result := run_checks([
+		assert_true(before_minimum.y <= card_view.custom_minimum_size.y + 0.5, "Energy plus Tool should not expand the landscape card before USED appears"),
+		assert_true(after_minimum.y <= card_view.custom_minimum_size.y + 0.5, "USED plus Energy plus Tool should not expand the landscape card minimum"),
+		assert_true(visible_stack_height <= available_status_height + 0.1, "USED plus Energy plus Tool rows should fit inside the card overlay instead of overflowing"),
+	])
+
+	card_view.queue_free()
+	return result
+
+
+func test_battle_card_view_landscape_vstar_energy_icon_stays_with_text_metrics() -> String:
+	var card_view := BattleCardViewScript.new()
+	card_view.custom_minimum_size = Vector2(137, 192)
+	card_view.size = Vector2(137, 192)
+	card_view.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_BENCH)
+	card_view.set_status_text_scale(0.8)
+	card_view.set_portrait_status_metrics_enabled(true)
+	card_view.set_battle_status({
+		"hp_current": 280,
+		"hp_max": 280,
+		"hp_ratio": 1.0,
+		"status_icons": [],
+		"energy_icons": ["W"],
+		"tool_name": "",
+		"ability_used_this_turn": true,
+	})
+
+	var combined_minimum := card_view.get_combined_minimum_size()
+	var used_panel := card_view.get("_status_used_panel") as Control
+	var hp_panel := card_view.get("_status_hp_bar_panel") as Control
+	var energy_panel := card_view.get("_status_energy_panel") as Control
+	var used_label := card_view.get("_status_used_label") as Label
+	var hp_label := card_view.get("_status_hp_value_label") as Label
+	var energy_row := card_view.get("_status_energy_row") as HBoxContainer
+	var energy_icon := energy_row.get_child(0) as Control if energy_row != null and energy_row.get_child_count() > 0 else null
+	var used_font_size := used_label.get_theme_font_size("font_size") if used_label != null else 0
+	var hp_font_size := hp_label.get_theme_font_size("font_size") if hp_label != null else 0
+	var max_text_metric := maxi(used_font_size, hp_font_size)
+	var energy_icon_height := energy_icon.custom_minimum_size.y if energy_icon != null else 0.0
+
+	var icon_metric_check := ""
+	if energy_icon_height > float(max_text_metric) + 0.1:
+		icon_metric_check = "Landscape VSTAR Energy icon should stay within text metrics; energy_icon=%.2f max_text=%d used=%d hp=%d" % [
+			energy_icon_height,
+			max_text_metric,
+			used_font_size,
+			hp_font_size,
+		]
+	var result := run_checks([
+		assert_true(combined_minimum.y <= card_view.custom_minimum_size.y + 0.5, "Landscape VSTAR Energy HUD should not grow the card minimum height"),
+		assert_true(used_panel != null and hp_panel != null and energy_panel != null, "Landscape VSTAR status panels should be available"),
+		assert_true(hp_panel != null and energy_panel != null and absf(hp_panel.custom_minimum_size.y - energy_panel.custom_minimum_size.y) <= 0.1, "Landscape VSTAR Energy slot height should match the HP slot height"),
+		icon_metric_check,
+	])
+
+	card_view.queue_free()
+	return result
+
+
+func test_battle_card_view_portrait_vstar_energy_icon_stays_with_text_metrics() -> String:
+	var card_view := BattleCardViewScript.new()
+	card_view.custom_minimum_size = Vector2(214, 300)
+	card_view.size = Vector2(214, 300)
+	card_view.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_BENCH)
+	card_view.set_status_text_scale(1.0)
+	card_view.set_portrait_status_metrics_enabled(true)
+	card_view.set_battle_status({
+		"hp_current": 280,
+		"hp_max": 280,
+		"hp_ratio": 1.0,
+		"status_icons": [],
+		"energy_icons": ["W"],
+		"tool_name": "",
+		"ability_used_this_turn": true,
+	})
+
+	var combined_minimum := card_view.get_combined_minimum_size()
+	var hp_panel := card_view.get("_status_hp_bar_panel") as Control
+	var energy_panel := card_view.get("_status_energy_panel") as Control
+	var used_label := card_view.get("_status_used_label") as Label
+	var hp_label := card_view.get("_status_hp_value_label") as Label
+	var energy_row := card_view.get("_status_energy_row") as HBoxContainer
+	var energy_icon := energy_row.get_child(0) as Control if energy_row != null and energy_row.get_child_count() > 0 else null
+	var max_text_metric := maxi(
+		used_label.get_theme_font_size("font_size") if used_label != null else 0,
+		hp_label.get_theme_font_size("font_size") if hp_label != null else 0
+	)
+	var energy_icon_height := energy_icon.custom_minimum_size.y if energy_icon != null else 0.0
+
+	var result := run_checks([
+		assert_true(combined_minimum.y <= card_view.custom_minimum_size.y + 0.5, "Portrait VSTAR Energy HUD should not grow the card minimum height"),
+		assert_true(hp_panel != null and energy_panel != null and absf(hp_panel.custom_minimum_size.y - energy_panel.custom_minimum_size.y) <= 0.1, "Portrait VSTAR Energy slot height should match the HP slot height"),
+		assert_true(energy_icon != null and energy_icon_height <= float(max_text_metric) + 0.1, "Portrait VSTAR Energy icon should stay within text metrics"),
+	])
+
+	card_view.queue_free()
+	return result
+
+
+func test_battle_card_view_landscape_energy_icons_shrink_without_slot_growth() -> String:
+	var one_card := BattleCardViewScript.new()
+	one_card.custom_minimum_size = Vector2(137, 192)
+	one_card.size = Vector2(137, 192)
+	one_card.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_BENCH)
+	one_card.set_status_text_scale(0.8)
+	one_card.set_portrait_status_metrics_enabled(true)
+	one_card.set_battle_status({
+		"hp_current": 280,
+		"hp_max": 280,
+		"hp_ratio": 1.0,
+		"status_icons": [],
+		"energy_icons": ["W"],
+		"tool_name": "",
+		"ability_used_this_turn": true,
+	})
+
+	var eight_icons: Array[String] = []
+	for _i: int in 8:
+		eight_icons.append("W")
+	var eight_card := BattleCardViewScript.new()
+	eight_card.custom_minimum_size = Vector2(137, 192)
+	eight_card.size = Vector2(137, 192)
+	eight_card.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_BENCH)
+	eight_card.set_status_text_scale(0.8)
+	eight_card.set_portrait_status_metrics_enabled(true)
+	eight_card.set_battle_status({
+		"hp_current": 280,
+		"hp_max": 280,
+		"hp_ratio": 1.0,
+		"status_icons": [],
+		"energy_icons": eight_icons,
+		"tool_name": "",
+		"ability_used_this_turn": true,
+	})
+
+	var sixteen_icons: Array[String] = []
+	for _i: int in 16:
+		sixteen_icons.append("W")
+	var sixteen_card := BattleCardViewScript.new()
+	sixteen_card.custom_minimum_size = Vector2(137, 192)
+	sixteen_card.size = Vector2(137, 192)
+	sixteen_card.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_BENCH)
+	sixteen_card.set_status_text_scale(0.8)
+	sixteen_card.set_portrait_status_metrics_enabled(true)
+	sixteen_card.set_battle_status({
+		"hp_current": 280,
+		"hp_max": 280,
+		"hp_ratio": 1.0,
+		"status_icons": [],
+		"energy_icons": sixteen_icons,
+		"tool_name": "",
+		"ability_used_this_turn": true,
+	})
+
+	var one_energy_panel := one_card.get("_status_energy_panel") as Control
+	var eight_energy_panel := eight_card.get("_status_energy_panel") as Control
+	var sixteen_energy_panel := sixteen_card.get("_status_energy_panel") as Control
+	var one_energy_row := one_card.get("_status_energy_row") as HBoxContainer
+	var eight_energy_row := eight_card.get("_status_energy_row") as HBoxContainer
+	var sixteen_energy_row := sixteen_card.get("_status_energy_row") as HBoxContainer
+	var one_icon := one_energy_row.get_child(0) as Control if one_energy_row != null and one_energy_row.get_child_count() > 0 else null
+	var eight_icon := eight_energy_row.get_child(0) as Control if eight_energy_row != null and eight_energy_row.get_child_count() > 0 else null
+	var sixteen_icon := sixteen_energy_row.get_child(0) as Control if sixteen_energy_row != null and sixteen_energy_row.get_child_count() > 0 else null
+	var one_slot_height := one_energy_panel.custom_minimum_size.y if one_energy_panel != null else -1.0
+	var eight_slot_height := eight_energy_panel.custom_minimum_size.y if eight_energy_panel != null else -2.0
+	var sixteen_slot_height := sixteen_energy_panel.custom_minimum_size.y if sixteen_energy_panel != null else -3.0
+	var one_icon_size := one_icon.custom_minimum_size.y if one_icon != null else -1.0
+	var eight_icon_size := eight_icon.custom_minimum_size.y if eight_icon != null else -2.0
+	var sixteen_icon_size := sixteen_icon.custom_minimum_size.y if sixteen_icon != null else -3.0
+	var eight_row_width := eight_energy_row.get_combined_minimum_size().x if eight_energy_row != null else INF
+	var sixteen_row_width := sixteen_energy_row.get_combined_minimum_size().x if sixteen_energy_row != null else INF
+	var eight_width_check := ""
+	if eight_row_width > eight_card.custom_minimum_size.x + 0.1:
+		eight_width_check = "Eight Energy icons should fit the landscape card width; row_width=%.2f card_width=%.2f icon_size=%.2f icon_width=%.2f child_min=%.2f row_min=%s count=%d separation=%d" % [
+			eight_row_width,
+			eight_card.custom_minimum_size.x,
+			eight_icon_size,
+			eight_icon.custom_minimum_size.x if eight_icon != null else -1.0,
+			eight_icon.get_combined_minimum_size().x if eight_icon != null else -1.0,
+			str(eight_energy_row.custom_minimum_size if eight_energy_row != null else Vector2.ZERO),
+			eight_energy_row.get_child_count() if eight_energy_row != null else -1,
+			eight_energy_row.get_theme_constant("separation") if eight_energy_row != null else -1,
+		]
+	var sixteen_width_check := ""
+	if sixteen_row_width > sixteen_card.custom_minimum_size.x + 0.1:
+		sixteen_width_check = "Sixteen Energy icons should fit the landscape card width; row_width=%.2f card_width=%.2f icon_size=%.2f separation=%d" % [
+			sixteen_row_width,
+			sixteen_card.custom_minimum_size.x,
+			sixteen_icon_size,
+			sixteen_energy_row.get_theme_constant("separation") if sixteen_energy_row != null else -1,
+		]
+
+	var result := run_checks([
+		assert_true(one_card.get_combined_minimum_size().y <= one_card.custom_minimum_size.y + 0.5, "One Energy should not grow the landscape card height"),
+		assert_true(eight_card.get_combined_minimum_size().y <= eight_card.custom_minimum_size.y + 0.5, "Eight Energy icons should not grow the landscape card height"),
+		assert_true(sixteen_card.get_combined_minimum_size().y <= sixteen_card.custom_minimum_size.y + 0.5, "Sixteen Energy icons should not grow the landscape card height"),
+		assert_true(absf(one_slot_height - eight_slot_height) <= 0.1, "Landscape Energy slot height should not change when more Energy is attached"),
+		assert_true(absf(one_slot_height - sixteen_slot_height) <= 0.1, "Landscape Energy slot height should stay fixed even with many Energy icons"),
+		assert_true(one_icon_size > eight_icon_size and eight_icon_size > sixteen_icon_size, "Landscape Energy icons should shrink as the attached Energy count grows"),
+		eight_width_check,
+		sixteen_width_check,
+	])
+
+	one_card.queue_free()
+	eight_card.queue_free()
+	sixteen_card.queue_free()
+	return result
+
+
+func test_battle_card_view_portrait_energy_icons_shrink_without_slot_growth() -> String:
+	var one_card := BattleCardViewScript.new()
+	one_card.custom_minimum_size = Vector2(214, 300)
+	one_card.size = Vector2(214, 300)
+	one_card.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_BENCH)
+	one_card.set_status_text_scale(1.0)
+	one_card.set_portrait_status_metrics_enabled(true)
+	one_card.set_battle_status({
+		"hp_current": 280,
+		"hp_max": 280,
+		"hp_ratio": 1.0,
+		"status_icons": [],
+		"energy_icons": ["W"],
+		"tool_name": "",
+		"ability_used_this_turn": true,
+	})
+
+	var twelve_icons: Array[String] = []
+	for _i: int in 12:
+		twelve_icons.append("W")
+	var twelve_card := BattleCardViewScript.new()
+	twelve_card.custom_minimum_size = Vector2(214, 300)
+	twelve_card.size = Vector2(214, 300)
+	twelve_card.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_BENCH)
+	twelve_card.set_status_text_scale(1.0)
+	twelve_card.set_portrait_status_metrics_enabled(true)
+	twelve_card.set_battle_status({
+		"hp_current": 280,
+		"hp_max": 280,
+		"hp_ratio": 1.0,
+		"status_icons": [],
+		"energy_icons": twelve_icons,
+		"tool_name": "",
+		"ability_used_this_turn": true,
+	})
+
+	var one_energy_panel := one_card.get("_status_energy_panel") as Control
+	var twelve_energy_panel := twelve_card.get("_status_energy_panel") as Control
+	var one_energy_row := one_card.get("_status_energy_row") as HBoxContainer
+	var twelve_energy_row := twelve_card.get("_status_energy_row") as HBoxContainer
+	var one_icon := one_energy_row.get_child(0) as Control if one_energy_row != null and one_energy_row.get_child_count() > 0 else null
+	var twelve_icon := twelve_energy_row.get_child(0) as Control if twelve_energy_row != null and twelve_energy_row.get_child_count() > 0 else null
+	var one_slot_height := one_energy_panel.custom_minimum_size.y if one_energy_panel != null else -1.0
+	var twelve_slot_height := twelve_energy_panel.custom_minimum_size.y if twelve_energy_panel != null else -2.0
+	var one_icon_size := one_icon.custom_minimum_size.y if one_icon != null else -1.0
+	var twelve_icon_size := twelve_icon.custom_minimum_size.y if twelve_icon != null else -2.0
+	var twelve_row_width := twelve_energy_row.get_combined_minimum_size().x if twelve_energy_row != null else INF
+	var twelve_width_check := ""
+	if twelve_row_width > twelve_card.custom_minimum_size.x + 0.1:
+		twelve_width_check = "Many portrait Energy icons should fit the card width; row_width=%.2f card_width=%.2f icon_size=%.2f icon_width=%.2f child_min=%.2f row_min=%s count=%d separation=%d" % [
+			twelve_row_width,
+			twelve_card.custom_minimum_size.x,
+			twelve_icon_size,
+			twelve_icon.custom_minimum_size.x if twelve_icon != null else -1.0,
+			twelve_icon.get_combined_minimum_size().x if twelve_icon != null else -1.0,
+			str(twelve_energy_row.custom_minimum_size if twelve_energy_row != null else Vector2.ZERO),
+			twelve_energy_row.get_child_count() if twelve_energy_row != null else -1,
+			twelve_energy_row.get_theme_constant("separation") if twelve_energy_row != null else -1,
+		]
+
+	var result := run_checks([
+		assert_true(one_card.get_combined_minimum_size().y <= one_card.custom_minimum_size.y + 0.5, "One Energy should not grow the portrait card height"),
+		assert_true(twelve_card.get_combined_minimum_size().y <= twelve_card.custom_minimum_size.y + 0.5, "Many Energy icons should not grow the portrait card height"),
+		assert_true(absf(one_slot_height - twelve_slot_height) <= 0.1, "Portrait Energy slot height should not change when more Energy is attached"),
+		assert_true(one_icon_size > twelve_icon_size, "Portrait Energy icons should shrink as the attached Energy count grows"),
+		twelve_width_check,
+	])
+
+	one_card.queue_free()
+	twelve_card.queue_free()
+	return result
+
+
+func test_battle_scene_landscape_field_status_uses_portrait_hp_used_tool_metrics() -> String:
+	var battle_scene := BattleSceneScript.new()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.turn_number = 3
+	battle_scene._gsm = gsm
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var active_view := BattleCardViewScript.new()
+	active_view.custom_minimum_size = Vector2(137, 192)
+	active_view.size = Vector2(137, 192)
+	battle_scene.set("_slot_card_views", {"my_active": active_view})
+
+	var active_slot := PokemonSlot.new()
+	active_slot.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Landscape Metrics", 200, "P"), 0))
+	active_slot.attached_energy.append(CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0))
+	active_slot.attached_tool = CardInstance.create(_make_trainer_cd("Tool", "Tool", ""), 0)
+	active_slot.effects.append({
+		"type": "ability_demo_used",
+		"turn": gsm.game_state.turn_number,
+	})
+	battle_scene.call("_refresh_slot_card_view", "my_active", active_slot, true)
+
+	var expected_height := active_view.custom_minimum_size.y / 5.0
+	var used_panel := active_view.get("_status_used_panel") as Control
+	var hp_panel := active_view.get("_status_hp_bar_panel") as Control
+	var tool_panel := active_view.get("_status_tool_panel") as Control
+	var used_label := active_view.get("_status_used_label") as Label
+	var hp_label := active_view.get("_status_hp_value_label") as Label
+	var tool_label := active_view.get("_status_tool_label") as Label
+	var energy_row := active_view.get("_status_energy_row") as HBoxContainer
+	var energy_icon := energy_row.get_child(0) as Control if energy_row != null and energy_row.get_child_count() > 0 else null
+	var used_matches_tool_size := used_label != null and tool_label != null and absf(float(used_label.get_theme_font_size("font_size") - tool_label.get_theme_font_size("font_size"))) <= 0.1
+	var portrait_probe := BattleCardViewScript.new()
+	portrait_probe.custom_minimum_size = active_view.custom_minimum_size
+	portrait_probe.size = active_view.size
+	portrait_probe.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_ACTIVE)
+	portrait_probe.set_status_text_scale(1.0)
+	portrait_probe.set_portrait_status_metrics_enabled(true)
+	portrait_probe.set_battle_status({
+		"hp_current": 200,
+		"hp_max": 200,
+		"hp_ratio": 1.0,
+		"status_icons": [],
+		"energy_icons": [],
+		"tool_name": "Tool",
+		"ability_used_this_turn": true,
+	})
+	var portrait_hp_label := portrait_probe.get("_status_hp_value_label") as Label
+	var portrait_tool_label := portrait_probe.get("_status_tool_label") as Label
+	var expected_hp_font := roundi(float(portrait_hp_label.get_theme_font_size("font_size")) * 0.8) if portrait_hp_label != null else -1
+	var expected_tool_font := roundi(float(portrait_tool_label.get_theme_font_size("font_size")) * 0.8) if portrait_tool_label != null else -1
+	var expected_energy_icon_size := expected_hp_font
+
+	var result := run_checks([
+		assert_true(bool(active_view.get("_portrait_status_metrics_enabled")), "Landscape field cards should enable the shared readable status metrics"),
+		assert_eq(float(active_view.get("_status_text_scale")), 0.8, "Landscape field status text should be scaled down by 20 percent"),
+		assert_true(used_panel != null and absf(used_panel.custom_minimum_size.y - expected_height) <= 0.1, "Landscape USED slot should match the portrait one-fifth height, expected=%s got=%s card_min=%s field=%s" % [str(expected_height), str(used_panel.custom_minimum_size.y if used_panel != null else -1.0), str(active_view.custom_minimum_size), str(active_view.get("_field_slot_layout_size"))]),
+		assert_true(hp_panel != null and absf(hp_panel.custom_minimum_size.y - expected_height) <= 0.1, "Landscape HP slot should match the portrait one-fifth height, expected=%s got=%s card_min=%s field=%s" % [str(expected_height), str(hp_panel.custom_minimum_size.y if hp_panel != null else -1.0), str(active_view.custom_minimum_size), str(active_view.get("_field_slot_layout_size"))]),
+		assert_true(tool_panel != null and absf(tool_panel.custom_minimum_size.y - expected_height) <= 0.1, "Landscape Tool slot should match the portrait one-fifth height, expected=%s got=%s card_min=%s field=%s" % [str(expected_height), str(tool_panel.custom_minimum_size.y if tool_panel != null else -1.0), str(active_view.custom_minimum_size), str(active_view.get("_field_slot_layout_size"))]),
+		assert_true(used_matches_tool_size, "Landscape USED text should keep the same size as Tool text"),
+		assert_eq(hp_label.get_theme_font_size("font_size") if hp_label != null else -1, expected_hp_font, "Landscape HP text should be 20 percent smaller than portrait"),
+		assert_eq(roundi(energy_icon.custom_minimum_size.y) if energy_icon != null else -1, expected_energy_icon_size, "Landscape Energy icon height should match the readable text metric"),
+		assert_eq(roundi(energy_icon.custom_minimum_size.x) if energy_icon != null else -1, expected_energy_icon_size, "Landscape Energy icon width should match the readable text metric"),
+		assert_eq(energy_row.alignment if energy_row != null else -1, BoxContainer.ALIGNMENT_CENTER, "Landscape Energy icons should be centered in the Energy slot"),
+		assert_eq(tool_label.get_theme_font_size("font_size") if tool_label != null else -1, expected_tool_font, "Landscape Tool text should be 20 percent smaller than portrait"),
+		assert_true(hp_label != null and hp_label.get_theme_constant("outline_size") >= 2, "Landscape HP text should use the readable portrait outline"),
+		assert_true(tool_label != null and tool_label.get_theme_constant("outline_size") >= 1, "Landscape Tool text should use the readable portrait outline"),
+	])
+
+	portrait_probe.queue_free()
+	active_view.queue_free()
+	return result
+
+
+func test_battle_card_view_portrait_status_icons_match_large_text_metrics() -> String:
+	var card_view := BattleCardViewScript.new()
+	card_view.custom_minimum_size = Vector2(214, 300)
+	card_view.size = Vector2(214, 300)
+	card_view.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_BENCH)
+	card_view.set_portrait_status_metrics_enabled(true)
+	card_view.set_battle_status({
+		"hp_current": 170,
+		"hp_max": 220,
+		"hp_ratio": 0.77,
+		"status_icons": ["poisoned"],
+		"energy_icons": ["R"],
+		"tool_name": "Tool",
+		"ability_used_this_turn": false,
+	})
+
+	var hp_label := card_view.get("_status_hp_value_label") as Label
+	var tool_label := card_view.get("_status_tool_label") as Label
+	var status_row := card_view.get("_status_condition_row") as HBoxContainer
+	var energy_row := card_view.get("_status_energy_row") as HBoxContainer
+	var status_icon := status_row.get_child(0) as Control if status_row != null and status_row.get_child_count() > 0 else null
+	var energy_icon := energy_row.get_child(0) as Control if energy_row != null and energy_row.get_child_count() > 0 else null
+	var expected_min_icon_height := mini(
+		hp_label.get_theme_font_size("font_size") if hp_label != null else 0,
+		tool_label.get_theme_font_size("font_size") if tool_label != null else 0
+	)
+
+	var result := run_checks([
+		assert_true(expected_min_icon_height > 0, "Portrait text metrics should be available for icon sizing"),
+		assert_true(status_icon != null and status_icon.custom_minimum_size.y >= expected_min_icon_height, "Portrait special-condition icons should match the enlarged text height"),
+		assert_true(energy_icon != null and energy_icon.custom_minimum_size.y >= expected_min_icon_height, "Portrait Energy icons should match the enlarged text height"),
+		assert_true(status_icon != null and absf(status_icon.custom_minimum_size.y - energy_icon.custom_minimum_size.y) <= 0.1, "Portrait condition and Energy icons should use the same large metric"),
+	])
+
+	card_view.queue_free()
+	return result
+
+
+func test_battle_card_view_portrait_status_hud_shrinks_on_expanded_bench_cards() -> String:
+	var small_card := BattleCardViewScript.new()
+	small_card.custom_minimum_size = Vector2(64, 90)
+	small_card.size = Vector2(64, 90)
+	small_card.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_BENCH)
+	small_card.set_portrait_status_metrics_enabled(true)
+	small_card.set_battle_status({
+		"hp_current": 120,
+		"hp_max": 160,
+		"hp_ratio": 0.75,
+		"status_icons": ["poisoned"],
+		"energy_icons": ["R", "C"],
+		"tool_name": "Tool",
+		"ability_used_this_turn": false,
+	})
+
+	var normal_card := BattleCardViewScript.new()
+	normal_card.custom_minimum_size = Vector2(120, 168)
+	normal_card.size = Vector2(120, 168)
+	normal_card.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_BENCH)
+	normal_card.set_portrait_status_metrics_enabled(true)
+	normal_card.set_battle_status({
+		"hp_current": 120,
+		"hp_max": 160,
+		"hp_ratio": 0.75,
+		"status_icons": ["poisoned"],
+		"energy_icons": ["R", "C"],
+		"tool_name": "Tool",
+		"ability_used_this_turn": false,
+	})
+
+	var small_hp_panel := small_card.get("_status_hp_bar_panel") as Control
+	var small_energy_row := small_card.get("_status_energy_row") as HBoxContainer
+	var small_tool_label := small_card.get("_status_tool_label") as Label
+	var small_energy_icon := small_energy_row.get_child(0) as Control if small_energy_row != null and small_energy_row.get_child_count() > 0 else null
+	var normal_hp_panel := normal_card.get("_status_hp_bar_panel") as Control
+	var normal_energy_row := normal_card.get("_status_energy_row") as HBoxContainer
+	var normal_tool_label := normal_card.get("_status_tool_label") as Label
+	var normal_energy_icon := normal_energy_row.get_child(0) as Control if normal_energy_row != null and normal_energy_row.get_child_count() > 0 else null
+	var expected_small_hp_height := minf(small_card.custom_minimum_size.y / 5.0, (small_card.custom_minimum_size.y - 20.0) / 4.0)
+	var expected_normal_hp_height := normal_card.custom_minimum_size.y / 5.0
+
+	var result := run_checks([
+		assert_true(small_hp_panel != null and normal_hp_panel != null, "Status HUD should expose HP panels for scaling checks"),
+		assert_true(small_hp_panel.custom_minimum_size.y < normal_hp_panel.custom_minimum_size.y, "Expanded-bench small cards should shrink HP status rows"),
+		assert_true(small_hp_panel != null and absf(small_hp_panel.custom_minimum_size.y - expected_small_hp_height) <= 0.1, "Small expanded-bench HP rows should fit inside the status overlay"),
+		assert_true(normal_hp_panel != null and absf(normal_hp_panel.custom_minimum_size.y - expected_normal_hp_height) <= 0.1, "Normal portrait HP rows should be one fifth of the card height"),
+		assert_true(small_energy_icon != null and normal_energy_icon != null and small_energy_icon.custom_minimum_size.y < normal_energy_icon.custom_minimum_size.y, "Expanded-bench small cards should shrink Energy icons"),
+		assert_true(small_tool_label != null and normal_tool_label != null and small_tool_label.get_theme_font_size("font_size") < normal_tool_label.get_theme_font_size("font_size"), "Expanded-bench small cards should shrink Tool text"),
+	])
+
+	small_card.queue_free()
+	normal_card.queue_free()
+	return result
+
+
+func test_battle_card_view_status_icons_use_layout_card_size_without_feedback_growth() -> String:
+	var stable_card := BattleCardViewScript.new()
+	stable_card.custom_minimum_size = Vector2(137, 192)
+	stable_card.size = Vector2(137, 192)
+	stable_card.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_ACTIVE)
+	stable_card.set_portrait_status_metrics_enabled(true)
+	stable_card.set_battle_status({
+		"hp_current": 150,
+		"hp_max": 200,
+		"hp_ratio": 0.75,
+		"status_icons": [],
+		"energy_icons": ["R", "C"],
+		"tool_name": "",
+		"ability_used_this_turn": false,
+	})
+	var stable_energy_row := stable_card.get("_status_energy_row") as HBoxContainer
+	var stable_icon := stable_energy_row.get_child(0) as Control if stable_energy_row != null and stable_energy_row.get_child_count() > 0 else null
+	var stable_icon_size := stable_icon.custom_minimum_size if stable_icon != null else Vector2.ZERO
+
+	var feedback_card := BattleCardViewScript.new()
+	feedback_card.custom_minimum_size = Vector2(137, 192)
+	feedback_card.size = Vector2(274, 384)
+	feedback_card.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_ACTIVE)
+	feedback_card.set_portrait_status_metrics_enabled(true)
+	feedback_card.set_battle_status({
+		"hp_current": 150,
+		"hp_max": 200,
+		"hp_ratio": 0.75,
+		"status_icons": [],
+		"energy_icons": ["R", "C"],
+		"tool_name": "",
+		"ability_used_this_turn": false,
+	})
+	var feedback_energy_row := feedback_card.get("_status_energy_row") as HBoxContainer
+	var feedback_icon := feedback_energy_row.get_child(0) as Control if feedback_energy_row != null and feedback_energy_row.get_child_count() > 0 else null
+
+	var result := run_checks([
+		assert_true(stable_icon != null and feedback_icon != null, "Energy icons should render for feedback-size regression"),
+		assert_eq(feedback_icon.custom_minimum_size if feedback_icon != null else Vector2.ZERO, stable_icon_size, "Energy icon size should follow the layout card size, not the already-expanded Control size"),
+	])
+
+	stable_card.queue_free()
+	feedback_card.queue_free()
+	return result
+
+
+func test_battle_card_view_field_slot_status_does_not_feedback_into_parent_minimum() -> String:
+	var slot_size := Vector2(137, 192)
+	var card_view := BattleCardViewScript.new()
+	card_view.custom_minimum_size = Vector2.ZERO
+	card_view.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_BENCH)
+	card_view.set_field_slot_layout_size(slot_size)
+	card_view.set_portrait_status_metrics_enabled(true)
+	var empty_minimum := card_view.get_combined_minimum_size()
+	card_view.set_battle_status({
+		"hp_current": 220,
+		"hp_max": 300,
+		"hp_ratio": 220.0 / 300.0,
+		"status_icons": [],
+		"energy_icons": ["M", "M"],
+		"tool_name": "",
+		"ability_used_this_turn": false,
+	})
+	var energy_minimum := card_view.get_combined_minimum_size()
+	card_view.set_battle_status({
+		"hp_current": 220,
+		"hp_max": 300,
+		"hp_ratio": 220.0 / 300.0,
+		"status_icons": ["poisoned"],
+		"energy_icons": ["M", "M"],
+		"tool_name": "Ancient Booster Energy Capsule",
+		"ability_used_this_turn": true,
+	})
+	var full_status_minimum := card_view.get_combined_minimum_size()
+	var hp_panel := card_view.get("_status_hp_bar_panel") as Control
+	var energy_panel := card_view.get("_status_energy_panel") as Control
+	var expected_row_height := minf(slot_size.y / 5.0, (slot_size.y - 20.0) / 5.0)
+	var row := HBoxContainer.new()
+	var left_panel := PanelContainer.new()
+	var right_panel := PanelContainer.new()
+	left_panel.custom_minimum_size = slot_size
+	right_panel.custom_minimum_size = slot_size
+	row.add_child(left_panel)
+	row.add_child(right_panel)
+	var left_card := BattleCardViewScript.new()
+	var right_card := BattleCardViewScript.new()
+	for slot_card: BattleCardView in [left_card, right_card]:
+		slot_card.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_BENCH)
+		slot_card.set_field_slot_layout_size(slot_size)
+		slot_card.set_portrait_status_metrics_enabled(true)
+		slot_card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		slot_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	left_panel.add_child(left_card)
+	right_panel.add_child(right_card)
+	var row_minimum_before := row.get_combined_minimum_size()
+	right_card.set_battle_status({
+		"hp_current": 220,
+		"hp_max": 300,
+		"hp_ratio": 220.0 / 300.0,
+		"status_icons": [],
+		"energy_icons": ["M", "M"],
+		"tool_name": "",
+		"ability_used_this_turn": false,
+	})
+	var row_minimum_after := row.get_combined_minimum_size()
+
+	var result := run_checks([
+		assert_true(empty_minimum.x <= 0.5 and empty_minimum.y <= 4.5, "Locked field slot card should only keep the base frame minimum before status, got %s" % str(empty_minimum)),
+		assert_true(energy_minimum.x <= empty_minimum.x + 0.5 and energy_minimum.y <= empty_minimum.y + 0.5, "Attached Energy HUD should not grow the field slot card parent minimum, before=%s after=%s" % [str(empty_minimum), str(energy_minimum)]),
+		assert_true(full_status_minimum.x <= empty_minimum.x + 0.5 and full_status_minimum.y <= empty_minimum.y + 0.5, "Energy, Tool, status, and USED rows should not grow the field slot card parent minimum, before=%s after=%s" % [str(empty_minimum), str(full_status_minimum)]),
+		assert_true(row_minimum_after.x <= row_minimum_before.x + 0.5 and row_minimum_after.y <= row_minimum_before.y + 0.5, "A field row should not relayout or shift neighbors after one slot gains Energy, before=%s after=%s" % [str(row_minimum_before), str(row_minimum_after)]),
+		assert_true(hp_panel != null and absf(hp_panel.custom_minimum_size.y - expected_row_height) <= 0.1, "Field slot HP row should still use the slot layout height for readable metrics"),
+		assert_true(energy_panel != null and absf(energy_panel.custom_minimum_size.y - expected_row_height) <= 0.1, "Field slot Energy row should still use the slot layout height for readable metrics"),
+	])
+
+	card_view.queue_free()
+	row.queue_free()
+	return result
+
+
+func test_battle_card_view_status_and_energy_icons_share_base_size() -> String:
+	var card_view := BattleCardViewScript.new()
+	card_view.custom_minimum_size = Vector2(137, 192)
+	card_view.size = Vector2(137, 192)
+	card_view.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_ACTIVE)
+	card_view.set_battle_status({
+		"hp_current": 150,
+		"hp_max": 200,
+		"hp_ratio": 0.75,
+		"status_icons": ["poisoned", "burned"],
+		"energy_icons": ["R", "C"],
+		"tool_name": "",
+		"ability_used_this_turn": false,
+	})
+
+	var status_row := card_view.get("_status_condition_row") as HBoxContainer
+	var energy_row := card_view.get("_status_energy_row") as HBoxContainer
+	var status_icon := status_row.get_child(0) as Control if status_row != null and status_row.get_child_count() > 0 else null
+	var energy_icon := energy_row.get_child(0) as Control if energy_row != null and energy_row.get_child_count() > 0 else null
+	var status_size := status_icon.custom_minimum_size.y if status_icon != null else -1.0
+	var energy_size := energy_icon.custom_minimum_size.y if energy_icon != null else -2.0
+
+	var result := run_checks([
+		assert_true(status_icon != null and energy_icon != null, "Battle status HUD should render comparable status and Energy icons"),
+		assert_true(absf(status_size - energy_size) < 0.1, "Status and attached Energy icons should share the same base size"),
+	])
+
+	card_view.queue_free()
+	return result
+
+
+func test_battle_card_view_double_turbo_energy_uses_two_same_size_markers() -> String:
+	var basic_card := BattleCardViewScript.new()
+	basic_card.custom_minimum_size = Vector2(137, 192)
+	basic_card.size = Vector2(137, 192)
+	basic_card.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_ACTIVE)
+	basic_card.set_battle_status({
+		"hp_current": 150,
+		"hp_max": 200,
+		"hp_ratio": 0.75,
+		"status_icons": [],
+		"energy_icons": ["C"],
+		"tool_name": "",
+		"ability_used_this_turn": false,
+	})
+	var dte_card := BattleCardViewScript.new()
+	dte_card.custom_minimum_size = Vector2(137, 192)
+	dte_card.size = Vector2(137, 192)
+	dte_card.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_ACTIVE)
+	dte_card.set_battle_status({
+		"hp_current": 150,
+		"hp_max": 200,
+		"hp_ratio": 0.75,
+		"status_icons": [],
+		"energy_icons": ["C", "C"],
+		"tool_name": "",
+		"ability_used_this_turn": false,
+	})
+
+	var basic_row := basic_card.get("_status_energy_row") as HBoxContainer
+	var dte_row := dte_card.get("_status_energy_row") as HBoxContainer
+	var basic_icon := basic_row.get_child(0) as Control if basic_row != null and basic_row.get_child_count() > 0 else null
+	var dte_icon_a := dte_row.get_child(0) as Control if dte_row != null and dte_row.get_child_count() > 0 else null
+	var dte_icon_b := dte_row.get_child(1) as Control if dte_row != null and dte_row.get_child_count() > 1 else null
+
+	var result := run_checks([
+		assert_eq(dte_row.get_child_count() if dte_row != null else -1, 2, "Double Turbo Energy should show two Colorless Energy markers"),
+		assert_true(basic_icon != null and dte_icon_a != null and dte_icon_b != null, "Basic and Double Turbo Energy markers should all render"),
+		assert_eq(dte_icon_a.custom_minimum_size, basic_icon.custom_minimum_size, "The first Double Turbo marker should keep the same size as a normal Energy marker"),
+		assert_eq(dte_icon_b.custom_minimum_size, basic_icon.custom_minimum_size, "The second Double Turbo marker should keep the same size as a normal Energy marker"),
+	])
+
+	basic_card.queue_free()
+	dte_card.queue_free()
+	return result
+
+
+func test_battle_scene_double_turbo_energy_icon_codes_show_two_energy_units() -> String:
+	var scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	scene.set("_gsm", gsm)
+	var slot := PokemonSlot.new()
+	var dte_cd := CardData.new()
+	dte_cd.name = "Double Turbo Energy"
+	dte_cd.card_type = "Special Energy"
+	dte_cd.effect_id = "9c04dd0addf56a7b2c88476bc8e45c0e"
+	slot.attached_energy.append(CardInstance.create(dte_cd, 0))
+
+	var icons: Array = scene.call("_slot_energy_icon_codes", slot)
+	return run_checks([
+		assert_eq(icons.size(), 2, "Double Turbo Energy should show two Colorless Energy units in the field HUD"),
+		assert_eq(str(icons[0]) if icons.size() > 0 else "", "C", "The first Double Turbo marker should be Colorless"),
+		assert_eq(str(icons[1]) if icons.size() > 1 else "", "C", "The second Double Turbo marker should be Colorless"),
+	])
+
+
+func test_battle_card_view_landscape_status_slots_match_hp_height() -> String:
+	var card_view := BattleCardViewScript.new()
+	card_view.custom_minimum_size = Vector2(137, 192)
+	card_view.size = Vector2(137, 192)
+	card_view.setup_from_instance(null, BattleCardViewScript.MODE_SLOT_ACTIVE)
+	card_view.set_battle_status({
+		"hp_current": 150,
+		"hp_max": 200,
+		"hp_ratio": 0.75,
+		"status_icons": ["poisoned", "burned"],
+		"energy_icons": ["R", "C", "R", "C", "R", "C", "R", "C", "R", "C", "R", "C"],
+		"tool_name": "",
+		"ability_used_this_turn": false,
+	})
+
+	var hp_panel := card_view.get("_status_hp_bar_panel") as Control
+	var hp_bar := card_view.get("_status_hp_bar") as ProgressBar
+	var hp_overlay := hp_bar.get_parent() as Control if hp_bar != null else null
+	var status_panel := card_view.get("_status_condition_panel") as Control
+	var energy_panel := card_view.get("_status_energy_panel") as Control
+	var status_row := card_view.get("_status_condition_row") as HBoxContainer
+	var energy_row := card_view.get("_status_energy_row") as HBoxContainer
+	var status_icon := status_row.get_child(0) as Control if status_row != null and status_row.get_child_count() > 0 else null
+	var energy_icon := energy_row.get_child(0) as Control if energy_row != null and energy_row.get_child_count() > 0 else null
+	var hp_height := hp_panel.custom_minimum_size.y if hp_panel != null else 0.0
+	var status_height := status_panel.custom_minimum_size.y if status_panel != null else -1.0
+	var energy_height := energy_panel.custom_minimum_size.y if energy_panel != null else -1.0
+	var hp_overlay_height := hp_overlay.custom_minimum_size.y if hp_overlay != null else 0.0
+
+	var result := run_checks([
+		assert_true(hp_panel != null and status_panel != null and energy_panel != null, "Landscape card should expose HP, status, and Energy slot panels"),
+		assert_true(absf(status_height - hp_height) < 0.1, "Status slot height should match the HP slot height in landscape"),
+		assert_true(absf(energy_height - hp_height) < 0.1, "Energy slot height should match the HP slot height in landscape"),
+		assert_true(status_icon != null and status_icon.custom_minimum_size.y <= hp_overlay_height, "Status icons should fit inside the HP bar height"),
+		assert_true(energy_icon != null and energy_icon.custom_minimum_size.y <= hp_overlay_height, "Energy icons should fit inside the HP bar height"),
+		assert_true(energy_icon != null and status_icon != null and energy_icon.custom_minimum_size.y <= status_icon.custom_minimum_size.y * 0.75, "Attached Energy icons should stay visually smaller than status icons"),
+		assert_true(energy_row != null and energy_row.get_combined_minimum_size().x <= card_view.custom_minimum_size.x, "Many attached Energy icons should not force the field card wider"),
+	])
+
+	card_view.queue_free()
+	return result
 
 
 func test_battle_scene_battle_status_includes_active_status_icons() -> String:
@@ -6793,6 +9849,99 @@ func test_battle_card_view_touch_long_press_opens_detail_without_left_click() ->
 		assert_true(suppresses_emulated_left, "Long press should suppress the next emulated left click"),
 		assert_eq(int(counters["left"]), 0, "Long press detail should not also select or play the card"),
 	])
+
+
+func test_modal_choice_tap_suppresses_followup_battle_slot_input() -> String:
+	var battle_scene := _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	var game_state := GameState.new()
+	game_state.current_player_index = 0
+	game_state.phase = GameState.GamePhase.MAIN
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		game_state.players.append(player)
+	var active_slot := PokemonSlot.new()
+	active_slot.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Tap Target", 120, "C"), 0))
+	game_state.players[0].active_pokemon = active_slot
+	gsm.game_state = game_state
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+	(battle_scene.get("_dialog_overlay") as Panel).visible = false
+
+	battle_scene.call("_mark_modal_input_consumed", "test_modal_choice")
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	battle_scene.call("_on_slot_input", click, "my_active")
+
+	var dialog_overlay := battle_scene.get("_dialog_overlay") as Panel
+	var result := run_checks([
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "A follow-up touch event from a modal card choice should not open the Pokemon action HUD"),
+		assert_false(dialog_overlay.visible, "A follow-up touch event from a modal card choice should not show a second dialog"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_modal_choice_tap_suppresses_portrait_bench_grid_fallback() -> String:
+	var battle_scene := _make_battle_scene_stub()
+	battle_scene.call("_mark_modal_input_consumed", "test_modal_bench")
+
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	click.position = Vector2(100, 100)
+	var consumed := bool(battle_scene.call("_try_handle_portrait_bench_play_input", click))
+
+	var result := run_checks([
+		assert_true(consumed, "A follow-up touch event from a modal choice should be consumed before the portrait bench fallback can play a Basic Pokemon"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "Consuming the modal follow-up should not start another pending choice"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_modal_choice_tap_suppresses_followup_discard_hud_open() -> String:
+	var battle_scene := _make_battle_scene_stub()
+	var discard_overlay := battle_scene.get("_discard_overlay") as Panel
+	discard_overlay.visible = false
+	battle_scene.call("_mark_modal_input_consumed", "test_modal_discard")
+
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	battle_scene.call("_on_discard_open_control_input", click, 0, "Discard")
+
+	var result := run_checks([
+		assert_false(discard_overlay.visible, "A follow-up touch event from a modal card choice should not open the discard viewer"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "Consuming the modal follow-up should not start another pending choice"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_modal_choice_tap_suppresses_followup_lost_zone_hud_open() -> String:
+	var battle_scene := _make_battle_scene_stub()
+	var discard_overlay := battle_scene.get("_discard_overlay") as Panel
+	discard_overlay.visible = false
+	battle_scene.call("_mark_modal_input_consumed", "test_modal_lost_zone")
+
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	battle_scene.call("_on_lost_zone_open_control_input", click, false)
+
+	var result := run_checks([
+		assert_false(discard_overlay.visible, "A follow-up touch event from a modal card choice should not open the LOST viewer"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "Consuming the modal follow-up should not start another pending choice"),
+	])
+
+	battle_scene.free()
+	return result
 
 
 func test_battle_card_view_secondary_inspect_is_hand_only() -> String:

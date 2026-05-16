@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "Tera",
+	"artist": "5ban Graphics",
+	"attacks": [
+		{
+			"cost": "CC",
+			"damage": "30×",
+			"is_vstar_power": false,
+			"name": "同盟打击",
+			"text": "这个招式，在后攻玩家的最初回合无法使用。造成自己备战宝可梦数量×30伤害。"
+		},
+		{
+			"cost": "GWL",
+			"damage": "180",
+			"is_vstar_power": false,
+			"name": "皇冠蛋白石",
+			"text": "在下一个对手的回合，这只宝可梦不会受到【基础】宝可梦（除【无】宝可梦外）的招式的伤害。"
+		}
+	],
+	"card_index": "175",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "【无】【无】 同盟打击 30×\n这个招式，在后攻玩家的最初回合无法使用。造成自己备战宝可梦数量×30伤害。\n\n【草】【水】【雷】 皇冠蛋白石 180\n在下一个对手的回合，这只宝可梦不会受到【基础】宝可梦（除【无】宝可梦外）的招式的伤害。\n\n\n",
+	"effect_id": "1e48ba6c2140461745fc407bf34f5598",
+	"energy_provides": "",
+	"energy_type": "C",
+	"evolves_from": "",
+	"hp": 230,
+	"image_local_path": "user://cards/images/CSV9C/175.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/175.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "ex",
+	"name": "太乐巴戈斯ex",
+	"name_en": "",
+	"rarity": "RR",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Basic",
+	"weakness_energy": "F",
+	"weakness_value": "×2",
+	"yoren_code": "Y1516"
+}

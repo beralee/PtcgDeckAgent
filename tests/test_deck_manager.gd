@@ -49,8 +49,109 @@ func test_deck_manager_uses_hud_visual_theme() -> String:
 		assert_eq(frame_style.border_width_left if frame_style != null else 0, 3, "Deck manager frame border should be thick enough to read in-game"),
 		assert_true(import_style != null and import_style.bg_color.a < 1.0, "Deck import dialog should use HUD panel styling"),
 		assert_true(button_style != null and button_style.border_color.a > 0.85, "Deck manager buttons should use explicit HUD borders"),
-		assert_true(import_button != null and import_button.custom_minimum_size.y >= 42.0, "Deck manager top action buttons should use touch-friendly HUD height"),
+		assert_true(import_button != null and import_button.custom_minimum_size.y >= 63.0, "Deck manager top action buttons should use the 50%-larger HUD height"),
+		assert_true(import_button != null and import_button.get_theme_font_size("font_size") >= 23, "Deck manager top action button text should be 50% larger"),
 	])
+
+
+func test_deck_manager_deck_row_buttons_use_50_percent_larger_text() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	var deck := _make_deck(910020, "Row Font Deck")
+	var row := scene._create_deck_item(deck) as Control
+	var buttons: Array[Button] = []
+	_collect_buttons(row, buttons)
+	var min_font_size := 999
+	var min_height := 999.0
+	for button: Button in buttons:
+		min_font_size = mini(min_font_size, button.get_theme_font_size("font_size"))
+		min_height = minf(min_height, button.custom_minimum_size.y)
+	row.queue_free()
+	scene.queue_free()
+
+	return run_checks([
+		assert_eq(buttons.size(), 4, "Deck rows should expose view, edit, rename and delete buttons"),
+		assert_true(min_font_size >= 21, "Deck row compact button text should be 50% larger"),
+		assert_true(min_height >= 57.0, "Deck row compact buttons should grow tall enough for the larger text"),
+	])
+
+
+func test_deck_manager_deck_row_name_and_import_date_share_large_line() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	var deck := _make_deck(910022, "Row Meta Deck")
+	deck.import_date = "2026-05-10 18:30:00"
+	var row := scene._create_deck_item(deck) as Control
+	var labels: Array[Label] = []
+	_collect_labels(row, labels)
+	var title_label := labels[0] if labels.size() > 0 else null
+	var title_text := title_label.text if title_label != null else ""
+	row.queue_free()
+	scene.queue_free()
+
+	return run_checks([
+		assert_eq(labels.size(), 1, "Deck row should keep deck name and import date on one line only"),
+		assert_eq(title_text, "Row Meta Deck | 导入于 2026-05-10", "Deck row should render name and import date separated by |"),
+		assert_false(title_text.contains("张卡牌"), "Deck row should not show the old card-count subtitle"),
+		assert_true(title_label != null and title_label.get_theme_font_size("font_size") >= 23, "Deck row title text should use 23px font"),
+	])
+
+
+func test_deck_manager_deck_row_shows_edit_date_when_available() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	var deck := _make_deck(910023, "Edited Row Deck")
+	deck.import_date = "2026-05-10 18:30:00"
+	deck.updated_at = int(Time.get_unix_time_from_datetime_dict({
+		"year": 2026,
+		"month": 5,
+		"day": 12,
+		"hour": 8,
+		"minute": 30,
+		"second": 0,
+	}) * 1000.0)
+	var row := scene._create_deck_item(deck) as Control
+	var labels: Array[Label] = []
+	_collect_labels(row, labels)
+	var title_text := labels[0].text if labels.size() > 0 else ""
+	row.queue_free()
+	scene.queue_free()
+
+	return run_checks([
+		assert_eq(title_text, "Edited Row Deck | 编辑于 2026-05-12", "Deck row should prefer the local edit date when it is available"),
+	])
+
+
+func test_deck_manager_sorts_decks_by_latest_edit_time_first() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	var old_deck := _make_deck(910024, "Old Edited Deck")
+	old_deck.updated_at = 1000
+	var latest_deck := _make_deck(910025, "Latest Edited Deck")
+	latest_deck.updated_at = 3000
+	var middle_deck := _make_deck(910026, "Middle Edited Deck")
+	middle_deck.updated_at = 2000
+	var decks: Array[DeckData] = [old_deck, latest_deck, middle_deck]
+
+	decks.sort_custom(scene._compare_decks_by_edit_time_desc)
+	scene.queue_free()
+
+	return run_checks([
+		assert_eq(decks[0].id, latest_deck.id, "Deck center should place the most recently edited deck first"),
+		assert_eq(decks[1].id, middle_deck.id, "Deck center should keep edit timestamps in descending order"),
+		assert_eq(decks[2].id, old_deck.id, "Deck center should place the oldest edited deck last"),
+	])
+
+
+func test_deck_manager_confirmation_dialog_buttons_use_large_text() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene._on_delete_deck(_make_deck(910021, "Delete Font Deck"))
+	var dialog := _first_confirmation_dialog(scene)
+	var ok_button := dialog.get_ok_button() if dialog != null else null
+	var cancel_button := dialog.get_cancel_button() if dialog != null else null
+	var result := run_checks([
+		assert_not_null(dialog, "Delete confirmation dialog should open"),
+		assert_true(ok_button != null and ok_button.get_theme_font_size("font_size") >= 23, "Delete confirm button text should be 50% larger"),
+		assert_true(cancel_button != null and cancel_button.get_theme_font_size("font_size") >= 23, "Delete cancel button text should be 50% larger"),
+	])
+	scene.queue_free()
+	return result
 
 
 func test_deck_manager_loads_three_latest_recommendation_articles() -> String:
@@ -131,8 +232,9 @@ func test_deck_manager_renders_recommendations_above_deck_list() -> String:
 		assert_not_null(detail_button, "Recommendation card should keep the detail action"),
 		assert_not_null(next_button, "Recommendation card should include local next action"),
 		assert_true(next_before_import, "Next recommendation button should sit before the import button in the card actions"),
-		assert_true(next_button != null and next_button.custom_minimum_size.y >= 42.0, "Recommendation next action should use the larger HUD button size"),
-		assert_true(import_button != null and import_button.custom_minimum_size.y >= 42.0, "Recommendation import action should use the larger HUD button size"),
+		assert_true(next_button != null and next_button.custom_minimum_size.y >= 63.0, "Recommendation next action should use the 50%-larger HUD button size"),
+		assert_true(import_button != null and import_button.custom_minimum_size.y >= 63.0, "Recommendation import action should use the 50%-larger HUD button size"),
+		assert_true(detail_button != null and detail_button.get_theme_font_size("font_size") >= 23, "Recommendation detail button text should be 50% larger"),
 		assert_true(next_style != null and import_style != null and next_style.border_color != import_style.border_color, "Recommendation actions should have visually distinct button roles"),
 	])
 
@@ -768,6 +870,36 @@ func _count_buttons_with_text(node: Node, text: String) -> int:
 	for child: Node in node.get_children():
 		count += _count_buttons_with_text(child, text)
 	return count
+
+
+func _collect_buttons(node: Node, out: Array[Button]) -> void:
+	if node == null:
+		return
+	if node is Button:
+		out.append(node as Button)
+	for child: Node in node.get_children():
+		_collect_buttons(child, out)
+
+
+func _collect_labels(node: Node, out: Array[Label]) -> void:
+	if node == null:
+		return
+	if node is Label:
+		out.append(node as Label)
+	for child: Node in node.get_children():
+		_collect_labels(child, out)
+
+
+func _first_confirmation_dialog(node: Node) -> ConfirmationDialog:
+	if node == null:
+		return null
+	if node is ConfirmationDialog:
+		return node as ConfirmationDialog
+	for child: Node in node.get_children():
+		var found := _first_confirmation_dialog(child)
+		if found != null:
+			return found
+	return null
 
 
 func _recommendation_pool_ids(scene: Control) -> PackedStringArray:

@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "ACE消除器",
+			"text": "如果这只宝可梦身上放有「宝可梦道具」的话，则对手无法从手牌使出「【ACE SPEC】」卡牌。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "Kazumasa Yasukuni",
+	"attacks": [
+		{
+			"cost": "MCC",
+			"damage": "100",
+			"is_vstar_power": false,
+			"name": "磁力爆破",
+			"text": ""
+		}
+	],
+	"card_index": "133",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "特性: ACE消除器\n如果这只宝可梦身上放有「宝可梦道具」的话，则对手无法从手牌使出「【ACE SPEC】」卡牌。\n\n【钢】【无】【无】 磁力爆破 100\n\n\n",
+	"effect_id": "571a7dd294812109ab0bf179ecf863eb",
+	"energy_provides": "",
+	"energy_type": "M",
+	"evolves_from": "",
+	"hp": 110,
+	"image_local_path": "user://cards/images/CSV9C/133.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/133.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "盖诺赛克特",
+	"name_en": "",
+	"rarity": "U",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "G",
+	"resistance_value": "-30",
+	"retreat_cost": 1,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Basic",
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"yoren_code": "P649"
+}

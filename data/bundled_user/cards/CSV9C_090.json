@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "Tera",
+	"artist": "5ban Graphics",
+	"attacks": [
+		{
+			"cost": "PCC",
+			"damage": "160",
+			"is_vstar_power": false,
+			"name": "魔法魅惑",
+			"text": "在下一个对手的回合，受到这个招式影响的宝可梦所使用的招式的伤害「-100」。"
+		},
+		{
+			"cost": "WLP",
+			"damage": "",
+			"is_vstar_power": false,
+			"name": "天使石",
+			"text": "选择对手的2只备战宝可梦，将那2只宝可梦，以及放于其身上的所有卡牌，放回牌库并重洗牌库。在上一个自己的回合，如果自己的宝可梦使用了「天使石」的话，则无法使用这个招式。"
+		}
+	],
+	"card_index": "090",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "【超】【无】【无】 魔法魅惑 160\n在下一个对手的回合，受到这个招式影响的宝可梦所使用的招式的伤害「-100」。\n\n【水】【雷】【超】 天使石\n选择对手的2只备战宝可梦，将那2只宝可梦，以及放于其身上的所有卡牌，放回牌库并重洗牌库。在上一个自己的回合，如果自己的宝可梦使用了「天使石」的话，则无法使用这个招式。\n\n\n",
+	"effect_id": "317cdd81106733967d562ad538a7983a",
+	"energy_provides": "",
+	"energy_type": "P",
+	"evolves_from": "伊布",
+	"hp": 270,
+	"image_local_path": "user://cards/images/CSV9C/090.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/090.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "ex",
+	"name": "仙子伊布ex",
+	"name_en": "",
+	"rarity": "RR",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Stage 1",
+	"weakness_energy": "M",
+	"weakness_value": "×2",
+	"yoren_code": "Y1507"
+}

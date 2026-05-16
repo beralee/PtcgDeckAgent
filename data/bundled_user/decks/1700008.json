@@ -1,0 +1,292 @@
+{
+    "cards":  [
+                  {
+                      "card_index":  "114",
+                      "card_type":  "Item",
+                      "count":  2,
+                      "effect_id":  "06bc00d5dcec33898dc6db2e4c4d10ec",
+                      "name":  "反击捕捉器",
+                      "name_en":  "Counter Catcher",
+                      "set_code":  "CSV6C"
+                  },
+                  {
+                      "card_index":  "185",
+                      "card_type":  "Tool",
+                      "count":  1,
+                      "effect_id":  "0b4cc131a19862f92acf71494f29a0ed",
+                      "name":  "紧急滑板",
+                      "name_en":  "Rescue Board",
+                      "set_code":  "CSV7C"
+                  },
+                  {
+                      "card_index":  "186",
+                      "card_type":  "Tool",
+                      "count":  1,
+                      "effect_id":  "12164ed03296d2df4ef6d0fa8b5f8aae",
+                      "name":  "璀璨结晶",
+                      "name_en":  "Sparkling Crystal",
+                      "set_code":  "CSV8C"
+                  },
+                  {
+                      "card_index":  "043",
+                      "card_type":  "Item",
+                      "count":  3,
+                      "effect_id":  "1af63a7e2cb7a79215474ad8db8fd8fd",
+                      "name":  "巢穴球",
+                      "name_en":  "Nest Ball",
+                      "set_code":  "CSVH1C"
+                  },
+                  {
+                      "card_index":  "160",
+                      "card_type":  "Pokemon",
+                      "count":  1,
+                      "effect_id":  "1ceeba6dac51ccc19833c5a513fe3fc6",
+                      "name":  "米立龙",
+                      "name_en":  "Tatsugiri",
+                      "set_code":  "CSV8C"
+                  },
+                  {
+                      "card_index":  "FIR",
+                      "card_type":  "Basic Energy",
+                      "count":  3,
+                      "effect_id":  "22db5405bf0cce61a00aa8082cdd1e65",
+                      "name":  "基本火能量",
+                      "name_en":  "Fire Energy",
+                      "set_code":  "CSVE1C"
+                  },
+                  {
+                      "card_index":  "083",
+                      "card_type":  "Pokemon",
+                      "count":  2,
+                      "effect_id":  "2a4178f21ba2bf13285bbb43ecaaa472",
+                      "name":  "黑夜魔灵",
+                      "name_en":  "Dusknoir",
+                      "set_code":  "CSV8C"
+                  },
+                  {
+                      "card_index":  "183",
+                      "card_type":  "Item",
+                      "count":  1,
+                      "effect_id":  "3e6f1daf545dfed48d0588dd50792a2e",
+                      "name":  "夜间担架",
+                      "name_en":  "Night Stretcher",
+                      "set_code":  "CSV8C"
+                  },
+                  {
+                      "card_index":  "PSY",
+                      "card_type":  "Basic Energy",
+                      "count":  3,
+                      "effect_id":  "41b2d1a95fafc35e4cf39383ffae928a",
+                      "name":  "基本超能量",
+                      "name_en":  "Psychic Energy",
+                      "set_code":  "CSVE1C"
+                  },
+                  {
+                      "card_index":  "158",
+                      "card_type":  "Pokemon",
+                      "count":  3,
+                      "effect_id":  "4e13cd08de3b6d141ce8e2f09d17a3a4",
+                      "name":  "多龙奇",
+                      "name_en":  "Drakloak",
+                      "set_code":  "CSV8C"
+                  },
+                  {
+                      "card_index":  "159",
+                      "card_type":  "Pokemon",
+                      "count":  3,
+                      "effect_id":  "52a205820de799a53a689f23cbeb8622",
+                      "name":  "多龙巴鲁托ex",
+                      "name_en":  "Dragapult ex",
+                      "set_code":  "CSV8C"
+                  },
+                  {
+                      "card_index":  "128",
+                      "card_type":  "Stadium",
+                      "count":  1,
+                      "effect_id":  "53864b068a4a1e8dce3c53c884b67efa",
+                      "name":  "神奥神殿",
+                      "name_en":  "Temple of Sinnoh",
+                      "set_code":  "CS5bC"
+                  },
+                  {
+                      "card_index":  "049",
+                      "card_type":  "Pokemon",
+                      "count":  1,
+                      "effect_id":  "553639840a44f19ad83b89a892a21f98",
+                      "name":  "霓虹鱼V",
+                      "name_en":  "Lumineon V",
+                      "set_code":  "CS5bC"
+                  },
+                  {
+                      "card_index":  "123",
+                      "card_type":  "Supporter",
+                      "count":  4,
+                      "effect_id":  "5bdbc985f9aa2e6f248b53f6f35d1d37",
+                      "name":  "派帕",
+                      "name_en":  "Arven",
+                      "set_code":  "CSV1C"
+                  },
+                  {
+                      "card_index":  "028",
+                      "card_type":  "Pokemon",
+                      "count":  1,
+                      "effect_id":  "68244d82147e13bb7d77116ffedf6162",
+                      "name":  "光辉胡地",
+                      "name_en":  "Radiant Alakazam",
+                      "set_code":  "CS6bC"
+                  },
+                  {
+                      "card_index":  "113",
+                      "card_type":  "Item",
+                      "count":  1,
+                      "effect_id":  "7c0b20e121c9d0e0d2d8a43524f7494e",
+                      "name":  "宝可梦交替",
+                      "name_en":  "Switch",
+                      "set_code":  "CSV1C"
+                  },
+                  {
+                      "card_index":  "065",
+                      "card_type":  "Supporter",
+                      "count":  1,
+                      "effect_id":  "889c893f76d8be0261cd53daad5e3c11",
+                      "name":  "杜娟",
+                      "name_en":  "Roxanne",
+                      "set_code":  "CS5.5C"
+                  },
+                  {
+                      "card_index":  "023",
+                      "card_type":  "Supporter",
+                      "count":  1,
+                      "effect_id":  "8e1fa2c9018db938084c94c7c970d419",
+                      "name":  "老大的指令",
+                      "name_en":  "Boss\u0027s Orders",
+                      "set_code":  "CSVH1aC"
+                  },
+                  {
+                      "card_index":  "023",
+                      "card_type":  "Pokemon",
+                      "count":  1,
+                      "effect_id":  "8ef5ff61fd97838af568f00fe3b0e3ea",
+                      "name":  "洛托姆V",
+                      "name_en":  "Rotom V",
+                      "set_code":  "CS6.5C"
+                  },
+                  {
+                      "card_index":  "066",
+                      "card_type":  "Tool",
+                      "count":  1,
+                      "effect_id":  "9fa9943ccda36f417ac3cb675177c216",
+                      "name":  "森林封印石",
+                      "name_en":  "Forest Seal Stone",
+                      "set_code":  "CS6.5C"
+                  },
+                  {
+                      "card_index":  "112",
+                      "card_type":  "Item",
+                      "count":  3,
+                      "effect_id":  "a337ed34a45e63c6d21d98c3d8e0cb6e",
+                      "name":  "高级球",
+                      "name_en":  "Ultra Ball",
+                      "set_code":  "CSV1C"
+                  },
+                  {
+                      "card_index":  "135",
+                      "card_type":  "Pokemon",
+                      "count":  1,
+                      "effect_id":  "ab6c3357e2b8a8385a68da738f41e0c1",
+                      "name":  "吉雉鸡ex",
+                      "name_en":  "Fezandipiti ex",
+                      "set_code":  "CSV8C"
+                  },
+                  {
+                      "card_index":  "082",
+                      "card_type":  "Pokemon",
+                      "count":  1,
+                      "effect_id":  "ad031124df2ede62f945220fbbd680b3",
+                      "name":  "彷徨夜灵",
+                      "name_en":  "Dusclops",
+                      "set_code":  "CSV8C"
+                  },
+                  {
+                      "card_index":  "123",
+                      "card_type":  "Supporter",
+                      "count":  2,
+                      "effect_id":  "af514f82d182aeae5327b2c360df703d",
+                      "name":  "奇树",
+                      "name_en":  "Iono",
+                      "set_code":  "CSV3C"
+                  },
+                  {
+                      "card_index":  "081",
+                      "card_type":  "Pokemon",
+                      "count":  2,
+                      "effect_id":  "ce6db179c3d166130e7a637581da3aa2",
+                      "name":  "夜巡灵",
+                      "name_en":  "Duskull",
+                      "set_code":  "CSV8C"
+                  },
+                  {
+                      "card_index":  "045",
+                      "card_type":  "Item",
+                      "count":  4,
+                      "effect_id":  "d3891abcfe3277c8811cde06741d3236",
+                      "name":  "神奇糖果",
+                      "name_en":  "Rare Candy",
+                      "set_code":  "CSVH1C"
+                  },
+                  {
+                      "card_index":  "120",
+                      "card_type":  "Tool",
+                      "count":  1,
+                      "effect_id":  "e228e825c541ce80e2507c557cb506c3",
+                      "name":  "招式学习器 退化",
+                      "name_en":  "Technical Machine: Devolution",
+                      "set_code":  "CSV5C"
+                  },
+                  {
+                      "card_index":  "115",
+                      "card_type":  "Item",
+                      "count":  2,
+                      "effect_id":  "e366f56ecd3f805a28294109a1a37453",
+                      "name":  "大地容器",
+                      "name_en":  "Earthen Vessel",
+                      "set_code":  "CSV6C"
+                  },
+                  {
+                      "card_index":  "157",
+                      "card_type":  "Pokemon",
+                      "count":  4,
+                      "effect_id":  "e793842faf5a8017e5456f898b1bf9d2",
+                      "name":  "多龙梅西亚",
+                      "name_en":  "Dreepy",
+                      "set_code":  "CSV8C"
+                  },
+                  {
+                      "card_index":  "177",
+                      "card_type":  "Item",
+                      "count":  4,
+                      "effect_id":  "f866dfee26cd6b0dbbb52b74438d0a59",
+                      "name":  "友好宝芬",
+                      "name_en":  "Buddy-Buddy Poffin",
+                      "set_code":  "CSV7C"
+                  },
+                  {
+                      "card_index":  "196",
+                      "card_type":  "Supporter",
+                      "count":  1,
+                      "effect_id":  "136fdb6578daa3b81aef369495de4c3d",
+                      "name":  "赤松",
+                      "name_en":  "",
+                      "set_code":  "CSV9C"
+                  }
+              ],
+    "deck_code":  "3Gh01jeexkRw0NiteC",
+    "deck_name":  "17.0 多龙巴鲁托 黑夜魔灵",
+    "id":  1700008,
+    "import_date":  "2026-05-16T17:40:08",
+    "source_url":  "https://tcg.mik.moe/decks/list/575723",
+    "strategy":  "【玩家打法要求】以下内容是本卡组的默认打法思路，玩家可以在卡组编辑器中继续修改。AI需要认真参考；若与当前 legal_actions、卡牌规则或可见局面冲突，以合法行动和当前事实为准。\n【卡组定位】多龙巴鲁托ex铺伤害指示物加彷徨夜灵/黑夜魔灵咒怨炸弹斩杀的中速控制卡组。核心目标是先让多龙巴鲁托ex持续使用「幻影潜袭」，再用咒怨炸弹把已有指示物转化为奖赏。\n【核心计划】\n- 前期优先铺多龙梅西亚，其次夜巡灵。友好宝芬、巢穴球、派帕、高级球、神奇糖果都应先完成多龙梅西亚到多龙奇/多龙巴鲁托ex。\n- 多龙巴鲁托ex是主攻手。幻影潜袭前场200并向后场放6个伤害指示物；这是放置指示物，不是伤害，玛纳霏不能阻止。\n- 多龙奇的侦察指令是重要过滤；可保留1只多龙奇提供抽滤，但不能因此延误首只多龙巴鲁托ex攻击。\n- 彷徨夜灵/黑夜魔灵的咒怨炸弹会让自己昏厥并给对手拿1奖，只在能立即拿奖、配合幻影潜袭完成斩杀、或阻止奖赏 race 崩盘时使用。\n- 光辉胡地每回合微调2个伤害指示物，优先凑关键KO；吉雉鸡ex在己方宝可梦昏厥后补牌。\n【回合优先级】\n- 先铺场、进化、神奇糖果、璀璨结晶、贴能、切换、gust，再攻击；攻击会结束回合。\n- 能用幻影潜袭攻击时，攻击前集中后场指示物到下个奖赏目标，不要随机分散。\n- 没有多龙巴鲁托ex攻击线时，优先补Dreepy、Drakloak、Rare Candy、Dragapult ex，而不是提前自爆夜灵线。\n【资源原则】\n- 璀璨结晶优先贴给多龙巴鲁托ex或即将进化成多龙巴鲁托ex的线；森林封印石只贴洛托姆V或霓虹鱼V。\n- 神奇糖果通常先完成多龙巴鲁托ex，再考虑黑夜魔灵；除非黑夜魔灵本回合能直接换奖。\n- Boss和反击捕捉器只在能拿奖、配合幻影潜袭/咒怨炸弹斩杀，或拖住关键目标时使用。\n【对局要点】\n- 对快攻必须尽快T2/T3形成多龙巴鲁托ex；靠320HP和持续铺指示物反超。\n- 对进化或低HP后场卡组，优先压关键引擎，必要时用退化学习器让已有指示物造成连锁击倒。",
+    "total_cards":  60,
+    "variant_name":  "多龙巴鲁托 黑夜魔灵",
+    "updated_at":  1778925605000
+}

@@ -5,9 +5,14 @@ extends RefCounted
 
 const BenchLimit = preload("res://scripts/engine/BenchLimitHelper.gd")
 const AutoloadResolverScript = preload("res://scripts/engine/AutoloadResolver.gd")
+const CSV9CEffects = preload("res://scripts/effects/CSV9CEffects.gd")
+const CSV9CHelpers = preload("res://scripts/effects/CSV9CHelpers.gd")
+const AreaZeroUnderdepthsEffect = preload("res://scripts/effects/stadium_effects/CSV9C207AreaZeroUnderdepths.gd")
 
 const AbilityAttachFromDeckEffect = preload("res://scripts/effects/pokemon_effects/AbilityAttachFromDeck.gd")
 const EffectHandheldFan = preload("res://scripts/effects/tool_effects/EffectHandheldFan.gd")
+
+const ANCIENT_SUPPORTER_PLAYED_FLAG_PREFIX := "ancient_supporter_played_turn_"
 
 static var _live_refs: Array[WeakRef] = []
 
@@ -48,6 +53,9 @@ var _pending_prize_knocked_out_player_index: int = -1
 var _pending_prize_knockout_is_active: bool = false
 var _pending_prize_resume_mode: String = ""
 var _pending_prize_resume_player_index: int = -1
+var _pending_bench_cleanup_knockout_player_index: int = -1
+var _pending_bench_cleanup_knockout_prize_count: int = 0
+var _pending_bench_cleanup_knockout_is_active: bool = false
 var _deck_order_overrides: Dictionary = {}
 var _attack_damage_knockout_slot_ids: Dictionary = {}
 
@@ -82,6 +90,7 @@ func prepare_for_disposal() -> void:
 	_pending_prize_knockout_is_active = false
 	_pending_prize_resume_mode = ""
 	_pending_prize_resume_player_index = -1
+	_clear_pending_knockout_bench_cleanup()
 	_attack_damage_knockout_slot_ids.clear()
 	if game_state != null:
 		game_state.shared_turn_flags.clear()
@@ -125,6 +134,7 @@ func start_game(deck_1: DeckData, deck_2: DeckData, force_first: int = -1) -> vo
 	effect_processor = EffectProcessor.new(coin_flipper)
 	effect_processor.bind_game_state_machine(self)
 	_clear_pending_prize_choice()
+	_clear_pending_knockout_bench_cleanup()
 
 	# 决定先攻
 	if force_first == -1:
@@ -520,10 +530,6 @@ func _start_turn() -> void:
 
 	_enter_phase(GameState.GamePhase.DRAW)
 
-	if game_state.is_first_turn_of_first_player():
-		_enter_phase(GameState.GamePhase.MAIN)
-		return
-
 	# 抽牌
 	var drawn: Array[CardInstance] = game_state.players[cp].draw_cards(1)
 	if drawn.is_empty():
@@ -532,7 +538,7 @@ func _start_turn() -> void:
 		return
 
 	_log_action(GameAction.ActionType.DRAW_CARD, cp,
-		{"count": 1}, "玩家%d抽1张牌" % (cp + 1))
+		{"count": 1, "turn_start": true, "draw_source": "turn_start"}, "玩家%d抽1张牌" % (cp + 1))
 
 	# 进入主阶段
 	_enter_phase(GameState.GamePhase.MAIN)
@@ -582,15 +588,24 @@ func _check_all_knockouts() -> void:
 
 	if game_state.phase == GameState.GamePhase.KNOCKOUT_REPLACE:
 		return
+	if _request_empty_active_replacement_if_needed():
+		return
+	_enforce_current_bench_limits("pokemon_check", game_state.current_player_index)
 	if not knockout_found:
-		_advance_to_next_turn()
+		if _consume_pending_second_attack_if_available(game_state.current_player_index):
+			_enter_phase(GameState.GamePhase.MAIN)
+		else:
+			_advance_to_next_turn()
 	elif _knockout_return_to_main:
 		# 回合中通过特性/训练家/竞技场等造成的 KO，结算后应继续当前玩家的 MAIN。
 		_knockout_return_to_main = false
 		_enter_phase(GameState.GamePhase.MAIN)
 	else:
 		# 攻击击倒备战区等无需替换的 KO，结算后仍应正常换到对手回合。
-		_advance_to_next_turn()
+		if _consume_pending_second_attack_if_available(game_state.current_player_index):
+			_enter_phase(GameState.GamePhase.MAIN)
+		else:
+			_advance_to_next_turn()
 
 
 func _has_pending_knockouts() -> bool:
@@ -610,6 +625,126 @@ func _resolve_mid_turn_knockouts() -> bool:
 	return true
 
 
+func enforce_current_bench_limits(
+	context: String = "",
+	acting_player_index: int = -1,
+	previous_stadium_effect_id: String = "",
+	previous_stadium_owner_index: int = -1,
+	targets: Array = []
+) -> bool:
+	return _enforce_current_bench_limits(
+		context,
+		acting_player_index,
+		previous_stadium_effect_id,
+		previous_stadium_owner_index,
+		targets
+	)
+
+
+func _enforce_current_bench_limits(
+	context: String = "",
+	acting_player_index: int = -1,
+	previous_stadium_effect_id: String = "",
+	previous_stadium_owner_index: int = -1,
+	targets: Array = []
+) -> bool:
+	if game_state == null:
+		return false
+	var start_player_index := _bench_cleanup_start_player(
+		acting_player_index,
+		previous_stadium_effect_id,
+		previous_stadium_owner_index
+	)
+	var cleanup_steps: Array[Dictionary] = AreaZeroUnderdepthsEffect.build_cleanup_interaction_steps(
+		game_state,
+		start_player_index
+	)
+	if (
+		not cleanup_steps.is_empty()
+		and _has_player_choice_listener()
+		and not _bench_cleanup_context_satisfies_steps(cleanup_steps, targets)
+	):
+		player_choice_required.emit("bench_limit_cleanup", {
+			"player": start_player_index,
+			"acting_player": acting_player_index,
+			"context": context,
+			"previous_stadium_effect_id": previous_stadium_effect_id,
+			"previous_stadium_owner_index": previous_stadium_owner_index,
+			"steps": cleanup_steps,
+		})
+		return false
+	var discarded_groups: Array[Dictionary] = AreaZeroUnderdepthsEffect.enforce_bench_limits(
+		game_state,
+		targets,
+		start_player_index
+	)
+	if discarded_groups.is_empty():
+		return false
+	for group: Dictionary in discarded_groups:
+		var pi := int(group.get("player_index", -1))
+		var discarded_names: Array = group.get("discarded_names", [])
+		_log_action(
+			GameAction.ActionType.DISCARD,
+			pi,
+			{
+				"source": "Area Zero Underdepths",
+				"limit": int(group.get("limit", BenchLimit.DEFAULT_BENCH_LIMIT)),
+				"card_names": discarded_names.duplicate(),
+			},
+			"玩家%d因零之大空洞失效弃掉备战宝可梦：%s" % [pi + 1, ", ".join(discarded_names)]
+		)
+	_assert_card_totals("bench_limit_cleanup:%s" % context)
+	_resume_pending_knockout_after_bench_cleanup()
+	return true
+
+
+func _has_player_choice_listener() -> bool:
+	return not player_choice_required.get_connections().is_empty()
+
+
+func _bench_cleanup_context_satisfies_steps(steps: Array[Dictionary], targets: Array) -> bool:
+	var ctx := _bench_cleanup_context_from_targets(targets)
+	if ctx.is_empty():
+		return false
+	for step: Dictionary in steps:
+		var step_id := str(step.get("id", ""))
+		if step_id == "":
+			return false
+		var selected_raw: Array = ctx.get(step_id, [])
+		if selected_raw.size() < int(step.get("min_select", 1)):
+			return false
+	return true
+
+
+func _bench_cleanup_context_from_targets(targets: Array) -> Dictionary:
+	if targets.is_empty():
+		return {}
+	var raw_context: Variant = targets[0]
+	return raw_context.duplicate(false) if raw_context is Dictionary else {}
+
+
+func _bench_cleanup_start_player(
+	acting_player_index: int,
+	previous_stadium_effect_id: String,
+	previous_stadium_owner_index: int
+) -> int:
+	if AreaZeroUnderdepthsEffect.matches_effect_id(previous_stadium_effect_id):
+		if previous_stadium_owner_index >= 0 and previous_stadium_owner_index < game_state.players.size():
+			return previous_stadium_owner_index
+	if (
+		game_state != null
+		and game_state.stadium_card != null
+		and game_state.stadium_card.card_data != null
+		and AreaZeroUnderdepthsEffect.matches_effect_id(str(game_state.stadium_card.card_data.effect_id))
+		and game_state.stadium_owner_index >= 0
+		and game_state.stadium_owner_index < game_state.players.size()
+	):
+		return game_state.stadium_owner_index
+	if acting_player_index >= 0 and acting_player_index < game_state.players.size():
+		return acting_player_index
+	return 0
+
+
 ## 处理宝可梦昏厥
 func _handle_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -> bool:
 	if _can_heavy_baton_trigger_for_knockout(player_index, slot, is_active):
@@ -620,7 +755,6 @@ func _handle_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -> 
 
 
 func _finalize_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -> bool:
-	var opp_index: int = 1 - player_index
 	var pokemon_name: String = slot.get_pokemon_name()
 	var base_prize_count: int = slot.get_prize_count()
 	var prize_count: int = _get_knockout_prize_count(slot)
@@ -632,12 +766,12 @@ func _finalize_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -
 		_apply_exp_share_if_possible(player_index, slot, null, null)
 	game_state.last_knockout_turn_against[player_index] = game_state.turn_number
 
-	# 遗赠能量：减少对手拿取的奖赏卡
-	var prize_modifier: int = effect_processor.get_knockout_prize_modifier(slot, game_state)
+	# 遗赠能量 / 豪华披风等减奖或加奖效果，只在对手招式伤害造成的昏厥上结算。
+	var prize_modifier: int = effect_processor.get_knockout_prize_modifier(slot, game_state) if _knockout_prize_modifiers_apply(slot) else 0
 	if prize_modifier != 0:
 		_log_action(GameAction.ActionType.USE_ABILITY, player_index,
-			{}, "遗赠能量生效：对手拿取的奖赏卡从%d张减为%d张" % [base_prize_count, prize_count])
-	effect_processor.mark_knockout_prize_modifier_consumed(slot, game_state)
+			{}, "奖赏卡修正生效：对手拿取的奖赏卡从%d张调整为%d张" % [base_prize_count, prize_count])
+		effect_processor.mark_knockout_prize_modifier_consumed(slot, game_state)
 
 	# 馈赠能量：附着宝可梦昏厥时，拥有者抽卡到手牌7张
 	if EffectGiftEnergy.check_gift_energy_on_knockout(slot):
@@ -660,13 +794,23 @@ func _finalize_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -
 		{"pokemon_name": pokemon_name, "prize_count": prize_count},
 		"玩家%d的 %s 昏厥" % [player_index + 1, pokemon_name])
 
+	if is_active and _knockout_needs_bench_cleanup_before_replacement(player_index):
+		_set_pending_knockout_bench_cleanup(player_index, prize_count, is_active)
+		_enforce_current_bench_limits("knockout_active_before_replacement", player_index)
+		return false
+
+	return _continue_after_knockout_field_effects(player_index, prize_count, is_active)
+
+
+func _continue_after_knockout_field_effects(player_index: int, prize_count: int, is_active: bool) -> bool:
+	var opp_index: int = 1 - player_index
 	var has_live_replacement: bool = _has_available_replacement(player_index)
 	var has_other_pending_knockouts: bool = _has_pending_knockouts()
 
 	# 对手拿取奖赏卡
 	var prizes_taken: Array[CardInstance] = []
 	var available_prizes: int = game_state.players[opp_index].prizes.size()
-	var pending_prize_count: int = mini(prize_count, available_prizes)
+	var pending_prize_count: int = mini(maxi(prize_count, 0), available_prizes)
 	if pending_prize_count > 0:
 		_pending_prize_player_index = opp_index
 		_pending_prize_remaining = pending_prize_count
@@ -694,6 +838,7 @@ func _finalize_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -
 			"description": "Select 1 prize card"
 		})
 		return false
+	_clear_pending_prize_choice()
 
 	for _i: int in prize_count:
 		if not game_state.players[opp_index].prizes.is_empty():
@@ -737,6 +882,42 @@ func _finalize_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -
 
 
 	return true
+
+
+func _knockout_needs_bench_cleanup_before_replacement(player_index: int) -> bool:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var steps: Array[Dictionary] = AreaZeroUnderdepthsEffect.build_cleanup_interaction_steps(
+		game_state,
+		player_index
+	)
+	return not steps.is_empty()
+
+
+func _set_pending_knockout_bench_cleanup(player_index: int, prize_count: int, is_active: bool) -> void:
+	_pending_bench_cleanup_knockout_player_index = player_index
+	_pending_bench_cleanup_knockout_prize_count = prize_count
+	_pending_bench_cleanup_knockout_is_active = is_active
+
+
+func _clear_pending_knockout_bench_cleanup() -> void:
+	_pending_bench_cleanup_knockout_player_index = -1
+	_pending_bench_cleanup_knockout_prize_count = 0
+	_pending_bench_cleanup_knockout_is_active = false
+
+
+func _has_pending_knockout_bench_cleanup() -> bool:
+	return _pending_bench_cleanup_knockout_player_index >= 0
+
+
+func _resume_pending_knockout_after_bench_cleanup() -> bool:
+	if not _has_pending_knockout_bench_cleanup():
+		return false
+	var player_index := _pending_bench_cleanup_knockout_player_index
+	var prize_count := _pending_bench_cleanup_knockout_prize_count
+	var is_active := _pending_bench_cleanup_knockout_is_active
+	_clear_pending_knockout_bench_cleanup()
+	return _continue_after_knockout_field_effects(player_index, prize_count, is_active)
 
 
 func resolve_take_prize(player_index: int, slot_index: int) -> bool:
@@ -816,6 +997,24 @@ func _has_available_replacement(player_index: int) -> bool:
 	for bench_slot: PokemonSlot in player.bench:
 		if bench_slot != null and not effect_processor.is_effectively_knocked_out(bench_slot, game_state):
 			return true
+	return false
+
+
+func _request_empty_active_replacement_if_needed() -> bool:
+	if _check_win_condition() >= 0:
+		return true
+	for pi: int in 2:
+		var player: PlayerState = game_state.players[pi]
+		if player.active_pokemon != null:
+			continue
+		if not _has_available_replacement(pi):
+			continue
+		_enter_phase(GameState.GamePhase.KNOCKOUT_REPLACE)
+		player_choice_required.emit("send_out_pokemon", {
+			"player": pi,
+			"description": "请选择1只备战宝可梦派出"
+		})
+		return true
 	return false
 
 
@@ -1024,6 +1223,7 @@ func send_out_pokemon(player_index: int, bench_slot: PokemonSlot) -> bool:
 	var send_out_action: GameAction = action_log.back()
 	if send_out_action != null:
 		send_out_action.data["replacement_pokemon_name"] = bench_slot.get_pokemon_name()
+	_enforce_current_bench_limits("send_out_pokemon", player_index)
 	if _has_pending_knockouts():
 		_enter_phase(GameState.GamePhase.POKEMON_CHECK)
 		_check_all_knockouts()
@@ -1032,6 +1232,9 @@ func send_out_pokemon(player_index: int, bench_slot: PokemonSlot) -> bool:
 	# 特性自爆等回合中间 KO：替换完后回到 MAIN 阶段继续操作
 	if _knockout_return_to_main:
 		_knockout_return_to_main = false
+		_enter_phase(GameState.GamePhase.MAIN)
+		return true
+	if _consume_pending_second_attack_if_available(game_state.current_player_index):
 		_enter_phase(GameState.GamePhase.MAIN)
 		return true
 	# 正常攻击后 KO：切换回合
@@ -1282,10 +1485,12 @@ func play_basic_to_bench(
 		{"card_name": card.card_data.name},
 		"玩家%d将 %s 放入备战区" % [player_index + 1, card.card_data.name])
 	_apply_stadium_basic_bench_enter_effect(player_index, slot)
+	_enforce_current_bench_limits("play_basic_to_bench:stadium_enter", player_index)
 	if _resolve_mid_turn_knockouts():
 		return true
 	if auto_trigger_bench_ability:
 		_try_auto_resolve_on_bench_enter_ability(player_index, slot)
+	_enforce_current_bench_limits("play_basic_to_bench:auto_ability", player_index)
 	return true
 
 
@@ -1300,6 +1505,7 @@ func evolve_pokemon(player_index: int, evolution: CardInstance, target_slot: Pok
 	player.hand.erase(evolution)
 	target_slot.pokemon_stack.append(evolution)
 	target_slot.turn_evolved = game_state.turn_number
+	CSV9CHelpers.mark_evolved_from_hand(target_slot, game_state)
 	# 进化清除特殊状态
 	target_slot.clear_all_status()
 
@@ -1307,6 +1513,7 @@ func evolve_pokemon(player_index: int, evolution: CardInstance, target_slot: Pok
 		{"evolution": evolution.card_data.name, "base": target_slot.get_pokemon_name()},
 		"玩家%d将 %s 进化为 %s" % [player_index + 1, target_slot.get_pokemon_name(), evolution.card_data.name])
 	_try_auto_resolve_on_evolve_ability(player_index, target_slot)
+	_enforce_current_bench_limits("evolve_pokemon", player_index)
 	return true
 
 
@@ -1315,14 +1522,17 @@ func get_evolve_ability_interaction_steps(slot: PokemonSlot) -> Array[Dictionary
 		return []
 	var top: CardInstance = slot.get_top_card()
 	var effect: BaseEffect = effect_processor.get_effect(top.card_data.effect_id)
-	if not effect is AbilityAttachFromDeck:
+	if effect == null:
 		return []
-	var attach_effect: AbilityAttachFromDeck = effect as AbilityAttachFromDeck
-	if not attach_effect.on_evolve_only:
+	if effect is AbilityAttachFromDeck:
+		var attach_effect: AbilityAttachFromDeck = effect as AbilityAttachFromDeck
+		if not attach_effect.on_evolve_only:
+			return []
+	elif not effect.has_method("is_evolve_triggered_ability") or not bool(effect.call("is_evolve_triggered_ability")):
 		return []
 	if not effect_processor.can_use_ability(slot, game_state, 0):
 		return []
-	return attach_effect.get_interaction_steps(top, game_state)
+	return effect.get_interaction_steps(top, game_state)
 
 
 func _try_auto_resolve_on_evolve_ability(player_index: int, slot: PokemonSlot) -> void:
@@ -1330,23 +1540,27 @@ func _try_auto_resolve_on_evolve_ability(player_index: int, slot: PokemonSlot) -
 		return
 	var top: CardInstance = slot.get_top_card()
 	var effect: BaseEffect = effect_processor.get_effect(top.card_data.effect_id)
-	if not effect is AbilityAttachFromDeckEffect:
+	if effect == null:
 		return
-	var attach_effect = effect as AbilityAttachFromDeckEffect
-	if not attach_effect.on_evolve_only:
+	var is_attach_from_deck := effect is AbilityAttachFromDeckEffect
+	if is_attach_from_deck and not (effect as AbilityAttachFromDeckEffect).on_evolve_only:
+		return
+	if not is_attach_from_deck and (not effect.has_method("is_evolve_triggered_ability") or not bool(effect.call("is_evolve_triggered_ability"))):
 		return
 	if not effect_processor.can_use_ability(slot, game_state, 0):
 		return
-	if not attach_effect.get_interaction_steps(top, game_state).is_empty():
+	if not effect.get_interaction_steps(top, game_state).is_empty():
 		return
 
 	var default_targets: Array = []
-	match attach_effect.target_filter:
-		"self", "own_one":
-			default_targets.append(slot)
-		"own":
-			for _i: int in attach_effect.max_count:
+	if is_attach_from_deck:
+		var attach_effect = effect as AbilityAttachFromDeckEffect
+		match attach_effect.target_filter:
+			"self", "own_one":
 				default_targets.append(slot)
+			"own":
+				for _i: int in attach_effect.max_count:
+					default_targets.append(slot)
 
 	use_ability(player_index, slot, 0, default_targets)
 
@@ -1356,17 +1570,17 @@ func _try_auto_resolve_on_bench_enter_ability(player_index: int, slot: PokemonSl
 	if slot == null or slot.get_top_card() == null:
 		return
 	var effect: BaseEffect = effect_processor.get_ability_effect(slot, 0, game_state)
-	if not effect is AbilityOnBenchEnter:
+	if effect == null:
+		return
+	if not effect.has_method("is_bench_enter_ability") or not bool(effect.call("is_bench_enter_ability")):
+		return
+	if effect.has_method("is_optional_bench_enter_ability") and bool(effect.call("is_optional_bench_enter_ability")):
 		return
 	if not effect_processor.can_use_ability(slot, game_state, 0):
 		return
-	effect.execute_ability(slot, 0, [], game_state)
-	var ability_name: String = effect_processor.get_ability_name(slot, 0, game_state)
-	if ability_name == "":
-		ability_name = slot.get_pokemon_name()
-	_log_action(GameAction.ActionType.USE_ABILITY, player_index,
-		{"pokemon_name": slot.get_pokemon_name(), "ability_name": ability_name},
-		"玩家%d使用特性「%s」" % [player_index + 1, ability_name])
+	if not effect.get_interaction_steps(slot.get_top_card(), game_state).is_empty():
+		return
+	use_ability(player_index, slot, 0, [])
 
 
 ## 检查目标槽位是否属于指定玩家（活跃或备战区）
@@ -1389,7 +1603,7 @@ func _slot_belongs_to_player(slot: PokemonSlot, player_index: int) -> bool:
 
 
 func attach_energy(player_index: int, energy: CardInstance, target_slot: PokemonSlot) -> bool:
-	if not rule_validator.can_attach_energy(game_state, player_index):
+	if not rule_validator.can_attach_energy(game_state, player_index, energy, effect_processor):
 		return false
 	if not _slot_belongs_to_player(target_slot, player_index):
 		return false
@@ -1402,6 +1616,8 @@ func attach_energy(player_index: int, energy: CardInstance, target_slot: Pokemon
 	target_slot.attached_energy.append(energy)
 	game_state.energy_attached_this_turn = true
 	effect_processor.execute_card_effect(energy, [target_slot], game_state)
+	if effect_processor.prevents_special_status(target_slot, game_state):
+		target_slot.clear_all_status()
 
 	_log_action(GameAction.ActionType.ATTACH_ENERGY, player_index,
 		{"energy": energy.card_data.name, "target": target_slot.get_pokemon_name()},
@@ -1411,7 +1627,7 @@ func attach_energy(player_index: int, energy: CardInstance, target_slot: Pokemon
 
 ## 附着道具卡到宝可梦
 func attach_tool(player_index: int, tool_card: CardInstance, target_slot: PokemonSlot) -> bool:
-	if not rule_validator.can_attach_tool(game_state, player_index, target_slot, effect_processor):
+	if not rule_validator.can_attach_tool(game_state, player_index, target_slot, effect_processor, tool_card):
 		return false
 	if not _slot_belongs_to_player(target_slot, player_index):
 		return false
@@ -1422,6 +1638,7 @@ func attach_tool(player_index: int, tool_card: CardInstance, target_slot: Pokemo
 
 	player.hand.erase(tool_card)
 	target_slot.attached_tool = tool_card
+	effect_processor.execute_card_effect(tool_card, [target_slot], game_state)
 
 	_log_action(GameAction.ActionType.PLAY_TOOL, player_index,
 		{"tool": tool_card.card_data.name, "target": target_slot.get_pokemon_name()},
@@ -1432,11 +1649,11 @@ func attach_tool(player_index: int, tool_card: CardInstance, target_slot: Pokemo
 ## 使用训练家卡（物品卡/支援者卡）
 func play_trainer(player_index: int, card: CardInstance, targets: Array) -> bool:
 	var card_type: String = card.card_data.card_type
-	if card_type == "Item" and not rule_validator.can_play_item(game_state, player_index):
+	if card_type == "Item" and not rule_validator.can_play_item(game_state, player_index, card, effect_processor):
 		return false
 	# 支援者卡检查
 	if card_type == "Supporter":
-		if not rule_validator.can_play_supporter(game_state, player_index) and not _can_play_supporter_exception(player_index, card):
+		if not rule_validator.can_play_supporter(game_state, player_index, card, effect_processor) and not _can_play_supporter_exception(player_index, card):
 			return false
 
 	var player: PlayerState = game_state.players[player_index]
@@ -1458,9 +1675,12 @@ func play_trainer(player_index: int, card: CardInstance, targets: Array) -> bool
 
 	if card_type == "Supporter":
 		game_state.supporter_used_this_turn = true
+		if card.card_data.has_tag(CardData.ANCIENT_TAG):
+			game_state.shared_turn_flags["%s%d" % [ANCIENT_SUPPORTER_PLAYED_FLAG_PREFIX, player_index]] = game_state.turn_number
 
 	_log_action(GameAction.ActionType.PLAY_TRAINER, player_index,
 		{"card_name": card.card_data.name}, "玩家%d使用 %s" % [player_index + 1, card.card_data.name])
+	_enforce_current_bench_limits("play_trainer:%s" % card.card_data.name, player_index)
 	_assert_card_totals("play_trainer:%s" % card.card_data.name)
 	_resolve_mid_turn_knockouts()
 	return true
@@ -1490,7 +1710,7 @@ func _is_card_in_any_zone(card: CardInstance) -> bool:
 
 ## 使出竞技场卡
 func play_stadium(player_index: int, card: CardInstance, targets: Array = []) -> bool:
-	if not rule_validator.can_play_stadium(game_state, player_index, card):
+	if not rule_validator.can_play_stadium(game_state, player_index, card, effect_processor):
 		return false
 
 	var player: PlayerState = game_state.players[player_index]
@@ -1501,6 +1721,11 @@ func play_stadium(player_index: int, card: CardInstance, targets: Array = []) ->
 	if game_state.stadium_card != null:
 		var old_owner: PlayerState = game_state.players[game_state.stadium_owner_index]
 		old_owner.discard_pile.append(game_state.stadium_card)
+
+	var previous_stadium_effect_id := ""
+	var previous_stadium_owner_index := game_state.stadium_owner_index
+	if game_state.stadium_card != null and game_state.stadium_card.card_data != null:
+		previous_stadium_effect_id = str(game_state.stadium_card.card_data.effect_id)
 
 	player.hand.erase(card)
 	game_state.stadium_card = card
@@ -1513,6 +1738,13 @@ func play_stadium(player_index: int, card: CardInstance, targets: Array = []) ->
 
 	_log_action(GameAction.ActionType.PLAY_STADIUM, player_index,
 		{"card_name": card.card_data.name}, "玩家%d使出竞技场 %s" % [player_index + 1, card.card_data.name])
+	_enforce_current_bench_limits(
+		"play_stadium:%s" % card.card_data.name,
+		player_index,
+		previous_stadium_effect_id,
+		previous_stadium_owner_index,
+		targets
+	)
 	_assert_card_totals("play_stadium:%s" % card.card_data.name)
 	_resolve_mid_turn_knockouts()
 	return true
@@ -1556,12 +1788,21 @@ func use_stadium_effect(player_index: int, targets: Array = []) -> bool:
 	var effect: BaseEffect = effect_processor.get_effect(stadium_card.card_data.effect_id)
 	if effect == null:
 		return false
+	var previous_stadium_effect_id := str(stadium_card.card_data.effect_id)
+	var previous_stadium_owner_index := game_state.stadium_owner_index
 
 	game_state.shared_turn_flags["_draw_effect_processor"] = effect_processor
 	effect.execute(stadium_card, targets, game_state)
 	game_state.stadium_effect_used_turn = game_state.turn_number
 	game_state.stadium_effect_used_player = player_index
 	game_state.stadium_effect_used_effect_id = stadium_card.card_data.effect_id
+	_enforce_current_bench_limits(
+		"use_stadium_effect:%s" % stadium_card.card_data.name,
+		player_index,
+		previous_stadium_effect_id,
+		previous_stadium_owner_index,
+		targets
+	)
 
 	_log_action(GameAction.ActionType.USE_STADIUM, player_index,
 		{"card_name": stadium_card.card_data.name}, "玩家%d使用竞技场效果 %s" % [player_index + 1, stadium_card.card_data.name])
@@ -1681,8 +1922,11 @@ func use_attack(player_index: int, attack_index: int, targets: Array = []) -> bo
 	var damage: int = _calculate_attack_damage(attacker, defender, attack, attack_index, targets)
 
 	if damage > 0:
+		var defender_damage_before: int = defender.damage_counters
 		damage_calculator.apply_damage_to_slot(defender, damage)
-		_apply_handheld_fan_if_possible(attacker, defender, targets)
+		var survival_prevented_knockout := _apply_attack_damage_survival_tool_if_possible(attacker, defender, defender_damage_before)
+		if not survival_prevented_knockout:
+			_apply_handheld_fan_if_possible(attacker, defender, targets)
 		_log_action(
 			GameAction.ActionType.DAMAGE_DEALT,
 			player_index,
@@ -1696,7 +1940,10 @@ func use_attack(player_index: int, attack_index: int, targets: Array = []) -> bo
 		)
 
 	effect_processor.execute_attack_effect(attacker, attack_index, defender, game_state, targets)
+	_enforce_current_bench_limits("use_attack:%s" % attack_name, player_index, "", -1, targets)
 	_record_attack_damage_knockout_candidates(damage_before_attack, opp_index)
+	_apply_attack_knockout_extra_prize_effects(attacker, opp_index)
+	CSV9CEffects.record_attack_completed(attacker, game_state)
 	if attack.get("is_vstar_power", false):
 		game_state.vstar_power_used[player_index] = true
 
@@ -1714,7 +1961,6 @@ func use_attack(player_index: int, attack_index: int, targets: Array = []) -> bo
 			attack_action.data["target_pokemon_name"] = defender.get_pokemon_name()
 		attack_action.data["damage"] = damage
 	_after_attack(player_index)
-	_attack_damage_knockout_slot_ids.clear()
 	return true
 
 
@@ -1756,6 +2002,7 @@ func use_granted_attack(
 	var damage_before_attack := _snapshot_damage_counters()
 	if not effect_processor.execute_granted_attack(attacker, granted_attack, defender, game_state, targets):
 		return false
+	_enforce_current_bench_limits("use_granted_attack:%s" % attack_name, player_index, "", -1, targets)
 
 	var granted_damage: int = 0
 	var granted_damage_raw: Variant = granted_attack.get("damage", 0)
@@ -1765,8 +2012,11 @@ func use_granted_attack(
 		granted_damage = int(str(granted_damage_raw).to_int())
 
 	if granted_damage > 0:
+		var defender_damage_before: int = defender.damage_counters
 		damage_calculator.apply_damage_to_slot(defender, granted_damage)
-		_apply_handheld_fan_if_possible(attacker, defender, targets)
+		var survival_prevented_knockout := _apply_attack_damage_survival_tool_if_possible(attacker, defender, defender_damage_before)
+		if not survival_prevented_knockout:
+			_apply_handheld_fan_if_possible(attacker, defender, targets)
 		_log_action(
 			GameAction.ActionType.DAMAGE_DEALT,
 			player_index,
@@ -1780,6 +2030,8 @@ func use_granted_attack(
 		)
 
 	_record_attack_damage_knockout_candidates(damage_before_attack, 1 - player_index)
+	_apply_attack_knockout_extra_prize_effects(attacker, 1 - player_index)
+	CSV9CEffects.record_attack_completed(attacker, game_state)
 	_log_action(
 		GameAction.ActionType.ATTACK,
 		player_index,
@@ -1793,7 +2045,6 @@ func use_granted_attack(
 			granted_attack_action.data["target_pokemon_name"] = defender.get_pokemon_name()
 		granted_attack_action.data["damage"] = granted_damage
 	_after_attack(player_index)
-	_attack_damage_knockout_slot_ids.clear()
 	return true
 
 func _attack_targets_define_resolved_target(targets: Array) -> bool:
@@ -1848,6 +2099,26 @@ func _apply_handheld_fan_if_possible(attacker: PokemonSlot, defender: PokemonSlo
 	)
 
 
+func _apply_attack_damage_survival_tool_if_possible(attacker: PokemonSlot, defender: PokemonSlot, previous_damage: int) -> bool:
+	if defender == null:
+		return false
+	var tool_name := "Knockout prevention"
+	if defender.attached_tool != null and defender.attached_tool.card_data != null:
+		tool_name = defender.attached_tool.card_data.name
+	var defender_name := defender.get_pokemon_name()
+	var owner_index := _find_slot_owner_index(defender)
+	var prevented := effect_processor.apply_attack_damage_survival_tool(defender, attacker, game_state, previous_damage)
+	if not prevented:
+		return false
+	_log_action(
+		GameAction.ActionType.USE_ABILITY,
+		owner_index,
+		{"tool": tool_name, "target": defender_name},
+		"%s keeps %s from being Knocked Out" % [tool_name, defender_name]
+	)
+	return true
+
+
 func _find_slot_owner_index(slot: PokemonSlot) -> int:
 	for player_index: int in game_state.players.size():
 		if slot in game_state.players[player_index].get_all_pokemon():
@@ -1883,6 +2154,35 @@ func _record_attack_damage_knockout_candidates(before_damage: Dictionary, damage
 			_attack_damage_knockout_slot_ids[slot_id] = true
 
 
+func _apply_attack_knockout_extra_prize_effects(attacker: PokemonSlot, damaged_player_index: int) -> void:
+	if attacker == null or game_state == null or damaged_player_index < 0 or damaged_player_index >= game_state.players.size():
+		return
+	for slot: PokemonSlot in game_state.players[damaged_player_index].get_all_pokemon():
+		if slot == null:
+			continue
+		if not _attack_damage_knockout_slot_ids.has(int(slot.get_instance_id())):
+			continue
+		effect_processor.apply_attack_knockout_extra_prize_effects(attacker, slot, game_state)
+
+
+func record_effect_damage(player_index: int, target: PokemonSlot, damage: int, source_kind: String = "") -> void:
+	if target == null or damage <= 0:
+		return
+	var target_name := target.get_pokemon_name()
+	var payload := {
+		"target": target_name,
+		"damage": damage,
+	}
+	if source_kind != "":
+		payload["source_kind"] = source_kind
+	_log_action(
+		GameAction.ActionType.DAMAGE_DEALT,
+		player_index,
+		payload,
+		"Player %d effect deals %d damage to %s" % [player_index + 1, damage, target_name]
+	)
+
+
 func _contains_target_selection_marker(value: Variant) -> bool:
 	if value is Dictionary:
 		var entry_dict: Dictionary = value
@@ -1906,14 +2206,15 @@ func _calculate_attack_damage(
 	attack_index: int = 0,
 	targets: Array = []
 ) -> int:
-	var ignore_defender_effects: bool = effect_processor.attack_ignores_defender_effects(attacker, attack_index, game_state)
-	var ignore_weakness: bool = effect_processor.attack_ignores_weakness(attacker, attack_index, game_state)
-	var ignore_resistance: bool = effect_processor.attack_ignores_resistance(attacker, attack_index, game_state)
+	var ignore_defender_effects: bool = effect_processor.attack_ignores_defender_effects(attacker, attack_index, game_state, targets)
+	var ignore_weakness: bool = effect_processor.attack_ignores_weakness(attacker, attack_index, game_state, targets)
+	var ignore_resistance: bool = effect_processor.attack_ignores_resistance(attacker, attack_index, game_state, targets)
 	if not ignore_defender_effects and effect_processor.is_damage_prevented_by_defender_ability(attacker, defender, game_state):
 		return 0
 	var atk_mod: int = effect_processor.get_attack_damage_modifier(attacker, defender, attack, game_state, targets)
-	var atk_self_mod: int = effect_processor.get_attacker_modifier(attacker, game_state)
+	var atk_self_mod: int = effect_processor.get_attacker_modifier(attacker, game_state, defender)
 	var def_mod: int = 0 if ignore_defender_effects else effect_processor.get_defender_modifier(defender, game_state, attacker)
+	var weakness_value_override: String = effect_processor.get_weakness_value_override(attacker, defender, game_state)
 	return damage_calculator.calculate_damage(
 		attacker,
 		defender,
@@ -1923,16 +2224,41 @@ func _calculate_attack_damage(
 		atk_self_mod,
 		def_mod,
 		ignore_weakness,
-		ignore_resistance
+		ignore_resistance,
+		weakness_value_override
 	)
 
 
 ## 招式使用后的流程
 func _after_attack(player_index: int) -> void:
 	_assert_card_totals("after_attack:p%d" % player_index)
+	_mark_pending_second_attack_if_available(player_index)
 	_enter_phase(GameState.GamePhase.POKEMON_CHECK)
 	_do_pokemon_check()
 	_clear_expired_attack_markers()
+
+
+func _mark_pending_second_attack_if_available(player_index: int) -> void:
+	if player_index < 0 or player_index >= game_state.players.size():
+		return
+	var attacker: PokemonSlot = game_state.players[player_index].active_pokemon
+	if attacker == null:
+		return
+	var effect: BaseEffect = effect_processor.get_effect(attacker.get_card_data().effect_id)
+	if effect != null and effect.has_method("mark_second_attack_pending"):
+		effect.call("mark_second_attack_pending", attacker, game_state)
+
+
+func _consume_pending_second_attack_if_available(player_index: int) -> bool:
+	if player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var attacker: PokemonSlot = game_state.players[player_index].active_pokemon
+	if attacker == null:
+		return false
+	var effect: BaseEffect = effect_processor.get_effect(attacker.get_card_data().effect_id)
+	if effect == null or not effect.has_method("consume_second_attack_pending"):
+		return false
+	return bool(effect.call("consume_second_attack_pending", attacker, game_state))
 
 
 func _discard_expired_tools() -> void:
@@ -1954,9 +2280,15 @@ func _get_knockout_prize_count(slot: PokemonSlot) -> int:
 	for effect: Dictionary in slot.effects:
 		if effect.get("type", "") == "extra_prize":
 			prize_count += int(effect.get("count", 0))
-	var modifier: int = effect_processor.get_knockout_prize_modifier(slot, game_state)
+	var modifier: int = effect_processor.get_knockout_prize_modifier(slot, game_state) if _knockout_prize_modifiers_apply(slot) else 0
 	prize_count += modifier
 	return maxi(0, prize_count)
+
+
+func _knockout_prize_modifiers_apply(slot: PokemonSlot) -> bool:
+	if slot == null:
+		return false
+	return _attack_damage_knockout_slot_ids.has(int(slot.get_instance_id()))
 
 
 func _clear_expired_attack_markers() -> void:
@@ -2179,6 +2511,7 @@ func use_ability(
 	_log_action(GameAction.ActionType.USE_ABILITY, player_index,
 		action_data,
 		"玩家%d使用特性「%s」" % [player_index + 1, ability_name])
+	_enforce_current_bench_limits("use_ability:%s" % ability_name, player_index, "", -1, targets)
 	if _resolve_mid_turn_knockouts():
 		return true
 	if _should_end_turn_after_ability(player_index, pokemon, ability_index):

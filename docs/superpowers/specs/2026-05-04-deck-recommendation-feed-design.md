@@ -236,7 +236,7 @@ The exact route can change, but it should not share feedback function logic. Rec
 
 ```json
 {
-  "app_version": "v0.2.1",
+  "app_version": "v0.2.2",
   "platform": "Android",
   "mode": "next",
   "current_id": "2026-05-04-raging-bolt-ogrepon",

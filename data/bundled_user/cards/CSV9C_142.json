@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "Dsuke",
+	"attacks": [
+		{
+			"cost": "M",
+			"damage": "30+",
+			"is_vstar_power": false,
+			"name": "富裕打击",
+			"text": "在这个回合，如果这只宝可梦从「索财灵」进化而来的话，则追加造成90伤害。"
+		},
+		{
+			"cost": "CCC",
+			"damage": "100",
+			"is_vstar_power": false,
+			"name": "冲浪回转",
+			"text": "若希望，可将这只宝可梦，以及放于其身上的所有卡牌，放回自己的牌库并重洗牌库。"
+		}
+	],
+	"card_index": "142",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "【钢】 富裕打击 30+\n在这个回合，如果这只宝可梦从「索财灵」进化而来的话，则追加造成90伤害。\n\n【无】【无】【无】 冲浪回转 100\n若希望，可将这只宝可梦，以及放于其身上的所有卡牌，放回自己的牌库并重洗牌库。\n\n\n",
+	"effect_id": "d6337e0ceed2bf39c2559bec1b517aec",
+	"energy_provides": "",
+	"energy_type": "M",
+	"evolves_from": "索财灵",
+	"hp": 130,
+	"image_local_path": "user://cards/images/CSV9C/142.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/142.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "赛富豪",
+	"name_en": "",
+	"rarity": "U",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "G",
+	"resistance_value": "-30",
+	"retreat_cost": 2,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Stage 1",
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"yoren_code": "P1000"
+}

@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "SIE NANAHARA",
+	"attacks": [
+		{
+			"cost": "F",
+			"damage": "130",
+			"is_vstar_power": false,
+			"name": "暴走",
+			"text": "令这只宝可梦陷入【混乱】状态。"
+		},
+		{
+			"cost": "FC",
+			"damage": "",
+			"is_vstar_power": false,
+			"name": "同命战斗",
+			"text": "令双方的战斗宝可梦【昏厥】。"
+		}
+	],
+	"card_index": "099",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "【斗】 暴走 130\n令这只宝可梦陷入【混乱】状态。\n\n【斗】【无】 同命战斗\n令双方的战斗宝可梦【昏厥】。\n\n\n",
+	"effect_id": "668cdee516a1fb4a2ab83835eaf1e035",
+	"energy_provides": "",
+	"energy_type": "F",
+	"evolves_from": "火暴猴",
+	"hp": 140,
+	"image_local_path": "user://cards/images/CSV9C/099.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/099.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "弃世猴",
+	"name_en": "",
+	"rarity": "U",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CSV9C",
+	"set_code_en": "",
+	"stage": "Stage 2",
+	"weakness_energy": "P",
+	"weakness_value": "×2",
+	"yoren_code": "P0979"
+}

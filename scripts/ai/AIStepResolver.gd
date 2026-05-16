@@ -250,6 +250,10 @@ func _build_counter_distribution_assignments(
 	if candidates.is_empty():
 		return []
 
+	var max_assignments: int = int(step.get("max_assignments", 0))
+	if max_assignments == 1:
+		return _build_single_counter_distribution_assignment(candidates, target_items, total_counters, step)
+
 	var remaining := total_counters
 	var allocations: Dictionary = {}
 	var knocked_out: Dictionary = {}
@@ -304,6 +308,54 @@ func _build_counter_distribution_assignments(
 		return int(a.get("target_index", -1)) < int(b.get("target_index", -1))
 	)
 	return result
+
+
+func _build_single_counter_distribution_assignment(
+	candidates: Array[Dictionary],
+	target_items: Array,
+	total_counters: int,
+	step: Dictionary
+) -> Array[Dictionary]:
+	if total_counters <= 0 or candidates.is_empty():
+		return []
+	var allow_partial := bool(step.get("allow_partial", false))
+	var best_target: Dictionary = {}
+	var best_is_ko := false
+	for candidate: Dictionary in candidates:
+		var counters_needed := int(candidate.get("counters_needed", 99))
+		var can_ko := counters_needed > 0 and counters_needed <= total_counters
+		if best_target.is_empty():
+			best_target = candidate
+			best_is_ko = can_ko
+			continue
+		if can_ko != best_is_ko:
+			if can_ko:
+				best_target = candidate
+				best_is_ko = true
+			continue
+		if can_ko:
+			var current_value := float(candidate.get("score", 0.0)) + float(candidate.get("prizes", 1)) * 520.0 - float(counters_needed) * 35.0
+			var best_needed := int(best_target.get("counters_needed", 99))
+			var best_value := float(best_target.get("score", 0.0)) + float(best_target.get("prizes", 1)) * 520.0 - float(best_needed) * 35.0
+			if current_value > best_value or (is_equal_approx(current_value, best_value) and counters_needed < best_needed):
+				best_target = candidate
+		elif _counter_pressure_value(candidate) > _counter_pressure_value(best_target):
+			best_target = candidate
+	if best_target.is_empty():
+		return []
+	var target_index := int(best_target.get("index", -1))
+	if target_index < 0 or target_index >= target_items.size():
+		return []
+	var counters := total_counters
+	var counters_needed_for_ko := int(best_target.get("counters_needed", 99))
+	if allow_partial and counters_needed_for_ko > 0 and counters_needed_for_ko <= total_counters:
+		counters = counters_needed_for_ko
+	return [{
+		"target_index": target_index,
+		"target": target_items[target_index],
+		"counters": counters,
+		"amount": counters * 10,
+	}]
 
 
 func _counter_pressure_value(candidate: Dictionary) -> float:

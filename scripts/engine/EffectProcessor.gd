@@ -3,6 +3,10 @@ extends RefCounted
 
 const EffectKieranScript = preload("res://scripts/effects/trainer_effects/EffectKieran.gd")
 const AbilityBasicVLockScript = preload("res://scripts/effects/pokemon_effects/AbilityBasicVLock.gd")
+const CSV9CEffects = preload("res://scripts/effects/CSV9CEffects.gd")
+const CSV9C202Briar = preload("res://scripts/effects/trainer_effects/CSV9C202Briar.gd")
+
+const SWEET_TRAP_DAMAGE_BONUS_EFFECT_TYPE := "sweet_trap_damage_bonus"
 
 static var _live_refs: Array[WeakRef] = []
 
@@ -158,6 +162,21 @@ func move_public_cards_to_hand_with_log(
 	return moved
 
 
+func record_effect_damage(
+	player_index: int,
+	target: PokemonSlot,
+	damage: int,
+	state: GameState,
+	source_kind: String = ""
+) -> void:
+	if target == null or damage <= 0:
+		return
+	var game_state_machine := _get_bound_game_state_machine()
+	if game_state_machine != null and game_state_machine.has_method("record_effect_damage"):
+		if game_state_machine.get("game_state") == state:
+			game_state_machine.call("record_effect_damage", player_index, target, damage, source_kind)
+
+
 func register_pokemon_card(card: CardData) -> void:
 	if card == null or not card.is_pokemon():
 		return
@@ -196,9 +215,9 @@ func execute_card_effect(card: CardInstance, targets: Array, state: GameState) -
 	if not _effect_registry.has(effect_id):
 		return true
 	var effect: BaseEffect = _effect_registry[effect_id]
+	state.shared_turn_flags["_draw_effect_processor"] = self
 	if not effect.can_execute(card, state):
 		return false
-	state.shared_turn_flags["_draw_effect_processor"] = self
 	effect.execute(card, targets, state)
 	return true
 
@@ -248,6 +267,7 @@ func execute_attack_effect_by_id(
 	if _effect_registry.has(effect_id):
 		var card_effect: BaseEffect = _effect_registry[effect_id]
 		if exclude_effect_type == null or not is_instance_of(card_effect, exclude_effect_type):
+			state.shared_turn_flags["_draw_effect_processor"] = self
 			card_effect.set_attack_interaction_context(targets)
 			card_effect.execute_attack(attacker, defender, attack_index, state)
 			card_effect.clear_attack_interaction_context()
@@ -258,6 +278,7 @@ func execute_attack_effect_by_id(
 				continue
 			if effect.has_method("applies_to_attack_index") and not bool(effect.call("applies_to_attack_index", attack_index)):
 				continue
+			state.shared_turn_flags["_draw_effect_processor"] = self
 			effect.set_attack_interaction_context(targets)
 			effect.execute_attack(attacker, defender, attack_index, state)
 			effect.clear_attack_interaction_context()
@@ -314,6 +335,7 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState, ability_index: int 
 	var effect: BaseEffect = get_ability_effect(pokemon, ability_index, state)
 	if effect == null or not effect.has_method("can_use_ability"):
 		return false
+	state.shared_turn_flags["_draw_effect_processor"] = self
 	return bool(effect.call("can_use_ability", pokemon, state))
 
 
@@ -457,15 +479,18 @@ func _get_tool_granted_ability_effect(pokemon: PokemonSlot, state: GameState) ->
 	return null
 
 
-func get_attacker_modifier(attacker: PokemonSlot, state: GameState) -> int:
+func get_attacker_modifier(attacker: PokemonSlot, state: GameState, defender: PokemonSlot = null) -> int:
 	var total: int = 0
 	var pi: int = _get_owner_index(attacker)
 	if pi == -1:
 		return 0
-	total += _get_ability_attack_modifier(attacker, state, pi)
-	total += _get_tool_attack_modifier(attacker, state)
+	total += _get_ability_attack_modifier(attacker, state, pi, defender)
+	total += _get_tool_attack_modifier(attacker, state, defender)
 	total += _get_stadium_attack_modifier(attacker, state)
 	total += _get_energy_attack_modifier(attacker, state)
+	for effect_data: Dictionary in attacker.effects:
+		if effect_data.get("type", "") == CSV9CEffects.OUTGOING_DAMAGE_REDUCTION_EFFECT_TYPE and int(effect_data.get("turn", -999)) == state.turn_number - 1:
+			total -= int(effect_data.get("amount", 0))
 	return total
 
 
@@ -481,6 +506,10 @@ func get_defender_modifier(defender: PokemonSlot, state: GameState, attacker: Po
 	for effect_data: Dictionary in defender.effects:
 		if effect_data.get("type", "") == "reduce_damage_next_turn" and int(effect_data.get("turn", -999)) == state.turn_number - 1:
 			total -= int(effect_data.get("amount", 0))
+		elif effect_data.get("type", "") == SWEET_TRAP_DAMAGE_BONUS_EFFECT_TYPE and int(effect_data.get("turn", -999)) == state.turn_number - 2:
+			var attacker_owner: int = _get_owner_index(attacker)
+			if attacker_owner >= 0 and attacker_owner == int(effect_data.get("source_player_index", -1)):
+				total += int(effect_data.get("amount", 0))
 	return total
 
 
@@ -510,63 +539,179 @@ func get_attack_damage_modifier(
 	return total
 
 
-func attack_ignores_weakness_and_resistance(attacker: PokemonSlot, attack_index: int, state: GameState) -> bool:
+func get_attack_damage_bonus_by_id(
+	effect_id: String,
+	attack_index: int,
+	attacker: PokemonSlot,
+	state: GameState,
+	targets: Array = [],
+	exclude_effect_type: Variant = null
+) -> int:
+	if attacker == null or attacker.get_top_card() == null:
+		return 0
+	if effect_id == "" or not _attack_effect_registry.has(effect_id):
+		return 0
+	var total: int = 0
+	for effect: BaseEffect in _attack_effect_registry[effect_id]:
+		if exclude_effect_type != null and is_instance_of(effect, exclude_effect_type):
+			continue
+		if effect.has_method("applies_to_attack_index") and not bool(effect.call("applies_to_attack_index", attack_index)):
+			continue
+		if effect.has_method("get_damage_bonus"):
+			effect.set_attack_interaction_context(targets)
+			total += int(effect.call("get_damage_bonus", attacker, state))
+			effect.clear_attack_interaction_context()
+	return total
+
+
+func attack_ignores_weakness_and_resistance(
+	attacker: PokemonSlot,
+	attack_index: int,
+	state: GameState,
+	targets: Array = []
+) -> bool:
 	if attacker == null or attacker.get_top_card() == null:
 		return false
 	var effect_id: String = attacker.get_card_data().effect_id
-	if not _attack_effect_registry.has(effect_id):
-		return false
-	for effect: BaseEffect in _attack_effect_registry[effect_id]:
-		if effect.has_method("applies_to_attack_index") and not bool(effect.call("applies_to_attack_index", attack_index)):
-			continue
-		if effect.has_method("ignores_weakness_and_resistance") and bool(effect.call("ignores_weakness_and_resistance", attacker, state, attack_index)):
-			return true
-	return false
+	return attack_effect_id_ignores_weakness_and_resistance(effect_id, attack_index, attacker, state, targets)
 
 
-func attack_ignores_weakness(attacker: PokemonSlot, attack_index: int, state: GameState) -> bool:
+func attack_ignores_weakness(
+	attacker: PokemonSlot,
+	attack_index: int,
+	state: GameState,
+	targets: Array = []
+) -> bool:
 	if attacker == null or attacker.get_top_card() == null:
 		return false
 	var effect_id: String = attacker.get_card_data().effect_id
-	if not _attack_effect_registry.has(effect_id):
-		return false
-	for effect: BaseEffect in _attack_effect_registry[effect_id]:
-		if effect.has_method("applies_to_attack_index") and not bool(effect.call("applies_to_attack_index", attack_index)):
-			continue
-		if effect.has_method("ignores_weakness") and bool(effect.call("ignores_weakness", attacker, state, attack_index)):
-			return true
-		if effect.has_method("ignores_weakness_and_resistance") and bool(effect.call("ignores_weakness_and_resistance", attacker, state, attack_index)):
-			return true
-	return false
+	return attack_effect_id_ignores_weakness(effect_id, attack_index, attacker, state, targets)
 
 
-func attack_ignores_resistance(attacker: PokemonSlot, attack_index: int, state: GameState) -> bool:
+func attack_ignores_resistance(
+	attacker: PokemonSlot,
+	attack_index: int,
+	state: GameState,
+	targets: Array = []
+) -> bool:
 	if attacker == null or attacker.get_top_card() == null:
 		return false
 	var effect_id: String = attacker.get_card_data().effect_id
-	if not _attack_effect_registry.has(effect_id):
-		return false
-	for effect: BaseEffect in _attack_effect_registry[effect_id]:
-		if effect.has_method("applies_to_attack_index") and not bool(effect.call("applies_to_attack_index", attack_index)):
-			continue
-		if effect.has_method("ignores_resistance") and bool(effect.call("ignores_resistance", attacker, state, attack_index)):
-			return true
-		if effect.has_method("ignores_weakness_and_resistance") and bool(effect.call("ignores_weakness_and_resistance", attacker, state, attack_index)):
-			return true
-	return false
+	return attack_effect_id_ignores_resistance(effect_id, attack_index, attacker, state, targets)
 
 
-func attack_ignores_defender_effects(attacker: PokemonSlot, attack_index: int, state: GameState) -> bool:
+func attack_ignores_defender_effects(
+	attacker: PokemonSlot,
+	attack_index: int,
+	state: GameState,
+	targets: Array = []
+) -> bool:
 	if attacker == null or attacker.get_top_card() == null:
 		return false
 	var effect_id: String = attacker.get_card_data().effect_id
+	return attack_effect_id_ignores_defender_effects(effect_id, attack_index, attacker, state, targets)
+
+
+func attack_effect_id_ignores_weakness_and_resistance(
+	effect_id: String,
+	attack_index: int,
+	attacker: PokemonSlot,
+	state: GameState,
+	targets: Array = [],
+	exclude_effect_type: Variant = null
+) -> bool:
+	return _attack_effect_id_has_flag(
+		effect_id,
+		attack_index,
+		attacker,
+		state,
+		["ignores_weakness_and_resistance"],
+		targets,
+		exclude_effect_type
+	)
+
+
+func attack_effect_id_ignores_weakness(
+	effect_id: String,
+	attack_index: int,
+	attacker: PokemonSlot,
+	state: GameState,
+	targets: Array = [],
+	exclude_effect_type: Variant = null
+) -> bool:
+	return _attack_effect_id_has_flag(
+		effect_id,
+		attack_index,
+		attacker,
+		state,
+		["ignores_weakness", "ignores_weakness_and_resistance"],
+		targets,
+		exclude_effect_type
+	)
+
+
+func attack_effect_id_ignores_resistance(
+	effect_id: String,
+	attack_index: int,
+	attacker: PokemonSlot,
+	state: GameState,
+	targets: Array = [],
+	exclude_effect_type: Variant = null
+) -> bool:
+	return _attack_effect_id_has_flag(
+		effect_id,
+		attack_index,
+		attacker,
+		state,
+		["ignores_resistance", "ignores_weakness_and_resistance"],
+		targets,
+		exclude_effect_type
+	)
+
+
+func attack_effect_id_ignores_defender_effects(
+	effect_id: String,
+	attack_index: int,
+	attacker: PokemonSlot,
+	state: GameState,
+	targets: Array = [],
+	exclude_effect_type: Variant = null
+) -> bool:
+	return _attack_effect_id_has_flag(
+		effect_id,
+		attack_index,
+		attacker,
+		state,
+		["ignores_defender_effects"],
+		targets,
+		exclude_effect_type
+	)
+
+
+func _attack_effect_id_has_flag(
+	effect_id: String,
+	attack_index: int,
+	attacker: PokemonSlot,
+	state: GameState,
+	method_names: Array,
+	targets: Array = [],
+	exclude_effect_type: Variant = null
+) -> bool:
+	if attacker == null or attacker.get_top_card() == null:
+		return false
 	if not _attack_effect_registry.has(effect_id):
 		return false
 	for effect: BaseEffect in _attack_effect_registry[effect_id]:
+		if exclude_effect_type != null and is_instance_of(effect, exclude_effect_type):
+			continue
 		if effect.has_method("applies_to_attack_index") and not bool(effect.call("applies_to_attack_index", attack_index)):
 			continue
-		if effect.has_method("ignores_defender_effects") and bool(effect.call("ignores_defender_effects", attacker, state, attack_index)):
-			return true
+		effect.set_attack_interaction_context(targets)
+		for method_name: String in method_names:
+			if effect.has_method(method_name) and bool(effect.call(method_name, attacker, state, attack_index)):
+				effect.clear_attack_interaction_context()
+				return true
+		effect.clear_attack_interaction_context()
 	return false
 
 
@@ -587,7 +732,10 @@ func get_attack_any_cost_modifier(attacker: PokemonSlot, attack: Dictionary, sta
 	if _effect_registry.has(effect_id):
 		var native_effect: BaseEffect = _effect_registry[effect_id]
 		if native_effect.has_method("get_attack_any_cost_modifier"):
-			total += int(native_effect.call("get_attack_any_cost_modifier", attacker, attack, state))
+			if native_effect.has_method("is_cost_modifier_ability") and bool(native_effect.call("is_cost_modifier_ability")) and is_ability_disabled(attacker, state):
+				pass
+			else:
+				total += int(native_effect.call("get_attack_any_cost_modifier", attacker, attack, state))
 	if attacker.attached_tool != null and not is_tool_effect_suppressed(attacker, state):
 		var tool_effect: BaseEffect = get_effect(attacker.attached_tool.card_data.effect_id)
 		if tool_effect != null and tool_effect.has_method("get_attack_any_cost_modifier"):
@@ -607,7 +755,10 @@ func get_attack_colorless_cost_modifier(attacker: PokemonSlot, attack: Dictionar
 	if _effect_registry.has(effect_id):
 		var native_effect: BaseEffect = _effect_registry[effect_id]
 		if native_effect.has_method("get_attack_colorless_cost_modifier"):
-			total += int(native_effect.call("get_attack_colorless_cost_modifier", attacker, attack, state))
+			if native_effect.has_method("is_cost_modifier_ability") and bool(native_effect.call("is_cost_modifier_ability")) and is_ability_disabled(attacker, state):
+				pass
+			else:
+				total += int(native_effect.call("get_attack_colorless_cost_modifier", attacker, attack, state))
 	if attacker.attached_tool != null and not is_tool_effect_suppressed(attacker, state):
 		var tool_effect: BaseEffect = get_effect(attacker.attached_tool.card_data.effect_id)
 		if tool_effect != null and tool_effect.has_method("get_attack_colorless_cost_modifier"):
@@ -616,11 +767,39 @@ func get_attack_colorless_cost_modifier(attacker: PokemonSlot, attack: Dictionar
 		var stadium_effect: BaseEffect = get_effect(state.stadium_card.card_data.effect_id)
 		if stadium_effect != null and stadium_effect.has_method("get_attack_colorless_cost_modifier"):
 			total += int(stadium_effect.call("get_attack_colorless_cost_modifier", attacker, attack, state))
+	total += AttackDefenderActionCostIncreaseNextTurn.get_active_modifier(attacker, state)
 	return total
+
+
+func get_weakness_value_override(attacker: PokemonSlot, defender: PokemonSlot, state: GameState) -> String:
+	if CSV9CEffects.defender_has_no_weakness(defender, state) or _defender_ignores_weakness(defender, state):
+		return "x1"
+	if attacker == null or defender == null or attacker.attached_tool == null:
+		return ""
+	if is_tool_effect_suppressed(attacker, state):
+		return ""
+	var effect: BaseEffect = get_effect(attacker.attached_tool.card_data.effect_id)
+	if effect != null and effect.has_method("get_weakness_value_override"):
+		return str(effect.call("get_weakness_value_override", attacker, defender, state))
+	return ""
 
 
 func get_retreat_cost_modifier(slot: PokemonSlot, state: GameState) -> int:
 	var total: int = 0
+	if slot == null:
+		return total
+	var owner_index := _get_owner_index(slot)
+	if state != null and owner_index >= 0:
+		for source: PokemonSlot in state.players[owner_index].get_all_pokemon():
+			if source == null or source.get_card_data() == null or is_ability_disabled(source, state):
+				continue
+			var source_effect: BaseEffect = get_effect(source.get_card_data().effect_id)
+			if source_effect != null and source_effect.has_method("get_retreat_cost_modifier_for_slot"):
+				total += int(source_effect.call("get_retreat_cost_modifier_for_slot", source, slot, state))
+	if slot != null and slot.get_card_data() != null and not is_ability_disabled(slot, state):
+		var native_effect: BaseEffect = get_effect(slot.get_card_data().effect_id)
+		if native_effect != null and native_effect.has_method("get_retreat_cost_modifier"):
+			total += int(native_effect.call("get_retreat_cost_modifier", slot, state))
 	if slot.attached_tool != null and not is_tool_effect_suppressed(slot, state):
 		var tool_effect: BaseEffect = get_effect(slot.attached_tool.card_data.effect_id)
 		if tool_effect is EffectToolRetreatModifier:
@@ -647,6 +826,7 @@ func get_retreat_cost_modifier(slot: PokemonSlot, state: GameState) -> int:
 			total += (energy_effect as EffectSpecialEnergyModifier).retreat_modifier
 		elif energy_effect != null and energy_effect.has_method("get_retreat_cost_modifier"):
 			total += int(energy_effect.call("get_retreat_cost_modifier", slot, state))
+	total += AttackDefenderActionCostIncreaseNextTurn.get_active_modifier(slot, state)
 	return total
 
 
@@ -677,6 +857,27 @@ func get_effective_remaining_hp(slot: PokemonSlot, state: GameState = null) -> i
 
 func is_effectively_knocked_out(slot: PokemonSlot, state: GameState = null) -> bool:
 	return get_effective_max_hp(slot, state) > 0 and get_effective_remaining_hp(slot, state) <= 0
+
+
+func apply_attack_damage_survival_tool(
+	defender: PokemonSlot,
+	attacker: PokemonSlot,
+	state: GameState,
+	previous_damage: int
+) -> bool:
+	if defender == null or attacker == null or state == null:
+		return false
+	if defender.get_card_data() != null and not is_ability_disabled(defender, state):
+		var native_effect: BaseEffect = get_effect(defender.get_card_data().effect_id)
+		if native_effect != null and native_effect.has_method("try_prevent_attack_knockout"):
+			if bool(native_effect.call("try_prevent_attack_knockout", defender, attacker, state, previous_damage, self)):
+				return true
+	if defender.attached_tool == null or is_tool_effect_suppressed(defender, state):
+		return false
+	var tool_effect: BaseEffect = get_effect(defender.attached_tool.card_data.effect_id)
+	if tool_effect == null or not tool_effect.has_method("try_prevent_attack_knockout"):
+		return false
+	return bool(tool_effect.call("try_prevent_attack_knockout", defender, attacker, state, previous_damage, self))
 
 
 func get_energy_colorless_count(energy: CardInstance, state: GameState = null) -> int:
@@ -756,6 +957,73 @@ func is_tool_effect_suppressed(slot: PokemonSlot, state: GameState) -> bool:
 	return stadium_effect != null and stadium_effect.has_method("suppresses_tool_effects") and bool(stadium_effect.call("suppresses_tool_effects"))
 
 
+func prevents_special_status(slot: PokemonSlot, state: GameState) -> bool:
+	if slot == null or state == null:
+		return false
+	if EffectFestivalGrounds.prevents_special_status(slot, state):
+		return true
+	if slot.attached_tool == null or is_tool_effect_suppressed(slot, state):
+		return false
+	var effect: BaseEffect = get_effect(slot.attached_tool.card_data.effect_id)
+	return effect != null and effect.has_method("prevents_special_status") and bool(effect.call("prevents_special_status", slot, state))
+
+
+func prevents_card_from_hand(player_index: int, card: CardInstance, state: GameState) -> bool:
+	if card == null or card.card_data == null or state == null:
+		return false
+	var opponent_index := 1 - player_index
+	if opponent_index < 0 or opponent_index >= state.players.size():
+		return false
+	for source: PokemonSlot in state.players[opponent_index].get_all_pokemon():
+		if source == null or source.get_card_data() == null or is_ability_disabled(source, state):
+			continue
+		var source_effect: BaseEffect = get_effect(source.get_card_data().effect_id)
+		if source_effect == null:
+			continue
+		if source_effect.has_method("blocks_card_from_hand") and bool(source_effect.call("blocks_card_from_hand", source, card, player_index, state)):
+			return true
+		if source_effect.has_method("blocks_opponent_ace_spec") and bool(source_effect.call("blocks_opponent_ace_spec", source, player_index, card, state)):
+			return true
+	return false
+
+
+func slot_allows_early_evolution(slot: PokemonSlot, player_index: int, state: GameState) -> bool:
+	if slot == null or slot.get_card_data() == null or state == null:
+		return false
+	if is_ability_disabled(slot, state):
+		return false
+	var effect: BaseEffect = get_effect(slot.get_card_data().effect_id)
+	if effect == null:
+		return false
+	if effect.has_method("allows_early_evolution"):
+		return bool(effect.call("allows_early_evolution", slot, player_index, state))
+	if effect.has_method("allows_fast_evolution"):
+		return bool(effect.call("allows_fast_evolution", slot, state))
+	return false
+
+
+func apply_attack_knockout_extra_prize_effects(attacker: PokemonSlot, knocked_out: PokemonSlot, state: GameState) -> void:
+	if attacker == null or knocked_out == null or state == null:
+		return
+	var attacker_owner := _get_owner_index(attacker)
+	if attacker_owner < 0:
+		return
+	for source: PokemonSlot in state.players[attacker_owner].get_all_pokemon():
+		if source == null or source.get_card_data() == null or is_ability_disabled(source, state):
+			continue
+		var source_effect: BaseEffect = get_effect(source.get_card_data().effect_id)
+		if source_effect == null:
+			continue
+		if source_effect.has_method("try_add_attack_knockout_extra_prize"):
+			source_effect.call("try_add_attack_knockout_extra_prize", source, attacker, knocked_out, state)
+		elif source_effect.has_method("get_extra_prize_for_active_knockout"):
+			var extra := int(source_effect.call("get_extra_prize_for_active_knockout", source, knocked_out, state))
+			if extra > 0:
+				knocked_out.effects.append({"type": "extra_prize", "count": extra, "source": "field_ability"})
+	if CSV9C202Briar.should_apply_extra_prize(state, attacker, knocked_out):
+		CSV9CEffects.add_extra_prize_once(knocked_out, "csv9c_briar", 1)
+
+
 func get_knockout_prize_modifier(slot: PokemonSlot, state: GameState) -> int:
 	if slot == null:
 		return 0
@@ -801,6 +1069,8 @@ func is_damage_prevented_by_defender_ability(attacker: PokemonSlot, defender: Po
 		return false
 	if AttackCoinFlipPreventDamageAndEffectsNextTurn.prevents_attack_damage(defender, state):
 		return true
+	if CSV9CEffects.prevents_damage_from_attack_effect(attacker, defender, state):
+		return true
 	if is_ability_disabled(defender, state):
 		return false
 	var effect: BaseEffect = get_effect(defender.get_card_data().effect_id)
@@ -811,14 +1081,17 @@ func is_damage_prevented_by_defender_ability(attacker: PokemonSlot, defender: Po
 
 func process_pokemon_check(state: GameState) -> Array[PokemonSlot]:
 	var damaged_slots: Array[PokemonSlot] = []
+	state.shared_turn_flags["_draw_effect_processor"] = self
 	for pi: int in 2:
 		var player: PlayerState = state.players[pi]
 		var slot: PokemonSlot = player.active_pokemon
 		if slot == null:
 			continue
+		if prevents_special_status(slot, state):
+			slot.clear_all_status()
 		var took_damage := false
 		if slot.status_conditions.get("poisoned", false):
-			slot.damage_counters += 10
+			slot.damage_counters += 10 + get_poison_damage_bonus(slot, state)
 			took_damage = true
 		if slot.status_conditions.get("burned", false):
 			slot.damage_counters += 20
@@ -834,7 +1107,28 @@ func process_pokemon_check(state: GameState) -> Array[PokemonSlot]:
 	return damaged_slots
 
 
-func _get_ability_attack_modifier(attacker: PokemonSlot, state: GameState, pi: int) -> int:
+func get_poison_damage_bonus(slot: PokemonSlot, state: GameState) -> int:
+	if slot == null or state == null:
+		return 0
+	var total := 0
+	var owner_index := _get_owner_index(slot)
+	if owner_index >= 0:
+		var opponent_index := 1 - owner_index
+		if opponent_index >= 0 and opponent_index < state.players.size():
+			for source: PokemonSlot in state.players[opponent_index].get_all_pokemon():
+				if source == null or source.get_card_data() == null or is_ability_disabled(source, state):
+					continue
+				var source_effect: BaseEffect = get_effect(source.get_card_data().effect_id)
+				if source_effect != null and source_effect.has_method("get_poison_damage_bonus_for_target"):
+					total += int(source_effect.call("get_poison_damage_bonus_for_target", source, slot, state))
+	if state.stadium_card != null:
+		var stadium_effect: BaseEffect = get_effect(state.stadium_card.card_data.effect_id)
+		if stadium_effect != null and stadium_effect.has_method("get_poison_damage_bonus"):
+			total += int(stadium_effect.call("get_poison_damage_bonus", slot, state))
+	return total
+
+
+func _get_ability_attack_modifier(attacker: PokemonSlot, state: GameState, pi: int, defender: PokemonSlot = null) -> int:
 	var total: int = 0
 	var player: PlayerState = state.players[pi]
 	total += AbilityFutureDamageBoost.get_future_damage_boost(player, attacker)
@@ -852,6 +1146,11 @@ func _get_ability_attack_modifier(attacker: PokemonSlot, state: GameState, pi: i
 			var mod: AbilityDamageModifier = effect as AbilityDamageModifier
 			if mod.is_attack_modifier() and (not mod.self_only or slot == attacker):
 				total += mod.get_modifier()
+		if effect != null:
+			if effect.has_method("get_attack_modifier_for_attacker"):
+				total += int(effect.call("get_attack_modifier_for_attacker", slot, attacker, state, defender))
+			if effect.has_method("get_attack_modifier_for_source"):
+				total += int(effect.call("get_attack_modifier_for_source", slot, attacker, state))
 	return total
 
 
@@ -869,10 +1168,15 @@ func _get_ability_defense_modifier(defender: PokemonSlot, state: GameState, pi: 
 			var mod: AbilityDamageModifier = effect as AbilityDamageModifier
 			if mod.is_defense_modifier() and (not mod.self_only or slot == defender):
 				total += mod.get_modifier()
+		if effect != null:
+			if effect.has_method("get_defense_modifier_for_defender"):
+				total += int(effect.call("get_defense_modifier_for_defender", slot, defender, state))
+			if effect.has_method("get_team_defense_modifier"):
+				total += int(effect.call("get_team_defense_modifier", slot, defender, null, state))
 	return total
 
 
-func _get_tool_attack_modifier(attacker: PokemonSlot, state: GameState) -> int:
+func _get_tool_attack_modifier(attacker: PokemonSlot, state: GameState, defender: PokemonSlot = null) -> int:
 	if attacker.attached_tool == null or is_tool_effect_suppressed(attacker, state):
 		return 0
 	var effect: BaseEffect = get_effect(attacker.attached_tool.card_data.effect_id)
@@ -882,8 +1186,7 @@ func _get_tool_attack_modifier(attacker: PokemonSlot, state: GameState) -> int:
 			return tool_mod.damage_modifier
 	elif effect is EffectToolConditionalDamage:
 		var conditional_mod: EffectToolConditionalDamage = effect as EffectToolConditionalDamage
-		if conditional_mod.is_active(attacker, state):
-			return conditional_mod.get_bonus()
+		return conditional_mod.get_attack_modifier(attacker, state, defender)
 	elif effect is EffectToolFutureBoost:
 		return (effect as EffectToolFutureBoost).get_attack_bonus(attacker)
 	elif effect != null and effect.has_method("get_attack_modifier"):
@@ -936,6 +1239,22 @@ func _get_stadium_defense_modifier(defender: PokemonSlot, state: GameState) -> i
 	elif effect != null and effect.has_method("get_defense_modifier"):
 		return int(effect.call("get_defense_modifier", defender, state))
 	return 0
+
+
+func _defender_ignores_weakness(defender: PokemonSlot, state: GameState) -> bool:
+	if defender == null or state == null:
+		return false
+	var owner_index := _get_owner_index(defender)
+	if owner_index < 0:
+		return false
+	for source: PokemonSlot in state.players[owner_index].get_all_pokemon():
+		if source == null or source.get_card_data() == null or is_ability_disabled(source, state):
+			continue
+		var effect: BaseEffect = get_effect(source.get_card_data().effect_id)
+		if effect != null and effect.has_method("ignores_weakness_when_defending"):
+			if bool(effect.call("ignores_weakness_when_defending", defender, state)):
+				return true
+	return false
 
 
 func _get_energy_defense_modifier(defender: PokemonSlot, attacker: PokemonSlot, state: GameState) -> int:

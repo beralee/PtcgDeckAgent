@@ -23,15 +23,16 @@ func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state:
 		return []
 	var player: PlayerState = state.players[card.owner_index]
 	var attacker: PokemonSlot = player.active_pokemon
+	if attacker == null:
+		return []
 	var energy_items: Array = attacker.attached_energy.duplicate()
+	if energy_items.size() < energy_return_count:
+		return []
+	if state.players[1 - card.owner_index].bench.is_empty():
+		return []
 	var energy_labels: Array[String] = []
 	for energy: CardInstance in energy_items:
-		energy_labels.append(energy.card_data.name)
-	var bench_items: Array = state.players[1 - card.owner_index].bench.duplicate()
-	var bench_labels: Array[String] = []
-	for slot: PokemonSlot in bench_items:
-		bench_labels.append(slot.get_pokemon_name())
-	var can_return: bool = energy_items.size() >= energy_return_count
+		energy_labels.append(energy.card_data.name if energy.card_data != null else "")
 	return [
 		{
 			"id": "return_energy_to_deck",
@@ -40,16 +41,38 @@ func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state:
 			"labels": energy_labels,
 			"card_groups": build_attached_card_groups(player, energy_items),
 			"transparent_battlefield_dialog": true,
-			"min_select": 0,
-			"max_select": mini(energy_return_count, energy_items.size()) if can_return else 0,
+			"min_select": energy_return_count,
+			"max_select": energy_return_count,
 			"allow_cancel": true,
+			"utility_actions": [{"label": "不洗回能量", "index": -1}],
 		},
+	]
+
+
+func get_followup_attack_interaction_steps(
+	card: CardInstance,
+	attack: Dictionary,
+	state: GameState,
+	resolved_context: Dictionary
+) -> Array[Dictionary]:
+	if not applies_to_attack_index(_resolve_attack_index(card, attack)):
+		return []
+	var energy_raw: Array = resolved_context.get("return_energy_to_deck", [])
+	if energy_raw.size() < energy_return_count:
+		return []
+	var bench_items: Array = state.players[1 - card.owner_index].bench.duplicate()
+	if bench_items.is_empty():
+		return []
+	var bench_labels: Array[String] = []
+	for slot: PokemonSlot in bench_items:
+		bench_labels.append(slot.get_pokemon_name())
+	return [
 		{
 			"id": "bench_target",
 			"title": "选择对手的1只备战宝可梦",
 			"items": bench_items,
 			"labels": bench_labels,
-			"min_select": 1 if not bench_items.is_empty() else 0,
+			"min_select": 1,
 			"max_select": 1,
 			"allow_cancel": true,
 		},
@@ -68,16 +91,13 @@ func execute_attack(attacker: PokemonSlot, _defender: PokemonSlot, attack_index:
 	var energy_raw: Array = ctx.get("return_energy_to_deck", [])
 	if energy_raw.size() < energy_return_count:
 		return
+	var target: PokemonSlot = _resolve_bench_target(ctx.get("bench_target", []), opponent)
+	if target == null:
+		return
 
 	var returned: Array[CardInstance] = []
 	for selected: Variant in energy_raw:
-		if not (selected is CardInstance):
-			continue
-		var energy: CardInstance = null
-		for attached: CardInstance in attacker.attached_energy:
-			if attached == selected or attached.instance_id == (selected as CardInstance).instance_id:
-				energy = attached
-				break
+		var energy: CardInstance = _resolve_attached_energy(attacker, selected)
 		if energy == null:
 			continue
 		attacker.attached_energy.erase(energy)
@@ -92,15 +112,42 @@ func execute_attack(attacker: PokemonSlot, _defender: PokemonSlot, attack_index:
 		return
 
 	player.shuffle_deck()
-	var target_raw: Array = ctx.get("bench_target", [])
-	if target_raw.is_empty() or not (target_raw[0] is PokemonSlot):
-		return
-	var target: PokemonSlot = target_raw[0]
-	if target == null or target == opponent.active_pokemon:
+	if AbilityBenchImmune.prevents_opponent_attack_damage_or_effect(target, attacker, state):
 		return
 	if AbilityPreventDamageFromBasicExEffect.prevents_target_damage(attacker, target, state):
 		return
 	DamageCalculator.new().apply_damage_to_slot(target, damage_amount)
+
+
+func _resolve_attached_energy(attacker: PokemonSlot, selected: Variant) -> CardInstance:
+	var selected_card: CardInstance = null
+	if selected is CardInstance:
+		selected_card = selected
+	elif selected is Dictionary:
+		var selected_dict := selected as Dictionary
+		for key: String in ["card", "source", "energy"]:
+			var value: Variant = selected_dict.get(key, null)
+			if value is CardInstance:
+				selected_card = value
+				break
+	if selected_card == null:
+		return null
+	for attached: CardInstance in attacker.attached_energy:
+		if attached == selected_card or attached.instance_id == selected_card.instance_id:
+			return attached
+	return null
+
+
+func _resolve_bench_target(target_raw: Variant, opponent: PlayerState) -> PokemonSlot:
+	if not (target_raw is Array):
+		return null
+	var target_items: Array = target_raw
+	if target_items.is_empty() or not (target_items[0] is PokemonSlot):
+		return null
+	var target: PokemonSlot = target_items[0]
+	if target == null or target == opponent.active_pokemon or target not in opponent.bench:
+		return null
+	return target
 
 
 func _resolve_attack_index(card: CardInstance, attack: Dictionary) -> int:

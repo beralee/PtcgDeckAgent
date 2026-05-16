@@ -186,6 +186,23 @@ func get_llm_setup_role_hint(cd: CardData) -> String:
 	return _raging_bolt_setup_role_hint(cd)
 
 
+func get_intent_planner_profile() -> Dictionary:
+	return {
+		"primary_attackers": ["Raging Bolt ex"],
+		"secondary_attackers": ["Teal Mask Ogerpon ex"],
+		"energy_banks": ["Teal Mask Ogerpon ex"],
+		"support_only": ["Radiant Greninja", "Squawkabilly ex", "Fezandipiti ex", "Mew ex"],
+		"energy_needs": {
+			"Raging Bolt ex": {"L": 1, "F": 1},
+			"Teal Mask Ogerpon ex": {"G": 3},
+		},
+		"primary_attacks": [{"pokemon": "Raging Bolt ex", "attack": "Thundering Bolt"}],
+		"scaling_attackers": ["Raging Bolt ex", "Teal Mask Ogerpon ex"],
+		"desperation_redraw_attacks": [{"pokemon": "Raging Bolt ex", "attack": "Bursting Roar"}],
+		"low_value_attacks": [{"pokemon": "Raging Bolt ex", "attack": "Bursting Roar"}],
+	}
+
+
 func get_llm_deck_strategy_prompt(game_state: GameState, player_index: int) -> PackedStringArray:
 	return _raging_bolt_strategy_prompt(game_state, player_index)
 
@@ -712,8 +729,7 @@ func _is_unproductive_gust_commit_action(action: Dictionary, game_state: GameSta
 func _is_gust_trainer_action(action: Dictionary) -> bool:
 	if str(action.get("kind", action.get("type", ""))) != "play_trainer":
 		return false
-	var card: CardInstance = action.get("card", null)
-	return _is_gust_card_instance(card)
+	return _is_gust_card_instance(action.get("card", null))
 
 
 func _is_gust_card_instance(raw_card: Variant) -> bool:
@@ -729,8 +745,7 @@ func _is_gust_card_instance(raw_card: Variant) -> bool:
 
 
 func _prime_catcher_can_self_pivot_to_ready_burst(action: Dictionary, game_state: GameState, player_index: int) -> bool:
-	var card: CardInstance = action.get("card", null)
-	if not _is_prime_catcher_card(card):
+	if not _is_prime_catcher_card(action.get("card", null)):
 		return false
 	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
 		return false
@@ -747,8 +762,11 @@ func _prime_catcher_can_self_pivot_to_ready_burst(action: Dictionary, game_state
 	return false
 
 
-func _is_prime_catcher_card(card: CardInstance) -> bool:
-	if card == null or card.card_data == null:
+func _is_prime_catcher_card(raw_card: Variant) -> bool:
+	if not (raw_card is CardInstance):
+		return false
+	var card: CardInstance = raw_card
+	if card.card_data == null:
 		return false
 	var name_text := "%s %s" % [str(card.card_data.name_en), str(card.card_data.name)]
 	return _name_contains(name_text, "Prime Catcher")
@@ -968,8 +986,11 @@ func _is_risky_hand_reset_action(
 	player_index: int,
 	missing_symbols: Dictionary
 ) -> bool:
-	var card: CardInstance = action.get("card", null)
-	if card == null or card.card_data == null:
+	var raw_card: Variant = action.get("card", null)
+	if not (raw_card is CardInstance):
+		return false
+	var card: CardInstance = raw_card
+	if card.card_data == null:
 		return false
 	var name_text := "%s %s" % [str(card.card_data.name_en), str(card.card_data.name)]
 	if not (

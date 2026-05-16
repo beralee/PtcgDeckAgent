@@ -7,12 +7,29 @@ const BattleSceneScript = preload("res://scenes/battle/BattleScene.gd")
 class SlotDetailSpyBattleScene extends BattleSceneScript:
 	var shown_detail_cards: Array[CardData] = []
 	var action_dialog_calls: int = 0
+	var refresh_success_calls: int = 0
+	var runtime_log_events: Array[String] = []
 
 	func _show_card_detail(cd: CardData) -> void:
 		shown_detail_cards.append(cd)
 
 	func _show_pokemon_action_dialog(_cp: int, _slot: PokemonSlot, _include_attacks: bool) -> void:
 		action_dialog_calls += 1
+
+	func _refresh_ui_after_successful_action(_check_handover: bool = false, _action_player_index: int = -1) -> void:
+		refresh_success_calls += 1
+
+	func _refresh_ui() -> void:
+		pass
+
+	func _runtime_log(event: String, detail: String = "") -> void:
+		runtime_log_events.append("%s|%s" % [event, detail])
+
+	func _state_snapshot() -> String:
+		return ""
+
+	func _card_instance_label(_card: CardInstance) -> String:
+		return ""
 
 
 func _make_touch_test_pokemon(name: String = "长按测试宝可梦") -> CardData:
@@ -23,6 +40,14 @@ func _make_touch_test_pokemon(name: String = "长按测试宝可梦") -> CardDat
 	cd.hp = 70
 	cd.energy_type = "C"
 	cd.retreat_cost = 1
+	return cd
+
+
+func _make_touch_test_energy(name: String = "Test Energy") -> CardData:
+	var cd := CardData.new()
+	cd.name = name
+	cd.card_type = "Basic Energy"
+	cd.energy_type = "R"
 	return cd
 
 
@@ -140,6 +165,171 @@ func test_check_two_player_handover_preserves_special_follow_up() -> String:
 	])
 
 
+func test_two_player_take_prize_handover_targets_pending_prize_owner() -> String:
+	var scene: Control = SlotDetailSpyBattleScene.new()
+	var gsm := GameStateMachine.new()
+	gsm.game_state.phase = GameState.GamePhase.POKEMON_CHECK
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.players = [PlayerState.new(), PlayerState.new()]
+	scene.set("_gsm", gsm)
+	var handover_panel := Panel.new()
+	handover_panel.visible = false
+	scene.set("_handover_panel", handover_panel)
+	scene.set("_handover_lbl", Label.new())
+	scene.set("_pending_choice", "take_prize")
+	scene.set("_pending_prize_player_index", 1)
+	scene.set("_pending_prize_remaining", 1)
+	scene.set("_view_player", 0)
+
+	var original_mode := GameManager.current_mode
+	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
+	scene.call("_check_two_player_handover")
+	var handover_visible := handover_panel.visible
+	var pending_action_before: Callable = scene.get("_pending_handover_action")
+	scene.call("_on_handover_confirmed")
+	var pending_action_after: Callable = scene.get("_pending_handover_action")
+	GameManager.current_mode = original_mode
+
+	var result := run_checks([
+		assert_true(handover_visible, "take_prize should hand over to the pending prize owner, not the turn player"),
+		assert_true(pending_action_before.is_valid(), "take_prize handover should install a follow-up to switch prize perspective"),
+		assert_eq(scene.get("_view_player"), 1, "handover confirmation should switch to the player who must take a prize"),
+		assert_eq(scene.get("_pending_choice"), "take_prize", "handover should preserve the prize selection prompt"),
+		assert_false(handover_panel.visible, "handover overlay should close after confirming the prize handover"),
+		assert_false(pending_action_after.is_valid(), "prize handover follow-up should be consumed after confirmation"),
+	])
+	handover_panel.free()
+	scene.free()
+	return result
+
+
+func test_two_player_take_prize_handover_does_not_redirect_back_to_turn_player() -> String:
+	var scene: Control = SlotDetailSpyBattleScene.new()
+	var gsm := GameStateMachine.new()
+	gsm.game_state.phase = GameState.GamePhase.POKEMON_CHECK
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.players = [PlayerState.new(), PlayerState.new()]
+	scene.set("_gsm", gsm)
+	var handover_panel := Panel.new()
+	handover_panel.visible = false
+	scene.set("_handover_panel", handover_panel)
+	scene.set("_handover_lbl", Label.new())
+	scene.set("_pending_choice", "take_prize")
+	scene.set("_pending_prize_player_index", 1)
+	scene.set("_pending_prize_remaining", 1)
+	scene.set("_view_player", 1)
+
+	var original_mode := GameManager.current_mode
+	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
+	scene.call("_check_two_player_handover")
+	var pending_action: Callable = scene.get("_pending_handover_action")
+	GameManager.current_mode = original_mode
+
+	var result := run_checks([
+		assert_false(handover_panel.visible, "when the prize owner is already viewing, handover should not redirect to the turn player"),
+		assert_false(pending_action.is_valid(), "aligned prize selection should not leave a stale handover follow-up"),
+		assert_eq(scene.get("_view_player"), 1, "view should stay on the pending prize owner"),
+		assert_eq(scene.get("_pending_choice"), "take_prize", "aligned handover check should keep the prize prompt active"),
+	])
+	handover_panel.free()
+	scene.free()
+	return result
+
+
+func test_start_prize_selection_requests_handover_before_portrait_prize_prompt() -> String:
+	var scene: Control = SlotDetailSpyBattleScene.new()
+	var gsm := GameStateMachine.new()
+	gsm.game_state.phase = GameState.GamePhase.POKEMON_CHECK
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.players = [PlayerState.new(), PlayerState.new()]
+	scene.set("_gsm", gsm)
+	var handover_panel := Panel.new()
+	handover_panel.visible = false
+	scene.set("_handover_panel", handover_panel)
+	scene.set("_handover_lbl", Label.new())
+	scene.set("_view_player", 0)
+
+	var original_mode := GameManager.current_mode
+	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
+	scene.call("_start_prize_selection", 1, 1)
+	var pending_action: Callable = scene.get("_pending_handover_action")
+	GameManager.current_mode = original_mode
+
+	var result := run_checks([
+		assert_eq(scene.get("_pending_choice"), "take_prize", "starting prize selection should set the prize prompt"),
+		assert_eq(scene.get("_pending_prize_player_index"), 1, "starting prize selection should keep the real prize owner"),
+		assert_true(handover_panel.visible, "portrait/two-player prize prompts should request handover before showing the wrong side"),
+		assert_true(pending_action.is_valid(), "starting prize selection should install the prize-owner follow-up"),
+		assert_eq(scene.get("_view_player"), 0, "view should not reveal the next player's prizes before handover confirmation"),
+	])
+	handover_panel.free()
+	scene.free()
+	return result
+
+
+func test_two_player_setup_handover_defers_until_setup_prompt_finishes() -> String:
+	var scene: Control = BattleSceneScript.new()
+	var gsm := GameStateMachine.new()
+	gsm.game_state.phase = GameState.GamePhase.SETUP
+	gsm.game_state.current_player_index = 1
+	gsm.game_state.players = [PlayerState.new(), PlayerState.new()]
+
+	var handover_panel := Panel.new()
+	var handover_label := Label.new()
+	handover_panel.visible = false
+	scene.set("_gsm", gsm)
+	scene.set("_handover_panel", handover_panel)
+	scene.set("_handover_lbl", handover_label)
+	scene.set("_pending_choice", "setup_active_0")
+	scene.set("_view_player", 0)
+
+	var original_mode := GameManager.current_mode
+	var original_layout := GameManager.battle_layout_mode
+	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+	scene.call("_check_two_player_handover")
+	var remaining_action: Callable = scene.get("_pending_handover_action")
+	GameManager.current_mode = original_mode
+	GameManager.battle_layout_mode = original_layout
+
+	var result := run_checks([
+		assert_false(handover_panel.visible, "opening setup handover should wait while player 1 is still choosing cards"),
+		assert_false(remaining_action.is_valid(), "deferred setup handover should not install a generic action before player 1 finishes"),
+		assert_eq(scene.get("_view_player"), 0, "setup view should remain on player 1 until the explicit handover prompt is confirmed"),
+	])
+	handover_panel.free()
+	handover_label.free()
+	scene.free()
+	return result
+
+
+func test_setup_player_two_handover_keeps_player_one_view_until_confirmed() -> String:
+	var scene: Control = BattleSceneScript.new()
+	var handover_panel := Panel.new()
+	var handover_label := Label.new()
+	handover_panel.visible = false
+	scene.set("_handover_panel", handover_panel)
+	scene.set("_handover_lbl", handover_label)
+	scene.set("_pending_choice", "")
+	scene.set("_view_player", 0)
+
+	var original_mode := GameManager.current_mode
+	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
+	scene.call("_setup_player_active", 1)
+	var pending_action: Callable = scene.get("_pending_handover_action")
+	GameManager.current_mode = original_mode
+
+	var result := run_checks([
+		assert_true(handover_panel.visible, "after player 1 setup completes, player 2 setup should show the handover prompt"),
+		assert_true(pending_action.is_valid(), "player 2 setup handover should keep the setup dialog as a confirmation follow-up"),
+		assert_eq(scene.get("_view_player"), 0, "player 2 setup should not reveal player 2 view before handover confirmation"),
+	])
+	handover_panel.free()
+	handover_label.free()
+	scene.free()
+	return result
+
+
 func test_slot_input_is_blocked_while_handover_overlay_is_visible() -> String:
 	var scene: Control = BattleSceneScript.new()
 	var gsm := GameStateMachine.new()
@@ -175,6 +365,109 @@ func test_slot_input_is_blocked_while_handover_overlay_is_visible() -> String:
 	return run_checks([
 		assert_false(scene.get("_dialog_overlay").visible, "board clicks should not open dialogs while handover is active"),
 		assert_true(handover_panel.visible, "handover overlay should stay visible after blocked board input"),
+	])
+
+
+func test_recent_slot_followup_click_is_consumed_before_action_dialog() -> String:
+	var scene := SlotDetailSpyBattleScene.new()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.players = [PlayerState.new(), PlayerState.new()]
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+	scene.set("_pending_choice", "")
+	var handover_panel := Panel.new()
+	handover_panel.visible = false
+	scene.set("_handover_panel", handover_panel)
+
+	var active_slot := PokemonSlot.new()
+	active_slot.pokemon_stack.append(CardInstance.create(_make_touch_test_pokemon("Followup test"), 0))
+	gsm.game_state.players[0].active_pokemon = active_slot
+
+	scene.call("_suppress_slot_followup_click", "my_active", "test")
+	var click := InputEventMouseButton.new()
+	click.pressed = true
+	click.button_index = MOUSE_BUTTON_LEFT
+	scene.call("_on_slot_input", click, "my_active")
+
+	return run_checks([
+		assert_eq(scene.action_dialog_calls, 0, "Android follow-up mouse click should not open a Pokemon action dialog"),
+		assert_eq(scene.get("_suppress_slot_followup_click_id"), "", "Consumed Android follow-up suppression should clear itself"),
+		assert_true(scene.runtime_log_events.any(func(entry: String) -> bool: return entry.begins_with("slot_followup_click_consumed|")), "Suppressed Android follow-up click should be logged"),
+	])
+
+
+func test_recent_slot_followup_touch_pair_is_consumed_before_action_dialog() -> String:
+	var scene := SlotDetailSpyBattleScene.new()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.players = [PlayerState.new(), PlayerState.new()]
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+	scene.set("_pending_choice", "")
+	var handover_panel := Panel.new()
+	handover_panel.visible = false
+	scene.set("_handover_panel", handover_panel)
+
+	var active_slot := PokemonSlot.new()
+	active_slot.pokemon_stack.append(CardInstance.create(_make_touch_test_pokemon("Followup touch test"), 0))
+	gsm.game_state.players[0].active_pokemon = active_slot
+
+	scene.call("_suppress_slot_followup_click", "my_active", "test")
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.index = 0
+	press.position = Vector2(10, 10)
+	scene.call("_on_slot_input", press, "my_active")
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.index = 0
+	release.position = Vector2(10, 10)
+	scene.call("_on_slot_input", release, "my_active")
+
+	return run_checks([
+		assert_eq(scene.action_dialog_calls, 0, "Android follow-up touch pair should not open a Pokemon action dialog"),
+		assert_false(bool(scene.get("_slot_touch_long_press_active")), "Consumed Android follow-up touch should not leave a pending slot press"),
+		assert_eq(scene.get("_suppress_slot_followup_click_id"), "", "Consumed Android follow-up touch suppression should clear itself"),
+	])
+
+
+func test_attach_energy_target_sets_android_followup_click_suppression() -> String:
+	var scene := SlotDetailSpyBattleScene.new()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.players = [PlayerState.new(), PlayerState.new()]
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+	scene.set("_pending_choice", "")
+	var handover_panel := Panel.new()
+	handover_panel.visible = false
+	scene.set("_handover_panel", handover_panel)
+
+	var active_slot := PokemonSlot.new()
+	active_slot.pokemon_stack.append(CardInstance.create(_make_touch_test_pokemon("Energy target"), 0))
+	gsm.game_state.players[0].active_pokemon = active_slot
+	var energy := CardInstance.create(_make_touch_test_energy(), 0)
+	gsm.game_state.players[0].hand.append(energy)
+	scene.set("_selected_hand_card", energy)
+
+	scene.call("_handle_slot_left_click", "my_active")
+	var click := InputEventMouseButton.new()
+	click.pressed = true
+	click.button_index = MOUSE_BUTTON_LEFT
+	scene.call("_on_slot_input", click, "my_active")
+
+	return run_checks([
+		assert_eq(active_slot.attached_energy.size(), 1, "Energy should attach to the selected slot"),
+		assert_eq(scene.refresh_success_calls, 1, "Successful energy attach should refresh through the normal action path"),
+		assert_eq(scene.action_dialog_calls, 0, "Synthetic click after attaching energy should not open the target Pokemon dialog"),
+		assert_eq(scene.get("_suppress_slot_followup_click_id"), "", "Attach-energy Android follow-up suppression should clear after consumption"),
 	])
 
 

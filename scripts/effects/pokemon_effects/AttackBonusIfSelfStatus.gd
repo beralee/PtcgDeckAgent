@@ -17,6 +17,8 @@ func applies_to_attack_index(attack_index: int) -> bool:
 
 
 func get_damage_bonus(attacker: PokemonSlot, _state: GameState) -> int:
+	if status_name == "any":
+		return bonus_damage if attacker.has_any_status() else 0
 	return bonus_damage if bool(attacker.status_conditions.get(status_name, false)) else 0
 
 
