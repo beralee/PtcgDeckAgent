@@ -297,9 +297,11 @@ func _score_action_with_model(action_kind: String, state_features: Array, featur
 	var action_vector_variant: Variant = features.get("action_vector", [])
 	if not (action_vector_variant is Array) or (action_vector_variant as Array).is_empty():
 		return 0.0
-	if not action_scorer.has_method("score_delta"):
-		return 0.0
-	return float(action_scorer.call("score_delta", state_features, action_vector_variant, action_kind))
+	if action_scorer.has_method("score_delta"):
+		return float(action_scorer.call("score_delta", state_features, action_vector_variant, action_kind))
+	if action_scorer.has_method("score"):
+		return float(action_scorer.call("score", state_features, action_vector_variant))
+	return 0.0
 
 
 func _evaluate_sequence(
@@ -488,6 +490,14 @@ func _classify_execution_failure(
 		return "action_resolution_mismatch"
 
 	var kind: String = str(planned_action.get("kind", resolved_action.get("kind", "")))
+	if kind == "play_trainer":
+		var precheck_trainer_card: CardInstance = resolved_action.get("card")
+		if precheck_trainer_card != null and precheck_trainer_card.card_data != null:
+			if precheck_trainer_card.card_data.card_type == "Supporter" and gsm != null and gsm.game_state != null and gsm.game_state.supporter_used_this_turn:
+				return "rule_reject_supporter_used"
+			var precheck_trainer_effect: BaseEffect = null if gsm == null else gsm.effect_processor.get_effect(precheck_trainer_card.card_data.effect_id)
+			if precheck_trainer_effect != null and not precheck_trainer_effect.can_execute(precheck_trainer_card, gsm.game_state):
+				return "trainer_effect_cannot_execute"
 	if _action_requires_headless_interaction(gsm, planned_action, resolved_action):
 		return "headless_interaction_required"
 	if _action_has_missing_reference(kind, resolved_action):
