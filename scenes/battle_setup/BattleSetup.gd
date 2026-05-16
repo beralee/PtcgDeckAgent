@@ -448,7 +448,7 @@ func _sync_mode_segment_buttons() -> void:
 func _on_mode_changed(_index: int) -> void:
 	_sync_mode_segment_buttons()
 	_mark_strategy_discussion_deck_changed()
-	_refresh_deck_options(false)
+	_refresh_deck_options(true)
 	_refresh_ai_ui_visibility()
 
 

@@ -260,7 +260,7 @@ func _opening_bench_score_v17(card: CardInstance) -> float:
 	if _is_iron_hands(card): return 980.0
 	if _is_raikou(card): return 940.0
 	if _is_latias(card): return 820.0
-	if _is_pikachu(card): return 760.0
+	if _is_pikachu(card): return 500.0
 	if _is_raichu(card): return 690.0
 	if _is_magnemite(card) or _is_magneton(card): return 520.0
 	if _is_fezandipiti(card): return 500.0
@@ -284,7 +284,7 @@ func _score_play_basic_v17(action: Dictionary, game_state: GameState, player: Pl
 	if _is_latias(card): return 500.0 if _count_on_field(player, [LATIAS, LATIAS_ID]) == 0 else 120.0
 	if _is_pikachu(card):
 		if _count_on_field(player, [PIKACHU_ID]) == 0:
-			return 460.0 if _has_area_zero_access_v17(player, game_state) else 390.0
+			return 320.0 if _has_area_zero_access_v17(player, game_state) else 260.0
 		return 180.0
 	if _is_raichu(card): return 360.0 if turn >= 4 else 130.0
 	if _is_squawk(card): return 430.0 if turn <= 2 else 80.0
@@ -412,10 +412,10 @@ func _score_trainer_v17(action: Dictionary, game_state: GameState, player: Playe
 		if player != null and _area_zero_in_play_v17(game_state):
 			return 30.0
 		if player != null and _count_on_field(player, [PIKACHU_ID]) > 0:
-			return 420.0 if player.bench.size() >= 5 else 280.0
+			return 320.0 if player.bench.size() >= 5 else 250.0
 		if player != null and _has_tera_on_field_v17(player):
-			return 380.0 if player.bench.size() >= 5 else 260.0
-		return 120.0
+			return 300.0 if player.bench.size() >= 5 else 210.0
+		return 80.0
 	return V17_UNHANDLED
 
 
@@ -502,7 +502,7 @@ func _search_card_score(card: CardInstance, step: Dictionary, context: Dictionar
 	if _is_latias(card): return 680.0 if player != null and _count_on_field(player, [LATIAS, LATIAS_ID]) == 0 else 180.0
 	if _is_pikachu(card):
 		if player != null and _count_on_field(player, [PIKACHU_ID]) == 0:
-			return 520.0
+			return 380.0
 		return 260.0
 	if _is_raichu(card): return 440.0
 	if _is_squawk(card): return 520.0 if player != null and player.bench.size() <= 3 else 120.0
