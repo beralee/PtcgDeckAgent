@@ -319,8 +319,11 @@ func get_discard_priority_contextual(card: CardInstance, game_state: GameState, 
 		return priority
 	var player: PlayerState = game_state.players[player_index]
 	var name := _card_name(card)
-	if name == ARCHEOPS and not _needs_archeops_discard_setup(player):
-		return 90
+	if name == ARCHEOPS:
+		if _needs_more_archeops_in_discard(player):
+			return 280
+		if not _needs_archeops_discard_setup(player):
+			return 90
 	if name == LUGIA_VSTAR and _count_named_on_field(player, LUGIA_V) > 0 and _count_named_on_field(player, LUGIA_VSTAR) == 0:
 		return 10
 	if card.card_data.card_type == "Special Energy" and _count_total_special_energy(player) <= 3:
@@ -1343,6 +1346,14 @@ func _needs_archeops_discard_setup(player: PlayerState) -> bool:
 	if staged_count >= 2:
 		return false
 	return _has_card_named(player.deck, ARCHEOPS) or _count_named_in_hand(player, ARCHEOPS) > 0
+
+
+func _needs_more_archeops_in_discard(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	if _count_named_on_field(player, ARCHEOPS) > 0:
+		return false
+	return _count_named_in_discard(player, ARCHEOPS) < 2 and _count_named_in_hand(player, ARCHEOPS) > 0
 
 
 func _archeops_search_candidate_is_needed(player: PlayerState, candidate_name: String) -> bool:

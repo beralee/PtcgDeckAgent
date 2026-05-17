@@ -52,6 +52,12 @@ func plan_opening_setup(player: PlayerState) -> Dictionary:
 
 func score_action_absolute(action: Dictionary, game_state: GameState, player_index: int) -> float:
 	if game_state != null and has_llm_plan_for_turn(int(game_state.turn_number)):
+		if _is_low_deck_unplanned_draw_action(action, game_state, player_index) \
+				and not _is_low_deck_attack_unlock_action(action, game_state, player_index):
+			return -10000.0
+		var llm_score := super.score_action_absolute(action, game_state, player_index)
+		if llm_score >= 10000.0 or llm_score <= -1000.0:
+			return llm_score
 		if _is_unproductive_gust_commit_action(action, game_state, player_index):
 			return -10000.0
 		if _is_core_energy_preservation_risk_action(action, game_state, player_index):
@@ -67,12 +73,6 @@ func score_action_absolute(action: Dictionary, game_state: GameState, player_ind
 			return -10000.0
 		if _is_support_active_trap_action(action, game_state, player_index):
 			return -10000.0
-		if _is_low_deck_unplanned_draw_action(action, game_state, player_index) \
-				and not _is_low_deck_attack_unlock_action(action, game_state, player_index):
-			return -10000.0
-		var llm_score := super.score_action_absolute(action, game_state, player_index)
-		if llm_score >= 10000.0 or llm_score <= -1000.0:
-			return llm_score
 		if _is_low_deck_unplanned_draw_action(action, game_state, player_index):
 			return -10000.0
 	if _is_off_plan_attack_energy_attach(action, game_state, player_index):

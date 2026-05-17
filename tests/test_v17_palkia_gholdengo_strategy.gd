@@ -331,6 +331,88 @@ func test_make_it_rain_burst_outranks_nonlethal_churn_when_loaded() -> String:
 	return assert_true(attack_score > churn_score + 500.0, "Loaded Make It Rain should convert before extra setup churn (attack=%f churn=%f)" % [attack_score, churn_score])
 
 
+func test_continuity_contract_gets_energy_search_before_nonfinal_make_it_rain() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	player.prizes = [
+		_card(_trainer("Prize A"), 0),
+		_card(_trainer("Prize B"), 0),
+		_card(_trainer("Prize C"), 0),
+	]
+	player.active_pokemon = _slot(_pokemon("Gholdengo ex", "M", 260, "Stage 1", "ex", "Gimmighoul", 2), 0)
+	_attach(player.active_pokemon, "M", 1)
+	player.bench.append(_slot(_pokemon("Gimmighoul", "M", 70, "Basic", "", "", 1), 0))
+	player.bench.append(_slot(_pokemon("Origin Forme Palkia V", "W", 220, "Basic", "V", "", 2), 0))
+	var energy_search := _card(_trainer("Energy Search Pro"), 0)
+	player.hand.append(energy_search)
+	for i: int in 4:
+		player.hand.append(_card(_energy("Basic Energy %d" % i, "M"), 0))
+	for energy_type: String in ["M", "W", "L", "P"]:
+		player.deck.append(_card(_energy("Search Target %s" % energy_type, energy_type), 0))
+	for i: int in 16:
+		player.deck.append(_card(_trainer("Deck filler %d" % i), 0))
+
+	var turn_contract: Dictionary = strategy.build_turn_contract(gs, 0, {"prompt_kind": "action_selection"})
+	var continuity: Dictionary = strategy.build_continuity_contract(gs, 0, turn_contract)
+	var setup_debt: Dictionary = continuity.get("setup_debt", {}) if continuity.get("setup_debt", {}) is Dictionary else {}
+	var search_score: float = strategy.score_action_absolute_with_plan({
+		"kind": "play_trainer",
+		"card": energy_search,
+	}, gs, 0, turn_contract)
+	var attack_score: float = strategy.score_action_absolute_with_plan({
+		"kind": "attack",
+		"source_slot": player.active_pokemon,
+		"attack_index": 0,
+		"attack_name": "Make It Rain",
+		"projected_damage": 200,
+		"projected_knockout": false,
+	}, gs, 0, turn_contract)
+
+	return run_checks([
+		assert_true(bool(continuity.get("enabled", false)), "Ready Gholdengo should expose continuity debt before a non-final Make It Rain"),
+		assert_true(bool(setup_debt.get("need_second_attack_fuel", false)), "Continuity debt should name the missing second-attack fuel"),
+		assert_true(search_score > attack_score, "Energy Search Pro should outrank a non-final 200-damage Make It Rain when it preserves two-turn pressure (search=%f attack=%f)" % [search_score, attack_score]),
+	])
+
+
+func test_continuity_contract_preserves_final_prize_make_it_rain() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	player.prizes = [_card(_trainer("Prize"), 0)]
+	player.active_pokemon = _slot(_pokemon("Gholdengo ex", "M", 260, "Stage 1", "ex", "Gimmighoul", 2), 0)
+	_attach(player.active_pokemon, "M", 1)
+	var energy_search := _card(_trainer("Energy Search Pro"), 0)
+	player.hand.append(energy_search)
+	for i: int in 5:
+		player.hand.append(_card(_energy("Basic Energy %d" % i, "M"), 0))
+	for energy_type: String in ["M", "W", "L", "P"]:
+		player.deck.append(_card(_energy("Search Target %s" % energy_type, energy_type), 0))
+	for i: int in 16:
+		player.deck.append(_card(_trainer("Deck filler %d" % i), 0))
+
+	var turn_contract: Dictionary = strategy.build_turn_contract(gs, 0, {"prompt_kind": "action_selection"})
+	var continuity: Dictionary = strategy.build_continuity_contract(gs, 0, turn_contract)
+	var search_score: float = strategy.score_action_absolute_with_plan({
+		"kind": "play_trainer",
+		"card": energy_search,
+	}, gs, 0, turn_contract)
+	var attack_score: float = strategy.score_action_absolute_with_plan({
+		"kind": "attack",
+		"source_slot": player.active_pokemon,
+		"attack_index": 0,
+		"attack_name": "Make It Rain",
+		"projected_damage": 250,
+		"projected_knockout": true,
+	}, gs, 0, turn_contract)
+
+	return run_checks([
+		assert_false(bool(continuity.get("safe_setup_before_attack", false)), "Final-prize Make It Rain should not enable optional pre-attack continuity setup"),
+		assert_true(attack_score > search_score, "Final-prize Make It Rain must not be delayed by Energy Search Pro (attack=%f search=%f)" % [attack_score, search_score]),
+	])
+
+
 func test_gholdengo_make_it_rain_requires_attached_metal_energy() -> String:
 	var strategy := StrategyPalkiaGholdengo.new()
 	var gs := _game_state()

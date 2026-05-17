@@ -1850,14 +1850,20 @@ func test_specialized_new_pokemon_attack_effects() -> String:
 	var metal_a := CardInstance.create(_make_energy_data("基础钢能量甲", "M"), 0)
 	var metal_b := CardInstance.create(_make_energy_data("基础钢能量乙", "M"), 0)
 	player.hand.append_array([metal_a, metal_b])
-	defender.damage_counters = 50
+	var gold_attack_damage: int = DamageCalculator.new().calculate_damage(
+		player.active_pokemon,
+		defender,
+		{"damage": "50×"},
+		state,
+		gold_attack.get_damage_bonus(player.active_pokemon, state)
+	)
 	gold_attack.execute_attack(player.active_pokemon, defender, 0, state)
 
 	return run_checks([
 		assert_true(searched_stadium_in_hand, "起源帕路奇亚V的检索招式应能将竞技场加入手牌"),
 		assert_gte(defender.damage_counters, 0, "直到反面为止的投币招式不应造成负伤害"),
 		assert_true(metal_a in player.discard_pile and metal_b in player.discard_pile, "赛富豪ex的招式应弃掉手牌中的基础能量"),
-		assert_eq(defender.damage_counters, 100, "弃2张基础能量时应总计造成100伤害"),
+		assert_eq(gold_attack_damage, 100, "弃2张基础能量时应总计造成100伤害"),
 	])
 
 

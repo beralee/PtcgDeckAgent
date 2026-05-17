@@ -1,0 +1,51 @@
+{
+    "name":  "雷吉铎拉戈",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "特性: 龙之秘宝\n如果这只宝可梦在战斗场上的话，则在自己的回合可以使用1次。从牌库上方抽取卡牌，直到自己的手牌变为4张为止。在这个回合，如果已经使用了其他的「龙之秘宝」了的话，则无法使用这个特性。\n\n【草】【火】 巨大之牙 160\n\n\n",
+    "yoren_code":  "P895",
+    "set_code":  "CS5.5C",
+    "card_index":  "054",
+    "set_code_en":  "ASR",
+    "card_index_en":  "118",
+    "name_en":  "Regidrago",
+    "artist":  "DOM",
+    "rarity":  "U",
+    "release_date":  "2024-08-02T00:00:00+08:00",
+    "regulation_mark":  "F",
+    "effect_id":  "e49bf2cfe3c7948b0dcebbe1b1b7aa76",
+    "image_url":  "https://tcg.mik.moe/static/img/CS5.5C/054.png",
+    "image_local_path":  "user://cards/images/CS5.5C/054.png",
+    "is_tags":  [
+                    "Basic"
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "N",
+    "stage":  "Basic",
+    "hp":  130,
+    "weakness_energy":  "",
+    "weakness_value":  "",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  3,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "巨大之牙",
+                        "text":  "",
+                        "cost":  "GRC",
+                        "damage":  "160",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+                      {
+                          "name":  "龙之秘宝",
+                          "text":  "如果这只宝可梦在战斗场上的话，则在自己的回合可以使用1次。从牌库上方抽取卡牌，直到自己的手牌变为4张为止。在这个回合，如果已经使用了其他的「龙之秘宝」了的话，则无法使用这个特性。"
+                      }
+                  ],
+    "energy_provides":  ""
+}

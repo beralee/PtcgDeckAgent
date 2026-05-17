@@ -1,0 +1,56 @@
+{
+    "name":  "爬地翅",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "Ancient",
+    "description":  "【斗】 碎铁 20+\n如果对手场上有「未来」宝可梦的话，则追加造成120伤害。\n\n【斗】【斗】 粉碎之翼 130\n选择这只宝可梦身上附着的2个能量，放于弃牌区。\n\n",
+    "yoren_code":  "P0988",
+    "set_code":  "CSV8C",
+    "card_index":  "119",
+    "set_code_en":  "SFA",
+    "card_index_en":  "26",
+    "name_en":  "Slither Wing",
+    "artist":  "Shinji Kanda",
+    "rarity":  "U",
+    "release_date":  "2026-03-13T00:00:00+08:00",
+    "regulation_mark":  "H",
+    "effect_id":  "f133f2b8d38148794b81a8b4ca135cff",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV8C/119.png",
+    "image_local_path":  "user://cards/images/CSV8C/119.png",
+    "is_tags":  [
+                    "Ancient",
+                    "Basic"
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "F",
+    "stage":  "Basic",
+    "hp":  140,
+    "weakness_energy":  "P",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  3,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "碎铁",
+                        "text":  "如果对手场上有「未来」宝可梦的话，则追加造成120伤害。",
+                        "cost":  "FC",
+                        "damage":  "20+",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "粉碎之翼",
+                        "text":  "选择这只宝可梦身上附着的2个能量，放于弃牌区。",
+                        "cost":  "FFC",
+                        "damage":  "130",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

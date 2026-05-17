@@ -263,6 +263,7 @@ func show_hand_card_detail(inst: CardInstance) -> void:
 	if inst == null or inst.card_data == null:
 		return
 	if bool(_call("_is_hand_drag_click_suppressed")):
+		_call("_runtime_log", ["hand_card_click_blocked", "reason=hand_drag_suppressed card=%s" % inst.card_data.name])
 		return
 	if should_hand_card_click_select_directly(inst):
 		_call("_on_hand_card_clicked", [inst, null])

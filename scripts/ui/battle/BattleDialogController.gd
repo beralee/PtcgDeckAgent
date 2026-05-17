@@ -24,9 +24,35 @@ func _bt(scene: Object, key: String, params: Dictionary = {}) -> String:
 	return str(scene.call("_bt", key, params))
 
 
-func mark_modal_input_consumed(scene: Object, reason: String = "dialog") -> void:
-	if scene != null and scene.has_method("_mark_modal_input_consumed"):
+func mark_modal_input_consumed(scene: Object, reason: String = "dialog", slot_suppression_mode: String = "arm") -> void:
+	if scene == null:
+		return
+	if scene.has_method("_finish_modal_input_interaction"):
+		scene.call("_finish_modal_input_interaction", reason, slot_suppression_mode)
+		return
+	if slot_suppression_mode == "clear" and scene.has_method("_mark_modal_input_consumed_without_slot_suppression"):
+		scene.call("_mark_modal_input_consumed_without_slot_suppression", reason)
+	elif scene.has_method("_mark_modal_input_consumed"):
 		scene.call("_mark_modal_input_consumed", reason)
+
+
+func _cancel_card_gallery_drag_capture(scene: Object, source: String) -> void:
+	if scene == null or not scene.has_method("_cancel_card_gallery_drag_scroll"):
+		return
+	scene.call("_cancel_card_gallery_drag_scroll", source)
+
+
+func _hide_dialog_overlay(scene: Object, source: String) -> void:
+	_cancel_card_gallery_drag_capture(scene, source)
+	var dialog_overlay := scene.get("_dialog_overlay") as Panel
+	if dialog_overlay != null:
+		dialog_overlay.visible = false
+
+
+func _arm_card_view_release_fallback(card_view: BattleCardView, reason: String) -> void:
+	if card_view == null:
+		return
+	card_view.arm_primary_release_fallback(reason)
 
 
 func _replace_int_array(scene: Object, property_name: String, values: Array) -> void:
@@ -800,6 +826,10 @@ func show_card_dialog(scene: Object, items: Array, extra_data: Dictionary) -> vo
 	var dialog_status_lbl: Label = scene.get("_dialog_status_lbl")
 	var dialog_card_size: Vector2 = scene.get("_dialog_card_size")
 
+	_cancel_card_gallery_drag_capture(scene, "show_card_dialog")
+	if scene.has_method("_clear_hand_drag_click_suppression"):
+		scene.call("_clear_hand_drag_click_suppression", "show_card_dialog")
+
 	dialog_list.visible = false
 	dialog_card_scroll.visible = false
 	dialog_assignment_panel.visible = false
@@ -875,6 +905,8 @@ func _populate_card_dialog_cards(scene: Object) -> void:
 		var card_view := BattleCardViewScript.new()
 		prepare_dialog_card_view(card_view, dialog_card_size)
 		card_view.set_clickable(card_click_selectable)
+		if card_click_selectable and not disabled:
+			_arm_card_view_release_fallback(card_view, "dialog_cards_open")
 		setup_dialog_card_view(scene, card_view, card_items[i], dialog_label_at(labels, i))
 		if disabled:
 			card_view.set_disabled(true)
@@ -988,6 +1020,8 @@ func populate_grouped_card_dialog_items(
 			var card_view := BattleCardViewScript.new()
 			prepare_grouped_energy_card_view(card_view, energy_card_size)
 			card_view.set_clickable(card_click_selectable)
+			if card_click_selectable:
+				_arm_card_view_release_fallback(card_view, "dialog_grouped_cards_open")
 			setup_dialog_card_view(scene, card_view, card_items[item_index], dialog_label_at(labels, item_index))
 			if scene.has_method("_configure_card_gallery_card_view"):
 				scene.call("_configure_card_gallery_card_view", card_view, dialog_card_scroll, "dialog_cards")
@@ -1181,6 +1215,8 @@ func create_grouped_card_dialog_slot_panel(
 		var card_view := BattleCardViewScript.new()
 		prepare_grouped_energy_card_view(card_view, energy_card_size)
 		card_view.set_clickable(card_click_selectable)
+		if card_click_selectable:
+			_arm_card_view_release_fallback(card_view, "dialog_grouped_cards_open")
 		setup_dialog_card_view(scene, card_view, card_items[real_index], "")
 		if scene.has_method("_configure_card_gallery_card_view"):
 			scene.call("_configure_card_gallery_card_view", card_view, scene.get("_dialog_card_scroll"), "dialog_cards")
@@ -1663,6 +1699,10 @@ func show_assignment_dialog(scene: Object, extra_data: Dictionary) -> void:
 	var source_card_indices: Array = extra_data.get("source_card_indices", [])
 	var source_choice_labels: Array = extra_data.get("source_choice_labels", [])
 
+	_cancel_card_gallery_drag_capture(scene, "show_assignment_dialog")
+	if scene.has_method("_clear_hand_drag_click_suppression"):
+		scene.call("_clear_hand_drag_click_suppression", "show_assignment_dialog")
+
 	dialog_list.visible = false
 	dialog_card_scroll.visible = false
 	dialog_assignment_panel.visible = true
@@ -1712,6 +1752,7 @@ func show_assignment_dialog(scene: Object, extra_data: Dictionary) -> void:
 		var target_view := BattleCardViewScript.new()
 		prepare_dialog_card_view(target_view, dialog_card_size)
 		target_view.set_clickable(true)
+		_arm_card_view_release_fallback(target_view, "assignment_targets_open")
 		setup_dialog_card_view(scene, target_view, target_items[i], dialog_label_at(target_labels, i))
 		target_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
 			scene.call("_on_assignment_target_chosen", i)
@@ -1890,6 +1931,7 @@ func create_grouped_assignment_source_slot_panel(
 		var source_view := BattleCardViewScript.new()
 		prepare_grouped_energy_card_view(source_view, energy_card_size)
 		source_view.set_clickable(true)
+		_arm_card_view_release_fallback(source_view, "assignment_grouped_sources_open")
 		setup_dialog_card_view(scene, source_view, source_items[source_index], dialog_label_at(source_labels, source_index))
 		source_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
 			scene.call("_on_assignment_source_chosen", source_index)
@@ -1921,6 +1963,8 @@ func add_assignment_source_card(
 	var source_view := BattleCardViewScript.new()
 	prepare_dialog_card_view(source_view, dialog_card_size)
 	source_view.set_clickable(not disabled)
+	if not disabled:
+		_arm_card_view_release_fallback(source_view, "assignment_sources_open")
 	var source_label: String = display_label
 	if source_label == "" and source_index >= 0 and source_index < source_labels.size():
 		source_label = str(source_labels[source_index])
@@ -2199,8 +2243,7 @@ func confirm_dialog_selection(scene: Object, sel_items: PackedInt32Array) -> voi
 		"confirm_dialog_selection",
 		"choice=%s selected=%s %s" % [scene.get("_pending_choice"), JSON.stringify(sel_items), scene.call("_dialog_state_snapshot")]
 	)
-	var dialog_overlay: Panel = scene.get("_dialog_overlay")
-	dialog_overlay.visible = false
+	_hide_dialog_overlay(scene, "dialog_confirm_selection")
 	scene.call("_handle_dialog_choice", sel_items)
 
 
@@ -2273,8 +2316,7 @@ func on_dialog_cancel(scene: Object) -> void:
 		"dialog_cancel",
 		"choice=%s %s" % [scene.get("_pending_choice"), scene.call("_dialog_state_snapshot")]
 	)
-	var dialog_overlay: Panel = scene.get("_dialog_overlay")
-	dialog_overlay.visible = false
+	_hide_dialog_overlay(scene, "dialog_cancel")
 	_replace_int_array(scene, "_dialog_card_selected_indices", [])
 	reset_dialog_assignment_state(scene)
 	if str(scene.get("_pending_choice")) == "effect_interaction":
@@ -2304,20 +2346,17 @@ func confirm_assignment_dialog(scene: Object) -> void:
 	if pending_step_index < 0 or pending_step_index >= pending_steps.size():
 		var pending_choice := str(scene.get("_pending_choice"))
 		if pending_choice == "heavy_baton_target":
-			var dialog_overlay_hb: Panel = scene.get("_dialog_overlay")
-			dialog_overlay_hb.visible = false
+			_hide_dialog_overlay(scene, "heavy_baton_assignment_confirm")
 			reset_dialog_assignment_state(scene)
 			scene.call("_commit_heavy_baton_assignment", stored_assignments)
 			return
 		if pending_choice == "exp_share_target":
-			var dialog_overlay_exp: Panel = scene.get("_dialog_overlay")
-			dialog_overlay_exp.visible = false
+			_hide_dialog_overlay(scene, "exp_share_assignment_confirm")
 			reset_dialog_assignment_state(scene)
 			scene.call("_commit_exp_share_assignment", stored_assignments)
 			return
 		return
-	var dialog_overlay: Panel = scene.get("_dialog_overlay")
-	dialog_overlay.visible = false
+	_hide_dialog_overlay(scene, "effect_assignment_confirm")
 	reset_dialog_assignment_state(scene)
 	scene.call("_commit_effect_assignment_selection", stored_assignments)
 

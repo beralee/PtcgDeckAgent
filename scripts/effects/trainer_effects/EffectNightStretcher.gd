@@ -52,9 +52,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	if recover_card == null or recover_card not in player.discard_pile:
 		return
 
-	player.discard_pile.erase(recover_card)
-	recover_card.face_up = true
-	player.hand.append(recover_card)
+	_move_discard_cards_to_hand_with_log(state, card.owner_index, [recover_card], card, "trainer")
 
 
 func get_description() -> String:

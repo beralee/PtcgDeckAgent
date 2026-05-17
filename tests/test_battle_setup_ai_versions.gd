@@ -727,6 +727,7 @@ func test_apply_setup_selection_enables_fixed_order_for_strong_miraidon_ai() -> 
 	var preview_option := scene.find_child("AIPreviewStrengthOption", true, false) as OptionButton
 	mode_option.select(1)
 	scene.call("_on_mode_changed", 1)
+	scene.call("_select_option_for_deck_id", scene.find_child("Deck2Option", true, false), 575720)
 	preview_option.select(1)
 
 	var ok: bool = scene.call("_apply_setup_selection")
@@ -927,6 +928,7 @@ func test_battle_setup_ai_view_button_keeps_normal_preview_for_weak_mode() -> St
 	var preview_option := scene.find_child("AIPreviewStrengthOption", true, false) as OptionButton
 	mode_option.select(1)
 	scene.call("_on_mode_changed", 1)
+	scene.call("_select_option_for_deck_id", scene.find_child("Deck2Option", true, false), 575720)
 	preview_option.select(0)
 
 	scene.call("_on_deck_view_pressed", 1)
@@ -948,6 +950,7 @@ func test_battle_setup_ai_view_button_uses_normal_preview_for_strong_mode() -> S
 	var preview_option := scene.find_child("AIPreviewStrengthOption", true, false) as OptionButton
 	mode_option.select(1)
 	scene.call("_on_mode_changed", 1)
+	scene.call("_select_option_for_deck_id", scene.find_child("Deck2Option", true, false), 575720)
 	preview_option.select(1)
 
 	scene.call("_on_deck_view_pressed", 1)

@@ -806,6 +806,8 @@ func build_hand_card(scene: Object, inst: CardInstance) -> PanelContainer:
 	card_view.setup_from_instance(inst, BattleCardView.MODE_HAND)
 	card_view.set_selected(scene.get("_selected_hand_card") == inst)
 	card_view.set_info(inst.card_data.name, hand_card_subtext(inst.card_data))
+	if scene.has_method("_should_arm_hand_primary_release_fallback") and bool(scene.call("_should_arm_hand_primary_release_fallback")):
+		card_view.arm_primary_release_fallback("rebuilt_hand_after_modal")
 	if scene.has_method("_handle_hand_drag_scroll_input"):
 		card_view.hand_drag_input.connect(func(event: InputEvent) -> void:
 			scene.call("_handle_hand_drag_scroll_input", event, "hand_card_gui")
@@ -964,6 +966,10 @@ func _show_card_collection(
 		scene.call("_apply_discard_collection_metrics")
 	if scene.has_method("_apply_portrait_popup_text_metrics"):
 		scene.call("_apply_portrait_popup_text_metrics")
+	if scene.has_method("_raise_discard_overlay_for_input"):
+		scene.call("_raise_discard_overlay_for_input")
+	else:
+		discard_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	discard_overlay.visible = true
 	scene.call("_runtime_log", event_name, "player=%d title=%s count=%d" % [player_index, title, cards.size()])
 

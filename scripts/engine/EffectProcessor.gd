@@ -5,6 +5,7 @@ const EffectKieranScript = preload("res://scripts/effects/trainer_effects/Effect
 const AbilityBasicVLockScript = preload("res://scripts/effects/pokemon_effects/AbilityBasicVLock.gd")
 const CSV9CEffects = preload("res://scripts/effects/CSV9CEffects.gd")
 const CSV9C202Briar = preload("res://scripts/effects/trainer_effects/CSV9C202Briar.gd")
+const NoivernExEffectsScript = preload("res://scripts/effects/pokemon_effects/NoivernExEffects.gd")
 
 const SWEET_TRAP_DAMAGE_BONUS_EFFECT_TYPE := "sweet_trap_damage_bonus"
 
@@ -244,7 +245,10 @@ func execute_attack_effect(
 		card_effect.clear_attack_interaction_context()
 
 	if _attack_effect_registry.has(effect_id):
+		var already_executed_effect: BaseEffect = _effect_registry.get(effect_id, null)
 		for effect: BaseEffect in _attack_effect_registry[effect_id]:
+			if effect == already_executed_effect:
+				continue
 			if effect.has_method("applies_to_attack_index") and not bool(effect.call("applies_to_attack_index", attack_index)):
 				continue
 			state.shared_turn_flags["_draw_effect_processor"] = self
@@ -273,7 +277,10 @@ func execute_attack_effect_by_id(
 			card_effect.clear_attack_interaction_context()
 
 	if _attack_effect_registry.has(effect_id):
+		var already_executed_effect: BaseEffect = _effect_registry.get(effect_id, null)
 		for effect: BaseEffect in _attack_effect_registry[effect_id]:
+			if effect == already_executed_effect:
+				continue
 			if exclude_effect_type != null and is_instance_of(effect, exclude_effect_type):
 				continue
 			if effect.has_method("applies_to_attack_index") and not bool(effect.call("applies_to_attack_index", attack_index)):
@@ -971,6 +978,10 @@ func prevents_special_status(slot: PokemonSlot, state: GameState) -> bool:
 func prevents_card_from_hand(player_index: int, card: CardInstance, state: GameState) -> bool:
 	if card == null or card.card_data == null or state == null:
 		return false
+	if NoivernExEffectsScript.is_player_locked(player_index, state):
+		var locked_card_type := str(card.card_data.card_type)
+		if locked_card_type == "Special Energy" or locked_card_type == "Stadium":
+			return true
 	var opponent_index := 1 - player_index
 	if opponent_index < 0 or opponent_index >= state.players.size():
 		return false

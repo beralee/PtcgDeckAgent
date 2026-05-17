@@ -80,7 +80,9 @@ var _deck_picker_subtitle: Label = null
 var _mode_segment_buttons: Dictionary = {}
 var _first_player_segment_buttons: Dictionary = {}
 var _battle_layout_segment_buttons: Dictionary = {}
+var _dynamic_stadium_background_segment_buttons: Dictionary = {}
 var _ai_strategy_segment_buttons: Array[Button] = []
+var _dynamic_stadium_background_enabled: bool = true
 
 
 func _ready() -> void:
@@ -104,6 +106,7 @@ func _ready() -> void:
 
 	_setup_first_player_options()
 	_setup_background_gallery()
+	_setup_dynamic_stadium_background_options()
 	_setup_battle_layout_options()
 	_setup_battle_music_options()
 
@@ -448,7 +451,7 @@ func _sync_mode_segment_buttons() -> void:
 func _on_mode_changed(_index: int) -> void:
 	_sync_mode_segment_buttons()
 	_mark_strategy_discussion_deck_changed()
-	_refresh_deck_options(true)
+	_refresh_deck_options(false)
 	_refresh_ai_ui_visibility()
 
 
@@ -1143,6 +1146,47 @@ func _setup_battle_layout_options() -> void:
 	_select_battle_layout_mode(GameManager.battle_layout_mode)
 	if not option.item_selected.is_connected(_on_battle_layout_option_changed):
 		option.item_selected.connect(_on_battle_layout_option_changed)
+
+
+func _setup_dynamic_stadium_background_options() -> void:
+	_dynamic_stadium_background_enabled = bool(GameManager.dynamic_stadium_background_enabled)
+	_dynamic_stadium_background_segment_buttons = {
+		true: get_node_or_null("%DynamicStadiumBackgroundOnButton"),
+		false: get_node_or_null("%DynamicStadiumBackgroundOffButton"),
+	}
+	for enabled_variant: Variant in _dynamic_stadium_background_segment_buttons.keys():
+		var enabled := bool(enabled_variant)
+		var button := _dynamic_stadium_background_segment_buttons[enabled] as Button
+		if button == null:
+			continue
+		button.tooltip_text = "竞技场上场时自动切换战场背景，离场后恢复所选背景。"
+		var pressed_callable := Callable(self, "_on_dynamic_stadium_background_segment_pressed").bind(enabled)
+		if not button.pressed.is_connected(pressed_callable):
+			button.pressed.connect(pressed_callable)
+	_sync_dynamic_stadium_background_segment_buttons()
+
+
+func _on_dynamic_stadium_background_segment_pressed(enabled: bool) -> void:
+	_dynamic_stadium_background_enabled = enabled
+	GameManager.dynamic_stadium_background_enabled = enabled
+	_sync_dynamic_stadium_background_segment_buttons()
+
+
+func _sync_dynamic_stadium_background_segment_buttons() -> void:
+	for enabled_variant: Variant in _dynamic_stadium_background_segment_buttons.keys():
+		var enabled := bool(enabled_variant)
+		var button := _dynamic_stadium_background_segment_buttons[enabled] as Button
+		if button == null:
+			continue
+		var active := enabled == _dynamic_stadium_background_enabled
+		button.add_theme_font_size_override("font_size", 15)
+		button.add_theme_color_override("font_color", Color(0.04, 0.10, 0.12, 1.0) if active else HUD_TEXT)
+		button.add_theme_color_override("font_hover_color", Color(0.04, 0.10, 0.12, 1.0) if active else Color.WHITE)
+		button.add_theme_color_override("font_pressed_color", Color(0.04, 0.10, 0.12, 1.0))
+		button.add_theme_stylebox_override("normal", _hud_segment_button_style(active, false, false))
+		button.add_theme_stylebox_override("hover", _hud_segment_button_style(active, true, false))
+		button.add_theme_stylebox_override("pressed", _hud_segment_button_style(active, true, true))
+		button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 
 
 func _on_battle_layout_option_changed(_index: int) -> void:
@@ -2137,6 +2181,7 @@ func _apply_setup_selection() -> bool:
 	GameManager.selected_deck_ids = [deck1.id, deck2.id]
 	GameManager.first_player_choice = _first_player_choice_from_option_index(%FirstPlayerOption.selected)
 	GameManager.selected_battle_background = _selected_background_path if _selected_background_path != "" else DEFAULT_BACKGROUND
+	GameManager.dynamic_stadium_background_enabled = _dynamic_stadium_background_enabled
 	_sync_battle_layout_preference_from_ui()
 	_record_battle_deck_usage([deck1, deck2])
 	_sync_battle_music_preferences_from_ui()
@@ -2189,6 +2234,7 @@ func _save_settings() -> void:
 		"deck2_id": deck2.id if deck2 != null else -1,
 		"first_player_choice": _first_player_choice_from_option_index(%FirstPlayerOption.selected),
 		"background_path": _selected_background_path,
+		"dynamic_stadium_background_enabled": _dynamic_stadium_background_enabled,
 		"battle_layout_mode": _selected_battle_layout_mode(),
 		"battle_music_id": _selected_battle_music_id,
 		"battle_bgm_volume_percent": _selected_battle_music_volume_percent,
@@ -2245,6 +2291,9 @@ func _load_settings() -> void:
 	if bg_path in _battle_backgrounds:
 		_selected_background_path = bg_path
 		_refresh_background_selection()
+	_dynamic_stadium_background_enabled = bool(data.get("dynamic_stadium_background_enabled", GameManager.dynamic_stadium_background_enabled))
+	GameManager.dynamic_stadium_background_enabled = _dynamic_stadium_background_enabled
+	_sync_dynamic_stadium_background_segment_buttons()
 	_select_battle_layout_mode(str(data.get("battle_layout_mode", GameManager.battle_layout_mode)))
 	_sync_battle_layout_preference_from_ui()
 
@@ -2266,6 +2315,7 @@ func _capture_setup_selection_context() -> Dictionary:
 		"deck2_id": deck2.id if deck2 != null else -1,
 		"first_player_choice": _first_player_choice_from_option_index(%FirstPlayerOption.selected),
 		"background_path": _selected_background_path,
+		"dynamic_stadium_background_enabled": _dynamic_stadium_background_enabled,
 		"mode": %ModeOption.selected,
 		"ai_source_index": %AISourceOption.selected,
 		"ai_version_index": %AIVersionOption.selected,
@@ -2291,6 +2341,9 @@ func _apply_setup_context(context: Dictionary) -> void:
 	if background_path in _battle_backgrounds:
 		_selected_background_path = background_path
 		_refresh_background_selection()
+	_dynamic_stadium_background_enabled = bool(context.get("dynamic_stadium_background_enabled", _dynamic_stadium_background_enabled))
+	GameManager.dynamic_stadium_background_enabled = _dynamic_stadium_background_enabled
+	_sync_dynamic_stadium_background_segment_buttons()
 
 	var ai_source_index := int(context.get("ai_source_index", %AISourceOption.selected))
 	if ai_source_index >= 0 and ai_source_index < %AISourceOption.item_count:

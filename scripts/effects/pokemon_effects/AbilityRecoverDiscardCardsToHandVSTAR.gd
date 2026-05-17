@@ -21,6 +21,8 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 		return false
 	if state.vstar_power_used[pi]:
 		return false
+	if DiscardToHandBlockHelper.is_discard_to_hand_blocked(pi, state, "ability"):
+		return false
 	return not _get_recoverable_cards(state.players[pi]).is_empty()
 
 
@@ -76,11 +78,9 @@ func execute_ability(
 		for i: int in mini(recover_count, recoverable.size()):
 			selected_cards.append(recoverable[i])
 
-	for selected: CardInstance in selected_cards:
-		player.discard_pile.erase(selected)
-		player.hand.append(selected)
-
-	state.vstar_power_used[pi] = true
+	var moved := _move_discard_cards_to_hand_with_log(state, pi, selected_cards, top, "ability")
+	if not moved.is_empty():
+		state.vstar_power_used[pi] = true
 
 
 func _get_recoverable_cards(player: PlayerState) -> Array:

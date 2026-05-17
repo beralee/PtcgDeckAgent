@@ -1,0 +1,42 @@
+{
+    "name":  "火夏",
+    "card_type":  "Supporter",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "选择自己牌库中最多3张进化宝可梦（除「拥有规则的宝可梦」外），在给对手看过之后，加入手牌。并重洗牌库。",
+    "yoren_code":  "Y960",
+    "set_code":  "CS5DC",
+    "card_index":  "147",
+    "set_code_en":  "LOR",
+    "card_index_en":  "153",
+    "name_en":  "Arezu",
+    "artist":  "kirisAki",
+    "rarity":  "无标记",
+    "release_date":  "2024-06-18T00:00:00+08:00",
+    "regulation_mark":  "F",
+    "effect_id":  "c29db727ed3ad15978addfc5d8ed6451",
+    "image_url":  "https://tcg.mik.moe/static/img/CS5DC/147.png",
+    "image_local_path":  "user://cards/images/CS5DC/147.png",
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "",
+    "stage":  "",
+    "hp":  0,
+    "weakness_energy":  "",
+    "weakness_value":  "",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  0,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

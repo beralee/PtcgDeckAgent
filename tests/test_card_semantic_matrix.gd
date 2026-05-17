@@ -33,11 +33,13 @@ const BELDUM_UIDS := ["CS6aC_083"]
 
 class RiggedCoinFlipper extends CoinFlipper:
 	var _results: Array[bool] = []
+	var flip_count: int = 0
 
 	func _init(results: Array[bool]) -> void:
 		_results = results.duplicate()
 
 	func flip() -> bool:
+		flip_count += 1
 		if _results.is_empty():
 			return false
 		var result: bool = _results.pop_front()
@@ -1522,6 +1524,78 @@ func test_dragon_copy_phantom_dive_full_flow_with_bench_counters() -> String:
 
 
 ## 测试12：对方无备战宝可梦时应跳过伤害指示物分配
+func test_dragon_copy_alolan_exeggutor_swinging_sphene_flips_before_tails_target() -> String:
+	var flipper := RiggedCoinFlipper.new([false])
+	var emitted: Array[bool] = []
+	flipper.coin_flipped.connect(func(result: bool) -> void: emitted.append(result))
+	var processor := EffectProcessor.new(flipper)
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	var opponent: PlayerState = state.players[1]
+
+	var regidrago_cd := _make_regidrago_vstar_data()
+	processor.register_pokemon_card(regidrago_cd)
+	var attacker := _make_slot(regidrago_cd, 0)
+	player.active_pokemon = attacker
+
+	var alolan_cd := _make_dragon_pokemon_data(
+		"Alolan Exeggutor ex",
+		300,
+		"0f9c649bb3f59a7a342b53cdc78952a4",
+		[
+			{"name": "Tropical Frenzy", "cost": "GW", "damage": "150", "text": "", "is_vstar_power": false},
+			{"name": "Swinging Sphene", "cost": "GWF", "damage": "", "text": "", "is_vstar_power": false},
+		]
+	)
+	processor.register_pokemon_card(alolan_cd)
+	var source_card := CardInstance.create(alolan_cd, 0)
+	player.discard_pile.append(source_card)
+	var bench_target: PokemonSlot = opponent.bench[0]
+	var other_bench: PokemonSlot = opponent.bench[1]
+
+	var dragon_effect: AttackUseDiscardDragonAttackEffect = null
+	for fx: BaseEffect in processor.get_attack_effects_for_slot(attacker, 0):
+		if fx is AttackUseDiscardDragonAttackEffect:
+			dragon_effect = fx
+			break
+	if dragon_effect == null:
+		return "Apex Dragon effect was not registered"
+
+	var copied_ctx := {
+		"copied_attack": [{
+			"source_card": source_card,
+			"attack_index": 1,
+			"attack": alolan_cd.attacks[1],
+		}],
+	}
+	var followup: Array[Dictionary] = dragon_effect.get_followup_attack_interaction_steps(
+		attacker.get_top_card(),
+		regidrago_cd.attacks[0],
+		state,
+		copied_ctx
+	)
+	copied_ctx["csv9c_basic_bench_ko_target"] = [bench_target]
+	var repeated_followup: Array[Dictionary] = dragon_effect.get_followup_attack_interaction_steps(
+		attacker.get_top_card(),
+		regidrago_cd.attacks[0],
+		state,
+		copied_ctx
+	)
+	dragon_effect.set_attack_interaction_context([copied_ctx])
+	dragon_effect.execute_attack(attacker, opponent.active_pokemon, 0, state)
+	dragon_effect.clear_attack_interaction_context()
+
+	return run_checks([
+		assert_eq(emitted, [false], "Copied CSV9C_144 should emit exactly one shared coin result while injecting the follow-up step"),
+		assert_eq(flipper.flip_count, 1, "Copied CSV9C_144 should not re-flip after the tails target step is resolved"),
+		assert_eq(str(followup[0].get("id", "")) if not followup.is_empty() else "", "csv9c_basic_bench_ko_target", "Copied CSV9C_144 tails should inject the Benched Basic target step"),
+		assert_eq(repeated_followup.size(), 0, "Copied CSV9C_144 should not regenerate follow-up steps after a copied follow-up has resolved"),
+		assert_true(bool(followup[0].get("wait_for_coin_animation", false)) if not followup.is_empty() else false, "Copied CSV9C_144 tails target should wait for the coin animation"),
+		assert_eq(bench_target.damage_counters, bench_target.get_max_hp(), "Copied CSV9C_144 tails should KO the selected Benched Basic"),
+		assert_eq(other_bench.damage_counters, 0, "Copied CSV9C_144 tails should not KO an unselected Benched Pokemon"),
+	])
+
+
 func test_dragon_copy_phantom_dive_no_bench_skips_counters() -> String:
 	var source_cd := _make_dragon_pokemon_data(
 		"Dragapult ex", 320, "52a205820de799a53a689f23cbeb8622",

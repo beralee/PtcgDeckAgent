@@ -677,6 +677,20 @@ func _load_battle_backdrop_texture() -> Texture2D:
 	)
 
 
+func _ensure_battle_stadium_backdrop_coordinator() -> void:
+	if _battle_stadium_backdrop_coordinator == null:
+		_battle_stadium_backdrop_coordinator = BattleStadiumBackdropCoordinatorScript.new()
+	_battle_stadium_backdrop_coordinator.call("setup", self)
+
+
+func _sync_stadium_backdrop(gs: GameState = null, immediate: bool = false) -> void:
+	_ensure_battle_stadium_backdrop_coordinator()
+	var live_state := gs
+	if live_state == null and _gsm != null:
+		live_state = _gsm.game_state
+	_battle_stadium_backdrop_coordinator.call("sync_stadium_backdrop", live_state, immediate)
+
+
 
 func _bench_display_size_for_player(player_index: int) -> int:
 	var display_size := BENCH_SIZE
@@ -1465,6 +1479,10 @@ func _suppress_slot_followup_click(slot_id: String, reason: String) -> void:
 
 
 func _refresh_ui_after_successful_action(check_handover: bool = false, action_player_index: int = -1) -> void:
+	if has_method("_clear_hand_drag_click_suppression"):
+		call("_clear_hand_drag_click_suppression", "successful_action")
+	if has_method("_arm_hand_primary_release_fallback_window"):
+		call("_arm_hand_primary_release_fallback_window", "successful_action")
 	_refresh_ui()
 	if check_handover:
 		_check_two_player_handover()
@@ -1817,6 +1835,7 @@ func _refresh_ui() -> void:
 	_trace_portrait_layout_stage("scene.refresh_ui.before_display")
 	_ensure_battle_display_coordinator()
 	_battle_display_coordinator.call("refresh_all")
+	_sync_stadium_backdrop()
 	_trace_portrait_layout_stage("scene.refresh_ui.after_display")
 	_refresh_vstar_lost_hud_values()
 	_refresh_end_turn_hud_button_state()

@@ -1,0 +1,52 @@
+{
+    "name":  "光辉洗翠 大狃拉",
+    "card_type":  "Pokemon",
+    "mechanic":  "Radiant",
+    "label":  "",
+    "description":  "特性: 巅峰毒性\n只要这只宝可梦在场上，对手的战斗宝可梦，因【中毒】而放置的伤害指示物数量增加2个。\n\n【恶】 毒击 90\n使对手的战斗宝可梦陷入【中毒】状态。\n\n",
+    "yoren_code":  "Y1015",
+    "set_code":  "CS5aC",
+    "card_index":  "079",
+    "set_code_en":  "LOR",
+    "card_index_en":  "123",
+    "name_en":  "Radiant Hisuian Sneasler",
+    "artist":  "Akira Komayama",
+    "rarity":  "K",
+    "release_date":  "2024-06-18T00:00:00+08:00",
+    "regulation_mark":  "F",
+    "effect_id":  "146a354ca20b3943ab792aa29b070fda",
+    "image_url":  "https://tcg.mik.moe/static/img/CS5aC/079.png",
+    "image_local_path":  "user://cards/images/CS5aC/079.png",
+    "is_tags":  [
+                    "Radiant",
+                    "Basic"
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "D",
+    "stage":  "Basic",
+    "hp":  130,
+    "weakness_energy":  "F",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "毒击",
+                        "text":  "使对手的战斗宝可梦陷入【中毒】状态。",
+                        "cost":  "DCC",
+                        "damage":  "90",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+                      {
+                          "name":  "巅峰毒性",
+                          "text":  "只要这只宝可梦在场上，对手的战斗宝可梦，因【中毒】而放置的伤害指示物数量增加2个。"
+                      }
+                  ],
+    "energy_provides":  ""
+}

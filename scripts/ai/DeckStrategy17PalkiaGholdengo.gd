@@ -112,6 +112,29 @@ func build_turn_plan(game_state: GameState, player_index: int, _context: Diction
 	}
 
 
+func build_continuity_contract(game_state: GameState, player_index: int, turn_contract: Dictionary = {}) -> Dictionary:
+	var disabled := _disabled_palkia_gholdengo_continuity_contract()
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return disabled
+	var player: PlayerState = game_state.players[player_index]
+	if not _has_immediate_palkia_gholdengo_attack_window(game_state, player_index):
+		return disabled
+	var setup_debt: Dictionary = _build_palkia_gholdengo_continuity_setup_debt(player, game_state, player_index)
+	if _palkia_gholdengo_terminal_attack_locked(game_state, player_index, turn_contract):
+		disabled["setup_debt"] = setup_debt
+		disabled["terminal_attack_locked"] = true
+		return disabled
+	var action_bonuses: Array[Dictionary] = _build_palkia_gholdengo_continuity_action_bonuses(player, setup_debt)
+	var enabled: bool = _palkia_gholdengo_continuity_debt_active(setup_debt) and not action_bonuses.is_empty()
+	return {
+		"enabled": enabled,
+		"safe_setup_before_attack": enabled,
+		"setup_debt": setup_debt,
+		"action_bonuses": action_bonuses,
+		"attack_penalty": 360.0 if enabled else 0.0,
+	}
+
+
 func predict_attacker_damage(slot: PokemonSlot, extra_context: int = 0) -> Dictionary:
 	if slot == null or slot.get_card_data() == null:
 		return {"damage": 0, "can_attack": false, "description": ""}
@@ -323,6 +346,17 @@ func _card_name(card: Variant) -> String:
 	if cd == null:
 		return ""
 	return _canonical_v17_name(cd)
+
+
+func _continuity_action_card_name(action: Dictionary) -> String:
+	var card: Variant = action.get("card", null)
+	if card is CardInstance or card is CardData:
+		return _card_name(card)
+	for key: String in ["card_name", "name", "source_name"]:
+		var value := str(action.get(key, ""))
+		if value != "":
+			return _canonical_known_name(value)
+	return ""
 
 
 func _slot_name(slot: PokemonSlot) -> String:
@@ -590,6 +624,259 @@ func _score_palkia_gholdengo_retreat(player: PlayerState, game_state: GameState,
 	if _slot_name(player.active_pokemon) in [GHOLDENGO_EX, PALKIA_VSTAR] and _has_live_attack_route(player, game_state, player_index):
 		return minf(base_score, 30.0)
 	return base_score
+
+
+func _disabled_palkia_gholdengo_continuity_contract() -> Dictionary:
+	return {
+		"enabled": false,
+		"safe_setup_before_attack": false,
+		"setup_debt": {},
+		"action_bonuses": [],
+		"attack_penalty": 0.0,
+	}
+
+
+func _has_immediate_palkia_gholdengo_attack_window(game_state: GameState, player_index: int) -> bool:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	if player == null or player.active_pokemon == null or not _slot_is_live(player.active_pokemon):
+		return false
+	var active_name := _slot_name(player.active_pokemon)
+	if active_name == GHOLDENGO_EX:
+		return _has_attached_energy_type(player.active_pokemon, METAL_ENERGY) and _basic_energy_in_hand(player) >= 2
+	if active_name == PALKIA_VSTAR:
+		return player.active_pokemon.attached_energy.size() >= 2
+	var prediction := predict_attacker_damage(player.active_pokemon)
+	return bool(prediction.get("can_attack", false)) and int(prediction.get("damage", 0)) > 0
+
+
+func _build_palkia_gholdengo_continuity_setup_debt(
+	player: PlayerState,
+	game_state: GameState,
+	player_index: int
+) -> Dictionary:
+	if player == null:
+		return {}
+	var bench_open := player.bench.size() < 5
+	var gholdengo_lanes := _count_name_on_field(player, GHOLDENGO_EX) + _count_name_on_field(player, GIMMIGHOUL)
+	var palkia_lanes := _count_name_on_field(player, PALKIA_VSTAR) + _count_name_on_field(player, PALKIA_V)
+	return {
+		"gholdengo_lane_count": gholdengo_lanes,
+		"palkia_lane_count": palkia_lanes,
+		"hand_basic_energy_count": _basic_energy_in_hand(player),
+		"discard_basic_energy_count": _discard_basic_energy_count(player),
+		"need_backup_gholdengo_seed": bench_open and gholdengo_lanes < 2,
+		"need_palkia_bridge": bench_open and palkia_lanes < 1,
+		"need_second_attack_fuel": _needs_second_attack_fuel(player, game_state, player_index),
+		"need_follow_up_metal": _needs_follow_up_metal(player),
+		"need_follow_up_water": _needs_follow_up_water(player),
+	}
+
+
+func _build_palkia_gholdengo_continuity_action_bonuses(player: PlayerState, setup_debt: Dictionary) -> Array[Dictionary]:
+	var bonuses: Array[Dictionary] = []
+	if player == null:
+		return bonuses
+	var bench_open := player.bench.size() < 5
+	if bool(setup_debt.get("need_second_attack_fuel", false)):
+		if _hand_has_card_name(player, ENERGY_SEARCH_PRO):
+			bonuses.append(_palkia_gholdengo_continuity_bonus(
+				"play_trainer",
+				[ENERGY_SEARCH_PRO],
+				980.0,
+				"Use Energy Search Pro before a non-final Make It Rain so the next attack still has fuel."
+			))
+		if _hand_has_card_name(player, SUPERIOR_ENERGY_RETRIEVAL) and _discard_basic_energy_count(player) >= 2:
+			bonuses.append(_palkia_gholdengo_continuity_bonus(
+				"play_trainer",
+				[SUPERIOR_ENERGY_RETRIEVAL],
+				760.0,
+				"Recover basic Energy before a non-final Make It Rain to preserve consecutive attacks."
+			))
+		if _hand_has_card_name(player, ENERGY_RETRIEVAL) and _discard_basic_energy_count(player) >= 1:
+			bonuses.append(_palkia_gholdengo_continuity_bonus(
+				"play_trainer",
+				[ENERGY_RETRIEVAL],
+				620.0,
+				"Recover basic Energy before a non-final Make It Rain to preserve follow-up fuel."
+			))
+		if _hand_has_card_name(player, IRIDA) and _engine_setup_gap(player) > 0:
+			bonuses.append(_palkia_gholdengo_continuity_bonus(
+				"play_trainer",
+				[IRIDA],
+				360.0,
+				"Use Irida to bridge missing engine or resource pieces before the attack window closes."
+			))
+	if bench_open and bool(setup_debt.get("need_backup_gholdengo_seed", false)):
+		if _hand_has_card_name(player, GIMMIGHOUL):
+			bonuses.append(_palkia_gholdengo_continuity_bonus(
+				"play_basic_to_bench",
+				[GIMMIGHOUL],
+				760.0,
+				"Bench a backup Gimmighoul before a non-final attack."
+			))
+		if _hand_has_card_name(player, BUDDY_BUDDY_POFFIN):
+			bonuses.append(_palkia_gholdengo_continuity_bonus(
+				"play_trainer",
+				[BUDDY_BUDDY_POFFIN],
+				700.0,
+				"Use Poffin to seed a backup Gimmighoul before a non-final attack."
+			))
+		if _hand_has_card_name(player, NEST_BALL):
+			bonuses.append(_palkia_gholdengo_continuity_bonus(
+				"play_trainer",
+				[NEST_BALL],
+				640.0,
+				"Use Nest Ball to seed the missing backup Gholdengo lane before attacking."
+			))
+	if bench_open and bool(setup_debt.get("need_palkia_bridge", false)):
+		if _hand_has_card_name(player, PALKIA_V):
+			bonuses.append(_palkia_gholdengo_continuity_bonus(
+				"play_basic_to_bench",
+				[PALKIA_V],
+				680.0,
+				"Bench Palkia V before attacking so the Water bridge remains available."
+			))
+		if _hand_has_card_name(player, NEST_BALL):
+			bonuses.append(_palkia_gholdengo_continuity_bonus(
+				"play_trainer",
+				[NEST_BALL],
+				620.0,
+				"Use Nest Ball to establish the Palkia bridge before a non-final attack."
+			))
+		if _hand_has_card_name(player, IRIDA):
+			bonuses.append(_palkia_gholdengo_continuity_bonus(
+				"play_trainer",
+				[IRIDA],
+				360.0,
+				"Use Irida to keep the Palkia bridge online before committing the attack."
+			))
+	if bool(setup_debt.get("need_follow_up_metal", false)) and _hand_has_basic_energy_type(player, METAL_ENERGY):
+		bonuses.append(_palkia_gholdengo_continuity_bonus(
+			"attach_energy",
+			[],
+			300.0,
+			"Attach Metal to a follow-up Gholdengo lane before a non-final attack.",
+			{"target_names": [GHOLDENGO_EX, GIMMIGHOUL]}
+		))
+	if bool(setup_debt.get("need_follow_up_water", false)) and _hand_has_basic_energy_type(player, WATER_ENERGY):
+		bonuses.append(_palkia_gholdengo_continuity_bonus(
+			"attach_energy",
+			[],
+			260.0,
+			"Attach Water to the Palkia bridge before a non-final attack.",
+			{"target_names": [PALKIA_VSTAR, PALKIA_V]}
+		))
+	return bonuses
+
+
+func _palkia_gholdengo_continuity_bonus(
+	kind: String,
+	card_names: Array[String],
+	bonus: float,
+	reason: String,
+	extra: Dictionary = {}
+) -> Dictionary:
+	var entry: Dictionary = {
+		"kind": kind,
+		"card_names": card_names.duplicate(),
+		"bonus": bonus,
+		"reason": reason,
+	}
+	for key: Variant in extra.keys():
+		entry[key] = extra[key]
+	return entry
+
+
+func _palkia_gholdengo_continuity_debt_active(setup_debt: Dictionary) -> bool:
+	return bool(setup_debt.get("need_backup_gholdengo_seed", false)) \
+		or bool(setup_debt.get("need_palkia_bridge", false)) \
+		or bool(setup_debt.get("need_second_attack_fuel", false)) \
+		or bool(setup_debt.get("need_follow_up_metal", false)) \
+		or bool(setup_debt.get("need_follow_up_water", false))
+
+
+func _palkia_gholdengo_terminal_attack_locked(game_state: GameState, player_index: int, turn_contract: Dictionary) -> bool:
+	var flags: Dictionary = turn_contract.get("flags", {}) if turn_contract.get("flags", {}) is Dictionary else {}
+	var constraints: Dictionary = turn_contract.get("constraints", {}) if turn_contract.get("constraints", {}) is Dictionary else {}
+	if bool(constraints.get("must_attack_if_available", false)):
+		return true
+	for key: String in ["final_prize_ko", "final_prize_ko_available", "critical_ko", "critical_ko_available", "force_terminal_attack"]:
+		if bool(turn_contract.get(key, false)) or bool(flags.get(key, false)):
+			return true
+	return _palkia_gholdengo_final_prize_ko_available(game_state, player_index)
+
+
+func _palkia_gholdengo_final_prize_ko_available(game_state: GameState, player_index: int) -> bool:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	var opponent_index := 1 - player_index
+	if player == null or player.prizes.is_empty() or opponent_index < 0 or opponent_index >= game_state.players.size():
+		return false
+	var opponent: PlayerState = game_state.players[opponent_index]
+	if opponent == null or opponent.active_pokemon == null:
+		return false
+	if player.prizes.size() > opponent.active_pokemon.get_prize_count():
+		return false
+	return _current_attacker_damage_available(player, game_state) >= opponent.active_pokemon.get_remaining_hp()
+
+
+func _needs_second_attack_fuel(player: PlayerState, game_state: GameState, player_index: int) -> bool:
+	if player == null or not _active_gholdengo_can_attack(player):
+		return false
+	var hand_energy := _basic_energy_in_hand(player)
+	if hand_energy <= 0:
+		return false
+	var remaining_hp := _opponent_active_remaining_hp(game_state, player_index)
+	var energy_needed := 4
+	if remaining_hp > 0 and remaining_hp < 999:
+		energy_needed = maxi(1, int(ceil(float(remaining_hp) / 50.0)))
+	var energy_after_attack := hand_energy - mini(hand_energy, energy_needed)
+	return hand_energy < energy_needed + 2 or energy_after_attack < 2
+
+
+func _needs_follow_up_metal(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	for slot: PokemonSlot in _all_slots(player):
+		if slot == player.active_pokemon or not _slot_is_live(slot):
+			continue
+		var name := _slot_name(slot)
+		if name in [GHOLDENGO_EX, GIMMIGHOUL] and not _has_attached_energy_type(slot, METAL_ENERGY):
+			return true
+	return false
+
+
+func _needs_follow_up_water(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	for slot: PokemonSlot in _all_slots(player):
+		if not _slot_is_live(slot):
+			continue
+		var name := _slot_name(slot)
+		if name in [PALKIA_VSTAR, PALKIA_V] and slot.attached_energy.size() < 2:
+			return true
+	return false
+
+
+func _hand_has_card_name(player: PlayerState, target_name: String) -> bool:
+	if player == null:
+		return false
+	for card: CardInstance in player.hand:
+		if _card_name(card) == target_name:
+			return true
+	return false
+
+
+func _hand_has_basic_energy_type(player: PlayerState, energy_type: String) -> bool:
+	if player == null:
+		return false
+	for card: CardInstance in player.hand:
+		if _is_basic_energy(card) and _energy_type(card) == energy_type:
+			return true
+	return false
 
 
 func _pick_make_it_rain_energy(items: Array, max_select: int, context: Dictionary) -> Array:

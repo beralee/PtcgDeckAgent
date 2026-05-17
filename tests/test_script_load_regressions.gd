@@ -30,6 +30,29 @@ func test_benchmark_runner_and_game_state_machine_scripts_load() -> String:
 	])
 
 
+func test_benchmark_runner_parses_strong_fixed_opening_options() -> String:
+	var benchmark_runner_script := load("res://scripts/training/run_deck_benchmark.gd")
+	var benchmark_runner_instance = benchmark_runner_script.new() if benchmark_runner_script != null and benchmark_runner_script.can_instantiate() else null
+	var parsed: Dictionary = benchmark_runner_instance.call("_parse_args", PackedStringArray([
+		"--deck-id=1700011",
+		"--anchor-id=575720",
+		"--deck-decision-mode=rules_only",
+		"--anchor-decision-mode=rules_only",
+		"--deck-strong-fixed-opening=true",
+		"--anchor-strong-fixed-opening=false",
+	])) if benchmark_runner_instance != null else {}
+
+	return run_checks([
+		assert_not_null(benchmark_runner_instance, "run_deck_benchmark.gd should instantiate for option parsing"),
+		assert_eq(int(parsed.get("deck_id", -1)), 1700011, "Benchmark runner should parse the tested deck id"),
+		assert_eq(int(parsed.get("anchor_id", -1)), 575720, "Benchmark runner should parse the anchor deck id"),
+		assert_eq(str(parsed.get("deck_decision_mode", "")), "rules_only", "Benchmark runner should parse tracked deck runtime mode"),
+		assert_eq(str(parsed.get("anchor_decision_mode", "")), "rules_only", "Benchmark runner should parse anchor runtime mode"),
+		assert_true(bool(parsed.get("deck_strong_fixed_opening", false)), "Benchmark runner should enable tested-deck strong fixed opening"),
+		assert_false(bool(parsed.get("anchor_strong_fixed_opening", true)), "Benchmark runner should keep anchor strong opening independently configurable"),
+	])
+
+
 func test_font_bootstrap_loads_bundled_chinese_font() -> String:
 	var font_script := load("res://scripts/autoload/FontBootstrap.gd")
 	var instance: Node = font_script.new() as Node if font_script != null and font_script.can_instantiate() else null
@@ -60,6 +83,7 @@ func test_font_bootstrap_loads_bundled_chinese_font() -> String:
 
 func test_battle_ui_coordinator_scripts_load() -> String:
 	var stadium_hud_script := load("res://scripts/ui/battle/display/BattleStadiumHudCoordinator.gd")
+	var stadium_backdrop_script := load("res://scripts/ui/battle/display/BattleStadiumBackdropCoordinator.gd")
 	var surface_styler_script := load("res://scripts/ui/battle/display/BattleSurfaceStyler.gd")
 	var detail_coordinator_script := load("res://scripts/ui/battle/display/BattleCardDetailCoordinator.gd")
 	var deck_shuffle_animator_script := load("res://scripts/ui/battle/display/BattleDeckShuffleAnimator.gd")
@@ -68,6 +92,7 @@ func test_battle_ui_coordinator_scripts_load() -> String:
 	var layout_debug_reporter_script := load("res://scripts/ui/battle/layouts/BattleLayoutDebugReporter.gd")
 	var drag_scroll_coordinator_script := load("res://scripts/ui/battle/interactions/BattleDragScrollCoordinator.gd")
 	var stadium_hud_instance = stadium_hud_script.new() if stadium_hud_script != null and stadium_hud_script.can_instantiate() else null
+	var stadium_backdrop_instance = stadium_backdrop_script.new() if stadium_backdrop_script != null and stadium_backdrop_script.can_instantiate() else null
 	var surface_styler_instance = surface_styler_script.new() if surface_styler_script != null and surface_styler_script.can_instantiate() else null
 	var detail_coordinator_instance = detail_coordinator_script.new() if detail_coordinator_script != null and detail_coordinator_script.can_instantiate() else null
 	var deck_shuffle_animator_instance = deck_shuffle_animator_script.new() if deck_shuffle_animator_script != null and deck_shuffle_animator_script.can_instantiate() else null
@@ -77,6 +102,7 @@ func test_battle_ui_coordinator_scripts_load() -> String:
 	var drag_scroll_coordinator_instance = drag_scroll_coordinator_script.new() if drag_scroll_coordinator_script != null and drag_scroll_coordinator_script.can_instantiate() else null
 	return run_checks([
 		assert_not_null(stadium_hud_script, "BattleStadiumHudCoordinator.gd should load without compile errors"),
+		assert_not_null(stadium_backdrop_script, "BattleStadiumBackdropCoordinator.gd should load without compile errors"),
 		assert_not_null(surface_styler_script, "BattleSurfaceStyler.gd should load without compile errors"),
 		assert_not_null(detail_coordinator_script, "BattleCardDetailCoordinator.gd should load without compile errors"),
 		assert_not_null(deck_shuffle_animator_script, "BattleDeckShuffleAnimator.gd should load without compile errors"),
@@ -85,6 +111,7 @@ func test_battle_ui_coordinator_scripts_load() -> String:
 		assert_not_null(layout_debug_reporter_script, "BattleLayoutDebugReporter.gd should load without compile errors"),
 		assert_not_null(drag_scroll_coordinator_script, "BattleDragScrollCoordinator.gd should load without compile errors"),
 		assert_not_null(stadium_hud_instance, "BattleStadiumHudCoordinator.gd should instantiate without compile errors"),
+		assert_not_null(stadium_backdrop_instance, "BattleStadiumBackdropCoordinator.gd should instantiate without compile errors"),
 		assert_not_null(surface_styler_instance, "BattleSurfaceStyler.gd should instantiate without compile errors"),
 		assert_not_null(detail_coordinator_instance, "BattleCardDetailCoordinator.gd should instantiate without compile errors"),
 		assert_not_null(deck_shuffle_animator_instance, "BattleDeckShuffleAnimator.gd should instantiate without compile errors"),

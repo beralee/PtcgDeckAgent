@@ -97,6 +97,24 @@ func test_duel_tool_make_ai_accepts_generic_llm_strategy_ids() -> String:
 	return run_checks(checks)
 
 
+func test_duel_tool_strong_fixed_opening_keeps_llm_runtime_enabled() -> String:
+	if not ResourceLoader.exists(DuelToolPath):
+		return "LLMRagingBoltDuelTool script should exist"
+	var script: Variant = load(DuelToolPath)
+	if not script is GDScript:
+		return "LLMRagingBoltDuelTool should load as GDScript"
+	var tool: Node = (script as GDScript).new()
+	var rule_ai: AIOpponent = tool.call("_make_ai", 0, "v17_miraidon", null, true)
+	var llm_ai: AIOpponent = tool.call("_make_ai", 1, "v17_regidrago_llm", null, true)
+	var llm_strategy: Variant = llm_ai.get("_deck_strategy") if llm_ai != null else null
+	tool.queue_free()
+	return run_checks([
+		assert_eq(str(rule_ai.decision_runtime_mode), AIOpponent.DECISION_RUNTIME_RULES_ONLY, "Strong fixed opening should keep non-LLM anchor decks on rules_only"),
+		assert_true(str(llm_ai.decision_runtime_mode) != AIOpponent.DECISION_RUNTIME_RULES_ONLY, "Strong fixed opening should not disable the LLM runtime for LLM strategies"),
+		assert_true(llm_strategy != null and llm_strategy.has_method("get_llm_stats"), "LLM strategy should still expose LLM runtime stats"),
+	])
+
+
 func test_standalone_self_play_runner_scripts_load() -> String:
 	if not ResourceLoader.exists(SelfPlayToolPath):
 		return "RagingBoltLLMSelfPlayTool script should exist"

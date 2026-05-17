@@ -52,6 +52,14 @@ func get_attack_interaction_steps(
 	return []
 
 
+func get_attack_preview_interaction_steps(
+	card: CardInstance,
+	attack: Dictionary,
+	state: GameState
+) -> Array[Dictionary]:
+	return get_attack_interaction_steps(card, attack, state)
+
+
 func get_followup_attack_interaction_steps(
 	_card: CardInstance,
 	_attack: Dictionary,
@@ -147,6 +155,31 @@ func _move_public_cards_to_hand_with_log(
 			continue
 		seen_ids[card.instance_id] = true
 		player.deck.erase(card)
+		card.face_up = true
+		player.hand.append(card)
+		moved.append(card)
+	return moved
+
+
+func _move_discard_cards_to_hand_with_log(
+	state: GameState,
+	player_index: int,
+	cards: Array[CardInstance],
+	source_card: CardInstance = null,
+	source_kind: String = ""
+) -> Array[CardInstance]:
+	if state == null or cards.is_empty():
+		return []
+	if DiscardToHandBlockHelper.is_discard_to_hand_blocked(player_index, state, source_kind):
+		return []
+	var player: PlayerState = state.players[player_index]
+	var moved: Array[CardInstance] = []
+	var seen_ids: Dictionary = {}
+	for card: CardInstance in cards:
+		if card == null or seen_ids.has(card.instance_id) or not (card in player.discard_pile):
+			continue
+		seen_ids[card.instance_id] = true
+		player.discard_pile.erase(card)
 		card.face_up = true
 		player.hand.append(card)
 		moved.append(card)

@@ -1,0 +1,55 @@
+{
+    "name":  "波波",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  " 呼朋引伴 \n选择自己牌库中最多2张【基础】宝可梦，放于备战区。并重洗牌库。\n\n 撞击 20\n\n\n",
+    "yoren_code":  "P016",
+    "set_code":  "151C",
+    "card_index":  "016",
+    "set_code_en":  "MEW",
+    "card_index_en":  "16",
+    "name_en":  "Pidgey",
+    "artist":  "Oswaldo KATO",
+    "rarity":  "C",
+    "release_date":  "2025-01-17T00:00:00+08:00",
+    "regulation_mark":  "G",
+    "effect_id":  "c52439ea1ed321c25091b60e04c0d1da",
+    "image_url":  "https://tcg.mik.moe/static/img/151C/016.png",
+    "image_local_path":  "user://cards/images/151C/016.png",
+    "is_tags":  [
+                    "Basic"
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "C",
+    "stage":  "Basic",
+    "hp":  50,
+    "weakness_energy":  "L",
+    "weakness_value":  "×2",
+    "resistance_energy":  "F",
+    "resistance_value":  "-30",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "呼朋引伴",
+                        "text":  "选择自己牌库中最多2张【基础】宝可梦，放于备战区。并重洗牌库。",
+                        "cost":  "C",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "撞击",
+                        "text":  "",
+                        "cost":  "CC",
+                        "damage":  "20",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

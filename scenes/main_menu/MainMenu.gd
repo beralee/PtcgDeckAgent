@@ -34,6 +34,9 @@ const ABOUT_ICON_PATH := "res://assets/ui/main_action_about.png"
 const UPDATE_ICON_PATH := "res://assets/ui/main_action_update.png"
 const FEEDBACK_OVERLAY_NAME := "FeedbackOverlay"
 const HUD_MODAL_OVERLAY_NAME := "HudModalOverlay"
+const TEMP_FORCE_UPDATE_PREVIEW_ON_STARTUP := false
+const TEMP_UPDATE_PREVIEW_ARG := "--preview-update-available"
+const TEMP_UPDATE_PREVIEW_KEY := KEY_U
 
 var _update_checker: Node = null
 var _feedback_client: Node = null
@@ -45,6 +48,7 @@ var _manual_update_button: Button = null
 var _about_button: Button = null
 var _available_update: Dictionary = {}
 var _manual_update_requested := false
+var _temp_update_preview_active := false
 var _feedback_submit_in_progress := false
 var _pending_feedback_payload: Dictionary = {}
 var _feedback_panel: PanelContainer = null
@@ -81,6 +85,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if key_event.ctrl_pressed and key_event.shift_pressed and key_event.keycode == KEY_C:
 		get_viewport().set_input_as_handled()
 		_open_champion_preview()
+	if key_event.ctrl_pressed and key_event.shift_pressed and key_event.keycode == TEMP_UPDATE_PREVIEW_KEY:
+		get_viewport().set_input_as_handled()
+		_show_temp_update_available_preview()
 
 
 func _notification(what: int) -> void:
@@ -439,6 +446,10 @@ func _stop_update_button_flash(reset_modulate: bool = true) -> void:
 
 
 func _start_update_check(force: bool = false) -> void:
+	if not force and _should_show_temp_update_preview_on_startup():
+		_show_temp_update_available_preview()
+		return
+	_temp_update_preview_active = false
 	if _update_checker != null:
 		var existing_err: int = int(_update_checker.call("check_for_updates", force))
 		if existing_err != OK and existing_err != ERR_BUSY:
@@ -452,6 +463,52 @@ func _start_update_check(force: bool = false) -> void:
 	var err: int = int(_update_checker.call("check_for_updates", force))
 	if err != OK and err != ERR_BUSY:
 		_on_update_check_failed("更新检查启动失败：%d" % err)
+
+
+func _should_show_temp_update_preview_on_startup() -> bool:
+	if TEMP_FORCE_UPDATE_PREVIEW_ON_STARTUP:
+		return true
+	for arg: String in OS.get_cmdline_user_args():
+		if arg == TEMP_UPDATE_PREVIEW_ARG:
+			return true
+	return false
+
+
+func _show_temp_update_available_preview() -> void:
+	_manual_update_requested = false
+	_temp_update_preview_active = true
+	_on_update_available(_build_temp_update_preview_info())
+
+
+func _build_temp_update_preview_info() -> Dictionary:
+	var latest_version := _next_patch_version(AppVersionScript.VERSION)
+	return {
+		"schema_version": 1,
+		"latest_version": latest_version,
+		"display_version": "v%s" % latest_version,
+		"release_date": Time.get_date_string_from_system(),
+		"title": "发现新版本 v%s" % latest_version,
+		"summary": PackedStringArray([
+			"临时预览：模拟自动检查发现新版本。",
+			"用于检查首页更新提示、闪烁按钮和更新弹窗表现。",
+			"不会访问服务器，也不会写入忽略版本或更新检查状态。",
+		]),
+		"download_page_url": UpdateCheckerScript.DEFAULT_DOWNLOAD_PAGE_URL,
+		"manifest_url": "debug://preview-update-available",
+	}
+
+
+func _next_patch_version(version: String) -> String:
+	var normalized := version.strip_edges()
+	if normalized.begins_with("v") or normalized.begins_with("V"):
+		normalized = normalized.substr(1)
+	var parts := normalized.split(".")
+	while parts.size() < 3:
+		parts.append("0")
+	var major := int(parts[0])
+	var minor := int(parts[1])
+	var patch := int(parts[2]) + 1
+	return "%d.%d.%d" % [major, minor, patch]
 
 
 func _on_update_available(info: Dictionary) -> void:
@@ -473,6 +530,7 @@ func _on_update_available(info: Dictionary) -> void:
 func _on_no_update(info: Dictionary) -> void:
 	var was_manual := _manual_update_requested
 	_manual_update_requested = false
+	_temp_update_preview_active = false
 	_set_manual_update_busy(false)
 	_available_update = {}
 	if _update_button != null:
@@ -484,6 +542,7 @@ func _on_no_update(info: Dictionary) -> void:
 
 
 func _on_update_check_failed(message: String) -> void:
+	_temp_update_preview_active = false
 	if _manual_update_requested:
 		_manual_update_requested = false
 		_set_manual_update_busy(false)
@@ -500,6 +559,7 @@ func _on_update_button_pressed() -> void:
 
 func _on_manual_update_button_pressed() -> void:
 	_hide_corner_action_label(_manual_update_button)
+	_temp_update_preview_active = false
 	_manual_update_requested = true
 	_set_manual_update_busy(true)
 	_start_update_check(true)
@@ -1220,6 +1280,13 @@ func _on_update_dialog_custom_action(action: StringName) -> void:
 
 
 func _ignore_current_update_version() -> void:
+	if _temp_update_preview_active:
+		_temp_update_preview_active = false
+		_available_update = {}
+		if _update_button != null:
+			_stop_update_button_flash()
+			_update_button.visible = false
+		return
 	if _update_checker != null:
 		_update_checker.ignore_version(str(_available_update.get("latest_version", "")))
 	if _update_button != null:

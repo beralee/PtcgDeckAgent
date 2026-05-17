@@ -258,6 +258,7 @@ const EffectCyclingRoadEffect = "res://scripts/effects/stadium_effects/EffectCyc
 const EffectCrushingHammerEffect = "res://scripts/effects/trainer_effects/EffectCrushingHammer.gd"
 const EffectEriEffect = "res://scripts/effects/trainer_effects/EffectEri.gd"
 const EffectPennyEffect = "res://scripts/effects/trainer_effects/EffectPenny.gd"
+const EffectScoopUpCycloneEffect = "res://scripts/effects/trainer_effects/EffectScoopUpCyclone.gd"
 const EffectColressTenacityEffect = "res://scripts/effects/trainer_effects/EffectColressTenacity.gd"
 const EffectErikasInvitation = "res://scripts/effects/trainer_effects/EffectErikasInvitation.gd"
 const EffectXerosicsMachinations = "res://scripts/effects/trainer_effects/EffectXerosicsMachinations.gd"
@@ -299,6 +300,17 @@ const AttackMoveAttachedEnergyToOwnBenchEffect = "res://scripts/effects/pokemon_
 const AttackCoinFlipDiscardOpponentActiveEnergyEffect = "res://scripts/effects/pokemon_effects/AttackCoinFlipDiscardOpponentActiveEnergy.gd"
 const AttackOwnFieldTaggedPokemonCountDamageEffect = "res://scripts/effects/pokemon_effects/AttackOwnFieldTaggedPokemonCountDamage.gd"
 const AttackCoinFlipBonusDamageEffect = "res://scripts/effects/pokemon_effects/AttackCoinFlipBonusDamage.gd"
+const Batch3178WorkerCSupportPokemonEffectsScript = preload("res://scripts/effects/pokemon_effects/Batch3178WorkerCSupportPokemonEffects.gd")
+const EffectFeatherBallEffect = "res://scripts/effects/trainer_effects/EffectFeatherBall.gd"
+const EffectArezuEffect = "res://scripts/effects/trainer_effects/EffectArezu.gd"
+const EffectAcademyAtNightEffect = "res://scripts/effects/stadium_effects/EffectAcademyAtNight.gd"
+const AttackRagingBoltLightningStormEffect = "res://scripts/effects/pokemon_effects/AttackRagingBoltLightningStorm.gd"
+const AttackBruteBonnetDamageCounterBonusEffect = "res://scripts/effects/pokemon_effects/AttackBruteBonnetDamageCounterBonus.gd"
+const AttackOpponentFuturePokemonBonusDamageEffect = "res://scripts/effects/pokemon_effects/AttackOpponentFuturePokemonBonusDamage.gd"
+const AbilityToedscruelSlimeMoldColonyEffect = "res://scripts/effects/pokemon_effects/AbilityToedscruelSlimeMoldColony.gd"
+const AbilityDragonHoardEffect = "res://scripts/effects/pokemon_effects/AbilityDragonHoard.gd"
+const NoivernExEffectsEffect = "res://scripts/effects/pokemon_effects/NoivernExEffects.gd"
+const CSV9CSimpleHealSelfAfterAttackEffect = "res://scripts/effects/pokemon_effects/CSV9CSimpleHealSelfAfterAttack.gd"
 ## ==================== 主入口 ====================
 
 ## 注册所有已知卡牌效果到 EffectProcessor
@@ -462,7 +474,7 @@ static func _register_pokemon_effect_overrides(processor: EffectProcessor, effec
 			processor.register_attack_effect(effect_id, registeel_gate)
 			processor.register_attack_effect(effect_id, _instantiate_effect(AttackOpponentRetreatCostReductionEffect, [50, 1]))
 		"e49bf2cfe3c7948b0dcebbe1b1b7aa76":
-			processor.register_effect(effect_id, _instantiate_effect(AbilityDrawToHandSizeActiveEffect, [4]))
+			processor.register_effect(effect_id, _instantiate_effect(AbilityDragonHoardEffect, [4]))
 		"d699ab2122b5617fe5a5c97e60ae4dac":
 			processor.register_effect(effect_id, _instantiate_effect(AbilityAncientWisdomEffect, [3]))
 			processor.register_attack_effect(effect_id, _instantiate_effect(AttackBonusIfDefenderMechanicEffect, [150, "VMAX", 0]))
@@ -617,6 +629,24 @@ static func _register_pokemon_effect_overrides(processor: EffectProcessor, effec
 		"f189ac39dca6332f0b3af7b65cea8220":
 			processor.register_effect(effect_id, _instantiate_effect(AbilityNoEnergyFreeRetreatEffect))
 			processor.register_attack_effect(effect_id, _instantiate_effect(AttackMoveAttachedEnergyToOwnBenchEffect, [2, "D", 0]))
+		"5c0716ee309a1b95a0ae5c534069b0d2", "c52439ea1ed321c25091b60e04c0d1da", "65442467f2645f5983fe6604e5bdc8d2":
+			for fx: BaseEffect in Batch3178WorkerCSupportPokemonEffectsScript.create_attack_effects_for_effect_id(effect_id):
+				processor.register_attack_effect(effect_id, fx)
+		"12b30b5d9a0bd31a8e033bf2f2cfead3":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackRagingBoltLightningStormEffect, [30, 0]))
+		"c6083ce0a1d2bda048f3eb948b8abca8":
+			processor.register_attack_effect(effect_id, EffectApplyStatus.new("poisoned", false, 0))
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackBruteBonnetDamageCounterBonusEffect, [50, 1]))
+		"f133f2b8d38148794b81a8b4ca135cff":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackOpponentFuturePokemonBonusDamageEffect, [120, 0]))
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackDiscardAttachedEnergyTypeFromSelfEffect, ["", 2, 1]))
+		"880338810e1bc9460b1d20044377e08c":
+			processor.register_effect(effect_id, _instantiate_effect(AbilityToedscruelSlimeMoldColonyEffect))
+			processor.register_attack_effect(effect_id, _instantiate_effect(CSV9CSimpleHealSelfAfterAttackEffect, [30, 0]))
+		"7f21a88085207d28e38ca3593994edc2":
+			processor.register_effect(effect_id, _instantiate_effect(NoivernExEffectsEffect, [-1, false]))
+			processor.register_attack_effect(effect_id, _instantiate_effect(NoivernExEffectsEffect, [0, true]))
+			processor.register_attack_effect(effect_id, _instantiate_effect(NoivernExEffectsEffect, [1, true]))
 		"f986b356ae9703ac2d1667d1897cfdb6":
 			processor.register_attack_effect(effect_id, _instantiate_effect(AttackBonusIfSelfStatusEffect, ["any", 160, 0]))
 			processor.register_attack_effect(effect_id, _instantiate_effect(AttackApplySelfStatusEffect, ["burned", 1]))
@@ -786,6 +816,7 @@ static func _register_items(processor: EffectProcessor) -> void:
 	processor.register_effect("c6bc96f30e19315b2e59451b3f9b92cd", EffectSwitchPokemon.new("both"))
 	# 顶尖捕捉器
 	processor.register_effect("4ec261453212280d0eb03ed8254ca97f", EffectPrimeCatcher.new())
+	processor.register_effect("c1acc32f6333793f261c9c132435fdfa", _instantiate_effect(EffectScoopUpCycloneEffect))
 	# 大师球：搜索牌库任意1只宝可梦
 	processor.register_effect("30e7c440d69817592656f5b44e444111", EffectSearchDeck.new(1, 0, "Pokemon"))
 	# 电气发生器
@@ -796,6 +827,8 @@ static func _register_items(processor: EffectProcessor) -> void:
 	processor.register_effect("8342fe3eeec6f897f3271be1aa26a412", EffectSwitchCart.new())
 	# Hisuian Heavy Ball
 	processor.register_effect("2f68195255c863293be4fad262bf23d2", _instantiate_effect(EffectHisuianHeavyBallEffect))
+	# Feather Ball
+	processor.register_effect("b029fdcf35f970d5d2254778009fa2fe", _instantiate_effect(EffectFeatherBallEffect))
 	# Superior Energy Retrieval
 	processor.register_effect("ff7e5670880217816bcf5d34388624cd", _instantiate_effect(EffectRecoverBasicEnergyEffect, [4, 2]))
 	# Earthen Vessel
@@ -898,6 +931,8 @@ static func _register_supporters(processor: EffectProcessor) -> void:
 	processor.register_effect("d4a94445aa981c2f84e4df9b0525eeb0", _instantiate_effect(EffectKieranEffect))
 	processor.register_effect("1b9696068a599e81c705bcb3648f0213", _instantiate_effect(EffectRoseannesBackupEffect))
 	processor.register_effect("b79ddb9a6aab6d346f6a1f71b7fcd3de", EffectLanasAid.new())
+	# Arezu
+	processor.register_effect("c29db727ed3ad15978addfc5d8ed6451", _instantiate_effect(EffectArezuEffect))
 	processor.register_effect("2e5819cd4e1c354b8a9945525c54ec71", _instantiate_effect(EffectCynthiasAmbitionEffect))
 	processor.register_effect("0f4743343a173fdba38290050453a8c8", _instantiate_effect(EffectExplorersGuidanceEffect))
 	processor.register_effect("136fdb6578daa3b81aef369495de4c3d", _instantiate_effect("res://scripts/effects/trainer_effects/CSV9C196Crispin.gd"))
@@ -977,6 +1012,8 @@ static func _register_stadiums(processor: EffectProcessor) -> void:
 	processor.register_effect("8784f5412bf62ce1356d2480df0b139b", _instantiate_effect(EffectGapejawBogEffect))
 	processor.register_effect("357d55b54ded5db071b55ebe165749fc", EffectFestivalGrounds.new())
 	processor.register_effect("b599512657c5c23024fde7875db3ba2d", _instantiate_effect(EffectCalamitousWastelandEffect))
+	# Academy at Night
+	processor.register_effect("e75fad9484071647f96e9f41beeb4a99", _instantiate_effect(EffectAcademyAtNightEffect))
 	processor.register_effect("9ac00d455f68b3217d0a64938081a5fe", _instantiate_effect("res://scripts/effects/stadium_effects/CSV9C205GrandTree.gd"))
 	processor.register_effect("528f7e92b624e35bb42828e372c45252", _instantiate_effect("res://scripts/effects/stadium_effects/CSV9C206VibrantPalace.gd"))
 	processor.register_effect("701eb0ccb34fe3d319ea1307bc36c1ef", _instantiate_effect("res://scripts/effects/stadium_effects/CSV9C207AreaZeroUnderdepths.gd"))

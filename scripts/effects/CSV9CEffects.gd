@@ -1181,8 +1181,11 @@ class AttackBasicPokemonKnockoutCoin:
 	extends BaseEffect
 
 	const STEP_ID := "csv9c_basic_bench_ko_target"
+	const RESULT_STEP_ID := "csv9c_basic_ko_coin_result"
 	var attack_index_to_match: int = -1
 	var coin_flipper: CoinFlipper = null
+	var _pending_flip_heads: bool = false
+	var _has_pending_flip: bool = false
 
 	func _init(match_attack_index: int = -1, flipper: CoinFlipper = null) -> void:
 		attack_index_to_match = match_attack_index
@@ -1191,26 +1194,55 @@ class AttackBasicPokemonKnockoutCoin:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index_to_match == -1 or attack_index_to_match == attack_index
 
-	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+	func get_attack_preview_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if card == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
 		var opponent := state.players[1 - card.owner_index]
-		var items: Array = []
-		var labels: Array[String] = []
-		for slot: PokemonSlot in opponent.bench:
-			if slot.get_card_data() != null and slot.get_card_data().is_basic_pokemon():
-				items.append(slot)
-				labels.append(H.slot_label(slot, state))
-		if items.is_empty():
+		if opponent.active_pokemon != null and opponent.active_pokemon.get_card_data() != null and opponent.active_pokemon.get_card_data().is_basic_pokemon():
+			return [_build_coin_result_step("投掷1次硬币，然后结算嗡嗡屑石。", "preview")]
+		if not _basic_bench_targets(opponent).is_empty():
+			return [_build_coin_result_step("投掷1次硬币。若为反面，选择对手备战区的1只基础宝可梦【昏厥】。", "preview")]
+		return [_build_coin_result_step("投掷1次硬币。若为反面且对手备战区没有基础宝可梦，嗡嗡屑石会发动失败。", "preview")]
+
+	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+		if card == null or not applies_to_attack_index(_resolve_attack_index(card, attack)):
 			return []
-		return [{"id": STEP_ID, "title": "Choose a Benched Basic Pokemon for tails", "items": items, "labels": labels, "min_select": 0, "max_select": 1, "allow_cancel": true}]
+		var flipper := coin_flipper if coin_flipper != null else CoinFlipper.new()
+		_pending_flip_heads = flipper.flip()
+		_has_pending_flip = true
+		var opponent := state.players[1 - card.owner_index]
+		if _pending_flip_heads:
+			if opponent.active_pokemon != null and opponent.active_pokemon.get_card_data() != null and opponent.active_pokemon.get_card_data().is_basic_pokemon():
+				return [_build_coin_result_step("投币结果：正面。对手战斗场的基础宝可梦将【昏厥】。", "heads")]
+			return [_build_coin_result_step("投币结果：正面。对手战斗宝可梦不是基础宝可梦，嗡嗡屑石发动失败。", "heads")]
+		var items := _basic_bench_targets(opponent)
+		if items.is_empty():
+			return [_build_coin_result_step("投币结果：反面。对手备战区没有基础宝可梦，嗡嗡屑石发动失败。", "tails")]
+		var labels: Array[String] = []
+		for slot: PokemonSlot in items:
+			labels.append(H.slot_label(slot, state))
+		return [{
+			"id": STEP_ID,
+			"title": "投币结果：反面。选择对手备战区的1只基础宝可梦【昏厥】。",
+			"items": items,
+			"labels": labels,
+			"min_select": 1,
+			"max_select": 1,
+			"allow_cancel": false,
+			"wait_for_coin_animation": true,
+		}]
 
 	func execute_attack(attacker: PokemonSlot, defender: PokemonSlot, attack_index: int, state: GameState) -> void:
 		if attacker == null or attacker.get_top_card() == null or not applies_to_attack_index(attack_index):
 			return
 		var flipper := coin_flipper if coin_flipper != null else CoinFlipper.new()
+		var context_result := _coin_result_from_context()
+		var heads := context_result == "heads" if context_result != "" else _pending_flip_heads
+		if context_result == "" and not _has_pending_flip:
+			heads = flipper.flip()
+		_has_pending_flip = false
 		var target: PokemonSlot = null
-		if flipper.flip():
+		if heads:
 			if defender != null and defender.get_card_data() != null and defender.get_card_data().is_basic_pokemon():
 				target = defender
 		else:
@@ -1228,16 +1260,47 @@ class AttackBasicPokemonKnockoutCoin:
 			max_hp = int(processor.call("get_effective_max_hp", target, state))
 		target.damage_counters = maxi(target.damage_counters, max_hp)
 
+	func _build_coin_result_step(title: String, result: String) -> Dictionary:
+		return {
+			"id": RESULT_STEP_ID,
+			"title": title,
+			"items": [result],
+			"labels": ["继续"],
+			"min_select": 1,
+			"max_select": 1,
+			"allow_cancel": false,
+			"wait_for_coin_animation": true,
+			"force_dialog": true,
+		}
+
+	func _basic_bench_targets(opponent: PlayerState) -> Array[PokemonSlot]:
+		var result: Array[PokemonSlot] = []
+		for slot: PokemonSlot in opponent.bench:
+			if slot.get_card_data() != null and slot.get_card_data().is_basic_pokemon():
+				result.append(slot)
+		return result
+
 	func _selected_basic_bench(opponent: PlayerState) -> PokemonSlot:
 		var raw: Array = get_attack_interaction_context().get(STEP_ID, [])
 		if not raw.is_empty() and raw[0] is PokemonSlot and raw[0] in opponent.bench:
 			var selected: PokemonSlot = raw[0]
 			if selected.get_card_data() != null and selected.get_card_data().is_basic_pokemon():
 				return selected
-		for slot: PokemonSlot in opponent.bench:
-			if slot.get_card_data() != null and slot.get_card_data().is_basic_pokemon():
-				return slot
+		var candidates := _basic_bench_targets(opponent)
+		if not candidates.is_empty():
+			return candidates[0]
 		return null
+
+	func _coin_result_from_context() -> String:
+		var ctx := get_attack_interaction_context()
+		var raw: Array = ctx.get(RESULT_STEP_ID, [])
+		if not raw.is_empty():
+			var result := str(raw[0])
+			if result == "heads" or result == "tails":
+				return result
+		if ctx.has(STEP_ID):
+			return "tails"
+		return ""
 
 	func _resolve_attack_index(card: CardInstance, attack: Dictionary) -> int:
 		if attack.has("_override_attack_index"):

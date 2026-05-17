@@ -98,6 +98,23 @@ func is_hand_drag_click_suppressed() -> bool:
 	return Time.get_ticks_msec() < int(_get("_hand_drag_suppress_click_until_msec"))
 
 
+func clear_hand_drag_click_suppression(source: String = "clear") -> void:
+	_set_scene_var("_hand_drag_active", false)
+	_set_scene_var("_hand_dragging", false)
+	_set_scene_var("_hand_drag_suppress_click_until_msec", 0)
+	debug_hand_drag_scroll("clear-suppression source=%s" % source)
+
+
+func clear_transient_input_capture(source: String = "clear") -> void:
+	cancel_card_gallery_drag_scroll(source)
+	clear_hand_drag_click_suppression(source)
+	_set_scene_var("_card_gallery_drag_active", false)
+	_set_scene_var("_card_gallery_dragging", false)
+	_set_scene_var("_card_gallery_drag_active_scroll", null)
+	_set_scene_var("_card_gallery_drag_suppress_click_until_msec", 0)
+	debug_hand_drag_scroll("clear-transient-input source=%s" % source)
+
+
 func configure_card_gallery_drag_scroll(scroll: ScrollContainer, row: Control = null, source: String = "card_gallery") -> void:
 	if scroll == null:
 		return
@@ -107,11 +124,16 @@ func configure_card_gallery_drag_scroll(scroll: ScrollContainer, row: Control = 
 		scroll.set_meta("card_gallery_drag_scroll_active", false)
 	if not scroll.has_meta("card_gallery_drag_keep_scrollbars_visible"):
 		scroll.set_meta("card_gallery_drag_keep_scrollbars_visible", false)
+	scroll.set_meta("card_gallery_drag_source", source)
 	if row != null:
 		row.set_meta("card_gallery_drag_row", true)
 	var input_callable := Callable(_scene, "_on_card_gallery_scroll_input").bind(scroll, source)
 	if not scroll.gui_input.is_connected(input_callable):
 		scroll.gui_input.connect(input_callable)
+	if _as_bool(scroll.get_meta("card_gallery_drag_keep_scrollbars_visible", false), false):
+		_disconnect_card_gallery_scrollbar_bridge(scroll, scroll.get_h_scroll_bar())
+	else:
+		_connect_card_gallery_scrollbar_bridge(scroll, scroll.get_h_scroll_bar(), source)
 
 
 func set_card_gallery_drag_scroll_active(scroll: ScrollContainer, active: bool) -> void:
@@ -122,13 +144,54 @@ func set_card_gallery_drag_scroll_active(scroll: ScrollContainer, active: bool) 
 	if active:
 		if keep_scrollbars_visible:
 			restore_card_gallery_scrollbars_for(scroll)
-		else:
+			_disconnect_card_gallery_scrollbar_bridge(scroll, scroll.get_h_scroll_bar())
+		elif scroll.has_meta("card_gallery_drag_source"):
+			_connect_card_gallery_scrollbar_bridge(scroll, scroll.get_h_scroll_bar(), str(scroll.get_meta("card_gallery_drag_source", "card_gallery")))
 			hide_card_gallery_scrollbars_for(scroll)
 			call_deferred("hide_card_gallery_scrollbars_for", scroll)
 	else:
 		if _get("_card_gallery_drag_active_scroll") == scroll:
 			_end_card_gallery_drag_scroll("deactivate")
 		restore_card_gallery_scrollbars_for(scroll)
+
+
+func _connect_card_gallery_scrollbar_bridge(scroll: ScrollContainer, bar: ScrollBar, source: String) -> void:
+	if scroll == null or bar == null or _scene == null:
+		return
+	if _as_bool(scroll.get_meta("card_gallery_drag_keep_scrollbars_visible", false), false):
+		_disconnect_card_gallery_scrollbar_bridge(scroll, bar)
+		return
+	bar.set_meta("card_gallery_drag_scrollbar_bridge", true)
+	bar.set_meta("card_gallery_drag_scrollbar_bridge_source", source)
+	var input_callable := Callable(_scene, "_on_card_gallery_scroll_input").bind(scroll, source)
+	if not bar.gui_input.is_connected(input_callable):
+		bar.gui_input.connect(input_callable)
+
+
+func _disconnect_card_gallery_scrollbar_bridge(scroll: ScrollContainer, bar: ScrollBar) -> void:
+	if scroll == null or bar == null or _scene == null:
+		return
+	var sources := {
+		str(bar.get_meta("card_gallery_drag_scrollbar_bridge_source", "card_gallery")): true,
+		str(scroll.get_meta("card_gallery_drag_source", "card_gallery")): true,
+		"card_gallery": true,
+		"dialog_cards": true,
+		"discard_collection": true,
+	}
+	for source: String in sources.keys():
+		var input_callable := Callable(_scene, "_on_card_gallery_scroll_input").bind(scroll, source)
+		if bar.gui_input.is_connected(input_callable):
+			bar.gui_input.disconnect(input_callable)
+	bar.set_meta("card_gallery_drag_scrollbar_bridge", false)
+	bar.remove_meta("card_gallery_drag_scrollbar_bridge_source")
+
+
+func cancel_card_gallery_drag_scroll(source: String = "cancel") -> void:
+	var active_scroll := _get("_card_gallery_drag_active_scroll") as ScrollContainer
+	if active_scroll != null and is_instance_valid(active_scroll):
+		set_card_gallery_drag_scroll_active(active_scroll, false)
+		return
+	_end_card_gallery_drag_scroll(source)
 
 
 func hide_card_gallery_scrollbars_for(scroll: ScrollContainer) -> void:
@@ -157,7 +220,10 @@ func restore_card_gallery_scrollbars_for(scroll: ScrollContainer) -> void:
 	scroll.set_meta("card_gallery_scrollbar_hidden", false)
 	for bar_value: Variant in [scroll.get_h_scroll_bar(), scroll.get_v_scroll_bar()]:
 		var bar := bar_value as ScrollBar
-		if bar == null or not _as_bool(bar.get_meta("card_gallery_hidden_scrollbar", false), false):
+		if bar == null:
+			continue
+		_disconnect_card_gallery_scrollbar_bridge(scroll, bar)
+		if not _as_bool(bar.get_meta("card_gallery_hidden_scrollbar", false), false):
 			continue
 		bar.visible = _as_bool(bar.get_meta("card_gallery_hidden_scrollbar_prev_visible", true), true)
 		var previous_modulate: Variant = bar.get_meta("card_gallery_hidden_scrollbar_prev_modulate", Color.WHITE)
@@ -358,6 +424,8 @@ func _handle_hand_drag_wheel(mouse_button: InputEventMouseButton, hand_scroll: S
 
 
 func _begin_hand_drag_scroll(position: Vector2, hand_scroll: ScrollContainer, source: String = "") -> void:
+	if _as_bool(_get("_card_gallery_drag_active"), false):
+		cancel_card_gallery_drag_scroll("hand_drag_start")
 	_set_scene_var("_hand_drag_active", true)
 	_set_scene_var("_hand_dragging", false)
 	_set_scene_var("_hand_drag_start_position", position)

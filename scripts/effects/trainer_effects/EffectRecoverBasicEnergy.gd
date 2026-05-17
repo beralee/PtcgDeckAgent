@@ -90,10 +90,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 				if selected_energy.size() >= recover_count:
 					break
 
-	for energy_card: CardInstance in selected_energy:
-		player.discard_pile.erase(energy_card)
-		energy_card.face_up = true
-		player.hand.append(energy_card)
+	_move_discard_cards_to_hand_with_log(state, card.owner_index, selected_energy, card, "trainer")
 
 
 func _resolve_discard_cost(card: CardInstance, player: PlayerState, ctx: Dictionary) -> Array[CardInstance]:

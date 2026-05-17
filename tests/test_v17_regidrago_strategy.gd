@@ -546,6 +546,89 @@ func test_v17_regidrago_ready_apex_attack_beats_more_search_churn() -> String:
 	return assert_true(attack_score > ultra_score, "A ready Regidrago VSTAR with copied-attack fuel should attack before more search churn (attack=%f ultra=%f)" % [attack_score, ultra_score])
 
 
+func test_v17_regidrago_continuity_seeds_backup_before_nonfinal_apex() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(5)
+	var player := gs.players[0]
+	var active := _slot(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V", [
+		{"name": "Apex Dragon", "cost": "GGR", "damage": ""},
+	], 3), 0)
+	_attach(active, "G", 2)
+	_attach(active, "R", 1)
+	player.active_pokemon = active
+	player.bench.append(_slot(_pokemon("Teal Mask Ogerpon ex", "Basic", "G", 210, "", "ex"), 0))
+	player.discard_pile.append(_card(_pokemon("Dragapult ex", "Stage 2", "N", 320, "Drakloak", "ex"), 0))
+	for i: int in 4:
+		player.prizes.append(_card(_trainer("Prize %d" % i), 0))
+	for i: int in 24:
+		player.deck.append(_card(_trainer("Deck %d" % i), 0))
+	var backup := _card(_pokemon("Regidrago V", "Basic", "N", 220, "", "V"), 0)
+	player.hand.append(backup)
+	gs.players[1].active_pokemon = _slot(_pokemon("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+
+	var turn_contract: Dictionary = strategy.build_turn_contract(gs, 0, {"prompt_kind": "action_selection"})
+	var continuity: Dictionary = strategy.build_continuity_contract(gs, 0, turn_contract)
+	var setup_debt: Dictionary = continuity.get("setup_debt", {}) as Dictionary
+	var bench_score: float = strategy.score_action_absolute_with_plan({
+		"kind": "play_basic_to_bench",
+		"card": backup,
+	}, gs, 0, turn_contract)
+	var attack_score: float = strategy.score_action_absolute_with_plan({
+		"kind": "attack",
+		"source_slot": active,
+		"attack_index": 0,
+		"attack_name": "Apex Dragon",
+		"projected_damage": 200,
+		"projected_knockout": false,
+	}, gs, 0, turn_contract)
+
+	return run_checks([
+		assert_true(bool(continuity.get("enabled", false)), "A ready non-final VSTAR should publish continuity setup before attacking again"),
+		assert_true(bool(setup_debt.get("need_backup_regidrago_seed", false)), "Continuity debt should record the missing backup Regidrago line"),
+		assert_true(bench_score > attack_score, "Non-final Apex Dragon should pause for a backup Regidrago line when the active VSTAR is already online (bench=%f attack=%f)" % [bench_score, attack_score]),
+	])
+
+
+func test_v17_regidrago_continuity_keeps_final_prize_apex_first() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(9)
+	var player := gs.players[0]
+	var active := _slot(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V", [
+		{"name": "Apex Dragon", "cost": "GGR", "damage": ""},
+	], 3), 0)
+	_attach(active, "G", 2)
+	_attach(active, "R", 1)
+	player.active_pokemon = active
+	player.bench.append(_slot(_pokemon("Teal Mask Ogerpon ex", "Basic", "G", 210, "", "ex"), 0))
+	player.discard_pile.append(_card(_pokemon("Dragapult ex", "Stage 2", "N", 320, "Drakloak", "ex"), 0))
+	player.prizes.append(_card(_trainer("Last Prize"), 0))
+	for i: int in 18:
+		player.deck.append(_card(_trainer("Deck %d" % i), 0))
+	var backup := _card(_pokemon("Regidrago V", "Basic", "N", 220, "", "V"), 0)
+	player.hand.append(backup)
+	gs.players[1].active_pokemon = _slot(_pokemon("Miraidon ex", "Basic", "L", 200, "", "ex"), 1)
+
+	var turn_contract: Dictionary = strategy.build_turn_contract(gs, 0, {"prompt_kind": "action_selection"})
+	var continuity: Dictionary = strategy.build_continuity_contract(gs, 0, turn_contract)
+	var bench_score: float = strategy.score_action_absolute_with_plan({
+		"kind": "play_basic_to_bench",
+		"card": backup,
+	}, gs, 0, turn_contract)
+	var attack_score: float = strategy.score_action_absolute_with_plan({
+		"kind": "attack",
+		"source_slot": active,
+		"attack_index": 0,
+		"attack_name": "Apex Dragon",
+		"projected_damage": 200,
+		"projected_knockout": true,
+	}, gs, 0, turn_contract)
+
+	return run_checks([
+		assert_false(bool(continuity.get("enabled", false)), "Continuity setup should not delay a final-prize Apex Dragon"),
+		assert_true(attack_score > bench_score, "Final-prize Apex Dragon must stay ahead of backup setup (attack=%f bench=%f)" % [attack_score, bench_score]),
+	])
+
+
 func test_v17_regidrago_super_rod_keeps_dragon_fuel_in_discard() -> String:
 	var strategy := StrategyRegidrago.new()
 	var gs := _game_state(7)

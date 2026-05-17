@@ -52,6 +52,9 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	)
 	step["source_groups"] = source_groups
 	step["source_exclude_targets"] = exclude_map
+	step["compact_field_assignment_after_source"] = true
+	step["field_assignment_require_confirm"] = true
+	step["compact_field_assignment_title"] = "能量转移"
 	return [step]
 
 

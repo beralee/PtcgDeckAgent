@@ -1,0 +1,52 @@
+{
+    "name":  "智挥猩V",
+    "card_type":  "Pokemon",
+    "mechanic":  "V",
+    "label":  "",
+    "description":  "特性: 预订\n如果这只宝可梦在战斗场上的话，则在自己的回合可以使用1次。选择自己牌库中最多2张「宝可梦道具」，在给对手看过之后，加入手牌。并重洗牌库。\n\n 精神强念 30+\n追加造成对手战斗宝可梦身上附有的能量数量×50点伤害。\n\n",
+    "yoren_code":  "Y989",
+    "set_code":  "CS5bC",
+    "card_index":  "113",
+    "set_code_en":  "ASR",
+    "card_index_en":  "133",
+    "name_en":  "Oranguru V",
+    "artist":  "Uta",
+    "rarity":  "RR",
+    "release_date":  "2024-06-18T00:00:00+08:00",
+    "regulation_mark":  "F",
+    "effect_id":  "c5783c83303269674231483fede75e99",
+    "image_url":  "https://tcg.mik.moe/static/img/CS5bC/113.png",
+    "image_local_path":  "user://cards/images/CS5bC/113.png",
+    "is_tags":  [
+                    "V",
+                    "Basic"
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "C",
+    "stage":  "Basic",
+    "hp":  210,
+    "weakness_energy":  "F",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  2,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "精神强念",
+                        "text":  "追加造成对手战斗宝可梦身上附有的能量数量×50点伤害。",
+                        "cost":  "CCC",
+                        "damage":  "30+",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+                      {
+                          "name":  "预订",
+                          "text":  "如果这只宝可梦在战斗场上的话，则在自己的回合可以使用1次。选择自己牌库中最多2张「宝可梦道具」，在给对手看过之后，加入手牌。并重洗牌库。"
+                      }
+                  ],
+    "energy_provides":  ""
+}

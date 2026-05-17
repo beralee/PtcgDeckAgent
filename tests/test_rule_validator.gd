@@ -33,6 +33,14 @@ func _make_state(turn: int = 2, first: int = 0, current: int = 0) -> GameState:
 	return state
 
 
+func _make_stadium_card(name: String, name_en: String = "") -> CardInstance:
+	var cd := CardData.new()
+	cd.name = name
+	cd.name_en = name_en
+	cd.card_type = "Stadium"
+	return CardInstance.create(cd, 0)
+
+
 func test_can_attach_energy_fresh_turn() -> String:
 	var state := _make_state()
 	var v := RuleValidator.new()
@@ -108,6 +116,34 @@ func test_can_play_item_after_item_lock_turn_expires() -> String:
 	var v := RuleValidator.new()
 	return run_checks([
 		assert_eq(v.can_play_item(state, 1), true, "Expired item lock should no longer block play"),
+	])
+
+
+func test_can_play_different_stadium_after_stadium_played_this_turn() -> String:
+	var state := _make_state()
+	state.stadium_played_this_turn = true
+	state.stadium_card = _make_stadium_card("Cycling Road", "Cycling Road")
+	var replacement := _make_stadium_card("Collapsed Stadium", "Collapsed Stadium")
+	var v := RuleValidator.new()
+	return run_checks([
+		assert_true(
+			v.can_play_stadium(state, 0, replacement),
+			"Different named Stadium cards should be playable after another Stadium was played this turn"
+		),
+	])
+
+
+func test_cannot_play_same_stadium_even_when_language_fields_differ() -> String:
+	var state := _make_state()
+	state.stadium_played_this_turn = true
+	state.stadium_card = _make_stadium_card("崩塌的竞技场", "Collapsed Stadium")
+	var same_stadium := _make_stadium_card("Collapsed Stadium", "Collapsed Stadium")
+	var v := RuleValidator.new()
+	return run_checks([
+		assert_false(
+			v.can_play_stadium(state, 0, same_stadium),
+			"The active Stadium should not be replaceable by the same Stadium name in another language field"
+		),
 	])
 
 

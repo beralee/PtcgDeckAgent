@@ -1,6 +1,7 @@
 class_name TestCSV9CPokemonSimpleEffects
 extends TestBase
 
+const CSV9CEffects := preload("res://scripts/effects/CSV9CEffects.gd")
 const EarlyEvolutionEffect := preload("res://scripts/effects/pokemon_effects/CSV9CSimpleEarlyEvolutionAttack.gd")
 const PreventBasicDamageEffect := preload("res://scripts/effects/pokemon_effects/CSV9CSimplePreventDamageFromBasicAfterAttack.gd")
 const TeraBenchBonusEffect := preload("res://scripts/effects/pokemon_effects/CSV9CSimpleBonusIfOwnBenchTera.gd")
@@ -24,11 +25,13 @@ const AttackMillOpponentDeckScript := preload("res://scripts/effects/pokemon_eff
 
 class RiggedCoinFlipper extends CoinFlipper:
 	var _results: Array[bool] = []
+	var flip_count: int = 0
 
 	func _init(results: Array[bool]) -> void:
 		_results = results.duplicate()
 
 	func flip() -> bool:
+		flip_count += 1
 		var result := false
 		if not _results.is_empty():
 			result = _results.pop_front()
@@ -282,6 +285,130 @@ func test_csv9c_097_098_154_coin_attacks_and_primeape_energy_discard() -> String
 		assert_eq(steps.size(), 1, "CSV9C_098 should request an opponent Active Energy target"),
 		assert_true(energy_b in opponent.discard_pile, "CSV9C_098 should discard the selected Energy on heads"),
 		assert_true(energy_a in opponent.active_pokemon.attached_energy, "CSV9C_098 should leave unselected Energy attached"),
+	])
+
+
+func test_csv9c_144_swinging_sphene_flips_before_tails_target_and_knocks_out_selected_bench() -> String:
+	var state := _make_state()
+	var attacker := _make_slot(_pokemon("Alolan Exeggutor ex", "Stage 1", "Exeggcute", "N", 300, [
+		_attack("Tropical Frenzy", "GW", "150"),
+		_attack("Swinging Sphene", "GWF", ""),
+	]), 0)
+	state.players[0].active_pokemon = attacker
+	var opponent := state.players[1]
+	var active_stage_one := _make_slot(_pokemon("Opponent Stage 1", "Stage 1", "Basic", "L", 120), 1)
+	opponent.active_pokemon = active_stage_one
+	var bench_basic := _make_slot(_pokemon("Opponent Bench Basic", "Basic", "", "L", 90), 1)
+	opponent.bench.append(bench_basic)
+	var flipper := RiggedCoinFlipper.new([false])
+	var emitted: Array[bool] = []
+	flipper.coin_flipped.connect(func(result: bool) -> void: emitted.append(result))
+	var effect := CSV9CEffects.AttackBasicPokemonKnockoutCoin.new(1, flipper)
+
+	var preview_steps: Array[Dictionary] = effect.get_attack_preview_interaction_steps(attacker.get_top_card(), attacker.get_attacks()[1], state)
+	var steps: Array[Dictionary] = effect.get_attack_interaction_steps(attacker.get_top_card(), attacker.get_attacks()[1], state)
+	effect.set_attack_interaction_context([{
+		"csv9c_basic_bench_ko_target": [bench_basic],
+	}])
+	effect.execute_attack(attacker, opponent.active_pokemon, 1, state)
+	effect.clear_attack_interaction_context()
+
+	return run_checks([
+		assert_eq(preview_steps.size(), 1, "CSV9C_144 attack previews should expose interaction without flipping the coin"),
+		assert_eq(emitted, [false], "CSV9C_144 should emit the shared coin result before asking for a tails target"),
+		assert_eq(flipper.flip_count, 1, "CSV9C_144 tails should flip exactly once across prompt and execution"),
+		assert_eq(str(steps[0].get("id", "")) if not steps.is_empty() else "", "csv9c_basic_bench_ko_target", "CSV9C_144 tails should ask for a Benched Basic target"),
+		assert_true(bool(steps[0].get("wait_for_coin_animation", false)) if not steps.is_empty() else false, "CSV9C_144 tails target prompt should wait for the coin animation"),
+		assert_true(str(steps[0].get("title", "")).contains("反面"), "CSV9C_144 tails target prompt should be localized and show the branch"),
+		assert_eq(bench_basic.damage_counters, bench_basic.get_max_hp(), "CSV9C_144 tails should KO the selected opponent Bench Basic"),
+		assert_eq(active_stage_one.damage_counters, 0, "CSV9C_144 tails should not touch the opponent Active Pokemon"),
+	])
+
+
+func test_csv9c_144_swinging_sphene_heads_uses_active_branch_without_bench_target() -> String:
+	var state := _make_state()
+	var attacker := _make_slot(_pokemon("Alolan Exeggutor ex", "Stage 1", "Exeggcute", "N", 300, [
+		_attack("Tropical Frenzy", "GW", "150"),
+		_attack("Swinging Sphene", "GWF", ""),
+	]), 0)
+	state.players[0].active_pokemon = attacker
+	var opponent := state.players[1]
+	var active_basic := _make_slot(_pokemon("Opponent Active Basic", "Basic", "", "L", 120), 1)
+	opponent.active_pokemon = active_basic
+	var bench_basic := _make_slot(_pokemon("Opponent Bench Basic", "Basic", "", "L", 90), 1)
+	opponent.bench.append(bench_basic)
+	var flipper := RiggedCoinFlipper.new([true, false])
+	var effect := CSV9CEffects.AttackBasicPokemonKnockoutCoin.new(1, flipper)
+
+	var steps: Array[Dictionary] = effect.get_attack_interaction_steps(attacker.get_top_card(), attacker.get_attacks()[1], state)
+	effect.execute_attack(attacker, opponent.active_pokemon, 1, state)
+
+	return run_checks([
+		assert_eq(str(steps[0].get("id", "")) if not steps.is_empty() else "", "csv9c_basic_ko_coin_result", "CSV9C_144 heads should expose a coin-result confirmation instead of a bench target"),
+		assert_true(bool(steps[0].get("wait_for_coin_animation", false)) if not steps.is_empty() else false, "CSV9C_144 heads result should wait for the coin animation"),
+		assert_eq(flipper.flip_count, 1, "CSV9C_144 heads should flip exactly once across prompt and execution"),
+		assert_true(str(steps[0].get("title", "")).contains("正面"), "CSV9C_144 heads result prompt should be localized and show the branch"),
+		assert_eq(active_basic.damage_counters, active_basic.get_max_hp(), "CSV9C_144 heads should KO the opponent Active Basic Pokemon"),
+		assert_eq(bench_basic.damage_counters, 0, "CSV9C_144 heads should ignore Benched Basic Pokemon"),
+	])
+
+
+func test_csv9c_144_swinging_sphene_heads_active_evolved_reports_failure_without_reflip() -> String:
+	var state := _make_state()
+	var attacker := _make_slot(_pokemon("Alolan Exeggutor ex", "Stage 1", "Exeggcute", "N", 300, [
+		_attack("Tropical Frenzy", "GW", "150"),
+		_attack("Swinging Sphene", "GWF", ""),
+	]), 0)
+	state.players[0].active_pokemon = attacker
+	var opponent := state.players[1]
+	var active_stage_one := _make_slot(_pokemon("Opponent Stage 1", "Stage 1", "Basic", "L", 120), 1)
+	opponent.active_pokemon = active_stage_one
+	var bench_basic := _make_slot(_pokemon("Opponent Bench Basic", "Basic", "", "L", 90), 1)
+	opponent.bench.append(bench_basic)
+	var flipper := RiggedCoinFlipper.new([true, false])
+	var effect := CSV9CEffects.AttackBasicPokemonKnockoutCoin.new(1, flipper)
+
+	var steps: Array[Dictionary] = effect.get_attack_interaction_steps(attacker.get_top_card(), attacker.get_attacks()[1], state)
+	effect.set_attack_interaction_context([{
+		"csv9c_basic_ko_coin_result": ["heads"],
+	}])
+	effect.execute_attack(attacker, opponent.active_pokemon, 1, state)
+	effect.clear_attack_interaction_context()
+
+	return run_checks([
+		assert_eq(steps.size(), 1, "CSV9C_144 heads failure should show one result prompt"),
+		assert_true(str(steps[0].get("title", "")).contains("发动失败"), "CSV9C_144 heads failure should explain that no legal Active Basic target exists"),
+		assert_eq(flipper.flip_count, 1, "CSV9C_144 heads failure should not flip again during execution"),
+		assert_eq(active_stage_one.damage_counters, 0, "CSV9C_144 heads failure should not KO an evolved Active Pokemon"),
+		assert_eq(bench_basic.damage_counters, 0, "CSV9C_144 heads failure should not fall through to the Bench branch"),
+	])
+
+
+func test_csv9c_144_swinging_sphene_tails_no_bench_basic_reports_failure_without_reflip() -> String:
+	var state := _make_state()
+	var attacker := _make_slot(_pokemon("Alolan Exeggutor ex", "Stage 1", "Exeggcute", "N", 300, [
+		_attack("Tropical Frenzy", "GW", "150"),
+		_attack("Swinging Sphene", "GWF", ""),
+	]), 0)
+	state.players[0].active_pokemon = attacker
+	var opponent := state.players[1]
+	opponent.active_pokemon = _make_slot(_pokemon("Opponent Active Basic", "Basic", "", "L", 120), 1)
+	opponent.bench.clear()
+	var flipper := RiggedCoinFlipper.new([false, true])
+	var effect := CSV9CEffects.AttackBasicPokemonKnockoutCoin.new(1, flipper)
+
+	var steps: Array[Dictionary] = effect.get_attack_interaction_steps(attacker.get_top_card(), attacker.get_attacks()[1], state)
+	effect.set_attack_interaction_context([{
+		"csv9c_basic_ko_coin_result": ["tails"],
+	}])
+	effect.execute_attack(attacker, opponent.active_pokemon, 1, state)
+	effect.clear_attack_interaction_context()
+
+	return run_checks([
+		assert_eq(steps.size(), 1, "CSV9C_144 tails failure should show one result prompt"),
+		assert_true(str(steps[0].get("title", "")).contains("发动失败"), "CSV9C_144 tails failure should explain that no Benched Basic target exists"),
+		assert_eq(flipper.flip_count, 1, "CSV9C_144 tails failure should not flip again during execution"),
+		assert_eq(opponent.active_pokemon.damage_counters, 0, "CSV9C_144 tails failure should not KO the Active Pokemon"),
 	])
 
 

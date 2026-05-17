@@ -42,8 +42,8 @@ func test_update_checker_and_app_version_scripts_load() -> String:
 		assert_not_null(update_instance, "UpdateChecker.gd should instantiate"),
 		assert_not_null(feedback_instance, "FeedbackClient.gd should instantiate"),
 		assert_not_null(user_visit_instance, "UserVisitClient.gd should instantiate"),
-		assert_eq(str(app_version_script.VERSION), "0.3", "AppVersion should expose the current version"),
-		assert_eq(str(app_version_script.DISPLAY_VERSION), "v0.3", "AppVersion should expose display version"),
+		assert_eq(str(app_version_script.VERSION), "0.3.1", "AppVersion should expose the current version"),
+		assert_eq(str(app_version_script.DISPLAY_VERSION), "v0.3.1", "AppVersion should expose display version"),
 		assert_eq(str(feedback_script.ENDPOINT_URL), "http://fc.skillserver.cn/ptcg", "Feedback client should use the production cloud function endpoint"),
 		assert_eq(str(user_visit_script.ENDPOINT_URL), "http://fc.skillserver.cn/userptcg", "User visit client should use the production cloud function endpoint"),
 		assert_eq(str(visit_payload.get("client_id", "")), "client-test", "User visit payload should include a stable client id"),
@@ -238,6 +238,50 @@ func test_auto_check_uses_24_hour_interval() -> String:
 	return checks
 
 
+func test_manual_update_request_bypasses_http_caches() -> String:
+	var checker_result: Dictionary = _new_checker()
+	if not bool((checker_result as Dictionary).get("ok", false)):
+		return str((checker_result as Dictionary).get("error", "checker setup failed"))
+	var checker: Object = (checker_result as Dictionary).get("value") as Object
+	var update_script := load(UpdateCheckerPath)
+	var normal_url := str(checker.call("_build_manifest_request_url", false))
+	var forced_url := str(checker.call("_build_manifest_request_url", true))
+	var normal_headers: PackedStringArray = checker.call("_build_manifest_request_headers", false)
+	var forced_headers: PackedStringArray = checker.call("_build_manifest_request_headers", true)
+	var checks := run_checks([
+		assert_eq(normal_url, str(update_script.MANIFEST_URL), "Automatic checks should keep the stable manifest URL"),
+		assert_true(forced_url.begins_with("%s?" % str(update_script.MANIFEST_URL)), "Manual checks should add a cache-busting query"),
+		assert_true(str(update_script.CACHE_BUST_QUERY_KEY) in forced_url, "Manual checks should include the cache-busting query key"),
+		assert_true("Cache-Control: no-cache, no-store, max-age=0" in forced_headers, "Manual checks should ask caches to revalidate"),
+		assert_true("Pragma: no-cache" in forced_headers, "Manual checks should include legacy no-cache header"),
+		assert_true("Expires: 0" in forced_headers, "Manual checks should include an immediate expiry header"),
+		assert_false("Cache-Control: no-cache, no-store, max-age=0" in normal_headers, "Automatic checks should not bypass caches unless forced"),
+	])
+	checker.free()
+	return checks
+
+
+func test_forced_update_check_cancels_inflight_request_state() -> String:
+	var checker_result: Dictionary = _new_checker()
+	if not bool((checker_result as Dictionary).get("ok", false)):
+		return str((checker_result as Dictionary).get("error", "checker setup failed"))
+	var checker: Node = (checker_result as Dictionary).get("value") as Node
+	var request := HTTPRequest.new()
+	checker.set("_http_request", request)
+	checker.set("_is_checking", true)
+	checker.set("_force_current_check", false)
+
+	checker.call("_cancel_active_request")
+
+	var checks := run_checks([
+		assert_false(bool(checker.get("_is_checking")), "Cancelling should clear the busy state before a manual restart"),
+		assert_false(bool(checker.get("_force_current_check")), "Cancelling should clear stale force state"),
+		assert_null(checker.get("_http_request"), "Cancelling should discard the old HTTPRequest node"),
+	])
+	checker.free()
+	return checks
+
+
 func test_manifest_normalization_keeps_download_page_and_summary() -> String:
 	var checker_result: Dictionary = _new_checker()
 	if not bool((checker_result as Dictionary).get("ok", false)):
@@ -267,8 +311,8 @@ func test_update_available_uses_current_version() -> String:
 		return str((checker_result as Dictionary).get("error", "checker setup failed"))
 	var checker: Object = (checker_result as Dictionary).get("value") as Object
 	var checks := run_checks([
-		assert_true(bool(checker.call("is_update_available", {"latest_version": "0.3.1"})), "0.3.1 should be available over current 0.3"),
-		assert_false(bool(checker.call("is_update_available", {"latest_version": "0.3"})), "Current version should not be treated as an update"),
+		assert_true(bool(checker.call("is_update_available", {"latest_version": "0.3.2"})), "0.3.2 should be available over current 0.3.1"),
+		assert_false(bool(checker.call("is_update_available", {"latest_version": "0.3.1"})), "Current version should not be treated as an update"),
 	])
 	checker.free()
 	return checks

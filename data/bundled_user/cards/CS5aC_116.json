@@ -1,0 +1,42 @@
+{
+    "name":  "飞羽球",
+    "card_type":  "Item",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "选择自己牌库中的1张没有【撤退】所需能量的宝可梦，在给对手看过之后，加入手牌。并重洗牌库。",
+    "yoren_code":  "Y1024",
+    "set_code":  "CS5aC",
+    "card_index":  "116",
+    "set_code_en":  "ASR",
+    "card_index_en":  "141",
+    "name_en":  "Feather Ball",
+    "artist":  "Studio Bora Inc.",
+    "rarity":  "U",
+    "release_date":  "2024-06-18T00:00:00+08:00",
+    "regulation_mark":  "F",
+    "effect_id":  "b029fdcf35f970d5d2254778009fa2fe",
+    "image_url":  "https://tcg.mik.moe/static/img/CS5aC/116.png",
+    "image_local_path":  "user://cards/images/CS5aC/116.png",
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "",
+    "stage":  "",
+    "hp":  0,
+    "weakness_energy":  "",
+    "weakness_value":  "",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  0,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

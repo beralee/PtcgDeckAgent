@@ -58,6 +58,8 @@ func get_followup_attack_interaction_steps(
 	var option: Dictionary = _get_selected_option_from_context(resolved_context)
 	if option.is_empty():
 		return []
+	if _has_resolved_copied_followup(resolved_context):
+		return []
 	return _processor.get_attack_interaction_steps_by_id(
 		str(option.get("source_effect_id", "")),
 		int(option.get("attack_index", -1)),
@@ -180,6 +182,13 @@ func _get_selected_option_from_context(context: Dictionary) -> Dictionary:
 	if selected_raw.is_empty() or not (selected_raw[0] is Dictionary):
 		return {}
 	return selected_raw[0]
+
+
+func _has_resolved_copied_followup(context: Dictionary) -> bool:
+	for key: Variant in context.keys():
+		if str(key) != STEP_ID:
+			return true
+	return false
 
 
 func get_description() -> String:

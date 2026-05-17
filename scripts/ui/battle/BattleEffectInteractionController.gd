@@ -99,6 +99,8 @@ func hide_ai_owned_effect_step_ui(scene: Object, chooser_player: int) -> void:
 	var dialog_overlay: Panel = scene.get("_dialog_overlay")
 	var dialog_cancel: Button = scene.get("_dialog_cancel")
 	var field_interaction_overlay: Control = scene.get("_field_interaction_overlay")
+	if scene.has_method("_cancel_card_gallery_drag_scroll"):
+		scene.call("_cancel_card_gallery_drag_scroll", "ai_owned_effect_step_hidden")
 	if dialog_overlay != null:
 		dialog_overlay.visible = false
 	if dialog_cancel != null:
@@ -371,6 +373,13 @@ func reset_effect_interaction(scene: Object) -> void:
 	if clearing_field_interaction:
 		scene.call("_hide_field_interaction")
 	if clearing_effect_dialog:
+		if scene.has_method("_finish_modal_input_interaction"):
+			scene.call("_finish_modal_input_interaction", "effect_interaction_reset", "preserve")
+		else:
+			if scene.has_method("_cancel_card_gallery_drag_scroll"):
+				scene.call("_cancel_card_gallery_drag_scroll", "effect_interaction_reset")
+			if scene.has_method("_clear_hand_drag_click_suppression"):
+				scene.call("_clear_hand_drag_click_suppression", "effect_interaction_reset")
 		scene.set("_pending_choice", "")
 		(scene.get("_dialog_data") as Dictionary).clear()
 		(scene.get("_dialog_items_data") as Array).clear()

@@ -97,6 +97,14 @@ func _make_basic_pokemon_card_data(name: String) -> CardData:
 	return cd
 
 
+func _make_stadium_card(name: String, owner_index: int = 0, name_en: String = "") -> CardInstance:
+	var cd := CardData.new()
+	cd.name = name
+	cd.name_en = name_en
+	cd.card_type = "Stadium"
+	return CardInstance.create(cd, owner_index)
+
+
 func _make_gsm_with_decks() -> GameStateMachine:
 	var gsm := GameStateMachine.new()
 	# 直接注入 PlayerState 和牌库，绕过 DeckData -> CardDatabase 流程。
@@ -963,6 +971,37 @@ func test_play_basic_to_bench() -> String:
 		assert_eq(result, true, "Bench placement should succeed"),
 		assert_eq(player.bench.size(), 1, "Bench should contain 1 Pokemon"),
 		assert_eq(player.hand.size(), 0, "鎵嬬墝鍑忓皯"),
+	])
+
+
+func test_play_stadium_can_replace_different_name_after_one_already_played_this_turn() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 2
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 1
+	for pi: int in 2:
+		var player_state := PlayerState.new()
+		player_state.player_index = pi
+		gsm.game_state.players.append(player_state)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var old_stadium := _make_stadium_card("Cycling Road", 0, "Cycling Road")
+	var replacement := _make_stadium_card("Collapsed Stadium", 0, "Collapsed Stadium")
+	player.hand.append(replacement)
+	gsm.game_state.stadium_card = old_stadium
+	gsm.game_state.stadium_owner_index = 0
+	gsm.game_state.stadium_played_this_turn = true
+
+	var result := gsm.play_stadium(0, replacement)
+
+	return run_checks([
+		assert_true(result, "A different named Stadium should be playable after another Stadium this turn"),
+		assert_true(gsm.game_state.stadium_card == replacement, "Replacement Stadium should become active"),
+		assert_true(old_stadium in player.discard_pile, "Previous Stadium should move to its owner's discard pile"),
+		assert_false(replacement in player.hand, "Replacement Stadium should leave hand after play"),
+		assert_true(gsm.game_state.stadium_played_this_turn, "The turn flag should remain true for history and prompts"),
 	])
 
 

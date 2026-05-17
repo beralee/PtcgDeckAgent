@@ -1,0 +1,56 @@
+{
+    "name":  "洗翠 顽皮雷弹V",
+    "card_type":  "Pokemon",
+    "mechanic":  "V",
+    "label":  "",
+    "description":  "【0】 暴躁炸弹 100×\n造成这只宝可梦所处于的特殊状态数量×100点伤害。\n\n【草】 日光射击 120\n将附着于这只宝可梦身上的能量，全部放于弃牌区。\n\n",
+    "yoren_code":  "Y1062",
+    "set_code":  "CS5.5C",
+    "card_index":  "003",
+    "set_code_en":  "SP",
+    "card_index_en":  "294",
+    "name_en":  "Hisuian Electrode V",
+    "artist":  "5ban Graphics",
+    "rarity":  "RR",
+    "release_date":  "2024-08-02T00:00:00+08:00",
+    "regulation_mark":  "F",
+    "effect_id":  "f9a90aafccf9445be72a6ed15f66bcd6",
+    "image_url":  "https://tcg.mik.moe/static/img/CS5.5C/003.png",
+    "image_local_path":  "user://cards/images/CS5.5C/003.png",
+    "is_tags":  [
+                    "V",
+                    "Basic"
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "G",
+    "stage":  "Basic",
+    "hp":  210,
+    "weakness_energy":  "R",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "暴躁炸弹",
+                        "text":  "造成这只宝可梦所处于的特殊状态数量×100点伤害。",
+                        "cost":  "",
+                        "damage":  "100×",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "日光射击",
+                        "text":  "将附着于这只宝可梦身上的能量，全部放于弃牌区。",
+                        "cost":  "GC",
+                        "damage":  "120",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

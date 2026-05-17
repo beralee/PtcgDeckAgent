@@ -412,10 +412,11 @@ func _run_one_logged_duel(game_index: int, options: Dictionary) -> Dictionary:
 func _make_ai(player_index: int, strategy_id: String, deck: DeckData = null, strong_rules_only: bool = false) -> AIOpponent:
 	var ai := AIOpponentScript.new()
 	ai.configure(player_index, 1)
-	if strong_rules_only:
+	var strategy: RefCounted = _registry.call("create_strategy_by_id", strategy_id)
+	var uses_llm_runtime := _strategy_uses_llm_runtime(strategy)
+	if strong_rules_only and not uses_llm_runtime:
 		ai.use_mcts = false
 		ai.decision_runtime_mode = AIOpponentScript.DECISION_RUNTIME_RULES_ONLY
-	var strategy: RefCounted = _registry.call("create_strategy_by_id", strategy_id)
 	if strategy != null:
 		if deck != null and strategy.has_method("set_deck_strategy_text"):
 			strategy.call("set_deck_strategy_text", str(deck.strategy))
@@ -423,6 +424,12 @@ func _make_ai(player_index: int, strategy_id: String, deck: DeckData = null, str
 			strategy.call("set_llm_host_node", self)
 		ai.set_deck_strategy(strategy)
 	return ai
+
+
+func _strategy_uses_llm_runtime(strategy: Variant) -> bool:
+	return strategy != null \
+		and strategy.has_method("get_llm_stats") \
+		and strategy.has_method("get_llm_audit_log_path")
 
 
 func _is_strong_fixed_opening_enabled(options: Dictionary, role: String) -> bool:

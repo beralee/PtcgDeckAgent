@@ -76,9 +76,7 @@ func execute_ability(
 			if selected_cards.size() >= recover_count:
 				break
 
-	for selected: CardInstance in selected_cards:
-		player.discard_pile.erase(selected)
-		player.hand.append(selected)
+	_move_discard_cards_to_hand_with_log(state, pi, selected_cards, top, "ability")
 
 	if is_vstar_power:
 		state.vstar_power_used[pi] = true

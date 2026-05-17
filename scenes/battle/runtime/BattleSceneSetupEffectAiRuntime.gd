@@ -35,6 +35,9 @@ func _setup_battle_scene_context() -> void:
 	if _battle_stadium_hud_coordinator == null:
 		_battle_stadium_hud_coordinator = BattleStadiumHudCoordinatorScript.new()
 	_battle_stadium_hud_coordinator.call("setup", self)
+	if _battle_stadium_backdrop_coordinator == null:
+		_battle_stadium_backdrop_coordinator = BattleStadiumBackdropCoordinatorScript.new()
+	_battle_stadium_backdrop_coordinator.call("setup", self)
 	if _battle_deck_shuffle_animator == null:
 		_battle_deck_shuffle_animator = BattleDeckShuffleAnimatorScript.new()
 	_battle_deck_shuffle_animator.call("setup", self)
@@ -406,6 +409,18 @@ func _raise_modal_overlay_for_input(overlay: Control, z_index_value: int) -> voi
 	var parent := overlay.get_parent()
 	if parent != null:
 		parent.move_child(overlay, parent.get_child_count() - 1)
+
+
+func _raise_coin_animator_to_front() -> void:
+	if _coin_animator == null or not is_instance_valid(_coin_animator):
+		return
+	if _coin_animator is CanvasItem:
+		var canvas_item := _coin_animator as CanvasItem
+		canvas_item.z_index = COIN_FLIP_OVERLAY_Z_INDEX
+		canvas_item.z_as_relative = true
+	var parent := _coin_animator.get_parent()
+	if parent != null:
+		parent.move_child(_coin_animator, parent.get_child_count() - 1)
 
 
 
@@ -1588,6 +1603,10 @@ func _play_next_coin_animation() -> void:
 		return
 	_coin_animating = true
 	var result: bool = _coin_flip_queue.pop_front()
+	if _coin_animator.has_method("apply_viewport_metrics"):
+		var coin_viewport_size := _portrait_dialog_viewport_size() if _is_portrait_battle_layout_active() else (get_viewport_rect().size if is_inside_tree() else size)
+		_coin_animator.call("apply_viewport_metrics", coin_viewport_size, _is_portrait_battle_layout_active())
+	_raise_coin_animator_to_front()
 	_coin_animator.play(result)
 
 

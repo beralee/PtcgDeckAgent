@@ -16,6 +16,8 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	var pi := pokemon.get_top_card().owner_index
 	if state.vstar_power_used[pi]:
 		return false
+	if DiscardToHandBlockHelper.is_discard_to_hand_blocked(pi, state, "ability"):
+		return false
 	for card: CardInstance in state.players[pi].discard_pile:
 		if card != null and card.card_data != null and card.card_data.card_type == "Item":
 			return true
@@ -59,6 +61,8 @@ func execute_ability(
 	var pi := pokemon.get_top_card().owner_index
 	if state.vstar_power_used[pi]:
 		return
+	if DiscardToHandBlockHelper.is_discard_to_hand_blocked(pi, state, "ability"):
+		return
 	var player: PlayerState = state.players[pi]
 	var ctx: Dictionary = get_interaction_context(targets)
 	var selected: Array[CardInstance] = []
@@ -84,11 +88,9 @@ func execute_ability(
 			selected.append(discard_card)
 			if selected.size() >= max_count:
 				break
-	for card: CardInstance in selected:
-		player.discard_pile.erase(card)
-		card.face_up = true
-		player.hand.append(card)
-	state.vstar_power_used[pi] = true
+	var moved := _move_discard_cards_to_hand_with_log(state, pi, selected, pokemon.get_top_card(), "ability")
+	if not moved.is_empty():
+		state.vstar_power_used[pi] = true
 
 
 func get_description() -> String:

@@ -1,0 +1,55 @@
+{
+    "name":  "小磁怪",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【雷】 冲撞 10\n\n\n 高速球 20\n\n\n",
+    "yoren_code":  "P081",
+    "set_code":  "CSV2C",
+    "card_index":  "036",
+    "set_code_en":  "OBF",
+    "card_index_en":  "63",
+    "name_en":  "Magnemite",
+    "artist":  "Masakazu Fukuda",
+    "rarity":  "C",
+    "release_date":  "2025-03-21T00:00:00+08:00",
+    "regulation_mark":  "G",
+    "effect_id":  "ace38c46277a54785c65568606be8e92",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV2C/036.png",
+    "image_local_path":  "user://cards/images/CSV2C/036.png",
+    "is_tags":  [
+                    "Basic"
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "L",
+    "stage":  "Basic",
+    "hp":  60,
+    "weakness_energy":  "F",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "冲撞",
+                        "text":  "",
+                        "cost":  "L",
+                        "damage":  "10",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "高速球",
+                        "text":  "",
+                        "cost":  "CC",
+                        "damage":  "20",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

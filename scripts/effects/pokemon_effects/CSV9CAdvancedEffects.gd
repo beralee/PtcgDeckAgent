@@ -616,8 +616,11 @@ class AlolanExeggutorExTropicalFrenzy extends BaseEffect:
 
 class AlolanExeggutorExSwingingSphene extends BaseEffect:
 	const STEP_ID := "swinging_sphene_bench_basic"
+	const RESULT_STEP_ID := "swinging_sphene_coin_result"
 	var attack_index_to_match: int = 1
 	var coin_flipper: CoinFlipper
+	var _pending_flip_heads: bool = false
+	var _has_pending_flip: bool = false
 
 	func _init(flipper: CoinFlipper = null) -> void:
 		coin_flipper = flipper if flipper != null else CoinFlipper.new()
@@ -625,9 +628,42 @@ class AlolanExeggutorExSwingingSphene extends BaseEffect:
 	func applies_to_attack_index(attack_index: int) -> bool:
 		return attack_index == attack_index_to_match
 
+	func get_attack_preview_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
+		if not applies_to_attack_index(AdvancedHelpers.resolve_attack_index(card, attack)):
+			return []
+		var opponent := state.players[1 - card.owner_index]
+		if AdvancedHelpers.is_basic_pokemon_slot(opponent.active_pokemon):
+			return [_build_coin_result_step("投掷1次硬币，然后结算嗡嗡屑石。", "preview")]
+		if not _basic_bench_targets(opponent).is_empty():
+			return [_build_coin_result_step("投掷1次硬币。若为反面，选择对手备战区的1只基础宝可梦【昏厥】。", "preview")]
+		return [_build_coin_result_step("投掷1次硬币。若为反面且对手备战区没有基础宝可梦，嗡嗡屑石会发动失败。", "preview")]
+
 	func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 		if not applies_to_attack_index(AdvancedHelpers.resolve_attack_index(card, attack)):
 			return []
+		_pending_flip_heads = coin_flipper.flip()
+		_has_pending_flip = true
+		var resolved_opponent := state.players[1 - card.owner_index]
+		if _pending_flip_heads:
+			if AdvancedHelpers.is_basic_pokemon_slot(resolved_opponent.active_pokemon):
+				return [_build_coin_result_step("投币结果：正面。对手战斗场的基础宝可梦将【昏厥】。", "heads")]
+			return [_build_coin_result_step("投币结果：正面。对手战斗宝可梦不是基础宝可梦，嗡嗡屑石发动失败。", "heads")]
+		var resolved_items := _basic_bench_targets(resolved_opponent)
+		if resolved_items.is_empty():
+			return [_build_coin_result_step("投币结果：反面。对手备战区没有基础宝可梦，嗡嗡屑石发动失败。", "tails")]
+		var resolved_labels: Array[String] = []
+		for resolved_slot: PokemonSlot in resolved_items:
+			resolved_labels.append(AdvancedHelpers.slot_label(resolved_slot))
+		return [{
+			"id": STEP_ID,
+			"title": "投币结果：反面。选择对手备战区的1只基础宝可梦【昏厥】。",
+			"items": resolved_items,
+			"labels": resolved_labels,
+			"min_select": 1,
+			"max_select": 1,
+			"allow_cancel": false,
+			"wait_for_coin_animation": true,
+		}]
 		var opponent := state.players[1 - card.owner_index]
 		var items: Array = []
 		var labels: Array[String] = []
@@ -654,7 +690,12 @@ class AlolanExeggutorExSwingingSphene extends BaseEffect:
 		if top == null:
 			return
 		var opponent := state.players[1 - top.owner_index]
-		if coin_flipper.flip():
+		var context_result := _coin_result_from_context()
+		var heads := context_result == "heads" if context_result != "" else _pending_flip_heads
+		if context_result == "" and not _has_pending_flip:
+			heads = coin_flipper.flip()
+		_has_pending_flip = false
+		if heads:
 			if AdvancedHelpers.is_basic_pokemon_slot(defender):
 				AdvancedHelpers.knock_out_slot(defender, state)
 			return
@@ -662,14 +703,45 @@ class AlolanExeggutorExSwingingSphene extends BaseEffect:
 		if target != null:
 			AdvancedHelpers.knock_out_slot(target, state)
 
+	func _build_coin_result_step(title: String, result: String) -> Dictionary:
+		return {
+			"id": RESULT_STEP_ID,
+			"title": title,
+			"items": [result],
+			"labels": ["继续"],
+			"min_select": 1,
+			"max_select": 1,
+			"allow_cancel": false,
+			"wait_for_coin_animation": true,
+			"force_dialog": true,
+		}
+
+	func _basic_bench_targets(opponent: PlayerState) -> Array[PokemonSlot]:
+		var result: Array[PokemonSlot] = []
+		for slot: PokemonSlot in opponent.bench:
+			if AdvancedHelpers.is_basic_pokemon_slot(slot):
+				result.append(slot)
+		return result
+
 	func _selected_basic_bench(opponent: PlayerState) -> PokemonSlot:
 		for entry: Variant in get_attack_interaction_context().get(STEP_ID, []):
 			if entry is PokemonSlot and entry in opponent.bench and AdvancedHelpers.is_basic_pokemon_slot(entry):
 				return entry
-		for slot: PokemonSlot in opponent.bench:
-			if AdvancedHelpers.is_basic_pokemon_slot(slot):
-				return slot
+		var candidates := _basic_bench_targets(opponent)
+		if not candidates.is_empty():
+			return candidates[0]
 		return null
+
+	func _coin_result_from_context() -> String:
+		var ctx := get_attack_interaction_context()
+		var raw: Array = ctx.get(RESULT_STEP_ID, [])
+		if not raw.is_empty():
+			var result := str(raw[0])
+			if result == "heads" or result == "tails":
+				return result
+		if ctx.has(STEP_ID):
+			return "tails"
+		return ""
 
 
 class KyuremAntiPlasma extends BaseEffect:

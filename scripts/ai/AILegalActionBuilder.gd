@@ -1436,7 +1436,7 @@ func _get_attack_interaction_steps(gsm: GameStateMachine, slot: PokemonSlot, att
 		return steps
 	var attack: Dictionary = attacks[attack_index]
 	for effect: BaseEffect in gsm.effect_processor.get_attack_effects_for_slot(slot, attack_index):
-		steps.append_array(effect.get_attack_interaction_steps(card, attack, gsm.game_state))
+		steps.append_array(effect.get_attack_preview_interaction_steps(card, attack, gsm.game_state))
 	return steps
 
 

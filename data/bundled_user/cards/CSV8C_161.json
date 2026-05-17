@@ -1,0 +1,56 @@
+{
+    "name":  "猛雷鼓",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "Ancient",
+    "description":  "【雷】【斗】 落雷风暴 \n给对手的1只宝可梦，造成这只宝可梦身上附着的能量数量×30伤害。[备战宝可梦不计算弱点、抗性。]\n\n【雷】【斗】 龙之头击 130\n\n\n",
+    "yoren_code":  "P1021",
+    "set_code":  "CSV8C",
+    "card_index":  "161",
+    "set_code_en":  "SCR",
+    "card_index_en":  "111",
+    "name_en":  "Raging Bolt",
+    "artist":  "kodama",
+    "rarity":  "R",
+    "release_date":  "2026-03-13T00:00:00+08:00",
+    "regulation_mark":  "H",
+    "effect_id":  "12b30b5d9a0bd31a8e033bf2f2cfead3",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV8C/161.png",
+    "image_local_path":  "user://cards/images/CSV8C/161.png",
+    "is_tags":  [
+                    "Ancient",
+                    "Basic"
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "N",
+    "stage":  "Basic",
+    "hp":  130,
+    "weakness_energy":  "",
+    "weakness_value":  "",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  3,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "落雷风暴",
+                        "text":  "给对手的1只宝可梦，造成这只宝可梦身上附着的能量数量×30伤害。[备战宝可梦不计算弱点、抗性。]",
+                        "cost":  "LF",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "龙之头击",
+                        "text":  "",
+                        "cost":  "LFC",
+                        "damage":  "130",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

@@ -73,13 +73,60 @@ func _on_slot_touch_long_press_timeout() -> void:
 
 
 
-func _mark_modal_input_consumed(reason: String = "modal") -> void:
-	_modal_input_slot_suppress_until_msec = Time.get_ticks_msec() + MODAL_INPUT_SLOT_SUPPRESS_MSEC
+func _finish_modal_input_interaction(reason: String = "modal", slot_suppression_mode: String = "arm") -> void:
+	_ensure_battle_drag_scroll_coordinator()
+	if _battle_drag_scroll_coordinator != null:
+		_battle_drag_scroll_coordinator.call("clear_transient_input_capture", reason)
+	_arm_hand_primary_release_fallback_window(reason)
+	match slot_suppression_mode:
+		"arm":
+			_modal_input_slot_suppress_until_msec = Time.get_ticks_msec() + MODAL_INPUT_SLOT_SUPPRESS_MSEC
+		"clear":
+			_modal_input_slot_suppress_until_msec = 0
+		"preserve":
+			pass
+		_:
+			_modal_input_slot_suppress_until_msec = Time.get_ticks_msec() + MODAL_INPUT_SLOT_SUPPRESS_MSEC
 	_cancel_slot_touch_long_press(false)
 	var viewport := get_viewport()
 	if viewport != null:
 		viewport.set_input_as_handled()
-	_runtime_log("modal_input_consumed", "reason=%s" % reason)
+	_runtime_log("modal_input_finished", "reason=%s slot_mode=%s" % [reason, slot_suppression_mode])
+
+
+func _mark_modal_input_consumed(reason: String = "modal") -> void:
+	_finish_modal_input_interaction(reason, "arm")
+
+
+func _mark_modal_input_consumed_without_slot_suppression(reason: String = "modal") -> void:
+	_finish_modal_input_interaction(reason, "clear")
+
+
+func _should_arm_hand_primary_release_fallback() -> bool:
+	return (
+		_modal_input_finished_at_msec > 0
+		and Time.get_ticks_msec() <= _modal_input_finished_at_msec + MODAL_HAND_RELEASE_FALLBACK_WINDOW_MSEC
+	)
+
+
+func _arm_hand_primary_release_fallback_window(reason: String = "transient_input") -> void:
+	_modal_input_finished_at_msec = Time.get_ticks_msec()
+	_arm_current_hand_cards_primary_release_fallback(reason)
+
+
+func _arm_current_hand_cards_primary_release_fallback(reason: String = "modal") -> void:
+	if _hand_container == null:
+		return
+	_arm_primary_release_fallback_recursive(_hand_container, "hand_after_%s" % reason)
+
+
+func _arm_primary_release_fallback_recursive(node: Node, reason: String) -> void:
+	if node == null:
+		return
+	if node is BattleCardView:
+		(node as BattleCardView).arm_primary_release_fallback(reason)
+	for child: Node in node.get_children():
+		_arm_primary_release_fallback_recursive(child, reason)
 
 
 

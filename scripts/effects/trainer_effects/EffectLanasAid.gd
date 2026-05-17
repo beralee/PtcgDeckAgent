@@ -58,10 +58,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 			if selected.size() >= recover_count:
 				break
 
-	for recover_card: CardInstance in selected:
-		player.discard_pile.erase(recover_card)
-		recover_card.face_up = true
-		player.hand.append(recover_card)
+	_move_discard_cards_to_hand_with_log(state, card.owner_index, selected, card, "trainer")
 
 
 func _matches_card(card: CardInstance) -> bool:

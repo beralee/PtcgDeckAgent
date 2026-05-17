@@ -155,6 +155,14 @@ func _card_name(card: CardInstance) -> String:
 	return str(card.card_data.name_en) if str(card.card_data.name_en) != "" else str(card.card_data.name)
 
 
+func _selected_card_names(cards: Array) -> Array[String]:
+	var names: Array[String] = []
+	for item: Variant in cards:
+		if item is CardInstance:
+			names.append(_card_name(item as CardInstance))
+	return names
+
+
 func test_opening_prefers_mew_pivot_over_engine_active_with_english_cards() -> String:
 	var strategy := _new_strategy()
 	var player := _player()
@@ -186,6 +194,39 @@ func test_basic_search_builds_miraidon_before_more_attackers() -> String:
 		miraidon_score > iron_score + 200.0,
 		"First basic search should establish Miraidon before adding another attacker (miraidon=%f iron=%f)" % [miraidon_score, iron_score]
 	)
+
+
+func test_strong_opening_tandem_fetches_pikachu_and_opens_area_zero_before_generator() -> String:
+	var strategy := _new_strategy()
+	var gs := _game_state(2)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_mew(), 0)
+	var miraidon := _slot(_miraidon(), 0)
+	player.bench.append(miraidon)
+	player.bench.append(_slot(_raikou(), 0))
+	player.hand.append(_card(_area_zero()))
+	player.deck.append(_card(_energy()))
+	var tandem_items: Array = [
+		_card(_iron_hands()),
+		_card(_latias()),
+		_card(_pikachu()),
+	]
+
+	var picked: Array = strategy.pick_interaction_items(tandem_items, {"id": "bench_pokemon", "max_select": 2}, _ctx(gs))
+	var picked_names := _selected_card_names(picked)
+	player.bench.append(_slot(_pikachu(), 0))
+	player.bench.append(_slot(_iron_hands(), 0))
+	player.bench.append(_slot(_latias(), 0))
+	var area_zero := _card(_area_zero())
+	var generator := _card(_trainer("Electric Generator", "Item"))
+
+	var area_zero_score: float = strategy.score_action_absolute({"kind": "play_stadium", "card": area_zero}, gs, 0)
+	var generator_score: float = strategy.score_action_absolute({"kind": "play_trainer", "card": generator}, gs, 0)
+
+	return run_checks([
+		assert_true(picked_names.has("Pikachu ex"), "Strong Tandem Unit should fetch Pikachu ex as the Area Zero Tera unlock (picked=%s)" % [str(picked_names)]),
+		assert_true(area_zero_score > generator_score + 80.0, "Once Pikachu ex is available, Area Zero should open the 6+ Bench shell before Generator (area=%f generator=%f)" % [area_zero_score, generator_score]),
+	])
 
 
 func test_generator_targets_empty_iron_hands_over_full_miraidon() -> String:
@@ -357,3 +398,35 @@ func test_area_zero_is_useful_once_pikachu_is_on_board() -> String:
 	var score: float = strategy.score_action_absolute({"kind": "play_stadium", "card": area_zero}, gs, 0)
 
 	return assert_true(score >= 250.0, "Area Zero should stay useful after Pikachu ex unlocks the Tera bench shell without outranking primary attack setup (score=%f)" % score)
+
+
+func test_strong_opening_raikou_attack_uses_expanded_bench_damage() -> String:
+	var strategy := _new_strategy()
+	var gs := _game_state(2)
+	gs.stadium_card = _card(_area_zero(), 0)
+	var player: PlayerState = gs.players[0]
+	var opponent: PlayerState = gs.players[1]
+	var raikou := _slot(_raikou(), 0)
+	_attach(raikou, "L", 2)
+	player.active_pokemon = raikou
+	player.bench.append(_slot(_pikachu(), 0))
+	player.bench.append(_slot(_miraidon(), 0))
+	player.bench.append(_slot(_iron_hands(), 0))
+	player.bench.append(_slot(_latias(), 0))
+	player.bench.append(_slot(_mew(), 0))
+	player.bench.append(_slot(_iron_hands(), 0))
+	opponent.active_pokemon = _slot(_pokemon("Bulky Miraidon ex", "L", 300, "ex"), 1)
+	for i: int in 5:
+		opponent.bench.append(_slot(_pokemon("Opponent Bench %d" % i, "C", 100), 1))
+
+	var attack_score: float = strategy.score_action_absolute({
+		"kind": "attack",
+		"source_slot": raikou,
+		"attack_index": 0,
+		"attack_name": "Lightning Rondo",
+	}, gs, 0)
+
+	return assert_true(
+		attack_score >= 590.0,
+		"Raikou should score Lightning Rondo from expanded Bench damage instead of parsed base 20 (score=%f)" % attack_score
+	)

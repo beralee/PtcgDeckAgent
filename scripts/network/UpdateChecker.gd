@@ -8,6 +8,7 @@ const DEFAULT_DOWNLOAD_PAGE_URL := "https://ptcg.skillserver.cn/"
 const STATE_PATH := "user://update_check_state.json"
 const CHECK_INTERVAL_SECONDS := 24 * 60 * 60
 const CHECK_FAILURE_INTERVAL_SECONDS := 3 * 60 * 60
+const CACHE_BUST_QUERY_KEY := "_ptcg_update_check"
 
 signal update_available(info: Dictionary)
 signal no_update(info: Dictionary)
@@ -20,7 +21,9 @@ var _force_current_check := false
 
 func check_for_updates(force: bool = false) -> int:
 	if _is_checking:
-		return ERR_BUSY
+		if not force:
+			return ERR_BUSY
+		_cancel_active_request()
 
 	var state := _load_state()
 	if not force:
@@ -41,8 +44,8 @@ func check_for_updates(force: bool = false) -> int:
 	_is_checking = true
 	_force_current_check = force
 	var err := _http_request.request(
-		MANIFEST_URL,
-		PackedStringArray(["User-Agent: PTCGDeckAgent/%s" % AppVersionScript.VERSION]),
+		_build_manifest_request_url(force),
+		_build_manifest_request_headers(force),
 		HTTPClient.METHOD_GET
 	)
 	if err != OK:
@@ -140,6 +143,35 @@ func _ensure_http_request() -> void:
 	_http_request.use_threads = true
 	_http_request.request_completed.connect(_on_manifest_response)
 	add_child(_http_request)
+
+
+func _cancel_active_request() -> void:
+	if _http_request != null:
+		if _http_request.request_completed.is_connected(_on_manifest_response):
+			_http_request.request_completed.disconnect(_on_manifest_response)
+		_http_request.cancel_request()
+		if _http_request.get_parent() != null:
+			_http_request.get_parent().remove_child(_http_request)
+		_http_request.queue_free()
+		_http_request = null
+	_is_checking = false
+	_force_current_check = false
+
+
+func _build_manifest_request_url(force: bool = false) -> String:
+	if not force:
+		return MANIFEST_URL
+	var separator := "&" if MANIFEST_URL.find("?") >= 0 else "?"
+	return "%s%s%s=%d" % [MANIFEST_URL, separator, CACHE_BUST_QUERY_KEY, Time.get_ticks_msec()]
+
+
+func _build_manifest_request_headers(force: bool = false) -> PackedStringArray:
+	var headers := PackedStringArray(["User-Agent: PTCGDeckAgent/%s" % AppVersionScript.VERSION])
+	if force:
+		headers.append("Cache-Control: no-cache, no-store, max-age=0")
+		headers.append("Pragma: no-cache")
+		headers.append("Expires: 0")
+	return headers
 
 
 func _on_manifest_response(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:

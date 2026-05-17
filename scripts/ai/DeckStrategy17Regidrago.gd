@@ -107,6 +107,28 @@ func build_turn_plan(game_state: GameState, player_index: int, _context: Diction
 	}
 
 
+func build_continuity_contract(
+	game_state: GameState,
+	player_index: int,
+	turn_contract: Dictionary = {}
+) -> Dictionary:
+	var player := _player(game_state, player_index)
+	if player == null:
+		return _v17_continuity_disabled()
+	var setup_debt := _build_v17_continuity_setup_debt(player, game_state, player_index, turn_contract)
+	if bool(setup_debt.get("terminal_attack_locked", false)):
+		return _v17_continuity_disabled(setup_debt)
+	var action_bonuses := _build_v17_continuity_action_bonuses(setup_debt)
+	var enabled := _v17_continuity_setup_debt_is_active(setup_debt) and not action_bonuses.is_empty()
+	return {
+		"enabled": enabled,
+		"safe_setup_before_attack": enabled,
+		"setup_debt": setup_debt,
+		"action_bonuses": action_bonuses,
+		"attack_penalty": 260.0 if enabled else 0.0,
+	}
+
+
 func score_action_absolute(action: Dictionary, game_state: GameState, player_index: int) -> float:
 	var kind := str(action.get("kind", ""))
 	var player := _player(game_state, player_index)
@@ -346,6 +368,173 @@ func _dragon_fuel_remaining(player: PlayerState) -> int:
 		if _is_v17_dragon_fuel(card):
 			total += 1
 	return total
+
+
+func _v17_continuity_disabled(setup_debt: Dictionary = {}) -> Dictionary:
+	return {
+		"enabled": false,
+		"safe_setup_before_attack": false,
+		"setup_debt": setup_debt,
+		"action_bonuses": [],
+		"attack_penalty": 0.0,
+	}
+
+
+func _build_v17_continuity_setup_debt(
+	player: PlayerState,
+	_game_state: GameState,
+	_player_index: int,
+	_turn_contract: Dictionary
+) -> Dictionary:
+	var debt := {
+		"ready_primary_online": false,
+		"need_backup_regidrago_seed": false,
+		"need_second_ogerpon": false,
+		"need_backup_regidrago_energy": false,
+		"need_ogerpon_charge": false,
+		"terminal_attack_locked": false,
+	}
+	if player == null:
+		return debt
+	var active := player.active_pokemon
+	var primary_ready := (
+		_is_live_slot(active)
+		and _slot_name(active) == REGIDRAGO_VSTAR
+		and _attack_energy_gap(active) <= 0
+		and _dragon_fuel_count(player) > 0
+	)
+	debt["ready_primary_online"] = primary_ready
+	if not primary_ready:
+		return debt
+	if player.prizes.size() <= 1:
+		debt["terminal_attack_locked"] = true
+		return debt
+	var open_bench_slots := _open_bench_slots(player)
+	var live_regidrago_count := (
+		_count_live_named_on_field(player, REGIDRAGO_V)
+		+ _count_live_named_on_field(player, REGIDRAGO_VSTAR)
+	)
+	var live_ogerpon_count := _count_live_named_on_field(player, TEAL_MASK_OGERPON_EX)
+	var needs_backup_seed := live_regidrago_count < 2 and open_bench_slots > 0
+	debt["live_regidrago_count"] = live_regidrago_count
+	debt["live_ogerpon_count"] = live_ogerpon_count
+	debt["open_bench_slots"] = open_bench_slots
+	debt["need_backup_regidrago_seed"] = needs_backup_seed
+	debt["need_second_ogerpon"] = live_ogerpon_count < 2 and open_bench_slots > (1 if needs_backup_seed else 0)
+	var backup := _best_v17_backup_regidrago(player, active)
+	debt["need_backup_regidrago_energy"] = (
+		backup != null
+		and _attack_energy_gap(backup) > 0
+		and _can_advance_backup_regidrago_energy(player, backup)
+	)
+	debt["need_ogerpon_charge"] = _has_uncharged_live_ogerpon(player) and _count_energy_in_hand(player, "G") > 0
+	return debt
+
+
+func _build_v17_continuity_action_bonuses(setup_debt: Dictionary) -> Array[Dictionary]:
+	var bonuses: Array[Dictionary] = []
+	if bool(setup_debt.get("need_backup_regidrago_seed", false)):
+		bonuses.append({"kind": "play_basic_to_bench", "card_names": [REGIDRAGO_V], "bonus": 820.0})
+		bonuses.append({"kind": "play_trainer", "card_names": [NEST_BALL], "target_names": [REGIDRAGO_V], "bonus": 780.0})
+		bonuses.append({"kind": "play_trainer", "card_names": [ULTRA_BALL], "target_names": [REGIDRAGO_V], "bonus": 560.0})
+	if bool(setup_debt.get("need_second_ogerpon", false)):
+		bonuses.append({"kind": "play_basic_to_bench", "card_names": [TEAL_MASK_OGERPON_EX], "bonus": 560.0})
+		bonuses.append({"kind": "play_trainer", "card_names": [NEST_BALL], "target_names": [TEAL_MASK_OGERPON_EX], "bonus": 560.0})
+		bonuses.append({"kind": "play_trainer", "card_names": [ULTRA_BALL], "target_names": [TEAL_MASK_OGERPON_EX], "bonus": 420.0})
+	if bool(setup_debt.get("need_backup_regidrago_energy", false)):
+		bonuses.append({"kind": "attach_energy", "target_names": [REGIDRAGO_V, REGIDRAGO_VSTAR], "bonus": 620.0})
+		bonuses.append({"kind": "play_trainer", "card_names": [ENERGY_SWITCH], "target_names": [REGIDRAGO_V, REGIDRAGO_VSTAR], "bonus": 500.0})
+	if bool(setup_debt.get("need_ogerpon_charge", false)):
+		bonuses.append({"kind": "use_ability", "target_names": [TEAL_MASK_OGERPON_EX], "bonus": 650.0})
+		bonuses.append({"kind": "attach_energy", "target_names": [TEAL_MASK_OGERPON_EX], "bonus": 320.0})
+	return bonuses
+
+
+func _v17_continuity_setup_debt_is_active(setup_debt: Dictionary) -> bool:
+	return (
+		bool(setup_debt.get("ready_primary_online", false))
+		and (
+			bool(setup_debt.get("need_backup_regidrago_seed", false))
+			or bool(setup_debt.get("need_second_ogerpon", false))
+			or bool(setup_debt.get("need_backup_regidrago_energy", false))
+			or bool(setup_debt.get("need_ogerpon_charge", false))
+		)
+	)
+
+
+func _count_live_named_on_field(player: PlayerState, target_name: String) -> int:
+	if player == null:
+		return 0
+	var count := 0
+	for slot: PokemonSlot in _all_slots(player):
+		if _is_live_slot(slot) and _slot_name(slot) == target_name:
+			count += 1
+	return count
+
+
+func _open_bench_slots(player: PlayerState) -> int:
+	if player == null:
+		return 0
+	return maxi(0, 5 - player.bench.size())
+
+
+func _best_v17_backup_regidrago(player: PlayerState, primary: PokemonSlot) -> PokemonSlot:
+	if player == null:
+		return null
+	var best_slot: PokemonSlot = null
+	var best_score := -1000000.0
+	for slot: PokemonSlot in _all_slots(player):
+		if slot == primary or not _is_live_slot(slot):
+			continue
+		var name := _slot_name(slot)
+		if not (name in [REGIDRAGO_V, REGIDRAGO_VSTAR]):
+			continue
+		var score := float(slot.attached_energy.size()) * 80.0
+		if name == REGIDRAGO_VSTAR:
+			score += 180.0
+		if score > best_score:
+			best_score = score
+			best_slot = slot
+	return best_slot
+
+
+func _can_advance_backup_regidrago_energy(player: PlayerState, backup: PokemonSlot) -> bool:
+	if player == null or backup == null:
+		return false
+	for missing_type: String in _regidrago_missing_types(backup):
+		if _count_energy_in_hand(player, missing_type) > 0:
+			return true
+		if _has_movable_ogerpon_energy_for_slot(player, backup, missing_type):
+			return true
+	return false
+
+
+func _has_movable_ogerpon_energy_for_slot(player: PlayerState, target: PokemonSlot, required_type: String = "") -> bool:
+	if player == null or target == null:
+		return false
+	for slot: PokemonSlot in _all_slots(player):
+		if slot == target or _slot_name(slot) != TEAL_MASK_OGERPON_EX:
+			continue
+		for energy: CardInstance in slot.attached_energy:
+			var provides := _energy_type(energy)
+			if required_type == "" or provides == required_type:
+				return true
+	return false
+
+
+func _has_uncharged_live_ogerpon(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	for slot: PokemonSlot in _all_slots(player):
+		if not _is_live_slot(slot) or _slot_name(slot) != TEAL_MASK_OGERPON_EX:
+			continue
+		var grass_count := 0
+		for energy: CardInstance in slot.attached_energy:
+			if _energy_type(energy) == "G":
+				grass_count += 1
+		if grass_count == 0:
+			return true
+	return false
 
 
 func _copied_attack_score(option: Dictionary, context: Dictionary) -> float:

@@ -1,0 +1,56 @@
+{
+    "name":  "猛恶菇",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "Ancient",
+    "description":  "【恶】 毒液喷吐 \n令对手的战斗宝可梦陷入【中毒】状态。\n\n【恶】【恶】【恶】 痛殴 50+\n追加造成对手战斗宝可梦身上放置的伤害指示物数量×50伤害。\n\n",
+    "yoren_code":  "P0986",
+    "set_code":  "CSV7C",
+    "card_index":  "142",
+    "set_code_en":  "TWM",
+    "card_index_en":  "118",
+    "name_en":  "Brute Bonnet",
+    "artist":  "danciao",
+    "rarity":  "U",
+    "release_date":  "2026-01-16T00:00:00+08:00",
+    "regulation_mark":  "H",
+    "effect_id":  "c6083ce0a1d2bda048f3eb948b8abca8",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV7C/142.png",
+    "image_local_path":  "user://cards/images/CSV7C/142.png",
+    "is_tags":  [
+                    "Ancient",
+                    "Basic"
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "D",
+    "stage":  "Basic",
+    "hp":  120,
+    "weakness_energy":  "G",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  3,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "毒液喷吐",
+                        "text":  "令对手的战斗宝可梦陷入【中毒】状态。",
+                        "cost":  "D",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "痛殴",
+                        "text":  "追加造成对手战斗宝可梦身上放置的伤害指示物数量×50伤害。",
+                        "cost":  "DDD",
+                        "damage":  "50+",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

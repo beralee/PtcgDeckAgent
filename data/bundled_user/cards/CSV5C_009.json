@@ -1,0 +1,51 @@
+{
+    "name":  "陆地水母",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "特性: 黏菌聚落\n只要这只宝可梦在场上，对手弃牌区中的卡牌，就无法因为对手的特性或训练家的效果，被加入对手的手牌。\n\n【草】 蘑菇吸取 80\n回复这只宝可梦「30」HP。\n\n",
+    "yoren_code":  "P0949",
+    "set_code":  "CSV5C",
+    "card_index":  "009",
+    "set_code_en":  "PAR",
+    "card_index_en":  "17",
+    "name_en":  "Toedscruel",
+    "artist":  "Toshinao Aoki",
+    "rarity":  "U",
+    "release_date":  "2025-09-12T00:00:00+08:00",
+    "regulation_mark":  "G",
+    "effect_id":  "880338810e1bc9460b1d20044377e08c",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV5C/009.png",
+    "image_local_path":  "user://cards/images/CSV5C/009.png",
+    "is_tags":  [
+                    "Stage 1"
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "G",
+    "stage":  "Stage 1",
+    "hp":  120,
+    "weakness_energy":  "R",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  2,
+    "evolves_from":  "原野水母",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "蘑菇吸取",
+                        "text":  "回复这只宝可梦「30」HP。",
+                        "cost":  "GCC",
+                        "damage":  "80",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+                      {
+                          "name":  "黏菌聚落",
+                          "text":  "只要这只宝可梦在场上，对手弃牌区中的卡牌，就无法因为对手的特性或训练家的效果，被加入对手的手牌。"
+                      }
+                  ],
+    "energy_provides":  ""
+}

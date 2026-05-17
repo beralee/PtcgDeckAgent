@@ -5,6 +5,10 @@ extends Resource
 const IMAGE_BASE_URL := "https://tcg.mik.moe/static/img"
 const LOCAL_IMAGE_ROOT := "user://cards/images"
 const BUNDLED_IMAGE_ROOT := "res://data/bundled_user/cards/images"
+const PNG_SIGNATURE_BYTES := [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]
+const JPG_SIGNATURE_BYTES := [0xFF, 0xD8]
+const RIFF_SIGNATURE_BYTES := [0x52, 0x49, 0x46, 0x46]
+const WEBP_SIGNATURE_BYTES := [0x57, 0x45, 0x42, 0x50]
 const FUTURE_TAG := "Future"
 const ANCIENT_TAG := "Ancient"
 const TAG_OVERRIDE_PATH := "res://scripts/data/card_tag_overrides.json"
@@ -128,13 +132,57 @@ static func resolve_existing_image_path(paths: PackedStringArray) -> String:
 		if candidate == "":
 			continue
 		if candidate.begins_with("res://"):
-			if FileAccess.file_exists(candidate):
+			if is_valid_card_image_file(candidate):
 				return candidate
 			continue
 		var absolute_path := ProjectSettings.globalize_path(candidate)
-		if FileAccess.file_exists(absolute_path):
+		if is_valid_card_image_file(candidate) or is_valid_card_image_file(absolute_path):
 			return absolute_path
 	return ""
+
+
+static func _has_signature(bytes: PackedByteArray, signature: Array, offset: int = 0) -> bool:
+	if bytes.size() < offset + signature.size():
+		return false
+	for i: int in signature.size():
+		if bytes[offset + i] != int(signature[i]):
+			return false
+	return true
+
+
+static func has_png_signature(bytes: PackedByteArray) -> bool:
+	return _has_signature(bytes, PNG_SIGNATURE_BYTES)
+
+
+static func has_jpg_signature(bytes: PackedByteArray) -> bool:
+	return _has_signature(bytes, JPG_SIGNATURE_BYTES)
+
+
+static func has_webp_signature(bytes: PackedByteArray) -> bool:
+	return _has_signature(bytes, RIFF_SIGNATURE_BYTES) and _has_signature(bytes, WEBP_SIGNATURE_BYTES, 8)
+
+
+static func has_supported_image_signature(bytes: PackedByteArray) -> bool:
+	return has_png_signature(bytes) or has_jpg_signature(bytes) or has_webp_signature(bytes)
+
+
+static func is_valid_card_image_file(path: String) -> bool:
+	if path == "" or not FileAccess.file_exists(path):
+		return false
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return false
+	var header_size := int(min(file.get_length(), 12))
+	if header_size <= 0:
+		file.close()
+		return false
+	var header := file.get_buffer(header_size)
+	file.close()
+	return has_supported_image_signature(header)
+
+
+static func is_valid_png_file(path: String) -> bool:
+	return is_valid_card_image_file(path)
 
 
 func ensure_image_metadata() -> bool:
@@ -154,7 +202,7 @@ func ensure_image_metadata() -> bool:
 
 func has_local_image() -> bool:
 	var local_path := image_local_path if image_local_path != "" else build_local_image_path(set_code, card_index)
-	return local_path != "" and FileAccess.file_exists(local_path)
+	return local_path != "" and is_valid_card_image_file(local_path)
 
 
 ## 是否为宝可梦卡
@@ -200,7 +248,7 @@ func get_prize_count() -> int:
 
 ## 是否为 ACE SPEC 卡
 func is_ace_spec() -> bool:
-	return "ACE SPEC" in is_tags
+	return mechanic == "ACE SPEC" or rarity == "ACE" or "ACE SPEC" in is_tags
 
 
 ## 是否为光辉宝可梦

@@ -1,0 +1,55 @@
+{
+    "name":  "小磁怪",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【雷】 小型电击 10\n\n\n【雷】 爆炸 60\n给这只宝可梦也造成60伤害。\n\n",
+    "yoren_code":  "P081",
+    "set_code":  "151C",
+    "card_index":  "081",
+    "set_code_en":  "MEW",
+    "card_index_en":  "81",
+    "name_en":  "Magnemite",
+    "artist":  "Yuka Morii",
+    "rarity":  "C",
+    "release_date":  "2025-01-17T00:00:00+08:00",
+    "regulation_mark":  "G",
+    "effect_id":  "5c0716ee309a1b95a0ae5c534069b0d2",
+    "image_url":  "https://tcg.mik.moe/static/img/151C/081.png",
+    "image_local_path":  "user://cards/images/151C/081.png",
+    "is_tags":  [
+                    "Basic"
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "L",
+    "stage":  "Basic",
+    "hp":  60,
+    "weakness_energy":  "F",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "小型电击",
+                        "text":  "",
+                        "cost":  "L",
+                        "damage":  "10",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "爆炸",
+                        "text":  "给这只宝可梦也造成60伤害。",
+                        "cost":  "LC",
+                        "damage":  "60",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

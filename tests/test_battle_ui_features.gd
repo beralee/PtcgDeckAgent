@@ -5,7 +5,9 @@ extends TestBase
 const BattleSceneScript = preload("res://scenes/battle/BattleScene.gd")
 const BattleScenePacked = preload("res://scenes/battle/BattleScene.tscn")
 const BattleCardViewScript = preload("res://scenes/battle/BattleCardView.gd")
+const CoinFlipAnimatorScript = preload("res://scenes/battle/CoinFlipAnimator.gd")
 const BattleDisplayControllerScript = preload("res://scripts/ui/battle/BattleDisplayController.gd")
+const BattleStadiumBackdropCoordinatorScript = preload("res://scripts/ui/battle/display/BattleStadiumBackdropCoordinator.gd")
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 const BattleSetupScript = preload("res://scenes/battle_setup/BattleSetup.gd")
 const BattleSetupScene = preload("res://scenes/battle_setup/BattleSetup.tscn")
@@ -18,12 +20,14 @@ const EffectEnergySwitchScript = preload("res://scripts/effects/trainer_effects/
 const EffectPokemonCatcherScript = preload("res://scripts/effects/trainer_effects/EffectPokemonCatcher.gd")
 const EffectCapturingAromaScript = preload("res://scripts/effects/trainer_effects/EffectCapturingAroma.gd")
 const EffectMirageGateScript = preload("res://scripts/effects/trainer_effects/EffectMirageGate.gd")
+const EffectPerfectMixerScript = preload("res://scripts/effects/trainer_effects/CSV9C183PerfectMixer.gd")
 const EffectSwitchCartScript = preload("res://scripts/effects/trainer_effects/EffectSwitchCart.gd")
 const EffectSwitchPokemonScript = preload("res://scripts/effects/trainer_effects/EffectSwitchPokemon.gd")
 const EffectRareCandyScript = preload("res://scripts/effects/trainer_effects/EffectRareCandy.gd")
 const EffectCarmineScript = preload("res://scripts/effects/trainer_effects/EffectCarmine.gd")
 const EffectMelaScript = preload("res://scripts/effects/trainer_effects/EffectMela.gd")
 const EffectCollapsedStadiumScript = preload("res://scripts/effects/stadium_effects/EffectCollapsedStadium.gd")
+const EffectAreaZeroUnderdepthsScript = preload("res://scripts/effects/stadium_effects/CSV9C207AreaZeroUnderdepths.gd")
 const AbilitySelfKnockoutDamageCountersScript = preload("res://scripts/effects/pokemon_effects/AbilitySelfKnockoutDamageCounters.gd")
 const AbilityPsychicEmbraceScript = preload("res://scripts/effects/pokemon_effects/AbilityPsychicEmbrace.gd")
 const AbilityStarPortalScript = preload("res://scripts/effects/pokemon_effects/AbilityStarPortal.gd")
@@ -77,6 +81,13 @@ class FakeBattleRecorder extends RefCounted:
 
 
 class FakeCoinAnimator extends Node:
+	var played_results: Array[bool] = []
+
+	func play(result: bool) -> void:
+		played_results.append(result)
+
+
+class FakeLayeredCoinAnimator extends Control:
 	var played_results: Array[bool] = []
 
 	func play(result: bool) -> void:
@@ -361,6 +372,114 @@ func test_hand_card_detail_use_and_cancel_gate_original_execution() -> String:
 	return result
 
 
+func test_effect_reset_clears_hand_drag_suppression_for_next_hand_item_tap() -> String:
+	var scene := _prepare_detail_scene()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+	scene.set("_active_battle_layout_mode", "portrait")
+
+	var card := CardInstance.create(_make_trainer_cd("Rare Candy", "Item", ""), 0)
+	gsm.game_state.players[0].hand = [card]
+	scene.set("_pending_choice", "effect_interaction")
+	scene.set("_hand_drag_suppress_click_until_msec", Time.get_ticks_msec() + 10000)
+	var suppressed_before := bool(scene.call("_is_hand_drag_click_suppressed"))
+
+	scene.call("_reset_effect_interaction")
+	var suppressed_after := bool(scene.call("_is_hand_drag_click_suppressed"))
+	scene.call("_show_hand_card_detail", card)
+
+	var action_bar := scene.find_child("DetailActionBar", true, false) as Control
+	var use_button := scene.find_child("DetailUseButton", true, false) as Button
+	var opened_confirmation: bool = action_bar != null and action_bar.visible and use_button != null and use_button.visible
+	var result := run_checks([
+		assert_true(suppressed_before, "The test should start with a stale hand drag click suppression window"),
+		assert_false(suppressed_after, "Finishing an effect dialog should clear stale hand drag click suppression"),
+		assert_true(opened_confirmation, "The next hand Item tap after an effect dialog should open its Use/Cancel confirmation immediately"),
+	])
+	scene.free()
+	return result
+
+
+func test_successful_action_refresh_clears_hand_drag_suppression_for_next_hand_item_tap() -> String:
+	var scene := _prepare_detail_scene()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+	scene.set("_active_battle_layout_mode", "portrait")
+
+	var card := CardInstance.create(_make_trainer_cd("Next Item", "Item", ""), 0)
+	gsm.game_state.players[0].hand = [card]
+	scene.set("_hand_drag_suppress_click_until_msec", Time.get_ticks_msec() + 10000)
+	var suppressed_before := bool(scene.call("_is_hand_drag_click_suppressed"))
+
+	scene.call("_refresh_ui_after_successful_action", false, 0)
+	var suppressed_after := bool(scene.call("_is_hand_drag_click_suppressed"))
+	scene.call("_show_hand_card_detail", card)
+
+	var action_bar := scene.find_child("DetailActionBar", true, false) as Control
+	var use_button := scene.find_child("DetailUseButton", true, false) as Button
+	var opened_confirmation: bool = action_bar != null and action_bar.visible and use_button != null and use_button.visible
+	var result := run_checks([
+		assert_true(suppressed_before, "The test should start with a stale hand drag click suppression window"),
+		assert_false(suppressed_after, "Successful action refresh should clear stale hand drag click suppression"),
+		assert_true(opened_confirmation, "The next hand Item tap after a completed action should open its Use/Cancel confirmation immediately"),
+	])
+	scene.free()
+	return result
+
+
+func test_modal_completion_clears_hand_drag_suppression_for_next_hand_item_tap() -> String:
+	var scene := _prepare_detail_scene()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+	scene.set("_active_battle_layout_mode", "portrait")
+
+	var card := CardInstance.create(_make_trainer_cd("Post Modal Item", "Item", ""), 0)
+	gsm.game_state.players[0].hand = [card]
+	scene.set("_hand_drag_suppress_click_until_msec", Time.get_ticks_msec() + 10000)
+	var suppressed_before := bool(scene.call("_is_hand_drag_click_suppressed"))
+
+	scene.call("_mark_modal_input_consumed", "test_dialog_confirm")
+	var suppressed_after := bool(scene.call("_is_hand_drag_click_suppressed"))
+	var modal_slot_suppression_armed := int(scene.get("_modal_input_slot_suppress_until_msec")) > Time.get_ticks_msec()
+	scene.call("_show_hand_card_detail", card)
+
+	var action_bar := scene.find_child("DetailActionBar", true, false) as Control
+	var use_button := scene.find_child("DetailUseButton", true, false) as Button
+	var opened_confirmation: bool = action_bar != null and action_bar.visible and use_button != null and use_button.visible
+	var result := run_checks([
+		assert_true(suppressed_before, "The test should start with a stale hand drag click suppression window"),
+		assert_false(suppressed_after, "Completing a modal dialog should clear stale hand drag click suppression"),
+		assert_true(modal_slot_suppression_armed, "Completing a modal dialog should still arm slot click-through suppression"),
+		assert_true(opened_confirmation, "The next hand Item tap after a modal dialog should open its Use/Cancel confirmation immediately"),
+	])
+	scene.free()
+	return result
+
+
 func test_pokemon_and_energy_hand_cards_directly_enter_selected_state() -> String:
 	var scene := _prepare_detail_scene()
 	var gsm := GameStateMachine.new()
@@ -439,6 +558,93 @@ func test_hand_card_left_click_waits_for_release_and_drag_suppresses_click() -> 
 	return result
 
 
+func test_battle_card_view_primary_release_fallback_handles_missing_press_once() -> String:
+	var card_view := BattleCardViewScript.new()
+	var card := CardInstance.create(_make_trainer_cd("Fallback Tool", "Tool", ""), 0)
+	var counters := {"left": 0}
+	card_view.setup_from_instance(card, BattleCardViewScript.MODE_HAND)
+	card_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
+		counters["left"] = int(counters["left"]) + 1
+	)
+
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = Vector2(24, 24)
+	release.global_position = Vector2(24, 24)
+	card_view.call("_gui_input", release)
+	var count_without_fallback := int(counters["left"])
+	card_view.call("arm_primary_release_fallback", "test_missing_press", 0, 1000)
+	var armed_before_release := bool(card_view.call("is_primary_release_fallback_armed"))
+	card_view.call("_gui_input", release)
+	var count_after_fallback := int(counters["left"])
+	card_view.call("_gui_input", release)
+	var count_after_second_release := int(counters["left"])
+
+	var result := run_checks([
+		assert_eq(count_without_fallback, 0, "A release without a tracked press should normally do nothing"),
+		assert_true(armed_before_release, "The fallback should be armed before the first release"),
+		assert_eq(count_after_fallback, 1, "The fallback should convert one missing-press release into a click"),
+		assert_eq(count_after_second_release, 1, "The fallback should be one-shot and not repeat on later releases"),
+	])
+	card_view.free()
+	return result
+
+
+func test_card_search_dialog_arms_release_fallback_for_first_card_tap() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var card := CardInstance.create(_make_pokemon_cd("Search Target", 60, "C"), 0)
+	battle_scene.set("_pending_choice", "effect_interaction")
+	battle_scene.call("_show_dialog", "Search", [], {
+		"presentation": "cards",
+		"card_items": [card],
+		"choice_labels": ["Search Target"],
+		"min_select": 0,
+		"max_select": 2,
+		"allow_cancel": true,
+	})
+
+	var row := battle_scene.get("_dialog_card_row") as HBoxContainer
+	var card_view := row.get_child(0) as BattleCardView if row != null and row.get_child_count() > 0 else null
+	var armed_on_open := card_view != null and bool(card_view.call("is_primary_release_fallback_armed"))
+	if card_view != null:
+		card_view.call("arm_primary_release_fallback", "test_dialog_missing_press", 0, 1000)
+		var release := InputEventMouseButton.new()
+		release.button_index = MOUSE_BUTTON_LEFT
+		release.pressed = false
+		release.position = Vector2(24, 24)
+		release.global_position = Vector2(24, 24)
+		card_view.call("_gui_input", release)
+	var selected_indices: Array = battle_scene.get("_dialog_card_selected_indices")
+
+	var result := run_checks([
+		assert_true(card_view != null, "Card search dialog should render a card view"),
+		assert_true(armed_on_open, "Card search dialog cards should arm a short missing-press fallback when opened"),
+		assert_eq(selected_indices, [0], "A release-only first tap during the fallback window should select the dialog card"),
+	])
+	battle_scene.free()
+	return result
+
+
+func test_modal_completion_arms_existing_hand_card_release_fallback() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var card := CardInstance.create(_make_trainer_cd("Post Modal Tool", "Tool", ""), 0)
+	var hand_card := battle_scene.call("_build_hand_card", card) as BattleCardView
+	var hand_container := battle_scene.get("_hand_container") as HBoxContainer
+	if hand_container != null and hand_card != null:
+		hand_container.add_child(hand_card)
+
+	battle_scene.call("_mark_modal_input_consumed", "test_modal_hand_fallback")
+	var armed_after_modal := hand_card != null and bool(hand_card.call("is_primary_release_fallback_armed"))
+
+	var result := run_checks([
+		assert_true(hand_card != null, "The test should create a hand card view"),
+		assert_true(armed_after_modal, "Completing a modal should arm existing hand cards for a missing-press release fallback"),
+	])
+	battle_scene.free()
+	return result
+
+
 func test_battle_hand_scroll_uses_drag_scroller_without_native_bar() -> String:
 	var scene: Control = BattleScenePacked.instantiate()
 	var hand_scroll := scene.find_child("HandScroll", true, false) as ScrollContainer
@@ -511,6 +717,56 @@ func test_battle_hand_drag_tracks_pointer_direction_after_press() -> String:
 		assert_true(scroll_after_left_drag > start_scroll, "Dragging the pointer left should move the hand rail toward later cards"),
 		assert_true(scroll_after_right_drag < start_scroll, "Dragging the pointer right should move the hand rail back toward earlier cards"),
 		assert_false(bool(scene.get("_hand_drag_active")), "Global hand drag capture should end on release"),
+	])
+	scene.free()
+	return result
+
+
+func test_hand_drag_clears_stale_card_gallery_capture() -> String:
+	var scene: Control = BattleScenePacked.instantiate()
+	var hand_scroll := scene.find_child("HandScroll", true, false) as ScrollContainer
+	scene.set("_hand_scroll", hand_scroll)
+	scene.call("_setup_hand_drag_scroll")
+	_prepare_overflowing_hand_scroll_for_drag_test(hand_scroll)
+	hand_scroll.scroll_horizontal = 300
+	var start_scroll := hand_scroll.scroll_horizontal
+
+	var stale_scroll := ScrollContainer.new()
+	var stale_row := HBoxContainer.new()
+	scene.add_child(stale_scroll)
+	stale_scroll.add_child(stale_row)
+	scene.call("_configure_card_gallery_drag_scroll", stale_scroll, stale_row, "stale_dialog")
+	scene.call("_set_card_gallery_drag_scroll_active", stale_scroll, true)
+	var stale_press := InputEventMouseButton.new()
+	stale_press.button_index = MOUSE_BUTTON_LEFT
+	stale_press.pressed = true
+	stale_press.global_position = Vector2(220, 24)
+	scene.call("_handle_card_gallery_drag_scroll_input", stale_press, stale_scroll, "stale_dialog")
+	var stale_active_before_hand_press: bool = bool(scene.get("_card_gallery_drag_active"))
+
+	var hand_press := InputEventMouseButton.new()
+	hand_press.button_index = MOUSE_BUTTON_LEFT
+	hand_press.pressed = true
+	hand_press.global_position = Vector2(200, 24)
+	scene.call("_handle_hand_drag_scroll_input", hand_press, "hand_card_gui")
+	var stale_active_after_hand_press: bool = bool(scene.get("_card_gallery_drag_active"))
+
+	var drag_left := InputEventMouseMotion.new()
+	drag_left.global_position = Vector2(120, 24)
+	scene.call("_input", drag_left)
+	var scroll_after_drag := hand_scroll.scroll_horizontal
+
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.global_position = Vector2(120, 24)
+	scene.call("_input", release)
+
+	var result := run_checks([
+		assert_true(stale_active_before_hand_press, "The test must start with a stale dialog card-gallery drag capture"),
+		assert_false(stale_active_after_hand_press, "Starting a hand drag should clear stale dialog card-gallery capture"),
+		assert_true(scroll_after_drag > start_scroll, "Hand drag should scroll even after a previous card-search dialog missed its release event"),
+		assert_false(bool(scene.get("_hand_drag_active")), "Hand drag should still end normally on release"),
 	])
 	scene.free()
 	return result
@@ -744,6 +1000,86 @@ func test_discard_collection_viewer_uses_shared_card_gallery_drag_scroll() -> St
 		assert_true(card_input_enabled, "Discard collection card views should forward pointer input to shared drag scrolling"),
 		assert_true(scroll_after_drag > start_scroll, "Dragging a discard collection card should scroll the collection row"),
 		assert_true(bool(scene.call("_is_card_gallery_drag_click_suppressed")), "Dragging a discard collection card should suppress card detail clicks briefly"),
+	])
+	scene.queue_free()
+	return result
+
+
+func test_discard_viewer_raises_above_stadium_overlay_for_input() -> String:
+	var scene: Control = BattleScenePacked.instantiate()
+	scene.set("_view_player", 0)
+	scene.call("_setup_discard_gallery")
+	var stadium_overlay := scene.call("_ensure_stadium_card_overlay") as Control
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	for player_index: int in 2:
+		var player := PlayerState.new()
+		player.player_index = player_index
+		gsm.game_state.players.append(player)
+	gsm.game_state.players[0].discard_pile.append(CardInstance.create(_make_pokemon_cd("Layered Discard", 70, "C"), 0))
+	scene.set("_gsm", gsm)
+
+	scene.call("_show_discard_pile", 0, "Discard")
+	var discard_overlay := scene.get("_discard_overlay") as Control
+
+	var result := run_checks([
+		assert_true(discard_overlay != null and discard_overlay.visible, "Discard viewer should be visible after opening"),
+		assert_gte(discard_overlay.z_index if discard_overlay != null else -1, 300, "Discard viewer should be promoted to the active modal input layer"),
+		assert_eq(discard_overlay.mouse_filter if discard_overlay != null else -1, Control.MOUSE_FILTER_STOP, "Discard viewer overlay should stop pointer events"),
+		assert_true(
+			discard_overlay != null
+			and stadium_overlay != null
+			and discard_overlay.get_parent() == stadium_overlay.get_parent()
+			and discard_overlay.get_index() > stadium_overlay.get_index(),
+			"Discard viewer should be moved above the Stadium card overlay in root sibling order"
+		),
+	])
+	scene.queue_free()
+	return result
+
+
+func test_discard_viewer_blocks_underlying_stadium_card_action() -> String:
+	var scene: Control = BattleScenePacked.instantiate()
+	scene.set("_view_player", 0)
+	scene.set("_dialog_overlay", scene.find_child("DialogOverlay", true, false))
+	scene.set("_dialog_title", scene.find_child("DialogTitle", true, false))
+	scene.set("_dialog_list", scene.find_child("DialogList", true, false))
+	scene.set("_dialog_confirm", scene.find_child("DialogConfirm", true, false))
+	scene.set("_dialog_cancel", scene.find_child("DialogCancel", true, false))
+	scene.set("_dialog_box", scene.find_child("DialogBox", true, false))
+	scene.set("_dialog_vbox", scene.find_child("DialogVBox", true, false))
+	scene.call("_setup_dialog_gallery")
+	scene.call("_setup_discard_gallery")
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	for player_index: int in 2:
+		var player := PlayerState.new()
+		player.player_index = player_index
+		gsm.game_state.players.append(player)
+	var stadium_cd := _make_trainer_cd("Blocked Stadium", "Stadium", "")
+	stadium_cd.effect_id = "missing_test_stadium_effect"
+	var stadium := CardInstance.create(stadium_cd, 0)
+	gsm.game_state.stadium_card = stadium
+	gsm.game_state.stadium_owner_index = 0
+	gsm.game_state.players[0].discard_pile.append(CardInstance.create(_make_pokemon_cd("Modal Discard", 70, "C"), 0))
+	scene.set("_gsm", gsm)
+
+	scene.call("_show_discard_pile", 0, "Discard")
+	scene.set("_pending_choice", "")
+	var dialog_overlay := scene.get("_dialog_overlay") as Control
+	if dialog_overlay != null:
+		dialog_overlay.visible = false
+	scene.call("_on_stadium_card_left_clicked", stadium, stadium_cd)
+
+	var result := run_checks([
+		assert_eq(str(scene.get("_pending_choice")), "", "Stadium card clicks below the discard viewer should not open a Stadium action dialog"),
+		assert_false(dialog_overlay != null and dialog_overlay.visible, "Discard viewer should block click-through into DialogOverlay"),
 	])
 	scene.queue_free()
 	return result
@@ -1016,6 +1352,109 @@ func test_coin_flipper_until_tails_emits() -> String:
 	])
 
 
+func test_coin_flip_animator_scales_coin_and_result_text_for_portrait() -> String:
+	var animator: Control = CoinFlipAnimatorScript.new()
+	animator.call("_ready")
+	animator.call("apply_viewport_metrics", Vector2(900, 1600), true)
+	var coin := animator.get("_coin_sprite") as TextureRect
+	var label := animator.get("_result_label") as Label
+	var vbox := animator.get("_coin_vbox") as VBoxContainer
+	var portrait_coin_size := coin.custom_minimum_size if coin != null else Vector2.ZERO
+	var portrait_font_size := label.get_theme_font_size("font_size") if label != null else 0
+	var portrait_gap := vbox.get_theme_constant("separation") if vbox != null else 0
+
+	animator.call("apply_viewport_metrics", Vector2(1600, 900), false)
+	var landscape_coin_size := coin.custom_minimum_size if coin != null else Vector2.ZERO
+	var landscape_font_size := label.get_theme_font_size("font_size") if label != null else 0
+	animator.free()
+
+	return run_checks([
+		assert_gte(roundi(portrait_coin_size.x), 300, "Portrait coin should scale with the tall battle canvas instead of staying at the desktop size"),
+		assert_gte(portrait_font_size, 44, "Portrait coin result text should be readable at battle phone scale"),
+		assert_gte(portrait_gap, 20, "Portrait coin result should keep proportional spacing under the coin"),
+		assert_eq(roundi(landscape_coin_size.x), 180, "Landscape coin should keep the existing compact size"),
+		assert_eq(landscape_font_size, 24, "Landscape coin result text should keep the existing compact font"),
+	])
+
+
+func test_coin_flip_animator_coin_skin_registry_is_complete() -> String:
+	var animator: Control = CoinFlipAnimatorScript.new()
+	var skin_count := int(animator.call("get_coin_skin_count_for_tests"))
+	var checks: Array[String] = [
+		assert_gte(skin_count, 4, "Coin skin registry should include default plus generated variants"),
+	]
+	for index: int in skin_count:
+		var skin: Dictionary = animator.call("get_coin_skin_textures_for_tests", index)
+		var heads: Variant = skin.get("heads", null)
+		var tails: Variant = skin.get("tails", null)
+		checks.append(assert_true(heads is Texture2D, "Coin skin %d should have a heads texture" % index))
+		checks.append(assert_true(tails is Texture2D, "Coin skin %d should have a tails texture" % index))
+		if heads is Texture2D:
+			var heads_size := (heads as Texture2D).get_size()
+			checks.append(assert_true(heads_size.x > 0.0 and heads_size.y > 0.0, "Coin skin heads texture should have valid dimensions"))
+		if tails is Texture2D:
+			var tails_size := (tails as Texture2D).get_size()
+			checks.append(assert_true(tails_size.x > 0.0 and tails_size.y > 0.0, "Coin skin tails texture should have valid dimensions"))
+	animator.free()
+	return run_checks(checks)
+
+
+func test_coin_flip_animator_uses_stable_selected_coin_skin() -> String:
+	var animator: Control = CoinFlipAnimatorScript.new()
+	animator.call("set_coin_skin_index_for_tests", 1)
+	animator.call("_ready")
+	var first_skin: Dictionary = animator.call("get_coin_skin_textures_for_tests", 1)
+	var coin := animator.get("_coin_sprite") as TextureRect
+	var first_texture := coin.texture if coin != null else null
+	var first_index := int(animator.call("get_coin_skin_index_for_tests"))
+
+	animator.call("_select_coin_skin_once")
+	var second_index := int(animator.call("get_coin_skin_index_for_tests"))
+	var second_texture := coin.texture if coin != null else null
+
+	animator.call("set_coin_skin_index_for_tests", 2)
+	var changed_skin: Dictionary = animator.call("get_coin_skin_textures_for_tests", 2)
+	var changed_texture := coin.texture if coin != null else null
+	var changed_index := int(animator.call("get_coin_skin_index_for_tests"))
+	animator.free()
+
+	return run_checks([
+		assert_eq(first_index, 1, "A preselected coin skin index should be honored during ready"),
+		assert_eq(first_texture, first_skin.get("heads", null), "Coin sprite should show the selected skin heads texture"),
+		assert_eq(second_index, first_index, "Selecting once again should keep the existing skin stable"),
+		assert_eq(second_texture, first_texture, "Stable skin selection should not replace the visible texture"),
+		assert_eq(changed_index, 2, "Test hook should allow changing the coin skin explicitly"),
+		assert_eq(changed_texture, changed_skin.get("heads", null), "Changing skin should update the visible heads texture"),
+		assert_true(changed_texture != first_texture, "Different generated coin skins should use different textures"),
+	])
+
+
+func test_battle_scene_coin_animation_raises_above_modal_overlays() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var dialog_overlay := battle_scene.get("_dialog_overlay") as Panel
+	var detail_overlay := battle_scene.get("_detail_overlay") as Panel
+	var coin_animator := FakeLayeredCoinAnimator.new()
+	dialog_overlay.z_index = 300
+	detail_overlay.z_index = 500
+	coin_animator.z_index = 1
+	battle_scene.add_child(dialog_overlay)
+	battle_scene.add_child(detail_overlay)
+	battle_scene.add_child(coin_animator)
+	battle_scene.set("_coin_animator", coin_animator)
+	var queue: Array[bool] = [true]
+	battle_scene.set("_coin_flip_queue", queue)
+
+	battle_scene.call("_play_next_coin_animation")
+
+	var result := run_checks([
+		assert_eq(coin_animator.played_results, [true], "Coin animation should still play the queued result"),
+		assert_gt(coin_animator.z_index, detail_overlay.z_index, "Coin animation should render above the highest modal overlay"),
+		assert_eq(coin_animator.get_index(), battle_scene.get_child_count() - 1, "Coin animation should be the last child so equal-z overlays cannot cover it"),
+	])
+	battle_scene.free()
+	return result
+
+
 func test_battle_setup_scene_includes_first_player_option() -> String:
 	var scene: Control = BattleSetupScene.instantiate()
 	var first_player_label := scene.find_child("FirstPlayerLabel", true, false)
@@ -1050,6 +1489,21 @@ func test_battle_setup_scene_includes_background_gallery() -> String:
 		assert_true(background_label is Label, "对战设置页应包含场地选择标签"),
 		assert_true(background_gallery is ScrollContainer, "对战设置页应包含横向场地滚动区"),
 		assert_true(background_gallery_row is HBoxContainer, "对战设置页应包含场地缩略图行"),
+	])
+
+
+func test_battle_setup_scene_includes_dynamic_stadium_background_toggle() -> String:
+	var scene: Control = BattleSetupScene.instantiate()
+	var dynamic_label := scene.find_child("DynamicStadiumBackgroundLabel", true, false)
+	var dynamic_segment := scene.find_child("DynamicStadiumBackgroundSegment", true, false)
+	var on_button := scene.find_child("DynamicStadiumBackgroundOnButton", true, false)
+	var off_button := scene.find_child("DynamicStadiumBackgroundOffButton", true, false)
+
+	return run_checks([
+		assert_true(dynamic_label is Label, "Battle setup should include dynamic stadium background label"),
+		assert_true(dynamic_segment is HBoxContainer, "Battle setup should include dynamic stadium background segment"),
+		assert_true(on_button is Button, "Battle setup should include dynamic stadium background on button"),
+		assert_true(off_button is Button, "Battle setup should include dynamic stadium background off button"),
 	])
 
 
@@ -4480,6 +4934,75 @@ func test_battle_scene_field_assignment_builds_entries_without_dialog_targets() 
 	])
 
 
+func test_energy_switch_field_assignment_compacts_after_source_and_waits_for_confirm() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Source Mon", 120, "G"), 0))
+	var bench := PokemonSlot.new()
+	bench.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Target Mon", 90, "G"), 0))
+	gsm.game_state.players[0].active_pokemon = active
+	gsm.game_state.players[0].bench = [bench]
+
+	var energy_a := CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0)
+	var energy_b := CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0)
+	active.attached_energy = [energy_a, energy_b]
+	var card := CardInstance.create(_make_trainer_cd("Energy Switch", "Item", ""), 0)
+	var steps: Array[Dictionary] = [{
+		"id": "energy_assignment",
+		"title": "Energy Switch",
+		"ui_mode": "card_assignment",
+		"source_items": [energy_a, energy_b],
+		"source_labels": ["Grass Energy", "Fire Energy"],
+		"source_groups": [{"slot": active, "energy_indices": [0, 1]}],
+		"target_items": [bench],
+		"target_labels": ["Target Mon"],
+		"min_select": 1,
+		"max_select": 1,
+		"compact_field_assignment_after_source": true,
+		"field_assignment_require_confirm": true,
+	}]
+
+	battle_scene.call("_start_effect_interaction", "trainer", 0, steps, card)
+	var panel := battle_scene.get("_field_interaction_panel") as PanelContainer
+	var scroll := battle_scene.get("_field_interaction_scroll") as ScrollContainer
+	var expanded_height := panel.custom_minimum_size.y if panel != null else 0.0
+	var scroll_visible_before := scroll != null and scroll.visible
+
+	battle_scene.call("_on_field_assignment_source_chosen", 0)
+	var compact_height := panel.custom_minimum_size.y if panel != null else 0.0
+	var scroll_visible_after_source := scroll != null and scroll.visible
+	var clear_button := battle_scene.get("_field_interaction_clear_btn") as Button
+	var confirm_button := battle_scene.get("_field_interaction_confirm_btn") as Button
+	var confirm_disabled_after_source := confirm_button != null and confirm_button.disabled
+
+	battle_scene.call("_handle_field_assignment_target_index", 0)
+	var assignments: Array = battle_scene.get("_field_interaction_assignment_entries")
+	var pending_step_index := int(battle_scene.get("_pending_effect_step_index"))
+
+	return run_checks([
+		assert_true(scroll_visible_before, "Energy Switch source picker should start expanded"),
+		assert_false(scroll_visible_after_source, "Energy Switch should hide the large source picker after a source Energy is selected"),
+		assert_true(compact_height < expanded_height, "Energy Switch field assignment panel should shrink after source selection"),
+		assert_true(clear_button != null and clear_button.visible, "Compact Energy Switch should allow clearing the selected source"),
+		assert_true(confirm_disabled_after_source, "Energy Switch confirm should stay disabled until a target is chosen"),
+		assert_eq(assignments.size(), 1, "Clicking the target should create a pending path"),
+		assert_eq(str(battle_scene.get("_field_interaction_mode")), "assignment", "Energy Switch should wait for explicit confirmation instead of resolving immediately"),
+		assert_eq(pending_step_index, 0, "Energy Switch should not advance the effect step before confirm"),
+		assert_false(confirm_button.disabled, "Energy Switch confirm should enable after source and target form a path"),
+	])
+
+
 func test_battle_scene_boss_orders_routes_real_effect_to_field_slots() -> String:
 	var battle_scene = _make_battle_scene_stub()
 	var gsm := GameStateMachine.new()
@@ -4721,6 +5244,7 @@ func test_portrait_card_search_dialog_restores_large_horizontal_scrollbar() -> S
 	var drag_active := scroll != null and bool(scroll.get_meta("card_gallery_drag_scroll_active", false))
 	var keeps_scrollbar_visible := scroll != null and bool(scroll.get_meta("card_gallery_drag_keep_scrollbars_visible", false))
 	var card_input_enabled := first_card != null and bool(first_card.get_meta("card_gallery_drag_input_enabled", false))
+	var scrollbar_bridged := hbar != null and bool(hbar.get_meta("card_gallery_drag_scrollbar_bridge", false))
 	if scroll != null:
 		scroll.size = Vector2(400, scroll.custom_minimum_size.y)
 	if row != null:
@@ -4759,6 +5283,7 @@ func test_portrait_card_search_dialog_restores_large_horizontal_scrollbar() -> S
 		assert_true(drag_active, "Portrait card search should activate card-gallery drag scrolling"),
 		assert_true(keeps_scrollbar_visible, "Portrait card search drag scrolling should keep the visible scrollbar available"),
 		assert_true(card_input_enabled, "Portrait card-search card previews should forward pointer input to shared drag scrolling"),
+		assert_false(scrollbar_bridged, "Portrait card search should leave the visible scrollbar to native input instead of card-gallery drag capture"),
 		assert_false(bool(hbar.get_meta("card_gallery_hidden_scrollbar", false)) if hbar != null else true, "Portrait card search should restore the visible horizontal scrollbar"),
 		assert_eq(str(hbar.get_meta("hud_scrollbar_profile", "")) if hbar != null else "", "portrait_touch", "Portrait card search scrollbar should use the large touch HUD profile"),
 		assert_gte(hbar.custom_minimum_size.y if hbar != null else 0.0, float(HudThemeScript.SCROLLBAR_PORTRAIT_TOUCH_THICKNESS), "Portrait card search horizontal scrollbar should be large enough to grab on mobile"),
@@ -4767,6 +5292,62 @@ func test_portrait_card_search_dialog_restores_large_horizontal_scrollbar() -> S
 		assert_true(press_consumed, "Portrait card search drag handler should consume the initial press while the scrollbar remains visible"),
 		assert_true(drag_consumed, "Portrait card search drag handler should consume horizontal drag while the scrollbar remains visible"),
 		assert_true(scroll_after_drag > start_scroll, "Portrait card search should move horizontally when dragged while the scrollbar remains visible"),
+	])
+
+
+func test_portrait_perfect_mixer_uses_native_visible_scrollbar_not_card_drag_bridge() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 3
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	for i: int in 12:
+		player.deck.append(CardInstance.create(_make_pokemon_cd("Mixer Target %d" % i, 60, "C"), 0))
+
+	var mixer_card := CardInstance.create(_make_trainer_cd("完美搅拌器", "Item", ""), 0)
+	var steps: Array[Dictionary] = EffectPerfectMixerScript.new().get_interaction_steps(mixer_card, gsm.game_state)
+	battle_scene.call("_start_effect_interaction", "trainer", 0, steps, mixer_card)
+
+	var scroll: ScrollContainer = battle_scene.get("_dialog_card_scroll")
+	var row := battle_scene.get("_dialog_card_row") as HBoxContainer
+	var first_card := row.get_child(0) as BattleCardView if row != null and row.get_child_count() > 0 else null
+	var hbar := scroll.get_h_scroll_bar() if scroll != null else null
+	var drag_active := scroll != null and bool(scroll.get_meta("card_gallery_drag_scroll_active", false))
+	var keeps_scrollbar_visible := scroll != null and bool(scroll.get_meta("card_gallery_drag_keep_scrollbars_visible", false))
+	var card_input_enabled := first_card != null and bool(first_card.get_meta("card_gallery_drag_input_enabled", false))
+	var scrollbar_bridged := hbar != null and bool(hbar.get_meta("card_gallery_drag_scrollbar_bridge", false))
+
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = Vector2(220, 24)
+	press.global_position = Vector2(220, 24)
+	if hbar != null:
+		hbar.gui_input.emit(press)
+	var custom_drag_active_after_hbar_press := bool(battle_scene.get("_card_gallery_drag_active"))
+
+	return run_checks([
+		assert_true(bool(battle_scene.get("_dialog_card_mode")), "Perfect Mixer should render the full deck through the shared card dialog"),
+		assert_eq((battle_scene.get("_dialog_items_data") as Array).size(), 12, "Perfect Mixer should expose the full deck as selectable cards"),
+		assert_true(drag_active, "Perfect Mixer card dialog should keep card-area drag scrolling active"),
+		assert_true(keeps_scrollbar_visible, "Perfect Mixer portrait dialog should keep a visible large scrollbar"),
+		assert_true(card_input_enabled, "Perfect Mixer card previews should still forward card-area drag input"),
+		assert_false(scrollbar_bridged, "Perfect Mixer visible scrollbar should not be captured by card-gallery dragging"),
+		assert_false(custom_drag_active_after_hbar_press, "Pressing the Perfect Mixer scrollbar should not start custom card-gallery dragging"),
+		assert_false(bool(hbar.get_meta("card_gallery_hidden_scrollbar", false)) if hbar != null else true, "Perfect Mixer scrollbar should stay visible in portrait"),
+		assert_eq(str(hbar.get_meta("hud_scrollbar_profile", "")) if hbar != null else "", "portrait_touch", "Perfect Mixer scrollbar should use the large touch HUD profile"),
 	])
 
 
@@ -4844,6 +5425,73 @@ func test_portrait_discard_viewer_restores_large_horizontal_scrollbar() -> Strin
 		assert_true(press_consumed, "Portrait discard viewer drag handler should consume the initial press while the scrollbar remains visible"),
 		assert_true(drag_consumed, "Portrait discard viewer drag handler should consume horizontal drag while the scrollbar remains visible"),
 		assert_true(scroll_after_drag > start_scroll, "Portrait discard viewer should move horizontally when dragged while the scrollbar remains visible"),
+	])
+	battle_scene.queue_free()
+	return result
+
+
+func test_portrait_discard_viewer_scrollbar_uses_native_input_not_card_drag_bridge() -> String:
+	var battle_scene: Control = BattleScenePacked.instantiate()
+	battle_scene.set("_view_player", 0)
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	battle_scene.call("_setup_discard_gallery")
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 3
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	for i: int in 10:
+		gsm.game_state.players[0].discard_pile.append(CardInstance.create(_make_pokemon_cd("Scrollbar Bridge %d" % i, 60, "C"), 0))
+	battle_scene.set("_gsm", gsm)
+
+	battle_scene.call("_show_discard_pile", 0, "Discard")
+	var scroll: ScrollContainer = battle_scene.get("_discard_card_scroll")
+	var row := battle_scene.get("_discard_card_row") as HBoxContainer
+	var hbar := scroll.get_h_scroll_bar() if scroll != null else null
+	if scroll != null:
+		scroll.size = Vector2(400, scroll.custom_minimum_size.y)
+	if row != null:
+		row.size = Vector2(1600, row.size.y)
+		row.custom_minimum_size = Vector2(1600, row.custom_minimum_size.y)
+	if hbar != null:
+		hbar.min_value = 0.0
+		hbar.max_value = 1200.0
+		hbar.page = 400.0
+	scroll.scroll_horizontal = 120
+	var start_scroll := scroll.scroll_horizontal
+
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = Vector2(220, 24)
+	press.global_position = Vector2(220, 24)
+	if hbar != null:
+		hbar.gui_input.emit(press)
+	var custom_drag_active_after_hbar_press := bool(battle_scene.get("_card_gallery_drag_active"))
+
+	var drag := InputEventMouseMotion.new()
+	drag.position = Vector2(60, 24)
+	drag.global_position = Vector2(60, 24)
+	if hbar != null:
+		hbar.gui_input.emit(drag)
+
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = Vector2(60, 24)
+	release.global_position = Vector2(60, 24)
+	if hbar != null:
+		hbar.gui_input.emit(release)
+
+	var result := run_checks([
+		assert_false(hbar != null and bool(hbar.get_meta("card_gallery_drag_scrollbar_bridge", false)), "Discard viewer visible scrollbar should stay on native input, not shared card-gallery dragging"),
+		assert_false(custom_drag_active_after_hbar_press, "Pressing the visible discard viewer scrollbar should not start custom card-gallery dragging"),
+		assert_eq(scroll.scroll_horizontal if scroll != null else -1, start_scroll, "Synthetic scrollbar gui_input should not be handled by card-gallery drag code"),
 	])
 	battle_scene.queue_free()
 	return result
@@ -5749,6 +6397,64 @@ func test_battle_scene_energy_switch_rejects_same_slot_target_in_field_assignmen
 		assert_eq(accepted_entries.size(), 1, "Energy Switch should accept a different target Pokemon"),
 		assert_eq(accepted_target, bench, "Accepted assignment should point to the other Pokemon"),
 	])
+
+
+func test_battle_scene_energy_switch_source_click_allows_immediate_slot_target() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Active", 120, "C"), 0))
+	active.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning A", "L"), 0))
+	gsm.game_state.players[0].active_pokemon = active
+
+	var bench := PokemonSlot.new()
+	bench.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Bench", 90, "C"), 0))
+	gsm.game_state.players[0].bench = [bench]
+
+	var effect := EffectEnergySwitchScript.new()
+	var card := CardInstance.create(_make_trainer_cd("Energy Switch", "Item", ""), 0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, gsm.game_state)
+	var step: Dictionary = steps[0].duplicate(true) if not steps.is_empty() else {}
+	step["max_select"] = 2
+	steps = [step]
+	battle_scene.call("_start_effect_interaction", "trainer", 0, steps, card)
+	battle_scene.set("_modal_input_slot_suppress_until_msec", 0)
+	battle_scene.set("_hand_drag_suppress_click_until_msec", Time.get_ticks_msec() + 10000)
+
+	battle_scene.call("_on_field_assignment_source_chosen", 0)
+	var suppression_after_source_click := int(battle_scene.get("_modal_input_slot_suppress_until_msec"))
+	var hand_drag_suppressed_after_source_click := bool(battle_scene.call("_is_hand_drag_click_suppressed"))
+
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	var target_click_consumed := bool(battle_scene.call("_consume_modal_slot_input_if_needed", click, "my_bench_0"))
+	if not target_click_consumed:
+		battle_scene.call("_handle_field_assignment_target_index", 1)
+
+	var assignments: Array = battle_scene.get("_field_interaction_assignment_entries")
+	var first_assignment: Dictionary = assignments[0] if not assignments.is_empty() else {}
+
+	var result := run_checks([
+		assert_eq(suppression_after_source_click, 0, "Choosing an Energy Switch source should not arm modal slot suppression for the intended target click"),
+		assert_false(hand_drag_suppressed_after_source_click, "Choosing an Energy Switch source should clear stale hand drag suppression for subsequent hand taps"),
+		assert_false(target_click_consumed, "The immediate target Pokemon click after choosing source Energy should not be swallowed by modal slot suppression"),
+		assert_eq(assignments.size(), 1, "The immediate target Pokemon click after choosing source Energy should create the assignment"),
+		assert_eq(first_assignment.get("target"), bench, "Immediate target click should resolve to the clicked Benched Pokemon"),
+	])
+	battle_scene.free()
+	return result
 
 
 func test_battle_scene_raging_bolt_bellowing_thunder_uses_energy_multiselect_dialog() -> String:
@@ -6754,6 +7460,91 @@ func test_battle_scene_loads_selected_background_texture() -> String:
 # ===================== 弃牌区数据测试 =====================
 
 ## 测试：弃牌区初始为空
+func test_stadium_backdrop_resolves_area_zero_background() -> String:
+	var coordinator := BattleStadiumBackdropCoordinatorScript.new()
+	var stadium_cd := _make_trainer_cd("零之大空洞", "Stadium", "")
+	stadium_cd.set_code = "CSV9C"
+	stadium_cd.card_index = "207"
+	stadium_cd.effect_id = "701eb0ccb34fe3d319ea1307bc36c1ef"
+	var stadium := CardInstance.create(stadium_cd, 0)
+	var resolved_path: String = coordinator.resolve_stadium_backdrop_path(stadium, "res://assets/ui/background.png")
+
+	return run_checks([
+		assert_eq(
+			resolved_path,
+			"res://assets/ui/stadium_backgrounds/area_zero_underdepths.webp",
+			"Area Zero Underdepths should resolve to its dynamic stadium background"
+		),
+	])
+
+
+func test_stadium_background_map_resources_exist_and_load() -> String:
+	var file := FileAccess.open("res://data/stadium_backgrounds.json", FileAccess.READ)
+	if file == null:
+		return "Stadium background map should be readable"
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if not parsed is Dictionary:
+		return "Stadium background map should be a JSON object"
+
+	var checks: Array[String] = []
+	var mapped_count := 0
+	for section: String in ["by_effect_id", "by_card_id", "by_name_en", "by_name"]:
+		var section_value: Variant = (parsed as Dictionary).get(section, {})
+		checks.append(assert_true(section_value is Dictionary, "Stadium background section should be a dictionary: %s" % section))
+		if not section_value is Dictionary:
+			continue
+		for key_variant: Variant in (section_value as Dictionary).keys():
+			var key := str(key_variant)
+			var path := str((section_value as Dictionary).get(key_variant, ""))
+			if key == "" or path == "":
+				checks.append("Stadium background map should not contain empty keys or paths in %s" % section)
+				continue
+			mapped_count += 1
+			checks.append(assert_true(ResourceLoader.exists(path) or FileAccess.file_exists(path), "Mapped stadium background should exist: %s => %s" % [key, path]))
+			var texture: Texture2D = load(path) as Texture2D if ResourceLoader.exists(path) else null
+			if texture == null and FileAccess.file_exists(path):
+				var image := Image.load_from_file(ProjectSettings.globalize_path(path))
+				if image != null and not image.is_empty():
+					texture = ImageTexture.create_from_image(image)
+			checks.append(assert_not_null(texture, "Mapped stadium background should load as texture: %s" % path))
+	checks.append(assert_gte(mapped_count, 19, "Stadium background map should include the local Stadium card set"))
+	return run_checks(checks)
+
+
+func test_all_bundled_stadium_cards_resolve_dynamic_backgrounds() -> String:
+	var coordinator := BattleStadiumBackdropCoordinatorScript.new()
+	var default_path := "res://assets/ui/background.png"
+	var missing: Array[String] = []
+	var stadium_count := 0
+	for file_name: String in DirAccess.get_files_at("res://data/bundled_user/cards"):
+		if not file_name.ends_with(".json"):
+			continue
+		var file := FileAccess.open("res://data/bundled_user/cards/%s" % file_name, FileAccess.READ)
+		if file == null:
+			continue
+		var parsed: Variant = JSON.parse_string(file.get_as_text())
+		file.close()
+		if not parsed is Dictionary:
+			continue
+		var data := parsed as Dictionary
+		if str(data.get("card_type", "")) != "Stadium":
+			continue
+		stadium_count += 1
+		var card_data := _make_trainer_cd(str(data.get("name", "")), "Stadium", str(data.get("description", "")))
+		card_data.name_en = str(data.get("name_en", ""))
+		card_data.set_code = str(data.get("set_code", ""))
+		card_data.card_index = str(data.get("card_index", ""))
+		card_data.effect_id = str(data.get("effect_id", ""))
+		var resolved_path: String = coordinator.resolve_stadium_backdrop_path(CardInstance.create(card_data, 0), default_path)
+		if resolved_path == default_path:
+			missing.append("%s_%s" % [card_data.set_code, card_data.card_index])
+	return run_checks([
+		assert_gte(stadium_count, 19, "The bundled card pool should include all currently supported Stadium cards"),
+		assert_eq(missing, [], "Every bundled Stadium card should resolve a dynamic background"),
+	])
+
+
 func test_battle_scene_prize_slots_keep_fixed_grid_positions() -> String:
 	var scene := BattleSceneScript.new()
 	var slots: Array[BattleCardView] = []
@@ -7518,6 +8309,100 @@ func test_battle_scene_collapsed_stadium_handover_uses_step_chooser_player() -> 
 		assert_eq(str(battle_scene.get("_field_interaction_mode")), "", "第一位玩家选完后应先等待下一步交机"),
 		assert_true(handover_visible, "Collapsed Stadium 轮到对手弃备战时应触发交机提示"),
 	])
+
+
+func test_battle_scene_collapsed_stadium_over_area_zero_cleanup_releases_drag_state() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var hand_scroll := ScrollContainer.new()
+	hand_scroll.name = "HandScroll"
+	var hand_row := HBoxContainer.new()
+	hand_scroll.add_child(hand_row)
+	battle_scene.add_child(hand_scroll)
+	battle_scene.set("_hand_scroll", hand_scroll)
+	battle_scene.call("_setup_hand_drag_scroll")
+	_prepare_overflowing_hand_scroll_for_drag_test(hand_scroll)
+
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 3
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player_state := PlayerState.new()
+		player_state.player_index = pi
+		gsm.game_state.players.append(player_state)
+		var active := PokemonSlot.new()
+		active.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Active %d" % pi, 120, "C"), pi))
+		player_state.active_pokemon = active
+
+	var player: PlayerState = gsm.game_state.players[0]
+	for bench_index: int in 8:
+		var bench := PokemonSlot.new()
+		bench.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Area Zero Bench %d" % bench_index, 80, "C"), 0))
+		player.bench.append(bench)
+
+	var zero_cd := _make_trainer_cd("Area Zero Underdepths", "Stadium", "")
+	zero_cd.effect_id = EffectAreaZeroUnderdepthsScript.EFFECT_ID
+	gsm.game_state.stadium_card = CardInstance.create(zero_cd, 0)
+	gsm.game_state.stadium_owner_index = 0
+
+	var collapsed_cd := _make_trainer_cd("Collapsed Stadium", "Stadium", "")
+	collapsed_cd.effect_id = EffectCollapsedStadiumScript.EFFECT_ID
+	var collapsed := CardInstance.create(collapsed_cd, 0)
+	player.hand.append(collapsed)
+
+	var stale_scroll := ScrollContainer.new()
+	var stale_row := HBoxContainer.new()
+	stale_scroll.add_child(stale_row)
+	battle_scene.add_child(stale_scroll)
+	battle_scene.call("_configure_card_gallery_drag_scroll", stale_scroll, stale_row, "collapsed_cleanup")
+	battle_scene.call("_set_card_gallery_drag_scroll_active", stale_scroll, true)
+	var stale_press := InputEventMouseButton.new()
+	stale_press.button_index = MOUSE_BUTTON_LEFT
+	stale_press.pressed = true
+	stale_press.global_position = Vector2(220, 24)
+	battle_scene.call("_handle_card_gallery_drag_scroll_input", stale_press, stale_scroll, "collapsed_cleanup")
+	battle_scene.set("_hand_drag_suppress_click_until_msec", Time.get_ticks_msec() + 10000)
+	var stale_gallery_active_before: bool = bool(battle_scene.get("_card_gallery_drag_active"))
+	var stale_hand_suppressed_before: bool = bool(battle_scene.call("_is_hand_drag_click_suppressed"))
+
+	battle_scene.call("_try_play_stadium_with_interaction", 0, collapsed)
+	var first_mode := str(battle_scene.get("_field_interaction_mode"))
+	for target_index: int in [4, 5, 6, 7]:
+		battle_scene.call("_handle_field_slot_select_index", target_index)
+
+	var stale_gallery_active_after: bool = bool(battle_scene.get("_card_gallery_drag_active"))
+	var stale_hand_suppressed_after: bool = bool(battle_scene.call("_is_hand_drag_click_suppressed"))
+	hand_scroll.scroll_horizontal = 300
+	var start_scroll := hand_scroll.scroll_horizontal
+	var hand_press := InputEventMouseButton.new()
+	hand_press.button_index = MOUSE_BUTTON_LEFT
+	hand_press.pressed = true
+	hand_press.global_position = Vector2(200, 24)
+	battle_scene.call("_handle_hand_drag_scroll_input", hand_press, "hand_card_gui")
+	var drag_left := InputEventMouseMotion.new()
+	drag_left.global_position = Vector2(120, 24)
+	battle_scene.call("_input", drag_left)
+	var scroll_after_drag := hand_scroll.scroll_horizontal
+
+	var result := run_checks([
+		assert_true(stale_gallery_active_before, "The test should start with a stale card-search/gallery drag capture"),
+		assert_true(stale_hand_suppressed_before, "The test should start with a stale hand drag click suppression window"),
+		assert_eq(first_mode, "slot_select", "Collapsed Stadium replacing Area Zero should use the field-slot cleanup selector"),
+		assert_eq(player.bench.size(), 4, "Collapsed Stadium should trim the Area Zero-expanded Bench to four"),
+		assert_eq(gsm.game_state.stadium_card, collapsed, "Collapsed Stadium should be the active Stadium after cleanup"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "The cleanup interaction should finish cleanly"),
+		assert_eq(str(battle_scene.get("_field_interaction_mode")), "", "The field cleanup overlay should be closed after the required choices"),
+		assert_false(stale_gallery_active_after, "Finishing the Stadium cleanup should clear stale card-gallery drag capture"),
+		assert_false(stale_hand_suppressed_after, "Finishing the Stadium cleanup should clear stale hand drag click suppression"),
+		assert_true(scroll_after_drag > start_scroll, "The hand row should be draggable immediately after the Stadium cleanup"),
+	])
+	battle_scene.free()
+	return result
 
 
 func test_battle_scene_iron_hands_ui_prize_and_turn_flow() -> String:

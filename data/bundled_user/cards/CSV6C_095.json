@@ -1,0 +1,52 @@
+{
+    "name":  "猛恶菇",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "Ancient",
+    "description":  "特性: 烈毒粉尘\n如果这只宝可梦身上放有「驱劲能量 古代」的话，则在自己的回合可以使用1次。令双方的战斗宝可梦，各陷入【中毒】状态。\n\n【恶】【恶】 暴走重锤 120\n在下一个自己的回合，这只宝可梦无法使用招式。\n\n",
+    "yoren_code":  "P0986",
+    "set_code":  "CSV6C",
+    "card_index":  "095",
+    "set_code_en":  "PAR",
+    "card_index_en":  "123",
+    "name_en":  "Brute Bonnet",
+    "artist":  "Anesaki Dynamic",
+    "rarity":  "R",
+    "release_date":  "2025-11-07T00:00:00+08:00",
+    "regulation_mark":  "G",
+    "effect_id":  "a5438c6290fdef331fe1ba579b6f4928",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV6C/095.png",
+    "image_local_path":  "user://cards/images/CSV6C/095.png",
+    "is_tags":  [
+                    "Ancient",
+                    "Basic"
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "D",
+    "stage":  "Basic",
+    "hp":  120,
+    "weakness_energy":  "G",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  3,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "暴走重锤",
+                        "text":  "在下一个自己的回合，这只宝可梦无法使用招式。",
+                        "cost":  "DDC",
+                        "damage":  "120",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+                      {
+                          "name":  "烈毒粉尘",
+                          "text":  "如果这只宝可梦身上放有「驱劲能量 古代」的话，则在自己的回合可以使用1次。令双方的战斗宝可梦，各陷入【中毒】状态。"
+                      }
+                  ],
+    "energy_provides":  ""
+}

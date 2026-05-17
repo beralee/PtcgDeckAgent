@@ -7,11 +7,13 @@ const CSV9CEffects := preload("res://scripts/effects/CSV9CEffects.gd")
 
 class RiggedCoinFlipper extends CoinFlipper:
 	var _results: Array[bool] = []
+	var flip_count: int = 0
 
 	func _init(results: Array[bool]) -> void:
 		_results = results.duplicate()
 
 	func flip() -> bool:
+		flip_count += 1
 		var result := false
 		if not _results.is_empty():
 			result = _results.pop_front()
@@ -228,7 +230,9 @@ func test_csv9c_144_alolan_exeggutor_attaches_hand_energy_and_tails_ko_bench_bas
 
 	var opp_bench := _make_slot(_pokemon("Opponent Basic", "Basic", "", "L", 90), 1)
 	opponent.bench.append(opp_bench)
-	var sphene := AdvancedEffects.AlolanExeggutorExSwingingSphene.new(RiggedCoinFlipper.new([false]))
+	var sphene_flipper := RiggedCoinFlipper.new([false, true])
+	var sphene := AdvancedEffects.AlolanExeggutorExSwingingSphene.new(sphene_flipper)
+	var sphene_steps: Array[Dictionary] = sphene.get_attack_interaction_steps(exeggutor.get_top_card(), exeggutor.get_attacks()[1], state)
 	sphene.set_attack_interaction_context([{
 		"swinging_sphene_bench_basic": [opp_bench],
 	}])
@@ -239,6 +243,8 @@ func test_csv9c_144_alolan_exeggutor_attaches_hand_energy_and_tails_ko_bench_bas
 		assert_eq(attach_steps.size(), 1, "CSV9C_144 first attack should request hand Energy assignments"),
 		assert_true(grass in exeggutor.attached_energy, "CSV9C_144 first attack should attach selected Grass Energy"),
 		assert_true(water in bench_target.attached_energy, "CSV9C_144 first attack should attach selected Water Energy"),
+		assert_eq(sphene_steps.size(), 1, "CSV9C_144 advanced tails should request one Benched Basic target"),
+		assert_eq(sphene_flipper.flip_count, 1, "CSV9C_144 advanced tails should flip exactly once across prompt and execution"),
 		assert_eq(opp_bench.damage_counters, opp_bench.get_max_hp(), "CSV9C_144 tails should KO the selected opponent Bench Basic"),
 	])
 

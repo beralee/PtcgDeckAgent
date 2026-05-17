@@ -46,6 +46,75 @@ func test_copy_missing_files_recursive_copies_nested_files_without_overwriting()
 	])
 
 
+func test_bundled_seed_replaces_corrupt_local_card_image() -> String:
+	var db := CardDatabaseScript.new()
+	var source_root := "res://.godot_test_user/utest_bundled_png_source"
+	var target_root := "res://.godot_test_user/utest_bundled_png_target"
+	_remove_dir_recursive(source_root)
+	_remove_dir_recursive(target_root)
+
+	var source_image := source_root.path_join("cards/images/UTEST/001.png.bin")
+	var target_image := target_root.path_join("cards/images/UTEST/001.png")
+	_write_bytes(source_image, _minimal_png_bytes())
+	_write_bytes(target_image, PackedByteArray([0x42, 0x41, 0x44]))
+
+	db._copy_missing_files_recursive(source_root.path_join("cards"), target_root.path_join("cards"))
+	var target_valid := CardData.is_valid_png_file(target_image)
+	var target_bytes := _read_bytes(target_image)
+
+	_remove_dir_recursive(source_root)
+	_remove_dir_recursive(target_root)
+
+	return run_checks([
+		assert_true(target_valid, "Bundled seed should repair corrupt local card images"),
+		assert_eq(target_bytes.size(), _minimal_png_bytes().size(), "Repaired local image should be copied from bundled source"),
+	])
+
+
+func test_save_card_image_rejects_non_png_response() -> String:
+	var db := CardDatabaseScript.new()
+	var card := CardData.new()
+	card.set_code = "UTESTPNG"
+	card.card_index = "001"
+	card.image_local_path = CardData.build_local_image_path(card.set_code, card.card_index)
+	var target_path := card.image_local_path
+	if FileAccess.file_exists(target_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(target_path))
+
+	var err := db.save_card_image(card, PackedByteArray([0x48, 0x54, 0x4D, 0x4C]))
+	var exists_after_bad_save := FileAccess.file_exists(target_path)
+
+	return run_checks([
+		assert_eq(err, ERR_INVALID_DATA, "Card image sync should reject non-PNG HTTP responses"),
+		assert_false(exists_after_bad_save, "Rejected image response should not leave a corrupt local file"),
+	])
+
+
+func test_save_card_image_accepts_existing_bundled_webp_bytes() -> String:
+	var db := CardDatabaseScript.new()
+	var card := CardData.new()
+	card.set_code = "UTESTWEBP"
+	card.card_index = "001"
+	card.image_local_path = CardData.build_local_image_path(card.set_code, card.card_index)
+	var target_path := card.image_local_path
+	if FileAccess.file_exists(target_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(target_path))
+
+	var source_bytes := _read_bytes("res://data/bundled_user/cards/images/CS5aC/107.png.bin")
+	var err := db.save_card_image(card, source_bytes)
+	var exists_after_save := FileAccess.file_exists(target_path)
+	var saved_valid := CardData.is_valid_card_image_file(target_path)
+	if exists_after_save:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(target_path))
+
+	return run_checks([
+		assert_true(CardData.has_webp_signature(source_bytes), "Regression fixture should be a WebP-backed bundled card image"),
+		assert_eq(err, OK, "Card image sync should accept supported WebP card images"),
+		assert_true(exists_after_save, "Accepted WebP image response should be written to local cache"),
+		assert_true(saved_valid, "Saved WebP card image should be treated as a usable local image"),
+	])
+
+
 func test_supported_ai_deck_ignores_user_override_and_reads_bundled_source() -> String:
 	var db := CardDatabaseScript.new()
 	db._ensure_directories()
@@ -251,6 +320,50 @@ func test_version_170_user_decks_are_bundled_with_generated_ids() -> String:
 	return run_checks(checks)
 
 
+func test_runtime_bundled_card_json_loads_through_card_database_deserializer() -> String:
+	var db := CardDatabaseScript.new()
+	var card_path := "res://data/bundled_user/cards/CSV8C_136.json"
+	var direct_card: CardData = db._load_card_from_file(card_path)
+	var cached_card: CardData = db.get_card("CSV8C", "136")
+	return run_checks([
+		assert_true(FileAccess.file_exists(card_path), "Regression fixture CSV8C_136 should exist in bundled cards"),
+		assert_not_null(direct_card, "CardDatabase should deserialize bundled JSON with CardData.from_dict"),
+		assert_not_null(cached_card, "CardDatabase.get_card should load bundled fallback cards"),
+		assert_eq(str(direct_card.get_uid()) if direct_card != null else "", "CSV8C_136", "Directly loaded card should keep its uid"),
+		assert_eq(str(cached_card.stage) if cached_card != null else "", "Basic", "Cached CSV8C_136 should be a Basic Pokemon for setup checks"),
+	])
+
+
+func test_version_170_bundled_decks_do_not_start_as_empty_card_database_game_over() -> String:
+	var db := CardDatabaseScript.new()
+	var player_deck: DeckData = db._load_deck_from_file("res://data/bundled_user/decks/1700012.json")
+	var opponent_deck: DeckData = db._load_deck_from_file("res://data/bundled_user/decks/1700001.json")
+	var player_basic := _first_basic_pokemon_entry(db, player_deck)
+	var opponent_basic := _first_basic_pokemon_entry(db, opponent_deck)
+	if player_deck == null or opponent_deck == null:
+		return "17.0 bundled decks should load before startup smoke"
+	if player_basic.is_empty() or opponent_basic.is_empty():
+		return "17.0 bundled decks should expose at least one loadable Basic Pokemon"
+
+	var gsm := GameStateMachine.new()
+	gsm.set_deck_order_override(0, [player_basic])
+	gsm.set_deck_order_override(1, [opponent_basic])
+	gsm.start_game(player_deck, opponent_deck, 0)
+	var player_has_basic := gsm.game_state.players[0].has_basic_pokemon_in_hand()
+	var opponent_has_basic := gsm.game_state.players[1].has_basic_pokemon_in_hand()
+	var checks: Array[String] = [
+		assert_false(gsm.game_state.phase == GameState.GamePhase.GAME_OVER, "17.0 real decks must not immediately end as an empty/no-Basic startup"),
+		assert_eq(gsm.game_state.players[0].hand.size(), 7, "Player should draw an opening hand from loaded deck cards"),
+		assert_eq(gsm.game_state.players[1].hand.size(), 7, "Opponent should draw an opening hand from loaded deck cards"),
+		assert_true(player_has_basic, "Player opening hand should contain the forced Basic Pokemon"),
+		assert_true(opponent_has_basic, "Opponent opening hand should contain the forced Basic Pokemon"),
+		assert_gt(gsm.count_player_total_cards(0), 0, "Player loaded deck must not collapse to an empty card database"),
+		assert_gt(gsm.count_player_total_cards(1), 0, "Opponent loaded deck must not collapse to an empty card database"),
+	]
+	gsm.prepare_for_disposal()
+	return run_checks(checks)
+
+
 func test_recent_card_audit_batch_is_bundled_as_default_install_cards() -> String:
 	var db := CardDatabaseScript.new()
 	var manifest := db._load_bundled_manifest()
@@ -284,6 +397,84 @@ func test_recent_card_audit_batch_is_bundled_as_default_install_cards() -> Strin
 	return run_checks(checks)
 
 
+func test_scoop_up_cyclone_is_bundled_as_default_install_card() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CSV8C_181.json"
+	var image_path := "res://data/bundled_user/cards/images/CSV8C/181.png.bin"
+	var card: CardData = db.get_card("CSV8C", "181")
+	var checks: Array[String] = [
+		assert_true(card_path in manifest, "CSV8C_181 should be listed in bundled seed manifest"),
+		assert_true(image_path in manifest, "CSV8C_181 image should be listed in bundled seed manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CSV8C_181 bundled card JSON should exist"),
+		assert_true(FileAccess.file_exists(image_path), "CSV8C_181 bundled card image should exist"),
+		assert_not_null(card, "CSV8C_181 should load through CardDatabase bundled fallback"),
+	]
+	if card != null:
+		checks.append(assert_eq(str(card.effect_id), "c1acc32f6333793f261c9c132435fdfa", "CSV8C_181 should keep Scoop Up Cyclone effect id"))
+		checks.append(assert_true(card.is_ace_spec(), "CSV8C_181 should be recognized as ACE SPEC from bundled card data"))
+	return run_checks(checks)
+
+
+func test_poison_box_key_cards_are_bundled_with_images() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var deck_path := "res://data/bundled_user/decks/1700010.json"
+	var required_cards := [
+		{"id": "CS5aC_079", "set": "CS5aC", "index": "079"},
+		{"id": "CSV6C_080", "set": "CSV6C", "index": "080"},
+	]
+	var raw := FileAccess.get_file_as_string(deck_path)
+	var parsed: Variant = JSON.parse_string(raw)
+	var deck_cards: Array[String] = []
+	if parsed is Dictionary:
+		for entry: Dictionary in (parsed as Dictionary).get("cards", []):
+			deck_cards.append("%s_%s" % [str(entry.get("set_code", "")), str(entry.get("card_index", ""))])
+
+	var checks: Array[String] = [
+		assert_true(deck_path in manifest, "17.0 Poison Box deck should be listed in bundled seed manifest"),
+		assert_true(parsed is Dictionary, "17.0 Poison Box bundled deck JSON should parse"),
+	]
+	for card_ref: Dictionary in required_cards:
+		var card_id := str(card_ref["id"])
+		var set_code := str(card_ref["set"])
+		var card_index := str(card_ref["index"])
+		var card_path := "res://data/bundled_user/cards/%s.json" % card_id
+		var image_path := "res://data/bundled_user/cards/images/%s/%s.png.bin" % [set_code, card_index]
+		var card: CardData = db.get_card(set_code, card_index)
+		checks.append(assert_true(card_id in deck_cards, "17.0 Poison Box should include %s" % card_id))
+		checks.append(assert_true(card_path in manifest, "%s card JSON should be listed in bundled seed manifest" % card_id))
+		checks.append(assert_true(image_path in manifest, "%s card image should be listed in bundled seed manifest" % card_id))
+		checks.append(assert_true(FileAccess.file_exists(card_path), "%s bundled card JSON should exist" % card_id))
+		checks.append(assert_true(FileAccess.file_exists(image_path), "%s bundled card image should exist" % card_id))
+		checks.append(assert_true(CardData.is_valid_card_image_file(image_path), "%s bundled card image should be a supported image file" % card_id))
+		checks.append(assert_not_null(card, "%s should load through CardDatabase bundled fallback" % card_id))
+	return run_checks(checks)
+
+
+func test_existing_install_backfills_new_poison_box_card_resources_on_startup() -> String:
+	var db := CardDatabaseScript.new()
+	var missing_paths := [
+		"user://cards/CS5aC_079.json",
+		"user://cards/CSV6C_080.json",
+		"user://cards/images/CS5aC/079.png",
+		"user://cards/images/CSV6C/080.png",
+	]
+	for path: String in missing_paths:
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+
+	db._ensure_directories()
+	db._seed_bundled_user_data()
+
+	return run_checks([
+		assert_true(FileAccess.file_exists("user://cards/CS5aC_079.json"), "Upgrade seed should backfill Radiant Hisuian Sneasler card JSON for existing installs"),
+		assert_true(FileAccess.file_exists("user://cards/CSV6C_080.json"), "Upgrade seed should backfill Klawf card JSON for existing installs"),
+		assert_true(CardData.is_valid_card_image_file("user://cards/images/CS5aC/079.png"), "Upgrade seed should backfill Radiant Hisuian Sneasler image for existing installs"),
+		assert_true(CardData.is_valid_card_image_file("user://cards/images/CSV6C/080.png"), "Upgrade seed should backfill Klawf image for existing installs"),
+	])
+
+
 func _write_text(path: String, content: String) -> void:
 	var parent_dir := path.get_base_dir()
 	if not _dir_exists(parent_dir):
@@ -294,6 +485,31 @@ func _write_text(path: String, content: String) -> void:
 		return
 	file.store_string(content)
 	file.close()
+
+
+func _write_bytes(path: String, bytes: PackedByteArray) -> void:
+	var parent_dir := path.get_base_dir()
+	if not _dir_exists(parent_dir):
+		_make_dir_recursive(parent_dir)
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		push_error("TestCardDatabaseSeed: failed to write %s" % path)
+		return
+	file.store_buffer(bytes)
+	file.close()
+
+
+func _read_bytes(path: String) -> PackedByteArray:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return PackedByteArray()
+	var bytes := file.get_buffer(file.get_length())
+	file.close()
+	return bytes
+
+
+func _minimal_png_bytes() -> PackedByteArray:
+	return PackedByteArray([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00])
 
 
 func _remove_dir_recursive(path: String) -> void:
@@ -331,3 +547,18 @@ func _to_absolute_path(path: String) -> String:
 	if path.begins_with("user://") or path.begins_with("res://"):
 		return ProjectSettings.globalize_path(path)
 	return path
+
+
+func _first_basic_pokemon_entry(db: Object, deck: DeckData) -> Dictionary:
+	if deck == null:
+		return {}
+	for entry: Dictionary in deck.cards:
+		var set_code := str(entry.get("set_code", ""))
+		var card_index := str(entry.get("card_index", ""))
+		var card: CardData = db.get_card(set_code, card_index)
+		if card != null and card.is_basic_pokemon():
+			return {
+				"set_code": set_code,
+				"card_index": card_index,
+			}
+	return {}

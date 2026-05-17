@@ -101,8 +101,14 @@ func test_prize_count_vmax() -> String:
 func test_is_ace_spec() -> String:
 	var card := CardData.new()
 	card.is_tags = PackedStringArray(["ACE SPEC", "Item"])
+	var mechanic_card := CardData.new()
+	mechanic_card.mechanic = "ACE SPEC"
+	var rarity_card := CardData.new()
+	rarity_card.rarity = "ACE"
 	return run_checks([
 		assert_true(card.is_ace_spec(), "有 ACE SPEC 标签"),
+		assert_true(mechanic_card.is_ace_spec(), "mechanic=ACE SPEC should count as ACE SPEC"),
+		assert_true(rarity_card.is_ace_spec(), "rarity=ACE should count as ACE SPEC"),
 	])
 
 

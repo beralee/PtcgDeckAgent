@@ -32,6 +32,7 @@ var ai_deck_strategy: String = "generic"
 var first_player_choice: int = -1
 ## 对战背景资源路径
 var selected_battle_background: String = "res://assets/ui/background.png"
+var dynamic_stadium_background_enabled: bool = true
 var selected_battle_music_id: String = "none"
 var battle_bgm_volume_percent: int = 20
 var battle_layout_mode: String = "auto"
@@ -449,6 +450,7 @@ func load_battle_setup_preferences() -> void:
 	selected_battle_music_id = "none"
 	battle_bgm_volume_percent = DEFAULT_BATTLE_BGM_VOLUME_PERCENT
 	battle_layout_mode = BATTLE_LAYOUT_AUTO
+	dynamic_stadium_background_enabled = true
 	if not FileAccess.file_exists(BATTLE_SETUP_SETTINGS_PATH):
 		return
 	var file := FileAccess.open(BATTLE_SETUP_SETTINGS_PATH, FileAccess.READ)
@@ -463,6 +465,7 @@ func load_battle_setup_preferences() -> void:
 	selected_battle_music_id = str(data.get("battle_music_id", selected_battle_music_id))
 	battle_bgm_volume_percent = clampi(int(data.get("battle_bgm_volume_percent", battle_bgm_volume_percent)), 0, 100)
 	battle_layout_mode = sanitize_battle_layout_mode(str(data.get("battle_layout_mode", battle_layout_mode)))
+	dynamic_stadium_background_enabled = bool(data.get("dynamic_stadium_background_enabled", dynamic_stadium_background_enabled))
 
 
 func sanitize_battle_layout_mode(mode: String) -> String:

@@ -14,6 +14,8 @@ const TOUCH_LONG_PRESS_SECONDS := 0.42
 const TOUCH_LONG_PRESS_MOVE_TOLERANCE := 18.0
 const HAND_PRIMARY_CLICK_MOVE_TOLERANCE := 12.0
 const CARD_GALLERY_VERTICAL_CLICK_TOLERANCE := 36.0
+const PRIMARY_RELEASE_FALLBACK_MIN_DELAY_MSEC := 80
+const PRIMARY_RELEASE_FALLBACK_DURATION_MSEC := 1400
 const ENERGY_ROW_MINIMUM_LAYOUT_GAP := 4
 const CardImplementationStatusScript := preload("res://scripts/engine/CardImplementationStatus.gd")
 const ENERGY_ICON_TEXTURES := {
@@ -95,6 +97,9 @@ var _secondary_inspect_enabled: bool = false
 var _hand_primary_press_active: bool = false
 var _hand_primary_press_start: Vector2 = Vector2.ZERO
 var _hand_primary_press_cancelled: bool = false
+var _primary_release_fallback_ready_at_msec: int = 0
+var _primary_release_fallback_until_msec: int = 0
+var _primary_release_fallback_reason: String = ""
 
 var _outer_margin: MarginContainer
 var _aspect_container: AspectRatioContainer
@@ -210,6 +215,30 @@ func set_clickable(clickable: bool) -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP if clickable else Control.MOUSE_FILTER_IGNORE
 	if not clickable:
 		_cancel_touch_long_press()
+		clear_primary_release_fallback()
+
+
+func arm_primary_release_fallback(
+	reason: String = "transient_input",
+	min_delay_msec: int = PRIMARY_RELEASE_FALLBACK_MIN_DELAY_MSEC,
+	duration_msec: int = PRIMARY_RELEASE_FALLBACK_DURATION_MSEC
+) -> void:
+	var now := Time.get_ticks_msec()
+	var safe_min_delay: int = maxi(0, min_delay_msec)
+	var safe_duration: int = maxi(safe_min_delay + 1, duration_msec)
+	_primary_release_fallback_ready_at_msec = now + safe_min_delay
+	_primary_release_fallback_until_msec = now + safe_duration
+	_primary_release_fallback_reason = reason
+
+
+func clear_primary_release_fallback() -> void:
+	_primary_release_fallback_ready_at_msec = 0
+	_primary_release_fallback_until_msec = 0
+	_primary_release_fallback_reason = ""
+
+
+func is_primary_release_fallback_armed() -> bool:
+	return _primary_release_fallback_until_msec > Time.get_ticks_msec()
 
 
 func set_secondary_inspect_enabled(enabled: bool) -> void:
@@ -1493,6 +1522,7 @@ func _handle_hand_primary_click_input(event: InputEvent) -> bool:
 			_hand_primary_press_active = true
 			_hand_primary_press_start = _primary_click_event_position(event)
 			_hand_primary_press_cancelled = false
+			clear_primary_release_fallback()
 			accept_event()
 			return true
 		if _hand_primary_press_active:
@@ -1506,6 +1536,10 @@ func _handle_hand_primary_click_input(event: InputEvent) -> bool:
 				_suppress_next_left_click = false
 				accept_event()
 				return true
+			left_clicked.emit(card_instance, card_data)
+			accept_event()
+			return true
+		if _consume_primary_release_fallback():
 			left_clicked.emit(card_instance, card_data)
 			accept_event()
 			return true
@@ -1521,6 +1555,7 @@ func _handle_hand_primary_click_input(event: InputEvent) -> bool:
 			_hand_primary_press_active = true
 			_hand_primary_press_start = touch.position
 			_hand_primary_press_cancelled = false
+			clear_primary_release_fallback()
 			accept_event()
 			return true
 		if _hand_primary_press_active:
@@ -1537,6 +1572,10 @@ func _handle_hand_primary_click_input(event: InputEvent) -> bool:
 			left_clicked.emit(card_instance, card_data)
 			accept_event()
 			return true
+		if _consume_primary_release_fallback():
+			left_clicked.emit(card_instance, card_data)
+			accept_event()
+			return true
 		return false
 
 	if event is InputEventScreenDrag and _hand_primary_press_active:
@@ -1544,6 +1583,19 @@ func _handle_hand_primary_click_input(event: InputEvent) -> bool:
 		return false
 
 	return false
+
+
+func _consume_primary_release_fallback() -> bool:
+	var now := Time.get_ticks_msec()
+	if _primary_release_fallback_until_msec <= 0:
+		return false
+	if now < _primary_release_fallback_ready_at_msec:
+		return false
+	if now > _primary_release_fallback_until_msec:
+		clear_primary_release_fallback()
+		return false
+	clear_primary_release_fallback()
+	return true
 
 
 func _update_hand_primary_click_motion(position: Vector2) -> void:

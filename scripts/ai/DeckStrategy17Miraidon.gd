@@ -411,6 +411,8 @@ func _score_trainer_v17(action: Dictionary, game_state: GameState, player: Playe
 	if _matches(card, [AREA_ZERO_ID]):
 		if player != null and _area_zero_in_play_v17(game_state):
 			return 30.0
+		if player != null and _area_zero_expansion_ready_v17(player, game_state):
+			return 760.0 if player.bench.size() >= 5 else 650.0
 		if player != null and _count_on_field(player, [PIKACHU_ID]) > 0:
 			return 320.0 if player.bench.size() >= 5 else 250.0
 		if player != null and _has_tera_on_field_v17(player):
@@ -460,7 +462,10 @@ func _score_attack_v17(action: Dictionary, game_state: GameState, player: Player
 	var attack_name := str(action.get("attack_name", ""))
 	var damage := int(action.get("projected_damage", 0))
 	if damage <= 0:
-		damage = _damage_for_attack_action(active, attack_index, attack_name, player)
+		if _is_raikou(active) and (attack_index == 0 or attack_name == "Lightning Rondo" or attack_name == "雷电回旋曲" or attack_name == "闪电回旋"):
+			damage = _visible_board_damage_v17(active, game_state, player_index)
+		else:
+			damage = _damage_for_attack_action(active, attack_index, attack_name, player)
 	if _is_raichu(active):
 		var burst := _total_lightning_energy(player) * 60
 		if attack_index == 1 or attack_name == "Dynamic Spark":
@@ -484,6 +489,7 @@ func _search_card_score(card: CardInstance, step: Dictionary, context: Dictionar
 	if card == null or card.card_data == null:
 		return 0.0
 	var player := _context_player(context)
+	var game_state: GameState = context.get("game_state", null)
 	var step_id := str(step.get("id", "")).to_lower()
 	var is_basic_search := step_id.contains("basic")
 	var is_bench_search := step_id.contains("bench")
@@ -502,6 +508,8 @@ func _search_card_score(card: CardInstance, step: Dictionary, context: Dictionar
 	if _is_latias(card): return 680.0 if player != null and _count_on_field(player, [LATIAS, LATIAS_ID]) == 0 else 180.0
 	if _is_pikachu(card):
 		if player != null and _count_on_field(player, [PIKACHU_ID]) == 0:
+			if _needs_pikachu_area_zero_shell_v17(player, game_state):
+				return 880.0 if is_bench_search else 820.0
 			return 380.0
 		return 260.0
 	if _is_raichu(card): return 440.0
@@ -711,6 +719,14 @@ func _needs_pikachu_area_zero_shell_v17(player: PlayerState, game_state: GameSta
 	if not _has_area_zero_access_v17(player, game_state):
 		return false
 	return player.bench.size() >= 3 or _count_on_field(player, [MIRAIDON, "CSV1C_050"]) > 0
+
+
+func _area_zero_expansion_ready_v17(player: PlayerState, game_state: GameState) -> bool:
+	if player == null or _area_zero_in_play_v17(game_state):
+		return false
+	if _count_on_field(player, [PIKACHU_ID]) <= 0 and not _has_tera_on_field_v17(player):
+		return false
+	return player.bench.size() >= 4
 
 
 func _card_data(item: Variant) -> CardData:

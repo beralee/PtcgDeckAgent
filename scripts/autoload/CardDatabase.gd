@@ -211,7 +211,7 @@ func _copy_missing_files_recursive(source_dir_path: String, target_dir_path: Str
 
 
 func _copy_file_if_missing(source_path: String, target_path: String) -> void:
-	if FileAccess.file_exists(target_path):
+	if FileAccess.file_exists(target_path) and not _should_replace_existing_seed_file(source_path, target_path):
 		return
 	var source_file := FileAccess.open(source_path, FileAccess.READ)
 	if source_file == null:
@@ -233,6 +233,16 @@ func _copy_file_if_missing(source_path: String, target_path: String) -> void:
 # === 卡牌操作 ===
 
 ## 是否已缓存指定卡牌
+func _should_replace_existing_seed_file(source_path: String, target_path: String) -> bool:
+	if not _is_card_image_path(source_path):
+		return false
+	return CardData.is_valid_card_image_file(source_path) and not CardData.is_valid_card_image_file(target_path)
+
+
+func _is_card_image_path(path: String) -> bool:
+	return path.ends_with(".png") or path.ends_with(".png.bin")
+
+
 func has_card(set_code: String, card_index: String) -> bool:
 	var uid := "%s_%s" % [set_code, card_index]
 	if _card_cache.has(uid):
@@ -313,7 +323,7 @@ func save_card_image(card: CardData, image_bytes: PackedByteArray) -> int:
 	card.ensure_image_metadata()
 	if card.image_local_path == "":
 		return ERR_INVALID_PARAMETER
-	if image_bytes.is_empty():
+	if not CardData.has_supported_image_signature(image_bytes):
 		return ERR_INVALID_DATA
 
 	var image_dir := card.image_local_path.get_base_dir()

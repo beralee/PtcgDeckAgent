@@ -54,6 +54,7 @@ var _heuristics = AIHeuristicsScript.new()
 var _interaction_feature_encoder = AIInteractionFeatureEncoderScript.new()
 var _intent_prompt_builder = LLMTurnPlanPromptBuilderScript.new()
 var _planned_setup_bench_ids: Array[int] = []
+var _setup_bench_plan_ready: bool = false
 var _last_legal_actions: Array[Dictionary] = []
 var _last_decision_trace = null
 var decision_runtime_mode: String = DECISION_RUNTIME_RULES_PLUS_LEARNED
@@ -305,6 +306,7 @@ func _run_setup_active_step(battle_scene: Control, gsm: GameStateMachine, pendin
 	var pi: int = int(pending_choice.split("_")[-1])
 	if pi != player_index or pi >= gsm.game_state.players.size():
 		return false
+	_setup_bench_plan_ready = false
 	var player: PlayerState = gsm.game_state.players[pi]
 	_detect_and_load_deck_strategy(player)
 	var choice: Dictionary
@@ -321,8 +323,10 @@ func _run_setup_active_step(battle_scene: Control, gsm: GameStateMachine, pendin
 	for hand_index: int in choice.get("bench_hand_indices", []):
 		if hand_index >= 0 and hand_index < player.hand.size():
 			_planned_setup_bench_ids.append(player.hand[hand_index].instance_id)
+	_setup_bench_plan_ready = true
 	var active_card: CardInstance = player.hand[active_hand_index]
 	if not gsm.setup_place_active_pokemon(pi, active_card):
+		_setup_bench_plan_ready = false
 		return false
 	if battle_scene.has_method("_after_setup_active"):
 		battle_scene.call("_after_setup_active", pi)
@@ -379,7 +383,7 @@ func _request_followup_ai_step_if_ready(battle_scene: Control, gsm: GameStateMac
 
 
 func _find_next_planned_bench_card(player: PlayerState, available_cards: Array[CardInstance]) -> CardInstance:
-	if _planned_setup_bench_ids.is_empty():
+	if _planned_setup_bench_ids.is_empty() and not _setup_bench_plan_ready:
 		var fallback_choice: Dictionary = _setup_planner.plan_opening_setup(player)
 		for hand_index: int in fallback_choice.get("bench_hand_indices", []):
 			if hand_index >= 0 and hand_index < player.hand.size():

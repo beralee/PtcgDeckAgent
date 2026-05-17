@@ -150,6 +150,14 @@ class FakeHandoffStrategy extends RefCounted:
 		return 500.0 if (item as PokemonSlot).get_pokemon_name() == preferred_name else 0.0
 
 
+class EmptyBenchOpeningStrategy extends RefCounted:
+	func plan_opening_setup(_player: PlayerState) -> Dictionary:
+		return {
+			"active_hand_index": 0,
+			"bench_hand_indices": [],
+		}
+
+
 class FakeSendOutInteractionScorer extends RefCounted:
 	func score_delta(_state_features: Array, interaction_vector: Array) -> float:
 		if interaction_vector.size() <= 25:
@@ -581,6 +589,27 @@ func test_ai_legal_action_builder_enumerates_play_stadium_actions() -> String:
 		assert_not_null(builder, "AILegalActionBuilder should load"),
 		assert_eq(_count_actions_by_kind(actions, "play_stadium"), 1, "Builder should enumerate playable stadium cards"),
 		assert_true(_has_action(actions, "play_stadium", {"card": stadium, "targets": []}), "Builder should include a normalized stadium action"),
+	])
+
+
+func test_ai_legal_action_builder_keeps_different_stadium_after_one_played_this_turn() -> String:
+	var gsm := _make_ai_manual_gsm()
+	var builder: Variant = _new_legal_action_builder()
+	var player: PlayerState = gsm.game_state.players[0]
+	player.active_pokemon = _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Lead"), 0))
+	var current_stadium := CardInstance.create(_make_ai_trainer_card_data("Cycling Road", "Stadium"), 0)
+	var replacement := CardInstance.create(_make_ai_trainer_card_data("Collapsed Stadium", "Stadium"), 0)
+	var same_stadium := CardInstance.create(_make_ai_trainer_card_data("Cycling Road", "Stadium"), 0)
+	gsm.game_state.stadium_card = current_stadium
+	gsm.game_state.stadium_owner_index = 0
+	gsm.game_state.stadium_played_this_turn = true
+	player.hand = [replacement, same_stadium]
+	var actions := _build_ai_actions(gsm)
+	return run_checks([
+		assert_not_null(builder, "AILegalActionBuilder should load"),
+		assert_eq(_count_actions_by_kind(actions, "play_stadium"), 1, "Builder should still enumerate only the different named Stadium"),
+		assert_true(_has_action(actions, "play_stadium", {"card": replacement, "targets": []}), "Builder should expose the replacement Stadium"),
+		assert_false(_has_action(actions, "play_stadium", {"card": same_stadium}), "Builder should not expose the active Stadium name"),
 	])
 
 
@@ -1336,6 +1365,47 @@ func test_ai_opponent_routes_setup_bench_prompt_through_setup_planner() -> Strin
 		assert_eq(player.bench[0].get_pokemon_name(), "Bench A", "AI should choose the available Basic for bench"),
 		assert_eq(scene.refresh_ui_calls, 1, "AI should request a refresh after benching a Basic"),
 		assert_eq(scene.show_setup_bench_dialog_calls.size(), 1, "AI should continue the bench setup flow after a successful bench placement"),
+	])
+
+
+func test_ai_opponent_respects_strategy_empty_setup_bench_plan() -> String:
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	ai.set_deck_strategy(EmptyBenchOpeningStrategy.new())
+	var scene := SpySetupBattleScene.new()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.SETUP
+	gsm.game_state.current_player_index = 1
+	gsm.game_state.players = [_make_player_state(0), _make_player_state(1)]
+	var player: PlayerState = gsm.game_state.players[1]
+	player.hand = [_make_basic("Safe Lead"), _make_basic("Risky Bench")]
+	scene.set("_gsm", gsm)
+	scene.set("_setup_done", [false, false])
+	scene.set("_view_player", 1)
+	scene.set("_pending_choice", "setup_active_1")
+	scene.set("_dialog_data", {
+		"basics": [player.hand[0], player.hand[1]],
+		"player": 1,
+	})
+
+	var handled_active := ai.run_single_step(scene, gsm)
+	scene.set("_pending_choice", "setup_bench_1")
+	scene.set("_dialog_data", {
+		"cards": [player.hand[0]],
+		"player": 1,
+	})
+	var handled_bench := ai.run_single_step(scene, gsm)
+
+	return run_checks([
+		assert_true(handled_active, "AI should handle setup active with a strategy-owned empty bench plan"),
+		assert_true(handled_bench, "AI should finish setup bench even when the strategy intentionally benches nothing"),
+		assert_not_null(player.active_pokemon, "AI should still choose the planned active Pokemon"),
+		assert_eq(player.active_pokemon.get_pokemon_name(), "Safe Lead", "AI should place the planned active Pokemon"),
+		assert_eq(player.bench.size(), 0, "AI should not fall back to generic setup and bench the risky Basic"),
+		assert_eq(player.hand.size(), 1, "The risky Basic should remain in hand"),
+		assert_eq(player.hand[0].card_data.name, "Risky Bench", "The unplanned Basic should remain available after setup"),
+		assert_eq(scene.after_setup_bench_calls.size(), 1, "AI should advance setup after consuming an intentional empty bench plan"),
 	])
 
 

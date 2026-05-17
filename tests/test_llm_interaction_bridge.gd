@@ -4,6 +4,7 @@ extends TestBase
 const RAGING_BOLT_LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategyRagingBoltLLM.gd"
 const DRAGAPULT_CHARIZARD_LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategyDragapultCharizardLLM.gd"
 const MIRAIDON_LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategyMiraidonLLM.gd"
+const V17_MIRAIDON_LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategy17MiraidonLLM.gd"
 const LUGIA_LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategyLugiaArcheopsLLM.gd"
 const LLM_DECK_STRATEGY_BASE_SCRIPT_PATH := "res://scripts/ai/LLMDeckStrategyBase.gd"
 const LLM_INTERACTION_BRIDGE_SCRIPT_PATH := "res://scripts/ai/LLMInteractionIntentBridge.gd"
@@ -167,6 +168,11 @@ func _new_dragapult_charizard_llm_strategy() -> RefCounted:
 
 func _new_miraidon_llm_strategy() -> RefCounted:
 	var script := _load_script(MIRAIDON_LLM_SCRIPT_PATH)
+	return script.new() if script != null else null
+
+
+func _new_v17_miraidon_llm_strategy() -> RefCounted:
+	var script := _load_script(V17_MIRAIDON_LLM_SCRIPT_PATH)
 	return script.new() if script != null else null
 
 
@@ -723,6 +729,23 @@ func test_miraidon_llm_payload_includes_deck_strategy_prompt() -> String:
 	])
 
 
+func test_v17_miraidon_llm_payload_includes_mirror_prize_race_prompt() -> String:
+	var strategy := _new_v17_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategy17MiraidonLLM.gd should exist"
+	var gs := _make_game_state(3)
+	gs.players[0].active_pokemon = _make_slot(_make_miraidon_cd(), 0)
+	gs.players[0].bench.append(_make_slot(_make_pokemon_cd("Raikou V", "Basic", "L", 200), 0))
+	var payload: Dictionary = strategy.call("build_llm_request_payload_for_test", gs, 0)
+	var prompt_lines: PackedStringArray = payload.get("deck_strategy_prompt", PackedStringArray())
+	var prompt_text := "\n".join(prompt_lines)
+	return run_checks([
+		assert_eq(str(payload.get("deck_strategy_id", "")), "v17_miraidon_llm", "v17 Miraidon payload should identify its strategy prompt"),
+		assert_str_contains(prompt_text, "Mirror prize race", "v17 prompt should call out the mirror first-attack race"),
+		assert_str_contains(prompt_text, "Do not attach Lightning Energy to Mew ex", "v17 prompt should warn against spending manual attach on Mew ex"),
+	])
+
+
 func test_miraidon_llm_registry_creates_variant_without_replacing_rules() -> String:
 	var registry_script := _load_script("res://scripts/ai/DeckStrategyRegistry.gd")
 	if registry_script == null:
@@ -1184,6 +1207,33 @@ func test_miraidon_llm_allows_retreat_to_ready_real_attackers() -> String:
 		assert_false(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "retreat"}, raikou_retreat, gs, 0)), "Ready Raikou V should remain a legal retreat target"),
 		assert_false(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "retreat"}, miraidon_retreat, gs, 0)), "Ready Miraidon ex should remain a legal retreat target"),
 		assert_true(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "retreat"}, raichu_retreat, gs, 0)), "Raichu V retreat still needs a separate prize-math finisher hook before it is allowed"),
+	])
+
+
+func test_miraidon_llm_retreat_queue_ref_with_string_target_does_not_crash() -> String:
+	var strategy := _new_v17_miraidon_llm_strategy()
+	if strategy == null:
+		return "DeckStrategy17MiraidonLLM.gd should exist"
+	var gs := _make_game_state(6)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Mew ex", "Basic", "P", 180), 0)
+	var raikou_cd := _make_pokemon_cd("Raikou V", "Basic", "L", 200)
+	raikou_cd.name_en = "Raikou V"
+	raikou_cd.mechanic = "V"
+	raikou_cd.attacks = [{"name": "Lightning Rondo", "cost": "LC", "damage": "20+"}]
+	var raikou_slot := _make_slot(raikou_cd, 0)
+	raikou_slot.attached_energy.append(CardInstance.create(_make_energy_cd("Lightning Energy", "L"), 0))
+	raikou_slot.attached_energy.append(CardInstance.create(_make_energy_cd("Double Turbo Energy", "C"), 0))
+	player.bench.append(raikou_slot)
+	var queued_ref := {
+		"type": "retreat",
+		"action_id": "retreat:bench_0:none",
+		"bench_target": "Raikou V",
+	}
+	var runtime_retreat := {"kind": "retreat", "bench_target": raikou_slot, "requires_interaction": false}
+	return run_checks([
+		assert_false(bool(strategy.call("_deck_should_block_exact_queue_match", queued_ref, queued_ref, gs, 0)), "String-only queued retreat refs should not enter PokemonSlot-only retreat guard"),
+		assert_false(bool(strategy.call("_deck_should_block_exact_queue_match", queued_ref, runtime_retreat, gs, 0)), "Ready Raikou runtime retreat should still be allowed"),
 	])
 
 
@@ -5986,6 +6036,39 @@ func test_llm_request_does_not_skip_single_interactive_trainer_turn() -> String:
 	return assert_false(skip, "Single interactive resource trainer turns should not be skipped because interaction intent matters")
 
 
+func test_llm_response_error_candidate_fallback_counts_as_failure_not_success() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(8)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	strategy.set("_cached_turn_number", 8)
+	strategy.set("_llm_request_count", 1)
+	strategy.set("_llm_action_catalog", {
+		"end_turn": {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	})
+	strategy.call("_register_payload_candidate_routes", {
+		"candidate_routes": [{
+			"id": "preserve_end",
+			"route_action_id": "route:preserve_end",
+			"goal": "fallback",
+			"actions": [{"id": "end_turn"}],
+			"base_priority": 100,
+		}],
+	})
+	strategy.call("_on_llm_response", {"status": "error", "message": "tls failed"}, 8, gs, 0)
+	var stats: Dictionary = strategy.call("get_llm_stats")
+
+	return run_checks([
+		assert_eq(int(stats.get("requests", -1)), 1, "The failed transport still counts as an attempted request"),
+		assert_eq(int(stats.get("successes", -1)), 0, "Candidate-route fallback after response error must not be counted as an LLM success"),
+		assert_eq(int(stats.get("failures", -1)), 1, "Candidate-route fallback after response error should count as an LLM failure"),
+		assert_true(str(stats.get("last_error", "")).contains("tls failed"), "The transport error should remain visible in LLM health"),
+		assert_true(strategy.call("has_llm_plan_for_turn", 8), "Runtime may still use a candidate-route fallback to keep the game moving"),
+	])
+
+
 func test_llm_request_still_runs_after_turn_plan_cache_refresh() -> String:
 	var strategy := _new_llm_strategy()
 	if strategy == null:
@@ -7118,7 +7201,8 @@ func test_invalid_llm_json_uses_candidate_route_when_available() -> String:
 		assert_false(strategy.call("is_llm_disabled_for_turn", 9), "Candidate route fallback should keep LLM route control when response JSON is invalid"),
 		assert_true(strategy.call("has_llm_plan_for_turn", 9), "Candidate route fallback should create a plan for the turn"),
 		assert_true(score > 0.0, "Candidate route fallback should score the route action"),
-		assert_eq(int(stats.get("failures", -1)), 0, "Candidate route fallback should not count as a runtime failure when it produces a usable plan"),
+		assert_eq(int(stats.get("failures", -1)), 1, "Candidate route fallback keeps play moving but still records the failed LLM response"),
+		assert_eq(int(stats.get("successes", -1)), 0, "A fallback plan created after invalid JSON must not be counted as a successful LLM decision"),
 	])
 
 

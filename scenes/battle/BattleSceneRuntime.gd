@@ -84,7 +84,7 @@ func _ready() -> void:
 	# Coin flip overlay setup
 	_coin_animator = CoinFlipAnimatorScript.new()
 	_coin_animator.set_anchors_preset(PRESET_FULL_RECT)
-	_coin_animator.z_index = 150
+	_coin_animator.z_index = COIN_FLIP_OVERLAY_Z_INDEX
 	_coin_animator.visible = false
 	add_child(_coin_animator)
 	_coin_animator.animation_finished.connect(_on_coin_animation_finished)
@@ -99,6 +99,7 @@ func _ready() -> void:
 	if not _detail_close_btn.button_down.is_connected(detail_close_callable):
 		_detail_close_btn.button_down.connect(detail_close_callable)
 	_discard_close_btn.pressed.connect(func() -> void:
+		_cancel_card_gallery_drag_scroll("discard_collection_close")
 		_discard_overlay.visible = false
 	)
 	if _discard_list != null and not _discard_list.item_clicked.is_connected(_on_discard_list_item_clicked):
@@ -283,6 +284,13 @@ func _raise_handover_overlay_for_input() -> void:
 	var handover_panel := _handover_panel if _handover_panel != null else find_child("HandoverPanel", true, false) as Control
 	if handover_panel != null:
 		_raise_modal_overlay_for_input(handover_panel, ACTIVE_MODAL_OVERLAY_Z_INDEX)
+
+
+func _raise_discard_overlay_for_input() -> void:
+	_restore_landscape_overlay_z_order()
+	var discard_overlay := _discard_overlay if _discard_overlay != null else find_child("DiscardOverlay", true, false) as Control
+	if discard_overlay != null:
+		_raise_modal_overlay_for_input(discard_overlay, ACTIVE_MODAL_OVERLAY_Z_INDEX)
 
 
 
@@ -958,6 +966,11 @@ func _is_hand_drag_click_suppressed() -> bool:
 	return bool(_battle_drag_scroll_coordinator.call("is_hand_drag_click_suppressed"))
 
 
+func _clear_hand_drag_click_suppression(source: String = "clear") -> void:
+	_ensure_battle_drag_scroll_coordinator()
+	_battle_drag_scroll_coordinator.call("clear_hand_drag_click_suppression", source)
+
+
 
 func _configure_card_gallery_drag_scroll(scroll: ScrollContainer, row: Control = null, source: String = "card_gallery") -> void:
 	_ensure_battle_drag_scroll_coordinator()
@@ -968,6 +981,11 @@ func _configure_card_gallery_drag_scroll(scroll: ScrollContainer, row: Control =
 func _set_card_gallery_drag_scroll_active(scroll: ScrollContainer, active: bool) -> void:
 	_ensure_battle_drag_scroll_coordinator()
 	_battle_drag_scroll_coordinator.call("set_card_gallery_drag_scroll_active", scroll, active)
+
+
+func _cancel_card_gallery_drag_scroll(source: String = "cancel") -> void:
+	_ensure_battle_drag_scroll_coordinator()
+	_battle_drag_scroll_coordinator.call("cancel_card_gallery_drag_scroll", source)
 
 
 
@@ -1800,6 +1818,8 @@ func _on_game_over(winner_index: int, reason: String) -> void:
 
 
 func _on_stadium_action_pressed() -> void:
+	if _is_board_modal_overlay_visible():
+		return
 	if not _can_accept_live_action() or _gsm == null or _is_field_interaction_active():
 		return
 	_show_stadium_action_dialog(_gsm.game_state.current_player_index)
@@ -1807,6 +1827,8 @@ func _on_stadium_action_pressed() -> void:
 
 
 func _on_stadium_card_left_clicked(card_instance: CardInstance, card_data: CardData) -> void:
+	if _is_board_modal_overlay_visible():
+		return
 	var gs := _gsm.game_state if _gsm != null else null
 	if gs != null and gs.stadium_card != null and _can_accept_live_action() and not _is_field_interaction_active():
 		_show_stadium_action_dialog(gs.current_player_index)
@@ -1820,6 +1842,8 @@ func _on_stadium_card_left_clicked(card_instance: CardInstance, card_data: CardD
 
 
 func _on_stadium_card_right_clicked(card_instance: CardInstance, card_data: CardData) -> void:
+	if _is_board_modal_overlay_visible():
+		return
 	var detail_data := card_data
 	if detail_data == null and card_instance != null:
 		detail_data = card_instance.card_data
@@ -1829,6 +1853,8 @@ func _on_stadium_card_right_clicked(card_instance: CardInstance, card_data: Card
 
 
 func _on_stadium_area_input(event: InputEvent) -> void:
+	if _is_board_modal_overlay_visible():
+		return
 	if not (event is InputEventMouseButton):
 		return
 	var mbe := event as InputEventMouseButton
@@ -1844,6 +1870,22 @@ func _on_stadium_area_input(event: InputEvent) -> void:
 	if mbe.button_index != MOUSE_BUTTON_RIGHT:
 		return
 	_show_card_detail(_gsm.game_state.stadium_card.card_data)
+
+
+func _is_board_modal_overlay_visible() -> bool:
+	for overlay_variant: Variant in [
+		_dialog_overlay,
+		_discard_overlay,
+		_detail_overlay,
+		_handover_panel,
+		_coin_overlay,
+		_review_overlay,
+		get("_match_end_overlay"),
+	]:
+		var overlay := overlay_variant as Control
+		if overlay != null and overlay.visible:
+			return true
+	return false
 
 
 

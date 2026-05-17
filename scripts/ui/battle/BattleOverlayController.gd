@@ -162,6 +162,10 @@ func show_opponent_hand_cards(scene: Object) -> void:
 		scene.call("_apply_discard_collection_metrics")
 	if scene.has_method("_apply_portrait_popup_text_metrics"):
 		scene.call("_apply_portrait_popup_text_metrics")
+	if scene.has_method("_raise_discard_overlay_for_input"):
+		scene.call("_raise_discard_overlay_for_input")
+	else:
+		discard_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	discard_overlay.visible = true
 	scene.call("_runtime_log", "show_opponent_hand", "player=%d count=%d" % [opponent_index, player.hand.size()])
 

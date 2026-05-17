@@ -16,6 +16,7 @@ extends Control
 const AIBenchmarkRunnerScript = preload("res://scripts/ai/AIBenchmarkRunner.gd")
 const AIOpponentScript = preload("res://scripts/ai/AIOpponent.gd")
 const DeckStrategyRegistryScript = preload("res://scripts/ai/DeckStrategyRegistry.gd")
+const AIFixedDeckOrderRegistryScript = preload("res://scripts/ai/AIFixedDeckOrderRegistry.gd")
 
 const DEFAULT_ANCHOR_ID := 575720
 const DEFAULT_GAMES := 100
@@ -31,7 +32,11 @@ func _ready() -> void:
 	var seed_base: int = int(options.get("seed_base", DEFAULT_SEED_BASE))
 	var max_steps: int = int(options.get("max_steps", DEFAULT_MAX_STEPS))
 	var json_output: String = str(options.get("json_output", ""))
-	var decision_mode: String = str(options.get("decision_mode", ""))
+	var deck_decision_mode: String = str(options.get("deck_decision_mode", options.get("decision_mode", "")))
+	var anchor_decision_mode: String = str(options.get("anchor_decision_mode", ""))
+	var deck_strong_fixed_opening: bool = bool(options.get("deck_strong_fixed_opening", false))
+	var anchor_strong_fixed_opening: bool = bool(options.get("anchor_strong_fixed_opening", false))
+	var decision_mode: String = deck_decision_mode
 
 	if deck_id <= 0:
 		print("[错误] 缺少 --deck-id 参数")
@@ -58,6 +63,7 @@ func _ready() -> void:
 	print("")
 
 	var runner := AIBenchmarkRunnerScript.new()
+	var fixed_order_registry := AIFixedDeckOrderRegistryScript.new()
 	var start_time := Time.get_ticks_msec()
 
 	var wins: int = 0
@@ -83,10 +89,16 @@ func _ready() -> void:
 
 		var p0_deck: DeckData = deck if tracked_player == 0 else anchor_deck
 		var p1_deck: DeckData = anchor_deck if tracked_player == 0 else deck
+		var p0_strong_fixed: bool = deck_strong_fixed_opening if tracked_player == 0 else anchor_strong_fixed_opening
+		var p1_strong_fixed: bool = anchor_strong_fixed_opening if tracked_player == 0 else deck_strong_fixed_opening
+		var p0_fixed_order_path := _apply_fixed_order_if_enabled(gsm, 0, int(p0_deck.id), p0_strong_fixed, fixed_order_registry)
+		var p1_fixed_order_path := _apply_fixed_order_if_enabled(gsm, 1, int(p1_deck.id), p1_strong_fixed, fixed_order_registry)
 		gsm.start_game(p0_deck, p1_deck, 0)
 
-		var p0_ai := _make_ai(0, p0_deck, decision_mode if tracked_player == 0 else "")
-		var p1_ai := _make_ai(1, p1_deck, decision_mode if tracked_player == 1 else "")
+		var p0_decision_mode := deck_decision_mode if tracked_player == 0 else anchor_decision_mode
+		var p1_decision_mode := anchor_decision_mode if tracked_player == 0 else deck_decision_mode
+		var p0_ai := _make_ai(0, p0_deck, p0_decision_mode, p0_strong_fixed)
+		var p1_ai := _make_ai(1, p1_deck, p1_decision_mode, p1_strong_fixed)
 
 		var result: Dictionary = runner.run_headless_duel(p0_ai, p1_ai, gsm, max_steps)
 
@@ -123,6 +135,8 @@ func _ready() -> void:
 			"failure_reason": fr,
 			"stalled": bool(result.get("stalled", false)),
 			"terminated_by_cap": bool(result.get("terminated_by_cap", false)),
+			"player_0_fixed_order_path": p0_fixed_order_path,
+			"player_1_fixed_order_path": p1_fixed_order_path,
 		})
 
 		if (i + 1) % 10 == 0:
@@ -171,6 +185,10 @@ func _ready() -> void:
 		"games": games,
 		"seed_base": seed_base,
 		"decision_mode": decision_mode,
+		"deck_decision_mode": deck_decision_mode,
+		"anchor_decision_mode": anchor_decision_mode,
+		"deck_strong_fixed_opening": deck_strong_fixed_opening,
+		"anchor_strong_fixed_opening": anchor_strong_fixed_opening,
 		"wins": wins,
 		"losses": losses,
 		"draws": draws,
@@ -186,7 +204,7 @@ func _ready() -> void:
 	if json_output != "":
 		var file := FileAccess.open(json_output, FileAccess.WRITE)
 		if file != null:
-			file.store_string(JSON.stringify(report, "\t"))
+			file.store_string(JSON.stringify(_json_ascii_safe(report), "\t"))
 			file.close()
 			print("结果导出: %s" % json_output)
 		else:
@@ -195,11 +213,19 @@ func _ready() -> void:
 	_quit(0)
 
 
-func _make_ai(player_index: int, deck: DeckData, decision_mode_override: String = "") -> AIOpponent:
+func _make_ai(
+	player_index: int,
+	deck: DeckData,
+	decision_mode_override: String = "",
+	strong_fixed_opening: bool = false
+) -> AIOpponent:
 	var ai := AIOpponentScript.new()
 	ai.configure(player_index, 1)
 	var registry := DeckStrategyRegistryScript.new()
 	var strategy = registry.apply_strategy_for_deck(ai, deck)
+	if strong_fixed_opening:
+		ai.use_mcts = false
+		ai.decision_runtime_mode = AIOpponentScript.DECISION_RUNTIME_RULES_ONLY
 	if strategy != null and strategy.has_method("get_strategy_id"):
 		# 尝试加载 value net
 		var strategy_id: String = str(strategy.call("get_strategy_id"))
@@ -217,6 +243,31 @@ func _make_ai(player_index: int, deck: DeckData, decision_mode_override: String 
 	return ai
 
 
+func _apply_fixed_order_if_enabled(
+	gsm: GameStateMachine,
+	player_index: int,
+	deck_id: int,
+	enabled: bool,
+	fixed_order_registry: RefCounted
+) -> String:
+	if not enabled or gsm == null or fixed_order_registry == null:
+		return ""
+	var fixed_order_path := str(fixed_order_registry.call("get_fixed_order_path", deck_id))
+	if fixed_order_path == "":
+		return ""
+	var loaded_order: Variant = fixed_order_registry.call("load_fixed_order_from_path", fixed_order_path)
+	if not loaded_order is Array:
+		return ""
+	var fixed_order: Array[Dictionary] = []
+	for entry_variant: Variant in loaded_order:
+		if entry_variant is Dictionary:
+			fixed_order.append((entry_variant as Dictionary).duplicate(true))
+	if fixed_order.is_empty():
+		return ""
+	gsm.set_deck_order_override(player_index, fixed_order)
+	return fixed_order_path
+
+
 func _parse_args(args: PackedStringArray) -> Dictionary:
 	var parsed := {
 		"deck_id": 0,
@@ -226,6 +277,10 @@ func _parse_args(args: PackedStringArray) -> Dictionary:
 		"max_steps": DEFAULT_MAX_STEPS,
 		"json_output": "",
 		"decision_mode": "",
+		"deck_decision_mode": "",
+		"anchor_decision_mode": "",
+		"deck_strong_fixed_opening": false,
+		"anchor_strong_fixed_opening": false,
 	}
 	for arg: String in args:
 		if arg.begins_with("--deck-id="):
@@ -242,7 +297,61 @@ func _parse_args(args: PackedStringArray) -> Dictionary:
 			parsed["json_output"] = arg.split("=")[1]
 		elif arg.begins_with("--decision-mode="):
 			parsed["decision_mode"] = arg.split("=")[1]
+			parsed["deck_decision_mode"] = arg.split("=")[1]
+		elif arg.begins_with("--deck-decision-mode="):
+			parsed["deck_decision_mode"] = arg.split("=")[1]
+		elif arg.begins_with("--anchor-decision-mode="):
+			parsed["anchor_decision_mode"] = arg.split("=")[1]
+		elif arg == "--strong-fixed-opening":
+			parsed["deck_strong_fixed_opening"] = true
+			parsed["anchor_strong_fixed_opening"] = true
+		elif arg.begins_with("--strong-fixed-opening="):
+			var enabled := _parse_bool(arg.split("=")[1])
+			parsed["deck_strong_fixed_opening"] = enabled
+			parsed["anchor_strong_fixed_opening"] = enabled
+		elif arg == "--deck-strong-fixed-opening":
+			parsed["deck_strong_fixed_opening"] = true
+		elif arg.begins_with("--deck-strong-fixed-opening="):
+			parsed["deck_strong_fixed_opening"] = _parse_bool(arg.split("=")[1])
+		elif arg == "--anchor-strong-fixed-opening":
+			parsed["anchor_strong_fixed_opening"] = true
+		elif arg.begins_with("--anchor-strong-fixed-opening="):
+			parsed["anchor_strong_fixed_opening"] = _parse_bool(arg.split("=")[1])
 	return parsed
+
+
+func _parse_bool(value: String) -> bool:
+	var normalized := value.strip_edges().to_lower()
+	return normalized in ["1", "true", "yes", "y", "on", "strong"]
+
+
+func _json_ascii_safe(value: Variant) -> Variant:
+	if value is Dictionary:
+		var safe_dict := {}
+		for raw_key: Variant in (value as Dictionary).keys():
+			safe_dict[str(raw_key)] = _json_ascii_safe((value as Dictionary).get(raw_key))
+		return safe_dict
+	if value is Array:
+		var safe_array: Array = []
+		for raw_item: Variant in value:
+			safe_array.append(_json_ascii_safe(raw_item))
+		return safe_array
+	if value is String:
+		return _ascii_safe_string(str(value))
+	return value
+
+
+func _ascii_safe_string(text: String) -> String:
+	var parts := PackedStringArray()
+	for i: int in text.length():
+		var code := text.unicode_at(i)
+		if code >= 32 and code <= 126:
+			parts.append(text.substr(i, 1))
+		elif code in [9, 10, 13]:
+			parts.append(" ")
+		else:
+			parts.append("?")
+	return "".join(parts)
 
 
 func _quit(code: int) -> void:

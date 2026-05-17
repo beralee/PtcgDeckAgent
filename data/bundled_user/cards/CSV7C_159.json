@@ -1,0 +1,48 @@
+{
+    "name":  "咕咕",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  " 寂静之翼 20\n查看对手的手牌。\n\n",
+    "yoren_code":  "P163",
+    "set_code":  "CSV7C",
+    "card_index":  "159",
+    "set_code_en":  "TEF",
+    "card_index_en":  "126",
+    "name_en":  "Hoothoot",
+    "artist":  "ryoma uratsuka",
+    "rarity":  "C",
+    "release_date":  "2026-01-16T00:00:00+08:00",
+    "regulation_mark":  "H",
+    "effect_id":  "65442467f2645f5983fe6604e5bdc8d2",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV7C/159.png",
+    "image_local_path":  "user://cards/images/CSV7C/159.png",
+    "is_tags":  [
+                    "Basic"
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "C",
+    "stage":  "Basic",
+    "hp":  70,
+    "weakness_energy":  "L",
+    "weakness_value":  "×2",
+    "resistance_energy":  "F",
+    "resistance_value":  "-30",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "寂静之翼",
+                        "text":  "查看对手的手牌。",
+                        "cost":  "CC",
+                        "damage":  "20",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

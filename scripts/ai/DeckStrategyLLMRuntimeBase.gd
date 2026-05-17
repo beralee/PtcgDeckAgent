@@ -3643,6 +3643,8 @@ func _repair_resource_conflicts_action_array(raw_actions: Variant) -> Dictionary
 func _enrich_sparse_tree_for_raging_bolt(tree: Dictionary) -> Dictionary:
 	if not _is_sparse_tree(tree):
 		return tree
+	if _tree_has_non_terminal_non_attack_action(tree):
+		return tree
 	var attack_actions: Array[Dictionary] = _extract_attack_actions(tree)
 	if attack_actions.is_empty():
 		return tree
@@ -3671,6 +3673,34 @@ func _enrich_sparse_tree_for_raging_bolt(tree: Dictionary) -> Dictionary:
 	enriched.erase("actions")
 	enriched["fallback_actions"] = attack_actions
 	return enriched
+
+
+func _tree_has_non_terminal_non_attack_action(node: Dictionary, depth: int = 0) -> bool:
+	if depth > 8:
+		return false
+	for raw_actions_key: String in ["actions", "fallback_actions", "fallback"]:
+		var raw_actions: Variant = node.get(raw_actions_key, [])
+		if not (raw_actions is Array):
+			continue
+		for raw_action: Variant in raw_actions:
+			if not (raw_action is Dictionary):
+				continue
+			var action: Dictionary = raw_action
+			if _is_attack_action_ref(action) or _is_end_turn_action_ref(action):
+				continue
+			return true
+	var raw_branches: Variant = node.get("branches", node.get("children", []))
+	if raw_branches is Array:
+		for raw_branch: Variant in raw_branches:
+			if not (raw_branch is Dictionary):
+				continue
+			var branch: Dictionary = raw_branch
+			if _tree_has_non_terminal_non_attack_action(branch, depth + 1):
+				return true
+			var then_node: Variant = branch.get("then", {})
+			if then_node is Dictionary and _tree_has_non_terminal_non_attack_action(then_node, depth + 1):
+				return true
+	return false
 
 
 func _is_sparse_tree(tree: Dictionary) -> bool:
@@ -4619,8 +4649,10 @@ func _on_llm_response(
 		return
 	var decision_tree: Dictionary = {}
 	var reasoning: String = str(response.get("reasoning", ""))
+	var response_error_reason := ""
 	if String(response.get("status", "")) == "error":
 		var reason := str(response.get("message", "unknown"))
+		response_error_reason = reason
 		decision_tree = _candidate_route_fallback_tree() if turn_at_request == _cached_turn_number else {}
 		if decision_tree.is_empty():
 			_llm_fail_count += 1
@@ -4635,11 +4667,13 @@ func _on_llm_response(
 			return
 		reasoning = "candidate route fallback after response error: %s" % reason
 		_audit_log("candidate_route_fallback", {
-			"turn": turn_at_request,
-			"player_index": player_index,
-			"reason": reason,
-			"fallback_tree": decision_tree,
-		})
+				"turn": turn_at_request,
+				"player_index": player_index,
+				"reason": reason,
+				"fallback_tree": decision_tree,
+			})
+		_llm_fail_count += 1
+		_last_llm_error = reason
 	else:
 		decision_tree = _prompt_builder.parse_llm_response_to_decision_tree(response)
 	if decision_tree.is_empty():
@@ -4780,12 +4814,14 @@ func _on_llm_response(
 				_disable_llm_for_turn(turn_at_request, "empty selected queue")
 				llm_thinking_failed.emit(turn_at_request, "decision tree selected no executable actions; fallback to rules")
 				return
-		_llm_success_count += 1
-		_last_llm_error = ""
+		if response_error_reason == "":
+			_llm_success_count += 1
+			_last_llm_error = ""
 		var plan := {
 			"decision_tree": decision_tree,
 			"action_queue": selected_queue,
 			"reasoning": reasoning,
+			"response_error_fallback": response_error_reason != "",
 		}
 		_audit_log("plan_selected", {
 			"turn": turn_at_request,

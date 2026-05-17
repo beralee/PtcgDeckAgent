@@ -1,24 +1,25 @@
-# PTCG Deck Agent 0.3 Release Notes
+# PTCG Deck Agent 0.3.1 Release Notes
 
-Release date: 2026-05-16
+Release date: 2026-05-17
 
 ## Main Change
 
-0.3 upgrades the client from 0.2.3 to the Simplified Chinese PTCG 17.0 environment.
+0.3.1 is the current 17.0 environment client release, based on the 0.3 upgrade from 0.2.3 to the Simplified Chinese PTCG 17.0 environment.
 
 ## Included Content
 
 - Added 58 new cards for the Simplified Chinese 17.0 environment.
 - Added 12 bundled player decks modeled after the international environment.
 - Added 7 bundled AI decks for direct practice and AI opponent selection.
+- Manual update checks now bypass HTTP/CDN caches so mobile clients do not keep reading stale update manifests.
 
 ## Compatibility Notes
 
-- App runtime version: `0.3`
-- Build number: `30`
-- Windows export version: `0.3.0.0`
-- macOS short version: `0.3`
-- Android version name/code: `0.3` / `30`
+- App runtime version: `0.3.1`
+- Build number: `31`
+- Windows export version: `0.3.1.0`
+- macOS short version: `0.3.1`
+- Android version name/code: `0.3.1` / `31`
 
 ## Scope
 

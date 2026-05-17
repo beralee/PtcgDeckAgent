@@ -261,6 +261,31 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 12
 
+[node name="DynamicStadiumBackgroundLabel" type="Label" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/LeftColumn/LeftMargin/LeftVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "竞技场动态背景"
+
+[node name="DynamicStadiumBackgroundSegment" type="HBoxContainer" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/LeftColumn/LeftMargin/LeftVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="DynamicStadiumBackgroundOnButton" type="Button" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/LeftColumn/LeftMargin/LeftVBox/DynamicStadiumBackgroundSegment"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(150, 42)
+text = "开启"
+
+[node name="DynamicStadiumBackgroundOffButton" type="Button" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/LeftColumn/LeftMargin/LeftVBox/DynamicStadiumBackgroundSegment"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(150, 42)
+text = "关闭"
+
 [node name="BattleLayoutLabel" type="Label" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/LeftColumn/LeftMargin/LeftVBox"]
 unique_name_in_owner = true
 layout_mode = 2

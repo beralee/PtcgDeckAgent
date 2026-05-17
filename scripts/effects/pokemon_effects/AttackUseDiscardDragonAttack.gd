@@ -71,6 +71,8 @@ func get_followup_attack_interaction_steps(
 	if selected_raw.is_empty() or not (selected_raw[0] is Dictionary):
 		return []
 	var option: Dictionary = selected_raw[0]
+	if _has_resolved_copied_followup(resolved_context):
+		return []
 	var source_card: Variant = option.get("source_card", null)
 	var copied_attack_index: int = int(option.get("attack_index", -1))
 	var copied_attack: Dictionary = option.get("attack", {})
@@ -220,6 +222,13 @@ func _get_selected_source_effect_id(option: Dictionary) -> String:
 	if source_instance.card_data == null or source_instance.card_data.effect_id == _OWN_EFFECT_ID:
 		return ""
 	return source_instance.card_data.effect_id
+
+
+func _has_resolved_copied_followup(context: Dictionary) -> bool:
+	for key: Variant in context.keys():
+		if str(key) != "copied_attack":
+			return true
+	return false
 
 
 func _build_copied_attack_action_item(source_data: CardData, copied_attack: Dictionary, apex_cost: String) -> Dictionary:

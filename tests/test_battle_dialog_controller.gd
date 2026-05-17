@@ -35,6 +35,7 @@ class DialogSceneStub:
 	var _pending_choice := ""
 	var _gsm = null
 	var _last_dialog_choice: PackedInt32Array = PackedInt32Array()
+	var _cancelled_card_gallery_drag_sources: Array[String] = []
 
 	func _init() -> void:
 		add_child(_dialog_overlay)
@@ -95,6 +96,9 @@ class DialogSceneStub:
 
 	func _handle_dialog_choice(selected_indices: PackedInt32Array) -> void:
 		_last_dialog_choice = selected_indices
+
+	func _cancel_card_gallery_drag_scroll(source: String = "cancel") -> void:
+		_cancelled_card_gallery_drag_sources.append(source)
 
 
 class FakeStadiumActionEffect extends BaseEffect:
@@ -244,6 +248,42 @@ func test_dialog_cancel_is_ignored_when_cancel_is_disallowed() -> String:
 		assert_true(scene._dialog_overlay.visible, "Mandatory dialogs should stay visible when cancel is requested"),
 		assert_eq(scene.get("_pending_choice"), "mandatory_choice", "Mandatory dialogs should keep their pending choice after cancel"),
 		assert_false(scene._dialog_cancel.visible, "Mandatory dialogs should keep the cancel button hidden"),
+		assert_eq(scene._cancelled_card_gallery_drag_sources, [], "Blocked cancel should not clear active card-gallery drag capture"),
+	])
+	scene.free()
+	return result
+
+
+func test_dialog_confirm_clears_card_gallery_drag_capture() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var scene := DialogSceneStub.new()
+	scene._dialog_overlay.visible = true
+	scene.set("_pending_choice", "test_choice")
+
+	controller.call("confirm_dialog_selection", scene, PackedInt32Array([0]))
+
+	var result := run_checks([
+		assert_false(scene._dialog_overlay.visible, "Confirming a dialog should hide the overlay"),
+		assert_eq(scene._cancelled_card_gallery_drag_sources, ["dialog_confirm_selection"], "Confirming a dialog should clear stale card-gallery drag capture"),
+		assert_eq(Array(scene._last_dialog_choice), [0], "Confirming a dialog should still forward the selected indices"),
+	])
+	scene.free()
+	return result
+
+
+func test_dialog_cancel_clears_card_gallery_drag_capture() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var scene := DialogSceneStub.new()
+	scene._dialog_overlay.visible = true
+	scene.set("_pending_choice", "test_choice")
+	scene.set("_dialog_data", {"allow_cancel": true})
+
+	controller.call("on_dialog_cancel", scene)
+
+	var result := run_checks([
+		assert_false(scene._dialog_overlay.visible, "Canceling a dialog should hide the overlay"),
+		assert_eq(scene._cancelled_card_gallery_drag_sources, ["dialog_cancel"], "Canceling a dialog should clear stale card-gallery drag capture"),
+		assert_eq(scene.get("_pending_choice"), "", "Canceling a dialog should clear pending choice"),
 	])
 	scene.free()
 	return result

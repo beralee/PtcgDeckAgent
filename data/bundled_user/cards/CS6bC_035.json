@@ -1,0 +1,55 @@
+{
+    "name":  "大嘴娃",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  " 甜甜陷阱 \n在下一个对手的回合，受到这个招式影响的宝可梦，无法撤退。在下一个自己的回合，受到这个招式影响的宝可梦所受到的招式的伤害「+90」。\n\n【超】 咬住 90\n\n\n",
+    "yoren_code":  "P303",
+    "set_code":  "CS6bC",
+    "card_index":  "035",
+    "set_code_en":  "LOR",
+    "card_index_en":  "71",
+    "name_en":  "Mawile",
+    "artist":  "kurumitsu",
+    "rarity":  "C",
+    "release_date":  "2024-09-20T00:00:00+08:00",
+    "regulation_mark":  "F",
+    "effect_id":  "26afb8b359bdeb40834a9dafbba4218b",
+    "image_url":  "https://tcg.mik.moe/static/img/CS6bC/035.png",
+    "image_local_path":  "user://cards/images/CS6bC/035.png",
+    "is_tags":  [
+                    "Basic"
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "P",
+    "stage":  "Basic",
+    "hp":  90,
+    "weakness_energy":  "M",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "甜甜陷阱",
+                        "text":  "在下一个对手的回合，受到这个招式影响的宝可梦，无法撤退。在下一个自己的回合，受到这个招式影响的宝可梦所受到的招式的伤害「+90」。",
+                        "cost":  "C",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "咬住",
+                        "text":  "",
+                        "cost":  "PCC",
+                        "damage":  "90",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

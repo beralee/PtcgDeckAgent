@@ -1569,13 +1569,17 @@ func _assignment_target_score(slot: PokemonSlot, context: Dictionary) -> float:
 	var backup_arceus := _backup_arceus_slot(player)
 	var giratina := _best_giratina_slot(player)
 	if _is_exact_double_vstar_shell_distribution_window(player, context):
-		if slot == backup_arceus:
-			var score := 920.0
-			if source_provides == "G":
-				score += 40.0
-			return score
 		if slot == giratina:
+			if source_provides == "P" and _giratina_needs_type_after_pending(slot, "P", context):
+				return 980.0
+			if source_provides == "G" and _giratina_needs_type_after_pending(slot, "G", context):
+				return 960.0
 			return 0.0
+		if slot == backup_arceus:
+			var score := 720.0
+			if source_provides not in ["G", "P"]:
+				score += 80.0
+			return score
 	if source_name == DOUBLE_TURBO_ENERGY:
 		if slot_name == ARCEUS_VSTAR or slot_name == ARCEUS_V:
 			if slot == backup_arceus and launch_online:
@@ -1599,9 +1603,9 @@ func _assignment_target_score(slot: PokemonSlot, context: Dictionary) -> float:
 		if launch_online and (slot_name == GIRATINA_VSTAR or slot_name == GIRATINA_V):
 			var giratina_score := 300.0
 			if source_name == PSYCHIC_ENERGY and _giratina_needs_type_after_pending(slot, "P", context):
-				giratina_score += 180.0
+				giratina_score += 260.0
 			elif source_name == GRASS_ENERGY and _giratina_needs_type_after_pending(slot, "G", context):
-				giratina_score += 120.0
+				giratina_score += 240.0
 				if _giratina_needs_type_after_pending(slot, "P", context):
 					giratina_score += 120.0
 			elif giratina != null and slot == giratina and _attack_gap_after_pending(slot, context) <= 1:
@@ -1633,13 +1637,12 @@ func _pick_energy_assignment_sources(items: Array[CardInstance], max_select: int
 	var backup_arceus := _backup_arceus_slot(player)
 	if player != null and _is_launch_online(player):
 		if _is_exact_double_vstar_shell_distribution_window(player, context):
-			while selected.size() < max_select:
-				var previous_size := selected.size()
+			if giratina != null and _giratina_needs_type_after_pending(giratina, "P", context):
+				_append_first_matching_energy_source(selected, remaining, max_select, ["P"])
+			if giratina != null and _giratina_needs_type_after_pending(giratina, "G", context):
 				_append_first_matching_energy_source(selected, remaining, max_select, ["G"])
-				if selected.size() == previous_size:
-					_append_first_matching_energy_source(selected, remaining, max_select, ["P"])
-				if selected.size() == previous_size:
-					break
+			if backup_arceus != null and _backup_arceus_needs_first_basic_progress_after_pending(backup_arceus, context):
+				_append_first_matching_energy_source(selected, remaining, max_select, ["G", "P"])
 			if not selected.is_empty():
 				return selected
 		if giratina == null and _count_giratina_total(player) == 0 and backup_arceus != null:

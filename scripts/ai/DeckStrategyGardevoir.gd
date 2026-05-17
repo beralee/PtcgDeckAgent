@@ -758,7 +758,11 @@ func _abs_play_basic(action: Dictionary, game_state: GameState, player: PlayerSt
 				return 120.0
 			return -80.0
 		if name == SCREAM_TAIL:
-			if attacker_bodies == 0 and free_slots > 0 and _count_primary_shell_bodies(player) >= 1:
+			if attacker_bodies == 0 \
+					and free_slots > 0 \
+					and _count_primary_shell_bodies(player) == 1 \
+					and player.active_pokemon != null \
+					and player.active_pokemon.get_pokemon_name() == KLEFKI:
 				return 110.0
 			return -60.0
 		if name in [MUNKIDORI, RADIANT_GRENINJA, MANAPHY]:
@@ -1047,7 +1051,12 @@ func _abs_attach_energy(action: Dictionary, game_state: GameState, player: Playe
 				if _shell_lock_active(player) or _count_pokemon_on_field(player, GARDEVOIR_EX) == 0:
 					if target_slot == player.active_pokemon and (_hand_has_card(player, TM_EVOLUTION) or _active_has_tm_evolution(player)):
 						return 260.0
-					return 320.0
+					if game_state != null \
+							and int(game_state.turn_number) >= 4 \
+							and player.active_pokemon != null \
+							and player.active_pokemon.get_pokemon_name() in [RALTS, KIRLIA]:
+						return 320.0
+					return -120.0
 				if _has_transition_shell(player) and not _munkidori_can_threaten_ko(game_state, player_index):
 					if ready_attackers == 0 or _attacker_rebuild_closed_loop_live(game_state, player, player_index):
 						return -120.0
@@ -1085,16 +1094,22 @@ func _abs_attach_tool(action: Dictionary, game_state: GameState, player: PlayerS
 	if _slot_has_tool(target_slot):
 		return -300.0
 	if tool_name == TM_EVOLUTION:
-		if _tm_evolution_attack_blocked_this_turn(game_state, player_index):
-			return -240.0
 		if target_slot != player.active_pokemon:
 			return -200.0
-		if not _tm_evolution_can_pay_attack_this_turn(game_state, player):
-			return -240.0
 		if _tm_support_carrier_cools_off(player, phase):
 			return -220.0
 		if _has_online_shell(player):
 			return -180.0
+		if not _tm_evolution_can_pay_attack_this_turn(game_state, player):
+			if _shell_lock_active(player):
+				var shell_bodies_for_preload: int = _count_primary_shell_bodies(player)
+				if target_name == KLEFKI:
+					return -120.0
+				if shell_bodies_for_preload >= 2:
+					return 260.0
+				if shell_bodies_for_preload >= 1 and target_name in [RALTS, KLEFKI, FLUTTER_MANE, MUNKIDORI]:
+					return 180.0
+			return -120.0
 		var shell_bodies: int = _count_primary_shell_bodies(player)
 		var evolvable_targets: int = _count_evolvable_bench_targets(player)
 		if _shell_lock_active(player) and shell_bodies == 0 and evolvable_targets == 0:
@@ -1153,6 +1168,8 @@ func _abs_use_ability(action: Dictionary, game_state: GameState, player: PlayerS
 			return 560.0
 		if _post_tm_refill_window(game_state, player, player_index):
 			if _has_direct_first_gardevoir_line(game_state, player, player_index):
+				if source_slot == player.active_pokemon and _count_psychic_energy_in_discard(game_state, player_index) < 2:
+					return 520.0
 				return 80.0
 			return 520.0
 		if _first_gardevoir_fuel_gate(game_state, player, player_index):
@@ -2770,7 +2787,7 @@ func plan_opening_setup(player: PlayerState) -> Dictionary:
 	var active_index: int = -1
 	var bridge_active_preference: Array[String] = [FLUTTER_MANE, KLEFKI]
 	var fallback_active_preference: Array[String] = [FLUTTER_MANE, KLEFKI, DRIFLOON, SCREAM_TAIL, MANAPHY, MUNKIDORI, RADIANT_GRENINJA]
-	if ralts_count >= 2:
+	if ralts_count >= 2 and (_opening_tm_bridge_live(player) or _hand_has_card(player, KIRLIA)):
 		for preferred in bridge_active_preference:
 			if active_index != -1:
 				break
@@ -2779,7 +2796,19 @@ func plan_opening_setup(player: PlayerState) -> Dictionary:
 					active_index = int(b["index"])
 					break
 	elif ralts_count == 1:
-		for preferred in [FLUTTER_MANE, KLEFKI, DRIFLOON, SCREAM_TAIL]:
+		var has_flutter_mane: bool = false
+		var has_drifloon: bool = false
+		for b in basics:
+			var bname_for_single: String = str(b["name"])
+			if bname_for_single == FLUTTER_MANE:
+				has_flutter_mane = true
+			elif bname_for_single == DRIFLOON:
+				has_drifloon = true
+		var single_ralts_active_preference: Array[String] = []
+		if has_flutter_mane and has_drifloon:
+			single_ralts_active_preference.append(FLUTTER_MANE)
+		single_ralts_active_preference.append(DRIFLOON)
+		for preferred in single_ralts_active_preference:
 			if active_index != -1:
 				break
 			for b in basics:

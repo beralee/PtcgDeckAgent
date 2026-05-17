@@ -1,0 +1,48 @@
+{
+    "name":  "原野水母",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  " 汁液喷吐 10\n\n\n",
+    "yoren_code":  "P0948",
+    "set_code":  "SVP",
+    "card_index":  "144",
+    "set_code_en":  "JTG",
+    "card_index_en":  "88",
+    "name_en":  "Toedscool",
+    "artist":  "osare",
+    "rarity":  "无标记",
+    "release_date":  "2026-01-16T00:00:00+08:00",
+    "regulation_mark":  "H",
+    "effect_id":  "3c5c8a731e45ff86d10c710edaa9387f",
+    "image_url":  "https://tcg.mik.moe/static/img/SVP/144.png",
+    "image_local_path":  "user://cards/images/SVP/144.png",
+    "is_tags":  [
+                    "Basic"
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "F",
+    "stage":  "Basic",
+    "hp":  60,
+    "weakness_energy":  "G",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "汁液喷吐",
+                        "text":  "",
+                        "cost":  "C",
+                        "damage":  "10",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

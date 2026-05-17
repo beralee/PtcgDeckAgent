@@ -1,0 +1,42 @@
+{
+    "name":  "超群眼镜",
+    "card_type":  "Tool",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "身上放有这张卡牌的宝可梦使用招式的伤害，在计算对手战斗宝可梦的弱点时，其弱点按照「×3」计算。",
+    "yoren_code":  "Y1025",
+    "set_code":  "CS5aC",
+    "card_index":  "118",
+    "set_code_en":  "ASR",
+    "card_index_en":  "152",
+    "name_en":  "Supereffective Glasses",
+    "artist":  "Ryo Ueda",
+    "rarity":  "U",
+    "release_date":  "2024-06-18T00:00:00+08:00",
+    "regulation_mark":  "F",
+    "effect_id":  "0ad0108e5ab1346d88f6ce11b75028d7",
+    "image_url":  "https://tcg.mik.moe/static/img/CS5aC/118.png",
+    "image_local_path":  "user://cards/images/CS5aC/118.png",
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "",
+    "stage":  "",
+    "hp":  0,
+    "weakness_energy":  "",
+    "weakness_value":  "",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  0,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

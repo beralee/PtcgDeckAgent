@@ -485,7 +485,7 @@ func _abs_play_trainer(action: Dictionary, game_state: GameState, player: Player
 				return 620.0
 		if tname == ELECTRIC_GENERATOR or tname == "Electric Generator":
 			if not _has_electric_generator_bench_target(player):
-				return 20.0
+				return 80.0
 			if _count_pokemon_on_field(player, MIRAIDON_EX) == 0:
 				return 320.0
 			if _should_prioritize_squawk_setup(player, game_state):
@@ -494,7 +494,7 @@ func _abs_play_trainer(action: Dictionary, game_state: GameState, player: Player
 	# 电气发生器 — 核心加速（牌库有雷能量时价值最高）
 	if tname == ELECTRIC_GENERATOR or tname == "Electric Generator":
 		if not _has_electric_generator_bench_target(player):
-			return 20.0
+			return 80.0
 		if player.deck.is_empty():
 			return 350.0
 		var deck_lightning: int = _count_lightning_in_deck(player)

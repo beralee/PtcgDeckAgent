@@ -14,8 +14,14 @@ func _bt(scene: Object, key: String, params: Dictionary = {}) -> String:
 	return str(scene.call("_bt", key, params))
 
 
-func mark_modal_input_consumed(scene: Object, reason: String = "field_interaction") -> void:
-	if scene != null and scene.has_method("_mark_modal_input_consumed"):
+func mark_modal_input_consumed(scene: Object, reason: String = "field_interaction", suppress_slot_input: bool = true) -> void:
+	if scene == null:
+		return
+	if scene.has_method("_finish_modal_input_interaction"):
+		scene.call("_finish_modal_input_interaction", reason, "arm" if suppress_slot_input else "clear")
+	elif not suppress_slot_input and scene.has_method("_mark_modal_input_consumed_without_slot_suppression"):
+		scene.call("_mark_modal_input_consumed_without_slot_suppression", reason)
+	elif scene.has_method("_mark_modal_input_consumed"):
 		scene.call("_mark_modal_input_consumed", reason)
 
 
@@ -178,6 +184,7 @@ func raise_field_interaction_overlay(scene: Object) -> void:
 
 
 func hide_field_interaction(scene: Object) -> void:
+	restore_field_assignment_expanded_metrics(scene)
 	scene.set("_field_interaction_mode", "")
 	scene.set("_field_interaction_data", {})
 	scene.set("_field_interaction_slot_index_by_id", {})
@@ -606,6 +613,69 @@ func field_interaction_uses_grouped_assignment_sources(scene: Object) -> bool:
 	return not source_groups.is_empty()
 
 
+func field_assignment_should_compact(scene: Object, interaction_data: Dictionary) -> bool:
+	if not bool(interaction_data.get("compact_field_assignment_after_source", false)):
+		return false
+	if str(scene.get("_field_interaction_mode")) != "assignment":
+		return false
+	if int(scene.get("_field_interaction_assignment_selected_source_index")) >= 0:
+		return true
+	var assignment_entries: Array = scene.get("_field_interaction_assignment_entries")
+	return not assignment_entries.is_empty()
+
+
+func apply_field_assignment_compact_metrics(scene: Object, compact: bool) -> void:
+	if compact:
+		var panel: PanelContainer = scene.get("_field_interaction_panel")
+		var scroll: ScrollContainer = scene.get("_field_interaction_scroll")
+		var row: HBoxContainer = scene.get("_field_interaction_row")
+		if panel == null:
+			return
+		if not panel.has_meta("field_assignment_expanded_panel_minimum"):
+			panel.set_meta("field_assignment_expanded_panel_minimum", panel.custom_minimum_size)
+		if scroll != null and not scroll.has_meta("field_assignment_expanded_scroll_minimum"):
+			scroll.set_meta("field_assignment_expanded_scroll_minimum", scroll.custom_minimum_size)
+		if row != null and not row.has_meta("field_assignment_expanded_row_minimum"):
+			row.set_meta("field_assignment_expanded_row_minimum", row.custom_minimum_size)
+		if scroll != null:
+			scroll.visible = false
+			scroll.custom_minimum_size = Vector2(scroll.custom_minimum_size.x, 0.0)
+		if row != null:
+			row.custom_minimum_size = Vector2(row.custom_minimum_size.x, 0.0)
+			row.size = Vector2(row.size.x, 0.0)
+		panel.custom_minimum_size = Vector2(panel.custom_minimum_size.x, field_assignment_compact_panel_height(scene))
+		return
+	restore_field_assignment_expanded_metrics(scene)
+
+
+func restore_field_assignment_expanded_metrics(scene: Object) -> void:
+	var panel: PanelContainer = scene.get("_field_interaction_panel")
+	var scroll: ScrollContainer = scene.get("_field_interaction_scroll")
+	var row: HBoxContainer = scene.get("_field_interaction_row")
+	if panel != null and panel.has_meta("field_assignment_expanded_panel_minimum"):
+		var panel_size: Variant = panel.get_meta("field_assignment_expanded_panel_minimum")
+		if panel_size is Vector2:
+			panel.custom_minimum_size = panel_size
+		panel.remove_meta("field_assignment_expanded_panel_minimum")
+	if scroll != null and scroll.has_meta("field_assignment_expanded_scroll_minimum"):
+		var scroll_size: Variant = scroll.get_meta("field_assignment_expanded_scroll_minimum")
+		if scroll_size is Vector2:
+			scroll.custom_minimum_size = scroll_size
+			scroll.size = Vector2(scroll.size.x, scroll_size.y)
+		scroll.remove_meta("field_assignment_expanded_scroll_minimum")
+	if row != null and row.has_meta("field_assignment_expanded_row_minimum"):
+		var row_size: Variant = row.get_meta("field_assignment_expanded_row_minimum")
+		if row_size is Vector2:
+			row.custom_minimum_size = row_size
+			row.size = Vector2(row.size.x, row_size.y)
+		row.remove_meta("field_assignment_expanded_row_minimum")
+
+
+func field_assignment_compact_panel_height(scene: Object) -> float:
+	var portrait_active := scene.has_method("_is_portrait_popup_text_profile_active") and bool(scene.call("_is_portrait_popup_text_profile_active"))
+	return 204.0 if portrait_active else 156.0
+
+
 func grouped_field_source_board_height(card_size: Vector2, has_active: bool, has_bench: bool) -> float:
 	var lane_count := 0
 	if has_active:
@@ -868,7 +938,7 @@ func add_field_assignment_source_card(
 
 
 func on_field_assignment_source_chosen(scene: Object, source_index: int) -> void:
-	mark_modal_input_consumed(scene, "field_assignment_source")
+	mark_modal_input_consumed(scene, "field_assignment_source", false)
 	var interaction_data: Dictionary = scene.get("_field_interaction_data")
 	var source_items: Array = interaction_data.get("source_items", [])
 	if source_index < 0 or source_index >= source_items.size():
@@ -933,6 +1003,65 @@ func field_interaction_selected_slot_ids(scene: Object) -> Array[String]:
 	return result
 
 
+func field_assignment_source_label(interaction_data: Dictionary, source_index: int) -> String:
+	var source_items: Array = interaction_data.get("source_items", [])
+	var source_labels: Array = interaction_data.get("source_labels", [])
+	if source_index < 0 or source_index >= source_items.size():
+		return ""
+	var source_label := str(source_labels[source_index]) if source_index < source_labels.size() else ""
+	var source_item: Variant = source_items[source_index]
+	if source_label.strip_edges() == "" and source_item is CardInstance:
+		var source_card := source_item as CardInstance
+		source_label = source_card.card_data.name if source_card.card_data != null else ""
+	if source_label.strip_edges() == "":
+		source_label = str(source_item)
+	var source_slot := field_assignment_source_slot_for_index(interaction_data, source_index)
+	if source_slot != null:
+		var slot_name := source_slot.get_pokemon_name()
+		if slot_name.strip_edges() != "":
+			return "%s（来自 %s）" % [source_label, slot_name]
+	return source_label
+
+
+func field_assignment_target_label(interaction_data: Dictionary, target_index: int, target_item: Variant) -> String:
+	var target_labels: Array = interaction_data.get("target_labels", [])
+	var target_label := str(target_labels[target_index]) if target_index >= 0 and target_index < target_labels.size() else ""
+	if target_label.strip_edges() != "":
+		return target_label
+	if target_item is PokemonSlot:
+		return (target_item as PokemonSlot).get_pokemon_name()
+	return str(target_item)
+
+
+func field_assignment_source_slot_for_index(interaction_data: Dictionary, source_index: int) -> PokemonSlot:
+	var source_groups: Array = interaction_data.get("source_groups", [])
+	for group_variant: Variant in source_groups:
+		if not (group_variant is Dictionary):
+			continue
+		var group := group_variant as Dictionary
+		if not (source_index in grouped_field_source_indices(group)):
+			continue
+		var slot_variant: Variant = group.get("slot")
+		if slot_variant is PokemonSlot:
+			return slot_variant as PokemonSlot
+	return null
+
+
+func field_assignment_path_summary(interaction_data: Dictionary, assignment_entries: Array) -> String:
+	var parts: Array[String] = []
+	for entry_variant: Variant in assignment_entries:
+		if not (entry_variant is Dictionary):
+			continue
+		var entry := entry_variant as Dictionary
+		var source_index := int(entry.get("source_index", -1))
+		var target_index := int(entry.get("target_index", -1))
+		var source_text := field_assignment_source_label(interaction_data, source_index)
+		var target_text := field_assignment_target_label(interaction_data, target_index, entry.get("target"))
+		if source_text.strip_edges() != "" and target_text.strip_edges() != "":
+			parts.append("%s -> %s" % [source_text, target_text])
+	return "，".join(parts)
+
+
 func refresh_field_interaction_status(scene: Object) -> void:
 	ensure_field_interaction_panel(scene)
 	if not is_field_interaction_active(scene):
@@ -947,10 +1076,15 @@ func refresh_field_interaction_status(scene: Object) -> void:
 	if title_label != null:
 		title_label.text = str(interaction_data.get("title", "请选择"))
 	var mode := str(scene.get("_field_interaction_mode"))
-	var show_cards := mode in ["assignment", "counter_distribution"]
+	var compact_assignment := mode == "assignment" and field_assignment_should_compact(scene, interaction_data)
+	if compact_assignment and title_label != null:
+		title_label.text = str(interaction_data.get("compact_field_assignment_title", title_label.text))
+	var show_cards := mode in ["assignment", "counter_distribution"] and not compact_assignment
 	var scroll: ScrollContainer = scene.get("_field_interaction_scroll")
 	if scroll != null:
 		scroll.visible = show_cards
+	if mode == "assignment":
+		apply_field_assignment_compact_metrics(scene, compact_assignment)
 	var buttons: HBoxContainer = scene.get("_field_interaction_buttons")
 	if buttons != null:
 		buttons.visible = true
@@ -1028,10 +1162,16 @@ func refresh_field_interaction_status(scene: Object) -> void:
 		summary += " 已分配 %d 项" % assignment_entries.size()
 		if max_assignments > 0:
 			summary += " / %d" % max_assignments
+	if selected_source_index >= 0:
+		summary = "已选择：%s。请选择目标宝可梦。" % field_assignment_source_label(interaction_data, selected_source_index)
+	if not assignment_entries.is_empty():
+		summary = "路径：%s。确认后执行。" % field_assignment_path_summary(interaction_data, assignment_entries)
+		if max_assignments > 0:
+			summary += " %d / %d" % [assignment_entries.size(), max_assignments]
 	if status_label != null:
 		status_label.text = summary
 	if clear_button != null:
-		clear_button.visible = not assignment_entries.is_empty()
+		clear_button.visible = not assignment_entries.is_empty() or (compact_assignment and selected_source_index >= 0)
 	if cancel_button != null:
 		cancel_button.visible = bool(interaction_data.get("allow_cancel", true))
 	if confirm_button != null:
@@ -1158,7 +1298,12 @@ func handle_field_assignment_target_index(scene: Object, target_index: int) -> v
 	scene.call("_refresh_ui")
 	var min_assignments: int = int(interaction_data.get("min_select", 0))
 	var max_assignments: int = int(interaction_data.get("max_select", 0))
-	if min_assignments == max_assignments and max_assignments > 0 and assignment_entries.size() == max_assignments:
+	if (
+		not bool(interaction_data.get("field_assignment_require_confirm", false))
+		and min_assignments == max_assignments
+		and max_assignments > 0
+		and assignment_entries.size() == max_assignments
+	):
 		finalize_field_assignment_selection(scene)
 
 
@@ -1259,14 +1404,14 @@ func _build_counter_distribution_buttons(scene: Object) -> void:
 		btn.add_theme_font_size_override("font_size", 18)
 		var captured_amount: int = amount
 		btn.pressed.connect(func() -> void:
-			mark_modal_input_consumed(scene, "counter_distribution_amount")
+			mark_modal_input_consumed(scene, "counter_distribution_amount", false)
 			scene.call("_on_counter_distribution_amount_chosen", captured_amount)
 		)
 		row.add_child(btn)
 
 
 func on_counter_distribution_amount_chosen(scene: Object, amount: int) -> void:
-	mark_modal_input_consumed(scene, "counter_distribution_amount")
+	mark_modal_input_consumed(scene, "counter_distribution_amount", false)
 	var interaction_data: Dictionary = scene.get("_field_interaction_data")
 	var total_counters: int = int(interaction_data.get("total_counters", 0))
 	var assigned_count: int = _get_counter_distribution_assigned_total(scene)

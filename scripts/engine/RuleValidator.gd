@@ -68,11 +68,49 @@ func can_play_stadium(
 		return false
 	if effect_processor != null and card != null and effect_processor.prevents_card_from_hand(player_index, card, state):
 		return false
-	if state.stadium_played_this_turn:
-		return false
-	if state.stadium_card != null and state.stadium_card.card_data.name == card.card_data.name:
+	if state.stadium_card != null and _is_same_stadium_card(state.stadium_card, card):
 		return false
 	return true
+
+
+func _is_same_stadium_card(active_stadium: CardInstance, incoming_stadium: CardInstance) -> bool:
+	if active_stadium == null or incoming_stadium == null:
+		return false
+	var active_data: CardData = active_stadium.card_data
+	var incoming_data: CardData = incoming_stadium.card_data
+	if active_data == null or incoming_data == null:
+		return false
+	if _both_non_empty_equal(active_data.yoren_code, incoming_data.yoren_code):
+		return true
+	if (
+		_both_non_empty_equal(active_data.set_code, incoming_data.set_code)
+		and _both_non_empty_equal(active_data.card_index, incoming_data.card_index)
+	):
+		return true
+	if (
+		_both_non_empty_equal(active_data.set_code_en, incoming_data.set_code_en)
+		and _both_non_empty_equal(active_data.card_index_en, incoming_data.card_index_en)
+	):
+		return true
+	var active_names := _stadium_identity_names(active_data)
+	var incoming_names := _stadium_identity_names(incoming_data)
+	for active_name: String in active_names:
+		if active_name in incoming_names:
+			return true
+	return false
+
+
+func _both_non_empty_equal(left: String, right: String) -> bool:
+	return left.strip_edges() != "" and right.strip_edges() != "" and left.strip_edges() == right.strip_edges()
+
+
+func _stadium_identity_names(card_data: CardData) -> PackedStringArray:
+	var names := PackedStringArray()
+	for raw_name: String in [card_data.name, card_data.name_en]:
+		var normalized := raw_name.strip_edges()
+		if normalized != "" and normalized not in names:
+			names.append(normalized)
+	return names
 
 
 func can_evolve(
