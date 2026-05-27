@@ -96,6 +96,13 @@ func _bench_names(player: PlayerState) -> Array[String]:
 	return names
 
 
+func _find_step(steps: Array[Dictionary], step_id: String) -> Dictionary:
+	for step: Dictionary in steps:
+		if str(step.get("id", "")) == step_id:
+			return step
+	return {}
+
+
 func test_arven_multistep_full_deck_visible_and_ignores_visible_only_cards() -> String:
 	var item := CardInstance.create(_make_trainer_data("Legal Item", "Item"), 0)
 	var water := CardInstance.create(_make_pokemon_data("Visible Water", "W"), 0)
@@ -125,6 +132,52 @@ func test_arven_multistep_full_deck_visible_and_ignores_visible_only_cards() -> 
 		assert_true(energy in player.deck, "Arven must ignore a visible-only Energy in the Tool step"),
 	]
 	return run_checks(checks)
+
+
+func test_arven_explicit_empty_searches_do_not_auto_take_cards() -> String:
+	var item := CardInstance.create(_make_trainer_data("Legal Item", "Item"), 0)
+	var tool := CardInstance.create(_make_trainer_data("Legal Tool", "Tool"), 0)
+	var state := _make_state_with_deck([item, tool])
+	var player: PlayerState = state.players[0]
+	var effect := EffectArven.new()
+	var card := CardInstance.create(_make_trainer_data("Arven", "Supporter"), 0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
+
+	effect.execute(card, [{
+		"search_item": [],
+		"search_tool": [],
+	}], state)
+
+	return run_checks([
+		assert_eq(int(_find_step(steps, "search_item").get("min_select", -1)), 0, "Arven item search should allow no card"),
+		assert_true(bool(_find_step(steps, "search_item").get("force_confirm", false)), "Arven item search should expose confirm for no card"),
+		assert_true(item in player.deck, "Explicit empty Arven item search should leave Item in deck"),
+		assert_true(tool in player.deck, "Explicit empty Arven tool search should leave Tool in deck"),
+		assert_false(item in player.hand or tool in player.hand, "Explicit empty Arven search should not move cards to hand"),
+	])
+
+
+func test_irida_explicit_empty_searches_do_not_auto_take_cards() -> String:
+	var water := CardInstance.create(_make_pokemon_data("Legal Water", "W"), 0)
+	var item := CardInstance.create(_make_trainer_data("Legal Item", "Item"), 0)
+	var state := _make_state_with_deck([water, item])
+	var player: PlayerState = state.players[0]
+	var effect := EffectIrida.new()
+	var card := CardInstance.create(_make_trainer_data("Irida", "Supporter"), 0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
+
+	effect.execute(card, [{
+		"water_pokemon": [],
+		"item_card": [],
+	}], state)
+
+	return run_checks([
+		assert_eq(int(_find_step(steps, "water_pokemon").get("min_select", -1)), 0, "Irida Water search should allow no card"),
+		assert_true(bool(_find_step(steps, "water_pokemon").get("force_confirm", false)), "Irida Water search should expose confirm for no card"),
+		assert_true(water in player.deck, "Explicit empty Irida Water search should leave Water Pokemon in deck"),
+		assert_true(item in player.deck, "Explicit empty Irida Item search should leave Item in deck"),
+		assert_false(water in player.hand or item in player.hand, "Explicit empty Irida search should not move cards to hand"),
+	])
 
 
 func test_colress_tenacity_multistep_full_deck_visible_and_ignores_visible_only_cards() -> String:
@@ -182,6 +235,27 @@ func test_town_store_full_deck_visible_but_only_tools_selectable() -> String:
 	])
 
 
+func test_town_store_explicit_empty_search_does_not_auto_take_tool() -> String:
+	var tool := CardInstance.create(_make_trainer_data("Legal Tool", "Tool"), 0)
+	var item := CardInstance.create(_make_trainer_data("Visible Item", "Item"), 0)
+	var state := _make_state_with_deck([tool, item])
+	var player: PlayerState = state.players[0]
+	var effect := EffectTownStore.new()
+	var stadium := CardInstance.create(_make_trainer_data("Town Store", "Stadium"), 0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(stadium, state)
+
+	effect.execute(stadium, [{
+		"town_store_tool": [],
+	}], state)
+
+	return run_checks([
+		assert_eq(int((steps[0] if not steps.is_empty() else {}).get("min_select", -1)), 0, "Town Store should allow choosing no Tool"),
+		assert_true(bool((steps[0] if not steps.is_empty() else {}).get("force_confirm", false)), "Town Store should expose confirm for no Tool"),
+		assert_true(tool in player.deck, "Explicit empty Town Store search should leave Tool in deck"),
+		assert_false(tool in player.hand, "Explicit empty Town Store search should not move Tool to hand"),
+	])
+
+
 func test_artazon_full_deck_visible_preserves_rule_box_filter() -> String:
 	var legal := CardInstance.create(_make_pokemon_data("Legal Basic", "G", "Basic", 70), 0)
 	var rule_box := CardInstance.create(_make_pokemon_data("Rule Box ex", "G", "Basic", 180, "ex"), 0)
@@ -207,6 +281,28 @@ func test_artazon_full_deck_visible_preserves_rule_box_filter() -> String:
 		assert_true(rule_box in player.deck, "Artazon must keep rule-box Pokemon visible-only"),
 		assert_true(stage_one in player.deck, "Artazon must keep Evolution Pokemon visible-only"),
 		assert_true(item in player.deck, "Artazon must ignore visible-only Trainer cards"),
+	])
+
+
+func test_artazon_explicit_empty_search_does_not_auto_bench_pokemon() -> String:
+	var legal := CardInstance.create(_make_pokemon_data("Legal Basic", "G", "Basic", 70), 0)
+	var item := CardInstance.create(_make_trainer_data("Visible Item", "Item"), 0)
+	var state := _make_state_with_deck([legal, item])
+	var player: PlayerState = state.players[0]
+	player.bench.clear()
+	var effect := EffectArtazon.new()
+	var stadium := CardInstance.create(_make_trainer_data("Artazon", "Stadium"), 0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(stadium, state)
+
+	effect.execute(stadium, [{
+		"artazon_pokemon": [],
+	}], state)
+
+	return run_checks([
+		assert_eq(int((steps[0] if not steps.is_empty() else {}).get("min_select", -1)), 0, "Artazon should allow choosing no Pokemon"),
+		assert_true(bool((steps[0] if not steps.is_empty() else {}).get("force_confirm", false)), "Artazon should expose confirm for no Pokemon"),
+		assert_true(player.bench.is_empty(), "Explicit empty Artazon search should not bench a Pokemon"),
+		assert_true(legal in player.deck, "Explicit empty Artazon search should leave the Basic Pokemon in deck"),
 	])
 
 

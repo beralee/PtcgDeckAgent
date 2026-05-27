@@ -2,8 +2,10 @@ class_name TestDeckManager
 extends TestBase
 
 const DeckManagerScene = preload("res://scenes/deck_manager/DeckManager.tscn")
+const DeckViewDialogScript = preload("res://scripts/ui/decks/DeckViewDialog.gd")
 const DeckRecommendationStoreScript = preload("res://scripts/engine/DeckRecommendationStore.gd")
 const TEST_RECOMMENDATION_CACHE_PATH := "user://test_deck_manager/recommendation_cache.json"
+const TEST_DECK_CENTER_META_STATE_PATH := "user://deck_center_meta_state.json"
 
 
 class FakeDeckSuggestionClient:
@@ -139,6 +141,69 @@ func test_deck_manager_sorts_decks_by_latest_edit_time_first() -> String:
 	])
 
 
+func test_deck_view_card_list_keeps_scrollbar_and_enables_drag_scroll() -> String:
+	var host := Control.new()
+	var dialog_helper = DeckViewDialogScript.new()
+	var deck := _make_deck(910027, "Drag View Deck")
+	deck.cards = [
+		{"name": "Drag Test Card", "set_code": "", "card_index": "", "count": 60, "card_type": "Pokemon"},
+	]
+
+	dialog_helper.show_deck(host, deck)
+	var scroll := host.find_child("DeckViewCardScroll", true, false) as ScrollContainer
+	var grid := host.find_child("DeckViewCardGrid", true, false) as GridContainer
+	var vbar := scroll.get_v_scroll_bar() if scroll != null else null
+
+	host.queue_free()
+	return run_checks([
+		assert_not_null(scroll, "Deck view should name the card-list ScrollContainer for interaction tests"),
+		assert_not_null(grid, "Deck view should name the card grid for interaction tests"),
+		assert_true(scroll != null and bool(scroll.get_meta("deck_card_list_drag_scroll_enabled", false)), "Deck view card list should opt into drag scrolling"),
+		assert_eq(scroll.horizontal_scroll_mode if scroll != null else -1, ScrollContainer.SCROLL_MODE_DISABLED, "Deck view card list should stay vertically oriented"),
+		assert_eq(scroll.vertical_scroll_mode if scroll != null else -1, ScrollContainer.SCROLL_MODE_AUTO, "Deck view card list should keep the native vertical scrollbar available"),
+		assert_true(vbar != null and vbar.mouse_filter == Control.MOUSE_FILTER_STOP, "Deck view card list should not hide or disable the native scrollbar"),
+	])
+
+
+func test_deck_view_card_list_drag_moves_vertical_scroll_and_suppresses_click() -> String:
+	var dialog_helper = DeckViewDialogScript.new()
+	var scroll := ScrollContainer.new()
+	var grid := GridContainer.new()
+	scroll.add_child(grid)
+	dialog_helper._configure_card_list_drag_scroll(scroll, grid)
+	var vbar := scroll.get_v_scroll_bar()
+	vbar.max_value = 1000.0
+	vbar.page = 200.0
+	scroll.scroll_vertical = 120
+
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = Vector2(20, 200)
+	var press_consumed: bool = dialog_helper._handle_card_list_drag_scroll_input(press, scroll)
+
+	var drag := InputEventMouseMotion.new()
+	drag.position = Vector2(20, 120)
+	var drag_consumed: bool = dialog_helper._handle_card_list_drag_scroll_input(drag, scroll)
+
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = Vector2(20, 120)
+	var release_consumed: bool = dialog_helper._handle_card_list_drag_scroll_input(release, scroll)
+	var suppress_until := int(scroll.get_meta("deck_card_list_drag_suppress_until_msec", 0))
+	var final_scroll := scroll.scroll_vertical
+
+	scroll.queue_free()
+	return run_checks([
+		assert_true(press_consumed, "Deck view card-list drag should capture the initial press"),
+		assert_true(drag_consumed, "Deck view card-list drag should consume movement after the threshold"),
+		assert_eq(final_scroll, 200, "Dragging upward should scroll the deck view card list downward"),
+		assert_true(release_consumed, "Deck view card-list release should consume the completed drag"),
+		assert_true(suppress_until > Time.get_ticks_msec(), "Deck view card-list drag should suppress the follow-up click"),
+	])
+
+
 func test_deck_manager_confirmation_dialog_buttons_use_large_text() -> String:
 	var scene: Control = DeckManagerScene.instantiate()
 	scene._on_delete_deck(_make_deck(910021, "Delete Font Deck"))
@@ -236,6 +301,96 @@ func test_deck_manager_renders_recommendations_above_deck_list() -> String:
 		assert_true(import_button != null and import_button.custom_minimum_size.y >= 63.0, "Recommendation import action should use the 50%-larger HUD button size"),
 		assert_true(detail_button != null and detail_button.get_theme_font_size("font_size") >= 23, "Recommendation detail button text should be 50% larger"),
 		assert_true(next_style != null and import_style != null and next_style.border_color != import_style.border_color, "Recommendation actions should have visually distinct button roles"),
+	])
+
+
+func test_deck_manager_marks_latest_recommendation_id_with_new_badge() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene._apply_hud_theme()
+	_configure_recommendation_test_state(scene)
+	scene._deck_center_latest_meta = {
+		"latest_revision": "test-latest-recommendation-id",
+		"latest_recommendation_id": str(scene._current_recommendation.get("id", "")),
+		"latest_deck_id": 0,
+	}
+	scene._ensure_recommendation_section()
+	scene._refresh_recommendation_cards()
+
+	var badge := scene.find_child("RecommendationNewBadge", true, false) as PanelContainer
+	var badge_text := _collect_label_text(badge)
+
+	scene.queue_free()
+	return run_checks([
+		assert_not_null(badge, "Latest deck-center recommendation should show a NEW badge"),
+		assert_str_contains(badge_text, "NEW", "Latest recommendation badge should use NEW label text"),
+	])
+
+
+func test_deck_manager_marks_latest_recommendation_deck_id_with_new_badge() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene._apply_hud_theme()
+	_configure_recommendation_test_state(scene)
+	scene._deck_center_latest_meta = {
+		"latest_revision": "test-latest-recommendation-deck-id",
+		"latest_recommendation_id": "",
+		"latest_deck_id": int(scene._current_recommendation.get("deck_id", 0)),
+	}
+	scene._ensure_recommendation_section()
+	scene._refresh_recommendation_cards()
+
+	var badge := scene.find_child("RecommendationNewBadge", true, false) as PanelContainer
+
+	scene.queue_free()
+	return run_checks([
+		assert_not_null(badge, "Latest deck-center deck id should show a NEW badge"),
+	])
+
+
+func test_deck_manager_hides_recommendation_new_badge_after_seen_revision() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene._apply_hud_theme()
+	_configure_recommendation_test_state(scene)
+	scene._deck_center_latest_meta = {
+		"latest_revision": "test-seen-recommendation-revision",
+		"latest_recommendation_id": str(scene._current_recommendation.get("id", "")),
+		"latest_deck_id": int(scene._current_recommendation.get("deck_id", 0)),
+	}
+	scene._deck_center_recommendation_badge_seen_revision = "test-seen-recommendation-revision"
+	scene._ensure_recommendation_section()
+	scene._refresh_recommendation_cards()
+
+	var badge := scene.find_child("RecommendationNewBadge", true, false) as PanelContainer
+
+	scene.queue_free()
+	return run_checks([
+		assert_null(badge, "Seen deck-center recommendation revision should not keep showing a NEW badge"),
+	])
+
+
+func test_deck_manager_marks_recommendation_new_badge_seen_revision() -> String:
+	_delete_user_file(TEST_DECK_CENTER_META_STATE_PATH)
+	var scene: Control = DeckManagerScene.instantiate()
+	_configure_recommendation_test_state(scene)
+	scene._deck_center_latest_meta = {
+		"latest_revision": "test-mark-recommendation-revision",
+		"latest_recommendation_id": str(scene._current_recommendation.get("id", "")),
+		"latest_deck_id": int(scene._current_recommendation.get("deck_id", 0)),
+	}
+
+	var matches_before_seen: bool = scene._recommendation_matches_deck_center_latest(scene._current_recommendation)
+	scene._mark_deck_center_recommendation_badge_seen()
+	var state: Dictionary = scene._load_deck_center_meta_state()
+	var seen_revision := str(state.get("last_recommendation_badge_seen_revision", ""))
+	var main_menu_seen_revision := str(state.get("last_seen_revision", ""))
+	var matches_after_seen: bool = scene._recommendation_matches_deck_center_latest(scene._current_recommendation)
+
+	scene.queue_free()
+	_delete_user_file(TEST_DECK_CENTER_META_STATE_PATH)
+	return run_checks([
+		assert_true(matches_before_seen, "Matching deck-center recommendation should be considered new before the card badge is marked seen"),
+		assert_eq(seen_revision, "test-mark-recommendation-revision", "Rendering a recommendation NEW badge should persist the seen badge revision"),
+		assert_eq(main_menu_seen_revision, "test-mark-recommendation-revision", "Rendering a deck-center recommendation NEW badge should also clear the main-menu entrance badge revision"),
+		assert_false(matches_after_seen, "The same recommendation revision should not show NEW again after being marked seen"),
 	])
 
 

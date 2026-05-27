@@ -37,7 +37,7 @@ func execute_ability(
 	if top == null:
 		return
 	var pi: int = top.owner_index
-	state.players[pi].draw_cards(draw_count)
+	_draw_cards_with_log(state, pi, draw_count, top, "ability")
 	state.shared_turn_flags["%s_%d" % [shared_flag_key, pi]] = state.turn_number
 
 

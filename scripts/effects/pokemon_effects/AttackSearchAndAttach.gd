@@ -11,6 +11,7 @@ var top_n_count: int = 5
 var attach_to: String = "any"
 var target_tag: String = ""
 var attack_index_to_match: int = -1
+var max_assignments_per_target: int = 0
 
 
 func _init(
@@ -19,7 +20,8 @@ func _init(
 	mode: String = "deck_search",
 	top_n: int = 5,
 	a_to: String = "any",
-	required_tag: String = ""
+	required_tag: String = "",
+	per_target_limit: int = 0
 ) -> void:
 	energy_type = e_type
 	attach_count = count
@@ -27,6 +29,7 @@ func _init(
 	top_n_count = top_n
 	attach_to = a_to
 	target_tag = required_tag
+	max_assignments_per_target = per_target_limit
 
 
 func applies_to_attack_index(attack_index: int) -> bool:
@@ -65,8 +68,9 @@ func get_attack_interaction_steps(
 			target_slot.get_max_hp(),
 		])
 
+	var max_assignments: int = _get_max_assignment_count(energy_items.size(), target_items.size())
 	if search_mode == "deck_search":
-		return [build_full_library_card_assignment_step(
+		var deck_step := build_full_library_card_assignment_step(
 			ASSIGNMENT_STEP_ID,
 			"选择要附着的能量并分配给目标宝可梦",
 			player.deck,
@@ -75,12 +79,14 @@ func get_attack_interaction_steps(
 			target_items,
 			target_labels,
 			0,
-			mini(attach_count, energy_items.size()),
+			max_assignments,
 			VISIBLE_SCOPE_OWN_FULL_DECK,
 			true
-		)]
+		)
+		_apply_assignment_limits(deck_step)
+		return [deck_step]
 
-	return [build_card_assignment_step(
+	var step := build_card_assignment_step(
 		ASSIGNMENT_STEP_ID,
 		"选择要附着的能量并分配给目标宝可梦",
 		energy_items,
@@ -88,9 +94,11 @@ func get_attack_interaction_steps(
 		target_items,
 		target_labels,
 		0,
-		mini(attach_count, energy_items.size()),
+		max_assignments,
 		true
-	)]
+	)
+	_apply_assignment_limits(step)
+	return [step]
 
 
 func execute_attack(
@@ -207,7 +215,9 @@ func _resolve_assignments(
 	var selected_assignments: Array = ctx.get(ASSIGNMENT_STEP_ID, [])
 	var has_explicit_assignments: bool = ctx.has(ASSIGNMENT_STEP_ID)
 	var used_sources: Array[CardInstance] = []
+	var target_assignment_counts: Dictionary = {}
 	var valid_targets: Array[PokemonSlot] = _collect_attach_targets(attacker, player, false)
+	var max_assignments: int = _get_max_assignment_count(candidates.size(), valid_targets.size())
 
 	for entry: Variant in selected_assignments:
 		if not (entry is Dictionary):
@@ -226,13 +236,19 @@ func _resolve_assignments(
 			continue
 		if source_card in used_sources:
 			continue
+		var target_key: int = target_slot.get_instance_id()
+		var target_count: int = int(target_assignment_counts.get(target_key, 0))
+		if max_assignments_per_target > 0 and target_count >= max_assignments_per_target:
+			continue
 
 		used_sources.append(source_card)
+		if max_assignments_per_target > 0:
+			target_assignment_counts[target_key] = target_count + 1
 		result.append({
 			"source": source_card,
 			"target": target_slot,
 		})
-		if result.size() >= attach_count:
+		if result.size() >= max_assignments:
 			break
 
 	if not result.is_empty() or has_explicit_assignments:
@@ -250,12 +266,28 @@ func _build_fallback_assignments(
 	if fallback_targets.is_empty():
 		return result
 
-	for idx: int in mini(attach_count, candidates.size()):
+	var max_assignments: int = _get_max_assignment_count(candidates.size(), fallback_targets.size())
+	for idx: int in max_assignments:
+		var target_index: int = mini(idx, fallback_targets.size() - 1)
+		if max_assignments_per_target > 0:
+			target_index = int(idx / max_assignments_per_target)
 		result.append({
 			"source": candidates[idx],
-			"target": fallback_targets[mini(idx, fallback_targets.size() - 1)],
+			"target": fallback_targets[target_index],
 		})
 	return result
+
+
+func _get_max_assignment_count(source_count: int, target_count: int) -> int:
+	var result: int = mini(attach_count, source_count)
+	if max_assignments_per_target > 0:
+		result = mini(result, target_count * max_assignments_per_target)
+	return result
+
+
+func _apply_assignment_limits(step: Dictionary) -> void:
+	if max_assignments_per_target > 0:
+		step["max_assignments_per_target"] = max_assignments_per_target
 
 
 func _find_owner_slot(card: CardInstance, player: PlayerState) -> PokemonSlot:

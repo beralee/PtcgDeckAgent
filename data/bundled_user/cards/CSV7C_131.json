@@ -1,0 +1,53 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "GIDORA",
+	"attacks": [
+		{
+			"cost": "CC",
+			"damage": "",
+			"is_vstar_power": false,
+			"name": "地基崩溃",
+			"text": "将对手牌库上方1张卡牌放于弃牌区。在这个回合，如果从手牌使出了「古代」支援者的话，则额外将牌库上方3张卡牌放于弃牌区。"
+		},
+		{
+			"cost": "FFCC",
+			"damage": "160",
+			"is_vstar_power": false,
+			"name": "巨大之牙",
+			"text": ""
+		}
+	],
+	"card_index": "131",
+	"card_index_en": "97",
+	"card_type": "Pokemon",
+	"description": " 地基崩溃 \n将对手牌库上方1张卡牌放于弃牌区。在这个回合，如果从手牌使出了「古代」支援者的话，则额外将牌库上方3张卡牌放于弃牌区。\n\n【斗】【斗】 巨大之牙 160\n\n\n",
+	"effect_id": "23706c5baababfabc76355e59709f4ec",
+	"energy_provides": "",
+	"energy_type": "F",
+	"evolves_from": "",
+	"hp": 140,
+	"image_local_path": "user://cards/images/CSV7C/131.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV7C/131.png",
+	"is_tags": [
+		"Ancient"
+	],
+	"label": "",
+	"mechanic": "",
+	"name": "雄伟牙",
+	"name_en": "Great Tusk",
+	"rarity": "U",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-01-16T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 3,
+	"set_code": "CSV7C",
+	"set_code_en": "TEF",
+	"stage": "Basic",
+	"weakness_energy": "P",
+	"weakness_value": "×2",
+	"yoren_code": "P0984"
+}

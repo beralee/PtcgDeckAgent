@@ -1,0 +1,53 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "DOM",
+	"attacks": [
+		{
+			"cost": "C",
+			"damage": "",
+			"is_vstar_power": false,
+			"name": "雷吉之门",
+			"text": "从自己的牌库中选择1张【基础】宝可梦卡，放置于备战区。并重洗牌库。"
+		},
+		{
+			"cost": "MMC",
+			"damage": "220-",
+			"is_vstar_power": false,
+			"name": "重磅冲撞",
+			"text": "减少对手的战斗宝可梦撤退所需能量的数量×50点伤害。"
+		}
+	],
+	"card_index": "051",
+	"card_index_en": "108",
+	"card_type": "Pokemon",
+	"description": "【无】 雷吉之门 \n从自己的牌库中选择1张【基础】宝可梦卡，放置于备战区。并重洗牌库。\n\n【钢】【钢】【无】 重磅冲撞 220-\n减少对手的战斗宝可梦撤退所需能量的数量×50点伤害。\n\n",
+	"effect_id": "db12f1eb552377de4cda107fbb6e1eb4",
+	"energy_provides": "",
+	"energy_type": "M",
+	"evolves_from": "",
+	"hp": 130,
+	"image_local_path": "user://cards/images/CS5.5C/051.png",
+	"image_url": "https://tcg.mik.moe/static/img/CS5.5C/051.png",
+	"is_tags": [
+		"Basic"
+	],
+	"label": "",
+	"mechanic": "",
+	"name": "雷吉斯奇鲁",
+	"name_en": "Registeel",
+	"rarity": "U",
+	"regulation_expanded": true,
+	"regulation_mark": "F",
+	"regulation_standard": true,
+	"release_date": "2024-08-02T00:00:00+08:00",
+	"resistance_energy": "G",
+	"resistance_value": "-30",
+	"retreat_cost": 3,
+	"set_code": "CS5.5C",
+	"set_code_en": "ASR",
+	"stage": "Basic",
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"yoren_code": "P379"
+}

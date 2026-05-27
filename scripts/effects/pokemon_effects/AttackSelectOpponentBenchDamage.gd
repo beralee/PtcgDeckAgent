@@ -61,7 +61,7 @@ func execute_attack(
 	var opponent: PlayerState = state.players[1 - top.owner_index]
 	var chosen: Array[PokemonSlot] = _resolve_targets(opponent, mini(target_count, opponent.bench.size()))
 	for target: PokemonSlot in chosen:
-		if AbilityBenchImmune.prevents_opponent_attack_damage_or_effect(target, attacker, state):
+		if AbilityBenchImmune.prevents_opponent_attack_damage(target, attacker, state):
 			continue
 		if AttackCoinFlipPreventDamageAndEffectsNextTurn.prevents_attack_damage(target, state):
 			continue

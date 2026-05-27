@@ -53,6 +53,10 @@ const TARGET_STEP_IDS := {
 	"pivot_target": true,
 }
 
+const COPIED_ATTACK_STEP_IDS := {
+	"copied_attack": true,
+}
+
 const _ENERGY_ALIASES := {
 	"lightning": "L",
 	"electric": "L",
@@ -130,6 +134,10 @@ func pick_interaction_items(
 		var burst_picks: Array = _pick_raging_bolt_burst_energy_for_ko(items, context, max_select)
 		if not burst_picks.is_empty():
 			return {"has_plan": true, "items": burst_picks}
+	if bool(COPIED_ATTACK_STEP_IDS.get(step_id, false)):
+		var copied_attack_picks: Array = _pick_copied_attack_items_by_intent(items, queue_item, max_select)
+		if not copied_attack_picks.is_empty():
+			return {"has_plan": true, "items": copied_attack_picks}
 	var intent_text: String = _intent_text_for_pick_step(step_id, queue_item)
 	if intent_text == "":
 		return {"has_plan": false, "items": []}
@@ -155,6 +163,13 @@ func score_interaction_target(
 	var step_id: String = str(step.get("id", ""))
 	if _queue_item_is_sada(queue_item, context) and item is PokemonSlot and (context.has("assignment_source") or context.has("source_card")) and (bool(ASSIGNMENT_STEP_IDS.get(step_id, false)) or step_id.contains("assignment")):
 		return {"has_score": true, "score": _score_sada_assignment_target(item as PokemonSlot, context)}
+	if bool(COPIED_ATTACK_STEP_IDS.get(step_id, false)) and item is Dictionary:
+		var copied_attack_intent := _copied_attack_intent_text(queue_item)
+		if copied_attack_intent == "":
+			return {"has_score": false, "score": 0.0}
+		if _copied_attack_option_matches_any_token(item as Dictionary, copied_attack_intent):
+			return {"has_score": true, "score": HIGH_MATCH_SCORE}
+		return {"has_score": true, "score": LOW_MISMATCH_SCORE}
 	var target_text: String = _intent_text_for_target_step(step_id, queue_item, item)
 	if target_text == "":
 		return {"has_score": false, "score": 0.0}
@@ -194,6 +209,8 @@ func _intent_text_for_pick_step(step_id: String, queue_item: Dictionary) -> Stri
 		return str(queue_item.get("search_target", "")).strip_edges()
 	if bool(ASSIGNMENT_STEP_IDS.get(step_id, false)) or step_id.contains("assignment"):
 		return str(queue_item.get("search_target", "")).strip_edges()
+	if bool(COPIED_ATTACK_STEP_IDS.get(step_id, false)):
+		return _copied_attack_intent_text(queue_item)
 	return ""
 
 
@@ -235,7 +252,7 @@ func _nested_interaction_text(queue_item: Dictionary, step_id: String) -> String
 func _interaction_spec_to_text(spec: Variant) -> String:
 	if spec is Dictionary:
 		var dict: Dictionary = spec
-		for key: String in ["prefer", "items", "item", "cards", "targets", "search_target", "search_targets", "discard_choice", "energy_type", "target", "card", "resource"]:
+		for key: String in ["prefer", "items", "item", "cards", "targets", "search_target", "search_targets", "discard_choice", "energy_type", "target", "card", "resource", "attack_name", "source_card", "source", "copied_attack"]:
 			if not dict.has(key):
 				continue
 			var text := _interaction_spec_to_text(dict.get(key))
@@ -260,6 +277,10 @@ func _selection_policy_text_for_step(selection_policy: Dictionary, step_id: Stri
 
 
 func _find_selection_policy_spec(selection_policy: Dictionary, step_id: String) -> Variant:
+	if bool(COPIED_ATTACK_STEP_IDS.get(step_id, false)):
+		for key: String in [step_id, "copied_attack", "attack_name", "copy_attack", "source_card", "source", "prefer", "target_attack"]:
+			if selection_policy.has(key):
+				return selection_policy.get(key)
 	if bool(DISCARD_STEP_IDS.get(step_id, false)):
 		for key: String in ["discard", "discard_policy", "discard_prefer", "discard_cards", "discard_card", "resource"]:
 			if selection_policy.has(key):
@@ -311,6 +332,10 @@ func _normalize_policy_text(text: String, step_id: String) -> String:
 
 
 func _find_policy_interaction_spec(interactions: Dictionary, step_id: String) -> Variant:
+	if bool(COPIED_ATTACK_STEP_IDS.get(step_id, false)):
+		for key: String in [step_id, "copied_attack", "attack_name", "copy_attack", "source_card", "source", "target_attack", "discard_cards"]:
+			if interactions.has(key):
+				return interactions.get(key)
 	if bool(DISCARD_STEP_IDS.get(step_id, false)):
 		for key: String in ["discard_cards", "discard_card", "discard_energy", "discard_basic_energy", "attack_energy_discard"]:
 			if interactions.has(key):
@@ -648,6 +673,71 @@ func _pick_items_by_intent(items: Array, intent_text: String, max_select: int) -
 			if picked.size() >= max_select:
 				break
 	return picked
+
+
+func _pick_copied_attack_items_by_intent(items: Array, queue_item: Dictionary, max_select: int) -> Array:
+	var intent_text := _copied_attack_intent_text(queue_item)
+	if intent_text == "":
+		return []
+	var picked: Array = []
+	var used_indices: Dictionary = {}
+	for token: String in _split_intent_tokens(intent_text):
+		for index: int in items.size():
+			if bool(used_indices.get(index, false)):
+				continue
+			var item: Variant = items[index]
+			if item is Dictionary and _copied_attack_option_matches_token(item as Dictionary, token):
+				picked.append(item)
+				used_indices[index] = true
+				break
+		if picked.size() >= max_select:
+			return picked
+	if picked.is_empty():
+		for index: int in items.size():
+			var item: Variant = items[index]
+			if item is Dictionary and _copied_attack_option_matches_any_token(item as Dictionary, intent_text):
+				picked.append(item)
+			if picked.size() >= max_select:
+				break
+	return picked
+
+
+func _copied_attack_intent_text(queue_item: Dictionary) -> String:
+	var interactions: Variant = queue_item.get("interactions", {})
+	if interactions is Dictionary:
+		var direct_spec: Variant = _find_policy_interaction_spec(interactions as Dictionary, "copied_attack")
+		var direct_text := _interaction_spec_to_text(direct_spec)
+		if direct_text != "":
+			return direct_text
+	var selection_policy: Variant = queue_item.get("selection_policy", {})
+	if selection_policy is Dictionary:
+		var policy_text := _selection_policy_text_for_step(selection_policy as Dictionary, "copied_attack")
+		if policy_text != "":
+			return policy_text
+	for key: String in ["attack_name", "copied_attack", "copy_attack", "source_card", "source"]:
+		var text := str(queue_item.get(key, "")).strip_edges()
+		if text != "":
+			return text
+	return ""
+
+
+func _copied_attack_option_matches_any_token(option: Dictionary, intent_text: String) -> bool:
+	for token: String in _split_intent_tokens(intent_text):
+		if _copied_attack_option_matches_token(option, token):
+			return true
+	return false
+
+
+func _copied_attack_option_matches_token(option: Dictionary, token: String) -> bool:
+	var source_card: Variant = option.get("source_card", null)
+	if source_card is CardInstance and _card_matches_token(source_card as CardInstance, token):
+		return true
+	var attack: Dictionary = option.get("attack", {}) if option.get("attack", {}) is Dictionary else {}
+	if _text_matches(str(attack.get("name", "")), token):
+		return true
+	if _text_matches(str(attack.get("damage", "")), token):
+		return true
+	return _text_matches(str(option), token)
 
 
 func _pick_energy_items_by_intent(items: Array, intent_text: String, max_select: int) -> Array:

@@ -112,7 +112,7 @@ func execute_attack(attacker: PokemonSlot, _defender: PokemonSlot, attack_index:
 		return
 
 	player.shuffle_deck()
-	if AbilityBenchImmune.prevents_opponent_attack_damage_or_effect(target, attacker, state):
+	if AbilityBenchImmune.prevents_opponent_attack_damage(target, attacker, state):
 		return
 	if AbilityPreventDamageFromBasicExEffect.prevents_target_damage(attacker, target, state):
 		return

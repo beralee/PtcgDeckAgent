@@ -42,7 +42,7 @@ func execute_attack(
 func _is_opponent_bench_damage_blocked(attacker: PokemonSlot, target: PokemonSlot, state: GameState) -> bool:
 	if target_side != "opponent":
 		return false
-	if AbilityBenchImmune.prevents_opponent_attack_damage_or_effect(target, attacker, state):
+	if AbilityBenchImmune.prevents_opponent_attack_damage(target, attacker, state):
 		return true
 	if AttackCoinFlipPreventDamageAndEffectsNextTurn.prevents_attack_damage(target, state):
 		return true

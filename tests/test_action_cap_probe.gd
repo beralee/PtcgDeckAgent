@@ -15,9 +15,11 @@ class TraceCollector extends RefCounted:
 		traces.append(trace.clone())
 
 
-func _make_bundled_ai(player_index: int, deck_id: int) -> AIOpponent:
+func _make_bundled_ai(player_index: int, deck_id: int, decision_mode: String = "") -> AIOpponent:
 	var ai := AIOpponentScript.new()
 	ai.configure(player_index, 1)
+	if decision_mode != "":
+		ai.decision_runtime_mode = decision_mode
 	var deck: DeckData = CardDatabase.get_deck(deck_id)
 	if deck == null:
 		return ai
@@ -56,7 +58,15 @@ func _trace_tail_summary(traces: Array, limit: int = 32) -> String:
 	return " | ".join(parts)
 
 
-func _run_seed(deck_id: int, anchor_deck_id: int, seed_value: int, tracked_player_index: int, max_steps: int = 200) -> Dictionary:
+func _run_seed(
+	deck_id: int,
+	anchor_deck_id: int,
+	seed_value: int,
+	tracked_player_index: int,
+	max_steps: int = 200,
+	with_trace: bool = true,
+	decision_mode: String = ""
+) -> Dictionary:
 	var benchmark_runner := AIBenchmarkRunnerScript.new()
 	var gsm := GameStateMachine.new()
 	benchmark_runner.call("_clear_forced_shuffle_seed")
@@ -67,10 +77,10 @@ func _run_seed(deck_id: int, anchor_deck_id: int, seed_value: int, tracked_playe
 	var player_0_deck: DeckData = tracked_deck if tracked_player_index == 0 else anchor_deck
 	var player_1_deck: DeckData = anchor_deck if tracked_player_index == 0 else tracked_deck
 	gsm.start_game(player_0_deck, player_1_deck, 0)
-	var trace_collector := TraceCollector.new()
+	var trace_collector := TraceCollector.new() if with_trace else null
 	var result: Dictionary = benchmark_runner.run_headless_duel(
-		_make_bundled_ai(0, player_0_deck.id),
-		_make_bundled_ai(1, player_1_deck.id),
+		_make_bundled_ai(0, player_0_deck.id, decision_mode),
+		_make_bundled_ai(1, player_1_deck.id, decision_mode),
 		gsm,
 		max_steps,
 		Callable(),
@@ -83,10 +93,11 @@ func _run_seed(deck_id: int, anchor_deck_id: int, seed_value: int, tracked_playe
 		tracked_player_index,
 		JSON.stringify(result),
 	])
-	print("ACTION_CAP_TRACE tail=%s" % _trace_tail_summary(trace_collector.traces))
+	var trace_tail := _trace_tail_summary(trace_collector.traces) if trace_collector != null else ""
+	print("ACTION_CAP_TRACE tail=%s" % trace_tail)
 	return {
 		"result": result,
-		"trace_tail": _trace_tail_summary(trace_collector.traces),
+		"trace_tail": trace_tail,
 	}
 
 
@@ -123,4 +134,29 @@ func test_probe_iron_thorns_tm_turbo_energize_seed_player_one() -> String:
 	return run_checks([
 		assert_true(str(result.get("failure_reason", "")) != "unsupported_interaction_step",
 			"Seed 9205 should no longer fail on unsupported granted-attack interaction; tail=%s" % str(probe.get("trace_tail", ""))),
+	])
+
+
+func test_trace_export_does_not_change_palkia_gholdengo_seed_result() -> String:
+	var untraced := _run_seed(1700004, 575716, 6030, 0, 200, false, AIOpponentScript.DECISION_RUNTIME_RULES_ONLY)
+	var traced := _run_seed(1700004, 575716, 6030, 0, 200, true, AIOpponentScript.DECISION_RUNTIME_RULES_ONLY)
+	var untraced_result: Dictionary = untraced.get("result", {})
+	var traced_result: Dictionary = traced.get("result", {})
+	return run_checks([
+		assert_eq(int(traced_result.get("winner_index", -99)), int(untraced_result.get("winner_index", -98)),
+			"Trace collection must not change winner for seed 6030"),
+		assert_eq(str(traced_result.get("failure_reason", "")), str(untraced_result.get("failure_reason", "")),
+			"Trace collection must not change terminal classification for seed 6030"),
+		assert_eq(int(traced_result.get("turn_count", -99)), int(untraced_result.get("turn_count", -98)),
+			"Trace collection must not change game length for seed 6030"),
+	])
+
+
+func test_probe_palkia_gholdengo_seed_6011_terminal_on_cap_boundary_is_clean() -> String:
+	var probe := _run_seed(1700004, 575716, 6011, 1, 200, false, AIOpponentScript.DECISION_RUNTIME_RULES_ONLY)
+	var result: Dictionary = probe.get("result", {})
+	return run_checks([
+		assert_true(str(result.get("failure_reason", "")) != "action_cap_reached",
+			"Seed 6011 reaches a real terminal state on the max-step boundary and should not be reported as action_cap_reached"),
+		assert_eq(int(result.get("winner_index", -99)), 1, "Seed 6011 should keep the actual terminal winner when it ends on the step boundary"),
 	])

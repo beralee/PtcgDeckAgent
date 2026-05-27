@@ -77,13 +77,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 
 
 func _shuffle_cards(cards: Array[CardInstance]) -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.randomize()
-	for i in range(cards.size() - 1, 0, -1):
-		var j: int = rng.randi_range(0, i)
-		var temp: CardInstance = cards[i]
-		cards[i] = cards[j]
-		cards[j] = temp
+	PlayerState.shuffle_card_array(cards)
 
 
 func get_description() -> String:

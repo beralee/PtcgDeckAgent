@@ -1,0 +1,265 @@
+{
+	"cards": [
+		{
+			"card_index": "078",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "057f688b2a4ed4d2e225b599004506d5",
+			"name": "原野水母",
+			"name_en": "Toedscool",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "114",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "06bc00d5dcec33898dc6db2e4c4d10ec",
+			"name": "反击捕捉器",
+			"name_en": "Counter Catcher",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "185",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "0b4cc131a19862f92acf71494f29a0ed",
+			"name": "紧急滑板",
+			"name_en": "Rescue Board",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "043",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "1af63a7e2cb7a79215474ad8db8fd8fd",
+			"name": "巢穴球",
+			"name_en": "Nest Ball",
+			"set_code": "CSVH1C"
+		},
+		{
+			"card_index": "FIR",
+			"card_type": "Basic Energy",
+			"count": 4,
+			"effect_id": "22db5405bf0cce61a00aa8082cdd1e65",
+			"name": "基本火能量",
+			"name_en": "Fire Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "183",
+			"card_type": "Item",
+			"count": 2,
+			"effect_id": "3e6f1daf545dfed48d0588dd50792a2e",
+			"name": "夜间担架",
+			"name_en": "Night Stretcher",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "PSY",
+			"card_type": "Basic Energy",
+			"count": 4,
+			"effect_id": "41b2d1a95fafc35e4cf39383ffae928a",
+			"name": "基本超能量",
+			"name_en": "Psychic Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "119",
+			"card_type": "Tool",
+			"count": 2,
+			"effect_id": "43386015be5c073ba2e5b9d3692ece3f",
+			"name": "招式学习器 进化",
+			"name_en": "Technical Machine: Evolution",
+			"set_code": "CSV5C"
+		},
+		{
+			"card_index": "LIG",
+			"card_type": "Basic Energy",
+			"count": 3,
+			"effect_id": "45550fd10011f6ade7eef16ba88788cf",
+			"name": "基本雷能量",
+			"name_en": "Lightning Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "158",
+			"card_type": "Pokemon",
+			"count": 4,
+			"effect_id": "4e13cd08de3b6d141ce8e2f09d17a3a4",
+			"name": "多龙奇",
+			"name_en": "Drakloak",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "159",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "52a205820de799a53a689f23cbeb8622",
+			"name": "多龙巴鲁托ex",
+			"name_en": "Dragapult ex",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "119",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "54920a273edba38ce45f3bc8f6e8ff25",
+			"name": "驱劲能量 未来",
+			"name_en": "Future Booster Energy Capsule",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 4,
+			"effect_id": "5bdbc985f9aa2e6f248b53f6f35d1d37",
+			"name": "派帕",
+			"name_en": "Arven",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "028",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "68244d82147e13bb7d77116ffedf6162",
+			"name": "光辉胡地",
+			"name_en": "Radiant Alakazam",
+			"set_code": "CS6bC"
+		},
+		{
+			"card_index": "125",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "73d5f46ecf3a6d71b23ce7bc1a28d4f4",
+			"name": "弗图博士的剧本",
+			"name_en": "Professor Turo's Scenario",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "113",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "768b545a38fccd5e265093b5adce10af",
+			"name": "宝可装置3.0",
+			"name_en": "Pokégear 3.0",
+			"set_code": "CSV2C"
+		},
+		{
+			"card_index": "009",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "880338810e1bc9460b1d20044377e08c",
+			"name": "陆地水母",
+			"name_en": "Toedscruel",
+			"set_code": "CSV5C"
+		},
+		{
+			"card_index": "023",
+			"card_type": "Supporter",
+			"count": 2,
+			"effect_id": "8e1fa2c9018db938084c94c7c970d419",
+			"name": "老大的指令",
+			"name_en": "Boss's Orders",
+			"set_code": "CSVH1aC"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "8f655fea1f90164bfbccb7a95c223e17",
+			"name": "放逐吸尘器",
+			"name_en": "Lost Vacuum",
+			"set_code": "CS6bC"
+		},
+		{
+			"card_index": "181",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "93e504a96d675da78630b8a27ee6199b",
+			"name": "太晶珠",
+			"name_en": "Tera Orb",
+			"set_code": "CSV9C"
+		},
+		{
+			"card_index": "112",
+			"card_type": "Item",
+			"count": 2,
+			"effect_id": "a337ed34a45e63c6d21d98c3d8e0cb6e",
+			"name": "高级球",
+			"name_en": "Ultra Ball",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "186",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "a36548792cb4ff401f9b56e3ade897f6",
+			"name": "贵重推车",
+			"name_en": "Precious Trolley",
+			"set_code": "CSV9C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 2,
+			"effect_id": "af514f82d182aeae5327b2c360df703d",
+			"name": "奇树",
+			"name_en": "Iono",
+			"set_code": "CSV3C"
+		},
+		{
+			"card_index": "091",
+			"card_type": "Pokemon",
+			"count": 4,
+			"effect_id": "c3e026ae191f492d082d00898727d9c4",
+			"name": "铁荆棘ex",
+			"name_en": "Iron Thorns ex",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "115",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "e366f56ecd3f805a28294109a1a37453",
+			"name": "大地容器",
+			"name_en": "Earthen Vessel",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "157",
+			"card_type": "Pokemon",
+			"count": 4,
+			"effect_id": "e793842faf5a8017e5456f898b1bf9d2",
+			"name": "多龙梅西亚",
+			"name_en": "Dreepy",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "177",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "f866dfee26cd6b0dbbb52b74438d0a59",
+			"name": "友好宝芬",
+			"name_en": "Buddy-Buddy Poffin",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "196",
+			"card_type": "Supporter",
+			"count": 4,
+			"effect_id": "fa8d8691876be30f245bc878d0a29745",
+			"name": "赤松",
+			"name_en": "Crispin",
+			"set_code": "CSV9C"
+		}
+	],
+	"deck_code": "Sgt5ruEAH6HWQRzR2s",
+	"deck_name": "17.0多龙铁荆棘",
+	"id": 606676,
+	"import_date": "2026-05-24T17:15:23",
+	"source_url": "https://tcg.mik.moe/decks/list/606676",
+	"strategy": "",
+	"total_cards": 60,
+	"updated_at": 1779614145675,
+	"variant_name": "多龙巴鲁托 铁荆棘"
+}

@@ -293,6 +293,8 @@ func _finish_all_reveals(scene: Object) -> void:
 		_set_hint_text(overlay, "")
 	scene.set("_draw_reveal_pending_hand_refresh", false)
 	scene.call("_refresh_hand")
+	if scene.has_method("_check_two_player_handover"):
+		scene.call("_check_two_player_handover")
 	if scene.has_method("_maybe_run_ai"):
 		scene.call("_maybe_run_ai")
 

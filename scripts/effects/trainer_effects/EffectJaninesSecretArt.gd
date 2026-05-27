@@ -28,7 +28,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			slot.get_remaining_hp(),
 			slot.get_max_hp(),
 		])
-	return [build_full_library_card_assignment_step(
+	var step := build_full_library_card_assignment_step(
 		ASSIGNMENT_ID,
 		"选择最多2张基本恶能量附着给恶属性宝可梦",
 		player.deck,
@@ -37,10 +37,12 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		target_items,
 		target_labels,
 		1,
-		mini(2, source_items.size()),
+		mini(2, mini(source_items.size(), target_items.size())),
 		VISIBLE_SCOPE_OWN_FULL_DECK,
 		true
-	)]
+	)
+	step["max_assignments_per_target"] = 1
+	return [step]
 
 
 func execute(card: CardInstance, targets: Array, state: GameState) -> void:
@@ -79,6 +81,7 @@ func _resolve_assignments(player: PlayerState, ctx: Dictionary) -> Array[Diction
 	var result: Array[Dictionary] = []
 	var selected_raw: Array = ctx.get(ASSIGNMENT_ID, [])
 	var used_sources: Array[CardInstance] = []
+	var used_targets: Array[PokemonSlot] = []
 	var valid_sources: Array = _get_dark_energy_from_deck(player)
 	var valid_targets: Array = _get_dark_targets(player)
 	for entry: Variant in selected_raw:
@@ -91,9 +94,12 @@ func _resolve_assignments(player: PlayerState, ctx: Dictionary) -> Array[Diction
 			continue
 		var source_card := source as CardInstance
 		var target_slot := target as PokemonSlot
-		if source_card not in valid_sources or target_slot not in valid_targets or source_card in used_sources:
+		if source_card not in valid_sources or target_slot not in valid_targets:
+			continue
+		if source_card in used_sources or target_slot in used_targets:
 			continue
 		used_sources.append(source_card)
+		used_targets.append(target_slot)
 		result.append({"source": source_card, "target": target_slot})
 		if result.size() >= 2:
 			break
@@ -106,10 +112,10 @@ func _build_fallback_assignments(player: PlayerState) -> Array[Dictionary]:
 	var targets: Array = _get_dark_targets(player)
 	if energies.is_empty() or targets.is_empty():
 		return result
-	for i: int in mini(2, energies.size()):
+	for i: int in mini(2, mini(energies.size(), targets.size())):
 		result.append({
 			"source": energies[i],
-			"target": targets[mini(i, targets.size() - 1)],
+			"target": targets[i],
 		})
 	return result
 

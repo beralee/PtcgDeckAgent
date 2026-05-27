@@ -169,7 +169,7 @@ func _style_editor_action_buttons() -> void:
 		button.custom_minimum_size = Vector2(0, ACTION_BUTTON_HEIGHT)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.clip_text = true
-		button.add_theme_font_size_override("font_size", ACTION_BUTTON_FONT_SIZE)
+		button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(ACTION_BUTTON_FONT_SIZE))
 		button.add_theme_color_override("font_color", Color(0.96, 0.99, 1.0, 1.0))
 		button.add_theme_color_override("font_hover_color", Color.WHITE)
 		button.add_theme_color_override("font_pressed_color", Color(0.08, 0.12, 0.16, 1.0))
@@ -357,7 +357,7 @@ func _style_category_tab_button(button: Button) -> void:
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.size_flags_stretch_ratio = 1.0
 	button.clip_text = true
-	button.add_theme_font_size_override("font_size", CATEGORY_TAB_FONT_SIZE)
+	button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(CATEGORY_TAB_FONT_SIZE))
 	button.add_theme_color_override("font_color", Color(0.90, 0.98, 1.0, 1.0))
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
 	button.add_theme_color_override("font_pressed_color", Color(0.06, 0.10, 0.13, 1.0))
@@ -742,7 +742,7 @@ func _create_card_tile(
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.text = card_name
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", _card_tile_label_font_size(tile_width))
+	label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(_card_tile_label_font_size(tile_width)))
 	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	label.custom_minimum_size = Vector2(art_width, 0)
 	vbox.add_child(label)
@@ -796,7 +796,7 @@ func _add_unimplemented_tile_badge(parent: Control, card: CardData) -> PanelCont
 	label.text = "未实现"
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 10)
+	label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(10))
 	label.add_theme_color_override("font_color", Color(1.0, 0.86, 0.66, 1.0))
 	label.add_theme_constant_override("outline_size", 1)
 	label.add_theme_color_override("font_outline_color", Color(0.10, 0.03, 0.00, 0.95))
@@ -1044,7 +1044,7 @@ func _on_strategy_pressed() -> void:
 	title.text = "编辑打法思路"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(24))
 	title.add_theme_color_override("font_color", Color(0.96, 0.98, 1.0, 1.0))
 	title.add_theme_color_override("font_shadow_color", Color(0.10, 0.55, 0.95, 0.65))
 	title.add_theme_constant_override("shadow_offset_x", 0)
@@ -1058,7 +1058,7 @@ func _on_strategy_pressed() -> void:
 	close_btn.offset_right = -8
 	close_btn.offset_bottom = 36
 	close_btn.text = "X"
-	close_btn.add_theme_font_size_override("font_size", 24)
+	close_btn.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(24))
 	_style_strategy_icon_button(close_btn)
 	root.add_child(close_btn)
 
@@ -1075,14 +1075,14 @@ func _on_strategy_pressed() -> void:
 
 	var hint := Label.new()
 	hint.text = _deck.deck_name
-	hint.add_theme_font_size_override("font_size", 20)
+	hint.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(20))
 	hint.add_theme_color_override("font_color", Color(0.96, 0.99, 1.0, 1.0))
 	header_vbox.add_child(hint)
 
 	var desc := Label.new()
 	desc.text = "描述这套卡组的核心战术、关键卡牌配合、各对局要点。AI 分析与对战建议会参考此信息。"
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	desc.add_theme_font_size_override("font_size", 14)
+	desc.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
 	desc.add_theme_color_override("font_color", Color(0.74, 0.84, 0.92, 1.0))
 	header_vbox.add_child(desc)
 
@@ -1101,7 +1101,7 @@ func _on_strategy_pressed() -> void:
 	text_edit.placeholder_text = "例：核心攻击手是XXex，通过YY加速能量，前两回合目标是展开ZZ线..."
 	text_edit.add_theme_color_override("font_color", Color(0.94, 0.98, 1.0, 1.0))
 	text_edit.add_theme_color_override("placeholder_color", Color(0.50, 0.58, 0.66, 1.0))
-	text_edit.add_theme_font_size_override("font_size", 15)
+	text_edit.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
 	var input_normal := _make_strategy_dialog_style(Color(0.015, 0.024, 0.042, 0.92), Color(0.18, 0.31, 0.40, 0.95), 12, 10, 0)
 	var input_focus := _make_strategy_dialog_style(Color(0.020, 0.036, 0.062, 0.97), Color(0.22, 0.86, 0.95, 0.95), 12, 10, 0)
 	text_edit.add_theme_stylebox_override("normal", input_normal)
@@ -1173,7 +1173,7 @@ func _style_strategy_button(button: Button, primary: bool) -> void:
 	button.add_theme_color_override("font_color", Color(0.93, 0.99, 1.0, 1.0))
 	button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
 	button.add_theme_color_override("font_pressed_color", Color(0.86, 0.98, 1.0, 1.0))
-	button.add_theme_font_size_override("font_size", 14)
+	button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
 
 
 func _style_strategy_icon_button(button: Button) -> void:
@@ -1182,7 +1182,7 @@ func _style_strategy_icon_button(button: Button) -> void:
 	button.add_theme_stylebox_override("pressed", _make_strategy_dialog_style(Color(0.04, 0.12, 0.18, 0.95), Color(0.20, 0.70, 0.90, 0.75), 999, 0, 0))
 	button.add_theme_color_override("font_color", Color(0.78, 0.86, 0.94, 1.0))
 	button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
-	button.add_theme_font_size_override("font_size", 24)
+	button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(24))
 
 
 func _on_ai_pressed() -> void:
@@ -1209,7 +1209,7 @@ func _on_ai_pressed() -> void:
 	# --- 针对卡组 ---
 	var target_header := Label.new()
 	target_header.text = "针对卡组（最多选2个，可选自身卡组用于内战优化）"
-	target_header.add_theme_font_size_override("font_size", 16)
+	target_header.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(16))
 	root_vbox.add_child(target_header)
 
 	var target_desc := Label.new()
@@ -1259,7 +1259,7 @@ func _on_ai_pressed() -> void:
 	# --- 优化方向 ---
 	var goal_header := Label.new()
 	goal_header.text = "优化方向（可多选或不选）"
-	goal_header.add_theme_font_size_override("font_size", 16)
+	goal_header.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(16))
 	root_vbox.add_child(goal_header)
 
 	var goal_desc := Label.new()
@@ -1678,7 +1678,7 @@ func _refresh_ai_panel(core_keep: String) -> void:
 			hl.text = "-%d %s  +%d %s" % [
 				h.get("remove_count", 1), h.get("remove_name", "?"),
 				h.get("add_count", 1), h.get("add_name", "?")]
-			hl.add_theme_font_size_override("font_size", 12)
+			hl.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(12))
 			hl.add_theme_color_override("font_color", Color(0.5, 0.6, 0.5))
 			%AIList.add_child(hl)
 
@@ -1704,14 +1704,14 @@ func _add_ai_replacement_row(index: int, r: Dictionary) -> void:
 	var title := Label.new()
 	title.text = "-%d %s  +%d %s" % [remove_count, remove_name, add_count, add_name]
 	title.add_theme_color_override("font_color", Color(0.9, 0.8, 0.4))
-	title.add_theme_font_size_override("font_size", 13)
+	title.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(13))
 	vbox.add_child(title)
 
 	if reason != "":
 		var reason_label := Label.new()
 		reason_label.text = reason
 		reason_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-		reason_label.add_theme_font_size_override("font_size", 12)
+		reason_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(12))
 		reason_label.add_theme_color_override("font_color", Color(0.65, 0.65, 0.65))
 		vbox.add_child(reason_label)
 
@@ -1952,7 +1952,7 @@ func _style_card_detail_overlay() -> void:
 
 	if _card_detail_title != null:
 		_card_detail_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		_card_detail_title.add_theme_font_size_override("font_size", 20)
+		_card_detail_title.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(20))
 		_card_detail_title.add_theme_color_override("font_color", Color(1.0, 0.92, 0.68))
 		_card_detail_title.add_theme_color_override("font_outline_color", Color(0.02, 0.04, 0.07, 0.95))
 		_card_detail_title.add_theme_constant_override("outline_size", 2)
@@ -1976,7 +1976,7 @@ func _style_card_detail_overlay() -> void:
 		_card_detail_content.bbcode_enabled = true
 		_card_detail_content.scroll_active = true
 		_card_detail_content.selection_enabled = true
-		_card_detail_content.add_theme_font_size_override("normal_font_size", 14)
+		_card_detail_content.add_theme_font_size_override("normal_font_size", HudThemeScript.scaled_font_size(14))
 		_card_detail_content.add_theme_color_override("default_color", Color(0.86, 0.94, 0.98))
 		_card_detail_content.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.4))
 		_card_detail_content.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
@@ -2004,7 +2004,7 @@ func _style_card_detail_button(button: Button) -> void:
 	button.add_theme_color_override("font_color", Color(0.93, 0.99, 1.0))
 	button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0))
 	button.add_theme_color_override("font_pressed_color", Color(1.0, 1.0, 1.0))
-	button.add_theme_font_size_override("font_size", 14)
+	button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
 	button.custom_minimum_size = Vector2(42, 32)
 
 

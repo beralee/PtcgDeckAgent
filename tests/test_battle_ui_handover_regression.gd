@@ -471,6 +471,44 @@ func test_attach_energy_target_sets_android_followup_click_suppression() -> Stri
 	])
 
 
+func test_bench_play_followup_suppression_expires_before_next_intentional_slot_tap() -> String:
+	var scene := SlotDetailSpyBattleScene.new()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.players = [PlayerState.new(), PlayerState.new()]
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+	scene.set("_pending_choice", "")
+	var handover_panel := Panel.new()
+	handover_panel.visible = false
+	scene.set("_handover_panel", handover_panel)
+
+	var active_slot := PokemonSlot.new()
+	active_slot.pokemon_stack.append(CardInstance.create(_make_touch_test_pokemon("Active"), 0))
+	gsm.game_state.players[0].active_pokemon = active_slot
+	var basic := CardInstance.create(_make_touch_test_pokemon("Same-turn Fez"), 0)
+	gsm.game_state.players[0].hand.append(basic)
+	scene.set("_selected_hand_card", basic)
+
+	scene.call("_handle_slot_left_click", "my_bench_0")
+	var suppressed_until := int(scene.get("_suppress_slot_followup_click_until_msec"))
+	var remaining_ms := suppressed_until - Time.get_ticks_msec()
+	scene.set("_suppress_slot_followup_click_until_msec", Time.get_ticks_msec() - 1)
+
+	var click := InputEventMouseButton.new()
+	click.pressed = true
+	click.button_index = MOUSE_BUTTON_LEFT
+	scene.call("_on_slot_input", click, "my_bench_0")
+
+	return run_checks([
+		assert_eq(gsm.game_state.players[0].bench.size(), 1, "Basic Pokemon should be placed onto the Bench"),
+		assert_true(remaining_ms > 0 and remaining_ms <= 260, "Bench-play follow-up suppression should be short enough to allow the next intentional tap"),
+		assert_eq(scene.action_dialog_calls, 1, "After the short bench-play suppression expires, tapping the new Bench Pokemon should open its action dialog"),
+	])
+
+
 func test_slot_touch_long_press_does_not_open_card_detail() -> String:
 	var scene := SlotDetailSpyBattleScene.new()
 	var gsm := GameStateMachine.new()

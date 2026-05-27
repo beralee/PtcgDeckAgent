@@ -616,6 +616,18 @@ func _has_pending_knockouts() -> bool:
 	return false
 
 
+func _has_pending_active_knockouts() -> bool:
+	if game_state == null:
+		return false
+	for player: PlayerState in game_state.players:
+		if (
+			player.active_pokemon != null
+			and effect_processor.is_effectively_knocked_out(player.active_pokemon, game_state)
+		):
+			return true
+	return false
+
+
 func _resolve_mid_turn_knockouts() -> bool:
 	if not _has_pending_knockouts():
 		return false
@@ -805,6 +817,7 @@ func _finalize_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -
 func _continue_after_knockout_field_effects(player_index: int, prize_count: int, is_active: bool) -> bool:
 	var opp_index: int = 1 - player_index
 	var has_live_replacement: bool = _has_available_replacement(player_index)
+	var has_other_pending_active_knockouts: bool = _has_pending_active_knockouts()
 	var has_other_pending_knockouts: bool = _has_pending_knockouts()
 
 	# 对手拿取奖赏卡
@@ -817,7 +830,10 @@ func _continue_after_knockout_field_effects(player_index: int, prize_count: int,
 		_pending_prize_knocked_out_player_index = player_index
 		_pending_prize_knockout_is_active = is_active
 		if is_active:
-			if has_live_replacement:
+			if has_other_pending_active_knockouts:
+				_pending_prize_resume_mode = "resume_check"
+				_pending_prize_resume_player_index = player_index
+			elif has_live_replacement:
 				_pending_prize_resume_mode = "send_out"
 				_pending_prize_resume_player_index = player_index
 			elif has_other_pending_knockouts:
@@ -868,7 +884,10 @@ func _continue_after_knockout_field_effects(player_index: int, prize_count: int,
 
 	# 战斗宝可梦昏厥需要派出替换宝可梦
 	if is_active:
-		if has_live_replacement:
+		if has_other_pending_active_knockouts:
+			_enter_phase(GameState.GamePhase.POKEMON_CHECK)
+			_check_all_knockouts()
+		elif has_live_replacement:
 			_enter_phase(GameState.GamePhase.KNOCKOUT_REPLACE)
 			player_choice_required.emit("send_out_pokemon", {
 				"player": player_index,
@@ -1228,6 +1247,8 @@ func send_out_pokemon(player_index: int, bench_slot: PokemonSlot) -> bool:
 		_enter_phase(GameState.GamePhase.POKEMON_CHECK)
 		_check_all_knockouts()
 		return true
+	if _request_empty_active_replacement_if_needed():
+		return true
 
 	# 特性自爆等回合中间 KO：替换完后回到 MAIN 阶段继续操作
 	if _knockout_return_to_main:
@@ -1479,6 +1500,7 @@ func play_basic_to_bench(
 	var slot := PokemonSlot.new()
 	slot.pokemon_stack.append(card)
 	slot.turn_played = game_state.turn_number
+	slot.mark_entered_bench_from_hand(game_state.turn_number)
 	player.bench.append(slot)
 
 	_log_action(GameAction.ActionType.PLAY_POKEMON, player_index,
@@ -1919,7 +1941,8 @@ func use_attack(player_index: int, attack_index: int, targets: Array = []) -> bo
 			_attack_damage_knockout_slot_ids.clear()
 			return true
 
-	var damage: int = _calculate_attack_damage(attacker, defender, attack, attack_index, targets)
+	var damage_cancelled := effect_processor.attack_damage_cancelled(attacker, attack_index, defender, game_state, targets)
+	var damage: int = 0 if damage_cancelled else _calculate_attack_damage(attacker, defender, attack, attack_index, targets)
 
 	if damage > 0:
 		var defender_damage_before: int = defender.damage_counters
@@ -2000,16 +2023,7 @@ func use_granted_attack(
 			return true
 
 	var damage_before_attack := _snapshot_damage_counters()
-	if not effect_processor.execute_granted_attack(attacker, granted_attack, defender, game_state, targets):
-		return false
-	_enforce_current_bench_limits("use_granted_attack:%s" % attack_name, player_index, "", -1, targets)
-
-	var granted_damage: int = 0
-	var granted_damage_raw: Variant = granted_attack.get("damage", 0)
-	if granted_damage_raw is int:
-		granted_damage = int(granted_damage_raw)
-	elif granted_damage_raw is String:
-		granted_damage = int(str(granted_damage_raw).to_int())
+	var granted_damage: int = _calculate_attack_damage(attacker, defender, granted_attack, -1, targets)
 
 	if granted_damage > 0:
 		var defender_damage_before: int = defender.damage_counters
@@ -2028,6 +2042,10 @@ func use_granted_attack(
 				granted_damage
 			]
 		)
+
+	if not effect_processor.execute_granted_attack(attacker, granted_attack, defender, game_state, targets):
+		return false
+	_enforce_current_bench_limits("use_granted_attack:%s" % attack_name, player_index, "", -1, targets)
 
 	_record_attack_damage_knockout_candidates(damage_before_attack, 1 - player_index)
 	_apply_attack_knockout_extra_prize_effects(attacker, 1 - player_index)
@@ -2206,12 +2224,13 @@ func _calculate_attack_damage(
 	attack_index: int = 0,
 	targets: Array = []
 ) -> int:
-	var ignore_defender_effects: bool = effect_processor.attack_ignores_defender_effects(attacker, attack_index, game_state, targets)
-	var ignore_weakness: bool = effect_processor.attack_ignores_weakness(attacker, attack_index, game_state, targets)
-	var ignore_resistance: bool = effect_processor.attack_ignores_resistance(attacker, attack_index, game_state, targets)
+	var use_printed_attack_effects := attack_index >= 0
+	var ignore_defender_effects: bool = use_printed_attack_effects and effect_processor.attack_ignores_defender_effects(attacker, attack_index, game_state, targets)
+	var ignore_weakness: bool = use_printed_attack_effects and effect_processor.attack_ignores_weakness(attacker, attack_index, game_state, targets)
+	var ignore_resistance: bool = use_printed_attack_effects and effect_processor.attack_ignores_resistance(attacker, attack_index, game_state, targets)
 	if not ignore_defender_effects and effect_processor.is_damage_prevented_by_defender_ability(attacker, defender, game_state):
 		return 0
-	var atk_mod: int = effect_processor.get_attack_damage_modifier(attacker, defender, attack, game_state, targets)
+	var atk_mod: int = effect_processor.get_attack_damage_modifier(attacker, defender, attack, game_state, targets, attack_index)
 	var atk_self_mod: int = effect_processor.get_attacker_modifier(attacker, game_state, defender)
 	var def_mod: int = 0 if ignore_defender_effects else effect_processor.get_defender_modifier(defender, game_state, attacker)
 	var weakness_value_override: String = effect_processor.get_weakness_value_override(attacker, defender, game_state)

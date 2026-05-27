@@ -1,6 +1,9 @@
 ## BattleScene shared HUD, coordinator, and AI prompt helper runtime.
 extends "res://scenes/battle/runtime/BattleSceneRuntimeFoundation.gd"
 
+const LLM_WAIT_LANDSCAPE_FONT_SIZE := 12
+const LLM_WAIT_PORTRAIT_FONT_SIZE := 56
+
 func _ensure_battle_interaction_coordinator() -> void:
 	if _battle_interaction_coordinator == null:
 		_battle_interaction_coordinator = BattleInteractionCoordinatorScript.new()
@@ -13,7 +16,7 @@ func _layout_llm_wait_label() -> void:
 	if _ai_llm_wait_label == null or not is_instance_valid(_ai_llm_wait_label):
 		return
 	_apply_llm_wait_label_text_metrics()
-	var anchor_rect := _llm_wait_top_center_hud_rect()
+	var anchor_rect := _llm_wait_hud_anchor_rect()
 	if anchor_rect.size.x <= 0.0 or anchor_rect.size.y <= 0.0:
 		_ai_llm_wait_label.position = Vector2.ZERO
 		_ai_llm_wait_label.size = Vector2.ZERO
@@ -26,6 +29,50 @@ func _layout_llm_wait_label() -> void:
 	_ai_llm_wait_label.custom_minimum_size = Vector2.ZERO
 	if _ai_llm_wait_label.visible:
 		_set_llm_wait_turn_label_suppressed(true)
+
+
+
+func _llm_wait_hud_anchor_rect() -> Rect2:
+	if _is_portrait_battle_layout_active():
+		var hand_anchor := _llm_wait_portrait_hand_hud_rect()
+		if hand_anchor.size.x > 0.0 and hand_anchor.size.y > 0.0:
+			return hand_anchor
+	return _llm_wait_top_center_hud_rect()
+
+
+
+func _llm_wait_portrait_hand_hud_rect() -> Rect2:
+	var hand_area := find_child("HandArea", true, false) as Control
+	if hand_area == null:
+		return Rect2()
+	var local_hand_rect := _llm_wait_control_rect_in_battle_local(hand_area)
+	var scene_rect := get_global_rect()
+	var hand_rect := Rect2(scene_rect.position + local_hand_rect.position, local_hand_rect.size)
+	if hand_rect.size.x <= 0.0 or hand_rect.size.y <= 0.0:
+		return Rect2()
+	var label_height := 28.0
+	if _ai_llm_wait_label != null and is_instance_valid(_ai_llm_wait_label):
+		label_height = maxf(float(_ai_llm_wait_label.get_theme_font_size("font_size")) + 14.0, label_height)
+	label_height = minf(label_height, maxf(hand_rect.size.y * 0.35, 24.0))
+	var width := minf(maxf(hand_rect.size.x * 0.82, 240.0), hand_rect.size.x)
+	var x := hand_rect.position.x + (hand_rect.size.x - width) * 0.5
+	var y := hand_rect.position.y + 4.0
+	return Rect2(Vector2(x, y), Vector2(width, label_height))
+
+
+
+func _llm_wait_control_rect_in_battle_local(control: Control) -> Rect2:
+	if control == null:
+		return Rect2()
+	var control_size := control.size
+	if control_size == Vector2.ZERO:
+		control_size = control.custom_minimum_size
+	if control_size == Vector2.ZERO:
+		return Rect2()
+	var local_transform := control.get_global_transform()
+	if control != self:
+		local_transform = get_global_transform().affine_inverse() * control.get_global_transform()
+	return Rect2(local_transform.origin, control_size)
 
 
 
@@ -261,7 +308,10 @@ func _apply_llm_wait_label_text_metrics() -> void:
 	_ai_llm_wait_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_ai_llm_wait_label.clip_text = true
 	_ai_llm_wait_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	_ai_llm_wait_label.add_theme_font_size_override("font_size", 14 if _is_portrait_battle_layout_active() else 12)
+	_ai_llm_wait_label.add_theme_font_size_override(
+		"font_size",
+		LLM_WAIT_PORTRAIT_FONT_SIZE if _is_portrait_battle_layout_active() else LLM_WAIT_LANDSCAPE_FONT_SIZE
+	)
 	_ai_llm_wait_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	_ai_llm_wait_label.max_lines_visible = 1
 

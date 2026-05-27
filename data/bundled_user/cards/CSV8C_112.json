@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "Takeshi Nakamura",
+	"attacks": [
+		{
+			"cost": "F",
+			"damage": "80",
+			"is_vstar_power": false,
+			"name": "暴走",
+			"text": "令这只宝可梦陷入【混乱】状态。"
+		},
+		{
+			"cost": "FCCC",
+			"damage": "250",
+			"is_vstar_power": false,
+			"name": "坚毅挥打",
+			"text": "这个招式，如果这只宝可梦处于特殊状态的话，则即使这只宝可梦身上没有附着满足使用这个招式所需能量，依然可以使用。"
+		}
+	],
+	"card_index": "112",
+	"card_index_en": "105",
+	"card_type": "Pokemon",
+	"description": "【斗】 暴走 80\n令这只宝可梦陷入【混乱】状态。\n\n【斗】 坚毅挥打 250\n这个招式，如果这只宝可梦处于特殊状态的话，则即使这只宝可梦身上没有附着满足使用这个招式所需能量，依然可以使用。\n\n",
+	"effect_id": "898ff379e73790978b8bdf6dfafc511f",
+	"energy_provides": "",
+	"energy_type": "F",
+	"evolves_from": "铁骨土人",
+	"hp": 180,
+	"image_local_path": "user://cards/images/CSV8C/112.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV8C/112.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "修建老匠",
+	"name_en": "Conkeldurr",
+	"rarity": "U",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-03-13T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 3,
+	"set_code": "CSV8C",
+	"set_code_en": "TWM",
+	"stage": "Stage 2",
+	"weakness_energy": "P",
+	"weakness_value": "×2",
+	"yoren_code": "P0534"
+}

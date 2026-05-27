@@ -211,6 +211,7 @@ func test_janine_full_deck_sources_and_execution_ignore_illegal_source() -> Stri
 
 	var checks: Array[String] = [
 		assert_eq(steps.size(), 1, "Janine should expose one assignment step"),
+		assert_eq(int(step.get("max_assignments_per_target", 0)), 1, "Janine assignment UI should allow at most one Energy per target"),
 		_assert_assignment_source_deck_visibility(
 			step,
 			visible_deck,

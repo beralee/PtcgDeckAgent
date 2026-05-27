@@ -13,13 +13,32 @@ func can_attach_energy(
 	card: CardInstance = null,
 	effect_processor: EffectProcessor = null
 ) -> bool:
+	return get_attach_energy_unusable_reason(state, player_index, card, effect_processor) == ""
+
+
+func get_attach_energy_unusable_reason(
+	state: GameState,
+	player_index: int,
+	card: CardInstance = null,
+	effect_processor: EffectProcessor = null
+) -> String:
+	if state == null:
+		return "当前无法附着能量。"
+	if player_index < 0 or player_index >= state.players.size():
+		return "当前玩家无效，不能附着能量。"
 	if state.current_player_index != player_index:
-		return false
+		return "现在不是你的回合，不能附着能量。"
 	if state.phase != GameState.GamePhase.MAIN:
-		return false
+		return "只能在主要阶段附着能量。"
+	if state.energy_attached_this_turn:
+		return "本回合已经从手牌附着过能量。每回合通常只能手贴 1 次能量。"
 	if effect_processor != null and card != null and effect_processor.prevents_card_from_hand(player_index, card, state):
-		return false
-	return not state.energy_attached_this_turn
+		if effect_processor.has_method("get_card_from_hand_block_reason"):
+			var block_reason := str(effect_processor.call("get_card_from_hand_block_reason", player_index, card, state))
+			if block_reason != "":
+				return block_reason
+		return "受到场上效果影响，当前不能从手牌打出这张能量。"
+	return ""
 
 
 func can_play_supporter(
@@ -28,17 +47,34 @@ func can_play_supporter(
 	card: CardInstance = null,
 	effect_processor: EffectProcessor = null
 ) -> bool:
+	return get_play_supporter_unusable_reason(state, player_index, card, effect_processor) == ""
+
+
+func get_play_supporter_unusable_reason(
+	state: GameState,
+	player_index: int,
+	card: CardInstance = null,
+	effect_processor: EffectProcessor = null
+) -> String:
+	if state == null:
+		return "当前无法使用支援者卡。"
+	if player_index < 0 or player_index >= state.players.size():
+		return "当前玩家无效，不能使用支援者卡。"
 	if state.current_player_index != player_index:
-		return false
+		return "现在不是你的回合，不能使用支援者卡。"
 	if state.phase != GameState.GamePhase.MAIN:
-		return false
+		return "只能在主要阶段使用支援者卡。"
 	if effect_processor != null and card != null and effect_processor.prevents_card_from_hand(player_index, card, state):
-		return false
+		if effect_processor.has_method("get_card_from_hand_block_reason"):
+			var block_reason := str(effect_processor.call("get_card_from_hand_block_reason", player_index, card, state))
+			if block_reason != "":
+				return block_reason
+		return "受到场上效果影响，当前不能从手牌使用这张支援者卡。"
 	if state.supporter_used_this_turn:
-		return false
+		return "本回合已经使用过支援者卡。每回合通常只能使用 1 张支援者。"
 	if state.turn_number == 1 and player_index == state.first_player_index:
-		return false
-	return true
+		return "先攻玩家的第一个回合不能使用支援者卡。"
+	return ""
 
 
 func can_play_item(
@@ -47,13 +83,32 @@ func can_play_item(
 	card: CardInstance = null,
 	effect_processor: EffectProcessor = null
 ) -> bool:
+	return get_play_item_unusable_reason(state, player_index, card, effect_processor) == ""
+
+
+func get_play_item_unusable_reason(
+	state: GameState,
+	player_index: int,
+	card: CardInstance = null,
+	effect_processor: EffectProcessor = null
+) -> String:
+	if state == null:
+		return "当前无法使用物品卡。"
+	if player_index < 0 or player_index >= state.players.size():
+		return "当前玩家无效，不能使用物品卡。"
 	if state.current_player_index != player_index:
-		return false
+		return "现在不是你的回合，不能使用物品卡。"
 	if state.phase != GameState.GamePhase.MAIN:
-		return false
+		return "只能在主要阶段使用物品卡。"
 	if effect_processor != null and card != null and effect_processor.prevents_card_from_hand(player_index, card, state):
-		return false
-	return int(state.shared_turn_flags.get("%s%d" % [ITEM_LOCK_PREFIX, player_index], -1)) != state.turn_number
+		if effect_processor.has_method("get_card_from_hand_block_reason"):
+			var block_reason := str(effect_processor.call("get_card_from_hand_block_reason", player_index, card, state))
+			if block_reason != "":
+				return block_reason
+		return "受到场上效果影响，当前不能从手牌使用这张物品卡。"
+	if int(state.shared_turn_flags.get("%s%d" % [ITEM_LOCK_PREFIX, player_index], -1)) == state.turn_number:
+		return "受到对手效果影响，本回合不能使用物品卡。"
+	return ""
 
 
 func can_play_stadium(
@@ -62,15 +117,34 @@ func can_play_stadium(
 	card: CardInstance,
 	effect_processor: EffectProcessor = null
 ) -> bool:
+	return get_play_stadium_unusable_reason(state, player_index, card, effect_processor) == ""
+
+
+func get_play_stadium_unusable_reason(
+	state: GameState,
+	player_index: int,
+	card: CardInstance,
+	effect_processor: EffectProcessor = null
+) -> String:
+	if state == null:
+		return "当前无法打出竞技场卡。"
+	if player_index < 0 or player_index >= state.players.size():
+		return "当前玩家无效，不能打出竞技场卡。"
+	if card == null or card.card_data == null:
+		return "没有选择要打出的竞技场卡。"
 	if state.current_player_index != player_index:
-		return false
+		return "现在不是你的回合，不能打出竞技场卡。"
 	if state.phase != GameState.GamePhase.MAIN:
-		return false
+		return "只能在主要阶段打出竞技场卡。"
 	if effect_processor != null and card != null and effect_processor.prevents_card_from_hand(player_index, card, state):
-		return false
+		if effect_processor.has_method("get_card_from_hand_block_reason"):
+			var block_reason := str(effect_processor.call("get_card_from_hand_block_reason", player_index, card, state))
+			if block_reason != "":
+				return block_reason
+		return "受到场上效果影响，当前不能从手牌打出这张竞技场卡。"
 	if state.stadium_card != null and _is_same_stadium_card(state.stadium_card, card):
-		return false
-	return true
+		return "场上已经有同名竞技场，不能用同名竞技场替换。"
+	return ""
 
 
 func _is_same_stadium_card(active_stadium: CardInstance, incoming_stadium: CardInstance) -> bool:
@@ -120,26 +194,42 @@ func can_evolve(
 	evolution: CardInstance,
 	effect_processor: EffectProcessor = null
 ) -> bool:
+	return get_evolve_unusable_reason(state, player_index, slot, evolution, effect_processor) == ""
+
+
+func get_evolve_unusable_reason(
+	state: GameState,
+	player_index: int,
+	slot: PokemonSlot,
+	evolution: CardInstance,
+	effect_processor: EffectProcessor = null
+) -> String:
+	if state == null:
+		return "当前无法进化。"
+	if player_index < 0 or player_index >= state.players.size():
+		return "当前玩家无效，不能进化。"
 	if state.current_player_index != player_index:
-		return false
+		return "现在不是你的回合，不能进化。"
 	if state.phase != GameState.GamePhase.MAIN:
-		return false
+		return "只能在主要阶段进化。"
 	if slot == null or _is_effectively_knocked_out(slot, state, effect_processor):
-		return false
+		return "没有可以进化的目标宝可梦。"
 	var early_evolution_allowed := effect_processor != null and effect_processor.slot_allows_early_evolution(slot, player_index, state)
 	if state.is_first_turn_for_player(player_index) and not early_evolution_allowed:
-		return false
+		return "玩家自己的第一个回合不能进化。"
 	if slot.turn_played == state.turn_number and not early_evolution_allowed:
-		return false
+		return "这只宝可梦是本回合刚放到场上的，不能立刻进化。"
 	if slot.turn_evolved == state.turn_number:
-		return false
+		return "这只宝可梦本回合已经进化过。"
+	if evolution == null or evolution.card_data == null:
+		return "没有选择要用于进化的宝可梦。"
 	if not evolution.card_data.is_pokemon():
-		return false
+		return "选择的卡不是宝可梦，不能用于进化。"
 	var top_name: String = slot.get_pokemon_name()
 	var evolves_from: String = evolution.card_data.evolves_from
 	if evolves_from == "" or evolves_from != top_name:
-		return false
-	return true
+		return "%s 不能从 %s 进化。" % [evolution.card_data.name, top_name]
+	return ""
 
 
 func can_retreat(
@@ -147,21 +237,33 @@ func can_retreat(
 	player_index: int,
 	effect_processor: EffectProcessor = null
 ) -> bool:
+	return get_retreat_unusable_reason(state, player_index, effect_processor) == ""
+
+
+func get_retreat_unusable_reason(
+	state: GameState,
+	player_index: int,
+	effect_processor: EffectProcessor = null
+) -> String:
+	if state == null:
+		return "当前无法撤退。"
+	if player_index < 0 or player_index >= state.players.size():
+		return "当前玩家无效，不能撤退。"
 	if state.current_player_index != player_index:
-		return false
+		return "现在不是你的回合，不能撤退。"
 	if state.phase != GameState.GamePhase.MAIN:
-		return false
+		return "只能在主要阶段撤退。"
 	if state.retreat_used_this_turn:
-		return false
+		return "本回合已经撤退过。每回合通常只能撤退 1 次。"
 	var player: PlayerState = state.players[player_index]
 	if player.active_pokemon == null:
-		return false
+		return "当前没有战斗宝可梦，不能撤退。"
 	if _is_effectively_knocked_out(player.active_pokemon, state, effect_processor):
-		return false
+		return "当前战斗宝可梦已经昏厥，不能撤退。"
 	if player.active_pokemon.status_conditions.get("asleep", false):
-		return false
+		return "战斗宝可梦处于睡眠状态，不能撤退。"
 	if player.active_pokemon.status_conditions.get("paralyzed", false):
-		return false
+		return "战斗宝可梦处于麻痹状态，不能撤退。"
 	if effect_processor != null:
 		var opponent_active: PokemonSlot = state.players[1 - player_index].active_pokemon
 		if opponent_active != null and not effect_processor.is_ability_disabled(opponent_active, state):
@@ -170,18 +272,18 @@ func can_retreat(
 				var effect: BaseEffect = effect_processor.get_ability_effect(opponent_active, ability_index, state)
 				if effect != null and effect.has_method("prevents_opponent_retreat"):
 					if bool(effect.call("prevents_opponent_retreat", opponent_active, player_index, state)):
-						return false
+						return "受到对手宝可梦的效果影响，当前不能撤退。"
 	for effect_data: Dictionary in player.active_pokemon.effects:
 		if effect_data.get("type", "") == "retreat_lock" and int(effect_data.get("turn", -999)) == state.turn_number - 1:
-			return false
+			return "受到上回合效果影响，当前不能撤退。"
 	var has_live_bench: bool = false
 	for bench_slot: PokemonSlot in player.bench:
 		if bench_slot != null and not _is_effectively_knocked_out(bench_slot, state, effect_processor):
 			has_live_bench = true
 			break
 	if not has_live_bench:
-		return false
-	return true
+		return "没有可交换上场的备战宝可梦，不能撤退。"
+	return ""
 
 
 func has_enough_energy_to_retreat(
@@ -257,10 +359,14 @@ func get_granted_attack_unusable_reason(
 		and not _allows_first_player_attack_on_first_turn(granted_attack)
 	):
 		return "先攻玩家首回合不能攻击"
-	if slot.attached_tool == null:
-		return "这只宝可梦没有附着工具"
-	if effect_processor != null and effect_processor.is_tool_effect_suppressed(slot, state):
-		return "这只宝可梦身上的道具效果当前不可用"
+	if effect_processor != null and not effect_processor.is_granted_attack_available(slot, granted_attack, state):
+		return "当前没有可用的赋予招式"
+	var source_kind := str(granted_attack.get("source", "tool"))
+	if source_kind == "tool":
+		if slot.attached_tool == null:
+			return "这只宝可梦没有附着工具"
+		if effect_processor != null and effect_processor.is_tool_effect_suppressed(slot, state):
+			return "这只宝可梦身上的道具效果当前不可用"
 	var cost: String = str(granted_attack.get("cost", ""))
 	if not has_enough_energy(slot, cost, effect_processor, state):
 		return "能量不足，无法满足这个招式的费用"
@@ -472,14 +578,26 @@ func has_enough_energy(
 
 
 func can_play_basic_to_bench(state: GameState, player_index: int, card: CardInstance) -> bool:
+	return get_play_basic_to_bench_unusable_reason(state, player_index, card) == ""
+
+
+func get_play_basic_to_bench_unusable_reason(state: GameState, player_index: int, card: CardInstance) -> String:
+	if state == null:
+		return "当前无法把基础宝可梦放到备战区。"
+	if player_index < 0 or player_index >= state.players.size():
+		return "当前玩家无效，不能放置宝可梦。"
 	if state.current_player_index != player_index:
-		return false
+		return "现在不是你的回合，不能把宝可梦放到备战区。"
 	if state.phase != GameState.GamePhase.MAIN:
-		return false
+		return "只能在主要阶段把基础宝可梦放到备战区。"
+	if card == null or card.card_data == null:
+		return "没有选择要放置的宝可梦。"
 	if not card.card_data.is_basic_pokemon():
-		return false
+		return "只有基础宝可梦可以直接放到备战区。"
 	var player: PlayerState = state.players[player_index]
-	return not BenchLimit.is_bench_full(state, player)
+	if BenchLimit.is_bench_full(state, player):
+		return "你的备战区已经满了，不能再放置新的宝可梦。"
+	return ""
 
 
 func can_attach_tool(
@@ -489,18 +607,38 @@ func can_attach_tool(
 	effect_processor: EffectProcessor = null,
 	tool_card: CardInstance = null
 ) -> bool:
+	return get_attach_tool_unusable_reason(state, player_index, slot, effect_processor, tool_card) == ""
+
+
+func get_attach_tool_unusable_reason(
+	state: GameState,
+	player_index: int,
+	slot: PokemonSlot,
+	effect_processor: EffectProcessor = null,
+	tool_card: CardInstance = null
+) -> String:
+	if state == null:
+		return "当前无法附着宝可梦道具。"
+	if player_index < 0 or player_index >= state.players.size():
+		return "当前玩家无效，不能附着宝可梦道具。"
 	if state.current_player_index != player_index:
-		return false
+		return "现在不是你的回合，不能附着宝可梦道具。"
 	if state.phase != GameState.GamePhase.MAIN:
-		return false
+		return "只能在主要阶段附着宝可梦道具。"
 	if slot == null or _is_effectively_knocked_out(slot, state, effect_processor):
-		return false
+		return "没有选择可以附着道具的宝可梦。"
 	if effect_processor != null and tool_card != null and effect_processor.prevents_card_from_hand(player_index, tool_card, state):
-		return false
+		if effect_processor.has_method("get_card_from_hand_block_reason"):
+			var block_reason := str(effect_processor.call("get_card_from_hand_block_reason", player_index, tool_card, state))
+			if block_reason != "":
+				return block_reason
+		return "受到场上效果影响，当前不能从手牌打出这张宝可梦道具。"
 	if effect_processor != null and tool_card != null and effect_processor.has_method("can_attach_tool_to_slot"):
 		if not bool(effect_processor.call("can_attach_tool_to_slot", slot, tool_card, state)):
-			return false
-	return slot.attached_tool == null
+			return "这张宝可梦道具不能附着到这个目标。"
+	if slot.attached_tool != null:
+		return "这只宝可梦已经附着了宝可梦道具。通常每只宝可梦只能附着 1 张道具。"
+	return ""
 
 
 func _is_effectively_knocked_out(

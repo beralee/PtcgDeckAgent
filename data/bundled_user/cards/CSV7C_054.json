@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "奔流之心",
+			"text": "在自己的回合可以使用1次。给这只宝可梦身上放置5个伤害指示物。在这种情况下，在这个回合，这只宝可梦所使用的招式，给对手战斗宝可梦造成的伤害「+120」。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "GOSSAN",
+	"attacks": [
+		{
+			"cost": "WW",
+			"damage": "160",
+			"is_vstar_power": false,
+			"name": "骇浪",
+			"text": "在下一个自己的回合，这只宝可梦无法使用「骇浪」。"
+		}
+	],
+	"card_index": "054",
+	"card_index_en": "41",
+	"card_type": "Pokemon",
+	"description": "特性: 奔流之心\n在自己的回合可以使用1次。给这只宝可梦身上放置5个伤害指示物。在这种情况下，在这个回合，这只宝可梦所使用的招式，给对手战斗宝可梦造成的伤害「+120」。\n\n【水】【水】 骇浪 160\n在下一个自己的回合，这只宝可梦无法使用「骇浪」。\n\n",
+	"effect_id": "db55f545bfa9fdddaf526a23431e7434",
+	"energy_provides": "",
+	"energy_type": "W",
+	"evolves_from": "蓝鳄",
+	"hp": 180,
+	"image_local_path": "user://cards/images/CSV7C/054.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV7C/054.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "大力鳄",
+	"name_en": "Feraligatr",
+	"rarity": "R",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-01-16T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 3,
+	"set_code": "CSV7C",
+	"set_code_en": "TEF",
+	"stage": "Stage 2",
+	"weakness_energy": "L",
+	"weakness_value": "×2",
+	"yoren_code": "P160"
+}

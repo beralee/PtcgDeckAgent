@@ -772,6 +772,61 @@ func test_hand_drag_clears_stale_card_gallery_capture() -> String:
 	return result
 
 
+func test_global_input_clears_hidden_stale_card_gallery_capture_before_hand_drag() -> String:
+	var scene: Control = BattleScenePacked.instantiate()
+	var hand_scroll := scene.find_child("HandScroll", true, false) as ScrollContainer
+	scene.set("_hand_scroll", hand_scroll)
+	scene.call("_setup_hand_drag_scroll")
+	_prepare_overflowing_hand_scroll_for_drag_test(hand_scroll)
+	hand_scroll.scroll_horizontal = 300
+	var start_scroll := hand_scroll.scroll_horizontal
+
+	var stale_scroll := ScrollContainer.new()
+	var stale_row := HBoxContainer.new()
+	scene.add_child(stale_scroll)
+	stale_scroll.add_child(stale_row)
+	scene.call("_configure_card_gallery_drag_scroll", stale_scroll, stale_row, "hidden_stale_dialog")
+	scene.call("_set_card_gallery_drag_scroll_active", stale_scroll, true)
+	var stale_press := InputEventMouseButton.new()
+	stale_press.button_index = MOUSE_BUTTON_LEFT
+	stale_press.pressed = true
+	stale_press.global_position = Vector2(220, 24)
+	scene.call("_handle_card_gallery_drag_scroll_input", stale_press, stale_scroll, "hidden_stale_dialog")
+	stale_scroll.visible = false
+	var stale_active_before_hand_press: bool = bool(scene.get("_card_gallery_drag_active"))
+
+	var hand_press := InputEventMouseButton.new()
+	hand_press.button_index = MOUSE_BUTTON_LEFT
+	hand_press.pressed = true
+	hand_press.global_position = Vector2(200, 24)
+	scene.call("_input", hand_press)
+	var stale_active_after_global_input: bool = bool(scene.get("_card_gallery_drag_active"))
+	if not stale_active_after_global_input:
+		scene.call("_handle_hand_drag_scroll_input", hand_press, "hand_card_gui")
+	var hand_active_after_press: bool = bool(scene.get("_hand_drag_active"))
+
+	var drag_left := InputEventMouseMotion.new()
+	drag_left.global_position = Vector2(120, 24)
+	scene.call("_input", drag_left)
+	var scroll_after_drag := hand_scroll.scroll_horizontal
+
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.global_position = Vector2(120, 24)
+	scene.call("_input", release)
+
+	var result := run_checks([
+		assert_true(stale_active_before_hand_press, "The test must start with a hidden stale dialog card-gallery drag capture"),
+		assert_false(stale_active_after_global_input, "Global battle input should drop hidden stale card-gallery capture instead of consuming the next hand press"),
+		assert_true(hand_active_after_press, "Hand card GUI input should be able to start dragging after global input clears stale gallery capture"),
+		assert_true(scroll_after_drag > start_scroll, "Hand drag should scroll after a hidden card-search dialog missed its release event"),
+		assert_false(bool(scene.get("_hand_drag_active")), "Hand drag should still end normally on release"),
+	])
+	scene.free()
+	return result
+
+
 func test_card_gallery_drag_scroll_suppresses_card_click() -> String:
 	var scene: Control = BattleScenePacked.instantiate()
 	var scroll := ScrollContainer.new()
@@ -3555,6 +3610,69 @@ func test_battle_scene_two_player_turn_start_draw_waits_for_handover_before_reve
 	])
 
 
+func test_battle_scene_two_player_terminal_draw_reveal_finishes_before_handover() -> String:
+	var previous_mode: int = GameManager.current_mode
+	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
+
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var drawn_cards := _make_named_deck_cards(0, ["Rotom Draw 1", "Rotom Draw 2", "Rotom Draw 3"])
+	gsm.game_state.players[0].hand = drawn_cards
+	var card_names: Array[String] = []
+	var card_ids: Array[int] = []
+	for drawn_card: CardInstance in drawn_cards:
+		card_names.append(drawn_card.card_data.name)
+		card_ids.append(drawn_card.instance_id)
+
+	var action := GameAction.create(
+		GameAction.ActionType.DRAW_CARD,
+		0,
+		{"count": 3, "card_names": card_names, "card_instance_ids": card_ids},
+		2,
+		"Rotom V draws three"
+	)
+	battle_scene.call("_on_action_logged", action)
+	var waiting_before_turn_pass: Variant = battle_scene.get("_draw_reveal_waiting_for_confirm")
+
+	gsm.game_state.current_player_index = 1
+	battle_scene.call("_check_two_player_handover")
+	var handover_visible_during_reveal: bool = bool(battle_scene.get("_handover_panel").visible)
+	var pending_handover_during_reveal: bool = (battle_scene.get("_pending_handover_action") as Callable).is_valid()
+	var reveal_active_during_handover_check: Variant = battle_scene.get("_draw_reveal_active")
+
+	var controller: RefCounted = battle_scene.get("_battle_draw_reveal_controller")
+	var has_confirm := controller != null and controller.has_method("confirm_current_reveal")
+	if has_confirm:
+		controller.call("confirm_current_reveal", battle_scene)
+	var reveal_active_after_confirm: Variant = battle_scene.get("_draw_reveal_active")
+	var handover_visible_after_confirm: bool = bool(battle_scene.get("_handover_panel").visible)
+	var view_player_after_confirm: int = int(battle_scene.get("_view_player"))
+	GameManager.current_mode = previous_mode
+
+	return run_checks([
+		assert_eq(waiting_before_turn_pass, true, "Terminal draw should first wait for the acting player to confirm their own reveal"),
+		assert_eq(reveal_active_during_handover_check, true, "Terminal draw reveal should remain active when the turn has just passed"),
+		assert_eq(handover_visible_during_reveal, false, "Handover prompt must not cover an unfinished private draw reveal"),
+		assert_eq(pending_handover_during_reveal, false, "Handover action should not be armed until the private reveal finishes"),
+		assert_eq(has_confirm, true, "Draw reveal controller should expose a confirm_current_reveal entrypoint"),
+		assert_eq(reveal_active_after_confirm, false, "Confirming the terminal draw should finish the reveal"),
+		assert_eq(handover_visible_after_confirm, true, "Handover prompt should appear only after the terminal draw reveal completes"),
+		assert_eq(view_player_after_confirm, 0, "View should stay on the acting player until they pass the device"),
+	])
+
+
 func test_battle_scene_two_player_setup_view_alignment_resumes_deferred_turn_start_draw() -> String:
 	var previous_mode: int = GameManager.current_mode
 	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
@@ -4637,6 +4755,28 @@ func test_battle_scene_pokemon_action_dialog_shows_empty_disabled_row_for_no_tex
 		assert_eq(str(first_action.get("type", "")), "noop", "No-action placeholder should be inert"),
 		assert_false(bool(first_action.get("enabled", true)), "No-action placeholder should be disabled"),
 		assert_eq(str((action_items[0] as Dictionary).get("title", "")) if action_items.size() > 0 and action_items[0] is Dictionary else "", "当前没有可执行行动", "No-action placeholder should explain why the dialog opened"),
+	])
+
+
+func test_battle_scene_disabled_pokemon_action_choice_does_not_open_invalid_overlay() -> String:
+	var scene = _make_battle_scene_stub()
+	scene.set("_pending_choice", "pokemon_action")
+	scene.set("_dialog_data", {
+		"player": 0,
+		"actions": [{
+			"type": "attack",
+			"enabled": false,
+			"reason": "能量不足，无法使用该招式",
+		}],
+	})
+	scene.call("_handle_dialog_choice", PackedInt32Array([0]))
+
+	var invalid_overlay := scene.get_node_or_null("InvalidActionOverlay")
+	var log_text := (scene.get("_log_list") as RichTextLabel).get_parsed_text()
+
+	return run_checks([
+		assert_null(invalid_overlay, "Disabled Pokemon action choices should not open the full-screen invalid action overlay"),
+		assert_str_contains(log_text, "能量不足", "The disabled action reason should still be recorded in the battle log"),
 	])
 
 
@@ -7474,6 +7614,25 @@ func test_stadium_backdrop_resolves_area_zero_background() -> String:
 			resolved_path,
 			"res://assets/ui/stadium_backgrounds/area_zero_underdepths.webp",
 			"Area Zero Underdepths should resolve to its dynamic stadium background"
+		),
+	])
+
+
+func test_stadium_backdrop_resolves_perilous_jungle_background() -> String:
+	var coordinator := BattleStadiumBackdropCoordinatorScript.new()
+	var stadium_cd := _make_trainer_cd("Perilous Jungle", "Stadium", "")
+	stadium_cd.name_en = "Perilous Jungle"
+	stadium_cd.set_code = "CSV7C"
+	stadium_cd.card_index = "200"
+	stadium_cd.effect_id = "16a6fb86a8ebd1cffc6f171250057d5c"
+	var stadium := CardInstance.create(stadium_cd, 0)
+	var resolved_path: String = coordinator.resolve_stadium_backdrop_path(stadium, "res://assets/ui/background.png")
+
+	return run_checks([
+		assert_eq(
+			resolved_path,
+			"res://assets/ui/stadium_backgrounds/perilous_jungle.webp",
+			"Perilous Jungle should resolve to its dynamic stadium background"
 		),
 	])
 
@@ -10770,6 +10929,157 @@ func test_modal_choice_tap_suppresses_followup_battle_slot_input() -> String:
 	return result
 
 
+func _first_action_hud_option(scene: Control) -> Control:
+	var dialog_card_row := scene.get("_dialog_card_row") as HBoxContainer
+	if dialog_card_row == null:
+		return null
+	for child: Node in dialog_card_row.get_children():
+		if not child is VBoxContainer:
+			continue
+		for option: Node in child.get_children():
+			if option is Control:
+				return option as Control
+	return null
+
+
+func _make_portrait_retreat_action_hud_scene() -> Control:
+	var battle_scene := _make_battle_scene_stub()
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	var gsm := GameStateMachine.new()
+	var game_state := GameState.new()
+	game_state.current_player_index = 0
+	game_state.phase = GameState.GamePhase.MAIN
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		game_state.players.append(player)
+
+	var active_cd := _make_pokemon_cd("Portrait Tap Active", 120, "C")
+	active_cd.attacks = []
+	active_cd.abilities = []
+	active_cd.retreat_cost = 0
+	var active_slot := PokemonSlot.new()
+	active_slot.pokemon_stack.append(CardInstance.create(active_cd, 0))
+	game_state.players[0].active_pokemon = active_slot
+
+	var bench_slot := PokemonSlot.new()
+	var bench_cd := _make_pokemon_cd("Retreat Receiver", 90, "C")
+	bench_cd.attacks = []
+	bench_cd.abilities = []
+	bench_slot.pokemon_stack.append(CardInstance.create(bench_cd, 0))
+	game_state.players[0].bench.append(bench_slot)
+
+	var opp_active := PokemonSlot.new()
+	var opp_cd := _make_pokemon_cd("Opponent Active", 120, "C")
+	opp_cd.attacks = []
+	opp_cd.abilities = []
+	opp_active.pokemon_stack.append(CardInstance.create(opp_cd, 1))
+	game_state.players[1].active_pokemon = opp_active
+
+	gsm.game_state = game_state
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+	(battle_scene.get("_dialog_overlay") as Panel).visible = false
+	(battle_scene.get("_handover_panel") as Panel).visible = false
+	return battle_scene
+
+
+func test_portrait_slot_tap_suppresses_emulated_action_hud_option_click() -> String:
+	var battle_scene := _make_portrait_retreat_action_hud_scene()
+
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.index = 0
+	press.position = Vector2(24, 24)
+	battle_scene.call("_on_slot_input", press, "my_active")
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.index = 0
+	release.position = Vector2(24, 24)
+	battle_scene.call("_on_slot_input", release, "my_active")
+
+	var option := _first_action_hud_option(battle_scene)
+	var emulated_click := InputEventMouseButton.new()
+	emulated_click.button_index = MOUSE_BUTTON_LEFT
+	emulated_click.pressed = true
+	if option != null:
+		option.emit_signal("gui_input", emulated_click)
+
+	var result := run_checks([
+		assert_true(option != null, "Portrait Pokemon action HUD should render at least one option"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "pokemon_action", "The emulated follow-up click that opened the action HUD should not immediately choose retreat"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_portrait_slot_tap_suppresses_delayed_emulated_action_hud_option_click() -> String:
+	var battle_scene := _make_portrait_retreat_action_hud_scene()
+
+	var touch_position := Vector2(24, 24)
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.index = 0
+	press.position = touch_position
+	battle_scene.call("_on_slot_input", press, "my_active")
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.index = 0
+	release.position = touch_position
+	battle_scene.call("_on_slot_input", release, "my_active")
+	battle_scene.set("_action_hud_open_input_suppress_until_msec", Time.get_ticks_msec() - 1)
+
+	var option := _first_action_hud_option(battle_scene)
+	var emulated_click := InputEventMouseButton.new()
+	emulated_click.button_index = MOUSE_BUTTON_LEFT
+	emulated_click.pressed = true
+	emulated_click.position = touch_position
+	emulated_click.global_position = touch_position
+	if option != null:
+		option.emit_signal("gui_input", emulated_click)
+
+	var result := run_checks([
+		assert_true(option != null, "Portrait Pokemon action HUD should render at least one option"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "pokemon_action", "A delayed Android emulated click at the original slot tap position should not choose the first action HUD option"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_portrait_action_hud_option_click_works_after_open_guard_expires() -> String:
+	var battle_scene := _make_portrait_retreat_action_hud_scene()
+
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.index = 0
+	press.position = Vector2(24, 24)
+	battle_scene.call("_on_slot_input", press, "my_active")
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.index = 0
+	release.position = Vector2(24, 24)
+	battle_scene.call("_on_slot_input", release, "my_active")
+	battle_scene.set("_action_hud_open_input_suppress_until_msec", Time.get_ticks_msec() - 1)
+	battle_scene.set("_action_hud_open_position_guard_until_msec", Time.get_ticks_msec() - 1)
+
+	var option := _first_action_hud_option(battle_scene)
+	var intentional_click := InputEventMouseButton.new()
+	intentional_click.button_index = MOUSE_BUTTON_LEFT
+	intentional_click.pressed = true
+	if option != null:
+		option.emit_signal("gui_input", intentional_click)
+
+	var result := run_checks([
+		assert_true(option != null, "Portrait Pokemon action HUD should render at least one option"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "retreat_bench", "After the guard expires, tapping the action HUD option should choose retreat"),
+	])
+
+	battle_scene.free()
+	return result
+
+
 func test_modal_choice_tap_suppresses_portrait_bench_grid_fallback() -> String:
 	var battle_scene := _make_battle_scene_stub()
 	battle_scene.call("_mark_modal_input_consumed", "test_modal_bench")
@@ -10823,6 +11133,27 @@ func test_modal_choice_tap_suppresses_followup_lost_zone_hud_open() -> String:
 	var result := run_checks([
 		assert_false(discard_overlay.visible, "A follow-up touch event from a modal card choice should not open the LOST viewer"),
 		assert_eq(str(battle_scene.get("_pending_choice")), "", "Consuming the modal follow-up should not start another pending choice"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_recent_modal_completion_suppresses_delayed_lost_zone_hud_open() -> String:
+	var battle_scene := _make_battle_scene_stub()
+	var discard_overlay := battle_scene.get("_discard_overlay") as Panel
+	discard_overlay.visible = false
+	battle_scene.set("_modal_input_slot_suppress_until_msec", 0)
+	battle_scene.set("_modal_input_finished_at_msec", Time.get_ticks_msec())
+
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	battle_scene.call("_on_lost_zone_open_control_input", click, false)
+
+	var result := run_checks([
+		assert_false(discard_overlay.visible, "A delayed follow-up event after an action modal should not open the LOST viewer"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "Consuming the delayed LOST follow-up should not start another pending choice"),
 	])
 
 	battle_scene.free()

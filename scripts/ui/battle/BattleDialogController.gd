@@ -1532,15 +1532,29 @@ func _build_action_hud_option(scene: Object, action: Dictionary, action_index: i
 	panel.custom_minimum_size = Vector2(option_width, 0)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	panel.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	panel.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if enabled else Control.CURSOR_ARROW
 	panel.add_theme_stylebox_override("panel", _action_hud_panel_style(accent, enabled))
 	panel.gui_input.connect(func(event: InputEvent) -> void:
+		var activated := false
 		if event is InputEventMouseButton:
 			var mouse_event := event as InputEventMouseButton
 			if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
-				mark_modal_input_consumed(scene, "action_hud_option")
-				confirm_dialog_selection(scene, PackedInt32Array([action_index]))
+				activated = true
+		elif event is InputEventScreenTouch:
+			var touch_event := event as InputEventScreenTouch
+			if touch_event.pressed:
+				activated = true
+		if activated:
+			if scene != null and scene.has_method("_consume_action_hud_open_input_if_needed"):
+				if bool(scene.call("_consume_action_hud_open_input_if_needed", event, "action_hud_option")):
+					panel.accept_event()
+					return
+			if not enabled:
 				panel.accept_event()
+				return
+			mark_modal_input_consumed(scene, "action_hud_option")
+			confirm_dialog_selection(scene, PackedInt32Array([action_index]))
+			panel.accept_event()
 	)
 
 	var margin := MarginContainer.new()
@@ -2625,7 +2639,7 @@ func show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlot, inclu
 		var ability_reason := "%s 当前无法使用特性" % card_data.name
 		if effect != null and effect.has_method("can_use_ability"):
 			can_use = gsm.effect_processor.can_use_ability(slot, gsm.game_state, i)
-			ability_reason = "" if can_use else "%s 当前无法使用特性" % card_data.name
+			ability_reason = "" if can_use else gsm.effect_processor.get_ability_unusable_reason(slot, gsm.game_state, i)
 		items.append("%s[特性] %s" % ["" if can_use else "[不可用] ", ability_name])
 		actions.append({
 			"type": "ability",
@@ -2646,12 +2660,13 @@ func show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlot, inclu
 	for granted: Dictionary in gsm.effect_processor.get_granted_abilities(slot, gsm.game_state):
 		var can_use_granted: bool = bool(granted.get("enabled", false))
 		var granted_name := str(granted.get("name", ""))
-		var granted_reason := "" if can_use_granted else "%s 当前无法使用特性" % card_data.name
+		var granted_index := int(granted.get("ability_index", card_data.abilities.size()))
+		var granted_reason: String = "" if can_use_granted else gsm.effect_processor.get_ability_unusable_reason(slot, gsm.game_state, granted_index)
 		items.append("%s[特性] %s" % ["" if can_use_granted else "[不可用] ", granted_name])
 		actions.append({
 			"type": "ability",
 			"slot": slot,
-			"ability_index": int(granted.get("ability_index", card_data.abilities.size())),
+			"ability_index": granted_index,
 			"enabled": can_use_granted,
 			"reason": granted_reason,
 		})
@@ -2728,11 +2743,12 @@ func show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlot, inclu
 		if include_attacks and is_active_slot:
 			var can_retreat: bool = gsm.rule_validator.can_retreat(gsm.game_state, cp, gsm.effect_processor)
 			var retreat_cost: int = gsm.effect_processor.get_effective_retreat_cost(slot, gsm.game_state)
+			var retreat_reason: String = "" if can_retreat else gsm.rule_validator.get_retreat_unusable_reason(gsm.game_state, cp, gsm.effect_processor)
 			items.append("%s[行动] 撤退" % ("" if can_retreat else "[不可用] "))
 			actions.append({
 				"type": "retreat",
 				"enabled": can_retreat,
-				"reason": "当前无法撤退",
+				"reason": retreat_reason,
 			})
 			action_items.append(_build_pokemon_action_item(
 				"retreat",
@@ -2741,7 +2757,7 @@ func show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlot, inclu
 				"费用 %d" % retreat_cost,
 				"支付撤退费用，选择 1 只备战宝可梦与战斗宝可梦交换。",
 				can_retreat,
-				"当前无法撤退"
+				retreat_reason
 			))
 	if actions.is_empty():
 		var empty_reason := "%s 当前没有可执行的行动" % card_data.name
@@ -2943,7 +2959,7 @@ func _legacy_show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlo
 			if not effect.has_method("can_use_ability"):
 				continue
 			var can_use: bool = gsm.effect_processor.can_use_ability(slot, gsm.game_state, i)
-			var ability_reason := "" if can_use else "%s 当前无法使用特性" % card_data.name
+			var ability_reason: String = "" if can_use else gsm.effect_processor.get_ability_unusable_reason(slot, gsm.game_state, i)
 			var prefix := "" if can_use else "[不可用] "
 			items.append("%s[特性] %s" % [prefix, ability.get("name", "")])
 			actions.append({
@@ -2956,13 +2972,14 @@ func _legacy_show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlo
 	for granted: Dictionary in gsm.effect_processor.get_granted_abilities(slot, gsm.game_state):
 		var can_use_granted: bool = bool(granted.get("enabled", false))
 		var granted_name := str(granted.get("name", ""))
-		var granted_reason := "" if can_use_granted else "%s 当前无法使用特性" % card_data.name
+		var granted_index := int(granted.get("ability_index", card_data.abilities.size()))
+		var granted_reason: String = "" if can_use_granted else gsm.effect_processor.get_ability_unusable_reason(slot, gsm.game_state, granted_index)
 		var granted_prefix := "" if can_use_granted else "[不可用] "
 		items.append("%s[特性] %s" % [granted_prefix, granted_name])
 		actions.append({
 			"type": "ability",
 			"slot": slot,
-			"ability_index": int(granted.get("ability_index", card_data.abilities.size())),
+			"ability_index": granted_index,
 			"enabled": can_use_granted,
 			"reason": granted_reason,
 		})
@@ -2999,11 +3016,12 @@ func _legacy_show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlo
 		if slot == gsm.game_state.players[cp].active_pokemon:
 			var can_retreat: bool = gsm.rule_validator.can_retreat(gsm.game_state, cp, gsm.effect_processor)
 			var retreat_prefix: String = "" if can_retreat else "[不可用] "
+			var retreat_reason: String = "" if can_retreat else gsm.rule_validator.get_retreat_unusable_reason(gsm.game_state, cp, gsm.effect_processor)
 			items.append("%s[行动] 撤退" % retreat_prefix)
 			actions.append({
 				"type": "retreat",
 				"enabled": can_retreat,
-				"reason": "当前无法撤退",
+				"reason": retreat_reason,
 			})
 	if actions.is_empty():
 		scene.call("_log", "%s 当前没有可执行的行动" % card_data.name)
@@ -3026,7 +3044,7 @@ func show_retreat_dialog(scene: Object, cp: int) -> void:
 		if paid_units >= cost:
 			break
 		energy_discard.append(energy)
-		paid_units += gsm.effect_processor.get_energy_colorless_count(energy)
+		paid_units += gsm.effect_processor.get_energy_colorless_count(energy, gsm.game_state)
 	scene.set("_pending_choice", "retreat_bench")
 	scene.set("_dialog_data", {
 		"player": cp,

@@ -1,26 +1,26 @@
 {
 	"deck_id": 1700011,
 	"deck_name": "17.0 Regidrago",
-	"description": "V17 strong opening. First 7 cards form the launch hand and keep Energy Switch in hand, because opponent mulligan draws shift the prize block and can otherwise prize the bridge card. Cards after the controlled prize block provide discard fuel, Grass, VSTAR search safety, and anti-Boss escape. Goal: T1 active Regidrago V with Teal Mask Ogerpon support, attach Fire to Regidrago, Ogerpon draws Grass resources, Ultra Ball discards Dragapult ex plus a Dragon fuel card for Regidrago VSTAR, then T2 evolve, attach Grass, Energy Switch Ogerpon Grass, and use Apex Dragon. Default conversion copies Dragapult ex for 200 plus 6 counters; when Iron Hands ex or another bulky 230 HP threat is active, copy Hisuian Goodra VSTAR if available to survive the return hit. The real Switch card is kept out of prizes so Star Legacy can recover an escape card if the opponent Bosses Ogerpon active.",
+	"description": "V17 strong opening. First 7 cards form the launch hand and keep Energy Switch in hand, because opponent mulligan draws shift the prize block and can otherwise prize the bridge card. Cards after the launch hand keep a spare Grass reachable across mulligan prize windows, then provide discard fuel, an early backup Regidrago V, VSTAR search safety, anti-Boss escape, and Giratina VSTAR for the 280 Lost Impact copy line into Charizard. Goal: open Teal Mask Ogerpon ex active when Regidrago V is also available, bench Regidrago V, attach Fire to Regidrago, use Ogerpon to draw Grass resources, but do not move away Ogerpon's only retreat Energy. On T2, evolve the protected bench Regidrago, attach Grass, Energy Switch only when Ogerpon can still retreat afterward, pivot into Regidrago VSTAR, and use Apex Dragon. Default conversion copies Dragapult ex for 200 plus 6 counters; against Charizard-style bulky attackers, prefer Giratina VSTAR's Lost Impact for clean 280 KOs, and copy Hisuian Goodra VSTAR only when a 200 hit will not take the prize and the active can survive with damage reduction. The real Switch card is kept out of prizes so Star Legacy can recover an escape card if the opponent Bosses Ogerpon active.",
 	"top_to_bottom": [
-		{"set_code": "CS6.5C", "card_index": "054"},
 		{"set_code": "CSV8C", "card_index": "028"},
+		{"set_code": "CS6.5C", "card_index": "054"},
 		{"set_code": "CSV1C", "card_index": "112"},
 		{"set_code": "CSV8C", "card_index": "159"},
 		{"set_code": "CSVE1C", "card_index": "FIR"},
 		{"set_code": "CSVE1C", "card_index": "GRA"},
 		{"set_code": "CSVH1aC", "card_index": "008"},
-		{"set_code": "151C", "card_index": "151"},
+		{"set_code": "CSVE1C", "card_index": "GRA"},
 		{"set_code": "CSV8C", "card_index": "203"},
 		{"set_code": "CSV7C", "card_index": "180"},
 		{"set_code": "CSV4C", "card_index": "044"},
-		{"set_code": "CSV1C", "card_index": "079"},
+		{"set_code": "151C", "card_index": "151"},
 		{"set_code": "CSVH1aC", "card_index": "023"},
 		{"set_code": "CSVE1C", "card_index": "GRA"},
 		{"set_code": "CS5.5C", "card_index": "053"},
-		{"set_code": "CSVE1C", "card_index": "GRA"},
+		{"set_code": "CS6.5C", "card_index": "054"},
 		{"set_code": "CS6.5C", "card_index": "055"},
 		{"set_code": "CSV1C", "card_index": "113"},
-		{"set_code": "CS5aC", "card_index": "113"}
+		{"set_code": "CS6bC", "card_index": "108"}
 	]
 }

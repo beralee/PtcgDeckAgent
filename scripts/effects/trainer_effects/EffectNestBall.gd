@@ -32,6 +32,15 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return not BenchLimit.is_bench_full(state, player)
 
 
+func get_unusable_reason(card: CardInstance, state: GameState) -> String:
+	if card == null or state == null or card.owner_index < 0 or card.owner_index >= state.players.size():
+		return "巢穴球当前无法使用。"
+	var player: PlayerState = state.players[card.owner_index]
+	if BenchLimit.is_bench_full(state, player):
+		return "你的备战区已经满了，巢穴球无法再放置基础宝可梦。"
+	return ""
+
+
 func can_headless_execute(card: CardInstance, state: GameState) -> bool:
 	var player: PlayerState = state.players[card.owner_index]
 	if BenchLimit.is_bench_full(state, player):
@@ -56,11 +65,15 @@ func execute(card: CardInstance, _targets: Array, state: GameState) -> void:
 
 	var pokemon: CardInstance = null
 	var selected_raw: Array = ctx.get("basic_pokemon", [])
-	if not selected_raw.is_empty() and selected_raw[0] is CardInstance:
-		var selected: CardInstance = selected_raw[0]
+	var has_explicit_selection: bool = ctx.has("basic_pokemon")
+	for entry: Variant in selected_raw:
+		if not (entry is CardInstance):
+			continue
+		var selected: CardInstance = entry
 		if selected in player.deck and selected.card_data.is_basic_pokemon():
 			pokemon = selected
-	if pokemon == null:
+			break
+	if pokemon == null and not has_explicit_selection:
 		for deck_card: CardInstance in player.deck:
 			if deck_card.card_data.is_basic_pokemon():
 				pokemon = deck_card

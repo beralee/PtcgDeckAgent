@@ -495,11 +495,19 @@ func _assign_sources_to_targets(
 	var pending_assignment_counts: Dictionary = {}
 	var pending_assignments: Array[Dictionary] = []
 	var source_indices: Array = explicit_source_indices if has_explicit_plan else range(source_items.size())
+	var max_assignments_per_target := int(step.get("max_assignments_per_target", 0))
 	for source_index_variant: Variant in source_indices:
 		var source_index: int = int(source_index_variant)
 		if assignments_made >= target_assignment_count:
 			break
-		var excluded_targets: Array = source_exclude_targets.get(source_index, [])
+		var excluded_targets: Array = (source_exclude_targets.get(source_index, []) as Array).duplicate()
+		if max_assignments_per_target > 0:
+			for target_index: int in target_items.size():
+				var candidate: Variant = target_items[target_index]
+				if candidate is Object:
+					var candidate_id := int((candidate as Object).get_instance_id())
+					if int(pending_assignment_counts.get(candidate_id, 0)) >= max_assignments_per_target and not (target_index in excluded_targets):
+						excluded_targets.append(target_index)
 		var assignment_context: Dictionary = context.duplicate(true)
 		assignment_context["assignment_source"] = source_items[source_index]
 		assignment_context["assignment_source_index"] = source_index

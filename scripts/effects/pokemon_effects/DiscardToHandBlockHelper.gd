@@ -51,7 +51,6 @@ static func _get_effect(source: PokemonSlot, processor: Variant) -> BaseEffect:
 static func _is_ability_disabled(source: PokemonSlot, state: GameState, processor: Variant) -> bool:
 	if processor != null and processor.has_method("is_ability_disabled"):
 		return processor.is_ability_disabled(source, state)
-	for effect_data: Dictionary in source.effects:
-		if effect_data.get("type", "") == "ability_disabled" and int(effect_data.get("turn", -999)) == state.turn_number:
-			return true
+	if EffectCancelCologne.is_slot_directly_ability_disabled(source, state):
+		return true
 	return false

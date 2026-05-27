@@ -167,6 +167,8 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 			return card_score
 	if item is PokemonSlot:
 		var slot := item as PokemonSlot
+		if step_id.contains("discard"):
+			return _bench_discard_score_v17(slot, context)
 		if step_id.contains("assign") or step_id.contains("attach") or step_id.contains("energy"):
 			return _generator_target_score(slot, context)
 		if _is_opponent_target_step_v17(step_id):
@@ -538,6 +540,8 @@ func _generator_target_score(slot: PokemonSlot, context: Dictionary = {}) -> flo
 	var gap_after := _attack_gap(slot, pending + 1)
 	var revenge_bonus := _revenge_bonus(slot, context)
 	if _is_raikou(slot):
+		if _raikou_first_attack_bridge_ready(slot, player, context):
+			return 940.0 + revenge_bonus
 		if gap_after == 0: return 760.0 + revenge_bonus
 		if gap_after == 1: return 560.0 + revenge_bonus
 		return 360.0 + revenge_bonus
@@ -664,12 +668,68 @@ func _slot_score(slot: PokemonSlot) -> float:
 	return 80.0
 
 
+func _bench_discard_score_v17(slot: PokemonSlot, context: Dictionary = {}) -> float:
+	if slot == null or slot.get_top_card() == null:
+		return 0.0
+	var player := _context_player(context)
+	var score := 120.0
+	var energy_count := _energy_units(slot)
+	var gap := _attack_gap(slot)
+	if _is_support_pokemon(slot):
+		score += 360.0
+	if _is_lumineon(slot) or _is_squawk(slot) or _is_fezandipiti(slot) or _is_iron_bundle(slot):
+		score += 180.0
+	if _is_latias(slot):
+		score += 130.0
+	if _is_magnemite(slot):
+		score += 80.0
+	if _is_core_pokemon(slot):
+		score -= 220.0
+	if _is_pikachu(slot):
+		score -= 260.0
+	if _is_iron_hands(slot) or _is_raikou(slot):
+		score -= 320.0
+	if gap == 0 and _is_attacker(slot):
+		score -= 720.0
+	elif gap == 1 and _is_attacker(slot):
+		score -= 430.0
+	score -= float(energy_count) * 240.0
+	if player != null and _count_on_field(player, _labels(slot)) > 1:
+		score += 240.0
+	if player != null and _is_miraidon(slot) and _count_on_field(player, [MIRAIDON, "CSV1C_050"]) <= 1:
+		score -= 180.0
+	return score
+
+
 func _context_player(context: Dictionary) -> PlayerState:
 	var game_state: GameState = context.get("game_state", null)
 	var player_index := int(context.get("player_index", -1))
 	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
 		return null
 	return game_state.players[player_index]
+
+
+func _raikou_first_attack_bridge_ready(slot: PokemonSlot, player: PlayerState, context: Dictionary = {}) -> bool:
+	if player == null or slot == null or not _is_raikou(slot):
+		return false
+	var game_state: GameState = context.get("game_state", null)
+	var turn := int(game_state.turn_number) if game_state != null else 0
+	if turn > 3:
+		return false
+	if player.active_pokemon == null or not _is_support_pokemon(player.active_pokemon):
+		return false
+	if not _hand_has_lightning_energy_v17(player):
+		return false
+	return _attack_gap(slot, 1) == 1
+
+
+func _hand_has_lightning_energy_v17(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	for card: CardInstance in player.hand:
+		if _is_lightning_energy(card):
+			return true
+	return false
 
 
 func _bench_limit_v17(game_state: GameState, player: PlayerState) -> int:

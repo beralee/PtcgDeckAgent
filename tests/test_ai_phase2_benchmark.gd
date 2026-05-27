@@ -7,6 +7,7 @@ const BenchmarkEvaluatorScript = preload("res://scripts/ai/BenchmarkEvaluator.gd
 const BenchmarkRunnerSceneScript = preload("res://scenes/tuner/BenchmarkRunner.gd")
 const AIVersionRegistryScript = preload("res://scripts/ai/AIVersionRegistry.gd")
 const TrainingRunRegistryScript = preload("res://scripts/ai/TrainingRunRegistry.gd")
+const EffectIonoScript = preload("res://scripts/effects/trainer_effects/EffectIono.gd")
 
 
 func _card_identity_signature(cards: Array) -> Array[String]:
@@ -33,6 +34,31 @@ func _setup_signature(gsm: GameStateMachine) -> Array[String]:
 			",".join(_card_identity_signature(gsm.game_state.players[1].deck)),
 		],
 	]
+
+
+func _iono_resolution_signature(seed: int) -> Array[String]:
+	var deck_a := CardDatabase.get_deck(1700004)
+	var deck_b := CardDatabase.get_deck(575716)
+	if deck_a == null or deck_b == null:
+		return []
+	var player_state := PlayerState.new()
+	player_state.call("set_forced_shuffle_seed", seed)
+	var gsm := GameStateMachine.new()
+	if gsm.coin_flipper != null:
+		var rng: Variant = gsm.coin_flipper.get("_rng")
+		if rng is RandomNumberGenerator:
+			(rng as RandomNumberGenerator).seed = seed
+	gsm.start_game(deck_a, deck_b, 0)
+	var iono_data: CardData = CardDatabase.get_card("CSV3C", "123")
+	if iono_data == null:
+		_clear_forced_shuffle_seed()
+		return []
+	var iono := CardInstance.create(iono_data, 0)
+	var effect = EffectIonoScript.new()
+	effect.execute(iono, [], gsm.game_state)
+	var signature := _setup_signature(gsm)
+	_clear_forced_shuffle_seed()
+	return signature
 
 
 func _clear_forced_shuffle_seed() -> void:
@@ -337,6 +363,18 @@ func test_player_state_forced_shuffle_seed_stabilizes_opening_hand_order() -> St
 	return run_checks([
 		assert_eq(setup_signature_one, setup_signature_two, "The same benchmark seed should produce the same setup signature for both players"),
 		assert_false(setup_signature_one == setup_signature_three, "A different benchmark seed should produce a different setup signature"),
+	])
+
+
+func test_forced_shuffle_seed_stabilizes_iono_bottom_shuffle_order() -> String:
+	var signature_one := _iono_resolution_signature(5006)
+	var signature_two := _iono_resolution_signature(5006)
+	var signature_three := _iono_resolution_signature(5007)
+	if signature_one.is_empty() or signature_two.is_empty() or signature_three.is_empty():
+		return "Pinned Iono benchmark fixture cards must exist"
+	return run_checks([
+		assert_eq(signature_one, signature_two, "The same benchmark seed should stabilize Iono hand-to-deck-bottom shuffle order"),
+		assert_false(signature_one == signature_three, "Different benchmark seeds should still produce different Iono shuffle signatures"),
 	])
 
 

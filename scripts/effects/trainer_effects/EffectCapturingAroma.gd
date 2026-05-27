@@ -79,20 +79,21 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 
 	var ctx: Dictionary = get_interaction_context(targets)
 	var selected_raw: Array = ctx.get("searched_pokemon", [])
-	if selected_raw.is_empty() or not selected_raw[0] is CardInstance:
-		_has_pending_flip = false
-		player.shuffle_deck()
-		return
-
-	var found: CardInstance = selected_raw[0]
-	if found not in player.deck:
-		_has_pending_flip = false
-		player.shuffle_deck()
-		return
-
-	var cd: CardData = found.card_data
-	var valid: bool = (_pending_flip_heads and cd.is_evolution_pokemon()) or (not _pending_flip_heads and cd.is_basic_pokemon())
-	if not valid:
+	var found: CardInstance = null
+	for entry: Variant in selected_raw:
+		if not (entry is CardInstance):
+			continue
+		var candidate: CardInstance = entry
+		if candidate not in player.deck:
+			continue
+		var candidate_data: CardData = candidate.card_data
+		if candidate_data == null:
+			continue
+		var candidate_valid: bool = (_pending_flip_heads and candidate_data.is_evolution_pokemon()) or (not _pending_flip_heads and candidate_data.is_basic_pokemon())
+		if candidate_valid:
+			found = candidate
+			break
+	if found == null:
 		_has_pending_flip = false
 		player.shuffle_deck()
 		return

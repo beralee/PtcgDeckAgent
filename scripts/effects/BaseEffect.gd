@@ -299,6 +299,14 @@ func build_full_library_search_step(
 			var suffix := selectable_label if card_indices[i] >= 0 else disabled_label
 			choice_labels.append("%s - %s" % [label, suffix])
 
+	var can_whiff_hidden_search: bool = \
+		resolved_scope == VISIBLE_SCOPE_OWN_FULL_DECK \
+		and bool(options.get("allow_hidden_search_whiff", true))
+	var resolved_min_select: int = 0 if can_whiff_hidden_search else min_select
+	var resolved_force_confirm: bool = bool(options.get("force_confirm", false))
+	if can_whiff_hidden_search and max_select <= 1:
+		resolved_force_confirm = true
+
 	var step := {
 		"id": step_id,
 		"title": title,
@@ -311,12 +319,14 @@ func build_full_library_search_step(
 		"visible_scope": resolved_scope,
 		"card_disabled_badge": disabled_badge,
 		"card_selectable_hint": str(options.get("card_selectable_hint", selectable_label)),
-		"min_select": min_select,
+		"min_select": resolved_min_select,
 		"max_select": max_select,
 		"allow_cancel": bool(options.get("allow_cancel", true)),
 		"visible_count": visible_cards.size(),
 		"selectable_count": legal_items.size(),
 	}
+	if can_whiff_hidden_search:
+		step["hidden_search_can_whiff"] = true
 	if options.has("show_selectable_hints"):
 		step["show_selectable_hints"] = bool(options.get("show_selectable_hints", false))
 	if options.has("card_click_selectable"):
@@ -325,8 +335,8 @@ func build_full_library_search_step(
 		step["utility_actions"] = (options.get("utility_actions", []) as Array).duplicate(true)
 	if options.has("prompt_type"):
 		step["prompt_type"] = str(options.get("prompt_type", ""))
-	if options.has("force_confirm"):
-		step["force_confirm"] = bool(options.get("force_confirm", false))
+	if options.has("force_confirm") or resolved_force_confirm:
+		step["force_confirm"] = resolved_force_confirm
 	return step
 
 
@@ -440,6 +450,10 @@ func can_execute(_card: CardInstance, _state: GameState) -> bool:
 	return true
 
 
+func get_unusable_reason(_card: CardInstance, _state: GameState) -> String:
+	return ""
+
+
 func can_headless_execute(card: CardInstance, state: GameState) -> bool:
 	return can_execute(card, state)
 
@@ -458,6 +472,14 @@ func execute_on_play(_card: CardInstance, _state: GameState, _targets: Array = [
 
 func can_use_as_stadium_action(_card: CardInstance, _state: GameState) -> bool:
 	return false
+
+
+func get_stadium_action_unusable_reason(_card: CardInstance, _state: GameState) -> String:
+	return ""
+
+
+func get_ability_unusable_reason(_pokemon: PokemonSlot, _state: GameState) -> String:
+	return ""
 
 
 func execute_attack(

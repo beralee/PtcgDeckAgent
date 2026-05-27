@@ -183,7 +183,7 @@ func _ensure_deck_picker_overlay() -> void:
 	var title := Label.new()
 	title.text = "选择参赛卡组"
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(22))
 	title.add_theme_color_override("font_color", HUD_TEXT)
 	title.add_theme_color_override("font_shadow_color", Color(0.0, 0.82, 1.0, 0.60))
 	title.add_theme_constant_override("shadow_offset_y", 1)
@@ -305,7 +305,7 @@ func _refresh_deck_picker() -> void:
 		button.tooltip_text = _deck_picker_card_tooltip(deck)
 		button.custom_minimum_size = Vector2(0, 76)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.add_theme_font_size_override("font_size", 14)
+		button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
 		button.add_theme_color_override("font_color", HUD_TEXT)
 		button.add_theme_color_override("font_hover_color", Color.WHITE)
 		button.add_theme_stylebox_override("normal", _deck_picker_card_style(is_selected, false))
@@ -324,7 +324,7 @@ func _refresh_deck_picker_tabs() -> void:
 		if button == null:
 			continue
 		var active := category == _deck_picker_category
-		button.add_theme_font_size_override("font_size", 14)
+		button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
 		button.add_theme_color_override("font_color", Color(0.05, 0.10, 0.13, 1.0) if active else HUD_TEXT)
 		button.add_theme_stylebox_override("normal", _deck_picker_tab_style(active, false))
 		button.add_theme_stylebox_override("hover", _deck_picker_tab_style(active, true))
@@ -511,7 +511,7 @@ func _on_next_pressed() -> void:
 
 
 func _style_deck_picker_button(button: Button) -> void:
-	button.add_theme_font_size_override("font_size", 15)
+	button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
 	button.add_theme_color_override("font_color", HUD_TEXT)
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
 	button.add_theme_stylebox_override("normal", _deck_picker_button_style(false, false))
@@ -522,7 +522,7 @@ func _style_deck_picker_button(button: Button) -> void:
 
 
 func _style_hud_button(button: Button) -> void:
-	button.add_theme_font_size_override("font_size", 15)
+	button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
 	button.add_theme_color_override("font_color", Color(0.96, 0.99, 1.0, 1.0))
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
 	button.add_theme_color_override("font_pressed_color", Color(0.08, 0.12, 0.16, 1.0))
@@ -533,12 +533,12 @@ func _style_hud_button(button: Button) -> void:
 
 
 func _style_hud_label(label: Label) -> void:
-	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
 	label.add_theme_color_override("font_color", HUD_TEXT_MUTED)
 
 
 func _style_hud_line_edit(line_edit: LineEdit) -> void:
-	line_edit.add_theme_font_size_override("font_size", 15)
+	line_edit.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
 	line_edit.add_theme_color_override("font_color", HUD_TEXT)
 	line_edit.add_theme_color_override("font_placeholder_color", Color(0.62, 0.74, 0.82, 0.88))
 	line_edit.add_theme_stylebox_override("normal", HudThemeScript.input_style(false))

@@ -1,0 +1,310 @@
+{
+	"cards": [
+		{
+			"card_index": "127",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "05b9dc8ee5c16c46da20f47a04907856",
+			"name": "捩木",
+			"name_en": "Thorton",
+			"set_code": "CS6aC"
+		},
+		{
+			"card_index": "110",
+			"card_type": "Pokemon",
+			"count": 4,
+			"effect_id": "0a2064b80b0edf2b2ec683210e77e1f2",
+			"name": "搬运小匠",
+			"name_en": "Timburr",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "129",
+			"card_type": "Special Energy",
+			"count": 2,
+			"effect_id": "1323733f19cc04e54090b39bc1a393b8",
+			"name": "喷射能量",
+			"name_en": "Jet Energy",
+			"set_code": "CSV4C"
+		},
+		{
+			"card_index": "128",
+			"card_type": "Stadium",
+			"count": 1,
+			"effect_id": "13b3caaa408a85dfd1e2a5ad797e8b8a",
+			"name": "城镇百货",
+			"name_en": "Town Store",
+			"set_code": "CSV5C"
+		},
+		{
+			"card_index": "079",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "146a354ca20b3943ab792aa29b070fda",
+			"name": "光辉洗翠 大狃拉",
+			"name_en": "Radiant Hisuian Sneasler",
+			"set_code": "CS5aC"
+		},
+		{
+			"card_index": "200",
+			"card_type": "Stadium",
+			"count": 1,
+			"effect_id": "16a6fb86a8ebd1cffc6f171250057d5c",
+			"name": "危险密林",
+			"name_en": "Perilous Jungle",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "043",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "1af63a7e2cb7a79215474ad8db8fd8fd",
+			"name": "巢穴球",
+			"name_en": "Nest Ball",
+			"set_code": "CSVH1C"
+		},
+		{
+			"card_index": "020",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "2e5819cd4e1c354b8a9945525c54ec71",
+			"name": "竹兰的霸气",
+			"name_en": "Cynthia's Ambition",
+			"set_code": "CSNC"
+		},
+		{
+			"card_index": "060",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "2f68195255c863293be4fad262bf23d2",
+			"name": "洗翠的沉重球",
+			"name_en": "Hisuian Heavy Ball",
+			"set_code": "CS5.5C"
+		},
+		{
+			"card_index": "183",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "3e6f1daf545dfed48d0588dd50792a2e",
+			"name": "夜间担架",
+			"name_en": "Night Stretcher",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "049",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "553639840a44f19ad83b89a892a21f98",
+			"name": "霓虹鱼V",
+			"name_en": "Lumineon V",
+			"set_code": "CS5bC"
+		},
+		{
+			"card_index": "127",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "5a1d0fbbb9c71b9ec99b31734560d4d1",
+			"name": "桃歹郎",
+			"name_en": "Pecharunt",
+			"set_code": "CSV9C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 4,
+			"effect_id": "5bdbc985f9aa2e6f248b53f6f35d1d37",
+			"name": "派帕",
+			"name_en": "Arven",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "099",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "60635d7ef1f254b347154daf97a02fdf",
+			"name": "波波",
+			"name_en": "Pidgey",
+			"set_code": "CSV4C"
+		},
+		{
+			"card_index": "113",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "7c0b20e121c9d0e0d2d8a43524f7494e",
+			"name": "宝可梦交替",
+			"name_en": "Switch",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "101",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "8105afde9792c2596166f318a480d041",
+			"name": "大比鸟ex",
+			"name_en": "Pidgeot ex",
+			"set_code": "CSV4C"
+		},
+		{
+			"card_index": "112",
+			"card_type": "Pokemon",
+			"count": 4,
+			"effect_id": "898ff379e73790978b8bdf6dfafc511f",
+			"name": "修建老匠",
+			"name_en": "Conkeldurr",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "118",
+			"card_type": "Tool",
+			"count": 4,
+			"effect_id": "8da8631aa1827b122ec65b712939ad48",
+			"name": "驱劲能量 古代",
+			"name_en": "Ancient Booster Energy Capsule",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "023",
+			"card_type": "Supporter",
+			"count": 2,
+			"effect_id": "8e1fa2c9018db938084c94c7c970d419",
+			"name": "老大的指令",
+			"name_en": "Boss's Orders",
+			"set_code": "CSVH1aC"
+		},
+		{
+			"card_index": "023",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "8ef5ff61fd97838af568f00fe3b0e3ea",
+			"name": "洛托姆V",
+			"name_en": "Rotom V",
+			"set_code": "CS6.5C"
+		},
+		{
+			"card_index": "111",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "99041ad1ee1b4ff984b57638cae3caf9",
+			"name": "铁骨土人",
+			"name_en": "Gurdurr",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "066",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "9fa9943ccda36f417ac3cb675177c216",
+			"name": "森林封印石",
+			"name_en": "Forest Seal Stone",
+			"set_code": "CS6.5C"
+		},
+		{
+			"card_index": "112",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "a337ed34a45e63c6d21d98c3d8e0cb6e",
+			"name": "高级球",
+			"name_en": "Ultra Ball",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "095",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "a5438c6290fdef331fe1ba579b6f4928",
+			"name": "猛恶菇",
+			"name_en": "Brute Bonnet",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "187",
+			"card_type": "Tool",
+			"count": 2,
+			"effect_id": "a77ef1e9df5b37e1d529682b2b38a4b8",
+			"name": "锁链粘糕",
+			"name_en": "Binding Mochi",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "135",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "ab6c3357e2b8a8385a68da738f41e0c1",
+			"name": "吉雉鸡ex",
+			"name_en": "Fezandipiti ex",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "201",
+			"card_type": "Stadium",
+			"count": 1,
+			"effect_id": "aee486132c2ba880232a477fe0fe7a03",
+			"name": "重力山",
+			"name_en": "Gravity Mountain",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 2,
+			"effect_id": "af514f82d182aeae5327b2c360df703d",
+			"name": "奇树",
+			"name_en": "Iono",
+			"set_code": "CSV3C"
+		},
+		{
+			"card_index": "127",
+			"card_type": "Stadium",
+			"count": 1,
+			"effect_id": "c117bea3cc758d46430d6bef11062a56",
+			"name": "深钵镇",
+			"name_en": "Artazon",
+			"set_code": "CSV2C"
+		},
+		{
+			"card_index": "109",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "c9c948169525fbb3dce70c477ec7a90a",
+			"name": "厉害钓竿",
+			"name_en": "Super Rod",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "045",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "d3891abcfe3277c8811cde06741d3236",
+			"name": "神奇糖果",
+			"name_en": "Rare Candy",
+			"set_code": "CSVH1C"
+		},
+		{
+			"card_index": "176",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "e92a86246f44351d023bd4fa271089aa",
+			"name": "秘密箱",
+			"name_en": "Secret Box",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "172",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "f2afef80b13b8f6a071facbcade0251c",
+			"name": "月月熊 赫月ex",
+			"name_en": "Bloodmoon Ursaluna ex",
+			"set_code": "CSV8C"
+		}
+	],
+	"deck_code": "4u6AyUvTeHdPCJxh_j",
+	"deck_name": "17.0 修建老匠",
+	"id": 607805,
+	"import_date": "2026-05-24T17:18:36",
+	"source_url": "https://tcg.mik.moe/decks/list/607805",
+	"strategy": "",
+	"total_cards": 60,
+	"updated_at": 1779614323704,
+	"variant_name": "修建老匠"
+}

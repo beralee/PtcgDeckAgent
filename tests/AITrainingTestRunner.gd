@@ -65,10 +65,12 @@ static func parse_runner_args(args: PackedStringArray) -> Dictionary:
 		"tracked_action_scorer_path": "",
 		"tracked_interaction_scorer_path": "",
 		"tracked_decision_mode": "",
+		"tracked_strong_fixed_opening": false,
 		"anchor_value_net_path": "",
 		"anchor_action_scorer_path": "",
 		"anchor_interaction_scorer_path": "",
 		"anchor_decision_mode": "",
+		"anchor_strong_fixed_opening": false,
 	}
 	for raw_arg: String in args:
 		if raw_arg == "--mode=miraidon_baseline_regression":
@@ -117,6 +119,10 @@ static func parse_runner_args(args: PackedStringArray) -> Dictionary:
 			options["tracked_interaction_scorer_path"] = raw_arg.trim_prefix("--tracked-interaction-scorer=")
 		elif raw_arg.begins_with("--tracked-decision-mode="):
 			options["tracked_decision_mode"] = raw_arg.trim_prefix("--tracked-decision-mode=")
+		elif raw_arg == "--tracked-strong-fixed-opening":
+			options["tracked_strong_fixed_opening"] = true
+		elif raw_arg.begins_with("--tracked-strong-fixed-opening="):
+			options["tracked_strong_fixed_opening"] = _parse_bool(raw_arg.trim_prefix("--tracked-strong-fixed-opening="))
 		elif raw_arg.begins_with("--anchor-value-net="):
 			options["anchor_value_net_path"] = raw_arg.trim_prefix("--anchor-value-net=")
 		elif raw_arg.begins_with("--anchor-action-scorer="):
@@ -125,6 +131,17 @@ static func parse_runner_args(args: PackedStringArray) -> Dictionary:
 			options["anchor_interaction_scorer_path"] = raw_arg.trim_prefix("--anchor-interaction-scorer=")
 		elif raw_arg.begins_with("--anchor-decision-mode="):
 			options["anchor_decision_mode"] = raw_arg.trim_prefix("--anchor-decision-mode=")
+		elif raw_arg == "--anchor-strong-fixed-opening":
+			options["anchor_strong_fixed_opening"] = true
+		elif raw_arg.begins_with("--anchor-strong-fixed-opening="):
+			options["anchor_strong_fixed_opening"] = _parse_bool(raw_arg.trim_prefix("--anchor-strong-fixed-opening="))
+		elif raw_arg == "--strong-fixed-opening":
+			options["tracked_strong_fixed_opening"] = true
+			options["anchor_strong_fixed_opening"] = true
+		elif raw_arg.begins_with("--strong-fixed-opening="):
+			var strong_fixed := _parse_bool(raw_arg.trim_prefix("--strong-fixed-opening="))
+			options["tracked_strong_fixed_opening"] = strong_fixed
+			options["anchor_strong_fixed_opening"] = strong_fixed
 	return options
 
 
@@ -171,6 +188,11 @@ static func parse_strategy_id_for_deck(deck_id: int) -> String:
 static func _parse_int_suffix(raw_arg: String, prefix: String, fallback: int) -> int:
 	var payload := raw_arg.trim_prefix(prefix)
 	return int(payload) if payload.is_valid_int() else fallback
+
+
+static func _parse_bool(value: String) -> bool:
+	var normalized := value.strip_edges().to_lower()
+	return normalized in ["1", "true", "yes", "y", "on", "strong"]
 
 
 static func _parse_int_list_suffix(raw_arg: String, prefix: String) -> Array[int]:

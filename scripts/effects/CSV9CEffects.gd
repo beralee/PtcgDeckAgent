@@ -277,10 +277,13 @@ class AttackEvolveFromDeck:
 		var player := state.players[attacker.get_top_card().owner_index]
 		var items := _candidates(player, attacker)
 		var chosen: CardInstance = null
-		var selected: Array = get_attack_interaction_context().get(STEP_ID, [])
-		if not selected.is_empty() and selected[0] is CardInstance and selected[0] in items:
-			chosen = selected[0]
-		elif not items.is_empty():
+		var ctx := get_attack_interaction_context()
+		var selected: Array = ctx.get(STEP_ID, [])
+		for entry: Variant in selected:
+			if entry is CardInstance and entry in items:
+				chosen = entry
+				break
+		if chosen == null and not items.is_empty() and not ctx.has(STEP_ID):
 			chosen = items[0]
 		if chosen == null:
 			player.shuffle_deck()
@@ -846,7 +849,7 @@ class AttackBenchMultiDamage:
 		for target: PokemonSlot in selected:
 			if target == null:
 				continue
-			if AbilityBenchImmuneEffect.prevents_opponent_attack_damage_or_effect(target, attacker, state):
+			if AbilityBenchImmuneEffect.prevents_opponent_attack_damage(target, attacker, state):
 				continue
 			if AttackCoinFlipPreventDamageAndEffectsNextTurnEffect.prevents_attack_damage(target, state):
 				continue
@@ -1252,7 +1255,7 @@ class AttackBasicPokemonKnockoutCoin:
 		if H.prevents_attack_effects(target, state):
 			return
 		if target != state.players[1 - attacker.get_top_card().owner_index].active_pokemon:
-			if AbilityBenchImmuneEffect.prevents_opponent_attack_damage_or_effect(target, attacker, state):
+			if AbilityBenchImmuneEffect.prevents_opponent_attack_effect(target, attacker, state):
 				return
 		var max_hp := target.get_max_hp()
 		var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null)
@@ -1348,7 +1351,7 @@ class AttackReturnOpponentBenchToDeck:
 				continue
 			if H.prevents_attack_effects(slot, state):
 				continue
-			if AbilityBenchImmuneEffect.prevents_opponent_attack_damage_or_effect(slot, attacker, state):
+			if AbilityBenchImmuneEffect.prevents_opponent_attack_effect(slot, attacker, state):
 				continue
 			opponent.bench.erase(slot)
 			H.return_cards_to_deck(opponent, slot.collect_all_cards(), false)
@@ -1423,7 +1426,7 @@ class AttackTriFrost:
 			if target == null:
 				continue
 			if target != opponent.active_pokemon:
-				if AbilityBenchImmuneEffect.prevents_opponent_attack_damage_or_effect(target, attacker, state):
+				if AbilityBenchImmuneEffect.prevents_opponent_attack_damage(target, attacker, state):
 					continue
 				if AttackCoinFlipPreventDamageAndEffectsNextTurnEffect.prevents_attack_damage(target, state):
 					continue
@@ -1570,7 +1573,7 @@ class AbilityBenchMillOnPlay:
 		if pokemon == null or pokemon.get_top_card() == null or state == null:
 			return false
 		var pi := pokemon.get_top_card().owner_index
-		return state.current_player_index == pi and pokemon in state.players[pi].bench and pokemon.turn_played == state.turn_number and not pokemon.has_ability_used(state.turn_number) and not state.players[1 - pi].deck.is_empty()
+		return state.current_player_index == pi and pokemon in state.players[pi].bench and pokemon.turn_played == state.turn_number and pokemon.entered_bench_from_hand_this_turn(state.turn_number) and not pokemon.has_ability_used(state.turn_number) and not state.players[1 - pi].deck.is_empty()
 
 	func execute_ability(pokemon: PokemonSlot, _ability_index: int, _targets: Array, state: GameState) -> void:
 		if not can_use_ability(pokemon, state):
@@ -1596,7 +1599,7 @@ class AbilityBenchDiscardStadiumOnPlay:
 		if pokemon == null or pokemon.get_top_card() == null or state == null or state.stadium_card == null:
 			return false
 		var pi := pokemon.get_top_card().owner_index
-		return state.current_player_index == pi and pokemon in state.players[pi].bench and pokemon.turn_played == state.turn_number and not pokemon.has_ability_used(state.turn_number)
+		return state.current_player_index == pi and pokemon in state.players[pi].bench and pokemon.turn_played == state.turn_number and pokemon.entered_bench_from_hand_this_turn(state.turn_number) and not pokemon.has_ability_used(state.turn_number)
 
 	func execute_ability(pokemon: PokemonSlot, _ability_index: int, _targets: Array, state: GameState) -> void:
 		if not can_use_ability(pokemon, state):

@@ -102,6 +102,26 @@ func _slot_names(slots: Array) -> Array[String]:
 	return result
 
 
+func test_v17_regidrago_opening_uses_ogerpon_as_active_buffer() -> String:
+	var strategy := StrategyRegidrago.new()
+	var player := _player()
+	var regidrago := _card(_pokemon("Regidrago V", "Basic", "N", 220, "", "V"), 0)
+	var ogerpon := _card(_pokemon("Teal Mask Ogerpon ex", "Basic", "G", 210, "", "ex"), 0)
+	player.hand.append_array([
+		regidrago,
+		ogerpon,
+		_card(_pokemon("Mew ex", "Basic", "P", 180, "", "ex"), 0),
+	])
+
+	var plan: Dictionary = strategy.plan_opening_setup(player)
+	var bench_indices: Array = plan.get("bench_hand_indices", []) as Array
+
+	return run_checks([
+		assert_eq(int(plan.get("active_hand_index", -1)), 1, "Regidrago strong opening should let Ogerpon absorb the first Charizard hit when both basics are available"),
+		assert_true(0 in bench_indices, "Opening setup should still bench Regidrago V behind the Ogerpon buffer"),
+	])
+
+
 func test_v17_regidrago_contract_exposes_launch_owner_and_fuel_search() -> String:
 	var strategy := StrategyRegidrago.new()
 	var gs := _game_state(2)
@@ -156,6 +176,71 @@ func test_v17_regidrago_evolve_outranks_celestial_roar_churn() -> String:
 	}, gs, 0)
 
 	return assert_true(evolve_score > roar_score, "Regidrago VSTAR evolution should outrank repeated Celestial Roar deck churn (evolve=%f roar=%f)" % [evolve_score, roar_score])
+
+
+func test_v17_regidrago_defers_basic_dragon_laser_when_vstar_conversion_is_ready() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(4)
+	var player := gs.players[0]
+	for i: int in 6:
+		player.prizes.append(_card(_trainer("Prize %d" % i), 0))
+	var active := _slot(_pokemon("Regidrago V", "Basic", "N", 220, "", "V", [
+		{"name": "Celestial Roar", "cost": "C", "damage": ""},
+		{"name": "Dragon Laser", "cost": "GGR", "damage": "130"},
+	], 3), 0)
+	_attach(active, "G", 2)
+	_attach(active, "R", 1)
+	player.active_pokemon = active
+	var vstar := _card(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V", [
+		{"name": "Apex Dragon", "cost": "GGR", "damage": ""},
+	], 3), 0)
+	player.hand.append(vstar)
+	player.discard_pile.append(_card(_pokemon("Dragapult ex", "Stage 2", "N", 320, "Drakloak", "ex"), 0))
+
+	var evolve_score: float = strategy.score_action_absolute({"kind": "evolve", "card": vstar, "target_slot": active}, gs, 0)
+	var laser_score: float = strategy.score_action_absolute({
+		"kind": "attack",
+		"source_slot": active,
+		"attack_index": 1,
+		"attack_name": "Dragon Laser",
+		"projected_damage": 130,
+		"projected_knockout": true,
+	}, gs, 0)
+
+	return run_checks([
+		assert_true(laser_score < 0.0, "A ready Regidrago V should not keep taking small prizes with Dragon Laser while VSTAR plus Apex fuel is available (laser=%f)" % laser_score),
+		assert_true(evolve_score > laser_score, "VSTAR conversion should outrank basic Dragon Laser once Apex fuel is online (evolve=%f laser=%f)" % [evolve_score, laser_score]),
+	])
+
+
+func test_v17_regidrago_defers_basic_dragon_laser_into_chinese_charmeleon_line() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(4)
+	var player := gs.players[0]
+	for i: int in 6:
+		player.prizes.append(_card(_trainer("Prize %d" % i), 0))
+	var active := _slot(_pokemon("Regidrago V", "Basic", "N", 220, "", "V", [
+		{"name": "Celestial Roar", "cost": "C", "damage": ""},
+		{"name": "Dragon Laser", "cost": "GGR", "damage": "130"},
+	], 3), 0)
+	_attach(active, "G", 2)
+	_attach(active, "R", 1)
+	player.active_pokemon = active
+	player.hand.append(_card(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V", [
+		{"name": "Apex Dragon", "cost": "GGR", "damage": ""},
+	], 3), 0))
+	gs.players[1].active_pokemon = _slot(_pokemon("火恐龙", "Stage 1", "R", 100, "小火龙"), 1)
+
+	var laser_score: float = strategy.score_action_absolute({
+		"kind": "attack",
+		"source_slot": active,
+		"attack_index": 1,
+		"attack_name": "Dragon Laser",
+		"projected_damage": 130,
+		"projected_knockout": true,
+	}, gs, 0)
+
+	return assert_true(laser_score < 0.0, "Chinese Charmeleon line should still block basic Dragon Laser before VSTAR conversion (laser=%f)" % laser_score)
 
 
 func test_v17_regidrago_uses_celestial_roar_as_early_fallback_before_vstar() -> String:
@@ -243,6 +328,66 @@ func test_v17_regidrago_searches_backup_line_after_first_vstar_online() -> Strin
 	)
 
 	return assert_eq(_names(selected), ["Regidrago V"], "After the first VSTAR is online, search should still build a backup Regidrago line before low-priority fuel")
+
+
+func test_v17_regidrago_searches_backup_v_before_premium_fuel_when_primary_online() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(5)
+	var player := gs.players[0]
+	var active := _slot(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V"), 0)
+	_attach(active, "G", 2)
+	_attach(active, "R", 1)
+	player.active_pokemon = active
+	player.discard_pile.append(_card(_pokemon("Dragapult ex", "Stage 2", "N", 320, "Drakloak", "ex"), 0))
+	var backup_v := _card(_pokemon("Regidrago V", "Basic", "N", 220, "", "V"), 0)
+	var exeggutor := _card(_pokemon("CSV9C_144", "Stage 1", "N", 300, "Exeggcute", "ex", [], 3, "CSV9C", "144"), 0)
+
+	var selected: Array = strategy.pick_interaction_items(
+		[exeggutor, backup_v],
+		{"id": "search_pokemon", "max_select": 1},
+		{"game_state": gs, "player_index": 0}
+	)
+
+	return assert_eq(_names(selected), ["Regidrago V"], "A ready primary Regidrago still needs a backup V before premium extra fuel")
+
+
+func test_v17_regidrago_rebuild_searches_regidrago_v_before_extra_fuel_when_primary_is_gone() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(6)
+	var player := gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Teal Mask Ogerpon ex", "Basic", "G", 210, "", "ex"), 0)
+	player.discard_pile.append(_card(_pokemon("Dragapult ex", "Stage 2", "N", 320, "Drakloak", "ex"), 0))
+	player.discard_pile.append(_card(_pokemon("Hisuian Goodra VSTAR", "VSTAR", "N", 270, "Hisuian Goodra V", "V"), 0))
+	var backup_v := _card(_pokemon("Regidrago V", "Basic", "N", 220, "", "V"), 0)
+	var exeggutor := _card(_pokemon("CSV9C_144", "Stage 1", "N", 300, "Exeggcute", "ex", [], 3, "CSV9C", "144"), 0)
+
+	var selected: Array = strategy.pick_interaction_items(
+		[exeggutor, backup_v],
+		{"id": "search_pokemon", "max_select": 1},
+		{"game_state": gs, "player_index": 0}
+	)
+
+	return assert_eq(_names(selected), ["Regidrago V"], "After the only Regidrago is gone, rebuild search must pick Regidrago V before another copied-attack fuel card")
+
+
+func test_v17_regidrago_searches_backup_vstar_before_extra_fuel_after_backup_v_is_live() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(7)
+	var player := gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V"), 0)
+	player.bench.append(_slot(_pokemon("Regidrago V", "Basic", "N", 220, "", "V"), 0))
+	player.discard_pile.append(_card(_pokemon("Dragapult ex", "Stage 2", "N", 320, "Drakloak", "ex"), 0))
+	gs.players[1].active_pokemon = _slot(_pokemon("Charizard ex", "Stage 2", "R", 330, "Charmeleon", "ex"), 1)
+	var vstar := _card(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V"), 0)
+	var exeggutor := _card(_pokemon("CSV9C_144", "Stage 1", "N", 300, "Exeggcute", "ex", [], 3, "CSV9C", "144"), 0)
+
+	var selected: Array = strategy.pick_interaction_items(
+		[vstar, exeggutor],
+		{"id": "search_pokemon", "max_select": 1},
+		{"game_state": gs, "player_index": 0}
+	)
+
+	return assert_eq(_names(selected), ["Regidrago VSTAR"], "Once a backup Regidrago V is live into Charizard pressure, search should complete the backup VSTAR before taking another fuel card")
 
 
 func test_v17_regidrago_searches_dragapult_before_giratina_as_first_spread_fuel() -> String:
@@ -349,6 +494,76 @@ func test_v17_regidrago_copied_attack_keeps_dragapult_for_200hp_prize_plus_sprea
 	return assert_eq(picked, "Dragapult ex:Phantom Dive", "Regidrago should keep the user-target Dragapult 200+spread line when it already takes the active prize")
 
 
+func test_v17_regidrago_copied_attack_prefers_goodra_prize_into_charizard_pressure() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(5)
+	gs.players[0].active_pokemon = _slot(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V"), 0)
+	gs.players[1].active_pokemon = _slot(_pokemon("Rotom V", "Basic", "L", 190, "", "V"), 1)
+	gs.players[1].bench.append(_slot(_pokemon("Charmander", "Basic", "R", 70), 1))
+	var options: Array = [
+		{
+			"source_card": _card(_pokemon("Dragapult ex", "Stage 2", "N", 320, "Drakloak", "ex"), 0),
+			"attack_index": 1,
+			"attack": {"name": "Phantom Dive", "cost": "RP", "damage": "200", "is_vstar_power": false},
+		},
+		{
+			"source_card": _card(_pokemon("Hisuian Goodra VSTAR", "VSTAR", "N", 270, "Hisuian Goodra V", "V"), 0),
+			"attack_index": 0,
+			"attack": {"name": "Rolling Iron", "cost": "GMW", "damage": "200", "is_vstar_power": false},
+		},
+	]
+
+	var selected: Array = strategy.pick_interaction_items(
+		options,
+		{"id": "copied_attack", "max_select": 1},
+		{"game_state": gs, "player_index": 0}
+	)
+	var picked := ""
+	if not selected.is_empty() and selected[0] is Dictionary:
+		var source_card: CardInstance = (selected[0] as Dictionary).get("source_card", null)
+		var attack: Dictionary = (selected[0] as Dictionary).get("attack", {})
+		if source_card != null and source_card.card_data != null:
+			picked = "%s:%s" % [str(source_card.card_data.name_en), str(attack.get("name", ""))]
+
+	return assert_eq(picked, "Hisuian Goodra VSTAR:Rolling Iron", "Into Charizard pressure, Regidrago should take the same 200 HP prize with Goodra protection instead of Dragapult spread")
+
+
+func test_v17_regidrago_damaged_vstar_still_uses_goodra_for_same_prize_under_charizard_pressure() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(5)
+	var vstar := _slot(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V"), 0)
+	vstar.damage_counters = 190
+	gs.players[0].active_pokemon = vstar
+	gs.players[1].active_pokemon = _slot(_pokemon("Charmander", "Basic", "R", 70), 1)
+	gs.players[1].bench.append(_slot(_pokemon("Charizard ex", "Stage 2", "D", 330, "Charmeleon", "ex"), 1))
+	var options: Array = [
+		{
+			"source_card": _card(_pokemon("Dragapult ex", "Stage 2", "N", 320, "Drakloak", "ex"), 0),
+			"attack_index": 1,
+			"attack": {"name": "Phantom Dive", "cost": "RP", "damage": "200", "is_vstar_power": false},
+		},
+		{
+			"source_card": _card(_pokemon("Hisuian Goodra VSTAR", "VSTAR", "N", 270, "Hisuian Goodra V", "V"), 0),
+			"attack_index": 0,
+			"attack": {"name": "Rolling Iron", "cost": "GMW", "damage": "200", "is_vstar_power": false},
+		},
+	]
+
+	var selected: Array = strategy.pick_interaction_items(
+		options,
+		{"id": "copied_attack", "max_select": 1},
+		{"game_state": gs, "player_index": 0}
+	)
+	var picked := ""
+	if not selected.is_empty() and selected[0] is Dictionary:
+		var source_card: CardInstance = (selected[0] as Dictionary).get("source_card", null)
+		var attack: Dictionary = (selected[0] as Dictionary).get("attack", {})
+		if source_card != null and source_card.card_data != null:
+			picked = "%s:%s" % [str(source_card.card_data.name_en), str(attack.get("name", ""))]
+
+	return assert_eq(picked, "Hisuian Goodra VSTAR:Rolling Iron", "A damaged Regidrago should still take a same-prize low-HP KO with Goodra protection under Charizard pressure")
+
+
 func test_v17_regidrago_copied_attack_uses_giratina_to_ko_bulky_active() -> String:
 	var strategy := StrategyRegidrago.new()
 	var gs := _game_state(5)
@@ -382,6 +597,83 @@ func test_v17_regidrago_copied_attack_uses_giratina_to_ko_bulky_active() -> Stri
 			picked = "%s:%s" % [str(source_card.card_data.name_en), str(attack.get("name", ""))]
 
 	return assert_eq(picked, "Giratina VSTAR:Lost Impact", "Regidrago should copy Giratina for a 280 KO when Dragapult's 200 would leave a bulky active alive")
+
+
+func test_v17_regidrago_damaged_vstar_uses_giratina_to_trade_charizard() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(5)
+	var vstar := _slot(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V"), 0)
+	vstar.damage_counters = 180
+	gs.players[0].active_pokemon = vstar
+	var charizard := _slot(_pokemon("Charizard ex", "Stage 2", "D", 330, "Charmeleon", "ex"), 1)
+	charizard.damage_counters = 60
+	gs.players[1].active_pokemon = charizard
+	var options: Array = [
+		{
+			"source_card": _card(_pokemon("Hisuian Goodra VSTAR", "VSTAR", "N", 270, "Hisuian Goodra V", "V"), 0),
+			"attack_index": 0,
+			"attack": {"name": "Rolling Iron", "cost": "GMW", "damage": "200", "is_vstar_power": false},
+		},
+		{
+			"source_card": _card(_pokemon("Giratina VSTAR", "VSTAR", "N", 280, "Giratina V", "V"), 0),
+			"attack_index": 0,
+			"attack": {"name": "Lost Impact", "cost": "GPC", "damage": "280", "is_vstar_power": false},
+		},
+	]
+
+	var selected: Array = strategy.pick_interaction_items(
+		options,
+		{"id": "copied_attack", "max_select": 1},
+		{"game_state": gs, "player_index": 0}
+	)
+	var picked := ""
+	if not selected.is_empty() and selected[0] is Dictionary:
+		var source_card: CardInstance = (selected[0] as Dictionary).get("source_card", null)
+		var attack: Dictionary = (selected[0] as Dictionary).get("attack", {})
+		if source_card != null and source_card.card_data != null:
+			picked = "%s:%s" % [str(source_card.card_data.name_en), str(attack.get("name", ""))]
+
+	return assert_eq(picked, "Giratina VSTAR:Lost Impact", "A badly damaged Regidrago VSTAR should trade with Charizard ex via Giratina 280 instead of taking a low-value Goodra 200 hit")
+
+
+func test_v17_regidrago_uses_giratina_to_pressure_full_charizard_when_goodra_cannot_save() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(5)
+	var vstar := _slot(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V"), 0)
+	vstar.damage_counters = 190
+	gs.players[0].active_pokemon = vstar
+	gs.players[1].active_pokemon = _slot(_pokemon("喷火龙ex", "Stage 2", "D", 330, "火恐龙", "ex"), 1)
+	var options: Array = [
+		{
+			"source_card": _card(_pokemon("Dragapult ex", "Stage 2", "N", 320, "Drakloak", "ex"), 0),
+			"attack_index": 1,
+			"attack": {"name": "Phantom Dive", "cost": "RP", "damage": "200", "is_vstar_power": false},
+		},
+		{
+			"source_card": _card(_pokemon("Hisuian Goodra VSTAR", "VSTAR", "N", 270, "Hisuian Goodra V", "V"), 0),
+			"attack_index": 0,
+			"attack": {"name": "Rolling Iron", "cost": "GMW", "damage": "200", "is_vstar_power": false},
+		},
+		{
+			"source_card": _card(_pokemon("Giratina VSTAR", "VSTAR", "N", 280, "Giratina V", "V"), 0),
+			"attack_index": 0,
+			"attack": {"name": "Lost Impact", "cost": "GPC", "damage": "280", "is_vstar_power": false},
+		},
+	]
+
+	var selected: Array = strategy.pick_interaction_items(
+		options,
+		{"id": "copied_attack", "max_select": 1},
+		{"game_state": gs, "player_index": 0}
+	)
+	var picked := ""
+	if not selected.is_empty() and selected[0] is Dictionary:
+		var source_card: CardInstance = (selected[0] as Dictionary).get("source_card", null)
+		var attack: Dictionary = (selected[0] as Dictionary).get("attack", {})
+		if source_card != null and source_card.card_data != null:
+			picked = "%s:%s" % [str(source_card.card_data.name_en), str(attack.get("name", ""))]
+
+	return assert_eq(picked, "Giratina VSTAR:Lost Impact", "When Goodra cannot save the active, full Charizard should take Giratina's 280 pressure over another 200 hit")
 
 
 func test_v17_regidrago_boss_converts_dragapult_prize_behind_bulky_active() -> String:
@@ -420,6 +712,27 @@ func test_v17_regidrago_boss_converts_dragapult_prize_behind_bulky_active() -> S
 	return run_checks([
 		assert_true(boss_score > attack_score, "Boss should happen before Apex Dragon when it creates a Dragapult KO behind bulky Iron Hands (boss=%f attack=%f)" % [boss_score, attack_score]),
 		assert_true(raikou_score > latias_score, "Boss target selection should pull the 200 HP Raikou prize target before a 210 HP support ex (raikou=%f latias=%f)" % [raikou_score, latias_score]),
+	])
+
+
+func test_v17_regidrago_gust_avoids_single_prize_chaff_under_charizard_active() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(8)
+	var player := gs.players[0]
+	player.prizes.clear()
+	for i: int in 3:
+		player.prizes.append(_card(_pokemon("Prize %d" % i), 0))
+	player.active_pokemon = _slot(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V", [
+		{"name": "Apex Dragon", "cost": "GGR", "damage": ""},
+	]), 0)
+	gs.players[1].active_pokemon = _slot(_pokemon("Charizard ex", "Stage 2", "D", 330, "Charmeleon", "ex"), 1)
+	var pidgey := _slot(_pokemon("Pidgey", "Basic", "C", 60), 1)
+	var pidgeot := _slot(_pokemon("Pidgeot ex", "Stage 2", "C", 280, "Pidgey", "ex"), 1)
+	var pidgey_score: float = strategy.score_interaction_target(pidgey, {"id": "opponent_bench_target"}, {"game_state": gs, "player_index": 0})
+	var pidgeot_score: float = strategy.score_interaction_target(pidgeot, {"id": "opponent_bench_target"}, {"game_state": gs, "player_index": 0})
+	return run_checks([
+		assert_true(pidgey_score < 0.0, "With Charizard active, Boss should not spend the attack on a non-final one-prize Pidgey (score=%f)" % pidgey_score),
+		assert_true(pidgeot_score > pidgey_score, "Multi-prize engine targets should remain better than one-prize chaff under Charizard pressure (pidgeot=%f pidgey=%f)" % [pidgeot_score, pidgey_score]),
 	])
 
 
@@ -589,6 +902,98 @@ func test_v17_regidrago_continuity_seeds_backup_before_nonfinal_apex() -> String
 	])
 
 
+func test_v17_regidrago_continuity_completes_backup_vstar_before_nonfinal_apex() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(7)
+	var player := gs.players[0]
+	var active := _slot(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V", [
+		{"name": "Apex Dragon", "cost": "GGR", "damage": ""},
+	], 3), 0)
+	_attach(active, "G", 2)
+	_attach(active, "R", 1)
+	player.active_pokemon = active
+	var backup := _slot(_pokemon("Regidrago V", "Basic", "N", 220, "", "V"), 0)
+	player.bench.append(backup)
+	player.discard_pile.append(_card(_pokemon("Dragapult ex", "Stage 2", "N", 320, "Drakloak", "ex"), 0))
+	for i: int in 4:
+		player.prizes.append(_card(_trainer("Prize %d" % i), 0))
+	for i: int in 20:
+		player.deck.append(_card(_trainer("Deck %d" % i), 0))
+	var vstar := _card(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V", [
+		{"name": "Apex Dragon", "cost": "GGR", "damage": ""},
+	], 3), 0)
+	player.hand.append(vstar)
+	gs.players[1].active_pokemon = _slot(_pokemon("Charizard ex", "Stage 2", "R", 330, "Charmeleon", "ex"), 1)
+
+	var turn_contract: Dictionary = strategy.build_turn_contract(gs, 0, {"prompt_kind": "action_selection"})
+	var continuity: Dictionary = strategy.build_continuity_contract(gs, 0, turn_contract)
+	var setup_debt: Dictionary = continuity.get("setup_debt", {}) as Dictionary
+	var evolve_score: float = strategy.score_action_absolute_with_plan({
+		"kind": "evolve",
+		"card": vstar,
+		"target_slot": backup,
+	}, gs, 0, turn_contract)
+	var attack_score: float = strategy.score_action_absolute_with_plan({
+		"kind": "attack",
+		"source_slot": active,
+		"attack_index": 0,
+		"attack_name": "Apex Dragon",
+		"projected_damage": 200,
+		"projected_knockout": false,
+	}, gs, 0, turn_contract)
+
+	return run_checks([
+		assert_true(bool(setup_debt.get("need_backup_regidrago_vstar", false)), "Continuity debt should record that the live backup Regidrago V still needs VSTAR"),
+		assert_true(evolve_score > attack_score, "Non-final Apex Dragon should complete the backup VSTAR before attacking into Charizard pressure (evolve=%f attack=%f)" % [evolve_score, attack_score]),
+	])
+
+
+func test_v17_regidrago_send_out_buffers_uncharged_drago_into_charizard_pressure() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(8)
+	var player := gs.players[0]
+	gs.players[1].active_pokemon = _slot(_pokemon("Charizard ex", "Stage 2", "R", 330, "Charmeleon", "ex"), 1)
+	var backup_drago := _slot(_pokemon("Regidrago V", "Basic", "N", 220, "", "V", [
+		{"name": "Dragon Laser", "cost": "GGR", "damage": "130"},
+	], 3), 0)
+	_attach(backup_drago, "G", 1)
+	var ogerpon := _slot(_pokemon("Teal Mask Ogerpon ex", "Basic", "G", 210, "", "ex", [
+		{"name": "Myriad Leaf Shower", "cost": "GCC", "damage": "30"},
+	], 1), 0)
+	_attach(ogerpon, "G", 1)
+	player.bench.clear()
+	player.bench.append(backup_drago)
+	player.bench.append(ogerpon)
+	var context := {"game_state": gs, "player_index": 0, "all_items": player.bench}
+	var drago_score: float = strategy.score_handoff_target(backup_drago, {"id": "send_out"}, context)
+	var ogerpon_score: float = strategy.score_handoff_target(ogerpon, {"id": "send_out"}, context)
+	return assert_true(ogerpon_score > drago_score, "Into Charizard pressure, send-out should buffer with Ogerpon before exposing an uncharged two-prize Regidrago (Ogerpon=%f Regidrago=%f)" % [ogerpon_score, drago_score])
+
+
+func test_v17_regidrago_send_out_keeps_ready_vstar_into_charizard_pressure() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(8)
+	var player := gs.players[0]
+	gs.players[1].active_pokemon = _slot(_pokemon("Charizard ex", "Stage 2", "R", 330, "Charmeleon", "ex"), 1)
+	var ready_vstar := _slot(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V", [
+		{"name": "Apex Dragon", "cost": "GGR", "damage": ""},
+	], 3), 0)
+	_attach(ready_vstar, "G", 2)
+	_attach(ready_vstar, "R", 1)
+	var ogerpon := _slot(_pokemon("Teal Mask Ogerpon ex", "Basic", "G", 210, "", "ex", [
+		{"name": "Myriad Leaf Shower", "cost": "GCC", "damage": "30"},
+	], 1), 0)
+	_attach(ogerpon, "G", 1)
+	player.bench.clear()
+	player.bench.append(ready_vstar)
+	player.bench.append(ogerpon)
+	player.discard_pile.append(_card(_pokemon("Dragapult ex", "Stage 2", "N", 320, "Drakloak", "ex"), 0))
+	var context := {"game_state": gs, "player_index": 0, "all_items": player.bench}
+	var vstar_score: float = strategy.score_handoff_target(ready_vstar, {"id": "send_out"}, context)
+	var ogerpon_score: float = strategy.score_handoff_target(ogerpon, {"id": "send_out"}, context)
+	return assert_true(vstar_score > ogerpon_score, "A ready fueled Regidrago VSTAR should still be sent out before Ogerpon (VSTAR=%f Ogerpon=%f)" % [vstar_score, ogerpon_score])
+
+
 func test_v17_regidrago_continuity_keeps_final_prize_apex_first() -> String:
 	var strategy := StrategyRegidrago.new()
 	var gs := _game_state(9)
@@ -650,6 +1055,66 @@ func test_v17_regidrago_super_rod_keeps_dragon_fuel_in_discard() -> String:
 		assert_true("Grass Energy" in selected_names, "Super Rod should recover useful energy before dragon attack fuel"),
 		assert_true("Fire Energy" in selected_names, "Super Rod should recover missing Regidrago energy before dragon attack fuel"),
 		assert_false("Dragapult ex" in selected_names, "Super Rod should leave Dragapult ex in discard for Apex Dragon"),
+	])
+
+
+func test_v17_regidrago_star_legacy_recovers_energy_switch_bridge_before_backup_seed_when_new_vstar_needs_energy() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(7)
+	var player := gs.players[0]
+	var vstar := _slot(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V", [
+		{"name": "Apex Dragon", "cost": "GGR", "damage": ""},
+	], 3), 0)
+	var ogerpon := _slot(_pokemon("Teal Mask Ogerpon ex", "Basic", "G", 210, "", "ex"), 0)
+	var ogerpon_grass := _card(_energy("Ogerpon Grass", "G"), 0)
+	ogerpon.attached_energy.append(ogerpon_grass)
+	player.active_pokemon = vstar
+	player.bench.append(ogerpon)
+	player.discard_pile.append(_card(_pokemon("Dragapult ex", "Stage 2", "N", 320, "Drakloak", "ex"), 0))
+	var backup_v := _card(_pokemon("Regidrago V", "Basic", "N", 220, "", "V"), 0)
+	var fire := _card(_energy("Fire Energy", "R"), 0)
+	var energy_switch := _card(_trainer("Energy Switch"), 0)
+
+	var selected: Array = strategy.pick_interaction_items(
+		[backup_v, fire, energy_switch],
+		{"id": "recover_cards", "max_select": 2},
+		{"game_state": gs, "player_index": 0}
+	)
+	var selected_names := _names(selected)
+
+	return run_checks([
+		assert_true("Energy Switch" in selected_names, "Star Legacy should recover Energy Switch when it bridges Ogerpon Grass into the new VSTAR"),
+		assert_true("Fire Energy" in selected_names, "Star Legacy should recover the missing Fire before a backup seed when the active VSTAR is not attacking yet"),
+		assert_false("Regidrago V" in selected_names, "Backup seed should wait until the active VSTAR can attack again"),
+	])
+
+
+func test_v17_regidrago_star_legacy_recovers_backup_vstar_when_backup_v_is_benched() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(8)
+	var player := gs.players[0]
+	var active := _slot(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V", [
+		{"name": "Apex Dragon", "cost": "GGR", "damage": ""},
+	], 3), 0)
+	_attach(active, "G", 2)
+	_attach(active, "R", 1)
+	player.active_pokemon = active
+	player.bench.append(_slot(_pokemon("Regidrago V", "Basic", "N", 220, "", "V"), 0))
+	player.discard_pile.append(_card(_pokemon("Dragapult ex", "Stage 2", "N", 320, "Drakloak", "ex"), 0))
+	var backup_vstar := _card(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V"), 0)
+	var grass := _card(_energy("Grass Energy", "G"), 0)
+	var goodra := _card(_pokemon("Hisuian Goodra VSTAR", "VSTAR", "N", 270, "Hisuian Goodra V", "V"), 0)
+
+	var selected: Array = strategy.pick_interaction_items(
+		[grass, goodra, backup_vstar],
+		{"id": "recover_cards", "max_select": 2},
+		{"game_state": gs, "player_index": 0}
+	)
+	var selected_names := _names(selected)
+
+	return run_checks([
+		assert_true("Regidrago VSTAR" in selected_names, "Star Legacy should recover backup VSTAR when a backup Regidrago V is already benched"),
+		assert_false("Hisuian Goodra VSTAR" in selected_names, "Star Legacy should not recover Dragon fuel over a live backup evolution"),
 	])
 
 
@@ -731,6 +1196,26 @@ func test_v17_regidrago_does_not_bench_hawlucha_as_setup_padding() -> String:
 	var end_score: float = strategy.score_action_absolute({"kind": "end_turn"}, gs, 0)
 
 	return assert_true(bench_score < end_score, "Hawlucha should not take a bench slot as generic setup padding (bench=%f end=%f)" % [bench_score, end_score])
+
+
+func test_v17_regidrago_does_not_pivot_resources_into_radiant_charizard_while_regidrago_line_exists() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(10)
+	var player := gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Regidrago V", "Basic", "N", 220, "", "V"), 0)
+	var radiant := _slot(_pokemon("Radiant Charizard", "Basic", "R", 160, "", "Radiant"), 0)
+	player.bench.append(radiant)
+	var radiant_card := _card(_pokemon("Radiant Charizard", "Basic", "R", 160, "", "Radiant"), 0)
+	var grass := _card(_energy("Grass Energy", "G"), 0)
+
+	var bench_score: float = strategy.score_action_absolute({"kind": "play_basic_to_bench", "card": radiant_card}, gs, 0)
+	var attach_score: float = strategy.score_action_absolute({"kind": "attach_energy", "card": grass, "target_slot": radiant}, gs, 0)
+	var end_score: float = strategy.score_action_absolute({"kind": "end_turn"}, gs, 0)
+
+	return run_checks([
+		assert_true(bench_score < end_score, "Radiant Charizard should not take setup space while a Regidrago line exists (bench=%f end=%f)" % [bench_score, end_score]),
+		assert_true(attach_score < end_score, "Grass Energy should not be attached to Radiant Charizard while a Regidrago line exists (attach=%f end=%f)" % [attach_score, end_score]),
+	])
 
 
 func test_v17_regidrago_energy_switch_does_not_drain_regidrago() -> String:
@@ -840,6 +1325,74 @@ func test_v17_regidrago_launch_bridge_scores_energy_before_bad_ultra_ball() -> S
 	return run_checks([
 		assert_true(switch_score > bad_ultra_score, "T1 Energy Switch bridge should beat Ultra Ball lines that discard the bridge (switch=%f ultra=%f)" % [switch_score, bad_ultra_score]),
 		assert_true(fire_score > bad_ultra_score, "T1 Fire attach should beat Ultra Ball lines that discard required Fire (fire=%f ultra=%f)" % [fire_score, bad_ultra_score]),
+	])
+
+
+func test_v17_regidrago_active_ogerpon_keeps_last_retreat_energy_before_handoff() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(2)
+	var player := gs.players[0]
+	var ogerpon := _slot(_pokemon("Teal Mask Ogerpon ex", "Basic", "G", 210, "", "ex", [
+		{"name": "Myriad Leaf Shower", "cost": "GGG", "damage": "30+"},
+	], 1), 0)
+	var ogerpon_grass := _card(_energy("Ogerpon Grass", "G"), 0)
+	ogerpon.attached_energy.append(ogerpon_grass)
+	var drago := _slot(_pokemon("Regidrago V", "Basic", "N", 220, "", "V", [
+		{"name": "Celestial Roar", "cost": "C", "damage": ""},
+		{"name": "Dragon Laser", "cost": "GGR", "damage": "130"},
+	], 3), 0)
+	_attach(drago, "R", 1)
+	player.active_pokemon = ogerpon
+	player.bench.append(drago)
+	var energy_switch := _card(_trainer("Energy Switch"), 0)
+
+	var switch_score: float = strategy.score_action_absolute({
+		"kind": "play_trainer",
+		"card": energy_switch,
+		"targets": [{"energy_assignment": [{"source": ogerpon_grass, "target": drago}]}],
+	}, gs, 0)
+	var end_score: float = strategy.score_action_absolute({"kind": "end_turn"}, gs, 0)
+
+	return assert_true(switch_score < end_score, "Active Ogerpon should not donate its only retreat Energy before the Regidrago handoff turn (switch=%f end=%f)" % [switch_score, end_score])
+
+
+func test_v17_regidrago_active_ogerpon_can_spare_extra_grass_for_ready_handoff() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(4)
+	var player := gs.players[0]
+	var ogerpon := _slot(_pokemon("Teal Mask Ogerpon ex", "Basic", "G", 210, "", "ex", [
+		{"name": "Myriad Leaf Shower", "cost": "GGG", "damage": "30+"},
+	], 1), 0)
+	var first_grass := _card(_energy("Ogerpon Grass 1", "G"), 0)
+	var second_grass := _card(_energy("Ogerpon Grass 2", "G"), 0)
+	ogerpon.attached_energy.append_array([first_grass, second_grass])
+	var vstar := _slot(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V", [
+		{"name": "Apex Dragon", "cost": "GGR", "damage": ""},
+	], 3), 0)
+	_attach(vstar, "R", 1)
+	_attach(vstar, "G", 1)
+	player.active_pokemon = ogerpon
+	player.bench.append(vstar)
+	player.discard_pile.append(_card(_pokemon("Dragapult ex", "Stage 2", "N", 320, "Drakloak", "ex"), 0))
+	var energy_switch := _card(_trainer("Energy Switch"), 0)
+
+	var switch_score: float = strategy.score_action_absolute({
+		"kind": "play_trainer",
+		"card": energy_switch,
+		"targets": [{"energy_assignment": [{"source": first_grass, "target": vstar}]}],
+	}, gs, 0)
+	ogerpon.attached_energy.erase(first_grass)
+	vstar.attached_energy.append(first_grass)
+	var retreat_score: float = strategy.score_action_absolute({
+		"kind": "retreat",
+		"bench_target": vstar,
+		"energy_to_discard": [second_grass],
+	}, gs, 0)
+	var end_score: float = strategy.score_action_absolute({"kind": "end_turn"}, gs, 0)
+
+	return run_checks([
+		assert_true(switch_score > end_score, "Once active Ogerpon has spare Energy, Energy Switch should complete GGR for Regidrago (switch=%f end=%f)" % [switch_score, end_score]),
+		assert_true(retreat_score > end_score, "After preserving a retreat Energy, Ogerpon should hand off to ready Regidrago VSTAR (retreat=%f end=%f)" % [retreat_score, end_score]),
 	])
 
 
@@ -1077,6 +1630,128 @@ func test_v17_regidrago_second_player_also_retreats_support_into_ready_vstar() -
 	return assert_true(retreat_score > ultra_score, "Second-player support actives should also retreat into ready Regidrago VSTAR once conversion is available (retreat=%f ultra=%f)" % [retreat_score, ultra_score])
 
 
+func test_v17_regidrago_charizard_pressure_blocks_ogerpon_retreat_to_mew() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(8)
+	var player := gs.players[0]
+	var active := _slot(_pokemon("Teal Mask Ogerpon ex", "Basic", "G", 210, "", "ex", [
+		{"name": "Myriad Leaf Shower", "cost": "GGG", "damage": "30+"},
+	], 1), 0)
+	var mew := _slot(_pokemon("Mew ex", "Basic", "P", 180, "", "ex", [
+		{"name": "Genome Hacking", "cost": "CCC", "damage": ""},
+	], 1), 0)
+	var unready_vstar := _slot(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V", [
+		{"name": "Apex Dragon", "cost": "GGR", "damage": ""},
+	], 3), 0)
+	_attach(active, "G", 1)
+	player.active_pokemon = active
+	player.bench.append(mew)
+	player.bench.append(unready_vstar)
+	gs.players[1].active_pokemon = _slot(_pokemon("Charizard ex", "Stage 2", "D", 330, "Charmeleon", "ex", [
+		{"name": "Burning Darkness", "cost": "RR", "damage": "180+"},
+	]), 1)
+
+	var retreat_score: float = strategy.score_action_absolute({
+		"kind": "retreat",
+		"bench_target": mew,
+		"energy_to_discard": active.attached_energy.duplicate(),
+	}, gs, 0)
+	var unready_vstar_score: float = strategy.score_action_absolute({
+		"kind": "retreat",
+		"bench_target": unready_vstar,
+		"energy_to_discard": active.attached_energy.duplicate(),
+	}, gs, 0)
+	var end_score: float = strategy.score_action_absolute({"kind": "end_turn"}, gs, 0)
+
+	return run_checks([
+		assert_true(retreat_score < end_score, "Ogerpon should not burn energy to promote Mew ex into Charizard (retreat=%f end=%f)" % [retreat_score, end_score]),
+		assert_true(unready_vstar_score < end_score, "Ogerpon should not retreat into an unready Regidrago VSTAR under Charizard pressure (retreat=%f end=%f)" % [unready_vstar_score, end_score]),
+	])
+
+
+func test_v17_regidrago_late_ogerpon_retreat_to_squawk_is_harder_blocked_than_end() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(6)
+	var player := gs.players[0]
+	var active := _slot(_pokemon("Teal Mask Ogerpon ex", "Basic", "G", 210, "", "ex"), 0)
+	_attach(active, "G", 1)
+	player.active_pokemon = active
+	player.bench.append(_slot(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V"), 0))
+	var squawk := _slot(_pokemon("Squawkabilly ex", "Basic", "C", 160, "", "ex"), 0)
+	player.bench.append(squawk)
+
+	var retreat_score: float = strategy.score_action_absolute({
+		"kind": "retreat",
+		"bench_target": squawk,
+		"energy_to_discard": active.attached_energy.duplicate(),
+	}, gs, 0)
+	var end_score: float = strategy.score_action_absolute({"kind": "end_turn"}, gs, 0)
+
+	return assert_true(retreat_score < end_score - 10000.0, "Late Ogerpon should not burn retreat Energy to promote Squawkabilly over ending (retreat=%f end=%f)" % [retreat_score, end_score])
+
+
+func test_v17_regidrago_charizard_pressure_allows_ogerpon_retreat_to_ready_vstar() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(8)
+	var player := gs.players[0]
+	var active := _slot(_pokemon("Teal Mask Ogerpon ex", "Basic", "G", 210, "", "ex", [
+		{"name": "Myriad Leaf Shower", "cost": "GGG", "damage": "30+"},
+	], 1), 0)
+	var vstar := _slot(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V", [
+		{"name": "Apex Dragon", "cost": "GGR", "damage": ""},
+	], 3), 0)
+	_attach(active, "G", 1)
+	_attach(vstar, "G", 2)
+	_attach(vstar, "R", 1)
+	player.active_pokemon = active
+	player.bench.append(vstar)
+	player.discard_pile.append(_card(_pokemon("Dragapult ex", "Stage 2", "N", 320, "Drakloak", "ex"), 0))
+	gs.players[1].active_pokemon = _slot(_pokemon("Charizard ex", "Stage 2", "D", 330, "Charmeleon", "ex", [
+		{"name": "Burning Darkness", "cost": "RR", "damage": "180+"},
+	]), 1)
+
+	var retreat_score: float = strategy.score_action_absolute({
+		"kind": "retreat",
+		"bench_target": vstar,
+		"energy_to_discard": active.attached_energy.duplicate(),
+	}, gs, 0)
+	var end_score: float = strategy.score_action_absolute({"kind": "end_turn"}, gs, 0)
+
+	return assert_true(retreat_score > end_score, "Ready Regidrago VSTAR handoff should remain legal under Charizard pressure (retreat=%f end=%f)" % [retreat_score, end_score])
+
+
+func test_v17_regidrago_charizard_pressure_blocks_damaged_ready_vstar_handoff() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(10)
+	var player := gs.players[0]
+	var active := _slot(_pokemon("Teal Mask Ogerpon ex", "Basic", "G", 210, "", "ex", [
+		{"name": "Myriad Leaf Shower", "cost": "GGG", "damage": "30+"},
+	], 1), 0)
+	var vstar := _slot(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V", [
+		{"name": "Apex Dragon", "cost": "GGR", "damage": ""},
+	], 3), 0)
+	vstar.damage_counters = 190
+	_attach(active, "G", 1)
+	_attach(vstar, "G", 2)
+	_attach(vstar, "R", 1)
+	player.active_pokemon = active
+	player.bench.append(vstar)
+	player.discard_pile.append(_card(_pokemon("Dragapult ex", "Stage 2", "N", 320, "Drakloak", "ex"), 0))
+	player.discard_pile.append(_card(_pokemon("Hisuian Goodra VSTAR", "VSTAR", "N", 270, "Hisuian Goodra V", "V"), 0))
+	gs.players[1].active_pokemon = _slot(_pokemon("Charizard ex", "Stage 2", "D", 330, "Charmeleon", "ex", [
+		{"name": "Burning Darkness", "cost": "RR", "damage": "180+"},
+	]), 1)
+
+	var retreat_score: float = strategy.score_action_absolute({
+		"kind": "retreat",
+		"bench_target": vstar,
+		"energy_to_discard": active.attached_energy.duplicate(),
+	}, gs, 0)
+	var end_score: float = strategy.score_action_absolute({"kind": "end_turn"}, gs, 0)
+
+	return assert_true(retreat_score < end_score, "A damaged ready VSTAR that cannot survive Charizard should stay benched unless it is ending the game (retreat=%f end=%f)" % [retreat_score, end_score])
+
+
 func test_v17_regidrago_plan_blocks_energy_paid_retreat_from_ready_drago_owner_to_ogerpon() -> String:
 	var strategy := StrategyRegidrago.new()
 	var gs := _game_state(1)
@@ -1157,6 +1832,26 @@ func test_v17_regidrago_hand_energy_assignment_targets_missing_vstar_type() -> S
 	)
 
 	return assert_true(regidrago_score > ogerpon_score, "Hand-energy assignment effects should put missing Fire on Regidrago VSTAR before padding Ogerpon (drago=%f ogerpon=%f)" % [regidrago_score, ogerpon_score])
+
+
+func test_v17_regidrago_manual_grass_goes_to_vstar_when_ogerpon_switch_completes_apex() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(4)
+	var player := gs.players[0]
+	var ogerpon := _slot(_pokemon("Teal Mask Ogerpon ex", "Basic", "G", 210, "", "ex"), 0)
+	_attach(ogerpon, "G", 1)
+	player.active_pokemon = ogerpon
+	var vstar := _slot(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V", [
+		{"name": "Apex Dragon", "cost": "GGR", "damage": ""},
+	], 3), 0)
+	_attach(vstar, "R", 1)
+	player.bench.append(vstar)
+	var grass := _card(_energy("Grass Energy", "G"), 0)
+
+	var vstar_score: float = strategy.score_action_absolute({"kind": "attach_energy", "card": grass, "target_slot": vstar}, gs, 0)
+	var ogerpon_score: float = strategy.score_action_absolute({"kind": "attach_energy", "card": grass, "target_slot": ogerpon}, gs, 0)
+
+	return assert_true(vstar_score > ogerpon_score, "When Ogerpon can donate the second Grass by Energy Switch, manual Grass should go to Regidrago VSTAR (vstar=%f ogerpon=%f)" % [vstar_score, ogerpon_score])
 
 
 func test_v17_regidrago_energy_assignment_rejects_knocked_out_targets() -> String:
@@ -1248,6 +1943,57 @@ func test_v17_regidrago_prioritizes_missing_fire_for_ggr() -> String:
 		assert_eq(_names(discarded), ["Grass Energy"], "Discard costs should protect the missing Fire Energy for GGR"),
 		assert_true(fire_attach_score > grass_attach_score, "Manual attach should prefer the missing Fire over redundant Grass (fire=%f grass=%f)" % [fire_attach_score, grass_attach_score]),
 	])
+
+
+func test_v17_regidrago_preserves_mew_draw_when_backup_needs_vstar() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(20)
+	var player := gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Teal Mask Ogerpon ex", "Basic", "G", 210, "", "ex"), 0)
+	player.bench.append(_slot(_pokemon("Regidrago V", "Basic", "N", 220, "", "V"), 0))
+	player.deck.append(_card(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V"), 0))
+	var mew := _card(_pokemon("Mew ex", "Basic", "P", 180, "", "ex", [
+		{"name": "Restart", "cost": "", "damage": "", "text": "Draw until you have 3 cards in hand."},
+	]), 0)
+	var vessel := _card(_trainer("Earthen Vessel"), 0)
+	var grass := _card(_energy("Grass Energy", "G"), 0)
+	var vessel_action := {
+		"kind": "play_trainer",
+		"card": vessel,
+		"targets": [{"discard_cards": [mew], "search_energy": [grass]}],
+	}
+	player.hand.append_array([mew, vessel])
+
+	var vessel_score: float = strategy.score_action_absolute(vessel_action, gs, 0)
+	var mew_discard_score: float = strategy.score_interaction_target(
+		mew,
+		{"id": "discard_cards", "max_select": 1},
+		{"game_state": gs, "player_index": 0}
+	)
+	var bench_mew_score: float = strategy.score_action_absolute({"kind": "play_basic_to_bench", "card": mew}, gs, 0)
+
+	return run_checks([
+		assert_true(vessel_score < -100.0, "Earthen Vessel should not discard the only Mew draw engine while backup Regidrago still needs VSTAR (score=%f)" % vessel_score),
+		assert_true(mew_discard_score < 20.0, "Discard selection should protect Mew ex in the backup-VSTAR recovery window (score=%f)" % mew_discard_score),
+		assert_true(bench_mew_score > 600.0, "The rules fallback should bench Mew ex as a recovery draw engine before sacrificing it (score=%f)" % bench_mew_score),
+	])
+
+
+func test_v17_regidrago_blocks_end_when_active_apex_is_ready() -> String:
+	var strategy := StrategyRegidrago.new()
+	var gs := _game_state(4)
+	var player := gs.players[0]
+	var vstar := _slot(_pokemon("Regidrago VSTAR", "VSTAR", "N", 280, "Regidrago V", "V", [
+		{"name": "Apex Dragon", "cost": "GGR", "damage": ""},
+	], 3), 0)
+	_attach(vstar, "G", 2)
+	_attach(vstar, "R", 1)
+	player.active_pokemon = vstar
+	player.discard_pile.append(_card(_pokemon("Dragapult ex", "Stage 2", "N", 320, "Drakloak", "ex"), 0))
+
+	var end_score: float = strategy.score_action_absolute({"kind": "end_turn"}, gs, 0)
+
+	return assert_true(end_score < -10000.0, "Rules fallback should not end the turn while active Regidrago VSTAR has GGR and copied-attack fuel (score=%f)" % end_score)
 
 
 func test_v17_regidrago_blocks_celestial_roar_after_vstar_online() -> String:

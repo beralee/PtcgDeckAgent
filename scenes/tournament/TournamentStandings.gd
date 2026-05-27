@@ -8,6 +8,8 @@ const CHAMPION_DEEP := Color(0.12, 0.055, 0.018, 0.92)
 
 func _ready() -> void:
 	HudThemeScript.apply(self)
+	%TitleLabel.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(26))
+	%ChampionTitle.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(34))
 	_apply_champion_banner_style()
 	%BtnPrimary.pressed.connect(_on_primary_pressed)
 	%BtnSecondary.pressed.connect(_on_secondary_pressed)
@@ -88,12 +90,12 @@ func _apply_champion_banner_style() -> void:
 	style.shadow_color = Color(1.0, 0.58, 0.12, 0.34)
 	style.shadow_size = 18
 	banner.add_theme_stylebox_override("panel", style)
-	%ChampionKicker.add_theme_font_size_override("font_size", 13)
+	%ChampionKicker.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(13))
 	%ChampionKicker.add_theme_color_override("font_color", Color(1.0, 0.80, 0.36, 1.0))
 	%ChampionTitle.add_theme_color_override("font_color", CHAMPION_TEXT)
 	%ChampionTitle.add_theme_color_override("font_shadow_color", Color(1.0, 0.58, 0.12, 0.72))
 	%ChampionTitle.add_theme_constant_override("shadow_offset_y", 2)
-	%ChampionSubtitle.add_theme_font_size_override("font_size", 16)
+	%ChampionSubtitle.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(16))
 	%ChampionSubtitle.add_theme_color_override("font_color", Color(1.0, 0.88, 0.56, 1.0))
 
 

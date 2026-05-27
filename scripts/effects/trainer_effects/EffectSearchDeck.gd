@@ -50,18 +50,16 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		steps.append(build_empty_search_resolution_step("牌库里没有可检索的%s。你仍可以使用这张卡。" % _get_filter_label()))
 		return steps
 
-	var deck_labels: Array[String] = []
-	for deck_card: CardInstance in deck_items:
-		deck_labels.append(deck_card.card_data.name)
-	steps.append({
-		"id": "search_cards",
-		"title": "选择最多%d张符合条件的卡" % search_count,
-		"items": deck_items,
-		"labels": deck_labels,
-		"min_select": 0,
-		"max_select": mini(search_count, deck_items.size()),
-		"allow_cancel": true,
-	})
+	steps.append(build_full_library_search_step(
+		"search_cards",
+		"选择最多%d张符合条件的卡" % search_count,
+		player.deck,
+		deck_items,
+		VISIBLE_SCOPE_OWN_FULL_DECK,
+		0,
+		mini(search_count, deck_items.size()),
+		{"allow_cancel": true}
+	))
 	return steps
 
 
@@ -143,17 +141,7 @@ func get_description() -> String:
 	var parts: Array[String] = []
 	if discard_cost > 0:
 		parts.append("弃掉%d张手牌" % discard_cost)
-	var filter_str: String = ""
-	if card_type_filter != "":
-		var filter_map := {
-			"Pokemon": "宝可梦",
-			"Basic": "基础宝可梦",
-			"Trainer": "训练家",
-			"Energy": "能量",
-			"Item": "物品",
-			"Supporter": "支援者",
-		}
-		filter_str = filter_map.get(card_type_filter, card_type_filter)
+	var filter_str: String = _get_filter_label()
 	parts.append("从牌库检索%d张%s" % [search_count, filter_str])
 	return "，".join(parts)
 

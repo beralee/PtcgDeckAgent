@@ -169,6 +169,26 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return false
 
 
+func get_unusable_reason(card: CardInstance, state: GameState) -> String:
+	if card == null or state == null or card.owner_index < 0 or card.owner_index >= state.players.size():
+		return "神奇糖果当前无法使用。"
+	var pi: int = card.owner_index
+	if state.is_first_turn_for_player(pi):
+		return "玩家自己的第一个回合不能使用神奇糖果进化宝可梦。"
+	var player: PlayerState = state.players[pi]
+	var has_stage2 := false
+	for c: CardInstance in player.hand:
+		if c == card:
+			continue
+		if c.card_data.is_pokemon() and c.card_data.stage == "Stage 2":
+			has_stage2 = true
+			if not _get_valid_stage2_targets(player, c, state).is_empty():
+				return ""
+	if not has_stage2:
+		return "手牌里没有可以通过神奇糖果放到场上的 2 阶进化宝可梦。"
+	return "没有可以通过神奇糖果进化的目标。目标必须是已经在场且本回合不是刚放置的基础宝可梦。"
+
+
 func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	var pi: int = card.owner_index
 	var player: PlayerState = state.players[pi]

@@ -190,6 +190,7 @@ const EffectGravityMountainEffect = "res://scripts/effects/stadium_effects/Effec
 const EffectJammingTowerEffect = "res://scripts/effects/stadium_effects/EffectJammingTower.gd"
 const EffectSparklingCrystalEffect = "res://scripts/effects/tool_effects/EffectSparklingCrystal.gd"
 const EffectLegacyEnergyEffect = "res://scripts/effects/energy_effects/EffectLegacyEnergy.gd"
+const EffectReversalEnergyEffect = "res://scripts/effects/energy_effects/EffectReversalEnergy.gd"
 const EffectMelaEffect = "res://scripts/effects/trainer_effects/EffectMela.gd"
 const EffectSadasVitalityEffect = "res://scripts/effects/trainer_effects/EffectSadasVitality.gd"
 const EffectCherensCareEffect = "res://scripts/effects/trainer_effects/EffectCherensCare.gd"
@@ -245,6 +246,8 @@ const AttackIgnoreWeaknessEffect = "res://scripts/effects/pokemon_effects/Attack
 const AttackCoinFlipPreventDamageAndEffectsNextTurnEffect = "res://scripts/effects/pokemon_effects/AttackCoinFlipPreventDamageAndEffectsNextTurn.gd"
 const AttackKnockoutDefenderThenSelfDamageEffect = "res://scripts/effects/pokemon_effects/AttackKnockoutDefenderThenSelfDamage.gd"
 const AttackDiscardStadiumBonusDamageEffect = "res://scripts/effects/pokemon_effects/AttackDiscardStadiumBonusDamage.gd"
+const AttackOptionalBonusSelfDamageEffect = "res://scripts/effects/pokemon_effects/AttackOptionalBonusSelfDamage.gd"
+const CSV8CConkeldurrEffectsEffect = "res://scripts/effects/pokemon_effects/CSV8CConkeldurrEffects.gd"
 const AttackItemLockNextTurnEffect = "res://scripts/effects/pokemon_effects/AttackItemLockNextTurn.gd"
 const EffectMirageGateEffect = "res://scripts/effects/trainer_effects/EffectMirageGate.gd"
 const EffectColressExperimentEffect = "res://scripts/effects/trainer_effects/EffectColressExperiment.gd"
@@ -253,6 +256,7 @@ const EffectSalvatoreEffect = "res://scripts/effects/trainer_effects/EffectSalva
 const EffectExpShareEffect = "res://scripts/effects/tool_effects/EffectExpShare.gd"
 const EffectLeagueHQEffect = "res://scripts/effects/stadium_effects/EffectLeagueHQ.gd"
 const EffectLuminousEnergyEffect = "res://scripts/effects/energy_effects/EffectLuminousEnergy.gd"
+const EffectNeoUpperEnergyEffect = "res://scripts/effects/energy_effects/EffectNeoUpperEnergy.gd"
 const EffectMagmaBasinEffect = "res://scripts/effects/stadium_effects/EffectMagmaBasin.gd"
 const EffectCyclingRoadEffect = "res://scripts/effects/stadium_effects/EffectCyclingRoad.gd"
 const EffectCrushingHammerEffect = "res://scripts/effects/trainer_effects/EffectCrushingHammer.gd"
@@ -291,6 +295,9 @@ const EffectLetterOfEncouragementEffect = "res://scripts/effects/trainer_effects
 const EffectLuxuriousCapeEffect = "res://scripts/effects/tool_effects/EffectLuxuriousCape.gd"
 const AttackSelfEnergyCountMultiplierBonusEffect = "res://scripts/effects/pokemon_effects/AttackSelfEnergyCountMultiplierBonus.gd"
 const AbilityOvervoltDischargeEffect = "res://scripts/effects/pokemon_effects/AbilityOvervoltDischarge.gd"
+const AbilityTorrentHeartEffect = "res://scripts/effects/pokemon_effects/AbilityTorrentHeart.gd"
+const AbilityPreEvolutionAttacksEffect = "res://scripts/effects/pokemon_effects/AbilityPreEvolutionAttacks.gd"
+const CSV8CGalvantulaEffectsEffect = "res://scripts/effects/pokemon_effects/CSV8CGalvantulaEffects.gd"
 const EffectGapejawBogEffect = "res://scripts/effects/stadium_effects/EffectGapejawBog.gd"
 const AbilityPlaceDamageCountersVSTAREffect = "res://scripts/effects/pokemon_effects/AbilityPlaceDamageCountersVSTAR.gd"
 const AttackBonusIfDefenderDamagedEffect = "res://scripts/effects/pokemon_effects/AttackBonusIfDefenderDamaged.gd"
@@ -373,6 +380,19 @@ static func _bind_attack_index_if_supported(effect: BaseEffect, attack_index: in
 
 static func _register_pokemon_effect_overrides(processor: EffectProcessor, effect_id: String) -> void:
 	match _canonical_csv9c_effect_id(effect_id):
+		"f70ca79aa9a395b44c6ab39dda0062d3":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackDefenderRetreatLockNextTurnEffect, [0]))
+		"d0d0f124636acb646f26f6b06c203d80":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackSwitchSelfToBenchEffect))
+		"db55f545bfa9fdddaf526a23431e7434":
+			processor.register_effect(effect_id, _instantiate_effect(AbilityTorrentHeartEffect, [5, 120]))
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackSelfLockNextTurnEffect))
+		"d348652e6296773db8b777e20e79fa4c":
+			processor.register_effect(effect_id, _instantiate_effect(AbilityPreEvolutionAttacksEffect, [processor]))
+		"553639840a44f19ad83b89a892a21f98":
+			processor.register_effect(effect_id, AbilityOnBenchEnter.new("search_supporter"))
+		"5a80f8eb94c6fcc27c475c10a63cf856":
+			processor.register_effect(effect_id, AbilityBenchImmune.new())
 		"daab918dc820662c599221a8a1d85114":
 			processor.register_effect(effect_id, AbilityMetalMaker.new(4, "M"))
 		"e470ac9bf3503ca157a8679c91e19fb1":
@@ -408,10 +428,31 @@ static func _register_pokemon_effect_overrides(processor: EffectProcessor, effec
 		"f2afef80b13b8f6a071facbcade0251c":
 			processor.register_effect(effect_id, _instantiate_effect(AbilityPrizeCountColorlessReductionEffect))
 			processor.register_attack_effect(effect_id, AttackSelfLockNextTurn.new())
+		"0a2064b80b0edf2b2ec683210e77e1f2":
+			processor.register_attack_effect(effect_id, AttackCoinFlipOrFail.new(40, "no_damage", processor.coin_flipper))
+		"99041ad1ee1b4ff984b57638cae3caf9":
+			processor.register_attack_effect(effect_id, _instantiate_effect(
+				AttackOptionalBonusSelfDamageEffect,
+				[30, 30, 1, "追加造成30伤害，并给这只宝可梦造成30伤害？"]
+			))
+		"898ff379e73790978b8bdf6dfafc511f":
+			processor.register_effect(effect_id, _instantiate_effect(CSV8CConkeldurrEffectsEffect))
+			var conkeldurr_rampage := _instantiate_effect(CSV8CConkeldurrEffectsEffect)
+			_bind_attack_index_if_supported(conkeldurr_rampage, 0)
+			processor.register_attack_effect(effect_id, conkeldurr_rampage)
+		"4aa937bbc437cbfd7b64597b7bcee0d2":
+			processor.register_effect(effect_id, _instantiate_effect(CSV8CGalvantulaEffectsEffect, [0]))
+			var galvantula_web := _instantiate_effect(CSV8CGalvantulaEffectsEffect, [0])
+			_bind_attack_index_if_supported(galvantula_web, 0)
+			processor.register_attack_effect(effect_id, galvantula_web)
 		"f822c0b2e4cb2865a8ac7af9d3018969":
 			processor.register_effect(effect_id, _instantiate_effect(AbilityRunAwayDrawEffect, [3]))
 		"8c23889e3e58324f3d58029f72379fac":
 			processor.register_attack_effect(effect_id, _instantiate_effect(AttackCoinFlipApplyStatusEffect, ["confused"]))
+		"ea2b685fc75e11c65704bc2709c9af96":
+			var frogadier_paralysis := _instantiate_effect(AttackCoinFlipApplyStatusEffect, ["paralyzed", processor.coin_flipper])
+			_bind_attack_index_if_supported(frogadier_paralysis, 0)
+			processor.register_attack_effect(effect_id, frogadier_paralysis)
 		"11e3c629e34562a7061a05c483eb5718":
 			processor.register_attack_effect(effect_id, _instantiate_effect(AttackLostMineEffect, [10, 120, 1]))
 		"013d589bd3c3a4c3472231a966ff6786":
@@ -428,7 +469,9 @@ static func _register_pokemon_effect_overrides(processor: EffectProcessor, effec
 			processor.register_attack_effect(effect_id, _instantiate_effect(AttackUseDiscardDragonAttackEffect, [processor]))
 		"68244d82147e13bb7d77116ffedf6162":
 			processor.register_effect(effect_id, _instantiate_effect(AbilityMoveOpponentDamageCountersEffect))
-			processor.register_attack_effect(effect_id, _instantiate_effect(AttackOpponentHandCountDamageEffect, [20]))
+			var alakazam_mind_ruler := _instantiate_effect(AttackOpponentHandCountDamageEffect, [20, false, 20])
+			_bind_attack_index_if_supported(alakazam_mind_ruler, 0)
+			processor.register_attack_effect(effect_id, alakazam_mind_ruler)
 		"5fbf2a43fe0f6df85dd1b7eb420ac678":
 			var dialga_attach := _instantiate_effect(AttackAttachBasicEnergyFromDiscardEffect, ["M", 2])
 			_bind_attack_index_if_supported(dialga_attach, 0)
@@ -581,6 +624,7 @@ static func _register_pokemon_effect_overrides(processor: EffectProcessor, effec
 		"2f6f444122be1e8d9af6c5a134f66572":
 			processor.register_attack_effect(effect_id, _instantiate_effect(AttackMillOpponentDeckEffect, [2, 0]))
 			var chi_yu_attach := AttackSearchAndAttach.new("R", 3, "deck_search", 0, "bench")
+			chi_yu_attach.max_assignments_per_target = 1
 			chi_yu_attach.attack_index_to_match = 1
 			processor.register_attack_effect(effect_id, chi_yu_attach)
 		"a0383c4a4ff14425610be52afedf41ae":
@@ -1032,6 +1076,7 @@ static func _register_special_energies(processor: EffectProcessor) -> void:
 	processor.register_effect("88bf9902f1d769a667bbd3939fc757de", EffectVGuardEnergy.new())
 	# 馈赠能量
 	processor.register_effect("dbb3f3d2ef2f3372bc8b21336e6c9bc6", EffectGiftEnergy.new())
+	processor.register_effect("cbadb3473273c14cf667d495d44d111b", _instantiate_effect(EffectReversalEnergyEffect))
 	# 薄雾能量
 	processor.register_effect("fb0948c721db1f31767aa6cf0c2ea692", EffectMistEnergy.new())
 	# Legacy Energy
@@ -1039,6 +1084,7 @@ static func _register_special_energies(processor: EffectProcessor) -> void:
 	# 夜光能量
 	processor.register_effect("540ee48bb93584e4bfe3d7f5d0ee0efc", _instantiate_effect(EffectLuminousEnergyEffect))
 	processor.register_effect("3b16e8f85f3165586cb0170232a80f1f", _instantiate_effect("res://scripts/effects/energy_effects/CSV9C208RichEnergy.gd"))
+	processor.register_effect("83aba7d0c92c81e8c03b3785af695c2f", _instantiate_effect(EffectNeoUpperEnergyEffect))
 
 
 ## ==================== 特性名称 → 效果实例映射 ====================
@@ -1344,7 +1390,7 @@ static func get_registered_count() -> Dictionary:
 	# 竞技场数量（硬编码，与 _register_stadiums 保持同步）
 	var stadiums_count: int = 19
 	# 特殊能量数量（硬编码，与 _register_special_energies 保持同步）
-	var energies_count: int = 9
+	var energies_count: int = 11
 
 	return {
 		"items": items_count,

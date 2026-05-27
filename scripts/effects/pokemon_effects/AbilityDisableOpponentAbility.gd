@@ -32,8 +32,18 @@ static func is_opponent_abilities_disabled(
 	var active: PokemonSlot = opponent.active_pokemon
 	if active == null:
 		return false
+	if _is_dark_wing_source_suppressed(active, state):
+		return false
 
 	return _has_dark_wing_ability(active)
+
+
+static func _is_dark_wing_source_suppressed(slot: PokemonSlot, state: GameState) -> bool:
+	if EffectCancelCologne.is_slot_directly_ability_disabled(slot, state):
+		return true
+	if AbilityBasicLock.is_locked_by_basic_lock(slot, state):
+		return true
+	return false
 
 
 ## 检查给定宝可梦是否被暗夜振翼压制。

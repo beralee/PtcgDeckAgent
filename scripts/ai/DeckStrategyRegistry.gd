@@ -105,6 +105,7 @@ const _STRATEGY_ORDER: Array[String] = [
 	"palkia_dusknoir",
 	"palkia_gholdengo",
 	"regidrago",
+	"v17_regidrago",
 	"lugia_archeops",
 	"dialga_metang",
 	"arceus_giratina",

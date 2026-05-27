@@ -1107,6 +1107,68 @@ func test_play_basic_to_bench_exposes_interactive_bench_enter_ability_choice() -
 	])
 
 
+func test_cs5bc_049_lumineon_v_luminous_signal_requires_played_from_hand_to_bench() -> String:
+	var gsm := _make_gsm_with_decks()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 2
+	gsm.game_state.current_player_index = 0
+	var state := gsm.game_state
+	var player: PlayerState = state.players[0]
+	player.hand.clear()
+	player.deck.clear()
+	player.bench.clear()
+
+	var supporter_cd := CardData.new()
+	supporter_cd.name = "Arven"
+	supporter_cd.card_type = "Supporter"
+	var supporter := CardInstance.create(supporter_cd, 0)
+
+	var lumineon_cd := CardData.new()
+	lumineon_cd.name = "Lumineon V"
+	lumineon_cd.name_en = "Lumineon V"
+	lumineon_cd.card_type = "Pokemon"
+	lumineon_cd.stage = "Basic"
+	lumineon_cd.hp = 170
+	lumineon_cd.energy_type = "W"
+	lumineon_cd.mechanic = "V"
+	lumineon_cd.effect_id = "553639840a44f19ad83b89a892a21f98"
+	lumineon_cd.abilities = [{"name": "夜光信号", "text": "从手牌使出放于备战区时，选择1张支援者加入手牌。"}]
+	gsm.effect_processor.register_pokemon_card(lumineon_cd)
+	var registered_effect := gsm.effect_processor.get_effect(lumineon_cd.effect_id)
+
+	var deck_lumineon := CardInstance.create(lumineon_cd, 0)
+	player.deck.append(deck_lumineon)
+	player.deck.append(supporter)
+	var nest_cd := CardData.new()
+	nest_cd.name = "Nest Ball"
+	nest_cd.card_type = "Item"
+	nest_cd.effect_id = "1af63a7e2cb7a79215474ad8db8fd8fd"
+	var nest_ball := CardInstance.create(nest_cd, 0)
+	player.hand.append(nest_ball)
+	var nest_played := gsm.play_trainer(0, nest_ball, [{"basic_pokemon": [deck_lumineon]}])
+	var deck_lumineon_slot: PokemonSlot = player.bench.back() if not player.bench.is_empty() else null
+	var deck_entry_can_use := gsm.effect_processor.can_use_ability(deck_lumineon_slot, state, 0) if deck_lumineon_slot != null else false
+	var deck_entry_used := gsm.use_ability(0, deck_lumineon_slot, 0, [supporter]) if deck_lumineon_slot != null else false
+
+	var hand_lumineon := CardInstance.create(lumineon_cd, 0)
+	player.hand.append(hand_lumineon)
+	var hand_played := gsm.play_basic_to_bench(0, hand_lumineon, false)
+	var hand_lumineon_slot: PokemonSlot = player.bench.back() if not player.bench.is_empty() else null
+	var hand_entry_can_use := gsm.effect_processor.can_use_ability(hand_lumineon_slot, state, 0) if hand_lumineon_slot != null else false
+	var hand_entry_used := gsm.use_ability(0, hand_lumineon_slot, 0, [supporter]) if hand_lumineon_slot != null else false
+
+	return run_checks([
+		assert_true(registered_effect is AbilityOnBenchEnter, "CS5bC_049 should register Luminous Signal by effect_id"),
+		assert_true(nest_played, "Nest Ball should put Lumineon V from deck onto the Bench"),
+		assert_false(deck_entry_can_use, "Luminous Signal should not be usable when Lumineon V entered from deck"),
+		assert_false(deck_entry_used, "use_ability should reject Luminous Signal when Lumineon V entered from deck"),
+		assert_true(hand_played, "Lumineon V should be playable from hand to Bench"),
+		assert_true(hand_entry_can_use, "Luminous Signal should be usable after Lumineon V is played from hand to Bench"),
+		assert_true(hand_entry_used, "Luminous Signal should resolve after valid hand-to-Bench entry"),
+		assert_true(player.hand.has(supporter), "Luminous Signal should add the selected Supporter to hand"),
+	])
+
+
 func test_cs5bc_049_lumineon_v_aqua_return_prompts_own_replacement() -> String:
 	var gsm := _make_gsm_with_decks()
 	gsm.game_state.phase = GameState.GamePhase.MAIN
@@ -2207,6 +2269,101 @@ func test_send_out_pokemon_rejects_replacement_while_prizes_are_still_pending() 
 		assert_eq(int(gsm.get("_pending_prize_remaining")), 1, "After the first prize, one more prize should still be pending"),
 		assert_false(sent_out_early, "The defending player should not be able to send out before all pending prizes are taken"),
 		assert_eq(gsm.game_state.current_player_index, 0, "The turn should not advance while prize selection is still pending"),
+	])
+
+
+func test_poison_check_double_active_knockout_resolves_both_prizes_before_replacements() -> String:
+	var gsm := _make_gsm_with_decks()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 2
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	var choice_events: Array[Dictionary] = []
+	gsm.player_choice_required.connect(func(choice_type: String, data: Dictionary) -> void:
+		choice_events.append({"type": choice_type, "data": data.duplicate(true)})
+	)
+
+	var gholdengo_cd := CardData.new()
+	gholdengo_cd.name = "赛富豪ex"
+	gholdengo_cd.name_en = "Gholdengo ex"
+	gholdengo_cd.card_type = "Pokemon"
+	gholdengo_cd.stage = "Stage 1"
+	gholdengo_cd.hp = 260
+	gholdengo_cd.energy_type = "M"
+	gholdengo_cd.mechanic = "ex"
+	gholdengo_cd.attacks = [{"name": "淘金潮", "cost": "", "damage": "230", "text": "", "is_vstar_power": false}]
+	var gholdengo := PokemonSlot.new()
+	gholdengo.pokemon_stack.append(CardInstance.create(gholdengo_cd, 0))
+	gholdengo.damage_counters = 250
+	gholdengo.set_status("poisoned", true)
+	gsm.game_state.players[0].active_pokemon = gholdengo
+
+	var my_replacement_cd := _make_basic_pokemon_card_data("己方替补")
+	my_replacement_cd.hp = 120
+	var my_replacement := PokemonSlot.new()
+	my_replacement.pokemon_stack.append(CardInstance.create(my_replacement_cd, 0))
+	gsm.game_state.players[0].bench = [my_replacement]
+
+	var terapagos_cd := CardData.new()
+	terapagos_cd.name = "太乐巴戈斯ex"
+	terapagos_cd.name_en = "Terapagos ex"
+	terapagos_cd.card_type = "Pokemon"
+	terapagos_cd.stage = "Basic"
+	terapagos_cd.hp = 230
+	terapagos_cd.energy_type = "C"
+	terapagos_cd.mechanic = "ex"
+	var terapagos := PokemonSlot.new()
+	terapagos.pokemon_stack.append(CardInstance.create(terapagos_cd, 1))
+	gsm.game_state.players[1].active_pokemon = terapagos
+
+	var opp_replacement_cd := _make_basic_pokemon_card_data("对方替补")
+	opp_replacement_cd.hp = 120
+	var opp_replacement := PokemonSlot.new()
+	opp_replacement.pokemon_stack.append(CardInstance.create(opp_replacement_cd, 1))
+	gsm.game_state.players[1].bench = [opp_replacement]
+
+	for i: int in 6:
+		gsm.game_state.players[0].prizes.append(CardInstance.create(_make_basic_pokemon_card_data("My Prize %d" % i), 0))
+		gsm.game_state.players[1].prizes.append(CardInstance.create(_make_basic_pokemon_card_data("Opp Prize %d" % i), 1))
+
+	var attacked: bool = gsm.use_attack(0, 0)
+	var first_pending_player: int = int(gsm.get("_pending_prize_player_index"))
+	var first_pending_count: int = int(gsm.get("_pending_prize_remaining"))
+	var opponent_took_prize_1: bool = gsm.resolve_take_prize(1, 0)
+	var opponent_took_prize_2: bool = gsm.resolve_take_prize(1, 1)
+	var pending_player_after_opponent_prizes: int = int(gsm.get("_pending_prize_player_index"))
+	var pending_count_after_opponent_prizes: int = int(gsm.get("_pending_prize_remaining"))
+	var phase_after_opponent_prizes: int = gsm.game_state.phase
+	var player_took_prize_1: bool = gsm.resolve_take_prize(0, 0)
+	var player_took_prize_2: bool = gsm.resolve_take_prize(0, 1)
+	var opponent_hand_after_prizes: int = gsm.game_state.players[1].hand.size()
+	var player_hand_after_prizes: int = gsm.game_state.players[0].hand.size()
+	var phase_after_all_prizes: int = gsm.game_state.phase
+	var last_choice_player_after_all_prizes: int = int(choice_events.back().get("data", {}).get("player", -1)) if not choice_events.is_empty() else -1
+	var opp_send_out_ok: bool = gsm.send_out_pokemon(1, opp_replacement)
+	var choice_player_after_opp_send_out: int = int(choice_events.back().get("data", {}).get("player", -1)) if not choice_events.is_empty() else -1
+	var my_send_out_ok: bool = gsm.send_out_pokemon(0, my_replacement)
+
+	return run_checks([
+		assert_true(attacked, "Gholdengo should attack and create the Pokemon Check double-active KO fixture"),
+		assert_eq(first_pending_player, 1, "Poison should let the opponent take prizes for the poisoned Gholdengo first"),
+		assert_eq(first_pending_count, 2, "Gholdengo ex should be worth two prizes"),
+		assert_true(opponent_took_prize_1, "Opponent should take the first Gholdengo prize"),
+		assert_true(opponent_took_prize_2, "Opponent should take the second Gholdengo prize"),
+		assert_eq(pending_player_after_opponent_prizes, 0, "After opponent prizes, the attacker should take Terapagos prizes before any replacement"),
+		assert_eq(pending_count_after_opponent_prizes, 2, "Terapagos ex should still queue two prizes for the attacker"),
+		assert_eq(phase_after_opponent_prizes, GameState.GamePhase.POKEMON_CHECK, "The flow should resume knockout checks instead of entering send-out early"),
+		assert_true(player_took_prize_1, "Attacker should take the first Terapagos prize"),
+		assert_true(player_took_prize_2, "Attacker should take the second Terapagos prize"),
+		assert_eq(opponent_hand_after_prizes, 2, "Opponent should receive both prizes for Gholdengo"),
+		assert_eq(player_hand_after_prizes, 2, "Attacker should receive both prizes for Terapagos"),
+		assert_eq(phase_after_all_prizes, GameState.GamePhase.KNOCKOUT_REPLACE, "Only after both KOs award prizes should replacement start"),
+		assert_eq(last_choice_player_after_all_prizes, 1, "Opponent should replace their knocked-out Active after all prizes are resolved"),
+		assert_true(opp_send_out_ok, "Opponent should send out after both players have taken prizes"),
+		assert_eq(choice_player_after_opp_send_out, 0, "After opponent replacement, the attacker should also replace their poisoned Active"),
+		assert_true(my_send_out_ok, "Attacker should send out their replacement"),
+		assert_eq(gsm.game_state.current_player_index, 1, "After both replacements, the turn should pass to the opponent"),
+		assert_eq(gsm.game_state.phase, GameState.GamePhase.MAIN, "After both replacements, the opponent should begin their turn in MAIN"),
 	])
 
 

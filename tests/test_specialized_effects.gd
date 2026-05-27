@@ -250,6 +250,48 @@ func test_nest_ball_uses_selected_basic_pokemon() -> String:
 		assert_eq(player.bench.back().get_pokemon_name(), "基础乙", "应按选择将指定基础宝可梦放入备战区"),
 	])
 
+func test_nest_ball_search_step_allows_taking_no_pokemon_when_targets_exist() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.bench.clear()
+	player.deck.clear()
+	var target := CardInstance.create(_make_basic_pokemon_data("Nest Target", "C", 70), 0)
+	player.deck.append(target)
+	var effect := EffectNestBall.new()
+	var card := CardInstance.create(_make_trainer_data("Nest Ball"), 0)
+
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
+	var step: Dictionary = steps[0] if not steps.is_empty() else {}
+
+	return run_checks([
+		assert_eq(steps.size(), 1, "Nest Ball should show a search step when a Basic target exists"),
+		assert_eq(int(step.get("min_select", -1)), 0, "Nest Ball should allow choosing no Pokemon"),
+		assert_eq(int(step.get("max_select", -1)), 1, "Nest Ball should still choose at most one Pokemon"),
+		assert_true(bool(step.get("force_confirm", false)), "Nest Ball needs a confirm button so the player can take no Pokemon"),
+		assert_true(bool(step.get("hidden_search_can_whiff", false)), "Nest Ball should mark the hidden-deck search as whiffable"),
+	])
+
+
+func test_nest_ball_explicit_empty_search_does_not_bench_basic_target() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.bench.clear()
+	player.deck.clear()
+	var target := CardInstance.create(_make_basic_pokemon_data("Nest Target", "C", 70), 0)
+	player.deck.append(target)
+	var effect := EffectNestBall.new()
+	var card := CardInstance.create(_make_trainer_data("Nest Ball"), 0)
+
+	effect.execute(card, [{
+		"basic_pokemon": [],
+	}], state)
+
+	return run_checks([
+		assert_true(player.bench.is_empty(), "Explicit empty Nest Ball search should not bench a Pokemon"),
+		assert_true(target in player.deck, "Explicit empty Nest Ball search should leave the Basic Pokemon in the deck"),
+	])
+
+
 func test_nest_ball_respects_collapsed_stadium_live_bench_limit() -> String:
 	var state := _make_state()
 	var player: PlayerState = state.players[0]

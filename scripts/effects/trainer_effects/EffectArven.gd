@@ -70,6 +70,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	var found_item: CardInstance = null
 	var found_tool: CardInstance = null
 	var item_raw: Array = ctx.get("search_item", [])
+	var has_explicit_item: bool = ctx.has("search_item")
 	for entry: Variant in item_raw:
 		if not (entry is CardInstance):
 			continue
@@ -78,6 +79,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 			found_item = selected_item
 			break
 	var tool_raw: Array = ctx.get("search_tool", [])
+	var has_explicit_tool: bool = ctx.has("search_tool")
 	for entry: Variant in tool_raw:
 		if not (entry is CardInstance):
 			continue
@@ -87,9 +89,9 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 			break
 
 	for deck_card: CardInstance in player.deck:
-		if found_item == null and deck_card.card_data.card_type == "Item":
+		if found_item == null and not has_explicit_item and deck_card.card_data.card_type == "Item":
 			found_item = deck_card
-		if found_tool == null and deck_card.card_data.card_type == "Tool":
+		if found_tool == null and not has_explicit_tool and deck_card.card_data.card_type == "Tool":
 			found_tool = deck_card
 		if found_item != null and found_tool != null:
 			break

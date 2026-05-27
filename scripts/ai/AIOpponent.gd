@@ -541,7 +541,11 @@ func _score_action_with_action_scorer(action_kind: String, state_features: Array
 
 
 func _should_collect_action_teachers() -> bool:
-	return _decision_exporter != null
+	if _decision_exporter == null:
+		return false
+	if _decision_exporter.has_method("should_collect_action_teachers"):
+		return bool(_decision_exporter.call("should_collect_action_teachers"))
+	return false
 
 
 func _estimate_action_teachers(gsm: GameStateMachine, actions: Array[Dictionary]) -> Array[Dictionary]:

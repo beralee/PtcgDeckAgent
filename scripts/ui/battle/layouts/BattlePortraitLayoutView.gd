@@ -135,10 +135,37 @@ func apply(context: Dictionary) -> void:
 	sync_prize_hud_visibility(true)
 	_call_scene("_show_portrait_prize_dialog_if_needed")
 	_call_scene("_update_portrait_overlay_metrics", [safe_viewport_size])
+	apply_dialog_gallery_metrics(measured.get("dialog_card_size", _get_scene_var("_dialog_card_size")))
+	_call_scene("_apply_portrait_popup_text_metrics")
 	if _get_scene_var("_gsm") != null:
 		_call_scene("_trace_portrait_layout_stage", ["portrait_view.apply.before_refresh_hand"])
 		_call_scene("_refresh_hand")
 		_call_scene("_trace_portrait_layout_stage", ["portrait_view.apply.after_refresh_hand"])
+
+
+func apply_dialog_gallery_metrics(dialog_card_size: Vector2) -> void:
+	var dialog_card_scroll := _get_scene_var("_dialog_card_scroll") as ScrollContainer
+	var dialog_assignment_source_scroll := _get_scene_var("_dialog_assignment_source_scroll") as ScrollContainer
+	var dialog_assignment_target_scroll := _get_scene_var("_dialog_assignment_target_scroll") as ScrollContainer
+	var dialog_card_row := _get_scene_var("_dialog_card_row") as HBoxContainer
+	var dialog_assignment_source_row := _get_scene_var("_dialog_assignment_source_row") as HBoxContainer
+	var dialog_assignment_target_row := _get_scene_var("_dialog_assignment_target_row") as HBoxContainer
+	if dialog_card_scroll != null:
+		dialog_card_scroll.custom_minimum_size = Vector2(0, _as_float(_call_scene("_effective_dialog_card_scroll_height"), dialog_card_size.y))
+	if dialog_assignment_source_scroll != null:
+		dialog_assignment_source_scroll.custom_minimum_size = Vector2(0, _as_float(_call_scene("_dialog_card_scroll_height"), dialog_card_size.y))
+	if dialog_assignment_target_scroll != null:
+		dialog_assignment_target_scroll.custom_minimum_size = Vector2(0, _as_float(_call_scene("_dialog_card_scroll_height"), dialog_card_size.y))
+	var dialog_controller := _get_scene_var("_battle_dialog_controller") as RefCounted
+	if dialog_controller != null and dialog_card_scroll != null and dialog_card_row != null:
+		dialog_controller.call("reset_dialog_card_row_metrics", dialog_card_scroll, dialog_card_row, dialog_card_size)
+	if dialog_controller != null and dialog_assignment_source_scroll != null and dialog_assignment_source_row != null:
+		dialog_controller.call("reset_dialog_card_row_metrics", dialog_assignment_source_scroll, dialog_assignment_source_row, dialog_card_size)
+	if dialog_controller != null and dialog_assignment_target_scroll != null and dialog_assignment_target_row != null:
+		dialog_controller.call("reset_dialog_card_row_metrics", dialog_assignment_target_scroll, dialog_assignment_target_row, dialog_card_size)
+	var dialog_overlay := _get_scene_var("_dialog_overlay") as Control
+	if dialog_overlay != null and dialog_overlay.visible and dialog_controller != null:
+		dialog_controller.call("compact_dialog_box_to_content", _scene)
 
 
 func sync_prize_hud_visibility(is_portrait: Variant = null) -> void:
@@ -783,8 +810,7 @@ func apply_field_hud_metrics(viewport_size: Vector2, bench_card_size: Vector2, a
 	var caption_font_size := hud_font_size
 	var value_font_size := hud_font_size
 	var prize_value_font_size := hud_font_size
-	var pending_prize := str(_get_scene_var("_pending_choice")) == "take_prize" and _as_int(_get_scene_var("_pending_prize_remaining"), 0) > 0
-	var prize_height := maxf(left_height, bench_card_size.y * 2.0 + 20.0) if pending_prize else left_height
+	var prize_height := left_height
 	var opp_hud_left := _get_scene_var("_opp_hud_left") as PanelContainer
 	if opp_hud_left == null:
 		opp_hud_left = _node("MainArea/CenterField/FieldArea/OppField/OppFieldShell/OppHudLeft") as PanelContainer

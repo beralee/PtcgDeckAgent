@@ -607,8 +607,8 @@ func slot_energy_icon_codes(scene: Object, slot: PokemonSlot) -> Array[String]:
 		if energy != null and energy.card_data != null:
 			var gsm: Variant = scene.get("_gsm")
 			if gsm != null and gsm.effect_processor != null:
-				energy_type = gsm.effect_processor.get_energy_type(energy)
-				provided_count = gsm.effect_processor.get_energy_colorless_count(energy)
+				energy_type = gsm.effect_processor.get_energy_type(energy, gsm.game_state)
+				provided_count = gsm.effect_processor.get_energy_colorless_count(energy, gsm.game_state)
 			else:
 				energy_type = energy.card_data.energy_provides if energy.card_data.energy_provides != "" else energy.card_data.energy_type
 		if energy_type == "":
@@ -641,8 +641,8 @@ func slot_energy_summary(scene: Object, slot: PokemonSlot) -> String:
 		if energy != null and energy.card_data != null:
 			var gsm: Variant = scene.get("_gsm")
 			if gsm != null and gsm.effect_processor != null:
-				energy_type = gsm.effect_processor.get_energy_type(energy)
-				provided_count = gsm.effect_processor.get_energy_colorless_count(energy)
+				energy_type = gsm.effect_processor.get_energy_type(energy, gsm.game_state)
+				provided_count = gsm.effect_processor.get_energy_colorless_count(energy, gsm.game_state)
 			else:
 				energy_type = energy.card_data.energy_provides if energy.card_data.energy_provides != "" else energy.card_data.energy_type
 			if energy_type == "":
@@ -685,8 +685,8 @@ func refresh_slot_label(scene: Object, label: RichTextLabel, slot: PokemonSlot) 
 		var provided_count := 1
 		var gsm: Variant = scene.get("_gsm")
 		if gsm != null and gsm.effect_processor != null:
-			energy_type = gsm.effect_processor.get_energy_type(energy)
-			provided_count = gsm.effect_processor.get_energy_colorless_count(energy)
+			energy_type = gsm.effect_processor.get_energy_type(energy, gsm.game_state)
+			provided_count = gsm.effect_processor.get_energy_colorless_count(energy, gsm.game_state)
 		elif energy.card_data.energy_provides != "":
 			energy_type = energy.card_data.energy_provides
 		energy_counts[energy_type] = int(energy_counts.get(energy_type, 0)) + provided_count

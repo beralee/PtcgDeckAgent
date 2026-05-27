@@ -49,6 +49,8 @@ func _on_slot_input(event: InputEvent, slot_id: String) -> void:
 		if suppressed_viewport != null:
 			suppressed_viewport.set_input_as_handled()
 		return
+	if _slot_touch_release_can_open_action_hud(slot_id):
+		_suppress_action_hud_open_input("slot_mouse_press", -1, _action_hud_open_input_screen_position(mbe))
 	_handle_slot_left_click(slot_id)
 
 
@@ -534,7 +536,12 @@ func _handle_dialog_choice_legacy(selected_indices: PackedInt32Array) -> void:
 					_refresh_ui()
 					_check_two_player_handover()
 				else:
-					_log(_gsm.get_attack_unusable_reason(cp, idx))
+					_show_invalid_action_message({
+						"title": "招式现在不能使用",
+						"reason": _gsm.get_attack_unusable_reason(cp, idx),
+						"detail": "招式需要满足回合、阶段和能量费用等条件。",
+						"kind": "attack",
+					})
 		"pokemon_action":
 			var cp_action: int = _dialog_data.get("player", 0)
 			var actions: Array = _dialog_data.get("actions", [])
@@ -545,7 +552,9 @@ func _handle_dialog_choice_legacy(selected_indices: PackedInt32Array) -> void:
 					var action_slot: Variant = action_data.get("slot", null)
 					var action_type: String = str(action_data.get("type", ""))
 					if not bool(action_data.get("enabled", true)):
-						_log(str(action_data.get("reason", "当前无法执行该操作")))
+						var disabled_reason := str(action_data.get("reason", "当前无法执行该操作")).strip_edges()
+						if disabled_reason != "":
+							_log(disabled_reason)
 						return
 					if action_slot is PokemonSlot and action_type == "ability":
 						_try_use_ability_with_interaction(
@@ -571,7 +580,12 @@ func _handle_dialog_choice_legacy(selected_indices: PackedInt32Array) -> void:
 						if _gsm.rule_validator.can_retreat(_gsm.game_state, cp_action):
 							_show_retreat_dialog(cp_action)
 						else:
-							_log("当前无法撤退")
+							_show_invalid_action_message({
+								"title": "当前无法撤退",
+								"reason": _gsm.rule_validator.get_retreat_unusable_reason(_gsm.game_state, cp_action, _gsm.effect_processor),
+								"detail": "撤退需要在主要阶段、有备战宝可梦，并支付足够撤退费用。",
+								"kind": "retreat",
+							})
 		"send_out":
 			var pi: int = _dialog_data.get("player", 0)
 			var bench_raw: Array = _dialog_data.get("bench", [])
@@ -1429,6 +1443,34 @@ func _try_play_stadium_with_interaction(player_index: int, card: CardInstance) -
 	_battle_action_controller.call("try_play_stadium_with_interaction", self, player_index, card)
 
 
+func _invalid_action_title_from_type(action_type: String) -> String:
+	match action_type:
+		"ability":
+			return "特性现在不能使用"
+		"attack", "granted_attack":
+			return "招式现在不能使用"
+		"stadium_ability":
+			return "竞技场能力现在不能使用"
+		"retreat":
+			return "当前无法撤退"
+		_:
+			return "当前无法执行"
+
+
+func _invalid_action_detail_from_type(action_type: String) -> String:
+	match action_type:
+		"ability":
+			return "特性需要满足卡面条件，并且可能受到场上特性封锁效果影响。"
+		"attack", "granted_attack":
+			return "招式需要满足回合、阶段、位置和能量费用等条件。"
+		"stadium_ability":
+			return "竞技场能力通常每回合只能使用一次，并且需要满足卡面条件。"
+		"retreat":
+			return "撤退需要在主要阶段、有备战宝可梦，并支付足够撤退费用。"
+		_:
+			return "请检查当前回合、阶段、场上目标和卡面效果条件。"
+
+
 
 func _effect_step_uses_field_slot_ui(step: Dictionary) -> bool:
 	return bool(_battle_effect_interaction_controller.call("effect_step_uses_field_slot_ui", self, step))
@@ -1664,7 +1706,7 @@ func _on_coin_animation_finished() -> void:
 
 
 func _on_discard_open_control_input(event: InputEvent, player_index: int, title: String) -> void:
-	if _consume_modal_slot_input_if_needed(event, "discard_hud"):
+	if _consume_modal_hud_input_if_needed(event, "discard_hud"):
 		return
 	var pressed := false
 	if event is InputEventMouseButton:
@@ -1682,7 +1724,7 @@ func _on_discard_open_control_input(event: InputEvent, player_index: int, title:
 
 
 func _on_lost_zone_open_control_input(event: InputEvent, enemy: bool) -> void:
-	if _consume_modal_slot_input_if_needed(event, "lost_zone_hud"):
+	if _consume_modal_hud_input_if_needed(event, "lost_zone_hud"):
 		return
 	var pressed := false
 	if event is InputEventMouseButton:

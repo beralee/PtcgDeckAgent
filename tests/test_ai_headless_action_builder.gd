@@ -66,6 +66,15 @@ class ExactEnergyAssignmentSubsetStrategy extends RefCounted:
 		return selected
 
 
+class PreferredAssignmentTargetStrategy extends RefCounted:
+	var preferred_target: Variant = null
+
+	func score_interaction_target(item: Variant, step: Dictionary, _context: Dictionary = {}) -> float:
+		if str(step.get("id", "")) != "energy_assignments":
+			return 0.0
+		return 1000.0 if item == preferred_target else 10.0
+
+
 class ContextAwareSearchPairStrategy extends RefCounted:
 	func score_interaction_target(item: Variant, step: Dictionary, context: Dictionary = {}) -> float:
 		if not (item is CardInstance) or (item as CardInstance).card_data == null:
@@ -810,6 +819,43 @@ func test_builder_allows_strategy_to_choose_exact_energy_assignment_sources() ->
 		assert_true(grass_a in chosen_sources, "Headless energy assignment should honor the strategy-picked first Energy source"),
 		assert_true(psychic in chosen_sources, "Headless energy assignment should honor the strategy-picked mixed Energy source set"),
 		assert_true(not (grass_b in chosen_sources), "Headless energy assignment should not fall back to raw source order when the strategy picked an exact subset"),
+	])
+
+
+func test_builder_respects_max_assignments_per_target_in_headless_assignment() -> String:
+	var gsm := _make_manual_gsm()
+	var builder = AILegalActionBuilderScript.new()
+	var strategy := PreferredAssignmentTargetStrategy.new()
+	builder._deck_strategy = strategy
+	builder._deck_strategy_detected = true
+	var energy_a := CardInstance.create(_make_energy_card_data("Water A", "W"), 0)
+	var energy_b := CardInstance.create(_make_energy_card_data("Water B", "W"), 0)
+	var preferred := _make_slot(CardInstance.create(_make_pokemon_card_data("Preferred Target", "C"), 0))
+	var backup := _make_slot(CardInstance.create(_make_pokemon_card_data("Backup Target", "C"), 0))
+	strategy.preferred_target = preferred
+	var resolved: Variant = builder.call("_resolve_headless_assignment_step", gsm, 0, 0, {
+		"id": "energy_assignments",
+		"source_items": [energy_a, energy_b],
+		"target_items": [preferred, backup],
+		"min_select": 0,
+		"max_select": 2,
+		"max_assignments_per_target": 1,
+	})
+	var assignments: Array = resolved.get("energy_assignments", []) if resolved is Dictionary else []
+	var preferred_count := 0
+	var backup_count := 0
+	for assignment_variant: Variant in assignments:
+		if not (assignment_variant is Dictionary):
+			continue
+		var target: Variant = (assignment_variant as Dictionary).get("target")
+		if target == preferred:
+			preferred_count += 1
+		elif target == backup:
+			backup_count += 1
+	return run_checks([
+		assert_eq(assignments.size(), 2, "Headless assignment should still plan both selected sources"),
+		assert_eq(preferred_count, 1, "max_assignments_per_target=1 should stop assigning both sources to the same preferred target"),
+		assert_eq(backup_count, 1, "The second source should move to the next legal target when the preferred target is full"),
 	])
 
 

@@ -206,6 +206,11 @@ func check_two_player_handover(scene: Object) -> void:
 		scene.call("_set_handover_panel_visible", false, "handover_check_setup_deferred")
 		scene.call("_runtime_log", "handover_check_setup_deferred", scene.call("_state_snapshot"))
 		return
+	if _should_defer_handover_for_visible_private_reveal(scene, gsm):
+		scene.call("_set_pending_handover_action", Callable(), "handover_check_reveal_deferred")
+		scene.call("_set_handover_panel_visible", false, "handover_check_reveal_deferred")
+		scene.call("_runtime_log", "handover_check_reveal_deferred", scene.call("_state_snapshot"))
+		return
 	var pending_choice := str(scene.get("_pending_choice"))
 	if pending_choice == "take_prize" and int(scene.get("_pending_prize_remaining")) > 0:
 		var prize_player := int(scene.get("_pending_prize_player_index"))
@@ -239,6 +244,38 @@ func _should_defer_handover_during_setup(scene: Object, gsm: Variant) -> bool:
 	return gsm.game_state.phase == GameState.GamePhase.SETUP
 
 
+func _should_defer_handover_for_visible_private_reveal(scene: Object, gsm: Variant) -> bool:
+	if gsm == null or gsm.game_state == null:
+		return false
+	var view_player: int = int(scene.get("_view_player"))
+	var current_player: int = int(gsm.game_state.current_player_index)
+	if view_player == current_player:
+		return false
+	var current_reveal: GameAction = scene.get("_draw_reveal_current_action") as GameAction
+	if _is_visible_private_reveal_for_player(current_reveal, view_player):
+		return true
+	var queued_reveals: Array = scene.get("_draw_reveal_queue")
+	for queued_variant: Variant in queued_reveals:
+		var queued_reveal: GameAction = queued_variant as GameAction
+		if _is_visible_private_reveal_for_player(queued_reveal, view_player):
+			return true
+	return false
+
+
+func _is_visible_private_reveal_for_player(action: GameAction, view_player: int) -> bool:
+	if action == null or action.player_index != view_player:
+		return false
+	if action.action_type == GameAction.ActionType.DRAW_CARD and _is_turn_start_reveal_action(action):
+		return false
+	return action.action_type == GameAction.ActionType.DRAW_CARD or action.action_type == GameAction.ActionType.DISCARD
+
+
+func _is_turn_start_reveal_action(action: GameAction) -> bool:
+	if action == null:
+		return false
+	return bool(action.data.get("turn_start", false)) or str(action.data.get("draw_source", "")) == "turn_start"
+
+
 func on_handover_confirmed(scene: Object) -> void:
 	var pending_handover_action: Callable = scene.get("_pending_handover_action")
 	scene.call(
@@ -246,6 +283,10 @@ func on_handover_confirmed(scene: Object) -> void:
 		"handover_confirm_requested",
 		"follow_up_valid=%s %s" % [str(pending_handover_action.is_valid()), scene.call("_state_snapshot")]
 	)
+	if scene.has_method("_cancel_card_gallery_drag_scroll"):
+		scene.call("_cancel_card_gallery_drag_scroll", "handover_confirm")
+	if scene.has_method("_clear_hand_drag_click_suppression"):
+		scene.call("_clear_hand_drag_click_suppression", "handover_confirm")
 	scene.call("_set_handover_panel_visible", false, "handover_confirm")
 	scene.call("_set_pending_handover_action", Callable(), "handover_confirm")
 	if pending_handover_action.is_valid():

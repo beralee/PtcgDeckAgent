@@ -915,6 +915,7 @@ func _resolve_headless_assignment_step(
 		return null
 	var min_select: int = int(step.get("min_select", 0))
 	var max_select: int = int(step.get("max_select", source_items.size()))
+	var max_assignments_per_target: int = int(step.get("max_assignments_per_target", 0))
 	var selected_sources: Array = _select_headless_items(
 		gsm,
 		player_index,
@@ -935,6 +936,12 @@ func _resolve_headless_assignment_step(
 		for target_index: int in target_items.size():
 			if target_index in excluded_target_indices:
 				continue
+			if max_assignments_per_target > 0:
+				var candidate: Variant = target_items[target_index]
+				if candidate is Object:
+					var candidate_id := int((candidate as Object).get_instance_id())
+					if int(pending_assignment_counts.get(candidate_id, 0)) >= max_assignments_per_target:
+						continue
 			eligible_targets.append(target_items[target_index])
 		var target: Variant = _pick_preferred_assignment_target_for_source(
 			gsm,

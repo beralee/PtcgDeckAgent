@@ -2,6 +2,7 @@
 .import/
 .export/
 .godot_test_user/
+.godot_llm_user/
 android/
 
 .claude/
@@ -14,6 +15,8 @@ android/
 
 nul
 battle_scene_check.log
+file_list.txt
+file_listing.txt
 遗留bug.txt
 tcg-img-rules03-img1.png
 tcg-img-rules03-img1.png.import

@@ -18,6 +18,7 @@ const AttackDiscardDefenderTool = preload("res://scripts/effects/pokemon_effects
 const EffectSecretBox = preload("res://scripts/effects/trainer_effects/EffectSecretBox.gd")
 const EffectArtazon = preload("res://scripts/effects/stadium_effects/EffectArtazon.gd")
 const AttackTMEvolution = preload("res://scripts/effects/pokemon_effects/AttackTMEvolution.gd")
+const EffectCancelCologne = preload("res://scripts/effects/trainer_effects/EffectCancelCologne.gd")
 
 
 func _make_basic_pokemon_data(
@@ -770,6 +771,120 @@ func test_klefki_lock_is_consumed_by_effect_processor() -> String:
 	])
 
 
+func test_cancel_cologne_suppresses_active_klefki_lock_source() -> String:
+	var state := _make_state()
+	var processor := EffectProcessor.new()
+
+	var own_basic_cd := _make_basic_pokemon_data("OwnBasic", "P", 90)
+	own_basic_cd.abilities = [{"name": "Own Ability"}]
+	var own_basic := _make_slot(own_basic_cd, 0)
+	state.players[0].active_pokemon = own_basic
+
+	var klefki_cd := _make_basic_pokemon_data("钥圈儿", "P", 70)
+	klefki_cd.abilities = [{"name": "恶作剧之锁"}]
+	var klefki := _make_slot(klefki_cd, 1)
+	state.players[1].active_pokemon = klefki
+
+	var cologne_cd := _make_trainer_data("清除古龙水", "Item", "66b2f1d77328b6578b1bf0d58d98f66b")
+	var cologne := CardInstance.create(cologne_cd, 0)
+	EffectCancelCologne.new().execute(cologne, [], state)
+
+	return run_checks([
+		assert_true(processor.is_ability_disabled(klefki, state), "清除古龙水应禁用对手战斗场钥圈儿自身特性"),
+		assert_false(processor.is_ability_disabled(own_basic, state), "钥圈儿被清除古龙水禁用后，不应继续封锁其他基础宝可梦特性"),
+	])
+
+
+func test_cancel_cologne_suppresses_new_opponent_active_until_turn_end() -> String:
+	var state := _make_state()
+	var processor := EffectProcessor.new()
+
+	var first_active_cd := _make_basic_pokemon_data("First Active", "P", 90)
+	first_active_cd.abilities = [{"name": "First Ability"}]
+	var first_active := _make_slot(first_active_cd, 1)
+	state.players[1].active_pokemon = first_active
+
+	var new_active_cd := _make_basic_pokemon_data("New Active", "P", 90)
+	new_active_cd.abilities = [{"name": "New Ability"}]
+	var new_active := _make_slot(new_active_cd, 1)
+	state.players[1].bench.clear()
+	state.players[1].bench.append(new_active)
+
+	var cologne_cd := _make_trainer_data("清除古龙水", "Item", "66b2f1d77328b6578b1bf0d58d98f66b")
+	var cologne := CardInstance.create(cologne_cd, 0)
+	EffectCancelCologne.new().execute(cologne, [], state)
+	var old_active_disabled := processor.is_ability_disabled(first_active, state)
+
+	state.players[1].bench.erase(new_active)
+	first_active.clear_on_leave_active()
+	state.players[1].bench.append(first_active)
+	state.players[1].active_pokemon = new_active
+	new_active.mark_entered_active_from_bench(state.turn_number)
+
+	var new_active_disabled := processor.is_ability_disabled(new_active, state)
+	state.turn_number += 1
+	var expired_next_turn := not processor.is_ability_disabled(new_active, state)
+
+	return run_checks([
+		assert_true(old_active_disabled, "清除古龙水应立即禁用当前对手战斗宝可梦特性"),
+		assert_true(new_active_disabled, "清除古龙水本回合也应禁用新上场的对手战斗宝可梦特性"),
+		assert_true(expired_next_turn, "清除古龙水应在下个回合失效"),
+	])
+
+
+func test_cancel_cologne_suppresses_active_flutter_mane_lock_source() -> String:
+	var state := _make_state()
+	var processor := EffectProcessor.new()
+
+	var own_active_cd := _make_basic_pokemon_data("Own Active", "P", 90)
+	own_active_cd.abilities = [{"name": "Own Ability"}]
+	var own_active := _make_slot(own_active_cd, 0)
+	state.players[0].active_pokemon = own_active
+
+	var flutter_cd := _make_basic_pokemon_data("振翼发", "P", 90)
+	flutter_cd.abilities = [{"name": "暗夜振翼"}]
+	var flutter := _make_slot(flutter_cd, 1)
+	state.players[1].active_pokemon = flutter
+
+	var locked_before := processor.is_ability_disabled(own_active, state)
+	var cologne_cd := _make_trainer_data("清除古龙水", "Item", "66b2f1d77328b6578b1bf0d58d98f66b")
+	var cologne := CardInstance.create(cologne_cd, 0)
+	EffectCancelCologne.new().execute(cologne, [], state)
+
+	return run_checks([
+		assert_true(locked_before, "暗夜振翼应先压制对手战斗宝可梦特性"),
+		assert_true(processor.is_ability_disabled(flutter, state), "清除古龙水应禁用对手战斗场振翼发自身特性"),
+		assert_false(processor.is_ability_disabled(own_active, state), "振翼发被清除古龙水禁用后，不应继续压制对手战斗宝可梦"),
+	])
+
+
+func test_cancel_cologne_suppresses_active_iron_thorns_init_source() -> String:
+	var state := _make_state()
+	var processor := EffectProcessor.new()
+
+	var own_rule_box_cd := _make_basic_pokemon_data("Own ex", "P", 220, "Basic", "ex")
+	own_rule_box_cd.abilities = [{"name": "Own Rule Box Ability"}]
+	var own_rule_box := _make_slot(own_rule_box_cd, 0)
+	state.players[0].active_pokemon = own_rule_box
+
+	var iron_thorns_cd := _make_basic_pokemon_data("铁荆棘ex", "L", 230, "Basic", "ex")
+	iron_thorns_cd.abilities = [{"name": "初始化"}]
+	iron_thorns_cd.is_tags = ["Future"]
+	var iron_thorns := _make_slot(iron_thorns_cd, 1)
+	state.players[1].active_pokemon = iron_thorns
+
+	var locked_before := processor.is_ability_disabled(own_rule_box, state)
+	var cologne_cd := _make_trainer_data("清除古龙水", "Item", "66b2f1d77328b6578b1bf0d58d98f66b")
+	var cologne := CardInstance.create(cologne_cd, 0)
+	EffectCancelCologne.new().execute(cologne, [], state)
+
+	return run_checks([
+		assert_true(locked_before, "初始化应先压制非未来规则宝可梦特性"),
+		assert_true(processor.is_ability_disabled(iron_thorns, state), "清除古龙水应禁用对手战斗场铁荆棘ex自身特性"),
+		assert_false(processor.is_ability_disabled(own_rule_box, state), "铁荆棘ex被清除古龙水禁用后，不应继续压制非未来规则宝可梦"),
+	])
+
+
 func test_flutter_mane_dark_wing_only_disables_opponent_active() -> String:
 	var state := _make_state()
 	var processor := EffectProcessor.new()
@@ -964,6 +1079,60 @@ func test_tm_evolution_evolves_bench_pokemon() -> String:
 	return run_checks([
 		assert_eq(basic_slot.pokemon_stack.size(), 2, "TM进化：应将进化卡放到备战宝可梦上"),
 		assert_eq(basic_slot.get_pokemon_name(), "奇鲁莉安", "TM进化：进化后应显示奇鲁莉安"),
+	])
+
+
+func test_tm_evolution_on_radiant_alakazam_does_not_inherit_mind_ruler_damage() -> String:
+	var gsm := _make_main_phase_gsm()
+	var state := gsm.game_state
+	var player: PlayerState = state.players[0]
+	var opponent: PlayerState = state.players[1]
+
+	var alakazam_cd := _make_basic_pokemon_data("光辉胡地", "P", 130, "Basic", "Radiant", "68244d82147e13bb7d77116ffedf6162")
+	alakazam_cd.attacks = [{
+		"name": "意志控制者",
+		"cost": "PC",
+		"damage": "20×",
+		"text": "造成对手手牌张数×20点伤害。",
+		"is_vstar_power": false,
+	}]
+	gsm.effect_processor.register_pokemon_card(alakazam_cd)
+	var attacker := _make_slot(alakazam_cd, 0)
+	attacker.attached_energy.append(CardInstance.create(_make_energy_data("基本雷能量", "L"), 0))
+	attacker.attached_tool = CardInstance.create(_make_trainer_data("招式学习器 进化", "Tool", "43386015be5c073ba2e5b9d3692ece3f"), 0)
+	player.active_pokemon = attacker
+
+	var basic_cd := _make_basic_pokemon_data("拉鲁拉丝", "P", 70, "Basic")
+	var basic_slot := _make_slot(basic_cd, 0)
+	player.bench.clear()
+	player.bench.append(basic_slot)
+	var evo_cd := _make_basic_pokemon_data("奇鲁莉安", "P", 80, "Stage 1")
+	evo_cd.evolves_from = "拉鲁拉丝"
+	var evo_card := CardInstance.create(evo_cd, 0)
+	player.deck.clear()
+	player.deck.append(evo_card)
+
+	var charcadet_cd := _make_basic_pokemon_data("炭小侍", "R", 70)
+	charcadet_cd.weakness_energy = "W"
+	charcadet_cd.weakness_value = "×2"
+	var charcadet_slot := _make_slot(charcadet_cd, 1)
+	opponent.active_pokemon = charcadet_slot
+	opponent.hand.clear()
+	for i: int in 4:
+		opponent.hand.append(CardInstance.create(_make_basic_pokemon_data("OpponentHand_%d" % i, "C", 60), 1))
+
+	var mind_ruler_preview := gsm.get_attack_preview_damage(0, 0)
+	var granted_attacks := gsm.effect_processor.get_granted_attacks(attacker, state)
+	var used := false
+	if not granted_attacks.is_empty():
+		used = gsm.use_granted_attack(0, attacker, granted_attacks[0], [{"evolution_bench": [basic_slot]}])
+
+	return run_checks([
+		assert_eq(mind_ruler_preview, 80, "胡地自己的意志控制者仍应按对手4张手牌造成80点预览伤害"),
+		assert_eq(granted_attacks.size(), 1, "光辉胡地携带进化碟时应获得1个赋予招式"),
+		assert_true(used, "1张雷能应能支付进化碟的无色费用"),
+		assert_eq(charcadet_slot.damage_counters, 0, "进化碟没有基础伤害，不能继承胡地本体招式的手牌数伤害"),
+		assert_eq(basic_slot.get_pokemon_name(), "奇鲁莉安", "进化碟仍应正常进化备战宝可梦"),
 	])
 
 

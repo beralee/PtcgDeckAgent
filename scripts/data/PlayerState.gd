@@ -175,7 +175,31 @@ func clear_forced_shuffle_seed() -> void:
 	PlayerState._forced_shuffle_counter = 0
 
 
+static func _next_shuffle_rng() -> RandomNumberGenerator:
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	if PlayerState._forced_shuffle_seed >= 0:
+		rng.seed = PlayerState._forced_shuffle_seed + PlayerState._forced_shuffle_counter
+		PlayerState._forced_shuffle_counter += 1
+	else:
+		rng.randomize()
+	return rng
+
+
+static func shuffle_card_array(cards: Array) -> void:
+	if cards.size() < 2:
+		return
+	var rng := PlayerState._next_shuffle_rng()
+	for i in range(cards.size() - 1, 0, -1):
+		var j := rng.randi_range(0, i)
+		var temp: Variant = cards[i]
+		cards[i] = cards[j]
+		cards[j] = temp
+
+
 func shuffle_deck() -> void:
+	PlayerState.shuffle_card_array(deck)
+	shuffle_count += 1
+	return
 	var rng := RandomNumberGenerator.new()
 	if PlayerState._forced_shuffle_seed >= 0:
 		rng.seed = PlayerState._forced_shuffle_seed + PlayerState._forced_shuffle_counter
@@ -183,12 +207,6 @@ func shuffle_deck() -> void:
 	else:
 		rng.randomize()
 	# Fisher-Yates 洗牌
-	for i in range(deck.size() - 1, 0, -1):
-		var j := rng.randi_range(0, i)
-		var temp: CardInstance = deck[i]
-		deck[i] = deck[j]
-		deck[j] = temp
-	shuffle_count += 1
 
 
 ## 将指定卡牌从弃牌区移回牌库（不洗牌）

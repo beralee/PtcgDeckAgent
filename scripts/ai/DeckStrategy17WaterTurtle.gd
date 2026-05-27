@@ -168,7 +168,7 @@ func predict_attacker_damage(slot: PokemonSlot, extra_context: int = 0) -> Dicti
 				continue
 			can_attack = true
 			var raw_damage := str(attack.get("damage", "0"))
-			best_damage = maxi(best_damage, 220 if raw_damage.begins_with("60+") else _parse_damage(raw_damage))
+			best_damage = maxi(best_damage, 260 if raw_damage.begins_with("60+") else _parse_damage(raw_damage))
 		return {"damage": best_damage, "can_attack": can_attack, "description": "palkia_bench_scaling"}
 	return super.predict_attacker_damage(slot, extra_context)
 
@@ -186,7 +186,7 @@ func score_action_absolute(action: Dictionary, game_state: GameState, player_ind
 		if _matches_key(card, AREA_ZERO_ID) or _primary_name(card).to_lower().contains("area zero"):
 			score += 360.0
 		elif _matches_key(card, GLASS_TRUMPET_ID) or _primary_name(card).to_lower().contains("glass trumpet"):
-			score += 330.0
+			score += _glass_trumpet_action_bonus(player)
 		elif _primary_name(card).to_lower().contains("ultra ball") or _primary_name(card).to_lower().contains("nest ball"):
 			score += 120.0
 		elif _is_gust_card(card):
@@ -194,17 +194,23 @@ func score_action_absolute(action: Dictionary, game_state: GameState, player_ind
 			var gust_bonus := _gust_action_bonus(game_state, player_index, is_prime)
 			if gust_bonus > 0.0:
 				score += gust_bonus
+			elif not _opponent_has_live_bench(game_state, player_index):
+				score -= 420.0
 		elif _matches_any_key(card, [KIERAN, KIERAN_ID]):
 			var kieran_bonus := _kieran_exact_ko_bonus(game_state, player_index)
 			if kieran_bonus > 0.0:
 				score += kieran_bonus
 		score += _setup_trainer_bonus(card, player, game_state)
+		if _matches_any_key(card, [LOST_VACUUM, LOST_VACUUM_ID]) and _action_targets_own_area_zero(action, game_state):
+			score -= 520.0
 	if kind == "play_basic_to_bench":
 		var basic_card: CardInstance = action.get("card", null)
 		if _matches_key(basic_card, TERAPAGOS_ID):
 			score += 620.0 if player != null and not _has_terapagos_on_field(player) else 220.0
 		elif player != null:
 			score += _bench_fill_bonus(basic_card, player)
+			if _matches_key(basic_card, PALKIA_V):
+				score += _palkia_bridge_pre_attack_bonus(player, game_state, player_index)
 		score += _terapagos_bench_pressure_bonus(player, game_state, player_index)
 	if kind == "attach_energy":
 		score += _manual_attach_adjustment(action, player)
@@ -212,12 +218,10 @@ func score_action_absolute(action: Dictionary, game_state: GameState, player_ind
 		var source: PokemonSlot = action.get("source_slot", null)
 		if _matches_key(source, NOCTOWL_ID) or _matches_key(source, FAN_ROTOM_ID):
 			score += 260.0
+		elif _matches_key(source, BIBAREL):
+			score += _bibarel_deckout_pressure_adjustment(player, game_state)
 	if kind == "retreat" and player != null:
-		var target: PokemonSlot = action.get("bench_target", null)
-		if target != null:
-			score = maxf(score, _water_turtle_handoff_score(target) - 120.0)
-			if player.active_pokemon != null and _is_core_attacker(player.active_pokemon) and _best_attack_gap(player.active_pokemon) == 0:
-				score -= 260.0
+		score = _score_water_turtle_retreat(action, game_state, player_index, player, score)
 	return score
 
 
@@ -251,6 +255,8 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 			return _irida_water_target_score(card, context)
 		if step_id == "item_card":
 			return _irida_item_target_score(card, context)
+		if step_id == "search_pokemon" or step_id.contains("search_pokemon"):
+			return _pokemon_search_target_score(card, context)
 		if step_id.contains("fan_call"):
 			return _fan_call_target_score(card, context)
 		if step_id.contains("poffin") or step_id.contains("basic"):
@@ -279,6 +285,8 @@ func score_handoff_target(item: Variant, step: Dictionary, context: Dictionary =
 
 func pick_interaction_items(items: Array, step: Dictionary, context: Dictionary = {}) -> Array:
 	var step_id := str(step.get("id", "")).to_lower()
+	if step_id.contains("csv9c178") or step_id.contains("glass"):
+		return _pick_glass_trumpet_sources(items, step, context)
 	if step_id.contains("fan_call"):
 		return _pick_diverse_fan_call_targets(items, step, context)
 	if step_id.contains("noctowl") or step_id.contains("csv9c_noctowl"):
@@ -389,6 +397,18 @@ func _gust_action_bonus(game_state: GameState, player_index: int, is_prime_catch
 	return best_target
 
 
+func _opponent_has_live_bench(game_state: GameState, player_index: int) -> bool:
+	if game_state == null:
+		return false
+	var opponent_index := 1 - player_index
+	if opponent_index < 0 or opponent_index >= game_state.players.size():
+		return false
+	for slot: PokemonSlot in game_state.players[opponent_index].bench:
+		if _slot_is_live(slot):
+			return true
+	return false
+
+
 func _kieran_exact_ko_bonus(game_state: GameState, player_index: int) -> float:
 	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
 		return 0.0
@@ -490,6 +510,43 @@ func _terapagos_bench_pressure_bonus(player: PlayerState, game_state: GameState,
 	return 260.0
 
 
+func _palkia_bridge_pre_attack_bonus(player: PlayerState, game_state: GameState, player_index: int) -> float:
+	if player == null or game_state == null:
+		return 0.0
+	if player.bench.size() >= 8 or _has_on_field_key(player, PALKIA_V) or _has_on_field_key(player, PALKIA_VSTAR):
+		return 0.0
+	var active := player.active_pokemon
+	if not _slot_is_live(active) or not _matches_key(active, TERAPAGOS_ID) or _best_attack_gap(active) > 0:
+		return 0.0
+	var pressure_damage := _active_pressure_damage(game_state, player_index)
+	if pressure_damage < 150:
+		return 0.0
+	if int(game_state.turn_number) > 5:
+		return 520.0 if not _has_ready_backup_pressure_attacker(player, active) else 0.0
+	return 1380.0
+
+
+func _has_ready_backup_pressure_attacker(player: PlayerState, active: PokemonSlot) -> bool:
+	if player == null:
+		return false
+	for slot: PokemonSlot in _all_slots(player):
+		if slot == active or not _slot_is_live(slot):
+			continue
+		if _is_pressure_attacker(slot) and _best_attack_gap(slot) == 0:
+			return true
+	return false
+
+
+func _bibarel_deckout_pressure_adjustment(player: PlayerState, game_state: GameState) -> float:
+	if player == null or game_state == null:
+		return 0.0
+	if int(game_state.turn_number) < 15:
+		return 0.0
+	if player.deck.size() <= 4:
+		return -720.0
+	return 0.0
+
+
 func _water_turtle_handoff_score(slot: PokemonSlot) -> float:
 	if not _slot_is_live(slot):
 		return -100000.0
@@ -523,6 +580,24 @@ func _water_turtle_handoff_score(slot: PokemonSlot) -> float:
 	return super.score_handoff_target(slot, {"id": "handoff"})
 
 
+func _score_water_turtle_retreat(
+	action: Dictionary,
+	game_state: GameState,
+	player_index: int,
+	player: PlayerState,
+	base_score: float
+) -> float:
+	var target: PokemonSlot = action.get("bench_target", null)
+	if not _slot_is_live(target):
+		return -100000.0
+	if _is_support_slot(target) and _has_better_retreat_target(player, target):
+		return -860.0
+	var score := maxf(base_score, _water_turtle_handoff_score(target) - 120.0)
+	if player.active_pokemon != null and _is_core_attacker(player.active_pokemon) and _best_attack_gap(player.active_pokemon) == 0:
+		score -= 260.0
+	return score
+
+
 func _score_water_turtle_attack(action: Dictionary, game_state: GameState, player_index: int, player: PlayerState, base_score: float) -> float:
 	var source: PokemonSlot = action.get("source_slot", null)
 	if source == null and player != null:
@@ -547,6 +622,8 @@ func _score_water_turtle_attack(action: Dictionary, game_state: GameState, playe
 		return score
 	if _matches_key(source, PALKIA_V):
 		var damage := _action_or_predicted_damage(action, source, game_state)
+		if damage <= 0 and _area_zero_in_play(game_state):
+			return minf(base_score, -180.0)
 		if damage >= _opponent_active_remaining_hp(game_state, player_index) and damage > 0:
 			return maxf(base_score, 760.0 + float(damage) * 1.6)
 		if damage >= 180:
@@ -612,6 +689,15 @@ func _has_better_water_attach_target(player: PlayerState, excluded: PokemonSlot)
 		if _matches_key(slot, TERAPAGOS_ID) and _energy_units(slot) < 3:
 			return true
 		if (_matches_key(slot, PALKIA_VSTAR) or _matches_key(slot, PALKIA_V)) and _best_attack_gap(slot) > 0:
+			return true
+	return false
+
+
+func _has_better_retreat_target(player: PlayerState, excluded: PokemonSlot) -> bool:
+	for slot: PokemonSlot in _all_slots(player):
+		if slot == excluded or not _slot_is_live(slot):
+			continue
+		if _is_pressure_attacker(slot) and _best_attack_gap(slot) <= 1:
 			return true
 	return false
 
@@ -809,6 +895,37 @@ func _basic_search_target_score(card: CardInstance, context: Dictionary) -> floa
 	return 120.0
 
 
+func _pokemon_search_target_score(card: CardInstance, context: Dictionary) -> float:
+	if card == null or card.card_data == null or not card.card_data.is_pokemon():
+		return -100000.0
+	var player := _context_player(context)
+	if _matches_key(card, PALKIA_VSTAR):
+		if player != null and _has_on_field_key(player, PALKIA_V) and not _has_on_field_key(player, PALKIA_VSTAR):
+			return 1320.0
+		return 620.0
+	if _matches_key(card, TERAPAGOS_ID):
+		return 1260.0 if player == null or not _has_terapagos_on_field(player) else 720.0
+	if _matches_key(card, NOCTOWL_ID):
+		if player != null and _has_on_field_key(player, HOOTHOOT_ID) and not _has_on_field_key(player, NOCTOWL_ID):
+			return 1180.0
+		return 680.0
+	if _matches_key(card, PALKIA_V):
+		return 980.0 if player == null or (not _has_on_field_key(player, PALKIA_V) and not _has_on_field_key(player, PALKIA_VSTAR)) else 300.0
+	if _matches_key(card, BIBAREL):
+		return 900.0 if player != null and _has_on_field_key(player, BIDOOF) and not _has_on_field_key(player, BIBAREL) else 260.0
+	if _matches_key(card, HOOTHOOT_ID):
+		return 760.0 if player == null or _field_key_count(player, HOOTHOOT_ID) < 2 else 220.0
+	if _matches_key(card, FAN_ROTOM_ID):
+		return 640.0 if player == null or not _has_on_field_key(player, FAN_ROTOM_ID) else 160.0
+	if _matches_key(card, RADIANT_GRENINJA):
+		return 540.0 if player == null or not _has_on_field_key(player, RADIANT_GRENINJA) else 140.0
+	if _matches_key(card, BIDOOF):
+		return 520.0 if player == null or not _has_on_field_key(player, BIDOOF) else 160.0
+	if _matches_key(card, FEZANDIPITI):
+		return 320.0
+	return float(get_search_priority(card))
+
+
 func _fan_call_target_score(card: CardInstance, context: Dictionary) -> float:
 	if card == null or card.card_data == null or not card.card_data.is_pokemon():
 		return -100000.0
@@ -992,6 +1109,36 @@ func _pick_diverse_fan_call_targets(items: Array, step: Dictionary, context: Dic
 	return selected
 
 
+func _pick_glass_trumpet_sources(items: Array, step: Dictionary, context: Dictionary = {}) -> Array:
+	var max_select := int(step.get("max_select", items.size()))
+	if max_select <= 0 or items.is_empty():
+		return []
+	var desired_count := mini(max_select, _glass_trumpet_desired_source_count(context))
+	if desired_count <= 0:
+		return []
+	var selected: Array = []
+	for item: Variant in items:
+		if selected.size() >= desired_count:
+			break
+		if item is CardInstance and (item as CardInstance).card_data != null and (item as CardInstance).card_data.is_energy():
+			selected.append(item)
+	return selected
+
+
+func _glass_trumpet_desired_source_count(context: Dictionary) -> int:
+	var raw_targets: Variant = context.get("target_items", [])
+	var pressure_targets := 0
+	if raw_targets is Array and not (raw_targets as Array).is_empty():
+		for item: Variant in raw_targets:
+			if item is PokemonSlot:
+				var slot := item as PokemonSlot
+				if _is_glass_trumpet_target(slot) and _matches_key(slot, TERAPAGOS_ID) and _energy_units(slot) < 2:
+					pressure_targets += 1
+	else:
+		pressure_targets = _glass_trumpet_pressure_target_count(_context_player(context))
+	return pressure_targets
+
+
 func _append_first_matching_fan_call_target(selected: Array, items: Array, key: String, enabled: bool, max_select: int) -> void:
 	if not enabled or selected.size() >= max_select:
 		return
@@ -1052,6 +1199,24 @@ func _glass_trumpet_search_score(player: PlayerState) -> float:
 	if has_tera:
 		return 1080.0 if target_count >= 2 else 960.0
 	return 720.0
+
+
+func _glass_trumpet_action_bonus(player: PlayerState) -> float:
+	if player == null:
+		return 420.0
+	var has_tera := _has_terapagos_on_field(player)
+	var discard_energy_count := _basic_energy_in_discard_count(player)
+	var target_count := _glass_trumpet_target_count(player)
+	if discard_energy_count <= 0 or target_count <= 0:
+		return 300.0 if has_tera else 220.0
+	var pressure_target_count := _glass_trumpet_pressure_target_count(player)
+	if has_tera:
+		if pressure_target_count >= 2:
+			return 560.0
+		if pressure_target_count == 1:
+			return 360.0 if target_count >= 2 else 330.0
+		return -180.0
+	return 420.0
 
 
 func _glass_trumpet_assignment_score(slot: PokemonSlot, context: Dictionary) -> float:
@@ -1132,6 +1297,16 @@ func _glass_trumpet_target_count(player: PlayerState) -> int:
 	var total := 0
 	for slot: PokemonSlot in player.bench:
 		if _is_glass_trumpet_target(slot):
+			total += 1
+	return total
+
+
+func _glass_trumpet_pressure_target_count(player: PlayerState) -> int:
+	if player == null:
+		return 0
+	var total := 0
+	for slot: PokemonSlot in player.bench:
+		if _is_glass_trumpet_target(slot) and _matches_key(slot, TERAPAGOS_ID) and _energy_units(slot) < 2:
 			total += 1
 	return total
 
@@ -1234,6 +1409,27 @@ func _lost_vacuum_breaks_own_area_zero_shell(player: PlayerState, game_state: Ga
 	if _slot_is_live(player.active_pokemon) and _matches_key(player.active_pokemon, TERAPAGOS_ID):
 		return true
 	return _has_on_field_key(player, TERAPAGOS_ID)
+
+
+func _action_targets_own_area_zero(action: Dictionary, game_state: GameState) -> bool:
+	if game_state == null or not _matches_key(game_state.stadium_card, AREA_ZERO_ID):
+		return false
+	return _variant_targets_card_key(action.get("targets", []), AREA_ZERO_ID)
+
+
+func _variant_targets_card_key(value: Variant, key: String) -> bool:
+	if value is CardInstance:
+		return _matches_key(value as CardInstance, key)
+	if value is Array:
+		for item: Variant in value:
+			if _variant_targets_card_key(item, key):
+				return true
+	if value is Dictionary:
+		var dict := value as Dictionary
+		for dict_key: Variant in dict.keys():
+			if _variant_targets_card_key(dict[dict_key], key):
+				return true
+	return false
 
 
 func _hand_has_water_energy(player: PlayerState) -> bool:

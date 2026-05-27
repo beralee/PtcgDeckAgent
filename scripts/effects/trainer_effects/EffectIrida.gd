@@ -27,6 +27,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	var found_water_pokemon: CardInstance = null
 	var found_item: CardInstance = null
 	var water_raw: Array = ctx.get("water_pokemon", [])
+	var has_explicit_water: bool = ctx.has("water_pokemon")
 	for entry: Variant in water_raw:
 		if not (entry is CardInstance):
 			continue
@@ -35,6 +36,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 			found_water_pokemon = water_selected
 			break
 	var item_raw: Array = ctx.get("item_card", [])
+	var has_explicit_item: bool = ctx.has("item_card")
 	for entry: Variant in item_raw:
 		if not (entry is CardInstance):
 			continue
@@ -45,9 +47,9 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 
 	for deck_card: CardInstance in player.deck:
 		var cd: CardData = deck_card.card_data
-		if found_water_pokemon == null and cd.is_pokemon() and cd.energy_type == WATER_ENERGY_TYPE:
+		if found_water_pokemon == null and not has_explicit_water and cd.is_pokemon() and cd.energy_type == WATER_ENERGY_TYPE:
 			found_water_pokemon = deck_card
-		if found_item == null and cd.card_type == "Item":
+		if found_item == null and not has_explicit_item and cd.card_type == "Item":
 			found_item = deck_card
 		if found_water_pokemon != null and found_item != null:
 			break

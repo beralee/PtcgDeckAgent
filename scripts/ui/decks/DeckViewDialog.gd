@@ -5,6 +5,9 @@ const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 const CARD_TILE_WIDTH := 100
 const CARD_TILE_HEIGHT := 140
 const VIEW_GRID_COLUMNS := 6
+const CARD_LIST_DRAG_SCROLL_THRESHOLD := 10.0
+const CARD_LIST_DRAG_CLICK_SUPPRESS_MSEC := 180
+const CARD_LIST_DRAG_SCROLL_SENSITIVITY := 1.0
 
 const ENERGY_TYPE_LABELS: Dictionary = {
 	"R": "火", "W": "水", "G": "草", "L": "雷",
@@ -53,16 +56,19 @@ func show_deck(host: Node, deck: DeckData) -> void:
 	outer.add_child(info_label)
 
 	var scroll := ScrollContainer.new()
+	scroll.name = "DeckViewCardScroll"
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	HudThemeScript.style_scroll_container(scroll)
 	outer.add_child(scroll)
 
 	var grid := GridContainer.new()
+	grid.name = "DeckViewCardGrid"
 	grid.columns = VIEW_GRID_COLUMNS
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.add_theme_constant_override("h_separation", 6)
 	grid.add_theme_constant_override("v_separation", 6)
 	scroll.add_child(grid)
+	_configure_card_list_drag_scroll(scroll, grid)
 
 	for entry: Dictionary in _sort_entries_by_category(deck.cards):
 		var card_name: String = entry.get("name", "?")
@@ -71,7 +77,7 @@ func show_deck(host: Node, deck: DeckData) -> void:
 		var count: int = entry.get("count", 0)
 		for _i: int in count:
 			var tile := _create_view_tile(card_name, set_code, card_index)
-			tile.gui_input.connect(_on_view_tile_input.bind(host, set_code, card_index))
+			tile.gui_input.connect(_on_view_tile_input.bind(host, scroll, set_code, card_index))
 			grid.add_child(tile)
 
 	var cols := VIEW_GRID_COLUMNS
@@ -81,8 +87,150 @@ func show_deck(host: Node, deck: DeckData) -> void:
 	dialog.size = Vector2i(w, h)
 
 	host.add_child(dialog)
-	dialog.popup_centered()
+	if dialog.is_inside_tree():
+		dialog.popup_centered()
 	dialog.confirmed.connect(dialog.queue_free)
+
+
+func _configure_card_list_drag_scroll(scroll: ScrollContainer, grid: Control = null) -> void:
+	if scroll == null:
+		return
+	scroll.clip_contents = true
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.mouse_filter = Control.MOUSE_FILTER_STOP
+	scroll.set_meta("deck_card_list_drag_scroll_enabled", true)
+	scroll.set_meta("deck_card_list_drag_active", false)
+	scroll.set_meta("deck_card_list_dragging", false)
+	scroll.set_meta("deck_card_list_drag_suppress_until_msec", 0)
+	var input_callable := Callable(self, "_on_card_list_scroll_input").bind(scroll)
+	if not scroll.gui_input.is_connected(input_callable):
+		scroll.gui_input.connect(input_callable)
+	if grid != null:
+		grid.mouse_filter = Control.MOUSE_FILTER_STOP
+		if not grid.gui_input.is_connected(input_callable):
+			grid.gui_input.connect(input_callable)
+
+
+func _on_card_list_scroll_input(event: InputEvent, scroll: ScrollContainer) -> void:
+	_handle_card_list_drag_scroll_input(event, scroll)
+
+
+func _handle_card_list_drag_scroll_input(event: InputEvent, scroll: ScrollContainer) -> bool:
+	if scroll == null or not bool(scroll.get_meta("deck_card_list_drag_scroll_enabled", false)):
+		return false
+	if event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if _handle_card_list_wheel(mouse_button, scroll):
+			_accept_scroll_event(scroll)
+			return true
+		if mouse_button.button_index != MOUSE_BUTTON_LEFT:
+			return false
+		if mouse_button.pressed:
+			_begin_card_list_drag_scroll(_card_list_drag_event_position(event), scroll)
+			_accept_scroll_event(scroll)
+			return true
+		return _end_card_list_drag_scroll(scroll)
+	if event is InputEventMouseMotion and bool(scroll.get_meta("deck_card_list_drag_active", false)):
+		return _update_card_list_drag_scroll(_card_list_drag_event_position(event), scroll)
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			_begin_card_list_drag_scroll(touch.position, scroll)
+			_accept_scroll_event(scroll)
+			return true
+		return _end_card_list_drag_scroll(scroll)
+	if event is InputEventScreenDrag and bool(scroll.get_meta("deck_card_list_drag_active", false)):
+		return _update_card_list_drag_scroll((event as InputEventScreenDrag).position, scroll)
+	return false
+
+
+func _handle_card_list_wheel(mouse_button: InputEventMouseButton, scroll: ScrollContainer) -> bool:
+	if not mouse_button.pressed:
+		return false
+	var direction := 0
+	match mouse_button.button_index:
+		MOUSE_BUTTON_WHEEL_UP:
+			direction = -1
+		MOUSE_BUTTON_WHEEL_DOWN:
+			direction = 1
+		_:
+			return false
+	_set_card_list_scroll_vertical(scroll, scroll.scroll_vertical + direction * CARD_TILE_HEIGHT)
+	return true
+
+
+func _begin_card_list_drag_scroll(position: Vector2, scroll: ScrollContainer) -> void:
+	scroll.set_meta("deck_card_list_drag_active", true)
+	scroll.set_meta("deck_card_list_dragging", false)
+	scroll.set_meta("deck_card_list_drag_start_position", position)
+	scroll.set_meta("deck_card_list_drag_start_scroll", scroll.scroll_vertical)
+
+
+func _update_card_list_drag_scroll(position: Vector2, scroll: ScrollContainer) -> bool:
+	var start_position := _as_vector2(scroll.get_meta("deck_card_list_drag_start_position", Vector2.ZERO), Vector2.ZERO)
+	var delta := position - start_position
+	if not bool(scroll.get_meta("deck_card_list_dragging", false)) and absf(delta.y) < CARD_LIST_DRAG_SCROLL_THRESHOLD:
+		return false
+	scroll.set_meta("deck_card_list_dragging", true)
+	var start_scroll := int(scroll.get_meta("deck_card_list_drag_start_scroll", 0))
+	_set_card_list_scroll_vertical(scroll, start_scroll - roundi(delta.y * CARD_LIST_DRAG_SCROLL_SENSITIVITY))
+	_accept_scroll_event(scroll)
+	return true
+
+
+func _end_card_list_drag_scroll(scroll: ScrollContainer) -> bool:
+	var was_dragging := bool(scroll.get_meta("deck_card_list_dragging", false))
+	scroll.set_meta("deck_card_list_drag_active", false)
+	scroll.set_meta("deck_card_list_dragging", false)
+	if was_dragging:
+		scroll.set_meta("deck_card_list_drag_suppress_until_msec", Time.get_ticks_msec() + CARD_LIST_DRAG_CLICK_SUPPRESS_MSEC)
+		_accept_scroll_event(scroll)
+	return was_dragging
+
+
+func _set_card_list_scroll_vertical(scroll: ScrollContainer, value: int) -> void:
+	var target := maxi(0, value)
+	var max_scroll := _card_list_max_vertical_scroll(scroll)
+	if max_scroll > 0:
+		target = mini(target, max_scroll)
+	scroll.scroll_vertical = target
+
+
+func _card_list_max_vertical_scroll(scroll: ScrollContainer) -> int:
+	if scroll == null:
+		return 0
+	var bar := scroll.get_v_scroll_bar()
+	if bar == null:
+		return 0
+	return maxi(0, roundi(bar.max_value - bar.page))
+
+
+func _is_card_list_drag_click_suppressed(scroll: ScrollContainer) -> bool:
+	if scroll == null:
+		return false
+	return Time.get_ticks_msec() < int(scroll.get_meta("deck_card_list_drag_suppress_until_msec", 0))
+
+
+func _card_list_drag_event_position(event: InputEvent) -> Vector2:
+	if event is InputEventMouse:
+		return (event as InputEventMouse).position
+	if event is InputEventScreenTouch:
+		return (event as InputEventScreenTouch).position
+	if event is InputEventScreenDrag:
+		return (event as InputEventScreenDrag).position
+	return Vector2.ZERO
+
+
+func _accept_scroll_event(scroll: ScrollContainer) -> void:
+	if scroll != null:
+		scroll.accept_event()
+
+
+func _as_vector2(value: Variant, fallback: Vector2 = Vector2.ZERO) -> Vector2:
+	if value is Vector2:
+		return value
+	return fallback
 
 
 func _sort_entries_by_category(cards: Array[Dictionary]) -> Array[Dictionary]:
@@ -134,7 +282,7 @@ func _create_view_tile(card_name: String, set_code: String, card_index: String) 
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.text = card_name
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 11)
+	label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(11))
 	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	label.custom_minimum_size = Vector2(CARD_TILE_WIDTH - 8, 0)
 	vbox.add_child(label)
@@ -142,7 +290,11 @@ func _create_view_tile(card_name: String, set_code: String, card_index: String) 
 	return panel
 
 
-func _on_view_tile_input(event: InputEvent, host: Node, set_code: String, card_index: String) -> void:
+func _on_view_tile_input(event: InputEvent, host: Node, scroll: ScrollContainer, set_code: String, card_index: String) -> void:
+	if _handle_card_list_drag_scroll_input(event, scroll):
+		return
+	if _is_card_list_drag_click_suppressed(scroll):
+		return
 	if not (event is InputEventMouseButton and (event as InputEventMouseButton).pressed):
 		return
 	if (event as InputEventMouseButton).button_index == MOUSE_BUTTON_RIGHT:
@@ -173,7 +325,7 @@ func _show_card_detail(host: Node, card: CardData) -> void:
 
 	var header := Label.new()
 	header.text = card.name
-	header.add_theme_font_size_override("font_size", 20)
+	header.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(20))
 	content.add_child(header)
 
 	var meta_parts: PackedStringArray = []

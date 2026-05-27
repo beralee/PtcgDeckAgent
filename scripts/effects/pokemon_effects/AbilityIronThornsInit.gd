@@ -33,6 +33,8 @@ static func is_locked_by_init(slot: PokemonSlot, state: GameState) -> bool:
 
 ## 检查铁荆棘的初始化特性是否被其他效果压制（不递归检查初始化自身）
 static func _is_init_suppressed(slot: PokemonSlot, state: GameState) -> bool:
+	if EffectCancelCologne.is_slot_directly_ability_disabled(slot, state):
+		return true
 	if AbilityBasicLock.is_locked_by_basic_lock(slot, state):
 		return true
 	if AbilityDisableOpponentAbility.is_locked_by_dark_wing(slot, state):

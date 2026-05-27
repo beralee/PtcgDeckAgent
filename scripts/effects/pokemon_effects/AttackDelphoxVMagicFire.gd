@@ -102,7 +102,7 @@ func execute_attack(
 		energy_card.face_up = true
 		player.lost_zone.append(energy_card)
 
-	if AbilityBenchImmune.prevents_opponent_attack_damage_or_effect(target_slot, attacker, state):
+	if AbilityBenchImmune.prevents_opponent_attack_damage(target_slot, attacker, state):
 		return
 	if AttackCoinFlipPreventDamageAndEffectsNextTurn.prevents_attack_damage(target_slot, state):
 		return

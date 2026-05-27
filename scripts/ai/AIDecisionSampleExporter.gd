@@ -18,6 +18,10 @@ var max_turn_for_shaping: int = 30
 var speed_penalty: float = 0.3
 
 
+func should_collect_action_teachers() -> bool:
+	return true
+
+
 func start_game(meta: Dictionary = {}) -> void:
 	_records.clear()
 	_interaction_records.clear()

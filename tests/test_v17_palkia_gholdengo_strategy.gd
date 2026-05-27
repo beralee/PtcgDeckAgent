@@ -251,6 +251,157 @@ func test_one_energy_make_it_rain_is_not_a_premium_nonlethal_attack() -> String:
 	return assert_true(attack_score <= 260.0, "A one-Energy nonlethal Make It Rain should preserve fuel instead of ending the turn as a premium attack (attack=%f)" % attack_score)
 
 
+func test_two_energy_nonlethal_make_it_rain_yields_to_setup_churn() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Gholdengo ex", "M", 260, "Stage 1", "ex", "Gimmighoul", 2), 0)
+	_attach(player.active_pokemon, "M", 1)
+	player.hand.append(_card(_energy("Basic Metal Energy A", "M"), 0))
+	player.hand.append(_card(_energy("Basic Metal Energy B", "M"), 0))
+	var cipher := _card(_trainer("Ciphermaniac's Codebreaking", "Supporter"), 0)
+	player.hand.append(cipher)
+	for i: int in 20:
+		player.deck.append(_card(_trainer("Deck filler %d" % i), 0))
+	gs.players[1].active_pokemon = _slot(_pokemon("Charizard ex", "R", 330, "Stage 2", "ex", "Charmeleon", 2), 1)
+
+	var attack_score: float = strategy.score_action_absolute({
+		"kind": "attack",
+		"source_slot": player.active_pokemon,
+		"attack_index": 0,
+		"attack_name": "Make It Rain",
+		"projected_damage": 100,
+		"projected_knockout": false,
+	}, gs, 0)
+	var cipher_score: float = strategy.score_action_absolute({
+		"kind": "play_trainer",
+		"card": cipher,
+	}, gs, 0)
+
+	return assert_true(cipher_score > attack_score, "A 100-damage nonlethal Make It Rain should not beat setup churn that improves the next burst turn (cipher=%f attack=%f)" % [cipher_score, attack_score])
+
+
+func test_thin_deck_one_energy_make_it_rain_yields_to_preserve_pass() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Gholdengo ex", "M", 260, "Stage 1", "ex", "Gimmighoul", 2), 0)
+	_attach(player.active_pokemon, "M", 1)
+	player.hand.append(_card(_energy("Basic Metal Energy", "M"), 0))
+	for i: int in 6:
+		player.deck.append(_card(_trainer("Deck filler %d" % i), 0))
+	gs.players[1].active_pokemon = _slot(_pokemon("Charizard ex", "R", 330, "Stage 2", "ex", "Charmeleon", 2), 1)
+
+	var attack_score: float = strategy.score_action_absolute({
+		"kind": "attack",
+		"source_slot": player.active_pokemon,
+		"attack_index": 0,
+		"attack_name": "Make It Rain",
+		"projected_damage": 50,
+		"projected_knockout": false,
+	}, gs, 0)
+	var end_turn_score: float = strategy.score_action_absolute({"kind": "end_turn"}, gs, 0)
+
+	return assert_true(end_turn_score > attack_score, "Thin-deck one-Energy Make It Rain should preserve deck and fuel instead of taking a nonlethal 50-damage attack (end=%f attack=%f)" % [end_turn_score, attack_score])
+
+
+func test_zero_energy_make_it_rain_stays_below_pass_after_intent_bonus_when_deck_safe() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Gholdengo ex", "M", 260, "Stage 1", "ex", "Gimmighoul", 2), 0)
+	_attach(player.active_pokemon, "M", 1)
+	for i: int in 20:
+		player.deck.append(_card(_trainer("Deck filler %d" % i), 0))
+
+	var attack_score: float = strategy.score_action_absolute({
+		"kind": "attack",
+		"source_slot": player.active_pokemon,
+		"attack_index": 0,
+		"attack_name": "Make It Rain",
+		"projected_damage": 0,
+		"projected_knockout": false,
+	}, gs, 0)
+	var end_turn_score: float = strategy.score_action_absolute({"kind": "end_turn"}, gs, 0)
+
+	return assert_true(end_turn_score > attack_score + 180.0, "Zero-energy Make It Rain should remain below pass even after the shared attack intent bonus (end=%f attack=%f)" % [end_turn_score, attack_score])
+
+
+func test_two_energy_nonlethal_make_it_rain_stays_below_pass_after_intent_bonus_when_no_setup() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Gholdengo ex", "M", 260, "Stage 1", "ex", "Gimmighoul", 2), 0)
+	_attach(player.active_pokemon, "M", 1)
+	player.hand.append(_card(_energy("Basic Metal Energy A", "M"), 0))
+	player.hand.append(_card(_energy("Basic Metal Energy B", "M"), 0))
+	for i: int in 20:
+		player.deck.append(_card(_trainer("Deck filler %d" % i), 0))
+	gs.players[1].active_pokemon = _slot(_pokemon("Charizard ex", "R", 330, "Stage 2", "ex", "Charmeleon", 2), 1)
+
+	var attack_score: float = strategy.score_action_absolute({
+		"kind": "attack",
+		"source_slot": player.active_pokemon,
+		"attack_index": 0,
+		"attack_name": "Make It Rain",
+		"projected_damage": 100,
+		"projected_knockout": false,
+	}, gs, 0)
+	var end_turn_score: float = strategy.score_action_absolute({"kind": "end_turn"}, gs, 0)
+
+	return assert_true(end_turn_score > attack_score + 180.0, "Two-energy nonlethal Make It Rain should preserve fuel instead of beating pass after attack intent bonus (end=%f attack=%f)" % [end_turn_score, attack_score])
+
+
+func test_full_metal_lab_outranks_nonlethal_small_make_it_rain() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Gholdengo ex", "M", 260, "Stage 1", "ex", "Gimmighoul", 2), 0)
+	_attach(player.active_pokemon, "M", 1)
+	player.hand.append(_card(_energy("Basic Metal Energy", "M"), 0))
+	for i: int in 20:
+		player.deck.append(_card(_trainer("Deck filler %d" % i), 0))
+	gs.players[1].active_pokemon = _slot(_pokemon("Charizard ex", "R", 330, "Stage 2", "ex", "Charmeleon", 2), 1)
+	var stadium := _card(_trainer("Full Metal Lab", "Stadium"), 0)
+
+	var attack_score: float = strategy.score_action_absolute({
+		"kind": "attack",
+		"source_slot": player.active_pokemon,
+		"attack_index": 0,
+		"attack_name": "Make It Rain",
+		"projected_damage": 50,
+		"projected_knockout": false,
+	}, gs, 0)
+	var stadium_score: float = strategy.score_action_absolute({
+		"kind": "play_stadium",
+		"card": stadium,
+	}, gs, 0)
+
+	return assert_true(stadium_score > attack_score + 180.0, "Full Metal Lab should land before a nonlethal small Make It Rain even after the shared attack intent bonus (stadium=%f attack=%f)" % [stadium_score, attack_score])
+
+
+func test_zero_energy_make_it_rain_is_worse_than_passing() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Gholdengo ex", "M", 260, "Stage 1", "ex", "Gimmighoul", 2), 0)
+	_attach(player.active_pokemon, "M", 1)
+	for i: int in 6:
+		player.deck.append(_card(_trainer("Deck filler %d" % i), 0))
+
+	var attack_score: float = strategy.score_action_absolute({
+		"kind": "attack",
+		"source_slot": player.active_pokemon,
+		"attack_index": 0,
+		"attack_name": "Make It Rain",
+		"projected_damage": 0,
+		"projected_knockout": false,
+	}, gs, 0)
+	var end_turn_score: float = strategy.score_action_absolute({"kind": "end_turn"}, gs, 0)
+
+	return assert_true(end_turn_score > attack_score, "Zero-damage Make It Rain should not be chosen over passing in a no-route low-deck state (end=%f attack=%f)" % [end_turn_score, attack_score])
+
+
 func test_gholdengo_draws_before_nonlethal_make_it_rain_when_not_thin() -> String:
 	var strategy := StrategyPalkiaGholdengo.new()
 	var gs := _game_state()
@@ -304,6 +455,36 @@ func test_gholdengo_draws_before_lethal_make_it_rain_when_deck_is_safe() -> Stri
 	}, gs, 0)
 
 	return assert_true(draw_score > attack_score, "Active Gholdengo should take the free draw before a lethal Make It Rain while the deck is safe (draw=%f attack=%f)" % [draw_score, attack_score])
+
+
+func test_near_thin_deck_takes_lethal_make_it_rain_before_gholdengo_draw() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Gholdengo ex", "M", 260, "Stage 1", "ex", "Gimmighoul", 2), 0)
+	_attach(player.active_pokemon, "M", 1)
+	for i: int in 3:
+		player.hand.append(_card(_energy("Basic Energy %d" % i, "M"), 0))
+	for i: int in 10:
+		player.deck.append(_card(_trainer("Deck filler %d" % i), 0))
+	gs.players[1].active_pokemon = _slot(_pokemon("Charizard ex", "R", 330, "Stage 2", "ex", "Charmeleon", 2), 1)
+	gs.players[1].active_pokemon.damage_counters = 180
+
+	var attack_score: float = strategy.score_action_absolute({
+		"kind": "attack",
+		"source_slot": player.active_pokemon,
+		"attack_index": 0,
+		"attack_name": "Make It Rain",
+		"projected_damage": 150,
+		"projected_knockout": true,
+	}, gs, 0)
+	var draw_score: float = strategy.score_action_absolute({
+		"kind": "use_ability",
+		"source_slot": player.active_pokemon,
+		"ability_index": 0,
+	}, gs, 0)
+
+	return assert_true(attack_score > draw_score + 500.0, "Near-thin decks should take an already-lethal Make It Rain before drawing extra cards (attack=%f draw=%f)" % [attack_score, draw_score])
 
 
 func test_make_it_rain_burst_outranks_nonlethal_churn_when_loaded() -> String:
@@ -462,6 +643,32 @@ func test_manual_attach_prefers_metal_on_unready_gholdengo() -> String:
 	])
 
 
+func test_unready_gimmighoul_rejects_off_type_manual_attach() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Gimmighoul", "M", 70, "Basic", "", "", 1), 0)
+	var fire := _card(_energy("Basic Fire Energy", "R"), 0)
+	var metal := _card(_energy("Basic Metal Energy", "M"), 0)
+
+	var fire_score: float = strategy.score_action_absolute({
+		"kind": "attach_energy",
+		"card": fire,
+		"target_slot": player.active_pokemon,
+	}, gs, 0)
+	var metal_score: float = strategy.score_action_absolute({
+		"kind": "attach_energy",
+		"card": metal,
+		"target_slot": player.active_pokemon,
+	}, gs, 0)
+	var end_turn_score: float = strategy.score_action_absolute({"kind": "end_turn"}, gs, 0)
+
+	return run_checks([
+		assert_true(metal_score > fire_score + 800.0, "Gimmighoul needs Metal before off-type retreat or attack filler (metal=%f fire=%f)" % [metal_score, fire_score]),
+		assert_true(fire_score < end_turn_score, "Off-type first attachment to Gimmighoul should be worse than passing (fire=%f end=%f)" % [fire_score, end_turn_score]),
+	])
+
+
 func test_manual_attach_prefers_water_on_unready_palkia() -> String:
 	var strategy := StrategyPalkiaGholdengo.new()
 	var gs := _game_state()
@@ -482,6 +689,115 @@ func test_manual_attach_prefers_water_on_unready_palkia() -> String:
 	}, gs, 0)
 
 	return assert_true(water_score > metal_score + 500.0, "Palkia should take Water Energy before off-type fuel (water=%f metal=%f)" % [water_score, metal_score])
+
+
+func test_no_damage_palkia_v_attack_does_not_skip_vstar_conversion() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Origin Forme Palkia V", "W", 220, "Basic", "V", "", 2), 0)
+	_attach(player.active_pokemon, "W", 1)
+	var vstar := _card(_pokemon("Origin Forme Palkia VSTAR", "W", 280, "VSTAR", "VSTAR", "Origin Forme Palkia V", 2), 0)
+	var water := _card(_energy("Basic Water Energy", "W"), 0)
+	player.hand.append(vstar)
+	player.hand.append(water)
+
+	var attack_score: float = strategy.score_action_absolute({
+		"kind": "attack",
+		"source_slot": player.active_pokemon,
+		"attack_index": 0,
+		"attack_name": "Rule the Region",
+		"projected_damage": 0,
+		"projected_knockout": false,
+	}, gs, 0)
+	var evolve_score: float = strategy.score_action_absolute({
+		"kind": "evolve",
+		"card": vstar,
+		"target_slot": player.active_pokemon,
+	}, gs, 0)
+	var attach_score: float = strategy.score_action_absolute({
+		"kind": "attach_energy",
+		"card": water,
+		"target_slot": player.active_pokemon,
+	}, gs, 0)
+
+	return run_checks([
+		assert_true(evolve_score > attack_score + 200.0, "Palkia V should evolve before spending the turn on a no-damage Stadium-search attack (evolve=%f attack=%f)" % [evolve_score, attack_score]),
+		assert_true(attach_score > attack_score + 200.0, "Palkia V should take the second Water before using a no-damage attack (attach=%f attack=%f)" % [attach_score, attack_score]),
+	])
+
+
+func test_support_pokemon_attack_does_not_become_turn_owner() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	var manaphy_cd := _pokemon("Manaphy", "W", 70, "Basic", "", "", 1)
+	manaphy_cd.attacks = [{"name": "Wave Splash", "cost": "W", "damage": "20"}]
+	player.active_pokemon = _slot(manaphy_cd, 0)
+	_attach(player.active_pokemon, "W", 1)
+	player.bench.append(_slot(_pokemon("Gimmighoul", "M", 70, "Basic", "", "", 1), 0))
+
+	var turn_contract: Dictionary = strategy.build_turn_contract(gs, 0, {"prompt_kind": "action_selection"})
+	var owner: Dictionary = turn_contract.get("owner", {}) if turn_contract.get("owner", {}) is Dictionary else {}
+	var attack_score: float = strategy.score_action_absolute({
+		"kind": "attack",
+		"source_slot": player.active_pokemon,
+		"attack_index": 0,
+		"attack_name": "Wave Splash",
+		"projected_damage": 20,
+		"projected_knockout": false,
+	}, gs, 0)
+
+	return run_checks([
+		assert_eq(str(owner.get("turn_owner_name", "")), "Gimmighoul", "A Manaphy chip attack should not become the Palkia-Gholdengo turn owner"),
+		assert_true(attack_score <= 80.0, "Support Pokemon chip attacks should stay below setup actions instead of acting as premium attacks (score=%f)" % attack_score),
+	])
+
+
+func test_support_pokemon_chip_attack_yields_to_retreat_after_intent_bonus() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	var manaphy_cd := _pokemon("Manaphy", "W", 70, "Basic", "", "", 1)
+	manaphy_cd.attacks = [{"name": "Wave Splash", "cost": "W", "damage": "20"}]
+	player.active_pokemon = _slot(manaphy_cd, 0)
+	_attach(player.active_pokemon, "W", 1)
+	var gimmighoul := _slot(_pokemon("Gimmighoul", "M", 70, "Basic", "", "", 1), 0)
+	_attach(gimmighoul, "M", 1)
+	player.bench.append(gimmighoul)
+
+	var attack_score: float = strategy.score_action_absolute({
+		"kind": "attack",
+		"source_slot": player.active_pokemon,
+		"attack_index": 0,
+		"attack_name": "Wave Splash",
+		"projected_damage": 20,
+		"projected_knockout": false,
+	}, gs, 0)
+	var retreat_score: float = strategy.score_action_absolute({"kind": "retreat"}, gs, 0)
+
+	return assert_true(retreat_score > attack_score + 180.0, "Support Pokemon chip attacks should remain below retreat even after the shared attack intent bonus (retreat=%f attack=%f)" % [retreat_score, attack_score])
+
+
+func test_palkia_v_stops_no_damage_attack_after_stadium_access() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Origin Forme Palkia V", "W", 220, "Basic", "V", "", 2), 0)
+	_attach(player.active_pokemon, "W", 1)
+	player.hand.append(_card(_trainer("Full Metal Lab", "Stadium"), 0))
+
+	var attack_score: float = strategy.score_action_absolute({
+		"kind": "attack",
+		"source_slot": player.active_pokemon,
+		"attack_index": 0,
+		"attack_name": "Rule the Region",
+		"projected_damage": 0,
+		"projected_knockout": false,
+	}, gs, 0)
+	var end_turn_score: float = strategy.score_action_absolute({"kind": "end_turn"}, gs, 0)
+
+	return assert_true(end_turn_score > attack_score, "Palkia V should stop repeating no-damage Stadium-search attacks once the Stadium is already accessible (end=%f attack=%f)" % [end_turn_score, attack_score])
 
 
 func test_search_target_prefers_gholdengo_evolution_over_palkia_v_when_gimmighoul_ready() -> String:
@@ -534,6 +850,8 @@ func test_poffin_stops_being_premium_when_only_palkia_v_is_missing() -> String:
 	var player: PlayerState = gs.players[0]
 	player.active_pokemon = _slot(_pokemon("Gimmighoul", "M", 70, "Basic", "", "", 1), 0)
 	player.bench.append(_slot(_pokemon("Gimmighoul", "M", 70, "Basic", "", "", 1), 0))
+	for i: int in 20:
+		player.deck.append(_card(_trainer("Deck filler %d" % i), 0))
 	var poffin := _card(_trainer("Buddy-Buddy Poffin"), 0)
 	var nest := _card(_trainer("Nest Ball"), 0)
 
@@ -630,6 +948,191 @@ func test_energy_search_prefers_core_metal_and_water_before_off_type_fuel() -> S
 		assert_true(metal_score > lightning_score + 120.0, "Energy search should secure Metal for the Gholdengo line before off-type fuel (metal=%f lightning=%f)" % [metal_score, lightning_score]),
 		assert_true(water_score > psychic_score + 80.0, "Energy search should secure Water for the Palkia line before off-type fuel (water=%f psychic=%f)" % [water_score, psychic_score]),
 		assert_true(picked_types.has("M") and picked_types.has("W"), "Two-card Energy search should pick Metal and Water before off-type fuel (picked=%s)" % str(picked_types)),
+	])
+
+
+func test_irida_item_search_protects_single_gimmighoul_opening_before_energy_search() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Gimmighoul", "M", 70, "Basic", "", "", 1), 0)
+	var poffin := _card(_trainer("Buddy-Buddy Poffin"), 0)
+	var nest := _card(_trainer("Nest Ball"), 0)
+	var energy_search := _card(_trainer("Energy Search Pro"), 0)
+	var context := {"game_state": gs, "player_index": 0}
+
+	var poffin_score: float = strategy.score_interaction_target(poffin, {"id": "search_item"}, context)
+	var nest_score: float = strategy.score_interaction_target(nest, {"id": "search_item"}, context)
+	var energy_score: float = strategy.score_interaction_target(energy_search, {"id": "search_item"}, context)
+	var picked: Array = strategy.pick_interaction_items([energy_search, nest, poffin], {"id": "search_item", "max_select": 1}, context)
+	var picked_name := ""
+	if not picked.is_empty() and picked[0] is CardInstance:
+		picked_name = (picked[0] as CardInstance).card_data.name_en
+
+	return run_checks([
+		assert_true(poffin_score > energy_score + 150.0, "Single-Gimmighoul openings should search Poffin before Energy Search Pro (poffin=%f energy=%f)" % [poffin_score, energy_score]),
+		assert_true(nest_score > energy_score + 100.0, "Single-Gimmighoul openings should search Nest Ball before Energy Search Pro (nest=%f energy=%f)" % [nest_score, energy_score]),
+		assert_eq(picked_name, "Buddy-Buddy Poffin", "Irida item search should choose the bench-protection item first"),
+	])
+
+
+func test_fragile_gimmighoul_opening_prefers_irida_over_ultra_ball() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Gimmighoul", "M", 70, "Basic", "", "", 1), 0)
+	player.bench.append(_slot(_pokemon("Manaphy", "W", 70, "Basic", "", "", 1), 0))
+	for i: int in 20:
+		player.deck.append(_card(_trainer("Deck filler %d" % i), 0))
+	var irida := _card(_trainer("Irida", "Supporter"), 0)
+	var ultra := _card(_trainer("Ultra Ball"), 0)
+
+	var irida_score: float = strategy.score_action_absolute({"kind": "play_trainer", "card": irida}, gs, 0)
+	var ultra_score: float = strategy.score_action_absolute({"kind": "play_trainer", "card": ultra}, gs, 0)
+
+	return assert_true(irida_score > ultra_score + 60.0, "Fragile Gimmighoul openings should use Irida to secure a Basic plus protection item before spending Ultra Ball discards (irida=%f ultra=%f)" % [irida_score, ultra_score])
+
+
+func test_single_active_opening_benches_support_before_gimmighoul_attack() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Gimmighoul", "M", 70, "Basic", "", "", 1), 0)
+	_attach(player.active_pokemon, "M", 1)
+	for i: int in 20:
+		player.deck.append(_card(_trainer("Deck filler %d" % i), 0))
+	var fez := _card(_pokemon("Fezandipiti ex", "D", 210, "Basic", "ex", "", 1), 0)
+	var bench_score: float = strategy.score_action_absolute({"kind": "play_basic_to_bench", "card": fez}, gs, 0)
+	var attack_score: float = strategy.score_action_absolute({"kind": "attack", "source_slot": player.active_pokemon, "attack_index": 0, "projected_damage": 30}, gs, 0)
+
+	return run_checks([
+		assert_true(bench_score > attack_score + 150.0, "Single-active openings should bench any available Basic before a low-value Gimmighoul attack (bench=%f attack=%f)" % [bench_score, attack_score]),
+	])
+
+
+func test_intent_facts_penalize_support_pokemon_energy_padding() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Gholdengo ex", "M", 260, "Stage 1", "ex", "Gimmighoul", 2), 0)
+	_attach(player.active_pokemon, "M", 1)
+	player.bench.append(_slot(_pokemon("Fezandipiti ex", "D", 210, "Basic", "ex", "", 1), 0))
+	var facts: Dictionary = strategy.build_intent_facts(gs, 0, [
+		{
+			"id": "attach_energy:c1:bench_0",
+			"type": "attach_energy",
+			"position": "bench_0",
+			"target_name_en": "Fezandipiti ex",
+			"energy_type": "Fire Energy",
+		},
+		{
+			"id": "attach_energy:c2:active",
+			"type": "attach_energy",
+			"position": "active",
+			"target_name_en": "Gholdengo ex",
+			"energy_type": "Metal Energy",
+		},
+	])
+	var support_penalized := false
+	var active_penalized := false
+	for raw_penalty: Variant in facts.get("soft_penalties", []):
+		if not (raw_penalty is Dictionary):
+			continue
+		var penalty: Dictionary = raw_penalty
+		if str(penalty.get("action_id", "")) == "attach_energy:c1:bench_0" and str(penalty.get("type", "")) == "wrong_energy_attribute":
+			support_penalized = true
+		if str(penalty.get("action_id", "")) == "attach_energy:c2:active":
+			active_penalized = true
+
+	return run_checks([
+		assert_true(support_penalized, "Intent facts should penalize support Pokemon energy padding before shared attach bonuses are applied"),
+		assert_false(active_penalized, "Intent facts should not penalize a correct Metal attach to Gholdengo ex"),
+	])
+
+
+func test_critical_deck_suppresses_non_conversion_search_churn() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Gholdengo ex", "M", 260, "Stage 1", "ex", "Gimmighoul", 2), 0)
+	_attach(player.active_pokemon, "M", 1)
+	player.deck.append(_card(_trainer("Buddy-Buddy Poffin"), 0))
+	player.deck.append(_card(_trainer("Nest Ball"), 0))
+	player.deck.append(_card(_trainer("Ultra Ball"), 0))
+	var ultra := _card(_trainer("Ultra Ball"), 0)
+	var cipher := _card(_trainer("Ciphermaniac's Codebreaking", "Supporter"), 0)
+	var poffin := _card(_trainer("Buddy-Buddy Poffin"), 0)
+
+	var ultra_score: float = strategy.score_action_absolute({"kind": "play_trainer", "card": ultra}, gs, 0)
+	var cipher_score: float = strategy.score_action_absolute({"kind": "play_trainer", "card": cipher}, gs, 0)
+	var poffin_score: float = strategy.score_action_absolute({"kind": "play_trainer", "card": poffin}, gs, 0)
+
+	return run_checks([
+		assert_true(ultra_score <= 90.0, "Critical-deck Ultra Ball should cool off unless it immediately converts the game (score=%f)" % ultra_score),
+		assert_true(cipher_score <= 40.0, "Critical-deck Ciphermaniac churn should stay suppressed (score=%f)" % cipher_score),
+		assert_true(poffin_score <= 90.0, "Critical-deck bench search should not pad the board (score=%f)" % poffin_score),
+	])
+
+
+func test_low_deck_end_turn_outranks_padding_search_without_attack_route() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Gholdengo ex", "M", 260, "Stage 1", "ex", "Gimmighoul", 2), 0)
+	_attach(player.active_pokemon, "M", 1)
+	for i: int in 5:
+		player.deck.append(_card(_trainer("Deck filler %d" % i), 0))
+	var ultra := _card(_trainer("Ultra Ball"), 0)
+	var cipher := _card(_trainer("Ciphermaniac's Codebreaking", "Supporter"), 0)
+	var stadium := _card(_trainer("Full Metal Lab", "Stadium"), 0)
+	var filler_basic := _card(_pokemon("Gimmighoul", "M", 70, "Basic", "", "", 1), 0)
+	var bench_gimmighoul := _slot(_pokemon("Gimmighoul", "M", 70, "Basic", "", "", 1), 0)
+	player.bench.append(bench_gimmighoul)
+	var dead_evolution := _card(_pokemon("Gholdengo ex", "M", 260, "Stage 1", "ex", "Gimmighoul", 2), 0)
+
+	var end_turn_score: float = strategy.score_action_absolute({"kind": "end_turn"}, gs, 0)
+	var ultra_score: float = strategy.score_action_absolute({"kind": "play_trainer", "card": ultra}, gs, 0)
+	var cipher_score: float = strategy.score_action_absolute({"kind": "play_trainer", "card": cipher}, gs, 0)
+	var stadium_score: float = strategy.score_action_absolute({"kind": "play_stadium", "card": stadium}, gs, 0)
+	var bench_score: float = strategy.score_action_absolute({"kind": "play_basic_to_bench", "card": filler_basic}, gs, 0)
+	var evolve_score: float = strategy.score_action_absolute({
+		"kind": "evolve",
+		"card": dead_evolution,
+		"target_slot": bench_gimmighoul,
+	}, gs, 0)
+
+	return run_checks([
+		assert_true(end_turn_score > ultra_score, "Low-deck no-attack states should end turn instead of spending Ultra Ball (end=%f ultra=%f)" % [end_turn_score, ultra_score]),
+		assert_true(end_turn_score > cipher_score, "Low-deck no-attack states should end turn instead of Ciphermaniac churn (end=%f cipher=%f)" % [end_turn_score, cipher_score]),
+		assert_true(end_turn_score > stadium_score, "Low-deck no-attack states should end turn instead of padding Stadium plays (end=%f stadium=%f)" % [end_turn_score, stadium_score]),
+		assert_true(end_turn_score > bench_score, "Low-deck no-attack states should not add filler Basics before passing (end=%f bench=%f)" % [end_turn_score, bench_score]),
+		assert_true(end_turn_score > evolve_score, "Low-deck no-attack states should not spend an evolution that does not create an attack route (end=%f evolve=%f)" % [end_turn_score, evolve_score]),
+	])
+
+
+func test_low_deck_end_turn_outranks_nonconversion_prize_and_recovery_search() -> String:
+	var strategy := StrategyPalkiaGholdengo.new()
+	var gs := _game_state()
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_pokemon("Gholdengo ex", "M", 260, "Stage 1", "ex", "Gimmighoul", 2), 0)
+	_attach(player.active_pokemon, "M", 1)
+	player.hand.append(_card(_energy("Basic Metal Energy", "M"), 0))
+	for i: int in 6:
+		player.deck.append(_card(_trainer("Deck filler %d" % i), 0))
+	gs.players[1].active_pokemon = _slot(_pokemon("Charizard ex", "R", 330, "Stage 2", "ex", "Charmeleon", 2), 1)
+	var heavy_ball := _card(_trainer("Hisuian Heavy Ball"), 0)
+	var night_stretcher := _card(_trainer("Night Stretcher"), 0)
+	var irida := _card(_trainer("Irida", "Supporter"), 0)
+
+	var end_turn_score: float = strategy.score_action_absolute({"kind": "end_turn"}, gs, 0)
+	var heavy_score: float = strategy.score_action_absolute({"kind": "play_trainer", "card": heavy_ball}, gs, 0)
+	var stretcher_score: float = strategy.score_action_absolute({"kind": "play_trainer", "card": night_stretcher}, gs, 0)
+	var irida_score: float = strategy.score_action_absolute({"kind": "play_trainer", "card": irida}, gs, 0)
+
+	return run_checks([
+		assert_true(end_turn_score > heavy_score, "Low-deck non-conversion states should not spend Hisuian Heavy Ball before passing (end=%f heavy=%f)" % [end_turn_score, heavy_score]),
+		assert_true(end_turn_score > stretcher_score, "Low-deck non-conversion states should not spend Night Stretcher before passing (end=%f stretcher=%f)" % [end_turn_score, stretcher_score]),
+		assert_true(end_turn_score > irida_score, "Low-deck non-conversion states should not spend Irida deck search before passing (end=%f irida=%f)" % [end_turn_score, irida_score]),
 	])
 
 

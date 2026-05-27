@@ -5,6 +5,7 @@ const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 
 func _ready() -> void:
 	HudThemeScript.apply(self)
+	%TitleLabel.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(26))
 	%BtnBack.pressed.connect(_on_back_pressed)
 	%BtnStartRound.pressed.connect(_on_start_round_pressed)
 	_render()

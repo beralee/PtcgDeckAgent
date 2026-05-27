@@ -29,6 +29,13 @@ func get_signature_names() -> Array[String]:
 func plan_opening_setup(player: PlayerState) -> Dictionary:
 	if player == null:
 		return {"active_hand_index": -1, "bench_hand_indices": []}
+	var has_regidrago_basic := false
+	for card: CardInstance in player.hand:
+		if card == null or card.card_data == null or not card.is_basic_pokemon():
+			continue
+		if _card_name(card) == REGIDRAGO_V:
+			has_regidrago_basic = true
+			break
 	var basics: Array[Dictionary] = []
 	for i: int in player.hand.size():
 		var card: CardInstance = player.hand[i]
@@ -39,7 +46,7 @@ func plan_opening_setup(player: PlayerState) -> Dictionary:
 		var bench_score := 80.0
 		match name:
 			TEAL_MASK_OGERPON_EX:
-				active_score = 320.0
+				active_score = 455.0 if has_regidrago_basic else 320.0
 				bench_score = 330.0
 			REGIDRAGO_V:
 				active_score = 430.0
@@ -134,16 +141,30 @@ func score_action_absolute(action: Dictionary, game_state: GameState, player_ind
 	var player := _player(game_state, player_index)
 	if player != null and _is_thin_deck_churn(action, player):
 		return -240.0
+	if kind == "end_turn" and _ready_active_apex_exists(player):
+		return -12000.0
 	if kind == "play_basic_to_bench" and _is_v17_dragon_fuel(action.get("card", null)):
 		return -80.0
+	if kind == "play_basic_to_bench" and _card_name(action.get("card", null)) == RADIANT_CHARIZARD and player != null and _has_live_or_rebuildable_regidrago(player):
+		return -140.0
+	if kind == "play_basic_to_bench" and player != null and _card_name(action.get("card", null)) == REGIDRAGO_V:
+		if _opponent_has_charizard_pressure(game_state, player_index) and _count_named_on_field(player, REGIDRAGO_V) + _count_named_on_field(player, REGIDRAGO_VSTAR) < 2:
+			return 680.0
+	if kind == "play_basic_to_bench" and player != null and _card_name(action.get("card", null)) == MEW_EX:
+		if _needs_mew_draw_for_backup_vstar(player):
+			return 680.0
 	if kind == "play_basic_to_bench" and _card_name(action.get("card", null)) == HAWLUCHA:
 		return -60.0
 	if kind == "attach_energy":
 		var energy: CardInstance = action.get("card", null)
 		var target: PokemonSlot = action.get("target_slot", null)
+		if target != null and _slot_name(target) == RADIANT_CHARIZARD and player != null and _has_live_or_rebuildable_regidrago(player):
+			return -260.0
 		if player != null and energy != null and target != null and _slot_name(target) in [REGIDRAGO_V, REGIDRAGO_VSTAR]:
 			var energy_type := _energy_type(energy)
 			if _regidrago_needs_type(target, energy_type):
+				if _manual_attach_sets_up_ogerpon_switch_apex(target, energy_type, player):
+					return 820.0
 				var attach_score := super.score_action_absolute(action, game_state, player_index) + (80.0 if energy_type == "R" else 20.0)
 				if game_state != null and game_state.turn_number <= 3:
 					attach_score = maxf(attach_score, 720.0 if energy_type == "R" else 660.0)
@@ -151,7 +172,14 @@ func score_action_absolute(action: Dictionary, game_state: GameState, player_ind
 			return maxf(30.0, super.score_action_absolute(action, game_state, player_index) - 160.0)
 	if kind == "play_trainer":
 		var trainer_name := _card_name(action.get("card", null))
+		var pivot_target := _own_bench_target_from_action(action)
+		if _late_support_pivot_liability(player.active_pokemon if player != null else null, pivot_target, player, game_state):
+			return -12000.0
+		if _is_live_slot(pivot_target) and player != null and player.active_pokemon != null and _opponent_has_charizard_pressure(game_state, player_index) and _charizard_pressure_retreat_is_liability(player.active_pokemon, pivot_target, player, game_state, player_index):
+			return -320.0
 		if trainer_name == ENERGY_SWITCH:
+			if _energy_switch_strands_active_ogerpon_buffer(action, player):
+				return -260.0
 			if _energy_switch_completes_primary_regidrago_attack(action, player):
 				return 1120.0
 			if _energy_switch_advances_primary_regidrago(action, player):
@@ -174,6 +202,8 @@ func score_action_absolute(action: Dictionary, game_state: GameState, player_ind
 			if _ultra_ball_discards_v17_fuel_and_searches_vstar(action, player):
 				return maxf(ultra_score, 660.0)
 			return ultra_score
+		if trainer_name == EARTHEN_VESSEL and _action_discards_protected_mew_draw(action, player):
+			return -260.0
 		if trainer_name == NEST_BALL and _action_targets_only_v17_dragon_fuel(action):
 			return -160.0
 		if trainer_name in [SUPER_ROD, NIGHT_STRETCHER] and _action_recovers_only_v17_dragon_fuel(action):
@@ -204,14 +234,25 @@ func score_action_absolute(action: Dictionary, game_state: GameState, player_ind
 			if player != null and _dragon_fuel_count(player) < 2:
 				return 720.0
 			return 420.0
+		if source != null and _slot_name(source) == MEW_EX:
+			if player != null and _needs_mew_draw_for_backup_vstar(player):
+				return 720.0
 	if kind == "retreat" and player != null and player.active_pokemon != null:
 		var target: PokemonSlot = action.get("bench_target", null)
 		var active_name := _slot_name(player.active_pokemon)
+		if _retreat_dumps_ready_active_apex_into_unready_target(action, player, target):
+			return -13000.0
+		if _late_support_pivot_liability(player.active_pokemon, target, player, game_state):
+			return -12000.0
+		if _is_live_slot(target) and _opponent_has_charizard_pressure(game_state, player_index) and _charizard_pressure_retreat_is_liability(player.active_pokemon, target, player, game_state, player_index):
+			return -320.0
 		if _is_live_slot(target) and _slot_name(target) == REGIDRAGO_VSTAR and not (active_name in [REGIDRAGO_V, REGIDRAGO_VSTAR]) and _attack_energy_gap(target) <= 0 and _dragon_fuel_count(player) > 0:
 			return 585.0
 		if _is_live_slot(target) and _slot_name(player.active_pokemon) == REGIDRAGO_V and _slot_name(target) == TEAL_MASK_OGERPON_EX and _attack_energy_gap(target) <= 0:
 			return 620.0
 	if kind == "attack" or kind == "granted_attack":
+		if _should_defer_basic_dragon_laser_for_vstar(action, player, game_state, player_index):
+			return -360.0
 		if _is_apex_dragon_action(action, player) and player != null and _dragon_fuel_count(player) > 0:
 			var score := 760.0 + float(mini(3, _dragon_fuel_count(player))) * 90.0
 			score += float(int(action.get("projected_damage", 0))) * 0.8
@@ -267,11 +308,11 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 		if step_id.contains("bench_damage_counters") or step_id.contains("damage_counter"):
 			return _bench_damage_counter_target_score(item as PokemonSlot)
 		if step_id in ["opponent_switch_target", "opponent_bench_target", "gust_target"]:
-			return _regidrago_gust_target_score(item as PokemonSlot)
+			return _regidrago_gust_target_score(item as PokemonSlot, context)
 		if _is_energy_assignment_step(step_id):
 			return _energy_assignment_target_score(item as PokemonSlot, context)
 		if step_id.contains("switch") or step_id.contains("send") or step_id.contains("active") or step_id.contains("handoff"):
-			return _handoff_target_score(item as PokemonSlot)
+			return _handoff_target_score(item as PokemonSlot, context, step_id)
 	if item is Dictionary and step_id == "copied_attack":
 		return _copied_attack_score(item as Dictionary, context)
 	return super.score_interaction_target(item, step, context)
@@ -279,7 +320,7 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 
 func score_handoff_target(item: Variant, step: Dictionary, context: Dictionary = {}) -> float:
 	if item is PokemonSlot:
-		return _handoff_target_score(item as PokemonSlot)
+		return _handoff_target_score(item as PokemonSlot, context, str(step.get("id", "")).to_lower())
 	return score_interaction_target(item, step, context)
 
 
@@ -301,8 +342,14 @@ func get_discard_priority_contextual(card: CardInstance, game_state: GameState, 
 		return 0
 	if name == REGIDRAGO_VSTAR and _count_named_on_field(player, REGIDRAGO_VSTAR) == 0 and _count_named_on_field(player, REGIDRAGO_V) > 0:
 		return 15
+	if name == ENERGY_SWITCH and _energy_switch_reloads_primary_regidrago(player):
+		return 10
+	if name == HISUIAN_GOODRA_VSTAR and _opponent_has_charizard_pressure(game_state, player_index) and _count_named_in_discard(player, name) == 0:
+		return maxi(priority + 180, 460)
 	if _is_v17_dragon_fuel(card) and _count_named_in_discard(player, name) == 0:
 		return priority + 40
+	if name == MEW_EX and _needs_mew_draw_for_backup_vstar(player):
+		return 12
 	if card.card_data.is_energy() and _energy_type(card) == "R" and _regidrago_needs_type(_best_regidrago_slot(player), "R"):
 		return mini(priority, 45)
 	if card.card_data.is_energy() and _energy_type(card) == "G" and _regidrago_needs_type(_best_regidrago_slot(player), "G"):
@@ -319,12 +366,23 @@ func _search_score(card: CardInstance, game_state: GameState, player_index: int)
 		return 0
 	var name := _card_name(card)
 	var player := _player(game_state, player_index)
-	if player != null and name == REGIDRAGO_V and _count_named_on_field(player, REGIDRAGO_V) + _count_named_on_field(player, REGIDRAGO_VSTAR) < 2:
-		return 188 if _count_named_on_field(player, REGIDRAGO_VSTAR) > 0 else 205
+	if player != null and name == REGIDRAGO_V:
+		var regidrago_v_count := _count_named_on_field(player, REGIDRAGO_V)
+		var regidrago_vstar_count := _count_named_on_field(player, REGIDRAGO_VSTAR)
+		var regidrago_total := regidrago_v_count + regidrago_vstar_count
+		if regidrago_total <= 0:
+			return 340
+		if regidrago_total < 2:
+			return 242 if regidrago_vstar_count > 0 and _dragon_fuel_count(player) > 0 else 205
 	if player != null and name == REGIDRAGO_VSTAR and _count_named_on_field(player, REGIDRAGO_VSTAR) == 0 and _count_named_on_field(player, REGIDRAGO_V) > 0:
 		return 230
-	if player != null and name == REGIDRAGO_VSTAR and _count_named_on_field(player, REGIDRAGO_VSTAR) > 0 and _count_named_on_field(player, REGIDRAGO_V) > 0:
-		return 186
+	if (
+		player != null
+		and name == REGIDRAGO_VSTAR
+		and _count_named_on_field(player, REGIDRAGO_VSTAR) > 0
+		and _count_named_on_field(player, REGIDRAGO_V) > 0
+	):
+		return 236 if _dragon_fuel_count(player) > 0 else 186
 	if player != null and _is_v17_dragon_fuel(card) and _count_named_in_discard(player, name) == 0:
 		if name == GIRATINA_VSTAR:
 			return 190
@@ -389,6 +447,7 @@ func _build_v17_continuity_setup_debt(
 	var debt := {
 		"ready_primary_online": false,
 		"need_backup_regidrago_seed": false,
+		"need_backup_regidrago_vstar": false,
 		"need_second_ogerpon": false,
 		"need_backup_regidrago_energy": false,
 		"need_ogerpon_charge": false,
@@ -422,6 +481,7 @@ func _build_v17_continuity_setup_debt(
 	debt["need_backup_regidrago_seed"] = needs_backup_seed
 	debt["need_second_ogerpon"] = live_ogerpon_count < 2 and open_bench_slots > (1 if needs_backup_seed else 0)
 	var backup := _best_v17_backup_regidrago(player, active)
+	debt["need_backup_regidrago_vstar"] = backup != null and _slot_name(backup) == REGIDRAGO_V
 	debt["need_backup_regidrago_energy"] = (
 		backup != null
 		and _attack_energy_gap(backup) > 0
@@ -437,6 +497,9 @@ func _build_v17_continuity_action_bonuses(setup_debt: Dictionary) -> Array[Dicti
 		bonuses.append({"kind": "play_basic_to_bench", "card_names": [REGIDRAGO_V], "bonus": 820.0})
 		bonuses.append({"kind": "play_trainer", "card_names": [NEST_BALL], "target_names": [REGIDRAGO_V], "bonus": 780.0})
 		bonuses.append({"kind": "play_trainer", "card_names": [ULTRA_BALL], "target_names": [REGIDRAGO_V], "bonus": 560.0})
+	if bool(setup_debt.get("need_backup_regidrago_vstar", false)):
+		bonuses.append({"kind": "evolve", "card_names": [REGIDRAGO_VSTAR], "target_names": [REGIDRAGO_V], "bonus": 780.0})
+		bonuses.append({"kind": "play_trainer", "card_names": [ULTRA_BALL], "target_names": [REGIDRAGO_VSTAR], "bonus": 620.0})
 	if bool(setup_debt.get("need_second_ogerpon", false)):
 		bonuses.append({"kind": "play_basic_to_bench", "card_names": [TEAL_MASK_OGERPON_EX], "bonus": 560.0})
 		bonuses.append({"kind": "play_trainer", "card_names": [NEST_BALL], "target_names": [TEAL_MASK_OGERPON_EX], "bonus": 560.0})
@@ -455,6 +518,7 @@ func _v17_continuity_setup_debt_is_active(setup_debt: Dictionary) -> bool:
 		bool(setup_debt.get("ready_primary_online", false))
 		and (
 			bool(setup_debt.get("need_backup_regidrago_seed", false))
+			or bool(setup_debt.get("need_backup_regidrago_vstar", false))
 			or bool(setup_debt.get("need_second_ogerpon", false))
 			or bool(setup_debt.get("need_backup_regidrago_energy", false))
 			or bool(setup_debt.get("need_ogerpon_charge", false))
@@ -572,16 +636,76 @@ func _copied_attack_score(option: Dictionary, context: Dictionary) -> float:
 			if defender != null and defender.get_remaining_hp() <= 200:
 				score += 140.0
 			return score
+		if source_name == GIRATINA_VSTAR or attack_name in ["Lost Impact", "放逐冲击", "迷失冲击"]:
+			var score := super._copied_attack_score(option, context)
+			if defender != null:
+				var attack_damage := _parse_damage(str(attack.get("damage", "")))
+				var defender_name := _slot_name(defender)
+				if _slot_is_charizard_attacker(defender):
+					if attack_damage >= defender.get_remaining_hp():
+						score += 520.0
+						if own_active != null and _slot_name(own_active) == REGIDRAGO_VSTAR and own_active.get_remaining_hp() <= 140:
+							score += 180.0
+					elif attack_damage > 200:
+						score += 360.0
+						if defender_name == "Charizard ex" or _is_charizard_attacker_name(defender_name):
+							score += 80.0
+			return score
 		if source_name == HISUIAN_GOODRA_VSTAR or attack_name == "Rolling Iron":
 			var score := 760.0
-			if defender != null and defender.get_remaining_hp() > 200 and defender.get_remaining_hp() <= 230:
-				score += 280.0
-			elif defender != null and defender.get_remaining_hp() <= 200:
-				score += 40.0
-				if own_active != null and _slot_name(own_active) == REGIDRAGO_VSTAR and own_active.get_remaining_hp() <= 180:
-					score += 360.0
+			if defender != null:
+				var attack_damage := _parse_damage(str(attack.get("damage", "")))
+				var defender_name := _slot_name(defender)
+				var goodra_survives_return := _goodra_reduction_survives_charizard_return(own_active, game_state, player_index)
+				var survival_check_applies := own_active != null and _slot_name(own_active) == REGIDRAGO_VSTAR
+				if attack_damage > 0 and attack_damage < defender.get_remaining_hp():
+					if _slot_is_charizard_attacker(defender):
+						score += 420.0 if not survival_check_applies or goodra_survives_return else -180.0
+					elif defender.get_remaining_hp() >= 260:
+						score += 260.0
+				if defender.get_remaining_hp() > 200 and defender.get_remaining_hp() <= 230:
+					score += 280.0
+				elif defender.get_remaining_hp() <= 200:
+					score += 40.0
+					if goodra_survives_return and own_active != null and _slot_name(own_active) == REGIDRAGO_VSTAR and own_active.get_remaining_hp() <= 180:
+						score += 360.0
+					score += _charizard_pressure_goodra_bonus(defender, own_active, game_state, player_index)
 			return score
 	return super._copied_attack_score(option, context)
+
+
+func _charizard_pressure_goodra_bonus(
+	defender: PokemonSlot,
+	own_active: PokemonSlot,
+	game_state: GameState,
+	player_index: int
+) -> float:
+	if defender == null or not _opponent_has_charizard_pressure(game_state, player_index):
+		return 0.0
+	if defender.get_remaining_hp() > 200:
+		return 0.0
+	var bonus := 520.0
+	if own_active != null and _slot_name(own_active) == REGIDRAGO_VSTAR and not _goodra_reduction_survives_charizard_return(own_active, game_state, player_index):
+		bonus = 220.0
+	var data := defender.get_card_data()
+	if data != null and str(data.mechanic).to_lower() in ["ex", "v", "vstar", "vmax"]:
+		bonus += 100.0
+	if defender.has_method("get_prize_count") and int(defender.get_prize_count()) >= 2:
+		bonus += 80.0
+	if own_active != null and _slot_name(own_active) == REGIDRAGO_VSTAR and own_active.get_remaining_hp() <= 260:
+		bonus += 120.0
+	return bonus
+
+
+func _goodra_reduction_survives_charizard_return(own_active: PokemonSlot, game_state: GameState, player_index: int) -> bool:
+	if own_active == null or game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	if player == null:
+		return false
+	var prizes_taken := 0 if player.prizes.is_empty() else maxi(0, 6 - player.prizes.size())
+	var expected_reduced_damage := maxi(0, 180 + prizes_taken * 30 - 80)
+	return own_active.get_remaining_hp() > expected_reduced_damage
 
 
 func _bench_candidate_score(card: CardInstance, game_state: GameState, player_index: int) -> int:
@@ -674,7 +798,7 @@ func _best_dragapult_gust_target(opponent: PlayerState) -> PokemonSlot:
 	return best_slot if best_score >= 520.0 else null
 
 
-func _regidrago_gust_target_score(slot: PokemonSlot) -> float:
+func _regidrago_gust_target_score(slot: PokemonSlot, context: Dictionary = {}) -> float:
 	if not _is_live_slot(slot):
 		return -900.0
 	var remaining_hp := slot.get_remaining_hp()
@@ -687,6 +811,8 @@ func _regidrago_gust_target_score(slot: PokemonSlot) -> float:
 		score += 120.0
 	if slot.has_method("get_prize_count"):
 		score += float(slot.get_prize_count()) * 80.0
+	if _charizard_active_punishes_low_value_gust(slot, context):
+		score -= 620.0
 	match name:
 		"Raikou V", "雷公V":
 			score += 110.0
@@ -695,6 +821,27 @@ func _regidrago_gust_target_score(slot: PokemonSlot) -> float:
 		"Squawkabilly ex", "怒鹦哥ex", "怒鸚哥ex":
 			score += 70.0
 	return score
+
+
+func _charizard_active_punishes_low_value_gust(slot: PokemonSlot, context: Dictionary) -> bool:
+	var game_state: GameState = context.get("game_state", null)
+	var player_index := int(context.get("player_index", -1))
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	var opponent: PlayerState = game_state.players[1 - player_index]
+	if player == null or opponent == null or opponent.active_pokemon == null:
+		return false
+	if not _slot_is_charizard_attacker(opponent.active_pokemon):
+		return false
+	if not player.prizes.is_empty() and player.prizes.size() <= 1:
+		return false
+	var prize_count := 1
+	if slot.has_method("get_prize_count"):
+		prize_count = int(slot.get_prize_count())
+	var data := slot.get_card_data()
+	var is_rule_box := data != null and str(data.mechanic).to_lower() in ["ex", "v", "vstar", "vmax"]
+	return prize_count <= 1 and not is_rule_box
 
 
 func _recover_score(card: CardInstance, game_state: GameState, player_index: int) -> float:
@@ -707,10 +854,17 @@ func _recover_score(card: CardInstance, game_state: GameState, player_index: int
 			return 720.0
 		if name == PRIME_CATCHER:
 			return 620.0
+	if player != null and name == REGIDRAGO_VSTAR and _has_backup_basic_regidrago_needing_vstar(player):
+		return 660.0
 	if _is_v17_dragon_fuel(card):
 		return -360.0
 	if player != null and card.card_data.is_energy() and _regidrago_needs_type(_best_regidrago_slot(player), _energy_type(card)):
+		var drago := _best_regidrago_slot(player)
+		if drago != null and _slot_name(drago) == REGIDRAGO_VSTAR and _regidrago_primary_missing_count(drago) > 0:
+			return 520.0
 		return 220.0
+	if player != null and name == ENERGY_SWITCH and _energy_switch_reloads_primary_regidrago(player):
+		return 560.0
 	return float(_search_score(card, game_state, player_index))
 
 
@@ -762,6 +916,17 @@ func _energy_switch_advances_primary_regidrago(action: Dictionary, player: Playe
 					var target_slot: PokemonSlot = (assignment as Dictionary).get("target", null)
 					if target_slot == drago and source_card != null and _regidrago_needs_type(drago, _energy_type(source_card)):
 						return true
+	return _has_movable_ogerpon_energy_for_regidrago(player)
+
+
+func _energy_switch_reloads_primary_regidrago(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	var drago := _best_regidrago_slot(player)
+	if drago == null or not (_slot_name(drago) in [REGIDRAGO_V, REGIDRAGO_VSTAR]):
+		return false
+	if _regidrago_primary_missing_count(drago) <= 0:
+		return false
 	return _has_movable_ogerpon_energy_for_regidrago(player)
 
 
@@ -841,6 +1006,83 @@ func _has_trapped_ready_benched_regidrago(player: PlayerState) -> bool:
 		if _slot_name(slot) == REGIDRAGO_VSTAR and _attack_energy_gap(slot) <= 0:
 			return true
 	return false
+
+
+func _has_live_or_rebuildable_regidrago(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	if _count_named_on_field(player, REGIDRAGO_V) + _count_named_on_field(player, REGIDRAGO_VSTAR) > 0:
+		return true
+	for card: CardInstance in player.hand:
+		var name := _card_name(card)
+		if name == REGIDRAGO_V or name == REGIDRAGO_VSTAR:
+			return true
+	return false
+
+
+func _ready_active_apex_exists(player: PlayerState) -> bool:
+	if player == null or player.active_pokemon == null:
+		return false
+	if _slot_name(player.active_pokemon) != REGIDRAGO_VSTAR:
+		return false
+	return _attack_energy_gap(player.active_pokemon) <= 0 and _dragon_fuel_count(player) > 0
+
+
+func _retreat_dumps_ready_active_apex_into_unready_target(
+	action: Dictionary,
+	player: PlayerState,
+	target: PokemonSlot
+) -> bool:
+	if not _ready_active_apex_exists(player):
+		return false
+	if not _is_live_slot(target):
+		return false
+	var discards: Variant = action.get("energy_to_discard", [])
+	if not (discards is Array) or (discards as Array).is_empty():
+		return false
+	if _slot_name(target) == REGIDRAGO_VSTAR and _attack_energy_gap(target) <= 0 and _dragon_fuel_count(player) > 0:
+		return false
+	return true
+
+
+func _has_backup_basic_regidrago_needing_vstar(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	for slot: PokemonSlot in player.bench:
+		if _slot_name(slot) == REGIDRAGO_V:
+			return true
+	return false
+
+
+func _needs_mew_draw_for_backup_vstar(player: PlayerState) -> bool:
+	if player == null or player.is_bench_full():
+		return false
+	if _count_named_on_field(player, REGIDRAGO_VSTAR) > 0:
+		return false
+	if not _has_backup_basic_regidrago_needing_vstar(player):
+		return false
+	if _count_named_in_hand(player, REGIDRAGO_VSTAR) > 0:
+		return false
+	return _count_named_in_deck(player, REGIDRAGO_VSTAR) > 0
+
+
+func _action_discards_protected_mew_draw(action: Dictionary, player: PlayerState) -> bool:
+	if not _needs_mew_draw_for_backup_vstar(player):
+		return false
+	for card: CardInstance in _discard_cards_from_action(action):
+		if _card_name(card) == MEW_EX:
+			return true
+	return false
+
+
+func _count_named_in_deck(player: PlayerState, target_name: String) -> int:
+	if player == null:
+		return 0
+	var count := 0
+	for card: CardInstance in player.deck:
+		if _card_name(card) == target_name:
+			count += 1
+	return count
 
 
 func _own_bench_target_from_action(action: Dictionary) -> PokemonSlot:
@@ -955,9 +1197,56 @@ func _has_movable_ogerpon_energy_for_regidrago(player: PlayerState) -> bool:
 		if slot == drago or _slot_name(slot) != TEAL_MASK_OGERPON_EX:
 			continue
 		for energy: CardInstance in slot.attached_energy:
-			if _regidrago_needs_type(drago, _energy_type(energy)):
+			if _regidrago_needs_type(drago, _energy_type(energy)) and _can_spare_ogerpon_energy_for_regidrago(player, slot, energy):
 				return true
 	return false
+
+
+func _energy_switch_strands_active_ogerpon_buffer(action: Dictionary, player: PlayerState) -> bool:
+	if player == null or player.active_pokemon == null:
+		return false
+	if _slot_name(player.active_pokemon) != TEAL_MASK_OGERPON_EX:
+		return false
+	var drago := _best_regidrago_slot(player)
+	if drago == null or _regidrago_primary_missing_count(drago) <= 0:
+		return false
+	var explicit_source_seen := false
+	var targets: Variant = action.get("targets", [])
+	if targets is Array:
+		for entry: Variant in targets:
+			if not (entry is Dictionary):
+				continue
+			for value: Variant in (entry as Dictionary).values():
+				if not (value is Array):
+					continue
+				for assignment: Variant in value:
+					if not (assignment is Dictionary):
+						continue
+					var source_card: CardInstance = (assignment as Dictionary).get("source", null)
+					var target_slot: PokemonSlot = (assignment as Dictionary).get("target", null)
+					if source_card == null:
+						continue
+					var source_slot := _find_slot_with_attached_card(player, source_card)
+					if source_slot != player.active_pokemon:
+						continue
+					explicit_source_seen = true
+					if target_slot == drago and _regidrago_needs_type(drago, _energy_type(source_card)):
+						return not _can_spare_ogerpon_energy_for_regidrago(player, source_slot, source_card)
+	if explicit_source_seen:
+		return false
+	return not _has_movable_ogerpon_energy_for_regidrago(player)
+
+
+func _can_spare_ogerpon_energy_for_regidrago(player: PlayerState, source_slot: PokemonSlot, source_energy: CardInstance) -> bool:
+	if player == null or source_slot == null or source_energy == null:
+		return false
+	if _slot_name(source_slot) != TEAL_MASK_OGERPON_EX:
+		return false
+	if source_slot != player.active_pokemon:
+		return true
+	var cd := source_slot.get_card_data()
+	var retreat_cost := maxi(0, int(cd.retreat_cost) if cd != null else 1)
+	return source_slot.attached_energy.size() - 1 >= retreat_cost
 
 
 func _regidrago_missing_types(slot: PokemonSlot) -> Array[String]:
@@ -998,6 +1287,18 @@ func _regidrago_would_miss_type_after_removal(slot: PokemonSlot, removed_energy:
 
 func _regidrago_primary_missing_count(slot: PokemonSlot) -> int:
 	return _regidrago_missing_types(slot).size()
+
+
+func _manual_attach_sets_up_ogerpon_switch_apex(target: PokemonSlot, energy_type: String, player: PlayerState) -> bool:
+	if target == null or player == null or not (_slot_name(target) in [REGIDRAGO_V, REGIDRAGO_VSTAR]):
+		return false
+	var missing := _regidrago_missing_types(target)
+	if energy_type not in missing:
+		return false
+	missing.erase(energy_type)
+	if missing.is_empty():
+		return true
+	return missing.size() == 1 and missing[0] == "G" and _has_movable_ogerpon_energy_for_regidrago(player)
 
 
 func _discard_cards_from_action(action: Dictionary) -> Array[CardInstance]:
@@ -1059,6 +1360,8 @@ func _energy_switch_source_score(card: CardInstance, context: Dictionary) -> flo
 		return 80.0
 	var drago := _best_regidrago_slot(player)
 	var energy_type := _energy_type(card)
+	if source_slot == player.active_pokemon and _slot_name(source_slot) == TEAL_MASK_OGERPON_EX and not _can_spare_ogerpon_energy_for_regidrago(player, source_slot, card):
+		return -360.0
 	if source_slot == drago or _slot_name(source_slot) in [REGIDRAGO_V, REGIDRAGO_VSTAR]:
 		return -420.0 if _regidrago_needs_type(source_slot, energy_type) else -120.0
 	if drago != null and _regidrago_needs_type(drago, energy_type):
@@ -1091,10 +1394,12 @@ func _energy_assignment_target_score(slot: PokemonSlot, context: Dictionary) -> 
 	return 40.0
 
 
-func _handoff_target_score(slot: PokemonSlot) -> float:
+func _handoff_target_score(slot: PokemonSlot, context: Dictionary = {}, step_id: String = "") -> float:
 	if slot == null:
 		return 0.0
 	var name := _slot_name(slot)
+	if _is_charizard_send_out_context(context, step_id):
+		return _charizard_pressure_handoff_score(slot, context)
 	if name == REGIDRAGO_VSTAR:
 		return 620.0 if _attack_energy_gap(slot) <= 0 else 360.0
 	if name == REGIDRAGO_V:
@@ -1102,6 +1407,163 @@ func _handoff_target_score(slot: PokemonSlot) -> float:
 	if name == TEAL_MASK_OGERPON_EX:
 		return 140.0
 	return 40.0
+
+
+func _is_charizard_send_out_context(context: Dictionary, step_id: String) -> bool:
+	if step_id != "send_out":
+		return false
+	return _opponent_has_charizard_pressure(context.get("game_state", null), int(context.get("player_index", -1)))
+
+
+func _charizard_pressure_handoff_score(slot: PokemonSlot, context: Dictionary) -> float:
+	if not _is_live_slot(slot):
+		return -900.0
+	var player := _player(context.get("game_state", null), int(context.get("player_index", -1)))
+	var name := _slot_name(slot)
+	var energy_gap := _attack_energy_gap(slot)
+	var attached_count := slot.attached_energy.size()
+	if name == REGIDRAGO_VSTAR:
+		if energy_gap <= 0 and _dragon_fuel_count(player) > 0:
+			return 880.0
+		return 70.0 if _charizard_context_has_buffer_candidate(context, slot) else 260.0
+	if name == REGIDRAGO_V:
+		if energy_gap <= 0 and _best_attack_damage(slot) > 0:
+			return 430.0
+		return 35.0 if _charizard_context_has_buffer_candidate(context, slot) else 160.0
+	if name == TEAL_MASK_OGERPON_EX:
+		if energy_gap <= 0 and _best_attack_damage(slot) > 0:
+			return 760.0
+		if attached_count > 0:
+			return 540.0
+		return 260.0
+	if name == RADIANT_CHARIZARD:
+		if energy_gap <= 0 and _best_attack_damage(slot) > 0:
+			return 680.0
+		if attached_count > 0:
+			return 520.0
+		return 360.0
+	if name in [CLEFFA, MEW_EX, FEZANDIPITI_EX]:
+		return 180.0
+	return 90.0
+
+
+func _charizard_pressure_retreat_is_liability(
+	active: PokemonSlot,
+	target: PokemonSlot,
+	player: PlayerState,
+	game_state: GameState = null,
+	player_index: int = -1
+) -> bool:
+	if not _is_live_slot(active) or not _is_live_slot(target):
+		return false
+	if _charizard_pressure_retreat_target_is_ready_attacker(target, player):
+		return not _charizard_pressure_ready_attacker_handoff_is_safe(target, player, game_state, player_index)
+	var target_name := _slot_name(target)
+	if target_name in [MEW_EX, FEZANDIPITI_EX, SQUAWKABILLY_EX]:
+		return true
+	if target_name in [REGIDRAGO_V, REGIDRAGO_VSTAR]:
+		return true
+	var active_name := _slot_name(active)
+	if active_name in [REGIDRAGO_V, REGIDRAGO_VSTAR] and active.attached_energy.size() > 0:
+		return true
+	if active_name == TEAL_MASK_OGERPON_EX and active.attached_energy.size() > 0:
+		return true
+	return false
+
+
+func _late_support_pivot_liability(
+	active: PokemonSlot,
+	target: PokemonSlot,
+	player: PlayerState,
+	game_state: GameState
+) -> bool:
+	if not _is_live_slot(active) or not _is_live_slot(target) or player == null or game_state == null:
+		return false
+	if game_state.turn_number <= 2:
+		return false
+	if _count_named_on_field(player, REGIDRAGO_V) + _count_named_on_field(player, REGIDRAGO_VSTAR) <= 0:
+		return false
+	if _slot_name(target) not in [MEW_EX, FEZANDIPITI_EX, SQUAWKABILLY_EX]:
+		return false
+	var active_name := _slot_name(active)
+	if active_name in [REGIDRAGO_V, REGIDRAGO_VSTAR, TEAL_MASK_OGERPON_EX] and active.attached_energy.size() > 0:
+		return true
+	return false
+
+
+func _charizard_pressure_ready_attacker_handoff_is_safe(
+	target: PokemonSlot,
+	player: PlayerState,
+	game_state: GameState,
+	player_index: int
+) -> bool:
+	if not _is_live_slot(target):
+		return false
+	if player != null and not player.prizes.is_empty() and player.prizes.size() <= 2:
+		return true
+	if _slot_name(target) != REGIDRAGO_VSTAR:
+		return true
+	if _charizard_pressure_slot_survives_return(target, game_state, player_index, 0):
+		return true
+	return _discard_has_hisuian_goodra(player) and _charizard_pressure_slot_survives_return(target, game_state, player_index, 80)
+
+
+func _charizard_pressure_slot_survives_return(
+	slot: PokemonSlot,
+	game_state: GameState,
+	player_index: int,
+	damage_reduction: int
+) -> bool:
+	if not _is_live_slot(slot) or game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	if player == null:
+		return false
+	var prizes_taken := 0 if player.prizes.is_empty() else maxi(0, 6 - player.prizes.size())
+	var expected_damage := maxi(0, 180 + prizes_taken * 30 - damage_reduction)
+	return slot.get_remaining_hp() > expected_damage
+
+
+func _discard_has_hisuian_goodra(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	for card: CardInstance in player.discard_pile:
+		if _card_name(card) == HISUIAN_GOODRA_VSTAR:
+			return true
+	return false
+
+
+func _charizard_pressure_retreat_target_is_ready_attacker(target: PokemonSlot, player: PlayerState) -> bool:
+	if not _is_live_slot(target):
+		return false
+	var name := _slot_name(target)
+	if name == REGIDRAGO_VSTAR:
+		return _attack_energy_gap(target) <= 0 and _dragon_fuel_count(player) > 0
+	if name == REGIDRAGO_V:
+		return _attack_energy_gap(target) <= 0 and _best_attack_damage(target) > 0
+	if name in [TEAL_MASK_OGERPON_EX, RADIANT_CHARIZARD]:
+		return _attack_energy_gap(target) <= 0 and _best_attack_damage(target) > 0
+	return false
+
+
+func _charizard_context_has_buffer_candidate(context: Dictionary, excluded_slot: PokemonSlot) -> bool:
+	var items: Variant = context.get("all_items", [])
+	if not (items is Array):
+		return false
+	for item: Variant in items:
+		if not (item is PokemonSlot):
+			continue
+		var slot := item as PokemonSlot
+		if slot == excluded_slot or not _is_live_slot(slot):
+			continue
+		var name := _slot_name(slot)
+		if name == TEAL_MASK_OGERPON_EX and slot.attached_energy.size() > 0:
+			return true
+		if name == RADIANT_CHARIZARD:
+			return true
+		if name == REGIDRAGO_VSTAR and _attack_energy_gap(slot) <= 0:
+			return true
+	return false
 
 
 func _best_ready_regidrago(player: PlayerState) -> PokemonSlot:
@@ -1202,6 +1664,59 @@ func _player(game_state: GameState, player_index: int) -> PlayerState:
 	return game_state.players[player_index]
 
 
+func _opponent_has_charizard_pressure(game_state: GameState, player_index: int) -> bool:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var opponent_index := 1 - player_index
+	if opponent_index < 0 or opponent_index >= game_state.players.size():
+		return false
+	var opponent: PlayerState = game_state.players[opponent_index]
+	if opponent == null:
+		return false
+	for slot: PokemonSlot in _all_slots(opponent):
+		if _slot_is_charizard_pressure(slot):
+			return true
+	return false
+
+
+func _slot_is_charizard_pressure(slot: PokemonSlot) -> bool:
+	return _slot_matches_name_predicate(slot, Callable(self, "_is_charizard_pressure_name"))
+
+
+func _slot_is_charizard_attacker(slot: PokemonSlot) -> bool:
+	return _slot_matches_name_predicate(slot, Callable(self, "_is_charizard_attacker_name"))
+
+
+func _slot_matches_name_predicate(slot: PokemonSlot, predicate: Callable) -> bool:
+	if not _is_live_slot(slot):
+		return false
+	var names: Array[String] = [_slot_name(slot)]
+	var data := slot.get_card_data()
+	if data != null:
+		names.append(str(data.name))
+		names.append(str(data.name_en))
+	for raw_name: String in names:
+		if predicate.call(raw_name):
+			return true
+	return false
+
+
+func _is_charizard_pressure_name(name: String) -> bool:
+	if _is_charizard_attacker_name(name):
+		return true
+	var compact := name.to_lower().replace(" ", "")
+	return compact.contains("charmander") \
+		or compact.contains("charmeleon") \
+		or name.contains("小火龙") \
+		or name.contains("火恐龙")
+
+
+func _is_charizard_attacker_name(name: String) -> bool:
+	var compact := name.to_lower().replace(" ", "")
+	return compact.contains("charizard") \
+		or name.contains("喷火龙")
+
+
 func _is_v17_dragon_fuel(card: Variant) -> bool:
 	return _card_name(card) in V17_DRAGON_FUEL_NAMES
 
@@ -1214,6 +1729,37 @@ func _is_celestial_roar_action(action: Dictionary, player: PlayerState = null) -
 	if source == null and player != null:
 		source = player.active_pokemon
 	return int(action.get("attack_index", -1)) == 0 and source != null and _slot_name(source) == REGIDRAGO_V
+
+
+func _is_basic_dragon_laser_action(action: Dictionary, player: PlayerState = null) -> bool:
+	var source: PokemonSlot = action.get("source_slot", null)
+	if source == null and player != null:
+		source = player.active_pokemon
+	if source == null or _slot_name(source) != REGIDRAGO_V:
+		return false
+	if int(action.get("attack_index", -1)) == 1:
+		return true
+	var attack_name := str(action.get("attack_name", action.get("attack", "")))
+	return attack_name in ["Dragon Laser", "巨龙镭射", "宸ㄩ緳闀皠"]
+
+
+func _should_defer_basic_dragon_laser_for_vstar(
+	action: Dictionary,
+	player: PlayerState,
+	game_state: GameState = null,
+	player_index: int = -1
+) -> bool:
+	if player == null:
+		return false
+	if bool(action.get("projected_knockout", false)) and not player.prizes.is_empty() and player.prizes.size() <= 1:
+		return false
+	if not _is_basic_dragon_laser_action(action, player):
+		return false
+	if _count_named_in_hand(player, REGIDRAGO_VSTAR) <= 0:
+		return false
+	if _dragon_fuel_count(player) > 0:
+		return true
+	return _opponent_has_charizard_pressure(game_state, player_index)
 
 
 func _is_apex_dragon_action(action: Dictionary, player: PlayerState = null) -> bool:

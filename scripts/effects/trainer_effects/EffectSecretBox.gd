@@ -107,12 +107,14 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	var public_labels: Array[String] = []
 	for i: int in search_keys.size():
 		var raw: Array = ctx.get(search_keys[i], [])
-		if raw.is_empty() or not (raw[0] is CardInstance):
-			continue
-		var found_card: CardInstance = raw[0]
-		if found_card in player.deck and found_card.card_data != null and found_card.card_data.card_type == search_types[i]:
-			revealed_cards.append(found_card)
-			public_labels.append(str(public_labels_map.get(search_types[i], "")))
+		for entry: Variant in raw:
+			if not (entry is CardInstance):
+				continue
+			var found_card: CardInstance = entry
+			if found_card in player.deck and found_card.card_data != null and found_card.card_data.card_type == search_types[i]:
+				revealed_cards.append(found_card)
+				public_labels.append(str(public_labels_map.get(search_types[i], "")))
+				break
 
 	_move_public_cards_to_hand_with_log(
 		state,

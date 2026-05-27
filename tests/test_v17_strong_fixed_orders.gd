@@ -15,6 +15,7 @@ const V17_STRONG_DECK_IDS := [
 ]
 
 const EXPECTED_FIXED_ORDER_SIZES := {
+	1700003: 19,
 	1700011: 19,
 }
 
@@ -70,17 +71,20 @@ func test_v17_strong_fixed_order_files_are_registered_and_usable() -> String:
 
 func _regidrago_bridge_checks(fixed_order: Array[Dictionary]) -> Array[String]:
 	var checks: Array[String] = [
+		assert_eq(_entry_key(fixed_order[0]), "CSV8C_028", "Regidrago strong hand should put Teal Mask Ogerpon first as the active buffer"),
+		assert_eq(_entry_key(fixed_order[1]), "CS6.5C_054", "Regidrago strong hand should bench Regidrago V behind the active Ogerpon buffer"),
 		assert_eq(_entry_key(fixed_order[2]), "CSV1C_112", "Regidrago strong hand should open Ultra Ball for VSTAR access"),
 		assert_eq(_entry_key(fixed_order[3]), "CSV8C_159", "Regidrago strong hand should open Dragapult ex as Apex Dragon discard fuel"),
 		assert_eq(_entry_key(fixed_order[5]), "CSVE1C_GRA", "Regidrago strong hand should open Grass for Teal Mask Ogerpon's first charge"),
 		assert_eq(_entry_key(fixed_order[6]), "CSVH1aC_008", "Regidrago strong hand should keep Energy Switch in hand so opponent mulligan draws cannot prize it"),
+		assert_eq(_entry_key(fixed_order[7]), "CSVE1C_GRA", "Regidrago card 8 should be spare Grass so a one- or two-mulligan prize window still has the T2 manual attach"),
 		assert_eq(_entry_key(fixed_order[12]), "CSVH1aC_023", "Regidrago card 13 should move Boss's Orders into the controlled prize block instead of the escape slot"),
 		assert_eq(_entry_key(fixed_order[13]), "CSVE1C_GRA", "Regidrago card 14 should be the no-mulligan first-turn draw Grass kept for T2 manual attach"),
 		assert_eq(_entry_key(fixed_order[14]), "CS5.5C_053", "Regidrago card 15 should be the 0/1-mulligan Dragon discard fuel drawn before Ultra Ball"),
-		assert_eq(_entry_key(fixed_order[15]), "CSVE1C_GRA", "Regidrago card 16 should be the one-mulligan Ogerpon draw Grass kept for T2 manual attach"),
+		assert_eq(_entry_key(fixed_order[15]), "CS6.5C_054", "Regidrago card 16 should be the early backup Regidrago V after the bridge cards"),
 		assert_eq(_entry_key(fixed_order[16]), "CS6.5C_055", "Regidrago card 17 should keep Regidrago VSTAR searchable and unprized"),
 		assert_eq(_entry_key(fixed_order[17]), "CSV1C_113", "Regidrago card 18 should keep the real Switch unprized for anti-Boss Star Legacy recovery"),
-		assert_eq(_entry_key(fixed_order[18]), "CS5aC_113", "Regidrago card 19 should use Canceling Cologne as final non-route padding"),
+		assert_eq(_entry_key(fixed_order[18]), "CS6bC_108", "Regidrago card 19 should keep Giratina VSTAR reachable for the 280 Lost Impact copy line"),
 	]
 	for opponent_mulligan_draws: int in 3:
 		checks.append_array(_regidrago_prize_window_checks(fixed_order, opponent_mulligan_draws))
@@ -89,12 +93,15 @@ func _regidrago_bridge_checks(fixed_order: Array[Dictionary]) -> Array[String]:
 
 func _regidrago_prize_window_checks(fixed_order: Array[Dictionary], opponent_mulligan_draws: int) -> Array[String]:
 	var hand: Array[String] = []
+	var extra_hand: Array[String] = []
 	var cursor := 0
 	for i: int in 7:
 		hand.append(_entry_key(fixed_order[cursor]))
 		cursor += 1
 	for i: int in opponent_mulligan_draws:
-		hand.append(_entry_key(fixed_order[cursor]))
+		var key := _entry_key(fixed_order[cursor])
+		hand.append(key)
+		extra_hand.append(key)
 		cursor += 1
 	var prizes: Array[String] = []
 	for i: int in 6:
@@ -105,12 +112,14 @@ func _regidrago_prize_window_checks(fixed_order: Array[Dictionary], opponent_mul
 	var checks: Array[String] = [
 		assert_true("CSVH1aC_008" in hand, "Regidrago Energy Switch must stay in hand with %d opponent mulligan draw(s)" % opponent_mulligan_draws),
 		assert_false("CSVH1aC_008" in prizes, "Regidrago Energy Switch must not be in the prize block with %d opponent mulligan draw(s)" % opponent_mulligan_draws),
+		assert_false("CSV1C_113" in prizes, "Regidrago Switch must not be in the prize block with %d opponent mulligan draw(s)" % opponent_mulligan_draws),
 	]
-	if opponent_mulligan_draws <= 1:
+	if opponent_mulligan_draws <= 2:
 		checks.append(assert_true(
-			first_turn_draw == "CSVE1C_GRA" or ogerpon_draw == "CSVE1C_GRA",
+			"CSVE1C_GRA" in extra_hand or first_turn_draw == "CSVE1C_GRA" or ogerpon_draw == "CSVE1C_GRA",
 			"Regidrago should draw a spare Grass before Ultra Ball with %d opponent mulligan draw(s)" % opponent_mulligan_draws
 		))
+	if opponent_mulligan_draws <= 1:
 		checks.append(assert_true(
 			first_turn_draw == "CS5.5C_053" or ogerpon_draw == "CS5.5C_053",
 			"Regidrago should draw Hisuian Goodra VSTAR as second Ultra Ball discard fuel with %d opponent mulligan draw(s)" % opponent_mulligan_draws
@@ -119,7 +128,7 @@ func _regidrago_prize_window_checks(fixed_order: Array[Dictionary], opponent_mul
 
 
 func _water_turtle_bridge_checks(fixed_order: Array[Dictionary]) -> Array[String]:
-	return [
+	var checks: Array[String] = [
 		assert_eq(_entry_key(fixed_order[0]), "CSV9C_175", "Water Turtle strong hand should open Terapagos ex"),
 		assert_eq(_entry_key(fixed_order[1]), "CSV9C_154", "Water Turtle strong hand should open Hoothoot"),
 		assert_eq(_entry_key(fixed_order[2]), "CSV9C_161", "Water Turtle strong hand should open Fan Rotom"),
@@ -128,6 +137,17 @@ func _water_turtle_bridge_checks(fixed_order: Array[Dictionary]) -> Array[String
 		assert_eq(_entry_key(fixed_order[5]), "CSVE1C_WAT", "Water Turtle strong hand should include the manual Water attach"),
 		assert_eq(_entry_key(fixed_order[6]), "CSV9C_155", "Water Turtle strong hand should keep Noctowl available for T2"),
 	]
+	if fixed_order.size() >= 19:
+		var prize_block: Array[String] = []
+		for i: int in range(7, 13):
+			prize_block.append(_entry_key(fixed_order[i]))
+		checks.append(assert_false("CSV8C_198" in prize_block, "Water Turtle strong order should not prize Kieran; it is needed for 230 HP conversion"))
+		checks.append(assert_false("CSV1C_113" in prize_block, "Water Turtle strong order should not prize Switch; it is needed for post-KO recovery"))
+		checks.append(assert_eq(_entry_key(fixed_order[13]), "CSV9C_178", "Water Turtle first bridge draw should stay Glass Trumpet"))
+		checks.append(assert_eq(_entry_key(fixed_order[14]), "CSVH1C_043", "Water Turtle second bridge draw should stay Nest Ball"))
+		checks.append(assert_eq(_entry_key(fixed_order[15]), "CSV8C_198", "Water Turtle card 16 should keep Kieran unprized for the first 230 HP conversion window"))
+		checks.append(assert_eq(_entry_key(fixed_order[16]), "CSV1C_113", "Water Turtle card 17 should keep Switch unprized and reachable"))
+	return checks
 
 
 func _card_database() -> Node:

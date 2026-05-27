@@ -259,10 +259,19 @@ func on_card_gallery_card_input(event: InputEvent, scroll: ScrollContainer, sour
 
 func handle_card_gallery_drag_scroll_input(event: InputEvent, scroll: ScrollContainer, source: String = "card_gallery") -> bool:
 	if scroll == null:
+		_clear_invalid_card_gallery_drag_capture(source)
+		return false
+	if not is_instance_valid(scroll):
+		_clear_invalid_card_gallery_drag_capture(source)
 		return false
 	if not _as_bool(scroll.get_meta("card_gallery_drag_scroll_enabled", false), false):
+		if _get("_card_gallery_drag_active_scroll") == scroll:
+			_clear_invalid_card_gallery_drag_capture(source, scroll)
 		return false
 	if not _as_bool(scroll.get_meta("card_gallery_drag_scroll_active", false), false) and _get("_card_gallery_drag_active_scroll") != scroll:
+		return false
+	if not _can_card_gallery_scroll_capture_input(scroll):
+		_clear_invalid_card_gallery_drag_capture(source, scroll)
 		return false
 	if event is InputEventMouseButton:
 		var mouse_button := event as InputEventMouseButton
@@ -477,6 +486,30 @@ func _handle_card_gallery_drag_wheel(mouse_button: InputEventMouseButton, scroll
 			return false
 	scroll.scroll_horizontal = maxi(0, scroll.scroll_horizontal + direction * HAND_DRAG_SCROLL_WHEEL_STEP)
 	return true
+
+
+func _can_card_gallery_scroll_capture_input(scroll: ScrollContainer) -> bool:
+	if scroll == null or not is_instance_valid(scroll) or not scroll.visible:
+		return false
+	if scroll.is_inside_tree() and not scroll.is_visible_in_tree():
+		return false
+	return true
+
+
+func _clear_invalid_card_gallery_drag_capture(source: String = "invalid", scroll: ScrollContainer = null) -> void:
+	var active_scroll := _get("_card_gallery_drag_active_scroll") as ScrollContainer
+	var should_clear := _as_bool(_get("_card_gallery_drag_active"), false) or active_scroll != null
+	if scroll != null and is_instance_valid(scroll):
+		should_clear = should_clear or _as_bool(scroll.get_meta("card_gallery_drag_scroll_active", false), false)
+		scroll.set_meta("card_gallery_drag_scroll_active", false)
+		restore_card_gallery_scrollbars_for(scroll)
+	if not should_clear:
+		return
+	_set_scene_var("_card_gallery_drag_active", false)
+	_set_scene_var("_card_gallery_dragging", false)
+	_set_scene_var("_card_gallery_drag_active_scroll", null)
+	_set_scene_var("_card_gallery_drag_suppress_click_until_msec", 0)
+	debug_hand_drag_scroll("clear-invalid-card-gallery source=%s" % source)
 
 
 func _begin_card_gallery_drag_scroll(position: Vector2, scroll: ScrollContainer) -> void:

@@ -3,6 +3,7 @@ extends TestBase
 
 
 const STRATEGY_REGISTRY_SCRIPT_PATH := "res://scripts/ai/DeckStrategyRegistry.gd"
+const CardDatabaseScript = preload("res://scripts/autoload/CardDatabase.gd")
 const EXPANDED_STRATEGIES := {
 	"charizard_ex": "res://scripts/ai/DeckStrategyCharizardEx.gd",
 	"dragapult_dusknoir": "res://scripts/ai/DeckStrategyDragapultDusknoir.gd",
@@ -67,6 +68,17 @@ func _make_player_with_hand(names: Array[String]) -> PlayerState:
 	return player
 
 
+func _card_database() -> Node:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree != null:
+		var autoload: Node = tree.root.get_node_or_null("CardDatabase")
+		if autoload != null:
+			return autoload
+	var fallback: Node = CardDatabaseScript.new()
+	fallback._ready()
+	return fallback
+
+
 func test_expanded_strategy_scripts_exist() -> String:
 	var checks: Array[String] = []
 	for strategy_id: String in EXPANDED_STRATEGIES.keys():
@@ -120,6 +132,24 @@ func test_registry_detects_expanded_families_from_signature_cards() -> String:
 			"Registry should detect %s from its signature cards" % strategy_id
 		))
 	return run_checks(checks)
+
+
+func test_registry_detects_v17_regidrago_when_dragapult_signature_is_visible() -> String:
+	var registry_script := _load_script(STRATEGY_REGISTRY_SCRIPT_PATH)
+	if registry_script == null:
+		return "DeckStrategyRegistry.gd should load before v17 Regidrago visible-hand detection can be tested"
+	var registry = registry_script.new()
+	var player := _make_player_with_hand([
+		"Teal Mask Ogerpon ex",
+		"Regidrago V",
+		"Dragapult ex",
+	])
+	var detected_id: String = str(registry.detect_strategy_id_for_player(player))
+	return assert_eq(
+		detected_id,
+		"v17_regidrago",
+		"Opening setup should detect the 17.0 Regidrago variant when Dragapult ex is visible with the Regidrago/Ogerpon shell"
+	)
 
 
 func test_v17_strategy_scripts_report_matching_strategy_ids() -> String:
@@ -198,10 +228,11 @@ func test_registry_resolves_real_v17_ai_decks_from_card_database() -> String:
 	if registry_script == null:
 		return "DeckStrategyRegistry.gd should load before real v17 AI deck resolution can be tested"
 	var registry = registry_script.new()
+	var card_database := _card_database()
 	var checks: Array[String] = []
 	for deck_id: int in V17_DECK_STRATEGIES.keys():
 		var expected_strategy_id := str(V17_DECK_STRATEGIES[deck_id])
-		var deck: DeckData = CardDatabase.get_ai_deck(deck_id)
+		var deck: DeckData = card_database.get_ai_deck(deck_id)
 		checks.append(assert_not_null(deck, "Bundled AI deck %d should load through CardDatabase" % deck_id))
 		if deck == null:
 			continue
@@ -221,12 +252,13 @@ func test_v17_ai_decks_can_start_a_game_with_initial_rule_strategies() -> String
 	if registry_script == null:
 		return "DeckStrategyRegistry.gd should load before v17 start-game smoke can be tested"
 	var registry = registry_script.new()
-	var anchor_deck: DeckData = CardDatabase.get_ai_deck(575720)
+	var card_database := _card_database()
+	var anchor_deck: DeckData = card_database.get_ai_deck(575720)
 	if anchor_deck == null:
 		return "Miraidon anchor AI deck should load for v17 start-game smoke"
 	var checks: Array[String] = []
 	for deck_id: int in V17_DECK_STRATEGIES.keys():
-		var deck: DeckData = CardDatabase.get_ai_deck(deck_id)
+		var deck: DeckData = card_database.get_ai_deck(deck_id)
 		checks.append(assert_not_null(deck, "Bundled AI deck %d should load for start-game smoke" % deck_id))
 		if deck == null:
 			continue

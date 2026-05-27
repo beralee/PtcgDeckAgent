@@ -43,6 +43,21 @@ class FakeHandoffStrategy extends RefCounted:
 		return 500.0 if (item as PokemonSlot).get_pokemon_name() == preferred_name else 0.0
 
 
+class FakeBenchCleanupStrategy extends RefCounted:
+	var preferred_name: String = ""
+
+	func _init(next_preferred_name: String = "") -> void:
+		preferred_name = next_preferred_name
+
+	func pick_interaction_items(items: Array, step: Dictionary, _context: Dictionary = {}) -> Array:
+		if not str(step.get("id", "")).contains("zero_area_discard"):
+			return []
+		for item: Variant in items:
+			if item is PokemonSlot and (item as PokemonSlot).get_pokemon_name() == preferred_name:
+				return [item]
+		return []
+
+
 class HeavyBatonResolveSpyGameStateMachine extends GameStateMachine:
 	var resolve_heavy_baton_choice_calls: int = 0
 	var resolved_heavy_baton_player_index: int = -1
@@ -559,6 +574,41 @@ func test_ai_resolves_send_out_through_headless_bridge_with_deck_strategy() -> S
 		assert_true(handled, "The owning AI should resolve send_out through the headless bridge"),
 		assert_eq(gsm.game_state.players[1].active_pokemon, preferred_bench, "Headless send_out should now respect deck-local handoff scoring"),
 		assert_eq(str(bridge.get("_pending_choice")), "", "The prompt should clear after AI-owned headless send_out resolution"),
+	])
+
+
+func test_bench_limit_cleanup_uses_bound_ai_strategy() -> String:
+	var bridge := HeadlessMatchBridgeScript.new()
+	var gsm := _make_gsm()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	var discard_me := _make_slot(_make_basic_card("Discard Me"))
+	var keep_a := _make_slot(_make_basic_card("Keep A"))
+	var keep_b := _make_slot(_make_basic_card("Keep B"))
+	var keep_c := _make_slot(_make_basic_card("Keep C"))
+	var keep_d := _make_slot(_make_basic_card("Keep D"))
+	var fallback_last := _make_slot(_make_basic_card("Fallback Last"))
+	gsm.game_state.players[1].bench = [discard_me, keep_a, keep_b, keep_c, keep_d, fallback_last]
+	bridge.bind(gsm)
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	ai.set_deck_strategy(FakeBenchCleanupStrategy.new("Discard Me"))
+	bridge.set_ai_controllers(null, ai)
+
+	bridge.call("_on_player_choice_required", "bench_limit_cleanup", {
+		"player": 1,
+		"steps": [{
+			"id": "csv9c207_zero_area_discard_p1",
+			"items": gsm.game_state.players[1].bench.duplicate(),
+			"min_select": 1,
+			"max_select": 1,
+			"chooser_player_index": 1,
+		}],
+	})
+
+	return run_checks([
+		assert_false(discard_me in gsm.game_state.players[1].bench, "Headless bench cleanup should discard the strategy-selected slot"),
+		assert_true(fallback_last in gsm.game_state.players[1].bench, "Strategy cleanup should override the old last-slot fallback"),
+		assert_eq(gsm.game_state.players[1].bench.size(), 5, "Bench cleanup should trim to the default limit"),
 	])
 
 

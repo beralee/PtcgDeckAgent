@@ -46,6 +46,7 @@ func execute_attack(
 
 	var ctx: Dictionary = get_attack_interaction_context()
 	var selected_raw: Array = ctx.get("search_cards", [])
+	var has_explicit_selection: bool = ctx.has("search_cards")
 	var chosen: Array[CardInstance] = []
 	for entry: Variant in selected_raw:
 		if entry is CardInstance and entry in player.deck and entry not in chosen:
@@ -53,7 +54,7 @@ func execute_attack(
 			if chosen.size() >= search_count:
 				break
 
-	if chosen.is_empty():
+	if chosen.is_empty() and not has_explicit_selection:
 		chosen.append(player.deck[0])
 
 	for card: CardInstance in chosen:

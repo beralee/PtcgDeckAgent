@@ -24,6 +24,15 @@ const DEFAULT_SEED_BASE := 5000
 const DEFAULT_MAX_STEPS := 200
 
 
+class BenchmarkTraceCollector:
+	var traces: Array = []
+
+	func record_trace(trace) -> void:
+		if trace == null:
+			return
+		traces.append(trace.clone())
+
+
 func _ready() -> void:
 	var options := _parse_args(OS.get_cmdline_user_args())
 	var deck_id: int = int(options.get("deck_id", 0))
@@ -36,6 +45,8 @@ func _ready() -> void:
 	var anchor_decision_mode: String = str(options.get("anchor_decision_mode", ""))
 	var deck_strong_fixed_opening: bool = bool(options.get("deck_strong_fixed_opening", false))
 	var anchor_strong_fixed_opening: bool = bool(options.get("anchor_strong_fixed_opening", false))
+	var trace_game: int = int(options.get("trace_game", 0))
+	var trace_jsonl_output: String = str(options.get("trace_jsonl_output", ""))
 	var decision_mode: String = deck_decision_mode
 
 	if deck_id <= 0:
@@ -74,6 +85,7 @@ func _ready() -> void:
 	var per_game: Array[Dictionary] = []
 	var turn_list_wins: Array[int] = []
 	var turn_list_losses: Array[int] = []
+	var trace_collector: BenchmarkTraceCollector = null
 
 	for i: int in games:
 		var seed_val: int = seed_base + i
@@ -99,8 +111,12 @@ func _ready() -> void:
 		var p1_decision_mode := anchor_decision_mode if tracked_player == 0 else deck_decision_mode
 		var p0_ai := _make_ai(0, p0_deck, p0_decision_mode, p0_strong_fixed)
 		var p1_ai := _make_ai(1, p1_deck, p1_decision_mode, p1_strong_fixed)
+		var game_trace_collector: BenchmarkTraceCollector = null
+		if trace_jsonl_output != "" and trace_game == i + 1:
+			game_trace_collector = BenchmarkTraceCollector.new()
+			trace_collector = game_trace_collector
 
-		var result: Dictionary = runner.run_headless_duel(p0_ai, p1_ai, gsm, max_steps)
+		var result: Dictionary = runner.run_headless_duel(p0_ai, p1_ai, gsm, max_steps, Callable(), game_trace_collector)
 
 		if ps.has_method("clear_forced_shuffle_seed"):
 			ps.call("clear_forced_shuffle_seed")
@@ -189,6 +205,8 @@ func _ready() -> void:
 		"anchor_decision_mode": anchor_decision_mode,
 		"deck_strong_fixed_opening": deck_strong_fixed_opening,
 		"anchor_strong_fixed_opening": anchor_strong_fixed_opening,
+		"trace_game": trace_game,
+		"trace_jsonl_output": trace_jsonl_output,
 		"wins": wins,
 		"losses": losses,
 		"draws": draws,
@@ -209,6 +227,10 @@ func _ready() -> void:
 			print("结果导出: %s" % json_output)
 		else:
 			print("[警告] 无法写入 %s" % json_output)
+
+	if trace_jsonl_output != "" and trace_collector != null:
+		_write_trace_jsonl(trace_jsonl_output, trace_collector.traces)
+		print("Trace JSONL exported: %s" % trace_jsonl_output)
 
 	_quit(0)
 
@@ -281,6 +303,8 @@ func _parse_args(args: PackedStringArray) -> Dictionary:
 		"anchor_decision_mode": "",
 		"deck_strong_fixed_opening": false,
 		"anchor_strong_fixed_opening": false,
+		"trace_game": 0,
+		"trace_jsonl_output": "",
 	}
 	for arg: String in args:
 		if arg.begins_with("--deck-id="):
@@ -317,6 +341,10 @@ func _parse_args(args: PackedStringArray) -> Dictionary:
 			parsed["anchor_strong_fixed_opening"] = true
 		elif arg.begins_with("--anchor-strong-fixed-opening="):
 			parsed["anchor_strong_fixed_opening"] = _parse_bool(arg.split("=")[1])
+		elif arg.begins_with("--trace-game="):
+			parsed["trace_game"] = max(1, int(arg.split("=")[1]))
+		elif arg.begins_with("--trace-jsonl-output="):
+			parsed["trace_jsonl_output"] = arg.split("=")[1]
 	return parsed
 
 
@@ -339,6 +367,19 @@ func _json_ascii_safe(value: Variant) -> Variant:
 	if value is String:
 		return _ascii_safe_string(str(value))
 	return value
+
+
+func _write_trace_jsonl(path: String, traces: Array) -> void:
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		print("[warn] failed to write trace JSONL: %s" % path)
+		return
+	for trace in traces:
+		if trace == null:
+			continue
+		var payload: Dictionary = trace.to_dictionary() if trace.has_method("to_dictionary") else {}
+		file.store_line(JSON.stringify(_json_ascii_safe(payload)))
+	file.close()
 
 
 func _ascii_safe_string(text: String) -> String:

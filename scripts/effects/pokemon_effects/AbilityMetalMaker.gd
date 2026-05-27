@@ -233,15 +233,7 @@ func _resolve_assignments(
 
 
 func _shuffle_cards(cards: Array[CardInstance]) -> void:
-	if cards.size() < 2:
-		return
-	var rng := RandomNumberGenerator.new()
-	rng.randomize()
-	for i: int in range(cards.size() - 1, 0, -1):
-		var j: int = rng.randi_range(0, i)
-		var tmp: CardInstance = cards[i]
-		cards[i] = cards[j]
-		cards[j] = tmp
+	PlayerState.shuffle_card_array(cards)
 
 
 func get_description() -> String:

@@ -1,0 +1,51 @@
+{
+	"abilities": [
+		{
+			"name": "古代智慧",
+			"text": "若自己的场上有「雷吉洛克」「雷吉艾斯」「雷吉斯奇鲁」「雷吉艾勒奇」「雷吉铎拉戈」各1只，则在自己的回合可以使用1次。选择自己弃牌区中的最多3张能量卡，附于自己的1只宝可梦身上。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "DOM",
+	"attacks": [
+		{
+			"cost": "CCCCC",
+			"damage": "150+",
+			"is_vstar_power": false,
+			"name": "巨吨重击",
+			"text": "若对手的战斗宝可梦为宝可梦VMAX，则追加造成150点伤害。"
+		}
+	],
+	"card_index": "056",
+	"card_index_en": "130",
+	"card_type": "Pokemon",
+	"description": "特性: 古代智慧\n若自己的场上有「雷吉洛克」「雷吉艾斯」「雷吉斯奇鲁」「雷吉艾勒奇」「雷吉铎拉戈」各1只，则在自己的回合可以使用1次。选择自己弃牌区中的最多3张能量卡，附于自己的1只宝可梦身上。\n\n【无】【无】【无】【无】【无】 巨吨重击 150+\n若对手的战斗宝可梦为宝可梦VMAX，则追加造成150点伤害。\n\n",
+	"effect_id": "d699ab2122b5617fe5a5c97e60ae4dac",
+	"energy_provides": "",
+	"energy_type": "C",
+	"evolves_from": "",
+	"hp": 150,
+	"image_local_path": "user://cards/images/CS5.5C/056.png",
+	"image_url": "https://tcg.mik.moe/static/img/CS5.5C/056.png",
+	"is_tags": [
+		"Basic"
+	],
+	"label": "",
+	"mechanic": "",
+	"name": "雷吉奇卡斯",
+	"name_en": "Regigigas",
+	"rarity": "R",
+	"regulation_expanded": true,
+	"regulation_mark": "F",
+	"regulation_standard": true,
+	"release_date": "2024-08-02T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 4,
+	"set_code": "CS5.5C",
+	"set_code_en": "ASR",
+	"stage": "Basic",
+	"weakness_energy": "F",
+	"weakness_value": "×2",
+	"yoren_code": "P486"
+}

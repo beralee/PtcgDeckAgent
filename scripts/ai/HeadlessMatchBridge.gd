@@ -13,6 +13,7 @@ var _setup_order_index: int = 0
 var _setup_planner = AISetupPlannerScript.new()
 var _deck_strategy_registry = DeckStrategyRegistryScript.new()
 var _planned_setup_bench_ids: Array[int] = []
+var _ai_controllers: Array = [null, null]
 
 ## 效果交互状态（与 BattleScene 同名以兼容 AIStepResolver）
 var _pending_effect_card: CardInstance = null
@@ -44,6 +45,10 @@ func bind(next_gsm: GameStateMachine) -> void:
 	_gsm = next_gsm
 	if _gsm != null and not _gsm.player_choice_required.is_connected(_on_player_choice_required):
 		_gsm.player_choice_required.connect(_on_player_choice_required)
+
+
+func set_ai_controllers(player_0_ai: RefCounted, player_1_ai: RefCounted) -> void:
+	_ai_controllers = [player_0_ai, player_1_ai]
 
 
 func handles_bridge_owned_prompts() -> bool:
@@ -164,11 +169,52 @@ func _resolve_bench_limit_cleanup(data: Dictionary) -> void:
 			continue
 		var items: Array = step.get("items", [])
 		var required := int(step.get("min_select", 1))
-		var selected: Array = []
-		for index: int in range(maxi(items.size() - required, 0), items.size()):
-			selected.append(items[index])
+		var owner := int(step.get("chooser_player_index", int(data.get("player", -1))))
+		var selected := _pick_bench_cleanup_items_with_strategy(step, items, owner, required)
+		if selected.size() < required:
+			for index: int in range(maxi(items.size() - required, 0), items.size()):
+				if items[index] not in selected:
+					selected.append(items[index])
+				if selected.size() >= required:
+					break
 		context[step_id] = selected
 	_gsm.enforce_current_bench_limits("bench_limit_cleanup", int(data.get("player", -1)), "", -1, [context])
+
+
+func _pick_bench_cleanup_items_with_strategy(step: Dictionary, items: Array, player_index: int, required: int) -> Array:
+	if required <= 0 or items.is_empty():
+		return []
+	var strategy := _strategy_for_player_index(player_index)
+	if strategy == null or not strategy.has_method("pick_interaction_items"):
+		return []
+	var step_copy := step.duplicate(true)
+	step_copy["min_select"] = required
+	step_copy["max_select"] = required
+	var context := {
+		"game_state": _gsm.game_state if _gsm != null else null,
+		"player_index": player_index,
+	}
+	var picked_raw: Variant = strategy.call("pick_interaction_items", items, step_copy, context)
+	var picked: Array = picked_raw if picked_raw is Array else []
+	var selected: Array = []
+	for item: Variant in picked:
+		if item in items and item not in selected:
+			selected.append(item)
+		if selected.size() >= required:
+			break
+	return selected
+
+
+func _strategy_for_player_index(player_index: int) -> RefCounted:
+	if player_index >= 0 and player_index < _ai_controllers.size():
+		var ai: Variant = _ai_controllers[player_index]
+		if ai is RefCounted:
+			var strategy: Variant = (ai as RefCounted).get("_deck_strategy")
+			if strategy is RefCounted:
+				return strategy
+	if _gsm != null and _gsm.game_state != null and player_index >= 0 and player_index < _gsm.game_state.players.size():
+		return _deck_strategy_registry.create_strategy_for_player(_gsm.game_state.players[player_index])
+	return null
 
 
 func _begin_setup_flow(start_player_index: int = 0) -> void:

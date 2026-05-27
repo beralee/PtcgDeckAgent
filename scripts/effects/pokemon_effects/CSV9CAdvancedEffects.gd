@@ -16,6 +16,8 @@ class IronAntExSuddenShear extends AbilityOnBenchEnter:
 			return false
 		if pokemon.turn_played != state.turn_number:
 			return false
+		if not pokemon.entered_bench_from_hand_this_turn(state.turn_number):
+			return false
 		if not state.players[top.owner_index].bench.has(pokemon):
 			return false
 		for eff: Dictionary in pokemon.effects:
@@ -45,6 +47,8 @@ class ChienPaoBuryInSnow extends AbilityOnBenchEnter:
 		if state.current_player_index != top.owner_index:
 			return false
 		if pokemon.turn_played != state.turn_number:
+			return false
+		if not pokemon.entered_bench_from_hand_this_turn(state.turn_number):
 			return false
 		if not state.players[top.owner_index].bench.has(pokemon):
 			return false
@@ -803,7 +807,7 @@ class KyuremTrifrost extends BaseEffect:
 		for target: PokemonSlot in targets:
 			if AttackCoinFlipPreventDamageAndEffectsNextTurn.prevents_attack_damage(target, state):
 				continue
-			if target != opponent.active_pokemon and AbilityBenchImmune.prevents_opponent_attack_damage_or_effect(target, attacker, state):
+			if target != opponent.active_pokemon and AbilityBenchImmune.prevents_opponent_attack_damage(target, attacker, state):
 				continue
 			if AbilityPreventDamageFromBasicEx.prevents_target_damage(attacker, target, state):
 				continue

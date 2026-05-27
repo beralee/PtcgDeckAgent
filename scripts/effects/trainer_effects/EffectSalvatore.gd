@@ -51,7 +51,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		VISIBLE_SCOPE_OWN_FULL_DECK,
 		1,
 		1,
-		{"allow_cancel": true}
+		{"allow_cancel": true, "allow_hidden_search_whiff": false}
 	)
 	evo_step["labels"] = evo_labels
 
@@ -78,10 +78,14 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	var target_slot: PokemonSlot = null
 
 	var evo_raw: Array = ctx.get("evolution_card", [])
-	if not evo_raw.is_empty() and evo_raw[0] is CardInstance:
-		var selected: CardInstance = evo_raw[0]
+	var has_explicit_evolution: bool = ctx.has("evolution_card")
+	for entry: Variant in evo_raw:
+		if not (entry is CardInstance):
+			continue
+		var selected: CardInstance = entry
 		if selected in player.deck and _is_valid_evolution(selected):
 			evo_card = selected
+			break
 
 	var target_raw: Array = ctx.get("target_pokemon", [])
 	if not target_raw.is_empty() and target_raw[0] is PokemonSlot:
@@ -90,7 +94,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 			target_slot = selected
 
 	# 自动回退
-	if evo_card == null or target_slot == null or not _can_evolve_onto(evo_card, target_slot):
+	if (evo_card == null or target_slot == null or not _can_evolve_onto(evo_card, target_slot)) and not has_explicit_evolution:
 		evo_card = null
 		target_slot = null
 		for c: CardInstance in player.deck:

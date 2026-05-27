@@ -41,7 +41,7 @@ static func has_bench_immune(slot: PokemonSlot) -> bool:
 	return false
 
 
-static func prevents_opponent_attack_damage_or_effect(
+static func prevents_opponent_attack_damage(
 	target: PokemonSlot,
 	attacker: PokemonSlot,
 	state: GameState
@@ -51,6 +51,22 @@ static func prevents_opponent_attack_damage_or_effect(
 	if has_bench_immune(target):
 		return true
 	return AbilityTeamBenchShield.protects_bench_target(target, attacker, state)
+
+
+static func prevents_opponent_attack_effect(
+	target: PokemonSlot,
+	attacker: PokemonSlot,
+	state: GameState
+) -> bool:
+	return AbilityTeamBenchShield.protects_bench_target(target, attacker, state)
+
+
+static func prevents_opponent_attack_damage_or_effect(
+	target: PokemonSlot,
+	attacker: PokemonSlot,
+	state: GameState
+) -> bool:
+	return prevents_opponent_attack_damage(target, attacker, state)
 
 
 func get_description() -> String:

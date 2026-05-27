@@ -188,14 +188,12 @@ func _initial_tls_mode() -> String:
 	return _initial_tls_mode_for_os(_current_os_name())
 
 
-func _initial_tls_mode_for_os(os_name: String) -> String:
+func _initial_tls_mode_for_os(_os_name: String) -> String:
 	if not _allow_unsafe_tls:
 		return TLS_MODE_DEFAULT
-	if os_name == "Android":
-		# Some Android exports fail the explicit unsafe TLSOptions path, so try
-		# the platform TLS stack first and only retry unsafe after a handshake error.
-		return TLS_MODE_DEFAULT
-	return TLS_MODE_UNSAFE
+	# Try the platform or bundled CA path first. If the TLS handshake fails,
+	# _should_retry_tls_with_unsafe() can start one explicit unsafe retry.
+	return TLS_MODE_DEFAULT
 
 
 func _current_os_name() -> String:
@@ -553,10 +551,8 @@ func _try_start_tls_retry_from_failed_request(request: HTTPRequest, callback: Ca
 	return retry_error == OK
 
 
-func _should_retry_tls_with_unsafe(original_error: Dictionary, tls_mode: String, os_name: String) -> bool:
+func _should_retry_tls_with_unsafe(original_error: Dictionary, tls_mode: String, _os_name: String) -> bool:
 	if not _allow_unsafe_tls:
-		return false
-	if os_name != "Android":
 		return false
 	if tls_mode != TLS_MODE_DEFAULT:
 		return false
@@ -888,8 +884,6 @@ func _should_prefer_python_transport() -> bool:
 	if OS.get_environment("ZENMUX_DISABLE_PYTHON_FALLBACK").strip_edges() in ["1", "true", "TRUE", "yes", "YES"]:
 		return false
 	if OS.get_environment("ZENMUX_PREFER_PYTHON").strip_edges() in ["1", "true", "TRUE", "yes", "YES"]:
-		return true
-	if OS.get_name() == "Windows":
 		return true
 	_ensure_proxy_loaded_from_environment()
 	return _proxy_host != "" and _proxy_port > 0

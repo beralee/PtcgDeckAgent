@@ -392,7 +392,10 @@ func _v17_should_block_primary_retreat(action: Dictionary, game_state: GameState
 	var player: PlayerState = game_state.players[player_index]
 	if player == null or player.active_pokemon == null:
 		return false
-	var target: PokemonSlot = action.get("bench_target", null)
+	var raw_target: Variant = action.get("bench_target", null)
+	if not (raw_target is PokemonSlot):
+		return false
+	var target: PokemonSlot = raw_target
 	if target == null:
 		return false
 	var active_name := _slot_name(player.active_pokemon)

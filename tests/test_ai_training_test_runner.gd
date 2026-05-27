@@ -54,6 +54,23 @@ func test_parse_args_supports_matchup_sweep_mode() -> String:
 	])
 
 
+func test_parse_args_supports_action_probe_fixed_opening_flags() -> String:
+	var parsed: Dictionary = AITrainingTestRunnerScript.parse_runner_args(PackedStringArray([
+		"--mode=action_cap_probe",
+		"--deck-id=1700011",
+		"--anchor-deck-id=575716",
+		"--tracked-strong-fixed-opening",
+		"--anchor-strong-fixed-opening=false",
+		"--tracked-decision-mode=rules_only",
+	]))
+	return run_checks([
+		assert_eq(str(parsed.get("mode", "")), "action_cap_probe", "Explicit action probe mode should be preserved"),
+		assert_true(bool(parsed.get("tracked_strong_fixed_opening", false)), "Action probe should be able to enable the tracked deck fixed opening"),
+		assert_false(bool(parsed.get("anchor_strong_fixed_opening", true)), "Action probe should keep the anchor fixed opening independently configurable"),
+		assert_eq(str(parsed.get("tracked_decision_mode", "")), "rules_only", "Action probe should still parse tracked decision mode"),
+	])
+
+
 func test_parse_args_supports_miraidon_baseline_regression_mode() -> String:
 	var parsed: Dictionary = AITrainingTestRunnerScript.parse_runner_args(PackedStringArray([
 		"--mode=miraidon_baseline_regression",
@@ -225,6 +242,30 @@ func test_run_matchup_for_deck_can_override_anchor_with_miraidon_baseline() -> S
 	return run_checks([
 		assert_eq(int(summary.get("games", 0)), 1, "Focused matchup summary should preserve requested game count"),
 		assert_eq(str(summary.get("anchor_strategy_override", "")), "miraidon_baseline", "Matchup summary should record the anchor override used"),
+	])
+
+
+func test_matchup_sweep_applies_tracked_strong_fixed_opening() -> String:
+	var scene = AITrainingRunnerSceneScript.new()
+	var report := scene.run_matchup_sweep({
+		"anchor_deck_id": 575716,
+		"explicit_deck_ids": [1700003],
+		"games_per_matchup": 1,
+		"max_steps": 20,
+		"seed_bases": [5000],
+		"tracked_strong_fixed_opening": true,
+		"anchor_strong_fixed_opening": false,
+		"tracked_decision_mode": "rules_only",
+		"anchor_decision_mode": "rules_only",
+	})
+	var results: Array = report.get("results", [])
+	var first_summary: Dictionary = results[0] if not results.is_empty() and results[0] is Dictionary else {}
+	var games_detail: Array = first_summary.get("games_detail", [])
+	var first_game: Dictionary = games_detail[0] if not games_detail.is_empty() and games_detail[0] is Dictionary else {}
+	return run_checks([
+		assert_eq(int(first_game.get("tracked_player_index", -1)), 0, "First matchup sweep game should put the tracked deck in player 0"),
+		assert_true(str(first_game.get("player_0_fixed_order_path", "")).ends_with("1700003.json"), "Tracked strong fixed opening should apply the 17.0 Water Turtle fixed deck order"),
+		assert_eq(str(first_game.get("player_1_fixed_order_path", "")), "", "Anchor fixed opening should stay disabled when only tracked strong fixed opening is requested"),
 	])
 
 

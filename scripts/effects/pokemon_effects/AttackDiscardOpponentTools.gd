@@ -57,7 +57,7 @@ func execute_attack(attacker: PokemonSlot, _defender: PokemonSlot, _attack_index
 	for tool_card: CardInstance in selected:
 		for slot: PokemonSlot in opponent.get_all_pokemon():
 			if slot.attached_tool == tool_card:
-				if slot in opponent.bench and AbilityBenchImmune.prevents_opponent_attack_damage_or_effect(slot, attacker, state):
+				if slot in opponent.bench and AbilityBenchImmune.prevents_opponent_attack_effect(slot, attacker, state):
 					break
 				slot.attached_tool = null
 				opponent.discard_card(tool_card)

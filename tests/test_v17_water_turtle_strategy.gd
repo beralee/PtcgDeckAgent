@@ -85,6 +85,46 @@ func test_terapagos_damage_prediction_handles_csv9c_multiplier_symbol() -> Strin
 	)
 
 
+func test_palkia_vstar_prediction_uses_area_zero_shell_expectation() -> String:
+	var strategy := _new_strategy()
+	if strategy == null:
+		return "DeckStrategy17WaterTurtle.gd should load"
+	var palkia_vstar := _make_slot(_make_pokemon_cd("Palkia VSTAR Test", "Origin Forme Palkia VSTAR", "VSTAR", "W", 280, "CS5bC", "051", "V", [
+		{"name": "Subspace Swell", "cost": "WW", "damage": "60+"},
+	]), 0)
+	palkia_vstar.attached_energy.append(CardInstance.create(_make_energy_cd("Water Energy", "W"), 0))
+	palkia_vstar.attached_energy.append(CardInstance.create(_make_energy_cd("Water Energy", "W"), 0))
+	var prediction: Dictionary = strategy.predict_attacker_damage(palkia_vstar)
+	return assert_true(
+		int(prediction.get("damage", 0)) >= 260,
+		"Palkia VSTAR generic damage prediction should reflect the normal Area Zero bench shell (%s)" % str(prediction)
+	)
+
+
+func test_palkia_v_zero_damage_stadium_search_is_suppressed_when_area_zero_online() -> String:
+	var strategy := _new_strategy()
+	if strategy == null:
+		return "DeckStrategy17WaterTurtle.gd should load"
+	var gs := _make_game_state()
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Palkia V Test", "Origin Forme Palkia V", "Basic", "W", 220, "CSNC", "003", "V", [
+		{"name": "Stadium Search", "cost": "W", "damage": ""},
+		{"name": "Hydro Break", "cost": "WWC", "damage": "200"},
+	]), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Water Energy", "W"), 0))
+	gs.stadium_card = CardInstance.create(_make_trainer_cd("Area Zero Underdepths", "Area Zero Underdepths", "Stadium", "CSV9C", "207"), 0)
+	var attack_score: float = strategy.score_action_absolute({
+		"kind": "attack",
+		"source_slot": player.active_pokemon,
+		"projected_damage": 0,
+	}, gs, 0)
+	var end_score: float = strategy.score_action_absolute({"kind": "end_turn"}, gs, 0)
+	return assert_true(
+		attack_score < end_score,
+		"Palkia V should not spend the attack on zero-damage Stadium Search after Area Zero is already online (Attack=%f End=%f)" % [attack_score, end_score]
+	)
+
+
 func test_low_bench_terapagos_attack_does_not_claim_false_knockout() -> String:
 	var strategy := _new_strategy()
 	if strategy == null:
@@ -238,6 +278,27 @@ func test_fan_call_stops_taking_hoothoot_after_two_are_in_play() -> String:
 		assert_true(has_noctowl, "Fan Call should still take Noctowl after the second Hoothoot is already established"),
 		assert_false(has_hoothoot, "Fan Call should stop taking extra Hoothoot once two are already in play"),
 	])
+
+
+func test_late_bibarel_draw_is_suppressed_under_deckout_pressure() -> String:
+	var strategy := _new_strategy()
+	if strategy == null:
+		return "DeckStrategy17WaterTurtle.gd should load"
+	var gs := _make_game_state()
+	gs.turn_number = 19
+	var player: PlayerState = gs.players[0]
+	var bibarel := _make_slot(_make_pokemon_cd("Bibarel Test", "Bibarel", "Stage 1", "C", 120, "CS5aC", "105"), 0)
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Terapagos Test", "", "Basic", "C", 230, "CSV9C", "175", "ex"), 0)
+	player.bench.append(bibarel)
+	player.deck.clear()
+	for i: int in 3:
+		player.deck.append(CardInstance.create(_make_trainer_cd("Filler%d" % i, "Filler%d" % i, "Item", "CSV1C", "112"), 0))
+	var ability_score: float = strategy.score_action_absolute({"kind": "use_ability", "source_slot": bibarel}, gs, 0)
+	var end_score: float = strategy.score_action_absolute({"kind": "end_turn"}, gs, 0)
+	return assert_true(
+		ability_score < end_score,
+		"Late Bibarel draw should be below end_turn when the deck is nearly empty (Bibarel=%f End=%f)" % [ability_score, end_score]
+	)
 
 
 func test_t2_noctowl_searches_energy_access_plus_area_zero_for_big_terapagos_turn() -> String:
@@ -414,6 +475,73 @@ func test_glass_trumpet_assignment_builds_backup_terapagos_before_overfeeding_re
 	)
 
 
+func test_conversion_glass_trumpet_outranks_ultra_ball_when_discard_energy_is_ready() -> String:
+	var strategy := _new_strategy()
+	if strategy == null:
+		return "DeckStrategy17WaterTurtle.gd should load"
+	var gs := _make_game_state()
+	gs.turn_number = 8
+	var player: PlayerState = gs.players[0]
+	var palkia := _make_slot(_make_pokemon_cd("Palkia VSTAR Test", "Origin Forme Palkia VSTAR", "VSTAR", "W", 280, "CS5bC", "051", "V", [
+		{"name": "Subspace Swell", "cost": "WW", "damage": "60+"},
+	]), 0)
+	var backup_terapagos_a := _make_slot(_make_pokemon_cd("Terapagos Backup A", "", "Basic", "C", 230, "CSV9C", "175", "ex", [
+		{"name": "Unified Beat", "cost": "CC", "damage": "30x"},
+	]), 0)
+	var backup_terapagos_b := _make_slot(_make_pokemon_cd("Terapagos Backup B", "", "Basic", "C", 230, "CSV9C", "175", "ex", [
+		{"name": "Unified Beat", "cost": "CC", "damage": "30x"},
+	]), 0)
+	var fan_rotom := _make_slot(_make_pokemon_cd("Fan Rotom Test", "", "Basic", "C", 70, "CSV9C", "161"), 0)
+	var noctowl := _make_slot(_make_pokemon_cd("Noctowl Test", "", "Stage 1", "C", 100, "CSV9C", "155"), 0)
+	player.active_pokemon = palkia
+	player.bench.append(backup_terapagos_a)
+	player.bench.append(backup_terapagos_b)
+	player.bench.append(fan_rotom)
+	player.bench.append(noctowl)
+	player.discard_pile.append(CardInstance.create(_make_energy_cd("Water Energy", "W"), 0))
+	player.discard_pile.append(CardInstance.create(_make_energy_cd("Water Energy", "W"), 0))
+	var glass := CardInstance.create(_make_trainer_cd("Glass Trumpet", "Glass Trumpet", "Item", "CSV9C", "178"), 0)
+	var ultra := CardInstance.create(_make_trainer_cd("Ultra Ball", "Ultra Ball", "Item", "CSV1C", "112"), 0)
+	var glass_score: float = strategy.score_action_absolute({"kind": "play_trainer", "card": glass}, gs, 0)
+	var ultra_score: float = strategy.score_action_absolute({"kind": "play_trainer", "card": ultra}, gs, 0)
+	return assert_true(
+		glass_score > ultra_score + 100.0,
+		"Conversion should accelerate discard Energy with Glass Trumpet before generic Ultra Ball churn (Glass=%f Ultra=%f)" % [glass_score, ultra_score]
+	)
+
+
+func test_glass_trumpet_source_selection_matches_real_terapagos_targets() -> String:
+	var strategy := _new_strategy()
+	if strategy == null:
+		return "DeckStrategy17WaterTurtle.gd should load"
+	var gs := _make_game_state()
+	var player: PlayerState = gs.players[0]
+	var palkia := _make_slot(_make_pokemon_cd("Palkia VSTAR Test", "Origin Forme Palkia VSTAR", "VSTAR", "W", 280, "CS5bC", "051", "V"), 0)
+	var backup_a := _make_slot(_make_pokemon_cd("Terapagos Backup A", "", "Basic", "C", 230, "CSV9C", "175", "ex"), 0)
+	var backup_b := _make_slot(_make_pokemon_cd("Terapagos Backup B", "", "Basic", "C", 230, "CSV9C", "175", "ex"), 0)
+	var fan_rotom := _make_slot(_make_pokemon_cd("Fan Rotom Test", "", "Basic", "C", 70, "CSV9C", "161"), 0)
+	player.active_pokemon = palkia
+	player.bench.append(backup_a)
+	player.bench.append(fan_rotom)
+	var water_a := CardInstance.create(_make_energy_cd("Water Energy A", "W"), 0)
+	var water_b := CardInstance.create(_make_energy_cd("Water Energy B", "W"), 0)
+	var step := {"id": "csv9c178_energy_assignments", "max_select": 2}
+	var one_target_pick: Array = strategy.pick_interaction_items(
+		[water_a, water_b],
+		step,
+		{"game_state": gs, "player_index": 0, "target_items": [backup_a, fan_rotom]}
+	)
+	var two_target_pick: Array = strategy.pick_interaction_items(
+		[water_a, water_b],
+		step,
+		{"game_state": gs, "player_index": 0, "target_items": [backup_a, backup_b, fan_rotom]}
+	)
+	return run_checks([
+		assert_eq(one_target_pick.size(), 1, "Glass Trumpet should preserve the second discard Energy when only one Terapagos target is worth building"),
+		assert_eq(two_target_pick.size(), 2, "Glass Trumpet should use both discard Energy when two Terapagos targets can be advanced"),
+	])
+
+
 func test_handoff_prefers_nearly_ready_terapagos_over_low_pressure_palkia_v() -> String:
 	var strategy := _new_strategy()
 	if strategy == null:
@@ -490,6 +618,34 @@ func test_irida_searches_real_water_route_and_area_zero_item() -> String:
 	])
 
 
+func test_ultra_ball_searches_palkia_vstar_before_extra_terapagos_when_palkia_is_in_play() -> String:
+	var strategy := _new_strategy()
+	if strategy == null:
+		return "DeckStrategy17WaterTurtle.gd should load"
+	var gs := _make_game_state()
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Palkia V Test", "Origin Forme Palkia V", "Basic", "W", 220, "CSNC", "003", "V", [
+		{"name": "Stadium Search", "cost": "W", "damage": ""},
+		{"name": "Hydro Break", "cost": "WWC", "damage": "200"},
+	]), 0)
+	player.bench.append(_make_slot(_make_pokemon_cd("Terapagos Test", "", "Basic", "C", 230, "CSV9C", "175", "ex", [
+		{"name": "Unified Beat", "cost": "CC", "damage": "30x"},
+	]), 0))
+	var palkia_vstar := CardInstance.create(_make_pokemon_cd("Palkia VSTAR Test", "Origin Forme Palkia VSTAR", "VSTAR", "W", 280, "CS5bC", "051", "V", [
+		{"name": "Subspace Swell", "cost": "WW", "damage": "60+"},
+	]), 0)
+	var extra_terapagos := CardInstance.create(_make_pokemon_cd("Terapagos Test", "", "Basic", "C", 230, "CSV9C", "175", "ex", [
+		{"name": "Unified Beat", "cost": "CC", "damage": "30x"},
+	]), 0)
+	var context := {"game_state": gs, "player_index": 0}
+	var vstar_score: float = strategy.score_interaction_target(palkia_vstar, {"id": "search_pokemon"}, context)
+	var terapagos_score: float = strategy.score_interaction_target(extra_terapagos, {"id": "search_pokemon"}, context)
+	return assert_true(
+		vstar_score > terapagos_score + 150.0,
+		"Ultra Ball Pokemon search should complete Palkia VSTAR before taking another Terapagos (VSTAR=%f Terapagos=%f)" % [vstar_score, terapagos_score]
+	)
+
+
 func test_gust_targets_bench_knockout_when_terapagos_misses_active() -> String:
 	var strategy := _new_strategy()
 	if strategy == null:
@@ -545,6 +701,65 @@ func test_terapagos_180_non_ko_waits_for_more_bench_development() -> String:
 	)
 
 
+func test_ready_terapagos_benches_palkia_bridge_before_early_prize_trade() -> String:
+	var strategy := _new_strategy()
+	if strategy == null:
+		return "DeckStrategy17WaterTurtle.gd should load"
+	var gs := _make_game_state()
+	gs.turn_number = 3
+	var player: PlayerState = gs.players[0]
+	var opponent: PlayerState = gs.players[1]
+	var terapagos := _make_slot(_make_pokemon_cd("Terapagos Test", "", "Basic", "C", 230, "CSV9C", "175", "ex", [
+		{"name": "Unified Beat", "cost": "CC", "damage": "30x"},
+	]), 0)
+	terapagos.attached_energy.append(CardInstance.create(_make_energy_cd("Water Energy", "W"), 0))
+	terapagos.attached_energy.append(CardInstance.create(_make_energy_cd("Water Energy", "W"), 0))
+	player.active_pokemon = terapagos
+	for i: int in 6:
+		player.bench.append(_make_slot(_make_pokemon_cd("Bench%d" % i, "", "Basic", "C", 70, "CSV9C", "154"), 0))
+	opponent.active_pokemon = _make_slot(_make_pokemon_cd("Charizard ex", "Charizard ex", "Stage 2", "R", 180, "CSV2aC", "066", "ex"), 1)
+	var palkia_v := CardInstance.create(_make_pokemon_cd("Palkia V Test", "Origin Forme Palkia V", "Basic", "W", 220, "CSNC", "003", "V", [
+		{"name": "Stadium Search", "cost": "W", "damage": ""},
+		{"name": "Hydro Break", "cost": "WWC", "damage": "200"},
+	]), 0)
+	var attack_score: float = strategy.score_action_absolute({"kind": "attack", "source_slot": terapagos}, gs, 0)
+	var palkia_score: float = strategy.score_action_absolute({"kind": "play_basic_to_bench", "card": palkia_v}, gs, 0)
+	return assert_true(
+		palkia_score > attack_score + 40.0,
+		"Early ready Terapagos should establish Palkia V bridge before taking a prize trade (Palkia=%f Attack=%f)" % [palkia_score, attack_score]
+	)
+
+
+func test_midgame_ready_terapagos_benches_palkia_when_no_backup_attacker() -> String:
+	var strategy := _new_strategy()
+	if strategy == null:
+		return "DeckStrategy17WaterTurtle.gd should load"
+	var gs := _make_game_state()
+	gs.turn_number = 15
+	var player: PlayerState = gs.players[0]
+	var opponent: PlayerState = gs.players[1]
+	var terapagos := _make_slot(_make_pokemon_cd("Terapagos Test", "", "Basic", "C", 230, "CSV9C", "175", "ex", [
+		{"name": "Unified Beat", "cost": "CC", "damage": "30x"},
+	]), 0)
+	terapagos.attached_energy.append(CardInstance.create(_make_energy_cd("Water Energy", "W"), 0))
+	terapagos.attached_energy.append(CardInstance.create(_make_energy_cd("Water Energy", "W"), 0))
+	player.active_pokemon = terapagos
+	player.bench.clear()
+	for i: int in 7:
+		player.bench.append(_make_slot(_make_pokemon_cd("Support%d" % i, "", "Basic", "C", 70, "CSV9C", "154"), 0))
+	opponent.active_pokemon = _make_slot(_make_pokemon_cd("Charizard ex", "Charizard ex", "Stage 2", "R", 330, "CSV2aC", "066", "ex"), 1)
+	var palkia_v := CardInstance.create(_make_pokemon_cd("Palkia V Test", "Origin Forme Palkia V", "Basic", "W", 220, "CSNC", "003", "V", [
+		{"name": "Stadium Search", "cost": "W", "damage": ""},
+		{"name": "Hydro Break", "cost": "WWC", "damage": "200"},
+	]), 0)
+	var attack_score: float = strategy.score_action_absolute({"kind": "attack", "source_slot": terapagos}, gs, 0)
+	var palkia_score: float = strategy.score_action_absolute({"kind": "play_basic_to_bench", "card": palkia_v}, gs, 0)
+	return assert_true(
+		palkia_score > attack_score + 120.0,
+		"Midgame Terapagos should create a Palkia backup before a non-final attack when no backup attacker exists (Palkia=%f Attack=%f)" % [palkia_score, attack_score]
+	)
+
+
 func test_kieran_boost_turns_210_terapagos_swing_into_rule_box_knockout() -> String:
 	var strategy := _new_strategy()
 	if strategy == null:
@@ -597,6 +812,80 @@ func test_lost_vacuum_does_not_break_own_area_zero_damage_shell() -> String:
 		assert_true(vacuum_score < 0.0, "Lost Vacuum should be suppressed while own Area Zero is enabling the 7-bench damage shell (Vacuum=%f)" % vacuum_score),
 		assert_true(attack_score > vacuum_score + 600.0, "Ready Terapagos attack should dominate self-breaking Lost Vacuum (Attack=%f Vacuum=%f)" % [attack_score, vacuum_score]),
 	])
+
+
+func test_lost_vacuum_refuses_own_area_zero_even_before_bench_overflow() -> String:
+	var strategy := _new_strategy()
+	if strategy == null:
+		return "DeckStrategy17WaterTurtle.gd should load"
+	var gs := _make_game_state()
+	gs.turn_number = 5
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Palkia VSTAR Test", "Origin Forme Palkia VSTAR", "VSTAR", "W", 280, "CS5bC", "051", "V"), 0)
+	player.bench.append(_make_slot(_make_pokemon_cd("Terapagos Test", "", "Basic", "C", 230, "CSV9C", "175", "ex"), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd("Noctowl Test", "", "Stage 1", "C", 100, "CSV9C", "155"), 0))
+	gs.stadium_card = CardInstance.create(_make_trainer_cd("Area Zero Underdepths", "Area Zero Underdepths", "Stadium", "CSV9C", "207"), 0)
+	var vacuum := CardInstance.create(_make_trainer_cd("Lost Vacuum", "Lost Vacuum", "Item", "CS6bC", "123"), 0)
+	var vacuum_score: float = strategy.score_action_absolute({
+		"kind": "play_trainer",
+		"card": vacuum,
+		"targets": [{"lost_vacuum_target": [gs.stadium_card]}],
+	}, gs, 0)
+	return assert_true(
+		vacuum_score < -100.0,
+		"Lost Vacuum should not be playable over end_turn when it only removes our own Area Zero (Vacuum=%f)" % vacuum_score
+	)
+
+
+func test_retreat_does_not_pivot_into_support_when_attacker_is_available() -> String:
+	var strategy := _new_strategy()
+	if strategy == null:
+		return "DeckStrategy17WaterTurtle.gd should load"
+	var gs := _make_game_state()
+	gs.turn_number = 13
+	var player: PlayerState = gs.players[0]
+	var active_support := _make_slot(_make_pokemon_cd("Hoothoot Test", "", "Basic", "C", 70, "CSV9C", "154"), 0)
+	active_support.attached_energy.append(CardInstance.create(_make_energy_cd("Water Energy", "W"), 0))
+	var ready_terapagos := _make_slot(_make_pokemon_cd("Terapagos Test", "", "Basic", "C", 230, "CSV9C", "175", "ex", [
+		{"name": "Unified Beat", "cost": "CC", "damage": "30x"},
+	]), 0)
+	ready_terapagos.attached_energy.append(CardInstance.create(_make_energy_cd("Water Energy", "W"), 0))
+	ready_terapagos.attached_energy.append(CardInstance.create(_make_energy_cd("Water Energy", "W"), 0))
+	var bench_hoothoot := _make_slot(_make_pokemon_cd("Bench Hoothoot", "", "Basic", "C", 70, "CSV9C", "154"), 0)
+	player.active_pokemon = active_support
+	player.bench.append(ready_terapagos)
+	player.bench.append(bench_hoothoot)
+	var water := active_support.attached_energy[0]
+	var attacker_score: float = strategy.score_action_absolute({"kind": "retreat", "bench_target": ready_terapagos, "energy_to_discard": [water]}, gs, 0)
+	var support_score: float = strategy.score_action_absolute({"kind": "retreat", "bench_target": bench_hoothoot, "energy_to_discard": [water]}, gs, 0)
+	return assert_true(
+		attacker_score > support_score + 900.0,
+		"Retreat should pivot to a ready attacker instead of another support slot (Attacker=%f Support=%f)" % [attacker_score, support_score]
+	)
+
+
+func test_gust_card_without_live_conversion_target_stays_below_end_turn() -> String:
+	var strategy := _new_strategy()
+	if strategy == null:
+		return "DeckStrategy17WaterTurtle.gd should load"
+	var gs := _make_game_state()
+	var player: PlayerState = gs.players[0]
+	var opponent: PlayerState = gs.players[1]
+	var terapagos := _make_slot(_make_pokemon_cd("Terapagos Test", "", "Basic", "C", 230, "CSV9C", "175", "ex", [
+		{"name": "Unified Beat", "cost": "CC", "damage": "30x"},
+	]), 0)
+	terapagos.attached_energy.append(CardInstance.create(_make_energy_cd("Water Energy", "W"), 0))
+	terapagos.attached_energy.append(CardInstance.create(_make_energy_cd("Water Energy", "W"), 0))
+	player.active_pokemon = terapagos
+	opponent.active_pokemon = _make_slot(_make_pokemon_cd("Charizard ex", "Charizard ex", "Stage 2", "R", 330, "CSV2aC", "066", "ex"), 1)
+	opponent.bench.clear()
+	var boss := CardInstance.create(_make_trainer_cd("Boss Orders", "Boss's Orders", "Supporter", "CSVH1aC", "023"), 0)
+	var boss_score: float = strategy.score_action_absolute({"kind": "play_trainer", "card": boss}, gs, 0)
+	var end_score: float = strategy.score_action_absolute({"kind": "end_turn"}, gs, 0)
+	return assert_true(
+		boss_score < end_score,
+		"Boss should not be spent when there is no live bench conversion target (Boss=%f End=%f)" % [boss_score, end_score]
+	)
 
 
 func _new_strategy() -> RefCounted:

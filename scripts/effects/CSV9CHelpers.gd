@@ -175,9 +175,8 @@ static func player_field_return_to_hand_blocked(player_index: int, state: GameSt
 static func _ability_disabled_without_processor(slot: PokemonSlot, state: GameState) -> bool:
 	if slot == null:
 		return false
-	for effect: Dictionary in slot.effects:
-		if String(effect.get("type", "")) == "ability_disabled" and (state == null or int(effect.get("turn", -999)) == state.turn_number):
-			return true
+	if state != null and EffectCancelCologne.is_slot_directly_ability_disabled(slot, state):
+		return true
 	if state != null:
 		if AbilityBasicLock.is_locked_by_basic_lock(slot, state):
 			return true
@@ -305,7 +304,7 @@ static func prevents_attack_effects(target: PokemonSlot, state: GameState) -> bo
 static func can_damage_bench_target(attacker: PokemonSlot, target: PokemonSlot, state: GameState) -> bool:
 	if target == null or target.get_top_card() == null:
 		return false
-	if AbilityBenchImmune.prevents_opponent_attack_damage_or_effect(target, attacker, state):
+	if AbilityBenchImmune.prevents_opponent_attack_damage(target, attacker, state):
 		return false
 	return true
 

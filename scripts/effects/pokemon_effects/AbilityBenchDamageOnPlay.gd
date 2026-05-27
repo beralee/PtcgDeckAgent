@@ -24,6 +24,8 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 		return false
 	if pokemon.turn_played != state.turn_number:
 		return false
+	if not pokemon.entered_bench_from_hand_this_turn(state.turn_number):
+		return false
 	if not state.players[top.owner_index].bench.has(pokemon):
 		return false
 	for effect_data: Dictionary in pokemon.effects:

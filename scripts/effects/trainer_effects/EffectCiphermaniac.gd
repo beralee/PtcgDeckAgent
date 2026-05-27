@@ -26,7 +26,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		VISIBLE_SCOPE_OWN_FULL_DECK,
 		pick_count,
 		pick_count,
-		{"allow_cancel": true}
+		{"allow_cancel": true, "allow_hidden_search_whiff": false}
 	)]
 
 
@@ -41,12 +41,13 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	var pick_count: int = mini(TOP_CARD_COUNT, player.deck.size())
 	var chosen: Array[CardInstance] = []
 	var selected_raw: Array = ctx.get("top_cards", [])
+	var has_explicit_selection: bool = ctx.has("top_cards")
 	for picked: Variant in selected_raw:
 		if picked is CardInstance and picked in player.deck and picked not in chosen:
 			chosen.append(picked)
 			if chosen.size() >= pick_count:
 				break
-	if chosen.is_empty():
+	if chosen.is_empty() and not has_explicit_selection:
 		for i: int in pick_count:
 			chosen.append(player.deck[i])
 

@@ -24,9 +24,13 @@ static func is_basic_abilities_disabled(state: GameState, checking_slot: Pokemon
 		var active: PokemonSlot = state.players[pi].active_pokemon
 		if active == null:
 			continue
-		if _has_basic_lock_ability(active):
+		if _has_basic_lock_ability(active) and not _is_basic_lock_source_suppressed(active, state):
 			return true
 	return false
+
+
+static func _is_basic_lock_source_suppressed(slot: PokemonSlot, state: GameState) -> bool:
+	return EffectCancelCologne.is_slot_directly_ability_disabled(slot, state)
 
 
 static func _has_basic_lock_ability(slot: PokemonSlot) -> bool:

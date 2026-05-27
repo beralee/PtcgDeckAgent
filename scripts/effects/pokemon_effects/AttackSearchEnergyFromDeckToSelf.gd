@@ -49,7 +49,7 @@ func execute_attack(
 	var player: PlayerState = state.players[attacker.get_top_card().owner_index]
 	var ctx: Dictionary = get_attack_interaction_context()
 	var selected: Array[CardInstance] = _resolve_selected_energy(player, ctx.get(STEP_ID, []))
-	if selected.is_empty():
+	if selected.is_empty() and not ctx.has(STEP_ID):
 		selected = _fallback_selection(player)
 	if selected.is_empty():
 		player.shuffle_deck()

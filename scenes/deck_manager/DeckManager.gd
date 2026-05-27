@@ -11,6 +11,7 @@ const CARD_TILE_HEIGHT := 140
 const VIEW_GRID_COLUMNS := 6
 const RENAME_DIALOG_SIZE := Vector2i(460, 230)
 const COMMUNITY_DATA_PATH := "res://community/data/community-data.json"
+const DECK_CENTER_META_STATE_PATH := "user://deck_center_meta_state.json"
 const HUD_ACCENT := Color(0.28, 0.92, 1.0, 1.0)
 const HUD_ACCENT_WARM := Color(1.0, 0.55, 0.24, 1.0)
 const HUD_DANGER := Color(1.0, 0.28, 0.22, 1.0)
@@ -63,6 +64,8 @@ var _recommendation_store: RefCounted = null
 var _recommendation_articles: Array[Dictionary] = []
 var _embedded_recommendations: Array[Dictionary] = []
 var _current_recommendation: Dictionary = {}
+var _deck_center_latest_meta: Dictionary = {}
+var _deck_center_recommendation_badge_seen_revision := ""
 var _recommendation_section: VBoxContainer = null
 var _recommendation_feed: VBoxContainer = null
 var _recommendation_status_label: Label = null
@@ -166,7 +169,7 @@ func _style_hud_labels_recursive(node: Node) -> void:
 	if node is Label:
 		var label := node as Label
 		if label.name in ["Title", "TitleLabel"]:
-			label.add_theme_font_size_override("font_size", 32)
+			label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(32))
 			label.add_theme_color_override("font_color", HUD_TEXT)
 			label.add_theme_color_override("font_shadow_color", Color(0.0, 0.82, 1.0, 0.72))
 			label.add_theme_constant_override("shadow_offset_y", 2)
@@ -210,7 +213,7 @@ func _hud_button_style(accent: Color, hover: bool, pressed: bool) -> StyleBoxFla
 
 
 func _style_hud_button(button: Button, accent: Color, compact: bool = false) -> void:
-	var font_size := HUD_BUTTON_COMPACT_FONT_SIZE if compact else HUD_BUTTON_FONT_SIZE
+	var font_size := HudThemeScript.scaled_font_size(HUD_BUTTON_COMPACT_FONT_SIZE if compact else HUD_BUTTON_FONT_SIZE)
 	var min_height := HUD_BUTTON_COMPACT_MIN_HEIGHT if compact else HUD_BUTTON_MIN_HEIGHT
 	var min_width := _hud_button_min_width_for_text(button.text, font_size)
 	button.custom_minimum_size = Vector2(maxf(button.custom_minimum_size.x, min_width), maxf(button.custom_minimum_size.y, min_height))
@@ -240,7 +243,7 @@ func _hud_button_min_width_for_text(text: String, font_size: int) -> float:
 
 
 func _style_hud_line_edit(input: LineEdit) -> void:
-	input.add_theme_font_size_override("font_size", 15)
+	input.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
 	input.add_theme_color_override("font_color", HUD_TEXT)
 	input.add_theme_color_override("font_placeholder_color", Color(0.55, 0.66, 0.74, 0.78))
 	input.add_theme_color_override("caret_color", HUD_ACCENT)
@@ -269,9 +272,37 @@ func _setup_deck_recommendations() -> void:
 	_recommendation_articles = _load_recommendation_articles()
 	_embedded_recommendations = _normalize_recommendation_articles(_recommendation_articles)
 	_current_recommendation = (_recommendation_store.call("get_current_or_fallback", _embedded_recommendations) as Dictionary)
+	_deck_center_latest_meta = _load_deck_center_latest_meta()
 	_ensure_recommendation_client()
 	_ensure_recommendation_section()
 	_request_latest_remote_recommendation_on_open()
+
+
+func _load_deck_center_latest_meta() -> Dictionary:
+	var root := _load_deck_center_meta_state()
+	_deck_center_recommendation_badge_seen_revision = str(root.get("last_recommendation_badge_seen_revision", "")).strip_edges()
+	var latest_raw: Variant = root.get("latest_info", {})
+	if latest_raw is Dictionary:
+		return (latest_raw as Dictionary).duplicate(true)
+	return root.duplicate(true)
+
+
+func _load_deck_center_meta_state() -> Dictionary:
+	if not FileAccess.file_exists(DECK_CENTER_META_STATE_PATH):
+		return {}
+	var raw_text := FileAccess.get_file_as_string(DECK_CENTER_META_STATE_PATH)
+	var parsed: Variant = JSON.parse_string(raw_text)
+	if parsed is Dictionary:
+		return (parsed as Dictionary).duplicate(true)
+	return {}
+
+
+func _save_deck_center_meta_state(state: Dictionary) -> void:
+	var file := FileAccess.open(DECK_CENTER_META_STATE_PATH, FileAccess.WRITE)
+	if file == null:
+		return
+	file.store_string(JSON.stringify(state, "\t"))
+	file.close()
 
 
 func _ensure_recommendation_client() -> void:
@@ -362,7 +393,7 @@ func _ensure_recommendation_section() -> void:
 	_recommendation_status_label.name = "RecommendationStatusLabel"
 	_recommendation_status_label.text = ""
 	_recommendation_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	_recommendation_status_label.add_theme_font_size_override("font_size", 12)
+	_recommendation_status_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(12))
 	_recommendation_status_label.add_theme_color_override("font_color", HUD_TEXT_MUTED)
 	_recommendation_section.add_child(_recommendation_status_label)
 
@@ -387,7 +418,10 @@ func _refresh_recommendation_cards() -> void:
 			_recommendation_next_button.disabled = _recommendation_fetch_in_progress
 		return
 
+	var should_mark_recommendation_badge_seen := _recommendation_matches_deck_center_latest(_current_recommendation)
 	_recommendation_feed.add_child(_create_recommendation_feed_card(_current_recommendation))
+	if should_mark_recommendation_badge_seen:
+		call_deferred("_mark_deck_center_recommendation_badge_seen")
 	if _recommendation_next_button != null:
 		_recommendation_next_button.disabled = _recommendation_fetch_in_progress or _current_operation != ""
 		_recommendation_next_button.text = "获取中..." if _recommendation_fetch_in_progress else "换一套"
@@ -402,6 +436,7 @@ func _create_recommendation_placeholder() -> PanelContainer:
 	var label := Label.new()
 	label.text = "暂时没有可展示的推荐卡组。你仍然可以手动导入卡组。"
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
 	label.add_theme_color_override("font_color", HUD_TEXT_MUTED)
 	panel.add_child(label)
 	return panel
@@ -427,7 +462,7 @@ func _create_recommendation_feed_card(recommendation: Dictionary) -> PanelContai
 
 	var meta := Label.new()
 	meta.text = source_text
-	meta.add_theme_font_size_override("font_size", 12)
+	meta.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(12))
 	meta.add_theme_color_override("font_color", HUD_ACCENT_WARM)
 	vbox.add_child(meta)
 
@@ -435,15 +470,24 @@ func _create_recommendation_feed_card(recommendation: Dictionary) -> PanelContai
 	deck_label.name = "RecommendationDeckName"
 	deck_label.text = deck_name
 	deck_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	deck_label.add_theme_font_size_override("font_size", 23)
+	deck_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(23))
 	deck_label.add_theme_color_override("font_color", HUD_TEXT)
-	vbox.add_child(deck_label)
+
+	var deck_header := HBoxContainer.new()
+	deck_header.name = "RecommendationDeckHeader"
+	deck_header.add_theme_constant_override("separation", 8)
+	deck_header.alignment = BoxContainer.ALIGNMENT_BEGIN
+	vbox.add_child(deck_header)
+	deck_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	deck_header.add_child(deck_label)
+	if _recommendation_matches_deck_center_latest(recommendation):
+		deck_header.add_child(_create_recommendation_new_badge())
 
 	var title := Label.new()
 	title.name = "RecommendationTitle"
 	title.text = title_text
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD
-	title.add_theme_font_size_override("font_size", 17)
+	title.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(17))
 	title.add_theme_color_override("font_color", Color(0.86, 0.96, 1.0, 1.0))
 	vbox.add_child(title)
 
@@ -451,13 +495,14 @@ func _create_recommendation_feed_card(recommendation: Dictionary) -> PanelContai
 		var summary_label := Label.new()
 		summary_label.text = style_summary
 		summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+		summary_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
 		summary_label.add_theme_color_override("font_color", Color(0.78, 0.90, 0.96, 1.0))
 		vbox.add_child(summary_label)
 
 	var why_title := Label.new()
 	why_title.name = "RecommendationWhyTitle"
 	why_title.text = "为什么值得玩"
-	why_title.add_theme_font_size_override("font_size", 15)
+	why_title.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
 	why_title.add_theme_color_override("font_color", HUD_ACCENT_WARM)
 	vbox.add_child(why_title)
 
@@ -469,6 +514,7 @@ func _create_recommendation_feed_card(recommendation: Dictionary) -> PanelContai
 		var bullet_label := Label.new()
 		bullet_label.text = "• " + bullet
 		bullet_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+		bullet_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
 		bullet_label.add_theme_color_override("font_color", HUD_TEXT_MUTED)
 		vbox.add_child(bullet_label)
 
@@ -519,17 +565,78 @@ func _create_recommendation_feed_card(recommendation: Dictionary) -> PanelContai
 	return panel
 
 
+func _recommendation_matches_deck_center_latest(recommendation: Dictionary) -> bool:
+	if _deck_center_latest_meta.is_empty():
+		return false
+	var latest_revision := str(_deck_center_latest_meta.get("latest_revision", "")).strip_edges()
+	if latest_revision != "" and latest_revision == _deck_center_recommendation_badge_seen_revision:
+		return false
+	var latest_recommendation_id := str(_deck_center_latest_meta.get("latest_recommendation_id", "")).strip_edges()
+	var recommendation_id := str(recommendation.get("id", "")).strip_edges()
+	if latest_recommendation_id != "" and recommendation_id != "" and latest_recommendation_id == recommendation_id:
+		return true
+
+	var latest_deck_id := int(_deck_center_latest_meta.get("latest_deck_id", 0))
+	var recommendation_deck_id := int(recommendation.get("deck_id", 0))
+	return latest_deck_id > 0 and latest_deck_id == recommendation_deck_id
+
+
+func _mark_deck_center_recommendation_badge_seen() -> void:
+	var revision := str(_deck_center_latest_meta.get("latest_revision", "")).strip_edges()
+	if revision == "" or revision == _deck_center_recommendation_badge_seen_revision:
+		return
+	var state := _load_deck_center_meta_state()
+	state["last_recommendation_badge_seen_revision"] = revision
+	state["last_recommendation_badge_seen_at"] = int(Time.get_unix_time_from_system())
+	state["last_seen_revision"] = revision
+	state["last_seen_at"] = int(state.get("last_recommendation_badge_seen_at", Time.get_unix_time_from_system()))
+	if not _deck_center_latest_meta.is_empty():
+		state["latest_info"] = _deck_center_latest_meta.duplicate(true)
+	_save_deck_center_meta_state(state)
+	_deck_center_recommendation_badge_seen_revision = revision
+
+
+func _create_recommendation_new_badge() -> PanelContainer:
+	var badge := PanelContainer.new()
+	badge.name = "RecommendationNewBadge"
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.custom_minimum_size = Vector2(52, 24)
+	badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(1.0, 0.83, 0.20, 0.96)
+	style.border_color = Color(1.0, 1.0, 1.0, 0.86)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(6)
+	style.content_margin_left = 10
+	style.content_margin_right = 10
+	style.content_margin_top = 4
+	style.content_margin_bottom = 4
+	badge.add_theme_stylebox_override("panel", style)
+
+	var label := Label.new()
+	label.name = "RecommendationNewBadgeText"
+	label.text = "NEW"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(11))
+	label.add_theme_color_override("font_color", Color(0.14, 0.08, 0.02, 1.0))
+	badge.add_child(label)
+	return badge
+
+
 func _create_recommendation_line(label_text: String, body_text: String) -> VBoxContainer:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 2)
 	var title := Label.new()
 	title.text = label_text
-	title.add_theme_font_size_override("font_size", 14)
+	title.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
 	title.add_theme_color_override("font_color", HUD_ACCENT)
 	box.add_child(title)
 	var body := Label.new()
 	body.text = body_text
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD
+	body.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
 	body.add_theme_color_override("font_color", HUD_TEXT_MUTED)
 	box.add_child(body)
 	return box
@@ -1022,7 +1129,7 @@ func _show_recommendation_article_dialog(recommendation: Dictionary) -> void:
 	var deck_name := Label.new()
 	deck_name.text = str(normalized.get("deck_name", "推荐卡组"))
 	deck_name.autowrap_mode = TextServer.AUTOWRAP_WORD
-	deck_name.add_theme_font_size_override("font_size", 24)
+	deck_name.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(24))
 	deck_name.add_theme_color_override("font_color", HUD_TEXT)
 	title_box.add_child(deck_name)
 
@@ -1055,7 +1162,7 @@ func _show_recommendation_article_dialog(recommendation: Dictionary) -> void:
 	var title := Label.new()
 	title.text = str(normalized.get("title", normalized.get("deck_name", "推荐卡组")))
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD
-	title.add_theme_font_size_override("font_size", 18)
+	title.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(18))
 	title.add_theme_color_override("font_color", Color(0.86, 0.96, 1.0, 1.0))
 	content.add_child(title)
 
@@ -1141,7 +1248,7 @@ func _create_recommendation_detail_heading(text: String) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	label.add_theme_font_size_override("font_size", 17)
+	label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(17))
 	label.add_theme_color_override("font_color", HUD_ACCENT_WARM)
 	return label
 
@@ -1243,7 +1350,7 @@ func _create_deck_item(deck: DeckData) -> Control:
 	var name_label := Label.new()
 	name_label.text = "%s | %s %s" % [deck.deck_name, _deck_row_date_label(deck), _deck_row_date_text(deck)]
 	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	name_label.add_theme_font_size_override("font_size", 23)
+	name_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(23))
 	name_label.add_theme_color_override("font_color", HUD_TEXT)
 	info_vbox.add_child(name_label)
 
@@ -1737,7 +1844,7 @@ func _create_view_tile(card_name: String, set_code: String, card_index: String) 
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.text = card_name
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 11)
+	label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(11))
 	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	label.custom_minimum_size = Vector2(CARD_TILE_WIDTH - 8, 0)
 	vbox.add_child(label)
@@ -1776,7 +1883,7 @@ func _show_card_detail(card: CardData) -> void:
 
 	var header := Label.new()
 	header.text = card.name
-	header.add_theme_font_size_override("font_size", 20)
+	header.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(20))
 	content.add_child(header)
 
 	var meta_parts: PackedStringArray = []

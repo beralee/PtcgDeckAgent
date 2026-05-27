@@ -334,6 +334,62 @@ func test_runtime_bundled_card_json_loads_through_card_database_deserializer() -
 	])
 
 
+func test_cbb5c_1501_joltik_is_bundled_with_existing_effect() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CBB5C_1501.json"
+	var image_path := "res://data/bundled_user/cards/images/CBB5C/1501.png.bin"
+	var card: CardData = db.get_card("CBB5C", "1501")
+	var checks: Array[String] = [
+		assert_true(card_path in manifest, "CBB5C_1501 Joltik card JSON should be listed in bundled manifest"),
+		assert_true(image_path in manifest, "CBB5C_1501 Joltik image should be listed in bundled manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CBB5C_1501 bundled card JSON should exist"),
+		assert_true(FileAccess.file_exists(image_path), "CBB5C_1501 bundled card image should exist"),
+		assert_true(CardData.is_valid_card_image_file(image_path), "CBB5C_1501 bundled card image should be valid"),
+		assert_not_null(card, "CBB5C_1501 should load through CardDatabase bundled fallback"),
+	]
+	if card != null:
+		checks.append(assert_eq(str(card.name), "电电虫", "CBB5C_1501 should keep the imported Chinese card name"))
+		checks.append(assert_eq(str(card.effect_id), "76ce94424f53e8a93cfb2c2008a84a86", "CBB5C_1501 should reuse the existing Joltik charge effect"))
+		checks.append(assert_eq(str(card.attacks[0].get("name", "")) if card.attacks.size() > 0 else "", "电电充能", "CBB5C_1501 should expose the Joltik attack"))
+	return run_checks(checks)
+
+
+func test_607807_joltik_box_galvantula_is_bundled_with_image_and_deck() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CSV8C_010.json"
+	var image_path := "res://data/bundled_user/cards/images/CSV8C/010.png.bin"
+	var deck_path := "res://data/bundled_user/decks/607807.json"
+	var card: CardData = db.get_card("CSV8C", "010")
+	var direct_card: CardData = db._load_card_from_file(card_path)
+	var deck: DeckData = db._load_deck_from_file(deck_path)
+	var checks: Array[String] = [
+		assert_true(card_path in manifest, "CSV8C_010 Galvantula card JSON should be listed in bundled manifest"),
+		assert_true(image_path in manifest, "CSV8C_010 Galvantula image should be listed in bundled manifest"),
+		assert_true(deck_path in manifest, "607807 Joltik Box deck should be listed in bundled manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CSV8C_010 bundled card JSON should exist"),
+		assert_true(FileAccess.file_exists(image_path), "CSV8C_010 bundled card image should exist"),
+		assert_true(FileAccess.file_exists(deck_path), "607807 bundled deck JSON should exist"),
+		assert_true(CardData.is_valid_card_image_file(image_path), "CSV8C_010 bundled image should be a supported card image"),
+		assert_not_null(direct_card, "CSV8C_010 bundled JSON should deserialize directly"),
+		assert_not_null(card, "CSV8C_010 should load through CardDatabase bundled fallback"),
+		assert_not_null(deck, "607807 Joltik Box deck should load from bundled JSON"),
+	]
+	if card != null:
+		checks.append(assert_eq(str(card.name_en), "Galvantula", "CSV8C_010 should keep the imported English card name"))
+		checks.append(assert_eq(str(card.effect_id), "4aa937bbc437cbfd7b64597b7bcee0d2", "CSV8C_010 should keep the implemented effect id"))
+		checks.append(assert_false(CardImplementationStatus.is_unimplemented(card), "CSV8C_010 should not show the unimplemented badge"))
+	if deck != null:
+		var galvantula_count := 0
+		for entry: Dictionary in deck.cards:
+			if str(entry.get("set_code", "")) == "CSV8C" and str(entry.get("card_index", "")) == "010":
+				galvantula_count += int(entry.get("count", 0))
+		checks.append(assert_eq(int(deck.total_cards), 60, "607807 Joltik Box should keep 60 cards"))
+		checks.append(assert_eq(galvantula_count, 1, "607807 Joltik Box should include one CSV8C_010 Galvantula"))
+	return run_checks(checks)
+
+
 func test_version_170_bundled_decks_do_not_start_as_empty_card_database_game_over() -> String:
 	var db := CardDatabaseScript.new()
 	var player_deck: DeckData = db._load_deck_from_file("res://data/bundled_user/decks/1700012.json")
@@ -449,6 +505,95 @@ func test_poison_box_key_cards_are_bundled_with_images() -> String:
 		checks.append(assert_true(FileAccess.file_exists(image_path), "%s bundled card image should exist" % card_id))
 		checks.append(assert_true(CardData.is_valid_card_image_file(image_path), "%s bundled card image should be a supported image file" % card_id))
 		checks.append(assert_not_null(card, "%s should load through CardDatabase bundled fallback" % card_id))
+	return run_checks(checks)
+
+
+func test_2026_05_24_new_cards_and_requested_decks_are_bundled() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_ids := [
+		"CS5aC_079",
+		"CSV2C_128",
+		"CSV6C_078",
+		"CSV6C_080",
+		"CSV7C_052",
+		"CSV7C_053",
+		"CSV7C_054",
+		"CSV7C_065",
+		"CSV7C_118",
+		"CSV7C_131",
+		"CSV7C_195",
+		"CSV7C_200",
+		"CSV7C_203",
+		"CSV8C_110",
+		"CSV8C_111",
+		"CSV8C_112",
+	]
+	var deck_ids := [607805, 608194, 610403, 606676]
+	var checks: Array[String] = []
+	for card_id: String in card_ids:
+		var parts := card_id.split("_", false, 1)
+		var set_code := str(parts[0])
+		var card_index := str(parts[1])
+		var card_path := "res://data/bundled_user/cards/%s.json" % card_id
+		var image_path := "res://data/bundled_user/cards/images/%s/%s.png.bin" % [set_code, card_index]
+		var card: CardData = db.get_card(set_code, card_index)
+		checks.append(assert_true(card_path in manifest, "%s card JSON should be listed in bundled manifest" % card_id))
+		checks.append(assert_true(image_path in manifest, "%s card image should be listed in bundled manifest" % card_id))
+		checks.append(assert_true(FileAccess.file_exists(card_path), "%s bundled card JSON should exist" % card_id))
+		checks.append(assert_true(FileAccess.file_exists(image_path), "%s bundled card image should exist" % card_id))
+		checks.append(assert_true(CardData.is_valid_card_image_file(image_path), "%s bundled image should be valid" % card_id))
+		checks.append(assert_not_null(card, "%s should load through CardDatabase bundled fallback" % card_id))
+	for deck_id: int in deck_ids:
+		var deck_path := "res://data/bundled_user/decks/%d.json" % deck_id
+		var deck: DeckData = db._load_deck_from_file(deck_path)
+		checks.append(assert_true(deck_path in manifest, "Deck %d should be listed in bundled manifest" % deck_id))
+		checks.append(assert_true(FileAccess.file_exists(deck_path), "Deck %d bundled JSON should exist" % deck_id))
+		checks.append(assert_not_null(deck, "Deck %d should load from bundled JSON" % deck_id))
+		if deck != null:
+			checks.append(assert_eq(int(deck.total_cards), 60, "Deck %d should keep 60 cards" % deck_id))
+	return run_checks(checks)
+
+
+func test_17_0_regigigas_deck_missing_regi_cards_are_bundled() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_ids := [
+		"CS4.5C_018",
+		"CS5.5C_021",
+		"CS5.5C_047",
+		"CS5.5C_051",
+		"CS5.5C_056",
+	]
+	var expected_effect_ids := {
+		"CS4.5C_018": "2976780d606bf72db47d00825db85124",
+		"CS5.5C_021": "873e6ea15bc769061eda7a433d95e9d6",
+		"CS5.5C_047": "399668227ca75416c9e72e83d1810457",
+		"CS5.5C_051": "db12f1eb552377de4cda107fbb6e1eb4",
+		"CS5.5C_056": "d699ab2122b5617fe5a5c97e60ae4dac",
+	}
+	var deck: DeckData = db._load_deck_from_file("res://data/bundled_user/decks/1700001.json")
+	var checks: Array[String] = [
+		assert_not_null(deck, "17.0 Regigigas bundled deck should load"),
+	]
+	for card_id: String in card_ids:
+		var parts := card_id.split("_", false, 1)
+		var set_code := str(parts[0])
+		var card_index := str(parts[1])
+		var card_path := "res://data/bundled_user/cards/%s.json" % card_id
+		var image_path := "res://data/bundled_user/cards/images/%s/%s.png.bin" % [set_code, card_index]
+		var card: CardData = db.get_card(set_code, card_index)
+		checks.append(assert_true(card_path in manifest, "%s card JSON should be listed in bundled manifest" % card_id))
+		checks.append(assert_true(image_path in manifest, "%s card image should be listed in bundled manifest" % card_id))
+		checks.append(assert_true(FileAccess.file_exists(card_path), "%s bundled card JSON should exist" % card_id))
+		checks.append(assert_true(FileAccess.file_exists(image_path), "%s bundled card image should exist" % card_id))
+		checks.append(assert_true(CardData.is_valid_card_image_file(image_path), "%s bundled image should be valid" % card_id))
+		checks.append(assert_not_null(card, "%s should load through CardDatabase bundled fallback" % card_id))
+		if card != null:
+			checks.append(assert_eq(str(card.effect_id), str(expected_effect_ids[card_id]), "%s should keep the implemented effect id" % card_id))
+	if deck != null:
+		var instances := db.build_deck_instances(deck, 0)
+		checks.append(assert_eq(instances.size(), 60, "17.0 Regigigas bundled deck should build all 60 card instances"))
 	return run_checks(checks)
 
 

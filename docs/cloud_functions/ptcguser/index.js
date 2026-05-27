@@ -3,6 +3,7 @@ const cloud = require('@alipay/faas-server-sdk');
 
 const COLLECTION_NAME = 'ptcguser';
 const MAX_TEXT_LENGTH = 256;
+const MAX_DIMENSION = 100000;
 
 const trimText = (value) => {
   if (value === undefined || value === null) return '';
@@ -14,8 +15,34 @@ const limitText = (value, maxLength = MAX_TEXT_LENGTH) => {
   return text.length > maxLength ? text.slice(0, maxLength) : text;
 };
 
+const finiteNumber = (value, fallback = 0) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const limitDimension = (value) => {
+  const parsed = finiteNumber(value, 0);
+  return Math.max(0, Math.min(MAX_DIMENSION, Math.round(parsed)));
+};
+
+const toBoolean = (value, fallback = false) => {
+  if (value === undefined || value === null || value === '') return fallback;
+  if (value === true || value === false) return value;
+  const text = String(value).trim().toLowerCase();
+  if (['true', '1', 'yes', 'y'].includes(text)) return true;
+  if (['false', '0', 'no', 'n'].includes(text)) return false;
+  return fallback;
+};
+
 const isPlainObject = (value) => {
   return value && typeof value === 'object' && !Array.isArray(value) && !Buffer.isBuffer(value);
+};
+
+const firstValue = (...values) => {
+  for (const value of values) {
+    if (value !== undefined && value !== null && value !== '') return value;
+  }
+  return undefined;
 };
 
 const parseJson = (text) => {
@@ -136,6 +163,90 @@ const makeId = (prefix) => {
   return `${prefix}_${crypto.randomBytes(16).toString('hex')}`;
 };
 
+const normalizeOrientation = (value, width, height) => {
+  const text = limitText(value, 24).toLowerCase();
+  if (['portrait', 'landscape', 'square', 'unknown'].includes(text)) return text;
+  if (height > width && height > 0 && width > 0) return 'portrait';
+  if (width > height && height > 0 && width > 0) return 'landscape';
+  if (width > 0 && width === height) return 'square';
+  return 'unknown';
+};
+
+const displayPayload = (payload) => {
+  const screen = isPlainObject(payload.screen) ? payload.screen : {};
+  const usable = isPlainObject(payload.screen_usable) ? payload.screen_usable : {};
+  const windowInfo = isPlainObject(payload.window) ? payload.window : {};
+  const viewport = isPlainObject(payload.viewport) ? payload.viewport : {};
+  const display = isPlainObject(payload.display) ? payload.display : {};
+  const device = isPlainObject(payload.device) ? payload.device : {};
+
+  const screenWidth = limitDimension(firstValue(
+    payload.screen_width,
+    screen.width,
+    screen.w,
+    display.screen_width,
+    device.screen_width
+  ));
+  const screenHeight = limitDimension(firstValue(
+    payload.screen_height,
+    screen.height,
+    screen.h,
+    display.screen_height,
+    device.screen_height
+  ));
+
+  return {
+    display_server: limitText(firstValue(payload.display_server, display.server), 32),
+    screen_width: screenWidth,
+    screen_height: screenHeight,
+    screen_usable_width: limitDimension(firstValue(
+      payload.screen_usable_width,
+      usable.width,
+      usable.w,
+      display.screen_usable_width
+    )),
+    screen_usable_height: limitDimension(firstValue(
+      payload.screen_usable_height,
+      usable.height,
+      usable.h,
+      display.screen_usable_height
+    )),
+    window_width: limitDimension(firstValue(
+      payload.window_width,
+      windowInfo.width,
+      windowInfo.w,
+      display.window_width
+    )),
+    window_height: limitDimension(firstValue(
+      payload.window_height,
+      windowInfo.height,
+      windowInfo.h,
+      display.window_height
+    )),
+    viewport_width: limitDimension(firstValue(
+      payload.viewport_width,
+      viewport.width,
+      viewport.w,
+      display.viewport_width
+    )),
+    viewport_height: limitDimension(firstValue(
+      payload.viewport_height,
+      viewport.height,
+      viewport.h,
+      display.viewport_height
+    )),
+    screen_orientation: normalizeOrientation(
+      firstValue(payload.screen_orientation, screen.orientation, display.orientation, device.orientation),
+      screenWidth,
+      screenHeight
+    ),
+    is_mobile_runtime: toBoolean(
+      firstValue(payload.is_mobile_runtime, payload.mobile, device.is_mobile_runtime, device.mobile),
+      false
+    ),
+  };
+};
+
 exports.main = async (event, context) => {
   cloud.init();
   const db = cloud.database();
@@ -144,6 +255,7 @@ exports.main = async (event, context) => {
   const now = Date.now();
   const visitId = limitText(payload.visit_id, 80) || makeId('visit');
   const clientId = limitText(payload.client_id, 128) || makeId('client');
+  const displayData = displayPayload(payload);
 
   const data = {
     visit_id: visitId,
@@ -151,12 +263,23 @@ exports.main = async (event, context) => {
     source: limitText(payload.source, 80) || 'unknown',
     app_version: limitText(payload.app_version, 32),
     version: limitText(payload.version, 32),
-    build_number: Number(payload.build_number || 0),
+    build_number: finiteNumber(payload.build_number, 0),
     channel: limitText(payload.channel, 32),
     platform: limitText(payload.platform, 64),
     locale: limitText(payload.locale, 64),
     engine_version: limitText(payload.engine_version, 80),
-    reported_at: Number(payload.reported_at || 0),
+    display_server: displayData.display_server,
+    screen_width: displayData.screen_width,
+    screen_height: displayData.screen_height,
+    screen_usable_width: displayData.screen_usable_width,
+    screen_usable_height: displayData.screen_usable_height,
+    window_width: displayData.window_width,
+    window_height: displayData.window_height,
+    viewport_width: displayData.viewport_width,
+    viewport_height: displayData.viewport_height,
+    screen_orientation: displayData.screen_orientation,
+    is_mobile_runtime: displayData.is_mobile_runtime,
+    reported_at: finiteNumber(payload.reported_at, 0),
     created_at: now,
     created_at_iso: new Date(now).toISOString(),
     function_name: 'ptcguser',
@@ -170,6 +293,8 @@ exports.main = async (event, context) => {
     doc_id: doc._id,
     platform: data.platform,
     app_version: data.app_version,
+    screen: `${data.screen_width}x${data.screen_height}`,
+    viewport: `${data.viewport_width}x${data.viewport_height}`,
   });
 
   return {

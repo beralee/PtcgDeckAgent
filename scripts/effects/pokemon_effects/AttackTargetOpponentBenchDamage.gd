@@ -63,7 +63,7 @@ func execute_attack(
 		target = selected_raw[0]
 	if target == null:
 		target = opponent.bench[0]
-	if AbilityBenchImmune.prevents_opponent_attack_damage_or_effect(target, attacker, state):
+	if AbilityBenchImmune.prevents_opponent_attack_damage(target, attacker, state):
 		return
 	if AttackCoinFlipPreventDamageAndEffectsNextTurn.prevents_attack_damage(target, state):
 		return

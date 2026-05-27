@@ -5,6 +5,8 @@ const RAGING_BOLT_LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategyRagingBoltLLM
 const DRAGAPULT_CHARIZARD_LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategyDragapultCharizardLLM.gd"
 const MIRAIDON_LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategyMiraidonLLM.gd"
 const V17_MIRAIDON_LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategy17MiraidonLLM.gd"
+const V17_REGIDRAGO_RULES_SCRIPT_PATH := "res://scripts/ai/DeckStrategy17Regidrago.gd"
+const V17_REGIDRAGO_LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategy17RegidragoLLM.gd"
 const LUGIA_LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategyLugiaArcheopsLLM.gd"
 const LLM_DECK_STRATEGY_BASE_SCRIPT_PATH := "res://scripts/ai/LLMDeckStrategyBase.gd"
 const LLM_INTERACTION_BRIDGE_SCRIPT_PATH := "res://scripts/ai/LLMInteractionIntentBridge.gd"
@@ -173,6 +175,16 @@ func _new_miraidon_llm_strategy() -> RefCounted:
 
 func _new_v17_miraidon_llm_strategy() -> RefCounted:
 	var script := _load_script(V17_MIRAIDON_LLM_SCRIPT_PATH)
+	return script.new() if script != null else null
+
+
+func _new_v17_regidrago_llm_strategy() -> RefCounted:
+	var script := _load_script(V17_REGIDRAGO_LLM_SCRIPT_PATH)
+	return script.new() if script != null else null
+
+
+func _new_v17_regidrago_rules_strategy() -> RefCounted:
+	var script := _load_script(V17_REGIDRAGO_RULES_SCRIPT_PATH)
 	return script.new() if script != null else null
 
 
@@ -3439,6 +3451,146 @@ func test_llm_selection_policy_controls_earthen_vessel_search_and_discard() -> S
 	])
 
 
+func test_llm_selection_policy_controls_regidrago_copied_attack_choice() -> String:
+	var bridge_script := _load_script(LLM_INTERACTION_BRIDGE_SCRIPT_PATH)
+	if bridge_script == null:
+		return "LLMInteractionIntentBridge.gd should exist"
+	var bridge: RefCounted = bridge_script.new()
+	var gs := _make_game_state(9)
+	var regidrago := _make_pokemon_cd("Regidrago VSTAR", "VSTAR", "N", 280)
+	regidrago.name_en = "Regidrago VSTAR"
+	gs.players[0].active_pokemon = _make_slot(regidrago, 0)
+	var goodra_cd := _make_pokemon_cd("Hisuian Goodra VSTAR", "VSTAR", "N", 270)
+	goodra_cd.name_en = "Hisuian Goodra VSTAR"
+	var giratina_cd := _make_pokemon_cd("Giratina VSTAR", "VSTAR", "N", 280)
+	giratina_cd.name_en = "Giratina VSTAR"
+	var goodra := CardInstance.create(goodra_cd, 0)
+	var giratina := CardInstance.create(giratina_cd, 0)
+	var goodra_option := {
+		"source_card": goodra,
+		"attack_index": 0,
+		"attack": {"name": "Rolling Iron", "damage": "200"},
+	}
+	var giratina_option := {
+		"source_card": giratina,
+		"attack_index": 0,
+		"attack": {"name": "Lost Impact", "damage": "280"},
+	}
+	var result: Dictionary = bridge.call("pick_interaction_items", [goodra_option, giratina_option], {
+		"id": "copied_attack",
+		"max_select": 1,
+	}, {
+		"game_state": gs,
+		"player_index": 0,
+		"pending_effect_kind": "attack",
+		"pending_effect_card": gs.players[0].active_pokemon.get_top_card(),
+	}, [{
+		"type": "attack",
+		"pokemon": "Regidrago VSTAR",
+		"attack_name": "Apex Dragon",
+		"action_id": "attack:0:apex dragon",
+		"selection_policy": {"attack_name": "Lost Impact"},
+	}])
+	var picked: Array = result.get("items", [])
+	var picked_option: Variant = picked[0] if not picked.is_empty() else null
+	return run_checks([
+		assert_true(bool(result.get("has_plan", false)), "Selection policy should compile to Regidrago copied-attack intent"),
+		assert_eq(picked.size(), 1, "Copied-attack bridge should pick one attack option"),
+		assert_true(picked_option == giratina_option, "Copied-attack bridge should choose the requested Lost Impact option"),
+	])
+
+
+func test_llm_bridge_maps_legacy_regidrago_discard_hint_to_copied_attack_choice() -> String:
+	var bridge_script := _load_script(LLM_INTERACTION_BRIDGE_SCRIPT_PATH)
+	if bridge_script == null:
+		return "LLMInteractionIntentBridge.gd should exist"
+	var bridge: RefCounted = bridge_script.new()
+	var gs := _make_game_state(9)
+	var regidrago := _make_pokemon_cd("Regidrago VSTAR", "VSTAR", "N", 280)
+	regidrago.name_en = "Regidrago VSTAR"
+	gs.players[0].active_pokemon = _make_slot(regidrago, 0)
+	var goodra_cd := _make_pokemon_cd("Hisuian Goodra VSTAR", "VSTAR", "N", 270)
+	goodra_cd.name_en = "Hisuian Goodra VSTAR"
+	var giratina_cd := _make_pokemon_cd("Giratina VSTAR", "VSTAR", "N", 280)
+	giratina_cd.name_en = "Giratina VSTAR"
+	var goodra := CardInstance.create(goodra_cd, 0)
+	var giratina := CardInstance.create(giratina_cd, 0)
+	var goodra_option := {
+		"source_card": goodra,
+		"attack_index": 0,
+		"attack": {"name": "Rolling Iron", "damage": "200"},
+	}
+	var giratina_option := {
+		"source_card": giratina,
+		"attack_index": 0,
+		"attack": {"name": "Lost Impact", "damage": "280"},
+	}
+	var result: Dictionary = bridge.call("pick_interaction_items", [goodra_option, giratina_option], {
+		"id": "copied_attack",
+		"max_select": 1,
+	}, {
+		"game_state": gs,
+		"player_index": 0,
+		"pending_effect_kind": "attack",
+		"pending_effect_card": gs.players[0].active_pokemon.get_top_card(),
+	}, [{
+		"type": "attack",
+		"pokemon": "Regidrago VSTAR",
+		"attack_name": "Apex Dragon",
+		"action_id": "attack:0:apex dragon",
+		"interactions": {"discard_cards": {"items": ["Giratina VSTAR"]}},
+	}])
+	var picked: Array = result.get("items", [])
+	var picked_option: Variant = picked[0] if not picked.is_empty() else null
+	return run_checks([
+		assert_true(bool(result.get("has_plan", false)), "Legacy Regidrago discard hint should be interpreted as copied-attack source intent"),
+		assert_eq(picked.size(), 1, "Legacy copied-attack bridge should pick one option"),
+		assert_true(picked_option == giratina_option, "Legacy copied-attack bridge should choose Giratina VSTAR from the option pool"),
+	])
+
+
+func test_llm_prompt_schema_exposes_regidrago_apex_as_copied_attack() -> String:
+	var builder_script := _load_script(LLM_TURN_PLAN_PROMPT_BUILDER_SCRIPT_PATH)
+	if builder_script == null:
+		return "LLMTurnPlanPromptBuilder.gd should exist"
+	var builder: RefCounted = builder_script.new()
+	var schema: Dictionary = builder.call("_interaction_schema_for_ref", {
+		"type": "attack",
+		"card_rules": {"effect_id": "749d2f12d33057c8cc20e52c1b11bcbf"},
+		"attack_rules": {
+			"name": "Apex Dragon",
+			"text": "Choose an attack from a Dragon Pokemon in your discard pile and use it as this attack.",
+			"tags": ["pokemon_related", "discard"],
+		},
+	})
+	return run_checks([
+		assert_true(schema.has("copied_attack"), "Regidrago Apex Dragon should expose a copied_attack interaction schema"),
+		assert_false(schema.has("discard_cards"), "Regidrago Apex Dragon should not be described as a hand-discard interaction"),
+	])
+
+
+func test_llm_prompt_schema_exposes_chinese_regidrago_apex_as_copied_attack() -> String:
+	var builder_script := _load_script(LLM_TURN_PLAN_PROMPT_BUILDER_SCRIPT_PATH)
+	if builder_script == null:
+		return "LLMTurnPlanPromptBuilder.gd should exist"
+	var builder: RefCounted = builder_script.new()
+	var schema: Dictionary = builder.call("_interaction_schema_for_ref", {
+		"type": "attack",
+		"id": "attack:0:巨龙无双",
+		"attack_name": "巨龙无双",
+		"summary": "attack with 巨龙无双",
+		"attack_rules": {
+			"name": "巨龙无双",
+			"text": "选择自己弃牌区中的【龙】宝可梦所拥有的1个招式，作为这个招式使用。",
+			"tags": ["discard", "attack"],
+		},
+	})
+	return run_checks([
+		assert_true(schema.has("copied_attack"), "Chinese Regidrago Apex should expose copied_attack in action-id prompts"),
+		assert_false(schema.has("discard_cards"), "Chinese Regidrago Apex should not expose discard_cards as if it discarded from hand"),
+	])
+
+
 func test_llm_selection_policy_controls_generic_deck_search_targets() -> String:
 	var bridge_script := _load_script(LLM_INTERACTION_BRIDGE_SCRIPT_PATH)
 	if bridge_script == null:
@@ -5897,6 +6049,239 @@ func test_llm_post_processing_removes_resource_conflicting_actions() -> String:
 		assert_true(ids.has("end_turn"), "Terminal action should remain after conflict pruning"),
 		assert_eq(int(repair.get("removed_count", 0)), 1, "Resource repair should report one removed action"),
 	])
+
+
+func test_llm_post_processing_removes_exact_interaction_card_reuse() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	var gs := _make_game_state(6)
+	var player := gs.players[0]
+	var ogerpon_cd := _make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210)
+	ogerpon_cd.name_en = "Teal Mask Ogerpon ex"
+	ogerpon_cd.abilities = [{"name": "Teal Dance", "text": "Attach a Grass Energy from your hand to this Pokemon. Draw a card."}]
+	player.active_pokemon = _make_slot(ogerpon_cd, 0)
+	var grass_a := CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0)
+	var grass_b := CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0)
+	player.hand.append(grass_a)
+	player.hand.append(grass_b)
+	var ability_action := {"kind": "use_ability", "source_slot": player.active_pokemon, "ability_index": 0, "requires_interaction": true}
+	var attach_action := {"kind": "attach_energy", "card": grass_a, "target_slot": player.active_pokemon}
+	var payload: Dictionary = strategy.call("build_action_id_request_payload_for_test", gs, 0, [ability_action, attach_action, {"kind": "end_turn"}])
+	var current_actions: Array = _current_legal_actions_from_payload(payload)
+	var ability_id := ""
+	var attach_id := ""
+	for raw_ref: Variant in current_actions:
+		if not (raw_ref is Dictionary):
+			continue
+		var ref: Dictionary = raw_ref
+		var ref_id := str(ref.get("id", ""))
+		if str(ref.get("type", "")) == "use_ability":
+			ability_id = ref_id
+		elif str(ref.get("type", "")) == "attach_energy" and ref_id.contains("c%d" % int(grass_a.instance_id)):
+			attach_id = ref_id
+	var materialized: Dictionary = strategy.call("_materialize_action_refs_in_tree", {
+		"actions": [
+			{"id": ability_id, "interactions": {"energy_card_id": "c%d" % int(grass_a.instance_id)}},
+			{"id": attach_id},
+			{"id": "end_turn"},
+		],
+	})
+	var repair: Dictionary = strategy.call("_repair_resource_conflicts_in_tree", materialized)
+	var actions: Array = (repair.get("tree", {}) as Dictionary).get("actions", [])
+	var ids: Array[String] = []
+	for raw_action: Variant in actions:
+		if raw_action is Dictionary:
+			ids.append(str((raw_action as Dictionary).get("action_id", "")))
+	return run_checks([
+		assert_true(ability_id != "", "Ogerpon ability legal action should be present"),
+		assert_true(attach_id != "", "Manual attach legal action should be present for the exact Grass Energy"),
+		assert_true(ids.has(ability_id), "Earlier exact-energy ability should remain"),
+		assert_false(ids.has(attach_id), "Later attach reusing the exact interaction energy should be pruned"),
+		assert_true(ids.has("end_turn"), "Terminal action should remain after exact-card conflict pruning"),
+		assert_eq(int(repair.get("removed_count", 0)), 1, "Exact-card repair should report one removed action"),
+	])
+
+
+func test_llm_post_processing_removes_exact_discard_card_reuse() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	strategy.set("_llm_action_catalog", {
+		"play_trainer:c38": {
+			"id": "play_trainer:c38",
+			"action_id": "play_trainer:c38",
+			"type": "play_trainer",
+			"card": "Ultra Ball",
+			"consumes_hand_card_ids": ["c38"],
+		},
+		"attach_energy:c20:active": {
+			"id": "attach_energy:c20:active",
+			"action_id": "attach_energy:c20:active",
+			"type": "attach_energy",
+			"consumes_hand_card_ids": ["c20"],
+		},
+		"end_turn": {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	})
+	var repair: Dictionary = strategy.call("_repair_resource_conflicts_in_tree", {
+		"actions": [
+			{"id": "play_trainer:c38", "interactions": {"discard_cards": ["c5", "c20"]}},
+			{"id": "attach_energy:c20:active"},
+			{"id": "end_turn"},
+		],
+	})
+	var actions: Array = (repair.get("tree", {}) as Dictionary).get("actions", [])
+	var ids: Array[String] = []
+	for raw_action: Variant in actions:
+		if raw_action is Dictionary:
+			ids.append(str((raw_action as Dictionary).get("action_id", (raw_action as Dictionary).get("id", ""))))
+	return run_checks([
+		assert_true(ids.has("play_trainer:c38"), "Earlier Ultra Ball action should remain"),
+		assert_false(ids.has("attach_energy:c20:active"), "Later attach reusing an exact discarded energy should be pruned"),
+		assert_true(ids.has("end_turn"), "Terminal action should remain after discard conflict pruning"),
+		assert_eq(int(repair.get("removed_count", 0)), 1, "Discard-card repair should report one removed action"),
+	])
+
+
+func test_llm_sanitize_strips_interactions_from_no_schema_actions() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyRagingBoltLLM.gd should exist"
+	strategy.set("_llm_action_catalog", {
+		"play_trainer:c7": {
+			"id": "play_trainer:c7",
+			"action_id": "play_trainer:c7",
+			"type": "play_trainer",
+			"card": "Energy Switch",
+		},
+		"end_turn": {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
+	})
+	var sanitize: Dictionary = strategy.call("_sanitize_decision_tree_contract", {
+		"actions": [
+			{
+				"id": "play_trainer:c7",
+				"interactions": {
+					"source_pokemon": "Teal Mask Ogerpon ex",
+					"target_pokemon": "Regidrago VSTAR",
+				},
+				"selection_policy": {
+					"source_pokemon": {"prefer": ["Teal Mask Ogerpon ex"]},
+					"target_pokemon": {"prefer": ["Regidrago VSTAR"]},
+				},
+			},
+			{"id": "end_turn"},
+		],
+	})
+	var actions: Array = (sanitize.get("tree", {}) as Dictionary).get("actions", [])
+	var first: Dictionary = actions[0] if not actions.is_empty() and actions[0] is Dictionary else {}
+	return run_checks([
+		assert_true(bool(sanitize.get("valid", false)), "No-schema interaction sanitizer should preserve an otherwise valid plan"),
+		assert_false(first.has("interactions"), "Low-level interactions should be stripped when legal action exposes no interaction_schema"),
+		assert_true(first.has("selection_policy"), "Selection policy should be preserved for fallback interaction scoring"),
+		assert_eq(int(sanitize.get("repaired_count", 0)), 1, "Sanitizer should report one repaired action"),
+	])
+
+
+func test_v17_regidrago_llm_treats_apex_dragon_as_high_pressure_terminal() -> String:
+	var strategy := _new_v17_regidrago_llm_strategy()
+	if strategy == null:
+		return "DeckStrategy17RegidragoLLM.gd should exist"
+	var gs := _make_game_state(8)
+	var player := gs.players[0]
+	var regidrago_vstar := _make_pokemon_cd("Regidrago VSTAR", "VSTAR", "N", 280)
+	regidrago_vstar.name_en = "Regidrago VSTAR"
+	regidrago_vstar.attacks = [{"name": "Apex Dragon", "cost": "GGR", "damage": ""}]
+	player.active_pokemon = _make_slot(regidrago_vstar, 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0))
+	var dragapult := _make_pokemon_cd("Dragapult ex", "Stage 2", "N", 320)
+	dragapult.name_en = "Dragapult ex"
+	dragapult.attacks = [{"name": "Phantom Dive", "cost": "RP", "damage": "200"}]
+	player.discard_pile.append(CardInstance.create(dragapult, 0))
+	var attack_action := {
+		"kind": "attack",
+		"attack_index": 0,
+		"attack_name": "Apex Dragon",
+		"source_slot": player.active_pokemon,
+		"projected_damage": 0,
+	}
+	var end_turn_ref := {"id": "end_turn", "action_id": "end_turn", "type": "end_turn"}
+	return run_checks([
+		assert_true(bool(strategy.call("_is_current_action_high_pressure_attack_ref", attack_action, gs, 0)), "Apex Dragon should be high pressure even though its printed damage is blank"),
+		assert_true(bool(strategy.call("_queue_item_matches", end_turn_ref, attack_action, gs, 0)), "An end_turn queue slot should be replaceable by ready Apex Dragon"),
+	])
+
+
+func test_v17_regidrago_prefers_goodra_copy_to_survive_charizard_ex() -> String:
+	var strategy := _new_v17_regidrago_rules_strategy()
+	if strategy == null:
+		return "DeckStrategy17Regidrago.gd should exist"
+	var gs := _make_game_state(12)
+	var opponent := gs.players[1]
+	var charizard := _make_pokemon_cd("Charizard ex", "Stage 2", "D", 330)
+	charizard.name_en = "Charizard ex"
+	opponent.active_pokemon = _make_slot(charizard, 1)
+	var goodra_cd := _make_pokemon_cd("Hisuian Goodra VSTAR", "VSTAR", "N", 270)
+	goodra_cd.name_en = "Hisuian Goodra VSTAR"
+	var goodra := CardInstance.create(goodra_cd, 0)
+	var dragapult_cd := _make_pokemon_cd("Dragapult ex", "Stage 2", "N", 320)
+	dragapult_cd.name_en = "Dragapult ex"
+	var dragapult := CardInstance.create(dragapult_cd, 0)
+	var context := {"game_state": gs, "player_index": 0}
+	var goodra_score := float(strategy.call("score_interaction_target", {
+		"source_card": goodra,
+		"attack": {"name": "Rolling Iron", "damage": "200"},
+	}, {"id": "copied_attack"}, context))
+	var dragapult_score := float(strategy.call("score_interaction_target", {
+		"source_card": dragapult,
+		"attack": {"name": "Phantom Dive", "damage": "200"},
+	}, {"id": "copied_attack"}, context))
+	return assert_true(goodra_score > dragapult_score, "Against bulky Charizard ex, Regidrago should prefer Goodra's damage reduction over Dragapult chip")
+
+
+func test_v17_regidrago_preserves_energy_switch_when_it_reloads_apex() -> String:
+	var strategy := _new_v17_regidrago_rules_strategy()
+	if strategy == null:
+		return "DeckStrategy17Regidrago.gd should exist"
+	var gs := _make_game_state(4)
+	var player := gs.players[0]
+	var active_cd := _make_pokemon_cd("Regidrago VSTAR", "VSTAR", "N", 280)
+	active_cd.name_en = "Regidrago VSTAR"
+	player.active_pokemon = _make_slot(active_cd, 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0))
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
+	var ogerpon := _make_slot(_make_pokemon_cd("Teal Mask Ogerpon ex", "Basic", "G", 210), 0)
+	ogerpon.attached_energy.append(CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0))
+	player.bench.append(ogerpon)
+	var energy_switch := CardInstance.create(_make_trainer_cd("Energy Switch", "Item"), 0)
+	var grass := CardInstance.create(_make_energy_cd("Grass Energy", "G"), 0)
+	var switch_priority := int(strategy.call("get_discard_priority_contextual", energy_switch, gs, 0))
+	var grass_priority := int(strategy.call("get_discard_priority_contextual", grass, gs, 0))
+	return run_checks([
+		assert_true(switch_priority <= 10, "Energy Switch should be protected when it reloads active Regidrago VSTAR"),
+		assert_true(grass_priority > switch_priority, "Vessel/Ultra Ball discard fallback should discard filler before the route-critical Energy Switch"),
+	])
+
+
+func test_v17_regidrago_prioritizes_goodra_fuel_against_charizard_pressure() -> String:
+	var strategy := _new_v17_regidrago_rules_strategy()
+	if strategy == null:
+		return "DeckStrategy17Regidrago.gd should exist"
+	var gs := _make_game_state(4)
+	var opponent := gs.players[1]
+	var charizard := _make_pokemon_cd("Charizard ex", "Stage 2", "D", 330)
+	charizard.name_en = "Charizard ex"
+	opponent.active_pokemon = _make_slot(charizard, 1)
+	var goodra_cd := _make_pokemon_cd("Hisuian Goodra VSTAR", "VSTAR", "N", 270)
+	goodra_cd.name_en = "Hisuian Goodra VSTAR"
+	var dragapult_cd := _make_pokemon_cd("Dragapult ex", "Stage 2", "N", 320)
+	dragapult_cd.name_en = "Dragapult ex"
+	var goodra := CardInstance.create(goodra_cd, 0)
+	var dragapult := CardInstance.create(dragapult_cd, 0)
+	var goodra_priority := int(strategy.call("get_discard_priority_contextual", goodra, gs, 0))
+	var dragapult_priority := int(strategy.call("get_discard_priority_contextual", dragapult, gs, 0))
+	return assert_true(goodra_priority > dragapult_priority, "Charizard pressure should make Hisuian Goodra VSTAR the preferred new dragon fuel")
 
 
 func test_raging_bolt_llm_blocks_end_turn_when_non_attacker_can_recover_line() -> String:

@@ -33,9 +33,8 @@ static func _is_live_lock_source(slot: PokemonSlot, state: GameState) -> bool:
 
 
 static func _is_lock_source_suppressed(slot: PokemonSlot, state: GameState) -> bool:
-	for eff: Dictionary in slot.effects:
-		if eff.get("type", "") == "ability_disabled" and int(eff.get("turn", -999)) == state.turn_number:
-			return true
+	if EffectCancelCologne.is_slot_directly_ability_disabled(slot, state):
+		return true
 	if AbilityBasicLock.is_locked_by_basic_lock(slot, state):
 		return true
 	if AbilityDisableOpponentAbility.is_locked_by_dark_wing(slot, state):

@@ -143,6 +143,12 @@ static func _is_touch_runtime() -> bool:
 	return OS.has_feature("mobile") or OS.has_feature("web_android") or OS.has_feature("web_ios")
 
 
+static func scaled_font_size(base: int) -> int:
+	if not _is_touch_runtime():
+		return base
+	return ceili(float(base) * 1.4)
+
+
 static func should_use_touch_profile(viewport_size: Vector2 = Vector2.ZERO) -> bool:
 	if _is_touch_runtime():
 		return true
@@ -212,21 +218,21 @@ static func _style_panel(panel: PanelContainer) -> void:
 
 static func _style_label(label: Label) -> void:
 	if label.name in ["TitleLabel", "Title"]:
-		label.add_theme_font_size_override("font_size", 32)
+		label.add_theme_font_size_override("font_size", scaled_font_size(32))
 		label.add_theme_color_override("font_color", TEXT)
 		label.add_theme_color_override("font_shadow_color", Color(0.0, 0.82, 1.0, 0.72))
 		label.add_theme_constant_override("shadow_offset_y", 2)
 		return
 	if label.name.ends_with("Title") or label.name.ends_with("Label") and label.name in ["MetaTitle", "DistributionTitle", "RosterTitle", "StandingsLabel"]:
-		label.add_theme_font_size_override("font_size", 18)
+		label.add_theme_font_size_override("font_size", scaled_font_size(18))
 		label.add_theme_color_override("font_color", Color(1.0, 0.78, 0.50, 1.0))
 		return
-	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_font_size_override("font_size", scaled_font_size(14))
 	label.add_theme_color_override("font_color", TEXT_MUTED)
 
 
 static func _style_button(button: Button, accent: Color) -> void:
-	button.add_theme_font_size_override("font_size", 15)
+	button.add_theme_font_size_override("font_size", scaled_font_size(15))
 	button.add_theme_color_override("font_color", Color(0.96, 0.99, 1.0, 1.0))
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
 	button.add_theme_color_override("font_pressed_color", Color(0.08, 0.12, 0.16, 1.0))
@@ -239,7 +245,7 @@ static func _style_button(button: Button, accent: Color) -> void:
 
 
 static func _style_option(option: OptionButton) -> void:
-	option.add_theme_font_size_override("font_size", 15)
+	option.add_theme_font_size_override("font_size", scaled_font_size(15))
 	option.add_theme_color_override("font_color", TEXT)
 	option.add_theme_color_override("font_hover_color", Color.WHITE)
 	option.add_theme_stylebox_override("normal", input_style(false))
@@ -249,7 +255,7 @@ static func _style_option(option: OptionButton) -> void:
 
 
 static func _style_line_edit(input: LineEdit) -> void:
-	input.add_theme_font_size_override("font_size", 15)
+	input.add_theme_font_size_override("font_size", scaled_font_size(15))
 	input.add_theme_color_override("font_color", TEXT)
 	input.add_theme_color_override("font_placeholder_color", Color(0.55, 0.66, 0.74, 0.78))
 	input.add_theme_color_override("caret_color", ACCENT)
@@ -258,7 +264,7 @@ static func _style_line_edit(input: LineEdit) -> void:
 
 
 static func _style_text_edit(input: TextEdit) -> void:
-	input.add_theme_font_size_override("font_size", 14)
+	input.add_theme_font_size_override("font_size", scaled_font_size(14))
 	input.add_theme_color_override("font_color", TEXT)
 	input.add_theme_color_override("caret_color", ACCENT)
 	input.add_theme_stylebox_override("normal", input_style(false))
@@ -268,7 +274,7 @@ static func _style_text_edit(input: TextEdit) -> void:
 
 static func _style_rich_text(label: RichTextLabel) -> void:
 	label.add_theme_color_override("default_color", TEXT_MUTED)
-	label.add_theme_font_size_override("normal_font_size", 14)
+	label.add_theme_font_size_override("normal_font_size", scaled_font_size(14))
 	label.add_theme_stylebox_override("normal", input_style(false))
 	style_scrollable_control(label)
 

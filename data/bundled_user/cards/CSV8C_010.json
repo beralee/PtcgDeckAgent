@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "复眼",
+			"text": "这只宝可梦所使用的招式，给对手战斗场上的拥有特性的宝可梦造成的伤害「+50」。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "mashu",
+	"attacks": [
+		{
+			"cost": "GC",
+			"damage": "50+",
+			"is_vstar_power": false,
+			"name": "麻麻网",
+			"text": "如果这只宝可梦身上附着了【雷】能量的话，则追加造成80伤害。"
+		}
+	],
+	"card_index": "010",
+	"card_index_en": "2",
+	"card_type": "Pokemon",
+	"description": "特性: 复眼\n这只宝可梦所使用的招式，给对手战斗场上的拥有特性的宝可梦造成的伤害「+50」。\n\n【草】 麻麻网 50+\n如果这只宝可梦身上附着了【雷】能量的话，则追加造成80伤害。\n\n",
+	"effect_id": "4aa937bbc437cbfd7b64597b7bcee0d2",
+	"energy_provides": "",
+	"energy_type": "G",
+	"evolves_from": "电电虫",
+	"hp": 100,
+	"image_local_path": "user://cards/images/CSV8C/010.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV8C/010.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "电蜘蛛",
+	"name_en": "Galvantula",
+	"rarity": "U",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-03-13T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "CSV8C",
+	"set_code_en": "SFA",
+	"stage": "Stage 1",
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"yoren_code": "P596"
+}

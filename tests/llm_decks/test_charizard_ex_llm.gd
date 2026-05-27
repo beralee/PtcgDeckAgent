@@ -403,3 +403,37 @@ func test_charizard_ex_llm_tool_assignment_blocks_forest_seal_stone_on_non_v_tar
 		assert_false(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "attach_tool"}, {"kind": "attach_tool", "card": forest_seal, "target_slot": lumineon}, gs, 0)), "Forest Seal Stone should remain legal for Lumineon V"),
 		assert_false(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "attach_tool"}, {"kind": "attach_tool", "card": defiance_band, "target_slot": player.active_pokemon}, gs, 0)), "The Forest Seal guard should not block unrelated tools"),
 	])
+
+
+func test_charizard_ex_llm_queue_guards_accept_payload_string_refs() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyCharizardExLLM.gd should exist"
+	var gs := _make_game_state(4)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_charizard_cd(), 0)
+	player.bench.append(_make_slot(_make_pidgeot_cd(), 0))
+	var rare_candy_action := {
+		"kind": "play_trainer",
+		"type": "play_trainer",
+		"card": "Rare Candy",
+		"requires_interaction": false,
+	}
+	var fire_to_pidgeot := {
+		"kind": "attach_energy",
+		"type": "attach_energy",
+		"card": "Fire Energy",
+		"target_slot": player.bench[0],
+	}
+	var forest_to_charizard := {
+		"kind": "attach_tool",
+		"type": "attach_tool",
+		"card": "Forest Seal Stone",
+		"target_slot": player.active_pokemon,
+	}
+	return run_checks([
+		assert_true(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "play_trainer"}, rare_candy_action, gs, 0)), "Rare Candy string refs should be guarded without type errors"),
+		assert_true(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "attach_energy"}, fire_to_pidgeot, gs, 0)), "Fire Energy string refs should be guarded without type errors"),
+		assert_true(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "attach_tool"}, forest_to_charizard, gs, 0)), "Forest Seal Stone string refs should be guarded without type errors"),
+		assert_false(bool(strategy.call("_deck_should_block_exact_queue_match", {"type": "retreat"}, {"kind": "retreat", "bench_target": "bench_0"}, gs, 0)), "String-only retreat refs should not raise type errors or hard-block without a slot"),
+	])

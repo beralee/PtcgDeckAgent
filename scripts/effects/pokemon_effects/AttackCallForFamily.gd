@@ -74,6 +74,7 @@ func execute_attack(
 	# 从交互上下文获取玩家选择
 	var ctx: Dictionary = get_attack_interaction_context()
 	var selected_raw: Array = ctx.get("search_basic_pokemon", [])
+	var has_explicit_selection: bool = ctx.has("search_basic_pokemon")
 	var chosen: Array[CardInstance] = []
 	for entry: Variant in selected_raw:
 		if entry is CardInstance and entry in player.deck and _is_matching_basic_pokemon(entry):
@@ -83,7 +84,7 @@ func execute_attack(
 					break
 
 	# 如果没有交互选择，回退到自动选择
-	if chosen.is_empty() and selected_raw.is_empty():
+	if chosen.is_empty() and not has_explicit_selection:
 		for deck_card: CardInstance in player.deck:
 			if _is_matching_basic_pokemon(deck_card):
 				chosen.append(deck_card)

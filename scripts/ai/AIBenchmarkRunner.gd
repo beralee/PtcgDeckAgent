@@ -397,7 +397,10 @@ func run_headless_duel(
 			step_callback.call(gsm)
 		steps += 1
 	if result.is_empty():
-		result = _make_failed_match_result("action_cap_reached", max_steps, gsm)
+		if gsm != null and gsm.game_state != null and gsm.game_state.is_game_over():
+			result = _make_success_match_result(gsm, steps)
+		else:
+			result = _make_failed_match_result("action_cap_reached", max_steps, gsm)
 	result["event_counters"] = _collect_ai_event_counters(player_0_ai, player_1_ai)
 	## 释放 bridge（extends Control，非 RefCounted，必须显式释放）
 	bridge.free()

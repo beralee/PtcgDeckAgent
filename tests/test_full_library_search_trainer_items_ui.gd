@@ -119,7 +119,7 @@ func test_capturing_aroma_tails_full_deck_visible_and_execution_ignores_evolutio
 	var visible_deck := player.deck.duplicate()
 
 	effect.execute(card, [{
-		"searched_pokemon": [basic, evolution],
+		"searched_pokemon": [evolution, basic],
 	}], state)
 
 	var checks := _full_deck_step_checks(step, visible_deck, [basic], [-1, 0, -1], "searched_pokemon", "Capturing Aroma")
@@ -205,10 +205,10 @@ func test_secret_box_full_deck_visible_and_execution_ignores_wrong_categories() 
 
 	effect.execute(box_card, [{
 		"discard_cards": [discard_a, discard_b, discard_c],
-		"search_item": [item, pokemon],
-		"search_tool": [tool, energy],
-		"search_supporter": [supporter, item],
-		"search_stadium": [stadium, pokemon],
+		"search_item": [pokemon, item],
+		"search_tool": [energy, tool],
+		"search_supporter": [item, supporter],
+		"search_stadium": [pokemon, stadium],
 	}], state)
 
 	var checks: Array[String] = []

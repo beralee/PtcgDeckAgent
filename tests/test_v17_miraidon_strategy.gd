@@ -163,6 +163,14 @@ func _selected_card_names(cards: Array) -> Array[String]:
 	return names
 
 
+func _selected_slot_names(slots: Array) -> Array[String]:
+	var names: Array[String] = []
+	for item: Variant in slots:
+		if item is PokemonSlot:
+			names.append((item as PokemonSlot).get_pokemon_name())
+	return names
+
+
 func test_opening_prefers_mew_pivot_over_engine_active_with_english_cards() -> String:
 	var strategy := _new_strategy()
 	var player := _player()
@@ -247,6 +255,27 @@ func test_generator_targets_empty_iron_hands_over_full_miraidon() -> String:
 		assert_true(iron_score >= 450.0, "Electric Generator should strongly value unfueled Iron Hands (score=%f)" % iron_score),
 		assert_true(iron_score > miraidon_score + 250.0, "Generator should not overfill a ready Miraidon (iron=%f miraidon=%f)" % [iron_score, miraidon_score]),
 	])
+
+
+func test_generator_prioritizes_raikou_when_hand_attach_completes_first_attack() -> String:
+	var strategy := _new_strategy()
+	var gs := _game_state(2)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_mew(), 0)
+	var raikou := _slot(_raikou(), 0)
+	var iron_hands := _slot(_iron_hands(), 0)
+	player.bench.append(raikou)
+	player.bench.append(iron_hands)
+	player.hand.append(_card(_energy()))
+	var step := {"id": "energy_assignments", "max_select": 1}
+
+	var raikou_score: float = strategy.score_interaction_target(raikou, step, _ctx(gs))
+	var iron_score: float = strategy.score_interaction_target(iron_hands, step, _ctx(gs))
+
+	return assert_true(
+		raikou_score > iron_score + 150.0,
+		"Generator should fuel Raikou first when hand attach can complete the immediate attack (raikou=%f iron=%f)" % [raikou_score, iron_score]
+	)
 
 
 func test_retreat_from_mew_prefers_ready_raikou_over_empty_latias() -> String:
@@ -398,6 +427,39 @@ func test_area_zero_is_useful_once_pikachu_is_on_board() -> String:
 	var score: float = strategy.score_action_absolute({"kind": "play_stadium", "card": area_zero}, gs, 0)
 
 	return assert_true(score >= 250.0, "Area Zero should stay useful after Pikachu ex unlocks the Tera bench shell without outranking primary attack setup (score=%f)" % score)
+
+
+func test_area_zero_cleanup_discards_support_before_backup_attackers() -> String:
+	var strategy := _new_strategy()
+	var gs := _game_state(5)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _slot(_mew(), 0)
+	var raikou := _slot(_raikou(), 0)
+	_attach(raikou, "L", 2)
+	var iron_hands := _slot(_iron_hands(), 0)
+	_attach(iron_hands, "L", 2)
+	player.bench = [
+		_slot(_latias(), 0),
+		_slot(_pokemon("Fezandipiti ex", "D", 210, "ex", [{"name": "Flip the Script"}]), 0),
+		_slot(_miraidon(), 0),
+		raikou,
+		iron_hands,
+		_slot(_pikachu(), 0),
+	]
+	var picked: Array = strategy.pick_interaction_items(
+		player.bench,
+		{"id": "csv9c207_zero_area_discard_p0", "min_select": 2, "max_select": 2},
+		_ctx(gs)
+	)
+	var picked_names := _selected_slot_names(picked)
+
+	return run_checks([
+		assert_true(picked_names.has("Latias ex"), "Area Zero cleanup should trim Latias before fueled attackers (picked=%s)" % [str(picked_names)]),
+		assert_true(picked_names.has("Fezandipiti ex"), "Area Zero cleanup should trim support draw Pokemon before backup attackers (picked=%s)" % [str(picked_names)]),
+		assert_false(picked_names.has("Raikou V"), "Area Zero cleanup should preserve the fueled Raikou follow-up attacker"),
+		assert_false(picked_names.has("Iron Hands ex"), "Area Zero cleanup should preserve the fueled Iron Hands follow-up attacker"),
+		assert_false(picked_names.has("Miraidon ex"), "Area Zero cleanup should preserve the only Miraidon engine"),
+	])
 
 
 func test_strong_opening_raikou_attack_uses_expanded_bench_damage() -> String:

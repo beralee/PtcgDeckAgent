@@ -4,6 +4,7 @@ const AppVersionScript := preload("res://scripts/app/AppVersion.gd")
 const FeedbackClientScript := preload("res://scripts/network/FeedbackClient.gd")
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 const SwissTournamentScript := preload("res://scripts/tournament/SwissTournament.gd")
+const DeckCenterMetaClientScript := preload("res://scripts/network/DeckCenterMetaClient.gd")
 const UpdateCheckerScript := preload("res://scripts/network/UpdateChecker.gd")
 const UserVisitClientScript := preload("res://scripts/network/UserVisitClient.gd")
 const MENU_VERTICAL_SHIFT := 88.0
@@ -39,15 +40,19 @@ const TEMP_UPDATE_PREVIEW_ARG := "--preview-update-available"
 const TEMP_UPDATE_PREVIEW_KEY := KEY_U
 
 var _update_checker: Node = null
+var _deck_center_meta_client: Node = null
 var _feedback_client: Node = null
 var _user_visit_client: Node = null
 var _update_button: Button = null
 var _update_button_flash_tween: Tween = null
+var _deck_center_button_flash_tween: Tween = null
+var _deck_center_new_badge: PanelContainer = null
 var _feedback_button: Button = null
 var _manual_update_button: Button = null
 var _about_button: Button = null
 var _available_update: Dictionary = {}
 var _manual_update_requested := false
+var _pending_deck_center_meta: Dictionary = {}
 var _temp_update_preview_active := false
 var _feedback_submit_in_progress := false
 var _pending_feedback_payload: Dictionary = {}
@@ -94,10 +99,12 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
 		_resize_feedback_panel()
 		_resize_hud_modal_panel()
+		_position_deck_center_new_badge()
 		if _corner_action_hover_button != null:
 			_position_corner_action_label(_corner_action_hover_button)
 	elif what == NOTIFICATION_PREDELETE:
 		_stop_update_button_flash(false)
+		_stop_deck_center_button_flash(false)
 
 
 func _apply_main_menu_hud() -> void:
@@ -121,7 +128,7 @@ func _apply_main_menu_hud() -> void:
 		var accent := _main_menu_button_accent(role)
 		button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		button.custom_minimum_size = _main_menu_button_minimum_size(role)
-		button.add_theme_font_size_override("font_size", 18)
+		button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(18))
 		button.add_theme_color_override("font_color", Color(0.96, 0.99, 1.0, 1.0))
 		button.add_theme_color_override("font_hover_color", Color.WHITE)
 		button.add_theme_color_override("font_pressed_color", Color(0.03, 0.07, 0.10, 1.0))
@@ -134,6 +141,9 @@ func _apply_main_menu_hud() -> void:
 		button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 		if is_featured:
 			button.tooltip_text = "查看推荐卡组、管理本地卡组、导入新卡组"
+
+
+	_ensure_deck_center_new_badge()
 
 
 func _main_menu_button_role(button_name: String) -> String:
@@ -293,7 +303,7 @@ func _ensure_corner_action_label() -> void:
 	_corner_action_label_text.name = "CornerActionHoverText"
 	_corner_action_label_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_corner_action_label_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_corner_action_label_text.add_theme_font_size_override("font_size", 15)
+	_corner_action_label_text.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
 	_corner_action_label_text.add_theme_color_override("font_color", Color(0.96, 0.99, 1.0, 1.0))
 	_corner_action_label_text.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.66))
 	_corner_action_label_text.add_theme_constant_override("shadow_offset_y", 1)
@@ -360,12 +370,13 @@ func _setup_version_and_updates() -> void:
 	var version_label := get_node_or_null("VersionLabel") as Label
 	if version_label != null:
 		version_label.text = AppVersionScript.DISPLAY_VERSION
-		version_label.add_theme_font_size_override("font_size", 14)
+		version_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
 		version_label.add_theme_color_override("font_color", Color(0.70, 0.82, 0.90, 0.92))
 
 	_ensure_update_button()
 	_ensure_corner_action_buttons()
 	call_deferred("_start_update_check")
+	call_deferred("_start_deck_center_meta_check")
 	call_deferred("_send_startup_visit_ping")
 
 
@@ -412,7 +423,7 @@ func _ensure_update_button() -> void:
 	_update_button.offset_bottom = -40.0
 	_update_button.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_update_button.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_update_button.add_theme_font_size_override("font_size", 16)
+	_update_button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(16))
 	_update_button.add_theme_color_override("font_color", Color(0.96, 0.99, 1.0, 1.0))
 	_update_button.add_theme_color_override("font_hover_color", Color.WHITE)
 	_update_button.add_theme_color_override("font_pressed_color", Color(0.03, 0.07, 0.10, 1.0))
@@ -443,6 +454,161 @@ func _stop_update_button_flash(reset_modulate: bool = true) -> void:
 		_update_button_flash_tween = null
 	if reset_modulate and _update_button != null and is_instance_valid(_update_button):
 		_update_button.modulate = Color.WHITE
+
+
+func _start_deck_center_meta_check() -> void:
+	if _deck_center_meta_client != null:
+		var existing_err: int = int(_deck_center_meta_client.call("check_latest"))
+		if existing_err != OK and existing_err != ERR_BUSY:
+			_on_deck_center_meta_failed("卡组中心更新检查启动失败：%d" % existing_err)
+		return
+	_deck_center_meta_client = DeckCenterMetaClientScript.new()
+	_deck_center_meta_client.new_revision_available.connect(_on_deck_center_new_revision_available)
+	_deck_center_meta_client.no_new_revision.connect(_on_deck_center_no_new_revision)
+	_deck_center_meta_client.check_failed.connect(_on_deck_center_meta_failed)
+	add_child(_deck_center_meta_client)
+	var err: int = int(_deck_center_meta_client.call("check_latest"))
+	if err != OK and err != ERR_BUSY:
+		_on_deck_center_meta_failed("卡组中心更新检查启动失败：%d" % err)
+
+
+func _on_deck_center_new_revision_available(info: Dictionary) -> void:
+	_pending_deck_center_meta = info.duplicate(true)
+	_start_deck_center_button_flash()
+
+
+func _on_deck_center_no_new_revision(_info: Dictionary) -> void:
+	_pending_deck_center_meta = {}
+	_stop_deck_center_button_flash()
+
+
+func _on_deck_center_meta_failed(message: String) -> void:
+	print_debug("[DeckCenterMeta] %s" % message)
+
+
+func _deck_center_button() -> Button:
+	var button := get_node_or_null("%BtnDeckManager") as Button
+	if button != null:
+		return button
+	button = get_node_or_null("VBoxContainer/BtnDeckManager") as Button
+	if button != null:
+		return button
+	return find_child("BtnDeckManager", true, false) as Button
+
+
+func _ensure_deck_center_new_badge() -> void:
+	var button := _deck_center_button()
+	if button == null:
+		return
+	if _deck_center_new_badge != null and is_instance_valid(_deck_center_new_badge):
+		if _deck_center_new_badge.get_parent() != self:
+			if _deck_center_new_badge.get_parent() != null:
+				_deck_center_new_badge.get_parent().remove_child(_deck_center_new_badge)
+			add_child(_deck_center_new_badge)
+		_position_deck_center_new_badge()
+		return
+	_deck_center_new_badge = PanelContainer.new()
+	_deck_center_new_badge.name = "DeckCenterNewBadge"
+	_deck_center_new_badge.visible = false
+	_deck_center_new_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_deck_center_new_badge.z_index = 20
+	_deck_center_new_badge.layout_mode = 1
+	_deck_center_new_badge.anchor_left = 0.0
+	_deck_center_new_badge.anchor_top = 0.0
+	_deck_center_new_badge.anchor_right = 0.0
+	_deck_center_new_badge.anchor_bottom = 0.0
+	_deck_center_new_badge.offset_left = 0.0
+	_deck_center_new_badge.offset_top = 0.0
+	_deck_center_new_badge.offset_right = 54.0
+	_deck_center_new_badge.offset_bottom = 22.0
+	_deck_center_new_badge.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_deck_center_new_badge.add_theme_stylebox_override("panel", _deck_center_new_badge_style())
+	add_child(_deck_center_new_badge)
+
+	var label := Label.new()
+	label.name = "DeckCenterNewBadgeText"
+	label.text = "NEW"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(12))
+	label.add_theme_color_override("font_color", Color(0.03, 0.05, 0.07, 1.0))
+	label.add_theme_color_override("font_outline_color", Color(1.0, 1.0, 1.0, 0.45))
+	label.add_theme_constant_override("outline_size", 1)
+	_deck_center_new_badge.add_child(label)
+	_position_deck_center_new_badge()
+
+
+func _position_deck_center_new_badge() -> void:
+	if _deck_center_new_badge == null or not is_instance_valid(_deck_center_new_badge):
+		return
+	var button := _deck_center_button()
+	if button == null or not is_instance_valid(button):
+		return
+	var rect := button.get_global_rect()
+	_deck_center_new_badge.size = Vector2(54.0, 22.0)
+	_deck_center_new_badge.global_position = Vector2(rect.position.x + rect.size.x - 64.0, rect.position.y + 4.0)
+
+
+func _deck_center_new_badge_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(1.0, 0.82, 0.22, 0.96)
+	style.border_color = Color(1.0, 0.98, 0.68, 1.0)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(8)
+	style.shadow_color = Color(1.0, 0.60, 0.0, 0.42)
+	style.shadow_size = 8
+	style.content_margin_left = 7
+	style.content_margin_right = 7
+	style.content_margin_top = 1
+	style.content_margin_bottom = 1
+	return style
+
+
+func _set_deck_center_new_badge_visible(visible: bool) -> void:
+	_ensure_deck_center_new_badge()
+	if _deck_center_new_badge != null and is_instance_valid(_deck_center_new_badge):
+		_deck_center_new_badge.visible = visible
+
+
+func _start_deck_center_button_flash() -> void:
+	var button := _deck_center_button()
+	if button == null or not is_instance_valid(button):
+		return
+	_stop_deck_center_button_flash(false)
+	_set_deck_center_new_badge_visible(true)
+	button.modulate = Color.WHITE
+	_deck_center_button_flash_tween = create_tween()
+	_deck_center_button_flash_tween.set_loops()
+	_deck_center_button_flash_tween.set_trans(Tween.TRANS_SINE)
+	_deck_center_button_flash_tween.set_ease(Tween.EASE_IN_OUT)
+	_deck_center_button_flash_tween.tween_property(button, "modulate", Color(1.0, 0.82, 0.26, 0.48), 0.48)
+	_deck_center_button_flash_tween.tween_property(button, "modulate", Color.WHITE, 0.48)
+
+
+func _stop_deck_center_button_flash(reset_modulate: bool = true) -> void:
+	if _deck_center_button_flash_tween != null:
+		_deck_center_button_flash_tween.kill()
+		_deck_center_button_flash_tween = null
+	var button := _deck_center_button()
+	if reset_modulate and button != null and is_instance_valid(button):
+		button.modulate = Color.WHITE
+	_set_deck_center_new_badge_visible(false)
+
+
+func _mark_pending_deck_center_meta_seen() -> void:
+	if _pending_deck_center_meta.is_empty():
+		return
+	var revision := str(_pending_deck_center_meta.get("latest_revision", "")).strip_edges()
+	if revision == "":
+		return
+	if _deck_center_meta_client != null and is_instance_valid(_deck_center_meta_client):
+		_deck_center_meta_client.call("mark_revision_seen", revision, _pending_deck_center_meta)
+	else:
+		var client = DeckCenterMetaClientScript.new()
+		client.call("mark_revision_seen", revision, _pending_deck_center_meta)
+		client.free()
+	_pending_deck_center_meta = {}
+	_stop_deck_center_button_flash()
 
 
 func _start_update_check(force: bool = false) -> void:
@@ -670,7 +836,7 @@ func _show_hud_modal(title: String, message: String, actions: Array, preferred_s
 	title_label.text = title
 	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	title_label.add_theme_font_size_override("font_size", 22)
+	title_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(22))
 	title_label.add_theme_color_override("font_color", Color(0.94, 0.99, 1.0, 1.0))
 	title_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.74, 1.0, 0.58))
 	title_label.add_theme_constant_override("shadow_offset_y", 2)
@@ -696,7 +862,7 @@ func _show_hud_modal(title: String, message: String, actions: Array, preferred_s
 		rich_body.scroll_active = false
 		rich_body.selection_enabled = true
 		rich_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		rich_body.add_theme_font_size_override("normal_font_size", 16)
+		rich_body.add_theme_font_size_override("normal_font_size", HudThemeScript.scaled_font_size(16))
 		rich_body.add_theme_color_override("default_color", Color(0.84, 0.93, 1.0, 1.0))
 		rich_body.add_theme_color_override("font_selected_color", Color(0.03, 0.07, 0.10, 1.0))
 		rich_body.add_theme_color_override("selection_color", Color(0.30, 0.86, 1.0, 0.72))
@@ -708,7 +874,7 @@ func _show_hud_modal(title: String, message: String, actions: Array, preferred_s
 		body.text = message
 		body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		body.add_theme_font_size_override("font_size", 16)
+		body.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(16))
 		body.add_theme_color_override("font_color", Color(0.84, 0.93, 1.0, 1.0))
 		body.add_theme_constant_override("line_spacing", 6)
 		scroll.add_child(body)
@@ -846,7 +1012,7 @@ func _create_feedback_overlay() -> Control:
 
 	var title := Label.new()
 	title.text = "建议与 Bug 反馈"
-	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(24))
 	title.add_theme_color_override("font_color", Color(0.94, 0.99, 1.0, 1.0))
 	title.add_theme_color_override("font_shadow_color", Color(0.0, 0.74, 1.0, 0.62))
 	title.add_theme_constant_override("shadow_offset_y", 2)
@@ -854,7 +1020,7 @@ func _create_feedback_overlay() -> Control:
 
 	var subtitle := Label.new()
 	subtitle.text = "直接提交到服务器，也可以扫码小红书后续补充截图"
-	subtitle.add_theme_font_size_override("font_size", 14)
+	subtitle.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
 	subtitle.add_theme_color_override("font_color", Color(0.64, 0.78, 0.88, 1.0))
 	title_box.add_child(subtitle)
 
@@ -922,14 +1088,14 @@ func _build_feedback_dialog_content() -> Control:
 	var contact_name := Label.new()
 	contact_name.text = XHS_DISPLAY_NAME
 	contact_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	contact_name.add_theme_font_size_override("font_size", 20)
+	contact_name.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(20))
 	contact_name.add_theme_color_override("font_color", Color(1.0, 0.78, 0.50, 1.0))
 	contact_box.add_child(contact_name)
 
 	var contact_id := Label.new()
 	contact_id.text = "小红书号：%s" % XHS_ID
 	contact_id.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	contact_id.add_theme_font_size_override("font_size", 13)
+	contact_id.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(13))
 	contact_id.add_theme_color_override("font_color", Color(0.68, 0.80, 0.88, 1.0))
 	contact_box.add_child(contact_id)
 
@@ -947,7 +1113,7 @@ func _build_feedback_dialog_content() -> Control:
 		"卡牌效果、AI 行为、安卓兼容、UI 操作或体验建议都可以直接写在这里。",
 		"本地限制 24 小时内最多提交 3 条，只有服务器保存成功才会消耗次数。"
 	]))
-	info.add_theme_font_size_override("font_size", 14)
+	info.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
 	info.add_theme_color_override("font_color", Color(0.70, 0.84, 0.93, 1.0))
 	form.add_child(info)
 
@@ -988,7 +1154,7 @@ func _create_feedback_action_button(text: String, accent: Color, minimum_size: V
 	var button := Button.new()
 	button.text = text
 	button.custom_minimum_size = minimum_size
-	button.add_theme_font_size_override("font_size", 15)
+	button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
 	button.add_theme_color_override("font_color", Color(0.96, 0.99, 1.0, 1.0))
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
 	button.add_theme_color_override("font_pressed_color", Color(0.03, 0.07, 0.10, 1.0))
@@ -1309,6 +1475,7 @@ func _on_tournament() -> void:
 
 
 func _on_deck_manager() -> void:
+	_mark_pending_deck_center_meta_seen()
 	GameManager.goto_deck_manager()
 
 

@@ -16,7 +16,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 config/name="PtcgDeckAgent"
 config/description="宝可梦集换式卡牌练牌模拟器"
-config/version="0.3.1"
+config/version="0.3.2"
 run/main_scene="res://scenes/main_menu/MainMenu.tscn"
 config/features=PackedStringArray("4.6")
 
@@ -40,6 +40,10 @@ window/size/window_height=900
 [internationalization]
 
 locale/default="zh_CN"
+
+[network]
+
+tls/certificate_bundle_override="res://data/certs/cacert.pem"
 
 [rendering]
 

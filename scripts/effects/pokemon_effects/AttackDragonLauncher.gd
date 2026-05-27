@@ -107,7 +107,7 @@ func execute_attack(
 		slot.attached_tool = null
 
 	for target: PokemonSlot in selected_targets:
-		if target in opponent.bench and AbilityBenchImmune.prevents_opponent_attack_damage_or_effect(target, attacker, state):
+		if target in opponent.bench and AbilityBenchImmune.prevents_opponent_attack_damage(target, attacker, state):
 			continue
 		if AttackCoinFlipPreventDamageAndEffectsNextTurn.prevents_attack_damage(target, state):
 			continue

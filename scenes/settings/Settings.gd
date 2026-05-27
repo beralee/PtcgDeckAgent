@@ -276,35 +276,35 @@ func _apply_hud_theme_recursive(node: Node) -> void:
 
 func _style_hud_label(label: Label) -> void:
 	if label.name == "Title":
-		label.add_theme_font_size_override("font_size", 34)
+		label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(34))
 		label.add_theme_color_override("font_color", HUD_TEXT)
 		label.add_theme_color_override("font_shadow_color", Color(0.0, 0.82, 1.0, 0.72))
 		label.add_theme_constant_override("shadow_offset_y", 2)
 		return
 	if label.name == "SectionLabel":
-		label.add_theme_font_size_override("font_size", 18)
+		label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(18))
 		label.add_theme_color_override("font_color", Color(1.0, 0.78, 0.50, 1.0))
 		return
 	if label.name in ["ZenMuxGuideTitle", "ZenMuxTroubleTitle"]:
-		label.add_theme_font_size_override("font_size", 17)
+		label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(17))
 		label.add_theme_color_override("font_color", Color(1.0, 0.78, 0.50, 1.0))
 		return
 	if label.name in ["ZenMuxGuideBody", "ZenMuxTroubleBody"]:
-		label.add_theme_font_size_override("font_size", 14)
+		label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
 		label.add_theme_color_override("font_color", HUD_TEXT)
 		label.add_theme_constant_override("line_spacing", 3)
 		return
 	if label.name in ["EndpointHint", "ApiKeyHint", "ModelHint"]:
-		label.add_theme_font_size_override("font_size", 12)
+		label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(12))
 		label.add_theme_color_override("font_color", HUD_TEXT_MUTED)
 		label.add_theme_constant_override("line_spacing", 2)
 		return
-	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
 	label.add_theme_color_override("font_color", HUD_TEXT_MUTED)
 
 
 func _style_hud_button(button: Button, accent: Color) -> void:
-	button.add_theme_font_size_override("font_size", 15)
+	button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
 	button.add_theme_color_override("font_color", Color(0.96, 0.99, 1.0, 1.0))
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
 	button.add_theme_color_override("font_pressed_color", Color(0.08, 0.12, 0.16, 1.0))
@@ -317,7 +317,7 @@ func _style_hud_button(button: Button, accent: Color) -> void:
 
 
 func _style_hud_option(option: OptionButton) -> void:
-	option.add_theme_font_size_override("font_size", 15)
+	option.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
 	option.add_theme_color_override("font_color", HUD_TEXT)
 	option.add_theme_color_override("font_hover_color", Color.WHITE)
 	option.add_theme_color_override("font_disabled_color", Color(0.44, 0.50, 0.56, 1.0))
@@ -329,7 +329,7 @@ func _style_hud_option(option: OptionButton) -> void:
 
 
 func _style_hud_line_edit(input: LineEdit) -> void:
-	input.add_theme_font_size_override("font_size", 15)
+	input.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
 	input.add_theme_color_override("font_color", HUD_TEXT)
 	input.add_theme_color_override("font_placeholder_color", Color(0.55, 0.66, 0.74, 0.78))
 	input.add_theme_color_override("caret_color", HUD_ACCENT)
@@ -339,7 +339,7 @@ func _style_hud_line_edit(input: LineEdit) -> void:
 
 
 func _style_hud_spin_box(spin_box: SpinBox) -> void:
-	spin_box.add_theme_font_size_override("font_size", 15)
+	spin_box.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
 	spin_box.add_theme_color_override("font_color", HUD_TEXT)
 	spin_box.add_theme_stylebox_override("normal", _hud_input_style(false))
 	spin_box.add_theme_stylebox_override("focus", _hud_input_style(true))

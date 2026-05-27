@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "深潜回忆",
+			"text": "只要这只宝可梦在场上，自己所有已经进化的宝可梦，可以使用其所有进化前拥有的招式。[需要满足使用招式所需能量。]"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "Mina Nakai",
+	"attacks": [
+		{
+			"cost": "FC",
+			"damage": "30",
+			"is_vstar_power": false,
+			"name": "鳍之利刃",
+			"text": ""
+		}
+	],
+	"card_index": "118",
+	"card_index_en": "84",
+	"card_type": "Pokemon",
+	"description": "特性: 深潜回忆\n只要这只宝可梦在场上，自己所有已经进化的宝可梦，可以使用其所有进化前拥有的招式。[需要满足使用招式所需能量。]\n\n【斗】 鳍之利刃 30\n\n\n",
+	"effect_id": "d348652e6296773db8b777e20e79fa4c",
+	"energy_provides": "",
+	"energy_type": "F",
+	"evolves_from": "",
+	"hp": 100,
+	"image_local_path": "user://cards/images/CSV7C/118.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV7C/118.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "古空棘鱼",
+	"name_en": "Relicanth",
+	"rarity": "R",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-01-16T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "CSV7C",
+	"set_code_en": "TEF",
+	"stage": "Basic",
+	"weakness_energy": "G",
+	"weakness_value": "×2",
+	"yoren_code": "P369"
+}

@@ -65,7 +65,7 @@ func execute_attack(
 		return
 	if AttackCoinFlipPreventDamageAndEffectsNextTurn.prevents_attack_damage(target, state):
 		return
-	if target in opponent.bench and AbilityBenchImmune.prevents_opponent_attack_damage_or_effect(target, attacker, state):
+	if target in opponent.bench and AbilityBenchImmune.prevents_opponent_attack_damage(target, attacker, state):
 		return
 	if AbilityPreventDamageFromBasicExEffect.prevents_target_damage(attacker, target, state):
 		return

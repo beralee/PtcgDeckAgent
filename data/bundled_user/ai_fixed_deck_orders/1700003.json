@@ -10,13 +10,17 @@
 		{"set_code": "CSV9C", "card_index": "207"},
 		{"set_code": "CSVE1C", "card_index": "WAT"},
 		{"set_code": "CSV9C", "card_index": "155"},
-		{"set_code": "CSVH1aC", "card_index": "023"},
 		{"set_code": "CS6bC", "card_index": "123"},
 		{"set_code": "CS6aC", "card_index": "127"},
-		{"set_code": "CSV8C", "card_index": "198"},
-		{"set_code": "CS5aC", "card_index": "113"},
 		{"set_code": "CS5.5C", "card_index": "060"},
+		{"set_code": "CS5aC", "card_index": "113"},
+		{"set_code": "CSV1C", "card_index": "112"},
+		{"set_code": "CSV8C", "card_index": "135"},
 		{"set_code": "CSV9C", "card_index": "178"},
-		{"set_code": "CSVH1C", "card_index": "043"}
+		{"set_code": "CSVH1C", "card_index": "043"},
+		{"set_code": "CSV8C", "card_index": "198"},
+		{"set_code": "CSV1C", "card_index": "113"},
+		{"set_code": "CSVH1aC", "card_index": "023"},
+		{"set_code": "CSV9C", "card_index": "207"}
 	]
 }

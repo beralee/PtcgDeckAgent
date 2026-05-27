@@ -3126,6 +3126,15 @@ func _attack_quality_summary(raw_rules: Variant, attack_index: int) -> Dictionar
 	var text := str(rules.get("text", "")).to_lower()
 	var name := str(rules.get("name", ""))
 	var tags: Array = rules.get("tags", []) if rules.get("tags", []) is Array else []
+	if _is_copied_attack_text("%s %s %s" % [name, damage, text]):
+		return {
+			"role": "primary_damage",
+			"terminal_priority": "high",
+			"discard_entire_hand": false,
+			"takes_prize": true,
+			"copied_attack": true,
+			"reason": "copied Dragon attack; choose the best visible discard attack option for the matchup",
+		}
 	var has_damage := damage != ""
 	var is_draw_or_search := tags.has("draw") or tags.has("search_deck")
 	var is_discard := tags.has("discard")
@@ -3300,6 +3309,15 @@ func _interaction_hints_for_tags(tags: Array[String]) -> Dictionary:
 func _interaction_schema_for_ref(ref: Dictionary) -> Dictionary:
 	var tags: Array[String] = _ref_rule_tags(ref)
 	var schema := {}
+	if _is_copied_attack_ref(ref):
+		schema["copied_attack"] = {
+			"type": "string",
+			"items": "exact copied attack name or source Dragon Pokemon name from the revealed option pool",
+			"examples": ["Lost Impact", "Giratina VSTAR", "Phantom Dive", "Dragapult ex", "Rolling Iron", "Hisuian Goodra VSTAR"],
+			"max_select": 1,
+			"note": "This chooses an attack from a Dragon Pokemon in discard. It does not discard cards from hand.",
+		}
+		return schema
 	if _is_hand_energy_attach_ability_ref(ref, tags):
 		schema["basic_energy_from_hand"] = {
 			"type": "string",
@@ -3382,6 +3400,36 @@ func _interaction_schema_for_ref(ref: Dictionary) -> Dictionary:
 			"max_select": 2,
 		}
 	return schema
+
+
+func _is_copied_attack_ref(ref: Dictionary) -> bool:
+	var kind := str(ref.get("type", ""))
+	if not (kind in ["attack", "granted_attack"]):
+		return false
+	var card_rules: Dictionary = ref.get("card_rules", {}) if ref.get("card_rules", {}) is Dictionary else {}
+	if str(card_rules.get("effect_id", "")) == "749d2f12d33057c8cc20e52c1b11bcbf":
+		return true
+	var attack_rules: Dictionary = ref.get("attack_rules", {}) if ref.get("attack_rules", {}) is Dictionary else {}
+	var text := " ".join([
+		str(ref.get("id", "")),
+		str(ref.get("action_id", "")),
+		str(ref.get("attack_name", "")),
+		str(ref.get("summary", "")),
+		str(attack_rules.get("name", "")),
+		str(attack_rules.get("text", "")),
+		str(attack_rules.get("description", "")),
+	])
+	return _is_copied_attack_text(text)
+
+
+func _is_copied_attack_text(text: String) -> bool:
+	var lowered := text.to_lower()
+	if lowered.contains("apex dragon") or text.contains("巨龙无双") or lowered.contains("宸ㄩ緳鏃犲弻") or lowered.contains("瀹搞劑绶抽弮鐘插蓟"):
+		return true
+	var mentions_discard := lowered.contains("discard") or text.contains("弃牌")
+	var mentions_dragon := lowered.contains("dragon") or text.contains("【龙】") or text.contains("龙系")
+	var mentions_attack := lowered.contains("attack") or text.contains("招式")
+	return mentions_discard and mentions_dragon and mentions_attack
 
 
 func _is_hand_energy_attach_ability_ref(ref: Dictionary, tags: Array[String]) -> bool:

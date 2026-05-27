@@ -33,6 +33,17 @@ func test_update_checker_and_app_version_scripts_load() -> String:
 		"visit_id": "visit-test",
 		"client_id": "client-test",
 		"source": "unit_test",
+		"screen_width": 1080,
+		"screen_height": 2400,
+		"screen_usable_width": 1080,
+		"screen_usable_height": 2260,
+		"window_width": 1080,
+		"window_height": 2400,
+		"viewport_width": 1080,
+		"viewport_height": 2400,
+		"screen_orientation": "portrait",
+		"display_server": "test_display",
+		"is_mobile_runtime": true,
 	}) if user_visit_script != null else {}
 	var checks := run_checks([
 		assert_not_null(update_script, "UpdateChecker.gd should load"),
@@ -42,12 +53,22 @@ func test_update_checker_and_app_version_scripts_load() -> String:
 		assert_not_null(update_instance, "UpdateChecker.gd should instantiate"),
 		assert_not_null(feedback_instance, "FeedbackClient.gd should instantiate"),
 		assert_not_null(user_visit_instance, "UserVisitClient.gd should instantiate"),
-		assert_eq(str(app_version_script.VERSION), "0.3.1", "AppVersion should expose the current version"),
-		assert_eq(str(app_version_script.DISPLAY_VERSION), "v0.3.1", "AppVersion should expose display version"),
+		assert_eq(str(app_version_script.VERSION), "0.3.2", "AppVersion should expose the current version"),
+		assert_eq(str(app_version_script.DISPLAY_VERSION), "v0.3.2", "AppVersion should expose display version"),
 		assert_eq(str(feedback_script.ENDPOINT_URL), "http://fc.skillserver.cn/ptcg", "Feedback client should use the production cloud function endpoint"),
 		assert_eq(str(user_visit_script.ENDPOINT_URL), "http://fc.skillserver.cn/userptcg", "User visit client should use the production cloud function endpoint"),
 		assert_eq(str(visit_payload.get("client_id", "")), "client-test", "User visit payload should include a stable client id"),
 		assert_eq(str(visit_payload.get("source", "")), "unit_test", "User visit payload should include source metadata"),
+		assert_eq(int(visit_payload.get("screen_width", 0)), 1080, "User visit payload should include physical screen width"),
+		assert_eq(int(visit_payload.get("screen_height", 0)), 2400, "User visit payload should include physical screen height"),
+		assert_eq(int(visit_payload.get("screen_usable_height", 0)), 2260, "User visit payload should include usable screen height"),
+		assert_eq(int(visit_payload.get("window_width", 0)), 1080, "User visit payload should include window width"),
+		assert_eq(int(visit_payload.get("window_height", 0)), 2400, "User visit payload should include window height"),
+		assert_eq(int(visit_payload.get("viewport_width", 0)), 1080, "User visit payload should include viewport width"),
+		assert_eq(int(visit_payload.get("viewport_height", 0)), 2400, "User visit payload should include viewport height"),
+		assert_eq(str(visit_payload.get("screen_orientation", "")), "portrait", "User visit payload should include screen orientation"),
+		assert_eq(str(visit_payload.get("display_server", "")), "test_display", "User visit payload should include display server"),
+		assert_true(bool(visit_payload.get("is_mobile_runtime", false)), "User visit payload should flag mobile runtime"),
 		assert_false(visit_payload.has("session_id"), "User visit payload should not include session id"),
 		assert_false(visit_payload.has("is_debug_build"), "User visit payload should not include debug build marker"),
 	])
@@ -311,8 +332,8 @@ func test_update_available_uses_current_version() -> String:
 		return str((checker_result as Dictionary).get("error", "checker setup failed"))
 	var checker: Object = (checker_result as Dictionary).get("value") as Object
 	var checks := run_checks([
-		assert_true(bool(checker.call("is_update_available", {"latest_version": "0.3.2"})), "0.3.2 should be available over current 0.3.1"),
-		assert_false(bool(checker.call("is_update_available", {"latest_version": "0.3.1"})), "Current version should not be treated as an update"),
+		assert_true(bool(checker.call("is_update_available", {"latest_version": "0.3.3"})), "0.3.3 should be available over current 0.3.2"),
+		assert_false(bool(checker.call("is_update_available", {"latest_version": "0.3.2"})), "Current version should not be treated as an update"),
 	])
 	checker.free()
 	return checks

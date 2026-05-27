@@ -101,7 +101,7 @@ func execute_attack(
 			selected_targets[target.get_instance_id()] = target
 
 	for target: PokemonSlot in selected_targets.values():
-		if target in opponent.bench and AbilityBenchImmune.prevents_opponent_attack_damage_or_effect(target, attacker, state):
+		if target in opponent.bench and AbilityBenchImmune.prevents_opponent_attack_damage(target, attacker, state):
 			continue
 		if AttackCoinFlipPreventDamageAndEffectsNextTurn.prevents_attack_damage(target, state):
 			continue

@@ -2,6 +2,9 @@
 class_name TestPersistentEffects
 extends TestBase
 
+const EffectNeoUpperEnergyScript = preload("res://scripts/effects/energy_effects/EffectNeoUpperEnergy.gd")
+const EffectReversalEnergyScript = preload("res://scripts/effects/energy_effects/EffectReversalEnergy.gd")
+
 
 ## ==================== 辅助方法 ====================
 
@@ -331,6 +334,102 @@ func test_special_energy_type_query() -> String:
 
 
 ## 测试特殊能量附着时效果
+func test_neo_upper_energy_stage2_provides_two_any_energy() -> String:
+	var proc := EffectProcessor.new()
+	var state := _make_state()
+	var validator := RuleValidator.new()
+	proc.register_effect("neo_upper", EffectNeoUpperEnergyScript.new())
+	var slot: PokemonSlot = state.players[0].active_pokemon
+	slot.get_card_data().stage = "Stage 2"
+	_attach_special_energy(slot, 0, "neo_upper", "")
+
+	return run_checks([
+		assert_eq(proc.get_energy_type(slot.attached_energy[0], state), "ANY", "Neo Upper should provide any type on Stage 2 Pokemon"),
+		assert_eq(proc.get_energy_colorless_count(slot.attached_energy[0], state), 2, "Neo Upper should provide two Energy on Stage 2 Pokemon"),
+		assert_true(validator.has_enough_energy(slot, "RD", proc, state), "Neo Upper should pay two typed requirements on Stage 2 Pokemon"),
+		assert_false(validator.has_enough_energy(slot, "RDC", proc, state), "Neo Upper should still only provide two total Energy units"),
+	])
+
+
+func test_neo_upper_energy_basic_pokemon_provides_one_colorless_energy() -> String:
+	var proc := EffectProcessor.new()
+	var state := _make_state()
+	var validator := RuleValidator.new()
+	proc.register_effect("neo_upper", EffectNeoUpperEnergyScript.new())
+	var slot: PokemonSlot = state.players[0].active_pokemon
+	_attach_special_energy(slot, 0, "neo_upper", "")
+
+	return run_checks([
+		assert_eq(proc.get_energy_type(slot.attached_energy[0], state), "C", "Neo Upper should provide Colorless on non-Stage 2 Pokemon"),
+		assert_eq(proc.get_energy_colorless_count(slot.attached_energy[0], state), 1, "Neo Upper should provide one Energy on non-Stage 2 Pokemon"),
+		assert_true(validator.has_enough_energy(slot, "C", proc, state), "Neo Upper should pay one Colorless requirement on non-Stage 2 Pokemon"),
+		assert_false(validator.has_enough_energy(slot, "R", proc, state), "Neo Upper should not pay typed requirements on non-Stage 2 Pokemon"),
+	])
+
+
+func test_neo_upper_energy_effect_id_registers() -> String:
+	var proc := EffectProcessor.new()
+	var effect := proc.get_effect("83aba7d0c92c81e8c03b3785af695c2f")
+	return run_checks([
+		assert_true(effect != null and effect.get_script() == EffectNeoUpperEnergyScript, "CSV7C_203 Neo Upper Energy should register to EffectNeoUpperEnergy"),
+	])
+
+
+func test_reversal_energy_stage1_non_rule_behind_on_prizes_provides_three_any() -> String:
+	var proc := EffectProcessor.new()
+	var state := _make_state()
+	var validator := RuleValidator.new()
+	proc.register_effect("reversal", EffectReversalEnergyScript.new())
+	var slot: PokemonSlot = state.players[0].active_pokemon
+	slot.get_card_data().stage = "Stage 1"
+	_attach_special_energy(slot, 0, "reversal", "")
+	state.players[0].prizes.append(CardInstance.create(CardData.new(), 0))
+	state.players[1].prizes.clear()
+
+	return run_checks([
+		assert_eq(proc.get_energy_type(slot.attached_energy[0], state), "ANY", "Reversal should provide any type for a behind player on a non-rule evolution"),
+		assert_eq(proc.get_energy_colorless_count(slot.attached_energy[0], state), 3, "Reversal should provide three Energy units while active"),
+		assert_true(validator.has_enough_energy(slot, "RDC", proc, state), "Reversal should pay up to three typed/colorless requirements"),
+		assert_false(validator.has_enough_energy(slot, "RDCC", proc, state), "Reversal should not provide more than three Energy units"),
+	])
+
+
+func test_reversal_energy_inactive_cases_provide_one_colorless() -> String:
+	var proc := EffectProcessor.new()
+	var state := _make_state()
+	var validator := RuleValidator.new()
+	proc.register_effect("reversal", EffectReversalEnergyScript.new())
+	var slot: PokemonSlot = state.players[0].active_pokemon
+	slot.get_card_data().stage = "Stage 1"
+	_attach_special_energy(slot, 0, "reversal", "")
+
+	var rule_box_slot: PokemonSlot = state.players[0].bench[0]
+	rule_box_slot.get_card_data().stage = "Stage 1"
+	rule_box_slot.get_card_data().mechanic = "ex"
+	_attach_special_energy(rule_box_slot, 0, "reversal", "")
+	state.players[0].prizes.append(CardInstance.create(CardData.new(), 0))
+	state.players[1].prizes.clear()
+
+	var checks: Array[String] = [
+		assert_eq(proc.get_energy_type(rule_box_slot.attached_energy[0], state), "C", "Reversal should stay Colorless on rule-box evolved Pokemon"),
+		assert_eq(proc.get_energy_colorless_count(rule_box_slot.attached_energy[0], state), 1, "Reversal should provide one unit on rule-box evolved Pokemon"),
+		assert_true(validator.has_enough_energy(rule_box_slot, "C", proc, state), "Inactive Reversal should still pay one Colorless requirement"),
+		assert_false(validator.has_enough_energy(rule_box_slot, "R", proc, state), "Inactive Reversal should not pay typed requirements"),
+	]
+	state.players[0].prizes.clear()
+	checks.append(assert_eq(proc.get_energy_type(slot.attached_energy[0], state), "C", "Reversal should stop being active when its owner is not behind on Prizes"))
+	checks.append(assert_false(validator.has_enough_energy(slot, "R", proc, state), "Inactive Reversal should not pay typed costs when its owner is not behind"))
+	return run_checks(checks)
+
+
+func test_reversal_energy_effect_id_registers() -> String:
+	var proc := EffectProcessor.new()
+	var effect := proc.get_effect("cbadb3473273c14cf667d495d44d111b")
+	return run_checks([
+		assert_true(effect != null and effect.get_script() == EffectReversalEnergyScript, "CSV2C_128 Reversal Energy should register to EffectReversalEnergy"),
+	])
+
+
 func test_special_energy_on_attach() -> String:
 	var proc := EffectProcessor.new()
 	var state := _make_state()

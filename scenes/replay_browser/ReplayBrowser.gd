@@ -37,7 +37,7 @@ func _apply_hud_theme() -> void:
 	_ensure_hud_frame()
 	var title := get_node_or_null("%Title") as Label
 	if title != null:
-		title.add_theme_font_size_override("font_size", 34)
+		title.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(34))
 		title.add_theme_color_override("font_color", HUD_TEXT)
 		title.add_theme_color_override("font_shadow_color", Color(0.0, 0.82, 1.0, 0.72))
 		title.add_theme_constant_override("shadow_offset_y", 2)
@@ -117,7 +117,7 @@ func _hud_button_style(accent: Color, hover: bool, pressed: bool) -> StyleBoxFla
 
 
 func _style_hud_button(button: Button, accent: Color, compact: bool = false) -> void:
-	var font_size := HUD_BUTTON_COMPACT_FONT_SIZE if compact else HUD_BUTTON_FONT_SIZE
+	var font_size := HudThemeScript.scaled_font_size(HUD_BUTTON_COMPACT_FONT_SIZE if compact else HUD_BUTTON_FONT_SIZE)
 	var min_height := HUD_BUTTON_COMPACT_MIN_HEIGHT if compact else HUD_BUTTON_MIN_HEIGHT
 	var min_width := _hud_button_min_width_for_text(button.text, font_size)
 	button.custom_minimum_size = Vector2(maxf(button.custom_minimum_size.x, min_width), maxf(button.custom_minimum_size.y, min_height))
@@ -160,7 +160,7 @@ func _render_rows() -> void:
 		var empty_label := Label.new()
 		empty_label.text = "暂无对局记录"
 		empty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		empty_label.add_theme_font_size_override("font_size", REPLAY_ROW_TITLE_FONT_SIZE)
+		empty_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(REPLAY_ROW_TITLE_FONT_SIZE))
 		empty_label.add_theme_color_override("font_color", HUD_TEXT_MUTED)
 		empty_label.custom_minimum_size = Vector2(0, REPLAY_ROW_MIN_HEIGHT)
 		list_container.add_child(empty_label)
@@ -221,7 +221,7 @@ func _build_row_widget(row: Dictionary) -> Control:
 	line1.text = "%s vs %s    胜者：%s" % [p1_name, p2_name, winner_name]
 	line1.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	line1.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	line1.add_theme_font_size_override("font_size", REPLAY_ROW_TITLE_FONT_SIZE)
+	line1.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(REPLAY_ROW_TITLE_FONT_SIZE))
 	line1.add_theme_color_override("font_color", HUD_TEXT)
 	info_vbox.add_child(line1)
 
@@ -239,7 +239,7 @@ func _build_row_widget(row: Dictionary) -> Control:
 	line2.text = "  ".join(details)
 	line2.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	line2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	line2.add_theme_font_size_override("font_size", REPLAY_ROW_META_FONT_SIZE)
+	line2.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(REPLAY_ROW_META_FONT_SIZE))
 	line2.add_theme_color_override("font_color", HUD_TEXT_MUTED)
 	info_vbox.add_child(line2)
 
@@ -311,7 +311,7 @@ func _on_delete_pressed(row: Dictionary, row_widget: Control) -> void:
 		var empty_label := Label.new()
 		empty_label.text = "暂无对局记录"
 		empty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		empty_label.add_theme_font_size_override("font_size", REPLAY_ROW_TITLE_FONT_SIZE)
+		empty_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(REPLAY_ROW_TITLE_FONT_SIZE))
 		empty_label.add_theme_color_override("font_color", HUD_TEXT_MUTED)
 		empty_label.custom_minimum_size = Vector2(0, REPLAY_ROW_MIN_HEIGHT)
 		list_container.add_child(empty_label)

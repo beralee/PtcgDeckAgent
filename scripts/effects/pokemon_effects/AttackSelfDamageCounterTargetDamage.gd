@@ -57,7 +57,7 @@ func execute_attack(
 			target = t
 	if target == null:
 		return
-	if target in opponent.bench and AbilityBenchImmune.prevents_opponent_attack_damage_or_effect(target, attacker, state):
+	if target in opponent.bench and AbilityBenchImmune.prevents_opponent_attack_damage(target, attacker, state):
 		return
 
 	# 计算伤害：自身伤害指示物数量（每10HP=1个指示物）x damage_per_counter

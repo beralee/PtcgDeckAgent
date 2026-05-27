@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "Oswaldo KATO",
+	"attacks": [
+		{
+			"cost": "F",
+			"damage": "10",
+			"is_vstar_power": false,
+			"name": "踢飞",
+			"text": ""
+		},
+		{
+			"cost": "CC",
+			"damage": "20",
+			"is_vstar_power": false,
+			"name": "掷泥",
+			"text": ""
+		}
+	],
+	"card_index": "078",
+	"card_index_en": "118",
+	"card_type": "Pokemon",
+	"description": "【斗】 踢飞 10\n\n\n 掷泥 20\n\n\n",
+	"effect_id": "057f688b2a4ed4d2e225b599004506d5",
+	"energy_provides": "",
+	"energy_type": "F",
+	"evolves_from": "",
+	"hp": 60,
+	"image_local_path": "user://cards/images/CSV6C/078.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV6C/078.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "原野水母",
+	"name_en": "Toedscool",
+	"rarity": "C",
+	"regulation_expanded": true,
+	"regulation_mark": "G",
+	"regulation_standard": true,
+	"release_date": "2025-11-07T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "CSV6C",
+	"set_code_en": "OBF",
+	"stage": "Basic",
+	"weakness_energy": "G",
+	"weakness_value": "×2",
+	"yoren_code": "P0948"
+}

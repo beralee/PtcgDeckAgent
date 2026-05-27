@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "Aya Kusube",
+	"attacks": [
+		{
+			"cost": "F",
+			"damage": "20",
+			"is_vstar_power": false,
+			"name": "握紧拳头",
+			"text": ""
+		},
+		{
+			"cost": "FCC",
+			"damage": "50+",
+			"is_vstar_power": false,
+			"name": "蛮力",
+			"text": "若希望，可追加造成30伤害。在这种情况下，给这只宝可梦也造成30伤害。"
+		}
+	],
+	"card_index": "111",
+	"card_index_en": "104",
+	"card_type": "Pokemon",
+	"description": "【斗】 握紧拳头 20\n\n\n【斗】 蛮力 50+\n若希望，可追加造成30伤害。在这种情况下，给这只宝可梦也造成30伤害。\n\n",
+	"effect_id": "99041ad1ee1b4ff984b57638cae3caf9",
+	"energy_provides": "",
+	"energy_type": "F",
+	"evolves_from": "搬运小匠",
+	"hp": 100,
+	"image_local_path": "user://cards/images/CSV8C/111.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV8C/111.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "铁骨土人",
+	"name_en": "Gurdurr",
+	"rarity": "C",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-03-13T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CSV8C",
+	"set_code_en": "TWM",
+	"stage": "Stage 1",
+	"weakness_energy": "P",
+	"weakness_value": "×2",
+	"yoren_code": "P0533"
+}

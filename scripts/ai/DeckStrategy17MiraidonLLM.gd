@@ -104,9 +104,8 @@ func _deck_should_block_exact_queue_match(queued_action: Dictionary, runtime_act
 			and _miraidon_llm_has_better_energy_target(runtime_action, game_state, player_index):
 		return true
 	if str(runtime_action.get("kind", runtime_action.get("type", ""))) == "retreat":
-		var raw_target: Variant = runtime_action.get("bench_target", null)
-		if not (raw_target is PokemonSlot):
-			return false
+		if _miraidon_llm_should_block_unready_support_retreat(runtime_action, game_state, player_index):
+			return true
 	return super._deck_should_block_exact_queue_match(queued_action, runtime_action, game_state, player_index)
 
 
@@ -129,16 +128,97 @@ func _miraidon_llm_add_ready_handoff_route(result: Dictionary) -> void:
 
 	var updated_facts := facts.duplicate(true)
 	var actions: Array = route.get("actions", []) if route.get("actions", []) is Array else []
-	var first_action: Dictionary = actions[0] if not actions.is_empty() and actions[0] is Dictionary else {}
+	var pivot_action := _miraidon_llm_route_action_by_capability(actions, "ready_bench_handoff")
+	if pivot_action.is_empty() and not actions.is_empty() and actions[0] is Dictionary:
+		pivot_action = actions[0]
+	var manual_attach_action_id := str(route.get("manual_attach_action_id", ""))
 	updated_facts["miraidon_ready_handoff"] = {
 		"route_available": true,
 		"route_action_id": "route:miraidon_ready_handoff_attack",
-		"pivot_action_id": str(first_action.get("id", "")),
+		"pivot_action_id": str(pivot_action.get("id", "")),
+		"requires_manual_attach": manual_attach_action_id != "",
+		"manual_attach_action_id": manual_attach_action_id,
 		"bench_position": str(route.get("bench_position", "")),
 		"attack_name": str(route.get("attack_name", "")),
 		"reason": "A support active can pivot to a ready Miraidon attacker; do not end after Mew/setup draw.",
 	}
 	result["turn_tactical_facts"] = updated_facts
+	if manual_attach_action_id != "":
+		_miraidon_llm_add_handoff_attach_conflicts(result, manual_attach_action_id, str(route.get("bench_position", "")))
+
+
+func _miraidon_llm_route_action_by_capability(actions: Array, capability: String) -> Dictionary:
+	for raw: Variant in actions:
+		if raw is Dictionary and str((raw as Dictionary).get("capability", "")) == capability:
+			return raw
+	return {}
+
+
+func _miraidon_llm_add_handoff_attach_conflicts(result: Dictionary, preferred_action_id: String, bench_position: String) -> void:
+	var legal_actions: Array = result.get("legal_actions", []) if result.get("legal_actions", []) is Array else []
+	var preferred_ref := _miraidon_llm_legal_ref_by_id(legal_actions, preferred_action_id)
+	if preferred_ref.is_empty():
+		return
+	var preferred_token := _miraidon_llm_attach_card_token(preferred_ref)
+	var conflict_refs: Array[Dictionary] = []
+	for raw: Variant in legal_actions:
+		if not (raw is Dictionary):
+			continue
+		var ref: Dictionary = raw
+		var action_id := _miraidon_llm_ref_id(ref)
+		if action_id == "" or action_id == preferred_action_id:
+			continue
+		if str(ref.get("type", ref.get("kind", ""))) != "attach_energy":
+			continue
+		if preferred_token != "" and _miraidon_llm_attach_card_token(ref) != preferred_token:
+			continue
+		if str(ref.get("position", "")).strip_edges() == bench_position:
+			continue
+		conflict_refs.append(ref)
+	if conflict_refs.is_empty():
+		return
+
+	var facts: Dictionary = result.get("turn_tactical_facts", {}) if result.get("turn_tactical_facts", {}) is Dictionary else {}
+	facts = facts.duplicate(true)
+	var negatives: Array = facts.get("resource_negative_actions", []) if facts.get("resource_negative_actions", []) is Array else []
+	var updated_negatives := negatives.duplicate(true)
+	for ref: Dictionary in conflict_refs:
+		var blocked_id := _miraidon_llm_ref_id(ref)
+		if _miraidon_llm_action_list_has_id(updated_negatives, blocked_id):
+			continue
+		updated_negatives.append({
+			"id": blocked_id,
+			"type": "attach_energy",
+			"target": _miraidon_llm_ref_target_name(ref, null, -1),
+			"preferred_action_id": preferred_action_id,
+			"reason": "This Energy is needed on the same benched attacker before the Miraidon handoff attack.",
+			"instruction": "use the preferred attach before pivoting; attaching the same Energy elsewhere strands the handoff attacker",
+		})
+	facts["resource_negative_actions"] = updated_negatives
+	result["turn_tactical_facts"] = facts
+
+	var intent_facts: Dictionary = result.get("intent_facts", {}) if result.get("intent_facts", {}) is Dictionary else {}
+	intent_facts = intent_facts.duplicate(true)
+	var hard_blocks: Array = intent_facts.get("hard_blocks", []) if intent_facts.get("hard_blocks", []) is Array else []
+	var updated_blocks := hard_blocks.duplicate(true)
+	for ref: Dictionary in conflict_refs:
+		var blocked_id := _miraidon_llm_ref_id(ref)
+		if _miraidon_llm_action_list_has_id(updated_blocks, blocked_id):
+			continue
+		updated_blocks.append({
+			"action_id": blocked_id,
+			"replacement_action_id": preferred_action_id,
+			"reason": "The same Energy must be attached to the handoff attacker to make the post-pivot attack legal.",
+		})
+	intent_facts["hard_blocks"] = updated_blocks
+	result["intent_facts"] = intent_facts
+
+
+func _miraidon_llm_legal_ref_by_id(legal_actions: Array, action_id: String) -> Dictionary:
+	for raw: Variant in legal_actions:
+		if raw is Dictionary and _miraidon_llm_ref_id(raw as Dictionary) == action_id:
+			return raw
+	return {}
 
 
 func _miraidon_llm_ready_handoff_candidate_route(payload: Dictionary, facts: Dictionary) -> Dictionary:
@@ -154,6 +234,9 @@ func _miraidon_llm_ready_handoff_candidate_route(payload: Dictionary, facts: Dic
 	var pivot_ref := _miraidon_llm_best_handoff_pivot_ref(legal_actions, bench_position)
 	if pivot_ref.is_empty():
 		return {}
+	var attach_ref := _miraidon_llm_handoff_manual_attach_ref(legal_actions, future_attack, bench_position)
+	if _miraidon_llm_future_attack_requires_manual_attach(future_attack) and attach_ref.is_empty():
+		return {}
 	var pivot_action := _miraidon_llm_route_ref(pivot_ref)
 	pivot_action["capability"] = "ready_bench_handoff"
 	pivot_action["selection_policy"] = _miraidon_llm_handoff_selection_policy(bench_position)
@@ -161,6 +244,17 @@ func _miraidon_llm_ready_handoff_candidate_route(payload: Dictionary, facts: Dic
 	future_goal["type"] = "attack"
 	future_goal["future"] = true
 	future_goal["attack_quality"] = _miraidon_llm_handoff_attack_quality(future_attack)
+	var route_actions: Array = []
+	if not attach_ref.is_empty():
+		var attach_action := _miraidon_llm_route_ref(attach_ref)
+		attach_action["capability"] = "manual_attach_for_handoff_attack"
+		attach_action["selection_policy"] = {
+			"attach_target": bench_position,
+			"reason": "This Energy must go to the same attacker that will receive the pivot.",
+		}
+		route_actions.append(attach_action)
+	route_actions.append(pivot_action)
+	route_actions.append({"id": "end_turn", "action_id": "end_turn", "type": "end_turn"})
 	return {
 		"id": "miraidon_ready_handoff_attack",
 		"route_action_id": "route:miraidon_ready_handoff_attack",
@@ -171,14 +265,53 @@ func _miraidon_llm_ready_handoff_candidate_route(payload: Dictionary, facts: Dic
 		"description": "Pivot a support active into the listed ready Miraidon attacker, then let runtime convert end_turn into the attack.",
 		"bench_position": bench_position,
 		"attack_name": str(future_attack.get("attack_name", "")),
-		"actions": [
-			pivot_action,
-			{"id": "end_turn", "action_id": "end_turn", "type": "end_turn"},
-		],
+		"requires_manual_attach": not attach_ref.is_empty(),
+		"manual_attach_action_id": _miraidon_llm_ref_id(attach_ref),
+		"actions": route_actions,
 		"future_goals": [future_goal],
 		"contract": "Select this route when active Mew/support would otherwise draw or end while a benched Raikou, Miraidon, Iron Hands, Pikachu, or Raichu attack is already reachable.",
 		"strategy_adjustable": true,
 	}
+
+
+func _miraidon_llm_future_attack_requires_manual_attach(ref: Dictionary) -> bool:
+	if not (ref.get("missing_cost_now", []) is Array):
+		return false
+	var missing_now: Array = ref.get("missing_cost_now", [])
+	if missing_now.is_empty():
+		return false
+	var missing_after: Array = ref.get("missing_cost_after_prerequisite", missing_now) if ref.get("missing_cost_after_prerequisite", missing_now) is Array else missing_now
+	return missing_after.is_empty()
+
+
+func _miraidon_llm_handoff_manual_attach_ref(legal_actions: Array, future_attack: Dictionary, bench_position: String) -> Dictionary:
+	if not _miraidon_llm_future_attack_requires_manual_attach(future_attack):
+		return {}
+	var needed_energy := str(future_attack.get("best_manual_attach_energy", "")).strip_edges()
+	for raw: Variant in legal_actions:
+		if not (raw is Dictionary):
+			continue
+		var ref: Dictionary = raw
+		if str(ref.get("type", ref.get("kind", ""))) != "attach_energy":
+			continue
+		if str(ref.get("position", "")).strip_edges() != bench_position:
+			continue
+		if not _miraidon_llm_handoff_attach_energy_matches(ref, needed_energy):
+			continue
+		return ref
+	return {}
+
+
+func _miraidon_llm_handoff_attach_energy_matches(ref: Dictionary, needed_energy: String) -> bool:
+	if needed_energy == "":
+		return true
+	var normalized := needed_energy.strip_edges().to_lower()
+	var text := _miraidon_llm_ref_text(ref).to_lower()
+	match normalized:
+		"l", "lightning", "lightning energy", "basic lightning energy":
+			return text.contains("lightning") or text.contains("雷")
+		_:
+			return text.contains(normalized)
 
 
 func _miraidon_llm_handoff_attack_quality(future_attack: Dictionary) -> Dictionary:
@@ -217,6 +350,8 @@ func _miraidon_llm_future_attack_is_handoff_candidate(ref: Dictionary) -> bool:
 	if not action_id.begins_with("future:attack_after_pivot:"):
 		return false
 	if not bool(ref.get("reachable_with_known_resources", false)):
+		return false
+	if ref.get("missing_cost_after_prerequisite", []) is Array and not (ref.get("missing_cost_after_prerequisite", []) as Array).is_empty():
 		return false
 	var position := str(ref.get("position", "")).strip_edges()
 	if not position.begins_with("bench_"):
@@ -553,6 +688,37 @@ func _miraidon_llm_is_real_ready_attack_action(action: Dictionary, game_state: G
 	if terminal_priority == "low" or role in ["setup_draw", "desperation_redraw"]:
 		return false
 	return true
+
+
+func _miraidon_llm_should_block_unready_support_retreat(action: Dictionary, game_state: GameState, player_index: int) -> bool:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	if player == null or not _miraidon_llm_is_support_pivot_slot(player.active_pokemon):
+		return false
+	var raw_target: Variant = action.get("bench_target", null)
+	if not (raw_target is PokemonSlot):
+		return false
+	var target: PokemonSlot = raw_target
+	if target == null or not _miraidon_llm_is_real_energy_target_slot(target):
+		return false
+	return not _miraidon_llm_slot_has_real_ready_attack(target)
+
+
+func _miraidon_llm_slot_has_real_ready_attack(slot: PokemonSlot) -> bool:
+	if slot == null or slot.get_card_data() == null or not _miraidon_llm_is_real_energy_target_slot(slot):
+		return false
+	var attacks: Array = slot.get_card_data().attacks
+	for attack_index: int in attacks.size():
+		var attack: Dictionary = attacks[attack_index] if attacks[attack_index] is Dictionary else {}
+		if attack.is_empty():
+			continue
+		var attack_name := str(attack.get("name", "")).strip_edges()
+		if _miraidon_llm_attack_name_is_low_value(attack_name):
+			continue
+		if _active_attack_cost_ready(slot, str(attack.get("cost", ""))):
+			return true
+	return false
 
 
 func _miraidon_llm_attack_rules(slot: PokemonSlot, attack_index: int) -> Dictionary:

@@ -1,0 +1,265 @@
+{
+	"cards": [
+		{
+			"card_index": "185",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "0b4cc131a19862f92acf71494f29a0ed",
+			"name": "紧急滑板",
+			"name_en": "Rescue Board",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "043",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "1af63a7e2cb7a79215474ad8db8fd8fd",
+			"name": "巢穴球",
+			"name_en": "Nest Ball",
+			"set_code": "CSVH1C"
+		},
+		{
+			"card_index": "035",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "26afb8b359bdeb40834a9dafbba4218b",
+			"name": "大嘴娃",
+			"name_en": "Mawile",
+			"set_code": "CS6bC"
+		},
+		{
+			"card_index": "050",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "27fbc2c429b05bd8206cd0c7f5d39b11",
+			"name": "密勒顿ex",
+			"name_en": "Miraidon ex",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "033",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "2e307380eb013c4e20db0a19816ba3b9",
+			"name": "铁斑叶ex",
+			"name_en": "Iron Leaves ex",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "1501",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "36d024ba3147200b7a179519b1eb4992",
+			"name": "电电虫",
+			"name_en": "Joltik",
+			"set_code": "CBB5C"
+		},
+		{
+			"card_index": "183",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "3e6f1daf545dfed48d0588dd50792a2e",
+			"name": "夜间担架",
+			"name_en": "Night Stretcher",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "LIG",
+			"card_type": "Basic Energy",
+			"count": 5,
+			"effect_id": "45550fd10011f6ade7eef16ba88788cf",
+			"name": "基本雷能量",
+			"name_en": "Lightning Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "MET",
+			"card_type": "Basic Energy",
+			"count": 2,
+			"effect_id": "4557c01497b81767fdaa0004089ecfb3",
+			"name": "基本钢能量",
+			"name_en": "Metal Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "151",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "49669fcf461deacebeb5755c11ec51f1",
+			"name": "梦幻ex",
+			"name_en": "Mew ex",
+			"set_code": "151C"
+		},
+		{
+			"card_index": "010",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "4aa937bbc437cbfd7b64597b7bcee0d2",
+			"name": "电蜘蛛",
+			"name_en": "Galvantula",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "180",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "4ec261453212280d0eb03ed8254ca97f",
+			"name": "顶尖捕捉器",
+			"name_en": "Prime Catcher",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "119",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "54920a273edba38ce45f3bc8f6e8ff25",
+			"name": "驱劲能量 未来",
+			"name_en": "Future Booster Energy Capsule",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 4,
+			"effect_id": "5bdbc985f9aa2e6f248b53f6f35d1d37",
+			"name": "派帕",
+			"name_en": "Arven",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "GRA",
+			"card_type": "Basic Energy",
+			"count": 6,
+			"effect_id": "5e2d0ce37ca0c539aa45908da10544a0",
+			"name": "基本草能量",
+			"name_en": "Grass Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "054",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "689549e631f4f93ecf618a215c628bd1",
+			"name": "皮卡丘ex",
+			"name_en": "Pikachu ex",
+			"set_code": "CSV9C"
+		},
+		{
+			"card_index": "113",
+			"card_type": "Item",
+			"count": 3,
+			"effect_id": "768b545a38fccd5e265093b5adce10af",
+			"name": "宝可装置3.0",
+			"name_en": "Pokégear 3.0",
+			"set_code": "CSV2C"
+		},
+		{
+			"card_index": "023",
+			"card_type": "Supporter",
+			"count": 4,
+			"effect_id": "8e1fa2c9018db938084c94c7c970d419",
+			"name": "老大的指令",
+			"name_en": "Boss's Orders",
+			"set_code": "CSVH1aC"
+		},
+		{
+			"card_index": "112",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "a337ed34a45e63c6d21d98c3d8e0cb6e",
+			"name": "高级球",
+			"name_en": "Ultra Ball",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "078",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "a92ab1fcfe663d2a56b267a34307fad4",
+			"name": "拉帝亚斯ex",
+			"name_en": "Latias ex",
+			"set_code": "CSV9C"
+		},
+		{
+			"card_index": "135",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "ab6c3357e2b8a8385a68da738f41e0c1",
+			"name": "吉雉鸡ex",
+			"name_en": "Fezandipiti ex",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "af514f82d182aeae5327b2c360df703d",
+			"name": "奇树",
+			"name_en": "Iono",
+			"set_code": "CSV3C"
+		},
+		{
+			"card_index": "133",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "cd6b5456da3f4e586959e20ca1b413a0",
+			"name": "盖诺赛克特",
+			"name_en": "Genesect",
+			"set_code": "CSV9C"
+		},
+		{
+			"card_index": "118",
+			"card_type": "Tool",
+			"count": 2,
+			"effect_id": "d1c2f018a644e662f2b6895fdfc29281",
+			"name": "勇气护符",
+			"name_en": "Bravery Charm",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "115",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "e366f56ecd3f805a28294109a1a37453",
+			"name": "大地容器",
+			"name_en": "Earthen Vessel",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "051",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "e9f0c124fc2e352af2408a7e61862b95",
+			"name": "铁臂膀ex",
+			"name_en": "Iron Hands ex",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "172",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "f2afef80b13b8f6a071facbcade0251c",
+			"name": "月月熊 赫月ex",
+			"name_en": "Bloodmoon Ursaluna ex",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "196",
+			"card_type": "Supporter",
+			"count": 4,
+			"effect_id": "fa8d8691876be30f245bc878d0a29745",
+			"name": "赤松",
+			"name_en": "Crispin",
+			"set_code": "CSV9C"
+		}
+	],
+	"deck_code": "hfbb9Vpb1kgTQFkGpC",
+	"deck_name": "电电虫Box",
+	"id": 607807,
+	"import_date": "2026-05-24T21:13:46",
+	"source_url": "https://tcg.mik.moe/decks/list/607807",
+	"strategy": "",
+	"total_cards": 60,
+	"updated_at": 1779628430146,
+	"variant_name": "电电虫Box"
+}

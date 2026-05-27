@@ -7,6 +7,7 @@ const AIBenchmarkRunnerScript = preload("res://scripts/ai/AIBenchmarkRunner.gd")
 const AIOpponentScript = preload("res://scripts/ai/AIOpponent.gd")
 const DeckStrategyRegistryScript = preload("res://scripts/ai/DeckStrategyRegistry.gd")
 const DeckStrategyMiraidonBaselineScript = preload("res://scripts/ai/DeckStrategyMiraidonBaseline.gd")
+const AIFixedDeckOrderRegistryScript = preload("res://scripts/ai/AIFixedDeckOrderRegistry.gd")
 
 
 class TraceCollector extends RefCounted:
@@ -92,6 +93,8 @@ func run_matchup_sweep(options: Dictionary) -> Dictionary:
 	var benchmark_runner := AIBenchmarkRunnerScript.new()
 	var tracked_artifact_overrides := _build_artifact_overrides(options, "tracked")
 	var anchor_artifact_overrides := _build_artifact_overrides(options, "anchor")
+	var tracked_strong_fixed := bool(options.get("tracked_strong_fixed_opening", false))
+	var anchor_strong_fixed := bool(options.get("anchor_strong_fixed_opening", false))
 	for deck_index: int in deck_ids.size():
 		var deck_id: int = deck_ids[deck_index]
 		var deck: DeckData = null
@@ -111,7 +114,9 @@ func run_matchup_sweep(options: Dictionary) -> Dictionary:
 			"",
 			anchor_strategy_override,
 			tracked_artifact_overrides,
-			anchor_artifact_overrides
+			anchor_artifact_overrides,
+			tracked_strong_fixed,
+			anchor_strong_fixed
 		)
 		results.append(summary)
 		lines.append(_format_matchup_summary_line(summary))
@@ -176,6 +181,23 @@ func run_action_cap_probe(options: Dictionary) -> Dictionary:
 	benchmark_runner.call("_set_forced_shuffle_seed", seed_value)
 	var player_0_deck: DeckData = tracked_deck if tracked_player_index == 0 else anchor_deck
 	var player_1_deck: DeckData = anchor_deck if tracked_player_index == 0 else tracked_deck
+	var tracked_strong_fixed := bool(options.get("tracked_strong_fixed_opening", false))
+	var anchor_strong_fixed := bool(options.get("anchor_strong_fixed_opening", false))
+	var fixed_order_registry := AIFixedDeckOrderRegistryScript.new()
+	var player_0_fixed_order_path := _apply_fixed_order_if_enabled(
+		gsm,
+		0,
+		int(player_0_deck.id),
+		tracked_strong_fixed if tracked_player_index == 0 else anchor_strong_fixed,
+		fixed_order_registry
+	)
+	var player_1_fixed_order_path := _apply_fixed_order_if_enabled(
+		gsm,
+		1,
+		int(player_1_deck.id),
+		anchor_strong_fixed if tracked_player_index == 0 else tracked_strong_fixed,
+		fixed_order_registry
+	)
 	gsm.start_game(player_0_deck, player_1_deck, 0)
 	var collector := TraceCollector.new()
 	var probe_ai_pair := _build_probe_ai_pair(
@@ -184,6 +206,14 @@ func run_action_cap_probe(options: Dictionary) -> Dictionary:
 		tracked_player_index,
 		anchor_strategy_override,
 		options
+	)
+	_apply_probe_strong_runtime(
+		probe_ai_pair.get("player_0_ai", null),
+		tracked_strong_fixed if tracked_player_index == 0 else anchor_strong_fixed
+	)
+	_apply_probe_strong_runtime(
+		probe_ai_pair.get("player_1_ai", null),
+		anchor_strong_fixed if tracked_player_index == 0 else tracked_strong_fixed
 	)
 	var result: Dictionary = benchmark_runner.run_headless_duel(
 		probe_ai_pair.get("player_0_ai", null),
@@ -201,6 +231,8 @@ func run_action_cap_probe(options: Dictionary) -> Dictionary:
 		"Anchor strategy override: %s" % anchor_strategy_override,
 		"Seed: %d" % seed_value,
 		"Tracked player index: %d" % tracked_player_index,
+		"Player 0 fixed order: %s" % player_0_fixed_order_path,
+		"Player 1 fixed order: %s" % player_1_fixed_order_path,
 		"Result: %s" % JSON.stringify(result),
 		"Trace tail: %s" % _trace_tail_summary(collector.traces),
 	]
@@ -213,6 +245,8 @@ func run_action_cap_probe(options: Dictionary) -> Dictionary:
 		"anchor_deck_id": anchor_deck.id,
 		"seed": seed_value,
 		"tracked_player_index": tracked_player_index,
+		"player_0_fixed_order_path": player_0_fixed_order_path,
+		"player_1_fixed_order_path": player_1_fixed_order_path,
 		"result": result,
 		"trace_tail": _trace_tail_summary(collector.traces),
 		"errors": errors,
@@ -320,7 +354,9 @@ func _run_matchup_for_deck(
 	deck_strategy_override: String = "",
 	anchor_strategy_override: String = "",
 	deck_artifact_overrides: Dictionary = {},
-	anchor_artifact_overrides: Dictionary = {}
+	anchor_artifact_overrides: Dictionary = {},
+	tracked_strong_fixed_opening: bool = false,
+	anchor_strong_fixed_opening: bool = false
 ) -> Dictionary:
 	var wins := 0
 	var losses := 0
@@ -328,6 +364,7 @@ func _run_matchup_for_deck(
 	var total_turns := 0
 	var failure_reason_counts := {}
 	var per_game: Array[Dictionary] = []
+	var fixed_order_registry := AIFixedDeckOrderRegistryScript.new()
 	for game_index: int in games_per_matchup:
 		var seed_value: int = seed_base + deck_index * 100 + game_index
 		var tracked_player_index: int = game_index % 2
@@ -337,14 +374,30 @@ func _run_matchup_for_deck(
 		benchmark_runner.call("_set_forced_shuffle_seed", seed_value)
 		var player_0_deck: DeckData = deck if tracked_player_index == 0 else anchor_deck
 		var player_1_deck: DeckData = anchor_deck if tracked_player_index == 0 else deck
+		var player_0_strong_fixed := tracked_strong_fixed_opening if tracked_player_index == 0 else anchor_strong_fixed_opening
+		var player_1_strong_fixed := anchor_strong_fixed_opening if tracked_player_index == 0 else tracked_strong_fixed_opening
+		var player_0_fixed_order_path := _apply_fixed_order_if_enabled(
+			gsm,
+			0,
+			int(player_0_deck.id),
+			player_0_strong_fixed,
+			fixed_order_registry
+		)
+		var player_1_fixed_order_path := _apply_fixed_order_if_enabled(
+			gsm,
+			1,
+			int(player_1_deck.id),
+			player_1_strong_fixed,
+			fixed_order_registry
+		)
 		gsm.start_game(player_0_deck, player_1_deck, 0)
 
 		var player_0_override := deck_strategy_override if tracked_player_index == 0 else anchor_strategy_override
 		var player_1_override := anchor_strategy_override if tracked_player_index == 0 else deck_strategy_override
 		var player_0_artifacts := deck_artifact_overrides if tracked_player_index == 0 else anchor_artifact_overrides
 		var player_1_artifacts := anchor_artifact_overrides if tracked_player_index == 0 else deck_artifact_overrides
-		var player_0_ai = _make_matchup_ai(0, player_0_deck.id, player_0_override, player_0_artifacts)
-		var player_1_ai = _make_matchup_ai(1, player_1_deck.id, player_1_override, player_1_artifacts)
+		var player_0_ai = _make_matchup_ai(0, player_0_deck.id, player_0_override, player_0_artifacts, player_0_strong_fixed)
+		var player_1_ai = _make_matchup_ai(1, player_1_deck.id, player_1_override, player_1_artifacts, player_1_strong_fixed)
 		var result: Dictionary = benchmark_runner.run_headless_duel(player_0_ai, player_1_ai, gsm, max_steps)
 		benchmark_runner.call("_clear_forced_shuffle_seed")
 
@@ -370,6 +423,8 @@ func _run_matchup_for_deck(
 			"failure_diagnostics": result.get("failure_diagnostics", {}),
 			"terminated_by_cap": bool(result.get("terminated_by_cap", false)),
 			"stalled": bool(result.get("stalled", false)),
+			"player_0_fixed_order_path": player_0_fixed_order_path,
+			"player_1_fixed_order_path": player_1_fixed_order_path,
 		})
 
 	var total_games: int = max(1, games_per_matchup)
@@ -380,6 +435,8 @@ func _run_matchup_for_deck(
 		"anchor_deck_name": anchor_deck.deck_name,
 		"deck_strategy_override": deck_strategy_override,
 		"anchor_strategy_override": anchor_strategy_override,
+		"tracked_strong_fixed_opening": tracked_strong_fixed_opening,
+		"anchor_strong_fixed_opening": anchor_strong_fixed_opening,
 		"games": games_per_matchup,
 		"wins": wins,
 		"losses": losses,
@@ -402,7 +459,9 @@ func _run_matchup_for_deck_multi_seed(
 	deck_strategy_override: String = "",
 	anchor_strategy_override: String = "",
 	deck_artifact_overrides: Dictionary = {},
-	anchor_artifact_overrides: Dictionary = {}
+	anchor_artifact_overrides: Dictionary = {},
+	tracked_strong_fixed_opening: bool = false,
+	anchor_strong_fixed_opening: bool = false
 ) -> Dictionary:
 	var per_seed_results: Array[Dictionary] = []
 	for seed_base: int in seed_bases:
@@ -417,7 +476,9 @@ func _run_matchup_for_deck_multi_seed(
 			deck_strategy_override,
 			anchor_strategy_override,
 			deck_artifact_overrides,
-			anchor_artifact_overrides
+			anchor_artifact_overrides,
+			tracked_strong_fixed_opening,
+			anchor_strong_fixed_opening
 		))
 	var aggregate := _aggregate_seed_summaries(per_seed_results)
 	aggregate["deck_id"] = deck.id
@@ -426,25 +487,29 @@ func _run_matchup_for_deck_multi_seed(
 	aggregate["anchor_deck_name"] = anchor_deck.deck_name
 	aggregate["deck_strategy_override"] = deck_strategy_override
 	aggregate["anchor_strategy_override"] = anchor_strategy_override
+	aggregate["tracked_strong_fixed_opening"] = tracked_strong_fixed_opening
+	aggregate["anchor_strong_fixed_opening"] = anchor_strong_fixed_opening
 	aggregate["games_per_matchup"] = games_per_matchup
 	aggregate["seed_bases"] = seed_bases.duplicate()
 	aggregate["per_seed_results"] = per_seed_results
 	return aggregate
 
 
-func _make_matchup_ai(player_index: int, deck_id: int, strategy_override_id: String = "", artifact_overrides: Dictionary = {}):
+func _make_matchup_ai(player_index: int, deck_id: int, strategy_override_id: String = "", artifact_overrides: Dictionary = {}, strong_fixed_opening: bool = false):
 	var ai := AIOpponentScript.new()
 	ai.configure(player_index, 1)
 	if strategy_override_id != "":
 		if strategy_override_id == "miraidon_baseline":
 			ai.set_deck_strategy(DeckStrategyMiraidonBaselineScript.new())
 			_apply_matchup_artifact_overrides(ai, ai._deck_strategy, artifact_overrides)
+			_apply_probe_strong_runtime(ai, strong_fixed_opening)
 			return ai
 		var override_registry := DeckStrategyRegistryScript.new()
 		var override_strategy = override_registry.create_strategy_by_id(strategy_override_id)
 		if override_strategy != null:
 			ai.set_deck_strategy(override_strategy)
 			_apply_matchup_artifact_overrides(ai, ai._deck_strategy, artifact_overrides)
+			_apply_probe_strong_runtime(ai, strong_fixed_opening)
 			return ai
 	var card_database = _get_card_database()
 	var deck: DeckData = null
@@ -455,7 +520,40 @@ func _make_matchup_ai(player_index: int, deck_id: int, strategy_override_id: Str
 		var registry := DeckStrategyRegistryScript.new()
 		strategy = registry.apply_strategy_for_deck(ai, deck)
 	_apply_matchup_artifact_overrides(ai, strategy, artifact_overrides)
+	_apply_probe_strong_runtime(ai, strong_fixed_opening)
 	return ai
+
+
+func _apply_fixed_order_if_enabled(
+	gsm: GameStateMachine,
+	player_index: int,
+	deck_id: int,
+	enabled: bool,
+	fixed_order_registry: RefCounted
+) -> String:
+	if not enabled or gsm == null or fixed_order_registry == null:
+		return ""
+	var fixed_order_path := str(fixed_order_registry.call("get_fixed_order_path", deck_id))
+	if fixed_order_path == "":
+		return ""
+	var loaded_order: Variant = fixed_order_registry.call("load_fixed_order_from_path", fixed_order_path)
+	if not loaded_order is Array:
+		return ""
+	var fixed_order: Array[Dictionary] = []
+	for entry_variant: Variant in loaded_order:
+		if entry_variant is Dictionary:
+			fixed_order.append((entry_variant as Dictionary).duplicate(true))
+	if fixed_order.is_empty():
+		return ""
+	gsm.set_deck_order_override(player_index, fixed_order)
+	return fixed_order_path
+
+
+func _apply_probe_strong_runtime(ai, strong_fixed_opening: bool) -> void:
+	if ai == null or not strong_fixed_opening:
+		return
+	ai.use_mcts = false
+	ai.decision_runtime_mode = AIOpponentScript.DECISION_RUNTIME_RULES_ONLY
 
 
 func _build_artifact_overrides(options: Dictionary, prefix: String) -> Dictionary:
@@ -698,7 +796,7 @@ func _write_json(path: String, payload: Dictionary) -> void:
 	if file == null:
 		push_warning("AITrainingRunnerScene: failed to open %s for writing" % path)
 		return
-	file.store_string(JSON.stringify(payload, "\t"))
+	file.store_string(JSON.stringify(_json_ascii_safe(payload), "\t"))
 
 
 func _write_trace_jsonl(path: String, traces: Array) -> void:
@@ -710,4 +808,33 @@ func _write_trace_jsonl(path: String, traces: Array) -> void:
 		if trace == null:
 			continue
 		var payload: Dictionary = trace.to_dictionary() if trace.has_method("to_dictionary") else {}
-		file.store_line(JSON.stringify(payload))
+		file.store_line(JSON.stringify(_json_ascii_safe(payload)))
+
+
+func _json_ascii_safe(value: Variant) -> Variant:
+	if value is Dictionary:
+		var safe_dict := {}
+		for raw_key: Variant in (value as Dictionary).keys():
+			safe_dict[str(raw_key)] = _json_ascii_safe((value as Dictionary).get(raw_key))
+		return safe_dict
+	if value is Array:
+		var safe_array: Array = []
+		for raw_item: Variant in value:
+			safe_array.append(_json_ascii_safe(raw_item))
+		return safe_array
+	if value is String:
+		return _ascii_safe_string(str(value))
+	return value
+
+
+func _ascii_safe_string(text: String) -> String:
+	var parts := PackedStringArray()
+	for i: int in text.length():
+		var code := text.unicode_at(i)
+		if code >= 32 and code <= 126:
+			parts.append(text.substr(i, 1))
+		elif code in [9, 10, 13]:
+			parts.append(" ")
+		else:
+			parts.append("?")
+	return "".join(parts)

@@ -67,7 +67,7 @@ func execute_attack(
 	for target: PokemonSlot in targets:
 		if AttackCoinFlipPreventDamageAndEffectsNextTurn.prevents_attack_damage(target, state):
 			continue
-		if target != opponent.active_pokemon and AbilityBenchImmune.prevents_opponent_attack_damage_or_effect(target, attacker, state):
+		if target != opponent.active_pokemon and AbilityBenchImmune.prevents_opponent_attack_damage(target, attacker, state):
 			continue
 		if AbilityPreventDamageFromBasicExEffect.prevents_target_damage(attacker, target, state):
 			continue

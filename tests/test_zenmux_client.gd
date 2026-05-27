@@ -33,9 +33,10 @@ class TlsRetryProbeClient extends ZenMuxClient:
 	var captured_api_key := ""
 	var captured_payload: Dictionary = {}
 	var captured_tls_mode := ""
+	var os_name := "Android"
 
 	func _current_os_name() -> String:
-		return "Android"
+		return os_name
 
 	func _request_json_payload_via_http_request(
 		parent: Node,
@@ -234,6 +235,12 @@ func test_android_tls_mode_uses_platform_store_before_unsafe_fallback() -> Strin
 		"default",
 		"Android"
 	))
+	var retries_windows_tls := bool(client.call(
+		"_should_retry_tls_with_unsafe",
+		{"request_result": HTTPRequest.RESULT_TLS_HANDSHAKE_ERROR},
+		"default",
+		"Windows"
+	))
 	var ignores_other_errors := bool(client.call(
 		"_should_retry_tls_with_unsafe",
 		{"request_result": HTTPRequest.RESULT_CANT_CONNECT},
@@ -244,8 +251,9 @@ func test_android_tls_mode_uses_platform_store_before_unsafe_fallback() -> Strin
 	var disabled_tls_mode := String(client.call("_initial_tls_mode_for_os", "Windows"))
 	return run_checks([
 		assert_eq(android_tls_mode, "default", "Android should try the platform TLS store first"),
-		assert_eq(windows_tls_mode, "unsafe", "Desktop should keep the existing unsafe TLS fallback path"),
+		assert_eq(windows_tls_mode, "default", "Windows should try the bundled/platform TLS path before unsafe retry"),
 		assert_true(retries_android_tls, "Android TLS handshake failures should trigger one unsafe retry"),
+		assert_true(retries_windows_tls, "Windows TLS handshake failures should trigger one unsafe retry"),
 		assert_false(ignores_other_errors, "Non-TLS transport errors should not use the unsafe TLS retry path"),
 		assert_eq(disabled_tls_mode, "default", "Disabling unsafe TLS should keep strict TLS mode"),
 	])
@@ -311,6 +319,64 @@ func test_http_transport_failure_starts_python_fallback_asynchronously() -> Stri
 	])
 	parent.free()
 	return result
+
+
+func test_windows_tls_handshake_failure_starts_unsafe_retry_without_external_helper() -> String:
+	var client := TlsRetryProbeClient.new()
+	client.os_name = "Windows"
+	var parent := Node.new()
+	var request := HTTPRequest.new()
+	request.set_meta("zenmux_request_url", "https://zenmux.ai/api/v1/chat/completions")
+	request.set_meta("zenmux_api_key", "test-key")
+	request.set_meta("zenmux_request_payload", {"model": "test-model", "messages": []})
+	request.set_meta("zenmux_tls_mode", "default")
+	parent.add_child(request)
+	var callback_state := {"called": false}
+	var callback := func(_response: Dictionary) -> void:
+		callback_state["called"] = true
+
+	client.call(
+		"_on_request_completed",
+		HTTPRequest.RESULT_TLS_HANDSHAKE_ERROR,
+		0,
+		PackedStringArray(),
+		PackedByteArray(),
+		request,
+		callback
+	)
+	var result := run_checks([
+		assert_true(client.retry_called, "Windows TLS handshake failure should retry through Godot unsafe TLS, not an external helper"),
+		assert_true(client.captured_parent_valid, "Windows TLS retry should attach to the same live parent"),
+		assert_eq(client.captured_url, "https://zenmux.ai/api/v1/chat/completions", "Windows TLS retry should reuse failed request URL"),
+		assert_eq(client.captured_api_key, "test-key", "Windows TLS retry should reuse API key"),
+		assert_eq(str(client.captured_payload.get("model", "")), "test-model", "Windows TLS retry should reuse request payload"),
+		assert_eq(client.captured_tls_mode, "unsafe", "Windows TLS retry should switch to unsafe TLS mode"),
+		assert_false(bool(callback_state.get("called", false)), "Original failure callback should wait while unsafe retry is pending"),
+	])
+	parent.free()
+	return result
+
+
+func test_windows_does_not_prefer_python_transport_without_explicit_opt_in_or_proxy() -> String:
+	var client_result: Variant = _new_client()
+	if client_result is Dictionary and not bool((client_result as Dictionary).get("ok", false)):
+		return str((client_result as Dictionary).get("error", "ZenMuxClient setup failed"))
+
+	var client: Object = (client_result as Dictionary).get("value") as Object
+	if not client.has_method("_should_prefer_python_transport"):
+		return "ZenMuxClient is missing _should_prefer_python_transport"
+	client.call("clear_proxy")
+	return run_checks([
+		assert_false(bool(client.call("_should_prefer_python_transport")), "Windows should not depend on user-installed Python by default"),
+	])
+
+
+func test_project_uses_bundled_tls_certificate_bundle() -> String:
+	var bundle_path := str(ProjectSettings.get_setting("network/tls/certificate_bundle_override", ""))
+	return run_checks([
+		assert_eq(bundle_path, "res://data/certs/cacert.pem", "Project should use the bundled CA file instead of relying only on the Windows root store"),
+		assert_true(FileAccess.file_exists(bundle_path), "Bundled CA file should exist"),
+	])
 
 
 func test_parse_proxy_url_accepts_common_proxy_formats() -> String:

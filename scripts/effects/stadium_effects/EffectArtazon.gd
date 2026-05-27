@@ -51,6 +51,7 @@ func execute(_card: CardInstance, targets: Array, state: GameState) -> void:
 	var player: PlayerState = state.players[pi]
 	var ctx: Dictionary = get_interaction_context(targets)
 	var selected_raw: Array = ctx.get("artazon_pokemon", [])
+	var has_explicit_selection: bool = ctx.has("artazon_pokemon")
 
 	var chosen: CardInstance = null
 	for entry: Variant in selected_raw:
@@ -60,7 +61,7 @@ func execute(_card: CardInstance, targets: Array, state: GameState) -> void:
 		if candidate in player.deck and _is_valid_pokemon(candidate):
 			chosen = candidate
 			break
-	if chosen == null:
+	if chosen == null and not has_explicit_selection:
 		for deck_card: CardInstance in player.deck:
 			if _is_valid_pokemon(deck_card):
 				chosen = deck_card

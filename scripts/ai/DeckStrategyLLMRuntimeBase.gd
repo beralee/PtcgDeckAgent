@@ -1473,6 +1473,10 @@ func _sanitize_decision_tree_contract(tree: Dictionary) -> Dictionary:
 	var repair_notes: Array[String] = []
 	var pruned_count := 0
 	var repaired_count := 0
+	var stripped_interactions := _strip_no_schema_interactions_in_tree(sanitized)
+	if stripped_interactions > 0:
+		repaired_count += stripped_interactions
+		repair_notes.append("removed low-level interactions from %d no-schema action(s); selection_policy/fallback scoring will drive legal choices" % stripped_interactions)
 	for key: String in ["actions", "fallback_actions", "fallback"]:
 		if not sanitized.has(key):
 			continue
@@ -1527,6 +1531,45 @@ func _sanitize_decision_tree_contract(tree: Dictionary) -> Dictionary:
 		"repair_notes": repair_notes,
 		"repaired_count": repaired_count,
 	}
+
+
+func _strip_no_schema_interactions_in_tree(node: Dictionary) -> int:
+	var changed_count := 0
+	for key: String in ["actions", "fallback_actions", "fallback"]:
+		if node.has(key):
+			changed_count += _strip_no_schema_interactions_in_action_array(node.get(key, []))
+	for branch_key: String in ["branches", "children"]:
+		var raw_branches: Variant = node.get(branch_key, [])
+		if not (raw_branches is Array):
+			continue
+		for raw_branch: Variant in raw_branches:
+			if not (raw_branch is Dictionary):
+				continue
+			changed_count += _strip_no_schema_interactions_in_tree(raw_branch as Dictionary)
+	return changed_count
+
+
+func _strip_no_schema_interactions_in_action_array(raw_actions: Variant) -> int:
+	if not (raw_actions is Array):
+		return 0
+	var changed_count := 0
+	for raw_action: Variant in raw_actions:
+		if not (raw_action is Dictionary):
+			continue
+		var action: Dictionary = raw_action
+		var interactions: Variant = action.get("interactions", {})
+		if not (interactions is Dictionary) or (interactions as Dictionary).is_empty():
+			continue
+		var action_id := str(action.get("id", action.get("action_id", ""))).strip_edges()
+		if action_id == "" or not _llm_action_catalog.has(action_id):
+			continue
+		var ref: Dictionary = _llm_action_catalog.get(action_id, {})
+		var schema: Dictionary = ref.get("interaction_schema", {}) if ref.get("interaction_schema", {}) is Dictionary else {}
+		if not schema.is_empty():
+			continue
+		action.erase("interactions")
+		changed_count += 1
+	return changed_count
 
 
 func _repair_active_ready_branch_missing_attack(branch: Dictionary) -> Dictionary:
@@ -3609,6 +3652,7 @@ func _repair_resource_conflicts_action_array(raw_actions: Variant) -> Dictionary
 	var kept: Array[Dictionary] = []
 	var kept_ids: Dictionary = {}
 	var forbidden_later_ids: Dictionary = {}
+	var consumed_hand_card_ids: Dictionary = {}
 	var removed: Array[Dictionary] = []
 	for raw_action: Variant in raw_actions:
 		if not (raw_action is Dictionary):
@@ -3616,12 +3660,18 @@ func _repair_resource_conflicts_action_array(raw_actions: Variant) -> Dictionary
 		var action: Dictionary = raw_action
 		var action_id: String = _action_ref_id(action)
 		var conflicts: Array[String] = _resource_conflict_ids_for_action_ref(action)
+		var hand_card_ids: Array[String] = _exact_hand_card_ids_consumed_by_action_ref(action)
 		var conflicts_with_kept := false
 		if action_id != "" and bool(forbidden_later_ids.get(action_id, false)):
 			conflicts_with_kept = true
 		if not conflicts_with_kept:
 			for conflict_id: String in conflicts:
 				if bool(kept_ids.get(conflict_id, false)):
+					conflicts_with_kept = true
+					break
+		if not conflicts_with_kept:
+			for hand_card_id: String in hand_card_ids:
+				if bool(consumed_hand_card_ids.get(hand_card_id, false)):
 					conflicts_with_kept = true
 					break
 		if conflicts_with_kept:
@@ -3633,6 +3683,9 @@ func _repair_resource_conflicts_action_array(raw_actions: Variant) -> Dictionary
 		for conflict_id: String in conflicts:
 			if conflict_id != "":
 				forbidden_later_ids[conflict_id] = true
+		for hand_card_id: String in hand_card_ids:
+			if hand_card_id != "":
+				consumed_hand_card_ids[hand_card_id] = true
 	return {
 		"actions": kept,
 		"removed_count": removed.size(),
@@ -4053,6 +4106,95 @@ func _resource_conflict_ids_for_action_ref(action: Dictionary) -> Array[String]:
 				if conflict_id != "" and not result.has(conflict_id):
 					result.append(conflict_id)
 	return result
+
+
+func _exact_hand_card_ids_consumed_by_action_ref(action: Dictionary) -> Array[String]:
+	var result: Array[String] = []
+	_append_exact_card_ids_from_variant(action.get("consumes_hand_card_ids", []), result)
+	var action_type := str(action.get("type", action.get("kind", "")))
+	if action_type in ["attach_energy", "attach_tool", "play_basic_to_bench", "play_trainer", "play_stadium"]:
+		_append_exact_card_ids_from_text(_action_ref_id(action), result)
+	var action_id: String = _action_ref_id(action)
+	if action_id != "" and _llm_action_catalog.has(action_id):
+		var catalog_ref: Dictionary = _llm_action_catalog.get(action_id, {})
+		_append_exact_card_ids_from_variant(catalog_ref.get("consumes_hand_card_ids", []), result)
+		var catalog_type := str(catalog_ref.get("type", catalog_ref.get("kind", "")))
+		if catalog_type in ["attach_energy", "attach_tool", "play_basic_to_bench", "play_trainer", "play_stadium"]:
+			_append_exact_card_ids_from_text(action_id, result)
+	_append_exact_hand_card_ids_from_interactions(action.get("interactions", {}), result)
+	return result
+
+
+func _append_exact_hand_card_ids_from_interactions(raw_interactions: Variant, result: Array[String]) -> void:
+	if not (raw_interactions is Dictionary):
+		return
+	var interactions: Dictionary = raw_interactions
+	for raw_key: Variant in interactions.keys():
+		var key := str(raw_key)
+		if not _interaction_key_consumes_hand_card(key):
+			continue
+		_append_exact_card_ids_from_variant(interactions.get(raw_key), result)
+
+
+func _interaction_key_consumes_hand_card(key: String) -> bool:
+	return key in [
+		"basic_energy_from_hand",
+		"energy_card",
+		"energy_card_id",
+		"selected_energy_card_id",
+		"discard_card",
+		"discard_cards",
+		"discard",
+		"discard_energy",
+		"discard_basic_energy",
+		"resource",
+	]
+
+
+func _append_exact_card_ids_from_variant(value: Variant, result: Array[String]) -> void:
+	if value is Dictionary:
+		var dict: Dictionary = value
+		for raw_key: Variant in dict.keys():
+			_append_exact_card_ids_from_variant(dict.get(raw_key), result)
+		return
+	if value is Array:
+		for raw_value: Variant in value:
+			_append_exact_card_ids_from_variant(raw_value, result)
+		return
+	_append_exact_card_ids_from_text(str(value), result)
+
+
+func _append_exact_card_ids_from_text(text: String, result: Array[String]) -> void:
+	var i := 0
+	while i < text.length():
+		var ch := text.substr(i, 1)
+		if ch != "c" or i + 1 >= text.length() or not _is_ascii_digit(text.substr(i + 1, 1)):
+			i += 1
+			continue
+		if not _is_card_id_boundary(text, i - 1):
+			i += 1
+			continue
+		var j := i + 1
+		while j < text.length() and _is_ascii_digit(text.substr(j, 1)):
+			j += 1
+		if not _is_card_id_boundary(text, j):
+			i = j
+			continue
+		var card_id := text.substr(i, j - i)
+		if card_id != "" and not result.has(card_id):
+			result.append(card_id)
+		i = j
+
+
+func _is_ascii_digit(ch: String) -> bool:
+	return ch >= "0" and ch <= "9"
+
+
+func _is_card_id_boundary(text: String, index: int) -> bool:
+	if index < 0 or index >= text.length():
+		return true
+	var ch := text.substr(index, 1)
+	return not ((ch >= "0" and ch <= "9") or (ch >= "A" and ch <= "Z") or (ch >= "a" and ch <= "z") or ch == "_")
 
 
 func _append_greninja_ability(target: Array[Dictionary], seen_ids: Dictionary, interactions: Dictionary = {}) -> void:

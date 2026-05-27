@@ -146,6 +146,17 @@ func _text_hud_panels(row: HBoxContainer) -> Array[PanelContainer]:
 	return panels
 
 
+func _first_action_hud_panel(row: HBoxContainer) -> PanelContainer:
+	if row == null or row.get_child_count() == 0:
+		return null
+	var stack := row.get_child(0) as VBoxContainer
+	if stack == null and row.get_child_count() > 1:
+		stack = row.get_child(1) as VBoxContainer
+	if stack == null or stack.get_child_count() == 0:
+		return null
+	return stack.get_child(0) as PanelContainer
+
+
 func _collect_text_hud_panels(node: Node, panels: Array[PanelContainer]) -> void:
 	if node is PanelContainer and node.has_meta("dialog_text_choice_index"):
 		panels.append(node as PanelContainer)
@@ -198,6 +209,41 @@ func test_stadium_action_dialog_uses_pokemon_action_hud() -> String:
 		assert_eq(str(first_item.get("meta", "")), "竞技场", "Stadium action HUD should mark the source as Stadium"),
 		assert_eq(dialog_data.get("pokemon_card", null), stadium, "Stadium action HUD should use the live Stadium card preview"),
 		assert_not_null(preview_panel, "Stadium action HUD should render the same left-side card preview as Pokemon actions"),
+	])
+	scene.free()
+	return result
+
+
+func test_disabled_action_hud_option_does_not_confirm_or_hide_dialog() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var scene := DialogSceneStub.new()
+	scene.set("_pending_choice", "pokemon_action")
+
+	controller.call("show_dialog", scene, "选择行动：测试宝可梦", [], {
+		"presentation": "action_hud",
+		"action_items": [{
+			"type": "ability",
+			"kind": "特性",
+			"title": "被封锁的特性",
+			"body": "这行文字应该继续留在行动 HUD 内。",
+			"enabled": false,
+			"reason": "特性被封锁",
+		}],
+		"allow_cancel": true,
+	})
+
+	var panel := _first_action_hud_panel(scene.get("_dialog_card_row") as HBoxContainer)
+	var press := InputEventMouseButton.new()
+	press.pressed = true
+	press.button_index = MOUSE_BUTTON_LEFT
+	if panel != null:
+		panel.gui_input.emit(press)
+
+	var result := run_checks([
+		assert_not_null(panel, "Action HUD should render the disabled option panel"),
+		assert_true(scene._dialog_overlay.visible, "Clicking a disabled Pokemon action row should keep the action HUD open"),
+		assert_eq(Array(scene._last_dialog_choice), [], "Disabled Pokemon action rows should not confirm a dialog choice"),
+		assert_eq(scene.get("_pending_choice"), "pokemon_action", "Disabled Pokemon action rows should keep the pending action context"),
 	])
 	scene.free()
 	return result

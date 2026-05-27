@@ -9,6 +9,7 @@ var _round_probe: RefCounted = SwissTournamentScript.new()
 
 func _ready() -> void:
 	HudThemeScript.apply(self)
+	%TitleLabel.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(24))
 	%BtnBack.text = "返回"
 	%BtnStart.text = "查看比赛情况"
 	%TitleLabel.text = "比赛设置"

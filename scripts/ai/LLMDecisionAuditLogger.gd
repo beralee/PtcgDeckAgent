@@ -15,9 +15,7 @@ func _init() -> void:
 func log_event(event_type: String, data: Dictionary = {}) -> void:
 	if not enabled:
 		return
-	var dir := DirAccess.open("user://")
-	if dir != null and not dir.dir_exists("logs"):
-		dir.make_dir("logs")
+	_ensure_log_dir_for_path(log_path)
 	var entry := {
 		"ts_unix": Time.get_unix_time_from_system(),
 		"ts": Time.get_datetime_string_from_system(false, true),
@@ -26,13 +24,16 @@ func log_event(event_type: String, data: Dictionary = {}) -> void:
 	for key: String in data.keys():
 		entry[key] = _json_safe(data.get(key))
 	var line := JSON.stringify(entry)
-	var file := FileAccess.open(log_path, FileAccess.READ_WRITE)
-	if file == null:
-		file = FileAccess.open(log_path, FileAccess.WRITE)
+	var file := _open_log_file_for_append(log_path)
+	if file == null and log_path.begins_with("user://"):
+		log_path = _fallback_log_path()
+		_ensure_log_dir_for_path(log_path)
+		file = _open_log_file_for_append(log_path)
 	if file == null:
 		return
 	file.seek_end()
 	file.store_line(line)
+	file.close()
 
 
 func compact_action(action: Dictionary) -> Dictionary:
@@ -122,6 +123,31 @@ func _default_log_path() -> String:
 		int(d.get("month", 0)),
 		int(d.get("day", 0)),
 	]
+
+
+func _fallback_log_path() -> String:
+	var d := Time.get_date_dict_from_system()
+	return "res://tmp/llm_audit/logs/%s_%04d%02d%02d.jsonl" % [
+		LOG_PREFIX,
+		int(d.get("year", 0)),
+		int(d.get("month", 0)),
+		int(d.get("day", 0)),
+	]
+
+
+func _ensure_log_dir_for_path(path: String) -> void:
+	var dir_path := path.get_base_dir()
+	if dir_path == "":
+		return
+	var absolute_dir := ProjectSettings.globalize_path(dir_path) if dir_path.begins_with("user://") or dir_path.begins_with("res://") else dir_path
+	DirAccess.make_dir_recursive_absolute(absolute_dir)
+
+
+func _open_log_file_for_append(path: String) -> FileAccess:
+	var file := FileAccess.open(path, FileAccess.READ_WRITE)
+	if file == null:
+		file = FileAccess.open(path, FileAccess.WRITE)
+	return file
 
 
 func _json_safe(value: Variant) -> Variant:

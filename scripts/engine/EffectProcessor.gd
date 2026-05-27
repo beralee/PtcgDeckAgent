@@ -259,6 +259,51 @@ func execute_attack_effect(
 
 ## 使用指定的 effect_id 执行攻击效果（用于复制招式场景，如巨龙无双）
 ## 与 execute_attack_effect 的区别：允许 effect_id 与 attacker 上的卡牌不同
+func attack_damage_cancelled(
+	attacker: PokemonSlot,
+	attack_index: int,
+	defender: PokemonSlot,
+	state: GameState,
+	targets: Array = []
+) -> bool:
+	if attacker == null or attacker.get_top_card() == null:
+		return false
+	var card_data: CardData = attacker.get_card_data()
+	if card_data == null or attack_index < 0 or attack_index >= card_data.attacks.size():
+		return false
+	var effect_id: String = card_data.effect_id
+	if _effect_registry.has(effect_id):
+		var card_effect: BaseEffect = _effect_registry[effect_id]
+		if _attack_damage_cancelled_by_effect(card_effect, attacker, attack_index, defender, state, targets):
+			return true
+	if _attack_effect_registry.has(effect_id):
+		var already_executed_effect: BaseEffect = _effect_registry.get(effect_id, null)
+		for effect: BaseEffect in _attack_effect_registry[effect_id]:
+			if effect == already_executed_effect:
+				continue
+			if effect.has_method("applies_to_attack_index") and not bool(effect.call("applies_to_attack_index", attack_index)):
+				continue
+			if _attack_damage_cancelled_by_effect(effect, attacker, attack_index, defender, state, targets):
+				return true
+	return false
+
+
+func _attack_damage_cancelled_by_effect(
+	effect: BaseEffect,
+	attacker: PokemonSlot,
+	attack_index: int,
+	defender: PokemonSlot,
+	state: GameState,
+	targets: Array
+) -> bool:
+	if effect == null or not effect.has_method("cancels_attack_damage"):
+		return false
+	effect.set_attack_interaction_context(targets)
+	var cancelled := bool(effect.call("cancels_attack_damage", attacker, defender, attack_index, state))
+	effect.clear_attack_interaction_context()
+	return cancelled
+
+
 func execute_attack_effect_by_id(
 	effect_id: String,
 	attack_index: int,
@@ -417,18 +462,10 @@ func get_granted_abilities(pokemon: PokemonSlot, state: GameState) -> Array[Dict
 
 func get_granted_attacks(pokemon: PokemonSlot, state: GameState) -> Array[Dictionary]:
 	var entries: Array[Dictionary] = []
-	if pokemon == null or pokemon.attached_tool == null:
+	if pokemon == null or pokemon.get_top_card() == null:
 		return entries
-	if is_tool_effect_suppressed(pokemon, state):
-		return entries
-	var effect: BaseEffect = get_effect(pokemon.attached_tool.card_data.effect_id)
-	if effect == null or not effect.has_method("get_granted_attacks"):
-		return entries
-	var raw_entries: Variant = effect.call("get_granted_attacks", pokemon, state)
-	if raw_entries is Array:
-		for entry: Variant in raw_entries:
-			if entry is Dictionary:
-				entries.append(entry)
+	entries.append_array(_get_tool_granted_attacks(pokemon, state))
+	entries.append_array(_get_field_ability_granted_attacks(pokemon, state))
 	return entries
 
 
@@ -437,11 +474,7 @@ func get_granted_attack_interaction_steps(
 	granted_attack: Dictionary,
 	state: GameState
 ) -> Array[Dictionary]:
-	if pokemon == null or pokemon.attached_tool == null:
-		return []
-	if is_tool_effect_suppressed(pokemon, state):
-		return []
-	var effect: BaseEffect = get_effect(pokemon.attached_tool.card_data.effect_id)
+	var effect: BaseEffect = _resolve_granted_attack_effect(pokemon, granted_attack, state)
 	if effect == null or not effect.has_method("get_granted_attack_interaction_steps"):
 		return []
 	var raw_steps: Variant = effect.call("get_granted_attack_interaction_steps", pokemon, granted_attack, state)
@@ -457,11 +490,7 @@ func execute_granted_attack(
 	state: GameState,
 	targets: Array = []
 ) -> bool:
-	if attacker == null or attacker.attached_tool == null:
-		return false
-	if is_tool_effect_suppressed(attacker, state):
-		return false
-	var effect: BaseEffect = get_effect(attacker.attached_tool.card_data.effect_id)
+	var effect: BaseEffect = _resolve_granted_attack_effect(attacker, granted_attack, state)
 	if effect == null or not effect.has_method("execute_granted_attack"):
 		return false
 	if effect.has_method("set_attack_interaction_context"):
@@ -469,6 +498,110 @@ func execute_granted_attack(
 	effect.call("execute_granted_attack", attacker, granted_attack, state, targets)
 	if effect.has_method("clear_attack_interaction_context"):
 		effect.clear_attack_interaction_context()
+	return true
+
+
+func is_granted_attack_available(
+	pokemon: PokemonSlot,
+	granted_attack: Dictionary,
+	state: GameState
+) -> bool:
+	if pokemon == null or pokemon.get_top_card() == null:
+		return false
+	for available: Dictionary in get_granted_attacks(pokemon, state):
+		if _granted_attack_matches(available, granted_attack):
+			return true
+	return false
+
+
+func _get_tool_granted_attacks(pokemon: PokemonSlot, state: GameState) -> Array[Dictionary]:
+	var entries: Array[Dictionary] = []
+	if pokemon == null or pokemon.attached_tool == null:
+		return entries
+	if is_tool_effect_suppressed(pokemon, state):
+		return entries
+	var effect: BaseEffect = get_effect(pokemon.attached_tool.card_data.effect_id)
+	if effect == null or not effect.has_method("get_granted_attacks"):
+		return entries
+	var raw_entries: Variant = effect.call("get_granted_attacks", pokemon, state)
+	if raw_entries is Array:
+		for entry: Variant in raw_entries:
+			if entry is Dictionary:
+				var normalized := (entry as Dictionary).duplicate(true)
+				normalized["source"] = str(normalized.get("source", "tool"))
+				normalized["source_effect_id"] = pokemon.attached_tool.card_data.effect_id
+				normalized["source_card_instance_id"] = int(pokemon.attached_tool.instance_id)
+				entries.append(normalized)
+	return entries
+
+
+func _get_field_ability_granted_attacks(pokemon: PokemonSlot, state: GameState) -> Array[Dictionary]:
+	var entries: Array[Dictionary] = []
+	if pokemon == null or pokemon.get_top_card() == null or state == null:
+		return entries
+	var owner_index := int(pokemon.get_top_card().owner_index)
+	if owner_index < 0 or owner_index >= state.players.size():
+		return entries
+	for source: PokemonSlot in state.players[owner_index].get_all_pokemon():
+		if source == null or source.get_card_data() == null:
+			continue
+		if is_ability_disabled(source, state):
+			continue
+		var effect: BaseEffect = get_effect(source.get_card_data().effect_id)
+		if effect == null or not effect.has_method("get_granted_attacks_for_target"):
+			continue
+		var raw_entries: Variant = effect.call("get_granted_attacks_for_target", source, pokemon, state)
+		if not (raw_entries is Array):
+			continue
+		var source_top := source.get_top_card()
+		for entry: Variant in raw_entries:
+			if not entry is Dictionary:
+				continue
+			var normalized := (entry as Dictionary).duplicate(true)
+			normalized["source"] = str(normalized.get("source", "field_ability"))
+			normalized["source_effect_id"] = str(normalized.get("source_effect_id", source.get_card_data().effect_id))
+			if source_top != null:
+				normalized["source_card_instance_id"] = int(normalized.get("source_card_instance_id", source_top.instance_id))
+			entries.append(normalized)
+	return entries
+
+
+func _resolve_granted_attack_effect(
+	pokemon: PokemonSlot,
+	granted_attack: Dictionary,
+	state: GameState
+) -> BaseEffect:
+	if pokemon == null or pokemon.get_top_card() == null:
+		return null
+	if not is_granted_attack_available(pokemon, granted_attack, state):
+		return null
+	var source_kind := str(granted_attack.get("source", "tool"))
+	if source_kind == "tool":
+		if pokemon.attached_tool == null or is_tool_effect_suppressed(pokemon, state):
+			return null
+		return get_effect(pokemon.attached_tool.card_data.effect_id)
+	var source_effect_id := str(granted_attack.get("source_effect_id", ""))
+	if source_effect_id == "":
+		return null
+	return get_effect(source_effect_id)
+
+
+func _granted_attack_matches(left: Dictionary, right: Dictionary) -> bool:
+	var left_id := str(left.get("id", ""))
+	var right_id := str(right.get("id", ""))
+	if left_id != "" and right_id != "" and left_id != right_id:
+		return false
+	for key: String in [
+		"source",
+		"source_effect_id",
+		"source_card_instance_id",
+		"grant_kind",
+		"original_card_instance_id",
+		"original_effect_id",
+		"original_attack_index",
+	]:
+		if left.has(key) and right.has(key) and str(left.get(key)) != str(right.get(key)):
+			return false
 	return true
 
 
@@ -525,23 +658,24 @@ func get_attack_damage_modifier(
 	_defender: PokemonSlot,
 	_attack: Dictionary,
 	state: GameState,
-	targets: Array = []
+	targets: Array = [],
+	attack_index_override: int = -999999
 ) -> int:
 	if attacker == null or attacker.get_top_card() == null:
 		return 0
 	var effect_id: String = attacker.get_card_data().effect_id
-	if not _attack_effect_registry.has(effect_id):
-		return 0
 	var total: int = 0
-	for effect: BaseEffect in _attack_effect_registry[effect_id]:
-		if effect.has_method("applies_to_attack_index"):
-			var attack_index := _resolve_attack_index(attacker, _attack)
-			if not bool(effect.call("applies_to_attack_index", attack_index)):
+	var attack_index: int = attack_index_override
+	if attack_index == -999999:
+		attack_index = _resolve_attack_index(attacker, _attack)
+	if attack_index >= 0 and _attack_effect_registry.has(effect_id):
+		for effect: BaseEffect in _attack_effect_registry[effect_id]:
+			if effect.has_method("applies_to_attack_index") and not bool(effect.call("applies_to_attack_index", attack_index)):
 				continue
-		if effect.has_method("get_damage_bonus"):
-			effect.set_attack_interaction_context(targets)
-			total += int(effect.call("get_damage_bonus", attacker, state))
-			effect.clear_attack_interaction_context()
+			if effect.has_method("get_damage_bonus"):
+				effect.set_attack_interaction_context(targets)
+				total += int(effect.call("get_damage_bonus", attacker, state))
+				effect.clear_attack_interaction_context()
 	total += EffectKieranScript.get_turn_damage_bonus(attacker, _defender, state)
 	return total
 
@@ -895,6 +1029,8 @@ func get_energy_colorless_count(energy: CardInstance, state: GameState = null) -
 	var effect: BaseEffect = get_effect(energy.card_data.effect_id)
 	if effect is EffectDoubleColorless:
 		return (effect as EffectDoubleColorless).provides_count
+	if effect != null and effect.has_method("get_energy_count_for"):
+		return int(effect.call("get_energy_count_for", energy, state))
 	if effect is EffectSpecialEnergyModifier:
 		return (effect as EffectSpecialEnergyModifier).energy_count
 	if effect != null and effect.has_method("get_energy_count"):
@@ -908,6 +1044,8 @@ func get_energy_type(energy: CardInstance, state: GameState = null) -> String:
 	if state != null and is_special_energy_suppressed(energy, state):
 		return "C"
 	var effect: BaseEffect = get_effect(energy.card_data.effect_id)
+	if effect != null and effect.has_method("get_energy_type_for"):
+		return str(effect.call("get_energy_type_for", energy, state))
 	if effect != null and effect.has_method("provides_any_type") and bool(effect.call("provides_any_type")):
 		if state != null and effect.has_method("should_downgrade_to_colorless") and bool(effect.call("should_downgrade_to_colorless", energy, state)):
 			return "C"
@@ -924,10 +1062,8 @@ func is_ability_disabled(slot: PokemonSlot, state: GameState = null) -> bool:
 	if slot == null:
 		return false
 	# 清除古龙水等通过 effects 数组标记的特性消除
-	if state != null:
-		for eff: Dictionary in slot.effects:
-			if eff.get("type", "") == "ability_disabled" and int(eff.get("turn", -999)) == state.turn_number:
-				return true
+	if state != null and EffectCancelCologne.is_slot_directly_ability_disabled(slot, state):
+		return true
 	if state != null:
 		if AbilityBasicLock.is_locked_by_basic_lock(slot, state):
 			return true
@@ -996,6 +1132,61 @@ func prevents_card_from_hand(player_index: int, card: CardInstance, state: GameS
 		if source_effect.has_method("blocks_opponent_ace_spec") and bool(source_effect.call("blocks_opponent_ace_spec", source, player_index, card, state)):
 			return true
 	return false
+
+
+func get_card_from_hand_block_reason(player_index: int, card: CardInstance, state: GameState) -> String:
+	if card == null or card.card_data == null or state == null:
+		return ""
+	if NoivernExEffectsScript.is_player_locked(player_index, state):
+		var locked_card_type := str(card.card_data.card_type)
+		if locked_card_type == "Special Energy":
+			return "受到对手招式效果影响，当前不能从手牌附着特殊能量。"
+		if locked_card_type == "Stadium":
+			return "受到对手招式效果影响，当前不能从手牌打出竞技场卡。"
+	var opponent_index := 1 - player_index
+	if opponent_index < 0 or opponent_index >= state.players.size():
+		return ""
+	for source: PokemonSlot in state.players[opponent_index].get_all_pokemon():
+		if source == null or source.get_card_data() == null or is_ability_disabled(source, state):
+			continue
+		var source_effect: BaseEffect = get_effect(source.get_card_data().effect_id)
+		if source_effect == null:
+			continue
+		if source_effect.has_method("blocks_card_from_hand") and bool(source_effect.call("blocks_card_from_hand", source, card, player_index, state)):
+			return "受到对手 %s 的效果影响，当前不能从手牌使用这张卡。" % source.get_pokemon_name()
+		if source_effect.has_method("blocks_opponent_ace_spec") and bool(source_effect.call("blocks_opponent_ace_spec", source, player_index, card, state)):
+			return "受到对手 %s 的效果影响，当前不能使用 ACE SPEC 卡。" % source.get_pokemon_name()
+	return ""
+
+
+func get_effect_unusable_reason(card: CardInstance, state: GameState) -> String:
+	if card == null or card.card_data == null:
+		return "当前无法使用这张卡。"
+	var effect: BaseEffect = get_effect(card.card_data.effect_id)
+	if effect != null and effect.has_method("get_unusable_reason"):
+		var reason := str(effect.call("get_unusable_reason", card, state))
+		if reason != "":
+			return reason
+	return "%s 当前无法使用。" % card.card_data.name
+
+
+func get_ability_unusable_reason(pokemon: PokemonSlot, state: GameState, ability_index: int = 0) -> String:
+	if pokemon == null or pokemon.get_top_card() == null:
+		return "当前没有可以使用特性的宝可梦。"
+	var card_data: CardData = pokemon.get_card_data()
+	var native_count: int = card_data.abilities.size() if card_data != null else 0
+	if ability_index < native_count and is_ability_disabled(pokemon, state):
+		return "%s 的特性当前被场上效果关闭。" % pokemon.get_pokemon_name()
+	var effect: BaseEffect = get_ability_effect(pokemon, ability_index, state)
+	if effect != null and effect.has_method("get_ability_unusable_reason"):
+		var reason := str(effect.call("get_ability_unusable_reason", pokemon, state))
+		if reason != "":
+			return reason
+	if effect == null:
+		return "%s 当前没有可执行的特性。" % pokemon.get_pokemon_name()
+	if not can_use_ability(pokemon, state, ability_index):
+		return "%s 当前无法使用这个特性。" % pokemon.get_pokemon_name()
+	return ""
 
 
 func slot_allows_early_evolution(slot: PokemonSlot, player_index: int, state: GameState) -> bool:

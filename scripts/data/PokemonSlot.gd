@@ -29,6 +29,7 @@ var turn_evolved: int = -1
 var effects: Array[Dictionary] = []
 
 const ENTERED_ACTIVE_FROM_BENCH_EFFECT_TYPE := "entered_active_from_bench"
+const ENTERED_BENCH_FROM_HAND_EFFECT_TYPE := "entered_bench_from_hand"
 const ABILITY_USED_EFFECT_TYPE := "ability_used"
 
 
@@ -148,6 +149,30 @@ func mark_entered_active_from_bench(turn_number: int) -> void:
 func entered_active_from_bench_this_turn(turn_number: int) -> bool:
 	for eff: Dictionary in effects:
 		if eff.get("type", "") == ENTERED_ACTIVE_FROM_BENCH_EFFECT_TYPE and int(eff.get("turn", -999)) == turn_number:
+			return true
+	return false
+
+
+func mark_entered_bench_from_hand(turn_number: int) -> void:
+	var top := get_top_card()
+	effects.append({
+		"type": ENTERED_BENCH_FROM_HAND_EFFECT_TYPE,
+		"turn": turn_number,
+		"card_instance_id": int(top.instance_id) if top != null else -1,
+	})
+
+
+func entered_bench_from_hand_this_turn(turn_number: int) -> bool:
+	var top := get_top_card()
+	if top == null:
+		return false
+	var top_id := int(top.instance_id)
+	for eff: Dictionary in effects:
+		if eff.get("type", "") != ENTERED_BENCH_FROM_HAND_EFFECT_TYPE:
+			continue
+		if int(eff.get("turn", -999)) != turn_number:
+			continue
+		if int(eff.get("card_instance_id", -1)) == top_id:
 			return true
 	return false
 

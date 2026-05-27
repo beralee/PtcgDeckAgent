@@ -49,6 +49,7 @@ func execute(_card: CardInstance, targets: Array, state: GameState) -> void:
 	var player: PlayerState = state.players[pi]
 	var ctx: Dictionary = get_interaction_context(targets)
 	var selected_raw: Array = ctx.get("town_store_tool", [])
+	var has_explicit_selection: bool = ctx.has("town_store_tool")
 
 	var tool_card: CardInstance = null
 	for entry: Variant in selected_raw:
@@ -58,7 +59,7 @@ func execute(_card: CardInstance, targets: Array, state: GameState) -> void:
 		if candidate in player.deck and candidate.card_data != null and candidate.card_data.card_type == "Tool":
 			tool_card = candidate
 			break
-	if tool_card == null:
+	if tool_card == null and not has_explicit_selection:
 		for deck_card: CardInstance in player.deck:
 			if deck_card.card_data != null and deck_card.card_data.card_type == "Tool":
 				tool_card = deck_card

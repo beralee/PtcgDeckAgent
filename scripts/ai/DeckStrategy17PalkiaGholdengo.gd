@@ -19,6 +19,8 @@ const EARTHEN_VESSEL := "Earthen Vessel"
 const BUDDY_BUDDY_POFFIN := "Buddy-Buddy Poffin"
 const NEST_BALL := "Nest Ball"
 const ULTRA_BALL := "Ultra Ball"
+const HISUIAN_HEAVY_BALL := "Hisuian Heavy Ball"
+const NIGHT_STRETCHER := "Night Stretcher"
 const IRIDA := "Irida"
 const CIPHERMANIACS_CODEBREAKING := "Ciphermaniac's Codebreaking"
 const BOSS_ORDERS := "Boss's Orders"
@@ -112,6 +114,22 @@ func build_turn_plan(game_state: GameState, player_index: int, _context: Diction
 	}
 
 
+func build_intent_facts(game_state: GameState, player_index: int, legal_action_refs: Array = []) -> Dictionary:
+	var facts: Dictionary = super.build_intent_facts(game_state, player_index, legal_action_refs)
+	var soft_penalties: Array = facts.get("soft_penalties", []) if facts.get("soft_penalties", []) is Array else []
+	for raw_ref: Variant in legal_action_refs:
+		if not (raw_ref is Dictionary):
+			continue
+		var ref: Dictionary = raw_ref
+		if _should_penalize_manual_attach_ref(ref, game_state, player_index):
+			soft_penalties.append({
+				"action_id": str(ref.get("id", ref.get("action_id", ""))),
+				"type": "wrong_energy_attribute",
+			})
+	facts["soft_penalties"] = soft_penalties
+	return facts
+
+
 func build_continuity_contract(game_state: GameState, player_index: int, turn_contract: Dictionary = {}) -> Dictionary:
 	var disabled := _disabled_palkia_gholdengo_continuity_contract()
 	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
@@ -171,7 +189,14 @@ func score_action_absolute(action: Dictionary, game_state: GameState, player_ind
 				score = maxf(score, 360.0)
 			elif _card_name(card) == PALKIA_V and _count_name_on_field(player, PALKIA_V) == 0:
 				score = maxf(score, 520.0)
-		"play_trainer":
+			elif player.bench.is_empty() and card != null and card.card_data != null and card.card_data.is_basic_pokemon():
+				score = maxf(score, 760.0)
+			if _should_preserve_low_deck_without_attack(player, game_state, player_index):
+				score = minf(score, 70.0)
+		"evolve":
+			if _should_preserve_low_deck_without_attack(player, game_state, player_index) and not _evolution_action_creates_attack_route(action, player):
+				score = minf(score, 70.0)
+		"play_trainer", "play_stadium":
 			score = _score_palkia_gholdengo_trainer(action, game_state, player, player_index, score)
 		"attach_energy":
 			score = _score_palkia_gholdengo_attach(action, player, score)
@@ -182,7 +207,10 @@ func score_action_absolute(action: Dictionary, game_state: GameState, player_ind
 			if _slot_name(source) == GHOLDENGO_EX:
 				score = maxf(score, 380.0 if player.hand.size() <= 5 else 260.0)
 				if source == player.active_pokemon and _has_attached_energy_type(source, METAL_ENERGY) and not _deck_is_thin(player):
-					score = maxf(score, 3200.0)
+					if _deck_is_near_thin(player) and _can_current_attacker_take_ko(game_state, player_index):
+						score = minf(score, 260.0)
+					else:
+						score = maxf(score, 3200.0)
 			elif _slot_name(source) == RADIANT_GRENINJA:
 				score = maxf(score, 330.0 if _basic_energy_in_hand(player) > 0 else 80.0)
 			elif _slot_name(source) == FEZANDIPITI_EX:
@@ -191,19 +219,27 @@ func score_action_absolute(action: Dictionary, game_state: GameState, player_ind
 			var source: PokemonSlot = action.get("source_slot", player.active_pokemon)
 			if source == null:
 				source = player.active_pokemon
-			if _slot_name(source) == GHOLDENGO_EX:
+			var source_name := _slot_name(source)
+			if source_name == GHOLDENGO_EX:
 				if not _has_attached_energy_type(source, METAL_ENERGY):
 					return -1000.0
 				score = _score_gholdengo_make_it_rain(action, player, game_state, player_index, score)
-			elif _slot_name(source) == PALKIA_VSTAR:
+			elif source_name == PALKIA_VSTAR:
 				var damage := _predict_attack_with_board(source, game_state)
 				score = maxf(score, 420.0 + float(damage) * 1.9)
 				if damage >= _opponent_active_remaining_hp(game_state, player_index):
 					score += 720.0
-			elif _slot_name(source) == GIMMIGHOUL and _should_delay_gimmighoul_setup_attack(action, player):
-				score = minf(score, 220.0)
+			elif source_name == PALKIA_V:
+				score = _score_palkia_v_attack(action, player, source, game_state, score)
+			elif source_name == GIMMIGHOUL:
+				score = _score_gimmighoul_attack(action, player, score)
+			elif _is_support_pokemon_name(source_name):
+				score = _score_support_pokemon_attack(action, score)
 		"retreat":
 			score = _score_palkia_gholdengo_retreat(player, game_state, player_index, score)
+		"end_turn":
+			if _should_preserve_low_deck_without_attack(player, game_state, player_index):
+				score = maxf(score, 120.0)
 	return score
 
 
@@ -241,6 +277,8 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 		if step_id.contains("search") or step_id.contains("item") or step_id.contains("basic_pokemon") or step_id.contains("buddy_poffin_pokemon"):
 			var name := _card_name(card)
 			var player := _player_from_context(context)
+			if name in [BUDDY_BUDDY_POFFIN, NEST_BALL, ULTRA_BALL]:
+				return _score_item_search_target(card, context)
 			if name == ENERGY_SEARCH_PRO:
 				return 380.0
 			if name == GHOLDENGO_EX:
@@ -295,6 +333,12 @@ func get_search_priority(card: CardInstance) -> int:
 		return 315
 	if name == PALKIA_V:
 		return 300
+	if name == BUDDY_BUDDY_POFFIN:
+		return 300
+	if name == NEST_BALL:
+		return 295
+	if name == ULTRA_BALL:
+		return 292
 	if name == ENERGY_SEARCH_PRO:
 		return 290
 	return super.get_search_priority(card)
@@ -315,14 +359,19 @@ func _score_trainer(action: Dictionary, game_state: GameState, player: PlayerSta
 
 
 func _score_item_search_target(card: CardInstance, context: Dictionary) -> float:
+	var player := _player_from_context(context)
 	if _card_name(card) == ENERGY_SEARCH_PRO:
-		return 390.0
+		return 300.0 if _needs_bench_out_protection(player) else 390.0
 	if _card_name(card) == BUDDY_BUDDY_POFFIN:
-		var player := _player_from_context(context)
-		return 410.0 if _needs_poffin_basics(player) else 230.0
+		if _needs_bench_out_protection(player):
+			return 760.0
+		return 520.0 if _needs_poffin_basics(player) else 230.0
 	if _card_name(card) == NEST_BALL:
-		var player := _player_from_context(context)
-		return 390.0 if _needs_opening_basics(player) else 220.0
+		if _needs_bench_out_protection(player):
+			return 700.0
+		return 500.0 if _needs_opening_basics(player) else 220.0
+	if _card_name(card) == ULTRA_BALL:
+		return 520.0 if _needs_evolution_piece(player) else 260.0
 	return float(super.get_search_priority(card))
 
 
@@ -483,6 +532,8 @@ func _score_palkia_gholdengo_trainer(
 		score = maxf(score, 510.0 if _needs_evolution_piece(player) else 260.0)
 	if name == IRIDA:
 		score = maxf(score, 480.0 if _engine_setup_gap(player) > 0 else 240.0)
+		if _fragile_gimmighoul_opening(player):
+			score = maxf(score, 620.0)
 	if name == EARTHEN_VESSEL:
 		if _needs_opening_basics(player):
 			score = minf(score, 300.0)
@@ -503,17 +554,24 @@ func _score_palkia_gholdengo_trainer(
 	if name == SWITCH:
 		score = maxf(score, 300.0 if _has_ready_bench_attacker(player, game_state, player_index) else 80.0)
 	if name == FULL_METAL_LAB:
-		score = maxf(score, 260.0 if _count_name_on_field(player, GHOLDENGO_EX) > 0 else 80.0)
+		score = maxf(score, 340.0 if _count_name_on_field(player, GHOLDENGO_EX) > 0 else 80.0)
 	if name == CANCELING_COLOGNE:
 		score = minf(score, 120.0)
+	if _should_preserve_low_deck_without_attack(player, game_state, player_index):
+		if name in [BUDDY_BUDDY_POFFIN, NEST_BALL, ULTRA_BALL, HISUIAN_HEAVY_BALL, NIGHT_STRETCHER, IRIDA, EARTHEN_VESSEL, CIPHERMANIACS_CODEBREAKING, FULL_METAL_LAB, CANCELING_COLOGNE]:
+			score = minf(score, 70.0)
+		if name in [BOSS_ORDERS, COUNTER_CATCHER] and _best_gust_ko_action_score(player, game_state, player_index) <= 0.0:
+			score = minf(score, 70.0)
 	if _deck_is_thin(player) and _has_live_attack_route(player, game_state, player_index):
 		if name in [CIPHERMANIACS_CODEBREAKING]:
 			score = minf(score, 40.0)
-		if name in [BUDDY_BUDDY_POFFIN, NEST_BALL, ULTRA_BALL, EARTHEN_VESSEL] and not _needs_evolution_piece(player):
+		if name in [BUDDY_BUDDY_POFFIN, NEST_BALL, ULTRA_BALL, HISUIAN_HEAVY_BALL, NIGHT_STRETCHER, IRIDA, EARTHEN_VESSEL] and not _needs_evolution_piece(player):
 			score = minf(score, 90.0)
 	if _deck_is_critical(player):
 		if name == CIPHERMANIACS_CODEBREAKING:
 			score = minf(score, 40.0)
+		if name in [BUDDY_BUDDY_POFFIN, NEST_BALL, ULTRA_BALL, HISUIAN_HEAVY_BALL, NIGHT_STRETCHER, IRIDA, EARTHEN_VESSEL]:
+			score = minf(score, 70.0)
 		if name in [BOSS_ORDERS, COUNTER_CATCHER] \
 				and not _can_current_attacker_take_ko(game_state, player_index) \
 				and _best_gust_ko_action_score(player, game_state, player_index) <= 0.0:
@@ -541,7 +599,7 @@ func _score_palkia_gholdengo_attach(action: Dictionary, player: PlayerState, bas
 					and not _has_attached_energy_type(player.active_pokemon, METAL_ENERGY):
 				score = minf(score, 620.0)
 		elif energy_type != METAL_ENERGY and not _has_attached_energy_type(target, METAL_ENERGY):
-			score = minf(score, 180.0 if target_name == GIMMIGHOUL and target.attached_energy.is_empty() else 90.0)
+			score = minf(score, -180.0)
 		elif _has_attached_energy_type(target, METAL_ENERGY):
 			score = minf(score, 140.0)
 	if target_name in [PALKIA_VSTAR, PALKIA_V]:
@@ -574,12 +632,14 @@ func _score_gholdengo_make_it_rain(
 	var burst_damage := hand_energy * 50
 	var score := maxf(base_score, 520.0 + float(burst_damage) * 2.8)
 	var remaining_hp := _opponent_active_remaining_hp(game_state, player_index)
-	if burst_damage >= remaining_hp:
+	var projected_damage := int(action.get("projected_damage", 0))
+	var projected_knockout := bool(action.get("projected_knockout", false))
+	if burst_damage <= 0 and projected_damage <= 0 and not projected_knockout:
+		return -340.0
+	if projected_knockout or burst_damage >= remaining_hp:
 		return score + 820.0
-	if burst_damage <= 50:
-		score = minf(score, 220.0)
-	elif burst_damage < 150:
-		score = minf(score, 320.0)
+	if burst_damage < 150 and not projected_knockout:
+		return -340.0
 	if _best_energy_recovery_gain_from_hand(player) > 0:
 		var projected_after_recovery := (hand_energy + _best_energy_recovery_gain_from_hand(player)) * 50
 		if projected_after_recovery > burst_damage:
@@ -587,10 +647,65 @@ func _score_gholdengo_make_it_rain(
 				score = minf(score, 250.0 + float(burst_damage) * 1.2)
 			else:
 				score = minf(score, 380.0 + float(burst_damage))
-	var projected_damage := int(action.get("projected_damage", 0))
 	if hand_energy <= 1 and projected_damage <= 50 and _best_energy_recovery_gain_from_hand(player) > 0:
 		score = minf(score, 300.0)
 	return score
+
+
+func _score_palkia_v_attack(
+	action: Dictionary,
+	player: PlayerState,
+	source: PokemonSlot,
+	game_state: GameState,
+	base_score: float
+) -> float:
+	var attack_index := int(action.get("attack_index", 0))
+	var projected_damage := int(action.get("projected_damage", 0))
+	if attack_index != 0 or projected_damage > 0 or bool(action.get("projected_knockout", false)):
+		return base_score
+	var score := minf(base_score, 60.0)
+	if _hand_has_card_name(player, PALKIA_VSTAR) or (source != null and source.attached_energy.size() < 2 and _hand_has_basic_energy_type(player, WATER_ENERGY)):
+		return -340.0
+	if _stadium_access_already_available(player, game_state):
+		return -340.0
+	if not _deck_has_card_type(player, "Stadium"):
+		return -340.0
+	return score
+
+
+func _score_gimmighoul_attack(action: Dictionary, player: PlayerState, base_score: float) -> float:
+	var projected_damage := int(action.get("projected_damage", 0))
+	if projected_damage <= 0 and not bool(action.get("projected_knockout", false)):
+		return -340.0
+	if projected_damage <= 50 and _should_delay_gimmighoul_setup_attack(action, player):
+		return minf(base_score, 60.0)
+	return base_score
+
+
+func _score_support_pokemon_attack(action: Dictionary, base_score: float) -> float:
+	if bool(action.get("projected_knockout", false)):
+		return base_score
+	var projected_damage := int(action.get("projected_damage", 0))
+	if projected_damage <= 0:
+		return -340.0
+	if projected_damage <= 50:
+		return -340.0
+	return base_score
+
+
+func _evolution_action_creates_attack_route(action: Dictionary, player: PlayerState) -> bool:
+	if player == null:
+		return false
+	var card: CardInstance = action.get("card", null)
+	var target: PokemonSlot = action.get("target_slot", null)
+	if target == null:
+		return false
+	var name := _card_name(card)
+	if name == GHOLDENGO_EX:
+		return _has_attached_energy_type(target, METAL_ENERGY) and _basic_energy_in_hand(player) > 0
+	if name == PALKIA_VSTAR:
+		return target.attached_energy.size() >= 2
+	return false
 
 
 func _score_make_it_rain_recovery_trainer(
@@ -870,6 +985,30 @@ func _hand_has_card_name(player: PlayerState, target_name: String) -> bool:
 	return false
 
 
+func _stadium_access_already_available(player: PlayerState, game_state: GameState) -> bool:
+	if game_state != null and game_state.stadium_card != null:
+		return true
+	return _hand_has_card_type(player, "Stadium")
+
+
+func _hand_has_card_type(player: PlayerState, card_type: String) -> bool:
+	if player == null:
+		return false
+	for card: CardInstance in player.hand:
+		if card != null and card.card_data != null and card.card_data.card_type == card_type:
+			return true
+	return false
+
+
+func _deck_has_card_type(player: PlayerState, card_type: String) -> bool:
+	if player == null:
+		return false
+	for card: CardInstance in player.deck:
+		if card != null and card.card_data != null and card.card_data.card_type == card_type:
+			return true
+	return false
+
+
 func _hand_has_basic_energy_type(player: PlayerState, energy_type: String) -> bool:
 	if player == null:
 		return false
@@ -902,6 +1041,18 @@ func _needs_opening_basics(player: PlayerState) -> bool:
 	if player == null:
 		return false
 	return _count_name_on_field(player, GIMMIGHOUL) == 0 or _count_name_on_field(player, PALKIA_V) == 0
+
+
+func _fragile_gimmighoul_opening(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	return _count_name_on_field(player, GIMMIGHOUL) > 0 \
+		and _count_name_on_field(player, GHOLDENGO_EX) == 0 \
+		and _count_name_on_field(player, PALKIA_V) == 0
+
+
+func _needs_bench_out_protection(player: PlayerState) -> bool:
+	return player != null and player.bench.is_empty()
 
 
 func _needs_poffin_basics(player: PlayerState) -> bool:
@@ -1001,13 +1152,23 @@ func _deck_is_thin(player: PlayerState) -> bool:
 	return player != null and player.deck.size() <= 8
 
 
+func _deck_is_near_thin(player: PlayerState) -> bool:
+	return player != null and player.deck.size() <= 12
+
+
 func _deck_is_critical(player: PlayerState) -> bool:
 	return player != null and player.deck.size() <= 3
+
+
+func _should_preserve_low_deck_without_attack(player: PlayerState, game_state: GameState, player_index: int) -> bool:
+	return player != null and player.deck.size() <= 8 and not _has_live_attack_route(player, game_state, player_index)
 
 
 func _should_delay_gimmighoul_setup_attack(action: Dictionary, player: PlayerState) -> bool:
 	if player == null:
 		return false
+	if player.bench.is_empty() and not bool(action.get("projected_knockout", false)):
+		return true
 	if int(action.get("projected_damage", 0)) > 0 or bool(action.get("projected_knockout", false)):
 		return false
 	var attack_index := int(action.get("attack_index", 0))
@@ -1052,8 +1213,11 @@ func _best_palkia_gholdengo_attacker(player: PlayerState, game_state: GameState,
 	for slot: PokemonSlot in _all_slots(player):
 		if not _slot_is_live(slot):
 			continue
+		var slot_name := _slot_name(slot)
+		if not _is_primary_attack_route_name(slot_name):
+			continue
 		var score := 0.0
-		if _slot_name(slot) == GHOLDENGO_EX and _has_attached_energy_type(slot, METAL_ENERGY):
+		if slot_name == GHOLDENGO_EX and _has_attached_energy_type(slot, METAL_ENERGY):
 			score = 420.0 + float(_basic_energy_in_hand(player) * 50)
 		else:
 			var prediction := predict_attacker_damage(slot)
@@ -1065,6 +1229,14 @@ func _best_palkia_gholdengo_attacker(player: PlayerState, game_state: GameState,
 			best_score = score
 			best_slot = slot
 	return best_slot
+
+
+func _is_primary_attack_route_name(name: String) -> bool:
+	return name in [GHOLDENGO_EX, PALKIA_VSTAR, PALKIA_V]
+
+
+func _is_support_pokemon_name(name: String) -> bool:
+	return name in [MANAPHY, RADIANT_GRENINJA, FEZANDIPITI_EX, IRON_BUNDLE]
 
 
 func _palkia_gholdengo_handoff_score(slot: PokemonSlot, player: PlayerState, game_state: GameState, player_index: int) -> float:
@@ -1275,8 +1447,66 @@ func _player_from_context(context: Dictionary) -> PlayerState:
 	var game_state: GameState = context.get("game_state", null)
 	var player_index := int(context.get("player_index", -1))
 	if game_state != null and player_index >= 0 and player_index < game_state.players.size():
-		return game_state.players[player_index]
+			return game_state.players[player_index]
 	return null
+
+
+func _should_penalize_manual_attach_ref(ref: Dictionary, game_state: GameState, player_index: int) -> bool:
+	if str(ref.get("type", "")) != "attach_energy":
+		return false
+	var action_id := str(ref.get("id", ref.get("action_id", "")))
+	if action_id == "":
+		return false
+	var position := str(ref.get("position", ""))
+	var target_name := _canonical_known_name(str(ref.get("target_name_en", ref.get("target", ""))))
+	var slot := _slot_for_ref_position(game_state, player_index, position)
+	if slot != null:
+		target_name = _slot_name(slot)
+	var energy_symbol := _energy_symbol_from_ref(ref)
+	if position != "active" and target_name in [MANAPHY, RADIANT_GRENINJA, FEZANDIPITI_EX, IRON_BUNDLE]:
+		return true
+	if target_name in [GHOLDENGO_EX, GIMMIGHOUL]:
+		return energy_symbol != "" and energy_symbol != METAL_ENERGY
+	if target_name in [PALKIA_VSTAR, PALKIA_V]:
+		return energy_symbol != "" and energy_symbol != WATER_ENERGY
+	return false
+
+
+func _slot_for_ref_position(game_state: GameState, player_index: int, position: String) -> PokemonSlot:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return null
+	var player: PlayerState = game_state.players[player_index]
+	if position == "active":
+		return player.active_pokemon
+	if position.begins_with("bench_"):
+		var bench_index := int(position.trim_prefix("bench_"))
+		if bench_index >= 0 and bench_index < player.bench.size():
+			return player.bench[bench_index]
+	return null
+
+
+func _energy_symbol_from_ref(ref: Dictionary) -> String:
+	var text := "%s %s" % [str(ref.get("energy_type", "")), str(ref.get("card", ""))]
+	var lower := text.to_lower()
+	if lower.contains("metal") or lower.contains("steel"):
+		return METAL_ENERGY
+	if lower.contains("water"):
+		return WATER_ENERGY
+	if lower.contains("fire"):
+		return "R"
+	if lower.contains("lightning") or lower.contains("electric"):
+		return "L"
+	if lower.contains("psychic"):
+		return "P"
+	if lower.contains("grass"):
+		return "G"
+	if lower.contains("dark"):
+		return "D"
+	if lower.contains("fighting"):
+		return "F"
+	if lower.contains("colorless"):
+		return "C"
+	return ""
 
 
 func _canonical_known_name(name: String) -> String:

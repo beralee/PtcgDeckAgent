@@ -458,6 +458,90 @@ func test_headless_attack_entry_waits_for_target_or_assignment_choice() -> Strin
 	return run_checks(checks)
 
 
+func test_csv3c_031_chi_yu_flame_surge_declares_one_energy_per_bench_target() -> String:
+	var state := _make_state()
+	var processor := EffectProcessor.new()
+	var player := state.players[0]
+	var chi_yu_card := _load_card("res://data/bundled_user/cards/CSV3C_031.json")
+	processor.register_pokemon_card(chi_yu_card)
+	var chi_yu := _make_slot(chi_yu_card, 0)
+	player.active_pokemon = chi_yu
+	var bench_a := _make_slot(_pokemon("Bench A", "R", 100), 0)
+	var bench_b := _make_slot(_pokemon("Bench B", "R", 100), 0)
+	player.bench.append(bench_a)
+	player.bench.append(bench_b)
+	player.deck.append(CardInstance.create(_energy("Fire A", "R"), 0))
+	player.deck.append(CardInstance.create(_energy("Fire B", "R"), 0))
+	player.deck.append(CardInstance.create(_energy("Fire C", "R"), 0))
+
+	var effects: Array[BaseEffect] = processor.get_attack_effects_for_slot(chi_yu, 1)
+	var steps: Array[Dictionary] = []
+	for effect: BaseEffect in effects:
+		steps.append_array(effect.get_attack_interaction_steps(chi_yu.get_top_card(), chi_yu_card.attacks[1], state))
+
+	return run_checks([
+		assert_eq(steps.size(), 1, "CSV3C_031 Flame Surge should expose one assignment step"),
+		assert_eq(int(steps[0].get("max_assignments_per_target", 0)), 1, "CSV3C_031 Flame Surge should declare one Energy per Benched target"),
+		assert_eq(int(steps[0].get("max_select", 0)), 2, "CSV3C_031 Flame Surge should cap assignments by available Benched targets"),
+	])
+
+
+func test_csv3c_031_chi_yu_flame_surge_rejects_duplicate_bench_target_assignments() -> String:
+	var state := _make_state()
+	var processor := EffectProcessor.new()
+	var player := state.players[0]
+	var opponent := state.players[1]
+	var chi_yu_card := _load_card("res://data/bundled_user/cards/CSV3C_031.json")
+	processor.register_pokemon_card(chi_yu_card)
+	var chi_yu := _make_slot(chi_yu_card, 0)
+	player.active_pokemon = chi_yu
+	var bench_a := _make_slot(_pokemon("Bench A", "R", 100), 0)
+	var bench_b := _make_slot(_pokemon("Bench B", "R", 100), 0)
+	player.bench.append(bench_a)
+	player.bench.append(bench_b)
+	var fire_a := CardInstance.create(_energy("Fire A", "R"), 0)
+	var fire_b := CardInstance.create(_energy("Fire B", "R"), 0)
+	player.deck.append(fire_a)
+	player.deck.append(fire_b)
+	opponent.active_pokemon = _make_slot(_pokemon("Defender", "C", 120), 1)
+
+	processor.execute_attack_effect(chi_yu, 1, opponent.active_pokemon, state, [{
+		"energy_assignments": [
+			{"source": fire_a, "target": bench_a},
+			{"source": fire_b, "target": bench_a},
+		],
+	}])
+
+	return run_checks([
+		assert_eq(bench_a.attached_energy.size(), 1, "CSV3C_031 Flame Surge should attach at most one Energy to the chosen Benched Pokemon"),
+		assert_eq(bench_b.attached_energy.size(), 0, "CSV3C_031 Flame Surge should not redirect duplicate target assignments"),
+		assert_true(fire_b in player.deck, "CSV3C_031 Flame Surge should leave duplicate-target Energy in deck"),
+	])
+
+
+func test_csv3c_031_chi_yu_flame_surge_fallback_attaches_once_with_one_bench_target() -> String:
+	var state := _make_state()
+	var processor := EffectProcessor.new()
+	var player := state.players[0]
+	var opponent := state.players[1]
+	var chi_yu_card := _load_card("res://data/bundled_user/cards/CSV3C_031.json")
+	processor.register_pokemon_card(chi_yu_card)
+	var chi_yu := _make_slot(chi_yu_card, 0)
+	player.active_pokemon = chi_yu
+	var bench := _make_slot(_pokemon("Bench", "R", 100), 0)
+	player.bench.append(bench)
+	player.deck.append(CardInstance.create(_energy("Fire A", "R"), 0))
+	player.deck.append(CardInstance.create(_energy("Fire B", "R"), 0))
+	opponent.active_pokemon = _make_slot(_pokemon("Defender", "C", 120), 1)
+
+	processor.execute_attack_effect(chi_yu, 1, opponent.active_pokemon, state, [])
+
+	return run_checks([
+		assert_eq(bench.attached_energy.size(), 1, "CSV3C_031 Flame Surge fallback should not attach two Energy to one Benched Pokemon"),
+		assert_eq(player.deck.size(), 1, "CSV3C_031 Flame Surge fallback should leave excess Energy in deck when only one target exists"),
+	])
+
+
 func _load_card(path: String) -> CardData:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:

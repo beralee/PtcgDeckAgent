@@ -1,0 +1,53 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "Souichirou Gunjima",
+	"attacks": [
+		{
+			"cost": "C",
+			"damage": "20",
+			"is_vstar_power": false,
+			"name": "电击",
+			"text": ""
+		},
+		{
+			"cost": "LLC",
+			"damage": "120",
+			"is_vstar_power": false,
+			"name": "强力电火花",
+			"text": "将这只宝可梦身上附着的所有【雷】能量丢弃。给对手的2只备战宝可梦各造成40点伤害。[备战宝可梦不计算弱点、抵抗力。]"
+		}
+	],
+	"card_index": "018",
+	"card_index_en": "060",
+	"card_type": "Pokemon",
+	"description": "【无】 电击 20\n\n【雷】【雷】【无】 强力电火花 120\n将这只宝可梦身上附着的所有【雷】能量丢弃。给对手的2只备战宝可梦各造成40点伤害。[备战宝可梦不计算弱点、抵抗力。]\n\n",
+	"effect_id": "2976780d606bf72db47d00825db85124",
+	"energy_provides": "",
+	"energy_type": "L",
+	"evolves_from": "",
+	"hp": 120,
+	"image_local_path": "user://cards/images/CS4.5C/018.png",
+	"image_url": "https://tcg.mik.moe/static/img/CS4.5C/018.png",
+	"is_tags": [
+		"Basic"
+	],
+	"label": "",
+	"mechanic": "",
+	"name": "雷吉艾勒奇",
+	"name_en": "Regieleki",
+	"rarity": "R",
+	"regulation_expanded": true,
+	"regulation_mark": "E",
+	"regulation_standard": true,
+	"release_date": "2024-08-02T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CS4.5C",
+	"set_code_en": "EVS",
+	"stage": "Basic",
+	"weakness_energy": "F",
+	"weakness_value": "×2",
+	"yoren_code": "P894"
+}

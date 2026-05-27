@@ -97,7 +97,7 @@ func test_nest_ball_full_deck_visible_and_execution_ignores_non_candidate() -> S
 	effect.execute(card, [{"basic_pokemon": [deck_item, basic_b]}], state)
 
 	var checks := _full_deck_step_checks(step, visible_deck, [basic_a, basic_b], [0, -1, -1, 1], "basic_pokemon")
-	checks.append(assert_true("Nest Basic A" in _slot_names(player), "Nest Ball should only bench a legal Basic Pokemon"))
+	checks.append(assert_true("Nest Basic B" in _slot_names(player), "Nest Ball should use the first legal selected Basic Pokemon after visible-only cards"))
 	checks.append(assert_true(deck_item in player.deck, "Nest Ball must ignore disabled non-candidate selections"))
 	checks.append(assert_false("Deck Item" in _slot_names(player), "Nest Ball must never bench a disabled card"))
 	return run_checks(checks)
@@ -147,7 +147,8 @@ func test_ultra_ball_full_deck_visible_and_execution_ignores_non_pokemon() -> St
 	}], state)
 
 	var checks := _full_deck_step_checks(search_step, visible_deck, [pokemon_a, pokemon_b], [-1, 0, -1, 1], "search_pokemon")
-	checks.append(assert_true(pokemon_a in player.hand, "Ultra Ball should add only a legal Pokemon to hand"))
+	checks.append(assert_true(pokemon_b in player.hand, "Ultra Ball should use the first legal selected Pokemon after visible-only cards"))
+	checks.append(assert_true(pokemon_a in player.deck, "Ultra Ball should not fall back to the first legal Pokemon when an explicit legal choice is present"))
 	checks.append(assert_true(deck_item in player.deck, "Ultra Ball must ignore disabled non-Pokemon selections"))
 	checks.append(assert_false(deck_item in player.hand, "Ultra Ball must never move a disabled card to hand"))
 	return run_checks(checks)

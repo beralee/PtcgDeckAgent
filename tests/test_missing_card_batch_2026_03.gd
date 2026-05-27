@@ -634,6 +634,70 @@ func test_csv8c_192_janines_secret_art_attaches_to_two_dark_and_poisons_active_i
 	])
 
 
+func test_csv8c_192_janines_secret_art_rejects_duplicate_target_assignments() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+	var player: PlayerState = state.players[0]
+	player.deck.clear()
+	player.hand.clear()
+	var active_cd := _make_basic_pokemon_data("Active Dark", "D", 130)
+	var bench_cd := _make_basic_pokemon_data("Bench Dark", "D", 120)
+	player.active_pokemon = _make_slot(active_cd, 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(bench_cd, 0))
+	var dark_a := CardInstance.create(_make_energy_data("Dark A", "D"), 0)
+	var dark_b := CardInstance.create(_make_energy_data("Dark B", "D"), 0)
+	player.deck.append(dark_a)
+	player.deck.append(dark_b)
+	var card_data := _make_trainer_data("CSV8C_192 Janine's Secret Art", "Supporter", "050b081d65e7c3ccff3eed61107e17a5")
+	var card := CardInstance.create(card_data, 0)
+	player.hand.append(card)
+
+	var success := gsm.play_trainer(0, card, [{
+		"janine_assignments": [
+			{"source": dark_a, "target": player.active_pokemon},
+			{"source": dark_b, "target": player.active_pokemon},
+		],
+	}])
+
+	return run_checks([
+		assert_true(success, "CSV8C_192 should still resolve valid assignments when duplicate target input is supplied"),
+		assert_eq(player.active_pokemon.attached_energy.size(), 1, "CSV8C_192 should attach at most 1 Energy to each chosen Darkness Pokemon"),
+		assert_eq(player.bench[0].attached_energy.size(), 0, "CSV8C_192 should not redirect duplicate target assignments to a different Pokemon"),
+		assert_true(dark_b in player.deck, "CSV8C_192 should leave the duplicate-target Energy in deck"),
+		assert_true(player.active_pokemon.status_conditions.get("poisoned", false), "CSV8C_192 should Poison the Active Pokemon if one Energy was attached to it"),
+	])
+
+
+func test_csv8c_192_janines_secret_art_fallback_attaches_once_when_only_one_dark_target() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+	var player: PlayerState = state.players[0]
+	player.deck.clear()
+	player.hand.clear()
+	var active_cd := _make_basic_pokemon_data("Active Dark", "D", 130)
+	player.active_pokemon = _make_slot(active_cd, 0)
+	player.bench.clear()
+	var dark_a := CardInstance.create(_make_energy_data("Dark A", "D"), 0)
+	var dark_b := CardInstance.create(_make_energy_data("Dark B", "D"), 0)
+	player.deck.append(dark_a)
+	player.deck.append(dark_b)
+	var card_data := _make_trainer_data("CSV8C_192 Janine's Secret Art", "Supporter", "050b081d65e7c3ccff3eed61107e17a5")
+	var card := CardInstance.create(card_data, 0)
+	player.hand.append(card)
+
+	var success := gsm.play_trainer(0, card, [])
+
+	return run_checks([
+		assert_true(success, "CSV8C_192 fallback should resolve with one Darkness target"),
+		assert_eq(player.active_pokemon.attached_energy.size(), 1, "CSV8C_192 fallback should not attach two Energy to the same Darkness Pokemon"),
+		assert_eq(player.deck.size(), 1, "CSV8C_192 fallback should leave the second Energy in deck when there is only one legal target"),
+		assert_true(player.active_pokemon.status_conditions.get("poisoned", false), "CSV8C_192 should Poison the Active Pokemon if fallback attached Energy to it"),
+	])
+
+
 func test_csv8c_199_carmine_allows_first_turn_supporter_play() -> String:
 	var gsm := GameStateMachine.new()
 	gsm.game_state = _make_state()
@@ -806,6 +870,7 @@ func test_csv1c_079_hawlucha_places_counters_on_two_bench_targets() -> String:
 	var ability: AbilityBenchDamageOnPlay = AbilityBenchDamageOnPlay.new(10, 2)
 	var hawlucha_slot := _make_slot(_make_basic_pokemon_data("CSV1C_079 Hawlucha", "F"), 0)
 	hawlucha_slot.turn_played = state.turn_number
+	hawlucha_slot.mark_entered_bench_from_hand(state.turn_number)
 	player.bench.append(hawlucha_slot)
 	state.current_player_index = 1
 	var cannot_use_on_opponent_turn: bool = not ability.can_use_ability(hawlucha_slot, state)
@@ -1038,6 +1103,62 @@ func test_csv8c_135_fezandipiti_ability_unlocks_after_real_knockout_flow() -> St
 		assert_eq(state.current_player_index, 0, "CSV8C_135 regression should return to the knocked-out player's turn"),
 		assert_true(ability_ok, "CSV8C_135 should become usable after a real knockout on the opponent's turn"),
 		assert_eq(player.hand.size(), hand_before_ability + 3, "CSV8C_135 should draw 3 cards through GameStateMachine.use_ability"),
+	])
+
+
+func test_csv8c_135_fezandipiti_can_use_after_same_turn_search_and_bench() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state: GameState = gsm.game_state
+	state.current_player_index = 0
+	state.phase = GameState.GamePhase.MAIN
+	state.last_knockout_turn_against[0] = state.turn_number - 1
+	var player: PlayerState = state.players[0]
+	player.hand.clear()
+	player.deck.clear()
+	player.bench.clear()
+
+	var fez_cd := _make_basic_pokemon_data("CSV8C_135 Fezandipiti ex", "D", 210, "Basic", "ex", "ab6c3357e2b8a8385a68da738f41e0c1")
+	fez_cd.name_en = "Fezandipiti ex"
+	fez_cd.abilities = [{"name": "Flip the Script"}]
+	fez_cd.attacks = [{"name": "Cruel Arrow", "cost": "CCC", "damage": "", "text": "", "is_vstar_power": false}]
+	gsm.effect_processor.register_pokemon_card(fez_cd)
+
+	var ultra_cd := _make_trainer_data("Ultra Ball", "Item", "a337ed34a45e63c6d21d98c3d8e0cb6e")
+	var ultra := CardInstance.create(ultra_cd, 0)
+	var cost_a := CardInstance.create(_make_trainer_data("Discard Cost A", "Item"), 0)
+	var cost_b := CardInstance.create(_make_trainer_data("Discard Cost B", "Item"), 0)
+	var fez := CardInstance.create(fez_cd, 0)
+	player.hand.append_array([ultra, cost_a, cost_b])
+	player.deck.append(fez)
+	for i: int in 4:
+		player.deck.append(CardInstance.create(_make_trainer_data("Fez Draw %d" % i, "Item"), 0))
+
+	var search_ok := gsm.play_trainer(0, ultra, [{
+		"discard_cards": [cost_a, cost_b],
+		"search_pokemon": [fez],
+	}])
+	var found_in_hand := fez in player.hand
+	var bench_ok := gsm.play_basic_to_bench(0, fez)
+	var fez_slot: PokemonSlot = player.bench.back() if not player.bench.is_empty() else null
+	var can_after_bench := gsm.effect_processor.can_use_ability(fez_slot, state, 0)
+	var hand_before_ability := player.hand.size()
+	var ability_ok := gsm.use_ability(0, fez_slot, 0)
+	var draw_logged := false
+	for action: GameAction in gsm.action_log:
+		if action.action_type == GameAction.ActionType.DRAW_CARD and action.player_index == 0:
+			if int(action.data.get("count", 0)) == 3 and str(action.data.get("source_kind", "")) == "ability":
+				draw_logged = true
+				break
+
+	return run_checks([
+		assert_true(search_ok, "CSV8C_135 regression setup should search Fezandipiti ex from deck to hand"),
+		assert_true(found_in_hand, "CSV8C_135 should be in hand after same-turn Pokemon search"),
+		assert_true(bench_ok, "CSV8C_135 should be playable to the Bench after being searched this turn"),
+		assert_true(can_after_bench, "CSV8C_135 should be usable immediately after same-turn search and Bench play when knockout condition is met"),
+		assert_true(ability_ok, "CSV8C_135 should resolve through GameStateMachine.use_ability after same-turn search and Bench play"),
+		assert_eq(player.hand.size(), hand_before_ability + 3, "CSV8C_135 should draw 3 after being searched and benched this turn"),
+		assert_true(draw_logged, "CSV8C_135 ability draws should use the shared draw logging path"),
 	])
 
 
@@ -1674,6 +1795,7 @@ func test_csv7c_033_iron_leaves_ex_switches_in_and_moves_selected_energy_on_benc
 
 	var iron_slot := _make_slot(iron_cd, 0)
 	iron_slot.turn_played = state.turn_number
+	iron_slot.mark_entered_bench_from_hand(state.turn_number)
 	player.bench.append(iron_slot)
 
 	var effect: BaseEffect = processor.get_ability_effect(iron_slot, 0, state)
@@ -1863,6 +1985,36 @@ func test_csv8c_159_dragapult_ex_places_six_counters_on_bench() -> String:
 		assert_true(processor.has_attack_effect(card_data.effect_id), "CSV8C_159 should register scripted attacks"),
 		assert_eq(bench_a.damage_counters, 30, "CSV8C_159 should assign counters to the first chosen bench target"),
 		assert_eq(bench_b.damage_counters, 30, "CSV8C_159 should assign counters to the second chosen bench target"),
+	])
+
+
+func test_csv8c_159_dragapult_ex_counters_ignore_cs5bc_111_carefree_countenance() -> String:
+	var processor := EffectProcessor.new()
+	var dragapult_cd := _make_basic_pokemon_data("CSV8C_159 Dragapult ex", "N", 320, "Stage 2", "ex", "52a205820de799a53a689f23cbeb8622")
+	dragapult_cd.attacks = [
+		{"name": "Jet Headbutt", "cost": "C", "damage": "70", "text": "", "is_vstar_power": false},
+		{"name": "Phantom Dive", "cost": "RP", "damage": "200", "text": "", "is_vstar_power": false},
+	]
+	processor.register_pokemon_card(dragapult_cd)
+	var state := _make_state()
+	var attacker := _make_slot(dragapult_cd, 0)
+	var opponent := state.players[1]
+	opponent.bench.clear()
+
+	var bidoof_cd := _make_basic_pokemon_data("Bidoof", "C", 60, "Basic", "", "5a80f8eb94c6fcc27c475c10a63cf856")
+	bidoof_cd.abilities = [{"name": "毫不在意", "text": "只要这只宝可梦处于备战区，就不会受到招式的伤害。"}]
+	var bidoof := _make_slot(bidoof_cd, 1)
+	opponent.bench.append(bidoof)
+
+	processor.execute_attack_effect(attacker, 1, opponent.active_pokemon, state, [{
+		"bench_damage_counters": [
+			{"target": bidoof, "amount": 60},
+		],
+	}])
+
+	return run_checks([
+		assert_true(processor.has_attack_effect(dragapult_cd.effect_id), "CSV8C_159 should register Phantom Dive"),
+		assert_eq(bidoof.damage_counters, 60, "CS5bC_111 should not block Dragapult ex placing damage counters"),
 	])
 
 
@@ -3701,6 +3853,7 @@ func test_cs5bc_111_and_cs5ac_105_coin_flip_attacks_map_to_fail_on_tails() -> St
 	var bibarel_effects: Array[BaseEffect] = processor.get_attack_effects_for_slot(bibarel_slot, 0)
 
 	return run_checks([
+		assert_true(processor.get_effect(bidoof_cd.effect_id) is AbilityBenchImmune, "CS5bC_111 should register Carefree Countenance by effect_id"),
 		assert_true(bidoof_effects[0] is AttackCoinFlipOrFail, "CS5bC_111 should use the fail-on-tails effect"),
 		assert_eq((bidoof_effects[0] as AttackCoinFlipOrFail).base_damage, 30, "CS5bC_111 should only cancel its printed 30 damage"),
 		assert_true(bibarel_effects[0] is AttackCoinFlipOrFail, "CS5aC_105 should fail on tails instead of adding bonus damage"),

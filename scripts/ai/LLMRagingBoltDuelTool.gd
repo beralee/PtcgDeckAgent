@@ -198,6 +198,7 @@ func _run_one_logged_self_play(game_index: int, options: Dictionary) -> Dictiona
 
 	var player_0_ai := _make_ai(0, player_0_strategy_id, player_0_deck, player_0_strong)
 	var player_1_ai := _make_ai(1, player_1_strategy_id, player_1_deck, player_1_strong)
+	bridge.set_ai_controllers(player_0_ai, player_1_ai)
 	var steps := 0
 	var failure_reason := ""
 	while steps < max_steps:
@@ -335,6 +336,7 @@ func _run_one_logged_duel(game_index: int, options: Dictionary) -> Dictionary:
 
 	var rule_ai := _make_ai(0, rule_strategy_id, rule_deck, rule_strong)
 	var llm_ai := _make_ai(1, llm_strategy_id, llm_deck, llm_strong)
+	bridge.set_ai_controllers(rule_ai, llm_ai)
 	var steps := 0
 	var failure_reason := ""
 	while steps < max_steps:

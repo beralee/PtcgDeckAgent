@@ -26,6 +26,7 @@ func test_csv9c_006_iron_ant_ex_mills_opponent_top_on_bench_entry() -> String:
 	var player := state.players[0]
 	var opponent := state.players[1]
 	var iron_ant := _make_slot(_pokemon("Iron Ant ex", "Basic", "", "G", 210), 0, state.turn_number)
+	iron_ant.mark_entered_bench_from_hand(state.turn_number)
 	player.bench.append(iron_ant)
 	var top := CardInstance.create(_trainer("Top card"), 1)
 	var second := CardInstance.create(_trainer("Second card"), 1)
@@ -78,6 +79,7 @@ func test_csv9c_053_chien_pao_discards_stadium_and_returns_attached_energy_to_ha
 	var state := _make_state()
 	var player := state.players[0]
 	var chien_pao := _make_slot(_pokemon("Chien-Pao", "Basic", "", "W", 120, [_attack("Icicle Loop", "WW", "120")]), 0, state.turn_number)
+	chien_pao.mark_entered_bench_from_hand(state.turn_number)
 	player.bench.append(chien_pao)
 	var stadium := CardInstance.create(_trainer("Test Stadium", "Stadium"), 1)
 	state.stadium_card = stadium

@@ -49,6 +49,17 @@ func can_execute(card: CardInstance, state: GameState) -> bool:
 	return _can_pay_discard_cost(card, player) and not player.deck.is_empty()
 
 
+func get_unusable_reason(card: CardInstance, state: GameState) -> String:
+	if card == null or state == null or card.owner_index < 0 or card.owner_index >= state.players.size():
+		return "高级球当前无法使用。"
+	var player: PlayerState = state.players[card.owner_index]
+	if not _can_pay_discard_cost(card, player):
+		return "高级球需要从手牌弃掉另外 2 张牌作为费用。当前手牌数量不足。"
+	if player.deck.is_empty():
+		return "你的牌库已经没有牌，无法使用高级球进行检索。"
+	return ""
+
+
 func can_headless_execute(card: CardInstance, state: GameState) -> bool:
 	var player: PlayerState = state.players[card.owner_index]
 	return _can_pay_discard_cost(card, player) and not _get_pokemon_cards(player).is_empty()
@@ -82,12 +93,15 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	var selected_pokemon: CardInstance = null
 	var selected_raw: Array = ctx.get("search_pokemon", [])
 	var has_explicit_search_selection: bool = ctx.has("search_pokemon")
-	if not selected_raw.is_empty() and selected_raw[0] is CardInstance:
-		var chosen: CardInstance = selected_raw[0]
+	for entry: Variant in selected_raw:
+		if not (entry is CardInstance):
+			continue
+		var chosen: CardInstance = entry
 		if chosen in player.deck and chosen.card_data.is_pokemon():
 			selected_pokemon = chosen
+			break
 
-	if selected_pokemon == null and (not has_explicit_search_selection or not selected_raw.is_empty()):
+	if selected_pokemon == null and not has_explicit_search_selection:
 		for deck_card: CardInstance in _get_pokemon_cards(player):
 			selected_pokemon = deck_card
 			break

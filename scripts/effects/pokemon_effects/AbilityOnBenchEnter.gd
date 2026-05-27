@@ -19,13 +19,19 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	var top: CardInstance = pokemon.get_top_card()
 	if top == null:
 		return false
+	if state.current_player_index != top.owner_index:
+		return false
+	var player: PlayerState = state.players[top.owner_index]
+	if not player.bench.has(pokemon):
+		return false
 	if pokemon.turn_played != state.turn_number:
+		return false
+	if not pokemon.entered_bench_from_hand_this_turn(state.turn_number):
 		return false
 	for eff: Dictionary in pokemon.effects:
 		if eff.get("type") == TRIGGERED_KEY and eff.get("turn") == state.turn_number:
 			return false
 
-	var player: PlayerState = state.players[top.owner_index]
 	match effect_type:
 		"search_supporter":
 			return _has_supporter(player.deck)
@@ -94,12 +100,15 @@ func _search_supporter(player: PlayerState, targets: Array) -> void:
 	var found_idx: int = -1
 	var ctx: Dictionary = get_interaction_context(targets)
 	var selected_raw: Array = ctx.get("supporter_card", [])
-	if not selected_raw.is_empty() and selected_raw[0] is CardInstance:
-		found_idx = player.deck.find(selected_raw[0] as CardInstance)
-	elif targets.size() > 0 and targets[0] is CardInstance:
+	var has_explicit_selection: bool = ctx.has("supporter_card")
+	for entry: Variant in selected_raw:
+		if entry is CardInstance and entry in player.deck and (entry as CardInstance).card_data != null and (entry as CardInstance).card_data.card_type == "Supporter":
+			found_idx = player.deck.find(entry as CardInstance)
+			break
+	if found_idx == -1 and not has_explicit_selection and targets.size() > 0 and targets[0] is CardInstance:
 		found_idx = player.deck.find(targets[0] as CardInstance)
 
-	if found_idx == -1:
+	if found_idx == -1 and not has_explicit_selection:
 		for idx: int in player.deck.size():
 			var card: CardInstance = player.deck[idx]
 			if card.card_data != null and card.card_data.card_type == "Supporter":

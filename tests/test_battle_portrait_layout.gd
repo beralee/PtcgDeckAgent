@@ -83,6 +83,55 @@ class PortraitHudClampSceneStub:
 		return Rect2(control.position, control.size)
 
 
+class PortraitPrizeHudMetricSceneStub:
+	extends Control
+
+	var _pending_choice: String = ""
+	var _pending_prize_remaining: int = 0
+	var _opp_hud_left: PanelContainer = null
+	var _my_hud_left: PanelContainer = null
+	var _opp_hud_right: PanelContainer = null
+	var _my_hud_right: PanelContainer = null
+
+	func _init() -> void:
+		_opp_hud_left = PanelContainer.new()
+		_opp_hud_left.name = "OppHudLeft"
+		add_child(_opp_hud_left)
+		_my_hud_left = PanelContainer.new()
+		_my_hud_left.name = "MyHudLeft"
+		add_child(_my_hud_left)
+		_opp_hud_right = PanelContainer.new()
+		_opp_hud_right.name = "OppHudRight"
+		add_child(_opp_hud_right)
+		_my_hud_right = PanelContainer.new()
+		_my_hud_right.name = "MyHudRight"
+		add_child(_my_hud_right)
+
+	func _portrait_layout_ui_scale(_viewport_size: Vector2) -> float:
+		return 1.0
+
+	func _pile_lost_panel_height(pile_panel_height: float) -> float:
+		return clampf(roundf(pile_panel_height * 0.32), 24.0, 46.0)
+
+	func _portrait_stadium_hud_height(_viewport_size: Vector2, _ui_scale: float = 1.0) -> float:
+		return 64.0
+
+	func _portrait_hud_font_size(_viewport_size: Vector2) -> int:
+		return 16
+
+	func _apply_pile_hud_row_orientation(_vertical: bool) -> void:
+		pass
+
+	func _apply_battle_axis_field_alignment() -> void:
+		pass
+
+	func _move_lost_huds_to_pile_huds(_pile_lost_height: float) -> void:
+		pass
+
+	func _apply_portrait_hud_font_metrics(_font_size: int) -> void:
+		pass
+
+
 func _make_basic_pokemon_card(card_name: String) -> CardData:
 	var card_data := CardData.new()
 	card_data.name = card_name
@@ -1284,7 +1333,7 @@ func test_llm_wait_hud_label_does_not_join_hand_layout_container() -> String:
 	return result
 
 
-func test_portrait_llm_wait_hud_uses_top_hud_instead_of_hand_area() -> String:
+func test_portrait_llm_wait_hud_anchors_to_hand_hud_top_center() -> String:
 	var previous_layout: String = GameManager.battle_layout_mode
 	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
 	var scene: Control = BattleScene.instantiate()
@@ -1301,14 +1350,21 @@ func test_portrait_llm_wait_hud_uses_top_hud_instead_of_hand_area() -> String:
 	var wait_rect := Rect2(wait_label.position, wait_label.size) if wait_label != null else Rect2()
 	var top_rect := _battle_local_rect(scene, top_bar)
 	var hand_rect := _battle_local_rect(scene, hand_area)
+	var wait_center_x := wait_rect.position.x + wait_rect.size.x * 0.5
+	var hand_center_x := hand_rect.position.x + hand_rect.size.x * 0.5
+	var wait_font_size := wait_label.get_theme_font_size("font_size") if wait_label != null else 0
 	var turn_visible_during_wait := turn_label.visible if turn_label != null else true
 	scene.call("_stop_llm_wait_hud")
 	var turn_visible_after_wait := turn_label.visible if turn_label != null else false
 	var result := run_checks([
 		assert_true(wait_label != null and not wait_label.visible, "Portrait LLM wait HUD should hide after the wait stops"),
-		assert_true(_rects_overlap(wait_rect, top_rect), "Portrait LLM wait HUD should occupy the top HUD area"),
-		assert_false(_rects_overlap(wait_rect, hand_rect), "Portrait LLM wait HUD should not occupy the hand area"),
-		assert_eq(wait_label.max_lines_visible if wait_label != null else 0, 1, "Portrait LLM wait HUD should be a single-line top HUD label"),
+		assert_false(_rects_overlap(wait_rect, top_rect), "Portrait LLM wait HUD should not stay in the screen-top HUD band"),
+		assert_true(_rects_overlap(wait_rect, hand_rect), "Portrait LLM wait HUD should anchor inside the hand HUD instead of floating at the top of the screen"),
+		assert_true(absf(wait_center_x - hand_center_x) <= 2.0, "Portrait LLM wait HUD should be horizontally centered on the hand HUD"),
+		assert_true(wait_rect.position.y >= hand_rect.position.y - 1.0 and wait_rect.position.y <= hand_rect.position.y + 18.0, "Portrait LLM wait HUD should sit on the upper edge of the hand HUD"),
+		assert_true(wait_font_size >= 56, "Portrait LLM wait HUD font should be at least four times the old 14px mobile size"),
+		assert_true(wait_rect.size.y >= float(wait_font_size) + 14.0, "Portrait LLM wait HUD should reserve enough height for the enlarged thinking text"),
+		assert_eq(wait_label.max_lines_visible if wait_label != null else 0, 1, "Portrait LLM wait HUD should remain a single-line overlay label"),
 		assert_false(turn_visible_during_wait, "LLM wait HUD should hide the normal top turn text while active"),
 		assert_true(turn_visible_after_wait, "LLM wait HUD should restore the normal top turn text when it stops"),
 	])
@@ -1569,6 +1625,57 @@ func test_portrait_card_selection_dialog_uses_near_screen_width() -> String:
 	var result := run_checks([
 		assert_true(dialog_box != null and absf(dialog_box.custom_minimum_size.x - expected_width) < 0.1, "Portrait card selection dialog should use the near-screen popup width"),
 		assert_true(dialog_scroll != null and dialog_scroll.visible, "Card-selection dialog should keep the card gallery visible"),
+	])
+
+	scene.queue_free()
+	GameManager.battle_layout_mode = previous_layout
+	return result
+
+
+func test_portrait_layout_resizes_already_open_setup_bench_card_dialog() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+	var scene: Control = BattleScene.instantiate()
+	scene.set("_dialog_overlay", scene.find_child("DialogOverlay", true, false))
+	scene.set("_dialog_title", scene.find_child("DialogTitle", true, false))
+	scene.set("_dialog_list", scene.find_child("DialogList", true, false))
+	scene.set("_dialog_confirm", scene.find_child("DialogConfirm", true, false))
+	scene.set("_dialog_cancel", scene.find_child("DialogCancel", true, false))
+	scene.set("_dialog_box", scene.find_child("DialogBox", true, false))
+	scene.set("_dialog_vbox", scene.find_child("DialogVBox", true, false))
+	scene.call("_setup_dialog_gallery")
+
+	var stale_landscape_dialog_size := Vector2(148, 208)
+	scene.set("_dialog_card_size", stale_landscape_dialog_size)
+	var basic_a := CardInstance.create(_make_basic_pokemon_card("Setup Bench A"), 0)
+	var basic_b := CardInstance.create(_make_basic_pokemon_card("Setup Bench B"), 0)
+	scene.call("_show_dialog", "Setup bench", ["完成", "Setup Bench A", "Setup Bench B"], {
+		"presentation": "cards",
+		"card_items": [basic_a, basic_b],
+		"card_indices": [1, 2],
+		"choice_labels": ["Setup Bench A", "Setup Bench B"],
+		"utility_actions": [{"label": "完成", "index": 0}],
+		"allow_cancel": false,
+	})
+
+	var dialog_row := scene.get("_dialog_card_row") as HBoxContainer
+	var dialog_scroll := scene.get("_dialog_card_scroll") as ScrollContainer
+	var dialog_title := scene.find_child("DialogTitle", true, false) as Label
+	var utility_row := scene.get("_dialog_utility_row") as HBoxContainer
+	var utility_button := utility_row.get_child(0) as Button if utility_row != null and utility_row.get_child_count() > 0 else null
+	var card_before := dialog_row.get_child(0) as BattleCardViewScript if dialog_row != null and dialog_row.get_child_count() > 0 else null
+	var card_size_before := card_before.custom_minimum_size if card_before != null else Vector2.ZERO
+	scene.call("_apply_portrait_layout", Vector2(390, 844))
+	var portrait_dialog_size: Vector2 = scene.get("_dialog_card_size")
+	var card_after := dialog_row.get_child(0) as BattleCardViewScript if dialog_row != null and dialog_row.get_child_count() > 0 else null
+	var expected_scroll_height := float(scene.call("_dialog_card_scroll_height"))
+
+	var result := run_checks([
+		assert_eq(card_size_before, stale_landscape_dialog_size, "Setup bench dialog should start from the stale pre-portrait card size in this regression scenario"),
+		assert_eq(card_after.custom_minimum_size if card_after != null else Vector2.ZERO, portrait_dialog_size, "Portrait layout should resize an already-open setup bench card dialog to the current portrait dialog card size"),
+		assert_true(dialog_scroll != null and absf(dialog_scroll.custom_minimum_size.y - expected_scroll_height) <= 0.1, "Portrait layout should also resize the already-open card dialog scroll lane"),
+		assert_true(dialog_title != null and dialog_title.get_theme_font_size("font_size") >= 28, "Portrait layout should double the already-open setup bench dialog title text"),
+		assert_true(utility_button != null and utility_button.get_theme_font_size("font_size") >= 34, "Portrait layout should double the already-open setup bench utility button text"),
 	])
 
 	scene.queue_free()
@@ -2968,4 +3075,31 @@ func test_portrait_prize_hud_reappears_for_pending_prize_selection() -> String:
 
 	scene.queue_free()
 	GameManager.battle_layout_mode = previous_layout
+	return result
+
+
+func test_portrait_prize_hud_stays_compact_during_area_zero_prize_selection() -> String:
+	var scene := PortraitPrizeHudMetricSceneStub.new()
+	var view := BattlePortraitLayoutView.new()
+	view.setup(scene, BattleLayoutControllerScript.new())
+	var viewport_size := Vector2(390, 844)
+	var post_area_zero_bench_size := Vector2(74, 104)
+	var active_size := Vector2(122, 170)
+	view.call("apply_field_hud_metrics", viewport_size, post_area_zero_bench_size, active_size)
+	var normal_my_height := scene._my_hud_left.custom_minimum_size.y
+	var normal_opp_height := scene._opp_hud_left.custom_minimum_size.y
+
+	scene._pending_choice = "take_prize"
+	scene._pending_prize_remaining = 2
+	view.call("apply_field_hud_metrics", viewport_size, post_area_zero_bench_size, active_size)
+	var pending_my_height := scene._my_hud_left.custom_minimum_size.y
+	var pending_opp_height := scene._opp_hud_left.custom_minimum_size.y
+
+	var result := run_checks([
+		assert_true(normal_my_height > 0.0 and normal_opp_height > 0.0, "Portrait prize HUD fixture should measure normal compact heights"),
+		assert_true(absf(pending_my_height - normal_my_height) <= 0.5, "Self prize HUD should stay compact during Area Zero prize selection: %.1f -> %.1f" % [normal_my_height, pending_my_height]),
+		assert_true(absf(pending_opp_height - normal_opp_height) <= 0.5, "Opponent prize HUD should stay compact during Area Zero prize selection: %.1f -> %.1f" % [normal_opp_height, pending_opp_height]),
+	])
+
+	scene.queue_free()
 	return result

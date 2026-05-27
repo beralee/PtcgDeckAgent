@@ -56,6 +56,9 @@ func _setup_battle_scene_context() -> void:
 	if _battle_card_detail_coordinator == null:
 		_battle_card_detail_coordinator = BattleCardDetailCoordinatorScript.new()
 	_battle_card_detail_coordinator.call("setup", self)
+	if _battle_invalid_action_hint_controller == null:
+		_battle_invalid_action_hint_controller = BattleInvalidActionHintControllerScript.new()
+	_battle_invalid_action_hint_controller.call("setup", self)
 	if _battle_prompt_router == null:
 		_battle_prompt_router = BattlePromptRouterScript.new()
 	_battle_prompt_router.call("setup", _battle_scene_context)
@@ -988,6 +991,21 @@ func _show_slot_pokemon_action_if_available(slot_id: String) -> bool:
 
 
 
+func _slot_touch_release_can_open_action_hud(slot_id: String) -> bool:
+	if not _is_portrait_battle_layout_active():
+		return false
+	if not slot_id.begins_with("my_"):
+		return false
+	if _selected_hand_card != null or _is_field_interaction_active():
+		return false
+	var gs: GameState = _gsm.game_state if _gsm != null else null
+	if gs == null:
+		return false
+	var target_slot: PokemonSlot = _slot_from_id(slot_id, gs)
+	return target_slot != null
+
+
+
 func _handle_slot_touch_detail_input(event: InputEvent, slot_id: String) -> bool:
 	if event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
@@ -1007,6 +1025,8 @@ func _handle_slot_touch_detail_input(event: InputEvent, slot_id: String) -> bool
 				if consumed:
 					return true
 				_suppress_next_slot_left_click_id = slot_id
+				if _slot_touch_release_can_open_action_hud(slot_id):
+					_suppress_action_hud_open_input("slot_touch_release", -1, touch.position)
 				_handle_slot_left_click(slot_id)
 				return true
 		return false

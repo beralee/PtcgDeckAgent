@@ -249,6 +249,90 @@ func _consume_modal_slot_input_if_needed(event: InputEvent, source: String = "")
 
 
 
+func _consume_modal_hud_input_if_needed(event: InputEvent, source: String = "") -> bool:
+	if _consume_modal_slot_input_if_needed(event, source):
+		return true
+	if _modal_input_finished_at_msec <= 0:
+		return false
+	if Time.get_ticks_msec() > _modal_input_finished_at_msec + MODAL_HAND_RELEASE_FALLBACK_WINDOW_MSEC:
+		return false
+	if not _is_slot_followup_click_event(event):
+		return false
+	_cancel_slot_touch_long_press(false)
+	var viewport := get_viewport()
+	if viewport != null:
+		viewport.set_input_as_handled()
+	_runtime_log("modal_hud_input_consumed", "source=%s event=%s" % [source, event.get_class()])
+	return true
+
+
+
+func _suppress_action_hud_open_input(source: String = "action_hud_open", duration_msec: int = -1, origin_position: Vector2 = Vector2(-1.0, -1.0)) -> void:
+	var resolved_duration := duration_msec if duration_msec >= 0 else ACTION_HUD_OPEN_INPUT_SUPPRESS_MSEC
+	_action_hud_open_input_suppress_until_msec = Time.get_ticks_msec() + resolved_duration
+	_action_hud_open_input_suppress_has_position = origin_position.x >= 0.0 and origin_position.y >= 0.0
+	_action_hud_open_input_suppress_position = origin_position if _action_hud_open_input_suppress_has_position else Vector2.ZERO
+	_action_hud_open_position_guard_until_msec = Time.get_ticks_msec() + ACTION_HUD_OPEN_POSITION_GUARD_MSEC if _action_hud_open_input_suppress_has_position else 0
+	_runtime_log("action_hud_open_input_suppressed", "source=%s duration=%d" % [source, resolved_duration])
+
+
+
+func _consume_action_hud_open_input_if_needed(event: InputEvent, source: String = "") -> bool:
+	var now := Time.get_ticks_msec()
+	var in_time_guard := _action_hud_open_input_suppress_until_msec > 0 and now <= _action_hud_open_input_suppress_until_msec
+	var in_position_guard := _action_hud_open_input_suppress_has_position \
+		and _action_hud_open_position_guard_until_msec > 0 \
+		and now <= _action_hud_open_position_guard_until_msec
+	if not in_time_guard and not in_position_guard:
+		_clear_action_hud_open_input_guard()
+		return false
+	if _pending_choice != "pokemon_action":
+		_clear_action_hud_open_input_guard()
+		return false
+	if not _is_slot_followup_click_event(event):
+		return false
+	if not in_time_guard and not _action_hud_open_event_matches_suppress_position(event):
+		return false
+	_cancel_slot_touch_long_press(false)
+	_clear_action_hud_open_input_guard()
+	var viewport := get_viewport()
+	if viewport != null:
+		viewport.set_input_as_handled()
+	_runtime_log("action_hud_open_input_consumed", "source=%s event=%s" % [source, event.get_class()])
+	return true
+
+
+
+func _clear_action_hud_open_input_guard() -> void:
+	_action_hud_open_input_suppress_until_msec = 0
+	_action_hud_open_position_guard_until_msec = 0
+	_action_hud_open_input_suppress_position = Vector2.ZERO
+	_action_hud_open_input_suppress_has_position = false
+
+
+
+func _action_hud_open_event_matches_suppress_position(event: InputEvent) -> bool:
+	if not _action_hud_open_input_suppress_has_position:
+		return false
+	var event_position := _action_hud_open_input_screen_position(event)
+	if event_position.x < 0.0 or event_position.y < 0.0:
+		return false
+	return event_position.distance_to(_action_hud_open_input_suppress_position) <= ACTION_HUD_OPEN_POSITION_GUARD_TOLERANCE
+
+
+
+func _action_hud_open_input_screen_position(event: InputEvent) -> Vector2:
+	if event is InputEventMouse:
+		var mouse := event as InputEventMouse
+		if mouse.global_position.x >= 0.0 and mouse.global_position.y >= 0.0:
+			return mouse.global_position
+		return mouse.position
+	if event is InputEventScreenTouch:
+		return (event as InputEventScreenTouch).position
+	return Vector2(-1.0, -1.0)
+
+
+
 func _resolve_top_action_button_width(viewport_size: Vector2, action_gap: int = -1, ui_scale: float = 1.0) -> float:
 	var resolved_gap := action_gap if action_gap >= 0 else _resolve_top_action_gap(viewport_size)
 	var top_bar_inner_width := maxf(viewport_size.x - 12.0, 0.0)
@@ -333,7 +417,12 @@ func _handle_slot_left_click(slot_id: String) -> void:
 	if _selected_hand_card != null:
 		# 进化、能量、道具只能操作自己的宝可梦
 		if slot_id.begins_with("opp"):
-			_log("不能对对方的宝可梦使用手牌")
+			_show_invalid_action_message({
+				"title": "目标不合法",
+				"reason": "不能对对方的宝可梦使用手牌。",
+				"detail": "从手牌进化、附着能量或附着道具时，请选择己方场上的宝可梦。",
+				"kind": "target",
+			})
 			return
 		var card := _selected_hand_card
 		var cd := card.card_data
@@ -345,21 +434,39 @@ func _handle_slot_left_click(slot_id: String) -> void:
 				_try_start_evolve_trigger_ability_interaction(cp, target_slot)
 				_maybe_run_ai()
 			else:
-				_log("无法让这只宝可梦进化")
+				_show_invalid_action_message({
+					"title": "%s 现在不能进化" % cd.name,
+					"reason": _gsm.rule_validator.get_evolve_unusable_reason(gs, cp, target_slot, card, _gsm.effect_processor),
+					"detail": "进化需要满足回合、进化链和目标宝可梦状态要求。",
+					"kind": "evolve",
+				})
 		elif cd.card_type == "Basic Energy" or cd.card_type == "Special Energy":
 			if _gsm.attach_energy(cp, card, target_slot):
 				_selected_hand_card = null
 				_refresh_ui_after_successful_action(false, cp)
 				_suppress_slot_followup_click(slot_id, "attach_energy_target")
 			else:
-				_log("无法附着能量")
+				var energy_reason: String = _gsm.rule_validator.get_attach_energy_unusable_reason(gs, cp, card, _gsm.effect_processor)
+				if energy_reason == "":
+					energy_reason = "这张能量当前不能附着到这个目标。"
+				_show_invalid_action_message({
+					"title": "%s 现在不能附着" % cd.name,
+					"reason": energy_reason,
+					"detail": "通常每回合只能从手牌附着 1 次能量，并且只能附着给己方宝可梦。",
+					"kind": "energy",
+				})
 		elif cd.card_type == "Tool":
 			if _gsm.attach_tool(cp, card, target_slot):
 				_selected_hand_card = null
 				_refresh_ui_after_successful_action(false, cp)
 				_suppress_slot_followup_click(slot_id, "attach_tool_target")
 			else:
-				_log("无法将该道具附着到这里")
+				_show_invalid_action_message({
+					"title": "%s 现在不能附着" % cd.name,
+					"reason": _gsm.rule_validator.get_attach_tool_unusable_reason(gs, cp, target_slot, _gsm.effect_processor, card),
+					"detail": "宝可梦道具需要附着到有效目标上，且目标通常不能已经有道具。",
+					"kind": "tool",
+				})
 		return
 
 	if slot_id.begins_with("my_"):
@@ -996,11 +1103,14 @@ func _show_card_detail(cd: CardData) -> void:
 
 func _try_play_to_bench(player_index: int, card: CardInstance, _slot_id: String) -> void:
 	var gs: GameState = _gsm.game_state
-	if gs.current_player_index != player_index:
-		_log("当前不是你的回合")
-		return
-	if gs.phase != GameState.GamePhase.MAIN:
-		_log("基础宝可梦只能在主要阶段放置（当前阶段：%d）" % gs.phase)
+	var bench_reason: String = _gsm.rule_validator.get_play_basic_to_bench_unusable_reason(gs, player_index, card)
+	if bench_reason != "":
+		_show_invalid_action_message({
+			"title": "%s 现在不能放到备战区" % card.card_data.name,
+			"reason": bench_reason,
+			"detail": "基础宝可梦只能在主要阶段放到己方备战区，并且备战区需要有空位。",
+			"kind": "pokemon",
+		})
 		return
 	var bench_effect: BaseEffect = _gsm.effect_processor.get_effect(card.card_data.effect_id)
 	var bench_steps: Array[Dictionary] = []
@@ -1017,9 +1127,14 @@ func _try_play_to_bench(player_index: int, card: CardInstance, _slot_id: String)
 				_start_effect_interaction("ability", player_index, bench_steps, bench_slot.get_top_card(), bench_slot, 0)
 		_selected_hand_card = null
 		_refresh_ui_after_successful_action(false, player_index)
-		_suppress_slot_followup_click(_slot_id, "bench_basic_target")
+		_suppress_slot_followup_click(_slot_id, "bench_basic_target", BENCH_PLAY_FOLLOWUP_CLICK_SUPPRESS_MSEC)
 	else:
-		_log("无法将这只宝可梦放到备战区")
+		_show_invalid_action_message({
+			"title": "%s 现在不能放到备战区" % card.card_data.name,
+			"reason": "无法将这只宝可梦放到备战区。",
+			"detail": "请检查当前阶段、备战区空位和场上效果限制。",
+			"kind": "pokemon",
+		})
 
 
 
@@ -1471,10 +1586,11 @@ func _ensure_battle_card_detail_coordinator() -> void:
 
 
 
-func _suppress_slot_followup_click(slot_id: String, reason: String) -> void:
+func _suppress_slot_followup_click(slot_id: String, reason: String, duration_msec: int = -1) -> void:
+	var resolved_duration := duration_msec if duration_msec >= 0 else SLOT_FOLLOWUP_CLICK_SUPPRESS_MSEC
 	_suppress_slot_followup_click_id = slot_id
-	_suppress_slot_followup_click_until_msec = Time.get_ticks_msec() + SLOT_FOLLOWUP_CLICK_SUPPRESS_MSEC
-	_runtime_log("slot_followup_click_suppressed", "slot=%s reason=%s" % [slot_id, reason])
+	_suppress_slot_followup_click_until_msec = Time.get_ticks_msec() + resolved_duration
+	_runtime_log("slot_followup_click_suppressed", "slot=%s reason=%s duration=%d" % [slot_id, reason, resolved_duration])
 
 
 
@@ -1483,6 +1599,7 @@ func _refresh_ui_after_successful_action(check_handover: bool = false, action_pl
 		call("_clear_hand_drag_click_suppression", "successful_action")
 	if has_method("_arm_hand_primary_release_fallback_window"):
 		call("_arm_hand_primary_release_fallback_window", "successful_action")
+	_hide_invalid_action_hint()
 	_refresh_ui()
 	if check_handover:
 		_check_two_player_handover()
@@ -1502,6 +1619,28 @@ func _log(msg: String) -> void:
 				_log_list.text = full.substr(cut + 1)
 		_log_list.append_text(msg + "\n")
 	_runtime_log("ui_log", msg)
+
+
+func _show_invalid_action_hint(payload: Variant) -> void:
+	if _battle_invalid_action_hint_controller == null:
+		_battle_invalid_action_hint_controller = BattleInvalidActionHintControllerScript.new()
+	_battle_invalid_action_hint_controller.call("setup", self)
+	_battle_invalid_action_hint_controller.call("show_hint", payload)
+
+
+func _show_invalid_action_message(payload: Dictionary) -> void:
+	var reason := str(payload.get("reason", "")).strip_edges()
+	if reason == "":
+		reason = "当前无法执行该操作。"
+		payload["reason"] = reason
+	_show_invalid_action_hint(payload)
+	_log(reason)
+
+
+func _hide_invalid_action_hint() -> void:
+	if _battle_invalid_action_hint_controller == null:
+		return
+	_battle_invalid_action_hint_controller.call("hide_hint")
 
 
 

@@ -1221,13 +1221,18 @@ func _catalog_has_action_type(action_type: String) -> bool:
 func _is_bad_charizard_energy_attach(action: Dictionary, game_state: GameState, player_index: int) -> bool:
 	if str(action.get("kind", action.get("type", ""))) != "attach_energy":
 		return false
-	var target_slot: PokemonSlot = action.get("target_slot", null)
-	var card: CardInstance = action.get("card", null)
-	if target_slot == null or card == null or card.card_data == null:
+	var raw_target: Variant = action.get("target_slot", null)
+	if not (raw_target is PokemonSlot):
 		return false
+	var target_slot: PokemonSlot = raw_target
+	var raw_card: Variant = action.get("card", null)
+	var card: CardInstance = raw_card if raw_card is CardInstance else null
 	if _slot_is_support_only(target_slot):
 		return true
-	if not _is_fire_energy_card(card):
+	if card != null and card.card_data != null:
+		if not _is_fire_energy_card(card):
+			return false
+	elif not _name_contains(str(raw_card), FIRE_ENERGY):
 		return false
 	var target_name := _slot_best_name(target_slot)
 	if not _name_matches_any(target_name, ["Pidgey", "Pidgeot ex", "Duskull", "Dusclops", "Dusknoir"]):
@@ -1238,19 +1243,21 @@ func _is_bad_charizard_energy_attach(action: Dictionary, game_state: GameState, 
 func _is_bad_charizard_tool_attach(action: Dictionary) -> bool:
 	if str(action.get("kind", action.get("type", ""))) != "attach_tool":
 		return false
-	var target_slot: PokemonSlot = action.get("target_slot", null)
-	var card: CardInstance = action.get("card", null)
-	if target_slot == null or card == null or card.card_data == null:
+	var raw_target: Variant = action.get("target_slot", null)
+	if not (raw_target is PokemonSlot):
 		return false
-	var tool_name := _best_card_name(card.card_data)
+	var target_slot: PokemonSlot = raw_target
+	var raw_card: Variant = action.get("card", null)
+	var tool_name := _best_card_name((raw_card as CardInstance).card_data) if raw_card is CardInstance and (raw_card as CardInstance).card_data != null else str(raw_card)
 	return _name_contains(tool_name, "Forest Seal Stone") and not _name_matches_any(_slot_best_name(target_slot), ["Rotom V", "Lumineon V"])
 
 
 func _is_bad_charizard_rare_candy_play(action: Dictionary) -> bool:
 	if str(action.get("kind", action.get("type", ""))) != "play_trainer":
 		return false
-	var card: CardInstance = action.get("card", null)
-	if card == null or card.card_data == null or not _name_contains(_best_card_name(card.card_data), RARE_CANDY):
+	var raw_card: Variant = action.get("card", null)
+	var card_name := _best_card_name((raw_card as CardInstance).card_data) if raw_card is CardInstance and (raw_card as CardInstance).card_data != null else str(raw_card)
+	if not _name_contains(card_name, RARE_CANDY):
 		return false
 	if bool(action.get("requires_interaction", false)):
 		return false
@@ -1271,7 +1278,10 @@ func _is_bad_charizard_retreat(action: Dictionary, game_state: GameState, player
 	var active_name := _slot_best_name(player.active_pokemon)
 	if not _name_matches_any(active_name, ["Charizard ex", "Pidgeot ex", "Radiant Charizard"]):
 		return false
-	var bench_target: PokemonSlot = action.get("bench_target", null)
+	var raw_target: Variant = action.get("bench_target", null)
+	if not (raw_target is PokemonSlot):
+		return false
+	var bench_target: PokemonSlot = raw_target
 	return _slot_is_support_only(bench_target)
 
 
