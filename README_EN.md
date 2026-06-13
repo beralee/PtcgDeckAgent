@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="https://ptcg.skillserver.cn/">
-    <img src="assets/ui/title.png" alt="PTCG Deck Agent" width="100%" />
+    <img src="https://ptcg.skillserver.cn/dist/assets/dojo-home-design.png" alt="PTCG Deck Agent" width="100%" />
   </a>
 </p>
 
@@ -60,13 +60,13 @@ The project keeps infrastructure for match logs, decision traces, scenario snaps
 ## Preview
 
 <p align="center">
-  <img src="assets/demo_menu.png" alt="Main menu" width="49%" />
-  <img src="assets/demo_ai_card.png" alt="AI deck discussion" width="49%" />
+  <img src="https://ptcg.skillserver.cn/dist/assets/demo_menu.png" alt="Main menu" width="49%" />
+  <img src="https://ptcg.skillserver.cn/dist/assets/demo_ai_card.webp" alt="AI deck discussion" width="49%" />
 </p>
 
 <p align="center">
-  <img src="assets/demo1.png" alt="Battle scene" width="49%" />
-  <img src="assets/demo3.png" alt="Battle overview" width="49%" />
+  <img src="https://ptcg.skillserver.cn/dist/assets/demo4.webp" alt="Battle scene" width="49%" />
+  <img src="https://ptcg.skillserver.cn/dist/assets/demo3.webp" alt="Battle overview" width="49%" />
 </p>
 
 ## Modes
