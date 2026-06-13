@@ -133,6 +133,13 @@ func show_next_effect_interaction_step(scene: Object) -> void:
 		and chooser_player != int(scene.get("_view_player"))
 	):
 		scene.set("_pending_choice", "effect_interaction")
+		if scene.has_method("_defer_two_player_handover_until_attack_vfx_finished"):
+			var deferred_for_attack_vfx := bool(scene.call("_defer_two_player_handover_until_attack_vfx_finished", "effect_step", func() -> void:
+				show_next_effect_interaction_step(scene)
+			))
+			if deferred_for_attack_vfx:
+				scene.call("_runtime_log", "effect_step_waiting_for_attack_vfx", scene.call("_state_snapshot"))
+				return
 		scene.call("_show_handover_prompt", chooser_player, func() -> void:
 			scene.call("_set_handover_panel_visible", false, "effect_step_handover_%d" % int(scene.get("_pending_effect_step_index")))
 			scene.set("_view_player", chooser_player)
@@ -246,6 +253,7 @@ func show_next_effect_interaction_step(scene: Object) -> void:
 		"pokemon_card_data",
 		"visible_scope",
 		"force_confirm",
+		"cancel_resolves_empty",
 	]:
 		if step.has(passthrough_key):
 			dialog_data[passthrough_key] = step.get(passthrough_key)
@@ -420,10 +428,14 @@ func _finish_effect_interaction(scene: Object) -> void:
 			success = gsm.use_granted_attack(pending_effect_player_index, pending_effect_slot, pending_effect_attack_data, [pending_effect_context])
 		"bench_limit_cleanup":
 			success = gsm.enforce_current_bench_limits("bench_limit_cleanup", pending_effect_player_index, "", -1, [pending_effect_context])
+		"powerglass_end_turn":
+			success = gsm.resolve_powerglass_end_turn_choice(pending_effect_player_index, [pending_effect_context])
 	if not success and pending_effect_card != null:
 		scene.call("_log", _bt(scene, "battle.log.cannot_use_card", {"name": pending_effect_card.card_data.name}))
 	scene.call("_runtime_log", "effect_interaction_complete", "success=%s %s" % [str(success), scene.call("_state_snapshot")])
 	reset_effect_interaction(scene)
+	if success:
+		scene.set("_ready_vfx_trigger_source_player_index", resolved_player_index)
 	scene.call("_refresh_ui")
 	if success:
 		if followup_evolve_slot != null:

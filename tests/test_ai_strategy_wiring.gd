@@ -323,6 +323,17 @@ func test_registry_can_resolve_strategy_directly_from_deck_data() -> String:
 	])
 
 
+func test_registry_maps_610080_to_gardevoir_strategy_by_deck_id() -> String:
+	var registry = DeckStrategyRegistryScript.new()
+	var deck := _make_deck(610080, "17.5 Gardevoir", "")
+	var strategy = registry.call("resolve_strategy_for_deck", deck)
+	return run_checks([
+		assert_eq(str(registry.call("resolve_strategy_id_for_deck", deck)), "gardevoir", "17.5 Gardevoir should be an explicit Gardevoir AI deck"),
+		assert_not_null(strategy, "17.5 Gardevoir should instantiate the Gardevoir rules strategy"),
+		assert_eq(str(strategy.call("get_strategy_id")) if strategy != null else "", "gardevoir", "17.5 Gardevoir should reuse the tuned Gardevoir strategy"),
+	])
+
+
 func test_registry_passes_editable_deck_strategy_text_to_resolved_strategy() -> String:
 	var registry = DeckStrategyRegistryScript.new()
 	var deck := _make_deck(575718, "raging_bolt", "Raging Bolt ex")

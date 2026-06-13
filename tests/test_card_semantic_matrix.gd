@@ -282,6 +282,39 @@ func test_discard_multi_and_rule_box_defense_families() -> String:
 	])
 
 
+func test_radiant_gardevoir_loving_veil_is_suppressed_by_iron_thorns() -> String:
+	var state := _make_state()
+	var processor := EffectProcessor.new()
+	var defending_player: PlayerState = state.players[0]
+	var attacking_player: PlayerState = state.players[1]
+
+	var gardevoir_cd := _make_basic_pokemon_data("Radiant Gardevoir", "P", 130, "Basic", "Radiant", "test_radiant_gardevoir_loving_veil")
+	gardevoir_cd.abilities = [{"name": AbilityVReduceDamage.ABILITY_NAME}]
+	var gardevoir := _make_slot(gardevoir_cd, 0)
+	defending_player.bench.clear()
+	defending_player.bench.append(gardevoir)
+	processor.register_effect(gardevoir_cd.effect_id, AbilityVReduceDamage.new())
+
+	var defender := _make_slot(_make_basic_pokemon_data("Non Rule Defender", "C", 120), 0)
+	defending_player.active_pokemon = defender
+	var attacker_cd := _make_basic_pokemon_data("Attacking V", "R", 220, "Basic", "V")
+	var attacker := _make_slot(attacker_cd, 1)
+	attacking_player.active_pokemon = attacker
+
+	var modifier_without_lock := processor.get_defender_modifier(defender, state, attacker)
+
+	var iron_thorns_cd := _make_basic_pokemon_data("Iron Thorns ex", "L", 230, "Basic", "ex")
+	iron_thorns_cd.abilities = [{"name": "初始化"}]
+	iron_thorns_cd.is_tags = ["Future"]
+	attacking_player.active_pokemon = _make_slot(iron_thorns_cd, 1)
+	var modifier_with_lock := processor.get_defender_modifier(defender, state, attacker)
+
+	return run_checks([
+		assert_eq(modifier_without_lock, -20, "Radiant Gardevoir should reduce damage before Iron Thorns is active"),
+		assert_eq(modifier_with_lock, 0, "Iron Thorns should suppress Radiant Gardevoir's Loving Veil"),
+	])
+
+
 func test_raichu_v_registry_uses_exact_discard_energy_multi_damage_effect() -> String:
 	var processor := EffectProcessor.new()
 	var state := _make_state()
@@ -609,6 +642,90 @@ func test_mew_copy_attack_uses_selected_opponent_attack() -> String:
 		assert_eq(steps.size(), 1, "基因侵入应先要求选择对手战斗宝可梦的招式"),
 		assert_eq(damage_bonus, 230, "基因侵入应按选择的对手招式返回对应伤害"),
 		assert_eq(state.players[0].deck.size(), 3, "复制龙之波动时应执行其附加效果并磨掉己方牌库3张"),
+	])
+
+
+func test_mew_copy_attack_can_use_opponent_vstar_if_own_vstar_unused() -> String:
+	var processor := EffectProcessor.new()
+	var state := _make_state()
+
+	var mew_cd := _make_basic_pokemon_data("Mew ex", "P", 180, "Basic", "ex", "49669fcf461deacebeb5755c11ec51f1")
+	mew_cd.attacks = [{
+		"name": "Genome Hacking",
+		"cost": "CCC",
+		"damage": "",
+		"text": "",
+		"is_vstar_power": false,
+	}]
+	var mew_attacker := _make_slot(mew_cd, 0)
+	state.players[0].active_pokemon = mew_attacker
+	state.vstar_power_used[0] = false
+
+	var opponent_vstar_cd := _make_basic_pokemon_data("Opponent VSTAR", "P", 280, "VSTAR", "VSTAR", "test_opponent_vstar")
+	opponent_vstar_cd.attacks = [
+		{"name": "Regular Hit", "cost": "P", "damage": "40", "text": "", "is_vstar_power": false},
+		{"name": "Star Finisher", "cost": "P", "damage": "250", "text": "", "is_vstar_power": true},
+	]
+	state.players[1].active_pokemon = _make_slot(opponent_vstar_cd, 1)
+
+	var mew_effect := AttackCopyAttack.new(processor)
+	var steps: Array[Dictionary] = mew_effect.get_attack_interaction_steps(mew_attacker.get_top_card(), mew_cd.attacks[0], state)
+	var items: Array = steps[0].get("items", []) if not steps.is_empty() else []
+	var vstar_item := {}
+	for item: Dictionary in items:
+		var copied_attack: Dictionary = item.get("attack", {})
+		if str(copied_attack.get("name", "")) == "Star Finisher":
+			vstar_item = item
+			break
+
+	mew_effect.set_attack_interaction_context([{AttackCopyAttack.STEP_ID: [vstar_item]}])
+	var damage_bonus := mew_effect.get_damage_bonus(mew_attacker, state)
+	mew_effect.execute_attack(mew_attacker, state.players[1].active_pokemon, 0, state)
+	mew_effect.clear_attack_interaction_context()
+
+	return run_checks([
+		assert_eq(items.size(), 2, "Mew ex should be able to choose an opponent VSTAR attack while its own VSTAR power is unused"),
+		assert_false(vstar_item.is_empty(), "Mew ex copy options should include the opponent VSTAR attack"),
+		assert_eq(damage_bonus, 250, "Mew ex should copy the selected VSTAR attack damage"),
+		assert_true(state.vstar_power_used[0], "Copying an opponent VSTAR attack should consume Mew ex player's VSTAR power"),
+	])
+
+
+func test_mew_copy_attack_hides_opponent_vstar_after_own_vstar_used() -> String:
+	var processor := EffectProcessor.new()
+	var state := _make_state()
+
+	var mew_cd := _make_basic_pokemon_data("Mew ex", "P", 180, "Basic", "ex", "49669fcf461deacebeb5755c11ec51f1")
+	mew_cd.attacks = [{
+		"name": "Genome Hacking",
+		"cost": "CCC",
+		"damage": "",
+		"text": "",
+		"is_vstar_power": false,
+	}]
+	var mew_attacker := _make_slot(mew_cd, 0)
+	state.players[0].active_pokemon = mew_attacker
+	state.vstar_power_used[0] = true
+
+	var opponent_vstar_cd := _make_basic_pokemon_data("Opponent VSTAR", "P", 280, "VSTAR", "VSTAR", "test_opponent_vstar")
+	opponent_vstar_cd.attacks = [
+		{"name": "Regular Hit", "cost": "P", "damage": "40", "text": "", "is_vstar_power": false},
+		{"name": "Star Finisher", "cost": "P", "damage": "250", "text": "", "is_vstar_power": true},
+	]
+	state.players[1].active_pokemon = _make_slot(opponent_vstar_cd, 1)
+
+	var mew_effect := AttackCopyAttack.new(processor)
+	var steps: Array[Dictionary] = mew_effect.get_attack_interaction_steps(mew_attacker.get_top_card(), mew_cd.attacks[0], state)
+	var items: Array = steps[0].get("items", []) if not steps.is_empty() else []
+	var names: Array[String] = []
+	for item: Dictionary in items:
+		var copied_attack: Dictionary = item.get("attack", {})
+		names.append(str(copied_attack.get("name", "")))
+
+	return run_checks([
+		assert_eq(items.size(), 1, "Mew ex should still be able to copy non-VSTAR attacks after its own VSTAR is used"),
+		assert_true(names.has("Regular Hit"), "Mew ex should keep regular opponent attacks available"),
+		assert_false(names.has("Star Finisher"), "Mew ex should hide opponent VSTAR attacks once its own VSTAR power was used"),
 	])
 
 

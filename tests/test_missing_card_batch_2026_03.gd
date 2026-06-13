@@ -1041,6 +1041,123 @@ func test_csv8c_158_and_csv8c_160_look_top_to_hand_families() -> String:
 	])
 
 
+func test_csv8c_160_tatsugiri_look_top_ui_shows_seen_non_supporters_disabled() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.deck.clear()
+	player.hand.clear()
+	var item := CardInstance.create(_make_trainer_data("Top Item", "Item"), 0)
+	var supporter := CardInstance.create(_make_trainer_data("Top Supporter", "Supporter"), 0)
+	var pokemon := CardInstance.create(_make_basic_pokemon_data("Top Pokemon", "C"), 0)
+	player.deck.append(item)
+	player.deck.append(supporter)
+	player.deck.append(pokemon)
+	var tatsugiri := AbilityLookTopToHand.new(6, "Supporter", true, true, false)
+
+	var steps := tatsugiri.get_interaction_steps(player.active_pokemon.get_top_card(), state)
+	var step: Dictionary = steps[0] if not steps.is_empty() else {}
+
+	return run_checks([
+		assert_eq(str(step.get("id", "")), "look_top_pick", "CSV8C_160 should use the normal top-deck pick step when a Supporter is present"),
+		assert_eq(step.get("items", []), [supporter], "CSV8C_160 should only make Supporter cards selectable"),
+		assert_eq(step.get("card_items", []), [item, supporter, pokemon], "CSV8C_160 should reveal every looked-at top-deck card"),
+		assert_eq(step.get("card_indices", []), [-1, 0, -1], "CSV8C_160 should mark non-Supporter looked cards disabled"),
+		assert_true(bool(step.get("show_selectable_hints", false)), "CSV8C_160 should visually distinguish selectable and disabled looked cards"),
+	])
+
+
+func test_csv8c_160_tatsugiri_whiff_offers_continue_not_cancel() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.deck.clear()
+	player.hand.clear()
+	var item := CardInstance.create(_make_trainer_data("Top Item", "Item"), 0)
+	var pokemon := CardInstance.create(_make_basic_pokemon_data("Top Pokemon", "C"), 0)
+	player.deck.append(item)
+	player.deck.append(pokemon)
+	var tatsugiri := AbilityLookTopToHand.new(6, "Supporter", true, true, false)
+
+	var steps := tatsugiri.get_interaction_steps(player.active_pokemon.get_top_card(), state)
+	var step: Dictionary = steps[0] if not steps.is_empty() else {}
+	var items: Array = step.get("items", [])
+
+	return run_checks([
+		assert_true(tatsugiri.can_use_ability(player.active_pokemon, state), "CSV8C_160 should remain usable with a non-empty deck even if the top cards contain no Supporter"),
+		assert_eq(str(step.get("id", "")), "empty_search_resolution", "CSV8C_160 should show a whiff resolution prompt instead of an empty selectable list"),
+		assert_false(bool(step.get("allow_cancel", true)), "CSV8C_160 whiff prompt should resolve the ability instead of only allowing Cancel"),
+		assert_true(BaseEffect.EMPTY_SEARCH_CONTINUE in items, "CSV8C_160 whiff prompt should allow continuing"),
+		assert_true(BaseEffect.EMPTY_SEARCH_VIEW_DECK in items, "CSV8C_160 whiff prompt should allow viewing the checked top cards"),
+	])
+
+
+func test_csv8c_160_tatsugiri_whiff_preview_and_execute_shuffles_seen_cards() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.deck.clear()
+	player.hand.clear()
+	var item := CardInstance.create(_make_trainer_data("Top Item", "Item"), 0)
+	var pokemon := CardInstance.create(_make_basic_pokemon_data("Top Pokemon", "C"), 0)
+	player.deck.append(item)
+	player.deck.append(pokemon)
+	var tatsugiri := AbilityLookTopToHand.new(6, "Supporter", true, true, false)
+
+	var followup := tatsugiri.get_followup_interaction_steps(
+		player.active_pokemon.get_top_card(),
+		state,
+		{"empty_search_resolution": [BaseEffect.EMPTY_SEARCH_VIEW_DECK]}
+	)
+	var preview: Dictionary = followup[0] if not followup.is_empty() else {}
+
+	tatsugiri.execute_ability(
+		player.active_pokemon,
+		0,
+		[{"empty_search_resolution": [BaseEffect.EMPTY_SEARCH_CONTINUE]}],
+		state
+	)
+	var used_this_turn := false
+	for effect_data: Dictionary in player.active_pokemon.effects:
+		if effect_data.get("type", "") == AbilityLookTopToHand.USED_FLAG_TYPE and effect_data.get("turn", -1) == state.turn_number:
+			used_this_turn = true
+			break
+
+	return run_checks([
+		assert_eq(str(preview.get("id", "")), "empty_search_view_deck", "CSV8C_160 should let the player inspect the looked-at whiff cards"),
+		assert_eq(preview.get("items", []), [item, pokemon], "CSV8C_160 whiff preview should expose only the looked-at top cards"),
+		assert_true(player.hand.is_empty(), "CSV8C_160 should not add a card on a whiff"),
+		assert_true(item in player.deck and pokemon in player.deck, "CSV8C_160 should return the looked-at cards to the deck before shuffling"),
+		assert_true(used_this_turn, "CSV8C_160 should mark the ability used after resolving a whiff"),
+	])
+
+
+func test_csv8c_160_tatsugiri_can_use_only_own_turn_active_once() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.deck.clear()
+	player.hand.clear()
+	player.deck.append(CardInstance.create(_make_trainer_data("Top Supporter", "Supporter"), 0))
+	var tatsugiri := AbilityLookTopToHand.new(6, "Supporter", true, true, false)
+	var active := player.active_pokemon
+
+	state.current_player_index = 1
+	var blocked_opponent_turn: bool = not tatsugiri.can_use_ability(active, state)
+	state.current_player_index = 0
+	var can_active: bool = tatsugiri.can_use_ability(active, state)
+	active.effects.append({"type": AbilityLookTopToHand.USED_FLAG_TYPE, "turn": state.turn_number})
+	var blocked_repeat: bool = not tatsugiri.can_use_ability(active, state)
+	active.effects.clear()
+	var replacement := _make_slot(_make_basic_pokemon_data("Replacement", "C"), 0)
+	player.active_pokemon = replacement
+	player.bench.append(active)
+	var blocked_bench: bool = not tatsugiri.can_use_ability(active, state)
+
+	return run_checks([
+		assert_true(blocked_opponent_turn, "CSV8C_160 should only be usable during its controller's turn"),
+		assert_true(can_active, "CSV8C_160 should be usable from the Active Spot when its controller can act"),
+		assert_true(blocked_repeat, "CSV8C_160 should only be usable once during the same turn"),
+		assert_true(blocked_bench, "CSV8C_160 should only be usable while Tatsugiri is Active"),
+	])
+
+
 func test_csv8c_135_fezandipiti_draws_after_knockout_last_turn() -> String:
 	var state := _make_state()
 	var player: PlayerState = state.players[0]
@@ -4504,6 +4621,41 @@ func test_cs55c_007_radiant_charizard_reduces_cost_without_discarding_energy() -
 		assert_eq(target_damage_after_attack, 250, "CS5.5C_007 Combustion Blast should still deal its printed 250 damage"),
 		assert_str_contains(locked_reason, "下回合", "CS5.5C_007 should lock Combustion Blast during the next turn"),
 		assert_eq(unlocked_reason, "", "CS5.5C_007 should be able to use Combustion Blast again after waiting out the lock"),
+	])
+
+
+func test_cs55c_007_radiant_charizard_excited_heart_is_suppressed_by_iron_thorns() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state: GameState = gsm.game_state
+	var player: PlayerState = state.players[0]
+	var opponent: PlayerState = state.players[1]
+
+	var radiant_charizard_cd: CardData = CardDatabase.get_card("CS5.5C", "007")
+	if radiant_charizard_cd == null:
+		return "Missing cached card CS5.5C/007"
+	gsm.effect_processor.register_pokemon_card(radiant_charizard_cd)
+
+	var attacker := PokemonSlot.new()
+	attacker.pokemon_stack.append(CardInstance.create(radiant_charizard_cd, 0))
+	attacker.attached_energy.append(CardInstance.create(_make_energy_data("Fire Energy", "R"), 0))
+	player.active_pokemon = attacker
+	opponent.active_pokemon = _make_slot(_make_basic_pokemon_data("Normal Defender", "G", 330), 1)
+	opponent.prizes.clear()
+	for i: int in 2:
+		opponent.prizes.append(CardInstance.create(_make_basic_pokemon_data("Prize %d" % i, "C"), 1))
+
+	var usable_before_lock := gsm.can_use_attack(0, 0)
+
+	var iron_thorns_cd := _make_basic_pokemon_data("Iron Thorns ex", "L", 230, "Basic", "ex")
+	iron_thorns_cd.abilities = [{"name": "初始化"}]
+	iron_thorns_cd.is_tags = ["Future"]
+	opponent.active_pokemon = _make_slot(iron_thorns_cd, 1)
+	var usable_under_lock := gsm.can_use_attack(0, 0)
+
+	return run_checks([
+		assert_true(usable_before_lock, "Radiant Charizard should attack with 1 Fire once Excited Heart is active"),
+		assert_false(usable_under_lock, "Iron Thorns should suppress Radiant Charizard's Excited Heart cost reduction"),
 	])
 
 

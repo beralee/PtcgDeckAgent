@@ -63,9 +63,11 @@ func _prime_deck_options(scene: Control) -> void:
 	])
 	scene.set("_ai_deck_list", [
 		_make_deck(578647, "deck-c", "Gardevoir ex"),
+		_make_deck(610080, "deck-g175", "Gardevoir ex"),
 		_make_deck(575716, "deck-a", "喷火龙ex"),
 		_make_deck(575720, "deck-b", "密勒顿ex"),
 		_make_deck(575657, "deck-l", "Lugia VSTAR"),
+		_make_deck(609431, "deck-l175", "Lugia VSTAR"),
 		_make_deck(569061, "deck-d", "阿尔宙斯 VSTAR"),
 		_make_deck(579502, "deck-h", "Dragapult ex"),
 		_make_deck(575723, "deck-i", "Dragapult ex"),
@@ -352,7 +354,9 @@ func test_battle_setup_all_strategy_variant_labels_use_chinese_naming() -> Strin
 		575720: ["规则版密勒顿", "大模型版密勒顿"],
 		569061: ["规则版阿尔宙斯骑拉帝纳", "大模型版阿尔宙斯骑拉帝纳"],
 		575657: ["规则版洛奇亚始祖大鸟", "大模型版洛奇亚始祖大鸟"],
+		609431: ["规则版17.5洛奇亚始祖大鸟", "大模型版17.5洛奇亚始祖大鸟"],
 		578647: ["规则版沙奈朵", "大模型版沙奈朵"],
+		610080: ["规则版17.5沙奈朵", "大模型版17.5沙奈朵"],
 		575718: ["规则版猛雷鼓", "大模型版猛雷鼓"],
 		579502: ["规则版多龙喷火龙", "大模型版多龙喷火龙"],
 		575723: ["规则版多龙黑夜魔灵", "大模型版多龙黑夜魔灵"],
@@ -401,7 +405,9 @@ func test_battle_setup_exposes_llm_variants_for_all_selectable_llm_decks() -> St
 		575720: "miraidon_llm",
 		569061: "arceus_giratina_llm",
 		575657: "lugia_archeops_llm",
+		609431: "v175_lugia_archeops_llm",
 		578647: "gardevoir_llm",
+		610080: "v175_gardevoir_llm",
 		575718: "raging_bolt_ogerpon_llm",
 		579502: "dragapult_charizard_llm",
 		575723: "dragapult_dusknoir_llm",
@@ -553,6 +559,8 @@ func test_battle_setup_ai_mode_limits_ai_decks_to_supported_shortlist() -> Strin
 		assert_true(575718 in resolved_ids, "AI deck list should include Raging Bolt / Ogerpon"),
 		assert_true(579502 in resolved_ids, "AI deck list should include Dragapult / Charizard"),
 		assert_true(575723 in resolved_ids, "AI deck list should include Dragapult / Dusknoir"),
+		assert_true(609431 in resolved_ids, "AI deck list should include 17.5 Lugia / Archeops"),
+		assert_true(610080 in resolved_ids, "AI deck list should include 17.5 Gardevoir"),
 		assert_true(1700002 in resolved_ids, "AI deck list should include 17.0 Archaludon / Dialga"),
 		assert_true(1700003 in resolved_ids, "AI deck list should include 17.0 Water turtle"),
 		assert_true(1700004 in resolved_ids, "AI deck list should include 17.0 Palkia / Gholdengo"),
@@ -563,7 +571,7 @@ func test_battle_setup_ai_mode_limits_ai_decks_to_supported_shortlist() -> Strin
 	])
 
 
-func test_battle_setup_ai_mode_lists_v17_ai_decks_first() -> String:
+func test_battle_setup_ai_mode_lists_v175_ai_decks_first() -> String:
 	var scene := _make_scene_ready()
 	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
 	var deck2_option := scene.find_child("Deck2Option", true, false) as OptionButton
@@ -571,21 +579,21 @@ func test_battle_setup_ai_mode_lists_v17_ai_decks_first() -> String:
 	scene.call("_on_mode_changed", 1)
 
 	var leading_ids: Array[int] = []
-	for i: int in mini(7, deck2_option.item_count):
+	for i: int in mini(3, deck2_option.item_count):
 		var metadata: Variant = deck2_option.get_item_metadata(i)
 		leading_ids.append(int(metadata))
 	leading_ids.sort()
 	var expected_leading_ids := [
-		1700002, 1700003, 1700004, 1700005, 1700007, 1700008, 1700011,
+		1750002, 609431, 610080,
 	]
 	expected_leading_ids.sort()
 
 	return run_checks([
-		assert_eq(leading_ids, expected_leading_ids, "Battle setup AI deck dropdown should show the seven 17.0 AI decks first"),
+		assert_eq(leading_ids, expected_leading_ids, "Battle setup AI deck dropdown should show the supported 17.5 AI decks first"),
 	])
 
 
-func test_battle_setup_ai_mode_selects_first_v17_ai_deck_by_default() -> String:
+func test_battle_setup_ai_mode_selects_first_v175_ai_deck_by_default() -> String:
 	var scene := _make_scene_ready()
 	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
 	var deck2_option := scene.find_child("Deck2Option", true, false) as OptionButton
@@ -593,12 +601,14 @@ func test_battle_setup_ai_mode_selects_first_v17_ai_deck_by_default() -> String:
 	scene.call("_on_mode_changed", 1)
 
 	var selected_id := int(deck2_option.get_item_metadata(deck2_option.selected)) if deck2_option.selected >= 0 else -1
+	var selected_deck := scene.call("_selected_deck_for_slot", 1) as DeckData
 	return run_checks([
-		assert_true(selected_id >= 1700000 and selected_id < 1800000, "Switching to AI mode should default to a 17.0 AI deck instead of an old supported deck"),
+		assert_true(selected_id in [1750002, 609431, 610080], "Switching to AI mode should default to a supported 17.5 AI deck"),
+		assert_true(selected_deck != null and selected_deck.deck_name.begins_with("17.5"), "Default AI deck should be labeled as 17.5"),
 	])
 
 
-func test_battle_setup_ai_deck_picker_opens_all_with_v17_ai_decks_first() -> String:
+func test_battle_setup_ai_deck_picker_opens_all_with_v175_ai_decks_first() -> String:
 	var scene := _make_scene_ready()
 	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
 	mode_option.select(1)
@@ -609,22 +619,77 @@ func test_battle_setup_ai_deck_picker_opens_all_with_v17_ai_decks_first() -> Str
 	var recent_decks: Array = scene.call("_decks_for_picker", 1, "recent", "")
 	var leading_all_ids: Array[int] = []
 	var leading_recent_ids: Array[int] = []
-	for i: int in mini(7, all_decks.size()):
+	for i: int in mini(3, all_decks.size()):
 		leading_all_ids.append(int((all_decks[i] as DeckData).id))
-	for i: int in mini(7, recent_decks.size()):
+	for i: int in mini(3, recent_decks.size()):
 		leading_recent_ids.append(int((recent_decks[i] as DeckData).id))
 	leading_all_ids.sort()
 	leading_recent_ids.sort()
 	var expected_leading_ids := [
-		1700002, 1700003, 1700004, 1700005, 1700007, 1700008, 1700011,
+		1750002, 609431, 610080,
 	]
 	expected_leading_ids.sort()
 
 	return run_checks([
 		assert_eq(picker_category, "all", "AI deck picker should open on the creation-time ordered full list"),
-		assert_eq(leading_all_ids, expected_leading_ids, "AI deck picker All category should show the seven 17.0 decks first"),
-		assert_eq(leading_recent_ids, expected_leading_ids, "AI deck picker Recent category should not push old AI decks ahead of the 17.0 deck set"),
+		assert_eq(leading_all_ids, expected_leading_ids, "AI deck picker All category should show the supported 17.5 decks first"),
+		assert_eq(leading_recent_ids, expected_leading_ids, "AI deck picker Recent category should not push old AI decks ahead of the 17.5 deck set"),
 	])
+
+
+func test_battle_setup_player_deck_picker_lists_player_modified_decks_first() -> String:
+	var scene := _make_scene_ready()
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	mode_option.select(0)
+	scene.call("_on_mode_changed", 0)
+
+	var expected_v175_ids := [
+		1750001, 1750002, 1750003, 1750004, 1750005,
+		606452, 606972, 609431, 610080, 611607,
+	]
+	var controlled_decks: Array[DeckData] = []
+	for deck_id: int in expected_v175_ids + [1700001]:
+		var deck: DeckData = CardDatabase._load_deck_from_file("res://data/bundled_user/decks/%d.json" % deck_id)
+		if deck != null:
+			controlled_decks.append(deck)
+	var player_created_deck := DeckData.new()
+	player_created_deck.id = 99000001
+	player_created_deck.deck_name = "player created deck"
+	player_created_deck.import_date = "2099-01-01T00:00:00"
+	player_created_deck.updated_at = 1000000000001
+	player_created_deck.total_cards = 60
+	controlled_decks.append(player_created_deck)
+	var modified_specs := [
+		{"id": 1700001, "name": "player modified baseline deck", "updated_at": 1000000000000},
+		{"id": 1700002, "name": "17.5 stale legacy Archaludon", "updated_at": 999999999999},
+		{"id": 575723, "name": "17.5 stale legacy Dragapult", "updated_at": 999999999998},
+		{"id": 599947, "name": "17.5 stale legacy Miraidon", "updated_at": 999999999997},
+	]
+	for spec: Dictionary in modified_specs:
+		var modified_id := int(spec["id"])
+		var modified_deck: DeckData = CardDatabase._load_deck_from_file("res://data/bundled_user/decks/%d.json" % modified_id)
+		if modified_deck != null:
+			modified_deck.deck_name = str(spec["name"])
+			modified_deck.updated_at = int(spec["updated_at"])
+			controlled_decks.append(modified_deck)
+	scene.set("_deck_list", controlled_decks)
+
+	var all_decks: Array = scene.call("_decks_for_picker", 0, "all", "")
+	var leading_ids: Array[int] = []
+	var expected_modified_ids := [
+		99000001, 1700001, 1700002, 575723, 599947,
+	]
+	for i: int in mini(expected_modified_ids.size(), all_decks.size()):
+		var deck := all_decks[i] as DeckData
+		leading_ids.append(int(deck.id))
+
+	var checks: Array[String] = [
+		assert_eq(leading_ids, expected_modified_ids, "Battle setup player deck picker should put player-created or player-modified decks before bundled defaults"),
+	]
+	if all_decks.size() > expected_modified_ids.size():
+		var next_deck := all_decks[expected_modified_ids.size()] as DeckData
+		checks.append(assert_false(int(next_deck.id) in expected_modified_ids, "Modified deck ids should not be duplicated after the leading group"))
+	return run_checks(checks)
 
 
 func test_battle_setup_filters_dragapult_charizard_ai_versions() -> String:
@@ -746,6 +811,42 @@ func test_apply_setup_selection_enables_fixed_order_for_strong_miraidon_ai() -> 
 			str(selection.get("fixed_deck_order_path", "")),
 			"res://data/bundled_user/ai_fixed_deck_orders/575720.json",
 			"Strong Miraidon AI should bind the bundled fixed deck order path"
+		),
+	])
+
+
+func test_apply_setup_selection_enables_fixed_order_for_strong_v175_lugia_ai() -> String:
+	var previous_current_mode := GameManager.current_mode
+	var previous_selected_deck_ids := GameManager.selected_deck_ids.duplicate()
+	var previous_first_player_choice := GameManager.first_player_choice
+	var previous_background := GameManager.selected_battle_background
+	var previous_ai_selection := GameManager.ai_selection.duplicate(true)
+
+	var scene := _make_scene_ready()
+	_prime_deck_options(scene)
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	var preview_option := scene.find_child("AIPreviewStrengthOption", true, false) as OptionButton
+	mode_option.select(1)
+	scene.call("_on_mode_changed", 1)
+	scene.call("_select_option_for_deck_id", scene.find_child("Deck2Option", true, false), 609431)
+	preview_option.select(1)
+
+	var ok: bool = scene.call("_apply_setup_selection")
+	var selection: Dictionary = GameManager.ai_selection.duplicate(true)
+
+	GameManager.current_mode = previous_current_mode
+	GameManager.selected_deck_ids = previous_selected_deck_ids
+	GameManager.first_player_choice = previous_first_player_choice
+	GameManager.selected_battle_background = previous_background
+	GameManager.ai_selection = previous_ai_selection
+
+	return run_checks([
+		assert_true(ok, "_apply_setup_selection should succeed for strong 17.5 Lugia AI"),
+		assert_eq(str(selection.get("opening_mode", "")), "fixed_order", "Strong 17.5 Lugia AI should enable fixed opening mode"),
+		assert_eq(
+			str(selection.get("fixed_deck_order_path", "")),
+			"res://data/bundled_user/ai_fixed_deck_orders/609431.json",
+			"Strong 17.5 Lugia AI should bind the bundled fixed deck order path"
 		),
 	])
 

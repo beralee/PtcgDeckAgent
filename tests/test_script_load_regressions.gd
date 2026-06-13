@@ -313,18 +313,26 @@ func test_charizard_ex_llm_strategy_loads() -> String:
 func test_gardevoir_llm_strategy_loads() -> String:
 	var rules_script := load("res://scripts/ai/DeckStrategyGardevoir.gd")
 	var llm_script := load("res://scripts/ai/DeckStrategyGardevoirLLM.gd")
+	var v175_llm_script := load("res://scripts/ai/DeckStrategy175GardevoirLLM.gd")
 	var registry_script := load("res://scripts/ai/DeckStrategyRegistry.gd")
 	var llm_instance = llm_script.new() if llm_script != null and llm_script.can_instantiate() else null
+	var v175_llm_instance = v175_llm_script.new() if v175_llm_script != null and v175_llm_script.can_instantiate() else null
 	var registry = registry_script.new() if registry_script != null and registry_script.can_instantiate() else null
 	var registry_instance = registry.call("create_strategy_by_id", "gardevoir_llm") if registry != null else null
+	var v175_registry_instance = registry.call("create_strategy_by_id", "v175_gardevoir_llm") if registry != null else null
 	return run_checks([
 		assert_not_null(rules_script, "DeckStrategyGardevoir.gd should load without compile errors"),
 		assert_not_null(llm_script, "DeckStrategyGardevoirLLM.gd should load without compile errors"),
+		assert_not_null(v175_llm_script, "DeckStrategy175GardevoirLLM.gd should load without compile errors"),
 		assert_not_null(registry_script, "DeckStrategyRegistry.gd should load after registering the Gardevoir LLM variant"),
 		assert_not_null(llm_instance, "DeckStrategyGardevoirLLM.gd should instantiate without compile errors"),
 		assert_eq(str(llm_instance.call("get_strategy_id")) if llm_instance != null and llm_instance.has_method("get_strategy_id") else "", "gardevoir_llm", "Gardevoir LLM strategy id should be stable"),
 		assert_not_null(registry_instance, "Registry should create gardevoir_llm"),
 		assert_eq(str(registry_instance.call("get_strategy_id")) if registry_instance != null and registry_instance.has_method("get_strategy_id") else "", "gardevoir_llm", "Registered Gardevoir LLM variant should report its strategy id"),
+		assert_not_null(v175_llm_instance, "DeckStrategy175GardevoirLLM.gd should instantiate without compile errors"),
+		assert_eq(str(v175_llm_instance.call("get_strategy_id")) if v175_llm_instance != null and v175_llm_instance.has_method("get_strategy_id") else "", "v175_gardevoir_llm", "17.5 Gardevoir LLM strategy id should be stable"),
+		assert_not_null(v175_registry_instance, "Registry should create v175_gardevoir_llm"),
+		assert_eq(str(v175_registry_instance.call("get_strategy_id")) if v175_registry_instance != null and v175_registry_instance.has_method("get_strategy_id") else "", "v175_gardevoir_llm", "Registered 17.5 Gardevoir LLM variant should report its strategy id"),
 	])
 
 
@@ -376,3 +384,25 @@ func test_v17_llm_strategy_variants_load_and_register() -> String:
 		checks.append(assert_eq(str(registry_instance.call("get_strategy_id")) if registry_instance != null and registry_instance.has_method("get_strategy_id") else "", strategy_id, "Registered %s should report its strategy id" % strategy_id))
 		checks.append(assert_true(registry_instance != null and registry_instance.has_method("get_llm_stats"), "%s should expose LLM runtime stats" % strategy_id))
 	return run_checks(checks)
+
+
+func test_v175_pure_dragapult_llm_strategy_loads_and_registers() -> String:
+	var rules_script := load("res://scripts/ai/DeckStrategy175PureDragapult.gd")
+	var llm_script := load("res://scripts/ai/DeckStrategy175PureDragapultLLM.gd")
+	var registry_script := load("res://scripts/ai/DeckStrategyRegistry.gd")
+	var llm_instance = llm_script.new() if llm_script != null and llm_script.can_instantiate() else null
+	var registry = registry_script.new() if registry_script != null and registry_script.can_instantiate() else null
+	var registry_instance = registry.call("create_strategy_by_id", "v175_pure_dragapult_llm") if registry != null else null
+	var source := FileAccess.get_file_as_string("res://scripts/ai/DeckStrategy175PureDragapultLLM.gd")
+	return run_checks([
+		assert_not_null(rules_script, "DeckStrategy175PureDragapult.gd should load without compile errors"),
+		assert_not_null(llm_script, "DeckStrategy175PureDragapultLLM.gd should load without compile errors"),
+		assert_not_null(registry_script, "DeckStrategyRegistry.gd should load after registering v175 pure Dragapult LLM"),
+		assert_not_null(llm_instance, "DeckStrategy175PureDragapultLLM.gd should instantiate without compile errors"),
+		assert_eq(str(llm_instance.call("get_strategy_id")) if llm_instance != null and llm_instance.has_method("get_strategy_id") else "", "v175_pure_dragapult_llm", "V175 pure Dragapult LLM strategy id should be stable"),
+		assert_not_null(registry_instance, "Registry should create v175_pure_dragapult_llm"),
+		assert_eq(str(registry_instance.call("get_strategy_id")) if registry_instance != null and registry_instance.has_method("get_strategy_id") else "", "v175_pure_dragapult_llm", "Registered v175 pure Dragapult LLM should report its strategy id"),
+		assert_true(registry_instance != null and registry_instance.has_method("get_llm_stats"), "V175 pure Dragapult LLM should expose LLM runtime stats"),
+		assert_true(source.contains("DeckStrategy17DragapultDusknoirLLM.gd"), "V175 pure Dragapult LLM should reuse the shared v17 Dragapult LLM runtime"),
+		assert_true(source.contains("DeckStrategy175PureDragapult.gd"), "V175 pure Dragapult LLM should compose the 17.5 pure Dragapult rules strategy"),
+	])

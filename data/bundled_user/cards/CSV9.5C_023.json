@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "Tera",
+	"artist": "5ban Graphics",
+	"attacks": [
+		{
+			"cost": "RC",
+			"damage": "130",
+			"is_vstar_power": false,
+			"name": "燃烧充能",
+			"text": "选择自己牌库中最多2张基本能量，附着于自己的1只宝可梦身上。并重洗牌库。"
+		},
+		{
+			"cost": "RWL",
+			"damage": "280",
+			"is_vstar_power": false,
+			"name": "红玉髓",
+			"text": "在下一个自己的回合，这只宝可梦无法使用招式。"
+		}
+	],
+	"card_index": "023",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "【火】【无】燃烧充能 130\n选择自己牌库中最多2张基本能量，附着于自己的1只宝可梦身上。并重洗牌库。\n\n【火】【水】【雷】红玉髓 280\n在下一个自己的回合，这只宝可梦无法使用招式。\n\n",
+	"effect_id": "313cc7781c8489ce8c45d3597dfce241",
+	"energy_provides": "",
+	"energy_type": "R",
+	"evolves_from": "伊布",
+	"hp": 270,
+	"image_local_path": "user://cards/images/CSV9.5C/023.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9.5C/023.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "ex",
+	"name": "火伊布ex",
+	"name_en": "",
+	"rarity": "RR",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-06-12T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CSV9.5C",
+	"set_code_en": "",
+	"stage": "Stage 1",
+	"weakness_energy": "W",
+	"weakness_value": "×2",
+	"yoren_code": "Y1556"
+}

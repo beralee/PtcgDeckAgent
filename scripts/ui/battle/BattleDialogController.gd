@@ -2330,6 +2330,12 @@ func on_dialog_cancel(scene: Object) -> void:
 		"dialog_cancel",
 		"choice=%s %s" % [scene.get("_pending_choice"), scene.call("_dialog_state_snapshot")]
 	)
+	if str(scene.get("_pending_choice")) == "effect_interaction" and bool(dialog_data.get("cancel_resolves_empty", false)):
+		_hide_dialog_overlay(scene, "dialog_cancel_empty_selection")
+		_replace_int_array(scene, "_dialog_card_selected_indices", [])
+		reset_dialog_assignment_state(scene)
+		scene.call("_handle_effect_interaction_choice", PackedInt32Array())
+		return
 	_hide_dialog_overlay(scene, "dialog_cancel")
 	_replace_int_array(scene, "_dialog_card_selected_indices", [])
 	reset_dialog_assignment_state(scene)

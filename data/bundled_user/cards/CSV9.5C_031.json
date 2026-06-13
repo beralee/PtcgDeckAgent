@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "Natsumi Yoshida",
+	"attacks": [
+		{
+			"cost": "W",
+			"damage": "10",
+			"is_vstar_power": false,
+			"name": "水枪",
+			"text": ""
+		},
+		{
+			"cost": "WC",
+			"damage": "30",
+			"is_vstar_power": false,
+			"name": "摆尾拍击",
+			"text": ""
+		}
+	],
+	"card_index": "031",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "【水】 水枪 10\n\n\n【水】 摆尾拍击 30\n\n\n",
+	"effect_id": "26d4511ab7a84d662387e992b44f130a",
+	"energy_provides": "",
+	"energy_type": "W",
+	"evolves_from": "",
+	"hp": 70,
+	"image_local_path": "user://cards/images/CSV9.5C/031.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9.5C/031.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "呆呆兽",
+	"name_en": "",
+	"rarity": "C",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-06-12T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CSV9.5C",
+	"set_code_en": "",
+	"stage": "Basic",
+	"weakness_energy": "L",
+	"weakness_value": "×2",
+	"yoren_code": "P079"
+}

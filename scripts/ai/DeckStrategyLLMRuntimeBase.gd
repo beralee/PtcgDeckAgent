@@ -1473,7 +1473,10 @@ func _sanitize_decision_tree_contract(tree: Dictionary) -> Dictionary:
 	var repair_notes: Array[String] = []
 	var pruned_count := 0
 	var repaired_count := 0
-	var stripped_interactions := _strip_no_schema_interactions_in_tree(sanitized)
+	var stripped_interactions := 0
+	for key: String in ["actions", "fallback_actions", "fallback"]:
+		if sanitized.has(key):
+			stripped_interactions += _strip_no_schema_interactions_in_action_array(sanitized.get(key, []))
 	if stripped_interactions > 0:
 		repaired_count += stripped_interactions
 		repair_notes.append("removed low-level interactions from %d no-schema action(s); selection_policy/fallback scoring will drive legal choices" % stripped_interactions)

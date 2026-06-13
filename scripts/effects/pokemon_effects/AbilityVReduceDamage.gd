@@ -48,6 +48,29 @@ static func get_v_damage_reduction(
 
 
 ## 检查防守方场上（战斗位或备战区）是否有拥有"慈爱帘幕"特性的宝可梦
+func get_team_defense_modifier(
+	source: PokemonSlot,
+	defender: PokemonSlot,
+	attacker: PokemonSlot,
+	state: GameState
+) -> int:
+	if source == null or defender == null or attacker == null or state == null:
+		return 0
+	var source_top := source.get_top_card()
+	var defender_top := defender.get_top_card()
+	if source_top == null or defender_top == null:
+		return 0
+	if source_top.owner_index != defender_top.owner_index:
+		return 0
+	if not _has_ability(source):
+		return 0
+	if not _is_non_rule_box(defender):
+		return 0
+	if not _is_rule_box(attacker):
+		return 0
+	return -DAMAGE_REDUCTION
+
+
 static func _has_loving_veil_in_play(player: PlayerState) -> bool:
 	var all_slots: Array = []
 	if player.active_pokemon != null:

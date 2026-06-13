@@ -17,6 +17,10 @@ func execute_ability(
 	pass
 
 
+func is_cost_modifier_ability() -> bool:
+	return true
+
+
 func get_attack_colorless_cost_modifier(
 	pokemon: PokemonSlot,
 	attack: Dictionary,

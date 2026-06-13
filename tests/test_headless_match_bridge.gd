@@ -7,6 +7,11 @@ const AIStepResolverScript = preload("res://scripts/ai/AIStepResolver.gd")
 const AILegalActionBuilderScript = preload("res://scripts/ai/AILegalActionBuilder.gd")
 const AbilityMoveDamageCountersToOpponentScript = preload("res://scripts/effects/pokemon_effects/AbilityMoveDamageCountersToOpponent.gd")
 const AbilityFirstTurnDrawScript = preload("res://scripts/effects/pokemon_effects/AbilityFirstTurnDraw.gd")
+const AttackMoveOwnDamageCountersToOpponentScript = preload("res://scripts/effects/pokemon_effects/AttackMoveOwnDamageCountersToOpponent.gd")
+
+const SCREAM_TAIL_EFFECT_ID := "12c9416c64d1a8cfbbf0a3000a9f3d50"
+const CRESSELIA_HEADLESS_EFFECT_ID := "cresselia_headless_test"
+const POWERGLASS_ID := "1dc38c46be0951b2b135e1df2e5e7767"
 
 
 class SetupCompletionSpyGameStateMachine extends GameStateMachine:
@@ -56,6 +61,20 @@ class FakeBenchCleanupStrategy extends RefCounted:
 			if item is PokemonSlot and (item as PokemonSlot).get_pokemon_name() == preferred_name:
 				return [item]
 		return []
+
+
+class FakeInteractionTargetStrategy extends RefCounted:
+	var step_id: String = ""
+	var preferred_name: String = ""
+
+	func _init(next_step_id: String = "", next_preferred_name: String = "") -> void:
+		step_id = next_step_id
+		preferred_name = next_preferred_name
+
+	func score_interaction_target(item: Variant, step: Dictionary, _context: Dictionary = {}) -> float:
+		if str(step.get("id", "")) != step_id or not item is PokemonSlot:
+			return 0.0
+		return 900.0 if (item as PokemonSlot).get_pokemon_name() == preferred_name else 10.0
 
 
 class HeavyBatonResolveSpyGameStateMachine extends GameStateMachine:
@@ -126,6 +145,37 @@ func _make_slot(card: CardInstance) -> PokemonSlot:
 	var slot := PokemonSlot.new()
 	slot.pokemon_stack.append(card)
 	return slot
+
+
+func _make_scream_tail_card(owner: int = 0) -> CardInstance:
+	var card := CardData.new()
+	card.name = "吼叫尾"
+	card.name_en = "Scream Tail"
+	card.card_type = "Pokemon"
+	card.stage = "Basic"
+	card.hp = 90
+	card.energy_type = "P"
+	card.effect_id = SCREAM_TAIL_EFFECT_ID
+	card.attacks = [
+		{"name": "巴掌", "cost": "P", "damage": "30", "is_vstar_power": false},
+		{"name": "凶暴吼叫", "cost": "PC", "damage": "", "is_vstar_power": false},
+	]
+	return CardInstance.create(card, owner)
+
+
+func _make_cresselia_card(owner: int = 0) -> CardInstance:
+	var card := CardData.new()
+	card.name = "Cresselia"
+	card.name_en = "Cresselia"
+	card.card_type = "Pokemon"
+	card.stage = "Basic"
+	card.hp = 120
+	card.energy_type = "P"
+	card.effect_id = CRESSELIA_HEADLESS_EFFECT_ID
+	card.attacks = [
+		{"name": "Moonglow Reverse", "cost": "P", "damage": "", "is_vstar_power": false},
+	]
+	return CardInstance.create(card, owner)
 
 
 func _make_gsm() -> GameStateMachine:
@@ -201,6 +251,132 @@ func test_bridge_injects_ability_followup_counter_distribution_steps() -> String
 		assert_eq(source.damage_counters, 0, "Headless follow-up should remove selected counters from the damaged own Pokemon"),
 		assert_eq(opponent.active_pokemon.damage_counters, 30, "Headless follow-up should place selected counters onto the opponent target"),
 		assert_eq(str(bridge.get("_pending_choice")), "", "Resolved follow-up should clear the effect interaction prompt"),
+	])
+
+
+func test_bridge_resolves_scream_tail_attack_target_and_damage() -> String:
+	var bridge := HeadlessMatchBridgeScript.new()
+	var resolver := AIStepResolverScript.new()
+	var gsm := _make_gsm()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.turn_number = 2
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+	var scream_tail := _make_slot(_make_scream_tail_card(0))
+	scream_tail.damage_counters = 60
+	scream_tail.attached_energy = [
+		_make_energy_card("Psychic Energy", "P", 0),
+		_make_energy_card("Psychic Energy", "P", 0),
+	]
+	player.active_pokemon = scream_tail
+	gsm.effect_processor.register_pokemon_card(scream_tail.get_card_data())
+	var target_data := CardData.new()
+	target_data.name = "Miraidon ex"
+	target_data.card_type = "Pokemon"
+	target_data.stage = "Basic"
+	target_data.hp = 220
+	opponent.active_pokemon = _make_slot(CardInstance.create(target_data, 1))
+	bridge.bind(gsm)
+
+	var started := bridge._try_use_attack_with_interaction(0, scream_tail, 1)
+	var resolved := resolver.resolve_pending_step(bridge, gsm, 0)
+
+	return run_checks([
+		assert_true(started, "Headless bridge should start Scream Tail's target_pokemon attack interaction"),
+		assert_true(resolved, "AIStepResolver should resolve Scream Tail's attack target prompt"),
+		assert_eq(opponent.active_pokemon.damage_counters, 120, "Resolved Roaring Scream should deal self-damage-counter based damage to the selected target"),
+		assert_eq(str(bridge.get("_pending_choice")), "", "Resolved Scream Tail attack should clear the effect interaction prompt"),
+	])
+
+
+func test_bridge_resolves_cresselia_attack_target_and_moves_damage() -> String:
+	var bridge := HeadlessMatchBridgeScript.new()
+	var resolver := AIStepResolverScript.new()
+	resolver.set_deck_strategy(FakeInteractionTargetStrategy.new("cresselia_damage_target", "Prize Target"))
+	var gsm := _make_gsm()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.effect_processor.replace_attack_effects(
+		CRESSELIA_HEADLESS_EFFECT_ID,
+		[AttackMoveOwnDamageCountersToOpponentScript.new(20, 0)]
+	)
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+	var cresselia := _make_slot(_make_cresselia_card(0))
+	cresselia.damage_counters = 20
+	cresselia.attached_energy = [_make_energy_card("Psychic Energy", "P", 0)]
+	var damaged_bench := _make_slot(_make_basic_card("Damaged Ralts"))
+	damaged_bench.damage_counters = 20
+	player.active_pokemon = cresselia
+	player.bench = [damaged_bench]
+	var bulky_active := _make_slot(_make_basic_card("Bulky Active"))
+	bulky_active.pokemon_stack[0].card_data.hp = 220
+	opponent.active_pokemon = bulky_active
+	var prize_target := _make_slot(_make_basic_card("Prize Target"))
+	prize_target.pokemon_stack[0].card_data.hp = 60
+	prize_target.damage_counters = 20
+	opponent.bench = [prize_target]
+	bridge.bind(gsm)
+
+	var started := bridge._try_use_attack_with_interaction(0, cresselia, 0)
+	var source_step: Dictionary = (bridge.get("_pending_effect_steps") as Array)[0] if not (bridge.get("_pending_effect_steps") as Array).is_empty() else {}
+	var resolved_source := resolver.resolve_pending_step(bridge, gsm, 0)
+	var target_step: Dictionary = (bridge.get("_pending_effect_steps") as Array)[int(bridge.get("_pending_effect_step_index"))] if int(bridge.get("_pending_effect_step_index")) >= 0 and int(bridge.get("_pending_effect_step_index")) < (bridge.get("_pending_effect_steps") as Array).size() else {}
+	var resolved_target := resolver.resolve_pending_step(bridge, gsm, 0)
+
+	return run_checks([
+		assert_true(started, "Headless bridge should start Cresselia's own damage-counter source prompt"),
+		assert_eq(str(source_step.get("id", "")), "cresselia_damage_sources", "Cresselia should resolve own sources before choosing the opponent target"),
+		assert_true(resolved_source, "AIStepResolver should resolve Cresselia's cresselia_damage_sources prompt"),
+		assert_eq(str(target_step.get("id", "")), "cresselia_damage_target", "Cresselia should inject the opponent target prompt after source selection"),
+		assert_true(resolved_target, "AIStepResolver should resolve Cresselia's cresselia_damage_target prompt"),
+		assert_eq(cresselia.damage_counters, 0, "Cresselia should move up to 20 damage counters from itself"),
+		assert_eq(damaged_bench.damage_counters, 0, "Cresselia should move up to 20 damage counters from each own Pokemon"),
+		assert_eq(prize_target.damage_counters, 60, "Resolved Moonglow Reverse should move the full damage pool to the strategy-selected target"),
+		assert_eq(bulky_active.damage_counters, 0, "Cresselia should not fall back to the opponent active when strategy prefers a bench prize target"),
+		assert_eq(str(bridge.get("_pending_choice")), "", "Resolved Cresselia attack should clear the effect interaction prompt"),
+	])
+
+
+func test_bridge_resolves_powerglass_end_turn_energy_choice() -> String:
+	var bridge := HeadlessMatchBridgeScript.new()
+	var resolver := AIStepResolverScript.new()
+	var gsm := _make_gsm()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 2
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+	var active := _make_slot(_make_basic_card("Powerglass Holder"))
+	active.attached_tool = _make_tool_card("Powerglass", POWERGLASS_ID, 0)
+	var lightning := _make_energy_card("Lightning Energy", "L", 0)
+	var water := _make_energy_card("Water Energy", "W", 0)
+	player.active_pokemon = active
+	player.discard_pile.append_array([lightning, water])
+	player.set_prizes([_make_energy_card("Player Prize", "C", 0)])
+	player.deck.append(_make_energy_card("Player Draw", "C", 0))
+	opponent.active_pokemon = _make_slot(CardInstance.create((_make_basic_card("Opponent Active")).card_data, 1))
+	opponent.set_prizes([_make_energy_card("Opponent Prize", "C", 1)])
+	opponent.deck.append(_make_energy_card("Opponent Draw", "C", 1))
+	bridge.bind(gsm)
+
+	gsm.end_turn(0)
+	var pending_after_end := str(bridge.get_pending_prompt_type())
+	var steps: Array = bridge.get("_pending_effect_steps")
+	var first_step: Dictionary = steps[0] if not steps.is_empty() else {}
+	var resolved := resolver.resolve_pending_step(bridge, gsm, 0, [])
+
+	return run_checks([
+		assert_eq(pending_after_end, "effect_interaction", "Headless Powerglass should enter the shared effect_interaction prompt"),
+		assert_eq(str(first_step.get("id", "")), "powerglass_energy", "Headless Powerglass should expose the energy choice step"),
+		assert_true(resolved, "AIStepResolver should resolve Powerglass's optional end-turn choice"),
+		assert_true(lightning in active.attached_energy, "Headless resolver should attach one legal Basic Energy from discard"),
+		assert_true(water in player.discard_pile, "Headless resolver should leave unselected Basic Energy in discard"),
+		assert_eq(gsm.game_state.current_player_index, 1, "Resolved headless Powerglass should resume normal turn advancement"),
+		assert_eq(str(bridge.get_pending_prompt_type()), "", "Resolved Powerglass prompt should clear pending choice"),
 	])
 
 

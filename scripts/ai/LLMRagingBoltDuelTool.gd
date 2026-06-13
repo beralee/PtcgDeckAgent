@@ -422,6 +422,8 @@ func _make_ai(player_index: int, strategy_id: String, deck: DeckData = null, str
 	if strategy != null:
 		if deck != null and strategy.has_method("set_deck_strategy_text"):
 			strategy.call("set_deck_strategy_text", str(deck.strategy))
+		if deck != null and strategy.has_method("configure_from_deck"):
+			strategy.call("configure_from_deck", deck)
 		if strategy.has_method("set_llm_host_node"):
 			strategy.call("set_llm_host_node", self)
 		ai.set_deck_strategy(strategy)

@@ -453,6 +453,33 @@ func test_deck_manager_open_requests_latest_remote_recommendation() -> String:
 	])
 
 
+func test_deck_manager_initial_recommendation_prefers_cached_server_pool_over_stale_embedded_current() -> String:
+	_delete_user_file(TEST_RECOMMENDATION_CACHE_PATH)
+	var scene: Control = DeckManagerScene.instantiate()
+	scene._apply_hud_theme()
+	_configure_recommendation_test_state(scene, TEST_RECOMMENDATION_CACHE_PATH)
+
+	var stale_embedded: Dictionary = scene._embedded_recommendations[1] if scene._embedded_recommendations.size() > 1 else scene._embedded_recommendations[0]
+	var older_remote := _remote_recommendation("remote-older", 600401, "2026-05-05T03:00:00+08:00")
+	var newer_remote := _remote_recommendation("remote-newer", 600402, "2026-05-06T03:00:00+08:00")
+	scene._recommendation_store.call("upsert_item", stale_embedded, true)
+	scene._recommendation_store.call("upsert_item", older_remote, false)
+	scene._recommendation_store.call("upsert_item", newer_remote, false)
+
+	scene._current_recommendation = scene._select_initial_recommendation()
+	var current_id := str(scene._current_recommendation.get("id", ""))
+	var stale_id := str(stale_embedded.get("id", ""))
+	var pool_ids := _recommendation_pool_ids(scene)
+
+	scene.queue_free()
+	_delete_user_file(TEST_RECOMMENDATION_CACHE_PATH)
+	return run_checks([
+		assert_eq(current_id, "remote-newer", "Startup should show the newest cached server recommendation when the saved current id is an old embedded item"),
+		assert_false(Array(pool_ids).has(stale_id), "Stale embedded recommendation should stay out of the server-backed visible pool"),
+		assert_eq(Array(pool_ids), ["remote-newer", "remote-older"], "Startup visible pool should match cached server recommendations, newest first"),
+	])
+
+
 func test_deck_manager_remote_cycle_excludes_known_recommendations() -> String:
 	_delete_user_file(TEST_RECOMMENDATION_CACHE_PATH)
 	var scene: Control = DeckManagerScene.instantiate()
@@ -511,7 +538,7 @@ func test_deck_manager_next_recommendation_cycles_embedded_feed() -> String:
 	])
 
 
-func test_deck_manager_falls_back_when_remote_returns_current_recommendation() -> String:
+func test_deck_manager_keeps_current_remote_when_server_returns_duplicate() -> String:
 	_delete_user_file(TEST_RECOMMENDATION_CACHE_PATH)
 	var scene: Control = DeckManagerScene.instantiate()
 	scene._apply_hud_theme()
@@ -519,27 +546,29 @@ func test_deck_manager_falls_back_when_remote_returns_current_recommendation() -
 	scene._ensure_recommendation_section()
 	scene._refresh_recommendation_cards()
 
+	var remote := _remote_recommendation("remote-current", 600301, "2026-05-05T03:00:00+08:00")
+	var normalized: Dictionary = DeckRecommendationStoreScript.normalize_recommendation(remote)
+	scene._recommendation_store.call("upsert_item", normalized, true)
+	scene._current_recommendation = normalized
 	var first_id := str(scene._current_recommendation.get("id", ""))
 	scene._recommendation_fetch_in_progress = true
 	scene._on_remote_recommendation_succeeded({
 		"ok": true,
-		"recommendation": scene._current_recommendation.duplicate(true),
+		"recommendation": remote,
 	})
 	var next_id := str(scene._current_recommendation.get("id", ""))
-	var status_label := scene.find_child("RecommendationStatusLabel", true, false) as Label
-	var status_text := status_label.text if status_label != null else ""
+	var pool_ids := _recommendation_pool_ids(scene)
 
 	scene.queue_free()
 	_delete_user_file(TEST_RECOMMENDATION_CACHE_PATH)
 	return run_checks([
-		assert_true(first_id != "", "Initial recommendation should have a stable id"),
-		assert_true(next_id != "", "Fallback recommendation should have a stable id"),
-		assert_true(first_id != next_id, "Same remote recommendation should fall back to local cycle"),
-		assert_str_contains(status_text, "已切换推荐", "Fallback status should explain that another recommendation was selected"),
+		assert_eq(first_id, "remote-current", "Initial server recommendation should have a stable id"),
+		assert_eq(next_id, "remote-current", "Duplicate server response should keep the current server recommendation"),
+		assert_eq(Array(pool_ids), ["remote-current"], "Server recommendation pool should not fall back to embedded articles when only one server item exists"),
 	])
 
 
-func test_deck_manager_cycles_remote_and_embedded_recommendations_as_one_pool() -> String:
+func test_deck_manager_remote_recommendations_hide_embedded_feed() -> String:
 	_delete_user_file(TEST_RECOMMENDATION_CACHE_PATH)
 	var scene: Control = DeckManagerScene.instantiate()
 	scene._apply_hud_theme()
@@ -554,21 +583,16 @@ func test_deck_manager_cycles_remote_and_embedded_recommendations_as_one_pool() 
 	var remote_id := str(scene._current_recommendation.get("id", ""))
 	scene._recommendation_fetch_in_progress = true
 	scene._on_remote_recommendation_succeeded({"ok": true, "recommendation": remote})
-	var second_local_id := str(scene._current_recommendation.get("id", ""))
-	scene._recommendation_fetch_in_progress = true
-	scene._on_remote_recommendation_succeeded({"ok": true, "recommendation": remote})
-	var third_local_id := str(scene._current_recommendation.get("id", ""))
-	scene._recommendation_fetch_in_progress = true
-	scene._on_remote_recommendation_succeeded({"ok": true, "recommendation": remote})
-	var cycled_id := str(scene._current_recommendation.get("id", ""))
+	var duplicate_id := str(scene._current_recommendation.get("id", ""))
+	var pool_ids := _recommendation_pool_ids(scene)
 
 	scene.queue_free()
 	_delete_user_file(TEST_RECOMMENDATION_CACHE_PATH)
 	return run_checks([
+		assert_true(first_id != "", "Embedded fallback should still be available before the server responds"),
 		assert_eq(remote_id, "remote-raging-bolt", "First remote fetch should add the server recommendation into the cycle"),
-		assert_true(second_local_id != "" and second_local_id != first_id and second_local_id != remote_id, "Second step should move to the next embedded recommendation"),
-		assert_true(third_local_id != "" and third_local_id != first_id and third_local_id != remote_id and third_local_id != second_local_id, "Third step should move to the third embedded recommendation"),
-		assert_eq(cycled_id, first_id, "Fourth step should cycle back to the first embedded recommendation"),
+		assert_eq(duplicate_id, "remote-raging-bolt", "Duplicate server response should keep the visible server recommendation instead of switching to embedded"),
+		assert_eq(Array(pool_ids), ["remote-raging-bolt"], "Once server recommendations exist, embedded 5.1 articles should not remain in the visible cycle"),
 	])
 
 
@@ -592,14 +616,16 @@ func test_deck_manager_keeps_multiple_remote_recommendations_in_date_order() -> 
 	var older_id := str(scene._current_recommendation.get("id", ""))
 	scene._recommendation_fetch_in_progress = true
 	scene._on_remote_recommendation_succeeded({"ok": true, "recommendation": newer_remote})
-	var second_local_id := str(scene._current_recommendation.get("id", ""))
+	var cycled_id := str(scene._current_recommendation.get("id", ""))
 
 	scene.queue_free()
 	_delete_user_file(TEST_RECOMMENDATION_CACHE_PATH)
 	return run_checks([
-		assert_eq(newer_id, "remote-dragapult", "First remote item should enter the cycle after the first embedded item"),
+		assert_true(first_id != "", "Embedded fallback should still initialize when the server has not responded"),
+		assert_eq(newer_id, "remote-dragapult", "First remote item should become visible when the server responds"),
 		assert_eq(older_id, "remote-raging-bolt", "Older same-day remote item should be the next card, not skipped. Pool: %s" % ",".join(pool_after_older)),
-		assert_true(second_local_id != "" and second_local_id != first_id and second_local_id != newer_id and second_local_id != older_id, "After both remote items, cycle should continue into embedded recommendations"),
+		assert_eq(Array(pool_after_older), ["remote-dragapult", "remote-raging-bolt"], "Visible recommendation pool should match server items only, newest first"),
+		assert_eq(cycled_id, "remote-dragapult", "After the oldest server item, cycling should wrap to the newest server item, not embedded recommendations"),
 	])
 
 

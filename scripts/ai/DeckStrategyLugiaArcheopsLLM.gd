@@ -481,7 +481,7 @@ func _is_lugia_low_deck_unplanned_draw_action(action: Dictionary, game_state: Ga
 		return false
 	var kind := str(action.get("kind", action.get("type", "")))
 	if kind == "play_trainer":
-		var card: CardInstance = action.get("card", null)
+		var card := _variant_card_instance(action.get("card", null))
 		if card == null or card.card_data == null:
 			return false
 		var card_name := "%s %s" % [str(card.card_data.name_en), str(card.card_data.name)]
@@ -489,7 +489,7 @@ func _is_lugia_low_deck_unplanned_draw_action(action: Dictionary, game_state: Ga
 			or _name_contains(card_name, "Carmine") \
 			or _name_contains(card_name, "Iono")
 	if kind == "use_ability":
-		var source_slot: PokemonSlot = action.get("source_slot", null)
+		var source_slot := _variant_pokemon_slot(action.get("source_slot", null))
 		if source_slot == null or source_slot.get_card_data() == null:
 			return false
 		var source_name := _slot_best_name(source_slot)
@@ -726,8 +726,8 @@ func _sort_lugia_scored_item_desc(a: Dictionary, b: Dictionary) -> bool:
 	var right := float(b.get("score", 0.0))
 	if left != right:
 		return left > right
-	var left_card: CardInstance = a.get("item", null)
-	var right_card: CardInstance = b.get("item", null)
+	var left_card := _variant_card_instance(a.get("item", null))
+	var right_card := _variant_card_instance(b.get("item", null))
 	return _card_instance_name(left_card) < _card_instance_name(right_card)
 
 
@@ -786,6 +786,17 @@ func _lugia_search_candidate_score(card: CardInstance, context: Dictionary) -> i
 	var player: PlayerState = game_state.players[player_index]
 	if player == null:
 		return score
+	if _lugia_needs_emergency_basic_bench(player):
+		if _is_exact_lugia_v_name(name):
+			score += 2200
+		elif _name_matches_any(name, [MINCCINO]):
+			score += 1800
+		elif _is_high_value_lugia_basic_continuity_name(name):
+			score += 1400
+		elif card.is_basic_pokemon():
+			score += 900
+		elif _name_matches_any(name, [ARCHEOPS, LUGIA_VSTAR, CINCCINO]):
+			score -= 1600
 	var prefer := _lugia_search_prefer_names(player)
 	var exact_index := _name_index_in_prefer(name, prefer)
 	if exact_index >= 0:
@@ -874,7 +885,7 @@ func _lugia_assignment_target_score(slot: PokemonSlot, context: Dictionary) -> f
 	var score := 0.0
 	var slot_name := _slot_best_name(slot)
 	var gap := _slot_attack_energy_gap(slot)
-	var source_card: CardInstance = context.get("source_card", null)
+	var source_card := _variant_card_instance(context.get("source_card", null))
 	var source_name := _card_instance_name(source_card)
 	if _name_matches_any(slot_name, [LUGIA_VSTAR]):
 		score = 620.0 if gap > 0 else 360.0
@@ -908,10 +919,10 @@ func _is_lugia_primal_turbo_energy_source_step(step: Dictionary, context: Dictio
 	var step_id := str(step.get("id", ""))
 	if not (step_id in ["search_cards", "search_energy", "energy_card", "selected_energy_card_id"] or step_id.contains("energy")):
 		return false
-	var source_slot: PokemonSlot = context.get("source_slot", null)
+	var source_slot := _variant_pokemon_slot(context.get("source_slot", null))
 	if source_slot != null and _slot_name_matches_any(source_slot, [ARCHEOPS]):
 		return true
-	var source_card: CardInstance = context.get("source_card", null)
+	var source_card := _variant_card_instance(context.get("source_card", null))
 	if source_card != null and source_card.card_data != null and _name_contains(_best_card_name(source_card.card_data), ARCHEOPS):
 		return true
 	var source_text := "%s %s %s" % [
@@ -973,6 +984,14 @@ func _card_instance_name(card: CardInstance) -> String:
 	if card == null or card.card_data == null:
 		return ""
 	return _best_card_name(card.card_data)
+
+
+func _variant_card_instance(value: Variant) -> CardInstance:
+	return value as CardInstance if value is CardInstance else null
+
+
+func _variant_pokemon_slot(value: Variant) -> PokemonSlot:
+	return value as PokemonSlot if value is PokemonSlot else null
 
 
 func _lugia_shell_fact(payload: Dictionary, game_state: GameState, player_index: int) -> Dictionary:
@@ -1362,6 +1381,13 @@ func _lugia_search_prefer_names(player: PlayerState) -> Array[String]:
 	var prefer: Array[String] = []
 	if player == null:
 		return [LUGIA_VSTAR, ARCHEOPS, CINCCINO, MINCCINO, IRON_HANDS_EX, BLOODMOON_URSALUNA_EX]
+	if _lugia_needs_emergency_basic_bench(player):
+		prefer.append(LUGIA_V)
+		prefer.append(MINCCINO)
+		prefer.append(IRON_HANDS_EX)
+		prefer.append(BLOODMOON_URSALUNA_EX)
+		prefer.append(WELLSPRING_OGERPON_EX)
+		prefer.append(CORNERSTONE_OGERPON_EX)
 	if _lugia_needs_archeops_search(player):
 		prefer.append(ARCHEOPS)
 	if _lugia_needs_vstar_search(player):
@@ -1384,12 +1410,30 @@ func _lugia_search_prefer_names(player: PlayerState) -> Array[String]:
 func _lugia_should_prioritize_backup_basic_search(player: PlayerState) -> bool:
 	if player == null or player.is_bench_full():
 		return false
+	if _lugia_needs_emergency_basic_bench(player):
+		return true
 	if not _has_lugia_vstar_access(player):
 		return false
 	var lugia_field := _count_exact_lugia_v_on_field(player) + _count_exact_name_on_field(player, LUGIA_VSTAR)
 	if lugia_field <= 1 and _count_exact_lugia_v_in_hand(player) == 0:
 		return true
 	return _lugia_high_value_basic_continuity_count(player) == 0
+
+
+func _lugia_needs_emergency_basic_bench(player: PlayerState) -> bool:
+	if player == null or player.active_pokemon == null or player.is_bench_full():
+		return false
+	if not player.bench.is_empty():
+		return false
+	if _count_field_name(player, ARCHEOPS) > 0:
+		return false
+	var lugia_line := _count_field_name(player, LUGIA_V) + _count_field_name(player, LUGIA_VSTAR)
+	var minccino_line := _count_field_name(player, MINCCINO) + _count_field_name(player, CINCCINO)
+	if lugia_line == 0 or minccino_line == 0:
+		return true
+	if _count_field_name(player, LUGIA_VSTAR) == 0:
+		return true
+	return _count_discard_name(player, ARCHEOPS) < 2
 
 
 func _has_lugia_vstar_access(player: PlayerState) -> bool:
@@ -1884,8 +1928,8 @@ func _is_lugia_runtime_setup_action(action: Dictionary, game_state: GameState, p
 
 
 func _is_bad_lugia_energy_attach(action: Dictionary) -> bool:
-	var target_slot: PokemonSlot = action.get("target_slot", null)
-	var card: CardInstance = action.get("card", null)
+	var target_slot := _variant_pokemon_slot(action.get("target_slot", null))
+	var card := _variant_card_instance(action.get("card", null))
 	if target_slot == null or card == null or card.card_data == null:
 		return false
 	if _slot_is_bad_lugia_energy_assignment_target(target_slot):
@@ -1898,10 +1942,10 @@ func _lugia_queued_attach_accepts_runtime_special(queued_action: Dictionary, run
 		return false
 	if not _ref_is_special_energy(queued_action):
 		return false
-	var card: CardInstance = runtime_action.get("card", null)
+	var card := _variant_card_instance(runtime_action.get("card", null))
 	if card == null or card.card_data == null or str(card.card_data.card_type) != "Special Energy":
 		return false
-	var target_slot: PokemonSlot = runtime_action.get("target_slot", null)
+	var target_slot := _variant_pokemon_slot(runtime_action.get("target_slot", null))
 	if target_slot == null or _slot_is_bad_lugia_energy_assignment_target(target_slot):
 		return false
 	var player: PlayerState = game_state.players[player_index]
@@ -1934,7 +1978,7 @@ func _is_bad_lugia_retreat(action: Dictionary, game_state: GameState, player_ind
 	var active := game_state.players[player_index].active_pokemon
 	if active == null:
 		return false
-	var bench_target: PokemonSlot = action.get("bench_target", null)
+	var bench_target := _variant_pokemon_slot(action.get("bench_target", null))
 	if bench_target == null:
 		return false
 	if _slot_name_matches_any(active, [LUGIA_V, LUGIA_VSTAR]) \
@@ -1949,7 +1993,7 @@ func _is_bad_lugia_retreat(action: Dictionary, game_state: GameState, player_ind
 func _is_lugia_productive_end_turn_replacement_retreat(action: Dictionary, game_state: GameState, player_index: int) -> bool:
 	if _is_bad_lugia_retreat(action, game_state, player_index):
 		return false
-	var bench_target: PokemonSlot = action.get("bench_target", null)
+	var bench_target := _variant_pokemon_slot(action.get("bench_target", null))
 	if bench_target == null:
 		return false
 	return _slot_is_ready_lugia_attacker(bench_target)

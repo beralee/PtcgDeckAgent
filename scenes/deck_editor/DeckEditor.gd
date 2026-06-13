@@ -40,6 +40,9 @@ const CATEGORY_TAB_FONT_SIZE := 18
 const CATEGORY_TAB_GAP := 8
 const ACTION_BUTTON_HEIGHT := 104
 const ACTION_BUTTON_FONT_SIZE := 30
+const CARD_DETAIL_TITLE_FONT_SIZE := 40
+const CARD_DETAIL_BODY_FONT_SIZE := 28
+const CARD_DETAIL_CLOSE_FONT_SIZE := 28
 const TILE_LONG_PRESS_SECONDS := 0.42
 const TILE_LONG_PRESS_MOVE_TOLERANCE := 18.0
 
@@ -66,6 +69,7 @@ var _dirty: bool = false
 var _selected_deck_index: int = -1
 ## 右侧选中的卡牌 UID
 var _selected_pool_uid: String = ""
+var _last_selected_card_payload: Dictionary = {}
 
 ## 左侧当前激活的分类标签索引
 var _deck_active_tab: int = 0
@@ -124,6 +128,7 @@ var _card_grid_layout_refresh_passes_remaining := 0
 func _ready() -> void:
 	%BtnSave.pressed.connect(_on_save_pressed)
 	%BtnBack.pressed.connect(_on_back_pressed)
+	%BtnViewCard.pressed.connect(_on_view_card_pressed)
 	%BtnReplace.pressed.connect(_on_replace_pressed)
 	%BtnStrategy.pressed.connect(_on_strategy_pressed)
 	%BtnAI.pressed.connect(_on_ai_pressed)
@@ -161,11 +166,11 @@ func _ready() -> void:
 
 
 func _style_editor_action_buttons() -> void:
-	var buttons: Array[Button] = [%BtnReplace, %BtnSave, %BtnStrategy, %BtnAI, %BtnDiscussAI, %BtnBack]
+	var buttons: Array[Button] = [%BtnViewCard, %BtnReplace, %BtnSave, %BtnStrategy, %BtnAI, %BtnDiscussAI, %BtnBack]
 	for button: Button in buttons:
 		if button == null:
 			continue
-		var accent := HudThemeScript.ACCENT_WARM if button.name in ["BtnReplace", "BtnSave"] else HudThemeScript.ACCENT
+		var accent := HudThemeScript.ACCENT_WARM if button.name in ["BtnViewCard", "BtnReplace", "BtnSave"] else HudThemeScript.ACCENT
 		button.custom_minimum_size = Vector2(0, ACTION_BUTTON_HEIGHT)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.clip_text = true
@@ -427,8 +432,11 @@ func _on_deck_tile_input(event: InputEvent, flat_index: int, set_code: String, c
 func _on_deck_card_pressed(flat_index: int) -> void:
 	if _selected_deck_index == flat_index:
 		_selected_deck_index = -1
+		if str(_last_selected_card_payload.get("kind", "")) == "deck" and int(_last_selected_card_payload.get("flat_index", -1)) == flat_index:
+			_last_selected_card_payload = {}
 	else:
 		_selected_deck_index = flat_index
+		_last_selected_card_payload = _deck_card_payload_for_flat_index(flat_index)
 	_restyle_deck_grid()
 	_update_footer()
 
@@ -448,6 +456,23 @@ func _restyle_deck_grid() -> void:
 
 
 # -- 右侧卡牌池网格 --
+
+func _deck_card_payload_for_flat_index(flat_index: int) -> Dictionary:
+	if flat_index < 0 or _deck == null:
+		return {}
+	var flat := 0
+	for entry: Dictionary in _deck.cards:
+		var count: int = entry.get("count", 0)
+		if flat_index < flat + count:
+			return {
+				"kind": "deck",
+				"flat_index": flat_index,
+				"set_code": str(entry.get("set_code", "")),
+				"card_index": str(entry.get("card_index", "")),
+			}
+		flat += count
+	return {}
+
 
 func _refresh_pool_grid() -> void:
 	for child: Node in %PoolGrid.get_children():
@@ -638,8 +663,11 @@ func _ensure_tile_long_press_timer() -> void:
 func _on_pool_card_pressed(uid: String) -> void:
 	if _selected_pool_uid == uid:
 		_selected_pool_uid = ""
+		if str(_last_selected_card_payload.get("kind", "")) == "pool" and str(_last_selected_card_payload.get("uid", "")) == uid:
+			_last_selected_card_payload = {}
 	else:
 		_selected_pool_uid = uid
+		_last_selected_card_payload = {"kind": "pool", "uid": uid}
 	_restyle_pool_grid()
 	_update_footer()
 
@@ -892,6 +920,11 @@ func _update_footer() -> void:
 	%SelectionLabel.text = "  ".join(parts) if parts.size() > 0 else ""
 
 	var can_replace := deck_name != "" and pool_name != ""
+	var view_card := _get_current_selected_card_for_detail()
+	%BtnViewCard.visible = true
+	%BtnViewCard.disabled = view_card == null
+	%BtnViewCard.text = "查看卡牌"
+	%BtnViewCard.tooltip_text = "查看当前选中卡牌详情" if view_card != null else "先选中一张卡牌"
 	%BtnReplace.visible = true
 	%BtnReplace.disabled = not can_replace
 	%BtnReplace.text = "替换卡牌"
@@ -899,6 +932,38 @@ func _update_footer() -> void:
 		%BtnReplace.tooltip_text = "%s → %s" % [deck_name, pool_name]
 	else:
 		%BtnReplace.tooltip_text = "先在左侧卡组中选一张卡，再在中间卡牌库中选择替换目标"
+
+
+func _on_view_card_pressed() -> void:
+	var card := _get_current_selected_card_for_detail()
+	if card == null:
+		return
+	_show_card_detail(card)
+
+
+func _get_current_selected_card_for_detail() -> CardData:
+	if not _last_selected_card_payload.is_empty():
+		var last_card := _resolve_tile_payload_card(_last_selected_card_payload)
+		if last_card != null and _last_selected_card_payload_still_selected(_last_selected_card_payload):
+			return last_card
+	if _selected_deck_index >= 0:
+		var deck_card := _resolve_tile_payload_card(_deck_card_payload_for_flat_index(_selected_deck_index))
+		if deck_card != null:
+			return deck_card
+	if _selected_pool_uid != "":
+		return _find_pool_card(_selected_pool_uid)
+	return null
+
+
+func _last_selected_card_payload_still_selected(payload: Dictionary) -> bool:
+	if payload.get("card", null) is CardData:
+		return true
+	match str(payload.get("kind", "")):
+		"deck":
+			return int(payload.get("flat_index", -1)) == _selected_deck_index
+		"pool":
+			return str(payload.get("uid", "")) == _selected_pool_uid
+	return false
 
 
 func _get_selected_deck_card_name() -> String:
@@ -973,6 +1038,7 @@ func _do_replace(entry_index: int, pool_card: CardData) -> void:
 	_dirty = true
 	_selected_deck_index = -1
 	_selected_pool_uid = ""
+	_last_selected_card_payload = {}
 	if is_inside_tree():
 		_build_deck_categories()
 		_build_tab_bar(%DeckTabBar, _deck_tab_buttons, true)
@@ -1952,7 +2018,7 @@ func _style_card_detail_overlay() -> void:
 
 	if _card_detail_title != null:
 		_card_detail_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		_card_detail_title.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(20))
+		_card_detail_title.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(CARD_DETAIL_TITLE_FONT_SIZE))
 		_card_detail_title.add_theme_color_override("font_color", Color(1.0, 0.92, 0.68))
 		_card_detail_title.add_theme_color_override("font_outline_color", Color(0.02, 0.04, 0.07, 0.95))
 		_card_detail_title.add_theme_constant_override("outline_size", 2)
@@ -1976,7 +2042,7 @@ func _style_card_detail_overlay() -> void:
 		_card_detail_content.bbcode_enabled = true
 		_card_detail_content.scroll_active = true
 		_card_detail_content.selection_enabled = true
-		_card_detail_content.add_theme_font_size_override("normal_font_size", HudThemeScript.scaled_font_size(14))
+		_card_detail_content.add_theme_font_size_override("normal_font_size", HudThemeScript.scaled_font_size(CARD_DETAIL_BODY_FONT_SIZE))
 		_card_detail_content.add_theme_color_override("default_color", Color(0.86, 0.94, 0.98))
 		_card_detail_content.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.4))
 		_card_detail_content.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
@@ -2004,8 +2070,8 @@ func _style_card_detail_button(button: Button) -> void:
 	button.add_theme_color_override("font_color", Color(0.93, 0.99, 1.0))
 	button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0))
 	button.add_theme_color_override("font_pressed_color", Color(1.0, 1.0, 1.0))
-	button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
-	button.custom_minimum_size = Vector2(42, 32)
+	button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(CARD_DETAIL_CLOSE_FONT_SIZE))
+	button.custom_minimum_size = Vector2(56, 44)
 
 
 func _hide_card_detail() -> void:

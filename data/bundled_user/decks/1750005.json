@@ -1,0 +1,229 @@
+{
+    "cards":  [
+                  {
+                      "card_index":  "031",
+                      "card_type":  "Pokemon",
+                      "count":  4,
+                      "effect_id":  "26d4511ab7a84d662387e992b44f130a",
+                      "name":  "呆呆兽",
+                      "name_en":  "",
+                      "set_code":  "CSV9.5C"
+                  },
+                  {
+                      "card_index":  "072",
+                      "card_type":  "Pokemon",
+                      "count":  3,
+                      "effect_id":  "59d3af627f14b4a65ab4d589f6cb52db",
+                      "name":  "呆呆王",
+                      "name_en":  "Slowking",
+                      "set_code":  "CSV9C"
+                  },
+                  {
+                      "card_index":  "053",
+                      "card_type":  "Pokemon",
+                      "count":  2,
+                      "effect_id":  "2317be04afe1bd94899a29fe09b84d96",
+                      "name":  "天然雀",
+                      "name_en":  "Natu",
+                      "set_code":  "CSV5C"
+                  },
+                  {
+                      "card_index":  "054",
+                      "card_type":  "Pokemon",
+                      "count":  2,
+                      "effect_id":  "bcd9644ea935ce567829f4a76756059b",
+                      "name":  "天然鸟",
+                      "name_en":  "Xatu",
+                      "set_code":  "CSV5C"
+                  },
+                  {
+                      "card_index":  "147",
+                      "card_type":  "Pokemon",
+                      "count":  2,
+                      "effect_id":  "5ed7ff97aa96afb6a023ad8ce6636eba",
+                      "name":  "酋雷姆",
+                      "name_en":  "",
+                      "set_code":  "CSV9C"
+                  },
+                  {
+                      "card_index":  "004",
+                      "card_type":  "Pokemon",
+                      "count":  2,
+                      "effect_id":  "28505a8ad6e07e74382c1b5e09737932",
+                      "name":  "含羞苞",
+                      "name_en":  "",
+                      "set_code":  "CSV9.5C"
+                  },
+                  {
+                      "card_index":  "105",
+                      "card_type":  "Pokemon",
+                      "count":  1,
+                      "effect_id":  "1b951205e53e179bde0905c4a194d9ee",
+                      "name":  "怒鹦哥ex",
+                      "name_en":  "Squawkabilly ex",
+                      "set_code":  "CSV2C"
+                  },
+                  {
+                      "card_index":  "078",
+                      "card_type":  "Pokemon",
+                      "count":  1,
+                      "effect_id":  "f8c2715403e3f4ea9783c46be2de832b",
+                      "name":  "拉帝亚斯ex",
+                      "name_en":  "",
+                      "set_code":  "CSV9C"
+                  },
+                  {
+                      "card_index":  "121",
+                      "card_type":  "Pokemon",
+                      "count":  1,
+                      "effect_id":  "4f25f668ee0ab45c68f6954324c73003",
+                      "name":  "厄诡椪 础石面具ex",
+                      "name_en":  "Cornerstone Mask Ogerpon ex",
+                      "set_code":  "CSV8C"
+                  },
+                  {
+                      "card_index":  "160",
+                      "card_type":  "Pokemon",
+                      "count":  1,
+                      "effect_id":  "1ceeba6dac51ccc19833c5a513fe3fc6",
+                      "name":  "米立龙",
+                      "name_en":  "Tatsugiri",
+                      "set_code":  "CSV8C"
+                  },
+                  {
+                      "card_index":  "056",
+                      "card_type":  "Pokemon",
+                      "count":  1,
+                      "effect_id":  "d699ab2122b5617fe5a5c97e60ae4dac",
+                      "name":  "雷吉奇卡斯",
+                      "name_en":  "Regigigas",
+                      "set_code":  "CS5.5C"
+                  },
+                  {
+                      "card_index":  "135",
+                      "card_type":  "Pokemon",
+                      "count":  1,
+                      "effect_id":  "ab6c3357e2b8a8385a68da738f41e0c1",
+                      "name":  "吉雉鸡ex",
+                      "name_en":  "Fezandipiti ex",
+                      "set_code":  "CSV8C"
+                  },
+                  {
+                      "card_index":  "172",
+                      "card_type":  "Pokemon",
+                      "count":  1,
+                      "effect_id":  "f2afef80b13b8f6a071facbcade0251c",
+                      "name":  "月月熊 赫月ex",
+                      "name_en":  "Bloodmoon Ursaluna ex",
+                      "set_code":  "CSV8C"
+                  },
+                  {
+                      "card_index":  "191",
+                      "card_type":  "Supporter",
+                      "count":  4,
+                      "effect_id":  "1b5fc2ed2bce98ef93457881c05354e2",
+                      "name":  "暗码迷的解读",
+                      "name_en":  "Ciphermaniac\u0027s Codebreaking",
+                      "set_code":  "CSV7C"
+                  },
+                  {
+                      "card_index":  "121",
+                      "card_type":  "Supporter",
+                      "count":  4,
+                      "effect_id":  "aecd80ca2722885c3d062a2255346f3e",
+                      "name":  "博士的研究",
+                      "name_en":  "Professor\u0027s Research",
+                      "set_code":  "CSV1C"
+                  },
+                  {
+                      "card_index":  "123",
+                      "card_type":  "Supporter",
+                      "count":  1,
+                      "effect_id":  "af514f82d182aeae5327b2c360df703d",
+                      "name":  "奇树",
+                      "name_en":  "Iono",
+                      "set_code":  "CSV3C"
+                  },
+                  {
+                      "card_index":  "183",
+                      "card_type":  "Item",
+                      "count":  4,
+                      "effect_id":  "3e6f1daf545dfed48d0588dd50792a2e",
+                      "name":  "夜间担架",
+                      "name_en":  "Night Stretcher",
+                      "set_code":  "CSV8C"
+                  },
+                  {
+                      "card_index":  "112",
+                      "card_type":  "Item",
+                      "count":  4,
+                      "effect_id":  "a337ed34a45e63c6d21d98c3d8e0cb6e",
+                      "name":  "高级球",
+                      "name_en":  "Ultra Ball",
+                      "set_code":  "CSV1C"
+                  },
+                  {
+                      "card_index":  "177",
+                      "card_type":  "Item",
+                      "count":  4,
+                      "effect_id":  "f866dfee26cd6b0dbbb52b74438d0a59",
+                      "name":  "友好宝芬",
+                      "name_en":  "Buddy-Buddy Poffin",
+                      "set_code":  "CSV7C"
+                  },
+                  {
+                      "card_index":  "163",
+                      "card_type":  "Item",
+                      "count":  1,
+                      "effect_id":  "6a7fe7ec3f22c435f50b49909e85b3d3",
+                      "name":  "钓竿MAX",
+                      "name_en":  "",
+                      "set_code":  "CSV9.5C"
+                  },
+                  {
+                      "card_index":  "205",
+                      "card_type":  "Stadium",
+                      "count":  4,
+                      "effect_id":  "e75fad9484071647f96e9f41beeb4a99",
+                      "name":  "夜间学院",
+                      "name_en":  "Academy at Night",
+                      "set_code":  "CSV8C"
+                  },
+                  {
+                      "card_index":  "PSY",
+                      "card_type":  "Basic Energy",
+                      "count":  6,
+                      "effect_id":  "41b2d1a95fafc35e4cf39383ffae928a",
+                      "name":  "基本超能量",
+                      "name_en":  "Psychic Energy",
+                      "set_code":  "CSVE1C"
+                  },
+                  {
+                      "card_index":  "129",
+                      "card_type":  "Special Energy",
+                      "count":  4,
+                      "effect_id":  "1323733f19cc04e54090b39bc1a393b8",
+                      "name":  "喷射能量",
+                      "name_en":  "Jet Energy",
+                      "set_code":  "CSV4C"
+                  },
+                  {
+                      "card_index":  "128",
+                      "card_type":  "Special Energy",
+                      "count":  2,
+                      "effect_id":  "cbadb3473273c14cf667d495d44d111b",
+                      "name":  "逆转能量",
+                      "name_en":  "Reversal Energy",
+                      "set_code":  "CSV2C"
+                  }
+              ],
+    "deck_code":  "",
+    "deck_name":  "17.5呆呆王",
+    "id":  1750005,
+    "import_date":  "2026-06-13T00:28:43",
+    "source_url":  "",
+    "strategy":  "",
+    "total_cards":  60,
+    "updated_at":  1781281723000,
+    "variant_name":  "呆呆王"
+}

@@ -824,6 +824,11 @@ func _prompt_send_out_dialog(pi: int) -> void:
 		_refresh_ui()
 		_maybe_run_ai()
 		return
+	if GameManager.current_mode == GameManager.GameMode.TWO_PLAYER:
+		if _defer_two_player_handover_until_attack_vfx_finished("send_out", func() -> void:
+			_prompt_send_out_dialog(pi)
+		):
+			return
 	if GameManager.current_mode == GameManager.GameMode.TWO_PLAYER and pi != _view_player:
 		_show_handover_prompt(pi, func() -> void:
 			_set_handover_panel_visible(false, "send_out_follow_up")
@@ -872,6 +877,11 @@ func _prompt_heavy_baton_dialog(
 		_refresh_ui()
 		_maybe_run_ai()
 		return
+	if GameManager.current_mode == GameManager.GameMode.TWO_PLAYER:
+		if _defer_two_player_handover_until_attack_vfx_finished("heavy_baton", func() -> void:
+			_prompt_heavy_baton_dialog(pi, bench_targets, energy_count, source_name, source_slot, source_energy)
+		):
+			return
 	if GameManager.current_mode == GameManager.GameMode.TWO_PLAYER and pi != _view_player:
 		_show_handover_prompt(pi, func() -> void:
 			_set_handover_panel_visible(false, "heavy_baton_follow_up")
@@ -914,6 +924,11 @@ func _prompt_exp_share_dialog(
 		_refresh_ui()
 		_maybe_run_ai()
 		return
+	if GameManager.current_mode == GameManager.GameMode.TWO_PLAYER:
+		if _defer_two_player_handover_until_attack_vfx_finished("exp_share", func() -> void:
+			_prompt_exp_share_dialog(pi, bench_targets, source_slot, source_energy)
+		):
+			return
 	if GameManager.current_mode == GameManager.GameMode.TWO_PLAYER and pi != _view_player:
 		_show_handover_prompt(pi, func() -> void:
 			_set_handover_panel_visible(false, "exp_share_follow_up")

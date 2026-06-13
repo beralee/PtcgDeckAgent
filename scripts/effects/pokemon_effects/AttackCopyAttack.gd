@@ -23,7 +23,7 @@ func get_attack_interaction_steps(card: CardInstance, _attack: Dictionary, state
 	var labels: Array[String] = []
 	for attack_index: int in opp_active.get_attacks().size():
 		var copied_attack: Dictionary = opp_active.get_attacks()[attack_index]
-		if copied_attack.get("is_vstar_power", false):
+		if copied_attack.get("is_vstar_power", false) and _is_vstar_power_used_for_player(card.owner_index, state):
 			continue
 		items.append({
 			"source_effect_id": opp_active.get_card_data().effect_id,
@@ -73,6 +73,8 @@ func get_followup_attack_interaction_steps(
 func get_damage_bonus(_attacker: PokemonSlot, _state: GameState) -> int:
 	var option: Dictionary = _get_selected_option()
 	if option.is_empty():
+		return 0
+	if _is_selected_vstar_power_used(option, _attacker, _state):
 		return 0
 	var attack: Dictionary = option.get("attack", {})
 	var total: int = DamageCalculator.new().parse_damage(str(attack.get("damage", "")))
@@ -162,6 +164,8 @@ func execute_attack(
 	var copied_attack_index: int = int(option.get("attack_index", -1))
 	if source_effect_id == "" or copied_attack_index < 0:
 		return
+	if _is_selected_vstar_power_used(option, attacker, state):
+		return
 	_processor.execute_attack_effect_by_id(
 		source_effect_id,
 		copied_attack_index,
@@ -171,6 +175,7 @@ func execute_attack(
 		[get_attack_interaction_context()],
 		AttackCopyAttack
 	)
+	_mark_selected_vstar_power_used(option, attacker, state)
 
 
 func _get_selected_option() -> Dictionary:
@@ -189,6 +194,44 @@ func _has_resolved_copied_followup(context: Dictionary) -> bool:
 		if str(key) != STEP_ID:
 			return true
 	return false
+
+
+func _is_selected_vstar_power_used(option: Dictionary, attacker: PokemonSlot, state: GameState) -> bool:
+	if not _is_selected_vstar_power(option):
+		return false
+	var player_index := _get_attacker_owner_index(attacker)
+	return _is_vstar_power_used_for_player(player_index, state)
+
+
+func _mark_selected_vstar_power_used(option: Dictionary, attacker: PokemonSlot, state: GameState) -> void:
+	if not _is_selected_vstar_power(option):
+		return
+	var player_index := _get_attacker_owner_index(attacker)
+	if player_index < 0 or player_index >= state.vstar_power_used.size():
+		return
+	state.vstar_power_used[player_index] = true
+
+
+func _is_selected_vstar_power(option: Dictionary) -> bool:
+	var attack: Dictionary = option.get("attack", {})
+	return bool(attack.get("is_vstar_power", false))
+
+
+func _get_attacker_owner_index(attacker: PokemonSlot) -> int:
+	if attacker == null:
+		return -1
+	var top_card: CardInstance = attacker.get_top_card()
+	if top_card == null:
+		return -1
+	return top_card.owner_index
+
+
+func _is_vstar_power_used_for_player(player_index: int, state: GameState) -> bool:
+	if state == null:
+		return true
+	if player_index < 0 or player_index >= state.vstar_power_used.size():
+		return true
+	return bool(state.vstar_power_used[player_index])
 
 
 func get_description() -> String:

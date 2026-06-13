@@ -46,6 +46,9 @@ var _pending_heavy_baton_is_active: bool = false
 var _pending_exp_share_player_index: int = -1
 var _pending_exp_share_slot: PokemonSlot = null
 var _pending_exp_share_is_active: bool = false
+var _pending_powerglass_player_index: int = -1
+var _pending_powerglass_slot: PokemonSlot = null
+var _pending_powerglass_tool: CardInstance = null
 var _exp_share_resolved_knockout_slot_ids: Dictionary = {}
 var _pending_prize_player_index: int = -1
 var _pending_prize_remaining: int = 0
@@ -60,6 +63,7 @@ var _deck_order_overrides: Dictionary = {}
 var _attack_damage_knockout_slot_ids: Dictionary = {}
 
 const MAX_SETUP_MULLIGAN_LOOPS: int = 64
+const ATTACK_DAMAGE_COUNTER_PLACEMENT_FLAG := "_attack_damage_counter_effect_slot_ids"
 
 
 func _init() -> void:
@@ -83,6 +87,7 @@ func prepare_for_disposal() -> void:
 	_pending_exp_share_player_index = -1
 	_pending_exp_share_slot = null
 	_pending_exp_share_is_active = false
+	_clear_pending_powerglass_choice()
 	_exp_share_resolved_knockout_slot_ids.clear()
 	_pending_prize_player_index = -1
 	_pending_prize_remaining = 0
@@ -129,6 +134,7 @@ func start_game(deck_1: DeckData, deck_2: DeckData, force_first: int = -1) -> vo
 	_pending_exp_share_player_index = -1
 	_pending_exp_share_slot = null
 	_pending_exp_share_is_active = false
+	_clear_pending_powerglass_choice()
 	_exp_share_resolved_knockout_slot_ids.clear()
 	_attack_damage_knockout_slot_ids.clear()
 	effect_processor = EffectProcessor.new(coin_flipper)
@@ -714,6 +720,50 @@ func _has_player_choice_listener() -> bool:
 	return not player_choice_required.get_connections().is_empty()
 
 
+func _clear_pending_powerglass_choice() -> void:
+	_pending_powerglass_player_index = -1
+	_pending_powerglass_slot = null
+	_pending_powerglass_tool = null
+
+
+func resolve_powerglass_end_turn_choice(player_index: int, targets: Array = []) -> bool:
+	if (
+		_pending_powerglass_slot == null
+		or _pending_powerglass_tool == null
+		or _pending_powerglass_player_index != player_index
+	):
+		return false
+	var pending_slot: PokemonSlot = _pending_powerglass_slot
+	var pending_tool: CardInstance = _pending_powerglass_tool
+	_clear_pending_powerglass_choice()
+	if pending_slot.attached_tool != pending_tool or pending_tool.card_data == null:
+		_finish_advance_to_next_turn()
+		return true
+
+	var tool_effect: BaseEffect = effect_processor.get_effect(pending_tool.card_data.effect_id)
+	if tool_effect != null and tool_effect.has_method("resolve_end_turn_choice"):
+		var attached: Variant = tool_effect.call("resolve_end_turn_choice", pending_slot, targets, game_state)
+		if attached is CardInstance:
+			var energy_card := attached as CardInstance
+			_log_action(
+				GameAction.ActionType.ATTACH_ENERGY,
+				player_index,
+				{
+					"source": "Powerglass",
+					"tool": pending_tool.card_data.name,
+					"card_name": energy_card.card_data.name if energy_card.card_data != null else "",
+					"target": pending_slot.get_pokemon_name(),
+				},
+				"%s attached %s to %s" % [
+					pending_tool.card_data.name,
+					energy_card.card_data.name if energy_card.card_data != null else "Basic Energy",
+					pending_slot.get_pokemon_name(),
+				]
+			)
+	_finish_advance_to_next_turn()
+	return true
+
+
 func _bench_cleanup_context_satisfies_steps(steps: Array[Dictionary], targets: Array) -> bool:
 	var ctx := _bench_cleanup_context_from_targets(targets)
 	if ctx.is_empty():
@@ -806,9 +856,10 @@ func _finalize_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -
 		{"pokemon_name": pokemon_name, "prize_count": prize_count},
 		"玩家%d的 %s 昏厥" % [player_index + 1, pokemon_name])
 
-	if is_active and _knockout_needs_bench_cleanup_before_replacement(player_index):
+	if _knockout_needs_bench_cleanup_before_replacement(player_index):
 		_set_pending_knockout_bench_cleanup(player_index, prize_count, is_active)
-		_enforce_current_bench_limits("knockout_active_before_replacement", player_index)
+		var cleanup_context := "knockout_active_before_replacement" if is_active else "knockout_before_prizes"
+		_enforce_current_bench_limits(cleanup_context, player_index)
 		return false
 
 	return _continue_after_knockout_field_effects(player_index, prize_count, is_active)
@@ -1266,7 +1317,12 @@ func send_out_pokemon(player_index: int, bench_slot: PokemonSlot) -> bool:
 func _advance_to_next_turn() -> void:
 	if _check_win_condition() >= 0:
 		return
-	_discard_expired_tools()
+	if _discard_expired_tools():
+		return
+	_finish_advance_to_next_turn()
+
+
+func _finish_advance_to_next_turn() -> void:
 	if _consume_pending_extra_turn(game_state.current_player_index):
 		_start_turn()
 		return
@@ -1518,12 +1574,16 @@ func play_basic_to_bench(
 
 ## 进化宝可梦
 func evolve_pokemon(player_index: int, evolution: CardInstance, target_slot: PokemonSlot) -> bool:
+	if player_index < 0 or player_index >= game_state.players.size():
+		return false
 	if not _slot_belongs_to_player(target_slot, player_index):
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	if evolution == null or evolution not in player.hand:
 		return false
 	if not rule_validator.can_evolve(game_state, player_index, target_slot, evolution, effect_processor):
 		return false
 
-	var player: PlayerState = game_state.players[player_index]
 	player.hand.erase(evolution)
 	target_slot.pokemon_stack.append(evolution)
 	target_slot.turn_evolved = game_state.turn_number
@@ -1904,8 +1964,14 @@ func get_attack_preview_damage(player_index: int, attack_index: int) -> int:
 	return _calculate_attack_damage(attacker, defender, attacks[attack_index], attack_index)
 
 
-func use_attack(player_index: int, attack_index: int, targets: Array = []) -> bool:
+func _clear_attack_damage_tracking() -> void:
 	_attack_damage_knockout_slot_ids.clear()
+	if game_state != null:
+		game_state.shared_turn_flags.erase(ATTACK_DAMAGE_COUNTER_PLACEMENT_FLAG)
+
+
+func use_attack(player_index: int, attack_index: int, targets: Array = []) -> bool:
+	_clear_attack_damage_tracking()
 	if not can_use_attack(player_index, attack_index):
 		return false
 
@@ -1993,7 +2059,7 @@ func use_granted_attack(
 	granted_attack: Dictionary,
 	targets: Array = []
 ) -> bool:
-	_attack_damage_knockout_slot_ids.clear()
+	_clear_attack_damage_tracking()
 	if not rule_validator.can_use_granted_attack(game_state, player_index, attacker, granted_attack, effect_processor):
 		return false
 
@@ -2160,11 +2226,15 @@ func _record_attack_damage_knockout_candidates(before_damage: Dictionary, damage
 	_attack_damage_knockout_slot_ids.clear()
 	if game_state == null or damaged_player_index < 0 or damaged_player_index >= game_state.players.size():
 		return
+	var raw_counter_marker: Variant = game_state.shared_turn_flags.get(ATTACK_DAMAGE_COUNTER_PLACEMENT_FLAG, {})
+	var counter_placement_slot_ids: Dictionary = raw_counter_marker if raw_counter_marker is Dictionary else {}
 	var player: PlayerState = game_state.players[damaged_player_index]
 	for slot: PokemonSlot in player.get_all_pokemon():
 		if slot == null:
 			continue
 		var slot_id := int(slot.get_instance_id())
+		if counter_placement_slot_ids.has(slot_id):
+			continue
 		var before: int = int(before_damage.get(slot_id, slot.damage_counters))
 		if slot.damage_counters <= before:
 			continue
@@ -2280,7 +2350,8 @@ func _consume_pending_second_attack_if_available(player_index: int) -> bool:
 	return bool(effect.call("consume_second_attack_pending", attacker, game_state))
 
 
-func _discard_expired_tools() -> void:
+func _discard_expired_tools() -> bool:
+	game_state.shared_turn_flags["_draw_effect_processor"] = effect_processor
 	for player: PlayerState in game_state.players:
 		for slot: PokemonSlot in player.get_all_pokemon():
 			if slot == null or slot.attached_tool == null:
@@ -2288,10 +2359,38 @@ func _discard_expired_tools() -> void:
 			var tool_effect: BaseEffect = effect_processor.get_effect(slot.attached_tool.card_data.effect_id)
 			if tool_effect == null or not tool_effect.has_method("discard_at_end_of_turn"):
 				continue
+			if _maybe_request_powerglass_end_turn_choice(player.player_index, slot, tool_effect):
+				return true
 			if not bool(tool_effect.call("discard_at_end_of_turn", slot, game_state)):
 				continue
 			player.discard_pile.append(slot.attached_tool)
 			slot.attached_tool = null
+	return false
+
+
+func _maybe_request_powerglass_end_turn_choice(player_index: int, slot: PokemonSlot, tool_effect: BaseEffect) -> bool:
+	if tool_effect == null or not tool_effect.has_method("get_end_turn_interaction_steps"):
+		return false
+	if not _has_player_choice_listener():
+		return false
+	var steps_raw: Variant = tool_effect.call("get_end_turn_interaction_steps", slot, game_state)
+	var steps: Array[Dictionary] = []
+	if steps_raw is Array:
+		for raw_step: Variant in steps_raw:
+			if raw_step is Dictionary:
+				steps.append(raw_step)
+	if steps.is_empty():
+		return false
+	_pending_powerglass_player_index = player_index
+	_pending_powerglass_slot = slot
+	_pending_powerglass_tool = slot.attached_tool
+	player_choice_required.emit("powerglass_end_turn", {
+		"player": player_index,
+		"card": slot.attached_tool,
+		"slot": slot,
+		"steps": steps,
+	})
+	return true
 
 
 func _get_knockout_prize_count(slot: PokemonSlot) -> int:

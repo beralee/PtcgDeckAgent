@@ -1,6 +1,6 @@
 extends RefCounted
 
-const VERSION := "0.3.2"
-const DISPLAY_VERSION := "v0.3.2"
-const BUILD_NUMBER := 32
+const VERSION := "0.4.1"
+const DISPLAY_VERSION := "v0.4.1"
+const BUILD_NUMBER := 41
 const CHANNEL := "stable"

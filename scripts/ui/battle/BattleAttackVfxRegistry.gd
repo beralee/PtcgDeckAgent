@@ -117,6 +117,28 @@ const COLORLESS_ASSET_SPECS := {
 	"residue": {"path": "res://assets/textures/vfx/attribute_colorless/source/residue_motes.png", "frames": 1},
 }
 
+const BUDEW_ITCHY_POLLEN_ASSET_SPECS := {
+	"impact": {"path": "res://assets/textures/vfx/budew_itchy_pollen/itchy_pollen_flipbook.png", "frames": 4},
+	"residue": {"path": "res://assets/textures/vfx/budew_itchy_pollen/pollen_residue.png", "frames": 1},
+}
+
+var _card_uid_profiles: Dictionary = {
+	"CSV9.5C_004": _make_profile(
+		"signature_budew_itchy_pollen",
+		"itchy_pollen_lock",
+		Color(1.0, 0.62, 0.9, 1.0),
+		Color(0.86, 1.0, 0.34, 1.0),
+		6,
+		2,
+		0.92,
+		{
+			"asset_specs": BUDEW_ITCHY_POLLEN_ASSET_SPECS,
+			"impact_only": true,
+			"disable_generic_shockwave": true,
+		}
+	),
+}
+
 var _hero_profiles: Dictionary = {
 	"dragapult ex": _make_profile(
 		"hero_dragapult_ex",
@@ -447,6 +469,9 @@ static func _make_profile(
 
 func resolve_profile(attacker_card_data: CardData, _attack_name: String = "") -> RefCounted:
 	if attacker_card_data != null:
+		for card_uid: String in _card_uid_profile_candidates(attacker_card_data):
+			if _card_uid_profiles.has(card_uid):
+				return _card_uid_profiles[card_uid] as RefCounted
 		for candidate: String in _hero_profile_candidates(attacker_card_data):
 			if _hero_profiles.has(candidate):
 				return _hero_profiles[candidate] as RefCounted
@@ -471,6 +496,21 @@ func _hero_profile_candidates(card_data: CardData) -> Array[String]:
 	return candidates
 
 
+func _card_uid_profile_candidates(card_data: CardData) -> Array[String]:
+	var candidates: Array[String] = []
+	var set_code: String = String(card_data.set_code).strip_edges()
+	var card_index: String = String(card_data.card_index).strip_edges()
+	if set_code != "" and card_index != "":
+		candidates.append("%s_%s" % [set_code, card_index])
+	var set_code_en: String = String(card_data.set_code_en).strip_edges()
+	var card_index_en: String = String(card_data.card_index_en).strip_edges()
+	if set_code_en != "" and card_index_en != "":
+		var english_uid := "%s_%s" % [set_code_en, card_index_en]
+		if english_uid not in candidates:
+			candidates.append(english_uid)
+	return candidates
+
+
 func get_preview_entries() -> Array[Dictionary]:
 	return [
 		{"label": "Dragapult ex | Phantom Burst", "profile": _hero_profiles.get("dragapult ex")},
@@ -485,6 +525,7 @@ func get_preview_entries() -> Array[Dictionary]:
 		{"label": "Arceus VSTAR | Celestial Lance", "profile": _hero_profiles.get("arceus vstar")},
 		{"label": "Giratina VSTAR | Rift Howl", "profile": _hero_profiles.get("giratina vstar")},
 		{"label": "Dialga VSTAR | Chrono Forge", "profile": _hero_profiles.get("origin forme dialga vstar")},
+		{"label": "Budew | Itchy Pollen", "profile": _card_uid_profiles.get("CSV9.5C_004")},
 		{"label": "Fallback Fire | Flame Burst", "profile": _energy_fallback_profiles.get("R")},
 		{"label": "Fallback Water | Water Arc", "profile": _energy_fallback_profiles.get("W")},
 		{"label": "Fallback Lightning | Thunder Crack", "profile": _energy_fallback_profiles.get("L")},

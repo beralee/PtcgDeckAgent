@@ -4,6 +4,7 @@ extends TestBase
 
 const REGIDRAGO_SCRIPT_PATH := "res://scripts/ai/DeckStrategyRegidrago.gd"
 const LUGIA_SCRIPT_PATH := "res://scripts/ai/DeckStrategyLugiaArcheops.gd"
+const LUGIA_175_SCRIPT_PATH := "res://scripts/ai/DeckStrategy175LugiaArcheops.gd"
 const DIALGA_SCRIPT_PATH := "res://scripts/ai/DeckStrategyDialgaMetang.gd"
 const ARCEUS_SCRIPT_PATH := "res://scripts/ai/DeckStrategyArceusGiratina.gd"
 
@@ -136,6 +137,7 @@ func test_vstar_engine_strategy_scripts_load() -> String:
 	return run_checks([
 		assert_not_null(_load_script(REGIDRAGO_SCRIPT_PATH), "DeckStrategyRegidrago.gd should load"),
 		assert_not_null(_load_script(LUGIA_SCRIPT_PATH), "DeckStrategyLugiaArcheops.gd should load"),
+		assert_not_null(_load_script(LUGIA_175_SCRIPT_PATH), "DeckStrategy175LugiaArcheops.gd should load"),
 		assert_not_null(_load_script(DIALGA_SCRIPT_PATH), "DeckStrategyDialgaMetang.gd should load"),
 		assert_not_null(_load_script(ARCEUS_SCRIPT_PATH), "DeckStrategyArceusGiratina.gd should load"),
 	])
@@ -363,11 +365,12 @@ func test_lugia_search_prefers_archeops_once_lugia_owner_is_already_in_hand() ->
 	if strategy == null:
 		return "DeckStrategyLugiaArcheops.gd should exist before owner-in-hand search priorities can be verified"
 	var gs := _make_game_state(2)
+	gs.players[0].bench.append(_make_slot(_make_pokemon_cd("Minccino", "Basic", "C", 70), 0))
 	gs.players[0].hand.append(CardInstance.create(_make_pokemon_cd("Lugia V", "Basic", "C", 220, "", "V"), 0))
 	var items: Array = [
 		CardInstance.create(_make_pokemon_cd("Archeops", "Stage 2", "C", 150, "Archen"), 0),
 		CardInstance.create(_make_pokemon_cd("Lugia V", "Basic", "C", 220, "", "V"), 0),
-		CardInstance.create(_make_pokemon_cd("Minccino", "Basic", "C", 70), 0),
+		CardInstance.create(_make_pokemon_cd("Fezandipiti ex", "Basic", "D", 210, "", "ex"), 0),
 	]
 	var picked := _best_card_name(strategy, items, "search_pokemon", {"game_state": gs, "player_index": 0, "all_items": items})
 	return assert_eq(picked, "Archeops", "Once Lugia V is already in hand, Lugia should use search to load Archeops before taking a duplicate owner")
@@ -378,11 +381,12 @@ func test_lugia_search_does_not_take_vstar_before_first_owner_hits_field() -> St
 	if strategy == null:
 		return "DeckStrategyLugiaArcheops.gd should exist before VSTAR search timing can be verified"
 	var gs := _make_game_state(2)
+	gs.players[0].bench.append(_make_slot(_make_pokemon_cd("Minccino", "Basic", "C", 70), 0))
 	gs.players[0].hand.append(CardInstance.create(_make_pokemon_cd("Lugia V", "Basic", "C", 220, "", "V"), 0))
 	var items: Array = [
 		CardInstance.create(_make_pokemon_cd("Lugia VSTAR", "VSTAR", "C", 280, "Lugia V", "V"), 0),
 		CardInstance.create(_make_pokemon_cd("Archeops", "Stage 2", "C", 150, "Archen"), 0),
-		CardInstance.create(_make_pokemon_cd("Minccino", "Basic", "C", 70), 0),
+		CardInstance.create(_make_pokemon_cd("Fezandipiti ex", "Basic", "D", 210, "", "ex"), 0),
 	]
 	var picked := _best_card_name(strategy, items, "search_pokemon", {"game_state": gs, "player_index": 0, "all_items": items})
 	return assert_eq(picked, "Archeops", "Before the first Lugia owner is on the field, Lugia should finish shell progress instead of searching Lugia VSTAR")
@@ -653,7 +657,7 @@ func test_lugia_cinccino_damage_model_recognizes_special_energy_scaling() -> Str
 	var forecast: Dictionary = strategy.predict_attacker_damage(cinccino_slot)
 	return run_checks([
 		assert_true(bool(forecast.get("can_attack", false)), "Cinccino with two special energy should be recognized as attack-ready"),
-		assert_eq(int(forecast.get("damage", 0)), 140, "Cinccino damage model should read 2 attached special energy as 140 damage"),
+		assert_eq(int(forecast.get("damage", 0)), 120, "Cinccino damage model should read 2 attached special energy and apply Double Turbo Energy's -20 damage penalty"),
 	])
 
 
@@ -732,13 +736,19 @@ func test_lugia_deck_out_pressure_cools_off_great_ball_once_attacker_is_live() -
 		gs,
 		0
 	)
+	var research_score: float = strategy.score_action_absolute(
+		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Professor's Research", "Supporter"), 0)},
+		gs,
+		0
+	)
 	var attack_score: float = strategy.score_action_absolute(
 		{"kind": "attack", "source_slot": active_lugia, "attack_name": "Tempest Dive", "projected_damage": 220},
 		gs,
 		0
 	)
 	return run_checks([
-		assert_eq(great_ball_score, 0.0, "When the deck is low and Lugia already has a live attacker, Great Ball should cool off instead of burning more redraw churn"),
+		assert_true(great_ball_score < 0.0, "When the deck is low and Lugia already has a live attacker, Great Ball should fall below end-turn instead of tying it (got %f)" % great_ball_score),
+		assert_true(research_score < 0.0, "When the deck is low and Lugia already has a live attacker, Professor's Research should fall below end-turn instead of tying it (got %f)" % research_score),
 		assert_true(attack_score > great_ball_score, "A live attack should outrank deck-out padding search"),
 	])
 
@@ -785,7 +795,7 @@ func test_lugia_deck_out_pressure_cools_off_fezandipiti_draw_once_attacker_is_li
 		0
 	)
 	return run_checks([
-		assert_eq(fez_score, 0.0, "When the deck is low and Lugia already has a live attacker, Fezandipiti draw should cool off instead of pushing toward deck out"),
+		assert_true(fez_score < 0.0, "When the deck is low and Lugia already has a live attacker, Fezandipiti draw should fall below end-turn instead of tying it (got %f)" % fez_score),
 		assert_true(attack_score > fez_score, "A live attack should outrank Fezandipiti redraw churn"),
 	])
 
@@ -1053,10 +1063,10 @@ func test_lugia_convert_retreat_prefers_ready_cinccino_over_nonlethal_lugia_atta
 	cinccino.attached_energy.append(CardInstance.create(_make_energy_cd("Jet Energy", "", "Special Energy"), 0))
 	cinccino.attached_energy.append(CardInstance.create(_make_energy_cd("Mist Energy", "", "Special Energy"), 0))
 	player.bench.append(cinccino)
-	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Target ex", "Basic", "C", 280, "", "ex"), 1)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Target ex", "Basic", "C", 260, "", "ex"), 1)
 	var retreat_score: float = strategy.score_action_absolute({"kind": "retreat", "bench_target": cinccino}, gs, 0)
 	var attack_score: float = strategy.score_action_absolute(
-		{"kind": "attack", "source_slot": active_lugia, "attack_name": "Tempest Dive", "projected_damage": 220},
+		{"kind": "attack", "source_slot": active_lugia, "attack_name": "Tempest Dive", "projected_damage": 200},
 		gs,
 		0
 	)

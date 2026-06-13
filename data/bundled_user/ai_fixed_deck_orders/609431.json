@@ -1,0 +1,27 @@
+{
+  "deck_id": 609431,
+  "deck_name": "17.5 Lugia Archeops",
+  "description": "Strong-mode fixed opening for the 17.5 Lugia Archeops AI deck. The opening hand guarantees Lugia V, Minccino, Wyrdeer V, two Archeops, Ultra Ball, and Lugia VSTAR so the AI can discard both Archeops on turn 1, keep a backup attacker on board, and use Summoning Star on turn 2. The bridge cards preserve Cinccino plus Gift and Jet Energy access after prizes are assigned.",
+  "top_to_bottom": [
+    {"set_code": "CS6aC", "card_index": "102"},
+    {"set_code": "CSV7C", "card_index": "170"},
+    {"set_code": "CS5DC", "card_index": "111"},
+    {"set_code": "CS6aC", "card_index": "113"},
+    {"set_code": "CS6aC", "card_index": "113"},
+    {"set_code": "CSV1C", "card_index": "112"},
+    {"set_code": "CS6aC", "card_index": "103"},
+    {"set_code": "CSV7C", "card_index": "171"},
+    {"set_code": "CS6aC", "card_index": "131"},
+    {"set_code": "CSV4C", "card_index": "129"},
+    {"set_code": "CSNC", "card_index": "024"},
+    {"set_code": "CSV8C", "card_index": "207"},
+    {"set_code": "CSVH1aC", "card_index": "023"},
+    {"set_code": "CSV7C", "card_index": "171"},
+    {"set_code": "CS6aC", "card_index": "131"},
+    {"set_code": "CSV4C", "card_index": "129"},
+    {"set_code": "CS6aC", "card_index": "102"},
+    {"set_code": "CSV6C", "card_index": "051"},
+    {"set_code": "CSV8C", "card_index": "172"},
+    {"set_code": "CSV9.5C", "card_index": "149"}
+  ]
+}

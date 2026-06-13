@@ -1,0 +1,33 @@
+{
+  "deck_id": 610080,
+  "deck_name": "17.5 Gardevoir",
+  "description": "Strong-mode fixed opening for the 17.5 Gardevoir AI deck. The opening hand puts Budew active while two Ralts and Scream Tail develop on the bench, preserving Arven plus two Psychic Energy so TM Evolution can be enabled. Ultra Ball moves into the early bridge while Gardevoir ex and Kirlia stay out of the fragile prize window.",
+  "top_to_bottom": [
+    {"set_code": "CSV9.5C", "card_index": "004"},
+    {"set_code": "CS5aC", "card_index": "043"},
+    {"set_code": "CS5aC", "card_index": "043"},
+    {"set_code": "CSV6C", "card_index": "065"},
+    {"set_code": "CSVE1C", "card_index": "PSY"},
+    {"set_code": "CSV1C", "card_index": "123"},
+    {"set_code": "CSVE1C", "card_index": "PSY"},
+    {"set_code": "CS5bC", "card_index": "052"},
+    {"set_code": "CSV6C", "card_index": "114"},
+    {"set_code": "CSV3C", "card_index": "123"},
+    {"set_code": "CSV6C", "card_index": "125"},
+    {"set_code": "CSV1C", "card_index": "109"},
+    {"set_code": "CSVE1C", "card_index": "DAR"},
+    {"set_code": "CSV6C", "card_index": "115"},
+    {"set_code": "CS6.5C", "card_index": "030"},
+    {"set_code": "CSV2C", "card_index": "055"},
+    {"set_code": "CSV1C", "card_index": "112"},
+    {"set_code": "CS6.5C", "card_index": "030"},
+    {"set_code": "CSV1C", "card_index": "112"},
+    {"set_code": "CS6.5C", "card_index": "033"},
+    {"set_code": "CSV8C", "card_index": "094"},
+    {"set_code": "CSVE1C", "card_index": "DAR"},
+    {"set_code": "CSVE1C", "card_index": "PSY"},
+    {"set_code": "CSV7C", "card_index": "177"},
+    {"set_code": "CSV8C", "card_index": "183"},
+    {"set_code": "CSV2C", "card_index": "055"}
+  ]
+}

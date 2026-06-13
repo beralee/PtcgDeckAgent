@@ -1,0 +1,53 @@
+{
+	"name": "叉字蝠",
+	"card_type": "Pokemon",
+	"mechanic": "",
+	"label": "",
+	"description": "【恶】 毒牙 50\n使对手的战斗宝可梦陷入【中毒】状态。\n\n 重伤啃咬 \n给对手的1只宝可梦，造成30点伤害。如果因为这个招式的伤害，对手的宝可梦【昏厥】的话，则多拿取2张奖赏卡。[备战宝可梦不计算弱点、抗性。]\n\n",
+	"yoren_code": "P169",
+	"set_code": "CS5aC",
+	"card_index": "068",
+	"set_code_en": "SIT",
+	"card_index_en": "105",
+	"name_en": "Crobat",
+	"artist": "Yuya Oka",
+	"rarity": "R",
+	"release_date": "2024-06-18T00:00:00+08:00",
+	"regulation_mark": "F",
+	"effect_id": "930008a5b5f22ceabca6767aafd93a35",
+	"image_url": "https://tcg.mik.moe/static/img/CS5aC/068.png",
+	"image_local_path": "user://cards/images/CS5aC/068.png",
+	"is_tags": [
+		"Stage 2"
+	],
+	"regulation_standard": true,
+	"regulation_expanded": true,
+	"energy_type": "D",
+	"stage": "Stage 2",
+	"hp": 130,
+	"weakness_energy": "F",
+	"weakness_value": "×2",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 0,
+	"evolves_from": "大嘴蝠",
+	"ancient_trait": "",
+	"attacks": [
+		{
+			"name": "毒牙",
+			"text": "使对手的战斗宝可梦陷入【中毒】状态。",
+			"cost": "D",
+			"damage": "50",
+			"is_vstar_power": false
+		},
+		{
+			"name": "重伤啃咬",
+			"text": "给对手的1只宝可梦，造成30点伤害。如果因为这个招式的伤害，对手的宝可梦【昏厥】的话，则多拿取2张奖赏卡。[备战宝可梦不计算弱点、抗性。]",
+			"cost": "CCC",
+			"damage": "",
+			"is_vstar_power": false
+		}
+	],
+	"abilities": [],
+	"energy_provides": ""
+}

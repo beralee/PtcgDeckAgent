@@ -110,7 +110,7 @@ func test_csv8c_181_scoop_up_cyclone_returns_benched_pokemon_stack_and_attachmen
 
 	return run_checks([
 		assert_not_null(effect, "CSV8C_181 effect should be present in EffectProcessor"),
-		assert_eq(steps.size(), 2, "CSV8C_181 should ask for target and replacement when the Active is also selectable"),
+		assert_eq(steps.size(), 1, "CSV8C_181 should first ask only for the Pokemon to return"),
 		assert_true(success, "CSV8C_181 should resolve through GameStateMachine"),
 		assert_false(target in player.bench, "CSV8C_181 should remove the selected Benched Pokemon from play"),
 		assert_contains(player.hand, base, "CSV8C_181 should return the lower Pokemon card to hand"),
@@ -124,6 +124,49 @@ func test_csv8c_181_scoop_up_cyclone_returns_benched_pokemon_stack_and_attachmen
 		assert_false(target.status_conditions.get("poisoned", false), "CSV8C_181 should clear special status from the removed slot"),
 		assert_eq(target.effects.size(), 0, "CSV8C_181 should clear transient slot effects"),
 		assert_contains(player.discard_pile, item, "CSV8C_181 should discard the Item after resolution"),
+	])
+
+
+func test_csv8c_181_scoop_up_cyclone_adds_replacement_only_after_active_target() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+	var player: PlayerState = state.players[0]
+	player.hand.clear()
+	player.discard_pile.clear()
+
+	var active := _make_slot(_make_pokemon_data("Dialga VSTAR", "M", 280, "VSTAR", "VSTAR"), 0)
+	player.active_pokemon = active
+	player.bench.clear()
+	var bench_a := _make_slot(_make_pokemon_data("Duraludon", "M", 130), 0)
+	var bench_b := _make_slot(_make_pokemon_data("Archaludon ex", "M", 300, "Stage 1", "ex"), 0)
+	player.bench.append(bench_a)
+	player.bench.append(bench_b)
+
+	var card_data := _make_trainer_data("Scoop Up Cyclone", "Item", SCOOP_UP_CYCLONE_EFFECT_ID)
+	card_data.is_tags = PackedStringArray(["ACE SPEC"])
+	var item := CardInstance.create(card_data, 0)
+	player.hand.append(item)
+
+	var effect: BaseEffect = gsm.effect_processor.get_effect(SCOOP_UP_CYCLONE_EFFECT_ID)
+	var steps := effect.get_interaction_steps(item, state) if effect != null else []
+	var active_followup := effect.get_followup_interaction_steps(item, state, {
+		"scoop_up_cyclone_target": [active],
+	}) if effect != null else []
+	var bench_followup := effect.get_followup_interaction_steps(item, state, {
+		"scoop_up_cyclone_target": [bench_a],
+	}) if effect != null else []
+	var active_followup_id := str(active_followup[0].get("id", "")) if not active_followup.is_empty() else ""
+	var active_followup_item_count := int((active_followup[0].get("items", []) as Array).size()) if not active_followup.is_empty() else 0
+
+	return run_checks([
+		assert_not_null(effect, "CSV8C_181 effect should be registered"),
+		assert_eq(steps.size(), 1, "CSV8C_181 initial interaction should not pre-build a replacement choice"),
+		assert_true(bool(steps[0].get("requires_followup_interaction", false)), "CSV8C_181 target step should declare that Active targets may need a follow-up"),
+		assert_eq(active_followup.size(), 1, "CSV8C_181 should request a replacement after selecting the Active Pokemon"),
+		assert_eq(active_followup_id, "scoop_up_cyclone_replacement", "CSV8C_181 Active follow-up should be the replacement step"),
+		assert_eq(active_followup_item_count, 2, "CSV8C_181 replacement step should include all Bench Pokemon"),
+		assert_eq(bench_followup.size(), 0, "CSV8C_181 should not ask for a replacement after selecting a Benched Pokemon"),
 	])
 
 

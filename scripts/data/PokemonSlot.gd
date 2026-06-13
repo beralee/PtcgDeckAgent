@@ -31,6 +31,7 @@ var effects: Array[Dictionary] = []
 const ENTERED_ACTIVE_FROM_BENCH_EFFECT_TYPE := "entered_active_from_bench"
 const ENTERED_BENCH_FROM_HAND_EFFECT_TYPE := "entered_bench_from_hand"
 const ABILITY_USED_EFFECT_TYPE := "ability_used"
+const RARE_CANDY_EVOLVED_EFFECT_TYPE := "rare_candy_evolved"
 
 
 ## 获取顶层卡牌（当前形态）
@@ -169,6 +170,30 @@ func entered_bench_from_hand_this_turn(turn_number: int) -> bool:
 	var top_id := int(top.instance_id)
 	for eff: Dictionary in effects:
 		if eff.get("type", "") != ENTERED_BENCH_FROM_HAND_EFFECT_TYPE:
+			continue
+		if int(eff.get("turn", -999)) != turn_number:
+			continue
+		if int(eff.get("card_instance_id", -1)) == top_id:
+			return true
+	return false
+
+
+func mark_rare_candy_evolved(turn_number: int) -> void:
+	var top := get_top_card()
+	effects.append({
+		"type": RARE_CANDY_EVOLVED_EFFECT_TYPE,
+		"turn": turn_number,
+		"card_instance_id": int(top.instance_id) if top != null else -1,
+	})
+
+
+func rare_candy_evolved_this_turn(turn_number: int) -> bool:
+	var top := get_top_card()
+	if top == null:
+		return false
+	var top_id := int(top.instance_id)
+	for eff: Dictionary in effects:
+		if eff.get("type", "") != RARE_CANDY_EVOLVED_EFFECT_TYPE:
 			continue
 		if int(eff.get("turn", -999)) != turn_number:
 			continue

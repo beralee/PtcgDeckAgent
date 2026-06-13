@@ -262,6 +262,36 @@ func test_3178_worker_a_sneasler_poison_peak_only_boosts_opponents_active_poison
 	])
 
 
+func test_3178_worker_a_iron_thorns_suppresses_radiant_sneasler_poison_peak() -> String:
+	var state := _make_state()
+	var processor := EffectProcessor.new()
+	var player: PlayerState = state.players[0]
+	var opponent: PlayerState = state.players[1]
+	var sneasler := _make_slot(_sneasler(), 0)
+	player.bench.append(sneasler)
+
+	var iron_thorns_cd := _pokemon(
+		"Iron Thorns ex",
+		"",
+		[{"name": "Volt Cyclone", "cost": "LC", "damage": "140", "text": "", "is_vstar_power": false}],
+		[{"name": "初始化"}],
+		"L",
+		230,
+		"ex"
+	)
+	iron_thorns_cd.is_tags = ["Future"]
+	opponent.active_pokemon = _make_slot(iron_thorns_cd, 1)
+	opponent.active_pokemon.set_status("poisoned", true)
+
+	processor.register_pokemon_card(sneasler.get_card_data())
+	processor.process_pokemon_check(state)
+
+	return run_checks([
+		assert_true(processor.is_ability_disabled(sneasler, state), "Iron Thorns should disable Radiant Hisuian Sneasler as a Rule Box Pokemon"),
+		assert_eq(opponent.active_pokemon.damage_counters, 10, "Poison Peak should not add extra poison counters while Iron Thorns is active"),
+	])
+
+
 func test_3178_worker_a_sneasler_poison_jab_poison_is_boosted_by_poison_peak() -> String:
 	var gsm := _make_gsm()
 	var player: PlayerState = gsm.game_state.players[0]

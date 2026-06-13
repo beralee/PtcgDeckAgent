@@ -43,6 +43,15 @@ const V17_DECK_STRATEGIES := {
 	1700011: "v17_regidrago",
 }
 
+const V175_STRATEGIES := {
+	"v175_lugia_archeops": "res://scripts/ai/DeckStrategy175LugiaArcheops.gd",
+	"v175_lugia_archeops_llm": "res://scripts/ai/DeckStrategy175LugiaArcheopsLLM.gd",
+}
+
+const V175_DECK_STRATEGIES := {
+	609431: "v175_lugia_archeops",
+}
+
 
 func _load_script(script_path: String) -> GDScript:
 	var script: Variant = load(script_path)
@@ -173,6 +182,27 @@ func test_v17_strategy_scripts_report_matching_strategy_ids() -> String:
 	return run_checks(checks)
 
 
+func test_v175_lugia_strategy_scripts_report_matching_strategy_ids() -> String:
+	var checks: Array[String] = []
+	for strategy_id: String in V175_STRATEGIES.keys():
+		var script_path: String = str(V175_STRATEGIES[strategy_id])
+		var script := _load_script(script_path)
+		checks.append(assert_not_null(script, "%s script should load" % strategy_id))
+		if script == null:
+			continue
+		var strategy = script.new()
+		checks.append(assert_eq(
+			strategy.get_strategy_id(),
+			strategy_id,
+			"%s strategy should report its registry id" % strategy_id
+		))
+		checks.append(assert_true(
+			strategy.get_signature_names().size() > 0,
+			"%s should expose signatures for diagnostics" % strategy_id
+		))
+	return run_checks(checks)
+
+
 func test_v17_targeted_strategies_use_mature_rule_configs() -> String:
 	var expected_min_budget := {
 		"v17_miraidon": 1000,
@@ -223,6 +253,35 @@ func test_registry_resolves_v17_bundled_deck_ids_to_initial_rule_strategies() ->
 	return run_checks(checks)
 
 
+func test_registry_resolves_v175_lugia_bundled_deck_id_to_targeted_strategy() -> String:
+	var registry_script := _load_script(STRATEGY_REGISTRY_SCRIPT_PATH)
+	if registry_script == null:
+		return "DeckStrategyRegistry.gd should load before v17.5 deck id resolution can be tested"
+	var registry = registry_script.new()
+	var checks: Array[String] = []
+	for deck_id: int in V175_DECK_STRATEGIES.keys():
+		var expected_strategy_id := str(V175_DECK_STRATEGIES[deck_id])
+		var deck := DeckData.new()
+		deck.id = deck_id
+		deck.deck_name = "17.5 Lugia test deck"
+		deck.total_cards = 60
+		var resolved_id := str(registry.call("resolve_strategy_id_for_deck", deck))
+		var strategy = registry.call("resolve_strategy_for_deck", deck)
+		checks.append(assert_eq(
+			resolved_id,
+			expected_strategy_id,
+			"Deck %d should resolve by deck id before generic Lugia signature matching" % deck_id
+		))
+		checks.append(assert_not_null(strategy, "Deck %d should instantiate its v17.5 strategy" % deck_id))
+		if strategy != null:
+			checks.append(assert_eq(
+				str(strategy.call("get_strategy_id")),
+				expected_strategy_id,
+				"Deck %d strategy instance should report the v17.5 strategy id" % deck_id
+			))
+	return run_checks(checks)
+
+
 func test_registry_resolves_real_v17_ai_decks_from_card_database() -> String:
 	var registry_script := _load_script(STRATEGY_REGISTRY_SCRIPT_PATH)
 	if registry_script == null:
@@ -245,6 +304,26 @@ func test_registry_resolves_real_v17_ai_decks_from_card_database() -> String:
 				"Bundled AI deck %d should use %s" % [deck_id, expected_strategy_id]
 			))
 	return run_checks(checks)
+
+
+func test_registry_resolves_real_v175_lugia_ai_deck_from_card_database() -> String:
+	var registry_script := _load_script(STRATEGY_REGISTRY_SCRIPT_PATH)
+	if registry_script == null:
+		return "DeckStrategyRegistry.gd should load before real v17.5 AI deck resolution can be tested"
+	var registry = registry_script.new()
+	var card_database := _card_database()
+	var deck: DeckData = card_database.get_ai_deck(609431)
+	if deck == null:
+		return "Bundled AI deck 609431 should load through CardDatabase"
+	var strategy = registry.call("resolve_strategy_for_deck", deck)
+	return run_checks([
+		assert_not_null(strategy, "Bundled AI deck 609431 should resolve to its targeted Lugia rules strategy"),
+		assert_eq(
+			str(strategy.call("get_strategy_id")) if strategy != null else "",
+			"v175_lugia_archeops",
+			"Bundled AI deck 609431 should not fall back to generic lugia_archeops"
+		),
+	])
 
 
 func test_v17_ai_decks_can_start_a_game_with_initial_rule_strategies() -> String:

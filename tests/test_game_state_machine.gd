@@ -7,6 +7,9 @@ const AttackSearchDeckToTopEffect = preload("res://scripts/effects/pokemon_effec
 const AttackBenchCountDamageEffect = preload("res://scripts/effects/pokemon_effects/AttackBenchCountDamage.gd")
 const AttackGreninjaExMirageBarrageEffect = preload("res://scripts/effects/pokemon_effects/AttackGreninjaExMirageBarrage.gd")
 const AttackReturnToDeckEffect = preload("res://scripts/effects/pokemon_effects/AttackReturnToDeck.gd")
+const CardDatabaseScript = preload("res://scripts/autoload/CardDatabase.gd")
+
+var _card_database_fallback: Node = null
 
 
 class ScriptedRuleValidator extends RuleValidator:
@@ -133,6 +136,23 @@ func _make_gsm_with_decks() -> GameStateMachine:
 		gsm.game_state.players.append(player)
 
 	return gsm
+
+
+func _card_database() -> Node:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree != null:
+		var autoload: Node = tree.root.get_node_or_null("CardDatabase")
+		if autoload != null:
+			return autoload
+	if _card_database_fallback == null:
+		_card_database_fallback = CardDatabaseScript.new()
+		_card_database_fallback._ready()
+	return _card_database_fallback
+
+
+func _get_card(set_code: String, card_index: String) -> CardData:
+	var db := _card_database()
+	return db.get_card(set_code, card_index) if db != null else null
 
 
 func test_gsm_instantiate() -> String:
@@ -1407,8 +1427,8 @@ func test_dreepy_rescue_board_allows_zero_cost_retreat_after_attachment() -> Str
 	player.hand.clear()
 	player.discard_pile.clear()
 
-	var dreepy_cd: CardData = CardDatabase.get_card("CSV8C", "157")
-	var rescue_board_cd: CardData = CardDatabase.get_card("CSV7C", "185")
+	var dreepy_cd: CardData = _get_card("CSV8C", "157")
+	var rescue_board_cd: CardData = _get_card("CSV7C", "185")
 
 	var active_slot := PokemonSlot.new()
 	if dreepy_cd != null:
@@ -2131,7 +2151,7 @@ func test_iron_hands_amp_you_very_much_turn_advances_and_attack_is_usable_next_t
 	gsm.game_state.current_player_index = 0
 	gsm.game_state.first_player_index = 0
 
-	var iron_hands_cd: CardData = CardDatabase.get_card("CSV6C", "051")
+	var iron_hands_cd: CardData = _get_card("CSV6C", "051")
 	var attacker_slot := PokemonSlot.new()
 	attacker_slot.pokemon_stack.append(CardInstance.create(iron_hands_cd, 0))
 	for energy_type: String in ["L", "L", "C", "C"]:
@@ -2185,7 +2205,7 @@ func test_iron_hands_arm_press_knockout_advances_turn_after_prize_and_replacemen
 	gsm.game_state.current_player_index = 0
 	gsm.game_state.first_player_index = 0
 
-	var iron_hands_cd: CardData = CardDatabase.get_card("CSV6C", "051")
+	var iron_hands_cd: CardData = _get_card("CSV6C", "051")
 	var attacker_slot := PokemonSlot.new()
 	attacker_slot.pokemon_stack.append(CardInstance.create(iron_hands_cd, 0))
 	for energy_type: String in ["L", "L", "C"]:
@@ -2235,7 +2255,7 @@ func test_send_out_pokemon_rejects_replacement_while_prizes_are_still_pending() 
 	gsm.game_state.current_player_index = 0
 	gsm.game_state.first_player_index = 0
 
-	var iron_hands_cd: CardData = CardDatabase.get_card("CSV6C", "051")
+	var iron_hands_cd: CardData = _get_card("CSV6C", "051")
 	var attacker_slot := PokemonSlot.new()
 	attacker_slot.pokemon_stack.append(CardInstance.create(iron_hands_cd, 0))
 	for energy_type: String in ["L", "L", "C", "C"]:
@@ -2367,6 +2387,89 @@ func test_poison_check_double_active_knockout_resolves_both_prizes_before_replac
 	])
 
 
+func test_roaring_moon_frenzied_gouging_double_active_knockout_allows_both_replacements() -> String:
+	var gsm := _make_gsm_with_decks()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 2
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	var choice_events: Array[Dictionary] = []
+	gsm.player_choice_required.connect(func(choice_type: String, data: Dictionary) -> void:
+		choice_events.append({"type": choice_type, "data": data.duplicate(true)})
+	)
+
+	var roaring_cd: CardData = _get_card("CSV6C", "096")
+	var attacker_slot := PokemonSlot.new()
+	attacker_slot.pokemon_stack.append(CardInstance.create(roaring_cd, 0))
+	attacker_slot.damage_counters = 40
+	for energy_type: String in ["D", "D", "C"]:
+		attacker_slot.attached_energy.append(CardInstance.create(_make_test_energy(energy_type), 0))
+	gsm.effect_processor.register_pokemon_card(roaring_cd)
+	gsm.game_state.players[0].active_pokemon = attacker_slot
+
+	var my_replacement_cd := _make_basic_pokemon_card_data("My Replacement")
+	my_replacement_cd.hp = 120
+	var my_replacement := PokemonSlot.new()
+	my_replacement.pokemon_stack.append(CardInstance.create(my_replacement_cd, 0))
+	gsm.game_state.players[0].bench = [my_replacement]
+
+	var defender_cd := _make_basic_pokemon_card_data("Frenzied Gouging Target")
+	defender_cd.hp = 220
+	defender_cd.mechanic = "ex"
+	var defender_slot := PokemonSlot.new()
+	defender_slot.pokemon_stack.append(CardInstance.create(defender_cd, 1))
+	gsm.game_state.players[1].active_pokemon = defender_slot
+
+	var opp_replacement_cd := _make_basic_pokemon_card_data("Opponent Replacement")
+	opp_replacement_cd.hp = 120
+	var opp_replacement := PokemonSlot.new()
+	opp_replacement.pokemon_stack.append(CardInstance.create(opp_replacement_cd, 1))
+	gsm.game_state.players[1].bench = [opp_replacement]
+
+	for i: int in 6:
+		gsm.game_state.players[0].prizes.append(CardInstance.create(_make_basic_pokemon_card_data("My Prize %d" % i), 0))
+		gsm.game_state.players[1].prizes.append(CardInstance.create(_make_basic_pokemon_card_data("Opp Prize %d" % i), 1))
+
+	var attacked: bool = gsm.use_attack(0, 0)
+	var first_pending_player: int = int(gsm.get("_pending_prize_player_index"))
+	var first_pending_count: int = int(gsm.get("_pending_prize_remaining"))
+	var opponent_took_prize_1: bool = gsm.resolve_take_prize(1, 0)
+	var opponent_took_prize_2: bool = gsm.resolve_take_prize(1, 1)
+	var pending_player_after_opponent_prizes: int = int(gsm.get("_pending_prize_player_index"))
+	var pending_count_after_opponent_prizes: int = int(gsm.get("_pending_prize_remaining"))
+	var phase_after_opponent_prizes: int = gsm.game_state.phase
+	var player_took_prize_1: bool = gsm.resolve_take_prize(0, 0)
+	var player_took_prize_2: bool = gsm.resolve_take_prize(0, 1)
+	var phase_after_all_prizes: int = gsm.game_state.phase
+	var last_choice_player_after_all_prizes: int = int(choice_events.back().get("data", {}).get("player", -1)) if not choice_events.is_empty() else -1
+	var opp_send_out_ok: bool = gsm.send_out_pokemon(1, opp_replacement)
+	var choice_player_after_opp_send_out: int = int(choice_events.back().get("data", {}).get("player", -1)) if not choice_events.is_empty() else -1
+	var my_send_out_ok: bool = gsm.send_out_pokemon(0, my_replacement)
+
+	return run_checks([
+		assert_not_null(roaring_cd, "CSV6C_096 Roaring Moon ex should exist"),
+		assert_true(attacked, "Roaring Moon ex should use Frenzied Gouging"),
+		assert_eq(first_pending_player, 1, "The opponent should first take prizes for Roaring Moon ex's self-KO"),
+		assert_eq(first_pending_count, 2, "Roaring Moon ex should be worth two prizes after self-KO"),
+		assert_true(opponent_took_prize_1, "The opponent should take the first Roaring Moon prize"),
+		assert_true(opponent_took_prize_2, "The opponent should take the second Roaring Moon prize"),
+		assert_eq(pending_player_after_opponent_prizes, 0, "After Roaring Moon prizes, the attacker should take prizes for the opposing Active"),
+		assert_eq(pending_count_after_opponent_prizes, 2, "The opposing ex Active should be worth two prizes"),
+		assert_eq(phase_after_opponent_prizes, GameState.GamePhase.POKEMON_CHECK, "The flow should continue checking KOs before replacement"),
+		assert_true(player_took_prize_1, "The attacker should take the first defender prize"),
+		assert_true(player_took_prize_2, "The attacker should take the second defender prize"),
+		assert_eq(phase_after_all_prizes, GameState.GamePhase.KNOCKOUT_REPLACE, "Replacement should begin only after both active KOs award prizes"),
+		assert_eq(last_choice_player_after_all_prizes, 1, "Opponent should replace their knocked-out Active first"),
+		assert_true(opp_send_out_ok, "Opponent should be able to send out after both prize queues resolve"),
+		assert_eq(choice_player_after_opp_send_out, 0, "After opponent replacement, the attacking player should also replace Roaring Moon ex"),
+		assert_true(my_send_out_ok, "The attacking player should be able to send out after Roaring Moon ex self-KO"),
+		assert_eq(gsm.game_state.players[0].active_pokemon, my_replacement, "The attacking player's replacement should become Active"),
+		assert_eq(gsm.game_state.players[1].active_pokemon, opp_replacement, "The defending player's replacement should become Active"),
+		assert_eq(gsm.game_state.current_player_index, 1, "After both replacements, the turn should pass to the opponent"),
+		assert_eq(gsm.game_state.phase, GameState.GamePhase.MAIN, "After both replacements, the opponent should begin their turn in MAIN"),
+	])
+
+
 func test_dragapult_phantom_dive_awards_prizes_for_active_and_bench_knockouts() -> String:
 	var gsm := _make_gsm_with_decks()
 	gsm.game_state.phase = GameState.GamePhase.MAIN
@@ -2374,7 +2477,7 @@ func test_dragapult_phantom_dive_awards_prizes_for_active_and_bench_knockouts() 
 	gsm.game_state.current_player_index = 0
 	gsm.game_state.first_player_index = 0
 
-	var dragapult_cd: CardData = CardDatabase.get_card("CSV8C", "159")
+	var dragapult_cd: CardData = _get_card("CSV8C", "159")
 	var attacker_slot := PokemonSlot.new()
 	attacker_slot.pokemon_stack.append(CardInstance.create(dragapult_cd, 0))
 	for energy_type: String in ["R", "P"]:
@@ -2432,6 +2535,70 @@ func test_dragapult_phantom_dive_awards_prizes_for_active_and_bench_knockouts() 
 	])
 
 
+func test_dragapult_phantom_dive_counter_knockout_does_not_reduce_legacy_energy_prizes() -> String:
+	var gsm := _make_gsm_with_decks()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 2
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+
+	var dragapult_cd: CardData = _get_card("CSV8C", "159")
+	var attacker_slot := PokemonSlot.new()
+	attacker_slot.pokemon_stack.append(CardInstance.create(dragapult_cd, 0))
+	for energy_type: String in ["R", "P"]:
+		attacker_slot.attached_energy.append(CardInstance.create(_make_test_energy(energy_type), 0))
+	gsm.effect_processor.register_pokemon_card(dragapult_cd)
+	gsm.game_state.players[0].active_pokemon = attacker_slot
+
+	var active_target_cd := CardData.new()
+	active_target_cd.name = "High HP Active"
+	active_target_cd.card_type = "Pokemon"
+	active_target_cd.stage = "Basic"
+	active_target_cd.hp = 320
+	active_target_cd.energy_type = "W"
+	var active_target := PokemonSlot.new()
+	active_target.pokemon_stack.append(CardInstance.create(active_target_cd, 1))
+	gsm.game_state.players[1].active_pokemon = active_target
+
+	var bench_target_cd := CardData.new()
+	bench_target_cd.name = "Legacy Bench ex"
+	bench_target_cd.card_type = "Pokemon"
+	bench_target_cd.stage = "Basic"
+	bench_target_cd.hp = 60
+	bench_target_cd.energy_type = "W"
+	bench_target_cd.mechanic = "ex"
+	var bench_target := PokemonSlot.new()
+	bench_target.pokemon_stack.append(CardInstance.create(bench_target_cd, 1))
+	var legacy_energy_cd := CardData.new()
+	legacy_energy_cd.name = "Legacy Energy"
+	legacy_energy_cd.name_en = "Legacy Energy"
+	legacy_energy_cd.card_type = "Special Energy"
+	legacy_energy_cd.effect_id = "6f31b7241a181631016466e561f148f3"
+	bench_target.attached_energy.append(CardInstance.create(legacy_energy_cd, 1))
+	gsm.game_state.players[1].bench = [bench_target]
+
+	for i: int in 6:
+		gsm.game_state.players[0].prizes.append(CardInstance.create(active_target_cd, 0))
+		gsm.game_state.players[1].prizes.append(CardInstance.create(active_target_cd, 1))
+
+	var attacked: bool = gsm.use_attack(0, 1, [{
+		"bench_damage_counters": [
+			{"target": bench_target, "amount": 60},
+		],
+	}])
+	var pending_prizes: int = int(gsm.get("_pending_prize_remaining"))
+	var legacy_consumed := bool(gsm.game_state.shared_turn_flags.get("legacy_energy_prize_reduction_used_1", false))
+
+	return run_checks([
+		assert_not_null(dragapult_cd, "CSV8C_159 should exist in the card database"),
+		assert_true(attacked, "CSV8C_159 Phantom Dive should resolve successfully"),
+		assert_eq(active_target.damage_counters, 200, "Phantom Dive should damage the Active without knocking it out in this fixture"),
+		assert_eq(bench_target.damage_counters, 60, "Phantom Dive should place 6 counters on the Benched Pokemon"),
+		assert_eq(pending_prizes, 2, "Legacy Energy should not reduce prizes when Phantom Dive only placed damage counters on the Benched Pokemon"),
+		assert_false(legacy_consumed, "Legacy Energy's once-per-game reduction should not be consumed by damage-counter placement knockouts"),
+	])
+
+
 func test_dragapult_phantom_dive_does_not_prompt_send_out_when_only_knocked_out_bench_remains() -> String:
 	var gsm := _make_gsm_with_decks()
 	gsm.game_state.phase = GameState.GamePhase.MAIN
@@ -2439,7 +2606,7 @@ func test_dragapult_phantom_dive_does_not_prompt_send_out_when_only_knocked_out_
 	gsm.game_state.current_player_index = 0
 	gsm.game_state.first_player_index = 0
 
-	var dragapult_cd: CardData = CardDatabase.get_card("CSV8C", "159")
+	var dragapult_cd: CardData = _get_card("CSV8C", "159")
 	var attacker_slot := PokemonSlot.new()
 	attacker_slot.pokemon_stack.append(CardInstance.create(dragapult_cd, 0))
 	for energy_type: String in ["R", "P"]:
@@ -2504,7 +2671,7 @@ func test_dragapult_phantom_dive_active_knockout_hands_turn_to_opponent_after_re
 	gsm.game_state.current_player_index = 0
 	gsm.game_state.first_player_index = 0
 
-	var dragapult_cd: CardData = CardDatabase.get_card("CSV8C", "159")
+	var dragapult_cd: CardData = _get_card("CSV8C", "159")
 	var attacker_slot := PokemonSlot.new()
 	attacker_slot.pokemon_stack.append(CardInstance.create(dragapult_cd, 0))
 	for energy_type: String in ["R", "P"]:

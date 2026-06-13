@@ -7,6 +7,7 @@ var energy_filter: String = "L"
 var max_count: int = 2
 
 const USED_KEY: String = "ability_search_pokemon_to_bench_used"
+const SUMMONED_KEY: String = "ability_search_pokemon_to_bench_summoned"
 
 
 func _init(e_filter: String = "L", count: int = 2) -> void:
@@ -95,6 +96,11 @@ func execute_ability(
 		var slot := PokemonSlot.new()
 		slot.pokemon_stack.append(poke_card)
 		slot.turn_played = state.turn_number
+		slot.effects.append({
+			"type": SUMMONED_KEY,
+			"turn": state.turn_number,
+			"source_instance_id": int(top.instance_id),
+		})
 		player.bench.append(slot)
 
 	player.shuffle_deck()
@@ -102,9 +108,11 @@ func execute_ability(
 
 
 func _mark_used(pokemon: PokemonSlot, state: GameState) -> void:
+	var top := pokemon.get_top_card()
 	pokemon.effects.append({
 		"type": USED_KEY,
 		"turn": state.turn_number,
+		"source_instance_id": int(top.instance_id) if top != null else -1,
 	})
 
 

@@ -4,10 +4,12 @@ extends BaseEffect
 const STEP_ID := "lanas_aid_cards"
 
 var recover_count: int = 3
+var include_rule_box_pokemon: bool = false
 
 
-func _init(count: int = 3) -> void:
+func _init(count: int = 3, allow_rule_box_pokemon: bool = false) -> void:
 	recover_count = count
+	include_rule_box_pokemon = allow_rule_box_pokemon
 
 
 func can_execute(card: CardInstance, state: GameState) -> bool:
@@ -27,9 +29,12 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 			continue
 		items.append(discard_card)
 		labels.append(discard_card.card_data.name)
+	var title := "Choose up to %d Pokemon and Basic Energy from discard" % recover_count
+	if not include_rule_box_pokemon:
+		title = "Choose up to %d non-rule-box Pokemon and Basic Energy from discard" % recover_count
 	return [{
 		"id": STEP_ID,
-		"title": "Choose up to %d non-rule-box Pokemon and Basic Energy from discard" % recover_count,
+		"title": title,
 		"items": items,
 		"labels": labels,
 		"min_select": 0,
@@ -67,8 +72,12 @@ func _matches_card(card: CardInstance) -> bool:
 	var cd: CardData = card.card_data
 	if cd.card_type == "Basic Energy":
 		return true
-	return cd.is_pokemon() and not cd.is_rule_box_pokemon()
+	if not cd.is_pokemon():
+		return false
+	return include_rule_box_pokemon or not cd.is_rule_box_pokemon()
 
 
 func get_description() -> String:
-	return "Recover up to three non-rule-box Pokemon and Basic Energy cards from discard to hand."
+	if include_rule_box_pokemon:
+		return "Recover up to %d Pokemon and Basic Energy cards from discard to hand." % recover_count
+	return "Recover up to %d non-rule-box Pokemon and Basic Energy cards from discard to hand." % recover_count

@@ -273,6 +273,7 @@ func _suppress_action_hud_open_input(source: String = "action_hud_open", duratio
 	_action_hud_open_input_suppress_has_position = origin_position.x >= 0.0 and origin_position.y >= 0.0
 	_action_hud_open_input_suppress_position = origin_position if _action_hud_open_input_suppress_has_position else Vector2.ZERO
 	_action_hud_open_position_guard_until_msec = Time.get_ticks_msec() + ACTION_HUD_OPEN_POSITION_GUARD_MSEC if _action_hud_open_input_suppress_has_position else 0
+	_action_hud_open_input_suppress_source = source
 	_runtime_log("action_hud_open_input_suppressed", "source=%s duration=%d" % [source, resolved_duration])
 
 
@@ -291,7 +292,7 @@ func _consume_action_hud_open_input_if_needed(event: InputEvent, source: String 
 		return false
 	if not _is_slot_followup_click_event(event):
 		return false
-	if not in_time_guard and not _action_hud_open_event_matches_suppress_position(event):
+	if not _should_consume_action_hud_open_followup_event(event, in_time_guard, in_position_guard):
 		return false
 	_cancel_slot_touch_long_press(false)
 	_clear_action_hud_open_input_guard()
@@ -303,11 +304,27 @@ func _consume_action_hud_open_input_if_needed(event: InputEvent, source: String 
 
 
 
+func _should_consume_action_hud_open_followup_event(event: InputEvent, in_time_guard: bool, in_position_guard: bool) -> bool:
+	if event is InputEventScreenTouch:
+		if not _action_hud_open_input_suppress_has_position:
+			return in_time_guard
+		return _action_hud_open_event_matches_suppress_position(event)
+	if event is InputEventMouseButton:
+		if _action_hud_open_input_suppress_source == "slot_touch_release":
+			return in_time_guard or in_position_guard
+		if not _action_hud_open_input_suppress_has_position:
+			return in_time_guard
+		return _action_hud_open_event_matches_suppress_position(event)
+	return in_time_guard
+
+
+
 func _clear_action_hud_open_input_guard() -> void:
 	_action_hud_open_input_suppress_until_msec = 0
 	_action_hud_open_position_guard_until_msec = 0
 	_action_hud_open_input_suppress_position = Vector2.ZERO
 	_action_hud_open_input_suppress_has_position = false
+	_action_hud_open_input_suppress_source = ""
 
 
 
@@ -687,7 +704,14 @@ func _stop_battle_discussion_flash() -> void:
 
 
 func _can_accept_live_action() -> bool:
-	return not _is_review_mode() and not _draw_reveal_active and not _ai_llm_waiting and not _is_ai_action_pause_active() and _pending_choice != "take_prize"
+	return (
+		not _is_review_mode()
+		and not _draw_reveal_active
+		and not _ai_llm_waiting
+		and not _is_ai_action_pause_active()
+		and not _handover_attack_vfx_delay_active
+		and _pending_choice != "take_prize"
+	)
 
 
 
@@ -1206,6 +1230,92 @@ func _show_handover_prompt(target_player: int, follow_up: Callable = Callable())
 	_sync_battle_overlay_state_from_scene()
 
 
+func _has_active_attack_vfx() -> bool:
+	if _battle_attack_vfx_controller == null:
+		return false
+	if not _battle_attack_vfx_controller.has_method("has_active_attack_vfx"):
+		return false
+	return bool(_battle_attack_vfx_controller.call("has_active_attack_vfx", self))
+
+
+func _should_defer_two_player_handover_for_attack_vfx() -> bool:
+	if GameManager.current_mode != GameManager.GameMode.TWO_PLAYER:
+		return false
+	if _battle_mode != "live":
+		return false
+	if _gsm == null or _gsm.game_state == null:
+		return false
+	if _gsm.game_state.phase == GameState.GamePhase.GAME_OVER:
+		return false
+	return _handover_attack_vfx_delay_active or _has_active_attack_vfx()
+
+
+func _defer_two_player_handover_until_attack_vfx_finished(reason: String, follow_up: Callable = Callable()) -> bool:
+	if not _should_defer_two_player_handover_for_attack_vfx():
+		return false
+	_set_handover_panel_visible(false, "attack_vfx_handover_delay_%s" % reason)
+	if follow_up.is_valid():
+		_pending_attack_vfx_completion_action = follow_up
+		_pending_attack_vfx_completion_reason = reason
+	if _handover_attack_vfx_delay_active:
+		_runtime_log("handover_attack_vfx_delay_pending", "reason=%s %s" % [reason, _state_snapshot()])
+		return true
+	_handover_attack_vfx_delay_active = true
+	_handover_attack_vfx_delay_token += 1
+	_runtime_log("handover_attack_vfx_delay_start", "reason=%s %s" % [reason, _state_snapshot()])
+	_schedule_attack_vfx_handover_delay_poll(_handover_attack_vfx_delay_token, reason)
+	return true
+
+
+func _schedule_attack_vfx_handover_delay_poll(token: int, reason: String) -> void:
+	if not is_inside_tree():
+		_handover_attack_vfx_delay_timer = null
+		return
+	var timer: SceneTreeTimer = get_tree().create_timer(HANDOVER_ATTACK_VFX_RECHECK_SECONDS)
+	_handover_attack_vfx_delay_timer = timer
+	timer.timeout.connect(func() -> void:
+		_poll_attack_vfx_handover_delay(token, reason)
+	)
+
+
+func _poll_attack_vfx_handover_delay(token: int, reason: String) -> void:
+	if token != _handover_attack_vfx_delay_token:
+		return
+	if not _handover_attack_vfx_delay_active:
+		return
+	if GameManager.current_mode != GameManager.GameMode.TWO_PLAYER or _battle_mode != "live":
+		_clear_attack_vfx_handover_delay("invalid_context_%s" % reason)
+		return
+	if _gsm == null or _gsm.game_state == null or _gsm.game_state.phase == GameState.GamePhase.GAME_OVER:
+		_clear_attack_vfx_handover_delay("game_over_%s" % reason)
+		return
+	if _has_active_attack_vfx():
+		_schedule_attack_vfx_handover_delay_poll(token, reason)
+		return
+	_finish_attack_vfx_handover_delay(token, reason)
+
+
+func _finish_attack_vfx_handover_delay(token: int, reason: String) -> void:
+	if token != _handover_attack_vfx_delay_token:
+		return
+	if not _handover_attack_vfx_delay_active:
+		return
+	var follow_up := _pending_attack_vfx_completion_action
+	_clear_attack_vfx_handover_delay("finish_%s" % reason)
+	if follow_up.is_valid():
+		follow_up.call()
+		return
+	_check_two_player_handover()
+
+
+func _clear_attack_vfx_handover_delay(reason: String) -> void:
+	_handover_attack_vfx_delay_active = false
+	_handover_attack_vfx_delay_timer = null
+	_pending_attack_vfx_completion_action = Callable()
+	_pending_attack_vfx_completion_reason = ""
+	_runtime_log("handover_attack_vfx_delay_clear", "reason=%s %s" % [reason, _state_snapshot()])
+
+
 
 func _set_handover_panel_visible(visible_state: bool, reason: String) -> void:
 	if _handover_panel == null:
@@ -1600,6 +1710,7 @@ func _refresh_ui_after_successful_action(check_handover: bool = false, action_pl
 	if has_method("_arm_hand_primary_release_fallback_window"):
 		call("_arm_hand_primary_release_fallback_window", "successful_action")
 	_hide_invalid_action_hint()
+	_ready_vfx_trigger_source_player_index = action_player_index
 	_refresh_ui()
 	if check_handover:
 		_check_two_player_handover()
@@ -1969,6 +2080,35 @@ func _start_ai_action_pause() -> void:
 	)
 
 
+func _check_ready_vfx_triggers() -> void:
+	if _is_review_mode():
+		return
+	if _gsm == null or _gsm.game_state == null:
+		return
+	var trigger_source_player_index := _ready_vfx_trigger_source_player_index
+	_ready_vfx_trigger_source_player_index = -1
+	if trigger_source_player_index < 0:
+		return
+	if _battle_ready_vfx_evaluator == null:
+		_battle_ready_vfx_evaluator = BattleReadyVfxEvaluatorScript.new()
+	if _battle_ready_vfx_controller == null:
+		_battle_ready_vfx_controller = BattleReadyVfxControllerScript.new()
+	var triggers_variant: Variant = _battle_ready_vfx_evaluator.call("find_ready_triggers", _gsm.game_state)
+	if not (triggers_variant is Array):
+		return
+	for trigger_variant: Variant in triggers_variant:
+		if not (trigger_variant is Dictionary):
+			continue
+		var trigger: Dictionary = trigger_variant
+		if int(trigger.get("player_index", -1)) != trigger_source_player_index:
+			continue
+		var ready_key := str(trigger.get("ready_key", ""))
+		if ready_key == "" or _ready_vfx_seen_keys.has(ready_key):
+			continue
+		_ready_vfx_seen_keys[ready_key] = true
+		_battle_ready_vfx_controller.call("play_ready_vfx", self, trigger)
+
+
 
 func _refresh_ui() -> void:
 	_trace_portrait_layout_stage("scene.refresh_ui.before_display")
@@ -1985,3 +2125,4 @@ func _refresh_ui() -> void:
 	_finalize_portrait_layout_constraints()
 	_trace_portrait_layout_stage("scene.refresh_ui.after_finalize")
 	call_deferred("_deferred_finalize_portrait_layout_constraints")
+	_check_ready_vfx_triggers()

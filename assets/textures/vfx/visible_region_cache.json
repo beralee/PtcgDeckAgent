@@ -247,6 +247,24 @@
       279,
       199
     ],
+    "res://assets/textures/vfx/budew_itchy_pollen/itchy_pollen_flipbook.png": [
+      19,
+      4,
+      480,
+      118
+    ],
+    "res://assets/textures/vfx/budew_itchy_pollen/pollen_residue.png": [
+      12,
+      14,
+      103,
+      98
+    ],
+    "res://assets/textures/vfx/budew_itchy_pollen/sheet_transparent_preview.png": [
+      0,
+      6,
+      253,
+      244
+    ],
     "res://assets/textures/vfx/charizard_ex/mid_stream/embers_smoke_flipbook.png": [
       7,
       56,

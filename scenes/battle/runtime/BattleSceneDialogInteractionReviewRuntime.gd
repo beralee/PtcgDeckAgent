@@ -1786,6 +1786,12 @@ func _show_hand_card_detail(inst: CardInstance) -> void:
 
 
 
+func _show_selected_hand_card_detail(inst: CardInstance) -> void:
+	_ensure_battle_card_detail_coordinator()
+	_battle_card_detail_coordinator.call("show_selected_hand_card_detail", inst)
+
+
+
 func _should_hand_card_click_select_directly(inst: CardInstance) -> bool:
 	_ensure_battle_card_detail_coordinator()
 	return bool(_battle_card_detail_coordinator.call("should_hand_card_click_select_directly", inst))

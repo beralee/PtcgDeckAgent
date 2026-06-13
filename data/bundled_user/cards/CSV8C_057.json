@@ -1,0 +1,52 @@
+{
+	"abilities": [
+		{
+			"name": "璀璨鳞片",
+			"text": "这只宝可梦，不受到对手「太晶」宝可梦所使用招式的伤害和效果影响。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "hncl",
+	"attacks": [
+		{
+			"cost": "WCC",
+			"damage": "160",
+			"is_vstar_power": false,
+			"name": "催眠飞溅",
+			"text": "令对手的战斗宝可梦陷入【睡眠】状态。"
+		}
+	],
+	"card_index": "057",
+	"card_index_en": "42",
+	"card_type": "Pokemon",
+	"description": "特性: 璀璨鳞片\n这只宝可梦，不受到对手「太晶」宝可梦所使用招式的伤害和效果影响。\n\n【水】 催眠飞溅 160\n令对手的战斗宝可梦陷入【睡眠】状态。\n\n",
+	"effect_id": "57e95f8cb1129f6b45b7bbbc1a45b643",
+	"energy_provides": "",
+	"energy_type": "W",
+	"evolves_from": "丑丑鱼",
+	"hp": 270,
+	"image_local_path": "user://cards/images/CSV8C/057.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV8C/057.png",
+	"is_tags": [
+		"ex",
+		"Stage 1"
+	],
+	"label": "",
+	"mechanic": "ex",
+	"name": "美纳斯ex",
+	"name_en": "Milotic ex",
+	"rarity": "RR",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-03-13T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CSV8C",
+	"set_code_en": "SSP",
+	"stage": "Stage 1",
+	"weakness_energy": "L",
+	"weakness_value": "×2",
+	"yoren_code": "Y1446"
+}

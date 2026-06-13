@@ -1424,6 +1424,25 @@ func test_rules_prefers_bench_gardevoir_ex_evolution_over_active_kirlia() -> Str
 	])
 
 
+func test_rules_allows_active_first_gardevoir_when_bench_kirlia_just_evolved() -> String:
+	var gs := _make_game_state(8)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_require_card(KIRLIA_SET, KIRLIA_INDEX), 0)
+	var fresh_bench_kirlia := _make_slot(_require_card(KIRLIA_SET, KIRLIA_INDEX), 0)
+	fresh_bench_kirlia.turn_evolved = gs.turn_number
+	player.bench.append(fresh_bench_kirlia)
+	player.bench.append(_make_slot(_make_scream_tail_cd(), 0))
+	var gardevoir_card := CardInstance.create(_require_card(GARDEVOIR_SET, GARDEVOIR_INDEX), 0)
+	var s := _new_strategy()
+	var active_score: float = s.score_action_absolute(
+		{"kind": "evolve", "card": gardevoir_card, "target_slot": player.active_pokemon},
+		gs,
+		0
+	)
+	return assert_true(active_score >= 700.0,
+		"When the only bench Kirlia just evolved this turn, active Kirlia is the only legal first Gardevoir ex route and should not be protected away (active=%f)" % active_score)
+
+
 func test_rules_blocks_second_active_gardevoir_ex_after_bench_engine_online() -> String:
 	var gs := _make_game_state(8)
 	var player := gs.players[0]

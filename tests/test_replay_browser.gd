@@ -106,6 +106,40 @@ func test_main_menu_uses_hud_buttons_shifted_down() -> String:
 	return result
 
 
+func test_main_menu_budew_mascot_dodges_click_without_blocking_menu_layer() -> String:
+	var scene: Control = load("res://scenes/main_menu/MainMenu.tscn").instantiate()
+	scene.call("_ensure_budew_mascot")
+	var layer := scene.get_node_or_null("BudewMascotLayer") as Control
+	var sprite := scene.get_node_or_null("BudewMascotLayer/BudewMascotSprite") as TextureRect
+	var start := Vector2(120.0, 500.0)
+	scene.set("_budew_mascot_position", start)
+	var sprite_size: Vector2 = scene.call("_budew_mascot_display_size")
+	var click_position := start + sprite_size * 0.5
+	var target: Vector2 = scene.call("_budew_mascot_dodge_target_for_click", click_position)
+	var left_click_target: Vector2 = scene.call("_budew_mascot_dodge_target_for_click", start + Vector2(2.0, sprite_size.y * 0.5))
+	var right_click_target: Vector2 = scene.call("_budew_mascot_dodge_target_for_click", start + Vector2(sprite_size.x - 2.0, sprite_size.y * 0.5))
+	scene.call("_apply_budew_mascot_dodge", 0.5, start, target)
+	var mid_jump := float(scene.get("_budew_mascot_jump_offset"))
+	scene.call("_apply_budew_mascot_dodge", 1.0, start, target)
+	var end_position := scene.get("_budew_mascot_position") as Vector2
+
+	var result := run_checks([
+		assert_not_null(layer, "Main menu should create the Budew mascot layer"),
+		assert_not_null(sprite, "Main menu should create the Budew mascot sprite"),
+		assert_eq(layer.mouse_filter if layer != null else -1, Control.MOUSE_FILTER_IGNORE, "Budew layer should not block normal main-menu controls"),
+		assert_eq(sprite.mouse_filter if sprite != null else -1, Control.MOUSE_FILTER_STOP, "Budew sprite should receive clicks for the playful dodge"),
+		assert_true(absf(target.x - start.x) >= 80.0, "Budew dodge target should move sideways instead of only bobbing in place"),
+		assert_true(left_click_target.x > start.x, "Clicking Budew's left side should make it dodge right"),
+		assert_true(right_click_target.x < start.x, "Clicking Budew's right side should make it dodge left"),
+		assert_true(target.distance_to(click_position) > start.distance_to(click_position) + 36.0, "Budew dodge target should be farther from the click point"),
+		assert_true(mid_jump > 20.0, "Budew dodge should include a visible jump arc"),
+		assert_eq(end_position, target, "Budew dodge tween should land on the computed target"),
+	])
+
+	scene.queue_free()
+	return result
+
+
 func test_main_menu_about_mentions_tcg_mik_dependency() -> String:
 	var scene: Control = load("res://scenes/main_menu/MainMenu.tscn").instantiate()
 	var about_text: String = scene.call("_format_about_text")

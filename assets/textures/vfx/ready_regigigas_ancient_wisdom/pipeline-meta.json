@@ -1,0 +1,254 @@
+{
+  "target": "creature",
+  "mode": "charge",
+  "prompt": "Body-first Regigigas ancient-wisdom ready animation; titan Pokemon body is the primary subject in every frame with attached regi crystal echoes.",
+  "role": "",
+  "input": "assets\\textures\\vfx\\ready_regigigas_ancient_wisdom\\raw-sheet.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 1620,
+  "rows": 2,
+  "cols": 3,
+  "cell_size": 256,
+  "fit_scale": 0.76,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "center",
+  "shared_scale": true,
+  "component_mode": "largest",
+  "component_padding": 8,
+  "min_component_area": 32,
+  "edge_touch_margin": 0,
+  "frame_labels": [
+    "ready-1",
+    "ready-2",
+    "ready-3",
+    "ready-4",
+    "ready-5",
+    "ready-6"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 73116,
+      "selected_component_bbox": [
+        53,
+        157,
+        474,
+        440
+      ],
+      "crop_bbox": [
+        45,
+        149,
+        482,
+        448
+      ],
+      "edge_touch": false,
+      "output_size": [
+        176,
+        120
+      ],
+      "paste_position": [
+        40,
+        68
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        512,
+        0,
+        1024,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 9,
+      "selected_component_area": 75956,
+      "selected_component_bbox": [
+        35,
+        156,
+        462,
+        441
+      ],
+      "crop_bbox": [
+        27,
+        148,
+        470,
+        449
+      ],
+      "edge_touch": false,
+      "output_size": [
+        178,
+        121
+      ],
+      "paste_position": [
+        39,
+        67
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        1024,
+        0,
+        1536,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 78976,
+      "selected_component_bbox": [
+        11,
+        149,
+        443,
+        441
+      ],
+      "crop_bbox": [
+        3,
+        141,
+        451,
+        449
+      ],
+      "edge_touch": false,
+      "output_size": [
+        180,
+        124
+      ],
+      "paste_position": [
+        38,
+        66
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        512,
+        512,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 7,
+      "selected_component_area": 63568,
+      "selected_component_bbox": [
+        48,
+        109,
+        484,
+        405
+      ],
+      "crop_bbox": [
+        40,
+        101,
+        492,
+        413
+      ],
+      "edge_touch": false,
+      "output_size": [
+        182,
+        125
+      ],
+      "paste_position": [
+        37,
+        65
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        512,
+        512,
+        1024,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 4,
+      "selected_component_area": 117721,
+      "selected_component_bbox": [
+        17,
+        0,
+        484,
+        422
+      ],
+      "crop_bbox": [
+        9,
+        0,
+        492,
+        430
+      ],
+      "edge_touch": true,
+      "output_size": [
+        194,
+        173
+      ],
+      "paste_position": [
+        31,
+        41
+      ]
+    },
+    {
+      "grid": [
+        1,
+        2
+      ],
+      "source_box": [
+        1024,
+        512,
+        1536,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 6,
+      "selected_component_area": 69829,
+      "selected_component_bbox": [
+        18,
+        139,
+        437,
+        410
+      ],
+      "crop_bbox": [
+        10,
+        131,
+        445,
+        418
+      ],
+      "edge_touch": false,
+      "output_size": [
+        175,
+        115
+      ],
+      "paste_position": [
+        40,
+        70
+      ]
+    }
+  ],
+  "edge_touch_frames": [
+    [
+      1,
+      1
+    ]
+  ]
+}

@@ -4,6 +4,7 @@ extends RefCounted
 var _attack_interaction_context: Dictionary = {}
 var _default_attack_index_to_match: int = -1
 
+const ATTACK_DAMAGE_COUNTER_PLACEMENT_FLAG := "_attack_damage_counter_effect_slot_ids"
 const EMPTY_SEARCH_CONTINUE := "continue"
 const EMPTY_SEARCH_VIEW_DECK := "view_deck"
 const VISIBLE_SCOPE_OWN_FULL_DECK := "own_full_deck"
@@ -204,16 +205,19 @@ func _apply_special_status(slot: PokemonSlot, status_name: String, state: GameSt
 	if _special_status_prevented(slot, state):
 		slot.clear_all_status()
 		return false
+	if _special_status_prevented(slot, state, status_name):
+		slot.set_status(status_name, false)
+		return false
 	slot.set_status(status_name, true)
 	return true
 
 
-func _special_status_prevented(slot: PokemonSlot, state: GameState) -> bool:
+func _special_status_prevented(slot: PokemonSlot, state: GameState, status_name: String = "") -> bool:
 	if slot == null or state == null:
 		return false
 	var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null)
 	if processor != null and processor.has_method("prevents_special_status"):
-		return bool(processor.call("prevents_special_status", slot, state))
+		return bool(processor.call("prevents_special_status", slot, state, status_name))
 	return EffectFestivalGrounds.prevents_special_status(slot, state) or EffectToolAncientBoosterEnergyCapsule.protects(slot, state)
 
 
@@ -244,6 +248,15 @@ func _calculate_attack_target_damage(
 		attacker_modifier,
 		defender_modifier
 	)
+
+
+func _mark_attack_damage_counter_placement(target: PokemonSlot, state: GameState) -> void:
+	if target == null or state == null:
+		return
+	var raw_marker: Variant = state.shared_turn_flags.get(ATTACK_DAMAGE_COUNTER_PLACEMENT_FLAG, {})
+	var marker: Dictionary = raw_marker if raw_marker is Dictionary else {}
+	marker[int(target.get_instance_id())] = true
+	state.shared_turn_flags[ATTACK_DAMAGE_COUNTER_PLACEMENT_FLAG] = marker
 
 
 func _is_opponent_active_target(attacker: PokemonSlot, target: PokemonSlot, state: GameState) -> bool:

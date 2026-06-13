@@ -33,6 +33,20 @@ const CORNER_ACTION_LABEL_MIN_WIDTH := 76.0
 const FEEDBACK_ICON_PATH := "res://assets/ui/main_action_feedback.png"
 const ABOUT_ICON_PATH := "res://assets/ui/main_action_about.png"
 const UPDATE_ICON_PATH := "res://assets/ui/main_action_update.png"
+const BUDEW_MASCOT_SHEET_PATH := "res://assets/ui/budew_mascot/sheet-transparent.png"
+const BUDEW_MASCOT_FRAME_SIZE := Vector2i(128, 128)
+const BUDEW_MASCOT_FRAME_COUNT := 4
+const BUDEW_MASCOT_FRAME_SECONDS := 0.14
+const BUDEW_MASCOT_WALK_SPEED := 128.0
+const BUDEW_MASCOT_LEFT_MARGIN := 34.0
+const BUDEW_MASCOT_BOTTOM_MARGIN := 38.0
+const BUDEW_MASCOT_PAUSE_SECONDS := 0.34
+const BUDEW_MASCOT_BOB_AMPLITUDE := 5.0
+const BUDEW_MASCOT_SOURCE_FACES_LEFT := true
+const BUDEW_MASCOT_DODGE_DISTANCE := 156.0
+const BUDEW_MASCOT_DODGE_HEIGHT := 48.0
+const BUDEW_MASCOT_DODGE_SECONDS := 0.34
+const BUDEW_MASCOT_DODGE_PAUSE_SECONDS := 0.20
 const FEEDBACK_OVERLAY_NAME := "FeedbackOverlay"
 const HUD_MODAL_OVERLAY_NAME := "HudModalOverlay"
 const TEMP_FORCE_UPDATE_PREVIEW_ON_STARTUP := false
@@ -67,10 +81,25 @@ var _hud_modal_panel: PanelContainer = null
 var _corner_action_label: PanelContainer = null
 var _corner_action_label_text: Label = null
 var _corner_action_hover_button: Button = null
+var _budew_mascot_root: Control = null
+var _budew_mascot_sprite: TextureRect = null
+var _budew_mascot_shadow: PanelContainer = null
+var _budew_mascot_frames: Array[Texture2D] = []
+var _budew_mascot_frame_index := 0
+var _budew_mascot_frame_elapsed := 0.0
+var _budew_mascot_position := Vector2.ZERO
+var _budew_mascot_route: Array[Vector2] = []
+var _budew_mascot_route_index := 0
+var _budew_mascot_pause_timer := 0.0
+var _budew_mascot_bob_time := 0.0
+var _budew_mascot_last_move_x := 1.0
+var _budew_mascot_dodge_tween: Tween = null
+var _budew_mascot_jump_offset := 0.0
 
 
 func _ready() -> void:
 	_apply_main_menu_hud()
+	_ensure_budew_mascot()
 	_setup_version_and_updates()
 	%BtnSettings.text = "AI 设置"
 	%BtnStartBattle.pressed.connect(_on_start_battle)
@@ -100,11 +129,17 @@ func _notification(what: int) -> void:
 		_resize_feedback_panel()
 		_resize_hud_modal_panel()
 		_position_deck_center_new_badge()
+		_layout_budew_mascot()
 		if _corner_action_hover_button != null:
 			_position_corner_action_label(_corner_action_hover_button)
 	elif what == NOTIFICATION_PREDELETE:
 		_stop_update_button_flash(false)
 		_stop_deck_center_button_flash(false)
+		_stop_budew_mascot_dodge()
+
+
+func _process(delta: float) -> void:
+	_update_budew_mascot(delta)
 
 
 func _apply_main_menu_hud() -> void:
@@ -144,6 +179,297 @@ func _apply_main_menu_hud() -> void:
 
 
 	_ensure_deck_center_new_badge()
+
+
+func _ensure_budew_mascot() -> void:
+	if _budew_mascot_root != null:
+		return
+	_budew_mascot_frames = _load_budew_mascot_frames()
+	if _budew_mascot_frames.is_empty():
+		return
+
+	_budew_mascot_root = Control.new()
+	_budew_mascot_root.name = "BudewMascotLayer"
+	_budew_mascot_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_budew_mascot_root.layout_mode = 1
+	_budew_mascot_root.anchors_preset = PRESET_FULL_RECT
+	_budew_mascot_root.anchor_right = 1.0
+	_budew_mascot_root.anchor_bottom = 1.0
+	_budew_mascot_root.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_budew_mascot_root.grow_vertical = Control.GROW_DIRECTION_BOTH
+	add_child(_budew_mascot_root)
+	move_child(_budew_mascot_root, 1)
+
+	_budew_mascot_shadow = PanelContainer.new()
+	_budew_mascot_shadow.name = "BudewMascotShadow"
+	_budew_mascot_shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_budew_mascot_shadow.add_theme_stylebox_override("panel", _budew_mascot_shadow_style())
+	_budew_mascot_root.add_child(_budew_mascot_shadow)
+
+	_budew_mascot_sprite = TextureRect.new()
+	_budew_mascot_sprite.name = "BudewMascotSprite"
+	_budew_mascot_sprite.mouse_filter = Control.MOUSE_FILTER_STOP
+	_budew_mascot_sprite.texture = _budew_mascot_frames[0]
+	_budew_mascot_sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_budew_mascot_sprite.gui_input.connect(_on_budew_mascot_sprite_input)
+	_budew_mascot_root.add_child(_budew_mascot_sprite)
+
+	set_process(true)
+	_layout_budew_mascot()
+
+
+func _load_budew_mascot_frames() -> Array[Texture2D]:
+	var sheet := load(BUDEW_MASCOT_SHEET_PATH) as Texture2D
+	if sheet == null:
+		return []
+	var frames: Array[Texture2D] = []
+	for frame_index: int in BUDEW_MASCOT_FRAME_COUNT:
+		var col := frame_index % 2
+		var row := int(frame_index / 2)
+		var atlas := AtlasTexture.new()
+		atlas.atlas = sheet
+		atlas.region = Rect2(
+			Vector2(float(col * BUDEW_MASCOT_FRAME_SIZE.x), float(row * BUDEW_MASCOT_FRAME_SIZE.y)),
+			Vector2(float(BUDEW_MASCOT_FRAME_SIZE.x), float(BUDEW_MASCOT_FRAME_SIZE.y))
+		)
+		frames.append(atlas)
+	return frames
+
+
+func _update_budew_mascot(delta: float) -> void:
+	if _budew_mascot_sprite == null or _budew_mascot_frames.is_empty():
+		return
+	if _budew_mascot_route.size() < 2:
+		_layout_budew_mascot()
+	if _budew_mascot_route.size() < 2:
+		return
+
+	if _is_budew_mascot_dodging():
+		_advance_budew_mascot_frame(delta)
+		return
+
+	if _budew_mascot_pause_timer > 0.0:
+		_budew_mascot_pause_timer = maxf(0.0, _budew_mascot_pause_timer - delta)
+		_position_budew_mascot()
+		return
+
+	_advance_budew_mascot_frame(delta)
+
+	var target := _budew_mascot_route[_budew_mascot_route_index]
+	var to_target := target - _budew_mascot_position
+	var step_distance := BUDEW_MASCOT_WALK_SPEED * delta
+	if to_target.length() <= step_distance:
+		_budew_mascot_position = target
+		_budew_mascot_route_index = (_budew_mascot_route_index + 1) % _budew_mascot_route.size()
+		_budew_mascot_pause_timer = BUDEW_MASCOT_PAUSE_SECONDS
+	else:
+		var step := to_target.normalized() * step_distance
+		_budew_mascot_position += step
+		if absf(step.x) > 0.2:
+			_budew_mascot_last_move_x = 1.0 if step.x > 0.0 else -1.0
+	_budew_mascot_sprite.flip_h = (_budew_mascot_last_move_x > 0.0) == BUDEW_MASCOT_SOURCE_FACES_LEFT
+	_position_budew_mascot()
+
+
+func _advance_budew_mascot_frame(delta: float) -> void:
+	if _budew_mascot_sprite == null or _budew_mascot_frames.is_empty():
+		return
+	_budew_mascot_frame_elapsed += delta
+	while _budew_mascot_frame_elapsed >= BUDEW_MASCOT_FRAME_SECONDS:
+		_budew_mascot_frame_elapsed -= BUDEW_MASCOT_FRAME_SECONDS
+		_budew_mascot_frame_index = (_budew_mascot_frame_index + 1) % _budew_mascot_frames.size()
+		_budew_mascot_sprite.texture = _budew_mascot_frames[_budew_mascot_frame_index]
+
+
+func _on_budew_mascot_sprite_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mouse := event as InputEventMouseButton
+		if mouse.pressed and mouse.button_index == MOUSE_BUTTON_LEFT:
+			_make_budew_mascot_dodge_click(mouse.position)
+			get_viewport().set_input_as_handled()
+	elif event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			_make_budew_mascot_dodge_click(touch.position)
+			get_viewport().set_input_as_handled()
+
+
+func _make_budew_mascot_dodge_click(click_global_position: Vector2) -> void:
+	if _budew_mascot_sprite == null:
+		return
+	_stop_budew_mascot_dodge()
+	var start := _budew_mascot_position
+	var target := _budew_mascot_dodge_target_for_click(click_global_position)
+	if absf(target.x - start.x) > 0.2:
+		_budew_mascot_last_move_x = 1.0 if target.x > start.x else -1.0
+	_budew_mascot_sprite.flip_h = (_budew_mascot_last_move_x > 0.0) == BUDEW_MASCOT_SOURCE_FACES_LEFT
+	_budew_mascot_pause_timer = 0.0
+	_budew_mascot_dodge_tween = create_tween()
+	_budew_mascot_dodge_tween.tween_method(
+		Callable(self, "_apply_budew_mascot_dodge").bind(start, target),
+		0.0,
+		1.0,
+		BUDEW_MASCOT_DODGE_SECONDS
+	)
+	_budew_mascot_dodge_tween.finished.connect(_on_budew_mascot_dodge_finished)
+
+
+func _budew_mascot_dodge_target_for_click(click_global_position: Vector2) -> Vector2:
+	var viewport_size := _main_menu_viewport_size()
+	var sprite_size := _budew_mascot_display_size()
+	var click_position := click_global_position
+	if _budew_mascot_root != null:
+		click_position -= _budew_mascot_root.global_position
+	var current_center := _budew_mascot_position + sprite_size * 0.5
+	var away := current_center - click_position
+	if away.length() < 4.0:
+		away = Vector2(-1.0 if current_center.x >= viewport_size.x * 0.5 else 1.0, -0.24)
+	else:
+		away = away.normalized()
+		if absf(away.x) < 0.36:
+			away.x = -1.0 if click_position.x >= current_center.x else 1.0
+			away.y = minf(away.y, -0.18)
+			away = away.normalized()
+	var target := _budew_mascot_position + Vector2(
+		away.x * BUDEW_MASCOT_DODGE_DISTANCE,
+		clampf(away.y * BUDEW_MASCOT_DODGE_DISTANCE * 0.28, -32.0, 18.0)
+	)
+	return Vector2(
+		clampf(target.x, 12.0, maxf(12.0, viewport_size.x - sprite_size.x - 12.0)),
+		clampf(target.y, 72.0, maxf(72.0, viewport_size.y - sprite_size.y - 16.0))
+	)
+
+
+func _apply_budew_mascot_dodge(progress: float, start: Vector2, target: Vector2) -> void:
+	var eased := 1.0 - pow(1.0 - progress, 3.0)
+	_budew_mascot_position = start.lerp(target, eased)
+	_budew_mascot_jump_offset = sin(progress * PI) * BUDEW_MASCOT_DODGE_HEIGHT
+	_position_budew_mascot()
+
+
+func _on_budew_mascot_dodge_finished() -> void:
+	_budew_mascot_jump_offset = 0.0
+	_budew_mascot_dodge_tween = null
+	if not _budew_mascot_route.is_empty():
+		var nearest := _nearest_budew_route_point(_budew_mascot_position)
+		var nearest_index := _budew_mascot_route.find(nearest)
+		if nearest_index >= 0:
+			_budew_mascot_route_index = (nearest_index + 1) % _budew_mascot_route.size()
+	_budew_mascot_pause_timer = BUDEW_MASCOT_DODGE_PAUSE_SECONDS
+	_position_budew_mascot()
+
+
+func _is_budew_mascot_dodging() -> bool:
+	return _budew_mascot_dodge_tween != null and is_instance_valid(_budew_mascot_dodge_tween) and _budew_mascot_dodge_tween.is_running()
+
+
+func _stop_budew_mascot_dodge() -> void:
+	if _budew_mascot_dodge_tween != null and is_instance_valid(_budew_mascot_dodge_tween):
+		_budew_mascot_dodge_tween.kill()
+	_budew_mascot_dodge_tween = null
+	_budew_mascot_jump_offset = 0.0
+
+
+func _layout_budew_mascot() -> void:
+	if _budew_mascot_root == null or _budew_mascot_sprite == null:
+		return
+	_budew_mascot_root.offset_left = 0.0
+	_budew_mascot_root.offset_top = 0.0
+	_budew_mascot_root.offset_right = 0.0
+	_budew_mascot_root.offset_bottom = 0.0
+
+	var sprite_size := _budew_mascot_display_size()
+	_budew_mascot_sprite.custom_minimum_size = sprite_size
+	_budew_mascot_sprite.size = sprite_size
+	var had_route := not _budew_mascot_route.is_empty()
+	_budew_mascot_route = _build_budew_mascot_route()
+	if _budew_mascot_route.is_empty():
+		return
+	if not had_route or _budew_mascot_position == Vector2.ZERO:
+		_budew_mascot_position = _budew_mascot_route[0]
+		_budew_mascot_route_index = 1 % _budew_mascot_route.size()
+	else:
+		_budew_mascot_position = _nearest_budew_route_point(_budew_mascot_position)
+		_budew_mascot_route_index = (_budew_mascot_route.find(_budew_mascot_position) + 1) % _budew_mascot_route.size()
+
+	_position_budew_mascot()
+
+
+func _position_budew_mascot() -> void:
+	if _budew_mascot_sprite == null:
+		return
+	var moving := _budew_mascot_pause_timer <= 0.0
+	if moving:
+		_budew_mascot_bob_time += get_process_delta_time()
+	var bob := sin(_budew_mascot_bob_time * TAU * 2.0) * BUDEW_MASCOT_BOB_AMPLITUDE if moving else 0.0
+	_budew_mascot_sprite.position = _budew_mascot_position + Vector2(0.0, bob - _budew_mascot_jump_offset)
+	if _budew_mascot_shadow != null:
+		var sprite_size := _budew_mascot_display_size()
+		var jump_ratio := clampf(_budew_mascot_jump_offset / BUDEW_MASCOT_DODGE_HEIGHT, 0.0, 1.0)
+		var shadow_size := Vector2(sprite_size.x * (0.56 - jump_ratio * 0.12), 10.0)
+		_budew_mascot_shadow.size = shadow_size
+		_budew_mascot_shadow.position = Vector2(
+			_budew_mascot_position.x + (sprite_size.x - shadow_size.x) * 0.5,
+			_budew_mascot_position.y + sprite_size.y - 14.0
+		)
+		_budew_mascot_shadow.modulate = Color(1.0, 1.0, 1.0, 0.84 - (absf(bob) / BUDEW_MASCOT_BOB_AMPLITUDE) * 0.18 - jump_ratio * 0.24)
+
+
+func _budew_mascot_shadow_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.0, 0.12, 0.04, 0.42)
+	style.set_corner_radius_all(99)
+	return style
+
+
+func _budew_mascot_display_size() -> Vector2:
+	var viewport_size := _main_menu_viewport_size()
+	var side := 116.0
+	if viewport_size.x < 820.0:
+		side = 96.0
+	if viewport_size.y < 620.0:
+		side = minf(side, 84.0)
+	return Vector2(side, side)
+
+
+func _build_budew_mascot_route() -> Array[Vector2]:
+	var viewport_size := _main_menu_viewport_size()
+	var sprite_size := _budew_mascot_display_size()
+	var left := BUDEW_MASCOT_LEFT_MARGIN
+	var right := minf(viewport_size.x - sprite_size.x - 148.0, viewport_size.x * 0.72)
+	if viewport_size.x < 900.0:
+		right = viewport_size.x - sprite_size.x - BUDEW_MASCOT_LEFT_MARGIN
+	right = maxf(left + sprite_size.x + 84.0, right)
+	var center := clampf(viewport_size.x * 0.44, left + 92.0, right - 92.0)
+	var sneak := clampf(viewport_size.x * 0.25, left + 64.0, right - 64.0)
+	var base_y := maxf(96.0, viewport_size.y - sprite_size.y - BUDEW_MASCOT_BOTTOM_MARGIN)
+	var high_y := maxf(112.0, base_y - minf(92.0, viewport_size.y * 0.12))
+	var low_y := minf(viewport_size.y - sprite_size.y - 18.0, base_y + 12.0)
+	return [
+		Vector2(left, base_y),
+		Vector2(sneak, high_y),
+		Vector2(center, low_y),
+		Vector2(right, base_y - 24.0),
+		Vector2(center + minf(120.0, maxf(60.0, right - center) * 0.5), base_y + 4.0),
+		Vector2(left + 76.0, low_y),
+	]
+
+
+func _nearest_budew_route_point(point: Vector2) -> Vector2:
+	if _budew_mascot_route.is_empty():
+		return point
+	var nearest := _budew_mascot_route[0]
+	var nearest_distance := point.distance_squared_to(nearest)
+	for route_point: Vector2 in _budew_mascot_route:
+		var distance := point.distance_squared_to(route_point)
+		if distance < nearest_distance:
+			nearest = route_point
+			nearest_distance = distance
+	return nearest
+
+
+func _main_menu_viewport_size() -> Vector2:
+	return get_viewport_rect().size if is_inside_tree() else Vector2(1280, 720)
 
 
 func _main_menu_button_role(button_name: String) -> String:

@@ -271,7 +271,7 @@ func _setup_deck_recommendations() -> void:
 	_recommendation_store.call("load_cache")
 	_recommendation_articles = _load_recommendation_articles()
 	_embedded_recommendations = _normalize_recommendation_articles(_recommendation_articles)
-	_current_recommendation = (_recommendation_store.call("get_current_or_fallback", _embedded_recommendations) as Dictionary)
+	_current_recommendation = _select_initial_recommendation()
 	_deck_center_latest_meta = _load_deck_center_latest_meta()
 	_ensure_recommendation_client()
 	_ensure_recommendation_section()
@@ -354,6 +354,25 @@ func _normalize_recommendation_articles(articles: Array[Dictionary]) -> Array[Di
 		if not normalized.is_empty():
 			result.append(normalized)
 	return result
+
+
+func _select_initial_recommendation() -> Dictionary:
+	var fallback: Dictionary = {}
+	if _recommendation_store != null:
+		fallback = (_recommendation_store.call("get_current_or_fallback", _embedded_recommendations) as Dictionary)
+	elif not _embedded_recommendations.is_empty():
+		fallback = _embedded_recommendations[0].duplicate(true)
+
+	var pool := _combined_recommendation_pool()
+	if pool.is_empty():
+		return fallback
+
+	var fallback_id := str(fallback.get("id", "")).strip_edges()
+	if fallback_id != "":
+		for item: Dictionary in pool:
+			if str(item.get("id", "")).strip_edges() == fallback_id:
+				return item.duplicate(true)
+	return (pool[0] as Dictionary).duplicate(true)
 
 
 func _compare_recommendation_articles(a: Dictionary, b: Dictionary) -> bool:
@@ -643,24 +662,7 @@ func _create_recommendation_line(label_text: String, body_text: String) -> VBoxC
 
 
 func _recommendation_available_count() -> int:
-	var seen := {}
-	for item: Dictionary in _embedded_recommendations:
-		var item_id := str(item.get("id", "")).strip_edges()
-		if item_id != "":
-			seen[item_id] = true
-	if _recommendation_store != null:
-		var cached_items: Array = _recommendation_store.call("get_items")
-		for cached_raw: Variant in cached_items:
-			if cached_raw is not Dictionary:
-				continue
-			var cached := cached_raw as Dictionary
-			var cached_id := str(cached.get("id", "")).strip_edges()
-			if cached_id != "":
-				seen[cached_id] = true
-	var current_id := str(_current_recommendation.get("id", "")).strip_edges()
-	if current_id != "":
-		seen[current_id] = true
-	return seen.size()
+	return _combined_recommendation_pool().size()
 
 
 func _recommendation_exclude_ids(extra_id: String = "") -> PackedStringArray:
@@ -857,9 +859,6 @@ func _combined_recommendation_pool() -> Array[Dictionary]:
 		if item_id != "":
 			embedded_ids[item_id] = true
 
-	if not _embedded_recommendations.is_empty():
-		_append_recommendation_to_pool(pool, seen, _embedded_recommendations[0])
-
 	if _recommendation_store != null:
 		var cached_items: Array = _recommendation_store.call("get_items")
 		var cached_candidates: Array[Dictionary] = []
@@ -875,9 +874,11 @@ func _combined_recommendation_pool() -> Array[Dictionary]:
 				cached_candidates.append(normalized_cached)
 		for cached: Dictionary in _sort_recommendations_for_pool(cached_candidates):
 			_append_recommendation_to_pool(pool, seen, cached)
+	if not pool.is_empty():
+		return pool
 
-	for index: int in range(1, _embedded_recommendations.size()):
-		_append_recommendation_to_pool(pool, seen, _embedded_recommendations[index])
+	for embedded: Dictionary in _embedded_recommendations:
+		_append_recommendation_to_pool(pool, seen, embedded)
 
 	if pool.is_empty() and not _current_recommendation.is_empty():
 		_append_recommendation_to_pool(pool, seen, _current_recommendation)

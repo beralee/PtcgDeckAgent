@@ -3,15 +3,18 @@ extends TestBase
 
 
 const LUGIA_SCRIPT_PATH := "res://scripts/ai/DeckStrategyLugiaArcheops.gd"
+const LUGIA_175_SCRIPT_PATH := "res://scripts/ai/DeckStrategy175LugiaArcheops.gd"
 const DOUBLE_TURBO_ENERGY := "Double Turbo Energy"
 const GIFT_ENERGY := "Gift Energy"
 const JET_ENERGY := "Jet Energy"
 const MIST_ENERGY := "Mist Energy"
+const V_GUARD_ENERGY := "V Guard Energy"
+const MESAGOZA := "Mesagoza"
 
 
-func _new_strategy() -> RefCounted:
+func _new_strategy(script_path: String = LUGIA_SCRIPT_PATH) -> RefCounted:
 	CardInstance.reset_id_counter()
-	var script: Variant = load(LUGIA_SCRIPT_PATH)
+	var script: Variant = load(script_path)
 	return script.new() if script is GDScript else null
 
 
@@ -109,6 +112,25 @@ func _lugia_vstar() -> PokemonSlot:
 	)
 
 
+func _lugia_v() -> PokemonSlot:
+	return _make_slot(
+		_make_pokemon_cd(
+			"Lugia V",
+			"Basic",
+			"C",
+			220,
+			"",
+			"V",
+			[
+				{"name": "Read the Wind", "cost": "C", "damage": ""},
+				{"name": "Aero Dive", "cost": "CCCC", "damage": "130"},
+			],
+			2
+		),
+		0
+	)
+
+
 func _archeops() -> PokemonSlot:
 	return _make_slot(
 		_make_pokemon_cd(
@@ -139,6 +161,13 @@ func _cinccino() -> PokemonSlot:
 	)
 
 
+func _cinccino_real() -> PokemonSlot:
+	var cd := CardDatabase.get_card("CSV7C", "171")
+	if cd == null:
+		return null
+	return _make_slot(cd, 0)
+
+
 func _iron_hands() -> PokemonSlot:
 	return _make_slot(
 		_make_pokemon_cd(
@@ -163,7 +192,40 @@ func _wellspring() -> PokemonSlot:
 			210,
 			"",
 			"ex",
-			[{"name": "Myriad Leaf Shower", "cost": "WCC", "damage": "140"}]
+			[
+				{"name": "Sob", "cost": "C", "damage": "20"},
+				{"name": "Torrential Pump", "cost": "WCC", "damage": "100"},
+			]
+		),
+		0
+	)
+
+
+func _wyrdeer_v() -> PokemonSlot:
+	return _make_slot(
+		_make_pokemon_cd(
+			"Wyrdeer V",
+			"Basic",
+			"C",
+			220,
+			"",
+			"V",
+			[{"name": "Psyshield Bash", "cost": "CCC", "damage": "40x"}]
+		),
+		0
+	)
+
+
+func _regigigas_card() -> CardInstance:
+	return CardInstance.create(
+		_make_pokemon_cd(
+			"雷吉奇卡斯",
+			"Basic",
+			"C",
+			160,
+			"",
+			"",
+			[{"name": "Jewel Break", "cost": "CCCC", "damage": "100+"}]
 		),
 		0
 	)
@@ -274,6 +336,706 @@ func test_lugia_midgame_owner_missing_keeps_cinccino_recovery_attach_live() -> S
 	return assert_true(gift_score >= 200.0, "After the initial launch window, owner-missing Lugia should still charge Cinccino recovery lines (got %f)" % gift_score)
 
 
+func test_v175_lugia_nest_ball_launch_route_outranks_dead_supporter() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before 17.5 Nest Ball launch routing can be verified"
+	var gs := _make_game_state(1)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Lumineon V", "Basic", "W", 170, "", "V"), 0)
+	player.bench.append(_make_slot(_make_pokemon_cd("Minccino", "Basic", "C", 70), 0))
+	var nest_score: float = strategy.score_action_absolute(
+		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Nest Ball"), 0)},
+		gs,
+		0
+	)
+	var boss_score: float = strategy.score_action_absolute(
+		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Boss's Orders", "Supporter"), 0)},
+		gs,
+		0
+	)
+	return run_checks([
+		assert_true(nest_score >= 430.0, "17.5 Lugia should treat Nest Ball as a premium missing-owner launch route (got %f)" % nest_score),
+		assert_true(nest_score > boss_score, "Nest Ball should outrank a dead Boss before the Lugia shell exists"),
+	])
+
+
+func test_v175_lugia_side_attackers_are_late_search_targets_not_opening_padding() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before 17.5 side-attacker search routing can be verified"
+	var early_gs := _make_game_state(1)
+	var early_player := early_gs.players[0]
+	early_player.active_pokemon = _make_slot(_make_pokemon_cd("Lugia V", "Basic", "C", 220, "", "V"), 0)
+	var late_gs := _make_game_state(8)
+	var late_player := late_gs.players[0]
+	var active_lugia := _lugia_vstar()
+	_attach(active_lugia, [DOUBLE_TURBO_ENERGY, GIFT_ENERGY, JET_ENERGY, MIST_ENERGY])
+	late_player.active_pokemon = active_lugia
+	late_player.bench.append(_archeops())
+	late_player.bench.append(_archeops())
+	late_player.bench.append(_cinccino())
+	var wyrdeer_card := CardInstance.create(_make_pokemon_cd("Wyrdeer V", "Basic", "C", 220, "", "V"), 0)
+	var regigigas_card := _regigigas_card()
+	var minccino_card := CardInstance.create(_make_pokemon_cd("Minccino", "Basic", "C", 70), 0)
+	var early_wyrdeer_score: float = strategy.score_interaction_target(
+		wyrdeer_card,
+		{"id": "search_pokemon", "max_select": 1},
+		{"game_state": early_gs, "player_index": 0}
+	)
+	var early_minccino_score: float = strategy.score_interaction_target(
+		minccino_card,
+		{"id": "search_pokemon", "max_select": 1},
+		{"game_state": early_gs, "player_index": 0}
+	)
+	var late_wyrdeer_score: float = strategy.score_interaction_target(
+		wyrdeer_card,
+		{"id": "search_pokemon", "max_select": 1},
+		{"game_state": late_gs, "player_index": 0}
+	)
+	var late_regigigas_score: float = strategy.score_interaction_target(
+		regigigas_card,
+		{"id": "search_pokemon", "max_select": 1},
+		{"game_state": late_gs, "player_index": 0}
+	)
+	return run_checks([
+		assert_true(early_wyrdeer_score < early_minccino_score, "Wyrdeer V should not steal opening search priority from the Minccino shell"),
+		assert_true(late_wyrdeer_score >= 170.0, "Wyrdeer V should become a real late search target once Archeops is online (got %f)" % late_wyrdeer_score),
+		assert_true(late_regigigas_score >= 150.0, "Localized-name Regigigas should become searchable after the engine is online (got %f)" % late_regigigas_score),
+	])
+
+
+func test_v175_lugia_pre_engine_manual_attach_does_not_feed_late_side_attackers() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before 17.5 pre-engine attachment routing can be verified"
+	var gs := _make_game_state(2)
+	var player := gs.players[0]
+	var lugia_v := _lugia_v()
+	var minccino := _make_slot(_make_pokemon_cd("Minccino", "Basic", "C", 70), 0)
+	var wyrdeer := _wyrdeer_v()
+	var regigigas := _make_slot(_regigigas_card().card_data, 0)
+	player.active_pokemon = lugia_v
+	player.bench.append(minccino)
+	player.bench.append(wyrdeer)
+	player.bench.append(regigigas)
+	var lugia_score: float = strategy.score_action_absolute(
+		{"kind": "attach_energy", "card": _energy(GIFT_ENERGY), "target_slot": lugia_v},
+		gs,
+		0
+	)
+	var minccino_score: float = strategy.score_action_absolute(
+		{"kind": "attach_energy", "card": _energy(GIFT_ENERGY), "target_slot": minccino},
+		gs,
+		0
+	)
+	var wyrdeer_score: float = strategy.score_action_absolute(
+		{"kind": "attach_energy", "card": _energy(GIFT_ENERGY), "target_slot": wyrdeer},
+		gs,
+		0
+	)
+	var regigigas_score: float = strategy.score_action_absolute(
+		{"kind": "attach_energy", "card": _energy(GIFT_ENERGY), "target_slot": regigigas},
+		gs,
+		0
+	)
+	var shell_score := maxf(lugia_score, minccino_score)
+	return run_checks([
+		assert_true(wyrdeer_score <= 40.0, "Wyrdeer V should not take manual Energy before the Lugia shell is online (got %f)" % wyrdeer_score),
+		assert_true(regigigas_score <= 40.0, "Regigigas should not take manual Energy before the Lugia shell is online (got %f)" % regigigas_score),
+		assert_true(shell_score > wyrdeer_score, "Manual Energy should stay with the Lugia/Minccino shell before Wyrdeer V"),
+		assert_true(shell_score > regigigas_score, "Manual Energy should stay with the Lugia/Minccino shell before Regigigas"),
+	])
+
+
+func test_v175_lugia_emergency_search_prefers_basic_backup_over_archeops() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before 17.5 emergency search routing can be verified"
+	var gs := _make_game_state(2)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Lumineon V", "Basic", "W", 170, "", "V"), 0)
+	player.hand.append(CardInstance.create(_lugia_vstar().get_card_data(), 0))
+	var lugia_card := CardInstance.create(_lugia_v().get_card_data(), 0)
+	var minccino_card := CardInstance.create(_make_pokemon_cd("Minccino", "Basic", "C", 70), 0)
+	var archeops_card := CardInstance.create(_archeops().get_card_data(), 0)
+	var context := {"game_state": gs, "player_index": 0}
+	var lugia_score: float = strategy.score_interaction_target(lugia_card, {"id": "search_pokemon", "max_select": 1}, context)
+	var minccino_score: float = strategy.score_interaction_target(minccino_card, {"id": "search_pokemon", "max_select": 1}, context)
+	var archeops_score: float = strategy.score_interaction_target(archeops_card, {"id": "search_pokemon", "max_select": 1}, context)
+	return run_checks([
+		assert_true(lugia_score > archeops_score, "Emergency no-bench search should find Lugia V before Archeops (Lugia %f vs Archeops %f)" % [lugia_score, archeops_score]),
+		assert_true(minccino_score > archeops_score, "Emergency no-bench search should find a Minccino shell piece before Archeops (Minccino %f vs Archeops %f)" % [minccino_score, archeops_score]),
+	])
+
+
+func test_v175_lugia_retreat_rejects_one_energy_lugia_v_draw_attack_as_ready_handoff() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before 17.5 Lugia handoff readiness can be verified"
+	var gs := _make_game_state(8)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Minccino", "Basic", "C", 70), 0)
+	var lugia_v := _lugia_v()
+	_attach(lugia_v, [GIFT_ENERGY])
+	player.bench.append(lugia_v)
+	player.bench.append(_archeops())
+	player.bench.append(_archeops())
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Charizard ex", "Stage 2", "R", 330, "", "ex"), 1)
+	var turn_plan: Dictionary = strategy.build_turn_contract(gs, 0, {"prompt_kind": "action_selection"})
+	var retreat_score: float = strategy.score_action_absolute_with_plan(
+		{"kind": "retreat", "bench_target": lugia_v},
+		gs,
+		0,
+		turn_plan
+	)
+	return assert_true(
+		retreat_score <= 50.0,
+		"One-energy Lugia V only has a zero-damage draw attack ready and should not be scored as a conversion handoff target (got %f)" % retreat_score
+	)
+
+
+func test_v175_lugia_retreat_rejects_one_energy_cinccino_chip_handoff() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before 17.5 Cinccino handoff readiness can be verified"
+	var gs := _make_game_state(8)
+	var player := gs.players[0]
+	var active_lugia := _lugia_vstar()
+	_attach(active_lugia, [DOUBLE_TURBO_ENERGY, GIFT_ENERGY, JET_ENERGY, MIST_ENERGY])
+	player.active_pokemon = active_lugia
+	player.bench.append(_archeops())
+	player.bench.append(_archeops())
+	var chip_cinccino := _cinccino()
+	_attach(chip_cinccino, [GIFT_ENERGY])
+	player.bench.append(chip_cinccino)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var turn_plan: Dictionary = strategy.build_turn_contract(gs, 0, {"prompt_kind": "action_selection"})
+	var contract_pivot := ""
+	if turn_plan.get("owner", {}) is Dictionary:
+		contract_pivot = str((turn_plan.get("owner", {}) as Dictionary).get("pivot_target_name", ""))
+	var retreat_score: float = strategy.score_action_absolute_with_plan(
+		{"kind": "retreat", "bench_target": chip_cinccino},
+		gs,
+		0,
+		turn_plan
+	)
+	var active_attack_score: float = strategy.score_action_absolute_with_plan(
+		{"kind": "attack", "source_slot": active_lugia, "attack_name": "Tempest Dive", "projected_damage": 220, "projected_knockout": true},
+		gs,
+		0,
+		turn_plan
+	)
+	return run_checks([
+		assert_true(contract_pivot != "Cinccino", "A one-energy Cinccino chip attack should not become the contract pivot"),
+		assert_true(retreat_score < 100.0, "Retreating into a one-energy Cinccino chip attack should stay low-value (got %f)" % retreat_score),
+		assert_true(active_attack_score > retreat_score, "A live Lugia VSTAR KO should outrank retreating into chip Cinccino (attack=%f retreat=%f)" % [active_attack_score, retreat_score]),
+	])
+
+
+func test_v175_lugia_deck_out_pressure_pushes_search_below_end_turn() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before 17.5 deck-out search discipline can be verified"
+	var gs := _make_game_state(20)
+	var player := gs.players[0]
+	var active_lugia := _lugia_vstar()
+	_attach(active_lugia, [DOUBLE_TURBO_ENERGY, GIFT_ENERGY, JET_ENERGY, MIST_ENERGY])
+	player.active_pokemon = active_lugia
+	player.bench.append(_archeops())
+	player.deck.clear()
+	for i: int in 8:
+		player.deck.append(CardInstance.create(_make_trainer_cd("Deck Filler %d" % i), 0))
+	var nest_score: float = strategy.score_action_absolute(
+		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Nest Ball"), 0)},
+		gs,
+		0
+	)
+	var mesagoza_score: float = strategy.score_action_absolute(
+		{"kind": "play_stadium", "card": CardInstance.create(_make_trainer_cd("Mesagoza", "Stadium"), 0)},
+		gs,
+		0
+	)
+	return run_checks([
+		assert_true(nest_score < 0.0, "17.5 Lugia should not tie end-turn with Nest Ball under deck-out pressure (got %f)" % nest_score),
+		assert_true(mesagoza_score < 0.0, "17.5 Lugia should not tie end-turn with Mesagoza under deck-out pressure (got %f)" % mesagoza_score),
+	])
+
+
+func test_v175_lugia_mesagoza_effect_cools_off_under_deck_out_pressure() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before Mesagoza deck-out discipline can be verified"
+	var gs := _make_game_state(20)
+	var player := gs.players[0]
+	var active_lugia := _lugia_vstar()
+	_attach(active_lugia, [GIFT_ENERGY, JET_ENERGY, MIST_ENERGY, V_GUARD_ENERGY])
+	player.active_pokemon = active_lugia
+	player.bench.append(_archeops())
+	player.bench.append(_archeops())
+	player.deck.clear()
+	for i: int in 10:
+		player.deck.append(CardInstance.create(_make_pokemon_cd("Late Pokemon %d" % i), 0))
+	var mesagoza := CardInstance.create(_make_trainer_cd(MESAGOZA, "Stadium"), 0)
+	gs.stadium_card = mesagoza
+	var stadium_score: float = strategy.score_action_absolute({"kind": "use_stadium_effect", "card": mesagoza}, gs, 0)
+	var end_turn_score: float = strategy.score_action_absolute({"kind": "end_turn"}, gs, 0)
+	return assert_true(
+		stadium_score < end_turn_score,
+		"Mesagoza effect should cool off under deck-out pressure once a live attacker exists (stadium=%f end=%f)" % [stadium_score, end_turn_score]
+	)
+
+
+func test_v175_lugia_post_engine_low_damage_attack_does_not_block_rebuild_search() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before 17.5 post-engine attack discipline can be verified"
+	var gs := _make_game_state(8)
+	var player := gs.players[0]
+	player.active_pokemon = _lugia_vstar()
+	player.bench.append(_archeops())
+	player.bench.append(_archeops())
+	var turn_plan: Dictionary = strategy.build_turn_contract(gs, 0, {"prompt_kind": "action_selection"})
+	var ultra_score: float = strategy.score_action_absolute_with_plan(
+		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Ultra Ball"), 0)},
+		gs,
+		0,
+		turn_plan
+	)
+	var zero_attack_score: float = strategy.score_action_absolute_with_plan(
+		{"kind": "attack", "source_slot": player.active_pokemon, "attack_name": "Low pressure", "projected_damage": 0},
+		gs,
+		0,
+		turn_plan
+	)
+	var chip_attack_score: float = strategy.score_action_absolute_with_plan(
+		{"kind": "attack", "source_slot": player.active_pokemon, "attack_name": "Low pressure", "projected_damage": 10},
+		gs,
+		0,
+		turn_plan
+	)
+	return run_checks([
+		assert_true(ultra_score > zero_attack_score, "Post-engine zero-damage attacks should not outrank rebuild search (Ultra=%f attack=%f)" % [ultra_score, zero_attack_score]),
+		assert_true(ultra_score > chip_attack_score, "Post-engine 10-damage non-KO attacks should not outrank rebuild search (Ultra=%f attack=%f)" % [ultra_score, chip_attack_score]),
+	])
+
+
+func test_v175_lugia_post_engine_low_damage_attack_matches_localized_runtime_owner() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before localized 17.5 post-engine attack discipline can be verified"
+	var gs := _make_game_state(8)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("洛奇亚VSTAR", "Stage 1", "C", 280, "", "VSTAR"), 0)
+	player.bench.append(_archeops())
+	player.bench.append(_archeops())
+	var turn_plan: Dictionary = strategy.build_turn_contract(gs, 0, {"prompt_kind": "action_selection"})
+	var ultra_score: float = strategy.score_action_absolute_with_plan(
+		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Ultra Ball"), 0)},
+		gs,
+		0,
+		turn_plan
+	)
+	var runtime_shaped_attack_score: float = strategy.score_action_absolute_with_plan(
+		{"kind": "attack", "attack_name": "??", "projected_damage": 0, "projected_knockout": false},
+		gs,
+		0,
+		turn_plan
+	)
+	return assert_true(
+		ultra_score > runtime_shaped_attack_score,
+		"Localized Lugia VSTAR runtime attacks without source_slot should not keep the base 540 score (Ultra=%f attack=%f)" % [ultra_score, runtime_shaped_attack_score]
+	)
+
+
+func test_v175_lugia_post_engine_cinccino_low_damage_attack_yields_to_setup() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before post-engine Cinccino attack discipline can be verified"
+	var gs := _make_game_state(8)
+	var player := gs.players[0]
+	player.active_pokemon = _cinccino()
+	player.bench.append(_archeops())
+	player.bench.append(_archeops())
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Charizard ex", "Stage 2", "R", 330, "", "ex"), 1)
+	var turn_plan: Dictionary = strategy.build_turn_contract(gs, 0, {"prompt_kind": "action_selection"})
+	var ultra_score: float = strategy.score_action_absolute_with_plan(
+		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd("Ultra Ball"), 0)},
+		gs,
+		0,
+		turn_plan
+	)
+	var lugia_seed_score: float = strategy.score_action_absolute_with_plan(
+		{"kind": "play_basic_to_bench", "card": CardInstance.create(_make_pokemon_cd("Lugia V", "Basic", "C", 220, "", "V"), 0)},
+		gs,
+		0,
+		turn_plan
+	)
+	var zero_attack_score: float = strategy.score_action_absolute_with_plan(
+		{"kind": "attack", "source_slot": player.active_pokemon, "attack_name": "Special Roll", "projected_damage": 0, "projected_knockout": false},
+		gs,
+		0,
+		turn_plan
+	)
+	var chip_attack_score: float = strategy.score_action_absolute_with_plan(
+		{"kind": "attack", "source_slot": player.active_pokemon, "attack_name": "Special Roll", "projected_damage": 30, "projected_knockout": false},
+		gs,
+		0,
+		turn_plan
+	)
+	return run_checks([
+		assert_true(lugia_seed_score > zero_attack_score, "Post-engine Cinccino zero-damage attacks should not outrank rebuilding a Lugia attacker (Lugia=%f attack=%f)" % [lugia_seed_score, zero_attack_score]),
+		assert_true(ultra_score > chip_attack_score, "Post-engine Cinccino chip attacks should not outrank search when they cannot take a KO (Ultra=%f attack=%f)" % [ultra_score, chip_attack_score]),
+	])
+
+
+func test_v175_lugia_cinccino_special_roll_preview_matches_actual_damage() -> String:
+	var cinccino := _cinccino_real()
+	if cinccino == null:
+		return "Missing CSV7C_171 Cinccino real card data"
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_game_state(8)
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.players[0].active_pokemon = cinccino
+	gsm.game_state.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	_attach(cinccino, [GIFT_ENERGY, JET_ENERGY])
+	gsm.effect_processor.register_pokemon_card(cinccino.get_card_data())
+	var preview_damage := gsm.get_attack_preview_damage(0, 1)
+	var used := gsm.use_attack(0, 1)
+	var actual_damage := gsm.game_state.players[1].active_pokemon.damage_counters
+	return run_checks([
+		assert_eq(preview_damage, 140, "Cinccino Special Roll preview should be 70 per attached Special Energy"),
+		assert_true(used, "Cinccino should be able to use Special Roll with two Special Energy"),
+		assert_eq(actual_damage, 140, "Cinccino Special Roll actual damage should match preview"),
+	])
+
+
+func test_v175_lugia_damage_model_counts_double_turbo_energy_units() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before Double Turbo modeling can be verified"
+	var cinccino := _cinccino()
+	_attach(cinccino, [DOUBLE_TURBO_ENERGY])
+	var cinccino_forecast: Dictionary = strategy.predict_attacker_damage(cinccino)
+	var lugia_vstar := _lugia_vstar()
+	_attach(lugia_vstar, [DOUBLE_TURBO_ENERGY, GIFT_ENERGY, JET_ENERGY])
+	var lugia_forecast: Dictionary = strategy.predict_attacker_damage(lugia_vstar)
+	return run_checks([
+		assert_true(bool(cinccino_forecast.get("can_attack", false)), "One Double Turbo Energy should satisfy Cinccino's CC attack cost"),
+		assert_eq(int(cinccino_forecast.get("damage", 0)), 50, "Cinccino with only Double Turbo should model 70 damage minus the Double Turbo penalty"),
+		assert_true(bool(lugia_forecast.get("can_attack", false)), "Double Turbo plus two single Special Energy should satisfy Lugia VSTAR's CCCC attack cost"),
+		assert_eq(int(lugia_forecast.get("damage", 0)), 200, "Lugia VSTAR with Double Turbo attached should model Tempest Dive with the -20 penalty"),
+	])
+
+
+func test_v175_lugia_damage_model_applies_double_turbo_penalty_to_special_roll() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before Double Turbo damage penalty can be verified"
+	var cinccino := _cinccino()
+	_attach(cinccino, [DOUBLE_TURBO_ENERGY, GIFT_ENERGY])
+	var forecast: Dictionary = strategy.predict_attacker_damage(cinccino)
+	return run_checks([
+		assert_true(bool(forecast.get("can_attack", false)), "Double Turbo plus Gift Energy should keep Cinccino attack-ready"),
+		assert_eq(int(forecast.get("damage", 0)), 120, "Cinccino Special Roll should count two Special Energy cards then apply Double Turbo's -20 penalty"),
+	])
+
+
+func test_v175_lugia_archeops_non_ko_attack_yields_to_primal_turbo() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before support-attacker discipline can be verified"
+	var gs := _make_game_state(8)
+	var player := gs.players[0]
+	var active_archeops := _archeops()
+	_attach(active_archeops, [GIFT_ENERGY, JET_ENERGY, MIST_ENERGY])
+	player.active_pokemon = active_archeops
+	player.bench.append(_lugia_vstar())
+	var ready_cinccino := _cinccino()
+	_attach(ready_cinccino, [GIFT_ENERGY, JET_ENERGY])
+	player.bench.append(ready_cinccino)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Charizard ex", "Stage 2", "R", 330, "", "ex"), 1)
+	var turn_plan: Dictionary = strategy.build_turn_contract(gs, 0, {"prompt_kind": "action_selection"})
+	var ability_score: float = strategy.score_action_absolute_with_plan(
+		{"kind": "use_ability", "source_slot": active_archeops},
+		gs,
+		0,
+		turn_plan
+	)
+	var attack_score: float = strategy.score_action_absolute_with_plan(
+		{"kind": "attack", "source_slot": active_archeops, "attack_name": "Speed Wing", "projected_damage": 100, "projected_knockout": false},
+		gs,
+		0,
+		turn_plan
+	)
+	return assert_true(
+		ability_score > attack_score,
+		"Archeops should not take a non-KO support attack before Primal Turbo can rebuild a real attacker (ability=%f attack=%f)" % [ability_score, attack_score]
+	)
+
+
+func test_v175_lugia_wellspring_without_legacy_energy_is_only_chip_attacker() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before Wellspring damage modeling can be verified"
+	var wellspring := _wellspring()
+	_attach(wellspring, [GIFT_ENERGY, JET_ENERGY, MIST_ENERGY])
+	var damage_info: Dictionary = strategy.predict_attacker_damage(wellspring)
+	return assert_eq(
+		int(damage_info.get("damage", 0)),
+		20,
+		"Wellspring Ogerpon without Legacy Energy should only be modeled as the 20-damage colorless attack"
+	)
+
+
+func test_v175_lugia_rejects_retreat_to_wellspring_chip_attack() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before Wellspring retreat discipline can be verified"
+	var gs := _make_game_state(12)
+	var player := gs.players[0]
+	var active_archeops := _archeops()
+	player.active_pokemon = active_archeops
+	var wellspring := _wellspring()
+	_attach(wellspring, [JET_ENERGY])
+	player.bench.append(wellspring)
+	player.bench.append(_lugia_vstar())
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Charizard ex", "Stage 2", "R", 330, "", "ex"), 1)
+	var turn_plan: Dictionary = strategy.build_turn_contract(gs, 0, {"prompt_kind": "action_selection"})
+	var retreat_score: float = strategy.score_action_absolute_with_plan(
+		{"kind": "retreat", "bench_target": wellspring},
+		gs,
+		0,
+		turn_plan
+	)
+	return assert_true(
+		retreat_score < 100.0,
+		"Retreating into a 20-damage Wellspring attack should stay below real setup actions (got %f)" % retreat_score
+	)
+
+
+func test_v175_lugia_energy_assignments_step_scores_real_attacker_over_archeops_padding() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before Primal Turbo assignment scoring can be verified"
+	var gs := _make_game_state(10)
+	var player := gs.players[0]
+	var active_archeops := _archeops()
+	player.active_pokemon = active_archeops
+	var lugia_vstar := _lugia_vstar()
+	player.bench.append(lugia_vstar)
+	player.bench.append(_archeops())
+	var context := {
+		"game_state": gs,
+		"player_index": 0,
+		"source_card": _energy(GIFT_ENERGY),
+	}
+	var active_score: float = strategy.score_interaction_target(active_archeops, {"id": "energy_assignments"}, context)
+	var lugia_score: float = strategy.score_interaction_target(lugia_vstar, {"id": "energy_assignments"}, context)
+	return assert_true(
+		lugia_score > active_score,
+		"Primal Turbo energy_assignments should route special Energy to Lugia VSTAR before padding Archeops (Lugia=%f Archeops=%f)" % [lugia_score, active_score]
+	)
+
+
+func test_v175_lugia_send_out_contract_prefers_archeops_chargeable_wyrdeer() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before chargeable handoff can be verified"
+	var gs := _make_game_state(7)
+	var player := gs.players[0]
+	player.active_pokemon = null
+	var lugia_v := _lugia_v()
+	var wyrdeer := _wyrdeer_v()
+	player.bench.append(lugia_v)
+	player.bench.append(_archeops())
+	player.bench.append(_archeops())
+	player.bench.append(wyrdeer)
+	player.deck.append(_energy(DOUBLE_TURBO_ENERGY))
+	player.deck.append(_energy(GIFT_ENERGY))
+	player.deck.append(_energy(JET_ENERGY))
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var turn_plan: Dictionary = strategy.build_turn_contract(gs, 0, {"prompt_kind": "send_out"})
+	var owner: Dictionary = turn_plan.get("owner", {}) if turn_plan.get("owner", {}) is Dictionary else {}
+	var priorities: Dictionary = turn_plan.get("priorities", {}) if turn_plan.get("priorities", {}) is Dictionary else {}
+	var handoff: Array = priorities.get("handoff", []) if priorities.get("handoff", []) is Array else []
+	var context := {
+		"game_state": gs,
+		"player_index": 0,
+		"turn_plan": turn_plan,
+	}
+	var wyrdeer_score: float = strategy.score_interaction_target(wyrdeer, {"id": "send_out"}, context)
+	var lugia_score: float = strategy.score_interaction_target(lugia_v, {"id": "send_out"}, context)
+	return run_checks([
+		assert_eq(str(owner.get("pivot_target_name", "")), "Wyrdeer V", "After dual Archeops are online, knockout replacement should pivot to the attacker that can be charged this turn"),
+		assert_true(not handoff.is_empty() and str(handoff[0]) == "Wyrdeer V", "Handoff priority should name chargeable Wyrdeer V before fallback Lugia V"),
+		assert_true(wyrdeer_score > lugia_score, "send_out target scoring should agree with the contract (Wyrdeer=%f Lugia=%f)" % [wyrdeer_score, lugia_score]),
+	])
+
+
+func test_v175_lugia_send_out_ignores_knocked_out_primary_when_wyrdeer_can_be_charged() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before KO handoff can be verified"
+	var gs := _make_game_state(7)
+	var player := gs.players[0]
+	var knocked_out_lugia := _lugia_vstar()
+	knocked_out_lugia.damage_counters = knocked_out_lugia.get_max_hp()
+	player.active_pokemon = knocked_out_lugia
+	var archeops := _archeops()
+	var wyrdeer := _wyrdeer_v()
+	player.bench.append(archeops)
+	player.bench.append(_archeops())
+	player.bench.append(wyrdeer)
+	player.deck.append(_energy(DOUBLE_TURBO_ENERGY))
+	player.deck.append(_energy(GIFT_ENERGY))
+	player.deck.append(_energy(JET_ENERGY))
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var turn_plan: Dictionary = strategy.build_turn_contract(gs, 0, {"prompt_kind": "handoff", "step_id": "send_out"})
+	var owner: Dictionary = turn_plan.get("owner", {}) if turn_plan.get("owner", {}) is Dictionary else {}
+	var context := {
+		"game_state": gs,
+		"player_index": 0,
+		"turn_plan": turn_plan,
+	}
+	var wyrdeer_score: float = strategy.score_interaction_target(wyrdeer, {"id": "send_out"}, context)
+	var archeops_score: float = strategy.score_interaction_target(archeops, {"id": "send_out"}, context)
+	return run_checks([
+		assert_eq(str(owner.get("pivot_target_name", "")), "Wyrdeer V", "A knocked-out Lugia VSTAR should not block the chargeable Wyrdeer send-out contract"),
+		assert_true(wyrdeer_score > archeops_score, "send_out should prefer chargeable Wyrdeer over a support Archeops after the primary is knocked out (Wyrdeer=%f Archeops=%f)" % [wyrdeer_score, archeops_score]),
+	])
+
+
+func test_v175_lugia_primary_vstar_charge_outranks_backup_attackers() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before primary-charge scoring can be verified"
+	var gs := _make_game_state(3)
+	var player := gs.players[0]
+	var lugia_vstar := _lugia_vstar()
+	player.active_pokemon = lugia_vstar
+	player.bench.append(_archeops())
+	var cinccino := _cinccino()
+	var wyrdeer := _wyrdeer_v()
+	player.bench.append(cinccino)
+	player.bench.append(wyrdeer)
+	var context := {
+		"game_state": gs,
+		"player_index": 0,
+		"source_card": _energy(GIFT_ENERGY),
+	}
+	var lugia_assignment: float = strategy.score_interaction_target(lugia_vstar, {"id": "energy_assignments"}, context)
+	var cinccino_assignment: float = strategy.score_interaction_target(cinccino, {"id": "energy_assignments"}, context)
+	var wyrdeer_assignment: float = strategy.score_interaction_target(wyrdeer, {"id": "energy_assignments"}, context)
+	var lugia_attach: float = strategy.score_action_absolute(
+		{"kind": "attach_energy", "card": _energy(GIFT_ENERGY), "target_slot": lugia_vstar},
+		gs,
+		0
+	)
+	var cinccino_attach: float = strategy.score_action_absolute(
+		{"kind": "attach_energy", "card": _energy(GIFT_ENERGY), "target_slot": cinccino},
+		gs,
+		0
+	)
+	return run_checks([
+		assert_true(lugia_assignment > cinccino_assignment, "Primary Lugia VSTAR should receive Primal Turbo before Cinccino while it still needs Energy"),
+		assert_true(lugia_assignment > wyrdeer_assignment, "Primary Lugia VSTAR should receive Primal Turbo before Wyrdeer while it still needs Energy"),
+		assert_true(lugia_attach > cinccino_attach, "Manual special Energy should stay on the uncharged primary Lugia VSTAR before Cinccino"),
+	])
+
+
+func test_v175_lugia_primal_turbo_charges_active_cinccino_before_benched_vstar() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before active conversion charging can be verified"
+	var gs := _make_game_state(3)
+	var player := gs.players[0]
+	var active_cinccino := _cinccino()
+	player.active_pokemon = active_cinccino
+	var bench_lugia := _lugia_vstar()
+	player.bench.append(bench_lugia)
+	player.bench.append(_archeops())
+	player.bench.append(_archeops())
+	player.deck.append(_energy(GIFT_ENERGY))
+	player.deck.append(_energy(JET_ENERGY))
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Iron Hands ex", "Basic", "L", 230, "", "ex"), 1)
+	var context := {
+		"game_state": gs,
+		"player_index": 0,
+		"source_card": _energy(GIFT_ENERGY),
+	}
+	var cinccino_assignment: float = strategy.score_interaction_target(active_cinccino, {"id": "energy_assignments"}, context)
+	var lugia_assignment: float = strategy.score_interaction_target(bench_lugia, {"id": "energy_assignments"}, context)
+	return assert_true(
+		cinccino_assignment > lugia_assignment,
+		"If Lugia VSTAR is benched, Primal Turbo should enable the active Cinccino attack before charging the bench VSTAR (Cinccino=%f Lugia=%f)" % [cinccino_assignment, lugia_assignment]
+	)
+
+
+func test_v175_lugia_caps_primary_and_regigigas_energy_before_cinccino_scaling() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before 17.5 energy cap routing can be verified"
+	var gs := _make_game_state(10)
+	var player := gs.players[0]
+	var lugia_vstar := _lugia_vstar()
+	_attach(lugia_vstar, [DOUBLE_TURBO_ENERGY, GIFT_ENERGY, JET_ENERGY, MIST_ENERGY])
+	player.active_pokemon = lugia_vstar
+	player.bench.append(_archeops())
+	var cinccino := _cinccino()
+	_attach(cinccino, [GIFT_ENERGY, JET_ENERGY, MIST_ENERGY])
+	var regigigas := _make_slot(_regigigas_card().card_data, 0)
+	_attach(regigigas, [DOUBLE_TURBO_ENERGY, GIFT_ENERGY, JET_ENERGY, MIST_ENERGY])
+	var charging_regigigas := _make_slot(_regigigas_card().card_data, 0)
+	_attach(charging_regigigas, [DOUBLE_TURBO_ENERGY, GIFT_ENERGY, JET_ENERGY])
+	player.bench.append(cinccino)
+	player.bench.append(regigigas)
+	player.bench.append(charging_regigigas)
+	var gift_context := {
+		"game_state": gs,
+		"player_index": 0,
+		"source_card": _energy(GIFT_ENERGY),
+	}
+	var pending_context := gift_context.duplicate()
+	pending_context["pending_assignment_counts"] = {
+		lugia_vstar.get_instance_id(): 1,
+	}
+	var legacy_context := {
+		"game_state": gs,
+		"player_index": 0,
+		"source_card": _energy("Legacy Energy"),
+	}
+	var capped_lugia_score: float = strategy.score_interaction_target(lugia_vstar, {"id": "energy_assignments"}, gift_context)
+	var pending_capped_lugia_score: float = strategy.score_interaction_target(lugia_vstar, {"id": "energy_assignments"}, pending_context)
+	var capped_regigigas_score: float = strategy.score_interaction_target(regigigas, {"id": "energy_assignments"}, gift_context)
+	var charging_regigigas_score: float = strategy.score_interaction_target(charging_regigigas, {"id": "energy_assignments"}, gift_context)
+	var cinccino_gift_score: float = strategy.score_interaction_target(cinccino, {"id": "energy_assignments"}, gift_context)
+	var cinccino_legacy_score: float = strategy.score_interaction_target(cinccino, {"id": "energy_assignments"}, legacy_context)
+	var lugia_legacy_score: float = strategy.score_interaction_target(lugia_vstar, {"id": "energy_assignments"}, legacy_context)
+	var manual_lugia_score: float = strategy.score_action_absolute(
+		{"kind": "attach_energy", "card": _energy(GIFT_ENERGY), "target_slot": lugia_vstar},
+		gs,
+		0
+	)
+	var manual_cinccino_score: float = strategy.score_action_absolute(
+		{"kind": "attach_energy", "card": _energy(GIFT_ENERGY), "target_slot": cinccino},
+		gs,
+		0
+	)
+	return run_checks([
+		assert_true(capped_lugia_score < 100.0, "A 4-energy Lugia VSTAR should be a low-value Primal Turbo target, not just slightly below Cinccino (got %f)" % capped_lugia_score),
+		assert_true(pending_capped_lugia_score < 100.0, "Pending assignment counts should make Lugia overfill stay low-value in the same Primal Turbo burst (got %f)" % pending_capped_lugia_score),
+		assert_true(capped_regigigas_score < 100.0, "A 4-energy Regigigas should be a low-value Primal Turbo target (got %f)" % capped_regigigas_score),
+		assert_true(charging_regigigas_score > capped_regigigas_score, "A 3-energy Regigigas should still be allowed to receive its fourth Energy"),
+		assert_true(cinccino_gift_score > capped_lugia_score, "A 4-energy Lugia VSTAR should stop taking Primal Turbo before Cinccino scaling"),
+		assert_true(cinccino_gift_score > pending_capped_lugia_score, "Pending assignment counts should prevent overfilling Lugia past 4 in the same Primal Turbo burst"),
+		assert_true(cinccino_gift_score > capped_regigigas_score, "A 4-energy Regigigas should stop taking Primal Turbo before Cinccino scaling"),
+		assert_true(cinccino_legacy_score > lugia_legacy_score, "Legacy Energy should prefer Cinccino once Lugia has enough Energy"),
+		assert_true(manual_cinccino_score > manual_lugia_score, "Manual special Energy should prefer Cinccino over a 4-energy Lugia VSTAR"),
+	])
+
+
 func test_lugia_setup_preserves_on_play_support_basics_when_core_shell_exists() -> String:
 	var strategy := _new_strategy()
 	if strategy == null:
@@ -351,7 +1113,7 @@ func test_lugia_boss_prioritizes_visible_bench_ko_conversion() -> String:
 	var gs := _make_game_state(9)
 	var player := gs.players[0]
 	var active_lugia := _lugia_vstar()
-	_attach(active_lugia, [DOUBLE_TURBO_ENERGY, GIFT_ENERGY, JET_ENERGY, MIST_ENERGY])
+	_attach(active_lugia, [GIFT_ENERGY, JET_ENERGY, MIST_ENERGY, V_GUARD_ENERGY])
 	player.active_pokemon = active_lugia
 	var opponent := gs.players[1]
 	opponent.active_pokemon = _make_slot(_make_pokemon_cd("Iron Hands ex", "Basic", "L", 230, "", "ex"), 1)

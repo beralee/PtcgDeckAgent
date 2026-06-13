@@ -235,6 +235,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	target_slot.pokemon_stack.append(stage2_card)
 	target_slot.turn_evolved = state.turn_number
 	target_slot.clear_all_status()
+	target_slot.mark_rare_candy_evolved(state.turn_number)
 
 
 func get_description() -> String:

@@ -1,0 +1,249 @@
+{
+  "target": "creature",
+  "mode": "charge",
+  "prompt": "Body-first Terapagos ex cavern-board ready animation; crystal turtle body is the primary subject in every frame with eight attached crystal facets.",
+  "role": "",
+  "input": "assets\\textures\\vfx\\ready_terapagos_cavern_board\\raw-sheet.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 1620,
+  "rows": 2,
+  "cols": 3,
+  "cell_size": 256,
+  "fit_scale": 0.8,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "center",
+  "shared_scale": true,
+  "component_mode": "largest",
+  "component_padding": 8,
+  "min_component_area": 32,
+  "edge_touch_margin": 0,
+  "frame_labels": [
+    "ready-1",
+    "ready-2",
+    "ready-3",
+    "ready-4",
+    "ready-5",
+    "ready-6"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 16,
+      "selected_component_area": 51344,
+      "selected_component_bbox": [
+        105,
+        202,
+        438,
+        416
+      ],
+      "crop_bbox": [
+        97,
+        194,
+        446,
+        424
+      ],
+      "edge_touch": false,
+      "output_size": [
+        154,
+        101
+      ],
+      "paste_position": [
+        51,
+        77
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        512,
+        0,
+        1024,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 11,
+      "selected_component_area": 41862,
+      "selected_component_bbox": [
+        67,
+        209,
+        399,
+        460
+      ],
+      "crop_bbox": [
+        59,
+        201,
+        407,
+        468
+      ],
+      "edge_touch": false,
+      "output_size": [
+        154,
+        118
+      ],
+      "paste_position": [
+        51,
+        69
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        1024,
+        0,
+        1536,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 11,
+      "selected_component_area": 45086,
+      "selected_component_bbox": [
+        35,
+        211,
+        376,
+        466
+      ],
+      "crop_bbox": [
+        27,
+        203,
+        384,
+        474
+      ],
+      "edge_touch": false,
+      "output_size": [
+        158,
+        120
+      ],
+      "paste_position": [
+        49,
+        68
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        512,
+        512,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 7,
+      "selected_component_area": 57876,
+      "selected_component_bbox": [
+        89,
+        79,
+        443,
+        400
+      ],
+      "crop_bbox": [
+        81,
+        71,
+        451,
+        408
+      ],
+      "edge_touch": false,
+      "output_size": [
+        164,
+        149
+      ],
+      "paste_position": [
+        46,
+        53
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        512,
+        512,
+        1024,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 4,
+      "selected_component_area": 97768,
+      "selected_component_bbox": [
+        10,
+        10,
+        456,
+        426
+      ],
+      "crop_bbox": [
+        2,
+        2,
+        464,
+        434
+      ],
+      "edge_touch": false,
+      "output_size": [
+        204,
+        191
+      ],
+      "paste_position": [
+        26,
+        32
+      ]
+    },
+    {
+      "grid": [
+        1,
+        2
+      ],
+      "source_box": [
+        1024,
+        512,
+        1536,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 9,
+      "selected_component_area": 55224,
+      "selected_component_bbox": [
+        40,
+        107,
+        385,
+        399
+      ],
+      "crop_bbox": [
+        32,
+        99,
+        393,
+        407
+      ],
+      "edge_touch": false,
+      "output_size": [
+        160,
+        136
+      ],
+      "paste_position": [
+        48,
+        60
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

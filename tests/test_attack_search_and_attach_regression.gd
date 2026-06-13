@@ -56,6 +56,38 @@ func test_future_energy_attachment_uses_assignment_ui_and_selected_targets() -> 
 	])
 
 
+func test_single_target_only_energy_attachment_rejects_split_assignments() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	var bench_a := player.bench[0]
+	var bench_b := player.bench[1]
+
+	player.deck.clear()
+	var energy_a := CardInstance.create(_make_energy_data("Energy A", "R"), 0)
+	var energy_b := CardInstance.create(_make_energy_data("Energy B", "W"), 0)
+	player.deck.append_array([energy_a, energy_b])
+
+	var effect := AttackSearchAndAttachEffect.new("", 2, "deck_search", 0, "any")
+	effect.single_target_only = true
+	var steps := effect.get_attack_interaction_steps(player.active_pokemon.get_top_card(), {"name": "Single Target"}, state)
+	effect.set_attack_interaction_context([{
+		"energy_assignments": [
+			{"source": energy_a, "target": bench_a},
+			{"source": energy_b, "target": bench_b},
+		],
+	}])
+	effect.execute_attack(player.active_pokemon, state.players[1].active_pokemon, 0, state)
+	effect.clear_attack_interaction_context()
+
+	return run_checks([
+		assert_true(bool(steps[0].get("single_target_only", false)) if not steps.is_empty() else false, "Single-target attachment should declare the assignment UI constraint"),
+		assert_eq(bench_a.attached_energy.size(), 1, "Only the first chosen target should receive legal explicit assignments"),
+		assert_eq(bench_b.attached_energy.size(), 0, "Split-target assignments should be rejected instead of attached"),
+		assert_false(energy_a in player.deck, "Accepted Energy should leave the deck"),
+		assert_true(energy_b in player.deck, "Rejected split Energy should remain in deck"),
+	])
+
+
 func _make_state() -> GameState:
 	var state := GameState.new()
 	state.phase = GameState.GamePhase.MAIN

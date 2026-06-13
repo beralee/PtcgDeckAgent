@@ -1730,6 +1730,21 @@ func _on_player_choice_required(choice_type: String, data: Dictionary) -> void:
 					cleanup_steps,
 					null
 				)
+		"powerglass_end_turn":
+			var powerglass_steps: Array[Dictionary] = []
+			for raw_powerglass_step: Variant in data.get("steps", []):
+				if raw_powerglass_step is Dictionary:
+					powerglass_steps.append(raw_powerglass_step)
+			var powerglass_card: CardInstance = data.get("card", null) as CardInstance
+			var powerglass_slot: PokemonSlot = data.get("slot", null) as PokemonSlot
+			if not powerglass_steps.is_empty() and powerglass_card != null:
+				_start_effect_interaction(
+					"powerglass_end_turn",
+					int(data.get("player", _view_player)),
+					powerglass_steps,
+					powerglass_card,
+					powerglass_slot
+				)
 		"heavy_baton_target":
 			var pi_hb: int = data.get("player", 0)
 			var bench_raw: Array = data.get("bench", [])

@@ -1,12 +1,83 @@
-extends "res://scripts/ai/DeckStrategyCharizardExLLM.gd"
+extends "res://scripts/ai/DeckStrategy17LLMBase.gd"
 
 const BombCharizardRulesScript = preload("res://scripts/ai/DeckStrategy17BombCharizard.gd")
 
 const BOMB_CHARIZARD_LLM_ID := "v17_bomb_charizard_llm"
+const CHARMANDER := "Charmander"
+const CHARMELEON := "Charmeleon"
+const CHARIZARD_EX := "Charizard ex"
+const PIDGEY := "Pidgey"
+const PIDGEOT_EX := "Pidgeot ex"
+const DUSKULL := "Duskull"
+const DUSCLOPS := "Dusclops"
+const DUSKNOIR := "Dusknoir"
+const RADIANT_CHARIZARD := "Radiant Charizard"
+const ROTOM_V := "Rotom V"
+const LUMINEON_V := "Lumineon V"
+const FEZANDIPITI_EX := "Fezandipiti ex"
+const MANAPHY := "Manaphy"
+const FOREST_SEAL_STONE := "Forest Seal Stone"
+const FIRE_ENERGY := "Fire Energy"
 
 
 func _init() -> void:
 	_rules = BombCharizardRulesScript.new()
+
+
+func _llm_strategy_id() -> String:
+	return BOMB_CHARIZARD_LLM_ID
+
+
+func _rules_strategy_path() -> String:
+	return "res://scripts/ai/DeckStrategy17BombCharizard.gd"
+
+
+func _deck_display_name() -> String:
+	return "17.0 Bomb Charizard"
+
+
+func _deck_primary_attackers() -> Array[String]:
+	return [CHARIZARD_EX, RADIANT_CHARIZARD]
+
+
+func _deck_secondary_attackers() -> Array[String]:
+	return []
+
+
+func _deck_support_pokemon() -> Array[String]:
+	return [PIDGEY, PIDGEOT_EX, DUSKULL, DUSCLOPS, DUSKNOIR, ROTOM_V, LUMINEON_V, FEZANDIPITI_EX, MANAPHY]
+
+
+func _deck_energy_banks() -> Array[String]:
+	return [CHARIZARD_EX]
+
+
+func _deck_primary_attacks() -> Array:
+	return [
+		{"pokemon": CHARIZARD_EX, "attack": "Burning Darkness"},
+		{"pokemon": RADIANT_CHARIZARD, "attack": "Combustion Blast"},
+	]
+
+
+func _deck_evolution_lines() -> Array:
+	return [
+		{"basic": CHARMANDER, "stages": [CHARMELEON, CHARIZARD_EX], "role": "primary_attacker_energy_engine", "desired_count": 2, "energy": {"R": 2}},
+		{"basic": PIDGEY, "stages": [PIDGEOT_EX], "role": "search_engine", "desired_count": 1},
+		{"basic": DUSKULL, "stages": [DUSCLOPS, DUSKNOIR], "role": "conversion_support", "desired_count": 1},
+	]
+
+
+func _deck_energy_needs() -> Dictionary:
+	return {
+		CHARMANDER: {"R": 2},
+		CHARMELEON: {"R": 2},
+		CHARIZARD_EX: {"R": 2},
+		RADIANT_CHARIZARD: {"R": 1},
+	}
+
+
+func _deck_route_terms() -> Array[String]:
+	return [CHARMANDER, PIDGEY, PIDGEOT_EX, DUSKNOIR, DUSCLOPS, "Rare Candy", "Buddy-Buddy Poffin", "Ultra Ball", "Arven", FOREST_SEAL_STONE]
 
 
 func get_strategy_id() -> String:
@@ -50,7 +121,7 @@ func make_llm_runtime_snapshot(game_state: GameState, player_index: int) -> Dict
 
 func get_llm_deck_strategy_prompt(game_state: GameState, player_index: int) -> PackedStringArray:
 	var lines := PackedStringArray()
-	lines.append("Deck plan: V17 Bomb Charizard is the Charizard ex / Pidgeot ex strong shell with a Dusknoir prize-conversion package. Reuse the normal Charizard plan first: build Charmander plus Pidgey, convert through Rare Candy, then attack with Charizard ex while Pidgeot ex keeps the next turn online.")
+	lines.append("Deck plan: 17.0 Bomb Charizard is the Charizard ex / Pidgeot ex strong shell with a Dusknoir prize-conversion package. Reuse the normal Charizard plan first: build Charmander plus Pidgey, convert through Rare Candy, then attack with Charizard ex while Pidgeot ex keeps the next turn online.")
 	lines.append("Opening priority: the first setup target is Charmander plus Pidgey. Buddy-Buddy Poffin, Nest Ball, Ultra Ball, Arven, Rare Candy, Forest Seal Stone on Rotom V or Lumineon V, and Pidgeot ex search should all serve this shell before optional Duskull padding.")
 	lines.append("Stage 2 policy: if Rare Candy can create Pidgeot ex or Charizard ex, finish the Stage 2 before shallow draw or end_turn. Prefer Pidgeot ex when it unlocks the exact missing search piece; prefer Charizard ex when it creates the first real attack.")
 	lines.append("Fire policy: attach or accelerate Fire only to Charizard ex, a Charmander/Charmeleon backup lane, or late-game Radiant Charizard. Do not put Fire on Pidgeot ex, Pidgey, Duskull, Dusclops, Dusknoir, Rotom V, Lumineon V, Fezandipiti ex, Manaphy, or Cleffa unless the structured payload proves an immediate retreat or attack.")
@@ -59,7 +130,7 @@ func get_llm_deck_strategy_prompt(game_state: GameState, player_index: int) -> P
 	lines.append("Prize policy: prefer an active KO, then a gust/catcher bench KO, then a Dusknoir/Dusclops conversion on a damaged two-prize Pokemon. Never hand the opponent their final Prize with self-KO unless the same sequence wins first.")
 	lines.append("Support policy: Rotom V, Lumineon V, Fezandipiti ex, Manaphy, Cleffa, Pidgey, Pidgeot ex, Duskull, Dusclops, and Dusknoir are support or conversion pieces, not Fire targets. Bench them only when their ability or future evolution matters.")
 	lines.append("Attack policy: Burning Darkness and Combustion Blast are the real terminal attacks. Attack after safe setup, search, Rare Candy, Fire assignment, tool, gust/catcher, and bomb conversion actions are complete.")
-	lines.append("Execution boundary: exact action ids, card text, interaction schemas, HP, energy, hand, discard, and opponent board come from the structured payload. Do not invent ids, card effects, targets, or interaction fields.")
+	lines.append("Execution boundary: exact action ids, legal_actions, card text, interaction_schema, HP, energy, hand, discard, and opponent board come from the structured payload. Do not invent ids, card effects, targets, or interaction fields.")
 	var custom_text := get_deck_strategy_text().strip_edges()
 	if custom_text != "" and not _bomb_charizard_text_looks_garbled(custom_text):
 		lines.append("Player-authored notes follow. Treat them as preferences only when they agree with legal_actions, card_rules, candidate_routes, and turn_tactical_facts.")
@@ -455,10 +526,108 @@ func _bomb_slot_position(player: PlayerState, slot: PokemonSlot) -> String:
 	return ""
 
 
+func _append_payload_ref_by_id(
+	route_actions: Array[Dictionary],
+	seen_ids: Dictionary,
+	legal_actions: Array,
+	action_id: String,
+	policy: Dictionary = {}
+) -> void:
+	var ref := _payload_ref_by_id(legal_actions, action_id)
+	if ref.is_empty():
+		return
+	var ref_id := str(ref.get("id", ref.get("action_id", ""))).strip_edges()
+	if ref_id == "" or bool(seen_ids.get(ref_id, false)):
+		return
+	var route_ref := {
+		"id": ref_id,
+		"action_id": ref_id,
+		"type": str(ref.get("type", ref.get("kind", ""))),
+	}
+	if not policy.is_empty():
+		route_ref["selection_policy"] = policy
+	route_actions.append(route_ref)
+	seen_ids[ref_id] = true
+
+
+func _payload_ref_by_id(legal_actions: Array, action_id: String) -> Dictionary:
+	if action_id.strip_edges() == "":
+		return {}
+	for raw: Variant in legal_actions:
+		if not (raw is Dictionary):
+			continue
+		var ref: Dictionary = raw
+		if str(ref.get("id", ref.get("action_id", ""))) == action_id:
+			return ref
+	return {}
+
+
+func _charizard_terminal_attack_ref(legal_actions: Array) -> Dictionary:
+	var best_attack: Dictionary = {}
+	var best_score := -999999
+	for raw: Variant in legal_actions:
+		if not (raw is Dictionary):
+			continue
+		var ref: Dictionary = raw
+		if str(ref.get("type", ref.get("kind", ""))) not in ["attack", "granted_attack"]:
+			continue
+		var quality: Dictionary = ref.get("attack_quality", {}) if ref.get("attack_quality", {}) is Dictionary else {}
+		if str(quality.get("terminal_priority", "")) == "low":
+			continue
+		var score := 500 + int(ref.get("attack_index", 0)) * 25
+		if _name_matches_any(str(ref.get("attack_name", "")), ["Burning Darkness", "Combustion Blast"]):
+			score += 250
+		if str(quality.get("role", "")) == "primary_damage":
+			score += 160
+		if score > best_score:
+			best_score = score
+			best_attack = ref
+	if best_attack.is_empty():
+		return {}
+	var action_id := str(best_attack.get("id", best_attack.get("action_id", ""))).strip_edges()
+	return {"id": action_id, "action_id": action_id, "type": str(best_attack.get("type", "attack"))} if action_id != "" else {}
+
+
+func _continuity_ref_text(ref: Dictionary) -> String:
+	return "%s %s %s %s %s %s %s" % [
+		str(ref.get("id", ref.get("action_id", ""))),
+		str(ref.get("card", "")),
+		str(ref.get("pokemon", "")),
+		str(ref.get("target", "")),
+		str(ref.get("ability", "")),
+		str(ref.get("summary", "")),
+		JSON.stringify(ref.get("card_rules", {})),
+	]
+
+
+func _charizard_count_field_name(player: PlayerState, query: String) -> int:
+	if player == null:
+		return 0
+	var count := 0
+	if _name_contains(_slot_best_name(player.active_pokemon), query):
+		count += 1
+	for slot: PokemonSlot in player.bench:
+		if _name_contains(_slot_best_name(slot), query):
+			count += 1
+	return count
+
+
+func _slot_best_name(slot: PokemonSlot) -> String:
+	return _slot_name(slot)
+
+
+func _name_matches_any(name: String, queries: Array[String]) -> bool:
+	return _matches_any(name, queries)
+
+
+func _name_contains(text: String, query: String) -> bool:
+	return _v17_name_contains(text, query)
+
+
 func _bomb_charizard_text_looks_garbled(text: String) -> bool:
-	var markers := ["銆", "鐨", "鍠", "榫", "俓n", "€", "涓", "绾", "濂"]
-	var hits := 0
-	for marker: String in markers:
-		if text.contains(marker):
-			hits += 1
-	return hits >= 2
+	var suspicious_count := text.count("?")
+	for i: int in text.length():
+		var codepoint := text.unicode_at(i)
+		if codepoint == 0xfffd or codepoint == 0x20ac:
+			suspicious_count += 1
+	return suspicious_count >= 3 and suspicious_count >= maxi(3, text.length() / 40)

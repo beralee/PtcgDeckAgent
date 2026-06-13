@@ -238,6 +238,8 @@ func score_action_absolute(action: Dictionary, game_state: GameState, player_ind
 			return _score_trainer(action.get("card", null), player, phase, game_state, player_index)
 		"attach_energy":
 			return _score_attach(action.get("card", null), action.get("target_slot", null), player, phase, game_state)
+		"use_stadium_effect":
+			return _score_use_stadium_effect(action.get("card", null), game_state, player, player_index, phase)
 		"use_ability":
 			return _score_use_ability(action.get("source_slot", null), game_state, player, phase)
 		"retreat":
@@ -284,7 +286,7 @@ func evaluate_board(game_state: GameState, player_index: int) -> float:
 func predict_attacker_damage(slot: PokemonSlot, extra_context: int = 0) -> Dictionary:
 	if slot == null or slot.get_card_data() == null:
 		return {"damage": 0, "can_attack": false, "description": ""}
-	var attached := slot.attached_energy.size() + extra_context
+	var attached := _attached_energy_units(slot) + extra_context
 	var best_damage := _best_attack_damage(slot)
 	var can_attack := false
 	for attack: Dictionary in slot.get_card_data().attacks:
@@ -354,7 +356,7 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 			return float(get_discard_priority_contextual(card, context.get("game_state", null), int(context.get("player_index", -1))))
 		if step_id == "summon_targets":
 			return _summon_target_score(card)
-	if item is PokemonSlot and step_id in ["assignment_target", "energy_assignment"]:
+	if item is PokemonSlot and step_id in ["assignment_target", "energy_assignment", "energy_assignments"]:
 		return _assignment_target_score(item as PokemonSlot, context)
 	if item is PokemonSlot and step_id in ["opponent_switch_target", "opponent_bench_target"]:
 		return _score_opponent_switch_target(item as PokemonSlot, context)
@@ -533,7 +535,7 @@ func _score_trainer(
 	var cool_off_draw_churn := _should_cool_off_draw_churn(player, phase)
 	if cool_off_draw_churn:
 		if name in [PROFESSORS_RESEARCH, IONO, GREAT_BALL, CARMINE, ULTRA_BALL, CAPTURING_AROMA]:
-			return 0.0
+			return -80.0
 	if cool_off_churn:
 		if name == PROFESSORS_RESEARCH:
 			return 80.0
@@ -681,9 +683,29 @@ func _score_use_ability(source_slot: PokemonSlot, game_state: GameState, player:
 		return 220.0
 	if name == FEZANDIPITI_EX:
 		if _should_cool_off_draw_churn(player, phase):
-			return 0.0
+			return -80.0
 		return 130.0
 	return 0.0
+
+
+func _score_use_stadium_effect(
+	card: CardInstance,
+	game_state: GameState,
+	player: PlayerState,
+	player_index: int,
+	phase: String
+) -> float:
+	var stadium_card := card
+	if stadium_card == null and game_state != null:
+		stadium_card = game_state.stadium_card
+	if stadium_card == null or player == null:
+		return 0.0
+	var stadium_name := _card_name(stadium_card)
+	if stadium_name != "Mesagoza":
+		return 0.0
+	if _should_cool_off_draw_churn(player, phase):
+		return -90.0
+	return -30.0 if player.deck.is_empty() else 0.0
 
 
 func _score_retreat(game_state: GameState, player: PlayerState, phase: String, bench_target: PokemonSlot = null) -> float:
@@ -705,6 +727,8 @@ func _score_retreat(game_state: GameState, player: PlayerState, phase: String, b
 		var opponent: PlayerState = game_state.players[1 - player.player_index]
 		if opponent != null and opponent.active_pokemon != null:
 			opponent_hp = opponent.active_pokemon.get_remaining_hp()
+	if target_damage <= 30 and (opponent_hp <= 0 or target_damage < opponent_hp):
+		return 40.0 if target_damage > 0 else 0.0
 	var score := 90.0
 	var active_name := _slot_name(player.active_pokemon)
 	var target_name := _slot_name(target)
@@ -738,11 +762,21 @@ func _score_attack(action: Dictionary, game_state: GameState, player_index: int,
 	var player: PlayerState = game_state.players[player_index]
 	var projected_damage := int(action.get("projected_damage", 0))
 	var defender: PokemonSlot = game_state.players[1 - player_index].active_pokemon
-	var projected_ko := defender != null and projected_damage >= defender.get_remaining_hp()
+	var projected_ko := bool(action.get("projected_knockout", false))
+	if not projected_ko and defender != null:
+		projected_ko = projected_damage >= defender.get_remaining_hp()
+	var source_slot: PokemonSlot = action.get("source_slot", null)
+	if source_slot == null:
+		source_slot = player.active_pokemon
+	var source_name := _slot_name(source_slot)
 	var score := 500.0 + float(projected_damage)
 	score += _launch_shell_attack_adjustment(player, projected_damage, projected_ko)
 	if projected_ko:
 		score += 300.0
+	elif _count_named_on_field(player, ARCHEOPS) > 0 and projected_damage <= 30:
+		score = minf(score, 90.0 if projected_damage > 0 else 40.0)
+	elif source_name == ARCHEOPS and projected_damage < 130:
+		score = minf(score, 180.0)
 	if phase == "late":
 		score += 40.0
 	return score
@@ -771,6 +805,15 @@ func _search_score(card: CardInstance, game_state: GameState, player_index: int)
 	var minccino_total := _count_named_on_field(player, MINCCINO) + _count_named_on_field(player, CINCCINO) + _count_named_in_hand(player, MINCCINO) + _count_named_in_hand(player, CINCCINO)
 	var engine_online := _count_named_on_field(player, ARCHEOPS) > 0
 	var phase := _detect_phase(game_state, player)
+	if _needs_emergency_basic_backup_search(player):
+		if name == LUGIA_V:
+			return 560 + _turn_contract_search_bonus(turn_contract, LUGIA_V)
+		if name == MINCCINO:
+			return 430 + _turn_contract_search_bonus(turn_contract, MINCCINO)
+		if card.is_basic_pokemon():
+			return 260
+		if name in [ARCHEOPS, LUGIA_VSTAR, CINCCINO]:
+			return 35
 	if lugia_on_field + lugia_in_hand == 0:
 		if name == LUGIA_V:
 			return 220 + _turn_contract_search_bonus(turn_contract, LUGIA_V)
@@ -1161,6 +1204,16 @@ func _count_special_energy_in_deck(player: PlayerState) -> int:
 	return count
 
 
+func _count_slot_special_energy(slot: PokemonSlot) -> int:
+	if slot == null:
+		return 0
+	var count := 0
+	for energy: CardInstance in slot.attached_energy:
+		if energy != null and energy.card_data != null and str(energy.card_data.card_type) == "Special Energy":
+			count += 1
+	return count
+
+
 func _detect_phase(game_state: GameState, player: PlayerState) -> String:
 	var archeops_count := _count_named_on_field(player, ARCHEOPS)
 	var ready_bench := _best_ready_bench(player)
@@ -1378,6 +1431,16 @@ func _lugia_core_shell_pressure(player: PlayerState) -> bool:
 	return false
 
 
+func _needs_emergency_basic_backup_search(player: PlayerState) -> bool:
+	if player == null or player.active_pokemon == null or player.is_bench_full():
+		return false
+	if not player.bench.is_empty():
+		return false
+	if _count_named_on_field(player, ARCHEOPS) > 0:
+		return false
+	return _lugia_core_shell_pressure(player)
+
+
 func _best_gust_ko_target(game_state: GameState, player_index: int) -> PokemonSlot:
 	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
 		return null
@@ -1408,9 +1471,20 @@ func _attack_energy_gap(slot: PokemonSlot) -> int:
 	if slot == null or slot.get_card_data() == null or slot.get_card_data().attacks.is_empty():
 		return 99
 	var min_gap := 99
+	var has_damage_attack := false
+	var attached_units := _attached_energy_units(slot)
 	for attack: Dictionary in slot.get_card_data().attacks:
 		var cost: String = str(attack.get("cost", ""))
-		min_gap = mini(min_gap, maxi(0, cost.length() - slot.attached_energy.size()))
+		var damage := _parse_damage(str(attack.get("damage", "0")))
+		if damage <= 0:
+			continue
+		has_damage_attack = true
+		min_gap = mini(min_gap, maxi(0, cost.length() - attached_units))
+	if has_damage_attack:
+		return min_gap
+	for attack: Dictionary in slot.get_card_data().attacks:
+		var cost: String = str(attack.get("cost", ""))
+		min_gap = mini(min_gap, maxi(0, cost.length() - attached_units))
 	return min_gap
 
 
@@ -1418,18 +1492,45 @@ func _best_attack_damage(slot: PokemonSlot) -> int:
 	if slot == null or slot.get_card_data() == null:
 		return 0
 	var slot_name := _slot_name(slot)
+	var attached_units := _attached_energy_units(slot)
+	var damage_modifier := _attached_damage_modifier(slot)
 	if slot_name == CINCCINO:
-		var special_count := 0
-		for energy: CardInstance in slot.attached_energy:
-			if energy != null and energy.card_data != null and str(energy.card_data.card_type) == "Special Energy":
-				special_count += 1
-		var scaled_damage := special_count * 70 if slot.attached_energy.size() >= 2 else 0
-		var fallback_damage := 30 if slot.attached_energy.size() >= 1 else 0
-		return maxi(scaled_damage, fallback_damage)
+		var special_count := _count_slot_special_energy(slot)
+		var scaled_damage := special_count * 70 + damage_modifier if attached_units >= 2 else 0
+		var fallback_damage := 30 + damage_modifier if attached_units >= 1 else 0
+		return maxi(0, maxi(scaled_damage, fallback_damage))
 	var best := 0
 	for attack: Dictionary in slot.get_card_data().attacks:
-		best = maxi(best, _parse_damage(str(attack.get("damage", "0"))))
+		var damage := _parse_damage(str(attack.get("damage", "0")))
+		if damage <= 0:
+			continue
+		var cost: String = str(attack.get("cost", ""))
+		if attached_units < cost.length():
+			continue
+		best = maxi(best, maxi(0, damage + damage_modifier))
 	return best
+
+
+func _attached_energy_units(slot: PokemonSlot) -> int:
+	if slot == null:
+		return 0
+	var total := 0
+	for energy: CardInstance in slot.attached_energy:
+		if _card_name(energy) == DOUBLE_TURBO_ENERGY:
+			total += 2
+		else:
+			total += 1
+	return total
+
+
+func _attached_damage_modifier(slot: PokemonSlot) -> int:
+	if slot == null:
+		return 0
+	var total := 0
+	for energy: CardInstance in slot.attached_energy:
+		if _card_name(energy) == DOUBLE_TURBO_ENERGY:
+			total -= 20
+	return total
 
 
 func _context_turn_plan(context: Dictionary) -> Dictionary:

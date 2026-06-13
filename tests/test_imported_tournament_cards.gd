@@ -554,6 +554,78 @@ func _load_card(path: String) -> CardData:
 	return CardData.from_dict(json.data)
 
 
+func test_cresselia_moonglow_reverse_requires_own_damage_counter_sources() -> String:
+	var state := _make_state()
+	var processor := EffectProcessor.new()
+	var cresselia_card := _load_card("res://data/bundled_user/cards/CS6.5C_033.json")
+	processor.register_pokemon_card(cresselia_card)
+	var cresselia := _make_slot(cresselia_card, 0)
+	cresselia.damage_counters = 40
+	var damaged_bench := _make_slot(_pokemon("Damaged Bench", "P", 100), 0)
+	damaged_bench.damage_counters = 10
+	var clean_bench := _make_slot(_pokemon("Clean Bench", "P", 100), 0)
+	state.players[0].active_pokemon = cresselia
+	state.players[0].bench = [damaged_bench, clean_bench]
+	state.players[1].active_pokemon = _make_slot(_pokemon("Opponent Active", "C", 120), 1)
+	var attack_effects: Array[BaseEffect] = processor.get_attack_effects_for_slot(cresselia, 0)
+	var steps: Array[Dictionary] = []
+	for effect: BaseEffect in attack_effects:
+		steps.append_array(effect.get_attack_interaction_steps(cresselia.get_top_card(), cresselia_card.attacks[0], state))
+	var source_step: Dictionary = steps[0] if not steps.is_empty() else {}
+	var source_items: Array = source_step.get("items", [])
+	var followup_steps: Array[Dictionary] = []
+	if not attack_effects.is_empty():
+		followup_steps = attack_effects[0].get_followup_attack_interaction_steps(cresselia.get_top_card(), cresselia_card.attacks[0], state, {
+			"cresselia_damage_sources": [cresselia, damaged_bench],
+		})
+	var target_step: Dictionary = followup_steps[0] if not followup_steps.is_empty() else {}
+
+	return run_checks([
+		assert_eq(steps.size(), 1, "Cresselia should first ask which own damaged Pokemon will provide counters"),
+		assert_eq(str(source_step.get("id", "")), "cresselia_damage_sources", "Initial Cresselia step should select own damage-counter sources"),
+		assert_true(bool(source_step.get("requires_followup_interaction", false)), "Source selection should inject the opponent target follow-up"),
+		assert_eq(source_items.size(), 2, "Only own Pokemon with damage counters should be source candidates"),
+		assert_true(cresselia in source_items, "Cresselia should be listed as a source when damaged"),
+		assert_true(damaged_bench in source_items, "Damaged own Bench Pokemon should be listed as a source"),
+		assert_false(clean_bench in source_items, "Undamaged own Pokemon should not be listed as a source"),
+		assert_eq(int(source_step.get("min_select", 0)), 2, "Moonglow Reverse should require confirming every damaged own Pokemon source"),
+		assert_eq(int(source_step.get("max_select", 0)), 2, "Source selection should not allow selecting outside the damaged source set"),
+		assert_eq(str(target_step.get("id", "")), "cresselia_damage_target", "After source selection Cresselia should ask for one opponent target"),
+	])
+
+
+func test_cresselia_moonglow_reverse_moves_only_confirmed_own_sources() -> String:
+	var state := _make_state()
+	var processor := EffectProcessor.new()
+	var cresselia_card := _load_card("res://data/bundled_user/cards/CS6.5C_033.json")
+	processor.register_pokemon_card(cresselia_card)
+	var cresselia := _make_slot(cresselia_card, 0)
+	cresselia.damage_counters = 40
+	var confirmed_bench := _make_slot(_pokemon("Confirmed Bench", "P", 100), 0)
+	confirmed_bench.damage_counters = 30
+	var untouched_bench := _make_slot(_pokemon("Untouched Bench", "P", 100), 0)
+	untouched_bench.damage_counters = 20
+	state.players[0].active_pokemon = cresselia
+	state.players[0].bench = [confirmed_bench, untouched_bench]
+	var opp_active := _make_slot(_pokemon("Opponent Active", "C", 120), 1)
+	var opp_bench := _make_slot(_pokemon("Opponent Bench", "C", 120), 1)
+	state.players[1].active_pokemon = opp_active
+	state.players[1].bench = [opp_bench]
+
+	processor.execute_attack_effect(cresselia, 0, opp_active, state, [{
+		"cresselia_damage_sources": [cresselia, confirmed_bench],
+		"cresselia_damage_target": [opp_bench],
+	}])
+
+	return run_checks([
+		assert_eq(cresselia.damage_counters, 20, "Selected Active source should lose up to two damage counters"),
+		assert_eq(confirmed_bench.damage_counters, 10, "Selected Bench source should lose up to two damage counters"),
+		assert_eq(untouched_bench.damage_counters, 20, "Unselected own Pokemon should keep its damage counters"),
+		assert_eq(opp_bench.damage_counters, 40, "Opponent target should receive only the selected sources' moved counters"),
+		assert_eq(opp_active.damage_counters, 0, "Chosen Bench target should prevent fallback to opponent Active"),
+	])
+
+
 func _assert_attack_interaction_waits_for_cresselia_choice() -> String:
 	var gsm := _make_gsm()
 	var bridge := HeadlessMatchBridge.new()
@@ -569,9 +641,12 @@ func _assert_attack_interaction_waits_for_cresselia_choice() -> String:
 	gsm.game_state.players[1].active_pokemon = defender
 	gsm.game_state.players[1].bench.append(opp_bench)
 	var started: bool = bool(bridge.call("_try_use_attack_with_interaction", 0, cresselia, 0))
+	var pending_steps: Array = bridge.get("_pending_effect_steps")
+	var first_step: Dictionary = pending_steps[0] if not pending_steps.is_empty() else {}
 	var result := run_checks([
-		assert_true(started, "Cresselia should start target selection"),
-		assert_eq(bridge.get_pending_prompt_type(), "effect_interaction", "Cresselia should wait for opponent target choice"),
+		assert_true(started, "Cresselia should start source selection"),
+		assert_eq(bridge.get_pending_prompt_type(), "effect_interaction", "Cresselia should wait for own damage-counter source choice"),
+		assert_eq(str(first_step.get("id", "")), "cresselia_damage_sources", "Cresselia should ask for own damage-counter sources before opponent target"),
 		assert_eq(cresselia.damage_counters, 40, "Cresselia should not move damage before target choice"),
 		assert_eq(defender.damage_counters, 0, "Opponent Active should not receive fallback damage before choice"),
 	])

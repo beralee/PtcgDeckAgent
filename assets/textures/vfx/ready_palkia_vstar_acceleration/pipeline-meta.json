@@ -1,0 +1,254 @@
+{
+  "target": "creature",
+  "mode": "charge",
+  "prompt": "Body-first Palkia VSTAR acceleration ready animation; space dragon body is the primary subject in every frame with attached water spheres and star portal glow.",
+  "role": "",
+  "input": "assets\\textures\\vfx\\ready_palkia_vstar_acceleration\\raw-sheet.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 1620,
+  "rows": 2,
+  "cols": 3,
+  "cell_size": 256,
+  "fit_scale": 0.74,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "center",
+  "shared_scale": true,
+  "component_mode": "largest",
+  "component_padding": 8,
+  "min_component_area": 32,
+  "edge_touch_margin": 0,
+  "frame_labels": [
+    "ready-1",
+    "ready-2",
+    "ready-3",
+    "ready-4",
+    "ready-5",
+    "ready-6"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 51457,
+      "selected_component_bbox": [
+        86,
+        127,
+        444,
+        436
+      ],
+      "crop_bbox": [
+        78,
+        119,
+        452,
+        444
+      ],
+      "edge_touch": false,
+      "output_size": [
+        148,
+        129
+      ],
+      "paste_position": [
+        54,
+        63
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        512,
+        0,
+        1024,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 7,
+      "selected_component_area": 75184,
+      "selected_component_bbox": [
+        47,
+        87,
+        407,
+        443
+      ],
+      "crop_bbox": [
+        39,
+        79,
+        415,
+        451
+      ],
+      "edge_touch": false,
+      "output_size": [
+        149,
+        148
+      ],
+      "paste_position": [
+        53,
+        54
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        1024,
+        0,
+        1536,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 3,
+      "selected_component_area": 82784,
+      "selected_component_bbox": [
+        14,
+        86,
+        414,
+        443
+      ],
+      "crop_bbox": [
+        6,
+        78,
+        422,
+        451
+      ],
+      "edge_touch": false,
+      "output_size": [
+        165,
+        148
+      ],
+      "paste_position": [
+        45,
+        54
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        512,
+        512,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 3,
+      "selected_component_area": 92476,
+      "selected_component_bbox": [
+        64,
+        30,
+        475,
+        379
+      ],
+      "crop_bbox": [
+        56,
+        22,
+        483,
+        387
+      ],
+      "edge_touch": false,
+      "output_size": [
+        169,
+        145
+      ],
+      "paste_position": [
+        43,
+        55
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        512,
+        512,
+        1024,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 2,
+      "selected_component_area": 98039,
+      "selected_component_bbox": [
+        0,
+        15,
+        468,
+        382
+      ],
+      "crop_bbox": [
+        0,
+        7,
+        476,
+        390
+      ],
+      "edge_touch": true,
+      "output_size": [
+        189,
+        152
+      ],
+      "paste_position": [
+        33,
+        52
+      ]
+    },
+    {
+      "grid": [
+        1,
+        2
+      ],
+      "source_box": [
+        1024,
+        512,
+        1536,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 6,
+      "selected_component_area": 75667,
+      "selected_component_bbox": [
+        16,
+        23,
+        375,
+        379
+      ],
+      "crop_bbox": [
+        8,
+        15,
+        383,
+        387
+      ],
+      "edge_touch": false,
+      "output_size": [
+        149,
+        148
+      ],
+      "paste_position": [
+        53,
+        54
+      ]
+    }
+  ],
+  "edge_touch_frames": [
+    [
+      1,
+      1
+    ]
+  ]
+}

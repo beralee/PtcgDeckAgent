@@ -116,6 +116,13 @@ func set_deck_strategy_text(text: String) -> void:
 		_rules.call("set_deck_strategy_text", text)
 
 
+func configure_from_deck(deck: DeckData) -> void:
+	if deck != null:
+		set_deck_strategy_text(str(deck.strategy))
+	if _rules != null and _rules.has_method("configure_from_deck"):
+		_rules.call("configure_from_deck", deck)
+
+
 func get_deck_strategy_text() -> String:
 	if _deck_strategy_text.strip_edges() != "":
 		return _deck_strategy_text

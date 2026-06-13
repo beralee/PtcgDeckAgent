@@ -1,0 +1,49 @@
+﻿{
+    "name":  "红莲铠骑",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "特性: 送火\n在自己的回合可以使用任意次。选择自己备战宝可梦身上附着的1个【火】能量，转附于战斗宝可梦身上。\n\n【火】【火】 火焰加农炮 90\n令对手的战斗宝可梦陷入【灼伤】状态。\n\n",
+    "yoren_code":  "P0936",
+    "set_code":  "CSV1C",
+    "card_index":  "028",
+    "set_code_en":  "PAF",
+    "card_index_en":  "15",
+    "name_en":  "Armarouge",
+    "artist":  "AKIRA EGAWA",
+    "rarity":  "R",
+    "release_date":  "2025-01-17T00:00:00+08:00",
+    "regulation_mark":  "G",
+    "effect_id":  "4f4c17fe9f3429419f9e344fbecb140d",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV1C/028.png",
+    "image_local_path":  "user://cards/images/CSV1C/028.png",
+    "is_tags":  [],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "R",
+    "stage":  "Stage 1",
+    "hp":  130,
+    "weakness_energy":  "W",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  2,
+    "evolves_from":  "炭小侍",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "火焰加农炮",
+                        "text":  "令对手的战斗宝可梦陷入【灼伤】状态。",
+                        "cost":  "RRC",
+                        "damage":  "90",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+                      {
+                          "name":  "送火",
+                          "text":  "在自己的回合可以使用任意次。选择自己备战宝可梦身上附着的1个【火】能量，转附于战斗宝可梦身上。"
+                      }
+                  ],
+    "energy_provides":  ""
+}

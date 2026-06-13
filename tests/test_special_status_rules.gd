@@ -378,3 +378,30 @@ func test_ai_action_builder_filters_status_blocked_attacks() -> String:
 		assert_true(_has_action_kind(confused_actions, "attack"), "AI should still expose normal attacks while Confused"),
 		assert_true(_has_action_kind(confused_actions, "granted_attack"), "AI should still expose granted attacks while Confused"),
 	])
+
+
+func test_ai_action_builder_filters_empty_hp_zero_slots_from_attachment_targets() -> String:
+	var gsm := _make_gsm()
+	var player := gsm.game_state.players[0]
+	var empty_active := _make_slot(_make_pokemon("", 0), 0)
+	var live_bench := _make_slot(_make_pokemon("Bench Budew", 30), 0)
+	var energy := CardInstance.create(_make_energy("Grass Energy", "G"), 0)
+	player.active_pokemon = empty_active
+	player.bench.append(live_bench)
+	player.hand.append(energy)
+
+	var actions := AILegalActionBuilder.new().build_actions(gsm, 0)
+	var empty_active_attach := false
+	var live_bench_attach := false
+	for action: Dictionary in actions:
+		if str(action.get("kind", "")) != "attach_energy":
+			continue
+		if action.get("target_slot") == empty_active:
+			empty_active_attach = true
+		if action.get("target_slot") == live_bench:
+			live_bench_attach = true
+
+	return run_checks([
+		assert_false(empty_active_attach, "AI should not expose manual Energy attachment to an empty HP-0 active placeholder"),
+		assert_true(live_bench_attach, "AI should still expose manual Energy attachment to a live benched Pokemon"),
+	])

@@ -141,6 +141,10 @@ func _cinccino_cd() -> CardData:
 	)
 
 
+func _minccino_cd() -> CardData:
+	return _make_pokemon_cd("Minccino", "Basic", "C", 70)
+
+
 func _fill_deck(player: PlayerState, count: int, owner: int = 0) -> void:
 	player.deck.clear()
 	for i: int in count:
@@ -316,6 +320,33 @@ func test_lugia_llm_backup_basic_search_route_policy_prefers_lugia_v_when_vstar_
 		assert_true(not route.is_empty(), "Payload should expose a backup-basic Ultra Ball route"),
 		assert_eq(str(prefer[0]) if not prefer.is_empty() else "", "Lugia V", "Backup route should put Lugia V before duplicate VSTAR"),
 		assert_true(prefer.find("Lugia VSTAR") > prefer.find("Lugia V"), "Duplicate VSTAR should stay behind backup Lugia V when VSTAR is already in hand"),
+	])
+
+
+func test_lugia_llm_repairs_no_bench_search_from_archeops_to_basic_backup() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyLugiaArcheopsLLM.gd should instantiate"
+	var gs := _make_game_state(2)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Lumineon V", "Basic", "W", 170, "", "V"), 0)
+	player.hand.append(CardInstance.create(_lugia_vstar_cd(), 0))
+	var lugia := CardInstance.create(_lugia_v_cd(), 0)
+	var minccino := CardInstance.create(_minccino_cd(), 0)
+	var archeops := CardInstance.create(_archeops_cd(), 0)
+	var items: Array = [archeops, lugia, minccino]
+	var step := {"id": "search_pokemon", "max_select": 1}
+	var context := {"game_state": gs, "player_index": 0}
+	var lugia_score: float = strategy.score_interaction_target(lugia, step, context)
+	var archeops_score: float = strategy.score_interaction_target(archeops, step, context)
+	var repaired_variant: Variant = strategy.call("_repair_lugia_search_interaction_picks", [archeops], items, step, context)
+	var repaired: Array = repaired_variant if repaired_variant is Array else []
+	var repaired_names := _card_names(repaired)
+	return run_checks([
+		assert_true(lugia_score > archeops_score, "No-bench emergency search should score Lugia V above Archeops (Lugia %f vs Archeops %f)" % [lugia_score, archeops_score]),
+		assert_true(bool(strategy.call("_lugia_should_prioritize_backup_basic_search", player)), "No-bench emergency should activate backup Basic search policy"),
+		assert_true(repaired_names.has("Lugia V"), "Search repair should override a planned Archeops pick with Lugia V when the board has no backup Basic"),
+		assert_false(repaired_names.has("Archeops"), "Search repair should not keep Archeops as the emergency no-bench pick"),
 	])
 
 
@@ -554,3 +585,24 @@ func test_lugia_llm_end_turn_repair_blocks_read_the_wind_on_low_deck() -> String
 	}
 	var can_replace_end_turn: bool = strategy.call("_deck_can_replace_end_turn_with_action", read_the_wind, gs, 0)
 	return assert_false(can_replace_end_turn, "Low deck should not repair queued end_turn into a draw attack")
+
+
+func test_lugia_llm_queue_guards_ignore_virtual_refs_without_runtime_objects() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyLugiaArcheopsLLM.gd should instantiate"
+	var gs := _make_game_state(8)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_lugia_vstar_cd(), 0)
+	player.bench.append(_make_slot(_archeops_cd(), 0))
+	_fill_deck(player, 6)
+	var string_card_trainer := {"kind": "play_trainer", "card": "Professor's Research"}
+	var virtual_attach := {"kind": "attach_energy", "card": "Gift Energy", "target_slot": "bench_0"}
+	var virtual_ability := {"kind": "use_ability", "source_slot": "bench_0"}
+	var virtual_retreat := {"kind": "retreat", "bench_target": "bench_0"}
+	return run_checks([
+		assert_false(bool(strategy.call("_deck_should_block_exact_queue_match", {}, string_card_trainer, gs, 0)), "String-card trainer refs should not crash or become blocked as runtime draw actions"),
+		assert_false(bool(strategy.call("_deck_should_block_exact_queue_match", {}, virtual_attach, gs, 0)), "Virtual attach refs without CardInstance/PokemonSlot objects should be ignored by Lugia guards"),
+		assert_false(bool(strategy.call("_deck_should_block_exact_queue_match", {}, virtual_ability, gs, 0)), "Virtual ability refs without source slots should be ignored by low-deck guards"),
+		assert_false(bool(strategy.call("_deck_should_block_exact_queue_match", {}, virtual_retreat, gs, 0)), "Virtual retreat refs without bench target slots should be ignored by Lugia guards"),
+	])

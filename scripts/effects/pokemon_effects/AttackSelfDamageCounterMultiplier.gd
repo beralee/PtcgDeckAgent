@@ -5,10 +5,16 @@ class_name AttackSelfDamageCounterMultiplier
 extends BaseEffect
 
 var damage_per_counter: int = 30
+var attack_index_to_match: int = -1
 
 
-func _init(per_counter: int = 30) -> void:
+func _init(per_counter: int = 30, match_attack_index: int = -1) -> void:
 	damage_per_counter = per_counter
+	attack_index_to_match = match_attack_index
+
+
+func applies_to_attack_index(attack_index: int) -> bool:
+	return attack_index_to_match < 0 or attack_index == attack_index_to_match
 
 
 func get_damage_bonus(attacker: PokemonSlot, _state: GameState) -> int:

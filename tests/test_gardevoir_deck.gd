@@ -14,6 +14,7 @@ const AttackSelfDamageCounterTargetDamage = preload("res://scripts/effects/pokem
 const AttackSelfDamageCounterMultiplier = preload("res://scripts/effects/pokemon_effects/AttackSelfDamageCounterMultiplier.gd")
 const AttackSwitchSelfToBench = preload("res://scripts/effects/pokemon_effects/AttackSwitchSelfToBench.gd")
 const AbilityBasicLock = preload("res://scripts/effects/pokemon_effects/AbilityBasicLock.gd")
+const AbilityMoveOpponentDamageCounters = preload("res://scripts/effects/pokemon_effects/AbilityMoveOpponentDamageCounters.gd")
 const AttackDiscardDefenderTool = preload("res://scripts/effects/pokemon_effects/AttackDiscardDefenderTool.gd")
 const EffectSecretBox = preload("res://scripts/effects/trainer_effects/EffectSecretBox.gd")
 const EffectArtazon = preload("res://scripts/effects/stadium_effects/EffectArtazon.gd")
@@ -882,6 +883,72 @@ func test_cancel_cologne_suppresses_active_iron_thorns_init_source() -> String:
 		assert_true(locked_before, "初始化应先压制非未来规则宝可梦特性"),
 		assert_true(processor.is_ability_disabled(iron_thorns, state), "清除古龙水应禁用对手战斗场铁荆棘ex自身特性"),
 		assert_false(processor.is_ability_disabled(own_rule_box, state), "铁荆棘ex被清除古龙水禁用后，不应继续压制非未来规则宝可梦"),
+	])
+
+
+func test_iron_thorns_init_disables_radiant_greninja_concealed_cards() -> String:
+	var state := _make_state()
+	var processor := EffectProcessor.new()
+	var player: PlayerState = state.players[0]
+
+	var greninja_cd := _make_basic_pokemon_data("光辉甲贺忍蛙", "W", 130, "Basic", "Radiant", "test_radiant_greninja_concealed_cards")
+	greninja_cd.name_en = "Radiant Greninja"
+	greninja_cd.abilities = [{"name": "隐藏牌", "text": "Discard an Energy card from your hand. Draw 2 cards."}]
+	var greninja := _make_slot(greninja_cd, 0)
+	player.bench.clear()
+	player.bench.append(greninja)
+	player.hand.clear()
+	player.hand.append(CardInstance.create(_make_energy_data("Basic Water Energy", "W"), 0))
+	player.deck.clear()
+	player.deck.append(CardInstance.create(_make_basic_pokemon_data("DeckDrawA", "C", 60), 0))
+	player.deck.append(CardInstance.create(_make_basic_pokemon_data("DeckDrawB", "C", 60), 0))
+
+	processor.register_effect(greninja_cd.effect_id, AbilityDiscardDraw.new())
+
+	var can_use_without_lock := processor.can_use_ability(greninja, state, 0)
+
+	var iron_thorns_cd := _make_basic_pokemon_data("铁荆棘ex", "L", 230, "Basic", "ex")
+	iron_thorns_cd.abilities = [{"name": "初始化"}]
+	iron_thorns_cd.is_tags = ["Future"]
+	state.players[1].active_pokemon = _make_slot(iron_thorns_cd, 1)
+
+	return run_checks([
+		assert_true(can_use_without_lock, "Radiant Greninja should be able to use Concealed Cards before Iron Thorns is active"),
+		assert_true(processor.is_ability_disabled(greninja, state), "Iron Thorns Initialization should disable Radiant Rule Box Pokemon abilities"),
+		assert_false(processor.can_use_ability(greninja, state, 0), "Concealed Cards must be unavailable while opponent active Iron Thorns ex is locking Rule Box Pokemon"),
+	])
+
+
+func test_iron_thorns_init_disables_radiant_alakazam_painful_spoons() -> String:
+	var state := _make_state()
+	var processor := EffectProcessor.new()
+	var player: PlayerState = state.players[0]
+	var opponent: PlayerState = state.players[1]
+
+	var alakazam_cd := _make_basic_pokemon_data("光辉胡地", "P", 130, "Basic", "Radiant", "test_radiant_alakazam_painful_spoons")
+	alakazam_cd.name_en = "Radiant Alakazam"
+	alakazam_cd.abilities = [{"name": "伤痛汤匙", "text": "Move up to 2 damage counters from 1 opposing Pokemon to another."}]
+	var alakazam := _make_slot(alakazam_cd, 0)
+	player.bench.clear()
+	player.bench.append(alakazam)
+	processor.register_effect(alakazam_cd.effect_id, AbilityMoveOpponentDamageCounters.new())
+
+	opponent.active_pokemon.damage_counters = 20
+	opponent.bench.clear()
+	opponent.bench.append(_make_slot(_make_basic_pokemon_data("Opponent Bench", "C", 90), 1))
+	var can_use_without_lock := processor.can_use_ability(alakazam, state, 0)
+
+	var iron_thorns_cd := _make_basic_pokemon_data("铁荆棘ex", "L", 230, "Basic", "ex")
+	iron_thorns_cd.abilities = [{"name": "初始化"}]
+	iron_thorns_cd.is_tags = ["Future"]
+	var iron_thorns := _make_slot(iron_thorns_cd, 1)
+	iron_thorns.damage_counters = 20
+	opponent.active_pokemon = iron_thorns
+
+	return run_checks([
+		assert_true(can_use_without_lock, "Radiant Alakazam should be able to use Painful Spoons before Iron Thorns is active"),
+		assert_true(processor.is_ability_disabled(alakazam, state), "Iron Thorns Initialization should disable Radiant Alakazam as a Rule Box Pokemon"),
+		assert_false(processor.can_use_ability(alakazam, state, 0), "Painful Spoons must be unavailable while Iron Thorns is locking Rule Box Pokemon"),
 	])
 
 

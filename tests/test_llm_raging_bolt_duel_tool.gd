@@ -5,6 +5,8 @@ const DuelToolPath := "res://scripts/ai/LLMRagingBoltDuelTool.gd"
 const SelfPlayToolPath := "res://scripts/tools/RagingBoltLLMSelfPlayTool.gd"
 const SelfPlayRunnerPath := "res://scripts/tools/run_raging_bolt_llm_self_play.gd"
 const DuelRunnerPath := "res://scripts/tools/run_llm_raging_bolt_duel.gd"
+const BUDEW_EFFECT_ID := "28505a8ad6e07e74382c1b5e09737932"
+const CRESSELIA_EFFECT_ID := "5a56387211377cf56bfeb12751a5eed3"
 
 
 func test_duel_tool_loads_and_exposes_default_matchup() -> String:
@@ -115,6 +117,29 @@ func test_duel_tool_strong_fixed_opening_keeps_llm_runtime_enabled() -> String:
 	])
 
 
+func test_duel_tool_configures_explicit_v175_gardevoir_llm_deck() -> String:
+	if not ResourceLoader.exists(DuelToolPath):
+		return "LLMRagingBoltDuelTool script should exist"
+	var script: Variant = load(DuelToolPath)
+	if not script is GDScript:
+		return "LLMRagingBoltDuelTool should load as GDScript"
+	var tool: Node = (script as GDScript).new()
+	var ai: AIOpponent = tool.call("_make_ai", 1, "v175_gardevoir_llm", _make_deck_610080(), true)
+	var strategy: Variant = ai.get("_deck_strategy") if ai != null else null
+	var player := PlayerState.new()
+	player.hand.append(CardInstance.create(_make_pokemon_cd("Ralts"), 0))
+	player.hand.append(CardInstance.create(_make_budew_cd(), 0))
+	player.hand.append(CardInstance.create(_make_pokemon_cd("Klefki"), 0))
+	var setup: Dictionary = strategy.call("plan_opening_setup", player) if strategy != null and strategy.has_method("plan_opening_setup") else {}
+	var active_index := int(setup.get("active_hand_index", -1))
+	tool.queue_free()
+	return run_checks([
+		assert_not_null(strategy, "Generic duel tool should install v175_gardevoir_llm"),
+		assert_eq(str(strategy.call("get_strategy_id")) if strategy != null and strategy.has_method("get_strategy_id") else "", "v175_gardevoir_llm", "Duel-created strategy should keep the requested id"),
+		assert_eq(_card_name(player.hand[active_index]) if active_index >= 0 else "", "Budew", "Duel tool should configure 610080 before the strategy plans setup"),
+	])
+
+
 func test_standalone_self_play_runner_scripts_load() -> String:
 	if not ResourceLoader.exists(SelfPlayToolPath):
 		return "RagingBoltLLMSelfPlayTool script should exist"
@@ -134,3 +159,46 @@ func test_standalone_self_play_runner_scripts_load() -> String:
 		assert_true(runner_script is GDScript, "Standalone self-play CLI runner should load as GDScript"),
 		assert_true(duel_runner_script is GDScript, "LLMRagingBoltDuelTool CLI runner should load as GDScript"),
 	])
+
+
+func _make_deck_610080() -> DeckData:
+	var deck := DeckData.new()
+	deck.id = 610080
+	deck.deck_name = "17.5 Gardevoir"
+	deck.cards = [
+		{"name_en": "Budew", "effect_id": BUDEW_EFFECT_ID, "card_type": "Pokemon", "count": 1},
+		{"name_en": "Ralts", "card_type": "Pokemon", "count": 4},
+		{"name_en": "Kirlia", "card_type": "Pokemon", "count": 4},
+		{"name_en": "Gardevoir ex", "card_type": "Pokemon", "count": 2},
+		{"name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name_en": "Cresselia", "effect_id": CRESSELIA_EFFECT_ID, "card_type": "Pokemon", "count": 1},
+	]
+	return deck
+
+
+func _make_pokemon_cd(pname: String, stage: String = "Basic", energy_type: String = "P", hp: int = 100) -> CardData:
+	var cd := CardData.new()
+	cd.name = pname
+	cd.name_en = pname
+	cd.card_type = "Pokemon"
+	cd.stage = stage
+	cd.energy_type = energy_type
+	cd.hp = hp
+	return cd
+
+
+func _make_budew_cd() -> CardData:
+	var cd := _make_pokemon_cd("Budew", "Basic", "G", 30)
+	cd.effect_id = BUDEW_EFFECT_ID
+	cd.retreat_cost = 0
+	cd.attacks.append({"name": "Itchy Pollen", "cost": "0", "damage": "10"})
+	return cd
+
+
+func _card_name(card: CardInstance) -> String:
+	if card == null or card.card_data == null:
+		return ""
+	if str(card.card_data.name_en) != "":
+		return str(card.card_data.name_en)
+	return str(card.card_data.name)

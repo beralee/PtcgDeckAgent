@@ -21,6 +21,11 @@ const AttackCoinFlipDiscardEnergyScript := preload("res://scripts/effects/pokemo
 const AttackDiscardAllEnergyScript := preload("res://scripts/effects/pokemon_effects/AttackDiscardAllAttachedEnergyFromSelf.gd")
 const AttackDiscardTypedEnergyScript := preload("res://scripts/effects/pokemon_effects/AttackDiscardAttachedEnergyTypeFromSelf.gd")
 const AttackMillOpponentDeckScript := preload("res://scripts/effects/pokemon_effects/AttackMillOpponentDeck.gd")
+const AttackOpponentFieldEnergyDamageScript := preload("res://scripts/effects/pokemon_effects/AttackOpponentFieldEnergyCountDamage.gd")
+const AttackHealOwnBenchPokemonScript := preload("res://scripts/effects/pokemon_effects/AttackHealOwnBenchPokemon.gd")
+const AttackSearchAndAttachScript := preload("res://scripts/effects/pokemon_effects/AttackSearchAndAttach.gd")
+const AttackItemLockNextTurnScript := preload("res://scripts/effects/pokemon_effects/AttackItemLockNextTurn.gd")
+const AttackSelfAllAttacksLockNextTurnScript := preload("res://scripts/effects/pokemon_effects/AttackSelfAllAttacksLockNextTurn.gd")
 
 
 class RiggedCoinFlipper extends CoinFlipper:
@@ -37,6 +42,214 @@ class RiggedCoinFlipper extends CoinFlipper:
 			result = _results.pop_front()
 		coin_flipped.emit(result)
 		return result
+
+
+func test_csv95c_004_006_023_effect_registry_overrides() -> String:
+	var processor := EffectProcessor.new()
+	var budew := _pokemon("含羞苞", "Basic", "", "G", 30, [_attack("痒痒花粉", "", "10")])
+	budew.effect_id = "28505a8ad6e07e74382c1b5e09737932"
+	var leafeon := _pokemon("叶伊布ex", "Stage 1", "伊布", "G", 270, [
+		_attack("绿叶风暴", "GC", "60×"),
+		_attack("苔纹玛瑙", "GRW", "230"),
+	], "ex")
+	leafeon.effect_id = "930f07ef177d44b0e1084343b66b13af"
+	var flareon := _pokemon("火伊布ex", "Stage 1", "伊布", "R", 270, [
+		_attack("燃烧充能", "RC", "130"),
+		_attack("红玉髓", "RWL", "280"),
+	], "ex")
+	flareon.effect_id = "313cc7781c8489ce8c45d3597dfce241"
+
+	processor.register_pokemon_card(budew)
+	processor.register_pokemon_card(leafeon)
+	processor.register_pokemon_card(flareon)
+
+	var budew_slot := _make_slot(budew, 0)
+	var leafeon_slot := _make_slot(leafeon, 0)
+	var flareon_slot := _make_slot(flareon, 0)
+	var budew_attack0 := processor.get_attack_effects_for_slot(budew_slot, 0)
+	var leafeon_attack0 := processor.get_attack_effects_for_slot(leafeon_slot, 0)
+	var leafeon_attack1 := processor.get_attack_effects_for_slot(leafeon_slot, 1)
+	var flareon_attack0 := processor.get_attack_effects_for_slot(flareon_slot, 0)
+	var flareon_attack1 := processor.get_attack_effects_for_slot(flareon_slot, 1)
+
+	return run_checks([
+		assert_eq(budew_attack0.size(), 1, "CSV9.5C_004 should register one item-lock attack effect"),
+		assert_true(budew_attack0[0] is AttackItemLockNextTurnScript, "CSV9.5C_004 first attack should use item lock next turn"),
+		assert_eq(leafeon_attack0.size(), 1, "CSV9.5C_006 first attack should register one variable-damage effect"),
+		assert_true(leafeon_attack0[0] is AttackOpponentFieldEnergyDamageScript, "CSV9.5C_006 first attack should count opponent field Energy"),
+		assert_eq(leafeon_attack1.size(), 1, "CSV9.5C_006 second attack should register one heal effect"),
+		assert_true(leafeon_attack1[0] is AttackHealOwnBenchPokemonScript, "CSV9.5C_006 second attack should heal own Bench"),
+		assert_eq(flareon_attack0.size(), 1, "CSV9.5C_023 first attack should register one search attach effect"),
+		assert_true(flareon_attack0[0] is AttackSearchAndAttachScript, "CSV9.5C_023 first attack should search and attach Energy"),
+		assert_true(bool(flareon_attack0[0].get("single_target_only")), "CSV9.5C_023 first attack should force one target Pokemon"),
+		assert_eq(flareon_attack1.size(), 1, "CSV9.5C_023 second attack should register one self-lock effect"),
+		assert_true(flareon_attack1[0] is AttackSelfAllAttacksLockNextTurnScript, "CSV9.5C_023 second attack should lock all attacks next own turn"),
+	])
+
+
+func test_csv95c_004_budew_blocks_opponent_items_next_turn() -> String:
+	var state := _make_state()
+	var budew := _make_slot(_pokemon("含羞苞", "Basic", "", "G", 30, [_attack("痒痒花粉", "", "10")]), 0)
+	state.players[0].active_pokemon = budew
+	var effect := AttackItemLockNextTurnScript.new()
+	effect.attack_index_to_match = 0
+	var expected_locked_turn := state.turn_number + 1
+	effect.execute_attack(budew, state.players[1].active_pokemon, 0, state)
+	effect.execute_attack(budew, state.players[1].active_pokemon, 1, state)
+	var locked_turn := int(state.shared_turn_flags.get("item_lock_1", 0))
+	state.current_player_index = 1
+	state.turn_number += 1
+	var item_blocked := not RuleValidator.new().can_play_item(state, 1)
+
+	return run_checks([
+		assert_eq(locked_turn, expected_locked_turn, "CSV9.5C_004 should lock opponent Items until their next turn"),
+		assert_true(item_blocked, "CSV9.5C_004 should make the opponent unable to play Item cards on their next turn"),
+	])
+
+
+func test_csv95c_004_budew_item_lock_survives_attacker_knockout() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+
+	var budew_cd: CardData = CardDatabase.get_card("CSV9.5C", "004")
+	if budew_cd == null:
+		return "CSV9.5C_004 Budew should load from CardDatabase"
+	gsm.effect_processor.register_pokemon_card(budew_cd)
+	var budew := _make_slot(budew_cd, 0)
+	state.players[0].active_pokemon = budew
+	state.players[1].deck.append(CardInstance.create(_pokemon("Opponent turn draw", "Basic", "", "C", 60), 1))
+
+	var locked_item := CardInstance.create(_trainer("Locked Item", "Item"), 1)
+	state.players[1].hand.append(locked_item)
+
+	var attacked := gsm.use_attack(0, 0)
+	var locked_turn := int(state.shared_turn_flags.get("item_lock_1", -1))
+	var budew_card := budew.get_top_card()
+	state.players[0].discard_pile.append(budew_card)
+	state.players[0].active_pokemon = null
+
+	var item_blocked_after_budew_left := not gsm.play_trainer(1, locked_item, [])
+	state.turn_number = locked_turn + 1
+	state.current_player_index = 1
+	state.phase = GameState.GamePhase.MAIN
+	var item_allowed_after_lock_turn := gsm.rule_validator.can_play_item(state, 1, locked_item, gsm.effect_processor)
+
+	return run_checks([
+		assert_true(attacked, "CSV9.5C_004 should attack through the real GameStateMachine path"),
+		assert_eq(locked_turn, 3, "CSV9.5C_004 should lock Items on the opponent's next turn"),
+		assert_true(budew_card in state.players[0].discard_pile, "The test fixture should remove Budew from play before the opponent tries an Item"),
+		assert_true(item_blocked_after_budew_left, "Budew's Item lock should remain active after the attacking Budew has left play"),
+		assert_true(item_allowed_after_lock_turn, "Budew's Item lock should expire after the locked opponent turn"),
+	])
+
+
+func test_csv95c_006_leafeon_counts_opponent_field_energy_and_heals_own_bench() -> String:
+	var state := _make_state()
+	var attacker := _make_slot(_pokemon("叶伊布ex", "Stage 1", "伊布", "G", 270, [
+		_attack("绿叶风暴", "GC", "60×"),
+		_attack("苔纹玛瑙", "GRW", "230"),
+	], "ex"), 0)
+	state.players[0].active_pokemon = attacker
+
+	_attach_energy(state.players[1].active_pokemon, 1, "R", 2)
+	var opponent_bench_a := _make_slot(_pokemon("Opponent Bench A", "Basic", "", "C", 100), 1)
+	var opponent_bench_b := _make_slot(_pokemon("Opponent Bench B", "Basic", "", "C", 100), 1)
+	state.players[1].bench.append_array([opponent_bench_a, opponent_bench_b])
+	_attach_energy(opponent_bench_a, 1, "W", 1)
+	_attach_energy(opponent_bench_b, 1, "L", 2)
+	_attach_energy(attacker, 0, "G", 3)
+
+	var damage_bonus := AttackOpponentFieldEnergyDamageScript.new(60, 0).get_damage_bonus(attacker, state)
+	var resolved_damage := DamageCalculator.new().calculate_damage(attacker, state.players[1].active_pokemon, attacker.get_attacks()[0], state, damage_bonus)
+	var zero_state := _make_state()
+	var zero_attacker := _make_slot(_pokemon("Leafeon ex Zero", "Stage 1", "Eevee", "G", 270, [
+		_attack("Verdant Storm", "GC", "60x"),
+	]), 0)
+	zero_state.players[0].active_pokemon = zero_attacker
+	var zero_bonus := AttackOpponentFieldEnergyDamageScript.new(60, 0).get_damage_bonus(zero_attacker, zero_state)
+	var zero_damage := DamageCalculator.new().calculate_damage(zero_attacker, zero_state.players[1].active_pokemon, zero_attacker.get_attacks()[0], zero_state, zero_bonus)
+
+	attacker.damage_counters = 80
+	var bench_a := _make_slot(_pokemon("Own Bench A", "Basic", "", "G", 120), 0)
+	var bench_b := _make_slot(_pokemon("Own Bench B", "Basic", "", "G", 120), 0)
+	bench_a.damage_counters = 150
+	bench_b.damage_counters = 50
+	state.players[0].bench.append_array([bench_a, bench_b])
+	AttackHealOwnBenchPokemonScript.new(100, 1).execute_attack(attacker, state.players[1].active_pokemon, 1, state)
+
+	return run_checks([
+		assert_eq(damage_bonus, 240, "CSV9.5C_006 first attack should add only the delta for 5 opponent Energy after printed 60x"),
+		assert_eq(resolved_damage, 300, "CSV9.5C_006 first attack should deal 5 * 60 total damage"),
+		assert_eq(zero_damage, 0, "CSV9.5C_006 first attack should deal 0 damage when opponent has no Energy in play"),
+		assert_eq(attacker.damage_counters, 80, "CSV9.5C_006 second attack should not heal own Active Pokemon"),
+		assert_eq(bench_a.damage_counters, 50, "CSV9.5C_006 second attack should heal each own Benched Pokemon by 100"),
+		assert_eq(bench_b.damage_counters, 0, "CSV9.5C_006 second attack should not reduce damage below zero"),
+		assert_eq(opponent_bench_a.damage_counters, 0, "CSV9.5C_006 second attack should not heal opponent Bench"),
+	])
+
+
+func test_csv95c_023_flareon_attaches_basic_energy_to_one_pokemon_and_locks_second_attack() -> String:
+	var state := _make_state()
+	var player := state.players[0]
+	var flareon := _make_slot(_pokemon("火伊布ex", "Stage 1", "伊布", "R", 270, [
+		_attack("燃烧充能", "RC", "130"),
+		_attack("红玉髓", "RWL", "280"),
+	], "ex"), 0)
+	player.active_pokemon = flareon
+	player.bench.clear()
+	var bench_a := _make_slot(_pokemon("Bench A", "Basic", "", "R", 100), 0)
+	var bench_b := _make_slot(_pokemon("Bench B", "Basic", "", "R", 100), 0)
+	player.bench.append_array([bench_a, bench_b])
+	player.deck.clear()
+	var fire := CardInstance.create(_energy("Fire", "R"), 0)
+	var water := CardInstance.create(_energy("Water", "W"), 0)
+	var special := CardInstance.create(_energy("Special", "C", "Special Energy"), 0)
+	player.deck.append_array([fire, special, water])
+
+	var attach_effect := AttackSearchAndAttachScript.new("", 2, "deck_search", 0, "any")
+	attach_effect.attack_index_to_match = 0
+	attach_effect.single_target_only = true
+	var steps := attach_effect.get_attack_interaction_steps(flareon.get_top_card(), flareon.get_attacks()[0], state)
+	attach_effect.set_attack_interaction_context([{
+		"energy_assignments": [
+			{"source": fire, "target": bench_a},
+			{"source": water, "target": bench_b},
+		],
+	}])
+	attach_effect.execute_attack(flareon, state.players[1].active_pokemon, 0, state)
+	attach_effect.clear_attack_interaction_context()
+
+	var lock_effect := AttackSelfAllAttacksLockNextTurnScript.new()
+	lock_effect.attack_index_to_match = 1
+	lock_effect.execute_attack(flareon, state.players[1].active_pokemon, 0, state)
+	lock_effect.execute_attack(flareon, state.players[1].active_pokemon, 1, state)
+	flareon.attached_energy.append_array([
+		CardInstance.create(_energy("Rule Fire", "R"), 0),
+		CardInstance.create(_energy("Rule Water", "W"), 0),
+		CardInstance.create(_energy("Rule Lightning", "L"), 0),
+	])
+	state.turn_number = 4
+	var validator := RuleValidator.new()
+	var attack0_locked := not validator.can_use_attack(state, 0, 0)
+	var attack1_locked := not validator.can_use_attack(state, 0, 1)
+
+	return run_checks([
+		assert_eq(steps.size(), 1, "CSV9.5C_023 first attack should request a deck assignment step"),
+		assert_eq(str(steps[0].get("source_visible_scope", "")), BaseEffect.VISIBLE_SCOPE_OWN_FULL_DECK, "CSV9.5C_023 first attack should expose the full own deck"),
+		assert_eq(steps[0].get("source_card_items", []), [fire, special, water], "CSV9.5C_023 first attack should display selectable and disabled deck cards"),
+		assert_eq(steps[0].get("source_items", []), [fire, water], "CSV9.5C_023 first attack should expose only Basic Energy as selectable"),
+		assert_true(bool(steps[0].get("single_target_only", false)), "CSV9.5C_023 first attack should declare one target Pokemon only"),
+		assert_eq(bench_a.attached_energy, [fire], "CSV9.5C_023 first attack should keep accepted Energy on the first target"),
+		assert_eq(bench_b.attached_energy.size(), 0, "CSV9.5C_023 first attack should reject split target assignments"),
+		assert_true(water in player.deck, "Rejected split-target Energy should remain in deck"),
+		assert_true(special in player.deck, "Special Energy should stay in deck"),
+		assert_eq(flareon.effects.size(), 1, "CSV9.5C_023 second attack lock should apply only to attack index 1"),
+		assert_eq(str(flareon.effects[0].get("type", "")), "attack_lock_all", "CSV9.5C_023 second attack should mark whole-Pokemon attack lock"),
+		assert_eq(int(flareon.effects[0].get("source_attack_index", -1)), 1, "CSV9.5C_023 second attack should record the source attack index"),
+		assert_true(attack0_locked, "CSV9.5C_023 second attack should block the first attack next own turn"),
+		assert_true(attack1_locked, "CSV9.5C_023 second attack should block the second attack next own turn"),
+	])
 
 
 func test_csv9c_001_exeggcute_early_evolution_full_deck_visible_and_executes() -> String:

@@ -99,7 +99,7 @@ func _charizard_cd() -> CardData:
 	)
 
 
-func test_v17_bomb_charizard_llm_reuses_charizard_llm_runtime_with_bomb_rules() -> String:
+func test_v17_bomb_charizard_llm_uses_shared_v17_runtime_with_bomb_rules() -> String:
 	var llm_script: Variant = load(LLM_SCRIPT_PATH)
 	var rules_script: Variant = load(RULES_SCRIPT_PATH)
 	var strategy: RefCounted = llm_script.new() if llm_script is GDScript else null
@@ -111,8 +111,8 @@ func test_v17_bomb_charizard_llm_reuses_charizard_llm_runtime_with_bomb_rules() 
 		assert_not_null(rules, "V17 Bomb Charizard rules strategy should instantiate"),
 		assert_eq(str(strategy.call("get_strategy_id")) if strategy != null else "", "v17_bomb_charizard_llm", "LLM strategy id should remain registry-ready"),
 		assert_eq(str(rules.call("get_strategy_id")) if rules != null else "", "v17_bomb_charizard", "Rules fallback should be the V17 Bomb Charizard strategy"),
-		assert_true(source.contains("DeckStrategyCharizardExLLM.gd"), "Bomb LLM should inherit the proven Charizard/Pidgeot LLM runtime hooks"),
-		assert_false(source.contains("DeckStrategy17LLMBase.gd"), "Bomb LLM should not fall back to the generic V17 wrapper for Charizard-specific routing"),
+		assert_true(source.contains("DeckStrategy17LLMBase.gd"), "Bomb LLM should inherit the shared V17 LLM runtime"),
+		assert_false(source.contains("DeckStrategyCharizardExLLM.gd"), "Bomb LLM should not bypass the shared V17 wrapper through the legacy Charizard LLM"),
 	])
 
 
@@ -120,14 +120,16 @@ func test_v17_bomb_charizard_llm_prompt_is_clean_and_bomb_specific() -> String:
 	var strategy := _new_llm_strategy()
 	if strategy == null:
 		return "V17 Bomb Charizard LLM strategy should instantiate"
-	strategy.call("set_deck_strategy_text", "銆愬崱缁勫畾浣嶃€戝柗鐏緳ex/澶ф瘮楦焑x")
+	var question := char(63)
+	var garbled_text := question + question + question + "ex/" + question + question + question
+	strategy.call("set_deck_strategy_text", garbled_text)
 	var lines: PackedStringArray = strategy.call("get_llm_deck_strategy_prompt", _make_game_state(), 0)
 	var prompt := "\n".join(lines)
 	return run_checks([
 		assert_str_contains(prompt, "V17 Bomb Charizard", "Prompt should provide a clean V17 Bomb Charizard plan"),
 		assert_str_contains(prompt, "Dusknoir places 130", "Prompt should explain the new Dusknoir conversion damage"),
 		assert_str_contains(prompt, "Dusclops places 50", "Prompt should explain the Dusclops conversion damage"),
-		assert_false(prompt.contains("銆愬崱"), "Bundled mojibake strategy text should not pollute the LLM prompt"),
+		assert_false(prompt.contains(garbled_text), "Bundled mojibake strategy text should not pollute the LLM prompt"),
 	])
 
 

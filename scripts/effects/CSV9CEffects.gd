@@ -1487,14 +1487,73 @@ class AttackSlowkingInspiration:
 		if player.deck.is_empty():
 			return []
 		var top_card: CardInstance = player.deck[0]
-		if top_card == null or top_card.card_data == null or not top_card.card_data.is_pokemon() or top_card.card_data.is_rule_box_pokemon() or top_card.card_data.attacks.size() <= 1:
+		if top_card == null or top_card.card_data == null or not top_card.card_data.is_pokemon() or top_card.card_data.is_rule_box_pokemon() or top_card.card_data.attacks.is_empty():
 			return []
 		var items: Array = []
 		var labels: Array[String] = []
+		var action_items: Array[Dictionary] = []
 		for i: int in top_card.card_data.attacks.size():
-			items.append(i)
-			labels.append(str(top_card.card_data.attacks[i].get("name", "Attack %d" % [i + 1])))
-		return [{"id": STEP_ID, "title": "Choose copied attack", "items": items, "labels": labels, "min_select": 1, "max_select": 1, "allow_cancel": false}]
+			var copied_attack: Dictionary = top_card.card_data.attacks[i]
+			if bool(copied_attack.get("is_vstar_power", false)):
+				continue
+			items.append({
+				"source_card": top_card,
+				"attack_index": i,
+				"attack": copied_attack,
+			})
+			labels.append("%s - %s" % [top_card.card_data.name, str(copied_attack.get("name", "Attack %d" % [i + 1]))])
+			action_items.append(_build_copied_attack_action_item(top_card.card_data, copied_attack, str(attack.get("cost", ""))))
+		if items.is_empty():
+			return []
+		return [{
+			"id": STEP_ID,
+			"title": "选择翻开的宝可梦的1个招式",
+			"items": items,
+			"labels": labels,
+			"presentation": "action_hud",
+			"action_items": action_items,
+			"pokemon_card": top_card,
+			"pokemon_card_data": top_card.card_data,
+			"card_items": [top_card],
+			"card_click_selectable": false,
+			"min_select": 1,
+			"max_select": 1,
+			"allow_cancel": false,
+		}]
+
+	func get_followup_attack_interaction_steps(
+		card: CardInstance,
+		attack: Dictionary,
+		state: GameState,
+		resolved_context: Dictionary
+	) -> Array[Dictionary]:
+		if processor == null:
+			return []
+		if _has_resolved_copied_followup(resolved_context):
+			return []
+		var option := _get_selected_option_from_context(resolved_context)
+		if option.is_empty():
+			return []
+		var source_card: Variant = option.get("source_card", null)
+		if not (source_card is CardInstance):
+			return []
+		var source_instance: CardInstance = source_card
+		if source_instance.card_data == null:
+			return []
+		var copied_index: int = int(option.get("attack_index", -1))
+		if copied_index < 0 or copied_index >= source_instance.card_data.attacks.size():
+			return []
+		var copied_attack: Dictionary = option.get("attack", {})
+		if copied_attack.is_empty():
+			copied_attack = source_instance.card_data.attacks[copied_index]
+		return processor.get_attack_interaction_steps_by_id(
+			source_instance.card_data.effect_id,
+			copied_index,
+			card,
+			copied_attack,
+			state,
+			AttackSlowkingInspiration
+		)
 
 	func execute_attack(attacker: PokemonSlot, defender: PokemonSlot, attack_index: int, state: GameState) -> void:
 		if attacker == null or attacker.get_top_card() == null or defender == null or not applies_to_attack_index(attack_index):
@@ -1508,13 +1567,26 @@ class AttackSlowkingInspiration:
 		if top_card.card_data == null or not top_card.card_data.is_pokemon() or top_card.card_data.is_rule_box_pokemon() or top_card.card_data.attacks.is_empty():
 			return
 		var copied_index := _resolve_copied_attack_index(top_card.card_data)
+		if copied_index < 0 or copied_index >= top_card.card_data.attacks.size():
+			return
 		var copied_attack: Dictionary = top_card.card_data.attacks[copied_index]
 		var copied_damage := DamageCalculator.new().parse_damage(str(copied_attack.get("damage", "")))
 		var proc: Variant = processor if processor != null else state.shared_turn_flags.get("_draw_effect_processor", null)
+		var copied_targets: Array = [get_attack_interaction_context()]
 		if proc != null and proc.has_method("get_attack_damage_bonus_by_id"):
-			copied_damage += int(proc.call("get_attack_damage_bonus_by_id", top_card.card_data.effect_id, copied_index, attacker, state, [], AttackSlowkingInspiration))
+			copied_damage += int(proc.call("get_attack_damage_bonus_by_id", top_card.card_data.effect_id, copied_index, attacker, state, copied_targets, AttackSlowkingInspiration))
 		if copied_damage > 0:
-			if proc != null and proc.has_method("is_damage_prevented_by_defender_ability") and bool(proc.call("is_damage_prevented_by_defender_ability", attacker, defender, state)):
+			var ignore_weakness := false
+			var ignore_resistance := false
+			var ignore_defender_effects := false
+			if proc != null:
+				if proc.has_method("attack_effect_id_ignores_weakness"):
+					ignore_weakness = bool(proc.call("attack_effect_id_ignores_weakness", top_card.card_data.effect_id, copied_index, attacker, state, copied_targets, AttackSlowkingInspiration))
+				if proc.has_method("attack_effect_id_ignores_resistance"):
+					ignore_resistance = bool(proc.call("attack_effect_id_ignores_resistance", top_card.card_data.effect_id, copied_index, attacker, state, copied_targets, AttackSlowkingInspiration))
+				if proc.has_method("attack_effect_id_ignores_defender_effects"):
+					ignore_defender_effects = bool(proc.call("attack_effect_id_ignores_defender_effects", top_card.card_data.effect_id, copied_index, attacker, state, copied_targets, AttackSlowkingInspiration))
+			if not ignore_defender_effects and proc != null and proc.has_method("is_damage_prevented_by_defender_ability") and bool(proc.call("is_damage_prevented_by_defender_ability", attacker, defender, state)):
 				return
 			var attacker_modifier := 0
 			var defender_modifier := 0
@@ -1522,22 +1594,60 @@ class AttackSlowkingInspiration:
 			if proc != null:
 				if proc.has_method("get_attacker_modifier"):
 					attacker_modifier = int(proc.call("get_attacker_modifier", attacker, state, defender))
-				if proc.has_method("get_defender_modifier"):
+				if not ignore_defender_effects and proc.has_method("get_defender_modifier"):
 					defender_modifier = int(proc.call("get_defender_modifier", defender, state, attacker))
 				if proc.has_method("get_weakness_value_override"):
 					weakness_override = str(proc.call("get_weakness_value_override", attacker, defender, state))
-			var damage := DamageCalculator.new().calculate_damage(attacker, defender, {"damage": str(copied_damage)}, state, 0, attacker_modifier, defender_modifier, false, false, weakness_override)
+			var damage := DamageCalculator.new().calculate_damage(attacker, defender, {"damage": str(copied_damage)}, state, 0, attacker_modifier, defender_modifier, ignore_weakness, ignore_resistance, weakness_override)
 			DamageCalculator.new().apply_damage_to_slot(defender, damage)
 		if proc != null and proc.has_method("execute_attack_effect_by_id"):
-			proc.call("execute_attack_effect_by_id", top_card.card_data.effect_id, copied_index, attacker, defender, state, [], AttackSlowkingInspiration)
+			proc.call("execute_attack_effect_by_id", top_card.card_data.effect_id, copied_index, attacker, defender, state, copied_targets, AttackSlowkingInspiration)
 
 	func _resolve_copied_attack_index(cd: CardData) -> int:
 		var raw: Array = get_attack_interaction_context().get(STEP_ID, [])
 		if not raw.is_empty():
-			var chosen := int(raw[0])
-			if chosen >= 0 and chosen < cd.attacks.size():
-				return chosen
+			var entry: Variant = raw[0]
+			if entry is Dictionary:
+				var chosen_from_option := int((entry as Dictionary).get("attack_index", -1))
+				if chosen_from_option >= 0 and chosen_from_option < cd.attacks.size():
+					return chosen_from_option
+			elif entry is int:
+				var chosen: int = entry
+				if chosen >= 0 and chosen < cd.attacks.size():
+					return chosen
 		return _best_attack_index(cd)
+
+	func _get_selected_option_from_context(context: Dictionary) -> Dictionary:
+		var raw: Array = context.get(STEP_ID, [])
+		if raw.is_empty() or not (raw[0] is Dictionary):
+			return {}
+		return raw[0]
+
+	func _has_resolved_copied_followup(context: Dictionary) -> bool:
+		for key: Variant in context.keys():
+			if str(key) != STEP_ID:
+				return true
+		return false
+
+	func _build_copied_attack_action_item(source_data: CardData, copied_attack: Dictionary, attack_cost: String) -> Dictionary:
+		var attack_name := str(copied_attack.get("name", ""))
+		var damage_text := str(copied_attack.get("damage", "")).strip_edges()
+		var meta := source_data.name
+		if damage_text != "":
+			meta = "%s  %s" % [source_data.name, damage_text]
+		var body := str(copied_attack.get("text", "")).strip_edges()
+		if body == "":
+			body = "使用翻开的宝可梦所拥有的这个招式。"
+		return {
+			"type": "attack",
+			"kind": "招式",
+			"title": attack_name,
+			"meta": meta,
+			"body": body,
+			"cost": attack_cost,
+			"enabled": true,
+			"reason": "",
+		}
 
 	func _best_attack_index(cd: CardData) -> int:
 		var best_index := 0

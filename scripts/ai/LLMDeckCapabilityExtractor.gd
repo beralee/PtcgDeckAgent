@@ -12,6 +12,8 @@ const EFFECT_TO_INTERACTIONS := {
 	"8538726d6cdfad2fa3ca5f4b462c12c5": ["recover_energy"], # Energy Retrieval
 	"c9c948169525fbb3dce70c477ec7a90a": ["shuffle_back_cards"], # Super Rod
 	"3e6f1daf545dfed48d0588dd50792a2e": ["recover_card"], # Night Stretcher
+	"6a7fe7ec3f22c435f50b49909e85b3d3": ["recover_card"], # Max Rod
+	"ee2e1cc534d39f1710b1c590bf585ae5": ["search_pokemon"], # Love Ball
 	"9fa9943ccda36f417ac3cb675177c216": ["search_cards"], # Forest Seal Stone
 	"2234845fbc2e11ab95587e1b393bb318": ["energy_assignments"], # Electric Generator
 	"8b0d4f541f256d67f0757efe4fc8b407": ["discard_cards", "search_cards"], # Techno Radar
@@ -26,6 +28,7 @@ const EFFECT_TO_INTERACTIONS := {
 	"af514f82d182aeae5327b2c360df703d": [], # Iono
 	"d324e01179ab048ed023bf4a20bf658d": [], # Unfair Stamp
 	"651276c51911345aa091c1c7b87f3f4f": ["sada_assignments"], # Professor Sada's Vitality
+	"60efb96839df10bb78737047da1c4fb1": ["search_pokemon", "search_supporter", "search_energy"], # Aoki's Skill
 	"43386015be5c073ba2e5b9d3692ece3f": ["search_to_bench"], # TM Evolution
 	"e92a86246f44351d023bd4fa271089aa": ["discard_cards", "search_item", "search_tool", "search_cards"], # Secret Box
 }

@@ -48,6 +48,7 @@ func get_interaction_steps(_card: CardInstance, state: GameState) -> Array[Dicti
 	)
 	step["source_exclude_targets"] = _build_source_exclude_targets(source_items, target_items)
 	step["requires_followup_interaction"] = true
+	step["compact_field_assignment_after_source"] = true
 	return [step]
 
 
@@ -67,7 +68,7 @@ func get_followup_interaction_steps(_card: CardInstance, state: GameState, resol
 	for stage2_card: CardInstance in stage2_items:
 		labels.append(stage2_card.card_data.name)
 	var target_label := "%s -> %s" % [target_slot.get_pokemon_name(), stage1_card.card_data.name]
-	return [build_full_library_card_assignment_step(
+	var step := build_full_library_card_assignment_step(
 		STAGE2_STEP_ID,
 		"可继续选择1张2阶进化宝可梦进化",
 		player.deck,
@@ -79,7 +80,9 @@ func get_followup_interaction_steps(_card: CardInstance, state: GameState, resol
 		1,
 		VISIBLE_SCOPE_OWN_FULL_DECK,
 		true
-	)]
+	)
+	step["compact_field_assignment_after_source"] = true
+	return [step]
 
 
 func execute(_card: CardInstance, targets: Array, state: GameState) -> void:

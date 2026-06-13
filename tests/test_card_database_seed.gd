@@ -146,22 +146,23 @@ func test_get_all_ai_decks_returns_supported_bundled_shortlist() -> String:
 	var leading_ids: Array[int] = []
 	for deck: DeckData in ai_decks:
 		ids.append(deck.id)
-		if leading_ids.size() < 7:
+		if leading_ids.size() < 3:
 			leading_ids.append(deck.id)
 	ids.sort()
 	var expected_ids := [
-		569061, 575657, 575716, 575718, 575720, 575723, 578647, 579502,
+		569061, 575657, 575716, 575718, 575720, 575723, 578647, 579502, 609431, 610080,
 		1700002, 1700003, 1700004, 1700005, 1700007, 1700008, 1700011,
+		1750002,
 	]
 	var expected_leading_ids := [
-		1700002, 1700003, 1700004, 1700005, 1700007, 1700008, 1700011,
+		1750002, 609431, 610080,
 	]
 	leading_ids.sort()
 	expected_leading_ids.sort()
 	return run_checks([
 		assert_eq(ai_decks.size(), expected_ids.size(), "AI deck list should expose exactly the backed-up AI deck set"),
 		assert_eq(ids, expected_ids, "AI deck list should match the backed-up AI deck set"),
-		assert_eq(leading_ids, expected_leading_ids, "AI deck list should sort the seven 17.0 supported AI decks first"),
+		assert_eq(leading_ids, expected_leading_ids, "AI deck list should sort the supported 17.5 AI decks first"),
 	])
 
 
@@ -320,6 +321,157 @@ func test_version_170_user_decks_are_bundled_with_generated_ids() -> String:
 	return run_checks(checks)
 
 
+func test_version_175_configured_decks_are_bundled() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var expected := {
+		1750001: "17.5 铝钢桥龙",
+		1750002: "17.5纯多龙",
+		1750003: "17.5密勒顿",
+		1750004: "17.5毒龟",
+		1750005: "17.5呆呆王",
+		606452: "17.5苍炎刃鬼",
+		606972: "17.5恶喷",
+		609431: "17.5洛奇亚",
+		610080: "17.5沙奈朵",
+		611607: "17.5毒龟",
+	}
+	var checks: Array[String] = []
+	for deck_id_variant: Variant in expected.keys():
+		var deck_id := int(deck_id_variant)
+		var deck_path := "res://data/bundled_user/decks/%d.json" % deck_id
+		var deck: DeckData = db._load_deck_from_file(deck_path)
+		checks.append(assert_true(deck_path in manifest, "17.5 deck %d should be listed in the bundled seed manifest" % deck_id))
+		checks.append(assert_true(FileAccess.file_exists(deck_path), "17.5 deck %d bundled JSON should exist" % deck_id))
+		checks.append(assert_not_null(deck, "17.5 deck %d should load from bundled JSON" % deck_id))
+		if deck == null:
+			continue
+		checks.append(assert_eq(int(deck.id), deck_id, "17.5 deck %d should keep its unique bundled id" % deck_id))
+		checks.append(assert_eq(str(deck.deck_name), str(expected[deck_id_variant]), "17.5 deck %d should keep the configured deck name" % deck_id))
+		checks.append(assert_eq(int(deck.total_cards), 60, "17.5 deck %d should keep 60 cards" % deck_id))
+		var instances := db.build_deck_instances(deck, 0)
+		checks.append(assert_eq(instances.size(), 60, "17.5 deck %d should build all 60 card instances from bundled cards" % deck_id))
+	var regenerated_from_legacy := {
+		1750001: 1700002,
+		1750002: 575723,
+		1750003: 599947,
+	}
+	for generated_id_variant: Variant in regenerated_from_legacy.keys():
+		var generated_id := int(generated_id_variant)
+		var legacy_id := int(regenerated_from_legacy[generated_id_variant])
+		var generated_deck: DeckData = db._load_deck_from_file("res://data/bundled_user/decks/%d.json" % generated_id)
+		var legacy_deck: DeckData = db._load_deck_from_file("res://data/bundled_user/decks/%d.json" % legacy_id)
+		checks.append(assert_not_null(generated_deck, "Generated 17.5 deck %d should exist for legacy deck %d" % [generated_id, legacy_id]))
+		checks.append(assert_not_null(legacy_deck, "Legacy source deck %d should still exist beside generated 17.5 deck %d" % [legacy_id, generated_id]))
+		if generated_deck != null:
+			checks.append(assert_true(str(generated_deck.deck_name).begins_with("17.5"), "Generated deck %d should be the 17.5 copy" % generated_id))
+		if legacy_deck != null:
+			checks.append(assert_false(str(legacy_deck.deck_name).begins_with("17.5"), "Legacy deck %d should not be overwritten as the 17.5 copy" % legacy_id))
+	return run_checks(checks)
+
+
+func test_get_all_decks_sorts_player_modified_decks_first() -> String:
+	var db := CardDatabaseScript.new()
+	var expected_v175_ids := [
+		1750001, 1750002, 1750003, 1750004, 1750005,
+		606452, 606972, 609431, 610080, 611607,
+	]
+	var cache := {}
+	for deck_id: int in expected_v175_ids + [1700001]:
+		var deck: DeckData = db._load_deck_from_file("res://data/bundled_user/decks/%d.json" % deck_id)
+		if deck != null:
+			cache[deck.id] = deck
+	var player_created_deck := DeckData.new()
+	player_created_deck.id = 99000001
+	player_created_deck.deck_name = "player created deck"
+	player_created_deck.import_date = "2099-01-01T00:00:00"
+	player_created_deck.updated_at = 1000000000001
+	player_created_deck.total_cards = 60
+	cache[player_created_deck.id] = player_created_deck
+	var modified_specs := [
+		{"id": 1700001, "name": "player modified baseline deck", "updated_at": 1000000000000},
+		{"id": 1700002, "name": "17.5 stale legacy Archaludon", "updated_at": 999999999999},
+		{"id": 575723, "name": "17.5 stale legacy Dragapult", "updated_at": 999999999998},
+		{"id": 599947, "name": "17.5 stale legacy Miraidon", "updated_at": 999999999997},
+	]
+	for spec: Dictionary in modified_specs:
+		var modified_id := int(spec["id"])
+		var modified_deck: DeckData = db._load_deck_from_file("res://data/bundled_user/decks/%d.json" % modified_id)
+		if modified_deck != null:
+			modified_deck.deck_name = str(spec["name"])
+			modified_deck.updated_at = int(spec["updated_at"])
+			cache[modified_deck.id] = modified_deck
+	var sorted: Array[DeckData] = db._sorted_deck_values(cache)
+	var leading_ids: Array[int] = []
+	var expected_modified_ids := [
+		99000001, 1700001, 1700002, 575723, 599947,
+	]
+	for i: int in mini(expected_modified_ids.size(), sorted.size()):
+		var deck := sorted[i] as DeckData
+		leading_ids.append(int(deck.id))
+	var checks: Array[String] = [
+		assert_eq(leading_ids, expected_modified_ids, "CardDatabase.get_all_decks should put player-created or player-modified decks before bundled defaults"),
+	]
+	for i: int in range(expected_modified_ids.size(), sorted.size()):
+		var trailing_deck := sorted[i] as DeckData
+		checks.append(assert_false(int(trailing_deck.id) in expected_modified_ids, "Modified deck %d should not appear after bundled defaults" % int(trailing_deck.id)))
+		break
+	return run_checks(checks)
+
+
+func test_175_slowking_deck_matches_screenshot_counts() -> String:
+	var db := CardDatabaseScript.new()
+	var deck: DeckData = db._load_deck_from_file("res://data/bundled_user/decks/1750005.json")
+	if deck == null:
+		return "17.5 Slowking bundled deck should load from bundled JSON"
+	var expected_counts := {
+		"CSV9.5C_031": 4,
+		"CSV9C_072": 3,
+		"CSV5C_053": 2,
+		"CSV5C_054": 2,
+		"CSV9C_147": 2,
+		"CSV9.5C_004": 2,
+		"CSV2C_105": 1,
+		"CSV9C_078": 1,
+		"CSV8C_121": 1,
+		"CSV8C_160": 1,
+		"CS5.5C_056": 1,
+		"CSV8C_135": 1,
+		"CSV8C_172": 1,
+		"CSV7C_191": 4,
+		"CSV1C_121": 4,
+		"CSV3C_123": 1,
+		"CSV8C_183": 4,
+		"CSV1C_112": 4,
+		"CSV7C_177": 4,
+		"CSV9.5C_163": 1,
+		"CSV8C_205": 4,
+		"CSVE1C_PSY": 6,
+		"CSV4C_129": 4,
+		"CSV2C_128": 2,
+	}
+	var actual_counts := {}
+	var total_count := 0
+	for entry: Dictionary in deck.cards:
+		var card_id := "%s_%s" % [str(entry.get("set_code", "")), str(entry.get("card_index", ""))]
+		var count := int(entry.get("count", 0))
+		actual_counts[card_id] = int(actual_counts.get(card_id, 0)) + count
+		total_count += count
+	var checks: Array[String] = [
+		assert_eq(int(deck.id), 1750005, "17.5 Slowking deck should keep its unique bundled id"),
+		assert_eq(str(deck.deck_name), "17.5呆呆王", "17.5 Slowking deck should keep the configured display name"),
+		assert_eq(deck.cards.size(), expected_counts.size(), "17.5 Slowking deck should contain the screenshot card rows"),
+		assert_eq(total_count, 60, "17.5 Slowking deck card counts should add up to 60"),
+	]
+	for card_id_variant: Variant in expected_counts.keys():
+		var card_id := str(card_id_variant)
+		checks.append(assert_eq(int(actual_counts.get(card_id, 0)), int(expected_counts[card_id_variant]), "%s count should match the screenshot" % card_id))
+	for card_id_variant: Variant in actual_counts.keys():
+		var card_id := str(card_id_variant)
+		checks.append(assert_true(expected_counts.has(card_id), "%s should be part of the screenshot deck list" % card_id))
+	return run_checks(checks)
+
+
 func test_runtime_bundled_card_json_loads_through_card_database_deserializer() -> String:
 	var db := CardDatabaseScript.new()
 	var card_path := "res://data/bundled_user/cards/CSV8C_136.json"
@@ -390,6 +542,440 @@ func test_607807_joltik_box_galvantula_is_bundled_with_image_and_deck() -> Strin
 	return run_checks(checks)
 
 
+func test_csv8c_188_powerglass_is_bundled_with_image_and_effect_id() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CSV8C_188.json"
+	var image_path := "res://data/bundled_user/cards/images/CSV8C/188.png.bin"
+	var card: CardData = db.get_card("CSV8C", "188")
+	var direct_card: CardData = db._load_card_from_file(card_path)
+	var checks: Array[String] = [
+		assert_true(card_path in manifest, "CSV8C_188 Powerglass card JSON should be listed in bundled manifest"),
+		assert_true(image_path in manifest, "CSV8C_188 Powerglass image should be listed in bundled manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CSV8C_188 bundled card JSON should exist"),
+		assert_true(FileAccess.file_exists(image_path), "CSV8C_188 bundled card image should exist"),
+		assert_true(CardData.is_valid_card_image_file(image_path), "CSV8C_188 bundled card image should be valid"),
+		assert_not_null(direct_card, "CSV8C_188 bundled JSON should deserialize directly"),
+		assert_not_null(card, "CSV8C_188 should load through CardDatabase bundled fallback"),
+	]
+	if card != null:
+		checks.append(assert_eq(str(card.name_en), "Powerglass", "CSV8C_188 should keep the imported English card name"))
+		checks.append(assert_eq(str(card.card_type), "Tool", "CSV8C_188 should be imported as a Pokemon Tool"))
+		checks.append(assert_eq(str(card.effect_id), "1dc38c46be0951b2b135e1df2e5e7767", "CSV8C_188 should keep the Powerglass effect id"))
+	return run_checks(checks)
+
+
+func test_csv1c_028_armarouge_is_bundled_with_image_and_effect_id() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CSV1C_028.json"
+	var image_path := "res://data/bundled_user/cards/images/CSV1C/028.png.bin"
+	var card: CardData = db.get_card("CSV1C", "028")
+	var direct_card: CardData = db._load_card_from_file(card_path)
+	var found_in_pool := false
+	for pooled: CardData in db.get_all_cards():
+		if pooled.get_uid() == "CSV1C_028":
+			found_in_pool = true
+			break
+	var checks: Array[String] = [
+		assert_true(card_path in manifest, "CSV1C_028 Armarouge card JSON should be listed in bundled manifest"),
+		assert_true(image_path in manifest, "CSV1C_028 Armarouge image should be listed in bundled manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CSV1C_028 bundled card JSON should exist"),
+		assert_true(FileAccess.file_exists(image_path), "CSV1C_028 bundled card image should exist"),
+		assert_true(CardData.is_valid_card_image_file(image_path), "CSV1C_028 bundled image should be valid"),
+		assert_not_null(direct_card, "CSV1C_028 bundled JSON should deserialize directly"),
+		assert_not_null(card, "CSV1C_028 should load through CardDatabase bundled fallback"),
+		assert_true(found_in_pool, "CSV1C_028 should appear in CardDatabase.get_all_cards for deck editor pools"),
+		assert_true(db.has_card("CSV1C", "028"), "CardDatabase.has_card should recognize bundled CSV1C_028"),
+	]
+	if card != null:
+		checks.append(assert_eq(str(card.name), "红莲铠骑", "CSV1C_028 should keep the source Chinese name"))
+		checks.append(assert_eq(str(card.name_en), "Armarouge", "CSV1C_028 should keep the imported English card name"))
+		checks.append(assert_eq(str(card.card_type), "Pokemon", "CSV1C_028 should be imported as Pokemon"))
+		checks.append(assert_eq(str(card.stage), "Stage 1", "CSV1C_028 should keep source evolution stage"))
+		checks.append(assert_eq(str(card.evolves_from), "炭小侍", "CSV1C_028 should keep source evolution line"))
+		checks.append(assert_eq(str(card.effect_id), "4f4c17fe9f3429419f9e344fbecb140d", "CSV1C_028 should keep the API effect id"))
+		checks.append(assert_eq(card.abilities.size(), 1, "CSV1C_028 should import Armarouge's Ability"))
+		checks.append(assert_eq(card.attacks.size(), 1, "CSV1C_028 should import Armarouge's attack"))
+	return run_checks(checks)
+
+
+func test_csv4c_118_defiance_vest_is_bundled_with_image_and_effect_id() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CSV4C_118.json"
+	var image_path := "res://data/bundled_user/cards/images/CSV4C/118.png.bin"
+	var card: CardData = db.get_card("CSV4C", "118")
+	var direct_card: CardData = db._load_card_from_file(card_path)
+	var found_in_pool := false
+	for pooled: CardData in db.get_all_cards():
+		if pooled.get_uid() == "CSV4C_118":
+			found_in_pool = true
+			break
+	var checks: Array[String] = [
+		assert_true(card_path in manifest, "CSV4C_118 Defiance Vest card JSON should be listed in bundled manifest"),
+		assert_true(image_path in manifest, "CSV4C_118 Defiance Vest image should be listed in bundled manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CSV4C_118 bundled card JSON should exist"),
+		assert_true(FileAccess.file_exists(image_path), "CSV4C_118 bundled card image should exist"),
+		assert_true(CardData.is_valid_card_image_file(image_path), "CSV4C_118 bundled card image should be valid"),
+		assert_not_null(direct_card, "CSV4C_118 bundled JSON should deserialize directly"),
+		assert_not_null(card, "CSV4C_118 should load through CardDatabase bundled fallback"),
+		assert_true(found_in_pool, "CSV4C_118 should appear in CardDatabase.get_all_cards for deck editor pools"),
+		assert_true(db.has_card("CSV4C", "118"), "CardDatabase.has_card should recognize bundled CSV4C_118"),
+	]
+	if card != null:
+		checks.append(assert_eq(str(card.name_en), "Defiance Vest", "CSV4C_118 should keep the imported English card name"))
+		checks.append(assert_eq(str(card.card_type), "Tool", "CSV4C_118 should be imported as a Pokemon Tool"))
+		checks.append(assert_eq(str(card.effect_id), "8661d78f9695838cee64d65fb73ddf58", "CSV4C_118 should keep the Defiance Vest effect id"))
+	return run_checks(checks)
+
+
+func test_cs4dac_313_zamazenta_v_is_bundled_with_image_and_effect_id() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CS4DaC_313.json"
+	var image_path := "res://data/bundled_user/cards/images/CS4DaC/313.png.bin"
+	var card: CardData = db.get_card("CS4DaC", "313")
+	var direct_card: CardData = db._load_card_from_file(card_path)
+	var found_in_pool := false
+	for pooled: CardData in db.get_all_cards():
+		if pooled.get_uid() == "CS4DaC_313":
+			found_in_pool = true
+			break
+	var checks: Array[String] = [
+		assert_true(card_path in manifest, "CS4DaC_313 Zamazenta V card JSON should be listed in bundled manifest"),
+		assert_true(image_path in manifest, "CS4DaC_313 Zamazenta V image should be listed in bundled manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CS4DaC_313 bundled card JSON should exist"),
+		assert_true(FileAccess.file_exists(image_path), "CS4DaC_313 bundled card image should exist"),
+		assert_true(CardData.is_valid_card_image_file(image_path), "CS4DaC_313 bundled card image should be valid"),
+		assert_not_null(direct_card, "CS4DaC_313 bundled JSON should deserialize directly"),
+		assert_not_null(card, "CS4DaC_313 should load through CardDatabase bundled fallback"),
+		assert_true(found_in_pool, "CS4DaC_313 should appear in CardDatabase.get_all_cards for deck editor pools"),
+		assert_true(db.has_card("CS4DaC", "313"), "CardDatabase.has_card should recognize bundled CS4DaC_313"),
+	]
+	if card != null:
+		checks.append(assert_eq(str(card.name_en), "Zamazenta V", "CS4DaC_313 should keep the imported English card name"))
+		checks.append(assert_eq(str(card.card_type), "Pokemon", "CS4DaC_313 should be imported as Pokemon"))
+		checks.append(assert_eq(str(card.effect_id), "f3543bd547e44612b034263374aa0ef1", "CS4DaC_313 should keep the Zamazenta V effect id"))
+	return run_checks(checks)
+
+
+func test_csv95c_004_006_023_031_are_bundled_with_images_and_effect_ids() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var expected := {
+		"CSV9.5C_004": {
+			"index": "004",
+			"type": "Pokemon",
+			"stage": "Basic",
+			"effect_id": "28505a8ad6e07e74382c1b5e09737932",
+		},
+		"CSV9.5C_006": {
+			"index": "006",
+			"type": "Pokemon",
+			"stage": "Stage 1",
+			"effect_id": "930f07ef177d44b0e1084343b66b13af",
+		},
+		"CSV9.5C_023": {
+			"index": "023",
+			"type": "Pokemon",
+			"stage": "Stage 1",
+			"effect_id": "313cc7781c8489ce8c45d3597dfce241",
+		},
+		"CSV9.5C_031": {
+			"index": "031",
+			"type": "Pokemon",
+			"stage": "Basic",
+			"effect_id": "26d4511ab7a84d662387e992b44f130a",
+		},
+	}
+	var checks: Array[String] = []
+	for uid_variant: Variant in expected.keys():
+		var uid := str(uid_variant)
+		var meta: Dictionary = expected[uid_variant]
+		var index := str(meta.get("index", ""))
+		var card_path := "res://data/bundled_user/cards/%s.json" % uid
+		var image_path := "res://data/bundled_user/cards/images/CSV9.5C/%s.png.bin" % index
+		var card: CardData = db.get_card("CSV9.5C", index)
+		var found_in_pool := false
+		for pooled: CardData in db.get_all_cards():
+			if pooled.get_uid() == uid:
+				found_in_pool = true
+				break
+		checks.append(assert_true(card_path in manifest, "%s card JSON should be listed in bundled manifest" % uid))
+		checks.append(assert_true(image_path in manifest, "%s card image should be listed in bundled manifest" % uid))
+		checks.append(assert_true(FileAccess.file_exists(card_path), "%s bundled card JSON should exist" % uid))
+		checks.append(assert_true(FileAccess.file_exists(image_path), "%s bundled card image should exist" % uid))
+		checks.append(assert_true(CardData.is_valid_card_image_file(image_path), "%s bundled card image should be valid" % uid))
+		checks.append(assert_not_null(card, "%s should load through CardDatabase bundled fallback" % uid))
+		checks.append(assert_true(found_in_pool, "%s should appear in CardDatabase.get_all_cards for deck editor pools" % uid))
+		if card != null:
+			checks.append(assert_eq(str(card.card_type), str(meta.get("type", "")), "%s should keep imported card type" % uid))
+			checks.append(assert_eq(str(card.stage), str(meta.get("stage", "")), "%s should keep imported stage" % uid))
+			checks.append(assert_eq(str(card.effect_id), str(meta.get("effect_id", "")), "%s should keep imported effect id" % uid))
+	return run_checks(checks)
+
+
+func test_csv95c_029_hearthflame_ogerpon_ex_is_bundled_with_image_and_effect_id() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CSV9.5C_029.json"
+	var image_path := "res://data/bundled_user/cards/images/CSV9.5C/029.png.bin"
+	var card: CardData = db.get_card("CSV9.5C", "029")
+	var direct_card: CardData = db._load_card_from_file(card_path)
+	var found_in_pool := false
+	for pooled: CardData in db.get_all_cards():
+		if pooled.get_uid() == "CSV9.5C_029":
+			found_in_pool = true
+			break
+	var checks: Array[String] = [
+		assert_true(card_path in manifest, "CSV9.5C_029 Hearthflame Mask Ogerpon ex card JSON should be listed in bundled manifest"),
+		assert_true(image_path in manifest, "CSV9.5C_029 Hearthflame Mask Ogerpon ex image should be listed in bundled manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CSV9.5C_029 bundled card JSON should exist"),
+		assert_true(FileAccess.file_exists(image_path), "CSV9.5C_029 bundled card image should exist"),
+		assert_true(CardData.is_valid_card_image_file(image_path), "CSV9.5C_029 bundled card image should be valid"),
+		assert_not_null(direct_card, "CSV9.5C_029 bundled JSON should deserialize directly"),
+		assert_not_null(card, "CSV9.5C_029 should load through CardDatabase bundled fallback"),
+		assert_true(found_in_pool, "CSV9.5C_029 should appear in CardDatabase.get_all_cards for deck editor pools"),
+		assert_true(db.has_card("CSV9.5C", "029"), "CardDatabase.has_card should recognize bundled CSV9.5C_029"),
+	]
+	if card != null:
+		checks.append(assert_eq(str(card.name_en), "Hearthflame Mask Ogerpon ex", "CSV9.5C_029 should keep the imported English card name"))
+		checks.append(assert_eq(str(card.card_type), "Pokemon", "CSV9.5C_029 should be imported as Pokemon"))
+		checks.append(assert_eq(str(card.stage), "Basic", "CSV9.5C_029 should keep Basic stage"))
+		checks.append(assert_eq(int(card.hp), 210, "CSV9.5C_029 should keep 210 HP"))
+		checks.append(assert_eq(str(card.energy_type), "R", "CSV9.5C_029 should keep Fire typing"))
+		checks.append(assert_eq(str(card.mechanic), "ex", "CSV9.5C_029 should keep ex mechanic"))
+		checks.append(assert_eq(str(card.ancient_trait), "Tera", "CSV9.5C_029 should keep Tera marker"))
+		checks.append(assert_eq(str(card.effect_id), "afe6e5fb7931c8c529e43134ef264885", "CSV9.5C_029 should keep the API effect id"))
+		checks.append(assert_eq(card.attacks.size(), 2, "CSV9.5C_029 should import both attacks"))
+	return run_checks(checks)
+
+
+func test_csv9c_099_annihilape_uses_remote_import_metadata() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CSV9C_099.json"
+	var image_path := "res://data/bundled_user/cards/images/CSV9C/099.png.bin"
+	var direct_card: CardData = db._load_card_from_file(card_path)
+	var checks: Array[String] = [
+		assert_true(card_path in manifest, "CSV9C_099 card JSON should be listed in bundled manifest"),
+		assert_true(image_path in manifest, "CSV9C_099 card image should be listed in bundled manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CSV9C_099 bundled card JSON should exist"),
+		assert_true(FileAccess.file_exists(image_path), "CSV9C_099 bundled card image should exist"),
+		assert_true(CardData.is_valid_card_image_file(image_path), "CSV9C_099 bundled card image should be valid"),
+		assert_not_null(direct_card, "CSV9C_099 bundled JSON should deserialize directly"),
+		assert_true(db.has_card("CSV9C", "099"), "CardDatabase.has_card should recognize bundled CSV9C_099"),
+	]
+	if direct_card != null:
+		checks.append(assert_eq(str(direct_card.name), "弃世猴", "CSV9C_099 should keep the imported Chinese name"))
+		checks.append(assert_eq(str(direct_card.name_en), "Annihilape", "CSV9C_099 should keep the imported English card name"))
+		checks.append(assert_eq(str(direct_card.set_code_en), "SSP", "CSV9C_099 should keep the imported English set code"))
+		checks.append(assert_eq(str(direct_card.card_index_en), "100", "CSV9C_099 should keep the imported English card index"))
+		checks.append(assert_eq(str(direct_card.effect_id), "293b8c882a550600a395e3c82b58f833", "CSV9C_099 should keep the API effect id"))
+	return run_checks(checks)
+
+
+func test_csv9c_180_scramble_switch_is_bundled_with_image_and_effect_id() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CSV9C_180.json"
+	var image_path := "res://data/bundled_user/cards/images/CSV9C/180.png.bin"
+	var card: CardData = db.get_card("CSV9C", "180")
+	var direct_card: CardData = db._load_card_from_file(card_path)
+	var found_in_pool := false
+	for pooled: CardData in db.get_all_cards():
+		if pooled.get_uid() == "CSV9C_180":
+			found_in_pool = true
+			break
+	var checks: Array[String] = [
+		assert_true(card_path in manifest, "CSV9C_180 Scramble Switch card JSON should be listed in bundled manifest"),
+		assert_true(image_path in manifest, "CSV9C_180 Scramble Switch image should be listed in bundled manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CSV9C_180 bundled card JSON should exist"),
+		assert_true(FileAccess.file_exists(image_path), "CSV9C_180 bundled card image should exist"),
+		assert_true(CardData.is_valid_card_image_file(image_path), "CSV9C_180 bundled card image should be valid"),
+		assert_not_null(direct_card, "CSV9C_180 bundled JSON should deserialize directly"),
+		assert_not_null(card, "CSV9C_180 should load through CardDatabase bundled fallback"),
+		assert_true(found_in_pool, "CSV9C_180 should appear in CardDatabase.get_all_cards for deck editor pools"),
+		assert_true(db.has_card("CSV9C", "180"), "CardDatabase.has_card should recognize bundled CSV9C_180"),
+	]
+	if card != null:
+		checks.append(assert_eq(str(card.name_en), "Scramble Switch", "CSV9C_180 should keep the imported English card name"))
+		checks.append(assert_eq(str(card.card_type), "Item", "CSV9C_180 should be imported as an Item"))
+		checks.append(assert_eq(str(card.mechanic), "ACE SPEC", "CSV9C_180 should keep the ACE SPEC mechanic"))
+		checks.append(assert_eq(str(card.effect_id), "1da701b43813d6ddb1238e54bce95811", "CSV9C_180 should keep the API effect id"))
+	return run_checks(checks)
+
+
+func test_csv95c_126_140_149_are_bundled_with_images_and_effect_ids() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var expected := {
+		"CSV9.5C_126": {
+			"index": "126",
+			"type": "Pokemon",
+			"stage": "Basic",
+			"mechanic": "",
+			"ancient_trait": "",
+			"effect_id": "62bbe4c45b6f0406104dc382a620e017",
+		},
+		"CSV9.5C_140": {
+			"index": "140",
+			"type": "Pokemon",
+			"stage": "Basic",
+			"mechanic": "ex",
+			"ancient_trait": "Tera",
+			"effect_id": "efa5883e7d648ebc984f161b2c7d8fe9",
+		},
+		"CSV9.5C_149": {
+			"index": "149",
+			"type": "Pokemon",
+			"stage": "Basic",
+			"mechanic": "",
+			"ancient_trait": "",
+			"effect_id": "d5ab8efe3bcad6f39e9a434ae6d8de7a",
+		},
+	}
+	var checks: Array[String] = []
+	for uid_variant: Variant in expected.keys():
+		var uid := str(uid_variant)
+		var meta: Dictionary = expected[uid_variant]
+		var index := str(meta.get("index", ""))
+		var card_path := "res://data/bundled_user/cards/%s.json" % uid
+		var image_path := "res://data/bundled_user/cards/images/CSV9.5C/%s.png.bin" % index
+		var card: CardData = db.get_card("CSV9.5C", index)
+		var found_in_pool := false
+		for pooled: CardData in db.get_all_cards():
+			if pooled.get_uid() == uid:
+				found_in_pool = true
+				break
+		checks.append(assert_true(card_path in manifest, "%s card JSON should be listed in bundled manifest" % uid))
+		checks.append(assert_true(image_path in manifest, "%s card image should be listed in bundled manifest" % uid))
+		checks.append(assert_true(FileAccess.file_exists(card_path), "%s bundled card JSON should exist" % uid))
+		checks.append(assert_true(FileAccess.file_exists(image_path), "%s bundled card image should exist" % uid))
+		checks.append(assert_true(CardData.is_valid_card_image_file(image_path), "%s bundled card image should be valid" % uid))
+		checks.append(assert_not_null(card, "%s should load through CardDatabase bundled fallback" % uid))
+		checks.append(assert_true(found_in_pool, "%s should appear in CardDatabase.get_all_cards for deck editor pools" % uid))
+		if card != null:
+			checks.append(assert_eq(str(card.card_type), str(meta.get("type", "")), "%s should keep imported card type" % uid))
+			checks.append(assert_eq(str(card.stage), str(meta.get("stage", "")), "%s should keep imported stage" % uid))
+			checks.append(assert_eq(str(card.mechanic), str(meta.get("mechanic", "")), "%s should keep imported mechanic" % uid))
+			checks.append(assert_eq(str(card.ancient_trait), str(meta.get("ancient_trait", "")), "%s should keep imported ancient trait" % uid))
+			checks.append(assert_eq(str(card.effect_id), str(meta.get("effect_id", "")), "%s should keep imported effect id" % uid))
+	return run_checks(checks)
+
+
+func test_csv95c_104_umbreon_ex_is_bundled_with_image_and_effect_id() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CSV9.5C_104.json"
+	var image_path := "res://data/bundled_user/cards/images/CSV9.5C/104.png.bin"
+	var card: CardData = db.get_card("CSV9.5C", "104")
+	var direct_card: CardData = db._load_card_from_file(card_path)
+	var found_in_pool := false
+	for pooled: CardData in db.get_all_cards():
+		if pooled.get_uid() == "CSV9.5C_104":
+			found_in_pool = true
+			break
+	var checks: Array[String] = [
+		assert_true(card_path in manifest, "CSV9.5C_104 Umbreon ex card JSON should be listed in bundled manifest"),
+		assert_true(image_path in manifest, "CSV9.5C_104 Umbreon ex image should be listed in bundled manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CSV9.5C_104 bundled card JSON should exist"),
+		assert_true(FileAccess.file_exists(image_path), "CSV9.5C_104 bundled card image should exist"),
+		assert_true(CardData.is_valid_card_image_file(image_path), "CSV9.5C_104 bundled card image should be valid"),
+		assert_not_null(direct_card, "CSV9.5C_104 bundled JSON should deserialize directly"),
+		assert_not_null(card, "CSV9.5C_104 should load through CardDatabase bundled fallback"),
+		assert_true(found_in_pool, "CSV9.5C_104 should appear in CardDatabase.get_all_cards for deck editor pools"),
+		assert_true(db.has_card("CSV9.5C", "104"), "CardDatabase.has_card should recognize bundled CSV9.5C_104"),
+	]
+	if card != null:
+		checks.append(assert_eq(str(card.name_en), "Umbreon ex", "CSV9.5C_104 should keep the imported English card name"))
+		checks.append(assert_eq(str(card.card_type), "Pokemon", "CSV9.5C_104 should be imported as Pokemon"))
+		checks.append(assert_eq(str(card.stage), "Stage 1", "CSV9.5C_104 should keep Stage 1 metadata"))
+		checks.append(assert_eq(str(card.evolves_from), "伊布", "CSV9.5C_104 should keep Eevee as its evolution source"))
+		checks.append(assert_eq(int(card.hp), 280, "CSV9.5C_104 should keep 280 HP"))
+		checks.append(assert_eq(str(card.energy_type), "D", "CSV9.5C_104 should keep Darkness typing"))
+		checks.append(assert_eq(str(card.mechanic), "ex", "CSV9.5C_104 should keep ex mechanic"))
+		checks.append(assert_eq(str(card.ancient_trait), "Tera", "CSV9.5C_104 should keep Tera marker"))
+		checks.append(assert_eq(str(card.effect_id), "233350ffecdbfac2a8fab27e7f7da282", "CSV9.5C_104 should keep the API effect id"))
+		checks.append(assert_eq(card.attacks.size(), 2, "CSV9.5C_104 should import both attacks"))
+	return run_checks(checks)
+
+
+func test_csv95c_188_black_belts_training_is_bundled_with_image_and_effect_id() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CSV9.5C_188.json"
+	var image_path := "res://data/bundled_user/cards/images/CSV9.5C/188.png.bin"
+	var card: CardData = db.get_card("CSV9.5C", "188")
+	var direct_card: CardData = db._load_card_from_file(card_path)
+	var checks: Array[String] = [
+		assert_true(card_path in manifest, "CSV9.5C_188 Black Belt's Training card JSON should be listed in bundled manifest"),
+		assert_true(image_path in manifest, "CSV9.5C_188 Black Belt's Training image should be listed in bundled manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CSV9.5C_188 bundled card JSON should exist"),
+		assert_true(FileAccess.file_exists(image_path), "CSV9.5C_188 bundled card image should exist"),
+		assert_true(CardData.is_valid_card_image_file(image_path), "CSV9.5C_188 bundled card image should be valid"),
+		assert_not_null(direct_card, "CSV9.5C_188 bundled JSON should deserialize directly"),
+		assert_not_null(card, "CSV9.5C_188 should load through CardDatabase bundled fallback"),
+	]
+	if card != null:
+		checks.append(assert_eq(str(card.name_en), "Black Belt's Training", "CSV9.5C_188 should keep the imported English card name"))
+		checks.append(assert_eq(str(card.card_type), "Supporter", "CSV9.5C_188 should be imported as a Supporter"))
+		checks.append(assert_eq(str(card.effect_id), "a444b83881df9e2a0225aee95bbc853a", "CSV9.5C_188 should keep the Black Belt's Training effect id"))
+	return run_checks(checks)
+
+
+func test_has_card_checks_bundled_powerglass_even_without_user_copy() -> String:
+	var db := CardDatabaseScript.new()
+	var user_path := "user://cards/CSV8C_188.json"
+	var absolute_user_path := ProjectSettings.globalize_path(user_path)
+	var had_user_copy := FileAccess.file_exists(user_path)
+	var user_copy_text := FileAccess.get_file_as_string(user_path) if had_user_copy else ""
+	if had_user_copy:
+		DirAccess.remove_absolute(absolute_user_path)
+
+	var has_powerglass := db.has_card("CSV8C", "188")
+
+	if had_user_copy:
+		_write_text(user_path, user_copy_text)
+
+	return run_checks([
+		assert_true(has_powerglass, "CardDatabase.has_card should recognize bundled CSV8C_188 even before seeding it into user://cards"),
+	])
+
+
+func test_get_all_cards_includes_bundle_only_powerglass_for_deck_editor_pool() -> String:
+	var db := CardDatabaseScript.new()
+	var found: CardData = null
+	for card: CardData in db.get_all_cards():
+		if card.get_uid() == "CSV8C_188":
+			found = card
+			break
+	var checks: Array[String] = [
+		assert_not_null(found, "Deck editor card pool should include bundle-only CSV8C_188 from CardDatabase.get_all_cards"),
+	]
+	if found != null:
+		checks.append(assert_eq(str(found.name_en), "Powerglass", "get_all_cards should expose Powerglass metadata"))
+		checks.append(assert_eq(str(found.card_type), "Tool", "Powerglass should appear in the Tool category"))
+	return run_checks(checks)
+
+
+func test_get_all_cards_includes_bundle_only_black_belts_training_for_deck_editor_pool() -> String:
+	var db := CardDatabaseScript.new()
+	var found: CardData = null
+	for card: CardData in db.get_all_cards():
+		if card.get_uid() == "CSV9.5C_188":
+			found = card
+			break
+	var checks: Array[String] = [
+		assert_not_null(found, "Deck editor card pool should include bundle-only CSV9.5C_188 from CardDatabase.get_all_cards"),
+	]
+	if found != null:
+		checks.append(assert_eq(str(found.name_en), "Black Belt's Training", "get_all_cards should expose Black Belt's Training metadata"))
+		checks.append(assert_eq(str(found.card_type), "Supporter", "Black Belt's Training should appear in the Supporter category"))
+	return run_checks(checks)
+
+
 func test_version_170_bundled_decks_do_not_start_as_empty_card_database_game_over() -> String:
 	var db := CardDatabaseScript.new()
 	var player_deck: DeckData = db._load_deck_from_file("res://data/bundled_user/decks/1700012.json")
@@ -450,6 +1036,284 @@ func test_recent_card_audit_batch_is_bundled_as_default_install_cards() -> Strin
 		checks.append(assert_not_null(card, "%s should load through CardDatabase bundled fallback" % card_id))
 		if card != null:
 			checks.append(assert_eq(str(card.effect_id), str(expected_effect_ids[card_id]), "%s should keep the implemented effect id" % card_id))
+	return run_checks(checks)
+
+
+func test_csv8c_057_milotic_ex_is_bundled_with_image_and_effect_metadata() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CSV8C_057.json"
+	var image_path := "res://data/bundled_user/cards/images/CSV8C/057.png.bin"
+	var card: CardData = db.get_card("CSV8C", "057")
+	var found_in_pool := false
+	for pool_card: CardData in db.get_all_cards():
+		if pool_card != null and pool_card.get_uid() == "CSV8C_057":
+			found_in_pool = true
+			break
+	return run_checks([
+		assert_true(card_path in manifest, "CSV8C_057 should be listed in bundled seed manifest"),
+		assert_true(image_path in manifest, "CSV8C_057 image should be listed in bundled seed manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CSV8C_057 bundled card JSON should exist"),
+		assert_true(FileAccess.file_exists(image_path), "CSV8C_057 bundled card image should exist"),
+		assert_true(CardData.is_valid_card_image_file(image_path), "CSV8C_057 bundled card image should be readable"),
+		assert_not_null(card, "CSV8C_057 should load through CardDatabase bundled fallback"),
+		assert_true(db.has_card("CSV8C", "057"), "CardDatabase.has_card should recognize CSV8C_057"),
+		assert_true(found_in_pool, "CardDatabase.get_all_cards should expose CSV8C_057 to DeckEditor"),
+		assert_eq(str(card.name_en if card != null else ""), "Milotic ex", "CSV8C_057 should keep imported English name"),
+		assert_eq(str(card.card_type if card != null else ""), "Pokemon", "CSV8C_057 should keep imported card type"),
+		assert_eq(str(card.effect_id if card != null else ""), "57e95f8cb1129f6b45b7bbbc1a45b643", "CSV8C_057 should keep imported effect id"),
+	])
+
+
+func test_csv95c_141_163_182_are_bundled_with_images_and_effects() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var expected := {
+		"CSV9.5C_141": {"effect_id": "76f4e0d39348c21f1f1a4be4d653b6a5", "card_type": "Pokemon"},
+		"CSV9.5C_163": {"effect_id": "6a7fe7ec3f22c435f50b49909e85b3d3", "card_type": "Item"},
+		"CSV9.5C_182": {"effect_id": "60efb96839df10bb78737047da1c4fb1", "card_type": "Supporter"},
+	}
+	var checks: Array[String] = []
+	for card_id: String in expected.keys():
+		var parts := card_id.split("_", false, 1)
+		var set_code := str(parts[0])
+		var card_index := str(parts[1])
+		var card_path := "res://data/bundled_user/cards/%s.json" % card_id
+		var image_path := "res://data/bundled_user/cards/images/%s/%s.png.bin" % [set_code, card_index]
+		var card: CardData = db.get_card(set_code, card_index)
+		var spec: Dictionary = expected[card_id]
+		checks.append(assert_true(card_path in manifest, "%s should be listed in bundled seed manifest" % card_id))
+		checks.append(assert_true(image_path in manifest, "%s image should be listed in bundled seed manifest" % card_id))
+		checks.append(assert_true(FileAccess.file_exists(card_path), "%s bundled card JSON should exist" % card_id))
+		checks.append(assert_true(FileAccess.file_exists(image_path), "%s bundled card image should exist" % card_id))
+		checks.append(assert_true(CardData.is_valid_card_image_file(image_path), "%s bundled image should be valid" % card_id))
+		checks.append(assert_not_null(card, "%s should load through CardDatabase bundled fallback" % card_id))
+		if card != null:
+			checks.append(assert_eq(str(card.effect_id), str(spec["effect_id"]), "%s should keep source effect id" % card_id))
+			checks.append(assert_eq(str(card.card_type), str(spec["card_type"]), "%s should keep source card type" % card_id))
+			if card_id == "CSV9.5C_163":
+				checks.append(assert_true(card.is_ace_spec(), "CSV9.5C_163 should be recognized as ACE SPEC"))
+	return run_checks(checks)
+
+
+func test_csv7c_182_love_ball_is_bundled_with_image_and_effect() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CSV7C_182.json"
+	var image_path := "res://data/bundled_user/cards/images/CSV7C/182.png.bin"
+	var card: CardData = db.get_card("CSV7C", "182")
+	var found: CardData = null
+	for candidate: CardData in db.get_all_cards():
+		if candidate.get_uid() == "CSV7C_182":
+			found = candidate
+			break
+	var checks: Array[String] = [
+		assert_true(card_path in manifest, "CSV7C_182 should be listed in bundled seed manifest"),
+		assert_true(image_path in manifest, "CSV7C_182 image should be listed in bundled seed manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CSV7C_182 bundled card JSON should exist"),
+		assert_true(FileAccess.file_exists(image_path), "CSV7C_182 bundled card image should exist"),
+		assert_true(CardData.is_valid_card_image_file(image_path), "CSV7C_182 bundled image should be valid"),
+		assert_not_null(card, "CSV7C_182 should load through CardDatabase bundled fallback"),
+		assert_not_null(found, "Deck editor card pool should include bundle-only CSV7C_182 from CardDatabase.get_all_cards"),
+	]
+	if card != null:
+		checks.append(assert_eq(str(card.name_en), "Love Ball", "CSV7C_182 should keep source English name"))
+		checks.append(assert_eq(str(card.card_type), "Item", "CSV7C_182 should keep source card type"))
+		checks.append(assert_eq(str(card.effect_id), "ee2e1cc534d39f1710b1c590bf585ae5", "CSV7C_182 should keep source effect id"))
+	return run_checks(checks)
+
+
+func test_csv3c_117_picnic_basket_is_bundled_with_image_and_effect() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CSV3C_117.json"
+	var image_path := "res://data/bundled_user/cards/images/CSV3C/117.png.bin"
+	var card: CardData = db.get_card("CSV3C", "117")
+	var found: CardData = null
+	for candidate: CardData in db.get_all_cards():
+		if candidate.get_uid() == "CSV3C_117":
+			found = candidate
+			break
+	var checks: Array[String] = [
+		assert_true(card_path in manifest, "CSV3C_117 should be listed in bundled seed manifest"),
+		assert_true(image_path in manifest, "CSV3C_117 image should be listed in bundled seed manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CSV3C_117 bundled card JSON should exist"),
+		assert_true(FileAccess.file_exists(image_path), "CSV3C_117 bundled card image should exist"),
+		assert_true(CardData.is_valid_card_image_file(image_path), "CSV3C_117 bundled image should be valid"),
+		assert_not_null(card, "CSV3C_117 should load through CardDatabase bundled fallback"),
+		assert_not_null(found, "Deck editor card pool should include bundle-only CSV3C_117 from CardDatabase.get_all_cards"),
+	]
+	if card != null:
+		checks.append(assert_eq(str(card.name_en), "Picnic Basket", "CSV3C_117 should keep source English name"))
+		checks.append(assert_eq(str(card.card_type), "Item", "CSV3C_117 should keep source card type"))
+		checks.append(assert_eq(str(card.effect_id), "276cc8e3fd9a7b7c18f5da7715fe8460", "CSV3C_117 should keep source effect id"))
+	return run_checks(checks)
+
+
+func test_csv2c_011_floragato_is_bundled_with_image_and_effect() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CSV2C_011.json"
+	var image_path := "res://data/bundled_user/cards/images/CSV2C/011.png.bin"
+	var card: CardData = db.get_card("CSV2C", "011")
+	var found: CardData = null
+	for candidate: CardData in db.get_all_cards():
+		if candidate.get_uid() == "CSV2C_011":
+			found = candidate
+			break
+	var checks: Array[String] = [
+		assert_true(card_path in manifest, "CSV2C_011 should be listed in bundled seed manifest"),
+		assert_true(image_path in manifest, "CSV2C_011 image should be listed in bundled seed manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CSV2C_011 bundled card JSON should exist"),
+		assert_true(FileAccess.file_exists(image_path), "CSV2C_011 bundled card image should exist"),
+		assert_true(CardData.is_valid_card_image_file(image_path), "CSV2C_011 bundled image should be valid"),
+		assert_not_null(card, "CSV2C_011 should load through CardDatabase bundled fallback"),
+		assert_not_null(found, "Deck editor card pool should include bundle-only CSV2C_011 from CardDatabase.get_all_cards"),
+	]
+	if card != null:
+		checks.append(assert_eq(str(card.name_en), "Floragato", "CSV2C_011 should keep source English name"))
+		checks.append(assert_eq(str(card.card_type), "Pokemon", "CSV2C_011 should keep source card type"))
+		checks.append(assert_eq(str(card.stage), "Stage 1", "CSV2C_011 should keep source evolution stage"))
+		checks.append(assert_eq(str(card.evolves_from), "新叶喵", "CSV2C_011 should keep source evolution line"))
+		checks.append(assert_eq(str(card.effect_id), "b49466f5df9dfcef38331df65187f068", "CSV2C_011 should keep source effect id"))
+	return run_checks(checks)
+
+
+func test_csv2c_114_rigid_band_is_bundled_with_image_and_effect() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CSV2C_114.json"
+	var image_path := "res://data/bundled_user/cards/images/CSV2C/114.png.bin"
+	var card: CardData = db.get_card("CSV2C", "114")
+	var found: CardData = null
+	for candidate: CardData in db.get_all_cards():
+		if candidate.get_uid() == "CSV2C_114":
+			found = candidate
+			break
+	var checks: Array[String] = [
+		assert_true(card_path in manifest, "CSV2C_114 should be listed in bundled seed manifest"),
+		assert_true(image_path in manifest, "CSV2C_114 image should be listed in bundled seed manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CSV2C_114 bundled card JSON should exist"),
+		assert_true(FileAccess.file_exists(image_path), "CSV2C_114 bundled card image should exist"),
+		assert_true(CardData.is_valid_card_image_file(image_path), "CSV2C_114 bundled image should be valid"),
+		assert_not_null(card, "CSV2C_114 should load through CardDatabase bundled fallback"),
+		assert_not_null(found, "Deck editor card pool should include bundle-only CSV2C_114 from CardDatabase.get_all_cards"),
+	]
+	if card != null:
+		checks.append(assert_eq(str(card.name_en), "Rigid Band", "CSV2C_114 should keep source English name"))
+		checks.append(assert_eq(str(card.card_type), "Tool", "CSV2C_114 should keep source card type"))
+		checks.append(assert_eq(str(card.effect_id), "6ec876cf4467166edf6e90fa1cc321eb", "CSV2C_114 should keep source effect id"))
+	return run_checks(checks)
+
+
+func test_csv5c_053_054_and_csv9c_072_source_cards_are_bundled_with_images_and_effect_ids() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var specs := [
+		{
+			"uid": "CSV5C_053",
+			"set": "CSV5C",
+			"index": "053",
+			"name_en": "Natu",
+			"card_type": "Pokemon",
+			"effect_id": "2317be04afe1bd94899a29fe09b84d96",
+		},
+		{
+			"uid": "CSV5C_054",
+			"set": "CSV5C",
+			"index": "054",
+			"name_en": "Xatu",
+			"card_type": "Pokemon",
+			"effect_id": "bcd9644ea935ce567829f4a76756059b",
+		},
+		{
+			"uid": "CSV9C_072",
+			"set": "CSV9C",
+			"index": "072",
+			"name_en": "Slowking",
+			"card_type": "Pokemon",
+			"effect_id": "59d3af627f14b4a65ab4d589f6cb52db",
+		},
+	]
+	var checks: Array[String] = []
+	for spec: Dictionary in specs:
+		var uid := str(spec["uid"])
+		var card_path := "res://data/bundled_user/cards/%s.json" % uid
+		var image_path := "res://data/bundled_user/cards/images/%s/%s.png.bin" % [str(spec["set"]), str(spec["index"])]
+		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(card_path))
+		var card: CardData = null
+		if parsed is Dictionary:
+			var payload: Dictionary = parsed
+			card = CardData.from_dict(payload)
+		checks.append(assert_true(card_path in manifest, "%s card JSON should be listed in bundled seed manifest" % uid))
+		checks.append(assert_true(image_path in manifest, "%s card image should be listed in bundled seed manifest" % uid))
+		checks.append(assert_true(FileAccess.file_exists(card_path), "%s bundled card JSON should exist" % uid))
+		checks.append(assert_true(FileAccess.file_exists(image_path), "%s bundled card image should exist" % uid))
+		checks.append(assert_true(CardData.is_valid_card_image_file(image_path), "%s bundled image should be valid" % uid))
+		checks.append(assert_not_null(card, "%s bundled card JSON should parse into CardData" % uid))
+		if card != null:
+			checks.append(assert_eq(card.get_uid(), uid, "%s should keep source uid" % uid))
+			checks.append(assert_eq(str(card.name_en), str(spec["name_en"]), "%s should keep source English name" % uid))
+			checks.append(assert_eq(str(card.card_type), str(spec["card_type"]), "%s should keep source card type" % uid))
+			checks.append(assert_eq(str(card.effect_id), str(spec["effect_id"]), "%s should keep source effect id" % uid))
+	return run_checks(checks)
+
+
+func test_cs5ac_068_crobat_is_bundled_with_image_and_effect() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CS5aC_068.json"
+	var image_path := "res://data/bundled_user/cards/images/CS5aC/068.png.bin"
+	var card: CardData = db.get_card("CS5aC", "068")
+	var found: CardData = null
+	for candidate: CardData in db.get_all_cards():
+		if candidate.get_uid() == "CS5aC_068":
+			found = candidate
+			break
+	var checks: Array[String] = [
+		assert_true(card_path in manifest, "CS5aC_068 card JSON should be listed in bundled seed manifest"),
+		assert_true(image_path in manifest, "CS5aC_068 image should be listed in bundled seed manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CS5aC_068 bundled card JSON should exist"),
+		assert_true(FileAccess.file_exists(image_path), "CS5aC_068 bundled card image should exist"),
+		assert_true(CardData.is_valid_card_image_file(image_path), "CS5aC_068 bundled image should be valid"),
+		assert_not_null(card, "CS5aC_068 should load through CardDatabase bundled fallback"),
+		assert_not_null(found, "Deck editor card pool should include bundle-only CS5aC_068 from CardDatabase.get_all_cards"),
+	]
+	if card != null:
+		checks.append(assert_eq(str(card.name_en), "Crobat", "CS5aC_068 should keep source English name"))
+		checks.append(assert_eq(str(card.card_type), "Pokemon", "CS5aC_068 should keep source card type"))
+		checks.append(assert_eq(str(card.stage), "Stage 2", "CS5aC_068 should keep source evolution stage"))
+		checks.append(assert_eq(str(card.evolves_from), "大嘴蝠", "CS5aC_068 should keep source evolution line"))
+		checks.append(assert_eq(str(card.effect_id), "930008a5b5f22ceabca6767aafd93a35", "CS5aC_068 should keep source effect id"))
+	return run_checks(checks)
+
+
+func test_cs6ac_099_zamazenta_vstar_is_bundled_with_image_and_effect() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CS6aC_099.json"
+	var image_path := "res://data/bundled_user/cards/images/CS6aC/099.png.bin"
+	var card: CardData = db.get_card("CS6aC", "099")
+	var found: CardData = null
+	for candidate: CardData in db.get_all_cards():
+		if candidate.get_uid() == "CS6aC_099":
+			found = candidate
+			break
+	var checks: Array[String] = [
+		assert_true(card_path in manifest, "CS6aC_099 card JSON should be listed in bundled seed manifest"),
+		assert_true(image_path in manifest, "CS6aC_099 card image should be listed in bundled seed manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CS6aC_099 bundled card JSON should exist"),
+		assert_true(FileAccess.file_exists(image_path), "CS6aC_099 bundled card image should exist"),
+		assert_true(CardData.is_valid_card_image_file(image_path), "CS6aC_099 bundled image should be valid"),
+		assert_not_null(card, "CS6aC_099 should load through CardDatabase bundled fallback"),
+		assert_not_null(found, "Deck editor card pool should include bundle-only CS6aC_099 from CardDatabase.get_all_cards"),
+	]
+	if card != null:
+		checks.append(assert_eq(str(card.name_en), "Zamazenta VSTAR", "CS6aC_099 should keep source English name"))
+		checks.append(assert_eq(str(card.card_type), "Pokemon", "CS6aC_099 should keep source card type"))
+		checks.append(assert_eq(str(card.stage), "VSTAR", "CS6aC_099 should keep source evolution stage"))
+		checks.append(assert_eq(str(card.evolves_from), "藏玛然特V", "CS6aC_099 should keep source evolution line"))
+		checks.append(assert_eq(str(card.effect_id), "00d90ff674296941a9da9d9a0255aa2d", "CS6aC_099 should keep source effect id"))
 	return run_checks(checks)
 
 
@@ -601,8 +1465,18 @@ func test_existing_install_backfills_new_poison_box_card_resources_on_startup() 
 	var db := CardDatabaseScript.new()
 	var missing_paths := [
 		"user://cards/CS5aC_079.json",
+		"user://cards/CSV2C_011.json",
+		"user://cards/CSV2C_114.json",
+		"user://cards/CSV3C_117.json",
+		"user://cards/CSV5C_053.json",
+		"user://cards/CSV5C_054.json",
 		"user://cards/CSV6C_080.json",
 		"user://cards/images/CS5aC/079.png",
+		"user://cards/images/CSV2C/011.png",
+		"user://cards/images/CSV2C/114.png",
+		"user://cards/images/CSV3C/117.png",
+		"user://cards/images/CSV5C/053.png",
+		"user://cards/images/CSV5C/054.png",
 		"user://cards/images/CSV6C/080.png",
 	]
 	for path: String in missing_paths:
@@ -614,8 +1488,18 @@ func test_existing_install_backfills_new_poison_box_card_resources_on_startup() 
 
 	return run_checks([
 		assert_true(FileAccess.file_exists("user://cards/CS5aC_079.json"), "Upgrade seed should backfill Radiant Hisuian Sneasler card JSON for existing installs"),
+		assert_true(FileAccess.file_exists("user://cards/CSV2C_011.json"), "Upgrade seed should backfill Floragato card JSON for existing installs"),
+		assert_true(FileAccess.file_exists("user://cards/CSV2C_114.json"), "Upgrade seed should backfill Rigid Band card JSON for existing installs"),
+		assert_true(FileAccess.file_exists("user://cards/CSV3C_117.json"), "Upgrade seed should backfill Picnic Basket card JSON for existing installs"),
+		assert_true(FileAccess.file_exists("user://cards/CSV5C_053.json"), "Upgrade seed should backfill Natu card JSON for existing installs"),
+		assert_true(FileAccess.file_exists("user://cards/CSV5C_054.json"), "Upgrade seed should backfill Xatu card JSON for existing installs"),
 		assert_true(FileAccess.file_exists("user://cards/CSV6C_080.json"), "Upgrade seed should backfill Klawf card JSON for existing installs"),
 		assert_true(CardData.is_valid_card_image_file("user://cards/images/CS5aC/079.png"), "Upgrade seed should backfill Radiant Hisuian Sneasler image for existing installs"),
+		assert_true(CardData.is_valid_card_image_file("user://cards/images/CSV2C/011.png"), "Upgrade seed should backfill Floragato image for existing installs"),
+		assert_true(CardData.is_valid_card_image_file("user://cards/images/CSV2C/114.png"), "Upgrade seed should backfill Rigid Band image for existing installs"),
+		assert_true(CardData.is_valid_card_image_file("user://cards/images/CSV3C/117.png"), "Upgrade seed should backfill Picnic Basket image for existing installs"),
+		assert_true(CardData.is_valid_card_image_file("user://cards/images/CSV5C/053.png"), "Upgrade seed should backfill Natu image for existing installs"),
+		assert_true(CardData.is_valid_card_image_file("user://cards/images/CSV5C/054.png"), "Upgrade seed should backfill Xatu image for existing installs"),
 		assert_true(CardData.is_valid_card_image_file("user://cards/images/CSV6C/080.png"), "Upgrade seed should backfill Klawf image for existing installs"),
 	])
 

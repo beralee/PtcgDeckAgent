@@ -94,6 +94,9 @@ func test_field_can_include_all_llm_deck_variants_when_enabled() -> String:
 		1700007: "v17_miraidon_llm",
 		1700008: "v17_dragapult_dusknoir_llm",
 		1700011: "v17_regidrago_llm",
+		609431: "v175_lugia_archeops_llm",
+		1750002: "v175_pure_dragapult_llm",
+		610080: "v175_gardevoir_llm",
 	}
 	var checks: Array[String] = [
 		assert_true(llm_deck_pool.size() >= 15, "LLM pool should keep all old and v17 strategy-backed LLM deck variants"),
@@ -104,8 +107,8 @@ func test_field_can_include_all_llm_deck_variants_when_enabled() -> String:
 		assert_eq(missing_strategy_count, 0, "每个 LLM 对手卡组都必须能映射到对应 LLM strategy id"),
 	]
 	for deck_id: int in expected_v17_llm.keys():
-		checks.append(assert_true(deck_id in llm_deck_pool, "LLM pool should include v17 deck %d" % deck_id))
-		checks.append(assert_eq(str(tournament.call("llm_strategy_id_for_deck_id", deck_id)), str(expected_v17_llm[deck_id]), "v17 deck %d should map to its LLM strategy" % deck_id))
+		checks.append(assert_true(deck_id in llm_deck_pool, "LLM pool should include v17/v17.5 deck %d" % deck_id))
+		checks.append(assert_eq(str(tournament.call("llm_strategy_id_for_deck_id", deck_id)), str(expected_v17_llm[deck_id]), "v17/v17.5 deck %d should map to its LLM strategy" % deck_id))
 	return run_checks(checks)
 
 

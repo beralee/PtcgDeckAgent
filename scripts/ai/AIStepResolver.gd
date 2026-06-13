@@ -496,11 +496,17 @@ func _assign_sources_to_targets(
 	var pending_assignments: Array[Dictionary] = []
 	var source_indices: Array = explicit_source_indices if has_explicit_plan else range(source_items.size())
 	var max_assignments_per_target := int(step.get("max_assignments_per_target", 0))
+	var single_target_only := bool(step.get("single_target_only", false))
+	var locked_target_index := -1
 	for source_index_variant: Variant in source_indices:
 		var source_index: int = int(source_index_variant)
 		if assignments_made >= target_assignment_count:
 			break
 		var excluded_targets: Array = (source_exclude_targets.get(source_index, []) as Array).duplicate()
+		if single_target_only and locked_target_index >= 0:
+			for target_index: int in target_items.size():
+				if target_index != locked_target_index and not (target_index in excluded_targets):
+					excluded_targets.append(target_index)
 		if max_assignments_per_target > 0:
 			for target_index: int in target_items.size():
 				var candidate: Variant = target_items[target_index]
@@ -524,6 +530,8 @@ func _assign_sources_to_targets(
 		if chosen_target_index < 0:
 			continue
 		apply_assignment.call(source_index, chosen_target_index)
+		if single_target_only and locked_target_index < 0:
+			locked_target_index = chosen_target_index
 		picked_targets.append(chosen_target_index)
 		var chosen_target: Variant = target_items[chosen_target_index]
 		if chosen_target is PokemonSlot:

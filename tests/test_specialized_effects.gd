@@ -667,6 +667,39 @@ func test_search_pokemon_to_bench_uses_selected_targets() -> String:
 	])
 
 
+func test_search_pokemon_to_bench_marks_source_instance_for_ready_vfx() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.bench.clear()
+	player.deck.clear()
+	var selected_a := CardInstance.create(_make_basic_pokemon_data("Lightning A", "L"), 0)
+	var selected_b := CardInstance.create(_make_basic_pokemon_data("Lightning B", "L"), 0)
+	player.deck.append(selected_a)
+	player.deck.append(selected_b)
+	var ability := AbilitySearchPokemonToBench.new("L", 2)
+
+	ability.execute_ability(player.active_pokemon, 0, [{
+		"bench_pokemon": [selected_a, selected_b],
+	}], state)
+
+	var source_instance_id := int(player.active_pokemon.get_top_card().instance_id)
+	var used_marked := player.active_pokemon.effects.any(func(eff: Dictionary) -> bool:
+		return str(eff.get("type", "")) == "ability_search_pokemon_to_bench_used" and int(eff.get("source_instance_id", -1)) == source_instance_id
+	)
+	var first_summoned_marked := player.bench[0].effects.any(func(eff: Dictionary) -> bool:
+		return str(eff.get("type", "")) == "ability_search_pokemon_to_bench_summoned" and int(eff.get("source_instance_id", -1)) == source_instance_id
+	)
+	var second_summoned_marked := player.bench[1].effects.any(func(eff: Dictionary) -> bool:
+		return str(eff.get("type", "")) == "ability_search_pokemon_to_bench_summoned" and int(eff.get("source_instance_id", -1)) == source_instance_id
+	)
+
+	return run_checks([
+		assert_true(used_marked, "Search-to-bench ability should record the source Pokemon instance that used it"),
+		assert_true(first_summoned_marked, "First summoned Pokemon should record the source ability instance"),
+		assert_true(second_summoned_marked, "Second summoned Pokemon should record the source ability instance"),
+	])
+
+
 func test_quick_charge_searches_lightning_energy_from_deck_to_self() -> String:
 	var state := _make_state()
 	var player: PlayerState = state.players[0]
@@ -741,6 +774,63 @@ func test_moonlight_shuriken_discards_two_attached_energy() -> String:
 	return run_checks([
 		assert_eq(attacker.attached_energy.size(), 0, "月光手里剑结算后应弃掉攻击者身上的2个能量"),
 		assert_eq(state.players[0].discard_pile.size(), 2, "被弃置的能量应进入弃牌区"),
+	])
+
+
+func test_iron_crown_twin_blade_selects_any_two_opponent_pokemon() -> String:
+	var processor := EffectProcessor.new()
+	var state := _make_state()
+	state.current_player_index = 0
+	var player: PlayerState = state.players[0]
+	var opponent: PlayerState = state.players[1]
+	opponent.bench.clear()
+
+	var iron_crown_cd := _make_basic_pokemon_data("铁头壳ex", "P", 220, "Basic", "ex", "9f00ff54c265aa486652154a5e976c67")
+	iron_crown_cd.attacks = [{
+		"name": "双刃",
+		"cost": "PCC",
+		"damage": "",
+		"text": "给对手的2只宝可梦，各造成50伤害。",
+		"is_vstar_power": false,
+	}]
+	var attacker := PokemonSlot.new()
+	attacker.pokemon_stack.append(CardInstance.create(iron_crown_cd, 0))
+	player.active_pokemon = attacker
+
+	var bench_a := PokemonSlot.new()
+	bench_a.pokemon_stack.append(CardInstance.create(_make_basic_pokemon_data("不选择的备战宝可梦", "C", 100), 1))
+	var bench_b := PokemonSlot.new()
+	bench_b.pokemon_stack.append(CardInstance.create(_make_basic_pokemon_data("选择的备战宝可梦", "C", 100), 1))
+	opponent.bench.append_array([bench_a, bench_b])
+
+	processor.register_pokemon_card(iron_crown_cd)
+	var effects: Array[BaseEffect] = processor.get_attack_effects_for_slot(attacker, 0)
+	var has_select_two_effect := false
+	var has_auto_bench_snipe_effect := false
+	var target_step: Dictionary = {}
+	for effect: BaseEffect in effects:
+		has_select_two_effect = has_select_two_effect or effect is AttackMoonlightShuriken
+		has_auto_bench_snipe_effect = has_auto_bench_snipe_effect or effect is AttackBenchSnipe
+		for step: Dictionary in effect.get_attack_interaction_steps(attacker.get_top_card(), iron_crown_cd.attacks[0], state):
+			if str(step.get("id", "")) == "moonlight_shuriken_targets":
+				target_step = step
+
+	processor.execute_attack_effect(attacker, 0, opponent.active_pokemon, state, [{
+		"moonlight_shuriken_targets": [opponent.active_pokemon, bench_b],
+	}])
+
+	return run_checks([
+		assert_true(has_select_two_effect, "铁头壳ex的双刃应注册为可自选对手2只宝可梦的效果"),
+		assert_false(has_auto_bench_snipe_effect, "铁头壳ex的双刃不应自动狙击备战区且不应自伤"),
+		assert_false(target_step.is_empty(), "双刃应提供选择对手宝可梦的交互步骤"),
+		assert_eq(int(target_step.get("min_select", -1)), 2, "双刃应强制选择2只对手宝可梦"),
+		assert_eq(int(target_step.get("max_select", -1)), 2, "双刃应最多选择2只对手宝可梦"),
+		assert_true(opponent.active_pokemon in target_step.get("items", []), "双刃可选择对手战斗宝可梦"),
+		assert_true(bench_b in target_step.get("items", []), "双刃可选择对手备战宝可梦"),
+		assert_eq(opponent.active_pokemon.damage_counters, 50, "被选择的对手战斗宝可梦应受到50伤害"),
+		assert_eq(bench_b.damage_counters, 50, "被选择的对手备战宝可梦应受到50伤害"),
+		assert_eq(bench_a.damage_counters, 0, "未选择的备战宝可梦不应受到伤害"),
+		assert_eq(attacker.damage_counters, 0, "铁头壳ex使用双刃不应对自己造成反伤"),
 	])
 
 
@@ -993,6 +1083,7 @@ func test_rare_candy_evolves_basic_into_stage_two() -> String:
 		assert_true(can_execute, "满足条件时应可使用神奇糖果"),
 		assert_eq(player.active_pokemon.pokemon_stack.size(), 2, "应直接完成跳阶进化"),
 		assert_eq(player.active_pokemon.get_pokemon_name(), "喷火龙ex", "顶层应变为2阶进化宝可梦"),
+		assert_true(player.active_pokemon.rare_candy_evolved_this_turn(state.turn_number), "Rare Candy execution should mark the evolved top card for same-turn ready VFX"),
 		assert_eq(evolve_steps.size(), 1, "神奇糖果进化到喷火龙ex后应立即能生成烈炎支配交互步骤"),
 		assert_eq(str(evolve_steps[0].get("ui_mode", "")), "card_assignment", "进化后的烈炎支配应走统一的分配交互"),
 	])

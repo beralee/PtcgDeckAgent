@@ -15,8 +15,8 @@ func can_headless_execute(card: CardInstance, state: GameState) -> bool:
 	return not _get_unique_basic_energy(player.deck).is_empty()
 
 
-func get_preview_interaction_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
-	return []
+func get_preview_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
+	return get_interaction_steps(card, state)
 
 
 func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
@@ -24,7 +24,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	var energy_items := _get_unique_basic_energy(player.deck)
 	if energy_items.is_empty():
 		return [build_empty_search_resolution_step("牌库里没有基本能量。你仍可以使用赤松。")]
-	var steps: Array[Dictionary] = [build_full_library_search_step(
+	var hand_step := build_full_library_search_step(
 		HAND_STEP_ID,
 		"选择1张基本能量加入手牌",
 		player.deck,
@@ -33,35 +33,23 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		0,
 		1,
 		{"allow_cancel": true}
-	)]
+	)
 	if not player.get_all_pokemon().is_empty() and energy_items.size() > 1:
-		var target_items: Array = player.get_all_pokemon()
-		var target_labels: Array[String] = []
-		for slot: PokemonSlot in target_items:
-			target_labels.append(H.slot_label(slot, state))
-		var energy_labels: Array[String] = []
-		for energy_card: CardInstance in energy_items:
-			energy_labels.append(energy_card.card_data.name)
-		steps.append(build_full_library_card_assignment_step(
-			ATTACH_STEP_ID,
-			"可再选择1张不同属性基本能量附着于自己的宝可梦",
-			player.deck,
-			energy_items,
-			energy_labels,
-			target_items,
-			target_labels,
-			0,
-			1,
-			VISIBLE_SCOPE_OWN_FULL_DECK,
-			true
-		))
-	return steps
+		hand_step["requires_followup_interaction"] = true
+	return [hand_step]
 
 
 func get_followup_interaction_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
-	if not should_preview_empty_search_deck(resolved_context):
+	if should_preview_empty_search_deck(resolved_context):
+		return [build_readonly_deck_preview_step("%s：查看剩余牌库" % card.card_data.name, state.players[card.owner_index].deck)]
+	var player: PlayerState = state.players[card.owner_index]
+	var hand_energy: CardInstance = _resolve_hand_energy(player, resolved_context)
+	if hand_energy == null or player.get_all_pokemon().is_empty():
 		return []
-	return [build_readonly_deck_preview_step("%s：查看剩余牌库" % card.card_data.name, state.players[card.owner_index].deck)]
+	var energy_items := _get_unique_basic_energy_excluding_type(player.deck, _energy_type(hand_energy))
+	if energy_items.is_empty():
+		return []
+	return [_build_attachment_step(player, state, energy_items)]
 
 
 func execute(card: CardInstance, targets: Array, state: GameState) -> void:
@@ -130,6 +118,29 @@ func _build_fallback(player: PlayerState) -> Dictionary:
 	return result
 
 
+func _build_attachment_step(player: PlayerState, state: GameState, energy_items: Array) -> Dictionary:
+	var target_items: Array = player.get_all_pokemon()
+	var target_labels: Array[String] = []
+	for slot: PokemonSlot in target_items:
+		target_labels.append(H.slot_label(slot, state))
+	var energy_labels: Array[String] = []
+	for energy_card: CardInstance in energy_items:
+		energy_labels.append(energy_card.card_data.name)
+	return build_full_library_card_assignment_step(
+		ATTACH_STEP_ID,
+		"可再选择1张不同属性基本能量附着于自己的宝可梦",
+		player.deck,
+		energy_items,
+		energy_labels,
+		target_items,
+		target_labels,
+		0,
+		1,
+		VISIBLE_SCOPE_OWN_FULL_DECK,
+		true
+	)
+
+
 func _get_unique_basic_energy(cards: Array[CardInstance]) -> Array:
 	var result: Array = []
 	var seen_types: Dictionary = {}
@@ -138,6 +149,20 @@ func _get_unique_basic_energy(cards: Array[CardInstance]) -> Array:
 			continue
 		var energy_type := _energy_type(deck_card)
 		if energy_type == "" or seen_types.has(energy_type):
+			continue
+		seen_types[energy_type] = true
+		result.append(deck_card)
+	return result
+
+
+func _get_unique_basic_energy_excluding_type(cards: Array[CardInstance], excluded_type: String) -> Array:
+	var result: Array = []
+	var seen_types: Dictionary = {}
+	for deck_card: CardInstance in cards:
+		if not _is_basic_energy(deck_card):
+			continue
+		var energy_type := _energy_type(deck_card)
+		if energy_type == "" or energy_type == excluded_type or seen_types.has(energy_type):
 			continue
 		seen_types[energy_type] = true
 		result.append(deck_card)

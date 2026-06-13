@@ -1,0 +1,262 @@
+{
+  "target": "creature",
+  "mode": "charge",
+  "prompt": "Body-first Miraidon ex generator-line ready animation; electric dragon body is the primary subject in every frame with attached cyan route sparks.",
+  "role": "",
+  "input": "assets\\textures\\vfx\\ready_miraidon_generator_line\\raw-sheet.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 1620,
+  "rows": 2,
+  "cols": 3,
+  "cell_size": 256,
+  "fit_scale": 0.8,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "center",
+  "shared_scale": true,
+  "component_mode": "largest",
+  "component_padding": 8,
+  "min_component_area": 32,
+  "edge_touch_margin": 0,
+  "frame_labels": [
+    "ready-1",
+    "ready-2",
+    "ready-3",
+    "ready-4",
+    "ready-5",
+    "ready-6"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 8,
+      "selected_component_area": 46031,
+      "selected_component_bbox": [
+        89,
+        110,
+        426,
+        429
+      ],
+      "crop_bbox": [
+        81,
+        102,
+        434,
+        437
+      ],
+      "edge_touch": false,
+      "output_size": [
+        165,
+        157
+      ],
+      "paste_position": [
+        45,
+        49
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        512,
+        0,
+        1024,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 9,
+      "selected_component_area": 47070,
+      "selected_component_bbox": [
+        49,
+        110,
+        381,
+        427
+      ],
+      "crop_bbox": [
+        41,
+        102,
+        389,
+        435
+      ],
+      "edge_touch": false,
+      "output_size": [
+        163,
+        156
+      ],
+      "paste_position": [
+        46,
+        50
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        1024,
+        0,
+        1536,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 2,
+      "selected_component_area": 49775,
+      "selected_component_bbox": [
+        0,
+        112,
+        342,
+        430
+      ],
+      "crop_bbox": [
+        0,
+        104,
+        350,
+        438
+      ],
+      "edge_touch": true,
+      "output_size": [
+        164,
+        156
+      ],
+      "paste_position": [
+        46,
+        50
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        512,
+        512,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 6,
+      "selected_component_area": 53513,
+      "selected_component_bbox": [
+        75,
+        2,
+        433,
+        342
+      ],
+      "crop_bbox": [
+        67,
+        0,
+        441,
+        350
+      ],
+      "edge_touch": true,
+      "output_size": [
+        175,
+        164
+      ],
+      "paste_position": [
+        40,
+        46
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        512,
+        512,
+        1024,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 3,
+      "selected_component_area": 76994,
+      "selected_component_bbox": [
+        23,
+        0,
+        443,
+        380
+      ],
+      "crop_bbox": [
+        15,
+        0,
+        451,
+        388
+      ],
+      "edge_touch": true,
+      "output_size": [
+        204,
+        182
+      ],
+      "paste_position": [
+        26,
+        37
+      ]
+    },
+    {
+      "grid": [
+        1,
+        2
+      ],
+      "source_box": [
+        1024,
+        512,
+        1536,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 3,
+      "selected_component_area": 50469,
+      "selected_component_bbox": [
+        13,
+        20,
+        371,
+        334
+      ],
+      "crop_bbox": [
+        5,
+        12,
+        379,
+        342
+      ],
+      "edge_touch": false,
+      "output_size": [
+        175,
+        155
+      ],
+      "paste_position": [
+        40,
+        50
+      ]
+    }
+  ],
+  "edge_touch_frames": [
+    [
+      0,
+      2
+    ],
+    [
+      1,
+      0
+    ],
+    [
+      1,
+      1
+    ]
+  ]
+}

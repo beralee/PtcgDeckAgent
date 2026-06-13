@@ -9,12 +9,18 @@ const AIFixedDeckOrderRegistryScript = preload("res://scripts/ai/AIFixedDeckOrde
 const MIRAIDON_DECK_ID := 575720
 const CHARIZARD_DECK_ID := 575716
 const LUGIA_DECK_ID := 575657
+const LUGIA_175_DECK_ID := 609431
+const GARDEVOIR_175_DECK_ID := 610080
+const PURE_DRAGAPULT_175_DECK_ID := 1750002
 const ARCEUS_DECK_ID := 569061
 const DRAGAPULT_DUSKNOIR_DECK_ID := 575723
 const DRAGAPULT_CHARIZARD_DECK_ID := 579502
 
 const CHARIZARD_FIXED_ORDER_PATH := "res://data/bundled_user/ai_fixed_deck_orders/575716.json"
 const LUGIA_FIXED_ORDER_PATH := "res://data/bundled_user/ai_fixed_deck_orders/575657.json"
+const LUGIA_175_FIXED_ORDER_PATH := "res://data/bundled_user/ai_fixed_deck_orders/609431.json"
+const GARDEVOIR_175_FIXED_ORDER_PATH := "res://data/bundled_user/ai_fixed_deck_orders/610080.json"
+const PURE_DRAGAPULT_175_FIXED_ORDER_PATH := "res://data/bundled_user/ai_fixed_deck_orders/1750002.json"
 const ARCEUS_FIXED_ORDER_PATH := "res://data/bundled_user/ai_fixed_deck_orders/569061.json"
 const DRAGAPULT_DUSKNOIR_FIXED_ORDER_PATH := "res://data/bundled_user/ai_fixed_deck_orders/575723.json"
 const DRAGAPULT_CHARIZARD_FIXED_ORDER_PATH := "res://data/bundled_user/ai_fixed_deck_orders/579502.json"
@@ -243,6 +249,12 @@ func _slot_name(slot: PokemonSlot) -> String:
 	return str(cd.name)
 
 
+func _slot_effect_id(slot: PokemonSlot) -> String:
+	if slot == null or slot.get_top_card() == null or slot.get_top_card().card_data == null:
+		return ""
+	return str(slot.get_top_card().card_data.effect_id)
+
+
 func _find_slot_by_name(player: PlayerState, target_name: String) -> PokemonSlot:
 	if player.active_pokemon != null and _slot_name(player.active_pokemon) == target_name:
 		return player.active_pokemon
@@ -329,6 +341,16 @@ func _describe_hand(player: PlayerState) -> String:
 	return "[" + ", ".join(names) + "]"
 
 
+func _hand_count_name(player: PlayerState, target_name: String) -> int:
+	if player == null:
+		return 0
+	var count := 0
+	for card: CardInstance in player.hand:
+		if _card_instance_name(card) == target_name:
+			count += 1
+	return count
+
+
 func _load_fixed_order(path: String) -> Array[Dictionary]:
 	var registry := AIFixedDeckOrderRegistryScript.new()
 	return registry.load_fixed_order_from_path(path)
@@ -348,6 +370,87 @@ func _append_fixed_order_checks(
 		var wanted: Dictionary = expected[i]
 		checks.append(assert_eq(str(actual.get("set_code", "")), str(wanted.get("set_code", "")), "%s opening card %d set_code should match" % [label, i + 1]))
 		checks.append(assert_eq(str(actual.get("card_index", "")), str(wanted.get("card_index", "")), "%s opening card %d card_index should match" % [label, i + 1]))
+
+
+func _fixed_order_entry_key(entry: Dictionary) -> String:
+	return "%s_%s" % [str(entry.get("set_code", "")), str(entry.get("card_index", ""))]
+
+
+func _v175_lugia_prize_window_checks(fixed_order: Array[Dictionary]) -> Array[String]:
+	var checks: Array[String] = []
+	for opponent_mulligan_draws: int in 3:
+		var cursor := 0
+		var hand: Array[String] = []
+		for i: int in 7:
+			hand.append(_fixed_order_entry_key(fixed_order[cursor]))
+			cursor += 1
+		for i: int in opponent_mulligan_draws:
+			hand.append(_fixed_order_entry_key(fixed_order[cursor]))
+			cursor += 1
+		var prizes: Array[String] = []
+		for i: int in 6:
+			prizes.append(_fixed_order_entry_key(fixed_order[cursor]))
+			cursor += 1
+		var bridge: Array[String] = []
+		for i: int in 3:
+			if cursor + i < fixed_order.size():
+				bridge.append(_fixed_order_entry_key(fixed_order[cursor + i]))
+		var reachable := hand + bridge
+		checks.append(assert_true(
+			"CSV7C_171" in reachable,
+			"17.5 Lugia should keep a Cinccino reachable with %d opponent mulligan draw(s); prizes=%s bridge=%s" % [opponent_mulligan_draws, str(prizes), str(bridge)]
+		))
+		checks.append(assert_true(
+			"CS6aC_131" in reachable,
+			"17.5 Lugia should keep Gift Energy reachable with %d opponent mulligan draw(s); prizes=%s bridge=%s" % [opponent_mulligan_draws, str(prizes), str(bridge)]
+		))
+		checks.append(assert_true(
+			"CSV4C_129" in reachable,
+			"17.5 Lugia should keep Jet Energy reachable with %d opponent mulligan draw(s); prizes=%s bridge=%s" % [opponent_mulligan_draws, str(prizes), str(bridge)]
+		))
+	return checks
+
+
+func _v175_gardevoir_prize_window_checks(fixed_order: Array[Dictionary]) -> Array[String]:
+	var checks: Array[String] = []
+	if fixed_order.size() < 16:
+		checks.append(assert_true(false, "17.5 Gardevoir fixed order should contain enough cards for opening, prizes, and bridge draws"))
+		return checks
+	for opponent_mulligan_draws: int in 3:
+		var cursor := 0
+		var hand: Array[String] = []
+		for i: int in 7:
+			hand.append(_fixed_order_entry_key(fixed_order[cursor]))
+			cursor += 1
+		for i: int in opponent_mulligan_draws:
+			hand.append(_fixed_order_entry_key(fixed_order[cursor]))
+			cursor += 1
+		var prizes: Array[String] = []
+		for i: int in 6:
+			prizes.append(_fixed_order_entry_key(fixed_order[cursor]))
+			cursor += 1
+		var bridge: Array[String] = []
+		for i: int in 3:
+			if cursor + i < fixed_order.size():
+				bridge.append(_fixed_order_entry_key(fixed_order[cursor + i]))
+		var reachable := hand + bridge
+		checks.append(assert_true(
+			"CSV2C_055" in reachable,
+			"17.5 Gardevoir should keep Gardevoir ex reachable with %d opponent mulligan draw(s); prizes=%s bridge=%s" % [opponent_mulligan_draws, str(prizes), str(bridge)]
+		))
+		checks.append(assert_true(
+			"CS6.5C_030" in reachable,
+			"17.5 Gardevoir should keep Kirlia reachable with %d opponent mulligan draw(s); prizes=%s bridge=%s" % [opponent_mulligan_draws, str(prizes), str(bridge)]
+		))
+		checks.append(assert_true(
+			not ("CSV1C_112" in prizes),
+			"17.5 Gardevoir should not prize Ultra Ball in the early bridge window with %d opponent mulligan draw(s); prizes=%s bridge=%s" % [opponent_mulligan_draws, str(prizes), str(bridge)]
+		))
+		checks.append(assert_true(
+			not ("CSV6C_065" in prizes),
+			"17.5 Gardevoir should not prize Scream Tail in the early bridge window with %d opponent mulligan draw(s); prizes=%s bridge=%s" % [opponent_mulligan_draws, str(prizes), str(bridge)]
+		))
+	return checks
 
 
 func _miraidon_low_pressure_fixed_order() -> Array[Dictionary]:
@@ -399,7 +502,7 @@ func test_dragapult_strong_fixed_order_files_match_requested_opening_hands() -> 
 		{"set_code": "CSVE1C", "card_index": "PSY"}, # Psychic Energy
 		{"set_code": "CSV1C", "card_index": "123"}, # Arven
 		{"set_code": "CSV3C", "card_index": "123"}, # Iono
-		{"set_code": "CSV5C", "card_index": "119"}, # Technical Machine: Evolution
+		{"set_code": "CSV1C", "card_index": "112"}, # Ultra Ball
 		{"set_code": "CS5bC", "card_index": "052"}, # Manaphy
 		{"set_code": "CSV6C", "card_index": "114"}, # Counter Catcher
 		{"set_code": "CSV7C", "card_index": "185"}, # Rescue Board
@@ -428,6 +531,250 @@ func test_dragapult_strong_fixed_order_files_match_requested_opening_hands() -> 
 		{"set_code": "CSVH1C", "card_index": "045"}, # Rare Candy
 	])
 	return run_checks(checks)
+
+
+func test_v175_lugia_strong_fixed_order_file_matches_requested_opening_line() -> String:
+	var registry := AIFixedDeckOrderRegistryScript.new()
+	var checks: Array[String] = [
+		assert_eq(
+			registry.get_fixed_order_path(LUGIA_175_DECK_ID),
+			LUGIA_175_FIXED_ORDER_PATH,
+			"17.5 Lugia Archeops strong AI should bind a fixed opening path"
+		),
+	]
+	_append_fixed_order_checks(checks, "17.5 Lugia Archeops", LUGIA_175_FIXED_ORDER_PATH, [
+		{"set_code": "CS6aC", "card_index": "102"}, # Lugia V
+		{"set_code": "CSV7C", "card_index": "170"}, # Minccino
+		{"set_code": "CS5DC", "card_index": "111"}, # Wyrdeer V
+		{"set_code": "CS6aC", "card_index": "113"}, # Archeops
+		{"set_code": "CS6aC", "card_index": "113"}, # Archeops
+		{"set_code": "CSV1C", "card_index": "112"}, # Ultra Ball
+		{"set_code": "CS6aC", "card_index": "103"}, # Lugia VSTAR
+		{"set_code": "CSV7C", "card_index": "171"}, # Cinccino
+		{"set_code": "CS6aC", "card_index": "131"}, # Gift Energy
+		{"set_code": "CSV4C", "card_index": "129"}, # Jet Energy
+		{"set_code": "CSNC", "card_index": "024"}, # Double Turbo Energy
+		{"set_code": "CSV8C", "card_index": "207"}, # Legacy Energy
+		{"set_code": "CSVH1aC", "card_index": "023"}, # Boss's Orders
+		{"set_code": "CSV7C", "card_index": "171"}, # Cinccino
+		{"set_code": "CS6aC", "card_index": "131"}, # Gift Energy
+		{"set_code": "CSV4C", "card_index": "129"}, # Jet Energy
+		{"set_code": "CS6aC", "card_index": "102"}, # Lugia V
+		{"set_code": "CSV6C", "card_index": "051"}, # Iron Hands ex
+		{"set_code": "CSV8C", "card_index": "172"}, # Bloodmoon Ursaluna ex
+		{"set_code": "CSV9.5C", "card_index": "149"}, # Regigigas
+	])
+	checks.append_array(_v175_lugia_prize_window_checks(_load_fixed_order(LUGIA_175_FIXED_ORDER_PATH)))
+	return run_checks(checks)
+
+
+func test_v175_pure_dragapult_strong_fixed_order_file_matches_budew_opening_line() -> String:
+	var registry := AIFixedDeckOrderRegistryScript.new()
+	var checks: Array[String] = [
+		assert_eq(
+			registry.get_fixed_order_path(PURE_DRAGAPULT_175_DECK_ID),
+			PURE_DRAGAPULT_175_FIXED_ORDER_PATH,
+			"17.5 Pure Dragapult strong AI should bind a fixed opening path"
+		),
+	]
+	_append_fixed_order_checks(checks, "17.5 Pure Dragapult", PURE_DRAGAPULT_175_FIXED_ORDER_PATH, [
+		{"set_code": "CSV9.5C", "card_index": "004"}, # Budew
+		{"set_code": "CSV8C", "card_index": "157"}, # Dreepy
+		{"set_code": "CSV7C", "card_index": "177"}, # Buddy-Buddy Poffin
+		{"set_code": "CSVE1C", "card_index": "FIR"}, # Fire Energy
+		{"set_code": "CSVE1C", "card_index": "PSY"}, # Psychic Energy
+		{"set_code": "CSV1C", "card_index": "123"}, # Arven
+		{"set_code": "CS6.5C", "card_index": "070"}, # Lance
+		{"set_code": "CSV3C", "card_index": "123"}, # Iono
+		{"set_code": "CSV7C", "card_index": "177"}, # Buddy-Buddy Poffin
+		{"set_code": "CSV8C", "card_index": "081"}, # Duskull
+		{"set_code": "CSV1C", "card_index": "112"}, # Ultra Ball
+		{"set_code": "CS6.5C", "card_index": "070"}, # Lance
+		{"set_code": "CS5bC", "card_index": "128"}, # Temple of Sinnoh
+		{"set_code": "CSV8C", "card_index": "158"}, # Drakloak
+		{"set_code": "CSV8C", "card_index": "159"}, # Dragapult ex
+		{"set_code": "CSV8C", "card_index": "186"}, # Sparkling Crystal
+		{"set_code": "CSVH1C", "card_index": "045"}, # Rare Candy
+		{"set_code": "CSV6C", "card_index": "115"}, # Earthen Vessel
+		{"set_code": "CSV1C", "card_index": "113"}, # Switch
+	])
+	return run_checks(checks)
+
+
+func test_v175_gardevoir_strong_fixed_order_file_matches_budew_shell_line() -> String:
+	var registry := AIFixedDeckOrderRegistryScript.new()
+	var checks: Array[String] = [
+		assert_eq(
+			registry.get_fixed_order_path(GARDEVOIR_175_DECK_ID),
+			GARDEVOIR_175_FIXED_ORDER_PATH,
+			"17.5 Gardevoir strong AI should bind a fixed opening path"
+		),
+	]
+	_append_fixed_order_checks(checks, "17.5 Gardevoir", GARDEVOIR_175_FIXED_ORDER_PATH, [
+		{"set_code": "CSV9.5C", "card_index": "004"}, # Budew
+		{"set_code": "CS5aC", "card_index": "043"}, # Ralts
+		{"set_code": "CS5aC", "card_index": "043"}, # Ralts
+		{"set_code": "CSV6C", "card_index": "065"}, # Scream Tail
+		{"set_code": "CSVE1C", "card_index": "PSY"}, # Psychic Energy
+		{"set_code": "CSV1C", "card_index": "123"}, # Arven
+		{"set_code": "CSVE1C", "card_index": "PSY"}, # Psychic Energy
+		{"set_code": "CS5bC", "card_index": "052"}, # Manaphy
+		{"set_code": "CSV6C", "card_index": "114"}, # Counter Catcher
+		{"set_code": "CSV3C", "card_index": "123"}, # Iono
+		{"set_code": "CSV6C", "card_index": "125"}, # Professor Turo's Scenario
+		{"set_code": "CSV1C", "card_index": "109"}, # Super Rod
+		{"set_code": "CSVE1C", "card_index": "DAR"}, # Darkness Energy
+		{"set_code": "CSV6C", "card_index": "115"}, # Earthen Vessel
+		{"set_code": "CS6.5C", "card_index": "030"}, # Kirlia
+		{"set_code": "CSV2C", "card_index": "055"}, # Gardevoir ex
+		{"set_code": "CSV1C", "card_index": "112"}, # Ultra Ball
+		{"set_code": "CS6.5C", "card_index": "030"}, # Kirlia
+		{"set_code": "CSV1C", "card_index": "112"}, # Ultra Ball
+		{"set_code": "CS6.5C", "card_index": "033"}, # Cresselia
+		{"set_code": "CSV8C", "card_index": "094"}, # Munkidori
+		{"set_code": "CSVE1C", "card_index": "DAR"}, # Darkness Energy
+		{"set_code": "CSVE1C", "card_index": "PSY"}, # Psychic Energy
+		{"set_code": "CSV7C", "card_index": "177"}, # Buddy-Buddy Poffin
+		{"set_code": "CSV8C", "card_index": "183"}, # Night Stretcher
+		{"set_code": "CSV2C", "card_index": "055"}, # Gardevoir ex
+	])
+	checks.append_array(_v175_gardevoir_prize_window_checks(_load_fixed_order(GARDEVOIR_175_FIXED_ORDER_PATH)))
+	return run_checks(checks)
+
+
+func test_v175_gardevoir_strong_setup_uses_budew_active_with_double_ralts_bench() -> String:
+	var deck: DeckData = CardDatabase.get_deck(GARDEVOIR_175_DECK_ID)
+	if deck == null:
+		return assert_true(false, "17.5 Gardevoir deck should load")
+	var opponent_deck: DeckData = CardDatabase.get_deck(MIRAIDON_DECK_ID)
+	if opponent_deck == null:
+		return assert_true(false, "Opponent deck should load")
+	var fixed_order := _load_fixed_order(GARDEVOIR_175_FIXED_ORDER_PATH)
+	if fixed_order.is_empty():
+		return assert_true(false, "Fixed order should load: %s" % GARDEVOIR_175_FIXED_ORDER_PATH)
+
+	CardInstance.reset_id_counter()
+	var gsm := GameStateMachine.new()
+	gsm.set_deck_order_override(0, fixed_order)
+	gsm.set_deck_order_override(1, _miraidon_low_pressure_fixed_order())
+	var player_0_ai := _make_ai_for_deck(0, GARDEVOIR_175_DECK_ID)
+	var player_1_ai := _make_ai_for_deck(1, MIRAIDON_DECK_ID)
+	var bridge := HeadlessMatchBridgeScript.new()
+	bridge.bind(gsm)
+	bridge.set_ai_controllers(player_0_ai, player_1_ai)
+	gsm.start_game(deck, opponent_deck, 0)
+	bridge.bootstrap_pending_setup()
+
+	var steps := 0
+	var progressed := true
+	while gsm.game_state.phase == GameState.GamePhase.SETUP and steps < 40 and progressed:
+		progressed = false
+		if bridge.has_pending_prompt():
+			if bridge.can_resolve_pending_prompt():
+				progressed = bridge.resolve_pending_prompt()
+			else:
+				var owner: int = bridge.get_pending_prompt_owner()
+				if owner == 0:
+					progressed = player_0_ai.run_single_step(bridge, gsm)
+				elif owner == 1:
+					progressed = player_1_ai.run_single_step(bridge, gsm)
+		else:
+			bridge.bootstrap_pending_setup()
+			progressed = bridge.has_pending_prompt()
+		steps += 1
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var active_effect_id := _slot_effect_id(player.active_pokemon)
+	var ralts_count := 0
+	if player.active_pokemon != null and _slot_name(player.active_pokemon) == "Ralts":
+		ralts_count += 1
+	var scream_tail_slot: PokemonSlot = null
+	for slot: PokemonSlot in player.bench:
+		if slot != null and _slot_name(slot) == "Ralts":
+			ralts_count += 1
+		if slot != null and _slot_name(slot) == "Scream Tail":
+			scream_tail_slot = slot
+	var run_desc := "phase=%s steps=%d board=%s hand=%s pending=%s" % [
+		str(gsm.game_state.phase),
+		steps,
+		_describe_player_board(player),
+		_describe_hand(player),
+		str(bridge.get_pending_prompt_type()) if bridge.has_method("get_pending_prompt_type") else "",
+	]
+
+	if is_instance_valid(bridge):
+		bridge.free()
+
+	return run_checks([
+		assert_eq(gsm.game_state.phase, GameState.GamePhase.MAIN, "Headless setup should reach MAIN (%s)" % run_desc),
+		assert_eq(active_effect_id, "28505a8ad6e07e74382c1b5e09737932", "17.5 Gardevoir setup should open with Budew active (%s)" % run_desc),
+		assert_true(ralts_count >= 2, "17.5 Gardevoir setup should bench two Ralts behind Budew (%s)" % run_desc),
+		assert_not_null(scream_tail_slot, "17.5 Gardevoir setup should already bench Scream Tail as the post-shell conversion target (%s)" % run_desc),
+		assert_true(_hand_count_name(player, "Psychic Energy") >= 1, "17.5 Gardevoir setup hand should preserve Psychic Energy for Arven -> TM Evolution (%s)" % run_desc),
+		assert_true(_hand_count_name(player, "Arven") >= 1, "17.5 Gardevoir setup hand should preserve Arven for TM Evolution search (%s)" % run_desc),
+	])
+
+
+func test_v175_pure_dragapult_strong_setup_uses_bound_ai_budew_active() -> String:
+	var deck: DeckData = CardDatabase.get_deck(PURE_DRAGAPULT_175_DECK_ID)
+	if deck == null:
+		return assert_true(false, "17.5 Pure Dragapult deck should load")
+	var opponent_deck: DeckData = CardDatabase.get_deck(MIRAIDON_DECK_ID)
+	if opponent_deck == null:
+		return assert_true(false, "Opponent deck should load")
+	var fixed_order := _load_fixed_order(PURE_DRAGAPULT_175_FIXED_ORDER_PATH)
+	if fixed_order.is_empty():
+		return assert_true(false, "Fixed order should load: %s" % PURE_DRAGAPULT_175_FIXED_ORDER_PATH)
+
+	CardInstance.reset_id_counter()
+	var gsm := GameStateMachine.new()
+	gsm.set_deck_order_override(0, fixed_order)
+	gsm.set_deck_order_override(1, _miraidon_low_pressure_fixed_order())
+	var player_0_ai := _make_ai_for_deck(0, PURE_DRAGAPULT_175_DECK_ID)
+	var player_1_ai := _make_ai_for_deck(1, MIRAIDON_DECK_ID)
+	var bridge := HeadlessMatchBridgeScript.new()
+	bridge.bind(gsm)
+	bridge.set_ai_controllers(player_0_ai, player_1_ai)
+	gsm.start_game(deck, opponent_deck, 0)
+	bridge.bootstrap_pending_setup()
+
+	var steps := 0
+	var progressed := true
+	while gsm.game_state.phase == GameState.GamePhase.SETUP and steps < 40 and progressed:
+		progressed = false
+		if bridge.has_pending_prompt():
+			if bridge.can_resolve_pending_prompt():
+				progressed = bridge.resolve_pending_prompt()
+			else:
+				var owner: int = bridge.get_pending_prompt_owner()
+				if owner == 0:
+					progressed = player_0_ai.run_single_step(bridge, gsm)
+				elif owner == 1:
+					progressed = player_1_ai.run_single_step(bridge, gsm)
+		else:
+			bridge.bootstrap_pending_setup()
+			progressed = bridge.has_pending_prompt()
+		steps += 1
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var active_effect_id := _slot_effect_id(player.active_pokemon)
+	var dreepy_slot := _find_slot_by_name(player, "Dreepy")
+	var run_desc := "phase=%s steps=%d board=%s hand=%s pending=%s" % [
+		str(gsm.game_state.phase),
+		steps,
+		_describe_player_board(player),
+		_describe_hand(player),
+		str(bridge.get_pending_prompt_type()) if bridge.has_method("get_pending_prompt_type") else "",
+	]
+
+	if is_instance_valid(bridge):
+		bridge.free()
+
+	return run_checks([
+		assert_eq(gsm.game_state.phase, GameState.GamePhase.MAIN, "Headless setup should reach MAIN (%s)" % run_desc),
+		assert_eq(active_effect_id, "28505a8ad6e07e74382c1b5e09737932", "Bound 17.5 Pure Dragapult setup should open with Budew active (%s)" % run_desc),
+		assert_not_null(dreepy_slot, "Bound 17.5 Pure Dragapult setup should bench Dreepy behind Budew (%s)" % run_desc),
+	])
 
 
 func test_charizard_strong_fixed_order_hits_t2_charizard_and_pidgeot_board() -> String:
@@ -508,16 +855,23 @@ func test_charizard_strong_fixed_order_hits_t2_charizard_and_pidgeot_board() -> 
 	])
 
 
-func test_lugia_strong_fixed_order_hits_t2_lugia_vstar_and_double_archeops() -> String:
-	var lugia_deck: DeckData = CardDatabase.get_deck(LUGIA_DECK_ID)
+func _assert_lugia_fixed_order_hits_t2_lugia_vstar_and_double_archeops(
+	deck_id: int,
+	fixed_order_path: String,
+	label: String,
+	rng_seed: int,
+	protected_cards: Array[String],
+	required_board_names: Array[String] = []
+) -> String:
+	var lugia_deck: DeckData = CardDatabase.get_deck(deck_id)
 	if lugia_deck == null:
-		return assert_true(false, "Lugia deck should load")
+		return assert_true(false, "%s deck should load" % label)
 	var opponent_deck: DeckData = CardDatabase.get_deck(MIRAIDON_DECK_ID)
 	if opponent_deck == null:
 		return assert_true(false, "Opponent deck should load")
-	var fixed_order := _load_fixed_order(LUGIA_FIXED_ORDER_PATH)
+	var fixed_order := _load_fixed_order(fixed_order_path)
 	if fixed_order.is_empty():
-		return assert_true(false, "Fixed order should load: %s" % LUGIA_FIXED_ORDER_PATH)
+		return assert_true(false, "Fixed order should load: %s" % fixed_order_path)
 
 	CardInstance.reset_id_counter()
 	var gsm := GameStateMachine.new()
@@ -526,22 +880,15 @@ func test_lugia_strong_fixed_order_hits_t2_lugia_vstar_and_double_archeops() -> 
 	if gsm.coin_flipper != null:
 		var rng: Variant = gsm.coin_flipper.get("_rng")
 		if rng is RandomNumberGenerator:
-			(rng as RandomNumberGenerator).seed = 303
+			(rng as RandomNumberGenerator).seed = rng_seed
 	gsm.start_game(lugia_deck, opponent_deck, 0)
-	_ensure_cards_not_prized(gsm.game_state.players[0], [
-		"Lugia V",
-		"Lugia VSTAR",
-		"Archeops",
-		"Ultra Ball",
-		"Double Turbo Energy",
-		"Minccino",
-	])
+	_ensure_cards_not_prized(gsm.game_state.players[0], protected_cards)
 
 	var bridge := HeadlessMatchBridgeScript.new()
 	bridge.bind(gsm)
 	bridge.bootstrap_pending_setup()
 
-	var player_0_ai := _make_ai_for_deck(0, LUGIA_DECK_ID)
+	var player_0_ai := _make_ai_for_deck(0, deck_id)
 	var player_1_ai := _make_ai_for_deck(1, MIRAIDON_DECK_ID)
 	var outcome := _run_until_turn_end(gsm, bridge, player_0_ai, player_1_ai, 3, 0)
 
@@ -571,18 +918,62 @@ func test_lugia_strong_fixed_order_hits_t2_lugia_vstar_and_double_archeops() -> 
 		trace_tail,
 		_describe_hand(player),
 	]
+	var required_board_checks: Array[String] = []
+	for required_name: String in required_board_names:
+		required_board_checks.append(assert_not_null(
+			_find_slot_by_name(player, required_name),
+			"%s strong opening should keep %s on board by first-player T2 (%s)" % [label, required_name, run_desc]
+		))
 
 	if is_instance_valid(bridge):
 		bridge.free()
 
-	return run_checks([
-		assert_true(bool(outcome.get("target_reached", false)), "Target turn should complete for Lugia strong fixed opening (%s)" % run_desc),
-		assert_eq(_slot_name(active_slot), "Lugia VSTAR", "Active should be Lugia VSTAR by first-player T2 (%s)" % run_desc),
-		assert_not_null(lugia_vstar_slot, "Board should contain Lugia VSTAR by first-player T2 (%s)" % run_desc),
-		assert_true(used_summoning_star, "First-player T2 should use Lugia VSTAR's Summoning Star (%s)" % run_desc),
-		assert_eq(archeops_count, 2, "Strong opening should bench exactly 2 Archeops by first-player T2 (%s)" % run_desc),
-		assert_true(active_slot != null and active_slot.attached_energy.size() >= 1, "Lugia VSTAR should already have at least one attached energy card when the engine comes online (%s)" % run_desc),
-	])
+	var checks: Array[String] = [
+		assert_true(bool(outcome.get("target_reached", false)), "Target turn should complete for %s strong fixed opening (%s)" % [label, run_desc]),
+		assert_eq(_slot_name(active_slot), "Lugia VSTAR", "Active should be Lugia VSTAR by first-player T2 for %s (%s)" % [label, run_desc]),
+		assert_not_null(lugia_vstar_slot, "Board should contain Lugia VSTAR by first-player T2 for %s (%s)" % [label, run_desc]),
+		assert_true(used_summoning_star, "First-player T2 should use Lugia VSTAR's Summoning Star for %s (%s)" % [label, run_desc]),
+		assert_eq(archeops_count, 2, "%s strong opening should bench exactly 2 Archeops by first-player T2 (%s)" % [label, run_desc]),
+		assert_true(active_slot != null and active_slot.attached_energy.size() >= 1, "Lugia VSTAR should already have at least one attached energy card when %s comes online (%s)" % [label, run_desc]),
+	]
+	checks.append_array(required_board_checks)
+	return run_checks(checks)
+
+
+func test_lugia_strong_fixed_order_hits_t2_lugia_vstar_and_double_archeops() -> String:
+	return _assert_lugia_fixed_order_hits_t2_lugia_vstar_and_double_archeops(
+		LUGIA_DECK_ID,
+		LUGIA_FIXED_ORDER_PATH,
+		"Lugia",
+		303,
+		[
+			"Lugia V",
+			"Lugia VSTAR",
+			"Archeops",
+			"Ultra Ball",
+			"Double Turbo Energy",
+			"Minccino",
+		]
+	)
+
+
+func test_v175_lugia_strong_fixed_order_hits_t2_lugia_vstar_and_double_archeops() -> String:
+	return _assert_lugia_fixed_order_hits_t2_lugia_vstar_and_double_archeops(
+		LUGIA_175_DECK_ID,
+		LUGIA_175_FIXED_ORDER_PATH,
+		"17.5 Lugia Archeops",
+		3175,
+		[
+			"Lugia V",
+			"Lugia VSTAR",
+			"Archeops",
+			"Ultra Ball",
+			"Double Turbo Energy",
+			"Minccino",
+			"Nest Ball",
+		],
+		["Wyrdeer V"]
+	)
 
 
 func test_arceus_strong_fixed_order_hits_t2_trinity_nova_distribution() -> String:

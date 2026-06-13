@@ -36,6 +36,7 @@ func configure_hand_drag_scroll(hand_scroll: ScrollContainer) -> void:
 	hand_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	hand_scroll.mouse_filter = Control.MOUSE_FILTER_STOP
 	hand_scroll.set_meta("hand_drag_scroll_enabled", true)
+	refresh_hand_drag_scroll_extents(hand_scroll)
 	hide_hand_scrollbar_for(hand_scroll)
 
 
@@ -377,6 +378,32 @@ func hand_drag_content_size_text(hand_scroll: ScrollContainer) -> String:
 	return "size=%s min=%s combined=%s children=%d" % [str(content.size), str(content.custom_minimum_size), str(content.get_combined_minimum_size()), content.get_child_count()]
 
 
+func refresh_hand_drag_scroll_extents(hand_scroll: ScrollContainer) -> void:
+	if hand_scroll == null:
+		return
+	var content := _hand_drag_content_control(hand_scroll)
+	if content == null:
+		return
+	var viewport_width := _hand_drag_viewport_width(hand_scroll)
+	if viewport_width <= 0.0:
+		return
+	var content_width := _hand_drag_content_width(content)
+	if content_width > viewport_width:
+		content.custom_minimum_size.x = maxf(content.custom_minimum_size.x, content_width)
+		if content.size.x < content_width:
+			content.size.x = content_width
+	var hbar := hand_scroll.get_h_scroll_bar()
+	if hbar == null:
+		return
+	var range_width := maxf(maxf(viewport_width, content_width), maxf(content.custom_minimum_size.x, content.size.x))
+	hbar.min_value = 0.0
+	hbar.max_value = range_width
+	hbar.page = viewport_width
+	var max_scroll := maxi(0, roundi(range_width - viewport_width))
+	if hand_scroll.scroll_horizontal > max_scroll:
+		hand_scroll.scroll_horizontal = max_scroll
+
+
 func hand_drag_event_global_position(event: InputEvent) -> Vector2:
 	if event is InputEventMouse:
 		return (event as InputEventMouse).global_position
@@ -428,6 +455,7 @@ func _handle_hand_drag_wheel(mouse_button: InputEventMouseButton, hand_scroll: S
 			direction = 1
 		_:
 			return false
+	refresh_hand_drag_scroll_extents(hand_scroll)
 	hand_scroll.scroll_horizontal = maxi(0, hand_scroll.scroll_horizontal + direction * HAND_DRAG_SCROLL_WHEEL_STEP)
 	return true
 
@@ -435,6 +463,7 @@ func _handle_hand_drag_wheel(mouse_button: InputEventMouseButton, hand_scroll: S
 func _begin_hand_drag_scroll(position: Vector2, hand_scroll: ScrollContainer, source: String = "") -> void:
 	if _as_bool(_get("_card_gallery_drag_active"), false):
 		cancel_card_gallery_drag_scroll("hand_drag_start")
+	refresh_hand_drag_scroll_extents(hand_scroll)
 	_set_scene_var("_hand_drag_active", true)
 	_set_scene_var("_hand_dragging", false)
 	_set_scene_var("_hand_drag_start_position", position)
@@ -444,6 +473,7 @@ func _begin_hand_drag_scroll(position: Vector2, hand_scroll: ScrollContainer, so
 
 
 func _update_hand_drag_scroll(position: Vector2, hand_scroll: ScrollContainer, source: String = "") -> bool:
+	refresh_hand_drag_scroll_extents(hand_scroll)
 	var start_position := _as_vector2(_get("_hand_drag_start_position"), Vector2.ZERO)
 	var delta := position - start_position
 	if not _as_bool(_get("_hand_dragging"), false) and absf(delta.x) < HAND_DRAG_SCROLL_THRESHOLD:
@@ -546,6 +576,35 @@ func _hand_scroll() -> ScrollContainer:
 	if hand_scroll != null:
 		return hand_scroll
 	return _find("HandScroll", true, false) as ScrollContainer
+
+
+func _hand_drag_content_control(hand_scroll: ScrollContainer) -> Control:
+	if hand_scroll == null or hand_scroll.get_child_count() <= 0:
+		return null
+	return hand_scroll.get_child(0) as Control
+
+
+func _hand_drag_viewport_width(hand_scroll: ScrollContainer) -> float:
+	if hand_scroll == null:
+		return 0.0
+	return maxf(hand_scroll.size.x, hand_scroll.custom_minimum_size.x)
+
+
+func _hand_drag_content_width(content: Control) -> float:
+	if content == null:
+		return 0.0
+	var width := maxf(content.size.x, content.get_combined_minimum_size().x)
+	var child_width := 0.0
+	var visible_child_count := 0
+	for child: Node in content.get_children():
+		var child_control := child as Control
+		if child_control == null or not child_control.visible:
+			continue
+		child_width += maxf(maxf(child_control.size.x, child_control.custom_minimum_size.x), child_control.get_combined_minimum_size().x)
+		visible_child_count += 1
+	if visible_child_count > 1:
+		child_width += float((content as BoxContainer).get_theme_constant("separation") if content is BoxContainer else 0) * float(visible_child_count - 1)
+	return maxf(width, child_width)
 
 
 func _accept_event() -> void:

@@ -56,7 +56,9 @@ func execute_attack(attacker: PokemonSlot, _defender: PokemonSlot, attack_index:
 		if target is PokemonSlot and target in opponent.bench:
 			if AbilityBenchImmune.prevents_opponent_attack_effect(target, attacker, state):
 				continue
-			(target as PokemonSlot).damage_counters += max(0, amount)
+			var target_slot := target as PokemonSlot
+			target_slot.damage_counters += max(0, amount)
+			_mark_attack_damage_counter_placement(target_slot, state)
 
 
 func _resolve_attack_index(card: CardInstance, attack: Dictionary) -> int:

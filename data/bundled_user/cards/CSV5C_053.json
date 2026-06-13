@@ -1,0 +1,46 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "ryoma uratsuka",
+	"attacks": [
+		{
+			"cost": "P",
+			"damage": "10×",
+			"is_vstar_power": false,
+			"name": "三连突刺",
+			"text": "抛掷3次硬币，造成正面次数×10伤害。"
+		}
+	],
+	"card_index": "053",
+	"card_index_en": "25",
+	"card_type": "Pokemon",
+	"description": "【超】 三连突刺 10×\n抛掷3次硬币，造成正面次数×10伤害。\n\n",
+	"effect_id": "2317be04afe1bd94899a29fe09b84d96",
+	"energy_provides": "",
+	"energy_type": "P",
+	"evolves_from": "",
+	"hp": 50,
+	"image_local_path": "user://cards/images/CSV5C/053.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV5C/053.png",
+	"is_tags": [
+		"Basic"
+	],
+	"label": "",
+	"mechanic": "",
+	"name": "天然雀",
+	"name_en": "Natu",
+	"rarity": "C",
+	"regulation_expanded": true,
+	"regulation_mark": "G",
+	"regulation_standard": true,
+	"release_date": "2025-09-12T00:00:00+08:00",
+	"resistance_energy": "F",
+	"resistance_value": "-30",
+	"retreat_cost": 1,
+	"set_code": "CSV5C",
+	"set_code_en": "PAF",
+	"stage": "Basic",
+	"weakness_energy": "D",
+	"weakness_value": "×2",
+	"yoren_code": "P177"
+}

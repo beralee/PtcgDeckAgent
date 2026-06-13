@@ -117,7 +117,7 @@ func play_attack_vfx(scene: Object, action: GameAction) -> void:
 			"impact_style": "damage",
 		})
 	var source_position: Vector2 = _resolve_attack_source_position(scene, action.player_index, profile, target_specs)
-	_play_sequence(scene, overlay, profile, source_position, target_specs)
+	_play_sequence(scene, overlay, profile, source_position, target_specs, "attack")
 
 
 func play_preview_vfx(scene: Object, profile: RefCounted) -> void:
@@ -133,7 +133,7 @@ func play_preview_vfx(scene: Object, profile: RefCounted) -> void:
 		"impact_style": "damage",
 	}]
 	var source_position: Vector2 = _resolve_attack_source_position(scene, int(scene.get("_view_player")), profile, target_specs)
-	_play_sequence(scene, overlay, profile, source_position, target_specs)
+	_play_sequence(scene, overlay, profile, source_position, target_specs, "preview")
 
 
 func play_counter_transfer_vfx(scene: Object, data: Dictionary) -> void:
@@ -158,10 +158,33 @@ func play_counter_transfer_vfx(scene: Object, data: Dictionary) -> void:
 		scene.set("_battle_attack_vfx_registry", registry)
 	var profile: RefCounted = registry.call("get_counter_transfer_profile")
 	var source_position: Vector2 = source_spec.get("position", Vector2.ZERO)
-	_play_sequence(scene, overlay, profile, source_position, [target_spec])
+	_play_sequence(scene, overlay, profile, source_position, [target_spec], "counter_transfer")
 	var sequence: Control = overlay.get_child(overlay.get_child_count() - 1) as Control if overlay.get_child_count() > 0 else null
 	if sequence != null:
 		_add_counter_transfer_accents(scene, sequence, overlay, source_spec, target_spec, data)
+
+
+func has_active_attack_vfx(scene: Object) -> bool:
+	return get_active_attack_vfx_count(scene) > 0
+
+
+func get_active_attack_vfx_count(scene: Object) -> int:
+	if scene == null:
+		return 0
+	var overlay: Control = scene.get("_attack_vfx_overlay") as Control
+	if overlay == null or not is_instance_valid(overlay):
+		return 0
+	var active_count := 0
+	for child: Node in overlay.get_children():
+		if child == null or not is_instance_valid(child) or child.is_queued_for_deletion():
+			continue
+		if not bool(child.get_meta("attack_vfx_sequence", str(child.name).begins_with(SEQUENCE_NAME))):
+			continue
+		if str(child.get_meta("attack_vfx_kind", "attack")) != "attack":
+			continue
+		if bool(child.get_meta("attack_vfx_animation_active", false)):
+			active_count += 1
+	return active_count
 
 
 func _play_sequence(
@@ -169,12 +192,16 @@ func _play_sequence(
 	overlay: Control,
 	profile: RefCounted,
 	source_position: Vector2,
-	target_specs: Array
+	target_specs: Array,
+	sequence_kind: String = "attack"
 ) -> void:
 	var sequence := Control.new()
 	sequence.name = SEQUENCE_NAME
 	sequence.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	sequence.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	sequence.set_meta("attack_vfx_sequence", true)
+	sequence.set_meta("attack_vfx_kind", sequence_kind)
+	sequence.set_meta("attack_vfx_animation_active", false)
 	sequence.set_meta("profile_id", str(profile.get("profile_id")) if profile != null else "")
 	sequence.set_meta("source_position", source_position)
 	sequence.set_meta("target_count", target_specs.size())
@@ -922,6 +949,7 @@ func _play_sequence_animation(
 	profile: RefCounted,
 	target_specs: Array
 ) -> void:
+	sequence.set_meta("attack_vfx_animation_active", true)
 	var cast_duration: float = float(profile.get("cast_duration")) if profile != null else 0.15
 	var travel_duration: float = float(profile.get("travel_duration")) if profile != null else 0.2
 	var impact_duration: float = float(profile.get("impact_duration")) if profile != null else 0.42
@@ -992,6 +1020,7 @@ func _play_sequence_animation(
 	cleanup_tween.tween_interval(cleanup_delay)
 	cleanup_tween.finished.connect(func() -> void:
 		if is_instance_valid(sequence):
+			sequence.set_meta("attack_vfx_animation_active", false)
 			sequence.queue_free()
 	)
 

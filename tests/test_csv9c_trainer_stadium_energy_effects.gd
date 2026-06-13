@@ -3,6 +3,7 @@ extends TestBase
 
 const Effect176 = preload("res://scripts/effects/trainer_effects/CSV9C176EnergySearchPro.gd")
 const Effect178 = preload("res://scripts/effects/trainer_effects/CSV9C178GlassTrumpet.gd")
+const Effect180 = preload("res://scripts/effects/trainer_effects/CSV9C180ScrambleSwitch.gd")
 const Effect181 = preload("res://scripts/effects/trainer_effects/CSV9C181TeraOrb.gd")
 const Effect183 = preload("res://scripts/effects/trainer_effects/CSV9C183PerfectMixer.gd")
 const Effect186 = preload("res://scripts/effects/trainer_effects/CSV9C186PreciousTrolley.gd")
@@ -17,6 +18,7 @@ const Effect207 = preload("res://scripts/effects/stadium_effects/CSV9C207AreaZer
 const Effect208 = preload("res://scripts/effects/energy_effects/CSV9C208RichEnergy.gd")
 const EffectPenny = preload("res://scripts/effects/trainer_effects/EffectPenny.gd")
 const AILegalActionBuilderScript = preload("res://scripts/ai/AILegalActionBuilder.gd")
+const HeadlessMatchBridgeScript = preload("res://scripts/ai/HeadlessMatchBridge.gd")
 const CSV9CHelpers = preload("res://scripts/effects/CSV9CHelpers.gd")
 
 
@@ -113,6 +115,7 @@ func test_csv9c_remote_trainer_stadium_energy_effect_ids_register() -> String:
 	var remote_fixed_ids := [
 		"bccf47163b5058460ec0a00ddb08d0bb",
 		"3f27c81408709eb3ad93c81b1fbb516f",
+		"1da701b43813d6ddb1238e54bce95811",
 		"93e504a96d675da78630b8a27ee6199b",
 		"e6d017f040bcadf0006755aa929897b7",
 		"a36548792cb4ff401f9b56e3ade897f6",
@@ -140,6 +143,115 @@ func test_csv9c_metadata_matches_tcg_missing_fields() -> String:
 		assert_eq(str(card190.get("set_code_en", "")), "LOT", "CSV9C_190 should carry the English set code"),
 		assert_eq(str(card190.get("card_index_en", "")), "170", "CSV9C_190 should carry the English card index"),
 		assert_eq(str(card190.get("name_en", "")), "Counter Gain", "CSV9C_190 should carry the English card name"),
+	])
+
+
+func test_csv9c_180_scramble_switch_followup_targets_selected_new_active() -> String:
+	var state := _make_state()
+	var player := state.players[0]
+	var old_active := player.active_pokemon
+	old_active.attached_energy = [
+		CardInstance.create(_energy("Fire Energy", "R"), 0),
+		CardInstance.create(_energy("Double Turbo Energy", "C", "Special Energy"), 0),
+	]
+	var new_active := _slot(_pokemon("New Active", "C"), 0)
+	var other_bench := _slot(_pokemon("Other Bench", "C"), 0)
+	player.bench = [new_active, other_bench]
+	var effect := Effect180.new()
+	var card := CardInstance.create(_trainer("Scramble Switch", "Item"), 0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
+	var followup: Array[Dictionary] = effect.get_followup_interaction_steps(card, state, {
+		Effect180.SWITCH_STEP_ID: [new_active],
+	})
+
+	return run_checks([
+		assert_true(effect.can_execute(card, state), "Scramble Switch should be usable with an active and at least one benched Pokemon"),
+		assert_eq(steps.size(), 1, "Initial interaction should only ask which benched Pokemon becomes Active"),
+		assert_eq(str(steps[0].get("id", "")), Effect180.SWITCH_STEP_ID, "Initial step id should identify the switch target"),
+		assert_true(bool(steps[0].get("requires_followup_interaction", false)), "Switch choice should inject the follow-up Energy transfer step"),
+		assert_eq(followup.size(), 1, "Selected switch target should create one optional Energy transfer follow-up"),
+		assert_eq(str(followup[0].get("id", "")), Effect180.ENERGY_STEP_ID, "Follow-up step should identify the Energy transfer"),
+		assert_eq(followup[0].get("source_items", []), old_active.attached_energy, "Only Energy on the old Active should be offered as sources"),
+		assert_eq(followup[0].get("target_items", []), [new_active], "Follow-up should only target the selected new Active Pokemon"),
+		assert_eq(int(followup[0].get("min_select", -1)), 0, "Energy transfer should allow choosing zero Energy"),
+		assert_eq(int(followup[0].get("max_select", -1)), 2, "Energy transfer should allow moving any number of attached Energy"),
+	])
+
+
+func test_csv9c_180_scramble_switch_switches_and_moves_only_selected_energy() -> String:
+	var state := _make_state()
+	var player := state.players[0]
+	var old_active := player.active_pokemon
+	var fire := CardInstance.create(_energy("Fire Energy", "R"), 0)
+	var special := CardInstance.create(_energy("Double Turbo Energy", "C", "Special Energy"), 0)
+	old_active.attached_energy = [fire, special]
+	var new_active := _slot(_pokemon("New Active", "C"), 0)
+	var other_bench := _slot(_pokemon("Other Bench", "C"), 0)
+	player.bench = [new_active, other_bench]
+	var effect := Effect180.new()
+	var card := CardInstance.create(_trainer("Scramble Switch", "Item"), 0)
+
+	effect.execute(card, [{
+		Effect180.SWITCH_STEP_ID: [new_active],
+		Effect180.ENERGY_STEP_ID: [
+			{"source": fire, "target": new_active},
+		],
+	}], state)
+
+	return run_checks([
+		assert_eq(player.active_pokemon, new_active, "Selected bench Pokemon should become the new Active"),
+		assert_true(old_active in player.bench, "Old Active should move to the bench"),
+		assert_true(fire in new_active.attached_energy, "Selected Energy should move to the new Active"),
+		assert_false(fire in old_active.attached_energy, "Moved Energy should leave the old Active"),
+		assert_true(special in old_active.attached_energy, "Unselected Energy should stay on the old Active"),
+		assert_false(special in new_active.attached_energy, "Unselected Energy should not move"),
+	])
+
+
+func test_csv9c_180_scramble_switch_allows_zero_energy_transfer() -> String:
+	var state := _make_state()
+	var player := state.players[0]
+	var old_active := player.active_pokemon
+	var fire := CardInstance.create(_energy("Fire Energy", "R"), 0)
+	old_active.attached_energy = [fire]
+	var new_active := _slot(_pokemon("New Active", "C"), 0)
+	player.bench = [new_active]
+	var effect := Effect180.new()
+	var card := CardInstance.create(_trainer("Scramble Switch", "Item"), 0)
+
+	effect.execute(card, [{
+		Effect180.SWITCH_STEP_ID: [new_active],
+		Effect180.ENERGY_STEP_ID: [],
+	}], state)
+
+	return run_checks([
+		assert_eq(player.active_pokemon, new_active, "Scramble Switch should still switch when zero Energy is chosen"),
+		assert_true(old_active in player.bench, "Old Active should move to the bench when zero Energy is chosen"),
+		assert_true(fire in old_active.attached_energy, "Explicit zero transfer should keep attached Energy on the old Active"),
+		assert_false(fire in new_active.attached_energy, "Explicit zero transfer should not move Energy"),
+	])
+
+
+func test_csv9c_180_scramble_switch_works_without_attached_energy() -> String:
+	var state := _make_state()
+	var player := state.players[0]
+	var new_active := _slot(_pokemon("New Active", "C"), 0)
+	player.bench = [new_active]
+	player.active_pokemon.attached_energy.clear()
+	var effect := Effect180.new()
+	var card := CardInstance.create(_trainer("Scramble Switch", "Item"), 0)
+	var steps := effect.get_interaction_steps(card, state)
+	var followup := effect.get_followup_interaction_steps(card, state, {
+		Effect180.SWITCH_STEP_ID: [new_active],
+	})
+
+	effect.execute(card, [{Effect180.SWITCH_STEP_ID: [new_active]}], state)
+
+	return run_checks([
+		assert_true(effect.can_execute(card, state), "Scramble Switch should not require attached Energy"),
+		assert_eq(steps.size(), 1, "No attached Energy should produce only the switch step"),
+		assert_eq(followup.size(), 0, "No attached Energy should not inject an Energy transfer follow-up"),
+		assert_eq(player.active_pokemon, new_active, "Scramble Switch should still switch without attached Energy"),
 	])
 
 
@@ -336,6 +448,10 @@ func test_csv9c_196_crispin_moves_one_energy_to_hand_and_attaches_a_different_ty
 	var effect := Effect196.new()
 	var card := CardInstance.create(_trainer("赤松", "Supporter"), 0)
 	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
+	var followup: Array[Dictionary] = effect.get_followup_interaction_steps(card, state, {
+		Effect196.HAND_STEP_ID: [fire],
+	})
+	var followup_step: Dictionary = followup[0] if not followup.is_empty() else {}
 
 	effect.execute(card, [{
 		Effect196.HAND_STEP_ID: [fire],
@@ -343,8 +459,12 @@ func test_csv9c_196_crispin_moves_one_energy_to_hand_and_attaches_a_different_ty
 	}], state)
 
 	return run_checks([
+		assert_eq(steps.size(), 1, "Crispin should ask for hand Energy first, then build attachment from that choice"),
+		assert_true(bool(steps[0].get("requires_followup_interaction", false)), "Crispin hand Energy step should declare the attachment follow-up"),
 		assert_eq(steps[0].get("card_indices", []), [0, -1, 1, -1], "Crispin hand step should show full deck and disable duplicate Energy types"),
-		assert_eq(steps[1].get("source_card_indices", []), [0, -1, 1, -1], "Crispin attachment step should also show full deck source metadata"),
+		assert_eq(followup.size(), 1, "Crispin should offer an attachment follow-up after a hand Energy is selected"),
+		assert_eq(followup_step.get("source_items", []), [water], "Crispin follow-up should only allow a different Energy type from the hand choice"),
+		assert_eq(followup_step.get("source_card_indices", []), [-1, -1, 0, -1], "Crispin attachment follow-up should show full deck and only enable different-type Energy"),
 		assert_true(fire in player.hand, "Chosen first Energy should move to hand"),
 		assert_true(water in player.active_pokemon.attached_energy, "Different-type remaining Energy should attach to own Pokemon"),
 		assert_true(fire_duplicate in player.deck, "Duplicate type should remain in deck"),
@@ -367,6 +487,48 @@ func test_csv9c_196_does_not_attach_without_hand_energy_choice() -> String:
 	return run_checks([
 		assert_true(water in player.deck, "Crispin should not attach an Energy when no Energy was chosen for hand"),
 		assert_false(water in player.active_pokemon.attached_energy, "Crispin attachment is illegal without the required hand Energy"),
+	])
+
+
+func test_csv9c_196_crispin_no_attachment_followup_without_hand_energy_choice() -> String:
+	var state := _make_state()
+	var player := state.players[0]
+	var fire := CardInstance.create(_energy("Fire", "R"), 0)
+	var water := CardInstance.create(_energy("Water", "W"), 0)
+	player.deck = [fire, water]
+	var effect := Effect196.new()
+	var card := CardInstance.create(_trainer("赤松", "Supporter"), 0)
+	var followup: Array[Dictionary] = effect.get_followup_interaction_steps(card, state, {
+		Effect196.HAND_STEP_ID: [],
+	})
+
+	return run_checks([
+		assert_eq(followup.size(), 0, "Crispin should not show an attachment step when the player takes no Energy into hand"),
+	])
+
+
+func test_csv9c_196_ai_keeps_crispin_interactive_for_followup_attachment() -> String:
+	var gsm := _make_gsm()
+	var state := gsm.game_state
+	var player := state.players[0]
+	var fire := CardInstance.create(_energy("Fire", "R"), 0)
+	var water := CardInstance.create(_energy("Water", "W"), 0)
+	player.deck = [fire, water]
+	var crispin := CardInstance.create(_trainer("赤松", "Supporter", "136fdb6578daa3b81aef369495de4c3d"), 0)
+	player.hand = [crispin]
+	gsm.effect_processor.register_effect("136fdb6578daa3b81aef369495de4c3d", Effect196.new())
+	var builder = AILegalActionBuilderScript.new()
+	var actions: Array[Dictionary] = builder.build_actions(gsm, 0)
+	var crispin_action: Dictionary = {}
+	for action: Dictionary in actions:
+		if action.get("kind", "") == "play_trainer" and action.get("card") == crispin:
+			crispin_action = action
+			break
+
+	return run_checks([
+		assert_false(crispin_action.is_empty(), "AI should enumerate Crispin when the deck has searchable Basic Energy"),
+		assert_true(bool(crispin_action.get("requires_interaction", false)), "AI should keep Crispin interactive because the attachment step depends on the hand Energy choice"),
+		assert_eq(crispin_action.get("targets", []), [], "AI should not fall back to blind automatic Crispin targets before the follow-up is resolved"),
 	])
 
 
@@ -832,6 +994,109 @@ func test_csv9c_207_area_zero_active_tera_knockout_cleans_before_replacement() -
 		assert_eq(player.active_pokemon, replacement, "The selected replacement should become Active"),
 		assert_eq(player.bench.size(), 4, "Sending out after cleanup should leave four Benched Pokemon"),
 		assert_eq(total_pokemon_after_send_out, 5, "Cleanup-before-replacement should leave one Active plus four Benched Pokemon"),
+	])
+
+
+func test_csv9c_207_area_zero_bench_tera_knockout_cleans_before_prizes() -> String:
+	var gsm := _make_gsm()
+	var state := gsm.game_state
+	state.current_player_index = 0
+	state.turn_number = 5
+	state.phase = GameState.GamePhase.POKEMON_CHECK
+	var attacker := state.players[0]
+	var defender := state.players[1]
+	attacker.active_pokemon = _slot(_pokemon("Attacker", "C", 120), 0)
+	defender.active_pokemon = _slot(_pokemon("Plain Active", "C", 120), 1)
+	var tera_bench := _slot(_pokemon("Bench Terapagos ex", "C", 230, "Basic", "ex", "", "", "Tera"), 1)
+	tera_bench.damage_counters = 230
+	defender.bench.append(tera_bench)
+	for i: int in 7:
+		defender.bench.append(_slot(_pokemon("Support Bench %d" % i, "C", 70), 1))
+	_prizes(attacker, 6)
+	_prizes(defender, 6)
+	state.stadium_card = CardInstance.create(_trainer("Area Zero Underdepths", "Stadium", Effect207.EFFECT_ID), 1)
+	state.stadium_owner_index = 1
+	var choice_events: Array[Dictionary] = []
+	gsm.player_choice_required.connect(func(choice_type: String, data: Dictionary) -> void:
+		choice_events.append({"type": choice_type, "data": data.duplicate(true)})
+	)
+
+	var limit_before_knockout := BenchLimitHelper.get_bench_limit(state, defender)
+	gsm._check_all_knockouts()
+	var first_prompt_type := str(choice_events[0].get("type", "")) if not choice_events.is_empty() else ""
+	var cleanup_prompt: Dictionary = choice_events[0].get("data", {}) if not choice_events.is_empty() else {}
+	var cleanup_steps: Array = cleanup_prompt.get("steps", [])
+	var cleanup_step: Dictionary = cleanup_steps[0] if not cleanup_steps.is_empty() and cleanup_steps[0] is Dictionary else {}
+	var bench_after_knockout_before_cleanup := defender.bench.size()
+	var take_prize_prompt_index_before_cleanup := -1
+	for i: int in choice_events.size():
+		if str(choice_events[i].get("type", "")) == "take_prize":
+			take_prize_prompt_index_before_cleanup = i
+			break
+	var cleanup_context := {
+		str(cleanup_step.get("id", "")): [
+			defender.bench[defender.bench.size() - 2],
+			defender.bench[defender.bench.size() - 1],
+		],
+	}
+	var cleaned := gsm.enforce_current_bench_limits("bench_limit_cleanup", 1, "", -1, [cleanup_context])
+	var take_prize_prompt_index_after_cleanup := -1
+	for i: int in choice_events.size():
+		if str(choice_events[i].get("type", "")) == "take_prize":
+			take_prize_prompt_index_after_cleanup = i
+			break
+
+	return run_checks([
+		assert_eq(limit_before_knockout, 8, "Area Zero should start with an expanded Bench while the only Tera is in play"),
+		assert_eq(first_prompt_type, "bench_limit_cleanup", "A Benched only-Tera knockout should clean Area Zero excess before prize prompts"),
+		assert_eq(bench_after_knockout_before_cleanup, 7, "The knocked-out Tera should leave the Bench while cleanup is pending"),
+		assert_eq(int(cleanup_step.get("min_select", -1)), 2, "After the Benched Tera leaves, exactly two excess Bench Pokemon must be discarded"),
+		assert_eq(take_prize_prompt_index_before_cleanup, -1, "Prize taking must not be prompted before the mandatory Area Zero cleanup"),
+		assert_true(cleaned, "Resolving the cleanup prompt should resume the bench knockout flow"),
+		assert_eq(defender.bench.size(), 5, "Area Zero cleanup should trim the AI Bench to five before prizes"),
+		assert_true(take_prize_prompt_index_after_cleanup > 0, "Prize prompt should appear after cleanup resolves"),
+	])
+
+
+func test_csv9c_207_headless_bench_tera_knockout_cleanup_does_not_stall() -> String:
+	var gsm := _make_gsm()
+	var bridge := HeadlessMatchBridgeScript.new()
+	bridge.bind(gsm)
+	var state := gsm.game_state
+	state.current_player_index = 0
+	state.turn_number = 5
+	state.phase = GameState.GamePhase.POKEMON_CHECK
+	var attacker := state.players[0]
+	var defender := state.players[1]
+	attacker.active_pokemon = _slot(_pokemon("Attacker", "C", 120), 0)
+	defender.active_pokemon = _slot(_pokemon("Plain Active", "C", 120), 1)
+	var tera_bench := _slot(_pokemon("Bench Terapagos ex", "C", 230, "Basic", "ex", "", "", "Tera"), 1)
+	tera_bench.damage_counters = 230
+	defender.bench.append(tera_bench)
+	for i: int in 7:
+		defender.bench.append(_slot(_pokemon("Support Bench %d" % i, "C", 70), 1))
+	_prizes(attacker, 6)
+	_prizes(defender, 6)
+	state.stadium_card = CardInstance.create(_trainer("Area Zero Underdepths", "Stadium", Effect207.EFFECT_ID), 1)
+	state.stadium_owner_index = 1
+
+	gsm._check_all_knockouts()
+	var pending_after_cleanup := bridge.get_pending_prompt_type()
+	var bench_after_cleanup := defender.bench.size()
+	var resolved_prize_count := 0
+	while bridge.get_pending_prompt_type() == "take_prize":
+		if not bridge.resolve_pending_prompt():
+			break
+		resolved_prize_count += 1
+	var pending_after_prize := bridge.get_pending_prompt_type()
+	bridge.free()
+
+	return run_checks([
+		assert_eq(bench_after_cleanup, 5, "Headless Area Zero cleanup should auto-trim the AI Bench to five immediately"),
+		assert_eq(pending_after_cleanup, "take_prize", "Headless cleanup should continue into the normal prize prompt instead of stalling"),
+		assert_eq(resolved_prize_count, 2, "Headless bridge should resolve both prizes for the knocked-out Tera ex"),
+		assert_eq(pending_after_prize, "", "After prize resolution, the headless bridge should not leave an unsupported cleanup prompt pending"),
+		assert_eq(attacker.prizes.size(), 4, "The attacking player should take two prizes after cleanup"),
 	])
 
 

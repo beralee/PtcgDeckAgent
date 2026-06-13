@@ -68,6 +68,7 @@ func test_register_all_fixed_effect_ids() -> String:
 		"7c0b20e121c9d0e0d2d8a43524f7494e",
 		"4ec261453212280d0eb03ed8254ca97f",
 		"30e7c440d69817592656f5b44e444111",
+		"ee2e1cc534d39f1710b1c590bf585ae5",
 		"2234845fbc2e11ab95587e1b393bb318",
 		"8b0d4f541f256d67f0757efe4fc8b407",
 		"8342fe3eeec6f897f3271be1aa26a412",

@@ -1,0 +1,49 @@
+{
+	"name": "伊布ex",
+	"card_type": "Pokemon",
+	"mechanic": "ex",
+	"label": "",
+	"description": "特性: 虹色因子\n这只宝可梦，可以从手牌中使出从「伊布」进化而来的「宝可梦【ex】」，放于这只宝可梦身上进行进化。（在自己最初的回合，以及刚出场的回合无法进化。）\n\n【火】【水】【雷】 石英闪耀 200\n\n\n",
+	"yoren_code": "Y1562",
+	"set_code": "CSV9.5C",
+	"card_index": "140",
+	"set_code_en": "",
+	"card_index_en": "",
+	"name_en": "",
+	"artist": "aky CG Works",
+	"rarity": "RR",
+	"release_date": "2026-06-12T00:00:00+08:00",
+	"regulation_mark": "H",
+	"effect_id": "efa5883e7d648ebc984f161b2c7d8fe9",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9.5C/140.png",
+	"image_local_path": "user://cards/images/CSV9.5C/140.png",
+	"is_tags": [],
+	"regulation_standard": true,
+	"regulation_expanded": true,
+	"energy_type": "C",
+	"stage": "Basic",
+	"hp": 200,
+	"weakness_energy": "F",
+	"weakness_value": "×2",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"evolves_from": "",
+	"ancient_trait": "Tera",
+	"attacks": [
+		{
+			"name": "石英闪耀",
+			"text": "",
+			"cost": "RWL",
+			"damage": "200",
+			"is_vstar_power": false
+		}
+	],
+	"abilities": [
+		{
+			"name": "虹色因子",
+			"text": "这只宝可梦，可以从手牌中使出从「伊布」进化而来的「宝可梦【ex】」，放于这只宝可梦身上进行进化。（在自己最初的回合，以及刚出场的回合无法进化。）"
+		}
+	],
+	"energy_provides": ""
+}

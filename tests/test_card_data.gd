@@ -75,13 +75,21 @@ func test_is_rule_box_pokemon() -> String:
 		var r := assert_true(card.is_rule_box_pokemon(), "%s 应为特殊规则宝可梦" % m)
 		if r != "":
 			return r
+	var radiant := CardData.new()
+	radiant.mechanic = "Radiant"
+	var radiant_result := assert_true(radiant.is_rule_box_pokemon(), "Radiant Pokemon should be treated as Rule Box Pokemon")
+	if radiant_result != "":
+		return radiant_result
 	var normal := _make_basic_pokemon()
 	return assert_false(normal.is_rule_box_pokemon(), "普通宝可梦不应为特殊规则宝可梦")
 
 
 func test_prize_count() -> String:
+	var radiant := CardData.new()
+	radiant.mechanic = "Radiant"
 	return run_checks([
 		assert_eq(_make_basic_pokemon().get_prize_count(), 1, "普通奖赏1"),
+		assert_eq(radiant.get_prize_count(), 1, "Radiant Pokemon should still give 1 Prize"),
 		assert_eq(CardData.new().get_prize_count(), 1, "默认奖赏1"),
 	])
 

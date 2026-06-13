@@ -1,0 +1,52 @@
+{
+	"abilities": [
+		{
+			"name": "王者之姿",
+			"text": "在自己的回合可以使用1次，如果使用了，则自己的回合结束。将自己的手牌全部放于弃牌区，从牌库上方抽取5张卡牌。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "PLANETA Mochizuki",
+	"attacks": [
+		{
+			"cost": "MCC",
+			"damage": "120+",
+			"is_vstar_power": false,
+			"name": "复仇爆破",
+			"text": "追加造成对手已经获得的奖赏卡张数×30点伤害。"
+		}
+	],
+	"card_index": "313",
+	"card_index_en": "105",
+	"card_type": "Pokemon",
+	"description": "特性: 王者之姿\n在自己的回合可以使用1次，如果使用了，则自己的回合结束。将自己的手牌全部放于弃牌区，从牌库上方抽取5张卡牌。\n\n【钢】 复仇爆破 120+\n追加造成对手已经获得的奖赏卡张数×30点伤害。\n\n",
+	"effect_id": "f3543bd547e44612b034263374aa0ef1",
+	"energy_provides": "",
+	"energy_type": "M",
+	"evolves_from": "",
+	"hp": 220,
+	"image_local_path": "user://cards/images/CS4DaC/313.png",
+	"image_url": "https://tcg.mik.moe/static/img/CS4DaC/313.png",
+	"is_tags": [
+		"V",
+		"Basic"
+	],
+	"label": "",
+	"mechanic": "V",
+	"name": "藏玛然特V",
+	"name_en": "Zamazenta V",
+	"rarity": "无标记",
+	"regulation_expanded": true,
+	"regulation_mark": "F",
+	"regulation_standard": true,
+	"release_date": "2024-05-17T00:00:00+08:00",
+	"resistance_energy": "G",
+	"resistance_value": "-30",
+	"retreat_cost": 2,
+	"set_code": "CS4DaC",
+	"set_code_en": "BRS",
+	"stage": "Basic",
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"yoren_code": "Y547"
+}

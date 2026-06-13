@@ -19,6 +19,7 @@ const DECK_ID_TO_STRATEGY_ID := {
 	575620: "lost_box",
 	575653: "regidrago",
 	575657: "lugia_archeops",
+	609431: "v175_lugia_archeops",
 	575716: "charizard_ex",
 	575718: "raging_bolt_ogerpon",
 	575720: "miraidon",

@@ -103,6 +103,7 @@ func get_pending_prompt_owner() -> int:
 func can_resolve_pending_prompt() -> bool:
 	return _pending_choice == "mulligan_extra_draw" \
 		or _pending_choice == "take_prize" \
+		or _pending_choice == "send_out" \
 		or _pending_choice.begins_with("setup_active_") \
 		or _pending_choice.begins_with("setup_bench_")
 
@@ -124,6 +125,8 @@ func resolve_pending_prompt() -> bool:
 			resolved = _resolve_mulligan_extra_draw(dialog_data)
 		"take_prize":
 			resolved = _resolve_take_prize(dialog_data)
+		"send_out":
+			resolved = _resolve_send_out(dialog_data)
 		_ when pending_choice.begins_with("setup_active_"):
 			resolved = _resolve_setup_active(dialog_data)
 		_ when pending_choice.begins_with("setup_bench_"):
@@ -151,6 +154,24 @@ func _on_player_choice_required(choice_type: String, data: Dictionary) -> void:
 			_dialog_data = {"player": int(data.get("player", -1))}
 		"bench_limit_cleanup":
 			_resolve_bench_limit_cleanup(data)
+		"powerglass_end_turn":
+			var steps: Array[Dictionary] = []
+			for raw_step: Variant in data.get("steps", []):
+				if raw_step is Dictionary:
+					steps.append(raw_step)
+			var card: CardInstance = data.get("card", null) as CardInstance
+			var slot: PokemonSlot = data.get("slot", null) as PokemonSlot
+			if card != null and not steps.is_empty():
+				_start_effect_interaction(
+					"powerglass_end_turn",
+					int(data.get("player", -1)),
+					steps,
+					card,
+					slot
+				)
+			else:
+				_pending_choice = choice_type
+				_dialog_data = data.duplicate(true)
 		_:
 			_pending_choice = choice_type
 			_dialog_data = data.duplicate(true)
@@ -322,7 +343,20 @@ func _on_end_turn(action_player_index: int = -1) -> void:
 ## ===== 效果交互：_try_*_with_interaction 方法 =====
 
 func _try_play_trainer_with_interaction(player_index: int, card: CardInstance) -> bool:
-	if _gsm == null:
+	if _gsm == null or _gsm.game_state == null or card == null or card.card_data == null:
+		return false
+	if player_index < 0 or player_index >= _gsm.game_state.players.size():
+		return false
+	var player: PlayerState = _gsm.game_state.players[player_index]
+	if not card in player.hand:
+		return false
+	var card_type := str(card.card_data.card_type)
+	if card_type == "Item" and not _gsm.rule_validator.can_play_item(_gsm.game_state, player_index, card, _gsm.effect_processor):
+		return false
+	if card_type == "Supporter":
+		if not _gsm.rule_validator.can_play_supporter(_gsm.game_state, player_index, card, _gsm.effect_processor) and not _gsm._can_play_supporter_exception(player_index, card):
+			return false
+	if card_type != "Item" and card_type != "Supporter":
 		return false
 	var effect: BaseEffect = _gsm.effect_processor.get_effect(card.card_data.effect_id)
 	if effect == null:
@@ -503,6 +537,11 @@ func _show_next_effect_interaction_step() -> void:
 					_pending_effect_attack_data,
 					[_pending_effect_context]
 				)
+			"powerglass_end_turn":
+				success = _gsm.resolve_powerglass_end_turn_choice(
+					_pending_effect_player_index,
+					[_pending_effect_context]
+				)
 		_reset_effect_interaction()
 		return
 	## 还有步骤未完成 -> 设置 pending_choice 等待 AI 解决
@@ -652,6 +691,10 @@ func _handle_field_assignment_target_index(target_index: int) -> void:
 	var excluded: Array = exclude_map.get(_field_interaction_assignment_selected_source_index, [])
 	if target_index in excluded:
 		return
+	if bool(_field_interaction_data.get("single_target_only", false)):
+		for assignment: Dictionary in _field_interaction_assignment_entries:
+			if int(assignment.get("target_index", -1)) != target_index:
+				return
 	var max_per_target: int = int(_field_interaction_data.get("max_assignments_per_target", 0))
 	if max_per_target > 0 and _count_assignments_for_target_index(_field_interaction_assignment_entries, target_index) >= max_per_target:
 		return
@@ -769,6 +812,10 @@ func _on_assignment_target_chosen(target_index: int) -> void:
 	var excluded: Array = exclude_map.get(_dialog_assignment_selected_source_index, [])
 	if target_index in excluded:
 		return
+	if bool(_dialog_data.get("single_target_only", false)):
+		for assignment: Dictionary in _dialog_assignment_assignments:
+			if int(assignment.get("target_index", -1)) != target_index:
+				return
 	var max_per_target: int = int(_dialog_data.get("max_assignments_per_target", 0))
 	if max_per_target > 0 and _count_assignments_for_target_index(_dialog_assignment_assignments, target_index) >= max_per_target:
 		return
@@ -1019,8 +1066,7 @@ func _resolve_take_prize(dialog_data: Dictionary) -> bool:
 	return false
 
 
-func _deprecated_resolve_send_out_fallback(dialog_data: Dictionary) -> bool:
-	return false
+func _resolve_send_out(dialog_data: Dictionary) -> bool:
 	if _gsm == null or _gsm.game_state == null:
 		return false
 	var send_out_player: int = int(dialog_data.get("player", -1))
@@ -1076,6 +1122,11 @@ func _find_next_planned_bench_card(player: PlayerState, available_cards: Array[C
 
 func _plan_opening_setup(player: PlayerState) -> Dictionary:
 	if player != null:
+		var bound_strategy := _strategy_for_player_index(player.player_index)
+		if bound_strategy != null and bound_strategy.has_method("plan_opening_setup"):
+			var bound_choice: Variant = bound_strategy.call("plan_opening_setup", player)
+			if bound_choice is Dictionary:
+				return (bound_choice as Dictionary).duplicate(true)
 		var strategy := _deck_strategy_registry.create_strategy_for_player(player)
 		if strategy != null and strategy.has_method("plan_opening_setup"):
 			var choice: Variant = strategy.call("plan_opening_setup", player)

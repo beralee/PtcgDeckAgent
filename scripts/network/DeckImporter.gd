@@ -122,6 +122,8 @@ func _fetch_cards_sequentially(deck: DeckData, keys: Array[Dictionary], index: i
 
 	# 检查本地缓存
 	if CardDatabase.has_card(set_code, card_index):
+		var cached_card := CardDatabase.get_card(set_code, card_index)
+		_try_register_duplicate_effect_alias(cached_card)
 		call_deferred("_fetch_cards_sequentially", deck, keys, index + 1, errors)
 		return
 
@@ -156,6 +158,7 @@ func _on_card_detail_response(
 				var card_json: Dictionary = data_raw if data_raw is Dictionary else {}
 				var card_data := CardData.from_api_json(card_json)
 				CardDatabase.cache_card(card_data)
+				_try_register_duplicate_effect_alias(card_data)
 			else:
 				errors.append("获取卡牌 %s/%s 失败: %s" % [set_code, card_index, resp.get("msg", "")])
 		else:
@@ -164,6 +167,17 @@ func _on_card_detail_response(
 		errors.append("获取卡牌 %s/%s 网络错误" % [set_code, card_index])
 
 	_fetch_cards_sequentially(deck, keys, index + 1, errors)
+
+
+func _try_register_duplicate_effect_alias(card: CardData) -> void:
+	if card == null:
+		return
+	var result := CardDatabase.try_register_duplicate_effect_alias(card)
+	if bool(result.get("applied", false)) and not bool(result.get("already_registered", false)):
+		print("DeckImporter: applied duplicate card effect alias %s -> %s" % [
+			str(result.get("alias_effect_id", "")),
+			str(result.get("source_effect_id", "")),
+		])
 
 
 func _start_image_sync(deck: DeckData, errors: PackedStringArray) -> void:

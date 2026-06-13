@@ -41,6 +41,36 @@ func test_on_hand_card_clicked_selects_basic_pokemon_and_refreshes_hand() -> Str
 	])
 
 
+func test_on_hand_card_clicked_again_opens_selected_pokemon_detail() -> String:
+	var controller := BattleActionControllerScript.new()
+	var scene = BattleSceneScript.new()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	var player := PlayerState.new()
+	player.player_index = 0
+	var opponent := PlayerState.new()
+	opponent.player_index = 1
+	gsm.game_state.players = [player, opponent]
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+	scene.set("_hand_container", HBoxContainer.new())
+	var detail_overlay := Panel.new()
+	detail_overlay.visible = false
+	scene.set("_detail_overlay", detail_overlay)
+	var card := CardInstance.create(_make_pokemon_cd("Basic"), 0)
+	player.hand = [card]
+	scene.set("_selected_hand_card", card)
+
+	controller.call("on_hand_card_clicked", scene, card, PanelContainer.new())
+
+	return run_checks([
+		assert_eq(scene.get("_selected_hand_card"), card, "Clicking the selected Pokemon again should keep it armed"),
+		assert_true(detail_overlay.visible, "Clicking the selected Pokemon again should open its detail overlay"),
+	])
+
+
 func test_try_use_stadium_with_interaction_no_stadium_is_noop() -> String:
 	var controller := BattleActionControllerScript.new()
 	var scene = BattleSceneScript.new()

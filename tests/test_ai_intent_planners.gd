@@ -19,6 +19,8 @@ const LLM_PROFILE_SCRIPT_PATHS := [
 	"res://scripts/ai/DeckStrategy17MiraidonLLM.gd",
 	"res://scripts/ai/DeckStrategy17DragapultDusknoirLLM.gd",
 	"res://scripts/ai/DeckStrategy17RegidragoLLM.gd",
+	"res://scripts/ai/DeckStrategy175LugiaArcheopsLLM.gd",
+	"res://scripts/ai/DeckStrategy175PureDragapultLLM.gd",
 ]
 
 
@@ -286,6 +288,7 @@ func test_v17_llm_blocks_primary_attacker_retreat_to_support_energy_bank() -> St
 	drago.attached_energy.append(_attached_energy("基本草能量", "G"))
 	drago.attached_energy.append(_attached_energy("基本草能量", "G"))
 	drago.attached_energy.append(_attached_energy("基本火能量", "R"))
+	gs.players[0].discard_pile.append(CardInstance.create(_make_dragapult_ex_cd(), 0))
 	var ogerpon := _make_slot(_make_pokemon_cd("厄诡椪 碧草面具ex", "Basic", "G", 210, [
 		{"name": "万叶阵雨", "cost": "GC", "damage": "120"},
 	]), 0)

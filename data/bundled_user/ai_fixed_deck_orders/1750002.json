@@ -1,0 +1,26 @@
+{
+  "deck_id": 1750002,
+  "deck_name": "17.5 Pure Dragapult",
+  "description": "Strong-mode fixed opening for the 17.5 Pure Dragapult AI deck. The opening hand guarantees Budew active pressure, a Dreepy setup target, Buddy-Buddy Poffin, two basic Energy, Arven, and Lance. The prize window uses redundant setup cards so Counter Catcher, Boss's Orders, Night Stretcher, Drakloak, Dragapult ex, Sparkling Crystal, Rare Candy, Switch, and Earthen Vessel stay available for the tempo and closing line.",
+  "top_to_bottom": [
+    {"set_code": "CSV9.5C", "card_index": "004"},
+    {"set_code": "CSV8C", "card_index": "157"},
+    {"set_code": "CSV7C", "card_index": "177"},
+    {"set_code": "CSVE1C", "card_index": "FIR"},
+    {"set_code": "CSVE1C", "card_index": "PSY"},
+    {"set_code": "CSV1C", "card_index": "123"},
+    {"set_code": "CS6.5C", "card_index": "070"},
+    {"set_code": "CSV3C", "card_index": "123"},
+    {"set_code": "CSV7C", "card_index": "177"},
+    {"set_code": "CSV8C", "card_index": "081"},
+    {"set_code": "CSV1C", "card_index": "112"},
+    {"set_code": "CS6.5C", "card_index": "070"},
+    {"set_code": "CS5bC", "card_index": "128"},
+    {"set_code": "CSV8C", "card_index": "158"},
+    {"set_code": "CSV8C", "card_index": "159"},
+    {"set_code": "CSV8C", "card_index": "186"},
+    {"set_code": "CSVH1C", "card_index": "045"},
+    {"set_code": "CSV6C", "card_index": "115"},
+    {"set_code": "CSV1C", "card_index": "113"}
+  ]
+}

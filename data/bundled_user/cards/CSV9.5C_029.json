@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "Tera",
+	"artist": "5ban Graphics",
+	"attacks": [
+		{
+			"cost": "RCC",
+			"damage": "20×",
+			"is_vstar_power": false,
+			"name": "愤怒火灶",
+			"text": "造成这只宝可梦身上放置的伤害指示物数量×20伤害。"
+		},
+		{
+			"cost": "RRR",
+			"damage": "140+",
+			"is_vstar_power": false,
+			"name": "强劲烈焰",
+			"text": "如果对手的战斗宝可梦为进化宝可梦的话，则追加造成140伤害。在这种情况下，将这只宝可梦身上附着的能量，全部放于弃牌区。"
+		}
+	],
+	"card_index": "029",
+	"card_index_en": "40",
+	"card_type": "Pokemon",
+	"description": "【火】 愤怒火灶 20×\n造成这只宝可梦身上放置的伤害指示物数量×20伤害。\n\n【火】【火】【火】 强劲烈焰 140+\n如果对手的战斗宝可梦为进化宝可梦的话，则追加造成140伤害。在这种情况下，将这只宝可梦身上附着的能量，全部放于弃牌区。\n\n",
+	"effect_id": "afe6e5fb7931c8c529e43134ef264885",
+	"energy_provides": "",
+	"energy_type": "R",
+	"evolves_from": "",
+	"hp": 210,
+	"image_local_path": "user://cards/images/CSV9.5C/029.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9.5C/029.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "ex",
+	"name": "厄诡椪 火灶面具ex",
+	"name_en": "Hearthflame Mask Ogerpon ex",
+	"rarity": "RR",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-06-12T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "CSV9.5C",
+	"set_code_en": "TWM",
+	"stage": "Basic",
+	"weakness_energy": "W",
+	"weakness_value": "×2",
+	"yoren_code": "Y1444"
+}

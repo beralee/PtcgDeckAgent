@@ -1,0 +1,51 @@
+{
+	"name": "铝钢龙",
+	"card_type": "Pokemon",
+	"mechanic": "",
+	"label": "",
+	"description": "【钢】 头突 30\n\n\n【钢】【钢】 愤怒重锤 80+\n追加造成这只宝可梦身上放置的伤害指示物数量×10伤害。\n\n",
+	"yoren_code": "P884",
+	"set_code": "CSV9.5C",
+	"card_index": "126",
+	"set_code_en": "",
+	"card_index_en": "",
+	"name_en": "",
+	"artist": "Takeshi Nakamura",
+	"rarity": "C",
+	"release_date": "2026-06-12T00:00:00+08:00",
+	"regulation_mark": "H",
+	"effect_id": "62bbe4c45b6f0406104dc382a620e017",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9.5C/126.png",
+	"image_local_path": "user://cards/images/CSV9.5C/126.png",
+	"is_tags": [],
+	"regulation_standard": true,
+	"regulation_expanded": true,
+	"energy_type": "M",
+	"stage": "Basic",
+	"hp": 130,
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"resistance_energy": "G",
+	"resistance_value": "-30",
+	"retreat_cost": 2,
+	"evolves_from": "",
+	"ancient_trait": "",
+	"attacks": [
+		{
+			"name": "头突",
+			"text": "",
+			"cost": "M",
+			"damage": "30",
+			"is_vstar_power": false
+		},
+		{
+			"name": "愤怒重锤",
+			"text": "追加造成这只宝可梦身上放置的伤害指示物数量×10伤害。",
+			"cost": "MMC",
+			"damage": "80+",
+			"is_vstar_power": false
+		}
+	],
+	"abilities": [],
+	"energy_provides": ""
+}

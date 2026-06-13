@@ -27,7 +27,7 @@ func test_csv9c_under100_effect_ids_register_required_hooks() -> String:
 		{"name": "索财灵", "effect_id": "6c6c611ae3397c524ea28fec85c1f8b8", "attacks": [_attack("小使者", "C", ""), _attack("撞击", "CCC", "50")], "needs_attack": true},
 		{"name": "猴怪", "effect_id": "20655f99bed441a33a259b16b9935355", "attacks": [_attack("二连劈", "C", "10x")], "needs_attack": true},
 		{"name": "火暴猴", "effect_id": "5f360b6881fbb857e809ca402ffdfda4", "attacks": [_attack("扫堂腿", "F", "30"), _attack("百万吨重拳", "FC", "70")], "needs_attack": true},
-		{"name": "弃世猴", "effect_id": "668cdee516a1fb4a2ab83835eaf1e035", "attacks": [_attack("暴走", "F", "130"), _attack("同命战斗", "FC", "")], "needs_attack": true},
+		{"name": "弃世猴", "effect_id": "293b8c882a550600a395e3c82b58f833", "attacks": [_attack("暴走", "F", "130"), _attack("同命战斗", "FC", "")], "needs_attack": true},
 	]
 	var checks: Array[String] = []
 	for spec: Dictionary in scripted_cards:
@@ -248,10 +248,12 @@ func test_csv9c_090_sylveon_registered_effects_reduce_damage_and_lock_angelite()
 func test_csv9c_099_annihilape_registered_attacks_confuse_self_and_knock_out_both_active() -> String:
 	var state := _make_state()
 	var processor := EffectProcessor.new()
-	var annihilape_cd := _pokemon("弃世猴", "Stage 2", "火暴猴", "F", 140, [_attack("暴走", "F", "130"), _attack("同命战斗", "FC", "")], [], "", "668cdee516a1fb4a2ab83835eaf1e035")
+	var annihilape_cd := _pokemon("弃世猴", "Stage 2", "火暴猴", "F", 140, [_attack("暴走", "F", "130"), _attack("同命战斗", "FC", "")], [], "", "293b8c882a550600a395e3c82b58f833")
 	processor.register_pokemon_card(annihilape_cd)
 	var annihilape := _slot(annihilape_cd, 0)
 	state.players[0].active_pokemon = annihilape
+	var attack0_effects := processor.get_attack_effects_for_slot(annihilape, 0)
+	var attack1_effects := processor.get_attack_effects_for_slot(annihilape, 1)
 
 	processor.execute_attack_effect(annihilape, 0, state.players[1].active_pokemon, state)
 	var confused := bool(annihilape.status_conditions.get("confused", false))
@@ -259,9 +261,85 @@ func test_csv9c_099_annihilape_registered_attacks_confuse_self_and_knock_out_bot
 	processor.execute_attack_effect(annihilape, 1, state.players[1].active_pokemon, state)
 
 	return run_checks([
+		assert_eq(attack0_effects.size(), 1, "Annihilape first attack should resolve exactly one native attack effect"),
+		assert_eq(attack1_effects.size(), 1, "Annihilape second attack should resolve exactly one native attack effect"),
 		assert_true(confused, "Annihilape first attack should Confuse itself"),
 		assert_true(annihilape.is_knocked_out(), "Annihilape second attack should Knock Out itself"),
 		assert_true(state.players[1].active_pokemon.is_knocked_out(), "Annihilape second attack should Knock Out the opponent Active"),
+	])
+
+
+func test_csv95c_031_slowpoke_real_attack_flow_has_no_native_effects_and_deals_printed_damage() -> String:
+	var slowpoke_cd := _load_bundled_card("res://data/bundled_user/cards/CSV9.5C_031.json")
+	if slowpoke_cd == null:
+		return "CSV9.5C_031 bundled card should load"
+
+	var water_gun_gsm := _make_gsm()
+	var water_gun_attacker := _slot(slowpoke_cd, 0)
+	var water_gun_defender := _slot(_pokemon("High HP Defender A", "Basic", "", "C", 220, [_attack("Tackle", "C", "30")], [], "", "defender_a"), 1)
+	water_gun_gsm.game_state.players[0].active_pokemon = water_gun_attacker
+	water_gun_gsm.game_state.players[1].active_pokemon = water_gun_defender
+	_attach_energy(water_gun_attacker, 0, "W", 1)
+	water_gun_gsm.effect_processor.register_pokemon_card(slowpoke_cd)
+	var water_gun_used := water_gun_gsm.use_attack(0, 0)
+
+	var tail_slap_gsm := _make_gsm()
+	var tail_slap_attacker := _slot(slowpoke_cd, 0)
+	var tail_slap_defender := _slot(_pokemon("High HP Defender B", "Basic", "", "C", 220, [_attack("Tackle", "C", "30")], [], "", "defender_b"), 1)
+	tail_slap_gsm.game_state.players[0].active_pokemon = tail_slap_attacker
+	tail_slap_gsm.game_state.players[1].active_pokemon = tail_slap_defender
+	_attach_energy(tail_slap_attacker, 0, "W", 2)
+	tail_slap_gsm.effect_processor.register_pokemon_card(slowpoke_cd)
+	var tail_slap_used := tail_slap_gsm.use_attack(0, 1)
+
+	return run_checks([
+		assert_eq(str(slowpoke_cd.effect_id), "26d4511ab7a84d662387e992b44f130a", "CSV9.5C_031 should keep the API effect id"),
+		assert_false(water_gun_gsm.effect_processor.has_attack_effect(slowpoke_cd.effect_id), "Slowpoke should not register native attack effects"),
+		assert_true(water_gun_used, "Slowpoke should use Water Gun through GameStateMachine"),
+		assert_eq(water_gun_defender.damage_counters, 10, "Water Gun should deal printed 10 damage"),
+		assert_true(tail_slap_used, "Slowpoke should use Tail Slap through GameStateMachine"),
+		assert_eq(tail_slap_defender.damage_counters, 30, "Tail Slap should deal printed 30 damage"),
+	])
+
+
+func test_csv9c_099_annihilape_real_attack_flow_uses_remote_effect_id() -> String:
+	var annihilape_cd := _load_bundled_card("res://data/bundled_user/cards/CSV9C_099.json")
+	if annihilape_cd == null:
+		return "CSV9C_099 bundled card should load"
+
+	var rage_gsm := _make_gsm()
+	var rage_attacker := _slot(annihilape_cd, 0)
+	var rage_defender := _slot(_pokemon("High HP Defender A", "Basic", "", "C", 220, [_attack("Tackle", "C", "30")], [], "", "annihilape_defender_a"), 1)
+	rage_gsm.game_state.players[0].active_pokemon = rage_attacker
+	rage_gsm.game_state.players[1].active_pokemon = rage_defender
+	_attach_energy(rage_attacker, 0, "F", 1)
+	rage_gsm.effect_processor.register_pokemon_card(annihilape_cd)
+	var rage_effects := rage_gsm.effect_processor.get_attack_effects_for_slot(rage_attacker, 0)
+	var rage_used := rage_gsm.use_attack(0, 0)
+
+	var destined_gsm := _make_gsm()
+	var destined_attacker := _slot(annihilape_cd, 0)
+	var destined_defender := _slot(_pokemon("High HP Defender B", "Basic", "", "C", 220, [_attack("Tackle", "C", "30")], [], "", "annihilape_defender_b"), 1)
+	destined_gsm.game_state.players[0].active_pokemon = destined_attacker
+	destined_gsm.game_state.players[1].active_pokemon = destined_defender
+	_attach_energy(destined_attacker, 0, "F", 2)
+	destined_gsm.effect_processor.register_pokemon_card(annihilape_cd)
+	var destined_effects := destined_gsm.effect_processor.get_attack_effects_for_slot(destined_attacker, 1)
+	var destined_used := destined_gsm.use_attack(0, 1)
+
+	return run_checks([
+		assert_eq(str(annihilape_cd.effect_id), "293b8c882a550600a395e3c82b58f833", "CSV9C_099 should keep the remote imported effect id"),
+		assert_true(rage_gsm.effect_processor.has_attack_effect(annihilape_cd.effect_id), "Remote effect id should register attack effects"),
+		assert_eq(rage_effects.size(), 1, "Rage should resolve exactly one attack effect through the remote effect id"),
+		assert_eq(destined_effects.size(), 1, "Destined Fight should resolve exactly one attack effect through the remote effect id"),
+		assert_true(rage_used, "Annihilape should use Rage through GameStateMachine"),
+		assert_eq(rage_defender.damage_counters, 130, "Rage should apply its printed 130 damage"),
+		assert_true(bool(rage_attacker.status_conditions.get("confused", false)), "Rage should Confuse the attacker after damage"),
+		assert_true(destined_used, "Annihilape should use Destined Fight through GameStateMachine"),
+		assert_true(destined_attacker.damage_counters >= destined_attacker.get_max_hp(), "Destined Fight should Knock Out Annihilape"),
+		assert_true(destined_defender.damage_counters >= destined_defender.get_max_hp(), "Destined Fight should Knock Out the opponent Active"),
+		assert_true(destined_attacker.get_top_card() in destined_gsm.game_state.players[0].discard_pile, "Knocked Out Annihilape should move to discard"),
+		assert_true(destined_defender.get_top_card() in destined_gsm.game_state.players[1].discard_pile, "Knocked Out opponent Active should move to discard"),
 	])
 
 
@@ -278,6 +356,24 @@ func _make_state() -> GameState:
 		player.active_pokemon = _slot(_pokemon("战斗宝可梦%d" % pi, "Basic", "", "C", 120, [_attack("撞击", "C", "30")], [], "", "active_%d" % pi), pi)
 		state.players.append(player)
 	return state
+
+
+func _make_gsm() -> GameStateMachine:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	return gsm
+
+
+func _load_bundled_card(path: String) -> CardData:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return null
+	var content := file.get_as_text()
+	file.close()
+	var json := JSON.new()
+	if json.parse(content) != OK or not (json.data is Dictionary):
+		return null
+	return CardData.from_dict(json.data)
 
 
 func _pokemon(
@@ -337,3 +433,8 @@ func _slot(card_data: CardData, owner_index: int) -> PokemonSlot:
 	slot.pokemon_stack.append(CardInstance.create(card_data, owner_index))
 	slot.turn_played = 0
 	return slot
+
+
+func _attach_energy(slot: PokemonSlot, owner_index: int, energy_type: String, count: int) -> void:
+	for i: int in count:
+		slot.attached_energy.append(CardInstance.create(_energy("%s Energy %d" % [energy_type, i], energy_type), owner_index))

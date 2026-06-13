@@ -17,10 +17,10 @@ func applies_to_attack_index(attack_index: int) -> bool:
 
 
 func execute_attack(
-	_attacker: PokemonSlot,
+	attacker: PokemonSlot,
 	defender: PokemonSlot,
 	_attack_index: int,
-	_state: GameState
+	state: GameState
 ) -> void:
 	if not applies_to_attack_index(_attack_index):
 		return
@@ -29,7 +29,11 @@ func execute_attack(
 		rng.randomize()
 		if rng.randi_range(0, 1) == 0:
 			return
-	_apply_special_status(defender, status_name, _state)
+	var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null) if state != null else null
+	if processor != null and processor.has_method("is_attack_effect_prevented_by_defender_ability"):
+		if bool(processor.call("is_attack_effect_prevented_by_defender_ability", attacker, defender, state)):
+			return
+	_apply_special_status(defender, status_name, state)
 
 
 func get_description() -> String:

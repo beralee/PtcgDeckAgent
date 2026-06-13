@@ -1282,6 +1282,11 @@ func handle_field_assignment_target_index(scene: Object, target_index: int) -> v
 		scene.call("_log", "当前选择的目标无效，请重新选择。")
 		return
 	var assignment_entries: Array = scene.get("_field_interaction_assignment_entries")
+	if bool(interaction_data.get("single_target_only", false)):
+		for assignment_variant: Variant in assignment_entries:
+			if assignment_variant is Dictionary and int((assignment_variant as Dictionary).get("target_index", -1)) != target_index:
+				scene.call("_log", "target invalid")
+				return
 	var max_per_target: int = int(interaction_data.get("max_assignments_per_target", 0))
 	if max_per_target > 0 and _count_assignments_for_target_index(assignment_entries, target_index) >= max_per_target:
 		scene.call("_log", "当前目标已达到可分配上限")

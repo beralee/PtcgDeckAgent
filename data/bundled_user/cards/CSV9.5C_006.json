@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "Tera",
+	"artist": "5ban Graphics",
+	"attacks": [
+		{
+			"cost": "GC",
+			"damage": "60×",
+			"is_vstar_power": false,
+			"name": "绿叶风暴",
+			"text": "造成对手所有宝可梦身上附着的能量数量×60伤害。"
+		},
+		{
+			"cost": "GRW",
+			"damage": "230",
+			"is_vstar_power": false,
+			"name": "苔纹玛瑙",
+			"text": "将自己所有备战宝可梦的HP，各回复「100」。"
+		}
+	],
+	"card_index": "006",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "【草】【无】绿叶风暴 60×\n造成对手所有宝可梦身上附着的能量数量×60伤害。\n\n【草】【火】【水】苔纹玛瑙 230\n将自己所有备战宝可梦的HP，各回复「100」。\n\n",
+	"effect_id": "930f07ef177d44b0e1084343b66b13af",
+	"energy_provides": "",
+	"energy_type": "G",
+	"evolves_from": "伊布",
+	"hp": 270,
+	"image_local_path": "user://cards/images/CSV9.5C/006.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9.5C/006.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "ex",
+	"name": "叶伊布ex",
+	"name_en": "",
+	"rarity": "RR",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-06-12T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CSV9.5C",
+	"set_code_en": "",
+	"stage": "Stage 1",
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"yoren_code": "Y1555"
+}

@@ -41,6 +41,13 @@ func _make_pokemon_card_with_attack_cost(name: String, energy_type: String, atta
 	return card
 
 
+func _make_pokemon_card_with_uid(name: String, energy_type: String, set_code: String, card_index: String) -> CardData:
+	var card := _make_pokemon_card(name, energy_type)
+	card.set_code = set_code
+	card.card_index = card_index
+	return card
+
+
 func _make_scene_stub() -> Control:
 	var battle_scene = BattleSceneScript.new()
 	var main_area := Control.new()
@@ -129,6 +136,37 @@ func test_play_preview_vfx_creates_cast_travel_and_impact_nodes() -> String:
 	])
 
 
+func test_active_attack_vfx_count_tracks_only_live_attack_sequences() -> String:
+	var battle_scene := _make_scene_stub()
+	var controller: RefCounted = battle_scene.get("_battle_attack_vfx_controller")
+	var action := GameAction.create(
+		GameAction.ActionType.ATTACK,
+		0,
+		{"attack_name": "Test Attack", "damage": 120},
+		2,
+		"attack"
+	)
+
+	controller.call("play_attack_vfx", battle_scene, action)
+
+	var overlay: Control = battle_scene.get("_attack_vfx_overlay") as Control
+	var sequence: Control = overlay.get_child(0) as Control if overlay != null and overlay.get_child_count() > 0 else null
+	var count_before_animation: int = int(controller.call("get_active_attack_vfx_count", battle_scene))
+	if sequence != null:
+		sequence.set_meta("attack_vfx_animation_active", true)
+	var active_attack_count: int = int(controller.call("get_active_attack_vfx_count", battle_scene))
+	if sequence != null:
+		sequence.set_meta("attack_vfx_kind", "preview")
+	var preview_count: int = int(controller.call("get_active_attack_vfx_count", battle_scene))
+
+	return run_checks([
+		assert_not_null(sequence, "Attack VFX should create a sequence root"),
+		assert_eq(count_before_animation, 0, "Unanimated test sequences should not block handover prompts"),
+		assert_eq(active_attack_count, 1, "A live attack animation should be counted as active"),
+		assert_eq(preview_count, 0, "Preview animations should not delay pass-and-play handover"),
+	])
+
+
 func test_dragapult_preview_vfx_prefers_authored_layers_over_generic_geometry() -> String:
 	var battle_scene := _make_scene_stub()
 	var controller: RefCounted = battle_scene.get("_battle_attack_vfx_controller")
@@ -155,6 +193,71 @@ func test_dragapult_preview_vfx_prefers_authored_layers_over_generic_geometry() 
 		assert_null(impact_node.get_node_or_null("ImpactCore") if impact_node != null else null, "Dragapult preview should not render the old generic impact burst"),
 		assert_not_null(residue_node.get_node_or_null("EmbersSmokeTexture") if residue_node != null else null, "Dragapult preview should render an authored residue layer"),
 		assert_null(shockwave_node, "Dragapult preview should suppress the generic shockwave bar"),
+	])
+
+
+func test_budew_itchy_pollen_attack_vfx_uses_signature_item_lock_assets() -> String:
+	var battle_scene := _make_scene_stub()
+	var controller: RefCounted = battle_scene.get("_battle_attack_vfx_controller")
+	var gsm: GameStateMachine = battle_scene.get("_gsm") as GameStateMachine
+	var attacker_slot := PokemonSlot.new()
+	attacker_slot.pokemon_stack.append(CardInstance.create(_make_pokemon_card_with_uid("含羞苞", "G", "CSV9.5C", "004"), 0))
+	gsm.game_state.players[0].active_pokemon = attacker_slot
+	var action := GameAction.create(
+		GameAction.ActionType.ATTACK,
+		0,
+		{"attack_name": "痒痒花粉", "target_pokemon_name": "Charizard ex", "damage": 10},
+		3,
+		"attack"
+	)
+
+	controller.call("play_attack_vfx", battle_scene, action)
+
+	var overlay: Control = battle_scene.get("_attack_vfx_overlay") as Control
+	var sequence: Control = overlay.get_child(0) as Control if overlay != null and overlay.get_child_count() > 0 else null
+	var cast_node: Control = sequence.get_node_or_null("AttackVfxCast") as Control if sequence != null else null
+	var travel_node: Node = sequence.get_node_or_null("AttackVfxTravel0") if sequence != null else null
+	var impact_node: Control = sequence.get_node_or_null("AttackVfxImpact0") as Control if sequence != null else null
+	var residue_node: Control = sequence.get_node_or_null("AttackVfxResidue0") as Control if sequence != null else null
+	var shockwave_node: Node = sequence.get_node_or_null("AttackVfxShockwave0") if sequence != null else null
+	var impact_texture: TextureRect = impact_node.get_node_or_null("ImpactBloomTexture") as TextureRect if impact_node != null else null
+	var residue_texture: TextureRect = residue_node.get_node_or_null("EmbersSmokeTexture") as TextureRect if residue_node != null else null
+
+	return run_checks([
+		assert_not_null(sequence, "Budew attack should create a VFX sequence root"),
+		assert_eq(str(sequence.get_meta("profile_id", "")), "signature_budew_itchy_pollen", "Budew attack should use the dedicated itchy-pollen profile"),
+		assert_not_null(cast_node, "Budew attack should keep an empty cast node for sequence timing"),
+		assert_eq(cast_node.get_child_count() if cast_node != null else -1, 0, "Budew attack should not render generic cast geometry"),
+		assert_null(travel_node, "Budew itchy pollen should not render a generic launch/travel segment"),
+		assert_null(shockwave_node, "Budew itchy pollen should not mix in the generic shockwave bar"),
+		assert_not_null(impact_texture, "Budew impact should render the generated item-lock pollen flipbook"),
+		assert_not_null(residue_texture, "Budew residue should render the generated pollen fade layer"),
+		assert_eq(impact_node.get_child_count() if impact_node != null else -1, 1, "Budew impact should keep the generated pollen as the sole visual subject"),
+	])
+
+
+func test_budew_itchy_pollen_preview_uses_same_signature_profile() -> String:
+	var battle_scene := _make_scene_stub()
+	var controller: RefCounted = battle_scene.get("_battle_attack_vfx_controller")
+	var registry: RefCounted = battle_scene.get("_battle_attack_vfx_registry")
+	var profile: RefCounted = registry.call("resolve_profile", _make_pokemon_card_with_uid("含羞苞", "G", "CSV9.5C", "004"), "痒痒花粉")
+
+	controller.call("play_preview_vfx", battle_scene, profile)
+
+	var overlay: Control = battle_scene.get("_attack_vfx_overlay") as Control
+	var sequence: Control = overlay.get_child(0) as Control if overlay != null and overlay.get_child_count() > 0 else null
+	var travel_node: Node = sequence.get_node_or_null("AttackVfxTravel0") if sequence != null else null
+	var impact_node: Control = sequence.get_node_or_null("AttackVfxImpact0") as Control if sequence != null else null
+	var residue_node: Control = sequence.get_node_or_null("AttackVfxResidue0") as Control if sequence != null else null
+	var shockwave_node: Node = sequence.get_node_or_null("AttackVfxShockwave0") if sequence != null else null
+
+	return run_checks([
+		assert_not_null(sequence, "Budew preview should create a VFX sequence root"),
+		assert_eq(str(sequence.get_meta("profile_id", "")), "signature_budew_itchy_pollen", "Budew preview should use the same dedicated profile as live combat"),
+		assert_null(travel_node, "Budew preview should not create a generic travel node"),
+		assert_null(shockwave_node, "Budew preview should not create a generic shockwave node"),
+		assert_not_null(impact_node.get_node_or_null("ImpactBloomTexture") if impact_node != null else null, "Budew preview should render the generated pollen flipbook"),
+		assert_not_null(residue_node.get_node_or_null("EmbersSmokeTexture") if residue_node != null else null, "Budew preview should render the generated pollen residue"),
 	])
 
 

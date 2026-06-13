@@ -830,13 +830,13 @@ func _run_send_out_step(battle_scene: Control, gsm: GameStateMachine) -> bool:
 	if _deck_strategy != null and _deck_strategy.has_method("consume_fast_send_out_choice"):
 		var fast_slot: PokemonSlot = _deck_strategy.call("consume_fast_send_out_choice", bench_slots, gsm.game_state, send_out_player_index)
 		if fast_slot != null and gsm.send_out_pokemon(send_out_player_index, fast_slot):
-			if str(battle_scene.get("_pending_choice")) == "send_out":
+			if _is_current_send_out_prompt_for(battle_scene, send_out_player_index):
 				_clear_consumed_prompt(battle_scene)
 			return true
 	var best_slot: PokemonSlot = _pick_best_handoff_target(bench_slots, gsm, "send_out")
 	if best_slot != null:
 		if gsm.send_out_pokemon(send_out_player_index, best_slot):
-			if str(battle_scene.get("_pending_choice")) == "send_out":
+			if _is_current_send_out_prompt_for(battle_scene, send_out_player_index):
 				_clear_consumed_prompt(battle_scene)
 			var game_manager = null
 			if battle_scene.is_inside_tree():
@@ -851,7 +851,7 @@ func _run_send_out_step(battle_scene: Control, gsm: GameStateMachine) -> bool:
 	# 兜底：按顺序尝试
 	for bench_slot: PokemonSlot in bench_slots:
 		if gsm.send_out_pokemon(send_out_player_index, bench_slot):
-			if str(battle_scene.get("_pending_choice")) == "send_out":
+			if _is_current_send_out_prompt_for(battle_scene, send_out_player_index):
 				_clear_consumed_prompt(battle_scene)
 			if battle_scene.has_method("_refresh_ui_after_successful_action"):
 				battle_scene.call("_refresh_ui_after_successful_action", true, player_index)
@@ -1062,6 +1062,13 @@ func _clear_consumed_prompt(battle_scene: Control) -> void:
 		return
 	battle_scene.set("_pending_choice", "")
 	battle_scene.set("_dialog_data", {})
+
+
+func _is_current_send_out_prompt_for(battle_scene: Control, prompt_player_index: int) -> bool:
+	if battle_scene == null or str(battle_scene.get("_pending_choice")) != "send_out":
+		return false
+	var dialog_data: Dictionary = battle_scene.get("_dialog_data")
+	return int(dialog_data.get("player", -1)) == prompt_player_index
 
 
 func _choose_mcts_action(gsm: GameStateMachine) -> Dictionary:

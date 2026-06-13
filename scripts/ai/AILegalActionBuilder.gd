@@ -471,6 +471,7 @@ func _build_attack_actions(gsm: GameStateMachine, player_index: int, player: Pla
 		actions.append({
 			"kind": "attack",
 			"attack_index": attack_index,
+			"source_slot": active,
 			"attack_name": str(attack.get("name", "")),
 			"projected_damage": projected_damage,
 			"projected_knockout": _attack_would_knock_out_active(gsm, player_index, projected_damage),
@@ -531,8 +532,11 @@ func _is_live_slot_for_gsm(gsm: GameStateMachine, slot: PokemonSlot) -> bool:
 	if slot == null or slot.get_top_card() == null:
 		return false
 	if gsm != null and gsm.effect_processor != null:
-		return not gsm.effect_processor.is_effectively_knocked_out(slot, gsm.game_state)
-	return slot.get_remaining_hp() > 0
+		return (
+			gsm.effect_processor.get_effective_max_hp(slot, gsm.game_state) > 0
+			and gsm.effect_processor.get_effective_remaining_hp(slot, gsm.game_state) > 0
+		)
+	return slot.get_max_hp() > 0 and slot.get_remaining_hp() > 0
 
 
 func _remaining_hp_for_gsm(gsm: GameStateMachine, slot: PokemonSlot) -> int:
@@ -916,6 +920,7 @@ func _resolve_headless_assignment_step(
 	var min_select: int = int(step.get("min_select", 0))
 	var max_select: int = int(step.get("max_select", source_items.size()))
 	var max_assignments_per_target: int = int(step.get("max_assignments_per_target", 0))
+	var single_target_only: bool = bool(step.get("single_target_only", false))
 	var selected_sources: Array = _select_headless_items(
 		gsm,
 		player_index,
@@ -929,12 +934,15 @@ func _resolve_headless_assignment_step(
 	var assignments: Array[Dictionary] = []
 	var pending_assignment_counts: Dictionary = {}
 	var pending_assignments: Array[Dictionary] = []
+	var locked_target: Variant = null
 	for source: Variant in selected_sources:
 		var source_index: int = source_items.find(source)
 		var eligible_targets: Array = []
 		var excluded_target_indices: Array = exclude_map.get(source_index, [])
 		for target_index: int in target_items.size():
 			if target_index in excluded_target_indices:
+				continue
+			if single_target_only and locked_target != null and target_items[target_index] != locked_target:
 				continue
 			if max_assignments_per_target > 0:
 				var candidate: Variant = target_items[target_index]
@@ -954,6 +962,8 @@ func _resolve_headless_assignment_step(
 		)
 		if target == null:
 			continue
+		if single_target_only and locked_target == null:
+			locked_target = target
 		if target is Object:
 			var target_id := int((target as Object).get_instance_id())
 			pending_assignment_counts[target_id] = int(pending_assignment_counts.get(target_id, 0)) + 1

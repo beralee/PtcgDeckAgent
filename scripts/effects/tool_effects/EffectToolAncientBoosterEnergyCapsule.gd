@@ -18,7 +18,7 @@ func get_hp_modifier(slot: PokemonSlot, state: GameState = null) -> int:
 	return HP_BONUS if _applies_to(slot, state) else 0
 
 
-func prevents_special_status(slot: PokemonSlot, state: GameState = null) -> bool:
+func prevents_special_status(slot: PokemonSlot, state: GameState = null, _status_name: String = "") -> bool:
 	return _applies_to(slot, state)
 
 

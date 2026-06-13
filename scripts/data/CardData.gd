@@ -230,9 +230,9 @@ func is_evolution_pokemon() -> bool:
 	return is_pokemon() and stage in ["Stage 1", "Stage 2", "VSTAR", "VMAX"]
 
 
-## 是否为特殊规则宝可梦（昏厥给对手额外奖赏卡）
+## 是否为拥有规则框的宝可梦（不等同于昏厥奖赏卡数量）
 func is_rule_box_pokemon() -> bool:
-	return mechanic in ["ex", "V", "VSTAR", "VMAX"]
+	return mechanic in ["ex", "V", "VSTAR", "VMAX"] or is_radiant()
 
 
 ## 昏厥时对手获取的奖赏卡数量

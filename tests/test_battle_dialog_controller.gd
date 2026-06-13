@@ -35,6 +35,7 @@ class DialogSceneStub:
 	var _pending_choice := ""
 	var _gsm = null
 	var _last_dialog_choice: PackedInt32Array = PackedInt32Array()
+	var _last_effect_choice: PackedInt32Array = PackedInt32Array()
 	var _cancelled_card_gallery_drag_sources: Array[String] = []
 
 	func _init() -> void:
@@ -96,6 +97,9 @@ class DialogSceneStub:
 
 	func _handle_dialog_choice(selected_indices: PackedInt32Array) -> void:
 		_last_dialog_choice = selected_indices
+
+	func _handle_effect_interaction_choice(selected_indices: PackedInt32Array) -> void:
+		_last_effect_choice = selected_indices
 
 	func _cancel_card_gallery_drag_scroll(source: String = "cancel") -> void:
 		_cancelled_card_gallery_drag_sources.append(source)
@@ -330,6 +334,28 @@ func test_dialog_cancel_clears_card_gallery_drag_capture() -> String:
 		assert_false(scene._dialog_overlay.visible, "Canceling a dialog should hide the overlay"),
 		assert_eq(scene._cancelled_card_gallery_drag_sources, ["dialog_cancel"], "Canceling a dialog should clear stale card-gallery drag capture"),
 		assert_eq(scene.get("_pending_choice"), "", "Canceling a dialog should clear pending choice"),
+	])
+	scene.free()
+	return result
+
+
+func test_dialog_cancel_can_resolve_effect_interaction_as_empty_selection() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var scene := DialogSceneStub.new()
+	scene._dialog_overlay.visible = true
+	scene.set("_pending_choice", "effect_interaction")
+	scene.set("_dialog_card_selected_indices", [0])
+	scene.set("_dialog_data", {
+		"allow_cancel": true,
+		"cancel_resolves_empty": true,
+	})
+
+	controller.call("on_dialog_cancel", scene)
+
+	var result := run_checks([
+		assert_false(scene._dialog_overlay.visible, "Canceling an optional effect step should hide the overlay"),
+		assert_eq(Array(scene._last_effect_choice), [], "Canceling an optional effect step should submit an empty selection"),
+		assert_eq(scene._cancelled_card_gallery_drag_sources, ["dialog_cancel_empty_selection"], "Cancel-as-empty should clear stale card-gallery drag capture"),
 	])
 	scene.free()
 	return result

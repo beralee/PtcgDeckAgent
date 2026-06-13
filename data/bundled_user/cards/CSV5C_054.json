@@ -1,0 +1,52 @@
+{
+	"abilities": [
+		{
+			"is_vstar_power": false,
+			"name": "以太感知",
+			"text": "在自己的回合可以使用1次。选择自己手牌中的1张「基本【超】能量」，附着于备战宝可梦身上。然后，从自己牌库上方抽取2张卡牌。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "Tetsu Kayama",
+	"attacks": [
+		{
+			"cost": "PCC",
+			"damage": "80",
+			"is_vstar_power": false,
+			"name": "超念力",
+			"text": ""
+		}
+	],
+	"card_index": "054",
+	"card_index_en": "26",
+	"card_type": "Pokemon",
+	"description": "特性: 以太感知\n在自己的回合可以使用1次。选择自己手牌中的1张「基本【超】能量」，附着于备战宝可梦身上。然后，从自己牌库上方抽取2张卡牌。\n\n【超】 超念力 80\n\n\n",
+	"effect_id": "bcd9644ea935ce567829f4a76756059b",
+	"energy_provides": "",
+	"energy_type": "P",
+	"evolves_from": "天然雀",
+	"hp": 100,
+	"image_local_path": "user://cards/images/CSV5C/054.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV5C/054.png",
+	"is_tags": [
+		"Stage 1"
+	],
+	"label": "",
+	"mechanic": "",
+	"name": "天然鸟",
+	"name_en": "Xatu",
+	"rarity": "R",
+	"regulation_expanded": true,
+	"regulation_mark": "G",
+	"regulation_standard": true,
+	"release_date": "2025-09-12T00:00:00+08:00",
+	"resistance_energy": "F",
+	"resistance_value": "-30",
+	"retreat_cost": 1,
+	"set_code": "CSV5C",
+	"set_code_en": "PAF",
+	"stage": "Stage 1",
+	"weakness_energy": "D",
+	"weakness_value": "×2",
+	"yoren_code": "P178"
+}

@@ -323,6 +323,7 @@ func run_headless_duel(
 			player_1_ai.set_decision_exporter(decision_exporter)
 	var bridge := HeadlessMatchBridgeScript.new()
 	bridge.bind(gsm)
+	bridge.set_ai_controllers(player_0_ai, player_1_ai)
 	bridge.bootstrap_pending_setup()
 	var result: Dictionary = {}
 	var steps: int = 0

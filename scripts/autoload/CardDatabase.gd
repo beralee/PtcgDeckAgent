@@ -1,6 +1,8 @@
 ## 全局卡牌数据库 - 管理卡牌缓存和卡组持久化
 extends Node
 
+const CardEffectAliasResolverScript := preload("res://scripts/engine/CardEffectAliasResolver.gd")
+
 ## 卡牌缓存目录
 const CARDS_DIR := "user://cards/"
 const CARD_IMAGES_DIR := "user://cards/images/"
@@ -11,13 +13,18 @@ const BUNDLED_USER_DIR := "res://data/bundled_user/"
 const BUNDLED_CARDS_DIR := BUNDLED_USER_DIR + "cards/"
 const BUNDLED_DECKS_DIR := BUNDLED_USER_DIR + "decks/"
 const BUNDLED_MANIFEST := BUNDLED_USER_DIR + "_manifest.txt"
+const EFFECT_ALIASES_PATH := CARDS_DIR + "effect_aliases.json"
 const SUPPORTED_AI_DECK_IDS: Array[int] = [
-	569061, 575657, 575716, 575718, 575720, 575723, 578647, 579502,
+	569061, 575657, 575716, 575718, 575720, 575723, 578647, 579502, 609431, 610080,
 	1700002, 1700003, 1700004, 1700005, 1700007, 1700008, 1700011,
+	1750002,
 ]
 
 ## 内存中的卡牌缓存 {uid -> CardData}
 var _card_cache: Dictionary = {}
+var _effect_aliases: Dictionary = {}
+var _effect_aliases_loaded: bool = false
+var _bundled_deck_signature_cache: Dictionary = {}
 ## 内存中的卡组缓存 {deck_id -> DeckData}
 var _deck_cache: Dictionary = {}
 var _ai_deck_cache: Dictionary = {}
@@ -28,6 +35,7 @@ signal decks_changed()
 
 func _ready() -> void:
 	_ensure_directories()
+	_load_effect_aliases()
 	_seed_bundled_user_data()
 	_load_all_decks()
 	_load_all_ai_decks()
@@ -248,7 +256,9 @@ func has_card(set_code: String, card_index: String) -> bool:
 	if _card_cache.has(uid):
 		return true
 	# 检查文件系统
-	return FileAccess.file_exists(CARDS_DIR + uid + ".json")
+	if FileAccess.file_exists(CARDS_DIR + uid + ".json"):
+		return true
+	return FileAccess.file_exists(BUNDLED_CARDS_DIR + uid + ".json")
 
 
 ## 获取卡牌数据（先查内存，再查文件）
@@ -289,21 +299,34 @@ func get_all_cards() -> Array[CardData]:
 		seen[uid] = true
 
 	var dir := DirAccess.open(CARDS_DIR)
-	if dir == null:
-		return result
+	if dir != null:
+		dir.list_dir_begin()
+		var file_name := dir.get_next()
+		while file_name != "":
+			if not dir.current_is_dir() and file_name.ends_with(".json"):
+				var uid := file_name.trim_suffix(".json")
+				if not seen.has(uid):
+					var card := _load_card_from_file(CARDS_DIR + file_name)
+					if card:
+						_card_cache[uid] = card
+						result.append(card)
+						seen[uid] = true
+			file_name = dir.get_next()
+		dir.list_dir_end()
 
-	dir.list_dir_begin()
-	var file_name := dir.get_next()
-	while file_name != "":
-		if not dir.current_is_dir() and file_name.ends_with(".json"):
-			var uid := file_name.trim_suffix(".json")
-			if not seen.has(uid):
-				var card := _load_card_from_file(CARDS_DIR + file_name)
-				if card:
-					_card_cache[uid] = card
-					result.append(card)
-		file_name = dir.get_next()
-	dir.list_dir_end()
+	for bundled_path: String in _load_bundled_manifest():
+		if not bundled_path.begins_with(BUNDLED_CARDS_DIR):
+			continue
+		if not bundled_path.ends_with(".json"):
+			continue
+		var uid := bundled_path.get_file().trim_suffix(".json")
+		if seen.has(uid):
+			continue
+		var bundled_card := _load_card_from_file(bundled_path)
+		if bundled_card:
+			_card_cache[uid] = bundled_card
+			result.append(bundled_card)
+			seen[uid] = true
 
 	result.sort_custom(func(a: CardData, b: CardData) -> bool:
 		return a.get_uid() < b.get_uid()
@@ -317,6 +340,77 @@ func cache_card(card: CardData) -> void:
 	var uid := card.get_uid()
 	_card_cache[uid] = card
 	_save_card_to_file(card)
+
+
+func try_register_duplicate_effect_alias(card: CardData) -> Dictionary:
+	_load_effect_aliases()
+	if card == null:
+		return {"applied": false, "reason": "missing card"}
+	var effect_id := str(card.effect_id).strip_edges()
+	if effect_id == "":
+		return {"applied": false, "reason": "missing effect id"}
+	if _effect_aliases.has(effect_id):
+		var existing := (_effect_aliases[effect_id] as Dictionary).duplicate(true)
+		existing["applied"] = true
+		existing["already_registered"] = true
+		return existing
+
+	var result: Dictionary = CardEffectAliasResolverScript.find_duplicate_effect_alias(card, get_all_cards())
+	if not bool(result.get("matched", false)):
+		return {"applied": false, "reason": str(result.get("reason", ""))}
+
+	var alias_data := {
+		"source_effect_id": str(result.get("source_effect_id", "")),
+		"source_set_code": str(result.get("source_set_code", "")),
+		"source_card_index": str(result.get("source_card_index", "")),
+		"alias_set_code": str(result.get("alias_set_code", card.set_code)),
+		"alias_card_index": str(result.get("alias_card_index", card.card_index)),
+		"signature": str(result.get("signature", "")),
+		"reason": str(result.get("reason", "same_name_same_effect_signature")),
+		"created_at": int(Time.get_unix_time_from_system() * 1000.0),
+	}
+	_effect_aliases[effect_id] = alias_data
+	_save_effect_aliases()
+	CardImplementationStatus.clear_cache()
+
+	var response := alias_data.duplicate(true)
+	response["applied"] = true
+	response["alias_effect_id"] = effect_id
+	return response
+
+
+func get_effect_alias(effect_id: String) -> String:
+	_load_effect_aliases()
+	var alias_data: Variant = _effect_aliases.get(str(effect_id), null)
+	if not (alias_data is Dictionary):
+		return ""
+	return str((alias_data as Dictionary).get("source_effect_id", ""))
+
+
+func get_effect_alias_metadata(effect_id: String) -> Dictionary:
+	_load_effect_aliases()
+	var alias_data: Variant = _effect_aliases.get(str(effect_id), null)
+	if not (alias_data is Dictionary):
+		return {}
+	return (alias_data as Dictionary).duplicate(true)
+
+
+func get_effect_alias_source_card(effect_id: String) -> CardData:
+	var metadata := get_effect_alias_metadata(effect_id)
+	if metadata.is_empty():
+		return null
+	var source_set := str(metadata.get("source_set_code", ""))
+	var source_index := str(metadata.get("source_card_index", ""))
+	if source_set == "" or source_index == "":
+		return null
+	return get_card(source_set, source_index)
+
+
+func unregister_effect_alias_for_tests(effect_id: String) -> void:
+	_load_effect_aliases()
+	_effect_aliases.erase(str(effect_id))
+	_save_effect_aliases()
+	CardImplementationStatus.clear_cache()
 
 
 func save_card_image(card: CardData, image_bytes: PackedByteArray) -> int:
@@ -347,6 +441,42 @@ func save_card_image(card: CardData, image_bytes: PackedByteArray) -> int:
 
 
 ## 从文件加载卡牌
+func _load_effect_aliases() -> void:
+	if _effect_aliases_loaded:
+		return
+	_effect_aliases_loaded = true
+	_effect_aliases.clear()
+	if not FileAccess.file_exists(EFFECT_ALIASES_PATH):
+		return
+	var file := FileAccess.open(EFFECT_ALIASES_PATH, FileAccess.READ)
+	if file == null:
+		return
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if not (parsed is Dictionary):
+		return
+	var aliases_raw: Variant = (parsed as Dictionary).get("aliases", {})
+	if not (aliases_raw is Dictionary):
+		return
+	for alias_effect_id: Variant in (aliases_raw as Dictionary).keys():
+		var alias_data: Variant = (aliases_raw as Dictionary)[alias_effect_id]
+		if alias_data is Dictionary:
+			_effect_aliases[str(alias_effect_id)] = (alias_data as Dictionary).duplicate(true)
+
+
+func _save_effect_aliases() -> void:
+	_ensure_directories()
+	var file := FileAccess.open(EFFECT_ALIASES_PATH, FileAccess.WRITE)
+	if file == null:
+		push_warning("CardDatabase: unable to write effect aliases %s" % EFFECT_ALIASES_PATH)
+		return
+	file.store_string(JSON.stringify({
+		"version": 1,
+		"aliases": _effect_aliases,
+	}, "\t"))
+	file.close()
+
+
 func _load_card_from_file(path: String) -> CardData:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
@@ -454,7 +584,7 @@ func get_all_ai_decks() -> Array[DeckData]:
 		var deck: DeckData = _ai_deck_cache.get(deck_id)
 		if deck != null:
 			result.append(deck)
-	result.sort_custom(_compare_ai_decks_by_created_time_desc)
+	result.sort_custom(Callable(self, "_compare_ai_decks_by_created_time_desc"))
 	return result
 
 
@@ -474,6 +604,10 @@ func get_supported_ai_deck_ids() -> Array[int]:
 
 
 func _compare_ai_decks_by_created_time_desc(a: DeckData, b: DeckData) -> bool:
+	var a_version_priority := get_ai_deck_version_priority(a)
+	var b_version_priority := get_ai_deck_version_priority(b)
+	if a_version_priority != b_version_priority:
+		return a_version_priority > b_version_priority
 	var a_release := _generated_ai_deck_release_key(a)
 	var b_release := _generated_ai_deck_release_key(b)
 	if a_release != b_release:
@@ -487,8 +621,95 @@ func _compare_ai_decks_by_created_time_desc(a: DeckData, b: DeckData) -> bool:
 	return a_import > b_import
 
 
+func get_ai_deck_version_priority(deck: DeckData) -> int:
+	return _deck_release_version_priority(deck)
+
+
+func get_deck_version_priority(deck: DeckData) -> int:
+	return get_player_deck_sort_priority(deck)
+
+
+func get_player_deck_sort_priority(deck: DeckData) -> int:
+	if _is_player_modified_deck(deck):
+		return 1000
+	return 0
+
+
+func _deck_release_version_priority(deck: DeckData) -> int:
+	var deck_id := int(deck.id) if deck != null else 0
+	var deck_name := str(deck.deck_name) if deck != null else ""
+	if deck_name.begins_with("17.5") or (deck_id >= 1750000 and deck_id < 1760000):
+		return 200
+	if deck_name.begins_with("17.0") or (deck_id >= 1700000 and deck_id < 1710000):
+		return 100
+	return 0
+
+
+func _is_player_modified_deck(deck: DeckData) -> bool:
+	var deck_id := int(deck.id) if deck != null else 0
+	if deck_id <= 0:
+		return false
+	var bundled_signature := _bundled_deck_content_signature(deck_id)
+	if bundled_signature == "":
+		return true
+	return _deck_content_signature(deck) != bundled_signature
+
+
+func _bundled_deck_content_signature(deck_id: int) -> String:
+	if deck_id <= 0:
+		return ""
+	if _bundled_deck_signature_cache.has(deck_id):
+		return str(_bundled_deck_signature_cache[deck_id])
+	var bundled_path := BUNDLED_DECKS_DIR.path_join("%d.json" % deck_id)
+	if not FileAccess.file_exists(bundled_path):
+		_bundled_deck_signature_cache[deck_id] = ""
+		return ""
+	var bundled_deck := _load_deck_from_file(bundled_path)
+	var signature := _deck_content_signature(bundled_deck)
+	_bundled_deck_signature_cache[deck_id] = signature
+	return signature
+
+
+func _deck_content_signature(deck: DeckData) -> String:
+	if deck == null:
+		return ""
+	var payload := {
+		"id": int(deck.id),
+		"deck_name": str(deck.deck_name),
+		"variant_name": str(deck.variant_name),
+		"deck_code": str(deck.deck_code),
+		"cards": deck.cards,
+		"total_cards": int(deck.total_cards),
+		"strategy": str(deck.strategy),
+	}
+	return JSON.stringify(_canonicalize_signature_value(payload))
+
+
+func _canonicalize_signature_value(value: Variant) -> Variant:
+	if value is Dictionary:
+		var dict: Dictionary = value
+		var normalized := {}
+		var keys := dict.keys()
+		keys.sort()
+		for key: Variant in keys:
+			normalized[str(key)] = _canonicalize_signature_value(dict[key])
+		return normalized
+	if value is Array:
+		var source_array: Array = value
+		var normalized_array := []
+		for item: Variant in source_array:
+			normalized_array.append(_canonicalize_signature_value(item))
+		return normalized_array
+	return value
+
+
 func _generated_ai_deck_release_key(deck: DeckData) -> int:
 	var deck_id := int(deck.id) if deck != null else 0
+	var deck_name := str(deck.deck_name) if deck != null else ""
+	if deck_name.begins_with("17.5") or (deck_id >= 1750000 and deck_id < 1760000):
+		return 175
+	if deck_name.begins_with("17.0") or (deck_id >= 1700000 and deck_id < 1710000):
+		return 170
 	if deck_id < 1000000:
 		return 0
 	return int(floor(float(deck_id) / 100000.0))
@@ -550,10 +771,26 @@ func _sorted_deck_values(cache: Dictionary) -> Array[DeckData]:
 	var result: Array[DeckData] = []
 	for deck: Variant in cache.values():
 		result.append(deck)
-	result.sort_custom(func(a: DeckData, b: DeckData) -> bool:
-		return a.import_date > b.import_date
-	)
+	result.sort_custom(Callable(self, "_compare_decks_by_player_priority_desc"))
 	return result
+
+
+func _compare_decks_by_player_priority_desc(a: DeckData, b: DeckData) -> bool:
+	var a_priority := get_player_deck_sort_priority(a)
+	var b_priority := get_player_deck_sort_priority(b)
+	if a_priority != b_priority:
+		return a_priority > b_priority
+	var a_time := int(a.updated_at) if a != null else 0
+	var b_time := int(b.updated_at) if b != null else 0
+	if a_time != b_time:
+		return a_time > b_time
+	var a_import := str(a.import_date) if a != null else ""
+	var b_import := str(b.import_date) if b != null else ""
+	if a_import != b_import:
+		return a_import > b_import
+	var a_id := int(a.id) if a != null else 0
+	var b_id := int(b.id) if b != null else 0
+	return a_id < b_id
 
 
 ## 从文件加载卡组

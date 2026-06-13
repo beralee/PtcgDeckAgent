@@ -1,0 +1,28 @@
+{
+  "package_name": "budew_itchy_pollen",
+  "card_uid": "CSV9.5C_004",
+  "card_name": "含羞苞",
+  "attack_name": "痒痒花粉",
+  "style_rule": "Budew's signature attack is an impact-only pastel pollen prank: item-like silhouettes are trapped in cute pollen bubbles, with no generic launch beam or shockwave.",
+  "generation_method": "image_gen_sprite_sheet_plus_generate2dsprite_postprocess",
+  "assets": [
+    {
+      "asset_name": "itchy_pollen_flipbook",
+      "file": "itchy_pollen_flipbook.png",
+      "role": "primary impact flipbook",
+      "format": "4-frame horizontal strip"
+    },
+    {
+      "asset_name": "pollen_residue",
+      "file": "pollen_residue.png",
+      "role": "soft pollen fade residue",
+      "format": "single transparent texture"
+    },
+    {
+      "asset_name": "sheet_transparent_preview",
+      "file": "sheet_transparent_preview.png",
+      "role": "2x2 transparent QC preview",
+      "format": "debug preview sheet"
+    }
+  ]
+}

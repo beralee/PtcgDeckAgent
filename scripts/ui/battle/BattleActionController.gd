@@ -21,6 +21,13 @@ func on_hand_card_clicked(scene: Object, inst: CardInstance, _panel: PanelContai
 	if bool(scene.call("_is_field_interaction_active")):
 		return
 	if scene.get("_selected_hand_card") == inst:
+		var selected_card_data: CardData = inst.card_data if inst != null else null
+		if selected_card_data != null and selected_card_data.is_pokemon():
+			if scene.has_method("_show_selected_hand_card_detail"):
+				scene.call("_show_selected_hand_card_detail", inst)
+			else:
+				scene.call("_show_card_detail", selected_card_data)
+			return
 		scene.set("_selected_hand_card", null)
 		scene.call("_refresh_hand")
 		return

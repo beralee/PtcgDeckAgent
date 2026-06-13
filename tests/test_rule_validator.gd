@@ -344,6 +344,28 @@ func test_can_use_attack_with_zero_string_cost() -> String:
 	])
 
 
+func test_attack_lock_all_blocks_every_attack_next_own_turn() -> String:
+	var state := _make_state(4, 0, 0)
+	var v := RuleValidator.new()
+
+	var active: PokemonSlot = state.players[0].active_pokemon
+	active.get_card_data().attacks = [
+		{"name": "Attack A", "cost": "", "damage": "10", "is_vstar_power": false},
+		{"name": "Attack B", "cost": "", "damage": "20", "is_vstar_power": false},
+	]
+	active.effects.append({
+		"type": "attack_lock_all",
+		"source_attack_name": "Attack B",
+		"source_attack_index": 1,
+		"turn": 2,
+	})
+
+	return run_checks([
+		assert_eq(v.can_use_attack(state, 0, 0), false, "Whole-Pokemon attack lock should block the first attack next own turn"),
+		assert_eq(v.can_use_attack(state, 0, 1), false, "Whole-Pokemon attack lock should block the second attack next own turn"),
+	])
+
+
 func test_cannot_attack_first_turn_first_player() -> String:
 	var state := _make_state(1, 0, 0)
 	var v := RuleValidator.new()

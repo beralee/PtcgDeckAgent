@@ -215,6 +215,9 @@ func check_two_player_handover(scene: Object) -> void:
 	if pending_choice == "take_prize" and int(scene.get("_pending_prize_remaining")) > 0:
 		var prize_player := int(scene.get("_pending_prize_player_index"))
 		if prize_player >= 0 and prize_player != int(scene.get("_view_player")):
+			if scene.has_method("_defer_two_player_handover_until_attack_vfx_finished") and bool(scene.call("_defer_two_player_handover_until_attack_vfx_finished", "prize")):
+				scene.call("_runtime_log", "handover_prize_waiting_for_attack_vfx", scene.call("_state_snapshot"))
+				return
 			show_handover_prompt(scene, prize_player, func() -> void:
 				scene.set("_view_player", prize_player)
 				scene.call("_refresh_ui")
@@ -226,6 +229,9 @@ func check_two_player_handover(scene: Object) -> void:
 		return
 	var current_player: int = gsm.game_state.current_player_index
 	if current_player != int(scene.get("_view_player")):
+		if scene.has_method("_defer_two_player_handover_until_attack_vfx_finished") and bool(scene.call("_defer_two_player_handover_until_attack_vfx_finished", "turn")):
+			scene.call("_runtime_log", "handover_turn_waiting_for_attack_vfx", scene.call("_state_snapshot"))
+			return
 		show_handover_prompt(scene, current_player)
 		scene.call("_runtime_log", "handover_required", scene.call("_state_snapshot"))
 		return

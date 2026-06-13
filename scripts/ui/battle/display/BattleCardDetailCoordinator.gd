@@ -265,6 +265,9 @@ func show_hand_card_detail(inst: CardInstance) -> void:
 	if bool(_call("_is_hand_drag_click_suppressed")):
 		_call("_runtime_log", ["hand_card_click_blocked", "reason=hand_drag_suppressed card=%s" % inst.card_data.name])
 		return
+	if _get_scene_var("_selected_hand_card") == inst and inst.card_data.is_pokemon():
+		show_selected_hand_card_detail(inst)
+		return
 	if should_hand_card_click_select_directly(inst):
 		_call("_on_hand_card_clicked", [inst, null])
 		return
@@ -277,6 +280,22 @@ func show_hand_card_detail(inst: CardInstance) -> void:
 			detail_use_btn.text = detail_use_label_for_current_context()
 	else:
 		set_detail_action_mode("readonly", null)
+
+
+func show_selected_hand_card_detail(inst: CardInstance) -> void:
+	if inst == null or inst.card_data == null:
+		return
+	if not inst.card_data.is_pokemon():
+		show_card_detail(inst.card_data)
+		return
+	if bool(_call("_is_hand_drag_click_suppressed")):
+		_call("_runtime_log", ["hand_card_click_blocked", "reason=hand_drag_suppressed card=%s" % inst.card_data.name])
+		return
+	if not can_show_hand_detail_action(inst):
+		show_card_detail(inst.card_data)
+		return
+	show_card_detail(inst.card_data)
+	set_detail_action_mode("selected_pokemon", inst)
 
 
 func should_hand_card_click_select_directly(inst: CardInstance) -> bool:
@@ -321,6 +340,8 @@ func hand_contains_card(player_index: int, inst: CardInstance) -> bool:
 
 
 func detail_use_label_for_current_context() -> String:
+	if str(_get_scene_var("_detail_mode")) == "selected_pokemon":
+		return "放置"
 	var pending_choice := str(_get_scene_var("_pending_choice"))
 	if pending_choice.begins_with("setup_active_") or pending_choice.begins_with("setup_bench_"):
 		return "选择"
@@ -329,8 +350,9 @@ func detail_use_label_for_current_context() -> String:
 
 func set_detail_action_mode(mode: String, inst: CardInstance) -> void:
 	_set_scene_var("_detail_mode", mode)
-	_set_scene_var("_detail_hand_action_card", inst if mode == "hand_action" else null)
-	var show_actions := mode == "hand_action" and inst != null
+	var action_mode := mode == "hand_action" or mode == "selected_pokemon"
+	_set_scene_var("_detail_hand_action_card", inst if action_mode else null)
+	var show_actions := action_mode and inst != null
 	var detail_action_bar := _get_scene_var("_detail_action_bar") as Control
 	var detail_use_btn := _get_scene_var("_detail_use_btn") as Button
 	var detail_cancel_btn := _get_scene_var("_detail_cancel_btn") as Button
@@ -339,14 +361,21 @@ func set_detail_action_mode(mode: String, inst: CardInstance) -> void:
 	if detail_use_btn != null:
 		detail_use_btn.visible = show_actions
 		detail_use_btn.disabled = not show_actions
+		if show_actions:
+			detail_use_btn.text = detail_use_label_for_current_context()
 	if detail_cancel_btn != null:
 		detail_cancel_btn.visible = show_actions
 		detail_cancel_btn.disabled = not show_actions
+		if show_actions:
+			detail_cancel_btn.text = "取消"
 
 
 func on_detail_use_pressed() -> void:
+	var mode := str(_get_scene_var("_detail_mode"))
 	var inst := _get_scene_var("_detail_hand_action_card") as CardInstance
 	hide_card_detail()
+	if mode == "selected_pokemon":
+		return
 	if inst == null:
 		return
 	if not can_show_hand_detail_action(inst):
@@ -357,6 +386,11 @@ func on_detail_use_pressed() -> void:
 
 
 func on_detail_cancel_pressed() -> void:
+	var mode := str(_get_scene_var("_detail_mode"))
+	var inst := _get_scene_var("_detail_hand_action_card") as CardInstance
+	if mode == "selected_pokemon" and _get_scene_var("_selected_hand_card") == inst:
+		_set_scene_var("_selected_hand_card", null)
+		_call("_refresh_hand")
 	hide_card_detail()
 
 

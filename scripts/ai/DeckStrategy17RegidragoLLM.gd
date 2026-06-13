@@ -704,7 +704,6 @@ func _regidrago_payload_ref_is_apex_attack(ref: Dictionary) -> bool:
 func _regidrago_text_is_apex_attack(text: String) -> bool:
 	return _v17_name_contains(text, "Apex Dragon") \
 			or _v17_name_contains(text, "巨龙无双") \
-			or _v17_name_contains(text, "宸ㄩ緳鏃犲弻") \
 			or _v17_name_contains(text, "瀹搞劑绶抽弮鐘插蓟")
 
 
@@ -1398,7 +1397,7 @@ func _regidrago_immediate_attack_ref_score(ref: Dictionary) -> int:
 	if action_type != "attack" and action_type != "granted_attack":
 		return -999999
 	var text := _regidrago_ref_text(ref)
-	if _v17_name_contains(text, "Apex Dragon") or _v17_name_contains(text, "宸ㄩ緳鏃犲弻"):
+	if _v17_name_contains(text, "Apex Dragon") or _v17_name_contains(text, "巨龙无双"):
 		return 1200
 	if _v17_name_contains(text, "Dragon Laser"):
 		return 700
@@ -1686,8 +1685,7 @@ func _regidrago_llm_should_preserve_mew_draw_engine(action: Dictionary, game_sta
 	if not _regidrago_llm_needs_mew_draw_for_backup_vstar(player):
 		return false
 	return _regidrago_llm_action_discards_named_card(action, "Mew ex") \
-		or _regidrago_llm_action_discards_named_card(action, "梦幻ex") \
-		or _regidrago_llm_action_discards_named_card(action, "姊﹀够ex")
+		or _regidrago_llm_action_discards_named_card(action, "梦幻ex")
 
 
 func _regidrago_llm_needs_mew_draw_for_backup_vstar(player: PlayerState) -> bool:
@@ -2120,7 +2118,7 @@ func _regidrago_llm_is_apex_dragon_action(action: Dictionary, game_state: GameSt
 	if source == null or not _regidrago_llm_is_regidrago_vstar_slot(source):
 		return false
 	var attack_name := _regidrago_llm_attack_name(action, source)
-	if _v17_name_contains(attack_name, "Apex Dragon") or _v17_name_contains(attack_name, "宸ㄩ緳鏃犲弻"):
+	if _v17_name_contains(attack_name, "Apex Dragon") or _v17_name_contains(attack_name, "巨龙无双"):
 		return true
 	return int(action.get("attack_index", -1)) == 0
 

@@ -7,18 +7,21 @@ const POINTS_LOSS := 0
 const AIFixedDeckOrderRegistryScript := preload("res://scripts/ai/AIFixedDeckOrderRegistry.gd")
 
 const DEFAULT_AI_DECK_POOL: Array[int] = [
-	569061, 575657, 575716, 575718, 575720, 575723, 578647, 579502,
+	569061, 575657, 575716, 575718, 575720, 575723, 578647, 579502, 609431, 610080,
 	1700002, 1700003, 1700004, 1700005, 1700007, 1700008, 1700011,
+	1750002,
 ]
 const LLM_STRATEGY_ID_BY_DECK_ID := {
 	569061: "arceus_giratina_llm",
 	575657: "lugia_archeops_llm",
+	609431: "v175_lugia_archeops_llm",
 	575716: "charizard_ex_llm",
 	575718: "raging_bolt_ogerpon_llm",
 	575720: "miraidon_llm",
 	575723: "dragapult_dusknoir_llm",
 	578647: "gardevoir_llm",
 	579502: "dragapult_charizard_llm",
+	610080: "v175_gardevoir_llm",
 	1700002: "v17_archaludon_dialga_llm",
 	1700003: "v17_water_turtle_llm",
 	1700004: "v17_palkia_gholdengo_llm",
@@ -26,18 +29,21 @@ const LLM_STRATEGY_ID_BY_DECK_ID := {
 	1700007: "v17_miraidon_llm",
 	1700008: "v17_dragapult_dusknoir_llm",
 	1700011: "v17_regidrago_llm",
+	1750002: "v175_pure_dragapult_llm",
 }
 const LLM_OPPONENT_PROBABILITY := 0.12
 
 const DECK_RATINGS := {
 	569061: 1560.0,  # Arceus / Giratina
 	575657: 1510.0,  # Lugia / Archeops
+	609431: 1510.0,  # 17.5 Lugia / Archeops
 	575716: 1690.0,  # Charizard / Pidgeot
 	575718: 1430.0,  # Raging Bolt / Ogerpon
 	575720: 1630.0,  # Miraidon
 	575723: 1550.0,  # Dragapult / Dusknoir
 	578647: 1460.0,  # Gardevoir
 	579502: 1580.0,  # Dragapult / Charizard
+	610080: 1500.0,  # 17.5 Gardevoir
 	1700002: 1500.0,  # 17.0 Archaludon / Dialga
 	1700003: 1500.0,  # 17.0 Water turtle / Palkia
 	1700004: 1500.0,  # 17.0 Palkia / Gholdengo
@@ -45,6 +51,7 @@ const DECK_RATINGS := {
 	1700007: 1500.0,  # 17.0 Miraidon
 	1700008: 1500.0,  # 17.0 Dragapult / Dusknoir
 	1700011: 1500.0,  # 17.0 Regidrago
+	1750002: 1500.0,  # 17.5 Pure Dragapult
 }
 
 const NAME_PREFIXES := [

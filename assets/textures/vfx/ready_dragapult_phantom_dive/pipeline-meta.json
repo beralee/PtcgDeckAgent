@@ -1,0 +1,249 @@
+{
+  "target": "creature",
+  "mode": "charge",
+  "prompt": "Body-first Dragapult ex phantom-dive ready animation; Pokemon body is the primary subject in every frame with teal phantom sparks attached close to the body.",
+  "role": "",
+  "input": "assets\\textures\\vfx\\ready_dragapult_phantom_dive\\raw-sheet.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 1620,
+  "rows": 2,
+  "cols": 3,
+  "cell_size": 256,
+  "fit_scale": 0.82,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "center",
+  "shared_scale": true,
+  "component_mode": "largest",
+  "component_padding": 8,
+  "min_component_area": 32,
+  "edge_touch_margin": 0,
+  "frame_labels": [
+    "ready-1",
+    "ready-2",
+    "ready-3",
+    "ready-4",
+    "ready-5",
+    "ready-6"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 2,
+      "selected_component_area": 54559,
+      "selected_component_bbox": [
+        72,
+        175,
+        439,
+        446
+      ],
+      "crop_bbox": [
+        64,
+        167,
+        447,
+        454
+      ],
+      "edge_touch": false,
+      "output_size": [
+        173,
+        130
+      ],
+      "paste_position": [
+        41,
+        63
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        512,
+        0,
+        1024,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 10,
+      "selected_component_area": 50268,
+      "selected_component_bbox": [
+        23,
+        166,
+        470,
+        408
+      ],
+      "crop_bbox": [
+        15,
+        158,
+        478,
+        416
+      ],
+      "edge_touch": false,
+      "output_size": [
+        209,
+        116
+      ],
+      "paste_position": [
+        23,
+        70
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        1024,
+        0,
+        1536,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 3,
+      "selected_component_area": 57338,
+      "selected_component_bbox": [
+        9,
+        156,
+        413,
+        429
+      ],
+      "crop_bbox": [
+        1,
+        148,
+        421,
+        437
+      ],
+      "edge_touch": false,
+      "output_size": [
+        190,
+        131
+      ],
+      "paste_position": [
+        33,
+        62
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        512,
+        512,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 2,
+      "selected_component_area": 55961,
+      "selected_component_bbox": [
+        67,
+        16,
+        472,
+        341
+      ],
+      "crop_bbox": [
+        59,
+        8,
+        480,
+        349
+      ],
+      "edge_touch": false,
+      "output_size": [
+        190,
+        154
+      ],
+      "paste_position": [
+        33,
+        51
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        512,
+        512,
+        1024,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 7,
+      "selected_component_area": 61467,
+      "selected_component_bbox": [
+        36,
+        30,
+        456,
+        328
+      ],
+      "crop_bbox": [
+        28,
+        22,
+        464,
+        336
+      ],
+      "edge_touch": false,
+      "output_size": [
+        197,
+        142
+      ],
+      "paste_position": [
+        29,
+        57
+      ]
+    },
+    {
+      "grid": [
+        1,
+        2
+      ],
+      "source_box": [
+        1024,
+        512,
+        1536,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 5,
+      "selected_component_area": 58740,
+      "selected_component_bbox": [
+        19,
+        45,
+        392,
+        337
+      ],
+      "crop_bbox": [
+        11,
+        37,
+        400,
+        345
+      ],
+      "edge_touch": false,
+      "output_size": [
+        176,
+        139
+      ],
+      "paste_position": [
+        40,
+        58
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

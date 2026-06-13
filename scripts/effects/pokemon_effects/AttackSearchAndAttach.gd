@@ -12,6 +12,7 @@ var attach_to: String = "any"
 var target_tag: String = ""
 var attack_index_to_match: int = -1
 var max_assignments_per_target: int = 0
+var single_target_only: bool = false
 
 
 func _init(
@@ -218,6 +219,7 @@ func _resolve_assignments(
 	var target_assignment_counts: Dictionary = {}
 	var valid_targets: Array[PokemonSlot] = _collect_attach_targets(attacker, player, false)
 	var max_assignments: int = _get_max_assignment_count(candidates.size(), valid_targets.size())
+	var locked_target: PokemonSlot = null
 
 	for entry: Variant in selected_assignments:
 		if not (entry is Dictionary):
@@ -236,12 +238,16 @@ func _resolve_assignments(
 			continue
 		if source_card in used_sources:
 			continue
+		if single_target_only and locked_target != null and target_slot != locked_target:
+			continue
 		var target_key: int = target_slot.get_instance_id()
 		var target_count: int = int(target_assignment_counts.get(target_key, 0))
 		if max_assignments_per_target > 0 and target_count >= max_assignments_per_target:
 			continue
 
 		used_sources.append(source_card)
+		if single_target_only and locked_target == null:
+			locked_target = target_slot
 		if max_assignments_per_target > 0:
 			target_assignment_counts[target_key] = target_count + 1
 		result.append({
@@ -269,7 +275,9 @@ func _build_fallback_assignments(
 	var max_assignments: int = _get_max_assignment_count(candidates.size(), fallback_targets.size())
 	for idx: int in max_assignments:
 		var target_index: int = mini(idx, fallback_targets.size() - 1)
-		if max_assignments_per_target > 0:
+		if single_target_only:
+			target_index = 0
+		elif max_assignments_per_target > 0:
 			target_index = int(idx / max_assignments_per_target)
 		result.append({
 			"source": candidates[idx],
@@ -280,7 +288,11 @@ func _build_fallback_assignments(
 
 func _get_max_assignment_count(source_count: int, target_count: int) -> int:
 	var result: int = mini(attach_count, source_count)
-	if max_assignments_per_target > 0:
+	if target_count <= 0:
+		return 0
+	if single_target_only and max_assignments_per_target > 0:
+		result = mini(result, max_assignments_per_target)
+	elif max_assignments_per_target > 0:
 		result = mini(result, target_count * max_assignments_per_target)
 	return result
 
@@ -288,6 +300,8 @@ func _get_max_assignment_count(source_count: int, target_count: int) -> int:
 func _apply_assignment_limits(step: Dictionary) -> void:
 	if max_assignments_per_target > 0:
 		step["max_assignments_per_target"] = max_assignments_per_target
+	if single_target_only:
+		step["single_target_only"] = true
 
 
 func _find_owner_slot(card: CardInstance, player: PlayerState) -> PokemonSlot:

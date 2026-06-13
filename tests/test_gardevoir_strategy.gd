@@ -3,7 +3,10 @@ class_name TestGardevoirStrategy
 extends TestBase
 
 const DeckStrategyGardevoirScript = preload("res://scripts/ai/DeckStrategyGardevoir.gd")
+const AIOpponentScript = preload("res://scripts/ai/AIOpponent.gd")
 const AIHeuristicsScript = preload("res://scripts/ai/AIHeuristics.gd")
+const BUDEW_EFFECT_ID := "28505a8ad6e07e74382c1b5e09737932"
+const CRESSELIA_EFFECT_ID := "5a56387211377cf56bfeb12751a5eed3"
 
 
 func _new_strategy() -> RefCounted:
@@ -55,6 +58,34 @@ func _make_trainer_cd(pname: String, card_type: String = "Item") -> CardData:
 	return cd
 
 
+func _make_budew_cd() -> CardData:
+	var cd := _make_pokemon_cd("Budew", "Basic", "G", 30, "", "", [], [
+		{"name": "Itchy Pollen", "cost": "0", "damage": "10"},
+	])
+	cd.effect_id = BUDEW_EFFECT_ID
+	cd.retreat_cost = 0
+	return cd
+
+
+func _make_cresselia_cd() -> CardData:
+	var cd := _make_pokemon_cd("Cresselia", "Basic", "P", 120, "", "", [], [
+		{"name": "Moonglow Reverse", "cost": "P", "damage": ""},
+		{"name": "Lunar Blast", "cost": "PPC", "damage": "110"},
+	])
+	cd.name_en = "Cresselia"
+	cd.effect_id = CRESSELIA_EFFECT_ID
+	cd.retreat_cost = 1
+	return cd
+
+
+func _make_deck_data(deck_id: int, entries: Array[Dictionary]) -> DeckData:
+	var deck := DeckData.new()
+	deck.id = deck_id
+	for entry: Dictionary in entries:
+		deck.cards.append(entry.duplicate(true))
+	return deck
+
+
 func _make_tool_cd(pname: String) -> CardData:
 	var cd := CardData.new()
 	cd.name = pname
@@ -90,6 +121,14 @@ func _make_game_state(turn: int = 2) -> GameState:
 
 func _ctx(gs: GameState, pi: int = 0) -> Dictionary:
 	return {"game_state": gs, "player_index": pi}
+
+
+func _card_display_name(card: CardInstance) -> String:
+	if card == null or card.card_data == null:
+		return ""
+	if str(card.card_data.effect_id) == BUDEW_EFFECT_ID:
+		return "Budew"
+	return str(card.card_data.name)
 
 
 # ============================================================
@@ -151,6 +190,1491 @@ func test_flutter_mane_preferred_active_in_opening() -> String:
 # ============================================================
 #  动作评分测试
 # ============================================================
+
+func test_175_gardevoir_opening_prefers_budew_active_and_benches_ralts() -> String:
+	var player := _make_player()
+	player.hand.append(CardInstance.create(_make_pokemon_cd("鎷夐瞾鎷変笣"), 0))
+	player.hand.append(CardInstance.create(_make_budew_cd(), 0))
+	player.hand.append(CardInstance.create(_make_pokemon_cd("鎸考鍙?", "Basic", "P", 90), 0))
+	player.hand.append(CardInstance.create(_make_pokemon_cd("鎰垮鐚?", "Basic", "D", 110), 0))
+	var s := _new_strategy()
+	var choice: Dictionary = s.plan_opening_setup(player)
+	var active_idx: int = int(choice.get("active_hand_index", -1))
+	var bench_indices: Array = choice.get("bench_hand_indices", [])
+	var bench_names: Array[String] = []
+	for idx_variant: Variant in bench_indices:
+		bench_names.append(_card_display_name(player.hand[int(idx_variant)]))
+	return run_checks([
+		assert_eq(_card_display_name(player.hand[active_idx]) if active_idx >= 0 else "", "Budew", "17.5 Gardevoir should open Budew active as the stall buffer"),
+		assert_true("鎷夐瞾鎷変笣" in bench_names, "Budew active should preserve Ralts on the bench for setup"),
+	])
+
+
+func test_175_gardevoir_searches_ralts_before_budew_when_shell_missing() -> String:
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.RALTS, "name_en": "Ralts", "card_type": "Pokemon", "count": 4},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+	]))
+	var gs := _make_game_state(1)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.MUNKIDORI, "Basic", "P", 110), 0)
+	player.bench.clear()
+	var ralts := CardInstance.create(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS), 0)
+	var budew := CardInstance.create(_make_budew_cd(), 0)
+	var ralts_score: float = float(s.score_interaction_target(ralts, {"id": "search_pokemon"}, _ctx(gs, 0)))
+	var budew_score: float = float(s.score_interaction_target(budew, {"id": "search_pokemon"}, _ctx(gs, 0)))
+	return assert_true(
+		ralts_score > budew_score,
+		"17.5 shell-missing search should prioritize first Ralts over extra Budew stall (ralts=%f budew=%f)" % [ralts_score, budew_score]
+	)
+
+
+func test_175_gardevoir_handoff_uses_budew_buffer_before_shell_online() -> String:
+	var gs := _make_game_state(2)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = null
+	var budew := _make_slot(_make_budew_cd(), 0)
+	var ralts := _make_slot(_make_pokemon_cd("鎷夐瞾鎷変笣", "Basic", "P", 70), 0)
+	player.bench.append(budew)
+	player.bench.append(ralts)
+	var s := _new_strategy()
+	var context := {"game_state": gs, "player_index": 0}
+	var budew_score: float = float(s.score_handoff_target(budew, {"id": "send_out"}, context))
+	var ralts_score: float = float(s.score_handoff_target(ralts, {"id": "send_out"}, context))
+	return assert_true(budew_score > ralts_score + 150.0, "Before the Gardevoir shell is online, send-out should use Budew to protect Ralts")
+
+
+func test_175_gardevoir_handoff_uses_scream_tail_after_budew_before_shell_online() -> String:
+	var gs := _make_game_state(3)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = null
+	var scream_tail := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90), 0)
+	var ralts := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS, "Basic", "P", 70), 0)
+	var kirlia := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.KIRLIA, "Stage 1", "P", 80, DeckStrategyGardevoirScript.RALTS), 0)
+	player.bench.append(scream_tail)
+	player.bench.append(ralts)
+	player.bench.append(kirlia)
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.RALTS, "name_en": "Ralts", "card_type": "Pokemon", "count": 4},
+		{"name": DeckStrategyGardevoirScript.KIRLIA, "name_en": "Kirlia", "card_type": "Pokemon", "count": 4},
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var context := {"game_state": gs, "player_index": 0}
+	var scream_score: float = float(s.score_handoff_target(scream_tail, {"id": "send_out"}, context))
+	var ralts_score: float = float(s.score_handoff_target(ralts, {"id": "send_out"}, context))
+	var kirlia_score: float = float(s.score_handoff_target(kirlia, {"id": "send_out"}, context))
+	return assert_true(
+		scream_score > ralts_score and scream_score > kirlia_score,
+		"After Budew is gone but before the shell is online, send-out should use Scream Tail to protect Ralts/Kirlia (scream=%f ralts=%f kirlia=%f)" % [scream_score, ralts_score, kirlia_score]
+	)
+
+
+func test_175_gardevoir_ai_picker_sends_out_scream_tail_over_kirlia_before_shell_online() -> String:
+	var gs := _make_game_state(3)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = null
+	var scream_tail := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90), 0)
+	var ralts := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS, "Basic", "P", 70), 0)
+	var kirlia := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.KIRLIA, "Stage 1", "P", 80, DeckStrategyGardevoirScript.RALTS), 0)
+	player.bench.append(scream_tail)
+	player.bench.append(ralts)
+	player.bench.append(kirlia)
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.RALTS, "name_en": "Ralts", "card_type": "Pokemon", "count": 4},
+		{"name": DeckStrategyGardevoirScript.KIRLIA, "name_en": "Kirlia", "card_type": "Pokemon", "count": 4},
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var gsm := GameStateMachine.new()
+	gsm.game_state = gs
+	var ai := AIOpponentScript.new()
+	ai.configure(0, 1)
+	ai.decision_runtime_mode = AIOpponentScript.DECISION_RUNTIME_RULES_ONLY
+	ai.set_deck_strategy(s)
+	var picked: PokemonSlot = ai.call("_pick_best_handoff_target", player.bench, gsm, "send_out")
+	return assert_eq(picked, scream_tail,
+		"AIOpponent send_out should use Scream Tail as the buffer before the first Gardevoir ex is online, preserving Kirlia")
+
+
+func test_175_gardevoir_budew_item_lock_attack_scores_as_stall_action() -> String:
+	var gs := _make_game_state(2)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_budew_cd(), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd("鎷夐瞾鎷変笣", "Basic", "P", 70), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd("鎷夐瞾鎷変笣", "Basic", "P", 70), 0))
+	var s := _new_strategy()
+	var attack_score: float = float(s.score_action_absolute({
+		"kind": "attack",
+		"source_slot": player.active_pokemon,
+		"attack_name": "Itchy Pollen",
+		"projected_damage": 10,
+	}, gs, 0))
+	return assert_true(attack_score >= 620.0, "Budew item-lock attack should be a high-value stall action while Gardevoir develops")
+
+
+func test_175_gardevoir_launch_budew_plays_safe_shell_search_before_stall_attack() -> String:
+	var gs := _make_game_state(7)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_budew_cd(), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS, "Basic", "P", 70), 0))
+	var arven := CardInstance.create(_make_trainer_cd(DeckStrategyGardevoirScript.ARVEN, "Supporter"), 0)
+	var poffin := CardInstance.create(_make_trainer_cd(DeckStrategyGardevoirScript.BUDDY_BUDDY_POFFIN), 0)
+	var ralts := CardInstance.create(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS, "Basic", "P", 70), 0)
+	player.hand.append(arven)
+	player.hand.append(poffin)
+	player.hand.append(ralts)
+	player.deck.append(CardInstance.create(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS, "Basic", "P", 70), 0))
+	player.deck.append(CardInstance.create(_make_tool_cd(DeckStrategyGardevoirScript.TM_EVOLUTION), 0))
+	for i: int in 10:
+		player.deck.append(CardInstance.create(_make_energy_cd("Dummy Psychic %d" % i, "P"), 0))
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Charizard ex", "Stage 2", "R", 330, "", "ex"), 1)
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.RALTS, "name_en": "Ralts", "card_type": "Pokemon", "count": 4},
+		{"name": DeckStrategyGardevoirScript.KIRLIA, "name_en": "Kirlia", "card_type": "Pokemon", "count": 4},
+		{"name": DeckStrategyGardevoirScript.GARDEVOIR_EX, "name_en": "Gardevoir ex", "card_type": "Pokemon", "count": 2},
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var turn_contract: Dictionary = s.build_turn_contract(gs, 0, {"prompt_kind": "action_selection"})
+	var continuity: Dictionary = s.build_continuity_contract(gs, 0, turn_contract)
+	var setup_debt: Dictionary = continuity.get("setup_debt", {}) if continuity.get("setup_debt", {}) is Dictionary else {}
+	var has_launch_bonus := false
+	for bonus_variant: Variant in continuity.get("action_bonuses", []):
+		if not (bonus_variant is Dictionary):
+			continue
+		var bonus: Dictionary = bonus_variant
+		if str(bonus.get("reason", "")) == "continuity_launch_shell_before_budew_stall":
+			has_launch_bonus = true
+	var attack_score: float = float(s.score_action_absolute_with_plan({
+		"kind": "attack",
+		"source_slot": player.active_pokemon,
+		"attack_name": "Itchy Pollen",
+		"projected_damage": 10,
+		"projected_knockout": false,
+	}, gs, 0, turn_contract))
+	var arven_score: float = float(s.score_action_absolute_with_plan({
+		"kind": "play_trainer",
+		"card": arven,
+		"targets": [],
+	}, gs, 0, turn_contract))
+	var poffin_score: float = float(s.score_action_absolute_with_plan({
+		"kind": "play_trainer",
+		"card": poffin,
+		"targets": [],
+	}, gs, 0, turn_contract))
+	var ralts_score: float = float(s.score_action_absolute_with_plan({
+		"kind": "play_basic_to_bench",
+		"card": ralts,
+	}, gs, 0, turn_contract))
+	return run_checks([
+		assert_true(bool(setup_debt.get("need_launch_shell_before_stall", false)),
+			"Budew launch turns should expose exact shell setup debt before the stall attack"),
+		assert_true(bool(continuity.get("safe_setup_before_attack", false)),
+			"Budew launch stall attacks must be terminal after safe shell setup debt"),
+		assert_true(has_launch_bonus,
+			"Safe launch setup should be represented as a continuity action bonus"),
+		assert_true(arven_score > attack_score,
+			"Arven should happen before Budew's terminal launch stall attack (arven=%f attack=%f)" % [arven_score, attack_score]),
+		assert_true(poffin_score > attack_score,
+			"Buddy-Buddy Poffin should happen before Budew's terminal launch stall attack (poffin=%f attack=%f)" % [poffin_score, attack_score]),
+		assert_true(ralts_score > attack_score,
+			"Direct Ralts benching should happen before Budew's terminal launch stall attack (ralts=%f attack=%f)" % [ralts_score, attack_score]),
+	])
+
+
+func test_175_gardevoir_budew_stall_remains_terminal_after_launch_debt_clears() -> String:
+	var gs := _make_game_state(7)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_budew_cd(), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS, "Basic", "P", 70), 0))
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.RALTS, "name_en": "Ralts", "card_type": "Pokemon", "count": 4},
+		{"name": DeckStrategyGardevoirScript.KIRLIA, "name_en": "Kirlia", "card_type": "Pokemon", "count": 4},
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var turn_contract: Dictionary = s.build_turn_contract(gs, 0, {"prompt_kind": "action_selection"})
+	var continuity: Dictionary = s.build_continuity_contract(gs, 0, turn_contract)
+	var attack_score: float = float(s.score_action_absolute_with_plan({
+		"kind": "attack",
+		"source_slot": player.active_pokemon,
+		"attack_name": "Itchy Pollen",
+		"projected_damage": 10,
+		"projected_knockout": false,
+	}, gs, 0, turn_contract))
+	var end_score: float = float(s.score_action_absolute_with_plan({"kind": "end_turn"}, gs, 0, turn_contract))
+	return run_checks([
+		assert_false(bool(continuity.get("enabled", false)),
+			"Budew continuity must clear once no legal safe launch setup action remains"),
+		assert_true(attack_score > end_score,
+			"After launch setup debt clears, Budew should remain the terminal stall action (attack=%f end=%f)" % [attack_score, end_score]),
+	])
+
+
+func test_175_gardevoir_budew_yields_to_bench_evolution_window() -> String:
+	var gs := _make_game_state(8)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_budew_cd(), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd("拉鲁拉丝", "Basic", "P", 70), 0))
+	var s := _new_strategy()
+	var attack_score: float = float(s.score_action_absolute({
+		"kind": "attack",
+		"source_slot": player.active_pokemon,
+		"attack_name": "Itchy Pollen",
+		"projected_damage": 10,
+	}, gs, 0))
+	var evolve_score: float = float(s.score_action_absolute({
+		"kind": "evolve",
+		"card": CardInstance.create(_make_pokemon_cd("奇鲁莉安", "Stage 1", "P", 80, "拉鲁拉丝"), 0),
+		"target_slot": player.bench[0],
+	}, gs, 0))
+	return assert_true(attack_score < evolve_score,
+		"Budew should be the stall finisher after development actions, not block available Kirlia evolution (attack=%f evolve=%f)" % [attack_score, evolve_score])
+
+
+func test_175_gardevoir_late_budew_yields_to_visible_kirlia_development() -> String:
+	var gs := _make_game_state(34)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_budew_cd(), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0))
+	var ralts := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS, "Basic", "P", 70), 0)
+	player.bench.append(ralts)
+	var kirlia_card := CardInstance.create(_make_pokemon_cd(DeckStrategyGardevoirScript.KIRLIA, "Stage 1", "P", 80, DeckStrategyGardevoirScript.RALTS), 0)
+	player.hand.append(kirlia_card)
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var attack_score: float = float(s.score_action_absolute({
+		"kind": "attack",
+		"source_slot": player.active_pokemon,
+		"attack_name": "Itchy Pollen",
+		"projected_damage": 10,
+	}, gs, 0))
+	var evolve_score: float = float(s.score_action_absolute({
+		"kind": "evolve",
+		"card": kirlia_card,
+		"target_slot": ralts,
+	}, gs, 0))
+	return assert_true(evolve_score > attack_score,
+		"Late Budew item-lock should not end the turn before visible Kirlia development (evolve=%f attack=%f)" % [evolve_score, attack_score])
+
+
+func test_175_gardevoir_late_budew_yields_to_visible_munkidori_development() -> String:
+	var gs := _make_game_state(34)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_budew_cd(), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.KIRLIA, "Stage 1", "P", 80, DeckStrategyGardevoirScript.RALTS), 0))
+	var munkidori_card := CardInstance.create(_make_pokemon_cd(DeckStrategyGardevoirScript.MUNKIDORI, "Basic", "D", 110), 0)
+	player.hand.append(munkidori_card)
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var attack_score: float = float(s.score_action_absolute({
+		"kind": "attack",
+		"source_slot": player.active_pokemon,
+		"attack_name": "Itchy Pollen",
+		"projected_damage": 10,
+	}, gs, 0))
+	var bench_score: float = float(s.score_action_absolute({
+		"kind": "play_basic_to_bench",
+		"card": munkidori_card,
+	}, gs, 0))
+	return assert_true(bench_score > attack_score,
+		"Late Budew item-lock should leave room for visible Munkidori setup before ending the turn (bench=%f attack=%f)" % [bench_score, attack_score])
+
+
+func test_175_gardevoir_budew_rebuild_plays_safe_stadium_before_stall_attack() -> String:
+	var gs := _make_game_state(15)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_budew_cd(), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.KIRLIA, "Stage 1", "P", 80, DeckStrategyGardevoirScript.RALTS), 0))
+	var artazon := CardInstance.create(_make_trainer_cd(DeckStrategyGardevoirScript.ARTAZON, "Stadium"), 0)
+	player.hand.append(artazon)
+	player.deck.append(CardInstance.create(_make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90), 0))
+	for i: int in 10:
+		player.deck.append(CardInstance.create(_make_energy_cd("Dummy Psychic %d" % i, "P"), 0))
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Charizard ex", "Stage 2", "R", 330, "", "ex"), 1)
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var turn_contract: Dictionary = s.build_turn_contract(gs, 0, {"prompt_kind": "action_selection"})
+	var continuity: Dictionary = s.build_continuity_contract(gs, 0, turn_contract)
+	var setup_debt: Dictionary = continuity.get("setup_debt", {}) if continuity.get("setup_debt", {}) is Dictionary else {}
+	var has_stadium_bonus := false
+	for bonus_variant: Variant in continuity.get("action_bonuses", []):
+		if not (bonus_variant is Dictionary):
+			continue
+		var bonus: Dictionary = bonus_variant
+		if str(bonus.get("kind", "")) == "play_stadium" and str(bonus.get("reason", "")) == "continuity_stadium_search_next_attacker":
+			has_stadium_bonus = true
+	var stadium_score: float = float(s.score_action_absolute_with_plan({
+		"kind": "play_stadium",
+		"card": artazon,
+		"targets": [],
+	}, gs, 0, turn_contract))
+	var budew_attack_score: float = float(s.score_action_absolute_with_plan({
+		"kind": "attack",
+		"source_slot": player.active_pokemon,
+		"attack_name": "Itchy Pollen",
+		"projected_damage": 10,
+		"projected_knockout": false,
+	}, gs, 0, turn_contract))
+	return run_checks([
+		assert_eq(str(turn_contract.get("intent", "")), "rebuild_attacker",
+			"Budew active with online Gardevoir but no attacker should stay in rebuild intent"),
+		assert_true(bool(setup_debt.get("need_next_attacker_seed", false)),
+			"Continuity debt should name the missing next attacker before a support stall attack"),
+		assert_true(bool(setup_debt.get("need_stall_safe_attacker_search", false)),
+			"Budew stall windows should expose exact safe Stadium search debt instead of relying on raw scores"),
+		assert_true(bool(continuity.get("safe_setup_before_attack", false)),
+			"Budew stall attacks must be terminal after exact safe setup debt"),
+		assert_true(has_stadium_bonus,
+			"Artazon/Stadium search for the next attacker should be an explicit continuity action bonus"),
+		assert_true(stadium_score > budew_attack_score,
+			"Safe Stadium setup should happen before Budew's terminal stall attack (stadium=%f attack=%f)" % [stadium_score, budew_attack_score]),
+	])
+
+
+func test_175_gardevoir_ready_scream_tail_handoff_outscores_budew_attack() -> String:
+	var gs := _make_game_state(17)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_budew_cd(), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0))
+	var scream_tail := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90, "", "", [], [
+		{"name": "Slap", "cost": "P", "damage": "30"},
+		{"name": "Roaring Scream", "cost": "PC", "damage": ""},
+	]), 0)
+	scream_tail.damage_counters = 40
+	scream_tail.damage_counters = 40
+	scream_tail.attached_energy = [
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+	]
+	player.bench.append(scream_tail)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	gs.players[1].active_pokemon.damage_counters = 150
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var retreat_score: float = float(s.score_action_absolute({
+		"kind": "retreat",
+		"bench_target": scream_tail,
+	}, gs, 0))
+	var attack_score: float = float(s.score_action_absolute({
+		"kind": "attack",
+		"projected_damage": 10,
+	}, gs, 0))
+	return assert_true(retreat_score > attack_score,
+		"Once Scream Tail is ready, 17.5 Gardevoir should hand off from Budew instead of continuing item-lock attacks (retreat=%f attack=%f)" % [retreat_score, attack_score])
+
+
+func test_175_gardevoir_scream_tail_attack_targets_visible_bench_prize() -> String:
+	var gs := _make_game_state(17)
+	var player: PlayerState = gs.players[0]
+	var scream_tail := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90, "", "", [], [
+		{"name": "Slap", "cost": "P", "damage": "30"},
+		{"name": "Roaring Scream", "cost": "PC", "damage": ""},
+	]), 0)
+	scream_tail.damage_counters = 60
+	scream_tail.attached_energy = [
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+	]
+	player.active_pokemon = scream_tail
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0))
+	var opponent: PlayerState = gs.players[1]
+	var iron_hands := _make_slot(_make_pokemon_cd("Iron Hands ex", "Basic", "L", 230, "", "ex"), 1)
+	var mew := _make_slot(_make_pokemon_cd("Mew ex", "Basic", "P", 180, "", "ex"), 1)
+	mew.damage_counters = 120
+	opponent.active_pokemon = iron_hands
+	opponent.bench.append(mew)
+	var s := _new_strategy()
+	var attack_score: float = float(s.score_action_absolute({
+		"kind": "attack",
+		"source_slot": scream_tail,
+		"attack_index": 1,
+		"attack_name": "Roaring Scream",
+		"projected_damage": 0,
+		"requires_interaction": true,
+	}, gs, 0))
+	var active_score: float = float(s.score_interaction_target(iron_hands, {"id": "target_pokemon"}, _ctx(gs, 0)))
+	var bench_score: float = float(s.score_interaction_target(mew, {"id": "target_pokemon"}, _ctx(gs, 0)))
+	return run_checks([
+		assert_true(attack_score >= 1000.0, "Scream Tail Roaring Scream should be scored by self-damage KO value, not zero preview damage (score=%f)" % attack_score),
+		assert_true(bench_score > active_score, "Scream Tail should target the visible low-HP bench prize over non-KO active pressure (bench=%f active=%f)" % [bench_score, active_score]),
+	])
+
+
+func test_175_gardevoir_turo_unlocks_boss_trapped_active_for_scream_tail_bench_prize() -> String:
+	var gs := _make_game_state(17)
+	var player: PlayerState = gs.players[0]
+	var active_gardevoir := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0)
+	active_gardevoir.get_card_data().retreat_cost = 2
+	player.active_pokemon = active_gardevoir
+	player.bench.clear()
+	var backup_gardevoir := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0)
+	var kirlia := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.KIRLIA, "Stage 1", "P", 80, DeckStrategyGardevoirScript.RALTS), 0)
+	var scream_tail := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90, "", "", [], [
+		{"name": "Slap", "cost": "P", "damage": "30"},
+		{"name": "Roaring Scream", "cost": "PC", "damage": ""},
+	]), 0)
+	scream_tail.damage_counters = 40
+	scream_tail.attached_energy = [
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+		CardInstance.create(_make_energy_cd("Darkness Energy", "D"), 0),
+	]
+	player.bench.append(backup_gardevoir)
+	player.bench.append(kirlia)
+	player.bench.append(scream_tail)
+	var opponent: PlayerState = gs.players[1]
+	opponent.active_pokemon = _make_slot(_make_pokemon_cd("Charizard ex", "Stage 2", "R", 330, "", "ex"), 1)
+	var pidgey_cd := _make_pokemon_cd("Pidgey", "Basic", "C", 60)
+	pidgey_cd.name_en = "Pidgey"
+	opponent.bench.append(_make_slot(pidgey_cd, 1))
+	var turo := CardInstance.create(_make_trainer_cd(DeckStrategyGardevoirScript.PROF_TURO, "Supporter"), 0)
+	player.hand.append(turo)
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.RALTS, "name_en": "Ralts", "card_type": "Pokemon", "count": 4},
+		{"name": DeckStrategyGardevoirScript.KIRLIA, "name_en": "Kirlia", "card_type": "Pokemon", "count": 4},
+		{"name": DeckStrategyGardevoirScript.GARDEVOIR_EX, "name_en": "Gardevoir ex", "card_type": "Pokemon", "count": 2},
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var contract: Dictionary = s.build_turn_contract(gs, 0, {})
+	var context := {"game_state": gs, "player_index": 0, "turn_contract": contract}
+	var turo_score: float = float(s.score_action_absolute_with_plan({
+		"kind": "play_trainer",
+		"card": turo,
+	}, gs, 0, contract))
+	var active_target_score: float = float(s.score_interaction_target(active_gardevoir, {"id": "prof_turo_target"}, context))
+	var backup_target_score: float = float(s.score_interaction_target(backup_gardevoir, {"id": "prof_turo_target"}, context))
+	var replacement_score: float = float(s.score_interaction_target(scream_tail, {"id": "prof_turo_replacement"}, context))
+	var engine_replacement_score: float = float(s.score_interaction_target(backup_gardevoir, {"id": "prof_turo_replacement"}, context))
+	return run_checks([
+		assert_true(bool(contract.get("flags", {}).get("trapped_active_with_ready_bench_attacker", false)),
+			"Turn contract should explicitly mark the trapped-active ready-bench-attacker unlock route"),
+		assert_eq(str(contract.get("owner", {}).get("pivot_target_name", "")), DeckStrategyGardevoirScript.SCREAM_TAIL,
+			"The same contract should keep Scream Tail as the handoff owner"),
+		assert_true(turo_score >= 600.0,
+			"Professor Turo should be the high-priority bridge when Boss traps active Gardevoir and Scream Tail can take a bench prize (got %f)" % turo_score),
+		assert_true(active_target_score > backup_target_score,
+			"Turo target selection should pick the trapped active Gardevoir, not the backup engine (active=%f backup=%f)" % [active_target_score, backup_target_score]),
+		assert_true(replacement_score > engine_replacement_score,
+			"Turo replacement should hand off to ready Scream Tail instead of exposing backup Gardevoir (scream=%f gardevoir=%f)" % [replacement_score, engine_replacement_score]),
+	])
+
+
+func test_175_gardevoir_manual_energy_unlocks_active_retreat_bridge_for_ready_scream_tail() -> String:
+	var gs := _make_game_state(17)
+	var player: PlayerState = gs.players[0]
+	var active_gardevoir := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0)
+	active_gardevoir.get_card_data().retreat_cost = 2
+	active_gardevoir.attached_energy = [
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+	]
+	player.active_pokemon = active_gardevoir
+	player.bench.clear()
+	var kirlia := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.KIRLIA, "Stage 1", "P", 80, DeckStrategyGardevoirScript.RALTS), 0)
+	var scream_tail := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90, "", "", [], [
+		{"name": "Roaring Scream", "cost": "PC", "damage": ""},
+	]), 0)
+	scream_tail.damage_counters = 40
+	scream_tail.attached_energy = [
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.DARK_ENERGY, "D"), 0),
+	]
+	player.bench.append(kirlia)
+	player.bench.append(scream_tail)
+	var opponent: PlayerState = gs.players[1]
+	opponent.active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var mareep := _make_slot(_make_pokemon_cd("Mareep", "Basic", "L", 60), 1)
+	opponent.bench.append(mareep)
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.RALTS, "name_en": "Ralts", "card_type": "Pokemon", "count": 4},
+		{"name": DeckStrategyGardevoirScript.KIRLIA, "name_en": "Kirlia", "card_type": "Pokemon", "count": 4},
+		{"name": DeckStrategyGardevoirScript.GARDEVOIR_EX, "name_en": "Gardevoir ex", "card_type": "Pokemon", "count": 2},
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var psychic := CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0)
+	player.hand.append(psychic)
+	var contract: Dictionary = s.build_turn_contract(gs, 0, {"prompt_kind": "action_selection"})
+	var flags: Dictionary = contract.get("flags", {}) if contract.get("flags", {}) is Dictionary else {}
+	var constraints: Dictionary = contract.get("constraints", {}) if contract.get("constraints", {}) is Dictionary else {}
+	var attach_score: float = float(s.score_action_absolute_with_plan({
+		"kind": "attach_energy",
+		"card": psychic,
+		"target_slot": active_gardevoir,
+	}, gs, 0, contract))
+	var end_score: float = float(s.score_action_absolute_with_plan({"kind": "end_turn"}, gs, 0, contract))
+	return run_checks([
+		assert_true(bool(flags.get("active_retreat_bridge_to_ready_bench_attacker", false)),
+			"Turn contract should mark the manual retreat-payment bridge when active Gardevoir blocks a ready Scream Tail"),
+		assert_true(bool(constraints.get("must_unlock_ready_bench_attacker", false)),
+			"The same route should force an unlock step before passing"),
+		assert_true(attach_score >= 360.0,
+			"Manual Energy to active Gardevoir should be a real bridge payment toward the ready Scream Tail handoff (attach=%f)" % attach_score),
+		assert_true(attach_score > end_score + 250.0,
+			"Retreat bridge payment should beat passing when a ready Scream Tail is stranded behind active Gardevoir (attach=%f end=%f)" % [attach_score, end_score]),
+	])
+
+
+func test_175_gardevoir_pick_embrace_pays_active_retreat_before_overcharging_ready_scream_tail() -> String:
+	var gs := _make_game_state(17)
+	var player: PlayerState = gs.players[0]
+	var active_gardevoir := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0)
+	active_gardevoir.get_card_data().retreat_cost = 2
+	active_gardevoir.attached_energy = [
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+	]
+	player.active_pokemon = active_gardevoir
+	player.bench.clear()
+	var scream_tail := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90, "", "", [], [
+		{"name": "Slap", "cost": "P", "damage": "30"},
+		{"name": "Roaring Scream", "cost": "PC", "damage": ""},
+	]), 0)
+	scream_tail.damage_counters = 40
+	scream_tail.attached_energy = [
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.DARK_ENERGY, "D"), 0),
+	]
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.KIRLIA, "Stage 1", "P", 80, DeckStrategyGardevoirScript.RALTS), 0))
+	player.bench.append(scream_tail)
+	player.discard_pile.append(CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0))
+	var opponent: PlayerState = gs.players[1]
+	opponent.active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	opponent.bench.append(_make_slot(_make_pokemon_cd("Mareep", "Basic", "L", 60), 1))
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.RALTS, "name_en": "Ralts", "card_type": "Pokemon", "count": 4},
+		{"name": DeckStrategyGardevoirScript.KIRLIA, "name_en": "Kirlia", "card_type": "Pokemon", "count": 4},
+		{"name": DeckStrategyGardevoirScript.GARDEVOIR_EX, "name_en": "Gardevoir ex", "card_type": "Pokemon", "count": 2},
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var picked: Variant = s.pick_embrace_target([scream_tail, active_gardevoir], gs, 0)
+	return assert_true(picked == active_gardevoir,
+		"Psychic Embrace target picker should pay active retreat before overcharging an already-ready Scream Tail handoff")
+
+
+func test_175_gardevoir_does_not_mark_unpayable_retreat_bridge_as_ready() -> String:
+	var gs := _make_game_state(17)
+	var player: PlayerState = gs.players[0]
+	var active_gardevoir := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0)
+	active_gardevoir.get_card_data().retreat_cost = 2
+	player.active_pokemon = active_gardevoir
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.KIRLIA, "Stage 1", "P", 80, DeckStrategyGardevoirScript.RALTS), 0))
+	var scream_tail := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90, "", "", [], [
+		{"name": "Slap", "cost": "P", "damage": "30"},
+		{"name": "Roaring Scream", "cost": "PC", "damage": ""},
+	]), 0)
+	scream_tail.damage_counters = 40
+	scream_tail.attached_energy = [
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.DARK_ENERGY, "D"), 0),
+	]
+	player.bench.append(scream_tail)
+	player.hand.append(CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0))
+	var opponent: PlayerState = gs.players[1]
+	opponent.active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	opponent.bench.append(_make_slot(_make_pokemon_cd("Mareep", "Basic", "L", 60), 1))
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.RALTS, "name_en": "Ralts", "card_type": "Pokemon", "count": 4},
+		{"name": DeckStrategyGardevoirScript.KIRLIA, "name_en": "Kirlia", "card_type": "Pokemon", "count": 4},
+		{"name": DeckStrategyGardevoirScript.GARDEVOIR_EX, "name_en": "Gardevoir ex", "card_type": "Pokemon", "count": 2},
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var contract: Dictionary = s.build_turn_contract(gs, 0, {"prompt_kind": "action_selection"})
+	var flags: Dictionary = contract.get("flags", {}) if contract.get("flags", {}) is Dictionary else {}
+	var constraints: Dictionary = contract.get("constraints", {}) if contract.get("constraints", {}) is Dictionary else {}
+	var attach_score: float = float(s.score_action_absolute_with_plan({
+		"kind": "attach_energy",
+		"card": player.hand[0],
+		"target_slot": active_gardevoir,
+	}, gs, 0, contract))
+	var end_score: float = float(s.score_action_absolute_with_plan({"kind": "end_turn"}, gs, 0, contract))
+	return run_checks([
+		assert_false(bool(flags.get("active_retreat_bridge_to_ready_bench_attacker", false)),
+			"Turn contract must not claim a ready-bench handoff when one manual Energy cannot fully pay active Gardevoir's retreat"),
+		assert_false(bool(constraints.get("must_unlock_ready_bench_attacker", false)),
+			"Unpayable retreat bridges should not force an unlock route that can only pass after attaching"),
+		assert_true(attach_score <= end_score + 250.0,
+			"Partial retreat payments should not be scored as a real handoff unlock (attach=%f end=%f)" % [attach_score, end_score]),
+	])
+
+
+func test_175_gardevoir_delays_low_pressure_scream_tail_handoff_without_prize_target() -> String:
+	var gs := _make_game_state(17)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_budew_cd(), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0))
+	var scream_tail := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90, "", "", [], [
+		{"name": "Slap", "cost": "P", "damage": "30"},
+		{"name": "Roaring Scream", "cost": "PC", "damage": ""},
+	]), 0)
+	scream_tail.damage_counters = 20
+	scream_tail.attached_energy = [
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+	]
+	player.bench.append(scream_tail)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var retreat_score: float = float(s.score_action_absolute({
+		"kind": "retreat",
+		"bench_target": scream_tail,
+	}, gs, 0))
+	var attack_score: float = float(s.score_action_absolute({
+		"kind": "attack",
+		"projected_damage": 10,
+	}, gs, 0))
+	return assert_true(retreat_score < attack_score,
+		"17.5 Gardevoir should keep Budew active when Scream Tail is ready but only creates low pressure and has no immediate prize target (retreat=%f attack=%f)" % [retreat_score, attack_score])
+
+
+func test_175_gardevoir_hands_off_scream_tail_early_into_miraidon_pressure() -> String:
+	var gs := _make_game_state(5)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_budew_cd(), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0))
+	var scream_tail := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90, "", "", [], [
+		{"name": "Slap", "cost": "P", "damage": "30"},
+		{"name": "Roaring Scream", "cost": "PC", "damage": ""},
+	]), 0)
+	scream_tail.damage_counters = 40
+	scream_tail.attached_energy = [
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+	]
+	player.bench.append(scream_tail)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Iron Hands ex", "Basic", "L", 230, "", "ex"), 1)
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var retreat_score: float = float(s.score_action_absolute({
+		"kind": "retreat",
+		"bench_target": scream_tail,
+	}, gs, 0))
+	var attack_score: float = float(s.score_action_absolute({
+		"kind": "attack",
+		"projected_damage": 10,
+	}, gs, 0))
+	return assert_true(retreat_score > attack_score,
+		"Against Miraidon pressure, 17.5 Gardevoir should hand off to an 80-damage Scream Tail before the late stall window (retreat=%f attack=%f)" % [retreat_score, attack_score])
+
+
+func test_175_gardevoir_hands_off_to_pressure_scream_tail_after_stall_window() -> String:
+	var gs := _make_game_state(17)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_budew_cd(), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0))
+	var scream_tail := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90, "", "", [], [
+		{"name": "Slap", "cost": "P", "damage": "30"},
+		{"name": "Roaring Scream", "cost": "PC", "damage": ""},
+	]), 0)
+	scream_tail.damage_counters = 40
+	scream_tail.attached_energy = [
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+	]
+	player.bench.append(scream_tail)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var retreat_score: float = float(s.score_action_absolute({
+		"kind": "retreat",
+		"bench_target": scream_tail,
+	}, gs, 0))
+	var attack_score: float = float(s.score_action_absolute({
+		"kind": "attack",
+		"projected_damage": 10,
+	}, gs, 0))
+	return assert_true(retreat_score > attack_score,
+		"After the Budew stall window, a ready Scream Tail dealing real two-hit pressure should take over even without an immediate KO (retreat=%f attack=%f)" % [retreat_score, attack_score])
+
+
+func test_175_gardevoir_benches_munkidori_before_nonlethal_scream_tail_handoff() -> String:
+	var gs := _make_game_state(17)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_budew_cd(), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.KIRLIA, "Stage 1", "P", 80, DeckStrategyGardevoirScript.RALTS), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS, "Basic", "P", 70), 0))
+	var scream_tail := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90, "", "", [], [
+		{"name": "Slap", "cost": "P", "damage": "30"},
+		{"name": "Roaring Scream", "cost": "PC", "damage": ""},
+	]), 0)
+	scream_tail.damage_counters = 40
+	scream_tail.attached_energy = [
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+	]
+	player.bench.append(scream_tail)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var munkidori_cd := _make_pokemon_cd(DeckStrategyGardevoirScript.MUNKIDORI, "Basic", "D", 110)
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var munkidori_score: float = float(s.score_action_absolute({
+		"kind": "play_basic_to_bench",
+		"card": CardInstance.create(munkidori_cd, 0),
+	}, gs, 0))
+	var retreat_score: float = float(s.score_action_absolute({
+		"kind": "retreat",
+		"bench_target": scream_tail,
+	}, gs, 0))
+	return assert_true(
+		munkidori_score > retreat_score,
+		"Before a nonlethal Scream Tail handoff, 17.5 Gardevoir should use the last bench slot for Munkidori support (munkidori=%f retreat=%f)" % [munkidori_score, retreat_score]
+	)
+
+
+func test_175_gardevoir_conversion_window_disables_backup_ralts_continuity_bonus() -> String:
+	var gs := _make_game_state(17)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_budew_cd(), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0))
+	var scream_tail := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90, "", "", [], [
+		{"name": "Slap", "cost": "P", "damage": "30"},
+		{"name": "Roaring Scream", "cost": "PC", "damage": ""},
+	]), 0)
+	scream_tail.damage_counters = 60
+	scream_tail.attached_energy = [
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+	]
+	player.bench.append(scream_tail)
+	player.hand.append(CardInstance.create(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS, "Basic", "P", 70), 0))
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.RALTS, "name_en": "Ralts", "card_type": "Pokemon", "count": 4},
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var turn_contract: Dictionary = s.build_turn_contract(gs, 0, {"prompt_kind": "action_selection"})
+	var continuity: Dictionary = s.build_continuity_contract(gs, 0, turn_contract)
+	var setup_debt: Dictionary = s._gardevoir_continuity_setup_debt(gs, player, 0)
+	var action_bonuses: Array = continuity.get("action_bonuses", []) if continuity.get("action_bonuses", []) is Array else []
+	var forced_bonuses: Array = s._gardevoir_continuity_action_bonuses({
+		"has_attack_window": true,
+		"need_backup_ralts_or_kirlia": true,
+		"ready_attackers": 1,
+	}, player, gs, 0)
+	var has_ralts_seed_bonus := false
+	for bonus_variant: Variant in action_bonuses:
+		if not (bonus_variant is Dictionary):
+			continue
+		var bonus: Dictionary = bonus_variant
+		if str(bonus.get("kind", "")) != "play_basic_to_bench":
+			continue
+		if str(bonus.get("reason", "")) == "continuity_seed_backup_ralts":
+			has_ralts_seed_bonus = true
+	var forced_has_ralts_seed_bonus := false
+	for bonus_variant: Variant in forced_bonuses:
+		if not (bonus_variant is Dictionary):
+			continue
+		var bonus: Dictionary = bonus_variant
+		if str(bonus.get("kind", "")) != "play_basic_to_bench":
+			continue
+		if str(bonus.get("reason", "")) == "continuity_seed_backup_ralts":
+			forced_has_ralts_seed_bonus = true
+	return run_checks([
+		assert_eq(str(turn_contract.get("intent", "")), "convert_attack", "Ready Scream Tail behind Budew should put 17.5 Gardevoir into conversion intent"),
+		assert_false(bool(setup_debt.get("need_backup_ralts_or_kirlia", false)), "Immediate conversion should close backup Ralts setup debt before continuity bonuses are built"),
+		assert_false(has_ralts_seed_bonus, "Conversion window must not add backup Ralts continuity before handing off to the ready Scream Tail"),
+		assert_false(forced_has_ralts_seed_bonus, "Continuity action bonuses must ignore backup Ralts debt when a ready attacker already has an attack window"),
+	])
+
+
+func test_175_gardevoir_active_scream_tail_conversion_does_not_reopen_backup_ralts_debt() -> String:
+	var gs := _make_game_state(17)
+	var player: PlayerState = gs.players[0]
+	var scream_tail := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90, "", "", [], [
+		{"name": "Slap", "cost": "P", "damage": "30"},
+		{"name": "Roaring Scream", "cost": "PC", "damage": ""},
+	]), 0)
+	scream_tail.damage_counters = 60
+	scream_tail.attached_energy = [
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+	]
+	player.active_pokemon = scream_tail
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0))
+	player.hand.append(CardInstance.create(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS, "Basic", "P", 70), 0))
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.RALTS, "name_en": "Ralts", "card_type": "Pokemon", "count": 4},
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var setup_debt: Dictionary = s._gardevoir_continuity_setup_debt(gs, player, 0)
+	var forced_bonuses: Array = s._gardevoir_continuity_action_bonuses({
+		"has_attack_window": true,
+		"need_backup_ralts_or_kirlia": true,
+		"ready_attackers": 1,
+	}, player, gs, 0)
+	var forced_has_ralts_seed_bonus := false
+	for bonus_variant: Variant in forced_bonuses:
+		if not (bonus_variant is Dictionary):
+			continue
+		var bonus: Dictionary = bonus_variant
+		if str(bonus.get("kind", "")) == "play_basic_to_bench" \
+				and str(bonus.get("reason", "")) == "continuity_seed_backup_ralts":
+			forced_has_ralts_seed_bonus = true
+	return run_checks([
+		assert_false(bool(setup_debt.get("need_backup_ralts_or_kirlia", false)),
+			"17.5 Scream Tail conversion should not reopen backup Ralts continuity debt after the attacker is already active"),
+		assert_false(forced_has_ralts_seed_bonus,
+			"17.5 Scream Tail conversion should not receive forced backup Ralts continuity bonuses"),
+	])
+
+
+func test_175_gardevoir_active_tm_does_not_block_ready_scream_tail_handoff() -> String:
+	var gs := _make_game_state(17)
+	var player: PlayerState = gs.players[0]
+	var active_gardevoir := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0)
+	active_gardevoir.attached_tool = CardInstance.create(_make_trainer_cd(DeckStrategyGardevoirScript.TM_EVOLUTION, "Tool"), 0)
+	player.active_pokemon = active_gardevoir
+	player.bench.clear()
+	var scream_tail := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90, "", "", [], [
+		{"name": "Slap", "cost": "P", "damage": "30"},
+		{"name": "Roaring Scream", "cost": "PC", "damage": ""},
+	]), 0)
+	scream_tail.damage_counters = 60
+	scream_tail.attached_energy = [
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+	]
+	player.bench.append(scream_tail)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var retreat_score: float = float(s.score_action_absolute({
+		"kind": "retreat",
+		"bench_target": scream_tail,
+	}, gs, 0))
+	return assert_true(retreat_score > 300.0,
+		"Once 17.5 Gardevoir has a ready Scream Tail, an active TM Evolution carrier should still hand off (retreat=%f)" % retreat_score)
+
+
+func test_175_gardevoir_without_drifloon_package_prefers_scream_tail_transition() -> String:
+	var gs := _make_game_state(8)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": "拉鲁拉丝", "name_en": "Ralts", "card_type": "Pokemon", "count": 4},
+		{"name": "奇鲁莉安", "name_en": "Kirlia", "card_type": "Pokemon", "count": 4},
+		{"name": "沙奈朵ex", "name_en": "Gardevoir ex", "card_type": "Pokemon", "count": 2},
+		{"name": "吼叫尾", "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": "含羞苞", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var preferred: String = s._preferred_transition_attacker_name(gs, 0)
+	return assert_eq(preferred, DeckStrategyGardevoirScript.SCREAM_TAIL,
+		"17.5 Gardevoir has no Drifloon/Bravery Charm package, so transition pressure should route through Scream Tail")
+
+
+func test_175_gardevoir_online_shell_benches_scream_tail_before_low_damage_attack() -> String:
+	var gs := _make_game_state(14)
+	var player: PlayerState = gs.players[0]
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	player.active_pokemon = _make_slot(_make_pokemon_cd("玛纳霏", "Basic", "W", 70), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd("沙奈朵ex", "Stage 2", "P", 310, "奇鲁莉安", "ex"), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd("奇鲁莉安", "Stage 1", "P", 80, "拉鲁拉丝"), 0))
+	var scream_tail_cd := _make_pokemon_cd("吼叫尾", "Basic", "P", 90, "", "", [], [
+		{"name": "Roaring Scream", "cost": "PC", "damage": ""},
+	])
+	player.hand.append(CardInstance.create(scream_tail_cd, 0))
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": "吼叫尾", "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": "含羞苞", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var bench_score: float = float(s.score_action_absolute({
+		"kind": "play_basic_to_bench",
+		"card": CardInstance.create(scream_tail_cd, 0),
+	}, gs, 0))
+	var attack_score: float = float(s.score_action_absolute({
+		"kind": "attack",
+		"projected_damage": 140,
+	}, gs, 0))
+	return assert_true(bench_score > attack_score,
+		"After the shell is online, 17.5 Gardevoir should bench Scream Tail before taking low-damage non-attacker attacks (bench=%f attack=%f)" % [bench_score, attack_score])
+
+
+func test_175_gardevoir_scream_tail_zero_damage_attack_does_not_use_generic_prediction() -> String:
+	var gs := _make_game_state(8)
+	var player: PlayerState = gs.players[0]
+	var scream_tail_cd := _make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90, "", "", [], [
+		{"name": "Tiny Cry", "cost": "P", "damage": "30"},
+		{"name": "Roaring Scream", "cost": "PC", "damage": ""},
+	])
+	player.active_pokemon = _make_slot(scream_tail_cd, 0)
+	player.active_pokemon.damage_counters = 40
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0))
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+	]))
+	var zero_damage_score: float = float(s.score_action_absolute({
+		"kind": "attack",
+		"attack_index": 1,
+		"projected_damage": 0,
+	}, gs, 0))
+	var chip_attack_score: float = float(s.score_action_absolute({
+		"kind": "attack",
+		"attack_index": 0,
+		"projected_damage": 30,
+	}, gs, 0))
+	return assert_true(chip_attack_score > zero_damage_score,
+		"An explicit 0-damage Scream Tail attack must not borrow generic predicted damage and outrank a real chip attack (chip=%f zero=%f)" % [chip_attack_score, zero_damage_score])
+
+
+func test_175_gardevoir_active_scream_tail_embrace_outscores_low_damage_slap() -> String:
+	var gs := _make_game_state(8)
+	var player: PlayerState = gs.players[0]
+	var scream_tail := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90, "", "", [], [
+		{"name": "Slap", "cost": "P", "damage": "30"},
+		{"name": "Roaring Scream", "cost": "PC", "damage": ""},
+	]), 0)
+	scream_tail.damage_counters = 20
+	scream_tail.attached_energy.append(CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0))
+	player.active_pokemon = scream_tail
+	var gardevoir := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0)
+	player.bench.append(gardevoir)
+	player.discard_pile.append(CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0))
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Iron Hands ex", "Basic", "L", 230, "", "ex"), 1)
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+	]))
+	var embrace_score: float = float(s.score_action_absolute({
+		"kind": "use_ability",
+		"source_slot": gardevoir,
+		"ability_index": 0,
+		"targets": [{
+			"embrace_energy": [player.discard_pile[0]],
+			"embrace_target": [scream_tail],
+		}],
+	}, gs, 0))
+	var slap_score: float = float(s.score_action_absolute({
+		"kind": "attack",
+		"attack_index": 0,
+		"projected_damage": 30,
+	}, gs, 0))
+	return assert_true(embrace_score > slap_score,
+		"Active Scream Tail should keep using Psychic Embrace before settling for low-damage Slap (embrace=%f slap=%f)" % [embrace_score, slap_score])
+
+
+func test_175_gardevoir_scream_tail_prediction_requires_roaring_scream_cost() -> String:
+	var scream_tail := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90, "", "", [], [
+		{"name": "Slap", "cost": "P", "damage": "30"},
+		{"name": "Roaring Scream", "cost": "PC", "damage": ""},
+	]), 0)
+	scream_tail.damage_counters = 20
+	scream_tail.attached_energy.append(CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0))
+	var s := _new_strategy()
+	var now: Dictionary = s.predict_attacker_damage(scream_tail, 0)
+	var after: Dictionary = s.predict_attacker_damage(scream_tail, 1)
+	return run_checks([
+		assert_false(bool(now.get("can_attack", false)),
+			"One Energy only pays Scream Tail's Slap; Roaring Scream pressure should not be treated as attack-ready"),
+		assert_true(bool(after.get("can_attack", false)),
+			"One extra Psychic Embrace should pay Roaring Scream and make the pressure route live"),
+	])
+
+
+func test_175_gardevoir_cresselia_attack_scores_counter_conversion_ko() -> String:
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": "Cresselia", "name_en": "Cresselia", "card_type": "Pokemon", "effect_id": CRESSELIA_EFFECT_ID, "count": 1},
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var gs := _make_game_state(17)
+	var player: PlayerState = gs.players[0]
+	var cresselia := _make_slot(_make_cresselia_cd(), 0)
+	cresselia.attached_energy.append(CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0))
+	player.active_pokemon = cresselia
+	var gardevoir := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0)
+	gardevoir.damage_counters = 20
+	var kirlia := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.KIRLIA, "Stage 1", "P", 80, DeckStrategyGardevoirScript.RALTS), 0)
+	kirlia.damage_counters = 20
+	player.bench.clear()
+	player.bench.append(gardevoir)
+	player.bench.append(kirlia)
+	var opponent_active := _make_slot(_make_pokemon_cd("Iron Hands ex", "Basic", "L", 230, "", "ex"), 1)
+	opponent_active.damage_counters = 200
+	gs.players[1].active_pokemon = opponent_active
+	var attack_score: float = float(s.score_action_absolute({
+		"kind": "attack",
+		"attack_index": 0,
+		"projected_damage": 0,
+	}, gs, 0))
+	var low_attack_score: float = float(s.score_action_absolute({
+		"kind": "attack",
+		"attack_index": 1,
+		"projected_damage": 110,
+	}, gs, 0))
+	return assert_true(attack_score > low_attack_score,
+		"Cresselia should prioritize Moonglow Reverse when the damage-counter pool converts a prize (moon=%f low=%f)" % [attack_score, low_attack_score])
+
+
+func test_175_gardevoir_hands_off_budew_to_ready_cresselia_prize_route() -> String:
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": "Cresselia", "name_en": "Cresselia", "card_type": "Pokemon", "effect_id": CRESSELIA_EFFECT_ID, "count": 1},
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var gs := _make_game_state(17)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_budew_cd(), 0)
+	player.bench.clear()
+	var gardevoir := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0)
+	gardevoir.damage_counters = 20
+	var cresselia := _make_slot(_make_cresselia_cd(), 0)
+	cresselia.attached_energy.append(CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0))
+	player.bench.append(gardevoir)
+	player.bench.append(cresselia)
+	var opponent_active := _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	opponent_active.damage_counters = 200
+	gs.players[1].active_pokemon = opponent_active
+	var retreat_score: float = float(s.score_action_absolute({
+		"kind": "retreat",
+		"bench_target": cresselia,
+	}, gs, 0))
+	var budew_attack_score: float = float(s.score_action_absolute({
+		"kind": "attack",
+		"projected_damage": 10,
+	}, gs, 0))
+	return assert_true(retreat_score > budew_attack_score,
+		"Budew should hand off to ready Cresselia when Moonglow Reverse converts a prize (retreat=%f budew=%f)" % [retreat_score, budew_attack_score])
+
+
+func test_175_gardevoir_non_attacker_hands_off_to_ready_cresselia_pressure() -> String:
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": "Cresselia", "name_en": "Cresselia", "card_type": "Pokemon", "effect_id": CRESSELIA_EFFECT_ID, "count": 1},
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var gs := _make_game_state(17)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.MANAPHY, "Basic", "W", 70), 0)
+	player.bench.clear()
+	var gardevoir := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0)
+	gardevoir.damage_counters = 20
+	var kirlia := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.KIRLIA, "Stage 1", "P", 80, DeckStrategyGardevoirScript.RALTS), 0)
+	kirlia.damage_counters = 20
+	var cresselia := _make_slot(_make_cresselia_cd(), 0)
+	cresselia.attached_energy.append(CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0))
+	player.bench.append(gardevoir)
+	player.bench.append(kirlia)
+	player.bench.append(cresselia)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var retreat_score: float = float(s.score_action_absolute({
+		"kind": "retreat",
+		"bench_target": cresselia,
+	}, gs, 0))
+	var end_score: float = float(s.score_action_absolute({"kind": "end_turn"}, gs, 0))
+	return assert_true(retreat_score > end_score + 300.0,
+		"Non-attacker active should hand off to ready Cresselia once the Stage 2 shell has a damage-counter pool (retreat=%f end=%f)" % [retreat_score, end_score])
+
+
+func test_175_gardevoir_embrace_seeds_cresselia_counter_route() -> String:
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": "Cresselia", "name_en": "Cresselia", "card_type": "Pokemon", "effect_id": CRESSELIA_EFFECT_ID, "count": 1},
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var gs := _make_game_state(17)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_budew_cd(), 0)
+	player.bench.clear()
+	var gardevoir := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0)
+	var cresselia := _make_slot(_make_cresselia_cd(), 0)
+	cresselia.attached_energy.append(CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0))
+	player.bench.append(gardevoir)
+	player.bench.append(cresselia)
+	var opponent_active := _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	opponent_active.damage_counters = 200
+	gs.players[1].active_pokemon = opponent_active
+	var psychic := CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0)
+	player.discard_pile.append(psychic)
+	var embrace_score: float = float(s.score_action_absolute({
+		"kind": "use_ability",
+		"source_slot": gardevoir,
+		"ability_index": 0,
+		"targets": [{
+			"embrace_energy": [psychic],
+			"embrace_target": [cresselia],
+		}],
+	}, gs, 0))
+	var end_score: float = float(s.score_action_absolute({"kind": "end_turn"}, gs, 0))
+	return assert_true(embrace_score > end_score + 300.0,
+		"Psychic Embrace should seed Cresselia's Moonglow Reverse pool when that creates a counter-prize route (embrace=%f end=%f)" % [embrace_score, end_score])
+
+
+func test_175_gardevoir_reserves_attacker_slot_by_searching_scream_tail_over_extra_ralts() -> String:
+	var gs := _make_game_state(6)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.MANAPHY, "Basic", "W", 70), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_budew_cd(), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.KIRLIA, "Stage 1", "P", 80, DeckStrategyGardevoirScript.RALTS), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS, "Basic", "P", 70), 0))
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var scream_score: float = float(s.score_interaction_target(
+		CardInstance.create(_make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90), 0),
+		{"id": "artazon_pokemon"},
+		{"game_state": gs, "player_index": 0}
+	))
+	var ralts_score: float = float(s.score_interaction_target(
+		CardInstance.create(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS, "Basic", "P", 70), 0),
+		{"id": "artazon_pokemon"},
+		{"game_state": gs, "player_index": 0}
+	))
+	return assert_true(scream_score > ralts_score,
+		"17.5 Gardevoir should reserve a bench slot for Scream Tail once the shell body count is enough (scream=%f ralts=%f)" % [scream_score, ralts_score])
+
+
+func test_175_gardevoir_online_shell_picks_nest_ball_before_vessel_when_missing_attacker() -> String:
+	var gs := _make_game_state(12)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.MANAPHY, "Basic", "W", 70), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.KIRLIA, "Stage 1", "P", 80, DeckStrategyGardevoirScript.RALTS), 0))
+	var nest_ball := CardInstance.create(_make_trainer_cd(DeckStrategyGardevoirScript.NEST_BALL), 0)
+	var vessel := CardInstance.create(_make_trainer_cd(DeckStrategyGardevoirScript.EARTHEN_VESSEL), 0)
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var picked: Variant = s.pick_search_item([vessel, nest_ball], gs, 0)
+	return assert_true(picked == nest_ball,
+		"17.5 Gardevoir should pick Nest Ball over Earthen Vessel when the online shell still needs its first attacker body")
+
+
+func test_175_gardevoir_reserves_last_bench_slot_for_attacker_over_support_basic() -> String:
+	var gs := _make_game_state(14)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.MANAPHY, "Basic", "W", 70), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.KIRLIA, "Stage 1", "P", 80, DeckStrategyGardevoirScript.RALTS), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS, "Basic", "P", 70), 0))
+	player.bench.append(_make_slot(_make_budew_cd(), 0))
+	var support_cd := _make_pokemon_cd(DeckStrategyGardevoirScript.MUNKIDORI, "Basic", "D", 110)
+	var attacker_cd := _make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90)
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var support_score: float = float(s.score_action_absolute({
+		"kind": "play_basic_to_bench",
+		"card": CardInstance.create(support_cd, 0),
+	}, gs, 0))
+	var attacker_score: float = float(s.score_action_absolute({
+		"kind": "play_basic_to_bench",
+		"card": CardInstance.create(attacker_cd, 0),
+	}, gs, 0))
+	return run_checks([
+		assert_true(support_score < 0.0,
+			"Support basics must not tie end turn when the final bench slot belongs to the first attacker (support=%f)" % support_score),
+		assert_true(attacker_score > support_score + 500.0,
+			"Scream Tail should strongly outrank support basics for the reserved attacker slot (attacker=%f support=%f)" % [attacker_score, support_score]),
+	])
+
+
+func test_175_gardevoir_reserves_conversion_support_slot_over_klefki() -> String:
+	var gs := _make_game_state(15)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_budew_cd(), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.KIRLIA, "Stage 1", "P", 80, DeckStrategyGardevoirScript.RALTS), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS, "Basic", "P", 70), 0))
+	var klefki_cd := _make_pokemon_cd(DeckStrategyGardevoirScript.KLEFKI, "Basic", "P", 70)
+	var munkidori_cd := _make_pokemon_cd(DeckStrategyGardevoirScript.MUNKIDORI, "Basic", "D", 110)
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var klefki_score: float = float(s.score_action_absolute({
+		"kind": "play_basic_to_bench",
+		"card": CardInstance.create(klefki_cd, 0),
+	}, gs, 0))
+	var munkidori_score: float = float(s.score_action_absolute({
+		"kind": "play_basic_to_bench",
+		"card": CardInstance.create(munkidori_cd, 0),
+	}, gs, 0))
+	return run_checks([
+		assert_true(klefki_score < 0.0,
+			"17.5 Gardevoir should keep the remaining two bench slots for Scream Tail plus Munkidori, not late Klefki padding (klefki=%f)" % klefki_score),
+		assert_true(munkidori_score > klefki_score + 250.0,
+			"Munkidori should outrank Klefki as the conversion support body for the Budew/Scream Tail route (munkidori=%f klefki=%f)" % [munkidori_score, klefki_score]),
+	])
+
+
+func test_175_gardevoir_routes_darkness_to_munkidori_before_scream_tail() -> String:
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var gs := _make_game_state(17)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_budew_cd(), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.KIRLIA, "Stage 1", "P", 80, DeckStrategyGardevoirScript.RALTS), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90, "", "", [], [
+		{"name": "Slap", "cost": "P", "damage": "30"},
+		{"name": "Roaring Scream", "cost": "PC", "damage": ""},
+	]), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.MUNKIDORI, "Basic", "P", 110, "", "", [
+		{"name": "Adrena-Brain", "text": "Move damage counters."},
+	], [
+		{"name": "Mind Bend", "cost": "PC", "damage": "60"},
+	]), 0))
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220), 1)
+	gs.players[1].active_pokemon.damage_counters = 190
+	player.discard_pile = [
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+		CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0),
+	]
+	var dark := CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.DARK_ENERGY, "D"), 0)
+	var scream_score: float = s.score_action_absolute({
+		"kind": "attach_energy",
+		"card": dark,
+		"target_slot": player.bench[2],
+	}, gs, 0)
+	var munkidori_score: float = s.score_action_absolute({
+		"kind": "attach_energy",
+		"card": dark,
+		"target_slot": player.bench[3],
+	}, gs, 0)
+	return run_checks([
+		assert_true(munkidori_score > scream_score,
+			"17.5 Gardevoir should preserve Darkness for Munkidori conversion when Scream Tail can be paid by Psychic Embrace (munkidori=%f scream=%f)" % [munkidori_score, scream_score]),
+		assert_true(munkidori_score >= 500.0,
+			"Darkness to Munkidori should be a real conversion setup action in the 17.5 Budew shell (got %f)" % munkidori_score),
+	])
+
+
+func test_175_gardevoir_blocks_energy_switch_moving_darkness_off_munkidori() -> String:
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var gs := _make_game_state(13)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_budew_cd(), 0)
+	player.bench.clear()
+	var munkidori := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.MUNKIDORI, "Basic", "D", 110), 0)
+	var kirlia := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.KIRLIA, "Stage 1", "P", 80, DeckStrategyGardevoirScript.RALTS), 0)
+	var dark := CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.DARK_ENERGY, "D"), 0)
+	munkidori.attached_energy.append(dark)
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0))
+	player.bench.append(kirlia)
+	player.bench.append(munkidori)
+	var energy_switch := CardInstance.create(_make_trainer_cd("能量转移"), 0)
+	energy_switch.card_data.name_en = "Energy Switch"
+	var score: float = float(s.score_action_absolute({
+		"kind": "play_trainer",
+		"card": energy_switch,
+		"targets": [{
+			"energy_assignment": [{
+				"source": dark,
+				"target": kirlia,
+			}],
+		}],
+	}, gs, 0))
+	return assert_true(score < -200.0,
+		"17.5 Gardevoir should block Energy Switch lines that move Darkness off Munkidori (score=%f)" % score)
+
+
+func test_175_gardevoir_scores_unresolved_munkidori_followup_when_ko_live() -> String:
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var gs := _make_game_state(19)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90), 0)
+	player.active_pokemon.damage_counters = 30
+	var munkidori := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.MUNKIDORI, "Basic", "D", 110, "", "", [
+		{"name": "Adrena-Brain", "text": "Move damage counters."},
+	]), 0)
+	munkidori.attached_energy.append(CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.DARK_ENERGY, "D"), 0))
+	player.bench.append(munkidori)
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0))
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	gs.players[1].active_pokemon.damage_counters = 190
+	var score: float = float(s.score_action_absolute({
+		"kind": "use_ability",
+		"source_slot": munkidori,
+		"ability_index": 0,
+		"targets": [],
+		"requires_interaction": true,
+	}, gs, 0))
+	return assert_true(score >= 500.0,
+		"Unresolved Munkidori follow-up should still score as a KO conversion action so the resolver can pick targets (score=%f)" % score)
+
+
+func test_175_gardevoir_munkidori_damage_transfer_debt_beats_end_turn_without_ko() -> String:
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var gs := _make_game_state(21)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_budew_cd(), 0)
+	var gardevoir := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex", [
+		{"name": "Psychic Embrace", "text": "Attach Psychic Energy from discard."},
+	]), 0)
+	gardevoir.damage_counters = 30
+	player.bench.append(gardevoir)
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.KIRLIA, "Stage 1", "P", 80, DeckStrategyGardevoirScript.RALTS), 0))
+	var scream_tail := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.SCREAM_TAIL, "Basic", "P", 90, "", "", [], [
+		{"name": "Slap", "cost": "P", "damage": "30"},
+		{"name": "Roaring Scream", "cost": "PC", "damage": ""},
+	]), 0)
+	scream_tail.damage_counters = 30
+	player.bench.append(scream_tail)
+	var munkidori := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.MUNKIDORI, "Basic", "D", 110, "", "", [
+		{"name": "Adrena-Brain", "text": "Move damage counters."},
+	]), 0)
+	munkidori.attached_energy.append(CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.DARK_ENERGY, "D"), 0))
+	player.bench.append(munkidori)
+	var charizard := _make_slot(_make_pokemon_cd("喷火龙ex", "Stage 2", "D", 330, "", "ex"), 1)
+	charizard.damage_counters = 100
+	gs.players[1].active_pokemon = charizard
+	var pidgey := _make_slot(_make_pokemon_cd("波波", "Basic", "C", 60), 1)
+	pidgey.damage_counters = 20
+	gs.players[1].bench.append(pidgey)
+	var contract: Dictionary = s.build_turn_contract(gs, 0, {"prompt_kind": "action_selection"})
+	var action := {
+		"kind": "use_ability",
+		"source_slot": munkidori,
+		"ability_index": 0,
+		"targets": [],
+		"requires_interaction": true,
+	}
+	var action_score: float = float(s.score_action_absolute_with_plan(action, gs, 0, contract))
+	var end_score: float = float(s.score_action_absolute_with_plan({"kind": "end_turn"}, gs, 0, contract))
+	var context := {"game_state": gs, "player_index": 0, "turn_contract": contract}
+	var source_gardevoir_score: float = float(s.score_interaction_target(gardevoir, {"id": "source_pokemon"}, context))
+	var source_scream_score: float = float(s.score_interaction_target(scream_tail, {"id": "source_pokemon"}, context))
+	var target_pidgey_score: float = float(s.score_interaction_target(pidgey, {"id": "target_damage_counters"}, context))
+	var target_charizard_score: float = float(s.score_interaction_target(charizard, {"id": "target_damage_counters"}, context))
+	return run_checks([
+		assert_true(bool(contract.get("flags", {}).get("munkidori_damage_transfer_debt", false)),
+			"Turn contract should mark unresolved Munkidori damage-transfer debt before ending the turn"),
+		assert_true(action_score > end_score + 250.0,
+			"Munkidori damage transfer should replace stale end_turn even without an immediate KO (munkidori=%f end=%f)" % [action_score, end_score]),
+		assert_true(source_gardevoir_score > source_scream_score,
+			"Munkidori should prefer non-attacker support damage over draining Scream Tail damage (gardevoir=%f scream=%f)" % [source_gardevoir_score, source_scream_score]),
+		assert_true(target_pidgey_score > target_charizard_score,
+			"Munkidori should prefer the low-HP bench prize over padding Charizard damage (pidgey=%f charizard=%f)" % [target_pidgey_score, target_charizard_score]),
+	])
+
 
 func test_score_evolve_kirlia_higher_than_generic() -> String:
 	var gs := _make_game_state()
@@ -396,6 +1920,103 @@ func test_psychic_energy_manual_attach_allows_active_drifloon_emergency_line() -
 #  训练师评分测试
 # ============================================================
 
+func test_175_gardevoir_manual_psychic_recharges_existing_scream_tail_when_no_ready_attacker() -> String:
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var gs := _make_game_state(17)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_budew_cd(), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(
+		DeckStrategyGardevoirScript.GARDEVOIR_EX,
+		"Stage 2",
+		"P",
+		310,
+		DeckStrategyGardevoirScript.KIRLIA,
+		"ex"
+	), 0))
+	var scream_tail := _make_slot(_make_pokemon_cd(
+		DeckStrategyGardevoirScript.SCREAM_TAIL,
+		"Basic",
+		"P",
+		90,
+		"",
+		"",
+		[],
+		[
+			{"name": "Roaring Scream", "cost": "PC", "damage": ""},
+		]
+	), 0)
+	player.bench.append(scream_tail)
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var psychic := CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0)
+	var attach_score: float = s.score_action_absolute({
+		"kind": "attach_energy",
+		"card": psychic,
+		"target_slot": scream_tail,
+	}, gs, 0)
+	var end_score: float = s.score_action_absolute({"kind": "end_turn"}, gs, 0)
+	return run_checks([
+		assert_true(attach_score >= 300.0,
+			"17.5 Gardevoir should recharge an existing unready Scream Tail once the Stage 2 shell is online (attach=%f)" % attach_score),
+		assert_true(attach_score > end_score + 250.0,
+			"Manual Psychic to Scream Tail should beat passing when no attacker is ready (attach=%f end=%f)" % [attach_score, end_score]),
+	])
+
+
+func test_175_gardevoir_manual_darkness_recharges_scream_tail_when_munkidori_absent() -> String:
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+		{"name": DeckStrategyGardevoirScript.MUNKIDORI, "name_en": "Munkidori", "card_type": "Pokemon", "count": 3},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+	]))
+	var gs := _make_game_state(17)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_budew_cd(), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(
+		DeckStrategyGardevoirScript.GARDEVOIR_EX,
+		"Stage 2",
+		"P",
+		310,
+		DeckStrategyGardevoirScript.KIRLIA,
+		"ex"
+	), 0))
+	var scream_tail := _make_slot(_make_pokemon_cd(
+		DeckStrategyGardevoirScript.SCREAM_TAIL,
+		"Basic",
+		"P",
+		90,
+		"",
+		"",
+		[],
+		[
+			{"name": "Roaring Scream", "cost": "PC", "damage": ""},
+		]
+	), 0)
+	player.bench.append(scream_tail)
+	player.discard_pile.append(CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0))
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	var dark := CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.DARK_ENERGY, "D"), 0)
+	var attach_score: float = s.score_action_absolute({
+		"kind": "attach_energy",
+		"card": dark,
+		"target_slot": scream_tail,
+	}, gs, 0)
+	var end_score: float = s.score_action_absolute({"kind": "end_turn"}, gs, 0)
+	return run_checks([
+		assert_true(attach_score >= 300.0,
+			"17.5 Gardevoir should use Darkness as Scream Tail colorless payment when Munkidori is not on board (attach=%f)" % attach_score),
+		assert_true(attach_score > end_score + 250.0,
+			"Darkness to Scream Tail should beat passing when it is the only visible attacker recharge route (attach=%f end=%f)" % [attach_score, end_score]),
+	])
+
+
 func test_trainer_earthen_vessel_high_mid_game() -> String:
 	var gs := _make_game_state(3)
 	# 手里有超能量时大地容器价值更高（弃超能 = Embrace 燃料）
@@ -474,6 +2095,77 @@ func test_arven_picks_ultra_ball_when_need_gardevoir() -> String:
 	if picked is CardInstance:
 		picked_name = str((picked as CardInstance).card_data.name)
 	return assert_eq(picked_name, "高级球", "需要沙奈朵时派帕应优先找高级球")
+
+
+func test_175_gardevoir_research_outranks_arven_when_kirlia_online_without_direct_gardevoir_search() -> String:
+	var gs := _make_game_state(5)
+	var player := gs.players[0]
+	var kirlia_en_cd := _make_pokemon_cd("Kirlia", "Stage 1", "P", 80, "Ralts")
+	kirlia_en_cd.name_en = "Kirlia"
+	player.bench.append(_make_slot(kirlia_en_cd, 0))
+	player.bench.append(_make_slot(kirlia_en_cd, 0))
+	player.deck.append(CardInstance.create(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0))
+	player.deck.append(CardInstance.create(_make_trainer_cd(DeckStrategyGardevoirScript.SECRET_BOX), 0))
+	player.deck.append(CardInstance.create(_make_tool_cd(DeckStrategyGardevoirScript.TM_EVOLUTION), 0))
+	for i: int in 12:
+		player.deck.append(CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0))
+	var research_cd := _make_trainer_cd("Professor's Research", "Supporter")
+	research_cd.name_en = "Professor's Research"
+	research_cd.effect_id = DeckStrategyGardevoirScript.PROFESSORS_RESEARCH_EFFECT_ID
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.RALTS, "name_en": "Ralts", "card_type": "Pokemon", "count": 4},
+		{"name": DeckStrategyGardevoirScript.KIRLIA, "name_en": "Kirlia", "card_type": "Pokemon", "count": 4},
+		{"name": DeckStrategyGardevoirScript.GARDEVOIR_EX, "name_en": "Gardevoir ex", "card_type": "Pokemon", "count": 2},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+	]))
+	var research_score: float = float(s.score_action_absolute(
+		{"kind": "play_trainer", "card": CardInstance.create(research_cd, 0)},
+		gs,
+		0
+	))
+	var arven_score: float = float(s.score_action_absolute(
+		{"kind": "play_trainer", "card": CardInstance.create(_make_trainer_cd(DeckStrategyGardevoirScript.ARVEN, "Supporter"), 0)},
+		gs,
+		0
+	))
+	return assert_true(
+		research_score > arven_score,
+		"17.5 Gardevoir should draw toward the first Gardevoir ex instead of using Arven for Secret Box/TM detours (research=%f arven=%f)" % [research_score, arven_score]
+	)
+
+
+func test_175_gardevoir_low_deck_blocks_research_for_first_gardevoir_churn() -> String:
+	var gs := _make_game_state(12)
+	var player := gs.players[0]
+	player.deck.clear()
+	for i: int in 5:
+		if i == 0:
+			player.deck.append(CardInstance.create(_make_pokemon_cd(DeckStrategyGardevoirScript.GARDEVOIR_EX, "Stage 2", "P", 310, DeckStrategyGardevoirScript.KIRLIA, "ex"), 0))
+		else:
+			player.deck.append(CardInstance.create(_make_energy_cd(DeckStrategyGardevoirScript.PSYCHIC_ENERGY, "P"), 0))
+	player.active_pokemon = _make_slot(_make_budew_cd(), 0)
+	player.bench.clear()
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.KIRLIA, "Stage 1", "P", 80, DeckStrategyGardevoirScript.RALTS), 0))
+	var research_cd := _make_trainer_cd("Professor's Research", "Supporter")
+	research_cd.name_en = "Professor's Research"
+	research_cd.effect_id = DeckStrategyGardevoirScript.PROFESSORS_RESEARCH_EFFECT_ID
+	var s := _new_strategy()
+	s.configure_from_deck(_make_deck_data(610080, [
+		{"name": DeckStrategyGardevoirScript.RALTS, "name_en": "Ralts", "card_type": "Pokemon", "count": 4},
+		{"name": DeckStrategyGardevoirScript.KIRLIA, "name_en": "Kirlia", "card_type": "Pokemon", "count": 4},
+		{"name": DeckStrategyGardevoirScript.GARDEVOIR_EX, "name_en": "Gardevoir ex", "card_type": "Pokemon", "count": 2},
+		{"name": "Budew", "name_en": "Budew", "card_type": "Pokemon", "effect_id": BUDEW_EFFECT_ID, "count": 1},
+		{"name": DeckStrategyGardevoirScript.SCREAM_TAIL, "name_en": "Scream Tail", "card_type": "Pokemon", "count": 1},
+	]))
+	var research_score: float = float(s.score_action_absolute(
+		{"kind": "play_trainer", "card": CardInstance.create(research_cd, 0)},
+		gs,
+		0
+	))
+	return assert_true(research_score <= 120.0,
+		"Low-deck Gardevoir should not burn Professor's Research just to gamble for first Stage 2 without an attack window (score=%f)" % research_score)
 
 
 func test_second_gardevoir_evolve_low_when_losing_last_kirlia() -> String:

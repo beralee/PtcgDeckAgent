@@ -1,0 +1,51 @@
+{
+	"name": "月亮伊布ex",
+	"card_type": "Pokemon",
+	"mechanic": "ex",
+	"label": "",
+	"description": "【恶】 月亮幻影 160\n令对手的战斗宝可梦陷入【混乱】状态。\n\n【雷】【超】【恶】 缟玛瑙 \n将这只宝可梦身上附着的所有能量放于弃牌区，自己拿取1张奖赏卡。\n\n",
+	"yoren_code": "Y1561",
+	"set_code": "CSV9.5C",
+	"card_index": "104",
+	"set_code_en": "PRE",
+	"card_index_en": "60",
+	"name_en": "Umbreon ex",
+	"artist": "takuyoa",
+	"rarity": "RR",
+	"release_date": "2026-06-12T00:00:00+08:00",
+	"regulation_mark": "H",
+	"effect_id": "233350ffecdbfac2a8fab27e7f7da282",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9.5C/104.png",
+	"image_local_path": "user://cards/images/CSV9.5C/104.png",
+	"is_tags": [],
+	"regulation_standard": true,
+	"regulation_expanded": true,
+	"energy_type": "D",
+	"stage": "Stage 1",
+	"hp": 280,
+	"weakness_energy": "G",
+	"weakness_value": "×2",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"evolves_from": "伊布",
+	"ancient_trait": "Tera",
+	"attacks": [
+		{
+			"name": "月亮幻影",
+			"text": "令对手的战斗宝可梦陷入【混乱】状态。",
+			"cost": "DCC",
+			"damage": "160",
+			"is_vstar_power": false
+		},
+		{
+			"name": "缟玛瑙",
+			"text": "将这只宝可梦身上附着的所有能量放于弃牌区，自己拿取1张奖赏卡。",
+			"cost": "LPD",
+			"damage": "",
+			"is_vstar_power": false
+		}
+	],
+	"abilities": [],
+	"energy_provides": ""
+}

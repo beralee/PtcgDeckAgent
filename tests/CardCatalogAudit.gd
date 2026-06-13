@@ -205,7 +205,7 @@ func _smoke_non_pokemon(card_data: CardData) -> Dictionary:
 				return {"status": "FAIL_REGISTRY", "detail": "missing registry"}
 			if not effect.can_execute(card, gsm.game_state):
 				return {"status": "SKIP", "detail": "fixture cannot satisfy can_execute"}
-			var context: Dictionary = _auto_select_context(effect.get_interaction_steps(card, gsm.game_state))
+			var context: Dictionary = _auto_select_effect_context(effect, card, gsm.game_state)
 			if not gsm.play_trainer(0, card, [context]):
 				return {"status": "FAIL_SMOKE", "detail": "play_trainer returned false"}
 		"Tool":
@@ -252,7 +252,7 @@ func _smoke_pokemon(card_data: CardData, processor: EffectProcessor) -> String:
 
 	if processor.has_effect(card_data.effect_id):
 		var effect: BaseEffect = processor.get_effect(card_data.effect_id)
-		var ability_context: Dictionary = _auto_select_context(effect.get_interaction_steps(card, gsm.game_state))
+		var ability_context: Dictionary = _auto_select_effect_context(effect, card, gsm.game_state)
 		if effect.has_method("can_use_ability"):
 			if bool(effect.call("can_use_ability", attacker, gsm.game_state)):
 				processor.execute_ability_effect(attacker, 0, [ability_context], gsm.game_state)
@@ -262,7 +262,7 @@ func _smoke_pokemon(card_data: CardData, processor: EffectProcessor) -> String:
 				bench_slot.pokemon_stack.append(bench_card)
 				bench_slot.turn_played = 0
 				player.bench.insert(0, bench_slot)
-				var bench_context: Dictionary = _auto_select_context(effect.get_interaction_steps(bench_card, gsm.game_state))
+				var bench_context: Dictionary = _auto_select_effect_context(effect, bench_card, gsm.game_state)
 				if bool(effect.call("can_use_ability", bench_slot, gsm.game_state)):
 					processor.execute_ability_effect(bench_slot, 0, [bench_context], gsm.game_state)
 				else:
@@ -525,29 +525,64 @@ func _has_scripted_attack(card_data: CardData) -> bool:
 	return false
 
 
-func _auto_select_context(steps: Array[Dictionary]) -> Dictionary:
+func _auto_select_effect_context(effect: BaseEffect, card: CardInstance, state: GameState) -> Dictionary:
+	if effect == null:
+		return {}
 	var context: Dictionary = {}
-	for step in steps:
-		var step_id: String = str(step.get("id", ""))
-		if step_id == "":
-			continue
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
+	var step_index := 0
+	while step_index < steps.size():
+		var step: Dictionary = steps[step_index]
+		_auto_select_step_into_context(step, context)
+		step_index += 1
 
-		var items: Array = step.get("items", [])
-		var max_select: int = int(step.get("max_select", 0))
-		var min_select: int = int(step.get("min_select", 0))
-		var desired_count := maxi(min_select, max_select)
-		desired_count = mini(desired_count, items.size())
-
-		var selected: Array = []
-		for i in range(desired_count):
-			selected.append(items[i])
-		context[step_id] = selected
-
+		var followup_steps: Array[Dictionary] = effect.get_followup_interaction_steps(card, state, context)
+		for followup: Dictionary in followup_steps:
+			var followup_id := str(followup.get("id", ""))
+			if followup_id != "" and (context.has(followup_id) or _pending_steps_have_id(steps, step_index, followup_id)):
+				continue
+			steps.insert(step_index, followup)
 	return context
+
+
+func _auto_select_step_into_context(step: Dictionary, context: Dictionary) -> void:
+	var step_id: String = str(step.get("id", ""))
+	if step_id == "":
+		return
+
+	var items: Array = step.get("items", [])
+	var max_select: int = int(step.get("max_select", 0))
+	var min_select: int = int(step.get("min_select", 0))
+	var desired_count := maxi(min_select, max_select)
+	desired_count = mini(desired_count, items.size())
+
+	var selected: Array = []
+	for i in range(desired_count):
+		selected.append(items[i])
+	context[step_id] = selected
+
+
+func _pending_steps_have_id(steps: Array[Dictionary], start_index: int, step_id: String) -> bool:
+	for i in range(start_index, steps.size()):
+		if str(steps[i].get("id", "")) == step_id:
+			return true
+	return false
 
 
 func _load_cached_cards() -> Array[CardData]:
 	var cards: Array[CardData] = []
+	var seen: Dictionary = {}
+	for card: CardData in CardDatabase.get_all_cards():
+		if card == null:
+			continue
+		var uid := card.get_uid()
+		if seen.has(uid):
+			continue
+		seen[uid] = true
+		cards.append(card)
+	if not cards.is_empty():
+		return cards
+
 	var dir := DirAccess.open(CardDatabase.CARDS_DIR)
 	if dir == null:
 		return cards

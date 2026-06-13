@@ -80,6 +80,14 @@ const PIDGEY_EN := "Pidgey"
 const CHARMANDER_EN := "Charmander"
 const DUSKULL_EN := "Duskull"
 const ROTOM_V_EN := "Rotom V"
+const BUDEW_EFFECT_ID := "28505a8ad6e07e74382c1b5e09737932"
+const BUDEW_EN := "Budew"
+const DRIFLOON_EN := "Drifloon"
+const SCREAM_TAIL_EN := "Scream Tail"
+const BRAVERY_CHARM_EN := "Bravery Charm"
+const CRESSELIA_EFFECT_ID := "5a56387211377cf56bfeb12751a5eed3"
+const CRESSELIA_EN := "Cresselia"
+const PROFESSORS_RESEARCH_EFFECT_ID := "aecd80ca2722885c3d062a2255346f3e"
 
 const CORE_NAMES: Array[String] = [RALTS, KIRLIA, GARDEVOIR_EX]
 const CONTROL_NAMES: Array[String] = [KLEFKI, FLUTTER_MANE]
@@ -88,6 +96,103 @@ const SUPPORT_NAMES: Array[String] = [MUNKIDORI, MANAPHY, KLEFKI, FLUTTER_MANE]
 const BENCH_PRIORITY_NAMES: Array[String] = [RALTS, KLEFKI, FLUTTER_MANE, DRIFLOON, SCREAM_TAIL, MUNKIDORI, MANAPHY]
 const SEARCH_PRIORITY_NAMES: Array[String] = [RALTS, KIRLIA, GARDEVOIR_EX, DRIFLOON, SCREAM_TAIL, MUNKIDORI, FLUTTER_MANE, MANAPHY]
 const SCREAM_TAIL_PRIZE_LOOKAHEAD_DAMAGE := 220
+
+var _configured_deck_id: int = 0
+var _configured_deck_cards_known: bool = false
+var _configured_has_budew: bool = false
+var _configured_has_drifloon: bool = false
+var _configured_has_scream_tail: bool = false
+var _configured_has_bravery_charm: bool = false
+var _configured_has_munkidori: bool = false
+var _configured_has_cresselia: bool = false
+
+
+func configure_from_deck(deck: DeckData) -> void:
+	_configured_deck_id = int(deck.id) if deck != null else 0
+	_configured_deck_cards_known = deck != null and not deck.cards.is_empty()
+	_configured_has_budew = false
+	_configured_has_drifloon = false
+	_configured_has_scream_tail = false
+	_configured_has_bravery_charm = false
+	_configured_has_munkidori = false
+	_configured_has_cresselia = false
+	if deck == null:
+		return
+	for entry_variant: Variant in deck.cards:
+		if not (entry_variant is Dictionary):
+			continue
+		var entry: Dictionary = entry_variant
+		if str(entry.get("effect_id", "")) == BUDEW_EFFECT_ID \
+				or _deck_entry_matches_name(entry, BUDEW_EN, BUDEW_EN):
+			_configured_has_budew = true
+		if _deck_entry_matches_name(entry, DRIFLOON, DRIFLOON_EN):
+			_configured_has_drifloon = true
+		if _deck_entry_matches_name(entry, SCREAM_TAIL, SCREAM_TAIL_EN):
+			_configured_has_scream_tail = true
+		if _deck_entry_matches_name(entry, BRAVERY_CHARM, BRAVERY_CHARM_EN):
+			_configured_has_bravery_charm = true
+		if _deck_entry_matches_name(entry, MUNKIDORI, "Munkidori"):
+			_configured_has_munkidori = true
+		if str(entry.get("effect_id", "")) == CRESSELIA_EFFECT_ID \
+				or _deck_entry_matches_name(entry, CRESSELIA_EN, CRESSELIA_EN):
+			_configured_has_cresselia = true
+
+
+func _deck_entry_matches_name(entry: Dictionary, local_name: String, english_name: String = "") -> bool:
+	var name: String = str(entry.get("name", ""))
+	var name_en: String = str(entry.get("name_en", ""))
+	return name == local_name or name_en == local_name or (english_name != "" and (name == english_name or name_en == english_name))
+
+
+func _deck_allows_drifloon_package() -> bool:
+	if _configured_deck_id == 610080:
+		return false
+	if not _configured_deck_cards_known:
+		return true
+	return _configured_has_drifloon
+
+
+func _deck_allows_scream_tail_package() -> bool:
+	if _configured_deck_id == 610080:
+		return true
+	if not _configured_deck_cards_known:
+		return true
+	return _configured_has_scream_tail
+
+
+func _deck_allows_bravery_charm_package() -> bool:
+	if _configured_deck_id == 610080:
+		return false
+	if not _configured_deck_cards_known:
+		return true
+	return _configured_has_bravery_charm
+
+
+func _deck_allows_munkidori_package() -> bool:
+	if _configured_deck_id == 610080:
+		return true
+	if not _configured_deck_cards_known:
+		return true
+	return _configured_has_munkidori
+
+
+func _deck_allows_cresselia_package() -> bool:
+	if _configured_deck_id == 610080:
+		return true
+	if not _configured_deck_cards_known:
+		return true
+	return _configured_has_cresselia
+
+
+func _is_budew_munkidori_scream_tail_variant() -> bool:
+	return is_budew_opening_variant() \
+		and _deck_allows_scream_tail_package() \
+		and _deck_allows_munkidori_package() \
+		and not _deck_allows_drifloon_package()
+
+
+func is_budew_opening_variant() -> bool:
+	return _configured_has_budew or _configured_deck_id == 610080
 
 
 
@@ -134,6 +239,9 @@ func build_turn_plan(game_state: GameState, player_index: int, context: Dictiona
 	var charizard_rebuild: bool = _charizard_rebuild_lock(game_state, player, player_index)
 	var deck_out: bool = _has_deck_out_pressure(player)
 	var immediate_attack_window: bool = _has_immediate_attack_window(game_state, player, player_index)
+	var trapped_handoff: bool = _trapped_active_with_ready_bench_attacker_live(game_state, player, player_index)
+	var active_retreat_bridge: bool = _active_retreat_bridge_to_ready_bench_attacker_live(game_state, player, player_index)
+	var munkidori_damage_transfer_debt: bool = _munkidori_damage_transfer_debt_live(game_state, player, player_index)
 
 	var flags: Dictionary = {
 		"shell_lock": shell_lock,
@@ -156,6 +264,9 @@ func build_turn_plan(game_state: GameState, player_index: int, context: Dictiona
 		"attacker_rebuild_closed_loop": closed_loop_rebuild,
 		"vs_charizard": charizard_matchup,
 		"charizard_rebuild_lock": charizard_rebuild,
+		"trapped_active_with_ready_bench_attacker": trapped_handoff,
+		"active_retreat_bridge_to_ready_bench_attacker": active_retreat_bridge,
+		"munkidori_damage_transfer_debt": munkidori_damage_transfer_debt,
 		"deck_out_pressure": deck_out,
 		"discard_has_psychic": discard_p >= 1,
 		"discard_has_embrace_fuel": discard_p >= 2,
@@ -182,7 +293,10 @@ func build_turn_plan(game_state: GameState, player_index: int, context: Dictiona
 	elif shell_online and attacker_bodies >= 1 and ready_attackers == 0:
 		intent = "transition_to_conversion"
 	elif shell_online and ready_attackers >= 1:
-		intent = "convert_attack" if immediate_attack_window else "transition_to_conversion"
+		if trapped_handoff or active_retreat_bridge:
+			intent = "unlock_bench_attacker_handoff"
+		else:
+			intent = "convert_attack" if immediate_attack_window else "transition_to_conversion"
 	elif deck_out:
 		intent = "dead_turn_preserve_outs"
 
@@ -199,7 +313,12 @@ func build_turn_plan(game_state: GameState, player_index: int, context: Dictiona
 	var primary_attacker_name: String = ""
 	var pivot_target_name: String = ""
 	if ready_attackers >= 1:
+		var trapped_owner: PokemonSlot = _best_ready_bench_handoff_attacker(game_state, player, player_index)
+		if (trapped_handoff or active_retreat_bridge) and trapped_owner != null:
+			primary_attacker_name = trapped_owner.get_pokemon_name()
 		for slot: PokemonSlot in _get_all_slots(player):
+			if primary_attacker_name != "":
+				break
 			if slot == null:
 				continue
 			var n: String = slot.get_pokemon_name()
@@ -247,6 +366,8 @@ func build_turn_plan(game_state: GameState, player_index: int, context: Dictiona
 		"forbid_extra_bench_padding": intent == "convert_attack" and attacker_bodies >= 1,
 		"forbid_engine_churn": intent in ["rebuild_attacker_closed_loop", "convert_attack"],
 		"prefer_tm_combo_this_turn": tm_setup_live,
+		"must_unlock_ready_bench_attacker": trapped_handoff or active_retreat_bridge,
+		"must_resolve_munkidori_damage_transfer": munkidori_damage_transfer_debt,
 	}
 
 	var modifiers: Array[String] = []
@@ -284,6 +405,24 @@ func build_turn_contract(game_state: GameState, player_index: int, context: Dict
 		owner["bridge_target_name"] = bridge_target_name
 	if str(owner.get("pivot_target_name", "")) == "":
 		owner["pivot_target_name"] = pivot_target_name
+	var flags: Dictionary = contract.get("flags", {}) if contract.get("flags", {}) is Dictionary else {}
+	if bool(flags.get("trapped_active_with_ready_bench_attacker", false)) and player.active_pokemon != null:
+		owner["trapped_active_name"] = player.active_pokemon.get_pokemon_name()
+		owner["turo_target_name"] = player.active_pokemon.get_pokemon_name()
+		if primary_attacker_name != "":
+			owner["replacement_target_name"] = primary_attacker_name
+	if bool(flags.get("active_retreat_bridge_to_ready_bench_attacker", false)) and player.active_pokemon != null:
+		owner["trapped_active_name"] = player.active_pokemon.get_pokemon_name()
+		owner["retreat_payment_target_name"] = player.active_pokemon.get_pokemon_name()
+		if primary_attacker_name != "":
+			owner["replacement_target_name"] = primary_attacker_name
+	if bool(flags.get("munkidori_damage_transfer_debt", false)):
+		var munkidori_source: PokemonSlot = _best_munkidori_damage_source(game_state, player, player_index)
+		var munkidori_target: PokemonSlot = _best_munkidori_damage_target(game_state, player_index)
+		if munkidori_source != null:
+			owner["munkidori_source_name"] = munkidori_source.get_pokemon_name()
+		if munkidori_target != null:
+			owner["munkidori_target_name"] = munkidori_target.get_pokemon_name()
 	contract["owner"] = owner
 
 	var attach_priority: Array[String] = []
@@ -310,6 +449,25 @@ func build_turn_contract(game_state: GameState, player_index: int, context: Dict
 	priorities["attach"] = attach_priority
 	priorities["search"] = search_priority
 	priorities["handoff"] = handoff_priority
+	if bool(flags.get("trapped_active_with_ready_bench_attacker", false)) and player.active_pokemon != null:
+		priorities["turo_target"] = [player.active_pokemon.get_pokemon_name()]
+		if primary_attacker_name != "":
+			priorities["replacement"] = [primary_attacker_name]
+	if bool(flags.get("active_retreat_bridge_to_ready_bench_attacker", false)) and player.active_pokemon != null:
+		priorities["retreat_payment_target"] = [player.active_pokemon.get_pokemon_name()]
+		if primary_attacker_name != "":
+			priorities["replacement"] = [primary_attacker_name]
+	if bool(flags.get("munkidori_damage_transfer_debt", false)):
+		var source_priority: Array[String] = []
+		var target_priority: Array[String] = []
+		var debt_source: PokemonSlot = _best_munkidori_damage_source(game_state, player, player_index)
+		var debt_target: PokemonSlot = _best_munkidori_damage_target(game_state, player_index)
+		if debt_source != null:
+			source_priority.append(debt_source.get_pokemon_name())
+		if debt_target != null:
+			target_priority.append(debt_target.get_pokemon_name())
+		priorities["munkidori_source"] = source_priority
+		priorities["munkidori_target"] = target_priority
 	contract["priorities"] = priorities
 	return contract
 
@@ -357,15 +515,23 @@ func _gardevoir_continuity_setup_debt(game_state: GameState, player: PlayerState
 	var shell_online: bool = gardevoir_count >= 1
 	var backup_engine_lines: int = ralts_count + kirlia_count
 	var drifloon_pressure_needs_fuel: bool = _drifloon_pressure_fuel_route_live(game_state, player, player_index)
+	var immediate_attack_window: bool = _has_immediate_attack_window(game_state, player, player_index)
+	var stall_attack_window: bool = _gardevoir_budew_stall_terminal_window(player, immediate_attack_window)
+	var conversion_window: bool = immediate_attack_window and ready_attackers >= 1
+	var suppress_backup_continuity: bool = conversion_window and _is_budew_munkidori_scream_tail_variant()
+	var launch_budew_stall_window: bool = stall_attack_window and not shell_online
 	return {
-		"has_attack_window": _has_immediate_attack_window(game_state, player, player_index),
+		"has_attack_window": immediate_attack_window,
+		"has_stall_attack_window": stall_attack_window,
+		"need_launch_shell_before_stall": launch_budew_stall_window and not deck_out_pressure and _continuity_has_safe_launch_setup(player),
 		"need_first_gardevoir_ex": gardevoir_count == 0 and kirlia_count >= 1,
 		"need_kirlia_engine": kirlia_count == 0 and ralts_count >= 1,
-		"need_backup_ralts_or_kirlia": shell_online and backup_engine_lines < 2 and has_bench_space and not deck_out_pressure,
+		"need_backup_ralts_or_kirlia": shell_online and backup_engine_lines < 2 and has_bench_space and not deck_out_pressure and not suppress_backup_continuity,
 		"need_backup_gardevoir_ex": shell_online and gardevoir_count < 2 and kirlia_count >= 2 and not deck_out_pressure,
 		"need_psychic_energy_fuel": shell_online and (psychic_fuel < 2 or drifloon_pressure_needs_fuel) and not deck_out_pressure,
 		"drifloon_pressure_needs_fuel": drifloon_pressure_needs_fuel,
 		"need_next_attacker_seed": shell_online and attacker_bodies < 2 and has_bench_space and not deck_out_pressure,
+		"need_stall_safe_attacker_search": shell_online and stall_attack_window and attacker_bodies < 2 and has_bench_space and not deck_out_pressure and _continuity_can_stadium_search_next_attacker(player),
 		"need_second_attacker_energy": shell_online and attacker_bodies >= 2 and ready_attackers < 2 and psychic_fuel >= 1 and not deck_out_pressure,
 		"avoid_deck_out": deck_out_pressure,
 		"psychic_fuel": psychic_fuel,
@@ -384,7 +550,8 @@ func _gardevoir_continuity_window(
 ) -> bool:
 	if player == null:
 		return false
-	if not bool(setup_debt.get("has_attack_window", false)):
+	if not bool(setup_debt.get("has_attack_window", false)) \
+			and not bool(setup_debt.get("has_stall_attack_window", false)):
 		return false
 	if bool(setup_debt.get("avoid_deck_out", false)):
 		return false
@@ -411,6 +578,8 @@ func _gardevoir_continuity_action_bonuses(
 	player_index: int
 ) -> Array[Dictionary]:
 	var bonuses: Array[Dictionary] = []
+	if bool(setup_debt.get("need_launch_shell_before_stall", false)):
+		bonuses.append_array(_continuity_launch_shell_action_bonuses(player))
 	if bool(setup_debt.get("need_first_gardevoir_ex", false)):
 		if _continuity_can_evolve(player, GARDEVOIR_EX):
 			bonuses.append({
@@ -435,7 +604,10 @@ func _gardevoir_continuity_action_bonuses(
 				"bonus": 360.0,
 				"reason": "continuity_build_kirlia_engine",
 			})
-	if bool(setup_debt.get("need_backup_ralts_or_kirlia", false)):
+	var conversion_attack_window: bool = bool(setup_debt.get("has_attack_window", false)) \
+		and int(setup_debt.get("ready_attackers", 0)) >= 1
+	var suppress_backup_bonus: bool = conversion_attack_window and _is_budew_munkidori_scream_tail_variant()
+	if bool(setup_debt.get("need_backup_ralts_or_kirlia", false)) and not suppress_backup_bonus:
 		if _continuity_can_play_basic(player, RALTS):
 			bonuses.append({
 				"kind": "play_basic_to_bench",
@@ -488,6 +660,13 @@ func _gardevoir_continuity_action_bonuses(
 				"bonus": 420.0,
 				"reason": "continuity_search_next_attacker",
 			})
+	if bool(setup_debt.get("need_stall_safe_attacker_search", false)) and _hand_has_card(player, ARTAZON):
+		bonuses.append({
+			"kind": "play_stadium",
+			"card_names": _continuity_alias_names([ARTAZON]),
+			"bonus": 520.0,
+			"reason": "continuity_stadium_search_next_attacker",
+		})
 	if bool(setup_debt.get("need_backup_gardevoir_ex", false)):
 		if _continuity_can_evolve(player, GARDEVOIR_EX):
 			bonuses.append({
@@ -537,6 +716,100 @@ func _gardevoir_continuity_action_bonuses(
 
 func _continuity_can_play_basic(player: PlayerState, card_name: String) -> bool:
 	return player != null and player.bench.size() < 5 and _hand_has_card(player, card_name)
+
+
+func _gardevoir_budew_stall_terminal_window(player: PlayerState, immediate_attack_window: bool) -> bool:
+	if player == null or not _is_budew_munkidori_scream_tail_variant():
+		return false
+	if immediate_attack_window:
+		return false
+	return _slot_is_budew(player.active_pokemon)
+
+
+func _continuity_has_safe_launch_setup(player: PlayerState) -> bool:
+	return not _continuity_launch_shell_action_bonuses(player).is_empty()
+
+
+func _continuity_launch_shell_action_bonuses(player: PlayerState) -> Array[Dictionary]:
+	var bonuses: Array[Dictionary] = []
+	if player == null:
+		return bonuses
+	var has_bench_space: bool = player.bench.size() < 5
+	var needs_basic_shell: bool = _count_primary_shell_bodies(player) < 2 and has_bench_space
+	if needs_basic_shell and _hand_has_card(player, RALTS):
+		bonuses.append({
+			"kind": "play_basic_to_bench",
+			"card_names": _continuity_alias_names([RALTS]),
+			"bonus": 560.0,
+			"reason": "continuity_launch_shell_before_budew_stall",
+		})
+	if _continuity_can_evolve(player, KIRLIA):
+		bonuses.append({
+			"kind": "evolve",
+			"card_names": _continuity_alias_names([KIRLIA]),
+			"bonus": 460.0,
+			"reason": "continuity_launch_shell_before_budew_stall",
+		})
+	if _continuity_can_evolve(player, GARDEVOIR_EX):
+		bonuses.append({
+			"kind": "evolve",
+			"card_names": _continuity_alias_names([GARDEVOIR_EX]),
+			"bonus": 460.0,
+			"reason": "continuity_launch_shell_before_budew_stall",
+		})
+	if _hand_has_card(player, TM_EVOLUTION) and _count_evolvable_bench_targets(player) > 0:
+		bonuses.append({
+			"kind": "attach_tool",
+			"card_names": _continuity_alias_names([TM_EVOLUTION]),
+			"bonus": 460.0,
+			"reason": "continuity_launch_shell_before_budew_stall",
+		})
+	var search_cards: Array[String] = []
+	if _continuity_launch_shell_search_live(player):
+		for card_name: String in [BUDDY_BUDDY_POFFIN, NEST_BALL, ULTRA_BALL, ARVEN, SECRET_BOX]:
+			if _hand_has_card(player, card_name):
+				search_cards.append(card_name)
+	if not search_cards.is_empty():
+		bonuses.append({
+			"kind": "play_trainer",
+			"card_names": _continuity_alias_names(search_cards),
+			"bonus": 520.0,
+			"reason": "continuity_launch_shell_before_budew_stall",
+		})
+	if _hand_has_card(player, ARTAZON) \
+			and needs_basic_shell \
+			and _deck_has_card_name(player, RALTS):
+		bonuses.append({
+			"kind": "play_stadium",
+			"card_names": _continuity_alias_names([ARTAZON]),
+			"bonus": 480.0,
+			"reason": "continuity_launch_shell_before_budew_stall",
+		})
+	return bonuses
+
+
+func _continuity_launch_shell_search_live(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	var has_bench_space: bool = player.bench.size() < 5
+	if has_bench_space and _count_primary_shell_bodies(player) < 2 and _deck_has_card_name(player, RALTS):
+		return true
+	if _count_pokemon_on_field(player, RALTS) > 0 and _deck_has_card_name(player, KIRLIA):
+		return true
+	if _count_pokemon_on_field(player, KIRLIA) > 0 and _deck_has_card_name(player, GARDEVOIR_EX):
+		return true
+	if _count_evolvable_bench_targets(player) > 0 and _deck_has_card_name(player, TM_EVOLUTION):
+		return true
+	return false
+
+
+func _continuity_can_stadium_search_next_attacker(player: PlayerState) -> bool:
+	if player == null or not _hand_has_card(player, ARTAZON):
+		return false
+	for card_name: String in [DRIFLOON, SCREAM_TAIL, CRESSELIA_EN]:
+		if _deck_has_card_name(player, card_name):
+			return true
+	return false
 
 
 func _continuity_can_evolve(player: PlayerState, card_name: String) -> bool:
@@ -618,6 +891,8 @@ func _continuity_english_alias(name: String) -> String:
 			return "Rescue Stretcher"
 		SECRET_BOX:
 			return "Secret Box"
+		TM_EVOLUTION:
+			return "Technical Machine: Evolution"
 		EARTHEN_VESSEL:
 			return "Earthen Vessel"
 	return ""
@@ -732,11 +1007,50 @@ func _abs_play_basic(action: Dictionary, game_state: GameState, player: PlayerSt
 	var free_slots: int = 5 - bench_size
 	var is_essential: bool = _is_essential_pokemon(name, player)
 	var charizard_rebuild_lock: bool = _charizard_rebuild_lock(game_state, player, player_index)
+	var is_cresselia_card: bool = _card_is_cresselia(card)
+
+	if _is_budew_munkidori_scream_tail_variant() \
+			and _deck_allows_cresselia_package() \
+			and _has_online_shell(player) \
+			and is_cresselia_card \
+			and _count_cresselia_on_field(player) == 0:
+		var movable_damage: int = _cresselia_movable_damage(game_state, player_index)
+		if attacker_bodies == 0:
+			return 520.0 if movable_damage >= 40 else 360.0
+		if ready_attackers == 0 and movable_damage >= 40:
+			return 420.0
+		if movable_damage >= 60:
+			return 240.0
+		return 120.0
+
+	if _is_budew_munkidori_scream_tail_variant() \
+			and _has_online_shell(player) \
+			and name == MUNKIDORI \
+			and _count_pokemon_on_field(player, MUNKIDORI) == 0:
+		if attacker_bodies == 0 and free_slots <= 1:
+			return -80.0
+		if attacker_bodies == 0:
+			return 240.0
+		if ready_attackers == 0:
+			return 220.0
+		if _munkidori_can_threaten_ko(game_state, player_index):
+			return 760.0
+		if _count_pokemon_on_field(player, SCREAM_TAIL) > 0:
+			return 680.0 if free_slots <= 1 else 360.0
+		return 260.0
 
 	if not is_essential and free_slots <= essential_slots_needed:
+		if is_budew_opening_variant() and _has_online_shell(player) and attacker_bodies == 0:
+			return -140.0
 		return 0.0
 
 	if shell_lock:
+		if _card_is_budew(card):
+			if _count_budew_on_field(player) > 0:
+				return -80.0
+			if _count_primary_shell_bodies(player) >= 1:
+				return 160.0
+			return 60.0
 		if _must_force_first_gardevoir(player) \
 				and attacker_bodies == 0 \
 				and free_slots > 0 \
@@ -772,8 +1086,12 @@ func _abs_play_basic(action: Dictionary, game_state: GameState, player: PlayerSt
 	if not transition_shell:
 		if _has_online_shell(player) and attacker_bodies == 0:
 			if name == DRIFLOON:
+				if _preferred_transition_attacker_name(game_state, player_index) == DRIFLOON:
+					return 640.0
 				return 360.0
 			if name == SCREAM_TAIL:
+				if _preferred_transition_attacker_name(game_state, player_index) == SCREAM_TAIL:
+					return 640.0
 				if _opponent_has_scream_tail_prize_target(game_state, player_index):
 					return 320.0
 				return 220.0
@@ -837,10 +1155,14 @@ func _abs_play_basic(action: Dictionary, game_state: GameState, player: PlayerSt
 
 	if attacker_bodies == 0:
 		if name == DRIFLOON:
+			if _preferred_transition_attacker_name(game_state, player_index) == DRIFLOON:
+				return 640.0
 			if _opponent_has_scream_tail_prize_target(game_state, player_index):
 				return 260.0
 			return 320.0
 		if name == SCREAM_TAIL:
+			if _preferred_transition_attacker_name(game_state, player_index) == SCREAM_TAIL:
+				return 640.0
 			if _opponent_has_scream_tail_prize_target(game_state, player_index):
 				return 360.0
 			return 260.0
@@ -877,11 +1199,29 @@ func _abs_use_stadium_effect(action: Dictionary, game_state: GameState, player: 
 	var transition_shell: bool = _has_transition_shell(player)
 	var attacker_bodies: int = _count_attackers_on_field(player)
 	var preferred_transition_attacker: String = _preferred_transition_attacker_name(game_state, player_index)
+	var wanted_is_cresselia: bool = _action_targets_cresselia(action, "artazon_pokemon") or wanted == CRESSELIA_EN
 	if _needs_first_attacker_body(player):
+		if wanted_is_cresselia and _deck_allows_cresselia_package():
+			return 520.0 if _cresselia_movable_damage(game_state, player_index) >= 40 else 360.0
 		if wanted == preferred_transition_attacker:
 			return 560.0
 		if wanted in ATTACKER_NAMES or wanted == SCREAM_TAIL:
 			return 360.0
+	if _is_budew_munkidori_scream_tail_variant() \
+			and transition_shell \
+			and wanted_is_cresselia \
+			and _count_cresselia_on_field(player) == 0:
+		if _cresselia_movable_damage(game_state, player_index) >= 40:
+			return 420.0
+		return 220.0
+	if _is_budew_munkidori_scream_tail_variant() \
+			and transition_shell \
+			and _count_pokemon_on_field(player, MUNKIDORI) == 0:
+		var free_slots: int = 5 - player.bench.size()
+		if wanted == MUNKIDORI and (attacker_bodies > 0 or free_slots >= 2):
+			return 420.0 if attacker_bodies > 0 else 260.0
+		if free_slots <= 2 and wanted in [KLEFKI, FLUTTER_MANE, MANAPHY, RADIANT_GRENINJA]:
+			return -100.0
 	if transition_shell and attacker_bodies == 0:
 		if wanted == preferred_transition_attacker:
 			return 500.0
@@ -894,7 +1234,7 @@ func _abs_use_stadium_effect(action: Dictionary, game_state: GameState, player: 
 	return 80.0
 
 
-func _should_preserve_active_kirlia_from_gardevoir_evolve(target_slot: PokemonSlot, player: PlayerState) -> bool:
+func _should_preserve_active_kirlia_from_gardevoir_evolve(target_slot: PokemonSlot, player: PlayerState, game_state: GameState = null) -> bool:
 	if player == null or target_slot == null or target_slot != player.active_pokemon:
 		return false
 	if target_slot.get_pokemon_name() != KIRLIA:
@@ -902,9 +1242,18 @@ func _should_preserve_active_kirlia_from_gardevoir_evolve(target_slot: PokemonSl
 	if _count_pokemon_on_field(player, GARDEVOIR_EX) > 0:
 		return true
 	for bench_slot: PokemonSlot in player.bench:
-		if _slot_is_live(bench_slot) and bench_slot.get_pokemon_name() == KIRLIA:
+		if _bench_kirlia_can_become_gardevoir_this_turn(bench_slot, game_state):
 			return true
 	return false
+
+
+func _bench_kirlia_can_become_gardevoir_this_turn(slot: PokemonSlot, game_state: GameState = null) -> bool:
+	if not _slot_is_live(slot) or slot.get_pokemon_name() != KIRLIA:
+		return false
+	if game_state == null:
+		return true
+	var current_turn: int = int(game_state.turn_number)
+	return slot.turn_played != current_turn and slot.turn_evolved != current_turn
 
 
 func _abs_evolve(action: Dictionary, player: PlayerState, phase: String, game_state: GameState = null, player_index: int = -1) -> float:
@@ -914,7 +1263,7 @@ func _abs_evolve(action: Dictionary, player: PlayerState, phase: String, game_st
 	var name: String = str(card.card_data.name)
 	if name == GARDEVOIR_EX:
 		var target_slot: PokemonSlot = action.get("target_slot", null)
-		if _should_preserve_active_kirlia_from_gardevoir_evolve(target_slot, player):
+		if _should_preserve_active_kirlia_from_gardevoir_evolve(target_slot, player, game_state):
 			return -240.0
 		if _count_pokemon_on_field(player, GARDEVOIR_EX) == 0:
 			return 1000.0 if _first_gardevoir_emergency(player) else 800.0
@@ -950,6 +1299,17 @@ func _abs_attach_energy(action: Dictionary, game_state: GameState, player: Playe
 	var charizard_matchup: bool = _is_charizard_pressure_matchup(game_state, player_index)
 	var delay_attacker_investment: bool = _should_delay_attacker_investment_during_shell_lock(player)
 	var preferred_attacker_recovery_live: bool = _preferred_attacker_recovery_live(game_state, player, player_index)
+
+	if target_slot == player.active_pokemon \
+			and _active_retreat_bridge_to_ready_bench_attacker_live(game_state, player, player_index):
+		var retreat_gap_for_bridge: int = _get_retreat_energy_gap(target_slot)
+		if retreat_gap_for_bridge > 0:
+			var bridge_score: float = 560.0 if retreat_gap_for_bridge <= 1 else 400.0
+			if energy_type == "P":
+				bridge_score += 40.0
+			elif energy_type == "D" and _munkidori_lacks_darkness(player):
+				bridge_score -= 80.0
+			return maxf(360.0, bridge_score)
 
 	if target_name == KIRLIA:
 		if _must_force_first_gardevoir(player) and _count_psychic_energy_in_discard(game_state, player_index) >= 2:
@@ -999,6 +1359,12 @@ func _abs_attach_energy(action: Dictionary, game_state: GameState, player: Playe
 				return 380.0
 
 	if energy_type == "P":
+		if _slot_is_cresselia(target_slot) and stage2_shell:
+			if _get_attack_energy_gap(target_slot) <= 1:
+				var movable_damage: int = _cresselia_movable_damage(game_state, player_index)
+				if movable_damage >= 40:
+					return 620.0 if target_slot == player.active_pokemon else 520.0
+				return 460.0 if target_slot == player.active_pokemon else 360.0
 		if shell_lock:
 			return -100.0
 		if target_name == KIRLIA:
@@ -1039,6 +1405,27 @@ func _abs_attach_energy(action: Dictionary, game_state: GameState, player: Playe
 			return 520.0
 		return -100.0
 	if energy_type == "D":
+		var budew_munkidori_route: bool = _is_budew_munkidori_scream_tail_variant() \
+			and stage2_shell \
+			and _munkidori_lacks_darkness(player)
+		if budew_munkidori_route and target_name == MUNKIDORI and not _slot_has_energy_type(target_slot, "D"):
+			if _munkidori_can_threaten_ko(game_state, player_index):
+				return 760.0
+			if live_attackers > 0 or _count_psychic_energy_in_discard(game_state, player_index) >= 2:
+				return 620.0
+			return 520.0
+		if budew_munkidori_route and target_name == SCREAM_TAIL:
+			if _count_psychic_energy_in_discard(game_state, player_index) >= 2:
+				return 120.0
+			return 240.0
+		if target_name == SCREAM_TAIL \
+				and stage2_shell \
+				and ready_attackers == 0 \
+				and _get_attack_energy_gap(target_slot) <= 2 \
+				and (_slot_has_energy_type(target_slot, "P") or _count_psychic_energy_in_discard(game_state, player_index) >= 1):
+			if _opponent_has_scream_tail_prize_target(game_state, player_index):
+				return 680.0 if target_slot == player.active_pokemon else 560.0
+			return 600.0 if target_slot == player.active_pokemon else 460.0
 		if target_name == SCREAM_TAIL and live_attackers == 0 and _get_attack_energy_gap(target_slot) <= 1:
 			if stage2_shell:
 				if _opponent_has_scream_tail_prize_target(game_state, player_index):
@@ -1221,9 +1608,19 @@ func _abs_use_ability(action: Dictionary, game_state: GameState, player: PlayerS
 		return 0.0
 	if source_name == MUNKIDORI:
 		if not _munkidori_action_has_resolved_counter_target(action, game_state, player_index):
+			if action.has("targets"):
+				var target_contexts: Variant = action.get("targets", [])
+				if not (target_contexts is Array) or not (target_contexts as Array).is_empty():
+					return -160.0 if _has_transition_shell(player) else -80.0
+			if _munkidori_can_threaten_ko(game_state, player_index):
+				return 600.0
+			if _munkidori_damage_transfer_debt_live(game_state, player, player_index):
+				return 420.0
 			return -160.0 if _has_transition_shell(player) else -80.0
 		if _munkidori_can_threaten_ko(game_state, player_index):
 			return 600.0
+		if _munkidori_damage_transfer_debt_live(game_state, player, player_index):
+			return 420.0
 		if _post_stage2_handoff_live(game_state, player, player_index):
 			return -120.0
 		if _is_charizard_pressure_matchup(game_state, player_index) and _has_transition_shell(player):
@@ -1427,6 +1824,28 @@ func _first_action_target_card_name(action: Dictionary, key: String) -> String:
 	return ""
 
 
+func _action_targets_cresselia(action: Dictionary, key: String) -> bool:
+	var targets_variant: Variant = action.get("targets", [])
+	if not (targets_variant is Array):
+		return false
+	for entry_variant: Variant in targets_variant as Array:
+		if not (entry_variant is Dictionary):
+			continue
+		var entry: Dictionary = entry_variant as Dictionary
+		var raw: Variant = entry.get(key, [])
+		if raw is CardInstance and _card_is_cresselia(raw as CardInstance):
+			return true
+		if raw is PokemonSlot and _slot_is_cresselia(raw as PokemonSlot):
+			return true
+		if raw is Array:
+			for item: Variant in raw as Array:
+				if item is CardInstance and _card_is_cresselia(item as CardInstance):
+					return true
+				if item is PokemonSlot and _slot_is_cresselia(item as PokemonSlot):
+					return true
+	return false
+
+
 func _action_has_explicit_targets(action: Dictionary) -> bool:
 	var targets_variant: Variant = action.get("targets", [])
 	return targets_variant is Array and not (targets_variant as Array).is_empty()
@@ -1480,10 +1899,9 @@ func _target_value_matches_any_name(value: Variant, names: Array[String]) -> boo
 func _card_data_matches_any_name(card_data: CardData, names: Array[String]) -> bool:
 	if card_data == null:
 		return false
-	if card_data.name != "" and names.has(card_data.name):
-		return true
-	if card_data.name_en != "" and names.has(card_data.name_en):
-		return true
+	for wanted_name: String in names:
+		if _card_data_matches_name(card_data, wanted_name):
+			return true
 	return false
 
 
@@ -1506,6 +1924,16 @@ func _score_psychic_embrace_target_slot(
 	if not _can_take_more_psychic_embrace_damage(target_slot, game_state):
 		return -260.0
 
+	var cresselia_route_score: float = _score_cresselia_embrace_target(target_slot, game_state, player, player_index)
+	if cresselia_route_score > 0.0:
+		return cresselia_route_score
+
+	if target_slot == player.active_pokemon \
+			and _active_retreat_bridge_to_ready_bench_attacker_live(game_state, player, player_index):
+		var retreat_gap_for_bridge: int = _get_retreat_energy_gap(target_slot)
+		if retreat_gap_for_bridge > 0:
+			return 620.0 if retreat_gap_for_bridge <= 1 else 520.0
+
 	var name: String = target_slot.get_pokemon_name()
 	if name in ATTACKER_NAMES or name == SCREAM_TAIL:
 		if name == SCREAM_TAIL and _preferred_attacker_recovery_live(game_state, player, player_index):
@@ -1520,10 +1948,17 @@ func _score_psychic_embrace_target_slot(
 		if name == SCREAM_TAIL:
 			var visible_now: float = _best_scream_tail_visible_prize_value(game_state, player_index, now_dmg)
 			var visible_after: float = _best_scream_tail_visible_prize_value(game_state, player_index, after_dmg)
+			if can_now and visible_now > 0.0 and visible_after <= visible_now:
+				return 40.0
 			if can_after and visible_after > 0.0 and visible_after > visible_now:
 				if not can_now:
 					return 760.0
 				return 680.0 + minf(120.0, visible_after * 0.1)
+			if target_slot == player.active_pokemon and can_now and can_after and dmg_gain > 0:
+				if now_dmg <= 30 and after_dmg >= 60:
+					return 460.0
+				if after_dmg >= 100:
+					return 360.0
 		if name == DRIFLOON and _slot_has_bravery_charm(target_slot) and can_after and defender != null:
 			var defender_remaining: int = defender.get_remaining_hp()
 			if now_dmg < defender_remaining and after_dmg < defender_remaining and after_dmg >= 180:
@@ -1563,7 +1998,11 @@ func _abs_play_trainer(action: Dictionary, game_state: GameState, player: Player
 	if card == null or card.card_data == null:
 		return 0.0
 	var name: String = str(card.card_data.name)
+	var name_en: String = str(card.card_data.name_en)
+	var card_type: String = str(card.card_data.card_type)
 	var bench_full: bool = player.bench.size() >= 5
+	if name_en == "Energy Switch" and _energy_switch_breaks_munkidori_dark_route(action, player):
+		return -320.0
 
 	var hand_size: int = player.hand.size()
 	var need_gardevoir: bool = _count_pokemon_on_field(player, GARDEVOIR_EX) == 0
@@ -1582,6 +2021,43 @@ func _abs_play_trainer(action: Dictionary, game_state: GameState, player: Player
 	var fuel_gate: bool = _first_gardevoir_fuel_gate(game_state, player, player_index)
 	var attacker_closed_loop: bool = _attacker_rebuild_closed_loop_live(game_state, player, player_index)
 	var charizard_rebuild_lock: bool = _charizard_rebuild_lock(game_state, player, player_index)
+	var deck_out_pressure: bool = _has_deck_out_pressure(player)
+	var first_gardevoir_missing_by_alias: bool = need_gardevoir and not _has_visible_gardevoir_ex_body(player)
+	var kirlia_online_by_alias: bool = has_kirlia or _has_visible_kirlia_body(player)
+	var gardevoir_in_hand_by_alias: bool = _hand_has_card(player, GARDEVOIR_EX) or _hand_has_gardevoir_ex_alias(player)
+	var raw_draw_supporter: bool = _card_is_professors_research(card) \
+		or (card_type == "Supporter" and name not in [ARVEN, IONO, PROF_TURO, BOSSS_ORDERS])
+	if deck_out_pressure and raw_draw_supporter:
+		if first_gardevoir_missing_by_alias and kirlia_online_by_alias and not gardevoir_in_hand_by_alias:
+			return 80.0
+		if _has_online_shell(player) or ready_attackers >= 1:
+			return -120.0
+
+	if _card_is_professors_research(card):
+		if first_gardevoir_missing_by_alias and kirlia_online_by_alias and not gardevoir_in_hand_by_alias:
+			var deck_items_for_first_gardevoir: Array[String] = _get_deck_card_names_by_type(player, "Item")
+			var direct_first_gardevoir_search: bool = ULTRA_BALL in deck_items_for_first_gardevoir
+			if _discard_has_card(game_state, player_index, GARDEVOIR_EX) \
+					and (NIGHT_STRETCHER in deck_items_for_first_gardevoir or RESCUE_STRETCHER in deck_items_for_first_gardevoir):
+				direct_first_gardevoir_search = true
+			if not direct_first_gardevoir_search:
+				return 420.0
+			return 180.0
+
+	if card_type == "Supporter" \
+			and name not in [ARVEN, IONO, PROF_TURO, BOSSS_ORDERS] \
+			and first_gardevoir_missing_by_alias \
+			and kirlia_online_by_alias \
+			and not gardevoir_in_hand_by_alias:
+		var deck_items_for_unknown_draw_supporter: Array[String] = _get_deck_card_names_by_type(player, "Item")
+		var direct_search_for_unknown_draw_supporter: bool = ULTRA_BALL in deck_items_for_unknown_draw_supporter
+		if _discard_has_card(game_state, player_index, GARDEVOIR_EX) \
+				and (NIGHT_STRETCHER in deck_items_for_unknown_draw_supporter or RESCUE_STRETCHER in deck_items_for_unknown_draw_supporter):
+			direct_search_for_unknown_draw_supporter = true
+		if not direct_search_for_unknown_draw_supporter:
+			return 420.0
+		return 180.0
+
 	if name == BUDDY_BUDDY_POFFIN:
 		if bench_full:
 			return 0.0
@@ -1897,6 +2373,12 @@ func _abs_play_trainer(action: Dictionary, game_state: GameState, player: Player
 			return 500.0
 		return 50.0
 
+	if action.get("targets", []).is_empty() \
+			and first_gardevoir_missing_by_alias \
+			and kirlia_online_by_alias \
+			and not gardevoir_in_hand_by_alias:
+		return 420.0
+
 	return 50.0
 
 
@@ -1913,7 +2395,53 @@ func _abs_retreat(action: Dictionary, game_state: GameState, player: PlayerState
 	var bench_name: String = bench_target.get_pokemon_name()
 	var bench_is_ready_attacker: bool = _is_ready_attacker(bench_target)
 	var phase: String = _detect_game_phase(int(game_state.turn_number), player)
+	if _slot_is_budew(active) \
+			and _is_budew_munkidori_scream_tail_variant() \
+			and _deck_allows_cresselia_package() \
+			and _has_online_shell(player) \
+			and _slot_is_cresselia(bench_target) \
+			and _cresselia_has_immediate_prize_target(game_state, player_index, bench_target):
+		return 640.0
+	if _slot_is_budew(active) \
+			and _is_budew_munkidori_scream_tail_variant() \
+			and _has_online_shell(player) \
+			and bench_name == SCREAM_TAIL \
+			and bench_is_ready_attacker \
+			and _scream_tail_has_immediate_prize_target(game_state, player_index, bench_target):
+		return 620.0
+	if _slot_is_budew(active) \
+			and _is_budew_munkidori_scream_tail_variant() \
+			and _has_online_shell(player) \
+			and bench_name == SCREAM_TAIL \
+			and bench_is_ready_attacker \
+			and _opponent_active_demands_drifloon_pressure(game_state, player_index):
+		var early_pressure_pred: Dictionary = predict_attacker_damage(bench_target)
+		if int(early_pressure_pred.get("damage", 0)) >= 80:
+			return 520.0
+	if _slot_is_budew(active) \
+			and _is_budew_munkidori_scream_tail_variant() \
+			and _has_online_shell(player) \
+			and bench_name == SCREAM_TAIL \
+			and bench_is_ready_attacker \
+			and int(game_state.turn_number) >= 17:
+		var pressure_pred: Dictionary = predict_attacker_damage(bench_target)
+		if int(pressure_pred.get("damage", 0)) >= 80:
+			return 590.0
+	if _slot_is_budew(active) and _shell_lock_active(player):
+		return -260.0
 	if _active_has_tm_evolution(player):
+		var active_is_primary_attacker: bool = active_name in ATTACKER_NAMES \
+			or active_name == SCREAM_TAIL \
+			or _slot_is_cresselia(active)
+		if not active_is_primary_attacker and _has_online_shell(player) and bench_is_ready_attacker:
+			if bench_name == SCREAM_TAIL:
+				var scream_pressure: Dictionary = predict_attacker_damage(bench_target)
+				if int(scream_pressure.get("damage", 0)) >= 80:
+					return 620.0
+				return 420.0
+			if _slot_is_cresselia(bench_target) and _cresselia_has_immediate_prize_target(game_state, player_index, bench_target):
+				return 640.0
+			return 350.0
 		return -300.0
 	if active_name in ATTACKER_NAMES or active_name == SCREAM_TAIL:
 		var pred: Dictionary = predict_attacker_damage(active)
@@ -1934,6 +2462,19 @@ func _abs_retreat(action: Dictionary, game_state: GameState, player: PlayerState
 				return -120.0
 			return -80.0
 	var is_non_attacker: bool = active_name not in ATTACKER_NAMES and active_name != SCREAM_TAIL
+	if is_non_attacker \
+			and _is_budew_munkidori_scream_tail_variant() \
+			and _deck_allows_cresselia_package() \
+			and _has_online_shell(player) \
+			and _slot_is_cresselia(bench_target) \
+			and _cresselia_can_attack(bench_target):
+		if _cresselia_has_immediate_prize_target(game_state, player_index, bench_target):
+			return 640.0
+		var cresselia_pool: int = _cresselia_movable_damage(game_state, player_index)
+		if cresselia_pool >= 40:
+			return 480.0
+		if cresselia_pool > 0:
+			return 430.0
 	if is_non_attacker and bench_is_ready_attacker:
 		return 350.0
 	if is_non_attacker:
@@ -1947,6 +2488,7 @@ func _abs_retreat(action: Dictionary, game_state: GameState, player: PlayerState
 	return 0.0
 
 func _abs_attack(action: Dictionary, game_state: GameState, player_index: int) -> float:
+	var has_projected_damage: bool = action.has("projected_damage")
 	var damage: int = int(action.get("projected_damage", 0))
 	var player: PlayerState = game_state.players[player_index]
 	if _should_delay_attacker_investment_during_shell_lock(player) and player.active_pokemon != null:
@@ -1958,9 +2500,6 @@ func _abs_attack(action: Dictionary, game_state: GameState, player_index: int) -
 				opp_def = game_state.players[opponent_idx].active_pokemon
 			if opp_def == null or damage < opp_def.get_remaining_hp():
 				return -180.0
-	if damage <= 0 and player.active_pokemon != null:
-		var pred: Dictionary = predict_attacker_damage(player.active_pokemon)
-		damage = int(pred.get("damage", 0))
 	var opponent_index: int = 1 - player_index
 	if opponent_index < 0 or opponent_index >= game_state.players.size():
 		return 100.0 if damage > 0 else 0.0
@@ -1968,6 +2507,32 @@ func _abs_attack(action: Dictionary, game_state: GameState, player_index: int) -
 	if defender == null:
 		return 100.0 if damage > 0 else 0.0
 	var active_name: String = player.active_pokemon.get_pokemon_name() if player.active_pokemon != null else ""
+	if damage <= 0 and player.active_pokemon != null:
+		if active_name == SCREAM_TAIL and bool(action.get("requires_interaction", false)):
+			var scream_pred: Dictionary = predict_attacker_damage(player.active_pokemon)
+			damage = int(scream_pred.get("damage", 0))
+		elif not has_projected_damage:
+			var pred: Dictionary = predict_attacker_damage(player.active_pokemon)
+			damage = int(pred.get("damage", 0))
+	if _slot_is_budew(player.active_pokemon):
+		var budew_score: float = 720.0 if _shell_lock_active(player) else 360.0
+		if _shell_lock_active(player) and _budew_should_yield_to_development(player, _detect_game_phase(int(game_state.turn_number), player)):
+			budew_score = 180.0
+		if _count_primary_shell_bodies(player) >= 1:
+			budew_score += 80.0
+		if _budew_should_wait_for_visible_online_development(game_state, player, player_index):
+			budew_score = minf(budew_score, 100.0)
+		if damage >= defender.get_remaining_hp():
+			return maxf(budew_score, 820.0)
+		return budew_score
+	if _slot_is_cresselia(player.active_pokemon) and int(action.get("attack_index", -1)) == 0:
+		var movable_damage: int = _cresselia_movable_damage(game_state, player_index)
+		if movable_damage <= 0:
+			return 40.0
+		var cresselia_prize_value: float = _best_cresselia_visible_prize_value(game_state, player_index)
+		if cresselia_prize_value > 0.0:
+			return maxf(820.0, cresselia_prize_value)
+		return 260.0 + float(movable_damage)
 	if active_name == SCREAM_TAIL and damage > 0:
 		var best_ko_value: float = 0.0
 		for opp_slot: PokemonSlot in _get_all_slots(game_state.players[opponent_index]):
@@ -1989,9 +2554,50 @@ func _abs_attack(action: Dictionary, game_state: GameState, player_index: int) -
 		return ko_score
 	if active_name == GARDEVOIR_EX and _gardevoir_core_attack_should_yield_to_attacker_route(game_state, player, player_index):
 		return 180.0
+	if active_name not in ATTACKER_NAMES and active_name != SCREAM_TAIL \
+			and _has_online_shell(player) \
+			and _count_attackers_on_field(player) == 0 \
+			and _gardevoir_core_attack_should_yield_to_attacker_route(game_state, player, player_index):
+		return 160.0
 	if damage > 0:
 		return 300.0 + float(damage)
 	return 0.0
+
+
+func _budew_should_wait_for_visible_online_development(game_state: GameState, player: PlayerState, player_index: int) -> bool:
+	if player == null or not _has_online_shell(player):
+		return false
+	if _hand_has_card(player, KIRLIA):
+		for bench_slot: PokemonSlot in player.bench:
+			if _slot_is_live(bench_slot) and bench_slot.get_pokemon_name() == RALTS:
+				return true
+	if _hand_has_card(player, GARDEVOIR_EX):
+		var kirlia_count: int = _count_pokemon_on_field(player, KIRLIA)
+		for bench_slot: PokemonSlot in player.bench:
+			if not _slot_is_live(bench_slot) or bench_slot.get_pokemon_name() != KIRLIA:
+				continue
+			if _count_pokemon_on_field(player, GARDEVOIR_EX) == 0 or kirlia_count >= 2:
+				return true
+	if player.bench.size() < 5:
+		if _is_budew_munkidori_scream_tail_variant() \
+				and _count_pokemon_on_field(player, MUNKIDORI) == 0 \
+				and _hand_has_card(player, MUNKIDORI):
+			return true
+		if _deck_allows_cresselia_package() \
+				and _count_cresselia_on_field(player) == 0:
+			for card: CardInstance in player.hand:
+				if card != null and _card_is_cresselia(card):
+					return true
+	if game_state != null \
+			and player_index >= 0 \
+			and _count_psychic_energy_in_discard(game_state, player_index) > 0:
+		for field_slot: PokemonSlot in _get_all_slots(player):
+			if not _slot_is_live(field_slot):
+				continue
+			if field_slot.get_pokemon_name() in ATTACKER_NAMES or field_slot.get_pokemon_name() == SCREAM_TAIL or _slot_is_cresselia(field_slot):
+				if _can_take_more_psychic_embrace_damage(field_slot, game_state):
+					return true
+	return false
 
 
 func _gardevoir_core_attack_should_yield_to_attacker_route(game_state: GameState, player: PlayerState, player_index: int) -> bool:
@@ -2154,6 +2760,16 @@ func _eval_best_search_item(game_state: GameState, player: PlayerState, player_i
 	if NEST_BALL in deck_items and not bench_full:
 		best = maxf(best, 130.0 if phase == "early" else 80.0)
 
+	if _needs_first_attacker_body(player) and not bench_full:
+		if ULTRA_BALL in deck_items:
+			best = maxf(best, 460.0)
+		if NEST_BALL in deck_items:
+			best = maxf(best, 420.0)
+		if BUDDY_BUDDY_POFFIN in deck_items:
+			best = maxf(best, 360.0)
+		if SECRET_BOX in deck_items:
+			best = maxf(best, 240.0)
+
 	if EARTHEN_VESSEL in deck_items:
 		if _drifloon_pressure_fuel_route_live(game_state, player, player_index):
 			best = maxf(best, 580.0)
@@ -2227,7 +2843,12 @@ func pick_search_item(items: Array, game_state: GameState, player_index: int) ->
 	if _preferred_attacker_recovery_live(game_state, player, player_index):
 		priority_list.append(NIGHT_STRETCHER)
 		priority_list.append(RESCUE_STRETCHER)
-	if _first_gardevoir_emergency(player):
+	if _needs_first_attacker_body(player) and not bench_full:
+		priority_list.append(ULTRA_BALL)
+		priority_list.append(NEST_BALL)
+		priority_list.append(BUDDY_BUDDY_POFFIN)
+		priority_list.append(SECRET_BOX)
+	elif _first_gardevoir_emergency(player):
 		priority_list.append(ULTRA_BALL)
 		priority_list.append(NIGHT_STRETCHER)
 		priority_list.append(RESCUE_STRETCHER)
@@ -2280,15 +2901,16 @@ func pick_search_tool(items: Array, game_state: GameState, player_index: int) ->
 	var phase: String = _detect_game_phase(int(game_state.turn_number), player)
 	var priority_list: Array[String] = []
 	var tm_unusable_this_turn: bool = _tm_evolution_tool_search_dead_this_turn(game_state, player, player_index, items)
-	if _is_charizard_pressure_matchup(game_state, player_index) and _active_has_tm_evolution(player) and _count_evolvable_bench_targets(player) >= 2:
+	var bravery_available: bool = _deck_allows_bravery_charm_package()
+	if bravery_available and _is_charizard_pressure_matchup(game_state, player_index) and _active_has_tm_evolution(player) and _count_evolvable_bench_targets(player) >= 2:
 		priority_list.append(BRAVERY_CHARM)
-	if _post_tm_refill_window(game_state, player, player_index):
+	if bravery_available and _post_tm_refill_window(game_state, player, player_index):
 		priority_list.append(BRAVERY_CHARM)
 	if not tm_unusable_this_turn and _shell_lock_active(player) and _count_pokemon_on_field(player, RALTS) < 2 and _count_pokemon_on_field(player, KIRLIA) == 0:
 		priority_list.append(TM_EVOLUTION)
 	elif not tm_unusable_this_turn and _shell_lock_active(player) and _count_evolvable_bench_targets(player) >= 2:
 		priority_list.append(TM_EVOLUTION)
-	if BRAVERY_CHARM not in priority_list:
+	if bravery_available and BRAVERY_CHARM not in priority_list:
 		priority_list.append(BRAVERY_CHARM)
 	if not tm_unusable_this_turn and TM_EVOLUTION not in priority_list and not _tm_support_carrier_cools_off(player, phase) and not _must_force_first_gardevoir(player):
 		priority_list.append(TM_EVOLUTION)
@@ -2322,6 +2944,8 @@ func _abs_ultra_ball(game_state: GameState, player: PlayerState, player_index: i
 		search_value = 280.0
 	elif need_gardevoir:
 		search_value = 250.0
+	elif _needs_first_attacker_body(player):
+		search_value = 420.0
 	elif _count_pokemon_on_field(player, KIRLIA) < 2:
 		search_value = 200.0
 	var psychic_in_hand: int = _count_energy_in_hand(player, "P")
@@ -2368,7 +2992,7 @@ func _abs_night_stretcher(game_state: GameState, player: PlayerState, player_ind
 			has_gardevoir_in_discard = true
 		elif cname == KIRLIA:
 			has_kirlia_in_discard = true
-		elif cname in ATTACKER_NAMES or cname == SCREAM_TAIL:
+		elif _card_is_cresselia(card) or cname in ATTACKER_NAMES or cname == SCREAM_TAIL:
 			has_attacker = true
 		elif cname == RALTS:
 			has_ralts = true
@@ -2438,7 +3062,8 @@ func _abs_iono(game_state: GameState, player: PlayerState, player_index: int, ph
 
 
 func _abs_prof_turo(game_state: GameState, player: PlayerState, player_index: int, phase: String) -> float:
-	if _active_gardevoir_turo_handoff_live(game_state, player, player_index):
+	if _active_gardevoir_turo_handoff_live(game_state, player, player_index) \
+			or _trapped_active_with_ready_bench_attacker_live(game_state, player, player_index):
 		return 620.0
 	if _has_transition_shell(player) and _count_ready_attackers(player) >= 1:
 		return 20.0
@@ -2481,12 +3106,143 @@ func _active_gardevoir_turo_handoff_live(game_state: GameState, player: PlayerSt
 	for bench_slot: PokemonSlot in player.bench:
 		if not _is_ready_attacker(bench_slot):
 			continue
+		if _ready_bench_attacker_has_conversion_route(bench_slot, game_state, player_index):
+			return true
 		if defender == null:
 			return true
 		var pred: Dictionary = predict_attacker_damage(bench_slot)
 		if int(pred.get("damage", 0)) >= defender.get_remaining_hp():
 			return true
 	return false
+
+
+func _trapped_active_with_ready_bench_attacker_live(game_state: GameState, player: PlayerState, player_index: int) -> bool:
+	if game_state == null or player == null or player.active_pokemon == null:
+		return false
+	if not _has_online_shell(player):
+		return false
+	if not _hand_has_card(player, PROF_TURO):
+		return false
+	var active: PokemonSlot = player.active_pokemon
+	if active.get_pokemon_name() != GARDEVOIR_EX:
+		return false
+	if _get_retreat_energy_gap(active) <= 0:
+		return false
+	if _is_ready_attacker(active):
+		return false
+	if not _has_pokemon_on_bench(player, GARDEVOIR_EX):
+		return false
+	return _best_ready_bench_handoff_attacker(game_state, player, player_index) != null
+
+
+func _active_retreat_bridge_to_ready_bench_attacker_live(game_state: GameState, player: PlayerState, player_index: int) -> bool:
+	if game_state == null or player == null or player.active_pokemon == null:
+		return false
+	if not _has_online_shell(player):
+		return false
+	var active: PokemonSlot = player.active_pokemon
+	if not _slot_is_live(active):
+		return false
+	if _get_retreat_energy_gap(active) <= 0:
+		return false
+	var active_pred: Dictionary = predict_attacker_damage(active)
+	if bool(active_pred.get("can_attack", false)) and int(active_pred.get("damage", 0)) > 0:
+		return false
+	if active.get_remaining_hp() <= 20:
+		return false
+	if not _active_retreat_bridge_can_be_paid_this_turn(game_state, player, player_index, active):
+		return false
+	return _best_ready_bench_handoff_attacker(game_state, player, player_index) != null
+
+
+func _active_retreat_bridge_can_be_paid_this_turn(
+	game_state: GameState,
+	player: PlayerState,
+	player_index: int,
+	active: PokemonSlot
+) -> bool:
+	if game_state == null or player == null or active == null:
+		return false
+	var retreat_gap: int = _get_retreat_energy_gap(active)
+	if retreat_gap <= 0:
+		return true
+	var available_payments: int = 0
+	if not game_state.energy_attached_this_turn and _hand_has_any_energy(player):
+		available_payments += 1
+	available_payments += _available_psychic_embrace_payments_for_slot(game_state, player, player_index, active)
+	return available_payments >= retreat_gap
+
+
+func _available_psychic_embrace_payments_for_slot(
+	game_state: GameState,
+	player: PlayerState,
+	player_index: int,
+	target: PokemonSlot
+) -> int:
+	if game_state == null or player == null or target == null:
+		return 0
+	if target.get_energy_type() != "P":
+		return 0
+	if _count_pokemon_on_field(player, GARDEVOIR_EX) <= 0:
+		return 0
+	var psychic_fuel: int = _count_psychic_energy_in_discard(game_state, player_index)
+	if psychic_fuel <= 0:
+		return 0
+	var safe_uses: int = _safe_psychic_embrace_uses_for_slot(target, game_state)
+	return mini(psychic_fuel, safe_uses)
+
+
+func _safe_psychic_embrace_uses_for_slot(target: PokemonSlot, game_state: GameState) -> int:
+	if target == null:
+		return 0
+	var remaining_hp: int = _effective_remaining_hp_for_strategy(target, game_state)
+	return maxi(0, (remaining_hp - 21) / 20)
+
+
+func _best_ready_bench_handoff_attacker(game_state: GameState, player: PlayerState, player_index: int) -> PokemonSlot:
+	if player == null:
+		return null
+	var preferred: String = _preferred_transition_attacker_name(game_state, player_index)
+	var best: PokemonSlot = null
+	var best_score: float = -INF
+	for bench_slot: PokemonSlot in player.bench:
+		if not _ready_bench_attacker_has_conversion_route(bench_slot, game_state, player_index):
+			continue
+		var name: String = bench_slot.get_pokemon_name()
+		var score: float = 500.0
+		if name == preferred:
+			score += 180.0
+		if name == SCREAM_TAIL and _scream_tail_has_immediate_prize_target(game_state, player_index, bench_slot):
+			score += 160.0
+		if _slot_is_cresselia(bench_slot) and _cresselia_has_immediate_prize_target(game_state, player_index, bench_slot):
+			score += 140.0
+		var pred: Dictionary = predict_attacker_damage(bench_slot)
+		score += minf(160.0, float(int(pred.get("damage", 0))))
+		if score > best_score:
+			best_score = score
+			best = bench_slot
+	return best
+
+
+func _ready_bench_attacker_has_conversion_route(slot: PokemonSlot, game_state: GameState, player_index: int) -> bool:
+	if not _is_ready_attacker(slot):
+		return false
+	if slot.get_pokemon_name() == SCREAM_TAIL:
+		return _scream_tail_has_immediate_prize_target(game_state, player_index, slot)
+	if _slot_is_cresselia(slot):
+		return _cresselia_can_attack(slot) and (
+			_cresselia_has_immediate_prize_target(game_state, player_index, slot)
+			or _cresselia_movable_damage(game_state, player_index) >= 40
+		)
+	var opponent_index: int = 1 - player_index
+	var defender: PokemonSlot = null
+	if game_state != null and opponent_index >= 0 and opponent_index < game_state.players.size():
+		defender = game_state.players[opponent_index].active_pokemon
+	var pred: Dictionary = predict_attacker_damage(slot)
+	var damage: int = int(pred.get("damage", 0))
+	if defender != null and damage >= defender.get_remaining_hp():
+		return true
+	return damage > 0
 
 
 func _count_energy_in_hand(player: PlayerState, etype: String) -> int:
@@ -2635,6 +3391,7 @@ func pick_embrace_target(target_slots: Array, game_state: GameState = null, play
 	var best_score: float = -1.0
 
 	var active_needs_retreat: bool = false
+	var active_retreat_bridge_live: bool = false
 	if active_slot != null:
 		var aname: String = active_slot.get_pokemon_name()
 		if aname not in ATTACKER_NAMES and aname != SCREAM_TAIL:
@@ -2644,6 +3401,8 @@ func pick_embrace_target(target_slots: Array, game_state: GameState = null, play
 						if _is_ready_attacker(bench_slot):
 							active_needs_retreat = true
 							break
+		if player != null and game_state != null and player_index >= 0:
+			active_retreat_bridge_live = _active_retreat_bridge_to_ready_bench_attacker_live(game_state, player, player_index)
 
 	for slot_variant: Variant in target_slots:
 		if not (slot_variant is PokemonSlot):
@@ -2656,7 +3415,10 @@ func pick_embrace_target(target_slots: Array, game_state: GameState = null, play
 
 		if not _can_take_more_psychic_embrace_damage(slot, game_state):
 			continue
-		if name in ATTACKER_NAMES or name == SCREAM_TAIL:
+		var cresselia_route_score: float = _score_cresselia_embrace_target(slot, game_state, player, player_index)
+		if cresselia_route_score > 0.0:
+			score = maxf(score, cresselia_route_score)
+		elif name in ATTACKER_NAMES or name == SCREAM_TAIL:
 			if name == SCREAM_TAIL and player != null and _preferred_attacker_recovery_live(game_state, player, player_index):
 				continue
 			var pred: Dictionary = predict_attacker_damage(slot, 0)
@@ -2698,7 +3460,7 @@ func pick_embrace_target(target_slots: Array, game_state: GameState = null, play
 
 			score = maxf(score, 450.0)
 		elif slot == active_slot and active_needs_retreat:
-			score = 420.0
+			score = 640.0 if active_retreat_bridge_live else 420.0
 		elif player != null and _has_established_stage2_shell(player):
 			score = -220.0
 		else:
@@ -2735,7 +3497,7 @@ func predict_attacker_damage(slot: PokemonSlot, extra_embrace_count: int = 0) ->
 
 	if name == DRIFLOON or name == DRIFBLIM:
 		var damage: int = counter_count * 30
-		var energy_gap: int = _get_attack_energy_gap(slot) - extra_embrace_count
+		var energy_gap: int = _self_damage_attack_energy_gap(slot, 2, extra_embrace_count)
 		return {
 			"damage": damage,
 			"can_attack": energy_gap <= 0,
@@ -2744,7 +3506,7 @@ func predict_attacker_damage(slot: PokemonSlot, extra_embrace_count: int = 0) ->
 
 	if name == SCREAM_TAIL:
 		var damage: int = counter_count * 20
-		var energy_gap: int = _get_attack_energy_gap(slot) - extra_embrace_count
+		var energy_gap: int = _self_damage_attack_energy_gap(slot, 2, extra_embrace_count)
 		return {
 			"damage": damage,
 			"can_attack": energy_gap <= 0,
@@ -2753,6 +3515,39 @@ func predict_attacker_damage(slot: PokemonSlot, extra_embrace_count: int = 0) ->
 
 	return {"damage": 0, "can_attack": false, "description": ""}
 
+
+func _self_damage_attack_energy_gap(slot: PokemonSlot, fallback_cost_size: int, extra_energy_count: int = 0) -> int:
+	if slot == null:
+		return 999
+	var cost_size: int = _self_damage_attack_cost_size(slot, fallback_cost_size)
+	return maxi(0, cost_size - slot.attached_energy.size() - extra_energy_count)
+
+
+func _self_damage_attack_cost_size(slot: PokemonSlot, fallback_cost_size: int) -> int:
+	var card_data: CardData = slot.get_card_data() if slot != null else null
+	if card_data == null:
+		return fallback_cost_size
+	var best_cost: int = 999
+	for attack: Dictionary in card_data.attacks:
+		if not _attack_is_self_damage_scaler(slot, attack):
+			continue
+		var cost: String = CardData.normalize_attack_cost(attack.get("cost", ""))
+		best_cost = mini(best_cost, cost.length())
+	if best_cost == 999:
+		return fallback_cost_size
+	return best_cost
+
+
+func _attack_is_self_damage_scaler(slot: PokemonSlot, attack: Dictionary) -> bool:
+	var name: String = str(attack.get("name", "")).to_lower()
+	var damage_text: String = str(attack.get("damage", "")).to_lower()
+	var rules_text: String = str(attack.get("text", "")).to_lower()
+	var pokemon_name: String = slot.get_pokemon_name() if slot != null else ""
+	if pokemon_name == SCREAM_TAIL:
+		return name.contains("roaring") or rules_text.contains("damage counter") or damage_text == ""
+	if pokemon_name == DRIFLOON or pokemon_name == DRIFBLIM:
+		return name.contains("balloon") or damage_text.contains("x") or rules_text.contains("damage counter")
+	return false
 
 
 func score_action(action: Dictionary, context: Dictionary) -> float:
@@ -2774,7 +3569,13 @@ func plan_opening_setup(player: PlayerState) -> Dictionary:
 			continue
 		if card.card_data.card_type != "Pokemon" or str(card.card_data.stage) != "Basic":
 			continue
-		basics.append({"index": i, "name": str(card.card_data.name), "priority": _get_setup_priority(str(card.card_data.name))})
+		var is_budew: bool = _card_is_budew(card)
+		basics.append({
+			"index": i,
+			"name": str(card.card_data.name),
+			"is_budew": is_budew,
+			"priority": 100 if is_budew else _get_setup_priority(str(card.card_data.name)),
+		})
 	if basics.is_empty():
 		return {"active_hand_index": -1, "bench_hand_indices": []}
 	basics.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
@@ -2787,6 +3588,11 @@ func plan_opening_setup(player: PlayerState) -> Dictionary:
 	var active_index: int = -1
 	var bridge_active_preference: Array[String] = [FLUTTER_MANE, KLEFKI]
 	var fallback_active_preference: Array[String] = [FLUTTER_MANE, KLEFKI, DRIFLOON, SCREAM_TAIL, MANAPHY, MUNKIDORI, RADIANT_GRENINJA]
+	if ralts_count >= 1:
+		for b in basics:
+			if bool(b.get("is_budew", false)):
+				active_index = int(b["index"])
+				break
 	if ralts_count >= 2 and (_opening_tm_bridge_live(player) or _hand_has_card(player, KIRLIA)):
 		for preferred in bridge_active_preference:
 			if active_index != -1:
@@ -2829,6 +3635,7 @@ func plan_opening_setup(player: PlayerState) -> Dictionary:
 				break
 	if active_index == -1:
 		active_index = int(basics[0]["index"])
+	var opening_bench_limit: int = 2
 	var bench_indices: Array[int] = []
 	var non_essentials: Array[int] = []
 	for b in basics:
@@ -2840,7 +3647,7 @@ func plan_opening_setup(player: PlayerState) -> Dictionary:
 		else:
 			non_essentials.append(int(b["index"]))
 	for idx in non_essentials:
-		if bench_indices.size() >= 2:
+		if bench_indices.size() >= opening_bench_limit:
 			break
 		bench_indices.append(idx)
 	return {"active_hand_index": active_index, "bench_hand_indices": bench_indices}
@@ -2870,7 +3677,6 @@ func _opening_tm_bridge_live(player: PlayerState) -> bool:
 	if _hand_has_card(player, EARTHEN_VESSEL):
 		return true
 	return false
-
 
 
 func get_discard_priority(card: CardInstance) -> int:
@@ -3027,6 +3833,10 @@ func _get_supporter_search_value(cname: String) -> int:
 func get_search_priority(card: CardInstance) -> int:
 	if card == null or card.card_data == null:
 		return 0
+	if _card_is_budew(card):
+		return 85
+	if _card_is_cresselia(card):
+		return 65
 	var name: String = str(card.card_data.name)
 	for i: int in SEARCH_PRIORITY_NAMES.size():
 		if name == SEARCH_PRIORITY_NAMES[i]:
@@ -3064,6 +3874,19 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 		return float(get_search_priority(card))
 	if item is PokemonSlot:
 		var slot: PokemonSlot = item as PokemonSlot
+		if step_id == "source_pokemon":
+			var munkidori_source_score: float = _score_munkidori_damage_source(slot, context)
+			if munkidori_source_score != 0.0:
+				return munkidori_source_score
+		if step_id == "target_damage_counters" or str(step.get("ui_mode", "")).strip_edges() == "counter_distribution":
+			var munkidori_target_score: float = _score_munkidori_damage_target(slot, context)
+			if munkidori_target_score != 0.0:
+				return munkidori_target_score
+		if step_id in ["prof_turo_target", "prof_turo_replacement"]:
+			return _score_prof_turo_slot_target(slot, step_id, context)
+		var cresselia_target_score: float = _score_cresselia_attack_target(slot, step, context)
+		if cresselia_target_score != 0.0:
+			return cresselia_target_score
 		var scream_tail_target_score: float = _score_scream_tail_attack_target(slot, step, context)
 		if scream_tail_target_score != 0.0:
 			return scream_tail_target_score
@@ -3080,6 +3903,49 @@ func score_handoff_target(item: Variant, step: Dictionary, context: Dictionary =
 	if item is PokemonSlot and step_id in ["send_out", "switch_target", "self_switch_target", "pivot_target", "heavy_baton_target", "own_bench_target"]:
 		return _score_handoff_target(item as PokemonSlot, step_id, context)
 	return score_interaction_target(item, step, context)
+
+
+func _score_prof_turo_slot_target(slot: PokemonSlot, step_id: String, context: Dictionary) -> float:
+	if slot == null or slot.get_top_card() == null:
+		return 0.0
+	var game_state: GameState = context.get("game_state", null)
+	var player_index: int = int(context.get("player_index", -1))
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return score_assignment_target(slot)
+	var player: PlayerState = game_state.players[player_index]
+	var contract_route: bool = _context_turn_contract_flag(context, "trapped_active_with_ready_bench_attacker")
+	var live_route: bool = contract_route or _trapped_active_with_ready_bench_attacker_live(game_state, player, player_index)
+	if not live_route:
+		return score_assignment_target(slot)
+	if step_id == "prof_turo_target":
+		if slot == player.active_pokemon:
+			return 1000.0
+		if _is_ready_attacker(slot):
+			return -500.0
+		if slot.get_pokemon_name() == GARDEVOIR_EX:
+			return -320.0
+		return -40.0
+	if step_id == "prof_turo_replacement":
+		var best_attacker: PokemonSlot = _best_ready_bench_handoff_attacker(game_state, player, player_index)
+		if slot == best_attacker:
+			return 1000.0
+		if _is_ready_attacker(slot):
+			return 720.0
+		if slot.get_pokemon_name() == GARDEVOIR_EX:
+			return -260.0
+		return _score_handoff_target(slot, "self_switch_target", context)
+	return 0.0
+
+
+func _context_turn_contract_flag(context: Dictionary, flag_name: String) -> bool:
+	var contract_variant: Variant = context.get("turn_contract", context.get("turn_plan", {}))
+	if not (contract_variant is Dictionary):
+		return false
+	var contract: Dictionary = contract_variant as Dictionary
+	var flags_variant: Variant = contract.get("flags", {})
+	if not (flags_variant is Dictionary):
+		return false
+	return bool((flags_variant as Dictionary).get(flag_name, false))
 
 
 func _score_search_item_target(card: CardInstance, all_items: Array, game_state: GameState, player_index: int) -> float:
@@ -3129,9 +3995,47 @@ func _score_search_pokemon_target(card: CardInstance, game_state: GameState, pla
 	var weak_bench_target: bool = _opponent_has_scream_tail_prize_target(game_state, player_index)
 	var charizard_rebuild_lock: bool = _charizard_rebuild_lock(game_state, player, player_index)
 	var preferred_transition_attacker: String = _preferred_transition_attacker_name(game_state, player_index)
+	var free_slots: int = 5 - player.bench.size()
+	if _card_is_budew(card):
+		if _count_budew_on_field(player) > 0:
+			return -80.0
+		var shell_bodies_for_budew_search: int = _count_primary_shell_bodies(player)
+		if _must_force_first_gardevoir(player) or shell_bodies_for_budew_search <= 0:
+			return 40.0
+		if _shell_lock_active(player):
+			if shell_bodies_for_budew_search >= 2:
+				return 220.0
+			return 80.0
+		return 40.0
+	if _card_is_cresselia(card):
+		if not _deck_allows_cresselia_package():
+			return -80.0
+		if _count_cresselia_on_field(player) > 0:
+			return -40.0
+		if shell_online:
+			var movable_damage: int = _cresselia_movable_damage(game_state, player_index)
+			if attacker_bodies == 0:
+				return 500.0 if movable_damage >= 40 else 340.0
+			if ready_attackers == 0 and movable_damage >= 40:
+				return 420.0
+			if movable_damage >= 60:
+				return 260.0
+			return 140.0
+		if _count_primary_shell_bodies(player) >= 2:
+			return 80.0
+		return 20.0
 	if _must_force_first_gardevoir(player):
 		if name == GARDEVOIR_EX:
 			return 1000.0
+		if is_budew_opening_variant() \
+				and attacker_bodies == 0 \
+				and _count_primary_shell_bodies(player) >= 2:
+			if name == preferred_transition_attacker:
+				return 280.0
+			if name in ATTACKER_NAMES or name == SCREAM_TAIL:
+				return 180.0
+			if name == RALTS:
+				return -100.0
 		if name == RALTS and _count_pokemon_on_field(player, KIRLIA) == 0:
 			return 400.0
 		if name == RALTS:
@@ -3139,6 +4043,14 @@ func _score_search_pokemon_target(card: CardInstance, game_state: GameState, pla
 		if name == MUNKIDORI or name == MANAPHY:
 			return -100.0
 		return -60.0
+
+	if _is_budew_munkidori_scream_tail_variant() \
+			and shell_online \
+			and _count_pokemon_on_field(player, MUNKIDORI) == 0:
+		if name == MUNKIDORI and (attacker_bodies > 0 or free_slots >= 2):
+			return 380.0 if attacker_bodies > 0 else 240.0
+		if free_slots <= 2 and name in [KLEFKI, FLUTTER_MANE, MANAPHY, RADIANT_GRENINJA]:
+			return -100.0
 
 	if shell_online and ready_attackers == 0 and (name in ATTACKER_NAMES or name == SCREAM_TAIL):
 		var on_field_count: int = _count_pokemon_on_field(player, name)
@@ -3195,14 +4107,18 @@ func _score_night_stretcher_choice_target(card: CardInstance, game_state: GameSt
 		if _count_primary_shell_bodies(player) < 2 and player.bench.size() < 5:
 			return 360.0
 		return 40.0
-	if name in ATTACKER_NAMES or name == SCREAM_TAIL:
+	if _card_is_cresselia(card) or name in ATTACKER_NAMES or name == SCREAM_TAIL:
 		if closed_loop_rebuild:
 			if name == preferred_transition_attacker:
 				return 960.0 if _count_pokemon_on_field(player, name) == 0 else 700.0
+			if _card_is_cresselia(card):
+				return 820.0 if _count_cresselia_on_field(player) == 0 else 500.0
 			return 720.0 if _count_pokemon_on_field(player, name) == 0 else 440.0
 		if transition_shell and ready_attackers == 0:
 			if name == preferred_transition_attacker:
 				return 860.0 if _count_pokemon_on_field(player, name) == 0 else 520.0
+			if _card_is_cresselia(card):
+				return 720.0 if _count_cresselia_on_field(player) == 0 else 420.0
 			return 380.0 if _count_pokemon_on_field(player, name) == 0 else 180.0
 		if transition_shell and attacker_bodies == 0:
 			return 800.0
@@ -3237,6 +4153,10 @@ func _score_handoff_target(slot: PokemonSlot, step_id: String, context: Dictiona
 	var score: float = 0.0
 
 	if _shell_lock_active(player):
+		if _slot_is_budew(slot):
+			return 620.0 if _count_primary_shell_bodies(player) >= 1 else 320.0
+		if name == SCREAM_TAIL:
+			return 540.0 if _count_primary_shell_bodies(player) >= 1 else 300.0
 		match name:
 			RALTS:
 				return 420.0
@@ -3305,24 +4225,24 @@ func _score_handoff_target(slot: PokemonSlot, step_id: String, context: Dictiona
 
 func _count_pokemon_on_field(player: PlayerState, pokemon_name: String) -> int:
 	var count: int = 0
-	if _slot_is_live(player.active_pokemon) and player.active_pokemon.get_pokemon_name() == pokemon_name:
+	if _slot_is_live(player.active_pokemon) and _slot_matches_name(player.active_pokemon, pokemon_name):
 		count += 1
 	for slot: PokemonSlot in player.bench:
-		if _slot_is_live(slot) and slot.get_pokemon_name() == pokemon_name:
+		if _slot_is_live(slot) and _slot_matches_name(slot, pokemon_name):
 			count += 1
 	return count
 
 
 func _has_pokemon_on_bench(player: PlayerState, pokemon_name: String) -> bool:
 	for slot: PokemonSlot in player.bench:
-		if _slot_is_live(slot) and slot.get_pokemon_name() == pokemon_name:
+		if _slot_is_live(slot) and _slot_matches_name(slot, pokemon_name):
 			return true
 	return false
 
 
 func _hand_has_card(player: PlayerState, card_name: String) -> bool:
 	for card: CardInstance in player.hand:
-		if card != null and card.card_data != null and str(card.card_data.name) == card_name:
+		if card != null and card.card_data != null and _card_data_matches_name(card.card_data, card_name):
 			return true
 	return false
 
@@ -3338,6 +4258,8 @@ func _get_retreat_energy_gap(slot: PokemonSlot) -> int:
 func _is_ready_attacker(slot: PokemonSlot) -> bool:
 	if not _slot_is_live(slot):
 		return false
+	if _slot_is_cresselia(slot):
+		return _get_attack_energy_gap(slot) <= 0 and slot.damage_counters > 0
 	var name: String = slot.get_pokemon_name()
 	if name not in ATTACKER_NAMES and name != SCREAM_TAIL:
 		return false
@@ -3394,6 +4316,8 @@ func _has_attacker_in_discard(state: GameState, player_index: int) -> bool:
 	if player_index < 0 or player_index >= state.players.size():
 		return false
 	for card: CardInstance in state.players[player_index].discard_pile:
+		if _card_is_cresselia(card):
+			return true
 		if card != null and card.card_data != null and str(card.card_data.name) in ATTACKER_NAMES:
 			return true
 		if card != null and card.card_data != null and str(card.card_data.name) == SCREAM_TAIL:
@@ -3414,6 +4338,350 @@ func _munkidori_can_threaten_ko(state: GameState, player_index: int) -> bool:
 	if opponent == null:
 		return false
 	return opponent.get_remaining_hp() <= max_movable_damage
+
+
+func _munkidori_damage_transfer_debt_live(state: GameState, player: PlayerState, player_index: int) -> bool:
+	if state == null or player == null or player_index < 0 or player_index >= state.players.size():
+		return false
+	if not _is_budew_munkidori_scream_tail_variant():
+		return false
+	if not _has_online_shell(player):
+		return false
+	var munkidori: PokemonSlot = _find_ready_munkidori_support(player, state)
+	if munkidori == null:
+		return false
+	if _munkidori_ability_used_this_turn(munkidori, state):
+		return false
+	if _best_munkidori_damage_source(state, player, player_index) == null:
+		return false
+	return _best_munkidori_damage_target(state, player_index) != null
+
+
+func _find_ready_munkidori_support(player: PlayerState, state: GameState) -> PokemonSlot:
+	if player == null:
+		return null
+	for slot: PokemonSlot in _get_all_slots(player):
+		if not _slot_is_live(slot):
+			continue
+		if slot.get_pokemon_name() != MUNKIDORI:
+			continue
+		if _slot_has_energy_type(slot, "D") and not _munkidori_ability_used_this_turn(slot, state):
+			return slot
+	return null
+
+
+func _munkidori_ability_used_this_turn(slot: PokemonSlot, state: GameState) -> bool:
+	if slot == null or state == null:
+		return false
+	for effect: Dictionary in slot.effects:
+		if str(effect.get("type", "")) == "ability_move_counters_to_opp_used" and int(effect.get("turn", -1)) == int(state.turn_number):
+			return true
+	return false
+
+
+func _best_munkidori_damage_source(state: GameState, player: PlayerState, player_index: int) -> PokemonSlot:
+	var best_slot: PokemonSlot = null
+	var best_score: float = 0.0
+	if state == null or player == null:
+		return null
+	for slot: PokemonSlot in _get_all_slots(player):
+		var score: float = _score_munkidori_source_slot(slot, state, player, player_index)
+		if score > best_score:
+			best_score = score
+			best_slot = slot
+	return best_slot
+
+
+func _best_munkidori_damage_target(state: GameState, player_index: int) -> PokemonSlot:
+	if state == null or player_index < 0:
+		return null
+	var opponent_index: int = 1 - player_index
+	if opponent_index < 0 or opponent_index >= state.players.size():
+		return null
+	var opponent: PlayerState = state.players[opponent_index]
+	if opponent == null:
+		return null
+	var best_slot: PokemonSlot = null
+	var best_score: float = 0.0
+	for slot: PokemonSlot in _get_all_slots(opponent):
+		var score: float = _score_munkidori_target_slot(slot, state, player_index)
+		if score > best_score:
+			best_score = score
+			best_slot = slot
+	return best_slot
+
+
+func _score_munkidori_damage_source(slot: PokemonSlot, context: Dictionary) -> float:
+	var game_state: GameState = context.get("game_state", null)
+	var player_index: int = int(context.get("player_index", -1))
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return 0.0
+	var player: PlayerState = game_state.players[player_index]
+	if not _munkidori_damage_transfer_debt_live(game_state, player, player_index):
+		return 0.0
+	return _score_munkidori_source_slot(slot, game_state, player, player_index)
+
+
+func _score_munkidori_damage_target(slot: PokemonSlot, context: Dictionary) -> float:
+	var game_state: GameState = context.get("game_state", null)
+	var player_index: int = int(context.get("player_index", -1))
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return 0.0
+	if not _munkidori_damage_transfer_debt_live(game_state, game_state.players[player_index], player_index):
+		return 0.0
+	return _score_munkidori_target_slot(slot, game_state, player_index)
+
+
+func _score_munkidori_source_slot(slot: PokemonSlot, state: GameState, player: PlayerState, player_index: int) -> float:
+	if slot == null or player == null or not (slot in _get_all_slots(player)):
+		return 0.0
+	if not _slot_is_live(slot) or slot.damage_counters < 10:
+		return -1000.0
+	if _munkidori_source_damage_should_be_preserved(slot, state, player_index):
+		return -1000.0
+	var movable_damage: int = mini(30, int(slot.damage_counters / 10) * 10)
+	var score: float = 500.0 + float(movable_damage * 8)
+	var name: String = slot.get_pokemon_name()
+	if name == GARDEVOIR_EX or name == KIRLIA:
+		score += 220.0
+	if slot == player.active_pokemon:
+		score += 80.0
+	if _effective_remaining_hp_for_strategy(slot, state) <= 40:
+		score += 120.0
+	return score
+
+
+func _score_munkidori_target_slot(slot: PokemonSlot, state: GameState, player_index: int) -> float:
+	if slot == null or not _slot_is_live(slot):
+		return 0.0
+	var opponent_index: int = 1 - player_index
+	if opponent_index < 0 or opponent_index >= state.players.size():
+		return 0.0
+	var opponent: PlayerState = state.players[opponent_index]
+	if opponent == null or not (slot in _get_all_slots(opponent)):
+		return 0.0
+	var remaining_hp: int = _effective_remaining_hp_for_strategy(slot, state)
+	if remaining_hp <= 0:
+		return -1000.0
+	var transfer_damage: int = _available_munkidori_transfer_damage(state, player_index)
+	if transfer_damage <= 0:
+		transfer_damage = 30
+	var score: float = 440.0 + float(slot.get_prize_count() * 80) + float(slot.damage_counters) * 0.2 - float(remaining_hp) * 0.6
+	if slot == opponent.active_pokemon:
+		score += 40.0
+	if remaining_hp <= transfer_damage:
+		score += 1050.0 + float(slot.get_prize_count() * 180) - float(remaining_hp * 2)
+	elif remaining_hp <= transfer_damage + 20:
+		score += 220.0
+	return score
+
+
+func _available_munkidori_transfer_damage(state: GameState, player_index: int) -> int:
+	if state == null or player_index < 0 or player_index >= state.players.size():
+		return 0
+	var player: PlayerState = state.players[player_index]
+	var best: int = 0
+	for slot: PokemonSlot in _get_all_slots(player):
+		if not _slot_is_live(slot) or slot.damage_counters < 10:
+			continue
+		if _munkidori_source_damage_should_be_preserved(slot, state, player_index):
+			continue
+		best = maxi(best, mini(30, int(slot.damage_counters / 10) * 10))
+	return best
+
+
+func _munkidori_source_damage_should_be_preserved(slot: PokemonSlot, state: GameState, player_index: int) -> bool:
+	if not _is_attacker_body(slot):
+		return false
+	if not _is_ready_attacker(slot):
+		return false
+	if _munkidori_can_threaten_ko(state, player_index):
+		return false
+	if _slot_is_cresselia(slot):
+		return false
+	var defender: PokemonSlot = state.players[1 - player_index].active_pokemon if state != null and (1 - player_index) >= 0 and (1 - player_index) < state.players.size() else null
+	if defender == null:
+		return true
+	var damage: int = int(predict_attacker_damage(slot).get("damage", 0))
+	return damage > 0 and damage >= defender.get_remaining_hp()
+
+
+func _cresselia_movable_damage(state: GameState, player_index: int) -> int:
+	if state == null or player_index < 0 or player_index >= state.players.size():
+		return 0
+	var player: PlayerState = state.players[player_index]
+	if player == null:
+		return 0
+	var total: int = 0
+	for slot: PokemonSlot in _get_all_slots(player):
+		if not _slot_is_live(slot):
+			continue
+		total += mini(20, slot.damage_counters)
+	return total
+
+
+func _cresselia_can_attack(slot: PokemonSlot) -> bool:
+	if not _slot_is_live(slot) or not _slot_is_cresselia(slot):
+		return false
+	return _get_attack_energy_gap(slot) <= 0
+
+
+func _best_cresselia_visible_prize_value(state: GameState, player_index: int) -> float:
+	var damage: int = _cresselia_movable_damage(state, player_index)
+	if damage <= 0 or state == null or player_index < 0:
+		return 0.0
+	var opponent_index: int = 1 - player_index
+	if opponent_index < 0 or opponent_index >= state.players.size():
+		return 0.0
+	var opponent: PlayerState = state.players[opponent_index]
+	if opponent == null:
+		return 0.0
+	var best: float = 0.0
+	for slot: PokemonSlot in _get_all_slots(opponent):
+		if slot == null or slot.get_top_card() == null:
+			continue
+		if slot.get_remaining_hp() > damage:
+			continue
+		var value: float = 820.0 + float(slot.get_prize_count() * 170) - float(slot.get_remaining_hp())
+		var cd: CardData = slot.get_card_data()
+		if cd != null and (cd.mechanic == "ex" or cd.mechanic == "V"):
+			value += 180.0
+		if slot == opponent.active_pokemon:
+			value += 60.0
+		best = maxf(best, value)
+	return best
+
+
+func _cresselia_has_immediate_prize_target(state: GameState, player_index: int, cresselia: PokemonSlot) -> bool:
+	if not _cresselia_can_attack(cresselia):
+		return false
+	return _best_cresselia_visible_prize_value(state, player_index) > 0.0
+
+
+func _score_cresselia_attack_target(slot: PokemonSlot, step: Dictionary, context: Dictionary) -> float:
+	if str(step.get("id", "")).strip_edges() != "cresselia_damage_target":
+		return 0.0
+	if slot == null or slot.get_card_data() == null:
+		return 0.0
+	var game_state: GameState = context.get("game_state", null)
+	var player_index: int = int(context.get("player_index", -1))
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return 0.0
+	var player: PlayerState = game_state.players[player_index]
+	if player == null or not _slot_is_cresselia(player.active_pokemon):
+		return 0.0
+	var opponent_index: int = 1 - player_index
+	if opponent_index < 0 or opponent_index >= game_state.players.size():
+		return 0.0
+	var opponent: PlayerState = game_state.players[opponent_index]
+	if opponent == null or not (slot in opponent.get_all_pokemon()):
+		return 0.0
+	var damage: int = _cresselia_movable_damage(game_state, player_index)
+	if damage <= 0:
+		return 0.0
+	var remaining_hp: int = slot.get_remaining_hp()
+	if remaining_hp <= 0:
+		return -1000.0
+	var score: float = 420.0 + float(slot.get_prize_count() * 90) + float(slot.damage_counters) * 0.2 - float(remaining_hp) * 0.4
+	if slot == opponent.active_pokemon:
+		score += 40.0
+	if remaining_hp <= damage:
+		score += 1100.0 + float(slot.get_prize_count() * 220) - float(remaining_hp * 2)
+	return score
+
+
+func _score_cresselia_embrace_target(
+	target_slot: PokemonSlot,
+	state: GameState,
+	player: PlayerState,
+	player_index: int
+) -> float:
+	if target_slot == null or state == null or player == null:
+		return 0.0
+	if not _deck_allows_cresselia_package() or not _has_online_shell(player):
+		return 0.0
+	if _count_cresselia_on_field(player) <= 0:
+		return 0.0
+	if not _slot_is_live(target_slot) or not (target_slot in player.get_all_pokemon()):
+		return 0.0
+	var cd: CardData = target_slot.get_card_data()
+	if cd == null or str(cd.energy_type) != "P":
+		return 0.0
+	if target_slot.get_pokemon_name() in ATTACKER_NAMES or target_slot.get_pokemon_name() == SCREAM_TAIL:
+		return 0.0
+	if not _can_take_more_psychic_embrace_damage(target_slot, state):
+		return 0.0
+	var current_contribution: int = mini(20, target_slot.damage_counters)
+	var after_contribution: int = mini(20, target_slot.damage_counters + 20)
+	var contribution_gain: int = after_contribution - current_contribution
+	if contribution_gain <= 0:
+		return 0.0
+	var score: float = 340.0 + float(contribution_gain * 4)
+	if _slot_is_cresselia(target_slot):
+		score += 260.0
+		if _get_attack_energy_gap(target_slot) > 0:
+			score += 120.0
+	elif cd.mechanic == "ex" or cd.mechanic == "V":
+		score -= 60.0
+	var after_pool: int = _cresselia_movable_damage(state, player_index) + contribution_gain
+	var opponent_index: int = 1 - player_index
+	if opponent_index >= 0 and opponent_index < state.players.size():
+		var opponent: PlayerState = state.players[opponent_index]
+		if opponent != null:
+			for opp_slot: PokemonSlot in _get_all_slots(opponent):
+				if _slot_is_live(opp_slot) and opp_slot.get_remaining_hp() <= after_pool:
+					score += 260.0 + float(opp_slot.get_prize_count() * 80)
+					break
+	return score
+
+
+func _munkidori_lacks_darkness(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	for slot: PokemonSlot in _get_all_slots(player):
+		if _slot_is_live(slot) and slot.get_pokemon_name() == MUNKIDORI and not _slot_has_energy_type(slot, "D"):
+			return true
+	return false
+
+
+func _energy_switch_breaks_munkidori_dark_route(action: Dictionary, player: PlayerState) -> bool:
+	if player == null or not _is_budew_munkidori_scream_tail_variant():
+		return false
+	var targets_variant: Variant = action.get("targets", [])
+	if not (targets_variant is Array):
+		return false
+	for entry_variant: Variant in targets_variant as Array:
+		if not (entry_variant is Dictionary):
+			continue
+		var entry: Dictionary = entry_variant as Dictionary
+		var assignments: Array = entry.get("energy_assignment", [])
+		for assignment_variant: Variant in assignments:
+			if not (assignment_variant is Dictionary):
+				continue
+			var assignment: Dictionary = assignment_variant as Dictionary
+			var source_variant: Variant = assignment.get("source", null)
+			var target_variant: Variant = assignment.get("target", null)
+			if not (source_variant is CardInstance):
+				continue
+			var energy: CardInstance = source_variant as CardInstance
+			if energy.card_data == null or str(energy.card_data.energy_provides) != "D":
+				continue
+			var source_slot: PokemonSlot = _find_slot_for_attached_energy(player, energy)
+			if source_slot == null or source_slot.get_pokemon_name() != MUNKIDORI:
+				continue
+			if target_variant is PokemonSlot and (target_variant as PokemonSlot).get_pokemon_name() == MUNKIDORI:
+				continue
+			return true
+	return false
+
+
+func _find_slot_for_attached_energy(player: PlayerState, energy: CardInstance) -> PokemonSlot:
+	if player == null or energy == null:
+		return null
+	for slot: PokemonSlot in _get_all_slots(player):
+		if energy in slot.attached_energy:
+			return slot
+	return null
 
 
 func _has_ability_named(card_data: CardData, ability_name: String) -> bool:
@@ -3460,6 +4728,8 @@ func _count_essential_slots_needed(player: PlayerState) -> int:
 	if _has_online_shell(player):
 		if _count_attackers_on_field(player) == 0:
 			needed += 1
+		if _is_budew_munkidori_scream_tail_variant() and _count_pokemon_on_field(player, MUNKIDORI) == 0:
+			needed += 1
 	return needed
 
 
@@ -3468,6 +4738,8 @@ func _is_essential_pokemon(pname: String, player: PlayerState) -> bool:
 		return _count_primary_shell_bodies(player) < 2
 	if _has_online_shell(player) and (pname == DRIFLOON or pname == SCREAM_TAIL):
 		return _count_attackers_on_field(player) == 0
+	if _has_online_shell(player) and _is_budew_munkidori_scream_tail_variant() and pname == MUNKIDORI:
+		return _count_pokemon_on_field(player, MUNKIDORI) == 0
 	return false
 
 
@@ -3475,6 +4747,9 @@ func _count_attackers_on_field(player: PlayerState) -> int:
 	var count: int = 0
 	for slot: PokemonSlot in _get_all_slots(player):
 		if not _slot_is_live(slot):
+			continue
+		if _slot_is_cresselia(slot):
+			count += 1
 			continue
 		var name: String = slot.get_pokemon_name()
 		if name in ATTACKER_NAMES or name == SCREAM_TAIL:
@@ -3563,13 +4838,151 @@ func _slot_has_bravery_charm(slot: PokemonSlot) -> bool:
 func _card_matches_name(card: CardInstance, wanted_name: String) -> bool:
 	if card == null or card.card_data == null:
 		return false
+	if _card_data_matches_name(card.card_data, wanted_name):
+		return true
 	var name: String = str(card.card_data.name)
 	var name_en: String = str(card.card_data.name_en)
-	if name == wanted_name or name_en == wanted_name:
-		return true
 	if wanted_name == BRAVERY_CHARM:
 		return name == "Bravery Charm" or name_en == "Bravery Charm"
 	return false
+
+
+func _slot_matches_name(slot: PokemonSlot, wanted_name: String) -> bool:
+	if slot == null:
+		return false
+	return _card_data_matches_name(slot.get_card_data(), wanted_name)
+
+
+func _card_data_matches_name(card_data: CardData, wanted_name: String) -> bool:
+	if card_data == null or wanted_name == "":
+		return false
+	var name: String = str(card_data.name)
+	var name_en: String = str(card_data.name_en)
+	if name == wanted_name or name_en == wanted_name:
+		return true
+	var english_alias: String = _continuity_english_alias(wanted_name)
+	if english_alias != "" and (name == english_alias or name_en == english_alias):
+		return true
+	return false
+
+
+func _card_is_professors_research(card: CardInstance) -> bool:
+	if card == null or card.card_data == null:
+		return false
+	var name: String = str(card.card_data.name)
+	var name_en: String = str(card.card_data.name_en)
+	if str(card.card_data.effect_id) == PROFESSORS_RESEARCH_EFFECT_ID:
+		return true
+	if name == "Professor's Research" or name_en == "Professor's Research":
+		return true
+	if name == "博士的研究" or name.find("鍗氬＋鐨勭爺") >= 0:
+		return true
+	return false
+
+
+func _card_data_is_budew(card_data: CardData) -> bool:
+	if card_data == null:
+		return false
+	if str(card_data.effect_id) == BUDEW_EFFECT_ID:
+		return true
+	if str(card_data.name_en) == BUDEW_EN or str(card_data.name) == BUDEW_EN:
+		return true
+	return false
+
+
+func _card_data_is_cresselia(card_data: CardData) -> bool:
+	if card_data == null:
+		return false
+	if str(card_data.effect_id) == CRESSELIA_EFFECT_ID:
+		return true
+	return str(card_data.name_en) == CRESSELIA_EN or str(card_data.name) == CRESSELIA_EN
+
+
+func _card_data_is_kirlia_alias(card_data: CardData) -> bool:
+	if card_data == null:
+		return false
+	var name: String = str(card_data.name)
+	var name_en: String = str(card_data.name_en)
+	return name_en == "Kirlia" or name == "Kirlia" or name == "奇鲁莉安" or name.find("濂囬瞾鑾") >= 0
+
+
+func _card_data_is_gardevoir_ex_alias(card_data: CardData) -> bool:
+	if card_data == null:
+		return false
+	var name: String = str(card_data.name)
+	var name_en: String = str(card_data.name_en)
+	return name_en == "Gardevoir ex" or name == "Gardevoir ex" or name == "沙奈朵ex" or name.find("娌欏") >= 0
+
+
+func _has_visible_kirlia_body(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	for slot: PokemonSlot in _get_all_slots(player):
+		if _slot_is_live(slot) and _card_data_is_kirlia_alias(slot.get_card_data()):
+			return true
+	return false
+
+
+func _has_visible_gardevoir_ex_body(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	for slot: PokemonSlot in _get_all_slots(player):
+		if _slot_is_live(slot) and _card_data_is_gardevoir_ex_alias(slot.get_card_data()):
+			return true
+	return false
+
+
+func _hand_has_gardevoir_ex_alias(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	for card: CardInstance in player.hand:
+		if card != null and _card_data_is_gardevoir_ex_alias(card.card_data):
+			return true
+	return false
+
+
+func _card_is_budew(card: CardInstance) -> bool:
+	if card == null:
+		return false
+	return _card_data_is_budew(card.card_data)
+
+
+func _card_is_cresselia(card: CardInstance) -> bool:
+	if card == null:
+		return false
+	return _card_data_is_cresselia(card.card_data)
+
+
+func _slot_is_budew(slot: PokemonSlot) -> bool:
+	if slot == null:
+		return false
+	return _card_data_is_budew(slot.get_card_data())
+
+
+func _slot_is_cresselia(slot: PokemonSlot) -> bool:
+	if slot == null:
+		return false
+	return _card_data_is_cresselia(slot.get_card_data())
+
+
+func _count_budew_on_field(player: PlayerState) -> int:
+	var count: int = 0
+	if player == null:
+		return 0
+	for slot: PokemonSlot in _get_all_slots(player):
+		if _slot_is_live(slot) and _slot_is_budew(slot):
+			count += 1
+	return count
+
+
+func _count_cresselia_on_field(player: PlayerState) -> int:
+	var count: int = 0
+	if player == null:
+		return 0
+	for slot: PokemonSlot in _get_all_slots(player):
+		if _slot_is_live(slot) and _slot_is_cresselia(slot):
+			count += 1
+	return count
 
 
 func _effective_remaining_hp_for_strategy(slot: PokemonSlot, game_state: GameState = null) -> int:
@@ -3610,6 +5023,8 @@ func _can_take_more_psychic_embrace_damage(slot: PokemonSlot, game_state: GameSt
 func _has_uncharmed_drifloon(player: PlayerState) -> bool:
 	if player == null:
 		return false
+	if not _deck_allows_drifloon_package():
+		return false
 	for slot: PokemonSlot in _get_all_slots(player):
 		if slot.get_pokemon_name() == DRIFLOON and not _slot_has_tool(slot):
 			return true
@@ -3619,6 +5034,8 @@ func _has_uncharmed_drifloon(player: PlayerState) -> bool:
 func _bravery_charm_preload_window(player: PlayerState) -> bool:
 	if player == null:
 		return false
+	if not _deck_allows_bravery_charm_package():
+		return false
 	if _has_online_shell(player):
 		return true
 	return _count_pokemon_on_field(player, KIRLIA) >= 1
@@ -3626,6 +5043,8 @@ func _bravery_charm_preload_window(player: PlayerState) -> bool:
 
 func _bravery_charm_discard_protected(game_state: GameState, player: PlayerState, player_index: int) -> bool:
 	if player == null:
+		return false
+	if not _deck_allows_bravery_charm_package():
 		return false
 	if _has_uncharmed_drifloon(player):
 		return true
@@ -3652,6 +5071,8 @@ func _recovery_resource_discard_protected(card_name: String, player: PlayerState
 func _bravery_charm_pressure_route_live(game_state: GameState, player: PlayerState, player_index: int) -> bool:
 	if player == null:
 		return false
+	if not _deck_allows_bravery_charm_package():
+		return false
 	for slot: PokemonSlot in _get_all_slots(player):
 		if _bravery_charm_drifloon_pressure_live(game_state, player, player_index, slot):
 			return true
@@ -3659,6 +5080,8 @@ func _bravery_charm_pressure_route_live(game_state: GameState, player: PlayerSta
 
 
 func _bravery_charm_search_route_live(game_state: GameState, player: PlayerState, player_index: int) -> bool:
+	if not _deck_allows_bravery_charm_package():
+		return false
 	if not _bravery_charm_pressure_route_live(game_state, player, player_index):
 		return false
 	return _deck_has_named_card(player, BRAVERY_CHARM, "Tool")
@@ -3666,6 +5089,8 @@ func _bravery_charm_search_route_live(game_state: GameState, player: PlayerState
 
 func _bravery_charm_drifloon_pressure_live(game_state: GameState, player: PlayerState, player_index: int, target_slot: PokemonSlot) -> bool:
 	if game_state == null or player == null or target_slot == null:
+		return false
+	if not _deck_allows_drifloon_package() or not _deck_allows_bravery_charm_package():
 		return false
 	if target_slot.get_pokemon_name() != DRIFLOON:
 		return false
@@ -3756,6 +5181,18 @@ func _should_delay_attacker_investment_during_shell_lock(player: PlayerState) ->
 	if _must_force_first_gardevoir(player):
 		return true
 	if _has_shell_search(player):
+		return true
+	return false
+
+
+func _budew_should_yield_to_development(player: PlayerState, phase: String) -> bool:
+	if player == null or not _shell_lock_active(player):
+		return false
+	if _count_evolvable_bench_targets(player) > 0:
+		return true
+	if _tm_setup_priority_live(player, phase):
+		return true
+	if _must_force_first_gardevoir(player):
 		return true
 	return false
 
@@ -4170,8 +5607,13 @@ func _can_pivot_into_ready_attacker(player: PlayerState) -> bool:
 
 func _preferred_transition_attacker_name(game_state: GameState, player_index: int) -> String:
 	if _opponent_active_demands_drifloon_pressure(game_state, player_index):
-		return DRIFLOON
+		if _deck_allows_drifloon_package():
+			return DRIFLOON
+		if _deck_allows_scream_tail_package():
+			return SCREAM_TAIL
 	if game_state != null and player_index >= 0 and _opponent_has_scream_tail_prize_target(game_state, player_index):
+		return SCREAM_TAIL
+	if not _deck_allows_drifloon_package() and _deck_allows_scream_tail_package():
 		return SCREAM_TAIL
 	return DRIFLOON
 
@@ -4216,6 +5658,8 @@ func _opponent_active_demands_drifloon_pressure(game_state: GameState, player_in
 func _has_drifloon_bench_scaling_candidate(game_state: GameState, player: PlayerState, player_index: int) -> bool:
 	if game_state == null or player == null:
 		return false
+	if not _deck_allows_drifloon_package():
+		return false
 	if not _opponent_active_demands_drifloon_pressure(game_state, player_index):
 		return false
 	var psychic_fuel: int = _count_psychic_energy_in_discard(game_state, player_index)
@@ -4243,6 +5687,8 @@ func _has_drifloon_bench_scaling_candidate(game_state: GameState, player: Player
 
 func _has_drifloon_bench_fuel_route_candidate(game_state: GameState, player: PlayerState, player_index: int) -> bool:
 	if game_state == null or player == null:
+		return false
+	if not _deck_allows_drifloon_package():
 		return false
 	if not _drifloon_pressure_fuel_route_live(game_state, player, player_index):
 		return false
@@ -4298,6 +5744,8 @@ func _drifloon_pressure_fuel_access_live(_game_state: GameState, player: PlayerS
 
 func _drifloon_pressure_fuel_route_live(game_state: GameState, player: PlayerState, player_index: int) -> bool:
 	if game_state == null or player == null:
+		return false
+	if not _deck_allows_drifloon_package():
 		return false
 	if not _has_online_shell(player):
 		return false
@@ -4393,6 +5841,8 @@ func _drifloon_can_scale_to_active_ko(slot: PokemonSlot, defender_remaining: int
 func _is_attacker_body(slot: PokemonSlot) -> bool:
 	if slot == null or slot.get_top_card() == null:
 		return false
+	if _slot_is_cresselia(slot):
+		return true
 	var name: String = slot.get_pokemon_name()
 	return name in ATTACKER_NAMES or name == SCREAM_TAIL
 
@@ -4480,6 +5930,16 @@ func _best_scream_tail_visible_prize_value(game_state: GameState, player_index: 
 	return best
 
 
+
+
+func _scream_tail_has_immediate_prize_target(game_state: GameState, player_index: int, scream_tail: PokemonSlot) -> bool:
+	if scream_tail == null:
+		return false
+	var pred: Dictionary = predict_attacker_damage(scream_tail)
+	if not bool(pred.get("can_attack", false)):
+		return false
+	var damage: int = int(pred.get("damage", 0))
+	return _best_scream_tail_visible_prize_value(game_state, player_index, damage) > 0.0
 
 
 func _discard_has_card(state: GameState, player_index: int, card_name: String) -> bool:

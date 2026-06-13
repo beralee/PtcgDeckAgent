@@ -5,6 +5,7 @@ const BenchLimit = preload("res://scripts/engine/BenchLimitHelper.gd")
 const CSV9CEffects = preload("res://scripts/effects/CSV9CEffects.gd")
 
 const ITEM_LOCK_PREFIX := "item_lock_"
+const ATTACK_LOCK_ALL_TYPE := "attack_lock_all"
 const AttackSelfLockUntilLeaveActiveEffect = preload("res://scripts/effects/pokemon_effects/AttackSelfLockUntilLeaveActive.gd")
 
 func can_attach_energy(
@@ -227,7 +228,11 @@ func get_evolve_unusable_reason(
 		return "选择的卡不是宝可梦，不能用于进化。"
 	var top_name: String = slot.get_pokemon_name()
 	var evolves_from: String = evolution.card_data.evolves_from
-	if evolves_from == "" or evolves_from != top_name:
+	var special_hand_evolution_allowed := (
+		effect_processor != null
+		and effect_processor.slot_allows_evolution_from_hand_onto_self(slot, evolution, player_index, state)
+	)
+	if (evolves_from == "" or evolves_from != top_name) and not special_hand_evolution_allowed:
 		return "%s 不能从 %s 进化。" % [evolution.card_data.name, top_name]
 	return ""
 
@@ -423,6 +428,8 @@ func get_attack_unusable_reason(
 		if effect_data.get("type", "") == AttackSelfLockUntilLeaveActiveEffect.EFFECT_TYPE:
 			if str(effect_data.get("attack_name", "")) == str(attack.get("name", "")):
 				return "该招式在离开战斗场前无法再次使用"
+		if effect_data.get("type", "") == ATTACK_LOCK_ALL_TYPE and int(effect_data.get("turn", -999)) == state.turn_number - 2:
+			return "This Pokemon cannot use attacks during your next turn"
 		if effect_data.get("type", "") == "attack_lock" and int(effect_data.get("turn", -999)) == state.turn_number - 2:
 			if str(effect_data.get("attack_name", "")) == str(attack.get("name", "")):
 				return "该招式下回合无法再次使用"

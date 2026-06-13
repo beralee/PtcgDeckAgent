@@ -64,7 +64,9 @@ func execute_attack(
 			if target is PokemonSlot and target in opp_player.bench:
 				if AbilityBenchImmune.prevents_opponent_attack_effect(target, attacker, state):
 					continue
-				(target as PokemonSlot).damage_counters += max(0, amount)
+				var target_slot := target as PokemonSlot
+				target_slot.damage_counters += max(0, amount)
+				_mark_attack_damage_counter_placement(target_slot, state)
 		return
 
 	# 无交互上下文时的后备：均匀分配
@@ -77,7 +79,9 @@ func execute_attack(
 	var idx: int = 0
 	while remaining > 0 and bench_count > 0:
 		var chunk: int = min(10, remaining)
-		legal_bench[idx % bench_count].damage_counters += chunk
+		var target_slot := legal_bench[idx % bench_count]
+		target_slot.damage_counters += chunk
+		_mark_attack_damage_counter_placement(target_slot, state)
 		remaining -= chunk
 		idx += 1
 

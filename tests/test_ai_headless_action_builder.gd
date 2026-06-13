@@ -8,6 +8,8 @@ const EffectCapturingAromaScript = preload("res://scripts/effects/trainer_effect
 const EffectArtazonScript = preload("res://scripts/effects/stadium_effects/EffectArtazon.gd")
 const EffectRareCandyScript = preload("res://scripts/effects/trainer_effects/EffectRareCandy.gd")
 
+const SCREAM_TAIL_EFFECT_ID := "12c9416c64d1a8cfbbf0a3000a9f3d50"
+
 
 class PartialSearchPriorityStrategy extends RefCounted:
 	var scores: Dictionary = {}
@@ -73,6 +75,17 @@ class PreferredAssignmentTargetStrategy extends RefCounted:
 		if str(step.get("id", "")) != "energy_assignments":
 			return 0.0
 		return 1000.0 if item == preferred_target else 10.0
+
+
+class PreferUnusedAssignmentTargetStrategy extends RefCounted:
+	func score_interaction_target(item: Variant, step: Dictionary, context: Dictionary = {}) -> float:
+		if str(step.get("id", "")) != "energy_assignments":
+			return 0.0
+		var counts: Dictionary = context.get("pending_assignment_counts", {})
+		if item is Object:
+			var item_id := int((item as Object).get_instance_id())
+			return 100.0 if int(counts.get(item_id, 0)) == 0 else 1.0
+		return 0.0
 
 
 class ContextAwareSearchPairStrategy extends RefCounted:
@@ -277,6 +290,37 @@ func test_builder_treats_effective_hp_tool_holder_as_live() -> String:
 		assert_true(active.is_knocked_out(), "Raw base HP should consider this Scream Tail knocked out"),
 		assert_false(gsm.effect_processor.is_effectively_knocked_out(active, gsm.game_state), "Bravery Charm should keep the attacker effectively live"),
 		assert_false(attack_action.is_empty(), "AI legal-action builder must expose attacks for effect-HP-live Pokemon"),
+	])
+
+
+func test_builder_exposes_scream_tail_second_attack_interaction() -> String:
+	var gsm := _make_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+	var scream_tail_cd := _make_pokemon_card_data("吼叫尾", "P", SCREAM_TAIL_EFFECT_ID)
+	scream_tail_cd.name_en = "Scream Tail"
+	scream_tail_cd.hp = 90
+	scream_tail_cd.attacks = [
+		{"name": "巴掌", "cost": "P", "damage": "30", "is_vstar_power": false},
+		{"name": "凶暴吼叫", "cost": "PC", "damage": "", "is_vstar_power": false},
+	]
+	var scream_tail := _make_slot(CardInstance.create(scream_tail_cd, 0))
+	scream_tail.damage_counters = 60
+	scream_tail.attached_energy = [
+		CardInstance.create(_make_energy_card_data("Psychic Energy", "P"), 0),
+		CardInstance.create(_make_energy_card_data("Psychic Energy", "P"), 0),
+	]
+	player.active_pokemon = scream_tail
+	var target_cd := _make_pokemon_card_data("Miraidon ex", "L")
+	target_cd.hp = 220
+	opponent.active_pokemon = _make_slot(CardInstance.create(target_cd, 1))
+
+	var action := _find_action(_build_actions(gsm), "attack", func(candidate: Dictionary) -> bool:
+		return int(candidate.get("attack_index", -1)) == 1
+	)
+	return run_checks([
+		assert_false(action.is_empty(), "Scream Tail's second attack should be visible as a legal AI action"),
+		assert_true(bool(action.get("requires_interaction", false)), "Roaring Scream must expose the target_pokemon interaction instead of becoming a no-target attack"),
 	])
 
 
@@ -560,6 +604,38 @@ func test_builder_keeps_interactive_trainer_when_headless_target_build_fails() -
 		assert_false(action.is_empty(), "Interactive trainer actions should remain legal even if headless target synthesis fails"),
 		assert_true(bool(action.get("requires_interaction", false)), "When headless target synthesis fails, the trainer should fall back to requires_interaction=true"),
 		assert_eq((action.get("targets", []) as Array).size(), 0, "Fallback interactive trainer actions should not synthesize stale targets"),
+	])
+
+
+func test_builder_keeps_scoop_up_cyclone_active_return_interactive_for_dynamic_replacement() -> String:
+	var gsm := _make_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	var active := _make_slot(CardInstance.create(_make_pokemon_card_data("Cyclone Active", "C"), 0))
+	var active_energy := CardInstance.create(_make_energy_card_data("Cyclone Energy", "C"), 0)
+	active.attached_energy.append(active_energy)
+	player.active_pokemon = active
+	var replacement := _make_slot(CardInstance.create(_make_pokemon_card_data("Cyclone Bench", "C"), 0))
+	player.bench = [replacement]
+
+	var cyclone := CardInstance.create(
+		_make_trainer_card_data("Scoop Up Cyclone", "Item", "c1acc32f6333793f261c9c132435fdfa"),
+		0
+	)
+	player.hand = [cyclone]
+
+	var builder := AILegalActionBuilderScript.new()
+	var action := _find_action(builder.build_actions(gsm, 0, true), "play_trainer", func(candidate: Dictionary) -> bool:
+		return candidate.get("card") == cyclone
+	)
+	var targets: Array = action.get("targets", [])
+
+	return run_checks([
+		assert_false(action.is_empty(), "Scoop Up Cyclone should remain a legal AI/headless action"),
+		assert_true(bool(action.get("requires_interaction", false)), "Scoop Up Cyclone should stay interactive because Active return needs a dynamic replacement follow-up"),
+		assert_eq(targets.size(), 0, "Scoop Up Cyclone should not synthesize stale partial targets before the dynamic replacement step exists"),
+		assert_eq(player.active_pokemon, active, "Previewing legal actions should not mutate the Active Pokemon"),
+		assert_true(active_energy in active.attached_energy, "Previewing legal actions should not move attached cards"),
+		assert_true(cyclone in player.hand, "Previewing legal actions should keep Scoop Up Cyclone in hand"),
 	])
 
 
@@ -856,6 +932,41 @@ func test_builder_respects_max_assignments_per_target_in_headless_assignment() -
 		assert_eq(assignments.size(), 2, "Headless assignment should still plan both selected sources"),
 		assert_eq(preferred_count, 1, "max_assignments_per_target=1 should stop assigning both sources to the same preferred target"),
 		assert_eq(backup_count, 1, "The second source should move to the next legal target when the preferred target is full"),
+	])
+
+
+func test_builder_respects_single_target_only_in_headless_assignment() -> String:
+	var gsm := _make_manual_gsm()
+	var builder = AILegalActionBuilderScript.new()
+	builder._deck_strategy = PreferUnusedAssignmentTargetStrategy.new()
+	builder._deck_strategy_detected = true
+	var energy_a := CardInstance.create(_make_energy_card_data("Fire A", "R"), 0)
+	var energy_b := CardInstance.create(_make_energy_card_data("Fire B", "R"), 0)
+	var target_a := _make_slot(CardInstance.create(_make_pokemon_card_data("Target A", "C"), 0))
+	var target_b := _make_slot(CardInstance.create(_make_pokemon_card_data("Target B", "C"), 0))
+	var resolved: Variant = builder.call("_resolve_headless_assignment_step", gsm, 0, 0, {
+		"id": "energy_assignments",
+		"source_items": [energy_a, energy_b],
+		"target_items": [target_a, target_b],
+		"min_select": 0,
+		"max_select": 2,
+		"single_target_only": true,
+	})
+	var assignments: Array = resolved.get("energy_assignments", []) if resolved is Dictionary else []
+	var target_a_count := 0
+	var target_b_count := 0
+	for assignment_variant: Variant in assignments:
+		if not (assignment_variant is Dictionary):
+			continue
+		var target: Variant = (assignment_variant as Dictionary).get("target")
+		if target == target_a:
+			target_a_count += 1
+		elif target == target_b:
+			target_b_count += 1
+	return run_checks([
+		assert_eq(assignments.size(), 2, "Single-target assignment should still plan both selected sources"),
+		assert_eq(target_a_count, 2, "single_target_only should keep all sources on the first legal target"),
+		assert_eq(target_b_count, 0, "single_target_only should not split to the next preferred unused target"),
 	])
 
 

@@ -152,6 +152,15 @@ size_flags_vertical = 3
 theme_override_constants/separation = 16
 alignment = 1
 
+[node name="BtnViewCard" type="Button" parent="MarginContainer/VBox/ContentHBox/RightPanel/ActionButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 104)
+size_flags_horizontal = 3
+disabled = true
+clip_text = true
+text = "查看卡牌"
+
 [node name="BtnReplace" type="Button" parent="MarginContainer/VBox/ContentHBox/RightPanel/ActionButtons"]
 unique_name_in_owner = true
 layout_mode = 2

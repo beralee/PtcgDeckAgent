@@ -1,0 +1,52 @@
+{
+	"abilities": [
+		{
+			"name": "星耀之盾",
+			"text": "在自己的回合可以使用。在下一个对手的回合，自己的所有宝可梦，受到对手宝可梦的招式的伤害「-100」。（也包括新出场的宝可梦。）[对战中，己方的【VSTAR】力量只能使用1次。]"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "5ban Graphics",
+	"attacks": [
+		{
+			"cost": "MMC",
+			"damage": "220",
+			"is_vstar_power": false,
+			"name": "终极冲击",
+			"text": "在下一个自己的回合，这只宝可梦无法使用招式。"
+		}
+	],
+	"card_index": "099",
+	"card_index_en": "99",
+	"card_type": "Pokemon",
+	"description": "特性: 星耀之盾\n在自己的回合可以使用。在下一个对手的回合，自己的所有宝可梦，受到对手宝可梦的招式的伤害「-100」。（也包括新出场的宝可梦。）[对战中，己方的【VSTAR】力量只能使用1次。]\n\n【钢】【钢】 终极冲击 220\n在下一个自己的回合，这只宝可梦无法使用招式。\n\n",
+	"effect_id": "00d90ff674296941a9da9d9a0255aa2d",
+	"energy_provides": "",
+	"energy_type": "M",
+	"evolves_from": "藏玛然特V",
+	"hp": 270,
+	"image_local_path": "user://cards/images/CS6aC/099.png",
+	"image_url": "https://tcg.mik.moe/static/img/CS6aC/099.png",
+	"is_tags": [
+		"V",
+		"VSTAR"
+	],
+	"label": "",
+	"mechanic": "V",
+	"name": "藏玛然特VSTAR",
+	"name_en": "Zamazenta VSTAR",
+	"rarity": "RRR",
+	"regulation_expanded": true,
+	"regulation_mark": "F",
+	"regulation_standard": true,
+	"release_date": "2024-09-20T00:00:00+08:00",
+	"resistance_energy": "G",
+	"resistance_value": "-30",
+	"retreat_cost": 2,
+	"set_code": "CS6aC",
+	"set_code_en": "CRZ",
+	"stage": "VSTAR",
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"yoren_code": "Y1127"
+}

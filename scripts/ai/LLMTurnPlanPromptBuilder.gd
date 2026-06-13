@@ -3424,7 +3424,7 @@ func _is_copied_attack_ref(ref: Dictionary) -> bool:
 
 func _is_copied_attack_text(text: String) -> bool:
 	var lowered := text.to_lower()
-	if lowered.contains("apex dragon") or text.contains("巨龙无双") or lowered.contains("宸ㄩ緳鏃犲弻") or lowered.contains("瀹搞劑绶抽弮鐘插蓟"):
+	if lowered.contains("apex dragon") or text.contains("巨龙无双"):
 		return true
 	var mentions_discard := lowered.contains("discard") or text.contains("弃牌")
 	var mentions_dragon := lowered.contains("dragon") or text.contains("【龙】") or text.contains("龙系")

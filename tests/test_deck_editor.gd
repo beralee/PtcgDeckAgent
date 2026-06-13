@@ -75,6 +75,24 @@ func test_deck_editor_shows_strategy_button_and_hides_legacy_ai_button() -> Stri
 	])
 
 
+func test_deck_editor_has_view_card_button_above_replace_button() -> String:
+	var editor: Control = DeckEditorScene.instantiate()
+	var view_button := editor.get_node_or_null("%BtnViewCard") as Button
+	var replace_button := editor.get_node_or_null("%BtnReplace") as Button
+	var same_parent := view_button != null and replace_button != null and view_button.get_parent() == replace_button.get_parent()
+	var view_index := view_button.get_index() if view_button != null else 999
+	var replace_index := replace_button.get_index() if replace_button != null else -1
+	editor.queue_free()
+
+	return run_checks([
+		assert_not_null(view_button, "Deck editor right action panel should expose a View Card button"),
+		assert_not_null(replace_button, "Deck editor right action panel should still expose the Replace Card button"),
+		assert_eq(view_button.text if view_button != null else "", "查看卡牌", "View Card button should use the requested Chinese label"),
+		assert_true(same_parent, "View Card and Replace Card buttons should share the right action stack"),
+		assert_true(view_index < replace_index, "View Card button should sit directly above Replace Card"),
+	])
+
+
 func test_deck_editor_scroll_nodes_are_unique_for_runtime_metrics() -> String:
 	var editor: Control = DeckEditorScene.instantiate()
 	var deck_scroll := editor.get_node_or_null("%DeckScroll") as ScrollContainer
@@ -158,6 +176,8 @@ func test_card_detail_uses_preview_overlay() -> String:
 	var body := editor.get("_card_detail_body") as GridContainer
 	var preview: Control = editor.get("_card_detail_card_view") as Control
 	var content := editor.get("_card_detail_content") as RichTextLabel
+	var title := editor.get("_card_detail_title") as Label
+	var close_button := editor.get("_card_detail_close_btn") as Button
 
 	return run_checks([
 		assert_not_null(overlay, "Card detail should create an inline overlay"),
@@ -166,6 +186,25 @@ func test_card_detail_uses_preview_overlay() -> String:
 		assert_not_null(body, "Card detail should use a responsive body grid"),
 		assert_not_null(preview, "Card detail should include the shared card preview"),
 		assert_true(content != null and content.text.contains("Quick Strike"), "Card detail should render attack text"),
+		assert_eq(title.get_theme_font_size("font_size") if title != null else 0, 40, "Deck editor card detail title text should be doubled for readability"),
+		assert_eq(content.get_theme_font_size("normal_font_size") if content != null else 0, 28, "Deck editor card detail body text should be doubled for readability"),
+		assert_eq(close_button.get_theme_font_size("font_size") if close_button != null else 0, 28, "Deck editor card detail close button text should be doubled for readability"),
+	])
+
+
+func test_view_card_button_opens_last_selected_card_detail() -> String:
+	var editor: Control = DeckEditorScript.new()
+	var card := _make_card("SV1", "009", "View Button Test", "Pokemon")
+	card.hp = 90
+	editor.set("_last_selected_card_payload", {"card": card})
+
+	editor.call("_on_view_card_pressed")
+	var overlay := editor.get("_card_detail_overlay") as Panel
+	var title := editor.get("_card_detail_title") as Label
+
+	return run_checks([
+		assert_true(overlay != null and overlay.visible, "View Card button should reuse the right-click card detail overlay"),
+		assert_eq(title.text if title != null else "", "View Button Test", "View Card should open the last selected card detail"),
 	])
 
 
@@ -448,6 +487,124 @@ func test_utest_cards_are_excluded() -> String:
 		assert_true(excluded_utest, "UTEST 系列卡牌应被排除"),
 		assert_false(excluded_real, "正常卡牌不应被排除"),
 	])
+
+
+func test_build_pool_includes_bundled_powerglass_in_tool_category() -> String:
+	var editor: Control = DeckEditorScript.new()
+	editor.call("_build_pool")
+	var pool_by_category: Array = editor.get("_pool_by_category")
+	var tool_cards: Array = pool_by_category[3] if pool_by_category.size() > 3 else []
+	var found: CardData = null
+	for card: CardData in tool_cards:
+		if card.get_uid() == "CSV8C_188":
+			found = card
+			break
+	var checks: Array[String] = [
+		assert_not_null(found, "DeckEditor Tool tab should include bundle-only CSV8C_188"),
+	]
+	if found != null:
+		checks.append(assert_eq(str(found.name_en), "Powerglass", "DeckEditor should keep Powerglass metadata in the Tool pool"))
+		checks.append(assert_eq(str(found.card_type), "Tool", "Powerglass should be listed under the Tool tab"))
+	editor.free()
+	return run_checks(checks)
+
+
+func test_build_pool_includes_bundled_black_belts_training_in_supporter_category() -> String:
+	var editor: Control = DeckEditorScript.new()
+	editor.call("_build_pool")
+	var pool_by_category: Array = editor.get("_pool_by_category")
+	var supporter_cards: Array = pool_by_category[1] if pool_by_category.size() > 1 else []
+	var found: CardData = null
+	for card: CardData in supporter_cards:
+		if card.get_uid() == "CSV9.5C_188":
+			found = card
+			break
+	var checks: Array[String] = [
+		assert_not_null(found, "DeckEditor Supporter tab should include bundle-only CSV9.5C_188"),
+	]
+	if found != null:
+		checks.append(assert_eq(str(found.name_en), "Black Belt's Training", "DeckEditor should keep Black Belt's Training metadata in the Supporter pool"))
+		checks.append(assert_eq(str(found.card_type), "Supporter", "Black Belt's Training should be listed under the Supporter tab"))
+	editor.free()
+	return run_checks(checks)
+
+
+func test_build_pool_includes_bundled_love_ball_in_item_category() -> String:
+	var editor: Control = DeckEditorScript.new()
+	editor.call("_build_pool")
+	var pool_by_category: Array = editor.get("_pool_by_category")
+	var item_cards: Array = pool_by_category[2] if pool_by_category.size() > 2 else []
+	var found: CardData = null
+	for card: CardData in item_cards:
+		if card.get_uid() == "CSV7C_182":
+			found = card
+			break
+	var checks: Array[String] = [
+		assert_not_null(found, "DeckEditor Item tab should include bundle-only CSV7C_182"),
+	]
+	if found != null:
+		checks.append(assert_eq(str(found.name_en), "Love Ball", "DeckEditor should keep Love Ball metadata in the Item pool"))
+		checks.append(assert_eq(str(found.card_type), "Item", "Love Ball should be listed under the Item tab"))
+	editor.free()
+	return run_checks(checks)
+
+
+func test_build_pool_includes_bundled_scramble_switch_in_item_category() -> String:
+	var editor: Control = DeckEditorScript.new()
+	editor.call("_build_pool")
+	var pool_by_category: Array = editor.get("_pool_by_category")
+	var item_cards: Array = pool_by_category[2] if pool_by_category.size() > 2 else []
+	var found: CardData = null
+	for card: CardData in item_cards:
+		if card.get_uid() == "CSV9C_180":
+			found = card
+			break
+	var checks: Array[String] = [
+		assert_not_null(found, "DeckEditor Item tab should include bundle-only CSV9C_180"),
+	]
+	if found != null:
+		checks.append(assert_eq(str(found.name_en), "Scramble Switch", "DeckEditor should keep Scramble Switch metadata in the Item pool"))
+		checks.append(assert_eq(str(found.card_type), "Item", "Scramble Switch should be listed under the Item tab"))
+		checks.append(assert_eq(str(found.effect_id), "1da701b43813d6ddb1238e54bce95811", "Scramble Switch should keep its implemented effect id"))
+	editor.free()
+	return run_checks(checks)
+
+
+func test_build_pool_includes_requested_bundled_pokemon_cards() -> String:
+	var editor: Control = DeckEditorScript.new()
+	editor.call("_build_pool")
+	var pool_by_category: Array = editor.get("_pool_by_category")
+	var pokemon_cards: Array = pool_by_category[0] if pool_by_category.size() > 0 else []
+	var found_slowpoke: CardData = null
+	var found_umbreon: CardData = null
+	var found_annihilape: CardData = null
+	for card: CardData in pokemon_cards:
+		if card.get_uid() == "CSV9.5C_031":
+			found_slowpoke = card
+		elif card.get_uid() == "CSV9.5C_104":
+			found_umbreon = card
+		elif card.get_uid() == "CSV9C_099":
+			found_annihilape = card
+	var checks: Array[String] = [
+		assert_not_null(found_slowpoke, "DeckEditor Pokemon tab should include bundle-only CSV9.5C_031"),
+		assert_not_null(found_umbreon, "DeckEditor Pokemon tab should include bundle-only CSV9.5C_104"),
+		assert_not_null(found_annihilape, "DeckEditor Pokemon tab should include CSV9C_099"),
+	]
+	if found_slowpoke != null:
+		checks.append(assert_eq(str(found_slowpoke.card_type), "Pokemon", "CSV9.5C_031 should be listed under the Pokemon tab"))
+		checks.append(assert_eq(str(found_slowpoke.energy_type), "W", "CSV9.5C_031 should keep Water typing in the Pokemon pool"))
+		checks.append(assert_eq(str(found_slowpoke.stage), "Basic", "CSV9.5C_031 should keep Basic stage in the Pokemon pool"))
+	if found_umbreon != null:
+		checks.append(assert_eq(str(found_umbreon.card_type), "Pokemon", "CSV9.5C_104 should be listed under the Pokemon tab"))
+		checks.append(assert_eq(str(found_umbreon.energy_type), "D", "CSV9.5C_104 should keep Darkness typing in the Pokemon pool"))
+		checks.append(assert_eq(str(found_umbreon.stage), "Stage 1", "CSV9.5C_104 should keep Stage 1 in the Pokemon pool"))
+		checks.append(assert_eq(str(found_umbreon.effect_id), "233350ffecdbfac2a8fab27e7f7da282", "CSV9.5C_104 should keep its implemented effect id"))
+	if found_annihilape != null:
+		checks.append(assert_eq(str(found_annihilape.card_type), "Pokemon", "CSV9C_099 should be listed under the Pokemon tab"))
+		checks.append(assert_eq(str(found_annihilape.energy_type), "F", "CSV9C_099 should keep Fighting typing in the Pokemon pool"))
+		checks.append(assert_eq(str(found_annihilape.stage), "Stage 2", "CSV9C_099 should keep Stage 2 in the Pokemon pool"))
+	editor.free()
+	return run_checks(checks)
 
 
 # -- _ordered_pokemon_cards --

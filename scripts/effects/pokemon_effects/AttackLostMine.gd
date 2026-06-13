@@ -76,7 +76,9 @@ func execute_attack(attacker: PokemonSlot, _defender: PokemonSlot, attack_index:
 			if target is PokemonSlot and target in legal_targets:
 				if target in opponent.bench and AbilityBenchImmune.prevents_opponent_attack_effect(target, attacker, state):
 					continue
-				(target as PokemonSlot).damage_counters += max(0, amount)
+				var target_slot := target as PokemonSlot
+				target_slot.damage_counters += max(0, amount)
+				_mark_attack_damage_counter_placement(target_slot, state)
 		return
 
 	var remaining: int = total_damage
@@ -88,7 +90,9 @@ func execute_attack(attacker: PokemonSlot, _defender: PokemonSlot, attack_index:
 		distributable_targets.append(target)
 	while remaining > 0 and not distributable_targets.is_empty():
 		var chunk: int = min(10, remaining)
-		distributable_targets[idx % distributable_targets.size()].damage_counters += chunk
+		var target_slot := distributable_targets[idx % distributable_targets.size()]
+		target_slot.damage_counters += chunk
+		_mark_attack_damage_counter_placement(target_slot, state)
 		remaining -= chunk
 		idx += 1
 

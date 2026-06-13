@@ -1740,7 +1740,7 @@ func _is_basic_dragon_laser_action(action: Dictionary, player: PlayerState = nul
 	if int(action.get("attack_index", -1)) == 1:
 		return true
 	var attack_name := str(action.get("attack_name", action.get("attack", "")))
-	return attack_name in ["Dragon Laser", "巨龙镭射", "宸ㄩ緳闀皠"]
+	return attack_name in ["Dragon Laser", "巨龙镭射"]
 
 
 func _should_defer_basic_dragon_laser_for_vstar(

@@ -39,10 +39,15 @@ const DeckStrategy17MiraidonScript = preload("res://scripts/ai/DeckStrategy17Mir
 const DeckStrategy17MiraidonLLMScript = preload("res://scripts/ai/DeckStrategy17MiraidonLLM.gd")
 const DeckStrategy17DragapultDusknoirScript = preload("res://scripts/ai/DeckStrategy17DragapultDusknoir.gd")
 const DeckStrategy17DragapultDusknoirLLMScript = preload("res://scripts/ai/DeckStrategy17DragapultDusknoirLLM.gd")
+const DeckStrategy175PureDragapultScript = preload("res://scripts/ai/DeckStrategy175PureDragapult.gd")
+const DeckStrategy175PureDragapultLLMScript = preload("res://scripts/ai/DeckStrategy175PureDragapultLLM.gd")
+const DeckStrategy175LugiaArcheopsScript = preload("res://scripts/ai/DeckStrategy175LugiaArcheops.gd")
+const DeckStrategy175LugiaArcheopsLLMScript = preload("res://scripts/ai/DeckStrategy175LugiaArcheopsLLM.gd")
 const DeckStrategy17RegidragoScript = preload("res://scripts/ai/DeckStrategy17Regidrago.gd")
 const DeckStrategy17RegidragoLLMScript = preload("res://scripts/ai/DeckStrategy17RegidragoLLM.gd")
 const _GARDEVOIR_SCRIPT_PATH := "res://scripts/ai/DeckStrategyGardevoir.gd"
 const _GARDEVOIR_LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategyGardevoirLLM.gd"
+const _V175_GARDEVOIR_LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategy175GardevoirLLM.gd"
 const _GARDEVOIR_SIGNATURES: Array[String] = ["沙奈朵ex", "奇鲁莉安", "拉鲁拉丝", "Gardevoir ex", "Kirlia", "Ralts"]
 
 const _STRATEGY_SCRIPTS := {
@@ -82,6 +87,10 @@ const _STRATEGY_SCRIPTS := {
 	"v17_miraidon_llm": DeckStrategy17MiraidonLLMScript,
 	"v17_dragapult_dusknoir": DeckStrategy17DragapultDusknoirScript,
 	"v17_dragapult_dusknoir_llm": DeckStrategy17DragapultDusknoirLLMScript,
+	"v175_pure_dragapult": DeckStrategy175PureDragapultScript,
+	"v175_pure_dragapult_llm": DeckStrategy175PureDragapultLLMScript,
+	"v175_lugia_archeops": DeckStrategy175LugiaArcheopsScript,
+	"v175_lugia_archeops_llm": DeckStrategy175LugiaArcheopsLLMScript,
 	"v17_regidrago": DeckStrategy17RegidragoScript,
 	"v17_regidrago_llm": DeckStrategy17RegidragoLLMScript,
 	"miraidon": DeckStrategyMiraidonScript,
@@ -95,6 +104,9 @@ const _STRATEGY_ID_BY_DECK_ID := {
 	1700007: "v17_miraidon",
 	1700008: "v17_dragapult_dusknoir",
 	1700011: "v17_regidrago",
+	1750002: "v175_pure_dragapult",
+	609431: "v175_lugia_archeops",
+	610080: "gardevoir",
 }
 
 const _STRATEGY_ORDER: Array[String] = [
@@ -134,6 +146,8 @@ func create_strategy_by_id(strategy_id: String) -> RefCounted:
 		return _instantiate_strategy_from_path(_GARDEVOIR_SCRIPT_PATH)
 	if strategy_id == "gardevoir_llm":
 		return _instantiate_strategy_from_path(_GARDEVOIR_LLM_SCRIPT_PATH)
+	if strategy_id == "v175_gardevoir_llm":
+		return _instantiate_strategy_from_path(_V175_GARDEVOIR_LLM_SCRIPT_PATH)
 	var script: Variant = _STRATEGY_SCRIPTS.get(strategy_id, null)
 	if script is GDScript:
 		return (script as GDScript).new()
@@ -210,6 +224,8 @@ func _configure_strategy_from_deck(strategy: RefCounted, deck: DeckData) -> void
 		return
 	if strategy.has_method("set_deck_strategy_text"):
 		strategy.call("set_deck_strategy_text", str(deck.strategy))
+	if strategy.has_method("configure_from_deck"):
+		strategy.call("configure_from_deck", deck)
 
 
 func _instantiate_strategy_from_path(script_path: String) -> RefCounted:

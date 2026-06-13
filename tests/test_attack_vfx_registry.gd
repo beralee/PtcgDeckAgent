@@ -40,6 +40,13 @@ func _make_pokemon_card_with_attack_cost(name: String, energy_type: String, atta
 	return card
 
 
+func _make_pokemon_card_with_uid(name: String, energy_type: String, set_code: String, card_index: String) -> CardData:
+	var card := _make_pokemon_card(name, energy_type)
+	card.set_code = set_code
+	card.card_index = card_index
+	return card
+
+
 func test_resolve_profile_prefers_named_hero_override() -> String:
 	var registry = BattleAttackVfxRegistryScript.new()
 	var dragapult := _make_pokemon_card("Dragapult ex", "P")
@@ -65,6 +72,27 @@ func test_resolve_profile_prefers_name_en_for_localized_charizard_hero_override(
 	return run_checks([
 		assert_true(profile is BattleAttackVfxProfileScript, "Localized Charizard lookup should still return a BattleAttackVfxProfile"),
 		assert_eq(str(profile.profile_id), "hero_charizard_ex", "Localized Charizard should resolve through name_en to the dedicated hero profile"),
+	])
+
+
+func test_budew_itchy_pollen_resolves_card_specific_profile_by_uid() -> String:
+	var registry = BattleAttackVfxRegistryScript.new()
+	var budew := _make_pokemon_card_with_uid("含羞苞", "G", "CSV9.5C", "004")
+	var generic_grass := _make_pokemon_card("Grass Test", "G")
+
+	var profile = registry.call("resolve_profile", budew, "痒痒花粉")
+	var fallback_profile = registry.call("resolve_profile", generic_grass, "Leaf Test")
+	var asset_specs: Dictionary = profile.asset_specs if profile != null else {}
+
+	return run_checks([
+		assert_true(profile is BattleAttackVfxProfileScript, "Budew lookup should return a battle VFX profile"),
+		assert_eq(str(profile.profile_id), "signature_budew_itchy_pollen", "CSV9.5C_004 should resolve to its dedicated itchy-pollen profile"),
+		assert_true(asset_specs.has("impact"), "Budew profile should expose the generated pollen flipbook as impact art"),
+		assert_true(asset_specs.has("residue"), "Budew profile should expose a generated pollen residue layer"),
+		assert_true(profile.get("enable_travel") == false, "Budew pollen should not render a generic travel segment"),
+		assert_true(profile.get("enable_generic_cast") == false, "Budew pollen should not render generic cast rays"),
+		assert_true(profile.get("enable_generic_shockwave") == false, "Budew pollen should suppress the generic shockwave bar"),
+		assert_eq(str(fallback_profile.profile_id), "fallback_grass", "Other Grass attackers should keep the shared grass fallback"),
 	])
 
 
@@ -335,6 +363,7 @@ func test_preview_entries_expose_clean_chinese_labels() -> String:
 		assert_true(labels.has("Arceus VSTAR | Celestial Lance"), "Preview labels should include the Arceus hero entry"),
 		assert_true(labels.has("Giratina VSTAR | Rift Howl"), "Preview labels should include the Giratina hero entry"),
 		assert_true(labels.has("Dialga VSTAR | Chrono Forge"), "Preview labels should include the Dialga hero entry"),
+		assert_true(labels.has("Budew | Itchy Pollen"), "Preview labels should include the Budew signature entry"),
 		assert_true(labels.has("Fallback Fire | Flame Burst"), "Preview labels should expose the shared fire entry"),
 		assert_true(labels.has("Fallback Water | Water Arc"), "Preview labels should expose the shared water entry"),
 		assert_true(labels.has("Fallback Lightning | Thunder Crack"), "Preview labels should expose the shared lightning entry"),

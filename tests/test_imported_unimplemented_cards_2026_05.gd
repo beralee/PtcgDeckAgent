@@ -794,7 +794,7 @@ func test_csv7c_031_rabsca_blocks_bench_attack_effects() -> String:
 	any_target.execute_attack(attacker, shield_owner.active_pokemon, 0, state)
 
 	var move_counters := AttackMoveOwnDamageCountersToOpponent.new(20, 0)
-	move_counters.set_attack_interaction_context([{AttackMoveOwnDamageCountersToOpponent.STEP_ID: [protected_bench]}])
+	move_counters.set_attack_interaction_context([{AttackMoveOwnDamageCountersToOpponent.TARGET_STEP_ID: [protected_bench]}])
 	move_counters.execute_attack(attacker, shield_owner.active_pokemon, 0, state)
 
 	var self_counter_damage := AttackSelfDamageCounterTargetDamage.new(20)

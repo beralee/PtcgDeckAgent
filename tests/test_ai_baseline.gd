@@ -699,6 +699,7 @@ func test_ai_legal_action_builder_enumerates_attack_actions() -> String:
 		assert_eq(_count_actions_by_kind(actions, "attack"), 1, "Builder should enumerate attacks that are currently usable"),
 		assert_true(_has_action(actions, "attack", {"attack_index": 0, "targets": []}), "Builder should include a normalized attack action"),
 		assert_true(_has_action(actions, "attack", {"attack_index": 0, "attack_name": "Zap", "projected_damage": 10}), "Builder should preserve attack metadata for downstream strategy scoring"),
+		assert_true(_has_action(actions, "attack", {"attack_index": 0, "source_slot": active_slot}), "Builder should preserve the active source slot for attack strategy scoring"),
 	])
 
 
@@ -2021,6 +2022,108 @@ func test_ai_send_out_prompt_preserves_followup_take_prize_prompt() -> String:
 		assert_eq(scene_pending_second_prize, 1, "BattleScene should keep exactly one prize pending after the AI send-out"),
 		assert_eq(gsm_pending_second_prize, 1, "GameStateMachine should keep exactly one prize pending after the AI send-out"),
 		assert_eq(player_hand_after_second_prize, 2, "The player should still be able to take the second Dragapult ex prize"),
+	])
+
+
+func test_vs_ai_double_active_knockout_allows_ai_and_human_replacements() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var scene := _make_setup_ready_battle_scene()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 2
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.state_changed.connect(scene._on_state_changed)
+	gsm.action_logged.connect(scene._on_action_logged)
+	gsm.player_choice_required.connect(scene._on_player_choice_required)
+	gsm.game_over.connect(scene._on_game_over)
+	gsm.coin_flipper.coin_flipped.connect(scene._on_coin_flipped)
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+	var my_prize_slots: Array[BattleCardView] = []
+	var opp_prize_slots: Array[BattleCardView] = []
+	for _i: int in 6:
+		my_prize_slots.append(BattleCardViewScript.new())
+		opp_prize_slots.append(BattleCardViewScript.new())
+	scene.set("_my_prize_slots", my_prize_slots)
+	scene.set("_opp_prize_slots", opp_prize_slots)
+
+	for pi: int in 2:
+		var player := _make_player_state(pi)
+		for deck_idx: int in 3:
+			player.deck.append(CardInstance.create(_make_ai_pokemon_card_data("Deck %d-%d" % [pi, deck_idx]), pi))
+		gsm.game_state.players.append(player)
+
+	var attack_cd := _make_ai_pokemon_card_data(
+		"Human Poisoned Active",
+		"Basic",
+		"",
+		"",
+		[],
+		[{"name": "Trade KO", "cost": "", "damage": "100", "text": "", "is_vstar_power": false}],
+		0
+	)
+	attack_cd.hp = 60
+	var human_active := PokemonSlot.new()
+	human_active.pokemon_stack.append(CardInstance.create(attack_cd, 0))
+	human_active.damage_counters = 50
+	human_active.set_status("poisoned", true)
+	gsm.game_state.players[0].active_pokemon = human_active
+	var human_replacement := PokemonSlot.new()
+	human_replacement.pokemon_stack.append(CardInstance.create(_make_ai_pokemon_card_data("Human Replacement"), 0))
+	gsm.game_state.players[0].bench = [human_replacement]
+
+	var ai_active_cd := _make_ai_pokemon_card_data("AI Active")
+	ai_active_cd.hp = 100
+	var ai_active := PokemonSlot.new()
+	ai_active.pokemon_stack.append(CardInstance.create(ai_active_cd, 1))
+	gsm.game_state.players[1].active_pokemon = ai_active
+	var ai_replacement := PokemonSlot.new()
+	ai_replacement.pokemon_stack.append(CardInstance.create(_make_ai_pokemon_card_data("AI Replacement"), 1))
+	gsm.game_state.players[1].bench = [ai_replacement]
+
+	for prize_idx: int in 6:
+		gsm.game_state.players[0].prizes.append(CardInstance.create(_make_ai_pokemon_card_data("My Prize %d" % prize_idx), 0))
+		gsm.game_state.players[1].prizes.append(CardInstance.create(_make_ai_pokemon_card_data("Opp Prize %d" % prize_idx), 1))
+
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	scene.set("_ai_opponent", ai)
+	var attacked: bool = gsm.use_attack(0, 0)
+	var first_prompt: String = str(scene.get("_pending_choice"))
+	var ai_prize_scheduled: bool = bool(scene.get("_ai_step_scheduled"))
+	scene._run_ai_step()
+	var prompt_after_ai_prize: String = str(scene.get("_pending_choice"))
+	var human_prize_player: int = int(scene.get("_pending_prize_player_index"))
+	scene._try_take_prize_from_slot(0, 0)
+	var prompt_after_human_prize: String = str(scene.get("_pending_choice"))
+	var ai_send_out_player: int = int((scene.get("_dialog_data") as Dictionary).get("player", -1))
+	var ai_send_out_scheduled: bool = bool(scene.get("_ai_step_scheduled"))
+	scene._run_ai_step()
+	var prompt_after_ai_send_out: String = str(scene.get("_pending_choice"))
+	var human_send_out_player: int = int((scene.get("_dialog_data") as Dictionary).get("player", -1))
+	scene._handle_dialog_choice(PackedInt32Array([0]))
+	var final_phase: int = int(gsm.game_state.phase)
+	var final_current_player: int = int(gsm.game_state.current_player_index)
+	GameManager.current_mode = previous_mode
+
+	return run_checks([
+		assert_true(attacked, "Human attack should create a double-active knockout during Pokemon Check"),
+		assert_eq(first_prompt, "take_prize", "AI should receive the first prize prompt for the poisoned human Active"),
+		assert_true(ai_prize_scheduled, "AI-owned prize prompt should schedule the AI"),
+		assert_eq(prompt_after_ai_prize, "take_prize", "After AI prize, the human prize prompt should remain clickable"),
+		assert_eq(human_prize_player, 0, "The next prize prompt should belong to the human player"),
+		assert_eq(prompt_after_human_prize, "send_out", "After both prizes, AI should send out first"),
+		assert_eq(ai_send_out_player, 1, "The first replacement prompt should belong to the AI"),
+		assert_true(ai_send_out_scheduled, "AI-owned replacement prompt should schedule the AI"),
+		assert_eq(prompt_after_ai_send_out, "send_out", "After AI sends out, the human replacement prompt should remain clickable"),
+		assert_eq(human_send_out_player, 0, "The second replacement prompt should belong to the human player"),
+		assert_eq(gsm.game_state.players[0].active_pokemon, human_replacement, "Human replacement should become Active"),
+		assert_eq(gsm.game_state.players[1].active_pokemon, ai_replacement, "AI replacement should become Active"),
+		assert_eq(final_current_player, 1, "After both replacements, the turn should pass to the AI"),
+		assert_eq(final_phase, GameState.GamePhase.MAIN, "After both replacements, the game should return to MAIN instead of staying stuck"),
 	])
 
 

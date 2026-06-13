@@ -190,6 +190,9 @@ func resolve_strategy_variant_override(strategy: RefCounted, deck_strategy_regis
 		return strategy
 	if strategy.has_method("get_deck_strategy_text") and variant.has_method("set_deck_strategy_text"):
 		variant.call("set_deck_strategy_text", str(strategy.call("get_deck_strategy_text")))
+	var ai_deck: DeckData = GameManager.resolve_selected_battle_deck(1) if GameManager.selected_deck_ids.size() >= 2 else null
+	if ai_deck != null and variant.has_method("configure_from_deck"):
+		variant.call("configure_from_deck", ai_deck)
 	if variant.has_method("set_llm_host_node"):
 		variant.call("set_llm_host_node", host_scene)
 	connect_llm_strategy_signals(variant, host_scene)

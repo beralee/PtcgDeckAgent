@@ -1,0 +1,50 @@
+{
+	"abilities": [
+		{
+			"is_vstar_power": false,
+			"name": "不眠",
+			"text": "这只宝可梦不会陷入【睡眠】状态。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "Nakamura Ippan",
+	"attacks": [
+		{
+			"cost": "CC",
+			"damage": "20",
+			"is_vstar_power": false,
+			"name": "撞击",
+			"text": ""
+		}
+	],
+	"card_index": "141",
+	"card_index_en": "",
+	"card_type": "Pokemon",
+	"description": "特性: 不眠\n这只宝可梦不会陷入【睡眠】状态。\n\n【无】【无】 撞击 20",
+	"effect_id": "76f4e0d39348c21f1f1a4be4d653b6a5",
+	"energy_provides": "",
+	"energy_type": "C",
+	"evolves_from": "",
+	"hp": 80,
+	"image_local_path": "user://cards/images/CSV9.5C/141.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9.5C/141.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "咕咕",
+	"name_en": "",
+	"rarity": "C",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-06-12T00:00:00+08:00",
+	"resistance_energy": "F",
+	"resistance_value": "-30",
+	"retreat_cost": 2,
+	"set_code": "CSV9.5C",
+	"set_code_en": "",
+	"stage": "Basic",
+	"weakness_energy": "L",
+	"weakness_value": "×2",
+	"yoren_code": "P163"
+}

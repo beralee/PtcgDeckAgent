@@ -26,6 +26,9 @@ const LUGIA_ARCHEOPS_DECK_ID := 575657
 const RAGING_BOLT_OGERPON_DECK_ID := 575718
 const DRAGAPULT_CHARIZARD_DECK_ID := 579502
 const DRAGAPULT_DUSKNOIR_DECK_ID := 575723
+const V17_AI_DECK_PRIORITY_IDS: Array[int] = [
+	1700002, 1700003, 1700004, 1700005, 1700007, 1700008, 1700011,
+]
 const BACKGROUND_CARD_SIZE := Vector2(188, 112)
 const BACKGROUND_GALLERY_HEIGHT := 132.0
 const BACKGROUND_GALLERY_DRAG_THRESHOLD := 12.0
@@ -617,6 +620,8 @@ func _detect_ai_strategy_variants() -> Array[Dictionary]:
 		"v17_miraidon",
 		"v17_dragapult_dusknoir",
 		"v17_regidrago",
+		"v175_pure_dragapult",
+		"v175_lugia_archeops",
 	]:
 		return []
 	var labels_by_strategy := {
@@ -635,8 +640,13 @@ func _detect_ai_strategy_variants() -> Array[Dictionary]:
 		"v17_miraidon": ["规则版17.0密勒顿", "大模型版17.0密勒顿"],
 		"v17_dragapult_dusknoir": ["规则版17.0多龙黑夜魔灵", "大模型版17.0多龙黑夜魔灵"],
 		"v17_regidrago": ["规则版17.0龙柱", "大模型版17.0龙柱"],
+		"v175_pure_dragapult": ["规则版17.5纯多龙", "大模型版17.5纯多龙"],
+		"v175_lugia_archeops": ["规则版17.5洛奇亚始祖大鸟", "大模型版17.5洛奇亚始祖大鸟"],
 	}
-	var labels: Array = labels_by_strategy.get(base_id, [])
+	var labels_by_deck_id := {
+		610080: ["规则版17.5沙奈朵", "大模型版17.5沙奈朵"],
+	}
+	var labels: Array = labels_by_deck_id.get(int(deck.id), labels_by_strategy.get(base_id, []))
 	if labels.is_empty():
 		return []
 	var variants: Array[Dictionary] = [{
@@ -644,8 +654,11 @@ func _detect_ai_strategy_variants() -> Array[Dictionary]:
 		"label": str(labels[0]),
 	}]
 	if _has_llm_api_configured():
+		var llm_id_by_deck_id := {
+			610080: "v175_gardevoir_llm",
+		}
 		variants.append({
-			"id": "%s_llm" % base_id,
+			"id": str(llm_id_by_deck_id.get(int(deck.id), "%s_llm" % base_id)),
 			"label": str(labels[1]),
 		})
 	return variants
@@ -1599,6 +1612,10 @@ func _deck_edit_key(deck: DeckData) -> int:
 
 
 func _compare_decks_by_edit_time_desc(a: DeckData, b: DeckData) -> bool:
+	var a_player_priority := _player_deck_sort_priority_key(a)
+	var b_player_priority := _player_deck_sort_priority_key(b)
+	if a_player_priority != b_player_priority:
+		return a_player_priority > b_player_priority
 	var a_time := _deck_edit_key(a)
 	var b_time := _deck_edit_key(b)
 	if a_time == b_time:
@@ -1616,7 +1633,19 @@ func _compare_decks_by_edit_time_desc(a: DeckData, b: DeckData) -> bool:
 	return a_time > b_time
 
 
+func _player_deck_sort_priority_key(deck: DeckData) -> int:
+	if CardDatabase != null and CardDatabase.has_method("get_player_deck_sort_priority"):
+		return int(CardDatabase.get_player_deck_sort_priority(deck))
+	if CardDatabase != null and CardDatabase.has_method("get_deck_version_priority"):
+		return int(CardDatabase.get_deck_version_priority(deck))
+	return 0
+
+
 func _compare_ai_decks_by_setup_priority(a: DeckData, b: DeckData) -> bool:
+	var a_setup := _ai_deck_setup_priority_key(a)
+	var b_setup := _ai_deck_setup_priority_key(b)
+	if a_setup != b_setup:
+		return a_setup > b_setup
 	var a_release := _ai_deck_release_key(a)
 	var b_release := _ai_deck_release_key(b)
 	if a_release != b_release:
@@ -1634,8 +1663,35 @@ func _compare_ai_decks_by_setup_priority(a: DeckData, b: DeckData) -> bool:
 	return a_id < b_id
 
 
+func _ai_deck_setup_priority_key(deck: DeckData) -> int:
+	var version_priority := _ai_deck_version_priority_key(deck)
+	if version_priority > 0:
+		return version_priority
+	var deck_id := int(deck.id) if deck != null else 0
+	if V17_AI_DECK_PRIORITY_IDS.has(deck_id):
+		return 100
+	return 0
+
+
+func _ai_deck_version_priority_key(deck: DeckData) -> int:
+	if CardDatabase != null and CardDatabase.has_method("get_ai_deck_version_priority"):
+		return int(CardDatabase.get_ai_deck_version_priority(deck))
+	var deck_id := int(deck.id) if deck != null else 0
+	var deck_name := str(deck.deck_name) if deck != null else ""
+	if deck_name.begins_with("17.5") or (deck_id >= 1750000 and deck_id < 1760000):
+		return 200
+	if deck_name.begins_with("17.0") or (deck_id >= 1700000 and deck_id < 1710000):
+		return 100
+	return 0
+
+
 func _ai_deck_release_key(deck: DeckData) -> int:
 	var deck_id := int(deck.id) if deck != null else 0
+	var deck_name := str(deck.deck_name) if deck != null else ""
+	if deck_name.begins_with("17.5") or (deck_id >= 1750000 and deck_id < 1760000):
+		return 175
+	if deck_name.begins_with("17.0") or (deck_id >= 1700000 and deck_id < 1710000):
+		return 170
 	if deck_id < 1000000:
 		return 0
 	return int(floor(float(deck_id) / 100000.0))
