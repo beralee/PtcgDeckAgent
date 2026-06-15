@@ -15,7 +15,9 @@ res://data/bundled_user/ai_fixed_deck_orders/578647.json
 res://data/bundled_user/ai_fixed_deck_orders/579502.json
 res://data/bundled_user/ai_fixed_deck_orders/609431.json
 res://data/bundled_user/cards/151C_004.json
+res://data/bundled_user/cards/151C_005.json
 res://data/bundled_user/cards/151C_016.json
+res://data/bundled_user/cards/151C_017.json
 res://data/bundled_user/cards/151C_081.json
 res://data/bundled_user/cards/151C_113.json
 res://data/bundled_user/cards/151C_123.json
@@ -55,6 +57,7 @@ res://data/bundled_user/cards/CS5aC_107.json
 res://data/bundled_user/cards/CS5aC_113.json
 res://data/bundled_user/cards/CS5aC_116.json
 res://data/bundled_user/cards/CS5aC_118.json
+res://data/bundled_user/cards/CS5bC_040.json
 res://data/bundled_user/cards/CS5bC_045.json
 res://data/bundled_user/cards/CS5bC_049.json
 res://data/bundled_user/cards/CS5bC_051.json
@@ -407,7 +410,9 @@ res://data/bundled_user/cards/CSVH3aC_017.json
 res://data/bundled_user/cards/CSVH3pC_001.json
 res://data/bundled_user/cards/CSVL1C_045.json
 res://data/bundled_user/cards/images/151C/004.png.bin
+res://data/bundled_user/cards/images/151C/005.png.bin
 res://data/bundled_user/cards/images/151C/016.png.bin
+res://data/bundled_user/cards/images/151C/017.png.bin
 res://data/bundled_user/cards/images/151C/081.png.bin
 res://data/bundled_user/cards/images/151C/113.png.bin
 res://data/bundled_user/cards/images/151C/123.png.bin
@@ -447,6 +452,7 @@ res://data/bundled_user/cards/images/CS5aC/107.png.bin
 res://data/bundled_user/cards/images/CS5aC/113.png.bin
 res://data/bundled_user/cards/images/CS5aC/116.png.bin
 res://data/bundled_user/cards/images/CS5aC/118.png.bin
+res://data/bundled_user/cards/images/CS5bC/040.png.bin
 res://data/bundled_user/cards/images/CS5bC/045.png.bin
 res://data/bundled_user/cards/images/CS5bC/049.png.bin
 res://data/bundled_user/cards/images/CS5bC/051.png.bin
@@ -823,7 +829,6 @@ res://data/bundled_user/decks/1700012.json
 res://data/bundled_user/decks/1750001.json
 res://data/bundled_user/decks/1750002.json
 res://data/bundled_user/decks/1750003.json
-res://data/bundled_user/decks/1750004.json
 res://data/bundled_user/decks/1750005.json
 res://data/bundled_user/decks/561444.json
 res://data/bundled_user/decks/569061.json
@@ -854,11 +859,13 @@ res://data/bundled_user/decks/599947.json
 res://data/bundled_user/decks/602769.json
 res://data/bundled_user/decks/606452.json
 res://data/bundled_user/decks/606676.json
-res://data/bundled_user/decks/606972.json
 res://data/bundled_user/decks/607805.json
 res://data/bundled_user/decks/607807.json
 res://data/bundled_user/decks/608194.json
 res://data/bundled_user/decks/609431.json
 res://data/bundled_user/decks/610080.json
 res://data/bundled_user/decks/610403.json
-res://data/bundled_user/decks/611607.json
+res://data/bundled_user/decks/620753.json
+res://data/bundled_user/decks/620761.json
+res://data/bundled_user/decks/620880.json
+res://data/bundled_user/decks/620909.json

@@ -501,6 +501,10 @@ func test_bench_play_followup_suppression_expires_before_next_intentional_slot_t
 	click.pressed = true
 	click.button_index = MOUSE_BUTTON_LEFT
 	scene.call("_on_slot_input", click, "my_bench_0")
+	var release := InputEventMouseButton.new()
+	release.pressed = false
+	release.button_index = MOUSE_BUTTON_LEFT
+	scene.call("_on_slot_input", release, "my_bench_0")
 
 	return run_checks([
 		assert_eq(gsm.game_state.players[0].bench.size(), 1, "Basic Pokemon should be placed onto the Bench"),

@@ -528,6 +528,65 @@ func test_lugia_llm_attack_cannot_skip_queued_primal_turbo() -> String:
 	])
 
 
+func test_lugia_llm_runtime_estimates_cinccino_double_turbo_as_50() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyLugiaArcheopsLLM.gd should instantiate"
+	var gs := _make_game_state(8)
+	var player: PlayerState = gs.players[0]
+	var cinccino := _make_slot(_cinccino_cd(), 0)
+	cinccino.attached_energy.append(CardInstance.create(_make_energy_cd("Double Turbo Energy"), 0))
+	player.active_pokemon = cinccino
+	var attack_action := {
+		"kind": "attack",
+		"attack_index": 0,
+		"attack_name": "Special Roll",
+		"attack_rules": _cinccino_cd().attacks[0],
+	}
+	var estimated_damage: int = int(strategy.call("_estimated_current_attack_damage", attack_action, gs, 0))
+	cinccino.attached_energy.append(CardInstance.create(_make_energy_cd("Gift Energy"), 0))
+	var two_special_estimated_damage: int = int(strategy.call("_estimated_current_attack_damage", attack_action, gs, 0))
+	return run_checks([
+		assert_eq(estimated_damage, 50, "LLM runtime should count one Double Turbo as one Special Energy card and apply its -20 damage penalty"),
+		assert_eq(two_special_estimated_damage, 120, "LLM runtime should only reach 120 when Double Turbo plus another Special Energy are attached"),
+	])
+
+
+func test_lugia_llm_runtime_recognizes_all_175_special_energy_cards() -> String:
+	var strategy := _new_llm_strategy()
+	if strategy == null:
+		return "DeckStrategyLugiaArcheopsLLM.gd should instantiate"
+	var gs := _make_game_state(8)
+	var player: PlayerState = gs.players[0]
+	var cinccino := _make_slot(_cinccino_cd(), 0)
+	for energy_name: String in ["Jet Energy", "Legacy Energy", "V Guard Energy", "Double Turbo Energy", "Gift Energy", "Mist Energy"]:
+		cinccino.attached_energy.append(CardInstance.create(_make_energy_cd(energy_name), 0))
+	player.active_pokemon = cinccino
+	var attack_action := {
+		"kind": "attack",
+		"attack_index": 0,
+		"attack_name": "Special Roll",
+		"attack_rules": _cinccino_cd().attacks[0],
+	}
+	var all_special_damage: int = int(strategy.call("_estimated_current_attack_damage", attack_action, gs, 0))
+	var dte_only := _make_slot(_cinccino_cd(), 0)
+	dte_only.attached_energy.append(CardInstance.create(_make_energy_cd("Double Turbo Energy"), 0))
+	var dte_ready: bool = strategy.call("_active_attack_cost_ready", dte_only, "CC")
+	var lugia_vstar := _make_slot(_lugia_vstar_cd(), 0)
+	for energy_name: String in ["Double Turbo Energy", "Jet Energy", "Gift Energy"]:
+		lugia_vstar.attached_energy.append(CardInstance.create(_make_energy_cd(energy_name), 0))
+	var lugia_ready: bool = strategy.call("_active_attack_cost_ready", lugia_vstar, "CCCC")
+	var legacy_holder := _make_slot(_make_pokemon_cd("Legacy Holder", "Basic", "C", 100), 0)
+	legacy_holder.attached_energy.append(CardInstance.create(_make_energy_cd("Legacy Energy"), 0))
+	var legacy_pays_typed: bool = strategy.call("_active_attack_cost_ready", legacy_holder, "R")
+	return run_checks([
+		assert_eq(all_special_damage, 400, "Six 17.5 Lugia Special Energy cards should give Cinccino 420 damage before the Double Turbo -20 penalty"),
+		assert_true(dte_ready, "One Double Turbo Energy should pay Cinccino's CC attack cost"),
+		assert_true(lugia_ready, "Double Turbo plus two single Special Energy cards should pay Lugia VSTAR's CCCC attack cost"),
+		assert_true(legacy_pays_typed, "Legacy Energy should be treated as a one-unit any-type Special Energy in runtime cost checks"),
+	])
+
+
 func test_lugia_llm_end_turn_repair_does_not_insert_unready_lugia_retreat() -> String:
 	var strategy := _new_llm_strategy()
 	if strategy == null:

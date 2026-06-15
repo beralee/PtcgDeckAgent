@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "GIDORA",
+	"attacks": [
+		{
+			"cost": "R",
+			"damage": "20",
+			"is_vstar_power": false,
+			"name": "烈焰",
+			"text": ""
+		},
+		{
+			"cost": "RRR",
+			"damage": "90",
+			"is_vstar_power": false,
+			"name": "大字爆炎",
+			"text": "选择这只宝可梦身上附着的1个能量，放于弃牌区。"
+		}
+	],
+	"card_index": "005",
+	"card_index_en": "5",
+	"card_type": "Pokemon",
+	"description": "【火】 烈焰 20\n\n\n【火】【火】【火】 大字爆炎 90\n选择这只宝可梦身上附着的1个能量，放于弃牌区。\n\n",
+	"effect_id": "5c0e1214b56b8b00c3853bd00635a5de",
+	"energy_provides": "",
+	"energy_type": "R",
+	"evolves_from": "小火龙",
+	"hp": 100,
+	"image_local_path": "user://cards/images/151C/005.png",
+	"image_url": "https://tcg.mik.moe/static/img/151C/005.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "火恐龙",
+	"name_en": "Charmeleon",
+	"rarity": "U",
+	"regulation_expanded": true,
+	"regulation_mark": "G",
+	"regulation_standard": true,
+	"release_date": "2025-01-17T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "151C",
+	"set_code_en": "MEW",
+	"stage": "Stage 1",
+	"weakness_energy": "W",
+	"weakness_value": "×2",
+	"yoren_code": "P005"
+}

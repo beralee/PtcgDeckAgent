@@ -17,6 +17,7 @@ const Effect206 = preload("res://scripts/effects/stadium_effects/CSV9C206Vibrant
 const Effect207 = preload("res://scripts/effects/stadium_effects/CSV9C207AreaZeroUnderdepths.gd")
 const Effect208 = preload("res://scripts/effects/energy_effects/CSV9C208RichEnergy.gd")
 const EffectPenny = preload("res://scripts/effects/trainer_effects/EffectPenny.gd")
+const AttackOptionalDiscardStadiumScript = preload("res://scripts/effects/pokemon_effects/AttackOptionalDiscardStadium.gd")
 const AILegalActionBuilderScript = preload("res://scripts/ai/AILegalActionBuilder.gd")
 const HeadlessMatchBridgeScript = preload("res://scripts/ai/HeadlessMatchBridge.gd")
 const CSV9CHelpers = preload("res://scripts/effects/CSV9CHelpers.gd")
@@ -1055,6 +1056,77 @@ func test_csv9c_207_area_zero_bench_tera_knockout_cleans_before_prizes() -> Stri
 		assert_true(cleaned, "Resolving the cleanup prompt should resume the bench knockout flow"),
 		assert_eq(defender.bench.size(), 5, "Area Zero cleanup should trim the AI Bench to five before prizes"),
 		assert_true(take_prize_prompt_index_after_cleanup > 0, "Prize prompt should appear after cleanup resolves"),
+	])
+
+
+func test_csv9c_207_lugia_discards_area_zero_then_ko_waits_for_cleanup_before_prizes() -> String:
+	var gsm := _make_gsm()
+	var state := gsm.game_state
+	state.current_player_index = 0
+	state.first_player_index = 1
+	state.turn_number = 5
+	state.phase = GameState.GamePhase.MAIN
+	var attacker := state.players[0]
+	var defender := state.players[1]
+	var lugia_cd := _pokemon("Lugia V", "C", 220, "Basic", "V", "test_lugia_optional_discard_stadium")
+	lugia_cd.attacks = [{"name": "Aero Dive", "cost": "C", "damage": "130", "text": "You may discard a Stadium in play.", "is_vstar_power": false}]
+	var lugia := _slot(lugia_cd, 0)
+	lugia.attached_energy.append(CardInstance.create(_energy("Colorless Energy", "C"), 0))
+	attacker.active_pokemon = lugia
+	defender.active_pokemon = _slot(_pokemon("Budew", "G", 30), 1)
+	defender.bench.clear()
+	defender.bench.append(_slot(_pokemon("Terapagos ex", "C", 230, "Basic", "ex", "", "", "Tera"), 1))
+	for i: int in 7:
+		defender.bench.append(_slot(_pokemon("Turtle Bench %d" % i, "C", 90), 1))
+	_prizes(attacker, 6)
+	_prizes(defender, 6)
+	state.stadium_card = CardInstance.create(_trainer("Area Zero Underdepths", "Stadium", Effect207.EFFECT_ID), 1)
+	state.stadium_owner_index = 1
+	gsm.effect_processor.register_effect("test_lugia_optional_discard_stadium", AttackOptionalDiscardStadiumScript.new())
+	var choice_events: Array[Dictionary] = []
+	gsm.player_choice_required.connect(func(choice_type: String, data: Dictionary) -> void:
+		choice_events.append({"type": choice_type, "data": data.duplicate(true)})
+	)
+
+	var attacked := gsm.use_attack(0, 0, [{"discard_stadium": ["discard"]}])
+	var event_types_after_attack: Array[String] = []
+	for event: Dictionary in choice_events:
+		event_types_after_attack.append(str(event.get("type", "")))
+	var cleanup_prompt: Dictionary = choice_events[0].get("data", {}) if not choice_events.is_empty() else {}
+	var cleanup_steps: Array = cleanup_prompt.get("steps", [])
+	var cleanup_step: Dictionary = cleanup_steps[0] if not cleanup_steps.is_empty() and cleanup_steps[0] is Dictionary else {}
+	var bench_before_cleanup := defender.bench.size()
+	var cleanup_context := {
+		str(cleanup_step.get("id", "")): [
+			defender.bench[defender.bench.size() - 3],
+			defender.bench[defender.bench.size() - 2],
+			defender.bench[defender.bench.size() - 1],
+		],
+	}
+	var cleaned := gsm.enforce_current_bench_limits("bench_limit_cleanup", 1, "", -1, [cleanup_context])
+	var event_types_after_cleanup: Array[String] = []
+	for event: Dictionary in choice_events:
+		event_types_after_cleanup.append(str(event.get("type", "")))
+	var take_prize_prompt_index := -1
+	for i: int in choice_events.size():
+		if str(choice_events[i].get("type", "")) == "take_prize":
+			take_prize_prompt_index = i
+			break
+	var prize_resolved := gsm.resolve_take_prize(0, 0)
+
+	return run_checks([
+		assert_true(attacked, "Lugia V should be able to use Aero Dive and choose to discard Area Zero"),
+		assert_eq(state.stadium_card, null, "Aero Dive should discard Area Zero before cleanup is resolved"),
+		assert_eq(event_types_after_attack, ["bench_limit_cleanup"], "Aero Dive should pause on Area Zero cleanup and not emit prizes before cleanup (events=%s)" % str(event_types_after_attack)),
+		assert_eq(defender.active_pokemon, null, "Budew should leave Active during the attack knockout flow"),
+		assert_eq(bench_before_cleanup, 8, "The opponent Bench should remain full while cleanup is pending"),
+		assert_eq(int(cleanup_step.get("chooser_player_index", -1)), 1, "The opponent should choose which excess Bench Pokemon to discard"),
+		assert_eq(int(cleanup_step.get("min_select", -1)), 3, "Removing Area Zero should force the opponent to discard three excess Bench Pokemon"),
+		assert_true(cleaned, "Resolving the Area Zero cleanup should resume the paused attack knockout flow"),
+		assert_eq(defender.bench.size(), 5, "Cleanup should trim the opponent Bench to five before prizes"),
+		assert_true(take_prize_prompt_index > 0, "Prize taking should be prompted after cleanup resolves (events=%s)" % str(event_types_after_cleanup)),
+		assert_true(prize_resolved, "The attacking player should be able to take the Budew prize after cleanup"),
+		assert_eq(attacker.prizes.size(), 5, "The attacking player should take exactly one prize"),
 	])
 
 

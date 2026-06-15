@@ -114,6 +114,7 @@ var battle_player_display_names: Array[String] = ["", ""]
 var tournament_battle_in_progress: bool = false
 var suppress_scene_navigation_for_tests: bool = false
 var last_requested_scene_path: String = ""
+var _touch_button_bridge_candidate: Button = null
 
 
 func _ready() -> void:
@@ -336,6 +337,100 @@ func _should_use_large_windowed_desktop_launch(os_name: String) -> bool:
 
 func _is_mobile_runtime() -> bool:
 	return OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
+
+
+func _input(event: InputEvent) -> void:
+	if not (event is InputEventScreenTouch):
+		return
+	if bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true)):
+		return
+	if _has_active_battle_scene():
+		return
+	_handle_menu_touch_button_bridge(event as InputEventScreenTouch)
+
+
+func _handle_menu_touch_button_bridge(touch: InputEventScreenTouch) -> void:
+	var button := _find_topmost_touch_button(touch.position)
+	if touch.pressed:
+		_touch_button_bridge_candidate = button
+		if button != null:
+			_mark_touch_button_bridge_handled()
+		return
+	var candidate := _touch_button_bridge_candidate
+	_touch_button_bridge_candidate = null
+	if candidate == null or candidate != button:
+		return
+	if not _button_can_bridge_touch(candidate):
+		return
+	candidate.emit_signal("pressed")
+	_mark_touch_button_bridge_handled()
+
+
+func _mark_touch_button_bridge_handled() -> void:
+	var viewport := get_viewport()
+	if viewport != null:
+		viewport.set_input_as_handled()
+
+
+func _find_topmost_touch_button(global_position: Vector2) -> Button:
+	var tree := get_tree()
+	if tree == null or tree.root == null:
+		return null
+	for i: int in range(tree.root.get_child_count() - 1, -1, -1):
+		var child := tree.root.get_child(i)
+		if child == self or _node_is_battle_scene(child):
+			continue
+		var button := _find_topmost_touch_button_recursive(child, global_position)
+		if button != null:
+			return button
+	return null
+
+
+func _find_topmost_touch_button_recursive(node: Node, global_position: Vector2) -> Button:
+	for i: int in range(node.get_child_count() - 1, -1, -1):
+		var child := node.get_child(i)
+		var button := _find_topmost_touch_button_recursive(child, global_position)
+		if button != null:
+			return button
+	if not (node is Button):
+		return null
+	var button := node as Button
+	if not _button_can_bridge_touch(button):
+		return null
+	return button if button.get_global_rect().has_point(global_position) else null
+
+
+func _button_can_bridge_touch(button: Button) -> bool:
+	if button == null or button.disabled or not button.visible:
+		return false
+	if button.is_inside_tree() and not button.is_visible_in_tree():
+		return false
+	return true
+
+
+func _has_active_battle_scene() -> bool:
+	var tree := get_tree()
+	if tree == null or tree.root == null:
+		return false
+	if tree.current_scene != null and _node_is_battle_scene(tree.current_scene):
+		return true
+	for child: Node in tree.root.get_children():
+		if child == self:
+			continue
+		if _node_is_battle_scene(child):
+			return true
+	return false
+
+
+func _node_is_battle_scene(node: Node) -> bool:
+	if node == null:
+		return false
+	if node.scene_file_path == SCENE_BATTLE or node.name == "BattleScene":
+		return true
+	var script: Variant = node.get_script()
+	if script is Script and str(script.resource_path) == "res://scenes/battle/BattleScene.gd":
+		return true
+	return false
 
 
 ## 切换到指定场景

@@ -68,6 +68,47 @@ func test_csv95c_126_raging_hammer_bonus_binds_only_second_attack() -> String:
 	])
 
 
+func test_csv95c_126_raging_hammer_bonus_applies_when_used_as_pre_evolution_granted_attack() -> String:
+	var db := CardDatabaseScript.new()
+	var duraludon: CardData = db.get_card("CSV9.5C", "126")
+	var archaludon: CardData = db.get_card("CSV9C", "138")
+	var relicanth: CardData = db.get_card("CSV7C", "118")
+	var checks: Array[String] = [
+		assert_not_null(duraludon, "CSV9.5C_126 should load before testing pre-evolution attack damage"),
+		assert_not_null(archaludon, "CSV9C_138 should load before testing pre-evolution attack damage"),
+		assert_not_null(relicanth, "CSV7C_118 should load before testing pre-evolution attack grants"),
+	]
+	if duraludon == null or archaludon == null or relicanth == null:
+		return run_checks(checks)
+
+	var gsm := _make_gsm_for_attack_card(archaludon)
+	var attacker: PokemonSlot = gsm.game_state.players[0].active_pokemon
+	var defender: PokemonSlot = gsm.game_state.players[1].active_pokemon
+	gsm.effect_processor.register_pokemon_card(duraludon)
+	gsm.effect_processor.register_pokemon_card(archaludon)
+	gsm.effect_processor.register_pokemon_card(relicanth)
+	attacker.pokemon_stack.insert(0, CardInstance.create(duraludon, 0))
+	attacker.damage_counters = 40
+	_attach_energy(attacker, 0, "M", 3)
+	gsm.game_state.players[0].bench.append(_make_slot(relicanth, 0))
+
+	var granted := _find_granted_attack(
+		gsm.effect_processor.get_granted_attacks(attacker, gsm.game_state),
+		duraludon.effect_id,
+		1
+	)
+	var used := false
+	if not granted.is_empty():
+		used = gsm.use_granted_attack(0, attacker, granted)
+
+	checks.append_array([
+		assert_false(granted.is_empty(), "Relicanth should grant Archaludon ex access to Duraludon's second attack"),
+		assert_true(used, "Archaludon ex should be able to use Duraludon's Raging Hammer through Relicanth"),
+		assert_eq(defender.damage_counters, 120, "Pre-evolution Raging Hammer should deal 80 plus 40 self-damage bonus"),
+	])
+	return run_checks(checks)
+
+
 func _make_state() -> GameState:
 	var state := GameState.new()
 	var player := PlayerState.new()
@@ -115,6 +156,30 @@ func _make_slot(card: CardData, owner_index: int) -> PokemonSlot:
 	var slot := PokemonSlot.new()
 	slot.pokemon_stack.append(CardInstance.create(card, owner_index))
 	return slot
+
+
+func _energy(name: String, energy_type: String) -> CardData:
+	var card := CardData.new()
+	card.name = name
+	card.card_type = "Basic Energy"
+	card.energy_type = energy_type
+	card.energy_provides = energy_type
+	return card
+
+
+func _attach_energy(slot: PokemonSlot, owner_index: int, energy_type: String, count: int) -> void:
+	for i: int in count:
+		slot.attached_energy.append(CardInstance.create(_energy("%s Energy %d" % [energy_type, i], energy_type), owner_index))
+
+
+func _find_granted_attack(granted_attacks: Array[Dictionary], original_effect_id: String, original_attack_index: int) -> Dictionary:
+	for granted: Dictionary in granted_attacks:
+		if (
+			str(granted.get("original_effect_id", "")) == original_effect_id
+			and int(granted.get("original_attack_index", -1)) == original_attack_index
+		):
+			return granted
+	return {}
 
 
 func _make_gsm_for_attack_card(attacker_card: CardData) -> GameStateMachine:

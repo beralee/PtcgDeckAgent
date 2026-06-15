@@ -208,7 +208,7 @@ func _show_portrait_prize_dialog_if_needed() -> void:
 	if _pending_prize_player_index != _view_player:
 		_close_portrait_prize_dialog()
 		return
-	if _current_resolved_battle_layout_mode() != "portrait":
+	if not _is_portrait_battle_layout_active():
 		_close_portrait_prize_dialog()
 		return
 	var host := _my_prize_hud_host if _pending_prize_player_index == _view_player else _opp_prize_hud_host
@@ -588,9 +588,22 @@ func _set_lost_zone_hud_value(label: Label, count: int) -> void:
 
 
 func _battle_layout_logical_viewport_size(viewport_size: Vector2, resolved_mode: String) -> Vector2:
-	if _should_rotate_portrait_canvas(viewport_size, resolved_mode):
+	if _should_rotate_battle_canvas(viewport_size, resolved_mode):
 		return Vector2(viewport_size.y, viewport_size.x)
 	return viewport_size
+
+
+func _should_rotate_battle_canvas(viewport_size: Vector2, resolved_mode: String) -> bool:
+	var preferred_mode := GameManager.sanitize_battle_layout_mode(str(GameManager.get("battle_layout_mode"))) if GameManager != null else "auto"
+	if resolved_mode == "portrait":
+		if viewport_size.x <= viewport_size.y:
+			return false
+		return preferred_mode == GameManager.BATTLE_LAYOUT_PORTRAIT
+	if resolved_mode == "landscape":
+		if viewport_size.y <= viewport_size.x:
+			return false
+		return preferred_mode == GameManager.BATTLE_LAYOUT_LANDSCAPE
+	return false
 
 
 
@@ -774,12 +787,7 @@ func _apply_lost_hud_font_size(label: Label) -> void:
 
 
 func _should_rotate_portrait_canvas(viewport_size: Vector2, resolved_mode: String) -> bool:
-	if resolved_mode != "portrait":
-		return false
-	if viewport_size.x <= viewport_size.y:
-		return false
-	var preferred_mode := GameManager.sanitize_battle_layout_mode(str(GameManager.get("battle_layout_mode"))) if GameManager != null else "auto"
-	return preferred_mode == GameManager.BATTLE_LAYOUT_PORTRAIT
+	return _should_rotate_battle_canvas(viewport_size, resolved_mode)
 
 
 

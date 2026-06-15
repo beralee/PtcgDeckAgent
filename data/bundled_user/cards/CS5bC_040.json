@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "Mousho",
+	"attacks": [
+		{
+			"cost": "C",
+			"damage": "20",
+			"is_vstar_power": false,
+			"name": "转转冲撞",
+			"text": "使双方的战斗宝可梦各陷入【睡眠】状态。"
+		},
+		{
+			"cost": "CC",
+			"damage": "",
+			"is_vstar_power": false,
+			"name": "黄昏灵感",
+			"text": "这个招式，只有在对手的剩余奖赏卡张数为1张时才可使用。拿取2张自己的奖赏卡。"
+		}
+	],
+	"card_index": "040",
+	"card_index_en": "20",
+	"card_type": "Pokemon",
+	"description": " 转转冲撞 20\n使双方的战斗宝可梦各陷入【睡眠】状态。\n\n 黄昏灵感 \n这个招式，只有在对手的剩余奖赏卡张数为1张时才可使用。拿取2张自己的奖赏卡。\n\n",
+	"effect_id": "24f6629cb78fa8e4a940f49f67736afa",
+	"energy_provides": "",
+	"energy_type": "W",
+	"evolves_from": "呆呆兽",
+	"hp": 120,
+	"image_local_path": "user://cards/images/CS5bC/040.png",
+	"image_url": "https://tcg.mik.moe/static/img/CS5bC/040.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "呆壳兽",
+	"name_en": "Slowbro",
+	"rarity": "U",
+	"regulation_expanded": true,
+	"regulation_mark": "F",
+	"regulation_standard": true,
+	"release_date": "2024-06-18T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 3,
+	"set_code": "CS5bC",
+	"set_code_en": "PGO",
+	"stage": "Stage 1",
+	"weakness_energy": "L",
+	"weakness_value": "×2",
+	"yoren_code": "P080"
+}

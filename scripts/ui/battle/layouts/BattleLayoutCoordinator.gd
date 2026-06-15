@@ -29,7 +29,7 @@ func apply(viewport_size: Vector2, preferred_mode: String, is_mobile: bool = fal
 		return {}
 
 	var resolved_mode := str(_metrics_controller.call("resolve_layout_mode", viewport_size, preferred_mode, is_mobile))
-	var rotate_canvas := _should_rotate_portrait_canvas(viewport_size, resolved_mode, preferred_mode)
+	var rotate_canvas := _should_rotate_layout_canvas(viewport_size, resolved_mode, preferred_mode)
 	var logical_size := _logical_viewport_size(viewport_size, rotate_canvas)
 	if _scene.has_method("_apply_battle_canvas_transform"):
 		_scene.call("_apply_battle_canvas_transform", rotate_canvas, viewport_size, logical_size)
@@ -247,9 +247,13 @@ func _logical_viewport_size(viewport_size: Vector2, rotate_canvas: bool) -> Vect
 	return viewport_size
 
 
-func _should_rotate_portrait_canvas(viewport_size: Vector2, resolved_mode: String, preferred_mode: String) -> bool:
-	if resolved_mode != "portrait":
-		return false
-	if viewport_size.x <= viewport_size.y:
-		return false
-	return preferred_mode == "portrait"
+func _should_rotate_layout_canvas(viewport_size: Vector2, resolved_mode: String, preferred_mode: String) -> bool:
+	if resolved_mode == "portrait":
+		if viewport_size.x <= viewport_size.y:
+			return false
+		return preferred_mode == "portrait"
+	if resolved_mode == "landscape":
+		if viewport_size.y <= viewport_size.x:
+			return false
+		return preferred_mode == "landscape"
+	return false

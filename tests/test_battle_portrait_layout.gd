@@ -969,9 +969,12 @@ func test_battle_setup_layout_selector_exposes_landscape_and_portrait_segments()
 	var landscape_button := scene.find_child("BattleLayoutLandscapeButton", true, false) as Button
 	var portrait_button := scene.find_child("BattleLayoutPortraitButton", true, false) as Button
 	var metas: Array[String] = []
+	var portrait_option_label := ""
 	if option != null:
 		for i: int in option.item_count:
 			metas.append(str(option.get_item_metadata(i)))
+		if option.item_count > 1:
+			portrait_option_label = option.get_item_text(1)
 
 	var result := run_checks([
 		assert_eq(metas.size(), 2, "Battle setup layout selector should expose only landscape and portrait modes"),
@@ -979,7 +982,8 @@ func test_battle_setup_layout_selector_exposes_landscape_and_portrait_segments()
 		assert_true(GameManager.BATTLE_LAYOUT_LANDSCAPE in metas, "Battle layout selector should include landscape mode"),
 		assert_true(GameManager.BATTLE_LAYOUT_PORTRAIT in metas, "Battle layout selector should include portrait mode"),
 		assert_true(landscape_button != null and landscape_button.text == "横屏", "Battle layout segment should include a landscape button"),
-		assert_true(portrait_button != null and portrait_button.text == "竖屏(安卓建议使用)", "Battle layout segment should include the Android-recommended portrait button"),
+		assert_eq(portrait_button.text if portrait_button != null else "", "竖屏（手机建议使用）", "Battle layout segment should include the phone-recommended portrait button"),
+		assert_eq(portrait_option_label, "竖屏（手机建议使用）", "Hidden battle layout option should use the same phone recommendation label"),
 	])
 
 	scene.queue_free()
@@ -1046,16 +1050,26 @@ func test_battle_setup_layout_selector_writes_game_manager() -> String:
 	return result
 
 
-func test_battle_setup_first_run_layout_defaults_to_portrait_only_on_android() -> String:
+func test_battle_setup_first_run_layout_defaults_to_portrait_on_mobile_runtimes() -> String:
 	var scene: Control = BattleSetupScene.instantiate()
 	var android_default := str(scene.call("_default_battle_layout_mode_for_first_run", "Android"))
-	var windows_default := str(scene.call("_default_battle_layout_mode_for_first_run", "Windows"))
 	var ios_default := str(scene.call("_default_battle_layout_mode_for_first_run", "iOS"))
+	var mobile_feature_default := str(scene.call("_default_battle_layout_mode_for_first_run", "", {"mobile": true}, "headless", Vector2.ZERO))
+	var web_android_default := str(scene.call("_default_battle_layout_mode_for_first_run", "", {"web_android": true}, "headless", Vector2.ZERO))
+	var web_ios_default := str(scene.call("_default_battle_layout_mode_for_first_run", "", {"web_ios": true}, "headless", Vector2.ZERO))
+	var phone_web_viewport_default := str(scene.call("_default_battle_layout_mode_for_first_run", "Web", {}, "web", Vector2(390, 844)))
+	var windows_default := str(scene.call("_default_battle_layout_mode_for_first_run", "Windows"))
+	var desktop_web_default := str(scene.call("_default_battle_layout_mode_for_first_run", "Web", {}, "web", Vector2(1440, 900)))
 
 	var result := run_checks([
 		assert_eq(android_default, GameManager.BATTLE_LAYOUT_PORTRAIT, "Android first run should default to portrait battle layout"),
+		assert_eq(ios_default, GameManager.BATTLE_LAYOUT_PORTRAIT, "iOS first run should default to portrait battle layout"),
+		assert_eq(mobile_feature_default, GameManager.BATTLE_LAYOUT_PORTRAIT, "Generic mobile runtime should default to portrait battle layout"),
+		assert_eq(web_android_default, GameManager.BATTLE_LAYOUT_PORTRAIT, "Android mobile browser should default to portrait battle layout"),
+		assert_eq(web_ios_default, GameManager.BATTLE_LAYOUT_PORTRAIT, "iOS mobile browser should default to portrait battle layout"),
+		assert_eq(phone_web_viewport_default, GameManager.BATTLE_LAYOUT_PORTRAIT, "Phone-sized Web viewport should default to portrait battle layout"),
 		assert_eq(windows_default, GameManager.BATTLE_LAYOUT_LANDSCAPE, "Windows first run should default to landscape battle layout"),
-		assert_eq(ios_default, GameManager.BATTLE_LAYOUT_LANDSCAPE, "Non-Android first run should not be forced to portrait"),
+		assert_eq(desktop_web_default, GameManager.BATTLE_LAYOUT_LANDSCAPE, "Desktop-sized Web viewport should keep landscape as the first-run default"),
 	])
 
 	scene.queue_free()
@@ -2415,7 +2429,14 @@ func test_portrait_reparented_bench_slot_keeps_mouse_input_binding() -> String:
 	event.pressed = true
 	if bench_panel != null:
 		event.position = bench_panel.get_global_rect().get_center()
+		event.global_position = event.position
 		bench_panel.emit_signal("gui_input", event)
+		var release := InputEventMouseButton.new()
+		release.button_index = MOUSE_BUTTON_LEFT
+		release.pressed = false
+		release.position = event.position
+		release.global_position = event.global_position
+		bench_panel.emit_signal("gui_input", release)
 
 	var result := run_checks([
 		assert_true(bench_panel != null and bench_panel.get_parent() != scene.find_child("MyBench", true, false), "Portrait layout should reparent the bench slot out of the hidden horizontal bench"),

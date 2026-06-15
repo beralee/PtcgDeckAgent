@@ -12,6 +12,7 @@ const MAX_TITLE_LENGTH := 96
 const MAX_SUMMARY_LENGTH := 140
 const MAX_BODY_LENGTH := 520
 const MAX_URL_LENGTH := 260
+const SERVER_ORDER_UNSET := -1
 
 var cache_path: String = CACHE_PATH
 var _cache: Dictionary = _empty_cache()
@@ -78,14 +79,24 @@ func upsert_item(raw_item: Dictionary, make_current: bool = true) -> Dictionary:
 	var items: Array = _cache.get("items", [])
 	var filtered: Array = []
 	var item_id := str(item.get("id", ""))
+	var replaced_existing: Dictionary = {}
 	for existing_raw: Variant in items:
 		if existing_raw is not Dictionary:
 			continue
 		var existing := existing_raw as Dictionary
 		if str(existing.get("id", "")) == item_id:
+			replaced_existing = existing
 			continue
 		filtered.append(existing)
-	filtered.push_front(item)
+	if not item.has("server_order") and replaced_existing.has("server_order"):
+		item["server_order"] = int(replaced_existing.get("server_order", SERVER_ORDER_UNSET))
+	if not item.has("server_order_batch") and replaced_existing.has("server_order_batch"):
+		item["server_order_batch"] = int(replaced_existing.get("server_order_batch", SERVER_ORDER_UNSET))
+	if item.has("server_order") or item.has("server_order_batch"):
+		filtered.append(item)
+		filtered = _sort_server_ordered_items(filtered)
+	else:
+		filtered.push_front(item)
 	while filtered.size() > MAX_CACHE_ITEMS:
 		filtered.pop_back()
 	_cache["schema_version"] = SCHEMA_VERSION
@@ -165,6 +176,12 @@ static func normalize_recommendation(raw: Dictionary) -> Dictionary:
 		"detail": _normalize_detail(raw.get("detail", {})),
 		"generated_at": _clean_text(raw.get("generated_at", ""), MAX_TITLE_LENGTH),
 	}
+	var server_order := _coerce_optional_int(raw.get("server_order", raw.get("_server_order", SERVER_ORDER_UNSET)))
+	if server_order >= 0:
+		result["server_order"] = server_order
+	var server_order_batch := _coerce_optional_int(raw.get("server_order_batch", raw.get("_server_order_batch", SERVER_ORDER_UNSET)))
+	if server_order_batch >= 0:
+		result["server_order_batch"] = server_order_batch
 	return result
 
 
@@ -234,6 +251,36 @@ static func _empty_cache() -> Dictionary:
 		"items": [],
 		"updated_at": 0,
 	}
+
+
+static func _sort_server_ordered_items(items: Array) -> Array:
+	var source := items.duplicate(true)
+	var result: Array = []
+	while not source.is_empty():
+		var best_index := 0
+		for index: int in range(1, source.size()):
+			if source[index] is Dictionary and source[best_index] is Dictionary:
+				if _cache_item_before(source[index] as Dictionary, source[best_index] as Dictionary):
+					best_index = index
+		result.append(source[best_index])
+		source.remove_at(best_index)
+	return result
+
+
+static func _cache_item_before(left: Dictionary, right: Dictionary) -> bool:
+	var left_batch := _coerce_optional_int(left.get("server_order_batch", SERVER_ORDER_UNSET))
+	var right_batch := _coerce_optional_int(right.get("server_order_batch", SERVER_ORDER_UNSET))
+	if left_batch != right_batch:
+		return left_batch > right_batch
+	var left_order := _coerce_optional_int(left.get("server_order", SERVER_ORDER_UNSET))
+	var right_order := _coerce_optional_int(right.get("server_order", SERVER_ORDER_UNSET))
+	if left_order >= 0 and right_order >= 0 and left_order != right_order:
+		return left_order < right_order
+	if left_order >= 0 and right_order < 0:
+		return true
+	if left_order < 0 and right_order >= 0:
+		return false
+	return false
 
 
 static func _first_valid_from(items: Array[Dictionary]) -> Dictionary:
@@ -316,6 +363,17 @@ static func _coerce_deck_id(value: Variant, import_url: String) -> int:
 		if explicit_id > 0:
 			return explicit_id
 	return DeckImporter.parse_deck_id(import_url)
+
+
+static func _coerce_optional_int(value: Variant) -> int:
+	if value is int:
+		return int(value)
+	if value is float:
+		return int(value)
+	var raw_text := str(value).strip_edges()
+	if raw_text.is_valid_int():
+		return int(raw_text)
+	return SERVER_ORDER_UNSET
 
 
 static func _as_dictionary(value: Variant) -> Dictionary:

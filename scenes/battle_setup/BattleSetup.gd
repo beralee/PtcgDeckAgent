@@ -1141,7 +1141,7 @@ func _setup_battle_layout_options() -> void:
 	option.clear()
 	option.add_item("横屏")
 	option.set_item_metadata(0, GameManager.BATTLE_LAYOUT_LANDSCAPE)
-	option.add_item("竖屏(安卓建议使用)")
+	option.add_item("竖屏（手机建议使用）")
 	option.set_item_metadata(1, GameManager.BATTLE_LAYOUT_PORTRAIT)
 	option.visible = false
 	_battle_layout_segment_buttons = {
@@ -1262,14 +1262,31 @@ func _visible_battle_layout_mode(mode: String) -> String:
 	return _default_battle_layout_mode_for_first_run()
 
 
-func _default_battle_layout_mode_for_first_run(os_name: String = "") -> String:
+func _default_battle_layout_mode_for_first_run(
+	os_name: String = "",
+	feature_flags: Dictionary = {},
+	display_server_name: String = "",
+	viewport_size: Vector2 = Vector2.ZERO
+) -> String:
 	var resolved_os := os_name.strip_edges().to_lower()
 	if resolved_os == "":
 		resolved_os = OS.get_name().strip_edges().to_lower()
-	if resolved_os == "android":
+	if resolved_os in ["android", "ios"]:
 		return GameManager.BATTLE_LAYOUT_PORTRAIT
-	if os_name == "" and (OS.has_feature("android") or OS.has_feature("web_android")):
+	for feature: String in ["mobile", "android", "ios", "web_android", "web_ios"]:
+		if bool(feature_flags.get(feature, false)):
+			return GameManager.BATTLE_LAYOUT_PORTRAIT
+	if feature_flags.is_empty() and os_name == "" and (OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")):
 		return GameManager.BATTLE_LAYOUT_PORTRAIT
+	var resolved_display := display_server_name.strip_edges().to_lower()
+	if resolved_display == "":
+		resolved_display = DisplayServer.get_name().strip_edges().to_lower()
+	if resolved_os in ["web", "html5"] or resolved_display in ["web", "html5"]:
+		var size := viewport_size
+		if size.x <= 0.0 or size.y <= 0.0:
+			size = get_viewport_rect().size if is_inside_tree() else Vector2.ZERO
+		if minf(size.x, size.y) <= 760.0 and maxf(size.x, size.y) <= 1200.0:
+			return GameManager.BATTLE_LAYOUT_PORTRAIT
 	return GameManager.BATTLE_LAYOUT_LANDSCAPE
 
 

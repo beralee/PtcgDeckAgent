@@ -267,74 +267,38 @@ func _consume_modal_hud_input_if_needed(event: InputEvent, source: String = "") 
 
 
 
-func _suppress_action_hud_open_input(source: String = "action_hud_open", duration_msec: int = -1, origin_position: Vector2 = Vector2(-1.0, -1.0)) -> void:
-	var resolved_duration := duration_msec if duration_msec >= 0 else ACTION_HUD_OPEN_INPUT_SUPPRESS_MSEC
-	_action_hud_open_input_suppress_until_msec = Time.get_ticks_msec() + resolved_duration
-	_action_hud_open_input_suppress_has_position = origin_position.x >= 0.0 and origin_position.y >= 0.0
-	_action_hud_open_input_suppress_position = origin_position if _action_hud_open_input_suppress_has_position else Vector2.ZERO
-	_action_hud_open_position_guard_until_msec = Time.get_ticks_msec() + ACTION_HUD_OPEN_POSITION_GUARD_MSEC if _action_hud_open_input_suppress_has_position else 0
-	_action_hud_open_input_suppress_source = source
-	_runtime_log("action_hud_open_input_suppressed", "source=%s duration=%d" % [source, resolved_duration])
+func _clear_modal_slot_time_guard_for_field_choice(reason: String = "field_choice") -> void:
+	if _modal_input_slot_suppress_until_msec <= 0:
+		return
+	_modal_input_slot_suppress_until_msec = 0
+	_runtime_log("modal_slot_time_guard_cleared", "reason=%s" % reason)
 
 
 
-func _consume_action_hud_open_input_if_needed(event: InputEvent, source: String = "") -> bool:
-	var now := Time.get_ticks_msec()
-	var in_time_guard := _action_hud_open_input_suppress_until_msec > 0 and now <= _action_hud_open_input_suppress_until_msec
-	var in_position_guard := _action_hud_open_input_suppress_has_position \
-		and _action_hud_open_position_guard_until_msec > 0 \
-		and now <= _action_hud_open_position_guard_until_msec
-	if not in_time_guard and not in_position_guard:
-		_clear_action_hud_open_input_guard()
+func _suppress_field_assignment_source_followup_choice(source_index: int, duration_msec: int = -1) -> void:
+	var resolved_duration := duration_msec if duration_msec >= 0 else FIELD_ASSIGNMENT_SOURCE_FOLLOWUP_CHOICE_SUPPRESS_MSEC
+	_field_assignment_source_followup_choice_index = source_index
+	_field_assignment_source_followup_choice_until_msec = Time.get_ticks_msec() + resolved_duration
+	_runtime_log("field_assignment_source_followup_suppressed", "source=%d duration=%d" % [source_index, resolved_duration])
+
+
+
+func _consume_field_assignment_source_followup_choice(source_index: int) -> bool:
+	if _field_assignment_source_followup_choice_until_msec <= 0:
 		return false
-	if _pending_choice != "pokemon_action":
-		_clear_action_hud_open_input_guard()
+	if Time.get_ticks_msec() > _field_assignment_source_followup_choice_until_msec:
+		_clear_field_assignment_source_followup_choice_guard()
 		return false
-	if not _is_slot_followup_click_event(event):
+	if source_index != _field_assignment_source_followup_choice_index:
 		return false
-	if not _should_consume_action_hud_open_followup_event(event, in_time_guard, in_position_guard):
-		return false
-	_cancel_slot_touch_long_press(false)
-	_clear_action_hud_open_input_guard()
-	var viewport := get_viewport()
-	if viewport != null:
-		viewport.set_input_as_handled()
-	_runtime_log("action_hud_open_input_consumed", "source=%s event=%s" % [source, event.get_class()])
+	_runtime_log("field_assignment_source_followup_consumed", "source=%d" % source_index)
 	return true
 
 
 
-func _should_consume_action_hud_open_followup_event(event: InputEvent, in_time_guard: bool, in_position_guard: bool) -> bool:
-	if event is InputEventScreenTouch:
-		if not _action_hud_open_input_suppress_has_position:
-			return in_time_guard
-		return _action_hud_open_event_matches_suppress_position(event)
-	if event is InputEventMouseButton:
-		if _action_hud_open_input_suppress_source == "slot_touch_release":
-			return in_time_guard or in_position_guard
-		if not _action_hud_open_input_suppress_has_position:
-			return in_time_guard
-		return _action_hud_open_event_matches_suppress_position(event)
-	return in_time_guard
-
-
-
-func _clear_action_hud_open_input_guard() -> void:
-	_action_hud_open_input_suppress_until_msec = 0
-	_action_hud_open_position_guard_until_msec = 0
-	_action_hud_open_input_suppress_position = Vector2.ZERO
-	_action_hud_open_input_suppress_has_position = false
-	_action_hud_open_input_suppress_source = ""
-
-
-
-func _action_hud_open_event_matches_suppress_position(event: InputEvent) -> bool:
-	if not _action_hud_open_input_suppress_has_position:
-		return false
-	var event_position := _action_hud_open_input_screen_position(event)
-	if event_position.x < 0.0 or event_position.y < 0.0:
-		return false
-	return event_position.distance_to(_action_hud_open_input_suppress_position) <= ACTION_HUD_OPEN_POSITION_GUARD_TOLERANCE
+func _clear_field_assignment_source_followup_choice_guard() -> void:
+	_field_assignment_source_followup_choice_until_msec = 0
+	_field_assignment_source_followup_choice_index = -1
 
 
 
@@ -921,15 +885,25 @@ func _try_take_prize_from_slot(player_index: int, slot_index: int) -> void:
 		return
 	_pending_prize_animating = true
 	_animate_prize_flip(prize_view, prize_card, func() -> void:
+		var previous_choice := _pending_choice
+		var previous_prize_player_index := _pending_prize_player_index
+		var previous_prize_remaining := _pending_prize_remaining
 		_pending_choice = ""
 		_pending_prize_player_index = -1
 		_pending_prize_remaining = 0
 		var resolved: bool = _gsm.resolve_take_prize(player_index, slot_index)
 		_pending_prize_animating = false
+		if resolved:
+			_restore_pending_engine_prize_choice_if_needed("take_prize_resolve")
 		if resolved and _pending_choice == "take_prize":
 			_focus_prize_panel(_pending_prize_player_index)
 		elif resolved:
 			_clear_prize_selection()
+		else:
+			_pending_choice = previous_choice
+			_pending_prize_player_index = previous_prize_player_index
+			_pending_prize_remaining = previous_prize_remaining
+			_focus_prize_panel(player_index)
 		_refresh_ui()
 		_check_two_player_handover()
 		_maybe_run_ai()
@@ -1468,6 +1442,33 @@ func _clear_prize_selection() -> void:
 	_sync_battle_dialog_state_from_scene()
 	_sync_battle_overlay_state_from_scene()
 	_sync_portrait_prize_hud_visibility()
+
+
+
+func _restore_pending_engine_prize_choice_if_needed(reason: String = "") -> bool:
+	if _gsm == null:
+		return false
+	var engine_prize_player := int(_gsm.get("_pending_prize_player_index"))
+	var engine_prize_remaining := int(_gsm.get("_pending_prize_remaining"))
+	if engine_prize_player < 0 or engine_prize_remaining <= 0:
+		return false
+	if (
+		_pending_choice == "take_prize"
+		and _pending_prize_player_index == engine_prize_player
+		and _pending_prize_remaining == engine_prize_remaining
+	):
+		return false
+	_runtime_log(
+		"restore_engine_prize_choice",
+		"reason=%s player=%d remaining=%d previous=%s" % [
+			reason,
+			engine_prize_player,
+			engine_prize_remaining,
+			_state_snapshot(),
+		]
+	)
+	call("_start_prize_selection", engine_prize_player, engine_prize_remaining)
+	return true
 
 
 

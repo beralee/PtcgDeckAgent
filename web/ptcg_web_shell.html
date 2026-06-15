@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+		<meta name="mobile-web-app-capable" content="yes">
+		<meta name="theme-color" content="#0b1117">
+		<title>$GODOT_PROJECT_NAME</title>
+		<style>
+html,
+body,
+#canvas {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	width: 100%;
+	height: 100%;
+}
+
+html,
+body {
+	overflow: hidden;
+	position: fixed;
+	inset: 0;
+	background: #0b1117;
+	color: #f4f7fb;
+	touch-action: none;
+	overscroll-behavior: none;
+	-webkit-text-size-adjust: 100%;
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+* {
+	box-sizing: border-box;
+	-webkit-tap-highlight-color: transparent;
+}
+
+#canvas {
+	display: block;
+	background: #05080c;
+}
+
+#canvas:focus {
+	outline: none;
+}
+
+#launch,
+#status {
+	position: fixed;
+	inset: 0;
+	z-index: 2;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding:
+		max(20px, env(safe-area-inset-top))
+		max(20px, env(safe-area-inset-right))
+		max(24px, env(safe-area-inset-bottom))
+		max(20px, env(safe-area-inset-left));
+	background: linear-gradient(180deg, #0c1621 0%, #080b10 100%);
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+}
+
+#launch.is-hidden {
+	display: none;
+}
+
+#launch-panel,
+#status-panel {
+	width: min(92vw, 560px);
+	text-align: center;
+}
+
+#launch-title {
+	margin: 0 0 10px;
+	font-size: 28px;
+	font-weight: 800;
+	letter-spacing: 0;
+}
+
+#launch-copy,
+#status-copy,
+#install-hint {
+	margin: 0 auto;
+	color: rgba(244, 247, 251, 0.78);
+	font-size: 15px;
+	line-height: 1.7;
+}
+
+#launch-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	margin: 28px 0 16px;
+}
+
+#start-game {
+	margin: 28px 0 16px;
+	min-width: 176px;
+	min-height: 52px;
+	border: 0;
+	border-radius: 8px;
+	background: #48c78e;
+	color: #07130d;
+	font-size: 18px;
+	font-weight: 800;
+	box-shadow: 0 12px 28px rgba(72, 199, 142, 0.24);
+	cursor: pointer;
+}
+
+#launch-actions #start-game {
+	margin: 0;
+}
+
+#start-game:disabled {
+	opacity: 0.62;
+	cursor: default;
+}
+
+#status {
+	z-index: 1;
+	visibility: hidden;
+}
+
+#status-splash {
+	display: none;
+}
+
+#status-stage {
+	margin: 0 0 14px;
+	font-size: 18px;
+	font-weight: 700;
+}
+
+#status-progress {
+	display: none;
+	width: min(72vw, 420px);
+	height: 12px;
+	margin: 0 auto 12px;
+	accent-color: #48c78e;
+}
+
+#status-notice {
+	display: none;
+	margin: 0 auto;
+	padding: 14px 16px;
+	border: 1px solid rgba(255, 107, 107, 0.48);
+	border-radius: 8px;
+	background: rgba(99, 37, 43, 0.68);
+	color: #fff0f0;
+	line-height: 1.45;
+	white-space: pre-line;
+}
+
+@media (max-width: 640px) {
+	#launch-title {
+		font-size: 24px;
+	}
+
+	#launch-copy,
+	#status-copy,
+	#install-hint {
+		font-size: 14px;
+	}
+}
+		</style>
+		$GODOT_HEAD_INCLUDE
+	</head>
+	<body>
+		<canvas id="canvas">
+			&#20320;&#30340;&#27983;&#35272;&#22120;&#19981;&#25903;&#25345; canvas&#12290;
+		</canvas>
+
+		<noscript>
+			&#20320;&#30340;&#27983;&#35272;&#22120;&#19981;&#25903;&#25345; JavaScript&#65292;&#26080;&#27861;&#21551;&#21160;&#28216;&#25103;&#12290;
+		</noscript>
+
+		<div id="launch">
+			<div id="launch-panel">
+				<h1 id="launch-title">PTCG Deck Agent</h1>
+				<p id="launch-copy">&#28857;&#20987;&#24320;&#22987;&#21518;&#20250;&#21152;&#36733;&#28216;&#25103;&#36164;&#28304;&#12290;&#39318;&#27425;&#21152;&#36733;&#31245;&#24930;&#65292;&#20043;&#21518;&#20250;&#36890;&#36807;&#27983;&#35272;&#22120;&#21644; PWA &#32531;&#23384;&#21152;&#36895;&#12290;</p>
+				<div id="launch-actions">
+					<button id="start-game" type="button">&#24320;&#22987;&#28216;&#25103;</button>
+				</div>
+				<p id="install-hint">&#28155;&#21152;&#21040;&#20027;&#23631;&#24149;&#21518;&#65292;&#19979;&#27425;&#25171;&#24320;&#26356;&#25509;&#36817; App &#20307;&#39564;&#12290;</p>
+			</div>
+		</div>
+
+		<div id="status">
+			<div id="status-panel">
+				<img id="status-splash" src="$GODOT_SPLASH" class="$GODOT_SPLASH_CLASSES" alt="">
+				<div id="status-stage">&#27491;&#22312;&#20934;&#22791;&#21551;&#21160;&#29615;&#22659;...</div>
+				<progress id="status-progress"></progress>
+				<div id="status-copy">&#39318;&#27425;&#21152;&#36733;&#31245;&#24930;&#65292;&#20043;&#21518;&#20250;&#26356;&#24555;&#12290;</div>
+				<div id="status-notice"></div>
+			</div>
+		</div>
+
+		<script src="$GODOT_URL"></script>
+		<script>
+const GODOT_CONFIG = $GODOT_CONFIG;
+const GODOT_THREADS_ENABLED = $GODOT_THREADS_ENABLED;
+const engine = new Engine(GODOT_CONFIG);
+
+(function () {
+	const TEXT_UNKNOWN_ERROR = '\u53d1\u751f\u672a\u77e5\u9519\u8bef\u3002';
+	const TEXT_START_FAILED = '\u542f\u52a8\u5931\u8d25';
+	const TEXT_RETRY = '\u8bf7\u5237\u65b0\u9875\u9762\u540e\u91cd\u8bd5\uff1b\u5982\u679c\u4ecd\u5931\u8d25\uff0c\u8bf7\u6362 Safari \u6216 Chrome \u6253\u5f00\u3002';
+	const TEXT_MISSING_PREFIX = '\u9519\u8bef\n\u5f53\u524d\u6d4f\u89c8\u5668\u7f3a\u5c11\u8fd0\u884c Web \u7248\u6240\u9700\u80fd\u529b\uff1a\n';
+	const TEXT_PREPARE_START = '\u6b63\u5728\u51c6\u5907\u542f\u52a8\u73af\u5883...';
+	const TEXT_PREPARE_CACHE = '\u6b63\u5728\u51c6\u5907\u6d4f\u89c8\u5668\u7f13\u5b58...';
+	const TEXT_LOADING_DOWNLOAD = '\u6b63\u5728\u4e0b\u8f7d\u6e38\u620f\u8d44\u6e90...';
+	const TEXT_LOADING_ENGINE = '\u6b63\u5728\u521d\u59cb\u5316\u5f15\u64ce...';
+	const TEXT_ENGINE_READY = '\u6b63\u5728\u521d\u59cb\u5316\u5f15\u64ce\uff0c\u9a6c\u4e0a\u8fdb\u5165\u6e38\u620f\u3002';
+	const WEB_LAUNCH_LAYOUT_STORAGE_KEY = 'ptcg_web_launch_layout';
+
+	const launchOverlay = document.getElementById('launch');
+	const startButton = document.getElementById('start-game');
+	const statusOverlay = document.getElementById('status');
+	const statusStage = document.getElementById('status-stage');
+	const statusProgress = document.getElementById('status-progress');
+	const statusNotice = document.getElementById('status-notice');
+	const statusCopy = document.getElementById('status-copy');
+
+	let initializing = true;
+	let statusMode = '';
+
+	function setStatusMode(mode) {
+		if (statusMode === mode || !initializing) {
+			return;
+		}
+		if (mode === 'hidden') {
+			if (launchOverlay && launchOverlay.parentNode) {
+				launchOverlay.remove();
+			}
+			if (statusOverlay && statusOverlay.parentNode) {
+				statusOverlay.remove();
+			}
+			initializing = false;
+			return;
+		}
+		statusOverlay.style.visibility = 'visible';
+		statusProgress.style.display = mode === 'progress' ? 'block' : 'none';
+		statusNotice.style.display = mode === 'notice' ? 'block' : 'none';
+		statusMode = mode;
+	}
+
+	function setStage(text) {
+		statusStage.textContent = text;
+	}
+
+	function setStatusNotice(text) {
+		statusNotice.textContent = text;
+	}
+
+	function displayFailureNotice(err) {
+		console.error(err);
+		const message = err instanceof Error ? err.message : (typeof err === 'string' ? err : TEXT_UNKNOWN_ERROR);
+		setStage(TEXT_START_FAILED);
+		statusCopy.textContent = TEXT_RETRY;
+		setStatusNotice(message);
+		setStatusMode('notice');
+		initializing = false;
+	}
+
+	function clearWebLaunchLayoutPreference() {
+		window.PTCG_WEB_LAUNCH_LAYOUT = '';
+		try {
+			if (window.localStorage) {
+				window.localStorage.removeItem(WEB_LAUNCH_LAYOUT_STORAGE_KEY);
+			}
+		} catch (err) {}
+	}
+
+	function unlockAudioFromGesture() {
+		const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+		if (!AudioContextClass) {
+			return Promise.resolve();
+		}
+		try {
+			const context = new AudioContextClass();
+			const resumePromise = context.state === 'suspended' ? context.resume() : Promise.resolve();
+			return resumePromise.then(function () {
+				if (typeof context.close === 'function') {
+					return context.close().catch(function () {});
+				}
+			}).catch(function () {});
+		} catch (err) {
+			return Promise.resolve();
+		}
+	}
+
+	function installServiceWorkerRecovery(missing) {
+		if (!(GODOT_CONFIG['serviceWorker'] && GODOT_CONFIG['ensureCrossOriginIsolationHeaders'] && 'serviceWorker' in navigator)) {
+			displayFailureNotice(TEXT_MISSING_PREFIX + missing.join('\n'));
+			return;
+		}
+
+		let serviceWorkerRegistrationPromise;
+		try {
+			serviceWorkerRegistrationPromise = navigator.serviceWorker.getRegistration();
+		} catch (err) {
+			serviceWorkerRegistrationPromise = Promise.reject(new Error('Service worker registration failed.'));
+		}
+
+		Promise.race([
+			serviceWorkerRegistrationPromise.then(function (registration) {
+				if (registration != null) {
+					return Promise.reject(new Error('Service worker already exists.'));
+				}
+				return registration;
+			}).then(function () {
+				return engine.installServiceWorker();
+			}),
+			new Promise(function (resolve) {
+				setTimeout(function () {
+					resolve();
+				}, 2000);
+			}),
+		]).then(function () {
+			window.location.reload();
+		}).catch(function (err) {
+			console.error('Error while registering service worker:', err);
+			displayFailureNotice(TEXT_MISSING_PREFIX + missing.join('\n'));
+		});
+	}
+
+	function startGameFromClick() {
+		startButton.disabled = true;
+		clearWebLaunchLayoutPreference();
+		launchOverlay.classList.add('is-hidden');
+		setStatusMode('progress');
+		setStage(TEXT_PREPARE_START);
+
+		Promise.all([
+			unlockAudioFromGesture(),
+		]).then(function () {
+			setStage(TEXT_LOADING_DOWNLOAD);
+			return engine.startGame({
+				'onProgress': function (current, total) {
+					if (current > 0 && total > 0) {
+						statusProgress.value = current;
+						statusProgress.max = total;
+						statusCopy.textContent = TEXT_LOADING_DOWNLOAD + ' ' + Math.round((current / total) * 100) + '%';
+						if (current >= total) {
+							setStage(TEXT_LOADING_ENGINE);
+							statusCopy.textContent = TEXT_ENGINE_READY;
+						}
+					} else {
+						statusProgress.removeAttribute('value');
+						statusProgress.removeAttribute('max');
+						statusCopy.textContent = TEXT_LOADING_DOWNLOAD;
+					}
+				},
+			});
+		}).then(function () {
+			setStatusMode('hidden');
+		}, displayFailureNotice);
+	}
+
+	const missing = Engine.getMissingFeatures({
+		threads: GODOT_THREADS_ENABLED,
+	});
+
+	if (missing.length !== 0) {
+		launchOverlay.classList.add('is-hidden');
+		setStatusMode('progress');
+		setStage(TEXT_PREPARE_CACHE);
+		installServiceWorkerRecovery(missing);
+	} else {
+		startButton.addEventListener('click', function () {
+			startGameFromClick();
+		}, { once: true });
+	}
+}());
+		</script>
+	</body>
+</html>

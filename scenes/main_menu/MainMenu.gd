@@ -95,6 +95,7 @@ var _budew_mascot_bob_time := 0.0
 var _budew_mascot_last_move_x := 1.0
 var _budew_mascot_dodge_tween: Tween = null
 var _budew_mascot_jump_offset := 0.0
+var _main_menu_touch_button_candidate: Button = null
 
 
 func _ready() -> void:
@@ -108,6 +109,16 @@ func _ready() -> void:
 	%BtnBattleReplay.pressed.connect(_on_battle_replay)
 	%BtnSettings.pressed.connect(_on_settings)
 	%BtnQuit.pressed.connect(_on_quit)
+
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		_handle_budew_mascot_unhandled_input(event)
+		return
+
+
+func _gui_input(event: InputEvent) -> void:
+	_handle_main_menu_touch_gui_input(event)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -143,6 +154,9 @@ func _process(delta: float) -> void:
 
 
 func _apply_main_menu_hud() -> void:
+	var background := get_node_or_null("Background") as Control
+	if background != null:
+		background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var menu := get_node_or_null("VBoxContainer") as VBoxContainer
 	if menu != null:
 		menu.offset_left = -170.0
@@ -174,6 +188,7 @@ func _apply_main_menu_hud() -> void:
 		button.add_theme_stylebox_override("pressed", _main_menu_button_style(accent, is_primary, true, true, is_featured))
 		button.add_theme_stylebox_override("disabled", _main_menu_button_style(Color(0.30, 0.34, 0.38, 1.0), false, false, false))
 		button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+		_enable_button_touch_activation(button)
 		if is_featured:
 			button.tooltip_text = "查看推荐卡组、管理本地卡组、导入新卡组"
 
@@ -208,10 +223,9 @@ func _ensure_budew_mascot() -> void:
 
 	_budew_mascot_sprite = TextureRect.new()
 	_budew_mascot_sprite.name = "BudewMascotSprite"
-	_budew_mascot_sprite.mouse_filter = Control.MOUSE_FILTER_STOP
+	_budew_mascot_sprite.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_budew_mascot_sprite.texture = _budew_mascot_frames[0]
 	_budew_mascot_sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_budew_mascot_sprite.gui_input.connect(_on_budew_mascot_sprite_input)
 	_budew_mascot_root.add_child(_budew_mascot_sprite)
 
 	set_process(true)
@@ -281,17 +295,108 @@ func _advance_budew_mascot_frame(delta: float) -> void:
 		_budew_mascot_sprite.texture = _budew_mascot_frames[_budew_mascot_frame_index]
 
 
-func _on_budew_mascot_sprite_input(event: InputEvent) -> void:
+func _handle_budew_mascot_unhandled_input(event: InputEvent) -> void:
+	var pointer_position := Vector2(-1.0, -1.0)
 	if event is InputEventMouseButton:
 		var mouse := event as InputEventMouseButton
-		if mouse.pressed and mouse.button_index == MOUSE_BUTTON_LEFT:
-			_make_budew_mascot_dodge_click(mouse.position)
-			get_viewport().set_input_as_handled()
-	elif event is InputEventScreenTouch:
-		var touch := event as InputEventScreenTouch
-		if touch.pressed:
+		if not mouse.pressed or mouse.button_index != MOUSE_BUTTON_LEFT:
+			return
+		pointer_position = mouse.global_position if mouse.global_position != Vector2.ZERO else mouse.position
+	else:
+		return
+	if not _budew_mascot_hit_test(pointer_position):
+		return
+	if _main_menu_button_hit_test(pointer_position):
+		return
+	_make_budew_mascot_dodge_click(pointer_position)
+	var viewport := get_viewport()
+	if viewport != null:
+		viewport.set_input_as_handled()
+
+
+func _handle_main_menu_touch_gui_input(event: InputEvent) -> void:
+	if not (event is InputEventScreenTouch):
+		return
+	if bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true)):
+		return
+	var touch := event as InputEventScreenTouch
+	var button := _main_menu_button_at_position(touch.position)
+	if touch.pressed:
+		_main_menu_touch_button_candidate = button
+		if button != null:
+			_accept_main_menu_touch()
+			return
+		if _budew_mascot_hit_test(touch.position):
 			_make_budew_mascot_dodge_click(touch.position)
-			get_viewport().set_input_as_handled()
+			_accept_main_menu_touch()
+		return
+	var candidate := _main_menu_touch_button_candidate
+	_main_menu_touch_button_candidate = null
+	if candidate != null and candidate == button:
+		candidate.emit_signal("pressed")
+		_accept_main_menu_touch()
+
+
+func _accept_main_menu_touch() -> void:
+	var viewport := get_viewport()
+	if viewport != null:
+		viewport.set_input_as_handled()
+
+
+func _enable_button_touch_activation(button: Button) -> void:
+	if button == null:
+		return
+	var callback := Callable(self, "_on_touch_button_gui_input").bind(button)
+	if not button.gui_input.is_connected(callback):
+		button.gui_input.connect(callback)
+
+
+func _on_touch_button_gui_input(event: InputEvent, button: Button) -> void:
+	if not (event is InputEventScreenTouch):
+		return
+	if bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true)):
+		return
+	var touch := event as InputEventScreenTouch
+	if touch.pressed:
+		return
+	if button == null or button.disabled:
+		return
+	if button.is_inside_tree() and not button.is_visible_in_tree():
+		return
+	button.emit_signal("pressed")
+	var viewport := get_viewport()
+	if viewport != null:
+		viewport.set_input_as_handled()
+
+
+func _main_menu_button_hit_test(global_position: Vector2) -> bool:
+	return _main_menu_button_at_position(global_position) != null
+
+
+func _main_menu_button_at_position(global_position: Vector2) -> Button:
+	return _button_at_position_recursive(self, global_position)
+
+
+func _button_at_position_recursive(node: Node, global_position: Vector2) -> Button:
+	for i: int in range(node.get_child_count() - 1, -1, -1):
+		var child := node.get_child(i)
+		var child_button := _button_at_position_recursive(child, global_position)
+		if child_button != null:
+			return child_button
+	if not (node is Button):
+		return null
+	var button := node as Button
+	if button.disabled or not button.visible:
+		return null
+	if button.is_inside_tree() and not button.is_visible_in_tree():
+		return null
+	return button if button.get_global_rect().has_point(global_position) else null
+
+
+func _budew_mascot_hit_test(global_position: Vector2) -> bool:
+	if _budew_mascot_sprite == null or not _budew_mascot_sprite.visible:
+		return false
+	return _budew_mascot_sprite.get_global_rect().has_point(global_position)
 
 
 func _make_budew_mascot_dodge_click(click_global_position: Vector2) -> void:
@@ -608,6 +713,7 @@ func _create_corner_icon_button(button_name: String, icon_path: String, tip: Str
 	button.add_theme_stylebox_override("pressed", _main_menu_round_button_style(accent, true, true))
 	button.add_theme_stylebox_override("disabled", _main_menu_round_button_style(Color(0.35, 0.40, 0.46, 1.0), false, false))
 	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	_enable_button_touch_activation(button)
 	button.mouse_entered.connect(_show_corner_action_label.bind(button))
 	button.mouse_exited.connect(_hide_corner_action_label.bind(button))
 	return button
@@ -757,6 +863,7 @@ func _ensure_update_button() -> void:
 	_update_button.add_theme_stylebox_override("hover", _main_menu_button_style(HudThemeScript.ACCENT_WARM, false, true, false))
 	_update_button.add_theme_stylebox_override("pressed", _main_menu_button_style(HudThemeScript.ACCENT_WARM, false, true, true))
 	_update_button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	_enable_button_touch_activation(_update_button)
 	_update_button.pressed.connect(_on_update_button_pressed)
 	add_child(_update_button)
 
@@ -1489,6 +1596,7 @@ func _create_feedback_action_button(text: String, accent: Color, minimum_size: V
 	button.add_theme_stylebox_override("pressed", _main_menu_button_style(accent, false, true, true))
 	button.add_theme_stylebox_override("disabled", _main_menu_button_style(Color(0.30, 0.34, 0.38, 1.0), false, false, false))
 	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	_enable_button_touch_activation(button)
 	return button
 
 

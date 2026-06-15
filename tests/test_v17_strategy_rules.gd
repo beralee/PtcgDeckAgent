@@ -178,6 +178,10 @@ func test_v17_palkia_gholdengo_opening_poffin_outranks_vessel() -> String:
 	var opponent := PlayerState.new()
 	opponent.player_index = 1
 	player.active_pokemon = _slot(_pokemon("Manaphy", "W", 70))
+	player.deck.append(CardInstance.create(_pokemon("Gimmighoul", "M", 70, "Basic", "", "", "", "CSV9C", "096"), 0))
+	player.deck.append(CardInstance.create(_pokemon("Origin Forme Palkia V", "W", 220, "Basic", "V"), 0))
+	for i: int in 9:
+		player.deck.append(CardInstance.create(_pokemon("Opening Filler %d" % i), 0))
 	opponent.active_pokemon = _slot(_pokemon("Miraidon ex", "L", 220, "Basic", "ex"), 1)
 	state.players.append(player)
 	state.players.append(opponent)

@@ -644,6 +644,114 @@ func test_battle_card_view_primary_release_fallback_handles_missing_press_once()
 	return result
 
 
+func test_battle_card_view_input_catcher_forwards_touch_clicks() -> String:
+	var card_view := BattleCardViewScript.new()
+	var card := CardInstance.create(_make_pokemon_cd("Touch Catcher", 70, "C"), 0)
+	var counters := {"left": 0}
+	card_view.setup_from_instance(card, BattleCardViewScript.MODE_PREVIEW)
+	card_view.set_clickable(true)
+	card_view.set_meta("card_gallery_drag_input_enabled", true)
+	card_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
+		counters["left"] = int(counters["left"]) + 1
+	)
+
+	var catcher := card_view.find_child("CardInputCatcher", true, false) as Control
+	if catcher != null:
+		var press := InputEventScreenTouch.new()
+		press.pressed = true
+		press.index = 0
+		press.position = Vector2(32, 32)
+		catcher.gui_input.emit(press)
+
+		var release := InputEventScreenTouch.new()
+		release.pressed = false
+		release.index = 0
+		release.position = Vector2(32, 32)
+		catcher.gui_input.emit(release)
+
+	card_view.set_clickable(false)
+	var disabled_filter := catcher.mouse_filter if catcher != null else -1
+
+	var result := run_checks([
+		assert_true(catcher != null, "BattleCardView should create a transparent input catcher for mobile Web card taps"),
+		assert_eq(counters["left"], 1, "Touch events received by the input catcher should forward to the existing card click signal"),
+		assert_eq(disabled_filter, Control.MOUSE_FILTER_IGNORE, "Disabling card clicks should also disable the input catcher"),
+	])
+	card_view.free()
+	return result
+
+
+func test_battle_card_view_choice_mode_accepts_pure_screen_touch_without_mouse_echo() -> String:
+	var card_view := BattleCardViewScript.new()
+	var card := CardInstance.create(_make_pokemon_cd("Android Choice Touch", 70, "C"), 0)
+	var counters := {"left": 0}
+	card_view.setup_from_instance(card, BattleCardViewScript.MODE_CHOICE)
+	card_view.set_clickable(true)
+	card_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
+		counters["left"] = int(counters["left"]) + 1
+	)
+
+	var catcher := card_view.find_child("CardInputCatcher", true, false) as Control
+	if catcher != null:
+		var press := InputEventScreenTouch.new()
+		press.pressed = true
+		press.index = 0
+		press.position = Vector2(36, 36)
+		catcher.gui_input.emit(press)
+
+		var release := InputEventScreenTouch.new()
+		release.pressed = false
+		release.index = 0
+		release.position = Vector2(36, 36)
+		catcher.gui_input.emit(release)
+
+	var result := run_checks([
+		assert_true(catcher != null, "Choice cards should create the transparent input catcher"),
+		assert_eq(counters["left"], 1, "A pure Android ScreenTouch press/release should select a choice card even without an emulated MouseButton"),
+	])
+	card_view.free()
+	return result
+
+
+func test_battle_card_view_non_clickable_slot_card_does_not_capture_touch_children() -> String:
+	var card_view := BattleCardViewScript.new()
+	var card := CardInstance.create(_make_pokemon_cd("Android Field Slot", 70, "C"), 0)
+	card_view.set_clickable(false)
+	card_view.setup_from_instance(card, BattleCardViewScript.MODE_SLOT_ACTIVE)
+	card_view.set_battle_status({
+		"hp_current": 50,
+		"hp_max": 70,
+		"hp_ratio": 50.0 / 70.0,
+		"status_icons": ["poisoned"],
+		"energy_icons": ["R", "C"],
+		"tool_name": "Test Tool",
+		"ability_used_this_turn": true,
+	})
+
+	var catcher := card_view.find_child("CardInputCatcher", true, false) as Control
+	var blocking_child_count := _count_pointer_blocking_children(card_view, catcher)
+
+	var result := run_checks([
+		assert_eq(card_view.mouse_filter, Control.MOUSE_FILTER_IGNORE, "A non-clickable field slot card root should pass touch events to the slot panel"),
+		assert_true(catcher == null or catcher.mouse_filter == Control.MOUSE_FILTER_IGNORE, "A field slot card should not use the transparent card input catcher"),
+		assert_eq(blocking_child_count, 0, "Non-clickable field slot card internals should not intercept Android Web touch events before the slot panel"),
+	])
+	card_view.free()
+	return result
+
+
+func _count_pointer_blocking_children(node: Node, ignored: Node = null) -> int:
+	var count := 0
+	for child: Node in node.get_children():
+		if child == ignored:
+			continue
+		var control := child as Control
+		if control != null and control.mouse_filter != Control.MOUSE_FILTER_IGNORE:
+			count += 1
+		count += _count_pointer_blocking_children(child, ignored)
+	return count
+
+
 func test_card_search_dialog_arms_release_fallback_for_first_card_tap() -> String:
 	var battle_scene = _make_battle_scene_stub()
 	var card := CardInstance.create(_make_pokemon_cd("Search Target", 60, "C"), 0)
@@ -674,6 +782,60 @@ func test_card_search_dialog_arms_release_fallback_for_first_card_tap() -> Strin
 		assert_true(card_view != null, "Card search dialog should render a card view"),
 		assert_true(armed_on_open, "Card search dialog cards should arm a short missing-press fallback when opened"),
 		assert_eq(selected_indices, [0], "A release-only first tap during the fallback window should select the dialog card"),
+	])
+	battle_scene.free()
+	return result
+
+
+func test_setup_active_touch_with_horizontal_jitter_still_selects_basic() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 0
+	gsm.game_state.phase = GameState.GamePhase.SETUP
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+	battle_scene.set("_setup_done", [false, true])
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var lead_card := CardInstance.create(_make_pokemon_cd("Mobile Lead", 70, "C"), 0)
+	gsm.game_state.players[0].hand.append(lead_card)
+
+	battle_scene.call("_show_setup_active_dialog", 0)
+
+	var row := battle_scene.get("_dialog_card_row") as HBoxContainer
+	var card_view := row.get_child(0) as BattleCardView if row != null and row.get_child_count() > 0 else null
+	if card_view != null:
+		var press := InputEventScreenTouch.new()
+		press.pressed = true
+		press.index = 0
+		press.position = Vector2(220, 24)
+		card_view.call("_gui_input", press)
+
+		var jitter := InputEventScreenDrag.new()
+		jitter.index = 0
+		jitter.position = Vector2(238, 30)
+		card_view.call("_gui_input", jitter)
+
+		var release := InputEventScreenTouch.new()
+		release.pressed = false
+		release.index = 0
+		release.position = Vector2(238, 30)
+		card_view.call("_gui_input", release)
+
+	var active_slot := gsm.game_state.players[0].active_pokemon
+	var active_card := active_slot.get_top_card() if active_slot != null else null
+	var result := run_checks([
+		assert_true(card_view != null, "Setup active dialog should render a card view for the basic Pokemon"),
+		assert_eq(active_card, lead_card, "A mobile setup-card tap with minor horizontal jitter should still choose the active Pokemon"),
+		assert_false(bool(battle_scene.call("_is_card_gallery_drag_click_suppressed")), "Minor touch jitter in setup should not arm gallery drag click suppression"),
 	])
 	battle_scene.free()
 	return result
@@ -1024,6 +1186,55 @@ func test_card_gallery_click_without_drag_still_clicks_card() -> String:
 	var result := run_checks([
 		assert_eq(clicked["count"], 1, "A card-gallery tap without drag should keep the original card click behavior"),
 		assert_false(bool(scene.call("_is_card_gallery_drag_click_suppressed")), "A plain card-gallery tap should not suppress clicks"),
+	])
+	scene.free()
+	return result
+
+
+func test_card_gallery_touch_horizontal_drag_still_scrolls_and_suppresses_card_click() -> String:
+	var scene: Control = BattleScenePacked.instantiate()
+	var scroll := ScrollContainer.new()
+	var row := HBoxContainer.new()
+	scene.add_child(scroll)
+	scroll.add_child(row)
+	scene.call("_configure_card_gallery_drag_scroll", scroll, row, "test_gallery")
+	scene.call("_set_card_gallery_drag_scroll_active", scroll, true)
+	_prepare_overflowing_hand_scroll_for_drag_test(scroll)
+	scroll.scroll_horizontal = 300
+	var start_scroll := scroll.scroll_horizontal
+
+	var clicked := {"count": 0}
+	var card_view := BattleCardViewScript.new()
+	card_view.setup_from_instance(CardInstance.create(_make_pokemon_cd("Gallery Card", 60, "C"), 0), BattleCardViewScript.MODE_PREVIEW)
+	card_view.set_clickable(true)
+	scene.call("_configure_card_gallery_card_view", card_view, scroll, "test_gallery")
+	card_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
+		clicked["count"] += 1
+	)
+	row.add_child(card_view)
+
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.index = 0
+	press.position = Vector2(220, 24)
+	card_view.call("_gui_input", press)
+
+	var drag := InputEventScreenDrag.new()
+	drag.index = 0
+	drag.position = Vector2(120, 24)
+	card_view.call("_gui_input", drag)
+	var scroll_after_drag := scroll.scroll_horizontal
+
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.index = 0
+	release.position = Vector2(120, 24)
+	card_view.call("_gui_input", release)
+
+	var result := run_checks([
+		assert_true(scroll_after_drag > start_scroll, "A real touch drag on card-gallery cards should still scroll horizontally"),
+		assert_eq(clicked["count"], 0, "A real touch drag on card-gallery cards should not choose the card"),
+		assert_true(bool(scene.call("_is_card_gallery_drag_click_suppressed")), "A real touch drag release should still suppress follow-up card clicks briefly"),
 	])
 	scene.free()
 	return result
@@ -4597,6 +4808,401 @@ func test_battle_scene_retreat_uses_player_selected_energy_cards() -> String:
 	])
 
 
+func test_battle_scene_retreat_real_bench_slot_click_uses_clicked_bench_and_clears_selection() -> String:
+	var scene = _make_battle_scene_stub()
+	scene._setup_ai_for_tests()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	scene._gsm = gsm
+	scene._view_player = 0
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var active_cd := _make_pokemon_cd("Retreat Active", 70, "C")
+	active_cd.retreat_cost = 0
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(active_cd, 0))
+	var bench_a := PokemonSlot.new()
+	bench_a.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Bench A", 80, "C"), 0))
+	var bench_b := PokemonSlot.new()
+	bench_b.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Bench B", 90, "C"), 0))
+	gsm.game_state.players[0].active_pokemon = active
+	gsm.game_state.players[0].bench = [bench_a, bench_b]
+
+	scene.call("_show_retreat_dialog", 0)
+	var field_map_before: Dictionary = scene.get("_field_interaction_slot_index_by_id")
+	_emit_slot_mouse_click(scene, "my_bench_1", Vector2(520, 520))
+	var selected_after: Array = scene.get("_field_interaction_selected_indices")
+	var field_map_after: Dictionary = scene.get("_field_interaction_slot_index_by_id")
+
+	return run_checks([
+		assert_eq(field_map_before.get("my_bench_0", -1), 0, "Retreat field selection should map the first Bench slot to target index 0"),
+		assert_eq(field_map_before.get("my_bench_1", -1), 1, "Retreat field selection should map the clicked second Bench slot to target index 1"),
+		assert_eq(gsm.game_state.players[0].active_pokemon, bench_b, "Clicking my_bench_1 during retreat should promote that exact Bench Pokemon"),
+		assert_true(bench_a in gsm.game_state.players[0].bench, "The unclicked Bench Pokemon should stay on the Bench"),
+		assert_true(active in gsm.game_state.players[0].bench, "The former Active should move to the Bench after retreat"),
+		assert_false(bench_b in gsm.game_state.players[0].bench, "The promoted Bench Pokemon should no longer remain in the Bench list"),
+		assert_eq(str(scene.get("_pending_choice")), "", "Successful retreat should clear the pending retreat choice"),
+		assert_eq(str(scene.get("_field_interaction_mode")), "", "Successful retreat should close field slot selection"),
+		assert_eq(selected_after.size(), 0, "Successful retreat should clear field selection highlights"),
+		assert_eq(field_map_after.size(), 0, "Successful retreat should clear stale field slot index mapping"),
+	])
+
+
+func test_battle_scene_retreat_touch_bench_slot_mouse_echo_does_not_reopen_selection() -> String:
+	var scene = _make_battle_scene_stub()
+	scene._setup_ai_for_tests()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	scene._gsm = gsm
+	scene._view_player = 0
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var active_cd := _make_pokemon_cd("Touch Retreat Active", 70, "C")
+	active_cd.retreat_cost = 0
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(active_cd, 0))
+	var bench_a := PokemonSlot.new()
+	bench_a.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Touch Bench A", 80, "C"), 0))
+	var bench_b := PokemonSlot.new()
+	bench_b.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Touch Bench B", 90, "C"), 0))
+	gsm.game_state.players[0].active_pokemon = active
+	gsm.game_state.players[0].bench = [bench_a, bench_b]
+
+	scene.call("_show_retreat_dialog", 0)
+	var touch_press := InputEventScreenTouch.new()
+	touch_press.pressed = true
+	touch_press.index = 0
+	touch_press.position = Vector2(520, 520)
+	scene.call("_on_slot_input", touch_press, "my_bench_1")
+	var touch_release := InputEventScreenTouch.new()
+	touch_release.pressed = false
+	touch_release.index = 0
+	touch_release.position = Vector2(520, 520)
+	scene.call("_on_slot_input", touch_release, "my_bench_1")
+
+	var mouse_echo_press := InputEventMouseButton.new()
+	mouse_echo_press.button_index = MOUSE_BUTTON_LEFT
+	mouse_echo_press.pressed = true
+	mouse_echo_press.position = Vector2(20, 20)
+	mouse_echo_press.global_position = Vector2(20, 20)
+	scene.call("_on_slot_input", mouse_echo_press, "my_bench_1")
+	var mouse_echo_release := InputEventMouseButton.new()
+	mouse_echo_release.button_index = MOUSE_BUTTON_LEFT
+	mouse_echo_release.pressed = false
+	mouse_echo_release.position = Vector2(20, 20)
+	mouse_echo_release.global_position = Vector2(20, 20)
+	scene.call("_on_slot_input", mouse_echo_release, "my_bench_1")
+
+	return run_checks([
+		assert_eq(gsm.game_state.players[0].active_pokemon, bench_b, "Touch retreat should promote the touched Bench Pokemon"),
+		assert_eq(str(scene.get("_pending_choice")), "", "A post-retreat Android mouse echo should not reopen an action HUD or a field choice"),
+		assert_eq(str(scene.get("_field_interaction_mode")), "", "A post-retreat Android mouse echo should leave field selection closed"),
+		assert_eq((scene.get("_field_interaction_selected_indices") as Array).size(), 0, "A post-retreat Android mouse echo should not leave target highlights selected"),
+	])
+
+
+func test_battle_scene_retreat_action_hud_same_position_bench_click_selects_underlying_bench() -> String:
+	var scene = _make_battle_scene_stub()
+	scene._setup_ai_for_tests()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	scene._gsm = gsm
+	scene._view_player = 0
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var active_cd := _make_pokemon_cd("Hud Echo Retreat Active", 70, "C")
+	active_cd.retreat_cost = 0
+	active_cd.attacks = []
+	active_cd.abilities = []
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(active_cd, 0))
+	var bench_a := PokemonSlot.new()
+	bench_a.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Hud Echo Bench A", 80, "C"), 0))
+	var bench_b := PokemonSlot.new()
+	bench_b.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Hud Echo Bench B", 90, "C"), 0))
+	gsm.game_state.players[0].active_pokemon = active
+	gsm.game_state.players[0].bench = [bench_a, bench_b]
+
+	scene.call("_show_pokemon_action_dialog", 0, active, true)
+	var actions: Array = (scene.get("_dialog_data") as Dictionary).get("actions", [])
+	var retreat_index := -1
+	for i: int in actions.size():
+		if actions[i] is Dictionary and str((actions[i] as Dictionary).get("type", "")) == "retreat":
+			retreat_index = i
+			break
+	var retreat_option := _action_hud_option_at_index(scene, retreat_index)
+	var action_position := Vector2(520, 520)
+	_emit_action_hud_mouse_click(retreat_option, Vector2(20, 20), action_position)
+
+	scene.set("_modal_input_slot_suppress_until_msec", Time.get_ticks_msec() - 1)
+	scene.set("_modal_input_finished_at_msec", Time.get_ticks_msec() - 350)
+	_emit_slot_mouse_click(scene, "my_bench_0", action_position)
+
+	return run_checks([
+		assert_gte(retreat_index, 0, "Regression setup should expose retreat in the action HUD"),
+		assert_true(retreat_option != null, "Regression setup should render the retreat action HUD option"),
+		assert_eq(gsm.game_state.players[0].active_pokemon, bench_a, "The first same-position Bench click should promote the clicked Pokemon"),
+		assert_eq(str(scene.get("_pending_choice")), "", "The Bench click should clear retreat selection"),
+		assert_eq(str(scene.get("_field_interaction_mode")), "", "The Bench click should close field selection"),
+	])
+
+
+func test_battle_scene_one_energy_retreat_action_hud_first_bench_click_works() -> String:
+	var scene = _make_battle_scene_stub()
+	scene._setup_ai_for_tests()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	scene._gsm = gsm
+	scene._view_player = 0
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var active_cd := _make_pokemon_cd("One Energy Retreat Active", 70, "C")
+	active_cd.retreat_cost = 1
+	active_cd.attacks = []
+	active_cd.abilities = []
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(active_cd, 0))
+	var retreat_energy := CardInstance.create(_make_energy_cd("Retreat Energy", "C"), 0)
+	active.attached_energy.append(retreat_energy)
+	var bench_a := PokemonSlot.new()
+	bench_a.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("One Energy Bench A", 80, "C"), 0))
+	var bench_b := PokemonSlot.new()
+	bench_b.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("One Energy Bench B", 90, "C"), 0))
+	gsm.game_state.players[0].active_pokemon = active
+	gsm.game_state.players[0].bench = [bench_a, bench_b]
+
+	scene.call("_show_pokemon_action_dialog", 0, active, true)
+	var actions: Array = (scene.get("_dialog_data") as Dictionary).get("actions", [])
+	var retreat_index := -1
+	for i: int in actions.size():
+		if actions[i] is Dictionary and str((actions[i] as Dictionary).get("type", "")) == "retreat":
+			retreat_index = i
+			break
+	var retreat_option := _action_hud_option_at_index(scene, retreat_index)
+	_emit_action_hud_mouse_click(retreat_option, Vector2(20, 20), Vector2(520, 520))
+	var pending_after_retreat_option := str(scene.get("_pending_choice"))
+	var mode_after_retreat_option := str(scene.get("_field_interaction_mode"))
+	var broad_guard_after_retreat_option := int(scene.get("_modal_input_slot_suppress_until_msec")) > Time.get_ticks_msec()
+
+	_emit_slot_mouse_click(scene, "my_bench_1", Vector2(720, 520))
+
+	return run_checks([
+		assert_gte(retreat_index, 0, "Regression setup should expose retreat in the action HUD"),
+		assert_true(retreat_option != null, "Regression setup should render the retreat action HUD option"),
+		assert_eq(pending_after_retreat_option, "retreat_bench", "Choosing retreat with exactly one Energy should immediately ask for a Bench target"),
+		assert_eq(mode_after_retreat_option, "slot_select", "Choosing retreat should open field slot selection"),
+		assert_false(broad_guard_after_retreat_option, "Entering Bench target selection should clear the broad modal slot guard and keep only same-position echo protection"),
+		assert_eq(gsm.game_state.players[0].active_pokemon, bench_b, "The first real Bench click after choosing retreat should promote the clicked Bench Pokemon"),
+		assert_false(retreat_energy in active.attached_energy, "The selected retreat Energy should be discarded during retreat"),
+		assert_true(retreat_energy in gsm.game_state.players[0].discard_pile, "The selected retreat Energy should move to discard"),
+		assert_eq(str(scene.get("_pending_choice")), "", "Successful retreat should clear the pending retreat choice"),
+		assert_eq(str(scene.get("_field_interaction_mode")), "", "Successful retreat should close field selection"),
+	])
+
+
+func test_battle_scene_one_energy_retreat_action_hud_same_position_first_mouse_bench_click_works() -> String:
+	var scene = _make_battle_scene_stub()
+	scene._setup_ai_for_tests()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	scene._gsm = gsm
+	scene._view_player = 0
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var active_cd := _make_pokemon_cd("Same Position One Energy Active", 70, "C")
+	active_cd.retreat_cost = 1
+	active_cd.attacks = []
+	active_cd.abilities = []
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(active_cd, 0))
+	var retreat_energy := CardInstance.create(_make_energy_cd("Same Position Retreat Energy", "C"), 0)
+	active.attached_energy.append(retreat_energy)
+	var bench_a := PokemonSlot.new()
+	bench_a.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Same Position One Energy Bench A", 80, "C"), 0))
+	var bench_b := PokemonSlot.new()
+	bench_b.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Same Position One Energy Bench B", 90, "C"), 0))
+	gsm.game_state.players[0].active_pokemon = active
+	gsm.game_state.players[0].bench = [bench_a, bench_b]
+
+	scene.call("_show_pokemon_action_dialog", 0, active, true)
+	var actions: Array = (scene.get("_dialog_data") as Dictionary).get("actions", [])
+	var retreat_index := -1
+	for i: int in actions.size():
+		if actions[i] is Dictionary and str((actions[i] as Dictionary).get("type", "")) == "retreat":
+			retreat_index = i
+			break
+	var retreat_option := _action_hud_option_at_index(scene, retreat_index)
+	var shared_position := Vector2(520, 520)
+	_emit_action_hud_mouse_click(retreat_option, Vector2(20, 20), shared_position)
+	var pending_after_retreat_option := str(scene.get("_pending_choice"))
+	var mode_after_retreat_option := str(scene.get("_field_interaction_mode"))
+
+	_emit_slot_mouse_click(scene, "my_bench_1", shared_position)
+
+	return run_checks([
+		assert_gte(retreat_index, 0, "Regression setup should expose retreat in the action HUD"),
+		assert_true(retreat_option != null, "Regression setup should render the retreat action HUD option"),
+		assert_eq(pending_after_retreat_option, "retreat_bench", "Choosing retreat should ask for a Bench target"),
+		assert_eq(mode_after_retreat_option, "slot_select", "Choosing retreat should open field slot selection"),
+		assert_eq(gsm.game_state.players[0].active_pokemon, bench_b, "The first same-position MouseButton Bench click after choosing retreat should promote the clicked Bench Pokemon"),
+		assert_false(retreat_energy in active.attached_energy, "The selected retreat Energy should be discarded during retreat"),
+		assert_true(retreat_energy in gsm.game_state.players[0].discard_pile, "The selected retreat Energy should move to discard"),
+		assert_eq(str(scene.get("_pending_choice")), "", "Successful retreat should clear the pending retreat choice"),
+		assert_eq(str(scene.get("_field_interaction_mode")), "", "Successful retreat should close field selection"),
+	])
+
+
+func test_battle_scene_retreat_same_position_first_bench_click_works() -> String:
+	var scene = _make_battle_scene_stub()
+	scene._setup_ai_for_tests()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	scene._gsm = gsm
+	scene._view_player = 0
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var active_cd := _make_pokemon_cd("Same Position Retreat Active", 70, "C")
+	active_cd.retreat_cost = 0
+	active_cd.attacks = []
+	active_cd.abilities = []
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(active_cd, 0))
+	var bench_a := PokemonSlot.new()
+	bench_a.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Same Position Bench A", 80, "C"), 0))
+	var bench_b := PokemonSlot.new()
+	bench_b.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Same Position Bench B", 90, "C"), 0))
+	gsm.game_state.players[0].active_pokemon = active
+	gsm.game_state.players[0].bench = [bench_a, bench_b]
+
+	scene.call("_show_pokemon_action_dialog", 0, active, true)
+	var actions: Array = (scene.get("_dialog_data") as Dictionary).get("actions", [])
+	var retreat_index := -1
+	for i: int in actions.size():
+		if actions[i] is Dictionary and str((actions[i] as Dictionary).get("type", "")) == "retreat":
+			retreat_index = i
+			break
+	var retreat_option := _action_hud_option_at_index(scene, retreat_index)
+	var action_position := Vector2(520, 520)
+	_emit_action_hud_mouse_click(retreat_option, Vector2(20, 20), action_position)
+
+	_emit_slot_mouse_click(scene, "my_bench_0", action_position)
+
+	return run_checks([
+		assert_gte(retreat_index, 0, "Regression setup should expose retreat in the action HUD"),
+		assert_true(retreat_option != null, "Regression setup should render the retreat action HUD option"),
+		assert_eq(gsm.game_state.players[0].active_pokemon, bench_a, "The first real tap on the same Bench slot should promote that exact Pokemon"),
+		assert_eq(str(scene.get("_pending_choice")), "", "Successful retreat should clear the pending retreat choice"),
+		assert_eq(str(scene.get("_field_interaction_mode")), "", "Successful retreat should close field selection"),
+	])
+
+
+func test_battle_scene_one_energy_retreat_touch_first_bench_tap_after_hud_works() -> String:
+	var scene = _make_battle_scene_stub()
+	scene._setup_ai_for_tests()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	scene._gsm = gsm
+	scene._view_player = 0
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var active_cd := _make_pokemon_cd("Touch One Energy Retreat Active", 70, "C")
+	active_cd.retreat_cost = 1
+	active_cd.attacks = []
+	active_cd.abilities = []
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(active_cd, 0))
+	var retreat_energy := CardInstance.create(_make_energy_cd("Touch Retreat Energy", "C"), 0)
+	active.attached_energy.append(retreat_energy)
+	var bench_a := PokemonSlot.new()
+	bench_a.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Touch One Energy Bench A", 80, "C"), 0))
+	var bench_b := PokemonSlot.new()
+	bench_b.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Touch One Energy Bench B", 90, "C"), 0))
+	gsm.game_state.players[0].active_pokemon = active
+	gsm.game_state.players[0].bench = [bench_a, bench_b]
+
+	scene.call("_show_pokemon_action_dialog", 0, active, true)
+	var actions: Array = (scene.get("_dialog_data") as Dictionary).get("actions", [])
+	var retreat_index := -1
+	for i: int in actions.size():
+		if actions[i] is Dictionary and str((actions[i] as Dictionary).get("type", "")) == "retreat":
+			retreat_index = i
+			break
+	var retreat_option := _action_hud_option_at_index(scene, retreat_index)
+	var touch_position := Vector2(520, 520)
+	_emit_action_hud_touch_tap(retreat_option, 0, touch_position)
+	var pending_after_retreat_option := str(scene.get("_pending_choice"))
+	var mode_after_retreat_option := str(scene.get("_field_interaction_mode"))
+
+	_emit_slot_touch_tap(scene, "my_bench_1", 0, touch_position)
+
+	return run_checks([
+		assert_gte(retreat_index, 0, "Regression setup should expose retreat in the action HUD"),
+		assert_true(retreat_option != null, "Regression setup should render the retreat action HUD option"),
+		assert_eq(pending_after_retreat_option, "retreat_bench", "Choosing retreat with exactly one Energy should immediately ask for a Bench target"),
+		assert_eq(mode_after_retreat_option, "slot_select", "Choosing retreat should open field slot selection"),
+		assert_eq(gsm.game_state.players[0].active_pokemon, bench_b, "The first real Bench touch after choosing retreat should promote the touched Bench Pokemon"),
+		assert_true(retreat_energy in gsm.game_state.players[0].discard_pile, "The selected retreat Energy should move to discard"),
+		assert_eq(str(scene.get("_pending_choice")), "", "Successful retreat should clear the pending retreat choice"),
+		assert_eq(str(scene.get("_field_interaction_mode")), "", "Successful retreat should close field selection"),
+	])
+
+
 func test_battle_scene_retreat_rejects_overpaying_energy_selection() -> String:
 	var scene = _make_battle_scene_stub()
 	var gsm := SpyRetreatGameStateMachine.new()
@@ -4705,6 +5311,7 @@ func test_battle_scene_pokemon_action_dialog_uses_hud_cards_with_full_text() -> 
 	scene.call("_show_pokemon_action_dialog", 0, active, false)
 	var six_action_height := (scene.get("_dialog_card_scroll") as ScrollContainer).custom_minimum_size.y
 	var six_action_scroll_mode: int = (scene.get("_dialog_card_scroll") as ScrollContainer).vertical_scroll_mode
+	var expected_six_action_height := maxf(474.0, (preview_panel.custom_minimum_size.y if preview_panel != null else 0.0) + 4.0)
 
 	return run_checks([
 		assert_eq(str(data.get("presentation", "")), "action_hud", "Pokemon action dialog should use the HUD-card presentation"),
@@ -4726,10 +5333,57 @@ func test_battle_scene_pokemon_action_dialog_uses_hud_cards_with_full_text() -> 
 		assert_true(three_action_height >= expected_detail_size.y, "Pokemon action HUD should reserve the full detail-card preview height"),
 		assert_eq(single_action_items.size(), 1, "Ability-only Pokemon action HUD should contain one option"),
 		assert_true(single_action_height >= (preview_panel.custom_minimum_size.y if preview_panel != null else 0.0), "Ability-only Pokemon action HUD should stay tall enough for the card preview"),
-		assert_true(absf(six_action_height - 474.0) < 0.1, "Pokemon action HUD should cap visible height at five options"),
+		assert_true(absf(six_action_height - expected_six_action_height) < 0.1, "Pokemon action HUD should cap visible action height while keeping the card preview readable"),
 		assert_eq(six_action_scroll_mode, ScrollContainer.SCROLL_MODE_AUTO, "Pokemon action HUD should only enable vertical scrolling above five options"),
 		assert_eq(first_panel.mouse_filter if first_panel != null else -1, Control.MOUSE_FILTER_STOP, "Whole action HUD option should receive clicks"),
 		assert_eq(first_margin.mouse_filter if first_margin != null else -1, Control.MOUSE_FILTER_IGNORE, "Action HUD contents should pass clicks through to the whole option"),
+	])
+
+
+func test_battle_scene_pokemon_action_dialog_shows_attached_energy_cards() -> String:
+	var scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	scene._gsm = gsm
+	scene._view_player = 0
+
+	var active_cd := _make_pokemon_cd("Lugia VSTAR", 280, "C")
+	active_cd.abilities = []
+	active_cd.attacks = [{"name": "Tempest Dive", "cost": "CCCC", "damage": "220", "text": "", "is_vstar_power": false}]
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(active_cd, 0))
+	var dte_cd := CardData.new()
+	dte_cd.name = "Double Turbo Energy"
+	dte_cd.card_type = "Special Energy"
+	var vguard_cd := CardData.new()
+	vguard_cd.name = "V Guard Energy"
+	vguard_cd.card_type = "Special Energy"
+	active.attached_energy.append(CardInstance.create(dte_cd, 0))
+	active.attached_energy.append(CardInstance.create(vguard_cd, 0))
+	active.attached_energy.append(CardInstance.create(vguard_cd, 0))
+	gsm.game_state.players[0].active_pokemon = active
+	gsm.game_state.players[1].active_pokemon = PokemonSlot.new()
+	gsm.game_state.players[1].active_pokemon.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Target", 100, "C"), 1))
+
+	scene.call("_show_pokemon_action_dialog", 0, active, true)
+	var row: HBoxContainer = scene.get("_dialog_card_row")
+	var summary_panel := row.find_child("PokemonActionAttachedEnergySummary", true, false) as PanelContainer if row != null else null
+	var summary_label := row.find_child("PokemonActionAttachedEnergyLabel", true, false) as Label if row != null else null
+	var preview_panel := row.get_child(0) as PanelContainer if row != null and row.get_child_count() > 0 else null
+	var scroll: ScrollContainer = scene.get("_dialog_card_scroll")
+
+	return run_checks([
+		assert_true(summary_panel != null and summary_panel.visible, "Pokemon action HUD should show attached Energy names inside the action popup"),
+		assert_true(summary_label != null and summary_label.visible, "Attached Energy summary should use a readable text label in the action popup"),
+		assert_str_contains(summary_label.text if summary_label != null else "", "Double Turbo Energy", "Attached Energy summary should name Double Turbo Energy"),
+		assert_str_contains(summary_label.text if summary_label != null else "", "V Guard Energy x2", "Attached Energy summary should group repeated V Guard Energy cards"),
+		assert_true(scroll.custom_minimum_size.y >= (preview_panel.custom_minimum_size.y if preview_panel != null else 0.0), "Action popup scroll area should stay tall enough for the card preview plus Energy summary"),
 	])
 
 
@@ -4976,10 +5630,7 @@ func test_battle_scene_dreepy_rescue_board_retreats_through_manual_click_flow() 
 
 	if rescue_board != null:
 		scene.call("_on_hand_card_clicked", rescue_board, PanelContainer.new())
-		var click := InputEventMouseButton.new()
-		click.button_index = MOUSE_BUTTON_LEFT
-		click.pressed = true
-		scene.call("_on_slot_input", click, "my_active")
+		_emit_slot_mouse_click(scene, "my_active", Vector2(360, 720))
 
 	scene.call("_show_pokemon_action_dialog", 0, active, true)
 	var actions: Array = (scene.get("_dialog_data") as Dictionary).get("actions", [])
@@ -5177,6 +5828,108 @@ func test_battle_scene_field_assignment_builds_entries_without_dialog_targets() 
 		assert_eq(assignments.size(), 1, "Choosing a source card and field target should create one assignment entry"),
 		assert_eq(first_assignment.get("source"), energy_a, "Assignment should preserve the chosen source card"),
 		assert_eq(first_assignment.get("target"), bench_b, "Assignment should preserve the clicked field target"),
+	])
+
+
+func test_field_assignment_source_echo_does_not_cancel_selected_energy() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Charizard ex", 330, "D"), 0))
+	gsm.game_state.players[0].active_pokemon = active
+	var fire_energy := CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0)
+	var dummy_card := CardInstance.create(_make_trainer_cd("Infernal Reign", "Ability", ""), 0)
+	var steps: Array[Dictionary] = [{
+		"id": "energy_assignments",
+		"title": "Assign Fire Energy",
+		"ui_mode": "card_assignment",
+		"source_items": [fire_energy],
+		"source_labels": ["Fire Energy"],
+		"target_items": [active],
+		"target_labels": ["Charizard ex"],
+		"min_select": 0,
+		"max_select": 3,
+		"allow_cancel": true,
+	}]
+
+	battle_scene.call("_start_effect_interaction", "ability", 0, steps, dummy_card, active, 0)
+	battle_scene.call("_on_field_assignment_source_chosen", 0)
+	var selected_after_first := int(battle_scene.get("_field_interaction_assignment_selected_source_index"))
+	battle_scene.call("_on_field_assignment_source_chosen", 0)
+	var selected_after_echo := int(battle_scene.get("_field_interaction_assignment_selected_source_index"))
+	var assignments_after_echo: Array = battle_scene.get("_field_interaction_assignment_entries")
+
+	return run_checks([
+		assert_eq(selected_after_first, 0, "Selecting a Fire Energy source should mark it as the pending assignment source"),
+		assert_eq(selected_after_echo, 0, "A duplicate pointer echo on the same source card should not cancel the selected Fire Energy"),
+		assert_eq(assignments_after_echo.size(), 0, "The duplicate source echo should not create or clear assignment paths"),
+	])
+
+
+func test_field_assignment_source_choice_allows_immediate_target_slot_click() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Charizard ex", 330, "D"), 0))
+	gsm.game_state.players[0].active_pokemon = active
+	var fire_energy := CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0)
+	var dummy_card := CardInstance.create(_make_trainer_cd("Infernal Reign", "Ability", ""), 0)
+	var steps: Array[Dictionary] = [{
+		"id": "energy_assignments",
+		"title": "Assign Fire Energy",
+		"ui_mode": "card_assignment",
+		"source_items": [fire_energy],
+		"source_labels": ["Fire Energy"],
+		"target_items": [active],
+		"target_labels": ["Charizard ex"],
+		"min_select": 0,
+		"max_select": 3,
+		"allow_cancel": true,
+	}]
+
+	battle_scene.call("_start_effect_interaction", "ability", 0, steps, dummy_card, active, 0)
+	battle_scene.call("_on_field_assignment_source_chosen", 0)
+	var suppression_after_source_click := int(battle_scene.get("_modal_input_slot_suppress_until_msec"))
+
+	var target_click := InputEventMouseButton.new()
+	target_click.button_index = MOUSE_BUTTON_LEFT
+	target_click.pressed = true
+	target_click.position = Vector2(300, 300)
+	target_click.global_position = Vector2(300, 300)
+	var target_click_consumed := bool(battle_scene.call("_consume_modal_slot_input_if_needed", target_click, "my_active"))
+	if not target_click_consumed:
+		battle_scene.call("_handle_field_assignment_target_index", 0)
+
+	var assignments_after_target: Array = battle_scene.get("_field_interaction_assignment_entries")
+	var first_assignment: Dictionary = assignments_after_target[0] if not assignments_after_target.is_empty() else {}
+
+	return run_checks([
+		assert_eq(suppression_after_source_click, 0, "Choosing a Fire Energy source should not arm modal slot suppression for the intended target click"),
+		assert_false(target_click_consumed, "The immediate Charizard target click after choosing Fire Energy should not be swallowed"),
+		assert_eq(assignments_after_target.size(), 1, "The immediate Charizard target click after choosing Fire Energy should create the assignment"),
+		assert_eq(first_assignment.get("target"), active, "The assignment should target the clicked Charizard slot"),
 	])
 
 
@@ -8035,6 +8788,7 @@ func test_battle_scene_prize_slots_keep_fixed_grid_positions() -> String:
 	var slots: Array[BattleCardView] = []
 	for _i: int in 6:
 		var slot := BattleCardView.new()
+		slot.set_clickable(false)
 		slot.set_compact_preview(true)
 		slot.setup_from_instance(null, BattleCardView.MODE_PREVIEW)
 		slots.append(slot)
@@ -8053,6 +8807,7 @@ func test_battle_scene_prize_slots_keep_fixed_grid_positions() -> String:
 
 	return run_checks([
 		assert_true(slots[0].visible, "Filled prize slots should stay visible"),
+		assert_eq(slots[0].mouse_filter, Control.MOUSE_FILTER_STOP, "Selectable Prize slots must keep receiving pointer input after refresh"),
 		assert_true(slots[1].visible, "Empty fixed slot should still keep its grid position"),
 		assert_true(slots[1].self_modulate.a < 0.1, "Taken prize slots should fade out instead of collapsing"),
 		assert_true(slots[2].self_modulate.a > 0.9, "Neighbour prize slots should stay in place and visible"),
@@ -8493,6 +9248,229 @@ func test_battle_scene_regidrago_copy_dragapult_real_choice_enters_assignment_ui
 		assert_eq(pending_choice, "effect_interaction", "Selecting Phantom Dive should continue into the follow-up interaction flow"),
 		assert_eq(field_interaction_mode, "counter_distribution", "Selecting Phantom Dive should switch into the counter distribution interaction mode"),
 		assert_true(has_assignment_step, "The queued follow-up step should be bench_damage_counters"),
+	])
+
+
+func test_battle_scene_dragapult_phantom_dive_action_hud_counter_distribution_accepts_immediate_bench_click() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	CardInstance.reset_id_counter()
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var dragapult_cd := _make_dragapult_ex_cd()
+	gsm.effect_processor.register_pokemon_card(dragapult_cd)
+
+	var attacker := PokemonSlot.new()
+	attacker.pokemon_stack.append(CardInstance.create(dragapult_cd, 0))
+	attacker.turn_played = 0
+	attacker.attached_energy.append(CardInstance.create(_make_energy_cd("Fire", "R"), 0))
+	attacker.attached_energy.append(CardInstance.create(_make_energy_cd("Psychic", "P"), 0))
+	gsm.game_state.players[0].active_pokemon = attacker
+
+	var defender := PokemonSlot.new()
+	defender.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Defender", 320, "C"), 1))
+	defender.turn_played = 0
+	gsm.game_state.players[1].active_pokemon = defender
+
+	var bench_a := PokemonSlot.new()
+	bench_a.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Bench A", 90, "P"), 1))
+	bench_a.turn_played = 0
+	var bench_b := PokemonSlot.new()
+	bench_b.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Bench B", 90, "P"), 1))
+	bench_b.turn_played = 0
+	gsm.game_state.players[1].bench.append(bench_a)
+	gsm.game_state.players[1].bench.append(bench_b)
+
+	battle_scene.call("_show_pokemon_action_dialog", 0, attacker, true)
+
+	var actions: Array = (battle_scene.get("_dialog_data") as Dictionary).get("actions", [])
+	var phantom_action_index: int = -1
+	for i: int in actions.size():
+		var action: Variant = actions[i]
+		if not (action is Dictionary):
+			continue
+		var action_dict: Dictionary = action
+		if str(action_dict.get("type", "")) == "attack" and int(action_dict.get("attack_index", -1)) == 1:
+			phantom_action_index = i
+			break
+
+	var phantom_option := _action_hud_option_at_index(battle_scene, phantom_action_index)
+	_emit_action_hud_mouse_click(phantom_option, Vector2(18, 18), Vector2(360, 180))
+
+	var mode_after_attack := str(battle_scene.get("_field_interaction_mode"))
+	var pending_after_attack := str(battle_scene.get("_pending_choice"))
+	var index_map_after_attack: Dictionary = battle_scene.get("_field_interaction_slot_index_by_id")
+	var broad_guard_cleared := int(battle_scene.get("_modal_input_slot_suppress_until_msec")) <= Time.get_ticks_msec()
+
+	battle_scene.call("_on_counter_distribution_amount_chosen", 6)
+	_emit_slot_mouse_click(battle_scene, "opp_bench_0", Vector2(620, 360))
+
+	return run_checks([
+		assert_gte(phantom_action_index, 0, "Dragapult action HUD should expose Phantom Dive as the second attack"),
+		assert_not_null(phantom_option, "Phantom Dive HUD option should be rendered"),
+		assert_eq(pending_after_attack, "effect_interaction", "Phantom Dive should enter the follow-up interaction flow"),
+		assert_eq(mode_after_attack, "counter_distribution", "Phantom Dive should show the bench counter distribution UI"),
+		assert_true(index_map_after_attack.has("opp_bench_0"), "Counter distribution should target the opponent Bench"),
+		assert_true(broad_guard_cleared, "Field counter distribution must clear the broad modal slot guard"),
+		assert_eq(bench_a.damage_counters, 60, "The immediate Bench click after choosing 6 counters should be accepted"),
+		assert_eq(defender.damage_counters, 200, "Resolving Phantom Dive after counter assignment should deal active damage"),
+	])
+
+
+func test_battle_scene_real_dragapult_slot_action_hud_shows_counter_distribution() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var dragapult_cd: CardData = CardDatabase.get_card("CSV8C", "159")
+	if dragapult_cd == null:
+		return "CSV8C_159 Dragapult ex fixture missing"
+	gsm.effect_processor.register_pokemon_card(dragapult_cd)
+
+	var attacker := PokemonSlot.new()
+	attacker.pokemon_stack.append(CardInstance.create(dragapult_cd, 0))
+	attacker.turn_played = 0
+	attacker.attached_energy.append(CardInstance.create(_make_energy_cd("Fire", "R"), 0))
+	attacker.attached_energy.append(CardInstance.create(_make_energy_cd("Psychic", "P"), 0))
+	gsm.game_state.players[0].active_pokemon = attacker
+
+	var defender := PokemonSlot.new()
+	defender.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Defender", 320, "C"), 1))
+	defender.turn_played = 0
+	gsm.game_state.players[1].active_pokemon = defender
+	var bench_a := PokemonSlot.new()
+	bench_a.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Bench A", 90, "P"), 1))
+	bench_a.turn_played = 0
+	gsm.game_state.players[1].bench.append(bench_a)
+
+	_emit_slot_mouse_click(battle_scene, "my_active", Vector2(360, 720))
+
+	var actions: Array = (battle_scene.get("_dialog_data") as Dictionary).get("actions", [])
+	var phantom_action_index := -1
+	for i: int in actions.size():
+		var action: Variant = actions[i]
+		if action is Dictionary and str((action as Dictionary).get("type", "")) == "attack" and int((action as Dictionary).get("attack_index", -1)) == 1:
+			phantom_action_index = i
+			break
+	var phantom_option := _action_hud_option_at_index(battle_scene, phantom_action_index)
+	_emit_action_hud_mouse_click(phantom_option, Vector2(18, 18), Vector2(620, 180))
+
+	var overlay := battle_scene.get("_field_interaction_overlay") as Control
+	var mode_after_attack := str(battle_scene.get("_field_interaction_mode"))
+	var pending_after_attack := str(battle_scene.get("_pending_choice"))
+	var index_map_after_attack: Dictionary = battle_scene.get("_field_interaction_slot_index_by_id")
+	var visible_after_attack := overlay != null and overlay.visible
+
+	return run_checks([
+		assert_true(gsm.effect_processor.has_attack_effect(dragapult_cd.effect_id), "Real CSV8C_159 should register Phantom Dive by effect_id even when localized names are mojibake"),
+		assert_eq(str(battle_scene.get("_dialog_data").get("presentation", "")) if phantom_action_index < 0 else "action_hud", "action_hud", "Slot click should open the Pokemon action HUD before choosing Phantom Dive"),
+		assert_gte(phantom_action_index, 0, "Real Dragapult action HUD should expose attack index 1"),
+		assert_not_null(phantom_option, "Real Dragapult Phantom Dive option should be rendered"),
+		assert_eq(pending_after_attack, "effect_interaction", "Real Dragapult Phantom Dive should leave the flow waiting for counter assignment"),
+		assert_eq(mode_after_attack, "counter_distribution", "Real Dragapult Phantom Dive must show the 6-counter distribution UI"),
+		assert_true(visible_after_attack, "Counter distribution overlay must be visible after selecting real Dragapult Phantom Dive"),
+		assert_true(index_map_after_attack.has("opp_bench_0"), "Counter distribution must map opponent Bench slots for real Dragapult"),
+	])
+
+
+func test_battle_scene_real_regidrago_copy_dragapult_action_hud_shows_counter_distribution() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var regidrago_cd := _make_regidrago_vstar_cd()
+	var dragapult_cd: CardData = CardDatabase.get_card("CSV8C", "159")
+	if dragapult_cd == null:
+		return "CSV8C_159 Dragapult ex fixture missing"
+	gsm.effect_processor.register_pokemon_card(regidrago_cd)
+	gsm.effect_processor.register_pokemon_card(dragapult_cd)
+
+	var attacker := PokemonSlot.new()
+	attacker.pokemon_stack.append(CardInstance.create(regidrago_cd, 0))
+	attacker.turn_played = 0
+	attacker.attached_energy.append(CardInstance.create(_make_energy_cd("Grass A", "G"), 0))
+	attacker.attached_energy.append(CardInstance.create(_make_energy_cd("Grass B", "G"), 0))
+	attacker.attached_energy.append(CardInstance.create(_make_energy_cd("Fire", "R"), 0))
+	gsm.game_state.players[0].active_pokemon = attacker
+	gsm.game_state.players[0].discard_pile.append(CardInstance.create(dragapult_cd, 0))
+
+	var defender := PokemonSlot.new()
+	defender.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Defender", 320, "C"), 1))
+	defender.turn_played = 0
+	gsm.game_state.players[1].active_pokemon = defender
+	var bench_a := PokemonSlot.new()
+	bench_a.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Bench A", 90, "P"), 1))
+	bench_a.turn_played = 0
+	gsm.game_state.players[1].bench.append(bench_a)
+
+	_emit_slot_mouse_click(battle_scene, "my_active", Vector2(360, 720))
+	var apex_option := _action_hud_option_at_index(battle_scene, 0)
+	_emit_action_hud_mouse_click(apex_option, Vector2(18, 18), Vector2(620, 180))
+
+	var copied_steps: Array = battle_scene.get("_pending_effect_steps")
+	var copied_items: Array = (copied_steps[0] as Dictionary).get("items", []) if not copied_steps.is_empty() else []
+	var phantom_index := -1
+	for i: int in copied_items.size():
+		var item: Variant = copied_items[i]
+		if not (item is Dictionary):
+			continue
+		var source_card: Variant = (item as Dictionary).get("source_card", null)
+		if source_card is CardInstance and (source_card as CardInstance).card_data != null:
+			if (source_card as CardInstance).card_data.effect_id == dragapult_cd.effect_id and int((item as Dictionary).get("attack_index", -1)) == 1:
+				phantom_index = i
+				break
+	var phantom_copy_option := _action_hud_option_at_index(battle_scene, phantom_index)
+	_emit_action_hud_mouse_click(phantom_copy_option, Vector2(18, 18), Vector2(620, 260))
+
+	var overlay := battle_scene.get("_field_interaction_overlay") as Control
+	var mode_after_copy := str(battle_scene.get("_field_interaction_mode"))
+	var pending_after_copy := str(battle_scene.get("_pending_choice"))
+	var index_map_after_copy: Dictionary = battle_scene.get("_field_interaction_slot_index_by_id")
+	var visible_after_copy := overlay != null and overlay.visible
+
+	return run_checks([
+		assert_true(gsm.effect_processor.has_attack_effect(regidrago_cd.effect_id), "Regidrago VSTAR should register Apex Dragon"),
+		assert_true(gsm.effect_processor.has_attack_effect(dragapult_cd.effect_id), "Real CSV8C_159 should register Phantom Dive by effect_id"),
+		assert_not_null(apex_option, "Regidrago active slot click should render Apex Dragon in the action HUD"),
+		assert_gte(phantom_index, 0, "Copied attack HUD should include real Dragapult attack index 1"),
+		assert_not_null(phantom_copy_option, "Real Dragapult copied attack option should be rendered"),
+		assert_eq(pending_after_copy, "effect_interaction", "Copying real Dragapult Phantom Dive should wait for counter assignment"),
+		assert_eq(mode_after_copy, "counter_distribution", "Copying real Dragapult Phantom Dive must show the 6-counter distribution UI"),
+		assert_true(visible_after_copy, "Counter distribution overlay must be visible after selecting copied real Dragapult Phantom Dive"),
+		assert_true(index_map_after_copy.has("opp_bench_0"), "Counter distribution must map opponent Bench slots after Regidrago copy"),
 	])
 
 
@@ -9239,10 +10217,15 @@ func test_battle_scene_roaring_moon_self_ko_prompts_both_active_replacements() -
 	var my_prize_slots: Array[BattleCardView] = []
 	var opp_prize_slots: Array[BattleCardView] = []
 	for _i: int in 6:
-		my_prize_slots.append(BattleCardView.new())
-		opp_prize_slots.append(BattleCardView.new())
+		var my_prize_view := BattleCardView.new()
+		my_prize_view.set_clickable(false)
+		my_prize_slots.append(my_prize_view)
+		var opp_prize_view := BattleCardView.new()
+		opp_prize_view.set_clickable(false)
+		opp_prize_slots.append(opp_prize_view)
 	battle_scene.set("_my_prize_slots", my_prize_slots)
 	battle_scene.set("_opp_prize_slots", opp_prize_slots)
+	battle_scene.call("_setup_prize_viewer")
 
 	for pi: int in 2:
 		var player := PlayerState.new()
@@ -11651,13 +12634,94 @@ func _first_action_hud_option(scene: Control) -> Control:
 	var dialog_card_row := scene.get("_dialog_card_row") as HBoxContainer
 	if dialog_card_row == null:
 		return null
+	return _action_hud_option_at_index(scene, 0)
+
+
+func _action_hud_option_at_index(scene: Control, action_index: int) -> Control:
+	var dialog_card_row := scene.get("_dialog_card_row") as HBoxContainer
+	if dialog_card_row == null:
+		return null
+	var current_index := 0
 	for child: Node in dialog_card_row.get_children():
 		if not child is VBoxContainer:
 			continue
 		for option: Node in child.get_children():
 			if option is Control:
-				return option as Control
+				if current_index == action_index:
+					return option as Control
+				current_index += 1
 	return null
+
+
+func _emit_action_hud_mouse_click(option: Control, local_position: Vector2 = Vector2(18, 18), global_position: Vector2 = Vector2(360, 180)) -> void:
+	if option == null:
+		return
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = local_position
+	press.global_position = global_position
+	option.emit_signal("gui_input", press)
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = local_position
+	release.global_position = global_position
+	option.emit_signal("gui_input", release)
+
+
+func _emit_action_hud_mouse_release(option: Control, local_position: Vector2 = Vector2(18, 18), global_position: Vector2 = Vector2(360, 180)) -> void:
+	if option == null:
+		return
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = local_position
+	release.global_position = global_position
+	option.emit_signal("gui_input", release)
+
+
+func _emit_action_hud_touch_tap(option: Control, touch_index: int, position: Vector2) -> void:
+	if option == null:
+		return
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.index = touch_index
+	press.position = position
+	option.emit_signal("gui_input", press)
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.index = touch_index
+	release.position = position
+	option.emit_signal("gui_input", release)
+
+
+func _emit_slot_mouse_click(scene: Control, slot_id: String, position: Vector2) -> void:
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = position
+	press.global_position = position
+	scene.call("_on_slot_input", press, slot_id)
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = position
+	release.global_position = position
+	scene.call("_on_slot_input", release, slot_id)
+
+
+func _emit_slot_touch_tap(scene: Control, slot_id: String, touch_index: int, position: Vector2) -> void:
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.index = touch_index
+	press.position = position
+	scene.call("_on_slot_input", press, slot_id)
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.index = touch_index
+	release.position = position
+	scene.call("_on_slot_input", release, slot_id)
 
 
 func _make_portrait_retreat_action_hud_scene() -> Control:
@@ -11702,9 +12766,9 @@ func _make_portrait_retreat_action_hud_scene() -> Control:
 	return battle_scene
 
 
-func _make_portrait_koraidon_action_hud_scene() -> Control:
+func _make_koraidon_action_hud_scene(layout_mode: String = "portrait") -> Control:
 	var battle_scene := _make_battle_scene_stub()
-	battle_scene.set("_active_battle_layout_mode", "portrait")
+	battle_scene.set("_active_battle_layout_mode", layout_mode)
 	var gsm := GameStateMachine.new()
 	var game_state := GameState.new()
 	game_state.current_player_index = 0
@@ -11752,7 +12816,215 @@ func _make_portrait_koraidon_action_hud_scene() -> Control:
 	return battle_scene
 
 
-func test_portrait_slot_tap_suppresses_emulated_action_hud_option_click() -> String:
+func _make_portrait_koraidon_action_hud_scene() -> Control:
+	return _make_koraidon_action_hud_scene("portrait")
+
+
+func _make_rotated_portrait_koraidon_action_hud_scene() -> Control:
+	var battle_scene := _make_koraidon_action_hud_scene("portrait")
+	battle_scene.set("_rotated_portrait_canvas_active", true)
+	battle_scene.set("_rotated_portrait_physical_viewport_size", Vector2(1600, 900))
+	return battle_scene
+
+
+func _make_lugia_vstar_action_hud_scene(rotated_portrait: bool = false) -> Control:
+	var battle_scene := _make_battle_scene_stub()
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	if rotated_portrait:
+		battle_scene.set("_rotated_portrait_canvas_active", true)
+		battle_scene.set("_rotated_portrait_physical_viewport_size", Vector2(1600, 900))
+
+	var gsm := GameStateMachine.new()
+	var game_state := GameState.new()
+	game_state.current_player_index = 0
+	game_state.phase = GameState.GamePhase.MAIN
+	game_state.turn_number = 4
+	game_state.vstar_power_used = [false, false]
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		game_state.players.append(player)
+
+	var lugia_cd := _make_pokemon_cd("Lugia VSTAR", 280, "C")
+	lugia_cd.name_en = "Lugia VSTAR"
+	lugia_cd.stage = "VSTAR"
+	lugia_cd.mechanic = "V"
+	lugia_cd.effect_id = "b219587ea29cd6901c83f698ed25f052"
+	lugia_cd.abilities = [{"name": "星耀汇聚", "text": "Put up to 2 Colorless Pokemon from your discard pile onto your Bench."}]
+	lugia_cd.attacks = [{"name": "Tempest Dive", "cost": "CCCC", "damage": "220", "text": "", "is_vstar_power": false}]
+	lugia_cd.retreat_cost = 2
+	gsm.effect_processor.register_pokemon_card(lugia_cd)
+	var active_slot := PokemonSlot.new()
+	active_slot.pokemon_stack.append(CardInstance.create(lugia_cd, 0))
+	for i: int in 4:
+		active_slot.attached_energy.append(CardInstance.create(_make_energy_cd("Lugia Energy %d" % i, "C"), 0))
+	game_state.players[0].active_pokemon = active_slot
+
+	var archeops_cd := _make_pokemon_cd("Archeops", 150, "C")
+	archeops_cd.name_en = "Archeops"
+	archeops_cd.stage = "Stage 2"
+	archeops_cd.mechanic = ""
+	archeops_cd.abilities = []
+	archeops_cd.attacks = [{"name": "Speed Wing", "cost": "CCC", "damage": "120", "text": "", "is_vstar_power": false}]
+	game_state.players[0].discard_pile.append(CardInstance.create(archeops_cd, 0))
+
+	var opp_active := PokemonSlot.new()
+	var opp_cd := _make_pokemon_cd("Opponent Active", 300, "C")
+	opp_cd.attacks = []
+	opp_cd.abilities = []
+	opp_active.pokemon_stack.append(CardInstance.create(opp_cd, 1))
+	game_state.players[1].active_pokemon = opp_active
+
+	gsm.game_state = game_state
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+	(battle_scene.get("_dialog_overlay") as Panel).visible = false
+	(battle_scene.get("_handover_panel") as Panel).visible = false
+	return battle_scene
+
+
+func _prepare_real_portrait_battle_scene() -> Control:
+	var battle_scene: Control = BattleScenePacked.instantiate()
+	battle_scene.set("_view_player", 0)
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	battle_scene.set("_dialog_overlay", battle_scene.find_child("DialogOverlay", true, false))
+	battle_scene.set("_dialog_title", battle_scene.find_child("DialogTitle", true, false))
+	battle_scene.set("_dialog_list", battle_scene.find_child("DialogList", true, false))
+	battle_scene.set("_dialog_confirm", battle_scene.find_child("DialogConfirm", true, false))
+	battle_scene.set("_dialog_cancel", battle_scene.find_child("DialogCancel", true, false))
+	battle_scene.set("_dialog_vbox", battle_scene.find_child("DialogVBox", true, false))
+	battle_scene.set("_dialog_box", battle_scene.find_child("DialogBox", true, false))
+	battle_scene.set("_handover_panel", battle_scene.find_child("HandoverPanel", true, false))
+	battle_scene.set("_my_prizes_title", battle_scene.find_child("MyPrizesLbl", true, false))
+	battle_scene.set("_opp_prizes_title", battle_scene.find_child("OppPrizesLbl", true, false))
+	battle_scene.set("_my_prize_hud_title", battle_scene.find_child("MyHudLeftTitle", true, false))
+	battle_scene.set("_opp_prize_hud_title", battle_scene.find_child("OppHudLeftTitle", true, false))
+	battle_scene.set("_my_hud_left", battle_scene.find_child("MyHudLeft", true, false))
+	battle_scene.set("_opp_hud_left", battle_scene.find_child("OppHudLeft", true, false))
+	battle_scene.set("_my_prize_hud_host", battle_scene.find_child("MyPrizeHudHost", true, false))
+	battle_scene.set("_opp_prize_hud_host", battle_scene.find_child("OppPrizeHudHost", true, false))
+	battle_scene.set("_my_deck_hud_box", battle_scene.find_child("MyDeckHudBox", true, false))
+	battle_scene.set("_opp_deck_hud_box", battle_scene.find_child("OppDeckHudBox", true, false))
+	battle_scene.set("_my_discard_hud_box", battle_scene.find_child("MyDiscardHudBox", true, false))
+	battle_scene.set("_opp_discard_hud_box", battle_scene.find_child("OppDiscardHudBox", true, false))
+	battle_scene.call("_setup_dialog_gallery")
+	battle_scene.call("_setup_side_previews")
+	battle_scene.call("_setup_prize_viewer")
+	(battle_scene.get("_dialog_overlay") as Panel).visible = false
+	(battle_scene.get("_handover_panel") as Panel).visible = false
+	return battle_scene
+
+
+func _make_real_portrait_lugia_vstar_knockout_scene() -> Control:
+	var battle_scene := _prepare_real_portrait_battle_scene()
+	var gsm := GameStateMachine.new()
+	var game_state := GameState.new()
+	game_state.current_player_index = 0
+	game_state.phase = GameState.GamePhase.MAIN
+	game_state.turn_number = 4
+	game_state.vstar_power_used = [false, false]
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		game_state.players.append(player)
+
+	var lugia_cd := _make_pokemon_cd("Lugia VSTAR", 280, "C")
+	lugia_cd.name_en = "Lugia VSTAR"
+	lugia_cd.stage = "VSTAR"
+	lugia_cd.mechanic = "V"
+	lugia_cd.effect_id = "b219587ea29cd6901c83f698ed25f052"
+	lugia_cd.abilities = [{"name": "Summoning Star", "text": "Put up to 2 Colorless Pokemon from your discard pile onto your Bench."}]
+	lugia_cd.attacks = [{"name": "Tempest Dive", "cost": "CCCC", "damage": "220", "text": "", "is_vstar_power": false}]
+	lugia_cd.retreat_cost = 2
+	gsm.effect_processor.register_pokemon_card(lugia_cd)
+	var active_slot := PokemonSlot.new()
+	active_slot.pokemon_stack.append(CardInstance.create(lugia_cd, 0))
+	for i: int in 4:
+		active_slot.attached_energy.append(CardInstance.create(_make_energy_cd("Lugia Energy %d" % i, "C"), 0))
+	game_state.players[0].active_pokemon = active_slot
+
+	var archeops_cd := _make_pokemon_cd("Archeops", 150, "C")
+	archeops_cd.name_en = "Archeops"
+	archeops_cd.stage = "Stage 2"
+	archeops_cd.mechanic = ""
+	archeops_cd.abilities = []
+	archeops_cd.attacks = [{"name": "Speed Wing", "cost": "CCC", "damage": "120", "text": "", "is_vstar_power": false}]
+	game_state.players[0].discard_pile.append(CardInstance.create(archeops_cd, 0))
+
+	var opp_active := PokemonSlot.new()
+	var opp_cd := _make_pokemon_cd("Opponent Active", 300, "C")
+	opp_cd.attacks = []
+	opp_cd.abilities = []
+	opp_active.pokemon_stack.append(CardInstance.create(opp_cd, 1))
+	opp_active.damage_counters = 80
+	game_state.players[1].active_pokemon = opp_active
+
+	for i: int in 6:
+		game_state.players[0].prizes.append(CardInstance.create(_make_pokemon_cd("Lugia Dialog Prize %d" % i, 60, "C"), 0))
+
+	gsm.game_state = game_state
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+	return battle_scene
+
+
+func _make_landscape_charmander_tm_evolution_action_hud_scene() -> Control:
+	var battle_scene := _make_battle_scene_stub()
+	battle_scene.set("_active_battle_layout_mode", "landscape")
+
+	var gsm := GameStateMachine.new()
+	var game_state := GameState.new()
+	game_state.current_player_index = 0
+	game_state.phase = GameState.GamePhase.MAIN
+	game_state.turn_number = 4
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		game_state.players.append(player)
+
+	var charmander_cd := _make_pokemon_cd("小火龙", 70, "R")
+	charmander_cd.name_en = "Charmander"
+	charmander_cd.attacks = []
+	charmander_cd.abilities = []
+	charmander_cd.retreat_cost = 1
+	var active_slot := PokemonSlot.new()
+	active_slot.pokemon_stack.append(CardInstance.create(charmander_cd, 0))
+	game_state.players[0].active_pokemon = active_slot
+
+	var bench_cd := _make_pokemon_cd("Bench Basic", 70, "R")
+	bench_cd.attacks = []
+	bench_cd.abilities = []
+	var bench_slot := PokemonSlot.new()
+	bench_slot.pokemon_stack.append(CardInstance.create(bench_cd, 0))
+	game_state.players[0].bench = [bench_slot]
+
+	var evo_cd := _make_pokemon_cd("Bench Evolution", 110, "R")
+	evo_cd.stage = "Stage 1"
+	evo_cd.evolves_from = "Bench Basic"
+	game_state.players[0].deck = [CardInstance.create(evo_cd, 0)]
+
+	var fire_energy := CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0)
+	var tm_cd := _make_trainer_cd("Technical Machine: Evolution", "Tool", "")
+	tm_cd.effect_id = "43386015be5c073ba2e5b9d3692ece3f"
+	var tm_evolution := CardInstance.create(tm_cd, 0)
+	game_state.players[0].hand = [fire_energy, tm_evolution]
+
+	var opp_active := PokemonSlot.new()
+	var opp_cd := _make_pokemon_cd("Opponent Active", 120, "C")
+	opp_cd.attacks = []
+	opp_cd.abilities = []
+	opp_active.pokemon_stack.append(CardInstance.create(opp_cd, 1))
+	game_state.players[1].active_pokemon = opp_active
+
+	gsm.game_state = game_state
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+	(battle_scene.get("_dialog_overlay") as Panel).visible = false
+	(battle_scene.get("_handover_panel") as Panel).visible = false
+	return battle_scene
+
+
+func test_portrait_slot_tap_mouse_action_hud_option_click_activates() -> String:
 	var battle_scene := _make_portrait_retreat_action_hud_scene()
 
 	var press := InputEventScreenTouch.new()
@@ -11775,14 +13047,15 @@ func test_portrait_slot_tap_suppresses_emulated_action_hud_option_click() -> Str
 
 	var result := run_checks([
 		assert_true(option != null, "Portrait Pokemon action HUD should render at least one option"),
-		assert_eq(str(battle_scene.get("_pending_choice")), "pokemon_action", "The emulated follow-up click that opened the action HUD should not immediately choose retreat"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "retreat_bench", "A real MouseButton action HUD option click should choose retreat"),
+		assert_eq(str(battle_scene.get("_field_interaction_mode")), "slot_select", "A real MouseButton action HUD option click should enter retreat target selection"),
 	])
 
 	battle_scene.free()
 	return result
 
 
-func test_portrait_slot_tap_suppresses_delayed_emulated_action_hud_option_click() -> String:
+func test_portrait_slot_tap_delayed_mouse_action_hud_option_click_activates() -> String:
 	var battle_scene := _make_portrait_retreat_action_hud_scene()
 
 	var touch_position := Vector2(24, 24)
@@ -11796,7 +13069,6 @@ func test_portrait_slot_tap_suppresses_delayed_emulated_action_hud_option_click(
 	release.index = 0
 	release.position = touch_position
 	battle_scene.call("_on_slot_input", release, "my_active")
-	battle_scene.set("_action_hud_open_input_suppress_until_msec", Time.get_ticks_msec() - 1)
 
 	var option := _first_action_hud_option(battle_scene)
 	var emulated_click := InputEventMouseButton.new()
@@ -11809,14 +13081,398 @@ func test_portrait_slot_tap_suppresses_delayed_emulated_action_hud_option_click(
 
 	var result := run_checks([
 		assert_true(option != null, "Portrait Pokemon action HUD should render at least one option"),
-		assert_eq(str(battle_scene.get("_pending_choice")), "pokemon_action", "A delayed Android emulated click at the original slot tap position should not choose the first action HUD option"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "retreat_bench", "A delayed real MouseButton action HUD option click should choose retreat"),
+		assert_eq(str(battle_scene.get("_field_interaction_mode")), "slot_select", "A delayed real MouseButton action HUD option click should enter retreat target selection"),
 	])
 
 	battle_scene.free()
 	return result
 
 
-func test_portrait_koraidon_slot_tap_keeps_action_hud_when_delayed_click_uses_local_option_position() -> String:
+func test_portrait_slot_tap_action_hud_option_touch_activates() -> String:
+	var battle_scene := _make_portrait_retreat_action_hud_scene()
+	var original_touch_position := Vector2(360, 720)
+
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.index = 0
+	press.position = original_touch_position
+	battle_scene.call("_on_slot_input", press, "my_active")
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.index = 0
+	release.position = original_touch_position
+	battle_scene.call("_on_slot_input", release, "my_active")
+
+	var option := _first_action_hud_option(battle_scene)
+	var local_followup_touch := InputEventScreenTouch.new()
+	local_followup_touch.pressed = true
+	local_followup_touch.index = 0
+	local_followup_touch.position = Vector2(20, 20)
+	if option != null:
+		option.emit_signal("gui_input", local_followup_touch)
+
+	var result := run_checks([
+		assert_true(option != null, "Portrait retreat-only action HUD should render the retreat option"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "retreat_bench", "A real ScreenTouch press on an action HUD option should activate retreat"),
+		assert_eq(str(battle_scene.get("_field_interaction_mode")), "slot_select", "A real ScreenTouch action option should open retreat target selection"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_portrait_slot_tap_immediate_mouse_action_hud_option_click_activates() -> String:
+	var battle_scene := _make_portrait_retreat_action_hud_scene()
+	var original_touch_position := Vector2(360, 720)
+
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.index = 0
+	press.position = original_touch_position
+	battle_scene.call("_on_slot_input", press, "my_active")
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.index = 0
+	release.position = original_touch_position
+	battle_scene.call("_on_slot_input", release, "my_active")
+
+	var option := _first_action_hud_option(battle_scene)
+	var immediate_mouse_echo := InputEventMouseButton.new()
+	immediate_mouse_echo.button_index = MOUSE_BUTTON_LEFT
+	immediate_mouse_echo.pressed = true
+	immediate_mouse_echo.position = Vector2(20, 20)
+	immediate_mouse_echo.global_position = Vector2(360, 160)
+	if option != null:
+		option.emit_signal("gui_input", immediate_mouse_echo)
+
+	var result := run_checks([
+		assert_true(option != null, "Portrait retreat-only action HUD should render the retreat option"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "retreat_bench", "A real immediate MouseButton action HUD option click should choose retreat"),
+		assert_eq(str(battle_scene.get("_field_interaction_mode")), "slot_select", "A real immediate MouseButton action HUD option click should enter retreat target selection"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_mouse_opened_retreat_hud_option_press_enters_retreat() -> String:
+	var battle_scene := _make_portrait_retreat_action_hud_scene()
+	var original_click_position := Vector2(360, 720)
+
+	_emit_slot_mouse_click(battle_scene, "my_active", original_click_position)
+
+	var option := _first_action_hud_option(battle_scene)
+	var delayed_option_press := InputEventMouseButton.new()
+	delayed_option_press.button_index = MOUSE_BUTTON_LEFT
+	delayed_option_press.pressed = true
+	delayed_option_press.position = Vector2(18, 18)
+	delayed_option_press.global_position = Vector2(360, 160)
+	if option != null:
+		option.emit_signal("gui_input", delayed_option_press)
+
+	var result := run_checks([
+		assert_true(option != null, "Retreat-only action HUD should render the retreat option"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "retreat_bench", "A real MouseButton press on the retreat option should enter retreat target selection"),
+		assert_eq(str(battle_scene.get("_field_interaction_mode")), "slot_select", "A real MouseButton press on the retreat option should open field-target mode"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_mouse_slot_release_opens_action_hud() -> String:
+	var battle_scene := _make_portrait_retreat_action_hud_scene()
+	var original_click_position := Vector2(360, 720)
+
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = original_click_position
+	press.global_position = original_click_position
+	battle_scene.call("_on_slot_input", press, "my_active")
+	var pending_after_press := str(battle_scene.get("_pending_choice"))
+	var option_after_press := _first_action_hud_option(battle_scene)
+
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = original_click_position
+	release.global_position = original_click_position
+	battle_scene.call("_on_slot_input", release, "my_active")
+	var option_after_release := _first_action_hud_option(battle_scene)
+
+	var result := run_checks([
+		assert_eq(pending_after_press, "", "Mouse slot press should only start the slot click, not open the Pokemon action HUD"),
+		assert_true(option_after_press == null, "The action HUD option should not exist before the opening mouse release"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "pokemon_action", "Mouse slot release should open the Pokemon action HUD"),
+		assert_true(option_after_release != null, "The action HUD option should render after the opening mouse release"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_mouse_opened_action_hud_followup_option_click_enters_retreat() -> String:
+	var battle_scene := _make_portrait_retreat_action_hud_scene()
+	var original_click_position := Vector2(360, 720)
+
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = original_click_position
+	press.global_position = original_click_position
+	battle_scene.call("_on_slot_input", press, "my_active")
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = original_click_position
+	release.global_position = original_click_position
+	battle_scene.call("_on_slot_input", release, "my_active")
+
+	var option := _first_action_hud_option(battle_scene)
+	_emit_action_hud_mouse_click(option, Vector2(18, 18), Vector2(580, 260))
+
+	var result := run_checks([
+		assert_true(option != null, "Retreat-only action HUD should render the retreat option"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "retreat_bench", "A real MouseButton option click after opening the HUD should choose retreat"),
+		assert_eq(str(battle_scene.get("_field_interaction_mode")), "slot_select", "A real MouseButton option click should enter retreat target selection"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_touch_opened_action_hud_delayed_mouse_option_click_activates() -> String:
+	var battle_scene := _make_portrait_retreat_action_hud_scene()
+	var original_touch_position := Vector2(360, 720)
+
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.index = 0
+	press.position = original_touch_position
+	battle_scene.call("_on_slot_input", press, "my_active")
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.index = 0
+	release.position = original_touch_position
+	battle_scene.call("_on_slot_input", release, "my_active")
+
+	var option := _first_action_hud_option(battle_scene)
+	_emit_action_hud_mouse_click(option, Vector2(18, 18), Vector2(580, 260))
+
+	var result := run_checks([
+		assert_true(option != null, "Retreat-only action HUD should render the retreat option"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "retreat_bench", "A delayed real MouseButton action HUD option click should choose retreat"),
+		assert_eq(str(battle_scene.get("_field_interaction_mode")), "slot_select", "A delayed real MouseButton action HUD option click should enter retreat target selection"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_tool_attached_active_repeated_touch_opening_never_auto_enters_retreat() -> String:
+	var battle_scene := _make_portrait_retreat_action_hud_scene()
+	var gsm: GameStateMachine = battle_scene.get("_gsm")
+	var player: PlayerState = gsm.game_state.players[0]
+	var active_slot: PokemonSlot = player.active_pokemon
+	var emergency_board := CardInstance.create(_make_trainer_cd("Emergency Board", "Tool", "Tool attached before opening the action HUD"), 0)
+	active_slot.attached_tool = emergency_board
+
+	var pending_after_attempts: Array[String] = []
+	var field_mode_after_attempts: Array[String] = []
+	var first_action_types: Array[String] = []
+
+	for attempt: int in 3:
+		battle_scene.set("_modal_input_slot_suppress_until_msec", Time.get_ticks_msec() - 1)
+		battle_scene.set("_modal_input_finished_at_msec", Time.get_ticks_msec() - 2000)
+
+		var touch_position := Vector2(360 + attempt * 7, 720 - attempt * 5)
+		var press := InputEventScreenTouch.new()
+		press.pressed = true
+		press.index = 0
+		press.position = touch_position
+		battle_scene.call("_on_slot_input", press, "my_active")
+		var release := InputEventScreenTouch.new()
+		release.pressed = false
+		release.index = 0
+		release.position = touch_position
+		battle_scene.call("_on_slot_input", release, "my_active")
+
+		var actions: Array = (battle_scene.get("_dialog_data") as Dictionary).get("actions", [])
+		first_action_types.append(str((actions[0] as Dictionary).get("type", "")) if not actions.is_empty() and actions[0] is Dictionary else "")
+
+		pending_after_attempts.append(str(battle_scene.get("_pending_choice")))
+		field_mode_after_attempts.append(str(battle_scene.get("_field_interaction_mode")))
+		battle_scene.call("_on_dialog_cancel")
+
+	var result := run_checks([
+		assert_eq(first_action_types, ["retreat", "retreat", "retreat"], "The regression setup should keep retreat as the first action HUD option"),
+		assert_eq(pending_after_attempts, ["pokemon_action", "pokemon_action", "pokemon_action"], "Repeated Tool-attached touch openings should keep the action HUD open"),
+		assert_eq(field_mode_after_attempts, ["", "", ""], "Repeated Tool-attached touch openings should not enter retreat target selection"),
+		assert_true(active_slot.attached_tool == emergency_board, "The attached Tool should remain attached during the repeated touch-open regression"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_mouse_slot_release_opens_action_hud_without_sticky_field_state() -> String:
+	var battle_scene := _make_portrait_retreat_action_hud_scene()
+	var original_click_position := Vector2(360, 720)
+
+	var open_click := InputEventMouseButton.new()
+	open_click.button_index = MOUSE_BUTTON_LEFT
+	open_click.pressed = true
+	open_click.position = original_click_position
+	open_click.global_position = original_click_position
+	battle_scene.call("_on_slot_input", open_click, "my_active")
+	var pending_choice_after_press := str(battle_scene.get("_pending_choice"))
+	var option_after_press := _first_action_hud_option(battle_scene)
+
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = original_click_position
+	release.global_position = original_click_position
+	battle_scene.call("_on_slot_input", release, "my_active")
+	var option_after_release := _first_action_hud_option(battle_scene)
+
+	var result := run_checks([
+		assert_eq(pending_choice_after_press, "", "Mouse slot press should not open the action HUD"),
+		assert_true(option_after_press == null, "Mouse slot press should not render action HUD options"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "pokemon_action", "Mouse slot release should open the action HUD"),
+		assert_true(option_after_release != null, "Mouse slot release should render action HUD options"),
+		assert_eq(str(battle_scene.get("_field_interaction_mode")), "", "Opening the action HUD should not leave sticky field selection state"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_pokemon_action_hud_blocks_underlying_slot_reopen_clicks() -> String:
+	var battle_scene := _make_portrait_retreat_action_hud_scene()
+	var gsm: GameStateMachine = battle_scene.get("_gsm")
+	var active_slot: PokemonSlot = gsm.game_state.players[0].active_pokemon
+	battle_scene.call("_show_pokemon_action_dialog", 0, active_slot, true)
+
+	var slot_click := InputEventMouseButton.new()
+	slot_click.button_index = MOUSE_BUTTON_LEFT
+	slot_click.pressed = true
+	slot_click.position = Vector2(360, 720)
+	slot_click.global_position = Vector2(360, 720)
+	battle_scene.call("_on_slot_input", slot_click, "my_active")
+
+	var result := run_checks([
+		assert_eq(str(battle_scene.get("_pending_choice")), "pokemon_action", "The existing Pokemon action HUD should remain open"),
+		assert_eq(str(battle_scene.get("_field_interaction_mode")), "", "Underlying slot clicks while the action HUD is open should not start field selection"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_action_hud_option_mouse_press_activates_before_release() -> String:
+	var battle_scene := _make_portrait_retreat_action_hud_scene()
+	var original_click_position := Vector2(360, 720)
+
+	_emit_slot_mouse_click(battle_scene, "my_active", original_click_position)
+
+	var option := _first_action_hud_option(battle_scene)
+	var option_press := InputEventMouseButton.new()
+	option_press.button_index = MOUSE_BUTTON_LEFT
+	option_press.pressed = true
+	option_press.position = Vector2(18, 18)
+	option_press.global_position = Vector2(580, 260)
+	if option != null:
+		option.emit_signal("gui_input", option_press)
+	var later_release := InputEventMouseButton.new()
+	later_release.button_index = MOUSE_BUTTON_LEFT
+	later_release.pressed = false
+	later_release.position = Vector2(18, 18)
+	later_release.global_position = Vector2(580, 260)
+	if option != null:
+		option.emit_signal("gui_input", later_release)
+
+	var result := run_checks([
+		assert_true(option != null, "Retreat-only action HUD should render the retreat option"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "retreat_bench", "An option mouse press should activate retreat before release"),
+		assert_eq(str(battle_scene.get("_field_interaction_mode")), "slot_select", "An option mouse press should enter retreat target selection"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_action_hud_cancel_closes_release_opened_hud() -> String:
+	var battle_scene := _make_portrait_retreat_action_hud_scene()
+	var original_click_position := Vector2(360, 720)
+
+	_emit_slot_mouse_click(battle_scene, "my_active", original_click_position)
+	var pending_before_cancel := str(battle_scene.get("_pending_choice"))
+	var option_before_cancel := _first_action_hud_option(battle_scene)
+
+	battle_scene.call("_on_dialog_cancel")
+
+	var result := run_checks([
+		assert_eq(pending_before_cancel, "pokemon_action", "The action HUD should be open before cancel"),
+		assert_true(option_before_cancel != null, "The action HUD should render before cancel"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "Cancel should close the Pokemon action HUD"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_tool_attached_active_repeated_mouse_opening_never_auto_enters_retreat() -> String:
+	var battle_scene := _make_portrait_retreat_action_hud_scene()
+	var gsm: GameStateMachine = battle_scene.get("_gsm")
+	var player: PlayerState = gsm.game_state.players[0]
+	var active_slot: PokemonSlot = player.active_pokemon
+	var emergency_board := CardInstance.create(_make_trainer_cd("Emergency Board", "Tool", "Tool attached before opening the action HUD"), 0)
+	active_slot.attached_tool = emergency_board
+
+	var pending_after_attempts: Array[String] = []
+	var field_mode_after_attempts: Array[String] = []
+	var active_same_after_attempts: Array[bool] = []
+	var tool_same_after_attempts: Array[bool] = []
+	var first_action_types: Array[String] = []
+	var option_available_after_attempts: Array[bool] = []
+
+	for attempt: int in 3:
+		battle_scene.set("_modal_input_slot_suppress_until_msec", Time.get_ticks_msec() - 1)
+		battle_scene.set("_modal_input_finished_at_msec", Time.get_ticks_msec() - 2000)
+
+		_emit_slot_mouse_click(battle_scene, "my_active", Vector2(360 + attempt * 8, 720 - attempt * 6))
+
+		var option := _first_action_hud_option(battle_scene)
+		option_available_after_attempts.append(option != null)
+		var actions: Array = (battle_scene.get("_dialog_data") as Dictionary).get("actions", [])
+		first_action_types.append(str((actions[0] as Dictionary).get("type", "")) if not actions.is_empty() and actions[0] is Dictionary else "")
+
+		pending_after_attempts.append(str(battle_scene.get("_pending_choice")))
+		field_mode_after_attempts.append(str(battle_scene.get("_field_interaction_mode")))
+		active_same_after_attempts.append(player.active_pokemon == active_slot)
+		tool_same_after_attempts.append(active_slot.attached_tool == emergency_board)
+
+		battle_scene.call("_on_dialog_cancel")
+
+	var result := run_checks([
+		assert_eq(option_available_after_attempts, [true, true, true], "Every repeated opening should render the action HUD option"),
+		assert_eq(first_action_types, ["retreat", "retreat", "retreat"], "The regression setup should keep retreat as the first action HUD option"),
+		assert_eq(pending_after_attempts, ["pokemon_action", "pokemon_action", "pokemon_action"], "Repeated openings on a Tool-attached Active should keep the action HUD open until the player chooses an option"),
+		assert_eq(field_mode_after_attempts, ["", "", ""], "Repeated openings should not enter retreat field-target mode before an option is chosen"),
+		assert_eq(active_same_after_attempts, [true, true, true], "The Active Pokemon should not retreat during repeated HUD openings"),
+		assert_eq(tool_same_after_attempts, [true, true, true], "The attached Tool should remain attached while testing repeated HUD openings"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "Canceling after each repeated opening should leave no sticky pending action"),
+		assert_eq(str(battle_scene.get("_field_interaction_mode")), "", "Canceling after each repeated opening should leave no sticky field interaction"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_portrait_koraidon_action_hud_local_mouse_option_click_activates() -> String:
 	var battle_scene := _make_portrait_koraidon_action_hud_scene()
 	var original_touch_position := Vector2(360, 720)
 
@@ -11830,7 +13486,6 @@ func test_portrait_koraidon_slot_tap_keeps_action_hud_when_delayed_click_uses_lo
 	release.index = 0
 	release.position = original_touch_position
 	battle_scene.call("_on_slot_input", release, "my_active")
-	battle_scene.set("_action_hud_open_input_suppress_until_msec", Time.get_ticks_msec() - 1)
 
 	var option := _first_action_hud_option(battle_scene)
 	var emulated_click := InputEventMouseButton.new()
@@ -11860,15 +13515,1039 @@ func test_portrait_koraidon_slot_tap_keeps_action_hud_when_delayed_click_uses_lo
 		assert_true(option != null, "Portrait Koraidon action HUD should render at least one option"),
 		assert_eq(attack_count, 2, "Koraidon action HUD should list both printed attacks"),
 		assert_eq(retreat_count, 1, "Koraidon action HUD should include retreat"),
-		assert_eq(str(battle_scene.get("_pending_choice")), "pokemon_action", "A delayed Android local-position click should not immediately choose Koraidon's first attack"),
-		assert_eq(opponent_damage, 0, "The delayed local-position click should not execute Primitive Beatdown"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "A real local-position MouseButton click should choose Koraidon's first attack"),
+		assert_gt(opponent_damage, 0, "The real local-position click should execute Primitive Beatdown"),
 	])
 
 	battle_scene.free()
 	return result
 
 
-func test_portrait_action_hud_option_touch_works_inside_open_guard_when_position_is_distinct() -> String:
+func test_portrait_touch_opened_action_hud_mouse_option_click_works_when_global_position_is_distinct() -> String:
+	var battle_scene := _make_portrait_koraidon_action_hud_scene()
+	var original_touch_position := Vector2(360, 720)
+
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.index = 0
+	press.position = original_touch_position
+	battle_scene.call("_on_slot_input", press, "my_active")
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.index = 0
+	release.position = original_touch_position
+	battle_scene.call("_on_slot_input", release, "my_active")
+
+	var option := _first_action_hud_option(battle_scene)
+	_emit_action_hud_mouse_release(option, Vector2(16, 16), original_touch_position)
+	var option_click := InputEventMouseButton.new()
+	option_click.button_index = MOUSE_BUTTON_LEFT
+	option_click.pressed = true
+	option_click.position = Vector2(16, 16)
+	option_click.global_position = Vector2(360, 160)
+	_emit_action_hud_mouse_click(option, option_click.position, option_click.global_position)
+
+	var gsm: GameStateMachine = battle_scene.get("_gsm")
+	var opponent_damage := gsm.game_state.players[1].active_pokemon.damage_counters
+
+	var result := run_checks([
+		assert_true(option != null, "Portrait Koraidon action HUD should render at least one option"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "A real option click with reliable global coordinates should activate"),
+		assert_gt(opponent_damage, 0, "The real option click should execute Koraidon's first attack instead of requiring retreat or a second action"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_android_landscape_rotated_portrait_action_hud_mouse_option_click_works_when_global_position_is_distinct() -> String:
+	var battle_scene := _make_rotated_portrait_koraidon_action_hud_scene()
+	var original_touch_position := Vector2(930, 520)
+
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.index = 0
+	press.position = original_touch_position
+	battle_scene.call("_on_slot_input", press, "my_active")
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.index = 0
+	release.position = original_touch_position
+	battle_scene.call("_on_slot_input", release, "my_active")
+
+	var option := _first_action_hud_option(battle_scene)
+	_emit_action_hud_mouse_release(option, Vector2(18, 18), original_touch_position)
+	var option_click := InputEventMouseButton.new()
+	option_click.button_index = MOUSE_BUTTON_LEFT
+	option_click.pressed = true
+	option_click.position = Vector2(18, 18)
+	option_click.global_position = Vector2(930, 220)
+	_emit_action_hud_mouse_click(option, option_click.position, option_click.global_position)
+
+	var gsm: GameStateMachine = battle_scene.get("_gsm")
+	var opponent_damage := gsm.game_state.players[1].active_pokemon.damage_counters
+
+	var result := run_checks([
+		assert_true(option != null, "Android landscape rotated-portrait Koraidon action HUD should render at least one option"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "A reliable option click should activate the action HUD option"),
+		assert_gt(opponent_damage, 0, "The reliable option click should execute Koraidon's first attack instead of requiring retreat or a second action"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_android_landscape_mouse_opened_action_hud_accepts_distinct_option_tap() -> String:
+	var battle_scene := _make_koraidon_action_hud_scene("landscape")
+	var original_click_position := Vector2(930, 520)
+
+	_emit_slot_mouse_click(battle_scene, "my_active", original_click_position)
+
+	var option := _first_action_hud_option(battle_scene)
+	var actions: Array = (battle_scene.get("_dialog_data") as Dictionary).get("actions", [])
+	var first_action_type := ""
+	if not actions.is_empty() and actions[0] is Dictionary:
+		first_action_type = str((actions[0] as Dictionary).get("type", ""))
+
+	var option_click := InputEventMouseButton.new()
+	option_click.button_index = MOUSE_BUTTON_LEFT
+	option_click.pressed = true
+	option_click.position = Vector2(18, 18)
+	option_click.global_position = Vector2(580, 260)
+	_emit_action_hud_mouse_click(option, option_click.position, option_click.global_position)
+
+	var gsm: GameStateMachine = battle_scene.get("_gsm")
+	var opponent_damage := gsm.game_state.players[1].active_pokemon.damage_counters
+
+	var result := run_checks([
+		assert_true(option != null, "Android landscape Koraidon action HUD should render at least one option"),
+		assert_eq(first_action_type, "attack", "The first Koraidon action HUD option should be an attack in this regression setup"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "The real option tap should activate the action HUD option instead of leaving the player stuck in pokemon_action"),
+		assert_gt(opponent_damage, 0, "The real option tap should execute Koraidon's first attack instead of requiring another tap or retreat"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_android_landscape_rotated_portrait_lugia_vstar_action_hud_mouse_option_click_uses_summoning_star() -> String:
+	var battle_scene := _make_lugia_vstar_action_hud_scene(true)
+	var original_touch_position := Vector2(360, 720)
+	var rotated_same_touch_global_position := Vector2(880, 360)
+
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.index = 0
+	press.position = original_touch_position
+	battle_scene.call("_on_slot_input", press, "my_active")
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.index = 0
+	release.position = original_touch_position
+	battle_scene.call("_on_slot_input", release, "my_active")
+
+	var option := _first_action_hud_option(battle_scene)
+	var action_data_before_click: Dictionary = battle_scene.get("_dialog_data")
+	var actions_before_click: Array = action_data_before_click.get("actions", [])
+	var first_action_type := ""
+	if not actions_before_click.is_empty() and actions_before_click[0] is Dictionary:
+		first_action_type = str((actions_before_click[0] as Dictionary).get("type", ""))
+	var same_open_click := InputEventMouseButton.new()
+	same_open_click.button_index = MOUSE_BUTTON_LEFT
+	same_open_click.pressed = true
+	same_open_click.position = Vector2(20, 20)
+	same_open_click.global_position = rotated_same_touch_global_position
+	if option != null:
+		option.emit_signal("gui_input", same_open_click)
+
+	var result := run_checks([
+		assert_true(option != null, "Lugia VSTAR action HUD should render at least one option"),
+		assert_eq(first_action_type, "ability", "The first Lugia VSTAR action HUD option should be Summoning Star"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "effect_interaction", "A real MouseButton action HUD option click should choose Summoning Star"),
+		assert_true(str(battle_scene.get("_pending_choice")) != "pokemon_action", "Choosing Summoning Star should leave the action HUD"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_lugia_vstar_action_hud_option_touch_activates_once() -> String:
+	var battle_scene := _make_lugia_vstar_action_hud_scene(true)
+	var original_touch_position := Vector2(360, 720)
+
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.index = 0
+	press.position = original_touch_position
+	battle_scene.call("_on_slot_input", press, "my_active")
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.index = 0
+	release.position = original_touch_position
+	battle_scene.call("_on_slot_input", release, "my_active")
+
+	var option := _first_action_hud_option(battle_scene)
+	var first_echo_touch := InputEventScreenTouch.new()
+	first_echo_touch.pressed = true
+	first_echo_touch.index = 0
+	first_echo_touch.position = Vector2(20, 20)
+	if option != null:
+		option.emit_signal("gui_input", first_echo_touch)
+
+	var result := run_checks([
+		assert_true(option != null, "Lugia VSTAR action HUD should render at least one option"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "effect_interaction", "A real ScreenTouch option press should choose Summoning Star"),
+		assert_true(str(battle_scene.get("_pending_choice")) != "pokemon_action", "Choosing Summoning Star should leave the action HUD"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_android_mouse_opened_lugia_vstar_action_hud_local_click_uses_summoning_star() -> String:
+	var battle_scene := _make_lugia_vstar_action_hud_scene(false)
+	var original_click_position := Vector2(360, 720)
+
+	_emit_slot_mouse_click(battle_scene, "my_active", original_click_position)
+
+	var option := _first_action_hud_option(battle_scene)
+	var action_data_before_echo: Dictionary = battle_scene.get("_dialog_data")
+	var actions_before_echo: Array = action_data_before_echo.get("actions", [])
+	var first_action_type := ""
+	if not actions_before_echo.is_empty() and actions_before_echo[0] is Dictionary:
+		first_action_type = str((actions_before_echo[0] as Dictionary).get("type", ""))
+
+	var local_mouse_echo := InputEventMouseButton.new()
+	local_mouse_echo.button_index = MOUSE_BUTTON_LEFT
+	local_mouse_echo.pressed = true
+	local_mouse_echo.position = Vector2(20, 20)
+	local_mouse_echo.global_position = Vector2(20, 20)
+	if option != null:
+		option.emit_signal("gui_input", local_mouse_echo)
+
+	var result := run_checks([
+		assert_true(option != null, "Lugia VSTAR action HUD should render at least one option after a mouse-style Android tap"),
+		assert_eq(first_action_type, "ability", "The first Lugia VSTAR action HUD option should be Summoning Star"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "effect_interaction", "A real local-coordinate MouseButton click should choose Summoning Star"),
+		assert_true(str(battle_scene.get("_pending_choice")) != "pokemon_action", "Choosing Summoning Star should leave the action HUD"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_android_mouse_opened_lugia_vstar_delayed_local_click_uses_summoning_star() -> String:
+	var battle_scene := _make_lugia_vstar_action_hud_scene(false)
+	var original_click_position := Vector2(360, 720)
+
+	_emit_slot_mouse_click(battle_scene, "my_active", original_click_position)
+
+	var option := _first_action_hud_option(battle_scene)
+	var action_data_before_echo: Dictionary = battle_scene.get("_dialog_data")
+	var actions_before_echo: Array = action_data_before_echo.get("actions", [])
+	var first_action_type := ""
+	if not actions_before_echo.is_empty() and actions_before_echo[0] is Dictionary:
+		first_action_type = str((actions_before_echo[0] as Dictionary).get("type", ""))
+
+	var delayed_local_mouse_echo := InputEventMouseButton.new()
+	delayed_local_mouse_echo.button_index = MOUSE_BUTTON_LEFT
+	delayed_local_mouse_echo.pressed = true
+	delayed_local_mouse_echo.position = Vector2(20, 20)
+	delayed_local_mouse_echo.global_position = Vector2(20, 20)
+	if option != null:
+		option.emit_signal("gui_input", delayed_local_mouse_echo)
+
+	var result := run_checks([
+		assert_true(option != null, "Lugia VSTAR action HUD should render at least one option after a mouse-style Android tap"),
+		assert_eq(first_action_type, "ability", "The first Lugia VSTAR action HUD option should be Summoning Star"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "effect_interaction", "A real local-coordinate MouseButton click should choose Summoning Star"),
+		assert_true(str(battle_scene.get("_pending_choice")) != "pokemon_action", "Choosing Summoning Star should leave the action HUD"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_android_mouse_opened_lugia_vstar_delayed_lower_local_click_uses_summoning_star() -> String:
+	var battle_scene := _make_lugia_vstar_action_hud_scene(false)
+	var original_click_position := Vector2(360, 720)
+
+	_emit_slot_mouse_click(battle_scene, "my_active", original_click_position)
+
+	var option := _first_action_hud_option(battle_scene)
+	var action_data_before_echo: Dictionary = battle_scene.get("_dialog_data")
+	var actions_before_echo: Array = action_data_before_echo.get("actions", [])
+	var first_action_type := ""
+	if not actions_before_echo.is_empty() and actions_before_echo[0] is Dictionary:
+		first_action_type = str((actions_before_echo[0] as Dictionary).get("type", ""))
+
+	var delayed_lower_local_mouse_echo := InputEventMouseButton.new()
+	delayed_lower_local_mouse_echo.button_index = MOUSE_BUTTON_LEFT
+	delayed_lower_local_mouse_echo.pressed = true
+	delayed_lower_local_mouse_echo.position = Vector2(32, 220)
+	delayed_lower_local_mouse_echo.global_position = Vector2(32, 220)
+	if option != null:
+		option.emit_signal("gui_input", delayed_lower_local_mouse_echo)
+
+	var result := run_checks([
+		assert_true(option != null, "Lugia VSTAR action HUD should render at least one option after a mouse-style Android tap"),
+		assert_eq(first_action_type, "ability", "The first Lugia VSTAR action HUD option should be Summoning Star"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "effect_interaction", "A real lower local-coordinate MouseButton click should choose Summoning Star"),
+		assert_true(str(battle_scene.get("_pending_choice")) != "pokemon_action", "Choosing Summoning Star should leave the action HUD"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_landscape_charmander_tm_evolution_after_attach_release_open_shows_action_hud_without_auto_starting_evolution() -> String:
+	var battle_scene := _make_landscape_charmander_tm_evolution_action_hud_scene()
+	var gsm: GameStateMachine = battle_scene.get("_gsm")
+	var player: PlayerState = gsm.game_state.players[0]
+	var active_slot: PokemonSlot = player.active_pokemon
+	var fire_energy: CardInstance = player.hand[0]
+	var tm_evolution: CardInstance = player.hand[1]
+
+	battle_scene.set("_selected_hand_card", fire_energy)
+	battle_scene.call("_handle_slot_left_click", "my_active")
+	battle_scene.set("_suppress_slot_followup_click_until_msec", Time.get_ticks_msec() - 1)
+	battle_scene.set("_selected_hand_card", tm_evolution)
+	battle_scene.call("_handle_slot_left_click", "my_active")
+	battle_scene.set("_suppress_slot_followup_click_until_msec", Time.get_ticks_msec() - 1)
+
+	_emit_slot_mouse_click(battle_scene, "my_active", Vector2(360, 520))
+
+	var option := _first_action_hud_option(battle_scene)
+	var actions: Array = (battle_scene.get("_dialog_data") as Dictionary).get("actions", [])
+	var first_action_type := ""
+	if not actions.is_empty() and actions[0] is Dictionary:
+		first_action_type = str((actions[0] as Dictionary).get("type", ""))
+
+	var result := run_checks([
+		assert_eq(active_slot.attached_energy.size(), 1, "Charmander should have one Fire Energy before opening the action HUD"),
+		assert_true(active_slot.attached_tool == tm_evolution, "Charmander should have TM Evolution attached before opening the action HUD"),
+		assert_true(option != null, "Charmander action HUD should render the TM Evolution action option"),
+		assert_eq(first_action_type, "granted_attack", "TM Evolution should be the first available action in this regression setup"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "pokemon_action", "Opening the Charmander slot should stop at the action HUD"),
+		assert_false(bool(battle_scene.get("_dialog_card_mode")), "Opening the Charmander slot should not jump into TM Evolution's deck search"),
+		assert_false(bool(battle_scene.get("_dialog_assignment_mode")), "Opening the Charmander slot should not jump into TM Evolution's target flow"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_landscape_charmander_tm_evolution_after_attach_local_click_starts_evolution() -> String:
+	var battle_scene := _make_landscape_charmander_tm_evolution_action_hud_scene()
+	var gsm: GameStateMachine = battle_scene.get("_gsm")
+	var player: PlayerState = gsm.game_state.players[0]
+	var active_slot: PokemonSlot = player.active_pokemon
+	var fire_energy: CardInstance = player.hand[0]
+	var tm_evolution: CardInstance = player.hand[1]
+
+	battle_scene.set("_selected_hand_card", fire_energy)
+	battle_scene.call("_handle_slot_left_click", "my_active")
+	var attached_energy_count := active_slot.attached_energy.size()
+	battle_scene.set("_suppress_slot_followup_click_until_msec", Time.get_ticks_msec() - 1)
+
+	battle_scene.set("_selected_hand_card", tm_evolution)
+	battle_scene.call("_handle_slot_left_click", "my_active")
+	var attached_tool: CardInstance = active_slot.attached_tool
+	battle_scene.set("_suppress_slot_followup_click_until_msec", Time.get_ticks_msec() - 1)
+
+	_emit_slot_mouse_click(battle_scene, "my_active", Vector2(360, 520))
+
+	var option := _first_action_hud_option(battle_scene)
+	var action_data_before_echo: Dictionary = battle_scene.get("_dialog_data")
+	var actions_before_echo: Array = action_data_before_echo.get("actions", [])
+	var first_action_type := ""
+	if not actions_before_echo.is_empty() and actions_before_echo[0] is Dictionary:
+		first_action_type = str((actions_before_echo[0] as Dictionary).get("type", ""))
+
+	var local_mouse_echo := InputEventMouseButton.new()
+	local_mouse_echo.button_index = MOUSE_BUTTON_LEFT
+	local_mouse_echo.pressed = true
+	local_mouse_echo.position = Vector2(20, 20)
+	local_mouse_echo.global_position = Vector2(20, 20)
+	if option != null:
+		option.emit_signal("gui_input", local_mouse_echo)
+
+	var result := run_checks([
+		assert_eq(attached_energy_count, 1, "Charmander should have the manually attached Fire Energy before opening the action HUD"),
+		assert_true(attached_tool == tm_evolution, "Charmander should have TM Evolution attached before opening the action HUD"),
+		assert_true(option != null, "Landscape Charmander action HUD should render at least one option after Fire Energy and TM Evolution are attached"),
+		assert_eq(first_action_type, "granted_attack", "TM Evolution should be the first available action in this regression setup"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "effect_interaction", "A real local MouseButton click should choose TM Evolution"),
+		assert_true(bool(battle_scene.get("_dialog_card_mode")), "The UI should enter TM Evolution's evolution-card search after choosing it"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_landscape_charmander_tm_evolution_delayed_local_click_starts_evolution() -> String:
+	var battle_scene := _make_landscape_charmander_tm_evolution_action_hud_scene()
+	var gsm: GameStateMachine = battle_scene.get("_gsm")
+	var player: PlayerState = gsm.game_state.players[0]
+	var active_slot: PokemonSlot = player.active_pokemon
+	var fire_energy: CardInstance = player.hand[0]
+	var tm_evolution: CardInstance = player.hand[1]
+
+	battle_scene.set("_selected_hand_card", fire_energy)
+	battle_scene.call("_handle_slot_left_click", "my_active")
+	battle_scene.set("_suppress_slot_followup_click_until_msec", Time.get_ticks_msec() - 1)
+	battle_scene.set("_selected_hand_card", tm_evolution)
+	battle_scene.call("_handle_slot_left_click", "my_active")
+	battle_scene.set("_suppress_slot_followup_click_until_msec", Time.get_ticks_msec() - 1)
+
+	_emit_slot_mouse_click(battle_scene, "my_active", Vector2(360, 520))
+
+	var option := _first_action_hud_option(battle_scene)
+	var actions_before_tail: Array = (battle_scene.get("_dialog_data") as Dictionary).get("actions", [])
+	var first_action_type := ""
+	if not actions_before_tail.is_empty() and actions_before_tail[0] is Dictionary:
+		first_action_type = str((actions_before_tail[0] as Dictionary).get("type", ""))
+	_emit_action_hud_mouse_click(option, Vector2(20, 20), Vector2(20, 20))
+
+	var result := run_checks([
+		assert_eq(active_slot.attached_energy.size(), 1, "Charmander should have one Fire Energy before opening the action HUD"),
+		assert_true(active_slot.attached_tool == tm_evolution, "Charmander should have TM Evolution attached before opening the action HUD"),
+		assert_true(option != null, "Charmander action HUD should render the TM Evolution action option"),
+		assert_eq(first_action_type, "granted_attack", "TM Evolution should be the first available action in this regression setup"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "effect_interaction", "A real local MouseButton click should choose TM Evolution"),
+		assert_true(bool(battle_scene.get("_dialog_card_mode")), "The UI should enter TM Evolution's evolution-card search after choosing it"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_landscape_charmander_tm_evolution_two_bench_reliable_mouse_click_starts_evolution() -> String:
+	var battle_scene := _make_landscape_charmander_tm_evolution_action_hud_scene()
+	var gsm: GameStateMachine = battle_scene.get("_gsm")
+	var player: PlayerState = gsm.game_state.players[0]
+	var active_slot: PokemonSlot = player.active_pokemon
+	var fire_energy: CardInstance = player.hand[0]
+	var tm_evolution: CardInstance = player.hand[1]
+
+	var bench_charmander_cd := _make_pokemon_cd("Charmander", 70, "R")
+	bench_charmander_cd.attacks = []
+	bench_charmander_cd.abilities = []
+	var bench_charmander := PokemonSlot.new()
+	bench_charmander.pokemon_stack.append(CardInstance.create(bench_charmander_cd, 0))
+	var bench_pidgey_cd := _make_pokemon_cd("Pidgey", 60, "C")
+	bench_pidgey_cd.attacks = []
+	bench_pidgey_cd.abilities = []
+	var bench_pidgey := PokemonSlot.new()
+	bench_pidgey.pokemon_stack.append(CardInstance.create(bench_pidgey_cd, 0))
+	player.bench = [bench_charmander, bench_pidgey]
+
+	var charmeleon_cd := _make_pokemon_cd("Charmeleon", 100, "R")
+	charmeleon_cd.stage = "Stage 1"
+	charmeleon_cd.evolves_from = "Charmander"
+	var pidgeotto_cd := _make_pokemon_cd("Pidgeotto", 80, "C")
+	pidgeotto_cd.stage = "Stage 1"
+	pidgeotto_cd.evolves_from = "Pidgey"
+	player.deck = [CardInstance.create(charmeleon_cd, 0), CardInstance.create(pidgeotto_cd, 0)]
+
+	battle_scene.set("_selected_hand_card", fire_energy)
+	battle_scene.call("_handle_slot_left_click", "my_active")
+	battle_scene.set("_suppress_slot_followup_click_until_msec", Time.get_ticks_msec() - 1)
+	battle_scene.set("_selected_hand_card", tm_evolution)
+	battle_scene.call("_handle_slot_left_click", "my_active")
+	battle_scene.set("_suppress_slot_followup_click_until_msec", Time.get_ticks_msec() - 1)
+
+	_emit_slot_mouse_click(battle_scene, "my_active", Vector2(360, 520))
+
+	var option := _first_action_hud_option(battle_scene)
+	var actions_before_echo: Array = (battle_scene.get("_dialog_data") as Dictionary).get("actions", [])
+	var first_action_type := ""
+	if not actions_before_echo.is_empty() and actions_before_echo[0] is Dictionary:
+		first_action_type = str((actions_before_echo[0] as Dictionary).get("type", ""))
+
+	var reliable_mouse_echo := InputEventMouseButton.new()
+	reliable_mouse_echo.button_index = MOUSE_BUTTON_LEFT
+	reliable_mouse_echo.pressed = true
+	reliable_mouse_echo.position = Vector2(18, 18)
+	reliable_mouse_echo.global_position = Vector2(580, 260)
+	if option != null:
+		option.emit_signal("gui_input", reliable_mouse_echo)
+
+	var result := run_checks([
+		assert_eq(active_slot.attached_energy.size(), 1, "Charmander should have one Fire Energy before opening the action HUD"),
+		assert_true(active_slot.attached_tool == tm_evolution, "Charmander should have TM Evolution attached before opening the action HUD"),
+		assert_eq(player.bench.size(), 2, "The regression setup should keep Charmander and Pidgey on the Bench"),
+		assert_true(option != null, "Charmander action HUD should render the TM Evolution action option"),
+		assert_eq(first_action_type, "granted_attack", "TM Evolution should be the first available action in this regression setup"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "effect_interaction", "A real MouseButton click should choose TM Evolution"),
+		assert_true(bool(battle_scene.get("_dialog_card_mode")), "The UI should enter TM Evolution's evolution-card search"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_android_lugia_vstar_knockout_prize_accepts_screen_touch() -> String:
+	var battle_scene := _make_lugia_vstar_action_hud_scene(false)
+	var gsm: GameStateMachine = battle_scene.get("_gsm")
+	gsm.state_changed.connect(battle_scene._on_state_changed)
+	gsm.player_choice_required.connect(battle_scene._on_player_choice_required)
+	gsm.action_logged.connect(battle_scene._on_action_logged)
+
+	var my_prize_slots: Array[BattleCardView] = []
+	var opp_prize_slots: Array[BattleCardView] = []
+	for _i: int in 6:
+		my_prize_slots.append(BattleCardView.new())
+		opp_prize_slots.append(BattleCardView.new())
+	battle_scene.set("_my_prize_slots", my_prize_slots)
+	battle_scene.set("_opp_prize_slots", opp_prize_slots)
+	for i: int in 6:
+		gsm.game_state.players[0].prizes.append(CardInstance.create(_make_pokemon_cd("Lugia Prize %d" % i, 60, "C"), 0))
+	var defender := gsm.game_state.players[1].active_pokemon
+	if defender != null:
+		defender.damage_counters = 80
+
+	_emit_slot_mouse_click(battle_scene, "my_active", Vector2(360, 720))
+
+	var actions: Array = (battle_scene.get("_dialog_data") as Dictionary).get("actions", [])
+	var attack_action_index := -1
+	for i: int in actions.size():
+		if actions[i] is Dictionary and str((actions[i] as Dictionary).get("type", "")) == "attack":
+			attack_action_index = i
+			break
+	var attack_option := _action_hud_option_at_index(battle_scene, attack_action_index)
+	var attack_click := InputEventMouseButton.new()
+	attack_click.button_index = MOUSE_BUTTON_LEFT
+	attack_click.pressed = true
+	attack_click.position = Vector2(18, 18)
+	attack_click.global_position = Vector2(360, 180)
+	_emit_action_hud_mouse_click(attack_option, attack_click.position, attack_click.global_position)
+
+	var pending_after_attack := str(battle_scene.get("_pending_choice"))
+	var dialog_visible_after_attack := bool((battle_scene.get("_dialog_overlay") as Panel).visible)
+	var prize_slot_filter_after_attack := my_prize_slots[0].mouse_filter
+	var hand_before_prize := gsm.game_state.players[0].hand.size()
+	var prize_press := InputEventScreenTouch.new()
+	prize_press.pressed = true
+	prize_press.index = 0
+	prize_press.position = Vector2(24, 24)
+	battle_scene.call("_on_prize_slot_input", prize_press, 0, "Prize", 0)
+	var prize_release := InputEventScreenTouch.new()
+	prize_release.pressed = false
+	prize_release.index = 0
+	prize_release.position = Vector2(24, 24)
+	battle_scene.call("_on_prize_slot_input", prize_release, 0, "Prize", 0)
+	var hand_after_prize := gsm.game_state.players[0].hand.size()
+
+	var result := run_checks([
+		assert_true(attack_action_index >= 0, "Lugia VSTAR action HUD should expose Tempest Dive as an attack option"),
+		assert_true(attack_option != null, "The attack option should render in the action HUD"),
+		assert_eq(pending_after_attack, "take_prize", "Lugia VSTAR knockout should enter prize selection after Tempest Dive"),
+		assert_false(dialog_visible_after_attack, "The action HUD overlay should be closed while choosing Prize cards"),
+		assert_eq(prize_slot_filter_after_attack, Control.MOUSE_FILTER_STOP, "A selectable Prize card view must keep receiving pointer input after UI refresh"),
+		assert_eq(hand_after_prize, hand_before_prize + 1, "An Android ScreenTouch on a selectable Prize card should take that Prize"),
+		assert_true(str(battle_scene.get("_pending_choice")) != "take_prize", "After taking the only pending Prize, the flow should leave Prize selection"),
+	])
+
+	battle_scene.free()
+	return result
+
+
+func test_android_portrait_lugia_vstar_knockout_opens_prize_dialog() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+	var battle_scene := _make_real_portrait_lugia_vstar_knockout_scene()
+	var gsm: GameStateMachine = battle_scene.get("_gsm")
+	gsm.state_changed.connect(battle_scene._on_state_changed)
+	gsm.player_choice_required.connect(battle_scene._on_player_choice_required)
+	gsm.action_logged.connect(battle_scene._on_action_logged)
+
+	_emit_slot_mouse_click(battle_scene, "my_active", Vector2(180, 640))
+
+	var actions: Array = (battle_scene.get("_dialog_data") as Dictionary).get("actions", [])
+	var attack_action_index := -1
+	for i: int in actions.size():
+		if actions[i] is Dictionary and str((actions[i] as Dictionary).get("type", "")) == "attack":
+			attack_action_index = i
+			break
+	var attack_option := _action_hud_option_at_index(battle_scene, attack_action_index)
+	_emit_action_hud_mouse_click(attack_option, Vector2(18, 18), Vector2(180, 220))
+	battle_scene.call("_apply_portrait_layout", Vector2(390, 844))
+	battle_scene.call("_refresh_ui")
+	battle_scene.call("_deferred_finalize_portrait_layout_constraints")
+
+	var dialog_overlay := battle_scene.get("_dialog_overlay") as Panel
+	var dialog_vbox := battle_scene.get("_dialog_vbox") as VBoxContainer
+	var dialog_confirm := battle_scene.get("_dialog_confirm") as Button
+	var buttons_row := dialog_confirm.get_parent() as Control if dialog_confirm != null else null
+	var my_host := battle_scene.get("_my_prize_hud_host") as VBoxContainer
+	var my_slots: Array[BattleCardView] = battle_scene.get("_my_prize_slots")
+	var first_prize_slot := my_slots[0] if not my_slots.is_empty() else null
+	var pending_after_attack := str(battle_scene.get("_pending_choice"))
+	var resolved_mode := str(battle_scene.call("_current_resolved_battle_layout_mode"))
+	var dialog_visible_after_attack := dialog_overlay != null and dialog_overlay.visible
+	var host_in_dialog_after_attack := my_host != null and dialog_vbox != null and my_host.get_parent() == dialog_vbox
+	var buttons_hidden_after_attack := buttons_row != null and not buttons_row.visible
+	var first_prize_clickable := first_prize_slot != null and first_prize_slot.mouse_filter == Control.MOUSE_FILTER_STOP
+
+	var result := run_checks([
+		assert_true(attack_action_index >= 0, "The action HUD should expose Tempest Dive before the regression attack"),
+		assert_true(attack_option != null, "The Tempest Dive option should render in the action HUD"),
+		assert_eq(pending_after_attack, "take_prize", "Lugia VSTAR knockout should enter prize selection"),
+		assert_eq(resolved_mode, "portrait", "The Android portrait regression must run with portrait layout resolved"),
+		assert_true(dialog_visible_after_attack, "A human-owned portrait Prize prompt should open the centered Prize dialog"),
+		assert_true(host_in_dialog_after_attack, "The selectable Prize host should be moved into the dialog after the knockout"),
+		assert_true(buttons_hidden_after_attack, "The Prize dialog should hide generic cancel/confirm buttons"),
+		assert_true(first_prize_clickable, "The visible Prize slot in the dialog should remain clickable"),
+	])
+
+	battle_scene.free()
+	GameManager.battle_layout_mode = previous_layout
+	return result
+
+
+func test_android_active_portrait_lugia_vstar_knockout_opens_prize_dialog_when_layout_auto() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_AUTO
+	var battle_scene := _make_real_portrait_lugia_vstar_knockout_scene()
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	battle_scene.set("_rotated_portrait_canvas_active", true)
+	battle_scene.set("_rotated_portrait_physical_viewport_size", Vector2(1600, 900))
+	var gsm: GameStateMachine = battle_scene.get("_gsm")
+	gsm.state_changed.connect(battle_scene._on_state_changed)
+	gsm.player_choice_required.connect(battle_scene._on_player_choice_required)
+	gsm.action_logged.connect(battle_scene._on_action_logged)
+
+	_emit_slot_mouse_click(battle_scene, "my_active", Vector2(180, 640))
+
+	var actions: Array = (battle_scene.get("_dialog_data") as Dictionary).get("actions", [])
+	var attack_action_index := -1
+	for i: int in actions.size():
+		if actions[i] is Dictionary and str((actions[i] as Dictionary).get("type", "")) == "attack":
+			attack_action_index = i
+			break
+	var attack_option := _action_hud_option_at_index(battle_scene, attack_action_index)
+	_emit_action_hud_mouse_click(attack_option, Vector2(18, 18), Vector2(180, 220))
+	battle_scene.call("_apply_portrait_layout", Vector2(900, 1600))
+	battle_scene.call("_refresh_ui")
+	battle_scene.call("_deferred_finalize_portrait_layout_constraints")
+
+	var dialog_overlay := battle_scene.get("_dialog_overlay") as Panel
+	var dialog_vbox := battle_scene.get("_dialog_vbox") as VBoxContainer
+	var my_host := battle_scene.get("_my_prize_hud_host") as VBoxContainer
+	var pending_after_attack := str(battle_scene.get("_pending_choice"))
+	var active_portrait := bool(battle_scene.call("_is_portrait_battle_layout_active"))
+	var resolved_mode := str(battle_scene.call("_current_resolved_battle_layout_mode"))
+	var dialog_visible_after_attack := dialog_overlay != null and dialog_overlay.visible
+	var host_in_dialog_after_attack := my_host != null and dialog_vbox != null and my_host.get_parent() == dialog_vbox
+
+	var result := run_checks([
+		assert_true(attack_action_index >= 0, "The action HUD should expose Tempest Dive before the auto-layout regression attack"),
+		assert_true(attack_option != null, "The Tempest Dive option should render before the auto-layout regression attack"),
+		assert_eq(pending_after_attack, "take_prize", "Lugia VSTAR knockout should still enter prize selection in active portrait layout"),
+		assert_true(active_portrait, "The regression scene should be treated as active portrait layout"),
+		assert_true(dialog_visible_after_attack, "A human-owned Prize prompt should open while the battle is already in active portrait layout, even if current resolver reports %s" % resolved_mode),
+		assert_true(host_in_dialog_after_attack, "The selectable Prize host should move into the dialog while active portrait layout is in use"),
+	])
+
+	battle_scene.free()
+	GameManager.battle_layout_mode = previous_layout
+	return result
+
+
+func test_android_lugia_vstar_knockout_prize_card_view_input_takes_prize_after_refresh() -> String:
+	for input_mode: String in ["touch", "mouse"]:
+		var battle_scene := _make_lugia_vstar_action_hud_scene(false)
+		var gsm: GameStateMachine = battle_scene.get("_gsm")
+		gsm.state_changed.connect(battle_scene._on_state_changed)
+		gsm.player_choice_required.connect(battle_scene._on_player_choice_required)
+		gsm.action_logged.connect(battle_scene._on_action_logged)
+
+		var my_prize_slots: Array[BattleCardView] = []
+		var opp_prize_slots: Array[BattleCardView] = []
+		for _i: int in 6:
+			my_prize_slots.append(BattleCardView.new())
+			opp_prize_slots.append(BattleCardView.new())
+		battle_scene.set("_my_prize_slots", my_prize_slots)
+		battle_scene.set("_opp_prize_slots", opp_prize_slots)
+		battle_scene.call("_setup_prize_viewer")
+		for i: int in 6:
+			gsm.game_state.players[0].prizes.append(CardInstance.create(_make_pokemon_cd("Lugia CardView Prize %d" % i, 60, "C"), 0))
+		var defender := gsm.game_state.players[1].active_pokemon
+		if defender != null:
+			defender.damage_counters = 80
+
+		_emit_slot_mouse_click(battle_scene, "my_active", Vector2(360, 720))
+
+		var actions: Array = (battle_scene.get("_dialog_data") as Dictionary).get("actions", [])
+		var attack_action_index := -1
+		for i: int in actions.size():
+			if actions[i] is Dictionary and str((actions[i] as Dictionary).get("type", "")) == "attack":
+				attack_action_index = i
+				break
+		var attack_option := _action_hud_option_at_index(battle_scene, attack_action_index)
+		var attack_click := InputEventMouseButton.new()
+		attack_click.button_index = MOUSE_BUTTON_LEFT
+		attack_click.pressed = true
+		attack_click.position = Vector2(18, 18)
+		attack_click.global_position = Vector2(360, 180)
+		_emit_action_hud_mouse_click(attack_option, attack_click.position, attack_click.global_position)
+
+		var pending_after_attack := str(battle_scene.get("_pending_choice"))
+		var pending_prize_player := int(battle_scene.get("_pending_prize_player_index"))
+		var prize_slot := my_prize_slots[0] if not my_prize_slots.is_empty() else null
+		var left_connection_count := prize_slot.left_clicked.get_connections().size() if prize_slot != null else -1
+		var gui_connection_count := prize_slot.gui_input.get_connections().size() if prize_slot != null else -1
+		var hand_before_prize := gsm.game_state.players[0].hand.size()
+		if prize_slot != null:
+			_send_prize_card_view_input(prize_slot, input_mode)
+		var hand_after_prize := gsm.game_state.players[0].hand.size()
+		var pending_after_prize := str(battle_scene.get("_pending_choice"))
+		var prize_count_after_prize := gsm.game_state.players[0].prizes.size()
+
+		var result := run_checks([
+			assert_true(attack_action_index >= 0, "Lugia VSTAR action HUD should expose Tempest Dive as an attack option (%s)" % input_mode),
+			assert_true(attack_option != null, "The attack option should render in the action HUD (%s)" % input_mode),
+			assert_eq(pending_after_attack, "take_prize", "A knockout should enter prize selection before the prize card is tapped (%s)" % input_mode),
+			assert_eq(pending_prize_player, 0, "The human player should own the prize prompt after knocking out the AI Active (%s)" % input_mode),
+			assert_true(prize_slot != null, "The refreshed prize area should expose the selectable BattleCardView (%s)" % input_mode),
+			assert_gt(left_connection_count, 0, "The refreshed prize card view should keep its left-click connection after knockout UI refresh (%s)" % input_mode),
+			assert_gt(gui_connection_count, 0, "The refreshed prize card view should keep its gui_input connection after knockout UI refresh (%s)" % input_mode),
+			assert_eq(hand_after_prize, hand_before_prize + 1, "Tapping the refreshed prize BattleCardView should take the prize after knockout (%s)" % input_mode),
+			assert_eq(prize_count_after_prize, 5, "Taking the refreshed prize BattleCardView should remove one prize card (%s)" % input_mode),
+			assert_false(pending_after_prize == "take_prize", "After taking the only pending prize, prize selection should clear (%s)" % input_mode),
+		])
+		battle_scene.free()
+		if result != "":
+			return result
+	return ""
+
+
+func test_selectable_prize_slots_restore_card_view_clickability_after_initial_disabled_build() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_view_player", 0)
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 4
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	gsm.game_state.players[0].prizes.append(CardInstance.create(_make_pokemon_cd("Initially Disabled Prize", 60, "C"), 0))
+	gsm.set("_pending_prize_player_index", 0)
+	gsm.set("_pending_prize_remaining", 1)
+
+	var my_prize_slots: Array[BattleCardView] = []
+	var opp_prize_slots: Array[BattleCardView] = []
+	for _i: int in 6:
+		var my_slot := BattleCardView.new()
+		my_slot.set_clickable(false)
+		my_slot.setup_from_instance(null, BattleCardView.MODE_PREVIEW)
+		var opp_slot := BattleCardView.new()
+		opp_slot.set_clickable(false)
+		opp_slot.setup_from_instance(null, BattleCardView.MODE_PREVIEW)
+		my_prize_slots.append(my_slot)
+		opp_prize_slots.append(opp_slot)
+	battle_scene.set("_my_prize_slots", my_prize_slots)
+	battle_scene.set("_opp_prize_slots", opp_prize_slots)
+	battle_scene.call("_setup_prize_viewer")
+	battle_scene.set("_pending_choice", "take_prize")
+	battle_scene.set("_pending_prize_player_index", 0)
+	battle_scene.set("_pending_prize_remaining", 1)
+	battle_scene.call("_update_prize_slots", my_prize_slots, gsm.game_state.players[0].get_prize_layout(), true)
+
+	var prize_slot := my_prize_slots[0]
+	var mouse_filter_after_update := prize_slot.mouse_filter
+	var clickability_after_update := bool(prize_slot.get("_clickable"))
+	var left_connection_count := prize_slot.left_clicked.get_connections().size()
+	var hand_before := gsm.game_state.players[0].hand.size()
+	_send_prize_card_view_input(prize_slot, "touch")
+	var hand_after := gsm.game_state.players[0].hand.size()
+	var pending_after := str(battle_scene.get("_pending_choice"))
+
+	battle_scene.free()
+	return run_checks([
+		assert_eq(mouse_filter_after_update, Control.MOUSE_FILTER_STOP, "A selectable prize slot should accept GUI input at the Control level"),
+		assert_true(clickability_after_update, "A selectable prize slot built disabled should restore BattleCardView clickability, not only mouse_filter"),
+		assert_gt(left_connection_count, 0, "The selectable prize slot should keep its left-click prize-taking connection"),
+		assert_eq(hand_after, hand_before + 1, "A selectable prize slot built disabled should take the prize through its card-view click path"),
+		assert_false(pending_after == "take_prize", "After taking the only pending prize, prize selection should clear"),
+	])
+
+
+func _send_prize_card_view_input(prize_slot: BattleCardView, input_mode: String) -> void:
+	if input_mode == "touch":
+		var press := InputEventScreenTouch.new()
+		press.pressed = true
+		press.index = 0
+		press.position = Vector2(24, 24)
+		prize_slot.call("_gui_input", press)
+		var release := InputEventScreenTouch.new()
+		release.pressed = false
+		release.index = 0
+		release.position = Vector2(24, 24)
+		prize_slot.call("_gui_input", release)
+		return
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	click.position = Vector2(24, 24)
+	click.global_position = Vector2(24, 24)
+	prize_slot.call("_gui_input", click)
+
+
+func test_portrait_prize_dialog_slot_gui_input_takes_prize_on_android_touch() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+	var battle_scene: Control = BattleScenePacked.instantiate()
+	battle_scene.set("_view_player", 0)
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	battle_scene.set("_dialog_overlay", battle_scene.find_child("DialogOverlay", true, false))
+	battle_scene.set("_dialog_title", battle_scene.find_child("DialogTitle", true, false))
+	battle_scene.set("_dialog_list", battle_scene.find_child("DialogList", true, false))
+	battle_scene.set("_dialog_confirm", battle_scene.find_child("DialogConfirm", true, false))
+	battle_scene.set("_dialog_vbox", battle_scene.find_child("DialogVBox", true, false))
+	battle_scene.set("_dialog_box", battle_scene.find_child("DialogBox", true, false))
+	battle_scene.set("_my_prizes_title", battle_scene.find_child("MyPrizesLbl", true, false))
+	battle_scene.set("_opp_prizes_title", battle_scene.find_child("OppPrizesLbl", true, false))
+	battle_scene.set("_my_prize_hud_title", battle_scene.find_child("MyHudLeftTitle", true, false))
+	battle_scene.set("_opp_prize_hud_title", battle_scene.find_child("OppHudLeftTitle", true, false))
+	battle_scene.set("_my_hud_left", battle_scene.find_child("MyHudLeft", true, false))
+	battle_scene.set("_opp_hud_left", battle_scene.find_child("OppHudLeft", true, false))
+	battle_scene.set("_my_prize_hud_host", battle_scene.find_child("MyPrizeHudHost", true, false))
+	battle_scene.set("_opp_prize_hud_host", battle_scene.find_child("OppPrizeHudHost", true, false))
+	battle_scene.set("_my_deck_hud_box", battle_scene.find_child("MyDeckHudBox", true, false))
+	battle_scene.set("_opp_deck_hud_box", battle_scene.find_child("OppDeckHudBox", true, false))
+	battle_scene.set("_my_discard_hud_box", battle_scene.find_child("MyDiscardHudBox", true, false))
+	battle_scene.set("_opp_discard_hud_box", battle_scene.find_child("OppDiscardHudBox", true, false))
+
+	battle_scene.call("_setup_side_previews")
+	battle_scene.call("_setup_prize_viewer")
+
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 4
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	gsm.game_state.players[0].prizes.append(CardInstance.create(_make_pokemon_cd("Portrait Prize", 60, "C"), 0))
+	gsm.set("_pending_prize_player_index", 0)
+	gsm.set("_pending_prize_remaining", 1)
+	battle_scene.set("_gsm", gsm)
+
+	var my_slots: Array[BattleCardView] = battle_scene.get("_my_prize_slots")
+	battle_scene.set("_pending_choice", "take_prize")
+	battle_scene.set("_pending_prize_player_index", 0)
+	battle_scene.set("_pending_prize_remaining", 1)
+	battle_scene.call("_update_prize_slots", my_slots, gsm.game_state.players[0].get_prize_layout(), true)
+	battle_scene.call("_show_portrait_prize_dialog_if_needed")
+
+	var dialog_overlay := battle_scene.get("_dialog_overlay") as Panel
+	var dialog_vbox := battle_scene.get("_dialog_vbox") as VBoxContainer
+	var my_host := battle_scene.get("_my_prize_hud_host") as VBoxContainer
+	var prize_slot := my_slots[0] if not my_slots.is_empty() else null
+	var dialog_visible_before_tap := dialog_overlay != null and dialog_overlay.visible
+	var host_in_dialog_before_tap := my_host != null and dialog_vbox != null and my_host.get_parent() == dialog_vbox
+	var prize_slot_connection_count := prize_slot.gui_input.get_connections().size() if prize_slot != null else -1
+	var hand_before := gsm.game_state.players[0].hand.size()
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.index = 0
+	press.position = Vector2(24, 24)
+	if prize_slot != null:
+		prize_slot.emit_signal("gui_input", press)
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.index = 0
+	release.position = Vector2(24, 24)
+	if prize_slot != null:
+		prize_slot.emit_signal("gui_input", release)
+	var hand_after := gsm.game_state.players[0].hand.size()
+
+	var result := run_checks([
+		assert_true(dialog_visible_before_tap, "Portrait prize selection should show the prize dialog before the tap"),
+		assert_true(host_in_dialog_before_tap, "The selectable prize host should be inside the portrait dialog"),
+		assert_true(prize_slot != null, "The portrait prize dialog should expose a real connected prize slot"),
+		assert_gt(prize_slot_connection_count, 0, "The portrait prize slot should keep its gui_input connection after moving into the dialog"),
+		assert_eq(hand_after, hand_before + 1, "A ScreenTouch press/release emitted through the visible prize slot should take the Prize"),
+		assert_false(str(battle_scene.get("_pending_choice")) == "take_prize", "After taking the prize through the dialog slot signal, the flow should leave Prize selection"),
+	])
+
+	battle_scene.free()
+	GameManager.battle_layout_mode = previous_layout
+	return result
+
+
+func test_prize_card_view_own_touch_input_takes_prize_on_android() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_view_player", 0)
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 4
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	gsm.game_state.players[0].prizes.append(CardInstance.create(_make_pokemon_cd("Card View Prize", 60, "C"), 0))
+	gsm.set("_pending_prize_player_index", 0)
+	gsm.set("_pending_prize_remaining", 1)
+
+	var my_prize_slots: Array[BattleCardView] = []
+	var opp_prize_slots: Array[BattleCardView] = []
+	for _i: int in 6:
+		my_prize_slots.append(BattleCardView.new())
+		opp_prize_slots.append(BattleCardView.new())
+	battle_scene.set("_my_prize_slots", my_prize_slots)
+	battle_scene.set("_opp_prize_slots", opp_prize_slots)
+	battle_scene.call("_setup_prize_viewer")
+	battle_scene.set("_pending_choice", "take_prize")
+	battle_scene.set("_pending_prize_player_index", 0)
+	battle_scene.set("_pending_prize_remaining", 1)
+	battle_scene.call("_update_prize_slots", my_prize_slots, gsm.game_state.players[0].get_prize_layout(), true)
+
+	var prize_slot := my_prize_slots[0]
+	var connection_count := prize_slot.left_clicked.get_connections().size() if prize_slot != null else -1
+	var hand_before := gsm.game_state.players[0].hand.size()
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.index = 0
+	press.position = Vector2(24, 24)
+	if prize_slot != null:
+		prize_slot.call("_gui_input", press)
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.index = 0
+	release.position = Vector2(24, 24)
+	if prize_slot != null:
+		prize_slot.call("_gui_input", release)
+	var hand_after := gsm.game_state.players[0].hand.size()
+
+	battle_scene.free()
+	return run_checks([
+		assert_true(prize_slot != null, "The selectable Prize card should have a BattleCardView"),
+		assert_gt(connection_count, 0, "Prize BattleCardView left-clicks should be bound to the Prize-taking path"),
+		assert_eq(hand_after, hand_before + 1, "A real BattleCardView touch click should take the selected Prize instead of being swallowed by card preview input"),
+	])
+
+
+func test_prize_card_view_touch_uses_current_view_player_after_handover() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_view_player", 0)
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 1
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 4
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	gsm.game_state.players[0].prizes.append(CardInstance.create(_make_pokemon_cd("Player 0 Prize", 60, "C"), 0))
+	gsm.game_state.players[1].prizes.append(CardInstance.create(_make_pokemon_cd("Player 1 Prize", 60, "C"), 1))
+	gsm.set("_pending_prize_player_index", 1)
+	gsm.set("_pending_prize_remaining", 1)
+
+	var my_prize_slots: Array[BattleCardView] = []
+	var opp_prize_slots: Array[BattleCardView] = []
+	for _i: int in 6:
+		my_prize_slots.append(BattleCardView.new())
+		opp_prize_slots.append(BattleCardView.new())
+	battle_scene.set("_my_prize_slots", my_prize_slots)
+	battle_scene.set("_opp_prize_slots", opp_prize_slots)
+	battle_scene.call("_setup_prize_viewer")
+
+	battle_scene.set("_view_player", 1)
+	battle_scene.set("_pending_choice", "take_prize")
+	battle_scene.set("_pending_prize_player_index", 1)
+	battle_scene.set("_pending_prize_remaining", 1)
+	battle_scene.call("_update_prize_slots", my_prize_slots, gsm.game_state.players[1].get_prize_layout(), true)
+
+	var prize_slot := my_prize_slots[0]
+	var player_zero_hand_before := gsm.game_state.players[0].hand.size()
+	var player_one_hand_before := gsm.game_state.players[1].hand.size()
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.index = 0
+	press.position = Vector2(24, 24)
+	if prize_slot != null:
+		prize_slot.call("_gui_input", press)
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.index = 0
+	release.position = Vector2(24, 24)
+	if prize_slot != null:
+		prize_slot.call("_gui_input", release)
+	var player_zero_hand_after := gsm.game_state.players[0].hand.size()
+	var player_one_hand_after := gsm.game_state.players[1].hand.size()
+	var pending_after := str(battle_scene.get("_pending_choice"))
+
+	battle_scene.free()
+	return run_checks([
+		assert_true(prize_slot != null, "The visible player's Prize slot should exist after handover"),
+		assert_eq(player_zero_hand_after, player_zero_hand_before, "A stale Prize-slot binding should not take the previous view player's Prize"),
+		assert_eq(player_one_hand_after, player_one_hand_before + 1, "Prize-slot card clicks should resolve against the current visible player after handover"),
+		assert_false(pending_after == "take_prize", "Taking the current visible player's Prize should clear the prompt"),
+	])
+
+
+func test_prize_slot_resolve_failure_preserves_ui_prize_prompt() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 4
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	gsm.game_state.players[0].prizes.append(CardInstance.create(_make_pokemon_cd("Unsynced Prize", 60, "C"), 0))
+
+	var my_prize_slots: Array[BattleCardView] = []
+	var opp_prize_slots: Array[BattleCardView] = []
+	for _i: int in 6:
+		my_prize_slots.append(BattleCardView.new())
+		opp_prize_slots.append(BattleCardView.new())
+	battle_scene.set("_my_prize_slots", my_prize_slots)
+	battle_scene.set("_opp_prize_slots", opp_prize_slots)
+	battle_scene.set("_pending_choice", "take_prize")
+	battle_scene.set("_pending_prize_player_index", 0)
+	battle_scene.set("_pending_prize_remaining", 1)
+
+	var hand_before := gsm.game_state.players[0].hand.size()
+	battle_scene.call("_try_take_prize_from_slot", 0, 0)
+	var hand_after := gsm.game_state.players[0].hand.size()
+	var pending_after := str(battle_scene.get("_pending_choice"))
+	var pending_player_after := int(battle_scene.get("_pending_prize_player_index"))
+	var pending_remaining_after := int(battle_scene.get("_pending_prize_remaining"))
+
+	battle_scene.free()
+	return run_checks([
+		assert_eq(hand_after, hand_before, "If the engine rejects a prize resolve, no card should move to hand"),
+		assert_eq(pending_after, "take_prize", "A failed engine prize resolve should keep the UI in prize selection instead of clearing into a dead state"),
+		assert_eq(pending_player_after, 0, "The restored prize prompt should keep the same player"),
+		assert_eq(pending_remaining_after, 1, "The restored prize prompt should keep the remaining count"),
+	])
+
+
+func test_portrait_action_hud_option_touch_works_when_position_is_distinct() -> String:
 	var battle_scene := _make_portrait_koraidon_action_hud_scene()
 	var original_touch_position := Vector2(360, 720)
 
@@ -11888,15 +14567,14 @@ func test_portrait_action_hud_option_touch_works_inside_open_guard_when_position
 	intentional_touch.pressed = true
 	intentional_touch.index = 1
 	intentional_touch.position = Vector2(360, 160)
-	if option != null:
-		option.emit_signal("gui_input", intentional_touch)
+	_emit_action_hud_touch_tap(option, intentional_touch.index, intentional_touch.position)
 
 	var gsm: GameStateMachine = battle_scene.get("_gsm")
 	var opponent_damage := gsm.game_state.players[1].active_pokemon.damage_counters
 
 	var result := run_checks([
 		assert_true(option != null, "Portrait Koraidon action HUD should render at least one option"),
-		assert_eq(str(battle_scene.get("_pending_choice")), "", "A deliberate option touch away from the opening slot tap should activate immediately inside the short guard"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "A deliberate option touch away from the opening slot tap should activate immediately"),
 		assert_gt(opponent_damage, 0, "The deliberate option touch should execute Koraidon's first attack instead of requiring a second tap"),
 	])
 
@@ -11904,17 +14582,11 @@ func test_portrait_action_hud_option_touch_works_inside_open_guard_when_position
 	return result
 
 
-func test_portrait_mouse_opened_action_hud_option_click_works_while_position_guard_remains() -> String:
+func test_portrait_mouse_opened_action_hud_option_click_works_after_release_open() -> String:
 	var battle_scene := _make_portrait_koraidon_action_hud_scene()
 	var original_click_position := Vector2(360, 720)
 
-	var click := InputEventMouseButton.new()
-	click.button_index = MOUSE_BUTTON_LEFT
-	click.pressed = true
-	click.position = original_click_position
-	click.global_position = original_click_position
-	battle_scene.call("_on_slot_input", click, "my_active")
-	battle_scene.set("_action_hud_open_input_suppress_until_msec", Time.get_ticks_msec() - 1)
+	_emit_slot_mouse_click(battle_scene, "my_active", original_click_position)
 
 	var option := _first_action_hud_option(battle_scene)
 	var option_click := InputEventMouseButton.new()
@@ -11922,15 +14594,14 @@ func test_portrait_mouse_opened_action_hud_option_click_works_while_position_gua
 	option_click.pressed = true
 	option_click.position = Vector2(360, 160)
 	option_click.global_position = Vector2(360, 160)
-	if option != null:
-		option.emit_signal("gui_input", option_click)
+	_emit_action_hud_mouse_click(option, option_click.position, option_click.global_position)
 
 	var gsm: GameStateMachine = battle_scene.get("_gsm")
 	var opponent_damage := gsm.game_state.players[1].active_pokemon.damage_counters
 
 	var result := run_checks([
 		assert_true(option != null, "Portrait mouse-opened action HUD should render at least one option"),
-		assert_eq(str(battle_scene.get("_pending_choice")), "", "A real mouse option click away from the opening slot click should activate while the long position guard remains"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "A real mouse option click away from the opening slot click should activate"),
 		assert_gt(opponent_damage, 0, "The first real mouse option click should execute Koraidon's first attack instead of requiring a second click"),
 	])
 
@@ -11938,7 +14609,7 @@ func test_portrait_mouse_opened_action_hud_option_click_works_while_position_gua
 	return result
 
 
-func test_portrait_action_hud_option_click_works_after_open_guard_expires() -> String:
+func test_portrait_action_hud_option_click_works_after_touch_open() -> String:
 	var battle_scene := _make_portrait_retreat_action_hud_scene()
 
 	var press := InputEventScreenTouch.new()
@@ -11951,19 +14622,16 @@ func test_portrait_action_hud_option_click_works_after_open_guard_expires() -> S
 	release.index = 0
 	release.position = Vector2(24, 24)
 	battle_scene.call("_on_slot_input", release, "my_active")
-	battle_scene.set("_action_hud_open_input_suppress_until_msec", Time.get_ticks_msec() - 1)
-	battle_scene.set("_action_hud_open_position_guard_until_msec", Time.get_ticks_msec() - 1)
 
 	var option := _first_action_hud_option(battle_scene)
 	var intentional_click := InputEventMouseButton.new()
 	intentional_click.button_index = MOUSE_BUTTON_LEFT
 	intentional_click.pressed = true
-	if option != null:
-		option.emit_signal("gui_input", intentional_click)
+	_emit_action_hud_mouse_click(option)
 
 	var result := run_checks([
 		assert_true(option != null, "Portrait Pokemon action HUD should render at least one option"),
-		assert_eq(str(battle_scene.get("_pending_choice")), "retreat_bench", "After the guard expires, tapping the action HUD option should choose retreat"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "retreat_bench", "Tapping the action HUD option should choose retreat"),
 	])
 
 	battle_scene.free()

@@ -410,6 +410,8 @@ func show_field_slot_choice(scene: Object, title: String, items: Array, data: Di
 	ensure_field_interaction_panel(scene)
 	update_field_interaction_panel_metrics(scene)
 	hide_field_interaction(scene)
+	if scene.has_method("_clear_modal_slot_time_guard_for_field_choice"):
+		scene.call("_clear_modal_slot_time_guard_for_field_choice", "field_slot_choice")
 	scene.set("_field_interaction_mode", "slot_select")
 	var interaction_data := data.duplicate(true)
 	interaction_data["title"] = title
@@ -439,6 +441,10 @@ func show_field_assignment_interaction(scene: Object, step: Dictionary) -> void:
 	ensure_field_interaction_panel(scene)
 	update_field_interaction_panel_metrics(scene)
 	hide_field_interaction(scene)
+	if scene.has_method("_clear_modal_slot_time_guard_for_field_choice"):
+		scene.call("_clear_modal_slot_time_guard_for_field_choice", "field_assignment")
+	if scene.has_method("_clear_field_assignment_source_followup_choice_guard"):
+		scene.call("_clear_field_assignment_source_followup_choice_guard")
 	scene.set("_field_interaction_mode", "assignment")
 	scene.set("_field_interaction_data", step.duplicate(true))
 	apply_field_interaction_position(scene, resolve_field_interaction_position(scene, step.get("target_items", [])))
@@ -938,6 +944,8 @@ func add_field_assignment_source_card(
 
 
 func on_field_assignment_source_chosen(scene: Object, source_index: int) -> void:
+	if scene.has_method("_consume_field_assignment_source_followup_choice") and bool(scene.call("_consume_field_assignment_source_followup_choice", source_index)):
+		return
 	mark_modal_input_consumed(scene, "field_assignment_source", false)
 	var interaction_data: Dictionary = scene.get("_field_interaction_data")
 	var source_items: Array = interaction_data.get("source_items", [])
@@ -952,6 +960,8 @@ func on_field_assignment_source_chosen(scene: Object, source_index: int) -> void
 			scene.set("_field_interaction_assignment_selected_source_index", -1)
 		refresh_field_interaction_status(scene)
 		scene.call("_refresh_ui")
+		if scene.has_method("_suppress_field_assignment_source_followup_choice"):
+			scene.call("_suppress_field_assignment_source_followup_choice", source_index)
 		return
 
 	var max_assignments: int = int(interaction_data.get("max_select", source_items.size()))
@@ -965,6 +975,8 @@ func on_field_assignment_source_chosen(scene: Object, source_index: int) -> void
 		scene.set("_field_interaction_assignment_selected_source_index", source_index)
 	refresh_field_interaction_status(scene)
 	scene.call("_refresh_ui")
+	if scene.has_method("_suppress_field_assignment_source_followup_choice"):
+		scene.call("_suppress_field_assignment_source_followup_choice", source_index)
 
 
 func find_field_assignment_index_for_source(scene: Object, source_index: int) -> int:
@@ -1354,6 +1366,8 @@ func show_field_counter_distribution(scene: Object, step: Dictionary) -> void:
 	ensure_field_interaction_panel(scene)
 	update_field_interaction_panel_metrics(scene)
 	hide_field_interaction(scene)
+	if scene.has_method("_clear_modal_slot_time_guard_for_field_choice"):
+		scene.call("_clear_modal_slot_time_guard_for_field_choice", "counter_distribution")
 	scene.set("_field_interaction_mode", "counter_distribution")
 	scene.set("_field_interaction_data", step.duplicate(true))
 	apply_field_interaction_position(scene, resolve_field_interaction_position(scene, step.get("target_items", [])))

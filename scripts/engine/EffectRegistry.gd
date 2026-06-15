@@ -128,6 +128,7 @@ const AbilitySearchDeckCardTypeEffect = "res://scripts/effects/pokemon_effects/A
 const AttackSelfStatusCountDamageEffect = "res://scripts/effects/pokemon_effects/AttackSelfStatusCountDamage.gd"
 const AttackDiscardAllAttachedEnergyFromSelfEffect = "res://scripts/effects/pokemon_effects/AttackDiscardAllAttachedEnergyFromSelf.gd"
 const AttackDiscardAllEnergyTakePrizeEffect = "res://scripts/effects/pokemon_effects/AttackDiscardAllEnergyTakePrize.gd"
+const CS5bC040SlowbroEffectsEffect = "res://scripts/effects/pokemon_effects/CS5bC040SlowbroEffects.gd"
 const EffectSupereffectiveGlassesEffect = "res://scripts/effects/tool_effects/EffectSupereffectiveGlasses.gd"
 const EffectToolAncientBoosterEnergyCapsuleEffect = "res://scripts/effects/tool_effects/EffectToolAncientBoosterEnergyCapsule.gd"
 const EffectPerilousJungleEffect = "res://scripts/effects/stadium_effects/EffectPerilousJungle.gd"
@@ -404,6 +405,9 @@ static func _bind_attack_index_if_supported(effect: BaseEffect, attack_index: in
 
 static func _register_pokemon_effect_overrides(processor: EffectProcessor, effect_id: String) -> void:
 	match _canonical_csv9c_effect_id(effect_id):
+		"24f6629cb78fa8e4a940f49f67736afa":
+			processor.register_attack_effect(effect_id, _instantiate_effect(CS5bC040SlowbroEffectsEffect, [0]))
+			processor.register_attack_effect(effect_id, _instantiate_effect(CS5bC040SlowbroEffectsEffect, [1]))
 		"00d90ff674296941a9da9d9a0255aa2d":
 			processor.register_effect(effect_id, _instantiate_effect(AbilityZamazentaVSTARShieldEffect))
 			var zamazenta_lock := _instantiate_effect(AttackSelfLockNextTurnEffect)
@@ -596,6 +600,8 @@ static func _register_pokemon_effect_overrides(processor: EffectProcessor, effec
 			processor.register_attack_effect(effect_id, _instantiate_effect(AttackAnyTargetDamageEffect, [100]))
 		"98ecdb0066cdc5dc6697a0075bcfa4a9":
 			processor.register_attack_effect(effect_id, _instantiate_effect(AttackDiscardAttachedEnergyFromSelf, [1, 0]))
+		"5c0e1214b56b8b00c3853bd00635a5de":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackDiscardAttachedEnergyFromSelf, [1, 1]))
 		"32ad0aabda779aea0420eed4505407be":
 			processor.register_attack_effect(effect_id, EffectApplyStatus.new("asleep", false, 1))
 		"6d8bfccd0e05c3cfdea28540dce2deab":

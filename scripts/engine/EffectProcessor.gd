@@ -728,6 +728,12 @@ func get_attack_damage_modifier(
 	var attack_index: int = attack_index_override
 	if attack_index == -999999:
 		attack_index = _resolve_attack_index(attacker, _attack)
+	if attack_index < 0:
+		var original_effect_id := str(_attack.get("original_effect_id", ""))
+		var original_attack_index := int(_attack.get("original_attack_index", -1))
+		if original_effect_id != "" and original_attack_index >= 0:
+			effect_id = _resolve_effect_id(original_effect_id)
+			attack_index = original_attack_index
 	if attack_index >= 0 and _attack_effect_registry.has(effect_id):
 		for effect: BaseEffect in _attack_effect_registry[effect_id]:
 			if effect.has_method("applies_to_attack_index") and not bool(effect.call("applies_to_attack_index", attack_index)):

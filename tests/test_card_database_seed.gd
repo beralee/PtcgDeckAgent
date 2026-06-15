@@ -328,14 +328,17 @@ func test_version_175_configured_decks_are_bundled() -> String:
 		1750001: "17.5 铝钢桥龙",
 		1750002: "17.5纯多龙",
 		1750003: "17.5密勒顿",
-		1750004: "17.5毒龟",
 		1750005: "17.5呆呆王",
 		606452: "17.5苍炎刃鬼",
-		606972: "17.5恶喷",
 		609431: "17.5洛奇亚",
 		610080: "17.5沙奈朵",
-		611607: "17.5毒龟",
+		620753: "17.5赛富豪",
+		620761: "17.5猛雷鼓",
+		620880: "17.5毒龟v2",
+		620909: "17.5恶喷v2",
 	}
+	var one_ace_deck_ids := [620753, 620761, 620880, 620909]
+	var removed_two_ace_deck_ids := [1750004, 606972, 611607]
 	var checks: Array[String] = []
 	for deck_id_variant: Variant in expected.keys():
 		var deck_id := int(deck_id_variant)
@@ -351,6 +354,30 @@ func test_version_175_configured_decks_are_bundled() -> String:
 		checks.append(assert_eq(int(deck.total_cards), 60, "17.5 deck %d should keep 60 cards" % deck_id))
 		var instances := db.build_deck_instances(deck, 0)
 		checks.append(assert_eq(instances.size(), 60, "17.5 deck %d should build all 60 card instances from bundled cards" % deck_id))
+		if deck_id in one_ace_deck_ids:
+			checks.append(assert_eq(_ace_spec_copy_count(db, deck), 1, "17.5 deck %d should contain exactly one ACE SPEC card" % deck_id))
+	for removed_id: int in removed_two_ace_deck_ids:
+		var removed_path := "res://data/bundled_user/decks/%d.json" % removed_id
+		checks.append(assert_false(removed_path in manifest, "Removed two-ACE 17.5 deck %d should not be listed in the bundled seed manifest" % removed_id))
+		checks.append(assert_false(FileAccess.file_exists(removed_path), "Removed two-ACE 17.5 deck %d bundled JSON should not exist" % removed_id))
+	var imported_cards := {
+		"151C_005": "火恐龙",
+		"151C_017": "比比鸟",
+	}
+	for uid_variant: Variant in imported_cards.keys():
+		var uid := str(uid_variant)
+		var parts := uid.split("_")
+		var card_path := "res://data/bundled_user/cards/%s.json" % uid
+		var image_path := "res://data/bundled_user/cards/images/%s/%s.png.bin" % [parts[0], parts[1]]
+		var card: CardData = db.get_card(str(parts[0]), str(parts[1]))
+		checks.append(assert_true(card_path in manifest, "%s card JSON should be listed in bundled manifest" % uid))
+		checks.append(assert_true(image_path in manifest, "%s card image should be listed in bundled manifest" % uid))
+		checks.append(assert_true(FileAccess.file_exists(card_path), "%s bundled card JSON should exist" % uid))
+		checks.append(assert_true(FileAccess.file_exists(image_path), "%s bundled card image should exist" % uid))
+		checks.append(assert_true(CardData.is_valid_card_image_file(image_path), "%s bundled card image should be valid" % uid))
+		checks.append(assert_not_null(card, "%s should load from bundled cards" % uid))
+		if card != null:
+			checks.append(assert_eq(str(card.name), str(imported_cards[uid_variant]), "%s should keep the expected card name" % uid))
 	var regenerated_from_legacy := {
 		1750001: 1700002,
 		1750002: 575723,
@@ -373,8 +400,8 @@ func test_version_175_configured_decks_are_bundled() -> String:
 func test_get_all_decks_sorts_player_modified_decks_first() -> String:
 	var db := CardDatabaseScript.new()
 	var expected_v175_ids := [
-		1750001, 1750002, 1750003, 1750004, 1750005,
-		606452, 606972, 609431, 610080, 611607,
+		1750001, 1750002, 1750003, 1750005,
+		606452, 609431, 610080, 620753, 620761, 620880, 620909,
 	]
 	var cache := {}
 	for deck_id: int in expected_v175_ids + [1700001]:
@@ -1419,6 +1446,33 @@ func test_2026_05_24_new_cards_and_requested_decks_are_bundled() -> String:
 	return run_checks(checks)
 
 
+func test_cs5bc_040_slowbro_is_bundled_for_deck_editor_visibility() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CS5bC_040.json"
+	var image_path := "res://data/bundled_user/cards/images/CS5bC/040.png.bin"
+	var card: CardData = db.get_card("CS5bC", "040")
+	var all_cards := db.get_all_cards()
+	var found_in_all := false
+	for candidate: CardData in all_cards:
+		if candidate != null and candidate.set_code == "CS5bC" and candidate.card_index == "040":
+			found_in_all = true
+			break
+	return run_checks([
+		assert_true(card_path in manifest, "CS5bC_040 card JSON should be listed in bundled manifest"),
+		assert_true(image_path in manifest, "CS5bC_040 card image should be listed in bundled manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CS5bC_040 bundled card JSON should exist"),
+		assert_true(FileAccess.file_exists(image_path), "CS5bC_040 bundled card image should exist"),
+		assert_true(CardData.is_valid_card_image_file(image_path), "CS5bC_040 bundled image should be valid"),
+		assert_not_null(card, "CS5bC_040 should load through CardDatabase bundled fallback"),
+		assert_eq(str(card.name_en) if card != null else "", "Slowbro", "CS5bC_040 should keep API English name"),
+		assert_eq(str(card.card_type) if card != null else "", "Pokemon", "CS5bC_040 should stay in the Pokemon card pool"),
+		assert_eq(str(card.effect_id) if card != null else "", "24f6629cb78fa8e4a940f49f67736afa", "CS5bC_040 should keep its API effect id"),
+		assert_true(db.has_card("CS5bC", "040"), "CardDatabase.has_card should recognize bundled CS5bC_040"),
+		assert_true(found_in_all, "CardDatabase.get_all_cards should include bundled CS5bC_040 for DeckEditor"),
+	])
+
+
 func test_17_0_regigigas_deck_missing_regi_cards_are_bundled() -> String:
 	var db := CardDatabaseScript.new()
 	var manifest := db._load_bundled_manifest()
@@ -1591,3 +1645,16 @@ func _first_basic_pokemon_entry(db: Object, deck: DeckData) -> Dictionary:
 				"card_index": card_index,
 			}
 	return {}
+
+
+func _ace_spec_copy_count(db: Object, deck: DeckData) -> int:
+	if deck == null:
+		return 0
+	var total := 0
+	for entry: Dictionary in deck.cards:
+		var set_code := str(entry.get("set_code", ""))
+		var card_index := str(entry.get("card_index", ""))
+		var card: CardData = db.get_card(set_code, card_index)
+		if card != null and card.is_ace_spec():
+			total += int(entry.get("count", 0))
+	return total

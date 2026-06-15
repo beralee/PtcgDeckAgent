@@ -486,6 +486,9 @@ func _fails_special_attack_usage_gate(
 	var attack: Dictionary = card_data.attacks[attack_index]
 	var attack_name: String = str(attack.get("name", ""))
 	match card_data.effect_id:
+		"24f6629cb78fa8e4a940f49f67736afa":
+			if attack_index == 1 and state.players[1 - player_index].prizes.size() != 1:
+				return "This attack can only be used when the opponent has exactly 1 Prize card remaining."
 		"11e3c629e34562a7061a05c483eb5718":
 			if _is_lost_mine(attack_name, attack_index) and state.players[player_index].lost_zone.size() < 10:
 				return "自己的放逐区没有达到 10 张，无法使用这个招式"

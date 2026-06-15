@@ -2,6 +2,7 @@ class_name BattleDragScrollCoordinator
 extends RefCounted
 
 const HAND_DRAG_SCROLL_THRESHOLD := 12.0
+const CARD_GALLERY_TOUCH_DRAG_SCROLL_THRESHOLD := 28.0
 const HAND_DRAG_SCROLL_WHEEL_STEP := 96
 const HAND_DRAG_CLICK_SUPPRESS_MSEC := 220
 const HAND_DRAG_SCROLL_SENSITIVITY := 1.0
@@ -113,6 +114,7 @@ func clear_transient_input_capture(source: String = "clear") -> void:
 	_set_scene_var("_card_gallery_dragging", false)
 	_set_scene_var("_card_gallery_drag_active_scroll", null)
 	_set_scene_var("_card_gallery_drag_suppress_click_until_msec", 0)
+	_set_scene_var("_card_gallery_drag_touch_active", false)
 	debug_hand_drag_scroll("clear-transient-input source=%s" % source)
 
 
@@ -282,7 +284,7 @@ func handle_card_gallery_drag_scroll_input(event: InputEvent, scroll: ScrollCont
 		if mouse_button.button_index != MOUSE_BUTTON_LEFT:
 			return false
 		if mouse_button.pressed:
-			_begin_card_gallery_drag_scroll(card_gallery_drag_event_position(event), scroll)
+			_begin_card_gallery_drag_scroll(card_gallery_drag_event_position(event), scroll, false)
 			_accept_event()
 			return true
 		return _end_card_gallery_drag_scroll(source)
@@ -291,7 +293,7 @@ func handle_card_gallery_drag_scroll_input(event: InputEvent, scroll: ScrollCont
 	if event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
 		if touch.pressed:
-			_begin_card_gallery_drag_scroll(card_gallery_drag_event_position(event), scroll)
+			_begin_card_gallery_drag_scroll(card_gallery_drag_event_position(event), scroll, true)
 			_accept_event()
 			return true
 		return _end_card_gallery_drag_scroll(source)
@@ -539,20 +541,23 @@ func _clear_invalid_card_gallery_drag_capture(source: String = "invalid", scroll
 	_set_scene_var("_card_gallery_dragging", false)
 	_set_scene_var("_card_gallery_drag_active_scroll", null)
 	_set_scene_var("_card_gallery_drag_suppress_click_until_msec", 0)
+	_set_scene_var("_card_gallery_drag_touch_active", false)
 	debug_hand_drag_scroll("clear-invalid-card-gallery source=%s" % source)
 
 
-func _begin_card_gallery_drag_scroll(position: Vector2, scroll: ScrollContainer) -> void:
+func _begin_card_gallery_drag_scroll(position: Vector2, scroll: ScrollContainer, from_touch: bool = false) -> void:
 	_set_scene_var("_card_gallery_drag_active_scroll", scroll)
 	_set_scene_var("_card_gallery_drag_active", true)
 	_set_scene_var("_card_gallery_dragging", false)
 	_set_scene_var("_card_gallery_drag_start_position", position)
 	_set_scene_var("_card_gallery_drag_start_scroll", scroll.scroll_horizontal)
+	_set_scene_var("_card_gallery_drag_touch_active", from_touch)
 
 
 func _update_card_gallery_drag_scroll(position: Vector2, scroll: ScrollContainer) -> bool:
 	var delta := position - _as_vector2(_get("_card_gallery_drag_start_position"), Vector2.ZERO)
-	if not _as_bool(_get("_card_gallery_dragging"), false) and absf(delta.x) < HAND_DRAG_SCROLL_THRESHOLD:
+	var threshold := CARD_GALLERY_TOUCH_DRAG_SCROLL_THRESHOLD if _as_bool(_get("_card_gallery_drag_touch_active"), false) else HAND_DRAG_SCROLL_THRESHOLD
+	if not _as_bool(_get("_card_gallery_dragging"), false) and absf(delta.x) < threshold:
 		return false
 	_set_scene_var("_card_gallery_dragging", true)
 	scroll.scroll_horizontal = maxi(0, int(_get("_card_gallery_drag_start_scroll")) - roundi(delta.x * HAND_DRAG_SCROLL_SENSITIVITY))
@@ -565,6 +570,7 @@ func _end_card_gallery_drag_scroll(_source: String = "") -> bool:
 	_set_scene_var("_card_gallery_drag_active", false)
 	_set_scene_var("_card_gallery_dragging", false)
 	_set_scene_var("_card_gallery_drag_active_scroll", null)
+	_set_scene_var("_card_gallery_drag_touch_active", false)
 	if was_dragging:
 		_set_scene_var("_card_gallery_drag_suppress_click_until_msec", Time.get_ticks_msec() + HAND_DRAG_CLICK_SUPPRESS_MSEC)
 		_accept_event()

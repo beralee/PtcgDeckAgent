@@ -121,7 +121,7 @@ func make_llm_runtime_snapshot(game_state: GameState, player_index: int) -> Dict
 
 func get_llm_deck_strategy_prompt(game_state: GameState, player_index: int) -> PackedStringArray:
 	var lines := PackedStringArray()
-	lines.append("Deck plan: 17.0 Bomb Charizard is the Charizard ex / Pidgeot ex strong shell with a Dusknoir prize-conversion package. Reuse the normal Charizard plan first: build Charmander plus Pidgey, convert through Rare Candy, then attack with Charizard ex while Pidgeot ex keeps the next turn online.")
+	lines.append("Deck plan: V17 Bomb Charizard (17.0 family) is the Charizard ex / Pidgeot ex strong shell with a Dusknoir prize-conversion package. Reuse the normal Charizard plan first: build Charmander plus Pidgey, convert through Rare Candy, then attack with Charizard ex while Pidgeot ex keeps the next turn online.")
 	lines.append("Opening priority: the first setup target is Charmander plus Pidgey. Buddy-Buddy Poffin, Nest Ball, Ultra Ball, Arven, Rare Candy, Forest Seal Stone on Rotom V or Lumineon V, and Pidgeot ex search should all serve this shell before optional Duskull padding.")
 	lines.append("Stage 2 policy: if Rare Candy can create Pidgeot ex or Charizard ex, finish the Stage 2 before shallow draw or end_turn. Prefer Pidgeot ex when it unlocks the exact missing search piece; prefer Charizard ex when it creates the first real attack.")
 	lines.append("Fire policy: attach or accelerate Fire only to Charizard ex, a Charmander/Charmeleon backup lane, or late-game Radiant Charizard. Do not put Fire on Pidgeot ex, Pidgey, Duskull, Dusclops, Dusknoir, Rotom V, Lumineon V, Fezandipiti ex, Manaphy, or Cleffa unless the structured payload proves an immediate retreat or attack.")

@@ -9,7 +9,16 @@ const GIFT_ENERGY := "Gift Energy"
 const JET_ENERGY := "Jet Energy"
 const MIST_ENERGY := "Mist Energy"
 const V_GUARD_ENERGY := "V Guard Energy"
+const LEGACY_ENERGY := "Legacy Energy"
 const MESAGOZA := "Mesagoza"
+const LUGIA_175_SPECIAL_ENERGY_CARDS := [
+	{"name": "Jet Energy", "set_code": "CSV4C", "card_index": "129", "symbol": "C", "units": 1},
+	{"name": "Legacy Energy", "set_code": "CSV8C", "card_index": "207", "symbol": "ANY", "units": 1},
+	{"name": "V Guard Energy", "set_code": "CS6.5C", "card_index": "072", "symbol": "C", "units": 1},
+	{"name": "Double Turbo Energy", "set_code": "CSNC", "card_index": "024", "symbol": "C", "units": 2},
+	{"name": "Gift Energy", "set_code": "CS6aC", "card_index": "131", "symbol": "C", "units": 1},
+	{"name": "Mist Energy", "set_code": "CSV7C", "card_index": "204", "symbol": "C", "units": 1},
+]
 
 
 func _new_strategy(script_path: String = LUGIA_SCRIPT_PATH) -> RefCounted:
@@ -166,6 +175,13 @@ func _cinccino_real() -> PokemonSlot:
 	if cd == null:
 		return null
 	return _make_slot(cd, 0)
+
+
+func _real_card(set_code: String, card_index: String, owner: int = 0) -> CardInstance:
+	var cd := CardDatabase.get_card(set_code, card_index)
+	if cd == null:
+		return null
+	return CardInstance.create(cd, owner)
 
 
 func _iron_hands() -> PokemonSlot:
@@ -711,6 +727,60 @@ func test_v175_lugia_cinccino_special_roll_preview_matches_actual_damage() -> St
 	])
 
 
+func test_v175_lugia_cinccino_special_roll_with_only_double_turbo_deals_50() -> String:
+	var cinccino := _cinccino_real()
+	var double_turbo := _real_card("CSNC", "024", 0)
+	if cinccino == null or double_turbo == null:
+		return "Missing CSV7C_171 Cinccino or CSNC_024 Double Turbo real card data"
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_game_state(8)
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.players[0].active_pokemon = cinccino
+	gsm.game_state.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Miraidon ex", "Basic", "L", 220, "", "ex"), 1)
+	cinccino.attached_energy.append(double_turbo)
+	gsm.effect_processor.register_pokemon_card(cinccino.get_card_data())
+	var preview_damage := gsm.get_attack_preview_damage(0, 1)
+	var used := gsm.use_attack(0, 1)
+	var actual_damage := gsm.game_state.players[1].active_pokemon.damage_counters
+	return run_checks([
+		assert_eq(preview_damage, 50, "Cinccino with only Double Turbo should preview 70 minus the Double Turbo penalty"),
+		assert_true(used, "One Double Turbo should satisfy Special Roll's CC cost"),
+		assert_eq(actual_damage, 50, "Cinccino with only Double Turbo should deal 50 actual damage, not count Double Turbo as two Special Energy cards"),
+	])
+
+
+func test_v175_lugia_bundled_special_energies_register_and_power_cinccino() -> String:
+	var cinccino := _cinccino_real()
+	if cinccino == null:
+		return "Missing CSV7C_171 Cinccino real card data"
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_game_state(8)
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.players[0].active_pokemon = cinccino
+	gsm.game_state.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Neutral Defender", "Basic", "C", 500), 1)
+	var checks: Array[String] = []
+	for spec: Dictionary in LUGIA_175_SPECIAL_ENERGY_CARDS:
+		var energy := _real_card(str(spec.get("set_code", "")), str(spec.get("card_index", "")), 0)
+		if energy == null or energy.card_data == null:
+			return "Missing bundled Special Energy card data: %s" % str(spec.get("name", ""))
+		var cd: CardData = energy.card_data
+		checks.append(assert_eq(str(cd.card_type), "Special Energy", "%s should be loaded as Special Energy" % str(spec.get("name", ""))))
+		checks.append(assert_true(gsm.effect_processor.has_effect(str(cd.effect_id)), "%s effect_id should be registered" % str(spec.get("name", ""))))
+		checks.append(assert_eq(gsm.effect_processor.get_energy_type(energy, gsm.game_state), str(spec.get("symbol", "")), "%s runtime energy symbol should match its effect" % str(spec.get("name", ""))))
+		checks.append(assert_eq(gsm.effect_processor.get_energy_colorless_count(energy, gsm.game_state), int(spec.get("units", 1)), "%s runtime energy units should match its effect" % str(spec.get("name", ""))))
+		cinccino.attached_energy.append(energy)
+	gsm.effect_processor.register_pokemon_card(cinccino.get_card_data())
+	var preview_damage := gsm.get_attack_preview_damage(0, 1)
+	var used := gsm.use_attack(0, 1)
+	var actual_damage := gsm.game_state.players[1].active_pokemon.damage_counters
+	checks.append(assert_eq(preview_damage, 400, "All six 17.5 Lugia Special Energy cards should preview Cinccino as 420 minus the Double Turbo penalty"))
+	checks.append(assert_true(used, "All six 17.5 Lugia Special Energy cards should satisfy Cinccino's CC attack cost"))
+	checks.append(assert_eq(actual_damage, 400, "All six 17.5 Lugia Special Energy cards should deal the same damage as preview"))
+	return run_checks(checks)
+
+
 func test_v175_lugia_damage_model_counts_double_turbo_energy_units() -> String:
 	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
 	if strategy == null:
@@ -739,6 +809,19 @@ func test_v175_lugia_damage_model_applies_double_turbo_penalty_to_special_roll()
 	return run_checks([
 		assert_true(bool(forecast.get("can_attack", false)), "Double Turbo plus Gift Energy should keep Cinccino attack-ready"),
 		assert_eq(int(forecast.get("damage", 0)), 120, "Cinccino Special Roll should count two Special Energy cards then apply Double Turbo's -20 penalty"),
+	])
+
+
+func test_v175_lugia_damage_model_counts_each_special_energy_card_once() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before bundled Special Energy modeling can be verified"
+	var cinccino := _cinccino()
+	_attach(cinccino, [JET_ENERGY, LEGACY_ENERGY, V_GUARD_ENERGY, DOUBLE_TURBO_ENERGY, GIFT_ENERGY, MIST_ENERGY])
+	var forecast: Dictionary = strategy.predict_attacker_damage(cinccino)
+	return run_checks([
+		assert_true(bool(forecast.get("can_attack", false)), "17.5 Lugia model should treat the six Special Energy cards as enough attack fuel"),
+		assert_eq(int(forecast.get("damage", 0)), 400, "17.5 Lugia model should count six Special Energy cards once each and apply only Double Turbo's -20 penalty"),
 	])
 
 

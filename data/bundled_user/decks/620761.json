@@ -1,0 +1,292 @@
+{
+	"cards": [
+		{
+			"card_index": "020",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "09445b8c32fd4abef4230ebcdc964096",
+			"name": "光辉甲贺忍蛙",
+			"name_en": "Radiant Greninja",
+			"set_code": "CS6.5C"
+		},
+		{
+			"card_index": "161",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "12b30b5d9a0bd31a8e033bf2f2cfead3",
+			"name": "猛雷鼓",
+			"name_en": "Raging Bolt",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "043",
+			"card_type": "Item",
+			"count": 4,
+			"effect_id": "1af63a7e2cb7a79215474ad8db8fd8fd",
+			"name": "巢穴球",
+			"name_en": "Nest Ball",
+			"set_code": "CSVH1C"
+		},
+		{
+			"card_index": "105",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "1b951205e53e179bde0905c4a194d9ee",
+			"name": "怒鹦哥ex",
+			"name_en": "Squawkabilly ex",
+			"set_code": "CSV2C"
+		},
+		{
+			"card_index": "008",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "294212d9c02dc0acb886a7ef01ebeac4",
+			"name": "能量转移",
+			"name_en": "Energy Switch",
+			"set_code": "CSVH1aC"
+		},
+		{
+			"card_index": "060",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "2f68195255c863293be4fad262bf23d2",
+			"name": "洗翠的沉重球",
+			"name_en": "Hisuian Heavy Ball",
+			"set_code": "CS5.5C"
+		},
+		{
+			"card_index": "154",
+			"card_type": "Pokemon",
+			"count": 3,
+			"effect_id": "3050727a9de336da69b1b7865ad2cf2d",
+			"name": "咕咕",
+			"name_en": "Hoothoot",
+			"set_code": "CSV9C"
+		},
+		{
+			"card_index": "183",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "3e6f1daf545dfed48d0588dd50792a2e",
+			"name": "夜间担架",
+			"name_en": "Night Stretcher",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "028",
+			"card_type": "Pokemon",
+			"count": 3,
+			"effect_id": "409898a79b38fe8ca279e7bdaf4fd52e",
+			"name": "厄诡椪 碧草面具ex",
+			"name_en": "Teal Mask Ogerpon ex",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "LIG",
+			"card_type": "Basic Energy",
+			"count": 3,
+			"effect_id": "45550fd10011f6ade7eef16ba88788cf",
+			"name": "基本雷能量",
+			"name_en": "Lightning Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "151",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "49669fcf461deacebeb5755c11ec51f1",
+			"name": "梦幻ex",
+			"name_en": "Mew ex",
+			"set_code": "151C"
+		},
+		{
+			"card_index": "203",
+			"card_type": "Stadium",
+			"count": 1,
+			"effect_id": "4e16157bfa88a41e823d058a732df8e0",
+			"name": "阻碍之塔",
+			"name_en": "Jamming Tower",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "180",
+			"card_type": "Item",
+			"count": 1,
+			"effect_id": "4ec261453212280d0eb03ed8254ca97f",
+			"name": "顶尖捕捉器",
+			"name_en": "Prime Catcher",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "GRA",
+			"card_type": "Basic Energy",
+			"count": 6,
+			"effect_id": "5e2d0ce37ca0c539aa45908da10544a0",
+			"name": "基本草能量",
+			"name_en": "Grass Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "132",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "63ea5ed31033f1cc5711c2f89bd92692",
+			"name": "百变怪",
+			"name_en": "Ditto",
+			"set_code": "151C"
+		},
+		{
+			"card_index": "121",
+			"card_type": "Supporter",
+			"count": 4,
+			"effect_id": "651276c51911345aa091c1c7b87f3f4f",
+			"name": "奥琳博士的气魄",
+			"name_en": "Professor Sada's Vitality",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "112",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "66377923675b93ec93a30c3411292d47",
+			"name": "故勒顿",
+			"name_en": "Koraidon",
+			"set_code": "CSV9C"
+		},
+		{
+			"card_index": "155",
+			"card_type": "Pokemon",
+			"count": 3,
+			"effect_id": "842bef708173f5e6e1186bfb25e35e38",
+			"name": "猫头夜鹰",
+			"name_en": "Noctowl",
+			"set_code": "CSV9C"
+		},
+		{
+			"card_index": "034",
+			"card_type": "Item",
+			"count": 2,
+			"effect_id": "8538726d6cdfad2fa3ca5f4b462c12c5",
+			"name": "能量回收",
+			"name_en": "Energy Retrieval",
+			"set_code": "CSVH1C"
+		},
+		{
+			"card_index": "023",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "8e1fa2c9018db938084c94c7c970d419",
+			"name": "老大的指令",
+			"name_en": "Boss's Orders",
+			"set_code": "CSVH1aC"
+		},
+		{
+			"card_index": "FIG",
+			"card_type": "Basic Energy",
+			"count": 3,
+			"effect_id": "9fedb80a97ddd5cc8b8022a21364c326",
+			"name": "基本斗能量",
+			"name_en": "Fighting Energy",
+			"set_code": "CSVE1C"
+		},
+		{
+			"card_index": "112",
+			"card_type": "Item",
+			"count": 3,
+			"effect_id": "a337ed34a45e63c6d21d98c3d8e0cb6e",
+			"name": "高级球",
+			"name_en": "Ultra Ball",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "078",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "a92ab1fcfe663d2a56b267a34307fad4",
+			"name": "拉帝亚斯ex",
+			"name_en": "Latias ex",
+			"set_code": "CSV9C"
+		},
+		{
+			"card_index": "135",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "ab6c3357e2b8a8385a68da738f41e0c1",
+			"name": "吉雉鸡ex",
+			"name_en": "Fezandipiti ex",
+			"set_code": "CSV8C"
+		},
+		{
+			"card_index": "123",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "af514f82d182aeae5327b2c360df703d",
+			"name": "奇树",
+			"name_en": "Iono",
+			"set_code": "CSV3C"
+		},
+		{
+			"card_index": "207",
+			"card_type": "Stadium",
+			"count": 2,
+			"effect_id": "cf3124da3d7bf217f7969b6ae4e60e38",
+			"name": "零之大空洞",
+			"name_en": "Area Zero Underdepths",
+			"set_code": "CSV9C"
+		},
+		{
+			"card_index": "118",
+			"card_type": "Tool",
+			"count": 1,
+			"effect_id": "d1c2f018a644e662f2b6895fdfc29281",
+			"name": "勇气护符",
+			"name_en": "Bravery Charm",
+			"set_code": "CSV1C"
+		},
+		{
+			"card_index": "115",
+			"card_type": "Item",
+			"count": 3,
+			"effect_id": "e366f56ecd3f805a28294109a1a37453",
+			"name": "大地容器",
+			"name_en": "Earthen Vessel",
+			"set_code": "CSV6C"
+		},
+		{
+			"card_index": "154",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "e96bb407c5f18bb9eec55487e70395fd",
+			"name": "猛雷鼓ex",
+			"name_en": "Raging Bolt ex",
+			"set_code": "CSV7C"
+		},
+		{
+			"card_index": "196",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "fa8d8691876be30f245bc878d0a29745",
+			"name": "赤松",
+			"name_en": "Crispin",
+			"set_code": "CSV9C"
+		},
+		{
+			"card_index": "161",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "fff777c54e423cea55d217f6954f635c",
+			"name": "旋转洛托姆",
+			"name_en": "Fan Rotom",
+			"set_code": "CSV9C"
+		}
+	],
+	"deck_code": "raa05VN0eJ_jVs5dBt",
+	"deck_name": "17.5猛雷鼓",
+	"id": 620761,
+	"import_date": "2026-06-14T14:22:09",
+	"source_url": "https://tcg.mik.moe/decks/list/620761",
+	"strategy": "",
+	"total_cards": 60,
+	"updated_at": 1781418141952,
+	"variant_name": "其他"
+}

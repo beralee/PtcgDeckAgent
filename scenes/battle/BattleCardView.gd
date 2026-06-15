@@ -13,6 +13,7 @@ const MODE_PREVIEW := "preview"
 const TOUCH_LONG_PRESS_SECONDS := 0.42
 const TOUCH_LONG_PRESS_MOVE_TOLERANCE := 18.0
 const HAND_PRIMARY_CLICK_MOVE_TOLERANCE := 12.0
+const CARD_GALLERY_TOUCH_CLICK_MOVE_TOLERANCE := 28.0
 const CARD_GALLERY_VERTICAL_CLICK_TOLERANCE := 36.0
 const PRIMARY_RELEASE_FALLBACK_MIN_DELAY_MSEC := 80
 const PRIMARY_RELEASE_FALLBACK_DURATION_MSEC := 1400
@@ -58,6 +59,13 @@ class EnergyIconControl:
 		var draw_position := (size - draw_size) * 0.5
 		draw_texture_rect(texture, Rect2(draw_position, draw_size), false)
 
+
+class CardInputCatcherControl:
+	extends Control
+
+	func _get_minimum_size() -> Vector2:
+		return Vector2.ZERO
+
 static var _texture_cache: Dictionary = {}
 static var _failed_texture_paths: Dictionary = {}
 
@@ -97,6 +105,7 @@ var _secondary_inspect_enabled: bool = false
 var _hand_primary_press_active: bool = false
 var _hand_primary_press_start: Vector2 = Vector2.ZERO
 var _hand_primary_press_cancelled: bool = false
+var _hand_primary_press_from_touch: bool = false
 var _primary_release_fallback_ready_at_msec: int = 0
 var _primary_release_fallback_until_msec: int = 0
 var _primary_release_fallback_reason: String = ""
@@ -130,6 +139,7 @@ var _status_tool_label: Label
 var _selection_overlay: PanelContainer
 var _selection_badge_panel: PanelContainer
 var _selection_badge: Label
+var _input_catcher: Control
 
 
 func _ready() -> void:
@@ -153,6 +163,9 @@ func setup_from_instance(inst: CardInstance = null, mode: String = MODE_HAND) ->
 	display_mode = mode
 	_selected = false
 	_selectable_hint = false
+	if _clickable and display_mode == MODE_HAND:
+		_ensure_input_catcher()
+	_apply_card_input_filters()
 	clear_battle_status()
 	_refresh()
 
@@ -164,6 +177,7 @@ func setup_from_card_data(data: CardData, mode: String = MODE_CHOICE) -> void:
 	display_mode = mode
 	_selected = false
 	_selectable_hint = false
+	_apply_card_input_filters()
 	clear_battle_status()
 	_refresh()
 
@@ -211,8 +225,11 @@ func set_back_texture(texture: Texture2D) -> void:
 
 
 func set_clickable(clickable: bool) -> void:
+	_ensure_ui()
 	_clickable = clickable
-	mouse_filter = Control.MOUSE_FILTER_STOP if clickable else Control.MOUSE_FILTER_IGNORE
+	if clickable:
+		_ensure_input_catcher()
+	_apply_card_input_filters()
 	if not clickable:
 		_cancel_touch_long_press()
 		clear_primary_release_fallback()
@@ -610,6 +627,45 @@ func _build_ui() -> void:
 	_update_style()
 
 
+func _ensure_input_catcher() -> void:
+	if _input_catcher != null:
+		return
+	if _art_frame == null:
+		_ensure_ui()
+	_input_catcher = CardInputCatcherControl.new()
+	_input_catcher.name = "CardInputCatcher"
+	_input_catcher.focus_mode = Control.FOCUS_NONE
+	_input_catcher.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_input_catcher.custom_minimum_size = Vector2.ZERO
+	_input_catcher.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_input_catcher.gui_input.connect(_on_input_catcher_gui_input)
+	_art_frame.add_child(_input_catcher)
+	_apply_card_input_filters()
+
+
+func _apply_card_input_filters() -> void:
+	mouse_filter = Control.MOUSE_FILTER_STOP if _clickable else Control.MOUSE_FILTER_IGNORE
+	_set_child_controls_mouse_filter(self, Control.MOUSE_FILTER_IGNORE)
+	if _input_catcher != null:
+		_input_catcher.mouse_filter = Control.MOUSE_FILTER_STOP if _should_use_input_catcher() else Control.MOUSE_FILTER_IGNORE
+
+
+func _should_use_input_catcher() -> bool:
+	if not _clickable:
+		return false
+	return display_mode != MODE_SLOT_ACTIVE and display_mode != MODE_SLOT_BENCH
+
+
+func _set_child_controls_mouse_filter(node: Node, filter: int) -> void:
+	for child: Node in node.get_children():
+		if child == _input_catcher:
+			continue
+		var control := child as Control
+		if control != null:
+			control.mouse_filter = filter
+		_set_child_controls_mouse_filter(child, filter)
+
+
 func _update_layout() -> void:
 	if _outer_margin == null:
 		return
@@ -748,6 +804,7 @@ func _refresh() -> void:
 
 	_update_style()
 	_apply_tilt()
+	_apply_card_input_filters()
 
 
 func _placeholder_text() -> String:
@@ -887,6 +944,7 @@ func _update_battle_status_ui() -> void:
 	for energy_icon_variant: Variant in energy_icons_raw:
 		_status_energy_row.add_child(_make_energy_icon(energy_icon_variant, energy_total))
 	_apply_responsive_status_metrics()
+	_apply_card_input_filters()
 
 
 func _update_implementation_badge() -> void:
@@ -1487,12 +1545,22 @@ func _apply_tilt() -> void:
 
 
 func _gui_input(event: InputEvent) -> void:
+	_handle_card_pointer_input(event)
+
+
+func _on_input_catcher_gui_input(event: InputEvent) -> void:
+	_handle_card_pointer_input(event)
+
+
+func _handle_card_pointer_input(event: InputEvent) -> void:
 	if not _clickable:
 		return
 	var release_primary_click := display_mode == MODE_HAND or bool(get_meta("card_gallery_drag_input_enabled", false))
 	if release_primary_click:
 		hand_drag_input.emit(event)
 	if _handle_touch_inspect_input(event):
+		return
+	if not release_primary_click and _handle_direct_touch_click_input(event):
 		return
 	if release_primary_click and _handle_hand_primary_click_input(event):
 		return
@@ -1522,6 +1590,7 @@ func _handle_hand_primary_click_input(event: InputEvent) -> bool:
 			_hand_primary_press_active = true
 			_hand_primary_press_start = _primary_click_event_position(event)
 			_hand_primary_press_cancelled = false
+			_hand_primary_press_from_touch = false
 			clear_primary_release_fallback()
 			accept_event()
 			return true
@@ -1529,6 +1598,7 @@ func _handle_hand_primary_click_input(event: InputEvent) -> bool:
 			var cancelled := _hand_primary_press_cancelled
 			_hand_primary_press_active = false
 			_hand_primary_press_cancelled = false
+			_hand_primary_press_from_touch = false
 			if cancelled:
 				accept_event()
 				return true
@@ -1555,6 +1625,7 @@ func _handle_hand_primary_click_input(event: InputEvent) -> bool:
 			_hand_primary_press_active = true
 			_hand_primary_press_start = touch.position
 			_hand_primary_press_cancelled = false
+			_hand_primary_press_from_touch = true
 			clear_primary_release_fallback()
 			accept_event()
 			return true
@@ -1562,6 +1633,7 @@ func _handle_hand_primary_click_input(event: InputEvent) -> bool:
 			var cancelled := _hand_primary_press_cancelled
 			_hand_primary_press_active = false
 			_hand_primary_press_cancelled = false
+			_hand_primary_press_from_touch = false
 			if cancelled:
 				accept_event()
 				return true
@@ -1573,6 +1645,41 @@ func _handle_hand_primary_click_input(event: InputEvent) -> bool:
 			accept_event()
 			return true
 		if _consume_primary_release_fallback():
+			left_clicked.emit(card_instance, card_data)
+			accept_event()
+			return true
+		return false
+
+	if event is InputEventScreenDrag and _hand_primary_press_active:
+		_update_hand_primary_click_motion((event as InputEventScreenDrag).position)
+		return false
+
+	return false
+
+
+func _handle_direct_touch_click_input(event: InputEvent) -> bool:
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			_hand_primary_press_active = true
+			_hand_primary_press_start = touch.position
+			_hand_primary_press_cancelled = false
+			_hand_primary_press_from_touch = true
+			clear_primary_release_fallback()
+			accept_event()
+			return true
+		if _hand_primary_press_active:
+			var cancelled := _hand_primary_press_cancelled
+			_hand_primary_press_active = false
+			_hand_primary_press_cancelled = false
+			_hand_primary_press_from_touch = false
+			if cancelled:
+				accept_event()
+				return true
+			if _suppress_next_left_click:
+				_suppress_next_left_click = false
+				accept_event()
+				return true
 			left_clicked.emit(card_instance, card_data)
 			accept_event()
 			return true
@@ -1603,7 +1710,8 @@ func _update_hand_primary_click_motion(position: Vector2) -> void:
 	if bool(get_meta("card_gallery_drag_input_enabled", false)):
 		# Card galleries scroll horizontally. Vertical touch jitter on phones should not
 		# cancel a card tap unless it is clearly no longer a tap.
-		if absf(delta.x) > HAND_PRIMARY_CLICK_MOVE_TOLERANCE or absf(delta.y) > CARD_GALLERY_VERTICAL_CLICK_TOLERANCE:
+		var horizontal_tolerance := CARD_GALLERY_TOUCH_CLICK_MOVE_TOLERANCE if _hand_primary_press_from_touch else HAND_PRIMARY_CLICK_MOVE_TOLERANCE
+		if absf(delta.x) > horizontal_tolerance or absf(delta.y) > CARD_GALLERY_VERTICAL_CLICK_TOLERANCE:
 			_hand_primary_press_cancelled = true
 		return
 	if delta.length() > HAND_PRIMARY_CLICK_MOVE_TOLERANCE:
@@ -1634,6 +1742,7 @@ func _handle_touch_inspect_input(event: InputEvent) -> bool:
 				if consumed:
 					_hand_primary_press_active = false
 					_hand_primary_press_cancelled = false
+					_hand_primary_press_from_touch = false
 					accept_event()
 				return consumed
 		return false

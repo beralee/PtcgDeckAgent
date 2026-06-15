@@ -439,10 +439,13 @@ func _deck_estimate_multiplier_attack_damage(_action: Dictionary, game_state: Ga
 	if not lower_text.contains("special") and not lower_text.contains("70x"):
 		return 0
 	var special_count := 0
+	var damage_modifier := 0
 	for energy: CardInstance in active.attached_energy:
 		if energy != null and energy.card_data != null and str(energy.card_data.card_type) == "Special Energy":
 			special_count += 1
-	return special_count * 70
+			if _name_contains(_best_card_name(energy.card_data), "Double Turbo Energy"):
+				damage_modifier -= 20
+	return maxi(0, special_count * 70 + damage_modifier)
 
 
 func _deck_hand_has_recovery_or_pivot_piece(player: PlayerState) -> bool:

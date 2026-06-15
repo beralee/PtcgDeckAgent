@@ -60,6 +60,7 @@ var _recommendation_fetch_in_progress := false
 var _recommendation_fetch_reason := ""
 var _recommendation_prefetch_remaining := 0
 var _recommendation_prefetch_seen_ids: Dictionary = {}
+var _recommendation_remote_order_batch := 0
 var _recommendation_store: RefCounted = null
 var _recommendation_articles: Array[Dictionary] = []
 var _embedded_recommendations: Array[Dictionary] = []
@@ -681,8 +682,19 @@ func _recommendation_exclude_ids(extra_id: String = "") -> PackedStringArray:
 
 
 func _prefetch_recommendation_exclude_ids() -> PackedStringArray:
-	var ids := _recommendation_exclude_ids()
 	var seen := {}
+	var ids := PackedStringArray()
+	_append_recommendation_id(ids, seen, _current_recommendation)
+	if _recommendation_store != null:
+		var cached_items: Array = _recommendation_store.call("get_items")
+		for cached_raw: Variant in cached_items:
+			if cached_raw is not Dictionary:
+				continue
+			var cached := cached_raw as Dictionary
+			if int(cached.get("server_order_batch", -1)) == _recommendation_remote_order_batch:
+				_append_recommendation_id(ids, seen, cached)
+	for embedded: Dictionary in _embedded_recommendations:
+		_append_recommendation_id(ids, seen, embedded)
 	for item_id: String in ids:
 		seen[item_id] = true
 	for seen_id: Variant in _recommendation_prefetch_seen_ids.keys():
@@ -805,8 +817,6 @@ func _begin_remote_recommendation_prefetch() -> void:
 		return
 	_recommendation_prefetch_remaining = REMOTE_RECOMMENDATION_PREFETCH_STEPS
 	_recommendation_prefetch_seen_ids = {}
-	for known_id: String in _recommendation_exclude_ids():
-		_recommendation_prefetch_seen_ids[known_id] = true
 	_request_next_remote_recommendation_prefetch()
 
 
@@ -899,6 +909,18 @@ func _sort_recommendations_for_pool(items: Array[Dictionary]) -> Array[Dictionar
 
 
 func _recommendation_pool_item_before(left: Dictionary, right: Dictionary) -> bool:
+	var left_batch := int(left.get("server_order_batch", -1))
+	var right_batch := int(right.get("server_order_batch", -1))
+	if left_batch != right_batch:
+		return left_batch > right_batch
+	var left_order := int(left.get("server_order", -1))
+	var right_order := int(right.get("server_order", -1))
+	if left_order >= 0 and right_order >= 0 and left_order != right_order:
+		return left_order < right_order
+	if left_order >= 0 and right_order < 0:
+		return true
+	if left_order < 0 and right_order >= 0:
+		return false
 	var left_key := _recommendation_sort_key(left)
 	var right_key := _recommendation_sort_key(right)
 	if left_key != right_key:
@@ -972,6 +994,7 @@ func _on_remote_recommendation_succeeded(response: Dictionary) -> void:
 	if _recommendation_store == null:
 		_recommendation_store = DeckRecommendationStoreScript.new()
 		_recommendation_store.call("load_cache")
+	normalized = _apply_remote_recommendation_order(normalized, fetch_reason)
 
 	if fetch_reason == "prefetch":
 		var prefetched_id := str(normalized.get("id", "")).strip_edges()
@@ -1012,6 +1035,65 @@ func _on_remote_recommendation_succeeded(response: Dictionary) -> void:
 	_set_recommendation_status("已切换推荐：%s。" % deck_name)
 	_refresh_recommendation_cards()
 	_begin_remote_recommendation_prefetch()
+
+
+func _apply_remote_recommendation_order(recommendation: Dictionary, fetch_reason: String) -> Dictionary:
+	var result := recommendation.duplicate(true)
+	var item_id := str(result.get("id", "")).strip_edges()
+	if item_id == "":
+		return result
+	if fetch_reason == "open_refresh" or _recommendation_remote_order_batch <= 0:
+		_recommendation_remote_order_batch = _next_remote_order_batch()
+	if fetch_reason == "open_refresh":
+		result["server_order_batch"] = _recommendation_remote_order_batch
+		result["server_order"] = 0
+		return result
+	var existing_order := _cached_recommendation_server_order(item_id)
+	if existing_order >= 0:
+		result["server_order_batch"] = _recommendation_remote_order_batch
+		result["server_order"] = existing_order
+		return result
+	result["server_order_batch"] = _recommendation_remote_order_batch
+	result["server_order"] = _next_remote_server_order(_recommendation_remote_order_batch)
+	return result
+
+
+func _next_remote_order_batch() -> int:
+	var max_batch := 0
+	if _recommendation_store != null:
+		var cached_items: Array = _recommendation_store.call("get_items")
+		for cached_raw: Variant in cached_items:
+			if cached_raw is not Dictionary:
+				continue
+			max_batch = maxi(max_batch, int((cached_raw as Dictionary).get("server_order_batch", 0)))
+	return maxi(int(Time.get_unix_time_from_system()), max_batch + 1)
+
+
+func _cached_recommendation_server_order(recommendation_id: String) -> int:
+	if _recommendation_store == null:
+		return -1
+	var cached_items: Array = _recommendation_store.call("get_items")
+	for cached_raw: Variant in cached_items:
+		if cached_raw is not Dictionary:
+			continue
+		var cached := cached_raw as Dictionary
+		if str(cached.get("id", "")).strip_edges() == recommendation_id:
+			return int(cached.get("server_order", -1))
+	return -1
+
+
+func _next_remote_server_order(batch: int) -> int:
+	var max_order := -1
+	if _recommendation_store != null:
+		var cached_items: Array = _recommendation_store.call("get_items")
+		for cached_raw: Variant in cached_items:
+			if cached_raw is not Dictionary:
+				continue
+			var cached := cached_raw as Dictionary
+			if int(cached.get("server_order_batch", -1)) != batch:
+				continue
+			max_order = maxi(max_order, int(cached.get("server_order", -1)))
+	return max_order + 1
 
 
 func _on_remote_recommendation_failed(message: String) -> void:

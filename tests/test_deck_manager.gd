@@ -629,6 +629,62 @@ func test_deck_manager_keeps_multiple_remote_recommendations_in_date_order() -> 
 	])
 
 
+func test_deck_manager_preserves_remote_sequence_when_timestamps_match() -> String:
+	_delete_user_file(TEST_RECOMMENDATION_CACHE_PATH)
+	var scene: Control = DeckManagerScene.instantiate()
+	scene._apply_hud_theme()
+	_configure_recommendation_test_state(scene, TEST_RECOMMENDATION_CACHE_PATH)
+	scene._ensure_recommendation_section()
+	scene._refresh_recommendation_cards()
+
+	var same_timestamp := "2026-06-14T14:20:00+08:00"
+	var latest := _remote_recommendation("m-first-from-server", 620658, same_timestamp)
+	var second := _remote_recommendation("a-second-by-id", 620880, same_timestamp)
+	var third := _remote_recommendation("z-third-by-id", 620889, same_timestamp)
+	scene._recommendation_fetch_in_progress = true
+	scene._recommendation_fetch_reason = "open_refresh"
+	scene._on_remote_recommendation_succeeded({"ok": true, "recommendation": latest})
+	scene._recommendation_fetch_in_progress = true
+	scene._recommendation_fetch_reason = "prefetch"
+	scene._recommendation_prefetch_remaining = 0
+	scene._on_remote_recommendation_succeeded({"ok": true, "recommendation": second})
+	scene._recommendation_fetch_in_progress = true
+	scene._recommendation_fetch_reason = "prefetch"
+	scene._recommendation_prefetch_remaining = 0
+	scene._on_remote_recommendation_succeeded({"ok": true, "recommendation": third})
+	var pool_ids := _recommendation_pool_ids(scene)
+
+	scene.queue_free()
+	_delete_user_file(TEST_RECOMMENDATION_CACHE_PATH)
+	return run_checks([
+		assert_eq(Array(pool_ids), ["m-first-from-server", "a-second-by-id", "z-third-by-id"], "Same-timestamp server recommendations should keep cloud sequence instead of id order"),
+	])
+
+
+func test_deck_manager_prefetch_rehydrates_stale_cached_server_order() -> String:
+	_delete_user_file(TEST_RECOMMENDATION_CACHE_PATH)
+	var scene: Control = DeckManagerScene.instantiate()
+	scene._apply_hud_theme()
+	_configure_recommendation_test_state(scene, TEST_RECOMMENDATION_CACHE_PATH)
+	scene._ensure_recommendation_section()
+	scene._refresh_recommendation_cards()
+
+	var stale_second := _remote_recommendation("a-second-by-id", 620880, "2026-06-14T14:20:00+08:00")
+	scene._recommendation_store.call("upsert_item", stale_second, false)
+	var latest := _remote_recommendation("m-first-from-server", 620658, "2026-06-14T14:20:00+08:00")
+	scene._recommendation_fetch_in_progress = true
+	scene._recommendation_fetch_reason = "open_refresh"
+	scene._on_remote_recommendation_succeeded({"ok": true, "recommendation": latest})
+	var exclude_ids: PackedStringArray = scene._prefetch_recommendation_exclude_ids()
+
+	scene.queue_free()
+	_delete_user_file(TEST_RECOMMENDATION_CACHE_PATH)
+	return run_checks([
+		assert_contains(exclude_ids, "m-first-from-server", "Current latest recommendation should be excluded from prefetch"),
+		assert_false(Array(exclude_ids).has("a-second-by-id"), "Stale cached server recommendation without current order metadata should be fetched again"),
+	])
+
+
 func test_deck_manager_open_refresh_shows_latest_remote_directly() -> String:
 	_delete_user_file(TEST_RECOMMENDATION_CACHE_PATH)
 	var scene: Control = DeckManagerScene.instantiate()

@@ -209,24 +209,41 @@ func _setup_field_interaction_panel() -> void:
 
 
 func _setup_prize_viewer() -> void:
+	_bind_prize_card_clicks()
 	for i: int in _opp_prize_slots.size():
 		var prize_slot: BattleCardView = _opp_prize_slots[i]
 		if prize_slot == null:
 			continue
 		prize_slot.mouse_filter = Control.MOUSE_FILTER_STOP
-		var slot_index := i
-		prize_slot.gui_input.connect(func(event: InputEvent) -> void:
-			_on_prize_slot_input(event, 1 - _view_player, "对方奖赏", slot_index)
-		)
 	for i: int in _my_prize_slots.size():
 		var prize_slot: BattleCardView = _my_prize_slots[i]
 		if prize_slot == null:
 			continue
 		prize_slot.mouse_filter = Control.MOUSE_FILTER_STOP
-		var slot_index := i
-		prize_slot.gui_input.connect(func(event: InputEvent) -> void:
-			_on_prize_slot_input(event, _view_player, "己方奖赏", slot_index)
-		)
+
+
+
+func _bind_prize_card_clicks() -> void:
+	for i: int in _opp_prize_slots.size():
+		var prize_slot: BattleCardView = _opp_prize_slots[i]
+		if prize_slot == null:
+			continue
+		var opp_input_callback := Callable(self, "_on_dynamic_prize_slot_input").bind("opp", i)
+		if not prize_slot.gui_input.is_connected(opp_input_callback):
+			prize_slot.gui_input.connect(opp_input_callback)
+		var opp_click_callback := Callable(self, "_on_prize_slot_card_left_clicked").bind("opp", i)
+		if not prize_slot.left_clicked.is_connected(opp_click_callback):
+			prize_slot.left_clicked.connect(opp_click_callback)
+	for i: int in _my_prize_slots.size():
+		var prize_slot: BattleCardView = _my_prize_slots[i]
+		if prize_slot == null:
+			continue
+		var my_input_callback := Callable(self, "_on_dynamic_prize_slot_input").bind("my", i)
+		if not prize_slot.gui_input.is_connected(my_input_callback):
+			prize_slot.gui_input.connect(my_input_callback)
+		var my_click_callback := Callable(self, "_on_prize_slot_card_left_clicked").bind("my", i)
+		if not prize_slot.left_clicked.is_connected(my_click_callback):
+			prize_slot.left_clicked.connect(my_click_callback)
 
 
 
@@ -1007,8 +1024,6 @@ func _show_slot_pokemon_action_if_available(slot_id: String) -> bool:
 
 
 func _slot_touch_release_can_open_action_hud(slot_id: String) -> bool:
-	if not _is_portrait_battle_layout_active():
-		return false
 	if not slot_id.begins_with("my_"):
 		return false
 	if _selected_hand_card != null or _is_field_interaction_active():
@@ -1040,8 +1055,6 @@ func _handle_slot_touch_detail_input(event: InputEvent, slot_id: String) -> bool
 				if consumed:
 					return true
 				_suppress_next_slot_left_click_id = slot_id
-				if _slot_touch_release_can_open_action_hud(slot_id):
-					_suppress_action_hud_open_input("slot_touch_release", -1, touch.position)
 				_handle_slot_left_click(slot_id)
 				return true
 		return false
@@ -1863,7 +1876,32 @@ func _stop_all_deck_shuffle_effects() -> void:
 
 
 
+func _prize_player_index_for_visible_side(side: String) -> int:
+	return _view_player if side == "my" else 1 - _view_player
+
+
+
+func _on_dynamic_prize_slot_input(event: InputEvent, side: String, slot_index: int) -> void:
+	var player_index := _prize_player_index_for_visible_side(side)
+	_on_prize_slot_input(event, player_index, "Prize", slot_index)
+
+
+
+func _on_prize_slot_card_left_clicked(_card_instance: CardInstance, _card_data: CardData, side: String, slot_index: int) -> void:
+	var player_index := _prize_player_index_for_visible_side(side)
+	_try_take_prize_from_slot(player_index, slot_index)
+
+
+
 func _on_prize_slot_input(event: InputEvent, player_index: int, title: String, slot_index: int) -> void:
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		var touch_viewport := get_viewport()
+		if touch_viewport != null:
+			touch_viewport.set_input_as_handled()
+		if not touch.pressed:
+			_try_take_prize_from_slot(player_index, slot_index)
+		return
 	if not (event is InputEventMouseButton):
 		return
 	var mbe := event as InputEventMouseButton

@@ -2029,7 +2029,8 @@ func use_attack(player_index: int, attack_index: int, targets: Array = []) -> bo
 		)
 
 	effect_processor.execute_attack_effect(attacker, attack_index, defender, game_state, targets)
-	_enforce_current_bench_limits("use_attack:%s" % attack_name, player_index, "", -1, targets)
+	if not _has_pending_knockouts():
+		_enforce_current_bench_limits("use_attack:%s" % attack_name, player_index, "", -1, targets)
 	_record_attack_damage_knockout_candidates(damage_before_attack, opp_index)
 	_apply_attack_knockout_extra_prize_effects(attacker, opp_index)
 	CSV9CEffects.record_attack_completed(attacker, game_state)
@@ -2111,7 +2112,8 @@ func use_granted_attack(
 
 	if not effect_processor.execute_granted_attack(attacker, granted_attack, defender, game_state, targets):
 		return false
-	_enforce_current_bench_limits("use_granted_attack:%s" % attack_name, player_index, "", -1, targets)
+	if not _has_pending_knockouts():
+		_enforce_current_bench_limits("use_granted_attack:%s" % attack_name, player_index, "", -1, targets)
 
 	_record_attack_damage_knockout_candidates(damage_before_attack, 1 - player_index)
 	_apply_attack_knockout_extra_prize_effects(attacker, 1 - player_index)
@@ -2295,9 +2297,24 @@ func _calculate_attack_damage(
 	targets: Array = []
 ) -> int:
 	var use_printed_attack_effects := attack_index >= 0
-	var ignore_defender_effects: bool = use_printed_attack_effects and effect_processor.attack_ignores_defender_effects(attacker, attack_index, game_state, targets)
-	var ignore_weakness: bool = use_printed_attack_effects and effect_processor.attack_ignores_weakness(attacker, attack_index, game_state, targets)
-	var ignore_resistance: bool = use_printed_attack_effects and effect_processor.attack_ignores_resistance(attacker, attack_index, game_state, targets)
+	var original_effect_id := str(attack.get("original_effect_id", ""))
+	var original_attack_index := int(attack.get("original_attack_index", -1))
+	var use_original_attack_effects := (
+		not use_printed_attack_effects
+		and original_effect_id != ""
+		and original_attack_index >= 0
+	)
+	var ignore_defender_effects: bool = false
+	var ignore_weakness: bool = false
+	var ignore_resistance: bool = false
+	if use_printed_attack_effects:
+		ignore_defender_effects = effect_processor.attack_ignores_defender_effects(attacker, attack_index, game_state, targets)
+		ignore_weakness = effect_processor.attack_ignores_weakness(attacker, attack_index, game_state, targets)
+		ignore_resistance = effect_processor.attack_ignores_resistance(attacker, attack_index, game_state, targets)
+	elif use_original_attack_effects:
+		ignore_defender_effects = effect_processor.attack_effect_id_ignores_defender_effects(original_effect_id, original_attack_index, attacker, game_state, targets)
+		ignore_weakness = effect_processor.attack_effect_id_ignores_weakness(original_effect_id, original_attack_index, attacker, game_state, targets)
+		ignore_resistance = effect_processor.attack_effect_id_ignores_resistance(original_effect_id, original_attack_index, attacker, game_state, targets)
 	if not ignore_defender_effects and effect_processor.is_damage_prevented_by_defender_ability(attacker, defender, game_state):
 		return 0
 	var atk_mod: int = effect_processor.get_attack_damage_modifier(attacker, defender, attack, game_state, targets, attack_index)

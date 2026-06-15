@@ -309,7 +309,7 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(150, 42)
-text = "竖屏(安卓建议使用)"
+text = "竖屏（手机建议使用）"
 
 [node name="BattleLayoutOption" type="OptionButton" parent="SafeArea/SetupFrame/FrameMargin/RootVBox/ContentColumns/LeftColumn/LeftMargin/LeftVBox"]
 unique_name_in_owner = true

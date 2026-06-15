@@ -17,7 +17,7 @@ func mode() -> String:
 func apply(context: Dictionary) -> void:
 	if _scene == null or _metrics_controller == null:
 		return
-	var viewport_size: Vector2 = context.get("viewport_size", Vector2.ZERO)
+	var viewport_size: Vector2 = context.get("logical_size", context.get("viewport_size", Vector2.ZERO))
 	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
 		return
 	apply_scene_layout(viewport_size)

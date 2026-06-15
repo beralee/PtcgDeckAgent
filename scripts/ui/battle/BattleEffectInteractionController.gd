@@ -436,6 +436,8 @@ func _finish_effect_interaction(scene: Object) -> void:
 	reset_effect_interaction(scene)
 	if success:
 		scene.set("_ready_vfx_trigger_source_player_index", resolved_player_index)
+		if scene.has_method("_restore_pending_engine_prize_choice_if_needed"):
+			scene.call("_restore_pending_engine_prize_choice_if_needed", "effect_interaction_complete")
 	scene.call("_refresh_ui")
 	if success:
 		if followup_evolve_slot != null:

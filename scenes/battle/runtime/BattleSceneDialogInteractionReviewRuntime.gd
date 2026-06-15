@@ -16,6 +16,8 @@ func _on_slot_input(event: InputEvent, slot_id: String) -> void:
 		if viewport != null:
 			viewport.set_input_as_handled()
 		return
+	if _consume_pokemon_action_modal_slot_input(event, slot_id):
+		return
 	if _consume_recent_slot_followup_click(event, slot_id):
 		return
 	if _try_show_opponent_slot_detail_input(event, slot_id):
@@ -27,17 +29,26 @@ func _on_slot_input(event: InputEvent, slot_id: String) -> void:
 		return
 
 	if not event is InputEventMouseButton:
+		_handle_slot_mouse_motion_cancel(event, slot_id)
 		return
 	var mbe := event as InputEventMouseButton
-	if not mbe.pressed:
-		return
 
 	if mbe.button_index == MOUSE_BUTTON_RIGHT:
+		if not mbe.pressed:
+			return
 		_runtime_log("slot_right_click_action", "slot=%s %s" % [slot_id, _state_snapshot()])
 		_show_slot_pokemon_action_if_available(slot_id)
 		return
 
 	if mbe.button_index != MOUSE_BUTTON_LEFT:
+		return
+	if mbe.pressed:
+		_start_slot_mouse_action_press(slot_id, _action_hud_open_input_screen_position(mbe))
+		var press_viewport := get_viewport()
+		if press_viewport != null:
+			press_viewport.set_input_as_handled()
+		return
+	if not _finish_slot_mouse_action_press(slot_id, _action_hud_open_input_screen_position(mbe)):
 		return
 	if _slot_touch_long_press_active and _slot_touch_long_press_slot_id == slot_id:
 		var touch_viewport := get_viewport()
@@ -49,9 +60,71 @@ func _on_slot_input(event: InputEvent, slot_id: String) -> void:
 		if suppressed_viewport != null:
 			suppressed_viewport.set_input_as_handled()
 		return
-	if _slot_touch_release_can_open_action_hud(slot_id):
-		_suppress_action_hud_open_input("slot_mouse_press", -1, _action_hud_open_input_screen_position(mbe))
 	_handle_slot_left_click(slot_id)
+	var release_viewport := get_viewport()
+	if release_viewport != null:
+		release_viewport.set_input_as_handled()
+
+
+
+func _consume_pokemon_action_modal_slot_input(event: InputEvent, slot_id: String) -> bool:
+	if _pending_choice != "pokemon_action":
+		return false
+	if not (event is InputEventScreenTouch or event is InputEventMouseButton):
+		return false
+	_cancel_slot_touch_long_press(false)
+	var viewport := get_viewport()
+	if viewport != null:
+		viewport.set_input_as_handled()
+	_runtime_log("slot_input_blocked", "slot=%s reason=pokemon_action_hud %s" % [slot_id, _state_snapshot()])
+	return true
+
+
+
+func _start_slot_mouse_action_press(slot_id: String, position: Vector2) -> void:
+	_cancel_slot_mouse_action_press(false)
+	_slot_mouse_action_press_active = true
+	_slot_mouse_action_press_slot_id = slot_id
+	_slot_mouse_action_press_start = position
+	_slot_mouse_action_press_consumed = false
+
+
+
+func _finish_slot_mouse_action_press(slot_id: String, position: Vector2) -> bool:
+	if not _slot_mouse_action_press_active:
+		return false
+	if _slot_mouse_action_press_slot_id != slot_id:
+		_cancel_slot_mouse_action_press()
+		return false
+	var consumed := _slot_mouse_action_press_consumed
+	if position.x >= 0.0 and position.y >= 0.0 and _slot_mouse_action_press_start.x >= 0.0 and _slot_mouse_action_press_start.y >= 0.0:
+		consumed = consumed or position.distance_to(_slot_mouse_action_press_start) > SLOT_TOUCH_LONG_PRESS_MOVE_TOLERANCE
+	_cancel_slot_mouse_action_press(false)
+	return not consumed
+
+
+
+func _handle_slot_mouse_motion_cancel(event: InputEvent, slot_id: String) -> void:
+	if not (event is InputEventMouseMotion):
+		return
+	if not _slot_mouse_action_press_active or _slot_mouse_action_press_slot_id != slot_id:
+		return
+	var motion := event as InputEventMouseMotion
+	var motion_position := _action_hud_open_input_screen_position(motion)
+	if motion_position.x < 0.0 or motion_position.y < 0.0:
+		return
+	if _slot_mouse_action_press_start.x < 0.0 or _slot_mouse_action_press_start.y < 0.0:
+		return
+	if motion_position.distance_to(_slot_mouse_action_press_start) > SLOT_TOUCH_LONG_PRESS_MOVE_TOLERANCE:
+		_slot_mouse_action_press_consumed = true
+
+
+
+func _cancel_slot_mouse_action_press(_clear_suppression: bool = true) -> void:
+	_slot_mouse_action_press_active = false
+	_slot_mouse_action_press_slot_id = ""
+	_slot_mouse_action_press_start = Vector2.ZERO
+	_slot_mouse_action_press_consumed = false
 
 
 
@@ -75,7 +148,7 @@ func _on_slot_touch_long_press_timeout() -> void:
 
 
 
-func _finish_modal_input_interaction(reason: String = "modal", slot_suppression_mode: String = "arm") -> void:
+func _finish_modal_input_interaction(reason: String = "modal", slot_suppression_mode: String = "arm", _origin_position: Vector2 = Vector2(-1.0, -1.0)) -> void:
 	_ensure_battle_drag_scroll_coordinator()
 	if _battle_drag_scroll_coordinator != null:
 		_battle_drag_scroll_coordinator.call("clear_transient_input_capture", reason)

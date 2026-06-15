@@ -35,6 +35,28 @@ const SUPPORTED_TREE_FACTS := {
 	"active_attack_ready": true,
 	"has_bench_space": true,
 }
+const RUNTIME_SPECIAL_ENERGY_EFFECT_SYMBOLS := {
+	"9c04dd0addf56a7b2c88476bc8e45c0e": "C",
+	"1323733f19cc04e54090b39bc1a393b8": "C",
+	"88bf9902f1d769a667bbd3939fc757de": "C",
+	"dbb3f3d2ef2f3372bc8b21336e6c9bc6": "C",
+	"fb0948c721db1f31767aa6cf0c2ea692": "C",
+	"6f31b7241a181631016466e561f148f3": "ANY",
+}
+const RUNTIME_SPECIAL_ENERGY_EFFECT_COUNTS := {
+	"9c04dd0addf56a7b2c88476bc8e45c0e": 2,
+}
+const RUNTIME_SPECIAL_ENERGY_NAME_SYMBOLS := {
+	"Double Turbo Energy": "C",
+	"Jet Energy": "C",
+	"V Guard Energy": "C",
+	"Gift Energy": "C",
+	"Mist Energy": "C",
+	"Legacy Energy": "ANY",
+}
+const RUNTIME_SPECIAL_ENERGY_NAME_COUNTS := {
+	"Double Turbo Energy": 2,
+}
 
 var _llm_host_node: Node = null
 var _cached_turn_number: int = -1
@@ -2935,16 +2957,23 @@ func _current_active_has_high_pressure_ready_attack(game_state: GameState, playe
 
 
 func _active_attack_cost_ready(slot: PokemonSlot, cost: String) -> bool:
+	if slot == null:
+		return false
 	var remaining := {}
-	var total_attached := 0
+	var colorless_pool := 0
+	var any_pool := 0
 	for energy: CardInstance in slot.attached_energy:
-		if energy == null or energy.card_data == null:
+		var profile := _runtime_attached_energy_profile(energy)
+		var symbol := str(profile.get("symbol", ""))
+		var units := int(profile.get("units", 0))
+		if symbol == "" or units <= 0:
 			continue
-		var symbol := _energy_symbol_for_runtime(str(energy.card_data.energy_provides))
-		if symbol == "":
-			continue
-		remaining[symbol] = int(remaining.get(symbol, 0)) + 1
-		total_attached += 1
+		if symbol == "ANY":
+			any_pool += units
+		elif symbol == "C":
+			colorless_pool += units
+		else:
+			remaining[symbol] = int(remaining.get(symbol, 0)) + units
 	var colorless_needed := 0
 	for i: int in cost.length():
 		var symbol := _energy_symbol_for_runtime(cost.substr(i, 1))
@@ -2954,11 +2983,41 @@ func _active_attack_cost_ready(slot: PokemonSlot, cost: String) -> bool:
 			colorless_needed += 1
 			continue
 		var count := int(remaining.get(symbol, 0))
-		if count <= 0:
+		if count > 0:
+			remaining[symbol] = count - 1
+		elif any_pool > 0:
+			any_pool -= 1
+		else:
 			return false
-		remaining[symbol] = count - 1
-		total_attached -= 1
-	return colorless_needed <= total_attached
+	var free_units := colorless_pool + any_pool
+	for value: Variant in remaining.values():
+		free_units += int(value)
+	return colorless_needed <= free_units
+
+
+func _runtime_attached_energy_profile(energy: CardInstance) -> Dictionary:
+	if energy == null or energy.card_data == null:
+		return {"symbol": "", "units": 0}
+	var cd: CardData = energy.card_data
+	var effect_id := str(cd.effect_id)
+	var symbol := str(RUNTIME_SPECIAL_ENERGY_EFFECT_SYMBOLS.get(effect_id, ""))
+	var units := int(RUNTIME_SPECIAL_ENERGY_EFFECT_COUNTS.get(effect_id, 1))
+	if symbol == "":
+		var combined_name := "%s %s" % [str(cd.name_en), str(cd.name)]
+		for energy_name: String in RUNTIME_SPECIAL_ENERGY_NAME_SYMBOLS.keys():
+			if _name_contains(combined_name, energy_name):
+				symbol = str(RUNTIME_SPECIAL_ENERGY_NAME_SYMBOLS.get(energy_name, ""))
+				units = int(RUNTIME_SPECIAL_ENERGY_NAME_COUNTS.get(energy_name, 1))
+				break
+	if symbol == "":
+		symbol = _energy_symbol_for_runtime(str(cd.energy_provides))
+	if symbol == "":
+		symbol = _energy_symbol_for_runtime(str(cd.energy_type))
+	if symbol == "" and str(cd.card_type) == "Special Energy":
+		symbol = "C"
+	if units <= 0:
+		units = 1
+	return {"symbol": symbol, "units": units}
 
 
 func _estimated_current_attack_damage(action: Dictionary, game_state: GameState, player_index: int) -> int:

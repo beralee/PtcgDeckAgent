@@ -372,10 +372,12 @@ func update_prize_slots(scene: Object, slots: Array, prize_layout: Array, is_sel
 		prize_view.set_selectable_hint_text("点击拿奖")
 		prize_view.set_selected_badge_text("已拿")
 		prize_view.set_selectable_hint(filled and is_selectable)
+		prize_view.set_clickable(filled and is_selectable)
 		prize_view.set_selected(false)
 		prize_view.set_disabled(not filled or (str(scene.get("_pending_choice")) == "take_prize" and not is_selectable))
 		prize_view.set_badges("点这里" if filled and is_selectable else "", "")
 		prize_view.self_modulate = Color(1, 1, 1, 1) if filled else Color(1, 1, 1, 0.02)
+		prize_view.mouse_filter = Control.MOUSE_FILTER_STOP
 
 
 func update_pile_preview(preview: BattleCardView, card: CardInstance, face_down: bool) -> void:

@@ -83,6 +83,7 @@ func test_main_menu_uses_hud_buttons_shifted_down() -> String:
 	var scene: Control = load("res://scenes/main_menu/MainMenu.tscn").instantiate()
 	scene.call("_apply_main_menu_hud")
 	var menu := scene.get_node_or_null("VBoxContainer") as VBoxContainer
+	var background := scene.get_node_or_null("Background") as Control
 	var start_button := scene.get_node_or_null("%BtnStartBattle") as Button
 	var deck_button := scene.get_node_or_null("%BtnDeckManager") as Button
 	var button_style := start_button.get_theme_stylebox("normal") as StyleBoxFlat if start_button != null else null
@@ -100,6 +101,7 @@ func test_main_menu_uses_hud_buttons_shifted_down() -> String:
 		assert_true(deck_button != null and deck_button.get_index() == 1, "Deck center should be promoted directly below start battle"),
 		assert_eq(deck_button.custom_minimum_size if deck_button != null else Vector2.ZERO, Vector2(312, 52), "Deck center should keep the same size as the other main actions"),
 		assert_true(deck_style != null and deck_style.border_width_left >= 2 and deck_style.border_color.a > 0.9, "Deck center should use the strongest featured HUD border without changing size"),
+		assert_eq(background.mouse_filter if background != null else -1, Control.MOUSE_FILTER_IGNORE, "Main menu background should not consume unhandled mascot clicks"),
 	])
 
 	scene.queue_free()
@@ -115,6 +117,16 @@ func test_main_menu_budew_mascot_dodges_click_without_blocking_menu_layer() -> S
 	scene.set("_budew_mascot_position", start)
 	var sprite_size: Vector2 = scene.call("_budew_mascot_display_size")
 	var click_position := start + sprite_size * 0.5
+	scene.call("_position_budew_mascot")
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = click_position
+	press.global_position = click_position
+	scene.call("_handle_budew_mascot_unhandled_input", press)
+	var unhandled_dodge_tween: Tween = scene.get("_budew_mascot_dodge_tween")
+	var unhandled_dodge_started := unhandled_dodge_tween != null and is_instance_valid(unhandled_dodge_tween)
+	scene.call("_stop_budew_mascot_dodge")
 	var target: Vector2 = scene.call("_budew_mascot_dodge_target_for_click", click_position)
 	var left_click_target: Vector2 = scene.call("_budew_mascot_dodge_target_for_click", start + Vector2(2.0, sprite_size.y * 0.5))
 	var right_click_target: Vector2 = scene.call("_budew_mascot_dodge_target_for_click", start + Vector2(sprite_size.x - 2.0, sprite_size.y * 0.5))
@@ -127,7 +139,8 @@ func test_main_menu_budew_mascot_dodges_click_without_blocking_menu_layer() -> S
 		assert_not_null(layer, "Main menu should create the Budew mascot layer"),
 		assert_not_null(sprite, "Main menu should create the Budew mascot sprite"),
 		assert_eq(layer.mouse_filter if layer != null else -1, Control.MOUSE_FILTER_IGNORE, "Budew layer should not block normal main-menu controls"),
-		assert_eq(sprite.mouse_filter if sprite != null else -1, Control.MOUSE_FILTER_STOP, "Budew sprite should receive clicks for the playful dodge"),
+		assert_eq(sprite.mouse_filter if sprite != null else -1, Control.MOUSE_FILTER_IGNORE, "Budew sprite should not participate in GUI hit-testing over main-menu buttons"),
+		assert_true(unhandled_dodge_started, "Budew should still start a dodge tween from unhandled pointer input"),
 		assert_true(absf(target.x - start.x) >= 80.0, "Budew dodge target should move sideways instead of only bobbing in place"),
 		assert_true(left_click_target.x > start.x, "Clicking Budew's left side should make it dodge right"),
 		assert_true(right_click_target.x < start.x, "Clicking Budew's right side should make it dodge left"),
@@ -138,6 +151,32 @@ func test_main_menu_budew_mascot_dodges_click_without_blocking_menu_layer() -> S
 
 	scene.queue_free()
 	return result
+
+
+func test_main_menu_start_button_area_is_not_covered_by_budew_input_controls() -> String:
+	var scene: Control = load("res://scenes/main_menu/MainMenu.tscn").instantiate()
+	scene.size = Vector2(1280, 720)
+	scene.call("_apply_main_menu_hud")
+	scene.call("_ensure_budew_mascot")
+	var start_button := scene.get_node_or_null("%BtnStartBattle") as Button
+	var button_center := start_button.global_position + start_button.size * 0.5 if start_button != null else Vector2(640, 360)
+	var blocking_controls: Array[String] = []
+	for child: Node in scene.get_children():
+		if child == start_button or not (child is Control):
+			continue
+		if start_button != null and child.is_ancestor_of(start_button):
+			continue
+		var control := child as Control
+		if control.mouse_filter == Control.MOUSE_FILTER_IGNORE:
+			continue
+		if control.get_global_rect().has_point(button_center):
+			blocking_controls.append(control.name)
+
+	scene.queue_free()
+	return run_checks([
+		assert_not_null(start_button, "Main menu should have a start battle button"),
+		assert_eq(blocking_controls, [], "No later main-menu overlay should accept GUI input over the start button center"),
+	])
 
 
 func test_main_menu_about_mentions_tcg_mik_dependency() -> String:

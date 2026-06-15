@@ -2025,6 +2025,132 @@ func test_ai_send_out_prompt_preserves_followup_take_prize_prompt() -> String:
 	])
 
 
+func test_vs_ai_double_dusknoir_self_ko_queues_human_prize_after_ai_prize() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var scene := _make_setup_ready_battle_scene()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 4
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.state_changed.connect(scene._on_state_changed)
+	gsm.action_logged.connect(scene._on_action_logged)
+	gsm.player_choice_required.connect(scene._on_player_choice_required)
+	gsm.game_over.connect(scene._on_game_over)
+	gsm.coin_flipper.coin_flipped.connect(scene._on_coin_flipped)
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+	var my_prize_slots: Array[BattleCardView] = []
+	var opp_prize_slots: Array[BattleCardView] = []
+	for _i: int in 6:
+		my_prize_slots.append(BattleCardViewScript.new())
+		opp_prize_slots.append(BattleCardViewScript.new())
+	scene.set("_my_prize_slots", my_prize_slots)
+	scene.set("_opp_prize_slots", opp_prize_slots)
+
+	for pi: int in 2:
+		var player := _make_player_state(pi)
+		for deck_idx: int in 3:
+			player.deck.append(CardInstance.create(_make_ai_pokemon_card_data("Deck %d-%d" % [pi, deck_idx]), pi))
+		gsm.game_state.players.append(player)
+
+	var dusknoir_cd := _make_ai_pokemon_card_data(
+		"Dusknoir",
+		"Stage 2",
+		"Dusclops",
+		"2a4178f21ba2bf13285bbb43ecaaa472",
+		[{"name": "Cursed Blast"}],
+		[],
+		3
+	)
+	dusknoir_cd.hp = 160
+	gsm.effect_processor.register_pokemon_card(dusknoir_cd)
+	var dusknoir_first := PokemonSlot.new()
+	dusknoir_first.pokemon_stack.append(CardInstance.create(dusknoir_cd, 0))
+	var dusknoir_second := PokemonSlot.new()
+	dusknoir_second.pokemon_stack.append(CardInstance.create(dusknoir_cd, 0))
+	gsm.game_state.players[0].bench = [dusknoir_first, dusknoir_second]
+
+	var mew_cd := _make_ai_pokemon_card_data("Mew ex", "Basic", "", "", [], [], 0)
+	mew_cd.hp = 180
+	mew_cd.mechanic = "ex"
+	var mew_active := PokemonSlot.new()
+	mew_active.pokemon_stack.append(CardInstance.create(mew_cd, 1))
+	gsm.game_state.players[1].active_pokemon = mew_active
+	var ai_replacement := PokemonSlot.new()
+	ai_replacement.pokemon_stack.append(CardInstance.create(_make_ai_pokemon_card_data("AI Replacement"), 1))
+	gsm.game_state.players[1].bench = [ai_replacement]
+	var human_active := PokemonSlot.new()
+	human_active.pokemon_stack.append(CardInstance.create(_make_ai_pokemon_card_data("Human Active"), 0))
+	gsm.game_state.players[0].active_pokemon = human_active
+
+	for prize_idx: int in 6:
+		gsm.game_state.players[0].prizes.append(CardInstance.create(_make_ai_pokemon_card_data("My Prize %d" % prize_idx), 0))
+		gsm.game_state.players[1].prizes.append(CardInstance.create(_make_ai_pokemon_card_data("AI Prize %d" % prize_idx), 1))
+
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	scene.set("_ai_opponent", ai)
+
+	scene._try_use_ability_with_interaction(0, dusknoir_first, 0)
+	var first_interaction_prompt: String = str(scene.get("_pending_choice"))
+	var first_interaction_mode: String = str(scene.get("_field_interaction_mode"))
+	scene._handle_field_slot_select_index(0)
+	var first_used := first_interaction_prompt == "effect_interaction" and first_interaction_mode == "slot_select"
+	var first_prompt: String = str(scene.get("_pending_choice"))
+	var first_prompt_player: int = int(scene.get("_pending_prize_player_index"))
+	scene._run_ai_step()
+	var after_first_ai_prize_prompt: String = str(scene.get("_pending_choice"))
+	scene._try_use_ability_with_interaction(0, dusknoir_second, 0)
+	var second_interaction_prompt: String = str(scene.get("_pending_choice"))
+	var second_interaction_mode: String = str(scene.get("_field_interaction_mode"))
+	scene._handle_field_slot_select_index(0)
+	var second_used := second_interaction_prompt == "effect_interaction" and second_interaction_mode == "slot_select"
+	var second_prompt: String = str(scene.get("_pending_choice"))
+	var second_prompt_player: int = int(scene.get("_pending_prize_player_index"))
+	var choice_callback := Callable(scene, "_on_player_choice_required")
+	if gsm.player_choice_required.is_connected(choice_callback):
+		gsm.player_choice_required.disconnect(choice_callback)
+	scene._run_ai_step()
+	var prompt_after_ai_self_ko_prize: String = str(scene.get("_pending_choice"))
+	var prize_player_after_ai_self_ko_prize: int = int(scene.get("_pending_prize_player_index"))
+	var prize_remaining_after_ai_self_ko_prize: int = int(scene.get("_pending_prize_remaining"))
+	if not gsm.player_choice_required.is_connected(choice_callback):
+		gsm.player_choice_required.connect(choice_callback)
+	scene._try_take_prize_from_slot(0, 0)
+	var prompt_after_first_human_prize: String = str(scene.get("_pending_choice"))
+	var remaining_after_first_human_prize: int = int(scene.get("_pending_prize_remaining"))
+	scene._try_take_prize_from_slot(0, 1)
+	var prompt_after_human_prize: String = str(scene.get("_pending_choice"))
+	var send_out_player: int = int((scene.get("_dialog_data") as Dictionary).get("player", -1))
+	scene._run_ai_step()
+	var final_phase: int = int(gsm.game_state.phase)
+	var final_current_player: int = int(gsm.game_state.current_player_index)
+	GameManager.current_mode = previous_mode
+
+	return run_checks([
+		assert_true(first_used, "First Dusknoir should enter and resolve the Cursed Blast target-selection UI"),
+		assert_eq(first_prompt, "take_prize", "First Dusknoir self-KO should prompt the AI to take a prize"),
+		assert_eq(first_prompt_player, 1, "The AI should own the first Dusknoir prize prompt"),
+		assert_eq(after_first_ai_prize_prompt, "", "After the first AI prize, the player should return to the turn without a stale prompt"),
+		assert_true(second_used, "Second Dusknoir should enter and resolve the Cursed Blast target-selection UI"),
+		assert_eq(second_prompt, "take_prize", "Second Dusknoir self-KO should first prompt the AI prize"),
+		assert_eq(second_prompt_player, 1, "The AI should own the second Dusknoir self-KO prize prompt"),
+		assert_eq(prompt_after_ai_self_ko_prize, "take_prize", "After AI takes the self-KO prize, Mew's knockout should leave a human prize prompt even if the nested signal is missed"),
+		assert_eq(prize_player_after_ai_self_ko_prize, 0, "The follow-up prize should belong to the human player"),
+		assert_eq(prize_remaining_after_ai_self_ko_prize, 2, "Exactly two prizes should remain pending for knocking out Mew ex"),
+		assert_eq(prompt_after_first_human_prize, "take_prize", "After the first Mew ex prize, the second prize should remain pending"),
+		assert_eq(remaining_after_first_human_prize, 1, "After taking one Mew ex prize, exactly one prize should remain"),
+		assert_eq(prompt_after_human_prize, "send_out", "After both human prizes, the AI should be prompted to replace its knocked-out Active"),
+		assert_eq(send_out_player, 1, "The replacement prompt should belong to the AI"),
+		assert_eq(gsm.game_state.players[1].active_pokemon, ai_replacement, "AI should send out its replacement after the queued prizes resolve"),
+		assert_eq(final_phase, GameState.GamePhase.MAIN, "After both Dusknoir knockouts and the replacement, the game should return to MAIN"),
+		assert_eq(final_current_player, 0, "Dusknoir mid-turn knockouts should keep the turn with the human player"),
+	])
+
+
 func test_vs_ai_double_active_knockout_allows_ai_and_human_replacements() -> String:
 	var previous_mode: int = GameManager.current_mode
 	var scene := _make_setup_ready_battle_scene()

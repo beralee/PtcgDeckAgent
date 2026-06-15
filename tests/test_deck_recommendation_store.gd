@@ -81,6 +81,45 @@ func test_store_cache_deduplicates_bounds_and_cycles_items() -> String:
 	])
 
 
+func test_store_orders_server_recommendations_by_cloud_sequence() -> String:
+	_remove_test_cache()
+	var store = StoreScript.new()
+	store.set_cache_path(TEST_CACHE_PATH)
+	store.load_cache()
+
+	var older_name_first := _server_recommendation("z-third-by-id", 600003)
+	older_name_first["server_order_batch"] = 42
+	older_name_first["server_order"] = 2
+	var latest := _server_recommendation("m-first-from-server", 600001)
+	latest["server_order_batch"] = 42
+	latest["server_order"] = 0
+	var second := _server_recommendation("a-second-by-id", 600002)
+	second["server_order_batch"] = 42
+	second["server_order"] = 1
+
+	store.upsert_item(older_name_first, false)
+	store.upsert_item(latest, true)
+	store.upsert_item(second, false)
+	var items: Array[Dictionary] = store.get_items()
+	var saved := store.save_cache()
+
+	var reloaded = StoreScript.new()
+	reloaded.set_cache_path(TEST_CACHE_PATH)
+	var reloaded_cache: Dictionary = reloaded.load_cache()
+	var reloaded_items: Array = reloaded_cache.get("items", [])
+
+	_remove_test_cache()
+
+	return run_checks([
+		assert_eq(str((items[0] as Dictionary).get("id", "")), "m-first-from-server", "Cloud sequence should beat id order"),
+		assert_eq(str((items[1] as Dictionary).get("id", "")), "a-second-by-id", "Second cloud item should stay second"),
+		assert_eq(str((items[2] as Dictionary).get("id", "")), "z-third-by-id", "Third cloud item should stay third"),
+		assert_eq(int((items[0] as Dictionary).get("server_order", -1)), 0, "Server order metadata should be preserved"),
+		assert_true(saved, "Cache should save server order metadata"),
+		assert_eq(int((reloaded_items[0] as Dictionary).get("server_order_batch", -1)), 42, "Saved cache should reload server order batch"),
+	])
+
+
 func _server_recommendation(recommendation_id: String, deck_id: int, title: String = "一套节奏直接的进攻型卡组") -> Dictionary:
 	return {
 		"id": recommendation_id,

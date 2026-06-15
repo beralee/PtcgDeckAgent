@@ -18,6 +18,7 @@ const ENERGY_ICON_TEXTURES := {
 const TEXT_HUD_OPTION_SIZE := Vector2(760, 74)
 const PORTRAIT_TEXT_HUD_OPTION_HEIGHT := 128.0
 const PORTRAIT_TEXT_HUD_OPTION_HORIZONTAL_INSET := 48.0
+const ACTION_HUD_ENERGY_SUMMARY_HEIGHT := 66.0
 
 
 func _bt(scene: Object, key: String, params: Dictionary = {}) -> String:
@@ -34,6 +35,30 @@ func mark_modal_input_consumed(scene: Object, reason: String = "dialog", slot_su
 		scene.call("_mark_modal_input_consumed_without_slot_suppression", reason)
 	elif scene.has_method("_mark_modal_input_consumed"):
 		scene.call("_mark_modal_input_consumed", reason)
+
+
+func mark_modal_input_consumed_from_event(scene: Object, reason: String, event: InputEvent, slot_suppression_mode: String = "arm") -> void:
+	mark_modal_input_consumed_at_position(scene, reason, _input_event_screen_position(event), slot_suppression_mode)
+
+
+func mark_modal_input_consumed_at_position(scene: Object, reason: String, origin_position: Vector2, slot_suppression_mode: String = "arm") -> void:
+	if scene == null:
+		return
+	if scene.has_method("_finish_modal_input_interaction"):
+		scene.call("_finish_modal_input_interaction", reason, slot_suppression_mode, origin_position)
+		return
+	mark_modal_input_consumed(scene, reason, slot_suppression_mode)
+
+
+func _input_event_screen_position(event: InputEvent) -> Vector2:
+	if event is InputEventMouse:
+		var mouse := event as InputEventMouse
+		if mouse.global_position.x >= 0.0 and mouse.global_position.y >= 0.0:
+			return mouse.global_position
+		return mouse.position
+	if event is InputEventScreenTouch:
+		return (event as InputEventScreenTouch).position
+	return Vector2(-1.0, -1.0)
 
 
 func _cancel_card_gallery_drag_capture(scene: Object, source: String) -> void:
@@ -1426,13 +1451,15 @@ func show_action_hud_dialog(scene: Object, _items: Array, extra_data: Dictionary
 	var preview_item: Variant = extra_data.get("pokemon_card", extra_data.get("pokemon_card_data", null))
 	var has_preview := preview_item is CardInstance or preview_item is CardData
 	var preview_size := _action_hud_preview_card_size(scene)
+	var attached_energy_summary := str(extra_data.get("attached_energy_summary", "")).strip_edges()
 	dialog_card_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	dialog_card_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO if action_items.size() > 5 else ScrollContainer.SCROLL_MODE_DISABLED
 	if scene.has_method("_set_card_gallery_drag_scroll_active"):
 		scene.call("_set_card_gallery_drag_scroll_active", dialog_card_scroll, false)
 	var scroll_height := _action_hud_scroll_height(action_items.size())
 	if has_preview:
-		scroll_height = maxf(scroll_height, preview_size.y + 18.0)
+		var preview_extra_height := ACTION_HUD_ENERGY_SUMMARY_HEIGHT if attached_energy_summary != "" else 0.0
+		scroll_height = maxf(scroll_height, preview_size.y + preview_extra_height + 18.0)
 	dialog_card_scroll.custom_minimum_size = Vector2(0, scroll_height)
 	if dialog_list.item_selected.is_connected(Callable(scene, "_on_dialog_item_selected")):
 		dialog_list.item_selected.disconnect(Callable(scene, "_on_dialog_item_selected"))
@@ -1447,7 +1474,7 @@ func show_action_hud_dialog(scene: Object, _items: Array, extra_data: Dictionary
 	stack.add_theme_constant_override("separation", 8)
 	dialog_card_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	if has_preview:
-		dialog_card_row.add_child(_build_action_hud_card_preview(preview_item, preview_size))
+		dialog_card_row.add_child(_build_action_hud_card_preview(preview_item, preview_size, attached_energy_summary))
 	dialog_card_row.add_child(stack)
 
 	var option_width := _action_hud_option_width(scene, preview_size, has_preview)
@@ -1481,10 +1508,12 @@ func _action_hud_option_width(scene: Object, preview_size: Vector2, has_preview:
 	return maxf(420.0, box_width - (preview_size.x + 14.0) - 16.0)
 
 
-func _build_action_hud_card_preview(preview_item: Variant, preview_size: Vector2) -> PanelContainer:
+func _build_action_hud_card_preview(preview_item: Variant, preview_size: Vector2, attached_energy_summary: String = "") -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.name = "PokemonActionCardPreview"
-	panel.custom_minimum_size = Vector2(preview_size.x + 14.0, preview_size.y + 14.0)
+	var summary_text := attached_energy_summary.strip_edges()
+	var summary_height := ACTION_HUD_ENERGY_SUMMARY_HEIGHT if summary_text != "" else 0.0
+	panel.custom_minimum_size = Vector2(preview_size.x + 14.0, preview_size.y + summary_height + 14.0)
 	panel.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1498,6 +1527,12 @@ func _build_action_hud_card_preview(preview_item: Variant, preview_size: Vector2
 	margin.add_theme_constant_override("margin_bottom", 7)
 	panel.add_child(margin)
 
+	var box := VBoxContainer.new()
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	box.add_theme_constant_override("separation", 8)
+	margin.add_child(box)
+
 	var card_view := BattleCardViewScript.new()
 	card_view.name = "PokemonActionCardView"
 	card_view.custom_minimum_size = preview_size
@@ -1510,7 +1545,49 @@ func _build_action_hud_card_preview(preview_item: Variant, preview_size: Vector2
 		card_view.setup_from_instance(preview_item as CardInstance, BattleCardViewScript.MODE_PREVIEW)
 	elif preview_item is CardData:
 		card_view.setup_from_card_data(preview_item as CardData, BattleCardViewScript.MODE_PREVIEW)
-	margin.add_child(card_view)
+	box.add_child(card_view)
+	if summary_text != "":
+		box.add_child(_build_action_hud_attached_energy_summary(summary_text, preview_size.x))
+	return panel
+
+
+func _build_action_hud_attached_energy_summary(summary_text: String, width: float) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.name = "PokemonActionAttachedEnergySummary"
+	panel.custom_minimum_size = Vector2(width, 0)
+	panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_theme_stylebox_override("panel", _action_hud_energy_summary_style())
+
+	var margin := MarginContainer.new()
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_theme_constant_override("margin_left", 9)
+	margin.add_theme_constant_override("margin_right", 9)
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_theme_constant_override("margin_bottom", 6)
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_theme_constant_override("separation", 2)
+	margin.add_child(box)
+
+	var title := Label.new()
+	title.name = "PokemonActionAttachedEnergyTitle"
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	title.text = "附着能量"
+	title.add_theme_font_size_override("font_size", 12)
+	title.add_theme_color_override("font_color", Color(0.55, 0.86, 1.0, 1.0))
+	box.add_child(title)
+
+	var label := Label.new()
+	label.name = "PokemonActionAttachedEnergyLabel"
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.text = summary_text
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.add_theme_font_size_override("font_size", 15)
+	label.add_theme_color_override("font_color", Color(0.96, 0.99, 1.0, 1.0))
+	box.add_child(label)
 	return panel
 
 
@@ -1522,6 +1599,15 @@ func _action_hud_card_preview_style() -> StyleBoxFlat:
 	style.set_corner_radius_all(10)
 	style.shadow_color = Color(0.0, 0.74, 1.0, 0.18)
 	style.shadow_size = 10
+	return style
+
+
+func _action_hud_energy_summary_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.035, 0.075, 0.090, 0.96)
+	style.border_color = Color(0.35, 0.80, 0.95, 0.72)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(7)
 	return style
 
 
@@ -1545,15 +1631,10 @@ func _build_action_hud_option(scene: Object, action: Dictionary, action_index: i
 			if touch_event.pressed:
 				activated = true
 		if activated:
-			if scene != null and scene.has_method("_consume_action_hud_open_input_if_needed"):
-				if bool(scene.call("_consume_action_hud_open_input_if_needed", event, "action_hud_option")):
-					panel.accept_event()
-					return
 			if not enabled:
 				panel.accept_event()
 				return
-			mark_modal_input_consumed(scene, "action_hud_option")
-			confirm_dialog_selection(scene, PackedInt32Array([action_index]))
+			confirm_dialog_selection(scene, PackedInt32Array([action_index]), _input_event_screen_position(event))
 			panel.accept_event()
 	)
 
@@ -2250,8 +2331,11 @@ func update_dialog_status_text(scene: Object) -> void:
 		})
 
 
-func confirm_dialog_selection(scene: Object, sel_items: PackedInt32Array) -> void:
-	mark_modal_input_consumed(scene, "dialog_confirm_selection")
+func confirm_dialog_selection(scene: Object, sel_items: PackedInt32Array, origin_position: Vector2 = Vector2(-1.0, -1.0)) -> void:
+	if origin_position.x >= 0.0 and origin_position.y >= 0.0:
+		mark_modal_input_consumed_at_position(scene, "dialog_confirm_selection", origin_position)
+	else:
+		mark_modal_input_consumed(scene, "dialog_confirm_selection")
 	scene.call(
 		"_runtime_log",
 		"confirm_dialog_selection",
@@ -2789,12 +2873,48 @@ func show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlot, inclu
 		"action_items": action_items,
 		"pokemon_card": slot.get_top_card(),
 		"pokemon_card_data": card_data,
+		"attached_energy_summary": _pokemon_action_attached_energy_summary(slot),
 		"presentation": "action_hud",
 		"allow_cancel": true,
 	})
 	var dialog_cancel: Button = scene.get("_dialog_cancel")
 	if dialog_cancel != null:
 		dialog_cancel.visible = true
+
+
+func _pokemon_action_attached_energy_summary(slot: PokemonSlot) -> String:
+	var names := _pokemon_action_attached_energy_names(slot)
+	if names.is_empty():
+		return ""
+	var order: Array[String] = []
+	var counts := {}
+	for name: String in names:
+		if not counts.has(name):
+			order.append(name)
+			counts[name] = 0
+		counts[name] = int(counts[name]) + 1
+	var parts: Array[String] = []
+	for name: String in order:
+		var count := int(counts.get(name, 0))
+		parts.append(name if count <= 1 else "%s x%d" % [name, count])
+	return " · ".join(parts)
+
+
+func _pokemon_action_attached_energy_names(slot: PokemonSlot) -> Array[String]:
+	var names: Array[String] = []
+	if slot == null:
+		return names
+	for energy: CardInstance in slot.attached_energy:
+		if energy == null or energy.card_data == null:
+			continue
+		var energy_name := energy.card_data.name.strip_edges()
+		if energy_name == "":
+			energy_name = energy.card_data.name_en.strip_edges()
+		if energy_name == "":
+			energy_name = energy.card_data.card_type.strip_edges()
+		if energy_name != "":
+			names.append(energy_name)
+	return names
 
 
 func show_stadium_action_dialog(scene: Object, cp: int) -> void:

@@ -1,9 +1,18 @@
 {
 	"cards": [
 		{
+			"card_index": "051",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "0a9bdf265647461dd5c6c827ffc19e61",
+			"name": "裁判",
+			"name_en": "Judge",
+			"set_code": "CSVH1C"
+		},
+		{
 			"card_index": "079",
 			"card_type": "Pokemon",
-			"count": 1.0,
+			"count": 1,
 			"effect_id": "146a354ca20b3943ab792aa29b070fda",
 			"name": "光辉洗翠 大狃拉",
 			"name_en": "Radiant Hisuian Sneasler",
@@ -12,7 +21,7 @@
 		{
 			"card_index": "043",
 			"card_type": "Item",
-			"count": 4.0,
+			"count": 4,
 			"effect_id": "1af63a7e2cb7a79215474ad8db8fd8fd",
 			"name": "巢穴球",
 			"name_en": "Nest Ball",
@@ -21,16 +30,25 @@
 		{
 			"card_index": "105",
 			"card_type": "Pokemon",
-			"count": 1.0,
+			"count": 1,
 			"effect_id": "1b951205e53e179bde0905c4a194d9ee",
 			"name": "怒鹦哥ex",
 			"name_en": "Squawkabilly ex",
 			"set_code": "CSV2C"
 		},
 		{
+			"card_index": "004",
+			"card_type": "Pokemon",
+			"count": 2,
+			"effect_id": "28505a8ad6e07e74382c1b5e09737932",
+			"name": "含羞苞",
+			"name_en": "Budew",
+			"set_code": "CSV9.5C"
+		},
+		{
 			"card_index": "060",
 			"card_type": "Item",
-			"count": 2.0,
+			"count": 2,
 			"effect_id": "2f68195255c863293be4fad262bf23d2",
 			"name": "洗翠的沉重球",
 			"name_en": "Hisuian Heavy Ball",
@@ -46,18 +64,18 @@
 			"set_code": "CSV8C"
 		},
 		{
-			"card_index": "042",
-			"card_type": "Pokemon",
-			"count": 1.0,
-			"effect_id": "47676dfc37415cfdf3b3992b1de64141",
-			"name": "铁包袱",
-			"name_en": "Iron Bundle",
-			"set_code": "CSV6C"
+			"card_index": "DAR",
+			"card_type": "Basic Energy",
+			"count": 1,
+			"effect_id": "46c769fc57a6c250c560df648bb779f8",
+			"name": "基本恶能量",
+			"name_en": "Darkness Energy",
+			"set_code": "CSVE1C"
 		},
 		{
 			"card_index": "049",
 			"card_type": "Pokemon",
-			"count": 2.0,
+			"count": 2,
 			"effect_id": "553639840a44f19ad83b89a892a21f98",
 			"name": "霓虹鱼V",
 			"name_en": "Lumineon V",
@@ -66,7 +84,7 @@
 		{
 			"card_index": "127",
 			"card_type": "Pokemon",
-			"count": 1.0,
+			"count": 1,
 			"effect_id": "5a1d0fbbb9c71b9ec99b31734560d4d1",
 			"name": "桃歹郎",
 			"name_en": "Pecharunt",
@@ -75,7 +93,7 @@
 		{
 			"card_index": "123",
 			"card_type": "Supporter",
-			"count": 2.0,
+			"count": 2,
 			"effect_id": "5bdbc985f9aa2e6f248b53f6f35d1d37",
 			"name": "派帕",
 			"name_en": "Arven",
@@ -84,16 +102,25 @@
 		{
 			"card_index": "175",
 			"card_type": "Pokemon",
-			"count": 2.0,
+			"count": 2,
 			"effect_id": "5de19cbd4b2d1ff80ba14d6d89246ae9",
 			"name": "太乐巴戈斯ex",
 			"name_en": "Terapagos ex",
 			"set_code": "CSV9C"
 		},
 		{
+			"card_index": "094",
+			"card_type": "Pokemon",
+			"count": 1,
+			"effect_id": "66fee12502043db7d92b97b0d62b0f59",
+			"name": "愿增猿",
+			"name_en": "Munkidori",
+			"set_code": "CSV8C"
+		},
+		{
 			"card_index": "199",
 			"card_type": "Supporter",
-			"count": 1.0,
+			"count": 1,
 			"effect_id": "8150af4062192998497e376ad931bea4",
 			"name": "丹瑜",
 			"name_en": "Carmine",
@@ -102,7 +129,7 @@
 		{
 			"card_index": "116",
 			"card_type": "Item",
-			"count": 3.0,
+			"count": 4,
 			"effect_id": "8342fe3eeec6f897f3271be1aa26a412",
 			"name": "交替推车",
 			"name_en": "Switch Cart",
@@ -111,7 +138,7 @@
 		{
 			"card_index": "118",
 			"card_type": "Tool",
-			"count": 3.0,
+			"count": 3,
 			"effect_id": "8da8631aa1827b122ec65b712939ad48",
 			"name": "驱劲能量 古代",
 			"name_en": "Ancient Booster Energy Capsule",
@@ -120,7 +147,7 @@
 		{
 			"card_index": "023",
 			"card_type": "Supporter",
-			"count": 3.0,
+			"count": 3,
 			"effect_id": "8e1fa2c9018db938084c94c7c970d419",
 			"name": "老大的指令",
 			"name_en": "Boss's Orders",
@@ -129,7 +156,7 @@
 		{
 			"card_index": "024",
 			"card_type": "Special Energy",
-			"count": 4.0,
+			"count": 4,
 			"effect_id": "9c04dd0addf56a7b2c88476bc8e45c0e",
 			"name": "双重涡轮能量",
 			"name_en": "Double Turbo Energy",
@@ -138,7 +165,7 @@
 		{
 			"card_index": "066",
 			"card_type": "Tool",
-			"count": 2.0,
+			"count": 2,
 			"effect_id": "9fa9943ccda36f417ac3cb675177c216",
 			"name": "森林封印石",
 			"name_en": "Forest Seal Stone",
@@ -147,7 +174,7 @@
 		{
 			"card_index": "112",
 			"card_type": "Item",
-			"count": 3.0,
+			"count": 3,
 			"effect_id": "a337ed34a45e63c6d21d98c3d8e0cb6e",
 			"name": "高级球",
 			"name_en": "Ultra Ball",
@@ -156,7 +183,7 @@
 		{
 			"card_index": "186",
 			"card_type": "Item",
-			"count": 2.0,
+			"count": 1,
 			"effect_id": "a36548792cb4ff401f9b56e3ade897f6",
 			"name": "贵重推车",
 			"name_en": "Precious Trolley",
@@ -165,7 +192,7 @@
 		{
 			"card_index": "095",
 			"card_type": "Pokemon",
-			"count": 2.0,
+			"count": 2,
 			"effect_id": "a5438c6290fdef331fe1ba579b6f4928",
 			"name": "猛恶菇",
 			"name_en": "Brute Bonnet",
@@ -174,7 +201,7 @@
 		{
 			"card_index": "187",
 			"card_type": "Tool",
-			"count": 3.0,
+			"count": 3,
 			"effect_id": "a77ef1e9df5b37e1d529682b2b38a4b8",
 			"name": "锁链粘糕",
 			"name_en": "Binding Mochi",
@@ -183,7 +210,7 @@
 		{
 			"card_index": "078",
 			"card_type": "Pokemon",
-			"count": 1.0,
+			"count": 1,
 			"effect_id": "a92ab1fcfe663d2a56b267a34307fad4",
 			"name": "拉帝亚斯ex",
 			"name_en": "Latias ex",
@@ -192,7 +219,7 @@
 		{
 			"card_index": "135",
 			"card_type": "Pokemon",
-			"count": 1.0,
+			"count": 1,
 			"effect_id": "ab6c3357e2b8a8385a68da738f41e0c1",
 			"name": "吉雉鸡ex",
 			"name_en": "Fezandipiti ex",
@@ -201,7 +228,7 @@
 		{
 			"card_index": "121",
 			"card_type": "Supporter",
-			"count": 2.0,
+			"count": 2,
 			"effect_id": "aecd80ca2722885c3d062a2255346f3e",
 			"name": "博士的研究",
 			"name_en": "Professor's Research",
@@ -210,7 +237,7 @@
 		{
 			"card_index": "123",
 			"card_type": "Supporter",
-			"count": 2.0,
+			"count": 1,
 			"effect_id": "af514f82d182aeae5327b2c360df703d",
 			"name": "奇树",
 			"name_en": "Iono",
@@ -219,7 +246,7 @@
 		{
 			"card_index": "113",
 			"card_type": "Pokemon",
-			"count": 1.0,
+			"count": 1,
 			"effect_id": "c5783c83303269674231483fede75e99",
 			"name": "智挥猩V",
 			"name_en": "Oranguru V",
@@ -228,16 +255,25 @@
 		{
 			"card_index": "207",
 			"card_type": "Stadium",
-			"count": 4.0,
+			"count": 3,
 			"effect_id": "cf3124da3d7bf217f7969b6ae4e60e38",
 			"name": "零之大空洞",
 			"name_en": "Area Zero Underdepths",
 			"set_code": "CSV9C"
 		},
 		{
+			"card_index": "198",
+			"card_type": "Supporter",
+			"count": 1,
+			"effect_id": "d4a94445aa981c2f84e4df9b0525eeb0",
+			"name": "乌栗",
+			"name_en": "Kieran",
+			"set_code": "CSV8C"
+		},
+		{
 			"card_index": "191",
 			"card_type": "Supporter",
-			"count": 1.0,
+			"count": 1,
 			"effect_id": "f7415384905a382f6f8ffe95dca595cb",
 			"name": "阿克罗玛的执念",
 			"name_en": "Colress's Tenacity",
@@ -246,38 +282,20 @@
 		{
 			"card_index": "080",
 			"card_type": "Pokemon",
-			"count": 1.0,
+			"count": 1,
 			"effect_id": "f986b356ae9703ac2d1667d1897cfdb6",
 			"name": "毛崖蟹",
 			"name_en": "Klawf",
 			"set_code": "CSV6C"
-		},
-		{
-			"card_index": "004",
-			"card_type": "Pokemon",
-			"count": 2,
-			"effect_id": "28505a8ad6e07e74382c1b5e09737932",
-			"name": "含羞苞",
-			"name_en": "",
-			"set_code": "CSV9.5C"
-		},
-		{
-			"card_index": "DAR",
-			"card_type": "Basic Energy",
-			"count": 1,
-			"effect_id": "46c769fc57a6c250c560df648bb779f8",
-			"name": "基本恶能量",
-			"name_en": "Darkness Energy",
-			"set_code": "CSVE1C"
 		}
 	],
-	"deck_code": "trXMZPOke3ZdxqiVoO",
-	"deck_name": "17.5毒龟",
-	"id": 611607,
-	"import_date": "2026-05-24T23:57:03",
-	"source_url": "https://tcg.mik.moe/decks/list/611607",
+	"deck_code": "T4zW67jh9eiOx2RzOM",
+	"deck_name": "17.5毒龟v2",
+	"id": 620880,
+	"import_date": "2026-06-14T14:15:27",
+	"source_url": "https://tcg.mik.moe/decks/list/620880",
 	"strategy": "",
 	"total_cards": 60,
-	"updated_at": 1781278008500,
+	"updated_at": 1781417750075,
 	"variant_name": "毛崖蟹 太乐巴戈斯"
 }
