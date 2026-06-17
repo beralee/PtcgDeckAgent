@@ -3140,6 +3140,116 @@ func test_mew_ex_genome_hacking_copies_dragapult_phantom_dive_bench_counters() -
 	])
 
 
+func test_mew_ex_genome_hacking_copies_bellowing_thunder_field_energy_discard() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 2
+
+	CardInstance.reset_id_counter()
+	for pi: int in 2:
+		var player_state := PlayerState.new()
+		player_state.player_index = pi
+		gsm.game_state.players.append(player_state)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+
+	var mew_cd := CardData.new()
+	mew_cd.name = "梦幻ex"
+	mew_cd.name_en = "Mew ex"
+	mew_cd.card_type = "Pokemon"
+	mew_cd.stage = "Basic"
+	mew_cd.hp = 180
+	mew_cd.energy_type = "P"
+	mew_cd.effect_id = "49669fcf461deacebeb5755c11ec51f1"
+	mew_cd.mechanic = "ex"
+	mew_cd.abilities = [{"name": "Restart", "text": ""}]
+	mew_cd.attacks = [{
+		"name": "基因侵入",
+		"cost": "CCC",
+		"damage": "",
+		"text": "Choose 1 of your opponent's Active Pokemon's attacks and use it as this attack.",
+		"is_vstar_power": false,
+	}]
+	gsm.effect_processor.register_pokemon_card(mew_cd)
+
+	var raging_cd := CardData.new()
+	raging_cd.name = "Raging Bolt ex"
+	raging_cd.name_en = "Raging Bolt ex"
+	raging_cd.card_type = "Pokemon"
+	raging_cd.stage = "Basic"
+	raging_cd.hp = 240
+	raging_cd.energy_type = "N"
+	raging_cd.effect_id = "e96bb407c5f18bb9eec55487e70395fd"
+	raging_cd.mechanic = "ex"
+	raging_cd.attacks = [
+		{"name": "Bursting Roar", "cost": "C", "damage": "", "text": "Discard your hand and draw 6 cards.", "is_vstar_power": false},
+		{"name": "Bellowing Thunder", "cost": "LF", "damage": "70x", "text": "Discard any number of Basic Energy from your Pokemon. This attack does 70 damage for each card you discarded in this way.", "is_vstar_power": false},
+	]
+	gsm.effect_processor.register_pokemon_card(raging_cd)
+
+	var mew_slot := PokemonSlot.new()
+	mew_slot.pokemon_stack.append(CardInstance.create(mew_cd, 0))
+	for i: int in 3:
+		mew_slot.attached_energy.append(CardInstance.create(_make_test_energy("C"), 0))
+	player.active_pokemon = mew_slot
+
+	var ogerpon_cd := CardData.new()
+	ogerpon_cd.name = "Teal Mask Ogerpon ex"
+	ogerpon_cd.card_type = "Pokemon"
+	ogerpon_cd.stage = "Basic"
+	ogerpon_cd.hp = 210
+	ogerpon_cd.energy_type = "G"
+	var ogerpon_slot := PokemonSlot.new()
+	ogerpon_slot.pokemon_stack.append(CardInstance.create(ogerpon_cd, 0))
+	var grass_a := CardInstance.create(_make_test_energy("G"), 0)
+	var grass_b := CardInstance.create(_make_test_energy("G"), 0)
+	ogerpon_slot.attached_energy.append(grass_a)
+	ogerpon_slot.attached_energy.append(grass_b)
+	player.bench = [ogerpon_slot]
+
+	var raging_slot := PokemonSlot.new()
+	raging_slot.pokemon_stack.append(CardInstance.create(raging_cd, 1))
+	opponent.active_pokemon = raging_slot
+
+	var copied_option := {
+		"source_effect_id": raging_cd.effect_id,
+		"attack_index": 1,
+		"attack": raging_cd.attacks[1],
+	}
+	var mew_effect := AttackCopyAttack.new(gsm.effect_processor)
+	var followup_steps := mew_effect.get_followup_attack_interaction_steps(
+		mew_slot.get_top_card(),
+		mew_cd.attacks[0],
+		gsm.game_state,
+		{"copied_attack": [copied_option]}
+	)
+	var followup_step: Dictionary = followup_steps[0] if not followup_steps.is_empty() else {}
+
+	var attacked := gsm.use_attack(0, 0, [{
+		"copied_attack": [copied_option],
+		"discard_basic_energy": [grass_a, grass_b],
+	}])
+	var damage_action: GameAction = _get_last_action_of_type(gsm.action_log, GameAction.ActionType.DAMAGE_DEALT)
+
+	return run_checks([
+		assert_true(gsm.effect_processor.has_attack_effect(mew_cd.effect_id), "Mew ex should register Genome Hacking as an attack effect"),
+		assert_true(gsm.effect_processor.has_attack_effect(raging_cd.effect_id), "Raging Bolt ex should register Bellowing Thunder as an attack effect"),
+		assert_eq(followup_steps.size(), 1, "Mew ex copying Bellowing Thunder should expose the field Basic Energy discard follow-up"),
+		assert_eq(str(followup_step.get("id", "")), "discard_basic_energy", "Copied Bellowing Thunder should use the standard field Energy discard step"),
+		assert_eq(int(followup_step.get("max_select", -1)), 5, "Copied Bellowing Thunder should expose all own field Basic Energy as discard choices"),
+		assert_true(attacked, "Mew ex should be able to use Genome Hacking with only its CCC attack cost paid"),
+		assert_eq(raging_slot.damage_counters, 140, "Copied Bellowing Thunder should deal 70 damage per discarded Basic Energy"),
+		assert_true(grass_a in player.discard_pile and grass_b in player.discard_pile, "Copied Bellowing Thunder should discard selected field Basic Energy"),
+		assert_eq(ogerpon_slot.attached_energy.size(), 0, "Copied Bellowing Thunder should remove selected Energy from the Benched Pokemon"),
+		assert_not_null(damage_action, "Copied Bellowing Thunder damage should be logged"),
+		assert_eq(int(damage_action.data.get("damage", -1)) if damage_action != null else -1, 140, "Damage log should record copied Bellowing Thunder damage"),
+	])
+
+
 func _make_test_energy(energy_type: String) -> CardData:
 	var e_cd := CardData.new()
 	e_cd.card_type = "Basic Energy"

@@ -8,6 +8,7 @@ const AILegalActionBuilderScript = preload("res://scripts/ai/AILegalActionBuilde
 const AbilityMoveDamageCountersToOpponentScript = preload("res://scripts/effects/pokemon_effects/AbilityMoveDamageCountersToOpponent.gd")
 const AbilityFirstTurnDrawScript = preload("res://scripts/effects/pokemon_effects/AbilityFirstTurnDraw.gd")
 const AttackMoveOwnDamageCountersToOpponentScript = preload("res://scripts/effects/pokemon_effects/AttackMoveOwnDamageCountersToOpponent.gd")
+const EffectGrandTreeScript = preload("res://scripts/effects/stadium_effects/CSV9C205GrandTree.gd")
 
 const SCREAM_TAIL_EFFECT_ID := "12c9416c64d1a8cfbbf0a3000a9f3d50"
 const CRESSELIA_HEADLESS_EFFECT_ID := "cresselia_headless_test"
@@ -104,6 +105,16 @@ func _make_basic_card(name: String) -> CardInstance:
 	card.stage = "Basic"
 	card.hp = 60
 	return CardInstance.create(card, 0)
+
+
+func _make_evolution_card(name: String, stage: String, evolves_from: String, owner: int = 0) -> CardInstance:
+	var card := CardData.new()
+	card.name = name
+	card.card_type = "Pokemon"
+	card.stage = stage
+	card.evolves_from = evolves_from
+	card.hp = 120
+	return CardInstance.create(card, owner)
 
 
 func _make_basic_card_with_ability(name: String, ability_name: String, effect_id: String, owner: int = 0) -> CardInstance:
@@ -454,6 +465,55 @@ func test_step_resolver_executes_headless_ability_followup_counter_distribution(
 		assert_eq(source.damage_counters, 0, "Resolver follow-up should remove counters from the selected source"),
 		assert_eq(opponent.active_pokemon.damage_counters, 30, "Resolver follow-up should place counters onto the selected opponent target"),
 		assert_eq(str(bridge.get("_pending_choice")), "", "Resolver follow-up should complete the ability interaction"),
+	])
+
+
+func test_step_resolver_executes_headless_grand_tree_stage2_followup() -> String:
+	var bridge := HeadlessMatchBridgeScript.new()
+	var resolver := AIStepResolverScript.new()
+	var gsm := _make_gsm()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.turn_number = 3
+	var player: PlayerState = gsm.game_state.players[0]
+	var active := _make_slot(_make_basic_card("Seed"))
+	active.turn_played = 0
+	player.active_pokemon = active
+	var stage1 := _make_evolution_card("Tree Stage1", "Stage 1", "Seed", 0)
+	var stage2 := _make_evolution_card("Tree Stage2", "Stage 2", "Tree Stage1", 0)
+	player.deck = [stage1, stage2]
+	var stadium_data := CardData.new()
+	stadium_data.name = "Great Tree"
+	stadium_data.card_type = "Stadium"
+	stadium_data.effect_id = "grand_tree_headless_test"
+	var stadium := CardInstance.create(stadium_data, 0)
+	gsm.game_state.stadium_card = stadium
+	gsm.game_state.stadium_owner_index = 0
+	gsm.effect_processor.register_effect("grand_tree_headless_test", EffectGrandTreeScript.new())
+	bridge.bind(gsm)
+
+	var started := bridge._try_use_stadium_with_interaction(0)
+	var stage1_step: Dictionary = (bridge.get("_pending_effect_steps") as Array)[0] if not (bridge.get("_pending_effect_steps") as Array).is_empty() else {}
+	var resolved_stage1 := resolver.resolve_pending_step(bridge, gsm, 0, [])
+	var pending_after_stage1 := str(bridge.get("_pending_choice"))
+	var mode_after_stage1 := str(bridge.get("_field_interaction_mode"))
+	var step_index_after_stage1 := int(bridge.get("_pending_effect_step_index"))
+	var pending_steps: Array = bridge.get("_pending_effect_steps")
+	var stage2_step: Dictionary = pending_steps[step_index_after_stage1] if step_index_after_stage1 >= 0 and step_index_after_stage1 < pending_steps.size() else {}
+	var resolved_stage2 := resolver.resolve_pending_step(bridge, gsm, 0, [])
+
+	return run_checks([
+		assert_true(started, "Headless bridge should start Grand Tree's Stadium interaction"),
+		assert_eq(str(stage1_step.get("id", "")), EffectGrandTreeScript.STAGE1_STEP_ID, "Grand Tree should first ask for a Stage 1 evolution assignment"),
+		assert_true(resolved_stage1, "AIStepResolver should resolve Grand Tree's Stage 1 assignment"),
+		assert_eq(pending_after_stage1, "effect_interaction", "Stage 1 assignment should leave the optional Stage 2 follow-up pending"),
+		assert_eq(mode_after_stage1, "assignment", "Grand Tree's follow-up should remain a field assignment prompt"),
+		assert_eq(str(stage2_step.get("id", "")), EffectGrandTreeScript.STAGE2_STEP_ID, "Grand Tree should inject the Stage 2 follow-up step"),
+		assert_true(resolved_stage2, "AIStepResolver should resolve Grand Tree's optional Stage 2 assignment"),
+		assert_eq(active.pokemon_stack.size(), 3, "Headless Grand Tree should evolve through Stage 1 and Stage 2"),
+		assert_eq(active.get_pokemon_name(), "Tree Stage2", "The selected Stage 2 should be the final top Pokemon"),
+		assert_false(stage2 in player.deck, "The selected Stage 2 should leave the deck during Stadium resolution"),
+		assert_eq(str(bridge.get("_pending_choice")), "", "Resolved Grand Tree follow-up should clear the effect interaction prompt"),
 	])
 
 

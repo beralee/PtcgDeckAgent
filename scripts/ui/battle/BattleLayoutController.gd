@@ -74,7 +74,27 @@ func compute_play_card_height(
 
 	var min_card_height := 82.0 if bench_size > 5 else 112.0
 	var max_card_height := 176.0 if bench_size > 5 else 192.0
-	return clampf(minf(height_limited, width_limited), min_card_height, max_card_height)
+	var hud_width_limited := compute_landscape_hud_safe_card_height(center_width, card_aspect)
+	if hud_width_limited > 0.0 and hud_width_limited < min_card_height:
+		min_card_height = maxf(82.0, hud_width_limited)
+	var total_width_limited := width_limited
+	if hud_width_limited > 0.0:
+		total_width_limited = minf(total_width_limited, hud_width_limited)
+	return clampf(minf(height_limited, total_width_limited), min_card_height, max_card_height)
+
+
+func compute_landscape_hud_safe_card_height(center_width: float, card_aspect: float) -> float:
+	if center_width <= 0.0 or card_aspect <= 0.0:
+		return 0.0
+	# Horizontal field rows contain prize HUD, active/bench axis, pile HUDs, and shell gaps.
+	# The bench row width alone does not protect low-height 20:9 phones or narrow 4:3
+	# tablet canvases from pushing the prize HUD outside the touchable viewport.
+	var prize_factor := 3.0 * 0.9 * card_aspect
+	var field_axis_factor := 6.2 * card_aspect
+	var pile_factor := 2.0 * 0.9 * card_aspect
+	var fixed_chrome := 78.0
+	var total_factor := maxf(prize_factor + field_axis_factor + pile_factor, 1.0)
+	return maxf((center_width - fixed_chrome) / total_factor, 0.0)
 
 
 func measure_portrait_card_layout(

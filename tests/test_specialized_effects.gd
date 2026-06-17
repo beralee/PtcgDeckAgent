@@ -12,6 +12,10 @@ const AttackSearchDeckToHandEffect = preload("res://scripts/effects/pokemon_effe
 const AttackCoinFlipMultiplierEffect = preload("res://scripts/effects/pokemon_effects/AttackCoinFlipMultiplier.gd")
 const AttackDiscardBasicEnergyFromHandDamageEffect = preload("res://scripts/effects/pokemon_effects/AttackDiscardBasicEnergyFromHandDamage.gd")
 const AttackSearchEnergyFromDeckToSelfEffect = preload("res://scripts/effects/pokemon_effects/AttackSearchEnergyFromDeckToSelf.gd")
+const AILegalActionBuilderScript = preload("res://scripts/ai/AILegalActionBuilder.gd")
+
+const MANAPHY_WAVE_VEIL_EFFECT_ID := "04653d073ffc3ca2202746e4f9aebabd"
+const RADIANT_GRENINJA_EFFECT_ID := "09445b8c32fd4abef4230ebcdc964096"
 
 
 class RiggedCoinFlipper extends CoinFlipper:
@@ -59,6 +63,20 @@ func _make_trainer_data(name: String, card_type: String = "Item", effect_id: Str
 	cd.name = name
 	cd.card_type = card_type
 	cd.effect_id = effect_id
+	return cd
+
+
+func _make_slot_from_card_data(card_data: CardData, owner_index: int) -> PokemonSlot:
+	var slot := PokemonSlot.new()
+	slot.pokemon_stack.append(CardInstance.create(card_data, owner_index))
+	slot.turn_played = 0
+	return slot
+
+
+func _make_manaphy_data() -> CardData:
+	var cd := _make_basic_pokemon_data("Manaphy", "W", 70, "Basic", "", MANAPHY_WAVE_VEIL_EFFECT_ID)
+	cd.abilities = [{"name": "浪花水帘", "text": "Your Benched Pokemon take no damage from attacks from your opponent's Pokemon."}]
+	cd.attacks = [{"name": "Rain Splash", "cost": "W", "damage": "20", "text": "", "is_vstar_power": false}]
 	return cd
 
 
@@ -777,6 +795,75 @@ func test_moonlight_shuriken_discards_two_attached_energy() -> String:
 	])
 
 
+func test_moonlight_shuriken_active_manaphy_blocks_selected_bench_damage() -> String:
+	var processor := EffectProcessor.new()
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	var opponent: PlayerState = state.players[1]
+	var attacker_cd := _make_basic_pokemon_data("Radiant Greninja", "W", 130, "Basic", "", RADIANT_GRENINJA_EFFECT_ID)
+	attacker_cd.attacks = [{
+		"name": "Moonlight Shuriken",
+		"cost": "WWC",
+		"damage": "",
+		"text": "",
+		"is_vstar_power": false,
+	}]
+	var attacker := _make_slot_from_card_data(attacker_cd, 0)
+	player.active_pokemon = attacker
+	opponent.active_pokemon = _make_slot_from_card_data(_make_manaphy_data(), 1)
+	var protected_bench := opponent.bench[0]
+
+	processor.replace_attack_effects(RADIANT_GRENINJA_EFFECT_ID, [
+		AttackMoonlightShuriken.new(90, 2),
+	])
+	processor.execute_attack_effect(attacker, 0, opponent.active_pokemon, state, [{
+		"moonlight_shuriken_targets": [opponent.active_pokemon, protected_bench],
+	}])
+
+	return run_checks([
+		assert_eq(opponent.active_pokemon.damage_counters, 90, "Moonlight Shuriken may damage active Manaphy"),
+		assert_eq(protected_bench.damage_counters, 0, "Active Manaphy must still protect Benched Pokemon before KO resolution"),
+	])
+
+
+func test_gsm_moonlight_shuriken_active_manaphy_blocks_bench_before_knockout_check() -> String:
+	var gsm := GameStateMachine.new()
+	var state := _make_state()
+	state.phase = GameState.GamePhase.MAIN
+	gsm.game_state = state
+	var player: PlayerState = state.players[0]
+	var opponent: PlayerState = state.players[1]
+	var attacker_cd := _make_basic_pokemon_data("Radiant Greninja", "W", 130, "Basic", "", RADIANT_GRENINJA_EFFECT_ID)
+	attacker_cd.attacks = [{
+		"name": "Moonlight Shuriken",
+		"cost": "WWC",
+		"damage": "",
+		"text": "",
+		"is_vstar_power": false,
+	}]
+	var attacker := _make_slot_from_card_data(attacker_cd, 0)
+	attacker.attached_energy.append(CardInstance.create(_make_energy_data("Water A", "W"), 0))
+	attacker.attached_energy.append(CardInstance.create(_make_energy_data("Water B", "W"), 0))
+	attacker.attached_energy.append(CardInstance.create(_make_energy_data("Colorless", "C"), 0))
+	player.active_pokemon = attacker
+	opponent.active_pokemon = _make_slot_from_card_data(_make_manaphy_data(), 1)
+	var protected_bench := opponent.bench[0]
+
+	gsm.effect_processor.replace_attack_effects(RADIANT_GRENINJA_EFFECT_ID, [
+		AttackMoonlightShuriken.new(90, 2),
+		EffectDiscardEnergy.new(2),
+	])
+	var attacked := gsm.use_attack(0, 0, [{
+		"moonlight_shuriken_targets": [opponent.active_pokemon, protected_bench],
+	}])
+
+	return run_checks([
+		assert_true(attacked, "GameStateMachine should resolve Moonlight Shuriken"),
+		assert_eq(protected_bench.damage_counters, 0, "KO processing after the attack must not retroactively allow protected bench damage"),
+		assert_eq(attacker.attached_energy.size(), 1, "Moonlight Shuriken should still discard two Energy after resolving damage"),
+	])
+
+
 func test_iron_crown_twin_blade_selects_any_two_opponent_pokemon() -> String:
 	var processor := EffectProcessor.new()
 	var state := _make_state()
@@ -1213,6 +1300,62 @@ func test_rare_candy_accepts_baxcalibur_without_arctibax_reference() -> String:
 		assert_true(baxcalibur in stage2_items, "Baxcalibur should appear in the Rare Candy Stage 2 selection list"),
 		assert_true(player.active_pokemon in target_items, "Frigibax should appear in the Rare Candy target list for Baxcalibur"),
 		assert_eq(player.active_pokemon.get_pokemon_name(), "戟脊龙", "Rare Candy should evolve Frigibax directly into Baxcalibur"),
+	])
+
+
+func test_rare_candy_accepts_blaziken_ex_from_torchic_without_combusken_reference() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	var effect := EffectRareCandy.new()
+	var card := CardInstance.create(_make_trainer_data("Rare Candy"), 0)
+	var torchic_cd: CardData = CardDatabase.get_card("CSV7C", "036")
+	var blaziken_cd: CardData = CardDatabase.get_card("CSV7C", "038")
+	var blaziken := CardInstance.create(blaziken_cd, 0)
+	player.hand.append(blaziken)
+
+	player.active_pokemon.pokemon_stack.clear()
+	player.active_pokemon.pokemon_stack.append(CardInstance.create(torchic_cd, 0))
+	player.active_pokemon.turn_played = 0
+
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
+	var stage2_items: Array = steps[0].get("items", []) if not steps.is_empty() else []
+	var target_items: Array = steps[1].get("items", []) if steps.size() > 1 else []
+	var can_execute: bool = effect.can_execute(card, state)
+	effect.execute(card, [{
+		"stage2_card": [blaziken],
+		"target_pokemon": [player.active_pokemon],
+	}], state)
+
+	return run_checks([
+		assert_not_null(torchic_cd, "CSV7C_036 Torchic should exist in the card database"),
+		assert_not_null(blaziken_cd, "CSV7C_038 Blaziken ex should exist in the card database"),
+		assert_eq(str(blaziken_cd.evolves_from), "力壮鸡", "Blaziken ex metadata should point to Combusken as the Stage 1"),
+		assert_true(can_execute, "Rare Candy should support Blaziken ex even when Combusken is missing from local references"),
+		assert_true(blaziken in stage2_items, "Blaziken ex should appear in the Rare Candy Stage 2 selection list"),
+		assert_true(player.active_pokemon in target_items, "Torchic should appear in the Rare Candy target list for Blaziken ex"),
+		assert_eq(player.active_pokemon.get_pokemon_name(), blaziken_cd.name, "Rare Candy should evolve Torchic directly into Blaziken ex"),
+	])
+
+
+func test_headless_rare_candy_matches_blaziken_ex_to_torchic_without_combusken_reference() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	var torchic_cd: CardData = CardDatabase.get_card("CSV7C", "036")
+	var blaziken_cd: CardData = CardDatabase.get_card("CSV7C", "038")
+	var blaziken := CardInstance.create(blaziken_cd, 0)
+	player.hand.append(blaziken)
+	player.active_pokemon.pokemon_stack.clear()
+	player.active_pokemon.pokemon_stack.append(CardInstance.create(torchic_cd, 0))
+	player.active_pokemon.turn_played = 0
+
+	var gsm := GameStateMachine.new()
+	gsm.game_state = state
+	var builder := AILegalActionBuilderScript.new()
+	var matches: bool = bool(builder.call("_rare_candy_target_matches_stage2", gsm, 0, blaziken, player.active_pokemon))
+	return run_checks([
+		assert_not_null(torchic_cd, "CSV7C_036 Torchic should exist before headless matching"),
+		assert_not_null(blaziken_cd, "CSV7C_038 Blaziken ex should exist before headless matching"),
+		assert_true(matches, "Headless Rare Candy target filtering should match Blaziken ex to Torchic without a Combusken reference"),
 	])
 
 
@@ -2243,6 +2386,38 @@ func test_attack_bench_snipe_and_self_damage() -> String:
 		assert_eq(state.players[1].bench[0].damage_counters, 60, "第一只备战应受60伤害"),
 		assert_eq(state.players[1].bench[1].damage_counters, 60, "第二只备战应受60伤害"),
 		assert_eq(attacker.damage_counters, 30, "攻击者应自伤30"),
+	])
+
+
+func test_attack_bench_snipe_active_manaphy_blocks_opponent_bench_damage() -> String:
+	var state := _make_state()
+	var attacker := state.players[0].active_pokemon
+	var opponent: PlayerState = state.players[1]
+	opponent.active_pokemon = _make_slot_from_card_data(_make_manaphy_data(), 1)
+	var protected_first := opponent.bench[0]
+	var protected_second := opponent.bench[1]
+
+	AttackBenchSnipe.new(60, 2, 0).execute_attack(attacker, opponent.active_pokemon, 0, state)
+
+	return run_checks([
+		assert_eq(protected_first.damage_counters, 0, "Active Manaphy should block automatic bench snipe damage"),
+		assert_eq(protected_second.damage_counters, 0, "Active Manaphy should block every selected Benched Pokemon from attack damage"),
+	])
+
+
+func test_effect_bench_damage_active_manaphy_blocks_all_opponent_bench_damage() -> String:
+	var state := _make_state()
+	var attacker := state.players[0].active_pokemon
+	var opponent: PlayerState = state.players[1]
+	opponent.active_pokemon = _make_slot_from_card_data(_make_manaphy_data(), 1)
+	var protected_first := opponent.bench[0]
+	var protected_second := opponent.bench[1]
+
+	EffectBenchDamage.new(30, true, "opponent").execute_attack(attacker, opponent.active_pokemon, 0, state)
+
+	return run_checks([
+		assert_eq(protected_first.damage_counters, 0, "Active Manaphy should block all-opponent-bench attack damage"),
+		assert_eq(protected_second.damage_counters, 0, "Active Manaphy should block all-opponent-bench attack damage for each bench slot"),
 	])
 
 

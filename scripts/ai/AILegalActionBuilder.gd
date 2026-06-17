@@ -27,9 +27,11 @@ const _RARE_CANDY_STAGE_ONE_BASIC_OVERRIDES := {
 	"比比鸟": ["波波", "Pidgey"],
 	"呱头蛙": ["呱呱泡蛙", "Froakie"],
 	"冻脊龙": ["凉脊龙", "Frigibax"],
+	"力壮鸡": ["火稚鸡", "Torchic"],
 	"Pidgeotto": ["Pidgey", "波波"],
 	"Frogadier": ["Froakie", "呱呱泡蛙"],
 	"Arctibax": ["Frigibax", "凉脊龙"],
+	"Combusken": ["Torchic", "火稚鸡"],
 }
 
 var _deck_strategy = null

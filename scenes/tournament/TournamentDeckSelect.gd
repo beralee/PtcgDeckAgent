@@ -1,6 +1,8 @@
 extends Control
 
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
+const NonBattleLayoutControllerScript := preload("res://scripts/ui/non_battle/NonBattleLayoutController.gd")
+const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
 
 const DECK_USAGE_STATS_PATH := "user://battle_deck_usage.json"
 const DECK_PICKER_ALL := "all"
@@ -21,16 +23,126 @@ var _deck_picker_tabs: Dictionary = {}
 var _deck_picker_grid: GridContainer = null
 var _deck_picker_search_input: LineEdit = null
 var _deck_picker_subtitle: Label = null
+var _non_battle_layout_controller: RefCounted = NonBattleLayoutControllerScript.new()
+var _last_non_battle_layout_context: Dictionary = {}
 
 
 func _ready() -> void:
 	HudThemeScript.apply(self)
 	_apply_tournament_picker_theme()
+	_connect_non_battle_layout_signal()
 	%BtnBack.pressed.connect(_on_back_pressed)
 	%BtnNext.pressed.connect(_on_next_pressed)
 	%DeckPickerButton.pressed.connect(_on_deck_picker_pressed)
 	_load_deck_usage_stats()
 	_load_decks()
+	call_deferred("_apply_non_battle_layout")
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED:
+		_apply_non_battle_layout()
+
+
+func _input(event: InputEvent) -> void:
+	NonBattleTouchBridgeScript.handle_root_touch(self, event)
+
+
+func _connect_non_battle_layout_signal() -> void:
+	if GameManager == null or not GameManager.has_signal("non_battle_layout_mode_changed"):
+		return
+	var callback := Callable(self, "_on_non_battle_layout_mode_changed")
+	if not GameManager.non_battle_layout_mode_changed.is_connected(callback):
+		GameManager.non_battle_layout_mode_changed.connect(callback)
+
+
+func _on_non_battle_layout_mode_changed(_mode: String) -> void:
+	_apply_non_battle_layout()
+	call_deferred("_apply_non_battle_layout")
+
+
+func _apply_non_battle_layout_for_tests(viewport_size: Vector2, mode: String) -> void:
+	_apply_non_battle_layout(viewport_size, mode)
+
+
+func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode: String = "") -> void:
+	var size := viewport_size
+	if size.x <= 0.0 or size.y <= 0.0:
+		size = get_viewport_rect().size if is_inside_tree() else Vector2(1600, 900)
+	var mode := forced_mode
+	if mode == "":
+		mode = str(GameManager.get("non_battle_layout_mode")) if GameManager != null else "landscape"
+	var is_mobile := OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
+	var context: Dictionary = _non_battle_layout_controller.call("build_context", size, mode, is_mobile)
+	_last_non_battle_layout_context = context.duplicate(true)
+	var portrait := bool(context.get("is_portrait", false))
+	set_meta("non_battle_layout_mode", str(context.get("resolved_mode", mode)))
+	var panel := find_child("Panel", true, false) as Control
+	if panel != null:
+		panel.custom_minimum_size.x = float(context.get("content_width", 720.0)) if portrait else 720.0
+		panel.custom_minimum_size.y = maxf(720.0, size.y - float(context.get("page_margin", 24.0)) * 2.0) if portrait else 420.0
+	_apply_tournament_mobile_metrics(self, context, portrait)
+	_apply_tournament_button_stack(portrait)
+	if _deck_picker_panel != null:
+		_resize_deck_picker_panel()
+
+
+func _apply_tournament_mobile_metrics(node: Node, context: Dictionary, portrait: bool) -> void:
+	if node is Button:
+		var button := node as Button
+		button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, float(context.get("secondary_button_height", 44.0)) if portrait else button.custom_minimum_size.y)
+		button.add_theme_font_size_override("font_size", int(context.get("button_font_size", 15)) if portrait else HudThemeScript.scaled_font_size(15))
+		NonBattleTouchBridgeScript.bind_button_touch(button)
+	elif node is OptionButton or node is LineEdit:
+		var control := node as Control
+		control.custom_minimum_size.y = maxf(control.custom_minimum_size.y, float(context.get("input_height", 42.0)) if portrait else control.custom_minimum_size.y)
+		if portrait:
+			control.add_theme_font_size_override("font_size", maxi(int(context.get("input_font_size", 15)), int(context.get("button_font_size", 15))))
+		if control is LineEdit:
+			NonBattleTouchBridgeScript.bind_focus_control_touch(control)
+	elif node is Label:
+		var label := node as Label
+		if label.name == "TitleLabel":
+			label.add_theme_font_size_override("font_size", int(context.get("title_font_size", 24)) if portrait else HudThemeScript.scaled_font_size(24))
+		elif portrait:
+			label.add_theme_font_size_override("font_size", int(context.get("body_font_size", 15)))
+			label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	for child: Node in node.get_children():
+		_apply_tournament_mobile_metrics(child, context, portrait)
+
+
+func _apply_tournament_button_stack(portrait: bool) -> void:
+	var current := find_child("ButtonRow", true, false) as BoxContainer
+	if current == null:
+		return
+	if portrait and current is HBoxContainer:
+		_replace_button_row(current, VBoxContainer.new(), 10)
+	elif not portrait and current is VBoxContainer:
+		_replace_button_row(current, HBoxContainer.new(), 16)
+
+
+func _replace_button_row(current: BoxContainer, replacement: BoxContainer, separation: int) -> void:
+	var parent := current.get_parent()
+	if parent == null:
+		return
+	replacement.name = "ButtonRow"
+	replacement.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	replacement.add_theme_constant_override("separation", separation)
+	var children := current.get_children()
+	var index := current.get_index()
+	var inherited_owner := current.owner
+	parent.remove_child(current)
+	parent.add_child(replacement)
+	replacement.owner = inherited_owner
+	parent.move_child(replacement, index)
+	for child: Node in children:
+		var child_owner := child.owner
+		current.remove_child(child)
+		child.owner = null
+		replacement.add_child(child)
+		child.owner = child_owner if child_owner != null else inherited_owner
+	current.queue_free()
 
 
 func _apply_tournament_picker_theme() -> void:
@@ -181,6 +293,7 @@ func _ensure_deck_picker_overlay() -> void:
 	root.add_child(header)
 
 	var title := Label.new()
+	title.name = "DeckPickerTitle"
 	title.text = "选择参赛卡组"
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(22))
@@ -190,6 +303,7 @@ func _ensure_deck_picker_overlay() -> void:
 	header.add_child(title)
 
 	var close_button := Button.new()
+	close_button.name = "DeckPickerCloseButton"
 	close_button.text = "X"
 	close_button.custom_minimum_size = Vector2(44, 38)
 	close_button.pressed.connect(_close_deck_picker)
@@ -202,6 +316,7 @@ func _ensure_deck_picker_overlay() -> void:
 	root.add_child(_deck_picker_subtitle)
 
 	_deck_picker_search_input = LineEdit.new()
+	_deck_picker_search_input.name = "DeckPickerSearchInput"
 	_deck_picker_search_input.placeholder_text = "搜索卡组名称、ID 或类型"
 	_deck_picker_search_input.custom_minimum_size = Vector2(0, 42)
 	_deck_picker_search_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -239,22 +354,68 @@ func _ensure_deck_picker_overlay() -> void:
 	_deck_picker_grid.add_theme_constant_override("h_separation", 10)
 	_deck_picker_grid.add_theme_constant_override("v_separation", 10)
 	scroll.add_child(_deck_picker_grid)
+	if not _last_non_battle_layout_context.is_empty():
+		_apply_deck_picker_mobile_metrics(_last_non_battle_layout_context, bool(_last_non_battle_layout_context.get("is_portrait", false)))
 
 
 func _resize_deck_picker_panel() -> void:
 	if _deck_picker_panel == null:
 		return
 	var viewport_size := _deck_picker_viewport_size()
+	var context := _last_non_battle_layout_context
+	var portrait := bool(context.get("is_portrait", viewport_size.y > viewport_size.x)) if not context.is_empty() else viewport_size.y > viewport_size.x
+	if portrait:
+		var page_margin := float(context.get("page_margin", clampf(viewport_size.x * 0.038, 22.0, 42.0)))
+		_deck_picker_panel.custom_minimum_size = Vector2(
+			maxf(320.0, float(context.get("content_width", viewport_size.x - page_margin * 2.0))),
+			maxf(520.0, viewport_size.y - page_margin * 2.0)
+		)
+		_apply_deck_picker_mobile_metrics(context, true)
+		return
 	_deck_picker_panel.custom_minimum_size = Vector2(
 		maxf(360.0, minf(940.0, viewport_size.x * 0.92)),
 		maxf(420.0, minf(760.0, viewport_size.y * 0.88))
 	)
+	_apply_deck_picker_mobile_metrics(context, false)
 
 
 func _deck_picker_viewport_size() -> Vector2:
+	if size.x > 0.0 and size.y > 0.0:
+		return size
 	if is_inside_tree():
 		return get_viewport_rect().size
 	return Vector2(1280, 720)
+
+
+func _apply_deck_picker_mobile_metrics(context: Dictionary, portrait: bool) -> void:
+	if _deck_picker_panel == null:
+		return
+	var button_height := float(context.get("secondary_button_height", 44.0)) if portrait else 40.0
+	var input_height := float(context.get("input_height", 42.0)) if portrait else 42.0
+	var title_font := int(context.get("title_font_size", 22)) if portrait else HudThemeScript.scaled_font_size(22)
+	var body_font := int(context.get("body_font_size", 14)) if portrait else HudThemeScript.scaled_font_size(14)
+	var button_font := int(context.get("button_font_size", 14)) if portrait else HudThemeScript.scaled_font_size(14)
+	var input_font := maxi(int(context.get("input_font_size", 15)), button_font) if portrait else HudThemeScript.scaled_font_size(15)
+	var title := _deck_picker_panel.find_child("DeckPickerTitle", true, false) as Label
+	if title != null:
+		title.add_theme_font_size_override("font_size", title_font)
+		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var close_button := _deck_picker_panel.find_child("DeckPickerCloseButton", true, false) as Button
+	if close_button != null:
+		close_button.custom_minimum_size = Vector2(button_height, button_height)
+		close_button.add_theme_font_size_override("font_size", button_font)
+	if _deck_picker_subtitle != null:
+		_deck_picker_subtitle.add_theme_font_size_override("font_size", body_font)
+		_deck_picker_subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	if _deck_picker_search_input != null:
+		_deck_picker_search_input.custom_minimum_size.y = maxf(_deck_picker_search_input.custom_minimum_size.y, input_height)
+		_deck_picker_search_input.add_theme_font_size_override("font_size", input_font)
+		NonBattleTouchBridgeScript.bind_focus_control_touch(_deck_picker_search_input)
+	for category_variant: Variant in _deck_picker_tabs.keys():
+		var tab := _deck_picker_tabs[category_variant] as Button
+		if tab != null:
+			tab.custom_minimum_size.y = maxf(tab.custom_minimum_size.y, button_height)
+			tab.add_theme_font_size_override("font_size", button_font)
 
 
 func _close_deck_picker() -> void:
@@ -303,9 +464,11 @@ func _refresh_deck_picker() -> void:
 		var button := Button.new()
 		button.text = "%s\n%s" % [deck.deck_name, _deck_picker_card_meta(deck)]
 		button.tooltip_text = _deck_picker_card_tooltip(deck)
-		button.custom_minimum_size = Vector2(0, 76)
+		var portrait_context := _last_non_battle_layout_context
+		var picker_portrait := bool(portrait_context.get("is_portrait", false)) if not portrait_context.is_empty() else _deck_picker_viewport_size().y > _deck_picker_viewport_size().x
+		button.custom_minimum_size = Vector2(0, maxf(76.0, float(portrait_context.get("list_item_min_height", 76.0)) if picker_portrait else 76.0))
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
+		button.add_theme_font_size_override("font_size", int(portrait_context.get("body_font_size", HudThemeScript.scaled_font_size(14))) if picker_portrait else HudThemeScript.scaled_font_size(14))
 		button.add_theme_color_override("font_color", HUD_TEXT)
 		button.add_theme_color_override("font_hover_color", Color.WHITE)
 		button.add_theme_stylebox_override("normal", _deck_picker_card_style(is_selected, false))
@@ -324,7 +487,11 @@ func _refresh_deck_picker_tabs() -> void:
 		if button == null:
 			continue
 		var active := category == _deck_picker_category
-		button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
+		var portrait_context := _last_non_battle_layout_context
+		var picker_portrait := bool(portrait_context.get("is_portrait", false)) if not portrait_context.is_empty() else false
+		button.add_theme_font_size_override("font_size", int(portrait_context.get("button_font_size", HudThemeScript.scaled_font_size(14))) if picker_portrait else HudThemeScript.scaled_font_size(14))
+		if picker_portrait:
+			button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, float(portrait_context.get("secondary_button_height", 40.0)))
 		button.add_theme_color_override("font_color", Color(0.05, 0.10, 0.13, 1.0) if active else HUD_TEXT)
 		button.add_theme_stylebox_override("normal", _deck_picker_tab_style(active, false))
 		button.add_theme_stylebox_override("hover", _deck_picker_tab_style(active, true))

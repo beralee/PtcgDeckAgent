@@ -3,6 +3,8 @@ extends Control
 
 const ZenMuxClientScript := preload("res://scripts/network/ZenMuxClient.gd")
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
+const NonBattleLayoutControllerScript := preload("res://scripts/ui/non_battle/NonBattleLayoutController.gd")
+const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
 const HUD_ACCENT := Color(0.28, 0.92, 1.0, 1.0)
 const HUD_ACCENT_WARM := Color(1.0, 0.55, 0.24, 1.0)
 const HUD_TEXT := Color(0.92, 0.98, 1.0, 1.0)
@@ -13,6 +15,8 @@ const ZENMUX_SETUP_GUIDE := "1. 在浏览器打开 zenmux.ai，注册或登录�
 const ZENMUX_TROUBLESHOOTING := "测试失败时先看这里：\n- 鉴权失败/401：API Key 复制错、少复制字符，或 Key 已失效。\n- model not found：当前 Key 不能用这个模型，换一个模型再测。\n- timeout/请求超时：网络慢，把超时改成 90 或 120 秒再试。"
 
 var _test_client = ZenMuxClientScript.new()
+var _non_battle_layout_controller: RefCounted = NonBattleLayoutControllerScript.new()
+var _portrait_action_footer_candidate: Button = null
 
 
 func _ready() -> void:
@@ -20,9 +24,357 @@ func _ready() -> void:
 	_ensure_zenmux_setup_guide()
 	_configure_settings_form_bounds()
 	_apply_hud_theme()
+	_connect_non_battle_layout_signal()
 	_connect_settings_controls()
 	_populate_model_options()
 	_load_config()
+	call_deferred("_apply_non_battle_layout")
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED:
+		_apply_non_battle_layout()
+
+
+func _input(event: InputEvent) -> void:
+	if _handle_portrait_action_footer_input(event):
+		return
+	NonBattleTouchBridgeScript.handle_root_touch(self, event)
+
+
+func _connect_non_battle_layout_signal() -> void:
+	if GameManager == null or not GameManager.has_signal("non_battle_layout_mode_changed"):
+		return
+	var callback := Callable(self, "_on_non_battle_layout_mode_changed")
+	if not GameManager.non_battle_layout_mode_changed.is_connected(callback):
+		GameManager.non_battle_layout_mode_changed.connect(callback)
+
+
+func _on_non_battle_layout_mode_changed(_mode: String) -> void:
+	_apply_non_battle_layout()
+	call_deferred("_apply_non_battle_layout")
+
+
+func _apply_non_battle_layout_for_tests(viewport_size: Vector2, mode: String) -> void:
+	_apply_non_battle_layout(viewport_size, mode)
+
+
+func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode: String = "") -> void:
+	var size := viewport_size
+	if size.x <= 0.0 or size.y <= 0.0:
+		size = get_viewport_rect().size if is_inside_tree() else Vector2(1600, 900)
+	var mode := forced_mode
+	if mode == "":
+		mode = str(GameManager.get("non_battle_layout_mode")) if GameManager != null else "landscape"
+	var is_mobile := OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
+	var context: Dictionary = _non_battle_layout_controller.call("build_context", size, mode, is_mobile)
+	var portrait := bool(context.get("is_portrait", false))
+	set_meta("non_battle_layout_mode", str(context.get("resolved_mode", mode)))
+	if portrait:
+		_apply_settings_portrait_layout(context)
+	else:
+		_apply_settings_landscape_layout(context)
+	_apply_settings_mobile_metrics(self, context, portrait)
+	_sync_hud_frame_to_form()
+
+
+func _apply_settings_portrait_layout(context: Dictionary) -> void:
+	var root := get_node_or_null("VBoxContainer") as VBoxContainer
+	var columns := root.get_node_or_null("ContentColumns") as HBoxContainer if root != null else null
+	var form_column := find_child("FormColumn", true, false) as Control
+	var guide_column := find_child("ZenMuxGuideColumn", true, false) as Control
+	if root == null or columns == null or form_column == null or guide_column == null:
+		return
+	var viewport_size: Vector2 = context.get("viewport_size", Vector2(390, 844))
+	var horizontal_margin := clampf(viewport_size.x * 0.026, 14.0, 30.0)
+	var top_margin := clampf(viewport_size.y * 0.024, 26.0, 58.0)
+	var bottom_margin := clampf(viewport_size.y * 0.026, 30.0, 66.0)
+	var content_width := maxf(320.0, viewport_size.x - horizontal_margin * 2.0)
+	var content_height := maxf(760.0, viewport_size.y - top_margin - bottom_margin)
+	root.custom_minimum_size = Vector2(content_width, content_height)
+	root.offset_left = -content_width * 0.5
+	root.offset_right = content_width * 0.5
+	root.offset_top = -viewport_size.y * 0.5 + top_margin
+	root.offset_bottom = viewport_size.y * 0.5 - bottom_margin
+	root.add_theme_constant_override("separation", int(context.get("section_gap", 14)))
+	var scroll := root.get_node_or_null("PortraitSettingsScroll") as ScrollContainer
+	if scroll == null:
+		scroll = ScrollContainer.new()
+		scroll.name = "PortraitSettingsScroll"
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
+		scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		root.add_child(scroll)
+		root.move_child(scroll, columns.get_index() + 1)
+		var stack := VBoxContainer.new()
+		stack.name = "PortraitSettingsStack"
+		stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		stack.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		stack.add_theme_constant_override("separation", int(context.get("section_gap", 14)))
+		scroll.add_child(stack)
+	var stack := scroll.get_node_or_null("PortraitSettingsStack") as VBoxContainer
+	if stack == null:
+		return
+	var footer_height := _settings_portrait_footer_height(context)
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
+	HudThemeScript.style_scroll_container(scroll, "portrait_touch")
+	var vbar := scroll.get_v_scroll_bar()
+	if vbar != null:
+		NonBattleTouchBridgeScript.bind_range_touch(vbar)
+	scroll.custom_minimum_size = Vector2(content_width, maxf(0.0, content_height - footer_height - float(context.get("section_gap", 18)) * 3.0))
+	var stack_width := maxf(320.0, content_width - float(HudThemeScript.scrollbar_thickness_for_profile("portrait_touch")) - 18.0)
+	stack.custom_minimum_size = Vector2(stack_width, 0)
+	stack.add_theme_constant_override("separation", int(context.get("section_gap", 14)))
+	columns.visible = false
+	scroll.visible = true
+	var spacer := find_child("Spacer", true, false) as Control
+	if spacer != null:
+		spacer.visible = false
+	_layout_portrait_action_footer(context, content_width, content_height)
+	for column: Control in [form_column, guide_column]:
+		if column.get_parent() != stack:
+			if column.get_parent() != null:
+				column.get_parent().remove_child(column)
+			column.owner = null
+			stack.add_child(column)
+		column.custom_minimum_size = Vector2(stack_width, 0)
+		column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		column.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_set_runtime_owner(stack)
+
+
+func _apply_settings_landscape_layout(_context: Dictionary) -> void:
+	_configure_settings_form_bounds()
+	var root := get_node_or_null("VBoxContainer") as VBoxContainer
+	var columns := root.get_node_or_null("ContentColumns") as HBoxContainer if root != null else null
+	var form_column := find_child("FormColumn", true, false) as Control
+	var guide_column := find_child("ZenMuxGuideColumn", true, false) as Control
+	var scroll := root.get_node_or_null("PortraitSettingsScroll") as ScrollContainer if root != null else null
+	if scroll != null:
+		scroll.visible = false
+	var spacer := find_child("Spacer", true, false) as Control
+	if spacer != null:
+		spacer.visible = true
+	if columns == null or form_column == null or guide_column == null:
+		return
+	_restore_landscape_action_footer(root)
+	for column: Control in [form_column, guide_column]:
+		if column.get_parent() != columns:
+			if column.get_parent() != null:
+				column.get_parent().remove_child(column)
+			column.owner = null
+			columns.add_child(column)
+	columns.move_child(form_column, 0)
+	columns.move_child(guide_column, 1)
+	columns.visible = true
+	form_column.custom_minimum_size = Vector2(420, 0)
+	guide_column.custom_minimum_size = Vector2(360, 0)
+	form_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	guide_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_set_runtime_owner(columns)
+
+
+func _layout_portrait_action_footer(context: Dictionary, content_width: float, content_height: float) -> void:
+	var root := get_node_or_null("VBoxContainer") as VBoxContainer
+	var action_row := find_child("HBox", true, false) as HBoxContainer
+	if action_row == null:
+		return
+	if action_row.get_parent() != self:
+		if action_row.get_parent() != null:
+			action_row.get_parent().remove_child(action_row)
+		action_row.owner = null
+		add_child(action_row)
+	action_row.visible = true
+	action_row.z_index = 40
+	action_row.mouse_filter = Control.MOUSE_FILTER_PASS
+	action_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	action_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	action_row.add_theme_constant_override("separation", int(context.get("section_gap", 14)))
+	var footer_height := _settings_portrait_footer_height(context)
+	var footer_gap := clampf(22.0 * float(context.get("portrait_scale", 1.0)), 22.0, 42.0)
+	action_row.anchor_left = 0.5
+	action_row.anchor_right = 0.5
+	action_row.anchor_top = 0.5
+	action_row.anchor_bottom = 0.5
+	action_row.offset_left = -content_width * 0.5
+	action_row.offset_right = content_width * 0.5
+	action_row.offset_top = content_height * 0.5 - footer_height - footer_gap
+	action_row.offset_bottom = content_height * 0.5 - footer_gap
+	var viewport_size: Vector2 = context.get("viewport_size", Vector2(390, 844))
+	action_row.position = Vector2(
+		viewport_size.x * 0.5 + action_row.offset_left,
+		viewport_size.y * 0.5 + action_row.offset_top
+	)
+	action_row.size = Vector2(content_width, footer_height)
+	if root != null:
+		move_child(action_row, get_child_count() - 1)
+	var visible_buttons: Array[Button] = []
+	for button_name: String in ["BtnSave", "BtnTest", "BtnBack"]:
+		var button := find_child(button_name, true, false) as Button
+		if button != null:
+			button.mouse_filter = Control.MOUSE_FILTER_STOP
+			visible_buttons.append(button)
+	if not visible_buttons.is_empty():
+		var gap := float(context.get("section_gap", 18))
+		var button_width := maxf(1.0, (content_width - gap * float(visible_buttons.size() - 1)) / float(visible_buttons.size()))
+		var x := 0.0
+		for button: Button in visible_buttons:
+			button.position = Vector2(x, 0.0)
+			button.size = Vector2(button_width, footer_height)
+			x += button_width + gap
+
+
+func _settings_portrait_footer_height(context: Dictionary) -> float:
+	return float(context.get("secondary_button_height", 84.0)) * 1.12
+
+
+func _handle_portrait_action_footer_input(event: InputEvent) -> bool:
+	if str(get_meta("non_battle_layout_mode", "")) != "portrait":
+		return false
+	var pointer_position := Vector2.ZERO
+	var pressed := false
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		pointer_position = touch.position
+		pressed = touch.pressed
+	elif event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if mouse_button.button_index != MOUSE_BUTTON_LEFT:
+			return false
+		if not _is_mobile_like_runtime():
+			return false
+		pointer_position = mouse_button.position
+		pressed = mouse_button.pressed
+	else:
+		return false
+	var button := _portrait_footer_button_at_position(pointer_position)
+	if pressed:
+		_portrait_action_footer_candidate = button
+		if button != null:
+			_accept_pointer_event()
+			return true
+		return false
+	var candidate := _portrait_action_footer_candidate
+	_portrait_action_footer_candidate = null
+	if candidate == null:
+		candidate = button
+	if candidate == null or candidate != button:
+		return false
+	if candidate.disabled or not candidate.visible:
+		return false
+	candidate.pressed.emit()
+	_accept_pointer_event()
+	return true
+
+
+func _portrait_footer_button_at_position(global_position: Vector2) -> Button:
+	var action_row := find_child("HBox", true, false) as HBoxContainer
+	if action_row == null or not action_row.visible:
+		return null
+	for button_name: String in ["BtnSave", "BtnTest", "BtnBack"]:
+		var button := find_child(button_name, true, false) as Button
+		if button != null and button.visible and button.get_global_rect().has_point(global_position):
+			return button
+	var row_rect := action_row.get_global_rect()
+	if not row_rect.has_point(global_position):
+		return null
+	var buttons: Array[Button] = []
+	for button_name: String in ["BtnSave", "BtnTest", "BtnBack"]:
+		var button := find_child(button_name, true, false) as Button
+		if button != null and button.visible:
+			buttons.append(button)
+	if buttons.is_empty():
+		return null
+	var segment_width := row_rect.size.x / float(buttons.size())
+	var index := clampi(int(floor((global_position.x - row_rect.position.x) / maxf(segment_width, 1.0))), 0, buttons.size() - 1)
+	return buttons[index]
+
+
+func _is_mobile_like_runtime() -> bool:
+	return OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
+
+
+func _accept_pointer_event() -> void:
+	var viewport := get_viewport()
+	if viewport != null:
+		viewport.set_input_as_handled()
+
+
+func _restore_landscape_action_footer(root: VBoxContainer) -> void:
+	var action_row := find_child("HBox", true, false) as HBoxContainer
+	if action_row == null or root == null:
+		return
+	if action_row.get_parent() != root:
+		if action_row.get_parent() != null:
+			action_row.get_parent().remove_child(action_row)
+		action_row.owner = null
+		root.add_child(action_row)
+	action_row.z_index = 0
+	action_row.anchor_left = 0.0
+	action_row.anchor_right = 0.0
+	action_row.anchor_top = 0.0
+	action_row.anchor_bottom = 0.0
+	action_row.offset_left = 0.0
+	action_row.offset_right = 0.0
+	action_row.offset_top = 0.0
+	action_row.offset_bottom = 0.0
+
+
+func _apply_settings_mobile_metrics(node: Node, context: Dictionary, portrait: bool) -> void:
+	if node is Button:
+		var button := node as Button
+		if portrait:
+			var button_height := _settings_portrait_footer_height(context) if button.name in ["BtnSave", "BtnTest", "BtnBack"] else float(context.get("secondary_button_height", 84.0))
+			button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, button_height)
+		elif button.name in ["BtnSave", "BtnTest", "BtnBack"]:
+			button.custom_minimum_size.y = 40.0
+		if portrait and button.name in ["BtnSave", "BtnTest", "BtnBack", "BtnUseZenMuxDefault", "BtnOpenZenMux"]:
+			button.custom_minimum_size.x = 0.0
+			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		elif not portrait and button.name in ["BtnSave", "BtnTest", "BtnBack"]:
+			button.custom_minimum_size.x = 140.0
+			button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		button.add_theme_font_size_override("font_size", int(context.get("button_font_size", 15)) if portrait else HudThemeScript.scaled_font_size(15))
+		NonBattleTouchBridgeScript.bind_button_touch(button)
+	elif node is LineEdit:
+		var input := node as LineEdit
+		input.custom_minimum_size.y = maxf(input.custom_minimum_size.y, float(context.get("input_height", 80.0))) if portrait else 35.0
+		input.size_flags_horizontal = Control.SIZE_EXPAND_FILL if portrait else input.size_flags_horizontal
+		input.add_theme_font_size_override("font_size", int(context.get("input_font_size", 15)) if portrait else HudThemeScript.scaled_font_size(15))
+	elif node is SpinBox:
+		var spin := node as SpinBox
+		spin.custom_minimum_size.y = maxf(spin.custom_minimum_size.y, float(context.get("input_height", 80.0))) if portrait else 35.0
+		spin.size_flags_horizontal = Control.SIZE_EXPAND_FILL if portrait else spin.size_flags_horizontal
+		spin.add_theme_font_size_override("font_size", int(context.get("input_font_size", 15)) if portrait else HudThemeScript.scaled_font_size(15))
+	elif node is OptionButton:
+		var option := node as OptionButton
+		option.custom_minimum_size.y = maxf(option.custom_minimum_size.y, float(context.get("input_height", 80.0))) if portrait else 35.0
+		option.size_flags_horizontal = Control.SIZE_EXPAND_FILL if portrait else option.size_flags_horizontal
+		option.add_theme_font_size_override("font_size", int(context.get("input_font_size", 15)) if portrait else HudThemeScript.scaled_font_size(15))
+	elif node is HBoxContainer:
+		var row := node as HBoxContainer
+		if portrait and row.name == "HBox":
+			row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			row.alignment = BoxContainer.ALIGNMENT_CENTER
+			row.add_theme_constant_override("separation", int(context.get("section_gap", 14)))
+	elif node is Label:
+		var label := node as Label
+		if label.name == "Title":
+			label.add_theme_font_size_override("font_size", int(context.get("title_font_size", 34)) if portrait else HudThemeScript.scaled_font_size(34))
+		elif portrait and label.name in ["SectionLabel", "ZenMuxGuideTitle", "ZenMuxTroubleTitle"]:
+			label.add_theme_font_size_override("font_size", int(context.get("section_font_size", 29)))
+			label.add_theme_constant_override("line_spacing", int(float(context.get("portrait_scale", 1.0)) * 5.0))
+		elif portrait and label.name in ["EndpointHint", "ApiKeyHint", "ModelHint"]:
+			label.add_theme_font_size_override("font_size", int(context.get("meta_font_size", 19)))
+			label.add_theme_constant_override("line_spacing", int(float(context.get("portrait_scale", 1.0)) * 5.0))
+		elif portrait and label.name in ["ZenMuxGuideBody", "ZenMuxTroubleBody"]:
+			label.add_theme_font_size_override("font_size", int(context.get("body_font_size", 23)))
+			label.add_theme_constant_override("line_spacing", int(float(context.get("portrait_scale", 1.0)) * 8.0))
+		elif portrait:
+			label.add_theme_font_size_override("font_size", int(context.get("body_font_size", 18)))
+	for child: Node in node.get_children():
+		_apply_settings_mobile_metrics(child, context, portrait)
 
 
 func _apply_settings_copy() -> void:
@@ -248,10 +600,14 @@ func _sync_hud_frame_to_form() -> void:
 	var vbox := get_node_or_null("VBoxContainer") as Control
 	if frame == null or vbox == null:
 		return
-	frame.offset_left = vbox.offset_left - 30
-	frame.offset_top = vbox.offset_top - 28
-	frame.offset_right = vbox.offset_right + 30
-	frame.offset_bottom = vbox.offset_bottom + 58
+	var portrait := str(get_meta("non_battle_layout_mode", "")) == "portrait"
+	var side_pad := 14.0 if portrait else 30.0
+	var top_pad := 14.0 if portrait else 28.0
+	var bottom_pad := 18.0 if portrait else 58.0
+	frame.offset_left = vbox.offset_left - side_pad
+	frame.offset_top = vbox.offset_top - top_pad
+	frame.offset_right = vbox.offset_right + side_pad
+	frame.offset_bottom = vbox.offset_bottom + bottom_pad
 
 
 func _apply_hud_theme_recursive(node: Node) -> void:

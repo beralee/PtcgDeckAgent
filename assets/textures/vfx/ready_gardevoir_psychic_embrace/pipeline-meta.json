@@ -1,0 +1,249 @@
+{
+  "target": "creature",
+  "mode": "charge",
+  "prompt": "Body-first Gardevoir ex Psychic Embrace ready animation; elegant Pokemon body is the primary subject in every frame with attached violet-pink psychic aura close to the body.",
+  "role": "",
+  "input": "C:\\Users\\24726\\.codex\\generated_images\\019eb1d3-e9e4-7051-a3e5-3472e895aa8d\\ig_02be628f9aa7c3fc016a32c148b230819bb282f9926a76e2d9.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 1620,
+  "rows": 2,
+  "cols": 3,
+  "cell_size": 256,
+  "fit_scale": 0.82,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "center",
+  "shared_scale": true,
+  "component_mode": "largest",
+  "component_padding": 8,
+  "min_component_area": 32,
+  "edge_touch_margin": 0,
+  "frame_labels": [
+    "ready-1",
+    "ready-2",
+    "ready-3",
+    "ready-4",
+    "ready-5",
+    "ready-6"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 46753,
+      "selected_component_bbox": [
+        105,
+        63,
+        385,
+        446
+      ],
+      "crop_bbox": [
+        97,
+        55,
+        393,
+        454
+      ],
+      "edge_touch": false,
+      "output_size": [
+        155,
+        209
+      ],
+      "paste_position": [
+        50,
+        23
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        512,
+        0,
+        1024,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 10,
+      "selected_component_area": 45927,
+      "selected_component_bbox": [
+        84,
+        72,
+        398,
+        444
+      ],
+      "crop_bbox": [
+        76,
+        64,
+        406,
+        452
+      ],
+      "edge_touch": false,
+      "output_size": [
+        173,
+        203
+      ],
+      "paste_position": [
+        41,
+        26
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        1024,
+        0,
+        1536,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 6,
+      "selected_component_area": 47367,
+      "selected_component_bbox": [
+        50,
+        84,
+        379,
+        449
+      ],
+      "crop_bbox": [
+        42,
+        76,
+        387,
+        457
+      ],
+      "edge_touch": false,
+      "output_size": [
+        181,
+        199
+      ],
+      "paste_position": [
+        37,
+        28
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        512,
+        512,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 5,
+      "selected_component_area": 63485,
+      "selected_component_bbox": [
+        92,
+        32,
+        435,
+        416
+      ],
+      "crop_bbox": [
+        84,
+        24,
+        443,
+        424
+      ],
+      "edge_touch": false,
+      "output_size": [
+        188,
+        209
+      ],
+      "paste_position": [
+        34,
+        23
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        512,
+        512,
+        1024,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 5,
+      "selected_component_area": 48284,
+      "selected_component_bbox": [
+        87,
+        48,
+        392,
+        415
+      ],
+      "crop_bbox": [
+        79,
+        40,
+        400,
+        423
+      ],
+      "edge_touch": false,
+      "output_size": [
+        168,
+        200
+      ],
+      "paste_position": [
+        44,
+        28
+      ]
+    },
+    {
+      "grid": [
+        1,
+        2
+      ],
+      "source_box": [
+        1024,
+        512,
+        1536,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 5,
+      "selected_component_area": 43762,
+      "selected_component_bbox": [
+        50,
+        51,
+        340,
+        416
+      ],
+      "crop_bbox": [
+        42,
+        43,
+        348,
+        424
+      ],
+      "edge_touch": false,
+      "output_size": [
+        160,
+        199
+      ],
+      "paste_position": [
+        48,
+        28
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

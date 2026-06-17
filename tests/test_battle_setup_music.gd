@@ -14,7 +14,8 @@ func _force_two_player_mode(scene: Control) -> void:
 	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
 	if mode_option == null:
 		return
-	mode_option.select(0)
+	if mode_option.item_count > 0:
+		mode_option.select(0)
 	scene.call("_refresh_deck_options")
 	scene.call("_refresh_ai_ui_visibility")
 
@@ -41,6 +42,14 @@ func _restore_settings_text(original_text: String) -> void:
 	file.close()
 
 
+func _dispose_scene(scene: Node) -> void:
+	if scene == null:
+		return
+	if scene.get_parent() != null:
+		scene.get_parent().remove_child(scene)
+	scene.free()
+
+
 func test_battle_setup_populates_bgm_option() -> String:
 	var scene := BattleSetupScene.instantiate()
 	var tree := Engine.get_main_loop() as SceneTree
@@ -64,7 +73,7 @@ func test_battle_setup_populates_bgm_option() -> String:
 		assert_true(preview_button != null, "应提供 BGM 试听按钮"),
 	])
 
-	scene.queue_free()
+	_dispose_scene(scene)
 	return result
 
 
@@ -97,7 +106,7 @@ func test_battle_setup_applies_selected_bgm_volume_to_game_manager() -> String:
 	scene.call("_apply_setup_selection")
 	var applied := int(GameManager.get("battle_bgm_volume_percent"))
 
-	scene.queue_free()
+	_dispose_scene(scene)
 	return run_checks([
 		assert_eq(applied, 37, "应把对战 BGM 音量写入 GameManager"),
 	])
@@ -122,7 +131,7 @@ func test_battle_setup_defaults_bgm_volume_to_20_without_saved_settings() -> Str
 		assert_eq(bgm_volume_value.text, "20%", "首次启动时应显示 20% 的默认 BGM 音量"),
 	])
 
-	scene.queue_free()
+	_dispose_scene(scene)
 	GameManager.selected_battle_music_id = previous_track
 	GameManager.battle_bgm_volume_percent = previous_volume
 	_restore_settings_text(original_settings_text)
@@ -147,7 +156,7 @@ func test_battle_setup_back_persists_bgm_volume_setting() -> String:
 	var parse_ok := json.parse(saved_text) == OK
 	var saved_data: Dictionary = json.data if parse_ok and json.data is Dictionary else {}
 
-	scene.queue_free()
+	_dispose_scene(scene)
 	_set_navigation_suppressed(false)
 	_restore_settings_text(original_settings_text)
 	return run_checks([
@@ -171,7 +180,8 @@ func test_battle_setup_preview_button_reflects_playing_state() -> String:
 	scene.call("_on_bgm_preview_pressed")
 	var after_stop := preview_button.text
 
-	scene.queue_free()
+	BattleMusicManager.stop_battle_music()
+	_dispose_scene(scene)
 	return run_checks([
 		assert_eq(after_start, "停止试听", "开始试听后按钮文案应切换"),
 		assert_eq(after_stop, "试听", "停止试听后按钮文案应恢复"),
@@ -197,7 +207,8 @@ func test_battle_setup_preview_respects_volume_slider_changes_in_real_time() -> 
 	scene.call("_on_bgm_volume_changed", 90.0)
 	var loud_volume := float(audio_player.volume_db)
 
-	scene.queue_free()
+	BattleMusicManager.stop_battle_music()
+	_dispose_scene(scene)
 	return run_checks([
 		assert_true(loud_volume > quiet_volume, "试听中调高音量应立即提高播放器音量"),
 	])

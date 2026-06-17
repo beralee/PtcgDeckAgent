@@ -93,6 +93,8 @@ func execute_attack(
 
 
 func _resolve_attack_index(card: CardInstance, attack: Dictionary) -> int:
+	if attack.has("_override_attack_index"):
+		return int(attack.get("_override_attack_index", -1))
 	if card == null or card.card_data == null:
 		return -1
 	for i: int in card.card_data.attacks.size():

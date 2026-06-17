@@ -752,7 +752,7 @@ func _count_pointer_blocking_children(node: Node, ignored: Node = null) -> int:
 	return count
 
 
-func test_card_search_dialog_arms_release_fallback_for_first_card_tap() -> String:
+func test_card_search_dialog_does_not_arm_release_fallback_for_fresh_choices() -> String:
 	var battle_scene = _make_battle_scene_stub()
 	var card := CardInstance.create(_make_pokemon_cd("Search Target", 60, "C"), 0)
 	battle_scene.set("_pending_choice", "effect_interaction")
@@ -768,22 +768,92 @@ func test_card_search_dialog_arms_release_fallback_for_first_card_tap() -> Strin
 	var row := battle_scene.get("_dialog_card_row") as HBoxContainer
 	var card_view := row.get_child(0) as BattleCardView if row != null and row.get_child_count() > 0 else null
 	var armed_on_open := card_view != null and bool(card_view.call("is_primary_release_fallback_armed"))
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = Vector2(24, 24)
+	release.global_position = Vector2(24, 24)
+	if card_view != null:
+		card_view.call("_gui_input", release)
+	var selected_without_fallback: Array = (battle_scene.get("_dialog_card_selected_indices") as Array).duplicate()
 	if card_view != null:
 		card_view.call("arm_primary_release_fallback", "test_dialog_missing_press", 0, 1000)
-		var release := InputEventMouseButton.new()
-		release.button_index = MOUSE_BUTTON_LEFT
-		release.pressed = false
-		release.position = Vector2(24, 24)
-		release.global_position = Vector2(24, 24)
 		card_view.call("_gui_input", release)
-	var selected_indices: Array = battle_scene.get("_dialog_card_selected_indices")
+	var selected_after_manual_fallback: Array = (battle_scene.get("_dialog_card_selected_indices") as Array).duplicate()
 
 	var result := run_checks([
 		assert_true(card_view != null, "Card search dialog should render a card view"),
-		assert_true(armed_on_open, "Card search dialog cards should arm a short missing-press fallback when opened"),
-		assert_eq(selected_indices, [0], "A release-only first tap during the fallback window should select the dialog card"),
+		assert_false(armed_on_open, "Fresh dialog cards should not arm a missing-press fallback from the previous modal touch"),
+		assert_eq(selected_without_fallback, [], "A release-only event from the previous touch should not select a fresh dialog card"),
+		assert_eq(selected_after_manual_fallback, [0], "BattleCardView fallback still works when deliberately armed for hand-card recovery paths"),
 	])
 	battle_scene.free()
+	return result
+
+
+func test_card_search_dialog_normal_press_release_selects_fresh_choice() -> String:
+	var mouse_scene = _make_battle_scene_stub()
+	var mouse_card := CardInstance.create(_make_pokemon_cd("Mouse Search Target", 60, "C"), 0)
+	mouse_scene.set("_pending_choice", "effect_interaction")
+	mouse_scene.call("_show_dialog", "Search", [], {
+		"presentation": "cards",
+		"card_items": [mouse_card],
+		"choice_labels": ["Mouse Search Target"],
+		"min_select": 0,
+		"max_select": 2,
+		"allow_cancel": true,
+	})
+	var mouse_row := mouse_scene.get("_dialog_card_row") as HBoxContainer
+	var mouse_card_view := mouse_row.get_child(0) as BattleCardView if mouse_row != null and mouse_row.get_child_count() > 0 else null
+	if mouse_card_view != null:
+		var mouse_press := InputEventMouseButton.new()
+		mouse_press.button_index = MOUSE_BUTTON_LEFT
+		mouse_press.pressed = true
+		mouse_press.position = Vector2(24, 24)
+		mouse_press.global_position = Vector2(24, 24)
+		var mouse_release := InputEventMouseButton.new()
+		mouse_release.button_index = MOUSE_BUTTON_LEFT
+		mouse_release.pressed = false
+		mouse_release.position = Vector2(24, 24)
+		mouse_release.global_position = Vector2(24, 24)
+		mouse_card_view.call("_gui_input", mouse_press)
+		mouse_card_view.call("_gui_input", mouse_release)
+	var mouse_selected: Array = (mouse_scene.get("_dialog_card_selected_indices") as Array).duplicate()
+
+	var touch_scene = _make_battle_scene_stub()
+	var touch_card := CardInstance.create(_make_pokemon_cd("Touch Search Target", 60, "C"), 0)
+	touch_scene.set("_pending_choice", "effect_interaction")
+	touch_scene.call("_show_dialog", "Search", [], {
+		"presentation": "cards",
+		"card_items": [touch_card],
+		"choice_labels": ["Touch Search Target"],
+		"min_select": 0,
+		"max_select": 2,
+		"allow_cancel": true,
+	})
+	var touch_row := touch_scene.get("_dialog_card_row") as HBoxContainer
+	var touch_card_view := touch_row.get_child(0) as BattleCardView if touch_row != null and touch_row.get_child_count() > 0 else null
+	if touch_card_view != null:
+		var touch_press := InputEventScreenTouch.new()
+		touch_press.index = 0
+		touch_press.pressed = true
+		touch_press.position = Vector2(24, 24)
+		var touch_release := InputEventScreenTouch.new()
+		touch_release.index = 0
+		touch_release.pressed = false
+		touch_release.position = Vector2(24, 24)
+		touch_card_view.call("_gui_input", touch_press)
+		touch_card_view.call("_gui_input", touch_release)
+	var touch_selected: Array = (touch_scene.get("_dialog_card_selected_indices") as Array).duplicate()
+
+	var result := run_checks([
+		assert_true(mouse_card_view != null, "Mouse card search dialog should render a clickable card view"),
+		assert_eq(mouse_selected, [0], "Mouse press/release should select a fresh dialog card without fallback"),
+		assert_true(touch_card_view != null, "Touch card search dialog should render a clickable card view"),
+		assert_eq(touch_selected, [0], "ScreenTouch press/release should select a fresh dialog card without fallback"),
+	])
+	mouse_scene.free()
+	touch_scene.free()
 	return result
 
 
@@ -4619,17 +4689,16 @@ func test_battle_scene_discard_item_list_right_click_opens_card_detail() -> Stri
 func test_battle_scene_llm_wait_hud_uses_model_specific_copy() -> String:
 	var scene := _make_battle_scene_stub()
 	var deepseek_text := str(scene.call("_llm_wait_hud_text_for_model", "deepseek/deepseek-v4-pro", 6, 12, 3))
-	var grok_text := str(scene.call("_llm_wait_hud_text_for_model", "x-ai/grok-4.2-fast-non-reasoning", 4, 8, 2))
-	var qwen_text := str(scene.call("_llm_wait_hud_text_for_model", "qwen/qwen3.6-plus", 3, 5, 1))
+	var qwen_max_text := str(scene.call("_llm_wait_hud_text_for_model", "qwen/qwen3.7-max", 4, 8, 2))
+	var qwen_text := str(scene.call("_llm_wait_hud_text_for_model", "qwen/qwen3.7-plus", 3, 5, 1))
 	var gpt_text := str(scene.call("_llm_wait_hud_text_for_model", "gpt-5.5", 9, 1, 4))
 
 	return run_checks([
 		assert_str_contains(deepseek_text, "DeepSeek V4 Pro", "LLM wait HUD should show the concrete DeepSeek model"),
 		assert_str_contains(deepseek_text, "正在思考中", "DeepSeek wait HUD should use the thinking copy"),
 		assert_false(deepseek_text.contains("AI thinking"), "LLM wait HUD should no longer use the old English copy"),
-		assert_str_contains(grok_text, "Grok 4.2", "LLM wait HUD should compact Grok model names"),
-		assert_str_contains(grok_text, "正在挠头中", "Grok wait HUD should use a distinct playful copy"),
-		assert_str_contains(qwen_text, "Qwen 3.6 Plus", "LLM wait HUD should show Qwen model names"),
+		assert_str_contains(qwen_max_text, "Qwen 3.7 Max", "LLM wait HUD should show Qwen Max model names"),
+		assert_str_contains(qwen_text, "Qwen 3.7 Plus", "LLM wait HUD should show Qwen Plus model names"),
 		assert_str_contains(qwen_text, "正在排兵布阵", "Qwen wait HUD should use a strategy-flavored copy"),
 		assert_str_contains(gpt_text, "GPT-5.5", "LLM wait HUD should show GPT model names"),
 		assert_str_contains(gpt_text, "第 9 回合", "LLM wait HUD should keep turn context"),
@@ -6268,6 +6337,106 @@ func test_battle_scene_buddy_poffin_card_dialog_clicks_select_distinct_candidate
 	])
 
 
+func test_portrait_ultra_ball_search_step_does_not_arm_candidate_release_fallback() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 3
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var ultra_ball := CardInstance.create(_make_trainer_cd("Ultra Ball", "Item", ""), 0)
+	ultra_ball.card_data.effect_id = "a337ed34a45e63c6d21d98c3d8e0cb6e"
+	var discard_a := CardInstance.create(_make_trainer_cd("Discard A", "Item", ""), 0)
+	var discard_b := CardInstance.create(_make_trainer_cd("Discard B", "Item", ""), 0)
+	player.hand = [ultra_ball, discard_a, discard_b]
+	player.deck = [
+		CardInstance.create(_make_pokemon_cd("Search Pokemon", 90, "C"), 0),
+		CardInstance.create(_make_trainer_cd("Visible Item", "Item", ""), 0),
+	]
+
+	var steps: Array[Dictionary] = EffectUltraBall.new().get_interaction_steps(ultra_ball, gsm.game_state)
+	battle_scene.call("_start_effect_interaction", "trainer", 0, steps, ultra_ball)
+	battle_scene.call("_handle_effect_interaction_choice", PackedInt32Array([0, 1]))
+
+	var current_step := (battle_scene.get("_pending_effect_steps") as Array)[int(battle_scene.get("_pending_effect_step_index"))] as Dictionary
+	var card_row := battle_scene.get("_dialog_card_row") as HBoxContainer
+	var first_card := card_row.get_child(0) as BattleCardView if card_row != null and card_row.get_child_count() > 0 else null
+	var second_card := card_row.get_child(1) as BattleCardView if card_row != null and card_row.get_child_count() > 1 else null
+
+	return run_checks([
+		assert_eq(str(current_step.get("id", "")), "search_pokemon", "Ultra Ball should wait on the Pokemon search step after paying discard cost"),
+		assert_true(bool(battle_scene.get("_dialog_overlay").visible), "Ultra Ball Pokemon search should leave a visible choice dialog open"),
+		assert_true(bool(battle_scene.get("_dialog_card_mode")), "Ultra Ball Pokemon search should use the card dialog in portrait"),
+		assert_false(first_card != null and first_card.is_primary_release_fallback_armed(), "Fresh Ultra Ball search candidates must not consume the previous touch release"),
+		assert_false(second_card != null and second_card.is_primary_release_fallback_armed(), "Visible-only Ultra Ball deck cards must not consume the previous touch release either"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "effect_interaction", "Ultra Ball should still be waiting for the player's Pokemon search choice"),
+		assert_false(ultra_ball in player.discard_pile, "Ultra Ball should not resolve before the search choice is made"),
+	])
+
+
+func test_portrait_secret_box_item_step_does_not_arm_candidate_release_fallback() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 3
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var secret_box := CardInstance.create(_make_trainer_cd("Secret Box", "Item", ""), 0)
+	secret_box.card_data.effect_id = "e92a86246f44351d023bd4fa271089aa"
+	var discard_a := CardInstance.create(_make_trainer_cd("Discard A", "Item", ""), 0)
+	var discard_b := CardInstance.create(_make_trainer_cd("Discard B", "Item", ""), 0)
+	var discard_c := CardInstance.create(_make_trainer_cd("Discard C", "Item", ""), 0)
+	player.hand = [secret_box, discard_a, discard_b, discard_c]
+	player.deck = [
+		CardInstance.create(_make_trainer_cd("Secret Item", "Item", ""), 0),
+		CardInstance.create(_make_pokemon_cd("Visible Pokemon", 90, "C"), 0),
+		CardInstance.create(_make_trainer_cd("Secret Tool", "Tool", ""), 0),
+		CardInstance.create(_make_trainer_cd("Secret Supporter", "Supporter", ""), 0),
+		CardInstance.create(_make_trainer_cd("Secret Stadium", "Stadium", ""), 0),
+	]
+
+	var steps: Array[Dictionary] = EffectSecretBox.new().get_interaction_steps(secret_box, gsm.game_state)
+	battle_scene.call("_start_effect_interaction", "trainer", 0, steps, secret_box)
+	battle_scene.call("_handle_effect_interaction_choice", PackedInt32Array([0, 1, 2]))
+
+	var current_step := (battle_scene.get("_pending_effect_steps") as Array)[int(battle_scene.get("_pending_effect_step_index"))] as Dictionary
+	var card_row := battle_scene.get("_dialog_card_row") as HBoxContainer
+	var first_card := card_row.get_child(0) as BattleCardView if card_row != null and card_row.get_child_count() > 0 else null
+	var second_card := card_row.get_child(1) as BattleCardView if card_row != null and card_row.get_child_count() > 1 else null
+
+	return run_checks([
+		assert_eq(str(current_step.get("id", "")), "search_item", "Secret Box should ask for the Item search immediately after paying its discard cost"),
+		assert_true(bool(battle_scene.get("_dialog_overlay").visible), "Secret Box Item search should leave a visible choice dialog open"),
+		assert_true(bool(battle_scene.get("_dialog_card_mode")), "Secret Box Item search should use the card dialog in portrait"),
+		assert_false(first_card != null and first_card.is_primary_release_fallback_armed(), "Fresh Secret Box Item candidates must not consume the previous touch release"),
+		assert_false(second_card != null and second_card.is_primary_release_fallback_armed(), "Visible-only Secret Box deck cards must not consume the previous touch release either"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "effect_interaction", "Secret Box should still be waiting for the player's Item search choice"),
+		assert_false(secret_box in player.discard_pile, "Secret Box should not resolve before the search choices are made"),
+	])
+
+
 func test_portrait_card_search_dialog_restores_large_horizontal_scrollbar() -> String:
 	var battle_scene = _make_battle_scene_stub()
 	battle_scene.set("_active_battle_layout_mode", "portrait")
@@ -7352,6 +7521,74 @@ func test_grand_tree_followup_compacts_after_stage2_source_selection() -> String
 		assert_true(row != null and row.custom_minimum_size.y <= 1.0, "Grand Tree Stage 2 source row should not keep covering the Bench after source selection"),
 		assert_true(compact_height <= 156.0, "Grand Tree Stage 2 field target prompt should use the compact battlefield HUD height"),
 		assert_true(compact_height < expanded_height, "Grand Tree Stage 2 prompt should shrink after source selection"),
+	])
+
+
+func test_grand_tree_full_field_assignment_resolves_stage2_followup() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.turn_number = 3
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Seed", 70, "G"), 0))
+	active.turn_played = 0
+	gsm.game_state.players[0].active_pokemon = active
+
+	var stage1_cd := CardData.new()
+	stage1_cd.name = "Tree Stage1"
+	stage1_cd.card_type = "Pokemon"
+	stage1_cd.stage = "Stage 1"
+	stage1_cd.evolves_from = "Seed"
+	stage1_cd.hp = 100
+	stage1_cd.energy_type = "G"
+	var stage2_cd := CardData.new()
+	stage2_cd.name = "Tree Stage2"
+	stage2_cd.card_type = "Pokemon"
+	stage2_cd.stage = "Stage 2"
+	stage2_cd.evolves_from = "Tree Stage1"
+	stage2_cd.hp = 160
+	stage2_cd.energy_type = "G"
+	var stage1 := CardInstance.create(stage1_cd, 0)
+	var stage2 := CardInstance.create(stage2_cd, 0)
+	gsm.game_state.players[0].deck = [stage1, stage2]
+
+	var effect := EffectGrandTreeScript.new()
+	var stadium_cd := _make_trainer_cd("Great Tree", "Stadium", "")
+	stadium_cd.effect_id = "grand_tree_full_resolution"
+	var stadium := CardInstance.create(stadium_cd, 0)
+	gsm.game_state.stadium_card = stadium
+	gsm.game_state.stadium_owner_index = 0
+	gsm.effect_processor.register_effect("grand_tree_full_resolution", effect)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(stadium, gsm.game_state)
+	battle_scene.call("_start_effect_interaction", "stadium", 0, steps, stadium)
+
+	battle_scene.call("_on_field_assignment_source_chosen", 0)
+	battle_scene.call("_handle_field_assignment_target_index", 0)
+	battle_scene.call("_on_field_assignment_source_chosen", 0)
+	battle_scene.call("_handle_field_assignment_target_index", 0)
+	battle_scene.call("_finalize_field_assignment_selection")
+
+	var stack_size := active.pokemon_stack.size()
+	var top_name := active.get_pokemon_name()
+	var stage1_in_deck := stage1 in gsm.game_state.players[0].deck
+	var stage2_in_deck := stage2 in gsm.game_state.players[0].deck
+
+	return run_checks([
+		assert_eq(stack_size, 3, "Grand Tree should resolve the selected optional Stage 2 follow-up"),
+		assert_eq(top_name, "Tree Stage2", "Grand Tree full UI flow should leave the selected Stage 2 on top"),
+		assert_false(stage1_in_deck, "Selected Stage 1 should leave the deck"),
+		assert_false(stage2_in_deck, "Selected Stage 2 should leave the deck"),
+		assert_eq(int(gsm.game_state.stadium_effect_used_turn), 3, "Using Grand Tree through the field UI should mark the Stadium action used"),
 	])
 
 
@@ -14151,6 +14388,81 @@ func test_android_active_portrait_lugia_vstar_knockout_opens_prize_dialog_when_l
 	])
 
 	battle_scene.free()
+	GameManager.battle_layout_mode = previous_layout
+	return result
+
+
+func test_portrait_prize_dialog_ignores_stale_cached_dialog_vbox() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+	var battle_scene: Control = BattleScenePacked.instantiate()
+	battle_scene.set("_view_player", 0)
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	battle_scene.set("_dialog_overlay", battle_scene.find_child("DialogOverlay", true, false))
+	battle_scene.set("_dialog_title", battle_scene.find_child("DialogTitle", true, false))
+	battle_scene.set("_dialog_list", battle_scene.find_child("DialogList", true, false))
+	battle_scene.set("_dialog_confirm", battle_scene.find_child("DialogConfirm", true, false))
+	var live_dialog_vbox := battle_scene.find_child("DialogVBox", true, false) as VBoxContainer
+	var stale_dialog_vbox := VBoxContainer.new()
+	stale_dialog_vbox.name = "StaleDialogVBox"
+	battle_scene.set("_dialog_vbox", stale_dialog_vbox)
+	battle_scene.set("_dialog_box", battle_scene.find_child("DialogBox", true, false))
+	battle_scene.set("_my_prizes_title", battle_scene.find_child("MyPrizesLbl", true, false))
+	battle_scene.set("_opp_prizes_title", battle_scene.find_child("OppPrizesLbl", true, false))
+	battle_scene.set("_my_prize_hud_title", battle_scene.find_child("MyHudLeftTitle", true, false))
+	battle_scene.set("_opp_prize_hud_title", battle_scene.find_child("OppHudLeftTitle", true, false))
+	battle_scene.set("_my_hud_left", battle_scene.find_child("MyHudLeft", true, false))
+	battle_scene.set("_opp_hud_left", battle_scene.find_child("OppHudLeft", true, false))
+	battle_scene.set("_my_prize_hud_host", battle_scene.find_child("MyPrizeHudHost", true, false))
+	battle_scene.set("_opp_prize_hud_host", battle_scene.find_child("OppPrizeHudHost", true, false))
+	battle_scene.set("_my_deck_hud_box", battle_scene.find_child("MyDeckHudBox", true, false))
+	battle_scene.set("_opp_deck_hud_box", battle_scene.find_child("OppDeckHudBox", true, false))
+	battle_scene.set("_my_discard_hud_box", battle_scene.find_child("MyDiscardHudBox", true, false))
+	battle_scene.set("_opp_discard_hud_box", battle_scene.find_child("OppDiscardHudBox", true, false))
+
+	battle_scene.call("_setup_side_previews")
+	battle_scene.call("_setup_prize_viewer")
+
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 4
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	gsm.game_state.players[0].prizes.append(CardInstance.create(_make_pokemon_cd("Stale VBox Prize", 60, "C"), 0))
+	gsm.set("_pending_prize_player_index", 0)
+	gsm.set("_pending_prize_remaining", 1)
+	battle_scene.set("_gsm", gsm)
+
+	var my_slots: Array[BattleCardView] = battle_scene.get("_my_prize_slots")
+	battle_scene.set("_pending_choice", "take_prize")
+	battle_scene.set("_pending_prize_player_index", 0)
+	battle_scene.set("_pending_prize_remaining", 1)
+	battle_scene.call("_update_prize_slots", my_slots, gsm.game_state.players[0].get_prize_layout(), true)
+	battle_scene.call("_show_portrait_prize_dialog_if_needed")
+
+	var dialog_overlay := battle_scene.get("_dialog_overlay") as Panel
+	var my_host := battle_scene.get("_my_prize_hud_host") as VBoxContainer
+	var dialog_visible := dialog_overlay != null and dialog_overlay.visible
+	var host_in_live_dialog := my_host != null and live_dialog_vbox != null and my_host.get_parent() == live_dialog_vbox
+	var host_not_moved_to_stale_dialog := my_host != null and my_host.get_parent() != stale_dialog_vbox
+	var prize_slot := my_slots[0] if not my_slots.is_empty() else null
+	var prize_slot_clickable := prize_slot != null and prize_slot.mouse_filter == Control.MOUSE_FILTER_STOP
+
+	var result := run_checks([
+		assert_true(live_dialog_vbox != null, "The real battle scene should expose the live portrait dialog VBox"),
+		assert_true(dialog_visible, "A human portrait Prize prompt should still open when the cached VBox reference is stale"),
+		assert_true(host_in_live_dialog, "The Prize host must be moved into the live dialog VBox, not an old cached container"),
+		assert_true(host_not_moved_to_stale_dialog, "The Prize host should never be reparented into a detached stale dialog VBox"),
+		assert_true(prize_slot_clickable, "The visible Prize slot should remain clickable after recovering from a stale dialog VBox"),
+	])
+
+	battle_scene.free()
+	stale_dialog_vbox.free()
 	GameManager.battle_layout_mode = previous_layout
 	return result
 

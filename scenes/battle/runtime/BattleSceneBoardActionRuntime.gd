@@ -410,6 +410,7 @@ func _handle_slot_left_click(slot_id: String) -> void:
 		if cd.is_pokemon() and cd.stage != "Basic":
 			if _gsm.evolve_pokemon(cp, card, target_slot):
 				_selected_hand_card = null
+				_mark_ready_vfx_action_source(cp, "evolve")
 				_refresh_ui()
 				_suppress_slot_followup_click(slot_id, "evolve_target")
 				_try_start_evolve_trigger_ability_interaction(cp, target_slot)
@@ -1705,13 +1706,19 @@ func _suppress_slot_followup_click(slot_id: String, reason: String, duration_mse
 
 
 
+func _mark_ready_vfx_action_source(player_index: int, action_kind: String = "") -> void:
+	_ready_vfx_trigger_source_player_index = player_index
+	_ready_vfx_trigger_action_kind = action_kind
+
+
+
 func _refresh_ui_after_successful_action(check_handover: bool = false, action_player_index: int = -1) -> void:
 	if has_method("_clear_hand_drag_click_suppression"):
 		call("_clear_hand_drag_click_suppression", "successful_action")
 	if has_method("_arm_hand_primary_release_fallback_window"):
 		call("_arm_hand_primary_release_fallback_window", "successful_action")
 	_hide_invalid_action_hint()
-	_ready_vfx_trigger_source_player_index = action_player_index
+	_mark_ready_vfx_action_source(action_player_index)
 	_refresh_ui()
 	if check_handover:
 		_check_two_player_handover()
@@ -2087,7 +2094,9 @@ func _check_ready_vfx_triggers() -> void:
 	if _gsm == null or _gsm.game_state == null:
 		return
 	var trigger_source_player_index := _ready_vfx_trigger_source_player_index
+	var trigger_source_action_kind := _ready_vfx_trigger_action_kind
 	_ready_vfx_trigger_source_player_index = -1
+	_ready_vfx_trigger_action_kind = ""
 	if trigger_source_player_index < 0:
 		return
 	if _battle_ready_vfx_evaluator == null:
@@ -2102,6 +2111,9 @@ func _check_ready_vfx_triggers() -> void:
 			continue
 		var trigger: Dictionary = trigger_variant
 		if int(trigger.get("player_index", -1)) != trigger_source_player_index:
+			continue
+		var required_action_kind := str(trigger.get("required_action_kind", "")).strip_edges()
+		if required_action_kind != "" and required_action_kind != trigger_source_action_kind:
 			continue
 		var ready_key := str(trigger.get("ready_key", ""))
 		if ready_key == "" or _ready_vfx_seen_keys.has(ready_key):

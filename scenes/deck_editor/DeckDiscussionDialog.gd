@@ -4,6 +4,7 @@ signal assistant_response_finished
 
 const DeckDiscussionServiceScript = preload("res://scripts/engine/DeckDiscussionService.gd")
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
+const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
 
 const DIALOG_SIZE := Vector2i(980, 760)
 const DIALOG_MIN_SIZE := Vector2i(820, 620)
@@ -13,8 +14,8 @@ const PORTRAIT_DIALOG_MIN_SIZE := Vector2i(300, 570)
 const PORTRAIT_DIALOG_MARGIN_RATIO := 0.01
 const PORTRAIT_DIALOG_WIDTH_RATIO := 0.99
 const PORTRAIT_DIALOG_HEIGHT_RATIO := 0.68
-const PORTRAIT_REFERENCE_LOGICAL_WIDTH := 900.0
-const PORTRAIT_MAX_TOUCH_SCALE := 1.85
+const PORTRAIT_REFERENCE_LOGICAL_WIDTH := 720.0
+const PORTRAIT_MAX_TOUCH_SCALE := 1.82
 const PORTRAIT_MIN_BUBBLE_WIDTH := 240.0
 const HEADER_COMPACT_BOTTOM := 166.0
 const HEADER_BATTLE_BOTTOM := 126.0
@@ -81,6 +82,7 @@ func _ready() -> void:
 	%ResetButton.pressed.connect(_on_reset_pressed)
 	%CloseButton.pressed.connect(_on_dialog_close_requested)
 	%QuestionInput.gui_input.connect(_on_question_input_gui_input)
+	NonBattleTouchBridgeScript.bind_buttons_recursive(self)
 	%StatusLabel.text = ""
 	%TitleLabel.text = _discussion_title()
 	_apply_compact_layout()
@@ -870,6 +872,7 @@ func _refresh_suggestion_buttons(suggestions: Array[String], preserve_existing: 
 		button.clip_text = _is_portrait_profile()
 		_style_chip_button(button)
 		_apply_suggestion_button_profile(button)
+		NonBattleTouchBridgeScript.bind_button_touch(button)
 		button.pressed.connect(func() -> void:
 			%QuestionInput.text = suggestion
 			%QuestionInput.grab_focus()

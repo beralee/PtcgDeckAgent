@@ -3,6 +3,8 @@ extends Control
 const AppVersionScript := preload("res://scripts/app/AppVersion.gd")
 const FeedbackClientScript := preload("res://scripts/network/FeedbackClient.gd")
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
+const NonBattleLayoutControllerScript := preload("res://scripts/ui/non_battle/NonBattleLayoutController.gd")
+const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
 const SwissTournamentScript := preload("res://scripts/tournament/SwissTournament.gd")
 const DeckCenterMetaClientScript := preload("res://scripts/network/DeckCenterMetaClient.gd")
 const UpdateCheckerScript := preload("res://scripts/network/UpdateChecker.gd")
@@ -10,6 +12,7 @@ const UserVisitClientScript := preload("res://scripts/network/UserVisitClient.gd
 const MENU_VERTICAL_SHIFT := 88.0
 const MAIN_MENU_BUTTON_WIDTH := 312.0
 const MAIN_MENU_BUTTON_HEIGHT := 52.0
+const PORTRAIT_MENU_BUTTON_DOWN_SHIFT := 1.0
 const MAIN_MENU_FEATURED_ACCENT := Color(1.0, 0.70, 0.24, 1.0)
 const MAIN_MENU_DANGER_ACCENT := Color(1.0, 0.38, 0.34, 1.0)
 const CHAMPION_PREVIEW_PLAYER_NAME := "冠军玩家"
@@ -28,11 +31,13 @@ const CORNER_ACTION_BUTTON_SIZE := 58.0
 const CORNER_ACTION_BUTTON_SPACING := 14.0
 const CORNER_ACTION_BUTTON_RIGHT_MARGIN := 18.0
 const CORNER_ACTION_BUTTON_BOTTOM_MARGIN := 18.0
+const CORNER_ACTION_COUNT := 5
 const CORNER_ACTION_LABEL_GAP := 8.0
 const CORNER_ACTION_LABEL_MIN_WIDTH := 76.0
 const FEEDBACK_ICON_PATH := "res://assets/ui/main_action_feedback.png"
 const ABOUT_ICON_PATH := "res://assets/ui/main_action_about.png"
 const UPDATE_ICON_PATH := "res://assets/ui/main_action_update.png"
+const PORTRAIT_BACKGROUND_PATH := "res://assets/ui/title_portrait.png"
 const BUDEW_MASCOT_SHEET_PATH := "res://assets/ui/budew_mascot/sheet-transparent.png"
 const BUDEW_MASCOT_FRAME_SIZE := Vector2i(128, 128)
 const BUDEW_MASCOT_FRAME_COUNT := 4
@@ -64,6 +69,8 @@ var _deck_center_new_badge: PanelContainer = null
 var _feedback_button: Button = null
 var _manual_update_button: Button = null
 var _about_button: Button = null
+var _non_battle_orientation_button: Button = null
+var _share_button: Button = null
 var _available_update: Dictionary = {}
 var _manual_update_requested := false
 var _pending_deck_center_meta: Dictionary = {}
@@ -96,12 +103,19 @@ var _budew_mascot_last_move_x := 1.0
 var _budew_mascot_dodge_tween: Tween = null
 var _budew_mascot_jump_offset := 0.0
 var _main_menu_touch_button_candidate: Button = null
+var _non_battle_layout_controller: RefCounted = NonBattleLayoutControllerScript.new()
+var _main_menu_landscape_background_texture: Texture2D = null
+var _main_menu_portrait_background_texture: Texture2D = null
+var _portrait_home_title: Label = null
+var _portrait_home_subtitle: Label = null
 
 
 func _ready() -> void:
 	_apply_main_menu_hud()
 	_ensure_budew_mascot()
 	_setup_version_and_updates()
+	_connect_non_battle_layout_signal()
+	call_deferred("_apply_non_battle_layout")
 	%BtnSettings.text = "AI 设置"
 	%BtnStartBattle.pressed.connect(_on_start_battle)
 	%BtnTournament.pressed.connect(_on_tournament)
@@ -112,6 +126,12 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch or event is InputEventScreenDrag or event is InputEventMouseButton:
+		if bool(NonBattleTouchBridgeScript.handle_root_touch(self, event)):
+			return
+	if event is InputEventScreenTouch:
+		_handle_main_menu_touch_gui_input(event)
+		return
 	if event is InputEventMouseButton:
 		_handle_budew_mascot_unhandled_input(event)
 		return
@@ -137,6 +157,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
+		_apply_non_battle_layout()
 		_resize_feedback_panel()
 		_resize_hud_modal_panel()
 		_position_deck_center_new_badge()
@@ -157,6 +178,8 @@ func _apply_main_menu_hud() -> void:
 	var background := get_node_or_null("Background") as Control
 	if background != null:
 		background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if background is TextureRect and _main_menu_landscape_background_texture == null:
+			_main_menu_landscape_background_texture = (background as TextureRect).texture
 	var menu := get_node_or_null("VBoxContainer") as VBoxContainer
 	if menu != null:
 		menu.offset_left = -170.0
@@ -194,6 +217,157 @@ func _apply_main_menu_hud() -> void:
 
 
 	_ensure_deck_center_new_badge()
+	_apply_non_battle_layout()
+
+
+func _connect_non_battle_layout_signal() -> void:
+	if GameManager == null or not GameManager.has_signal("non_battle_layout_mode_changed"):
+		return
+	var callback := Callable(self, "_on_non_battle_layout_mode_changed")
+	if not GameManager.non_battle_layout_mode_changed.is_connected(callback):
+		GameManager.non_battle_layout_mode_changed.connect(callback)
+
+
+func _on_non_battle_layout_mode_changed(_mode: String) -> void:
+	_apply_non_battle_layout()
+	call_deferred("_apply_non_battle_layout")
+
+
+func _apply_non_battle_layout_for_tests(viewport_size: Vector2, mode: String) -> void:
+	_apply_non_battle_layout(viewport_size, mode)
+
+
+func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode: String = "") -> void:
+	var size := viewport_size
+	if size.x <= 0.0 or size.y <= 0.0:
+		size = get_viewport_rect().size if is_inside_tree() else Vector2(1600, 900)
+	var mode := forced_mode
+	if mode == "":
+		mode = _current_non_battle_orientation_mode()
+	var is_mobile := OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
+	var context: Dictionary = _non_battle_layout_controller.call("build_context", size, mode, is_mobile)
+	var portrait := bool(context.get("is_portrait", false))
+	set_meta("non_battle_layout_mode", str(context.get("resolved_mode", mode)))
+	set_meta("non_battle_layout_viewport_size", context.get("viewport_size", size))
+	_apply_main_menu_background(context, portrait)
+	_ensure_corner_action_buttons()
+	_layout_corner_action_buttons(context, portrait)
+	_apply_main_menu_frame_metrics(context, portrait)
+	_position_deck_center_new_badge()
+	_ensure_budew_mascot()
+	_layout_budew_mascot()
+
+
+func _apply_main_menu_frame_metrics(context: Dictionary, portrait: bool) -> void:
+	var menu := get_node_or_null("VBoxContainer") as VBoxContainer
+	if menu == null:
+		return
+	var content_width := float(context.get("content_width", MAIN_MENU_BUTTON_WIDTH))
+	var button_height := float(context.get("primary_button_height", MAIN_MENU_BUTTON_HEIGHT))
+	var button_font := int(context.get("button_font_size", 18))
+	var button_width := content_width if portrait else MAIN_MENU_BUTTON_WIDTH
+	var separation := int(context.get("section_gap", 12))
+	menu.add_theme_constant_override("separation", separation)
+	if portrait:
+		var viewport_size: Vector2 = context.get("viewport_size", Vector2(1080, 2400))
+		var button_count := 6.0
+		var group_height := button_height * button_count + float(separation) * (button_count - 1.0)
+		var menu_center_y := viewport_size.y * 0.595 + button_height * PORTRAIT_MENU_BUTTON_DOWN_SHIFT
+		var viewport_center_y := viewport_size.y * 0.5
+		menu.offset_left = -button_width * 0.5
+		menu.offset_right = button_width * 0.5
+		menu.offset_top = menu_center_y - group_height * 0.5 - viewport_center_y
+		menu.offset_bottom = menu.offset_top + group_height
+	else:
+		menu.offset_left = -170.0
+		menu.offset_right = 170.0
+		menu.offset_top = -175.0 + MENU_VERTICAL_SHIFT
+		menu.offset_bottom = 175.0 + MENU_VERTICAL_SHIFT
+	for button_name: String in ["BtnStartBattle", "BtnTournament", "BtnDeckManager", "BtnBattleReplay", "BtnSettings", "BtnQuit"]:
+		var button := get_node_or_null("%" + button_name) as Button
+		if button == null:
+			continue
+		button.custom_minimum_size = Vector2(button_width, button_height)
+		button.add_theme_font_size_override("font_size", button_font if portrait else HudThemeScript.scaled_font_size(button_font))
+		NonBattleTouchBridgeScript.bind_button_touch(button)
+	var version_label := get_node_or_null("VersionLabel") as Label
+	if version_label != null:
+		version_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14 if portrait else 12))
+
+
+func _apply_main_menu_background(context: Dictionary, portrait: bool) -> void:
+	var background := get_node_or_null("Background") as TextureRect
+	if background == null:
+		return
+	if _main_menu_landscape_background_texture == null:
+		_main_menu_landscape_background_texture = background.texture
+	if _main_menu_portrait_background_texture == null:
+		_main_menu_portrait_background_texture = load(PORTRAIT_BACKGROUND_PATH) as Texture2D
+	if portrait:
+		if _main_menu_portrait_background_texture != null:
+			background.texture = _main_menu_portrait_background_texture
+		background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		_hide_portrait_home_title()
+		return
+	background.texture = _main_menu_landscape_background_texture
+	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	_hide_portrait_home_title()
+
+
+func _layout_portrait_home_title(context: Dictionary) -> void:
+	_ensure_portrait_home_title()
+	if _portrait_home_title == null or _portrait_home_subtitle == null:
+		return
+	var viewport_size: Vector2 = context.get("viewport_size", Vector2(1080, 2400))
+	var content_width := minf(float(context.get("content_width", viewport_size.x - 64.0)), viewport_size.x - 72.0)
+	var title_font := maxi(int(context.get("title_font_size", 40)) + 8, 46)
+	var subtitle_font := maxi(int(context.get("section_font_size", 29)), 28)
+	var top := maxf(viewport_size.y * 0.075, 54.0)
+	var left := (viewport_size.x - content_width) * 0.5
+	_portrait_home_title.visible = true
+	_portrait_home_title.position = Vector2(left, top)
+	_portrait_home_title.size = Vector2(content_width, title_font * 1.35)
+	_portrait_home_title.add_theme_font_size_override("font_size", title_font)
+	_portrait_home_subtitle.visible = true
+	_portrait_home_subtitle.position = Vector2(left, top + title_font * 1.22)
+	_portrait_home_subtitle.size = Vector2(content_width, subtitle_font * 1.55)
+	_portrait_home_subtitle.add_theme_font_size_override("font_size", subtitle_font)
+
+
+func _ensure_portrait_home_title() -> void:
+	if _portrait_home_title != null and _portrait_home_subtitle != null:
+		return
+	if _portrait_home_title == null:
+		_portrait_home_title = Label.new()
+		_portrait_home_title.name = "PortraitHomeTitle"
+		_portrait_home_title.text = "PTCG Deck"
+		_portrait_home_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_portrait_home_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_portrait_home_title.add_theme_color_override("font_color", Color(0.96, 0.99, 1.0, 1.0))
+		_portrait_home_title.add_theme_color_override("font_shadow_color", Color(0.0, 0.8, 1.0, 0.72))
+		_portrait_home_title.add_theme_constant_override("shadow_offset_y", 4)
+		_portrait_home_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_portrait_home_title.visible = false
+		add_child(_portrait_home_title)
+	if _portrait_home_subtitle == null:
+		_portrait_home_subtitle = Label.new()
+		_portrait_home_subtitle.name = "PortraitHomeSubtitle"
+		_portrait_home_subtitle.text = "宝可梦卡牌智能练牌"
+		_portrait_home_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_portrait_home_subtitle.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_portrait_home_subtitle.add_theme_color_override("font_color", Color(0.78, 0.92, 1.0, 0.96))
+		_portrait_home_subtitle.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.72))
+		_portrait_home_subtitle.add_theme_constant_override("shadow_offset_y", 2)
+		_portrait_home_subtitle.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_portrait_home_subtitle.visible = false
+		add_child(_portrait_home_subtitle)
+
+
+func _hide_portrait_home_title() -> void:
+	if _portrait_home_title != null:
+		_portrait_home_title.visible = false
+	if _portrait_home_subtitle != null:
+		_portrait_home_subtitle.visible = false
 
 
 func _ensure_budew_mascot() -> void:
@@ -333,7 +507,7 @@ func _handle_main_menu_touch_gui_input(event: InputEvent) -> void:
 	var candidate := _main_menu_touch_button_candidate
 	_main_menu_touch_button_candidate = null
 	if candidate != null and candidate == button:
-		candidate.emit_signal("pressed")
+		candidate.pressed.emit()
 		_accept_main_menu_touch()
 
 
@@ -352,21 +526,7 @@ func _enable_button_touch_activation(button: Button) -> void:
 
 
 func _on_touch_button_gui_input(event: InputEvent, button: Button) -> void:
-	if not (event is InputEventScreenTouch):
-		return
-	if bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true)):
-		return
-	var touch := event as InputEventScreenTouch
-	if touch.pressed:
-		return
-	if button == null or button.disabled:
-		return
-	if button.is_inside_tree() and not button.is_visible_in_tree():
-		return
-	button.emit_signal("pressed")
-	var viewport := get_viewport()
-	if viewport != null:
-		viewport.set_input_as_handled()
+	NonBattleTouchBridgeScript.handle_button_touch(button, event)
 
 
 func _main_menu_button_hit_test(global_position: Vector2) -> bool:
@@ -530,6 +690,9 @@ func _budew_mascot_shadow_style() -> StyleBoxFlat:
 func _budew_mascot_display_size() -> Vector2:
 	var viewport_size := _main_menu_viewport_size()
 	var side := 116.0
+	if viewport_size.y > viewport_size.x:
+		side = clampf(viewport_size.x * 0.17, 124.0, 188.0)
+		return Vector2(side, side)
 	if viewport_size.x < 820.0:
 		side = 96.0
 	if viewport_size.y < 620.0:
@@ -574,7 +737,15 @@ func _nearest_budew_route_point(point: Vector2) -> Vector2:
 
 
 func _main_menu_viewport_size() -> Vector2:
-	return get_viewport_rect().size if is_inside_tree() else Vector2(1280, 720)
+	if has_meta("non_battle_layout_viewport_size"):
+		var stored: Variant = get_meta("non_battle_layout_viewport_size")
+		if stored is Vector2 and (stored as Vector2).x > 0.0 and (stored as Vector2).y > 0.0:
+			return stored as Vector2
+	if is_inside_tree():
+		return get_viewport_rect().size
+	if size.x > 0.0 and size.y > 0.0:
+		return size
+	return Vector2(1280, 720)
 
 
 func _main_menu_button_role(button_name: String) -> String:
@@ -652,7 +823,7 @@ func _main_menu_round_button_style(accent: Color, hover: bool, pressed: bool) ->
 		style.bg_color = Color(accent.r, accent.g, accent.b, 0.26)
 	style.border_color = Color(accent.r, accent.g, accent.b, 0.66 if not hover else 0.98)
 	style.set_border_width_all(2)
-	style.set_corner_radius_all(int(CORNER_ACTION_BUTTON_SIZE * 0.5))
+	style.set_corner_radius_all(999)
 	style.shadow_color = Color(accent.r, accent.g, accent.b, 0.26 if hover else 0.16)
 	style.shadow_size = 12 if hover else 7
 	style.content_margin_left = 0
@@ -663,22 +834,94 @@ func _main_menu_round_button_style(accent: Color, hover: bool, pressed: bool) ->
 
 
 func _ensure_corner_action_buttons() -> void:
+	if _non_battle_orientation_button == null:
+		_non_battle_orientation_button = _create_corner_icon_button("NonBattleOrientationButton", "", _non_battle_orientation_hover_label(), _corner_action_left_offset(5), HudThemeScript.ACCENT)
+		_non_battle_orientation_button.pressed.connect(_on_non_battle_orientation_button_pressed)
+		add_child(_non_battle_orientation_button)
 	if _feedback_button == null:
-		_feedback_button = _create_corner_icon_button("FeedbackButton", FEEDBACK_ICON_PATH, "建议反馈", _corner_action_left_offset(3), HudThemeScript.ACCENT_WARM)
+		_feedback_button = _create_corner_icon_button("FeedbackButton", FEEDBACK_ICON_PATH, "建议反馈", _corner_action_left_offset(4), HudThemeScript.ACCENT_WARM)
 		_feedback_button.pressed.connect(_on_feedback_button_pressed)
 		add_child(_feedback_button)
 	if _about_button == null:
-		_about_button = _create_corner_icon_button("AboutButton", ABOUT_ICON_PATH, "关于", _corner_action_left_offset(2), HudThemeScript.ACCENT)
+		_about_button = _create_corner_icon_button("AboutButton", ABOUT_ICON_PATH, "关于", _corner_action_left_offset(3), HudThemeScript.ACCENT)
 		_about_button.pressed.connect(_on_about_button_pressed)
 		add_child(_about_button)
 	if _manual_update_button == null:
-		_manual_update_button = _create_corner_icon_button("ManualUpdateButton", UPDATE_ICON_PATH, "检查更新", _corner_action_left_offset(1), HudThemeScript.ACCENT_WARM)
+		_manual_update_button = _create_corner_icon_button("ManualUpdateButton", UPDATE_ICON_PATH, "检查更新", _corner_action_left_offset(2), HudThemeScript.ACCENT_WARM)
 		_manual_update_button.pressed.connect(_on_manual_update_button_pressed)
 		add_child(_manual_update_button)
+	if _share_button == null:
+		_share_button = _create_corner_icon_button("ShareButton", "", "分享给牌友", _corner_action_left_offset(1), MAIN_MENU_FEATURED_ACCENT)
+		_share_button.text = "分享"
+		_share_button.pressed.connect(_on_share_button_pressed)
+		add_child(_share_button)
+	_update_non_battle_orientation_button_state()
 
 
-func _corner_action_left_offset(index_from_right: int) -> float:
-	return -CORNER_ACTION_BUTTON_RIGHT_MARGIN - (CORNER_ACTION_BUTTON_SIZE * float(index_from_right)) - (CORNER_ACTION_BUTTON_SPACING * float(max(index_from_right - 1, 0)))
+func _corner_action_button_size_for_context(context: Dictionary = {}, portrait: bool = false) -> float:
+	if portrait:
+		var viewport_size: Vector2 = context.get("viewport_size", get_viewport_rect().size if is_inside_tree() else Vector2(390, 844))
+		var width_fit := (viewport_size.x - CORNER_ACTION_BUTTON_RIGHT_MARGIN * 2.0 - 10.0 * float(CORNER_ACTION_COUNT - 1)) / float(CORNER_ACTION_COUNT)
+		return clampf(minf(clampf(viewport_size.x * 0.105, 74.0, 118.0), width_fit), 58.0, 118.0)
+	return CORNER_ACTION_BUTTON_SIZE
+
+
+func _corner_action_spacing_for_size(button_size: float, portrait: bool = false) -> float:
+	return clampf(button_size * (0.14 if portrait else 0.24), 10.0 if portrait else 12.0, 18.0)
+
+
+func _corner_action_bottom_margin_for_size(button_size: float, portrait: bool = false) -> float:
+	return clampf(button_size * (0.24 if portrait else 0.31), 18.0, 32.0)
+
+
+func _corner_action_right_margin_for_size(button_size: float, portrait: bool = false) -> float:
+	return clampf(button_size * (0.20 if portrait else 0.31), 18.0, 30.0)
+
+
+func _corner_action_left_offset(
+	index_from_right: int,
+	button_size: float = CORNER_ACTION_BUTTON_SIZE,
+	spacing: float = CORNER_ACTION_BUTTON_SPACING,
+	right_margin: float = CORNER_ACTION_BUTTON_RIGHT_MARGIN
+) -> float:
+	return -right_margin - (button_size * float(index_from_right)) - (spacing * float(max(index_from_right - 1, 0)))
+
+
+func _layout_corner_action_buttons(context: Dictionary, portrait: bool) -> void:
+	var button_size := _corner_action_button_size_for_context(context, portrait)
+	var spacing := _corner_action_spacing_for_size(button_size, portrait)
+	var bottom_margin := _corner_action_bottom_margin_for_size(button_size, portrait)
+	var right_margin := _corner_action_right_margin_for_size(button_size, portrait)
+	var entries: Array[Dictionary] = [
+		{"button": _non_battle_orientation_button, "index": 5, "accent": HudThemeScript.ACCENT},
+		{"button": _feedback_button, "index": 4, "accent": HudThemeScript.ACCENT_WARM},
+		{"button": _about_button, "index": 3, "accent": HudThemeScript.ACCENT},
+		{"button": _manual_update_button, "index": 2, "accent": HudThemeScript.ACCENT_WARM},
+		{"button": _share_button, "index": 1, "accent": MAIN_MENU_FEATURED_ACCENT},
+	]
+	for entry: Dictionary in entries:
+		var button := entry.get("button", null) as Button
+		if button == null:
+			continue
+		var accent: Color = entry.get("accent", HudThemeScript.ACCENT) as Color
+		var left_offset := _corner_action_left_offset(int(entry.get("index", 1)), button_size, spacing, right_margin)
+		button.custom_minimum_size = Vector2(button_size, button_size)
+		button.size = Vector2(button_size, button_size)
+		button.offset_left = left_offset
+		button.offset_top = -bottom_margin - button_size
+		button.offset_right = left_offset + button_size
+		button.offset_bottom = -bottom_margin
+		button.add_theme_constant_override("icon_max_width", int(button_size * 0.78))
+		if button == _share_button:
+			button.add_theme_font_size_override("font_size", roundi(button_size * (0.29 if portrait else 0.25)))
+		button.add_theme_stylebox_override("normal", _main_menu_round_button_style(accent, false, false))
+		button.add_theme_stylebox_override("hover", _main_menu_round_button_style(accent, true, false))
+		button.add_theme_stylebox_override("pressed", _main_menu_round_button_style(accent, true, true))
+		button.add_theme_stylebox_override("disabled", _main_menu_round_button_style(Color(0.35, 0.40, 0.46, 1.0), false, false))
+	if _corner_action_label_text != null:
+		_corner_action_label_text.add_theme_font_size_override("font_size", roundi(button_size * (0.34 if portrait else 0.26)))
+	if _corner_action_hover_button != null:
+		_position_corner_action_label(_corner_action_hover_button)
 
 
 func _create_corner_icon_button(button_name: String, icon_path: String, tip: String, left_offset: float, accent: Color) -> Button:
@@ -687,7 +930,8 @@ func _create_corner_icon_button(button_name: String, icon_path: String, tip: Str
 	button.text = ""
 	button.tooltip_text = ""
 	button.set_meta("corner_action_label", tip)
-	button.icon = load(icon_path) as Texture2D
+	if icon_path != "":
+		button.icon = _load_main_menu_icon_texture(icon_path)
 	button.expand_icon = true
 	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -717,6 +961,98 @@ func _create_corner_icon_button(button_name: String, icon_path: String, tip: Str
 	button.mouse_entered.connect(_show_corner_action_label.bind(button))
 	button.mouse_exited.connect(_hide_corner_action_label.bind(button))
 	return button
+
+
+func _load_main_menu_icon_texture(icon_path: String) -> Texture2D:
+	if icon_path == "":
+		return null
+	if _main_menu_imported_texture_cache_exists(icon_path):
+		var imported_texture := load(icon_path) as Texture2D
+		if imported_texture != null:
+			return imported_texture
+	var bytes := FileAccess.get_file_as_bytes(icon_path)
+	if bytes.is_empty():
+		return null
+	var image := Image.new()
+	if image.load_png_from_buffer(bytes) != OK:
+		return null
+	return ImageTexture.create_from_image(image)
+
+
+func _main_menu_imported_texture_cache_exists(icon_path: String) -> bool:
+	var import_file := FileAccess.open("%s.import" % icon_path, FileAccess.READ)
+	if import_file == null:
+		return false
+	var text := import_file.get_as_text()
+	import_file.close()
+	for raw_line: String in text.split("\n"):
+		var line := raw_line.strip_edges()
+		if line.begins_with("path=\"") and line.ends_with("\""):
+			var imported_path := line.substr(6, line.length() - 7)
+			return FileAccess.file_exists(imported_path)
+	return false
+
+
+func _on_non_battle_orientation_button_pressed() -> void:
+	_hide_corner_action_label(_non_battle_orientation_button)
+	if GameManager != null and GameManager.has_method("toggle_non_battle_layout_mode"):
+		GameManager.call("toggle_non_battle_layout_mode", true, true)
+	_update_non_battle_orientation_button_state()
+
+
+func _update_non_battle_orientation_button_state() -> void:
+	if _non_battle_orientation_button == null:
+		return
+	var mode := _current_non_battle_orientation_mode()
+	_non_battle_orientation_button.icon = _make_non_battle_orientation_icon(mode)
+	_non_battle_orientation_button.set_meta("corner_action_label", _non_battle_orientation_hover_label(mode))
+	_non_battle_orientation_button.set_meta("non_battle_orientation_mode", mode)
+	if _corner_action_hover_button == _non_battle_orientation_button:
+		_show_corner_action_label(_non_battle_orientation_button)
+
+
+func _current_non_battle_orientation_mode() -> String:
+	if GameManager != null and GameManager.has_method("sanitize_non_battle_layout_mode"):
+		return str(GameManager.call("sanitize_non_battle_layout_mode", str(GameManager.get("non_battle_layout_mode"))))
+	return "landscape"
+
+
+func _non_battle_orientation_hover_label(mode: String = "") -> String:
+	var normalized := mode if mode != "" else _current_non_battle_orientation_mode()
+	if normalized == "portrait":
+		return "非战斗界面：竖屏"
+	return "非战斗界面：横屏"
+
+
+func _make_non_battle_orientation_icon(mode: String) -> Texture2D:
+	var image := Image.create(64, 64, false, Image.FORMAT_RGBA8)
+	image.fill(Color(0, 0, 0, 0))
+	var portrait := mode == "portrait"
+	var screen_rect := Rect2i(Vector2i(21, 8), Vector2i(22, 48)) if portrait else Rect2i(Vector2i(8, 20), Vector2i(48, 24))
+	_fill_icon_rect(image, screen_rect, Color(0.05, 0.16, 0.20, 0.92))
+	_draw_icon_rect_outline(image, screen_rect, 3, Color(0.80, 1.0, 1.0, 1.0))
+	var inner_rect := Rect2i(screen_rect.position + Vector2i(5, 6), screen_rect.size - Vector2i(10, 12))
+	_draw_icon_rect_outline(image, inner_rect, 1, Color(0.28, 0.92, 1.0, 0.78))
+	if portrait:
+		_fill_icon_rect(image, Rect2i(Vector2i(screen_rect.position.x + 8, screen_rect.position.y + screen_rect.size.y - 6), Vector2i(6, 2)), Color(0.92, 1.0, 1.0, 0.95))
+	else:
+		_fill_icon_rect(image, Rect2i(Vector2i(screen_rect.position.x + screen_rect.size.x - 7, screen_rect.position.y + 10), Vector2i(2, 5)), Color(0.92, 1.0, 1.0, 0.95))
+	return ImageTexture.create_from_image(image)
+
+
+func _fill_icon_rect(image: Image, rect: Rect2i, color: Color) -> void:
+	for y: int in range(rect.position.y, rect.position.y + rect.size.y):
+		for x: int in range(rect.position.x, rect.position.x + rect.size.x):
+			if x >= 0 and y >= 0 and x < image.get_width() and y < image.get_height():
+				image.set_pixel(x, y, color)
+
+
+func _draw_icon_rect_outline(image: Image, rect: Rect2i, thickness: int, color: Color) -> void:
+	for i: int in thickness:
+		_fill_icon_rect(image, Rect2i(rect.position + Vector2i(i, i), Vector2i(rect.size.x - i * 2, 1)), color)
+		_fill_icon_rect(image, Rect2i(rect.position + Vector2i(i, rect.size.y - 1 - i), Vector2i(rect.size.x - i * 2, 1)), color)
+		_fill_icon_rect(image, Rect2i(rect.position + Vector2i(i, i), Vector2i(1, rect.size.y - i * 2)), color)
+		_fill_icon_rect(image, Rect2i(rect.position + Vector2i(rect.size.x - 1 - i, i), Vector2i(1, rect.size.y - i * 2)), color)
 
 
 func _ensure_corner_action_label() -> void:
@@ -784,7 +1120,8 @@ func _position_corner_action_label(button: Button) -> void:
 	if button == null or _corner_action_label == null or _corner_action_label_text == null:
 		return
 	var text_min := _corner_action_label_text.get_combined_minimum_size()
-	var desired := Vector2(maxf(CORNER_ACTION_LABEL_MIN_WIDTH, text_min.x + 28.0), 32.0)
+	var button_size := button.custom_minimum_size.x if button != null else CORNER_ACTION_BUTTON_SIZE
+	var desired := Vector2(maxf(CORNER_ACTION_LABEL_MIN_WIDTH, text_min.x + button_size * 0.48), maxf(32.0, button_size * 0.48))
 	_corner_action_label.custom_minimum_size = desired
 	_corner_action_label.size = desired
 	var button_rect := button.get_global_rect()
@@ -1186,6 +1523,53 @@ func _show_update_status_dialog(title: String, message: String) -> void:
 	], Vector2(460, 260))
 
 
+func _on_share_button_pressed() -> void:
+	_hide_corner_action_label(_share_button)
+	_show_share_dialog()
+
+
+func _show_share_dialog() -> void:
+	_show_hud_modal("把 PTCG Deck Agent 分享给牌友", _format_share_dialog_text(), [
+		{
+			"id": "close",
+			"text": "先看看",
+			"accent": HudThemeScript.ACCENT,
+			"primary": false,
+		},
+		{
+			"id": "copy_share_invite",
+			"text": "复制分享文案",
+			"accent": MAIN_MENU_FEATURED_ACCENT,
+			"primary": true,
+		},
+	], Vector2(680, 430))
+
+
+func _format_share_dialog_text() -> String:
+	return "\n".join(PackedStringArray([
+		"把链接发给牌友，就能免费一起测构筑、跑 AI 对局、复盘失误，也可以直接约几轮比赛模式。",
+		"",
+		"复制后可以发到群里或私聊：",
+		"免费 PTCG 练牌工具，有 AI 陪练和比赛模拟。打开就能试卡组：%s" % GAME_HOME_URL,
+		"",
+		"网址：%s" % GAME_HOME_URL,
+	]))
+
+
+func _format_share_clipboard_text() -> String:
+	return "\n".join(PackedStringArray([
+		"免费 PTCG 练牌工具，带 AI 陪练/对战。",
+		"打开就能试卡组：%s" % GAME_HOME_URL,
+	]))
+
+
+func _copy_share_invite_to_clipboard() -> String:
+	var share_text := _format_share_clipboard_text()
+	DisplayServer.clipboard_set(share_text)
+	_show_update_status_dialog("分享文案已复制", "已经复制到剪贴板。把它发到群聊或私聊给牌友，对方打开链接就能一起练牌。\n\n%s" % GAME_HOME_URL)
+	return share_text
+
+
 func _on_about_button_pressed() -> void:
 	_hide_corner_action_label(_about_button)
 	_show_about_dialog()
@@ -1256,9 +1640,11 @@ func _show_hud_modal(title: String, message: String, actions: Array, preferred_s
 	center.add_child(_hud_modal_panel)
 	_resize_hud_modal_panel()
 
+	var portrait := _is_portrait_home_layout()
+	var portrait_scale := _home_portrait_scale()
 	var root := VBoxContainer.new()
 	root.name = "HudModalRoot"
-	root.add_theme_constant_override("separation", 14)
+	root.add_theme_constant_override("separation", roundi(22.0 * portrait_scale) if portrait else 14)
 	_hud_modal_panel.add_child(root)
 
 	var header := HBoxContainer.new()
@@ -1269,13 +1655,14 @@ func _show_hud_modal(title: String, message: String, actions: Array, preferred_s
 	title_label.text = title
 	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	title_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(22))
+	title_label.add_theme_font_size_override("font_size", roundi(34.0 * portrait_scale) if portrait else HudThemeScript.scaled_font_size(22))
 	title_label.add_theme_color_override("font_color", Color(0.94, 0.99, 1.0, 1.0))
 	title_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.74, 1.0, 0.58))
 	title_label.add_theme_constant_override("shadow_offset_y", 2)
 	header.add_child(title_label)
 
-	var close_button := _create_feedback_action_button("×", HudThemeScript.ACCENT, Vector2(42, 38))
+	var close_button_size := Vector2(92.0 * portrait_scale, 92.0 * portrait_scale) if portrait else Vector2(42, 38)
+	var close_button := _create_feedback_action_button("×", HudThemeScript.ACCENT, close_button_size)
 	close_button.pressed.connect(_hide_hud_modal)
 	header.add_child(close_button)
 
@@ -1283,7 +1670,7 @@ func _show_hud_modal(title: String, message: String, actions: Array, preferred_s
 	scroll.name = "HudModalScroll"
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.custom_minimum_size = Vector2(0, maxf(120.0, preferred_size.y - 170.0))
+	scroll.custom_minimum_size = Vector2(0, maxf(360.0 * portrait_scale, preferred_size.y - 170.0) if portrait else maxf(120.0, preferred_size.y - 170.0))
 	root.add_child(scroll)
 
 	if body_bbcode:
@@ -1295,7 +1682,7 @@ func _show_hud_modal(title: String, message: String, actions: Array, preferred_s
 		rich_body.scroll_active = false
 		rich_body.selection_enabled = true
 		rich_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		rich_body.add_theme_font_size_override("normal_font_size", HudThemeScript.scaled_font_size(16))
+		rich_body.add_theme_font_size_override("normal_font_size", roundi(27.0 * portrait_scale) if portrait else HudThemeScript.scaled_font_size(16))
 		rich_body.add_theme_color_override("default_color", Color(0.84, 0.93, 1.0, 1.0))
 		rich_body.add_theme_color_override("font_selected_color", Color(0.03, 0.07, 0.10, 1.0))
 		rich_body.add_theme_color_override("selection_color", Color(0.30, 0.86, 1.0, 0.72))
@@ -1307,7 +1694,7 @@ func _show_hud_modal(title: String, message: String, actions: Array, preferred_s
 		body.text = message
 		body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		body.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(16))
+		body.add_theme_font_size_override("font_size", roundi(27.0 * portrait_scale) if portrait else HudThemeScript.scaled_font_size(16))
 		body.add_theme_color_override("font_color", Color(0.84, 0.93, 1.0, 1.0))
 		body.add_theme_constant_override("line_spacing", 6)
 		scroll.add_child(body)
@@ -1316,7 +1703,7 @@ func _show_hud_modal(title: String, message: String, actions: Array, preferred_s
 	var footer := HBoxContainer.new()
 	footer.name = "HudModalFooter"
 	footer.alignment = BoxContainer.ALIGNMENT_END
-	footer.add_theme_constant_override("separation", 12)
+	footer.add_theme_constant_override("separation", roundi(14.0 * portrait_scale) if portrait else 12)
 	root.add_child(footer)
 
 	for raw_action: Variant in actions:
@@ -1326,7 +1713,10 @@ func _show_hud_modal(title: String, message: String, actions: Array, preferred_s
 		var action_id := str(action.get("id", "close"))
 		var accent: Color = action.get("accent", HudThemeScript.ACCENT) as Color
 		var minimum_width := 132.0 if bool(action.get("primary", false)) else 118.0
-		var button := _create_feedback_action_button(str(action.get("text", "确定")), accent, Vector2(minimum_width, 44))
+		var button_size := Vector2(maxf(minimum_width * portrait_scale, 260.0), 92.0 * portrait_scale) if portrait else Vector2(minimum_width, 44)
+		var button := _create_feedback_action_button(str(action.get("text", "确定")), accent, button_size)
+		if portrait:
+			button.add_theme_font_size_override("font_size", roundi(27.0 * portrait_scale))
 		button.pressed.connect(_on_hud_modal_action_pressed.bind(action_id))
 		footer.add_child(button)
 
@@ -1347,7 +1737,16 @@ func _resize_hud_modal_panel() -> void:
 	if _hud_modal_panel == null:
 		return
 	var preferred: Vector2 = _hud_modal_panel.get_meta("preferred_size", Vector2(520, 300)) as Vector2
-	var viewport_size := get_viewport_rect().size if is_inside_tree() else Vector2(1280, 720)
+	var viewport_size := get_viewport_rect().size if is_inside_tree() else size
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		viewport_size = Vector2(1280, 720)
+	if _is_portrait_home_layout():
+		var margin := clampf(viewport_size.x * 0.028, 24.0, 42.0)
+		_hud_modal_panel.custom_minimum_size = Vector2(
+			maxf(320.0, viewport_size.x - margin * 2.0),
+			minf(viewport_size.y - margin * 2.0, maxf(viewport_size.y * 0.36, 720.0))
+		)
+		return
 	_hud_modal_panel.custom_minimum_size = Vector2(
 		minf(preferred.x, maxf(320.0, viewport_size.x - 56.0)),
 		minf(preferred.y, maxf(230.0, viewport_size.y - 56.0))
@@ -1356,6 +1755,8 @@ func _resize_hud_modal_panel() -> void:
 
 func _on_hud_modal_action_pressed(action_id: String) -> void:
 	match action_id:
+		"copy_share_invite":
+			_copy_share_invite_to_clipboard()
 		"download_update":
 			_open_update_download_page()
 			_hide_hud_modal()
@@ -1390,7 +1791,7 @@ func _show_feedback_dialog() -> void:
 	_resize_feedback_panel()
 	_update_feedback_quota_label()
 	_set_feedback_submit_busy(_feedback_submit_in_progress)
-	if _feedback_text_edit != null:
+	if _feedback_text_edit != null and is_inside_tree():
 		_feedback_text_edit.grab_focus()
 
 
@@ -1633,11 +2034,70 @@ func _feedback_side_panel_style(accent: Color) -> StyleBoxFlat:
 func _resize_feedback_panel() -> void:
 	if _feedback_panel == null:
 		return
-	var viewport_size := get_viewport_rect().size if is_inside_tree() else Vector2(1280, 720)
+	var viewport_size := get_viewport_rect().size if is_inside_tree() else size
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		viewport_size = Vector2(1280, 720)
+	if _is_portrait_home_layout():
+		var margin := clampf(viewport_size.x * 0.026, 24.0, 42.0)
+		_feedback_panel.custom_minimum_size = Vector2(
+			maxf(320.0, viewport_size.x - margin * 2.0),
+			minf(viewport_size.y - margin * 2.0, maxf(1800.0, viewport_size.y * 0.78))
+		)
+		_apply_feedback_portrait_metrics()
+		return
 	_feedback_panel.custom_minimum_size = Vector2(
 		minf(820.0, maxf(320.0, viewport_size.x - 56.0)),
 		minf(560.0, maxf(420.0, viewport_size.y - 56.0))
 	)
+
+
+func _apply_feedback_portrait_metrics() -> void:
+	if _feedback_panel == null:
+		return
+	var scale := _home_portrait_scale()
+	_apply_feedback_portrait_metrics_recursive(_feedback_panel, scale)
+	if _feedback_name_input != null:
+		_feedback_name_input.custom_minimum_size.y = maxf(_feedback_name_input.custom_minimum_size.y, 78.0 * scale)
+		_feedback_name_input.add_theme_font_size_override("font_size", roundi(27.0 * scale))
+	if _feedback_text_edit != null:
+		_feedback_text_edit.custom_minimum_size.y = maxf(_feedback_text_edit.custom_minimum_size.y, 225.0 * scale)
+		_feedback_text_edit.add_theme_font_size_override("font_size", roundi(24.0 * scale))
+	if _feedback_submit_button != null:
+		_feedback_submit_button.custom_minimum_size.y = maxf(_feedback_submit_button.custom_minimum_size.y, 92.0 * scale)
+		_feedback_submit_button.add_theme_font_size_override("font_size", roundi(27.0 * scale))
+
+
+func _apply_feedback_portrait_metrics_recursive(node: Node, scale: float) -> void:
+	if node is Button:
+		var button := node as Button
+		button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, 92.0 * scale)
+		button.add_theme_font_size_override("font_size", roundi(27.0 * scale))
+	elif node is Label:
+		var label := node as Label
+		var base := 28.0
+		if label.name == "":
+			base = 24.0
+		label.add_theme_font_size_override("font_size", roundi(base * scale))
+	elif node is TextEdit:
+		(node as TextEdit).add_theme_font_size_override("font_size", roundi(24.0 * scale))
+	elif node is LineEdit:
+		(node as LineEdit).add_theme_font_size_override("font_size", roundi(27.0 * scale))
+	for child: Node in node.get_children():
+		_apply_feedback_portrait_metrics_recursive(child, scale)
+
+
+func _is_portrait_home_layout() -> bool:
+	if str(get_meta("non_battle_layout_mode", "")) == "portrait":
+		return true
+	var viewport_size := get_viewport_rect().size if is_inside_tree() else size
+	return viewport_size.y > viewport_size.x
+
+
+func _home_portrait_scale() -> float:
+	var viewport_size := get_viewport_rect().size if is_inside_tree() else size
+	if viewport_size.x <= 0.0:
+		viewport_size = Vector2(390, 844)
+	return clampf(viewport_size.x / 430.0, 1.0, 1.62)
 
 
 func _set_feedback_submit_busy(busy: bool) -> void:

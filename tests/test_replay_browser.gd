@@ -82,6 +82,7 @@ func test_main_menu_includes_battle_replay_button() -> String:
 func test_main_menu_uses_hud_buttons_shifted_down() -> String:
 	var scene: Control = load("res://scenes/main_menu/MainMenu.tscn").instantiate()
 	scene.call("_apply_main_menu_hud")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1280, 720), GameManager.NON_BATTLE_LAYOUT_LANDSCAPE)
 	var menu := scene.get_node_or_null("VBoxContainer") as VBoxContainer
 	var background := scene.get_node_or_null("Background") as Control
 	var start_button := scene.get_node_or_null("%BtnStartBattle") as Button

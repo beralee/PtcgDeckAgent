@@ -5,6 +5,8 @@ const DeckSuggestionClientScript := preload("res://scripts/network/DeckSuggestio
 const DeckRecommendationStoreScript := preload("res://scripts/engine/DeckRecommendationStore.gd")
 const DeckViewDialogScript := preload("res://scripts/ui/decks/DeckViewDialog.gd")
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
+const NonBattleLayoutControllerScript := preload("res://scripts/ui/non_battle/NonBattleLayoutController.gd")
+const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
 
 const CARD_TILE_WIDTH := 100
 const CARD_TILE_HEIGHT := 140
@@ -73,10 +75,13 @@ var _recommendation_status_label: Label = null
 var _recommendation_next_button: Button = null
 var _recommendation_detail_overlay: Control = null
 var _import_result_close_timer: Timer = null
+var _non_battle_layout_controller: RefCounted = NonBattleLayoutControllerScript.new()
+var _current_non_battle_layout_context: Dictionary = {}
 
 
 func _ready() -> void:
 	_apply_hud_theme()
+	_connect_non_battle_layout_signal()
 	_setup_deck_recommendations()
 	%BtnImport.pressed.connect(_on_import_pressed)
 	%BtnSyncImages.pressed.connect(_on_sync_images_pressed)
@@ -98,6 +103,83 @@ func _ready() -> void:
 	_image_syncer.progress.connect(_on_image_sync_progress)
 	_image_syncer.completed.connect(_on_image_sync_completed)
 	_image_syncer.failed.connect(_on_image_sync_failed)
+	call_deferred("_apply_non_battle_layout")
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED:
+		_apply_non_battle_layout()
+
+
+func _input(event: InputEvent) -> void:
+	NonBattleTouchBridgeScript.handle_root_touch(self, event)
+
+
+func _connect_non_battle_layout_signal() -> void:
+	if GameManager == null or not GameManager.has_signal("non_battle_layout_mode_changed"):
+		return
+	var callback := Callable(self, "_on_non_battle_layout_mode_changed")
+	if not GameManager.non_battle_layout_mode_changed.is_connected(callback):
+		GameManager.non_battle_layout_mode_changed.connect(callback)
+
+
+func _on_non_battle_layout_mode_changed(_mode: String) -> void:
+	_apply_non_battle_layout()
+	_refresh_deck_list()
+	call_deferred("_apply_non_battle_layout")
+
+
+func _apply_non_battle_layout_for_tests(viewport_size: Vector2, mode: String) -> void:
+	_apply_non_battle_layout(viewport_size, mode)
+
+
+func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode: String = "") -> void:
+	var size := viewport_size
+	if size.x <= 0.0 or size.y <= 0.0:
+		size = get_viewport_rect().size if is_inside_tree() else Vector2(1600, 900)
+	var mode := forced_mode
+	if mode == "":
+		mode = str(GameManager.get("non_battle_layout_mode")) if GameManager != null else "landscape"
+	var is_mobile := OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
+	var context: Dictionary = _non_battle_layout_controller.call("build_context", size, mode, is_mobile)
+	var portrait := bool(context.get("is_portrait", false))
+	_current_non_battle_layout_context = context.duplicate(true)
+	set_meta("non_battle_layout_mode", str(context.get("resolved_mode", mode)))
+	var margin := get_node_or_null("MarginContainer") as MarginContainer
+	if margin != null:
+		var value := int(context.get("page_margin", 24.0))
+		margin.add_theme_constant_override("margin_left", value)
+		margin.add_theme_constant_override("margin_top", value)
+		margin.add_theme_constant_override("margin_right", value)
+		margin.add_theme_constant_override("margin_bottom", value)
+	var import_box := find_child("ImportBox", true, false) as Control
+	if import_box != null and portrait:
+		var import_width := float(context.get("content_width", 390.0))
+		var import_height := minf(size.y - float(context.get("page_margin", 24.0)) * 4.0, maxf(420.0, float(context.get("input_height", 80.0)) * 4.8))
+		import_box.offset_left = -import_width * 0.5
+		import_box.offset_right = import_width * 0.5
+		import_box.offset_top = -import_height * 0.5
+		import_box.offset_bottom = import_height * 0.5
+	_apply_deck_manager_mobile_metrics(self, context, portrait)
+
+
+func _apply_deck_manager_mobile_metrics(node: Node, context: Dictionary, portrait: bool) -> void:
+	if node is Button:
+		var button := node as Button
+		var height := float(context.get("secondary_button_height", 57.0)) if portrait else button.custom_minimum_size.y
+		button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, height)
+		button.add_theme_font_size_override("font_size", int(context.get("button_font_size", HUD_BUTTON_FONT_SIZE)) if portrait else button.get_theme_font_size("font_size"))
+		NonBattleTouchBridgeScript.bind_button_touch(button)
+	elif node is LineEdit:
+		var input := node as LineEdit
+		input.custom_minimum_size.y = maxf(input.custom_minimum_size.y, float(context.get("input_height", 38.0)))
+		input.add_theme_font_size_override("font_size", int(context.get("input_font_size", 15)))
+	elif node is Label:
+		var label := node as Label
+		if label.name in ["Title", "TitleLabel"]:
+			label.add_theme_font_size_override("font_size", int(context.get("title_font_size", 32)) if portrait else HudThemeScript.scaled_font_size(32))
+	for child: Node in node.get_children():
+		_apply_deck_manager_mobile_metrics(child, context, portrait)
 
 
 func _apply_hud_theme() -> void:
@@ -281,10 +363,20 @@ func _setup_deck_recommendations() -> void:
 
 func _load_deck_center_latest_meta() -> Dictionary:
 	var root := _load_deck_center_meta_state()
-	_deck_center_recommendation_badge_seen_revision = str(root.get("last_recommendation_badge_seen_revision", "")).strip_edges()
+	var recommendation_seen_revision := str(root.get("last_recommendation_badge_seen_revision", "")).strip_edges()
+	var entrance_seen_revision := str(root.get("last_seen_revision", "")).strip_edges()
 	var latest_raw: Variant = root.get("latest_info", {})
 	if latest_raw is Dictionary:
-		return (latest_raw as Dictionary).duplicate(true)
+		var latest_meta := (latest_raw as Dictionary).duplicate(true)
+		var latest_revision := str(latest_meta.get("latest_revision", "")).strip_edges()
+		if recommendation_seen_revision == "" and latest_revision != "" and entrance_seen_revision == latest_revision:
+			recommendation_seen_revision = entrance_seen_revision
+		_deck_center_recommendation_badge_seen_revision = recommendation_seen_revision
+		return latest_meta
+	var root_latest_revision := str(root.get("latest_revision", "")).strip_edges()
+	if recommendation_seen_revision == "" and root_latest_revision != "" and entrance_seen_revision == root_latest_revision:
+		recommendation_seen_revision = entrance_seen_revision
+	_deck_center_recommendation_badge_seen_revision = recommendation_seen_revision
 	return root.duplicate(true)
 
 
@@ -448,29 +540,37 @@ func _refresh_recommendation_cards() -> void:
 
 
 func _create_recommendation_placeholder() -> PanelContainer:
+	var portrait := _is_deck_manager_portrait_layout()
+	var context := _current_non_battle_layout_context
 	var panel := PanelContainer.new()
 	panel.name = "RecommendationFeedCard"
-	panel.custom_minimum_size = Vector2(0, 120)
+	panel.custom_minimum_size = Vector2(0, maxf(120.0, float(context.get("list_item_min_height", 120.0)) * 1.5) if portrait else 120.0)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.add_theme_stylebox_override("panel", _hud_panel_style(Color(0.030, 0.070, 0.098, 0.92), HUD_RECOMMENDATION_BORDER, 16))
 	var label := Label.new()
 	label.text = "暂时没有可展示的推荐卡组。你仍然可以手动导入卡组。"
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
+	label.add_theme_font_size_override("font_size", int(context.get("body_font_size", 15)) if portrait else HudThemeScript.scaled_font_size(15))
 	label.add_theme_color_override("font_color", HUD_TEXT_MUTED)
 	panel.add_child(label)
 	return panel
 
 
 func _create_recommendation_feed_card(recommendation: Dictionary) -> PanelContainer:
+	var portrait := _is_deck_manager_portrait_layout()
+	var context := _current_non_battle_layout_context
+	var body_font := int(context.get("body_font_size", 15)) if portrait else HudThemeScript.scaled_font_size(15)
+	var meta_font := int(context.get("meta_font_size", 12)) if portrait else HudThemeScript.scaled_font_size(12)
+	var section_font := int(context.get("section_font_size", 17)) if portrait else HudThemeScript.scaled_font_size(17)
+	var title_font := int(context.get("title_font_size", 23)) if portrait else HudThemeScript.scaled_font_size(23)
 	var panel := PanelContainer.new()
 	panel.name = "RecommendationFeedCard"
-	panel.custom_minimum_size = Vector2(0, 260)
+	panel.custom_minimum_size = Vector2(0, maxf(420.0, float(context.get("list_item_min_height", 260.0)) * 1.52) if portrait else 260.0)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.add_theme_stylebox_override("panel", _hud_panel_style(Color(0.030, 0.070, 0.098, 0.94), HUD_RECOMMENDATION_BORDER, 18))
 
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 9)
+	vbox.add_theme_constant_override("separation", int(context.get("section_gap", 9)) if portrait else 9)
 	panel.add_child(vbox)
 
 	var deck_name := str(recommendation.get("deck_name", "推荐卡组"))
@@ -482,7 +582,7 @@ func _create_recommendation_feed_card(recommendation: Dictionary) -> PanelContai
 
 	var meta := Label.new()
 	meta.text = source_text
-	meta.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(12))
+	meta.add_theme_font_size_override("font_size", meta_font)
 	meta.add_theme_color_override("font_color", HUD_ACCENT_WARM)
 	vbox.add_child(meta)
 
@@ -490,7 +590,7 @@ func _create_recommendation_feed_card(recommendation: Dictionary) -> PanelContai
 	deck_label.name = "RecommendationDeckName"
 	deck_label.text = deck_name
 	deck_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	deck_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(23))
+	deck_label.add_theme_font_size_override("font_size", title_font)
 	deck_label.add_theme_color_override("font_color", HUD_TEXT)
 
 	var deck_header := HBoxContainer.new()
@@ -507,7 +607,7 @@ func _create_recommendation_feed_card(recommendation: Dictionary) -> PanelContai
 	title.name = "RecommendationTitle"
 	title.text = title_text
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD
-	title.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(17))
+	title.add_theme_font_size_override("font_size", section_font)
 	title.add_theme_color_override("font_color", Color(0.86, 0.96, 1.0, 1.0))
 	vbox.add_child(title)
 
@@ -515,14 +615,14 @@ func _create_recommendation_feed_card(recommendation: Dictionary) -> PanelContai
 		var summary_label := Label.new()
 		summary_label.text = style_summary
 		summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-		summary_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
+		summary_label.add_theme_font_size_override("font_size", body_font)
 		summary_label.add_theme_color_override("font_color", Color(0.78, 0.90, 0.96, 1.0))
 		vbox.add_child(summary_label)
 
 	var why_title := Label.new()
 	why_title.name = "RecommendationWhyTitle"
 	why_title.text = "为什么值得玩"
-	why_title.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
+	why_title.add_theme_font_size_override("font_size", body_font)
 	why_title.add_theme_color_override("font_color", HUD_ACCENT_WARM)
 	vbox.add_child(why_title)
 
@@ -534,7 +634,7 @@ func _create_recommendation_feed_card(recommendation: Dictionary) -> PanelContai
 		var bullet_label := Label.new()
 		bullet_label.text = "• " + bullet
 		bullet_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-		bullet_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
+		bullet_label.add_theme_font_size_override("font_size", body_font)
 		bullet_label.add_theme_color_override("font_color", HUD_TEXT_MUTED)
 		vbox.add_child(bullet_label)
 
@@ -564,6 +664,7 @@ func _create_recommendation_feed_card(recommendation: Dictionary) -> PanelContai
 	_recommendation_next_button.pressed.connect(_on_recommendation_next_pressed)
 	button_row.add_child(_recommendation_next_button)
 	_style_hud_button(_recommendation_next_button, HUD_SECONDARY)
+	_apply_recommendation_button_mobile_metrics(_recommendation_next_button)
 
 	var import_button := Button.new()
 	import_button.name = "RecommendationImportButton"
@@ -573,6 +674,7 @@ func _create_recommendation_feed_card(recommendation: Dictionary) -> PanelContai
 	import_button.pressed.connect(_on_recommendation_import_pressed.bind(recommendation))
 	button_row.add_child(import_button)
 	_style_hud_button(import_button, HUD_ACCENT_WARM)
+	_apply_recommendation_button_mobile_metrics(import_button)
 
 	var read_button := Button.new()
 	read_button.name = "RecommendationDetailButton"
@@ -581,8 +683,27 @@ func _create_recommendation_feed_card(recommendation: Dictionary) -> PanelContai
 	read_button.pressed.connect(_on_recommendation_read_pressed.bind(recommendation))
 	button_row.add_child(read_button)
 	_style_hud_button(read_button, HUD_ACCENT)
+	_apply_recommendation_button_mobile_metrics(read_button)
 
 	return panel
+
+
+func _is_deck_manager_portrait_layout() -> bool:
+	return str(get_meta("non_battle_layout_mode", "")) == "portrait"
+
+
+func _deck_manager_portrait_scale() -> float:
+	return float(_current_non_battle_layout_context.get("portrait_scale", 1.0)) if _is_deck_manager_portrait_layout() else 1.0
+
+
+func _apply_recommendation_button_mobile_metrics(button: Button) -> void:
+	if button == null or not _is_deck_manager_portrait_layout():
+		return
+	var context := _current_non_battle_layout_context
+	var height := maxf(145.0, float(context.get("secondary_button_height", 96.0)) * 0.86)
+	button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, height)
+	button.add_theme_font_size_override("font_size", int(context.get("button_font_size", 32)))
+	NonBattleTouchBridgeScript.bind_button_touch(button)
 
 
 func _recommendation_matches_deck_center_latest(recommendation: Dictionary) -> bool:
@@ -603,7 +724,10 @@ func _recommendation_matches_deck_center_latest(recommendation: Dictionary) -> b
 
 func _mark_deck_center_recommendation_badge_seen() -> void:
 	var revision := str(_deck_center_latest_meta.get("latest_revision", "")).strip_edges()
-	if revision == "" or revision == _deck_center_recommendation_badge_seen_revision:
+	if revision == "":
+		return
+	if revision == _deck_center_recommendation_badge_seen_revision:
+		_remove_recommendation_new_badges()
 		return
 	var state := _load_deck_center_meta_state()
 	state["last_recommendation_badge_seen_revision"] = revision
@@ -614,6 +738,17 @@ func _mark_deck_center_recommendation_badge_seen() -> void:
 		state["latest_info"] = _deck_center_latest_meta.duplicate(true)
 	_save_deck_center_meta_state(state)
 	_deck_center_recommendation_badge_seen_revision = revision
+	_remove_recommendation_new_badges()
+
+
+func _remove_recommendation_new_badges() -> void:
+	for badge: Node in find_children("RecommendationNewBadge", "PanelContainer", true, false):
+		if badge == null or not is_instance_valid(badge):
+			continue
+		var parent := badge.get_parent()
+		if parent != null:
+			parent.remove_child(badge)
+		badge.queue_free()
 
 
 func _create_recommendation_new_badge() -> PanelContainer:
@@ -646,17 +781,19 @@ func _create_recommendation_new_badge() -> PanelContainer:
 
 
 func _create_recommendation_line(label_text: String, body_text: String) -> VBoxContainer:
+	var portrait := _is_deck_manager_portrait_layout()
+	var context := _current_non_battle_layout_context
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 2)
+	box.add_theme_constant_override("separation", maxi(2, int(float(context.get("portrait_scale", 1.0)) * 4.0)) if portrait else 2)
 	var title := Label.new()
 	title.text = label_text
-	title.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
+	title.add_theme_font_size_override("font_size", int(context.get("body_font_size", 14)) if portrait else HudThemeScript.scaled_font_size(14))
 	title.add_theme_color_override("font_color", HUD_ACCENT)
 	box.add_child(title)
 	var body := Label.new()
 	body.text = body_text
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD
-	body.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
+	body.add_theme_font_size_override("font_size", int(context.get("body_font_size", 15)) if portrait else HudThemeScript.scaled_font_size(15))
 	body.add_theme_color_override("font_color", HUD_TEXT_MUTED)
 	box.add_child(body)
 	return box
@@ -1167,6 +1304,12 @@ func _show_recommendation_article_dialog(recommendation: Dictionary) -> void:
 	if normalized.is_empty():
 		return
 	_close_recommendation_detail_overlay()
+	var portrait := _is_deck_manager_portrait_layout()
+	var context := _current_non_battle_layout_context
+	var portrait_scale := _deck_manager_portrait_scale()
+	var viewport_size: Vector2 = context.get("viewport_size", get_viewport_rect().size if is_inside_tree() else Vector2(1080, 2400))
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		viewport_size = Vector2(1080, 2400) if portrait else Vector2(1280, 720)
 
 	var overlay := Control.new()
 	overlay.name = "RecommendationDetailOverlay"
@@ -1184,25 +1327,31 @@ func _show_recommendation_article_dialog(recommendation: Dictionary) -> void:
 	var margin := MarginContainer.new()
 	margin.name = "RecommendationDetailMargin"
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	margin.offset_left = 24
-	margin.offset_top = 24
-	margin.offset_right = -24
-	margin.offset_bottom = -24
+	var margin_value := roundi(24.0 * portrait_scale) if portrait else 24
+	margin.offset_left = margin_value
+	margin.offset_top = margin_value
+	margin.offset_right = -margin_value
+	margin.offset_bottom = -margin_value
 	overlay.add_child(margin)
 
 	var panel := PanelContainer.new()
 	panel.name = "RecommendationDetailPanel"
+	if portrait:
+		panel.custom_minimum_size = Vector2(
+			maxf(320.0, viewport_size.x - float(margin_value * 2)),
+			maxf(560.0, viewport_size.y - float(margin_value * 2))
+		)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	panel.add_theme_stylebox_override("panel", _hud_panel_style(Color(0.025, 0.055, 0.085, 0.98), Color(HUD_RECOMMENDATION_BORDER.r, HUD_RECOMMENDATION_BORDER.g, HUD_RECOMMENDATION_BORDER.b, 0.92), 22))
 	margin.add_child(panel)
 
 	var outer := VBoxContainer.new()
-	outer.add_theme_constant_override("separation", 12)
+	outer.add_theme_constant_override("separation", int(context.get("section_gap", 12)) if portrait else 12)
 	panel.add_child(outer)
 
 	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 12)
+	header.add_theme_constant_override("separation", roundi(12.0 * portrait_scale) if portrait else 12)
 	outer.add_child(header)
 
 	var title_box := VBoxContainer.new()
@@ -1212,13 +1361,14 @@ func _show_recommendation_article_dialog(recommendation: Dictionary) -> void:
 	var deck_name := Label.new()
 	deck_name.text = str(normalized.get("deck_name", "推荐卡组"))
 	deck_name.autowrap_mode = TextServer.AUTOWRAP_WORD
-	deck_name.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(24))
+	deck_name.add_theme_font_size_override("font_size", int(context.get("title_font_size", 24)) if portrait else HudThemeScript.scaled_font_size(24))
 	deck_name.add_theme_color_override("font_color", HUD_TEXT)
 	title_box.add_child(deck_name)
 
 	var meta := Label.new()
 	meta.text = _recommendation_source_text(normalized)
 	meta.autowrap_mode = TextServer.AUTOWRAP_WORD
+	meta.add_theme_font_size_override("font_size", int(context.get("meta_font_size", 14)) if portrait else HudThemeScript.scaled_font_size(14))
 	meta.add_theme_color_override("font_color", HUD_ACCENT_WARM)
 	title_box.add_child(meta)
 
@@ -1227,7 +1377,7 @@ func _show_recommendation_article_dialog(recommendation: Dictionary) -> void:
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	HudThemeScript.style_scroll_container(scroll)
+	HudThemeScript.style_scroll_container(scroll, "portrait_touch" if portrait else "auto")
 	outer.add_child(scroll)
 
 	var content_margin := MarginContainer.new()
@@ -1239,13 +1389,13 @@ func _show_recommendation_article_dialog(recommendation: Dictionary) -> void:
 	var content := VBoxContainer.new()
 	content.name = "RecommendationDetailContent"
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	content.add_theme_constant_override("separation", 12)
+	content.add_theme_constant_override("separation", int(context.get("section_gap", 12)) if portrait else 12)
 	content_margin.add_child(content)
 
 	var title := Label.new()
 	title.text = str(normalized.get("title", normalized.get("deck_name", "推荐卡组")))
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD
-	title.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(18))
+	title.add_theme_font_size_override("font_size", int(context.get("section_font_size", 18)) if portrait else HudThemeScript.scaled_font_size(18))
 	title.add_theme_color_override("font_color", Color(0.86, 0.96, 1.0, 1.0))
 	content.add_child(title)
 
@@ -1292,7 +1442,7 @@ func _show_recommendation_article_dialog(recommendation: Dictionary) -> void:
 				content.add_child(_create_recommendation_detail_paragraph("• " + bullet, HUD_TEXT_MUTED))
 
 	var footer := HBoxContainer.new()
-	footer.add_theme_constant_override("separation", 10)
+	footer.add_theme_constant_override("separation", roundi(10.0 * portrait_scale) if portrait else 10)
 	footer.alignment = BoxContainer.ALIGNMENT_END
 	outer.add_child(footer)
 
@@ -1307,39 +1457,49 @@ func _show_recommendation_article_dialog(recommendation: Dictionary) -> void:
 	import_button.pressed.connect(_on_recommendation_detail_import_pressed.bind(normalized))
 	footer.add_child(import_button)
 	_style_hud_button(import_button, HUD_ACCENT_WARM)
+	_apply_recommendation_button_mobile_metrics(import_button)
 
 	var open_button := Button.new()
+	open_button.name = "RecommendationDetailOpenButton"
 	open_button.text = "打开原卡表"
 	open_button.custom_minimum_size = Vector2(136, 42)
 	open_button.disabled = str(normalized.get("import_url", "")).strip_edges() == ""
 	open_button.pressed.connect(_on_recommendation_open_pressed.bind(normalized))
 	footer.add_child(open_button)
 	_style_hud_button(open_button, HUD_ACCENT)
+	_apply_recommendation_button_mobile_metrics(open_button)
 
 	var close_footer_button := Button.new()
+	close_footer_button.name = "RecommendationDetailCloseButton"
 	close_footer_button.text = "关闭"
 	close_footer_button.custom_minimum_size = Vector2(96, 42)
 	close_footer_button.pressed.connect(_close_recommendation_detail_overlay)
 	footer.add_child(close_footer_button)
 	_style_hud_button(close_footer_button, HUD_SECONDARY)
+	_apply_recommendation_button_mobile_metrics(close_footer_button)
 
 	add_child(overlay)
 	move_child(overlay, get_child_count() - 1)
 
 
 func _create_recommendation_detail_heading(text: String) -> Label:
+	var portrait := _is_deck_manager_portrait_layout()
+	var context := _current_non_battle_layout_context
 	var label := Label.new()
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(17))
+	label.add_theme_font_size_override("font_size", int(context.get("section_font_size", 17)) if portrait else HudThemeScript.scaled_font_size(17))
 	label.add_theme_color_override("font_color", HUD_ACCENT_WARM)
 	return label
 
 
 func _create_recommendation_detail_paragraph(text: String, color: Color) -> Label:
+	var portrait := _is_deck_manager_portrait_layout()
+	var context := _current_non_battle_layout_context
 	var label := Label.new()
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	label.add_theme_font_size_override("font_size", int(context.get("body_font_size", 15)) if portrait else HudThemeScript.scaled_font_size(15))
 	label.add_theme_color_override("font_color", color)
 	return label
 
@@ -1418,12 +1578,23 @@ func _refresh_deck_list() -> void:
 
 
 func _create_deck_item(deck: DeckData) -> Control:
+	var portrait := str(get_meta("non_battle_layout_mode", "")) == "portrait"
+	var context := _current_non_battle_layout_context
+	var gap := int(context.get("section_gap", 12)) if portrait else 12
+	var body_font := int(context.get("body_font_size", 23)) if portrait else HudThemeScript.scaled_font_size(23)
+	var button_font := maxi(20, int(context.get("button_font_size", 28)) - 5) if portrait else HudThemeScript.scaled_font_size(HUD_BUTTON_COMPACT_FONT_SIZE)
+	var row_button_height := maxf(float(context.get("secondary_button_height", 84.0)) * 0.76, 72.0) if portrait else 38.0
+	var row_height := maxf(
+		float(context.get("list_item_min_height", 148.0)),
+		row_button_height * 2.0 + float(gap) * 3.0 + float(body_font) * 1.45
+	) if portrait else 76.0
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(0, 76)
+	panel.custom_minimum_size = Vector2(0, row_height)
 	panel.add_theme_stylebox_override("panel", _hud_panel_style(Color(0.035, 0.075, 0.11, 0.88), HUD_CARD_BORDER, 16))
 
-	var hbox := HBoxContainer.new()
-	hbox.add_theme_constant_override("separation", 12)
+	var hbox: BoxContainer = VBoxContainer.new() if portrait else HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", gap)
+	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.add_child(hbox)
 
 	var info_vbox := VBoxContainer.new()
@@ -1433,38 +1604,56 @@ func _create_deck_item(deck: DeckData) -> Control:
 	var name_label := Label.new()
 	name_label.text = "%s | %s %s" % [deck.deck_name, _deck_row_date_label(deck), _deck_row_date_text(deck)]
 	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	name_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(23))
+	name_label.add_theme_font_size_override("font_size", body_font)
 	name_label.add_theme_color_override("font_color", HUD_TEXT)
 	info_vbox.add_child(name_label)
+
+	var button_parent: Container = hbox
+	if portrait:
+		var grid := GridContainer.new()
+		grid.name = "DeckRowButtonGrid"
+		grid.columns = 2
+		grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		grid.add_theme_constant_override("h_separation", gap)
+		grid.add_theme_constant_override("v_separation", gap)
+		hbox.add_child(grid)
+		button_parent = grid
 
 	var btn_view := Button.new()
 	btn_view.text = "查看"
 	btn_view.custom_minimum_size = Vector2(78, 38)
 	btn_view.pressed.connect(_on_view_deck.bind(deck))
-	hbox.add_child(btn_view)
+	button_parent.add_child(btn_view)
 
 	var btn_edit := Button.new()
 	btn_edit.text = "编辑"
 	btn_edit.custom_minimum_size = Vector2(78, 38)
 	btn_edit.pressed.connect(_on_edit_deck.bind(deck))
-	hbox.add_child(btn_edit)
+	button_parent.add_child(btn_edit)
 
 	var btn_rename := Button.new()
 	btn_rename.text = "重命名"
 	btn_rename.custom_minimum_size = Vector2(96, 38)
 	btn_rename.pressed.connect(_on_rename_deck.bind(deck))
-	hbox.add_child(btn_rename)
+	button_parent.add_child(btn_rename)
 
 	var btn_delete := Button.new()
 	btn_delete.text = "删除"
 	btn_delete.custom_minimum_size = Vector2(78, 38)
 	btn_delete.pressed.connect(_on_delete_deck.bind(deck))
-	hbox.add_child(btn_delete)
+	button_parent.add_child(btn_delete)
 
 	_style_hud_button(btn_view, HUD_SECONDARY, true)
 	_style_hud_button(btn_edit, HUD_ACCENT, true)
 	_style_hud_button(btn_rename, HUD_RENAME, true)
 	_style_hud_button(btn_delete, HUD_DANGER, true)
+	for button: Button in [btn_view, btn_edit, btn_rename, btn_delete]:
+		NonBattleTouchBridgeScript.bind_button_touch(button)
+	if portrait:
+		for button: Button in [btn_view, btn_edit, btn_rename, btn_delete]:
+			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, row_button_height)
+			button.add_theme_font_size_override("font_size", button_font)
 
 	return panel
 

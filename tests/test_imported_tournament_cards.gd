@@ -18,6 +18,7 @@ const IMPORTED_CARD_PATHS := [
 	"res://data/bundled_user/cards/CS5bC_125.json",
 	"res://data/bundled_user/cards/CS6.5C_029.json",
 	"res://data/bundled_user/cards/CSV7C_036.json",
+	"res://data/bundled_user/cards/CSV7C_037.json",
 	"res://data/bundled_user/cards/CSV7C_038.json",
 	"res://data/bundled_user/cards/CSV7C_175.json",
 	"res://data/bundled_user/cards/CSV7C_132.json",

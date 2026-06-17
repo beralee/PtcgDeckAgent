@@ -4,8 +4,11 @@ extends Control
 const DeckViewDialogScript := preload("res://scripts/ui/decks/DeckViewDialog.gd")
 const DeckDiscussionDialogScene := preload("res://scenes/deck_editor/DeckDiscussionDialog.tscn")
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
+const NonBattleLayoutControllerScript := preload("res://scripts/ui/non_battle/NonBattleLayoutController.gd")
+const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
 const ZenMuxClientScript := preload("res://scripts/network/ZenMuxClient.gd")
 
+const DECK_DISCUSSION_DIALOG_SCRIPT_PATH := "res://scenes/deck_editor/DeckDiscussionDialog.gd"
 const FIRST_PLAYER_RANDOM := -1
 const FIRST_PLAYER_PLAYER_ONE := 0
 const FIRST_PLAYER_PLAYER_TWO := 1
@@ -45,6 +48,8 @@ const HUD_TEXT_MUTED := Color(0.64, 0.76, 0.86, 1.0)
 const DECK_PICKER_ALL := "all"
 const DECK_PICKER_RECENT := "recent"
 const DECK_PICKER_LIMIT := 80
+const DECK_PICKER_TOUCH_BOUND_META := "_battle_setup_deck_picker_touch_bound"
+const BGM_PICKER_OVERLAY_NAME := "BattleMusicPickerOverlay"
 
 ## 卡组列表，与 OptionButton index 对应
 var _deck_list: Array = []
@@ -71,6 +76,8 @@ var _strategy_discussion_signature := ""
 var _llm_model_test_client: ZenMuxClient = ZenMuxClientScript.new()
 var _pending_llm_model_test_config: Dictionary = {}
 var _llm_model_test_in_progress: bool = false
+var _portrait_action_footer_candidate: Button = null
+var _deck_picker_button_candidate_slot: int = -1
 var _deck_picker_overlay: Control = null
 var _deck_picker_panel: PanelContainer = null
 var _deck_picker_slot_index: int = 0
@@ -80,16 +87,23 @@ var _deck_picker_tabs: Dictionary = {}
 var _deck_picker_grid: GridContainer = null
 var _deck_picker_search_input: LineEdit = null
 var _deck_picker_subtitle: Label = null
+var _deck_picker_input_suppress_until_msec: int = 0
+var _bgm_picker_overlay: Control = null
+var _bgm_picker_scroll: ScrollContainer = null
+var _bgm_picker_list: VBoxContainer = null
 var _mode_segment_buttons: Dictionary = {}
 var _first_player_segment_buttons: Dictionary = {}
 var _battle_layout_segment_buttons: Dictionary = {}
 var _dynamic_stadium_background_segment_buttons: Dictionary = {}
 var _ai_strategy_segment_buttons: Array[Button] = []
 var _dynamic_stadium_background_enabled: bool = true
+var _non_battle_layout_controller: RefCounted = NonBattleLayoutControllerScript.new()
+var _current_non_battle_layout_context: Dictionary = {}
 
 
 func _ready() -> void:
 	_apply_hud_theme()
+	_connect_non_battle_layout_signal()
 	%ModeOption.clear()
 	%ModeOption.add_item("自己练牌", 0)
 	%ModeOption.add_item("AI 对战", 1)
@@ -119,6 +133,8 @@ func _ready() -> void:
 	%Deck2Option.item_selected.connect(_on_deck2_changed)
 	%Deck1PickerButton.pressed.connect(_on_deck_picker_pressed.bind(0))
 	%Deck2PickerButton.pressed.connect(_on_deck_picker_pressed.bind(1))
+	_bind_deck_picker_button_touch(%Deck1PickerButton, 0)
+	_bind_deck_picker_button_touch(%Deck2PickerButton, 1)
 	%BtnDiscussStrategyAI.pressed.connect(_on_discuss_strategy_ai_pressed)
 	%Deck1ViewButton.pressed.connect(_on_deck_view_pressed.bind(0))
 	%Deck1EditButton.pressed.connect(_on_deck_edit_pressed.bind(0))
@@ -138,6 +154,525 @@ func _ready() -> void:
 	_load_settings()
 	_restore_returned_setup_context()
 	_refresh_ai_ui_visibility()
+	call_deferred("_apply_non_battle_layout")
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED:
+		_apply_non_battle_layout()
+
+
+func _input(event: InputEvent) -> void:
+	if _handle_battle_music_picker_input(event):
+		return
+	if _handle_deck_picker_modal_input(event):
+		return
+	if _handle_deck_picker_button_input(event):
+		return
+	if _handle_portrait_action_footer_input(event):
+		return
+	NonBattleTouchBridgeScript.handle_root_touch(self, event)
+
+
+func _connect_non_battle_layout_signal() -> void:
+	if GameManager == null or not GameManager.has_signal("non_battle_layout_mode_changed"):
+		return
+	var callback := Callable(self, "_on_non_battle_layout_mode_changed")
+	if not GameManager.non_battle_layout_mode_changed.is_connected(callback):
+		GameManager.non_battle_layout_mode_changed.connect(callback)
+
+
+func _on_non_battle_layout_mode_changed(_mode: String) -> void:
+	_apply_non_battle_layout()
+	call_deferred("_apply_non_battle_layout")
+
+
+func _apply_non_battle_layout_for_tests(viewport_size: Vector2, mode: String) -> void:
+	_apply_non_battle_layout(viewport_size, mode)
+
+
+func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode: String = "") -> void:
+	var size := viewport_size
+	if size.x <= 0.0 or size.y <= 0.0:
+		size = get_viewport_rect().size if is_inside_tree() else Vector2(1600, 900)
+	var mode := forced_mode
+	if mode == "":
+		mode = str(GameManager.get("non_battle_layout_mode")) if GameManager != null else "landscape"
+	var is_mobile := OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
+	var context: Dictionary = _non_battle_layout_controller.call("build_context", size, mode, is_mobile)
+	var portrait := bool(context.get("is_portrait", false))
+	_current_non_battle_layout_context = context.duplicate(true)
+	set_meta("non_battle_layout_mode", str(context.get("resolved_mode", mode)))
+	_ensure_battle_music_options_ready()
+	if portrait:
+		_apply_battle_setup_portrait_layout(context)
+	else:
+		_apply_battle_setup_landscape_layout(context)
+
+
+func _apply_battle_setup_portrait_layout(context: Dictionary) -> void:
+	var root := find_child("RootVBox", true, false) as VBoxContainer
+	var content_columns := find_child("ContentColumns", true, false) as HBoxContainer
+	var left_column := find_child("LeftColumn", true, false) as Control
+	var right_column := find_child("RightColumn", true, false) as Control
+	if root == null or content_columns == null or left_column == null or right_column == null:
+		return
+	var scroll := root.get_node_or_null("PortraitSetupScroll") as ScrollContainer
+	if scroll == null:
+		scroll = ScrollContainer.new()
+		scroll.name = "PortraitSetupScroll"
+		scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		root.add_child(scroll)
+		root.move_child(scroll, content_columns.get_index() + 1)
+		var stack := VBoxContainer.new()
+		stack.name = "PortraitSetupStack"
+		stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		stack.add_theme_constant_override("separation", int(context.get("section_gap", 14)))
+		scroll.add_child(stack)
+	var stack := scroll.get_node_or_null("PortraitSetupStack") as VBoxContainer
+	if stack == null:
+		return
+	content_columns.visible = false
+	scroll.visible = true
+	for column: Control in [left_column, right_column]:
+		if column.get_parent() != stack:
+			if column.get_parent() != null:
+				column.get_parent().remove_child(column)
+			column.owner = null
+			stack.add_child(column)
+		column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		column.custom_minimum_size = Vector2(float(context.get("content_width", 390.0)), 0.0)
+	_layout_portrait_scroll_footer_spacer(stack, context)
+	_layout_portrait_deck_rows(context)
+	_layout_portrait_action_footer(context)
+	_apply_battle_setup_mobile_metrics(context)
+
+
+func _apply_battle_setup_landscape_layout(context: Dictionary) -> void:
+	var root := find_child("RootVBox", true, false) as VBoxContainer
+	var content_columns := find_child("ContentColumns", true, false) as HBoxContainer
+	var left_column := find_child("LeftColumn", true, false) as Control
+	var right_column := find_child("RightColumn", true, false) as Control
+	if content_columns == null or left_column == null or right_column == null:
+		return
+	var scroll := root.get_node_or_null("PortraitSetupScroll") as ScrollContainer if root != null else null
+	if scroll != null:
+		scroll.visible = false
+	if left_column.get_parent() != content_columns:
+		if left_column.get_parent() != null:
+			left_column.get_parent().remove_child(left_column)
+		left_column.owner = null
+		content_columns.add_child(left_column)
+		content_columns.move_child(left_column, 0)
+	if right_column.get_parent() != content_columns:
+		if right_column.get_parent() != null:
+			right_column.get_parent().remove_child(right_column)
+		right_column.owner = null
+		content_columns.add_child(right_column)
+		content_columns.move_child(right_column, 1)
+	_restore_landscape_deck_rows()
+	_restore_landscape_action_footer()
+	content_columns.visible = true
+	left_column.custom_minimum_size = Vector2.ZERO
+	right_column.custom_minimum_size = Vector2.ZERO
+	_apply_battle_setup_mobile_metrics(context)
+
+
+func _layout_portrait_scroll_footer_spacer(stack: VBoxContainer, context: Dictionary) -> void:
+	var spacer := stack.get_node_or_null("PortraitSetupFooterSpacer") as Control
+	if spacer == null:
+		spacer = Control.new()
+		spacer.name = "PortraitSetupFooterSpacer"
+		spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		stack.add_child(spacer)
+	var footer_height := float(context.get("primary_button_height", 94.0))
+	var viewport_size: Vector2 = context.get("viewport_size", Vector2(390, 844))
+	var bottom_margin := clampf(viewport_size.y * 0.034, 34.0, 78.0)
+	spacer.custom_minimum_size = Vector2(0.0, footer_height + bottom_margin + float(context.get("section_gap", 18)))
+	spacer.visible = true
+	stack.move_child(spacer, stack.get_child_count() - 1)
+
+
+func _layout_portrait_deck_rows(context: Dictionary) -> void:
+	var left_vbox := find_child("LeftVBox", true, false) as VBoxContainer
+	if left_vbox == null:
+		return
+	var gap := int(context.get("section_gap", 18))
+	for slot_index: int in [1, 2]:
+		var label := find_child("Deck%dLabel" % slot_index, true, false) as Label
+		var row := find_child("Deck%dRow" % slot_index, true, false) as HBoxContainer
+		var picker := find_child("Deck%dPickerButton" % slot_index, true, false) as Button
+		if row == null or picker == null:
+			continue
+		_bind_deck_picker_button_touch(picker, slot_index - 1)
+		if picker.get_parent() != left_vbox:
+			if picker.get_parent() != null:
+				picker.get_parent().remove_child(picker)
+			picker.owner = null
+			left_vbox.add_child(picker)
+		var insert_index := (label.get_index() + 1) if label != null and label.get_parent() == left_vbox else 0
+		left_vbox.move_child(picker, insert_index)
+		if row.get_parent() == left_vbox:
+			left_vbox.move_child(row, picker.get_index() + 1)
+		picker.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		picker.custom_minimum_size = Vector2(0.0, float(context.get("primary_button_height", 96.0)))
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.custom_minimum_size.y = float(context.get("secondary_button_height", 84.0))
+		row.add_theme_constant_override("separation", gap)
+		for action_name: String in ["Deck%dViewButton" % slot_index, "Deck%dEditButton" % slot_index, "AIPreviewStrengthOption"]:
+			var action := find_child(action_name, true, false) as Control
+			if action == null or action.get_parent() != row:
+				continue
+			action.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			action.custom_minimum_size.x = 0.0
+			action.custom_minimum_size.y = float(context.get("secondary_button_height", 84.0))
+
+
+func _restore_landscape_deck_rows() -> void:
+	for slot_index: int in [1, 2]:
+		var row := find_child("Deck%dRow" % slot_index, true, false) as HBoxContainer
+		var picker := find_child("Deck%dPickerButton" % slot_index, true, false) as Button
+		if row == null or picker == null:
+			continue
+		if picker.get_parent() != row:
+			if picker.get_parent() != null:
+				picker.get_parent().remove_child(picker)
+			picker.owner = null
+			row.add_child(picker)
+			row.move_child(picker, 0)
+		row.custom_minimum_size = Vector2.ZERO
+		row.add_theme_constant_override("separation", 8)
+		picker.custom_minimum_size = Vector2(320.0, 68.0)
+		for action_name: String in ["Deck%dViewButton" % slot_index, "Deck%dEditButton" % slot_index, "AIPreviewStrengthOption"]:
+			var action := find_child(action_name, true, false) as Control
+			if action == null:
+				continue
+			action.custom_minimum_size.x = 76.0
+			action.custom_minimum_size.y = 38.0
+
+
+func _layout_portrait_action_footer(context: Dictionary) -> void:
+	var action_row := find_child("ActionRow", true, false) as HBoxContainer
+	if action_row == null:
+		return
+	if action_row.get_parent() != self:
+		if action_row.get_parent() != null:
+			action_row.get_parent().remove_child(action_row)
+		action_row.owner = null
+		add_child(action_row)
+	action_row.visible = true
+	action_row.z_index = 50
+	action_row.mouse_filter = Control.MOUSE_FILTER_PASS
+	action_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	action_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	var gap := int(context.get("section_gap", 18))
+	action_row.add_theme_constant_override("separation", gap)
+	var viewport_size: Vector2 = context.get("viewport_size", Vector2(390, 844))
+	var content_width := float(context.get("content_width", viewport_size.x - 40.0))
+	var footer_height := float(context.get("primary_button_height", 94.0))
+	var bottom_margin := clampf(viewport_size.y * 0.034, 34.0, 78.0)
+	action_row.anchor_left = 0.5
+	action_row.anchor_right = 0.5
+	action_row.anchor_top = 0.5
+	action_row.anchor_bottom = 0.5
+	action_row.offset_left = -content_width * 0.5
+	action_row.offset_right = content_width * 0.5
+	action_row.offset_top = viewport_size.y * 0.5 - footer_height - bottom_margin
+	action_row.offset_bottom = viewport_size.y * 0.5 - bottom_margin
+	action_row.position = Vector2(viewport_size.x * 0.5 + action_row.offset_left, viewport_size.y * 0.5 + action_row.offset_top)
+	action_row.size = Vector2(content_width, footer_height)
+	move_child(action_row, get_child_count() - 1)
+	var buttons: Array[Button] = []
+	for button_name: String in ["BtnStart", "BtnBack"]:
+		var button := find_child(button_name, true, false) as Button
+		if button != null and button.visible:
+			button.mouse_filter = Control.MOUSE_FILTER_STOP
+			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			buttons.append(button)
+	if not buttons.is_empty():
+		var button_width := maxf(1.0, (content_width - float(gap) * float(buttons.size() - 1)) / float(buttons.size()))
+		var x := 0.0
+		for button: Button in buttons:
+			button.position = Vector2(x, 0.0)
+			button.size = Vector2(button_width, footer_height)
+			x += button_width + float(gap)
+
+
+func _restore_landscape_action_footer() -> void:
+	var right_vbox := find_child("RightVBox", true, false) as VBoxContainer
+	var action_row := find_child("ActionRow", true, false) as HBoxContainer
+	if right_vbox == null or action_row == null:
+		return
+	if action_row.get_parent() != right_vbox:
+		if action_row.get_parent() != null:
+			action_row.get_parent().remove_child(action_row)
+		action_row.owner = null
+		right_vbox.add_child(action_row)
+	action_row.z_index = 0
+	action_row.anchor_left = 0.0
+	action_row.anchor_right = 0.0
+	action_row.anchor_top = 0.0
+	action_row.anchor_bottom = 0.0
+	action_row.offset_left = 0.0
+	action_row.offset_right = 0.0
+	action_row.offset_top = 0.0
+	action_row.offset_bottom = 0.0
+	action_row.position = Vector2.ZERO
+
+
+func _bind_deck_picker_button_touch(button: Button, slot_index: int) -> void:
+	if button == null or bool(button.get_meta(DECK_PICKER_TOUCH_BOUND_META, false)):
+		return
+	button.set_meta(DECK_PICKER_TOUCH_BOUND_META, true)
+	button.gui_input.connect(Callable(self, "_on_deck_picker_button_gui_input").bind(slot_index))
+
+
+func _on_deck_picker_button_gui_input(event: InputEvent, slot_index: int) -> void:
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			return
+		_on_deck_picker_pressed(slot_index)
+		_accept_pointer_event()
+		return
+	if event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if mouse_button.button_index != MOUSE_BUTTON_LEFT or mouse_button.pressed or not _is_mobile_like_runtime():
+			return
+		_on_deck_picker_pressed(slot_index)
+		_accept_pointer_event()
+
+
+func _handle_deck_picker_button_input(event: InputEvent) -> bool:
+	var pointer_position := Vector2.ZERO
+	var pressed := false
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		pointer_position = touch.position
+		pressed = touch.pressed
+	elif event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if mouse_button.button_index != MOUSE_BUTTON_LEFT or not _is_mobile_like_runtime():
+			return false
+		pointer_position = mouse_button.position
+		pressed = mouse_button.pressed
+	else:
+		return false
+	var slot := _deck_picker_button_slot_at_position(pointer_position)
+	if pressed:
+		_deck_picker_button_candidate_slot = slot
+		if slot >= 0:
+			_accept_pointer_event()
+			return true
+		return false
+	var candidate_slot := _deck_picker_button_candidate_slot
+	_deck_picker_button_candidate_slot = -1
+	if candidate_slot < 0:
+		candidate_slot = slot
+	if candidate_slot < 0 or candidate_slot != slot:
+		return false
+	_on_deck_picker_pressed(candidate_slot)
+	_accept_pointer_event()
+	return true
+
+
+func _deck_picker_button_slot_at_position(global_position: Vector2) -> int:
+	for slot_index: int in [0, 1]:
+		var button_name := "Deck1PickerButton" if slot_index == 0 else "Deck2PickerButton"
+		var button := find_child(button_name, true, false) as Button
+		if button == null or button.disabled or not button.visible:
+			continue
+		if button.is_inside_tree() and not button.is_visible_in_tree():
+			continue
+		if button.get_global_rect().has_point(global_position):
+			return slot_index
+	return -1
+
+
+func _handle_portrait_action_footer_input(event: InputEvent) -> bool:
+	if str(get_meta("non_battle_layout_mode", "")) != "portrait":
+		return false
+	var pointer_position := Vector2.ZERO
+	var pressed := false
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		pointer_position = touch.position
+		pressed = touch.pressed
+	elif event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if mouse_button.button_index != MOUSE_BUTTON_LEFT or not _is_mobile_like_runtime():
+			return false
+		pointer_position = mouse_button.position
+		pressed = mouse_button.pressed
+	else:
+		return false
+	var button := _portrait_action_footer_button_at_position(pointer_position)
+	if pressed:
+		_portrait_action_footer_candidate = button
+		if button != null:
+			_accept_pointer_event()
+			return true
+		return false
+	var candidate := _portrait_action_footer_candidate
+	_portrait_action_footer_candidate = null
+	if candidate == null:
+		candidate = button
+	if candidate == null or candidate != button:
+		return false
+	if candidate.disabled or not candidate.visible:
+		return false
+	candidate.pressed.emit()
+	_accept_pointer_event()
+	return true
+
+
+func _portrait_action_footer_button_at_position(global_position: Vector2) -> Button:
+	var action_row := find_child("ActionRow", true, false) as HBoxContainer
+	if action_row == null or not action_row.visible or action_row.get_parent() != self:
+		return null
+	for button_name: String in ["BtnStart", "BtnBack"]:
+		var button := find_child(button_name, true, false) as Button
+		if button != null and button.visible and button.get_global_rect().has_point(global_position):
+			return button
+	var row_rect := action_row.get_global_rect()
+	if not row_rect.has_point(global_position):
+		return null
+	var buttons: Array[Button] = []
+	for button_name: String in ["BtnStart", "BtnBack"]:
+		var button := find_child(button_name, true, false) as Button
+		if button != null and button.visible:
+			buttons.append(button)
+	if buttons.is_empty():
+		return null
+	var segment_width := row_rect.size.x / float(buttons.size())
+	var index := clampi(int(floor((global_position.x - row_rect.position.x) / maxf(segment_width, 1.0))), 0, buttons.size() - 1)
+	return buttons[index]
+
+
+func _is_mobile_like_runtime() -> bool:
+	return OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
+
+
+func _accept_pointer_event() -> void:
+	var viewport := get_viewport()
+	if viewport != null:
+		viewport.set_input_as_handled()
+
+
+func _handle_deck_picker_modal_input(event: InputEvent) -> bool:
+	if _should_suppress_deck_picker_input(event):
+		return true
+	if _deck_picker_overlay == null or not is_instance_valid(_deck_picker_overlay) or not _deck_picker_overlay.visible:
+		return false
+	if NonBattleTouchBridgeScript.handle_root_touch(_deck_picker_overlay, event):
+		return true
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed and _deck_picker_panel != null and not _deck_picker_panel.get_global_rect().has_point(touch.position):
+			_close_deck_picker()
+		_accept_pointer_event()
+		return true
+	if event is InputEventScreenDrag:
+		_accept_pointer_event()
+		return true
+	if event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if mouse_button.button_index != MOUSE_BUTTON_LEFT:
+			return false
+		if _is_mobile_like_runtime():
+			_accept_pointer_event()
+			return true
+		if mouse_button.pressed and _deck_picker_panel != null and not _deck_picker_panel.get_global_rect().has_point(mouse_button.position):
+			_close_deck_picker()
+			_accept_pointer_event()
+			return true
+	return false
+
+
+func _should_suppress_deck_picker_input(event: InputEvent) -> bool:
+	if _deck_picker_input_suppress_until_msec <= 0:
+		return false
+	if Time.get_ticks_msec() > _deck_picker_input_suppress_until_msec:
+		_deck_picker_input_suppress_until_msec = 0
+		return false
+	var should_suppress := event is InputEventScreenTouch or event is InputEventScreenDrag
+	if event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		should_suppress = mouse_button.button_index == MOUSE_BUTTON_LEFT
+	if not should_suppress:
+		return false
+	_accept_pointer_event()
+	return true
+
+
+func _apply_battle_setup_mobile_metrics(context: Dictionary) -> void:
+	var portrait := bool(context.get("is_portrait", false))
+	var margin_value := int(context.get("page_margin", 24.0))
+	var safe_area := get_node_or_null("SafeArea") as MarginContainer
+	if safe_area != null:
+		safe_area.add_theme_constant_override("margin_left", margin_value)
+		safe_area.add_theme_constant_override("margin_top", margin_value)
+		safe_area.add_theme_constant_override("margin_right", margin_value)
+		safe_area.add_theme_constant_override("margin_bottom", margin_value)
+	var root := find_child("RootVBox", true, false) as VBoxContainer
+	if root != null:
+		root.add_theme_constant_override("separation", int(context.get("section_gap", 14)))
+	var action_row := find_child("ActionRow", true, false) as HBoxContainer
+	if action_row != null:
+		action_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		action_row.alignment = BoxContainer.ALIGNMENT_CENTER
+		action_row.add_theme_constant_override("separation", int(context.get("section_gap", 14)) if portrait else 10)
+		var start_button := find_child("BtnStart", true, false) as Button
+		var back_button := find_child("BtnBack", true, false) as Button
+		for action_button: Button in [start_button, back_button]:
+			if action_button == null:
+				continue
+			action_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL if portrait else Control.SIZE_SHRINK_CENTER
+			if portrait:
+				action_button.custom_minimum_size.x = 0.0
+	var title := find_child("Title", true, false) as Label
+	if title != null:
+		title.add_theme_font_size_override("font_size", int(context.get("title_font_size", 32)))
+	_apply_battle_setup_metrics_recursive(self, context, portrait)
+
+
+func _apply_battle_setup_metrics_recursive(node: Node, context: Dictionary, portrait: bool) -> void:
+	if node is OptionButton:
+		var option := node as OptionButton
+		var target_height := ceilf(float(context.get("input_height", 38.0))) if portrait else 38.0
+		option.custom_minimum_size.y = maxf(option.custom_minimum_size.y, target_height) if portrait else target_height
+		option.add_theme_font_size_override("font_size", int(context.get("input_font_size", 15)) if portrait else int(context.get("input_font_size", 15)))
+		if option.name == "BgmOption":
+			option.set_meta(NonBattleTouchBridgeScript.OPTION_PRESS_SIGNAL_ONLY_META, portrait)
+		NonBattleTouchBridgeScript.bind_button_touch(option)
+	elif node is Button:
+		var button := node as Button
+		var target_height := ceilf(float(context.get("secondary_button_height", 44.0)))
+		if button.name == "BtnStart" or button.name.ends_with("PickerButton"):
+			target_height = ceilf(float(context.get("primary_button_height", 52.0)))
+		button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, target_height) if portrait else (68.0 if button.name.ends_with("PickerButton") else 42.0)
+		var button_font_size := int(context.get("button_font_size", 18))
+		if not portrait and button.name.ends_with("PickerButton") and not _is_ai_mode():
+			button_font_size = DECK_PICKER_MAIN_FONT_SIZE
+		button.add_theme_font_size_override("font_size", button_font_size)
+		NonBattleTouchBridgeScript.bind_button_touch(button)
+	elif node is HSlider:
+		var slider := node as HSlider
+		if portrait:
+			var slider_height := maxf(72.0, float(context.get("input_height", 90.0)) * 0.58)
+			slider.custom_minimum_size = Vector2(
+				maxf(slider.custom_minimum_size.x, float(context.get("content_width", 390.0)) * 0.48),
+				maxf(slider.custom_minimum_size.y, slider_height)
+			)
+			slider.size = Vector2(maxf(slider.size.x, slider.custom_minimum_size.x), maxf(slider.size.y, slider.custom_minimum_size.y))
+	elif node is Label:
+		var label := node as Label
+		if label.name != "Title":
+			label.add_theme_font_size_override("font_size", int(context.get("body_font_size", 15)) if portrait else 14)
+	for child: Node in node.get_children():
+		_apply_battle_setup_metrics_recursive(child, context, portrait)
 
 
 func _apply_hud_theme() -> void:
@@ -441,7 +976,7 @@ func _sync_mode_segment_buttons() -> void:
 		if button == null:
 			continue
 		var active: bool = option_index == %ModeOption.selected
-		button.add_theme_font_size_override("font_size", 15)
+		button.add_theme_font_size_override("font_size", _current_non_battle_button_font_size(15))
 		button.add_theme_color_override("font_color", Color(0.04, 0.10, 0.12, 1.0) if active else HUD_TEXT)
 		button.add_theme_color_override("font_hover_color", Color(0.04, 0.10, 0.12, 1.0) if active else Color.WHITE)
 		button.add_theme_color_override("font_pressed_color", Color(0.04, 0.10, 0.12, 1.0))
@@ -471,6 +1006,16 @@ func _on_deck2_changed(_index: int) -> void:
 	_refresh_deck_action_buttons()
 
 
+func _current_non_battle_button_font_size(fallback: int = 15) -> int:
+	return int(_current_non_battle_layout_context.get("button_font_size", fallback))
+
+
+func _reapply_current_non_battle_layout_metrics() -> void:
+	if _current_non_battle_layout_context.is_empty():
+		return
+	_apply_battle_setup_mobile_metrics(_current_non_battle_layout_context)
+
+
 func _refresh_ai_ui_visibility() -> void:
 	_sync_mode_segment_buttons()
 	_refresh_first_player_segment_labels()
@@ -482,6 +1027,7 @@ func _refresh_ai_ui_visibility() -> void:
 	_refresh_ai_strategy_variant_options()
 	_refresh_llm_model_controls()
 	_refresh_deck_action_buttons()
+	_reapply_current_non_battle_layout_metrics()
 
 
 func _setup_ai_preview_strength_options() -> void:
@@ -585,7 +1131,7 @@ func _sync_ai_strategy_segment_buttons() -> void:
 			continue
 		var active: bool = option_index == selected_index
 		button.disabled = option_count <= 1
-		button.add_theme_font_size_override("font_size", 15)
+		button.add_theme_font_size_override("font_size", _current_non_battle_button_font_size(15))
 		button.add_theme_color_override("font_color", Color(0.04, 0.10, 0.12, 1.0) if active else HUD_TEXT)
 		button.add_theme_color_override("font_hover_color", Color(0.04, 0.10, 0.12, 1.0) if active else Color.WHITE)
 		button.add_theme_color_override("font_pressed_color", Color(0.04, 0.10, 0.12, 1.0))
@@ -911,7 +1457,7 @@ func _sync_first_player_segment_buttons() -> void:
 		if button == null:
 			continue
 		var active: bool = option_index == %FirstPlayerOption.selected
-		button.add_theme_font_size_override("font_size", 15)
+		button.add_theme_font_size_override("font_size", _current_non_battle_button_font_size(15))
 		button.add_theme_color_override("font_color", Color(0.04, 0.10, 0.12, 1.0) if active else HUD_TEXT)
 		button.add_theme_color_override("font_hover_color", Color(0.04, 0.10, 0.12, 1.0) if active else Color.WHITE)
 		button.add_theme_stylebox_override("normal", _hud_segment_button_style(active, false, false))
@@ -1112,6 +1658,7 @@ func _hide_background_gallery_scrollbar_for(gallery: ScrollContainer) -> void:
 
 func _setup_battle_music_options() -> void:
 	BattleMusicManager.ensure_custom_music_dir()
+	BattleMusicManager.ensure_builtin_music_mirror()
 	_battle_music_tracks = BattleMusicManager.get_available_battle_tracks()
 	%BgmOption.clear()
 	for track: Dictionary in _battle_music_tracks:
@@ -1129,9 +1676,20 @@ func _setup_battle_music_options() -> void:
 	%BgmHint.text = "自定义音乐目录: %s" % BattleMusicManager.get_custom_music_absolute_dir_path()
 	if not %BgmOption.item_selected.is_connected(_on_bgm_option_changed):
 		%BgmOption.item_selected.connect(_on_bgm_option_changed)
+	if not %BgmOption.pressed.is_connected(_on_bgm_option_pressed):
+		%BgmOption.pressed.connect(_on_bgm_option_pressed)
 	if not %BgmVolumeSlider.value_changed.is_connected(_on_bgm_volume_changed):
 		%BgmVolumeSlider.value_changed.connect(_on_bgm_volume_changed)
 	_update_bgm_preview_button()
+
+
+func _ensure_battle_music_options_ready() -> void:
+	var option := get_node_or_null("%BgmOption") as OptionButton
+	if option == null:
+		return
+	if _battle_music_tracks.size() > 1 and option.item_count > 1:
+		return
+	_setup_battle_music_options()
 
 
 func _setup_battle_layout_options() -> void:
@@ -1192,7 +1750,7 @@ func _sync_dynamic_stadium_background_segment_buttons() -> void:
 		if button == null:
 			continue
 		var active := enabled == _dynamic_stadium_background_enabled
-		button.add_theme_font_size_override("font_size", 15)
+		button.add_theme_font_size_override("font_size", _current_non_battle_button_font_size(15))
 		button.add_theme_color_override("font_color", Color(0.04, 0.10, 0.12, 1.0) if active else HUD_TEXT)
 		button.add_theme_color_override("font_hover_color", Color(0.04, 0.10, 0.12, 1.0) if active else Color.WHITE)
 		button.add_theme_color_override("font_pressed_color", Color(0.04, 0.10, 0.12, 1.0))
@@ -1245,7 +1803,7 @@ func _sync_battle_layout_segment_buttons() -> void:
 		if button == null:
 			continue
 		var active := mode == selected_mode
-		button.add_theme_font_size_override("font_size", 15)
+		button.add_theme_font_size_override("font_size", _current_non_battle_button_font_size(15))
 		button.add_theme_color_override("font_color", Color(0.04, 0.10, 0.12, 1.0) if active else HUD_TEXT)
 		button.add_theme_color_override("font_hover_color", Color(0.04, 0.10, 0.12, 1.0) if active else Color.WHITE)
 		button.add_theme_color_override("font_pressed_color", Color(0.04, 0.10, 0.12, 1.0))
@@ -1295,6 +1853,167 @@ func _on_bgm_option_changed(_index: int) -> void:
 	_update_bgm_preview_button()
 
 
+func _on_bgm_option_pressed() -> void:
+	if bool(_current_non_battle_layout_context.get("is_portrait", false)):
+		_show_battle_music_picker()
+
+
+func _handle_battle_music_picker_input(event: InputEvent) -> bool:
+	if _bgm_picker_overlay == null or not is_instance_valid(_bgm_picker_overlay) or not _bgm_picker_overlay.visible:
+		return false
+	if NonBattleTouchBridgeScript.handle_root_touch(_bgm_picker_overlay, event):
+		return true
+	return false
+
+
+func _show_battle_music_picker() -> void:
+	_ensure_battle_music_options_ready()
+	_ensure_battle_music_picker_overlay()
+	_refresh_battle_music_picker_layout()
+	_populate_battle_music_picker()
+	_bgm_picker_overlay.visible = true
+	_bgm_picker_overlay.move_to_front()
+
+
+func _hide_battle_music_picker() -> void:
+	if _bgm_picker_overlay != null and is_instance_valid(_bgm_picker_overlay):
+		_bgm_picker_overlay.visible = false
+
+
+func _ensure_battle_music_picker_overlay() -> void:
+	if _bgm_picker_overlay != null and is_instance_valid(_bgm_picker_overlay):
+		return
+	_bgm_picker_overlay = Control.new()
+	_bgm_picker_overlay.name = BGM_PICKER_OVERLAY_NAME
+	_bgm_picker_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_bgm_picker_overlay.visible = false
+	_bgm_picker_overlay.z_index = 2400
+	_bgm_picker_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(_bgm_picker_overlay)
+
+	var shade := ColorRect.new()
+	shade.name = "BattleMusicPickerShade"
+	shade.color = Color(0.0, 0.0, 0.0, 0.58)
+	shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_bgm_picker_overlay.add_child(shade)
+
+	var panel := PanelContainer.new()
+	panel.name = "BattleMusicPickerPanel"
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	panel.add_theme_stylebox_override("panel", _hud_panel_style(
+		Color(0.025, 0.055, 0.085, 0.96),
+		HUD_ACCENT,
+		22,
+		10,
+		Color(0.0, 0.52, 0.76, 0.24)
+	))
+	_bgm_picker_overlay.add_child(panel)
+
+	var margin := MarginContainer.new()
+	margin.name = "BattleMusicPickerMargin"
+	margin.add_theme_constant_override("margin_left", 22)
+	margin.add_theme_constant_override("margin_top", 22)
+	margin.add_theme_constant_override("margin_right", 22)
+	margin.add_theme_constant_override("margin_bottom", 22)
+	panel.add_child(margin)
+
+	var root := VBoxContainer.new()
+	root.name = "BattleMusicPickerRoot"
+	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	root.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_theme_constant_override("separation", 18)
+	margin.add_child(root)
+
+	var title := Label.new()
+	title.name = "BattleMusicPickerTitle"
+	title.text = "选择对战音乐"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 54)
+	title.add_theme_color_override("font_color", HUD_TEXT)
+	root.add_child(title)
+
+	_bgm_picker_scroll = ScrollContainer.new()
+	_bgm_picker_scroll.name = "BattleMusicPickerScroll"
+	_bgm_picker_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_bgm_picker_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_bgm_picker_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_bgm_picker_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	HudThemeScript.style_scroll_container(_bgm_picker_scroll, "portrait_touch")
+	var vbar := _bgm_picker_scroll.get_v_scroll_bar()
+	if vbar != null:
+		NonBattleTouchBridgeScript.bind_range_touch(vbar)
+	root.add_child(_bgm_picker_scroll)
+
+	_bgm_picker_list = VBoxContainer.new()
+	_bgm_picker_list.name = "BattleMusicPickerList"
+	_bgm_picker_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_bgm_picker_list.add_theme_constant_override("separation", 14)
+	_bgm_picker_scroll.add_child(_bgm_picker_list)
+
+	var close_button := Button.new()
+	close_button.name = "BattleMusicPickerCloseButton"
+	close_button.text = "关闭"
+	close_button.custom_minimum_size = Vector2(0.0, 150.0)
+	close_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_hud_button(close_button)
+	close_button.add_theme_font_size_override("font_size", 48)
+	close_button.pressed.connect(_hide_battle_music_picker)
+	NonBattleTouchBridgeScript.bind_button_touch(close_button)
+	root.add_child(close_button)
+
+
+func _refresh_battle_music_picker_layout() -> void:
+	if _bgm_picker_overlay == null or not is_instance_valid(_bgm_picker_overlay):
+		return
+	var viewport_size: Vector2 = _current_non_battle_layout_context.get("viewport_size", size if size.x > 0.0 and size.y > 0.0 else Vector2(1080, 2400))
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		viewport_size = Vector2(1080, 2400)
+	var panel := _bgm_picker_overlay.get_node_or_null("BattleMusicPickerPanel") as PanelContainer
+	if panel != null:
+		var margin := roundi(clampf(viewport_size.x * 0.035, 28.0, 46.0))
+		panel.offset_left = margin
+		panel.offset_top = margin
+		panel.offset_right = -margin
+		panel.offset_bottom = -margin
+		panel.custom_minimum_size = Vector2(maxf(320.0, viewport_size.x - margin * 2.0), maxf(560.0, viewport_size.y - margin * 2.0))
+	if _bgm_picker_scroll != null:
+		_bgm_picker_scroll.custom_minimum_size.y = maxf(900.0, viewport_size.y * 0.58)
+		HudThemeScript.style_scroll_container(_bgm_picker_scroll, "portrait_touch")
+
+
+func _populate_battle_music_picker() -> void:
+	if _bgm_picker_list == null:
+		return
+	for child: Node in _bgm_picker_list.get_children():
+		child.queue_free()
+	var selected_index := _battle_music_index_from_id(_selected_battle_music_id)
+	for i: int in _battle_music_tracks.size():
+		var track := _battle_music_tracks[i]
+		var button := Button.new()
+		button.name = "BattleMusicPickerItem%d" % i
+		button.text = "%s%s" % ["[当前] " if i == selected_index else "", str(track.get("label", ""))]
+		button.custom_minimum_size = Vector2(0.0, 148.0)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.clip_text = true
+		_style_hud_button(button)
+		button.add_theme_font_size_override("font_size", 46)
+		button.pressed.connect(_select_battle_music_from_picker.bind(i))
+		NonBattleTouchBridgeScript.bind_button_touch(button)
+		_bgm_picker_list.add_child(button)
+
+
+func _select_battle_music_from_picker(index: int) -> void:
+	var option := get_node_or_null("%BgmOption") as OptionButton
+	if option == null:
+		option = find_child("BgmOption", true, false) as OptionButton
+	if option != null and index >= 0 and index < option.item_count:
+		option.select(index)
+	_on_bgm_option_changed(index)
+	_hide_battle_music_picker()
+
+
 func _on_bgm_volume_changed(value: float) -> void:
 	_selected_battle_music_volume_percent = clampi(int(round(value)), 0, 100)
 	_update_bgm_volume_value_label()
@@ -1302,11 +2021,18 @@ func _on_bgm_volume_changed(value: float) -> void:
 
 
 func _update_bgm_volume_value_label() -> void:
-	%BgmVolumeValue.text = "%d%%" % _selected_battle_music_volume_percent
+	var value_label := get_node_or_null("%BgmVolumeValue") as Label
+	if value_label == null:
+		return
+	value_label.text = "%d%%" % _selected_battle_music_volume_percent
 
 
 func _sync_selected_battle_music_from_option() -> void:
-	var selected_index: int = %BgmOption.selected
+	var option := get_node_or_null("%BgmOption") as OptionButton
+	if option == null:
+		_selected_battle_music_id = "none"
+		return
+	var selected_index: int = option.selected
 	if selected_index >= 0 and selected_index < _battle_music_tracks.size():
 		_selected_battle_music_id = str(_battle_music_tracks[selected_index].get("id", "none"))
 	else:
@@ -1327,7 +2053,11 @@ func _on_bgm_preview_pressed() -> void:
 
 func _update_bgm_preview_button() -> void:
 	var is_current_preview := BattleMusicManager.is_battle_music_playing() and BattleMusicManager.get_current_track_id() == _selected_battle_music_id and _selected_battle_music_id != "none"
-	%BtnPreviewBgm.text = "停止试听" if is_current_preview else "试听"
+	var preview_button := get_node_or_null("%BtnPreviewBgm") as Button
+	if preview_button == null:
+		preview_button = find_child("BtnPreviewBgm", true, false) as Button
+	if preview_button != null:
+		preview_button.text = "停止试听" if is_current_preview else "试听"
 
 
 func _battle_music_index_from_id(track_id: String) -> int:
@@ -1399,6 +2129,7 @@ func _build_background_card(path: String, texture: Texture2D) -> PanelContainer:
 	)
 
 	var margin := MarginContainer.new()
+	margin.name = "DeckPickerMargin"
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
 	margin.add_theme_constant_override("margin_left", 4)
 	margin.add_theme_constant_override("margin_top", 4)
@@ -1715,12 +2446,14 @@ func _ai_deck_release_key(deck: DeckData) -> int:
 
 
 func _on_deck_picker_pressed(slot_index: int) -> void:
+	_deck_picker_input_suppress_until_msec = 0
 	_deck_picker_slot_index = slot_index
 	_deck_picker_category = _default_deck_picker_category(slot_index)
 	_deck_picker_search = ""
 	_ensure_deck_picker_overlay()
 	if _deck_picker_search_input != null:
 		_deck_picker_search_input.text = ""
+	_apply_deck_picker_mobile_metrics(_deck_picker_layout_context())
 	_refresh_deck_picker()
 	_resize_deck_picker_panel()
 	_deck_picker_overlay.visible = true
@@ -1733,6 +2466,7 @@ func _ensure_deck_picker_overlay() -> void:
 	_deck_picker_overlay = Control.new()
 	_deck_picker_overlay.name = "DeckPickerOverlay"
 	_deck_picker_overlay.visible = false
+	_deck_picker_overlay.z_index = 200
 	_deck_picker_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	_deck_picker_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(_deck_picker_overlay)
@@ -1748,7 +2482,7 @@ func _ensure_deck_picker_overlay() -> void:
 	)
 	_deck_picker_overlay.add_child(shade)
 
-	var center := CenterContainer.new()
+	var center := Control.new()
 	center.name = "DeckPickerCenter"
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -1762,6 +2496,7 @@ func _ensure_deck_picker_overlay() -> void:
 	center.add_child(_deck_picker_panel)
 
 	var margin := MarginContainer.new()
+	margin.name = "DeckPickerMargin"
 	margin.add_theme_constant_override("margin_left", 16)
 	margin.add_theme_constant_override("margin_top", 14)
 	margin.add_theme_constant_override("margin_right", 16)
@@ -1769,17 +2504,20 @@ func _ensure_deck_picker_overlay() -> void:
 	_deck_picker_panel.add_child(margin)
 
 	var root := VBoxContainer.new()
+	root.name = "DeckPickerRoot"
 	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	root.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_theme_constant_override("separation", 12)
 	margin.add_child(root)
 
 	var header := HBoxContainer.new()
+	header.name = "DeckPickerHeader"
 	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_theme_constant_override("separation", 10)
 	root.add_child(header)
 
 	var title := Label.new()
+	title.name = "DeckPickerTitle"
 	title.text = "选择卡组"
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.add_theme_font_size_override("font_size", 22)
@@ -1789,10 +2527,12 @@ func _ensure_deck_picker_overlay() -> void:
 	header.add_child(title)
 
 	var close_button := Button.new()
+	close_button.name = "DeckPickerCloseButton"
 	close_button.text = "X"
 	close_button.custom_minimum_size = Vector2(44, 38)
 	close_button.pressed.connect(_close_deck_picker)
 	_style_hud_button(close_button)
+	NonBattleTouchBridgeScript.bind_button_touch(close_button)
 	header.add_child(close_button)
 
 	_deck_picker_subtitle = Label.new()
@@ -1809,6 +2549,7 @@ func _ensure_deck_picker_overlay() -> void:
 	root.add_child(_deck_picker_search_input)
 
 	var tabs := HBoxContainer.new()
+	tabs.name = "DeckPickerTabs"
 	tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	tabs.add_theme_constant_override("separation", 8)
 	root.add_child(tabs)
@@ -1822,10 +2563,12 @@ func _ensure_deck_picker_overlay() -> void:
 		button.custom_minimum_size = Vector2(96, 40)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.pressed.connect(_on_deck_picker_category_pressed.bind(str(tab.get("id", ""))))
+		NonBattleTouchBridgeScript.bind_button_touch(button)
 		tabs.add_child(button)
 		_deck_picker_tabs[str(tab.get("id", ""))] = button
 
 	var scroll := ScrollContainer.new()
+	scroll.name = "DeckPickerScroll"
 	scroll.custom_minimum_size = Vector2(0, 430)
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -1837,21 +2580,104 @@ func _ensure_deck_picker_overlay() -> void:
 	_deck_picker_grid.add_theme_constant_override("h_separation", 10)
 	_deck_picker_grid.add_theme_constant_override("v_separation", 10)
 	scroll.add_child(_deck_picker_grid)
+	_apply_deck_picker_mobile_metrics(_deck_picker_layout_context())
 
 
 func _resize_deck_picker_panel() -> void:
 	if _deck_picker_panel == null:
 		return
-	var viewport_size := get_viewport_rect().size
-	_deck_picker_panel.custom_minimum_size = Vector2(
+	var context := _deck_picker_layout_context()
+	var viewport_size: Vector2 = context.get("viewport_size", Vector2.ZERO)
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		viewport_size = get_viewport_rect().size if is_inside_tree() else Vector2(1600, 900)
+	if bool(context.get("is_portrait", false)):
+		var margin := float(context.get("page_margin", 24.0))
+		var desired_size := Vector2(
+			maxf(340.0, viewport_size.x - margin),
+			maxf(760.0, viewport_size.y - margin * 2.0)
+		)
+		_deck_picker_panel.custom_minimum_size = desired_size
+		_deck_picker_panel.size = desired_size
+		_deck_picker_panel.position = Vector2(
+			maxf(margin, (viewport_size.x - desired_size.x) * 0.5),
+			margin
+		)
+		return
+	var landscape_size := Vector2(
 		maxf(360.0, minf(940.0, viewport_size.x * 0.92)),
 		maxf(420.0, minf(760.0, viewport_size.y * 0.88))
 	)
+	_deck_picker_panel.custom_minimum_size = landscape_size
+	_deck_picker_panel.size = landscape_size
+	_deck_picker_panel.position = Vector2(
+		maxf(0.0, (viewport_size.x - landscape_size.x) * 0.5),
+		maxf(0.0, (viewport_size.y - landscape_size.y) * 0.5)
+	)
+
+
+func _deck_picker_layout_context() -> Dictionary:
+	if not _current_non_battle_layout_context.is_empty():
+		return _current_non_battle_layout_context
+	var size := get_viewport_rect().size if is_inside_tree() else Vector2(1600, 900)
+	var mode := str(get_meta("non_battle_layout_mode", "landscape"))
+	var is_mobile := OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
+	return _non_battle_layout_controller.call("build_context", size, mode, is_mobile)
+
+
+func _apply_deck_picker_mobile_metrics(context: Dictionary) -> void:
+	if _deck_picker_panel == null:
+		return
+	var portrait := bool(context.get("is_portrait", false))
+	var margin_value := int(context.get("page_margin", 24.0)) if portrait else 16
+	var gap := int(context.get("section_gap", 12)) if portrait else 12
+	var margin := _deck_picker_panel.get_node_or_null("DeckPickerMargin") as MarginContainer
+	if margin != null:
+		margin.add_theme_constant_override("margin_left", margin_value)
+		margin.add_theme_constant_override("margin_top", margin_value)
+		margin.add_theme_constant_override("margin_right", margin_value)
+		margin.add_theme_constant_override("margin_bottom", margin_value)
+	var root := _deck_picker_panel.find_child("DeckPickerRoot", true, false) as VBoxContainer
+	if root != null:
+		root.add_theme_constant_override("separation", gap)
+	var header := _deck_picker_panel.find_child("DeckPickerHeader", true, false) as HBoxContainer
+	if header != null:
+		header.add_theme_constant_override("separation", gap)
+	var title := _deck_picker_panel.find_child("DeckPickerTitle", true, false) as Label
+	if title != null:
+		title.add_theme_font_size_override("font_size", int(context.get("title_font_size", 32)) if portrait else 22)
+	var close_button := _deck_picker_panel.find_child("DeckPickerCloseButton", true, false) as Button
+	if close_button != null:
+		var close_size := float(context.get("secondary_button_height", 44.0)) if portrait else 44.0
+		close_button.custom_minimum_size = Vector2(close_size, close_size)
+		close_button.add_theme_font_size_override("font_size", int(context.get("button_font_size", 15)) if portrait else 15)
+	if _deck_picker_subtitle != null:
+		_deck_picker_subtitle.add_theme_font_size_override("font_size", int(context.get("body_font_size", 15)) if portrait else HudThemeScript.scaled_font_size(14))
+		_deck_picker_subtitle.add_theme_constant_override("line_spacing", maxi(3, int(float(context.get("portrait_scale", 1.0)) * 6.0)) if portrait else 2)
+	if _deck_picker_search_input != null:
+		_deck_picker_search_input.custom_minimum_size.y = float(context.get("input_height", 42.0)) if portrait else 42.0
+		_deck_picker_search_input.add_theme_font_size_override("font_size", int(context.get("input_font_size", 15)) if portrait else 15)
+	var tabs := _deck_picker_panel.find_child("DeckPickerTabs", true, false) as HBoxContainer
+	if tabs != null:
+		tabs.add_theme_constant_override("separation", gap)
+	for category_variant: Variant in _deck_picker_tabs.keys():
+		var button := _deck_picker_tabs[str(category_variant)] as Button
+		if button == null:
+			continue
+		button.custom_minimum_size.y = float(context.get("secondary_button_height", 44.0)) if portrait else 40.0
+		button.add_theme_font_size_override("font_size", int(context.get("button_font_size", 15)) if portrait else 14)
+	var scroll := _deck_picker_panel.find_child("DeckPickerScroll", true, false) as ScrollContainer
+	if scroll != null:
+		scroll.custom_minimum_size.y = float(context.get("list_item_min_height", 90.0)) * (3.2 if portrait else 4.8)
+		HudThemeScript.style_scroll_container(scroll, "portrait_touch" if portrait else "auto")
+	if _deck_picker_grid != null:
+		_deck_picker_grid.add_theme_constant_override("h_separation", gap)
+		_deck_picker_grid.add_theme_constant_override("v_separation", gap)
 
 
 func _close_deck_picker() -> void:
 	if _deck_picker_overlay != null and is_instance_valid(_deck_picker_overlay):
 		_deck_picker_overlay.visible = false
+	_deck_picker_input_suppress_until_msec = Time.get_ticks_msec() + 320
 
 
 func _style_hud_line_edit(line_edit: LineEdit) -> void:
@@ -1876,7 +2702,13 @@ func _on_deck_picker_category_pressed(category: String) -> void:
 func _refresh_deck_picker() -> void:
 	if _deck_picker_grid == null:
 		return
-	_deck_picker_grid.columns = 1 if get_viewport_rect().size.x < 760.0 else 2
+	var context := _deck_picker_layout_context()
+	var portrait := bool(context.get("is_portrait", false))
+	var viewport_size: Vector2 = context.get("viewport_size", Vector2.ZERO)
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		viewport_size = get_viewport_rect().size if is_inside_tree() else Vector2(1600, 900)
+	_apply_deck_picker_mobile_metrics(context)
+	_deck_picker_grid.columns = 1 if portrait or viewport_size.x < 760.0 else 2
 	for child: Node in _deck_picker_grid.get_children():
 		child.queue_free()
 	_refresh_deck_picker_tabs()
@@ -1887,10 +2719,12 @@ func _refresh_deck_picker() -> void:
 	if decks.is_empty():
 		var empty := Label.new()
 		empty.text = "没有找到符合条件的卡组"
-		empty.custom_minimum_size = Vector2(0, 90)
+		empty.custom_minimum_size = Vector2(0, float(context.get("list_item_min_height", 90.0)) if portrait else 90.0)
 		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		_style_hud_label(empty)
+		if portrait:
+			empty.add_theme_font_size_override("font_size", int(context.get("body_font_size", 15)))
 		_deck_picker_grid.add_child(empty)
 		return
 
@@ -1904,10 +2738,10 @@ func _refresh_deck_picker() -> void:
 		var button := Button.new()
 		button.text = deck.deck_name
 		button.tooltip_text = _deck_picker_card_tooltip(deck)
-		button.custom_minimum_size = Vector2(0, 72)
+		button.custom_minimum_size = Vector2(0, float(context.get("list_item_min_height", 76.0)) if portrait else 72.0)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.clip_text = true
-		button.add_theme_font_size_override("font_size", DECK_PICKER_LIST_FONT_SIZE)
+		button.add_theme_font_size_override("font_size", int(context.get("button_font_size", DECK_PICKER_LIST_FONT_SIZE)) if portrait else DECK_PICKER_LIST_FONT_SIZE)
 		button.add_theme_color_override("font_color", HUD_TEXT)
 		button.add_theme_color_override("font_hover_color", Color.WHITE)
 		button.add_theme_stylebox_override("normal", _deck_picker_card_style(is_selected, false))
@@ -1915,18 +2749,22 @@ func _refresh_deck_picker() -> void:
 		button.add_theme_stylebox_override("pressed", _deck_picker_card_pressed_style())
 		button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 		button.pressed.connect(_on_deck_picker_deck_selected.bind(_deck_picker_slot_index, deck.id))
+		NonBattleTouchBridgeScript.bind_button_touch(button)
 		_deck_picker_grid.add_child(button)
 		count += 1
 
 
 func _refresh_deck_picker_tabs() -> void:
+	var context := _deck_picker_layout_context()
+	var portrait := bool(context.get("is_portrait", false))
 	for category_variant: Variant in _deck_picker_tabs.keys():
 		var category := str(category_variant)
 		var button := _deck_picker_tabs[category] as Button
 		if button == null:
 			continue
 		var active := category == _deck_picker_category
-		button.add_theme_font_size_override("font_size", 14)
+		button.custom_minimum_size.y = float(context.get("secondary_button_height", 40.0)) if portrait else 40.0
+		button.add_theme_font_size_override("font_size", int(context.get("button_font_size", 14)) if portrait else 14)
 		button.add_theme_color_override("font_color", Color(0.05, 0.10, 0.13, 1.0) if active else HUD_TEXT)
 		button.add_theme_stylebox_override("normal", _deck_picker_tab_style(active, false))
 		button.add_theme_stylebox_override("hover", _deck_picker_tab_style(active, true))
@@ -2087,13 +2925,47 @@ func _deck_picker_card_tooltip(deck: DeckData) -> String:
 
 
 func _deck_option_for_slot(slot_index: int) -> OptionButton:
-	return %Deck1Option if slot_index == 0 else %Deck2Option
+	var option: OptionButton = null
+	if slot_index == 0:
+		option = get_node_or_null("%Deck1Option") as OptionButton
+		if option == null:
+			option = find_child("Deck1Option", true, false) as OptionButton
+		return option
+	option = get_node_or_null("%Deck2Option") as OptionButton
+	if option == null:
+		option = find_child("Deck2Option", true, false) as OptionButton
+	return option
 
 
 func _deck_source_list_for_slot(slot_index: int) -> Array:
 	if slot_index == 1 and _is_ai_mode():
 		return _ai_deck_list
 	return _deck_list
+
+
+func _deck_data_from_variant(value: Variant) -> DeckData:
+	if value is DeckData:
+		return value as DeckData
+	if value is Dictionary:
+		return DeckData.from_dict(value as Dictionary)
+	if not value is Object:
+		return null
+	var source := value as Object
+	var data := {
+		"id": int(source.get("id")),
+		"deck_name": str(source.get("deck_name")),
+		"source_url": str(source.get("source_url")),
+		"import_date": str(source.get("import_date")),
+		"updated_at": int(source.get("updated_at")),
+		"variant_name": str(source.get("variant_name")),
+		"deck_code": str(source.get("deck_code")),
+		"cards": source.get("cards"),
+		"total_cards": int(source.get("total_cards")),
+		"strategy": str(source.get("strategy")),
+	}
+	if int(data.get("id", 0)) <= 0 and str(data.get("deck_name", "")) == "":
+		return null
+	return DeckData.from_dict(data)
 
 
 func _default_deck_picker_category(slot_index: int) -> String:
@@ -2110,11 +2982,20 @@ func _sync_deck_picker_buttons() -> void:
 
 
 func _sync_deck_picker_button(slot_index: int) -> void:
-	var button := %Deck1PickerButton if slot_index == 0 else %Deck2PickerButton
+	var button := find_child("Deck1PickerButton" if slot_index == 0 else "Deck2PickerButton", true, false) as Button
+	if button == null:
+		return
 	var deck := _selected_deck_for_slot(slot_index)
-	button.add_theme_font_size_override("font_size", DECK_PICKER_MAIN_FONT_SIZE)
+	var portrait := bool(_current_non_battle_layout_context.get("is_portrait", false))
+	var has_layout_context := not _current_non_battle_layout_context.is_empty()
+	var font_size := DECK_PICKER_MAIN_FONT_SIZE
+	if portrait:
+		font_size = int(_current_non_battle_layout_context.get("button_font_size", DECK_PICKER_MAIN_FONT_SIZE))
+	elif has_layout_context and _is_ai_mode():
+		font_size = int(_current_non_battle_layout_context.get("button_font_size", 18))
+	button.add_theme_font_size_override("font_size", font_size)
 	button.clip_text = true
-	button.custom_minimum_size.y = 68
+	button.custom_minimum_size.y = float(_current_non_battle_layout_context.get("primary_button_height", 68.0)) if portrait else 68.0
 	if deck == null:
 		button.text = "选择卡组"
 		button.tooltip_text = ""
@@ -2184,32 +3065,40 @@ func _default_deck2_id_for_current_mode() -> int:
 
 
 func _selected_deck_for_slot(slot_index: int) -> DeckData:
-	var option: OptionButton = %Deck1Option if slot_index == 0 else %Deck2Option
+	var option := _deck_option_for_slot(slot_index)
+	if option == null:
+		return null
 	var selected_index := option.selected
 	if selected_index < 0 or selected_index >= option.item_count:
 		return null
 	var selected_text := option.get_item_text(selected_index)
 	var selected_metadata: Variant = option.get_item_metadata(selected_index)
 	var source_list: Array = _deck_list if slot_index == 0 or not _is_ai_mode() else _ai_deck_list
-	if selected_metadata is int:
-		for deck: DeckData in source_list:
-			if deck.id == int(selected_metadata):
+	if selected_metadata is int or selected_metadata is float:
+		for deck_variant: Variant in source_list:
+			var deck := _deck_data_from_variant(deck_variant)
+			if deck != null and deck.id == int(selected_metadata):
 				return deck
-	for deck: DeckData in source_list:
-		if selected_text == deck.deck_name or selected_text.begins_with(deck.deck_name):
+	for deck_variant: Variant in source_list:
+		var deck := _deck_data_from_variant(deck_variant)
+		if deck != null and (selected_text == deck.deck_name or selected_text.begins_with(deck.deck_name)):
 			return deck
 	return null
 
 
 func _is_ai_mode() -> bool:
-	return %ModeOption.selected == 1
+	var mode_option := get_node_or_null("%ModeOption") as OptionButton
+	if mode_option == null:
+		mode_option = find_child("ModeOption", true, false) as OptionButton
+	return mode_option != null and mode_option.selected == 1
 
 
 func _select_option_for_deck_id(option: OptionButton, deck_id: int) -> void:
 	if option == null or option.item_count <= 0:
 		return
 	var source_list: Array = _deck_list
-	if option == %Deck2Option and _is_ai_mode():
+	var deck2_option := get_node_or_null("%Deck2Option") as OptionButton
+	if option == deck2_option and _is_ai_mode():
 		source_list = _ai_deck_list
 	for i: int in option.item_count:
 		var metadata: Variant = option.get_item_metadata(i)
@@ -2440,13 +3329,25 @@ func _restore_returned_setup_context() -> void:
 
 
 func _refresh_deck_action_buttons() -> void:
-	%Deck1ViewButton.disabled = _selected_deck_for_slot(0) == null
-	%Deck1EditButton.disabled = _selected_deck_for_slot(0) == null
-	%Deck2ViewButton.disabled = _selected_deck_for_slot(1) == null
-	%Deck2EditButton.disabled = _is_ai_mode() or _selected_deck_for_slot(1) == null
+	var deck1 := _selected_deck_for_slot(0)
+	var deck2 := _selected_deck_for_slot(1)
+	var deck1_view_button := get_node_or_null("%Deck1ViewButton") as Button
+	if deck1_view_button != null:
+		deck1_view_button.disabled = deck1 == null
+	var deck1_edit_button := get_node_or_null("%Deck1EditButton") as Button
+	if deck1_edit_button != null:
+		deck1_edit_button.disabled = deck1 == null
+	var deck2_view_button := get_node_or_null("%Deck2ViewButton") as Button
+	if deck2_view_button != null:
+		deck2_view_button.disabled = deck2 == null
+	var deck2_edit_button := get_node_or_null("%Deck2EditButton") as Button
+	if deck2_edit_button != null:
+		deck2_edit_button.disabled = _is_ai_mode() or deck2 == null
 	var has_llm_api := _has_llm_api_configured()
-	%BtnDiscussStrategyAI.visible = has_llm_api
-	%BtnDiscussStrategyAI.disabled = not has_llm_api or _selected_deck_for_slot(0) == null or _selected_deck_for_slot(1) == null
+	var discuss_button := get_node_or_null("%BtnDiscussStrategyAI") as Button
+	if discuss_button != null:
+		discuss_button.visible = has_llm_api
+		discuss_button.disabled = not has_llm_api or deck1 == null or deck2 == null
 
 
 func _mark_strategy_discussion_deck_changed() -> void:
@@ -2480,7 +3381,9 @@ func _on_discuss_strategy_ai_pressed() -> void:
 	if deck1 == null or deck2 == null:
 		return
 	if _strategy_discussion_dialog == null or not is_instance_valid(_strategy_discussion_dialog):
-		_strategy_discussion_dialog = DeckDiscussionDialogScene.instantiate() as AcceptDialog
+		_strategy_discussion_dialog = _create_strategy_discussion_dialog()
+		if _strategy_discussion_dialog == null:
+			return
 		add_child(_strategy_discussion_dialog)
 	var signature := _current_strategy_discussion_signature()
 	var reset_session := signature != _strategy_discussion_signature
@@ -2494,8 +3397,36 @@ func _on_discuss_strategy_ai_pressed() -> void:
 		_strategy_discussion_session_id(deck1, deck2),
 		reset_session
 	)
+	NonBattleTouchBridgeScript.bind_buttons_recursive(_strategy_discussion_dialog)
+	var scene_size := size
+	var scene_is_portrait := scene_size.x > 0.0 and scene_size.y > scene_size.x
+	var context_is_portrait := bool(_current_non_battle_layout_context.get("is_portrait", false))
+	var portrait := str(get_meta("non_battle_layout_mode", "")) == "portrait" or context_is_portrait or scene_is_portrait
+	if portrait and _strategy_discussion_dialog.has_method("popup_for_viewport"):
+		var fallback_size := get_viewport_rect().size if is_inside_tree() else Vector2(390, 844)
+		if scene_is_portrait:
+			fallback_size = scene_size
+		var viewport_size: Vector2 = _current_non_battle_layout_context.get("viewport_size", fallback_size)
+		if scene_is_portrait and (not context_is_portrait or viewport_size.x > viewport_size.y):
+			viewport_size = scene_size
+		_strategy_discussion_dialog.call("popup_for_viewport", Rect2(Vector2.ZERO, viewport_size), true)
+		return
+	if _strategy_discussion_dialog.has_method("popup_for_viewport"):
+		_strategy_discussion_dialog.call("popup_for_viewport", Rect2(Vector2.ZERO, get_viewport_rect().size if is_inside_tree() else Vector2(1280, 720)), false)
+		return
 	_strategy_discussion_dialog.popup_centered(Vector2i(980, 760))
 	_strategy_discussion_dialog.size = Vector2i(980, 760)
+
+
+func _create_strategy_discussion_dialog() -> AcceptDialog:
+	var dialog := DeckDiscussionDialogScene.instantiate() as AcceptDialog
+	if dialog == null:
+		return null
+	if not dialog.has_method("setup_for_match"):
+		var dialog_script := ResourceLoader.load(DECK_DISCUSSION_DIALOG_SCRIPT_PATH, "GDScript", ResourceLoader.CACHE_MODE_REUSE) as Script
+		if dialog_script != null:
+			dialog.set_script(dialog_script)
+	return dialog
 
 
 func _on_deck_view_pressed(slot_index: int) -> void:

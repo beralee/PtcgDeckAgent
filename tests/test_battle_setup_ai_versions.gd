@@ -265,7 +265,7 @@ func test_battle_setup_llm_strategy_explains_api_and_thinking_cost() -> String:
 	_write_battle_review_config_for_test({
 		"endpoint": "https://zenmux.ai/api/v1",
 		"api_key": "test-key",
-		"model": "z-ai/glm-5.1",
+		"model": "z-ai/glm-5.2",
 		"timeout_seconds": 60.0,
 		"ai_personality": "",
 		"ai_test_passed": false,
@@ -285,7 +285,7 @@ func test_battle_setup_llm_strategy_explains_api_and_thinking_cost() -> String:
 	var result := run_checks([
 		assert_str_contains(status_title.text, "大模型", "Selecting an LLM strategy should identify the LLM mode"),
 		assert_false(status_title.text.contains("："), "LLM mode title should avoid full-width colon for Android glyph compatibility"),
-		assert_str_contains(status_body.text, "GLM 5.1", "LLM mode copy should name the selected model"),
+		assert_str_contains(status_body.text, "GLM 5.2", "LLM mode copy should name the selected model"),
 		assert_str_contains(status_body.text, "思考时间", "LLM mode copy should set wait-time expectations"),
 		assert_str_contains(status_body.text, "能力中等", "LLM mode copy should state the capability level"),
 		assert_str_contains(status_body.text, "模型 API", "LLM mode copy should explain the API requirement"),
@@ -436,7 +436,7 @@ func test_battle_setup_selected_llm_strategy_shows_current_model_name() -> Strin
 	_write_battle_review_config_for_test({
 		"endpoint": "https://zenmux.ai/api/v1",
 		"api_key": "test-key",
-		"model": "z-ai/glm-5.1",
+		"model": "z-ai/glm-5.2",
 		"timeout_seconds": 60.0,
 		"ai_personality": "",
 		"ai_test_passed": false,
@@ -456,10 +456,10 @@ func test_battle_setup_selected_llm_strategy_shows_current_model_name() -> Strin
 
 	var result := run_checks([
 		assert_true(current_model_label.visible, "Selecting an LLM strategy should reveal the current model label"),
-		assert_str_contains(current_model_label.text, "GLM 5.1", "Current model label should show the concrete model name"),
+		assert_str_contains(current_model_label.text, "GLM 5.2", "Current model label should show the concrete model name"),
 		assert_false(current_model_label.text.contains("："), "Current model label should avoid full-width colon for Android glyph compatibility"),
 		assert_false(redundant_model_label.visible, "Selecting an LLM strategy should not show a redundant standalone model label"),
-		assert_str_contains(discuss_button.text, "GLM 5.1", "Discussion button should show the concrete model name"),
+		assert_str_contains(discuss_button.text, "GLM 5.2", "Discussion button should show the concrete model name"),
 		assert_false(discuss_button.text.contains("《") or discuss_button.text.contains("》"), "Discussion button should avoid guillemets for Android glyph compatibility"),
 	])
 	_restore_battle_review_config_file(snapshot)

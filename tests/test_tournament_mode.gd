@@ -55,6 +55,22 @@ func _write_ready_llm_config_for_test() -> void:
 		file.close()
 
 
+func _write_not_ready_llm_config_for_test() -> void:
+	var config := {
+		"endpoint": "https://zenmux.ai/api/v1",
+		"api_key": "test-key",
+		"model": "kimi-k2.6",
+		"timeout_seconds": 60.0,
+		"ai_personality": "",
+		"ai_test_passed": false,
+		"ai_test_signature": "",
+	}
+	var file := FileAccess.open(GameManager.get_battle_review_api_config_path(), FileAccess.WRITE)
+	if file != null:
+		file.store_string(JSON.stringify(config, "\t"))
+		file.close()
+
+
 func test_main_menu_exposes_tournament_entry() -> String:
 	var scene: Control = MainMenuScene.instantiate()
 	return run_checks([
@@ -329,6 +345,7 @@ func test_practice_battle_does_not_count_as_tournament_when_tournament_exists() 
 
 
 func test_game_manager_prepares_first_tournament_round_for_battle() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
 	var previous_mode := GameManager.current_mode
 	var previous_selected_ids := GameManager.selected_deck_ids.duplicate()
 	var previous_first := GameManager.first_player_choice
@@ -337,6 +354,7 @@ func test_game_manager_prepares_first_tournament_round_for_battle() -> String:
 	var previous_tournament := GameManager.current_tournament
 	var previous_tournament_deck_id := GameManager.tournament_selected_player_deck_id
 
+	_write_not_ready_llm_config_for_test()
 	GameManager.ai_deck_strategy = "raging_bolt_ogerpon_llm"
 	GameManager.set_tournament_selected_player_deck_id(575716)
 	GameManager.start_swiss_tournament("测试玩家", 16)
@@ -362,6 +380,7 @@ func test_game_manager_prepares_first_tournament_round_for_battle() -> String:
 	GameManager.ai_deck_strategy = previous_ai_deck_strategy
 	GameManager.current_tournament = previous_tournament
 	GameManager.tournament_selected_player_deck_id = previous_tournament_deck_id
+	_restore_battle_review_config_file(snapshot)
 	return result
 
 

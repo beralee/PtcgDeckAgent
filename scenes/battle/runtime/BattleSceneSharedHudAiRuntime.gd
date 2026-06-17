@@ -200,22 +200,43 @@ func _sync_portrait_prize_hud_visibility(is_portrait: Variant = null) -> void:
 	_battle_layout_coordinator.call("sync_portrait_prize_hud_visibility", is_portrait)
 
 
+func _has_human_portrait_prize_prompt_pending() -> bool:
+	return _pending_choice == "take_prize" \
+		and _pending_prize_remaining > 0 \
+		and _pending_prize_player_index == _view_player \
+		and _is_portrait_battle_layout_active()
+
+
 
 func _show_portrait_prize_dialog_if_needed() -> void:
-	if _pending_choice != "take_prize" or _pending_prize_remaining <= 0:
+	if not _has_human_portrait_prize_prompt_pending():
 		_close_portrait_prize_dialog()
 		return
-	if _pending_prize_player_index != _view_player:
-		_close_portrait_prize_dialog()
-		return
-	if not _is_portrait_battle_layout_active():
-		_close_portrait_prize_dialog()
-		return
-	var host := _my_prize_hud_host if _pending_prize_player_index == _view_player else _opp_prize_hud_host
-	if host == null:
-		host = find_child("MyPrizeHudHost" if _pending_prize_player_index == _view_player else "OppPrizeHudHost", true, false) as VBoxContainer
-	var dialog_overlay := _dialog_overlay if _dialog_overlay != null else find_child("DialogOverlay", true, false) as Panel
-	var dialog_vbox := _dialog_vbox if _dialog_vbox != null else find_child("DialogVBox", true, false) as VBoxContainer
+	var host_name := "MyPrizeHudHost" if _pending_prize_player_index == _view_player else "OppPrizeHudHost"
+	var cached_host: VBoxContainer = _my_prize_hud_host if _pending_prize_player_index == _view_player else _opp_prize_hud_host
+	if cached_host != null and not is_instance_valid(cached_host):
+		cached_host = null
+	var live_host := find_child(host_name, true, false) as VBoxContainer
+	var host := live_host if live_host != null else cached_host
+	if live_host != null:
+		if _pending_prize_player_index == _view_player:
+			_my_prize_hud_host = live_host
+		else:
+			_opp_prize_hud_host = live_host
+	var cached_dialog_overlay := _dialog_overlay
+	if cached_dialog_overlay != null and not is_instance_valid(cached_dialog_overlay):
+		cached_dialog_overlay = null
+	var live_dialog_overlay := find_child("DialogOverlay", true, false) as Panel
+	var dialog_overlay := live_dialog_overlay if live_dialog_overlay != null else cached_dialog_overlay
+	if live_dialog_overlay != null:
+		_dialog_overlay = live_dialog_overlay
+	var cached_dialog_vbox := _dialog_vbox
+	if cached_dialog_vbox != null and not is_instance_valid(cached_dialog_vbox):
+		cached_dialog_vbox = null
+	var live_dialog_vbox := find_child("DialogVBox", true, false) as VBoxContainer
+	var dialog_vbox := live_dialog_vbox if live_dialog_vbox != null else cached_dialog_vbox
+	if live_dialog_vbox != null:
+		_dialog_vbox = live_dialog_vbox
 	if host == null or dialog_overlay == null or dialog_vbox == null:
 		return
 	if _portrait_prize_dialog_active and _portrait_prize_dialog_host != host:
@@ -228,7 +249,13 @@ func _show_portrait_prize_dialog_if_needed() -> void:
 		_portrait_prize_dialog_original_index = host.get_index()
 		_portrait_prize_dialog_original_visible = host.visible
 		_portrait_prize_dialog_original_minimum_size = host.custom_minimum_size
-	var dialog_confirm := _dialog_confirm if _dialog_confirm != null else find_child("DialogConfirm", true, false) as Button
+	var cached_dialog_confirm := _dialog_confirm
+	if cached_dialog_confirm != null and not is_instance_valid(cached_dialog_confirm):
+		cached_dialog_confirm = null
+	var live_dialog_confirm := find_child("DialogConfirm", true, false) as Button
+	var dialog_confirm := live_dialog_confirm if live_dialog_confirm != null else cached_dialog_confirm
+	if live_dialog_confirm != null:
+		_dialog_confirm = live_dialog_confirm
 	var buttons_row := (dialog_confirm.get_parent() as Control) if dialog_confirm != null else null
 	var insert_index := buttons_row.get_index() if buttons_row != null and buttons_row.get_parent() == dialog_vbox else dialog_vbox.get_child_count()
 	_move_control_to_node(host, dialog_vbox, insert_index)
@@ -329,9 +356,11 @@ func _llm_wait_model_display_name(model_id: String) -> String:
 	if lower.contains("deepseek"):
 		return "DeepSeek"
 	if lower.contains("glm"):
-		return "GLM 5.1"
+		return "GLM 5.2"
+	if lower.contains("qwen3.7-max"):
+		return "Qwen 3.7 Max"
 	if lower.contains("qwen"):
-		return "Qwen 3.6 Plus"
+		return "Qwen 3.7 Plus"
 	if lower.contains("kimi"):
 		return "Kimi K2.6"
 	if lower.contains("claude"):

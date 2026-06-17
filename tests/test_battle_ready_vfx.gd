@@ -90,6 +90,13 @@ func _add_energy_to_zone(zone: Array, owner: int, energy_type: String, count: in
 		zone.append(CardInstance.create(_make_energy_card("%s Energy" % energy_type, energy_type), owner))
 
 
+func _add_special_energy_to_zone(zone: Array, owner: int, energy_type: String, count: int) -> void:
+	for _i: int in count:
+		var card := _make_energy_card("Special %s Energy" % energy_type, energy_type)
+		card.card_type = "Special Energy"
+		zone.append(CardInstance.create(card, owner))
+
+
 func _add_card_to_zone(zone: Array, card: CardData, owner: int) -> void:
 	zone.append(CardInstance.create(card, owner))
 
@@ -268,6 +275,30 @@ func test_ready_vfx_registry_registers_charizard_body_asset() -> String:
 	])
 
 
+func test_ready_vfx_registry_registers_gardevoir_psychic_embrace_asset() -> String:
+	var registry: RefCounted = BattleReadyVfxRegistryScript.new()
+	var profile: RefCounted = registry.call("get_profile", "gardevoir_psychic_embrace_ready")
+	var asset_specs: Dictionary = profile.get("asset_specs") if profile != null else {}
+	var burst: Dictionary = asset_specs.get("burst", {})
+	var image := Image.load_from_file(ProjectSettings.globalize_path(str(burst.get("path", ""))))
+	var runtime_texture: Texture2D = load(str(burst.get("path", ""))) as Texture2D
+
+	return run_checks([
+		assert_not_null(profile, "Gardevoir ready profile should be registered"),
+		assert_eq(str(profile.get("profile_id")) if profile != null else "", "ready_gardevoir_psychic_embrace", "Gardevoir ready profile id should be stable"),
+		assert_eq(str(burst.get("path", "")), "res://assets/textures/vfx/ready_gardevoir_psychic_embrace/sheet-transparent.png", "Gardevoir ready profile should point to the generated sheet"),
+		assert_eq(int(burst.get("frames", 0)), 6, "Gardevoir ready sheet should have 6 frames"),
+		assert_eq(int(burst.get("rows", 0)), 2, "Gardevoir ready sheet should have 2 rows"),
+		assert_eq(int(burst.get("cols", 0)), 3, "Gardevoir ready sheet should have 3 columns"),
+		assert_eq(profile.get("effect_size") if profile != null else Vector2.ZERO, Vector2(520.0, 520.0), "Gardevoir ready animation should use the cinematic board size"),
+		assert_gte(float(profile.get("hold_ratio")) if profile != null else 0.0, 0.24, "Gardevoir ready animation should hold the Psychic Embrace peak"),
+		assert_not_null(image, "Generated Gardevoir ready sheet should load as an Image"),
+		assert_eq(image.get_size() if image != null else Vector2i.ZERO, Vector2i(768, 512), "Generated Gardevoir ready sheet should be a 2x3 256px grid"),
+		assert_not_null(runtime_texture, "Generated Gardevoir ready sheet should load through Godot's runtime resource importer"),
+		assert_eq(Vector2i(runtime_texture.get_width(), runtime_texture.get_height()) if runtime_texture != null else Vector2i.ZERO, Vector2i(768, 512), "Runtime Gardevoir ready texture should use the generated body-first sheet dimensions"),
+	])
+
+
 func test_charizard_ready_vfx_portrait_sequence_uses_cinematic_metrics() -> String:
 	var controller: RefCounted = BattleReadyVfxControllerScript.new()
 	var registry: RefCounted = BattleReadyVfxRegistryScript.new()
@@ -318,6 +349,7 @@ func test_ready_vfx_registry_registers_all_priority_profiles() -> String:
 		"radiant_greninja_concealed_cards_ready",
 		"ceruledge_discard_energy_ready",
 		"roaring_moon_frenzied_ready",
+		"gardevoir_psychic_embrace_ready",
 		"archaludon_metal_bridge_ready",
 	]
 	var checks: Array[String] = [
@@ -329,10 +361,10 @@ func test_ready_vfx_registry_registers_all_priority_profiles() -> String:
 		var burst: Dictionary = asset_specs.get("burst", {})
 		var image := Image.load_from_file(ProjectSettings.globalize_path(str(burst.get("path", ""))))
 		checks.append(assert_not_null(profile, "Ready profile should exist for %s" % rule_id))
-		checks.append(assert_true(str(profile.get("profile_id")) != "", "Ready profile id should be stable for %s" % rule_id))
+		checks.append(assert_true((str(profile.get("profile_id")) if profile != null else "") != "", "Ready profile id should be stable for %s" % rule_id))
 		checks.append(assert_true(str(burst.get("path", "")).begins_with("res://assets/textures/vfx/"), "Ready profile should use a bundled VFX asset for %s" % rule_id))
 		checks.append(assert_not_null(image, "Ready burst image should load for %s" % rule_id))
-		checks.append(assert_gte(float(profile.get("duration")), 0.6, "Ready profile duration should be visible for %s" % rule_id))
+		checks.append(assert_gte(float(profile.get("duration")) if profile != null else 0.0, 0.6, "Ready profile duration should be visible for %s" % rule_id))
 	return run_checks(checks)
 
 
@@ -364,9 +396,9 @@ func test_non_budew_ready_profiles_use_body_first_cinematic_sheets() -> String:
 		checks.append(assert_eq(int(burst.get("cols", 0)), 3, "%s should use a 2x3 body-first ready sheet" % rule_id))
 		checks.append(assert_not_null(image, "%s body-first ready sheet should load as an Image" % rule_id))
 		checks.append(assert_eq(image.get_size() if image != null else Vector2i.ZERO, Vector2i(768, 512), "%s body-first ready sheet should be a 2x3 256px grid" % rule_id))
-		checks.append(assert_gte(float(profile.get("duration")), 1.45, "%s should linger like the Charizard cinematic ready animation" % rule_id))
-		checks.append(assert_gte(float(profile.get("hold_ratio")), 0.18, "%s should include a cinematic hold instead of flashing past" % rule_id))
-		checks.append(assert_gte(float(profile.get("portrait_effect_width_ratio")), 0.85, "%s should scale up in portrait mode" % rule_id))
+		checks.append(assert_gte(float(profile.get("duration")) if profile != null else 0.0, 1.45, "%s should linger like the Charizard cinematic ready animation" % rule_id))
+		checks.append(assert_gte(float(profile.get("hold_ratio")) if profile != null else 0.0, 0.18, "%s should include a cinematic hold instead of flashing past" % rule_id))
+		checks.append(assert_gte(float(profile.get("portrait_effect_width_ratio")) if profile != null else 0.0, 0.85, "%s should scale up in portrait mode" % rule_id))
 		checks.append(assert_false(banned_body_negative, "%s prompt must not describe a pure-effect or no-body sheet" % rule_id))
 	return run_checks(checks)
 
@@ -539,6 +571,16 @@ func test_ready_vfx_evaluator_detects_engine_ability_ready_scenes() -> String:
 	_add_energy_to_zone(regigigas_state.players[0].discard_pile, 0, "C", 1)
 	var regigigas_triggers: Array = evaluator.call("find_ready_triggers", regigigas_state)
 
+	var gardevoir_state := _make_state(0, 4, GameState.GamePhase.MAIN)
+	var gardevoir := _make_slot(_make_pokemon_card("Gardevoir ex", "CSV2C", "055", "P", "Stage 2", 310, "ex", [_attack("PPC", "190")], "Gardevoir ex"), 0)
+	gardevoir.turn_evolved = gardevoir_state.turn_number
+	gardevoir.damage_counters = 300
+	gardevoir_state.players[0].active_pokemon = gardevoir
+	gardevoir_state.players[0].bench.append(_make_slot(_make_pokemon_card("Colorless Helper", "TEST", "GC1", "C", "Basic", 100), 0))
+	_add_energy_to_zone(gardevoir_state.players[0].discard_pile, 0, "P", 3)
+	var gardevoir_triggers: Array = evaluator.call("find_ready_triggers", gardevoir_state)
+	var gardevoir_trigger := _first_rule(gardevoir_triggers, "gardevoir_psychic_embrace_ready")
+
 	return run_checks([
 		assert_true(_has_rule(lugia_triggers, "lugia_double_archeops_ready"), "Lugia VSTAR should trigger when two Archeops are in discard and VSTAR is unused"),
 		assert_true(_has_rule(palkia_triggers, "palkia_vstar_acceleration_ready"), "Palkia VSTAR should trigger when Star Portal has discard Water Energy"),
@@ -546,6 +588,8 @@ func test_ready_vfx_evaluator_detects_engine_ability_ready_scenes() -> String:
 		assert_true(_has_rule(miraidon_triggers, "miraidon_generator_line_ready"), "Miraidon ex should trigger after Tandem Unit summons two Lightning Basic Pokemon this turn"),
 		assert_true(_has_rule(miraidon_area_zero_triggers, "miraidon_generator_line_ready"), "Miraidon ex should still trigger after a full Area Zero Tandem Unit bench expansion"),
 		assert_true(_has_rule(regigigas_triggers, "regigigas_ancient_wisdom_ready"), "Regigigas should trigger when all five Regis and discard Energy are available"),
+		assert_true(_has_rule(gardevoir_triggers, "gardevoir_psychic_embrace_ready"), "Gardevoir ex should trigger when it evolves with three discard Basic Psychic Energy even without a safe Psychic target"),
+		assert_eq(str(gardevoir_trigger.get("required_action_kind", "")), "evolve", "Gardevoir ready trigger should only play after an evolve action source"),
 	])
 
 
@@ -616,6 +660,27 @@ func test_ready_vfx_evaluator_respects_new_rule_negative_gates() -> String:
 	_append_tandem_summoned_bench(miraidon_one_summon_state.players[0], one_summon_miraidon, _make_slot(_make_pokemon_card("Single Lightning", "TEST", "MO1", "L", "Basic", 80), 0), miraidon_one_summon_state.turn_number)
 	var miraidon_one_summon_triggers: Array = evaluator.call("find_ready_triggers", miraidon_one_summon_state)
 
+	var gardevoir_two_energy_state := _make_state(0, 4, GameState.GamePhase.MAIN)
+	var two_energy_gardevoir := _make_slot(_make_pokemon_card("Gardevoir ex", "CSV2C", "055", "P", "Stage 2", 310, "ex", [_attack("PPC", "190")], "Gardevoir ex"), 0)
+	two_energy_gardevoir.turn_evolved = gardevoir_two_energy_state.turn_number
+	gardevoir_two_energy_state.players[0].active_pokemon = two_energy_gardevoir
+	_add_energy_to_zone(gardevoir_two_energy_state.players[0].discard_pile, 0, "P", 2)
+	var gardevoir_two_energy_triggers: Array = evaluator.call("find_ready_triggers", gardevoir_two_energy_state)
+
+	var gardevoir_old_evolution_state := _make_state(0, 4, GameState.GamePhase.MAIN)
+	var old_gardevoir := _make_slot(_make_pokemon_card("Gardevoir ex", "CSV2C", "055", "P", "Stage 2", 310, "ex", [_attack("PPC", "190")], "Gardevoir ex"), 0)
+	old_gardevoir.turn_evolved = gardevoir_old_evolution_state.turn_number - 1
+	gardevoir_old_evolution_state.players[0].active_pokemon = old_gardevoir
+	_add_energy_to_zone(gardevoir_old_evolution_state.players[0].discard_pile, 0, "P", 3)
+	var gardevoir_old_evolution_triggers: Array = evaluator.call("find_ready_triggers", gardevoir_old_evolution_state)
+
+	var gardevoir_special_energy_state := _make_state(0, 4, GameState.GamePhase.MAIN)
+	var special_energy_gardevoir := _make_slot(_make_pokemon_card("Gardevoir ex", "CSV2C", "055", "P", "Stage 2", 310, "ex", [_attack("PPC", "190")], "Gardevoir ex"), 0)
+	special_energy_gardevoir.turn_evolved = gardevoir_special_energy_state.turn_number
+	gardevoir_special_energy_state.players[0].active_pokemon = special_energy_gardevoir
+	_add_special_energy_to_zone(gardevoir_special_energy_state.players[0].discard_pile, 0, "P", 3)
+	var gardevoir_special_energy_triggers: Array = evaluator.call("find_ready_triggers", gardevoir_special_energy_state)
+
 	return run_checks([
 		assert_false(_has_rule(lugia_used_triggers, "lugia_double_archeops_ready"), "Lugia ready should not trigger after VSTAR has been spent"),
 		assert_false(_has_rule(terapagos_no_zero_triggers, "terapagos_cavern_board_ready"), "Terapagos Area Zero ready should require Area Zero to be active"),
@@ -626,6 +691,9 @@ func test_ready_vfx_evaluator_respects_new_rule_negative_gates() -> String:
 		assert_false(_has_rule(charizard_underpowered_triggers, "charizard_infernal_reign_ready"), "Charizard ready should require two attached Energy after Rare Candy evolution"),
 		assert_false(_has_rule(miraidon_unused_triggers, "miraidon_generator_line_ready"), "Miraidon ready should not preview before Tandem Unit is used"),
 		assert_false(_has_rule(miraidon_one_summon_triggers, "miraidon_generator_line_ready"), "Miraidon ready should require Tandem Unit to summon two Lightning Basic Pokemon"),
+		assert_false(_has_rule(gardevoir_two_energy_triggers, "gardevoir_psychic_embrace_ready"), "Gardevoir ready should require at least three discard Basic Psychic Energy"),
+		assert_false(_has_rule(gardevoir_old_evolution_triggers, "gardevoir_psychic_embrace_ready"), "Gardevoir ready should only trigger on the turn it evolves into Gardevoir ex"),
+		assert_false(_has_rule(gardevoir_special_energy_triggers, "gardevoir_psychic_embrace_ready"), "Gardevoir ready should require Basic Psychic Energy, not Special Energy"),
 	])
 
 
@@ -691,6 +759,35 @@ func test_scene_ready_vfx_triggers_after_effect_interaction_attaches_to_iron_han
 		assert_not_null(sequence, "Ready VFX should play after an effect interaction makes Iron Hands ex attack-ready"),
 		assert_eq(str(sequence.get_meta("rule_id", "")) if sequence != null else "", "iron_hands_amp_ready", "Iron Hands effect-interaction ready sequence should use the Amp rule"),
 		assert_eq(str(sequence.get_meta("profile_id", "")) if sequence != null else "", "ready_iron_hands_amp", "Iron Hands ready sequence should use the dedicated profile"),
+	])
+	battle_scene.free()
+	return result
+
+
+func test_scene_gardevoir_ready_vfx_only_plays_after_evolve_action_source() -> String:
+	var gs := _make_state(0, 4, GameState.GamePhase.MAIN)
+	var gardevoir := _make_slot(_make_pokemon_card("Gardevoir ex", "CSV2C", "055", "P", "Stage 2", 310, "ex", [_attack("PPC", "190")], "Gardevoir ex"), 0)
+	gardevoir.turn_evolved = gs.turn_number
+	gs.players[0].active_pokemon = gardevoir
+	_add_energy_to_zone(gs.players[0].discard_pile, 0, "P", 3)
+	var battle_scene := _make_scene_stub_with_state(gs)
+
+	battle_scene.set("_ready_vfx_trigger_source_player_index", 0)
+	battle_scene.set("_ready_vfx_trigger_action_kind", "attach_energy")
+	battle_scene.call("_check_ready_vfx_triggers")
+	var overlay_after_attach: Control = battle_scene.get("_ready_vfx_overlay") as Control
+	var attach_count := overlay_after_attach.get_child_count() if overlay_after_attach != null else 0
+
+	battle_scene.set("_ready_vfx_trigger_source_player_index", 0)
+	battle_scene.set("_ready_vfx_trigger_action_kind", "evolve")
+	battle_scene.call("_check_ready_vfx_triggers")
+	var overlay_after_evolve: Control = battle_scene.get("_ready_vfx_overlay") as Control
+	var sequence: Control = overlay_after_evolve.get_child(0) as Control if overlay_after_evolve != null and overlay_after_evolve.get_child_count() > 0 else null
+	var result := run_checks([
+		assert_eq(attach_count, 0, "Gardevoir ready VFX should not play after a later non-evolve action in the same turn"),
+		assert_not_null(sequence, "Gardevoir ready VFX should play immediately after the evolve action source"),
+		assert_eq(str(sequence.get_meta("rule_id", "")) if sequence != null else "", "gardevoir_psychic_embrace_ready", "Gardevoir ready sequence should use the Psychic Embrace rule"),
+		assert_eq(str(sequence.get_meta("profile_id", "")) if sequence != null else "", "ready_gardevoir_psychic_embrace", "Gardevoir ready sequence should use the dedicated profile"),
 	])
 	battle_scene.free()
 	return result

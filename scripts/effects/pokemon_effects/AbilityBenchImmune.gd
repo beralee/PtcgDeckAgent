@@ -54,6 +54,8 @@ static func prevents_opponent_attack_damage(
 		return true
 	if AbilityPreventTeraAttackDamageAndEffectsScript.prevents_target_effect_from_tera_attack(attacker, target, state):
 		return true
+	if AbilityBenchProtect.protects_bench_target(target, attacker, state):
+		return true
 	return AbilityTeamBenchShield.protects_bench_target(target, attacker, state)
 
 

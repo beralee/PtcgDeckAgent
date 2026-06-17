@@ -17,6 +17,7 @@ const RULE_REGIGIGAS_ANCIENT_WISDOM := "regigigas_ancient_wisdom_ready"
 const RULE_RADIANT_GRENINJA_CONCEALED_CARDS := "radiant_greninja_concealed_cards_ready"
 const RULE_CERULEDGE_DISCARD_ENERGY := "ceruledge_discard_energy_ready"
 const RULE_ROARING_MOON_FRENZIED := "roaring_moon_frenzied_ready"
+const RULE_GARDEVOIR_PSYCHIC_EMBRACE := "gardevoir_psychic_embrace_ready"
 const RULE_ARCHALUDON_METAL_BRIDGE := "archaludon_metal_bridge_ready"
 
 const BUDEW_READY_ASSET_SPECS := {
@@ -184,6 +185,15 @@ const CERULEDGE_READY_ASSET_SPECS := {
 const ROARING_MOON_READY_ASSET_SPECS := {
 	"burst": {
 		"path": "res://assets/textures/vfx/ready_roaring_moon_frenzied/sheet-transparent.png",
+		"frames": 6,
+		"rows": 2,
+		"cols": 3,
+	},
+}
+
+const GARDEVOIR_READY_ASSET_SPECS := {
+	"burst": {
+		"path": "res://assets/textures/vfx/ready_gardevoir_psychic_embrace/sheet-transparent.png",
 		"frames": 6,
 		"rows": 2,
 		"cols": 3,
@@ -494,6 +504,28 @@ var _profiles: Dictionary = {
 			"portrait_effect_max_size": 820.0,
 			"portrait_anchor_offset_ratio": Vector2(0.0, -0.12),
 			"flash_color": Color(0.5, 0.12, 0.68, 0.34),
+		}
+	),
+	RULE_GARDEVOIR_PSYCHIC_EMBRACE: _make_profile(
+		"ready_gardevoir_psychic_embrace",
+		RULE_GARDEVOIR_PSYCHIC_EMBRACE,
+		GARDEVOIR_READY_ASSET_SPECS,
+		{
+			"duration": 1.62,
+			"effect_size": Vector2(520.0, 520.0),
+			"anchor_offset": Vector2(0.0, -44.0),
+			"start_scale": 0.7,
+			"peak_scale": 1.18,
+			"hold_scale": 1.1,
+			"end_scale": 1.03,
+			"hold_ratio": 0.24,
+			"flipbook_ratio": 0.96,
+			"portrait_duration": 1.72,
+			"portrait_effect_width_ratio": 0.9,
+			"portrait_effect_min_size": 600.0,
+			"portrait_effect_max_size": 820.0,
+			"portrait_anchor_offset_ratio": Vector2(0.0, -0.12),
+			"flash_color": Color(0.95, 0.36, 1.0, 0.34),
 		}
 	),
 	RULE_ARCHALUDON_METAL_BRIDGE: _make_profile(

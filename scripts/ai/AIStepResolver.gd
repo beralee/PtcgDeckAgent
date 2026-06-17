@@ -140,6 +140,8 @@ func _resolve_field_slot_step(
 	interaction_context: Dictionary = {},
 	state_features: Array[float] = []
 ) -> bool:
+	var initial_step_index := int(battle_scene.get("_pending_effect_step_index"))
+	var initial_step_id := str(step.get("id", ""))
 	var items: Array = step.get("items", [])
 	var legal_pool: Dictionary = _build_legal_item_pool(items, step, interaction_context)
 	var legal_items: Array = legal_pool.get("items", [])
@@ -171,7 +173,10 @@ func _resolve_field_slot_step(
 		picked_legal_indices,
 		"field_slot"
 	)
-	if str(battle_scene.get("_field_interaction_mode")) == "slot_select":
+	if (
+		str(battle_scene.get("_field_interaction_mode")) == "slot_select"
+		and _is_still_resolving_step(battle_scene, initial_step_index, initial_step_id)
+	):
 		battle_scene.call("_finalize_field_slot_selection")
 	return true
 
@@ -368,6 +373,8 @@ func _resolve_field_assignment_step(
 	context: Dictionary = {},
 	state_features: Array[float] = []
 ) -> bool:
+	var initial_step_index := int(battle_scene.get("_pending_effect_step_index"))
+	var initial_step_id := str(step.get("id", ""))
 	var assignment_plan: Dictionary = _build_assignment_source_plan(
 		step.get("source_items", []),
 		int(step.get("min_select", 0)),
@@ -392,7 +399,10 @@ func _resolve_field_assignment_step(
 	)
 	if assignments_made <= 0 and not bool(assignment_plan.get("handled", false)):
 		return false
-	if str(battle_scene.get("_field_interaction_mode")) == "assignment":
+	if (
+		str(battle_scene.get("_field_interaction_mode")) == "assignment"
+		and _is_still_resolving_step(battle_scene, initial_step_index, initial_step_id)
+	):
 		battle_scene.call("_finalize_field_assignment_selection")
 	return true
 
@@ -429,6 +439,21 @@ func _resolve_dialog_assignment_step(
 		return false
 	battle_scene.call("_confirm_assignment_dialog")
 	return true
+
+
+func _is_still_resolving_step(battle_scene: Control, initial_step_index: int, initial_step_id: String) -> bool:
+	if battle_scene == null:
+		return false
+	var current_step_index := int(battle_scene.get("_pending_effect_step_index"))
+	if current_step_index != initial_step_index:
+		return false
+	var steps: Array = battle_scene.get("_pending_effect_steps")
+	if current_step_index < 0 or current_step_index >= steps.size():
+		return false
+	var current_step: Variant = steps[current_step_index]
+	if not (current_step is Dictionary):
+		return false
+	return str((current_step as Dictionary).get("id", "")) == initial_step_id
 
 
 func _build_assignment_source_plan(

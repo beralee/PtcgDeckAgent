@@ -317,6 +317,8 @@ func _apply_portrait_field_hud_metrics(viewport_size: Vector2, bench_card_size: 
 func _deferred_finalize_portrait_layout_constraints() -> void:
 	_trace_portrait_layout_stage("scene.deferred_finalize.before")
 	_finalize_portrait_layout_constraints()
+	if _has_human_portrait_prize_prompt_pending():
+		_show_portrait_prize_dialog_if_needed()
 	_trace_portrait_layout_stage("scene.deferred_finalize.after")
 	_request_portrait_layout_debug_overlay_refresh()
 

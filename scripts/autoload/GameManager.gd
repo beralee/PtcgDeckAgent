@@ -2,6 +2,9 @@
 extends Node
 
 const SwissTournamentScript := preload("res://scripts/tournament/SwissTournament.gd")
+const NonBattleLayoutControllerScript := preload("res://scripts/ui/non_battle/NonBattleLayoutController.gd")
+
+signal non_battle_layout_mode_changed(mode: String)
 
 ## 游戏模式
 enum GameMode {
@@ -36,6 +39,8 @@ var dynamic_stadium_background_enabled: bool = true
 var selected_battle_music_id: String = "none"
 var battle_bgm_volume_percent: int = 20
 var battle_layout_mode: String = "auto"
+var non_battle_layout_mode: String = "landscape"
+var _non_battle_layout_controller: RefCounted = NonBattleLayoutControllerScript.new()
 
 ## 当前游戏状态（对战中有效）
 var game_state: GameState = null
@@ -56,12 +61,15 @@ const BATTLE_REVIEW_API_CONFIG_PATH := "user://battle_review_api.json"
 const CANONICAL_BATTLE_REVIEW_USER_DIR_NAME := "PTCG Train"
 const BATTLE_REVIEW_API_CONFIG_FILE_NAME := "battle_review_api.json"
 const BATTLE_SETUP_SETTINGS_PATH := "user://battle_setup.json"
+const NON_BATTLE_LAYOUT_SETTINGS_PATH := "user://non_battle_layout.json"
 const TOURNAMENT_SAVE_PATH := "user://tournament_mode_save.json"
 const DESKTOP_WINDOW_SCREEN_MARGIN := Vector2i(48, 48)
 const DEFAULT_BATTLE_BGM_VOLUME_PERCENT := 20
 const BATTLE_LAYOUT_AUTO := "auto"
 const BATTLE_LAYOUT_LANDSCAPE := "landscape"
 const BATTLE_LAYOUT_PORTRAIT := "portrait"
+const NON_BATTLE_LAYOUT_LANDSCAPE := "landscape"
+const NON_BATTLE_LAYOUT_PORTRAIT := "portrait"
 const BATTLE_LAYOUT_DESKTOP_MIN_LANDSCAPE := Vector2i(640, 360)
 const BATTLE_LAYOUT_DESKTOP_MIN_PORTRAIT := Vector2i(360, 640)
 const DEFAULT_BATTLE_REVIEW_MODEL := "kimi-k2.6"
@@ -72,16 +80,16 @@ const SUPPORTED_BATTLE_REVIEW_MODELS: Array[Dictionary] = [
 		"label": "Kimi K2.6",
 	},
 	{
-		"id": "z-ai/glm-5.1",
-		"label": "GLM 5.1",
+		"id": "z-ai/glm-5.2",
+		"label": "GLM 5.2",
 	},
 	{
-		"id": "qwen/qwen3.6-plus",
-		"label": "Qwen 3.6 Plus",
+		"id": "qwen/qwen3.7-plus",
+		"label": "Qwen 3.7 Plus",
 	},
 	{
-		"id": "deepseek/deepseek-chat",
-		"label": "DeepSeek chat",
+		"id": "qwen/qwen3.7-max",
+		"label": "Qwen 3.7 Max",
 	},
 	{
 		"id": "deepseek-v4-flash",
@@ -94,10 +102,6 @@ const SUPPORTED_BATTLE_REVIEW_MODELS: Array[Dictionary] = [
 	{
 		"id": "gpt-5.5",
 		"label": "gpt-5.5",
-	},
-	{
-		"id": "x-ai/grok-4.2-fast-non-reasoning",
-		"label": "x-ai/grok-4.2-fast-non-reasoning",
 	},
 	{
 		"id": "claude-sonnet-4-6",
@@ -118,6 +122,7 @@ var _touch_button_bridge_candidate: Button = null
 
 
 func _ready() -> void:
+	load_non_battle_layout_preferences()
 	load_battle_setup_preferences()
 	reload_tournament_state_from_disk()
 	call_deferred("apply_non_battle_orientation")
@@ -148,6 +153,7 @@ func _ensure_desktop_window_size() -> void:
 
 
 func apply_battle_layout_orientation(mode: String = "") -> void:
+	set_touch_mouse_emulation_for_runtime(true)
 	if DisplayServer.get_name() == "headless":
 		return
 	var normalized := sanitize_battle_layout_mode(mode if mode != "" else battle_layout_mode)
@@ -158,6 +164,7 @@ func apply_battle_layout_orientation(mode: String = "") -> void:
 
 
 func apply_non_battle_orientation() -> void:
+	set_touch_mouse_emulation_for_runtime(_non_battle_touch_mouse_emulation_enabled_for_runtime())
 	if DisplayServer.get_name() == "headless":
 		return
 	if _is_mobile_runtime():
@@ -167,7 +174,37 @@ func apply_non_battle_orientation() -> void:
 
 
 func non_battle_handheld_orientation() -> int:
-	return DisplayServer.SCREEN_SENSOR_LANDSCAPE
+	match sanitize_non_battle_layout_mode(non_battle_layout_mode):
+		NON_BATTLE_LAYOUT_PORTRAIT:
+			return DisplayServer.SCREEN_SENSOR_PORTRAIT
+		_:
+			return DisplayServer.SCREEN_SENSOR_LANDSCAPE
+
+
+func sanitize_non_battle_layout_mode(mode: String) -> String:
+	match mode:
+		NON_BATTLE_LAYOUT_PORTRAIT:
+			return NON_BATTLE_LAYOUT_PORTRAIT
+		_:
+			return NON_BATTLE_LAYOUT_LANDSCAPE
+
+
+func set_non_battle_layout_mode(mode: String, persist: bool = true, apply_now: bool = true) -> String:
+	var previous := non_battle_layout_mode
+	non_battle_layout_mode = sanitize_non_battle_layout_mode(mode)
+	if persist:
+		save_non_battle_layout_preferences()
+	if apply_now:
+		apply_non_battle_orientation()
+	if previous != non_battle_layout_mode:
+		non_battle_layout_mode_changed.emit(non_battle_layout_mode)
+	return non_battle_layout_mode
+
+
+func toggle_non_battle_layout_mode(persist: bool = true, apply_now: bool = true) -> String:
+	var current := sanitize_non_battle_layout_mode(non_battle_layout_mode)
+	var next := NON_BATTLE_LAYOUT_PORTRAIT if current == NON_BATTLE_LAYOUT_LANDSCAPE else NON_BATTLE_LAYOUT_LANDSCAPE
+	return set_non_battle_layout_mode(next, persist, apply_now)
 
 
 func battle_handheld_orientation_for_mode(mode: String) -> int:
@@ -339,30 +376,106 @@ func _is_mobile_runtime() -> bool:
 	return OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
 
 
+func set_touch_mouse_emulation_for_runtime(enabled: bool) -> void:
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", enabled)
+	if Input.has_method("set_emulate_mouse_from_touch"):
+		Input.call("set_emulate_mouse_from_touch", enabled)
+
+
+func _touch_mouse_emulation_enabled_for_scene(path: String) -> bool:
+	return true
+
+
+func _non_battle_touch_mouse_emulation_enabled_for_runtime(os_name: String = "", feature_flags: Dictionary = {}) -> bool:
+	var resolved_os := os_name if os_name != "" else OS.get_name()
+	if resolved_os in ["Android", "iOS"]:
+		return false
+	var flags := feature_flags
+	if flags.is_empty():
+		flags = _runtime_feature_flags()
+	for feature: String in ["mobile", "android", "ios", "web_android", "web_ios"]:
+		if bool(flags.get(feature, false)):
+			return false
+	return true
+
+
+func default_non_battle_layout_mode_for_first_run(
+	os_name: String = "",
+	feature_flags: Dictionary = {},
+	display_server_name: String = "",
+	viewport_size: Vector2 = Vector2.ZERO,
+	user_agent: String = ""
+) -> String:
+	var size := viewport_size
+	if size.x <= 0.0 or size.y <= 0.0:
+		size = _current_non_battle_layout_viewport_size()
+	var flags := feature_flags
+	if flags.is_empty() and os_name == "" and display_server_name == "":
+		flags = _runtime_feature_flags()
+	var resolved_os := os_name if os_name != "" else OS.get_name()
+	var resolved_display := display_server_name if display_server_name != "" else DisplayServer.get_name()
+	return str(_non_battle_layout_controller.call("default_layout_mode_for_runtime", resolved_os, flags, resolved_display, size, user_agent))
+
+
+func _runtime_feature_flags() -> Dictionary:
+	return {
+		"mobile": OS.has_feature("mobile"),
+		"android": OS.has_feature("android"),
+		"ios": OS.has_feature("ios"),
+		"web": OS.has_feature("web"),
+		"web_android": OS.has_feature("web_android"),
+		"web_ios": OS.has_feature("web_ios"),
+	}
+
+
+func _current_non_battle_layout_viewport_size() -> Vector2:
+	var viewport := get_viewport()
+	if viewport != null:
+		var rect := viewport.get_visible_rect()
+		if rect.size.x > 0.0 and rect.size.y > 0.0:
+			return rect.size
+	if DisplayServer.get_name() != "headless":
+		var window_size := DisplayServer.window_get_size()
+		if window_size.x > 0 and window_size.y > 0:
+			return Vector2(window_size)
+	return Vector2.ZERO
+
+
 func _input(event: InputEvent) -> void:
-	if not (event is InputEventScreenTouch):
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		_handle_touch_button_bridge_at_position(touch.position, touch.pressed)
 		return
-	if bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true)):
-		return
-	if _has_active_battle_scene():
-		return
-	_handle_menu_touch_button_bridge(event as InputEventScreenTouch)
+	if event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if _should_bridge_mouse_button_touch_echo(mouse_button):
+			_handle_touch_button_bridge_at_position(mouse_button.position, mouse_button.pressed)
 
 
-func _handle_menu_touch_button_bridge(touch: InputEventScreenTouch) -> void:
-	var button := _find_topmost_touch_button(touch.position)
-	if touch.pressed:
+func _should_bridge_mouse_button_touch_echo(mouse_button: InputEventMouseButton, os_name: String = "", feature_flags: Dictionary = {}) -> bool:
+	if mouse_button.button_index != MOUSE_BUTTON_LEFT:
+		return false
+	if os_name != "" or not feature_flags.is_empty():
+		return not _non_battle_touch_mouse_emulation_enabled_for_runtime(os_name, feature_flags)
+	return _is_mobile_runtime()
+
+
+func _handle_touch_button_bridge_at_position(position: Vector2, pressed: bool) -> void:
+	var button := _find_topmost_touch_button(position)
+	if pressed:
 		_touch_button_bridge_candidate = button
 		if button != null:
 			_mark_touch_button_bridge_handled()
 		return
 	var candidate := _touch_button_bridge_candidate
 	_touch_button_bridge_candidate = null
+	if candidate == null:
+		candidate = button
 	if candidate == null or candidate != button:
 		return
 	if not _button_can_bridge_touch(candidate):
 		return
-	candidate.emit_signal("pressed")
+	candidate.pressed.emit()
 	_mark_touch_button_bridge_handled()
 
 
@@ -373,12 +486,12 @@ func _mark_touch_button_bridge_handled() -> void:
 
 
 func _find_topmost_touch_button(global_position: Vector2) -> Button:
-	var tree := get_tree()
+	var tree := _scene_tree_or_null()
 	if tree == null or tree.root == null:
 		return null
 	for i: int in range(tree.root.get_child_count() - 1, -1, -1):
 		var child := tree.root.get_child(i)
-		if child == self or _node_is_battle_scene(child):
+		if child == self:
 			continue
 		var button := _find_topmost_touch_button_recursive(child, global_position)
 		if button != null:
@@ -409,7 +522,7 @@ func _button_can_bridge_touch(button: Button) -> bool:
 
 
 func _has_active_battle_scene() -> bool:
-	var tree := get_tree()
+	var tree := _scene_tree_or_null()
 	if tree == null or tree.root == null:
 		return false
 	if tree.current_scene != null and _node_is_battle_scene(tree.current_scene):
@@ -431,6 +544,13 @@ func _node_is_battle_scene(node: Node) -> bool:
 	if script is Script and str(script.resource_path) == "res://scenes/battle/BattleScene.gd":
 		return true
 	return false
+
+
+func _scene_tree_or_null() -> SceneTree:
+	if is_inside_tree():
+		return get_tree()
+	var loop := Engine.get_main_loop()
+	return loop as SceneTree
 
 
 ## 切换到指定场景
@@ -455,13 +575,26 @@ func consume_last_requested_scene_path() -> String:
 
 
 func _deferred_goto_scene(path: String) -> void:
-	if _should_apply_non_battle_orientation_before_scene_change(path):
+	set_touch_mouse_emulation_for_runtime(_touch_mouse_emulation_enabled_for_scene(path))
+	if path == SCENE_DECK_EDITOR:
+		apply_deck_editor_orientation()
+	elif _should_apply_non_battle_orientation_before_scene_change(path):
 		apply_non_battle_orientation()
 	get_tree().change_scene_to_file(path)
 
 
 func _should_apply_non_battle_orientation_before_scene_change(path: String) -> bool:
-	return path != SCENE_BATTLE
+	return path != SCENE_BATTLE and path != SCENE_DECK_EDITOR
+
+
+func apply_deck_editor_orientation() -> void:
+	set_touch_mouse_emulation_for_runtime(true)
+	if DisplayServer.get_name() == "headless":
+		return
+	if _is_mobile_runtime():
+		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_SENSOR_LANDSCAPE)
+		return
+	_ensure_desktop_window_size()
 
 
 ## 切换到主菜单
@@ -571,6 +704,34 @@ func sanitize_battle_layout_mode(mode: String) -> String:
 			return BATTLE_LAYOUT_AUTO
 
 
+func load_non_battle_layout_preferences() -> void:
+	non_battle_layout_mode = default_non_battle_layout_mode_for_first_run()
+	if not FileAccess.file_exists(NON_BATTLE_LAYOUT_SETTINGS_PATH):
+		return
+	var file := FileAccess.open(NON_BATTLE_LAYOUT_SETTINGS_PATH, FileAccess.READ)
+	if file == null:
+		return
+	var json := JSON.new()
+	if json.parse(file.get_as_text()) != OK:
+		file.close()
+		return
+	file.close()
+	if not json.data is Dictionary:
+		return
+	var data: Dictionary = json.data
+	non_battle_layout_mode = sanitize_non_battle_layout_mode(str(data.get("non_battle_layout_mode", non_battle_layout_mode)))
+
+
+func save_non_battle_layout_preferences() -> void:
+	var file := FileAccess.open(NON_BATTLE_LAYOUT_SETTINGS_PATH, FileAccess.WRITE)
+	if file == null:
+		return
+	file.store_string(JSON.stringify({
+		"non_battle_layout_mode": sanitize_non_battle_layout_mode(non_battle_layout_mode),
+	}, "\t"))
+	file.close()
+
+
 func set_battle_replay_launch(launch: Dictionary) -> void:
 	_battle_replay_launch = launch.duplicate(true)
 
@@ -600,8 +761,10 @@ func get_battle_review_model_label(model_id: String) -> String:
 func normalize_battle_review_model(model_id: String) -> String:
 	var normalized := model_id.strip_edges()
 	match normalized:
-		"deepseek-chat":
-			return "deepseek/deepseek-chat"
+		"z-ai/glm-5.1":
+			return "z-ai/glm-5.2"
+		"qwen/qwen3.6-plus":
+			return "qwen/qwen3.7-plus"
 		"deepseek/deepseek-v4-flash":
 			return "deepseek-v4-flash"
 		"deepseek/deepseek-v4-pro":

@@ -69,7 +69,7 @@ func execute_attack(
 		return
 	if AbilityPreventDamageFromBasicExEffect.prevents_target_damage(attacker, target, state):
 		return
-	var damage := target.attached_energy.size() * damage_per_energy
+	var damage := attacker.attached_energy.size() * damage_per_energy
 	if damage <= 0:
 		return
 	var final_damage := _calculate_attack_target_damage(attacker, target, damage, state)
@@ -110,4 +110,4 @@ func _resolve_attack_index(card: CardInstance, attack: Dictionary) -> int:
 
 
 func get_description() -> String:
-	return "Deal damage to 1 opponent Pokemon equal to its attached Energy count."
+	return "Deal damage to 1 opponent Pokemon equal to this Pokemon's attached Energy count."

@@ -93,6 +93,14 @@ func _has_effect_type(effects: Array[BaseEffect], script_ref: GDScript) -> bool:
 	return false
 
 
+func _last_action_of_type(actions: Array[GameAction], action_type: GameAction.ActionType) -> GameAction:
+	for i: int in range(actions.size() - 1, -1, -1):
+		var action := actions[i]
+		if action != null and action.action_type == action_type:
+			return action
+	return null
+
+
 func test_batch_3178_worker_d_effect_ids_register_direct_effects() -> String:
 	var processor := EffectProcessor.new()
 
@@ -159,12 +167,12 @@ func test_csv8c_161_raging_bolt_lightning_storm_targets_any_opponent_pokemon() -
 		{"name": "龙之头击", "cost": "LFC", "damage": "130", "text": "", "is_vstar_power": false},
 	]
 	player.active_pokemon = _make_slot(raging_cd, 0)
+	_attach_energy(player.active_pokemon, "Raging Energy A", "L", 0)
+	_attach_energy(player.active_pokemon, "Raging Energy B", "F", 0)
+	_attach_energy(player.active_pokemon, "Raging Energy C", "G", 0)
 	var bench_target := opponent.bench[1]
 	bench_target.get_card_data().weakness_energy = "N"
 	bench_target.get_card_data().weakness_value = "x2"
-	_attach_energy(bench_target, "Bench Energy A", "L", 1)
-	_attach_energy(bench_target, "Bench Energy B", "F", 1)
-	_attach_energy(bench_target, "Bench Energy C", "G", 1)
 	opponent.active_pokemon.get_card_data().weakness_energy = "N"
 	opponent.active_pokemon.get_card_data().weakness_value = "x2"
 
@@ -175,8 +183,6 @@ func test_csv8c_161_raging_bolt_lightning_storm_targets_any_opponent_pokemon() -
 	effect.execute_attack(player.active_pokemon, opponent.active_pokemon, 0, state)
 	effect.clear_attack_interaction_context()
 
-	_attach_energy(opponent.active_pokemon, "Active Energy A", "L", 1)
-	_attach_energy(opponent.active_pokemon, "Active Energy B", "F", 1)
 	effect.set_attack_interaction_context([{AttackRagingBoltLightningStorm.STEP_ID: [opponent.active_pokemon]}])
 	effect.execute_attack(player.active_pokemon, opponent.active_pokemon, 0, state)
 	effect.clear_attack_interaction_context()
@@ -184,8 +190,49 @@ func test_csv8c_161_raging_bolt_lightning_storm_targets_any_opponent_pokemon() -
 	return run_checks([
 		assert_eq(steps.size(), 1, "CSV8C_161 should ask which opposing Pokemon to damage"),
 		assert_eq((steps[0].get("items", []) as Array).size(), 3, "CSV8C_161 should expose Active plus Benched targets"),
-		assert_eq(bench_target.damage_counters, 90, "Bench target damage should be Energy count x30 without weakness"),
-		assert_eq(opponent.active_pokemon.damage_counters, 120, "Active target should use target Energy count x30 and then apply Weakness"),
+		assert_eq(bench_target.damage_counters, 90, "Bench target damage should use Raging Bolt Energy count x30 without Weakness"),
+		assert_eq(opponent.active_pokemon.damage_counters, 180, "Active target should use Raging Bolt Energy count x30 and then apply Weakness"),
+	])
+
+
+func test_csv8c_161_raging_bolt_lightning_storm_uses_attacker_energy_for_bench_target() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+	var player := state.players[0]
+	var opponent := state.players[1]
+	var raging_cd := _make_pokemon_data("Raging Bolt", "N", 130, "Basic", RAGING_BOLT_ID)
+	raging_cd.attacks = [
+		{"name": "Lightning Storm", "cost": "LF", "damage": "", "text": "This attack does 30 damage for each Energy attached to this Pokemon to 1 of your opponent's Pokemon.", "is_vstar_power": false},
+		{"name": "Dragon Headbutt", "cost": "LFC", "damage": "130", "text": "", "is_vstar_power": false},
+	]
+	var raging := _make_slot(raging_cd, 0)
+	_attach_energy(raging, "Lightning Energy", "L", 0)
+	_attach_energy(raging, "Fighting Energy", "F", 0)
+	player.active_pokemon = raging
+	gsm.effect_processor.register_pokemon_card(raging_cd)
+
+	var active_cd := _make_pokemon_data("Opponent Active", "P", 120, "Basic")
+	opponent.active_pokemon = _make_slot(active_cd, 1)
+	var kirlia_cd := _make_pokemon_data("Kirlia", "P", 80, "Stage 1")
+	var kirlia := _make_slot(kirlia_cd, 1)
+	opponent.bench = [kirlia]
+
+	var attacked := gsm.use_attack(0, 0, [{
+		AttackRagingBoltLightningStorm.STEP_ID: [kirlia],
+	}])
+	var damage_action := _last_action_of_type(gsm.action_log, GameAction.ActionType.DAMAGE_DEALT)
+	var damage_targets: Array = damage_action.data.get("targets", []) if damage_action != null else []
+	var first_target: Dictionary = damage_targets[0] if not damage_targets.is_empty() and damage_targets[0] is Dictionary else {}
+
+	return run_checks([
+		assert_true(attacked, "CSV8C_161 should be able to use Lightning Storm with Lightning and Fighting Energy attached"),
+		assert_eq(kirlia.damage_counters, 60, "Lightning Storm should use Raging Bolt's attached Energy count, not Kirlia's Energy count"),
+		assert_eq(opponent.active_pokemon.damage_counters, 0, "Selecting a Benched Kirlia should not damage the opposing Active"),
+		assert_not_null(damage_action, "Bench damage should be logged for VFX and battle history"),
+		assert_eq(str(damage_action.data.get("target", "")) if damage_action != null else "", "Kirlia", "Damage log should name the selected Bench target"),
+		assert_eq(str(first_target.get("slot_kind", "")), "bench", "Damage VFX target should point to the selected Bench slot"),
+		assert_eq(int(first_target.get("slot_index", -1)), 0, "Damage VFX target should preserve the selected Bench index"),
 	])
 
 

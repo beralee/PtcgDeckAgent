@@ -219,6 +219,7 @@ res://data/bundled_user/cards/CSV7C_030.json
 res://data/bundled_user/cards/CSV7C_031.json
 res://data/bundled_user/cards/CSV7C_033.json
 res://data/bundled_user/cards/CSV7C_036.json
+res://data/bundled_user/cards/CSV7C_037.json
 res://data/bundled_user/cards/CSV7C_038.json
 res://data/bundled_user/cards/CSV7C_051.json
 res://data/bundled_user/cards/CSV7C_052.json
@@ -614,6 +615,7 @@ res://data/bundled_user/cards/images/CSV7C/030.png.bin
 res://data/bundled_user/cards/images/CSV7C/031.png.bin
 res://data/bundled_user/cards/images/CSV7C/033.png.bin
 res://data/bundled_user/cards/images/CSV7C/036.png.bin
+res://data/bundled_user/cards/images/CSV7C/037.png.bin
 res://data/bundled_user/cards/images/CSV7C/038.png.bin
 res://data/bundled_user/cards/images/CSV7C/051.png.bin
 res://data/bundled_user/cards/images/CSV7C/052.png.bin

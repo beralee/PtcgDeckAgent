@@ -518,7 +518,7 @@ func test_build_request_payload_preserves_explicit_thinking_override() -> String
 
 	var client: Object = (client_result as Dictionary).get("value") as Object
 	var payload: Variant = client.call("_build_request_payload", {
-		"model": "z-ai/glm-5.1",
+		"model": "z-ai/glm-5.2",
 		"messages": [{
 			"role": "user",
 			"content": "hello",
@@ -541,25 +541,61 @@ func test_build_request_payload_disables_qwen_thinking_with_provider_flag_and_pr
 		return str((client_result as Dictionary).get("error", "ZenMuxClient setup failed"))
 
 	var client: Object = (client_result as Dictionary).get("value") as Object
-	var payload: Variant = client.call("_build_request_payload", {
-		"model": "qwen/qwen3.6-plus",
-		"messages": [{
-			"role": "system",
-			"content": "Return JSON only.",
-		}, {
-			"role": "user",
-			"content": "hello",
-		}],
-	})
-	if not payload is Dictionary:
-		return "_build_request_payload should return a Dictionary"
+	var checks: Array[String] = []
+	for model_id: String in ["qwen/qwen3.7-plus", "qwen/qwen3.7-max"]:
+		var payload: Variant = client.call("_build_request_payload", {
+			"model": model_id,
+			"messages": [{
+				"role": "system",
+				"content": "Return JSON only.",
+			}, {
+				"role": "user",
+				"content": "hello",
+			}],
+		})
+		if not payload is Dictionary:
+			return "_build_request_payload should return a Dictionary"
+		var messages: Array = (payload as Dictionary).get("messages", [])
+		var system_content := str(((messages[0] as Dictionary).get("content", ""))) if messages.size() > 0 and messages[0] is Dictionary else ""
+		checks.append(assert_eq(str((payload as Dictionary).get("model", "")), model_id, "Qwen payload should preserve the requested model id"))
+		checks.append(assert_eq((payload as Dictionary).get("enable_thinking", true), false, "Qwen payloads should use the official enable_thinking=false switch"))
+		checks.append(assert_true(system_content.begins_with("/no_think"), "Qwen payloads should include the documented soft no-thinking switch as a fallback"))
+	return run_checks(checks)
 
-	var messages: Array = (payload as Dictionary).get("messages", [])
-	var system_content := str(((messages[0] as Dictionary).get("content", ""))) if messages.size() > 0 and messages[0] is Dictionary else ""
-	return run_checks([
-		assert_eq((payload as Dictionary).get("enable_thinking", true), false, "Qwen payloads should use the official enable_thinking=false switch"),
-		assert_true(system_content.begins_with("/no_think"), "Qwen payloads should include the documented soft no-thinking switch as a fallback"),
-	])
+
+func test_build_request_payload_disables_reasoning_for_current_supported_models() -> String:
+	var client_result: Variant = _new_client()
+	if client_result is Dictionary and not bool((client_result as Dictionary).get("ok", false)):
+		return str((client_result as Dictionary).get("error", "ZenMuxClient setup failed"))
+
+	var client: Object = (client_result as Dictionary).get("value") as Object
+	var model_ids := [
+		"kimi-k2.6",
+		"z-ai/glm-5.2",
+		"qwen/qwen3.7-plus",
+		"qwen/qwen3.7-max",
+		"deepseek-v4-flash",
+		"deepseek-v4-pro",
+		"gpt-5.5",
+		"claude-sonnet-4-6",
+	]
+	var checks: Array[String] = []
+	for model_id: String in model_ids:
+		var payload: Variant = client.call("_build_request_payload", {
+			"model": model_id,
+			"messages": [{
+				"role": "user",
+				"content": "hello",
+			}],
+		})
+		if not payload is Dictionary:
+			return "_build_request_payload should return a Dictionary"
+		checks.append(assert_eq(str((payload as Dictionary).get("model", "")), model_id, "Request payload should preserve the supported model id"))
+		checks.append(assert_eq(((payload as Dictionary).get("reasoning", {}) as Dictionary).get("enabled", true), false, "Supported models should disable ZenMux reasoning by default"))
+		checks.append(assert_eq(((payload as Dictionary).get("thinking", {}) as Dictionary).get("type", ""), "disabled", "Supported models should disable provider thinking by default"))
+		if model_id.contains("qwen"):
+			checks.append(assert_eq((payload as Dictionary).get("enable_thinking", true), false, "Qwen supported models should disable thinking with the provider flag"))
+	return run_checks(checks)
 
 
 func test_build_request_payload_defaults_kimi_k26_temperature_to_required_value() -> String:

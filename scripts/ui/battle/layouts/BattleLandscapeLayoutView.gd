@@ -141,8 +141,12 @@ func apply_scene_layout(viewport_size: Vector2) -> void:
 	if stadium_action_row != null:
 		stadium_action_row.add_theme_constant_override("separation", clampi(int(viewport_size.x * 0.004), 6, 12))
 	if opp_field_shell != null:
+		opp_field_shell.alignment = BoxContainer.ALIGNMENT_BEGIN
+		opp_field_shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		opp_field_shell.add_theme_constant_override("separation", clampi(int(viewport_size.x * 0.006), 8, 16))
 	if my_field_shell != null:
+		my_field_shell.alignment = BoxContainer.ALIGNMENT_BEGIN
+		my_field_shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		my_field_shell.add_theme_constant_override("separation", clampi(int(viewport_size.x * 0.006), 8, 16))
 	if opp_field_inner != null:
 		opp_field_inner.add_theme_constant_override("separation", clampi(int(viewport_size.y * 0.003), 1, 4))
@@ -279,9 +283,11 @@ func apply_scene_layout(viewport_size: Vector2) -> void:
 	_call_scene("_apply_landscape_stadium_action_text_metrics", [hud_action_button_height])
 	_call_scene("_apply_stadium_card_view_metrics", [play_card_size.x, play_card_size.y])
 	if opp_prize_hud != null:
+		opp_prize_hud.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		opp_prize_hud.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		opp_prize_hud.custom_minimum_size = Vector2(0, prize_panel_height)
 	if my_prize_hud != null:
+		my_prize_hud.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		my_prize_hud.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		my_prize_hud.custom_minimum_size = Vector2(0, prize_panel_height)
 	var backdrop := _node("BattleBackdrop") as TextureRect

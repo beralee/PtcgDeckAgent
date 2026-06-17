@@ -3,6 +3,8 @@ extends Control
 const MatchRecordIndexScript = preload("res://scripts/engine/MatchRecordIndex.gd")
 const BattleReplayLocatorScript = preload("res://scripts/engine/BattleReplayLocator.gd")
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
+const NonBattleLayoutControllerScript := preload("res://scripts/ui/non_battle/NonBattleLayoutController.gd")
+const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
 const HUD_ACCENT := Color(0.28, 0.92, 1.0, 1.0)
 const HUD_DANGER := Color(1.0, 0.28, 0.22, 1.0)
 const HUD_TEXT := Color(0.92, 0.98, 1.0, 1.0)
@@ -22,12 +24,79 @@ const HUD_BUTTON_TEXT_HORIZONTAL_PADDING := 34.0
 var _record_index: RefCounted = MatchRecordIndexScript.new()
 var _replay_locator: RefCounted = BattleReplayLocatorScript.new()
 var _auto_navigate_to_battle: bool = true
+var _non_battle_layout_controller: RefCounted = NonBattleLayoutControllerScript.new()
+var _current_non_battle_layout_context: Dictionary = {}
 
 
 func _ready() -> void:
 	_apply_hud_theme()
+	_connect_non_battle_layout_signal()
 	%BtnBack.pressed.connect(_on_back_pressed)
 	_render_rows()
+	call_deferred("_apply_non_battle_layout")
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED:
+		_apply_non_battle_layout()
+
+
+func _input(event: InputEvent) -> void:
+	NonBattleTouchBridgeScript.handle_root_touch(self, event)
+
+
+func _connect_non_battle_layout_signal() -> void:
+	if GameManager == null or not GameManager.has_signal("non_battle_layout_mode_changed"):
+		return
+	var callback := Callable(self, "_on_non_battle_layout_mode_changed")
+	if not GameManager.non_battle_layout_mode_changed.is_connected(callback):
+		GameManager.non_battle_layout_mode_changed.connect(callback)
+
+
+func _on_non_battle_layout_mode_changed(_mode: String) -> void:
+	_apply_non_battle_layout()
+	_render_rows()
+	call_deferred("_apply_non_battle_layout")
+
+
+func _apply_non_battle_layout_for_tests(viewport_size: Vector2, mode: String) -> void:
+	_apply_non_battle_layout(viewport_size, mode)
+
+
+func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode: String = "") -> void:
+	var size := viewport_size
+	if size.x <= 0.0 or size.y <= 0.0:
+		size = get_viewport_rect().size if is_inside_tree() else Vector2(1600, 900)
+	var mode := forced_mode
+	if mode == "":
+		mode = str(GameManager.get("non_battle_layout_mode")) if GameManager != null else "landscape"
+	var is_mobile := OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
+	var context: Dictionary = _non_battle_layout_controller.call("build_context", size, mode, is_mobile)
+	var portrait := bool(context.get("is_portrait", false))
+	_current_non_battle_layout_context = context.duplicate(true)
+	set_meta("non_battle_layout_mode", str(context.get("resolved_mode", mode)))
+	var margin := get_node_or_null("MarginContainer") as MarginContainer
+	if margin != null:
+		var value := int(context.get("page_margin", 24.0))
+		margin.add_theme_constant_override("margin_left", value)
+		margin.add_theme_constant_override("margin_top", value)
+		margin.add_theme_constant_override("margin_right", value)
+		margin.add_theme_constant_override("margin_bottom", value)
+	_apply_replay_mobile_metrics(self, context, portrait)
+
+
+func _apply_replay_mobile_metrics(node: Node, context: Dictionary, portrait: bool) -> void:
+	if node is Button:
+		var button := node as Button
+		button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, float(context.get("secondary_button_height", 44.0)) if portrait else button.custom_minimum_size.y)
+		button.add_theme_font_size_override("font_size", int(context.get("button_font_size", 18)) if portrait else button.get_theme_font_size("font_size"))
+		NonBattleTouchBridgeScript.bind_button_touch(button)
+	elif node is Label:
+		var label := node as Label
+		if label.name == "Title":
+			label.add_theme_font_size_override("font_size", int(context.get("title_font_size", 34)) if portrait else HudThemeScript.scaled_font_size(34))
+	for child: Node in node.get_children():
+		_apply_replay_mobile_metrics(child, context, portrait)
 
 
 func _apply_hud_theme() -> void:
@@ -153,6 +222,7 @@ func _on_back_pressed() -> void:
 func _render_rows() -> void:
 	var list_container := %ListContainer
 	for child: Node in list_container.get_children():
+		list_container.remove_child(child)
 		child.queue_free()
 
 	var rows: Array = _record_index.call("list_rows") if _record_index != null and _record_index.has_method("list_rows") else []
@@ -173,14 +243,24 @@ func _render_rows() -> void:
 
 
 func _build_row_widget(row: Dictionary) -> Control:
+	var portrait := str(get_meta("non_battle_layout_mode", "")) == "portrait"
+	var gap := int(_current_non_battle_layout_context.get("section_gap", 12)) if portrait else 12
+	var title_font := int(_current_non_battle_layout_context.get("body_font_size", REPLAY_ROW_TITLE_FONT_SIZE)) if portrait else HudThemeScript.scaled_font_size(REPLAY_ROW_TITLE_FONT_SIZE)
+	var meta_font := int(_current_non_battle_layout_context.get("meta_font_size", REPLAY_ROW_META_FONT_SIZE)) if portrait else HudThemeScript.scaled_font_size(REPLAY_ROW_META_FONT_SIZE)
+	var row_button_height := float(_current_non_battle_layout_context.get("secondary_button_height", 84.0)) if portrait else REPLAY_ROW_MIN_HEIGHT
+	var row_height := maxf(
+		float(_current_non_battle_layout_context.get("list_item_min_height", 148.0)),
+		row_button_height * 2.0 + float(gap) * 3.0 + float(title_font + meta_font) * 1.15
+	) if portrait else REPLAY_ROW_MIN_HEIGHT
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(0, REPLAY_ROW_MIN_HEIGHT)
+	panel.name = "ReplayRowPanel"
+	panel.custom_minimum_size = Vector2(0, row_height)
 	panel.add_theme_stylebox_override("panel", _hud_panel_style(Color(0.035, 0.075, 0.11, 0.88), HUD_CARD_BORDER, 16))
 
-	var layout := HBoxContainer.new()
+	var layout: BoxContainer = VBoxContainer.new() if portrait else HBoxContainer.new()
 	layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	layout.alignment = BoxContainer.ALIGNMENT_CENTER
-	layout.add_theme_constant_override("separation", 12)
+	layout.add_theme_constant_override("separation", gap)
 	panel.add_child(layout)
 
 	var labels: Array = row.get("player_labels", [])
@@ -214,14 +294,14 @@ func _build_row_widget(row: Dictionary) -> Control:
 	# 信息区域（左侧）
 	var info_vbox := VBoxContainer.new()
 	info_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info_vbox.add_theme_constant_override("separation", 4)
+	info_vbox.add_theme_constant_override("separation", maxi(4, int(float(gap) * 0.45)) if portrait else 4)
 
 	# 第一行：对阵双方 + 胜者
 	var line1 := Label.new()
 	line1.text = "%s vs %s    胜者：%s" % [p1_name, p2_name, winner_name]
 	line1.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	line1.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	line1.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(REPLAY_ROW_TITLE_FONT_SIZE))
+	line1.add_theme_font_size_override("font_size", title_font)
 	line1.add_theme_color_override("font_color", HUD_TEXT)
 	info_vbox.add_child(line1)
 
@@ -239,22 +319,27 @@ func _build_row_widget(row: Dictionary) -> Control:
 	line2.text = "  ".join(details)
 	line2.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	line2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	line2.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(REPLAY_ROW_META_FONT_SIZE))
+	line2.add_theme_font_size_override("font_size", meta_font)
 	line2.add_theme_color_override("font_color", HUD_TEXT_MUTED)
 	info_vbox.add_child(line2)
 
 	layout.add_child(info_vbox)
 
 	# 按钮区域（右侧）
-	var btn_box := HBoxContainer.new()
+	var btn_box: BoxContainer = VBoxContainer.new() if portrait else HBoxContainer.new()
+	btn_box.name = "ReplayRowActions"
 	btn_box.alignment = BoxContainer.ALIGNMENT_CENTER
-	btn_box.add_theme_constant_override("separation", 8)
+	btn_box.add_theme_constant_override("separation", gap)
 
 	var replay_button := Button.new()
 	replay_button.name = "ReplayButton"
 	replay_button.text = "复盘"
 	replay_button.disabled = str(row.get("match_dir", "")).strip_edges() == "" or _replay_locator == null or not _replay_locator.has_method("locate")
 	_style_hud_button(replay_button, HUD_ACCENT, true)
+	if portrait:
+		replay_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		replay_button.custom_minimum_size.y = maxf(replay_button.custom_minimum_size.y, row_button_height)
+		replay_button.add_theme_font_size_override("font_size", int(_current_non_battle_layout_context.get("button_font_size", HUD_BUTTON_FONT_SIZE)))
 	replay_button.pressed.connect(func() -> void:
 		_on_replay_pressed(row)
 	)
@@ -264,6 +349,10 @@ func _build_row_widget(row: Dictionary) -> Control:
 	delete_button.name = "DeleteButton"
 	delete_button.text = "删除"
 	_style_hud_button(delete_button, HUD_DANGER, true)
+	if portrait:
+		delete_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		delete_button.custom_minimum_size.y = maxf(delete_button.custom_minimum_size.y, row_button_height)
+		delete_button.add_theme_font_size_override("font_size", int(_current_non_battle_layout_context.get("button_font_size", HUD_BUTTON_FONT_SIZE)))
 	delete_button.pressed.connect(func() -> void:
 		_on_delete_pressed(row, panel)
 	)

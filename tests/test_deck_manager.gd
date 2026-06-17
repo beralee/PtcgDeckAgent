@@ -4,6 +4,7 @@ extends TestBase
 const DeckManagerScene = preload("res://scenes/deck_manager/DeckManager.tscn")
 const DeckViewDialogScript = preload("res://scripts/ui/decks/DeckViewDialog.gd")
 const DeckRecommendationStoreScript = preload("res://scripts/engine/DeckRecommendationStore.gd")
+const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
 const TEST_RECOMMENDATION_CACHE_PATH := "user://test_deck_manager/recommendation_cache.json"
 const TEST_DECK_CENTER_META_STATE_PATH := "user://deck_center_meta_state.json"
 
@@ -165,6 +166,40 @@ func test_deck_view_card_list_keeps_scrollbar_and_enables_drag_scroll() -> Strin
 	])
 
 
+func test_deck_view_dialog_uses_large_portrait_card_grid() -> String:
+	var host := Control.new()
+	host.size = Vector2(1080, 2400)
+	var dialog_helper = DeckViewDialogScript.new()
+	var deck := _make_deck(910028, "Portrait View Deck")
+	deck.cards = [
+		{"name": "Portrait Test Card", "set_code": "", "card_index": "", "count": 60, "card_type": "Pokemon"},
+	]
+
+	dialog_helper.show_deck(host, deck)
+	var dialog := host.find_child("DeckViewDialog", true, false) as AcceptDialog
+	var scroll := host.find_child("DeckViewCardScroll", true, false) as ScrollContainer
+	var grid := host.find_child("DeckViewCardGrid", true, false) as GridContainer
+	var info_label := host.find_child("DeckViewInfoLabel", true, false) as Label
+	var close_button := host.find_child("DeckViewCloseButton", true, false) as Button
+	var first_tile := grid.get_child(0) as Control if grid != null and grid.get_child_count() > 0 else null
+	var vbar := scroll.get_v_scroll_bar() if scroll != null else null
+
+	host.queue_free()
+	return run_checks([
+		assert_true(dialog != null and dialog.size.x >= 990, "Portrait deck view dialog should use nearly the full phone width"),
+		assert_true(dialog != null and dialog.size.y >= 2280, "Portrait deck view dialog should be a tall mobile sheet instead of a desktop popup"),
+		assert_true(grid != null and grid.columns == 3, "Portrait deck view should use three large card columns"),
+		assert_true(scroll != null and str(scroll.get_meta("hud_scrollbar_profile", "")) == "portrait_touch", "Portrait deck view should use the large touch scrollbar profile"),
+		assert_true(vbar != null and vbar.custom_minimum_size.x >= 104.0, "Portrait deck view right scrollbar should be wide enough for touch dragging"),
+		assert_true(vbar != null and bool(vbar.get_meta("_non_battle_range_touch_bound", false)), "Portrait deck view right scrollbar should be bound to the Android touch bridge"),
+		assert_true(info_label != null and info_label.get_theme_font_size("font_size") >= 31, "Portrait deck view metadata should use phone-readable text"),
+		assert_true(close_button != null and close_button.custom_minimum_size.y >= 96.0, "Portrait deck view should use a large content-level close button"),
+		assert_true(close_button != null and bool(close_button.get_meta("_non_battle_touch_bound", false)), "Portrait deck view close button should use the Android touch bridge"),
+		assert_true(first_tile != null and first_tile.custom_minimum_size.x >= 275.0, "Portrait deck view card tiles should fill the phone-width sheet instead of looking like desktop thumbnails"),
+		assert_true(first_tile != null and first_tile.custom_minimum_size.y >= 400.0, "Portrait deck view card tiles should leave room for a readable card image and name"),
+	])
+
+
 func test_deck_view_card_list_drag_moves_vertical_scroll_and_suppresses_click() -> String:
 	var dialog_helper = DeckViewDialogScript.new()
 	var scroll := ScrollContainer.new()
@@ -198,9 +233,45 @@ func test_deck_view_card_list_drag_moves_vertical_scroll_and_suppresses_click() 
 	return run_checks([
 		assert_true(press_consumed, "Deck view card-list drag should capture the initial press"),
 		assert_true(drag_consumed, "Deck view card-list drag should consume movement after the threshold"),
-		assert_eq(final_scroll, 200, "Dragging upward should scroll the deck view card list downward"),
+		assert_true(final_scroll > 200, "Dragging upward should scroll the deck view card list downward with phone-friendly sensitivity"),
 		assert_true(release_consumed, "Deck view card-list release should consume the completed drag"),
 		assert_true(suppress_until > Time.get_ticks_msec(), "Deck view card-list drag should suppress the follow-up click"),
+	])
+
+
+func test_deck_view_right_scrollbar_accepts_android_touch_drag() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var vbar := VScrollBar.new()
+	vbar.position = Vector2(900, 100)
+	vbar.size = Vector2(112, 1000)
+	vbar.custom_minimum_size = Vector2(112, 1000)
+	vbar.min_value = 0.0
+	vbar.max_value = 1600.0
+	vbar.page = 300.0
+	vbar.value = 0.0
+	NonBattleTouchBridgeScript.bind_range_touch(vbar)
+
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.position = Vector2(956, 150)
+	var press_consumed := bool(NonBattleTouchBridgeScript.handle_range_touch(vbar, press))
+	var drag := InputEventScreenDrag.new()
+	drag.position = Vector2(956, 940)
+	var drag_consumed := bool(NonBattleTouchBridgeScript.handle_range_touch(vbar, drag))
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.position = drag.position
+	var release_consumed := bool(NonBattleTouchBridgeScript.handle_range_touch(vbar, release))
+	var final_value := float(vbar.value)
+	vbar.queue_free()
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+
+	return run_checks([
+		assert_true(press_consumed, "Portrait deck view scrollbar should capture Android ScreenTouch press"),
+		assert_true(drag_consumed, "Portrait deck view scrollbar should capture Android ScreenDrag"),
+		assert_true(release_consumed, "Portrait deck view scrollbar should consume release after dragging"),
+		assert_true(final_value > 900.0, "Dragging near the bottom of the portrait scrollbar should move the scroll value"),
 	])
 
 
@@ -391,6 +462,63 @@ func test_deck_manager_marks_recommendation_new_badge_seen_revision() -> String:
 		assert_eq(seen_revision, "test-mark-recommendation-revision", "Rendering a recommendation NEW badge should persist the seen badge revision"),
 		assert_eq(main_menu_seen_revision, "test-mark-recommendation-revision", "Rendering a deck-center recommendation NEW badge should also clear the main-menu entrance badge revision"),
 		assert_false(matches_after_seen, "The same recommendation revision should not show NEW again after being marked seen"),
+	])
+
+
+func test_deck_manager_removes_visible_recommendation_new_badge_when_marked_seen() -> String:
+	_delete_user_file(TEST_DECK_CENTER_META_STATE_PATH)
+	var scene: Control = DeckManagerScene.instantiate()
+	scene._apply_hud_theme()
+	_configure_recommendation_test_state(scene)
+	scene._deck_center_latest_meta = {
+		"latest_revision": "test-remove-visible-recommendation-revision",
+		"latest_recommendation_id": str(scene._current_recommendation.get("id", "")),
+		"latest_deck_id": int(scene._current_recommendation.get("deck_id", 0)),
+	}
+	scene._ensure_recommendation_section()
+	scene._refresh_recommendation_cards()
+
+	var badge_before := scene.find_child("RecommendationNewBadge", true, false) as PanelContainer
+	scene._mark_deck_center_recommendation_badge_seen()
+	var badge_after := scene.find_child("RecommendationNewBadge", true, false) as PanelContainer
+	var state: Dictionary = scene._load_deck_center_meta_state()
+
+	scene.queue_free()
+	_delete_user_file(TEST_DECK_CENTER_META_STATE_PATH)
+	return run_checks([
+		assert_not_null(badge_before, "Precondition: matching latest recommendation should initially render a NEW badge"),
+		assert_null(badge_after, "Marking the latest recommendation as seen should remove the visible NEW badge immediately"),
+		assert_eq(str(state.get("last_recommendation_badge_seen_revision", "")), "test-remove-visible-recommendation-revision", "Visible badge cleanup should still persist the recommendation seen revision"),
+	])
+
+
+func test_deck_manager_treats_main_menu_seen_revision_as_recommendation_badge_seen() -> String:
+	_delete_user_file(TEST_DECK_CENTER_META_STATE_PATH)
+	var scene: Control = DeckManagerScene.instantiate()
+	scene._apply_hud_theme()
+	_configure_recommendation_test_state(scene)
+	var revision := "test-main-menu-seen-recommendation-revision"
+	scene._save_deck_center_meta_state({
+		"last_seen_revision": revision,
+		"last_seen_at": 12345,
+		"latest_info": {
+			"latest_revision": revision,
+			"latest_recommendation_id": str(scene._current_recommendation.get("id", "")),
+			"latest_deck_id": int(scene._current_recommendation.get("deck_id", 0)),
+		},
+	})
+	scene._deck_center_latest_meta = scene._load_deck_center_latest_meta()
+	scene._ensure_recommendation_section()
+	scene._refresh_recommendation_cards()
+
+	var seen_revision: String = str(scene._deck_center_recommendation_badge_seen_revision)
+	var badge := scene.find_child("RecommendationNewBadge", true, false) as PanelContainer
+
+	scene.queue_free()
+	_delete_user_file(TEST_DECK_CENTER_META_STATE_PATH)
+	return run_checks([
+		assert_eq(seen_revision, revision, "Opening deck center from the main menu should satisfy the internal recommendation NEW badge state"),
+		assert_null(badge, "A revision already marked seen by the main-menu entrance should not keep showing the recommendation NEW badge"),
 	])
 
 

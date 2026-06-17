@@ -230,6 +230,7 @@ var _draw_reveal_visible_instance_ids: Array[int] = []
 var _ready_vfx_overlay: Control = null
 var _ready_vfx_seen_keys: Dictionary = {}
 var _ready_vfx_trigger_source_player_index: int = -1
+var _ready_vfx_trigger_action_kind: String = ""
 var _pending_prize_player_index: int = -1
 var _pending_prize_remaining: int = 0
 var _pending_prize_animating: bool = false

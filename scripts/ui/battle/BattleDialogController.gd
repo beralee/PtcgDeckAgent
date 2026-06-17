@@ -74,12 +74,6 @@ func _hide_dialog_overlay(scene: Object, source: String) -> void:
 		dialog_overlay.visible = false
 
 
-func _arm_card_view_release_fallback(card_view: BattleCardView, reason: String) -> void:
-	if card_view == null:
-		return
-	card_view.arm_primary_release_fallback(reason)
-
-
 func _replace_int_array(scene: Object, property_name: String, values: Array) -> void:
 	var snapshot := values.duplicate()
 	var target: Array[int] = scene.get(property_name)
@@ -930,8 +924,6 @@ func _populate_card_dialog_cards(scene: Object) -> void:
 		var card_view := BattleCardViewScript.new()
 		prepare_dialog_card_view(card_view, dialog_card_size)
 		card_view.set_clickable(card_click_selectable)
-		if card_click_selectable and not disabled:
-			_arm_card_view_release_fallback(card_view, "dialog_cards_open")
 		setup_dialog_card_view(scene, card_view, card_items[i], dialog_label_at(labels, i))
 		if disabled:
 			card_view.set_disabled(true)
@@ -1045,8 +1037,6 @@ func populate_grouped_card_dialog_items(
 			var card_view := BattleCardViewScript.new()
 			prepare_grouped_energy_card_view(card_view, energy_card_size)
 			card_view.set_clickable(card_click_selectable)
-			if card_click_selectable:
-				_arm_card_view_release_fallback(card_view, "dialog_grouped_cards_open")
 			setup_dialog_card_view(scene, card_view, card_items[item_index], dialog_label_at(labels, item_index))
 			if scene.has_method("_configure_card_gallery_card_view"):
 				scene.call("_configure_card_gallery_card_view", card_view, dialog_card_scroll, "dialog_cards")
@@ -1240,8 +1230,6 @@ func create_grouped_card_dialog_slot_panel(
 		var card_view := BattleCardViewScript.new()
 		prepare_grouped_energy_card_view(card_view, energy_card_size)
 		card_view.set_clickable(card_click_selectable)
-		if card_click_selectable:
-			_arm_card_view_release_fallback(card_view, "dialog_grouped_cards_open")
 		setup_dialog_card_view(scene, card_view, card_items[real_index], "")
 		if scene.has_method("_configure_card_gallery_card_view"):
 			scene.call("_configure_card_gallery_card_view", card_view, scene.get("_dialog_card_scroll"), "dialog_cards")
@@ -1847,7 +1835,6 @@ func show_assignment_dialog(scene: Object, extra_data: Dictionary) -> void:
 		var target_view := BattleCardViewScript.new()
 		prepare_dialog_card_view(target_view, dialog_card_size)
 		target_view.set_clickable(true)
-		_arm_card_view_release_fallback(target_view, "assignment_targets_open")
 		setup_dialog_card_view(scene, target_view, target_items[i], dialog_label_at(target_labels, i))
 		target_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
 			scene.call("_on_assignment_target_chosen", i)
@@ -2026,7 +2013,6 @@ func create_grouped_assignment_source_slot_panel(
 		var source_view := BattleCardViewScript.new()
 		prepare_grouped_energy_card_view(source_view, energy_card_size)
 		source_view.set_clickable(true)
-		_arm_card_view_release_fallback(source_view, "assignment_grouped_sources_open")
 		setup_dialog_card_view(scene, source_view, source_items[source_index], dialog_label_at(source_labels, source_index))
 		source_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
 			scene.call("_on_assignment_source_chosen", source_index)
@@ -2058,8 +2044,6 @@ func add_assignment_source_card(
 	var source_view := BattleCardViewScript.new()
 	prepare_dialog_card_view(source_view, dialog_card_size)
 	source_view.set_clickable(not disabled)
-	if not disabled:
-		_arm_card_view_release_fallback(source_view, "assignment_sources_open")
 	var source_label: String = display_label
 	if source_label == "" and source_index >= 0 and source_index < source_labels.size():
 		source_label = str(source_labels[source_index])

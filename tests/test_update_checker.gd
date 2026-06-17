@@ -6,6 +6,7 @@ const FeedbackClientPath := "res://scripts/network/FeedbackClient.gd"
 const UserVisitClientPath := "res://scripts/network/UserVisitClient.gd"
 const AppVersionPath := "res://scripts/app/AppVersion.gd"
 const STATE_PATH := "user://update_check_state.json"
+const NON_BATTLE_LAYOUT_SETTINGS_PATH := "user://non_battle_layout.json"
 
 
 func _new_checker() -> Dictionary:
@@ -19,6 +20,32 @@ func _remove_state_file() -> void:
 	var absolute_path := ProjectSettings.globalize_path(STATE_PATH)
 	if FileAccess.file_exists(absolute_path):
 		DirAccess.remove_absolute(absolute_path)
+
+
+func _read_non_battle_layout_settings_text() -> String:
+	var file := FileAccess.open(NON_BATTLE_LAYOUT_SETTINGS_PATH, FileAccess.READ)
+	if file == null:
+		return ""
+	var text := file.get_as_text()
+	file.close()
+	return text
+
+
+func _remove_non_battle_layout_settings_file() -> void:
+	var absolute_path := ProjectSettings.globalize_path(NON_BATTLE_LAYOUT_SETTINGS_PATH)
+	if FileAccess.file_exists(absolute_path):
+		DirAccess.remove_absolute(absolute_path)
+
+
+func _restore_non_battle_layout_settings_text(original_text: String) -> void:
+	if original_text == "":
+		_remove_non_battle_layout_settings_file()
+		return
+	var file := FileAccess.open(NON_BATTLE_LAYOUT_SETTINGS_PATH, FileAccess.WRITE)
+	if file == null:
+		return
+	file.store_string(original_text)
+	file.close()
 
 
 func test_update_checker_and_app_version_scripts_load() -> String:
@@ -99,9 +126,15 @@ func test_main_menu_corner_actions_use_image_icons() -> String:
 	if instance == null:
 		return "MainMenu scene should instantiate before corner icon buttons can be tested"
 	instance.call("_ensure_corner_action_buttons")
+	var orientation := instance.get_node_or_null("NonBattleOrientationButton") as Button
 	var feedback := instance.get_node_or_null("FeedbackButton") as Button
 	var about := instance.get_node_or_null("AboutButton") as Button
 	var update := instance.get_node_or_null("ManualUpdateButton") as Button
+	var share := instance.get_node_or_null("ShareButton") as Button
+	instance.call("_show_corner_action_label", orientation)
+	var orientation_hover_label := instance.get_node_or_null("CornerActionHoverLabel") as PanelContainer
+	var orientation_hover_text := orientation_hover_label.find_child("CornerActionHoverText", true, false) as Label if orientation_hover_label != null else null
+	var orientation_hover_display := orientation_hover_text.text if orientation_hover_text != null else ""
 	instance.call("_show_corner_action_label", feedback)
 	var hover_label := instance.get_node_or_null("CornerActionHoverLabel") as PanelContainer
 	var hover_text := hover_label.find_child("CornerActionHoverText", true, false) as Label if hover_label != null else null
@@ -111,24 +144,108 @@ func test_main_menu_corner_actions_use_image_icons() -> String:
 	var about_hover_display := hover_text.text if hover_text != null else ""
 	instance.call("_show_corner_action_label", update)
 	var update_hover_display := hover_text.text if hover_text != null else ""
-	instance.call("_hide_corner_action_label", update)
+	instance.call("_show_corner_action_label", share)
+	var share_hover_display := hover_text.text if hover_text != null else ""
+	instance.call("_hide_corner_action_label", share)
 	var hover_hidden := hover_label != null and not hover_label.visible
 	var checks := run_checks([
+		assert_not_null(orientation, "Non-battle orientation corner action should exist"),
 		assert_not_null(feedback, "Feedback corner action should exist"),
 		assert_not_null(about, "About corner action should exist"),
 		assert_not_null(update, "Manual update corner action should exist"),
+		assert_not_null(share, "Share corner action should exist"),
+		assert_true(orientation != null and orientation.icon != null, "Non-battle orientation corner action should use a generated screen-orientation icon"),
 		assert_true(feedback != null and feedback.icon != null, "Feedback corner action should use a PNG icon"),
 		assert_true(about != null and about.icon != null, "About corner action should use a PNG icon"),
 		assert_true(update != null and update.icon != null, "Manual update corner action should use a PNG icon"),
+		assert_true(share != null and share.icon == null, "Share corner action should not depend on an image icon"),
+		assert_eq(orientation.text if orientation != null else "missing", "", "Non-battle orientation corner action should not rely on text glyphs"),
 		assert_eq(feedback.text if feedback != null else "missing", "", "Feedback corner action should not rely on text glyphs"),
 		assert_eq(about.text if about != null else "missing", "", "About corner action should not rely on text glyphs"),
 		assert_eq(update.text if update != null else "missing", "", "Manual update corner action should not rely on text glyphs"),
+		assert_eq(share.text if share != null else "missing", "分享", "Share corner action should use direct Chinese text"),
+		assert_gte(orientation.custom_minimum_size.x if orientation != null else 0.0, 58.0, "Non-battle orientation action should be large enough to notice"),
 		assert_gte(feedback.custom_minimum_size.x if feedback != null else 0.0, 58.0, "Corner actions should be large enough to notice"),
+		assert_gte(share.custom_minimum_size.x if share != null else 0.0, 58.0, "Share corner action should be large enough to notice"),
+		assert_str_contains(orientation_hover_display, "非战斗界面", "Orientation hover label should identify that it affects non-battle scenes only"),
 		assert_true(hover_visible, "Corner action Chinese label should appear immediately on hover"),
 		assert_eq(hover_display, "建议反馈", "Feedback hover label should show the Chinese action name"),
 		assert_eq(about_hover_display, "关于", "About hover label should show the Chinese action name"),
 		assert_eq(update_hover_display, "检查更新", "Manual update hover label should show the Chinese action name"),
+		assert_eq(share_hover_display, "分享给牌友", "Share hover label should show the Chinese action name"),
 		assert_true(hover_hidden, "Corner action Chinese label should hide after hover exits"),
+	])
+	instance.free()
+	return checks
+
+
+func test_main_menu_share_dialog_prompts_and_copies_invite_payload() -> String:
+	var scene := load("res://scenes/main_menu/MainMenu.tscn")
+	var instance = scene.instantiate() if scene != null and scene.can_instantiate() else null
+	if instance == null:
+		return "MainMenu scene should instantiate before share dialog can be tested"
+	instance.call("_show_share_dialog")
+	var overlay: Node = instance.get_node_or_null("HudModalOverlay")
+	var body := instance.find_child("HudModalBody", true, false) as Label
+	var body_text := body.text if body != null else ""
+	var footer := instance.find_child("HudModalFooter", true, false) as HBoxContainer
+	var has_copy_button := false
+	if footer != null:
+		for child: Node in footer.get_children():
+			var button := child as Button
+			if button != null and button.text == "复制分享文案":
+				has_copy_button = true
+	var copied_text := str(instance.call("_copy_share_invite_to_clipboard"))
+	var status_body := instance.find_child("HudModalBody", true, false) as Label
+	var status_text := status_body.text if status_body != null else ""
+	var checks := run_checks([
+		assert_not_null(overlay, "Share dialog should use the HUD modal overlay"),
+		assert_str_contains(body_text, "https://ptcg.skillserver.cn/", "Share dialog should show the public game URL"),
+		assert_str_contains(body_text, "牌友", "Share dialog should make the invite feel social"),
+		assert_str_contains(body_text, "免费", "Share dialog should highlight that the tool is free"),
+		assert_str_contains(body_text, "AI", "Share dialog should highlight AI as a key feature"),
+		assert_true(has_copy_button, "Share dialog should expose a one-tap copy action"),
+		assert_str_contains(copied_text, "免费", "Copied share payload should lead with the free value prop"),
+		assert_str_contains(copied_text, "AI", "Copied share payload should lead with the AI value prop"),
+		assert_str_contains(copied_text, "https://ptcg.skillserver.cn/", "Copied share payload should include the public game URL"),
+		assert_str_contains(status_text, "剪贴板", "Copying should confirm that the text is now on the clipboard"),
+	])
+	instance.free()
+	return checks
+
+
+func test_main_menu_non_battle_orientation_button_does_not_change_battle_layout() -> String:
+	var original_non_battle_settings_text := _read_non_battle_layout_settings_text()
+	var previous_non_battle_mode := str(GameManager.non_battle_layout_mode)
+	var previous_battle_mode := str(GameManager.battle_layout_mode)
+	_remove_non_battle_layout_settings_file()
+	GameManager.set_non_battle_layout_mode(GameManager.NON_BATTLE_LAYOUT_LANDSCAPE, false, false)
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+	var scene := load("res://scenes/main_menu/MainMenu.tscn")
+	var instance = scene.instantiate() if scene != null and scene.can_instantiate() else null
+	if instance == null:
+		GameManager.non_battle_layout_mode = previous_non_battle_mode
+		GameManager.battle_layout_mode = previous_battle_mode
+		_restore_non_battle_layout_settings_text(original_non_battle_settings_text)
+		return "MainMenu scene should instantiate before non-battle orientation button can be tested"
+	instance.call("_ensure_corner_action_buttons")
+	var orientation := instance.get_node_or_null("NonBattleOrientationButton") as Button
+	if orientation != null:
+		orientation.pressed.emit()
+	var non_battle_after := str(GameManager.non_battle_layout_mode)
+	var battle_after := str(GameManager.battle_layout_mode)
+	var button_mode_after := str(orientation.get_meta("non_battle_orientation_mode", "")) if orientation != null else ""
+	var saved_text := _read_non_battle_layout_settings_text()
+	GameManager.non_battle_layout_mode = previous_non_battle_mode
+	GameManager.battle_layout_mode = previous_battle_mode
+	_restore_non_battle_layout_settings_text(original_non_battle_settings_text)
+
+	var checks := run_checks([
+		assert_not_null(orientation, "Main menu should expose a non-battle orientation button"),
+		assert_eq(non_battle_after, GameManager.NON_BATTLE_LAYOUT_PORTRAIT, "Pressing the main-menu orientation button should toggle non-battle layout"),
+		assert_eq(button_mode_after, GameManager.NON_BATTLE_LAYOUT_PORTRAIT, "Main-menu orientation icon metadata should follow the toggled non-battle mode"),
+		assert_eq(battle_after, GameManager.BATTLE_LAYOUT_PORTRAIT, "Pressing the non-battle orientation button must not change battle_layout_mode"),
+		assert_str_contains(saved_text, GameManager.NON_BATTLE_LAYOUT_PORTRAIT, "Main-menu orientation button should persist the non-battle preference"),
 	])
 	instance.free()
 	return checks

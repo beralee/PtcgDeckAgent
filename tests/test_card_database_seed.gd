@@ -1150,6 +1150,44 @@ func test_csv7c_182_love_ball_is_bundled_with_image_and_effect() -> String:
 	return run_checks(checks)
 
 
+func test_csv7c_037_combusken_is_bundled_with_image_and_basic_attack() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CSV7C_037.json"
+	var image_path := "res://data/bundled_user/cards/images/CSV7C/037.png.bin"
+	var card: CardData = db.get_card("CSV7C", "037")
+	var found: CardData = null
+	for candidate: CardData in db.get_all_cards():
+		if candidate.get_uid() == "CSV7C_037":
+			found = candidate
+			break
+	var checks: Array[String] = [
+		assert_true(card_path in manifest, "CSV7C_037 should be listed in bundled seed manifest"),
+		assert_true(image_path in manifest, "CSV7C_037 image should be listed in bundled seed manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CSV7C_037 bundled card JSON should exist"),
+		assert_true(FileAccess.file_exists(image_path), "CSV7C_037 bundled card image should exist"),
+		assert_true(CardData.is_valid_card_image_file(image_path), "CSV7C_037 bundled image should be valid"),
+		assert_not_null(card, "CSV7C_037 should load through CardDatabase bundled fallback"),
+		assert_not_null(found, "Deck editor card pool should include bundle-only CSV7C_037 from CardDatabase.get_all_cards"),
+	]
+	if card != null:
+		checks.append(assert_eq(str(card.name_en), "Combusken", "CSV7C_037 should keep source English name"))
+		checks.append(assert_eq(str(card.card_type), "Pokemon", "CSV7C_037 should keep source card type"))
+		checks.append(assert_eq(str(card.effect_id), "032fd31bdc0548d0dde63b1a03c706e8", "CSV7C_037 should keep source effect id"))
+		checks.append(assert_eq(str(card.stage), "Stage 1", "CSV7C_037 should keep source stage"))
+		checks.append(assert_eq(str(card.evolves_from), "火稚鸡", "CSV7C_037 should evolve from Torchic"))
+		checks.append(assert_eq(card.hp, 90, "CSV7C_037 should keep source HP"))
+		checks.append(assert_eq(card.retreat_cost, 2, "CSV7C_037 should keep source retreat cost"))
+		checks.append(assert_eq(card.attacks.size(), 1, "CSV7C_037 should keep its single basic attack"))
+		if card.attacks.size() == 1:
+			var attack: Dictionary = card.attacks[0]
+			checks.append(assert_eq(str(attack.get("name", "")), "劈开", "CSV7C_037 attack name should match source text"))
+			checks.append(assert_eq(str(attack.get("cost", "")), "RC", "CSV7C_037 attack cost should be Fire and Colorless"))
+			checks.append(assert_eq(str(attack.get("damage", "")), "50", "CSV7C_037 attack damage should be 50"))
+			checks.append(assert_eq(str(attack.get("text", "")), "", "CSV7C_037 attack should not invent scripted text"))
+	return run_checks(checks)
+
+
 func test_csv3c_117_picnic_basket_is_bundled_with_image_and_effect() -> String:
 	var db := CardDatabaseScript.new()
 	var manifest := db._load_bundled_manifest()

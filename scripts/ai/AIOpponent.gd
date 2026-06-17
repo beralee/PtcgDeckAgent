@@ -683,6 +683,8 @@ func _execute_action(battle_scene: Control, gsm: GameStateMachine, action: Dicti
 			var evolution_card: CardInstance = action.get("card")
 			var evolve_target: PokemonSlot = action.get("target_slot")
 			if gsm.evolve_pokemon(player_index, evolution_card, evolve_target):
+				if battle_scene != null and battle_scene.has_method("_mark_ready_vfx_action_source"):
+					battle_scene.call("_mark_ready_vfx_action_source", player_index, "evolve")
 				if battle_scene != null and battle_scene.has_method("_refresh_ui"):
 					battle_scene.call("_refresh_ui")
 				if battle_scene != null and battle_scene.has_method("_try_start_evolve_trigger_ability_interaction"):

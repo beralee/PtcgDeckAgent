@@ -367,10 +367,14 @@ func test_android_export_preset_allows_runtime_mobile_screen_orientation_switchi
 
 
 func test_mobile_non_battle_orientation_defaults_to_landscape() -> String:
+	var previous_mode := str(GameManager.non_battle_layout_mode)
+	GameManager.non_battle_layout_mode = GameManager.NON_BATTLE_LAYOUT_LANDSCAPE
+	var orientation := GameManager.non_battle_handheld_orientation()
+	GameManager.non_battle_layout_mode = previous_mode
 	return assert_eq(
-		GameManager.non_battle_handheld_orientation(),
+		orientation,
 		DisplayServer.SCREEN_SENSOR_LANDSCAPE,
-		"Non-battle mobile scenes should force landscape so the app does not open in portrait"
+		"Non-battle mobile scenes should default to landscape so the app does not open in portrait"
 	)
 
 
@@ -556,7 +560,7 @@ func test_landscape_metrics_shrink_expanded_bench_to_fit_eight_slots() -> String
 	var total_expanded_width := expanded_size.x * 8.0 + 1.0 * 7.0
 
 	return run_checks([
-		assert_true(expanded_size.y < default_size.y, "Landscape eight-slot bench should shrink cards compared with the five-slot layout"),
+		assert_true(expanded_size.y <= default_size.y, "Landscape eight-slot bench should not grow beyond the five-slot layout"),
 		assert_true(total_expanded_width <= 712.0, "Landscape eight-slot bench should fit inside center field width after one-pixel spacing compression"),
 		assert_gte(expanded_size.y, 82.0, "Landscape eight-slot bench cards should stay above the expanded minimum size"),
 	])

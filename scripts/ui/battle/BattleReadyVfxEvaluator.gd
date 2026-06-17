@@ -15,6 +15,7 @@ const RULE_REGIGIGAS_ANCIENT_WISDOM := "regigigas_ancient_wisdom_ready"
 const RULE_RADIANT_GRENINJA_CONCEALED_CARDS := "radiant_greninja_concealed_cards_ready"
 const RULE_CERULEDGE_DISCARD_ENERGY := "ceruledge_discard_energy_ready"
 const RULE_ROARING_MOON_FRENZIED := "roaring_moon_frenzied_ready"
+const RULE_GARDEVOIR_PSYCHIC_EMBRACE := "gardevoir_psychic_embrace_ready"
 const RULE_ARCHALUDON_METAL_BRIDGE := "archaludon_metal_bridge_ready"
 
 const BUDEW_UID := "CSV9.5C_004"
@@ -36,6 +37,7 @@ const REGIGIGAS_ANCIENT_UID := "CS5.5C_056"
 const RADIANT_GRENINJA_UID := "CS6.5C_020"
 const CERULEDGE_EX_UID := "CSV9C_034"
 const ROARING_MOON_EX_UID := "CSV6C_096"
+const GARDEVOIR_EX_UID := "CSV2C_055"
 const ARCHALUDON_EX_UID := "CSV9C_138"
 const TANDEM_UNIT_USED_EFFECT_TYPE := "ability_search_pokemon_to_bench_used"
 const TANDEM_UNIT_SUMMONED_EFFECT_TYPE := "ability_search_pokemon_to_bench_summoned"
@@ -87,6 +89,7 @@ func find_ready_triggers(game_state: GameState) -> Array:
 	_append_radiant_greninja_trigger(game_state, player, player_index, triggers)
 	_append_ceruledge_discard_energy_trigger(game_state, player, player_index, triggers)
 	_append_roaring_moon_frenzied_trigger(game_state, player, player_index, triggers)
+	_append_gardevoir_psychic_embrace_trigger(game_state, player, player_index, triggers)
 	_append_archaludon_metal_bridge_trigger(game_state, player, player_index, triggers)
 	return triggers
 
@@ -389,6 +392,30 @@ func _append_roaring_moon_frenzied_trigger(game_state: GameState, player: Player
 	))
 
 
+func _append_gardevoir_psychic_embrace_trigger(game_state: GameState, player: PlayerState, player_index: int, triggers: Array) -> void:
+	if _count_basic_energy_in_zone(player.discard_pile, "P") < 3:
+		return
+	for entry: Dictionary in _player_slot_entries(player):
+		var slot: PokemonSlot = entry.get("slot", null)
+		if not _slot_matches_uid(slot, GARDEVOIR_EX_UID):
+			continue
+		if slot.is_knocked_out():
+			continue
+		if slot.turn_evolved != game_state.turn_number:
+			continue
+		triggers.append(_make_trigger(
+			RULE_GARDEVOIR_PSYCHIC_EMBRACE,
+			player_index,
+			str(entry.get("slot_kind", "active")),
+			int(entry.get("slot_index", 0)),
+			slot,
+			game_state.turn_number,
+			"evolved_with_three_discard_psychic_energy_ready",
+			"evolve"
+		))
+		return
+
+
 func _append_archaludon_metal_bridge_trigger(game_state: GameState, player: PlayerState, player_index: int, triggers: Array) -> void:
 	for entry: Dictionary in _player_slot_entries(player):
 		var slot: PokemonSlot = entry.get("slot", null)
@@ -417,7 +444,8 @@ func _make_trigger(
 	slot_index: int,
 	slot: PokemonSlot,
 	turn_number: int,
-	reason: String
+	reason: String,
+	required_action_kind: String = ""
 ) -> Dictionary:
 	var card := slot.get_top_card() if slot != null else null
 	var card_data := card.card_data if card != null else null
@@ -434,6 +462,7 @@ func _make_trigger(
 		"turn_number": turn_number,
 		"reason": reason,
 		"ready_key": key,
+		"required_action_kind": required_action_kind,
 	}
 
 

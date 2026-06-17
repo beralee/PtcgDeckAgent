@@ -64,6 +64,7 @@ var _attack_damage_knockout_slot_ids: Dictionary = {}
 
 const MAX_SETUP_MULLIGAN_LOOPS: int = 64
 const ATTACK_DAMAGE_COUNTER_PLACEMENT_FLAG := "_attack_damage_counter_effect_slot_ids"
+const ATTACK_EFFECT_DAMAGE_TARGETS_FLAG := "_attack_effect_damage_targets"
 
 
 func _init() -> void:
@@ -1968,6 +1969,7 @@ func _clear_attack_damage_tracking() -> void:
 	_attack_damage_knockout_slot_ids.clear()
 	if game_state != null:
 		game_state.shared_turn_flags.erase(ATTACK_DAMAGE_COUNTER_PLACEMENT_FLAG)
+		game_state.shared_turn_flags.erase(ATTACK_EFFECT_DAMAGE_TARGETS_FLAG)
 
 
 func use_attack(player_index: int, attack_index: int, targets: Array = []) -> bool:
@@ -2049,6 +2051,9 @@ func use_attack(player_index: int, attack_index: int, targets: Array = []) -> bo
 		var has_explicit_attack_target: bool = _attack_targets_define_resolved_target(targets)
 		if not has_explicit_attack_target and (damage > 0 or targets.is_empty()):
 			attack_action.data["target_pokemon_name"] = defender.get_pokemon_name()
+		var effect_targets: Array = game_state.shared_turn_flags.get(ATTACK_EFFECT_DAMAGE_TARGETS_FLAG, [])
+		if not effect_targets.is_empty():
+			attack_action.data["targets"] = effect_targets.duplicate(true)
 		attack_action.data["damage"] = damage
 	_after_attack(player_index)
 	return true
@@ -2129,6 +2134,9 @@ func use_granted_attack(
 		var has_explicit_attack_target: bool = _attack_targets_define_resolved_target(targets)
 		if not has_explicit_attack_target and (granted_damage > 0 or targets.is_empty()):
 			granted_attack_action.data["target_pokemon_name"] = defender.get_pokemon_name()
+		var effect_targets: Array = game_state.shared_turn_flags.get(ATTACK_EFFECT_DAMAGE_TARGETS_FLAG, [])
+		if not effect_targets.is_empty():
+			granted_attack_action.data["targets"] = effect_targets.duplicate(true)
 		granted_attack_action.data["damage"] = granted_damage
 	_after_attack(player_index)
 	return true
@@ -2263,6 +2271,12 @@ func record_effect_damage(player_index: int, target: PokemonSlot, damage: int, s
 		"target": target_name,
 		"damage": damage,
 	}
+	var target_spec := _target_spec_for_slot(target)
+	if not target_spec.is_empty():
+		payload["targets"] = [target_spec]
+		var effect_targets: Array = game_state.shared_turn_flags.get(ATTACK_EFFECT_DAMAGE_TARGETS_FLAG, [])
+		effect_targets.append(target_spec)
+		game_state.shared_turn_flags[ATTACK_EFFECT_DAMAGE_TARGETS_FLAG] = effect_targets
 	if source_kind != "":
 		payload["source_kind"] = source_kind
 	_log_action(
@@ -2271,6 +2285,31 @@ func record_effect_damage(player_index: int, target: PokemonSlot, damage: int, s
 		payload,
 		"Player %d effect deals %d damage to %s" % [player_index + 1, damage, target_name]
 	)
+
+
+func _target_spec_for_slot(slot: PokemonSlot) -> Dictionary:
+	if slot == null or game_state == null:
+		return {}
+	for pi: int in game_state.players.size():
+		var player := game_state.players[pi]
+		if player == null:
+			continue
+		if player.active_pokemon == slot:
+			return {
+				"player_index": pi,
+				"slot_kind": "active",
+				"slot_index": 0,
+				"target_pokemon_name": slot.get_pokemon_name(),
+			}
+		var bench_index := player.bench.find(slot)
+		if bench_index >= 0:
+			return {
+				"player_index": pi,
+				"slot_kind": "bench",
+				"slot_index": bench_index,
+				"target_pokemon_name": slot.get_pokemon_name(),
+			}
+	return {}
 
 
 func _contains_target_selection_marker(value: Variant) -> bool:
