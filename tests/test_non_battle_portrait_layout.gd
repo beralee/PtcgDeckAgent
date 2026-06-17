@@ -956,7 +956,7 @@ func test_battle_setup_portrait_bgm_touch_opens_hud_picker_instead_of_native_pop
 	var scene: Control = BattleSetupScene.instantiate()
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree == null or tree.root == null:
-		scene.queue_free()
+		_dispose_scene(scene)
 		ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
 		GameManager.non_battle_layout_mode = previous_non_battle_mode
 		return "SceneTree root should be available for the battle setup BGM picker test"
@@ -968,9 +968,7 @@ func test_battle_setup_portrait_bgm_touch_opens_hud_picker_instead_of_native_pop
 	scene.call("_ensure_battle_music_options_ready")
 	var bgm_option := scene.find_child("BgmOption", true, false) as OptionButton
 	if bgm_option == null or bgm_option.item_count < 2:
-		if scene.get_parent() != null:
-			scene.get_parent().remove_child(scene)
-		scene.queue_free()
+		_dispose_scene(scene)
 		ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
 		GameManager.non_battle_layout_mode = previous_non_battle_mode
 		return "Battle setup BGM picker test needs bundled battle music options"
@@ -1011,9 +1009,7 @@ func test_battle_setup_portrait_bgm_touch_opens_hud_picker_instead_of_native_pop
 		assert_true(selected_index == 1, "Selecting a BGM picker row should update the underlying BGM option"),
 		assert_true(overlay_hidden_after_select, "Selecting a BGM picker row should hide the picker overlay"),
 	])
-	if scene.get_parent() != null:
-		scene.get_parent().remove_child(scene)
-	scene.queue_free()
+	_dispose_scene(scene)
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
 	GameManager.non_battle_layout_mode = previous_non_battle_mode
 	return result
@@ -1262,9 +1258,7 @@ func test_tournament_setup_portrait_name_input_accepts_android_touch() -> String
 		assert_true(name_edit != null and name_edit.get_theme_font_size("font_size") >= 50, "Tournament setup portrait name input text should be phone-readable"),
 		assert_true(name_edit_focused_after_touch, "Tournament setup NameEdit should focus from Android ScreenTouch without mouse emulation"),
 	])
-	if scene.get_parent() != null:
-		scene.get_parent().remove_child(scene)
-	scene.queue_free()
+	_dispose_scene(scene)
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
 	return result
 
