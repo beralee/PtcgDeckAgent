@@ -69,6 +69,7 @@ const BATTLE_SETUP_SETTINGS_PATH := "user://battle_setup.json"
 const NON_BATTLE_LAYOUT_SETTINGS_PATH := "user://non_battle_layout.json"
 const TOURNAMENT_SAVE_PATH := "user://tournament_mode_save.json"
 const DESKTOP_WINDOW_SCREEN_MARGIN := Vector2i(48, 48)
+const DESKTOP_RENDER_CAP_SIZE := Vector2i(1920, 1080)
 const DEFAULT_BATTLE_BGM_VOLUME_PERCENT := 20
 const BATTLE_BGM_VOLUME_USER_SET_KEY := "battle_bgm_volume_user_set"
 const BATTLE_LAYOUT_AUTO := "auto"
@@ -129,14 +130,29 @@ var _navigation_prewarm_requested: Dictionary = {}
 var _navigation_prewarm_resources: Dictionary = {}
 var _pending_scene_change_path: String = ""
 var _pending_scene_change_token: int = 0
+var _applying_desktop_render_resolution_cap: bool = false
 
 
 func _ready() -> void:
+	_connect_desktop_render_resolution_cap()
 	load_non_battle_layout_preferences()
 	load_battle_setup_preferences()
 	reload_tournament_state_from_disk()
 	call_deferred("apply_non_battle_orientation")
 	call_deferred("_ensure_desktop_window_size")
+	call_deferred("apply_desktop_render_resolution_cap")
+
+
+func _connect_desktop_render_resolution_cap() -> void:
+	var root := get_tree().root
+	if root == null:
+		return
+	if not root.size_changed.is_connected(_on_root_window_size_changed):
+		root.size_changed.connect(_on_root_window_size_changed)
+
+
+func _on_root_window_size_changed() -> void:
+	apply_desktop_render_resolution_cap()
 
 
 func _ensure_desktop_window_size() -> void:
@@ -146,9 +162,11 @@ func _ensure_desktop_window_size() -> void:
 		return
 	var current_mode := DisplayServer.window_get_mode()
 	if _should_preserve_user_desktop_window_mode(current_mode):
+		apply_desktop_render_resolution_cap()
 		return
 	if _should_maximize_desktop_window(OS.get_name()):
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MAXIMIZED)
+		call_deferred("apply_desktop_render_resolution_cap")
 		return
 
 	var desired := _configured_desktop_window_size()
@@ -162,6 +180,7 @@ func _ensure_desktop_window_size() -> void:
 	DisplayServer.window_set_size(desired)
 	if usable_rect.size.x > 0 and usable_rect.size.y > 0:
 		DisplayServer.window_set_position(_center_desktop_window_position(desired, usable_rect))
+	apply_desktop_render_resolution_cap(desired)
 
 
 func apply_battle_layout_orientation(mode: String = "") -> void:
@@ -273,6 +292,7 @@ func _apply_desktop_battle_window_shape(mode: String) -> void:
 		return
 	var current_mode := DisplayServer.window_get_mode()
 	if _should_preserve_user_desktop_window_mode(current_mode):
+		apply_desktop_render_resolution_cap()
 		return
 	if _should_maximize_desktop_window(OS.get_name()):
 		return
@@ -288,6 +308,7 @@ func _apply_desktop_battle_window_shape(mode: String) -> void:
 	DisplayServer.window_set_size(desired)
 	if usable_rect.size.x > 0 and usable_rect.size.y > 0:
 		DisplayServer.window_set_position(_center_desktop_window_position(desired, usable_rect))
+	apply_desktop_render_resolution_cap(desired)
 
 
 func _oriented_window_size(size: Vector2i, portrait: bool) -> Vector2i:
@@ -302,6 +323,61 @@ func _configured_desktop_window_size() -> Vector2i:
 	var desired_width := int(ProjectSettings.get_setting("display/window/size/window_width", ProjectSettings.get_setting("display/window/size/viewport_width", 1600)))
 	var desired_height := int(ProjectSettings.get_setting("display/window/size/window_height", ProjectSettings.get_setting("display/window/size/viewport_height", 900)))
 	return Vector2i(desired_width, desired_height)
+
+
+func apply_desktop_render_resolution_cap(window_size: Vector2i = Vector2i.ZERO) -> void:
+	if _applying_desktop_render_resolution_cap:
+		return
+	if DisplayServer.get_name() == "headless":
+		return
+	if _is_web_runtime() or _is_mobile_runtime():
+		return
+	var root := get_tree().root
+	if root == null:
+		return
+	var size := window_size
+	if size.x <= 0 or size.y <= 0:
+		size = DisplayServer.window_get_size()
+	if size.x <= 0 or size.y <= 0:
+		return
+	_applying_desktop_render_resolution_cap = true
+	if _should_apply_desktop_render_resolution_cap("", {}, "", size):
+		root.content_scale_mode = Window.CONTENT_SCALE_MODE_VIEWPORT
+		root.content_scale_size = _desktop_render_size_for_window_size(size)
+	else:
+		root.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
+		root.content_scale_size = _configured_desktop_window_size()
+	_applying_desktop_render_resolution_cap = false
+
+
+func _desktop_render_size_for_window_size(window_size: Vector2i, cap_size: Vector2i = DESKTOP_RENDER_CAP_SIZE) -> Vector2i:
+	if window_size.x <= 0 or window_size.y <= 0:
+		return _configured_desktop_window_size()
+	if cap_size.x <= 0 or cap_size.y <= 0:
+		return window_size
+	var scale := minf(1.0, minf(float(cap_size.x) / float(window_size.x), float(cap_size.y) / float(window_size.y)))
+	if scale >= 1.0:
+		return window_size
+	return Vector2i(
+		maxi(1, roundi(float(window_size.x) * scale)),
+		maxi(1, roundi(float(window_size.y) * scale))
+	)
+
+
+func _should_apply_desktop_render_resolution_cap(
+	os_name: String = "",
+	feature_flags: Dictionary = {},
+	display_server_name: String = "",
+	window_size: Vector2i = Vector2i.ZERO
+) -> bool:
+	if _is_web_runtime(os_name, feature_flags, display_server_name):
+		return false
+	if _is_mobile_runtime_for_context(os_name, feature_flags):
+		return false
+	if window_size.x <= 0 or window_size.y <= 0:
+		return false
+	var render_size := _desktop_render_size_for_window_size(window_size)
+	return render_size.x < window_size.x or render_size.y < window_size.y
 
 
 func _fit_desktop_window_size(desired: Vector2i, usable_size: Vector2i) -> Vector2i:

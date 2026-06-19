@@ -406,6 +406,23 @@ func test_desktop_window_resize_preserves_user_expanded_modes() -> String:
 	])
 
 
+func test_desktop_render_resolution_caps_high_density_windows() -> String:
+	var manager: Node = _load_game_manager_script().new()
+	var cap := Vector2i(1920, 1080)
+
+	return run_checks([
+		assert_eq(manager.call("_desktop_render_size_for_window_size", Vector2i(3840, 2160), cap), Vector2i(1920, 1080), "4K desktop windows should render at the 1080p performance cap"),
+		assert_eq(manager.call("_desktop_render_size_for_window_size", Vector2i(2560, 1440), cap), Vector2i(1920, 1080), "1440p desktop windows should also cap to a 1080p internal render target"),
+		assert_eq(manager.call("_desktop_render_size_for_window_size", Vector2i(1920, 1080), cap), Vector2i(1920, 1080), "1080p desktop windows should not be downscaled"),
+		assert_eq(manager.call("_desktop_render_size_for_window_size", Vector2i(1600, 900), cap), Vector2i(1600, 900), "Default 1600x900 windows should keep their native render size"),
+		assert_true(bool(manager.call("_should_apply_desktop_render_resolution_cap", "Windows", {}, "", Vector2i(3840, 2160))), "Windows 4K should enable the desktop render cap"),
+		assert_true(bool(manager.call("_should_apply_desktop_render_resolution_cap", "Linux", {}, "", Vector2i(2560, 1440))), "Linux 1440p should enable the desktop render cap"),
+		assert_false(bool(manager.call("_should_apply_desktop_render_resolution_cap", "Windows", {}, "", Vector2i(1920, 1080))), "Windows 1080p should keep native desktop rendering"),
+		assert_false(bool(manager.call("_should_apply_desktop_render_resolution_cap", "Android", {"android": true}, "", Vector2i(3840, 2160))), "Native Android should not use the desktop render cap"),
+		assert_false(bool(manager.call("_should_apply_desktop_render_resolution_cap", "Web", {"web": true}, "web", Vector2i(3840, 2160))), "Web builds should keep their browser-specific canvas policy"),
+	])
+
+
 func test_navigation_does_not_apply_battle_orientation_before_battle_scene_loads() -> String:
 	var manager: Node = _load_game_manager_script().new()
 	var left_mouse := InputEventMouseButton.new()
