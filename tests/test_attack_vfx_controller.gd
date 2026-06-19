@@ -294,6 +294,43 @@ func test_counter_transfer_ability_vfx_uses_siphon_profile_and_damage_labels() -
 	])
 
 
+func test_boss_orders_trainer_vfx_anchors_to_post_switch_active() -> String:
+	var battle_scene := _make_scene_stub()
+	var controller: RefCounted = battle_scene.get("_battle_attack_vfx_controller")
+	controller.call("play_boss_orders_vfx", battle_scene, {
+		"trainer_vfx": "boss_orders",
+		"source_player_index": 0,
+		"target": {"player_index": 1, "slot_kind": "active", "slot_index": 0, "pokemon_name": "Bench1_1"},
+	})
+
+	var overlay: Control = battle_scene.get("_attack_vfx_overlay") as Control
+	var sequence: Control = overlay.get_child(0) as Control if overlay != null and overlay.get_child_count() > 0 else null
+	var cast_node: Control = sequence.get_node_or_null("AttackVfxCast") as Control if sequence != null else null
+	var travel_node: Node = sequence.get_node_or_null("AttackVfxTravel0") if sequence != null else null
+	var impact_node: Control = sequence.get_node_or_null("AttackVfxImpact0") as Control if sequence != null else null
+	var shockwave_node: Node = sequence.get_node_or_null("AttackVfxShockwave0") if sequence != null else null
+	var impact_texture: TextureRect = impact_node.get_node_or_null("ImpactBloomTexture") as TextureRect if impact_node != null else null
+	var impact_atlas: AtlasTexture = impact_texture.texture as AtlasTexture if impact_texture != null else null
+	var opp_active: Control = battle_scene.get("_opp_active") as Control
+	var expected_position := opp_active.global_position + opp_active.size * 0.5
+
+	return run_checks([
+		assert_not_null(sequence, "Boss's Orders trainer VFX should create a sequence root"),
+		assert_eq(str(sequence.get_meta("attack_vfx_kind", "")), "trainer_boss_orders", "Boss's Orders should tag the sequence as a trainer VFX"),
+		assert_eq(str(sequence.get_meta("profile_id", "")), "trainer_boss_orders", "Boss's Orders should use the dedicated trainer profile"),
+		assert_not_null(cast_node, "Boss's Orders should keep an empty cast node for sequence timing"),
+		assert_eq(cast_node.get_child_count() if cast_node != null else -1, 0, "Boss's Orders should not render generic cast geometry"),
+		assert_null(travel_node, "Boss's Orders should not render generic attack travel"),
+		assert_null(shockwave_node, "Boss's Orders should not render generic shockwave bars"),
+		assert_not_null(impact_texture, "Boss's Orders should render the generated command sheet"),
+		assert_eq(int(impact_texture.get_meta("flipbook_rows", 0)) if impact_texture != null else 0, 2, "Boss's Orders should play the generated sheet as a two-row atlas"),
+		assert_eq(int(impact_texture.get_meta("flipbook_cols", 0)) if impact_texture != null else 0, 3, "Boss's Orders should play the generated sheet as a three-column atlas"),
+		assert_eq(impact_atlas.region.size if impact_atlas != null else Vector2.ZERO, Vector2(256.0, 256.0), "Boss's Orders atlas should initialize to one 256px frame, not a horizontal strip slice"),
+		assert_true(impact_texture.size.x >= 275.0 and impact_texture.size.y >= 275.0, "Boss's Orders impact art should be large enough to read in battle"),
+		assert_eq(impact_node.position if impact_node != null else Vector2.ZERO, expected_position, "Boss's Orders impact should anchor to the post-switch active slot"),
+	])
+
+
 func test_warm_profile_populates_runtime_texture_caches_before_first_play() -> String:
 	var battle_scene := _make_scene_stub()
 	var controller: RefCounted = battle_scene.get("_battle_attack_vfx_controller")

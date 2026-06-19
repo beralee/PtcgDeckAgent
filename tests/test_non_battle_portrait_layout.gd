@@ -386,6 +386,134 @@ func test_non_battle_touch_bridge_scrolls_when_drag_starts_on_focus_control() ->
 	return result
 
 
+func test_non_battle_touch_bridge_leaves_native_text_input_touch_sequence_unconsumed() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var root := Control.new()
+	root.name = "NativeTextRoot"
+	root.position = Vector2.ZERO
+	root.size = Vector2(720, 720)
+	var scroll := ScrollContainer.new()
+	scroll.name = "NativeTextScroll"
+	scroll.position = Vector2(80, 72)
+	scroll.size = Vector2(460, 420)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	root.add_child(scroll)
+	var content := VBoxContainer.new()
+	content.name = "NativeTextScrollContent"
+	content.custom_minimum_size = Vector2(420, 1600)
+	scroll.add_child(content)
+	var input := LineEdit.new()
+	input.name = "NativeTextInput"
+	input.custom_minimum_size = Vector2(380, 120)
+	content.add_child(input)
+	var filler := Control.new()
+	filler.custom_minimum_size = Vector2(380, 1400)
+	content.add_child(filler)
+	NonBattleTouchBridgeScript.configure_native_line_edit(input, LineEdit.KEYBOARD_TYPE_DEFAULT)
+	var vbar := scroll.get_v_scroll_bar()
+	vbar.max_value = 1600.0
+	vbar.page = 420.0
+	scroll.scroll_vertical = 120
+
+	var start_scroll := scroll.scroll_vertical
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.position = scroll.get_global_rect().position + Vector2(220, 70)
+	var handled_press := bool(NonBattleTouchBridgeScript.handle_root_touch(root, press))
+	var drag := InputEventScreenDrag.new()
+	drag.position = press.position - Vector2(0, 190)
+	var handled_drag := bool(NonBattleTouchBridgeScript.handle_root_touch(root, drag))
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.position = drag.position
+	var handled_release := bool(NonBattleTouchBridgeScript.handle_root_touch(root, release))
+	var final_scroll := scroll.scroll_vertical
+
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	var result := run_checks([
+		assert_false(handled_press or handled_drag or handled_release, "Native LineEdit touches should be left to Godot/Android for cursor movement, selection, paste, and copy"),
+		assert_eq(final_scroll, start_scroll, "Dragging inside a native text input should not be converted into parent ScrollContainer scrolling"),
+		assert_true(bool(input.get_meta(NonBattleTouchBridgeScript.NATIVE_TEXT_INPUT_META, false)), "Native LineEdit should be marked so root touch bridges can leave it alone"),
+		assert_false(bool(input.get_meta(NonBattleTouchBridgeScript.FOCUS_TOUCH_BOUND_META, false)), "Native LineEdit should not also bind the custom focus bridge"),
+		assert_true(input.context_menu_enabled, "Native LineEdit should keep Android copy/paste context menu support enabled"),
+		assert_true(input.virtual_keyboard_enabled and input.virtual_keyboard_show_on_focus, "Native LineEdit should request the system keyboard when focused"),
+	])
+	root.queue_free()
+	return result
+
+
+func test_non_battle_touch_bridge_web_line_edit_uses_dom_input_proxy() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	NonBattleTouchBridgeScript.set_test_web_text_input_enabled(true)
+	NonBattleTouchBridgeScript.reset_test_web_text_input_state()
+	var tree := Engine.get_main_loop() as SceneTree
+	var root := Control.new()
+	root.name = "WebTextProxyRoot"
+	root.position = Vector2.ZERO
+	root.size = Vector2(720, 720)
+	tree.root.add_child(root)
+	var input := LineEdit.new()
+	input.name = "WebTokenInput"
+	input.text = "old-secret"
+	input.secret = true
+	input.position = Vector2(80, 120)
+	input.size = Vector2(420, 80)
+	root.add_child(input)
+	NonBattleTouchBridgeScript.bind_focus_control_touch(input)
+
+	var opened := bool(NonBattleTouchBridgeScript.request_test_web_text_input(input))
+	NonBattleTouchBridgeScript.commit_test_web_text_input_value("new-secret", true)
+	var payload := NonBattleTouchBridgeScript.get_test_web_text_input_last_payload()
+	var result := run_checks([
+		assert_true(opened, "Web LineEdit should be accepted by the shared text input proxy"),
+		assert_eq(NonBattleTouchBridgeScript.get_test_web_text_input_request_count(), 1, "Web LineEdit should open exactly one DOM input proxy for a tap"),
+		assert_eq(str(payload.get("input_type", "")), "password", "Secret LineEdit should request a password DOM input for API tokens"),
+		assert_eq(str(payload.get("text", "")), "old-secret", "Web DOM input proxy should receive the current LineEdit text"),
+		assert_eq(input.text, "new-secret", "Web DOM input changes should sync back into the Godot LineEdit"),
+	])
+	root.queue_free()
+	NonBattleTouchBridgeScript.set_test_web_text_input_enabled(false)
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	return result
+
+
+func test_non_battle_touch_bridge_web_native_line_edit_uses_dom_input_proxy_instead_of_bypass() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	NonBattleTouchBridgeScript.set_test_web_text_input_enabled(true)
+	NonBattleTouchBridgeScript.reset_test_web_text_input_state()
+	var tree := Engine.get_main_loop() as SceneTree
+	var root := Control.new()
+	root.name = "WebNativeTextProxyRoot"
+	root.position = Vector2.ZERO
+	root.size = Vector2(720, 720)
+	tree.root.add_child(root)
+	var input := LineEdit.new()
+	input.name = "WebImportUrlInput"
+	input.text = "https://tcg.mik.moe/decks/list/123"
+	input.position = Vector2(60, 160)
+	input.size = Vector2(560, 88)
+	root.add_child(input)
+	NonBattleTouchBridgeScript.configure_native_line_edit(input, LineEdit.KEYBOARD_TYPE_URL)
+
+	var opened := bool(NonBattleTouchBridgeScript.request_test_web_text_input(input))
+	var payload := NonBattleTouchBridgeScript.get_test_web_text_input_last_payload()
+	var result := run_checks([
+		assert_true(opened, "Web native-marked LineEdit should be accepted by the DOM input proxy"),
+		assert_eq(NonBattleTouchBridgeScript.get_test_web_text_input_request_count(), 1, "Web native-marked LineEdit should not bypass the DOM input proxy"),
+		assert_true(bool(input.get_meta(NonBattleTouchBridgeScript.NATIVE_TEXT_INPUT_META, false)), "The existing native input marker should stay intact for Android/iOS behavior"),
+		assert_eq(str(payload.get("input_type", "")), "url", "URL LineEdit should request a URL DOM input for deck import links"),
+		assert_eq(str(payload.get("text", "")), "https://tcg.mik.moe/decks/list/123", "Web DOM input proxy should receive the current import URL"),
+	])
+	root.queue_free()
+	NonBattleTouchBridgeScript.set_test_web_text_input_enabled(false)
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	return result
+
+
 func test_non_battle_touch_bridge_opens_option_buttons_without_mouse_emulation() -> String:
 	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
@@ -422,6 +550,49 @@ func test_non_battle_touch_bridge_opens_option_buttons_without_mouse_emulation()
 	return run_checks([
 		assert_true(handled_press and handled_release, "Touch bridge should claim OptionButton taps when mouse emulation is disabled"),
 		assert_true(popup_visible, "Touch bridge should open OptionButton popups instead of only emitting a plain Button press"),
+	])
+
+
+func test_non_battle_touch_bridge_bounds_option_button_popup_for_portrait() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+		return "SceneTree root should be available for the bounded option popup test"
+	var root := Control.new()
+	root.name = "BoundedTouchOptionRoot"
+	root.position = Vector2.ZERO
+	root.size = Vector2(1080, 2400)
+	tree.root.add_child(root)
+	var option := OptionButton.new()
+	option.name = "PortraitModelOption"
+	option.position = Vector2(120, 520)
+	option.size = Vector2(760, 150)
+	for index: int in 10:
+		option.add_item("Model %d" % index)
+	root.add_child(option)
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.position = option.get_global_rect().get_center()
+	NonBattleTouchBridgeScript.handle_root_touch(root, press)
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.position = press.position
+	NonBattleTouchBridgeScript.handle_root_touch(root, release)
+	var popup := option.get_popup()
+	var popup_visible := popup != null and popup.visible
+	var popup_rect: Rect2i = option.get_meta("_non_battle_popup_bounds", Rect2i())
+	if popup != null:
+		popup.hide()
+	root.queue_free()
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	return run_checks([
+		assert_true(popup_visible, "Touch bridge should still show the OptionButton popup"),
+		assert_true(popup_rect.size.x > 0 and popup_rect.size.y > 0, "Touch bridge should record the bounded portrait OptionButton popup rectangle"),
+		assert_true(popup_rect.size.x <= int(option.size.x), "Touch bridge should bound portrait OptionButton popup width to the tapped control"),
+		assert_true(popup_rect.size.y <= 720, "Touch bridge should cap portrait OptionButton popup height instead of letting it fill the phone"),
+		assert_true(popup_rect.position.y >= 0 and popup_rect.end.y <= 2400, "Touch bridge should keep portrait OptionButton popup inside the viewport"),
 	])
 
 
@@ -483,12 +654,15 @@ func test_main_menu_portrait_secondary_actions_modals_and_budew_are_phone_sized(
 	var feedback_panel := scene.get_node_or_null("FeedbackOverlay/FeedbackCenter/FeedbackPanel") as PanelContainer
 	var feedback_text := scene.find_child("FeedbackText", true, false) as TextEdit
 	var feedback_submit := scene.get("_feedback_submit_button") as Button
+	var feedback_content := scene.find_child("FeedbackContent", true, false) as GridContainer
+	var feedback_contact := scene.find_child("FeedbackContactPanel", true, false) as PanelContainer
+	var xhs_qr := scene.find_child("XhsQrImage", true, false) as TextureRect
 	var result := run_checks([
-		assert_true(orientation_button != null and orientation_button.custom_minimum_size.x >= 110.0, "Portrait home orientation button should be large enough for Android thumbs"),
-		assert_true(feedback_button != null and feedback_button.custom_minimum_size.x >= 110.0, "Portrait home feedback button should be large enough for Android thumbs"),
-		assert_true(about_button != null and about_button.custom_minimum_size.x >= 110.0, "Portrait home about button should be large enough for Android thumbs"),
-		assert_true(update_button != null and update_button.custom_minimum_size.x >= 110.0, "Portrait home update button should be large enough for Android thumbs"),
-		assert_true(share_button != null and share_button.custom_minimum_size.x >= 110.0, "Portrait home share button should be large enough for Android thumbs"),
+		assert_true(orientation_button != null and orientation_button.custom_minimum_size.x >= 147.0, "Portrait home orientation button should be 30 percent larger on high-density Android portrait"),
+		assert_true(feedback_button != null and feedback_button.custom_minimum_size.x >= 147.0, "Portrait home feedback button should be 30 percent larger on high-density Android portrait"),
+		assert_true(about_button != null and about_button.custom_minimum_size.x >= 147.0, "Portrait home about button should be 30 percent larger on high-density Android portrait"),
+		assert_true(update_button != null and update_button.custom_minimum_size.x >= 147.0, "Portrait home update button should be 30 percent larger on high-density Android portrait"),
+		assert_true(share_button != null and share_button.custom_minimum_size.x >= 147.0, "Portrait home share button should be 30 percent larger on high-density Android portrait"),
 		assert_true(share_button != null and share_button.text == "分享", "Portrait home share button should show the direct share label"),
 		assert_true(budew != null and budew.custom_minimum_size.x >= 170.0, "Portrait home Budew mascot should scale beyond the desktop corner decoration size"),
 		assert_true(hud_panel != null and hud_panel.custom_minimum_size.x >= 1000.0, "Portrait home HUD modal should use nearly the full phone width"),
@@ -496,7 +670,11 @@ func test_main_menu_portrait_secondary_actions_modals_and_budew_are_phone_sized(
 		assert_true(hud_body != null and hud_body.get_theme_font_size("font_size") >= 43, "Portrait home HUD modal body text should be phone-readable"),
 		assert_true(hud_action != null and hud_action.custom_minimum_size.y >= 145.0, "Portrait home HUD modal footer buttons should be touch-sized"),
 		assert_true(feedback_panel != null and feedback_panel.custom_minimum_size.x >= 1000.0, "Portrait feedback modal should use nearly the full phone width"),
-		assert_true(feedback_panel != null and feedback_panel.custom_minimum_size.y >= 1800.0, "Portrait feedback modal should use enough phone height for the form"),
+		assert_true(feedback_panel != null and feedback_panel.custom_minimum_size.y >= 2200.0, "Portrait feedback modal should use nearly the full phone height so the QR card can be readable"),
+		assert_true(feedback_content != null and feedback_content.columns == 1, "Portrait feedback modal should stack the QR contact card above the form instead of squeezing both into columns"),
+		assert_true(feedback_contact != null and feedback_contact.custom_minimum_size.x >= 960.0, "Portrait feedback contact card should span the phone width"),
+		assert_true(xhs_qr != null and xhs_qr.custom_minimum_size.x >= 560.0, "Portrait feedback Xiaohongshu QR should be large enough to scan and see the profile image"),
+		assert_true(xhs_qr != null and xhs_qr.custom_minimum_size.y >= 760.0, "Portrait feedback Xiaohongshu QR card should keep enough height for the name and account text"),
 		assert_true(feedback_text != null and feedback_text.custom_minimum_size.y >= 360.0, "Portrait feedback text area should be much larger than the desktop form"),
 		assert_true(feedback_text != null and feedback_text.get_theme_font_size("font_size") >= 38, "Portrait feedback text should be phone-readable"),
 		assert_true(feedback_submit != null and feedback_submit.custom_minimum_size.y >= 145.0, "Portrait feedback submit action should be touch-sized"),
@@ -717,6 +895,40 @@ func test_battle_setup_landscape_ai_mode_refresh_keeps_deck_names_compact() -> S
 	return result
 
 
+func test_battle_setup_landscape_ai_mode_stays_inside_screen_after_switch() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test()
+	var scene: Control = BattleSetupScene.instantiate()
+	if not scene.has_method("_apply_non_battle_layout_for_tests"):
+		_restore_battle_review_config_file(snapshot)
+		_dispose_scene(scene)
+		return "BattleSetup should expose _apply_non_battle_layout_for_tests for landscape verification"
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	scene.size = Vector2(1600, 900)
+	scene.call("_ready")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1600, 900), "landscape")
+	scene.call("_select_mode_option", 1)
+	scene.call("_on_mode_changed", 1)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1600, 900), "landscape")
+	var setup_frame := scene.find_child("SetupFrame", true, false) as Control
+	var safe_area := scene.find_child("SafeArea", true, false) as MarginContainer
+	var content_columns := scene.find_child("ContentColumns", true, false) as Control
+	var action_row := scene.find_child("ActionRow", true, false) as Control
+	var landscape_scroll := scene.find_child("LandscapeSetupScroll", true, false) as ScrollContainer
+	var checks: Array[String] = []
+	checks.append(assert_true(setup_frame != null and setup_frame.global_position.y + setup_frame.size.y <= 900.1, "Landscape AI setup frame should not be pushed below the viewport"))
+	checks.append(assert_true(content_columns != null and content_columns.visible, "Landscape AI layout should keep the two-column content visible"))
+	checks.append(assert_true(content_columns != null and content_columns.size.y <= 900.0, "Landscape AI content columns should not expand beyond the viewport height"))
+	checks.append(assert_true(action_row != null and action_row.global_position.y + action_row.size.y <= 900.1, "Landscape AI start/back actions should remain reachable on screen"))
+	checks.append(assert_true(landscape_scroll != null and str(landscape_scroll.get_meta("hud_scrollbar_profile", "")) == "touch", "Landscape AI overflow should be handled by the HUD scroll container"))
+	var result := run_checks(checks)
+	_dispose_scene(scene)
+	_restore_battle_review_config_file(snapshot)
+	return result
+
+
 func test_battle_setup_portrait_deck_button_opens_large_picker_after_reparenting() -> String:
 	var scene: Control = BattleSetupScene.instantiate()
 	if not scene.has_method("_apply_non_battle_layout_for_tests"):
@@ -912,17 +1124,17 @@ func test_battle_setup_portrait_bgm_slider_footer_and_strategy_dialog_are_touch_
 		release.pressed = false
 		release.position = press.position
 		scene.call("_input", release)
+	var discuss_button := scene.find_child("BtnDiscussStrategyAI", true, false) as Button
 	scene.call("_on_discuss_strategy_ai_pressed")
 	var dialog := scene.get("_strategy_discussion_dialog") as AcceptDialog
-	var send_button := dialog.get_node_or_null("%SendButton") as Button if dialog != null else null
-	var question_input := dialog.get_node_or_null("%QuestionInput") as TextEdit if dialog != null else null
 	var footer_spacer := scene.find_child("PortraitSetupFooterSpacer", true, false) as Control
 	var action_row := scene.find_child("ActionRow", true, false) as Control
 	var bgm_option := scene.find_child("BgmOption", true, false) as OptionButton
 	var selected_deck1: Variant = scene.call("_selected_deck_for_slot", 0) if scene.has_method("_selected_deck_for_slot") else null
 	var selected_deck2: Variant = scene.call("_selected_deck_for_slot", 1) if scene.has_method("_selected_deck_for_slot") else null
-	var strategy_dialog_size_message := "Strategy discussion popup opened from battle setup should use phone width in portrait (dialog=%s scene=%s meta=%s)" % [
-		str(dialog.size if dialog != null else Vector2i.ZERO),
+	var strategy_dialog_hidden_message := "Strategy discussion should stay hidden in portrait (dialog=%s button_visible=%s scene=%s meta=%s)" % [
+		str(dialog),
+		str(discuss_button.visible if discuss_button != null else false),
 		str(scene.size),
 		str(scene.get_meta("non_battle_layout_mode", "")),
 	]
@@ -933,11 +1145,8 @@ func test_battle_setup_portrait_bgm_slider_footer_and_strategy_dialog_are_touch_
 		assert_true(selected_deck1 != null and selected_deck2 != null, "Battle setup portrait reparented deck options should still resolve selected decks"),
 		assert_true(footer_spacer != null and footer_spacer.custom_minimum_size.y >= 250.0, "High-density portrait battle setup should reserve enough scroll space above the fixed footer"),
 		assert_true(action_row != null and action_row.global_position.y + action_row.size.y <= 2360.0, "Battle setup fixed footer should stay at the bottom without covering the content edge"),
-		assert_true(dialog != null and dialog.size.x >= 1000, strategy_dialog_size_message),
-		assert_true(dialog != null and dialog.size.y >= 1600, "Strategy discussion popup opened from battle setup should use phone height in portrait"),
-		assert_true(send_button != null and send_button.custom_minimum_size.y >= 220.0, "Strategy discussion send button should be touch-sized in portrait"),
-		assert_true(send_button != null and send_button.get_theme_font_size("font_size") >= 50, "Strategy discussion send button text should be phone-readable"),
-		assert_true(question_input != null and question_input.get_theme_font_size("font_size") >= 46, "Strategy discussion input text should be phone-readable"),
+		assert_true(discuss_button != null and not discuss_button.visible, "Battle setup portrait should hide the AI strategy discussion entry"),
+		assert_null(dialog, strategy_dialog_hidden_message),
 	])
 	_dispose_scene(scene)
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
@@ -1003,8 +1212,8 @@ func test_battle_setup_portrait_bgm_touch_opens_hud_picker_instead_of_native_pop
 	var result := run_checks([
 		assert_true(overlay_visible_before_select, "Battle setup portrait BGM touch should open the HUD music picker"),
 		assert_false(native_popup_visible, "Battle setup portrait BGM touch should not open Godot's native OptionButton popup"),
-		assert_true(scroll != null and str(scroll.get_meta("hud_scrollbar_profile", "")) == "portrait_touch", "Battle setup portrait BGM picker should use the large touch scrollbar profile"),
-		assert_true(vbar != null and vbar.custom_minimum_size.x >= 104.0, "Battle setup portrait BGM picker scrollbar should be wide enough to drag"),
+		assert_true(scroll != null and bool(scroll.get_meta("_non_battle_hidden_vertical_drag_scroll", false)), "Battle setup portrait BGM picker should use hidden surface drag scrolling"),
+		assert_true(vbar != null and not vbar.visible, "Battle setup portrait BGM picker should hide the right vertical scrollbar"),
 		assert_true(list != null and list.get_child_count() == bgm_option.item_count, "Battle setup portrait BGM picker should mirror every music option"),
 		assert_true(selected_index == 1, "Selecting a BGM picker row should update the underlying BGM option"),
 		assert_true(overlay_hidden_after_select, "Selecting a BGM picker row should hide the picker overlay"),
@@ -1012,6 +1221,251 @@ func test_battle_setup_portrait_bgm_touch_opens_hud_picker_instead_of_native_pop
 	_dispose_scene(scene)
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
 	GameManager.non_battle_layout_mode = previous_non_battle_mode
+	return result
+
+
+func test_battle_setup_portrait_background_gallery_accepts_android_touch_selection() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var previous_non_battle_mode := str(GameManager.non_battle_layout_mode)
+	var previous_background := str(GameManager.selected_battle_background)
+	GameManager.non_battle_layout_mode = GameManager.NON_BATTLE_LAYOUT_PORTRAIT
+	var scene: Control = BattleSetupScene.instantiate()
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		_dispose_scene(scene)
+		ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+		GameManager.non_battle_layout_mode = previous_non_battle_mode
+		GameManager.selected_battle_background = previous_background
+		return "SceneTree root should be available for the battle setup background gallery touch test"
+	scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(1080, 2400)
+	tree.root.add_child(scene)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
+	var row := scene.find_child("BackgroundGalleryRow", true, false) as HBoxContainer
+	if row == null:
+		_dispose_scene(scene)
+		ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+		GameManager.non_battle_layout_mode = previous_non_battle_mode
+		GameManager.selected_battle_background = previous_background
+		return "Battle setup background gallery touch test needs BackgroundGalleryRow"
+	var backgrounds: Array[String] = ["res://test/background_a.png", "res://test/background_b.png"]
+	scene.set("_battle_backgrounds", backgrounds)
+	scene.call("_refresh_background_gallery")
+	scene.set("_selected_background_path", backgrounds[0])
+	scene.call("_refresh_background_selection")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
+	var cards: Array = row.get_children()
+	for card_variant: Variant in cards:
+		var card_control := card_variant as Control
+		if card_control != null:
+			card_control.size = card_control.custom_minimum_size
+	var target_card := cards[1] as Control
+	var target_background := str(backgrounds[1])
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.position = target_card.get_global_rect().get_center() if target_card != null else Vector2.ZERO
+	if target_card != null:
+		target_card.gui_input.emit(press)
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.position = press.position
+	if target_card != null:
+		target_card.gui_input.emit(release)
+	var selected_background := str(scene.get("_selected_background_path"))
+	var result := run_checks([
+		assert_true(target_card != null, "Battle setup portrait background gallery should expose a target card"),
+		assert_eq(selected_background, target_background, "Battle setup portrait background gallery should select the tapped stadium background from Android ScreenTouch"),
+	])
+	_dispose_scene(scene)
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	GameManager.non_battle_layout_mode = previous_non_battle_mode
+	GameManager.selected_battle_background = previous_background
+	return result
+
+
+func test_battle_setup_portrait_main_scroll_drag_does_not_click_release_target() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var scene: Control = BattleSetupScene.instantiate()
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		_dispose_scene(scene)
+		ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+		return "SceneTree root should be available for the battle setup portrait scroll test"
+	scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(1080, 2400)
+	tree.root.add_child(scene)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
+	var scroll := scene.find_child("PortraitSetupScroll", true, false) as ScrollContainer
+	var host := Control.new()
+	host.name = "ScrollDragSuppressHost"
+	host.position = Vector2.ZERO
+	host.size = Vector2(1080, 2400)
+	var drag_scroll := ScrollContainer.new()
+	drag_scroll.name = "ScrollDragSuppressContainer"
+	drag_scroll.position = Vector2(40, 240)
+	drag_scroll.size = Vector2(960, 1000)
+	drag_scroll.custom_minimum_size = Vector2(960, 1000)
+	drag_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	drag_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	host.add_child(drag_scroll)
+	var content := VBoxContainer.new()
+	content.name = "ScrollDragSuppressContent"
+	content.custom_minimum_size = Vector2(900, 3600)
+	drag_scroll.add_child(content)
+	var probe_button := Button.new()
+	probe_button.name = "PortraitScrollReleaseProbeButton"
+	probe_button.text = "Release probe"
+	probe_button.custom_minimum_size = Vector2(900, 150)
+	content.add_child(probe_button)
+	var pressed := [false]
+	probe_button.pressed.connect(func() -> void:
+		pressed[0] = true
+	)
+	var vbar := scroll.get_v_scroll_bar() if scroll != null else null
+	var drag_vbar := drag_scroll.get_v_scroll_bar()
+	if drag_vbar != null:
+		drag_vbar.max_value = 3600.0
+		drag_vbar.page = 1000.0
+	var start_scroll := drag_scroll.scroll_vertical
+	var handled_press := false
+	var handled_drag := false
+	var handled_release := false
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.position = drag_scroll.position + Vector2(460, 90)
+	handled_press = bool(NonBattleTouchBridgeScript.handle_root_touch(host, press))
+	var drag := InputEventScreenDrag.new()
+	drag.position = press.position - Vector2(0, 540)
+	handled_drag = bool(NonBattleTouchBridgeScript.handle_root_touch(host, drag))
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.position = drag.position
+	handled_release = bool(NonBattleTouchBridgeScript.handle_root_touch(host, release))
+	probe_button.gui_input.emit(release)
+	var result := run_checks([
+		assert_true(scroll != null and bool(scroll.get_meta("_non_battle_hidden_vertical_drag_scroll", false)), "Battle setup portrait main scroll should use hidden surface drag scrolling"),
+		assert_true(vbar != null and not vbar.visible, "Battle setup portrait main scrollbar should be hidden in mobile portrait"),
+		assert_true(handled_press and handled_drag and handled_release, "Battle setup portrait main scroll should consume Android drag gestures"),
+		assert_true(drag_scroll.scroll_vertical > start_scroll + 120, "Dragging on battle setup portrait content should scroll instead of staying stuck"),
+		assert_false(bool(pressed[0]), "Releasing after a scroll drag must not click the button under the finger"),
+	])
+	host.queue_free()
+	_dispose_scene(scene)
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	return result
+
+
+func test_battle_setup_portrait_ai_selectors_use_hud_picker() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test()
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var previous_non_battle_mode := str(GameManager.non_battle_layout_mode)
+	GameManager.non_battle_layout_mode = GameManager.NON_BATTLE_LAYOUT_PORTRAIT
+	var scene: Control = BattleSetupScene.instantiate()
+	scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(1080, 2400)
+	scene.call("_ready")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
+	scene.call("_select_mode_option", 1)
+	scene.call("_refresh_ai_ui_visibility")
+	var strength_option := scene.find_child("AIPreviewStrengthOption", true, false) as OptionButton
+	var model_option := scene.find_child("LLMModelOption", true, false) as OptionButton
+	var strength_opened := false
+	var strength_native_popup_visible := false
+	if strength_option != null:
+		var press := InputEventScreenTouch.new()
+		press.pressed = true
+		press.position = strength_option.get_global_rect().get_center()
+		strength_option.gui_input.emit(press)
+		var release := InputEventScreenTouch.new()
+		release.pressed = false
+		release.position = press.position
+		strength_option.gui_input.emit(release)
+		strength_opened = scene.get_node_or_null("BattleSetupHudPickerOverlay") != null and (scene.get_node("BattleSetupHudPickerOverlay") as Control).visible
+		strength_native_popup_visible = strength_option.get_popup().visible if strength_option.get_popup() != null else false
+	var hud_scroll := scene.find_child("BattleSetupHudPickerScroll", true, false) as ScrollContainer
+	var hud_list := scene.find_child("BattleSetupHudPickerList", true, false) as VBoxContainer
+	var hud_first_item := scene.find_child("BattleSetupHudPickerItem0", true, false) as Button
+	var strength_list_count := hud_list.get_child_count() if hud_list != null else -1
+	var strength_first_item_height := hud_first_item.custom_minimum_size.y if hud_first_item != null else 0.0
+	var strength_first_item_font := hud_first_item.get_theme_font_size("font_size") if hud_first_item != null else 0
+	var strength_select_item := scene.find_child("BattleSetupHudPickerItem1", true, false) as Button
+	if strength_select_item != null:
+		strength_select_item.pressed.emit()
+	var strength_selected := strength_option.selected if strength_option != null else -1
+	var model_opened := false
+	var model_native_popup_visible := false
+	if model_option != null:
+		var press_model := InputEventScreenTouch.new()
+		press_model.pressed = true
+		press_model.position = model_option.get_global_rect().get_center()
+		model_option.gui_input.emit(press_model)
+		var release_model := InputEventScreenTouch.new()
+		release_model.pressed = false
+		release_model.position = press_model.position
+		model_option.gui_input.emit(release_model)
+		model_opened = scene.get_node_or_null("BattleSetupHudPickerOverlay") != null and (scene.get_node("BattleSetupHudPickerOverlay") as Control).visible
+		model_native_popup_visible = model_option.get_popup().visible if model_option.get_popup() != null else false
+	var model_title := scene.find_child("BattleSetupHudPickerTitle", true, false) as Label
+	var result := run_checks([
+		assert_true(strength_opened, "Battle setup portrait AI strength touch should open the HUD picker"),
+		assert_false(strength_native_popup_visible, "Battle setup portrait AI strength touch should not open Godot's native popup"),
+		assert_true(hud_scroll != null and bool(hud_scroll.get_meta("_non_battle_hidden_vertical_drag_scroll", false)), "Battle setup portrait AI picker should use hidden surface drag scrolling"),
+		assert_true(strength_first_item_height >= 140.0, "Battle setup portrait AI picker rows should be large touch targets"),
+		assert_true(strength_first_item_font >= 44, "Battle setup portrait AI picker text should be phone-readable"),
+		assert_true(strength_list_count == strength_option.item_count, "Battle setup portrait AI strength picker should mirror all strength options"),
+		assert_eq(strength_selected, 1, "Selecting the HUD strength row should update the underlying strength option"),
+		assert_true(model_opened, "Battle setup portrait AI model touch should open the HUD picker"),
+		assert_false(model_native_popup_visible, "Battle setup portrait AI model touch should not open Godot's native popup"),
+		assert_str_contains(model_title.text if model_title != null else "", "AI 模型", "Battle setup portrait AI model picker should identify the model list"),
+	])
+	_dispose_scene(scene)
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	GameManager.non_battle_layout_mode = previous_non_battle_mode
+	_restore_battle_review_config_file(snapshot)
+	return result
+
+
+func _removed_battle_setup_portrait_top_ai_mode_button_switches_without_strategy_dialog() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+		return "SceneTree root should be available for the battle setup AI mode touch routing test"
+	var manager_script: GDScript = load("res://scripts/autoload/GameManager.gd")
+	var manager: Node = manager_script.new()
+	manager.name = "GameManagerAiModeTouchProbe"
+	tree.root.add_child(manager)
+	var scene: Control = BattleSetupScene.instantiate()
+	scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(1080, 2400)
+	tree.root.add_child(scene)
+	scene.call("_ready")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
+	var ai_button := scene.find_child("ModeAIButton", true, false) as Button
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	if ai_button == null or mode_option == null:
+		_dispose_scene(scene)
+		manager.queue_free()
+		ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+		return "Battle setup AI mode button should be available for the portrait touch routing test"
+	scene.call("_on_mode_segment_pressed", 1)
+	var ai_status_title := scene.find_child("AIModeStatusTitle", true, false) as Label
+	var result := run_checks([
+		assert_eq(mode_option.selected, 1, "Android portrait top AI mode tap should switch BattleSetup into AI mode"),
+		assert_true(ai_status_title != null and ai_status_title.visible, "Switching to AI mode should reveal the AI settings/status panel instead of appearing frozen"),
+	])
+	_dispose_scene(scene)
+	manager.queue_free()
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
 	return result
 
 
@@ -1053,6 +1507,7 @@ func test_deck_manager_portrait_deck_scroll_accepts_android_drag_without_mouse_e
 	scene.call("_apply_hud_theme")
 	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
 	var deck_scroll := scene.find_child("DeckScroll", true, false) as ScrollContainer
+	var deck_scroll_margin := scene.find_child("DeckScrollMargin", true, false) as MarginContainer
 	var deck_list := scene.get_node("%DeckList") as VBoxContainer
 	for i: int in 12:
 		var row := PanelContainer.new()
@@ -1065,30 +1520,9 @@ func test_deck_manager_portrait_deck_scroll_accepts_android_drag_without_mouse_e
 		deck_scroll.custom_minimum_size = Vector2(1000, 1200)
 	var vbar := deck_scroll.get_v_scroll_bar() if deck_scroll != null else null
 	if vbar != null:
-		vbar.visible = true
-		vbar.position = Vector2(916, 0)
-		vbar.size = Vector2(84, 1200)
-		vbar.custom_minimum_size = Vector2(84, 1200)
 		vbar.min_value = 0.0
 		vbar.max_value = 3200.0
 		vbar.page = 1200.0
-
-	var handled_bar_press := false
-	var handled_bar_drag := false
-	var handled_bar_release := false
-	if vbar != null:
-		var bar_press := InputEventScreenTouch.new()
-		bar_press.pressed = true
-		bar_press.position = vbar.get_global_rect().position + Vector2(42, 780)
-		handled_bar_press = bool(NonBattleTouchBridgeScript.handle_root_touch(scene, bar_press))
-		var bar_drag := InputEventScreenDrag.new()
-		bar_drag.position = vbar.get_global_rect().position + Vector2(42, 960)
-		handled_bar_drag = bool(NonBattleTouchBridgeScript.handle_root_touch(scene, bar_drag))
-		var bar_release := InputEventScreenTouch.new()
-		bar_release.pressed = false
-		bar_release.position = bar_drag.position
-		handled_bar_release = bool(NonBattleTouchBridgeScript.handle_root_touch(scene, bar_release))
-	var bar_value_after_drag := vbar.value if vbar != null else 0.0
 
 	if deck_scroll != null:
 		deck_scroll.scroll_vertical = 120
@@ -1109,15 +1543,17 @@ func test_deck_manager_portrait_deck_scroll_accepts_android_drag_without_mouse_e
 		surface_release.position = surface_drag.position
 		handled_surface_release = bool(NonBattleTouchBridgeScript.handle_root_touch(scene, surface_release))
 	var final_scroll := deck_scroll.scroll_vertical if deck_scroll != null else 0
+	var scroll_after_frames := deck_scroll.scroll_vertical if deck_scroll != null else 0
 
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
 	var result := run_checks([
 		assert_true(deck_scroll != null, "Deck center portrait should expose its main DeckScroll container"),
-		assert_true(vbar != null, "Deck center portrait should keep a right-side vertical scrollbar"),
-		assert_true(handled_bar_press and handled_bar_drag and handled_bar_release, "Deck center portrait right scrollbar should respond to Android ScreenTouch drag without mouse emulation"),
-		assert_true(bar_value_after_drag > 0.0, "Dragging the DeckScroll right scrollbar should update its value"),
+		assert_true(deck_scroll != null and bool(deck_scroll.get_meta("_non_battle_hidden_vertical_drag_scroll", false)), "Deck center portrait should use hidden surface drag scrolling"),
+		assert_true(vbar != null and not vbar.visible, "Deck center portrait should hide the right-side vertical scrollbar"),
+		assert_true(deck_scroll_margin != null and deck_scroll_margin.get_theme_constant("margin_right") < 80, "Deck center portrait list should not reserve the old wide scrollbar clearance"),
 		assert_true(handled_surface_press and handled_surface_drag and handled_surface_release, "Deck center portrait list surface should respond to Android ScreenTouch drag without mouse emulation"),
 		assert_true(final_scroll > start_scroll, "Dragging upward on the Deck center list should move the vertical scroll"),
+		assert_true(scroll_after_frames >= final_scroll - 1, "Deck center portrait list drag should not snap back to the starting scroll position after layout frames"),
 	])
 	scene.queue_free()
 	return result
@@ -1145,7 +1581,7 @@ func test_deck_manager_portrait_recommendation_card_and_detail_are_phone_readabl
 			"sections": [{
 				"heading": "Plan",
 				"body": "The recommendation detail overlay should use phone-scale text and buttons.",
-				"bullets": ["Avoid compact desktop body copy.", "Reserve room for the large scrollbar."],
+				"bullets": ["Avoid compact desktop body copy.", "Use content dragging instead of a right scrollbar."],
 			}],
 		},
 	}
@@ -1169,7 +1605,7 @@ func test_deck_manager_portrait_recommendation_card_and_detail_are_phone_readabl
 		assert_true(import_button != null and import_button.custom_minimum_size.y >= 145.0, "Portrait recommendation import button should be touch-sized"),
 		assert_true(detail_panel != null and detail_panel.custom_minimum_size.x >= 1000.0, "Portrait recommendation detail should use nearly the full phone width"),
 		assert_true(detail_panel != null and detail_panel.custom_minimum_size.y >= 2240.0, "Portrait recommendation detail should use nearly the full phone height"),
-		assert_true(detail_scroll != null and str(detail_scroll.get_meta("hud_scrollbar_profile", "")) == "portrait_touch", "Portrait recommendation detail should use a large touch scrollbar"),
+		assert_true(detail_scroll != null and bool(detail_scroll.get_meta("_non_battle_hidden_vertical_drag_scroll", false)), "Portrait recommendation detail should use hidden surface drag scrolling"),
 		assert_true(first_detail_label != null and first_detail_label.get_theme_font_size("font_size") >= 44, "Portrait recommendation detail text should be phone-readable"),
 		assert_true(detail_footer_button != null and detail_footer_button.custom_minimum_size.y >= 145.0, "Portrait recommendation detail footer buttons should be touch-sized"),
 	])
@@ -1218,11 +1654,19 @@ func test_tournament_deck_picker_portrait_dialog_uses_phone_dimensions() -> Stri
 	scene.call("_ensure_deck_picker_overlay")
 	scene.call("_resize_deck_picker_panel")
 	var panel := scene.find_child("DeckPickerPanel", true, false) as PanelContainer
+	var overlay := scene.find_child("DeckPickerOverlay", true, false) as Control
+	var grid := scene.find_child("DeckPickerGrid", true, false) as GridContainer
+	var scroll := scene.find_child("DeckPickerScroll", true, false) as ScrollContainer
 	var search := scene.find_child("DeckPickerSearchInput", true, false) as LineEdit
 	var title := scene.find_child("DeckPickerTitle", true, false) as Label
+	var vbar := scroll.get_v_scroll_bar() if scroll != null else null
 	var result := run_checks([
 		assert_true(panel != null and panel.custom_minimum_size.x >= 1000.0, "Tournament deck picker should use nearly the full high-density portrait width"),
 		assert_true(panel != null and panel.custom_minimum_size.y >= 2200.0, "Tournament deck picker should use nearly the full high-density portrait height"),
+		assert_true(overlay != null and overlay.anchor_right == 1.0 and overlay.anchor_bottom == 1.0, "Tournament deck picker overlay should cover the full portrait viewport"),
+		assert_true(grid != null and grid.columns == 1, "Tournament deck picker should use a single portrait column so the right side is never clipped"),
+		assert_true(scroll != null and bool(scroll.get_meta("_non_battle_hidden_vertical_drag_scroll", false)), "Tournament deck picker should use hidden surface drag scrolling"),
+		assert_true(vbar != null and not vbar.visible, "Tournament deck picker should hide the right vertical scrollbar in portrait"),
 		assert_true(search != null and search.custom_minimum_size.y >= 145.0, "Tournament deck picker search input should be phone-sized"),
 		assert_true(search != null and search.get_theme_font_size("font_size") >= 50, "Tournament deck picker search text should be phone-readable"),
 		assert_true(title != null and title.get_theme_font_size("font_size") >= 60, "Tournament deck picker title should be phone-readable"),
@@ -1263,6 +1707,91 @@ func test_tournament_setup_portrait_name_input_accepts_android_touch() -> String
 	return result
 
 
+func test_tournament_setup_portrait_size_option_uses_hud_picker() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+		return "SceneTree root should be available for the tournament size HUD picker regression"
+	var scene: Control = TournamentSetupScene.instantiate()
+	scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(1080, 2400)
+	tree.root.add_child(scene)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
+	var size_option := scene.find_child("SizeOption", true, false) as OptionButton
+	var press_handled := false
+	var release_handled := false
+	if size_option != null:
+		size_option.position = Vector2(80, 420)
+		size_option.size = Vector2(920, 160)
+		var center := size_option.get_global_rect().get_center()
+		var press := InputEventScreenTouch.new()
+		press.pressed = true
+		press.position = center
+		press_handled = bool(scene.call("_handle_size_option_touch_event", press))
+		var release := InputEventScreenTouch.new()
+		release.pressed = false
+		release.position = center
+		release_handled = bool(scene.call("_handle_size_option_touch_event", release))
+	var overlay := scene.find_child("TournamentSizeHudPickerOverlay", true, false) as Control
+	var overlay_open := overlay != null and overlay.visible
+	var native_popup_visible := size_option != null and size_option.get_popup() != null and size_option.get_popup().visible
+	var item_64 := scene.find_child("TournamentSizeHudPickerItem2", true, false) as Button
+	if item_64 != null:
+		item_64.pressed.emit()
+	var selected_size := int(size_option.get_item_text(size_option.selected).get_slice(" ", 0)) if size_option != null and size_option.selected >= 0 else 0
+	var round_info := scene.find_child("RoundInfoLabel", true, false) as Label
+	var result := run_checks([
+		assert_true(size_option != null and bool(size_option.get_meta(NonBattleTouchBridgeScript.OPTION_PRESS_SIGNAL_ONLY_META, false)), "Tournament setup portrait SizeOption should bypass the native popup path"),
+		assert_true(press_handled and release_handled, "Tournament setup portrait size touch should be handled before the root touch bridge"),
+		assert_true(overlay_open, "Tournament setup portrait size selection should open a HUD picker"),
+		assert_false(native_popup_visible, "Tournament setup portrait size selection should not open the native OptionButton popup"),
+		assert_true(item_64 != null and item_64.custom_minimum_size.y >= 145.0, "Tournament size HUD picker items should be phone touch-sized"),
+		assert_eq(selected_size, 64, "Selecting the 64-player HUD item should update SizeOption"),
+		assert_true(round_info != null and round_info.text.contains("64"), "Selecting from the HUD picker should refresh the round info"),
+	])
+	_dispose_scene(scene)
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	return result
+
+
+func test_tournament_setup_landscape_size_option_keeps_native_option_path() -> String:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return "SceneTree root should be available for the tournament size landscape regression"
+	var scene: Control = TournamentSetupScene.instantiate()
+	scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(2400, 1080)
+	tree.root.add_child(scene)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(2400, 1080), "landscape")
+	var size_option := scene.find_child("SizeOption", true, false) as OptionButton
+	var press_handled := false
+	var release_handled := false
+	if size_option != null:
+		size_option.position = Vector2(820, 320)
+		size_option.size = Vector2(640, 96)
+		var center := size_option.get_global_rect().get_center()
+		var press := InputEventScreenTouch.new()
+		press.pressed = true
+		press.position = center
+		press_handled = bool(scene.call("_handle_size_option_touch_event", press))
+		var release := InputEventScreenTouch.new()
+		release.pressed = false
+		release.position = center
+		release_handled = bool(scene.call("_handle_size_option_touch_event", release))
+	var overlay := scene.find_child("TournamentSizeHudPickerOverlay", true, false) as Control
+	var result := run_checks([
+		assert_true(size_option != null and not bool(size_option.get_meta(NonBattleTouchBridgeScript.OPTION_PRESS_SIGNAL_ONLY_META, true)), "Tournament setup landscape SizeOption should keep the native option path"),
+		assert_false(press_handled or release_handled, "Tournament setup landscape size touch should not be captured by the portrait HUD handler"),
+		assert_true(overlay == null or not overlay.visible, "Tournament setup landscape size touch should not open the portrait HUD picker"),
+	])
+	_dispose_scene(scene)
+	return result
+
+
 func test_tournament_setup_portrait_panel_and_hint_fill_phone_width() -> String:
 	var scene: Control = TournamentSetupScene.instantiate()
 	scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
@@ -1294,6 +1823,8 @@ func test_tournament_overview_portrait_text_panels_are_phone_readable() -> Strin
 	var meta := scene.find_child("MetaLabel", true, false) as RichTextLabel
 	var distribution := scene.find_child("DistributionText", true, false) as TextEdit
 	var roster := scene.find_child("RosterText", true, false) as TextEdit
+	var distribution_vbar := distribution.get_v_scroll_bar() if distribution != null else null
+	var roster_vbar := roster.get_v_scroll_bar() if roster != null else null
 	var stack := scene.find_child("PortraitTournamentStack", true, false) as VBoxContainer
 	var result := run_checks([
 		assert_not_null(stack, "Tournament overview high-density portrait should keep details in a vertical stack"),
@@ -1302,6 +1833,10 @@ func test_tournament_overview_portrait_text_panels_are_phone_readable() -> Strin
 		assert_true(roster != null and roster.get_theme_font_size("font_size") >= 44, "Tournament overview roster text should be phone-readable"),
 		assert_true(distribution != null and distribution.custom_minimum_size.y >= 420.0, "Tournament overview distribution panel should allocate enough portrait height"),
 		assert_true(roster != null and roster.custom_minimum_size.y >= 420.0, "Tournament overview roster panel should allocate enough portrait height"),
+		assert_true(distribution != null and bool(distribution.get_meta("_non_battle_hidden_vertical_drag_scrollable_control", false)), "Tournament overview distribution text should use hidden drag-scrollable control policy"),
+		assert_true(roster != null and bool(roster.get_meta("_non_battle_hidden_vertical_drag_scrollable_control", false)), "Tournament overview roster text should use hidden drag-scrollable control policy"),
+		assert_true(distribution_vbar != null and not distribution_vbar.visible, "Tournament overview distribution scrollbar should be hidden in portrait"),
+		assert_true(roster_vbar != null and not roster_vbar.visible, "Tournament overview roster scrollbar should be hidden in portrait"),
 	])
 	scene.queue_free()
 	return result
@@ -1347,7 +1882,170 @@ func test_replay_browser_portrait_rows_are_vertical_and_readable() -> String:
 	return result
 
 
-func test_ai_settings_portrait_layout_stacks_form_and_guide_with_large_inputs() -> String:
+func test_ai_settings_keeps_original_help_buttons_and_copy() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test()
+	var scene: Control = SettingsScene.instantiate()
+	scene.call("_ready")
+	var endpoint := scene.find_child("EndpointInput", true, false) as LineEdit
+	var personality := scene.find_child("PersonalityInput", true, false) as LineEdit
+	var default_endpoint_button := scene.find_child("BtnUseZenMuxDefault", true, false)
+	var paste_api_key_button := scene.find_child("BtnPasteApiKey", true, false)
+	var open_zenmux_button := scene.find_child("BtnOpenZenMux", true, false)
+	var endpoint_hint := scene.find_child("EndpointHint", true, false)
+	var api_key_hint := scene.find_child("ApiKeyHint", true, false)
+	var model_hint := scene.find_child("ModelHint", true, false)
+	var guide_column := scene.find_child("ZenMuxGuideColumn", true, false)
+	var guide_body := scene.find_child("ZenMuxGuideBody", true, false) as Label
+	var trouble_body := scene.find_child("ZenMuxTroubleBody", true, false) as Label
+	var result := run_checks([
+		assert_eq(endpoint.text if endpoint != null else "", "https://zenmux.ai/api/v1", "AI settings should prefill the ZenMux API address"),
+		assert_eq(personality.text if personality != null else "", GameManager.DEFAULT_AI_PERSONALITY, "AI settings should prefill the default AI personality even when saved config is blank"),
+		assert_not_null(default_endpoint_button, "AI settings should keep the original default endpoint helper button"),
+		assert_not_null(paste_api_key_button, "AI settings should expose a one-tap API key paste button"),
+		assert_not_null(open_zenmux_button, "AI settings should keep the original zenmux.ai link button"),
+		assert_not_null(endpoint_hint, "AI settings should keep endpoint help text for new players"),
+		assert_not_null(api_key_hint, "AI settings should keep API key help text for new players"),
+		assert_not_null(model_hint, "AI settings should keep model help text for new players"),
+		assert_not_null(guide_column, "AI settings should keep the setup guide column"),
+		assert_true(guide_body != null and guide_body.text.contains("API 地址保持 https://zenmux.ai/api/v1"), "AI settings guide should keep the original endpoint instruction"),
+		assert_true(trouble_body != null and trouble_body.text.contains("401"), "AI settings troubleshooting copy should keep common auth failure guidance"),
+	])
+	_dispose_scene(scene)
+	_restore_battle_review_config_file(snapshot)
+	return result
+
+
+func test_ai_settings_fresh_install_and_null_config_use_defaults() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	var path: String = GameManager.get_battle_review_api_config_path()
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	var missing_scene: Control = SettingsScene.instantiate()
+	missing_scene.call("_ready")
+	var missing_endpoint := missing_scene.find_child("EndpointInput", true, false) as LineEdit
+	var missing_personality := missing_scene.find_child("PersonalityInput", true, false) as LineEdit
+	var missing_model := missing_scene.find_child("ModelOption", true, false) as OptionButton
+	var missing_model_id := str(missing_model.get_item_metadata(missing_model.selected)) if missing_model != null and missing_model.selected >= 0 else ""
+	var missing_result := run_checks([
+		assert_eq(missing_endpoint.text if missing_endpoint != null else "", "https://zenmux.ai/api/v1", "Fresh install AI settings should prefill the ZenMux API address"),
+		assert_eq(missing_model_id, "deepseek-v4-flash", "Fresh install AI settings should select DeepSeek V4 Flash as the initial large model"),
+		assert_eq(missing_personality.text if missing_personality != null else "", GameManager.DEFAULT_AI_PERSONALITY, "Fresh install AI settings should prefill the default AI personality"),
+		assert_false((missing_endpoint.text if missing_endpoint != null else "").to_lower().contains("instance is null"), "Fresh install endpoint should never show a null-instance diagnostic"),
+		assert_false((missing_personality.text if missing_personality != null else "").to_lower().contains("instance is null"), "Fresh install personality should never show a null-instance diagnostic"),
+	])
+	_dispose_scene(missing_scene)
+	if missing_result != "":
+		_restore_battle_review_config_file(snapshot)
+		return missing_result
+
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file != null:
+		file.store_string(JSON.stringify({
+			"endpoint": null,
+			"api_key": null,
+			"model": null,
+			"timeout_seconds": null,
+			"ai_personality": null,
+			"ai_test_passed": false,
+			"ai_test_signature": null,
+		}, "\t"))
+		file.close()
+	var null_scene: Control = SettingsScene.instantiate()
+	null_scene.call("_ready")
+	var null_endpoint := null_scene.find_child("EndpointInput", true, false) as LineEdit
+	var null_personality := null_scene.find_child("PersonalityInput", true, false) as LineEdit
+	var null_model := null_scene.find_child("ModelOption", true, false) as OptionButton
+	var null_model_id := str(null_model.get_item_metadata(null_model.selected)) if null_model != null and null_model.selected >= 0 else ""
+	var result := run_checks([
+		assert_eq(null_endpoint.text if null_endpoint != null else "", "https://zenmux.ai/api/v1", "Null endpoint config should fall back to the ZenMux API address"),
+		assert_eq(null_model_id, "deepseek-v4-flash", "Null model config should select DeepSeek V4 Flash as the initial large model"),
+		assert_eq(null_personality.text if null_personality != null else "", GameManager.DEFAULT_AI_PERSONALITY, "Null personality config should fall back to the default AI personality"),
+		assert_false((null_endpoint.text if null_endpoint != null else "").to_lower().contains("instance is null"), "Null endpoint config should never leak a null-instance diagnostic"),
+		assert_false((null_personality.text if null_personality != null else "").to_lower().contains("instance is null"), "Null personality config should never leak a null-instance diagnostic"),
+	])
+	_dispose_scene(null_scene)
+	_restore_battle_review_config_file(snapshot)
+	return result
+
+
+func test_ai_settings_save_allows_clearing_api_key() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test()
+	var scene: Control = SettingsScene.instantiate()
+	scene.call("_ready")
+	var api_key := scene.find_child("ApiKeyInput", true, false) as LineEdit
+	if api_key != null:
+		api_key.text = ""
+	scene.call("_on_save")
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(GameManager.get_battle_review_api_config_path()))
+	var config := parsed as Dictionary if parsed is Dictionary else {}
+	var result := run_checks([
+		assert_not_null(api_key, "AI settings should expose the API key input before saving"),
+		assert_eq(str(config.get("api_key", "missing")), "", "Saving an intentionally empty API key should keep it empty instead of restoring the previous key"),
+	])
+	_dispose_scene(scene)
+	_restore_battle_review_config_file(snapshot)
+	return result
+
+
+func test_ai_settings_api_key_selects_all_and_paste_button_fills_key() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test()
+	var scene: Control = SettingsScene.instantiate()
+	scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(1080, 2400)
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	await tree.process_frame
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var api_key := scene.find_child("ApiKeyInput", true, false) as LineEdit
+	var paste_button := scene.find_child("BtnPasteApiKey", true, false) as Button
+	if api_key != null:
+		api_key.text = "old-secret"
+		api_key.global_position = Vector2(120, 500)
+		api_key.size = Vector2(760, 150)
+		var tap_position := api_key.get_global_rect().get_center()
+		var press := InputEventScreenTouch.new()
+		press.pressed = true
+		press.position = tap_position
+		NonBattleTouchBridgeScript.handle_root_touch(scene, press)
+		var release := InputEventScreenTouch.new()
+		release.pressed = false
+		release.position = tap_position
+		NonBattleTouchBridgeScript.handle_root_touch(scene, release)
+	var selected_text_after_touch := ""
+	if api_key != null and api_key.has_method("get_selected_text"):
+		selected_text_after_touch = str(api_key.call("get_selected_text"))
+	var selected_all_meta := api_key != null and bool(api_key.get_meta("_ai_settings_api_key_selected_all", false))
+	var paste_result := false
+	if scene.has_method("_apply_api_key_paste_text_for_tests"):
+		paste_result = bool(scene.call("_apply_api_key_paste_text_for_tests", "  pasted-secret-key  "))
+	var pasted_key := api_key.text if api_key != null else ""
+	var selected_text_after_paste := ""
+	if api_key != null and api_key.has_method("get_selected_text"):
+		selected_text_after_paste = str(api_key.call("get_selected_text"))
+	var result := run_checks([
+		assert_not_null(api_key, "AI settings should expose the API key input"),
+		assert_not_null(paste_button, "AI settings should expose a paste API key button"),
+		assert_true(paste_button != null and bool(paste_button.get_meta(NonBattleTouchBridgeScript.BUTTON_TOUCH_BOUND_META, false)), "AI settings paste API key button should use the shared touch bridge"),
+		assert_true(selected_all_meta, "Tapping the AI settings API key input should request select-all behavior"),
+		assert_true(selected_text_after_touch == "old-secret" or selected_text_after_touch == "", "AI settings API key select-all should cover the current key text when the LineEdit exposes selected text"),
+		assert_true(paste_result, "AI settings API key paste helper should accept non-empty clipboard text"),
+		assert_eq(pasted_key, "pasted-secret-key", "AI settings API key paste should trim and fill the key input"),
+		assert_true(selected_text_after_paste == "pasted-secret-key" or selected_text_after_paste == "", "AI settings API key paste should select the pasted key when the LineEdit exposes selected text"),
+	])
+	_dispose_scene(scene)
+	_restore_battle_review_config_file(snapshot)
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	return result
+
+
+func test_ai_settings_portrait_layout_stacks_form_with_large_inputs() -> String:
 	var scene: Control = SettingsScene.instantiate()
 	if not scene.has_method("_apply_non_battle_layout_for_tests"):
 		scene.queue_free()
@@ -1356,10 +2054,14 @@ func test_ai_settings_portrait_layout_stacks_form_and_guide_with_large_inputs() 
 	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
 	var stack := scene.find_child("PortraitSettingsStack", true, false) as VBoxContainer
 	var endpoint := scene.find_child("EndpointInput", true, false) as LineEdit
+	var personality := scene.find_child("PersonalityInput", true, false) as LineEdit
+	var guide_column := scene.find_child("ZenMuxGuideColumn", true, false) as Control
 	var save := scene.find_child("BtnSave", true, false) as Button
 	var first_result := run_checks([
-		assert_not_null(stack, "AI settings portrait layout should stack form and ZenMux guide vertically"),
+		assert_not_null(stack, "AI settings portrait layout should stack the form vertically"),
+		assert_true(guide_column != null and guide_column.get_parent() == stack, "AI settings portrait layout should stack setup help text below the form"),
 		assert_true(endpoint != null and endpoint.custom_minimum_size.y >= 80.0, "AI settings portrait inputs should be large enough for phone typing"),
+		assert_true(personality != null and personality.text.strip_edges() != "", "AI settings portrait personality input should be prefilled"),
 		assert_true(save != null and save.custom_minimum_size.y >= 92.0, "AI settings portrait save button should be comfortably phone-sized"),
 	])
 	if first_result != "":
@@ -1401,10 +2103,13 @@ func test_ai_settings_portrait_layout_stacks_form_and_guide_with_large_inputs() 
 	return result
 
 
-func test_ai_settings_portrait_scrollbar_is_visible_and_touch_sized() -> String:
+func test_ai_settings_portrait_scrollbar_is_hidden_and_surface_drag_scrolls() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
 	var scene: Control = SettingsScene.instantiate()
 	if not scene.has_method("_apply_non_battle_layout_for_tests"):
 		scene.queue_free()
+		ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
 		return "Settings should expose _apply_non_battle_layout_for_tests for portrait scrollbar verification"
 	scene.call("_ready")
 	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
@@ -1428,12 +2133,80 @@ func test_ai_settings_portrait_scrollbar_is_visible_and_touch_sized() -> String:
 		if text.to_lower().find("instance base is null") >= 0:
 			has_null_instance_text = true
 			break
+	var start_scroll := scroll.scroll_vertical if scroll != null else 0
+	var handled_surface_press := false
+	var handled_surface_drag := false
+	var handled_surface_release := false
+	if scroll != null:
+		scroll.position = Vector2(36, 240)
+		scroll.size = Vector2(1000, 1400)
+		scroll.scroll_vertical = 100
+		var surface_press := InputEventScreenTouch.new()
+		surface_press.pressed = true
+		surface_press.position = scroll.get_global_rect().position + Vector2(420, 900)
+		handled_surface_press = bool(NonBattleTouchBridgeScript.handle_root_touch(scene, surface_press))
+		var surface_drag := InputEventScreenDrag.new()
+		surface_drag.position = surface_press.position - Vector2(0, 320)
+		handled_surface_drag = bool(NonBattleTouchBridgeScript.handle_root_touch(scene, surface_drag))
+		var surface_release := InputEventScreenTouch.new()
+		surface_release.pressed = false
+		surface_release.position = surface_drag.position
+		handled_surface_release = bool(NonBattleTouchBridgeScript.handle_root_touch(scene, surface_release))
+	var final_scroll := scroll.scroll_vertical if scroll != null else 0
 	var result := run_checks([
 		assert_not_null(scroll, "AI settings portrait should expose a dedicated ScrollContainer"),
-		assert_eq(scroll.vertical_scroll_mode if scroll != null else -1, ScrollContainer.SCROLL_MODE_SHOW_ALWAYS, "AI settings portrait should keep the right vertical scrollbar visible"),
-		assert_true(scroll != null and str(scroll.get_meta("hud_scrollbar_profile", "")) == "portrait_touch", "AI settings portrait scroll should use the large touch scrollbar profile"),
-		assert_true(vbar != null and int(vbar.get_meta("hud_scrollbar_thickness", 0)) >= 80, "AI settings portrait vertical scrollbar should be wide enough for touch"),
+		assert_eq(scroll.vertical_scroll_mode if scroll != null else -1, ScrollContainer.SCROLL_MODE_AUTO, "AI settings portrait should keep logical scrolling enabled without forcing a visible bar"),
+		assert_true(scroll != null and bool(scroll.get_meta("_non_battle_hidden_vertical_drag_scroll", false)), "AI settings portrait scroll should use hidden surface drag scrolling"),
+		assert_true(vbar != null and not vbar.visible, "AI settings portrait vertical scrollbar should be hidden"),
+		assert_true(handled_surface_press and handled_surface_drag and handled_surface_release, "AI settings portrait form should scroll from Android surface dragging"),
+		assert_true(final_scroll > start_scroll, "Dragging upward on the AI settings form should move vertical scroll"),
 		assert_false(has_null_instance_text, "AI settings visible labels and inputs should never show 'instance base is null'"),
+	])
+	scene.queue_free()
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	return result
+
+
+func test_ai_settings_portrait_connection_error_status_stays_inside_scroll_form() -> String:
+	var scene: Control = SettingsScene.instantiate()
+	scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(1080, 2400)
+	scene.call("_ready")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
+	var repeated_error_parts: Array[String] = []
+	for index: int in 80:
+		repeated_error_parts.append("upstream-timeout-%d" % index)
+	scene.call("_on_test_connection_response", {
+		"status": "error",
+		"message": " ".join(repeated_error_parts),
+	})
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
+	var root := scene.get_node_or_null("VBoxContainer") as Control
+	var form_column := scene.find_child("FormColumn", true, false) as Control
+	var scroll := scene.find_child("PortraitSettingsScroll", true, false) as ScrollContainer
+	var status := scene.find_child("StatusLabel", true, false) as Label
+	var action_row := scene.find_child("HBox", true, false) as HBoxContainer
+	var status_text := status.text if status != null else ""
+	var status_min_height := status.custom_minimum_size.y if status != null else 0.0
+	var scroll_after_status := int(scroll.get("scroll_vertical")) if scroll != null else 0
+	var status_inside_scroll := false
+	var cursor: Node = status
+	while cursor != null:
+		if cursor == scroll:
+			status_inside_scroll = true
+			break
+		cursor = cursor.get_parent()
+	var result := run_checks([
+		assert_eq(status.get_parent() if status != null else null, form_column, "AI settings error status should live in the scrollable form column, not the root layout"),
+		assert_true(status_inside_scroll, "AI settings error status should scroll with the form instead of expanding the fixed page shell"),
+		assert_true(status_text.contains("测试失败"), "AI settings test result text should be written to the visible status label"),
+		assert_true(status_min_height >= 88.0, "AI settings test result should reserve a phone-readable visible status row"),
+		assert_true(scroll_after_status > 0, "AI settings portrait test result should scroll the form to the status row immediately"),
+		assert_true(status != null and status.autowrap_mode != TextServer.AUTOWRAP_OFF, "AI settings error status should wrap within the portrait form width"),
+		assert_true(status != null and int(status.get("max_lines_visible")) > 0 and int(status.get("max_lines_visible")) <= 3, "AI settings error status should be capped to a few portrait lines"),
+		assert_true(root != null and root.custom_minimum_size.x <= 1080.0, "AI settings long connection errors should not widen the portrait panel"),
+		assert_true(action_row != null and action_row.global_position.y + action_row.size.y <= 2400.0, "AI settings long connection errors should not push the fixed footer off screen"),
 	])
 	scene.queue_free()
 	return result
@@ -1449,68 +2222,135 @@ func test_ai_settings_portrait_form_controls_accept_android_touch_without_mouse_
 	scene.call("_ready")
 	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
 	var endpoint := scene.find_child("EndpointInput", true, false) as LineEdit
+	var api_key := scene.find_child("ApiKeyInput", true, false) as LineEdit
 	var model := scene.find_child("ModelOption", true, false) as OptionButton
-	var default_endpoint_button := scene.find_child("BtnUseZenMuxDefault", true, false) as Button
 	if endpoint != null:
 		endpoint.global_position = Vector2(120, 320)
 		endpoint.size = Vector2(760, 150)
+	if api_key != null:
+		api_key.global_position = Vector2(120, 500)
+		api_key.size = Vector2(760, 150)
 	if model != null:
-		model.global_position = Vector2(120, 520)
+		model.global_position = Vector2(120, 700)
 		model.size = Vector2(760, 150)
-	if default_endpoint_button != null:
-		default_endpoint_button.global_position = Vector2(120, 720)
-		default_endpoint_button.size = Vector2(760, 150)
-	var default_endpoint_pressed := [false]
-	if default_endpoint_button != null:
-		default_endpoint_button.pressed.connect(func() -> void:
-			default_endpoint_pressed[0] = true
-		)
 
 	if endpoint != null:
 		var endpoint_tap_position := endpoint.get_global_rect().get_center()
 		var endpoint_press := InputEventScreenTouch.new()
 		endpoint_press.pressed = true
 		endpoint_press.position = endpoint_tap_position
-		scene.call("_input", endpoint_press)
+		var endpoint_handled_press := bool(NonBattleTouchBridgeScript.handle_root_touch(scene, endpoint_press))
 		var endpoint_release := InputEventScreenTouch.new()
 		endpoint_release.pressed = false
 		endpoint_release.position = endpoint_tap_position
-		scene.call("_input", endpoint_release)
-	var endpoint_focused_after_touch := endpoint != null and (endpoint.has_focus() or bool(endpoint.get_meta("_non_battle_touch_focus_requested", false)))
+		var endpoint_handled_release := bool(NonBattleTouchBridgeScript.handle_root_touch(scene, endpoint_release))
+		endpoint.set_meta("_test_root_bridge_consumed_touch", endpoint_handled_press or endpoint_handled_release)
+		endpoint.set_meta("_test_focus_requested", bool(endpoint.get_meta(NonBattleTouchBridgeScript.FOCUS_REQUESTED_META, false)))
+	var endpoint_native_marked := endpoint != null and bool(endpoint.get_meta(NonBattleTouchBridgeScript.NATIVE_TEXT_INPUT_META, false))
+	var endpoint_focus_bridge_bound := endpoint != null and bool(endpoint.get_meta(NonBattleTouchBridgeScript.FOCUS_TOUCH_BOUND_META, false))
+	var endpoint_root_bridge_consumed := endpoint != null and bool(endpoint.get_meta("_test_root_bridge_consumed_touch", false))
+	var endpoint_focus_requested := endpoint != null and bool(endpoint.get_meta("_test_focus_requested", false))
+	if api_key != null:
+		var api_key_tap_position := api_key.get_global_rect().get_center()
+		var api_key_press := InputEventScreenTouch.new()
+		api_key_press.pressed = true
+		api_key_press.position = api_key_tap_position
+		var api_key_handled_press := bool(NonBattleTouchBridgeScript.handle_root_touch(scene, api_key_press))
+		var api_key_release := InputEventScreenTouch.new()
+		api_key_release.pressed = false
+		api_key_release.position = api_key_tap_position
+		var api_key_handled_release := bool(NonBattleTouchBridgeScript.handle_root_touch(scene, api_key_release))
+		api_key.set_meta("_test_root_bridge_consumed_touch", api_key_handled_press or api_key_handled_release)
+		api_key.set_meta("_test_focus_requested", bool(api_key.get_meta(NonBattleTouchBridgeScript.FOCUS_REQUESTED_META, false)))
+	var api_key_native_marked := api_key != null and bool(api_key.get_meta(NonBattleTouchBridgeScript.NATIVE_TEXT_INPUT_META, false))
+	var api_key_focus_bridge_bound := api_key != null and bool(api_key.get_meta(NonBattleTouchBridgeScript.FOCUS_TOUCH_BOUND_META, false))
+	var api_key_root_bridge_consumed := api_key != null and bool(api_key.get_meta("_test_root_bridge_consumed_touch", false))
+	var api_key_focus_requested := api_key != null and bool(api_key.get_meta("_test_focus_requested", false))
 
-	var popup_visible_after_touch := false
+	var model_hud_visible_after_touch := false
+	var model_native_popup_visible := false
 	if model != null:
 		var model_tap_position := model.get_global_rect().get_center()
 		var model_press := InputEventScreenTouch.new()
 		model_press.pressed = true
 		model_press.position = model_tap_position
-		scene.call("_input", model_press)
+		model.gui_input.emit(model_press)
 		var model_release := InputEventScreenTouch.new()
 		model_release.pressed = false
 		model_release.position = model_tap_position
-		scene.call("_input", model_release)
+		model.gui_input.emit(model_release)
 		var immediate_popup := model.get_popup()
-		popup_visible_after_touch = immediate_popup != null and immediate_popup.visible
-
-	if default_endpoint_button != null:
-		var button_tap_position := default_endpoint_button.get_global_rect().get_center()
-		var button_press := InputEventScreenTouch.new()
-		button_press.pressed = true
-		button_press.position = button_tap_position
-		scene.call("_input", button_press)
-		var button_release := InputEventScreenTouch.new()
-		button_release.pressed = false
-		button_release.position = button_tap_position
-		scene.call("_input", button_release)
+		model_native_popup_visible = immediate_popup != null and immediate_popup.visible
+		var picker_overlay := scene.get_node_or_null("AISettingsModelPickerOverlay") as Control
+		model_hud_visible_after_touch = picker_overlay != null and picker_overlay.visible
+	var selected_before := model.selected if model != null else -1
+	var target_model_index := 1
+	if model != null and model.get_item_count() > 1 and selected_before == target_model_index:
+		target_model_index = 0
+	var picker_item := scene.find_child("AISettingsModelPickerItem%d" % target_model_index, true, false) as Button
+	if picker_item != null:
+		picker_item.pressed.emit()
+	var selected_after := model.selected if model != null else -1
+	var picker_overlay_after := scene.get_node_or_null("AISettingsModelPickerOverlay") as Control
+	var model_hud_hidden_after_select := picker_overlay_after == null or not picker_overlay_after.visible
 
 	var popup := model.get_popup() if model != null else null
 	if popup != null:
 		popup.hide()
 	var result := run_checks([
-		assert_true(endpoint_focused_after_touch, "AI settings portrait EndpointInput should focus from Android ScreenTouch when mouse emulation is disabled"),
-		assert_true(model != null and popup_visible_after_touch, "AI settings portrait ModelOption should open from Android ScreenTouch when mouse emulation is disabled"),
-		assert_true(bool(default_endpoint_pressed[0]), "AI settings portrait helper buttons above the fixed footer should activate from Android ScreenTouch"),
+		assert_false(endpoint_native_marked or api_key_native_marked, "AI settings portrait text inputs should use the same focus path as the working feedback dialog, not the native-bypass path"),
+		assert_true(endpoint_focus_bridge_bound and api_key_focus_bridge_bound, "AI settings text inputs should bind the shared focus touch bridge"),
+		assert_true(endpoint_root_bridge_consumed and api_key_root_bridge_consumed, "AI settings text input taps should be handled by the shared focus bridge"),
+		assert_true(endpoint_focus_requested and api_key_focus_requested, "AI settings text input taps should request focus and open the Android keyboard"),
+		assert_true(endpoint != null and endpoint.context_menu_enabled and endpoint.virtual_keyboard_enabled and endpoint.virtual_keyboard_show_on_focus, "AI settings EndpointInput should keep native keyboard and copy/paste menu support"),
+		assert_true(api_key != null and api_key.context_menu_enabled and api_key.virtual_keyboard_enabled and api_key.virtual_keyboard_show_on_focus, "AI settings ApiKeyInput should keep native keyboard and copy/paste menu support"),
+		assert_true(endpoint != null and endpoint.virtual_keyboard_type == LineEdit.KEYBOARD_TYPE_URL, "AI settings EndpointInput should request a URL keyboard"),
+		assert_true(model_hud_visible_after_touch, "AI settings portrait ModelOption should open a HUD picker from Android ScreenTouch"),
+		assert_false(model_native_popup_visible, "AI settings portrait ModelOption should not open Godot's native popup on Android"),
+		assert_true(selected_after != selected_before, "AI settings HUD model picker should update the selected model"),
+		assert_true(model_hud_hidden_after_select, "AI settings HUD model picker should close after selecting a model"),
+		assert_not_null(scene.find_child("BtnUseZenMuxDefault", true, false), "AI settings portrait should keep the default endpoint helper button"),
 	])
 	scene.queue_free()
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	return result
+
+
+func test_ai_settings_missing_text_inputs_do_not_throw_null_instance_on_actions() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test()
+	var scene: Control = SettingsScene.instantiate()
+	scene.call("_ready")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
+	var endpoint := scene.find_child("EndpointInput", true, false) as LineEdit
+	var api_key := scene.find_child("ApiKeyInput", true, false) as LineEdit
+	var personality := scene.find_child("PersonalityInput", true, false) as LineEdit
+	var timeout := scene.find_child("TimeoutInput", true, false) as SpinBox
+	if endpoint != null:
+		endpoint.get_parent().remove_child(endpoint)
+		endpoint.free()
+	if api_key != null:
+		api_key.get_parent().remove_child(api_key)
+		api_key.free()
+	if personality != null:
+		personality.get_parent().remove_child(personality)
+		personality.free()
+	if timeout != null:
+		timeout.get_parent().remove_child(timeout)
+		timeout.free()
+
+	scene.call("_load_config")
+	scene.call("_on_use_zenmux_default_endpoint")
+	scene.call("_on_save")
+	scene.call("_on_test_connection")
+	var status := scene.find_child("StatusLabel", true, false) as Label
+	var status_text := status.text if status != null else ""
+	var config_text := FileAccess.get_file_as_string(GameManager.get_battle_review_api_config_path())
+	var result := run_checks([
+		assert_true(status_text.contains("输入框") or status_text.contains("测试失败"), "AI settings actions should surface a visible input initialization error instead of a null-instance script error"),
+		assert_false(config_text.to_lower().contains("instance base is null"), "AI settings save should never serialize a null-instance diagnostic"),
+		assert_false(config_text.to_lower().contains("null instance"), "AI settings save should never serialize a null-instance diagnostic variant"),
+	])
+	_dispose_scene(scene)
+	_restore_battle_review_config_file(snapshot)
 	return result

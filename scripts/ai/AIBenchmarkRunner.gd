@@ -370,6 +370,12 @@ func run_headless_duel(
 					result = _make_failed_match_result("unsupported_prompt", steps + 1, gsm)
 					break
 		else:
+			if _resolve_stale_main_phase_knockouts(gsm):
+				progressed = true
+				if step_callback.is_valid():
+					step_callback.call(gsm)
+				steps += 1
+				continue
 			var current_player: int = gsm.game_state.current_player_index
 			if current_player < 0 or current_player >= 2:
 				result = _make_failed_match_result("invalid_state_transition", steps + 1, gsm)
@@ -406,6 +412,16 @@ func run_headless_duel(
 	## 释放 bridge（extends Control，非 RefCounted，必须显式释放）
 	bridge.free()
 	return result
+
+
+func _resolve_stale_main_phase_knockouts(gsm: GameStateMachine) -> bool:
+	if gsm == null or gsm.game_state == null:
+		return false
+	if gsm.game_state.phase != GameState.GamePhase.MAIN:
+		return false
+	if not gsm.has_method("_resolve_mid_turn_knockouts"):
+		return false
+	return bool(gsm.call("_resolve_mid_turn_knockouts"))
 
 
 func _attach_bridge_failure_diagnostics(
@@ -457,7 +473,7 @@ func _record_decision_trace_if_available(decision_exporter, ai: AIOpponent) -> v
 		return
 	if not decision_exporter.has_method("record_trace"):
 		return
-	var trace = ai.get_last_decision_trace()
+	var trace = ai.consume_last_decision_trace()
 	if trace == null:
 		return
 	decision_exporter.record_trace(trace)

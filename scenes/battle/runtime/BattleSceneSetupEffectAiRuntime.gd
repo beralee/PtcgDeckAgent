@@ -1662,12 +1662,14 @@ func _play_next_coin_animation() -> void:
 func _show_discard_pile(player_index: int, title: String) -> void:
 	_ensure_battle_display_coordinator()
 	_battle_display_coordinator.call("show_discard_pile", player_index, title)
+	_sync_card_foil_effects(_discard_overlay)
 
 
 
 func _show_lost_zone(player_index: int, title: String) -> void:
 	_ensure_battle_display_coordinator()
 	_battle_display_coordinator.call("show_lost_zone", player_index, title)
+	_sync_card_foil_effects(_discard_overlay)
 
 
 

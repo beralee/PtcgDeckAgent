@@ -219,6 +219,19 @@ func _attach_test_pile_preview(scene: Node, box_name: String, property_name: Str
 	return preview
 
 
+func _attach_test_modal_overlay(scene: Node, overlay_name: String, child_name: String = "") -> Control:
+	var overlay := Control.new()
+	overlay.name = overlay_name
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scene.add_child(overlay)
+	if child_name != "":
+		var child := Control.new()
+		child.name = child_name
+		child.set_anchors_preset(Control.PRESET_FULL_RECT)
+		overlay.add_child(child)
+	return overlay
+
+
 func test_layout_resolver_auto_portrait_for_phone_viewport() -> String:
 	var controller := BattleLayoutControllerScript.new()
 	var mode := str(controller.call("resolve_layout_mode", Vector2(390, 844), "auto", true))
@@ -1650,6 +1663,257 @@ func test_portrait_card_selection_dialog_uses_near_screen_width() -> String:
 	return result
 
 
+func test_android_portrait_modal_overlays_keep_visible_frame_after_relayout() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+	var scene: Control = BattleScene.instantiate()
+	scene.set("_dialog_overlay", scene.find_child("DialogOverlay", true, false))
+	scene.set("_dialog_title", scene.find_child("DialogTitle", true, false))
+	scene.set("_dialog_list", scene.find_child("DialogList", true, false))
+	scene.set("_dialog_confirm", scene.find_child("DialogConfirm", true, false))
+	scene.set("_dialog_cancel", scene.find_child("DialogCancel", true, false))
+	scene.set("_dialog_box", scene.find_child("DialogBox", true, false))
+	scene.set("_dialog_vbox", scene.find_child("DialogVBox", true, false))
+	var field_overlay := _attach_test_modal_overlay(scene, "FieldInteractionOverlay", "FieldInteractionLayout")
+	var draw_overlay := _attach_test_modal_overlay(scene, "DrawRevealOverlay", "DrawRevealStage")
+	var match_end_overlay := _attach_test_modal_overlay(scene, "MatchEndOverlay", "MatchEndCenter")
+
+	scene.call("_apply_portrait_layout", Vector2(1600, 2844))
+	var large_frame: Rect2 = scene.get("_portrait_layout_frame_rect")
+	var field_child := field_overlay.get_child(0) as Control
+	var draw_child := draw_overlay.get_child(0) as Control
+	var match_end_child := match_end_overlay.get_child(0) as Control
+	scene.call("_apply_portrait_layout", Vector2(390, 844))
+	var small_frame: Rect2 = scene.get("_portrait_layout_frame_rect")
+	var checks: Array[String] = []
+	for overlay_name: String in [
+		"DialogOverlay",
+		"HandoverPanel",
+		"CoinFlipOverlay",
+		"DetailOverlay",
+		"DiscardOverlay",
+		"ReviewOverlay",
+	]:
+		var overlay := scene.find_child(overlay_name, true, false) as Control
+		checks.append(assert_eq(overlay.size if overlay != null else Vector2.ZERO, small_frame.size, "%s should keep a visible portrait frame after relayout" % overlay_name))
+	checks.append(assert_eq(field_overlay.size, small_frame.size, "Field interaction overlay should follow the active portrait frame"))
+	checks.append(assert_eq(draw_overlay.size, small_frame.size, "Draw reveal overlay should follow the active portrait frame"))
+	checks.append(assert_eq(match_end_overlay.size, small_frame.size, "Match end overlay should follow the active portrait frame"))
+	checks.append(assert_eq(field_child.size if field_child != null else Vector2.ZERO, small_frame.size, "Dynamic full-rect field child should keep following after anchors are converted to explicit rects"))
+	checks.append(assert_eq(draw_child.size if draw_child != null else Vector2.ZERO, small_frame.size, "Dynamic full-rect draw child should keep following after anchors are converted to explicit rects"))
+	checks.append(assert_eq(match_end_child.size if match_end_child != null else Vector2.ZERO, small_frame.size, "Match end center should keep following the active portrait frame"))
+	checks.append(assert_true(large_frame.size.x > small_frame.size.x and large_frame.size.y > small_frame.size.y, "Regression setup should exercise a real Android-to-phone portrait relayout"))
+	var result := run_checks(checks)
+
+	scene.queue_free()
+	GameManager.battle_layout_mode = previous_layout
+	return result
+
+
+func test_android_portrait_dynamic_modal_overlays_created_after_layout_get_visible_frame() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+	var scene: Control = BattleScene.instantiate()
+	scene.call("_apply_portrait_layout", Vector2(1600, 2844))
+	var frame_rect: Rect2 = scene.get("_portrait_layout_frame_rect")
+	var field_overlay := _attach_test_modal_overlay(scene, "FieldInteractionOverlay", "FieldInteractionLayout")
+	var draw_overlay := _attach_test_modal_overlay(scene, "DrawRevealOverlay", "DrawRevealStage")
+	var match_end_overlay := _attach_test_modal_overlay(scene, "MatchEndOverlay", "MatchEndCenter")
+	scene.set("_field_interaction_overlay", field_overlay)
+	scene.set("_draw_reveal_overlay", draw_overlay)
+	scene.set("_match_end_overlay", match_end_overlay)
+	scene.call("_apply_portrait_popup_text_metrics")
+	var field_child := field_overlay.get_child(0) as Control
+	var draw_child := draw_overlay.get_child(0) as Control
+	var match_end_child := match_end_overlay.get_child(0) as Control
+	var result := run_checks([
+		assert_eq(field_overlay.size, frame_rect.size, "Field interaction overlay created after portrait layout should immediately receive the visible frame"),
+		assert_eq(draw_overlay.size, frame_rect.size, "Draw reveal overlay created after portrait layout should immediately receive the visible frame"),
+		assert_eq(match_end_overlay.size, frame_rect.size, "Match end overlay created after portrait layout should immediately receive the visible frame"),
+		assert_eq(field_child.size if field_child != null else Vector2.ZERO, frame_rect.size, "Late field overlay child should fill the synced frame"),
+		assert_eq(draw_child.size if draw_child != null else Vector2.ZERO, frame_rect.size, "Late draw overlay child should fill the synced frame"),
+		assert_eq(match_end_child.size if match_end_child != null else Vector2.ZERO, frame_rect.size, "Late match end center should fill the synced frame"),
+	])
+
+	scene.queue_free()
+	GameManager.battle_layout_mode = previous_layout
+	return result
+
+
+func test_android_portrait_invalid_action_hint_created_after_layout_gets_visible_frame() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+	var scene: Control = BattleScene.instantiate()
+	scene.call("_apply_portrait_layout", Vector2(1600, 2844))
+	var frame_rect: Rect2 = scene.get("_portrait_layout_frame_rect")
+	scene.call("_show_invalid_action_hint", {
+		"title": "Cannot use now",
+		"reason": "This action is blocked.",
+	})
+
+	var overlay := scene.find_child("InvalidActionOverlay", true, false) as Control
+	var center := scene.find_child("InvalidActionCenter", true, false) as Control
+	var box := scene.find_child("InvalidActionBox", true, false) as PanelContainer
+	var result := run_checks([
+		assert_true(overlay != null and overlay.visible, "Invalid action hint should create a visible overlay after portrait layout"),
+		assert_eq(overlay.size if overlay != null else Vector2.ZERO, frame_rect.size, "Invalid action overlay should receive the active Android portrait frame"),
+		assert_eq(center.size if center != null else Vector2.ZERO, frame_rect.size, "Invalid action center should fill the synced overlay frame"),
+		assert_true(box != null and box.custom_minimum_size.x <= frame_rect.size.x, "Invalid action hint box should stay inside the portrait frame"),
+	])
+
+	scene.queue_free()
+	GameManager.battle_layout_mode = previous_layout
+	return result
+
+
+func test_android_portrait_invalid_action_hint_close_button_stays_above_hand_area() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+	var scene: Control = BattleScene.instantiate()
+	scene.call("_apply_portrait_layout", Vector2(390, 844))
+	scene.call("_show_invalid_action_hint", {
+		"title": "Cannot use now",
+		"reason": "This action is blocked by the current battle state. ".repeat(8),
+		"detail": "Check the active Pokemon, attached cards, and turn restrictions before choosing another action. ".repeat(8),
+		"hint": "Tap the confirmation button to return to the battle.",
+	})
+
+	var hand_area := scene.find_child("HandArea", true, false) as Control
+	var box := scene.find_child("InvalidActionBox", true, false) as PanelContainer
+	var title := scene.find_child("InvalidActionTitle", true, false) as Label
+	var reason := scene.find_child("InvalidActionReason", true, false) as Label
+	var detail := scene.find_child("InvalidActionDetail", true, false) as Label
+	var close_button := scene.find_child("InvalidActionCloseButton", true, false) as Button
+	var frame_rect: Rect2 = scene.get("_portrait_layout_frame_rect")
+	var hand_height := maxf(hand_area.size.y, hand_area.custom_minimum_size.y) if hand_area != null else 0.0
+	var hand_top := frame_rect.position.y + frame_rect.size.y - hand_height
+	var box_bottom := box.position.y + box.size.y if box != null else 99999.0
+	var title_height := maxf(title.size.y, title.get_combined_minimum_size().y) if title != null else 0.0
+	var reason_height := maxf(reason.size.y, reason.get_combined_minimum_size().y) if reason != null else 0.0
+	var detail_height := maxf(detail.size.y, detail.get_combined_minimum_size().y) if detail != null else 0.0
+	var result := run_checks([
+		assert_true(hand_top > 0.0, "Portrait battle scene should expose the hand area top for invalid action clamping"),
+		assert_true(box != null and box.size.y > 0.0, "Portrait invalid hint should resolve an explicit box rect in the real battle scene"),
+		assert_true(title != null and title.visible and title.text.strip_edges() != "" and title_height > 0.0, "Portrait invalid hint title should remain visible after clamping: size %s, min %s" % [str(title.size if title != null else Vector2.ZERO), str(title.get_combined_minimum_size() if title != null else Vector2.ZERO)]),
+		assert_true(reason != null and reason.visible and reason.text.strip_edges() != "" and reason_height > 0.0, "Portrait invalid hint reason should remain visible after clamping: size %s, min %s" % [str(reason.size if reason != null else Vector2.ZERO), str(reason.get_combined_minimum_size() if reason != null else Vector2.ZERO)]),
+		assert_true(detail != null and detail.visible and detail.text.strip_edges() != "" and detail_height > 0.0, "Portrait invalid hint detail should remain visible after clamping: size %s, min %s" % [str(detail.size if detail != null else Vector2.ZERO), str(detail.get_combined_minimum_size() if detail != null else Vector2.ZERO)]),
+		assert_true(close_button != null and close_button.custom_minimum_size.y > 0.0, "Portrait invalid hint close button should keep a visible touch target"),
+		assert_true(box_bottom <= hand_top - 8.0, "Portrait invalid hint close button must stay above the hand area in the real battle scene: box bottom %.1f, hand top %.1f" % [box_bottom, hand_top]),
+	])
+
+	scene.queue_free()
+	GameManager.battle_layout_mode = previous_layout
+	return result
+
+
+func test_landscape_invalid_action_hint_stays_compact_and_ignores_portrait_clamp() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_LANDSCAPE
+	var scene: Control = BattleScene.instantiate()
+	var viewport_size := Vector2(1600, 900)
+	scene.call("_apply_landscape_layout", viewport_size)
+	scene.call("_show_invalid_action_hint", {
+		"title": "Cannot use now",
+		"reason": "This action is blocked by the current battle state. ".repeat(8),
+		"detail": "Check the active Pokemon, attached cards, and turn restrictions before choosing another action. ".repeat(8),
+		"hint": "Tap the confirmation button to return to the battle.",
+	})
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree != null:
+		await tree.process_frame
+		await tree.process_frame
+
+	var box := scene.find_child("InvalidActionBox", true, false) as PanelContainer
+	var title := scene.find_child("InvalidActionTitle", true, false) as Label
+	var reason := scene.find_child("InvalidActionReason", true, false) as Label
+	var detail := scene.find_child("InvalidActionDetail", true, false) as Label
+	var hint := scene.find_child("InvalidActionHint", true, false) as Label
+	var close_button := scene.find_child("InvalidActionCloseButton", true, false) as Button
+	var box_height := box.size.y if box != null and box.size.y > 0.0 else (box.custom_minimum_size.y if box != null else 99999.0)
+	var box_rect := Rect2(box.global_position, box.size) if box != null else Rect2(Vector2.ZERO, Vector2(99999, 99999))
+	var result := run_checks([
+		assert_true(box != null and box_height <= viewport_size.y * 0.34, "Landscape invalid hint should stay compact instead of inheriting portrait clamp metrics: height %.1f" % box_height),
+		assert_true(box != null and box_rect.position.y >= 24.0 and box_rect.end.y <= viewport_size.y - 24.0, "Landscape invalid hint should remain inside the screen after container sorting: %s" % str(box_rect)),
+		assert_true(title != null and title.clip_text and title.max_lines_visible == 1 and title.custom_minimum_size.y > 0.0, "Landscape title should use compact fixed-line sizing, not portrait touch sizing"),
+		assert_true(reason != null and reason.clip_text and reason.max_lines_visible == 1 and reason.custom_minimum_size.y > 0.0, "Landscape reason should use compact fixed-line sizing, not portrait touch sizing"),
+		assert_true(detail != null and detail.clip_text and detail.max_lines_visible == 1 and detail.custom_minimum_size.y > 0.0, "Landscape detail should use compact fixed-line sizing, not portrait touch sizing"),
+		assert_true(hint != null and hint.clip_text and hint.max_lines_visible == 1 and hint.custom_minimum_size.y > 0.0, "Landscape hint should use compact fixed-line sizing, not portrait touch sizing"),
+		assert_true(close_button != null and close_button.custom_minimum_size == Vector2(220, 58), "Landscape close button should keep the original compact size"),
+	])
+
+	scene.queue_free()
+	GameManager.battle_layout_mode = previous_layout
+	return result
+
+
+func test_android_portrait_full_library_effect_search_dialog_has_visible_frame() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+	var scene: Control = BattleScene.instantiate()
+	scene.set("_view_player", 0)
+	scene.set("_dialog_overlay", scene.find_child("DialogOverlay", true, false))
+	scene.set("_dialog_title", scene.find_child("DialogTitle", true, false))
+	scene.set("_dialog_list", scene.find_child("DialogList", true, false))
+	scene.set("_dialog_confirm", scene.find_child("DialogConfirm", true, false))
+	scene.set("_dialog_cancel", scene.find_child("DialogCancel", true, false))
+	scene.set("_dialog_box", scene.find_child("DialogBox", true, false))
+	scene.set("_dialog_vbox", scene.find_child("DialogVBox", true, false))
+	scene.call("_setup_dialog_gallery")
+	scene.call("_apply_portrait_layout", Vector2(1600, 2844))
+
+	var visible_cards: Array[CardInstance] = []
+	var visible_labels: Array[String] = []
+	for i: int in 12:
+		var card_name := "Deck Pokemon %02d" % i
+		visible_cards.append(CardInstance.create(_make_basic_pokemon_card(card_name), 0))
+		visible_labels.append(card_name)
+	var selectable_cards: Array[CardInstance] = [visible_cards[1], visible_cards[4], visible_cards[8]]
+	var card_indices := [-1, 0, -1, -1, 1, -1, -1, -1, 2, -1, -1, -1]
+	var source_card := CardInstance.create(_make_stadium_card("Test Mesagoza"), 0)
+	var step := {
+		"id": "search_pokemon",
+		"title": "Choose a Pokemon",
+		"items": selectable_cards,
+		"labels": ["Deck Pokemon 01", "Deck Pokemon 04", "Deck Pokemon 08"],
+		"presentation": "cards",
+		"card_items": visible_cards,
+		"card_indices": card_indices,
+		"choice_labels": visible_labels,
+		"visible_scope": "own_full_deck",
+		"min_select": 0,
+		"max_select": 1,
+		"allow_cancel": true,
+	}
+	var steps: Array[Dictionary] = []
+	steps.append(step)
+	scene.call("_start_effect_interaction", "play_stadium", 0, steps, source_card)
+
+	var frame_rect: Rect2 = scene.get("_portrait_layout_frame_rect")
+	var dialog_overlay := scene.find_child("DialogOverlay", true, false) as Control
+	var dialog_center := scene.find_child("DialogCenter", true, false) as Control
+	var dialog_box := scene.find_child("DialogBox", true, false) as Control
+	var dialog_scroll := scene.get("_dialog_card_scroll") as ScrollContainer
+	var dialog_row := scene.get("_dialog_card_row") as HBoxContainer
+	var expected_width := float(scene.call("_portrait_popup_near_width"))
+	var first_card := dialog_row.get_child(0) as Control if dialog_row != null and dialog_row.get_child_count() > 0 else null
+	var dialog_card_size: Vector2 = scene.get("_dialog_card_size")
+	var result := run_checks([
+		assert_eq(str(scene.get("_pending_choice")), "effect_interaction", "Full-library card search should stay in the effect-interaction flow"),
+		assert_true(dialog_overlay != null and dialog_overlay.visible, "Android portrait full-library search should show the shared dialog overlay"),
+		assert_eq(dialog_overlay.position if dialog_overlay != null else Vector2(-1, -1), frame_rect.position, "Portrait dialog overlay should be anchored to the active portrait frame"),
+		assert_eq(dialog_overlay.size if dialog_overlay != null else Vector2.ZERO, frame_rect.size, "Portrait dialog overlay should have a non-zero Android portrait frame size"),
+		assert_eq(dialog_center.size if dialog_center != null else Vector2.ZERO, frame_rect.size, "Dialog center should fill the visible portrait overlay frame"),
+		assert_true(dialog_box != null and absf(dialog_box.custom_minimum_size.x - expected_width) < 0.1, "Android portrait search dialog should use the near-screen popup width"),
+		assert_true(dialog_scroll != null and dialog_scroll.visible and dialog_scroll.custom_minimum_size.y >= dialog_card_size.y, "Full-library card gallery should keep a visible card-height scroll lane"),
+		assert_eq(dialog_row.get_child_count() if dialog_row != null else 0, visible_cards.size(), "Full-library search should render every visible deck card, including disabled cards"),
+		assert_eq(first_card.custom_minimum_size if first_card != null else Vector2.ZERO, dialog_card_size, "Rendered search cards should use the active Android portrait dialog card metrics"),
+	])
+
+	scene.queue_free()
+	GameManager.battle_layout_mode = previous_layout
+	return result
+
+
 func test_portrait_layout_resizes_already_open_setup_bench_card_dialog() -> String:
 	var previous_layout: String = GameManager.battle_layout_mode
 	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
@@ -2580,7 +2844,7 @@ func test_landscape_layout_restores_top_actions_after_portrait() -> String:
 	var log_panel := scene.find_child("LogPanel", true, false) as Control
 	var landscape_side_width := 0.0 if left_panel == null or not left_panel.visible else clampf(1600.0 * 0.05, 72.0, 108.0)
 	var landscape_right_width := 0.0 if right_panel == null or not right_panel.visible else landscape_side_width + 6.0
-	var landscape_log_width := 0.0 if log_panel == null or not log_panel.visible else clampf(1600.0 * 0.125, 124.0, 204.0)
+	var landscape_log_width := 0.0 if log_panel == null or not log_panel.visible else clampf(1600.0 * 0.15, 144.0, 252.0)
 	var landscape_center_width := 1600.0 - landscape_side_width - landscape_right_width - landscape_log_width
 	var landscape_bench_spacing := float(clampi(int(1600.0 * 0.004), 4, 10))
 	var landscape_measured_variant: Variant = controller.call(
@@ -2732,10 +2996,13 @@ func test_portrait_stadium_card_preview_uses_two_thirds_active_height() -> Strin
 
 	scene.call("_refresh_stadium_card_hud", gsm.game_state, 0, true)
 	var card_view := scene.get("_stadium_card_view") as Control
+	var overlay := scene.find_child("StadiumCardOverlay", true, false) as Control
+	var frame_rect: Rect2 = scene.get("_portrait_layout_frame_rect")
 	var expected_size := active_size * (2.0 / 3.0)
 
 	var result := run_checks([
 		assert_true(card_view != null and card_view.visible, "Portrait Stadium card preview should be visible when a Stadium is in play"),
+		assert_eq(overlay.size if overlay != null else Vector2.ZERO, frame_rect.size, "Portrait Stadium card overlay should follow the active portrait frame"),
 		assert_true(active_size != Vector2.ZERO and card_view != null and absf(card_view.custom_minimum_size.y - expected_size.y) <= 1.0, "Portrait Stadium card preview height should be two thirds of the active-card height"),
 		assert_true(active_size != Vector2.ZERO and card_view != null and absf(card_view.custom_minimum_size.x - expected_size.x) <= 1.0, "Portrait Stadium card preview width should scale with the reduced height"),
 	])

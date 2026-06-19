@@ -55,9 +55,9 @@ func test_store_cache_deduplicates_bounds_and_cycles_items() -> String:
 	store.set_cache_path(TEST_CACHE_PATH)
 	store.load_cache()
 
-	for i: int in range(12):
+	for i: int in range(22):
 		store.upsert_item(_server_recommendation("rec-%02d" % i, 600000 + i), true)
-	store.upsert_item(_server_recommendation("rec-10", 600010, "重复更新标题"), true)
+	store.upsert_item(_server_recommendation("rec-20", 600020, "重复更新标题"), true)
 	var items: Array[Dictionary] = store.get_items()
 	var current_id := store.get_current_id()
 	var next_item: Dictionary = store.get_next_cached(current_id)
@@ -71,13 +71,13 @@ func test_store_cache_deduplicates_bounds_and_cycles_items() -> String:
 	_remove_test_cache()
 
 	return run_checks([
-		assert_eq(items.size(), 10, "Cache should keep the most recent ten recommendations"),
-		assert_eq(str((items[0] as Dictionary).get("id", "")), "rec-10", "Updated duplicate should move to the front"),
+		assert_eq(items.size(), 20, "Cache should keep the most recent twenty recommendations"),
+		assert_eq(str((items[0] as Dictionary).get("id", "")), "rec-20", "Updated duplicate should move to the front"),
 		assert_eq(str((items[0] as Dictionary).get("title", "")), "重复更新标题", "Updated duplicate should replace old content"),
-		assert_eq(current_id, "rec-10", "Current id should track the latest current item"),
+		assert_eq(current_id, "rec-20", "Current id should track the latest current item"),
 		assert_false(next_item.is_empty(), "Cache should return another item when cycling"),
 		assert_true(saved, "Cache should save to user storage"),
-		assert_eq(reloaded_items.size(), 10, "Saved cache should reload bounded items"),
+		assert_eq(reloaded_items.size(), 20, "Saved cache should reload bounded items"),
 	])
 
 

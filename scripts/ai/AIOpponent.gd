@@ -189,6 +189,14 @@ func get_last_decision_trace():
 	return _last_decision_trace.clone()
 
 
+func consume_last_decision_trace():
+	if _last_decision_trace == null:
+		return null
+	var trace = _last_decision_trace.clone()
+	_last_decision_trace = null
+	return trace
+
+
 func get_event_counters() -> Dictionary:
 	return _event_counters.duplicate(true)
 
@@ -731,7 +739,7 @@ func _execute_action(battle_scene: Control, gsm: GameStateMachine, action: Dicti
 					return bool(ability_result) if typeof(ability_result) == TYPE_BOOL else true
 				return false
 			if gsm.use_ability(player_index, action.get("source_slot"), int(action.get("ability_index", 0)), action.get("targets", [])):
-				_after_successful_action(battle_scene, true)
+				_after_successful_action(battle_scene, true, "use_ability")
 				return true
 		"retreat":
 			if gsm.retreat(player_index, action.get("energy_to_discard", []), action.get("bench_target")):
@@ -774,9 +782,9 @@ func _execute_action(battle_scene: Control, gsm: GameStateMachine, action: Dicti
 	return false
 
 
-func _after_successful_action(battle_scene: Control, check_handover: bool = false) -> void:
+func _after_successful_action(battle_scene: Control, check_handover: bool = false, action_kind: String = "") -> void:
 	if battle_scene != null and battle_scene.has_method("_refresh_ui_after_successful_action"):
-		battle_scene.call("_refresh_ui_after_successful_action", check_handover, player_index)
+		battle_scene.call("_refresh_ui_after_successful_action", check_handover, player_index, action_kind)
 
 
 func _run_take_prize_step(battle_scene: Control, gsm: GameStateMachine) -> bool:

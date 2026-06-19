@@ -95,6 +95,7 @@ func _apply_portrait_popup_text_metrics() -> void:
 		_restore_portrait_popup_text_metrics()
 		_restore_portrait_scrollbar_metrics()
 		return
+	_sync_portrait_modal_overlay_rects()
 	_apply_portrait_dialog_width_metrics()
 	_apply_portrait_overlay_box_metrics()
 	for root: Node in _portrait_popup_text_roots():
@@ -363,10 +364,10 @@ func _show_send_out_dialog(pi: int) -> void:
 
 
 func _show_slot_card_detail(slot_id: String) -> bool:
-	var detail_card := _slot_card_data_for_detail(slot_id)
+	var detail_card := _slot_card_instance_for_detail(slot_id)
 	if detail_card == null:
 		return false
-	_show_card_detail(detail_card)
+	_show_card_detail_for_instance(detail_card)
 	return true
 
 
@@ -679,11 +680,53 @@ func _can_accept_live_action() -> bool:
 	)
 
 
+func _active_card_foil_player_index() -> int:
+	if _is_review_mode() or _gsm == null or _gsm.game_state == null:
+		return -1
+	return int(_gsm.game_state.current_player_index)
+
+
+func _sync_card_foil_effects(root: Node = null) -> void:
+	var sync_root := root if root != null else self
+	if sync_root == null:
+		return
+	_sync_card_foil_effects_in_tree(sync_root, _active_card_foil_player_index())
+
+
+func _sync_card_foil_effects_in_tree(node: Node, active_player_index: int) -> void:
+	if node == null:
+		return
+	var card_view := node as BattleCardView
+	if card_view != null:
+		_sync_card_foil_effect_for_view(card_view, active_player_index)
+	for child: Node in node.get_children():
+		_sync_card_foil_effects_in_tree(child, active_player_index)
+
+
+func _sync_card_foil_effect_for_view(card_view: BattleCardView, active_player_index: int = -999) -> void:
+	if card_view == null:
+		return
+	var resolved_active_player := _active_card_foil_player_index() if active_player_index == -999 else active_player_index
+	var owner_index := _card_foil_owner_index_for_view(card_view)
+	var enabled := resolved_active_player >= 0 and owner_index == resolved_active_player
+	card_view.set_card_foil_effect_enabled(enabled, BattleCardView.CARD_FOIL_DEFAULT_INTENSITY)
+
+
+func _card_foil_owner_index_for_view(card_view: BattleCardView) -> int:
+	if card_view == null:
+		return -1
+	if card_view.has_method("get_card_foil_owner_index"):
+		return int(card_view.call("get_card_foil_owner_index"))
+	if card_view.card_instance != null:
+		return int(card_view.card_instance.owner_index)
+	return int(card_view.get_meta("card_foil_owner_index", -1))
+
 
 func _refresh_hand() -> void:
 	_trace_portrait_layout_stage("scene.refresh_hand.before_display")
 	_ensure_battle_display_coordinator()
 	_battle_display_coordinator.call("refresh_hand")
+	_sync_card_foil_effects(_hand_container)
 	_trace_portrait_layout_stage("scene.refresh_hand.after_display")
 	_finalize_portrait_layout_constraints()
 	_trace_portrait_layout_stage("scene.refresh_hand.after_finalize")
@@ -1084,19 +1127,39 @@ func _resolve_top_action_gap(viewport_size: Vector2) -> int:
 
 
 func _slot_card_data_for_detail(slot_id: String) -> CardData:
+	var detail_card := _slot_card_instance_for_detail(slot_id)
+	return detail_card.card_data if detail_card != null else null
+
+
+func _slot_card_instance_for_detail(slot_id: String) -> CardInstance:
 	var detail_state: GameState = _gsm.game_state if _gsm != null else null
 	if detail_state == null:
 		return null
 	var detail_slot: PokemonSlot = _slot_from_id(slot_id, detail_state)
 	if detail_slot == null or detail_slot.pokemon_stack.is_empty():
 		return null
-	return detail_slot.get_card_data()
+	return detail_slot.get_top_card()
 
 
 
 func _show_card_detail(cd: CardData) -> void:
 	_ensure_battle_card_detail_coordinator()
 	_battle_card_detail_coordinator.call("show_card_detail", cd)
+	_sync_card_foil_effects(_detail_overlay)
+
+
+func _show_card_detail_for_instance(inst: CardInstance) -> void:
+	if inst == null or inst.card_data == null:
+		return
+	_ensure_battle_card_detail_coordinator()
+	if _battle_card_detail_coordinator.has_method("show_card_instance_detail"):
+		_battle_card_detail_coordinator.call("show_card_instance_detail", inst)
+	else:
+		_battle_card_detail_coordinator.call("show_card_detail", inst.card_data)
+	var detail_card_view := _detail_card_view if _detail_card_view != null else find_child("DetailCardPreview", true, false) as BattleCardView
+	if detail_card_view != null and detail_card_view.has_method("set_card_foil_owner_index"):
+		detail_card_view.call("set_card_foil_owner_index", inst.owner_index)
+	_sync_card_foil_effects(_detail_overlay)
 
 
 
@@ -1327,6 +1390,7 @@ func _retreat_has_valid_partial_subset(
 
 func _show_dialog(title: String, items: Array, extra_data: Dictionary = {}) -> void:
 	_battle_dialog_controller.call("show_dialog", self, title, items, extra_data)
+	_sync_card_foil_effects(_dialog_overlay)
 
 
 func _show_field_slot_choice(title: String, items: Array, data: Dictionary = {}) -> void:
@@ -1712,13 +1776,32 @@ func _mark_ready_vfx_action_source(player_index: int, action_kind: String = "") 
 
 
 
-func _refresh_ui_after_successful_action(check_handover: bool = false, action_player_index: int = -1) -> void:
+func _ensure_battle_field_swap_animator() -> void:
+	if _battle_field_swap_animator == null:
+		_battle_field_swap_animator = BattleFieldSwapAnimatorScript.new()
+
+
+
+func _sync_field_swap_snapshot_after_refresh() -> void:
+	if _gsm == null or _gsm.game_state == null:
+		return
+	_ensure_battle_field_swap_animator()
+	if _battle_field_swap_animator == null:
+		return
+	var current_snapshot: Dictionary = _battle_field_swap_animator.call("capture_field_snapshot", _gsm.game_state, _view_player)
+	if not _is_review_mode() and not _field_swap_last_snapshot.is_empty():
+		_battle_field_swap_animator.call("play_detected_field_movement", self, _field_swap_last_snapshot, current_snapshot)
+	_field_swap_last_snapshot = current_snapshot
+
+
+
+func _refresh_ui_after_successful_action(check_handover: bool = false, action_player_index: int = -1, action_kind: String = "") -> void:
 	if has_method("_clear_hand_drag_click_suppression"):
 		call("_clear_hand_drag_click_suppression", "successful_action")
 	if has_method("_arm_hand_primary_release_fallback_window"):
 		call("_arm_hand_primary_release_fallback_window", "successful_action")
 	_hide_invalid_action_hint()
-	_mark_ready_vfx_action_source(action_player_index)
+	_mark_ready_vfx_action_source(action_player_index, action_kind)
 	_refresh_ui()
 	if check_handover:
 		_check_two_player_handover()
@@ -1729,15 +1812,51 @@ func _refresh_ui_after_successful_action(check_handover: bool = false, action_pl
 
 
 
-func _log(msg: String) -> void:
+func _log(msg: String, action: GameAction = null) -> void:
 	if _log_list != null:
+		_log_list.bbcode_enabled = true
 		if _log_list.get_parsed_text().length() > 12000:
 			var full := _log_list.text
 			var cut := full.find("\n", full.length() / 3)
 			if cut >= 0:
 				_log_list.text = full.substr(cut + 1)
-		_log_list.append_text(msg + "\n")
+		_log_list.append_text(_format_battle_log_entry_bbcode(msg, action) + "\n")
 	_runtime_log("ui_log", msg)
+
+
+func _format_battle_log_entry_bbcode(msg: String, action: GameAction = null) -> String:
+	_ensure_battle_action_log_presenter()
+	_ensure_battle_log_rich_text_renderer()
+	var entry: Dictionary = {}
+	if _battle_action_log_presenter != null:
+		if action != null:
+			entry = _battle_action_log_presenter.call("format_action", action, msg, _battle_log_player_names())
+		else:
+			entry = _battle_action_log_presenter.call("format_plain_message", msg, _battle_log_player_names())
+	if _battle_log_rich_text_renderer != null:
+		return str(_battle_log_rich_text_renderer.call("render_entry", entry))
+	return "[color=#dceff8]%s[/color]" % _escape_battle_log_bbcode(msg)
+
+
+func _escape_battle_log_bbcode(text: String) -> String:
+	return text.replace("[", "\uE000").replace("]", "\uE001").replace("\uE000", "[lb]").replace("\uE001", "[rb]")
+
+
+func _ensure_battle_action_log_presenter() -> void:
+	if _battle_action_log_presenter == null:
+		_battle_action_log_presenter = BattleActionLogPresenterScript.new()
+
+
+func _ensure_battle_log_rich_text_renderer() -> void:
+	if _battle_log_rich_text_renderer == null:
+		_battle_log_rich_text_renderer = BattleLogRichTextRendererScript.new()
+
+
+func _battle_log_player_names() -> Array[String]:
+	return [
+		GameManager.resolve_battle_player_display_name(0),
+		GameManager.resolve_battle_player_display_name(1),
+	]
 
 
 func _show_invalid_action_hint(payload: Variant) -> void:
@@ -2049,6 +2168,92 @@ func _portrait_popup_text_roots() -> Array[Node]:
 	return roots
 
 
+func _sync_portrait_modal_overlay_rects() -> void:
+	if not _is_portrait_battle_layout_active():
+		return
+	var overlay_rect := _portrait_layout_frame_rect
+	if overlay_rect.size == Vector2.ZERO:
+		var fallback_size := _portrait_layout_full_size
+		if fallback_size == Vector2.ZERO:
+			fallback_size = size
+		if fallback_size == Vector2.ZERO and is_inside_tree():
+			fallback_size = _battle_layout_logical_viewport_size(get_viewport_rect().size, "portrait")
+		if fallback_size == Vector2.ZERO:
+			return
+		overlay_rect = Rect2(Vector2.ZERO, fallback_size)
+	if overlay_rect.size.x <= 0.0 or overlay_rect.size.y <= 0.0:
+		return
+	var field_interaction_overlay: Variant = _field_interaction_overlay if _field_interaction_overlay != null else find_child("FieldInteractionOverlay", true, false)
+	var draw_reveal_overlay: Variant = _draw_reveal_overlay if _draw_reveal_overlay != null else find_child("DrawRevealOverlay", true, false)
+	var match_end_overlay: Variant = get("_match_end_overlay")
+	if match_end_overlay == null:
+		match_end_overlay = find_child("MatchEndOverlay", true, false)
+	var invalid_action_overlay: Variant = find_child("InvalidActionOverlay", true, false)
+	var stadium_card_overlay: Variant = find_child("StadiumCardOverlay", true, false)
+	var candidates: Array[Variant] = [
+		_dialog_overlay if _dialog_overlay != null else find_child("DialogOverlay", true, false),
+		_handover_panel if _handover_panel != null else find_child("HandoverPanel", true, false),
+		_coin_overlay if _coin_overlay != null else find_child("CoinFlipOverlay", true, false),
+		_detail_overlay if _detail_overlay != null else find_child("DetailOverlay", true, false),
+		_discard_overlay if _discard_overlay != null else find_child("DiscardOverlay", true, false),
+		_review_overlay if _review_overlay != null else find_child("ReviewOverlay", true, false),
+		field_interaction_overlay,
+		draw_reveal_overlay,
+		match_end_overlay,
+		invalid_action_overlay,
+		stadium_card_overlay,
+	]
+	for candidate: Variant in candidates:
+		var overlay := candidate as Control
+		if overlay == null:
+			continue
+		_apply_portrait_modal_overlay_rect(overlay, overlay_rect)
+
+
+func _apply_portrait_modal_overlay_rect(overlay: Control, overlay_rect: Rect2) -> void:
+	if overlay == null:
+		return
+	overlay.set_anchors_preset(Control.PRESET_TOP_LEFT, false)
+	overlay.position = overlay_rect.position
+	overlay.size = overlay_rect.size
+	var child_rect := Rect2(Vector2.ZERO, overlay_rect.size)
+	for child: Node in overlay.get_children():
+		var control := child as Control
+		if control == null:
+			continue
+		if _portrait_modal_overlay_child_should_fill(control):
+			control.set_anchors_preset(Control.PRESET_TOP_LEFT, false)
+			control.position = child_rect.position
+			control.size = child_rect.size
+			control.set_meta("portrait_modal_full_rect_child", true)
+
+
+func _portrait_modal_overlay_child_should_fill(control: Control) -> bool:
+	if control == null:
+		return false
+	if bool(control.get_meta("portrait_modal_full_rect_child", false)):
+		return true
+	var full_rect_child_names := {
+		"DialogCenter": true,
+		"HandoverCenter": true,
+		"CoinCenter": true,
+		"DetailCenter": true,
+		"DiscardCenter": true,
+		"ReviewCenter": true,
+		"MatchEndCenter": true,
+		"InvalidActionCenter": true,
+		"Stage": true,
+	}
+	if full_rect_child_names.has(str(control.name)):
+		return true
+	return (
+		absf(control.anchor_left) <= 0.001
+		and absf(control.anchor_top) <= 0.001
+		and absf(control.anchor_right - 1.0) <= 0.001
+		and absf(control.anchor_bottom - 1.0) <= 0.001
+	)
+
+
 
 func _check_two_player_handover() -> void:
 	_ensure_battle_overlay_coordinator()
@@ -2127,6 +2332,7 @@ func _refresh_ui() -> void:
 	_trace_portrait_layout_stage("scene.refresh_ui.before_display")
 	_ensure_battle_display_coordinator()
 	_battle_display_coordinator.call("refresh_all")
+	_sync_card_foil_effects()
 	_sync_stadium_backdrop()
 	_trace_portrait_layout_stage("scene.refresh_ui.after_display")
 	_refresh_vstar_lost_hud_values()
@@ -2137,5 +2343,6 @@ func _refresh_ui() -> void:
 	_trace_portrait_layout_stage("scene.refresh_ui.before_finalize")
 	_finalize_portrait_layout_constraints()
 	_trace_portrait_layout_stage("scene.refresh_ui.after_finalize")
+	_sync_field_swap_snapshot_after_refresh()
 	call_deferred("_deferred_finalize_portrait_layout_constraints")
 	_check_ready_vfx_triggers()

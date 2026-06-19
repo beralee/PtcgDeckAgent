@@ -169,6 +169,57 @@ func test_exporter_labels_non_winner_samples_as_loss() -> String:
 	])
 
 
+func test_exporter_reads_card_and_target_names_from_trace_snapshots() -> String:
+	var exporter = AIDecisionSampleExporterScript.new()
+	exporter.base_dir = "user://test_outputs/decision_samples"
+	exporter.start_game({
+		"run_id": "run_test_snapshot",
+		"match_id": "match_test_snapshot",
+		"pipeline_name": "snapshot_training",
+	})
+	var trace := AIDecisionTraceScript.new()
+	trace.turn_number = 1
+	trace.phase = "MAIN"
+	trace.player_index = 0
+	trace.scored_actions = [{
+		"kind": "attach_energy",
+		"card": {
+			"trace_ref_type": "card",
+			"name": "Psychic Energy",
+			"name_en": "Psychic Energy",
+		},
+		"target_slot": {
+			"trace_ref_type": "pokemon_slot",
+			"pokemon_name": "Snapshot Ralts",
+			"name": "Snapshot Ralts",
+			"remaining_hp": 70,
+			"max_hp": 70,
+		},
+		"score": 250.0,
+		"features": {"action_vector": [1.0, 0.0]},
+	}]
+	trace.chosen_action = trace.scored_actions[0].duplicate(true)
+
+	exporter.record_trace(trace)
+	exporter.end_game(0)
+	var path: String = exporter.export_game()
+	var file := FileAccess.open(path, FileAccess.READ)
+	var parsed: Dictionary = JSON.parse_string(file.get_as_text())
+	file.close()
+	var records: Array = parsed.get("records", [])
+	var record: Dictionary = {} if records.is_empty() else records[0]
+	var legal_actions: Array = record.get("legal_actions", [])
+	var first_action: Dictionary = {} if legal_actions.is_empty() else legal_actions[0]
+	var chosen_action: Dictionary = record.get("chosen_action", {})
+
+	return run_checks([
+		assert_eq(first_action.get("card_name", ""), "Psychic Energy", "Exporter should preserve card names from frozen trace snapshots"),
+		assert_eq(first_action.get("target_name", ""), "Snapshot Ralts", "Exporter should preserve target names from frozen trace snapshots"),
+		assert_eq(chosen_action.get("card_name", ""), "Psychic Energy", "Chosen action should preserve card names from frozen trace snapshots"),
+		assert_eq(chosen_action.get("target_name", ""), "Snapshot Ralts", "Chosen action should preserve target names from frozen trace snapshots"),
+	])
+
+
 func test_headless_duel_can_record_decision_samples_via_exporter() -> String:
 	var benchmark_runner = AIBenchmarkRunnerScript.new()
 	var exporter = AIDecisionSampleExporterScript.new()

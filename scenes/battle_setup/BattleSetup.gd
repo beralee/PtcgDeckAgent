@@ -37,10 +37,10 @@ const BACKGROUND_GALLERY_HEIGHT := 132.0
 const BACKGROUND_GALLERY_DRAG_THRESHOLD := 12.0
 const BACKGROUND_GALLERY_WHEEL_STEP := 96
 const DECK_PICKER_MAIN_FONT_SIZE := 28
+const DECK_PICKER_SETUP_LANDSCAPE_FONT_SIZE := 18
 const DECK_PICKER_LIST_FONT_SIZE := 24
 const AIVersionRegistryScript = preload("res://scripts/ai/AIVersionRegistry.gd")
 const AIFixedDeckOrderRegistryScript = preload("res://scripts/ai/AIFixedDeckOrderRegistry.gd")
-const DeckStrategyRegistryScript = preload("res://scripts/ai/DeckStrategyRegistry.gd")
 const HUD_ACCENT := Color(0.28, 0.92, 1.0, 1.0)
 const HUD_ACCENT_WARM := Color(1.0, 0.55, 0.24, 1.0)
 const HUD_TEXT := Color(0.92, 0.98, 1.0, 1.0)
@@ -50,6 +50,28 @@ const DECK_PICKER_RECENT := "recent"
 const DECK_PICKER_LIMIT := 80
 const DECK_PICKER_TOUCH_BOUND_META := "_battle_setup_deck_picker_touch_bound"
 const BGM_PICKER_OVERLAY_NAME := "BattleMusicPickerOverlay"
+const HUD_OPTION_PICKER_OVERLAY_NAME := "BattleSetupHudPickerOverlay"
+const AI_DECK_STRATEGY_ID_BY_DECK_ID := {
+	575716: "charizard_ex",
+	578647: "gardevoir",
+	569061: "arceus_giratina",
+	575657: "lugia_archeops",
+	575718: "raging_bolt_ogerpon",
+	575720: "miraidon",
+	575723: "dragapult_dusknoir",
+	579502: "dragapult_charizard",
+	609431: "v175_lugia_archeops",
+	610080: "gardevoir",
+	1700002: "v17_archaludon_dialga",
+	1700003: "v17_water_turtle",
+	1700004: "v17_palkia_gholdengo",
+	1700005: "v17_bomb_charizard",
+	1700007: "v17_miraidon",
+	1700008: "v17_dragapult_dusknoir",
+	1700011: "v17_regidrago",
+	1750002: "v175_pure_dragapult",
+}
+const AI_SETUP_HELP_COPY := "规则模型可直接开打；想使用大模型或策略探讨，请先在 AI 设置填写 API，并用“测试”确认当前模型可用。"
 
 ## 卡组列表，与 OptionButton index 对应
 var _deck_list: Array = []
@@ -62,6 +84,7 @@ var _background_gallery_drag_active: bool = false
 var _background_gallery_dragging: bool = false
 var _background_gallery_drag_start_position: Vector2 = Vector2.ZERO
 var _background_gallery_drag_start_scroll: int = 0
+var _background_gallery_pressed_path: String = ""
 var _battle_music_tracks: Array[Dictionary] = []
 var _selected_battle_music_id: String = "none"
 var _selected_battle_music_volume_percent: int = 20
@@ -69,7 +92,6 @@ var _ai_version_registry: RefCounted = AIVersionRegistryScript.new()
 var _ai_fixed_deck_order_registry: RefCounted = AIFixedDeckOrderRegistryScript.new()
 var _playable_ai_versions: Array[Dictionary] = []
 var _deck_view_dialog: RefCounted = DeckViewDialogScript.new()
-var _deck_strategy_registry: RefCounted = DeckStrategyRegistryScript.new()
 var _pending_ai_strategy_variant_id: String = ""
 var _strategy_discussion_dialog: AcceptDialog = null
 var _strategy_discussion_signature := ""
@@ -78,6 +100,7 @@ var _pending_llm_model_test_config: Dictionary = {}
 var _llm_model_test_in_progress: bool = false
 var _portrait_action_footer_candidate: Button = null
 var _deck_picker_button_candidate_slot: int = -1
+var _deck_action_button_candidate: Button = null
 var _deck_picker_overlay: Control = null
 var _deck_picker_panel: PanelContainer = null
 var _deck_picker_slot_index: int = 0
@@ -91,6 +114,10 @@ var _deck_picker_input_suppress_until_msec: int = 0
 var _bgm_picker_overlay: Control = null
 var _bgm_picker_scroll: ScrollContainer = null
 var _bgm_picker_list: VBoxContainer = null
+var _hud_option_picker_overlay: Control = null
+var _hud_option_picker_scroll: ScrollContainer = null
+var _hud_option_picker_list: VBoxContainer = null
+var _hud_option_picker_target: OptionButton = null
 var _mode_segment_buttons: Dictionary = {}
 var _first_player_segment_buttons: Dictionary = {}
 var _battle_layout_segment_buttons: Dictionary = {}
@@ -99,9 +126,13 @@ var _ai_strategy_segment_buttons: Array[Button] = []
 var _dynamic_stadium_background_enabled: bool = true
 var _non_battle_layout_controller: RefCounted = NonBattleLayoutControllerScript.new()
 var _current_non_battle_layout_context: Dictionary = {}
+var _ready_initialized: bool = false
 
 
 func _ready() -> void:
+	if _ready_initialized:
+		return
+	_ready_initialized = true
 	_apply_hud_theme()
 	_connect_non_battle_layout_signal()
 	%ModeOption.clear()
@@ -140,10 +171,14 @@ func _ready() -> void:
 	%Deck1EditButton.pressed.connect(_on_deck_edit_pressed.bind(0))
 	%Deck2ViewButton.pressed.connect(_on_deck_view_pressed.bind(1))
 	%Deck2EditButton.pressed.connect(_on_deck_edit_pressed.bind(1))
+	if not %AIPreviewStrengthOption.pressed.is_connected(_on_ai_preview_strength_option_pressed):
+		%AIPreviewStrengthOption.pressed.connect(_on_ai_preview_strength_option_pressed)
 	if not %AIStrategyOption.item_selected.is_connected(_on_ai_strategy_variant_changed):
 		%AIStrategyOption.item_selected.connect(_on_ai_strategy_variant_changed)
 	if not %LLMModelOption.item_selected.is_connected(_on_llm_model_changed):
 		%LLMModelOption.item_selected.connect(_on_llm_model_changed)
+	if not %LLMModelOption.pressed.is_connected(_on_llm_model_option_pressed):
+		%LLMModelOption.pressed.connect(_on_llm_model_option_pressed)
 	if not %BtnTestLLMModel.pressed.is_connected(_on_test_llm_model_pressed):
 		%BtnTestLLMModel.pressed.connect(_on_test_llm_model_pressed)
 	if not %BtnPreviewBgm.pressed.is_connected(_on_bgm_preview_pressed):
@@ -155,6 +190,7 @@ func _ready() -> void:
 	_restore_returned_setup_context()
 	_refresh_ai_ui_visibility()
 	call_deferred("_apply_non_battle_layout")
+	call_deferred("_request_battle_scene_resource_prewarm")
 
 
 func _notification(what: int) -> void:
@@ -162,16 +198,31 @@ func _notification(what: int) -> void:
 		_apply_non_battle_layout()
 
 
+func _request_battle_scene_resource_prewarm() -> void:
+	if not is_inside_tree():
+		return
+	await get_tree().process_frame
+	if GameManager != null and GameManager.has_method("prewarm_battle_scene_resource"):
+		GameManager.prewarm_battle_scene_resource()
+
+
 func _input(event: InputEvent) -> void:
+	if _handle_battle_setup_hud_picker_input(event):
+		return
 	if _handle_battle_music_picker_input(event):
 		return
 	if _handle_deck_picker_modal_input(event):
+		return
+	if _handle_deck_action_button_input(event):
 		return
 	if _handle_deck_picker_button_input(event):
 		return
 	if _handle_portrait_action_footer_input(event):
 		return
-	NonBattleTouchBridgeScript.handle_root_touch(self, event)
+	if _handle_background_gallery_root_input(event):
+		return
+	if NonBattleTouchBridgeScript.handle_root_touch(self, event):
+		return
 
 
 func _connect_non_battle_layout_signal() -> void:
@@ -208,6 +259,7 @@ func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode
 		_apply_battle_setup_portrait_layout(context)
 	else:
 		_apply_battle_setup_landscape_layout(context)
+	_sync_strategy_discussion_button_state()
 
 
 func _apply_battle_setup_portrait_layout(context: Dictionary) -> void:
@@ -217,6 +269,9 @@ func _apply_battle_setup_portrait_layout(context: Dictionary) -> void:
 	var right_column := find_child("RightColumn", true, false) as Control
 	if root == null or content_columns == null or left_column == null or right_column == null:
 		return
+	var landscape_scroll := root.get_node_or_null("LandscapeSetupScroll") as ScrollContainer
+	if landscape_scroll != null:
+		landscape_scroll.visible = false
 	var scroll := root.get_node_or_null("PortraitSetupScroll") as ScrollContainer
 	if scroll == null:
 		scroll = ScrollContainer.new()
@@ -231,6 +286,8 @@ func _apply_battle_setup_portrait_layout(context: Dictionary) -> void:
 		stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		stack.add_theme_constant_override("separation", int(context.get("section_gap", 14)))
 		scroll.add_child(stack)
+	HudThemeScript.style_scroll_container(scroll, "auto")
+	NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(scroll)
 	var stack := scroll.get_node_or_null("PortraitSetupStack") as VBoxContainer
 	if stack == null:
 		return
@@ -247,7 +304,10 @@ func _apply_battle_setup_portrait_layout(context: Dictionary) -> void:
 	_layout_portrait_scroll_footer_spacer(stack, context)
 	_layout_portrait_deck_rows(context)
 	_layout_portrait_action_footer(context)
+	_apply_setup_text_layout_mode(true)
 	_apply_battle_setup_mobile_metrics(context)
+	_layout_background_gallery_cards()
+	call_deferred("_layout_background_gallery_cards")
 
 
 func _apply_battle_setup_landscape_layout(context: Dictionary) -> void:
@@ -255,11 +315,14 @@ func _apply_battle_setup_landscape_layout(context: Dictionary) -> void:
 	var content_columns := find_child("ContentColumns", true, false) as HBoxContainer
 	var left_column := find_child("LeftColumn", true, false) as Control
 	var right_column := find_child("RightColumn", true, false) as Control
-	if content_columns == null or left_column == null or right_column == null:
+	if root == null or content_columns == null or left_column == null or right_column == null:
 		return
 	var scroll := root.get_node_or_null("PortraitSetupScroll") as ScrollContainer if root != null else null
 	if scroll != null:
 		scroll.visible = false
+	var landscape_scroll := _ensure_landscape_setup_scroll(root, content_columns)
+	if landscape_scroll == null:
+		return
 	if left_column.get_parent() != content_columns:
 		if left_column.get_parent() != null:
 			left_column.get_parent().remove_child(left_column)
@@ -277,7 +340,99 @@ func _apply_battle_setup_landscape_layout(context: Dictionary) -> void:
 	content_columns.visible = true
 	left_column.custom_minimum_size = Vector2.ZERO
 	right_column.custom_minimum_size = Vector2.ZERO
+	_reset_landscape_minimum_sizes(content_columns)
+	_apply_setup_text_layout_mode(false)
 	_apply_battle_setup_mobile_metrics(context)
+	_apply_landscape_setup_scroll_metrics(landscape_scroll, content_columns)
+	_layout_background_gallery_cards()
+
+
+func _ensure_landscape_setup_scroll(root: VBoxContainer, content_columns: HBoxContainer) -> ScrollContainer:
+	var scroll := root.get_node_or_null("LandscapeSetupScroll") as ScrollContainer
+	if scroll == null:
+		scroll = ScrollContainer.new()
+		scroll.name = "LandscapeSetupScroll"
+		var insert_index := content_columns.get_index() if content_columns.get_parent() == root else root.get_child_count()
+		root.add_child(scroll)
+		root.move_child(scroll, insert_index)
+	if content_columns.get_parent() != scroll:
+		if content_columns.get_parent() != null:
+			content_columns.get_parent().remove_child(content_columns)
+		content_columns.owner = null
+		scroll.add_child(content_columns)
+	scroll.visible = true
+	_apply_landscape_setup_scroll_metrics(scroll, content_columns)
+	return scroll
+
+
+func _apply_landscape_setup_scroll_metrics(scroll: ScrollContainer, content_columns: HBoxContainer) -> void:
+	if scroll == null or content_columns == null:
+		return
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.custom_minimum_size = Vector2.ZERO
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	HudThemeScript.style_scroll_container(scroll, "touch")
+	var vbar := scroll.get_v_scroll_bar()
+	if vbar != null:
+		vbar.visible = false
+		vbar.modulate.a = 0.0
+		vbar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		vbar.custom_minimum_size = Vector2.ZERO
+	content_columns.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content_columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content_columns.custom_minimum_size = Vector2.ZERO
+	var max_content_height := size.y if size.y > 0.0 else (get_viewport_rect().size.y if is_inside_tree() else 900.0)
+	if max_content_height > 0.0 and content_columns.size.y > max_content_height:
+		content_columns.size.y = max_content_height
+	if max_content_height > 0.0:
+		content_columns.set_deferred("size", Vector2(content_columns.size.x, minf(max_content_height, maxf(content_columns.size.y, 0.0))))
+		scroll.set_deferred("size", Vector2(scroll.size.x, max_content_height))
+
+
+func _reset_landscape_minimum_sizes(node: Node) -> void:
+	if node is Control:
+		var control := node as Control
+		if control.name != "BackgroundGallery":
+			control.custom_minimum_size.y = 0.0
+	for child: Node in node.get_children():
+		_reset_landscape_minimum_sizes(child)
+
+
+func _apply_setup_text_layout_mode(portrait: bool) -> void:
+	var ai_help := find_child("AiHelp", true, false) as Label
+	if ai_help != null:
+		ai_help.visible = true
+		ai_help.text = AI_SETUP_HELP_COPY
+		ai_help.custom_minimum_size = Vector2.ZERO
+		ai_help.clip_text = true
+		ai_help.max_lines_visible = 3
+		_reserve_compact_label_height(ai_help, 3)
+	var bgm_hint := find_child("BgmHint", true, false) as Label
+	if bgm_hint != null:
+		bgm_hint.visible = portrait or bgm_hint.text.strip_edges() != ""
+		bgm_hint.custom_minimum_size = Vector2.ZERO
+		bgm_hint.clip_text = not portrait
+		bgm_hint.max_lines_visible = -1 if portrait else 1
+	for label_name: String in ["AIModeStatusBody", "LLMModelStatus"]:
+		var label := find_child(label_name, true, false) as Label
+		if label == null:
+			continue
+		label.custom_minimum_size = Vector2.ZERO
+		label.clip_text = true
+		label.max_lines_visible = 3
+		_reserve_compact_label_height(label, 3)
+
+
+func _reserve_compact_label_height(label: Label, visible_lines: int) -> void:
+	if label == null:
+		return
+	var font_size := label.get_theme_font_size("font_size")
+	if font_size <= 0:
+		font_size = 14
+	var line_height := ceilf(float(font_size) * 1.35)
+	label.custom_minimum_size.y = maxf(label.custom_minimum_size.y, line_height * maxi(1, visible_lines))
 
 
 func _layout_portrait_scroll_footer_spacer(stack: VBoxContainer, context: Dictionary) -> void:
@@ -460,6 +615,9 @@ func _handle_deck_picker_button_input(event: InputEvent) -> bool:
 		pressed = mouse_button.pressed
 	else:
 		return false
+	if _deck_action_button_at_position(pointer_position) != null:
+		_deck_picker_button_candidate_slot = -1
+		return false
 	var slot := _deck_picker_button_slot_at_position(pointer_position)
 	if pressed:
 		_deck_picker_button_candidate_slot = slot
@@ -476,6 +634,60 @@ func _handle_deck_picker_button_input(event: InputEvent) -> bool:
 	_on_deck_picker_pressed(candidate_slot)
 	_accept_pointer_event()
 	return true
+
+
+func _handle_deck_action_button_input(event: InputEvent) -> bool:
+	var pointer_position := Vector2.ZERO
+	var pressed := false
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		pointer_position = touch.position
+		pressed = touch.pressed
+	elif event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if mouse_button.button_index != MOUSE_BUTTON_LEFT or not _is_mobile_like_runtime():
+			return false
+		pointer_position = mouse_button.position
+		pressed = mouse_button.pressed
+	else:
+		return false
+	var button := _deck_action_button_at_position(pointer_position)
+	if pressed:
+		_deck_action_button_candidate = button
+		if button != null:
+			_accept_pointer_event()
+			return true
+		return false
+	var candidate := _deck_action_button_candidate
+	_deck_action_button_candidate = null
+	if candidate == null:
+		candidate = button
+	if candidate == null or candidate != button:
+		return false
+	if candidate.disabled or not candidate.visible:
+		return false
+	if candidate.is_inside_tree() and not candidate.is_visible_in_tree():
+		return false
+	candidate.pressed.emit()
+	_accept_pointer_event()
+	return true
+
+
+func _deck_action_button_at_position(global_position: Vector2) -> Button:
+	for button_name: String in [
+		"Deck1ViewButton",
+		"Deck1EditButton",
+		"Deck2ViewButton",
+		"Deck2EditButton",
+	]:
+		var button := find_child(button_name, true, false) as Button
+		if button == null or button.disabled or not button.visible:
+			continue
+		if button.is_inside_tree() and not button.is_visible_in_tree():
+			continue
+		if button.get_global_rect().has_point(global_position):
+			return button
+	return null
 
 
 func _deck_picker_button_slot_at_position(global_position: Vector2) -> int:
@@ -644,7 +856,7 @@ func _apply_battle_setup_metrics_recursive(node: Node, context: Dictionary, port
 		var target_height := ceilf(float(context.get("input_height", 38.0))) if portrait else 38.0
 		option.custom_minimum_size.y = maxf(option.custom_minimum_size.y, target_height) if portrait else target_height
 		option.add_theme_font_size_override("font_size", int(context.get("input_font_size", 15)) if portrait else int(context.get("input_font_size", 15)))
-		if option.name == "BgmOption":
+		if str(option.name) in ["BgmOption", "AIPreviewStrengthOption", "LLMModelOption"]:
 			option.set_meta(NonBattleTouchBridgeScript.OPTION_PRESS_SIGNAL_ONLY_META, portrait)
 		NonBattleTouchBridgeScript.bind_button_touch(option)
 	elif node is Button:
@@ -654,8 +866,8 @@ func _apply_battle_setup_metrics_recursive(node: Node, context: Dictionary, port
 			target_height = ceilf(float(context.get("primary_button_height", 52.0)))
 		button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, target_height) if portrait else (68.0 if button.name.ends_with("PickerButton") else 42.0)
 		var button_font_size := int(context.get("button_font_size", 18))
-		if not portrait and button.name.ends_with("PickerButton") and not _is_ai_mode():
-			button_font_size = DECK_PICKER_MAIN_FONT_SIZE
+		if not portrait and button.name.ends_with("PickerButton"):
+			button_font_size = DECK_PICKER_SETUP_LANDSCAPE_FONT_SIZE
 		button.add_theme_font_size_override("font_size", button_font_size)
 		NonBattleTouchBridgeScript.bind_button_touch(button)
 	elif node is HSlider:
@@ -767,7 +979,7 @@ func _style_hud_button(button: Button) -> void:
 	var is_primary := button.name == "BtnStart"
 	var is_deck_picker := button.name.ends_with("PickerButton")
 	var accent := HUD_ACCENT_WARM if is_primary else HUD_ACCENT
-	button.add_theme_font_size_override("font_size", DECK_PICKER_MAIN_FONT_SIZE if is_deck_picker else 15)
+	button.add_theme_font_size_override("font_size", DECK_PICKER_SETUP_LANDSCAPE_FONT_SIZE if is_deck_picker else 15)
 	button.add_theme_color_override("font_color", Color(0.96, 0.99, 1.0, 1.0))
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
 	button.add_theme_color_override("font_pressed_color", Color(0.08, 0.12, 0.16, 1.0))
@@ -1145,11 +1357,9 @@ func _sync_ai_strategy_segment_buttons() -> void:
 
 func _detect_ai_strategy_variants() -> Array[Dictionary]:
 	var deck := _selected_deck_for_slot(1)
-	if deck == null or _deck_strategy_registry == null:
+	if deck == null:
 		return []
 	var base_id := _selected_ai_strategy_id()
-	if base_id == "" and _deck_strategy_registry.has_method("resolve_strategy_id_for_deck"):
-		base_id = str(_deck_strategy_registry.call("resolve_strategy_id_for_deck", deck))
 	if base_id not in [
 		"raging_bolt_ogerpon",
 		"dragapult_charizard",
@@ -1211,9 +1421,12 @@ func _detect_ai_strategy_variants() -> Array[Dictionary]:
 
 
 func _selected_ai_strategy_variant_id() -> String:
-	if %AIStrategyOption.selected < 0 or %AIStrategyOption.selected >= %AIStrategyOption.item_count:
+	var ai_strategy_option := get_node_or_null("%AIStrategyOption") as OptionButton
+	if ai_strategy_option == null:
 		return ""
-	return str(%AIStrategyOption.get_item_metadata(%AIStrategyOption.selected))
+	if ai_strategy_option.selected < 0 or ai_strategy_option.selected >= ai_strategy_option.item_count:
+		return ""
+	return str(ai_strategy_option.get_item_metadata(ai_strategy_option.selected))
 
 
 func _on_ai_strategy_variant_changed(_index: int) -> void:
@@ -1275,11 +1488,26 @@ func _refresh_llm_model_controls() -> void:
 	%LLMModelRow.visible = is_ai and has_llm_api
 	%LLMModelOption.disabled = not is_ai or not has_llm_api
 	%BtnTestLLMModel.disabled = not is_ai or not has_llm_api or _llm_model_test_in_progress
-	if not is_ai or not has_llm_api:
+	if not is_ai:
 		%LLMModelStatus.text = ""
+	elif %LLMModelStatus.text.strip_edges() == "":
+		_apply_default_llm_model_status(has_llm_api, selected_model_label)
 	%LLMModelStatus.visible = is_ai and %LLMModelStatus.text.strip_edges() != ""
-	%BtnDiscussStrategyAI.visible = has_llm_api
-	%BtnDiscussStrategyAI.text = "与 %s 探讨策略" % selected_model_label
+	_sync_strategy_discussion_button_state(has_llm_api, selected_model_label)
+
+
+func _apply_default_llm_model_status(has_llm_api: bool, selected_model_label: String) -> void:
+	if not has_llm_api:
+		%LLMModelStatus.text = "未配置大模型 API：可先用规则模型开打；需要大模型时请前往 AI 设置填写地址和密钥。"
+		%LLMModelStatus.add_theme_color_override("font_color", HUD_TEXT_MUTED)
+		return
+	var config := _battle_review_config_with_selected_model()
+	if bool(config.get("ai_test_passed", false)):
+		%LLMModelStatus.text = "已测试：%s 可用，可切换到大模型版或用于策略探讨。" % selected_model_label
+		%LLMModelStatus.add_theme_color_override("font_color", Color(0.34, 1.0, 0.58))
+		return
+	%LLMModelStatus.text = "当前模型未测试：点击“测试”确认 API 与 %s 可用。" % selected_model_label
+	%LLMModelStatus.add_theme_color_override("font_color", Color(1.0, 0.86, 0.36))
 
 
 func _refresh_ai_mode_summary(is_ai: bool, has_llm_api: bool, selected_is_llm: bool, selected_model_label: String) -> void:
@@ -1289,14 +1517,14 @@ func _refresh_ai_mode_summary(is_ai: bool, has_llm_api: bool, selected_is_llm: b
 		return
 	if selected_is_llm and has_llm_api:
 		%AIModeStatusTitle.text = "当前 AI: 大模型增强"
-		%AIModeStatusBody.text = "使用 %s, 会有思考时间, 能力中等; 需要有效的模型 API, 完整配置请前往 AI 设置。" % selected_model_label
+		%AIModeStatusBody.text = "使用 %s，会有思考时间，能力中等；需要有效的模型 API，请先在 AI 设置中测试确认。" % selected_model_label
 		%AIModeStatusTitle.add_theme_color_override("font_color", Color(1.0, 0.86, 0.52, 1.0))
 		return
 	%AIModeStatusTitle.text = "当前 AI: 规则模型(默认)"
 	if has_llm_api:
-		%AIModeStatusBody.text = "速度快，能力较低，不用设置。已检测到大模型 API，可在 AI 工作方式中切换到大模型版。"
+		%AIModeStatusBody.text = "速度快，能力较低，不用设置；已检测到大模型 API，可切换到大模型版并点测试确认。"
 	else:
-		%AIModeStatusBody.text = "速度快，能力较低，不用设置。未配置大模型 API 时，对战会直接使用本地规则模型。"
+		%AIModeStatusBody.text = "速度快，能力较低，不用设置；未配置大模型 API 时，对战会直接使用本地规则模型。"
 	%AIModeStatusTitle.add_theme_color_override("font_color", Color(0.94, 1.0, 1.0, 1.0))
 
 
@@ -1568,27 +1796,7 @@ func _selected_ai_strategy_id() -> String:
 	var deck := _selected_deck_for_slot(1)
 	if deck == null:
 		return ""
-	match deck.id:
-		MIRAIDON_DECK_ID:
-			return "miraidon"
-		DEFAULT_DECK2_ID:
-			return "gardevoir"
-		ARCEUS_GIRATINA_DECK_ID:
-			return "arceus_giratina"
-		LUGIA_ARCHEOPS_DECK_ID:
-			return "lugia_archeops"
-		RAGING_BOLT_OGERPON_DECK_ID:
-			return "raging_bolt_ogerpon"
-		DRAGAPULT_CHARIZARD_DECK_ID:
-			return "dragapult_charizard"
-		DRAGAPULT_DUSKNOIR_DECK_ID:
-			return "dragapult_dusknoir"
-		DEFAULT_DECK1_ID:
-			return "charizard_ex"
-		_:
-			if _deck_strategy_registry != null and _deck_strategy_registry.has_method("resolve_strategy_id_for_deck"):
-				return str(_deck_strategy_registry.call("resolve_strategy_id_for_deck", deck))
-			return ""
+	return str(AI_DECK_STRATEGY_ID_BY_DECK_ID.get(int(deck.id), ""))
 
 
 func _build_ai_selection(source: String, version_record: Dictionary = {}) -> Dictionary:
@@ -1616,10 +1824,13 @@ func _resolve_ai_opening_selection(deck: DeckData) -> Dictionary:
 
 
 func _setup_background_gallery() -> void:
-	_configure_background_gallery_scroll(%BackgroundGallery)
+	var gallery := _background_gallery_scroll()
+	if gallery == null:
+		return
+	_configure_background_gallery_scroll(gallery)
 	var input_callable := Callable(self, "_on_background_gallery_input")
-	if not %BackgroundGallery.gui_input.is_connected(input_callable):
-		%BackgroundGallery.gui_input.connect(input_callable)
+	if not gallery.gui_input.is_connected(input_callable):
+		gallery.gui_input.connect(input_callable)
 	call_deferred("_hide_background_gallery_scrollbar")
 	_refresh_background_gallery()
 
@@ -1634,10 +1845,11 @@ func _configure_background_gallery_scroll(gallery: ScrollContainer) -> void:
 	gallery.mouse_filter = Control.MOUSE_FILTER_STOP
 	gallery.set_meta("background_gallery_drag_scroll_enabled", true)
 	_hide_background_gallery_scrollbar_for(gallery)
+	_layout_background_gallery_cards()
 
 
 func _hide_background_gallery_scrollbar() -> void:
-	var gallery := get_node_or_null("%BackgroundGallery") as ScrollContainer
+	var gallery := _background_gallery_scroll()
 	if gallery == null:
 		return
 	_hide_background_gallery_scrollbar_for(gallery)
@@ -1848,13 +2060,197 @@ func _default_battle_layout_mode_for_first_run(
 	return GameManager.BATTLE_LAYOUT_LANDSCAPE
 
 
+func _on_ai_preview_strength_option_pressed() -> void:
+	if _is_portrait_setup_layout():
+		_show_battle_setup_hud_option_picker(%AIPreviewStrengthOption, "选择 AI 强度")
+
+
+func _on_llm_model_option_pressed() -> void:
+	if _is_portrait_setup_layout():
+		_show_battle_setup_hud_option_picker(%LLMModelOption, "选择 AI 模型")
+
+
+func _is_portrait_setup_layout() -> bool:
+	if bool(_current_non_battle_layout_context.get("is_portrait", false)):
+		return true
+	if str(get_meta("non_battle_layout_mode", "")) == "portrait":
+		return true
+	var viewport_size := size
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		viewport_size = get_viewport_rect().size if is_inside_tree() else Vector2.ZERO
+	return viewport_size.y > viewport_size.x
+
+
+func _handle_battle_setup_hud_picker_input(event: InputEvent) -> bool:
+	if _hud_option_picker_overlay == null or not is_instance_valid(_hud_option_picker_overlay) or not _hud_option_picker_overlay.visible:
+		return false
+	if NonBattleTouchBridgeScript.handle_root_touch(_hud_option_picker_overlay, event):
+		return true
+	return false
+
+
+func _show_battle_setup_hud_option_picker(option: OptionButton, title_text: String) -> void:
+	if option == null or option.disabled or option.get_item_count() <= 0:
+		return
+	_hud_option_picker_target = option
+	_ensure_battle_setup_hud_option_picker_overlay()
+	_refresh_battle_setup_hud_option_picker_layout()
+	_populate_battle_setup_hud_option_picker(title_text)
+	_hud_option_picker_overlay.visible = true
+	_hud_option_picker_overlay.move_to_front()
+
+
+func _hide_battle_setup_hud_option_picker() -> void:
+	if _hud_option_picker_overlay != null and is_instance_valid(_hud_option_picker_overlay):
+		_hud_option_picker_overlay.visible = false
+	_hud_option_picker_target = null
+
+
+func _ensure_battle_setup_hud_option_picker_overlay() -> void:
+	if _hud_option_picker_overlay != null and is_instance_valid(_hud_option_picker_overlay):
+		return
+	_hud_option_picker_overlay = Control.new()
+	_hud_option_picker_overlay.name = HUD_OPTION_PICKER_OVERLAY_NAME
+	_hud_option_picker_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_hud_option_picker_overlay.visible = false
+	_hud_option_picker_overlay.z_index = 2450
+	_hud_option_picker_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(_hud_option_picker_overlay)
+
+	var shade := ColorRect.new()
+	shade.name = "BattleSetupHudPickerShade"
+	shade.color = Color(0.0, 0.0, 0.0, 0.58)
+	shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_hud_option_picker_overlay.add_child(shade)
+
+	var panel := PanelContainer.new()
+	panel.name = "BattleSetupHudPickerPanel"
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	panel.add_theme_stylebox_override("panel", _hud_panel_style(
+		Color(0.025, 0.055, 0.085, 0.96),
+		HUD_ACCENT,
+		22,
+		10,
+		Color(0.0, 0.52, 0.76, 0.24)
+	))
+	_hud_option_picker_overlay.add_child(panel)
+
+	var margin := MarginContainer.new()
+	margin.name = "BattleSetupHudPickerMargin"
+	margin.add_theme_constant_override("margin_left", 22)
+	margin.add_theme_constant_override("margin_top", 22)
+	margin.add_theme_constant_override("margin_right", 22)
+	margin.add_theme_constant_override("margin_bottom", 22)
+	panel.add_child(margin)
+
+	var root := VBoxContainer.new()
+	root.name = "BattleSetupHudPickerRoot"
+	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	root.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_theme_constant_override("separation", 18)
+	margin.add_child(root)
+
+	var title := Label.new()
+	title.name = "BattleSetupHudPickerTitle"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 54)
+	title.add_theme_color_override("font_color", HUD_TEXT)
+	root.add_child(title)
+
+	_hud_option_picker_scroll = ScrollContainer.new()
+	_hud_option_picker_scroll.name = "BattleSetupHudPickerScroll"
+	_hud_option_picker_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_hud_option_picker_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_hud_option_picker_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_hud_option_picker_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	HudThemeScript.style_scroll_container(_hud_option_picker_scroll, "auto")
+	NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(_hud_option_picker_scroll)
+	root.add_child(_hud_option_picker_scroll)
+
+	_hud_option_picker_list = VBoxContainer.new()
+	_hud_option_picker_list.name = "BattleSetupHudPickerList"
+	_hud_option_picker_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_hud_option_picker_list.add_theme_constant_override("separation", 14)
+	_hud_option_picker_scroll.add_child(_hud_option_picker_list)
+
+	var close_button := Button.new()
+	close_button.name = "BattleSetupHudPickerCloseButton"
+	close_button.text = "关闭"
+	close_button.custom_minimum_size = Vector2(0.0, 150.0)
+	close_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_hud_button(close_button)
+	close_button.add_theme_font_size_override("font_size", 48)
+	close_button.pressed.connect(_hide_battle_setup_hud_option_picker)
+	NonBattleTouchBridgeScript.bind_button_touch(close_button)
+	root.add_child(close_button)
+
+
+func _refresh_battle_setup_hud_option_picker_layout() -> void:
+	if _hud_option_picker_overlay == null or not is_instance_valid(_hud_option_picker_overlay):
+		return
+	var viewport_size: Vector2 = _current_non_battle_layout_context.get("viewport_size", size if size.x > 0.0 and size.y > 0.0 else Vector2(1080, 2400))
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		viewport_size = Vector2(1080, 2400)
+	var panel := _hud_option_picker_overlay.get_node_or_null("BattleSetupHudPickerPanel") as PanelContainer
+	if panel != null:
+		var margin := roundi(clampf(viewport_size.x * 0.035, 28.0, 46.0))
+		panel.offset_left = margin
+		panel.offset_top = margin
+		panel.offset_right = -margin
+		panel.offset_bottom = -margin
+		panel.custom_minimum_size = Vector2(maxf(320.0, viewport_size.x - margin * 2.0), maxf(560.0, viewport_size.y - margin * 2.0))
+	if _hud_option_picker_scroll != null:
+		_hud_option_picker_scroll.custom_minimum_size.y = maxf(900.0, viewport_size.y * 0.58)
+		HudThemeScript.style_scroll_container(_hud_option_picker_scroll, "auto")
+		NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(_hud_option_picker_scroll)
+
+
+func _populate_battle_setup_hud_option_picker(title_text: String) -> void:
+	var title := _hud_option_picker_overlay.find_child("BattleSetupHudPickerTitle", true, false) as Label if _hud_option_picker_overlay != null else null
+	if title != null:
+		title.text = title_text
+	if _hud_option_picker_list == null or _hud_option_picker_target == null:
+		return
+	for child: Node in _hud_option_picker_list.get_children():
+		child.queue_free()
+	var selected_index := _hud_option_picker_target.selected
+	for i: int in _hud_option_picker_target.get_item_count():
+		var button := Button.new()
+		button.name = "BattleSetupHudPickerItem%d" % i
+		button.text = "%s%s" % ["[当前] " if i == selected_index else "", _hud_option_picker_target.get_item_text(i)]
+		button.custom_minimum_size = Vector2(0.0, 148.0)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.clip_text = true
+		_style_hud_button(button)
+		button.add_theme_font_size_override("font_size", 46)
+		button.pressed.connect(_select_battle_setup_hud_option_from_picker.bind(i))
+		NonBattleTouchBridgeScript.bind_button_touch(button)
+		_hud_option_picker_list.add_child(button)
+
+
+func _select_battle_setup_hud_option_from_picker(index: int) -> void:
+	var option := _hud_option_picker_target
+	if option == null or index < 0 or index >= option.get_item_count():
+		_hide_battle_setup_hud_option_picker()
+		return
+	option.select(index)
+	var option_name := str(option.name)
+	if option_name == "LLMModelOption":
+		_on_llm_model_changed(index)
+	elif option_name == "AIPreviewStrengthOption":
+		_refresh_deck_action_buttons()
+	_hide_battle_setup_hud_option_picker()
+
+
 func _on_bgm_option_changed(_index: int) -> void:
 	_sync_selected_battle_music_from_option()
 	_update_bgm_preview_button()
 
 
 func _on_bgm_option_pressed() -> void:
-	if bool(_current_non_battle_layout_context.get("is_portrait", false)):
+	if _is_portrait_setup_layout():
 		_show_battle_music_picker()
 
 
@@ -1940,10 +2336,8 @@ func _ensure_battle_music_picker_overlay() -> void:
 	_bgm_picker_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_bgm_picker_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_bgm_picker_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	HudThemeScript.style_scroll_container(_bgm_picker_scroll, "portrait_touch")
-	var vbar := _bgm_picker_scroll.get_v_scroll_bar()
-	if vbar != null:
-		NonBattleTouchBridgeScript.bind_range_touch(vbar)
+	HudThemeScript.style_scroll_container(_bgm_picker_scroll, "auto")
+	NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(_bgm_picker_scroll)
 	root.add_child(_bgm_picker_scroll)
 
 	_bgm_picker_list = VBoxContainer.new()
@@ -1980,7 +2374,8 @@ func _refresh_battle_music_picker_layout() -> void:
 		panel.custom_minimum_size = Vector2(maxf(320.0, viewport_size.x - margin * 2.0), maxf(560.0, viewport_size.y - margin * 2.0))
 	if _bgm_picker_scroll != null:
 		_bgm_picker_scroll.custom_minimum_size.y = maxf(900.0, viewport_size.y * 0.58)
-		HudThemeScript.style_scroll_container(_bgm_picker_scroll, "portrait_touch")
+		HudThemeScript.style_scroll_container(_bgm_picker_scroll, "auto")
+		NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(_bgm_picker_scroll)
 
 
 func _populate_battle_music_picker() -> void:
@@ -2087,14 +2482,22 @@ func _list_available_background_paths() -> Array[String]:
 
 
 func _refresh_background_gallery() -> void:
-	_battle_backgrounds = _list_available_background_paths()
+	var row := _background_gallery_row()
+	if row == null:
+		_background_cards.clear()
+		return
+	if _battle_backgrounds.is_empty():
+		_battle_backgrounds = _list_available_background_paths()
+	else:
+		_battle_backgrounds = _battle_backgrounds.duplicate()
 	_selected_background_path = GameManager.selected_battle_background if GameManager.selected_battle_background != "" else DEFAULT_BACKGROUND
 	_clear_background_gallery()
 	for bg_path: String in _battle_backgrounds:
 		var texture := _load_background_preview_texture(bg_path)
 		var card := _build_background_card(bg_path, texture)
-		%BackgroundGalleryRow.add_child(card)
+		row.add_child(card)
 		_background_cards.append(card)
+	_layout_background_gallery_cards()
 	_refresh_background_selection()
 
 
@@ -2105,8 +2508,12 @@ func _background_selection_index(path: String) -> int:
 
 
 func _clear_background_gallery() -> void:
-	for child: Node in %BackgroundGalleryRow.get_children():
-		%BackgroundGalleryRow.remove_child(child)
+	var row := _background_gallery_row()
+	if row == null:
+		_background_cards.clear()
+		return
+	for child: Node in row.get_children():
+		row.remove_child(child)
 		child.queue_free()
 	_background_cards.clear()
 
@@ -2114,16 +2521,26 @@ func _clear_background_gallery() -> void:
 func _build_background_card(path: String, texture: Texture2D) -> PanelContainer:
 	var card := PanelContainer.new()
 	card.custom_minimum_size = BACKGROUND_CARD_SIZE
+	card.size = BACKGROUND_CARD_SIZE
 	card.mouse_filter = Control.MOUSE_FILTER_STOP
 	card.clip_contents = true
 	card.set_meta("background_path", path)
 	card.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventScreenTouch:
+			var touch := event as InputEventScreenTouch
+			if touch.pressed:
+				_background_gallery_pressed_path = path
+			var was_dragging := _handle_background_gallery_drag_input(event)
+			if was_dragging:
+				return
+			if not touch.pressed and _background_gallery_pressed_path == path:
+				_select_background_path(path)
+				_background_gallery_pressed_path = ""
+				accept_event()
+			return
 		if _handle_background_gallery_drag_input(event):
 			return
 		if event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			_selected_background_path = path
-			_refresh_background_selection()
-		elif event is InputEventScreenTouch and not event.pressed:
 			_selected_background_path = path
 			_refresh_background_selection()
 	)
@@ -2147,12 +2564,60 @@ func _build_background_card(path: String, texture: Texture2D) -> PanelContainer:
 	return card
 
 
+func _layout_background_gallery_cards() -> void:
+	var row := _background_gallery_row()
+	if row == null:
+		return
+	var separation := int(row.get_theme_constant("separation"))
+	var x := 0.0
+	for child: Node in row.get_children():
+		var card := child as Control
+		if card == null:
+			continue
+		card.custom_minimum_size = BACKGROUND_CARD_SIZE
+		card.size = BACKGROUND_CARD_SIZE
+		row.fit_child_in_rect(card, Rect2(Vector2(x, 0.0), BACKGROUND_CARD_SIZE))
+		card.position = Vector2(x, 0.0)
+		x += BACKGROUND_CARD_SIZE.x + float(separation)
+	row.size = Vector2(maxf(0.0, x - float(separation)), BACKGROUND_GALLERY_HEIGHT)
+	row.custom_minimum_size = Vector2(maxf(0.0, x - float(separation)), BACKGROUND_GALLERY_HEIGHT)
+
+
 func _on_background_gallery_input(event: InputEvent) -> void:
 	_handle_background_gallery_drag_input(event)
 
 
+func _handle_background_gallery_root_input(event: InputEvent) -> bool:
+	var gallery := _background_gallery_scroll()
+	if gallery == null or not gallery.visible:
+		return false
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			var pressed_card := _background_card_at_position(touch.position)
+			if pressed_card == null:
+				return false
+			_background_gallery_pressed_path = str(pressed_card.get_meta("background_path", "")) if pressed_card != null else ""
+			_begin_background_gallery_drag(touch.position, gallery)
+			return false
+		if not _background_gallery_drag_active:
+			return false
+		var was_dragging := _end_background_gallery_drag()
+		if not was_dragging:
+			if _background_gallery_pressed_path != "":
+				_select_background_path(_background_gallery_pressed_path)
+			else:
+				_select_background_card_at_position(touch.position)
+		_background_gallery_pressed_path = ""
+		accept_event()
+		return true
+	if event is InputEventScreenDrag and _background_gallery_drag_active:
+		return _update_background_gallery_drag((event as InputEventScreenDrag).position, gallery)
+	return false
+
+
 func _handle_background_gallery_drag_input(event: InputEvent) -> bool:
-	var gallery := get_node_or_null("%BackgroundGallery") as ScrollContainer
+	var gallery := _background_gallery_scroll()
 	if gallery == null:
 		return false
 	if event is InputEventMouseButton:
@@ -2241,6 +2706,16 @@ func _begin_background_gallery_drag(position: Vector2, gallery: ScrollContainer)
 func _update_background_gallery_drag(position: Vector2, gallery: ScrollContainer) -> bool:
 	var delta := position - _background_gallery_drag_start_position
 	if not _background_gallery_dragging and absf(delta.x) < BACKGROUND_GALLERY_DRAG_THRESHOLD:
+		if absf(delta.y) >= BACKGROUND_GALLERY_DRAG_THRESHOLD:
+			_background_gallery_drag_active = false
+			_background_gallery_dragging = false
+			_background_gallery_pressed_path = ""
+			return false
+		return false
+	if not _background_gallery_dragging and absf(delta.y) > absf(delta.x):
+		_background_gallery_drag_active = false
+		_background_gallery_dragging = false
+		_background_gallery_pressed_path = ""
 		return false
 	_background_gallery_dragging = true
 	_set_background_gallery_scroll_horizontal(gallery, maxi(0, _background_gallery_drag_start_scroll - roundi(delta.x)))
@@ -2252,6 +2727,8 @@ func _end_background_gallery_drag() -> bool:
 	var was_dragging := _background_gallery_dragging
 	_background_gallery_drag_active = false
 	_background_gallery_dragging = false
+	if was_dragging:
+		_background_gallery_pressed_path = ""
 	if was_dragging:
 		accept_event()
 	return was_dragging
@@ -2265,6 +2742,71 @@ func _background_gallery_event_position(event: InputEvent) -> Vector2:
 	if event is InputEventScreenDrag:
 		return (event as InputEventScreenDrag).position
 	return Vector2.ZERO
+
+
+func _select_background_card_at_position(global_position: Vector2) -> bool:
+	var card := _background_card_at_position(global_position)
+	if card == null:
+		return false
+	var path := str(card.get_meta("background_path", ""))
+	return _select_background_path(path)
+
+
+func _select_background_path(path: String) -> bool:
+	if path == "":
+		return false
+	_selected_background_path = path
+	_refresh_background_selection()
+	return true
+
+
+func _background_card_at_position(global_position: Vector2) -> PanelContainer:
+	var candidates: Array[PanelContainer] = []
+	var row := _background_gallery_row()
+	if row != null:
+		for child: Node in row.get_children():
+			var child_card := child as PanelContainer
+			if child_card != null:
+				candidates.append(child_card)
+	if candidates.is_empty():
+		for card_variant: Variant in _background_cards:
+			var tracked_card := card_variant as PanelContainer
+			if tracked_card != null and not tracked_card.is_queued_for_deletion():
+				if row != null and tracked_card.get_parent() != row:
+					continue
+				candidates.append(tracked_card)
+	var matched_card: PanelContainer = null
+	for card: PanelContainer in candidates:
+		if card == null or not card.visible:
+			continue
+		if card.is_inside_tree() and not card.is_visible_in_tree():
+			continue
+		if _control_has_global_point(card, global_position):
+			matched_card = card
+	return matched_card
+
+
+func _background_gallery_row() -> HBoxContainer:
+	var row := get_node_or_null("%BackgroundGalleryRow") as HBoxContainer
+	if row == null:
+		row = find_child("BackgroundGalleryRow", true, false) as HBoxContainer
+	return row
+
+
+func _background_gallery_scroll() -> ScrollContainer:
+	var gallery := get_node_or_null("%BackgroundGallery") as ScrollContainer
+	if gallery == null:
+		gallery = find_child("BackgroundGallery", true, false) as ScrollContainer
+	return gallery
+
+
+func _control_has_global_point(control: Control, global_position: Vector2) -> bool:
+	if control == null:
+		return false
+	var rect := control.get_global_rect()
+	if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+		rect.size = Vector2(maxf(control.custom_minimum_size.x, control.size.x), maxf(control.custom_minimum_size.y, control.size.y))
+	return rect.has_point(global_position)
 
 
 func _refresh_background_selection() -> void:
@@ -2668,7 +3210,11 @@ func _apply_deck_picker_mobile_metrics(context: Dictionary) -> void:
 	var scroll := _deck_picker_panel.find_child("DeckPickerScroll", true, false) as ScrollContainer
 	if scroll != null:
 		scroll.custom_minimum_size.y = float(context.get("list_item_min_height", 90.0)) * (3.2 if portrait else 4.8)
-		HudThemeScript.style_scroll_container(scroll, "portrait_touch" if portrait else "auto")
+		HudThemeScript.style_scroll_container(scroll, "auto")
+		if portrait:
+			NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(scroll)
+		else:
+			NonBattleTouchBridgeScript.configure_visible_vertical_scroll(scroll)
 	if _deck_picker_grid != null:
 		_deck_picker_grid.add_theme_constant_override("h_separation", gap)
 		_deck_picker_grid.add_theme_constant_override("v_separation", gap)
@@ -2987,12 +3533,9 @@ func _sync_deck_picker_button(slot_index: int) -> void:
 		return
 	var deck := _selected_deck_for_slot(slot_index)
 	var portrait := bool(_current_non_battle_layout_context.get("is_portrait", false))
-	var has_layout_context := not _current_non_battle_layout_context.is_empty()
-	var font_size := DECK_PICKER_MAIN_FONT_SIZE
+	var font_size := DECK_PICKER_SETUP_LANDSCAPE_FONT_SIZE
 	if portrait:
 		font_size = int(_current_non_battle_layout_context.get("button_font_size", DECK_PICKER_MAIN_FONT_SIZE))
-	elif has_layout_context and _is_ai_mode():
-		font_size = int(_current_non_battle_layout_context.get("button_font_size", 18))
 	button.add_theme_font_size_override("font_size", font_size)
 	button.clip_text = true
 	button.custom_minimum_size.y = float(_current_non_battle_layout_context.get("primary_button_height", 68.0)) if portrait else 68.0
@@ -3200,6 +3743,7 @@ func _save_settings() -> void:
 		"battle_layout_mode": _selected_battle_layout_mode(),
 		"battle_music_id": _selected_battle_music_id,
 		"battle_bgm_volume_percent": _selected_battle_music_volume_percent,
+		GameManager.BATTLE_BGM_VOLUME_USER_SET_KEY: true,
 		"mode": %ModeOption.selected,
 		"ai_preview_strength_index": %AIPreviewStrengthOption.selected,
 		"ai_strategy_variant_id": _selected_ai_strategy_variant_id(),
@@ -3237,8 +3781,10 @@ func _load_settings() -> void:
 	var deck2_id: int = int(data.get("deck2_id", -1))
 	var mode_idx: int = int(data.get("mode", 0))
 	if mode_idx >= 0 and mode_idx < %ModeOption.item_count:
+		var mode_changed: bool = mode_idx != %ModeOption.selected
 		_select_mode_option(mode_idx)
-	_refresh_deck_options()
+		if mode_changed:
+			_refresh_deck_options()
 	_select_option_for_deck_id(%Deck1Option, deck1_id)
 	_select_option_for_deck_id(%Deck2Option, deck2_id)
 	var ai_preview_strength_index: int = int(data.get("ai_preview_strength_index", AI_PREVIEW_STRENGTH_WEAK))
@@ -3260,7 +3806,7 @@ func _load_settings() -> void:
 	_sync_battle_layout_preference_from_ui()
 
 	_selected_battle_music_id = BattleMusicManager.sanitize_track_id(str(data.get("battle_music_id", _selected_battle_music_id)))
-	_selected_battle_music_volume_percent = clampi(int(data.get("battle_bgm_volume_percent", _selected_battle_music_volume_percent)), 0, 100)
+	_selected_battle_music_volume_percent = GameManager.resolve_battle_bgm_volume_percent_from_settings(data, _selected_battle_music_volume_percent)
 	var battle_music_index := _battle_music_index_from_id(_selected_battle_music_id)
 	if battle_music_index >= 0 and battle_music_index < %BgmOption.item_count:
 		%BgmOption.select(battle_music_index)
@@ -3272,16 +3818,21 @@ func _load_settings() -> void:
 func _capture_setup_selection_context() -> Dictionary:
 	var deck1 := _selected_deck_for_slot(0)
 	var deck2 := _selected_deck_for_slot(1)
+	var first_player_option := get_node_or_null("%FirstPlayerOption") as OptionButton
+	var mode_option := get_node_or_null("%ModeOption") as OptionButton
+	var ai_source_option := get_node_or_null("%AISourceOption") as OptionButton
+	var ai_version_option := get_node_or_null("%AIVersionOption") as OptionButton
+	var ai_preview_strength_option := get_node_or_null("%AIPreviewStrengthOption") as OptionButton
 	return {
 		"deck1_id": deck1.id if deck1 != null else -1,
 		"deck2_id": deck2.id if deck2 != null else -1,
-		"first_player_choice": _first_player_choice_from_option_index(%FirstPlayerOption.selected),
+		"first_player_choice": _first_player_choice_from_option_index(first_player_option.selected) if first_player_option != null else FIRST_PLAYER_RANDOM,
 		"background_path": _selected_background_path,
 		"dynamic_stadium_background_enabled": _dynamic_stadium_background_enabled,
-		"mode": %ModeOption.selected,
-		"ai_source_index": %AISourceOption.selected,
-		"ai_version_index": %AIVersionOption.selected,
-		"ai_preview_strength_index": %AIPreviewStrengthOption.selected,
+		"mode": mode_option.selected if mode_option != null else 0,
+		"ai_source_index": ai_source_option.selected if ai_source_option != null else 0,
+		"ai_version_index": ai_version_option.selected if ai_version_option != null else 0,
+		"ai_preview_strength_index": ai_preview_strength_option.selected if ai_preview_strength_option != null else 0,
 		"ai_strategy_variant_id": _selected_ai_strategy_variant_id(),
 	}
 
@@ -3344,10 +3895,24 @@ func _refresh_deck_action_buttons() -> void:
 	if deck2_edit_button != null:
 		deck2_edit_button.disabled = _is_ai_mode() or deck2 == null
 	var has_llm_api := _has_llm_api_configured()
+	_sync_strategy_discussion_button_state(has_llm_api)
+
+
+func _sync_strategy_discussion_button_state(has_llm_api_value: Variant = null, selected_model_label: String = "") -> void:
 	var discuss_button := get_node_or_null("%BtnDiscussStrategyAI") as Button
-	if discuss_button != null:
-		discuss_button.visible = has_llm_api
-		discuss_button.disabled = not has_llm_api or deck1 == null or deck2 == null
+	if discuss_button == null:
+		return
+	var has_llm_api := bool(has_llm_api_value) if has_llm_api_value != null else _has_llm_api_configured()
+	if selected_model_label.strip_edges() == "":
+		selected_model_label = _selected_llm_model_label()
+	var hidden_for_portrait := _is_portrait_setup_layout()
+	var deck1 := _selected_deck_for_slot(0)
+	var deck2 := _selected_deck_for_slot(1)
+	discuss_button.visible = has_llm_api and not hidden_for_portrait
+	discuss_button.mouse_filter = Control.MOUSE_FILTER_IGNORE if hidden_for_portrait else Control.MOUSE_FILTER_STOP
+	discuss_button.focus_mode = Control.FOCUS_NONE if hidden_for_portrait else Control.FOCUS_ALL
+	discuss_button.disabled = not has_llm_api or hidden_for_portrait or deck1 == null or deck2 == null
+	discuss_button.text = "与 %s 探讨策略" % selected_model_label
 
 
 func _mark_strategy_discussion_deck_changed() -> void:
@@ -3375,6 +3940,8 @@ func _strategy_discussion_session_id(deck1: DeckData, deck2: DeckData) -> int:
 
 func _on_discuss_strategy_ai_pressed() -> void:
 	if not _has_llm_api_configured():
+		return
+	if _is_portrait_setup_layout():
 		return
 	var deck1 := _selected_deck_for_slot(0)
 	var deck2 := _selected_deck_for_slot(1)

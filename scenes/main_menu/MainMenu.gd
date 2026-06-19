@@ -25,6 +25,8 @@ const XHS_QR_PATH := "res://assets/ui/xiaohongshu_qr.png"
 const XHS_DISPLAY_NAME := "波导的勇者"
 const XHS_ID := "5417688847"
 const XHS_PROFILE_URL := "https://www.xiaohongshu.com/search_result?keyword=5417688847"
+const FEEDBACK_QR_DESKTOP_SIZE := Vector2(202.0, 300.0)
+const FEEDBACK_QR_CARD_ASPECT := 647.0 / 472.0
 const GAME_HOME_URL := "https://ptcg.skillserver.cn/"
 const TCG_MIK_URL := "https://tcg.mik.moe/"
 const CORNER_ACTION_BUTTON_SIZE := 58.0
@@ -32,6 +34,7 @@ const CORNER_ACTION_BUTTON_SPACING := 14.0
 const CORNER_ACTION_BUTTON_RIGHT_MARGIN := 18.0
 const CORNER_ACTION_BUTTON_BOTTOM_MARGIN := 18.0
 const CORNER_ACTION_COUNT := 5
+const PORTRAIT_CORNER_ACTION_BUTTON_SCALE := 1.30
 const CORNER_ACTION_LABEL_GAP := 8.0
 const CORNER_ACTION_LABEL_MIN_WIDTH := 76.0
 const FEEDBACK_ICON_PATH := "res://assets/ui/main_action_feedback.png"
@@ -111,6 +114,7 @@ var _portrait_home_subtitle: Label = null
 
 
 func _ready() -> void:
+	_request_navigation_resource_prewarm()
 	_apply_main_menu_hud()
 	_ensure_budew_mascot()
 	_setup_version_and_updates()
@@ -135,6 +139,13 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		_handle_budew_mascot_unhandled_input(event)
 		return
+
+
+func _request_navigation_resource_prewarm() -> void:
+	if not is_inside_tree():
+		return
+	if GameManager != null and GameManager.has_method("prewarm_navigation_resources"):
+		GameManager.prewarm_navigation_resources()
 
 
 func _gui_input(event: InputEvent) -> void:
@@ -861,9 +872,27 @@ func _ensure_corner_action_buttons() -> void:
 func _corner_action_button_size_for_context(context: Dictionary = {}, portrait: bool = false) -> float:
 	if portrait:
 		var viewport_size: Vector2 = context.get("viewport_size", get_viewport_rect().size if is_inside_tree() else Vector2(390, 844))
-		var width_fit := (viewport_size.x - CORNER_ACTION_BUTTON_RIGHT_MARGIN * 2.0 - 10.0 * float(CORNER_ACTION_COUNT - 1)) / float(CORNER_ACTION_COUNT)
-		return clampf(minf(clampf(viewport_size.x * 0.105, 74.0, 118.0), width_fit), 58.0, 118.0)
+		var target_size := clampf(viewport_size.x * 0.105, 74.0, 118.0) * PORTRAIT_CORNER_ACTION_BUTTON_SCALE
+		var fit_size := _portrait_corner_action_fit_size(viewport_size.x)
+		return clampf(minf(target_size, fit_size), 58.0, 118.0 * PORTRAIT_CORNER_ACTION_BUTTON_SCALE)
 	return CORNER_ACTION_BUTTON_SIZE
+
+
+func _portrait_corner_action_fit_size(viewport_width: float) -> float:
+	var low := CORNER_ACTION_BUTTON_SIZE
+	var high := maxf(CORNER_ACTION_BUTTON_SIZE, viewport_width / float(CORNER_ACTION_COUNT))
+	for _i: int in 18:
+		var mid := (low + high) * 0.5
+		var total_width := (
+			mid * float(CORNER_ACTION_COUNT)
+			+ _corner_action_spacing_for_size(mid, true) * float(CORNER_ACTION_COUNT - 1)
+			+ _corner_action_right_margin_for_size(mid, true) * 2.0
+		)
+		if total_width <= viewport_width:
+			low = mid
+		else:
+			high = mid
+	return low
 
 
 func _corner_action_spacing_for_size(button_size: float, portrait: bool = false) -> float:
@@ -1366,17 +1395,21 @@ func _stop_deck_center_button_flash(reset_modulate: bool = true) -> void:
 
 
 func _mark_pending_deck_center_meta_seen() -> void:
-	if _pending_deck_center_meta.is_empty():
-		return
 	var revision := str(_pending_deck_center_meta.get("latest_revision", "")).strip_edges()
-	if revision == "":
-		return
-	if _deck_center_meta_client != null and is_instance_valid(_deck_center_meta_client):
-		_deck_center_meta_client.call("mark_revision_seen", revision, _pending_deck_center_meta)
+	if revision != "":
+		if _deck_center_meta_client != null and is_instance_valid(_deck_center_meta_client):
+			_deck_center_meta_client.call("mark_revision_seen", revision, _pending_deck_center_meta)
+		else:
+			var pending_client = DeckCenterMetaClientScript.new()
+			pending_client.call("mark_revision_seen", revision, _pending_deck_center_meta)
+			pending_client.free()
 	else:
-		var client = DeckCenterMetaClientScript.new()
-		client.call("mark_revision_seen", revision, _pending_deck_center_meta)
-		client.free()
+		if _deck_center_meta_client != null and is_instance_valid(_deck_center_meta_client):
+			_deck_center_meta_client.call("mark_latest_known_revision_seen")
+		else:
+			var client = DeckCenterMetaClientScript.new()
+			client.call("mark_latest_known_revision_seen")
+			client.free()
 	_pending_deck_center_meta = {}
 	_stop_deck_center_button_flash()
 
@@ -1699,6 +1732,10 @@ func _show_hud_modal(title: String, message: String, actions: Array, preferred_s
 		body.add_theme_constant_override("line_spacing", 6)
 		scroll.add_child(body)
 	HudThemeScript.style_scroll_container(scroll)
+	if portrait:
+		NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(scroll)
+	else:
+		NonBattleTouchBridgeScript.configure_visible_vertical_scroll(scroll)
 
 	var footer := HBoxContainer.new()
 	footer.name = "HudModalFooter"
@@ -1886,19 +1923,26 @@ func _create_feedback_overlay() -> Control:
 
 
 func _build_feedback_dialog_content() -> Control:
-	var root := HBoxContainer.new()
+	var root := GridContainer.new()
 	root.name = "FeedbackContent"
+	root.columns = 2
 	root.custom_minimum_size = Vector2(740, 398)
 	root.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	root.add_theme_constant_override("separation", 16)
+	root.add_theme_constant_override("h_separation", 16)
+	root.add_theme_constant_override("v_separation", 16)
 
 	var contact_panel := PanelContainer.new()
 	contact_panel.name = "FeedbackContactPanel"
 	contact_panel.custom_minimum_size = Vector2(232, 398)
+	contact_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	contact_panel.add_theme_stylebox_override("panel", _feedback_side_panel_style(HudThemeScript.ACCENT))
 	root.add_child(contact_panel)
 
 	var contact_box := VBoxContainer.new()
+	contact_box.name = "FeedbackContactBox"
+	contact_box.alignment = BoxContainer.ALIGNMENT_CENTER
+	contact_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	contact_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	contact_box.add_theme_constant_override("separation", 8)
 	contact_panel.add_child(contact_box)
 
@@ -1907,13 +1951,16 @@ func _build_feedback_dialog_content() -> Control:
 		var qr := TextureRect.new()
 		qr.name = "XhsQrImage"
 		qr.texture = qr_texture
-		qr.custom_minimum_size = Vector2(202, 300)
+		qr.custom_minimum_size = FEEDBACK_QR_DESKTOP_SIZE
+		qr.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		qr.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 		qr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		contact_box.add_child(qr)
 	else:
 		var qr_fallback := Label.new()
-		qr_fallback.custom_minimum_size = Vector2(202, 300)
+		qr_fallback.name = "XhsQrFallback"
+		qr_fallback.custom_minimum_size = FEEDBACK_QR_DESKTOP_SIZE
+		qr_fallback.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		qr_fallback.text = "二维码图片未找到\n请搜索小红书号"
 		qr_fallback.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		qr_fallback.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -2041,10 +2088,11 @@ func _resize_feedback_panel() -> void:
 		var margin := clampf(viewport_size.x * 0.026, 24.0, 42.0)
 		_feedback_panel.custom_minimum_size = Vector2(
 			maxf(320.0, viewport_size.x - margin * 2.0),
-			minf(viewport_size.y - margin * 2.0, maxf(1800.0, viewport_size.y * 0.78))
+			maxf(320.0, viewport_size.y - margin * 2.0)
 		)
 		_apply_feedback_portrait_metrics()
 		return
+	_apply_feedback_landscape_metrics()
 	_feedback_panel.custom_minimum_size = Vector2(
 		minf(820.0, maxf(320.0, viewport_size.x - 56.0)),
 		minf(560.0, maxf(420.0, viewport_size.y - 56.0))
@@ -2055,6 +2103,29 @@ func _apply_feedback_portrait_metrics() -> void:
 	if _feedback_panel == null:
 		return
 	var scale := _home_portrait_scale()
+	var viewport_size := get_viewport_rect().size if is_inside_tree() else size
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		viewport_size = Vector2(390, 844)
+	var content := _feedback_panel.find_child("FeedbackContent", true, false) as GridContainer
+	if content != null:
+		content.columns = 1
+		content.custom_minimum_size.x = maxf(320.0, viewport_size.x - 96.0)
+		content.add_theme_constant_override("h_separation", 0)
+		content.add_theme_constant_override("v_separation", roundi(18.0 * scale))
+	var qr_size := _feedback_portrait_qr_size(viewport_size)
+	var contact_panel := _feedback_panel.find_child("FeedbackContactPanel", true, false) as PanelContainer
+	if contact_panel != null:
+		contact_panel.custom_minimum_size = Vector2(maxf(320.0, viewport_size.x - 96.0), qr_size.y + 142.0 * scale)
+		contact_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		contact_panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var qr := _feedback_panel.find_child("XhsQrImage", true, false) as TextureRect
+	if qr != null:
+		qr.custom_minimum_size = qr_size
+		qr.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var qr_fallback := _feedback_panel.find_child("XhsQrFallback", true, false) as Control
+	if qr_fallback != null:
+		qr_fallback.custom_minimum_size = qr_size
+		qr_fallback.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_apply_feedback_portrait_metrics_recursive(_feedback_panel, scale)
 	if _feedback_name_input != null:
 		_feedback_name_input.custom_minimum_size.y = maxf(_feedback_name_input.custom_minimum_size.y, 78.0 * scale)
@@ -2065,6 +2136,35 @@ func _apply_feedback_portrait_metrics() -> void:
 	if _feedback_submit_button != null:
 		_feedback_submit_button.custom_minimum_size.y = maxf(_feedback_submit_button.custom_minimum_size.y, 92.0 * scale)
 		_feedback_submit_button.add_theme_font_size_override("font_size", roundi(27.0 * scale))
+
+
+func _apply_feedback_landscape_metrics() -> void:
+	if _feedback_panel == null:
+		return
+	var content := _feedback_panel.find_child("FeedbackContent", true, false) as GridContainer
+	if content != null:
+		content.columns = 2
+		content.custom_minimum_size = Vector2(740.0, 398.0)
+		content.add_theme_constant_override("h_separation", 16)
+		content.add_theme_constant_override("v_separation", 16)
+	var contact_panel := _feedback_panel.find_child("FeedbackContactPanel", true, false) as PanelContainer
+	if contact_panel != null:
+		contact_panel.custom_minimum_size = Vector2(232.0, 398.0)
+		contact_panel.size_flags_horizontal = Control.SIZE_FILL
+		contact_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var qr := _feedback_panel.find_child("XhsQrImage", true, false) as TextureRect
+	if qr != null:
+		qr.custom_minimum_size = FEEDBACK_QR_DESKTOP_SIZE
+		qr.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var qr_fallback := _feedback_panel.find_child("XhsQrFallback", true, false) as Control
+	if qr_fallback != null:
+		qr_fallback.custom_minimum_size = FEEDBACK_QR_DESKTOP_SIZE
+		qr_fallback.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+
+
+func _feedback_portrait_qr_size(viewport_size: Vector2) -> Vector2:
+	var width := clampf(viewport_size.x * 0.56, 300.0, 620.0)
+	return Vector2(width, width * FEEDBACK_QR_CARD_ASPECT)
 
 
 func _apply_feedback_portrait_metrics_recursive(node: Node, scale: float) -> void:

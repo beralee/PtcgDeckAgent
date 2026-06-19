@@ -369,19 +369,58 @@ func _apply_opponent_hand_label_style() -> void:
 
 
 func _apply_log_panel_style() -> void:
-	_style_panel(_node("MainArea/LogPanel") as Control, Color(0.05, 0.09, 0.13, 0.88), Color(0.42, 0.58, 0.74))
+	var log_panel := _node("MainArea/LogPanel") as PanelContainer
+	if log_panel != null:
+		var panel_style := StyleBoxFlat.new()
+		panel_style.bg_color = Color(0.018, 0.043, 0.064, 0.94)
+		panel_style.border_color = Color(0.30, 0.78, 0.92, 0.86)
+		panel_style.set_border_width_all(2)
+		panel_style.set_corner_radius_all(18)
+		panel_style.shadow_color = Color(0.04, 0.36, 0.48, 0.28)
+		panel_style.shadow_size = 16
+		panel_style.shadow_offset = Vector2(0, 3)
+		panel_style.content_margin_left = 10
+		panel_style.content_margin_right = 10
+		panel_style.content_margin_top = 8
+		panel_style.content_margin_bottom = 10
+		log_panel.add_theme_stylebox_override("panel", panel_style)
+	var log_vbox := _node("MainArea/LogPanel/LogPanelVBox") as VBoxContainer
+	if log_vbox != null:
+		log_vbox.add_theme_constant_override("separation", 8)
 	var log_title := _get_scene_var("_log_title") as Label
+	if log_title == null:
+		log_title = _node("MainArea/LogPanel/LogPanelVBox/LogTitle") as Label
 	if log_title != null:
 		log_title.add_theme_font_size_override("font_size", 16)
-		log_title.add_theme_color_override("font_color", Color(0.72, 0.88, 0.96))
+		log_title.add_theme_color_override("font_color", Color(0.88, 0.98, 1.0))
+		log_title.add_theme_color_override("font_outline_color", Color(0.02, 0.08, 0.12, 0.92))
+		log_title.add_theme_constant_override("outline_size", 1)
+		log_title.add_theme_color_override("font_shadow_color", Color(0.10, 0.80, 0.98, 0.32))
+		log_title.add_theme_constant_override("shadow_offset_y", 1)
 		log_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var log_list := _get_scene_var("_log_list") as RichTextLabel
+	if log_list == null:
+		log_list = _node("MainArea/LogPanel/LogPanelVBox/LogList") as RichTextLabel
 	if log_list != null:
+		log_list.bbcode_enabled = true
+		log_list.fit_content = false
+		log_list.scroll_following = true
+		log_list.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		log_list.add_theme_font_size_override("normal_font_size", 15)
-		log_list.add_theme_color_override("default_color", Color(0.82, 0.93, 0.98))
-		var log_list_bg := StyleBoxEmpty.new()
+		log_list.add_theme_color_override("default_color", Color(0.88, 0.95, 0.98))
+		log_list.add_theme_constant_override("line_separation", 4)
+		var log_list_bg := StyleBoxFlat.new()
+		log_list_bg.bg_color = Color(0.006, 0.018, 0.030, 0.76)
+		log_list_bg.border_color = Color(0.23, 0.63, 0.78, 0.38)
+		log_list_bg.set_border_width_all(1)
+		log_list_bg.set_corner_radius_all(12)
+		log_list_bg.content_margin_left = 10
+		log_list_bg.content_margin_right = 8
+		log_list_bg.content_margin_top = 8
+		log_list_bg.content_margin_bottom = 8
 		log_list.add_theme_stylebox_override("normal", log_list_bg)
-		log_list.add_theme_stylebox_override("focus", log_list_bg)
+		log_list.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+		HudThemeScript.style_scrollable_control(log_list, "compact")
 
 
 func _hide_legacy_side_hud_text() -> void:

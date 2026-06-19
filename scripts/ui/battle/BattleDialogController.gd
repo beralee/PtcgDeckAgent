@@ -19,6 +19,7 @@ const TEXT_HUD_OPTION_SIZE := Vector2(760, 74)
 const PORTRAIT_TEXT_HUD_OPTION_HEIGHT := 128.0
 const PORTRAIT_TEXT_HUD_OPTION_HORIZONTAL_INSET := 48.0
 const ACTION_HUD_ENERGY_SUMMARY_HEIGHT := 66.0
+const DIALOG_MODAL_ECHO_POSITION_EPSILON := 24.0
 
 
 func _bt(scene: Object, key: String, params: Dictionary = {}) -> String:
@@ -50,6 +51,12 @@ func mark_modal_input_consumed_at_position(scene: Object, reason: String, origin
 	mark_modal_input_consumed(scene, reason, slot_suppression_mode)
 
 
+func _dialog_slot_suppression_mode(scene: Object) -> String:
+	if str(scene.get("_pending_choice")) == "pokemon_action":
+		return "clear"
+	return "arm"
+
+
 func _input_event_screen_position(event: InputEvent) -> Vector2:
 	if event is InputEventMouse:
 		var mouse := event as InputEventMouse
@@ -58,6 +65,170 @@ func _input_event_screen_position(event: InputEvent) -> Vector2:
 		return mouse.position
 	if event is InputEventScreenTouch:
 		return (event as InputEventScreenTouch).position
+	return Vector2(-1.0, -1.0)
+
+
+func _valid_input_position(position: Vector2) -> bool:
+	return position.x >= 0.0 and position.y >= 0.0
+
+
+func _input_positions_match(a: Vector2, b: Vector2) -> bool:
+	if not _valid_input_position(a) or not _valid_input_position(b):
+		return false
+	return a.distance_squared_to(b) <= DIALOG_MODAL_ECHO_POSITION_EPSILON * DIALOG_MODAL_ECHO_POSITION_EPSILON
+
+
+func _begin_dialog_modal_transition(scene: Object) -> void:
+	var depth := int(scene.get("_dialog_modal_transition_depth")) + 1
+	scene.set("_dialog_modal_transition_depth", depth)
+	scene.set("_dialog_modal_transition_generation", int(scene.get("_modal_input_generation")))
+	scene.set("_dialog_modal_transition_origin_position", scene.get("_modal_input_origin_position"))
+
+
+func _end_dialog_modal_transition(scene: Object) -> void:
+	var depth := maxi(0, int(scene.get("_dialog_modal_transition_depth")) - 1)
+	scene.set("_dialog_modal_transition_depth", depth)
+	if depth == 0:
+		scene.set("_dialog_modal_transition_generation", -1)
+
+
+func _prepare_dialog_action_input_guard(scene: Object) -> void:
+	var next_generation := int(scene.get("_dialog_generation")) + 1
+	var modal_transition_depth := int(scene.get("_dialog_modal_transition_depth"))
+	var modal_generation := int(scene.get("_modal_input_generation"))
+	var transition_generation := int(scene.get("_dialog_modal_transition_generation"))
+	scene.set("_dialog_generation", next_generation)
+	scene.set("_dialog_user_input_generation", -1)
+	scene.set("_dialog_user_input_position", Vector2(-1.0, -1.0))
+	scene.set("_dialog_confirm_input_generation", -1)
+	scene.set("_dialog_confirm_input_position", Vector2(-1.0, -1.0))
+	scene.set("_dialog_cancel_input_generation", -1)
+	scene.set("_dialog_cancel_input_position", Vector2(-1.0, -1.0))
+	scene.set("_dialog_modal_echo_blocked", false)
+	scene.set("_dialog_echo_action_pending", "")
+	var requires_fresh_action := modal_transition_depth > 0 and transition_generation >= 0 and transition_generation == modal_generation
+	scene.set("_dialog_requires_fresh_action_input", requires_fresh_action)
+	scene.set(
+		"_dialog_same_position_action_locked",
+		requires_fresh_action and _valid_input_position(scene.get("_dialog_modal_transition_origin_position"))
+	)
+	if not requires_fresh_action:
+		scene.set("_dialog_modal_transition_origin_position", Vector2(-1.0, -1.0))
+
+
+func _record_dialog_fresh_input(scene: Object, _source: String = "dialog", position: Vector2 = Vector2(-1.0, -1.0)) -> void:
+	scene.set("_dialog_user_input_generation", int(scene.get("_dialog_generation")))
+	scene.set("_dialog_user_input_position", position)
+	scene.set("_dialog_echo_action_pending", "")
+	if (
+		not _valid_input_position(position)
+		or not _input_positions_match(position, scene.get("_dialog_modal_transition_origin_position"))
+	):
+		scene.set("_dialog_same_position_action_locked", false)
+
+
+func _is_modal_echo_action_position(scene: Object, position: Vector2) -> bool:
+	if not bool(scene.get("_dialog_requires_fresh_action_input")):
+		return false
+	if not bool(scene.get("_dialog_same_position_action_locked")):
+		return false
+	return _input_positions_match(position, scene.get("_dialog_modal_transition_origin_position"))
+
+
+func _is_dialog_action_press_event(event: InputEvent) -> bool:
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		return mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT
+	if event is InputEventScreenTouch:
+		return (event as InputEventScreenTouch).pressed
+	if event is InputEventKey:
+		var key_event := event as InputEventKey
+		return key_event.pressed and not key_event.echo
+	if event is InputEventJoypadButton:
+		return (event as InputEventJoypadButton).pressed
+	return false
+
+
+func on_dialog_action_button_input(scene: Object, action: String, event: InputEvent) -> void:
+	if not _is_dialog_action_press_event(event):
+		return
+	var generation := int(scene.get("_dialog_generation"))
+	var position := _input_event_screen_position(event)
+	if _is_modal_echo_action_position(scene, position):
+		scene.set("_dialog_echo_action_pending", action)
+		scene.call(
+			"_runtime_log",
+			"dialog_%s_same_position_echo_pending" % action,
+			"generation=%d position=%s %s" % [generation, str(position), scene.call("_dialog_state_snapshot")]
+		)
+		return
+	_record_dialog_fresh_input(scene, "dialog_%s_button" % action, position)
+	if action == "confirm":
+		scene.set("_dialog_confirm_input_generation", generation)
+		scene.set("_dialog_confirm_input_position", position)
+	elif action == "cancel":
+		scene.set("_dialog_cancel_input_generation", generation)
+		scene.set("_dialog_cancel_input_position", position)
+
+
+func on_dialog_action_button_down(scene: Object, action: String) -> void:
+	if (
+		bool(scene.get("_dialog_requires_fresh_action_input"))
+		and bool(scene.get("_dialog_same_position_action_locked"))
+		and str(scene.get("_dialog_echo_action_pending")) == action
+	):
+		return
+	if (
+		bool(scene.get("_dialog_requires_fresh_action_input"))
+		and bool(scene.get("_dialog_same_position_action_locked"))
+		and _valid_input_position(scene.get("_dialog_modal_transition_origin_position"))
+		and int(scene.get("_dialog_user_input_generation")) != int(scene.get("_dialog_generation"))
+	):
+		scene.set("_dialog_echo_action_pending", action)
+		return
+	var generation := int(scene.get("_dialog_generation"))
+	_record_dialog_fresh_input(scene, "dialog_%s_button_down" % action)
+	if action == "confirm":
+		scene.set("_dialog_confirm_input_generation", generation)
+	elif action == "cancel":
+		scene.set("_dialog_cancel_input_generation", generation)
+
+
+func _has_fresh_dialog_action_input(scene: Object, action: String) -> bool:
+	if not bool(scene.get("_dialog_requires_fresh_action_input")):
+		return true
+	var generation := int(scene.get("_dialog_generation"))
+	if int(scene.get("_dialog_user_input_generation")) == generation:
+		return true
+	if action == "confirm" and int(scene.get("_dialog_confirm_input_generation")) == generation:
+		return true
+	if action == "cancel" and int(scene.get("_dialog_cancel_input_generation")) == generation:
+		return true
+	return false
+
+
+func _consume_dialog_action_if_stale(scene: Object, action: String) -> bool:
+	if _has_fresh_dialog_action_input(scene, action):
+		return false
+	scene.set("_dialog_modal_echo_blocked", true)
+	scene.set("_dialog_echo_action_pending", "")
+	scene.call(
+		"_runtime_log",
+		"dialog_%s_stale_input_blocked" % action,
+		"generation=%d modal_generation=%d %s" % [
+			int(scene.get("_dialog_generation")),
+			int(scene.get("_modal_input_generation")),
+			scene.call("_dialog_state_snapshot"),
+		]
+	)
+	return true
+
+
+func _dialog_action_input_position(scene: Object, action: String) -> Vector2:
+	if action == "confirm":
+		return scene.get("_dialog_confirm_input_position")
+	if action == "cancel":
+		return scene.get("_dialog_cancel_input_position")
 	return Vector2(-1.0, -1.0)
 
 
@@ -365,11 +536,16 @@ func setup_dialog_card_view(scene: Object, card_view: BattleCardView, item: Vari
 	elif item is PokemonSlot:
 		var slot: PokemonSlot = item
 		card_view.setup_from_card_data(slot.get_card_data(), scene.call("_battle_card_mode_for_slot", slot))
+		var top_card := slot.get_top_card()
+		if top_card != null and card_view.has_method("set_card_foil_owner_index"):
+			card_view.call("set_card_foil_owner_index", top_card.owner_index)
 		card_view.set_badges()
 		card_view.set_battle_status(scene.call("_build_battle_status", slot))
 	else:
 		card_view.setup_from_instance(null, BattleCardView.MODE_CHOICE)
 		card_view.set_info(str(label), "")
+	if scene.has_method("_sync_card_foil_effect_for_view"):
+		scene.call("_sync_card_foil_effect_for_view", card_view)
 
 
 func dialog_should_use_card_mode(items: Array, extra_data: Dictionary) -> bool:
@@ -402,8 +578,14 @@ func show_dialog(scene: Object, title: String, items: Array, extra_data: Diction
 	var dialog_list: ItemList = scene.get("_dialog_list")
 	var dialog_overlay: Panel = scene.get("_dialog_overlay")
 	var dialog_cancel: Button = scene.get("_dialog_cancel")
+	var dialog_confirm: Button = scene.get("_dialog_confirm")
+	_prepare_dialog_action_input_guard(scene)
 	dialog_title.text = title
 	dialog_list.clear()
+	if dialog_confirm != null:
+		dialog_confirm.button_pressed = false
+	if dialog_cancel != null:
+		dialog_cancel.button_pressed = false
 	scene.set("_dialog_items_data", items)
 	scene.set("_dialog_data", extra_data)
 	_replace_int_array(scene, "_dialog_multi_selected_indices", [])
@@ -464,6 +646,8 @@ func show_dialog(scene: Object, title: String, items: Array, extra_data: Diction
 		"turn_number": _turn_number(scene),
 		"phase": scene.call("_recording_phase_name"),
 	})
+	if scene.has_method("_sync_card_foil_effects"):
+		scene.call("_sync_card_foil_effects", dialog_overlay)
 	if not assignment_mode and int(extra_data.get("max_select", 1)) > 1:
 		scene.call("_log", "已启用多选：先选择卡牌，再点击确认。")
 
@@ -796,6 +980,7 @@ func _build_text_hud_option(scene: Object, label_text: String, option_index: int
 
 
 func on_text_hud_option_pressed(scene: Object, option_index: int) -> void:
+	_record_dialog_fresh_input(scene, "text_hud_option")
 	var dialog_data: Dictionary = scene.get("_dialog_data")
 	var min_select := int(dialog_data.get("min_select", 1))
 	var max_select := int(dialog_data.get("max_select", 1))
@@ -1218,6 +1403,11 @@ func create_grouped_card_dialog_slot_panel(
 	prepare_grouped_energy_card_view(header_view, energy_card_size)
 	header_view.set_clickable(false)
 	header_view.setup_from_card_data(pokemon_slot.get_card_data(), scene.call("_battle_card_mode_for_slot", pokemon_slot))
+	var header_top_card := pokemon_slot.get_top_card()
+	if header_top_card != null and header_view.has_method("set_card_foil_owner_index"):
+		header_view.call("set_card_foil_owner_index", header_top_card.owner_index)
+	if scene.has_method("_sync_card_foil_effect_for_view"):
+		scene.call("_sync_card_foil_effect_for_view", header_view)
 	header_view.set_badges()
 	header_view.set_battle_status(scene.call("_build_battle_status", pokemon_slot))
 	header_view.set_meta("dialog_choice_index", -1)
@@ -1413,6 +1603,7 @@ func _rebuild_card_dialog_utility_row(scene: Object) -> void:
 		style_dialog_button(button, "primary")
 		var action_index := int(action.get("index", -1))
 		button.pressed.connect(func() -> void:
+			_record_dialog_fresh_input(scene, "dialog_utility_action")
 			mark_modal_input_consumed(scene, "dialog_utility_action")
 			confirm_dialog_selection(scene, PackedInt32Array([action_index]))
 		)
@@ -1622,6 +1813,7 @@ func _build_action_hud_option(scene: Object, action: Dictionary, action_index: i
 			if not enabled:
 				panel.accept_event()
 				return
+			_record_dialog_fresh_input(scene, "action_hud_option")
 			confirm_dialog_selection(scene, PackedInt32Array([action_index]), _input_event_screen_position(event))
 			panel.accept_event()
 	)
@@ -1839,7 +2031,10 @@ func show_assignment_dialog(scene: Object, extra_data: Dictionary) -> void:
 		target_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
 			scene.call("_on_assignment_target_chosen", i)
 		)
-		target_view.right_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
+		target_view.right_clicked.connect(func(ci: CardInstance, cd: CardData) -> void:
+			if ci != null and scene.has_method("_show_card_detail_for_instance"):
+				scene.call("_show_card_detail_for_instance", ci)
+				return
 			if cd != null:
 				scene.call("_show_card_detail", cd)
 		)
@@ -2002,6 +2197,11 @@ func create_grouped_assignment_source_slot_panel(
 	prepare_grouped_energy_card_view(header_view, energy_card_size)
 	header_view.set_clickable(false)
 	header_view.setup_from_card_data(pokemon_slot.get_card_data(), scene.call("_battle_card_mode_for_slot", pokemon_slot))
+	var header_top_card := pokemon_slot.get_top_card()
+	if header_top_card != null and header_view.has_method("set_card_foil_owner_index"):
+		header_view.call("set_card_foil_owner_index", header_top_card.owner_index)
+	if scene.has_method("_sync_card_foil_effect_for_view"):
+		scene.call("_sync_card_foil_effect_for_view", header_view)
 	header_view.set_badges()
 	header_view.set_battle_status(scene.call("_build_battle_status", pokemon_slot))
 	card_line.add_child(header_view)
@@ -2017,7 +2217,10 @@ func create_grouped_assignment_source_slot_panel(
 		source_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
 			scene.call("_on_assignment_source_chosen", source_index)
 		)
-		source_view.right_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
+		source_view.right_clicked.connect(func(ci: CardInstance, cd: CardData) -> void:
+			if ci != null and scene.has_method("_show_card_detail_for_instance"):
+				scene.call("_show_card_detail_for_instance", ci)
+				return
 			if cd != null:
 				scene.call("_show_card_detail", cd)
 		)
@@ -2057,7 +2260,10 @@ func add_assignment_source_card(
 		source_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
 			scene.call("_on_assignment_source_chosen", source_index)
 		)
-	source_view.right_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
+	source_view.right_clicked.connect(func(ci: CardInstance, cd: CardData) -> void:
+		if ci != null and scene.has_method("_show_card_detail_for_instance"):
+			scene.call("_show_card_detail_for_instance", ci)
+			return
 		if cd != null:
 			scene.call("_show_card_detail", cd)
 	)
@@ -2082,6 +2288,7 @@ func dialog_assignment_last_target_index(scene: Object) -> int:
 
 
 func on_assignment_source_chosen(scene: Object, source_index: int) -> void:
+	_record_dialog_fresh_input(scene, "assignment_source")
 	var dialog_data: Dictionary = scene.get("_dialog_data")
 	var source_items: Array = dialog_data.get("source_items", [])
 	if source_index < 0 or source_index >= source_items.size():
@@ -2107,6 +2314,7 @@ func on_assignment_source_chosen(scene: Object, source_index: int) -> void:
 
 
 func on_assignment_target_chosen(scene: Object, target_index: int) -> void:
+	_record_dialog_fresh_input(scene, "assignment_target")
 	var selected_source_index := int(scene.get("_dialog_assignment_selected_source_index"))
 	if selected_source_index < 0:
 		scene.call("_log", _bt(scene, "battle.dialog.choose_target"))
@@ -2235,6 +2443,7 @@ func _count_assignments_for_target_index(assignments: Array, target_index: int) 
 
 
 func on_dialog_card_chosen(scene: Object, real_index: int) -> void:
+	_record_dialog_fresh_input(scene, "dialog_card")
 	var dialog_data: Dictionary = scene.get("_dialog_data")
 	var min_select := int(dialog_data.get("min_select", 1))
 	var max_select := int(dialog_data.get("max_select", 1))
@@ -2316,10 +2525,12 @@ func update_dialog_status_text(scene: Object) -> void:
 
 
 func confirm_dialog_selection(scene: Object, sel_items: PackedInt32Array, origin_position: Vector2 = Vector2(-1.0, -1.0)) -> void:
+	var slot_suppression_mode := _dialog_slot_suppression_mode(scene)
 	if origin_position.x >= 0.0 and origin_position.y >= 0.0:
-		mark_modal_input_consumed_at_position(scene, "dialog_confirm_selection", origin_position)
+		mark_modal_input_consumed_at_position(scene, "dialog_confirm_selection", origin_position, slot_suppression_mode)
 	else:
-		mark_modal_input_consumed(scene, "dialog_confirm_selection")
+		mark_modal_input_consumed(scene, "dialog_confirm_selection", slot_suppression_mode)
+	_begin_dialog_modal_transition(scene)
 	scene.call(
 		"_runtime_log",
 		"confirm_dialog_selection",
@@ -2327,9 +2538,11 @@ func confirm_dialog_selection(scene: Object, sel_items: PackedInt32Array, origin
 	)
 	_hide_dialog_overlay(scene, "dialog_confirm_selection")
 	scene.call("_handle_dialog_choice", sel_items)
+	_end_dialog_modal_transition(scene)
 
 
 func on_dialog_item_selected(scene: Object, idx: int) -> void:
+	_record_dialog_fresh_input(scene, "dialog_item")
 	var dialog_list: ItemList = scene.get("_dialog_list")
 	var dialog_confirm: Button = scene.get("_dialog_confirm")
 	if dialog_list.select_mode != ItemList.SELECT_SINGLE:
@@ -2340,6 +2553,7 @@ func on_dialog_item_selected(scene: Object, idx: int) -> void:
 
 
 func on_dialog_item_multi_selected(scene: Object, idx: int, selected: bool) -> void:
+	_record_dialog_fresh_input(scene, "dialog_item_multi")
 	var dialog_list: ItemList = scene.get("_dialog_list")
 	if dialog_list.select_mode == ItemList.SELECT_SINGLE:
 		return
@@ -2354,7 +2568,14 @@ func on_dialog_item_multi_selected(scene: Object, idx: int, selected: bool) -> v
 
 
 func on_dialog_confirm(scene: Object) -> void:
-	mark_modal_input_consumed(scene, "dialog_confirm")
+	if _consume_dialog_action_if_stale(scene, "confirm"):
+		return
+	var confirm_origin := _dialog_action_input_position(scene, "confirm")
+	var slot_suppression_mode := _dialog_slot_suppression_mode(scene)
+	if _valid_input_position(confirm_origin):
+		mark_modal_input_consumed_at_position(scene, "dialog_confirm", confirm_origin, slot_suppression_mode)
+	else:
+		mark_modal_input_consumed(scene, "dialog_confirm", slot_suppression_mode)
 	if bool(scene.get("_dialog_assignment_mode")):
 		confirm_assignment_dialog(scene)
 		return
@@ -2380,11 +2601,18 @@ func on_dialog_confirm(scene: Object) -> void:
 	if max_select > 0 and sel_items.size() > max_select:
 		scene.call("_log", _bt(scene, "battle.dialog.select_at_most", {"count": max_select}))
 		return
-	confirm_dialog_selection(scene, sel_items)
+	confirm_dialog_selection(scene, sel_items, confirm_origin)
 
 
 func on_dialog_cancel(scene: Object) -> void:
-	mark_modal_input_consumed(scene, "dialog_cancel")
+	if _consume_dialog_action_if_stale(scene, "cancel"):
+		return
+	var cancel_origin := _dialog_action_input_position(scene, "cancel")
+	var slot_suppression_mode := _dialog_slot_suppression_mode(scene)
+	if _valid_input_position(cancel_origin):
+		mark_modal_input_consumed_at_position(scene, "dialog_cancel", cancel_origin, slot_suppression_mode)
+	else:
+		mark_modal_input_consumed(scene, "dialog_cancel", slot_suppression_mode)
 	var dialog_data: Dictionary = scene.get("_dialog_data")
 	if not bool(dialog_data.get("allow_cancel", true)):
 		scene.call(
@@ -2402,7 +2630,9 @@ func on_dialog_cancel(scene: Object) -> void:
 		_hide_dialog_overlay(scene, "dialog_cancel_empty_selection")
 		_replace_int_array(scene, "_dialog_card_selected_indices", [])
 		reset_dialog_assignment_state(scene)
+		_begin_dialog_modal_transition(scene)
 		scene.call("_handle_effect_interaction_choice", PackedInt32Array())
+		_end_dialog_modal_transition(scene)
 		return
 	_hide_dialog_overlay(scene, "dialog_cancel")
 	_replace_int_array(scene, "_dialog_card_selected_indices", [])

@@ -817,11 +817,16 @@ func build_hand_card(scene: Object, inst: CardInstance) -> PanelContainer:
 	card_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
 		if scene.has_method("_show_hand_card_detail"):
 			scene.call("_show_hand_card_detail", inst)
+		elif scene.has_method("_show_card_detail_for_instance"):
+			scene.call("_show_card_detail_for_instance", inst)
 		else:
 			scene.call("_show_card_detail", inst.card_data)
 	)
 	card_view.right_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
-		scene.call("_show_card_detail", inst.card_data)
+		if scene.has_method("_show_card_detail_for_instance"):
+			scene.call("_show_card_detail_for_instance", inst)
+		else:
+			scene.call("_show_card_detail", inst.card_data)
 	)
 	return card_view
 
@@ -973,6 +978,8 @@ func _show_card_collection(
 	else:
 		discard_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	discard_overlay.visible = true
+	if scene.has_method("_sync_card_foil_effects"):
+		scene.call("_sync_card_foil_effects", discard_overlay)
 	scene.call("_runtime_log", event_name, "player=%d title=%s count=%d" % [player_index, title, cards.size()])
 
 
@@ -1003,14 +1010,20 @@ func _populate_card_collection(scene: Object, card_row: HBoxContainer, ordered_c
 		card_view.set_info("", "")
 		if scene.has_method("_configure_card_gallery_card_view"):
 			scene.call("_configure_card_gallery_card_view", card_view, scene.get("_discard_card_scroll"), "discard_collection")
-		card_view.left_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
+		card_view.left_clicked.connect(func(ci: CardInstance, cd: CardData) -> void:
 			if scene.has_method("_is_card_gallery_drag_click_suppressed") and bool(scene.call("_is_card_gallery_drag_click_suppressed")):
+				return
+			if ci != null and scene.has_method("_show_card_detail_for_instance"):
+				scene.call("_show_card_detail_for_instance", ci)
 				return
 			if cd != null:
 				scene.call("_show_card_detail", cd)
 		)
-		card_view.right_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
+		card_view.right_clicked.connect(func(ci: CardInstance, cd: CardData) -> void:
 			if scene.has_method("_is_card_gallery_drag_click_suppressed") and bool(scene.call("_is_card_gallery_drag_click_suppressed")):
+				return
+			if ci != null and scene.has_method("_show_card_detail_for_instance"):
+				scene.call("_show_card_detail_for_instance", ci)
 				return
 			if cd != null:
 				scene.call("_show_card_detail", cd)

@@ -79,8 +79,8 @@ func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode
 	set_meta("non_battle_layout_mode", str(context.get("resolved_mode", mode)))
 	var panel := find_child("Panel", true, false) as Control
 	if panel != null:
-		panel.custom_minimum_size.x = float(context.get("content_width", 720.0)) if portrait else 720.0
-		panel.custom_minimum_size.y = maxf(720.0, size.y - float(context.get("page_margin", 24.0)) * 2.0) if portrait else 420.0
+		panel.custom_minimum_size.x = _portrait_tournament_width(size, context) if portrait else 720.0
+		panel.custom_minimum_size.y = maxf(720.0, size.y - _portrait_tournament_margin(size, context) * 2.0) if portrait else 420.0
 	_apply_tournament_mobile_metrics(self, context, portrait)
 	_apply_tournament_button_stack(portrait)
 	if _deck_picker_panel != null:
@@ -342,9 +342,11 @@ func _ensure_deck_picker_overlay() -> void:
 		_deck_picker_tabs[str(tab.get("id", ""))] = button
 
 	var scroll := ScrollContainer.new()
+	scroll.name = "DeckPickerScroll"
 	scroll.custom_minimum_size = Vector2(0, 430)
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	HudThemeScript.style_scroll_container(scroll)
 	root.add_child(scroll)
 
@@ -365,9 +367,9 @@ func _resize_deck_picker_panel() -> void:
 	var context := _last_non_battle_layout_context
 	var portrait := bool(context.get("is_portrait", viewport_size.y > viewport_size.x)) if not context.is_empty() else viewport_size.y > viewport_size.x
 	if portrait:
-		var page_margin := float(context.get("page_margin", clampf(viewport_size.x * 0.038, 22.0, 42.0)))
+		var page_margin := _portrait_tournament_margin(viewport_size, context)
 		_deck_picker_panel.custom_minimum_size = Vector2(
-			maxf(320.0, float(context.get("content_width", viewport_size.x - page_margin * 2.0))),
+			_portrait_tournament_width(viewport_size, context),
 			maxf(520.0, viewport_size.y - page_margin * 2.0)
 		)
 		_apply_deck_picker_mobile_metrics(context, true)
@@ -385,6 +387,16 @@ func _deck_picker_viewport_size() -> Vector2:
 	if is_inside_tree():
 		return get_viewport_rect().size
 	return Vector2(1280, 720)
+
+
+func _portrait_tournament_margin(viewport_size: Vector2, context: Dictionary) -> float:
+	var fallback := clampf(viewport_size.x * 0.026, 14.0, 28.0)
+	return minf(float(context.get("page_margin", fallback)), fallback)
+
+
+func _portrait_tournament_width(viewport_size: Vector2, context: Dictionary) -> float:
+	var margin := _portrait_tournament_margin(viewport_size, context)
+	return maxf(320.0, viewport_size.x - margin * 2.0)
 
 
 func _apply_deck_picker_mobile_metrics(context: Dictionary, portrait: bool) -> void:
@@ -416,6 +428,15 @@ func _apply_deck_picker_mobile_metrics(context: Dictionary, portrait: bool) -> v
 		if tab != null:
 			tab.custom_minimum_size.y = maxf(tab.custom_minimum_size.y, button_height)
 			tab.add_theme_font_size_override("font_size", button_font)
+	var scroll := _deck_picker_panel.find_child("DeckPickerScroll", true, false) as ScrollContainer
+	if scroll != null:
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		scroll.custom_minimum_size.y = maxf(scroll.custom_minimum_size.y, float(context.get("list_item_min_height", 90.0)) * (5.0 if portrait else 4.8))
+		HudThemeScript.style_scroll_container(scroll, "auto")
+		if portrait:
+			NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(scroll)
+		else:
+			NonBattleTouchBridgeScript.configure_visible_vertical_scroll(scroll)
 
 
 func _close_deck_picker() -> void:
@@ -436,7 +457,9 @@ func _on_deck_picker_category_pressed(category: String) -> void:
 func _refresh_deck_picker() -> void:
 	if _deck_picker_grid == null:
 		return
-	_deck_picker_grid.columns = 1 if _deck_picker_viewport_size().x < 760.0 else 2
+	var picker_context := _last_non_battle_layout_context
+	var is_picker_portrait := bool(picker_context.get("is_portrait", false)) if not picker_context.is_empty() else _deck_picker_viewport_size().y > _deck_picker_viewport_size().x
+	_deck_picker_grid.columns = 1 if is_picker_portrait or _deck_picker_viewport_size().x < 760.0 else 2
 	for child: Node in _deck_picker_grid.get_children():
 		child.queue_free()
 	_refresh_deck_picker_tabs()

@@ -13,6 +13,7 @@ const EffectGrandTreeScript = preload("res://scripts/effects/stadium_effects/CSV
 const SCREAM_TAIL_EFFECT_ID := "12c9416c64d1a8cfbbf0a3000a9f3d50"
 const CRESSELIA_HEADLESS_EFFECT_ID := "cresselia_headless_test"
 const POWERGLASS_ID := "1dc38c46be0951b2b135e1df2e5e7767"
+const TM_EVOLUTION_EFFECT_ID := "43386015be5c073ba2e5b9d3692ece3f"
 
 
 class SetupCompletionSpyGameStateMachine extends GameStateMachine:
@@ -262,6 +263,48 @@ func test_bridge_injects_ability_followup_counter_distribution_steps() -> String
 		assert_eq(source.damage_counters, 0, "Headless follow-up should remove selected counters from the damaged own Pokemon"),
 		assert_eq(opponent.active_pokemon.damage_counters, 30, "Headless follow-up should place selected counters onto the opponent target"),
 		assert_eq(str(bridge.get("_pending_choice")), "", "Resolved follow-up should clear the effect interaction prompt"),
+	])
+
+
+func test_bridge_injects_tm_evolution_granted_attack_deck_followup_after_bench_choice() -> String:
+	var bridge := HeadlessMatchBridgeScript.new()
+	var gsm := _make_gsm()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.turn_number = 2
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+	var attacker := _make_slot(_make_basic_card("Attacker"))
+	attacker.attached_tool = _make_tool_card("TM Evolution", TM_EVOLUTION_EFFECT_ID, 0)
+	attacker.attached_energy.append(_make_energy_card("Colorless Energy", "C", 0))
+	var bench := _make_slot(_make_basic_card("Bench Basic"))
+	player.active_pokemon = attacker
+	player.bench = [bench]
+	var evolution := _make_evolution_card("Bench Evolution", "Stage 1", "Bench Basic", 0)
+	var wrong_evolution := _make_evolution_card("Wrong Evolution", "Stage 1", "Other Basic", 0)
+	player.deck = [evolution, wrong_evolution]
+	opponent.active_pokemon = _make_slot(_make_basic_card("Opponent Active"))
+	bridge.bind(gsm)
+
+	var granted_attacks: Array[Dictionary] = gsm.effect_processor.get_granted_attacks(attacker, gsm.game_state)
+	var granted_attack: Dictionary = granted_attacks[0] if not granted_attacks.is_empty() else {}
+	var started := bridge._try_use_granted_attack_with_interaction(0, attacker, granted_attack)
+	var initial_steps: Array = bridge.get("_pending_effect_steps")
+	var initial_step: Dictionary = initial_steps[0] if not initial_steps.is_empty() else {}
+	bridge._handle_effect_interaction_choice(PackedInt32Array([0]))
+	var pending_context: Dictionary = bridge.get("_pending_effect_context")
+	var current_steps: Array = bridge.get("_pending_effect_steps")
+	var step_index: int = int(bridge.get("_pending_effect_step_index"))
+	var followup_step: Dictionary = current_steps[step_index] if step_index >= 0 and step_index < current_steps.size() else {}
+
+	return run_checks([
+		assert_true(started, "Headless bridge should start TM Evolution's granted-attack interaction"),
+		assert_eq(str(initial_step.get("id", "")), "evolution_bench", "TM Evolution should choose the bench target before deck search"),
+		assert_eq(pending_context.get("evolution_bench", []), [bench], "Headless bridge should store the selected bench target"),
+		assert_eq(str(followup_step.get("id", "")), "evolution_cards", "TM Evolution should inject the deck-search follow-up after target selection"),
+		assert_eq(followup_step.get("items", []), [evolution], "TM Evolution follow-up should only allow evolution cards for the selected bench target"),
+		assert_eq(followup_step.get("card_items", []), [evolution, wrong_evolution], "TM Evolution follow-up should still show the full searched deck"),
+		assert_eq(followup_step.get("card_indices", []), [0, -1], "TM Evolution follow-up should disable evolution cards from unselected lines"),
 	])
 
 

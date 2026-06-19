@@ -272,7 +272,7 @@ func show_hand_card_detail(inst: CardInstance) -> void:
 		_call("_on_hand_card_clicked", [inst, null])
 		return
 	var can_use := can_show_hand_detail_action(inst)
-	show_card_detail(inst.card_data)
+	show_card_instance_detail(inst)
 	if can_use:
 		set_detail_action_mode("hand_action", inst)
 		var detail_use_btn := _get_scene_var("_detail_use_btn") as Button
@@ -286,15 +286,15 @@ func show_selected_hand_card_detail(inst: CardInstance) -> void:
 	if inst == null or inst.card_data == null:
 		return
 	if not inst.card_data.is_pokemon():
-		show_card_detail(inst.card_data)
+		show_card_instance_detail(inst)
 		return
 	if bool(_call("_is_hand_drag_click_suppressed")):
 		_call("_runtime_log", ["hand_card_click_blocked", "reason=hand_drag_suppressed card=%s" % inst.card_data.name])
 		return
 	if not can_show_hand_detail_action(inst):
-		show_card_detail(inst.card_data)
+		show_card_instance_detail(inst)
 		return
-	show_card_detail(inst.card_data)
+	show_card_instance_detail(inst)
 	set_detail_action_mode("selected_pokemon", inst)
 
 
@@ -380,7 +380,7 @@ func on_detail_use_pressed() -> void:
 		return
 	if not can_show_hand_detail_action(inst):
 		if inst.card_data != null:
-			show_card_detail(inst.card_data)
+			show_card_instance_detail(inst)
 		return
 	_call("_on_hand_card_clicked", [inst, null])
 
@@ -417,6 +417,21 @@ func show_card_detail(cd: CardData) -> void:
 		detail_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 		detail_overlay.visible = true
 	play_card_detail_open_animation()
+
+
+func show_card_instance_detail(inst: CardInstance) -> void:
+	if inst == null or inst.card_data == null:
+		return
+	show_card_detail(inst.card_data)
+	var detail_card_view := _get_scene_var("_detail_card_view") as BattleCardView
+	if detail_card_view != null:
+		detail_card_view.setup_from_instance(inst, BATTLE_CARD_VIEW.MODE_PREVIEW)
+		detail_card_view.set_badges("", "")
+		detail_card_view.set_info("", "")
+		if detail_card_view.has_method("set_card_foil_owner_index"):
+			detail_card_view.call("set_card_foil_owner_index", inst.owner_index)
+	if _scene != null and _scene.has_method("_sync_card_foil_effects"):
+		_scene.call("_sync_card_foil_effects", _get_scene_var("_detail_overlay") as Node)
 
 
 func detail_lines(cd: CardData) -> Array[String]:

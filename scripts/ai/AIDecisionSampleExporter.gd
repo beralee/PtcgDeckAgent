@@ -259,10 +259,25 @@ func _actions_match(lhs: Dictionary, rhs: Dictionary) -> bool:
 func _extract_card_name(card_variant: Variant) -> String:
 	if card_variant is CardInstance and (card_variant as CardInstance).card_data != null:
 		return str((card_variant as CardInstance).card_data.name)
+	if card_variant is Dictionary:
+		var snapshot := card_variant as Dictionary
+		var name := str(snapshot.get("name", "")).strip_edges()
+		if name != "":
+			return name
+		return str(snapshot.get("name_en", "")).strip_edges()
 	return ""
 
 
 func _extract_target_name(target_variant: Variant) -> String:
 	if target_variant is PokemonSlot:
 		return (target_variant as PokemonSlot).get_pokemon_name()
+	if target_variant is Dictionary:
+		var snapshot := target_variant as Dictionary
+		var pokemon_name := str(snapshot.get("pokemon_name", "")).strip_edges()
+		if pokemon_name != "":
+			return pokemon_name
+		var name := str(snapshot.get("name", "")).strip_edges()
+		if name != "":
+			return name
+		return str(snapshot.get("name_en", "")).strip_edges()
 	return ""

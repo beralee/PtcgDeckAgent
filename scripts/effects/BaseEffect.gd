@@ -70,6 +70,15 @@ func get_followup_attack_interaction_steps(
 	return []
 
 
+func get_followup_granted_attack_interaction_steps(
+	_pokemon: PokemonSlot,
+	_granted_attack: Dictionary,
+	_state: GameState,
+	_resolved_context: Dictionary
+) -> Array[Dictionary]:
+	return []
+
+
 func get_followup_interaction_steps(
 	_card: CardInstance,
 	_state: GameState,

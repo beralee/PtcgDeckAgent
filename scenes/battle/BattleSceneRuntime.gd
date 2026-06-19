@@ -24,6 +24,10 @@ func _ready() -> void:
 	_btn_battle_more.pressed.connect(_on_battle_more_pressed)
 	_dialog_confirm.pressed.connect(_on_dialog_confirm)
 	_dialog_cancel.pressed.connect(_on_dialog_cancel)
+	_dialog_confirm.gui_input.connect(_on_dialog_confirm_input)
+	_dialog_cancel.gui_input.connect(_on_dialog_cancel_input)
+	_dialog_confirm.button_down.connect(_on_dialog_confirm_button_down)
+	_dialog_cancel.button_down.connect(_on_dialog_cancel_button_down)
 	_handover_btn.pressed.connect(_on_handover_confirmed)
 	_handover_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	_handover_panel.z_index = HANDOVER_OVERLAY_Z_INDEX
@@ -125,7 +129,10 @@ func _ready() -> void:
 		_opp_discard_preview.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
 			_show_discard_pile(1 - _view_player, "对方弃牌区")
 		)
-		_opp_discard_preview.right_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
+		_opp_discard_preview.right_clicked.connect(func(ci: CardInstance, cd: CardData) -> void:
+			if ci != null:
+				_show_card_detail_for_instance(ci)
+				return
 			if cd != null:
 				_show_card_detail(cd)
 		)
@@ -133,7 +140,10 @@ func _ready() -> void:
 		_my_discard_preview.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
 			_show_discard_pile(_view_player, "己方弃牌区")
 		)
-		_my_discard_preview.right_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
+		_my_discard_preview.right_clicked.connect(func(ci: CardInstance, cd: CardData) -> void:
+			if ci != null:
+				_show_card_detail_for_instance(ci)
+				return
 			if cd != null:
 				_show_card_detail(cd)
 		)
@@ -188,9 +198,10 @@ func _input(event: InputEvent) -> void:
 		if gallery_drag_viewport != null:
 			gallery_drag_viewport.set_input_as_handled()
 		return
-	if _hand_drag_active:
+	var route_hand_drag_event := _should_route_hand_drag_input_event(event)
+	if route_hand_drag_event:
 		_debug_hand_drag_scroll_event("battle_scene_input", event, _hand_scroll if _hand_scroll != null else find_child("HandScroll", true, false) as ScrollContainer)
-	if _hand_drag_active and _handle_hand_drag_scroll_input(event):
+	if route_hand_drag_event and _handle_hand_drag_scroll_input(event, "battle_scene_input"):
 		var hand_drag_viewport := get_viewport()
 		if hand_drag_viewport != null:
 			hand_drag_viewport.set_input_as_handled()
@@ -199,6 +210,35 @@ func _input(event: InputEvent) -> void:
 		var viewport := get_viewport()
 		if viewport != null:
 			viewport.set_input_as_handled()
+
+
+func _should_route_hand_drag_input_event(event: InputEvent) -> bool:
+	if _hand_drag_active:
+		return true
+	if _hand_drag_late_start_blocked_by_modal():
+		return false
+	if event is InputEventScreenDrag:
+		return true
+	if event is InputEventMouseMotion:
+		var motion := event as InputEventMouseMotion
+		return (motion.button_mask & MOUSE_BUTTON_MASK_LEFT) != 0
+	return false
+
+
+func _hand_drag_late_start_blocked_by_modal() -> bool:
+	if _is_board_modal_overlay_visible():
+		return true
+	if _is_field_interaction_active():
+		return true
+	if _draw_reveal_active:
+		return true
+	if _portrait_prize_dialog_active:
+		return true
+	if _portrait_actions_popup != null and _portrait_actions_popup.visible:
+		return true
+	if _stadium_card_overlay != null and _stadium_card_overlay.visible:
+		return true
+	return false
 
 
 
@@ -244,7 +284,6 @@ func _on_battle_layout_pressed() -> void:
 
 func _on_battle_more_pressed() -> void:
 	_show_portrait_actions_popup()
-
 
 
 func _draw_reveal_anchor_rect() -> Rect2:
@@ -994,6 +1033,7 @@ func _cancel_card_gallery_drag_scroll(source: String = "cancel") -> void:
 func _configure_card_gallery_card_view(card_view: BattleCardView, scroll: ScrollContainer, source: String = "card_gallery") -> void:
 	_ensure_battle_drag_scroll_coordinator()
 	_battle_drag_scroll_coordinator.call("configure_card_gallery_card_view", card_view, scroll, source)
+	_sync_card_foil_effect_for_view(card_view)
 
 
 
@@ -1643,7 +1683,7 @@ func _on_action_logged(action: GameAction) -> void:
 		if action.player_index != _view_player:
 			_latest_opponent_action_text = display_description
 			_latest_opponent_action_turn_number = action.turn_number
-		_log(display_description)
+		_log(display_description, action)
 	if _is_turn_start_draw_action(action):
 		action.data["turn_start"] = true
 		action.data["draw_source"] = "turn_start"
@@ -1679,6 +1719,13 @@ func _on_action_logged(action: GameAction) -> void:
 		and str(action.data.get("ability_vfx", "")) == "counter_transfer"
 	):
 		_battle_attack_vfx_controller.call("play_counter_transfer_vfx", self, action.data)
+	elif (
+		action != null
+		and action.action_type == GameAction.ActionType.PLAY_TRAINER
+		and not _is_review_mode()
+		and str(action.data.get("trainer_vfx", "")) == "boss_orders"
+	):
+		_battle_attack_vfx_controller.call("play_boss_orders_vfx", self, action.data)
 	_record_battle_event({
 		"event_type": "action_resolved",
 		"action_type": action.action_type,
@@ -1850,9 +1897,10 @@ func _on_stadium_card_left_clicked(card_instance: CardInstance, card_data: CardD
 	if gs != null and gs.stadium_card != null and _can_accept_live_action() and not _is_field_interaction_active():
 		_show_stadium_action_dialog(gs.current_player_index)
 		return
+	if card_instance != null:
+		_show_card_detail_for_instance(card_instance)
+		return
 	var detail_data := card_data
-	if detail_data == null and card_instance != null:
-		detail_data = card_instance.card_data
 	if detail_data != null:
 		_show_card_detail(detail_data)
 
@@ -1861,9 +1909,10 @@ func _on_stadium_card_left_clicked(card_instance: CardInstance, card_data: CardD
 func _on_stadium_card_right_clicked(card_instance: CardInstance, card_data: CardData) -> void:
 	if _is_board_modal_overlay_visible():
 		return
+	if card_instance != null:
+		_show_card_detail_for_instance(card_instance)
+		return
 	var detail_data := card_data
-	if detail_data == null and card_instance != null:
-		detail_data = card_instance.card_data
 	if detail_data != null:
 		_show_card_detail(detail_data)
 
@@ -1886,7 +1935,7 @@ func _on_stadium_area_input(event: InputEvent) -> void:
 		return
 	if mbe.button_index != MOUSE_BUTTON_RIGHT:
 		return
-	_show_card_detail(_gsm.game_state.stadium_card.card_data)
+	_show_card_detail_for_instance(_gsm.game_state.stadium_card)
 
 
 func _is_board_modal_overlay_visible() -> bool:

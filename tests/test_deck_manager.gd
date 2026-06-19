@@ -57,6 +57,363 @@ func test_deck_manager_uses_hud_visual_theme() -> String:
 	])
 
 
+func test_import_panel_portrait_uses_phone_sized_modal_controls() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.call("_apply_hud_theme")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	scene.call("_on_import_pressed")
+
+	var import_panel := scene.get_node_or_null("%ImportPanel") as Control
+	var import_bg := scene.find_child("ImportBg", true, false) as Control
+	var import_box := scene.find_child("ImportBox", true, false) as Control
+	var hint_label := scene.find_child("HintLabel", true, false) as Label
+	var progress_label := scene.get_node_or_null("%ProgressLabel") as Label
+	var url_input := scene.get_node_or_null("%UrlInput") as LineEdit
+	var paste_button := scene.find_child("BtnPasteImport", true, false) as Button
+	var import_button := scene.get_node_or_null("%BtnDoImport") as Button
+	var close_button := scene.get_node_or_null("%BtnCloseImport") as Button
+	var box_min_size := import_box.custom_minimum_size if import_box != null else Vector2.ZERO
+	var guide_text := hint_label.text if hint_label != null else ""
+	var modal_is_top_layer := import_panel != null and import_panel.z_index >= 1000 and import_panel.z_as_relative == false
+	var modal_is_front_child := import_panel != null and import_panel.get_parent() != null and import_panel.get_parent().get_child(import_panel.get_parent().get_child_count() - 1) == import_panel
+
+	scene.queue_free()
+	return run_checks([
+		assert_true(import_panel != null and import_panel.visible, "Deck import panel should open in portrait"),
+		assert_true(import_panel != null and import_panel.mouse_filter == Control.MOUSE_FILTER_STOP, "Deck import panel should act as a touch-blocking modal layer"),
+		assert_true(modal_is_top_layer, "Deck import panel should render above deck rows so phone taps cannot hit View/Edit buttons behind it"),
+		assert_true(modal_is_front_child, "Deck import panel should move to the front when opened"),
+		assert_true(import_bg != null and import_bg.mouse_filter == Control.MOUSE_FILTER_STOP, "Deck import backdrop should stop touch events from leaking to the deck list"),
+		assert_true(import_box != null and import_box.mouse_filter == Control.MOUSE_FILTER_STOP, "Deck import box should own touch input while the modal is open"),
+		assert_true(import_box != null and import_box.anchor_left == 0.0 and import_box.anchor_right == 1.0, "Deck import portrait box should be a full-width HUD sheet"),
+		assert_true(import_box != null and import_box.anchor_top == 0.0 and import_box.anchor_bottom == 1.0, "Deck import portrait box should be a full-height HUD sheet"),
+		assert_true(box_min_size.x >= 340.0, "Deck import portrait sheet should use most of a phone-width screen"),
+		assert_true(box_min_size.y >= 780.0, "Deck import portrait sheet should use full phone height"),
+		assert_true(hint_label != null and hint_label.autowrap_mode != TextServer.AUTOWRAP_OFF, "Deck import portrait hint should wrap instead of shrinking text"),
+		assert_true(guide_text.contains("tcg.mik.moe") and guide_text.contains("574793"), "Deck import portrait guide should show the website and an example deck id"),
+		assert_true(guide_text.contains("复制") and guide_text.contains("粘贴"), "Deck import portrait guide should explain the copy and paste flow"),
+		assert_true(progress_label != null and progress_label.autowrap_mode != TextServer.AUTOWRAP_OFF, "Deck import portrait progress text should wrap instead of clipping"),
+		assert_true(url_input != null and url_input.custom_minimum_size.y >= 128.0, "Deck import portrait URL input should be a large phone touch target"),
+		assert_true(url_input != null and url_input.get_theme_font_size("font_size") >= 29, "Deck import portrait URL input text should be phone-readable"),
+		assert_true(url_input != null and url_input.virtual_keyboard_enabled and url_input.virtual_keyboard_show_on_focus, "Deck import URL input should rely on native mobile keyboard-on-focus behavior"),
+		assert_true(url_input != null and url_input.virtual_keyboard_type == LineEdit.KEYBOARD_TYPE_URL, "Deck import URL input should request the URL keyboard type"),
+		assert_true(url_input != null and url_input.context_menu_enabled, "Deck import URL input should keep the native paste context menu enabled"),
+		assert_true(paste_button != null and paste_button.visible, "Deck import portrait dialog should include a one-tap paste button for phone users"),
+		assert_true(paste_button != null and paste_button.custom_minimum_size.y >= 104.0, "Deck import paste button should be phone-sized"),
+		assert_true(import_button != null and import_button.custom_minimum_size.y >= 104.0, "Deck import portrait confirm button should be phone-sized"),
+		assert_true(close_button != null and close_button.custom_minimum_size.y >= 104.0, "Deck import portrait close button should be phone-sized"),
+		assert_true(import_button != null and import_button.get_theme_font_size("font_size") >= 33, "Deck import portrait button text should be phone-readable"),
+	])
+
+
+func test_import_panel_blocks_and_restores_background_deck_controls() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+
+	var deck_list := scene.get_node_or_null("%DeckList") as VBoxContainer
+	var fake_row_button := Button.new()
+	fake_row_button.name = "FakeDeckRowViewButton"
+	fake_row_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	if deck_list != null:
+		deck_list.add_child(fake_row_button)
+
+	var back_button := scene.get_node_or_null("%BtnBack") as Button
+	var back_filter_before := back_button.mouse_filter if back_button != null else -1
+	var row_filter_before := fake_row_button.mouse_filter
+
+	scene.call("_on_import_pressed")
+	var back_blocked := back_button != null and back_button.mouse_filter == Control.MOUSE_FILTER_IGNORE
+	var row_blocked := fake_row_button.mouse_filter == Control.MOUSE_FILTER_IGNORE
+
+	scene.call("_on_close_import")
+	var back_restored := back_button != null and back_button.mouse_filter == back_filter_before
+	var row_restored := fake_row_button.mouse_filter == row_filter_before
+
+	scene.queue_free()
+	return run_checks([
+		assert_true(back_blocked, "Deck import modal should disable background header buttons while open"),
+		assert_true(row_blocked, "Deck import modal should disable deck row buttons behind the full-screen sheet while open"),
+		assert_true(back_restored, "Deck import modal should restore background header button hit testing after close"),
+		assert_true(row_restored, "Deck import modal should restore deck row button hit testing after close"),
+	])
+
+
+func test_import_panel_gui_layer_consumes_background_touches() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	scene.call("_on_import_pressed")
+
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.position = Vector2(16, 760)
+	var handled_press := bool(scene.call("_handle_import_modal_gui_input_for_tests", press))
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.position = press.position
+	var handled_release := bool(scene.call("_handle_import_modal_gui_input_for_tests", release))
+
+	scene.queue_free()
+	return run_checks([
+		assert_true(handled_press and handled_release, "Deck import modal GUI layer should consume phone touches before deck row buttons behind it can react"),
+	])
+
+
+func test_import_panel_modal_consumes_background_touch_when_open() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	scene.call("_show_import_panel")
+
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.position = Vector2(12, 760)
+	var handled_press := bool(scene.call("_handle_import_panel_modal_input_for_tests", press))
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.position = press.position
+	var handled_release := bool(scene.call("_handle_import_panel_modal_input_for_tests", release))
+	scene.call("_hide_import_panel")
+	var handled_hidden := bool(scene.call("_handle_import_panel_modal_input_for_tests", press))
+
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	scene.queue_free()
+	return run_checks([
+		assert_true(handled_press and handled_release, "Deck import modal should consume background phone touches while open"),
+		assert_false(handled_hidden, "Deck import modal should not consume touches after it is closed"),
+	])
+
+
+func test_import_panel_url_input_uses_feedback_style_focus_path() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	scene.call("_on_import_pressed")
+	await tree.process_frame
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var url_input := scene.get_node_or_null("%UrlInput") as LineEdit
+
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.position = url_input.get_global_rect().get_center() if url_input != null else Vector2(80, 330)
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.position = press.position
+	var import_panel := scene.get_node_or_null("%ImportPanel") as Control
+	var handled_press := bool(NonBattleTouchBridgeScript.handle_root_touch(import_panel, press)) if import_panel != null else false
+	var handled_release := bool(NonBattleTouchBridgeScript.handle_root_touch(import_panel, release)) if import_panel != null else false
+	var focus_requested := url_input != null and bool(url_input.get_meta(NonBattleTouchBridgeScript.FOCUS_REQUESTED_META, false))
+	var native_marked := url_input != null and bool(url_input.get_meta(NonBattleTouchBridgeScript.NATIVE_TEXT_INPUT_META, false))
+	var focus_bridge_bound := url_input != null and bool(url_input.get_meta(NonBattleTouchBridgeScript.FOCUS_TOUCH_BOUND_META, false))
+	var has_manual_modal_handler := false
+	for control_name: String in ["ImportPanel", "ImportBg", "ImportBox"]:
+		var control := scene.find_child(control_name, true, false) as Control
+		if control == null:
+			continue
+		for connection: Dictionary in control.gui_input.get_connections():
+			var callable := connection.get("callable") as Callable
+			if callable.is_valid() and str(callable.get_method()) == "_on_import_modal_gui_input":
+				has_manual_modal_handler = true
+
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	scene.queue_free()
+	return run_checks([
+		assert_true(handled_press and handled_release, "Deck import URL input taps should be handled by the same focus bridge path as the working feedback dialog"),
+		assert_true(focus_requested, "Deck import URL input tap should request focus and open the Android keyboard"),
+		assert_false(native_marked, "Deck import URL input should not use the native-bypass path that skips the shared focus bridge"),
+		assert_true(focus_bridge_bound, "Deck import URL input should bind the shared focus touch bridge"),
+		assert_false(has_manual_modal_handler, "Deck import modal should not install manual gui_input guards that can swallow input-field taps"),
+		assert_true(url_input != null and url_input.mouse_filter == Control.MOUSE_FILTER_STOP, "Deck import URL input should still stop events inside the modal hit area"),
+		assert_true(url_input != null and url_input.virtual_keyboard_enabled and url_input.virtual_keyboard_show_on_focus, "Deck import URL input should request the native mobile keyboard on focus"),
+		assert_true(url_input != null and url_input.context_menu_enabled, "Deck import URL input should keep native paste support enabled"),
+	])
+
+
+func test_import_panel_url_input_is_focus_bridge_bound_like_feedback_dialog() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	scene.call("_on_import_pressed")
+	var url_input := scene.get_node_or_null("%UrlInput") as LineEdit
+	var native_marked := url_input != null and bool(url_input.get_meta(NonBattleTouchBridgeScript.NATIVE_TEXT_INPUT_META, false))
+	var focus_bridge_bound := url_input != null and bool(url_input.get_meta(NonBattleTouchBridgeScript.FOCUS_TOUCH_BOUND_META, false))
+
+	scene.queue_free()
+	return run_checks([
+		assert_false(native_marked, "Deck import URL input should use the feedback-style focus bridge instead of native bypass"),
+		assert_true(focus_bridge_bound, "Deck import URL input should be bound to the non-battle focus bridge"),
+	])
+
+
+func test_import_panel_modal_keeps_input_focus_bridge_after_text_entry_and_blocks_echoes() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	scene.call("_on_import_pressed")
+	await tree.process_frame
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var url_input := scene.get_node_or_null("%UrlInput") as LineEdit
+	if url_input != null:
+		url_input.text = "574793"
+
+	var input_touch := InputEventScreenTouch.new()
+	input_touch.pressed = true
+	input_touch.position = url_input.get_global_rect().get_center() if url_input != null else Vector2(80, 330)
+	var input_release := InputEventScreenTouch.new()
+	input_release.pressed = false
+	input_release.position = input_touch.position
+	var import_panel := scene.get_node_or_null("%ImportPanel") as Control
+	var handled_input_touch := bool(NonBattleTouchBridgeScript.handle_root_touch(import_panel, input_touch)) if import_panel != null else false
+	var handled_input_release := bool(NonBattleTouchBridgeScript.handle_root_touch(import_panel, input_release)) if import_panel != null else false
+	var focus_requested := url_input != null and bool(url_input.get_meta(NonBattleTouchBridgeScript.FOCUS_REQUESTED_META, false))
+
+	var echo_press := InputEventMouseButton.new()
+	echo_press.button_index = MOUSE_BUTTON_LEFT
+	echo_press.pressed = true
+	echo_press.position = Vector2(24, 760)
+	echo_press.global_position = echo_press.position
+	var handled_echo_press := bool(scene.call("_handle_import_panel_modal_input_for_tests", echo_press))
+	var echo_release := InputEventMouseButton.new()
+	echo_release.button_index = MOUSE_BUTTON_LEFT
+	echo_release.pressed = false
+	echo_release.position = echo_press.position
+	echo_release.global_position = echo_press.position
+	var handled_echo_release := bool(scene.call("_handle_import_panel_modal_input_for_tests", echo_release))
+
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	scene.queue_free()
+	return run_checks([
+		assert_true(handled_input_touch and handled_input_release, "Deck import URL input should remain on the feedback-style focus bridge after text entry"),
+		assert_true(focus_requested, "Deck import URL input should request focus after text entry when tapped again"),
+		assert_true(handled_echo_press and handled_echo_release, "Deck import modal should consume Android tap echoes outside the input after text entry"),
+	])
+
+
+func test_import_panel_paste_button_copies_clipboard_to_url_input() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	scene.call("_on_import_pressed")
+
+	scene.call("_apply_import_paste_text_for_tests", "https://tcg.mik.moe/decks/list/574793")
+	var url_input := scene.get_node_or_null("%UrlInput") as LineEdit
+	var progress_label := scene.get_node_or_null("%ProgressLabel") as Label
+	var pasted_text := url_input.text if url_input != null else ""
+	var progress_text := progress_label.text if progress_label != null else ""
+
+	scene.queue_free()
+	return run_checks([
+		assert_eq(pasted_text, "https://tcg.mik.moe/decks/list/574793", "Deck import paste button should copy the clipboard into the URL input"),
+		assert_true(progress_text.contains("已粘贴") or progress_text.contains("宸茬矘璐"), "Deck import paste button should tell the player that clipboard content was pasted"),
+	])
+
+
+func test_import_panel_url_input_touch_uses_feedback_focus_bridge() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	scene.call("_on_import_pressed")
+	await tree.process_frame
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var url_input := scene.get_node_or_null("%UrlInput") as LineEdit
+
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.position = url_input.get_global_rect().get_center() if url_input != null else Vector2(80, 330)
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.position = press.position
+	var import_panel := scene.get_node_or_null("%ImportPanel") as Control
+	var handled_press := bool(NonBattleTouchBridgeScript.handle_root_touch(import_panel, press)) if import_panel != null else false
+	var handled_release := bool(NonBattleTouchBridgeScript.handle_root_touch(import_panel, release)) if import_panel != null else false
+	var focus_requested := url_input != null and bool(url_input.get_meta(NonBattleTouchBridgeScript.FOCUS_REQUESTED_META, false))
+
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	scene.queue_free()
+	return run_checks([
+		assert_true(handled_press and handled_release, "Deck import URL input taps should be handled by the shared focus bridge"),
+		assert_true(focus_requested, "Deck import URL input taps should request focus so Android can open the keyboard"),
+	])
+
+
+func test_import_panel_modal_keeps_desktop_mouse_clicks_native() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", true)
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.call("_apply_hud_theme")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1600, 900), "landscape")
+	scene.get_node("%ImportPanel").visible = true
+
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = Vector2(800, 450)
+	press.global_position = press.position
+	var handled_press := bool(scene.call("_handle_import_panel_modal_input_for_tests", press))
+
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	scene.queue_free()
+	return run_checks([
+		assert_false(handled_press, "Deck import modal should leave ordinary desktop mouse clicks to native Godot GUI dispatch"),
+	])
+
+
+func test_import_panel_layout_restores_landscape_metrics_after_portrait() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.call("_apply_hud_theme")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1600, 900), "landscape")
+
+	var import_box := scene.find_child("ImportBox", true, false) as Control
+	var url_input := scene.get_node_or_null("%UrlInput") as LineEdit
+	var import_button := scene.get_node_or_null("%BtnDoImport") as Button
+	var close_button := scene.get_node_or_null("%BtnCloseImport") as Button
+	var box_height := import_box.offset_bottom - import_box.offset_top if import_box != null else 0.0
+
+	scene.queue_free()
+	return run_checks([
+		assert_eq(roundi(box_height), 260, "Deck import panel should restore the desktop dialog height after leaving portrait"),
+		assert_true(url_input != null and url_input.custom_minimum_size.y <= 50.0, "Deck import URL input should restore compact desktop height after leaving portrait"),
+		assert_true(import_button != null and import_button.custom_minimum_size.y <= 70.0, "Deck import confirm button should restore compact desktop height after leaving portrait"),
+		assert_true(close_button != null and close_button.custom_minimum_size.y <= 70.0, "Deck import close button should restore compact desktop height after leaving portrait"),
+		assert_true(import_button != null and import_button.get_theme_font_size("font_size") <= 26, "Deck import confirm button should restore compact desktop font after leaving portrait"),
+	])
+
+
 func test_deck_manager_deck_row_buttons_use_50_percent_larger_text() -> String:
 	var scene: Control = DeckManagerScene.instantiate()
 	var deck := _make_deck(910020, "Row Font Deck")
@@ -142,8 +499,9 @@ func test_deck_manager_sorts_decks_by_latest_edit_time_first() -> String:
 	])
 
 
-func test_deck_view_card_list_keeps_scrollbar_and_enables_drag_scroll() -> String:
+func test_deck_view_card_list_hides_scrollbar_and_enables_drag_scroll() -> String:
 	var host := Control.new()
+	host.size = Vector2(1080, 2400)
 	var dialog_helper = DeckViewDialogScript.new()
 	var deck := _make_deck(910027, "Drag View Deck")
 	deck.cards = [
@@ -160,9 +518,10 @@ func test_deck_view_card_list_keeps_scrollbar_and_enables_drag_scroll() -> Strin
 		assert_not_null(scroll, "Deck view should name the card-list ScrollContainer for interaction tests"),
 		assert_not_null(grid, "Deck view should name the card grid for interaction tests"),
 		assert_true(scroll != null and bool(scroll.get_meta("deck_card_list_drag_scroll_enabled", false)), "Deck view card list should opt into drag scrolling"),
+		assert_true(scroll != null and bool(scroll.get_meta("_non_battle_hidden_vertical_drag_scroll", false)), "Deck view card list should use the shared hidden portrait drag-scroll policy"),
 		assert_eq(scroll.horizontal_scroll_mode if scroll != null else -1, ScrollContainer.SCROLL_MODE_DISABLED, "Deck view card list should stay vertically oriented"),
-		assert_eq(scroll.vertical_scroll_mode if scroll != null else -1, ScrollContainer.SCROLL_MODE_AUTO, "Deck view card list should keep the native vertical scrollbar available"),
-		assert_true(vbar != null and vbar.mouse_filter == Control.MOUSE_FILTER_STOP, "Deck view card list should not hide or disable the native scrollbar"),
+		assert_eq(scroll.vertical_scroll_mode if scroll != null else -1, ScrollContainer.SCROLL_MODE_AUTO, "Deck view card list should keep logical vertical scrolling enabled"),
+		assert_true(vbar != null and not vbar.visible, "Deck view card list should hide the native vertical scrollbar in portrait"),
 	])
 
 
@@ -189,9 +548,8 @@ func test_deck_view_dialog_uses_large_portrait_card_grid() -> String:
 		assert_true(dialog != null and dialog.size.x >= 990, "Portrait deck view dialog should use nearly the full phone width"),
 		assert_true(dialog != null and dialog.size.y >= 2280, "Portrait deck view dialog should be a tall mobile sheet instead of a desktop popup"),
 		assert_true(grid != null and grid.columns == 3, "Portrait deck view should use three large card columns"),
-		assert_true(scroll != null and str(scroll.get_meta("hud_scrollbar_profile", "")) == "portrait_touch", "Portrait deck view should use the large touch scrollbar profile"),
-		assert_true(vbar != null and vbar.custom_minimum_size.x >= 104.0, "Portrait deck view right scrollbar should be wide enough for touch dragging"),
-		assert_true(vbar != null and bool(vbar.get_meta("_non_battle_range_touch_bound", false)), "Portrait deck view right scrollbar should be bound to the Android touch bridge"),
+		assert_true(scroll != null and bool(scroll.get_meta("_non_battle_hidden_vertical_drag_scroll", false)), "Portrait deck view should use hidden surface drag scrolling"),
+		assert_true(vbar != null and not vbar.visible, "Portrait deck view should hide the right scrollbar"),
 		assert_true(info_label != null and info_label.get_theme_font_size("font_size") >= 31, "Portrait deck view metadata should use phone-readable text"),
 		assert_true(close_button != null and close_button.custom_minimum_size.y >= 96.0, "Portrait deck view should use a large content-level close button"),
 		assert_true(close_button != null and bool(close_button.get_meta("_non_battle_touch_bound", false)), "Portrait deck view close button should use the Android touch bridge"),
@@ -290,6 +648,346 @@ func test_deck_manager_confirmation_dialog_buttons_use_large_text() -> String:
 	return result
 
 
+func test_deck_manager_portrait_rename_uses_hud_dialog() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	scene.call("_apply_hud_theme")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	var deck := _make_deck(910024, "Portrait Rename Deck")
+	scene._on_rename_deck(deck)
+
+	var overlay := scene.find_child("DeckActionHudDialog", true, false) as Control
+	var panel := scene.find_child("DeckActionHudPanel", true, false) as PanelContainer
+	var panel_style := panel.get_theme_stylebox("panel") as StyleBoxFlat if panel != null else null
+	var default_dialog = scene._rename_dialog
+	var input_height: float = scene._rename_input.custom_minimum_size.y if scene._rename_input != null else 0.0
+	var input_font: int = scene._rename_input.get_theme_font_size("font_size") if scene._rename_input != null else 0
+	var confirm_height: float = scene._rename_confirm_button.custom_minimum_size.y if scene._rename_confirm_button != null else 0.0
+	var confirm_font: int = scene._rename_confirm_button.get_theme_font_size("font_size") if scene._rename_confirm_button != null else 0
+
+	scene.queue_free()
+	return run_checks([
+		assert_not_null(overlay, "Portrait deck-row rename should open the deck-center HUD dialog layer"),
+		assert_true(overlay != null and overlay.mouse_filter == Control.MOUSE_FILTER_STOP, "Portrait rename HUD dialog should block touches behind it"),
+		assert_not_null(panel, "Portrait rename HUD dialog should include a styled panel"),
+		assert_true(panel_style != null and panel_style.border_color.a > 0.85, "Portrait rename HUD dialog panel should use the HUD border style"),
+		assert_null(default_dialog, "Portrait deck-row rename should not use the default AcceptDialog window"),
+		assert_true(input_height >= 98.0 and input_font >= 29, "Portrait rename HUD input should remain phone-sized"),
+		assert_true(confirm_height >= 104.0 and confirm_font >= 33, "Portrait rename HUD confirm button should remain phone-sized"),
+	])
+
+
+func test_deck_manager_portrait_delete_uses_hud_dialog() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	scene.call("_apply_hud_theme")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	scene._on_delete_deck(_make_deck(910025, "Portrait Delete Deck"))
+
+	var overlay := scene.find_child("DeckActionHudDialog", true, false) as Control
+	var panel := scene.find_child("DeckActionHudPanel", true, false) as PanelContainer
+	var panel_style := panel.get_theme_stylebox("panel") as StyleBoxFlat if panel != null else null
+	var default_dialog := _first_confirmation_dialog(scene)
+	var delete_button := scene.find_child("DeleteDeckConfirmButton", true, false) as Button
+	var cancel_button := scene.find_child("DeleteDeckCancelButton", true, false) as Button
+
+	scene.queue_free()
+	return run_checks([
+		assert_not_null(overlay, "Portrait delete should open the deck-center HUD dialog layer"),
+		assert_true(overlay != null and overlay.mouse_filter == Control.MOUSE_FILTER_STOP, "Portrait delete HUD dialog should block touches behind it"),
+		assert_not_null(panel, "Portrait delete HUD dialog should include a styled panel"),
+		assert_true(panel_style != null and panel_style.border_color.a > 0.85, "Portrait delete HUD dialog panel should use the HUD border style"),
+		assert_null(default_dialog, "Portrait delete should not create the default ConfirmationDialog window"),
+		assert_true(delete_button != null and delete_button.custom_minimum_size.y >= 104.0, "Portrait delete confirm button should be phone-sized"),
+		assert_true(delete_button != null and delete_button.get_theme_font_size("font_size") >= 33, "Portrait delete confirm text should be phone-readable"),
+		assert_true(cancel_button != null and cancel_button.custom_minimum_size.y >= 104.0, "Portrait delete cancel button should be phone-sized"),
+	])
+
+
+func test_deck_manager_portrait_row_action_buttons_open_hud_dialogs() -> String:
+	_cleanup_decks([910028])
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	scene.call("_apply_hud_theme")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	CardDatabase.save_deck(_make_deck(910028, "Portrait Row Action Deck"))
+	scene.call("_refresh_deck_list")
+	var deck_list := scene.get_node_or_null("%DeckList") as VBoxContainer
+	var rename_button := deck_list.find_child("DeckRowRenameButton", true, false) as Button if deck_list != null else null
+	var delete_button := deck_list.find_child("DeckRowDeleteButton", true, false) as Button if deck_list != null else null
+
+	if rename_button != null:
+		rename_button.emit_signal("pressed")
+	var rename_overlay := scene.find_child("DeckActionHudDialog", true, false) as Control
+	var rename_default_dialog = scene._rename_dialog
+	scene._close_rename_dialog()
+
+	if delete_button != null:
+		delete_button.emit_signal("pressed")
+	var delete_overlay := scene.find_child("DeckActionHudDialog", true, false) as Control
+	var delete_default_dialog := _first_confirmation_dialog(scene)
+
+	scene.queue_free()
+	_cleanup_decks([910028])
+	return run_checks([
+		assert_not_null(rename_button, "Portrait deck-row rename button should have a stable node name"),
+		assert_not_null(delete_button, "Portrait deck-row delete button should have a stable node name"),
+		assert_not_null(rename_overlay, "Tapping the portrait deck-row rename button should open the HUD dialog"),
+		assert_null(rename_default_dialog, "Tapping the portrait deck-row rename button should not open an AcceptDialog"),
+		assert_not_null(delete_overlay, "Tapping the portrait deck-row delete button should open the HUD dialog"),
+		assert_null(delete_default_dialog, "Tapping the portrait deck-row delete button should not open a ConfirmationDialog"),
+	])
+
+
+func test_deck_manager_portrait_row_action_buttons_open_hud_from_android_touch() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	_cleanup_decks([910029])
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	scene.call("_apply_hud_theme")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	CardDatabase.save_deck(_make_deck(910029, "Portrait Android Touch Deck"))
+	scene.call("_refresh_deck_list")
+	var deck_list := scene.get_node_or_null("%DeckList") as VBoxContainer
+	var rename_button := deck_list.find_child("DeckRowRenameButton", true, false) as Button if deck_list != null else null
+	var delete_button := deck_list.find_child("DeckRowDeleteButton", true, false) as Button if deck_list != null else null
+	var rename_bound := bool(rename_button.get_meta("_non_battle_touch_bound", false)) if rename_button != null else false
+	var delete_bound := bool(delete_button.get_meta("_non_battle_touch_bound", false)) if delete_button != null else false
+
+	if rename_button != null:
+		_emit_android_touch_on_button(rename_button)
+	var rename_overlay := scene.find_child("DeckActionHudDialog", true, false) as Control
+	var rename_default_dialog = scene._rename_dialog
+	scene._close_rename_dialog()
+
+	if delete_button != null:
+		_emit_android_touch_on_button(delete_button)
+	var delete_overlay := scene.find_child("DeckActionHudDialog", true, false) as Control
+	var delete_default_dialog := _first_confirmation_dialog(scene)
+
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	scene.queue_free()
+	_cleanup_decks([910029])
+	return run_checks([
+		assert_true(rename_bound, "Portrait deck-row rename button should be bound to the Android touch bridge"),
+		assert_true(delete_bound, "Portrait deck-row delete button should be bound to the Android touch bridge"),
+		assert_not_null(rename_overlay, "Android ScreenTouch on portrait rename should open the HUD dialog"),
+		assert_null(rename_default_dialog, "Android ScreenTouch on portrait rename should not open an AcceptDialog"),
+		assert_not_null(delete_overlay, "Android ScreenTouch on portrait delete should open the HUD dialog"),
+		assert_null(delete_default_dialog, "Android ScreenTouch on portrait delete should not open a ConfirmationDialog"),
+	])
+
+
+func test_deck_manager_portrait_hud_row_actions_commit_rename_and_delete() -> String:
+	_cleanup_decks([910031])
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	scene.call("_apply_hud_theme")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	CardDatabase.save_deck(_make_deck(910031, "Portrait HUD Action Deck"))
+	scene.call("_refresh_deck_list")
+	var deck_list := scene.get_node_or_null("%DeckList") as VBoxContainer
+	var rename_button := deck_list.find_child("DeckRowRenameButton", true, false) as Button if deck_list != null else null
+	if rename_button != null:
+		rename_button.emit_signal("pressed")
+	if scene._rename_input != null:
+		scene._rename_input.text = "Portrait HUD Action Renamed"
+	scene.call("_on_rename_text_changed", "Portrait HUD Action Renamed")
+	var rename_confirm := scene.find_child("DeckRenameConfirmButton", true, false) as Button
+	if rename_confirm != null:
+		rename_confirm.emit_signal("pressed")
+	var renamed_deck := CardDatabase.get_deck(910031)
+	var renamed_name := renamed_deck.deck_name if renamed_deck != null else ""
+	var rename_overlay_closed := not bool(scene.call("_is_deck_action_hud_dialog_visible"))
+
+	scene.call("_refresh_deck_list")
+	deck_list = scene.get_node_or_null("%DeckList") as VBoxContainer
+	var delete_button := deck_list.find_child("DeckRowDeleteButton", true, false) as Button if deck_list != null else null
+	if delete_button != null:
+		delete_button.emit_signal("pressed")
+	var delete_confirm := scene.find_child("DeleteDeckConfirmButton", true, false) as Button
+	if delete_confirm != null:
+		delete_confirm.emit_signal("pressed")
+	var deck_deleted := not CardDatabase.has_deck(910031)
+	var delete_overlay_closed := not bool(scene.call("_is_deck_action_hud_dialog_visible"))
+
+	scene.queue_free()
+	_cleanup_decks([910031])
+	return run_checks([
+		assert_eq(renamed_name, "Portrait HUD Action Renamed", "Portrait HUD row rename confirm should save the trimmed deck name"),
+		assert_true(rename_overlay_closed, "Portrait HUD row rename confirm should close the HUD dialog"),
+		assert_true(deck_deleted, "Portrait HUD row delete confirm should delete the selected deck"),
+		assert_true(delete_overlay_closed, "Portrait HUD row delete confirm should close the HUD dialog"),
+	])
+
+
+func test_deck_manager_global_portrait_deck_row_actions_use_hud_before_scene_meta_sync() -> String:
+	var previous_mode := str(GameManager.non_battle_layout_mode)
+	GameManager.non_battle_layout_mode = GameManager.NON_BATTLE_LAYOUT_PORTRAIT
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	scene.call("_apply_hud_theme")
+
+	scene._on_rename_deck(_make_deck(910026, "Global Portrait Rename Deck"))
+	var rename_overlay := scene.find_child("DeckActionHudDialog", true, false) as Control
+	var rename_default_dialog = scene._rename_dialog
+	scene._close_rename_dialog()
+
+	scene._on_delete_deck(_make_deck(910027, "Global Portrait Delete Deck"))
+	var delete_overlay := scene.find_child("DeckActionHudDialog", true, false) as Control
+	var delete_default_dialog := _first_confirmation_dialog(scene)
+
+	GameManager.non_battle_layout_mode = previous_mode
+	scene.queue_free()
+	return run_checks([
+		assert_not_null(rename_overlay, "Deck-row rename should use the HUD dialog as soon as global portrait mode is active"),
+		assert_null(rename_default_dialog, "Deck-row rename should not fall back to AcceptDialog before scene layout meta syncs"),
+		assert_not_null(delete_overlay, "Deck-row delete should use the HUD dialog as soon as global portrait mode is active"),
+		assert_null(delete_default_dialog, "Deck-row delete should not fall back to ConfirmationDialog before scene layout meta syncs"),
+	])
+
+
+func test_deck_manager_edit_requests_deck_editor_from_portrait_mode() -> String:
+	var previous_mode := str(GameManager.non_battle_layout_mode)
+	if GameManager.has_method("set_scene_navigation_suppressed_for_tests"):
+		GameManager.call("set_scene_navigation_suppressed_for_tests", true)
+	if GameManager.has_method("consume_last_requested_scene_path"):
+		GameManager.call("consume_last_requested_scene_path")
+	if GameManager.has_method("consume_deck_editor_id"):
+		GameManager.call("consume_deck_editor_id")
+	GameManager.non_battle_layout_mode = GameManager.NON_BATTLE_LAYOUT_PORTRAIT
+	var scene: Control = DeckManagerScene.instantiate()
+	var deck := _make_deck(910030, "Portrait Edit Deck")
+
+	scene.call("_on_edit_deck", deck)
+	var requested_scene := str(GameManager.call("consume_last_requested_scene_path"))
+	var editor_deck_id := int(GameManager.call("consume_deck_editor_id"))
+	var mode_after := str(GameManager.non_battle_layout_mode)
+
+	scene.queue_free()
+	GameManager.non_battle_layout_mode = previous_mode
+	if GameManager.has_method("set_scene_navigation_suppressed_for_tests"):
+		GameManager.call("set_scene_navigation_suppressed_for_tests", false)
+	return run_checks([
+		assert_eq(requested_scene, GameManager.SCENE_DECK_EDITOR, "Deck center edit should request the DeckEditor scene"),
+		assert_eq(editor_deck_id, 910030, "Deck center edit should pass the selected deck id into DeckEditor"),
+		assert_eq(mode_after, GameManager.NON_BATTLE_LAYOUT_PORTRAIT, "Deck center edit should not switch the non-battle layout mode away from portrait"),
+	])
+
+
+func test_deck_manager_portrait_edit_button_touch_requests_deck_editor_after_import_modal_close() -> String:
+	var previous_mode := str(GameManager.non_battle_layout_mode)
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	if GameManager.has_method("set_scene_navigation_suppressed_for_tests"):
+		GameManager.call("set_scene_navigation_suppressed_for_tests", true)
+	if GameManager.has_method("consume_last_requested_scene_path"):
+		GameManager.call("consume_last_requested_scene_path")
+	if GameManager.has_method("consume_deck_editor_id"):
+		GameManager.call("consume_deck_editor_id")
+	GameManager.non_battle_layout_mode = GameManager.NON_BATTLE_LAYOUT_PORTRAIT
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_apply_hud_theme")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	scene.call("_on_import_pressed")
+	scene.call("_on_close_import")
+
+	var deck := _make_deck(910033, "Portrait Touch Edit Deck")
+	var deck_list := scene.get_node_or_null("%DeckList") as VBoxContainer
+	var row := scene.call("_create_deck_item", deck) as Control
+	if deck_list != null and row != null:
+		deck_list.add_child(row)
+	var buttons: Array[Button] = []
+	_collect_buttons(row, buttons)
+	var edit_button := buttons[1] if buttons.size() > 1 else null
+	if edit_button != null:
+		edit_button.size = Vector2(180, 80)
+		edit_button.global_position = Vector2(120, 300)
+		_emit_android_touch_on_button(edit_button)
+	var requested_scene := str(GameManager.call("consume_last_requested_scene_path"))
+	var editor_deck_id := int(GameManager.call("consume_deck_editor_id"))
+	var import_visible := bool(scene.call("_is_import_panel_visible"))
+	var edit_mouse_filter := edit_button.mouse_filter if edit_button != null else -1
+
+	scene.queue_free()
+	GameManager.non_battle_layout_mode = previous_mode
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	if GameManager.has_method("set_scene_navigation_suppressed_for_tests"):
+		GameManager.call("set_scene_navigation_suppressed_for_tests", false)
+	return run_checks([
+		assert_not_null(edit_button, "Deck row should expose an edit button in portrait"),
+		assert_false(import_visible, "Closed import modal must not leave DeckManager in modal-input mode"),
+		assert_true(edit_mouse_filter != Control.MOUSE_FILTER_IGNORE, "Closed import modal must restore edit button hit testing"),
+		assert_eq(requested_scene, GameManager.SCENE_DECK_EDITOR, "Android touch on the portrait deck-row edit button should request DeckEditor"),
+		assert_eq(editor_deck_id, 910033, "Android touch on edit should pass the selected deck id"),
+	])
+
+
+func test_deck_manager_portrait_root_touch_routes_deck_row_edit_button() -> String:
+	var previous_mode := str(GameManager.non_battle_layout_mode)
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	if GameManager.has_method("set_scene_navigation_suppressed_for_tests"):
+		GameManager.call("set_scene_navigation_suppressed_for_tests", true)
+	if GameManager.has_method("consume_last_requested_scene_path"):
+		GameManager.call("consume_last_requested_scene_path")
+	if GameManager.has_method("consume_deck_editor_id"):
+		GameManager.call("consume_deck_editor_id")
+	GameManager.non_battle_layout_mode = GameManager.NON_BATTLE_LAYOUT_PORTRAIT
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_apply_hud_theme")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+
+	var deck := _make_deck(910034, "Portrait Root Touch Edit Deck")
+	var deck_list := scene.get_node_or_null("%DeckList") as VBoxContainer
+	var row := scene.call("_create_deck_item", deck) as Control
+	if deck_list != null and row != null:
+		deck_list.add_child(row)
+	var buttons: Array[Button] = []
+	_collect_buttons(row, buttons)
+	var edit_button := buttons[1] if buttons.size() > 1 else null
+	if edit_button != null:
+		edit_button.size = Vector2(180, 80)
+		edit_button.global_position = Vector2(120, 300)
+	var touch_position := edit_button.get_global_rect().get_center() if edit_button != null else Vector2(160, 340)
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.position = touch_position
+	scene.call("_input", press)
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.position = touch_position
+	scene.call("_input", release)
+	var requested_scene := str(GameManager.call("consume_last_requested_scene_path"))
+	var editor_deck_id := int(GameManager.call("consume_deck_editor_id"))
+
+	scene.queue_free()
+	GameManager.non_battle_layout_mode = previous_mode
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	if GameManager.has_method("set_scene_navigation_suppressed_for_tests"):
+		GameManager.call("set_scene_navigation_suppressed_for_tests", false)
+	return run_checks([
+		assert_not_null(edit_button, "Deck row should expose an edit button for root touch routing"),
+		assert_eq(requested_scene, GameManager.SCENE_DECK_EDITOR, "DeckManager root ScreenTouch bridge should route portrait edit taps to DeckEditor"),
+		assert_eq(editor_deck_id, 910034, "DeckManager root ScreenTouch bridge should preserve selected deck id"),
+	])
+
+
 func test_deck_manager_loads_three_latest_recommendation_articles() -> String:
 	var scene: Control = DeckManagerScene.instantiate()
 	var articles: Array[Dictionary] = scene._load_recommendation_articles()
@@ -357,9 +1055,9 @@ func test_deck_manager_renders_recommendations_above_deck_list() -> String:
 		assert_null(old_cards, "Recommendation section should not keep the old three-card row"),
 		assert_false(section_text.contains("今日值得一玩的卡组"), "Recommendation section should not render the old title copy"),
 		assert_false(section_text.contains("不催你做作业"), "Recommendation section should not render the old subtitle copy"),
-		assert_not_null(deck_scroll_margin, "Deck center list should be wrapped in a margin container for scrollbar clearance"),
-		assert_eq(deck_scroll.horizontal_scroll_mode if deck_scroll != null else -1, ScrollContainer.SCROLL_MODE_DISABLED, "Deck center should not introduce horizontal scrolling for the right clearance"),
-		assert_gte(deck_list_right_margin, 40, "Deck center list should leave room between content and the right scrollbar"),
+		assert_not_null(deck_scroll_margin, "Deck center list should be wrapped in a margin container for content padding"),
+		assert_eq(deck_scroll.horizontal_scroll_mode if deck_scroll != null else -1, ScrollContainer.SCROLL_MODE_DISABLED, "Deck center should not introduce horizontal scrolling for portrait content padding"),
+		assert_true(deck_list_right_margin < 80, "Deck center list should not reserve the old wide right scrollbar clearance"),
 		assert_not_null(feed, "Recommendation section should include the feed container"),
 		assert_eq(feed_count, 1, "Recommendation section should render one rich feed card"),
 		assert_not_null(card, "Recommendation feed should include the current deck card"),
@@ -414,6 +1112,36 @@ func test_deck_manager_marks_latest_recommendation_deck_id_with_new_badge() -> S
 	scene.queue_free()
 	return run_checks([
 		assert_not_null(badge, "Latest deck-center deck id should show a NEW badge"),
+	])
+
+
+func test_deck_manager_rendering_recommendation_new_badge_persists_seen_revision() -> String:
+	_delete_user_file(TEST_DECK_CENTER_META_STATE_PATH)
+	var scene: Control = DeckManagerScene.instantiate()
+	scene._apply_hud_theme()
+	_configure_recommendation_test_state(scene)
+	var revision := "test-render-persist-recommendation-revision"
+	scene._deck_center_latest_meta = {
+		"latest_revision": revision,
+		"latest_recommendation_id": str(scene._current_recommendation.get("id", "")),
+		"latest_deck_id": int(scene._current_recommendation.get("deck_id", 0)),
+	}
+	scene._ensure_recommendation_section()
+	scene._refresh_recommendation_cards()
+
+	var badge := scene.find_child("RecommendationNewBadge", true, false) as PanelContainer
+	var state: Dictionary = scene._load_deck_center_meta_state()
+	var badge_seen_revision := str(state.get("last_recommendation_badge_seen_revision", ""))
+	var entrance_seen_revision := str(state.get("last_seen_revision", ""))
+	var matches_after_render: bool = scene._recommendation_matches_deck_center_latest(scene._current_recommendation)
+
+	scene.queue_free()
+	_delete_user_file(TEST_DECK_CENTER_META_STATE_PATH)
+	return run_checks([
+		assert_not_null(badge, "First render should still show the latest recommendation NEW badge"),
+		assert_eq(badge_seen_revision, revision, "Rendering the NEW badge should immediately persist the recommendation seen revision"),
+		assert_eq(entrance_seen_revision, revision, "Rendering the recommendation NEW badge should also clear the main-menu entrance revision"),
+		assert_false(matches_after_render, "The same recommendation should not match as NEW again after the first render"),
 	])
 
 
@@ -525,6 +1253,7 @@ func test_deck_manager_treats_main_menu_seen_revision_as_recommendation_badge_se
 func test_recommendation_detail_dialog_uses_footer_close_only() -> String:
 	var scene: Control = DeckManagerScene.instantiate()
 	scene._apply_hud_theme()
+	scene._apply_non_battle_layout_for_tests(Vector2(1080, 2400), "portrait")
 	var recommendation := _remote_recommendation("remote-detail", 910014, "2026-05-05T03:20:00+08:00")
 	recommendation["detail"] = {
 		"sections": [
@@ -542,7 +1271,7 @@ func test_recommendation_detail_dialog_uses_footer_close_only() -> String:
 	return run_checks([
 		assert_not_null(overlay, "Recommendation detail overlay should open"),
 		assert_eq(close_button_count, 1, "Recommendation detail overlay should only keep the footer close button"),
-		assert_gte(scroll_margin_right, 30, "Recommendation detail content should leave room between text and the right scrollbar"),
+		assert_true(scroll_margin_right < 30, "Recommendation detail content should not reserve the old right scrollbar clearance"),
 	])
 
 
@@ -576,6 +1305,7 @@ func test_deck_manager_open_requests_latest_remote_recommendation() -> String:
 		assert_eq(str(first_call.get("current_id", "missing")), "", "Opening refresh should request the latest server recommendation without a current id"),
 		assert_eq(exclude_ids.size(), 0, "Opening refresh should ask for the latest server item before background prefetch excludes known items"),
 		assert_eq(str(metadata.get("source", "")), "deck_manager_open_refresh", "Opening refresh should use the open-refresh source marker"),
+		assert_eq(int(metadata.get("limit", 0)), int(DeckRecommendationStoreScript.MAX_CACHE_ITEMS), "Opening refresh should ask the server for the full recommendation cache in one request"),
 		assert_eq(fetch_reason, "open_refresh", "Opening refresh should track the request reason separately from the cycle button"),
 		assert_str_contains(status_text, "正在检查服务器最新卡组推荐", "Opening refresh should show a latest-recommendation status"),
 	])
@@ -608,6 +1338,18 @@ func test_deck_manager_initial_recommendation_prefers_cached_server_pool_over_st
 	])
 
 
+func test_deck_manager_open_batch_targets_recommendation_cache_capacity() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	var batch_limit := int(scene.REMOTE_RECOMMENDATION_BATCH_LIMIT)
+	var cache_items := int(DeckRecommendationStoreScript.MAX_CACHE_ITEMS)
+
+	scene.queue_free()
+	return run_checks([
+		assert_eq(cache_items, 20, "Recommendation cache capacity should allow twenty server recommendations"),
+		assert_eq(batch_limit, cache_items, "Opening refresh should fetch the full recommendation cache target in one request"),
+	])
+
+
 func test_deck_manager_remote_cycle_excludes_known_recommendations() -> String:
 	_delete_user_file(TEST_RECOMMENDATION_CACHE_PATH)
 	var scene: Control = DeckManagerScene.instantiate()
@@ -637,6 +1379,145 @@ func test_deck_manager_remote_cycle_excludes_known_recommendations() -> String:
 		assert_contains(exclude_ids, current_id, "Cycle request should exclude the current recommendation id"),
 		assert_contains(exclude_ids, "remote-a", "Cycle request should exclude cached server recommendations"),
 		assert_contains(exclude_ids, "remote-b", "Cycle request should exclude every cached server recommendation"),
+	])
+
+
+func test_deck_manager_next_button_switches_cached_recommendation_before_network() -> String:
+	_delete_user_file(TEST_RECOMMENDATION_CACHE_PATH)
+	var tree := Engine.get_main_loop() as SceneTree
+	var scene: Control = DeckManagerScene.instantiate()
+	var fake_client := FakeDeckSuggestionClient.new()
+	scene._recommendation_client = fake_client
+	scene.add_child(fake_client)
+	tree.root.add_child(scene)
+	scene._apply_hud_theme()
+	_configure_recommendation_test_state(scene, TEST_RECOMMENDATION_CACHE_PATH)
+	scene._ensure_recommendation_section()
+	var first := _remote_recommendation("remote-first-cached", 600501, "2026-05-05T01:00:00+08:00")
+	var second := _remote_recommendation("remote-second-cached", 600502, "2026-05-05T02:00:00+08:00")
+	var normalized_first: Dictionary = DeckRecommendationStoreScript.normalize_recommendation(first)
+	var normalized_second: Dictionary = DeckRecommendationStoreScript.normalize_recommendation(second)
+	scene._recommendation_store.call("upsert_item", normalized_first, true)
+	scene._recommendation_store.call("upsert_item", normalized_second, false)
+	scene._current_recommendation = normalized_first
+	scene._recommendation_fetch_in_progress = false
+	scene._recommendation_fetch_reason = ""
+	fake_client.calls.clear()
+	scene._refresh_recommendation_cards()
+
+	scene._on_recommendation_next_pressed()
+	scene._refresh_recommendation_cards()
+	var current_id := str(scene._current_recommendation.get("id", ""))
+	var call_count := fake_client.calls.size()
+	var next_button := scene.find_child("RecommendationNextButton", true, false) as Button
+	var button_text := next_button.text if next_button != null else ""
+	var button_disabled := next_button.disabled if next_button != null else true
+	var fetch_reason := str(scene._recommendation_fetch_reason)
+
+	scene.queue_free()
+	_delete_user_file(TEST_RECOMMENDATION_CACHE_PATH)
+	return run_checks([
+		assert_eq(current_id, "remote-second-cached", "Next should switch to an already cached recommendation immediately"),
+		assert_eq(call_count, 0, "Next should not make a follow-up server request after a local switch"),
+		assert_true(fetch_reason != "cycle", "The next button should not enter the foreground network cycle state after a local switch"),
+		assert_false(button_disabled, "Local switching should keep the next button enabled"),
+		assert_eq(button_text, "换一套", "Local switching should not show a loading label"),
+	])
+
+
+func test_deck_manager_open_batch_response_caches_twenty_and_next_stays_local() -> String:
+	_delete_user_file(TEST_RECOMMENDATION_CACHE_PATH)
+	var tree := Engine.get_main_loop() as SceneTree
+	var scene: Control = DeckManagerScene.instantiate()
+	var fake_client := FakeDeckSuggestionClient.new()
+	scene._recommendation_client = fake_client
+	scene.add_child(fake_client)
+	tree.root.add_child(scene)
+	scene._apply_hud_theme()
+	_configure_recommendation_test_state(scene, TEST_RECOMMENDATION_CACHE_PATH)
+	scene._ensure_recommendation_section()
+
+	var batch: Array = []
+	for index: int in range(20):
+		batch.append(_remote_recommendation("remote-batch-%02d" % index, 621000 + index, "2026-06-14T14:20:00+08:00"))
+
+	scene._recommendation_fetch_in_progress = true
+	scene._recommendation_fetch_reason = "open_refresh"
+	scene._on_remote_recommendation_succeeded({"ok": true, "recommendations": batch})
+	var current_after_batch := str(scene._current_recommendation.get("id", ""))
+	var cached_items: Array = scene._recommendation_store.call("get_items")
+	var cached_first := str((cached_items[0] as Dictionary).get("id", "")) if cached_items.size() > 0 else ""
+	var cached_last := str((cached_items[19] as Dictionary).get("id", "")) if cached_items.size() > 19 else ""
+
+	fake_client.calls.clear()
+	scene._on_recommendation_next_pressed()
+	var current_after_next := str(scene._current_recommendation.get("id", ""))
+	var call_count := fake_client.calls.size()
+
+	scene.queue_free()
+	_delete_user_file(TEST_RECOMMENDATION_CACHE_PATH)
+	return run_checks([
+		assert_eq(cached_items.size(), 20, "Opening batch response should fill the local recommendation cache"),
+		assert_eq(current_after_batch, "remote-batch-00", "Opening batch response should show the latest server recommendation first"),
+		assert_eq(cached_first, "remote-batch-00", "Recommendation cache should preserve the first server item"),
+		assert_eq(cached_last, "remote-batch-19", "Recommendation cache should preserve all twenty server items in order"),
+		assert_eq(current_after_next, "remote-batch-01", "Next should switch to the next cached server recommendation"),
+		assert_eq(call_count, 0, "Next should not request another server recommendation after the opening batch"),
+	])
+
+
+func test_deck_manager_prefetch_does_not_disable_recommendation_actions() -> String:
+	_delete_user_file(TEST_RECOMMENDATION_CACHE_PATH)
+	var scene: Control = DeckManagerScene.instantiate()
+	scene._apply_hud_theme()
+	_configure_recommendation_test_state(scene, TEST_RECOMMENDATION_CACHE_PATH)
+	scene._ensure_recommendation_section()
+	scene._recommendation_fetch_in_progress = true
+	scene._recommendation_fetch_reason = "prefetch"
+	scene._refresh_recommendation_cards()
+
+	var next_button := scene.find_child("RecommendationNextButton", true, false) as Button
+	var import_button := scene.find_child("RecommendationImportButton", true, false) as Button
+	var next_text := next_button.text if next_button != null else ""
+	var next_disabled := next_button.disabled if next_button != null else true
+	var import_disabled := import_button.disabled if import_button != null else true
+
+	scene.queue_free()
+	_delete_user_file(TEST_RECOMMENDATION_CACHE_PATH)
+	return run_checks([
+		assert_false(next_disabled, "Background prefetch should not block switching recommendations"),
+		assert_false(import_disabled, "Background prefetch should not block importing the visible recommendation"),
+		assert_eq(next_text, "换一套", "Background prefetch should not show a blocking loading label"),
+	])
+
+
+func test_deck_manager_background_server_result_is_next_visible_recommendation() -> String:
+	_delete_user_file(TEST_RECOMMENDATION_CACHE_PATH)
+	var scene: Control = DeckManagerScene.instantiate()
+	scene._apply_hud_theme()
+	_configure_recommendation_test_state(scene, TEST_RECOMMENDATION_CACHE_PATH)
+	scene._ensure_recommendation_section()
+	var first := _remote_recommendation("remote-first-cached", 600511, "2026-05-05T01:00:00+08:00")
+	var second := _remote_recommendation("remote-second-cached", 600512, "2026-05-05T02:00:00+08:00")
+	var fresh := _remote_recommendation("remote-fresh-from-server", 600513, "2026-05-05T03:00:00+08:00")
+	var normalized_first: Dictionary = DeckRecommendationStoreScript.normalize_recommendation(first)
+	var normalized_second: Dictionary = DeckRecommendationStoreScript.normalize_recommendation(second)
+	scene._recommendation_store.call("upsert_item", normalized_first, true)
+	scene._recommendation_store.call("upsert_item", normalized_second, false)
+	scene._current_recommendation = normalized_second
+	scene._recommendation_fetch_in_progress = true
+	scene._recommendation_fetch_reason = "cycle_background"
+
+	scene._on_remote_recommendation_succeeded({"ok": true, "recommendation": fresh})
+	var current_after_response := str(scene._current_recommendation.get("id", ""))
+	scene._on_recommendation_next_pressed()
+	var current_after_next := str(scene._current_recommendation.get("id", ""))
+
+	scene.queue_free()
+	_delete_user_file(TEST_RECOMMENDATION_CACHE_PATH)
+	return run_checks([
+		assert_eq(current_after_response, "remote-second-cached", "Background server result should not unexpectedly replace the visible card"),
+		assert_eq(current_after_next, "remote-fresh-from-server", "The next click after a background server response should show the fresh server recommendation first"),
 	])
 
 
@@ -953,6 +1834,7 @@ func test_recommendation_import_uses_article_deck_name() -> String:
 	var imported := _make_deck(910013, "幸福蛋")
 
 	scene._on_recommendation_import_pressed(recommendation)
+	scene._begin_pending_import_now_for_tests()
 	var requested_url := fake_importer.imported_urls[0] if fake_importer.imported_urls.size() > 0 else ""
 	scene._on_import_completed(imported, PackedStringArray())
 	var saved: DeckData = CardDatabase.get_deck(imported.id)
@@ -1031,6 +1913,39 @@ func test_import_pressed_resets_result_state_for_next_import() -> String:
 		assert_false(import_button.disabled, "Import button should be enabled for a fresh import"),
 		assert_true(url_input.editable, "Import input should be editable for a fresh import"),
 		assert_eq(result_text, "", "Fresh import should clear the previous result text"),
+	])
+
+
+func test_import_start_defers_importer_until_busy_modal_is_drawable() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	var fake_importer := FakeDeckImporter.new()
+	scene._importer = fake_importer
+	scene.add_child(fake_importer)
+	var url_input := scene.get_node("%UrlInput") as LineEdit
+	url_input.text = "https://tcg.mik.moe/decks/list/574793"
+
+	scene._on_do_import()
+	var immediate_count := fake_importer.imported_urls.size()
+	var queued_url: String = scene._pending_import_start_url
+	var import_button := scene.get_node("%BtnDoImport") as Button
+	var progress_bar := scene.get_node("%ProgressBar") as ProgressBar
+	var input_locked: bool = not url_input.editable
+	var import_button_locked: bool = import_button.disabled and not import_button.visible
+	var busy_visible: bool = progress_bar.visible and bool(scene.get_node("%ImportPanel").visible)
+
+	scene._begin_pending_import_now_for_tests()
+	var final_count := fake_importer.imported_urls.size()
+	var requested_url := fake_importer.imported_urls[0] if final_count > 0 else ""
+
+	scene.queue_free()
+	return run_checks([
+		assert_eq(immediate_count, 0, "Deck importer should not start in the same frame as the Android import button tap"),
+		assert_eq(queued_url, "https://tcg.mik.moe/decks/list/574793", "Deck import should queue the requested URL while the busy modal becomes visible"),
+		assert_true(input_locked, "Deck import should lock the URL input before the importer starts"),
+		assert_true(import_button_locked, "Deck import should hide and disable the confirm button before the importer starts"),
+		assert_true(busy_visible, "Deck import should show the busy modal before the importer starts"),
+		assert_eq(final_count, 1, "Queued deck import should still start after the busy-frame handoff"),
+		assert_eq(requested_url, "https://tcg.mik.moe/decks/list/574793", "Queued deck import should preserve the requested URL"),
 	])
 
 
@@ -1154,6 +2069,37 @@ func test_duplicate_import_rename_dialog_stays_clamped_with_visible_confirm_cont
 		assert_eq(dialog.size, Vector2i(460, 230), "rename dialog should use the fixed clamped size"),
 		assert_not_null(scroll, "rename dialog should wrap content in a scroll container"),
 		assert_not_null(scene._rename_confirm_button, "rename dialog should still expose the confirm button"),
+	])
+
+
+func test_duplicate_import_rename_dialog_uses_phone_sized_controls_in_portrait() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.call("_apply_hud_theme")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	scene._show_import_rename_dialog("Duplicate Deck Name")
+
+	var dialog: AcceptDialog = scene._rename_dialog
+	var scroll: ScrollContainer = null
+	if dialog != null:
+		for child: Node in dialog.get_children():
+			if child is ScrollContainer:
+				scroll = child
+				break
+	var input_height: float = scene._rename_input.custom_minimum_size.y if scene._rename_input != null else 0.0
+	var input_font: int = scene._rename_input.get_theme_font_size("font_size") if scene._rename_input != null else 0
+	var confirm_height: float = scene._rename_confirm_button.custom_minimum_size.y if scene._rename_confirm_button != null else 0.0
+	var confirm_font: int = scene._rename_confirm_button.get_theme_font_size("font_size") if scene._rename_confirm_button != null else 0
+
+	scene.queue_free()
+	return run_checks([
+		assert_not_null(dialog, "duplicate import should open the rename dialog"),
+		assert_true(dialog != null and dialog.size.x >= 330, "portrait rename dialog should use most of a phone-width screen"),
+		assert_true(dialog != null and dialog.size.y >= 440, "portrait rename dialog should be tall enough for readable duplicate-name guidance"),
+		assert_not_null(scroll, "portrait rename dialog should keep content inside a scroll container"),
+		assert_true(scroll != null and bool(scroll.get_meta("_non_battle_hidden_vertical_drag_scroll", false)), "portrait rename dialog should support touch drag scrolling without a visible scrollbar"),
+		assert_true(input_height >= 98.0 and input_font >= 29, "portrait rename input should be large enough to tap and read"),
+		assert_true(confirm_height >= 104.0 and confirm_font >= 33, "portrait rename confirm button should be large enough to tap and read"),
 	])
 
 
@@ -1299,3 +2245,16 @@ func _cleanup_decks(deck_ids: Array[int]) -> void:
 	for deck_id: int in deck_ids:
 		if CardDatabase.has_deck(deck_id):
 			CardDatabase.delete_deck(deck_id)
+
+
+func _emit_android_touch_on_button(button: Button) -> void:
+	if button == null:
+		return
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.position = button.get_global_rect().get_center()
+	button.gui_input.emit(press)
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.position = press.position
+	button.gui_input.emit(release)

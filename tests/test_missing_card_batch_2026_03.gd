@@ -1751,6 +1751,62 @@ func test_csv8c_067_torrential_pump_returns_energy_when_bench_damage_is_prevente
 	])
 
 
+func test_csv8c_067_torrential_pump_sparkling_crystal_reduced_return_still_snipes_bench() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state: GameState = gsm.game_state
+	var card_data := _make_basic_pokemon_data("CSV8C_067 Wellspring Mask Ogerpon ex", "W", 210, "Basic", "ex", "14cf8080c35f652fe13a579f1b50542a")
+	card_data.ancient_trait = "Tera"
+	card_data.attacks = [
+		{"name": "Bind Up", "cost": "C", "damage": "20", "text": "", "is_vstar_power": false},
+		{"name": "Torrential Pump", "cost": "WCC", "damage": "100", "text": "", "is_vstar_power": false},
+	]
+	gsm.effect_processor.register_pokemon_card(card_data)
+	var attacker := _make_slot(card_data, 0)
+	var energy1 := CardInstance.create(_make_energy_data("Water", "W"), 0)
+	var energy2 := CardInstance.create(_make_energy_data("Water 2", "W"), 0)
+	attacker.attached_energy = [energy1, energy2]
+	attacker.attached_tool = CardInstance.create(_make_trainer_data("CSV8C_186 Sparkling Crystal", "Tool", "12164ed03296d2df4ef6d0fa8b5f8aae"), 0)
+	state.players[0].active_pokemon = attacker
+	var defender := state.players[1].active_pokemon
+	var bench_target := state.players[1].bench[0]
+
+	var attack_effects: Array[BaseEffect] = gsm.effect_processor.get_attack_effects_for_slot(attacker, 1)
+	var pump_effect: BaseEffect = null
+	for effect: BaseEffect in attack_effects:
+		if effect.has_method("get_followup_attack_interaction_steps"):
+			pump_effect = effect
+			break
+	var modifier := gsm.effect_processor.get_attack_any_cost_modifier(attacker, card_data.attacks[1], state)
+	var unusable_reason := gsm.get_attack_unusable_reason(0, 1)
+	var can_attack_before := gsm.can_use_attack(0, 1)
+	var pump_card: CardInstance = attacker.get_top_card()
+	var pump_steps: Array[Dictionary] = pump_effect.get_attack_interaction_steps(pump_card, card_data.attacks[1], state) if pump_effect != null else []
+	var followup_steps: Array[Dictionary] = pump_effect.get_followup_attack_interaction_steps(
+		pump_card,
+		card_data.attacks[1],
+		state,
+		{"return_energy_to_deck": [energy1, energy2]}
+	) if pump_effect != null else []
+	var attack_success := gsm.use_attack(0, 1, [{
+		"return_energy_to_deck": [energy1, energy2],
+		"bench_target": [bench_target],
+	}])
+
+	return run_checks([
+		assert_eq(modifier, -1, "Sparkling Crystal modifier should be visible through EffectProcessor"),
+		assert_eq(unusable_reason, "", "Torrential Pump should have no unusable reason with Sparkling Crystal and two Water Energy"),
+		assert_true(can_attack_before, "Sparkling Crystal should make Torrential Pump usable with two attached Energy"),
+		assert_eq(int(pump_steps[0].get("min_select", -1)) if not pump_steps.is_empty() else -1, 2, "Sparkling Crystal should reduce Torrential Pump's returned Energy requirement to two"),
+		assert_eq(str(followup_steps[0].get("id", "")) if not followup_steps.is_empty() else "", "bench_target", "Two returned Energy with Sparkling Crystal should unlock the bench target step"),
+		assert_true(attack_success, "Torrential Pump should execute through GameStateMachine with Sparkling Crystal and two returned Energy"),
+		assert_eq(defender.damage_counters, 100, "Torrential Pump should still deal 100 to the Active Pokemon"),
+		assert_eq(bench_target.damage_counters, 120, "Torrential Pump should snipe the chosen Bench Pokemon after the reduced return"),
+		assert_eq(attacker.attached_energy.size(), 0, "The two selected Energy should be shuffled into the deck"),
+		assert_true(energy1 in state.players[0].deck and energy2 in state.players[0].deck, "Returned Energy should be in the deck after the attack"),
+	])
+
+
 func test_csv8c_083_dusknoir_attack_locks_retreat() -> String:
 	var processor := EffectProcessor.new()
 	var card_data := _make_basic_pokemon_data("CSV8C_083 Dusknoir", "P", 160, "Stage 2", "", "2a4178f21ba2bf13285bbb43ecaaa472")

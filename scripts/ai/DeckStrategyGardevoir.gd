@@ -241,6 +241,7 @@ func build_turn_plan(game_state: GameState, player_index: int, context: Dictiona
 	var immediate_attack_window: bool = _has_immediate_attack_window(game_state, player, player_index)
 	var trapped_handoff: bool = _trapped_active_with_ready_bench_attacker_live(game_state, player, player_index)
 	var active_retreat_bridge: bool = _active_retreat_bridge_to_ready_bench_attacker_live(game_state, player, player_index)
+	var active_retreat_search_bridge: bool = _active_retreat_energy_search_bridge_to_ready_bench_attacker_live(game_state, player, player_index)
 	var munkidori_damage_transfer_debt: bool = _munkidori_damage_transfer_debt_live(game_state, player, player_index)
 
 	var flags: Dictionary = {
@@ -266,6 +267,7 @@ func build_turn_plan(game_state: GameState, player_index: int, context: Dictiona
 		"charizard_rebuild_lock": charizard_rebuild,
 		"trapped_active_with_ready_bench_attacker": trapped_handoff,
 		"active_retreat_bridge_to_ready_bench_attacker": active_retreat_bridge,
+		"active_retreat_energy_search_bridge_to_ready_bench_attacker": active_retreat_search_bridge,
 		"munkidori_damage_transfer_debt": munkidori_damage_transfer_debt,
 		"deck_out_pressure": deck_out,
 		"discard_has_psychic": discard_p >= 1,
@@ -293,7 +295,7 @@ func build_turn_plan(game_state: GameState, player_index: int, context: Dictiona
 	elif shell_online and attacker_bodies >= 1 and ready_attackers == 0:
 		intent = "transition_to_conversion"
 	elif shell_online and ready_attackers >= 1:
-		if trapped_handoff or active_retreat_bridge:
+		if trapped_handoff or active_retreat_bridge or active_retreat_search_bridge:
 			intent = "unlock_bench_attacker_handoff"
 		else:
 			intent = "convert_attack" if immediate_attack_window else "transition_to_conversion"
@@ -308,13 +310,15 @@ func build_turn_plan(game_state: GameState, player_index: int, context: Dictiona
 	elif must_force_first_gardevoir:
 		bridge_target_name = GARDEVOIR_EX
 	elif shell_online and attacker_bodies == 0:
-		bridge_target_name = DRIFLOON
+		bridge_target_name = _preferred_transition_attacker_name(game_state, player_index)
+		if bridge_target_name == "":
+			bridge_target_name = DRIFLOON
 
 	var primary_attacker_name: String = ""
 	var pivot_target_name: String = ""
 	if ready_attackers >= 1:
 		var trapped_owner: PokemonSlot = _best_ready_bench_handoff_attacker(game_state, player, player_index)
-		if (trapped_handoff or active_retreat_bridge) and trapped_owner != null:
+		if (trapped_handoff or active_retreat_bridge or active_retreat_search_bridge) and trapped_owner != null:
 			primary_attacker_name = trapped_owner.get_pokemon_name()
 		for slot: PokemonSlot in _get_all_slots(player):
 			if primary_attacker_name != "":
@@ -366,7 +370,7 @@ func build_turn_plan(game_state: GameState, player_index: int, context: Dictiona
 		"forbid_extra_bench_padding": intent == "convert_attack" and attacker_bodies >= 1,
 		"forbid_engine_churn": intent in ["rebuild_attacker_closed_loop", "convert_attack"],
 		"prefer_tm_combo_this_turn": tm_setup_live,
-		"must_unlock_ready_bench_attacker": trapped_handoff or active_retreat_bridge,
+		"must_unlock_ready_bench_attacker": trapped_handoff or active_retreat_bridge or active_retreat_search_bridge,
 		"must_resolve_munkidori_damage_transfer": munkidori_damage_transfer_debt,
 	}
 
@@ -411,7 +415,9 @@ func build_turn_contract(game_state: GameState, player_index: int, context: Dict
 		owner["turo_target_name"] = player.active_pokemon.get_pokemon_name()
 		if primary_attacker_name != "":
 			owner["replacement_target_name"] = primary_attacker_name
-	if bool(flags.get("active_retreat_bridge_to_ready_bench_attacker", false)) and player.active_pokemon != null:
+	var active_retreat_handoff_bridge: bool = bool(flags.get("active_retreat_bridge_to_ready_bench_attacker", false)) \
+		or bool(flags.get("active_retreat_energy_search_bridge_to_ready_bench_attacker", false))
+	if active_retreat_handoff_bridge and player.active_pokemon != null:
 		owner["trapped_active_name"] = player.active_pokemon.get_pokemon_name()
 		owner["retreat_payment_target_name"] = player.active_pokemon.get_pokemon_name()
 		if primary_attacker_name != "":
@@ -453,7 +459,7 @@ func build_turn_contract(game_state: GameState, player_index: int, context: Dict
 		priorities["turo_target"] = [player.active_pokemon.get_pokemon_name()]
 		if primary_attacker_name != "":
 			priorities["replacement"] = [primary_attacker_name]
-	if bool(flags.get("active_retreat_bridge_to_ready_bench_attacker", false)) and player.active_pokemon != null:
+	if active_retreat_handoff_bridge and player.active_pokemon != null:
 		priorities["retreat_payment_target"] = [player.active_pokemon.get_pokemon_name()]
 		if primary_attacker_name != "":
 			priorities["replacement"] = [primary_attacker_name]
@@ -517,12 +523,17 @@ func _gardevoir_continuity_setup_debt(game_state: GameState, player: PlayerState
 	var drifloon_pressure_needs_fuel: bool = _drifloon_pressure_fuel_route_live(game_state, player, player_index)
 	var immediate_attack_window: bool = _has_immediate_attack_window(game_state, player, player_index)
 	var stall_attack_window: bool = _gardevoir_budew_stall_terminal_window(player, immediate_attack_window)
+	var shell_chip_attack_window: bool = _gardevoir_shell_chip_terminal_window(player, immediate_attack_window)
 	var conversion_window: bool = immediate_attack_window and ready_attackers >= 1
-	var suppress_backup_continuity: bool = conversion_window and _is_budew_munkidori_scream_tail_variant()
+	var closed_loop_rebuild: bool = _attacker_rebuild_closed_loop_live(game_state, player, player_index)
+	var suppress_backup_continuity: bool = (conversion_window and _is_budew_munkidori_scream_tail_variant()) or closed_loop_rebuild
 	var launch_budew_stall_window: bool = stall_attack_window and not shell_online
+	var active_scream_tail_embrace_debt: bool = _active_scream_tail_needs_embrace_damage_before_attack(game_state, player, player_index)
 	return {
 		"has_attack_window": immediate_attack_window,
-		"has_stall_attack_window": stall_attack_window,
+		"has_stall_attack_window": stall_attack_window or shell_chip_attack_window,
+		"has_shell_chip_attack_window": shell_chip_attack_window,
+		"closed_loop_rebuild": closed_loop_rebuild,
 		"need_launch_shell_before_stall": launch_budew_stall_window and not deck_out_pressure and _continuity_has_safe_launch_setup(player),
 		"need_first_gardevoir_ex": gardevoir_count == 0 and kirlia_count >= 1,
 		"need_kirlia_engine": kirlia_count == 0 and ralts_count >= 1,
@@ -533,6 +544,7 @@ func _gardevoir_continuity_setup_debt(game_state: GameState, player: PlayerState
 		"need_next_attacker_seed": shell_online and attacker_bodies < 2 and has_bench_space and not deck_out_pressure,
 		"need_stall_safe_attacker_search": shell_online and stall_attack_window and attacker_bodies < 2 and has_bench_space and not deck_out_pressure and _continuity_can_stadium_search_next_attacker(player),
 		"need_second_attacker_energy": shell_online and attacker_bodies >= 2 and ready_attackers < 2 and psychic_fuel >= 1 and not deck_out_pressure,
+		"need_active_scream_tail_embrace_damage": active_scream_tail_embrace_debt,
 		"avoid_deck_out": deck_out_pressure,
 		"psychic_fuel": psychic_fuel,
 		"ready_attackers": ready_attackers,
@@ -550,10 +562,13 @@ func _gardevoir_continuity_window(
 ) -> bool:
 	if player == null:
 		return false
+	var active_scream_tail_embrace_debt: bool = bool(setup_debt.get("need_active_scream_tail_embrace_damage", false))
 	if not bool(setup_debt.get("has_attack_window", false)) \
-			and not bool(setup_debt.get("has_stall_attack_window", false)):
+			and not bool(setup_debt.get("has_stall_attack_window", false)) \
+			and not active_scream_tail_embrace_debt:
 		return false
-	if bool(setup_debt.get("avoid_deck_out", false)):
+	if bool(setup_debt.get("avoid_deck_out", false)) \
+			and not active_scream_tail_embrace_debt:
 		return false
 	if _continuity_contract_forces_attack(turn_contract):
 		return false
@@ -604,6 +619,15 @@ func _gardevoir_continuity_action_bonuses(
 				"bonus": 360.0,
 				"reason": "continuity_build_kirlia_engine",
 			})
+		if _continuity_kirlia_engine_search_live(player):
+			var kirlia_search: Array[String] = _continuity_available_cards(player, [ULTRA_BALL, SECRET_BOX, ARVEN])
+			if not kirlia_search.is_empty():
+				bonuses.append({
+					"kind": "play_trainer",
+					"card_names": _continuity_alias_names(kirlia_search),
+					"bonus": 520.0,
+					"reason": "continuity_find_kirlia_engine",
+				})
 	var conversion_attack_window: bool = bool(setup_debt.get("has_attack_window", false)) \
 		and int(setup_debt.get("ready_attackers", 0)) >= 1
 	var suppress_backup_bonus: bool = conversion_attack_window and _is_budew_munkidori_scream_tail_variant()
@@ -711,11 +735,26 @@ func _gardevoir_continuity_action_bonuses(
 				"bonus": 260.0,
 				"reason": "continuity_embrace_backup_attacker",
 			})
+	if bool(setup_debt.get("need_active_scream_tail_embrace_damage", false)):
+		bonuses.append({
+			"kind": "use_ability",
+			"target_names": _continuity_alias_names([GARDEVOIR_EX]),
+			"bonus": 360.0,
+			"reason": "continuity_active_scream_tail_embrace_damage",
+		})
 	return bonuses
 
 
 func _continuity_can_play_basic(player: PlayerState, card_name: String) -> bool:
 	return player != null and player.bench.size() < 5 and _hand_has_card(player, card_name)
+
+
+func _continuity_kirlia_engine_search_live(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	if _deck_has_card_name(player, KIRLIA):
+		return true
+	return _count_evolvable_bench_targets(player) > 0 and _deck_has_card_name(player, TM_EVOLUTION)
 
 
 func _gardevoir_budew_stall_terminal_window(player: PlayerState, immediate_attack_window: bool) -> bool:
@@ -724,6 +763,17 @@ func _gardevoir_budew_stall_terminal_window(player: PlayerState, immediate_attac
 	if immediate_attack_window:
 		return false
 	return _slot_is_budew(player.active_pokemon)
+
+
+func _gardevoir_shell_chip_terminal_window(player: PlayerState, immediate_attack_window: bool) -> bool:
+	if player == null or player.active_pokemon == null:
+		return false
+	if immediate_attack_window:
+		return false
+	if not _shell_lock_active(player):
+		return false
+	var active_name: String = player.active_pokemon.get_pokemon_name()
+	return active_name == RALTS or active_name == KIRLIA
 
 
 func _continuity_has_safe_launch_setup(player: PlayerState) -> bool:
@@ -1200,6 +1250,13 @@ func _abs_use_stadium_effect(action: Dictionary, game_state: GameState, player: 
 	var attacker_bodies: int = _count_attackers_on_field(player)
 	var preferred_transition_attacker: String = _preferred_transition_attacker_name(game_state, player_index)
 	var wanted_is_cresselia: bool = _action_targets_cresselia(action, "artazon_pokemon") or wanted == CRESSELIA_EN
+	var closed_loop_rebuild: bool = _attacker_rebuild_closed_loop_live(game_state, player, player_index)
+	if closed_loop_rebuild:
+		var wanted_is_attacker: bool = wanted in ATTACKER_NAMES or wanted_is_cresselia
+		if wanted != "" and not wanted_is_attacker:
+			return -120.0
+		if wanted == "" and not _artazon_has_rebuild_attacker_target(player, game_state, player_index):
+			return -80.0
 	if _needs_first_attacker_body(player):
 		if wanted_is_cresselia and _deck_allows_cresselia_package():
 			return 520.0 if _cresselia_movable_damage(game_state, player_index) >= 40 else 360.0
@@ -1232,6 +1289,22 @@ func _abs_use_stadium_effect(action: Dictionary, game_state: GameState, player: 
 	if transition_shell and attacker_bodies >= 1:
 		return -80.0
 	return 80.0
+
+
+func _artazon_has_rebuild_attacker_target(player: PlayerState, game_state: GameState, player_index: int) -> bool:
+	if player == null:
+		return false
+	var preferred_transition_attacker: String = _preferred_transition_attacker_name(game_state, player_index)
+	var attacker_names: Array[String] = []
+	for name: String in [preferred_transition_attacker, DRIFLOON, SCREAM_TAIL]:
+		if name != "" and not attacker_names.has(name):
+			attacker_names.append(name)
+	if _deck_allows_cresselia_package() and not attacker_names.has(CRESSELIA_EN):
+		attacker_names.append(CRESSELIA_EN)
+	for attacker_name: String in attacker_names:
+		if _deck_has_card_name(player, attacker_name):
+			return true
+	return false
 
 
 func _should_preserve_active_kirlia_from_gardevoir_evolve(target_slot: PokemonSlot, player: PlayerState, game_state: GameState = null) -> bool:
@@ -1298,7 +1371,7 @@ func _abs_attach_energy(action: Dictionary, game_state: GameState, player: Playe
 	var active_name: String = player.active_pokemon.get_pokemon_name() if player.active_pokemon != null else ""
 	var charizard_matchup: bool = _is_charizard_pressure_matchup(game_state, player_index)
 	var delay_attacker_investment: bool = _should_delay_attacker_investment_during_shell_lock(player)
-	var preferred_attacker_recovery_live: bool = _preferred_attacker_recovery_live(game_state, player, player_index)
+	var preferred_attacker_recovery_live: bool = _preferred_attacker_recovery_suppresses_attacker_investment(game_state, player, player_index)
 
 	if target_slot == player.active_pokemon \
 			and _active_retreat_bridge_to_ready_bench_attacker_live(game_state, player, player_index):
@@ -1483,6 +1556,8 @@ func _abs_attach_tool(action: Dictionary, game_state: GameState, player: PlayerS
 	if tool_name == TM_EVOLUTION:
 		if target_slot != player.active_pokemon:
 			return -200.0
+		if _tm_evolution_attack_blocked_this_turn(game_state, player_index):
+			return -180.0
 		if _tm_support_carrier_cools_off(player, phase):
 			return -220.0
 		if _has_online_shell(player):
@@ -1704,6 +1779,8 @@ func _abs_psychic_embrace(action: Dictionary, game_state: GameState, player: Pla
 	for slot: PokemonSlot in _get_all_slots(player):
 		var name: String = slot.get_pokemon_name()
 		if name not in ATTACKER_NAMES and name != SCREAM_TAIL:
+			continue
+		if name == SCREAM_TAIL and _preferred_recovery_should_suppress_scream_tail_investment(game_state, player, player_index):
 			continue
 		if not _can_take_more_psychic_embrace_damage(slot, game_state):
 			continue
@@ -1936,7 +2013,7 @@ func _score_psychic_embrace_target_slot(
 
 	var name: String = target_slot.get_pokemon_name()
 	if name in ATTACKER_NAMES or name == SCREAM_TAIL:
-		if name == SCREAM_TAIL and _preferred_attacker_recovery_live(game_state, player, player_index):
+		if name == SCREAM_TAIL and _preferred_recovery_should_suppress_scream_tail_investment(game_state, player, player_index):
 			return -120.0
 		var now: Dictionary = predict_attacker_damage(target_slot, 0)
 		var after: Dictionary = predict_attacker_damage(target_slot, 1)
@@ -2187,6 +2264,8 @@ func _abs_play_trainer(action: Dictionary, game_state: GameState, player: Player
 
 
 	if name == EARTHEN_VESSEL:
+		if _active_retreat_energy_search_bridge_to_ready_bench_attacker_live(game_state, player, player_index):
+			return 580.0
 		if _drifloon_pressure_fuel_route_live(game_state, player, player_index):
 			return 640.0
 		if post_tm_refill_window:
@@ -2428,6 +2507,10 @@ func _abs_retreat(action: Dictionary, game_state: GameState, player: PlayerState
 		if int(pressure_pred.get("damage", 0)) >= 80:
 			return 590.0
 	if _slot_is_budew(active) and _shell_lock_active(player):
+		return -260.0
+	if _tm_evolution_attack_blocked_this_turn(game_state, player_index) \
+			and _tm_setup_priority_live(player, phase) \
+			and _tm_attack_payment_gap(active) <= 0:
 		return -260.0
 	if _active_has_tm_evolution(player):
 		var active_is_primary_attacker: bool = active_name in ATTACKER_NAMES \
@@ -3028,6 +3111,7 @@ func _abs_iono(game_state: GameState, player: PlayerState, player_index: int, ph
 	var opp_prizes: int = game_state.players[opp_index].prizes.size() if opp_index >= 0 and opp_index < game_state.players.size() else 6
 	var shell_lock: bool = _shell_lock_active(player)
 	var shell_online: bool = _has_established_stage2_shell(player)
+	var gardevoir_online: bool = _has_online_shell(player)
 	var ready_attackers: int = _count_ready_attackers(player)
 	var stable_hand: bool = hand_size >= 3
 	var strong_comeback_need: bool = my_prizes >= opp_prizes + 2
@@ -3035,9 +3119,9 @@ func _abs_iono(game_state: GameState, player: PlayerState, player_index: int, ph
 		return 0.0
 	if _late_deck_out_churn_lock(game_state, player, player_index):
 		return -120.0
-	if _has_deck_out_pressure(player) and shell_online:
-		if hand_size <= 1 and ready_attackers == 0:
-			return 20.0
+	if _has_deck_out_pressure(player) and (shell_online or gardevoir_online):
+		if hand_size <= 1 and ready_attackers == 0 and (_needs_attacker_recovery(game_state, player, player_index) or _needs_first_attacker_body(player)):
+			return 20.0 if _low_deck_iono_can_unlock_attacker_rebuild(game_state, player, player_index) else -120.0
 		return -120.0
 	if shell_online and ready_attackers >= 1:
 		if opp_prizes <= 2 and my_prizes > opp_prizes:
@@ -3059,6 +3143,23 @@ func _abs_iono(game_state: GameState, player: PlayerState, player_index: int, ph
 	if hand_size <= 2:
 		base += 100.0
 	return maxf(base, 0.0)
+
+
+func _low_deck_iono_can_unlock_attacker_rebuild(game_state: GameState, player: PlayerState, player_index: int) -> bool:
+	if player == null:
+		return false
+	if _needs_attacker_recovery(game_state, player, player_index):
+		for card_name: String in [NIGHT_STRETCHER, RESCUE_STRETCHER, SUPER_ROD]:
+			if _deck_has_named_card(player, card_name):
+				return true
+	if _needs_first_attacker_body(player):
+		for card_name: String in [DRIFLOON, SCREAM_TAIL, CRESSELIA_EN]:
+			if _deck_has_named_card(player, card_name):
+				return true
+		for card_name: String in [BUDDY_BUDDY_POFFIN, NEST_BALL, ULTRA_BALL, ARTAZON, SECRET_BOX]:
+			if _deck_has_named_card(player, card_name):
+				return true
+	return false
 
 
 func _abs_prof_turo(game_state: GameState, player: PlayerState, player_index: int, phase: String) -> float:
@@ -3143,14 +3244,39 @@ func _active_retreat_bridge_to_ready_bench_attacker_live(game_state: GameState, 
 	var active: PokemonSlot = player.active_pokemon
 	if not _slot_is_live(active):
 		return false
-	if _get_retreat_energy_gap(active) <= 0:
-		return false
 	var active_pred: Dictionary = predict_attacker_damage(active)
 	if bool(active_pred.get("can_attack", false)) and int(active_pred.get("damage", 0)) > 0:
 		return false
 	if active.get_remaining_hp() <= 20:
 		return false
 	if not _active_retreat_bridge_can_be_paid_this_turn(game_state, player, player_index, active):
+		return false
+	return _best_ready_bench_handoff_attacker(game_state, player, player_index) != null
+
+
+func _active_retreat_energy_search_bridge_to_ready_bench_attacker_live(game_state: GameState, player: PlayerState, player_index: int) -> bool:
+	if game_state == null or player == null or player.active_pokemon == null:
+		return false
+	if not _has_online_shell(player):
+		return false
+	if game_state.energy_attached_this_turn:
+		return false
+	if _hand_has_any_energy(player):
+		return false
+	if not _hand_has_playable_earthen_vessel(player):
+		return false
+	if not _deck_has_basic_energy(player):
+		return false
+	var active: PokemonSlot = player.active_pokemon
+	if not _slot_is_live(active):
+		return false
+	var retreat_gap: int = _get_retreat_energy_gap(active)
+	if retreat_gap != 1:
+		return false
+	var active_pred: Dictionary = predict_attacker_damage(active)
+	if bool(active_pred.get("can_attack", false)) and int(active_pred.get("damage", 0)) > 0:
+		return false
+	if active.get_remaining_hp() <= 20:
 		return false
 	return _best_ready_bench_handoff_attacker(game_state, player, player_index) != null
 
@@ -3419,7 +3545,7 @@ func pick_embrace_target(target_slots: Array, game_state: GameState = null, play
 		if cresselia_route_score > 0.0:
 			score = maxf(score, cresselia_route_score)
 		elif name in ATTACKER_NAMES or name == SCREAM_TAIL:
-			if name == SCREAM_TAIL and player != null and _preferred_attacker_recovery_live(game_state, player, player_index):
+			if name == SCREAM_TAIL and player != null and _preferred_attacker_recovery_suppresses_attacker_investment(game_state, player, player_index):
 				continue
 			var pred: Dictionary = predict_attacker_damage(slot, 0)
 			var pred_after: Dictionary = predict_attacker_damage(slot, 1)
@@ -3724,6 +3850,8 @@ func get_discard_priority_contextual(card: CardInstance, game_state: GameState, 
 		return 5
 	if _recovery_resource_discard_protected(cname, player):
 		return 8
+	if cname == TM_EVOLUTION and _tm_evolution_route_discard_protected(game_state, player, player_index):
+		return -120
 	if _shell_lock_active(player):
 		if cname == TM_EVOLUTION:
 			return 20
@@ -3802,6 +3930,8 @@ func _route_protected_discard_card_penalty(card: CardInstance, game_state: GameS
 		return 460.0
 	if cname in [EARTHEN_VESSEL, SECRET_BOX] and _drifloon_pressure_fuel_route_live(game_state, player, player_index):
 		return 360.0
+	if cname == TM_EVOLUTION and _tm_evolution_route_discard_protected(game_state, player, player_index):
+		return 760.0
 	if _must_force_first_gardevoir(player) and cname in [ULTRA_BALL, SECRET_BOX, ARVEN, GARDEVOIR_EX]:
 		return 420.0
 	if cname in [DRIFLOON, SCREAM_TAIL] \
@@ -3812,6 +3942,21 @@ func _route_protected_discard_card_penalty(card: CardInstance, game_state: GameS
 	if _recovery_resource_discard_protected(cname, player):
 		return 280.0
 	return 0.0
+
+
+func _tm_evolution_route_discard_protected(game_state: GameState, player: PlayerState, _player_index: int) -> bool:
+	if game_state == null or player == null:
+		return false
+	if not _shell_lock_active(player):
+		return false
+	if not _hand_has_card(player, TM_EVOLUTION):
+		return false
+	if not _has_evolvable_bench_targets(player):
+		return false
+	var phase: String = _detect_game_phase(int(game_state.turn_number), player)
+	if _tm_support_carrier_cools_off(player, phase):
+		return false
+	return _tm_setup_priority_live(player, phase) or _tm_precharge_window(player)
 
 
 func _get_supporter_search_value(cname: String) -> int:
@@ -4279,6 +4424,20 @@ func _hand_has_energy_type(player: PlayerState, etype: String) -> bool:
 		if card != null and card.card_data != null and card.card_data.is_energy() and str(card.card_data.energy_provides) == etype:
 			return true
 	return false
+
+
+func _hand_has_playable_earthen_vessel(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	var has_vessel: bool = false
+	var valid_hand_cards: int = 0
+	for card: CardInstance in player.hand:
+		if card == null or card.card_data == null:
+			continue
+		valid_hand_cards += 1
+		if str(card.card_data.name) == EARTHEN_VESSEL:
+			has_vessel = true
+	return has_vessel and valid_hand_cards >= 2
 
 
 func _slot_has_energy_type(slot: PokemonSlot, etype: String) -> bool:
@@ -5020,6 +5179,40 @@ func _can_take_more_psychic_embrace_damage(slot: PokemonSlot, game_state: GameSt
 	return _effective_remaining_hp_for_strategy(slot, game_state) > 20
 
 
+func _active_scream_tail_needs_embrace_damage_before_attack(game_state: GameState, player: PlayerState, player_index: int) -> bool:
+	if game_state == null or player == null:
+		return false
+	var active: PokemonSlot = player.active_pokemon
+	if not _slot_is_live(active) or active.get_pokemon_name() != SCREAM_TAIL:
+		return false
+	if not _has_online_shell(player):
+		return false
+	if _count_psychic_energy_in_discard(game_state, player_index) <= 0:
+		return false
+	if not _can_take_more_psychic_embrace_damage(active, game_state):
+		return false
+	var now: Dictionary = predict_attacker_damage(active, 0)
+	if not bool(now.get("can_attack", false)):
+		return false
+	var now_dmg: int = int(now.get("damage", 0))
+	var after: Dictionary = predict_attacker_damage(active, 1)
+	if not bool(after.get("can_attack", false)):
+		return false
+	var after_dmg: int = int(after.get("damage", 0))
+	if after_dmg <= now_dmg:
+		return false
+	var opponent_index: int = 1 - player_index
+	if opponent_index < 0 or opponent_index >= game_state.players.size():
+		return true
+	var opponent: PlayerState = game_state.players[opponent_index]
+	if opponent == null:
+		return true
+	for opp_slot: PokemonSlot in _get_all_slots(opponent):
+		if _slot_is_live(opp_slot) and opp_slot.get_remaining_hp() <= now_dmg:
+			return false
+	return true
+
+
 func _has_uncharmed_drifloon(player: PlayerState) -> bool:
 	if player == null:
 		return false
@@ -5309,12 +5502,14 @@ func _tm_still_accessible(player: PlayerState) -> bool:
 
 
 func _deck_has_card_name(player: PlayerState, target_name: String) -> bool:
-	if player == null or target_name == "":
+	return _deck_has_named_card(player, target_name)
+
+
+func _deck_has_basic_energy(player: PlayerState) -> bool:
+	if player == null:
 		return false
 	for card: CardInstance in player.deck:
-		if card == null or card.card_data == null:
-			continue
-		if str(card.card_data.name) == target_name:
+		if card != null and card.card_data != null and str(card.card_data.card_type) == "Basic Energy":
 			return true
 	return false
 
@@ -5522,6 +5717,18 @@ func _preferred_attacker_recovery_live(state: GameState, player: PlayerState, pl
 	return _count_ready_attackers(player) == 0
 
 
+func _preferred_attacker_recovery_suppresses_attacker_investment(state: GameState, player: PlayerState, player_index: int) -> bool:
+	if not _preferred_attacker_recovery_live(state, player, player_index):
+		return false
+	return _hand_has_card(player, NIGHT_STRETCHER) or _hand_has_card(player, RESCUE_STRETCHER)
+
+
+func _preferred_recovery_should_suppress_scream_tail_investment(state: GameState, player: PlayerState, player_index: int) -> bool:
+	if not _preferred_attacker_recovery_live(state, player, player_index):
+		return false
+	return not _opponent_has_scream_tail_prize_target(state, player_index)
+
+
 func _night_stretcher_has_live_target(state: GameState, player: PlayerState, player_index: int) -> bool:
 	if state == null or player == null:
 		return false
@@ -5542,8 +5749,6 @@ func _has_deck_out_pressure(player: PlayerState) -> bool:
 	if player == null:
 		return false
 	var remaining_deck: int = player.deck.size()
-	if remaining_deck <= 0:
-		return false
 	if remaining_deck <= 10:
 		return true
 	return remaining_deck <= 14 and _has_established_stage2_shell(player)

@@ -25,7 +25,7 @@ const HUD_RECOMMENDATION_BORDER := Color(1.0, 0.76, 0.30, 0.96)
 const HUD_SECONDARY := Color(0.50, 0.80, 1.0, 1.0)
 const HUD_RENAME := Color(0.72, 0.64, 1.0, 1.0)
 const IMPORT_RESULT_AUTO_CLOSE_SECONDS := 1.4
-const REMOTE_RECOMMENDATION_PREFETCH_STEPS := 6
+const REMOTE_RECOMMENDATION_PREFETCH_STEPS := 0
 const DECK_CENTER_SCROLLBAR_RIGHT_CLEARANCE := 40
 const RECOMMENDATION_DETAIL_SCROLLBAR_RIGHT_CLEARANCE := 34
 const HUD_BUTTON_FONT_SIZE := 23
@@ -33,6 +33,11 @@ const HUD_BUTTON_COMPACT_FONT_SIZE := 21
 const HUD_BUTTON_MIN_HEIGHT := 63.0
 const HUD_BUTTON_COMPACT_MIN_HEIGHT := 57.0
 const HUD_BUTTON_TEXT_HORIZONTAL_PADDING := 34.0
+const REMOTE_RECOMMENDATION_BATCH_LIMIT := 20
+const IMPORT_DECK_GUIDE_TEXT := "导入步骤：\n1. 在浏览器打开 tcg.mik.moe，进入你想玩的卡组页面。\n2. 复制浏览器地址栏里的完整链接，例如 https://tcg.mik.moe/decks/list/574793。\n3. 回到这里，点击下面的输入框并粘贴链接；也可以只输入末尾数字 ID，例如 574793。\n4. 点“导入卡组”，等待卡组和卡图同步完成。"
+const IMPORT_MODAL_PREVIOUS_MOUSE_FILTER_META := "_import_modal_previous_mouse_filter"
+const IMPORT_URL_FOCUS_REQUESTED_META := "_import_url_focus_requested"
+const DECK_ACTION_HUD_DIALOG_NAME := "DeckActionHudDialog"
 
 const ENERGY_TYPE_LABELS: Dictionary = {
 	"R": "火", "W": "水", "G": "草", "L": "雷",
@@ -43,6 +48,7 @@ var _importer: DeckImporter = null
 var _image_syncer = null
 var _current_operation: String = ""
 var _panel_mode: String = "import"
+var _pending_import_start_url := ""
 var _pending_import_deck: DeckData = null
 var _pending_import_errors: PackedStringArray = PackedStringArray()
 var _pending_import_deck_name_override := ""
@@ -54,6 +60,9 @@ var _rename_target_deck: DeckData = null
 var _rename_ignore_deck_id: int = -1
 var _rename_context: String = ""
 var _rename_forced: bool = false
+var _deck_action_hud_overlay: Control = null
+var _deck_action_hud_panel: PanelContainer = null
+var _deck_action_hud_context: String = ""
 var _texture_cache: Dictionary = {}
 var _failed_texture_paths: Dictionary = {}
 var _deck_view_dialog: RefCounted = DeckViewDialogScript.new()
@@ -63,6 +72,7 @@ var _recommendation_fetch_reason := ""
 var _recommendation_prefetch_remaining := 0
 var _recommendation_prefetch_seen_ids: Dictionary = {}
 var _recommendation_remote_order_batch := 0
+var _pending_remote_recommendation_id := ""
 var _recommendation_store: RefCounted = null
 var _recommendation_articles: Array[Dictionary] = []
 var _embedded_recommendations: Array[Dictionary] = []
@@ -88,6 +98,8 @@ func _ready() -> void:
 	%BtnBack.pressed.connect(_on_back_pressed)
 	%BtnDoImport.pressed.connect(_on_do_import)
 	%BtnCloseImport.pressed.connect(_on_close_import)
+	_ensure_import_paste_button()
+	_setup_import_panel_input_guards()
 
 	CardDatabase.decks_changed.connect(_refresh_deck_list)
 	_refresh_deck_list()
@@ -112,7 +124,153 @@ func _notification(what: int) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if _is_deck_action_hud_dialog_visible():
+		if NonBattleTouchBridgeScript.handle_root_touch(_deck_action_hud_overlay, event):
+			return
+		if event is InputEventScreenTouch or event is InputEventScreenDrag:
+			accept_event()
+			var viewport := get_viewport()
+			if viewport != null:
+				viewport.set_input_as_handled()
+			return
+	if _is_import_panel_visible():
+		var import_panel := get_node_or_null("%ImportPanel") as Control
+		if import_panel != null and NonBattleTouchBridgeScript.handle_root_touch(import_panel, event):
+			return
+		if _handle_import_panel_modal_input(event):
+			return
+		return
 	NonBattleTouchBridgeScript.handle_root_touch(self, event)
+
+
+func _setup_import_panel_input_guards() -> void:
+	_ensure_import_paste_button()
+	var modal_controls: Array[Control] = [
+		get_node_or_null("%ImportPanel") as Control,
+		find_child("ImportBg", true, false) as Control,
+		find_child("ImportBox", true, false) as Control,
+	]
+	var modal_callback := Callable(self, "_on_import_modal_gui_input")
+	for control: Control in modal_controls:
+		if control == null:
+			continue
+		control.mouse_filter = Control.MOUSE_FILTER_STOP
+		if control.gui_input.is_connected(modal_callback):
+			control.gui_input.disconnect(modal_callback)
+	var url_input := get_node_or_null("%UrlInput") as LineEdit
+	if url_input != null:
+		_configure_import_feedback_line_edit(url_input)
+
+
+func _ensure_import_paste_button() -> Button:
+	var existing := find_child("BtnPasteImport", true, false) as Button
+	if existing != null:
+		return existing
+	var button_row := find_child("BtnRow", true, false) as HBoxContainer
+	if button_row == null:
+		return null
+	var paste_button := Button.new()
+	paste_button.name = "BtnPasteImport"
+	paste_button.unique_name_in_owner = true
+	paste_button.text = "粘贴链接"
+	paste_button.custom_minimum_size = Vector2(120, 35)
+	paste_button.pressed.connect(_on_paste_import_url)
+	button_row.add_child(paste_button)
+	button_row.move_child(paste_button, 0)
+	_style_hud_button(paste_button, HUD_ACCENT_WARM)
+	NonBattleTouchBridgeScript.bind_button_touch(paste_button)
+	return paste_button
+
+
+func _on_import_modal_gui_input(event: InputEvent) -> void:
+	_handle_import_modal_gui_input(event)
+
+
+func _handle_import_modal_gui_input_for_tests(event: InputEvent) -> bool:
+	return _handle_import_modal_gui_input(event)
+
+
+func _handle_import_modal_gui_input(event: InputEvent) -> bool:
+	if not _is_import_panel_visible():
+		return false
+	if _event_targets_import_url_input(event):
+		return false
+	if event is InputEventScreenTouch or event is InputEventScreenDrag:
+		_consume_import_modal_event()
+		return true
+	if event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if mouse_button.button_index == MOUSE_BUTTON_LEFT:
+			_consume_import_modal_event()
+			return true
+	return false
+
+
+func _configure_import_feedback_line_edit(input: LineEdit, keyboard_type: int = LineEdit.KEYBOARD_TYPE_URL) -> void:
+	if input == null:
+		return
+	input.focus_mode = Control.FOCUS_ALL
+	input.mouse_filter = Control.MOUSE_FILTER_STOP
+	input.context_menu_enabled = true
+	input.virtual_keyboard_enabled = true
+	input.virtual_keyboard_show_on_focus = true
+	input.virtual_keyboard_type = keyboard_type
+	input.set("shortcut_keys_enabled", true)
+	input.set("middle_mouse_paste_enabled", true)
+	if input.has_meta(NonBattleTouchBridgeScript.NATIVE_TEXT_INPUT_META):
+		input.remove_meta(NonBattleTouchBridgeScript.NATIVE_TEXT_INPUT_META)
+	NonBattleTouchBridgeScript.bind_focus_control_touch(input)
+
+
+func _consume_import_modal_event() -> void:
+	accept_event()
+	var viewport := get_viewport()
+	if viewport != null:
+		viewport.set_input_as_handled()
+
+
+func _show_import_panel() -> void:
+	var import_panel := get_node_or_null("%ImportPanel") as Control
+	if import_panel == null:
+		return
+	import_panel.visible = true
+	import_panel.z_as_relative = false
+	import_panel.z_index = 2500
+	import_panel.move_to_front()
+	_set_import_background_controls_blocked(true)
+
+
+func _hide_import_panel() -> void:
+	var import_panel := get_node_or_null("%ImportPanel") as Control
+	if import_panel != null:
+		import_panel.visible = false
+	_set_import_background_controls_blocked(false)
+	var url_input := get_node_or_null("%UrlInput") as LineEdit
+	if url_input != null and url_input.has_focus():
+		url_input.release_focus()
+	if DisplayServer.get_name() != "headless":
+		DisplayServer.virtual_keyboard_hide()
+
+
+func _set_import_background_controls_blocked(blocked: bool) -> void:
+	var content_root := get_node_or_null("MarginContainer") as Control
+	if content_root == null:
+		return
+	_set_control_tree_mouse_filter_blocked(content_root, blocked)
+
+
+func _set_control_tree_mouse_filter_blocked(node: Node, blocked: bool) -> void:
+	if node is Control:
+		var control := node as Control
+		if blocked:
+			if not control.has_meta(IMPORT_MODAL_PREVIOUS_MOUSE_FILTER_META):
+				control.set_meta(IMPORT_MODAL_PREVIOUS_MOUSE_FILTER_META, control.mouse_filter)
+			control.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		elif control.has_meta(IMPORT_MODAL_PREVIOUS_MOUSE_FILTER_META):
+			control.mouse_filter = int(control.get_meta(IMPORT_MODAL_PREVIOUS_MOUSE_FILTER_META))
+			control.remove_meta(IMPORT_MODAL_PREVIOUS_MOUSE_FILTER_META)
+	for child: Node in node.get_children():
+		_set_control_tree_mouse_filter_blocked(child, blocked)
 
 
 func _connect_non_battle_layout_signal() -> void:
@@ -152,15 +310,201 @@ func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode
 		margin.add_theme_constant_override("margin_top", value)
 		margin.add_theme_constant_override("margin_right", value)
 		margin.add_theme_constant_override("margin_bottom", value)
-	var import_box := find_child("ImportBox", true, false) as Control
-	if import_box != null and portrait:
-		var import_width := float(context.get("content_width", 390.0))
-		var import_height := minf(size.y - float(context.get("page_margin", 24.0)) * 4.0, maxf(420.0, float(context.get("input_height", 80.0)) * 4.8))
-		import_box.offset_left = -import_width * 0.5
-		import_box.offset_right = import_width * 0.5
-		import_box.offset_top = -import_height * 0.5
-		import_box.offset_bottom = import_height * 0.5
 	_apply_deck_manager_mobile_metrics(self, context, portrait)
+	_apply_import_panel_layout(context, portrait, size)
+	_apply_deck_center_scroll_clearance()
+
+
+func _handle_import_panel_modal_input_for_tests(event: InputEvent) -> bool:
+	return _handle_import_panel_modal_input(event)
+
+
+func _handle_import_panel_modal_input(event: InputEvent) -> bool:
+	var import_panel := get_node_or_null("%ImportPanel") as Control
+	if import_panel == null or not import_panel.visible:
+		return false
+	if event is InputEventMouseButton and not _should_bridge_import_panel_mouse_event():
+		return false
+	if _event_targets_import_url_input(event):
+		return false
+	if event is InputEventScreenTouch or event is InputEventScreenDrag or event is InputEventMouseButton:
+		_consume_import_modal_event()
+		return true
+	var position := _event_global_position(event)
+	if position.x == INF or position.y == INF:
+		return false
+	if _control_rect_with_layout_fallback(import_panel).has_point(position):
+		_consume_import_modal_event()
+		return true
+	return false
+
+
+func _is_import_panel_visible() -> bool:
+	var import_panel := get_node_or_null("%ImportPanel") as Control
+	return import_panel != null and import_panel.visible
+
+
+func _event_targets_import_url_input(event: InputEvent) -> bool:
+	var url_input := get_node_or_null("%UrlInput") as LineEdit
+	if url_input == null or not url_input.visible or not url_input.editable:
+		return false
+	var position := _event_global_position(event)
+	if position.x == INF or position.y == INF:
+		return false
+	var rect := _control_rect_with_layout_fallback(url_input)
+	var max_input_height := maxf(url_input.custom_minimum_size.y * 1.6, 160.0)
+	if rect.size.y > max_input_height:
+		rect.size.y = max_input_height
+	return rect.has_point(position)
+
+
+func _should_bridge_import_panel_mouse_event() -> bool:
+	if not bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true)):
+		return true
+	return OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
+
+
+func _event_global_position(event: InputEvent) -> Vector2:
+	if event is InputEventScreenTouch:
+		return (event as InputEventScreenTouch).position
+	if event is InputEventScreenDrag:
+		return (event as InputEventScreenDrag).position
+	if event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		return mouse_button.global_position if mouse_button.global_position != Vector2.ZERO else mouse_button.position
+	return Vector2(INF, INF)
+
+
+func _control_rect_with_layout_fallback(control: Control) -> Rect2:
+	if control == null:
+		return Rect2()
+	var rect := control.get_global_rect()
+	if rect.size.x > 0.0 and rect.size.y > 0.0:
+		return rect
+	var fallback_size := control.size
+	if fallback_size.x <= 0.0 or fallback_size.y <= 0.0:
+		var context_size: Vector2 = _current_non_battle_layout_context.get("viewport_size", size if size.x > 0.0 and size.y > 0.0 else Vector2(1600, 900))
+		fallback_size.x = maxf(fallback_size.x, context_size.x)
+		fallback_size.y = maxf(fallback_size.y, context_size.y)
+	return Rect2(control.global_position, fallback_size)
+
+
+func _apply_import_panel_layout(context: Dictionary, portrait: bool, viewport_size: Vector2) -> void:
+	var import_panel := get_node_or_null("%ImportPanel") as Control
+	var import_bg := find_child("ImportBg", true, false) as Control
+	var import_box := find_child("ImportBox", true, false) as PanelContainer
+	if import_panel != null:
+		import_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+		import_panel.z_as_relative = false
+		import_panel.z_index = 1000
+		import_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	if import_bg != null:
+		import_bg.mouse_filter = Control.MOUSE_FILTER_STOP
+		import_bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	if import_box == null:
+		return
+	import_box.mouse_filter = Control.MOUSE_FILTER_STOP
+	var vbox := import_box.get_node_or_null("VBox") as VBoxContainer
+	var title_label := import_box.get_node_or_null("VBox/TitleLabel") as Label
+	var hint_label := import_box.get_node_or_null("VBox/HintLabel") as Label
+	var progress_label := get_node_or_null("%ProgressLabel") as Label
+	var progress_bar := get_node_or_null("%ProgressBar") as ProgressBar
+	var url_input := get_node_or_null("%UrlInput") as LineEdit
+	var button_row := import_box.get_node_or_null("VBox/BtnRow") as HBoxContainer
+	var paste_button := _ensure_import_paste_button()
+	var import_button := get_node_or_null("%BtnDoImport") as Button
+	var close_button := get_node_or_null("%BtnCloseImport") as Button
+	if hint_label != null:
+		hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	if progress_label != null:
+		progress_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+		progress_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	if url_input != null:
+		_configure_import_feedback_line_edit(url_input)
+	if not portrait:
+		import_box.anchor_left = 0.5
+		import_box.anchor_top = 0.5
+		import_box.anchor_right = 0.5
+		import_box.anchor_bottom = 0.5
+		import_box.custom_minimum_size = Vector2(500, 260)
+		import_box.offset_left = -250.0
+		import_box.offset_right = 250.0
+		import_box.offset_top = -130.0
+		import_box.offset_bottom = 130.0
+		if vbox != null:
+			vbox.add_theme_constant_override("separation", 10)
+		if hint_label != null:
+			hint_label.custom_minimum_size.y = 0.0
+			hint_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
+		if progress_label != null:
+			progress_label.custom_minimum_size.y = 0.0
+			progress_label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(14))
+		if url_input != null:
+			url_input.custom_minimum_size = Vector2(0.0, 38.0)
+			url_input.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
+		if progress_bar != null:
+			progress_bar.custom_minimum_size.y = 0.0
+		if button_row != null:
+			button_row.add_theme_constant_override("separation", 20)
+		for button: Button in [paste_button, import_button, close_button]:
+			if button == null:
+				continue
+			button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			button.custom_minimum_size.y = HUD_BUTTON_MIN_HEIGHT
+			button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(HUD_BUTTON_FONT_SIZE))
+		return
+
+	var margin := float(context.get("page_margin", 24.0))
+	var input_height := float(context.get("input_height", 98.0))
+	var box_width := maxf(320.0, viewport_size.x - margin * 2.0)
+	var box_height := maxf(560.0, viewport_size.y - margin * 2.0)
+	import_box.anchor_left = 0.0
+	import_box.anchor_top = 0.0
+	import_box.anchor_right = 1.0
+	import_box.anchor_bottom = 1.0
+	import_box.custom_minimum_size = Vector2(box_width, box_height)
+	import_box.offset_left = margin
+	import_box.offset_right = -margin
+	import_box.offset_top = margin
+	import_box.offset_bottom = -margin
+
+	var section_gap := int(context.get("section_gap", 22))
+	var title_font := int(context.get("title_font_size", 44))
+	var body_font := int(context.get("body_font_size", 27))
+	var input_font := int(context.get("input_font_size", 29))
+	var button_font := int(context.get("button_font_size", 33))
+	var button_height := maxf(float(context.get("secondary_button_height", 104.0)), input_height)
+	var portrait_input_height := maxf(input_height * 1.32, 128.0)
+	if vbox != null:
+		vbox.add_theme_constant_override("separation", section_gap)
+		vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	if title_label != null:
+		title_label.add_theme_font_size_override("font_size", title_font)
+	if hint_label != null:
+		hint_label.add_theme_font_size_override("font_size", body_font)
+		hint_label.custom_minimum_size.y = maxf(hint_label.custom_minimum_size.y, float(body_font) * 9.2)
+		hint_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		hint_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	if progress_label != null:
+		progress_label.add_theme_font_size_override("font_size", body_font)
+		progress_label.custom_minimum_size.y = maxf(progress_label.custom_minimum_size.y, float(body_font) * 2.0)
+	if url_input != null:
+		url_input.custom_minimum_size = Vector2(maxf(260.0, box_width - margin), maxf(url_input.custom_minimum_size.y, portrait_input_height))
+		url_input.add_theme_font_size_override("font_size", input_font)
+		url_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_configure_import_feedback_line_edit(url_input)
+	if progress_bar != null:
+		progress_bar.custom_minimum_size.y = maxf(progress_bar.custom_minimum_size.y, input_height * 0.36)
+	if button_row != null:
+		button_row.add_theme_constant_override("separation", maxi(16, roundi(float(section_gap) * 0.78)))
+	for button: Button in [paste_button, import_button, close_button]:
+		if button == null:
+			continue
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, button_height)
+		button.add_theme_font_size_override("font_size", button_font)
+		NonBattleTouchBridgeScript.bind_button_touch(button)
 
 
 func _apply_deck_manager_mobile_metrics(node: Node, context: Dictionary, portrait: bool) -> void:
@@ -188,11 +532,11 @@ func _apply_hud_theme() -> void:
 		shade.color = Color(0.01, 0.025, 0.045, 0.18)
 	_ensure_hud_frame()
 	_style_hud_labels_recursive(self)
-	for button_name: String in ["BtnImport", "BtnSyncImages", "BtnBack", "BtnDoImport", "BtnCloseImport"]:
+	for button_name: String in ["BtnImport", "BtnSyncImages", "BtnBack", "BtnPasteImport", "BtnDoImport", "BtnCloseImport"]:
 		var button := get_node_or_null("%" + button_name) as Button
 		if button != null:
 			var accent := HUD_ACCENT
-			if button_name in ["BtnImport", "BtnDoImport"]:
+			if button_name in ["BtnImport", "BtnPasteImport", "BtnDoImport"]:
 				accent = HUD_ACCENT_WARM
 			elif button_name in ["BtnSyncImages", "BtnCloseImport"]:
 				accent = HUD_SECONDARY
@@ -217,9 +561,22 @@ func _apply_deck_center_scroll_clearance() -> void:
 	var deck_scroll := find_child("DeckScroll", true, false) as ScrollContainer
 	if deck_scroll != null:
 		deck_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		var portrait := str(get_meta("non_battle_layout_mode", "")) == "portrait"
+		if portrait:
+			HudThemeScript.style_scroll_container(deck_scroll, "auto")
+			NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(deck_scroll)
+		else:
+			deck_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
+			HudThemeScript.style_scroll_container(deck_scroll, "auto")
+			NonBattleTouchBridgeScript.configure_visible_vertical_scroll(deck_scroll)
+			var vbar := deck_scroll.get_v_scroll_bar()
+			if vbar != null:
+				NonBattleTouchBridgeScript.bind_range_touch(vbar)
 	var deck_scroll_margin := find_child("DeckScrollMargin", true, false) as MarginContainer
 	if deck_scroll_margin != null:
-		deck_scroll_margin.add_theme_constant_override("margin_right", DECK_CENTER_SCROLLBAR_RIGHT_CLEARANCE)
+		var portrait := str(get_meta("non_battle_layout_mode", "")) == "portrait"
+		var clearance := 18 if portrait else DECK_CENTER_SCROLLBAR_RIGHT_CLEARANCE
+		deck_scroll_margin.add_theme_constant_override("margin_right", clearance)
 
 
 func _ensure_hud_frame() -> void:
@@ -326,6 +683,8 @@ func _hud_button_min_width_for_text(text: String, font_size: int) -> float:
 
 
 func _style_hud_line_edit(input: LineEdit) -> void:
+	var keyboard_type := LineEdit.KEYBOARD_TYPE_URL if input.name == "UrlInput" else LineEdit.KEYBOARD_TYPE_DEFAULT
+	_configure_import_feedback_line_edit(input, keyboard_type)
 	input.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
 	input.add_theme_color_override("font_color", HUD_TEXT)
 	input.add_theme_color_override("font_placeholder_color", Color(0.55, 0.66, 0.74, 0.78))
@@ -527,16 +886,17 @@ func _refresh_recommendation_cards() -> void:
 	if _current_recommendation.is_empty():
 		_recommendation_feed.add_child(_create_recommendation_placeholder())
 		if _recommendation_next_button != null:
-			_recommendation_next_button.disabled = _recommendation_fetch_in_progress
+			_recommendation_next_button.disabled = _recommendation_ui_blocked_by_fetch()
 		return
 
 	var should_mark_recommendation_badge_seen := _recommendation_matches_deck_center_latest(_current_recommendation)
 	_recommendation_feed.add_child(_create_recommendation_feed_card(_current_recommendation))
 	if should_mark_recommendation_badge_seen:
-		call_deferred("_mark_deck_center_recommendation_badge_seen")
+		_mark_deck_center_recommendation_badge_seen(false)
 	if _recommendation_next_button != null:
-		_recommendation_next_button.disabled = _recommendation_fetch_in_progress or _current_operation != ""
-		_recommendation_next_button.text = "获取中..." if _recommendation_fetch_in_progress else "换一套"
+		var fetch_blocks_ui := _recommendation_ui_blocked_by_fetch()
+		_recommendation_next_button.disabled = fetch_blocks_ui or _current_operation != ""
+		_recommendation_next_button.text = "获取中..." if fetch_blocks_ui else "换一套"
 
 
 func _create_recommendation_placeholder() -> PanelContainer:
@@ -658,9 +1018,10 @@ func _create_recommendation_feed_card(recommendation: Dictionary) -> PanelContai
 
 	_recommendation_next_button = Button.new()
 	_recommendation_next_button.name = "RecommendationNextButton"
-	_recommendation_next_button.text = "获取中..." if _recommendation_fetch_in_progress else "换一套"
+	var fetch_blocks_ui := _recommendation_ui_blocked_by_fetch()
+	_recommendation_next_button.text = "获取中..." if fetch_blocks_ui else "换一套"
 	_recommendation_next_button.custom_minimum_size = Vector2(112, 42)
-	_recommendation_next_button.disabled = _recommendation_fetch_in_progress or _current_operation != ""
+	_recommendation_next_button.disabled = fetch_blocks_ui or _current_operation != ""
 	_recommendation_next_button.pressed.connect(_on_recommendation_next_pressed)
 	button_row.add_child(_recommendation_next_button)
 	_style_hud_button(_recommendation_next_button, HUD_SECONDARY)
@@ -670,7 +1031,7 @@ func _create_recommendation_feed_card(recommendation: Dictionary) -> PanelContai
 	import_button.name = "RecommendationImportButton"
 	import_button.text = "更新本地" if deck_id > 0 and CardDatabase.has_deck(deck_id) else "导入这套"
 	import_button.custom_minimum_size = Vector2(124, 42)
-	import_button.disabled = import_url == "" or _current_operation != "" or _recommendation_fetch_in_progress
+	import_button.disabled = import_url == "" or _current_operation != "" or fetch_blocks_ui
 	import_button.pressed.connect(_on_recommendation_import_pressed.bind(recommendation))
 	button_row.add_child(import_button)
 	_style_hud_button(import_button, HUD_ACCENT_WARM)
@@ -689,7 +1050,15 @@ func _create_recommendation_feed_card(recommendation: Dictionary) -> PanelContai
 
 
 func _is_deck_manager_portrait_layout() -> bool:
-	return str(get_meta("non_battle_layout_mode", "")) == "portrait"
+	if str(get_meta("non_battle_layout_mode", "")) == "portrait":
+		return true
+	if bool(_current_non_battle_layout_context.get("is_portrait", false)):
+		return true
+	if GameManager != null and str(GameManager.get("non_battle_layout_mode")) == "portrait":
+		return true
+	var viewport_size := get_viewport_rect().size if is_inside_tree() else size
+	var mobile_like := OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
+	return mobile_like and viewport_size.y > viewport_size.x
 
 
 func _deck_manager_portrait_scale() -> float:
@@ -704,6 +1073,12 @@ func _apply_recommendation_button_mobile_metrics(button: Button) -> void:
 	button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, height)
 	button.add_theme_font_size_override("font_size", int(context.get("button_font_size", 32)))
 	NonBattleTouchBridgeScript.bind_button_touch(button)
+
+
+func _recommendation_ui_blocked_by_fetch() -> bool:
+	if not _recommendation_fetch_in_progress:
+		return false
+	return not (_recommendation_fetch_reason in ["prefetch", "cycle_background"])
 
 
 func _recommendation_matches_deck_center_latest(recommendation: Dictionary) -> bool:
@@ -722,12 +1097,13 @@ func _recommendation_matches_deck_center_latest(recommendation: Dictionary) -> b
 	return latest_deck_id > 0 and latest_deck_id == recommendation_deck_id
 
 
-func _mark_deck_center_recommendation_badge_seen() -> void:
+func _mark_deck_center_recommendation_badge_seen(remove_visible_badges: bool = true) -> void:
 	var revision := str(_deck_center_latest_meta.get("latest_revision", "")).strip_edges()
 	if revision == "":
 		return
 	if revision == _deck_center_recommendation_badge_seen_revision:
-		_remove_recommendation_new_badges()
+		if remove_visible_badges:
+			_remove_recommendation_new_badges()
 		return
 	var state := _load_deck_center_meta_state()
 	state["last_recommendation_badge_seen_revision"] = revision
@@ -738,7 +1114,8 @@ func _mark_deck_center_recommendation_badge_seen() -> void:
 		state["latest_info"] = _deck_center_latest_meta.duplicate(true)
 	_save_deck_center_meta_state(state)
 	_deck_center_recommendation_badge_seen_revision = revision
-	_remove_recommendation_new_badges()
+	if remove_visible_badges:
+		_remove_recommendation_new_badges()
 
 
 func _remove_recommendation_new_badges() -> void:
@@ -887,9 +1264,8 @@ func _on_recommendation_next_pressed() -> void:
 	if _current_operation != "":
 		_set_recommendation_status("当前正在导入或同步，完成后再切换推荐。")
 		return
-	if _recommendation_fetch_in_progress:
-		return
-	if is_inside_tree() and _request_remote_recommendation():
+	if _recommendation_fetch_in_progress and _recommendation_ui_blocked_by_fetch():
+		_set_recommendation_status("推荐数据加载中，完成后再切换。")
 		return
 	_switch_to_local_next_recommendation("已切换本地推荐。")
 
@@ -900,8 +1276,11 @@ func _request_latest_remote_recommendation_on_open() -> void:
 	_start_remote_recommendation_request(
 		"",
 		"deck_manager_open_refresh",
-		"正在检查服务器最新卡组推荐...",
-		"open_refresh"
+		"正在加载服务器最新卡组推荐...",
+		"open_refresh",
+		PackedStringArray(),
+		true,
+		REMOTE_RECOMMENDATION_BATCH_LIMIT
 	)
 
 
@@ -911,7 +1290,8 @@ func _start_remote_recommendation_request(
 	status_message: String,
 	reason: String,
 	exclude_ids: PackedStringArray = PackedStringArray(),
-	refresh_on_start: bool = true
+	refresh_on_start: bool = true,
+	limit: int = 1
 ) -> bool:
 	_ensure_recommendation_client()
 	if _recommendation_client == null:
@@ -925,8 +1305,12 @@ func _start_remote_recommendation_request(
 	var request_exclude_ids := exclude_ids
 	if request_exclude_ids.size() == 0 and reason != "open_refresh":
 		request_exclude_ids = _recommendation_exclude_ids(current_id)
+	var request_limit := limit
+	if reason == "open_refresh" and request_limit <= 1:
+		request_limit = REMOTE_RECOMMENDATION_BATCH_LIMIT
 	var err: int = _recommendation_client.call("fetch_next_recommendation", current_id, request_exclude_ids, {
 		"source": source,
+		"limit": request_limit,
 	})
 	if err != OK:
 		_recommendation_fetch_in_progress = false
@@ -937,13 +1321,15 @@ func _start_remote_recommendation_request(
 	return true
 
 
-func _request_remote_recommendation() -> bool:
+func _request_remote_recommendation(background: bool = false) -> bool:
 	var current_id := str(_current_recommendation.get("id", "")).strip_edges()
 	return _start_remote_recommendation_request(
 		current_id,
-		"deck_manager_recommendation",
-		"正在从服务器获取新的卡组推荐...",
-		"cycle"
+		"deck_manager_background_refresh" if background else "deck_manager_recommendation",
+		"" if background else "正在从服务器获取新的卡组推荐...",
+		"cycle_background" if background else "cycle",
+		PackedStringArray(),
+		not background
 	)
 
 
@@ -964,37 +1350,57 @@ func _request_next_remote_recommendation_prefetch() -> void:
 	var started := _start_remote_recommendation_request(
 		"",
 		"deck_manager_prefetch",
-		"正在同步更多服务器推荐...",
+		"",
 		"prefetch",
 		_prefetch_recommendation_exclude_ids(),
-		true
+		false
 	)
 	if not started:
 		_recommendation_prefetch_remaining = 0
 		_refresh_recommendation_cards()
 
 
-func _switch_to_local_next_recommendation(status_message: String) -> void:
+func _switch_to_local_next_recommendation(status_message: String) -> bool:
 	if _recommendation_store == null:
 		_recommendation_store = DeckRecommendationStoreScript.new()
 		_recommendation_store.call("load_cache")
 
 	var current_id := str(_current_recommendation.get("id", "")).strip_edges()
-	var next_recommendation := _select_next_recommendation_from_pool(_combined_recommendation_pool(), current_id)
+	var pool := _combined_recommendation_pool()
+	var next_recommendation := _select_pending_remote_recommendation_from_pool(pool, current_id)
+	if next_recommendation.is_empty():
+		next_recommendation = _select_next_recommendation_from_pool(pool, current_id)
 	if next_recommendation.is_empty() or str(next_recommendation.get("id", "")) == current_id and _recommendation_available_count() <= 1:
 		_set_recommendation_status("暂时没有更多推荐，本地会保留当前这一套。")
-		return
+		return false
 
 	var normalized := _normalize_recommendation_input(next_recommendation)
 	if normalized.is_empty():
 		_set_recommendation_status("下一套推荐数据不完整，已跳过。")
-		return
+		return false
 
 	_current_recommendation = normalized
+	if str(normalized.get("id", "")).strip_edges() == _pending_remote_recommendation_id:
+		_pending_remote_recommendation_id = ""
 	_recommendation_store.call("upsert_item", normalized, true)
 	_recommendation_store.call("save_cache")
 	_set_recommendation_status(status_message)
 	_refresh_recommendation_cards()
+	return true
+
+
+func _select_pending_remote_recommendation_from_pool(pool: Array[Dictionary], current_id: String) -> Dictionary:
+	var pending_id := _pending_remote_recommendation_id.strip_edges()
+	if pending_id == "":
+		return {}
+	if pending_id == current_id:
+		_pending_remote_recommendation_id = ""
+		return {}
+	for item: Dictionary in pool:
+		if str(item.get("id", "")).strip_edges() == pending_id:
+			return item.duplicate(true)
+	_pending_remote_recommendation_id = ""
+	return {}
 
 
 func _combined_recommendation_pool() -> Array[Dictionary]:
@@ -1108,24 +1514,99 @@ func _select_next_recommendation_from_pool(pool: Array[Dictionary], current_id: 
 	return pool[0].duplicate(true)
 
 
+func _normalize_remote_recommendation_batch(raw_recommendations: Array) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	var seen := {}
+	_recommendation_remote_order_batch = _next_remote_order_batch()
+	var server_order := 0
+	for raw_item: Variant in raw_recommendations:
+		if raw_item is not Dictionary:
+			continue
+		var normalized := _normalize_recommendation_input(raw_item as Dictionary)
+		if normalized.is_empty():
+			continue
+		var item_id := str(normalized.get("id", "")).strip_edges()
+		if item_id == "" or seen.has(item_id):
+			continue
+		seen[item_id] = true
+		normalized["server_order_batch"] = _recommendation_remote_order_batch
+		normalized["server_order"] = server_order
+		server_order += 1
+		result.append(normalized)
+		if result.size() >= REMOTE_RECOMMENDATION_BATCH_LIMIT:
+			break
+	return result
+
+
+func _handle_empty_remote_recommendation_response(fetch_reason: String) -> void:
+	if fetch_reason == "cycle_background":
+		return
+	if fetch_reason == "prefetch":
+		_recommendation_prefetch_remaining = 0
+		_set_recommendation_status("已同步已可用的服务器推荐，可以继续换一套。")
+		_refresh_recommendation_cards()
+		return
+	if fetch_reason == "open_refresh":
+		_set_recommendation_status("服务器推荐数据不完整，已保留当前推荐。")
+		_refresh_recommendation_cards()
+		return
+	_set_recommendation_status("服务器推荐数据不完整，已切回本地推荐。")
+	_switch_to_local_next_recommendation("服务器推荐数据不完整，已切换本地推荐。")
+
+
+func _handle_remote_recommendation_batch(fetch_reason: String, raw_recommendations: Array) -> void:
+	var normalized_items := _normalize_remote_recommendation_batch(raw_recommendations)
+	if normalized_items.is_empty():
+		_handle_empty_remote_recommendation_response(fetch_reason)
+		return
+
+	if _recommendation_store == null:
+		_recommendation_store = DeckRecommendationStoreScript.new()
+		_recommendation_store.call("load_cache")
+
+	for index: int in normalized_items.size():
+		_recommendation_store.call("upsert_item", normalized_items[index], fetch_reason == "open_refresh" and index == 0)
+	_recommendation_store.call("save_cache")
+
+	if fetch_reason == "cycle_background":
+		var background_id := str((normalized_items[0] as Dictionary).get("id", "")).strip_edges()
+		var current_id := str(_current_recommendation.get("id", "")).strip_edges()
+		if background_id != "" and background_id != current_id:
+			_pending_remote_recommendation_id = background_id
+			_set_recommendation_status("已准备好新的服务器推荐，点“换一套”查看。")
+			_refresh_recommendation_cards()
+		return
+
+	if fetch_reason == "prefetch":
+		for item: Dictionary in normalized_items:
+			var prefetched_id := str(item.get("id", "")).strip_edges()
+			if prefetched_id != "":
+				_recommendation_prefetch_seen_ids[prefetched_id] = true
+		_recommendation_prefetch_remaining = 0
+		_set_recommendation_status("已同步更多服务器推荐，可以继续换一套。")
+		_refresh_recommendation_cards()
+		return
+
+	_pending_remote_recommendation_id = ""
+	_current_recommendation = (normalized_items[0] as Dictionary).duplicate(true)
+	_recommendation_store.call("set_current_id", str(_current_recommendation.get("id", "")))
+	_recommendation_store.call("save_cache")
+	var count_text := str(normalized_items.size())
+	_set_recommendation_status("已加载服务器推荐 %s 套，切换将直接使用本地缓存。" % count_text)
+	_refresh_recommendation_cards()
+
+
 func _on_remote_recommendation_succeeded(response: Dictionary) -> void:
 	var fetch_reason := _recommendation_fetch_reason
 	_recommendation_fetch_reason = ""
 	_recommendation_fetch_in_progress = false
+	if response.has("recommendations"):
+		_handle_remote_recommendation_batch(fetch_reason, DeckSuggestionClientScript.extract_recommendations(response))
+		return
 	var raw_recommendation: Dictionary = DeckSuggestionClientScript.extract_recommendation(response)
 	var normalized := _normalize_recommendation_input(raw_recommendation)
 	if normalized.is_empty():
-		if fetch_reason == "prefetch":
-			_recommendation_prefetch_remaining = 0
-			_set_recommendation_status("已同步已可用的服务器推荐，可以继续换一套。")
-			_refresh_recommendation_cards()
-			return
-		if fetch_reason == "open_refresh":
-			_set_recommendation_status("服务器推荐数据不完整，已保留当前推荐。")
-			_refresh_recommendation_cards()
-			return
-		_set_recommendation_status("服务器推荐数据不完整，已切回本地推荐。")
-		_switch_to_local_next_recommendation("服务器推荐数据不完整，已切换本地推荐。")
+		_handle_empty_remote_recommendation_response(fetch_reason)
 		return
 
 	if _recommendation_store == null:
@@ -1146,14 +1627,25 @@ func _on_remote_recommendation_succeeded(response: Dictionary) -> void:
 			_refresh_recommendation_cards()
 		return
 
+	if fetch_reason == "cycle_background":
+		_recommendation_store.call("upsert_item", normalized, false)
+		_recommendation_store.call("save_cache")
+		var background_id := str(normalized.get("id", "")).strip_edges()
+		var current_id := str(_current_recommendation.get("id", "")).strip_edges()
+		if background_id != "" and background_id != current_id:
+			_pending_remote_recommendation_id = background_id
+			_set_recommendation_status("已准备好新的服务器推荐，点“换一套”查看。")
+			_refresh_recommendation_cards()
+		return
+
 	if fetch_reason == "open_refresh":
+		_pending_remote_recommendation_id = ""
 		_current_recommendation = normalized
 		_recommendation_store.call("upsert_item", normalized, true)
 		_recommendation_store.call("save_cache")
 		var latest_deck_name := str(normalized.get("deck_name", "最新卡组推荐"))
 		_set_recommendation_status("已更新服务器推荐：%s。" % latest_deck_name)
 		_refresh_recommendation_cards()
-		_begin_remote_recommendation_prefetch()
 		return
 
 	_recommendation_store.call("upsert_item", normalized, false)
@@ -1171,7 +1663,6 @@ func _on_remote_recommendation_succeeded(response: Dictionary) -> void:
 	var deck_name := str(next_recommendation.get("deck_name", "新卡组推荐"))
 	_set_recommendation_status("已切换推荐：%s。" % deck_name)
 	_refresh_recommendation_cards()
-	_begin_remote_recommendation_prefetch()
 
 
 func _apply_remote_recommendation_order(recommendation: Dictionary, fetch_reason: String) -> Dictionary:
@@ -1237,6 +1728,8 @@ func _on_remote_recommendation_failed(message: String) -> void:
 	var fetch_reason := _recommendation_fetch_reason
 	_recommendation_fetch_reason = ""
 	_recommendation_fetch_in_progress = false
+	if fetch_reason == "cycle_background":
+		return
 	if fetch_reason == "prefetch":
 		_recommendation_prefetch_remaining = 0
 		_set_recommendation_status("已同步已可用的服务器推荐，可以继续换一套。")
@@ -1377,13 +1870,15 @@ func _show_recommendation_article_dialog(recommendation: Dictionary) -> void:
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	HudThemeScript.style_scroll_container(scroll, "portrait_touch" if portrait else "auto")
+	HudThemeScript.style_scroll_container(scroll, "auto")
+	if portrait:
+		NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(scroll)
 	outer.add_child(scroll)
 
 	var content_margin := MarginContainer.new()
 	content_margin.name = "RecommendationDetailScrollMargin"
 	content_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	content_margin.add_theme_constant_override("margin_right", RECOMMENDATION_DETAIL_SCROLLBAR_RIGHT_CLEARANCE)
+	content_margin.add_theme_constant_override("margin_right", 12 if portrait else RECOMMENDATION_DETAIL_SCROLLBAR_RIGHT_CLEARANCE)
 	scroll.add_child(content_margin)
 
 	var content := VBoxContainer.new()
@@ -1564,6 +2059,8 @@ func _deck_row_date_text(deck: DeckData) -> String:
 
 func _refresh_deck_list() -> void:
 	var deck_list_container: VBoxContainer = %DeckList
+	var deck_scroll := find_child("DeckScroll", true, false) as ScrollContainer
+	var previous_scroll := deck_scroll.scroll_vertical if deck_scroll != null else 0
 	_refresh_recommendation_cards()
 	for child: Node in deck_list_container.get_children():
 		if child != %EmptyLabel and child != _recommendation_section:
@@ -1575,6 +2072,11 @@ func _refresh_deck_list() -> void:
 
 	for deck: DeckData in decks:
 		deck_list_container.add_child(_create_deck_item(deck))
+	if deck_scroll != null and previous_scroll > 0:
+		deck_scroll.scroll_vertical = previous_scroll
+		deck_scroll.set_deferred("scroll_vertical", previous_scroll)
+	if _is_import_panel_visible():
+		_set_import_background_controls_blocked(true)
 
 
 func _create_deck_item(deck: DeckData) -> Control:
@@ -1632,12 +2134,14 @@ func _create_deck_item(deck: DeckData) -> Control:
 	button_parent.add_child(btn_edit)
 
 	var btn_rename := Button.new()
+	btn_rename.name = "DeckRowRenameButton"
 	btn_rename.text = "重命名"
 	btn_rename.custom_minimum_size = Vector2(96, 38)
 	btn_rename.pressed.connect(_on_rename_deck.bind(deck))
 	button_parent.add_child(btn_rename)
 
 	var btn_delete := Button.new()
+	btn_delete.name = "DeckRowDeleteButton"
 	btn_delete.text = "删除"
 	btn_delete.custom_minimum_size = Vector2(78, 38)
 	btn_delete.pressed.connect(_on_delete_deck.bind(deck))
@@ -1671,7 +2175,7 @@ func _on_import_pressed() -> void:
 	%ProgressBar.visible = false
 	%BtnDoImport.visible = true
 	%BtnDoImport.disabled = false
-	%ImportPanel.visible = true
+	_show_import_panel()
 
 
 func _on_recommendation_import_pressed(recommendation: Dictionary) -> void:
@@ -1700,7 +2204,52 @@ func _on_recommendation_read_pressed(recommendation: Dictionary) -> void:
 
 func _on_close_import() -> void:
 	_cancel_import_result_auto_close()
-	%ImportPanel.visible = false
+	_hide_import_panel()
+
+
+func _focus_import_url_input() -> void:
+	if _panel_mode != "import":
+		return
+	var url_input := get_node_or_null("%UrlInput") as LineEdit
+	if url_input == null or not url_input.editable:
+		return
+	url_input.set_meta(IMPORT_URL_FOCUS_REQUESTED_META, true)
+	if not is_inside_tree():
+		return
+	if not _is_import_panel_visible() or not url_input.visible:
+		return
+	if not url_input.is_inside_tree():
+		return
+	url_input.focus_mode = Control.FOCUS_ALL
+	url_input.grab_focus()
+	url_input.caret_column = url_input.text.length()
+
+
+func _on_paste_import_url() -> void:
+	if _panel_mode != "import":
+		return
+	var clipboard_text := ""
+	if DisplayServer.get_name() != "headless":
+		clipboard_text = DisplayServer.clipboard_get().strip_edges()
+	_apply_import_paste_text(clipboard_text)
+
+
+func _apply_import_paste_text_for_tests(text: String) -> void:
+	_apply_import_paste_text(text)
+
+
+func _apply_import_paste_text(text: String) -> void:
+	var url_input := get_node_or_null("%UrlInput") as LineEdit
+	if url_input == null or not url_input.editable:
+		return
+	var clipboard_text := text.strip_edges()
+	if clipboard_text == "":
+		%ProgressLabel.text = "剪贴板为空。请先在浏览器复制 tcg.mik.moe 卡组链接，或直接输入末尾数字 ID。"
+		return
+	url_input.text = clipboard_text
+	url_input.caret_column = url_input.text.length()
+	%ProgressLabel.text = "已粘贴剪贴板内容，确认无误后点击“导入卡组”。"
+	_focus_import_url_input()
 
 
 func _on_do_import() -> void:
@@ -1725,7 +2274,7 @@ func _start_import_from_url(url: String, progress_text: String, deck_name_overri
 	_panel_mode = "import"
 	_configure_operation_panel()
 	_set_operation_busy(true)
-	%ImportPanel.visible = true
+	_show_import_panel()
 	%UrlInput.text = url
 	%UrlInput.editable = false
 	%BtnDoImport.visible = false
@@ -1733,7 +2282,40 @@ func _start_import_from_url(url: String, progress_text: String, deck_name_overri
 	%ProgressBar.visible = true
 	%ProgressBar.value = 0
 	%ProgressLabel.text = progress_text
+	var url_input := get_node_or_null("%UrlInput") as LineEdit
+	if url_input != null and url_input.has_focus():
+		url_input.release_focus()
+	if DisplayServer.get_name() != "headless":
+		DisplayServer.virtual_keyboard_hide()
+	_queue_import_deck_start(url)
+
+
+func _queue_import_deck_start(url: String) -> void:
+	_pending_import_start_url = url
+	call_deferred("_begin_pending_import_after_busy_frame")
+
+
+func _begin_pending_import_after_busy_frame() -> void:
+	if is_inside_tree():
+		await get_tree().process_frame
+	_begin_pending_import_now()
+
+
+func _begin_pending_import_now() -> void:
+	var url := _pending_import_start_url
+	if url == "":
+		return
+	_pending_import_start_url = ""
+	if _current_operation != "import":
+		return
+	if _importer == null:
+		_on_import_failed("Deck importer is not ready")
+		return
 	_importer.import_deck(url)
+
+
+func _begin_pending_import_now_for_tests() -> void:
+	_begin_pending_import_now()
 
 
 func _on_sync_images_pressed() -> void:
@@ -1743,7 +2325,7 @@ func _on_sync_images_pressed() -> void:
 	_cancel_import_result_auto_close()
 	_panel_mode = "sync_images"
 	_configure_operation_panel()
-	%ImportPanel.visible = true
+	_show_import_panel()
 	_current_operation = "sync_images"
 	_set_operation_busy(true)
 	%ProgressBar.visible = true
@@ -1820,12 +2402,190 @@ func _apply_pending_import_deck_name_override(deck: DeckData) -> void:
 	deck.deck_name = override_name
 
 
+func _is_deck_action_hud_dialog_visible() -> bool:
+	return _deck_action_hud_overlay != null and is_instance_valid(_deck_action_hud_overlay) and _deck_action_hud_overlay.visible
+
+
+func _close_deck_action_hud_dialog(context_filter: String = "") -> void:
+	if context_filter != "" and _deck_action_hud_context != context_filter:
+		return
+	if _deck_action_hud_overlay != null and is_instance_valid(_deck_action_hud_overlay):
+		_deck_action_hud_overlay.queue_free()
+	_deck_action_hud_overlay = null
+	_deck_action_hud_panel = null
+	_deck_action_hud_context = ""
+
+
+func _deck_action_hud_dialog_size(preferred_size: Vector2) -> Vector2:
+	if not _is_deck_manager_portrait_layout():
+		return preferred_size
+	var context := _current_non_battle_layout_context
+	var viewport_size: Vector2 = context.get("viewport_size", size if size.x > 0.0 and size.y > 0.0 else Vector2(390, 844))
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		viewport_size = Vector2(390, 844)
+	var margin := float(context.get("page_margin", 24.0))
+	var width := maxf(320.0, viewport_size.x - margin * 2.0)
+	var height := clampf(preferred_size.y, 340.0, maxf(340.0, viewport_size.y - margin * 2.0))
+	return Vector2(width, height)
+
+
+func _create_deck_action_hud_shell(title: String, message_text: String, preferred_size: Vector2, context: String) -> Dictionary:
+	_close_deck_action_hud_dialog()
+
+	_deck_action_hud_overlay = Control.new()
+	_deck_action_hud_overlay.name = DECK_ACTION_HUD_DIALOG_NAME
+	_deck_action_hud_overlay.layout_mode = 1
+	_deck_action_hud_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_deck_action_hud_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_deck_action_hud_overlay.z_as_relative = false
+	_deck_action_hud_overlay.z_index = 2600
+	add_child(_deck_action_hud_overlay)
+
+	var shade := ColorRect.new()
+	shade.name = "DeckActionHudShade"
+	shade.layout_mode = 1
+	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	shade.color = Color(0.0, 0.012, 0.024, 0.62)
+	shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	_deck_action_hud_overlay.add_child(shade)
+
+	var center := CenterContainer.new()
+	center.name = "DeckActionHudCenter"
+	center.layout_mode = 1
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_deck_action_hud_overlay.add_child(center)
+
+	_deck_action_hud_panel = PanelContainer.new()
+	_deck_action_hud_panel.name = "DeckActionHudPanel"
+	_deck_action_hud_panel.custom_minimum_size = _deck_action_hud_dialog_size(preferred_size)
+	_deck_action_hud_panel.add_theme_stylebox_override("panel", _hud_panel_style(Color(0.025, 0.055, 0.085, 0.98), HUD_FRAME_BORDER, 22))
+	center.add_child(_deck_action_hud_panel)
+
+	var root := VBoxContainer.new()
+	root.name = "DeckActionHudRoot"
+	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	root.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_theme_constant_override("separation", int(_current_non_battle_layout_context.get("section_gap", 22)))
+	_deck_action_hud_panel.add_child(root)
+
+	var title_label := Label.new()
+	title_label.name = "DeckActionHudTitle"
+	title_label.text = title
+	title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.add_theme_font_size_override("font_size", int(_current_non_battle_layout_context.get("title_font_size", 40)))
+	title_label.add_theme_color_override("font_color", HUD_TEXT)
+	title_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.74, 1.0, 0.58))
+	title_label.add_theme_constant_override("shadow_offset_y", 2)
+	root.add_child(title_label)
+
+	var scroll := ScrollContainer.new()
+	scroll.name = "DeckActionHudScroll"
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.custom_minimum_size = Vector2(0.0, maxf(150.0, _deck_action_hud_panel.custom_minimum_size.y - 190.0))
+	HudThemeScript.style_scroll_container(scroll)
+	NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(scroll)
+	root.add_child(scroll)
+
+	var content := VBoxContainer.new()
+	content.name = "DeckActionHudContent"
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.custom_minimum_size = Vector2(maxf(260.0, _deck_action_hud_panel.custom_minimum_size.x - 52.0), 0.0)
+	content.add_theme_constant_override("separation", int(_current_non_battle_layout_context.get("section_gap", 22)))
+	scroll.add_child(content)
+
+	var message := Label.new()
+	message.name = "DeckActionHudMessage"
+	message.text = message_text
+	message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	message.add_theme_font_size_override("font_size", int(_current_non_battle_layout_context.get("body_font_size", 27)))
+	message.add_theme_color_override("font_color", HUD_TEXT_MUTED)
+	content.add_child(message)
+
+	var footer := HBoxContainer.new()
+	footer.name = "DeckActionHudFooter"
+	footer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	footer.alignment = BoxContainer.ALIGNMENT_END
+	footer.add_theme_constant_override("separation", maxi(14, int(_current_non_battle_layout_context.get("section_gap", 22)) / 2))
+	root.add_child(footer)
+
+	_deck_action_hud_context = context
+	_deck_action_hud_overlay.move_to_front()
+	return {
+		"overlay": _deck_action_hud_overlay,
+		"panel": _deck_action_hud_panel,
+		"root": root,
+		"scroll": scroll,
+		"content": content,
+		"footer": footer,
+	}
+
+
+func _create_deck_action_hud_button(text: String, accent: Color, node_name: String = "") -> Button:
+	var button := Button.new()
+	if node_name != "":
+		button.name = node_name
+	button.text = text
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_hud_button(button, accent)
+	if _is_deck_manager_portrait_layout():
+		var context := _current_non_battle_layout_context
+		var input_height := float(context.get("input_height", 98.0))
+		var button_height := maxf(float(context.get("secondary_button_height", 104.0)), input_height)
+		button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, button_height)
+		button.add_theme_font_size_override("font_size", int(context.get("button_font_size", 33)))
+	NonBattleTouchBridgeScript.bind_button_touch(button)
+	return button
+
+
+func _show_rename_hud_dialog(initial_name: String, title: String, message_text: String) -> void:
+	var shell := _create_deck_action_hud_shell(title, message_text, Vector2(520.0, 520.0), "rename")
+	var content := shell.get("content") as VBoxContainer
+	var footer := shell.get("footer") as HBoxContainer
+	if content == null or footer == null:
+		return
+
+	_rename_dialog = null
+	_rename_input = LineEdit.new()
+	_rename_input.name = "DeckRenameInput"
+	_rename_input.text = initial_name
+	_rename_input.text_changed.connect(_on_rename_text_changed)
+	_rename_input.virtual_keyboard_enabled = true
+	_rename_input.virtual_keyboard_show_on_focus = true
+	_style_hud_line_edit(_rename_input)
+	var context := _current_non_battle_layout_context
+	_rename_input.custom_minimum_size.y = maxf(_rename_input.custom_minimum_size.y, float(context.get("input_height", 98.0)))
+	_rename_input.add_theme_font_size_override("font_size", int(context.get("input_font_size", 29)))
+	NonBattleTouchBridgeScript.bind_focus_control_touch(_rename_input)
+	content.add_child(_rename_input)
+
+	_rename_error_label = Label.new()
+	_rename_error_label.name = "DeckRenameError"
+	_rename_error_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_rename_error_label.add_theme_font_size_override("font_size", int(context.get("body_font_size", 27)))
+	_rename_error_label.add_theme_color_override("font_color", Color(1.0, 0.4, 0.4))
+	content.add_child(_rename_error_label)
+
+	var cancel_button := _create_deck_action_hud_button("\u53d6\u6d88", HUD_SECONDARY, "DeckRenameCancelButton")
+	cancel_button.pressed.connect(_on_rename_close_requested)
+	footer.add_child(cancel_button)
+
+	_rename_confirm_button = _create_deck_action_hud_button("\u786e\u8ba4", HUD_ACCENT_WARM, "DeckRenameConfirmButton")
+	_rename_confirm_button.pressed.connect(_on_confirm_rename)
+	footer.add_child(_rename_confirm_button)
+
+	_on_rename_text_changed(initial_name)
+
+
 func _on_rename_deck(deck: DeckData) -> void:
 	_show_rename_dialog(
 		deck.deck_name,
 		"重命名卡组",
 		"请输入新的卡组名称。",
-		deck.id
+		deck.id,
+		true
 	)
 	_rename_target_deck = deck
 	_rename_context = "existing"
@@ -1844,27 +2604,32 @@ func _show_import_rename_dialog(initial_name: String) -> void:
 	_rename_forced = true
 
 
-func _show_rename_dialog(initial_name: String, title: String, message_text: String, ignored_deck_id: int) -> void:
+func _show_rename_dialog(initial_name: String, title: String, message_text: String, ignored_deck_id: int, prefer_hud_dialog: bool = false) -> void:
 	_close_rename_dialog(false)
 
 	_rename_ignore_deck_id = ignored_deck_id
+	if prefer_hud_dialog and _is_deck_manager_portrait_layout():
+		_show_rename_hud_dialog(initial_name, title, message_text)
+		return
+
 	_rename_dialog = AcceptDialog.new()
 	_rename_dialog.title = title
 	_rename_dialog.ok_button_text = "\u786e\u8ba4"
 	_rename_dialog.dialog_hide_on_ok = false
-	_rename_dialog.min_size = RENAME_DIALOG_SIZE
-	_rename_dialog.size = RENAME_DIALOG_SIZE
 	_rename_dialog.close_requested.connect(_on_rename_close_requested)
 	_rename_dialog.confirmed.connect(_on_confirm_rename)
+	var dialog_size := _rename_dialog_size_for_current_layout()
+	_rename_dialog.min_size = dialog_size
+	_rename_dialog.size = dialog_size
 
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(RENAME_DIALOG_SIZE.x - 40, 120)
+	scroll.custom_minimum_size = Vector2(dialog_size.x - 40, 120)
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	HudThemeScript.style_scroll_container(scroll)
 	_rename_dialog.add_child(scroll)
 
 	var content := VBoxContainer.new()
-	content.custom_minimum_size = Vector2(RENAME_DIALOG_SIZE.x - 60, 0)
+	content.custom_minimum_size = Vector2(dialog_size.x - 60, 0)
 	content.add_theme_constant_override("separation", 8)
 	scroll.add_child(content)
 
@@ -1887,10 +2652,76 @@ func _show_rename_dialog(initial_name: String, title: String, message_text: Stri
 	_rename_confirm_button = _rename_dialog.get_ok_button()
 	if _rename_confirm_button != null:
 		_style_hud_button(_rename_confirm_button, HUD_ACCENT_WARM)
+	_apply_rename_dialog_layout(scroll, content, message)
 	_on_rename_text_changed(initial_name)
 
 	if is_inside_tree():
-		_rename_dialog.popup_centered(RENAME_DIALOG_SIZE)
+		_popup_rename_dialog_centered()
+
+
+func _rename_dialog_size_for_current_layout() -> Vector2i:
+	if not _is_deck_manager_portrait_layout():
+		return RENAME_DIALOG_SIZE
+	var context := _current_non_battle_layout_context
+	var viewport_size: Vector2 = context.get("viewport_size", size if size.x > 0.0 and size.y > 0.0 else Vector2(390, 844))
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		viewport_size = Vector2(390, 844)
+	var margin := float(context.get("page_margin", 24.0))
+	var input_height := float(context.get("input_height", 98.0))
+	var width := minf(maxf(float(context.get("content_width", viewport_size.x - margin * 2.0)), 320.0), maxf(320.0, viewport_size.x - margin * 2.0))
+	var height := minf(maxf(440.0, input_height * 4.7), maxf(440.0, viewport_size.y - margin * 2.0))
+	return Vector2i(roundi(width), roundi(height))
+
+
+func _apply_rename_dialog_layout(scroll: ScrollContainer, content: VBoxContainer, message: Label) -> void:
+	if _rename_dialog == null:
+		return
+	var dialog_size := _rename_dialog_size_for_current_layout()
+	_rename_dialog.min_size = dialog_size
+	_rename_dialog.size = dialog_size
+	if not _is_deck_manager_portrait_layout():
+		if scroll != null:
+			scroll.custom_minimum_size = Vector2(dialog_size.x - 40, 120)
+			HudThemeScript.style_scroll_container(scroll)
+		if content != null:
+			content.custom_minimum_size = Vector2(dialog_size.x - 60, 0)
+		return
+	var context := _current_non_battle_layout_context
+	var body_font := int(context.get("body_font_size", 27))
+	var input_font := int(context.get("input_font_size", 29))
+	var button_font := int(context.get("button_font_size", 33))
+	var input_height := float(context.get("input_height", 98.0))
+	var button_height := maxf(float(context.get("secondary_button_height", 104.0)), input_height)
+	var gap := int(context.get("section_gap", 22))
+	if scroll != null:
+		scroll.custom_minimum_size = Vector2(maxf(260.0, float(dialog_size.x) - 32.0), maxf(230.0, float(dialog_size.y) - button_height - 92.0))
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		HudThemeScript.style_scroll_container(scroll)
+		NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(scroll)
+	if content != null:
+		content.custom_minimum_size = Vector2(maxf(240.0, float(dialog_size.x) - 52.0), 0.0)
+		content.add_theme_constant_override("separation", gap)
+	if message != null:
+		message.add_theme_font_size_override("font_size", body_font)
+		message.autowrap_mode = TextServer.AUTOWRAP_WORD
+	if _rename_error_label != null:
+		_rename_error_label.add_theme_font_size_override("font_size", body_font)
+		_rename_error_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	if _rename_input != null:
+		_style_hud_line_edit(_rename_input)
+		_rename_input.custom_minimum_size.y = maxf(_rename_input.custom_minimum_size.y, input_height)
+		_rename_input.add_theme_font_size_override("font_size", input_font)
+		NonBattleTouchBridgeScript.bind_focus_control_touch(_rename_input)
+	if _rename_confirm_button != null:
+		_rename_confirm_button.custom_minimum_size.y = maxf(_rename_confirm_button.custom_minimum_size.y, button_height)
+		_rename_confirm_button.add_theme_font_size_override("font_size", button_font)
+		NonBattleTouchBridgeScript.bind_button_touch(_rename_confirm_button)
+
+
+func _popup_rename_dialog_centered() -> void:
+	if _rename_dialog == null or not is_instance_valid(_rename_dialog):
+		return
+	_rename_dialog.popup_centered(_rename_dialog_size_for_current_layout())
 
 func _on_rename_text_changed(new_text: String) -> void:
 	var validation_error: String = _validate_deck_name(new_text, _rename_ignore_deck_id)
@@ -1930,7 +2761,7 @@ func _on_confirm_rename() -> void:
 func _on_rename_close_requested() -> void:
 	if _rename_forced:
 		if _rename_dialog != null and is_instance_valid(_rename_dialog) and is_inside_tree():
-			_rename_dialog.popup_centered(RENAME_DIALOG_SIZE)
+			_popup_rename_dialog_centered()
 		return
 
 	_close_rename_dialog()
@@ -1939,6 +2770,7 @@ func _on_rename_close_requested() -> void:
 func _close_rename_dialog(clear_target: bool = true) -> void:
 	if _rename_dialog != null and is_instance_valid(_rename_dialog):
 		_rename_dialog.queue_free()
+	_close_deck_action_hud_dialog("rename")
 
 	_rename_dialog = null
 	_rename_input = null
@@ -2010,7 +2842,7 @@ func _cancel_import_result_auto_close() -> void:
 
 func _on_import_result_close_timeout() -> void:
 	if _current_operation == "":
-		%ImportPanel.visible = false
+		_hide_import_panel()
 
 
 func _on_image_sync_progress(current: int, total: int, message: String) -> void:
@@ -2301,7 +3133,30 @@ func _load_image_from_buffer(image: Image, image_bytes: PackedByteArray) -> int:
 	return ERR_FILE_UNRECOGNIZED
 
 
+func _show_delete_deck_hud_dialog(deck: DeckData) -> void:
+	var message := "\u786e\u5b9a\u8981\u5220\u9664\u5361\u7ec4\u201c%s\u201d\u5417\uff1f" % deck.deck_name
+	var shell := _create_deck_action_hud_shell("\u786e\u8ba4\u5220\u9664", message, Vector2(520.0, 390.0), "delete")
+	var footer := shell.get("footer") as HBoxContainer
+	if footer == null:
+		return
+
+	var cancel_button := _create_deck_action_hud_button("\u53d6\u6d88", HUD_SECONDARY, "DeleteDeckCancelButton")
+	cancel_button.pressed.connect(_close_deck_action_hud_dialog)
+	footer.add_child(cancel_button)
+
+	var delete_button := _create_deck_action_hud_button("\u5220\u9664", HUD_DANGER, "DeleteDeckConfirmButton")
+	delete_button.pressed.connect(func() -> void:
+		CardDatabase.delete_deck(deck.id)
+		_close_deck_action_hud_dialog("delete")
+	)
+	footer.add_child(delete_button)
+
+
 func _on_delete_deck(deck: DeckData) -> void:
+	if _is_deck_manager_portrait_layout():
+		_show_delete_deck_hud_dialog(deck)
+		return
+
 	var confirm := ConfirmationDialog.new()
 	confirm.title = "确认删除"
 	confirm.dialog_text = "确定要删除卡组“%s”吗？" % deck.deck_name
@@ -2326,18 +3181,31 @@ func _on_back_pressed() -> void:
 func _configure_operation_panel() -> void:
 	var title_label: Label = $ImportPanel/ImportBox/VBox/TitleLabel
 	var hint_label: Label = $ImportPanel/ImportBox/VBox/HintLabel
+	var paste_button := _ensure_import_paste_button()
 
 	if _panel_mode == "sync_images":
 		title_label.text = "同步卡图"
 		hint_label.visible = false
 		%UrlInput.visible = false
 		%BtnDoImport.visible = false
+		if paste_button != null:
+			paste_button.visible = false
 	else:
 		title_label.text = "导入卡组"
 		hint_label.visible = true
 		%UrlInput.visible = true
 		%BtnDoImport.visible = true
+		if paste_button != null:
+			paste_button.visible = true
 
+	%BtnCloseImport.text = "关闭"
+	if _panel_mode == "import":
+		title_label.text = "导入卡组"
+		hint_label.text = IMPORT_DECK_GUIDE_TEXT
+		%UrlInput.placeholder_text = "粘贴卡组链接或输入数字 ID，例如 574793"
+		if paste_button != null:
+			paste_button.text = "粘贴链接"
+		%BtnDoImport.text = "导入卡组"
 	%BtnCloseImport.text = "关闭"
 
 

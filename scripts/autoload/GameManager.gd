@@ -3,6 +3,7 @@ extends Node
 
 const SwissTournamentScript := preload("res://scripts/tournament/SwissTournament.gd")
 const NonBattleLayoutControllerScript := preload("res://scripts/ui/non_battle/NonBattleLayoutController.gd")
+const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
 
 signal non_battle_layout_mode_changed(mode: String)
 
@@ -57,6 +58,10 @@ const SCENE_TOURNAMENT_DECK_SELECT := "res://scenes/tournament/TournamentDeckSel
 const SCENE_TOURNAMENT_SETUP := "res://scenes/tournament/TournamentSetup.tscn"
 const SCENE_TOURNAMENT_OVERVIEW := "res://scenes/tournament/TournamentOverview.tscn"
 const SCENE_TOURNAMENT_STANDINGS := "res://scenes/tournament/TournamentStandings.tscn"
+const NAVIGATION_PREWARM_SCENES: Array[String] = [
+	SCENE_BATTLE_SETUP,
+	SCENE_DECK_MANAGER,
+]
 const BATTLE_REVIEW_API_CONFIG_PATH := "user://battle_review_api.json"
 const CANONICAL_BATTLE_REVIEW_USER_DIR_NAME := "PTCG Train"
 const BATTLE_REVIEW_API_CONFIG_FILE_NAME := "battle_review_api.json"
@@ -65,6 +70,7 @@ const NON_BATTLE_LAYOUT_SETTINGS_PATH := "user://non_battle_layout.json"
 const TOURNAMENT_SAVE_PATH := "user://tournament_mode_save.json"
 const DESKTOP_WINDOW_SCREEN_MARGIN := Vector2i(48, 48)
 const DEFAULT_BATTLE_BGM_VOLUME_PERCENT := 20
+const BATTLE_BGM_VOLUME_USER_SET_KEY := "battle_bgm_volume_user_set"
 const BATTLE_LAYOUT_AUTO := "auto"
 const BATTLE_LAYOUT_LANDSCAPE := "landscape"
 const BATTLE_LAYOUT_PORTRAIT := "portrait"
@@ -72,7 +78,7 @@ const NON_BATTLE_LAYOUT_LANDSCAPE := "landscape"
 const NON_BATTLE_LAYOUT_PORTRAIT := "portrait"
 const BATTLE_LAYOUT_DESKTOP_MIN_LANDSCAPE := Vector2i(640, 360)
 const BATTLE_LAYOUT_DESKTOP_MIN_PORTRAIT := Vector2i(360, 640)
-const DEFAULT_BATTLE_REVIEW_MODEL := "kimi-k2.6"
+const DEFAULT_BATTLE_REVIEW_MODEL := "deepseek-v4-flash"
 const DEFAULT_AI_PERSONALITY := "是一个大逗比，臭牌篓子"
 const SUPPORTED_BATTLE_REVIEW_MODELS: Array[Dictionary] = [
 	{
@@ -119,6 +125,10 @@ var tournament_battle_in_progress: bool = false
 var suppress_scene_navigation_for_tests: bool = false
 var last_requested_scene_path: String = ""
 var _touch_button_bridge_candidate: Button = null
+var _navigation_prewarm_requested: Dictionary = {}
+var _navigation_prewarm_resources: Dictionary = {}
+var _pending_scene_change_path: String = ""
+var _pending_scene_change_token: int = 0
 
 
 func _ready() -> void:
@@ -132,8 +142,10 @@ func _ready() -> void:
 func _ensure_desktop_window_size() -> void:
 	if DisplayServer.get_name() == "headless":
 		return
+	if _is_web_runtime():
+		return
 	var current_mode := DisplayServer.window_get_mode()
-	if current_mode in [DisplayServer.WINDOW_MODE_FULLSCREEN, DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN]:
+	if _should_preserve_user_desktop_window_mode(current_mode):
 		return
 	if _should_maximize_desktop_window(OS.get_name()):
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MAXIMIZED)
@@ -156,24 +168,38 @@ func apply_battle_layout_orientation(mode: String = "") -> void:
 	set_touch_mouse_emulation_for_runtime(true)
 	if DisplayServer.get_name() == "headless":
 		return
+	if _is_web_runtime():
+		return
 	var normalized := sanitize_battle_layout_mode(mode if mode != "" else battle_layout_mode)
-	if _is_mobile_runtime():
+	if _should_apply_native_screen_orientation():
 		_apply_handheld_battle_orientation(normalized)
 		return
 	_apply_desktop_battle_window_shape(normalized)
 
 
 func apply_non_battle_orientation() -> void:
+	apply_non_battle_orientation_for_scene("")
+
+
+func apply_non_battle_orientation_for_scene(path: String = "") -> void:
 	set_touch_mouse_emulation_for_runtime(_non_battle_touch_mouse_emulation_enabled_for_runtime())
 	if DisplayServer.get_name() == "headless":
 		return
-	if _is_mobile_runtime():
-		DisplayServer.screen_set_orientation(non_battle_handheld_orientation())
+	if _is_web_runtime():
+		return
+	if _should_apply_native_screen_orientation():
+		DisplayServer.screen_set_orientation(non_battle_handheld_orientation_for_scene(path))
 		return
 	_ensure_desktop_window_size()
 
 
 func non_battle_handheld_orientation() -> int:
+	return non_battle_handheld_orientation_for_scene("")
+
+
+func non_battle_handheld_orientation_for_scene(path: String = "") -> int:
+	if path == SCENE_DECK_EDITOR:
+		return DisplayServer.SCREEN_SENSOR_LANDSCAPE
 	match sanitize_non_battle_layout_mode(non_battle_layout_mode):
 		NON_BATTLE_LAYOUT_PORTRAIT:
 			return DisplayServer.SCREEN_SENSOR_PORTRAIT
@@ -246,7 +272,7 @@ func _apply_desktop_battle_window_shape(mode: String) -> void:
 	if mode == BATTLE_LAYOUT_AUTO:
 		return
 	var current_mode := DisplayServer.window_get_mode()
-	if current_mode in [DisplayServer.WINDOW_MODE_FULLSCREEN, DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN]:
+	if _should_preserve_user_desktop_window_mode(current_mode):
 		return
 	if _should_maximize_desktop_window(OS.get_name()):
 		return
@@ -368,12 +394,53 @@ func _should_maximize_desktop_window(os_name: String) -> bool:
 	return false
 
 
+func _should_preserve_user_desktop_window_mode(mode: int) -> bool:
+	return mode in [
+		DisplayServer.WINDOW_MODE_FULLSCREEN,
+		DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN,
+		DisplayServer.WINDOW_MODE_MAXIMIZED,
+	]
+
+
 func _should_use_large_windowed_desktop_launch(os_name: String) -> bool:
 	return os_name in ["macOS", "OSX"]
 
 
 func _is_mobile_runtime() -> bool:
-	return OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
+	return _is_mobile_runtime_for_context()
+
+
+func _is_mobile_runtime_for_context(os_name: String = "", feature_flags: Dictionary = {}) -> bool:
+	var resolved_os := os_name.strip_edges().to_lower()
+	if resolved_os in ["android", "ios"]:
+		return true
+	var flags := feature_flags
+	if flags.is_empty() and os_name == "":
+		flags = _runtime_feature_flags()
+	for feature: String in ["mobile", "android", "ios", "web_android", "web_ios"]:
+		if bool(flags.get(feature, false)):
+			return true
+	return false
+
+
+func _is_web_runtime(os_name: String = "", feature_flags: Dictionary = {}, display_server_name: String = "") -> bool:
+	var resolved_os := os_name.strip_edges().to_lower()
+	var resolved_display := display_server_name.strip_edges().to_lower()
+	var flags := feature_flags
+	if flags.is_empty() and os_name == "" and display_server_name == "":
+		flags = _runtime_feature_flags()
+		resolved_os = OS.get_name().strip_edges().to_lower()
+		resolved_display = DisplayServer.get_name().strip_edges().to_lower()
+	if resolved_os in ["web", "html5"] or resolved_display in ["web", "html5"]:
+		return true
+	for feature: String in ["web", "web_android", "web_ios"]:
+		if bool(flags.get(feature, false)):
+			return true
+	return false
+
+
+func _should_apply_native_screen_orientation(os_name: String = "", feature_flags: Dictionary = {}, display_server_name: String = "") -> bool:
+	return _is_mobile_runtime_for_context(os_name, feature_flags) and not _is_web_runtime(os_name, feature_flags, display_server_name)
 
 
 func set_touch_mouse_emulation_for_runtime(enabled: bool) -> void:
@@ -475,7 +542,7 @@ func _handle_touch_button_bridge_at_position(position: Vector2, pressed: bool) -
 		return
 	if not _button_can_bridge_touch(candidate):
 		return
-	candidate.pressed.emit()
+	NonBattleTouchBridgeScript.emit_button_pressed_once(candidate)
 	_mark_touch_button_bridge_handled()
 
 
@@ -559,7 +626,20 @@ func goto_scene(path: String) -> void:
 	if suppress_scene_navigation_for_tests:
 		last_requested_scene_path = path
 		return
-	call_deferred("_deferred_goto_scene", path)
+	if not _queue_scene_change(path):
+		return
+	var request_token := _pending_scene_change_token
+	call_deferred("_deferred_goto_scene", path, request_token)
+
+
+func _queue_scene_change(path: String) -> bool:
+	if path == "":
+		return false
+	if _pending_scene_change_path == path:
+		return false
+	_pending_scene_change_token += 1
+	_pending_scene_change_path = path
+	return true
 
 
 func set_scene_navigation_suppressed_for_tests(suppressed: bool) -> void:
@@ -574,24 +654,147 @@ func consume_last_requested_scene_path() -> String:
 	return path
 
 
-func _deferred_goto_scene(path: String) -> void:
+func _deferred_goto_scene(path: String, request_token: int = 0) -> void:
+	if not _is_current_scene_change_request(path, request_token):
+		return
 	set_touch_mouse_emulation_for_runtime(_touch_mouse_emulation_enabled_for_scene(path))
-	if path == SCENE_DECK_EDITOR:
+	if _should_apply_deck_editor_orientation_before_scene_change(path):
 		apply_deck_editor_orientation()
 	elif _should_apply_non_battle_orientation_before_scene_change(path):
-		apply_non_battle_orientation()
-	get_tree().change_scene_to_file(path)
+		apply_non_battle_orientation_for_scene(path)
+	var prewarmed_scene := _take_prewarmed_scene(path)
+	if prewarmed_scene != null:
+		var packed_err := get_tree().change_scene_to_packed(prewarmed_scene)
+		if packed_err == OK:
+			await get_tree().process_frame
+			_clear_pending_scene_change(path, request_token)
+		else:
+			_clear_pending_scene_change(path, request_token)
+			push_error("GameManager: failed to change scene to prewarmed %s: %s" % [path, packed_err])
+		return
+	if _should_await_requested_prewarm_for_path(path):
+		prewarmed_scene = await _await_prewarmed_scene(path)
+		if not _is_current_scene_change_request(path, request_token):
+			return
+		if prewarmed_scene != null:
+			var awaited_err := get_tree().change_scene_to_packed(prewarmed_scene)
+			if awaited_err == OK:
+				await get_tree().process_frame
+				_clear_pending_scene_change(path, request_token)
+			else:
+				_clear_pending_scene_change(path, request_token)
+				push_error("GameManager: failed to change scene to awaited %s: %s" % [path, awaited_err])
+			return
+	var file_err := get_tree().change_scene_to_file(path)
+	if file_err == OK:
+		await get_tree().process_frame
+		_clear_pending_scene_change(path, request_token)
+	else:
+		_clear_pending_scene_change(path, request_token)
+		push_error("GameManager: failed to change scene to %s: %s" % [path, file_err])
+
+
+func _is_current_scene_change_request(path: String, request_token: int) -> bool:
+	return _pending_scene_change_path == path and _pending_scene_change_token == request_token
+
+
+func _clear_pending_scene_change(path: String, request_token: int) -> void:
+	if not _is_current_scene_change_request(path, request_token):
+		return
+	_pending_scene_change_path = ""
+
+
+func prewarm_navigation_resources() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	for path: String in navigation_prewarm_scene_paths():
+		_request_navigation_resource_prewarm(path)
+
+
+func navigation_prewarm_scene_paths() -> Array[String]:
+	return NAVIGATION_PREWARM_SCENES.duplicate()
+
+
+func battle_setup_prewarm_scene_path() -> String:
+	return SCENE_BATTLE
+
+
+func prewarm_battle_scene_resource() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	_request_navigation_resource_prewarm(battle_setup_prewarm_scene_path())
+
+
+func should_await_prewarm_status_for_scene_change(status: int) -> bool:
+	return status == ResourceLoader.THREAD_LOAD_IN_PROGRESS
+
+
+func _request_navigation_resource_prewarm(path: String) -> void:
+	if path == "" or _navigation_prewarm_requested.has(path) or _navigation_prewarm_resources.has(path):
+		return
+	if ResourceLoader.has_cached(path):
+		var cached := ResourceLoader.load(path)
+		if cached is PackedScene:
+			_navigation_prewarm_resources[path] = cached
+		return
+	var err := ResourceLoader.load_threaded_request(path)
+	if err == OK:
+		_navigation_prewarm_requested[path] = true
+
+
+func _take_prewarmed_scene(path: String) -> PackedScene:
+	var cached: Variant = _navigation_prewarm_resources.get(path, null)
+	if cached is PackedScene:
+		return cached
+	if not _navigation_prewarm_requested.has(path):
+		return null
+	var status := ResourceLoader.load_threaded_get_status(path)
+	if status == ResourceLoader.THREAD_LOAD_LOADED:
+		_navigation_prewarm_requested.erase(path)
+		var resource := ResourceLoader.load_threaded_get(path)
+		if resource is PackedScene:
+			_navigation_prewarm_resources[path] = resource
+			return resource
+		return null
+	if status == ResourceLoader.THREAD_LOAD_FAILED or status == ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
+		_navigation_prewarm_requested.erase(path)
+	return null
+
+
+func _should_await_requested_prewarm_for_path(path: String) -> bool:
+	if not _navigation_prewarm_requested.has(path):
+		return false
+	var status := ResourceLoader.load_threaded_get_status(path)
+	return should_await_prewarm_status_for_scene_change(status)
+
+
+func _await_prewarmed_scene(path: String) -> PackedScene:
+	while _navigation_prewarm_requested.has(path):
+		var status := ResourceLoader.load_threaded_get_status(path)
+		if status == ResourceLoader.THREAD_LOAD_LOADED:
+			return _take_prewarmed_scene(path)
+		if status == ResourceLoader.THREAD_LOAD_FAILED or status == ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
+			_navigation_prewarm_requested.erase(path)
+			return null
+		await get_tree().process_frame
+	return _take_prewarmed_scene(path)
 
 
 func _should_apply_non_battle_orientation_before_scene_change(path: String) -> bool:
 	return path != SCENE_BATTLE and path != SCENE_DECK_EDITOR
 
 
+func _should_apply_deck_editor_orientation_before_scene_change(path: String, os_name: String = "", feature_flags: Dictionary = {}, display_server_name: String = "") -> bool:
+	return path == SCENE_DECK_EDITOR and not _is_web_runtime(os_name, feature_flags, display_server_name)
+
+
 func apply_deck_editor_orientation() -> void:
 	set_touch_mouse_emulation_for_runtime(true)
 	if DisplayServer.get_name() == "headless":
 		return
-	if _is_mobile_runtime():
+	if _is_web_runtime():
+		return
+	if _should_apply_native_screen_orientation():
 		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_SENSOR_LANDSCAPE)
 		return
 	_ensure_desktop_window_size()
@@ -691,9 +894,16 @@ func load_battle_setup_preferences() -> void:
 	if not data is Dictionary:
 		return
 	selected_battle_music_id = str(data.get("battle_music_id", selected_battle_music_id))
-	battle_bgm_volume_percent = clampi(int(data.get("battle_bgm_volume_percent", battle_bgm_volume_percent)), 0, 100)
+	battle_bgm_volume_percent = resolve_battle_bgm_volume_percent_from_settings(data, battle_bgm_volume_percent)
 	battle_layout_mode = sanitize_battle_layout_mode(str(data.get("battle_layout_mode", battle_layout_mode)))
 	dynamic_stadium_background_enabled = bool(data.get("dynamic_stadium_background_enabled", dynamic_stadium_background_enabled))
+
+
+func resolve_battle_bgm_volume_percent_from_settings(data: Dictionary, fallback: int = DEFAULT_BATTLE_BGM_VOLUME_PERCENT) -> int:
+	var resolved := clampi(int(data.get("battle_bgm_volume_percent", fallback)), 0, 100)
+	if data.has("battle_bgm_volume_percent") and resolved == 100 and not bool(data.get(BATTLE_BGM_VOLUME_USER_SET_KEY, false)):
+		return DEFAULT_BATTLE_BGM_VOLUME_PERCENT
+	return resolved
 
 
 func sanitize_battle_layout_mode(mode: String) -> String:
@@ -804,18 +1014,34 @@ func _load_battle_review_api_config_from_path(path: String) -> Dictionary:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return config
 	var parsed_dict: Dictionary = parsed
-	for key: String in ["endpoint", "api_key", "ai_personality"]:
+	for key: String in ["endpoint", "api_key", "ai_personality", "ai_test_signature"]:
 		if parsed_dict.has(key):
-			config[key] = str(parsed_dict[key])
-	if parsed_dict.has("model"):
-		config["model"] = normalize_battle_review_model(str(parsed_dict["model"]))
+			config[key] = _battle_review_config_text(parsed_dict[key], str(config.get(key, "")))
+	if str(config.get("endpoint", "")).strip_edges() == "":
+		config["endpoint"] = "https://zenmux.ai/api/v1"
+	if str(config.get("ai_personality", "")).strip_edges() == "":
+		config["ai_personality"] = DEFAULT_AI_PERSONALITY
+	if parsed_dict.has("model") and parsed_dict["model"] != null:
+		config["model"] = normalize_battle_review_model(_battle_review_config_text(parsed_dict["model"], str(config.get("model", DEFAULT_BATTLE_REVIEW_MODEL))))
 	if parsed_dict.has("timeout_seconds"):
-		config["timeout_seconds"] = float(parsed_dict["timeout_seconds"])
+		var timeout_value: Variant = parsed_dict["timeout_seconds"]
+		if timeout_value is int or timeout_value is float:
+			config["timeout_seconds"] = float(timeout_value)
+		elif timeout_value is String and str(timeout_value).strip_edges().is_valid_float():
+			config["timeout_seconds"] = float(str(timeout_value).strip_edges())
 	if parsed_dict.has("ai_test_passed"):
 		config["ai_test_passed"] = bool(parsed_dict["ai_test_passed"])
-	if parsed_dict.has("ai_test_signature"):
-		config["ai_test_signature"] = str(parsed_dict["ai_test_signature"])
 	return config
+
+
+func _battle_review_config_text(value: Variant, fallback: String = "") -> String:
+	if value == null:
+		return fallback
+	var text := str(value).strip_edges()
+	var lower := text.to_lower()
+	if text == "" or lower.contains("instance base is null") or lower.contains("instance is null") or lower.contains("null instance"):
+		return fallback
+	return text
 
 
 func _canonical_battle_review_api_config_path() -> String:

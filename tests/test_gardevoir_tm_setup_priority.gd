@@ -353,7 +353,7 @@ func test_first_gardevoir_emergency_manual_attach_stays_negative_on_active_kirli
 
 
 func test_attach_tool_tm_can_be_preloaded_early_even_before_energy_is_found() -> String:
-	var gs := _make_game_state(1)
+	var gs := _make_game_state(2)
 	var player := gs.players[0]
 	player.active_pokemon = _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.FLUTTER_MANE, "Basic", "P", 70), 0)
 	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS), 0))
@@ -363,6 +363,108 @@ func test_attach_tool_tm_can_be_preloaded_early_even_before_energy_is_found() ->
 		gs, 0
 	)
 	return assert_true(active_score >= 150.0, "Early TM Evolution should stay attachable on the active carrier even before energy is found (got %f)" % active_score)
+
+
+func test_first_player_turn_one_does_not_waste_tm_evolution_before_attacks_are_legal() -> String:
+	var gs := _make_game_state(1)
+	gs.first_player_index = 0
+	gs.current_player_index = 0
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Psychic Energy", "P"), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS), 0))
+	_add_tm_future_targets(player)
+	var s := _new_strategy()
+	var tm_score: float = s.score_action_absolute(
+		{"kind": "attach_tool", "card": CardInstance.create(_make_trainer_cd(DeckStrategyGardevoirScript.TM_EVOLUTION, "Tool"), 0), "target_slot": player.active_pokemon},
+		gs,
+		0
+	)
+	var end_score: float = s.score_action_absolute({"kind": "end_turn"}, gs, 0)
+	return assert_true(tm_score < end_score,
+		"First player turn one cannot attack, so TM Evolution should not be attached and discarded before use (tm=%f end=%f)" % [tm_score, end_score])
+
+
+func test_first_player_turn_one_keeps_precharged_tm_carrier_active_until_attacks_are_legal() -> String:
+	var gs := _make_game_state(1)
+	gs.first_player_index = 0
+	gs.current_player_index = 0
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Psychic Energy", "P"), 0))
+	var klefki := _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.KLEFKI), 0)
+	player.bench.append(klefki)
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS), 0))
+	player.hand.append(CardInstance.create(_make_trainer_cd(DeckStrategyGardevoirScript.TM_EVOLUTION, "Tool"), 0))
+	_add_tm_future_targets(player)
+	var s := _new_strategy()
+	var retreat_score: float = s.score_action_absolute(
+		{"kind": "retreat", "bench_target": klefki},
+		gs,
+		0
+	)
+	var end_score: float = s.score_action_absolute({"kind": "end_turn"}, gs, 0)
+	return assert_true(retreat_score < end_score,
+		"First-player turn-one TM route should keep the precharged active carrier in place until attacks are legal (retreat=%f end=%f)" % [retreat_score, end_score])
+
+
+func test_first_legal_attack_turn_attaches_tm_before_manual_kirlia_evolve() -> String:
+	var gs := _make_game_state(3)
+	gs.first_player_index = 0
+	gs.current_player_index = 0
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS), 0)
+	player.active_pokemon.attached_energy.append(CardInstance.create(_make_energy_cd("Basic Psychic Energy", "P"), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS), 0))
+	player.hand.append(CardInstance.create(_make_trainer_cd(DeckStrategyGardevoirScript.TM_EVOLUTION, "Tool"), 0))
+	var kirlia := CardInstance.create(_make_pokemon_cd(
+		DeckStrategyGardevoirScript.KIRLIA,
+		"Stage 1",
+		"P",
+		80,
+		DeckStrategyGardevoirScript.RALTS
+	), 0)
+	player.hand.append(kirlia)
+	player.deck.append(CardInstance.create(_make_pokemon_cd(
+		DeckStrategyGardevoirScript.GARDEVOIR_EX,
+		"Stage 2",
+		"P",
+		310,
+		DeckStrategyGardevoirScript.KIRLIA
+	), 0))
+	var s := _new_strategy()
+	var contract: Dictionary = s.build_turn_contract(gs, 0, {"prompt_kind": "action_selection"})
+	var flags: Dictionary = contract.get("flags", {}) if contract.get("flags", {}) is Dictionary else {}
+	var tm_score: float = float(s.score_action_absolute_with_plan(
+		{"kind": "attach_tool", "card": CardInstance.create(_make_trainer_cd(DeckStrategyGardevoirScript.TM_EVOLUTION, "Tool"), 0), "target_slot": player.active_pokemon},
+		gs,
+		0,
+		contract
+	))
+	var active_evolve_score: float = float(s.score_action_absolute_with_plan(
+		{"kind": "evolve", "card": kirlia, "target_slot": player.active_pokemon},
+		gs,
+		0,
+		contract
+	))
+	var bench_evolve_score: float = float(s.score_action_absolute_with_plan(
+		{"kind": "evolve", "card": kirlia, "target_slot": player.bench[0]},
+		gs,
+		0,
+		contract
+	))
+	var best_manual_evolve_score: float = maxf(active_evolve_score, bench_evolve_score)
+	return run_checks([
+		assert_eq(str(contract.get("intent", "")), "launch_shell_tm",
+			"Precharged Ralts with two bench targets should stay on the TM shell plan once attacks are legal"),
+		assert_true(bool(flags.get("tm_setup_live", false)),
+			"TM setup should be live on the first legal attack turn"),
+		assert_true(tm_score > best_manual_evolve_score + 60.0,
+			"Attaching TM must outrank manual Kirlia evolution plus runtime setup tie-break room (tm=%f evolve=%f)" % [tm_score, best_manual_evolve_score]),
+	])
 
 
 func test_tm_attach_does_not_outrank_only_shell_progress_when_zero_shell_bodies_are_online() -> String:
@@ -731,6 +833,43 @@ func test_tm_setup_discard_protects_tm_and_arven_while_shell_is_offline() -> Str
 	])
 
 
+func test_tm_setup_vessel_must_not_discard_live_tm_evolution_route() -> String:
+	var gs := _make_game_state(2)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS, "Basic", "P", 70), 0)
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS, "Basic", "P", 70), 0))
+	player.bench.append(_make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS, "Basic", "P", 70), 0))
+	_add_tm_future_targets(player)
+	var tm := CardInstance.create(_make_trainer_cd(DeckStrategyGardevoirScript.TM_EVOLUTION, "Tool"), 0)
+	var spare_item := CardInstance.create(_make_trainer_cd(DeckStrategyGardevoirScript.NEST_BALL), 0)
+	player.hand.append(tm)
+	player.hand.append(spare_item)
+	var s := _new_strategy()
+	var vessel_cd := _make_trainer_cd(DeckStrategyGardevoirScript.EARTHEN_VESSEL)
+	var vessel_with_tm_cost: float = s.score_action_absolute(
+		{
+			"kind": "play_trainer",
+			"card": CardInstance.create(vessel_cd, 0),
+			"targets": [{"discard_cards": [tm]}],
+		},
+		gs,
+		0
+	)
+	var vessel_with_spare_cost: float = s.score_action_absolute(
+		{
+			"kind": "play_trainer",
+			"card": CardInstance.create(vessel_cd, 0),
+			"targets": [{"discard_cards": [spare_item]}],
+		},
+		gs,
+		0
+	)
+	return run_checks([
+		assert_true(vessel_with_tm_cost < 0.0, "Earthen Vessel should not remain playable by discarding the live TM Evolution route (got %f)" % vessel_with_tm_cost),
+		assert_true(vessel_with_spare_cost > vessel_with_tm_cost, "A spare setup item should be a safer Vessel cost than the live TM Evolution route"),
+	])
+
+
 func test_tm_setup_discard_keeps_ultra_ball_below_energy_when_shell_lock_is_live() -> String:
 	var gs := _make_game_state(2)
 	var player := gs.players[0]
@@ -913,7 +1052,7 @@ func test_transition_shell_kirlia_active_does_not_take_manual_energy_as_fake_att
 
 
 func test_tm_preload_attach_energy_outranks_filler_stadium_before_bench_targets_exist() -> String:
-	var gs := _make_game_state(1)
+	var gs := _make_game_state(2)
 	var player := gs.players[0]
 	player.active_pokemon = _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS, "Basic", "P", 70), 0)
 	_add_tm_future_targets(player)
@@ -938,7 +1077,7 @@ func test_tm_preload_attach_energy_outranks_filler_stadium_before_bench_targets_
 
 
 func test_tm_preload_stays_positive_before_evolvable_bench_targets_exist() -> String:
-	var gs := _make_game_state(1)
+	var gs := _make_game_state(2)
 	var player := gs.players[0]
 	player.active_pokemon = _make_slot(_make_pokemon_cd(DeckStrategyGardevoirScript.RALTS, "Basic", "P", 70), 0)
 	_add_tm_future_targets(player)

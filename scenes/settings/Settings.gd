@@ -13,10 +13,17 @@ const ZENMUX_HOME_URL := "https://zenmux.ai"
 const ZENMUX_DEFAULT_ENDPOINT := "https://zenmux.ai/api/v1"
 const ZENMUX_SETUP_GUIDE := "1. 在浏览器打开 zenmux.ai，注册或登录账号。\n2. 进入控制台/API Keys，新建一个 API Key。\n3. 回到这里，API 地址保持 https://zenmux.ai/api/v1。\n4. 把 API Key 粘贴到“API 密钥”，选择模型；不确定就用默认模型。\n5. 点“测试连接”。提示测试通过后，回到开始对战选择大模型 AI。"
 const ZENMUX_TROUBLESHOOTING := "测试失败时先看这里：\n- 鉴权失败/401：API Key 复制错、少复制字符，或 Key 已失效。\n- model not found：当前 Key 不能用这个模型，换一个模型再测。\n- timeout/请求超时：网络慢，把超时改成 90 或 120 秒再试。"
+const MODEL_PICKER_OVERLAY_NAME := "AISettingsModelPickerOverlay"
+const API_KEY_SELECT_ALL_BOUND_META := "_ai_settings_api_key_select_all_bound"
+const API_KEY_SELECTED_ALL_META := "_ai_settings_api_key_selected_all"
 
 var _test_client = ZenMuxClientScript.new()
 var _non_battle_layout_controller: RefCounted = NonBattleLayoutControllerScript.new()
 var _portrait_action_footer_candidate: Button = null
+var _current_non_battle_layout_context: Dictionary = {}
+var _model_picker_overlay: Control = null
+var _model_picker_scroll: ScrollContainer = null
+var _model_picker_list: VBoxContainer = null
 
 
 func _ready() -> void:
@@ -37,6 +44,8 @@ func _notification(what: int) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if _handle_settings_model_picker_input(event):
+		return
 	if _handle_portrait_action_footer_input(event):
 		return
 	NonBattleTouchBridgeScript.handle_root_touch(self, event)
@@ -68,6 +77,7 @@ func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode
 		mode = str(GameManager.get("non_battle_layout_mode")) if GameManager != null else "landscape"
 	var is_mobile := OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
 	var context: Dictionary = _non_battle_layout_controller.call("build_context", size, mode, is_mobile)
+	_current_non_battle_layout_context = context.duplicate(true)
 	var portrait := bool(context.get("is_portrait", false))
 	set_meta("non_battle_layout_mode", str(context.get("resolved_mode", mode)))
 	if portrait:
@@ -75,6 +85,7 @@ func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode
 	else:
 		_apply_settings_landscape_layout(context)
 	_apply_settings_mobile_metrics(self, context, portrait)
+	_refresh_settings_model_picker_layout()
 	_sync_hud_frame_to_form()
 
 
@@ -83,7 +94,7 @@ func _apply_settings_portrait_layout(context: Dictionary) -> void:
 	var columns := root.get_node_or_null("ContentColumns") as HBoxContainer if root != null else null
 	var form_column := find_child("FormColumn", true, false) as Control
 	var guide_column := find_child("ZenMuxGuideColumn", true, false) as Control
-	if root == null or columns == null or form_column == null or guide_column == null:
+	if root == null or columns == null or form_column == null:
 		return
 	var viewport_size: Vector2 = context.get("viewport_size", Vector2(390, 844))
 	var horizontal_margin := clampf(viewport_size.x * 0.026, 14.0, 30.0)
@@ -102,7 +113,7 @@ func _apply_settings_portrait_layout(context: Dictionary) -> void:
 		scroll = ScrollContainer.new()
 		scroll.name = "PortraitSettingsScroll"
 		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-		scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
+		scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 		scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		root.add_child(scroll)
@@ -117,13 +128,10 @@ func _apply_settings_portrait_layout(context: Dictionary) -> void:
 	if stack == null:
 		return
 	var footer_height := _settings_portrait_footer_height(context)
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
-	HudThemeScript.style_scroll_container(scroll, "portrait_touch")
-	var vbar := scroll.get_v_scroll_bar()
-	if vbar != null:
-		NonBattleTouchBridgeScript.bind_range_touch(vbar)
+	HudThemeScript.style_scroll_container(scroll, "auto")
+	NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(scroll)
 	scroll.custom_minimum_size = Vector2(content_width, maxf(0.0, content_height - footer_height - float(context.get("section_gap", 18)) * 3.0))
-	var stack_width := maxf(320.0, content_width - float(HudThemeScript.scrollbar_thickness_for_profile("portrait_touch")) - 18.0)
+	var stack_width := maxf(320.0, content_width - 18.0)
 	stack.custom_minimum_size = Vector2(stack_width, 0)
 	stack.add_theme_constant_override("separation", int(context.get("section_gap", 14)))
 	columns.visible = false
@@ -132,7 +140,10 @@ func _apply_settings_portrait_layout(context: Dictionary) -> void:
 	if spacer != null:
 		spacer.visible = false
 	_layout_portrait_action_footer(context, content_width, content_height)
-	for column: Control in [form_column, guide_column]:
+	var layout_columns: Array[Control] = [form_column]
+	if guide_column != null:
+		layout_columns.append(guide_column)
+	for column: Control in layout_columns:
 		if column.get_parent() != stack:
 			if column.get_parent() != null:
 				column.get_parent().remove_child(column)
@@ -156,22 +167,28 @@ func _apply_settings_landscape_layout(_context: Dictionary) -> void:
 	var spacer := find_child("Spacer", true, false) as Control
 	if spacer != null:
 		spacer.visible = true
-	if columns == null or form_column == null or guide_column == null:
+	if columns == null or form_column == null:
 		return
 	_restore_landscape_action_footer(root)
-	for column: Control in [form_column, guide_column]:
+	var layout_columns: Array[Control] = [form_column]
+	if guide_column != null:
+		layout_columns.append(guide_column)
+	for column: Control in layout_columns:
 		if column.get_parent() != columns:
 			if column.get_parent() != null:
 				column.get_parent().remove_child(column)
 			column.owner = null
 			columns.add_child(column)
 	columns.move_child(form_column, 0)
-	columns.move_child(guide_column, 1)
+	if guide_column != null:
+		columns.move_child(guide_column, 1)
 	columns.visible = true
-	form_column.custom_minimum_size = Vector2(420, 0)
-	guide_column.custom_minimum_size = Vector2(360, 0)
+	form_column.custom_minimum_size = Vector2(760 if guide_column == null else 420, 0)
+	if guide_column != null:
+		guide_column.custom_minimum_size = Vector2(360, 0)
 	form_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	guide_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	if guide_column != null:
+		guide_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_set_runtime_owner(columns)
 
 
@@ -329,7 +346,7 @@ func _apply_settings_mobile_metrics(node: Node, context: Dictionary, portrait: b
 			button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, button_height)
 		elif button.name in ["BtnSave", "BtnTest", "BtnBack"]:
 			button.custom_minimum_size.y = 40.0
-		if portrait and button.name in ["BtnSave", "BtnTest", "BtnBack", "BtnUseZenMuxDefault", "BtnOpenZenMux"]:
+		if portrait and button.name in ["BtnSave", "BtnTest", "BtnBack", "BtnUseZenMuxDefault", "BtnPasteApiKey", "BtnOpenZenMux"]:
 			button.custom_minimum_size.x = 0.0
 			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		elif not portrait and button.name in ["BtnSave", "BtnTest", "BtnBack"]:
@@ -342,6 +359,7 @@ func _apply_settings_mobile_metrics(node: Node, context: Dictionary, portrait: b
 		input.custom_minimum_size.y = maxf(input.custom_minimum_size.y, float(context.get("input_height", 80.0))) if portrait else 35.0
 		input.size_flags_horizontal = Control.SIZE_EXPAND_FILL if portrait else input.size_flags_horizontal
 		input.add_theme_font_size_override("font_size", int(context.get("input_font_size", 15)) if portrait else HudThemeScript.scaled_font_size(15))
+		_configure_settings_feedback_line_edit(input)
 	elif node is SpinBox:
 		var spin := node as SpinBox
 		spin.custom_minimum_size.y = maxf(spin.custom_minimum_size.y, float(context.get("input_height", 80.0))) if portrait else 35.0
@@ -360,7 +378,9 @@ func _apply_settings_mobile_metrics(node: Node, context: Dictionary, portrait: b
 			row.add_theme_constant_override("separation", int(context.get("section_gap", 14)))
 	elif node is Label:
 		var label := node as Label
-		if label.name == "Title":
+		if label.name == "StatusLabel":
+			_configure_status_label(label, context, portrait)
+		elif label.name == "Title":
 			label.add_theme_font_size_override("font_size", int(context.get("title_font_size", 34)) if portrait else HudThemeScript.scaled_font_size(34))
 		elif portrait and label.name in ["SectionLabel", "ZenMuxGuideTitle", "ZenMuxTroubleTitle"]:
 			label.add_theme_font_size_override("font_size", int(context.get("section_font_size", 29)))
@@ -385,18 +405,121 @@ func _apply_settings_copy() -> void:
 	_set_label_text("ModelLabel", "模型:")
 	_set_label_text("TimeoutLabel", "请求超时 (秒):")
 	_set_label_text("PersonalityLabel", "AI 性格:")
-	%EndpointInput.placeholder_text = ZENMUX_DEFAULT_ENDPOINT
-	%ApiKeyInput.placeholder_text = "粘贴 ZenMux 控制台里的 API Key"
-	%PersonalityInput.placeholder_text = "可选，例如：稳健、简洁、会解释关键选择"
-	%BtnSave.text = "保存"
-	%BtnTest.text = "测试连接"
-	%BtnBack.text = "返回"
+	var endpoint_input := _endpoint_input()
+	if endpoint_input != null:
+		endpoint_input.placeholder_text = ZENMUX_DEFAULT_ENDPOINT
+	var api_key_input := _api_key_input()
+	if api_key_input != null:
+		api_key_input.placeholder_text = "粘贴 ZenMux 控制台里的 API Key"
+	var paste_api_key_button := find_child("BtnPasteApiKey", true, false) as Button
+	if paste_api_key_button != null:
+		paste_api_key_button.text = "粘贴密钥"
+	var personality_input := _personality_input()
+	if personality_input != null:
+		personality_input.placeholder_text = "可选，例如：稳健、简洁、会解释关键选择"
+	var save_button := _settings_button("BtnSave")
+	if save_button != null:
+		save_button.text = "保存"
+	var test_button := _settings_button("BtnTest")
+	if test_button != null:
+		test_button.text = "测试连接"
+	var back_button := _settings_button("BtnBack")
+	if back_button != null:
+		back_button.text = "返回"
 
 
 func _set_label_text(node_name: String, text: String) -> void:
 	var label := find_child(node_name, true, false) as Label
 	if label != null:
 		label.text = text
+
+
+func _endpoint_input() -> LineEdit:
+	return get_node_or_null("%EndpointInput") as LineEdit
+
+
+func _api_key_input() -> LineEdit:
+	return get_node_or_null("%ApiKeyInput") as LineEdit
+
+
+func _personality_input() -> LineEdit:
+	return get_node_or_null("%PersonalityInput") as LineEdit
+
+
+func _model_option() -> OptionButton:
+	return get_node_or_null("%ModelOption") as OptionButton
+
+
+func _timeout_input() -> SpinBox:
+	return get_node_or_null("%TimeoutInput") as SpinBox
+
+
+func _status_label() -> Label:
+	return get_node_or_null("%StatusLabel") as Label
+
+
+func _configure_status_label(label: Label, context: Dictionary = {}, portrait: bool = false) -> void:
+	if label == null:
+		return
+	var has_message := label.text.strip_edges() != ""
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	if has_message and portrait:
+		label.custom_minimum_size = Vector2(0.0, maxf(88.0, float(context.get("secondary_button_height", 84.0)) * 0.72))
+	elif has_message:
+		label.custom_minimum_size = Vector2(0.0, 38.0)
+	else:
+		label.custom_minimum_size = Vector2.ZERO
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.clip_text = true
+	label.max_lines_visible = 3 if portrait else 2
+	label.add_theme_font_size_override("font_size", int(context.get("body_font_size", 18)) if portrait else HudThemeScript.scaled_font_size(15))
+	label.add_theme_constant_override("line_spacing", int(float(context.get("portrait_scale", 1.0)) * 5.0) if portrait else 2)
+
+
+func _set_status_message(message: String, color: Color) -> void:
+	var label := _status_label()
+	if label == null:
+		return
+	label.text = message
+	label.add_theme_color_override("font_color", color)
+	var portrait := str(get_meta("non_battle_layout_mode", "")) == "portrait"
+	_configure_status_label(label, _current_non_battle_layout_context, portrait)
+	_reveal_status_message(label)
+
+
+func _reveal_status_message(label: Label) -> void:
+	if label == null or label.text.strip_edges() == "":
+		return
+	if str(get_meta("non_battle_layout_mode", "")) != "portrait":
+		return
+	var scroll := find_child("PortraitSettingsScroll", true, false) as ScrollContainer
+	if scroll == null or not scroll.visible:
+		return
+	var parent := label.get_parent()
+	var target_scroll := 0
+	if parent != null:
+		var separation := 0
+		if parent is BoxContainer:
+			separation = (parent as BoxContainer).get_theme_constant("separation")
+		for child: Node in parent.get_children():
+			if child == label:
+				break
+			if child is Control:
+				var control := child as Control
+				if not control.visible:
+					continue
+				var control_height := maxf(control.size.y, control.custom_minimum_size.y)
+				control_height = maxf(control_height, control.get_combined_minimum_size().y)
+				target_scroll += roundi(control_height)
+				target_scroll += separation
+	target_scroll = maxi(1, target_scroll - 48)
+	scroll.scroll_vertical = target_scroll
+	scroll.set_deferred("scroll_vertical", target_scroll)
+
+
+func _settings_button(button_name: String) -> Button:
+	return get_node_or_null("%" + button_name) as Button
 
 
 func _configure_settings_form_bounds() -> void:
@@ -469,6 +592,7 @@ func _reparent_form_controls(root: VBoxContainer, form_column: VBoxContainer) ->
 		"TimeoutInput",
 		"PersonalityLabel",
 		"PersonalityInput",
+		"StatusLabel",
 	]
 	for control_name: String in control_names:
 		var node := root.get_node_or_null(control_name)
@@ -482,7 +606,7 @@ func _reparent_form_controls(root: VBoxContainer, form_column: VBoxContainer) ->
 		if control_name == "EndpointInput":
 			form_column.add_child(_build_default_endpoint_row())
 		elif control_name == "ApiKeyInput":
-			form_column.add_child(_build_hint_label("ApiKeyHint", "API Key 只保存在本机配置文件里；复制时不要带前后空格。"))
+			form_column.add_child(_build_api_key_help_row())
 		elif control_name == "ModelOption":
 			form_column.add_child(_build_hint_label("ModelHint", "不确定模型就先保留默认；测试通过后才会启用大模型对手。"))
 
@@ -502,6 +626,26 @@ func _build_default_endpoint_row() -> HBoxContainer:
 	row.add_child(button)
 
 	var hint := _build_hint_label("EndpointHint", "ZenMux 用户通常保持这个地址即可。")
+	hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(hint)
+	return row
+
+
+func _build_api_key_help_row() -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.name = "ApiKeyHelpRow"
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("separation", 10)
+
+	var button := Button.new()
+	button.name = "BtnPasteApiKey"
+	button.unique_name_in_owner = true
+	button.text = "粘贴密钥"
+	button.custom_minimum_size = Vector2(132, 34)
+	button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	row.add_child(button)
+
+	var hint := _build_hint_label("ApiKeyHint", "API Key 只保存在本机配置文件里；复制时不要带前后空格。")
 	hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(hint)
 	return row
@@ -555,18 +699,34 @@ func _apply_hud_theme() -> void:
 
 
 func _connect_settings_controls() -> void:
-	if not %BtnSave.pressed.is_connected(_on_save):
-		%BtnSave.pressed.connect(_on_save)
-	if not %BtnTest.pressed.is_connected(_on_test_connection):
-		%BtnTest.pressed.connect(_on_test_connection)
+	var save_button := _settings_button("BtnSave")
+	if save_button != null and not save_button.pressed.is_connected(_on_save):
+		save_button.pressed.connect(_on_save)
+	var test_button := _settings_button("BtnTest")
+	if test_button != null and not test_button.pressed.is_connected(_on_test_connection):
+		test_button.pressed.connect(_on_test_connection)
 	var default_endpoint_button := find_child("BtnUseZenMuxDefault", true, false) as Button
 	if default_endpoint_button != null and not default_endpoint_button.pressed.is_connected(_on_use_zenmux_default_endpoint):
 		default_endpoint_button.pressed.connect(_on_use_zenmux_default_endpoint)
+	var paste_api_key_button := find_child("BtnPasteApiKey", true, false) as Button
+	if paste_api_key_button != null:
+		if not paste_api_key_button.pressed.is_connected(_on_paste_api_key_pressed):
+			paste_api_key_button.pressed.connect(_on_paste_api_key_pressed)
+		NonBattleTouchBridgeScript.bind_button_touch(paste_api_key_button)
 	var open_zenmux_button := find_child("BtnOpenZenMux", true, false) as Button
 	if open_zenmux_button != null and not open_zenmux_button.pressed.is_connected(_on_open_zenmux_pressed):
 		open_zenmux_button.pressed.connect(_on_open_zenmux_pressed)
-	if not %BtnBack.pressed.is_connected(_on_back):
-		%BtnBack.pressed.connect(_on_back)
+	var back_button := _settings_button("BtnBack")
+	if back_button != null and not back_button.pressed.is_connected(_on_back):
+		back_button.pressed.connect(_on_back)
+	var model_option := _model_option()
+	if model_option != null:
+		model_option.set_meta("_non_battle_option_press_signal_only", true)
+		if not model_option.pressed.is_connected(_on_model_option_pressed):
+			model_option.pressed.connect(_on_model_option_pressed)
+		var model_input_callback := Callable(self, "_on_model_option_gui_input")
+		if not model_option.gui_input.is_connected(model_input_callback):
+			model_option.gui_input.connect(model_input_callback)
 
 
 func _ensure_hud_frame() -> void:
@@ -685,6 +845,7 @@ func _style_hud_option(option: OptionButton) -> void:
 
 
 func _style_hud_line_edit(input: LineEdit) -> void:
+	_configure_settings_feedback_line_edit(input)
 	input.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(15))
 	input.add_theme_color_override("font_color", HUD_TEXT)
 	input.add_theme_color_override("font_placeholder_color", Color(0.55, 0.66, 0.74, 0.78))
@@ -692,6 +853,54 @@ func _style_hud_line_edit(input: LineEdit) -> void:
 	input.add_theme_stylebox_override("normal", _hud_input_style(false))
 	input.add_theme_stylebox_override("focus", _hud_input_style(true))
 	input.add_theme_stylebox_override("read_only", _hud_input_disabled_style())
+
+
+func _configure_settings_feedback_line_edit(input: LineEdit) -> void:
+	if input == null:
+		return
+	var keyboard_type := LineEdit.KEYBOARD_TYPE_URL if input.name == "EndpointInput" else LineEdit.KEYBOARD_TYPE_DEFAULT
+	input.focus_mode = Control.FOCUS_ALL
+	input.mouse_filter = Control.MOUSE_FILTER_STOP
+	input.context_menu_enabled = true
+	input.virtual_keyboard_enabled = true
+	input.virtual_keyboard_show_on_focus = true
+	input.virtual_keyboard_type = keyboard_type
+	input.set("shortcut_keys_enabled", true)
+	input.set("middle_mouse_paste_enabled", true)
+	if input.has_meta(NonBattleTouchBridgeScript.NATIVE_TEXT_INPUT_META):
+		input.remove_meta(NonBattleTouchBridgeScript.NATIVE_TEXT_INPUT_META)
+	NonBattleTouchBridgeScript.bind_focus_control_touch(input)
+	if input.name == "ApiKeyInput":
+		_bind_api_key_select_all(input)
+
+
+func _bind_api_key_select_all(input: LineEdit) -> void:
+	if input == null or bool(input.get_meta(API_KEY_SELECT_ALL_BOUND_META, false)):
+		return
+	input.set_meta(API_KEY_SELECT_ALL_BOUND_META, true)
+	input.focus_entered.connect(func() -> void:
+		_select_all_api_key_input(input)
+	)
+	input.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventScreenTouch:
+			var touch := event as InputEventScreenTouch
+			if touch.pressed:
+				_select_all_api_key_input(input)
+		elif event is InputEventMouseButton:
+			var mouse_button := event as InputEventMouseButton
+			if mouse_button.button_index == MOUSE_BUTTON_LEFT and mouse_button.pressed:
+				_select_all_api_key_input(input)
+	)
+
+
+func _select_all_api_key_input(input: LineEdit) -> void:
+	if input == null:
+		return
+	input.set_meta(API_KEY_SELECTED_ALL_META, true)
+	if input.text.length() <= 0:
+		return
+	input.select_all()
+	input.call_deferred("select_all")
 
 
 func _style_hud_spin_box(spin_box: SpinBox) -> void:
@@ -752,59 +961,332 @@ func _hud_input_disabled_style() -> StyleBoxFlat:
 	return style
 
 
+func _should_use_settings_model_picker() -> bool:
+	return str(get_meta("non_battle_layout_mode", "")) == "portrait" or _is_mobile_like_runtime()
+
+
+func _on_model_option_pressed() -> void:
+	if not _should_use_settings_model_picker():
+		return
+	_hide_model_option_native_popup()
+	_show_settings_model_picker()
+
+
+func _on_model_option_gui_input(event: InputEvent) -> void:
+	if not _should_use_settings_model_picker():
+		return
+	var model_option := _model_option()
+	if model_option == null:
+		return
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		model_option.accept_event()
+		_accept_pointer_event()
+		_hide_model_option_native_popup()
+		if not touch.pressed:
+			_show_settings_model_picker()
+	elif event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if mouse_button.button_index != MOUSE_BUTTON_LEFT:
+			return
+		if not _is_mobile_like_runtime() and str(get_meta("non_battle_layout_mode", "")) != "portrait":
+			return
+		model_option.accept_event()
+		_accept_pointer_event()
+		_hide_model_option_native_popup()
+		if not mouse_button.pressed:
+			_show_settings_model_picker()
+
+
+func _handle_settings_model_picker_input(event: InputEvent) -> bool:
+	if _model_picker_overlay == null or not is_instance_valid(_model_picker_overlay) or not _model_picker_overlay.visible:
+		return false
+	if NonBattleTouchBridgeScript.handle_root_touch(_model_picker_overlay, event):
+		return true
+	if event is InputEventScreenTouch:
+		_accept_pointer_event()
+		return true
+	if event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
+		_accept_pointer_event()
+		return true
+	return false
+
+
+func _show_settings_model_picker() -> void:
+	var model_option := _model_option()
+	if model_option == null or model_option.disabled or model_option.get_item_count() <= 0:
+		return
+	_ensure_settings_model_picker_overlay()
+	_refresh_settings_model_picker_layout()
+	_populate_settings_model_picker()
+	_model_picker_overlay.visible = true
+	_model_picker_overlay.move_to_front()
+
+
+func _hide_settings_model_picker() -> void:
+	if _model_picker_overlay != null and is_instance_valid(_model_picker_overlay):
+		_model_picker_overlay.visible = false
+
+
+func _hide_model_option_native_popup() -> void:
+	var model_option := _model_option()
+	if model_option == null:
+		return
+	var popup := model_option.get_popup()
+	if popup != null:
+		popup.hide()
+
+
+func _ensure_settings_model_picker_overlay() -> void:
+	if _model_picker_overlay != null and is_instance_valid(_model_picker_overlay):
+		return
+	_model_picker_overlay = Control.new()
+	_model_picker_overlay.name = MODEL_PICKER_OVERLAY_NAME
+	_model_picker_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_model_picker_overlay.visible = false
+	_model_picker_overlay.z_index = 2450
+	_model_picker_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(_model_picker_overlay)
+
+	var shade := ColorRect.new()
+	shade.name = "AISettingsModelPickerShade"
+	shade.color = Color(0.0, 0.0, 0.0, 0.58)
+	shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_model_picker_overlay.add_child(shade)
+
+	var panel := PanelContainer.new()
+	panel.name = "AISettingsModelPickerPanel"
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	panel.add_theme_stylebox_override("panel", _hud_panel_style(Color(0.025, 0.055, 0.085, 0.96), HUD_ACCENT, 22))
+	_model_picker_overlay.add_child(panel)
+
+	var margin := MarginContainer.new()
+	margin.name = "AISettingsModelPickerMargin"
+	margin.add_theme_constant_override("margin_left", 22)
+	margin.add_theme_constant_override("margin_top", 22)
+	margin.add_theme_constant_override("margin_right", 22)
+	margin.add_theme_constant_override("margin_bottom", 22)
+	panel.add_child(margin)
+
+	var root := VBoxContainer.new()
+	root.name = "AISettingsModelPickerRoot"
+	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	root.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_theme_constant_override("separation", 18)
+	margin.add_child(root)
+
+	var title := Label.new()
+	title.name = "AISettingsModelPickerTitle"
+	title.text = "选择 AI 模型"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 54)
+	title.add_theme_color_override("font_color", HUD_TEXT)
+	root.add_child(title)
+
+	_model_picker_scroll = ScrollContainer.new()
+	_model_picker_scroll.name = "AISettingsModelPickerScroll"
+	_model_picker_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_model_picker_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_model_picker_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_model_picker_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	HudThemeScript.style_scroll_container(_model_picker_scroll, "auto")
+	NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(_model_picker_scroll)
+	root.add_child(_model_picker_scroll)
+
+	_model_picker_list = VBoxContainer.new()
+	_model_picker_list.name = "AISettingsModelPickerList"
+	_model_picker_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_model_picker_list.add_theme_constant_override("separation", 14)
+	_model_picker_scroll.add_child(_model_picker_list)
+
+	var close_button := Button.new()
+	close_button.name = "AISettingsModelPickerCloseButton"
+	close_button.text = "关闭"
+	close_button.custom_minimum_size = Vector2(0.0, 150.0)
+	close_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_hud_button(close_button, HUD_ACCENT)
+	close_button.add_theme_font_size_override("font_size", 48)
+	close_button.pressed.connect(_hide_settings_model_picker)
+	NonBattleTouchBridgeScript.bind_button_touch(close_button)
+	root.add_child(close_button)
+	_set_runtime_owner(_model_picker_overlay)
+
+
+func _refresh_settings_model_picker_layout() -> void:
+	if _model_picker_overlay == null or not is_instance_valid(_model_picker_overlay):
+		return
+	var viewport_size: Vector2 = _current_non_battle_layout_context.get("viewport_size", size if size.x > 0.0 and size.y > 0.0 else Vector2(1080, 2400))
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		viewport_size = Vector2(1080, 2400)
+	var panel := _model_picker_overlay.get_node_or_null("AISettingsModelPickerPanel") as PanelContainer
+	if panel != null:
+		var margin := roundi(clampf(viewport_size.x * 0.035, 28.0, 46.0))
+		panel.offset_left = margin
+		panel.offset_top = margin
+		panel.offset_right = -margin
+		panel.offset_bottom = -margin
+		panel.custom_minimum_size = Vector2(maxf(320.0, viewport_size.x - margin * 2.0), maxf(560.0, viewport_size.y - margin * 2.0))
+	if _model_picker_scroll != null:
+		_model_picker_scroll.custom_minimum_size.y = maxf(900.0, viewport_size.y * 0.58)
+		HudThemeScript.style_scroll_container(_model_picker_scroll, "auto")
+		NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(_model_picker_scroll)
+
+
+func _populate_settings_model_picker() -> void:
+	var model_option := _model_option()
+	if _model_picker_list == null or model_option == null:
+		return
+	for child: Node in _model_picker_list.get_children():
+		child.queue_free()
+	var selected_index := model_option.selected
+	for i: int in model_option.get_item_count():
+		var button := Button.new()
+		button.name = "AISettingsModelPickerItem%d" % i
+		button.text = "%s%s" % ["[当前] " if i == selected_index else "", model_option.get_item_text(i)]
+		button.custom_minimum_size = Vector2(0.0, 148.0)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.clip_text = true
+		_style_hud_button(button, HUD_ACCENT)
+		button.add_theme_font_size_override("font_size", 46)
+		button.pressed.connect(_select_settings_model_from_picker.bind(i))
+		NonBattleTouchBridgeScript.bind_button_touch(button)
+		_model_picker_list.add_child(button)
+	_set_runtime_owner(_model_picker_list)
+
+
+func _select_settings_model_from_picker(index: int) -> void:
+	var model_option := _model_option()
+	if model_option == null or index < 0 or index >= model_option.get_item_count():
+		_hide_settings_model_picker()
+		return
+	model_option.select(index)
+	_hide_model_option_native_popup()
+	_hide_settings_model_picker()
+
+
 func _populate_model_options() -> void:
-	%ModelOption.clear()
+	var model_option := _model_option()
+	if model_option == null:
+		return
+	model_option.clear()
 	for model: Dictionary in GameManager.get_supported_battle_review_models():
-		var index: int = %ModelOption.get_item_count()
-		%ModelOption.add_item(str(model.get("label", model.get("id", ""))))
-		%ModelOption.set_item_metadata(index, str(model.get("id", "")))
+		var index: int = model_option.get_item_count()
+		model_option.add_item(str(model.get("label", model.get("id", ""))))
+		model_option.set_item_metadata(index, str(model.get("id", "")))
+	if _model_picker_overlay != null and is_instance_valid(_model_picker_overlay) and _model_picker_overlay.visible:
+		_populate_settings_model_picker()
 
 
 func _load_config() -> void:
 	var config := GameManager.get_battle_review_api_config()
-	var endpoint := str(config.get("endpoint", ZENMUX_DEFAULT_ENDPOINT)).strip_edges()
-	%EndpointInput.text = ZENMUX_DEFAULT_ENDPOINT if endpoint == "" else endpoint
-	%ApiKeyInput.text = str(config.get("api_key", ""))
+	var endpoint := _settings_config_text(config.get("endpoint", ZENMUX_DEFAULT_ENDPOINT), ZENMUX_DEFAULT_ENDPOINT)
+	var endpoint_input := _endpoint_input()
+	if endpoint_input != null:
+		endpoint_input.text = endpoint
+	var api_key_input := _api_key_input()
+	if api_key_input != null:
+		api_key_input.text = _settings_config_text(config.get("api_key", ""), "")
 	_select_model(str(config.get("model", "")))
-	%TimeoutInput.value = float(config.get("timeout_seconds", 30.0))
-	%PersonalityInput.text = str(config.get("ai_personality", ""))
-	%StatusLabel.text = ""
+	var timeout_input := _timeout_input()
+	if timeout_input != null:
+		timeout_input.value = float(config.get("timeout_seconds", 30.0))
+	var personality_input := _personality_input()
+	if personality_input != null:
+		personality_input.text = _settings_config_text(config.get("ai_personality", GameManager.DEFAULT_AI_PERSONALITY), GameManager.DEFAULT_AI_PERSONALITY)
+	var status_label := _status_label()
+	if status_label != null:
+		status_label.text = ""
+
+
+func _settings_config_text(value: Variant, fallback: String) -> String:
+	if value == null:
+		return fallback
+	var text := str(value).strip_edges()
+	if text == "" or _settings_text_has_null_instance_diagnostic(text):
+		return fallback
+	return text
+
+
+func _settings_text_has_null_instance_diagnostic(text: String) -> bool:
+	var lower := text.to_lower()
+	return lower.contains("instance base is null") or lower.contains("instance is null") or lower.contains("null instance")
 
 
 func _select_model(model_id: String) -> void:
+	var model_option := _model_option()
+	if model_option == null:
+		return
 	var normalized := GameManager.normalize_battle_review_model(model_id)
-	for index: int in %ModelOption.get_item_count():
-		if str(%ModelOption.get_item_metadata(index)) == normalized:
-			%ModelOption.select(index)
+	for index: int in model_option.get_item_count():
+		if str(model_option.get_item_metadata(index)) == normalized:
+			model_option.select(index)
 			return
-	if %ModelOption.get_item_count() > 0:
-		%ModelOption.select(0)
+	if model_option.get_item_count() > 0:
+		model_option.select(0)
 
 
 func _selected_model_id() -> String:
-	var selected_index: int = %ModelOption.selected
+	var model_option := _model_option()
+	if model_option == null:
+		return GameManager.normalize_battle_review_model("")
+	var selected_index: int = model_option.selected
 	if selected_index < 0:
 		return GameManager.normalize_battle_review_model("")
-	return GameManager.normalize_battle_review_model(str(%ModelOption.get_item_metadata(selected_index)))
+	return GameManager.normalize_battle_review_model(str(model_option.get_item_metadata(selected_index)))
 
 
 func _on_use_zenmux_default_endpoint() -> void:
-	%EndpointInput.text = ZENMUX_DEFAULT_ENDPOINT
-	%StatusLabel.text = "已填入 ZenMux 默认 API 地址，请继续粘贴 API Key 并测试连接。"
-	%StatusLabel.add_theme_color_override("font_color", Color(0.3, 1, 0.3))
+	var endpoint_input := _endpoint_input()
+	if endpoint_input == null:
+		_set_ai_settings_inputs_unavailable_status("填写默认地址")
+		return
+	endpoint_input.text = ZENMUX_DEFAULT_ENDPOINT
+	_set_status_message("已填入 ZenMux 默认 API 地址，请继续粘贴 API Key 并测试连接。", Color(0.3, 1, 0.3))
+
+
+func _on_paste_api_key_pressed() -> void:
+	var clipboard_text := ""
+	if DisplayServer.get_name() != "headless":
+		clipboard_text = DisplayServer.clipboard_get()
+	_apply_api_key_paste_text(clipboard_text)
+
+
+func _apply_api_key_paste_text_for_tests(text: String) -> bool:
+	return _apply_api_key_paste_text(text)
+
+
+func _apply_api_key_paste_text(text: String) -> bool:
+	var api_key_input := _api_key_input()
+	if api_key_input == null:
+		_set_ai_settings_inputs_unavailable_status("粘贴密钥")
+		return false
+	var api_key := text.strip_edges()
+	if api_key == "":
+		_set_status_message("剪贴板为空，请先复制 ZenMux API Key。", Color(1, 0.35, 0.25))
+		return false
+	api_key_input.text = api_key
+	if api_key_input.is_inside_tree():
+		api_key_input.focus_mode = Control.FOCUS_ALL
+		api_key_input.grab_focus()
+	_select_all_api_key_input(api_key_input)
+	_set_status_message("已粘贴 API Key，请测试连接。", Color(0.3, 1, 0.3))
+	return true
 
 
 func _on_open_zenmux_pressed() -> void:
 	var err := OS.shell_open(ZENMUX_HOME_URL)
 	if err == OK:
-		%StatusLabel.text = "已打开 zenmux.ai，请在浏览器注册或复制 API Key。"
-		%StatusLabel.add_theme_color_override("font_color", Color(0.3, 1, 0.3))
+		_set_status_message("已打开 zenmux.ai，请在浏览器注册或复制 API Key。", Color(0.3, 1, 0.3))
 		return
-	%StatusLabel.text = "无法自动打开浏览器，请手动访问 https://zenmux.ai。"
-	%StatusLabel.add_theme_color_override("font_color", Color(1, 0.35, 0.25))
+	_set_status_message("无法自动打开浏览器，请手动访问 https://zenmux.ai。", Color(1, 0.35, 0.25))
 
 
 func _on_save() -> void:
+	if not _are_core_ai_settings_inputs_available():
+		_set_ai_settings_inputs_unavailable_status("保存")
+		return
 	var data := _current_config_data()
 	var existing := GameManager.get_battle_review_api_config()
 	var signature := GameManager.battle_review_ai_config_signature(data)
@@ -814,41 +1296,67 @@ func _on_save() -> void:
 
 
 func _current_config_data() -> Dictionary:
+	var existing := GameManager.get_battle_review_api_config()
+	var endpoint_input := _endpoint_input()
+	var api_key_input := _api_key_input()
+	var timeout_input := _timeout_input()
+	var personality_input := _personality_input()
 	return {
-		"endpoint": %EndpointInput.text.strip_edges(),
-		"api_key": %ApiKeyInput.text.strip_edges(),
+		"endpoint": _settings_input_text(endpoint_input, str(existing.get("endpoint", ZENMUX_DEFAULT_ENDPOINT))),
+		"api_key": _settings_input_text(api_key_input, str(existing.get("api_key", ""))),
 		"model": _selected_model_id(),
-		"timeout_seconds": %TimeoutInput.value,
-		"ai_personality": %PersonalityInput.text.strip_edges(),
+		"timeout_seconds": timeout_input.value if timeout_input != null else float(existing.get("timeout_seconds", 60.0)),
+		"ai_personality": _settings_input_text(personality_input, str(existing.get("ai_personality", GameManager.DEFAULT_AI_PERSONALITY))),
 	}
+
+
+func _settings_input_text(input: LineEdit, fallback: String) -> String:
+	if input == null:
+		return _settings_config_text(fallback, "")
+	var text := input.text.strip_edges()
+	if _settings_text_has_null_instance_diagnostic(text):
+		return _settings_config_text(fallback, "")
+	return text
+
+
+func _are_core_ai_settings_inputs_available() -> bool:
+	return _endpoint_input() != null and _api_key_input() != null
+
+
+func _set_ai_settings_inputs_unavailable_status(action_name: String) -> void:
+	_set_status_message("%s失败：AI 设置输入框还在初始化，请重新进入设置页。" % action_name, Color(1, 0.35, 0.25))
 
 
 func _write_config_data(data: Dictionary, success_message: String) -> bool:
 	var path := GameManager.get_battle_review_api_config_path()
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
-		%StatusLabel.text = "保存失败：无法写入配置文件"
-		%StatusLabel.add_theme_color_override("font_color", Color(1, 0.3, 0.3))
+		_set_status_message("保存失败：无法写入配置文件", Color(1, 0.3, 0.3))
 		return false
 	file.store_string(JSON.stringify(data, "\t"))
 	file.close()
-	%StatusLabel.text = success_message
-	%StatusLabel.add_theme_color_override("font_color", Color(0.3, 1, 0.3))
+	_set_status_message(success_message, Color(0.3, 1, 0.3))
 	return true
 
 
 func _on_test_connection() -> void:
-	var endpoint: String = %EndpointInput.text.strip_edges()
-	var api_key: String = %ApiKeyInput.text.strip_edges()
+	var test_button := _settings_button("BtnTest")
+	var endpoint_input := _endpoint_input()
+	var api_key_input := _api_key_input()
+	var timeout_input := _timeout_input()
+	if endpoint_input == null or api_key_input == null:
+		_set_ai_settings_inputs_unavailable_status("测试")
+		return
+	var endpoint: String = endpoint_input.text.strip_edges()
+	var api_key: String = api_key_input.text.strip_edges()
 	if endpoint == "" or api_key == "":
-		%StatusLabel.text = "测试失败：请先填写 API 地址和密钥"
-		%StatusLabel.add_theme_color_override("font_color", Color(1, 0.35, 0.25))
+		_set_status_message("测试失败：请先填写 API 地址和密钥", Color(1, 0.35, 0.25))
 		return
 
-	%BtnTest.disabled = true
-	%StatusLabel.text = "正在测试..."
-	%StatusLabel.add_theme_color_override("font_color", Color(1, 0.85, 0.35))
-	_test_client.set_timeout_seconds(float(%TimeoutInput.value))
+	if test_button != null:
+		test_button.disabled = true
+	_set_status_message("正在测试...", Color(1, 0.85, 0.35))
+	_test_client.set_timeout_seconds(float(timeout_input.value) if timeout_input != null else 60.0)
 	var error := _test_client.request_json(
 		self,
 		endpoint,
@@ -867,25 +1375,28 @@ func _on_test_connection() -> void:
 		_on_test_connection_response
 	)
 	if error != OK:
-		%BtnTest.disabled = false
-		%StatusLabel.text = "测试失败：请求无法启动 (%d)" % error
-		%StatusLabel.add_theme_color_override("font_color", Color(1, 0.35, 0.25))
+		if test_button != null:
+			test_button.disabled = false
+		_set_status_message("测试失败：请求无法启动 (%d)" % error, Color(1, 0.35, 0.25))
 
 
 func _on_test_connection_response(response: Dictionary) -> void:
-	%BtnTest.disabled = false
+	var test_button := _settings_button("BtnTest")
+	if test_button != null:
+		test_button.disabled = false
 	if str(response.get("status", "")) == "error":
-		%StatusLabel.text = "测试失败：%s" % str(response.get("message", "未知错误")).left(120)
-		%StatusLabel.add_theme_color_override("font_color", Color(1, 0.35, 0.25))
+		_set_status_message("测试失败：%s" % str(response.get("message", "未知错误")).left(120), Color(1, 0.35, 0.25))
 		return
 	if bool(response.get("ok", false)):
+		if not _are_core_ai_settings_inputs_available():
+			_set_ai_settings_inputs_unavailable_status("保存测试结果")
+			return
 		var data := _current_config_data()
 		data["ai_test_passed"] = true
 		data["ai_test_signature"] = GameManager.battle_review_ai_config_signature(data)
 		_write_config_data(data, "测试通过：模型可用，已保存")
 		return
-	%StatusLabel.text = "测试失败：模型返回格式不符合预期"
-	%StatusLabel.add_theme_color_override("font_color", Color(1, 0.35, 0.25))
+	_set_status_message("测试失败：模型返回格式不符合预期", Color(1, 0.35, 0.25))
 
 
 func _on_back() -> void:

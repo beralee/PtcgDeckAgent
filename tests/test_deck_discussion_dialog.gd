@@ -2,6 +2,7 @@ class_name TestDeckDiscussionDialog
 extends TestBase
 
 const DialogScene := preload("res://scenes/deck_editor/DeckDiscussionDialog.tscn")
+const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
 
 
 func test_dialog_instantiates_and_accepts_deck_context() -> String:
@@ -109,6 +110,63 @@ func test_match_discussion_uses_compact_battle_style_header() -> String:
 		assert_false(summary_label.visible, "Battle setup strategy discussion should hide deck summary stats to free vertical space"),
 		assert_true(header_bottom <= 126.0, "Battle setup strategy discussion should use the compact battle header height"),
 		assert_true(transcript_top <= 144.0, "Battle setup strategy discussion transcript should start immediately below the compact header"),
+	])
+
+
+func test_non_battle_portrait_discussion_hides_transcript_scrollbar() -> String:
+	var dialog := DialogScene.instantiate()
+	var player_deck := DeckData.new()
+	player_deck.id = 900111
+	player_deck.deck_name = "Non battle player"
+	player_deck.total_cards = 60
+	var opponent_deck := DeckData.new()
+	opponent_deck.id = 900222
+	opponent_deck.deck_name = "Non battle opponent"
+	opponent_deck.total_cards = 60
+
+	dialog.call("setup_for_match", player_deck, opponent_deck, "AI Deck", 900111222, true)
+	dialog.call("prepare_for_portrait_popup", Rect2(Vector2.ZERO, Vector2(390, 844)))
+	var transcript_scroll := dialog.get_node_or_null("%TranscriptScroll") as ScrollContainer
+	var vbar := transcript_scroll.get_v_scroll_bar() if transcript_scroll != null else null
+	var send_button := dialog.get_node_or_null("%SendButton") as Button
+	var hidden_meta := transcript_scroll != null and bool(transcript_scroll.get_meta(NonBattleTouchBridgeScript.HIDDEN_VERTICAL_DRAG_SCROLL_META, false))
+	var hidden_bar := vbar != null and not vbar.visible and vbar.mouse_filter == Control.MOUSE_FILTER_IGNORE
+	var bridge_enabled := send_button != null and bool(NonBattleTouchBridgeScript.is_touch_bridge_enabled_for(send_button))
+	dialog.queue_free()
+
+	return run_checks([
+		assert_true(hidden_meta, "Non-battle portrait deck discussion should use hidden drag scrolling"),
+		assert_true(hidden_bar, "Non-battle portrait deck discussion should hide the transcript scrollbar"),
+		assert_true(bridge_enabled, "Non-battle portrait deck discussion should keep the non-battle touch bridge enabled"),
+	])
+
+
+func test_live_battle_portrait_discussion_keeps_visible_touch_scrollbar() -> String:
+	var dialog := DialogScene.instantiate()
+	var deck := DeckData.new()
+	deck.id = 900333
+	deck.deck_name = "Live battle deck"
+	deck.total_cards = 60
+	var battle_context := {
+		"perspective_label": "Player 1 / Live battle",
+		"state": {"turn_number": 1, "phase": "MAIN", "current_player_index": 0},
+		"public_counts": {},
+	}
+
+	dialog.call("setup_for_battle_context", deck, battle_context, 900333001, true)
+	dialog.call("prepare_for_portrait_popup", Rect2(Vector2.ZERO, Vector2(390, 844)))
+	var transcript_scroll := dialog.get_node_or_null("%TranscriptScroll") as ScrollContainer
+	var vbar := transcript_scroll.get_v_scroll_bar() if transcript_scroll != null else null
+	var send_button := dialog.get_node_or_null("%SendButton") as Button
+	var hidden_meta := transcript_scroll != null and bool(transcript_scroll.get_meta(NonBattleTouchBridgeScript.HIDDEN_VERTICAL_DRAG_SCROLL_META, false))
+	var profile := str(vbar.get_meta("hud_scrollbar_profile", "")) if vbar != null else ""
+	var bridge_enabled := send_button != null and bool(NonBattleTouchBridgeScript.is_touch_bridge_enabled_for(send_button))
+	dialog.queue_free()
+
+	return run_checks([
+		assert_false(hidden_meta, "Live battle portrait discussion should keep the battle scrollbar policy"),
+		assert_eq(profile, "portrait_touch", "Live battle portrait discussion scrollbar should still use the large battle touch profile"),
+		assert_false(bridge_enabled, "Live battle portrait discussion should disable the non-battle touch bridge"),
 	])
 
 
@@ -287,4 +345,161 @@ func test_portrait_discussion_buttons_survive_deferred_window_resize() -> String
 		assert_true(send_button != null and send_button.get_theme_font_size("font_size") >= 36, "Deferred fixed-window pass should preserve the readable portrait send font"),
 		assert_true(reset_button != null and reset_button.text == "清空", "Deferred fixed-window pass should keep the short portrait reset label"),
 		assert_true(total_action_width > 0.0 and total_action_width <= available_width, "Portrait action buttons should fit within the phone dialog width instead of being squeezed"),
+	])
+
+
+func test_portrait_discussion_question_input_uses_native_android_text_path() -> String:
+	var dialog := DialogScene.instantiate()
+	dialog.call("_ready")
+	NonBattleTouchBridgeScript.bind_buttons_recursive(dialog)
+	var question_input := dialog.get_node_or_null("%QuestionInput") as TextEdit
+	var focus_bridge_bound := question_input != null and bool(question_input.get_meta(NonBattleTouchBridgeScript.FOCUS_TOUCH_BOUND_META, false))
+	dialog.queue_free()
+
+	return run_checks([
+		assert_true(question_input != null and question_input.mouse_filter == Control.MOUSE_FILTER_STOP, "Portrait discussion question input should still own native TextEdit hit testing"),
+		assert_false(focus_bridge_bound, "Portrait discussion question input should not install the non-battle focus touch bridge that can swallow Android text editing taps"),
+	])
+
+
+func test_portrait_discussion_keyboard_inset_keeps_action_buttons_touchable() -> String:
+	var dialog := DialogScene.instantiate()
+	var deck := DeckData.new()
+	deck.id = 900304
+	deck.deck_name = "Keyboard inset test deck"
+	deck.total_cards = 60
+	var battle_context := {
+		"perspective_label": "Player 1 / keyboard inset",
+		"state": {"turn_number": 1, "phase": "MAIN", "current_player_index": 0, "acting_side_from_perspective": "me"},
+		"public_counts": {"prize_remaining_score": "6-6", "prizes_taken_score": "0-0", "my_hand_count": 5, "my_deck_count": 45, "opponent_hand_count": 5, "opponent_deck_count": 45},
+	}
+
+	dialog.call("setup_for_battle_context", deck, battle_context, 900304001, true)
+	var full_frame := Rect2(Vector2.ZERO, Vector2(390, 844))
+	dialog.call("prepare_for_portrait_popup", full_frame)
+	if not dialog.has_method("apply_portrait_keyboard_inset"):
+		dialog.queue_free()
+		return "Portrait discussion dialog should expose a keyboard inset layout handler"
+	var keyboard_height := 320.0
+	var popup_rect: Rect2i = dialog.call("apply_portrait_keyboard_inset", keyboard_height)
+	var keyboard_top := full_frame.size.y - keyboard_height
+	var send_button := dialog.get_node_or_null("%SendButton") as Button
+	var reset_button := dialog.get_node_or_null("%ResetButton") as Button
+	var root := dialog.get_node_or_null("Root") as Control
+	var root_bottom := float(popup_rect.position.y) + float(popup_rect.size.y) - (root.offset_bottom * -1.0 if root != null else 0.0)
+	var send_bottom := float(popup_rect.position.y) + float(popup_rect.size.y)
+	var reset_bottom := send_bottom
+	if send_button != null:
+		send_bottom = float(popup_rect.position.y) + float(popup_rect.size.y) + send_button.offset_bottom
+	if reset_button != null:
+		reset_bottom = float(popup_rect.position.y) + float(popup_rect.size.y) + reset_button.offset_bottom
+	dialog.queue_free()
+
+	return run_checks([
+		assert_true(popup_rect.size.x <= 390 and popup_rect.end.y <= int(keyboard_top), "Portrait discussion popup should move above the Android soft keyboard"),
+		assert_true(root_bottom <= keyboard_top, "Portrait discussion root should stay above the keyboard-covered area"),
+		assert_true(send_button != null and send_bottom <= keyboard_top, "Portrait discussion send button should remain touchable above the keyboard"),
+		assert_true(reset_button != null and reset_bottom <= keyboard_top, "Portrait discussion reset button should remain touchable above the keyboard"),
+	])
+
+
+func test_portrait_discussion_reset_recovers_busy_input_lock() -> String:
+	var dialog := DialogScene.instantiate()
+	var deck := DeckData.new()
+	deck.id = 900305
+	deck.deck_name = "Busy reset test deck"
+	deck.total_cards = 60
+	dialog.call("setup_for_deck", deck)
+	var service = dialog.get("_service")
+	var send_button := dialog.get_node_or_null("%SendButton") as Button
+	var question_input := dialog.get_node_or_null("%QuestionInput") as TextEdit
+	if service != null:
+		service.set("_busy", true)
+	if send_button != null:
+		send_button.disabled = true
+	if question_input != null:
+		question_input.text = "stuck question"
+
+	dialog.call("_on_reset_pressed")
+	var busy_after_reset := bool(service.call("is_busy")) if service != null and service.has_method("is_busy") else true
+	var input_text := question_input.text if question_input != null else ""
+	dialog.queue_free()
+
+	return run_checks([
+		assert_false(busy_after_reset, "Discussion reset should cancel a stuck in-flight request so the dialog is usable again"),
+		assert_true(send_button != null and not send_button.disabled, "Discussion reset should re-enable Send after a stuck request"),
+		assert_eq(input_text, "", "Discussion reset should clear the current typed question"),
+	])
+
+
+func test_live_battle_portrait_discussion_does_not_auto_focus_android_input() -> String:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return "SceneTree root should be available for the battle portrait discussion focus test"
+	var dialog := DialogScene.instantiate()
+	tree.root.add_child(dialog)
+	var deck := DeckData.new()
+	deck.id = 900306
+	deck.deck_name = "Battle portrait focus test deck"
+	deck.total_cards = 60
+	var battle_context := {
+		"perspective_label": "Player 1 / Android focus",
+		"state": {"turn_number": 1, "phase": "MAIN", "current_player_index": 0, "acting_side_from_perspective": "me"},
+		"public_counts": {"prize_remaining_score": "6-6", "prizes_taken_score": "0-0", "my_hand_count": 5, "my_deck_count": 45, "opponent_hand_count": 5, "opponent_deck_count": 45},
+	}
+	dialog.call("setup_for_battle_context", deck, battle_context, 900306001, true)
+	dialog.call("prepare_for_portrait_popup", Rect2(Vector2.ZERO, Vector2(390, 844)))
+	dialog.call("_deferred_grab_question_focus")
+	var question_input := dialog.get_node_or_null("%QuestionInput") as TextEdit
+	var has_focus := question_input != null and question_input.has_focus()
+	var exposes_policy := dialog.has_method("_should_auto_focus_question_input")
+	var allows_auto_focus := bool(dialog.call("_should_auto_focus_question_input")) if exposes_policy else true
+	dialog.queue_free()
+
+	return run_checks([
+		assert_true(exposes_policy, "Discussion dialog should expose a testable auto-focus policy for Android portrait regressions"),
+		assert_false(allows_auto_focus, "Live battle portrait AI discussion should disable open-time TextEdit auto-focus"),
+		assert_false(has_focus, "Live battle portrait AI discussion should not auto-focus TextEdit and open Android keyboard before the HUD is visible"),
+	])
+
+
+func test_live_battle_portrait_discussion_does_not_route_buttons_through_non_battle_touch_bridge() -> String:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return "SceneTree root should be available for the battle portrait discussion touch bridge test"
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var dialog := DialogScene.instantiate()
+	tree.root.add_child(dialog)
+	var deck := DeckData.new()
+	deck.id = 900307
+	deck.deck_name = "Battle portrait touch bridge test deck"
+	deck.total_cards = 60
+	var battle_context := {
+		"perspective_label": "Player 1 / Android touch bridge",
+		"state": {"turn_number": 1, "phase": "MAIN", "current_player_index": 0, "acting_side_from_perspective": "me"},
+		"public_counts": {"prize_remaining_score": "6-6", "prizes_taken_score": "0-0", "my_hand_count": 5, "my_deck_count": 45, "opponent_hand_count": 5, "opponent_deck_count": 45},
+	}
+	dialog.call("setup_for_battle_context", deck, battle_context, 900307001, true)
+	dialog.call("prepare_for_portrait_popup", Rect2(Vector2.ZERO, Vector2(390, 844)))
+	NonBattleTouchBridgeScript.bind_buttons_recursive(dialog)
+	var send_button := dialog.get_node_or_null("%SendButton") as Button
+	var bridge_press_count := [0]
+	if send_button != null:
+		send_button.pressed.connect(func() -> void:
+			bridge_press_count[0] = int(bridge_press_count[0]) + 1
+		)
+		var touch_press := InputEventScreenTouch.new()
+		touch_press.pressed = true
+		send_button.gui_input.emit(touch_press)
+		var touch_release := InputEventScreenTouch.new()
+		touch_release.pressed = false
+		send_button.gui_input.emit(touch_release)
+	var had_bound_bridge := send_button != null and bool(send_button.get_meta(NonBattleTouchBridgeScript.BUTTON_TOUCH_BOUND_META, false))
+	dialog.queue_free()
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+
+	return run_checks([
+		assert_true(had_bound_bridge, "Discussion buttons should still be covered by the shared binding path so this test catches context policy regressions"),
+		assert_eq(int(bridge_press_count[0]), 0, "Live battle portrait AI discussion must not let the non-battle touch bridge manually emit Button.pressed"),
 	])

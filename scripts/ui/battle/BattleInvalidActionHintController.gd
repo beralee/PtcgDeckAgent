@@ -4,6 +4,10 @@ extends RefCounted
 const OVERLAY_NAME := "InvalidActionOverlay"
 const PORTRAIT_BASE_TEXT_SCALE := 1.35
 const PORTRAIT_METRIC_GROWTH := 1.30
+const PORTRAIT_EDGE_MARGIN := 8.0
+const PORTRAIT_HAND_GAP := 8.0
+const PORTRAIT_MIN_USABLE_HEIGHT := 260.0
+const LANDSCAPE_MAX_BOX_HEIGHT := 260.0
 
 var _scene: Control = null
 
@@ -27,6 +31,8 @@ func show_hint(payload: Variant) -> void:
 		return
 	_ensure_overlay()
 	_apply_payload(data)
+	if _scene.has_method("_sync_portrait_modal_overlay_rects"):
+		_scene.call("_sync_portrait_modal_overlay_rects")
 	_apply_metrics()
 	var overlay := _overlay()
 	if overlay != null:
@@ -70,7 +76,7 @@ func _ensure_overlay() -> void:
 	overlay.add_theme_stylebox_override("panel", _overlay_style())
 	_scene.add_child(overlay)
 
-	var center := CenterContainer.new()
+	var center := Control.new()
 	center.name = "InvalidActionCenter"
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -133,18 +139,21 @@ func _apply_metrics() -> void:
 	var metric_scale := PORTRAIT_METRIC_GROWTH if portrait else 1.0
 	var content_margin_x := 24.0 * metric_scale
 	var content_margin_y := 20.0 * metric_scale
+	var box_width := 0.0
 	if portrait:
 		var old_portrait_width := maxf(320.0, viewport_size.x - 36.0)
 		var max_portrait_width := maxf(0.0, viewport_size.x - 16.0)
-		var box_width := minf(old_portrait_width * metric_scale, max_portrait_width)
+		box_width = minf(old_portrait_width * metric_scale, max_portrait_width)
 		box.custom_minimum_size = Vector2(box_width, 0)
 		content_margin_x = minf(content_margin_x, maxf(18.0, box_width * 0.16))
 	else:
-		box.custom_minimum_size = Vector2(minf(maxf(viewport_size.x * 0.42, 520.0), 720.0), 0)
+		box_width = minf(maxf(viewport_size.x * 0.42, 520.0), 720.0)
+		box.custom_minimum_size = Vector2(box_width, 0)
 	box.add_theme_stylebox_override("panel", _box_style(metric_scale, content_margin_x, content_margin_y))
 	var vbox := _node("InvalidActionCenter/InvalidActionBox/InvalidActionVBox") as VBoxContainer
 	if vbox != null:
 		vbox.add_theme_constant_override("separation", int(round(12.0 * metric_scale)))
+		vbox.clip_contents = not portrait
 	var footer := _node("InvalidActionCenter/InvalidActionBox/InvalidActionVBox/InvalidActionFooter") as HBoxContainer
 	if footer != null:
 		footer.add_theme_constant_override("separation", int(round(12.0 * metric_scale)))
@@ -169,6 +178,117 @@ func _apply_metrics() -> void:
 			ceilf(78.0 * metric_scale)
 		) if portrait else Vector2(220, 58)
 		close_button.add_theme_font_size_override("font_size", int(round(24.0 * metric_scale)) if portrait else 18)
+	_apply_label_bounds(portrait, maxf(1.0, box_width - content_margin_x * 2.0), title, reason, detail, hint)
+	_apply_box_rect(box, portrait, viewport_size)
+
+
+func _apply_label_bounds(
+	portrait: bool,
+	inner_width: float,
+	title: Label,
+	reason: Label,
+	detail: Label,
+	hint: Label
+) -> void:
+	if not portrait:
+		_configure_label_bounds(title, inner_width, 1, true)
+		_configure_label_bounds(reason, inner_width, 1, true)
+		_configure_label_bounds(detail, inner_width, 1, true)
+		_configure_label_bounds(hint, inner_width, 1, true)
+		return
+	_configure_label_bounds(title, inner_width, 1, true)
+	_configure_label_bounds(reason, inner_width, 2, true)
+	_configure_label_bounds(detail, inner_width, 1, true)
+	_configure_label_bounds(hint, inner_width, 1, true)
+
+
+func _configure_label_bounds(label: Label, inner_width: float, max_lines: int, clipped: bool) -> void:
+	if label == null:
+		return
+	label.custom_minimum_size.x = inner_width
+	label.size.x = inner_width
+	label.clip_text = clipped
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS if clipped else TextServer.OVERRUN_NO_TRIMMING
+	label.max_lines_visible = max_lines
+	if clipped and label.visible and label.text.strip_edges() != "":
+		var line_count := maxi(max_lines, 1)
+		var font_size := label.get_theme_font_size("font_size")
+		label.custom_minimum_size.y = ceilf(float(font_size) * 1.28 * float(line_count))
+		label.size.y = label.custom_minimum_size.y
+	else:
+		label.custom_minimum_size.y = 0.0
+
+
+func _apply_box_rect(box: PanelContainer, portrait: bool, viewport_size: Vector2) -> void:
+	if box == null:
+		return
+	var overlay := _overlay()
+	var center := _node("InvalidActionCenter") as Control
+	if overlay != null and overlay.size == Vector2.ZERO:
+		overlay.set_anchors_preset(Control.PRESET_TOP_LEFT, false)
+		overlay.position = Vector2.ZERO
+		overlay.size = viewport_size
+	if center != null:
+		center.set_anchors_preset(Control.PRESET_TOP_LEFT, false)
+		center.position = Vector2.ZERO
+		center.size = overlay.size if overlay != null and overlay.size != Vector2.ZERO else viewport_size
+	var content_rect := Rect2(Vector2.ZERO, viewport_size)
+	if overlay != null and overlay.size.x > 0.0 and overlay.size.y > 0.0:
+		content_rect = Rect2(Vector2.ZERO, overlay.size)
+	var available_rect := _available_hint_rect(content_rect, portrait)
+	var natural_size := box.get_combined_minimum_size()
+	var box_width := minf(maxf(box.custom_minimum_size.x, natural_size.x), available_rect.size.x)
+	var min_height := 180.0 if portrait else 140.0
+	var max_height := available_rect.size.y
+	if not portrait:
+		max_height = minf(max_height, LANDSCAPE_MAX_BOX_HEIGHT)
+	var box_height := minf(maxf(natural_size.y, min_height), max_height)
+	box.clip_contents = not portrait
+	box.custom_minimum_size = Vector2(box_width, box_height)
+	box.size = Vector2(box_width, box_height)
+	box.position = Vector2(
+		roundf(available_rect.position.x + maxf((available_rect.size.x - box_width) * 0.5, 0.0)),
+		roundf(available_rect.position.y + maxf((available_rect.size.y - box_height) * 0.5, 0.0))
+	)
+
+
+func _available_hint_rect(content_rect: Rect2, portrait: bool) -> Rect2:
+	var margin := PORTRAIT_EDGE_MARGIN if portrait else 24.0
+	var left := content_rect.position.x + margin
+	var top := content_rect.position.y + margin
+	var right := content_rect.position.x + maxf(content_rect.size.x - margin, margin)
+	var bottom := content_rect.position.y + maxf(content_rect.size.y - margin, margin)
+	if portrait:
+		var hand_top := _portrait_hand_top(content_rect)
+		if hand_top > top + PORTRAIT_MIN_USABLE_HEIGHT:
+			bottom = minf(bottom, hand_top - PORTRAIT_HAND_GAP)
+	if bottom <= top:
+		bottom = top + maxf(content_rect.size.y - margin * 2.0, 1.0)
+	var width := maxf(right - left, 1.0)
+	var height := maxf(bottom - top, 1.0)
+	return Rect2(Vector2(left, top), Vector2(width, height))
+
+
+func _portrait_hand_top(content_rect: Rect2) -> float:
+	if _scene == null or not is_instance_valid(_scene):
+		return content_rect.position.y + content_rect.size.y
+	var hand_area := _scene.find_child("HandArea", true, false) as Control
+	if hand_area == null:
+		return content_rect.position.y + content_rect.size.y
+	var content_bottom := content_rect.position.y + content_rect.size.y
+	var resolved_top := -1.0
+	var hand_height := maxf(hand_area.size.y, hand_area.custom_minimum_size.y)
+	if hand_height > 0.0 and hand_height < content_rect.size.y:
+		resolved_top = content_bottom - hand_height
+	if _scene.has_method("_control_rect_in_battle_local"):
+		var rect_variant: Variant = _scene.call("_control_rect_in_battle_local", hand_area)
+		if rect_variant is Rect2 and (rect_variant as Rect2).position.y > 0.0:
+			resolved_top = maxf(resolved_top, (rect_variant as Rect2).position.y)
+	if hand_area.position.y > 0.0:
+		resolved_top = maxf(resolved_top, hand_area.position.y)
+	if resolved_top > 0.0:
+		return minf(resolved_top, content_bottom)
+	return content_bottom
 
 
 func _is_portrait_layout() -> bool:

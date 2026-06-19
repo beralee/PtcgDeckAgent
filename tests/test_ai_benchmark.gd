@@ -4,6 +4,7 @@ extends TestBase
 const AIBenchmarkRunnerScript = preload("res://scripts/ai/AIBenchmarkRunner.gd")
 const HeadlessMatchBridgeScript = preload("res://scripts/ai/HeadlessMatchBridge.gd")
 const AIOpponentScript = preload("res://scripts/ai/AIOpponent.gd")
+const AIDecisionTraceScript = preload("res://scripts/ai/AIDecisionTrace.gd")
 
 
 class RiggedCoinFlipper extends CoinFlipper:
@@ -99,6 +100,53 @@ class EffectInteractionSignalSpyAI extends AIOpponent:
 		return true
 
 
+class TraceThenResolvePromptAI extends AIOpponent:
+	var action_steps: int = 0
+	var prompt_steps: int = 0
+
+	func run_single_step(battle_scene: Control, gsm: GameStateMachine) -> bool:
+		if str(battle_scene.get("_pending_choice")) == "effect_interaction":
+			prompt_steps += 1
+			battle_scene.set("_pending_choice", "")
+			battle_scene.set("_dialog_data", {})
+			if gsm != null and gsm.game_state != null:
+				gsm.game_state.phase = GameState.GamePhase.GAME_OVER
+				gsm.game_state.winner_index = player_index
+			return true
+
+		action_steps += 1
+		var trace = AIDecisionTraceScript.new()
+		trace.turn_number = int(gsm.game_state.turn_number) if gsm != null and gsm.game_state != null else -1
+		trace.phase = str(gsm.game_state.phase) if gsm != null and gsm.game_state != null else ""
+		trace.player_index = player_index
+		trace.scored_actions = [{
+			"kind": "play_trainer",
+			"score": 10.0,
+			"features": {},
+		}]
+		trace.chosen_action = trace.scored_actions[0].duplicate(true)
+		_last_decision_trace = trace
+		if gsm != null:
+			gsm.player_choice_required.emit("effect_interaction", {
+				"chooser_player_index": player_index,
+				"player": player_index,
+				"opponent_chooses": false,
+			})
+		return true
+
+
+class DecisionTraceRecorder extends RefCounted:
+	var records: Array[Dictionary] = []
+
+	func record_trace(trace) -> void:
+		if trace == null:
+			return
+		if trace.has_method("to_dictionary"):
+			records.append(trace.to_dictionary())
+		else:
+			records.append({})
+
+
 class UnsupportedInteractiveStepAI extends AIOpponent:
 	var legal_action_calls: int = 0
 
@@ -144,7 +192,28 @@ class HeavyBatonSignalSpyAI extends AIOpponent:
 				"bench": gsm.game_state.players[player_index].bench.duplicate(),
 				"count": 3,
 				"source_name": "Heavy Baton",
-			})
+		})
+		return true
+
+
+class KnockoutThenGuardAI extends AIOpponent:
+	var action_calls: int = 0
+	var saw_dead_active_main_action: bool = false
+
+	func run_single_step(_battle_scene: Control, gsm: GameStateMachine) -> bool:
+		action_calls += 1
+		if gsm == null or gsm.game_state == null:
+			return false
+		if player_index == 0 and action_calls == 1:
+			return gsm.use_attack(0, 0)
+		var player: PlayerState = gsm.game_state.players[player_index]
+		var active := player.active_pokemon
+		if gsm.game_state.phase == GameState.GamePhase.MAIN \
+				and active != null \
+				and gsm.effect_processor.is_effectively_knocked_out(active, gsm.game_state):
+			saw_dead_active_main_action = true
+			return false
+		gsm.end_turn(player_index)
 		return true
 
 
@@ -490,6 +559,27 @@ func test_benchmark_runner_handles_effect_interaction_prompt_from_signal_path() 
 	])
 
 
+func test_benchmark_runner_does_not_record_stale_action_trace_after_prompt_resolution() -> String:
+	var runner := AIBenchmarkRunnerScript.new()
+	var player_0_ai := TraceThenResolvePromptAI.new()
+	player_0_ai.configure(0, 1)
+	var player_1_ai := AIOpponentScript.new()
+	player_1_ai.configure(1, 1)
+	var recorder := DecisionTraceRecorder.new()
+	var gsm := _make_headless_smoke_gsm()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	var result: Dictionary = runner.run_headless_duel(player_0_ai, player_1_ai, gsm, 5, Callable(), recorder)
+
+	return run_checks([
+		assert_eq(player_0_ai.action_steps, 1, "The fixture should emit one real action decision"),
+		assert_eq(player_0_ai.prompt_steps, 1, "The fixture should resolve one prompt without making a new action decision"),
+		assert_eq(result.get("winner_index", -1), 0, "The prompt step should terminate the fixture duel"),
+		assert_eq(recorder.records.size(), 1, "Prompt resolution should not re-export the previous action trace"),
+		assert_eq(str((recorder.records[0] as Dictionary).get("chosen_action", {}).get("kind", "")), "play_trainer", "The single exported trace should be the original action"),
+	])
+
+
 func test_headless_bridge_can_drive_random_start_game_setup_to_main_phase() -> String:
 	var bridge = HeadlessMatchBridgeScript.new()
 	var player_0_ai = AIOpponentScript.new()
@@ -611,6 +701,82 @@ func test_headless_bridge_auto_resolves_send_out_prompt() -> String:
 		assert_true(can_resolve, "Headless bridge should auto-resolve send_out prompts it owns"),
 		assert_true(resolved, "Headless bridge should resolve the pending send_out prompt"),
 		assert_eq(active_after, replacement, "The selected replacement should become Active"),
+	])
+
+
+func test_benchmark_runner_resolves_prize_and_replacement_before_next_main_action() -> String:
+	var runner := AIBenchmarkRunnerScript.new()
+	var player_0_ai := KnockoutThenGuardAI.new()
+	player_0_ai.configure(0, 1)
+	var player_1_ai := KnockoutThenGuardAI.new()
+	player_1_ai.configure(1, 1)
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.players = [PlayerState.new(), PlayerState.new()]
+	for pi: int in 2:
+		gsm.game_state.players[pi].player_index = pi
+	var attacker := _make_benchmark_slot(_make_benchmark_basic("Headless KO Attacker", 120, [
+		{"name": "Clean KO", "cost": "", "damage": "200", "is_vstar_power": false},
+	]))
+	var defender := _make_benchmark_slot(_make_benchmark_basic("Headless Victim", 60))
+	var replacement := _make_benchmark_slot(_make_benchmark_basic("Headless Replacement", 100))
+	gsm.game_state.players[0].active_pokemon = attacker
+	gsm.game_state.players[1].active_pokemon = defender
+	gsm.game_state.players[1].bench = [replacement]
+	for pi: int in 2:
+		for prize_index: int in 2:
+			gsm.game_state.players[pi].prizes.append(_make_benchmark_filler("Prize %d %d" % [pi, prize_index]))
+		for deck_index: int in 3:
+			gsm.game_state.players[pi].deck.append(_make_benchmark_filler("Deck %d %d" % [pi, deck_index]))
+
+	var result: Dictionary = runner.run_headless_duel(player_0_ai, player_1_ai, gsm, 6)
+	var active_after: PokemonSlot = gsm.game_state.players[1].active_pokemon
+	return run_checks([
+		assert_false(player_1_ai.saw_dead_active_main_action, "Benchmark runner must not let a player act in MAIN with a knocked-out Active Pokemon"),
+		assert_eq(active_after, replacement, "Headless runner should auto-resolve send-out before the knocked-out player acts"),
+		assert_true(player_1_ai.action_calls >= 1, "The knocked-out player should get a normal turn after replacement"),
+		assert_false(str(result.get("failure_reason", "")) == "invalid_state_transition", "Prize/replacement prompt flow should not break the headless duel"),
+	])
+
+
+func test_benchmark_runner_cleans_stale_main_phase_knockouts_before_ai_action() -> String:
+	var runner := AIBenchmarkRunnerScript.new()
+	var player_0_ai := KnockoutThenGuardAI.new()
+	player_0_ai.configure(0, 1)
+	player_0_ai.action_calls = 1
+	var player_1_ai := KnockoutThenGuardAI.new()
+	player_1_ai.configure(1, 1)
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 1
+	gsm.game_state.turn_number = 3
+	gsm.game_state.players = [PlayerState.new(), PlayerState.new()]
+	for pi: int in 2:
+		gsm.game_state.players[pi].player_index = pi
+	var knocked_active := _make_benchmark_slot(_make_benchmark_basic("Stale Knocked Active", 70))
+	knocked_active.damage_counters = 70
+	var replacement := _make_benchmark_slot(_make_benchmark_basic("Fresh Replacement", 100))
+	gsm.game_state.players[0].active_pokemon = knocked_active
+	gsm.game_state.players[0].bench = [replacement]
+	gsm.game_state.players[1].active_pokemon = _make_benchmark_slot(_make_benchmark_basic("Prize Taker", 100))
+	for pi: int in 2:
+		for prize_index: int in 2:
+			gsm.game_state.players[pi].prizes.append(_make_benchmark_filler("Prize %d %d" % [pi, prize_index]))
+		for deck_index: int in 3:
+			gsm.game_state.players[pi].deck.append(_make_benchmark_filler("Deck %d %d" % [pi, deck_index]))
+
+	var result: Dictionary = runner.run_headless_duel(player_0_ai, player_1_ai, gsm, 6)
+	var active_after: PokemonSlot = gsm.game_state.players[0].active_pokemon
+	return run_checks([
+		assert_false(player_0_ai.saw_dead_active_main_action, "Benchmark runner must clean stale MAIN-phase knockouts before the affected AI acts"),
+		assert_eq(active_after, replacement, "The stale knocked-out Active should be replaced before normal MAIN actions resume"),
+		assert_false(str(result.get("failure_reason", "")) == "stalled_no_progress", "Stale knockout cleanup should make progress instead of falling back through a dead Active"),
 	])
 
 

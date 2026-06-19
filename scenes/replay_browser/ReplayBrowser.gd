@@ -83,6 +83,7 @@ func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode
 		margin.add_theme_constant_override("margin_right", value)
 		margin.add_theme_constant_override("margin_bottom", value)
 	_apply_replay_mobile_metrics(self, context, portrait)
+	_apply_replay_list_scroll_clearance()
 
 
 func _apply_replay_mobile_metrics(node: Node, context: Dictionary, portrait: bool) -> void:
@@ -118,12 +119,18 @@ func _apply_hud_theme() -> void:
 
 
 func _apply_replay_list_scroll_clearance() -> void:
+	var portrait := str(get_meta("non_battle_layout_mode", "")) == "portrait"
 	var replay_scroll := find_child("ScrollContainer", true, false) as ScrollContainer
 	if replay_scroll != null:
 		replay_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		HudThemeScript.style_scroll_container(replay_scroll, "auto")
+		if portrait:
+			NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(replay_scroll)
+		else:
+			NonBattleTouchBridgeScript.configure_visible_vertical_scroll(replay_scroll)
 	var replay_scroll_margin := find_child("ReplayScrollMargin", true, false) as MarginContainer
 	if replay_scroll_margin != null:
-		replay_scroll_margin.add_theme_constant_override("margin_right", REPLAY_LIST_SCROLLBAR_RIGHT_CLEARANCE)
+		replay_scroll_margin.add_theme_constant_override("margin_right", 12 if portrait else REPLAY_LIST_SCROLLBAR_RIGHT_CLEARANCE)
 
 
 func _ensure_hud_frame() -> void:

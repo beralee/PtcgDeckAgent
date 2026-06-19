@@ -37,6 +37,8 @@ func ensure_stadium_card_overlay() -> Control:
 	overlay.z_index = STADIUM_CARD_OVERLAY_Z_INDEX
 	overlay.clip_contents = false
 	_set_scene_var("_stadium_card_overlay", overlay)
+	if _scene != null and _scene.has_method("_sync_portrait_modal_overlay_rects"):
+		_scene.call("_sync_portrait_modal_overlay_rects")
 	return overlay
 
 

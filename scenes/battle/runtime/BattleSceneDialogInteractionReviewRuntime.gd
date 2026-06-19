@@ -152,6 +152,8 @@ func _finish_modal_input_interaction(reason: String = "modal", slot_suppression_
 	_ensure_battle_drag_scroll_coordinator()
 	if _battle_drag_scroll_coordinator != null:
 		_battle_drag_scroll_coordinator.call("clear_transient_input_capture", reason)
+	_modal_input_generation += 1
+	_modal_input_origin_position = _origin_position
 	_arm_hand_primary_release_fallback_window(reason)
 	match slot_suppression_mode:
 		"arm":
@@ -400,6 +402,7 @@ func _reset_dialog_assignment_state() -> void:
 
 func _setup_dialog_card_view(card_view: BattleCardView, item: Variant, label: String) -> void:
 	_battle_dialog_controller.call("setup_dialog_card_view", self, card_view, item, label)
+	_sync_card_foil_effect_for_view(card_view)
 
 
 
@@ -441,8 +444,11 @@ func _on_dialog_card_left_signal(_ci: CardInstance, _cd: CardData, real_index: i
 
 
 
-func _on_dialog_card_right_signal(_ci: CardInstance, cd: CardData) -> void:
+func _on_dialog_card_right_signal(ci: CardInstance, cd: CardData) -> void:
 	if _is_card_gallery_drag_click_suppressed():
+		return
+	if ci != null:
+		_show_card_detail_for_instance(ci)
 		return
 	if cd != null:
 		_show_card_detail(cd)
@@ -495,6 +501,22 @@ func _on_dialog_confirm() -> void:
 
 func _on_dialog_cancel() -> void:
 	_battle_dialog_controller.call("on_dialog_cancel", self)
+
+
+func _on_dialog_confirm_input(event: InputEvent) -> void:
+	_battle_dialog_controller.call("on_dialog_action_button_input", self, "confirm", event)
+
+
+func _on_dialog_cancel_input(event: InputEvent) -> void:
+	_battle_dialog_controller.call("on_dialog_action_button_input", self, "cancel", event)
+
+
+func _on_dialog_confirm_button_down() -> void:
+	_battle_dialog_controller.call("on_dialog_action_button_down", self, "confirm")
+
+
+func _on_dialog_cancel_button_down() -> void:
+	_battle_dialog_controller.call("on_dialog_action_button_down", self, "cancel")
 
 
 

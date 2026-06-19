@@ -71,11 +71,12 @@ func show_deck(host: Node, deck: DeckData) -> void:
 	var scroll := ScrollContainer.new()
 	scroll.name = "DeckViewCardScroll"
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	HudThemeScript.style_scroll_container(scroll, "portrait_touch" if portrait else "auto")
+	HudThemeScript.style_scroll_container(scroll, "auto")
+	if portrait:
+		NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(scroll)
+	else:
+		NonBattleTouchBridgeScript.configure_visible_vertical_scroll(scroll)
 	outer.add_child(scroll)
-	var vbar := scroll.get_v_scroll_bar()
-	if vbar != null:
-		NonBattleTouchBridgeScript.bind_range_touch(vbar)
 
 	var grid := GridContainer.new()
 	grid.name = "DeckViewCardGrid"
@@ -85,7 +86,7 @@ func show_deck(host: Node, deck: DeckData) -> void:
 	grid.add_theme_constant_override("h_separation", int(layout.get("gap", 6)))
 	grid.add_theme_constant_override("v_separation", int(layout.get("gap", 6)))
 	scroll.add_child(grid)
-	_configure_card_list_drag_scroll(scroll, grid)
+	_configure_card_list_drag_scroll(scroll, grid, portrait)
 
 	var tile_width := int(layout.get("tile_width", CARD_TILE_WIDTH))
 	var tile_height := int(layout.get("tile_height", CARD_TILE_HEIGHT))
@@ -139,8 +140,7 @@ func _deck_view_layout_profile(host: Node, total_cards: int) -> Dictionary:
 		)
 		var content_margin := roundi(clampf(viewport_size.x * 0.022, 22.0, 30.0))
 		var gap := roundi(clampf(viewport_size.x * 0.012, 10.0, 16.0))
-		var scrollbar_clearance := float(HudThemeScript.scrollbar_thickness_for_profile("portrait_touch")) + 8.0
-		var available_width := maxf(float(dialog_size.x) - float(content_margin * 2) - scrollbar_clearance - float(gap * (PORTRAIT_VIEW_GRID_COLUMNS - 1)), 1.0)
+		var available_width := maxf(float(dialog_size.x) - float(content_margin * 2) - float(gap * (PORTRAIT_VIEW_GRID_COLUMNS - 1)), 1.0)
 		var tile_width := roundi(clampf(floor(available_width / float(PORTRAIT_VIEW_GRID_COLUMNS)), 250.0, 310.0))
 		var grid_width := float(tile_width * PORTRAIT_VIEW_GRID_COLUMNS + gap * (PORTRAIT_VIEW_GRID_COLUMNS - 1))
 		return {
@@ -192,12 +192,16 @@ func _host_viewport_size(host: Node) -> Vector2:
 	return Vector2(1600, 900)
 
 
-func _configure_card_list_drag_scroll(scroll: ScrollContainer, grid: Control = null) -> void:
+func _configure_card_list_drag_scroll(scroll: ScrollContainer, grid: Control = null, hidden_scrollbar: bool = true) -> void:
 	if scroll == null:
 		return
 	scroll.clip_contents = true
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	if hidden_scrollbar:
+		NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(scroll)
+	else:
+		NonBattleTouchBridgeScript.configure_visible_vertical_scroll(scroll)
 	scroll.mouse_filter = Control.MOUSE_FILTER_STOP
 	scroll.set_meta("deck_card_list_drag_scroll_enabled", true)
 	scroll.set_meta("deck_card_list_drag_active", false)

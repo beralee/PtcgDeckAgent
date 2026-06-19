@@ -83,16 +83,21 @@ func test_tm_evolution_full_deck_search_pairs_selected_evolutions_by_line() -> S
 
 	var effect = AttackTMEvolutionScript.new(2)
 	var steps: Array[Dictionary] = effect.get_granted_attack_interaction_steps(player.active_pokemon, {"id": "tm_evolution"}, state)
-	var search_step: Dictionary = steps[0] if steps.size() > 0 else {}
-	var target_step: Dictionary = steps[1] if steps.size() > 1 else {}
+	var target_step: Dictionary = steps[0] if steps.size() > 0 else {}
+	var followup_raw: Variant = effect.call("get_followup_granted_attack_interaction_steps", player.active_pokemon, {"id": "tm_evolution"}, state, {
+		"evolution_bench": [charmander_slot],
+	})
+	var followup_steps: Array[Dictionary] = followup_raw if followup_raw is Array else []
+	var search_step: Dictionary = followup_steps[0] if not followup_steps.is_empty() else {}
 
 	effect.execute_granted_attack(player.active_pokemon, {"id": "tm_evolution"}, state, [{
 		"evolution_cards": [wartortle, charmeleon],
 		"evolution_bench": [charmander_slot, squirtle_slot],
 	}])
 
-	var checks := _full_deck_step_checks(search_step, visible_deck, [charmeleon, wartortle], [0, 1, -1], "evolution_cards", "TM Evolution")
+	var checks := _full_deck_step_checks(search_step, visible_deck, [charmeleon], [0, -1, -1], "evolution_cards", "TM Evolution")
 	checks.append(assert_eq(target_step.get("items", []), [charmander_slot, squirtle_slot], "TM Evolution should offer only bench Pokemon with matching deck evolutions"))
+	checks.append(assert_eq(int(target_step.get("min_select", -1)), 1, "TM Evolution should choose bench targets before any deck search"))
 	checks.append(assert_eq(charmander_slot.get_pokemon_name(), "Charmeleon", "TM Evolution should pair Charmeleon with the Charmander line"))
 	checks.append(assert_eq(squirtle_slot.get_pokemon_name(), "Wartortle", "TM Evolution should pair Wartortle with the Squirtle line"))
 	checks.append(assert_true(deck_item in player.deck, "TM Evolution must leave disabled non-evolution cards in deck"))

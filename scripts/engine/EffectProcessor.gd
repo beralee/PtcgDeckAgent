@@ -541,6 +541,21 @@ func get_granted_attack_interaction_steps(
 	return []
 
 
+func get_granted_attack_followup_interaction_steps(
+	pokemon: PokemonSlot,
+	granted_attack: Dictionary,
+	state: GameState,
+	resolved_context: Dictionary
+) -> Array[Dictionary]:
+	var effect: BaseEffect = _resolve_granted_attack_effect(pokemon, granted_attack, state)
+	if effect == null or not effect.has_method("get_followup_granted_attack_interaction_steps"):
+		return []
+	var raw_steps: Variant = effect.call("get_followup_granted_attack_interaction_steps", pokemon, granted_attack, state, resolved_context)
+	if raw_steps is Array:
+		return raw_steps
+	return []
+
+
 func execute_granted_attack(
 	attacker: PokemonSlot,
 	granted_attack: Dictionary,

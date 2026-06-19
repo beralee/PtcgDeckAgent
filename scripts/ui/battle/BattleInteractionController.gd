@@ -800,6 +800,11 @@ func create_grouped_field_source_slot_panel(
 	prepare_grouped_field_source_card_view(header, card_size)
 	header.set_clickable(false)
 	header.setup_from_card_data(slot.get_card_data(), scene.call("_battle_card_mode_for_slot", slot))
+	var header_top_card := slot.get_top_card()
+	if header_top_card != null and header.has_method("set_card_foil_owner_index"):
+		header.call("set_card_foil_owner_index", header_top_card.owner_index)
+	if scene.has_method("_sync_card_foil_effect_for_view"):
+		scene.call("_sync_card_foil_effect_for_view", header)
 	header.set_badges()
 	header.set_battle_status(scene.call("_build_battle_status", slot))
 	line.add_child(header)
@@ -820,7 +825,10 @@ func create_grouped_field_source_slot_panel(
 		source_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
 			scene.call("_on_field_assignment_source_chosen", source_index)
 		)
-		source_view.right_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
+		source_view.right_clicked.connect(func(ci: CardInstance, cd: CardData) -> void:
+			if ci != null and scene.has_method("_show_card_detail_for_instance"):
+				scene.call("_show_card_detail_for_instance", ci)
+				return
 			if cd != null:
 				scene.call("_show_card_detail", cd)
 		)
@@ -934,7 +942,10 @@ func add_field_assignment_source_card(
 		source_view.left_clicked.connect(func(_ci: CardInstance, _cd: CardData) -> void:
 			scene.call("_on_field_assignment_source_chosen", source_index)
 		)
-	source_view.right_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
+	source_view.right_clicked.connect(func(ci: CardInstance, cd: CardData) -> void:
+		if ci != null and scene.has_method("_show_card_detail_for_instance"):
+			scene.call("_show_card_detail_for_instance", ci)
+			return
 		if cd != null:
 			scene.call("_show_card_detail", cd)
 	)

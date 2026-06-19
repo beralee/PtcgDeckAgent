@@ -56,6 +56,32 @@ func test_web_progressive_web_app_is_enabled() -> String:
 	])
 
 
+func test_export_presets_use_unified_app_icon_assets() -> String:
+	var preset_text := FileAccess.get_file_as_string(EXPORT_PRESETS_PATH)
+	var windows_options := _extract_preset_options_block(preset_text, "Windows Desktop")
+	var mac_options := _extract_preset_options_block(preset_text, "macOS")
+	var android_options := _extract_preset_options_block(preset_text, "Android")
+	var web_options := _extract_preset_options_block(preset_text, WEB_PRESET_NAME)
+	var ios_options := _extract_preset_options_block(preset_text, "iOS")
+	var icon_keys := {
+		"Windows icon": _extract_string_value(windows_options, "application/icon"),
+		"macOS icon": _extract_string_value(mac_options, "application/icon"),
+		"Android launcher icon": _extract_string_value(android_options, "launcher_icons/main_192x192"),
+		"Web PWA 144 icon": _extract_string_value(web_options, "progressive_web_app/icon_144x144"),
+		"Web PWA 180 icon": _extract_string_value(web_options, "progressive_web_app/icon_180x180"),
+		"Web PWA 512 icon": _extract_string_value(web_options, "progressive_web_app/icon_512x512"),
+		"iOS app icon": _extract_string_value(ios_options, "icons/icon_1024x1024"),
+		"iOS store icon": _extract_string_value(ios_options, "icons/app_store_1024x1024"),
+	}
+	var checks: Array[String] = []
+	for label: String in icon_keys.keys():
+		var icon_path := str(icon_keys[label])
+		checks.append(assert_true(icon_path.begins_with("res://assets/ui/app_icon/"), "%s should use the unified app icon asset folder" % label))
+		checks.append(assert_false(icon_path.ends_with("title.png"), "%s should not reuse the homepage title art as an app icon" % label))
+		checks.append(assert_true(FileAccess.file_exists(icon_path), "%s path should exist" % label))
+	return run_checks(checks)
+
+
 func test_web_uses_custom_ios_first_html_shell() -> String:
 	var preset_text := FileAccess.get_file_as_string(EXPORT_PRESETS_PATH)
 	var web_options := _extract_preset_options_block(preset_text, WEB_PRESET_NAME)
@@ -115,6 +141,24 @@ func test_web_custom_shell_has_perceptible_loading_copy() -> String:
 		assert_true(shell_text.contains("\\u6b63\\u5728\\u521d\\u59cb\\u5316\\u5f15\\u64ce"), "Engine initialization copy should be encoded safely"),
 		assert_true(shell_text.contains("&#39318;&#27425;&#21152;&#36733;&#31245;&#24930;"), "Custom shell should explain first-load cost"),
 		assert_true(shell_text.contains("&#28155;&#21152;&#21040;&#20027;&#23631;&#24149;"), "Custom shell should provide a PWA install hint"),
+	])
+
+
+func test_web_custom_shell_has_safe_latest_version_upgrade_action() -> String:
+	var shell_text := FileAccess.get_file_as_string(WEB_CUSTOM_SHELL_PATH)
+
+	return run_checks([
+		assert_true(shell_text.contains("latest-web.json"), "Custom shell should check the moving Web latest pointer"),
+		assert_true(shell_text.contains("id=\"start-new-version\""), "Custom shell should offer a new-version launch button when an update exists"),
+		assert_true(shell_text.contains("latest.entry"), "New-version launch should prefer the canonical entry URL from latest-web.json"),
+		assert_true(shell_text.contains("release_path"), "New-version launch should fall back to release_path when entry is absent"),
+		assert_true(shell_text.contains("getCurrentWebVersion"), "Custom shell should compare the current versioned directory with latest-web.json"),
+		assert_true(shell_text.contains("clearOldWebReleaseCache"), "Custom shell should attempt to remove old Web resource caches before switching versions"),
+		assert_true(shell_text.contains("PtcgDeckAgent-sw-cache-"), "Cache cleanup should target Godot PWA caches"),
+		assert_true(shell_text.contains("navigator.serviceWorker.getRegistration('./')"), "Cache cleanup should unregister the current version service worker scope"),
+		assert_false(shell_text.contains("../../' + d.web_version"), "New-version links should not rebuild the old broken sibling path by string concatenation"),
+		assert_false(shell_text.contains("localStorage.clear()"), "Upgrade cache cleanup must not erase player local storage"),
+		assert_false(shell_text.contains("indexedDB.deleteDatabase"), "Upgrade cache cleanup must not erase player IndexedDB data"),
 	])
 
 

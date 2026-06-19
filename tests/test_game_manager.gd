@@ -118,7 +118,7 @@ func test_battle_review_api_config_uses_defaults_when_file_is_missing() -> Strin
 		assert_eq(str(manager.call("get_battle_review_api_config_path")), CONFIG_PATH, "GameManager should expose the fixed user:// config path"),
 		assert_eq(str(config.get("endpoint", "")), "https://zenmux.ai/api/v1", "missing config file should keep default endpoint"),
 		assert_eq(str(config.get("api_key", "")), "", "missing config file should keep default api_key"),
-		assert_eq(str(config.get("model", "")), "kimi-k2.6", "missing config file should keep default no-reasoning model"),
+		assert_eq(str(config.get("model", "")), "deepseek-v4-flash", "missing config file should keep default no-reasoning model"),
 		assert_eq(float(config.get("timeout_seconds", 0.0)), 60.0, "missing config file should keep default timeout"),
 		assert_eq(str(config.get("ai_personality", "")), "是一个大逗比，臭牌篓子", "missing config file should use default AI personality"),
 	])
@@ -155,6 +155,35 @@ func test_supported_battle_review_models_match_current_no_reasoning_batch() -> S
 	])
 
 
+func test_main_menu_navigation_prewarm_excludes_heavy_battle_scene() -> String:
+	var manager: Node = _load_game_manager_script().new()
+	var checks: Array[String] = [
+		assert_true(manager.has_method("navigation_prewarm_scene_paths"), "GameManager should expose the main menu prewarm policy for regression coverage"),
+		assert_true(manager.has_method("battle_setup_prewarm_scene_path"), "GameManager should expose the deferred BattleSetup prewarm target"),
+	]
+	if manager.has_method("navigation_prewarm_scene_paths"):
+		var paths: Array = manager.call("navigation_prewarm_scene_paths")
+		checks.append(assert_true(paths.has("res://scenes/battle_setup/BattleSetup.tscn"), "Main menu prewarm should still cover BattleSetup"))
+		checks.append(assert_true(paths.has("res://scenes/deck_manager/DeckManager.tscn"), "Main menu prewarm should still cover DeckManager"))
+		checks.append(assert_false(paths.has("res://scenes/battle/BattleScene.tscn"), "Main menu prewarm should not compete with navigation by loading the heavy BattleScene"))
+	if manager.has_method("battle_setup_prewarm_scene_path"):
+		checks.append(assert_eq(str(manager.call("battle_setup_prewarm_scene_path")), "res://scenes/battle/BattleScene.tscn", "BattleScene should be warmed only after BattleSetup is visible"))
+	return run_checks(checks)
+
+
+func test_scene_navigation_waits_for_in_progress_threaded_prewarm() -> String:
+	var manager: Node = _load_game_manager_script().new()
+	var checks: Array[String] = [
+		assert_true(manager.has_method("should_await_prewarm_status_for_scene_change"), "GameManager should expose in-progress prewarm navigation policy for regression coverage"),
+	]
+	if manager.has_method("should_await_prewarm_status_for_scene_change"):
+		checks.append(assert_true(bool(manager.call("should_await_prewarm_status_for_scene_change", ResourceLoader.THREAD_LOAD_IN_PROGRESS)), "In-progress threaded loads should be awaited instead of falling back to sync scene loading"))
+		checks.append(assert_false(bool(manager.call("should_await_prewarm_status_for_scene_change", ResourceLoader.THREAD_LOAD_LOADED)), "Loaded threaded resources are consumed immediately, not awaited"))
+		checks.append(assert_false(bool(manager.call("should_await_prewarm_status_for_scene_change", ResourceLoader.THREAD_LOAD_FAILED)), "Failed threaded loads should fall back to normal scene loading"))
+		checks.append(assert_false(bool(manager.call("should_await_prewarm_status_for_scene_change", ResourceLoader.THREAD_LOAD_INVALID_RESOURCE)), "Invalid threaded loads should fall back to normal scene loading"))
+	return run_checks(checks)
+
+
 func test_battle_review_api_config_loads_user_file() -> String:
 	var original_config_text := _read_config_text()
 	_remove_config_file()
@@ -175,6 +204,30 @@ func test_battle_review_api_config_loads_user_file() -> String:
 		assert_eq(str(config.get("model", "")), "z-ai/glm-5.2", "GameManager should load supported no-reasoning model from user config"),
 		assert_eq(float(config.get("timeout_seconds", 0.0)), 45.0, "GameManager should load timeout_seconds from user config"),
 		assert_eq(str(config.get("ai_personality", "")), "谨慎但幽默", "GameManager should load AI personality from user config"),
+	])
+
+
+func test_battle_review_api_config_filters_null_instance_diagnostics() -> String:
+	var original_config_text := _read_config_text()
+	_remove_config_file()
+	_write_config({
+		"endpoint": "instance base is null",
+		"api_key": "Instance Base Is Null",
+		"model": "null instance",
+		"timeout_seconds": 45,
+		"ai_personality": "instance is null",
+		"ai_test_signature": "Instance Base Is Null",
+	})
+	var manager: Node = _load_game_manager_script().new()
+	var config: Dictionary = manager.call("get_battle_review_api_config")
+	_restore_config_text(original_config_text)
+
+	return run_checks([
+		assert_eq(str(config.get("endpoint", "")), "https://zenmux.ai/api/v1", "Null-instance endpoint diagnostics should fall back to the default endpoint"),
+		assert_eq(str(config.get("api_key", "")), "", "Null-instance API key diagnostics should not be shown as a saved key"),
+		assert_eq(str(config.get("model", "")), "deepseek-v4-flash", "Null-instance model diagnostics should fall back to the default model"),
+		assert_eq(str(config.get("ai_personality", "")), "是一个大逗比，臭牌篓子", "Null-instance personality diagnostics should fall back to the default AI personality"),
+		assert_eq(str(config.get("ai_test_signature", "")), "", "Null-instance test signatures should be discarded"),
 	])
 
 
@@ -247,12 +300,12 @@ func test_battle_review_api_config_restricts_models_to_supported_allowlist() -> 
 	_restore_config_text(original_config_text)
 
 	return run_checks([
-		assert_eq(str(unsupported_config.get("model", "")), "kimi-k2.6", "Unsupported models should fall back to the default model"),
+		assert_eq(str(unsupported_config.get("model", "")), "deepseek-v4-flash", "Unsupported models should fall back to the default model"),
 		assert_eq(str(deepseek_config.get("model", "")), "deepseek-v4-flash", "DeepSeek V4 Flash should remain selectable as its tested no-thinking slug"),
 		assert_eq(str(deepseek_pro_config.get("model", "")), "deepseek-v4-pro", "Provider-prefixed DeepSeek V4 Pro should normalize to the tested no-thinking slug"),
 		assert_eq(str(legacy_glm_config.get("model", "")), "z-ai/glm-5.2", "Legacy GLM 5.1 config should migrate to GLM 5.2"),
 		assert_eq(str(legacy_qwen_config.get("model", "")), "qwen/qwen3.7-plus", "Legacy Qwen 3.6 Plus config should migrate to Qwen 3.7 Plus"),
-		assert_eq(str(removed_grok_config.get("model", "")), "kimi-k2.6", "Removed Grok model should fall back to the default model"),
+		assert_eq(str(removed_grok_config.get("model", "")), "deepseek-v4-flash", "Removed Grok model should fall back to the default model"),
 	])
 
 
@@ -294,6 +347,28 @@ func test_deck_editor_return_context_is_one_shot() -> String:
 	])
 
 
+func test_duplicate_scene_navigation_requests_are_coalesced_before_deferred_change() -> String:
+	var manager: Node = _load_game_manager_script().new()
+	var first_queued := bool(manager.call("_queue_scene_change", GameManager.SCENE_DECK_EDITOR))
+	var first_token := int(manager.get("_pending_scene_change_token"))
+	var second_queued := bool(manager.call("_queue_scene_change", GameManager.SCENE_DECK_EDITOR))
+	var second_token := int(manager.get("_pending_scene_change_token"))
+	var pending_after_duplicate := str(manager.get("_pending_scene_change_path"))
+	var replacement_queued := bool(manager.call("_queue_scene_change", GameManager.SCENE_MAIN_MENU))
+	var replacement_token := int(manager.get("_pending_scene_change_token"))
+	var pending_after_replacement := str(manager.get("_pending_scene_change_path"))
+
+	return run_checks([
+		assert_true(first_queued, "First DeckEditor navigation request should be queued"),
+		assert_false(second_queued, "Duplicate same-frame DeckEditor navigation should not queue a second deferred scene change"),
+		assert_eq(second_token, first_token, "Duplicate DeckEditor navigation should not advance the pending scene token"),
+		assert_eq(pending_after_duplicate, GameManager.SCENE_DECK_EDITOR, "Duplicate navigation should keep the original pending DeckEditor path"),
+		assert_true(replacement_queued, "A different scene request should replace the pending request"),
+		assert_true(replacement_token > first_token, "Replacement scene request should advance the pending scene token"),
+		assert_eq(pending_after_replacement, GameManager.SCENE_MAIN_MENU, "Replacement navigation should update the pending path"),
+	])
+
+
 func test_desktop_window_size_preserves_windows_target_and_fits_small_screens() -> String:
 	var manager: Node = _load_game_manager_script().new()
 	var normal_size: Vector2i = manager.call("_fit_desktop_window_size", Vector2i(1600, 900), Vector2i(1920, 1080))
@@ -320,6 +395,17 @@ func test_desktop_window_startup_uses_large_windowed_macos_size_without_maximize
 	])
 
 
+func test_desktop_window_resize_preserves_user_expanded_modes() -> String:
+	var manager: Node = _load_game_manager_script().new()
+
+	return run_checks([
+		assert_false(bool(manager.call("_should_preserve_user_desktop_window_mode", DisplayServer.WINDOW_MODE_WINDOWED)), "Configured desktop sizing should still apply to regular windowed mode"),
+		assert_true(bool(manager.call("_should_preserve_user_desktop_window_mode", DisplayServer.WINDOW_MODE_MAXIMIZED)), "Windows title-bar maximize should survive non-battle page changes"),
+		assert_true(bool(manager.call("_should_preserve_user_desktop_window_mode", DisplayServer.WINDOW_MODE_FULLSCREEN)), "Fullscreen should survive non-battle page changes"),
+		assert_true(bool(manager.call("_should_preserve_user_desktop_window_mode", DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN)), "Exclusive fullscreen should survive non-battle page changes"),
+	])
+
+
 func test_navigation_does_not_apply_battle_orientation_before_battle_scene_loads() -> String:
 	var manager: Node = _load_game_manager_script().new()
 	var left_mouse := InputEventMouseButton.new()
@@ -330,10 +416,10 @@ func test_navigation_does_not_apply_battle_orientation_before_battle_scene_loads
 	return run_checks([
 		assert_false(bool(manager.call("_should_apply_non_battle_orientation_before_scene_change", GameManager.SCENE_BATTLE)), "Entering battle should not rotate the current setup scene before the scene change"),
 		assert_true(bool(manager.call("_should_apply_non_battle_orientation_before_scene_change", GameManager.SCENE_BATTLE_SETUP)), "Leaving battle should restore non-battle orientation before showing setup"),
-		assert_false(bool(manager.call("_should_apply_non_battle_orientation_before_scene_change", GameManager.SCENE_DECK_EDITOR)), "Deck editor should keep its permanent landscape contract instead of using non-battle portrait orientation"),
+		assert_false(bool(manager.call("_should_apply_non_battle_orientation_before_scene_change", GameManager.SCENE_DECK_EDITOR)), "Deck editor should keep its dedicated navigation orientation path instead of the generic non-battle policy"),
 		assert_true(bool(manager.call("_touch_mouse_emulation_enabled_for_scene", GameManager.SCENE_BATTLE)), "Battle should keep Godot touch-to-mouse emulation enabled so existing battle gui_input controls receive Android taps"),
 		assert_true(bool(manager.call("_touch_mouse_emulation_enabled_for_scene", GameManager.SCENE_BATTLE_SETUP)), "Scene navigation may allow non-battle mouse emulation before mobile orientation policy is applied"),
-		assert_true(bool(manager.call("_touch_mouse_emulation_enabled_for_scene", GameManager.SCENE_DECK_EDITOR)), "Deck editor should keep regular touch-to-mouse button behavior while staying landscape"),
+		assert_true(bool(manager.call("_touch_mouse_emulation_enabled_for_scene", GameManager.SCENE_DECK_EDITOR)), "Deck editor should keep scene-load touch compatibility until non-battle runtime policy is applied"),
 		assert_false(bool(manager.call("_non_battle_touch_mouse_emulation_enabled_for_runtime", "Android", {})), "Android non-battle pages should use ScreenTouch button bridging instead of touch-to-mouse emulation"),
 		assert_false(bool(manager.call("_non_battle_touch_mouse_emulation_enabled_for_runtime", "iOS", {})), "iPhone non-battle pages should use ScreenTouch button bridging instead of touch-to-mouse emulation"),
 		assert_false(bool(manager.call("_non_battle_touch_mouse_emulation_enabled_for_runtime", "Web", {"web_android": true})), "Mobile browser non-battle pages should use ScreenTouch button bridging"),
@@ -341,6 +427,35 @@ func test_navigation_does_not_apply_battle_orientation_before_battle_scene_loads
 		assert_true(bool(manager.call("_should_bridge_mouse_button_touch_echo", left_mouse, "Android", {})), "Android mouse-button tap echoes should still activate the global Button bridge"),
 		assert_false(bool(manager.call("_should_bridge_mouse_button_touch_echo", left_mouse, "Windows", {})), "Desktop mouse clicks should stay on regular Button handling"),
 		assert_false(bool(manager.call("_should_bridge_mouse_button_touch_echo", right_mouse, "Android", {})), "Only left-button touch echoes should be bridged on Android"),
+	])
+
+
+func test_deck_editor_mobile_navigation_uses_dedicated_landscape_path() -> String:
+	var manager: Node = _load_game_manager_script().new()
+	manager.set("non_battle_layout_mode", GameManager.NON_BATTLE_LAYOUT_PORTRAIT)
+
+	return run_checks([
+		assert_eq(int(manager.call("non_battle_handheld_orientation_for_scene", GameManager.SCENE_DECK_MANAGER)), DisplayServer.SCREEN_SENSOR_PORTRAIT, "Ordinary non-battle pages should still honor the saved portrait preference"),
+		assert_eq(int(manager.call("non_battle_handheld_orientation_for_scene", GameManager.SCENE_DECK_EDITOR)), DisplayServer.SCREEN_SENSOR_LANDSCAPE, "DeckEditor should keep the original dedicated landscape editor path on phones"),
+		assert_true(bool(manager.call("_should_apply_deck_editor_orientation_before_scene_change", GameManager.SCENE_DECK_EDITOR)), "DeckEditor orientation should be applied by GameManager before changing scenes, not during DeckEditor _ready"),
+		assert_false(bool(manager.call("_should_apply_deck_editor_orientation_before_scene_change", GameManager.SCENE_DECK_MANAGER)), "Other non-battle pages should not use the DeckEditor orientation path"),
+	])
+
+
+func test_web_runtime_skips_native_orientation_calls() -> String:
+	var manager: Node = _load_game_manager_script().new()
+
+	return run_checks([
+		assert_true(bool(manager.call("_is_web_runtime", "Web", {}, "web")), "Godot Web builds should be detected as browser runtimes"),
+		assert_true(bool(manager.call("_is_web_runtime", "", {"web_android": true}, "")), "Android mobile browser feature flags should count as Web runtime"),
+		assert_true(bool(manager.call("_is_web_runtime", "", {"web_ios": true}, "")), "iOS mobile browser feature flags should count as Web runtime"),
+		assert_false(bool(manager.call("_is_web_runtime", "Android", {"android": true}, "")), "Native Android export should not be treated as Web"),
+		assert_true(bool(manager.call("_should_apply_native_screen_orientation", "Android", {"android": true}, "")), "Native Android should still use DisplayServer orientation APIs"),
+		assert_true(bool(manager.call("_should_apply_native_screen_orientation", "iOS", {"ios": true}, "")), "Native iOS should still use DisplayServer orientation APIs"),
+		assert_false(bool(manager.call("_should_apply_native_screen_orientation", "Web", {"web_android": true}, "web")), "Android browser should not call native DisplayServer orientation APIs"),
+		assert_false(bool(manager.call("_should_apply_native_screen_orientation", "Web", {"web_ios": true}, "web")), "iOS browser should not call native DisplayServer orientation APIs"),
+		assert_false(bool(manager.call("_should_apply_deck_editor_orientation_before_scene_change", GameManager.SCENE_DECK_EDITOR, "Web", {"web_android": true}, "web")), "Web DeckEditor navigation should not pre-apply the native landscape orientation path"),
+		assert_true(bool(manager.call("_should_apply_deck_editor_orientation_before_scene_change", GameManager.SCENE_DECK_EDITOR, "Android", {"android": true}, "")), "Native Android DeckEditor navigation should keep the dedicated landscape path"),
 	])
 
 
@@ -434,6 +549,40 @@ func test_android_screen_touch_bridge_keeps_non_battle_buttons_clickable_with_mo
 	])
 
 
+func test_global_touch_bridge_suppresses_button_already_handled_by_scene_bridge() -> String:
+	var manager: Node = _load_game_manager_script().new()
+	manager.name = "GameManagerDuplicateTouchBridgeProbe"
+	var page_root := Control.new()
+	page_root.name = "BattleSetup"
+	page_root.size = Vector2(1080, 2400)
+	var button := Button.new()
+	button.name = "ModeAIButton"
+	button.position = Vector2(120, 240)
+	button.size = Vector2(520, 150)
+	page_root.add_child(button)
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		manager.queue_free()
+		page_root.queue_free()
+		return "SceneTree root should be available for duplicate touch bridge suppression test"
+	tree.root.add_child(manager)
+	tree.root.add_child(page_root)
+	var pressed := [false]
+	button.pressed.connect(func() -> void:
+		pressed[0] = true
+	)
+	var center := button.get_global_rect().get_center()
+	manager.call("_handle_touch_button_bridge_at_position", center, true)
+	button.set_meta("_non_battle_last_bridge_press_msec", Time.get_ticks_msec())
+	manager.call("_handle_touch_button_bridge_at_position", center, false)
+	manager.queue_free()
+	page_root.queue_free()
+
+	return run_checks([
+		assert_false(bool(pressed[0]), "Global touch bridge should not re-emit a Button already handled by the scene-level non-battle touch bridge"),
+	])
+
+
 func test_mobile_first_run_non_battle_layout_defaults_to_portrait() -> String:
 	var manager: Node = _load_game_manager_script().new()
 	var android_default := str(manager.call("default_non_battle_layout_mode_for_first_run", "Android", {}, "", Vector2(390, 844), ""))
@@ -511,6 +660,41 @@ func test_battle_audio_preferences_load_saved_bgm_settings() -> String:
 	return run_checks([
 		assert_eq(selected_track, "pokemon_sv_battle_gym_leader", "GameManager should load the saved battle music id on startup"),
 		assert_eq(volume, 37, "GameManager should load the saved battle BGM volume on startup"),
+	])
+
+
+func test_battle_audio_preferences_migrate_legacy_default_100_to_20() -> String:
+	var original_settings_text := _read_battle_setup_settings_text()
+	_remove_battle_setup_settings_file()
+	_write_battle_setup_settings({
+		"battle_music_id": "pokemon_sv_battle_gym_leader",
+		"battle_bgm_volume_percent": 100,
+	})
+	var manager: Node = _load_game_manager_script().new()
+	manager.call("load_battle_setup_preferences")
+	var volume := int(manager.get("battle_bgm_volume_percent"))
+	_restore_battle_setup_settings_text(original_settings_text)
+
+	return run_checks([
+		assert_eq(volume, 20, "Legacy saved battle BGM volume 100 without an explicit user-set marker should migrate to the 20 default"),
+	])
+
+
+func test_battle_audio_preferences_keep_explicit_user_set_100() -> String:
+	var original_settings_text := _read_battle_setup_settings_text()
+	_remove_battle_setup_settings_file()
+	_write_battle_setup_settings({
+		"battle_music_id": "pokemon_sv_battle_gym_leader",
+		"battle_bgm_volume_percent": 100,
+		"battle_bgm_volume_user_set": true,
+	})
+	var manager: Node = _load_game_manager_script().new()
+	manager.call("load_battle_setup_preferences")
+	var volume := int(manager.get("battle_bgm_volume_percent"))
+	_restore_battle_setup_settings_text(original_settings_text)
+
+	return run_checks([
+		assert_eq(volume, 100, "Explicitly user-set battle BGM volume 100 should remain available"),
 	])
 
 

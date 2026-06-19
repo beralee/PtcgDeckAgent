@@ -91,6 +91,9 @@ func test_battle_ui_coordinator_scripts_load() -> String:
 	var discussion_builder_script := load("res://scripts/ui/battle/advice/BattleDiscussionContextBuilder.gd")
 	var layout_debug_reporter_script := load("res://scripts/ui/battle/layouts/BattleLayoutDebugReporter.gd")
 	var drag_scroll_coordinator_script := load("res://scripts/ui/battle/interactions/BattleDragScrollCoordinator.gd")
+	var action_log_presenter_script := load("res://scripts/ui/battle/BattleActionLogPresenter.gd")
+	var log_rich_text_renderer_script := load("res://scripts/ui/battle/BattleLogRichTextRenderer.gd")
+	var field_swap_animator_script := load("res://scripts/ui/battle/BattleFieldSwapAnimator.gd")
 	var stadium_hud_instance = stadium_hud_script.new() if stadium_hud_script != null and stadium_hud_script.can_instantiate() else null
 	var stadium_backdrop_instance = stadium_backdrop_script.new() if stadium_backdrop_script != null and stadium_backdrop_script.can_instantiate() else null
 	var surface_styler_instance = surface_styler_script.new() if surface_styler_script != null and surface_styler_script.can_instantiate() else null
@@ -100,6 +103,9 @@ func test_battle_ui_coordinator_scripts_load() -> String:
 	var discussion_builder_instance = discussion_builder_script.new() if discussion_builder_script != null and discussion_builder_script.can_instantiate() else null
 	var layout_debug_reporter_instance = layout_debug_reporter_script.new() if layout_debug_reporter_script != null and layout_debug_reporter_script.can_instantiate() else null
 	var drag_scroll_coordinator_instance = drag_scroll_coordinator_script.new() if drag_scroll_coordinator_script != null and drag_scroll_coordinator_script.can_instantiate() else null
+	var action_log_presenter_instance = action_log_presenter_script.new() if action_log_presenter_script != null and action_log_presenter_script.can_instantiate() else null
+	var log_rich_text_renderer_instance = log_rich_text_renderer_script.new() if log_rich_text_renderer_script != null and log_rich_text_renderer_script.can_instantiate() else null
+	var field_swap_animator_instance = field_swap_animator_script.new() if field_swap_animator_script != null and field_swap_animator_script.can_instantiate() else null
 	return run_checks([
 		assert_not_null(stadium_hud_script, "BattleStadiumHudCoordinator.gd should load without compile errors"),
 		assert_not_null(stadium_backdrop_script, "BattleStadiumBackdropCoordinator.gd should load without compile errors"),
@@ -110,6 +116,9 @@ func test_battle_ui_coordinator_scripts_load() -> String:
 		assert_not_null(discussion_builder_script, "BattleDiscussionContextBuilder.gd should load without compile errors"),
 		assert_not_null(layout_debug_reporter_script, "BattleLayoutDebugReporter.gd should load without compile errors"),
 		assert_not_null(drag_scroll_coordinator_script, "BattleDragScrollCoordinator.gd should load without compile errors"),
+		assert_not_null(action_log_presenter_script, "BattleActionLogPresenter.gd should load without compile errors"),
+		assert_not_null(log_rich_text_renderer_script, "BattleLogRichTextRenderer.gd should load without compile errors"),
+		assert_not_null(field_swap_animator_script, "BattleFieldSwapAnimator.gd should load without compile errors"),
 		assert_not_null(stadium_hud_instance, "BattleStadiumHudCoordinator.gd should instantiate without compile errors"),
 		assert_not_null(stadium_backdrop_instance, "BattleStadiumBackdropCoordinator.gd should instantiate without compile errors"),
 		assert_not_null(surface_styler_instance, "BattleSurfaceStyler.gd should instantiate without compile errors"),
@@ -119,6 +128,9 @@ func test_battle_ui_coordinator_scripts_load() -> String:
 		assert_not_null(discussion_builder_instance, "BattleDiscussionContextBuilder.gd should instantiate without compile errors"),
 		assert_not_null(layout_debug_reporter_instance, "BattleLayoutDebugReporter.gd should instantiate without compile errors"),
 		assert_not_null(drag_scroll_coordinator_instance, "BattleDragScrollCoordinator.gd should instantiate without compile errors"),
+		assert_not_null(action_log_presenter_instance, "BattleActionLogPresenter.gd should instantiate without compile errors"),
+		assert_not_null(log_rich_text_renderer_instance, "BattleLogRichTextRenderer.gd should instantiate without compile errors"),
+		assert_not_null(field_swap_animator_instance, "BattleFieldSwapAnimator.gd should instantiate without compile errors"),
 	])
 
 

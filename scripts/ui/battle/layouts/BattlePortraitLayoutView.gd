@@ -1009,6 +1009,7 @@ func apply_base_layout(context: Dictionary) -> void:
 	if dialog_overlay != null:
 		dialog_overlay.z_index = dialog_overlay_z_index
 		dialog_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_apply_portrait_modal_overlay_rects(frame_rect, full_size)
 
 	_call_scene("_set_portrait_panel_collapsed", [_node("MainArea/LeftPanel") as Control, true])
 	_call_scene("_set_portrait_panel_collapsed", [_node("MainArea/RightPanel") as Control, true])
@@ -1145,6 +1146,72 @@ func _apply_explicit_portrait_rect(control: Control, rect: Rect2) -> void:
 	control.size = rect.size
 
 
+func _apply_portrait_modal_overlay_rects(frame_rect: Rect2, full_size: Vector2) -> void:
+	var overlay_rect := frame_rect
+	if overlay_rect.size == Vector2.ZERO:
+		overlay_rect = Rect2(Vector2.ZERO, full_size)
+	if overlay_rect.size.x <= 0.0 or overlay_rect.size.y <= 0.0:
+		return
+	var overlay_names: Array[String] = [
+		"DialogOverlay",
+		"HandoverPanel",
+		"CoinFlipOverlay",
+		"DetailOverlay",
+		"DiscardOverlay",
+		"ReviewOverlay",
+		"FieldInteractionOverlay",
+		"DrawRevealOverlay",
+		"MatchEndOverlay",
+		"InvalidActionOverlay",
+		"StadiumCardOverlay",
+	]
+	for node_name: String in overlay_names:
+		var overlay := _find(node_name, true, false) as Control
+		if overlay == null:
+			continue
+		_apply_explicit_portrait_rect(overlay, overlay_rect)
+		_apply_portrait_overlay_child_rects(overlay, overlay_rect.size)
+
+
+func _apply_portrait_overlay_child_rects(overlay: Control, overlay_size: Vector2) -> void:
+	if overlay == null or overlay_size.x <= 0.0 or overlay_size.y <= 0.0:
+		return
+	var child_rect := Rect2(Vector2.ZERO, overlay_size)
+	var full_rect_child_names := {
+		"DialogCenter": true,
+		"HandoverCenter": true,
+		"CoinCenter": true,
+		"DetailCenter": true,
+		"DiscardCenter": true,
+		"ReviewCenter": true,
+		"MatchEndCenter": true,
+		"InvalidActionCenter": true,
+		"Stage": true,
+	}
+	for child: Node in overlay.get_children():
+		var control := child as Control
+		if control == null:
+			continue
+		if (
+			bool(control.get_meta("portrait_modal_full_rect_child", false))
+			or full_rect_child_names.has(str(control.name))
+			or _control_uses_full_rect_anchors(control)
+		):
+			_apply_explicit_portrait_rect(control, child_rect)
+			control.set_meta("portrait_modal_full_rect_child", true)
+
+
+func _control_uses_full_rect_anchors(control: Control) -> bool:
+	if control == null:
+		return false
+	return (
+		absf(control.anchor_left) <= 0.001
+		and absf(control.anchor_top) <= 0.001
+		and absf(control.anchor_right - 1.0) <= 0.001
+		and absf(control.anchor_bottom - 1.0) <= 0.001
+	)
+
+
 func _apply_axis_width_to_control(control: Control, width: float, expand: bool) -> void:
 	if control == null:
 		return
@@ -1168,8 +1235,13 @@ func _apply_portrait_overlay_z_order() -> void:
 		"DiscardOverlay": 230,
 		"DialogOverlay": 240,
 		"CoinFlipOverlay": 250,
+		"ReviewOverlay": 245,
+		"DrawRevealOverlay": 270,
 		"HandoverPanel": 260,
 		"DetailOverlay": 500,
+		"MatchEndOverlay": 520,
+		"InvalidActionOverlay": 620,
+		"StadiumCardOverlay": 70,
 	}
 	for node_name: String in overlay_z.keys():
 		var control := _find(node_name, true, false) as Control

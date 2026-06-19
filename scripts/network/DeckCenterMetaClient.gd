@@ -82,6 +82,25 @@ func mark_revision_seen(revision: String, info: Dictionary = {}) -> void:
 	_save_state(state)
 
 
+func mark_latest_known_revision_seen() -> bool:
+	var state := _load_state()
+	var latest_raw: Variant = state.get("latest_info", {})
+	var info: Dictionary = {}
+	if latest_raw is Dictionary:
+		info = (latest_raw as Dictionary).duplicate(true)
+
+	var revision := str(info.get("latest_revision", "")).strip_edges()
+	if revision == "":
+		revision = str(state.get("latest_revision", "")).strip_edges()
+		if revision != "":
+			info["latest_revision"] = revision
+	if revision == "":
+		return false
+
+	mark_revision_seen(revision, info)
+	return true
+
+
 func get_last_seen_revision() -> String:
 	return str(_load_state().get("last_seen_revision", "")).strip_edges()
 

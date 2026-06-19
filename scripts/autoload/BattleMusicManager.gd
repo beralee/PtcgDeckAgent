@@ -51,12 +51,11 @@ func ensure_builtin_music_mirror() -> void:
 		var source_path := str(track.get("path", ""))
 		if not source_path.begins_with("res://"):
 			continue
-		var source_file := FileAccess.open(source_path, FileAccess.READ)
-		if source_file == null:
-			continue
 		var target_path := mirror_dir.path_join(source_path.get_file())
 		if FileAccess.file_exists(target_path):
-			source_file.close()
+			continue
+		var source_file := FileAccess.open(source_path, FileAccess.READ)
+		if source_file == null:
 			continue
 		var target_file := FileAccess.open(target_path, FileAccess.WRITE)
 		if target_file == null:

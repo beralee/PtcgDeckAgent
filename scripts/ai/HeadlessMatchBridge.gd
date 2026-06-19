@@ -296,7 +296,7 @@ func _after_setup_bench(pi: int) -> void:
 		_gsm.setup_complete(0)
 
 
-func _refresh_ui_after_successful_action(_check_handover: bool = false, _action_player_index: int = -1) -> void:
+func _refresh_ui_after_successful_action(_check_handover: bool = false, _action_player_index: int = -1, _action_kind: String = "") -> void:
 	pass
 
 
@@ -892,6 +892,17 @@ func _inject_followup_steps() -> void:
 				followup_steps.append_array(
 					ability_effect.get_followup_interaction_steps(card, _gsm.game_state, _pending_effect_context)
 				)
+		"granted_attack":
+			if _pending_effect_slot == null:
+				return
+			followup_steps.append_array(
+				_gsm.effect_processor.get_granted_attack_followup_interaction_steps(
+					_pending_effect_slot,
+					_pending_effect_attack_data,
+					_gsm.game_state,
+					_pending_effect_context
+				)
+			)
 		_:
 			return
 	if followup_steps.is_empty():

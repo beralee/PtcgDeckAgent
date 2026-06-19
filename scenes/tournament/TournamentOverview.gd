@@ -58,8 +58,8 @@ func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode
 	set_meta("non_battle_layout_mode", str(context.get("resolved_mode", mode)))
 	var panel := find_child("Panel", true, false) as Control
 	if panel != null:
-		panel.custom_minimum_size.x = float(context.get("content_width", 980.0)) if portrait else 980.0
-		panel.custom_minimum_size.y = maxf(780.0, size.y - float(context.get("page_margin", 24.0)) * 2.0) if portrait else 700.0
+		panel.custom_minimum_size.x = _portrait_tournament_width(size, context) if portrait else 980.0
+		panel.custom_minimum_size.y = maxf(780.0, size.y - _portrait_tournament_margin(size, context) * 2.0) if portrait else 700.0
 	if portrait:
 		_apply_overview_portrait_stack()
 	else:
@@ -127,6 +127,7 @@ func _apply_overview_mobile_metrics(node: Node, context: Dictionary, portrait: b
 		var control := node as Control
 		if portrait:
 			control.custom_minimum_size.y = maxf(control.custom_minimum_size.y, float(context.get("list_item_min_height", 148.0)) * 1.5)
+			_apply_portrait_hidden_drag_scrollable_control(control)
 			if control is TextEdit:
 				(control as TextEdit).add_theme_font_size_override("font_size", int(context.get("body_font_size", 15)))
 				(control as TextEdit).wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
@@ -137,6 +138,9 @@ func _apply_overview_mobile_metrics(node: Node, context: Dictionary, portrait: b
 				rich.add_theme_font_size_override("bold_font_size", font_size)
 				rich.add_theme_font_size_override("italics_font_size", font_size)
 				rich.add_theme_font_size_override("mono_font_size", font_size)
+		else:
+			HudThemeScript.style_scrollable_control(control, "auto")
+			NonBattleTouchBridgeScript.configure_visible_vertical_scrollable_control(control)
 	elif node is Label:
 		var label := node as Label
 		if label.name == "TitleLabel":
@@ -147,6 +151,21 @@ func _apply_overview_mobile_metrics(node: Node, context: Dictionary, portrait: b
 			label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	for child: Node in node.get_children():
 		_apply_overview_mobile_metrics(child, context, portrait)
+
+
+func _portrait_tournament_margin(viewport_size: Vector2, context: Dictionary) -> float:
+	var fallback := clampf(viewport_size.x * 0.026, 14.0, 28.0)
+	return minf(float(context.get("page_margin", fallback)), fallback)
+
+
+func _portrait_tournament_width(viewport_size: Vector2, context: Dictionary) -> float:
+	var margin := _portrait_tournament_margin(viewport_size, context)
+	return maxf(320.0, viewport_size.x - margin * 2.0)
+
+
+func _apply_portrait_hidden_drag_scrollable_control(control: Control) -> void:
+	HudThemeScript.style_scrollable_control(control, "auto")
+	NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scrollable_control(control)
 
 
 func _apply_overview_button_stack(portrait: bool) -> void:

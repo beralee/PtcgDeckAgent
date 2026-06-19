@@ -16,7 +16,7 @@ class SlotDetailSpyBattleScene extends BattleSceneScript:
 	func _show_pokemon_action_dialog(_cp: int, _slot: PokemonSlot, _include_attacks: bool) -> void:
 		action_dialog_calls += 1
 
-	func _refresh_ui_after_successful_action(_check_handover: bool = false, _action_player_index: int = -1) -> void:
+	func _refresh_ui_after_successful_action(_check_handover: bool = false, _action_player_index: int = -1, _action_kind: String = "") -> void:
 		refresh_success_calls += 1
 
 	func _refresh_ui() -> void:

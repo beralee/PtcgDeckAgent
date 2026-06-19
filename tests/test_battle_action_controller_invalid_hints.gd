@@ -44,7 +44,7 @@ class ActionSceneStub:
 		else:
 			invalid_hints.append({"reason": str(payload)})
 
-	func _refresh_ui_after_successful_action(_ability_action: bool = false, _action_player_index: int = -1) -> void:
+	func _refresh_ui_after_successful_action(_ability_action: bool = false, _action_player_index: int = -1, _action_kind: String = "") -> void:
 		pass
 
 	func _start_effect_interaction(

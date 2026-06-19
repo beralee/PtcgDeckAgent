@@ -1,6 +1,8 @@
 class_name TestReplayBrowser
 extends TestBase
 
+const DECK_CENTER_META_STATE_PATH := "user://deck_center_meta_state.json"
+
 
 class FakeRecordIndex extends RefCounted:
 	func list_rows() -> Array[Dictionary]:
@@ -26,6 +28,19 @@ class FakeReplayLocator extends RefCounted:
 		return _result.duplicate(true)
 
 
+func _remove_deck_center_meta_state_file() -> void:
+	var absolute_path := ProjectSettings.globalize_path(DECK_CENTER_META_STATE_PATH)
+	if FileAccess.file_exists(absolute_path):
+		DirAccess.remove_absolute(absolute_path)
+
+
+func _read_deck_center_meta_state() -> Dictionary:
+	if not FileAccess.file_exists(DECK_CENTER_META_STATE_PATH):
+		return {}
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(DECK_CENTER_META_STATE_PATH))
+	return (parsed as Dictionary).duplicate(true) if parsed is Dictionary else {}
+
+
 func test_replay_browser_and_ai_settings_use_hud_panels() -> String:
 	var tree := Engine.get_main_loop() as SceneTree
 	var replay_scene: Control = load("res://scenes/replay_browser/ReplayBrowser.tscn").instantiate()
@@ -34,22 +49,20 @@ func test_replay_browser_and_ai_settings_use_hud_panels() -> String:
 	tree.root.add_child(settings_scene)
 	replay_scene.call("_apply_hud_theme")
 	settings_scene.call("_apply_hud_theme")
+	settings_scene.call("_load_config")
 
 	var replay_frame := replay_scene.get_node_or_null("HudFrame") as PanelContainer
 	var settings_frame := settings_scene.get_node_or_null("HudFrame") as PanelContainer
 	var replay_style := replay_frame.get_theme_stylebox("panel") as StyleBoxFlat if replay_frame != null else null
 	var settings_style := settings_frame.get_theme_stylebox("panel") as StyleBoxFlat if settings_frame != null else null
 	var settings_endpoint := settings_scene.get_node_or_null("%EndpointInput") as LineEdit
+	var settings_personality := settings_scene.get_node_or_null("%PersonalityInput") as LineEdit
 	var settings_save := settings_scene.get_node_or_null("%BtnSave") as Button
 	var settings_form := settings_scene.get_node_or_null("VBoxContainer") as Control
 	var settings_guide := settings_scene.find_child("ZenMuxGuideBody", true, false) as Label
 	var settings_troubleshooting := settings_scene.find_child("ZenMuxTroubleBody", true, false) as Label
-	var default_endpoint_button := settings_scene.find_child("BtnUseZenMuxDefault", true, false) as Button
-	var open_zenmux_button := settings_scene.find_child("BtnOpenZenMux", true, false) as Button
 	var endpoint_style := settings_endpoint.get_theme_stylebox("normal") as StyleBoxFlat if settings_endpoint != null else null
 	var save_style := settings_save.get_theme_stylebox("normal") as StyleBoxFlat if settings_save != null else null
-	if default_endpoint_button != null:
-		default_endpoint_button.pressed.emit()
 
 	var result := run_checks([
 		assert_true(replay_style != null and replay_style.bg_color.a < 0.9, "Replay browser should use a translucent HUD frame"),
@@ -57,12 +70,13 @@ func test_replay_browser_and_ai_settings_use_hud_panels() -> String:
 		assert_true(settings_frame != null and settings_form != null and settings_frame.offset_bottom > settings_form.offset_bottom + 50.0, "AI settings HUD frame should extend below the button row"),
 		assert_true(endpoint_style != null and endpoint_style.bg_color.a < 1.0, "AI settings inputs should use translucent HUD styling"),
 		assert_true(save_style != null and save_style.border_color.a > 0.8, "AI settings buttons should use explicit HUD borders"),
-		assert_true(settings_guide != null and settings_guide.text.contains("https://zenmux.ai/api/v1"), "AI settings should explain the exact ZenMux endpoint to enter"),
+		assert_eq(settings_endpoint.text if settings_endpoint != null else "", "https://zenmux.ai/api/v1", "AI settings should prefill the ZenMux API address"),
+		assert_eq(settings_personality.text if settings_personality != null else "", GameManager.DEFAULT_AI_PERSONALITY, "AI settings should prefill the default AI personality"),
+		assert_not_null(settings_scene.find_child("BtnUseZenMuxDefault", true, false), "AI settings should expose the original default endpoint helper button"),
+		assert_not_null(settings_scene.find_child("BtnOpenZenMux", true, false), "AI settings should expose the original zenmux.ai link button"),
+		assert_true(settings_guide != null and settings_guide.text.contains("https://zenmux.ai/api/v1"), "AI settings should keep the ZenMux endpoint setup guide"),
 		assert_true(settings_guide != null and settings_guide.text.contains("测试连接"), "AI settings should guide players to validate the configuration"),
 		assert_true(settings_troubleshooting != null and settings_troubleshooting.text.contains("401"), "AI settings should include common ZenMux failure explanations"),
-		assert_eq(settings_endpoint.text if settings_endpoint != null else "", "https://zenmux.ai/api/v1", "AI settings default endpoint button should fill the ZenMux API address"),
-		assert_true(open_zenmux_button != null and open_zenmux_button.text.contains("zenmux.ai"), "AI settings should expose a direct ZenMux website button"),
-		assert_eq(str(open_zenmux_button.get_meta("external_url", "")) if open_zenmux_button != null else "", "https://zenmux.ai", "ZenMux website button should point to the ZenMux homepage"),
 	])
 
 	replay_scene.queue_free()
@@ -106,6 +120,36 @@ func test_main_menu_uses_hud_buttons_shifted_down() -> String:
 	])
 
 	scene.queue_free()
+	return result
+
+
+func test_main_menu_clears_deck_center_new_from_latest_local_meta_without_pending_signal() -> String:
+	_remove_deck_center_meta_state_file()
+	var file := FileAccess.open(DECK_CENTER_META_STATE_PATH, FileAccess.WRITE)
+	file.store_string(JSON.stringify({
+		"latest_info": {
+			"latest_revision": "local-startup-rev",
+			"latest_recommendation_id": "rec-local",
+			"latest_deck_id": 609793,
+			"source": "unit_test",
+		},
+	}, "\t"))
+	file.close()
+
+	var scene: Control = load("res://scenes/main_menu/MainMenu.tscn").instantiate()
+	scene.set("_pending_deck_center_meta", {})
+	scene.call("_set_deck_center_new_badge_visible", true)
+	scene.call("_mark_pending_deck_center_meta_seen")
+
+	var state := _read_deck_center_meta_state()
+	var badge := scene.get("_deck_center_new_badge") as PanelContainer
+	var result := run_checks([
+		assert_eq(str(state.get("last_seen_revision", "")), "local-startup-rev", "Opening deck center should mark the latest locally cached deck-center revision as seen even if the startup signal is not pending anymore"),
+		assert_false(badge != null and badge.visible, "Opening deck center should hide the main-menu NEW badge even when only local metadata is available"),
+	])
+
+	scene.queue_free()
+	_remove_deck_center_meta_state_file()
 	return result
 
 

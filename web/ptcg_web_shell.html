@@ -122,6 +122,40 @@ body {
 	cursor: default;
 }
 
+#new-version-panel {
+	display: none;
+	margin: -2px auto 16px;
+}
+
+#new-version-panel.is-visible {
+	display: block;
+}
+
+#new-version-copy {
+	margin: 0 auto 10px;
+	color: rgba(244, 247, 251, 0.84);
+	font-size: 14px;
+	line-height: 1.6;
+}
+
+#start-new-version {
+	min-width: 176px;
+	min-height: 48px;
+	border: 1px solid rgba(72, 199, 142, 0.52);
+	border-radius: 8px;
+	background: rgba(72, 199, 142, 0.12);
+	color: #dff8ec;
+	font-size: 16px;
+	font-weight: 800;
+	box-shadow: 0 10px 22px rgba(72, 199, 142, 0.16);
+	cursor: pointer;
+}
+
+#start-new-version:disabled {
+	opacity: 0.68;
+	cursor: default;
+}
+
 #status {
 	z-index: 1;
 	visibility: hidden;
@@ -187,6 +221,10 @@ body {
 				<div id="launch-actions">
 					<button id="start-game" type="button">&#24320;&#22987;&#28216;&#25103;</button>
 				</div>
+				<div id="new-version-panel" aria-live="polite">
+					<p id="new-version-copy"></p>
+					<button id="start-new-version" type="button">&#24320;&#22987;&#26032;&#29256;&#26412;&#28216;&#25103;</button>
+				</div>
 				<p id="install-hint">&#28155;&#21152;&#21040;&#20027;&#23631;&#24149;&#21518;&#65292;&#19979;&#27425;&#25171;&#24320;&#26356;&#25509;&#36817; App &#20307;&#39564;&#12290;</p>
 			</div>
 		</div>
@@ -217,10 +255,17 @@ const engine = new Engine(GODOT_CONFIG);
 	const TEXT_LOADING_DOWNLOAD = '\u6b63\u5728\u4e0b\u8f7d\u6e38\u620f\u8d44\u6e90...';
 	const TEXT_LOADING_ENGINE = '\u6b63\u5728\u521d\u59cb\u5316\u5f15\u64ce...';
 	const TEXT_ENGINE_READY = '\u6b63\u5728\u521d\u59cb\u5316\u5f15\u64ce\uff0c\u9a6c\u4e0a\u8fdb\u5165\u6e38\u620f\u3002';
+	const TEXT_NEW_VERSION_PREFIX = '\u68c0\u6d4b\u5230\u65b0\u7248\u672c ';
+	const TEXT_NEW_VERSION_SUFFIX = '\uff0c\u5efa\u8bae\u6e05\u7406\u65e7\u7248\u672c\u7f13\u5b58\u540e\u6253\u5f00\u3002';
+	const TEXT_OPENING_NEW_VERSION = '\u6b63\u5728\u6e05\u7406\u65e7\u7248\u672c\u7f13\u5b58...';
 	const WEB_LAUNCH_LAYOUT_STORAGE_KEY = 'ptcg_web_launch_layout';
+	const WEB_CACHE_PREFIX = 'PtcgDeckAgent-sw-cache-';
 
 	const launchOverlay = document.getElementById('launch');
 	const startButton = document.getElementById('start-game');
+	const newVersionPanel = document.getElementById('new-version-panel');
+	const newVersionCopy = document.getElementById('new-version-copy');
+	const newVersionButton = document.getElementById('start-new-version');
 	const statusOverlay = document.getElementById('status');
 	const statusStage = document.getElementById('status-stage');
 	const statusProgress = document.getElementById('status-progress');
@@ -229,6 +274,7 @@ const engine = new Engine(GODOT_CONFIG);
 
 	let initializing = true;
 	let statusMode = '';
+	let latestWebEntryUrl = '';
 
 	function setStatusMode(mode) {
 		if (statusMode === mode || !initializing) {
@@ -275,6 +321,126 @@ const engine = new Engine(GODOT_CONFIG);
 				window.localStorage.removeItem(WEB_LAUNCH_LAYOUT_STORAGE_KEY);
 			}
 		} catch (err) {}
+	}
+
+	function getCurrentWebVersion() {
+		const match = window.location.pathname.match(/\/web\/([^\/]+)\//);
+		return match ? decodeURIComponent(match[1]) : '';
+	}
+
+	function normalizeUrl(url) {
+		try {
+			const parsed = new URL(url, window.location.href);
+			parsed.hash = '';
+			parsed.search = '';
+			return parsed.href;
+		} catch (err) {
+			return '';
+		}
+	}
+
+	function getLatestWebEntryUrl(latest) {
+		if (!latest || typeof latest !== 'object') {
+			return '';
+		}
+		const entry = typeof latest.entry === 'string' ? latest.entry.trim() : '';
+		if (entry) {
+			try {
+				return new URL(entry, window.location.origin).href;
+			} catch (err) {}
+		}
+		const releasePath = typeof latest.release_path === 'string' ? latest.release_path.trim().replace(/\/+$/, '') : '';
+		if (releasePath) {
+			try {
+				return new URL(releasePath + '/PtcgDeckAgent.html', window.location.origin).href;
+			} catch (err) {}
+		}
+		const webVersion = typeof latest.web_version === 'string' ? latest.web_version.trim() : '';
+		if (webVersion) {
+			try {
+				return new URL('../' + encodeURIComponent(webVersion) + '/PtcgDeckAgent.html', window.location.href).href;
+			} catch (err) {}
+		}
+		return '';
+	}
+
+	function showNewVersionAction(latest, entryUrl) {
+		if (!newVersionPanel || !newVersionCopy || !newVersionButton || !entryUrl) {
+			return;
+		}
+		const displayVersion = latest.display_version || latest.version || latest.web_version || '';
+		newVersionCopy.textContent = TEXT_NEW_VERSION_PREFIX + displayVersion + TEXT_NEW_VERSION_SUFFIX;
+		latestWebEntryUrl = entryUrl;
+		newVersionPanel.classList.add('is-visible');
+	}
+
+	function checkLatestWebVersion() {
+		if (!window.fetch || !newVersionPanel || !newVersionButton) {
+			return;
+		}
+		let latestUrl = '';
+		try {
+			latestUrl = new URL('../../latest-web.json?t=' + Date.now(), window.location.href).href;
+		} catch (err) {
+			return;
+		}
+		window.fetch(latestUrl, { cache: 'no-store' }).then(function (response) {
+			return response.ok ? response.json() : null;
+		}).then(function (latest) {
+			if (!latest) {
+				return;
+			}
+			const currentWebVersion = getCurrentWebVersion();
+			const latestWebVersion = typeof latest.web_version === 'string' ? latest.web_version.trim() : '';
+			const entryUrl = getLatestWebEntryUrl(latest);
+			if (!entryUrl) {
+				return;
+			}
+			if (latestWebVersion && currentWebVersion && latestWebVersion === currentWebVersion) {
+				return;
+			}
+			if (normalizeUrl(entryUrl) === normalizeUrl(window.location.href)) {
+				return;
+			}
+			showNewVersionAction(latest, entryUrl);
+		}).catch(function () {});
+	}
+
+	function clearOldWebReleaseCache() {
+		const tasks = [];
+		if ('caches' in window && window.caches && typeof window.caches.keys === 'function') {
+			tasks.push(window.caches.keys().then(function (keys) {
+				const deletions = keys.filter(function (key) {
+					return key.indexOf(WEB_CACHE_PREFIX) === 0 || key.indexOf('PtcgDeckAgent') !== -1;
+				}).map(function (key) {
+					return window.caches.delete(key).catch(function () {});
+				});
+				return Promise.all(deletions);
+			}).catch(function () {}));
+		}
+		if ('serviceWorker' in navigator && typeof navigator.serviceWorker.getRegistration === 'function') {
+			tasks.push(navigator.serviceWorker.getRegistration('./').then(function (registration) {
+				if (registration && typeof registration.unregister === 'function') {
+					return registration.unregister().catch(function () {});
+				}
+				return null;
+			}).catch(function () {}));
+		}
+		return Promise.all(tasks).then(function () {});
+	}
+
+	function openLatestWebVersion() {
+		if (!latestWebEntryUrl) {
+			return;
+		}
+		startButton.disabled = true;
+		newVersionButton.disabled = true;
+		newVersionButton.textContent = TEXT_OPENING_NEW_VERSION;
+		clearOldWebReleaseCache().then(function () {
+			window.location.assign(latestWebEntryUrl);
+		}, function () {
+			window.location.assign(latestWebEntryUrl);
+		});
 	}
 
 	function unlockAudioFromGesture() {
@@ -376,6 +542,10 @@ const engine = new Engine(GODOT_CONFIG);
 		startButton.addEventListener('click', function () {
 			startGameFromClick();
 		}, { once: true });
+		newVersionButton.addEventListener('click', function () {
+			openLatestWebVersion();
+		});
+		checkLatestWebVersion();
 	}
 }());
 		</script>

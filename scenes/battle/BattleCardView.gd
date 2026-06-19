@@ -18,6 +18,9 @@ const CARD_GALLERY_VERTICAL_CLICK_TOLERANCE := 36.0
 const PRIMARY_RELEASE_FALLBACK_MIN_DELAY_MSEC := 80
 const PRIMARY_RELEASE_FALLBACK_DURATION_MSEC := 1400
 const ENERGY_ROW_MINIMUM_LAYOUT_GAP := 4
+const CARD_FOIL_OFF := "off"
+const CARD_FOIL_SHINE := "shine"
+const CARD_FOIL_DEFAULT_INTENSITY := 1.2
 const CardImplementationStatusScript := preload("res://scripts/engine/CardImplementationStatus.gd")
 const ENERGY_ICON_TEXTURES := {
 	"R": preload("res://assets/ui/e-huo.png"),
@@ -68,6 +71,8 @@ class CardInputCatcherControl:
 
 static var _texture_cache: Dictionary = {}
 static var _failed_texture_paths: Dictionary = {}
+static var _foil_shader: Shader = null
+static var _empty_slot_shader: Shader = null
 
 
 func _get_minimum_size() -> Vector2:
@@ -109,11 +114,17 @@ var _hand_primary_press_from_touch: bool = false
 var _primary_release_fallback_ready_at_msec: int = 0
 var _primary_release_fallback_until_msec: int = 0
 var _primary_release_fallback_reason: String = ""
+var _card_foil_effect_enabled: bool = false
+var _card_foil_intensity: float = CARD_FOIL_DEFAULT_INTENSITY
+var _card_foil_seed: float = -1.0
+var _foil_material: ShaderMaterial = null
+var _empty_slot_material: ShaderMaterial = null
 
 var _outer_margin: MarginContainer
 var _aspect_container: AspectRatioContainer
 var _art_frame: PanelContainer
 
+var _empty_slot_effect: ColorRect
 var _texture_rect: TextureRect
 var _missing_art_panel: PanelContainer
 var _placeholder: Label
@@ -160,6 +171,9 @@ func setup_from_instance(inst: CardInstance = null, mode: String = MODE_HAND) ->
 	_ensure_ui()
 	card_instance = inst
 	card_data = inst.card_data if inst != null else null
+	set_card_foil_owner_index(inst.owner_index if inst != null else -1)
+	_card_foil_effect_enabled = false
+	set_meta("card_foil_effect_enabled", false)
 	display_mode = mode
 	_selected = false
 	_selectable_hint = false
@@ -174,6 +188,9 @@ func setup_from_card_data(data: CardData, mode: String = MODE_CHOICE) -> void:
 	_ensure_ui()
 	card_instance = null
 	card_data = data
+	set_card_foil_owner_index(-1)
+	_card_foil_effect_enabled = false
+	set_meta("card_foil_effect_enabled", false)
 	display_mode = mode
 	_selected = false
 	_selectable_hint = false
@@ -210,6 +227,7 @@ func set_disabled(disabled: bool) -> void:
 	_ensure_ui()
 	_disabled = disabled
 	_update_style()
+	_apply_card_foil_material()
 
 
 func set_face_down(face_down: bool) -> void:
@@ -296,6 +314,37 @@ func set_status_text_scale(scale: float) -> void:
 	_apply_responsive_status_metrics()
 
 
+func set_card_foil_effect_enabled(enabled: bool, intensity: float = CARD_FOIL_DEFAULT_INTENSITY) -> void:
+	_ensure_ui()
+	_card_foil_effect_enabled = enabled
+	_card_foil_intensity = clampf(intensity, 0.0, 1.6)
+	set_meta("card_foil_effect_enabled", _card_foil_effect_enabled)
+	set_meta("card_foil_effect_intensity", _card_foil_intensity)
+	_apply_card_foil_material()
+
+
+func get_card_foil_effect_enabled() -> bool:
+	return _card_foil_effect_enabled
+
+
+func set_card_foil_owner_index(owner_index: int) -> void:
+	set_meta("card_foil_owner_index", owner_index)
+
+
+func get_card_foil_owner_index() -> int:
+	if card_instance != null:
+		return int(card_instance.owner_index)
+	return int(get_meta("card_foil_owner_index", -1))
+
+
+func set_card_foil_effect(mode: String, intensity: float = CARD_FOIL_DEFAULT_INTENSITY) -> void:
+	set_card_foil_effect_enabled(mode != CARD_FOIL_OFF, intensity)
+
+
+func get_card_foil_effect_mode() -> String:
+	return CARD_FOIL_SHINE if _card_foil_effect_enabled else CARD_FOIL_OFF
+
+
 func set_field_slot_layout_size(layout_size: Vector2) -> void:
 	var normalized := Vector2.ZERO
 	if layout_size.x > 0.0 and layout_size.y > 0.0:
@@ -365,6 +414,14 @@ func _build_ui() -> void:
 	_art_frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_art_frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_aspect_container.add_child(_art_frame)
+
+	_empty_slot_effect = ColorRect.new()
+	_make_passthrough(_empty_slot_effect)
+	_empty_slot_effect.name = "EmptySlotEffect"
+	_empty_slot_effect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_empty_slot_effect.color = Color.WHITE
+	_empty_slot_effect.visible = false
+	_art_frame.add_child(_empty_slot_effect)
 
 	_texture_rect = TextureRect.new()
 	_make_passthrough(_texture_rect)
@@ -805,6 +862,7 @@ func _refresh() -> void:
 	_update_style()
 	_apply_tilt()
 	_apply_card_input_filters()
+	_apply_card_foil_material()
 
 
 func _placeholder_text() -> String:
@@ -891,6 +949,111 @@ func _load_image_from_buffer(image: Image, image_bytes: PackedByteArray) -> int:
 	if image_bytes.size() >= 2 and image_bytes[0] == 0xFF and image_bytes[1] == 0xD8:
 		return image.load_jpg_from_buffer(image_bytes)
 	return ERR_FILE_UNRECOGNIZED
+
+
+func _apply_card_foil_material() -> void:
+	if _texture_rect == null:
+		return
+	if not _card_foil_effect_enabled or _card_foil_intensity <= 0.0 or _disabled or _face_down or _texture_rect.texture == null:
+		_texture_rect.material = null
+		return
+	if _foil_material == null:
+		_foil_material = ShaderMaterial.new()
+		_foil_material.shader = _get_card_foil_shader()
+		_foil_material.resource_local_to_scene = true
+	if _card_foil_seed < 0.0:
+		var source_id := card_instance.instance_id if card_instance != null else int(get_instance_id())
+		_card_foil_seed = float(posmod(source_id * 37 + 17, 997)) / 997.0
+	_foil_material.set_shader_parameter("foil_intensity", _card_foil_intensity)
+	_foil_material.set_shader_parameter("foil_seed", _card_foil_seed)
+	_texture_rect.material = _foil_material
+
+
+func _apply_empty_slot_effect() -> void:
+	if _empty_slot_effect == null:
+		return
+	var enabled := _is_empty_field_slot()
+	_empty_slot_effect.visible = enabled
+	if not enabled:
+		_empty_slot_effect.material = null
+		return
+	if _empty_slot_material == null:
+		_empty_slot_material = ShaderMaterial.new()
+		_empty_slot_material.shader = _get_empty_slot_shader()
+		_empty_slot_material.resource_local_to_scene = true
+	_empty_slot_material.set_shader_parameter("slot_seed", float(posmod(int(get_instance_id()) * 29 + 11, 997)) / 997.0)
+	_empty_slot_effect.material = _empty_slot_material
+
+
+func _is_empty_field_slot() -> bool:
+	return card_data == null and not _face_down and (display_mode == MODE_SLOT_ACTIVE or display_mode == MODE_SLOT_BENCH)
+
+
+static func _get_card_foil_shader() -> Shader:
+	if _foil_shader != null:
+		return _foil_shader
+	var shader := Shader.new()
+	shader.code = """
+shader_type canvas_item;
+
+uniform float foil_intensity = 1.0;
+uniform float foil_seed = 0.0;
+
+void fragment() {
+	vec4 base = COLOR;
+	vec4 final_color = base;
+	if (base.a > 0.01 && foil_intensity > 0.001) {
+		float t = TIME + foil_seed * 8.0;
+		float sweep_axis = UV.x * 0.62 + UV.y * 1.18;
+		float sweep_center = fract(t * 0.135);
+		float sweep_distance = abs(fract(sweep_axis - sweep_center + 0.5) - 0.5);
+		float sweep = smoothstep(0.40, 0.0, sweep_distance);
+		float core = smoothstep(0.16, 0.0, sweep_distance);
+		float shimmer = 0.5 + 0.5 * sin((UV.x - UV.y + foil_seed) * 18.0 + TIME * 1.2);
+
+		vec3 foil_light = mix(vec3(1.0, 0.94, 0.74), vec3(0.76, 0.92, 1.0), shimmer * 0.32);
+		float highlight = (sweep * 0.20 + core * 0.08) * foil_intensity;
+		vec3 result = base.rgb + foil_light * highlight;
+
+		float edge = smoothstep(0.0, 0.035, UV.x) * smoothstep(0.0, 0.035, UV.y) * smoothstep(0.0, 0.035, 1.0 - UV.x) * smoothstep(0.0, 0.035, 1.0 - UV.y);
+		final_color = vec4(mix(base.rgb, min(result, vec3(1.0)), edge), base.a);
+	}
+	COLOR = final_color;
+}
+"""
+	_foil_shader = shader
+	return _foil_shader
+
+
+static func _get_empty_slot_shader() -> Shader:
+	if _empty_slot_shader != null:
+		return _empty_slot_shader
+	var shader := Shader.new()
+	shader.code = """
+shader_type canvas_item;
+
+uniform float slot_seed = 0.0;
+
+void fragment() {
+	vec2 center = UV - vec2(0.5);
+	float t = TIME * 0.75 + slot_seed * 6.28318;
+	float oval = length(center * vec2(0.82, 1.16));
+	float pulse = 0.62 + 0.38 * sin(t);
+	float ring_radius = 0.34 + 0.014 * sin(t * 0.8);
+	float ring = smoothstep(0.032, 0.0, abs(oval - ring_radius));
+	float core = smoothstep(0.44, 0.0, oval) * 0.18;
+	float diagonal = smoothstep(0.020, 0.0, abs(fract((UV.x + UV.y) * 1.85 - t * 0.08) - 0.5)) * 0.08;
+	float edge = max(
+		max(smoothstep(0.035, 0.0, UV.x), smoothstep(0.035, 0.0, 1.0 - UV.x)),
+		max(smoothstep(0.035, 0.0, UV.y), smoothstep(0.035, 0.0, 1.0 - UV.y))
+	) * 0.18;
+	float alpha = ring * (0.20 + 0.12 * pulse) + core + diagonal + edge;
+	vec3 color = mix(vec3(0.18, 0.62, 0.72), vec3(0.62, 0.88, 0.92), pulse * 0.35);
+	COLOR = vec4(color, clamp(alpha, 0.0, 0.34));
+}
+"""
+	_empty_slot_shader = shader
+	return _empty_slot_shader
 
 
 func _update_overlay_visibility() -> void:
@@ -1404,6 +1567,12 @@ func _update_style() -> void:
 	style.set_border_width_all(2)
 	style.border_color = Color(0.24, 0.3, 0.4)
 	style.set_content_margin_all(2)
+	if _is_empty_field_slot():
+		style.bg_color = Color(0.06, 0.14, 0.17, 0.52)
+		style.border_color = Color(0.36, 0.72, 0.80, 0.42)
+		style.shadow_color = Color(0.10, 0.62, 0.76, 0.16)
+		style.shadow_size = 7
+		style.shadow_offset = Vector2.ZERO
 	if _selected:
 		style.bg_color = Color(0.13, 0.11, 0.05, 1.0)
 		style.border_color = Color(1.0, 0.78, 0.10, 0.82)
@@ -1477,6 +1646,7 @@ func _update_style() -> void:
 	modulate = Color(0.55, 0.55, 0.55) if _disabled else Color(1, 1, 1)
 	if _texture_rect != null:
 		_texture_rect.modulate = Color(0.8, 0.8, 0.8) if _disabled else Color(1, 1, 1)
+	_apply_empty_slot_effect()
 
 
 func _apply_status_styles() -> void:

@@ -129,6 +129,21 @@ func test_tournament_scenes_instantiate() -> String:
 	])
 
 
+func test_tournament_setup_generates_random_default_player_name() -> String:
+	var setup: Control = TournamentSetupScene.instantiate()
+	setup.call("_ready")
+	var name_edit := setup.find_child("NameEdit", true, false) as LineEdit
+	var default_name := name_edit.text.strip_edges() if name_edit != null else ""
+	var digit_regex := RegEx.new()
+	digit_regex.compile("\\d{3}$")
+	var result := run_checks([
+		assert_true(default_name != "", "Tournament setup should prefill a random player name"),
+		assert_true(digit_regex.search(default_name) != null, "Random player name should include a numeric suffix"),
+	])
+	setup.queue_free()
+	return result
+
+
 func test_tournament_scenes_use_hud_visual_theme() -> String:
 	var scenes: Array[Control] = [
 		TournamentDeckSelectScene.instantiate(),

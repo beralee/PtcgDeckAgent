@@ -82,17 +82,29 @@ func handle_hand_drag_scroll_input(event: InputEvent, source: String = "external
 			_accept_event()
 			return true
 		return _end_hand_drag_scroll(source)
-	if event is InputEventMouseMotion and _as_bool(_get("_hand_drag_active"), false):
-		return _update_hand_drag_scroll(hand_drag_event_position(event), hand_scroll, source)
+	if event is InputEventMouseMotion:
+		var motion := event as InputEventMouseMotion
+		if _as_bool(_get("_hand_drag_active"), false):
+			return _update_hand_drag_scroll(hand_drag_event_position(event), hand_scroll, source)
+		return _try_late_start_hand_drag_scroll_from_motion(
+			motion.global_position,
+			motion.relative,
+			(motion.button_mask & MOUSE_BUTTON_MASK_LEFT) != 0,
+			hand_scroll,
+			source
+		)
 	if event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
 		if touch.pressed:
-			_begin_hand_drag_scroll(touch.position, hand_scroll, source)
+			_begin_hand_drag_scroll(_screen_position_to_drag_local(touch.position), hand_scroll, source)
 			_accept_event()
 			return true
 		return _end_hand_drag_scroll(source)
-	if event is InputEventScreenDrag and _as_bool(_get("_hand_drag_active"), false):
-		return _update_hand_drag_scroll((event as InputEventScreenDrag).position, hand_scroll, source)
+	if event is InputEventScreenDrag:
+		var drag := event as InputEventScreenDrag
+		if _as_bool(_get("_hand_drag_active"), false):
+			return _update_hand_drag_scroll(_screen_position_to_drag_local(drag.position), hand_scroll, source)
+		return _try_late_start_hand_drag_scroll_from_motion(drag.position, drag.relative, true, hand_scroll, source)
 	return false
 
 
@@ -288,8 +300,18 @@ func handle_card_gallery_drag_scroll_input(event: InputEvent, scroll: ScrollCont
 			_accept_event()
 			return true
 		return _end_card_gallery_drag_scroll(source)
-	if event is InputEventMouseMotion and _as_bool(_get("_card_gallery_drag_active"), false) and _get("_card_gallery_drag_active_scroll") == scroll:
-		return _update_card_gallery_drag_scroll(card_gallery_drag_event_position(event), scroll)
+	if event is InputEventMouseMotion:
+		var motion := event as InputEventMouseMotion
+		if _as_bool(_get("_card_gallery_drag_active"), false) and _get("_card_gallery_drag_active_scroll") == scroll:
+			return _update_card_gallery_drag_scroll(card_gallery_drag_event_position(event), scroll)
+		return _try_late_start_card_gallery_drag_scroll_from_motion(
+			motion.global_position,
+			motion.relative,
+			(motion.button_mask & MOUSE_BUTTON_MASK_LEFT) != 0,
+			scroll,
+			source,
+			false
+		)
 	if event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
 		if touch.pressed:
@@ -297,8 +319,11 @@ func handle_card_gallery_drag_scroll_input(event: InputEvent, scroll: ScrollCont
 			_accept_event()
 			return true
 		return _end_card_gallery_drag_scroll(source)
-	if event is InputEventScreenDrag and _as_bool(_get("_card_gallery_drag_active"), false) and _get("_card_gallery_drag_active_scroll") == scroll:
-		return _update_card_gallery_drag_scroll(card_gallery_drag_event_position(event), scroll)
+	if event is InputEventScreenDrag:
+		var drag := event as InputEventScreenDrag
+		if _as_bool(_get("_card_gallery_drag_active"), false) and _get("_card_gallery_drag_active_scroll") == scroll:
+			return _update_card_gallery_drag_scroll(card_gallery_drag_event_position(event), scroll)
+		return _try_late_start_card_gallery_drag_scroll_from_motion(drag.position, drag.relative, true, scroll, source, true)
 	return false
 
 
@@ -432,7 +457,7 @@ func hand_drag_event_position(event: InputEvent) -> Vector2:
 		screen_position = (event as InputEventScreenTouch).position
 	elif event is InputEventScreenDrag:
 		screen_position = (event as InputEventScreenDrag).position
-	return _as_vector2(_call("_screen_position_to_battle_local", [screen_position]), screen_position)
+	return _screen_position_to_drag_local(screen_position)
 
 
 func card_gallery_drag_event_position(event: InputEvent) -> Vector2:
@@ -443,7 +468,7 @@ func card_gallery_drag_event_position(event: InputEvent) -> Vector2:
 		screen_position = (event as InputEventScreenTouch).position
 	elif event is InputEventScreenDrag:
 		screen_position = (event as InputEventScreenDrag).position
-	return _as_vector2(_call("_screen_position_to_battle_local", [screen_position]), screen_position)
+	return _screen_position_to_drag_local(screen_position)
 
 
 func _handle_hand_drag_wheel(mouse_button: InputEventMouseButton, hand_scroll: ScrollContainer) -> bool:
@@ -472,6 +497,24 @@ func _begin_hand_drag_scroll(position: Vector2, hand_scroll: ScrollContainer, so
 	_set_scene_var("_hand_drag_start_scroll", hand_scroll.scroll_horizontal)
 	_set_scene_var("_hand_drag_debug_motion_count", 0)
 	debug_hand_drag_scroll("begin source=%s pos=%s scroll=%d range=%s scroll_size=%s content=%s" % [source, str(position), int(_get("_hand_drag_start_scroll")), hand_drag_scroll_range_text(hand_scroll), str(hand_scroll.size), hand_drag_content_size_text(hand_scroll)])
+
+
+func _try_late_start_hand_drag_scroll_from_motion(
+	screen_position: Vector2,
+	screen_relative: Vector2,
+	primary_button_active: bool,
+	hand_scroll: ScrollContainer,
+	source: String = ""
+) -> bool:
+	if not primary_button_active:
+		return false
+	if not _drag_motion_started_in_scroll(hand_scroll, screen_position, screen_relative):
+		return false
+	var start_screen_position := screen_position - screen_relative
+	var start_position := _screen_position_to_drag_local(start_screen_position)
+	var current_position := _screen_position_to_drag_local(screen_position)
+	_begin_hand_drag_scroll(start_position, hand_scroll, "%s_late" % source)
+	return _update_hand_drag_scroll(current_position, hand_scroll, source)
 
 
 func _update_hand_drag_scroll(position: Vector2, hand_scroll: ScrollContainer, source: String = "") -> bool:
@@ -554,6 +597,26 @@ func _begin_card_gallery_drag_scroll(position: Vector2, scroll: ScrollContainer,
 	_set_scene_var("_card_gallery_drag_touch_active", from_touch)
 
 
+func _try_late_start_card_gallery_drag_scroll_from_motion(
+	screen_position: Vector2,
+	screen_relative: Vector2,
+	primary_button_active: bool,
+	scroll: ScrollContainer,
+	source: String = "",
+	from_touch: bool = false
+) -> bool:
+	if not primary_button_active:
+		return false
+	if not _drag_motion_started_in_scroll(scroll, screen_position, screen_relative):
+		return false
+	var start_screen_position := screen_position - screen_relative
+	var start_position := _screen_position_to_drag_local(start_screen_position)
+	var current_position := _screen_position_to_drag_local(screen_position)
+	_begin_card_gallery_drag_scroll(start_position, scroll, from_touch)
+	debug_hand_drag_scroll("card-gallery-late-begin source=%s pos=%s scroll=%d" % [source, str(start_position), scroll.scroll_horizontal])
+	return _update_card_gallery_drag_scroll(current_position, scroll)
+
+
 func _update_card_gallery_drag_scroll(position: Vector2, scroll: ScrollContainer) -> bool:
 	var delta := position - _as_vector2(_get("_card_gallery_drag_start_position"), Vector2.ZERO)
 	var threshold := CARD_GALLERY_TOUCH_DRAG_SCROLL_THRESHOLD if _as_bool(_get("_card_gallery_drag_touch_active"), false) else HAND_DRAG_SCROLL_THRESHOLD
@@ -590,10 +653,30 @@ func _hand_drag_content_control(hand_scroll: ScrollContainer) -> Control:
 	return hand_scroll.get_child(0) as Control
 
 
+func _drag_motion_started_in_scroll(scroll: ScrollContainer, screen_position: Vector2, screen_relative: Vector2) -> bool:
+	if scroll == null or not is_instance_valid(scroll):
+		return false
+	if scroll.is_inside_tree() and not scroll.is_visible_in_tree():
+		return false
+	var start_screen_position := screen_position - screen_relative
+	var rect := scroll.get_global_rect()
+	if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+		rect = Rect2(scroll.global_position, scroll.size)
+	if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+		rect = Rect2(Vector2.ZERO, scroll.custom_minimum_size)
+	if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+		return false
+	return rect.has_point(start_screen_position) or (screen_relative == Vector2.ZERO and rect.has_point(screen_position))
+
+
 func _hand_drag_viewport_width(hand_scroll: ScrollContainer) -> float:
 	if hand_scroll == null:
 		return 0.0
 	return maxf(hand_scroll.size.x, hand_scroll.custom_minimum_size.x)
+
+
+func _screen_position_to_drag_local(screen_position: Vector2) -> Vector2:
+	return _as_vector2(_call("_screen_position_to_battle_local", [screen_position]), screen_position)
 
 
 func _hand_drag_content_width(content: Control) -> float:

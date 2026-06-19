@@ -13,6 +13,7 @@ const AbilityAttachFromDeckEffect = preload("res://scripts/effects/pokemon_effec
 const EffectHandheldFan = preload("res://scripts/effects/tool_effects/EffectHandheldFan.gd")
 
 const ANCIENT_SUPPORTER_PLAYED_FLAG_PREFIX := "ancient_supporter_played_turn_"
+const BOSS_ORDERS_EFFECT_ID := "8e1fa2c9018db938084c94c7c970d419"
 
 static var _live_refs: Array[WeakRef] = []
 
@@ -61,10 +62,13 @@ var _pending_bench_cleanup_knockout_prize_count: int = 0
 var _pending_bench_cleanup_knockout_is_active: bool = false
 var _deck_order_overrides: Dictionary = {}
 var _attack_damage_knockout_slot_ids: Dictionary = {}
+var _pending_trainer_vfx_data: Dictionary = {}
 
 const MAX_SETUP_MULLIGAN_LOOPS: int = 64
 const ATTACK_DAMAGE_COUNTER_PLACEMENT_FLAG := "_attack_damage_counter_effect_slot_ids"
 const ATTACK_EFFECT_DAMAGE_TARGETS_FLAG := "_attack_effect_damage_targets"
+const ORDERED_KNOCKOUT_SLOT_IDS_FLAG := "_ordered_knockout_slot_ids"
+const ORDERED_ACTIVE_REPLACEMENT_PLAYERS_FLAG := "_ordered_active_replacement_players"
 
 
 func _init() -> void:
@@ -98,6 +102,7 @@ func prepare_for_disposal() -> void:
 	_pending_prize_resume_player_index = -1
 	_clear_pending_knockout_bench_cleanup()
 	_attack_damage_knockout_slot_ids.clear()
+	_pending_trainer_vfx_data.clear()
 	if game_state != null:
 		game_state.shared_turn_flags.clear()
 	if effect_processor != null:
@@ -128,6 +133,7 @@ static func cleanup_live_instances_for_tests() -> void:
 func start_game(deck_1: DeckData, deck_2: DeckData, force_first: int = -1) -> void:
 	game_state = GameState.new()
 	action_log.clear()
+	_pending_trainer_vfx_data.clear()
 	_mulligan_counts = [0, 0]
 	_pending_heavy_baton_player_index = -1
 	_pending_heavy_baton_slot = null
@@ -576,6 +582,11 @@ func _do_pokemon_check() -> void:
 
 func _check_all_knockouts() -> void:
 	var knockout_found := false
+	var ordered_result := _handle_ordered_pending_knockouts()
+	if bool(ordered_result.get("paused", false)):
+		return
+	if bool(ordered_result.get("handled", false)):
+		knockout_found = true
 	for pi: int in 2:
 		var player: PlayerState = game_state.players[pi]
 		# 检查战斗宝可梦
@@ -599,6 +610,7 @@ func _check_all_knockouts() -> void:
 		return
 	_enforce_current_bench_limits("pokemon_check", game_state.current_player_index)
 	if not knockout_found:
+		game_state.shared_turn_flags.erase(ORDERED_KNOCKOUT_SLOT_IDS_FLAG)
 		if _consume_pending_second_attack_if_available(game_state.current_player_index):
 			_enter_phase(GameState.GamePhase.MAIN)
 		else:
@@ -613,6 +625,56 @@ func _check_all_knockouts() -> void:
 			_enter_phase(GameState.GamePhase.MAIN)
 		else:
 			_advance_to_next_turn()
+
+
+func _handle_ordered_pending_knockouts() -> Dictionary:
+	var result := {"handled": false, "paused": false}
+	if game_state == null:
+		return result
+	var raw_order: Variant = game_state.shared_turn_flags.get(ORDERED_KNOCKOUT_SLOT_IDS_FLAG, [])
+	if not (raw_order is Array) or (raw_order as Array).is_empty():
+		return result
+	var ordered_slot_ids: Array = raw_order as Array
+	for raw_slot_id: Variant in ordered_slot_ids:
+		var slot_info := _find_knockout_slot_by_id(int(raw_slot_id))
+		if slot_info.is_empty():
+			continue
+		var slot: PokemonSlot = slot_info.get("slot", null)
+		if slot == null or not effect_processor.is_effectively_knocked_out(slot, game_state):
+			continue
+		result["handled"] = true
+		if not _handle_knockout(
+			int(slot_info.get("player_index", -1)),
+			slot,
+			bool(slot_info.get("is_active", false))
+		):
+			result["paused"] = true
+			return result
+	if not _has_pending_knockouts():
+		game_state.shared_turn_flags.erase(ORDERED_KNOCKOUT_SLOT_IDS_FLAG)
+	return result
+
+
+func _has_ordered_knockout_sequence() -> bool:
+	if game_state == null:
+		return false
+	var raw_order: Variant = game_state.shared_turn_flags.get(ORDERED_KNOCKOUT_SLOT_IDS_FLAG, [])
+	if raw_order is Array and not (raw_order as Array).is_empty():
+		return true
+	return _has_pending_active_knockouts() or _has_ordered_active_replacement_queue()
+
+
+func _find_knockout_slot_by_id(slot_id: int) -> Dictionary:
+	if game_state == null:
+		return {}
+	for pi: int in game_state.players.size():
+		var player: PlayerState = game_state.players[pi]
+		if player.active_pokemon != null and int(player.active_pokemon.get_instance_id()) == slot_id:
+			return {"player_index": pi, "slot": player.active_pokemon, "is_active": true}
+		for bench_slot: PokemonSlot in player.bench:
+			if bench_slot != null and int(bench_slot.get_instance_id()) == slot_id:
+				return {"player_index": pi, "slot": bench_slot, "is_active": false}
+	return {}
 
 
 func _has_pending_knockouts() -> bool:
@@ -871,6 +933,8 @@ func _continue_after_knockout_field_effects(player_index: int, prize_count: int,
 	var has_live_replacement: bool = _has_available_replacement(player_index)
 	var has_other_pending_active_knockouts: bool = _has_pending_active_knockouts()
 	var has_other_pending_knockouts: bool = _has_pending_knockouts()
+	if is_active and has_live_replacement and _has_ordered_knockout_sequence():
+		_queue_ordered_active_replacement_player(player_index)
 
 	# 对手拿取奖赏卡
 	var prizes_taken: Array[CardInstance] = []
@@ -940,6 +1004,9 @@ func _continue_after_knockout_field_effects(player_index: int, prize_count: int,
 			_enter_phase(GameState.GamePhase.POKEMON_CHECK)
 			_check_all_knockouts()
 		elif has_live_replacement:
+			if _has_ordered_active_replacement_queue():
+				_request_empty_active_replacement_if_needed()
+				return true
 			_enter_phase(GameState.GamePhase.KNOCKOUT_REPLACE)
 			player_choice_required.emit("send_out_pokemon", {
 				"player": player_index,
@@ -1032,6 +1099,10 @@ func resolve_take_prize(player_index: int, slot_index: int) -> bool:
 
 	match resume_mode:
 		"send_out":
+			if _has_ordered_active_replacement_queue():
+				_queue_ordered_active_replacement_player(resume_player_index)
+				_request_empty_active_replacement_if_needed()
+				return true
 			_enter_phase(GameState.GamePhase.KNOCKOUT_REPLACE)
 			player_choice_required.emit("send_out_pokemon", {
 				"player": resume_player_index,
@@ -1071,10 +1142,72 @@ func _has_available_replacement(player_index: int) -> bool:
 	return false
 
 
+func _queue_ordered_active_replacement_player(player_index: int) -> void:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return
+	var ordered_players := _get_ordered_active_replacement_players()
+	if player_index not in ordered_players:
+		ordered_players.append(player_index)
+	ordered_players = _sort_active_replacement_players(ordered_players)
+	game_state.shared_turn_flags[ORDERED_ACTIVE_REPLACEMENT_PLAYERS_FLAG] = ordered_players
+
+
+func _remove_ordered_active_replacement_player(player_index: int) -> void:
+	if game_state == null:
+		return
+	var ordered_players := _get_ordered_active_replacement_players()
+	ordered_players.erase(player_index)
+	if ordered_players.is_empty():
+		game_state.shared_turn_flags.erase(ORDERED_ACTIVE_REPLACEMENT_PLAYERS_FLAG)
+	else:
+		game_state.shared_turn_flags[ORDERED_ACTIVE_REPLACEMENT_PLAYERS_FLAG] = ordered_players
+
+
+func _get_ordered_active_replacement_players() -> Array[int]:
+	var ordered_players: Array[int] = []
+	if game_state == null:
+		return ordered_players
+	var raw_order: Variant = game_state.shared_turn_flags.get(ORDERED_ACTIVE_REPLACEMENT_PLAYERS_FLAG, [])
+	if raw_order is Array:
+		for raw_player_index: Variant in raw_order:
+			var player_index := int(raw_player_index)
+			if player_index >= 0 and player_index < game_state.players.size() and player_index not in ordered_players:
+				ordered_players.append(player_index)
+	return ordered_players
+
+
+func _has_ordered_active_replacement_queue() -> bool:
+	return not _get_ordered_active_replacement_players().is_empty()
+
+
+func _active_replacement_scan_order() -> Array[int]:
+	var order := _get_ordered_active_replacement_players()
+	for pi: int in game_state.players.size():
+		if pi not in order:
+			order.append(pi)
+	return order
+
+
+func _sort_active_replacement_players(ordered_players: Array[int]) -> Array[int]:
+	if game_state == null or game_state.players.is_empty():
+		return ordered_players
+	var result: Array[int] = []
+	var current_player := clampi(game_state.current_player_index, 0, game_state.players.size() - 1)
+	var opponent_player := 1 - current_player if game_state.players.size() == 2 else -1
+	if opponent_player >= 0 and opponent_player in ordered_players:
+		result.append(opponent_player)
+	if current_player in ordered_players:
+		result.append(current_player)
+	for player_index: int in ordered_players:
+		if player_index not in result:
+			result.append(player_index)
+	return result
+
+
 func _request_empty_active_replacement_if_needed() -> bool:
 	if _check_win_condition() >= 0:
 		return true
-	for pi: int in 2:
+	for pi: int in _active_replacement_scan_order():
 		var player: PlayerState = game_state.players[pi]
 		if player.active_pokemon != null:
 			continue
@@ -1286,6 +1419,7 @@ func send_out_pokemon(player_index: int, bench_slot: PokemonSlot) -> bool:
 	player.bench.erase(bench_slot)
 	player.active_pokemon = bench_slot
 	bench_slot.mark_entered_active_from_bench(game_state.turn_number)
+	_remove_ordered_active_replacement_player(player_index)
 
 	_log_action(GameAction.ActionType.SEND_OUT, player_index,
 		{"pokemon_name": bench_slot.get_pokemon_name()},
@@ -1743,6 +1877,8 @@ func play_trainer(player_index: int, card: CardInstance, targets: Array) -> bool
 	if not card in player.hand:
 		return false
 
+	_pending_trainer_vfx_data.clear()
+	var boss_orders_target := _selected_boss_orders_target(player_index, card, targets)
 	player.hand.erase(card)
 
 	# 执行效果
@@ -1761,6 +1897,8 @@ func play_trainer(player_index: int, card: CardInstance, targets: Array) -> bool
 		if card.card_data.has_tag(CardData.ANCIENT_TAG):
 			game_state.shared_turn_flags["%s%d" % [ANCIENT_SUPPORTER_PLAYED_FLAG_PREFIX, player_index]] = game_state.turn_number
 
+	var trainer_vfx_data := _build_boss_orders_vfx_data(player_index, card, boss_orders_target)
+	_pending_trainer_vfx_data = trainer_vfx_data.duplicate(true)
 	_log_action(GameAction.ActionType.PLAY_TRAINER, player_index,
 		{"card_name": card.card_data.name}, "玩家%d使用 %s" % [player_index + 1, card.card_data.name])
 	_enforce_current_bench_limits("play_trainer:%s" % card.card_data.name, player_index)
@@ -1970,6 +2108,8 @@ func _clear_attack_damage_tracking() -> void:
 	if game_state != null:
 		game_state.shared_turn_flags.erase(ATTACK_DAMAGE_COUNTER_PLACEMENT_FLAG)
 		game_state.shared_turn_flags.erase(ATTACK_EFFECT_DAMAGE_TARGETS_FLAG)
+		game_state.shared_turn_flags.erase(ORDERED_KNOCKOUT_SLOT_IDS_FLAG)
+		game_state.shared_turn_flags.erase(ORDERED_ACTIVE_REPLACEMENT_PLAYERS_FLAG)
 
 
 func use_attack(player_index: int, attack_index: int, targets: Array = []) -> bool:
@@ -2312,6 +2452,56 @@ func _target_spec_for_slot(slot: PokemonSlot) -> Dictionary:
 	return {}
 
 
+func _build_boss_orders_vfx_data(player_index: int, card: CardInstance, selected_target: PokemonSlot) -> Dictionary:
+	if not _is_boss_orders_card(card) or selected_target == null:
+		return {}
+	var target_spec := _slot_action_spec(selected_target)
+	if target_spec.is_empty():
+		return {}
+	return {
+		"trainer_vfx": "boss_orders",
+		"source_player_index": player_index,
+		"target": target_spec,
+	}
+
+
+func _selected_boss_orders_target(player_index: int, card: CardInstance, targets: Array) -> PokemonSlot:
+	if not _is_boss_orders_card(card) or game_state == null:
+		return null
+	var opponent_index := 1 - player_index
+	if opponent_index < 0 or opponent_index >= game_state.players.size():
+		return null
+	var opponent: PlayerState = game_state.players[opponent_index]
+	if opponent == null:
+		return null
+	var ctx := _trainer_interaction_context(targets)
+	var raw_targets: Array = ctx.get("opponent_bench_target", [])
+	if not raw_targets.is_empty() and raw_targets[0] is PokemonSlot:
+		var selected_slot: PokemonSlot = raw_targets[0] as PokemonSlot
+		if selected_slot in opponent.bench:
+			return selected_slot
+	return opponent.bench[0] if not opponent.bench.is_empty() else null
+
+
+func _trainer_interaction_context(targets: Array) -> Dictionary:
+	if targets.is_empty() or not (targets[0] is Dictionary):
+		return {}
+	return (targets[0] as Dictionary).duplicate(true)
+
+
+func _is_boss_orders_card(card: CardInstance) -> bool:
+	if card == null or card.card_data == null:
+		return false
+	var effect_id := String(card.card_data.effect_id)
+	if effect_processor != null:
+		effect_id = effect_processor.resolve_effect_id(effect_id)
+	if effect_id == BOSS_ORDERS_EFFECT_ID:
+		return true
+	var name_en := String(card.card_data.name_en).strip_edges().to_lower()
+	var name := String(card.card_data.name).strip_edges().to_lower()
+	return name_en == "boss's orders" or name == "boss's orders"
+
+
 func _contains_target_selection_marker(value: Variant) -> bool:
 	if value is Dictionary:
 		var entry_dict: Dictionary = value
@@ -2547,6 +2737,9 @@ func _log_action(
 	var normalized_data: Dictionary = data.duplicate(true)
 	if action_type == GameAction.ActionType.DRAW_CARD:
 		normalized_data = _normalize_draw_action_data(player_index, normalized_data)
+	if action_type == GameAction.ActionType.PLAY_TRAINER and not _pending_trainer_vfx_data.is_empty():
+		normalized_data.merge(_pending_trainer_vfx_data, true)
+		_pending_trainer_vfx_data.clear()
 	var action: GameAction = GameAction.create(
 		action_type, player_index, normalized_data, game_state.turn_number, description
 	)

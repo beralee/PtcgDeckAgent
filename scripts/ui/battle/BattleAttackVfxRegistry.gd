@@ -82,6 +82,15 @@ const COUNTER_TRANSFER_ASSET_SPECS := {
 	"residue": {"path": "res://assets/textures/vfx/attribute_psychic/source/psychic_residue_motes.png", "frames": 1},
 }
 
+const BOSS_ORDERS_ASSET_SPECS := {
+	"impact": {
+		"path": "res://assets/textures/vfx/trainer_boss_orders/sheet-transparent.png",
+		"frames": 6,
+		"rows": 2,
+		"cols": 3,
+	},
+}
+
 const GRASS_ASSET_SPECS := {
 	"impact": {"path": "res://assets/textures/vfx/attribute_grass/verdant_burst/impact_bloom_flipbook.png", "frames": 4},
 	"impact_support": {"path": "res://assets/textures/vfx/attribute_grass/verdant_burst/leaf_shard_cluster.png", "frames": 1},
@@ -399,6 +408,8 @@ var _counter_transfer_profile := _make_profile(
 	}
 )
 
+var _boss_orders_profile := _make_boss_orders_profile()
+
 
 static func _make_profile(
 	id: String,
@@ -467,6 +478,30 @@ static func _make_profile(
 	return profile
 
 
+static func _make_boss_orders_profile() -> RefCounted:
+	var profile := _make_profile(
+		"trainer_boss_orders",
+		"boss_orders_command",
+		Color(1.0, 0.2, 0.08, 1.0),
+		Color(0.18, 0.45, 1.0, 1.0),
+		12,
+		3,
+		1.76,
+		{
+			"asset_specs": BOSS_ORDERS_ASSET_SPECS,
+			"impact_only": true,
+			"disable_generic_shockwave": true,
+		}
+	)
+	profile.cast_duration = 0.28
+	profile.travel_duration = 0.06
+	profile.impact_duration = 0.95
+	profile.residue_duration = 0.42
+	profile.target_flash_strength = 0.42
+	profile.screen_shake_strength = 20.0
+	return profile
+
+
 func resolve_profile(attacker_card_data: CardData, _attack_name: String = "") -> RefCounted:
 	if attacker_card_data != null:
 		for card_uid: String in _card_uid_profile_candidates(attacker_card_data):
@@ -483,6 +518,10 @@ func resolve_profile(attacker_card_data: CardData, _attack_name: String = "") ->
 
 func get_counter_transfer_profile() -> RefCounted:
 	return _counter_transfer_profile
+
+
+func get_boss_orders_profile() -> RefCounted:
+	return _boss_orders_profile
 
 
 func _hero_profile_candidates(card_data: CardData) -> Array[String]:

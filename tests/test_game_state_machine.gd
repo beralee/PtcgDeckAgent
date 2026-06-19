@@ -2433,13 +2433,13 @@ func test_roaring_moon_frenzied_gouging_double_active_knockout_allows_both_repla
 	var attacked: bool = gsm.use_attack(0, 0)
 	var first_pending_player: int = int(gsm.get("_pending_prize_player_index"))
 	var first_pending_count: int = int(gsm.get("_pending_prize_remaining"))
-	var opponent_took_prize_1: bool = gsm.resolve_take_prize(1, 0)
-	var opponent_took_prize_2: bool = gsm.resolve_take_prize(1, 1)
-	var pending_player_after_opponent_prizes: int = int(gsm.get("_pending_prize_player_index"))
-	var pending_count_after_opponent_prizes: int = int(gsm.get("_pending_prize_remaining"))
-	var phase_after_opponent_prizes: int = gsm.game_state.phase
 	var player_took_prize_1: bool = gsm.resolve_take_prize(0, 0)
 	var player_took_prize_2: bool = gsm.resolve_take_prize(0, 1)
+	var pending_player_after_player_prizes: int = int(gsm.get("_pending_prize_player_index"))
+	var pending_count_after_player_prizes: int = int(gsm.get("_pending_prize_remaining"))
+	var phase_after_player_prizes: int = gsm.game_state.phase
+	var opponent_took_prize_1: bool = gsm.resolve_take_prize(1, 0)
+	var opponent_took_prize_2: bool = gsm.resolve_take_prize(1, 1)
 	var phase_after_all_prizes: int = gsm.game_state.phase
 	var last_choice_player_after_all_prizes: int = int(choice_events.back().get("data", {}).get("player", -1)) if not choice_events.is_empty() else -1
 	var opp_send_out_ok: bool = gsm.send_out_pokemon(1, opp_replacement)
@@ -2449,15 +2449,15 @@ func test_roaring_moon_frenzied_gouging_double_active_knockout_allows_both_repla
 	return run_checks([
 		assert_not_null(roaring_cd, "CSV6C_096 Roaring Moon ex should exist"),
 		assert_true(attacked, "Roaring Moon ex should use Frenzied Gouging"),
-		assert_eq(first_pending_player, 1, "The opponent should first take prizes for Roaring Moon ex's self-KO"),
-		assert_eq(first_pending_count, 2, "Roaring Moon ex should be worth two prizes after self-KO"),
-		assert_true(opponent_took_prize_1, "The opponent should take the first Roaring Moon prize"),
-		assert_true(opponent_took_prize_2, "The opponent should take the second Roaring Moon prize"),
-		assert_eq(pending_player_after_opponent_prizes, 0, "After Roaring Moon prizes, the attacker should take prizes for the opposing Active"),
-		assert_eq(pending_count_after_opponent_prizes, 2, "The opposing ex Active should be worth two prizes"),
-		assert_eq(phase_after_opponent_prizes, GameState.GamePhase.POKEMON_CHECK, "The flow should continue checking KOs before replacement"),
+		assert_eq(first_pending_player, 0, "The attacker should first take prizes for the Defending Pokemon"),
+		assert_eq(first_pending_count, 2, "The opposing ex Active should be worth two prizes"),
 		assert_true(player_took_prize_1, "The attacker should take the first defender prize"),
 		assert_true(player_took_prize_2, "The attacker should take the second defender prize"),
+		assert_eq(pending_player_after_player_prizes, 1, "After defender prizes, the opponent should take prizes for Roaring Moon ex's self-KO"),
+		assert_eq(pending_count_after_player_prizes, 2, "Roaring Moon ex should be worth two prizes after self-KO"),
+		assert_eq(phase_after_player_prizes, GameState.GamePhase.POKEMON_CHECK, "The flow should continue checking KOs before replacement"),
+		assert_true(opponent_took_prize_1, "The opponent should take the first Roaring Moon prize"),
+		assert_true(opponent_took_prize_2, "The opponent should take the second Roaring Moon prize"),
 		assert_eq(phase_after_all_prizes, GameState.GamePhase.KNOCKOUT_REPLACE, "Replacement should begin only after both active KOs award prizes"),
 		assert_eq(last_choice_player_after_all_prizes, 1, "Opponent should replace their knocked-out Active first"),
 		assert_true(opp_send_out_ok, "Opponent should be able to send out after both prize queues resolve"),
@@ -3247,6 +3247,84 @@ func test_mew_ex_genome_hacking_copies_bellowing_thunder_field_energy_discard() 
 		assert_eq(ogerpon_slot.attached_energy.size(), 0, "Copied Bellowing Thunder should remove selected Energy from the Benched Pokemon"),
 		assert_not_null(damage_action, "Copied Bellowing Thunder damage should be logged"),
 		assert_eq(int(damage_action.data.get("damage", -1)) if damage_action != null else -1, 140, "Damage log should record copied Bellowing Thunder damage"),
+	])
+
+
+func test_mew_ex_genome_hacking_copies_roaring_moon_knockout_before_self_damage_prizes() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 2
+
+	CardInstance.reset_id_counter()
+	for pi: int in 2:
+		var player_state := PlayerState.new()
+		player_state.player_index = pi
+		gsm.game_state.players.append(player_state)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+	var mew_cd: CardData = _get_card("151C", "151")
+	var roaring_cd: CardData = _get_card("CSV6C", "096")
+	if mew_cd != null:
+		gsm.effect_processor.register_pokemon_card(mew_cd)
+	if roaring_cd != null:
+		gsm.effect_processor.register_pokemon_card(roaring_cd)
+
+	var mew_slot := PokemonSlot.new()
+	if mew_cd != null:
+		mew_slot.pokemon_stack.append(CardInstance.create(mew_cd, 0))
+	for i: int in 3:
+		mew_slot.attached_energy.append(CardInstance.create(_make_test_energy("C"), 0))
+	player.active_pokemon = mew_slot
+	var my_replacement := PokemonSlot.new()
+	my_replacement.pokemon_stack.append(CardInstance.create(_make_basic_pokemon_card_data("Mew Replacement"), 0))
+	player.bench = [my_replacement]
+
+	var roaring_slot := PokemonSlot.new()
+	if roaring_cd != null:
+		roaring_slot.pokemon_stack.append(CardInstance.create(roaring_cd, 1))
+	opponent.active_pokemon = roaring_slot
+	var opponent_replacement := PokemonSlot.new()
+	opponent_replacement.pokemon_stack.append(CardInstance.create(_make_basic_pokemon_card_data("Roaring Moon Replacement"), 1))
+	opponent.bench = [opponent_replacement]
+
+	for i: int in 6:
+		player.prizes.append(CardInstance.create(_make_basic_pokemon_card_data("Mew Prize %d" % i), 0))
+		opponent.prizes.append(CardInstance.create(_make_basic_pokemon_card_data("Moon Prize %d" % i), 1))
+
+	var copied_option := {
+		"source_effect_id": roaring_cd.effect_id if roaring_cd != null else "",
+		"attack_index": 0,
+		"attack": roaring_cd.attacks[0] if roaring_cd != null and not roaring_cd.attacks.is_empty() else {},
+	}
+	var attacked := gsm.use_attack(0, 0, [{"copied_attack": [copied_option]}])
+	var first_pending_player := int(gsm.get("_pending_prize_player_index"))
+	var first_pending_knocked_out_player := int(gsm.get("_pending_prize_knocked_out_player_index"))
+	var first_pending_count := int(gsm.get("_pending_prize_remaining"))
+	var player_took_first_prize := gsm.resolve_take_prize(0, 0)
+	var player_took_second_prize := gsm.resolve_take_prize(0, 1)
+	var second_pending_player := int(gsm.get("_pending_prize_player_index"))
+	var second_pending_knocked_out_player := int(gsm.get("_pending_prize_knocked_out_player_index"))
+	var second_pending_count := int(gsm.get("_pending_prize_remaining"))
+
+	return run_checks([
+		assert_not_null(mew_cd, "151C_151 Mew ex should exist in the card database"),
+		assert_not_null(roaring_cd, "CSV6C_096 Roaring Moon ex should exist in the card database"),
+		assert_true(gsm.effect_processor.has_attack_effect(mew_cd.effect_id) if mew_cd != null else false, "Mew ex should register Genome Hacking as an attack effect"),
+		assert_true(gsm.effect_processor.has_attack_effect(roaring_cd.effect_id) if roaring_cd != null else false, "Roaring Moon ex should register Frenzied Gouging as an attack effect"),
+		assert_true(attacked, "Mew ex should be able to copy Roaring Moon ex's Frenzied Gouging"),
+		assert_eq(roaring_slot.damage_counters, roaring_slot.get_max_hp(), "Copied Frenzied Gouging should Knock Out the opposing Active before resolving self-damage prizes"),
+		assert_eq(mew_slot.damage_counters, 200, "Copied Frenzied Gouging should still place 200 damage on Mew ex"),
+		assert_eq(first_pending_player, 0, "Mew ex's player should take prizes for Roaring Moon ex before the opponent takes Mew ex prizes"),
+		assert_eq(first_pending_knocked_out_player, 1, "The first prize queue should be for the copied attack's Defending Pokemon"),
+		assert_eq(first_pending_count, 2, "Roaring Moon ex should be worth two prizes"),
+		assert_true(player_took_first_prize and player_took_second_prize, "Mew ex's player should be able to take both Roaring Moon ex prizes first"),
+		assert_eq(second_pending_player, 1, "After Roaring Moon ex prizes, the opponent should take prizes for Mew ex's self-KO"),
+		assert_eq(second_pending_knocked_out_player, 0, "The second prize queue should be for Mew ex"),
+		assert_eq(second_pending_count, 2, "Mew ex should be worth two prizes after self-KO"),
 	])
 
 

@@ -19,10 +19,20 @@ const RULE_CERULEDGE_DISCARD_ENERGY := "ceruledge_discard_energy_ready"
 const RULE_ROARING_MOON_FRENZIED := "roaring_moon_frenzied_ready"
 const RULE_GARDEVOIR_PSYCHIC_EMBRACE := "gardevoir_psychic_embrace_ready"
 const RULE_ARCHALUDON_METAL_BRIDGE := "archaludon_metal_bridge_ready"
+const RULE_SQUAWKABILLY_FIRST_TURN_DRAW := "squawkabilly_first_turn_draw_ready"
 
 const BUDEW_READY_ASSET_SPECS := {
 	"burst": {
 		"path": "res://assets/textures/vfx/ready_budew_item_lock/sheet-transparent.png",
+		"frames": 6,
+		"rows": 2,
+		"cols": 3,
+	},
+}
+
+const SQUAWKABILLY_READY_ASSET_SPECS := {
+	"burst": {
+		"path": "res://assets/textures/vfx/ready_squawkabilly_first_turn_draw/sheet-transparent.png",
 		"frames": 6,
 		"rows": 2,
 		"cols": 3,
@@ -240,6 +250,28 @@ var _profiles: Dictionary = {
 			"peak_scale": 1.18,
 			"end_scale": 1.04,
 			"flash_color": Color(1.0, 0.45, 0.82, 0.24),
+		}
+	),
+	RULE_SQUAWKABILLY_FIRST_TURN_DRAW: _make_profile(
+		"ready_squawkabilly_first_turn_draw",
+		RULE_SQUAWKABILLY_FIRST_TURN_DRAW,
+		SQUAWKABILLY_READY_ASSET_SPECS,
+		{
+			"duration": 1.5,
+			"effect_size": Vector2(500.0, 500.0),
+			"anchor_offset": Vector2(0.0, -34.0),
+			"start_scale": 0.7,
+			"peak_scale": 1.18,
+			"hold_scale": 1.08,
+			"end_scale": 1.0,
+			"hold_ratio": 0.2,
+			"flipbook_ratio": 0.96,
+			"portrait_duration": 1.62,
+			"portrait_effect_width_ratio": 0.88,
+			"portrait_effect_min_size": 580.0,
+			"portrait_effect_max_size": 800.0,
+			"portrait_anchor_offset_ratio": Vector2(0.0, -0.12),
+			"flash_color": Color(0.58, 1.0, 0.22, 0.3),
 		}
 	),
 	RULE_DRAGAPULT_PHANTOM_DIVE: _make_profile(

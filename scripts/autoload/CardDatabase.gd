@@ -28,6 +28,10 @@ var _bundled_deck_signature_cache: Dictionary = {}
 ## 内存中的卡组缓存 {deck_id -> DeckData}
 var _deck_cache: Dictionary = {}
 var _ai_deck_cache: Dictionary = {}
+var _sorted_deck_cache: Array[DeckData] = []
+var _sorted_ai_deck_cache: Array[DeckData] = []
+var _sorted_deck_cache_dirty := true
+var _sorted_ai_deck_cache_dirty := true
 
 ## 卡组列表变更信号
 signal decks_changed()
@@ -518,6 +522,7 @@ func save_deck(deck: DeckData) -> void:
 	file.store_string(JSON.stringify(deck.to_dict(), "\t"))
 	file.close()
 	_deck_cache[deck.id] = deck
+	_mark_deck_sort_cache_dirty()
 	decks_changed.emit()
 
 
@@ -537,6 +542,7 @@ func save_ai_deck(deck: DeckData) -> void:
 	file.store_string(JSON.stringify(deck.to_dict(), "\t"))
 	file.close()
 	_ai_deck_cache[deck.id] = deck
+	_mark_ai_deck_sort_cache_dirty()
 
 
 func delete_ai_deck(deck_id: int) -> void:
@@ -544,11 +550,13 @@ func delete_ai_deck(deck_id: int) -> void:
 		var bundled_ai_deck := _load_bundled_ai_deck(deck_id)
 		if bundled_ai_deck != null:
 			_ai_deck_cache[deck_id] = bundled_ai_deck
+			_mark_ai_deck_sort_cache_dirty()
 		return
 	var path := AI_DECKS_DIR + "%d.json" % deck_id
 	if FileAccess.file_exists(path):
 		DirAccess.remove_absolute(path)
 	_ai_deck_cache.erase(deck_id)
+	_mark_ai_deck_sort_cache_dirty()
 
 
 ## 删除卡组
@@ -557,6 +565,7 @@ func delete_deck(deck_id: int) -> void:
 	if FileAccess.file_exists(path):
 		DirAccess.remove_absolute(path)
 	_deck_cache.erase(deck_id)
+	_mark_deck_sort_cache_dirty()
 	decks_changed.emit()
 
 
@@ -574,18 +583,24 @@ func get_ai_deck(deck_id: int) -> DeckData:
 ## 获取所有卡组列表
 func get_all_decks() -> Array[DeckData]:
 	_ensure_deck_cache_ready()
-	return _sorted_deck_values(_deck_cache)
+	if _sorted_deck_cache_dirty:
+		_sorted_deck_cache = _sorted_deck_values(_deck_cache)
+		_sorted_deck_cache_dirty = false
+	return _sorted_deck_cache.duplicate()
 
 
 func get_all_ai_decks() -> Array[DeckData]:
 	_ensure_ai_deck_cache_ready()
-	var result: Array[DeckData] = []
-	for deck_id: int in SUPPORTED_AI_DECK_IDS:
-		var deck: DeckData = _ai_deck_cache.get(deck_id)
-		if deck != null:
-			result.append(deck)
-	result.sort_custom(Callable(self, "_compare_ai_decks_by_created_time_desc"))
-	return result
+	if _sorted_ai_deck_cache_dirty:
+		var result: Array[DeckData] = []
+		for deck_id: int in SUPPORTED_AI_DECK_IDS:
+			var deck: DeckData = _ai_deck_cache.get(deck_id)
+			if deck != null:
+				result.append(deck)
+		result.sort_custom(Callable(self, "_compare_ai_decks_by_created_time_desc"))
+		_sorted_ai_deck_cache = result
+		_sorted_ai_deck_cache_dirty = false
+	return _sorted_ai_deck_cache.duplicate()
 
 
 ## 是否存在指定卡组
@@ -718,6 +733,7 @@ func _generated_ai_deck_release_key(deck: DeckData) -> int:
 ## 从文件系统加载所有卡组
 func _load_all_decks() -> void:
 	_deck_cache = _load_deck_cache_from_dir(DECKS_DIR)
+	_mark_deck_sort_cache_dirty()
 
 
 func _load_all_ai_decks() -> void:
@@ -726,6 +742,17 @@ func _load_all_ai_decks() -> void:
 		var bundled_ai_deck := _load_bundled_ai_deck(deck_id)
 		if bundled_ai_deck != null:
 			_ai_deck_cache[deck_id] = bundled_ai_deck
+	_mark_ai_deck_sort_cache_dirty()
+
+
+func _mark_deck_sort_cache_dirty() -> void:
+	_sorted_deck_cache_dirty = true
+	_sorted_deck_cache.clear()
+
+
+func _mark_ai_deck_sort_cache_dirty() -> void:
+	_sorted_ai_deck_cache_dirty = true
+	_sorted_ai_deck_cache.clear()
 
 
 func _ensure_deck_cache_ready() -> void:
@@ -771,8 +798,38 @@ func _sorted_deck_values(cache: Dictionary) -> Array[DeckData]:
 	var result: Array[DeckData] = []
 	for deck: Variant in cache.values():
 		result.append(deck)
-	result.sort_custom(Callable(self, "_compare_decks_by_player_priority_desc"))
+	var priorities := {}
+	result.sort_custom(func(a: DeckData, b: DeckData) -> bool:
+		return _compare_decks_by_player_priority_desc_cached(a, b, priorities)
+	)
 	return result
+
+
+func _compare_decks_by_player_priority_desc_cached(a: DeckData, b: DeckData, priorities: Dictionary) -> bool:
+	var a_priority := _player_deck_sort_priority_cached(a, priorities)
+	var b_priority := _player_deck_sort_priority_cached(b, priorities)
+	if a_priority != b_priority:
+		return a_priority > b_priority
+	var a_time := int(a.updated_at) if a != null else 0
+	var b_time := int(b.updated_at) if b != null else 0
+	if a_time != b_time:
+		return a_time > b_time
+	var a_import := str(a.import_date) if a != null else ""
+	var b_import := str(b.import_date) if b != null else ""
+	if a_import != b_import:
+		return a_import > b_import
+	var a_id := int(a.id) if a != null else 0
+	var b_id := int(b.id) if b != null else 0
+	return a_id < b_id
+
+
+func _player_deck_sort_priority_cached(deck: DeckData, priorities: Dictionary) -> int:
+	var deck_id := int(deck.id) if deck != null else 0
+	if priorities.has(deck_id):
+		return int(priorities[deck_id])
+	var priority := get_player_deck_sort_priority(deck)
+	priorities[deck_id] = priority
+	return priority
 
 
 func _compare_decks_by_player_priority_desc(a: DeckData, b: DeckData) -> bool:

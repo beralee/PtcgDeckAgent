@@ -421,6 +421,40 @@ func test_v175_lugia_side_attackers_are_late_search_targets_not_opening_padding(
 	])
 
 
+func test_v175_lugia_nest_ball_basic_prompt_prefers_owner_over_side_basics() -> String:
+	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
+	if strategy == null:
+		return "DeckStrategy175LugiaArcheops.gd should load before Nest Ball basic prompt routing can be verified"
+	var gs := _make_game_state(4)
+	var player := gs.players[0]
+	player.active_pokemon = _make_slot(_make_pokemon_cd("Cinccino", "Stage 1", "C", 110, "Minccino"), 0)
+	player.bench.clear()
+	var lugia_card := CardInstance.create(_lugia_v().get_card_data(), 0)
+	var minccino_card := CardInstance.create(_make_pokemon_cd("Minccino", "Basic", "C", 70), 0)
+	var wellspring_card := CardInstance.create(_wellspring().get_card_data(), 0)
+	var lumineon_card := CardInstance.create(_make_pokemon_cd("Lumineon V", "Basic", "W", 170, "", "V"), 0)
+	var context := {"game_state": gs, "player_index": 0}
+	var step := {"id": "basic_pokemon", "max_select": 1}
+	var lugia_score: float = strategy.score_interaction_target(lugia_card, step, context)
+	var minccino_score: float = strategy.score_interaction_target(minccino_card, step, context)
+	var wellspring_score: float = strategy.score_interaction_target(wellspring_card, step, context)
+	var lumineon_score: float = strategy.score_interaction_target(lumineon_card, step, context)
+	var picked: Array = strategy.pick_interaction_items(
+		[wellspring_card, lumineon_card, lugia_card, minccino_card],
+		step,
+		context
+	)
+	var picked_name := ""
+	if not picked.is_empty() and picked[0] is CardInstance:
+		picked_name = str((picked[0] as CardInstance).card_data.name_en)
+	return run_checks([
+		assert_true(lugia_score > wellspring_score + 200.0, "Missing-owner Nest Ball should find Lugia V before Wellspring side attacker (Lugia %f vs Wellspring %f)" % [lugia_score, wellspring_score]),
+		assert_true(lugia_score > lumineon_score + 200.0, "Missing-owner Nest Ball should find Lugia V before Lumineon support Basic (Lugia %f vs Lumineon %f)" % [lugia_score, lumineon_score]),
+		assert_true(minccino_score > wellspring_score, "If Lugia is unavailable, Minccino shell pieces should still outrank Wellspring padding"),
+		assert_eq(picked_name, "Lugia V", "The real basic_pokemon picker should choose Lugia V from a mixed Nest Ball pool"),
+	])
+
+
 func test_v175_lugia_pre_engine_manual_attach_does_not_feed_late_side_attackers() -> String:
 	var strategy := _new_strategy(LUGIA_175_SCRIPT_PATH)
 	if strategy == null:

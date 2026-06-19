@@ -125,6 +125,30 @@ func test_deck_center_meta_later_revision_flashes_until_seen() -> String:
 	])
 
 
+func test_deck_center_meta_marks_latest_cached_revision_seen() -> String:
+	_remove_state_file()
+	var file := FileAccess.open(STATE_PATH, FileAccess.WRITE)
+	file.store_string(JSON.stringify({
+		"latest_info": {
+			"latest_revision": "cached-latest-rev",
+			"latest_recommendation_id": "cached-rec",
+			"source": "unit_test",
+		},
+	}, "\t"))
+	file.close()
+
+	var client = DeckCenterMetaClientScript.new()
+	var marked: bool = client.mark_latest_known_revision_seen()
+	var seen := client.get_last_seen_revision()
+
+	client.free()
+	_remove_state_file()
+	return run_checks([
+		assert_true(marked, "Cached latest metadata should be markable as seen without an in-memory pending signal"),
+		assert_eq(seen, "cached-latest-rev", "Marking cached latest metadata should persist last_seen_revision"),
+	])
+
+
 func test_deck_center_meta_treats_seen_recommendation_badge_as_seen_revision() -> String:
 	_remove_state_file()
 	var file := FileAccess.open(STATE_PATH, FileAccess.WRITE)

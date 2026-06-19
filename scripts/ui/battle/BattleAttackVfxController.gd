@@ -164,6 +164,31 @@ func play_counter_transfer_vfx(scene: Object, data: Dictionary) -> void:
 		_add_counter_transfer_accents(scene, sequence, overlay, source_spec, target_spec, data)
 
 
+func play_boss_orders_vfx(scene: Object, data: Dictionary) -> void:
+	if scene == null or data.is_empty():
+		return
+	if str(data.get("trainer_vfx", "")) != "boss_orders":
+		return
+	var target_data: Variant = data.get("target", {})
+	if not (target_data is Dictionary):
+		return
+	var target_spec: Dictionary = _target_spec_from_dict(scene, target_data as Dictionary)
+	if target_spec.is_empty():
+		return
+	target_spec["impact_style"] = "boss_orders"
+	var overlay: Control = ensure_overlay(scene)
+	if overlay == null:
+		return
+	overlay.visible = true
+	var registry: RefCounted = scene.get("_battle_attack_vfx_registry") as RefCounted
+	if registry == null:
+		registry = BattleAttackVfxRegistryScript.new()
+		scene.set("_battle_attack_vfx_registry", registry)
+	var profile: RefCounted = registry.call("get_boss_orders_profile")
+	var source_position: Vector2 = resolve_source_position(scene, int(data.get("source_player_index", int(scene.get("_view_player")))))
+	_play_sequence(scene, overlay, profile, source_position, [target_spec], "trainer_boss_orders")
+
+
 func has_active_attack_vfx(scene: Object) -> bool:
 	return get_active_attack_vfx_count(scene) > 0
 
@@ -585,15 +610,23 @@ func _make_texture_layer(name: String, resource_path: String, size: Vector2) -> 
 	return rect
 
 
-func _make_flipbook_texture_layer(name: String, resource_path: String, size: Vector2, frame_count: int) -> TextureRect:
+func _make_flipbook_texture_layer(name: String, resource_path: String, size: Vector2, frame_count: int, rows: int = 1, cols: int = 0) -> TextureRect:
 	if resource_path.is_empty():
 		return null
 	var base_texture: Texture2D = _load_base_texture(resource_path)
 	if base_texture == null:
 		return null
+	var safe_frame_count: int = maxi(1, frame_count)
+	var safe_rows: int = maxi(1, rows)
+	var safe_cols: int = cols if cols > 0 else maxi(1, ceili(float(safe_frame_count) / float(safe_rows)))
 	var atlas := AtlasTexture.new()
 	atlas.atlas = base_texture
-	atlas.region = Rect2(0.0, 0.0, float(base_texture.get_width()) / float(max(1, frame_count)), float(base_texture.get_height()))
+	atlas.region = Rect2(
+		0.0,
+		0.0,
+		float(base_texture.get_width()) / float(safe_cols),
+		float(base_texture.get_height()) / float(safe_rows)
+	)
 	var rect := TextureRect.new()
 	rect.name = name
 	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -602,7 +635,9 @@ func _make_flipbook_texture_layer(name: String, resource_path: String, size: Vec
 	rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	rect.size = size
 	rect.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	rect.set_meta("flipbook_frame_count", frame_count)
+	rect.set_meta("flipbook_frame_count", safe_frame_count)
+	rect.set_meta("flipbook_rows", safe_rows)
+	rect.set_meta("flipbook_cols", safe_cols)
 	return rect
 
 
@@ -614,7 +649,7 @@ func _make_texture_layer_from_spec(name: String, spec: Dictionary, size: Vector2
 		return null
 	var frames: int = int(spec.get("frames", 1))
 	if frames > 1:
-		return _make_flipbook_texture_layer(name, resource_path, size, frames)
+		return _make_flipbook_texture_layer(name, resource_path, size, frames, int(spec.get("rows", 1)), int(spec.get("cols", 0)))
 	return _make_texture_layer(name, resource_path, size)
 
 
@@ -1031,14 +1066,20 @@ func _animate_flipbook(scene: Node, texture_rect: TextureRect, frame_count: int,
 	var atlas: AtlasTexture = texture_rect.texture as AtlasTexture
 	if atlas == null or atlas.atlas == null:
 		return
-	var frame_width := float(atlas.atlas.get_width()) / float(frame_count)
+	var cols: int = maxi(1, int(texture_rect.get_meta("flipbook_cols", frame_count)))
+	var rows: int = maxi(1, int(texture_rect.get_meta("flipbook_rows", ceili(float(frame_count) / float(cols)))))
+	var frame_width := float(atlas.atlas.get_width()) / float(cols)
+	var frame_height := float(atlas.atlas.get_height()) / float(rows)
 	var tween := scene.create_tween()
 	for frame_index: int in frame_count:
+		var current_frame := frame_index
 		tween.tween_callback(func() -> void:
 			if is_instance_valid(texture_rect):
 				var current: AtlasTexture = texture_rect.texture as AtlasTexture
-				if current != null:
-					current.region = Rect2(frame_width * frame_index, 0.0, frame_width, float(current.atlas.get_height()))
+				if current != null and current.atlas != null:
+					var col: int = current_frame % cols
+					var row: int = mini(rows - 1, int(current_frame / cols))
+					current.region = Rect2(frame_width * col, frame_height * row, frame_width, frame_height)
 		)
 		if frame_index < frame_count - 1:
 			tween.tween_interval(duration / float(frame_count))

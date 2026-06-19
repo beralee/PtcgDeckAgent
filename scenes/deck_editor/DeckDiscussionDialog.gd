@@ -67,6 +67,8 @@ var _layout_profile := PROFILE_DESKTOP
 var _portrait_frame_rect := Rect2()
 var _portrait_popup_rect := Rect2i()
 var _portrait_touch_scale := 1.0
+var _portrait_keyboard_inset := 0.0
+var _use_non_battle_hidden_scrollbars := false
 
 
 func _ready() -> void:
@@ -82,7 +84,11 @@ func _ready() -> void:
 	%ResetButton.pressed.connect(_on_reset_pressed)
 	%CloseButton.pressed.connect(_on_dialog_close_requested)
 	%QuestionInput.gui_input.connect(_on_question_input_gui_input)
+	%QuestionInput.focus_entered.connect(_on_question_input_focus_entered)
+	%QuestionInput.focus_exited.connect(_on_question_input_focus_exited)
+	NonBattleTouchBridgeScript.mark_native_text_input(%QuestionInput)
 	NonBattleTouchBridgeScript.bind_buttons_recursive(self)
+	_sync_non_battle_touch_bridge_policy()
 	%StatusLabel.text = ""
 	%TitleLabel.text = _discussion_title()
 	_apply_compact_layout()
@@ -92,6 +98,8 @@ func _ready() -> void:
 	_stream_timer.timeout.connect(_on_stream_tick)
 	add_child(_stream_timer)
 	_apply_visual_style()
+	if is_inside_tree() and get_viewport() != null and not get_viewport().size_changed.is_connected(_on_viewport_size_changed):
+		get_viewport().size_changed.connect(_on_viewport_size_changed)
 
 
 func _notification(what: int) -> void:
@@ -99,7 +107,19 @@ func _notification(what: int) -> void:
 		get_tree().quit()
 
 
+func _input(event: InputEvent) -> void:
+	if _use_non_battle_hidden_scrollbars and _layout_profile == PROFILE_PORTRAIT_TOUCH:
+		var root := get_node_or_null("Root") as Control
+		if root != null:
+			NonBattleTouchBridgeScript.handle_root_touch(root, event)
+
+
+func _sync_non_battle_touch_bridge_policy() -> void:
+	NonBattleTouchBridgeScript.set_touch_bridge_enabled(self, _use_non_battle_hidden_scrollbars)
+
+
 func _on_dialog_close_requested() -> void:
+	_release_question_input_focus()
 	_stop_stream_timer()
 	hide()
 
@@ -185,7 +205,7 @@ func apply_desktop_profile() -> void:
 		%SuggestionsPanel.offset_bottom = -154.0
 	_apply_battle_layout()
 	_refresh_existing_message_metrics()
-	HudThemeScript.apply_scrollbars_recursive(self)
+	_apply_discussion_scrollbar_policy(false)
 
 
 func prepare_for_portrait_popup(frame_rect: Rect2) -> Rect2i:
@@ -195,6 +215,8 @@ func prepare_for_portrait_popup(frame_rect: Rect2) -> Rect2i:
 func popup_for_viewport(frame_rect: Rect2, portrait: bool = false) -> void:
 	if portrait:
 		var popup_rect := _apply_portrait_profile(frame_rect)
+		if not _should_auto_focus_question_input():
+			_release_question_input_focus()
 		if is_inside_tree():
 			popup(popup_rect)
 			position = popup_rect.position
@@ -212,7 +234,8 @@ func _apply_portrait_profile(frame_rect: Rect2) -> Rect2i:
 		frame_rect = Rect2(Vector2.ZERO, Vector2(390, 844))
 	_portrait_frame_rect = frame_rect
 	_portrait_touch_scale = _portrait_touch_scale_for_frame(frame_rect)
-	_portrait_popup_rect = _portrait_popup_rect_for_frame(frame_rect)
+	var layout_frame_rect := _portrait_frame_rect_with_keyboard_inset(frame_rect)
+	_portrait_popup_rect = _portrait_popup_rect_for_frame(layout_frame_rect)
 	min_size = Vector2i(
 		mini(PORTRAIT_DIALOG_MIN_SIZE.x, _portrait_popup_rect.size.x),
 		mini(PORTRAIT_DIALOG_MIN_SIZE.y, _portrait_popup_rect.size.y)
@@ -309,8 +332,30 @@ func _apply_portrait_profile(frame_rect: Rect2) -> Rect2i:
 		_apply_portrait_action_button(%SendButton, "发送", true, button_width)
 	_refresh_existing_message_metrics()
 	_refresh_suggestion_button_metrics()
-	HudThemeScript.apply_scrollbars_recursive(self, "portrait_touch")
+	_apply_discussion_scrollbar_policy(true)
 	return _portrait_popup_rect
+
+
+func apply_portrait_keyboard_inset(keyboard_height: float) -> Rect2i:
+	_portrait_keyboard_inset = maxf(0.0, keyboard_height)
+	if _layout_profile != PROFILE_PORTRAIT_TOUCH:
+		return Rect2i()
+	var frame_rect := _portrait_frame_rect
+	if frame_rect.size == Vector2.ZERO:
+		frame_rect = Rect2(Vector2.ZERO, Vector2(390, 844))
+	var popup_rect := _apply_portrait_profile(frame_rect)
+	if is_inside_tree() and visible:
+		popup(popup_rect)
+		position = popup_rect.position
+	size = popup_rect.size
+	return popup_rect
+
+
+func _portrait_frame_rect_with_keyboard_inset(frame_rect: Rect2) -> Rect2:
+	if _portrait_keyboard_inset <= 0.0:
+		return frame_rect
+	var usable_height := maxf(1.0, frame_rect.size.y - _portrait_keyboard_inset)
+	return Rect2(frame_rect.position, Vector2(frame_rect.size.x, usable_height))
 
 
 func _portrait_popup_rect_for_frame(frame_rect: Rect2) -> Rect2i:
@@ -375,6 +420,8 @@ func setup_for_deck(deck: DeckData) -> void:
 	_stream_body = null
 	_forced_external_tool_results.clear()
 	_battle_context_provider = Callable()
+	_use_non_battle_hidden_scrollbars = true
+	_sync_non_battle_touch_bridge_policy()
 	_deck = deck
 	_apply_battle_layout()
 	%TitleLabel.text = _discussion_title()
@@ -395,6 +442,8 @@ func setup_for_match(player_deck: DeckData, opponent_deck: DeckData, opponent_la
 	_stop_stream_timer()
 	_stream_body = null
 	_battle_context_provider = Callable()
+	_use_non_battle_hidden_scrollbars = true
+	_sync_non_battle_touch_bridge_policy()
 	var match_deck := _make_match_session_deck(player_deck, opponent_deck, opponent_label, session_id)
 	_forced_external_tool_results = [_make_deck_tool_result(opponent_deck, opponent_label)]
 	_deck = match_deck
@@ -423,6 +472,8 @@ func setup_for_battle_context(view_deck: DeckData, battle_context: Dictionary, s
 	_stop_stream_timer()
 	_stream_body = null
 	_battle_context_provider = context_provider
+	_use_non_battle_hidden_scrollbars = false
+	_sync_non_battle_touch_bridge_policy()
 	var context_deck := _make_battle_session_deck(view_deck, battle_context, session_id)
 	_forced_external_tool_results = [{
 		"tool_name": "get_live_battle_context",
@@ -609,9 +660,24 @@ func _apply_visual_style() -> void:
 	_style_icon_button(%AttachButton)
 	_style_button(%ResetButton, false)
 	_style_button(%SendButton, true)
-	HudThemeScript.apply_scrollbars_recursive(self)
+	_apply_discussion_scrollbar_policy(_layout_profile == PROFILE_PORTRAIT_TOUCH)
 	if _layout_profile == PROFILE_PORTRAIT_TOUCH:
 		_apply_portrait_profile(_portrait_frame_rect)
+
+
+func _apply_discussion_scrollbar_policy(portrait: bool) -> void:
+	var profile := "auto"
+	if portrait and not _use_non_battle_hidden_scrollbars:
+		profile = "portrait_touch"
+	HudThemeScript.apply_scrollbars_recursive(self, profile)
+	var transcript_scroll := get_node_or_null("%TranscriptScroll") as ScrollContainer
+	if transcript_scroll == null:
+		return
+	HudThemeScript.style_scroll_container(transcript_scroll, profile)
+	if portrait and _use_non_battle_hidden_scrollbars:
+		NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(transcript_scroll)
+	else:
+		NonBattleTouchBridgeScript.configure_visible_vertical_scroll(transcript_scroll)
 
 
 func _make_panel_style(bg: Color, border: Color, radius: int, margin: int, shadow_size: int = 0) -> StyleBoxFlat:
@@ -942,6 +1008,34 @@ func _on_question_input_gui_input(event: InputEvent) -> void:
 			_on_send_pressed()
 
 
+func _on_question_input_focus_entered() -> void:
+	_sync_portrait_keyboard_inset.call_deferred()
+	if is_inside_tree() and get_tree() != null:
+		var timer := get_tree().create_timer(0.16)
+		timer.timeout.connect(_sync_portrait_keyboard_inset, CONNECT_ONE_SHOT)
+
+
+func _on_question_input_focus_exited() -> void:
+	if _portrait_keyboard_inset <= 0.0:
+		return
+	apply_portrait_keyboard_inset(0.0)
+
+
+func _on_viewport_size_changed() -> void:
+	_sync_portrait_keyboard_inset.call_deferred()
+
+
+func _sync_portrait_keyboard_inset() -> void:
+	if _layout_profile != PROFILE_PORTRAIT_TOUCH:
+		return
+	if not has_node("%QuestionInput") or not %QuestionInput.has_focus():
+		return
+	var keyboard_height := 0.0
+	if DisplayServer.has_method("virtual_keyboard_get_height"):
+		keyboard_height = float(DisplayServer.call("virtual_keyboard_get_height"))
+	apply_portrait_keyboard_inset(keyboard_height)
+
+
 func _on_service_status_changed(status: String, context: Dictionary) -> void:
 	if status == "loading_detail":
 		var reason := str(context.get("reason", "")).strip_edges()
@@ -1055,8 +1149,12 @@ func _on_reset_pressed() -> void:
 		return
 	_stop_stream_timer()
 	_stream_body = null
+	if _service.has_method("cancel_pending_request"):
+		_service.cancel_pending_request()
 	_service.clear_history(_deck.id)
 	%StatusLabel.text = ""
+	%SendButton.disabled = false
+	%QuestionInput.clear()
 	_reload_transcript()
 
 
@@ -1109,7 +1207,28 @@ func _scroll_to_bottom_after_layout() -> void:
 func _deferred_grab_question_focus() -> void:
 	if not is_inside_tree() or not has_node("%QuestionInput"):
 		return
+	if not _should_auto_focus_question_input():
+		return
 	%QuestionInput.grab_focus()
+
+
+func _should_auto_focus_question_input() -> bool:
+	return not (_layout_profile == PROFILE_PORTRAIT_TOUCH and _is_live_battle_discussion())
+
+
+func _is_live_battle_discussion() -> bool:
+	if _forced_external_tool_results.is_empty():
+		return false
+	var first_result: Dictionary = _forced_external_tool_results[0]
+	return str(first_result.get("tool_name", "")) == "get_live_battle_context"
+
+
+func _release_question_input_focus() -> void:
+	if not has_node("%QuestionInput"):
+		return
+	var input := %QuestionInput as TextEdit
+	if input != null and input.has_focus():
+		input.release_focus()
 
 
 func _is_portrait_profile() -> bool:

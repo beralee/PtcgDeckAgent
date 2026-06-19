@@ -2,6 +2,9 @@ class_name AttackReturnEnergyThenBenchDamage
 extends BaseEffect
 
 const AbilityPreventDamageFromBasicExEffect = preload("res://scripts/effects/pokemon_effects/AbilityPreventDamageFromBasicEx.gd")
+const EffectSparklingCrystalScript = preload("res://scripts/effects/tool_effects/EffectSparklingCrystal.gd")
+const SPARKLING_CRYSTAL_EFFECT_ID := "12164ed03296d2df4ef6d0fa8b5f8aae"
+const JAMMING_TOWER_EFFECT_ID := "4e16157bfa88a41e823d058a732df8e0"
 
 var damage_amount: int = 120
 var energy_return_count: int = 3
@@ -25,8 +28,9 @@ func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state:
 	var attacker: PokemonSlot = player.active_pokemon
 	if attacker == null:
 		return []
+	var required_return_count := _effective_energy_return_count(attacker, attack, state)
 	var energy_items: Array = attacker.attached_energy.duplicate()
-	if energy_items.size() < energy_return_count:
+	if energy_items.size() < required_return_count:
 		return []
 	if state.players[1 - card.owner_index].bench.is_empty():
 		return []
@@ -36,13 +40,13 @@ func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state:
 	return [
 		{
 			"id": "return_energy_to_deck",
-			"title": "选择%d个能量洗回牌库" % energy_return_count,
+			"title": "选择%d个能量洗回牌库" % required_return_count,
 			"items": energy_items,
 			"labels": energy_labels,
 			"card_groups": build_attached_card_groups(player, energy_items),
 			"transparent_battlefield_dialog": true,
-			"min_select": energy_return_count,
-			"max_select": energy_return_count,
+			"min_select": required_return_count,
+			"max_select": required_return_count,
 			"allow_cancel": true,
 			"utility_actions": [{"label": "不洗回能量", "index": -1}],
 		},
@@ -57,8 +61,11 @@ func get_followup_attack_interaction_steps(
 ) -> Array[Dictionary]:
 	if not applies_to_attack_index(_resolve_attack_index(card, attack)):
 		return []
+	var player: PlayerState = state.players[card.owner_index]
+	var attacker: PokemonSlot = player.active_pokemon
+	var required_return_count := _effective_energy_return_count(attacker, attack, state)
 	var energy_raw: Array = resolved_context.get("return_energy_to_deck", [])
-	if energy_raw.size() < energy_return_count:
+	if energy_raw.size() < required_return_count:
 		return []
 	var bench_items: Array = state.players[1 - card.owner_index].bench.duplicate()
 	if bench_items.is_empty():
@@ -87,9 +94,11 @@ func execute_attack(attacker: PokemonSlot, _defender: PokemonSlot, attack_index:
 		return
 	var player: PlayerState = state.players[top.owner_index]
 	var opponent: PlayerState = state.players[1 - top.owner_index]
+	var attack: Dictionary = top.card_data.attacks[attack_index] if top.card_data != null and attack_index >= 0 and attack_index < top.card_data.attacks.size() else {}
+	var required_return_count := _effective_energy_return_count(attacker, attack, state)
 	var ctx: Dictionary = get_attack_interaction_context()
 	var energy_raw: Array = ctx.get("return_energy_to_deck", [])
-	if energy_raw.size() < energy_return_count:
+	if energy_raw.size() < required_return_count:
 		return
 	var target: PokemonSlot = _resolve_bench_target(ctx.get("bench_target", []), opponent)
 	if target == null:
@@ -105,7 +114,7 @@ func execute_attack(attacker: PokemonSlot, _defender: PokemonSlot, attack_index:
 		player.deck.append(energy)
 		returned.append(energy)
 
-	if returned.size() < energy_return_count:
+	if returned.size() < required_return_count:
 		for energy: CardInstance in returned:
 			player.deck.erase(energy)
 			attacker.attached_energy.append(energy)
@@ -148,6 +157,30 @@ func _resolve_bench_target(target_raw: Variant, opponent: PlayerState) -> Pokemo
 	if target == null or target == opponent.active_pokemon or target not in opponent.bench:
 		return null
 	return target
+
+
+func _effective_energy_return_count(attacker: PokemonSlot, attack: Dictionary, state: GameState) -> int:
+	var modifier := _active_sparkling_crystal_any_cost_modifier(attacker, attack, state)
+	if modifier < 0:
+		return maxi(0, energy_return_count + modifier)
+	return energy_return_count
+
+
+func _active_sparkling_crystal_any_cost_modifier(attacker: PokemonSlot, attack: Dictionary, state: GameState) -> int:
+	if attacker == null or attacker.attached_tool == null or attacker.attached_tool.card_data == null:
+		return 0
+	if attacker.attached_tool.card_data.effect_id != SPARKLING_CRYSTAL_EFFECT_ID:
+		return 0
+	if _is_attached_tool_suppressed(state):
+		return 0
+	var effect := EffectSparklingCrystalScript.new()
+	return int(effect.get_attack_any_cost_modifier(attacker, attack, state))
+
+
+func _is_attached_tool_suppressed(state: GameState) -> bool:
+	if state == null or state.stadium_card == null or state.stadium_card.card_data == null:
+		return false
+	return state.stadium_card.card_data.effect_id == JAMMING_TOWER_EFFECT_ID
 
 
 func _resolve_attack_index(card: CardInstance, attack: Dictionary) -> int:

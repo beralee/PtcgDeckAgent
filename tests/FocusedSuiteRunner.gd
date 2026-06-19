@@ -38,7 +38,7 @@ func _initialize() -> void:
 			continue
 		total += 1
 		print("RUN %s" % method_name)
-		var result: Variant = suite.call(method_name)
+		var result: Variant = await suite.call(method_name)
 		var message: String = str(result)
 		if message == "":
 			print("PASS %s" % method_name)

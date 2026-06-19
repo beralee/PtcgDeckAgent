@@ -5,6 +5,7 @@ const AppVersionScript := preload("res://scripts/app/AppVersion.gd")
 
 const ENDPOINT_URL := "http://fc.skillserver.cn/decksuggest"
 const REQUEST_TIMEOUT_SECONDS := 10.0
+const MAX_BATCH_LIMIT := 20
 
 signal fetch_succeeded(response: Dictionary)
 signal fetch_failed(message: String)
@@ -14,6 +15,7 @@ var _is_fetching := false
 
 
 static func build_payload(current_id: String = "", exclude_ids: PackedStringArray = PackedStringArray(), metadata: Dictionary = {}) -> Dictionary:
+	var limit := clampi(int(metadata.get("limit", 1)), 1, MAX_BATCH_LIMIT)
 	return {
 		"current_id": current_id.strip_edges(),
 		"exclude_ids": Array(exclude_ids),
@@ -21,14 +23,32 @@ static func build_payload(current_id: String = "", exclude_ids: PackedStringArra
 		"platform": str(metadata.get("platform", OS.get_name())),
 		"source": str(metadata.get("source", "deck_manager_recommendation")),
 		"requested_at": int(metadata.get("requested_at", Time.get_unix_time_from_system())),
+		"limit": limit,
 	}
 
 
 static func extract_recommendation(response: Dictionary) -> Dictionary:
-	if not bool(response.get("ok", false)):
+	var recommendations := extract_recommendations(response)
+	if recommendations.is_empty():
 		return {}
+	return recommendations[0].duplicate(true)
+
+
+static func extract_recommendations(response: Dictionary) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if not bool(response.get("ok", false)):
+		return result
+	var recommendations_raw: Variant = response.get("recommendations", [])
+	if recommendations_raw is Array:
+		for item_raw: Variant in recommendations_raw as Array:
+			if item_raw is Dictionary:
+				result.append((item_raw as Dictionary).duplicate(true))
+	if not result.is_empty():
+		return result
 	var recommendation: Variant = response.get("recommendation", {})
-	return (recommendation as Dictionary).duplicate(true) if recommendation is Dictionary else {}
+	if recommendation is Dictionary:
+		result.append((recommendation as Dictionary).duplicate(true))
+	return result
 
 
 func fetch_next_recommendation(current_id: String = "", exclude_ids: PackedStringArray = PackedStringArray(), metadata: Dictionary = {}) -> int:
@@ -94,7 +114,7 @@ func _on_fetch_response(result: int, response_code: int, _headers: PackedStringA
 		fetch_failed.emit(message)
 		return
 
-	if extract_recommendation(response).is_empty():
+	if extract_recommendations(response).is_empty():
 		fetch_failed.emit("卡组推荐服务器返回的数据缺少 recommendation。")
 		return
 

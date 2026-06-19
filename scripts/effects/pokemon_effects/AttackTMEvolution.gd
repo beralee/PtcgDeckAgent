@@ -1,6 +1,7 @@
-## 招式学习器 进化 - 道具赋予的招式
-## [C] 进化：选择最多2只备战宝可梦，从牌库搜索其进化卡各1张放上进化。洗牌。
-## 道具在回合结束时弃置。
+## Technical Machine: Evolution - Tool-granted attack.
+## [C] Evolution: Choose up to 2 of your Benched Pokemon. For each of them,
+## search your deck for a card that evolves from that Pokemon and put it onto
+## that Pokemon to evolve it. Then shuffle your deck.
 class_name AttackTMEvolution
 extends BaseEffect
 
@@ -13,37 +14,63 @@ func _init(max_count: int = 2) -> void:
 	max_targets = max_count
 
 
-## 向 EffectProcessor 提供道具赋予的招式列表
 func get_granted_attacks(_pokemon: PokemonSlot, _state: GameState) -> Array[Dictionary]:
 	return [{
 		"id": GRANTED_ATTACK_ID,
 		"name": "进化",
 		"cost": "C",
 		"damage": "",
-		"text": "选择自己最多%d只备战宝可梦，从牌库中选择进化卡各1张放上进化。并重洗牌库。" % max_targets,
+		"text": "选择自己的最多%d只备战宝可梦，从牌库中选择从该宝可梦进化而来的卡各1张放上进化。并重洗牌库。" % max_targets,
 	}]
 
 
-## 返回交互步骤（玩家选择要进化的备战宝可梦）
 func get_granted_attack_interaction_steps(
 	pokemon: PokemonSlot,
 	_attack_data: Dictionary,
 	state: GameState
 ) -> Array[Dictionary]:
-	var top: CardInstance = pokemon.get_top_card()
-	if top == null:
+	var player: PlayerState = _player_for_pokemon(pokemon, state)
+	if player == null:
 		return []
-	var player: PlayerState = state.players[top.owner_index]
-	var evo_items: Array = _collect_evolution_cards_for_bench(player)
 	var bench_items: Array = _collect_evolvable_bench_targets(player)
-	if evo_items.is_empty() or bench_items.is_empty():
+	if bench_items.is_empty():
 		return []
 
 	var bench_labels: Array[String] = []
 	for slot: PokemonSlot in bench_items:
 		bench_labels.append(slot.get_pokemon_name())
 
-	var actual_max: int = mini(max_targets, mini(evo_items.size(), bench_items.size()))
+	return [{
+		"id": "evolution_bench",
+		"title": "选择最多%d只要进化的备战宝可梦" % max_targets,
+		"items": bench_items,
+		"labels": bench_labels,
+		"min_select": 1,
+		"max_select": mini(max_targets, bench_items.size()),
+		"allow_cancel": true,
+		"requires_followup_interaction": true,
+	}]
+
+
+func get_followup_granted_attack_interaction_steps(
+	pokemon: PokemonSlot,
+	_attack_data: Dictionary,
+	state: GameState,
+	resolved_context: Dictionary
+) -> Array[Dictionary]:
+	var player: PlayerState = _player_for_pokemon(pokemon, state)
+	if player == null:
+		return []
+	var selected_slots: Array = _selected_evolution_slots_from_context(player, resolved_context)
+	if selected_slots.is_empty():
+		return []
+	var evo_items: Array = _collect_evolution_cards_for_slots(player, selected_slots)
+	if evo_items.is_empty():
+		return []
+
+	var actual_max: int = mini(max_targets, mini(selected_slots.size(), evo_items.size()))
+	if actual_max <= 0:
+		return []
 	return [
 		build_full_library_search_step(
 			"evolution_cards",
@@ -55,19 +82,9 @@ func get_granted_attack_interaction_steps(
 			actual_max,
 			{"allow_cancel": true}
 		),
-		{
-			"id": "evolution_bench",
-			"title": "选择最多%d只要进化的备战宝可梦" % max_targets,
-			"items": bench_items,
-			"labels": bench_labels,
-			"min_select": 1,
-			"max_select": mini(max_targets, bench_items.size()),
-			"allow_cancel": true,
-		},
 	]
 
 
-## 执行道具赋予的招式
 func execute_granted_attack(
 	attacker: PokemonSlot,
 	attack_data: Dictionary,
@@ -76,16 +93,13 @@ func execute_granted_attack(
 ) -> void:
 	if str(attack_data.get("id", "")) != GRANTED_ATTACK_ID:
 		return
-	var top: CardInstance = attacker.get_top_card()
-	if top == null:
+	var player: PlayerState = _player_for_pokemon(attacker, state)
+	if player == null:
 		return
-	var player: PlayerState = state.players[top.owner_index]
 
 	var ctx: Dictionary = get_interaction_context(targets)
-
-	# 从交互上下文获取选中的备战宝可梦
-	var bench_raw: Array = ctx.get("evolution_bench", [])
-	if bench_raw.is_empty():
+	var selected_slots: Array = _selected_evolution_slots_from_context(player, ctx)
+	if selected_slots.is_empty():
 		return
 
 	var has_explicit_evolution_selection: bool = ctx.has("evolution_cards")
@@ -97,7 +111,7 @@ func execute_granted_attack(
 		var selected_evo: CardInstance = entry as CardInstance
 		if selected_evo not in player.deck:
 			continue
-		if not _can_evolve_onto_any_bench(selected_evo, player):
+		if not _can_evolve_onto_any_slot(selected_evo, selected_slots):
 			continue
 		if selected_evo in selected_evolutions:
 			continue
@@ -106,14 +120,10 @@ func execute_granted_attack(
 			break
 
 	var evolved_count: int = 0
-	for entry: Variant in bench_raw:
+	for slot_variant: Variant in selected_slots:
 		if evolved_count >= max_targets:
 			break
-		if not (entry is PokemonSlot):
-			continue
-		var slot: PokemonSlot = entry as PokemonSlot
-		if slot not in player.bench:
-			continue
+		var slot: PokemonSlot = slot_variant as PokemonSlot
 		var slot_top: CardInstance = slot.get_top_card()
 		if slot_top == null or slot_top.card_data == null:
 			continue
@@ -134,19 +144,26 @@ func execute_granted_attack(
 		player.shuffle_deck()
 
 
-## 标记此道具在回合结束时弃置
 func discard_at_end_of_turn(_slot: PokemonSlot, _state: GameState) -> bool:
 	return true
 
 
-func _has_evolution_in_deck(player: PlayerState, pokemon_name: String) -> bool:
-	return _find_evolution_in_deck(player, pokemon_name) != null
+func _player_for_pokemon(pokemon: PokemonSlot, state: GameState) -> PlayerState:
+	if pokemon == null or state == null:
+		return null
+	var top: CardInstance = pokemon.get_top_card()
+	if top == null:
+		return null
+	var owner_index: int = int(top.owner_index)
+	if owner_index < 0 or owner_index >= state.players.size():
+		return null
+	return state.players[owner_index]
 
 
-func _collect_evolution_cards_for_bench(player: PlayerState) -> Array:
+func _collect_evolution_cards_for_slots(player: PlayerState, selected_slots: Array) -> Array:
 	var result: Array = []
 	for deck_card: CardInstance in player.deck:
-		if _can_evolve_onto_any_bench(deck_card, player):
+		if _can_evolve_onto_any_slot(deck_card, selected_slots):
 			result.append(deck_card)
 	return result
 
@@ -159,9 +176,30 @@ func _collect_evolvable_bench_targets(player: PlayerState) -> Array:
 	return result
 
 
-func _can_evolve_onto_any_bench(evo_card: CardInstance, player: PlayerState) -> bool:
-	for slot: PokemonSlot in player.bench:
-		if _can_evolve_card_onto_slot(evo_card, slot):
+func _selected_evolution_slots_from_context(player: PlayerState, resolved_context: Dictionary) -> Array:
+	var result: Array = []
+	var bench_raw: Array = resolved_context.get("evolution_bench", [])
+	for entry: Variant in bench_raw:
+		if result.size() >= max_targets:
+			break
+		if not (entry is PokemonSlot):
+			continue
+		var slot: PokemonSlot = entry as PokemonSlot
+		if slot not in player.bench:
+			continue
+		if slot in result:
+			continue
+		if _find_evolution_for_slot(player, slot) == null:
+			continue
+		result.append(slot)
+	return result
+
+
+func _can_evolve_onto_any_slot(evo_card: CardInstance, selected_slots: Array) -> bool:
+	for slot_variant: Variant in selected_slots:
+		if not (slot_variant is PokemonSlot):
+			continue
+		if _can_evolve_card_onto_slot(evo_card, slot_variant as PokemonSlot):
 			return true
 	return false
 
@@ -205,4 +243,4 @@ func _find_evolution_in_deck(player: PlayerState, pokemon_name: String) -> CardI
 
 
 func get_description() -> String:
-	return "招式【进化】：选择最多%d只备战宝可梦，从牌库搜索进化卡各1张放上进化。回合结束时弃置。" % max_targets
+	return "招式【进化】：选择最多%d只备战宝可梦，从牌库搜索从该宝可梦进化而来的卡各1张放上进化。回合结束时弃置。" % max_targets

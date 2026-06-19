@@ -63,6 +63,7 @@ var _context_builder = ContextBuilderScript.new()
 var _prompt_builder = PromptBuilderScript.new()
 var _store = SessionStoreScript.new()
 var _busy := false
+var _request_generation := 0
 
 
 func configure_dependencies(client: Variant, context_builder: Variant, prompt_builder: Variant, store: Variant) -> void:
@@ -78,6 +79,11 @@ func configure_dependencies(client: Variant, context_builder: Variant, prompt_bu
 
 func is_busy() -> bool:
 	return _busy
+
+
+func cancel_pending_request() -> void:
+	_request_generation += 1
+	_busy = false
 
 
 func load_history(deck_id: int) -> Array[Dictionary]:
@@ -107,6 +113,8 @@ func ask(parent: Node, deck: DeckData, user_question: String, api_config: Dictio
 		return {"status": "error", "message": "missing_api_config"}
 
 	_busy = true
+	_request_generation += 1
+	var request_generation := _request_generation
 	var client = _get_client()
 	if client == null:
 		_busy = false
@@ -136,7 +144,7 @@ func ask(parent: Node, deck: DeckData, user_question: String, api_config: Dictio
 		endpoint,
 		api_key,
 		payload,
-		_on_response.bind(parent, deck, user_question, api_config, context, false)
+		_on_response.bind(parent, deck, user_question, api_config, context, false, request_generation)
 	)
 	if request_error != OK:
 		_busy = false
@@ -158,8 +166,11 @@ func _on_response(
 	user_question: String,
 	api_config: Dictionary,
 	initial_context: Dictionary,
-	detail_already_sent: bool
+	detail_already_sent: bool,
+	request_generation: int
 ) -> void:
+	if request_generation != _request_generation:
+		return
 	if String(response.get("status", "")) == "error":
 		if _is_plain_text_fallback_response(response):
 			var recovered := _plain_text_fallback_response(response)
@@ -202,7 +213,7 @@ func _on_response(
 			str(api_config.get("endpoint", "")).strip_edges(),
 			str(api_config.get("api_key", "")).strip_edges(),
 			followup_payload,
-			_on_response.bind(parent, deck, user_question, api_config, initial_context, true)
+			_on_response.bind(parent, deck, user_question, api_config, initial_context, true, request_generation)
 		)
 		if request_error != OK:
 			_busy = false

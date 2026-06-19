@@ -157,7 +157,7 @@ func try_use_ability_with_interaction(scene: Object, player_index: int, slot: Po
 	var effect: BaseEffect = gsm.effect_processor.get_ability_effect(slot, ability_index, gsm.game_state)
 	if effect == null:
 		if gsm.use_ability(player_index, slot, ability_index):
-			scene.call("_refresh_ui_after_successful_action", true, player_index)
+			scene.call("_refresh_ui_after_successful_action", true, player_index, "use_ability")
 		else:
 			_show_invalid_action_hint(scene, {
 				"title": "%s 现在不能使用特性" % card.card_data.name,
@@ -179,7 +179,7 @@ func try_use_ability_with_interaction(scene: Object, player_index: int, slot: Po
 		if gsm.use_ability(player_index, slot, ability_index):
 			var ability_name: String = gsm.effect_processor.get_ability_name(slot, ability_index, gsm.game_state)
 			scene.call("_log", _bt(scene, "battle.log.ability_used", {"name": ability_name}))
-			scene.call("_refresh_ui_after_successful_action", true, player_index)
+			scene.call("_refresh_ui_after_successful_action", true, player_index, "use_ability")
 		else:
 			_show_invalid_action_hint(scene, {
 				"title": "%s 现在不能使用特性" % card.card_data.name,

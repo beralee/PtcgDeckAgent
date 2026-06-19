@@ -141,11 +141,17 @@ func show_opponent_hand_cards(scene: Object) -> void:
 				card_view.set_secondary_inspect_enabled(true)
 				card_view.set_badges("", "")
 				card_view.set_info("", "")
-				card_view.left_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
+				card_view.left_clicked.connect(func(ci: CardInstance, cd: CardData) -> void:
+					if ci != null and scene.has_method("_show_card_detail_for_instance"):
+						scene.call("_show_card_detail_for_instance", ci)
+						return
 					if cd != null:
 						scene.call("_show_card_detail", cd)
 				)
-				card_view.right_clicked.connect(func(_ci: CardInstance, cd: CardData) -> void:
+				card_view.right_clicked.connect(func(ci: CardInstance, cd: CardData) -> void:
+					if ci != null and scene.has_method("_show_card_detail_for_instance"):
+						scene.call("_show_card_detail_for_instance", ci)
+						return
 					if cd != null:
 						scene.call("_show_card_detail", cd)
 				)

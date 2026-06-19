@@ -53,7 +53,7 @@ static func run_suites(
 			total += 1
 			var root_snapshot := _capture_root_children()
 			var orphan_snapshot := _capture_orphan_nodes()
-			var result: Variant = test_obj.call(method_name)
+			var result: Variant = await test_obj.call(method_name)
 			var message := str(result)
 			if message == "":
 				passed += 1

@@ -96,6 +96,35 @@ func test_budew_itchy_pollen_resolves_card_specific_profile_by_uid() -> String:
 	])
 
 
+func test_boss_orders_trainer_profile_uses_generated_command_sheet() -> String:
+	var registry = BattleAttackVfxRegistryScript.new()
+	var profile = registry.call("get_boss_orders_profile")
+	var asset_specs: Dictionary = profile.asset_specs if profile != null else {}
+	var impact_spec: Dictionary = asset_specs.get("impact", {}) if asset_specs.has("impact") else {}
+	var image := Image.load_from_file(ProjectSettings.globalize_path(str(impact_spec.get("path", ""))))
+	var runtime_texture: Texture2D = load(str(impact_spec.get("path", ""))) as Texture2D
+
+	return run_checks([
+		assert_true(profile is BattleAttackVfxProfileScript, "Boss's Orders should expose a battle VFX profile"),
+		assert_eq(str(profile.profile_id), "trainer_boss_orders", "Boss's Orders profile id should be stable"),
+		assert_eq(str(impact_spec.get("path", "")), "res://assets/textures/vfx/trainer_boss_orders/sheet-transparent.png", "Boss's Orders should point at the generated command sprite sheet"),
+		assert_eq(int(impact_spec.get("frames", 0)), 6, "Boss's Orders command sheet should expose six animation frames"),
+		assert_eq(int(impact_spec.get("rows", 0)), 2, "Boss's Orders command sheet should declare its two atlas rows"),
+		assert_eq(int(impact_spec.get("cols", 0)), 3, "Boss's Orders command sheet should declare its three atlas columns"),
+		assert_true(profile.get("asset_driven_impact") == true, "Boss's Orders should use the generated sheet as the visual subject"),
+		assert_true(profile.get("enable_travel") == false, "Boss's Orders should avoid generic attack travel geometry"),
+		assert_true(profile.get("enable_generic_cast") == false, "Boss's Orders should not render generic cast rays"),
+		assert_true(profile.get("enable_generic_shockwave") == false, "Boss's Orders should not mix in the generic shockwave bar"),
+		assert_true(float(profile.get("impact_radius")) >= 190.0, "Boss's Orders should render large enough to read Giovanni clearly in battle"),
+		assert_true(float(profile.get("impact_duration")) >= 0.9, "Boss's Orders should hold on screen long enough instead of flashing by"),
+		assert_true(float(profile.get("cast_duration")) + float(profile.get("impact_duration")) + float(profile.get("residue_duration")) >= 1.55, "Boss's Orders total timing should feel deliberate"),
+		assert_not_null(image, "Boss's Orders generated command sheet should load as an Image"),
+		assert_eq(image.get_size() if image != null else Vector2i.ZERO, Vector2i(768, 512), "Boss's Orders command sheet should be a 2x3 256px grid"),
+		assert_not_null(runtime_texture, "Boss's Orders command sheet should load through Godot's runtime importer"),
+		assert_eq(Vector2i(runtime_texture.get_width(), runtime_texture.get_height()) if runtime_texture != null else Vector2i.ZERO, Vector2i(768, 512), "Runtime Boss's Orders texture should use the generated sheet dimensions"),
+	])
+
+
 func test_resolve_profile_falls_back_to_energy_type_template() -> String:
 	var registry = BattleAttackVfxRegistryScript.new()
 	var water_attacker := _make_pokemon_card("Water Test", "W")

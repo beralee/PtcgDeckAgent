@@ -79,6 +79,8 @@ func _apply_standings_mobile_metrics(node: Node, context: Dictionary, portrait: 
 		var control := node as Control
 		if portrait:
 			control.custom_minimum_size.y = maxf(control.custom_minimum_size.y, float(context.get("list_item_min_height", 148.0)) * 1.5)
+			HudThemeScript.style_scrollable_control(control, "auto")
+			NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scrollable_control(control)
 			if control is TextEdit:
 				(control as TextEdit).add_theme_font_size_override("font_size", int(context.get("body_font_size", 15)))
 				(control as TextEdit).wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
@@ -89,6 +91,9 @@ func _apply_standings_mobile_metrics(node: Node, context: Dictionary, portrait: 
 				rich.add_theme_font_size_override("bold_font_size", font_size)
 				rich.add_theme_font_size_override("italics_font_size", font_size)
 				rich.add_theme_font_size_override("mono_font_size", font_size)
+		else:
+			HudThemeScript.style_scrollable_control(control, "auto")
+			NonBattleTouchBridgeScript.configure_visible_vertical_scrollable_control(control)
 	elif node is Label:
 		var label := node as Label
 		if label.name == "TitleLabel":

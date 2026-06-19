@@ -1011,24 +1011,26 @@ text = "0"
 horizontal_alignment = 1
 
 [node name="LogPanel" type="PanelContainer" parent="MainArea" unique_id=708388462]
-custom_minimum_size = Vector2(236, 0)
+custom_minimum_size = Vector2(252, 0)
 layout_mode = 2
 
 [node name="LogPanelVBox" type="VBoxContainer" parent="MainArea/LogPanel" unique_id=405220557]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 8
 
 [node name="LogTitle" type="Label" parent="MainArea/LogPanel/LogPanelVBox" unique_id=1245732683]
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 14
 text = "操作日志"
+horizontal_alignment = 1
 
 [node name="LogList" type="RichTextLabel" parent="MainArea/LogPanel/LogPanelVBox" unique_id=550181821]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_font_sizes/normal_font_size = 11
+theme_override_font_sizes/normal_font_size = 13
 bbcode_enabled = true
+autowrap_mode = 3
 scroll_following = true
 
 [node name="DialogOverlay" type="Panel" parent="." unique_id=1611301625]

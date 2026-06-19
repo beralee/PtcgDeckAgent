@@ -11,6 +11,7 @@ const EffectElectricGeneratorScript = preload("res://scripts/effects/trainer_eff
 
 const TANDEM_UNIT_USED_KEY := "ability_search_pokemon_to_bench_used"
 const TANDEM_UNIT_SUMMONED_KEY := "ability_search_pokemon_to_bench_summoned"
+const SQUAWKABILLY_FIRST_TURN_DRAW_USED_KEY := "ability_first_turn_draw_used"
 
 
 func _make_pokemon_card(
@@ -121,6 +122,13 @@ func _append_tandem_summoned_bench(player: PlayerState, source_slot: PokemonSlot
 	player.bench.append(slot)
 
 
+func _mark_squawkabilly_first_turn_draw_used(slot: PokemonSlot, turn_number: int) -> void:
+	slot.effects.append({
+		"type": SQUAWKABILLY_FIRST_TURN_DRAW_USED_KEY,
+		"turn": turn_number,
+	})
+
+
 func _make_state(current_player: int = 0, turn_number: int = 1, phase: int = GameState.GamePhase.MAIN) -> GameState:
 	var gs := GameState.new()
 	gs.current_player_index = current_player
@@ -150,13 +158,36 @@ func _first_rule(triggers: Array, rule_id: String) -> Dictionary:
 	return {}
 
 
-func _read_text_file(path: String) -> String:
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return ""
-	var text := file.get_as_text()
-	file.close()
-	return text
+func _ready_sheet_pixel_metrics(image: Image) -> Dictionary:
+	var metrics := {
+		"opaque": 0,
+		"green": 0,
+		"yellow_orange": 0,
+		"white": 0,
+		"black": 0,
+		"edge_alpha": 0,
+	}
+	if image == null:
+		return metrics
+	for y: int in image.get_height():
+		for x: int in image.get_width():
+			var pixel := image.get_pixel(x, y)
+			if pixel.a <= 0.1:
+				continue
+			metrics["opaque"] = int(metrics["opaque"]) + 1
+			if pixel.g > 0.42 and pixel.g > pixel.r * 1.04 and pixel.b < 0.5:
+				metrics["green"] = int(metrics["green"]) + 1
+			if pixel.r > 0.62 and pixel.g > 0.32 and pixel.b < 0.36:
+				metrics["yellow_orange"] = int(metrics["yellow_orange"]) + 1
+			if pixel.r > 0.66 and pixel.g > 0.66 and pixel.b > 0.52:
+				metrics["white"] = int(metrics["white"]) + 1
+			if pixel.r < 0.22 and pixel.g < 0.22 and pixel.b < 0.22:
+				metrics["black"] = int(metrics["black"]) + 1
+			var local_x := x % 256
+			var local_y := y % 256
+			if local_x < 2 or local_x > 253 or local_y < 2 or local_y > 253:
+				metrics["edge_alpha"] = int(metrics["edge_alpha"]) + 1
+	return metrics
 
 
 func _make_scene_stub_with_state(gs: GameState) -> Control:
@@ -232,6 +263,38 @@ func test_ready_vfx_registry_registers_budew_asset() -> String:
 		assert_eq(int(round(float(profile.get("duration")) * 1000.0)), 1014, "Budew ready animation should last 30 percent longer than the original 0.78s"),
 		assert_not_null(image, "Generated Budew ready sheet should load as an Image"),
 		assert_eq(image.get_size(), Vector2i(768, 512), "Generated Budew ready sheet should be a 2x3 256px grid"),
+	])
+
+
+func test_ready_vfx_registry_registers_squawkabilly_body_asset() -> String:
+	var registry: RefCounted = BattleReadyVfxRegistryScript.new()
+	var profile: RefCounted = registry.call("get_profile", "squawkabilly_first_turn_draw_ready")
+	var asset_specs: Dictionary = profile.get("asset_specs") if profile != null else {}
+	var burst: Dictionary = asset_specs.get("burst", {})
+	var path := str(burst.get("path", ""))
+	var image := Image.load_from_file(ProjectSettings.globalize_path(path))
+	var runtime_texture: Texture2D = load(path) as Texture2D
+	var metrics := _ready_sheet_pixel_metrics(image)
+
+	return run_checks([
+		assert_not_null(profile, "Squawkabilly ex ready profile should be registered"),
+		assert_eq(str(profile.get("profile_id")) if profile != null else "", "ready_squawkabilly_first_turn_draw", "Squawkabilly ready profile id should be stable"),
+		assert_eq(path, "res://assets/textures/vfx/ready_squawkabilly_first_turn_draw/sheet-transparent.png", "Squawkabilly ready profile should point to the dedicated sheet"),
+		assert_eq(int(burst.get("frames", 0)), 6, "Squawkabilly ready sheet should have 6 frames"),
+		assert_eq(int(burst.get("rows", 0)), 2, "Squawkabilly ready sheet should have 2 rows"),
+		assert_eq(int(burst.get("cols", 0)), 3, "Squawkabilly ready sheet should have 3 columns"),
+		assert_gte(float(profile.get("duration")) if profile != null else 0.0, 1.45, "Squawkabilly ready animation should linger like a real board-state cue"),
+		assert_gte(float(profile.get("hold_ratio")) if profile != null else 0.0, 0.18, "Squawkabilly ready animation should have a readable peak hold"),
+		assert_not_null(image, "Squawkabilly ready sheet should load as an Image"),
+		assert_eq(image.get_size() if image != null else Vector2i.ZERO, Vector2i(768, 512), "Squawkabilly ready sheet should be a 2x3 256px grid"),
+		assert_not_null(runtime_texture, "Squawkabilly ready sheet should load through Godot's importer"),
+		assert_eq(Vector2i(runtime_texture.get_width(), runtime_texture.get_height()) if runtime_texture != null else Vector2i.ZERO, Vector2i(768, 512), "Runtime Squawkabilly texture should use the generated sheet dimensions"),
+		assert_gte(int(metrics.get("opaque", 0)), 100000, "Squawkabilly sheet should contain a large redrawn Pokemon body, not tiny symbols"),
+		assert_gte(int(metrics.get("green", 0)), 30000, "Squawkabilly sheet should preserve its green body identity"),
+		assert_gte(int(metrics.get("yellow_orange", 0)), 6000, "Squawkabilly sheet should preserve its yellow-orange beak/feet identity"),
+		assert_gte(int(metrics.get("white", 0)), 18000, "Squawkabilly sheet should preserve its white belly identity"),
+		assert_gte(int(metrics.get("black", 0)), 12000, "Squawkabilly sheet should preserve its black pompadour crest and outline identity"),
+		assert_eq(int(metrics.get("edge_alpha", 0)), 0, "Squawkabilly frames should not touch cell edges or be cropped"),
 	])
 
 
@@ -351,6 +414,7 @@ func test_ready_vfx_registry_registers_all_priority_profiles() -> String:
 		"roaring_moon_frenzied_ready",
 		"gardevoir_psychic_embrace_ready",
 		"archaludon_metal_bridge_ready",
+		"squawkabilly_first_turn_draw_ready",
 	]
 	var checks: Array[String] = [
 		assert_eq((registry.call("list_rule_ids") as Array).size(), expected_rules.size(), "Registry should expose one profile for each designed ready scene"),
@@ -381,15 +445,7 @@ func test_non_budew_ready_profiles_use_body_first_cinematic_sheets() -> String:
 		var burst: Dictionary = asset_specs.get("burst", {})
 		var expected_path := "res://assets/textures/vfx/%s/sheet-transparent.png" % profile_id
 		var image := Image.load_from_file(ProjectSettings.globalize_path(expected_path))
-		var prompt_path := ProjectSettings.globalize_path("res://assets/textures/vfx/%s/prompt-used.txt" % profile_id)
-		var prompt_text := _read_text_file(prompt_path).to_lower()
-		var banned_body_negative := (
-			"no character body" in prompt_text
-			or "no creature body" in prompt_text
-			or "no full pokemon body" in prompt_text
-			or "not a full creature" in prompt_text
-			or "no pokemon body" in prompt_text
-		)
+		var metrics := _ready_sheet_pixel_metrics(image)
 		checks.append(assert_eq(str(burst.get("path", "")), expected_path, "%s should use its dedicated body-first ready sheet" % rule_id))
 		checks.append(assert_eq(int(burst.get("frames", 0)), 6, "%s should use a six-frame body-first ready sheet" % rule_id))
 		checks.append(assert_eq(int(burst.get("rows", 0)), 2, "%s should use a 2x3 body-first ready sheet" % rule_id))
@@ -399,7 +455,8 @@ func test_non_budew_ready_profiles_use_body_first_cinematic_sheets() -> String:
 		checks.append(assert_gte(float(profile.get("duration")) if profile != null else 0.0, 1.45, "%s should linger like the Charizard cinematic ready animation" % rule_id))
 		checks.append(assert_gte(float(profile.get("hold_ratio")) if profile != null else 0.0, 0.18, "%s should include a cinematic hold instead of flashing past" % rule_id))
 		checks.append(assert_gte(float(profile.get("portrait_effect_width_ratio")) if profile != null else 0.0, 0.85, "%s should scale up in portrait mode" % rule_id))
-		checks.append(assert_false(banned_body_negative, "%s prompt must not describe a pure-effect or no-body sheet" % rule_id))
+		checks.append(assert_gte(int(metrics.get("opaque", 0)), 30000, "%s sheet should contain substantial visible Pokemon art, not a tiny symbol" % rule_id))
+		checks.append(assert_eq(int(metrics.get("edge_alpha", 0)), 0, "%s sheet should not touch cell edges or be cropped" % rule_id))
 	return run_checks(checks)
 
 
@@ -424,6 +481,80 @@ func test_budew_active_opening_ready_trigger() -> String:
 		assert_eq(int(trigger.get("slot_index", -99)), 0, "Active slot index should be normalized to 0"),
 		assert_false(_has_rule(bench_triggers, "budew_opening_item_lock_ready"), "Benched Budew should not trigger the opening Active ready rule"),
 		assert_false(_has_rule(setup_triggers, "budew_opening_item_lock_ready"), "Ready VFX should not fire during setup"),
+	])
+
+
+func test_squawkabilly_first_turn_draw_ready_triggers_after_ability_used() -> String:
+	var evaluator: RefCounted = BattleReadyVfxEvaluatorScript.new()
+
+	var bench_state := _make_state(0, 4, GameState.GamePhase.MAIN)
+	var bench_squawk := _make_slot(_make_pokemon_card("Squawkabilly ex", "CSV2C", "105", "C", "Basic", 160, "ex", [], "Squawkabilly ex"), 0)
+	_mark_squawkabilly_first_turn_draw_used(bench_squawk, bench_state.turn_number)
+	bench_state.players[0].bench.append(bench_squawk)
+	var bench_triggers: Array = evaluator.call("find_ready_triggers", bench_state)
+	var bench_trigger := _first_rule(bench_triggers, "squawkabilly_first_turn_draw_ready")
+
+	var active_state := _make_state(0, 1, GameState.GamePhase.MAIN)
+	var active_squawk := _make_slot(_make_pokemon_card("Squawkabilly ex", "CSV2C", "105", "C", "Basic", 160, "ex", [], "Squawkabilly ex"), 0)
+	_mark_squawkabilly_first_turn_draw_used(active_squawk, active_state.turn_number)
+	active_state.players[0].active_pokemon = active_squawk
+	var active_triggers: Array = evaluator.call("find_ready_triggers", active_state)
+
+	var second_player_state := _make_state(1, 2, GameState.GamePhase.MAIN)
+	var second_player_squawk := _make_slot(_make_pokemon_card("Squawkabilly ex", "CSV2C", "105", "C", "Basic", 160, "ex", [], "Squawkabilly ex"), 1)
+	_mark_squawkabilly_first_turn_draw_used(second_player_squawk, second_player_state.turn_number)
+	second_player_state.players[1].bench.append(second_player_squawk)
+	var second_player_triggers: Array = evaluator.call("find_ready_triggers", second_player_state)
+
+	return run_checks([
+		assert_eq(str(bench_trigger.get("rule_id", "")), "squawkabilly_first_turn_draw_ready", "Benched Squawkabilly ex should trigger after Squawk and Seize resolves"),
+		assert_eq(str(bench_trigger.get("slot_kind", "")), "bench", "Benched Squawkabilly ready should target the Bench slot"),
+		assert_eq(int(bench_trigger.get("slot_index", -99)), 0, "Benched Squawkabilly ready should report the bench index"),
+		assert_eq(str(bench_trigger.get("reason", "")), "squawk_and_seize_resolved", "Squawkabilly ready trigger should document the resolved ability"),
+		assert_eq(str(bench_trigger.get("required_action_kind", "")), "use_ability", "Squawkabilly ready VFX should only play for the ability action that resolved Squawk and Seize"),
+		assert_true(_has_rule(active_triggers, "squawkabilly_first_turn_draw_ready"), "Active Squawkabilly ex should also trigger after the Ability resolves"),
+		assert_true(_has_rule(second_player_triggers, "squawkabilly_first_turn_draw_ready"), "Second player should get Squawkabilly ready VFX after their own Ability resolves"),
+	])
+
+
+func test_squawkabilly_first_turn_draw_ready_negative_gates() -> String:
+	var evaluator: RefCounted = BattleReadyVfxEvaluatorScript.new()
+
+	var available_state := _make_state(0, 1, GameState.GamePhase.MAIN)
+	available_state.players[0].bench.append(_make_slot(_make_pokemon_card("Squawkabilly ex", "CSV2C", "105", "C", "Basic", 160, "ex", [], "Squawkabilly ex"), 0))
+	_add_card_to_zone(available_state.players[0].deck, _make_trainer_card("Draw Target", "Item"), 0)
+	var available_triggers: Array = evaluator.call("find_ready_triggers", available_state)
+
+	var wrong_effect_state := _make_state(0, 1, GameState.GamePhase.MAIN)
+	var wrong_effect_squawk := _make_slot(_make_pokemon_card("Squawkabilly ex", "CSV2C", "105", "C", "Basic", 160, "ex", [], "Squawkabilly ex"), 0)
+	wrong_effect_squawk.effects.append({"type": "some_other_ability_used", "turn": wrong_effect_state.turn_number})
+	wrong_effect_state.players[0].bench.append(wrong_effect_squawk)
+	var wrong_effect_triggers: Array = evaluator.call("find_ready_triggers", wrong_effect_state)
+
+	var wrong_card_state := _make_state(0, 1, GameState.GamePhase.MAIN)
+	var wrong_card := _make_slot(_make_pokemon_card("Wrong Pokemon ex", "TEST", "105", "C", "Basic", 160, "ex", [], "Wrong Pokemon ex"), 0)
+	_mark_squawkabilly_first_turn_draw_used(wrong_card, wrong_card_state.turn_number)
+	wrong_card_state.players[0].bench.append(wrong_card)
+	var wrong_card_triggers: Array = evaluator.call("find_ready_triggers", wrong_card_state)
+
+	var opponent_turn_state := _make_state(1, 1, GameState.GamePhase.MAIN)
+	var opponent_squawk := _make_slot(_make_pokemon_card("Squawkabilly ex", "CSV2C", "105", "C", "Basic", 160, "ex", [], "Squawkabilly ex"), 0)
+	_mark_squawkabilly_first_turn_draw_used(opponent_squawk, opponent_turn_state.turn_number)
+	opponent_turn_state.players[0].bench.append(opponent_squawk)
+	var opponent_turn_triggers: Array = evaluator.call("find_ready_triggers", opponent_turn_state)
+
+	var stale_marker_state := _make_state(0, 4, GameState.GamePhase.MAIN)
+	var stale_marker_squawk := _make_slot(_make_pokemon_card("Squawkabilly ex", "CSV2C", "105", "C", "Basic", 160, "ex", [], "Squawkabilly ex"), 0)
+	_mark_squawkabilly_first_turn_draw_used(stale_marker_squawk, 1)
+	stale_marker_state.players[0].bench.append(stale_marker_squawk)
+	var stale_marker_triggers: Array = evaluator.call("find_ready_triggers", stale_marker_state)
+
+	return run_checks([
+		assert_false(_has_rule(available_triggers, "squawkabilly_first_turn_draw_ready"), "Squawkabilly ready VFX should not preview before Squawk and Seize resolves"),
+		assert_false(_has_rule(wrong_effect_triggers, "squawkabilly_first_turn_draw_ready"), "Squawkabilly ready VFX should require the first-turn draw used marker"),
+		assert_false(_has_rule(wrong_card_triggers, "squawkabilly_first_turn_draw_ready"), "Squawkabilly ready VFX should only target Squawkabilly ex"),
+		assert_false(_has_rule(opponent_turn_triggers, "squawkabilly_first_turn_draw_ready"), "Squawkabilly ready VFX should only evaluate the current player's board"),
+		assert_false(_has_rule(stale_marker_triggers, "squawkabilly_first_turn_draw_ready"), "Squawkabilly ready VFX should not replay a prior-turn Squawk and Seize marker"),
 	])
 
 
@@ -718,6 +849,101 @@ func test_scene_ready_vfx_dedupes_refreshes_and_does_not_block_input() -> String
 		assert_eq(str(sequence.get_meta("profile_id", "")) if sequence != null else "", "ready_budew_item_lock", "Budew ready sequence should use the generated profile"),
 	])
 	battle_scene.free()
+	return result
+
+
+func test_scene_squawkabilly_ready_vfx_plays_after_redraw_resolves() -> String:
+	var gs := _make_state(0, 1, GameState.GamePhase.MAIN)
+	var player := gs.players[0]
+	var squawk_cd := _make_pokemon_card("Squawkabilly ex", "CSV2C", "105", "C", "Basic", 160, "ex", [], "Squawkabilly ex")
+	squawk_cd.effect_id = "ready_test_squawk_first_turn_draw"
+	squawk_cd.abilities = [{"name": "Squawk and Seize", "text": ""}]
+	var squawk := _make_slot(squawk_cd, 0)
+	player.active_pokemon = squawk
+	for i: int in 3:
+		player.hand.append(CardInstance.create(_make_trainer_card("Old Hand %d" % i, "Item"), 0))
+	for i: int in 6:
+		player.deck.append(CardInstance.create(_make_trainer_card("New Hand %d" % i, "Item"), 0))
+	var battle_scene := _make_scene_stub_with_state(gs)
+	var gsm: GameStateMachine = battle_scene.get("_gsm")
+	gsm.effect_processor.register_effect(squawk_cd.effect_id, AbilityFirstTurnDraw.new(6))
+
+	battle_scene.call("_try_use_ability_with_interaction", 0, squawk, 0)
+	var used := squawk.effects.any(func(e: Dictionary) -> bool: return e.get("type", "") == SQUAWKABILLY_FIRST_TURN_DRAW_USED_KEY)
+	var overlay_after_action: Control = battle_scene.get("_ready_vfx_overlay") as Control
+	var count_after_action := overlay_after_action.get_child_count() if overlay_after_action != null else 0
+
+	battle_scene.set("_ready_vfx_trigger_source_player_index", 0)
+	battle_scene.call("_check_ready_vfx_triggers")
+
+	var overlay: Control = battle_scene.get("_ready_vfx_overlay") as Control
+	var sequence_count := overlay.get_child_count() if overlay != null else 0
+	var sequence: Control = overlay.get_child(0) as Control if overlay != null and overlay.get_child_count() > 0 else null
+	var burst: TextureRect = sequence.get_node_or_null("ReadyVfxBurst") as TextureRect if sequence != null else null
+	var burst_filter := burst.mouse_filter if burst != null else Control.MOUSE_FILTER_STOP
+
+	var result := run_checks([
+		assert_true(used, "Squawkabilly ex should resolve Squawk and Seize in the test scene"),
+		assert_eq(player.hand.size(), 6, "Squawk and Seize should finish with the newly drawn six-card hand before ready VFX checks"),
+		assert_true(used, "Squawk and Seize should mark the source slot as used"),
+		assert_eq(count_after_action, 1, "Actual Ability UI path should play Squawkabilly ready VFX immediately after redraw"),
+		assert_not_null(overlay, "Squawkabilly ready VFX overlay should be created"),
+		assert_eq(overlay.mouse_filter, Control.MOUSE_FILTER_IGNORE, "Squawkabilly ready VFX overlay must not intercept input"),
+		assert_eq(sequence_count, 1, "Repeated refreshes should not replay the same Squawkabilly ready key"),
+		assert_eq(str(sequence.get_meta("rule_id", "")) if sequence != null else "", "squawkabilly_first_turn_draw_ready", "Squawkabilly ready sequence should use the first-turn draw rule"),
+		assert_eq(str(sequence.get_meta("profile_id", "")) if sequence != null else "", "ready_squawkabilly_first_turn_draw", "Squawkabilly ready sequence should use the dedicated profile"),
+		assert_eq(burst_filter, Control.MOUSE_FILTER_IGNORE, "Squawkabilly ready burst must not block board input"),
+	])
+	battle_scene.free()
+	return result
+
+
+func test_scene_squawkabilly_ready_vfx_requires_use_ability_action_source() -> String:
+	var gs := _make_state(0, 4, GameState.GamePhase.MAIN)
+	var player := gs.players[0]
+	var squawk := _make_slot(_make_pokemon_card("Squawkabilly ex", "CSV2C", "105", "C", "Basic", 160, "ex", [], "Squawkabilly ex"), 0)
+	_mark_squawkabilly_first_turn_draw_used(squawk, 1)
+	player.bench.append(squawk)
+	player.bench.append(_make_slot(_make_pokemon_card("Other Basic", "TEST", "OB1", "C", "Basic", 70), 0))
+	var battle_scene := _make_scene_stub_with_state(gs)
+
+	battle_scene.set("_ready_vfx_trigger_source_player_index", 0)
+	battle_scene.set("_ready_vfx_trigger_action_kind", "play_pokemon")
+	battle_scene.call("_check_ready_vfx_triggers")
+	var overlay_after_play: Control = battle_scene.get("_ready_vfx_overlay") as Control
+	var play_count := overlay_after_play.get_child_count() if overlay_after_play != null else 0
+
+	battle_scene.set("_ready_vfx_trigger_source_player_index", 0)
+	battle_scene.call("_check_ready_vfx_triggers")
+	var overlay_after_blank: Control = battle_scene.get("_ready_vfx_overlay") as Control
+	var blank_count := overlay_after_blank.get_child_count() if overlay_after_blank != null else 0
+
+	battle_scene.set("_ready_vfx_trigger_source_player_index", 0)
+	battle_scene.set("_ready_vfx_trigger_action_kind", "use_ability")
+	battle_scene.call("_check_ready_vfx_triggers")
+	var overlay_after_stale_ability: Control = battle_scene.get("_ready_vfx_overlay") as Control
+	var stale_ability_count := overlay_after_stale_ability.get_child_count() if overlay_after_stale_ability != null else 0
+
+	var fresh_state := _make_state(0, 4, GameState.GamePhase.MAIN)
+	var fresh_squawk := _make_slot(_make_pokemon_card("Squawkabilly ex", "CSV2C", "105", "C", "Basic", 160, "ex", [], "Squawkabilly ex"), 0)
+	_mark_squawkabilly_first_turn_draw_used(fresh_squawk, fresh_state.turn_number)
+	fresh_state.players[0].bench.append(fresh_squawk)
+	var fresh_scene := _make_scene_stub_with_state(fresh_state)
+	fresh_scene.set("_ready_vfx_trigger_source_player_index", 0)
+	fresh_scene.set("_ready_vfx_trigger_action_kind", "use_ability")
+	fresh_scene.call("_check_ready_vfx_triggers")
+	var overlay_after_ability: Control = fresh_scene.get("_ready_vfx_overlay") as Control
+	var sequence: Control = overlay_after_ability.get_child(0) as Control if overlay_after_ability != null and overlay_after_ability.get_child_count() > 0 else null
+
+	var result := run_checks([
+		assert_eq(play_count, 0, "Squawkabilly ready VFX should not replay when a later Pokemon placement refreshes a used marker"),
+		assert_eq(blank_count, 0, "Squawkabilly ready VFX should not play when the action source has no ability kind"),
+		assert_eq(stale_ability_count, 0, "Squawkabilly ready VFX should not replay an old marker after another later ability action"),
+		assert_not_null(sequence, "Squawkabilly ready VFX should still play for the use_ability source"),
+		assert_eq(str(sequence.get_meta("rule_id", "")) if sequence != null else "", "squawkabilly_first_turn_draw_ready", "Squawkabilly ready sequence should use its rule after an ability source"),
+	])
+	battle_scene.free()
+	fresh_scene.free()
 	return result
 
 

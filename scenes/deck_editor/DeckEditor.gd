@@ -24,6 +24,7 @@ const EXCLUDED_SET_PREFIXES: Array[String] = ["UTEST"]
 const BATTLE_CARD_VIEW := preload("res://scenes/battle/BattleCardView.gd")
 const CardImplementationStatusScript := preload("res://scripts/engine/CardImplementationStatus.gd")
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
+const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
 
 ## 卡图尺寸（标准卡牌比例约 63:88）
 const CARD_WIDTH := 100
@@ -35,6 +36,7 @@ const CARD_TILE_INSET := 8
 const CARD_IMAGE_HEIGHT_RATIO := 1.4
 const CARD_MIN_WIDTH := 72
 const CARD_GRID_LAYOUT_REFRESH_PASSES := 4
+const DEFERRED_TILE_TEXTURES_PER_FRAME := 6
 const CATEGORY_TAB_HEIGHT := 54
 const CATEGORY_TAB_FONT_SIZE := 18
 const CATEGORY_TAB_GAP := 8
@@ -45,6 +47,8 @@ const CARD_DETAIL_BODY_FONT_SIZE := 28
 const CARD_DETAIL_CLOSE_FONT_SIZE := 28
 const TILE_LONG_PRESS_SECONDS := 0.42
 const TILE_LONG_PRESS_MOVE_TOLERANCE := 18.0
+const TOUCH_SCROLL_START_DISTANCE := 10.0
+const TOUCH_SCROLL_SENSITIVITY := 1.35
 
 ## AI 优化方向选项
 const AI_GOALS: Array[Dictionary] = [
@@ -120,9 +124,18 @@ var _tile_long_press_start: Vector2 = Vector2.ZERO
 var _tile_long_press_index: int = -1
 var _tile_long_press_consumed: bool = false
 var _suppress_next_tile_left_click: bool = false
+var _touch_drag_scroll_target: ScrollContainer = null
+var _touch_drag_scroll_start_position := Vector2.ZERO
+var _touch_drag_scroll_start_value := 0
+var _touch_drag_scroll_active := false
+var _touch_drag_scroll_index := -1
 var _deck_card_tile_size := Vector2(CARD_WIDTH, CARD_HEIGHT)
 var _pool_card_tile_size := Vector2(CARD_WIDTH, CARD_HEIGHT)
 var _card_grid_layout_refresh_passes_remaining := 0
+var _deferred_tile_texture_queue: Array[Dictionary] = []
+var _deferred_tile_texture_pump_active := false
+var _deferred_tile_texture_generation := 0
+var _initial_pool_grid_refresh_done := false
 
 
 func _ready() -> void:
@@ -155,14 +168,22 @@ func _ready() -> void:
 	_build_tab_bar(%PoolTabBar, _pool_tab_buttons, false)
 	_sync_card_grid_columns()
 	_refresh_deck_grid()
-	_refresh_pool_grid()
+	_show_pool_loading_placeholder()
 	_update_footer()
 	_style_editor_action_buttons()
 	HudThemeScript.apply_scrollbars_recursive(self)
+	_apply_editor_scrollbar_policy()
 	resized.connect(_on_editor_resized)
 	%DeckScroll.resized.connect(_on_card_grid_area_resized)
 	%PoolScroll.resized.connect(_on_card_grid_area_resized)
+	_bind_editor_scroll_input(%DeckScroll)
+	_bind_editor_scroll_input(%PoolScroll)
+	_bind_editor_scroll_input(find_child("AIScroll", true, false) as ScrollContainer)
 	_start_card_grid_metrics_refresh()
+	if _should_defer_initial_pool_grid_refresh():
+		call_deferred("_refresh_pool_grid_after_initial_frame")
+	else:
+		_refresh_pool_grid()
 
 
 func _style_editor_action_buttons() -> void:
@@ -187,6 +208,7 @@ func _style_editor_action_buttons() -> void:
 
 
 func _on_editor_resized() -> void:
+	_apply_editor_scrollbar_policy()
 	_queue_card_grid_metrics_refresh()
 
 
@@ -202,6 +224,38 @@ func _start_card_grid_metrics_refresh() -> void:
 	_queue_card_grid_metrics_refresh(true)
 	_card_grid_layout_refresh_passes_remaining = CARD_GRID_LAYOUT_REFRESH_PASSES
 	_queue_card_grid_layout_refresh_pass()
+
+
+func _should_defer_initial_pool_grid_refresh() -> bool:
+	return true
+
+
+func _refresh_pool_grid_after_initial_frame() -> void:
+	if not is_inside_tree():
+		return
+	await get_tree().process_frame
+	if not is_inside_tree():
+		return
+	_refresh_pool_grid()
+	_queue_card_grid_metrics_refresh()
+
+
+func _show_pool_loading_placeholder() -> void:
+	var pool_grid := get_node_or_null("%PoolGrid") as Container
+	if pool_grid == null:
+		return
+	for child: Node in pool_grid.get_children():
+		child.queue_free()
+	var label := Label.new()
+	label.name = "PoolLoadingPlaceholder"
+	label.text = "正在加载卡池..."
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	label.add_theme_color_override("font_color", Color(0.78, 0.90, 1.0, 0.88))
+	label.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(24))
+	pool_grid.add_child(label)
 
 
 func _queue_card_grid_layout_refresh_pass() -> void:
@@ -235,7 +289,8 @@ func _refresh_card_grid_metrics(force_refresh: bool = false) -> void:
 	_sync_card_grid_columns()
 	if force_refresh or changed:
 		_refresh_deck_grid()
-		_refresh_pool_grid()
+		if _initial_pool_grid_refresh_done:
+			_refresh_pool_grid()
 
 
 func _calculate_card_tile_size(scroll: ScrollContainer) -> Vector2:
@@ -246,12 +301,45 @@ func _calculate_card_tile_size(scroll: ScrollContainer) -> Vector2:
 			available_width = (scroll.get_parent() as Control).size.x
 	if available_width <= 0.0:
 		return Vector2(CARD_WIDTH, CARD_HEIGHT)
-	var scrollbar_clearance := float(HudThemeScript.scrollbar_thickness_for_profile("auto") + HudThemeScript.CARD_SCROLLBAR_CLEARANCE_PADDING)
+	var scrollbar_clearance := 0.0
+	if scroll == null or not bool(scroll.get_meta(NonBattleTouchBridgeScript.HIDDEN_VERTICAL_DRAG_SCROLL_META, false)):
+		scrollbar_clearance = float(HudThemeScript.scrollbar_thickness_for_profile("auto") + HudThemeScript.CARD_SCROLLBAR_CLEARANCE_PADDING)
 	var gap_total := float(CARD_GRID_GAP * (CARD_GRID_COLUMNS - 1))
 	var tile_width := floorf((available_width - scrollbar_clearance - gap_total) / float(CARD_GRID_COLUMNS))
 	tile_width = maxf(float(CARD_MIN_WIDTH), tile_width)
 	var image_height := roundf(tile_width * CARD_IMAGE_HEIGHT_RATIO)
 	return Vector2(tile_width, image_height)
+
+
+func _apply_editor_scrollbar_policy(force_portrait: Variant = null) -> void:
+	var viewport_size := size
+	if is_inside_tree() and get_viewport() != null:
+		viewport_size = get_viewport_rect().size
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		viewport_size = Vector2(1280, 720)
+	var portrait := viewport_size.y > viewport_size.x
+	if force_portrait is bool:
+		portrait = bool(force_portrait)
+	for scroll_name: String in ["DeckScroll", "PoolScroll", "AIScroll"]:
+		var scroll := find_child(scroll_name, true, false) as ScrollContainer
+		if scroll == null:
+			continue
+		HudThemeScript.style_scroll_container(scroll, "auto")
+		if portrait:
+			NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(scroll)
+		else:
+			NonBattleTouchBridgeScript.configure_visible_vertical_scroll(scroll)
+
+
+func _bind_editor_scroll_input(scroll: ScrollContainer) -> void:
+	if scroll == null or bool(scroll.get_meta("_deck_editor_touch_scroll_bound", false)):
+		return
+	scroll.set_meta("_deck_editor_touch_scroll_bound", true)
+	scroll.gui_input.connect(Callable(self, "_on_editor_scroll_input").bind(scroll))
+
+
+func _on_editor_scroll_input(event: InputEvent, scroll: ScrollContainer) -> void:
+	_handle_editor_card_scroll_input(event, scroll)
 
 
 # -- 分类构建 --
@@ -414,6 +502,9 @@ func _refresh_deck_grid() -> void:
 
 func _on_deck_tile_input(event: InputEvent, flat_index: int, set_code: String, card_index: String) -> void:
 	var payload := {"kind": "deck", "set_code": set_code, "card_index": card_index}
+	if _handle_editor_card_scroll_input(event, %DeckScroll):
+		_cancel_tile_long_press()
+		return
 	if _handle_tile_touch_detail_input(event, payload):
 		return
 	if not (event is InputEventMouseButton and (event as InputEventMouseButton).pressed):
@@ -475,6 +566,8 @@ func _deck_card_payload_for_flat_index(flat_index: int) -> Dictionary:
 
 
 func _refresh_pool_grid() -> void:
+	_initial_pool_grid_refresh_done = true
+	_reset_deferred_tile_texture_queue()
 	for child: Node in %PoolGrid.get_children():
 		child.queue_free()
 
@@ -549,13 +642,16 @@ func _create_pool_sub_grid() -> GridContainer:
 func _make_pool_tile(card: CardData) -> PanelContainer:
 	var uid := card.get_uid()
 	var is_selected := (uid == _selected_pool_uid)
-	var tile := _create_card_tile(card.name, card.set_code, card.card_index, is_selected, _pool_card_tile_size)
+	var tile := _create_card_tile(card.name, card.set_code, card.card_index, is_selected, _pool_card_tile_size, true)
 	tile.gui_input.connect(_on_pool_tile_input.bind(uid))
 	return tile
 
 
 func _on_pool_tile_input(event: InputEvent, uid: String) -> void:
 	var payload := {"kind": "pool", "uid": uid}
+	if _handle_editor_card_scroll_input(event, %PoolScroll):
+		_cancel_tile_long_press()
+		return
 	if _handle_tile_touch_detail_input(event, payload):
 		return
 	if not (event is InputEventMouseButton and (event as InputEventMouseButton).pressed):
@@ -593,6 +689,75 @@ func _handle_tile_touch_detail_input(event: InputEvent, payload: Dictionary) -> 
 		return false
 
 	return false
+
+
+func _handle_editor_card_scroll_input(event: InputEvent, scroll: ScrollContainer) -> bool:
+	if scroll == null or not bool(scroll.get_meta(NonBattleTouchBridgeScript.HIDDEN_VERTICAL_DRAG_SCROLL_META, false)):
+		return false
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			_begin_editor_touch_scroll(scroll, touch.position, touch.index)
+			return false
+		return _end_editor_touch_scroll(scroll, touch.index)
+	if event is InputEventScreenDrag:
+		var drag := event as InputEventScreenDrag
+		return _update_editor_touch_scroll(scroll, drag.position, drag.index)
+	if event is InputEventMouseButton:
+		var button := event as InputEventMouseButton
+		if button.button_index != MOUSE_BUTTON_LEFT or not _should_use_mouse_drag_bridge():
+			return false
+		var position := button.global_position if button.global_position != Vector2.ZERO else button.position
+		if button.pressed:
+			_begin_editor_touch_scroll(scroll, position, -1)
+			return false
+		return _end_editor_touch_scroll(scroll, -1)
+	if event is InputEventMouseMotion and _should_use_mouse_drag_bridge():
+		var motion := event as InputEventMouseMotion
+		var position := motion.global_position if motion.global_position != Vector2.ZERO else motion.position
+		return _update_editor_touch_scroll(scroll, position, -1)
+	return false
+
+
+func _begin_editor_touch_scroll(scroll: ScrollContainer, position: Vector2, index: int) -> void:
+	_touch_drag_scroll_target = scroll
+	_touch_drag_scroll_start_position = position
+	_touch_drag_scroll_start_value = scroll.scroll_vertical
+	_touch_drag_scroll_active = false
+	_touch_drag_scroll_index = index
+
+
+func _update_editor_touch_scroll(scroll: ScrollContainer, position: Vector2, index: int) -> bool:
+	if _touch_drag_scroll_target != scroll or (index != -1 and _touch_drag_scroll_index != index):
+		return false
+	var distance := position.distance_to(_touch_drag_scroll_start_position)
+	if not _touch_drag_scroll_active and distance < TOUCH_SCROLL_START_DISTANCE:
+		return false
+	_touch_drag_scroll_active = true
+	var delta := (_touch_drag_scroll_start_position.y - position.y) * TOUCH_SCROLL_SENSITIVITY
+	scroll.scroll_vertical = maxi(0, roundi(float(_touch_drag_scroll_start_value) + delta))
+	accept_event()
+	return true
+
+
+func _end_editor_touch_scroll(scroll: ScrollContainer, index: int) -> bool:
+	if _touch_drag_scroll_target != scroll or (index != -1 and _touch_drag_scroll_index != index):
+		return false
+	var was_active := _touch_drag_scroll_active
+	_touch_drag_scroll_target = null
+	_touch_drag_scroll_start_position = Vector2.ZERO
+	_touch_drag_scroll_start_value = 0
+	_touch_drag_scroll_active = false
+	_touch_drag_scroll_index = -1
+	if was_active:
+		accept_event()
+	return was_active
+
+
+func _should_use_mouse_drag_bridge() -> bool:
+	if not bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true)):
+		return true
+	return OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
 
 
 func _start_tile_long_press(payload: Dictionary, position: Vector2, touch_index: int) -> void:
@@ -725,7 +890,8 @@ func _create_card_tile(
 	set_code: String,
 	card_index: String,
 	selected: bool,
-	tile_size: Vector2 = Vector2.ZERO
+	tile_size: Vector2 = Vector2.ZERO,
+	defer_texture: bool = false
 ) -> PanelContainer:
 	var tile_width := int(roundf(tile_size.x)) if tile_size.x > 0.0 else CARD_WIDTH
 	var image_height := int(roundf(tile_size.y)) if tile_size.y > 0.0 else CARD_HEIGHT
@@ -753,14 +919,16 @@ func _create_card_tile(
 	tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 
-	var texture := _load_card_texture(set_code, card_index)
-	if texture != null:
-		tex_rect.texture = texture
-	else:
 		# 无图时显示灰底占位
-		var placeholder := PlaceholderTexture2D.new()
-		placeholder.size = Vector2(art_width, art_height)
-		tex_rect.texture = placeholder
+	if defer_texture:
+		tex_rect.texture = _make_card_placeholder_texture(Vector2(art_width, art_height))
+		_queue_deferred_card_texture_load(tex_rect, set_code, card_index)
+	else:
+		var texture := _load_card_texture(set_code, card_index)
+		if texture != null:
+			tex_rect.texture = texture
+		else:
+			tex_rect.texture = _make_card_placeholder_texture(Vector2(art_width, art_height))
 	art_holder.add_child(tex_rect)
 
 	var card := _resolve_card_for_tile(set_code, card_index)
@@ -864,6 +1032,58 @@ func _apply_tile_style(panel: PanelContainer, selected: bool) -> void:
 
 
 # -- 纹理加载 --
+
+func _make_card_placeholder_texture(size: Vector2) -> PlaceholderTexture2D:
+	var placeholder := PlaceholderTexture2D.new()
+	placeholder.size = size
+	return placeholder
+
+
+func _reset_deferred_tile_texture_queue() -> void:
+	_deferred_tile_texture_generation += 1
+	_deferred_tile_texture_queue.clear()
+	_deferred_tile_texture_pump_active = false
+
+
+func _queue_deferred_card_texture_load(texture_rect: TextureRect, set_code: String, card_index: String) -> void:
+	_deferred_tile_texture_queue.append({
+		"texture_rect": texture_rect,
+		"set_code": set_code,
+		"card_index": card_index,
+		"generation": _deferred_tile_texture_generation,
+	})
+	if _deferred_tile_texture_pump_active:
+		return
+	_deferred_tile_texture_pump_active = true
+	call_deferred("_pump_deferred_card_texture_queue")
+
+
+func _pump_deferred_card_texture_queue() -> void:
+	if not is_inside_tree():
+		_deferred_tile_texture_queue.clear()
+		_deferred_tile_texture_pump_active = false
+		return
+
+	var processed := 0
+	while processed < DEFERRED_TILE_TEXTURES_PER_FRAME and not _deferred_tile_texture_queue.is_empty():
+		var item: Dictionary = _deferred_tile_texture_queue.pop_front()
+		if int(item.get("generation", -1)) != _deferred_tile_texture_generation:
+			continue
+		var texture_rect := item.get("texture_rect", null) as TextureRect
+		if texture_rect == null or not is_instance_valid(texture_rect) or not texture_rect.is_inside_tree():
+			continue
+		var texture := _load_card_texture(str(item.get("set_code", "")), str(item.get("card_index", "")))
+		if texture != null:
+			texture_rect.texture = texture
+		processed += 1
+
+	if _deferred_tile_texture_queue.is_empty():
+		_deferred_tile_texture_pump_active = false
+		return
+
+	await get_tree().process_frame
+	call_deferred("_pump_deferred_card_texture_queue")
+
 
 func _load_card_texture(set_code: String, card_index: String) -> Texture2D:
 	var file_path := CardData.resolve_existing_image_path(

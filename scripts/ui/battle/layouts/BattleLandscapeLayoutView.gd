@@ -127,7 +127,7 @@ func apply_scene_layout(viewport_size: Vector2) -> void:
 
 	var side_width: float = 0.0 if not left_panel.visible else clampf(viewport_size.x * 0.05, 72.0, 108.0)
 	var right_width: float = 0.0 if not right_panel.visible else side_width + 6.0
-	var log_width: float = clampf(viewport_size.x * 0.125, 124.0, 204.0)
+	var log_width: float = clampf(viewport_size.x * 0.15, 144.0, 252.0)
 	left_panel.custom_minimum_size = Vector2(side_width, 0)
 	right_panel.custom_minimum_size = Vector2(right_width, 0)
 	log_panel.custom_minimum_size = Vector2(log_width, 0)

@@ -109,6 +109,78 @@ func hide_ai_owned_effect_step_ui(scene: Object, chooser_player: int) -> void:
 		field_interaction_overlay.visible = false
 
 
+func _apply_contextual_step_exclusions(
+	scene: Object,
+	step_index: int,
+	pending_effect_steps: Array[Dictionary],
+	step: Dictionary
+) -> Dictionary:
+	var pending_effect_context: Dictionary = scene.get("_pending_effect_context")
+	var filtered_step := _effect_step_with_contextual_item_exclusions(step, pending_effect_context)
+	if filtered_step != step:
+		pending_effect_steps[step_index] = filtered_step
+		scene.set("_pending_effect_steps", pending_effect_steps)
+	return filtered_step
+
+
+func _effect_step_with_contextual_item_exclusions(step: Dictionary, context: Dictionary) -> Dictionary:
+	var exclude_step_ids: Array = step.get("exclude_selected_from_step_ids", [])
+	if exclude_step_ids.is_empty():
+		return step
+	var excluded_items: Array = []
+	for key_variant: Variant in exclude_step_ids:
+		var selected_variant: Variant = context.get(str(key_variant), [])
+		if selected_variant is Array:
+			for selected_item: Variant in selected_variant:
+				if selected_item != null and selected_item not in excluded_items:
+					excluded_items.append(selected_item)
+		elif selected_variant != null and selected_variant not in excluded_items:
+			excluded_items.append(selected_variant)
+	if excluded_items.is_empty():
+		return step
+	var items: Array = step.get("items", [])
+	if items.is_empty():
+		return step
+	var filtered_items: Array = []
+	var kept_indices: Array = []
+	for i: int in items.size():
+		var item: Variant = items[i]
+		if item in excluded_items:
+			continue
+		filtered_items.append(item)
+		kept_indices.append(i)
+	if kept_indices.size() == items.size():
+		return step
+	var filtered_step := step.duplicate(true)
+	filtered_step["items"] = filtered_items
+	for key: String in ["labels", "choice_labels", "card_items", "card_indices", "action_items"]:
+		_copy_filtered_parallel_step_array(step, filtered_step, key, kept_indices, items.size())
+	return filtered_step
+
+
+func _copy_filtered_parallel_step_array(
+	source_step: Dictionary,
+	filtered_step: Dictionary,
+	key: String,
+	kept_indices: Array,
+	expected_size: int
+) -> void:
+	if not source_step.has(key):
+		return
+	var values_variant: Variant = source_step.get(key)
+	if not (values_variant is Array):
+		return
+	var values: Array = values_variant
+	if values.size() != expected_size:
+		return
+	var filtered_values: Array = []
+	for kept_index_variant: Variant in kept_indices:
+		var kept_index := int(kept_index_variant)
+		if kept_index >= 0 and kept_index < values.size():
+			filtered_values.append(values[kept_index])
+	filtered_step[key] = filtered_values
+
+
 func show_next_effect_interaction_step(scene: Object) -> void:
 	var pending_effect_card: CardInstance = scene.get("_pending_effect_card")
 	var pending_effect_kind: String = str(scene.get("_pending_effect_kind"))
@@ -126,6 +198,7 @@ func show_next_effect_interaction_step(scene: Object) -> void:
 	if bool(step.get("wait_for_coin_animation", false)) and bool(scene.call("_has_pending_coin_animation")):
 		scene.call("_delay_effect_step_until_coin_animation_finishes")
 		return
+	step = _apply_contextual_step_exclusions(scene, pending_effect_step_index, pending_effect_steps, step)
 	var chooser_player: int = resolve_effect_step_chooser_player(scene, step)
 	if (
 		GameManager.current_mode == GameManager.GameMode.TWO_PLAYER
@@ -331,6 +404,19 @@ func inject_followup_steps(scene: Object) -> void:
 			var ability_effect: BaseEffect = gsm.effect_processor.get_ability_effect(pending_effect_slot, ability_index, gsm.game_state)
 			if ability_effect != null:
 				followup_steps.append_array(ability_effect.get_followup_interaction_steps(pending_effect_card, gsm.game_state, pending_effect_context))
+		"granted_attack":
+			var granted_effect_slot: PokemonSlot = scene.get("_pending_effect_slot")
+			var granted_effect_attack_data: Dictionary = scene.get("_pending_effect_attack_data")
+			if granted_effect_slot == null or gsm == null or gsm.effect_processor == null:
+				return
+			followup_steps.append_array(
+				gsm.effect_processor.get_granted_attack_followup_interaction_steps(
+					granted_effect_slot,
+					granted_effect_attack_data,
+					gsm.game_state,
+					pending_effect_context
+				)
+			)
 		_:
 			return
 	if followup_steps.is_empty():
@@ -435,7 +521,12 @@ func _finish_effect_interaction(scene: Object) -> void:
 	scene.call("_runtime_log", "effect_interaction_complete", "success=%s %s" % [str(success), scene.call("_state_snapshot")])
 	reset_effect_interaction(scene)
 	if success:
-		scene.set("_ready_vfx_trigger_source_player_index", resolved_player_index)
+		var ready_action_kind := "use_ability" if pending_effect_kind == "ability" else ""
+		if scene.has_method("_mark_ready_vfx_action_source"):
+			scene.call("_mark_ready_vfx_action_source", resolved_player_index, ready_action_kind)
+		else:
+			scene.set("_ready_vfx_trigger_source_player_index", resolved_player_index)
+			scene.set("_ready_vfx_trigger_action_kind", ready_action_kind)
 		if scene.has_method("_restore_pending_engine_prize_choice_if_needed"):
 			scene.call("_restore_pending_engine_prize_choice_if_needed", "effect_interaction_complete")
 	scene.call("_refresh_ui")

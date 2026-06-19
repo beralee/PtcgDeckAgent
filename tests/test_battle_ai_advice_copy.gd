@@ -101,9 +101,75 @@ func test_battle_scene_topbar_and_log_title_use_readable_copy() -> String:
 		assert_eq(ai_button.text, _u([0x41, 0x49, 0x5EFA, 0x8BAE]), "BtnAiAdvice should use readable Chinese copy"),
 		assert_eq(zeus_button.text, _u([0x5B99, 0x65AF, 0x5E2E, 0x6211]), "BtnZeusHelp should preserve its readable Chinese copy"),
 		assert_eq(log_title.text, _u([0x64CD, 0x4F5C, 0x65E5, 0x5FD7]), "Right-side log title should use readable Chinese copy"),
-		assert_eq(log_panel.custom_minimum_size.x, 236.0, "Right-side log panel should reserve more width for readable copy"),
-		assert_eq(log_title.get_theme_font_size("font_size"), 12, "Log title should use the larger readable font size"),
-		assert_eq(log_list.get_theme_font_size("normal_font_size"), 11, "Log body should use the larger readable font size"),
+		assert_eq(log_panel.custom_minimum_size.x, 252.0, "Right-side log panel should reserve more width for readable copy"),
+		assert_eq(log_title.get_theme_font_size("font_size"), 14, "Log title should use the larger readable font size"),
+		assert_eq(log_list.get_theme_font_size("normal_font_size"), 13, "Log body should use the larger readable font size"),
+	])
+
+
+func test_battle_scene_log_panel_uses_layered_hud_surface_style() -> String:
+	var scene: Control = load("res://scenes/battle/BattleScene.tscn").instantiate()
+	scene.call("_apply_battle_surface_styles")
+
+	var log_title := scene.find_child("LogTitle", true, false) as Label
+	var log_panel := scene.find_child("LogPanel", true, false) as PanelContainer
+	var log_list := scene.find_child("LogList", true, false) as RichTextLabel
+	var panel_style := log_panel.get_theme_stylebox("panel") as StyleBoxFlat if log_panel != null else null
+	var body_style := log_list.get_theme_stylebox("normal") as StyleBoxFlat if log_list != null else null
+
+	var result := run_checks([
+		assert_true(panel_style != null and panel_style.bg_color.a >= 0.90, "Battle log panel should use an opaque HUD glass surface"),
+		assert_true(panel_style != null and panel_style.shadow_size >= 10, "Battle log panel should have a subtle glow/shadow"),
+		assert_true(body_style != null and body_style.bg_color.a >= 0.70, "Battle log body should have a distinct readable surface"),
+		assert_true(body_style != null and body_style.get_content_margin(SIDE_LEFT) >= 10.0, "Battle log body should add inner padding"),
+		assert_true(log_title != null and log_title.horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER, "Battle log title should be centered"),
+		assert_true(log_title != null and log_title.get_theme_font_size("font_size") >= 16, "Battle log runtime title should be larger than the old debug label"),
+		assert_true(log_list != null and log_list.get_theme_font_size("normal_font_size") >= 15, "Battle log runtime body should be readable in landscape"),
+		assert_true(log_list != null and log_list.get_theme_constant("line_separation") >= 4, "Battle log entries should have breathing room"),
+	])
+	scene.queue_free()
+	return result
+
+
+func test_battle_scene_log_bbcode_preserves_plain_log_text() -> String:
+	var scene := _make_scene_stub()
+	var log_list := scene.get("_log_list") as RichTextLabel
+	var raw_log := "玩家1 使用 [b]测试[/b] 卡牌"
+
+	scene.call("_log", raw_log)
+
+	var parsed := log_list.get_parsed_text().strip_edges() if log_list != null else ""
+	return run_checks([
+		assert_eq(parsed, raw_log, "Styled battle log entries should preserve the plain parsed log text"),
+		assert_false(parsed == "玩家1 使用 测试 卡牌", "Styled battle log entries should not treat raw log text as BBCode markup"),
+	])
+
+
+func test_battle_scene_log_entry_uses_presenter_highlight_colors() -> String:
+	var scene := _make_scene_stub()
+	var previous_names := GameManager.battle_player_display_names.duplicate()
+	GameManager.set_battle_player_display_names(["小林", "青木"])
+	var raw_log := "小林使用 雷电冲击 对 青木的皮卡丘造成 120 点伤害"
+	var action := GameAction.create(
+		GameAction.ActionType.DAMAGE_DEALT,
+		0,
+		{"damage": 120, "target": "皮卡丘"},
+		3,
+		raw_log
+	)
+	var rendered := str(scene.call("_format_battle_log_entry_bbcode", raw_log, action))
+	var rich_text := RichTextLabel.new()
+	rich_text.bbcode_enabled = true
+	rich_text.append_text(rendered)
+	var parsed := rich_text.get_parsed_text()
+	rich_text.queue_free()
+	GameManager.battle_player_display_names = previous_names
+
+	return run_checks([
+		assert_eq(parsed, raw_log, "BattleScene highlighted log markup should parse back to the original log text"),
+		assert_true(rendered.find("#61d8ff") >= 0, "BattleScene log markup should color player 1"),
+		assert_true(rendered.find("#ffcf70") >= 0, "BattleScene log markup should color player 2"),
+		assert_true(rendered.find("#ff7666") >= 0, "BattleScene log markup should color damage values"),
 	])
 
 

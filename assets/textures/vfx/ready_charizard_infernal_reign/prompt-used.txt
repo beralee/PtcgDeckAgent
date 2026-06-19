@@ -1,7 +1,0 @@
-Create a production HD 2D game creature animation sprite sheet for a tactical ready-state overlay. Subject: an original orange-red fire dragon with broad wings, horned head, long tail with flame tip, dark blue wing membranes, black crystalline tera-like facets, and fierce playful expression.
-
-Exact sheet: 6 frames in an invisible 2 rows x 3 columns grid. Each frame keeps the same dragon identity and centered scale, full creature body visible inside the cell. Fire effects stay tightly attached to the dragon body and never replace it.
-
-Frame progression: crouched anticipation; wings spread and chest glow; roar with orbiting fire-energy orbs; peak infernal crown aura behind a fully visible body; confident hover with compact flame ring; settled ready pose with ember glow.
-
-Background: solid #FF00FF magenta only, no text, UI, card art, borders, dividers, labels, logo, watermark, or scenery.

@@ -3,7 +3,7 @@ extends RefCounted
 
 const CACHE_PATH := "user://deck_recommendations/cache.json"
 const SCHEMA_VERSION := 1
-const MAX_CACHE_ITEMS := 10
+const MAX_CACHE_ITEMS := 20
 const MAX_WHY_PLAY_ITEMS := 3
 const MAX_DETAIL_SECTIONS := 8
 const MAX_DETAIL_BULLETS := 5

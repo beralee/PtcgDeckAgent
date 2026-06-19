@@ -17,6 +17,7 @@ const RULE_CERULEDGE_DISCARD_ENERGY := "ceruledge_discard_energy_ready"
 const RULE_ROARING_MOON_FRENZIED := "roaring_moon_frenzied_ready"
 const RULE_GARDEVOIR_PSYCHIC_EMBRACE := "gardevoir_psychic_embrace_ready"
 const RULE_ARCHALUDON_METAL_BRIDGE := "archaludon_metal_bridge_ready"
+const RULE_SQUAWKABILLY_FIRST_TURN_DRAW := "squawkabilly_first_turn_draw_ready"
 
 const BUDEW_UID := "CSV9.5C_004"
 const DRAGAPULT_EX_UID := "CSV8C_159"
@@ -39,8 +40,10 @@ const CERULEDGE_EX_UID := "CSV9C_034"
 const ROARING_MOON_EX_UID := "CSV6C_096"
 const GARDEVOIR_EX_UID := "CSV2C_055"
 const ARCHALUDON_EX_UID := "CSV9C_138"
+const SQUAWKABILLY_EX_UID := "CSV2C_105"
 const TANDEM_UNIT_USED_EFFECT_TYPE := "ability_search_pokemon_to_bench_used"
 const TANDEM_UNIT_SUMMONED_EFFECT_TYPE := "ability_search_pokemon_to_bench_summoned"
+const SQUAWKABILLY_FIRST_TURN_DRAW_USED_EFFECT_TYPE := "ability_first_turn_draw_used"
 
 const ENERGY_SYMBOLS := {
 	"G": true,
@@ -91,6 +94,7 @@ func find_ready_triggers(game_state: GameState) -> Array:
 	_append_roaring_moon_frenzied_trigger(game_state, player, player_index, triggers)
 	_append_gardevoir_psychic_embrace_trigger(game_state, player, player_index, triggers)
 	_append_archaludon_metal_bridge_trigger(game_state, player, player_index, triggers)
+	_append_squawkabilly_first_turn_draw_trigger(game_state, player, player_index, triggers)
 	return triggers
 
 
@@ -109,6 +113,26 @@ func _append_budew_opening_trigger(game_state: GameState, player: PlayerState, p
 		game_state.turn_number,
 		"opening_active_item_lock"
 	))
+
+
+func _append_squawkabilly_first_turn_draw_trigger(game_state: GameState, player: PlayerState, player_index: int, triggers: Array) -> void:
+	for entry: Dictionary in _player_slot_entries(player):
+		var slot: PokemonSlot = entry.get("slot", null)
+		if not _slot_matches_uid(slot, SQUAWKABILLY_EX_UID):
+			continue
+		if not _slot_has_effect_on_turn(slot, SQUAWKABILLY_FIRST_TURN_DRAW_USED_EFFECT_TYPE, game_state.turn_number):
+			continue
+		triggers.append(_make_trigger(
+			RULE_SQUAWKABILLY_FIRST_TURN_DRAW,
+			player_index,
+			str(entry.get("slot_kind", "active")),
+			int(entry.get("slot_index", 0)),
+			slot,
+			game_state.turn_number,
+			"squawk_and_seize_resolved",
+			"use_ability"
+		))
+		return
 
 
 func _append_dragapult_phantom_dive_trigger(game_state: GameState, player: PlayerState, player_index: int, triggers: Array) -> void:
@@ -481,6 +505,26 @@ func _slot_matches_uid(slot: PokemonSlot, uid: String) -> bool:
 	if slot == null:
 		return false
 	return _card_uid(slot.get_card_data()) == uid
+
+
+func _slot_has_effect(slot: PokemonSlot, effect_type: String) -> bool:
+	if slot == null:
+		return false
+	for eff: Dictionary in slot.effects:
+		if str(eff.get("type", "")) == effect_type:
+			return true
+	return false
+
+
+func _slot_has_effect_on_turn(slot: PokemonSlot, effect_type: String, turn_number: int) -> bool:
+	if slot == null:
+		return false
+	for eff: Dictionary in slot.effects:
+		if str(eff.get("type", "")) != effect_type:
+			continue
+		if int(eff.get("turn", -1)) == turn_number:
+			return true
+	return false
 
 
 func _card_uid(card_data: CardData) -> String:

@@ -3,6 +3,7 @@ extends TestBase
 
 const DeckEditorScript := preload("res://scenes/deck_editor/DeckEditor.gd")
 const DeckEditorScene := preload("res://scenes/deck_editor/DeckEditor.tscn")
+const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
 
 
 func _set_navigation_suppressed(suppressed: bool) -> void:
@@ -42,6 +43,18 @@ func _find_descendant_by_name(root: Node, node_name: String) -> Node:
 		return root
 	for child: Node in root.get_children():
 		var found := _find_descendant_by_name(child, node_name)
+		if found != null:
+			return found
+	return null
+
+
+func _find_descendant_by_class(root: Node, class_name_text: String) -> Node:
+	if root == null:
+		return null
+	if root.get_class() == class_name_text:
+		return root
+	for child: Node in root.get_children():
+		var found := _find_descendant_by_class(child, class_name_text)
 		if found != null:
 			return found
 	return null
@@ -148,6 +161,83 @@ func test_card_tile_metrics_expand_for_five_column_grid() -> String:
 		assert_gt(tile_size.x, 110.0, "Five-column deck editor tiles should grow beyond the old fixed 100px width when the panel is wider"),
 		assert_gt(grid_content_width, 570.0, "Five-column grid should use the available panel width instead of leaving a fixed-size blank strip"),
 		assert_eq(roundi(tile_size.y), roundi(tile_size.x * 1.4), "Tile image height should keep the card aspect ratio after resizing"),
+	])
+
+
+func test_deck_editor_defers_initial_pool_grid_refresh() -> String:
+	var editor: Control = DeckEditorScript.new()
+	var defer_initial := bool(editor.call("_should_defer_initial_pool_grid_refresh"))
+	editor.free()
+
+	return run_checks([
+		assert_true(defer_initial, "DeckEditor should show its first frame before building the full right-side card pool"),
+	])
+
+
+func test_pool_card_tile_queues_deferred_texture_load() -> String:
+	var editor: Control = DeckEditorScript.new()
+	var tile := editor.call("_create_card_tile", "Deferred Pool Card", "SV1", "001", false, Vector2(100, 140), true) as PanelContainer
+	var queue: Array = editor.get("_deferred_tile_texture_queue")
+	var pump_active := bool(editor.get("_deferred_tile_texture_pump_active"))
+	var texture_rect := _find_descendant_by_class(tile, "TextureRect") as TextureRect
+	var uses_placeholder := texture_rect != null and texture_rect.texture is PlaceholderTexture2D
+
+	tile.free()
+	editor.free()
+	return run_checks([
+		assert_eq(queue.size(), 1, "Pool card tiles should queue image loading instead of synchronously reading card images"),
+		assert_true(pump_active, "Deferred tile image pump should start after queueing the first pool tile image"),
+		assert_true(uses_placeholder, "Pool card tile should render a placeholder until the deferred image load catches up"),
+	])
+
+
+func test_deck_editor_portrait_hides_scrollbars_and_keeps_touch_drag() -> String:
+	var previous_emulate: bool = bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var editor: Control = DeckEditorScript.new()
+	editor.size = Vector2(390, 844)
+	var deck_scroll := ScrollContainer.new()
+	deck_scroll.name = "DeckScroll"
+	deck_scroll.size = Vector2(633, 240)
+	deck_scroll.custom_minimum_size = deck_scroll.size
+	var content := Control.new()
+	content.custom_minimum_size = Vector2(633, 1200)
+	deck_scroll.add_child(content)
+	editor.add_child(deck_scroll)
+	editor.call("_apply_editor_scrollbar_policy", true)
+	var vbar := deck_scroll.get_v_scroll_bar()
+	if vbar != null:
+		vbar.min_value = 0.0
+		vbar.max_value = 1200.0
+		vbar.page = 240.0
+	var hidden_meta := bool(deck_scroll.get_meta(NonBattleTouchBridgeScript.HIDDEN_VERTICAL_DRAG_SCROLL_META, false))
+	var hidden_bar := vbar != null and not vbar.visible and vbar.mouse_filter == Control.MOUSE_FILTER_IGNORE
+	var tile_size: Vector2 = editor.call("_calculate_card_tile_size", deck_scroll)
+	var press := InputEventScreenTouch.new()
+	press.index = 0
+	press.pressed = true
+	press.position = Vector2(24, 120)
+	editor.call("_handle_editor_card_scroll_input", press, deck_scroll)
+	var drag := InputEventScreenDrag.new()
+	drag.index = 0
+	drag.position = Vector2(24, 20)
+	var drag_consumed := bool(editor.call("_handle_editor_card_scroll_input", drag, deck_scroll))
+	var release := InputEventScreenTouch.new()
+	release.index = 0
+	release.pressed = false
+	release.position = Vector2(24, 20)
+	var release_consumed := bool(editor.call("_handle_editor_card_scroll_input", release, deck_scroll))
+	var scrolled := deck_scroll.scroll_vertical
+	editor.free()
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulate)
+
+	return run_checks([
+		assert_true(hidden_meta, "Portrait deck editor scroll containers should opt into hidden drag scrolling"),
+		assert_true(hidden_bar, "Portrait deck editor vertical scrollbar should be visually hidden and non-interactive"),
+		assert_gt(tile_size.x, 118.0, "Hidden portrait scrollbar should not reserve the old visible scrollbar clearance"),
+		assert_true(drag_consumed, "Dragging a portrait deck editor card list should be consumed as scroll"),
+		assert_true(release_consumed, "Releasing after a portrait drag scroll should be consumed"),
+		assert_gt(scrolled, 0, "Portrait deck editor card list drag should change scroll_vertical"),
 	])
 
 

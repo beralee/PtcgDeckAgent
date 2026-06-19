@@ -339,7 +339,7 @@ func get_search_priority(card: CardInstance) -> int:
 
 func pick_interaction_items(items: Array, step: Dictionary, context: Dictionary = {}) -> Array:
 	var step_id := str(step.get("id", ""))
-	if step_id in ["search_pokemon", "search_cards", "search_item"]:
+	if step_id in ["search_pokemon", "search_cards", "search_item", "basic_pokemon", "bench_pokemon"]:
 		return _pick_search_items_by_score(items, int(step.get("max_select", 1)), step, context)
 	return []
 
@@ -350,7 +350,9 @@ func score_interaction_target(item: Variant, step: Dictionary, context: Dictiona
 		var card := item as CardInstance
 		if step_id == "supporter_card":
 			return _score_supporter_card(card, context)
-		if step_id in ["search_pokemon", "search_cards", "search_item"]:
+		if step_id in ["basic_pokemon", "bench_pokemon"] and not card.is_basic_pokemon():
+			return 0.0
+		if step_id in ["search_pokemon", "search_cards", "search_item", "basic_pokemon", "bench_pokemon"]:
 			return float(_search_score(card, context.get("game_state", null), int(context.get("player_index", -1))))
 		if step_id in ["discard_card", "discard_cards"]:
 			return float(get_discard_priority_contextual(card, context.get("game_state", null), int(context.get("player_index", -1))))

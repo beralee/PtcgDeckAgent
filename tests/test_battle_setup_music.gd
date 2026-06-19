@@ -42,6 +42,47 @@ func _restore_settings_text(original_text: String) -> void:
 	file.close()
 
 
+func _write_settings(data: Dictionary) -> void:
+	var file := FileAccess.open(SETTINGS_PATH, FileAccess.WRITE)
+	if file == null:
+		return
+	file.store_string(JSON.stringify(data, "\t"))
+	file.close()
+
+
+func _snapshot_game_manager_state() -> Dictionary:
+	return {
+		"current_mode": int(GameManager.current_mode),
+		"selected_deck_ids": GameManager.selected_deck_ids.duplicate(),
+		"first_player_choice": int(GameManager.first_player_choice),
+		"selected_battle_music_id": str(GameManager.selected_battle_music_id),
+		"battle_bgm_volume_percent": int(GameManager.battle_bgm_volume_percent),
+		"battle_layout_mode": str(GameManager.battle_layout_mode),
+		"dynamic_stadium_background_enabled": bool(GameManager.dynamic_stadium_background_enabled),
+		"ai_selection": GameManager.ai_selection.duplicate(true),
+		"ai_deck_strategy": str(GameManager.ai_deck_strategy),
+		"suppress_scene_navigation_for_tests": bool(GameManager.suppress_scene_navigation_for_tests),
+		"last_requested_scene_path": str(GameManager.last_requested_scene_path),
+	}
+
+
+func _restore_game_manager_state(snapshot: Dictionary) -> void:
+	GameManager.current_mode = int(snapshot.get("current_mode", GameManager.GameMode.TWO_PLAYER))
+	var restored_deck_ids: Array[int] = []
+	for deck_id_variant: Variant in snapshot.get("selected_deck_ids", [0, 0]):
+		restored_deck_ids.append(int(deck_id_variant))
+	GameManager.selected_deck_ids = restored_deck_ids
+	GameManager.first_player_choice = int(snapshot.get("first_player_choice", -1))
+	GameManager.selected_battle_music_id = str(snapshot.get("selected_battle_music_id", "none"))
+	GameManager.battle_bgm_volume_percent = int(snapshot.get("battle_bgm_volume_percent", 20))
+	GameManager.battle_layout_mode = str(snapshot.get("battle_layout_mode", GameManager.BATTLE_LAYOUT_AUTO))
+	GameManager.dynamic_stadium_background_enabled = bool(snapshot.get("dynamic_stadium_background_enabled", true))
+	GameManager.ai_selection = (snapshot.get("ai_selection", {}) as Dictionary).duplicate(true)
+	GameManager.ai_deck_strategy = str(snapshot.get("ai_deck_strategy", "generic"))
+	GameManager.suppress_scene_navigation_for_tests = bool(snapshot.get("suppress_scene_navigation_for_tests", false))
+	GameManager.last_requested_scene_path = str(snapshot.get("last_requested_scene_path", ""))
+
+
 func _dispose_scene(scene: Node) -> void:
 	if scene == null:
 		return
@@ -51,6 +92,7 @@ func _dispose_scene(scene: Node) -> void:
 
 
 func test_battle_setup_populates_bgm_option() -> String:
+	var gm_snapshot := _snapshot_game_manager_state()
 	var scene := BattleSetupScene.instantiate()
 	var tree := Engine.get_main_loop() as SceneTree
 	tree.root.add_child(scene)
@@ -74,10 +116,12 @@ func test_battle_setup_populates_bgm_option() -> String:
 	])
 
 	_dispose_scene(scene)
+	_restore_game_manager_state(gm_snapshot)
 	return result
 
 
 func test_battle_setup_applies_selected_bgm_volume_to_game_manager() -> String:
+	var gm_snapshot := _snapshot_game_manager_state()
 	var scene := BattleSetupScene.instantiate()
 	var tree := Engine.get_main_loop() as SceneTree
 	tree.root.add_child(scene)
@@ -107,12 +151,14 @@ func test_battle_setup_applies_selected_bgm_volume_to_game_manager() -> String:
 	var applied := int(GameManager.get("battle_bgm_volume_percent"))
 
 	_dispose_scene(scene)
+	_restore_game_manager_state(gm_snapshot)
 	return run_checks([
 		assert_eq(applied, 37, "应把对战 BGM 音量写入 GameManager"),
 	])
 
 
 func test_battle_setup_defaults_bgm_volume_to_20_without_saved_settings() -> String:
+	var gm_snapshot := _snapshot_game_manager_state()
 	var original_settings_text := _read_settings_text()
 	_restore_settings_text("")
 	var previous_track := GameManager.selected_battle_music_id
@@ -135,10 +181,42 @@ func test_battle_setup_defaults_bgm_volume_to_20_without_saved_settings() -> Str
 	GameManager.selected_battle_music_id = previous_track
 	GameManager.battle_bgm_volume_percent = previous_volume
 	_restore_settings_text(original_settings_text)
+	_restore_game_manager_state(gm_snapshot)
+	return result
+
+
+func test_battle_setup_portrait_migrates_legacy_bgm_volume_100_to_20() -> String:
+	var gm_snapshot := _snapshot_game_manager_state()
+	var original_settings_text := _read_settings_text()
+	_write_settings({
+		"battle_layout_mode": GameManager.BATTLE_LAYOUT_PORTRAIT,
+		"battle_music_id": "pokemon_sv_battle_gym_leader",
+		"battle_bgm_volume_percent": 100,
+		"mode": 0,
+	})
+	GameManager.load_battle_setup_preferences()
+	var scene := BattleSetupScene.instantiate()
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
+	var bgm_volume_slider := scene.find_child("BgmVolumeSlider", true, false) as HSlider
+	var bgm_volume_value := scene.find_child("BgmVolumeValue", true, false) as Label
+	var selected_volume := int(scene.get("_selected_battle_music_volume_percent"))
+
+	var result := run_checks([
+		assert_eq(int(round(bgm_volume_slider.value)), 20, "Portrait BattleSetup should migrate legacy saved BGM volume 100 to the shared 20 default"),
+		assert_eq(bgm_volume_value.text, "20%", "Portrait BattleSetup volume label should show the migrated 20 default"),
+		assert_eq(selected_volume, 20, "Portrait BattleSetup internal selected BGM volume should also migrate to 20"),
+	])
+
+	_dispose_scene(scene)
+	_restore_settings_text(original_settings_text)
+	_restore_game_manager_state(gm_snapshot)
 	return result
 
 
 func test_battle_setup_back_persists_bgm_volume_setting() -> String:
+	var gm_snapshot := _snapshot_game_manager_state()
 	var original_settings_text := _read_settings_text()
 	_restore_settings_text("")
 	_set_navigation_suppressed(true)
@@ -159,6 +237,7 @@ func test_battle_setup_back_persists_bgm_volume_setting() -> String:
 	_dispose_scene(scene)
 	_set_navigation_suppressed(false)
 	_restore_settings_text(original_settings_text)
+	_restore_game_manager_state(gm_snapshot)
 	return run_checks([
 		assert_true(parse_ok, "返回对战设置后应写入 battle_setup.json"),
 		assert_eq(int(saved_data.get("battle_bgm_volume_percent", -1)), 24, "返回主菜单时应持久化当前 BGM 音量"),
@@ -166,6 +245,7 @@ func test_battle_setup_back_persists_bgm_volume_setting() -> String:
 
 
 func test_battle_setup_preview_button_reflects_playing_state() -> String:
+	var gm_snapshot := _snapshot_game_manager_state()
 	var scene := BattleSetupScene.instantiate()
 	var tree := Engine.get_main_loop() as SceneTree
 	tree.root.add_child(scene)
@@ -182,6 +262,7 @@ func test_battle_setup_preview_button_reflects_playing_state() -> String:
 
 	BattleMusicManager.stop_battle_music()
 	_dispose_scene(scene)
+	_restore_game_manager_state(gm_snapshot)
 	return run_checks([
 		assert_eq(after_start, "停止试听", "开始试听后按钮文案应切换"),
 		assert_eq(after_stop, "试听", "停止试听后按钮文案应恢复"),
@@ -189,6 +270,7 @@ func test_battle_setup_preview_button_reflects_playing_state() -> String:
 
 
 func test_battle_setup_preview_respects_volume_slider_changes_in_real_time() -> String:
+	var gm_snapshot := _snapshot_game_manager_state()
 	var scene := BattleSetupScene.instantiate()
 	var tree := Engine.get_main_loop() as SceneTree
 	tree.root.add_child(scene)
@@ -209,6 +291,7 @@ func test_battle_setup_preview_respects_volume_slider_changes_in_real_time() -> 
 
 	BattleMusicManager.stop_battle_music()
 	_dispose_scene(scene)
+	_restore_game_manager_state(gm_snapshot)
 	return run_checks([
 		assert_true(loud_volume > quiet_volume, "试听中调高音量应立即提高播放器音量"),
 	])
