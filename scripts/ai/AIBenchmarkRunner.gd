@@ -356,7 +356,10 @@ func run_headless_duel(
 					if prompt_ai == null:
 						result = _make_failed_match_result("unsupported_prompt", steps + 1, gsm)
 						break
-					progressed = prompt_ai.run_single_step(bridge, gsm)
+					if pending_choice == "send_out":
+						progressed = bool(prompt_ai.call("_run_send_out_step", bridge, gsm))
+					else:
+						progressed = prompt_ai.run_single_step(bridge, gsm)
 					if not progressed:
 						if pending_choice == "heavy_baton_target" or pending_choice == "exp_share_target" or pending_choice == "send_out":
 							result = _make_failed_match_result("unsupported_prompt", steps + 1, gsm)

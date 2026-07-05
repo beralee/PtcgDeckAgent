@@ -4,6 +4,7 @@ extends TestBase
 
 const EffectNeoUpperEnergyScript = preload("res://scripts/effects/energy_effects/EffectNeoUpperEnergy.gd")
 const EffectReversalEnergyScript = preload("res://scripts/effects/energy_effects/EffectReversalEnergy.gd")
+const BOOMERANG_ENERGY_EFFECT_ID := "56a8bc18baccdf243bead10faad2508a"
 
 
 ## ==================== 辅助方法 ====================
@@ -427,6 +428,165 @@ func test_reversal_energy_effect_id_registers() -> String:
 	var effect := proc.get_effect("cbadb3473273c14cf667d495d44d111b")
 	return run_checks([
 		assert_true(effect != null and effect.get_script() == EffectReversalEnergyScript, "CSV2C_128 Reversal Energy should register to EffectReversalEnergy"),
+	])
+
+
+func test_csv8c_206_boomerang_energy_registers_and_provides_one_colorless() -> String:
+	var proc := EffectProcessor.new()
+	var state := _make_state()
+	var slot: PokemonSlot = state.players[0].active_pokemon
+	var energy := _attach_special_energy(slot, 0, BOOMERANG_ENERGY_EFFECT_ID, "")
+	var effect := proc.get_effect(BOOMERANG_ENERGY_EFFECT_ID)
+	return run_checks([
+		assert_not_null(effect, "CSV8C_206 Boomerang Energy should register a special Energy effect"),
+		assert_true(effect != null and effect.has_method("should_return_after_attack_effect_discard"), "CSV8C_206 should expose attack-effect discard return behavior"),
+		assert_eq(proc.get_energy_type(energy, state), "C", "CSV8C_206 should provide one Colorless Energy while attached"),
+		assert_eq(proc.get_energy_colorless_count(energy, state), 1, "CSV8C_206 should count as one Energy"),
+	])
+
+
+func test_csv8c_206_boomerang_energy_returns_after_own_attack_effect_discards_it() -> String:
+	var proc := EffectProcessor.new()
+	var state := _make_state()
+	var attacker: PokemonSlot = state.players[0].active_pokemon
+	attacker.get_card_data().effect_id = "test_boomerang_energy_self_discard"
+	attacker.get_card_data().attacks = [{
+		"name": "Boomerang Test",
+		"cost": "C",
+		"damage": "10",
+		"text": "Discard an Energy from this Pokemon.",
+		"is_vstar_power": false,
+	}]
+	var energy := _attach_special_energy(attacker, 0, BOOMERANG_ENERGY_EFFECT_ID, "")
+	proc.register_attack_effect(attacker.get_card_data().effect_id, AttackDiscardAttachedEnergyFromSelf.new(1, 0))
+
+	proc.execute_attack_effect(attacker, 0, state.players[1].active_pokemon, state, [{
+		"discard_attached_energy_from_self": [energy],
+	}])
+
+	return run_checks([
+		assert_true(energy in attacker.attached_energy, "CSV8C_206 should reattach to the original attacking Pokemon after attack-effect discard"),
+		assert_false(energy in state.players[0].discard_pile, "CSV8C_206 should leave the discard pile after returning"),
+		assert_false(state.shared_turn_flags.has("_pending_attack_effect_energy_returns"), "CSV8C_206 return bookkeeping should be cleared after the attack effect resolves"),
+	])
+
+
+func test_csv8c_206_boomerang_energy_matches_colorless_discard_filters() -> String:
+	var proc := EffectProcessor.new()
+	var state := _make_state()
+	var attacker: PokemonSlot = state.players[0].active_pokemon
+	attacker.get_card_data().effect_id = "test_boomerang_energy_colorless_discard"
+	attacker.get_card_data().attacks = [{
+		"name": "Colorless Discard Test",
+		"cost": "C",
+		"damage": "10",
+		"text": "Discard a Colorless Energy from this Pokemon.",
+		"is_vstar_power": false,
+	}]
+	var energy := _attach_special_energy(attacker, 0, BOOMERANG_ENERGY_EFFECT_ID, "")
+	proc.register_attack_effect(attacker.get_card_data().effect_id, EffectDiscardEnergy.new(1, "C"))
+
+	proc.execute_attack_effect(attacker, 0, state.players[1].active_pokemon, state, [])
+
+	return run_checks([
+		assert_true(energy in attacker.attached_energy, "CSV8C_206 should satisfy Colorless discard filters through its special Energy effect"),
+		assert_false(energy in state.players[0].discard_pile, "CSV8C_206 should return after a Colorless-filtered attack-effect discard"),
+	])
+
+
+func test_csv8c_206_boomerang_energy_counts_for_multi_discard_damage_bonus() -> String:
+	var proc := EffectProcessor.new()
+	var state := _make_state()
+	var attacker: PokemonSlot = state.players[0].active_pokemon
+	attacker.get_card_data().effect_id = "test_boomerang_energy_multi_damage"
+	var attack := {
+		"name": "Multi Discard Test",
+		"cost": "C",
+		"damage": "60x",
+		"text": "Discard any number of Colorless Energy from your Pokemon.",
+		"is_vstar_power": false,
+	}
+	attacker.get_card_data().attacks = [attack]
+	var boomerang := _attach_special_energy(attacker, 0, BOOMERANG_ENERGY_EFFECT_ID, "")
+	var basic_cd := CardData.new()
+	basic_cd.name = "Basic Colorless Energy"
+	basic_cd.card_type = "Basic Energy"
+	basic_cd.energy_type = "C"
+	basic_cd.energy_provides = "C"
+	var basic := CardInstance.create(basic_cd, 0)
+	attacker.attached_energy.append(basic)
+	proc.register_attack_effect(attacker.get_card_data().effect_id, AttackDiscardEnergyMultiDamage.new("C", 60, 0))
+
+	var bonus := proc.get_attack_damage_modifier(attacker, state.players[1].active_pokemon, attack, state, [{
+		"discard_energy": [boomerang, basic],
+	}], 0)
+
+	return run_checks([
+		assert_eq(bonus, 60, "CSV8C_206 should count as Colorless during selected-energy damage bonus calculation"),
+	])
+
+
+func test_csv8c_206_boomerang_energy_does_not_return_when_same_attack_discards_bench_copy() -> String:
+	var proc := EffectProcessor.new()
+	var state := _make_state()
+	var attacker: PokemonSlot = state.players[0].active_pokemon
+	var bench: PokemonSlot = state.players[0].bench[0]
+	attacker.get_card_data().effect_id = "test_boomerang_energy_field_discard"
+	attacker.get_card_data().attacks = [{
+		"name": "Field Discard Test",
+		"cost": "C",
+		"damage": "10+",
+		"text": "Discard any number of Energy from your Pokemon.",
+		"is_vstar_power": false,
+	}]
+	var energy := _attach_special_energy(bench, 0, BOOMERANG_ENERGY_EFFECT_ID, "")
+	proc.register_attack_effect(attacker.get_card_data().effect_id, AttackDiscardEnergyMultiDamage.new("C", 60, 0))
+
+	proc.execute_attack_effect(attacker, 0, state.players[1].active_pokemon, state, [{
+		"discard_energy": [energy],
+	}])
+
+	return run_checks([
+		assert_false(energy in bench.attached_energy, "CSV8C_206 should not return when discarded from a non-attacking Pokemon"),
+		assert_true(energy in state.players[0].discard_pile, "CSV8C_206 should stay discarded when its attached Pokemon did not use the attack"),
+	])
+
+
+func test_csv8c_206_boomerang_energy_generic_zone_effect_returns_only_from_discard() -> String:
+	var proc := EffectProcessor.new()
+	var discard_state := _make_state()
+	var discard_attacker: PokemonSlot = discard_state.players[0].active_pokemon
+	discard_attacker.get_card_data().effect_id = "test_boomerang_generic_discard"
+	discard_attacker.get_card_data().attacks = [{
+		"name": "Discard Zone Test",
+		"cost": "C",
+		"damage": "10",
+		"text": "Discard an Energy from this Pokemon.",
+		"is_vstar_power": false,
+	}]
+	var discard_energy := _attach_special_energy(discard_attacker, 0, BOOMERANG_ENERGY_EFFECT_ID, "")
+	proc.register_attack_effect(discard_attacker.get_card_data().effect_id, AttackLostZoneEnergy.new(1, false, false))
+	proc.execute_attack_effect(discard_attacker, 0, discard_state.players[1].active_pokemon, discard_state, [])
+
+	var lost_state := _make_state()
+	var lost_attacker: PokemonSlot = lost_state.players[0].active_pokemon
+	lost_attacker.get_card_data().effect_id = "test_boomerang_generic_lost_zone"
+	lost_attacker.get_card_data().attacks = [{
+		"name": "Lost Zone Test",
+		"cost": "C",
+		"damage": "10",
+		"text": "Put an Energy from this Pokemon in the Lost Zone.",
+		"is_vstar_power": false,
+	}]
+	var lost_energy := _attach_special_energy(lost_attacker, 0, BOOMERANG_ENERGY_EFFECT_ID, "")
+	proc.register_attack_effect(lost_attacker.get_card_data().effect_id, AttackLostZoneEnergy.new(1, true, false))
+	proc.execute_attack_effect(lost_attacker, 0, lost_state.players[1].active_pokemon, lost_state, [])
+
+	return run_checks([
+		assert_true(discard_energy in discard_attacker.attached_energy, "CSV8C_206 should return after a generic own-attack effect discards it"),
+		assert_false(discard_energy in discard_state.players[0].discard_pile, "CSV8C_206 should leave discard after generic discard-zone resolution"),
+		assert_false(lost_energy in lost_attacker.attached_energy, "CSV8C_206 should not return when the attack effect sends it to the Lost Zone"),
+		assert_true(lost_energy in lost_state.players[0].lost_zone, "CSV8C_206 should remain in the Lost Zone because the card text only returns from discard"),
 	])
 
 

@@ -1,0 +1,60 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "NC Empire",
+	"attacks": [
+		{
+			"cost": "DD",
+			"damage": "60",
+			"is_vstar_power": false,
+			"name": "Corkscrew Punch",
+			"text": "",
+			"name_zh": "螺旋拳",
+			"text_zh": ""
+		}
+	],
+	"card_index": "135",
+	"card_index_en": "135",
+	"card_type": "Pokemon",
+	"description": "螺旋拳 60",
+	"effect_id": "2e411eb1e677cb90e7e38b3e969a7198",
+	"energy_provides": "",
+	"energy_type": "D",
+	"evolves_from": "Marnie's Impidimp",
+	"hp": 100,
+	"image_local_path": "user://cards/images/LEN_DRI/135.png",
+	"image_url": "https://limitless3.nyc3.cdn.digitaloceanspaces.com/limitless/logo.png",
+	"is_tags": [
+		"Stage 1"
+	],
+	"label": "",
+	"mechanic": "",
+	"name": "Marnie's Morgrem",
+	"name_en": "Marnie's Morgrem",
+	"name_zh": "玛俐的诈唬魔",
+	"rarity": "Destined Rivals (DRI)",
+	"regulation_expanded": true,
+	"regulation_mark": "",
+	"regulation_standard": true,
+	"release_date": "",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "LEN_DRI",
+	"set_code_en": "DRI",
+	"source_card_index": "135",
+	"source_imported_at": 1783008496004,
+	"source_language": "en",
+	"source_parser_version": 1,
+	"source_prints": [
+		"DRI/135",
+		"JP/SVOM/6"
+	],
+	"source_provider": "limitless",
+	"source_set_code": "DRI",
+	"source_url": "https://limitlesstcg.com/cards/DRI/135",
+	"stage": "Stage 1",
+	"weakness_energy": "G",
+	"weakness_value": "x2",
+	"yoren_code": ""
+}

@@ -24,6 +24,7 @@ var _current_non_battle_layout_context: Dictionary = {}
 var _model_picker_overlay: Control = null
 var _model_picker_scroll: ScrollContainer = null
 var _model_picker_list: VBoxContainer = null
+var _web_api_key_clipboard_callback = null
 
 
 func _ready() -> void:
@@ -127,10 +128,14 @@ func _apply_settings_portrait_layout(context: Dictionary) -> void:
 	var stack := scroll.get_node_or_null("PortraitSettingsStack") as VBoxContainer
 	if stack == null:
 		return
-	var footer_height := _settings_portrait_footer_height(context)
+	var footer_reserved_height := _settings_portrait_footer_reserved_height(context)
+	var scroll_height := maxf(
+		float(context.get("input_height", 80.0)) * 3.0,
+		content_height - _settings_portrait_header_reserved_height(context) - footer_reserved_height
+	)
 	HudThemeScript.style_scroll_container(scroll, "auto")
 	NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(scroll)
-	scroll.custom_minimum_size = Vector2(content_width, maxf(0.0, content_height - footer_height - float(context.get("section_gap", 18)) * 3.0))
+	scroll.custom_minimum_size = Vector2(content_width, scroll_height)
 	var stack_width := maxf(320.0, content_width - 18.0)
 	stack.custom_minimum_size = Vector2(stack_width, 0)
 	stack.add_theme_constant_override("separation", int(context.get("section_gap", 14)))
@@ -138,7 +143,9 @@ func _apply_settings_portrait_layout(context: Dictionary) -> void:
 	scroll.visible = true
 	var spacer := find_child("Spacer", true, false) as Control
 	if spacer != null:
-		spacer.visible = false
+		spacer.visible = true
+		spacer.custom_minimum_size = Vector2(0.0, footer_reserved_height)
+		spacer.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_layout_portrait_action_footer(context, content_width, content_height)
 	var layout_columns: Array[Control] = [form_column]
 	if guide_column != null:
@@ -167,6 +174,8 @@ func _apply_settings_landscape_layout(_context: Dictionary) -> void:
 	var spacer := find_child("Spacer", true, false) as Control
 	if spacer != null:
 		spacer.visible = true
+		spacer.custom_minimum_size = Vector2(0.0, 10.0)
+		spacer.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	if columns == null or form_column == null:
 		return
 	_restore_landscape_action_footer(root)
@@ -209,7 +218,7 @@ func _layout_portrait_action_footer(context: Dictionary, content_width: float, c
 	action_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	action_row.add_theme_constant_override("separation", int(context.get("section_gap", 14)))
 	var footer_height := _settings_portrait_footer_height(context)
-	var footer_gap := clampf(22.0 * float(context.get("portrait_scale", 1.0)), 22.0, 42.0)
+	var footer_gap := _settings_portrait_footer_gap(context)
 	action_row.anchor_left = 0.5
 	action_row.anchor_right = 0.5
 	action_row.anchor_top = 0.5
@@ -244,6 +253,22 @@ func _layout_portrait_action_footer(context: Dictionary, content_width: float, c
 
 func _settings_portrait_footer_height(context: Dictionary) -> float:
 	return float(context.get("secondary_button_height", 84.0)) * 1.12
+
+
+func _settings_portrait_footer_gap(context: Dictionary) -> float:
+	return clampf(22.0 * float(context.get("portrait_scale", 1.0)), 22.0, 42.0)
+
+
+func _settings_portrait_footer_reserved_height(context: Dictionary) -> float:
+	var safety_pad := clampf(8.0 * float(context.get("portrait_scale", 1.0)), 8.0, 18.0)
+	return _settings_portrait_footer_height(context) + _settings_portrait_footer_gap(context) + safety_pad
+
+
+func _settings_portrait_header_reserved_height(context: Dictionary) -> float:
+	var section_gap := float(context.get("section_gap", 18))
+	var title_height := float(context.get("title_font_size", 44)) * 1.35
+	var section_height := float(context.get("section_font_size", 33)) * 1.35
+	return title_height + section_height + section_gap * 2.0
 
 
 func _handle_portrait_action_footer_input(event: InputEvent) -> bool:
@@ -872,35 +897,16 @@ func _configure_settings_feedback_line_edit(input: LineEdit) -> void:
 	NonBattleTouchBridgeScript.bind_focus_control_touch(input)
 	if input.name == "ApiKeyInput":
 		_bind_api_key_select_all(input)
+	else:
+		NonBattleTouchBridgeScript.bind_line_edit_select_all(input)
 
 
 func _bind_api_key_select_all(input: LineEdit) -> void:
-	if input == null or bool(input.get_meta(API_KEY_SELECT_ALL_BOUND_META, false)):
-		return
-	input.set_meta(API_KEY_SELECT_ALL_BOUND_META, true)
-	input.focus_entered.connect(func() -> void:
-		_select_all_api_key_input(input)
-	)
-	input.gui_input.connect(func(event: InputEvent) -> void:
-		if event is InputEventScreenTouch:
-			var touch := event as InputEventScreenTouch
-			if touch.pressed:
-				_select_all_api_key_input(input)
-		elif event is InputEventMouseButton:
-			var mouse_button := event as InputEventMouseButton
-			if mouse_button.button_index == MOUSE_BUTTON_LEFT and mouse_button.pressed:
-				_select_all_api_key_input(input)
-	)
+	NonBattleTouchBridgeScript.bind_line_edit_select_all(input, API_KEY_SELECTED_ALL_META, API_KEY_SELECT_ALL_BOUND_META)
 
 
 func _select_all_api_key_input(input: LineEdit) -> void:
-	if input == null:
-		return
-	input.set_meta(API_KEY_SELECTED_ALL_META, true)
-	if input.text.length() <= 0:
-		return
-	input.select_all()
-	input.call_deferred("select_all")
+	NonBattleTouchBridgeScript.select_all_line_edit(input, API_KEY_SELECTED_ALL_META)
 
 
 func _style_hud_spin_box(spin_box: SpinBox) -> void:
@@ -908,6 +914,9 @@ func _style_hud_spin_box(spin_box: SpinBox) -> void:
 	spin_box.add_theme_color_override("font_color", HUD_TEXT)
 	spin_box.add_theme_stylebox_override("normal", _hud_input_style(false))
 	spin_box.add_theme_stylebox_override("focus", _hud_input_style(true))
+	var line_edit := spin_box.get_line_edit()
+	if line_edit != null:
+		NonBattleTouchBridgeScript.bind_line_edit_select_all(line_edit)
 
 
 func _hud_panel_style(fill: Color, border: Color, radius: int) -> StyleBoxFlat:
@@ -1247,10 +1256,110 @@ func _on_use_zenmux_default_endpoint() -> void:
 
 
 func _on_paste_api_key_pressed() -> void:
+	if _is_web_api_key_clipboard_runtime():
+		if _request_web_api_key_clipboard_paste():
+			_set_status_message("正在读取浏览器剪贴板...", Color(0.3, 0.85, 1.0))
+			return
+		_set_status_message("浏览器不允许直接读取剪贴板，请点 API 密钥输入框后使用系统粘贴。", Color(1, 0.35, 0.25))
+		return
 	var clipboard_text := ""
 	if DisplayServer.get_name() != "headless":
 		clipboard_text = DisplayServer.clipboard_get()
 	_apply_api_key_paste_text(clipboard_text)
+
+
+func _is_web_api_key_clipboard_runtime_for_tests(os_name: String = "", feature_flags: Dictionary = {}, display_server_name: String = "") -> bool:
+	return _is_web_api_key_clipboard_runtime(os_name, feature_flags, display_server_name)
+
+
+func _build_web_api_key_clipboard_script_for_tests(callback_name: String = "__ptcgDeckAgentApiKeyPasteCallback") -> String:
+	return _build_web_api_key_clipboard_script(callback_name)
+
+
+func _is_web_api_key_clipboard_runtime(os_name: String = "", feature_flags: Dictionary = {}, display_server_name: String = "") -> bool:
+	var resolved_os := os_name.strip_edges().to_lower()
+	var resolved_display := display_server_name.strip_edges().to_lower()
+	var flags := feature_flags
+	if flags.is_empty() and os_name == "" and display_server_name == "":
+		resolved_os = OS.get_name().strip_edges().to_lower()
+		resolved_display = DisplayServer.get_name().strip_edges().to_lower()
+		flags = {
+			"web": OS.has_feature("web"),
+			"web_android": OS.has_feature("web_android"),
+			"web_ios": OS.has_feature("web_ios"),
+		}
+	if resolved_os in ["web", "html5"] or resolved_display in ["web", "html5"]:
+		return true
+	for feature: String in ["web", "web_android", "web_ios"]:
+		if bool(flags.get(feature, false)):
+			return true
+	return false
+
+
+func _request_web_api_key_clipboard_paste() -> bool:
+	if not _ensure_web_api_key_clipboard_callback():
+		return false
+	var result: Variant = JavaScriptBridge.eval(_build_web_api_key_clipboard_script(), true)
+	return bool(result)
+
+
+func _ensure_web_api_key_clipboard_callback() -> bool:
+	var window := JavaScriptBridge.get_interface("window")
+	if window == null:
+		return false
+	if _web_api_key_clipboard_callback == null:
+		_web_api_key_clipboard_callback = JavaScriptBridge.create_callback(_on_web_api_key_clipboard_text)
+	window.__ptcgDeckAgentApiKeyPasteCallback = _web_api_key_clipboard_callback
+	return true
+
+
+func _build_web_api_key_clipboard_script(callback_name: String = "__ptcgDeckAgentApiKeyPasteCallback") -> String:
+	var resolved_callback := callback_name.strip_edges()
+	if resolved_callback == "":
+		resolved_callback = "__ptcgDeckAgentApiKeyPasteCallback"
+	return """
+(function() {
+  var callbackName = "__CALLBACK_NAME__";
+  function finish(payload) {
+    try {
+      var cb = window[callbackName];
+      if (typeof cb === 'function') {
+        cb(JSON.stringify(payload || {}));
+      }
+    } catch (_error) {}
+  }
+  try {
+    if (!navigator.clipboard || typeof navigator.clipboard.readText !== 'function') {
+      finish({ ok: false, error: 'clipboard API unavailable' });
+      return false;
+    }
+    navigator.clipboard.readText().then(function(text) {
+      finish({ ok: true, text: String(text || '') });
+    }).catch(function(error) {
+      finish({ ok: false, error: String(error && error.message ? error.message : error) });
+    });
+    return true;
+  } catch (error) {
+    finish({ ok: false, error: String(error && error.message ? error.message : error) });
+    return false;
+  }
+})();
+""".replace("__CALLBACK_NAME__", resolved_callback)
+
+
+func _on_web_api_key_clipboard_text(args: Array) -> void:
+	if args.is_empty():
+		_set_status_message("浏览器没有返回剪贴板内容，请点 API 密钥输入框后使用系统粘贴。", Color(1, 0.35, 0.25))
+		return
+	var parsed: Variant = JSON.parse_string(str(args[0]))
+	if not (parsed is Dictionary):
+		_set_status_message("浏览器剪贴板返回格式异常，请点 API 密钥输入框后使用系统粘贴。", Color(1, 0.35, 0.25))
+		return
+	var payload := parsed as Dictionary
+	if not bool(payload.get("ok", false)):
+		_set_status_message("浏览器未允许读取剪贴板，请点 API 密钥输入框后使用系统粘贴。", Color(1, 0.35, 0.25))
+		return
+	_apply_api_key_paste_text(str(payload.get("text", "")))
 
 
 func _apply_api_key_paste_text_for_tests(text: String) -> bool:

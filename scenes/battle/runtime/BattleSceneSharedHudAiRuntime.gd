@@ -3,6 +3,7 @@ extends "res://scenes/battle/runtime/BattleSceneRuntimeFoundation.gd"
 
 const LLM_WAIT_LANDSCAPE_FONT_SIZE := 12
 const LLM_WAIT_PORTRAIT_FONT_SIZE := 56
+const MODAL_BACKGROUND_PREVIOUS_MOUSE_FILTER_META := "_modal_background_previous_mouse_filter"
 
 func _ensure_battle_interaction_coordinator() -> void:
 	if _battle_interaction_coordinator == null:
@@ -300,12 +301,69 @@ func _sync_portrait_top_action_visibility(is_portrait: Variant = null) -> void:
 
 
 func _refresh_end_turn_hud_button_state() -> void:
+	_ensure_board_modal_overlay_visibility_watchers()
 	var hud_button := _hud_end_turn_btn if _hud_end_turn_btn != null else find_child("HudEndTurnBtn", true, false) as Button
 	var side_button := _btn_end_turn if _btn_end_turn != null else find_child("BtnEndTurn", true, false) as Button
 	for button: Button in [hud_button, side_button]:
 		if button == null:
 			continue
 		button.modulate = Color.WHITE
+		_set_modal_background_button_input_blocked(button, _is_board_modal_overlay_visible())
+
+
+
+func _set_modal_background_button_input_blocked(button: Button, blocked: bool) -> void:
+	if button == null:
+		return
+	if blocked:
+		if not button.has_meta(MODAL_BACKGROUND_PREVIOUS_MOUSE_FILTER_META):
+			button.set_meta(MODAL_BACKGROUND_PREVIOUS_MOUSE_FILTER_META, button.mouse_filter)
+		button.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		return
+	if button.has_meta(MODAL_BACKGROUND_PREVIOUS_MOUSE_FILTER_META):
+		button.mouse_filter = int(button.get_meta(MODAL_BACKGROUND_PREVIOUS_MOUSE_FILTER_META, Control.MOUSE_FILTER_STOP))
+		button.remove_meta(MODAL_BACKGROUND_PREVIOUS_MOUSE_FILTER_META)
+	else:
+		button.mouse_filter = Control.MOUSE_FILTER_STOP
+
+
+
+func _ensure_board_modal_overlay_visibility_watchers() -> void:
+	var refresh_callable := Callable(self, "_on_board_modal_overlay_visibility_changed")
+	for overlay: Control in _board_modal_overlays():
+		if not overlay.visibility_changed.is_connected(refresh_callable):
+			overlay.visibility_changed.connect(refresh_callable)
+
+
+
+func _on_board_modal_overlay_visibility_changed() -> void:
+	_refresh_end_turn_hud_button_state()
+
+
+
+func _board_modal_overlays() -> Array[Control]:
+	var overlays: Array[Control] = []
+	for overlay_variant: Variant in [
+		_dialog_overlay,
+		_discard_overlay,
+		_detail_overlay,
+		_handover_panel,
+		_coin_overlay,
+		_review_overlay,
+		get("_match_end_overlay"),
+	]:
+		var overlay := overlay_variant as Control
+		if overlay != null and overlay not in overlays:
+			overlays.append(overlay)
+	return overlays
+
+
+
+func _is_board_modal_overlay_visible() -> bool:
+	for overlay: Control in _board_modal_overlays():
+		if overlay != null and overlay.visible and overlay.get_parent() != null:
+			return true
+	return false
 
 
 
@@ -477,6 +535,7 @@ func _prepare_dialog_overlay_for_prize_selection() -> void:
 	dialog_overlay.z_index = DIALOG_OVERLAY_Z_INDEX
 	dialog_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	dialog_overlay.visible = true
+	_refresh_end_turn_hud_button_state()
 
 
 
@@ -521,6 +580,7 @@ func _close_portrait_prize_dialog() -> void:
 	var dialog_overlay := _dialog_overlay if _dialog_overlay != null else find_child("DialogOverlay", true, false) as Panel
 	if dialog_overlay != null:
 		dialog_overlay.visible = false
+	_refresh_end_turn_hud_button_state()
 
 
 

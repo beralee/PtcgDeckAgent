@@ -1,0 +1,78 @@
+{
+	"abilities": [
+		{
+			"name": "Fairy Zone",
+			"text": "The Weakness of each of your opponent's [N] Pokémon in play is now [P]. (Apply Weakness as ×2.)",
+			"name_zh": "妖精地带",
+			"text_zh": "对手场上的各龙属性宝可梦的弱点变为超属性。（弱点按x2计算。）"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "5ban Graphics",
+	"attacks": [
+		{
+			"cost": "PC",
+			"damage": "20+",
+			"is_vstar_power": false,
+			"name": "Full Moon Rondo",
+			"text": "This attack does 20 more damage for each Benched Pokémon (both yours and your opponent's).",
+			"name_zh": "满月轮舞曲",
+			"text_zh": "双方备战区的宝可梦每有1只，追加20点伤害。"
+		}
+	],
+	"card_index": "56",
+	"card_index_en": "56",
+	"card_type": "Pokemon",
+	"description": "特性: 妖精地带\n对手场上的各龙属性宝可梦的弱点变为超属性。（弱点按x2计算。）\n\n满月轮舞曲 20+\n双方备战区的宝可梦每有1只，追加20点伤害。",
+	"effect_id": "5c4e2a6033b2aa872f628b1dc060cc40",
+	"energy_provides": "",
+	"energy_type": "P",
+	"evolves_from": "",
+	"hp": 190,
+	"image_local_path": "user://cards/images/LEN_JTG/56.png",
+	"image_url": "https://limitless3.nyc3.cdn.digitaloceanspaces.com/limitless/logo.png",
+	"is_tags": [
+		"Basic",
+		"ex"
+	],
+	"label": "ex",
+	"mechanic": "ex",
+	"name": "Lillie's Clefairy ex",
+	"name_en": "Lillie's Clefairy ex",
+	"name_zh": "莉莉艾的皮皮ex",
+	"rarity": "Journey Together (JTG)",
+	"regulation_expanded": true,
+	"regulation_mark": "",
+	"regulation_standard": true,
+	"release_date": "",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "LEN_JTG",
+	"set_code_en": "JTG",
+	"source_card_index": "56",
+	"source_imported_at": 1783008495411,
+	"source_language": "en",
+	"source_parser_version": 1,
+	"source_prints": [
+		"JTG/56",
+		"SVP/195",
+		"JTG/173",
+		"JTG/184",
+		"ASC/76",
+		"ASC/280",
+		"JP/SV9/33",
+		"JP/SV9/115",
+		"JP/SV9/126",
+		"JP/M2A/60",
+		"JP/MC/287",
+		"JP/MC/765"
+	],
+	"source_provider": "limitless",
+	"source_set_code": "JTG",
+	"source_url": "https://limitlesstcg.com/cards/JTG/56",
+	"stage": "Basic",
+	"weakness_energy": "M",
+	"weakness_value": "x2",
+	"yoren_code": ""
+}

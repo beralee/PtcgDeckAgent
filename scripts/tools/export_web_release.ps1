@@ -69,6 +69,18 @@ function Get-ReleaseSlug {
 	return "v$($Version.Replace('.', '_').Replace('-', '_'))"
 }
 
+function Copy-UserVisitBridge {
+	param(
+		[string]$ProjectRoot,
+		[string]$ReleaseDir
+	)
+	$bridgeSource = Join-Path $ProjectRoot "web\userptcg_bridge.html"
+	if (-not (Test-Path -LiteralPath $bridgeSource)) {
+		throw "Static user visit bridge is missing: $bridgeSource"
+	}
+	Copy-Item -LiteralPath $bridgeSource -Destination (Join-Path $ReleaseDir "userptcg_bridge.html") -Force
+}
+
 function Assert-ExpectedFiles {
 	param(
 		[string]$ReleaseDir,
@@ -78,7 +90,8 @@ function Assert-ExpectedFiles {
 		"$Name.html",
 		"$Name.js",
 		"$Name.pck",
-		"$Name.wasm"
+		"$Name.wasm",
+		"userptcg_bridge.html"
 	)
 	foreach ($fileName in $required) {
 		$path = Join-Path $ReleaseDir $fileName
@@ -134,6 +147,7 @@ if (-not $SkipExport) {
 	}
 }
 
+Copy-UserVisitBridge -ProjectRoot $resolvedProjectRoot -ReleaseDir $releaseDir
 Assert-ExpectedFiles -ReleaseDir $releaseDir -Name $BaseName
 
 $files = Get-ReleaseFiles -ReleaseDir $releaseDir

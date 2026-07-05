@@ -117,6 +117,9 @@ func show_opponent_hand_cards(scene: Object) -> void:
 	var dialog_card_size: Vector2 = scene.get("_dialog_card_size")
 	discard_title.text = _bt(scene, "battle.overlay.opponent_hand", {"count": player.hand.size()})
 	discard_list.clear()
+	scene.set("_discard_collection_current_kind", "opponent_hand")
+	scene.set("_discard_collection_current_player_index", opponent_index)
+	scene.set("_discard_collection_current_title", discard_title.text)
 	scene.set("_discard_card_page", 0)
 	scene.set("_discard_card_page_size", 0)
 	if discard_card_scroll != null:
@@ -162,7 +165,7 @@ func show_opponent_hand_cards(scene: Object) -> void:
 		else:
 			for hand_card: CardInstance in player.hand:
 				var card_data: CardData = hand_card.card_data
-				discard_list.add_item("%s [%s]" % [card_data.name, scene.call("_card_type_cn", card_data)])
+				discard_list.add_item("%s [%s]" % [card_data.display_name(), scene.call("_card_type_cn", card_data)])
 				discard_list.set_item_metadata(discard_list.item_count - 1, card_data)
 	if scene.has_method("_apply_discard_collection_metrics"):
 		scene.call("_apply_discard_collection_metrics")

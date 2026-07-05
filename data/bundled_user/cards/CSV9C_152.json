@@ -1,0 +1,51 @@
+{
+	"name": "米立龙ex",
+	"card_type": "Pokemon",
+	"mechanic": "ex",
+	"label": "",
+	"description": "【火】【水】 突袭水炮 100\n这个招式的伤害，不计算对手战斗宝可梦身上所附加的效果。\n\n【火】【水】【恶】 朱砂诱饵 \n查看自己牌库上方10张卡牌，选择其中任意数量的宝可梦，放于备战区。将剩余的卡牌放回牌库并重洗牌库。\n\n",
+	"yoren_code": "Y1514",
+	"set_code": "CSV9C",
+	"card_index": "152",
+	"set_code_en": "SSP",
+	"card_index_en": "142",
+	"name_en": "Tatsugiri ex",
+	"artist": "5ban Graphics",
+	"rarity": "RR",
+	"release_date": "2026-05-15T00:00:00+08:00",
+	"regulation_mark": "H",
+	"effect_id": "b1bef15b71f5b719d49ad7376b879a60",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9C/152.png",
+	"image_local_path": "user://cards/images/CSV9C/152.png",
+	"is_tags": [],
+	"regulation_standard": true,
+	"regulation_expanded": true,
+	"energy_type": "N",
+	"stage": "Basic",
+	"hp": 160,
+	"weakness_energy": "",
+	"weakness_value": "",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"evolves_from": "",
+	"ancient_trait": "Tera",
+	"attacks": [
+		{
+			"name": "突袭水炮",
+			"text": "这个招式的伤害，不计算对手战斗宝可梦身上所附加的效果。",
+			"cost": "RW",
+			"damage": "100",
+			"is_vstar_power": false
+		},
+		{
+			"name": "朱砂诱饵",
+			"text": "查看自己牌库上方10张卡牌，选择其中任意数量的宝可梦，放于备战区。将剩余的卡牌放回牌库并重洗牌库。",
+			"cost": "RWD",
+			"damage": "",
+			"is_vstar_power": false
+		}
+	],
+	"abilities": [],
+	"energy_provides": ""
+}

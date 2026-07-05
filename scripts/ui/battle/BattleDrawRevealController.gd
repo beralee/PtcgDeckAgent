@@ -735,9 +735,11 @@ func _mark_card_landed(scene: Object, card_view: BattleCardView, player_index: i
 		scene.call("_refresh_hand")
 
 
-func _mark_discard_card_landed(scene: Object, card_view: BattleCardView, _player_index: int, landed_count: int) -> void:
+func _mark_discard_card_landed(scene: Object, card_view: BattleCardView, player_index: int, landed_count: int) -> void:
 	_set_visible_reveal_count(scene, landed_count)
 	if card_view != null and is_instance_valid(card_view):
 		card_view.visible = false
 	if scene.has_method("_refresh_ui"):
 		scene.call("_refresh_ui")
+	if scene.has_method("_refresh_open_card_collection_after_zone_change"):
+		scene.call("_refresh_open_card_collection_after_zone_change", "discard", player_index)

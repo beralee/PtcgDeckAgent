@@ -79,8 +79,16 @@ const NON_BATTLE_LAYOUT_LANDSCAPE := "landscape"
 const NON_BATTLE_LAYOUT_PORTRAIT := "portrait"
 const BATTLE_LAYOUT_DESKTOP_MIN_LANDSCAPE := Vector2i(640, 360)
 const BATTLE_LAYOUT_DESKTOP_MIN_PORTRAIT := Vector2i(360, 640)
+const BATTLE_SETUP_STARTUP_INPUT_SHIELD_DEFAULT_MSEC := 450
+const BATTLE_SETUP_STARTUP_INPUT_SHIELD_REQUEST_TTL_MSEC := 2000
 const DEFAULT_BATTLE_REVIEW_MODEL := "deepseek-v4-flash"
 const DEFAULT_AI_PERSONALITY := "是一个大逗比，臭牌篓子"
+const BATTLE_REVIEW_MOJIBAKE_CODEPOINT_MARKERS: Array[int] = [
+	0x00C2, # Latin-1 UTF-8 mojibake marker
+	0x00C3, # Latin-1 UTF-8 mojibake marker
+	0x00E2, # Latin-1 UTF-8 mojibake marker
+	0x20AC, # Euro-sign often appears in broken UTF-8 sequences
+]
 const SUPPORTED_BATTLE_REVIEW_MODELS: Array[Dictionary] = [
 	{
 		"id": "kimi-k2.6",
@@ -131,6 +139,9 @@ var _navigation_prewarm_resources: Dictionary = {}
 var _pending_scene_change_path: String = ""
 var _pending_scene_change_token: int = 0
 var _applying_desktop_render_resolution_cap: bool = false
+var _battle_setup_startup_input_shield_until_msec: int = 0
+var _battle_setup_startup_input_shield_duration_msec: int = 0
+var _battle_setup_startup_input_shield_reason: String = ""
 
 
 func _ready() -> void:
@@ -657,11 +668,7 @@ func _find_topmost_touch_button_recursive(node: Node, global_position: Vector2) 
 
 
 func _button_can_bridge_touch(button: Button) -> bool:
-	if button == null or button.disabled or not button.visible:
-		return false
-	if button.is_inside_tree() and not button.is_visible_in_tree():
-		return false
-	return true
+	return NonBattleTouchBridgeScript.button_can_bridge_touch(button)
 
 
 func _has_active_battle_scene() -> bool:
@@ -728,6 +735,35 @@ func consume_last_requested_scene_path() -> String:
 	var path := last_requested_scene_path
 	last_requested_scene_path = ""
 	return path
+
+
+func request_battle_setup_startup_input_shield(reason: String = "", duration_msec: int = BATTLE_SETUP_STARTUP_INPUT_SHIELD_DEFAULT_MSEC) -> void:
+	var duration := maxi(1, duration_msec)
+	var until_msec := Time.get_ticks_msec() + maxi(duration, BATTLE_SETUP_STARTUP_INPUT_SHIELD_REQUEST_TTL_MSEC)
+	if until_msec < _battle_setup_startup_input_shield_until_msec:
+		return
+	_battle_setup_startup_input_shield_until_msec = until_msec
+	_battle_setup_startup_input_shield_duration_msec = duration
+	_battle_setup_startup_input_shield_reason = reason
+
+
+func consume_battle_setup_startup_input_shield_request() -> Dictionary:
+	var now := Time.get_ticks_msec()
+	if _battle_setup_startup_input_shield_until_msec <= now:
+		_clear_battle_setup_startup_input_shield_request()
+		return {}
+	var request := {
+		"duration_msec": _battle_setup_startup_input_shield_duration_msec,
+		"reason": _battle_setup_startup_input_shield_reason,
+	}
+	_clear_battle_setup_startup_input_shield_request()
+	return request
+
+
+func _clear_battle_setup_startup_input_shield_request() -> void:
+	_battle_setup_startup_input_shield_until_msec = 0
+	_battle_setup_startup_input_shield_duration_msec = 0
+	_battle_setup_startup_input_shield_reason = ""
 
 
 func _deferred_goto_scene(path: String, request_token: int = 0) -> void:
@@ -1090,9 +1126,14 @@ func _load_battle_review_api_config_from_path(path: String) -> Dictionary:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return config
 	var parsed_dict: Dictionary = parsed
-	for key: String in ["endpoint", "api_key", "ai_personality", "ai_test_signature"]:
+	for key: String in ["endpoint", "api_key", "ai_test_signature"]:
 		if parsed_dict.has(key):
 			config[key] = _battle_review_config_text(parsed_dict[key], str(config.get(key, "")))
+	if parsed_dict.has("ai_personality"):
+		config["ai_personality"] = _battle_review_personality_text(
+			parsed_dict["ai_personality"],
+			str(config.get("ai_personality", DEFAULT_AI_PERSONALITY))
+		)
 	if str(config.get("endpoint", "")).strip_edges() == "":
 		config["endpoint"] = "https://zenmux.ai/api/v1"
 	if str(config.get("ai_personality", "")).strip_edges() == "":
@@ -1118,6 +1159,28 @@ func _battle_review_config_text(value: Variant, fallback: String = "") -> String
 	if text == "" or lower.contains("instance base is null") or lower.contains("instance is null") or lower.contains("null instance"):
 		return fallback
 	return text
+
+
+func _battle_review_personality_text(value: Variant, fallback: String = "") -> String:
+	var text := _battle_review_config_text(value, fallback)
+	if text == fallback:
+		return fallback
+	if _battle_review_text_looks_like_mojibake(text):
+		return fallback
+	return text
+
+
+func _battle_review_text_looks_like_mojibake(text: String) -> bool:
+	var marker_hits := 0
+	for index: int in text.length():
+		var codepoint := text.unicode_at(index)
+		if codepoint == 0xFFFD:
+			return true
+		if codepoint >= 0xE000 and codepoint <= 0xF8FF:
+			return true
+		if BATTLE_REVIEW_MOJIBAKE_CODEPOINT_MARKERS.has(codepoint):
+			marker_hits += 1
+	return marker_hits >= 2
 
 
 func _canonical_battle_review_api_config_path() -> String:

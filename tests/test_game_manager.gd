@@ -46,6 +46,10 @@ func _restore_config_text(original_text: String) -> void:
 	file.close()
 
 
+func _windows_mojibake_ai_personality_sample() -> String:
+	return "legacy-ai-personality" + char(0xE0A3) + char(0xE586) + char(0xFFFD)
+
+
 func _read_battle_setup_settings_text() -> String:
 	var file := FileAccess.open(BATTLE_SETUP_SETTINGS_PATH, FileAccess.READ)
 	if file == null:
@@ -105,6 +109,27 @@ func _restore_non_battle_layout_settings_text(original_text: String) -> void:
 		return
 	file.store_string(original_text)
 	file.close()
+
+
+func _snapshot_user_file(path: String) -> Dictionary:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {"exists": false, "text": ""}
+	var text := file.get_as_text()
+	file.close()
+	return {"exists": true, "text": text}
+
+
+func _restore_user_file(path: String, snapshot: Dictionary) -> void:
+	if bool(snapshot.get("exists", false)):
+		var file := FileAccess.open(path, FileAccess.WRITE)
+		if file != null:
+			file.store_string(str(snapshot.get("text", "")))
+			file.close()
+		return
+	var absolute_path := ProjectSettings.globalize_path(path)
+	if FileAccess.file_exists(absolute_path):
+		DirAccess.remove_absolute(absolute_path)
 
 
 func test_battle_review_api_config_uses_defaults_when_file_is_missing() -> String:
@@ -228,6 +253,30 @@ func test_battle_review_api_config_filters_null_instance_diagnostics() -> String
 		assert_eq(str(config.get("model", "")), "deepseek-v4-flash", "Null-instance model diagnostics should fall back to the default model"),
 		assert_eq(str(config.get("ai_personality", "")), "是一个大逗比，臭牌篓子", "Null-instance personality diagnostics should fall back to the default AI personality"),
 		assert_eq(str(config.get("ai_test_signature", "")), "", "Null-instance test signatures should be discarded"),
+	])
+
+
+func test_battle_review_api_config_filters_mojibake_ai_personality() -> String:
+	var original_config_text := _read_config_text()
+	_remove_config_file()
+	_write_config({
+		"endpoint": "https://example.invalid/v1",
+		"api_key": "zenmux-key",
+		"model": "deepseek-v4-pro",
+		"timeout_seconds": 45,
+		"ai_personality": _windows_mojibake_ai_personality_sample(),
+		"ai_test_signature": "ok-signature",
+	})
+	var manager: Node = _load_game_manager_script().new()
+	var config: Dictionary = manager.call("get_battle_review_api_config")
+	_restore_config_text(original_config_text)
+
+	return run_checks([
+		assert_eq(str(config.get("endpoint", "")), "https://example.invalid/v1", "Mojibake personality repair should not discard the endpoint"),
+		assert_eq(str(config.get("api_key", "")), "zenmux-key", "Mojibake personality repair should not discard the API key"),
+		assert_eq(str(config.get("model", "")), "deepseek-v4-pro", "Mojibake personality repair should keep the selected model"),
+		assert_eq(str(config.get("ai_personality", "")), GameManager.DEFAULT_AI_PERSONALITY, "Windows mojibake AI personality should fall back to the default personality"),
+		assert_eq(str(config.get("ai_test_signature", "")), "ok-signature", "Mojibake personality repair should not discard unrelated test state"),
 	])
 
 
@@ -643,6 +692,48 @@ func test_resolve_selected_battle_deck_prefers_ai_deck_for_vs_ai_slot() -> Strin
 	return run_checks([
 		assert_not_null(resolved, "GameManager should resolve a deck for the AI slot"),
 		assert_eq(str(resolved.deck_name if resolved != null else ""), "AI Deck", "VS_AI should resolve player 2 from the dedicated AI deck cache"),
+	])
+
+
+func test_supported_ai_deck_survives_same_id_player_deck_edit() -> String:
+	var supported_ai_id := 575720
+	var player_deck_path := "user://decks/%d.json" % supported_ai_id
+	var player_deck_snapshot := _snapshot_user_file(player_deck_path)
+	var previous_ids := GameManager.selected_deck_ids.duplicate()
+	var previous_mode := GameManager.current_mode
+	var canonical_ai := CardDatabase.get_ai_deck(supported_ai_id)
+	var canonical_name := str(canonical_ai.deck_name) if canonical_ai != null else ""
+	var canonical_total := int(canonical_ai.total_cards) if canonical_ai != null else 0
+
+	var edited_player_copy := DeckData.new()
+	edited_player_copy.id = supported_ai_id
+	edited_player_copy.deck_name = "Edited Player Copy Of Miraidon"
+	edited_player_copy.total_cards = 13
+	CardDatabase.save_deck(edited_player_copy)
+
+	GameManager.selected_deck_ids = [575716, supported_ai_id]
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	var normal_after_edit := CardDatabase.get_deck(supported_ai_id)
+	var ai_after_edit := CardDatabase.get_ai_deck(supported_ai_id)
+	var ai_list_entry: DeckData = null
+	for deck: DeckData in CardDatabase.get_all_ai_decks():
+		if deck.id == supported_ai_id:
+			ai_list_entry = deck
+			break
+	var resolved := GameManager.resolve_selected_battle_deck(1)
+
+	GameManager.selected_deck_ids = previous_ids.duplicate()
+	GameManager.current_mode = previous_mode
+	_restore_user_file(player_deck_path, player_deck_snapshot)
+	CardDatabase.call("_load_all_decks")
+
+	return run_checks([
+		assert_not_null(canonical_ai, "Miraidon should be present as a bundled supported AI deck"),
+		assert_eq(str(normal_after_edit.deck_name if normal_after_edit != null else ""), "Edited Player Copy Of Miraidon", "Test should simulate a player edit to the normal same-id deck"),
+		assert_eq(str(ai_after_edit.deck_name if ai_after_edit != null else ""), canonical_name, "Saving a normal same-id deck must not overwrite the AI deck cache"),
+		assert_eq(str(ai_list_entry.deck_name if ai_list_entry != null else ""), canonical_name, "AI deck picker data should keep the canonical AI deck after the same-id player edit"),
+		assert_eq(str(resolved.deck_name if resolved != null else ""), canonical_name, "VS_AI battle resolution should keep using the AI deck cache"),
+		assert_eq(int(resolved.total_cards if resolved != null else 0), canonical_total, "VS_AI should not resolve to the edited player deck's invalid card total"),
 	])
 
 

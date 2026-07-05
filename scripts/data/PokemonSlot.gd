@@ -2,6 +2,8 @@
 class_name PokemonSlot
 extends RefCounted
 
+static var _next_order_stamp: int = 1
+
 ## 进化链（底部为基础宝可梦，顶部为当前形态）
 var pokemon_stack: Array[CardInstance] = []
 ## 附着的能量卡
@@ -24,6 +26,10 @@ var status_conditions: Dictionary = {
 var turn_played: int = -1
 ## 最近进化的回合号
 var turn_evolved: int = -1
+## 当前顶层宝可梦进入场上成为当前形态的顺序，用于持续特性互相压制时按生效先后结算。
+var top_card_order: int = -1
+## 最近一次成为战斗宝可梦的顺序。仅战斗场生效的持续特性以此和 top_card_order 的较晚者作为生效顺序。
+var active_order: int = -1
 ## 临时效果列表（如清除古龙水、招式锁定等）
 ## 每个元素为 Dictionary: {type: String, source: String, turn: int, ...}
 var effects: Array[Dictionary] = []
@@ -32,6 +38,53 @@ const ENTERED_ACTIVE_FROM_BENCH_EFFECT_TYPE := "entered_active_from_bench"
 const ENTERED_BENCH_FROM_HAND_EFFECT_TYPE := "entered_bench_from_hand"
 const ABILITY_USED_EFFECT_TYPE := "ability_used"
 const RARE_CANDY_EVOLVED_EFFECT_TYPE := "rare_candy_evolved"
+
+
+static func reset_order_stamp_counter() -> void:
+	_next_order_stamp = 1
+
+
+static func next_order_stamp() -> int:
+	var stamp := _next_order_stamp
+	_next_order_stamp += 1
+	return stamp
+
+
+static func ensure_next_order_after(stamp: int) -> void:
+	if stamp >= _next_order_stamp:
+		_next_order_stamp = stamp + 1
+
+
+func mark_entered_play(order_stamp: int = -1) -> void:
+	if order_stamp <= 0:
+		order_stamp = PokemonSlot.next_order_stamp()
+	top_card_order = order_stamp
+
+
+func mark_top_card_changed(order_stamp: int = -1) -> void:
+	if order_stamp <= 0:
+		order_stamp = PokemonSlot.next_order_stamp()
+	top_card_order = order_stamp
+
+
+func mark_became_active(order_stamp: int = -1) -> void:
+	if order_stamp <= 0:
+		order_stamp = PokemonSlot.next_order_stamp()
+	active_order = order_stamp
+
+
+func get_active_continuous_ability_order() -> int:
+	if active_order <= 0:
+		mark_became_active()
+	if top_card_order <= 0:
+		mark_entered_play(active_order)
+	return maxi(active_order, top_card_order)
+
+
+func get_in_play_continuous_ability_order() -> int:
+	if top_card_order <= 0:
+		mark_entered_play()
+	return top_card_order
 
 
 ## 获取顶层卡牌（当前形态）
@@ -119,6 +172,7 @@ func clear_all_status() -> void:
 const _BENCH_CLEAR_EFFECT_TYPES: Array[String] = [
 	"reduce_damage_next_turn",
 	"attack_lock",
+	"attack_lock_all",
 	"attack_lock_until_leave_active",
 	"defender_attack_lock",
 	"defender_action_cost_increase",
@@ -131,6 +185,7 @@ const _BENCH_CLEAR_EFFECT_TYPES: Array[String] = [
 
 func clear_on_leave_active() -> void:
 	clear_all_status()
+	active_order = -1
 	if effects.is_empty():
 		return
 	var kept: Array[Dictionary] = []
@@ -140,7 +195,8 @@ func clear_on_leave_active() -> void:
 	effects = kept
 
 
-func mark_entered_active_from_bench(turn_number: int) -> void:
+func mark_entered_active_from_bench(turn_number: int, order_stamp: int = -1) -> void:
+	mark_became_active(order_stamp)
 	effects.append({
 		"type": ENTERED_ACTIVE_FROM_BENCH_EFFECT_TYPE,
 		"turn": turn_number,

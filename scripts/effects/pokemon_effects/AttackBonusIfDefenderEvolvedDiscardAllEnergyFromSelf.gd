@@ -48,6 +48,7 @@ func execute_attack(
 	attacker.attached_energy.clear()
 	for energy: CardInstance in discarded:
 		player.discard_pile.append(energy)
+		_record_attack_effect_discarded_attached_energy(attacker, energy, state)
 
 
 func _is_evolution_defender(defender: PokemonSlot) -> bool:

@@ -32,7 +32,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		VISIBLE_SCOPE_OWN_FULL_DECK,
 		0,
 		1,
-		{"allow_cancel": true}
+		{"allow_cancel": true, "force_confirm": true}
 	)
 	if not player.get_all_pokemon().is_empty() and energy_items.size() > 1:
 		hand_step["requires_followup_interaction"] = true

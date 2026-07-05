@@ -297,9 +297,10 @@ class AttackEvolveFromDeck:
 
 	func _candidates(player: PlayerState, attacker: PokemonSlot) -> Array[CardInstance]:
 		var result: Array[CardInstance] = []
-		var top_name := attacker.get_pokemon_name()
+		var top_card := attacker.get_top_card()
+		var top_data: CardData = top_card.card_data if top_card != null else null
 		for card: CardInstance in player.deck:
-			if card.card_data != null and card.card_data.is_pokemon() and card.card_data.evolves_from == top_name:
+			if card.card_data != null and card.card_data.is_pokemon() and card.card_data.evolves_from_matches(top_data):
 				result.append(card)
 		return result
 
@@ -386,6 +387,8 @@ class AttackJoltikCharge:
 	const STEP_ID := "csv9c_joltik_energy_assignments"
 	const GRASS_STEP_ID := "csv9c_joltik_grass_assignments"
 	const LIGHTNING_STEP_ID := "csv9c_joltik_lightning_assignments"
+	const LEGACY_GRASS_STEP_ID := "csv9c_grass_energy_assignments"
+	const LEGACY_LIGHTNING_STEP_ID := "csv9c_lightning_energy_assignments"
 	var attack_index_to_match: int = -1
 
 	func _init(match_attack_index: int = -1) -> void:
@@ -472,8 +475,11 @@ class AttackJoltikCharge:
 		var type_counts := {"G": 0, "L": 0}
 		var targets := player.get_all_pokemon()
 		var ctx := get_attack_interaction_context()
-		var has_explicit := ctx.has(STEP_ID) or ctx.has(GRASS_STEP_ID) or ctx.has(LIGHTNING_STEP_ID)
-		for step_id: String in [STEP_ID, GRASS_STEP_ID, LIGHTNING_STEP_ID]:
+		var step_ids := [STEP_ID, GRASS_STEP_ID, LIGHTNING_STEP_ID, LEGACY_GRASS_STEP_ID, LEGACY_LIGHTNING_STEP_ID]
+		var has_explicit := false
+		for step_id: String in step_ids:
+			has_explicit = has_explicit or ctx.has(step_id)
+		for step_id: String in step_ids:
 			for entry: Variant in ctx.get(step_id, []):
 				if not (entry is Dictionary):
 					continue
@@ -1421,6 +1427,7 @@ class AttackTriFrost:
 		attacker.attached_energy.clear()
 		for energy: CardInstance in discarded:
 			player.discard_pile.append(energy)
+			_record_attack_effect_discarded_attached_energy(attacker, energy, state)
 		var opponent := state.players[1 - attacker.get_top_card().owner_index]
 		for target: PokemonSlot in _selected_targets(opponent):
 			if target == null:
@@ -1591,6 +1598,7 @@ class AttackSlowkingInspiration:
 			var attacker_modifier := 0
 			var defender_modifier := 0
 			var weakness_override := ""
+			var weakness_energy_override := ""
 			if proc != null:
 				if proc.has_method("get_attacker_modifier"):
 					attacker_modifier = int(proc.call("get_attacker_modifier", attacker, state, defender))
@@ -1598,7 +1606,9 @@ class AttackSlowkingInspiration:
 					defender_modifier = int(proc.call("get_defender_modifier", defender, state, attacker))
 				if proc.has_method("get_weakness_value_override"):
 					weakness_override = str(proc.call("get_weakness_value_override", attacker, defender, state))
-			var damage := DamageCalculator.new().calculate_damage(attacker, defender, {"damage": str(copied_damage)}, state, 0, attacker_modifier, defender_modifier, ignore_weakness, ignore_resistance, weakness_override)
+				if proc.has_method("get_weakness_energy_override"):
+					weakness_energy_override = str(proc.call("get_weakness_energy_override", attacker, defender, state))
+			var damage := DamageCalculator.new().calculate_damage(attacker, defender, {"damage": str(copied_damage)}, state, 0, attacker_modifier, defender_modifier, ignore_weakness, ignore_resistance, weakness_override, weakness_energy_override)
 			DamageCalculator.new().apply_damage_to_slot(defender, damage)
 		if proc != null and proc.has_method("execute_attack_effect_by_id"):
 			proc.call("execute_attack_effect_by_id", top_card.card_data.effect_id, copied_index, attacker, defender, state, copied_targets, AttackSlowkingInspiration)
@@ -2029,7 +2039,7 @@ class AbilityNoctowlTeraTrainerSearch:
 		var items := _trainers(player)
 		if items.is_empty():
 			return []
-		return [build_full_library_search_step(STEP_ID, "Choose up to 2 Trainer cards", player.deck, items, VISIBLE_SCOPE_OWN_FULL_DECK, 0, mini(2, items.size()), {"allow_cancel": true})]
+		return [build_full_library_search_step(STEP_ID, "Choose up to 2 Trainer cards", player.deck, items, VISIBLE_SCOPE_OWN_FULL_DECK, 0, mini(2, items.size()), {"allow_cancel": true, "force_confirm": true})]
 
 	func execute_ability(pokemon: PokemonSlot, _ability_index: int, targets: Array, state: GameState) -> void:
 		if not can_use_ability(pokemon, state):
@@ -2084,7 +2094,7 @@ class AbilityFanCall:
 		var items := _targets(player)
 		if items.is_empty():
 			return []
-		return [build_full_library_search_step(STEP_ID, "Choose up to 3 Colorless Pokemon", player.deck, items, VISIBLE_SCOPE_OWN_FULL_DECK, 0, mini(3, items.size()), {"allow_cancel": true})]
+		return [build_full_library_search_step(STEP_ID, "Choose up to 3 Colorless Pokemon", player.deck, items, VISIBLE_SCOPE_OWN_FULL_DECK, 0, mini(3, items.size()), {"allow_cancel": true, "force_confirm": true})]
 
 	func execute_ability(pokemon: PokemonSlot, _ability_index: int, targets: Array, state: GameState) -> void:
 		if not can_use_ability(pokemon, state):

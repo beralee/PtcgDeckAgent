@@ -1,0 +1,77 @@
+{
+	"abilities": [
+		{
+			"name": "Jewel Seeker",
+			"text": "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, if you have any Tera Pokémon in play, you may search your deck for up to 2 Trainer cards, reveal them, and put them into your hand. Then, shuffle your deck.",
+			"name_zh": "宝石搜寻者",
+			"text_zh": "在自己的回合，当你从手牌将这只宝可梦放置到场上使自己的1只宝可梦进化时，若自己的场上有太晶宝可梦，可从自己的牌库选择最多2张训练家卡，给对手看后加入手牌。然后重洗牌库。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "matazo",
+	"attacks": [
+		{
+			"cost": "CC",
+			"damage": "60",
+			"is_vstar_power": false,
+			"name": "Speed Wing",
+			"text": "",
+			"name_zh": "高速翼击",
+			"text_zh": ""
+		}
+	],
+	"card_index": "115",
+	"card_index_en": "115",
+	"card_type": "Pokemon",
+	"description": "特性: 宝石搜寻者\n在自己的回合，当你从手牌将这只宝可梦放置到场上使自己的1只宝可梦进化时，若自己的场上有太晶宝可梦，可从自己的牌库选择最多2张训练家卡，给对手看后加入手牌。然后重洗牌库。\n\n高速翼击 60",
+	"effect_id": "73bdf25fd5cce3682a08778e76c5876e",
+	"energy_provides": "",
+	"energy_type": "C",
+	"evolves_from": "Hoothoot",
+	"hp": 100,
+	"image_local_path": "user://cards/images/LEN_SCR/115.png",
+	"image_url": "https://limitless3.nyc3.cdn.digitaloceanspaces.com/limitless/logo.png",
+	"is_tags": [
+		"Stage 1"
+	],
+	"label": "",
+	"mechanic": "",
+	"name": "Noctowl",
+	"name_en": "Noctowl",
+	"name_zh": "猫头夜鹰",
+	"rarity": "Stellar Crown (SCR)",
+	"regulation_expanded": true,
+	"regulation_mark": "",
+	"regulation_standard": true,
+	"release_date": "",
+	"resistance_energy": "F",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "LEN_SCR",
+	"set_code_en": "SCR",
+	"source_card_index": "115",
+	"source_imported_at": 1783008496670,
+	"source_language": "en",
+	"source_parser_version": 1,
+	"source_prints": [
+		"SCR/115",
+		"SVP/141",
+		"PRE/78",
+		"JP/SVP/173",
+		"JP/SV7/77",
+		"JP/SV7/114",
+		"JP/SVLS/10",
+		"JP/SV8A/128",
+		"JP/SVN/8",
+		"JP/MA/9",
+		"JP/M2A/138",
+		"JP/MC/573"
+	],
+	"source_provider": "limitless",
+	"source_set_code": "SCR",
+	"source_url": "https://limitlesstcg.com/cards/SCR/115",
+	"stage": "Stage 1",
+	"weakness_energy": "L",
+	"weakness_value": "x2",
+	"yoren_code": ""
+}

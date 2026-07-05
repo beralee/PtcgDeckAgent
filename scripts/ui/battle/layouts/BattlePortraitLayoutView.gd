@@ -150,19 +150,26 @@ func apply_dialog_gallery_metrics(dialog_card_size: Vector2) -> void:
 	var dialog_card_row := _get_scene_var("_dialog_card_row") as HBoxContainer
 	var dialog_assignment_source_row := _get_scene_var("_dialog_assignment_source_row") as HBoxContainer
 	var dialog_assignment_target_row := _get_scene_var("_dialog_assignment_target_row") as HBoxContainer
-	if dialog_card_scroll != null:
-		dialog_card_scroll.custom_minimum_size = Vector2(0, _as_float(_call_scene("_effective_dialog_card_scroll_height"), dialog_card_size.y))
-	if dialog_assignment_source_scroll != null:
-		dialog_assignment_source_scroll.custom_minimum_size = Vector2(0, _as_float(_call_scene("_dialog_card_scroll_height"), dialog_card_size.y))
-	if dialog_assignment_target_scroll != null:
-		dialog_assignment_target_scroll.custom_minimum_size = Vector2(0, _as_float(_call_scene("_dialog_card_scroll_height"), dialog_card_size.y))
 	var dialog_controller := _get_scene_var("_battle_dialog_controller") as RefCounted
-	if dialog_controller != null and dialog_card_scroll != null and dialog_card_row != null:
-		dialog_controller.call("reset_dialog_card_row_metrics", dialog_card_scroll, dialog_card_row, dialog_card_size)
-	if dialog_controller != null and dialog_assignment_source_scroll != null and dialog_assignment_source_row != null:
-		dialog_controller.call("reset_dialog_card_row_metrics", dialog_assignment_source_scroll, dialog_assignment_source_row, dialog_card_size)
-	if dialog_controller != null and dialog_assignment_target_scroll != null and dialog_assignment_target_row != null:
-		dialog_controller.call("reset_dialog_card_row_metrics", dialog_assignment_target_scroll, dialog_assignment_target_row, dialog_card_size)
+	var dialog_data_variant: Variant = _get_scene_var("_dialog_data")
+	var dialog_data: Dictionary = dialog_data_variant if dialog_data_variant is Dictionary else {}
+	var action_hud_mode := str(dialog_data.get("presentation", "")) == "action_hud"
+	if action_hud_mode:
+		if dialog_controller != null:
+			dialog_controller.call("refresh_action_hud_dialog", _scene)
+	else:
+		if dialog_card_scroll != null:
+			dialog_card_scroll.custom_minimum_size = Vector2(0, _as_float(_call_scene("_effective_dialog_card_scroll_height"), dialog_card_size.y))
+		if dialog_assignment_source_scroll != null:
+			dialog_assignment_source_scroll.custom_minimum_size = Vector2(0, _as_float(_call_scene("_dialog_card_scroll_height"), dialog_card_size.y))
+		if dialog_assignment_target_scroll != null:
+			dialog_assignment_target_scroll.custom_minimum_size = Vector2(0, _as_float(_call_scene("_dialog_card_scroll_height"), dialog_card_size.y))
+		if dialog_controller != null and dialog_card_scroll != null and dialog_card_row != null:
+			dialog_controller.call("reset_dialog_card_row_metrics", dialog_card_scroll, dialog_card_row, dialog_card_size)
+		if dialog_controller != null and dialog_assignment_source_scroll != null and dialog_assignment_source_row != null:
+			dialog_controller.call("reset_dialog_card_row_metrics", dialog_assignment_source_scroll, dialog_assignment_source_row, dialog_card_size)
+		if dialog_controller != null and dialog_assignment_target_scroll != null and dialog_assignment_target_row != null:
+			dialog_controller.call("reset_dialog_card_row_metrics", dialog_assignment_target_scroll, dialog_assignment_target_row, dialog_card_size)
 	var dialog_overlay := _get_scene_var("_dialog_overlay") as Control
 	if dialog_overlay != null and dialog_overlay.visible and dialog_controller != null:
 		dialog_controller.call("compact_dialog_box_to_content", _scene)
@@ -237,12 +244,12 @@ func sync_top_action_visibility(is_portrait: Variant = null) -> void:
 	var portrait_direct_buttons := _as_array(_call_scene("_portrait_direct_top_action_buttons"))
 	var live_direct_buttons: Array[Button] = [
 		_top_action_button_or_null(_get_scene_var("_btn_opponent_hand") as Button, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnOpponentHand"),
-		_top_action_button_or_null(_get_scene_var("_btn_battle_discuss_ai") as Button, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnBattleDiscussAI"),
 		_top_action_button_or_null(_get_scene_var("_btn_zeus_help") as Button, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnZeusHelp"),
 	]
 	var secondary_buttons: Array[Button] = [
 		_top_action_button_or_null(_get_scene_var("_btn_attack_vfx_preview") as Button, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnAttackVfxPreview"),
 		_top_action_button_or_null(_get_scene_var("_btn_ai_advice") as Button, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnAiAdvice"),
+		_top_action_button_or_null(_get_scene_var("_btn_battle_discuss_ai") as Button, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnBattleDiscussAI"),
 		_top_action_button_or_null(_get_scene_var("_btn_replay_prev_turn") as Button, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnReplayPrevTurn"),
 		_top_action_button_or_null(_get_scene_var("_btn_replay_next_turn") as Button, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnReplayNextTurn"),
 		_top_action_button_or_null(_get_scene_var("_btn_replay_continue") as Button, "TopBar/TopBarRow/TopBarRight/TopBarActions/BtnReplayContinue"),

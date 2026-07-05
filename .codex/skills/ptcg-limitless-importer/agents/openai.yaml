@@ -1,0 +1,4 @@
+interface:
+  display_name: "PTCG Limitless Importer"
+  short_description: "Import Limitless TCG decks"
+  default_prompt: "Import a Limitless TCG card or deck into this PTCG project, map existing local prints, implement missing effects, and validate with focused tests."

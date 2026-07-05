@@ -41,10 +41,12 @@ class DialogSceneStub:
 	var _dialog_modal_transition_depth: int = 0
 	var _dialog_modal_transition_generation: int = -1
 	var _dialog_modal_transition_origin_position: Vector2 = Vector2(-1.0, -1.0)
+	var _dialog_modal_transition_origin_source: String = ""
 	var _dialog_generation: int = 0
 	var _dialog_requires_fresh_action_input: bool = false
 	var _dialog_user_input_generation: int = -1
 	var _dialog_user_input_position: Vector2 = Vector2(-1.0, -1.0)
+	var _dialog_user_input_source: String = ""
 	var _dialog_confirm_input_generation: int = -1
 	var _dialog_confirm_input_position: Vector2 = Vector2(-1.0, -1.0)
 	var _dialog_cancel_input_generation: int = -1
@@ -240,6 +242,20 @@ class EffectSceneStub:
 		pass
 
 
+class NullEffectProcessorStub:
+	extends RefCounted
+
+	func get_effect(_effect_id: String) -> BaseEffect:
+		return null
+
+
+class EffectGsmStub:
+	extends RefCounted
+
+	var effect_processor := NullEffectProcessorStub.new()
+	var game_state = null
+
+
 func _make_test_card(name: String) -> CardInstance:
 	var card_data := CardData.new()
 	card_data.name = name
@@ -321,7 +337,10 @@ func test_effect_interaction_passes_full_library_dialog_metadata() -> String:
 		}
 	)
 	var scene := EffectSceneStub.new()
-	scene._pending_effect_card = _make_test_card("Source")
+	var source_card := _make_test_card("Source")
+	scene._pending_effect_card = source_card
+	scene._pending_effect_kind = "trainer"
+	scene._gsm = EffectGsmStub.new()
 	scene._pending_effect_steps = [step]
 
 	controller.call("show_next_effect_interaction_step", scene)
@@ -349,6 +368,8 @@ func test_effect_interaction_passes_full_library_dialog_metadata() -> String:
 		assert_eq(str(extra.get("card_disabled_badge", "")), "不可选", "card_disabled_badge should be passed through to the dialog"),
 		assert_true(bool(extra.get("show_selectable_hints", false)), "show_selectable_hints should be passed through to the dialog"),
 		assert_eq(str(extra.get("card_selectable_hint", "")), "Pick", "card_selectable_hint should be passed through to the dialog"),
+		assert_eq(extra.get("source_card", null), source_card, "source_card should be passed as UI metadata for the landscape board"),
+		assert_eq(str(extra.get("source_kind", "")), "trainer", "source_kind should be passed as UI metadata for the landscape board"),
 		assert_eq((extra.get("choice_labels", []) as Array).size(), 10, "visible choice_labels should be passed through to the dialog"),
 		assert_eq(selected_items, [legal_items[0], legal_items[2]], "Confirmed effect choices should resolve only legal item indices and ignore visible-only indices"),
 	])

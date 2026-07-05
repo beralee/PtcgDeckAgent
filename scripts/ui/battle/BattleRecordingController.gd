@@ -225,6 +225,8 @@ func serialize_pokemon_slot(slot: PokemonSlot) -> Dictionary:
 		"effects": slot.effects.duplicate(true),
 		"turn_played": slot.turn_played,
 		"turn_evolved": slot.turn_evolved,
+		"top_card_order": slot.top_card_order,
+		"active_order": slot.active_order,
 		"pokemon_stack": serialize_card_list(slot.pokemon_stack),
 	}
 

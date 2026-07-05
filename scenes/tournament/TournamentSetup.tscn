@@ -44,7 +44,7 @@ grow_vertical = 2
 
 [node name="Panel" type="PanelContainer" parent="Center"]
 layout_mode = 2
-custom_minimum_size = Vector2(660, 460)
+custom_minimum_size = Vector2(720, 620)
 
 [node name="Margin" type="MarginContainer" parent="Center/Panel"]
 layout_mode = 2
@@ -68,8 +68,26 @@ horizontal_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.97, 0.98, 1, 1)
-text = "参赛卡组："
-horizontal_alignment = 1
+text = "玩家卡组"
+
+[node name="DeckOption" type="OptionButton" parent="Center/Panel/Margin/VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="DeckPickerButton" type="Button" parent="Center/Panel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 58)
+text = "选择卡组"
+clip_text = true
+
+[node name="SelectedDeckLabel" type="Label" parent="Center/Panel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.89, 0.96, 1)
+text = "已选择："
+autowrap_mode = 2
 
 [node name="NameLabel" type="Label" parent="Center/Panel/Margin/VBox"]
 unique_name_in_owner = true
@@ -89,10 +107,12 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.97, 0.98, 1, 1)
 text = "比赛人数"
 
-[node name="SizeOption" type="OptionButton" parent="Center/Panel/Margin/VBox"]
+[node name="TournamentSizeRadioGroup" type="GridContainer" parent="Center/Panel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(0, 42)
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+columns = 4
 
 [node name="RoundInfoLabel" type="Label" parent="Center/Panel/Margin/VBox"]
 unique_name_in_owner = true

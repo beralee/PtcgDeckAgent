@@ -1,0 +1,67 @@
+{
+	"abilities": [
+		{
+			"name": "Insomnia",
+			"text": "This Pokémon can't be Asleep.",
+			"name_zh": "不眠",
+			"text_zh": "这只宝可梦不会陷入睡眠。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "Nakamura Ippan",
+	"attacks": [
+		{
+			"cost": "CC",
+			"damage": "20",
+			"is_vstar_power": false,
+			"name": "Tackle",
+			"text": "",
+			"name_zh": "撞击",
+			"text_zh": ""
+		}
+	],
+	"card_index": "77",
+	"card_index_en": "77",
+	"card_type": "Pokemon",
+	"description": "特性: 不眠\n这只宝可梦不会陷入睡眠。\n\n撞击 20",
+	"effect_id": "d5f66047087bc07ad7a765caaf743e55",
+	"energy_provides": "",
+	"energy_type": "C",
+	"evolves_from": "",
+	"hp": 80,
+	"image_local_path": "user://cards/images/LEN_PRE/77.png",
+	"image_url": "https://limitless3.nyc3.cdn.digitaloceanspaces.com/limitless/logo.png",
+	"is_tags": [
+		"Basic"
+	],
+	"label": "",
+	"mechanic": "",
+	"name": "Hoothoot",
+	"name_en": "Hoothoot",
+	"name_zh": "咕咕",
+	"rarity": "Prismatic Evolutions (PRE)",
+	"regulation_expanded": true,
+	"regulation_mark": "",
+	"regulation_standard": true,
+	"release_date": "",
+	"resistance_energy": "F",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "LEN_PRE",
+	"set_code_en": "PRE",
+	"source_card_index": "77",
+	"source_imported_at": 1783008496663,
+	"source_language": "en",
+	"source_parser_version": 1,
+	"source_prints": [
+		"PRE/77",
+		"JP/SV8A/127"
+	],
+	"source_provider": "limitless",
+	"source_set_code": "PRE",
+	"source_url": "https://limitlesstcg.com/cards/PRE/77",
+	"stage": "Basic",
+	"weakness_energy": "L",
+	"weakness_value": "x2",
+	"yoren_code": ""
+}

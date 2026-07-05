@@ -12,6 +12,8 @@ const AbilityPreventTeraAttackDamageAndEffectsScript = preload("res://scripts/ef
 const AutoloadResolverScript = preload("res://scripts/engine/AutoloadResolver.gd")
 
 const SWEET_TRAP_DAMAGE_BONUS_EFFECT_TYPE := "sweet_trap_damage_bonus"
+const PENDING_ATTACK_EFFECT_ENERGY_RETURNS_KEY := "_pending_attack_effect_energy_returns"
+const ATTACK_EFFECT_ENERGY_RETURN_DEPTH_KEY := "_attack_effect_energy_return_depth"
 
 static var _live_refs: Array[WeakRef] = []
 
@@ -246,6 +248,21 @@ func register_pokemon_card(card: CardData) -> void:
 	_registered_pokemon_effect_ids[effect_id] = true
 
 
+func _get_registered_pokemon_effect(slot: PokemonSlot) -> BaseEffect:
+	if slot == null:
+		return null
+	var card_data: CardData = slot.get_card_data()
+	if card_data == null or not card_data.is_pokemon():
+		return null
+	var existing_effect := get_effect(card_data.effect_id)
+	if existing_effect != null:
+		return existing_effect
+	if card_data.abilities.is_empty() or has_attack_effect(card_data.effect_id):
+		return null
+	register_pokemon_card(card_data)
+	return get_effect(card_data.effect_id)
+
+
 func get_attack_effects_for_slot(attacker: PokemonSlot, attack_index: int = 0) -> Array[BaseEffect]:
 	var result: Array[BaseEffect] = []
 	if attacker == null or attacker.get_top_card() == null:
@@ -254,6 +271,9 @@ func get_attack_effects_for_slot(attacker: PokemonSlot, attack_index: int = 0) -
 	if card_data == null:
 		return result
 	var effect_id: String = _resolve_effect_id(card_data.effect_id)
+	if not _attack_effect_registry.has(effect_id):
+		register_pokemon_card(card_data)
+		effect_id = _resolve_effect_id(card_data.effect_id)
 	if not _attack_effect_registry.has(effect_id):
 		return result
 	for effect: BaseEffect in _attack_effect_registry[effect_id]:
@@ -292,6 +312,7 @@ func execute_attack_effect(
 	if attack_index < 0 or attack_index >= card_data.attacks.size():
 		return
 	var effect_id: String = _resolve_effect_id(card_data.effect_id)
+	_begin_attack_effect_energy_return_window(state)
 
 	if _effect_registry.has(effect_id):
 		var card_effect: BaseEffect = _effect_registry[effect_id]
@@ -299,6 +320,9 @@ func execute_attack_effect(
 		card_effect.set_attack_interaction_context(targets)
 		card_effect.execute_attack(attacker, defender, attack_index, state)
 		card_effect.clear_attack_interaction_context()
+		if state != null and state.is_game_over():
+			_finish_attack_effect_energy_return_window(state)
+			return
 
 	if _attack_effect_registry.has(effect_id):
 		var already_executed_effect: BaseEffect = _effect_registry.get(effect_id, null)
@@ -311,6 +335,96 @@ func execute_attack_effect(
 			effect.set_attack_interaction_context(targets)
 			effect.execute_attack(attacker, defender, attack_index, state)
 			effect.clear_attack_interaction_context()
+			if state != null and state.is_game_over():
+				_finish_attack_effect_energy_return_window(state)
+				return
+	_finish_attack_effect_energy_return_window(state)
+
+
+func _begin_attack_effect_energy_return_window(state: GameState) -> void:
+	if state == null:
+		return
+	var depth := int(state.shared_turn_flags.get(ATTACK_EFFECT_ENERGY_RETURN_DEPTH_KEY, 0))
+	if depth <= 0:
+		state.shared_turn_flags[PENDING_ATTACK_EFFECT_ENERGY_RETURNS_KEY] = []
+	state.shared_turn_flags[ATTACK_EFFECT_ENERGY_RETURN_DEPTH_KEY] = depth + 1
+
+
+func _finish_attack_effect_energy_return_window(state: GameState) -> void:
+	if state == null:
+		return
+	var depth := int(state.shared_turn_flags.get(ATTACK_EFFECT_ENERGY_RETURN_DEPTH_KEY, 0)) - 1
+	if depth > 0:
+		state.shared_turn_flags[ATTACK_EFFECT_ENERGY_RETURN_DEPTH_KEY] = depth
+		return
+	_resolve_pending_attack_effect_energy_returns(state)
+	state.shared_turn_flags.erase(PENDING_ATTACK_EFFECT_ENERGY_RETURNS_KEY)
+	state.shared_turn_flags.erase(ATTACK_EFFECT_ENERGY_RETURN_DEPTH_KEY)
+
+
+func record_attack_effect_discarded_attached_energy(attacker: PokemonSlot, energy: CardInstance, state: GameState) -> void:
+	if attacker == null or energy == null or energy.card_data == null or state == null:
+		return
+	if int(state.shared_turn_flags.get(ATTACK_EFFECT_ENERGY_RETURN_DEPTH_KEY, 0)) <= 0:
+		return
+	if energy.card_data.card_type != "Special Energy":
+		return
+	if is_special_energy_suppressed(energy, state):
+		return
+	var effect := get_effect(energy.card_data.effect_id)
+	if effect == null or not effect.has_method("should_return_after_attack_effect_discard"):
+		return
+	if not bool(effect.call("should_return_after_attack_effect_discard", energy, attacker, state)):
+		return
+	var top := attacker.get_top_card()
+	if top == null:
+		return
+	var raw_pending: Variant = state.shared_turn_flags.get(PENDING_ATTACK_EFFECT_ENERGY_RETURNS_KEY, [])
+	var pending: Array = raw_pending if raw_pending is Array else []
+	for entry: Variant in pending:
+		if entry is Dictionary and (entry as Dictionary).get("energy", null) == energy:
+			return
+	pending.append({
+		"energy": energy,
+		"slot": attacker,
+		"player_index": int(top.owner_index),
+		"pokemon_instance_id": int(top.instance_id),
+	})
+	state.shared_turn_flags[PENDING_ATTACK_EFFECT_ENERGY_RETURNS_KEY] = pending
+
+
+func _resolve_pending_attack_effect_energy_returns(state: GameState) -> void:
+	var raw_pending: Variant = state.shared_turn_flags.get(PENDING_ATTACK_EFFECT_ENERGY_RETURNS_KEY, [])
+	if not raw_pending is Array:
+		return
+	for entry: Variant in raw_pending:
+		if not entry is Dictionary:
+			continue
+		var data := entry as Dictionary
+		var energy := data.get("energy", null) as CardInstance
+		var slot := data.get("slot", null) as PokemonSlot
+		var player_index := int(data.get("player_index", -1))
+		var pokemon_instance_id := int(data.get("pokemon_instance_id", -1))
+		if energy == null or slot == null or player_index < 0 or player_index >= state.players.size():
+			continue
+		var player: PlayerState = state.players[player_index]
+		if not (energy in player.discard_pile):
+			continue
+		if not _slot_still_in_play_for_player(slot, player):
+			continue
+		var top := slot.get_top_card()
+		if top == null or int(top.instance_id) != pokemon_instance_id:
+			continue
+		player.discard_pile.erase(energy)
+		slot.attached_energy.append(energy)
+
+
+func _slot_still_in_play_for_player(slot: PokemonSlot, player: PlayerState) -> bool:
+	if slot == null or player == null:
+		return false
+	if player.active_pokemon == slot:
+		return true
+	return slot in player.bench
 
 
 ## 使用指定的 effect_id 执行攻击效果（用于复制招式场景，如巨龙无双）
@@ -370,6 +484,7 @@ func execute_attack_effect_by_id(
 	exclude_effect_type: Variant = null
 ) -> void:
 	effect_id = _resolve_effect_id(effect_id)
+	_begin_attack_effect_energy_return_window(state)
 	if _effect_registry.has(effect_id):
 		var card_effect: BaseEffect = _effect_registry[effect_id]
 		if exclude_effect_type == null or not is_instance_of(card_effect, exclude_effect_type):
@@ -377,6 +492,9 @@ func execute_attack_effect_by_id(
 			card_effect.set_attack_interaction_context(targets)
 			card_effect.execute_attack(attacker, defender, attack_index, state)
 			card_effect.clear_attack_interaction_context()
+			if state != null and state.is_game_over():
+				_finish_attack_effect_energy_return_window(state)
+				return
 
 	if _attack_effect_registry.has(effect_id):
 		var already_executed_effect: BaseEffect = _effect_registry.get(effect_id, null)
@@ -391,6 +509,10 @@ func execute_attack_effect_by_id(
 			effect.set_attack_interaction_context(targets)
 			effect.execute_attack(attacker, defender, attack_index, state)
 			effect.clear_attack_interaction_context()
+			if state != null and state.is_game_over():
+				_finish_attack_effect_energy_return_window(state)
+				return
+	_finish_attack_effect_energy_return_window(state)
 
 
 ## 根据 effect_id 收集被复制招式的交互步骤（用于巨龙无双等复制招式场景）
@@ -566,11 +688,13 @@ func execute_granted_attack(
 	var effect: BaseEffect = _resolve_granted_attack_effect(attacker, granted_attack, state)
 	if effect == null or not effect.has_method("execute_granted_attack"):
 		return false
+	_begin_attack_effect_energy_return_window(state)
 	if effect.has_method("set_attack_interaction_context"):
 		effect.set_attack_interaction_context(targets)
 	effect.call("execute_granted_attack", attacker, granted_attack, state, targets)
 	if effect.has_method("clear_attack_interaction_context"):
 		effect.clear_attack_interaction_context()
+	_finish_attack_effect_energy_return_window(state)
 	return true
 
 
@@ -754,6 +878,8 @@ func get_attack_damage_modifier(
 			if effect.has_method("applies_to_attack_index") and not bool(effect.call("applies_to_attack_index", attack_index)):
 				continue
 			if effect.has_method("get_damage_bonus"):
+				if state != null:
+					state.shared_turn_flags["_draw_effect_processor"] = self
 				effect.set_attack_interaction_context(targets)
 				total += int(effect.call("get_damage_bonus", attacker, state))
 				effect.clear_attack_interaction_context()
@@ -782,6 +908,8 @@ func get_attack_damage_bonus_by_id(
 		if effect.has_method("applies_to_attack_index") and not bool(effect.call("applies_to_attack_index", attack_index)):
 			continue
 		if effect.has_method("get_damage_bonus"):
+			if state != null:
+				state.shared_turn_flags["_draw_effect_processor"] = self
 			effect.set_attack_interaction_context(targets)
 			total += int(effect.call("get_damage_bonus", attacker, state))
 			effect.clear_attack_interaction_context()
@@ -999,13 +1127,42 @@ func get_attack_colorless_cost_modifier(attacker: PokemonSlot, attack: Dictionar
 func get_weakness_value_override(attacker: PokemonSlot, defender: PokemonSlot, state: GameState) -> String:
 	if CSV9CEffects.defender_has_no_weakness(defender, state) or _defender_ignores_weakness(defender, state):
 		return "x1"
-	if attacker == null or defender == null or attacker.attached_tool == null:
+	if attacker == null or defender == null or state == null:
 		return ""
-	if is_tool_effect_suppressed(attacker, state):
+	if attacker.attached_tool != null and not is_tool_effect_suppressed(attacker, state):
+		var effect: BaseEffect = get_effect(attacker.attached_tool.card_data.effect_id)
+		if effect != null and effect.has_method("get_weakness_value_override"):
+			var tool_override := str(effect.call("get_weakness_value_override", attacker, defender, state))
+			if tool_override != "":
+				return tool_override
+	var attacker_owner := _get_owner_index(attacker)
+	if attacker_owner < 0 or attacker_owner >= state.players.size():
 		return ""
-	var effect: BaseEffect = get_effect(attacker.attached_tool.card_data.effect_id)
-	if effect != null and effect.has_method("get_weakness_value_override"):
-		return str(effect.call("get_weakness_value_override", attacker, defender, state))
+	for source: PokemonSlot in state.players[attacker_owner].get_all_pokemon():
+		if source == null or source.get_card_data() == null or is_ability_disabled(source, state):
+			continue
+		var source_effect: BaseEffect = _get_registered_pokemon_effect(source)
+		if source_effect != null and source_effect.has_method("get_weakness_value_override_for_target"):
+			var override := str(source_effect.call("get_weakness_value_override_for_target", source, defender, state))
+			if override != "":
+				return override
+	return ""
+
+
+func get_weakness_energy_override(attacker: PokemonSlot, defender: PokemonSlot, state: GameState) -> String:
+	if attacker == null or defender == null or state == null:
+		return ""
+	var attacker_owner := _get_owner_index(attacker)
+	if attacker_owner < 0 or attacker_owner >= state.players.size():
+		return ""
+	for source: PokemonSlot in state.players[attacker_owner].get_all_pokemon():
+		if source == null or source.get_card_data() == null or is_ability_disabled(source, state):
+			continue
+		var source_effect: BaseEffect = _get_registered_pokemon_effect(source)
+		if source_effect != null and source_effect.has_method("get_weakness_energy_override_for_target"):
+			var override := str(source_effect.call("get_weakness_energy_override_for_target", source, defender, state))
+			if override != "":
+				return override
 	return ""
 
 
@@ -1332,6 +1489,16 @@ func apply_attack_knockout_extra_prize_effects(attacker: PokemonSlot, knocked_ou
 		CSV9CEffects.add_extra_prize_once(knocked_out, "csv9c_briar", 1)
 
 
+func apply_attack_damage_knockout_reactive_effects(attacker: PokemonSlot, knocked_out: PokemonSlot, state: GameState) -> void:
+	if attacker == null or knocked_out == null or state == null:
+		return
+	if knocked_out.get_card_data() == null or is_ability_disabled(knocked_out, state):
+		return
+	var effect: BaseEffect = get_effect(knocked_out.get_card_data().effect_id)
+	if effect != null and effect.has_method("on_knocked_out_by_attack_damage"):
+		effect.call("on_knocked_out_by_attack_damage", knocked_out, attacker, state)
+
+
 func get_knockout_prize_modifier(slot: PokemonSlot, state: GameState) -> int:
 	if slot == null:
 		return 0
@@ -1431,7 +1598,20 @@ func process_pokemon_check(state: GameState) -> Array[PokemonSlot]:
 			slot.status_conditions["paralyzed"] = false
 		if took_damage:
 			damaged_slots.append(slot)
+	_process_pokemon_check_abilities(state, damaged_slots)
 	return damaged_slots
+
+
+func _process_pokemon_check_abilities(state: GameState, damaged_slots: Array[PokemonSlot]) -> void:
+	if state == null:
+		return
+	for pi: int in 2:
+		for source: PokemonSlot in state.players[pi].get_all_pokemon():
+			if source == null or source.get_card_data() == null or is_ability_disabled(source, state):
+				continue
+			var effect := get_effect(source.get_card_data().effect_id)
+			if effect != null and effect.has_method("process_pokemon_check"):
+				effect.call("process_pokemon_check", source, state, damaged_slots)
 
 
 func _clear_prevented_special_statuses(slot: PokemonSlot, state: GameState) -> void:

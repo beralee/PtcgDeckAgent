@@ -1,0 +1,50 @@
+{
+	"name": "普隆隆姆",
+	"card_type": "Pokemon",
+	"mechanic": "",
+	"label": "",
+	"description": "特性: 轰鸣引擎\n在自己的回合，如果将自己手牌中的1张能量放于弃牌区的话，则可使用1次。从自己牌库上方抽取卡牌，直到自己的手牌变为6张为止。\n\n【钢】 弹飞 90+\n抛掷1次硬币如果为正面，则追加造成90伤害。\n\n",
+	"yoren_code": "P0966",
+	"set_code": "CSV9.5C",
+	"card_index": "129",
+	"set_code_en": "PAF",
+	"card_index_en": "65",
+	"name_en": "Revavroom",
+	"artist": "Anesaki Dynamic",
+	"rarity": "R",
+	"release_date": "2026-06-12T00:00:00+08:00",
+	"regulation_mark": "G",
+	"effect_id": "a3fb29e6398509034c1f225f49ecb000",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9.5C/129.png",
+	"image_local_path": "user://cards/images/CSV9.5C/129.png",
+	"is_tags": [],
+	"regulation_standard": true,
+	"regulation_expanded": true,
+	"energy_type": "M",
+	"stage": "Stage 1",
+	"hp": 140,
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"resistance_energy": "G",
+	"resistance_value": "-30",
+	"retreat_cost": 2,
+	"evolves_from": "噗隆隆",
+	"ancient_trait": "",
+	"attacks": [
+		{
+			"name": "弹飞",
+			"text": "抛掷1次硬币如果为正面，则追加造成90伤害。",
+			"cost": "MCCC",
+			"damage": "90+",
+			"is_vstar_power": false
+		}
+	],
+	"abilities": [
+		{
+			"name": "轰鸣引擎",
+			"text": "在自己的回合，如果将自己手牌中的1张能量放于弃牌区的话，则可使用1次。从自己牌库上方抽取卡牌，直到自己的手牌变为6张为止。",
+			"is_vstar_power": false
+		}
+	],
+	"energy_provides": ""
+}

@@ -1577,6 +1577,10 @@ func _assignment_target_score(slot: PokemonSlot, context: Dictionary) -> float:
 			return 0.0
 		if slot == backup_arceus:
 			var score := 720.0
+			if source_provides == "G":
+				score = 1040.0
+			elif source_provides == "P":
+				score = 920.0
 			if source_provides not in ["G", "P"]:
 				score += 80.0
 			return score
@@ -1637,9 +1641,15 @@ func _pick_energy_assignment_sources(items: Array[CardInstance], max_select: int
 	var backup_arceus := _backup_arceus_slot(player)
 	if player != null and _is_launch_online(player):
 		if _is_exact_double_vstar_shell_distribution_window(player, context):
-			if giratina != null and _giratina_needs_type_after_pending(giratina, "P", context):
+			if backup_arceus != null and _slot_is(backup_arceus, [ARCEUS_VSTAR]):
+				while selected.size() < max_select:
+					var previous_size := selected.size()
+					_append_first_matching_energy_source(selected, remaining, max_select, ["G"])
+					if selected.size() == previous_size:
+						break
+			if selected.size() < max_select and giratina != null and _giratina_needs_type_after_pending(giratina, "P", context):
 				_append_first_matching_energy_source(selected, remaining, max_select, ["P"])
-			if giratina != null and _giratina_needs_type_after_pending(giratina, "G", context):
+			if selected.size() < max_select and giratina != null and _giratina_needs_type_after_pending(giratina, "G", context):
 				_append_first_matching_energy_source(selected, remaining, max_select, ["G"])
 			if backup_arceus != null and _backup_arceus_needs_first_basic_progress_after_pending(backup_arceus, context):
 				_append_first_matching_energy_source(selected, remaining, max_select, ["G", "P"])

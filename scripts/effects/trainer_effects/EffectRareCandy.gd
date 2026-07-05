@@ -8,10 +8,12 @@ const STAGE_ONE_BASIC_NAME_OVERRIDES := {
 	"呱头蛙": ["呱呱泡蛙", "Froakie"],
 	"冻脊龙": ["凉脊龙", "Frigibax"],
 	"力壮鸡": ["火稚鸡", "Torchic"],
+	"奇鲁莉安": ["拉鲁拉丝", "Ralts"],
 	"Pidgeotto": ["Pidgey", "波波"],
 	"Frogadier": ["Froakie", "呱呱泡蛙"],
 	"Arctibax": ["Frigibax", "凉脊龙"],
 	"Combusken": ["Torchic", "火稚鸡"],
+	"Kirlia": ["Ralts", "拉鲁拉丝"],
 }
 
 
@@ -23,7 +25,7 @@ func _get_card_database() -> Node:
 
 
 func _can_rare_candy_evolve(stage2_card: CardInstance, target_slot: PokemonSlot, state: GameState) -> bool:
-	if stage2_card == null or target_slot == null or state == null:
+	if stage2_card == null or stage2_card.card_data == null or target_slot == null or state == null:
 		return false
 	if state.is_first_turn_for_player(stage2_card.owner_index):
 		return false
@@ -35,32 +37,33 @@ func _can_rare_candy_evolve(stage2_card: CardInstance, target_slot: PokemonSlot,
 		return false
 
 	var target_top: CardInstance = target_slot.get_top_card()
-	if target_top == null or not target_top.card_data.is_basic_pokemon():
+	if target_top == null or target_top.card_data == null or not target_top.card_data.is_basic_pokemon():
 		return false
+	var target_data: CardData = target_top.card_data
 
 	var evolves_from: String = stage2_card.card_data.evolves_from
 	if evolves_from == "":
 		return false
-	if evolves_from == target_slot.get_pokemon_name():
+	if stage2_card.card_data.evolves_from_matches(target_data):
 		return true
 
 	var player: PlayerState = state.players[stage2_card.owner_index]
 	if player != null:
 		for card: CardInstance in player.hand:
-			if _matches_stage_one_reference(card, evolves_from, target_slot.get_pokemon_name()):
+			if _matches_stage_one_reference(card, evolves_from, target_data):
 				return true
 		for card: CardInstance in player.deck:
-			if _matches_stage_one_reference(card, evolves_from, target_slot.get_pokemon_name()):
+			if _matches_stage_one_reference(card, evolves_from, target_data):
 				return true
 		for card: CardInstance in player.discard_pile:
-			if _matches_stage_one_reference(card, evolves_from, target_slot.get_pokemon_name()):
+			if _matches_stage_one_reference(card, evolves_from, target_data):
 				return true
 		for card: CardInstance in player.prizes:
-			if _matches_stage_one_reference(card, evolves_from, target_slot.get_pokemon_name()):
+			if _matches_stage_one_reference(card, evolves_from, target_data):
 				return true
 		for slot: PokemonSlot in player.get_all_pokemon():
 			for ref_card: CardInstance in slot.pokemon_stack:
-				if _matches_stage_one_reference(ref_card, evolves_from, target_slot.get_pokemon_name()):
+				if _matches_stage_one_reference(ref_card, evolves_from, target_data):
 					return true
 
 	var card_database := _get_card_database()
@@ -70,33 +73,36 @@ func _can_rare_candy_evolve(stage2_card: CardInstance, target_slot: PokemonSlot,
 				continue
 			if card_data.stage != "Stage 1":
 				continue
-			if card_data.name != evolves_from:
+			if not card_data.matches_rule_identity_name(evolves_from):
 				continue
-			if card_data.evolves_from == target_slot.get_pokemon_name():
+			if card_data.evolves_from_matches(target_data):
 				return true
-	return _matches_stage_one_basic_override(evolves_from, target_slot.get_pokemon_name())
+	return _matches_stage_one_basic_override(evolves_from, target_data)
 
 
-func _matches_stage_one_basic_override(stage_one_name: String, basic_name: String) -> bool:
+func _matches_stage_one_basic_override(stage_one_name: String, basic_data: CardData) -> bool:
+	if basic_data == null:
+		return false
+	var basic_names := basic_data.rule_identity_names()
 	var aliases: Variant = STAGE_ONE_BASIC_NAME_OVERRIDES.get(stage_one_name, [])
 	if aliases is String:
-		return str(aliases) == basic_name
+		return str(aliases) in basic_names
 	if aliases is Array:
 		for alias: Variant in aliases:
-			if str(alias) == basic_name:
+			if str(alias) in basic_names:
 				return true
 	return false
 
 
-func _matches_stage_one_reference(card: CardInstance, stage_one_name: String, basic_name: String) -> bool:
+func _matches_stage_one_reference(card: CardInstance, stage_one_name: String, basic_data: CardData) -> bool:
 	if card == null or card.card_data == null:
 		return false
 	var card_data: CardData = card.card_data
 	return (
 		card_data.is_pokemon()
 		and card_data.stage == "Stage 1"
-		and card_data.name == stage_one_name
-		and card_data.evolves_from == basic_name
+		and card_data.matches_rule_identity_name(stage_one_name)
+		and card_data.evolves_from_matches(basic_data)
 	)
 
 

@@ -130,6 +130,8 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if _handle_active_modal_input(event):
+		return
 	if event is InputEventScreenTouch or event is InputEventScreenDrag or event is InputEventMouseButton:
 		if bool(NonBattleTouchBridgeScript.handle_root_touch(self, event)):
 			return
@@ -149,7 +151,118 @@ func _request_navigation_resource_prewarm() -> void:
 
 
 func _gui_input(event: InputEvent) -> void:
+	if _handle_active_modal_input(event):
+		return
 	_handle_main_menu_touch_gui_input(event)
+
+
+func _handle_active_modal_input(event: InputEvent) -> bool:
+	if not _should_guard_active_modal_event(event):
+		return false
+	var overlay := _active_modal_overlay()
+	if overlay == null:
+		return false
+	_main_menu_touch_button_candidate = null
+	if bool(NonBattleTouchBridgeScript.handle_root_touch(overlay, event)):
+		return true
+	if _event_inside_modal_overlay(overlay, event):
+		_accept_main_menu_touch()
+		return true
+	return false
+
+
+func _active_modal_overlay() -> Control:
+	var active: Control = null
+	for overlay_name: String in [FEEDBACK_OVERLAY_NAME, HUD_MODAL_OVERLAY_NAME]:
+		var overlay := get_node_or_null(overlay_name) as Control
+		if not _modal_overlay_is_active(overlay):
+			continue
+		if active == null or overlay.get_index() > active.get_index():
+			active = overlay
+	return active
+
+
+func _modal_overlay_is_active(overlay: Control) -> bool:
+	if overlay == null or not overlay.visible:
+		return false
+	if overlay.is_inside_tree() and not overlay.is_visible_in_tree():
+		return false
+	return true
+
+
+func _is_pointer_input_event(event: InputEvent) -> bool:
+	return event is InputEventScreenTouch or event is InputEventScreenDrag or event is InputEventMouseButton
+
+
+func _should_guard_active_modal_event(event: InputEvent) -> bool:
+	if event is InputEventScreenTouch or event is InputEventScreenDrag:
+		return true
+	if event is InputEventMouseButton:
+		return _should_guard_modal_mouse_echo()
+	return false
+
+
+func _should_guard_modal_mouse_echo() -> bool:
+	if not bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true)):
+		return true
+	return OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
+
+
+func _event_inside_modal_overlay(overlay: Control, event: InputEvent) -> bool:
+	if overlay == null:
+		return false
+	var rect := overlay.get_global_rect()
+	if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+		return true
+	return rect.has_point(_event_global_position(event))
+
+
+func _event_global_position(event: InputEvent) -> Vector2:
+	if event is InputEventScreenTouch:
+		return (event as InputEventScreenTouch).position
+	if event is InputEventScreenDrag:
+		return (event as InputEventScreenDrag).position
+	if event is InputEventMouseButton:
+		var mouse := event as InputEventMouseButton
+		return mouse.global_position if mouse.global_position != Vector2.ZERO else mouse.position
+	return Vector2.ZERO
+
+
+func _should_block_button_input_for_active_modal(button: Button, event: InputEvent) -> bool:
+	if not _should_guard_active_modal_event(event):
+		return false
+	var overlay := _active_modal_overlay()
+	if overlay == null:
+		return false
+	if button != null and _node_is_descendant_of(button, overlay):
+		return false
+	_main_menu_touch_button_candidate = null
+	_accept_main_menu_touch()
+	return true
+
+
+func _node_is_descendant_of(node: Node, ancestor: Node) -> bool:
+	var current := node
+	while current != null:
+		if current == ancestor:
+			return true
+		current = current.get_parent()
+	return false
+
+
+func _bind_modal_input_guard(control: Control) -> void:
+	if control == null:
+		return
+	control.mouse_filter = Control.MOUSE_FILTER_STOP
+	var callback := Callable(self, "_on_modal_overlay_gui_input")
+	if not control.gui_input.is_connected(callback):
+		control.gui_input.connect(callback)
+
+
+func _on_modal_overlay_gui_input(event: InputEvent) -> void:
+	if _is_pointer_input_event(event):
+		_main_menu_touch_button_candidate = null
+		_accept_main_menu_touch()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -262,8 +375,9 @@ func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode
 	set_meta("non_battle_layout_viewport_size", context.get("viewport_size", size))
 	_apply_main_menu_background(context, portrait)
 	_ensure_corner_action_buttons()
-	_layout_corner_action_buttons(context, portrait)
 	_apply_main_menu_frame_metrics(context, portrait)
+	_layout_update_button(context, portrait)
+	_layout_corner_action_buttons(context, portrait)
 	_position_deck_center_new_badge()
 	_ensure_budew_mascot()
 	_layout_budew_mascot()
@@ -500,6 +614,8 @@ func _handle_budew_mascot_unhandled_input(event: InputEvent) -> void:
 
 
 func _handle_main_menu_touch_gui_input(event: InputEvent) -> void:
+	if _handle_active_modal_input(event):
+		return
 	if not (event is InputEventScreenTouch):
 		return
 	if bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true)):
@@ -537,6 +653,8 @@ func _enable_button_touch_activation(button: Button) -> void:
 
 
 func _on_touch_button_gui_input(event: InputEvent, button: Button) -> void:
+	if _should_block_button_input_for_active_modal(button, event):
+		return
 	NonBattleTouchBridgeScript.handle_button_touch(button, event)
 
 
@@ -920,6 +1038,8 @@ func _layout_corner_action_buttons(context: Dictionary, portrait: bool) -> void:
 	var button_size := _corner_action_button_size_for_context(context, portrait)
 	var spacing := _corner_action_spacing_for_size(button_size, portrait)
 	var bottom_margin := _corner_action_bottom_margin_for_size(button_size, portrait)
+	if portrait and _update_button != null and _update_button.visible:
+		bottom_margin = _portrait_update_button_bottom_margin(context) + _portrait_update_button_height(context) + spacing
 	var right_margin := _corner_action_right_margin_for_size(button_size, portrait)
 	var entries: Array[Dictionary] = [
 		{"button": _non_battle_orientation_button, "index": 5, "accent": HudThemeScript.ACCENT},
@@ -951,6 +1071,34 @@ func _layout_corner_action_buttons(context: Dictionary, portrait: bool) -> void:
 		_corner_action_label_text.add_theme_font_size_override("font_size", roundi(button_size * (0.34 if portrait else 0.26)))
 	if _corner_action_hover_button != null:
 		_position_corner_action_label(_corner_action_hover_button)
+
+
+func _layout_update_button(context: Dictionary, portrait: bool) -> void:
+	if _update_button == null:
+		return
+	var button_width := float(context.get("content_width", MAIN_MENU_BUTTON_WIDTH)) if portrait else 240.0
+	var button_height := _portrait_update_button_height(context) if portrait else 44.0
+	var button_font := int(context.get("button_font_size", 18)) if portrait else HudThemeScript.scaled_font_size(16)
+	var bottom_margin := _portrait_update_button_bottom_margin(context) if portrait else 40.0
+	_update_button.anchor_left = 0.5
+	_update_button.anchor_right = 0.5
+	_update_button.anchor_top = 1.0
+	_update_button.anchor_bottom = 1.0
+	_update_button.offset_left = -button_width * 0.5
+	_update_button.offset_top = -bottom_margin - button_height
+	_update_button.offset_right = button_width * 0.5
+	_update_button.offset_bottom = -bottom_margin
+	_update_button.custom_minimum_size = Vector2(button_width, button_height)
+	_update_button.size = Vector2(button_width, button_height)
+	_update_button.add_theme_font_size_override("font_size", button_font)
+
+
+func _portrait_update_button_height(context: Dictionary) -> float:
+	return float(context.get("primary_button_height", MAIN_MENU_BUTTON_HEIGHT))
+
+
+func _portrait_update_button_bottom_margin(context: Dictionary) -> float:
+	return maxf(float(context.get("page_margin", CORNER_ACTION_BUTTON_BOTTOM_MARGIN)), CORNER_ACTION_BUTTON_BOTTOM_MARGIN)
 
 
 func _create_corner_icon_button(button_name: String, icon_path: String, tip: String, left_offset: float, accent: Color) -> Button:
@@ -1491,6 +1639,7 @@ func _on_update_available(info: Dictionary) -> void:
 		var display_version := str(info.get("display_version", "v%s" % str(info.get("latest_version", ""))))
 		_update_button.text = "发现新版本 %s" % display_version
 		_update_button.visible = true
+		_apply_non_battle_layout()
 		_start_update_button_flash()
 	if was_manual:
 		_show_update_dialog(_available_update)
@@ -1505,6 +1654,7 @@ func _on_no_update(info: Dictionary) -> void:
 	if _update_button != null:
 		_stop_update_button_flash()
 		_update_button.visible = false
+		_apply_non_battle_layout()
 	if was_manual:
 		var display_version := str(info.get("display_version", AppVersionScript.DISPLAY_VERSION))
 		_show_update_status_dialog("已是最新版本", "当前版本：%s\n服务器版本：%s" % [AppVersionScript.DISPLAY_VERSION, display_version])
@@ -1644,11 +1794,12 @@ func _format_about_text() -> String:
 
 func _show_hud_modal(title: String, message: String, actions: Array, preferred_size: Vector2 = Vector2(520, 300), body_bbcode: bool = false) -> void:
 	_hide_hud_modal()
+	_main_menu_touch_button_candidate = null
 	_hud_modal_overlay = Control.new()
 	_hud_modal_overlay.name = HUD_MODAL_OVERLAY_NAME
 	_hud_modal_overlay.layout_mode = 1
 	_hud_modal_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_hud_modal_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_bind_modal_input_guard(_hud_modal_overlay)
 	add_child(_hud_modal_overlay)
 
 	var shade := ColorRect.new()
@@ -1656,7 +1807,7 @@ func _show_hud_modal(title: String, message: String, actions: Array, preferred_s
 	shade.layout_mode = 1
 	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	shade.color = Color(0.0, 0.012, 0.024, 0.60)
-	shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	_bind_modal_input_guard(shade)
 	_hud_modal_overlay.add_child(shade)
 
 	var center := CenterContainer.new()
@@ -1669,6 +1820,7 @@ func _show_hud_modal(title: String, message: String, actions: Array, preferred_s
 	_hud_modal_panel = PanelContainer.new()
 	_hud_modal_panel.name = "HudModalPanel"
 	_hud_modal_panel.set_meta("preferred_size", preferred_size)
+	_bind_modal_input_guard(_hud_modal_panel)
 	_hud_modal_panel.add_theme_stylebox_override("panel", _feedback_panel_style())
 	center.add_child(_hud_modal_panel)
 	_resize_hud_modal_panel()
@@ -1819,6 +1971,7 @@ func _on_feedback_button_pressed() -> void:
 
 
 func _show_feedback_dialog() -> void:
+	_main_menu_touch_button_candidate = null
 	var overlay := get_node_or_null(FEEDBACK_OVERLAY_NAME) as Control
 	if overlay == null:
 		overlay = _create_feedback_overlay()
@@ -1844,14 +1997,14 @@ func _create_feedback_overlay() -> Control:
 	overlay.visible = false
 	overlay.layout_mode = 1
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_bind_modal_input_guard(overlay)
 
 	var shade := ColorRect.new()
 	shade.name = "FeedbackShade"
 	shade.layout_mode = 1
 	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	shade.color = Color(0.0, 0.012, 0.024, 0.68)
-	shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	_bind_modal_input_guard(shade)
 	overlay.add_child(shade)
 
 	var center := CenterContainer.new()
@@ -1863,6 +2016,7 @@ func _create_feedback_overlay() -> Control:
 
 	_feedback_panel = PanelContainer.new()
 	_feedback_panel.name = "FeedbackPanel"
+	_bind_modal_input_guard(_feedback_panel)
 	_feedback_panel.add_theme_stylebox_override("panel", _feedback_panel_style())
 	center.add_child(_feedback_panel)
 
@@ -2446,12 +2600,14 @@ func _ignore_current_update_version() -> void:
 		if _update_button != null:
 			_stop_update_button_flash()
 			_update_button.visible = false
+			_apply_non_battle_layout()
 		return
 	if _update_checker != null:
 		_update_checker.ignore_version(str(_available_update.get("latest_version", "")))
 	if _update_button != null:
 		_stop_update_button_flash()
 		_update_button.visible = false
+		_apply_non_battle_layout()
 
 
 func _on_start_battle() -> void:
@@ -2465,7 +2621,7 @@ func _on_tournament() -> void:
 	if GameManager.has_active_tournament():
 		GameManager.goto_tournament_standings()
 		return
-	GameManager.goto_tournament_deck_select()
+	GameManager.goto_tournament_setup()
 
 
 func _on_deck_manager() -> void:

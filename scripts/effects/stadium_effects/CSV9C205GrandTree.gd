@@ -220,7 +220,7 @@ func _name_matches(evolves_from: String, base_data: CardData) -> bool:
 	var wanted := evolves_from.strip_edges()
 	if wanted == "":
 		return false
-	return wanted == base_data.name or (base_data.name_en != "" and wanted == base_data.name_en)
+	return base_data.matches_rule_identity_name(wanted)
 
 
 func get_description() -> String:

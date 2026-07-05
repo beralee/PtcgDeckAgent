@@ -1,0 +1,49 @@
+{
+	"abilities": [
+		{
+			"name": "正义法则",
+			"text": "只要这只宝可梦在场上，自己的【基础】宝可梦使用的招式，给对手战斗场上的【恶】宝可梦造成的伤害「+30」。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "Shin Nagasawa",
+	"attacks": [
+		{
+			"cost": "CC",
+			"damage": "30",
+			"is_vstar_power": false,
+			"name": "跟进",
+			"text": "选择自己最多2只备战宝可梦，各附着1张牌库中的基本能量。并重洗牌库。"
+		}
+	],
+	"card_index": "094",
+	"card_index_en": "126",
+	"card_type": "Pokemon",
+	"description": "特性: 正义法则\n只要这只宝可梦在场上，自己的【基础】宝可梦使用的招式，给对手战斗场上的【恶】宝可梦造成的伤害「+30」。\n\n 跟进 30\n选择自己最多2只备战宝可梦，各附着1张牌库中的基本能量。并重洗牌库。\n\n",
+	"effect_id": "c87e28f4d502840e3ec98bfc04adc721",
+	"energy_provides": "",
+	"energy_type": "M",
+	"evolves_from": "",
+	"hp": 120,
+	"image_local_path": "user://cards/images/CS6aC/094.png",
+	"image_url": "https://tcg.mik.moe/static/img/CS6aC/094.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "勾帕路翁",
+	"name_en": "Cobalion",
+	"rarity": "C",
+	"regulation_expanded": true,
+	"regulation_mark": "F",
+	"regulation_standard": true,
+	"release_date": "2024-09-20T00:00:00+08:00",
+	"resistance_energy": "G",
+	"resistance_value": "-30",
+	"retreat_cost": 2,
+	"set_code": "CS6aC",
+	"set_code_en": "SIT",
+	"stage": "Basic",
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"yoren_code": "P638"
+}

@@ -158,9 +158,78 @@ func _make_stadium_card(card_name: String = "Test Stadium") -> CardData:
 	return card_data
 
 
+func _load_card_data_from_res(path: String) -> CardData:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return null
+	var text := file.get_as_text()
+	file.close()
+	var parsed: Variant = JSON.parse_string(text)
+	if not (parsed is Dictionary):
+		return null
+	return CardData.from_dict(parsed as Dictionary)
+
+
 func _add_scene_to_tree(scene: Node) -> void:
 	var tree := Engine.get_main_loop() as SceneTree
 	tree.root.add_child(scene)
+
+
+func _wait_test_frames(tree: SceneTree, count: int = 2) -> void:
+	if tree == null:
+		return
+	for _i: int in count:
+		await tree.process_frame
+
+
+func _dialog_box_rect(scene: Control) -> Rect2:
+	var dialog_box := scene.find_child("DialogBox", true, false) as Control
+	if dialog_box == null:
+		return Rect2(Vector2(-1, -1), Vector2.ZERO)
+	var box_size := dialog_box.size
+	if box_size.x <= 0.0:
+		box_size.x = dialog_box.custom_minimum_size.x
+	if box_size.y <= 0.0:
+		box_size.y = dialog_box.custom_minimum_size.y
+	return Rect2(dialog_box.position, box_size)
+
+
+func _dialog_box_global_rect(scene: Control) -> Rect2:
+	var dialog_box := scene.find_child("DialogBox", true, false) as Control
+	if dialog_box == null:
+		return Rect2(Vector2(-1, -1), Vector2.ZERO)
+	var rect := dialog_box.get_global_rect()
+	if rect.size.x <= 0.0:
+		rect.size.x = dialog_box.custom_minimum_size.x
+	if rect.size.y <= 0.0:
+		rect.size.y = dialog_box.custom_minimum_size.y
+	return rect
+
+
+func _tap_slot_for_action_hud(scene: Control, slot_id: String, position: Vector2 = Vector2(200, 620)) -> void:
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.index = 0
+	press.position = position
+	scene.call("_on_slot_input", press, slot_id)
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.index = 0
+	release.position = position
+	scene.call("_on_slot_input", release, slot_id)
+
+
+func _close_action_hud_for_layout_test(scene: Control) -> void:
+	scene.set("_pending_choice", "")
+	var dialog_overlay := scene.find_child("DialogOverlay", true, false) as Control
+	if dialog_overlay != null:
+		dialog_overlay.visible = false
+
+
+func _force_portrait_layout_for_action_hud_test(scene: Control, viewport_size: Vector2) -> void:
+	scene.call("_apply_portrait_layout", viewport_size)
+	scene.set("_responsive_layout_stabilization_frames_remaining", 0)
+	scene.set_process(false)
 
 
 func _portrait_safe_width(scene: Control, viewport_size: Vector2) -> float:
@@ -1663,6 +1732,86 @@ func test_portrait_card_selection_dialog_uses_near_screen_width() -> String:
 	return result
 
 
+func test_landscape_library_search_board_uses_wide_dialog_without_resizing_regular_dialog() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_LANDSCAPE
+	var scene: Control = BattleScene.instantiate()
+	scene.set("_dialog_overlay", scene.find_child("DialogOverlay", true, false))
+	scene.set("_dialog_title", scene.find_child("DialogTitle", true, false))
+	scene.set("_dialog_list", scene.find_child("DialogList", true, false))
+	scene.set("_dialog_confirm", scene.find_child("DialogConfirm", true, false))
+	scene.set("_dialog_cancel", scene.find_child("DialogCancel", true, false))
+	scene.set("_dialog_box", scene.find_child("DialogBox", true, false))
+	scene.set("_dialog_vbox", scene.find_child("DialogVBox", true, false))
+	scene.call("_setup_dialog_gallery")
+
+	var viewport_size := Vector2(1280, 720)
+	scene.call("_apply_landscape_layout", viewport_size)
+	var card := CardInstance.create(_make_basic_pokemon_card("Choice Pokemon"), 0)
+	scene.call("_show_dialog", "Inspect a card", [card], {"presentation": "cards", "allow_cancel": true})
+	scene.call("_apply_landscape_layout", viewport_size)
+	var dialog_box := scene.find_child("DialogBox", true, false) as Control
+	var regular_width := dialog_box.custom_minimum_size.x if dialog_box != null else 0.0
+
+	var search_cards := [
+		CardInstance.create(_make_basic_pokemon_card("Deck Pokemon A"), 0),
+		CardInstance.create(_make_basic_pokemon_card("Deck Pokemon B"), 0),
+	]
+	scene.call("_show_dialog", "Search deck", ["Deck Pokemon A", "Deck Pokemon B"], {
+		"presentation": "cards",
+		"visible_scope": "own_full_deck",
+		"card_items": search_cards,
+		"choice_labels": ["Deck Pokemon A", "Deck Pokemon B"],
+		"card_indices": [0, 1],
+		"source_card": card,
+		"source_kind": "Item",
+		"min_select": 1,
+		"max_select": 1,
+	})
+	scene.call("_apply_landscape_layout", viewport_size)
+	var board := scene.find_child("LibrarySearchBoard", true, false) as Control
+	var board_visible_before_restore := board != null and board.visible
+	var board_width := dialog_box.custom_minimum_size.x if dialog_box != null else 0.0
+	var board_height := board.custom_minimum_size.y if board != null else 0.0
+	var board_dialog_card_size: Vector2 = scene.get("_dialog_card_size")
+	var candidate_height := minf(board_dialog_card_size.y, 176.0)
+	var selected_height := roundf(candidate_height * 0.86)
+	var expected_board_content_height := (candidate_height + 28.0) + 72.0 + (selected_height + 26.0) + 16.0
+	var expected_board_height := minf(
+		expected_board_content_height + clampf(viewport_size.y * 0.05, 28.0, 56.0),
+		maxf(viewport_size.y - 40.0, expected_board_content_height)
+	)
+	var source_panel := board.find_child("LibrarySearchSourcePanel", true, false) as Control if board != null else null
+	var source_holder := board.find_child("LibrarySearchSourceCardHolder", true, false) as Control if board != null else null
+	var source_card_view := source_holder.get_child(0) as Control if source_holder != null and source_holder.get_child_count() > 0 else null
+	var expected_source_width := clampf(viewport_size.x * 0.13, 196.0, 214.0)
+	var candidate_width := minf(board_dialog_card_size.x, 126.0)
+	var expected_source_card_width := minf(candidate_width * 1.32, maxf(expected_source_width - 44.0, candidate_width))
+
+	scene.call("_show_dialog", "Inspect again", [card], {"presentation": "cards", "allow_cancel": true})
+	scene.call("_apply_landscape_layout", viewport_size)
+	var restored_width := dialog_box.custom_minimum_size.x if dialog_box != null else 0.0
+	var expected_regular_width := clampf(viewport_size.x * 0.62, 640.0, 1120.0)
+	var expected_board_width := clampf(viewport_size.x * 0.88, 960.0, maxf(viewport_size.x - 48.0, 640.0))
+
+	var result := run_checks([
+		assert_true(absf(regular_width - expected_regular_width) <= 1.0, "Landscape regular card dialogs should keep the standard width: %.1f ~= %.1f" % [regular_width, expected_regular_width]),
+		assert_true(board_visible_before_restore, "Landscape full-library search should render the board before switching away"),
+		assert_true(absf(board_width - expected_board_width) <= 1.0, "Landscape library board should use the wider dialog width: %.1f ~= %.1f" % [board_width, expected_board_width]),
+		assert_true(absf(board_height - expected_board_height) <= 1.0, "Landscape library board should shrink to content height: %.1f ~= %.1f" % [board_height, expected_board_height]),
+		assert_true(source_panel != null and absf(source_panel.custom_minimum_size.x - expected_source_width) <= 1.0, "Source panel should use the compact right rail width"),
+		assert_true(source_panel != null and source_panel.size_flags_vertical == Control.SIZE_SHRINK_CENTER, "Source panel should shrink vertically around the current card"),
+		assert_true(source_card_view != null and source_card_view.custom_minimum_size.x >= expected_source_card_width - 1.0, "Source card should be enlarged within the compact right rail"),
+		assert_true(source_card_view != null and source_card_view.custom_minimum_size.x > candidate_width, "Source card should be larger than a candidate card"),
+		assert_true(absf(restored_width - expected_regular_width) <= 1.0, "Opening a regular card dialog after the board should restore the standard width"),
+		assert_false(bool(scene.get("_dialog_library_search_board_mode")), "Regular dialog should clear library board mode"),
+	])
+
+	scene.queue_free()
+	GameManager.battle_layout_mode = previous_layout
+	return result
+
+
 func test_android_portrait_modal_overlays_keep_visible_frame_after_relayout() -> String:
 	var previous_layout: String = GameManager.battle_layout_mode
 	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
@@ -1893,10 +2042,35 @@ func test_android_portrait_full_library_effect_search_dialog_has_visible_frame()
 	var dialog_center := scene.find_child("DialogCenter", true, false) as Control
 	var dialog_box := scene.find_child("DialogBox", true, false) as Control
 	var dialog_scroll := scene.get("_dialog_card_scroll") as ScrollContainer
-	var dialog_row := scene.get("_dialog_card_row") as HBoxContainer
+	var board := scene.find_child("LibrarySearchBoard", true, false) as Control
+	var library_scroll := scene.find_child("LibrarySearchLibraryScroll", true, false) as ScrollContainer
+	var library_row := scene.find_child("LibraryCardRow", true, false) as HBoxContainer
+	var selected_row := scene.find_child("LibrarySelectedSlotRow", true, false) as HBoxContainer
+	var button_slot := scene.find_child("LibrarySearchButtonSlot", true, false) as Control
+	var source_panel := scene.find_child("LibrarySearchSourcePanel", true, false) as Control
+	var portrait_source_panel := scene.find_child("LibrarySearchPortraitSourcePanel", true, false) as Control
+	var portrait_source_holder := scene.find_child("LibrarySearchPortraitSourceCardHolder", true, false) as Control
+	var confirm := scene.find_child("DialogConfirm", true, false) as Button
+	var buttons_row := confirm.get_parent() as HBoxContainer if confirm != null else null
 	var expected_width := float(scene.call("_portrait_popup_near_width"))
-	var first_card := dialog_row.get_child(0) as Control if dialog_row != null and dialog_row.get_child_count() > 0 else null
 	var dialog_card_size: Vector2 = scene.get("_dialog_card_size")
+	var expected_candidate_size := dialog_card_size
+	var first_card := library_row.get_child(0) as Control if library_row != null and library_row.get_child_count() > 0 else null
+	var disabled_visible_cards := 0
+	if library_row != null:
+		for child: Node in library_row.get_children():
+			var control := child as Control
+			if control != null and int(control.get_meta("dialog_choice_index", 0)) < 0:
+				disabled_visible_cards += 1
+	var selected_empty_slots := 0
+	var empty_slot_label_font_size := 0
+	if selected_row != null:
+		for child: Node in selected_row.get_children():
+			if bool(child.get_meta("library_search_empty_slot", false)):
+				selected_empty_slots += 1
+				if child.get_child_count() > 0 and child.get_child(0) is Label:
+					empty_slot_label_font_size = int((child.get_child(0) as Label).get_meta("library_search_empty_slot_font_size", 0))
+	var portrait_source_view := portrait_source_holder.get_child(0) as BattleCardView if portrait_source_holder != null and portrait_source_holder.get_child_count() > 0 else null
 	var result := run_checks([
 		assert_eq(str(scene.get("_pending_choice")), "effect_interaction", "Full-library card search should stay in the effect-interaction flow"),
 		assert_true(dialog_overlay != null and dialog_overlay.visible, "Android portrait full-library search should show the shared dialog overlay"),
@@ -1904,9 +2078,736 @@ func test_android_portrait_full_library_effect_search_dialog_has_visible_frame()
 		assert_eq(dialog_overlay.size if dialog_overlay != null else Vector2.ZERO, frame_rect.size, "Portrait dialog overlay should have a non-zero Android portrait frame size"),
 		assert_eq(dialog_center.size if dialog_center != null else Vector2.ZERO, frame_rect.size, "Dialog center should fill the visible portrait overlay frame"),
 		assert_true(dialog_box != null and absf(dialog_box.custom_minimum_size.x - expected_width) < 0.1, "Android portrait search dialog should use the near-screen popup width"),
-		assert_true(dialog_scroll != null and dialog_scroll.visible and dialog_scroll.custom_minimum_size.y >= dialog_card_size.y, "Full-library card gallery should keep a visible card-height scroll lane"),
-		assert_eq(dialog_row.get_child_count() if dialog_row != null else 0, visible_cards.size(), "Full-library search should render every visible deck card, including disabled cards"),
-		assert_eq(first_card.custom_minimum_size if first_card != null else Vector2.ZERO, dialog_card_size, "Rendered search cards should use the active Android portrait dialog card metrics"),
+		assert_true(bool(scene.get("_dialog_library_search_board_mode")), "Android portrait full-library search should use the board HUD"),
+		assert_true(board != null and board.visible, "Android portrait full-library search should show the board HUD"),
+		assert_true(dialog_scroll != null and not dialog_scroll.visible, "Board HUD should hide the legacy card scroll in portrait"),
+		assert_true(library_scroll != null and library_scroll.visible and library_scroll.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_SHOW_NEVER, "Portrait board should use a touch-drag horizontal candidate rail"),
+		assert_eq(library_row.get_child_count() if library_row != null else 0, visible_cards.size(), "Full-library search should render every visible deck card, including disabled cards"),
+		assert_eq(first_card.custom_minimum_size if first_card != null else Vector2.ZERO, expected_candidate_size, "Portrait board candidate cards should use compact mobile metrics"),
+		assert_eq(disabled_visible_cards, card_indices.count(-1), "Disabled visible cards should remain visible but unselectable in portrait board mode"),
+		assert_eq(selected_empty_slots, 1, "Portrait single-pick optional search should show one lower optional slot before selection"),
+		assert_true(empty_slot_label_font_size >= 32, "Portrait optional slot text should be doubled for readability"),
+		assert_true(buttons_row != null and buttons_row.get_parent() == scene.get("_dialog_vbox"), "Portrait board should keep confirm/cancel in the bottom dialog footer"),
+		assert_true(button_slot != null and not button_slot.visible, "Portrait board should hide the landscape instruction-bar button slot"),
+		assert_true(source_panel != null and not source_panel.visible, "Portrait board should hide the landscape source rail"),
+		assert_true(portrait_source_panel != null and portrait_source_panel.visible, "Portrait board should show the played source card at the top"),
+		assert_not_null(portrait_source_view, "Portrait source strip should contain the current source card"),
+	])
+
+	scene.queue_free()
+	GameManager.battle_layout_mode = previous_layout
+	return result
+
+
+func test_portrait_pokemon_action_hud_preview_fits_phone_width() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+	var scene: Control = BattleScene.instantiate()
+	scene.set("_view_player", 0)
+	scene.set("_dialog_overlay", scene.find_child("DialogOverlay", true, false))
+	scene.set("_dialog_title", scene.find_child("DialogTitle", true, false))
+	scene.set("_dialog_list", scene.find_child("DialogList", true, false))
+	scene.set("_dialog_confirm", scene.find_child("DialogConfirm", true, false))
+	scene.set("_dialog_cancel", scene.find_child("DialogCancel", true, false))
+	scene.set("_dialog_box", scene.find_child("DialogBox", true, false))
+	scene.set("_dialog_vbox", scene.find_child("DialogVBox", true, false))
+	scene.call("_setup_dialog_gallery")
+	scene.call("_apply_portrait_layout", Vector2(390, 844))
+
+	var rotom := _make_basic_pokemon_card("Fan Rotom")
+	rotom.abilities = [{
+		"name": "Fan Call",
+		"text": "Search your deck for up to 3 Colorless Pokemon with 100 HP or less and put them into your hand.",
+	}]
+	scene.call("_show_dialog", "Choose action: Fan Rotom", [], {
+		"presentation": "action_hud",
+		"pokemon_card_data": rotom,
+		"action_items": [
+			{
+				"type": "ability",
+				"kind": "Ability",
+				"title": "Fan Call",
+				"body": "Search your deck for up to 3 Colorless Pokemon with 100 HP or less and put them into your hand.",
+				"enabled": true,
+			},
+			{
+				"type": "details",
+				"kind": "Info",
+				"title": "Card details",
+				"body": "Open the card information panel.",
+				"enabled": true,
+			},
+		],
+		"allow_cancel": true,
+	})
+
+	var expected_width := float(scene.call("_portrait_popup_near_width"))
+	var dialog_box := scene.find_child("DialogBox", true, false) as Control
+	var dialog_row := scene.get("_dialog_card_row") as HBoxContainer
+	var preview := dialog_row.find_child("PokemonActionCardPreview", true, false) as Control if dialog_row != null else null
+	var action_options := _action_hud_option_panels(dialog_row)
+	var first_option := action_options[0] if not action_options.is_empty() else null
+	var cancel_button := scene.find_child("DialogCancel", true, false) as Button
+	var row_gap := float(dialog_row.get_theme_constant("separation")) if dialog_row != null else 0.0
+	var side_by_side_width := (
+		(preview.custom_minimum_size.x if preview != null else 0.0)
+		+ row_gap
+		+ (first_option.custom_minimum_size.x if first_option != null else 0.0)
+	)
+	var result := run_checks([
+		assert_true(dialog_box != null and absf(dialog_box.custom_minimum_size.x - expected_width) < 0.1, "Portrait action HUD should use the same near-screen popup width as other battle dialogs"),
+		assert_true(preview != null and first_option != null, "Portrait action HUD should render both the Pokemon preview and action options"),
+		assert_true(side_by_side_width <= expected_width + 0.5, "Portrait action HUD preview and option column should fit phone width: %.1f <= %.1f" % [side_by_side_width, expected_width]),
+		assert_true(dialog_row != null and dialog_row.get_combined_minimum_size().x <= expected_width + 0.5, "Portrait action HUD row should not force the dialog wider than the visible frame: %.1f <= %.1f" % [dialog_row.get_combined_minimum_size().x if dialog_row != null else -1.0, expected_width]),
+		assert_true(cancel_button != null and cancel_button.visible, "Portrait action HUD cancel button should remain available"),
+	])
+
+	scene.queue_free()
+	GameManager.battle_layout_mode = previous_layout
+	return result
+
+
+func test_portrait_action_hud_reopen_resets_stale_overlay_offset() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+	var scene: Control = BattleScene.instantiate()
+	scene.set("_view_player", 0)
+	scene.set("_dialog_overlay", scene.find_child("DialogOverlay", true, false))
+	scene.set("_dialog_title", scene.find_child("DialogTitle", true, false))
+	scene.set("_dialog_list", scene.find_child("DialogList", true, false))
+	scene.set("_dialog_confirm", scene.find_child("DialogConfirm", true, false))
+	scene.set("_dialog_cancel", scene.find_child("DialogCancel", true, false))
+	scene.set("_dialog_box", scene.find_child("DialogBox", true, false))
+	scene.set("_dialog_vbox", scene.find_child("DialogVBox", true, false))
+	scene.call("_setup_dialog_gallery")
+	scene.call("_apply_portrait_layout", Vector2(390, 844))
+
+	var rotom := _make_basic_pokemon_card("Fan Rotom")
+	rotom.abilities = [{
+		"name": "Fan Call",
+		"text": "Search your deck for Colorless Pokemon.",
+	}]
+	scene.call("_show_dialog", "Choose action: Fan Rotom", [], {
+		"presentation": "action_hud",
+		"pokemon_card_data": rotom,
+		"action_items": [
+			{
+				"type": "ability",
+				"kind": "Ability",
+				"title": "Fan Call",
+				"body": "Search your deck for Colorless Pokemon.",
+				"enabled": true,
+			},
+		],
+		"allow_cancel": true,
+	})
+
+	var frame_rect: Rect2 = scene.get("_portrait_layout_frame_rect")
+	var dialog_overlay := scene.find_child("DialogOverlay", true, false) as Control
+	var dialog_center := scene.find_child("DialogCenter", true, false) as Control
+	if dialog_overlay != null:
+		dialog_overlay.position = frame_rect.position + Vector2(0, 260)
+		dialog_overlay.size = frame_rect.size
+	if dialog_center != null:
+		dialog_center.position = Vector2(0, 260)
+		dialog_center.size = frame_rect.size
+
+	var ogerpon := _make_basic_pokemon_card("Teal Mask Ogerpon ex")
+	ogerpon.abilities = [{
+		"name": "Teal Dance",
+		"text": "Attach a Grass Energy from your hand to this Pokemon.",
+	}]
+	scene.call("_show_dialog", "Choose action: Teal Mask Ogerpon ex", [], {
+		"presentation": "action_hud",
+		"pokemon_card_data": ogerpon,
+		"action_items": [
+			{
+				"type": "ability",
+				"kind": "Ability",
+				"title": "Teal Dance",
+				"body": "Attach a Grass Energy from your hand to this Pokemon.",
+				"enabled": true,
+			},
+		],
+		"allow_cancel": true,
+	})
+
+	var result := run_checks([
+		assert_eq(dialog_overlay.position if dialog_overlay != null else Vector2(-1, -1), frame_rect.position, "Reopening a portrait action HUD should reset a stale dialog overlay offset"),
+		assert_eq(dialog_overlay.size if dialog_overlay != null else Vector2.ZERO, frame_rect.size, "Reopening a portrait action HUD should keep the dialog overlay inside the active frame"),
+		assert_eq(dialog_center.position if dialog_center != null else Vector2(-1, -1), Vector2.ZERO, "Reopening a portrait action HUD should reset the dialog center to the overlay origin"),
+		assert_eq(dialog_center.size if dialog_center != null else Vector2.ZERO, frame_rect.size, "Reopening a portrait action HUD should make the dialog center fill the active frame"),
+	])
+
+	scene.queue_free()
+	GameManager.battle_layout_mode = previous_layout
+	return result
+
+
+func test_portrait_action_hud_reopen_recenters_stale_dialog_box() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+	var scene: Control = BattleScene.instantiate()
+	scene.set("_view_player", 0)
+	scene.set("_dialog_overlay", scene.find_child("DialogOverlay", true, false))
+	scene.set("_dialog_title", scene.find_child("DialogTitle", true, false))
+	scene.set("_dialog_list", scene.find_child("DialogList", true, false))
+	scene.set("_dialog_confirm", scene.find_child("DialogConfirm", true, false))
+	scene.set("_dialog_cancel", scene.find_child("DialogCancel", true, false))
+	scene.set("_dialog_box", scene.find_child("DialogBox", true, false))
+	scene.set("_dialog_vbox", scene.find_child("DialogVBox", true, false))
+	scene.call("_setup_dialog_gallery")
+	scene.call("_apply_portrait_layout", Vector2(390, 844))
+
+	var rotom := _make_basic_pokemon_card("Fan Rotom")
+	rotom.abilities = [{
+		"name": "Fan Call",
+		"text": "Search your deck for up to 3 Colorless Pokemon with 100 HP or less and put them into your hand.",
+	}]
+	scene.call("_show_dialog", "Choose action: Fan Rotom", [], {
+		"presentation": "action_hud",
+		"pokemon_card_data": rotom,
+		"action_items": [
+			{
+				"type": "ability",
+				"kind": "Ability",
+				"title": "Fan Call",
+				"body": "Search your deck for up to 3 Colorless Pokemon with 100 HP or less and put them into your hand.",
+				"enabled": true,
+			},
+		],
+		"allow_cancel": true,
+	})
+
+	var frame_rect: Rect2 = scene.get("_portrait_layout_frame_rect")
+	var dialog_center := scene.find_child("DialogCenter", true, false) as Control
+	var dialog_box := scene.find_child("DialogBox", true, false) as Control
+	if dialog_box != null:
+		dialog_box.position = Vector2(0, frame_rect.size.y + 80.0)
+
+	var ogerpon := _make_basic_pokemon_card("Teal Mask Ogerpon ex")
+	ogerpon.abilities = [{
+		"name": "Teal Dance",
+		"text": "Attach a Grass Energy from your hand to this Pokemon. If you attached Energy in this way, draw a card.",
+	}]
+	scene.call("_show_dialog", "Choose action: Teal Mask Ogerpon ex", [], {
+		"presentation": "action_hud",
+		"pokemon_card_data": ogerpon,
+		"action_items": [
+			{
+				"type": "ability",
+				"kind": "Ability",
+				"title": "Teal Dance",
+				"body": "Attach a Grass Energy from your hand to this Pokemon. If you attached Energy in this way, draw a card.",
+				"enabled": true,
+			},
+		],
+		"allow_cancel": true,
+	})
+
+	var box_rect := Rect2(dialog_box.position, dialog_box.size) if dialog_box != null else Rect2(Vector2(-1, -1), Vector2.ZERO)
+	var center_size := dialog_center.size if dialog_center != null else frame_rect.size
+	var expected_y := maxf(roundf((center_size.y - box_rect.size.y) * 0.5), 0.0)
+	var result := run_checks([
+		assert_true(dialog_box != null and dialog_box.position.y >= 0.0, "Reopened portrait action HUD should clear stale offscreen DialogBox y-position"),
+		assert_true(dialog_box != null and absf(dialog_box.position.y - expected_y) <= 1.0, "Reopened portrait action HUD should immediately recenter DialogBox: y %.1f expected %.1f" % [dialog_box.position.y if dialog_box != null else -1.0, expected_y]),
+		assert_true(dialog_box != null and box_rect.end.y <= center_size.y + 0.5, "Reopened portrait action HUD should keep DialogBox inside the visible frame: %s in %s" % [str(box_rect), str(center_size)]),
+	])
+
+	scene.queue_free()
+	GameManager.battle_layout_mode = previous_layout
+	return result
+
+
+func test_android_portrait_repeated_action_hud_sequence_stays_centered_after_effect_dialog() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return "SceneTree is required for repeated Android portrait HUD layout regression"
+	var scene: Control = BattleScene.instantiate()
+	scene.size = Vector2(1600, 900)
+	tree.root.add_child(scene)
+	await _wait_test_frames(tree, 2)
+	scene.call("_ensure_battle_layout_coordinator")
+	var coordinator: Variant = scene.get("_battle_layout_coordinator")
+	if coordinator != null:
+		coordinator.call("apply", Vector2(1600, 900), GameManager.BATTLE_LAYOUT_PORTRAIT, true)
+	await _wait_test_frames(tree, 2)
+
+	var rotom := _make_basic_pokemon_card("Fan Rotom")
+	rotom.abilities = [{
+		"name": "Fan Call",
+		"text": "Search your deck for up to 3 Colorless Pokemon with 100 HP or less and put them into your hand.",
+	}]
+	scene.call("_show_dialog", "Choose action: Fan Rotom", [], {
+		"presentation": "action_hud",
+		"pokemon_card_data": rotom,
+		"action_items": [
+			{
+				"type": "ability",
+				"kind": "Ability",
+				"title": "Fan Call",
+				"body": "Search your deck for up to 3 Colorless Pokemon with 100 HP or less and put them into your hand.",
+				"enabled": true,
+			},
+			{
+				"type": "retreat",
+				"kind": "Retreat",
+				"title": "Retreat",
+				"body": "Switch this Pokemon with one on the Bench.",
+				"enabled": true,
+			},
+		],
+		"allow_cancel": true,
+	})
+	if coordinator != null:
+		coordinator.call("apply", Vector2(1600, 900), GameManager.BATTLE_LAYOUT_PORTRAIT, true)
+	await _wait_test_frames(tree, 2)
+	var first_box_rect := _dialog_box_rect(scene)
+	var dialog_overlay := scene.find_child("DialogOverlay", true, false) as Control
+	if dialog_overlay != null:
+		dialog_overlay.visible = false
+
+	scene.call("_show_dialog", "Attach Energy", ["Grass Energy", "Lightning Energy"], {
+		"allow_cancel": true,
+		"min_select": 1,
+		"max_select": 1,
+	})
+	if coordinator != null:
+		coordinator.call("apply", Vector2(1600, 900), GameManager.BATTLE_LAYOUT_PORTRAIT, true)
+	await _wait_test_frames(tree, 2)
+	if dialog_overlay != null:
+		dialog_overlay.visible = false
+
+	var ogerpon := _make_basic_pokemon_card("Teal Mask Ogerpon ex")
+	ogerpon.abilities = [{
+		"name": "Teal Dance",
+		"text": "Attach a Grass Energy from your hand to this Pokemon. If you attached Energy in this way, draw a card.",
+	}]
+	scene.call("_show_dialog", "Choose action: Teal Mask Ogerpon ex", [], {
+		"presentation": "action_hud",
+		"pokemon_card_data": ogerpon,
+		"attached_energy_summary": "Grass Energy x1",
+		"action_items": [
+			{
+				"type": "ability",
+				"kind": "Ability",
+				"title": "Teal Dance",
+				"body": "Attach a Grass Energy from your hand to this Pokemon. If you attached Energy in this way, draw a card.",
+				"enabled": true,
+			},
+			{
+				"type": "attack",
+				"kind": "Attack",
+				"title": "Myriad Leaf Shower",
+				"body": "This attack does more damage when Energy is attached.",
+				"enabled": true,
+			},
+			{
+				"type": "retreat",
+				"kind": "Retreat",
+				"title": "Retreat",
+				"body": "Switch this Pokemon with one on the Bench.",
+				"enabled": true,
+			},
+		],
+		"allow_cancel": true,
+	})
+	if coordinator != null:
+		coordinator.call("apply", Vector2(1600, 900), GameManager.BATTLE_LAYOUT_PORTRAIT, true)
+	await _wait_test_frames(tree, 3)
+
+	var dialog_center := scene.find_child("DialogCenter", true, false) as Control
+	var final_box_rect := _dialog_box_rect(scene)
+	var center_size := dialog_center.size if dialog_center != null else Vector2.ZERO
+	var expected_y := maxf(roundf((center_size.y - final_box_rect.size.y) * 0.5), 0.0)
+	var result := run_checks([
+		assert_true(first_box_rect.size.y > 0.0, "First portrait action HUD should lay out before the follow-up dialog sequence"),
+		assert_true(center_size.y > 0.0, "Android portrait DialogCenter should have a concrete size after rotated-layout frames"),
+		assert_true(final_box_rect.position.y >= -0.5, "Repeated portrait action HUD should not keep a negative stale y-position"),
+		assert_true(absf(final_box_rect.position.y - expected_y) <= 1.0, "Repeated portrait action HUD should recenter after effect dialog sequence: y %.1f expected %.1f first %.1f" % [final_box_rect.position.y, expected_y, first_box_rect.position.y]),
+		assert_true(final_box_rect.end.y <= center_size.y + 0.5, "Repeated portrait action HUD should stay inside DialogCenter after effect dialog sequence: %s in %s" % [str(final_box_rect), str(center_size)]),
+	])
+
+	scene.queue_free()
+	GameManager.battle_layout_mode = previous_layout
+	return result
+
+
+func test_android_portrait_repeated_action_hud_clamps_tall_content_to_visible_center() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+	var scene: Control = BattleScene.instantiate()
+	scene.set("_view_player", 0)
+	scene.set("_dialog_overlay", scene.find_child("DialogOverlay", true, false))
+	scene.set("_dialog_title", scene.find_child("DialogTitle", true, false))
+	scene.set("_dialog_list", scene.find_child("DialogList", true, false))
+	scene.set("_dialog_confirm", scene.find_child("DialogConfirm", true, false))
+	scene.set("_dialog_cancel", scene.find_child("DialogCancel", true, false))
+	scene.set("_dialog_box", scene.find_child("DialogBox", true, false))
+	scene.set("_dialog_vbox", scene.find_child("DialogVBox", true, false))
+	scene.call("_setup_dialog_gallery")
+	scene.call("_apply_portrait_layout", Vector2(390, 520))
+
+	var rotom := _make_basic_pokemon_card("Fan Rotom")
+	rotom.abilities = [{
+		"name": "Fan Call",
+		"text": "Search your deck for up to 3 Colorless Pokemon with 100 HP or less and put them into your hand.",
+	}]
+	scene.call("_show_dialog", "Choose action: Fan Rotom", [], {
+		"presentation": "action_hud",
+		"pokemon_card_data": rotom,
+		"action_items": [
+			{
+				"type": "ability",
+				"kind": "Ability",
+				"title": "Fan Call",
+				"body": "Search your deck for up to 3 Colorless Pokemon with 100 HP or less and put them into your hand.",
+				"enabled": true,
+			},
+			{
+				"type": "retreat",
+				"kind": "Retreat",
+				"title": "Retreat",
+				"body": "Switch this Pokemon with one on the Bench.",
+				"enabled": true,
+			},
+		],
+		"allow_cancel": true,
+	})
+	var dialog_overlay := scene.find_child("DialogOverlay", true, false) as Control
+	if dialog_overlay != null:
+		dialog_overlay.visible = false
+
+	var ogerpon := _make_basic_pokemon_card("Teal Mask Ogerpon ex")
+	ogerpon.abilities = [{
+		"name": "Teal Dance",
+		"text": "Attach a Grass Energy from your hand to this Pokemon. If you attached Energy in this way, draw a card.",
+	}]
+	var long_body := "Use this action after several touch HUD operations. It is intentionally long enough to keep the action row tall on a phone while the dialog remains scrollable."
+	scene.call("_show_dialog", "Choose action: Teal Mask Ogerpon ex", [], {
+		"presentation": "action_hud",
+		"pokemon_card_data": ogerpon,
+		"attached_energy_summary": "Grass Energy x1\nLightning Energy x1\nFire Energy x1",
+		"action_items": [
+			{"type": "ability", "kind": "Ability", "title": "Teal Dance", "body": long_body, "enabled": true},
+			{"type": "attack", "kind": "Attack", "title": "Leaf Guard", "body": long_body, "enabled": true},
+			{"type": "attack", "kind": "Attack", "title": "Myriad Leaf Shower", "body": long_body, "enabled": true},
+			{"type": "retreat", "kind": "Retreat", "title": "Retreat", "body": long_body, "enabled": true},
+			{"type": "details", "kind": "Info", "title": "Card details", "body": long_body, "enabled": true},
+		],
+		"allow_cancel": true,
+	})
+
+	var dialog_center := scene.find_child("DialogCenter", true, false) as Control
+	var dialog_scroll := scene.get("_dialog_card_scroll") as ScrollContainer
+	var box_rect := _dialog_box_rect(scene)
+	var center_size := dialog_center.size if dialog_center != null else Vector2.ZERO
+	var result := run_checks([
+		assert_true(center_size.y > 0.0, "Constrained Android portrait DialogCenter should have a concrete visible height"),
+		assert_true(box_rect.position.y >= -0.5, "Tall repeated action HUD should not move above the visible center"),
+		assert_true(box_rect.end.y <= center_size.y + 0.5, "Tall repeated action HUD should clamp inside DialogCenter instead of dropping offscreen: %s in %s" % [str(box_rect), str(center_size)]),
+		assert_true(dialog_scroll != null and dialog_scroll.custom_minimum_size.y < 474.0, "Tall repeated action HUD should reduce its internal scroll area instead of growing the outer dialog offscreen"),
+	])
+
+	scene.queue_free()
+	GameManager.battle_layout_mode = previous_layout
+	return result
+
+
+func test_android_portrait_action_huds_with_different_heights_share_same_center() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return "SceneTree is required for portrait HUD center-lock regression"
+	var scene: Control = BattleScene.instantiate()
+	tree.root.add_child(scene)
+	await _wait_test_frames(tree, 2)
+	_force_portrait_layout_for_action_hud_test(scene, Vector2(390, 844))
+	await _wait_test_frames(tree, 1)
+
+	var pokemon := _make_basic_pokemon_card("HUD Center Test Pokemon")
+	pokemon.abilities = [{"name": "First Ability", "text": "Choose an action."}]
+	var action_sets: Array[Dictionary] = [
+		{
+			"label": "short",
+			"summary": "",
+			"actions": [
+				{"type": "ability", "kind": "Ability", "title": "First Ability", "body": "Draw a card.", "enabled": true},
+			],
+		},
+		{
+			"label": "medium",
+			"summary": "Grass Energy x1",
+			"actions": [
+				{"type": "ability", "kind": "Ability", "title": "First Ability", "body": "Draw a card.", "enabled": true},
+				{"type": "attack", "kind": "Attack", "title": "First Attack", "body": "This attack does 90 damage.", "enabled": true},
+				{"type": "retreat", "kind": "Retreat", "title": "Retreat", "body": "Switch this Pokemon with a Benched Pokemon.", "enabled": true},
+			],
+		},
+		{
+			"label": "tall",
+			"summary": "Grass Energy x1\nLightning Energy x1\nFire Energy x1",
+			"actions": [
+				{"type": "ability", "kind": "Ability", "title": "First Ability", "body": "This longer ability text represents cards whose HUD grows after several operations.", "enabled": true},
+				{"type": "attack", "kind": "Attack", "title": "First Attack", "body": "This attack has a longer explanation and should not move the dialog center.", "enabled": true},
+				{"type": "attack", "kind": "Attack", "title": "Second Attack", "body": "Another long attack body forces a different HUD height.", "enabled": true},
+				{"type": "retreat", "kind": "Retreat", "title": "Retreat", "body": "Switch this Pokemon with a Benched Pokemon.", "enabled": true},
+				{"type": "details", "kind": "Info", "title": "Card details", "body": "Open the card information panel.", "enabled": true},
+			],
+		},
+	]
+	var checks: Array[String] = []
+	var measured_heights: Array[float] = []
+	var expected_center_y := 0.0
+	for action_set: Dictionary in action_sets:
+		scene.call("_show_dialog", "Choose action: %s" % pokemon.name, [], {
+			"presentation": "action_hud",
+			"pokemon_card_data": pokemon,
+			"attached_energy_summary": str(action_set.get("summary", "")),
+			"action_items": action_set.get("actions", []),
+			"allow_cancel": true,
+		})
+		scene.call("_apply_portrait_layout", Vector2(390, 844))
+		await _wait_test_frames(tree, 2)
+		var dialog_center := scene.find_child("DialogCenter", true, false) as Control
+		var box_rect := _dialog_box_rect(scene)
+		var center_size := dialog_center.size if dialog_center != null else Vector2.ZERO
+		expected_center_y = center_size.y * 0.5
+		var actual_center_y := box_rect.position.y + box_rect.size.y * 0.5
+		measured_heights.append(box_rect.size.y)
+		checks.append(assert_true(box_rect.size.y > 0.0, "%s action HUD should produce a measurable dialog height" % str(action_set.get("label", ""))))
+		checks.append(assert_true(absf(actual_center_y - expected_center_y) <= 1.0, "%s action HUD center should stay locked to visible screen center: %.1f expected %.1f rect %s" % [str(action_set.get("label", "")), actual_center_y, expected_center_y, str(box_rect)]))
+		var dialog_overlay := scene.find_child("DialogOverlay", true, false) as Control
+		if dialog_overlay != null:
+			dialog_overlay.visible = false
+	var unique_heights := 0
+	var seen_heights: Array[float] = []
+	for measured_height: float in measured_heights:
+		var known := false
+		for seen_height: float in seen_heights:
+			if absf(seen_height - measured_height) <= 1.0:
+				known = true
+				break
+		if not known:
+			seen_heights.append(measured_height)
+			unique_heights += 1
+	checks.append(assert_true(unique_heights >= 2, "Regression should cover action HUDs with different heights: %s" % str(measured_heights)))
+
+	scene.queue_free()
+	GameManager.battle_layout_mode = previous_layout
+	return run_checks(checks)
+
+
+func test_android_portrait_slot_tap_action_hud_center_does_not_drift_after_card_operations() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return "SceneTree is required for portrait slot tap action HUD drift regression"
+	var scene: Control = BattleScene.instantiate()
+	tree.root.add_child(scene)
+	await _wait_test_frames(tree, 2)
+	_force_portrait_layout_for_action_hud_test(scene, Vector2(390, 844))
+	await _wait_test_frames(tree, 1)
+
+	var gsm := GameStateMachine.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 2
+	while gsm.game_state.players.size() < 2:
+		var player := PlayerState.new()
+		player.player_index = gsm.game_state.players.size()
+		gsm.game_state.players.append(player)
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+
+	var active_card := _make_basic_pokemon_card("Portrait HUD Drift Active")
+	active_card.hp = 160
+	active_card.retreat_cost = 1
+	active_card.abilities = [{"name": "Attach Test", "text": "Attach an Energy from your hand to this Pokemon."}]
+	active_card.attacks = [
+		{"name": "Center Bolt", "cost": "L", "damage": "90", "text": "This attack is available from the Active Spot."},
+	]
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(active_card, 0))
+	active.mark_entered_play()
+	active.mark_became_active()
+	var bench := PokemonSlot.new()
+	bench.pokemon_stack.append(CardInstance.create(_make_basic_pokemon_card("Portrait HUD Drift Bench"), 0))
+	bench.mark_entered_play()
+	var opponent := PokemonSlot.new()
+	opponent.pokemon_stack.append(CardInstance.create(_make_basic_pokemon_card("Opponent Active"), 1))
+	gsm.game_state.players[0].active_pokemon = active
+	gsm.game_state.players[0].bench = [bench]
+	gsm.game_state.players[1].active_pokemon = opponent
+	scene.call("_refresh_ui")
+	_force_portrait_layout_for_action_hud_test(scene, Vector2(390, 844))
+	await _wait_test_frames(tree, 2)
+
+	var checks: Array[String] = []
+	var centers: Array[float] = []
+	var expected_centers: Array[float] = []
+	var heights: Array[float] = []
+	var frames: Array[String] = []
+	var scene_rects: Array[String] = []
+	var overlay_rects: Array[String] = []
+
+	var record_open_hud := func(slot_id: String, touch_y: float) -> void:
+		_tap_slot_for_action_hud(scene, slot_id, Vector2(200, touch_y))
+
+	record_open_hud.call("my_active", 620.0)
+	await _wait_test_frames(tree, 4)
+	var dialog_center := scene.find_child("DialogCenter", true, false) as Control
+	var dialog_overlay := scene.find_child("DialogOverlay", true, false) as Control
+	var center_global := dialog_center.get_global_rect() if dialog_center != null else Rect2()
+	var box_global := _dialog_box_global_rect(scene)
+	centers.append(box_global.position.y + box_global.size.y * 0.5)
+	expected_centers.append(center_global.position.y + center_global.size.y * 0.5)
+	heights.append(box_global.size.y)
+	frames.append(str(scene.get("_portrait_layout_frame_rect")))
+	scene_rects.append(str(scene.get_global_rect()))
+	overlay_rects.append(str(dialog_overlay.get_global_rect() if dialog_overlay != null else Rect2()))
+	checks.append(assert_true(scene.get("_pending_choice") == "pokemon_action", "First real slot tap should open the Pokemon action HUD"))
+	_close_action_hud_for_layout_test(scene)
+
+	var lightning_energy := _make_basic_energy_card("Basic Lightning Energy", "L")
+	active.attached_energy.append(CardInstance.create(lightning_energy, 0))
+	scene.call("_refresh_ui")
+	_force_portrait_layout_for_action_hud_test(scene, Vector2(390, 844))
+	await _wait_test_frames(tree, 2)
+	record_open_hud.call("my_active", 620.0)
+	await _wait_test_frames(tree, 4)
+	dialog_center = scene.find_child("DialogCenter", true, false) as Control
+	dialog_overlay = scene.find_child("DialogOverlay", true, false) as Control
+	center_global = dialog_center.get_global_rect() if dialog_center != null else Rect2()
+	box_global = _dialog_box_global_rect(scene)
+	centers.append(box_global.position.y + box_global.size.y * 0.5)
+	expected_centers.append(center_global.position.y + center_global.size.y * 0.5)
+	heights.append(box_global.size.y)
+	frames.append(str(scene.get("_portrait_layout_frame_rect")))
+	scene_rects.append(str(scene.get_global_rect()))
+	overlay_rects.append(str(dialog_overlay.get_global_rect() if dialog_overlay != null else Rect2()))
+	_close_action_hud_for_layout_test(scene)
+
+	gsm.game_state.players[0].active_pokemon = bench
+	gsm.game_state.players[0].bench[0] = active
+	bench.mark_became_active()
+	scene.call("_refresh_ui")
+	_force_portrait_layout_for_action_hud_test(scene, Vector2(390, 844))
+	await _wait_test_frames(tree, 2)
+	record_open_hud.call("my_bench_0", 720.0)
+	await _wait_test_frames(tree, 4)
+	dialog_center = scene.find_child("DialogCenter", true, false) as Control
+	dialog_overlay = scene.find_child("DialogOverlay", true, false) as Control
+	center_global = dialog_center.get_global_rect() if dialog_center != null else Rect2()
+	box_global = _dialog_box_global_rect(scene)
+	centers.append(box_global.position.y + box_global.size.y * 0.5)
+	expected_centers.append(center_global.position.y + center_global.size.y * 0.5)
+	heights.append(box_global.size.y)
+	frames.append(str(scene.get("_portrait_layout_frame_rect")))
+	scene_rects.append(str(scene.get_global_rect()))
+	overlay_rects.append(str(dialog_overlay.get_global_rect() if dialog_overlay != null else Rect2()))
+	_close_action_hud_for_layout_test(scene)
+
+	for index: int in centers.size():
+		checks.append(assert_true(absf(centers[index] - expected_centers[index]) <= 1.0, "Action HUD %d should be centered in the portrait modal rect after real slot input: %.1f expected %.1f heights=%s centers=%s frames=%s scene=%s overlay=%s" % [index, centers[index], expected_centers[index], str(heights), str(centers), str(frames), str(scene_rects), str(overlay_rects)]))
+	for index: int in range(1, centers.size()):
+		checks.append(assert_true(absf(centers[index] - centers[0]) <= 1.0, "Action HUD global center should not drift after card operations: first %.1f current %.1f heights=%s centers=%s expected=%s frames=%s scene=%s overlay=%s" % [centers[0], centers[index], str(heights), str(centers), str(expected_centers), str(frames), str(scene_rects), str(overlay_rects)]))
+
+	scene.queue_free()
+	GameManager.battle_layout_mode = previous_layout
+	return run_checks(checks)
+
+
+func test_android_portrait_marnies_grimmsnarl_action_hud_stays_visible_after_assignment_dialog() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return "SceneTree is required for Marnie's Grimmsnarl action HUD regression"
+	var grimmsnarl := _load_card_data_from_res("res://data/bundled_user/cards/LEN_DRI_136.json")
+	if grimmsnarl == null:
+		return "Marnie's Grimmsnarl ex bundled card is required for this regression"
+	var scene: Control = BattleScene.instantiate()
+	tree.root.add_child(scene)
+	await _wait_test_frames(tree, 2)
+	scene.call("_apply_portrait_layout", Vector2(390, 844))
+	await _wait_test_frames(tree, 1)
+
+	var gsm := GameStateMachine.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 1
+	while gsm.game_state.players.size() < 2:
+		var player := PlayerState.new()
+		player.player_index = gsm.game_state.players.size()
+		gsm.game_state.players.append(player)
+	scene.set("_gsm", gsm)
+	scene.set("_view_player", 0)
+
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(grimmsnarl, 0))
+	active.turn_evolved = 1
+	active.mark_entered_play()
+	active.mark_became_active()
+	active.effects.append({"type": "marnies_grimmsnarl_punk_up_used", "turn": 1})
+	var darkness_energy := _make_basic_energy_card("Basic Darkness Energy", "D")
+	for energy_index: int in 5:
+		active.attached_energy.append(CardInstance.create(darkness_energy, 0))
+	var bench := PokemonSlot.new()
+	bench.pokemon_stack.append(CardInstance.create(_make_basic_pokemon_card("Marnie's Bench Receiver"), 0))
+	gsm.game_state.players[0].active_pokemon = active
+	gsm.game_state.players[0].bench = [bench]
+	gsm.game_state.players[1].active_pokemon = PokemonSlot.new()
+	gsm.game_state.players[1].active_pokemon.pokemon_stack.append(CardInstance.create(_make_basic_pokemon_card("Opponent Active"), 1))
+
+	scene.call("_show_dialog", "Punk Up assignment", [], {
+		"ui_mode": "card_assignment",
+		"source_items": active.attached_energy.duplicate(),
+		"source_labels": ["Basic Darkness Energy", "Basic Darkness Energy", "Basic Darkness Energy", "Basic Darkness Energy", "Basic Darkness Energy"],
+		"source_groups": [{"slot": active, "card_indices": [0, 1, 2, 3, 4], "energy_indices": [0, 1, 2, 3, 4]}],
+		"target_items": [active, bench],
+		"target_labels": ["Marnie's Grimmsnarl ex", "Marnie's Bench Receiver"],
+		"min_select": 0,
+		"max_select": 5,
+		"allow_cancel": true,
+	})
+	scene.call("_apply_portrait_layout", Vector2(390, 844))
+	await _wait_test_frames(tree, 2)
+	var dialog_overlay := scene.find_child("DialogOverlay", true, false) as Control
+	if dialog_overlay != null:
+		dialog_overlay.visible = false
+
+	scene.call("_show_pokemon_action_dialog", 0, active, true)
+	var action_scroll_before_layout := (scene.get("_dialog_card_scroll") as ScrollContainer).custom_minimum_size.y
+	scene.call("_apply_portrait_layout", Vector2(390, 844))
+	await _wait_test_frames(tree, 4)
+
+	var dialog_center := scene.find_child("DialogCenter", true, false) as Control
+	var dialog_box := scene.find_child("DialogBox", true, false) as Control
+	var dialog_vbox := scene.find_child("DialogVBox", true, false) as Control
+	var dialog_buttons := scene.find_child("DialogButtons", true, false) as Control
+	var dialog_scroll := scene.get("_dialog_card_scroll") as ScrollContainer
+	var logical_box_rect := _dialog_box_rect(scene)
+	var logical_center_size := dialog_center.size if dialog_center != null else Vector2.ZERO
+	var logical_center_y := logical_box_rect.position.y + logical_box_rect.size.y * 0.5
+	var expected_logical_center_y := logical_center_size.y * 0.5
+	var global_box := dialog_box.get_global_rect() if dialog_box != null else Rect2()
+	var global_center := dialog_center.get_global_rect() if dialog_center != null else Rect2()
+	var global_vbox := dialog_vbox.get_global_rect() if dialog_vbox != null else Rect2()
+	var global_buttons := dialog_buttons.get_global_rect() if dialog_buttons != null else Rect2()
+	var result := run_checks([
+		assert_true(dialog_box != null and dialog_center != null, "Marnie's Grimmsnarl action HUD should have dialog controls"),
+		assert_true(logical_box_rect.end.y <= logical_center_size.y + 0.5, "Marnie's Grimmsnarl action HUD should stay inside the logical portrait DialogCenter: %s in %s" % [str(logical_box_rect), str(logical_center_size)]),
+		assert_true(absf(logical_center_y - expected_logical_center_y) <= 1.0, "Marnie's Grimmsnarl action HUD center should stay on the visible center line: %.1f expected %.1f rect %s" % [logical_center_y, expected_logical_center_y, str(logical_box_rect)]),
+		assert_true(global_box.position.y >= global_center.position.y - 0.5 and global_box.end.y <= global_center.end.y + 0.5, "Marnie's Grimmsnarl action HUD should stay inside the global DialogCenter after container sorting: %s in %s" % [str(global_box), str(global_center)]),
+		assert_true(global_vbox.position.y >= global_box.position.y - 0.5 and global_vbox.end.y <= global_box.end.y + 0.5, "Marnie's Grimmsnarl action HUD DialogVBox should not visibly overflow the DialogBox: %s in %s" % [str(global_vbox), str(global_box)]),
+		assert_true(global_buttons.position.y >= global_box.position.y - 0.5 and global_buttons.end.y <= global_box.end.y + 0.5, "Marnie's Grimmsnarl action HUD footer buttons should not visibly overflow the DialogBox: %s in %s" % [str(global_buttons), str(global_box)]),
+		assert_true(dialog_scroll != null and absf(dialog_scroll.custom_minimum_size.y - action_scroll_before_layout) <= 1.0, "Portrait relayout should preserve action HUD scroll height instead of resetting it to card-gallery height: %.1f before %.1f" % [dialog_scroll.custom_minimum_size.y if dialog_scroll != null else -1.0, action_scroll_before_layout]),
+		assert_true(dialog_scroll != null and dialog_scroll.custom_minimum_size.y <= logical_box_rect.size.y + 0.5, "Marnie's Grimmsnarl action HUD scroll lane should stay inside the clamped DialogBox after relayout"),
 	])
 
 	scene.queue_free()
@@ -2622,6 +3523,12 @@ func _text_hud_panels(node: Node) -> Array[PanelContainer]:
 	return panels
 
 
+func _action_hud_option_panels(node: Node) -> Array[PanelContainer]:
+	var panels: Array[PanelContainer] = []
+	_collect_action_hud_option_panels(node, panels)
+	return panels
+
+
 func _collect_text_hud_panels(node: Node, panels: Array[PanelContainer]) -> void:
 	if node == null:
 		return
@@ -2629,6 +3536,15 @@ func _collect_text_hud_panels(node: Node, panels: Array[PanelContainer]) -> void
 		panels.append(node as PanelContainer)
 	for child: Node in node.get_children():
 		_collect_text_hud_panels(child, panels)
+
+
+func _collect_action_hud_option_panels(node: Node, panels: Array[PanelContainer]) -> void:
+	if node == null:
+		return
+	if node is PanelContainer and (node as PanelContainer).mouse_filter == Control.MOUSE_FILTER_STOP:
+		panels.append(node as PanelContainer)
+	for child: Node in node.get_children():
+		_collect_action_hud_option_panels(child, panels)
 
 
 func test_portrait_selected_hand_energy_attaches_to_reparented_bench_slot() -> String:
@@ -2921,6 +3837,59 @@ func test_landscape_layout_restores_top_actions_after_portrait() -> String:
 	scene.queue_free()
 	GameManager.battle_layout_mode = previous_layout
 	return result
+
+
+func test_android_redmi_landscape_scene_keeps_side_huds_inside_width_budget() -> String:
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_LANDSCAPE
+	var cases: Array[Dictionary] = [
+		{
+			"label": "Redmi Pad 10.61 16:10 logical landscape",
+			"viewport": Vector2(1600, 960),
+			"max_log_width": 240.0,
+		},
+		{
+			"label": "Redmi Pad SE 8.7 Android landscape",
+			"viewport": Vector2(1340, 800),
+			"max_log_width": 136.0,
+		},
+		{
+			"label": "Compact Android APK 16:10 landscape",
+			"viewport": Vector2(1280, 800),
+			"max_log_width": 128.0,
+		},
+	]
+	var checks: Array[String] = []
+
+	for test_case: Dictionary in cases:
+		var label: String = str(test_case.get("label", "Android landscape"))
+		var viewport_size: Vector2 = test_case.get("viewport", Vector2.ZERO)
+		var max_log_width: float = float(test_case.get("max_log_width", 0.0))
+		var scene: Control = BattleScene.instantiate()
+		scene.call("_apply_landscape_layout", viewport_size)
+
+		var main_area := scene.find_child("MainArea", true, false) as HBoxContainer
+		var center_field := scene.find_child("CenterField", true, false) as Control
+		var right_panel := scene.find_child("RightPanel", true, false) as Control
+		var log_panel := scene.find_child("LogPanel", true, false) as Control
+		var opp_prize_hud := scene.find_child("OppHudLeft", true, false) as Control
+		var my_prize_hud := scene.find_child("MyHudLeft", true, false) as Control
+		var main_min_width := main_area.get_combined_minimum_size().x if main_area != null else 999999.0
+		var log_width := log_panel.custom_minimum_size.x if log_panel != null else 999999.0
+
+		checks.append(assert_true(main_area != null, "%s should have a MainArea container" % label))
+		checks.append(assert_true(center_field != null and center_field.visible, "%s should keep the battlefield visible" % label))
+		checks.append(assert_true(opp_prize_hud != null and opp_prize_hud.visible and opp_prize_hud.custom_minimum_size.y > 0.0, "%s should keep opponent prize HUD visible" % label))
+		checks.append(assert_true(my_prize_hud != null and my_prize_hud.visible and my_prize_hud.custom_minimum_size.y > 0.0, "%s should keep self prize HUD visible" % label))
+		checks.append(assert_true(right_panel != null and right_panel.visible and right_panel.custom_minimum_size.x > 0.0, "%s should keep the right info panel visible" % label))
+		checks.append(assert_true(log_panel != null and log_panel.visible and log_width > 0.0, "%s should keep the operation log panel available" % label))
+		checks.append(assert_true(log_width <= max_log_width + 0.5, "%s should compact the log before it pushes side HUDs out: actual %.1f max %.1f" % [label, log_width, max_log_width]))
+		checks.append(assert_true(main_min_width <= viewport_size.x + 0.5, "%s scene minimum width should fit the Android viewport: actual %.1f viewport %.1f" % [label, main_min_width, viewport_size.x]))
+
+		scene.queue_free()
+
+	GameManager.battle_layout_mode = previous_layout
+	return run_checks(checks)
 
 
 func test_landscape_stadium_card_uses_floating_active_size_overlay() -> String:

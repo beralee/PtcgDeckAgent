@@ -1,0 +1,49 @@
+{
+	"name": "炽焰咆哮虎ex",
+	"card_type": "Pokemon",
+	"mechanic": "ex",
+	"label": "",
+	"description": "特性: 活力竞技\n这只宝可梦使用招式所需能量会减少与对手备战宝可梦数量相同数量的【无】能量。\n\n【火】【无】【无】【无】【无】 烈焰炸弹 240\n令对手的战斗宝可梦陷入【灼伤】状态。\n\n",
+	"yoren_code": "Y1386",
+	"set_code": "CSV7C",
+	"card_index": "047",
+	"set_code_en": "TEF",
+	"card_index_en": "34",
+	"name_en": "Incineroar ex",
+	"artist": "N-DESIGN Inc.",
+	"rarity": "RR",
+	"release_date": "2026-01-16T00:00:00+08:00",
+	"regulation_mark": "H",
+	"effect_id": "9a665c4cff5995deffdc83139ca9b39f",
+	"image_url": "https://tcg.mik.moe/static/img/CSV7C/047.png",
+	"image_local_path": "user://cards/images/CSV7C/047.png",
+	"is_tags": [],
+	"regulation_standard": true,
+	"regulation_expanded": true,
+	"energy_type": "R",
+	"stage": "Stage 2",
+	"hp": 320,
+	"weakness_energy": "W",
+	"weakness_value": "×2",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"evolves_from": "炎热喵",
+	"ancient_trait": "",
+	"attacks": [
+		{
+			"name": "烈焰炸弹",
+			"text": "令对手的战斗宝可梦陷入【灼伤】状态。",
+			"cost": "RCCCC",
+			"damage": "240",
+			"is_vstar_power": false
+		}
+	],
+	"abilities": [
+		{
+			"name": "活力竞技",
+			"text": "这只宝可梦使用招式所需能量会减少与对手备战宝可梦数量相同数量的【无】能量。"
+		}
+	],
+	"energy_provides": ""
+}

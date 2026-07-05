@@ -2,6 +2,7 @@ class_name TestAIHeadlessActionBuilder
 extends TestBase
 
 const AILegalActionBuilderScript = preload("res://scripts/ai/AILegalActionBuilder.gd")
+const AIOpponentScript = preload("res://scripts/ai/AIOpponent.gd")
 const MCTSPlannerScript = preload("res://scripts/ai/MCTSPlanner.gd")
 const AbilityMoveOpponentDamageCountersScript = preload("res://scripts/effects/pokemon_effects/AbilityMoveOpponentDamageCounters.gd")
 const EffectCapturingAromaScript = preload("res://scripts/effects/trainer_effects/EffectCapturingAroma.gd")
@@ -75,6 +76,82 @@ class PreferredAssignmentTargetStrategy extends RefCounted:
 		if str(step.get("id", "")) != "energy_assignments":
 			return 0.0
 		return 1000.0 if item == preferred_target else 10.0
+
+
+class StadiumActionScene extends Control:
+	var _pending_choice: String = ""
+	var trainer_interaction_calls: int = 0
+	var play_stadium_interaction_calls: int = 0
+	var stadium_interaction_calls: int = 0
+	var ability_interaction_calls: int = 0
+	var attack_interaction_calls: int = 0
+	var granted_attack_interaction_calls: int = 0
+	var refresh_success_calls: int = 0
+
+	func _try_play_trainer_with_interaction(_player_index: int, _card: CardInstance) -> bool:
+		trainer_interaction_calls += 1
+		_pending_choice = "effect_interaction"
+		return true
+
+	func _try_play_stadium_with_interaction(_player_index: int, _card: CardInstance) -> bool:
+		play_stadium_interaction_calls += 1
+		_pending_choice = "effect_interaction"
+		return true
+
+	func _try_use_stadium_with_interaction(_player_index: int) -> bool:
+		stadium_interaction_calls += 1
+		_pending_choice = "effect_interaction"
+		return true
+
+	func _try_use_ability_with_interaction(_player_index: int, _slot: PokemonSlot, _ability_index: int) -> bool:
+		ability_interaction_calls += 1
+		_pending_choice = "effect_interaction"
+		return true
+
+	func _try_use_attack_with_interaction(_player_index: int, _slot: PokemonSlot, _attack_index: int) -> bool:
+		attack_interaction_calls += 1
+		_pending_choice = "effect_interaction"
+		return true
+
+	func _try_use_granted_attack_with_interaction(_player_index: int, _slot: PokemonSlot, _granted_attack: Dictionary) -> bool:
+		granted_attack_interaction_calls += 1
+		_pending_choice = "effect_interaction"
+		return true
+
+	func _refresh_ui_after_successful_action(_check_handover: bool = false, _player_index: int = -1, _action_kind: String = "") -> void:
+		refresh_success_calls += 1
+
+
+class ResolvedTargetMarkerEffect extends BaseEffect:
+	func _marker_from_targets(targets: Array) -> String:
+		var ctx: Dictionary = get_interaction_context(targets)
+		return str(ctx.get("marker", ""))
+
+	func execute(_card: CardInstance, targets: Array, state: GameState) -> void:
+		state.shared_turn_flags["ai_direct_trainer_marker"] = _marker_from_targets(targets)
+
+	func execute_on_play(_card: CardInstance, state: GameState, targets: Array = []) -> void:
+		state.shared_turn_flags["ai_direct_play_stadium_marker"] = _marker_from_targets(targets)
+
+	func can_use_ability(_pokemon: PokemonSlot, _state: GameState) -> bool:
+		return true
+
+	func execute_ability(_pokemon: PokemonSlot, _ability_index: int, targets: Array, state: GameState) -> void:
+		state.shared_turn_flags["ai_direct_ability_marker"] = _marker_from_targets(targets)
+
+	func execute_attack(_attacker: PokemonSlot, _defender: PokemonSlot, _attack_index: int, state: GameState) -> void:
+		state.shared_turn_flags["ai_direct_attack_marker"] = _marker_from_targets([get_attack_interaction_context()])
+
+	func get_granted_attacks(_pokemon: PokemonSlot, _state: GameState) -> Array[Dictionary]:
+		return [{
+			"id": "test_resolved_target_attack",
+			"name": "Resolved Target Attack",
+			"cost": "",
+			"damage": "0",
+		}]
+
+	func execute_granted_attack(_attacker: PokemonSlot, _attack_data: Dictionary, state: GameState, targets: Array = []) -> void:
+		state.shared_turn_flags["ai_direct_granted_attack_marker"] = _marker_from_targets(targets)
 
 
 class PreferUnusedAssignmentTargetStrategy extends RefCounted:
@@ -264,6 +341,259 @@ func test_builder_enumerates_use_stadium_effect_actions() -> String:
 	])
 
 
+func test_builder_does_not_auto_whiff_artazon_without_targets() -> String:
+	var gsm := _make_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	player.active_pokemon = _make_slot(CardInstance.create(_make_pokemon_card_data("Lead"), 0))
+	var artazon_id := "c117bea3cc758d46430d6bef11062a56"
+	gsm.effect_processor.register_effect(artazon_id, EffectArtazonScript.new())
+	var artazon := CardInstance.create(_make_trainer_card_data("Artazon", "Stadium", artazon_id), 1)
+	gsm.game_state.stadium_card = artazon
+	gsm.game_state.stadium_owner_index = 1
+	var rule_box_data := _make_pokemon_card_data("Rule Box ex", "P")
+	rule_box_data.mechanic = "ex"
+	var stage_one_data := _make_pokemon_card_data("Stage One", "P")
+	stage_one_data.stage = "Stage 1"
+	player.deck = [
+		CardInstance.create(rule_box_data, 0),
+		CardInstance.create(stage_one_data, 0),
+		CardInstance.create(_make_trainer_card_data("Visible Item", "Item", ""), 0),
+	]
+
+	var action := _find_action(_build_actions(gsm), "use_stadium_effect", func(candidate: Dictionary) -> bool:
+		return candidate.get("card") == artazon
+	)
+
+	return run_checks([
+		assert_true(gsm.can_use_stadium_effect(0), "Artazon should remain player-usable for an explicit empty search"),
+		assert_true(action.is_empty(), "Headless builder should not synthesize an auto-whiff Artazon action without legal targets"),
+	])
+
+
+func test_builder_does_not_offer_artazon_when_bench_is_full() -> String:
+	var gsm := _make_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	player.active_pokemon = _make_slot(CardInstance.create(_make_pokemon_card_data("Lead"), 0))
+	var artazon_id := "c117bea3cc758d46430d6bef11062a56"
+	gsm.effect_processor.register_effect(artazon_id, EffectArtazonScript.new())
+	var artazon := CardInstance.create(_make_trainer_card_data("Artazon", "Stadium", artazon_id), 1)
+	gsm.game_state.stadium_card = artazon
+	gsm.game_state.stadium_owner_index = 1
+	for i: int in 5:
+		player.bench.append(_make_slot(CardInstance.create(_make_pokemon_card_data("Bench %d" % i), 0)))
+	player.deck = [
+		CardInstance.create(_make_pokemon_card_data("Drifloon", "P"), 0),
+	]
+
+	var action := _find_action(_build_actions(gsm), "use_stadium_effect", func(candidate: Dictionary) -> bool:
+		return candidate.get("card") == artazon
+	)
+
+	return run_checks([
+		assert_false(gsm.can_use_stadium_effect(0), "Artazon should be unusable when the current player's Bench is full"),
+		assert_true(action.is_empty(), "Headless builder should not enumerate Artazon when no Bench slot can receive the searched Pokemon"),
+	])
+
+
+func test_ai_uses_resolved_artazon_targets_without_opening_stadium_interaction() -> String:
+	var gsm := _make_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	player.active_pokemon = _make_slot(CardInstance.create(_make_pokemon_card_data("Lead"), 0))
+	var artazon_id := "c117bea3cc758d46430d6bef11062a56"
+	gsm.effect_processor.register_effect(artazon_id, EffectArtazonScript.new())
+	var artazon := CardInstance.create(_make_trainer_card_data("Artazon", "Stadium", artazon_id), 1)
+	gsm.game_state.stadium_card = artazon
+	gsm.game_state.stadium_owner_index = 1
+	var drifloon := CardInstance.create(_make_pokemon_card_data("Drifloon", "P"), 0)
+	player.deck = [drifloon]
+	var scene := StadiumActionScene.new()
+	var ai = AIOpponentScript.new()
+	ai.configure(0, 1)
+
+	var executed: bool = bool(ai.call("_execute_action", scene, gsm, {
+		"kind": "use_stadium_effect",
+		"card": artazon,
+		"targets": [{"artazon_pokemon": [drifloon]}],
+		"requires_interaction": true,
+	}))
+	var benched_name := player.bench[0].get_pokemon_name() if player.bench.size() > 0 else ""
+
+	return run_checks([
+		assert_true(executed, "AI should execute Artazon when the action already contains resolved targets"),
+		assert_eq(scene.stadium_interaction_calls, 0, "AI should not open BattleScene stadium interaction for a resolved Artazon action"),
+		assert_eq(str(scene._pending_choice), "", "Resolved Artazon actions should not leave a pending effect interaction"),
+		assert_eq(player.bench.size(), 1, "Artazon should bench the selected Basic Pokemon"),
+		assert_eq(benched_name, "Drifloon", "Artazon should bench the explicit AI target"),
+		assert_eq(gsm.game_state.stadium_effect_used_turn, gsm.game_state.turn_number, "Resolved Artazon action should spend the Stadium effect for the turn"),
+		assert_eq(scene.refresh_success_calls, 1, "Directly resolved Stadium actions should refresh through the normal success path"),
+	])
+
+
+func test_ai_uses_resolved_trainer_targets_without_opening_interaction() -> String:
+	var gsm := _make_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	player.active_pokemon = _make_slot(CardInstance.create(_make_pokemon_card_data("Lead"), 0))
+	var effect_id := "test_ai_direct_trainer_targets"
+	gsm.effect_processor.register_effect(effect_id, ResolvedTargetMarkerEffect.new())
+	var item := CardInstance.create(_make_trainer_card_data("Resolved Target Item", "Item", effect_id), 0)
+	player.hand = [item]
+	var scene := StadiumActionScene.new()
+	var ai = AIOpponentScript.new()
+	ai.configure(0, 1)
+
+	var executed: bool = bool(ai.call("_execute_action", scene, gsm, {
+		"kind": "play_trainer",
+		"card": item,
+		"targets": [{"marker": "trainer"}],
+		"requires_interaction": true,
+	}))
+
+	return run_checks([
+		assert_true(executed, "AI should execute trainer cards when resolved targets are already present"),
+		assert_eq(scene.trainer_interaction_calls, 0, "AI should not open BattleScene trainer interaction for resolved trainer targets"),
+		assert_eq(str(scene._pending_choice), "", "Resolved trainer actions should not leave a pending effect interaction"),
+		assert_eq(str(gsm.game_state.shared_turn_flags.get("ai_direct_trainer_marker", "")), "trainer", "Trainer effect should receive the explicit AI targets"),
+		assert_true(item in player.discard_pile, "Directly resolved trainer actions should move the played card through the engine path"),
+		assert_eq(scene.refresh_success_calls, 1, "Directly resolved trainer actions should refresh through the normal success path"),
+	])
+
+
+func test_ai_uses_resolved_play_stadium_targets_without_opening_interaction() -> String:
+	var gsm := _make_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	player.active_pokemon = _make_slot(CardInstance.create(_make_pokemon_card_data("Lead"), 0))
+	var effect_id := "test_ai_direct_play_stadium_targets"
+	gsm.effect_processor.register_effect(effect_id, ResolvedTargetMarkerEffect.new())
+	var stadium := CardInstance.create(_make_trainer_card_data("Resolved Target Stadium", "Stadium", effect_id), 0)
+	player.hand = [stadium]
+	var scene := StadiumActionScene.new()
+	var ai = AIOpponentScript.new()
+	ai.configure(0, 1)
+
+	var executed: bool = bool(ai.call("_execute_action", scene, gsm, {
+		"kind": "play_stadium",
+		"card": stadium,
+		"targets": [{"marker": "play_stadium"}],
+		"requires_interaction": true,
+	}))
+
+	return run_checks([
+		assert_true(executed, "AI should play Stadium cards when resolved on-play targets are already present"),
+		assert_eq(scene.play_stadium_interaction_calls, 0, "AI should not open BattleScene play-stadium interaction for resolved on-play targets"),
+		assert_eq(str(scene._pending_choice), "", "Resolved play-stadium actions should not leave a pending effect interaction"),
+		assert_eq(gsm.game_state.stadium_card, stadium, "Directly resolved Stadium actions should enter play through the engine path"),
+		assert_eq(str(gsm.game_state.shared_turn_flags.get("ai_direct_play_stadium_marker", "")), "play_stadium", "Stadium on-play effect should receive the explicit AI targets"),
+		assert_eq(scene.refresh_success_calls, 1, "Directly resolved play-stadium actions should refresh through the normal success path"),
+	])
+
+
+func test_ai_uses_resolved_ability_targets_without_opening_interaction() -> String:
+	var gsm := _make_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	var effect_id := "test_ai_direct_ability_targets"
+	gsm.effect_processor.register_effect(effect_id, ResolvedTargetMarkerEffect.new())
+	var ability_card_data := _make_pokemon_card_data("Resolved Ability Pokemon", "P", effect_id, [{
+		"name": "Resolved Ability",
+		"text": "Choose a target.",
+	}])
+	var active := _make_slot(CardInstance.create(ability_card_data, 0))
+	player.active_pokemon = active
+	var scene := StadiumActionScene.new()
+	var ai = AIOpponentScript.new()
+	ai.configure(0, 1)
+
+	var executed: bool = bool(ai.call("_execute_action", scene, gsm, {
+		"kind": "use_ability",
+		"source_slot": active,
+		"ability_index": 0,
+		"targets": [{"marker": "ability"}],
+		"requires_interaction": true,
+	}))
+
+	return run_checks([
+		assert_true(executed, "AI should use abilities when resolved targets are already present"),
+		assert_eq(scene.ability_interaction_calls, 0, "AI should not open BattleScene ability interaction for resolved ability targets"),
+		assert_eq(str(scene._pending_choice), "", "Resolved ability actions should not leave a pending effect interaction"),
+		assert_eq(str(gsm.game_state.shared_turn_flags.get("ai_direct_ability_marker", "")), "ability", "Ability effect should receive the explicit AI targets"),
+		assert_eq(scene.refresh_success_calls, 1, "Directly resolved ability actions should refresh through the normal success path"),
+	])
+
+
+func test_ai_uses_resolved_attack_targets_without_opening_interaction() -> String:
+	var gsm := _make_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+	var effect_id := "test_ai_direct_attack_targets"
+	gsm.effect_processor.register_attack_effect(effect_id, ResolvedTargetMarkerEffect.new())
+	var attacker_data := _make_pokemon_card_data("Resolved Attack Pokemon", "P", effect_id)
+	attacker_data.attacks = [{
+		"name": "Resolved Attack",
+		"cost": "",
+		"damage": "0",
+		"is_vstar_power": false,
+	}]
+	var attacker := _make_slot(CardInstance.create(attacker_data, 0))
+	player.active_pokemon = attacker
+	opponent.active_pokemon = _make_slot(CardInstance.create(_make_pokemon_card_data("Defender", "P"), 1))
+	var scene := StadiumActionScene.new()
+	var ai = AIOpponentScript.new()
+	ai.configure(0, 1)
+
+	var executed: bool = bool(ai.call("_execute_action", scene, gsm, {
+		"kind": "attack",
+		"source_slot": attacker,
+		"attack_index": 0,
+		"targets": [{"marker": "attack"}],
+		"requires_interaction": true,
+	}))
+
+	return run_checks([
+		assert_true(executed, "AI should attack when resolved attack targets are already present"),
+		assert_eq(scene.attack_interaction_calls, 0, "AI should not open BattleScene attack interaction for resolved attack targets"),
+		assert_eq(str(scene._pending_choice), "", "Resolved attack actions should not leave a pending effect interaction"),
+		assert_eq(str(gsm.game_state.shared_turn_flags.get("ai_direct_attack_marker", "")), "attack", "Attack effect should receive the explicit AI targets"),
+		assert_eq(scene.refresh_success_calls, 1, "Directly resolved attack actions should refresh through the normal success path"),
+	])
+
+
+func test_ai_uses_resolved_granted_attack_targets_without_opening_interaction() -> String:
+	var gsm := _make_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+	var effect_id := "test_ai_direct_granted_attack_targets"
+	gsm.effect_processor.register_effect(effect_id, ResolvedTargetMarkerEffect.new())
+	var attacker := _make_slot(CardInstance.create(_make_pokemon_card_data("Resolved Granted Attack Pokemon", "P"), 0))
+	var tool := CardInstance.create(_make_trainer_card_data("Resolved Target Tool", "Tool", effect_id), 0)
+	attacker.attached_tool = tool
+	player.active_pokemon = attacker
+	opponent.active_pokemon = _make_slot(CardInstance.create(_make_pokemon_card_data("Defender", "P"), 1))
+	var granted_attack := {
+		"id": "test_resolved_target_attack",
+		"name": "Resolved Target Attack",
+		"cost": "",
+		"damage": "0",
+	}
+	var scene := StadiumActionScene.new()
+	var ai = AIOpponentScript.new()
+	ai.configure(0, 1)
+
+	var executed: bool = bool(ai.call("_execute_action", scene, gsm, {
+		"kind": "granted_attack",
+		"source_slot": attacker,
+		"granted_attack_data": granted_attack,
+		"targets": [{"marker": "granted_attack"}],
+		"requires_interaction": true,
+	}))
+
+	return run_checks([
+		assert_true(executed, "AI should use granted attacks when resolved targets are already present"),
+		assert_eq(scene.granted_attack_interaction_calls, 0, "AI should not open BattleScene granted-attack interaction for resolved targets"),
+		assert_eq(str(scene._pending_choice), "", "Resolved granted-attack actions should not leave a pending effect interaction"),
+		assert_eq(str(gsm.game_state.shared_turn_flags.get("ai_direct_granted_attack_marker", "")), "granted_attack", "Granted attack effect should receive the explicit AI targets"),
+		assert_eq(scene.refresh_success_calls, 1, "Directly resolved granted attacks should refresh through the normal success path"),
+	])
+
+
 func test_builder_treats_effective_hp_tool_holder_as_live() -> String:
 	var gsm := _make_manual_gsm()
 	var player: PlayerState = gsm.game_state.players[0]
@@ -321,6 +651,38 @@ func test_builder_exposes_scream_tail_second_attack_interaction() -> String:
 	return run_checks([
 		assert_false(action.is_empty(), "Scream Tail's second attack should be visible as a legal AI action"),
 		assert_true(bool(action.get("requires_interaction", false)), "Roaring Scream must expose the target_pokemon interaction instead of becoming a no-target attack"),
+	])
+
+
+func test_builder_exposes_minccino_call_for_family_attack_interaction() -> String:
+	var gsm := _make_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+	var minccino_cd: CardData = CardDatabase.get_card("CS6bC", "117")
+	gsm.effect_processor.register_pokemon_card(minccino_cd)
+	var minccino := _make_slot(CardInstance.create(minccino_cd, 0))
+	minccino.attached_energy = [CardInstance.create(_make_energy_card_data("Double Turbo Energy", "C"), 0)]
+	player.active_pokemon = minccino
+	opponent.active_pokemon = _make_slot(CardInstance.create(_make_pokemon_card_data("Defender", "F"), 1))
+	player.deck = [
+		CardInstance.create(_make_pokemon_card_data("Basic Search A", "C"), 0),
+		CardInstance.create(_make_trainer_card_data("Visible Item", "Item", ""), 0),
+		CardInstance.create(_make_pokemon_card_data("Basic Search B", "L"), 0),
+	]
+
+	var first_action := _find_action(_build_actions(gsm), "attack", func(candidate: Dictionary) -> bool:
+		return int(candidate.get("attack_index", -1)) == 0
+	)
+	var second_action := _find_action(_build_actions(gsm), "attack", func(candidate: Dictionary) -> bool:
+		return int(candidate.get("attack_index", -1)) == 1
+	)
+	return run_checks([
+		assert_not_null(minccino_cd, "CS6bC_117 Minccino should exist in the card database"),
+		assert_false(first_action.is_empty(), "Minccino's Call for Family should be visible as a legal AI action"),
+		assert_eq(str(first_action.get("attack_name", "")), "呼朋引伴", "AI action should preserve the localized attack name"),
+		assert_true(bool(first_action.get("requires_interaction", false)), "Call for Family must expose the search_basic_pokemon interaction"),
+		assert_false(second_action.is_empty(), "Minccino's second attack should remain visible as a legal AI action"),
+		assert_false(bool(second_action.get("requires_interaction", true)), "Minccino's damage-only second attack should not inherit Call for Family interaction"),
 	])
 
 

@@ -25,7 +25,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		VISIBLE_SCOPE_OWN_FULL_DECK,
 		0,
 		mini(3, items.size()),
-		{"allow_cancel": true}
+		{"allow_cancel": true, "force_confirm": true}
 	)]
 
 

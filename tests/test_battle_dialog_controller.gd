@@ -29,18 +29,25 @@ class DialogSceneStub:
 	var _dialog_card_page_size := 0
 	var _dialog_card_mode := false
 	var _dialog_assignment_mode := false
+	var _dialog_library_search_board_mode := false
+	var _dialog_library_search_board: Control = null
+	var _dialog_buttons_original_parent: Node = null
+	var _dialog_buttons_original_index := -1
 	var _dialog_assignment_selected_source_index := -1
 	var _dialog_assignment_assignments: Array[Dictionary] = []
 	var _dialog_card_size := Vector2(92, 129)
+	var _active_battle_layout_mode := ""
 	var _modal_input_generation: int = 0
 	var _modal_input_origin_position: Vector2 = Vector2(-1.0, -1.0)
 	var _dialog_modal_transition_depth: int = 0
 	var _dialog_modal_transition_generation: int = -1
 	var _dialog_modal_transition_origin_position: Vector2 = Vector2(-1.0, -1.0)
+	var _dialog_modal_transition_origin_source: String = ""
 	var _dialog_generation: int = 0
 	var _dialog_requires_fresh_action_input: bool = false
 	var _dialog_user_input_generation: int = -1
 	var _dialog_user_input_position: Vector2 = Vector2(-1.0, -1.0)
+	var _dialog_user_input_source: String = ""
 	var _dialog_confirm_input_generation: int = -1
 	var _dialog_confirm_input_position: Vector2 = Vector2(-1.0, -1.0)
 	var _dialog_cancel_input_generation: int = -1
@@ -53,6 +60,8 @@ class DialogSceneStub:
 	var _last_dialog_choice: PackedInt32Array = PackedInt32Array()
 	var _last_effect_choice: PackedInt32Array = PackedInt32Array()
 	var _cancelled_card_gallery_drag_sources: Array[String] = []
+	var _card_gallery_drag_click_suppressed := false
+	var _screen_position_to_battle_local_offset := Vector2.ZERO
 
 	func _init() -> void:
 		add_child(_dialog_overlay)
@@ -120,6 +129,24 @@ class DialogSceneStub:
 	func _cancel_card_gallery_drag_scroll(source: String = "cancel") -> void:
 		_cancelled_card_gallery_drag_sources.append(source)
 
+	func _set_card_gallery_drag_scroll_active(scroll: ScrollContainer, active: bool) -> void:
+		if scroll != null:
+			scroll.set_meta("card_gallery_drag_scroll_active", active)
+
+	func _configure_card_gallery_drag_scroll(scroll: ScrollContainer, row: Control = null, source: String = "card_gallery") -> void:
+		if scroll == null:
+			return
+		scroll.set_meta("card_gallery_drag_scroll_enabled", true)
+		scroll.set_meta("card_gallery_drag_source", source)
+		if row != null:
+			row.set_meta("card_gallery_drag_row", true)
+
+	func _is_card_gallery_drag_click_suppressed() -> bool:
+		return _card_gallery_drag_click_suppressed
+
+	func _screen_position_to_battle_local(screen_position: Vector2) -> Vector2:
+		return screen_position + _screen_position_to_battle_local_offset
+
 
 class FakeStadiumActionEffect extends BaseEffect:
 	func can_use_as_stadium_action(_card: CardInstance, _state: GameState) -> bool:
@@ -158,6 +185,111 @@ func _card_row_names(row: HBoxContainer) -> Array[String]:
 			continue
 		names.append(card_view.card_instance.card_data.name)
 	return names
+
+
+func _collect_battle_card_views(node: Node, views: Array[BattleCardView]) -> void:
+	if node is BattleCardView:
+		views.append(node as BattleCardView)
+	for child: Node in node.get_children():
+		_collect_battle_card_views(child, views)
+
+
+func _battle_card_views_under(node: Node) -> Array[BattleCardView]:
+	var views: Array[BattleCardView] = []
+	if node != null:
+		_collect_battle_card_views(node, views)
+	return views
+
+
+func _candidate_slot_for_view(card_view: BattleCardView) -> Control:
+	if card_view == null:
+		return null
+	var parent := card_view.get_parent()
+	while parent != null:
+		if parent is Control and (bool((parent as Control).get_meta("library_search_candidate_slot", false)) or str(parent.name) == "LibrarySearchCandidateSlot"):
+			return parent as Control
+		parent = parent.get_parent()
+	return null
+
+
+func _emit_candidate_slot_tap(slot: Control) -> void:
+	if slot == null:
+		return
+	var center := slot.get_global_rect().get_center()
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = center
+	press.global_position = center
+	slot.gui_input.emit(press)
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = center
+	release.global_position = center
+	slot.gui_input.emit(release)
+
+
+func _screen_touch(position: Vector2, pressed: bool) -> InputEventScreenTouch:
+	var event := InputEventScreenTouch.new()
+	event.index = 0
+	event.position = position
+	event.pressed = pressed
+	return event
+
+
+func _screen_drag(position: Vector2, relative: Vector2) -> InputEventScreenDrag:
+	var event := InputEventScreenDrag.new()
+	event.index = 0
+	event.position = position
+	event.relative = relative
+	return event
+
+
+func _mouse_button(position: Vector2, pressed: bool) -> InputEventMouseButton:
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.pressed = pressed
+	event.position = position
+	event.global_position = position
+	return event
+
+
+func _prepare_library_search_touch_rects(library_scroll: ScrollContainer, library_row: HBoxContainer, candidate_slot: Control) -> Vector2:
+	library_scroll.position = Vector2(200, 300)
+	library_scroll.size = Vector2(640, 280)
+	library_scroll.custom_minimum_size = library_scroll.size
+	library_row.position = Vector2.ZERO
+	library_row.size = Vector2(640, 260)
+	library_row.custom_minimum_size = library_row.size
+	candidate_slot.position = Vector2.ZERO
+	candidate_slot.size = Vector2(180, 252)
+	candidate_slot.custom_minimum_size = candidate_slot.size
+	return candidate_slot.get_global_rect().get_center()
+
+
+func _collect_library_empty_slots(node: Node, slots: Array[PanelContainer]) -> void:
+	if node is PanelContainer:
+		var panel := node as PanelContainer
+		if bool(panel.get_meta("library_search_empty_slot", false)) or panel.name == "LibrarySearchEmptySlot":
+			slots.append(panel)
+	for child: Node in node.get_children():
+		_collect_library_empty_slots(child, slots)
+
+
+func _library_empty_slots_under(node: Node) -> Array[PanelContainer]:
+	var slots: Array[PanelContainer] = []
+	if node != null:
+		_collect_library_empty_slots(node, slots)
+	return slots
+
+
+func _library_empty_slot_labels_under(node: Node) -> Array[String]:
+	var labels: Array[String] = []
+	for panel: PanelContainer in _library_empty_slots_under(node):
+		var label := panel.get_child(0) as Label if panel.get_child_count() > 0 else null
+		labels.append(label.text if label != null else "")
+	return labels
 
 
 func _text_hud_panels(row: HBoxContainer) -> Array[PanelContainer]:
@@ -488,6 +620,535 @@ func test_card_dialog_height_does_not_accumulate_across_repeated_dialogs() -> St
 	var result := run_checks([
 		assert_true(second_min_height > 0.0, "Repeated card dialogs should keep a concrete compact content height"),
 		assert_eq(second_min_height, first_min_height, "Repeated card dialogs should not accumulate custom dialog-box height"),
+	])
+	scene.free()
+	return result
+
+
+func test_full_library_search_uses_layout_specific_board() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var landscape_scene := DialogSceneStub.new()
+	landscape_scene.set("_active_battle_layout_mode", "landscape")
+	var portrait_scene := DialogSceneStub.new()
+	portrait_scene.set("_active_battle_layout_mode", "portrait")
+	var cards := [_make_test_card("Basic A"), _make_test_card("Basic B")]
+	var labels := ["Basic A", "Basic B"]
+	var data := {
+		"presentation": "cards",
+		"visible_scope": "own_full_deck",
+		"card_items": cards,
+		"choice_labels": labels,
+		"card_indices": [0, 1],
+		"min_select": 1,
+		"max_select": 1,
+	}
+
+	controller.call("show_dialog", landscape_scene, "Search deck", labels, data)
+	controller.call("show_dialog", portrait_scene, "Search deck", labels, data)
+
+	var landscape_board := landscape_scene.find_child("LibrarySearchBoard", true, false) as Control
+	var portrait_board := portrait_scene.find_child("LibrarySearchBoard", true, false) as Control
+	var landscape_button_slot := landscape_scene.find_child("LibrarySearchButtonSlot", true, false) as HBoxContainer
+	var portrait_button_slot := portrait_scene.find_child("LibrarySearchButtonSlot", true, false) as HBoxContainer
+	var landscape_buttons := landscape_scene._dialog_confirm.get_parent() as HBoxContainer
+	var portrait_buttons := portrait_scene._dialog_confirm.get_parent() as HBoxContainer
+	var landscape_source_panel := landscape_scene.find_child("LibrarySearchSourcePanel", true, false) as Control
+	var portrait_source_panel := portrait_scene.find_child("LibrarySearchSourcePanel", true, false) as Control
+	var result := run_checks([
+		assert_true(bool(landscape_scene.get("_dialog_library_search_board_mode")), "Landscape full-library search should enter the board mode"),
+		assert_true(bool(landscape_scene.get("_dialog_card_mode")), "Board mode should still use card-dialog selection state"),
+		assert_not_null(landscape_board, "Board mode should create the LibrarySearchBoard node"),
+		assert_true(landscape_board != null and landscape_board.visible, "Landscape board should be visible"),
+		assert_false(landscape_scene._dialog_card_scroll.visible, "Board mode should hide the legacy card scroll"),
+		assert_true(landscape_buttons != null and landscape_button_slot != null and landscape_buttons.get_parent() == landscape_button_slot, "Landscape board should keep confirm/cancel in the right-side instruction bar"),
+		assert_true(landscape_source_panel != null and landscape_source_panel.visible, "Landscape board should keep the right-side source-card rail"),
+		assert_true(bool(portrait_scene.get("_dialog_library_search_board_mode")), "Portrait full-library search should also enter board mode"),
+		assert_true(bool(portrait_scene.get("_dialog_card_mode")), "Portrait board mode should still use card-dialog selection state"),
+		assert_not_null(portrait_board, "Portrait board mode should create the LibrarySearchBoard node"),
+		assert_true(portrait_board != null and portrait_board.visible, "Portrait board should be visible"),
+		assert_false(portrait_scene._dialog_card_scroll.visible, "Portrait board mode should hide the legacy card scroll"),
+		assert_true(portrait_buttons != null and portrait_buttons.get_parent() == portrait_scene._dialog_vbox, "Portrait board should leave confirm/cancel in the bottom dialog footer"),
+		assert_eq(portrait_buttons.size_flags_horizontal if portrait_buttons != null else -1, Control.SIZE_EXPAND_FILL, "Portrait footer buttons should fill the bottom action row"),
+		assert_true(portrait_button_slot != null and not portrait_button_slot.visible, "Portrait board should not reserve the landscape instruction-bar button slot"),
+		assert_true(portrait_source_panel != null and not portrait_source_panel.visible, "Portrait board should hide the landscape source-card rail"),
+	])
+	landscape_scene.free()
+	portrait_scene.free()
+	return result
+
+
+func test_landscape_library_search_restores_footer_button_layout_for_next_dialog() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var scene := DialogSceneStub.new()
+	scene.set("_active_battle_layout_mode", "landscape")
+	var cards := [_make_test_card("Basic A"), _make_test_card("Basic B")]
+	var labels := ["Basic A", "Basic B"]
+
+	controller.call("show_dialog", scene, "Search deck", labels, {
+		"presentation": "cards",
+		"visible_scope": "own_full_deck",
+		"card_items": cards,
+		"choice_labels": labels,
+		"card_indices": [0, 1],
+		"min_select": 1,
+		"max_select": 2,
+		"allow_cancel": true,
+	})
+	var button_slot := scene.find_child("LibrarySearchButtonSlot", true, false) as HBoxContainer
+	var board_buttons := scene._dialog_confirm.get_parent() as HBoxContainer
+	var board_buttons_in_instruction_bar := board_buttons != null and button_slot != null and board_buttons.get_parent() == button_slot
+	var board_buttons_shrink_end := board_buttons != null and board_buttons.size_flags_horizontal == Control.SIZE_SHRINK_END
+
+	controller.call("show_dialog", scene, "Choose many", ["One", "Two"], {
+		"presentation": "list",
+		"min_select": 1,
+		"max_select": 2,
+		"allow_cancel": true,
+	})
+	var restored_buttons := scene._dialog_confirm.get_parent() as HBoxContainer
+	var board := scene.find_child("LibrarySearchBoard", true, false) as Control
+
+	var result := run_checks([
+		assert_true(board_buttons_in_instruction_bar, "Landscape library search should place footer buttons in the instruction bar"),
+		assert_true(board_buttons_shrink_end, "Instruction-bar buttons should keep the compact right-side layout"),
+		assert_true(restored_buttons != null and restored_buttons.get_parent() == scene._dialog_vbox, "The next dialog should move footer buttons back into DialogVBox"),
+		assert_eq(restored_buttons.size_flags_horizontal if restored_buttons != null else -1, Control.SIZE_EXPAND_FILL, "Restored footer buttons should fill the normal dialog footer instead of staying at the lower-right"),
+		assert_eq(restored_buttons.alignment if restored_buttons != null else -1, BoxContainer.ALIGNMENT_CENTER, "Restored footer buttons should be centered in the normal dialog footer"),
+		assert_true(scene._dialog_confirm.visible and scene._dialog_cancel.visible, "The next multi-select skill HUD should expose both confirm and cancel buttons"),
+		assert_true(board == null or not board.visible, "The old landscape search board should be hidden after switching dialogs"),
+	])
+	scene.free()
+	return result
+
+
+func test_landscape_library_search_board_hides_horizontal_scrollbars_and_uses_drag() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var scene := DialogSceneStub.new()
+	scene.set("_active_battle_layout_mode", "landscape")
+	var cards := [_make_test_card("Basic A"), _make_test_card("Basic B"), _make_test_card("Basic C")]
+	var labels := ["Basic A", "Basic B", "Basic C"]
+
+	controller.call("show_dialog", scene, "Search deck", labels, {
+		"presentation": "cards",
+		"visible_scope": "own_full_deck",
+		"card_items": cards,
+		"choice_labels": labels,
+		"card_indices": [0, 1, 2],
+		"min_select": 1,
+		"max_select": 2,
+	})
+	var library_scroll := scene.find_child("LibrarySearchLibraryScroll", true, false) as ScrollContainer
+	var selected_scroll := scene.find_child("LibrarySearchSelectedScroll", true, false) as ScrollContainer
+	var library_row := scene.find_child("LibraryCardRow", true, false) as HBoxContainer
+	var selected_row := scene.find_child("LibrarySelectedSlotRow", true, false) as HBoxContainer
+
+	var result := run_checks([
+		assert_eq(library_scroll.horizontal_scroll_mode if library_scroll != null else -1, ScrollContainer.SCROLL_MODE_SHOW_NEVER, "Library candidate rail should hide the native horizontal scrollbar"),
+		assert_eq(selected_scroll.horizontal_scroll_mode if selected_scroll != null else -1, ScrollContainer.SCROLL_MODE_SHOW_NEVER, "Selected-card rail should hide the native horizontal scrollbar"),
+		assert_eq(library_scroll.vertical_scroll_mode if library_scroll != null else -1, ScrollContainer.SCROLL_MODE_DISABLED, "Library candidate rail should stay horizontal-only"),
+		assert_eq(selected_scroll.vertical_scroll_mode if selected_scroll != null else -1, ScrollContainer.SCROLL_MODE_DISABLED, "Selected-card rail should stay horizontal-only"),
+		assert_true(library_scroll != null and bool(library_scroll.get_meta("card_gallery_drag_scroll_active", false)), "Library candidate rail should keep drag scrolling active"),
+		assert_true(selected_scroll != null and bool(selected_scroll.get_meta("card_gallery_drag_scroll_active", false)), "Selected-card rail should keep drag scrolling active"),
+		assert_true(library_scroll != null and str(library_scroll.get_meta("card_gallery_drag_source", "")) == "library_search_candidates", "Library candidate rail should use the library drag source"),
+		assert_true(selected_scroll != null and str(selected_scroll.get_meta("card_gallery_drag_source", "")) == "library_search_selected", "Selected-card rail should use the selected drag source"),
+		assert_true(library_row != null and bool(library_row.get_meta("card_gallery_drag_row", false)), "Library candidate row should be registered for drag scrolling"),
+		assert_true(selected_row != null and bool(selected_row.get_meta("card_gallery_drag_row", false)), "Selected-card row should be registered for drag scrolling"),
+	])
+	scene.free()
+	return result
+
+
+func test_library_search_board_single_select_waits_for_confirm() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var scene := DialogSceneStub.new()
+	scene.set("_active_battle_layout_mode", "landscape")
+	var cards := [_make_test_card("Basic A"), _make_test_card("Basic B")]
+	var labels := ["Basic A", "Basic B"]
+
+	controller.call("show_dialog", scene, "Search deck", labels, {
+		"presentation": "cards",
+		"visible_scope": "own_full_deck",
+		"card_items": cards,
+		"choice_labels": labels,
+		"card_indices": [0, 1],
+		"min_select": 1,
+		"max_select": 1,
+	})
+	controller.call("on_library_search_candidate_pressed", scene, 1)
+	var selected_after_click: Array = (scene.get("_dialog_card_selected_indices") as Array).duplicate()
+	var selected_row := scene.find_child("LibrarySelectedSlotRow", true, false) as HBoxContainer
+	var selected_views := _battle_card_views_under(selected_row)
+	controller.call("on_dialog_confirm", scene)
+
+	var result := run_checks([
+		assert_eq(selected_after_click, [1], "Clicking a landscape board candidate should update selected real indices"),
+		assert_eq(Array(scene._last_dialog_choice), [1], "Confirm should submit the selected real index"),
+		assert_eq(selected_views.size(), 1, "Selected card should be copied into the lower selected slot row"),
+		assert_eq(Array(scene._last_effect_choice), [], "Candidate click should not auto-resolve the effect interaction"),
+	])
+	scene.free()
+	return result
+
+
+func test_library_search_board_confirm_returns_real_index_from_card_indices() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var scene := DialogSceneStub.new()
+	scene.set("_active_battle_layout_mode", "landscape")
+	var cards := [_make_test_card("Visible disabled"), _make_test_card("Visible legal")]
+	var labels := ["Visible disabled", "Visible legal"]
+
+	controller.call("show_dialog", scene, "Search deck", labels, {
+		"presentation": "cards",
+		"visible_scope": "own_full_deck",
+		"card_items": cards,
+		"choice_labels": labels,
+		"card_indices": [-1, 4],
+		"min_select": 1,
+		"max_select": 1,
+	})
+	controller.call("on_library_search_candidate_pressed", scene, -1)
+	var selected_after_disabled: Array = (scene.get("_dialog_card_selected_indices") as Array).duplicate()
+	controller.call("on_library_search_candidate_pressed", scene, 4)
+	controller.call("on_dialog_confirm", scene)
+
+	var result := run_checks([
+		assert_eq(selected_after_disabled, [], "Disabled visible cards should not enter the board selection"),
+		assert_eq(Array(scene._last_dialog_choice), [4], "Board confirm should return the real legal index, not the visible index"),
+	])
+	scene.free()
+	return result
+
+
+func test_library_search_board_selected_slots_match_max_select() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var scene := DialogSceneStub.new()
+	scene.set("_active_battle_layout_mode", "landscape")
+	var cards := [_make_test_card("Energy A"), _make_test_card("Energy B"), _make_test_card("Energy C")]
+	var labels := ["Energy A", "Energy B", "Energy C"]
+
+	controller.call("show_dialog", scene, "Choose up to 2 Energy", labels, {
+		"presentation": "cards",
+		"visible_scope": "own_full_deck",
+		"card_items": cards,
+		"choice_labels": labels,
+		"card_indices": [0, 1, 2],
+		"min_select": 0,
+		"max_select": 2,
+		"allow_cancel": true,
+	})
+	var selected_row := scene.find_child("LibrarySelectedSlotRow", true, false) as HBoxContainer
+	var initial_empty_slots := _library_empty_slots_under(selected_row).size()
+	var initial_empty_labels := _library_empty_slot_labels_under(selected_row)
+
+	controller.call("on_library_search_candidate_pressed", scene, 0)
+	var selected_views_after_one := _battle_card_views_under(selected_row).size()
+	var empty_slots_after_one := _library_empty_slots_under(selected_row).size()
+	var empty_labels_after_one := _library_empty_slot_labels_under(selected_row)
+
+	controller.call("on_library_search_candidate_pressed", scene, 1)
+	var selected_views_after_two := _battle_card_views_under(selected_row).size()
+	var empty_slots_after_two := _library_empty_slots_under(selected_row).size()
+
+	var result := run_checks([
+		assert_eq(initial_empty_slots, 2, "Optional search board should render one lower slot per max-select card before selection"),
+		assert_eq(initial_empty_labels, ["可不选择", "可不选择"], "Optional empty slots should clearly say that each pick may be skipped"),
+		assert_eq(selected_views_after_one, 1, "Selecting one card should fill one lower slot"),
+		assert_eq(empty_slots_after_one, 1, "Selecting one card from a max-two search should leave one optional lower slot"),
+		assert_eq(empty_labels_after_one, ["可不选择"], "The remaining lower slot should still communicate that it may be skipped"),
+		assert_eq(selected_views_after_two, 2, "Selecting two cards should fill both lower slots"),
+		assert_eq(empty_slots_after_two, 0, "A full max-two selection should not leave extra empty slots"),
+	])
+	scene.free()
+	return result
+
+
+func test_portrait_library_search_board_uses_bottom_buttons_and_max_slots() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var scene := DialogSceneStub.new()
+	scene.set("_active_battle_layout_mode", "portrait")
+	var source_card := _make_test_card("Search Source")
+	var cards := [_make_test_card("Energy A"), _make_test_card("Energy B"), _make_test_card("Energy C")]
+	var labels := ["Energy A", "Energy B", "Energy C"]
+
+	controller.call("show_dialog", scene, "Choose up to 2 Energy", labels, {
+		"presentation": "cards",
+		"visible_scope": "own_full_deck",
+		"card_items": cards,
+		"choice_labels": labels,
+		"card_indices": [0, 1, 2],
+		"source_card": source_card,
+		"source_kind": "Item",
+		"min_select": 0,
+		"max_select": 2,
+		"allow_cancel": true,
+	})
+	var board := scene.find_child("LibrarySearchBoard", true, false) as Control
+	var button_slot := scene.find_child("LibrarySearchButtonSlot", true, false) as HBoxContainer
+	var source_panel := scene.find_child("LibrarySearchSourcePanel", true, false) as Control
+	var portrait_source_panel := scene.find_child("LibrarySearchPortraitSourcePanel", true, false) as Control
+	var portrait_source_holder := scene.find_child("LibrarySearchPortraitSourceCardHolder", true, false) as Control
+	var buttons := scene._dialog_confirm.get_parent() as HBoxContainer
+	var selected_row := scene.find_child("LibrarySelectedSlotRow", true, false) as HBoxContainer
+	var initial_empty_slots := _library_empty_slots_under(selected_row).size()
+	var initial_empty_label := (_library_empty_slots_under(selected_row)[0].get_child(0) as Label) if initial_empty_slots > 0 else null
+	var initial_empty_label_font_size := int(initial_empty_label.get_meta("library_search_empty_slot_font_size", 0)) if initial_empty_label != null else 0
+	var portrait_source_views := _battle_card_views_under(portrait_source_holder)
+	controller.call("on_library_search_candidate_pressed", scene, 1)
+	var selected_views_after_one := _battle_card_views_under(selected_row).size()
+	var empty_slots_after_one := _library_empty_slots_under(selected_row).size()
+	var remaining_empty_label := (_library_empty_slots_under(selected_row)[0].get_child(0) as Label) if empty_slots_after_one > 0 else null
+	var remaining_empty_label_font_size := int(remaining_empty_label.get_meta("library_search_empty_slot_font_size", 0)) if remaining_empty_label != null else 0
+
+	var result := run_checks([
+		assert_true(bool(scene.get("_dialog_library_search_board_mode")), "Portrait full-library search should use the board mode"),
+		assert_true(board != null and board.visible, "Portrait library search board should be visible"),
+		assert_true(bool(board.get_meta("library_search_portrait_layout", false)) if board != null else false, "Portrait board should record portrait layout metrics"),
+		assert_true(buttons != null and buttons.get_parent() == scene._dialog_vbox, "Portrait board should keep the action buttons at the bottom"),
+		assert_eq(buttons.size_flags_horizontal if buttons != null else -1, Control.SIZE_EXPAND_FILL, "Portrait bottom action row should fill the dialog width"),
+		assert_true(button_slot != null and not button_slot.visible, "Portrait board should hide the landscape button slot"),
+		assert_true(source_panel != null and not source_panel.visible, "Portrait board should hide the landscape source rail"),
+		assert_true(portrait_source_panel != null and portrait_source_panel.visible, "Portrait board should show the current source card above the candidates"),
+		assert_eq(portrait_source_views.size(), 1, "Portrait source strip should render the played source card"),
+		assert_true(initial_empty_label_font_size >= 32, "Portrait optional empty slot label should be large enough to read"),
+		assert_eq(initial_empty_slots, 2, "Portrait optional search should render one lower slot per max-select card"),
+		assert_eq(selected_views_after_one, 1, "Portrait selected card should fill one lower slot"),
+		assert_eq(empty_slots_after_one, 1, "Portrait max-two search should leave one optional lower slot after one pick"),
+		assert_true(remaining_empty_label_font_size >= 32, "Portrait remaining optional empty slot label should stay readable after a pick"),
+	])
+	scene.free()
+	return result
+
+
+func test_library_search_drag_suppression_ignores_candidate_and_selected_clicks() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var scene := DialogSceneStub.new()
+	scene.set("_active_battle_layout_mode", "portrait")
+	var cards := [_make_test_card("Energy A"), _make_test_card("Energy B")]
+	var labels := ["Energy A", "Energy B"]
+
+	controller.call("show_dialog", scene, "Choose up to 2 Energy", labels, {
+		"presentation": "cards",
+		"visible_scope": "own_full_deck",
+		"card_items": cards,
+		"choice_labels": labels,
+		"card_indices": [0, 1],
+		"min_select": 0,
+		"max_select": 2,
+		"allow_cancel": true,
+	})
+	var library_row := scene.find_child("LibraryCardRow", true, false) as HBoxContainer
+	var candidate_views := _battle_card_views_under(library_row)
+	var candidate := candidate_views[0] if candidate_views.size() > 0 else null
+	var candidate_slot := _candidate_slot_for_view(candidate)
+	scene._card_gallery_drag_click_suppressed = true
+	_emit_candidate_slot_tap(candidate_slot)
+	var suppressed_candidate_selection: Array = (scene.get("_dialog_card_selected_indices") as Array).duplicate()
+
+	scene._card_gallery_drag_click_suppressed = false
+	_emit_candidate_slot_tap(candidate_slot)
+	var selected_after_clean_click: Array = (scene.get("_dialog_card_selected_indices") as Array).duplicate()
+
+	var selected_row := scene.find_child("LibrarySelectedSlotRow", true, false) as HBoxContainer
+	var selected_views := _battle_card_views_under(selected_row)
+	var selected_view := selected_views[0] if selected_views.size() > 0 else null
+	scene._card_gallery_drag_click_suppressed = true
+	if selected_view != null:
+		selected_view.left_clicked.emit(selected_view.card_instance, selected_view.card_data)
+	var selected_after_suppressed_remove: Array = (scene.get("_dialog_card_selected_indices") as Array).duplicate()
+
+	scene._card_gallery_drag_click_suppressed = false
+	controller.call("on_library_selected_slot_pressed", scene, 0)
+	var selected_after_clean_remove: Array = (scene.get("_dialog_card_selected_indices") as Array).duplicate()
+
+	var result := run_checks([
+		assert_eq(suppressed_candidate_selection, [], "A suppressed drag-release click should not select a library candidate"),
+		assert_eq(selected_after_clean_click, [0], "A normal candidate click should still select the card"),
+		assert_eq(selected_after_suppressed_remove, [0], "A suppressed drag-release click should not remove an already selected card"),
+		assert_eq(selected_after_clean_remove, [], "A normal selected-slot click should still remove the selected card"),
+	])
+	scene.free()
+	return result
+
+
+func test_library_search_board_global_touch_bridge_separates_drag_from_tap() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var drag_scene := DialogSceneStub.new()
+	drag_scene.set("_active_battle_layout_mode", "portrait")
+	drag_scene._screen_position_to_battle_local_offset = Vector2(100, 0)
+	var cards := [_make_test_card("Energy A"), _make_test_card("Energy B")]
+	var labels := ["Energy A", "Energy B"]
+
+	controller.call("show_dialog", drag_scene, "Choose a Basic", labels, {
+		"presentation": "cards",
+		"visible_scope": "own_full_deck",
+		"card_items": cards,
+		"choice_labels": labels,
+		"card_indices": [0, 1],
+		"min_select": 0,
+		"max_select": 1,
+		"allow_cancel": true,
+	})
+	var drag_scroll := drag_scene.find_child("LibrarySearchLibraryScroll", true, false) as ScrollContainer
+	var drag_row := drag_scene.find_child("LibraryCardRow", true, false) as HBoxContainer
+	var drag_candidate := _candidate_slot_for_view(_battle_card_views_under(drag_row)[0])
+	var drag_local_center := _prepare_library_search_touch_rects(drag_scroll, drag_row, drag_candidate)
+	var drag_screen_center := drag_local_center - drag_scene._screen_position_to_battle_local_offset
+	var drag_handled_press := bool(controller.call("try_handle_library_search_board_touch_input", drag_scene, _screen_touch(drag_screen_center, true)))
+	var drag_handled_move := bool(controller.call("try_handle_library_search_board_touch_input", drag_scene, _screen_drag(drag_screen_center + Vector2(96, 0), Vector2(96, 0))))
+	var drag_handled_release := bool(controller.call("try_handle_library_search_board_touch_input", drag_scene, _screen_touch(drag_screen_center + Vector2(96, 0), false)))
+	var selected_after_drag: Array = (drag_scene.get("_dialog_card_selected_indices") as Array).duplicate()
+	drag_scene.free()
+
+	var tap_scene := DialogSceneStub.new()
+	tap_scene.set("_active_battle_layout_mode", "portrait")
+	tap_scene._screen_position_to_battle_local_offset = Vector2(100, 0)
+	controller.call("show_dialog", tap_scene, "Choose a Basic", labels, {
+		"presentation": "cards",
+		"visible_scope": "own_full_deck",
+		"card_items": cards,
+		"choice_labels": labels,
+		"card_indices": [0, 1],
+		"min_select": 0,
+		"max_select": 1,
+		"allow_cancel": true,
+	})
+	var tap_scroll := tap_scene.find_child("LibrarySearchLibraryScroll", true, false) as ScrollContainer
+	var tap_row := tap_scene.find_child("LibraryCardRow", true, false) as HBoxContainer
+	var tap_candidate := _candidate_slot_for_view(_battle_card_views_under(tap_row)[0])
+	var tap_local_center := _prepare_library_search_touch_rects(tap_scroll, tap_row, tap_candidate)
+	var tap_screen_center := tap_local_center - tap_scene._screen_position_to_battle_local_offset
+	var tap_handled_press := bool(controller.call("try_handle_library_search_board_touch_input", tap_scene, _screen_touch(tap_screen_center, true)))
+	var tap_handled_release := bool(controller.call("try_handle_library_search_board_touch_input", tap_scene, _screen_touch(tap_screen_center, false)))
+	var selected_after_tap: Array = (tap_scene.get("_dialog_card_selected_indices") as Array).duplicate()
+	tap_scene.free()
+
+	var mouse_scene := DialogSceneStub.new()
+	mouse_scene.set("_active_battle_layout_mode", "portrait")
+	mouse_scene._screen_position_to_battle_local_offset = Vector2(100, 0)
+	controller.call("show_dialog", mouse_scene, "Choose a Basic", labels, {
+		"presentation": "cards",
+		"visible_scope": "own_full_deck",
+		"card_items": cards,
+		"choice_labels": labels,
+		"card_indices": [0, 1],
+		"min_select": 0,
+		"max_select": 1,
+		"allow_cancel": true,
+	})
+	var mouse_scroll := mouse_scene.find_child("LibrarySearchLibraryScroll", true, false) as ScrollContainer
+	var mouse_row := mouse_scene.find_child("LibraryCardRow", true, false) as HBoxContainer
+	var mouse_candidate := _candidate_slot_for_view(_battle_card_views_under(mouse_row)[0])
+	var mouse_local_center := _prepare_library_search_touch_rects(mouse_scroll, mouse_row, mouse_candidate)
+	var mouse_screen_center := mouse_local_center - mouse_scene._screen_position_to_battle_local_offset
+	var mouse_handled_press := bool(controller.call("try_handle_library_search_board_touch_input", mouse_scene, _mouse_button(mouse_screen_center, true)))
+	var mouse_handled_release := bool(controller.call("try_handle_library_search_board_touch_input", mouse_scene, _mouse_button(mouse_screen_center, false)))
+	var selected_after_mouse_tap: Array = (mouse_scene.get("_dialog_card_selected_indices") as Array).duplicate()
+	mouse_scene.free()
+
+	return run_checks([
+		assert_true(drag_handled_press and drag_handled_move and drag_handled_release, "Global touch bridge should handle candidate drag events"),
+		assert_eq(selected_after_drag, [], "Rightward global touch drag should not select a library candidate"),
+		assert_true(tap_handled_press and tap_handled_release, "Global touch bridge should handle candidate tap events"),
+		assert_eq(selected_after_tap, [0], "Global touch tap should select the candidate under the converted battle-local coordinate"),
+		assert_true(mouse_handled_press and mouse_handled_release, "Global touch bridge should handle Android mouse-style tap events"),
+		assert_eq(selected_after_mouse_tap, [0], "Android mouse-style tap should select the candidate under the converted battle-local coordinate"),
+	])
+
+
+func test_landscape_library_search_board_uses_slot_meta_for_mouse_tap() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var scene := DialogSceneStub.new()
+	scene.set("_active_battle_layout_mode", "landscape")
+	var cards := [_make_test_card("Energy A"), _make_test_card("Energy B")]
+	var labels := ["Energy A", "Energy B"]
+
+	controller.call("show_dialog", scene, "Choose a Basic", labels, {
+		"presentation": "cards",
+		"visible_scope": "own_full_deck",
+		"card_items": cards,
+		"choice_labels": labels,
+		"card_indices": [0, 1],
+		"min_select": 0,
+		"max_select": 1,
+		"allow_cancel": true,
+	})
+	var library_scroll := scene.find_child("LibrarySearchLibraryScroll", true, false) as ScrollContainer
+	var library_row := scene.find_child("LibraryCardRow", true, false) as HBoxContainer
+	var candidate_views := _battle_card_views_under(library_row)
+	var candidate := candidate_views[0] if candidate_views.size() > 0 else null
+	var candidate_slot := _candidate_slot_for_view(candidate)
+	if candidate_slot != null:
+		candidate_slot.name = "Control"
+	var local_center := _prepare_library_search_touch_rects(library_scroll, library_row, candidate_slot)
+	var handled_press := bool(controller.call("try_handle_library_search_board_touch_input", scene, _mouse_button(local_center, true)))
+	var handled_release := bool(controller.call("try_handle_library_search_board_touch_input", scene, _mouse_button(local_center, false)))
+	var selected_after_mouse_tap: Array = (scene.get("_dialog_card_selected_indices") as Array).duplicate()
+
+	var result := run_checks([
+		assert_not_null(candidate_slot, "Candidate card should have a marked library-search slot wrapper"),
+		assert_true(candidate_slot != null and bool(candidate_slot.get_meta("library_search_candidate_slot", false)), "Candidate slot should expose a stable meta marker"),
+		assert_true(handled_press and handled_release, "Landscape mouse bridge should handle candidate tap events"),
+		assert_eq(selected_after_mouse_tap, [0], "Landscape mouse tap should select via slot meta even when the runtime node name is auto-generated"),
+	])
+	scene.free()
+	return result
+
+
+func test_library_search_board_allows_empty_confirm_when_min_select_zero() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var scene := DialogSceneStub.new()
+	scene.set("_active_battle_layout_mode", "landscape")
+	var cards := [_make_test_card("Energy A"), _make_test_card("Energy B")]
+	var labels := ["Energy A", "Energy B"]
+
+	controller.call("show_dialog", scene, "Choose up to 2 Energy", labels, {
+		"presentation": "cards",
+		"visible_scope": "own_full_deck",
+		"card_items": cards,
+		"choice_labels": labels,
+		"card_indices": [0, 1],
+		"min_select": 0,
+		"max_select": 2,
+		"allow_cancel": true,
+	})
+	var confirm := scene.get("_dialog_confirm") as Button
+	var disabled_before_confirm := confirm.disabled
+	controller.call("on_dialog_confirm", scene)
+
+	var result := run_checks([
+		assert_false(disabled_before_confirm, "Optional full-library board searches should allow empty confirm"),
+		assert_eq(Array(scene._last_dialog_choice), [], "Empty confirm should submit an empty selection"),
+	])
+	scene.free()
+	return result
+
+
+func test_library_search_board_source_card_is_read_only() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var scene := DialogSceneStub.new()
+	scene.set("_active_battle_layout_mode", "landscape")
+	var source_card := _make_test_card("Nest Ball")
+	var cards := [_make_test_card("Basic A")]
+	var labels := ["Basic A"]
+
+	controller.call("show_dialog", scene, "Search deck", labels, {
+		"presentation": "cards",
+		"visible_scope": "own_full_deck",
+		"card_items": cards,
+		"choice_labels": labels,
+		"card_indices": [0],
+		"source_card": source_card,
+		"source_kind": "trainer",
+		"min_select": 1,
+		"max_select": 1,
+	})
+	var source_holder := scene.find_child("LibrarySearchSourceCardHolder", true, false) as Control
+	var source_views := _battle_card_views_under(source_holder)
+
+	var result := run_checks([
+		assert_eq(source_views.size(), 1, "Board should render the current source card in the right-side read-only panel"),
+		assert_false(source_views[0].has_meta("dialog_choice_index") if source_views.size() > 0 else true, "Source card view should not be a selectable dialog candidate"),
+		assert_eq(scene.get("_dialog_card_selected_indices"), [], "Rendering the source card should not change selected indices"),
 	])
 	scene.free()
 	return result

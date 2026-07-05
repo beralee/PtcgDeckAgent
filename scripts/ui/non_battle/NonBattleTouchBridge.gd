@@ -17,12 +17,17 @@ const SCROLL_DRAG_SENSITIVITY := 1.35
 const BUTTON_TOUCH_BOUND_META := "_non_battle_touch_bound"
 const BUTTON_TOUCH_PRESSED_META := "_non_battle_touch_pressed"
 const BUTTON_LAST_BRIDGE_PRESS_MSEC_META := "_non_battle_last_bridge_press_msec"
+const BUTTON_WINDOW_VISIBILITY_FALLBACK_META := "_non_battle_touch_window_visibility_fallback"
+const RANGE_WINDOW_VISIBILITY_FALLBACK_META := "_non_battle_range_window_visibility_fallback"
 const BUTTON_BRIDGE_DUPLICATE_SUPPRESS_MSEC := 180
 const BUTTON_RELEASE_AFTER_SCROLL_SUPPRESS_MSEC := 220
 const OPTION_PRESS_SIGNAL_ONLY_META := "_non_battle_option_press_signal_only"
 const OPTION_POPUP_BOUNDS_META := "_non_battle_popup_bounds"
 const FOCUS_TOUCH_BOUND_META := "_non_battle_focus_touch_bound"
 const FOCUS_TOUCH_PRESSED_META := "_non_battle_focus_touch_pressed"
+const LINE_EDIT_SELECT_ALL_BOUND_META := "_non_battle_line_edit_select_all_bound"
+const LINE_EDIT_SELECTED_ALL_META := "_non_battle_line_edit_selected_all"
+const LINE_EDIT_SELECTED_ALL_META_NAME := "_non_battle_line_edit_selected_all_meta_name"
 const NATIVE_TEXT_INPUT_META := "_non_battle_native_text_input"
 const NATIVE_TEXT_INPUT_CANDIDATE_META := "_non_battle_native_text_input_candidate"
 const RANGE_TOUCH_BOUND_META := "_non_battle_range_touch_bound"
@@ -377,6 +382,37 @@ static func bind_button_touch(button: Button) -> void:
 	)
 
 
+static func set_button_window_visibility_fallback(button: Button, enabled: bool = true) -> void:
+	if button == null:
+		return
+	button.set_meta(BUTTON_WINDOW_VISIBILITY_FALLBACK_META, enabled)
+
+
+static func set_range_window_visibility_fallback(range_control: Range, enabled: bool = true) -> void:
+	if range_control == null:
+		return
+	range_control.set_meta(RANGE_WINDOW_VISIBILITY_FALLBACK_META, enabled)
+
+
+static func button_can_bridge_touch(button: Button) -> bool:
+	if button == null or button.disabled or not button.visible:
+		return false
+	if button.is_inside_tree() and not button.is_visible_in_tree():
+		return bool(button.get_meta(BUTTON_WINDOW_VISIBILITY_FALLBACK_META, false))
+	return true
+
+
+static func range_can_bridge_touch(range_control: Range) -> bool:
+	if range_control == null or range_control is SpinBox or not range_control is Control:
+		return false
+	var control := range_control as Control
+	if not control.visible:
+		return false
+	if control.is_inside_tree() and not control.is_visible_in_tree():
+		return bool(range_control.get_meta(RANGE_WINDOW_VISIBILITY_FALLBACK_META, false))
+	return true
+
+
 static func bind_range_touch(range_control: Range) -> void:
 	if range_control == null or bool(range_control.get_meta(RANGE_TOUCH_BOUND_META, false)):
 		return
@@ -475,9 +511,7 @@ static func handle_button_touch(button: Button, event: InputEvent) -> bool:
 	elif _should_suppress_release_after_scroll():
 		_accept_event(button)
 		return true
-	if button.disabled:
-		return false
-	if button.is_inside_tree() and not button.is_visible_in_tree():
+	if not button_can_bridge_touch(button):
 		return false
 	_emit_button_pressed(button)
 	_accept_event(button)
@@ -492,6 +526,48 @@ static func bind_focus_control_touch(control: Control) -> void:
 	control.gui_input.connect(func(event: InputEvent) -> void:
 		handle_focus_control_touch(control, event)
 	)
+
+
+static func bind_line_edit_select_all(
+	input: LineEdit,
+	selected_meta: String = LINE_EDIT_SELECTED_ALL_META,
+	bound_meta: String = LINE_EDIT_SELECT_ALL_BOUND_META
+) -> void:
+	if input == null:
+		return
+	if bool(input.get_meta(bound_meta, false)) or bool(input.get_meta(LINE_EDIT_SELECT_ALL_BOUND_META, false)):
+		return
+	input.set_meta(bound_meta, true)
+	input.set_meta(LINE_EDIT_SELECT_ALL_BOUND_META, true)
+	input.set_meta(LINE_EDIT_SELECTED_ALL_META_NAME, selected_meta)
+	input.focus_entered.connect(func() -> void:
+		NonBattleTouchBridge.select_all_line_edit(input, selected_meta)
+	)
+	input.gui_input.connect(func(event: InputEvent) -> void:
+		if NonBattleTouchBridge._line_edit_select_all_press_event(event):
+			NonBattleTouchBridge.select_all_line_edit(input, selected_meta)
+	)
+
+
+static func select_all_line_edit(input: LineEdit, selected_meta: String = LINE_EDIT_SELECTED_ALL_META) -> void:
+	if input == null:
+		return
+	input.set_meta(LINE_EDIT_SELECTED_ALL_META, true)
+	if selected_meta != "":
+		input.set_meta(selected_meta, true)
+	if input.text.length() <= 0:
+		return
+	input.select_all()
+	input.call_deferred("select_all")
+
+
+static func _line_edit_select_all_press_event(event: InputEvent) -> bool:
+	if event is InputEventScreenTouch:
+		return (event as InputEventScreenTouch).pressed
+	if event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		return mouse_button.button_index == MOUSE_BUTTON_LEFT and mouse_button.pressed
+	return false
 
 
 static func handle_focus_control_touch(control: Control, event: InputEvent) -> bool:
@@ -544,9 +620,7 @@ static func _handle_bound_mouse_button(button: Button, mouse_button: InputEventM
 	elif _should_suppress_release_after_scroll():
 		_accept_event(button)
 		return true
-	if button.disabled:
-		return false
-	if button.is_inside_tree() and not button.is_visible_in_tree():
+	if not button_can_bridge_touch(button):
 		return false
 	_emit_button_pressed(button)
 	_accept_event(button)
@@ -792,9 +866,7 @@ static func _button_at_position_recursive(node: Node, global_position: Vector2) 
 	if not (node is Button):
 		return null
 	var button := node as Button
-	if button.disabled or not button.visible:
-		return null
-	if button.is_inside_tree() and not button.is_visible_in_tree():
+	if not button_can_bridge_touch(button):
 		return null
 	return button if _control_has_point(button, global_position) else null
 
@@ -818,11 +890,10 @@ static func _range_at_position_recursive(node: Node, global_position: Vector2) -
 	if not (node is Control):
 		return null
 	var control := node as Control
-	if not control.visible:
+	var range_control := node as Range
+	if not range_can_bridge_touch(range_control):
 		return null
-	if control.is_inside_tree() and not control.is_visible_in_tree():
-		return null
-	return node as Range if _control_has_point(control, global_position) else null
+	return range_control if _control_has_point(control, global_position) else null
 
 
 static func _focus_control_at_position_recursive(node: Node, global_position: Vector2) -> Control:
@@ -1012,15 +1083,29 @@ static func _focus_control(control: Control) -> void:
 		return
 	control.focus_mode = Control.FOCUS_ALL
 	if WebTextInputBridgeScript.request_focus(control):
+		_select_all_bound_line_edit(control)
 		return
 	control.grab_focus()
+	_select_all_bound_line_edit(control)
 	if control is SpinBox:
 		var line_edit := (control as SpinBox).get_line_edit()
 		if line_edit != null and line_edit.is_inside_tree():
 			line_edit.focus_mode = Control.FOCUS_ALL
 			if WebTextInputBridgeScript.request_focus(line_edit):
+				_select_all_bound_line_edit(line_edit)
 				return
 			line_edit.grab_focus()
+			_select_all_bound_line_edit(line_edit)
+
+
+static func _select_all_bound_line_edit(control: Control) -> void:
+	if not control is LineEdit:
+		return
+	var input := control as LineEdit
+	if not bool(input.get_meta(LINE_EDIT_SELECT_ALL_BOUND_META, false)):
+		return
+	var selected_meta := str(input.get_meta(LINE_EDIT_SELECTED_ALL_META_NAME, LINE_EDIT_SELECTED_ALL_META))
+	select_all_line_edit(input, selected_meta)
 
 
 static func _show_option_button_popup(option: OptionButton) -> void:
@@ -1093,7 +1178,32 @@ static func _control_has_point(control: Control, global_position: Vector2) -> bo
 	var actual_rect := control.get_global_rect()
 	if control.is_inside_tree() and (actual_rect.size.x <= 0.0 or actual_rect.size.y <= 0.0):
 		return false
-	return _control_global_rect_with_minimum(control).has_point(global_position)
+	if not _control_global_rect_with_minimum(control).has_point(global_position):
+		return false
+	if _control_visible_through_input_clips(control, global_position):
+		return true
+	if control.is_inside_tree() and not control.is_visible_in_tree():
+		return bool(control.get_meta(RANGE_WINDOW_VISIBILITY_FALLBACK_META, false))
+	return false
+
+
+static func _control_visible_through_input_clips(control: Control, global_position: Vector2) -> bool:
+	var cursor := control.get_parent()
+	while cursor != null:
+		if cursor is Control:
+			var ancestor := cursor as Control
+			if _control_clips_descendant_input(ancestor):
+				var clip_rect := _control_global_rect_with_minimum(ancestor)
+				if clip_rect.size.x <= 0.0 or clip_rect.size.y <= 0.0:
+					return false
+				if not clip_rect.has_point(global_position):
+					return false
+		cursor = cursor.get_parent()
+	return true
+
+
+static func _control_clips_descendant_input(control: Control) -> bool:
+	return control is ScrollContainer or control.clip_contents
 
 
 static func _control_global_rect_with_minimum(control: Control) -> Rect2:

@@ -306,6 +306,43 @@ func test_artazon_explicit_empty_search_does_not_auto_bench_pokemon() -> String:
 	])
 
 
+func test_artazon_can_empty_search_when_no_non_rule_basic_target() -> String:
+	var rule_box := CardInstance.create(_make_pokemon_data("Rule Box ex", "G", "Basic", 180, "ex"), 0)
+	var stage_one := CardInstance.create(_make_pokemon_data("Stage One", "G", "Stage 1", 90), 0)
+	var item := CardInstance.create(_make_trainer_data("Visible Item", "Item"), 0)
+	var state := _make_state_with_deck([rule_box, stage_one, item])
+	var player: PlayerState = state.players[0]
+	player.bench.clear()
+	var effect := EffectArtazon.new()
+	var artazon_id := "c117bea3cc758d46430d6bef11062a56"
+	var stadium := CardInstance.create(_make_trainer_data("Artazon", "Stadium"), 0)
+	stadium.card_data.effect_id = artazon_id
+	state.stadium_card = stadium
+	state.stadium_owner_index = 0
+	var gsm := GameStateMachine.new()
+	gsm.game_state = state
+	gsm.effect_processor.register_effect(artazon_id, effect)
+
+	var can_before: bool = gsm.can_use_stadium_effect(0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(stadium, state)
+	var first_step: Dictionary = steps[0] if not steps.is_empty() else {}
+	var labels: Array = first_step.get("labels", [])
+	var used: bool = gsm.use_stadium_effect(0, [{
+		"empty_search_resolution": [BaseEffect.EMPTY_SEARCH_CONTINUE],
+	}])
+
+	return run_checks([
+		assert_true(can_before, "Artazon should be usable even when deck has no non-rule Basic targets"),
+		assert_eq(steps.size(), 1, "Artazon should enter the shared empty-search resolution flow"),
+		assert_eq(str(first_step.get("id", "")), "empty_search_resolution", "Artazon whiffs should reuse the shared no-target resolution id"),
+		assert_eq(labels.size(), 2, "Artazon whiffs should offer continue and deck-preview choices"),
+		assert_true(used, "Using Artazon should succeed after confirming an empty search"),
+		assert_true(player.bench.is_empty(), "Empty Artazon search should not bench a Pokemon"),
+		assert_eq(player.deck.size(), 3, "Empty Artazon search should leave the deck contents intact"),
+		assert_eq(state.stadium_effect_used_turn, state.turn_number, "Empty Artazon search should still spend the once-per-turn stadium effect"),
+	])
+
+
 func test_mesagoza_heads_full_deck_visible_preserves_coin_gate() -> String:
 	var item := CardInstance.create(_make_trainer_data("Visible Item", "Item"), 0)
 	var pokemon_a := CardInstance.create(_make_pokemon_data("Legal Pokemon A"), 0)

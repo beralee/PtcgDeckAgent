@@ -120,6 +120,8 @@ func _send_to_zone(energy: CardInstance, player: PlayerState, slot: PokemonSlot,
 		})
 	else:
 		player.discard_pile.append(energy)
+		if slot == player.active_pokemon:
+			_record_attack_effect_discarded_attached_energy(slot, energy, state)
 
 
 func _get_candidate_slots(player: PlayerState) -> Array[PokemonSlot]:

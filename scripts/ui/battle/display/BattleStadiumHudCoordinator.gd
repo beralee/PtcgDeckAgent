@@ -232,7 +232,7 @@ func refresh_stadium_card_hud(gs: GameState, current_player: int, is_my_turn: bo
 	if card_view == null:
 		if stadium_label != null:
 			stadium_label.visible = true
-			stadium_label.text = _bt("battle.stadium.label", {"name": gs.stadium_card.card_data.name})
+			stadium_label.text = _bt("battle.stadium.label", {"name": gs.stadium_card.card_data.display_name()})
 		return
 
 	card_view.visible = true

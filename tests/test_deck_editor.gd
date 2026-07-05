@@ -604,17 +604,24 @@ func test_build_pool_includes_bundled_black_belts_training_in_supporter_category
 	editor.call("_build_pool")
 	var pool_by_category: Array = editor.get("_pool_by_category")
 	var supporter_cards: Array = pool_by_category[1] if pool_by_category.size() > 1 else []
-	var found: CardData = null
+	var found_black_belt: CardData = null
+	var found_morty: CardData = null
 	for card: CardData in supporter_cards:
 		if card.get_uid() == "CSV9.5C_188":
-			found = card
-			break
+			found_black_belt = card
+		elif card.get_uid() == "CSV9.5C_199":
+			found_morty = card
 	var checks: Array[String] = [
-		assert_not_null(found, "DeckEditor Supporter tab should include bundle-only CSV9.5C_188"),
+		assert_not_null(found_black_belt, "DeckEditor Supporter tab should include bundle-only CSV9.5C_188"),
+		assert_not_null(found_morty, "DeckEditor Supporter tab should include bundle-only CSV9.5C_199"),
 	]
-	if found != null:
-		checks.append(assert_eq(str(found.name_en), "Black Belt's Training", "DeckEditor should keep Black Belt's Training metadata in the Supporter pool"))
-		checks.append(assert_eq(str(found.card_type), "Supporter", "Black Belt's Training should be listed under the Supporter tab"))
+	if found_black_belt != null:
+		checks.append(assert_eq(str(found_black_belt.name_en), "Black Belt's Training", "DeckEditor should keep Black Belt's Training metadata in the Supporter pool"))
+		checks.append(assert_eq(str(found_black_belt.card_type), "Supporter", "Black Belt's Training should be listed under the Supporter tab"))
+	if found_morty != null:
+		checks.append(assert_eq(str(found_morty.name_en), "Morty's Conviction", "DeckEditor should keep Morty's Conviction metadata in the Supporter pool"))
+		checks.append(assert_eq(str(found_morty.card_type), "Supporter", "Morty's Conviction should be listed under the Supporter tab"))
+		checks.append(assert_eq(str(found_morty.effect_id), "0d2ca8f42fe1500644bc1bd21c89eeb1", "Morty's Conviction should keep its implemented effect id"))
 	editor.free()
 	return run_checks(checks)
 
@@ -666,24 +673,58 @@ func test_build_pool_includes_requested_bundled_pokemon_cards() -> String:
 	var pool_by_category: Array = editor.get("_pool_by_category")
 	var pokemon_cards: Array = pool_by_category[0] if pool_by_category.size() > 0 else []
 	var found_slowpoke: CardData = null
+	var found_iron_valiant: CardData = null
 	var found_umbreon: CardData = null
 	var found_annihilape: CardData = null
+	var found_arctibax: CardData = null
+	var found_snorunt: CardData = null
+	var found_froslass: CardData = null
+	var found_tatsugiri_ex: CardData = null
+	var found_incineroar_ex: CardData = null
+	var found_zubat: CardData = null
 	for card: CardData in pokemon_cards:
 		if card.get_uid() == "CSV9.5C_031":
 			found_slowpoke = card
+		elif card.get_uid() == "CSV9.5C_081":
+			found_iron_valiant = card
 		elif card.get_uid() == "CSV9.5C_104":
 			found_umbreon = card
 		elif card.get_uid() == "CSV9C_099":
 			found_annihilape = card
+		elif card.get_uid() == "CSVE2C_045":
+			found_arctibax = card
+		elif card.get_uid() == "CSV9.5C_043":
+			found_snorunt = card
+		elif card.get_uid() == "CSV7C_059":
+			found_froslass = card
+		elif card.get_uid() == "CSV9C_152":
+			found_tatsugiri_ex = card
+		elif card.get_uid() == "CSV7C_047":
+			found_incineroar_ex = card
+		elif card.get_uid() == "CSV8C_122":
+			found_zubat = card
 	var checks: Array[String] = [
 		assert_not_null(found_slowpoke, "DeckEditor Pokemon tab should include bundle-only CSV9.5C_031"),
+		assert_not_null(found_iron_valiant, "DeckEditor Pokemon tab should include bundle-only CSV9.5C_081"),
 		assert_not_null(found_umbreon, "DeckEditor Pokemon tab should include bundle-only CSV9.5C_104"),
 		assert_not_null(found_annihilape, "DeckEditor Pokemon tab should include CSV9C_099"),
+		assert_not_null(found_arctibax, "DeckEditor Pokemon tab should include bundle-only CSVE2C_045"),
+		assert_not_null(found_snorunt, "DeckEditor Pokemon tab should include bundle-only CSV9.5C_043"),
+		assert_not_null(found_froslass, "DeckEditor Pokemon tab should include bundle-only CSV7C_059"),
+		assert_not_null(found_tatsugiri_ex, "DeckEditor Pokemon tab should include bundle-only CSV9C_152"),
+		assert_not_null(found_incineroar_ex, "DeckEditor Pokemon tab should include bundle-only CSV7C_047"),
+		assert_not_null(found_zubat, "DeckEditor Pokemon tab should include bundle-only CSV8C_122"),
 	]
 	if found_slowpoke != null:
 		checks.append(assert_eq(str(found_slowpoke.card_type), "Pokemon", "CSV9.5C_031 should be listed under the Pokemon tab"))
 		checks.append(assert_eq(str(found_slowpoke.energy_type), "W", "CSV9.5C_031 should keep Water typing in the Pokemon pool"))
 		checks.append(assert_eq(str(found_slowpoke.stage), "Basic", "CSV9.5C_031 should keep Basic stage in the Pokemon pool"))
+	if found_iron_valiant != null:
+		checks.append(assert_eq(str(found_iron_valiant.card_type), "Pokemon", "CSV9.5C_081 should be listed under the Pokemon tab"))
+		checks.append(assert_eq(str(found_iron_valiant.energy_type), "P", "CSV9.5C_081 should keep Psychic typing in the Pokemon pool"))
+		checks.append(assert_eq(str(found_iron_valiant.stage), "Basic", "CSV9.5C_081 should keep Basic stage in the Pokemon pool"))
+		checks.append(assert_true(found_iron_valiant.is_future_pokemon(), "CSV9.5C_081 should keep the Future tag in the Pokemon pool"))
+		checks.append(assert_eq(str(found_iron_valiant.effect_id), "b417ad06ad8e4aa783b35fe1f3f27010", "CSV9.5C_081 should keep its implemented effect id"))
 	if found_umbreon != null:
 		checks.append(assert_eq(str(found_umbreon.card_type), "Pokemon", "CSV9.5C_104 should be listed under the Pokemon tab"))
 		checks.append(assert_eq(str(found_umbreon.energy_type), "D", "CSV9.5C_104 should keep Darkness typing in the Pokemon pool"))
@@ -693,6 +734,31 @@ func test_build_pool_includes_requested_bundled_pokemon_cards() -> String:
 		checks.append(assert_eq(str(found_annihilape.card_type), "Pokemon", "CSV9C_099 should be listed under the Pokemon tab"))
 		checks.append(assert_eq(str(found_annihilape.energy_type), "F", "CSV9C_099 should keep Fighting typing in the Pokemon pool"))
 		checks.append(assert_eq(str(found_annihilape.stage), "Stage 2", "CSV9C_099 should keep Stage 2 in the Pokemon pool"))
+	if found_arctibax != null:
+		checks.append(assert_eq(str(found_arctibax.card_type), "Pokemon", "CSVE2C_045 should be listed under the Pokemon tab"))
+		checks.append(assert_eq(str(found_arctibax.energy_type), "W", "CSVE2C_045 should keep Water typing in the Pokemon pool"))
+		checks.append(assert_eq(str(found_arctibax.stage), "Stage 1", "CSVE2C_045 should keep Stage 1 in the Pokemon pool"))
+		checks.append(assert_eq(str(found_arctibax.name_en), "Arctibax", "CSVE2C_045 should keep source English name"))
+	if found_snorunt != null:
+		checks.append(assert_eq(str(found_snorunt.energy_type), "W", "CSV9.5C_043 should keep Water typing in the Pokemon pool"))
+		checks.append(assert_eq(str(found_snorunt.stage), "Basic", "CSV9.5C_043 should keep Basic stage in the Pokemon pool"))
+		checks.append(assert_eq(str(found_snorunt.effect_id), "f6baf0c4c60ff47c7f836c1271f40cb3", "CSV9.5C_043 should keep its implemented effect id"))
+	if found_froslass != null:
+		checks.append(assert_eq(str(found_froslass.energy_type), "W", "CSV7C_059 should keep Water typing in the Pokemon pool"))
+		checks.append(assert_eq(str(found_froslass.stage), "Stage 1", "CSV7C_059 should keep Stage 1 in the Pokemon pool"))
+		checks.append(assert_eq(str(found_froslass.effect_id), "f27a2982c03f5b49a68ec0a77a2d6e48", "CSV7C_059 should keep its implemented effect id"))
+	if found_tatsugiri_ex != null:
+		checks.append(assert_eq(str(found_tatsugiri_ex.energy_type), "N", "CSV9C_152 should keep Dragon typing in the Pokemon pool"))
+		checks.append(assert_eq(str(found_tatsugiri_ex.stage), "Basic", "CSV9C_152 should keep Basic stage in the Pokemon pool"))
+		checks.append(assert_eq(str(found_tatsugiri_ex.effect_id), "b1bef15b71f5b719d49ad7376b879a60", "CSV9C_152 should keep its implemented effect id"))
+	if found_incineroar_ex != null:
+		checks.append(assert_eq(str(found_incineroar_ex.energy_type), "R", "CSV7C_047 should keep Fire typing in the Pokemon pool"))
+		checks.append(assert_eq(str(found_incineroar_ex.stage), "Stage 2", "CSV7C_047 should keep Stage 2 in the Pokemon pool"))
+		checks.append(assert_eq(str(found_incineroar_ex.effect_id), "9a665c4cff5995deffdc83139ca9b39f", "CSV7C_047 should keep its implemented effect id"))
+	if found_zubat != null:
+		checks.append(assert_eq(str(found_zubat.energy_type), "D", "CSV8C_122 should keep Darkness typing in the Pokemon pool"))
+		checks.append(assert_eq(str(found_zubat.stage), "Basic", "CSV8C_122 should keep Basic stage in the Pokemon pool"))
+		checks.append(assert_eq(str(found_zubat.effect_id), "bd712c72418b762b995cf1acd175c688", "CSV8C_122 should keep its implemented effect id"))
 	editor.free()
 	return run_checks(checks)
 

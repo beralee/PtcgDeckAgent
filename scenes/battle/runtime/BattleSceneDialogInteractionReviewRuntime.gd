@@ -186,6 +186,13 @@ func _should_arm_hand_primary_release_fallback() -> bool:
 	)
 
 
+func _should_preserve_hand_primary_release_fallback_after_successful_action() -> bool:
+	return (
+		_should_arm_hand_primary_release_fallback()
+		and _dialog_modal_transition_depth > 0
+	)
+
+
 func _arm_hand_primary_release_fallback_window(reason: String = "transient_input") -> void:
 	_modal_input_finished_at_msec = Time.get_ticks_msec()
 	_arm_current_hand_cards_primary_release_fallback(reason)
@@ -204,6 +211,21 @@ func _arm_primary_release_fallback_recursive(node: Node, reason: String) -> void
 		(node as BattleCardView).arm_primary_release_fallback(reason)
 	for child: Node in node.get_children():
 		_arm_primary_release_fallback_recursive(child, reason)
+
+
+func _clear_hand_primary_release_fallback_window(reason: String = "clear") -> void:
+	_modal_input_finished_at_msec = 0
+	_clear_primary_release_fallback_recursive(_hand_container)
+	_runtime_log("hand_release_fallback_cleared", "reason=%s" % reason)
+
+
+func _clear_primary_release_fallback_recursive(node: Node) -> void:
+	if node == null:
+		return
+	if node is BattleCardView:
+		(node as BattleCardView).clear_primary_release_fallback()
+	for child: Node in node.get_children():
+		_clear_primary_release_fallback_recursive(child)
 
 
 
@@ -627,9 +649,11 @@ func _handle_dialog_choice_legacy(selected_indices: PackedInt32Array) -> void:
 		"attack":
 			var cp: int = _dialog_data.get("player", 0)
 			if idx < _dialog_data.get("attack_count", 0):
-				if _gsm.use_attack(cp, idx):
-					_refresh_ui()
-					_check_two_player_handover()
+				var active_slot: PokemonSlot = null
+				if _gsm != null and _gsm.game_state != null and cp >= 0 and cp < _gsm.game_state.players.size():
+					active_slot = _gsm.game_state.players[cp].active_pokemon
+				if active_slot != null and _gsm.can_use_attack(cp, idx):
+					_try_use_attack_with_interaction(cp, active_slot, idx)
 				else:
 					_show_invalid_action_message({
 						"title": "招式现在不能使用",
@@ -755,6 +779,7 @@ func _handle_dialog_choice_legacy(selected_indices: PackedInt32Array) -> void:
 					GameManager.forfeit_current_tournament_battle("技术负（退出对局）")
 					GameManager.goto_tournament_standings()
 				else:
+					GameManager.request_battle_setup_startup_input_shield("battle_confirm_exit")
 					GameManager.goto_battle_setup()
 		"zeus_help":
 			var zeus_player_index: int = int(_dialog_data.get("player", _view_player))
@@ -1525,6 +1550,7 @@ func _run_ai_step() -> void:
 func _on_hand_card_clicked(inst: CardInstance, _panel: PanelContainer) -> void:
 	if not _can_accept_live_action():
 		return
+	_clear_stale_selected_hand_card("hand_card_clicked")
 	_battle_action_controller.call("on_hand_card_clicked", self, inst, _panel)
 
 

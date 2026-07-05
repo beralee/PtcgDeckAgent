@@ -44,7 +44,10 @@
 		"CSV8C_205": "res://assets/ui/stadium_backgrounds/academy_at_night.webp",
 		"CSV9C_205": "res://assets/ui/stadium_backgrounds/grand_tree.webp",
 		"CSV9C_206": "res://assets/ui/stadium_backgrounds/vibrant_palace.webp",
-		"CSV9C_207": "res://assets/ui/stadium_backgrounds/area_zero_underdepths.webp"
+		"CSV9C_207": "res://assets/ui/stadium_backgrounds/area_zero_underdepths.webp",
+		"LEN_DRI_169": "res://assets/ui/stadium_backgrounds/academy_at_night.webp",
+		"LEN_JTG_152": "res://assets/ui/stadium_backgrounds/vibrant_palace.webp",
+		"LEN_SCR_131": "res://assets/ui/stadium_backgrounds/area_zero_underdepths.webp"
 	},
 	"by_name_en": {},
 	"by_name": {}

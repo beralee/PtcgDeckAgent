@@ -205,7 +205,14 @@ func _action_is_evolve_into(action: GameAction, uid: String) -> bool:
 		return false
 	var evolution_name := _get_action_name(action, ["evolution", "card_name"])
 	var evolution_data := _lookup_card_data(evolution_name)
-	return evolution_data != null and evolution_data.get_uid() == uid
+	if evolution_data != null and evolution_data.get_uid() == uid:
+		return true
+	match uid:
+		CHARMELEON_UID:
+			return _matches_name(evolution_name, _get_charmeleon_aliases())
+		CHARIZARD_EX_UID:
+			return _matches_name(evolution_name, _get_charizard_aliases())
+	return false
 
 
 func _action_matches_name(action: GameAction, field_name: String, aliases: Array[String]) -> bool:
@@ -275,6 +282,7 @@ func _ensure_card_name_lookup() -> void:
 	_register_aliases(_get_psychic_embrace_aliases(), _lookup_card_data_by_uid(GARDEVOIR_EX_UID))
 	_register_aliases(_get_charizard_aliases(), _lookup_card_data_by_uid(CHARIZARD_EX_UID))
 	_register_aliases(_get_charizard_attack_aliases(), _lookup_card_data_by_uid(CHARIZARD_EX_UID))
+	_register_aliases(_get_charmeleon_aliases(), _lookup_card_data_by_uid(CHARMELEON_UID))
 	_register_aliases(_get_rare_candy_aliases(), _lookup_card_data_by_uid(RARE_CANDY_UID))
 
 
@@ -361,6 +369,15 @@ func _get_charizard_attack_aliases() -> Array[String]:
 	var card_data := _lookup_card_data_by_uid(CHARIZARD_EX_UID)
 	if card_data != null and not card_data.attacks.is_empty():
 		aliases.append(str(card_data.attacks[0].get("name", "")))
+	return _compact_aliases(aliases)
+
+
+func _get_charmeleon_aliases() -> Array[String]:
+	var aliases: Array[String] = ["Charmeleon", "火恐龙"]
+	var card_data := _lookup_card_data_by_uid(CHARMELEON_UID)
+	if card_data != null:
+		aliases.append(card_data.name)
+		aliases.append(card_data.name_en)
 	return _compact_aliases(aliases)
 
 

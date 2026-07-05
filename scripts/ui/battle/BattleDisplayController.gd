@@ -301,7 +301,7 @@ func refresh_stadium_area(scene: Object, gs: GameState, current_player: int, is_
 			stadium_action_button.disabled = true
 		return
 
-	var stadium_name: String = gs.stadium_card.card_data.name
+	var stadium_name: String = gs.stadium_card.card_data.display_name()
 	var gsm: Variant = scene.get("_gsm")
 	var effect: BaseEffect = gsm.effect_processor.get_effect(gs.stadium_card.card_data.effect_id)
 	var is_action_stadium: bool = effect != null and effect.can_use_as_stadium_action(gs.stadium_card, gs)
@@ -534,7 +534,7 @@ func slot_overlay_text(scene: Object, slot: PokemonSlot) -> String:
 	if energy_summary != "":
 		parts.append(energy_summary)
 	if slot.attached_tool != null:
-		parts.append(slot.attached_tool.card_data.name)
+		parts.append(slot.attached_tool.card_data.display_name())
 	return " | ".join(parts)
 
 
@@ -547,7 +547,7 @@ func build_battle_status(scene: Object, slot: PokemonSlot) -> Dictionary:
 		"hp_ratio": float(hp_current) / float(hp_max),
 		"status_icons": slot_status_icon_keys(slot),
 		"energy_icons": slot_energy_icon_codes(scene, slot),
-		"tool_name": slot.attached_tool.card_data.name if slot.attached_tool != null else "",
+		"tool_name": slot.attached_tool.card_data.display_name() if slot.attached_tool != null else "",
 		"ability_used_this_turn": slot_used_ability_this_turn(scene, slot),
 	}
 
@@ -711,7 +711,7 @@ func refresh_slot_label(scene: Object, label: RichTextLabel, slot: PokemonSlot) 
 			status_parts.append(status_names[status_key])
 
 	label.text = "[b]%s[/b]  HP:%d/%d\n能量：%s%s" % [
-		card_data.name,
+		card_data.display_name(),
 		slot.get_remaining_hp(),
 		slot.get_max_hp(),
 		energy_text,
@@ -732,7 +732,9 @@ func refresh_bench(container: HBoxContainer, bench: Array[PokemonSlot]) -> void:
 			continue
 		if i < bench.size():
 			var slot: PokemonSlot = bench[i]
-			label.text = "[b]%s[/b]\nHP:%d/%d" % [slot.get_pokemon_name(), slot.get_remaining_hp(), slot.get_max_hp()]
+			var slot_data := slot.get_card_data()
+			var slot_name := slot_data.display_name() if slot_data != null else slot.get_pokemon_name()
+			label.text = "[b]%s[/b]\nHP:%d/%d" % [slot_name, slot.get_remaining_hp(), slot.get_max_hp()]
 		else:
 			label.text = "[空]"
 
@@ -807,7 +809,7 @@ func build_hand_card(scene: Object, inst: CardInstance) -> PanelContainer:
 	card_view.custom_minimum_size = scene.get("_play_card_size")
 	card_view.setup_from_instance(inst, BattleCardView.MODE_HAND)
 	card_view.set_selected(scene.get("_selected_hand_card") == inst)
-	card_view.set_info(inst.card_data.name, hand_card_subtext(inst.card_data))
+	card_view.set_info(inst.card_data.display_name(), hand_card_subtext(inst.card_data))
 	if scene.has_method("_should_arm_hand_primary_release_fallback") and bool(scene.call("_should_arm_hand_primary_release_fallback")):
 		card_view.arm_primary_release_fallback("rebuilt_hand_after_modal")
 	if scene.has_method("_handle_hand_drag_scroll_input"):
@@ -886,7 +888,7 @@ func show_discard_pile(scene: Object, player_index: int, title: String) -> void:
 	if gsm == null:
 		return
 	var player: PlayerState = gsm.game_state.players[player_index]
-	_show_card_collection(scene, title, player.discard_pile, true, "show_discard", player_index)
+	_show_card_collection(scene, title, _visible_discard_pile(scene, player_index, player.discard_pile), true, "show_discard", player_index)
 
 
 func show_lost_zone(scene: Object, player_index: int, title: String) -> void:
@@ -928,6 +930,9 @@ func _show_card_collection(
 	var discard_utility_row: HBoxContainer = scene.get("_discard_utility_row")
 	var discard_overlay: Panel = scene.get("_discard_overlay")
 	var ordered_cards := _ordered_cards(cards, reverse_order)
+	scene.set("_discard_collection_current_kind", _collection_kind_for_event(event_name))
+	scene.set("_discard_collection_current_player_index", player_index)
+	scene.set("_discard_collection_current_title", title)
 	scene.set("_discard_card_page", 0)
 	scene.set("_discard_card_page_size", 0)
 	discard_title.text = _bt(scene, "battle.zone.count_title", {"title": title, "count": cards.size()})
@@ -967,7 +972,7 @@ func _show_card_collection(
 			for card_variant: Variant in ordered_cards:
 				var listed_card: CardInstance = card_variant as CardInstance
 				var card_data: CardData = listed_card.card_data
-				discard_list.add_item("%s [%s]" % [card_data.name, scene.call("_card_type_cn", card_data)])
+				discard_list.add_item("%s [%s]" % [card_data.display_name(), scene.call("_card_type_cn", card_data)])
 				discard_list.set_item_metadata(discard_list.item_count - 1, card_data)
 	if scene.has_method("_apply_discard_collection_metrics"):
 		scene.call("_apply_discard_collection_metrics")
@@ -981,6 +986,20 @@ func _show_card_collection(
 	if scene.has_method("_sync_card_foil_effects"):
 		scene.call("_sync_card_foil_effects", discard_overlay)
 	scene.call("_runtime_log", event_name, "player=%d title=%s count=%d" % [player_index, title, cards.size()])
+
+
+func _collection_kind_for_event(event_name: String) -> String:
+	match event_name:
+		"show_discard":
+			return "discard"
+		"show_lost_zone":
+			return "lost_zone"
+		"show_prizes":
+			return "prizes"
+		"show_deck":
+			return "deck"
+		_:
+			return event_name
 
 
 func _ordered_cards(cards: Array, reverse_order: bool) -> Array:

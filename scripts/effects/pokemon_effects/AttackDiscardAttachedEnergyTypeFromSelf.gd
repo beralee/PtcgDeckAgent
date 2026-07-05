@@ -72,6 +72,7 @@ func execute_attack(
 	for attached: CardInstance in attacker.attached_energy:
 		if attached in selected:
 			player.discard_pile.append(attached)
+			_record_attack_effect_discarded_attached_energy(attacker, attached, state)
 		else:
 			kept.append(attached)
 	attacker.attached_energy = kept

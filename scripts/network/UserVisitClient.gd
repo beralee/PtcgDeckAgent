@@ -4,6 +4,7 @@ extends Node
 const AppVersionScript := preload("res://scripts/app/AppVersion.gd")
 
 const ENDPOINT_URL := "http://fc.skillserver.cn/userptcg"
+const WEB_BRIDGE_PAGE := "userptcg_bridge.html"
 const REQUEST_TIMEOUT_SECONDS := 6.0
 const STATE_PATH := "user://ptcg_user_state.json"
 
@@ -32,9 +33,28 @@ static func build_payload(metadata: Dictionary = {}) -> Dictionary:
 	return payload
 
 
+static func endpoint_url_for_runtime(os_name: String = "", feature_flags: Dictionary = {}, display_server_name: String = "") -> String:
+	if _is_web_runtime_for_context(os_name, feature_flags, display_server_name):
+		return WEB_BRIDGE_PAGE
+	return ENDPOINT_URL
+
+
+static func request_headers_for_runtime(os_name: String = "", feature_flags: Dictionary = {}, display_server_name: String = "") -> PackedStringArray:
+	var headers := PackedStringArray(["Content-Type: application/json; charset=utf-8"])
+	if not _is_web_runtime_for_context(os_name, feature_flags, display_server_name):
+		headers.append("User-Agent: PTCGDeckAgent/%s" % AppVersionScript.VERSION)
+	return headers
+
+
+static func should_use_threaded_request_for_runtime(os_name: String = "", feature_flags: Dictionary = {}, display_server_name: String = "") -> bool:
+	return not _is_web_runtime_for_context(os_name, feature_flags, display_server_name)
+
+
 func report_startup_visit(metadata: Dictionary = {}) -> int:
 	if _is_reporting:
 		return ERR_BUSY
+	if _is_web_runtime_for_context():
+		return _report_startup_visit_via_web_bridge(metadata)
 
 	_ensure_http_request()
 	if _http_request == null:
@@ -42,17 +62,64 @@ func report_startup_visit(metadata: Dictionary = {}) -> int:
 		return ERR_CANT_CREATE
 
 	var body := JSON.stringify(build_payload(_with_runtime_display_metadata(metadata)))
-	var headers := PackedStringArray([
-		"Content-Type: application/json; charset=utf-8",
-		"User-Agent: PTCGDeckAgent/%s" % AppVersionScript.VERSION,
-	])
+	var headers := request_headers_for_runtime()
+	var endpoint_url := endpoint_url_for_runtime()
 
 	_is_reporting = true
-	var err := _http_request.request(ENDPOINT_URL, headers, HTTPClient.METHOD_POST, body)
+	var err := _http_request.request(endpoint_url, headers, HTTPClient.METHOD_POST, body)
 	if err != OK:
 		_is_reporting = false
 		visit_failed.emit("visit report start failed: %d" % err)
 	return err
+
+
+func _report_startup_visit_via_web_bridge(metadata: Dictionary = {}) -> int:
+	var payload := build_payload(_with_runtime_display_metadata(metadata))
+	var payload_text := JSON.stringify(payload)
+	var script := """
+(function(payloadText) {
+	try {
+		if (typeof window === 'undefined' || typeof document === 'undefined') {
+			return false;
+		}
+		var payload = JSON.parse(payloadText);
+		var bridgeUrl = new URL('%s', window.location.href);
+		bridgeUrl.hash = 'payload=' + encodeURIComponent(JSON.stringify(payload));
+		var iframe = document.createElement('iframe');
+		iframe.setAttribute('title', 'ptcg-user-visit-bridge');
+		iframe.setAttribute('aria-hidden', 'true');
+		iframe.style.position = 'fixed';
+		iframe.style.left = '-1px';
+		iframe.style.top = '-1px';
+		iframe.style.width = '1px';
+		iframe.style.height = '1px';
+		iframe.style.opacity = '0';
+		iframe.style.pointerEvents = 'none';
+		iframe.style.border = '0';
+		iframe.src = bridgeUrl.href;
+		document.body.appendChild(iframe);
+		window.setTimeout(function() {
+			try {
+				if (iframe.parentNode) {
+					iframe.parentNode.removeChild(iframe);
+				}
+			} catch (_error) {}
+		}, 15000);
+		return true;
+	} catch (error) {
+		if (typeof console !== 'undefined' && console.warn) {
+			console.warn('[UserVisit] static bridge failed', error);
+		}
+		return false;
+	}
+})(%s);
+""" % [WEB_BRIDGE_PAGE, JSON.stringify(payload_text)]
+	var result: Variant = JavaScriptBridge.eval(script, true)
+	if bool(result):
+		visit_recorded.emit({"ok": true, "transport": "web_static_html_bridge"})
+		return OK
+	visit_failed.emit("visit report web bridge failed")
+	return ERR_CANT_CREATE
 
 
 func _ready() -> void:
@@ -64,7 +131,7 @@ func _ensure_http_request() -> void:
 		return
 	_http_request = HTTPRequest.new()
 	_http_request.timeout = REQUEST_TIMEOUT_SECONDS
-	_http_request.use_threads = true
+	_http_request.use_threads = should_use_threaded_request_for_runtime()
 	_http_request.request_completed.connect(_on_visit_response)
 	add_child(_http_request)
 
@@ -148,7 +215,8 @@ static func _append_display_payload(payload: Dictionary, metadata: Dictionary) -
 		int(payload.get("screen_width", 0)),
 		int(payload.get("screen_height", 0))
 	))))
-	payload["is_mobile_runtime"] = bool(metadata.get("is_mobile_runtime", OS.get_name() in ["Android", "iOS"]))
+	payload["is_web_runtime"] = bool(metadata.get("is_web_runtime", _is_web_runtime_for_context()))
+	payload["is_mobile_runtime"] = bool(metadata.get("is_mobile_runtime", _is_mobile_runtime_for_context()))
 
 
 func _with_runtime_display_metadata(metadata: Dictionary) -> Dictionary:
@@ -202,6 +270,46 @@ static func _orientation_from_size(size: Vector2i) -> String:
 	if size.x > size.y:
 		return "landscape"
 	return "square"
+
+
+static func _is_web_runtime_for_context(os_name: String = "", feature_flags: Dictionary = {}, display_server_name: String = "") -> bool:
+	var resolved_os := os_name.strip_edges().to_lower()
+	var resolved_display := display_server_name.strip_edges().to_lower()
+	var flags := feature_flags
+	if flags.is_empty() and os_name == "" and display_server_name == "":
+		flags = _runtime_feature_flags()
+		resolved_os = OS.get_name().strip_edges().to_lower()
+		resolved_display = DisplayServer.get_name().strip_edges().to_lower()
+	if resolved_os in ["web", "html5"] or resolved_display in ["web", "html5"]:
+		return true
+	for feature: String in ["web", "web_android", "web_ios"]:
+		if bool(flags.get(feature, false)):
+			return true
+	return false
+
+
+static func _is_mobile_runtime_for_context(os_name: String = "", feature_flags: Dictionary = {}) -> bool:
+	var resolved_os := os_name.strip_edges().to_lower()
+	if resolved_os in ["android", "ios"]:
+		return true
+	var flags := feature_flags
+	if flags.is_empty() and os_name == "":
+		flags = _runtime_feature_flags()
+	for feature: String in ["mobile", "android", "ios", "web_android", "web_ios"]:
+		if bool(flags.get(feature, false)):
+			return true
+	return false
+
+
+static func _runtime_feature_flags() -> Dictionary:
+	return {
+		"mobile": OS.has_feature("mobile"),
+		"android": OS.has_feature("android"),
+		"ios": OS.has_feature("ios"),
+		"web": OS.has_feature("web"),
+		"web_android": OS.has_feature("web_android"),
+		"web_ios": OS.has_feature("web_ios"),
+	}
 
 
 static func _make_event_id(prefix: String) -> String:

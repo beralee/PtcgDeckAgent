@@ -51,6 +51,10 @@ const DECK_PICKER_LIMIT := 80
 const DECK_PICKER_TOUCH_BOUND_META := "_battle_setup_deck_picker_touch_bound"
 const BGM_PICKER_OVERLAY_NAME := "BattleMusicPickerOverlay"
 const HUD_OPTION_PICKER_OVERLAY_NAME := "BattleSetupHudPickerOverlay"
+const STARTUP_INPUT_SHIELD_NODE_NAME := "BattleSetupStartupInputShield"
+const STARTUP_INPUT_SHIELD_MIN_SECONDS := 0.05
+const INITIAL_DECK_REFRESH_MAX_ATTEMPTS := 10
+const INITIAL_DECK_REFRESH_INTERVAL_SECONDS := 0.12
 const AI_DECK_STRATEGY_ID_BY_DECK_ID := {
 	575716: "charizard_ex",
 	578647: "gardevoir",
@@ -126,7 +130,12 @@ var _ai_strategy_segment_buttons: Array[Button] = []
 var _dynamic_stadium_background_enabled: bool = true
 var _non_battle_layout_controller: RefCounted = NonBattleLayoutControllerScript.new()
 var _current_non_battle_layout_context: Dictionary = {}
+var _test_web_runtime_override := false
 var _ready_initialized: bool = false
+var _initial_deck_refresh_generation: int = 0
+var _initial_deck_refresh_attempts: int = 0
+var _startup_input_shield: Control = null
+var _startup_input_shield_until_msec: int = 0
 
 
 func _ready() -> void:
@@ -135,6 +144,7 @@ func _ready() -> void:
 	_ready_initialized = true
 	_apply_hud_theme()
 	_connect_non_battle_layout_signal()
+	_connect_card_database_deck_signal()
 	%ModeOption.clear()
 	%ModeOption.add_item("自己练牌", 0)
 	%ModeOption.add_item("AI 对战", 1)
@@ -162,15 +172,17 @@ func _ready() -> void:
 	%BtnBack.pressed.connect(_on_back)
 	%Deck1Option.item_selected.connect(_on_deck1_changed)
 	%Deck2Option.item_selected.connect(_on_deck2_changed)
-	%Deck1PickerButton.pressed.connect(_on_deck_picker_pressed.bind(0))
-	%Deck2PickerButton.pressed.connect(_on_deck_picker_pressed.bind(1))
-	_bind_deck_picker_button_touch(%Deck1PickerButton, 0)
-	_bind_deck_picker_button_touch(%Deck2PickerButton, 1)
+	var deck1_picker_button := _find_battle_setup_button("Deck1PickerButton")
+	var deck2_picker_button := _find_battle_setup_button("Deck2PickerButton")
+	_connect_button_pressed_once(deck1_picker_button, Callable(self, "_on_deck_picker_pressed").bind(0))
+	_connect_button_pressed_once(deck2_picker_button, Callable(self, "_on_deck_picker_pressed").bind(1))
+	_bind_deck_picker_button_touch(deck1_picker_button, 0)
+	_bind_deck_picker_button_touch(deck2_picker_button, 1)
 	%BtnDiscussStrategyAI.pressed.connect(_on_discuss_strategy_ai_pressed)
-	%Deck1ViewButton.pressed.connect(_on_deck_view_pressed.bind(0))
-	%Deck1EditButton.pressed.connect(_on_deck_edit_pressed.bind(0))
-	%Deck2ViewButton.pressed.connect(_on_deck_view_pressed.bind(1))
-	%Deck2EditButton.pressed.connect(_on_deck_edit_pressed.bind(1))
+	_connect_button_pressed_once(_find_battle_setup_button("Deck1ViewButton"), Callable(self, "_on_deck_view_pressed").bind(0))
+	_connect_button_pressed_once(_find_battle_setup_button("Deck1EditButton"), Callable(self, "_on_deck_edit_pressed").bind(0))
+	_connect_button_pressed_once(_find_battle_setup_button("Deck2ViewButton"), Callable(self, "_on_deck_view_pressed").bind(1))
+	_connect_button_pressed_once(_find_battle_setup_button("Deck2EditButton"), Callable(self, "_on_deck_edit_pressed").bind(1))
 	if not %AIPreviewStrengthOption.pressed.is_connected(_on_ai_preview_strength_option_pressed):
 		%AIPreviewStrengthOption.pressed.connect(_on_ai_preview_strength_option_pressed)
 	if not %AIStrategyOption.item_selected.is_connected(_on_ai_strategy_variant_changed):
@@ -189,7 +201,11 @@ func _ready() -> void:
 	_load_settings()
 	_restore_returned_setup_context()
 	_refresh_ai_ui_visibility()
+	_apply_non_battle_layout()
+	_install_startup_input_shield_if_requested()
 	call_deferred("_apply_non_battle_layout")
+	call_deferred("_stabilize_initial_non_battle_layout")
+	_schedule_initial_deck_options_refresh()
 	call_deferred("_request_battle_scene_resource_prewarm")
 
 
@@ -206,7 +222,18 @@ func _request_battle_scene_resource_prewarm() -> void:
 		GameManager.prewarm_battle_scene_resource()
 
 
+func _stabilize_initial_non_battle_layout() -> void:
+	if not is_inside_tree():
+		return
+	await get_tree().process_frame
+	_apply_non_battle_layout()
+	await get_tree().process_frame
+	_apply_non_battle_layout()
+
+
 func _input(event: InputEvent) -> void:
+	if _should_consume_startup_input_shield_event(event):
+		return
 	if _handle_battle_setup_hud_picker_input(event):
 		return
 	if _handle_battle_music_picker_input(event):
@@ -217,6 +244,8 @@ func _input(event: InputEvent) -> void:
 		return
 	if _handle_deck_picker_button_input(event):
 		return
+	if _handle_bgm_volume_slider_input(event):
+		return
 	if _handle_portrait_action_footer_input(event):
 		return
 	if _handle_background_gallery_root_input(event):
@@ -225,12 +254,168 @@ func _input(event: InputEvent) -> void:
 		return
 
 
+func _install_startup_input_shield_if_requested() -> void:
+	if GameManager == null or not GameManager.has_method("consume_battle_setup_startup_input_shield_request"):
+		return
+	var request: Dictionary = GameManager.call("consume_battle_setup_startup_input_shield_request")
+	if request.is_empty():
+		return
+	var duration_msec := maxi(1, int(request.get("duration_msec", 0)))
+	if duration_msec <= 0:
+		return
+	_startup_input_shield_until_msec = Time.get_ticks_msec() + duration_msec
+	_ensure_startup_input_shield()
+	var remaining_seconds := maxf(
+		STARTUP_INPUT_SHIELD_MIN_SECONDS,
+		float(_startup_input_shield_until_msec - Time.get_ticks_msec()) / 1000.0
+	)
+	if is_inside_tree():
+		var tree := get_tree()
+		var timer := tree.create_timer(remaining_seconds)
+		timer.timeout.connect(Callable(self, "_clear_startup_input_shield"))
+
+
+func _ensure_startup_input_shield() -> void:
+	if _startup_input_shield == null or not is_instance_valid(_startup_input_shield):
+		_startup_input_shield = Control.new()
+		_startup_input_shield.name = STARTUP_INPUT_SHIELD_NODE_NAME
+		_startup_input_shield.mouse_filter = Control.MOUSE_FILTER_STOP
+		_startup_input_shield.focus_mode = Control.FOCUS_NONE
+		_startup_input_shield.z_as_relative = false
+		_startup_input_shield.z_index = 4096
+		_startup_input_shield.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_startup_input_shield.gui_input.connect(_on_startup_input_shield_gui_input)
+		add_child(_startup_input_shield)
+	_startup_input_shield.visible = true
+	_startup_input_shield.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_raise_startup_input_shield()
+
+
+func _raise_startup_input_shield() -> void:
+	if _startup_input_shield == null or not is_instance_valid(_startup_input_shield):
+		return
+	if _startup_input_shield.get_parent() != self:
+		return
+	move_child(_startup_input_shield, get_child_count() - 1)
+
+
+func _clear_startup_input_shield() -> void:
+	_startup_input_shield_until_msec = 0
+	if _startup_input_shield != null and is_instance_valid(_startup_input_shield):
+		_startup_input_shield.queue_free()
+	_startup_input_shield = null
+
+
+func _is_startup_input_shield_active() -> bool:
+	if _startup_input_shield_until_msec <= 0:
+		return false
+	if Time.get_ticks_msec() > _startup_input_shield_until_msec:
+		_clear_startup_input_shield()
+		return false
+	return true
+
+
+func _should_consume_startup_input_shield_event(event: InputEvent) -> bool:
+	if not _is_startup_input_shield_active():
+		return false
+	if not _is_startup_pointer_event(event):
+		return false
+	_accept_pointer_event()
+	return true
+
+
+func _on_startup_input_shield_gui_input(event: InputEvent) -> void:
+	if not _is_startup_input_shield_active():
+		return
+	if not _is_startup_pointer_event(event):
+		return
+	_startup_input_shield.accept_event()
+	_accept_pointer_event()
+
+
+func _is_startup_pointer_event(event: InputEvent) -> bool:
+	if event is InputEventScreenTouch or event is InputEventScreenDrag:
+		return true
+	if event is InputEventMouseButton:
+		return (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT
+	return false
+
+
+func _find_battle_setup_button(node_name: String) -> Button:
+	var unique_node := get_node_or_null("%" + node_name) as Button
+	if unique_node != null:
+		return unique_node
+	return find_child(node_name, true, false) as Button
+
+
+func _find_battle_setup_option(node_name: String) -> OptionButton:
+	var unique_node := get_node_or_null("%" + node_name) as OptionButton
+	if unique_node != null:
+		return unique_node
+	return find_child(node_name, true, false) as OptionButton
+
+
+func _connect_button_pressed_once(button: Button, callback: Callable) -> void:
+	if button == null:
+		return
+	if not button.pressed.is_connected(callback):
+		button.pressed.connect(callback)
+
+
 func _connect_non_battle_layout_signal() -> void:
 	if GameManager == null or not GameManager.has_signal("non_battle_layout_mode_changed"):
 		return
 	var callback := Callable(self, "_on_non_battle_layout_mode_changed")
 	if not GameManager.non_battle_layout_mode_changed.is_connected(callback):
 		GameManager.non_battle_layout_mode_changed.connect(callback)
+
+
+func _connect_card_database_deck_signal() -> void:
+	if CardDatabase == null or not CardDatabase.has_signal("decks_changed"):
+		return
+	var callback := Callable(self, "_on_card_database_decks_changed")
+	if not CardDatabase.decks_changed.is_connected(callback):
+		CardDatabase.decks_changed.connect(callback)
+
+
+func _on_card_database_decks_changed() -> void:
+	_refresh_deck_options()
+	_refresh_ai_ui_visibility()
+	_apply_non_battle_layout()
+
+
+func _schedule_initial_deck_options_refresh() -> void:
+	_initial_deck_refresh_generation += 1
+	_initial_deck_refresh_attempts = 0
+	call_deferred("_refresh_deck_options_after_initial_data_settle", _initial_deck_refresh_generation)
+
+
+func _refresh_deck_options_after_initial_data_settle(generation: int) -> void:
+	if generation != _initial_deck_refresh_generation or not is_inside_tree():
+		return
+	_initial_deck_refresh_attempts += 1
+	_refresh_deck_options()
+	_refresh_ai_ui_visibility()
+	_apply_non_battle_layout()
+	if _has_initial_deck_options_ready() or _initial_deck_refresh_attempts >= INITIAL_DECK_REFRESH_MAX_ATTEMPTS:
+		return
+	var tree := get_tree()
+	if tree == null:
+		return
+	await tree.create_timer(INITIAL_DECK_REFRESH_INTERVAL_SECONDS).timeout
+	if generation != _initial_deck_refresh_generation or not is_inside_tree():
+		return
+	call_deferred("_refresh_deck_options_after_initial_data_settle", generation)
+
+
+func _has_initial_deck_options_ready() -> bool:
+	if _deck_list.size() < 1:
+		return false
+	if _ai_deck_list.is_empty():
+		return false
+	if not _is_ai_mode() and _deck_list.size() < 2:
+		return false
+	return true
 
 
 func _on_non_battle_layout_mode_changed(_mode: String) -> void:
@@ -259,7 +444,24 @@ func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode
 		_apply_battle_setup_portrait_layout(context)
 	else:
 		_apply_battle_setup_landscape_layout(context)
+	_refresh_layout_dependent_controls_after_non_battle_layout()
 	_sync_strategy_discussion_button_state()
+	_raise_startup_input_shield()
+
+
+func _refresh_layout_dependent_controls_after_non_battle_layout() -> void:
+	if _current_non_battle_layout_context.is_empty():
+		return
+	_sync_mode_segment_buttons()
+	_refresh_first_player_segment_labels()
+	_sync_first_player_segment_buttons()
+	_sync_deck_picker_buttons()
+	_sync_dynamic_stadium_background_segment_buttons()
+	_sync_battle_layout_segment_buttons()
+	_sync_ai_strategy_segment_buttons()
+	_update_bgm_preview_button()
+	_refresh_deck_action_buttons()
+	_apply_battle_setup_mobile_metrics(_current_non_battle_layout_context)
 
 
 func _apply_battle_setup_portrait_layout(context: Dictionary) -> void:
@@ -345,6 +547,8 @@ func _apply_battle_setup_landscape_layout(context: Dictionary) -> void:
 	_apply_battle_setup_mobile_metrics(context)
 	_apply_landscape_setup_scroll_metrics(landscape_scroll, content_columns)
 	_layout_background_gallery_cards()
+	_ensure_landscape_action_footer_order()
+	call_deferred("_ensure_landscape_action_footer_order")
 
 
 func _ensure_landscape_setup_scroll(root: VBoxContainer, content_columns: HBoxContainer) -> ScrollContainer:
@@ -383,12 +587,6 @@ func _apply_landscape_setup_scroll_metrics(scroll: ScrollContainer, content_colu
 	content_columns.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content_columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content_columns.custom_minimum_size = Vector2.ZERO
-	var max_content_height := size.y if size.y > 0.0 else (get_viewport_rect().size.y if is_inside_tree() else 900.0)
-	if max_content_height > 0.0 and content_columns.size.y > max_content_height:
-		content_columns.size.y = max_content_height
-	if max_content_height > 0.0:
-		content_columns.set_deferred("size", Vector2(content_columns.size.x, minf(max_content_height, maxf(content_columns.size.y, 0.0))))
-		scroll.set_deferred("size", Vector2(scroll.size.x, max_content_height))
 
 
 func _reset_landscape_minimum_sizes(node: Node) -> void:
@@ -504,6 +702,7 @@ func _restore_landscape_deck_rows() -> void:
 			var action := find_child(action_name, true, false) as Control
 			if action == null:
 				continue
+			action.size_flags_horizontal = Control.SIZE_FILL
 			action.custom_minimum_size.x = 76.0
 			action.custom_minimum_size.y = 38.0
 
@@ -518,6 +717,7 @@ func _layout_portrait_action_footer(context: Dictionary) -> void:
 		action_row.owner = null
 		add_child(action_row)
 	action_row.visible = true
+	action_row.layout_mode = 1
 	action_row.z_index = 50
 	action_row.mouse_filter = Control.MOUSE_FILTER_PASS
 	action_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -565,7 +765,9 @@ func _restore_landscape_action_footer() -> void:
 			action_row.get_parent().remove_child(action_row)
 		action_row.owner = null
 		right_vbox.add_child(action_row)
+	_ensure_landscape_action_footer_order()
 	action_row.z_index = 0
+	action_row.layout_mode = 2
 	action_row.anchor_left = 0.0
 	action_row.anchor_right = 0.0
 	action_row.anchor_top = 0.0
@@ -575,6 +777,32 @@ func _restore_landscape_action_footer() -> void:
 	action_row.offset_top = 0.0
 	action_row.offset_bottom = 0.0
 	action_row.position = Vector2.ZERO
+	action_row.size = Vector2.ZERO
+	for button_name: String in ["BtnStart", "BtnBack"]:
+		var button := find_child(button_name, true, false) as Button
+		if button == null:
+			continue
+		button.layout_mode = 2
+		button.anchor_left = 0.0
+		button.anchor_right = 0.0
+		button.anchor_top = 0.0
+		button.anchor_bottom = 0.0
+		button.offset_left = 0.0
+		button.offset_right = 0.0
+		button.offset_top = 0.0
+		button.offset_bottom = 0.0
+		button.position = Vector2.ZERO
+		button.size = Vector2.ZERO
+		button.custom_minimum_size.x = 150.0
+
+
+func _ensure_landscape_action_footer_order() -> void:
+	var right_vbox := find_child("RightVBox", true, false) as VBoxContainer
+	var action_row := find_child("ActionRow", true, false) as HBoxContainer
+	if right_vbox == null or action_row == null or action_row.get_parent() != right_vbox:
+		return
+	right_vbox.move_child(action_row, right_vbox.get_child_count() - 1)
+	right_vbox.queue_sort()
 
 
 func _bind_deck_picker_button_touch(button: Button, slot_index: int) -> void:
@@ -671,6 +899,43 @@ func _handle_deck_action_button_input(event: InputEvent) -> bool:
 	candidate.pressed.emit()
 	_accept_pointer_event()
 	return true
+
+
+func _handle_bgm_volume_slider_input(event: InputEvent) -> bool:
+	var slider := find_child("BgmVolumeSlider", true, false) as HSlider
+	if slider == null or not slider.visible:
+		return false
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed and not _control_rect_with_minimum(slider).has_point(touch.position):
+			return false
+		return NonBattleTouchBridgeScript.handle_range_touch(slider, event)
+	if event is InputEventScreenDrag:
+		return NonBattleTouchBridgeScript.handle_range_touch(slider, event)
+	if event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if mouse_button.button_index != MOUSE_BUTTON_LEFT:
+			return false
+		var pointer_position := mouse_button.global_position if mouse_button.global_position != Vector2.ZERO else mouse_button.position
+		if mouse_button.pressed and not _control_rect_with_minimum(slider).has_point(pointer_position):
+			return false
+		return NonBattleTouchBridgeScript.handle_range_touch(slider, event)
+	if event is InputEventMouseMotion:
+		return NonBattleTouchBridgeScript.handle_range_touch(slider, event)
+	return false
+
+
+func _control_rect_with_minimum(control: Control) -> Rect2:
+	var rect := control.get_global_rect()
+	if rect.size.x > 0.0 and rect.size.y > 0.0:
+		return rect
+	var fallback_size := control.custom_minimum_size
+	if fallback_size.x <= 0.0:
+		fallback_size.x = maxf(control.size.x, 1.0)
+	if fallback_size.y <= 0.0:
+		fallback_size.y = maxf(control.size.y, 1.0)
+	rect.size = fallback_size
+	return rect
 
 
 func _deck_action_button_at_position(global_position: Vector2) -> Button:
@@ -872,6 +1137,8 @@ func _apply_battle_setup_metrics_recursive(node: Node, context: Dictionary, port
 		NonBattleTouchBridgeScript.bind_button_touch(button)
 	elif node is HSlider:
 		var slider := node as HSlider
+		NonBattleTouchBridgeScript.bind_range_touch(slider)
+		NonBattleTouchBridgeScript.set_range_window_visibility_fallback(slider, portrait)
 		if portrait:
 			var slider_height := maxf(72.0, float(context.get("input_height", 90.0)) * 0.58)
 			slider.custom_minimum_size = Vector2(
@@ -1151,7 +1418,10 @@ func _make_slider_grabber_icon(color: Color) -> Texture2D:
 
 
 func _setup_mode_options() -> void:
-	%ModeOption.visible = false
+	var mode_option := _find_battle_setup_option("ModeOption")
+	if mode_option == null:
+		return
+	mode_option.visible = false
 	_mode_segment_buttons = {
 		0: %ModeTwoPlayerButton,
 		1: %ModeAIButton,
@@ -1164,7 +1434,7 @@ func _setup_mode_options() -> void:
 		var pressed_callable := Callable(self, "_on_mode_segment_pressed").bind(option_index)
 		if not button.pressed.is_connected(pressed_callable):
 			button.pressed.connect(pressed_callable)
-	_select_mode_option(%ModeOption.selected)
+	_select_mode_option(mode_option.selected)
 
 
 func _on_mode_segment_pressed(option_index: int) -> void:
@@ -1173,21 +1443,25 @@ func _on_mode_segment_pressed(option_index: int) -> void:
 
 
 func _select_mode_option(option_index: int) -> void:
-	if %ModeOption.item_count <= 0:
+	var mode_option := _find_battle_setup_option("ModeOption")
+	if mode_option == null or mode_option.item_count <= 0:
 		return
-	var normalized := clampi(option_index, 0, %ModeOption.item_count - 1)
-	%ModeOption.select(normalized)
+	var normalized := clampi(option_index, 0, mode_option.item_count - 1)
+	mode_option.select(normalized)
 	_sync_mode_segment_buttons()
 	_refresh_first_player_segment_labels()
 
 
 func _sync_mode_segment_buttons() -> void:
+	var mode_option := _find_battle_setup_option("ModeOption")
+	if mode_option == null:
+		return
 	for option_index_variant: Variant in _mode_segment_buttons.keys():
 		var option_index := int(option_index_variant)
 		var button := _mode_segment_buttons[option_index] as Button
 		if button == null:
 			continue
-		var active: bool = option_index == %ModeOption.selected
+		var active: bool = option_index == mode_option.selected
 		button.add_theme_font_size_override("font_size", _current_non_battle_button_font_size(15))
 		button.add_theme_color_override("font_color", Color(0.04, 0.10, 0.12, 1.0) if active else HUD_TEXT)
 		button.add_theme_color_override("font_hover_color", Color(0.04, 0.10, 0.12, 1.0) if active else Color.WHITE)
@@ -1231,11 +1505,14 @@ func _reapply_current_non_battle_layout_metrics() -> void:
 func _refresh_ai_ui_visibility() -> void:
 	_sync_mode_segment_buttons()
 	_refresh_first_player_segment_labels()
-	var is_ai: bool = %ModeOption.selected == 1
+	var mode_option := _find_battle_setup_option("ModeOption")
+	var is_ai: bool = mode_option != null and mode_option.selected == 1
 	%Deck2Label.text = "AI 卡组" if is_ai else "玩家2 卡组"
 	%AIPreviewStrengthOption.visible = is_ai
 	%AIPreviewStrengthOption.disabled = not is_ai
-	%Deck2EditButton.visible = not is_ai
+	var deck2_edit_button := _find_battle_setup_button("Deck2EditButton")
+	if deck2_edit_button != null:
+		deck2_edit_button.visible = not is_ai
 	_refresh_ai_strategy_variant_options()
 	_refresh_llm_model_controls()
 	_refresh_deck_action_buttons()
@@ -1252,29 +1529,32 @@ func _setup_ai_preview_strength_options() -> void:
 func _refresh_ai_strategy_variant_options() -> void:
 	var variants := _detect_ai_strategy_variants()
 	var show_variant := _is_ai_mode() and variants.size() > 0
+	var ai_strategy_option := _find_battle_setup_option("AIStrategyOption")
+	if ai_strategy_option == null:
+		return
 	%AIStrategyLabel.text = "AI 工作方式"
 	%AIStrategyLabel.visible = show_variant
-	%AIStrategyOption.visible = false
-	%AIStrategyOption.disabled = variants.size() <= 1
+	ai_strategy_option.visible = false
+	ai_strategy_option.disabled = variants.size() <= 1
 	%AIStrategySegment.visible = show_variant
 	if not show_variant:
-		%AIStrategyOption.clear()
+		ai_strategy_option.clear()
 		_clear_ai_strategy_segment_buttons()
 		_refresh_llm_model_controls()
 		return
 	var prev_selected_id := ""
-	if %AIStrategyOption.selected >= 0 and %AIStrategyOption.selected < %AIStrategyOption.item_count:
-		prev_selected_id = str(%AIStrategyOption.get_item_metadata(%AIStrategyOption.selected))
-	%AIStrategyOption.clear()
+	if ai_strategy_option.selected >= 0 and ai_strategy_option.selected < ai_strategy_option.item_count:
+		prev_selected_id = str(ai_strategy_option.get_item_metadata(ai_strategy_option.selected))
+	ai_strategy_option.clear()
 	for variant: Dictionary in variants:
-		var idx: int = %AIStrategyOption.item_count
-		%AIStrategyOption.add_item(str(variant.get("label", "")))
-		%AIStrategyOption.set_item_metadata(idx, str(variant.get("id", "")))
+		var idx: int = ai_strategy_option.item_count
+		ai_strategy_option.add_item(str(variant.get("label", "")))
+		ai_strategy_option.set_item_metadata(idx, str(variant.get("id", "")))
 	_rebuild_ai_strategy_segment_buttons(variants)
 	var restore_id := prev_selected_id if prev_selected_id != "" else _pending_ai_strategy_variant_id
 	_pending_ai_strategy_variant_id = ""
-	for i: int in %AIStrategyOption.item_count:
-		if str(%AIStrategyOption.get_item_metadata(i)) == restore_id:
+	for i: int in ai_strategy_option.item_count:
+		if str(ai_strategy_option.get_item_metadata(i)) == restore_id:
 			_select_ai_strategy_option(i)
 			_refresh_llm_model_controls()
 			return
@@ -1283,7 +1563,9 @@ func _refresh_ai_strategy_variant_options() -> void:
 
 
 func _setup_ai_strategy_segment() -> void:
-	%AIStrategyOption.visible = false
+	var ai_strategy_option := _find_battle_setup_option("AIStrategyOption")
+	if ai_strategy_option != null:
+		ai_strategy_option.visible = false
 	%AIStrategySegment.visible = false
 	_clear_ai_strategy_segment_buttons()
 
@@ -1327,16 +1609,20 @@ func _on_ai_strategy_segment_pressed(option_index: int) -> void:
 
 
 func _select_ai_strategy_option(option_index: int) -> void:
-	if %AIStrategyOption.item_count <= 0:
+	var ai_strategy_option := _find_battle_setup_option("AIStrategyOption")
+	if ai_strategy_option == null or ai_strategy_option.item_count <= 0:
 		return
-	var normalized := clampi(option_index, 0, %AIStrategyOption.item_count - 1)
-	%AIStrategyOption.select(normalized)
+	var normalized := clampi(option_index, 0, ai_strategy_option.item_count - 1)
+	ai_strategy_option.select(normalized)
 	_sync_ai_strategy_segment_buttons()
 
 
 func _sync_ai_strategy_segment_buttons() -> void:
-	var selected_index: int = int(%AIStrategyOption.selected)
-	var option_count: int = int(%AIStrategyOption.item_count)
+	var ai_strategy_option := _find_battle_setup_option("AIStrategyOption")
+	if ai_strategy_option == null:
+		return
+	var selected_index: int = int(ai_strategy_option.selected)
+	var option_count: int = int(ai_strategy_option.item_count)
 	for option_index: int in _ai_strategy_segment_buttons.size():
 		var button := _ai_strategy_segment_buttons[option_index]
 		if button == null:
@@ -1421,7 +1707,7 @@ func _detect_ai_strategy_variants() -> Array[Dictionary]:
 
 
 func _selected_ai_strategy_variant_id() -> String:
-	var ai_strategy_option := get_node_or_null("%AIStrategyOption") as OptionButton
+	var ai_strategy_option := _find_battle_setup_option("AIStrategyOption")
 	if ai_strategy_option == null:
 		return ""
 	if ai_strategy_option.selected < 0 or ai_strategy_option.selected >= ai_strategy_option.item_count:
@@ -1629,9 +1915,12 @@ func _on_test_llm_model_response(response: Dictionary) -> void:
 
 
 func _setup_first_player_options() -> void:
-	%FirstPlayerOption.clear()
+	var first_player_option := _find_battle_setup_option("FirstPlayerOption")
+	if first_player_option == null:
+		return
+	first_player_option.clear()
 	_ensure_first_player_option_items()
-	%FirstPlayerOption.visible = false
+	first_player_option.visible = false
 	_first_player_segment_buttons = {
 		0: %FirstPlayerRandomButton,
 		1: %FirstPlayerOneButton,
@@ -1649,11 +1938,12 @@ func _setup_first_player_options() -> void:
 
 
 func _ensure_first_player_option_items() -> void:
-	if %FirstPlayerOption.item_count > 0:
+	var first_player_option := _find_battle_setup_option("FirstPlayerOption")
+	if first_player_option == null or first_player_option.item_count > 0:
 		return
-	%FirstPlayerOption.add_item("随机先后攻")
-	%FirstPlayerOption.add_item("玩家1先攻")
-	%FirstPlayerOption.add_item("玩家2先攻")
+	first_player_option.add_item("随机先后攻")
+	first_player_option.add_item("玩家1先攻")
+	first_player_option.add_item("玩家2先攻")
 
 
 func _refresh_first_player_segment_labels() -> void:
@@ -1671,20 +1961,24 @@ func _on_first_player_segment_pressed(option_index: int) -> void:
 
 func _select_first_player_option(option_index: int) -> void:
 	_ensure_first_player_option_items()
-	if %FirstPlayerOption.item_count <= 0:
+	var first_player_option := _find_battle_setup_option("FirstPlayerOption")
+	if first_player_option == null or first_player_option.item_count <= 0:
 		return
-	var normalized := clampi(option_index, 0, %FirstPlayerOption.item_count - 1)
-	%FirstPlayerOption.select(normalized)
+	var normalized := clampi(option_index, 0, first_player_option.item_count - 1)
+	first_player_option.select(normalized)
 	_sync_first_player_segment_buttons()
 
 
 func _sync_first_player_segment_buttons() -> void:
+	var first_player_option := _find_battle_setup_option("FirstPlayerOption")
+	if first_player_option == null:
+		return
 	for option_index_variant: Variant in _first_player_segment_buttons.keys():
 		var option_index := int(option_index_variant)
 		var button := _first_player_segment_buttons[option_index] as Button
 		if button == null:
 			continue
-		var active: bool = option_index == %FirstPlayerOption.selected
+		var active: bool = option_index == first_player_option.selected
 		button.add_theme_font_size_override("font_size", _current_non_battle_button_font_size(15))
 		button.add_theme_color_override("font_color", Color(0.04, 0.10, 0.12, 1.0) if active else HUD_TEXT)
 		button.add_theme_color_override("font_hover_color", Color(0.04, 0.10, 0.12, 1.0) if active else Color.WHITE)
@@ -2079,6 +2373,18 @@ func _is_portrait_setup_layout() -> bool:
 	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
 		viewport_size = get_viewport_rect().size if is_inside_tree() else Vector2.ZERO
 	return viewport_size.y > viewport_size.x
+
+
+func _is_battle_setup_web_runtime() -> bool:
+	if _test_web_runtime_override:
+		return true
+	if GameManager != null and GameManager.has_method("_is_web_runtime"):
+		return bool(GameManager.call("_is_web_runtime"))
+	return OS.has_feature("web") or OS.has_feature("web_android") or OS.has_feature("web_ios") or DisplayServer.get_name().to_lower() in ["web", "html5"]
+
+
+func _should_hide_deck_edit_for_web_portrait() -> bool:
+	return _is_portrait_setup_layout() and _is_battle_setup_web_runtime()
 
 
 func _handle_battle_setup_hud_picker_input(event: InputEvent) -> bool:
@@ -3566,37 +3872,46 @@ func _refresh_deck_options(preserve_deck2_selection: bool = true) -> void:
 	var selected_deck2 := _selected_deck_for_slot(1) if preserve_deck2_selection else null
 	_deck_list = CardDatabase.get_all_decks()
 	_ai_deck_list = CardDatabase.get_all_ai_decks()
-	%Deck1Option.clear()
-	%Deck2Option.clear()
+	_apply_deck_option_controls(selected_deck1, selected_deck2)
 
-	if _deck_list.size() < 1 or (_is_ai_mode() and _ai_deck_list.is_empty()) or (not _is_ai_mode() and _deck_list.size() < 2):
-		%NoDeckWarning.visible = true
-		%BtnStart.disabled = true
-		_sync_deck_picker_buttons()
-		_refresh_deck_action_buttons()
+
+func _apply_deck_option_controls(selected_deck1: DeckData = null, selected_deck2: DeckData = null) -> void:
+	var deck1_option := _deck_option_for_slot(0)
+	var deck2_option := _deck_option_for_slot(1)
+	if deck1_option == null or deck2_option == null:
 		return
-
-	%NoDeckWarning.visible = false
-	%BtnStart.disabled = false
+	deck1_option.clear()
+	deck2_option.clear()
 
 	for deck: DeckData in _deck_list:
 		var label := "%s (%d张)" % [deck.deck_name, deck.total_cards]
-		%Deck1Option.add_item(label)
-		%Deck1Option.set_item_metadata(%Deck1Option.item_count - 1, deck.id)
+		deck1_option.add_item(label)
+		deck1_option.set_item_metadata(deck1_option.item_count - 1, deck.id)
 	if _is_ai_mode():
 		for ai_deck: DeckData in _ai_deck_list:
-			%Deck2Option.add_item("%s (%d张)" % [ai_deck.deck_name, ai_deck.total_cards])
-			%Deck2Option.set_item_metadata(%Deck2Option.item_count - 1, ai_deck.id)
+			deck2_option.add_item("%s (%d张)" % [ai_deck.deck_name, ai_deck.total_cards])
+			deck2_option.set_item_metadata(deck2_option.item_count - 1, ai_deck.id)
 	else:
 		for deck: DeckData in _deck_list:
-			%Deck2Option.add_item("%s (%d张)" % [deck.deck_name, deck.total_cards])
-			%Deck2Option.set_item_metadata(%Deck2Option.item_count - 1, deck.id)
+			deck2_option.add_item("%s (%d张)" % [deck.deck_name, deck.total_cards])
+			deck2_option.set_item_metadata(deck2_option.item_count - 1, deck.id)
 
-	_select_option_for_deck_id(%Deck1Option, selected_deck1.id if selected_deck1 != null else DEFAULT_DECK1_ID)
+	_select_option_for_deck_id(deck1_option, selected_deck1.id if selected_deck1 != null else DEFAULT_DECK1_ID)
 	var default_deck2_id := _default_deck2_id_for_current_mode()
-	_select_option_for_deck_id(%Deck2Option, selected_deck2.id if selected_deck2 != null else default_deck2_id)
+	_select_option_for_deck_id(deck2_option, selected_deck2.id if selected_deck2 != null else default_deck2_id)
+	var has_required_decks := _has_required_deck_options_for_current_mode()
+	%NoDeckWarning.visible = not has_required_decks
+	%BtnStart.disabled = not has_required_decks
 	_sync_deck_picker_buttons()
 	_refresh_deck_action_buttons()
+
+
+func _has_required_deck_options_for_current_mode() -> bool:
+	if _deck_list.size() < 1:
+		return false
+	if _is_ai_mode():
+		return not _ai_deck_list.is_empty()
+	return _deck_list.size() >= 2
 
 
 func _default_deck2_id_for_current_mode() -> int:
@@ -3617,22 +3932,26 @@ func _selected_deck_for_slot(slot_index: int) -> DeckData:
 	var selected_text := option.get_item_text(selected_index)
 	var selected_metadata: Variant = option.get_item_metadata(selected_index)
 	var source_list: Array = _deck_list if slot_index == 0 or not _is_ai_mode() else _ai_deck_list
+	var lookup_lists: Array = [source_list]
+	if slot_index == 1:
+		lookup_lists.append(_deck_list)
+		lookup_lists.append(_ai_deck_list)
 	if selected_metadata is int or selected_metadata is float:
-		for deck_variant: Variant in source_list:
+		for candidate_list: Array in lookup_lists:
+			for deck_variant: Variant in candidate_list:
+				var deck := _deck_data_from_variant(deck_variant)
+				if deck != null and deck.id == int(selected_metadata):
+					return deck
+	for candidate_list: Array in lookup_lists:
+		for deck_variant: Variant in candidate_list:
 			var deck := _deck_data_from_variant(deck_variant)
-			if deck != null and deck.id == int(selected_metadata):
+			if deck != null and (selected_text == deck.deck_name or selected_text.begins_with(deck.deck_name)):
 				return deck
-	for deck_variant: Variant in source_list:
-		var deck := _deck_data_from_variant(deck_variant)
-		if deck != null and (selected_text == deck.deck_name or selected_text.begins_with(deck.deck_name)):
-			return deck
 	return null
 
 
 func _is_ai_mode() -> bool:
-	var mode_option := get_node_or_null("%ModeOption") as OptionButton
-	if mode_option == null:
-		mode_option = find_child("ModeOption", true, false) as OptionButton
+	var mode_option := _find_battle_setup_option("ModeOption")
 	return mode_option != null and mode_option.selected == 1
 
 
@@ -3640,7 +3959,7 @@ func _select_option_for_deck_id(option: OptionButton, deck_id: int) -> void:
 	if option == null or option.item_count <= 0:
 		return
 	var source_list: Array = _deck_list
-	var deck2_option := get_node_or_null("%Deck2Option") as OptionButton
+	var deck2_option := _deck_option_for_slot(1)
 	if option == deck2_option and _is_ai_mode():
 		source_list = _ai_deck_list
 	for i: int in option.item_count:
@@ -3675,7 +3994,8 @@ func _first_player_option_index_from_choice(choice: int) -> int:
 
 
 func _apply_setup_selection() -> bool:
-	var mode_idx: int = %ModeOption.selected
+	var mode_option := _find_battle_setup_option("ModeOption")
+	var mode_idx: int = mode_option.selected if mode_option != null else 0
 	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER if mode_idx == 0 else GameManager.GameMode.VS_AI
 
 	var deck1 := _selected_deck_for_slot(0)
@@ -3684,7 +4004,8 @@ func _apply_setup_selection() -> bool:
 		return false
 
 	GameManager.selected_deck_ids = [deck1.id, deck2.id]
-	GameManager.first_player_choice = _first_player_choice_from_option_index(%FirstPlayerOption.selected)
+	var first_player_option := _find_battle_setup_option("FirstPlayerOption")
+	GameManager.first_player_choice = _first_player_choice_from_option_index(first_player_option.selected if first_player_option != null else 0)
 	GameManager.selected_battle_background = _selected_background_path if _selected_background_path != "" else DEFAULT_BACKGROUND
 	GameManager.dynamic_stadium_background_enabled = _dynamic_stadium_background_enabled
 	_sync_battle_layout_preference_from_ui()
@@ -3734,17 +4055,19 @@ func _save_settings() -> void:
 	_sync_battle_music_preferences_from_ui()
 	var deck1 := _selected_deck_for_slot(0)
 	var deck2 := _selected_deck_for_slot(1)
+	var first_player_option := _find_battle_setup_option("FirstPlayerOption")
+	var mode_option := _find_battle_setup_option("ModeOption")
 	var data := {
 		"deck1_id": deck1.id if deck1 != null else -1,
 		"deck2_id": deck2.id if deck2 != null else -1,
-		"first_player_choice": _first_player_choice_from_option_index(%FirstPlayerOption.selected),
+		"first_player_choice": _first_player_choice_from_option_index(first_player_option.selected if first_player_option != null else 0),
 		"background_path": _selected_background_path,
 		"dynamic_stadium_background_enabled": _dynamic_stadium_background_enabled,
 		"battle_layout_mode": _selected_battle_layout_mode(),
 		"battle_music_id": _selected_battle_music_id,
 		"battle_bgm_volume_percent": _selected_battle_music_volume_percent,
 		GameManager.BATTLE_BGM_VOLUME_USER_SET_KEY: true,
-		"mode": %ModeOption.selected,
+		"mode": mode_option.selected if mode_option != null else 0,
 		"ai_preview_strength_index": %AIPreviewStrengthOption.selected,
 		"ai_strategy_variant_id": _selected_ai_strategy_variant_id(),
 	}
@@ -3780,13 +4103,14 @@ func _load_settings() -> void:
 	var deck1_id: int = int(data.get("deck1_id", -1))
 	var deck2_id: int = int(data.get("deck2_id", -1))
 	var mode_idx: int = int(data.get("mode", 0))
-	if mode_idx >= 0 and mode_idx < %ModeOption.item_count:
-		var mode_changed: bool = mode_idx != %ModeOption.selected
+	var mode_option := _find_battle_setup_option("ModeOption")
+	if mode_option != null and mode_idx >= 0 and mode_idx < mode_option.item_count:
+		var mode_changed: bool = mode_idx != mode_option.selected
 		_select_mode_option(mode_idx)
 		if mode_changed:
 			_refresh_deck_options()
-	_select_option_for_deck_id(%Deck1Option, deck1_id)
-	_select_option_for_deck_id(%Deck2Option, deck2_id)
+	_select_option_for_deck_id(_deck_option_for_slot(0), deck1_id)
+	_select_option_for_deck_id(_deck_option_for_slot(1), deck2_id)
 	var ai_preview_strength_index: int = int(data.get("ai_preview_strength_index", AI_PREVIEW_STRENGTH_WEAK))
 	if ai_preview_strength_index >= 0 and ai_preview_strength_index < %AIPreviewStrengthOption.item_count:
 		%AIPreviewStrengthOption.select(ai_preview_strength_index)
@@ -3818,8 +4142,8 @@ func _load_settings() -> void:
 func _capture_setup_selection_context() -> Dictionary:
 	var deck1 := _selected_deck_for_slot(0)
 	var deck2 := _selected_deck_for_slot(1)
-	var first_player_option := get_node_or_null("%FirstPlayerOption") as OptionButton
-	var mode_option := get_node_or_null("%ModeOption") as OptionButton
+	var first_player_option := _find_battle_setup_option("FirstPlayerOption")
+	var mode_option := _find_battle_setup_option("ModeOption")
 	var ai_source_option := get_node_or_null("%AISourceOption") as OptionButton
 	var ai_version_option := get_node_or_null("%AIVersionOption") as OptionButton
 	var ai_preview_strength_option := get_node_or_null("%AIPreviewStrengthOption") as OptionButton
@@ -3840,12 +4164,13 @@ func _capture_setup_selection_context() -> Dictionary:
 func _apply_setup_context(context: Dictionary) -> void:
 	var deck1_id := int(context.get("deck1_id", -1))
 	var deck2_id := int(context.get("deck2_id", -1))
-	var mode_idx := int(context.get("mode", %ModeOption.selected))
-	if mode_idx >= 0 and mode_idx < %ModeOption.item_count:
+	var mode_option := _find_battle_setup_option("ModeOption")
+	var mode_idx := int(context.get("mode", mode_option.selected if mode_option != null else 0))
+	if mode_option != null and mode_idx >= 0 and mode_idx < mode_option.item_count:
 		_select_mode_option(mode_idx)
 	_refresh_deck_options()
-	_select_option_for_deck_id(%Deck1Option, deck1_id)
-	_select_option_for_deck_id(%Deck2Option, deck2_id)
+	_select_option_for_deck_id(_deck_option_for_slot(0), deck1_id)
+	_select_option_for_deck_id(_deck_option_for_slot(1), deck2_id)
 
 	var first_player_choice := int(context.get("first_player_choice", FIRST_PLAYER_RANDOM))
 	_select_first_player_option(_first_player_option_index_from_choice(first_player_choice))
@@ -3882,18 +4207,27 @@ func _restore_returned_setup_context() -> void:
 func _refresh_deck_action_buttons() -> void:
 	var deck1 := _selected_deck_for_slot(0)
 	var deck2 := _selected_deck_for_slot(1)
-	var deck1_view_button := get_node_or_null("%Deck1ViewButton") as Button
+	var hide_web_portrait_edit := _should_hide_deck_edit_for_web_portrait()
+	var deck1_view_button := _find_battle_setup_button("Deck1ViewButton")
 	if deck1_view_button != null:
 		deck1_view_button.disabled = deck1 == null
-	var deck1_edit_button := get_node_or_null("%Deck1EditButton") as Button
+	var deck1_edit_button := _find_battle_setup_button("Deck1EditButton")
 	if deck1_edit_button != null:
-		deck1_edit_button.disabled = deck1 == null
-	var deck2_view_button := get_node_or_null("%Deck2ViewButton") as Button
+		var deck1_edit_visible := not hide_web_portrait_edit
+		deck1_edit_button.visible = deck1_edit_visible
+		deck1_edit_button.mouse_filter = Control.MOUSE_FILTER_STOP if deck1_edit_visible else Control.MOUSE_FILTER_IGNORE
+		deck1_edit_button.focus_mode = Control.FOCUS_ALL if deck1_edit_visible else Control.FOCUS_NONE
+		deck1_edit_button.disabled = hide_web_portrait_edit or deck1 == null
+	var deck2_view_button := _find_battle_setup_button("Deck2ViewButton")
 	if deck2_view_button != null:
 		deck2_view_button.disabled = deck2 == null
-	var deck2_edit_button := get_node_or_null("%Deck2EditButton") as Button
+	var deck2_edit_button := _find_battle_setup_button("Deck2EditButton")
 	if deck2_edit_button != null:
-		deck2_edit_button.disabled = _is_ai_mode() or deck2 == null
+		var deck2_edit_visible := not hide_web_portrait_edit and not _is_ai_mode()
+		deck2_edit_button.visible = deck2_edit_visible
+		deck2_edit_button.mouse_filter = Control.MOUSE_FILTER_STOP if deck2_edit_visible else Control.MOUSE_FILTER_IGNORE
+		deck2_edit_button.focus_mode = Control.FOCUS_ALL if deck2_edit_visible else Control.FOCUS_NONE
+		deck2_edit_button.disabled = not deck2_edit_visible or deck2 == null
 	var has_llm_api := _has_llm_api_configured()
 	_sync_strategy_discussion_button_state(has_llm_api)
 
@@ -4004,6 +4338,8 @@ func _on_deck_view_pressed(slot_index: int) -> void:
 
 
 func _on_deck_edit_pressed(slot_index: int) -> void:
+	if _should_hide_deck_edit_for_web_portrait():
+		return
 	if _is_ai_mode() and slot_index == 1:
 		return
 	var deck := _selected_deck_for_slot(slot_index)
@@ -4015,5 +4351,5 @@ func _on_deck_edit_pressed(slot_index: int) -> void:
 
 
 func _apply_default_deck_selection() -> void:
-	_select_option_for_deck_id(%Deck1Option, DEFAULT_DECK1_ID)
-	_select_option_for_deck_id(%Deck2Option, _default_deck2_id_for_current_mode())
+	_select_option_for_deck_id(_deck_option_for_slot(0), DEFAULT_DECK1_ID)
+	_select_option_for_deck_id(_deck_option_for_slot(1), _default_deck2_id_for_current_mode())

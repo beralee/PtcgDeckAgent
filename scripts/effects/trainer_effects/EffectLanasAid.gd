@@ -13,21 +13,15 @@ func _init(count: int = 3, allow_rule_box_pokemon: bool = false) -> void:
 
 
 func can_execute(card: CardInstance, state: GameState) -> bool:
-	var player: PlayerState = state.players[card.owner_index]
-	for discard_card: CardInstance in player.discard_pile:
-		if _matches_card(discard_card):
-			return true
-	return false
+	return not _recoverable_discard_cards(card, state).is_empty()
 
 
 func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
-	var player: PlayerState = state.players[card.owner_index]
-	var items: Array = []
+	var items: Array[CardInstance] = _recoverable_discard_cards(card, state)
+	if items.is_empty():
+		return []
 	var labels: Array[String] = []
-	for discard_card: CardInstance in player.discard_pile:
-		if not _matches_card(discard_card):
-			continue
-		items.append(discard_card)
+	for discard_card: CardInstance in items:
 		labels.append(discard_card.card_data.name)
 	var title := "Choose up to %d Pokemon and Basic Energy from discard" % recover_count
 	if not include_rule_box_pokemon:
@@ -41,6 +35,12 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		"max_select": mini(recover_count, items.size()),
 		"allow_cancel": true,
 	}]
+
+
+func get_unusable_reason(card: CardInstance, state: GameState) -> String:
+	if card != null and DiscardToHandBlockHelper.is_discard_to_hand_blocked(card.owner_index, state, "trainer"):
+		return "受对手场上效果影响，当前不能通过训练家效果将弃牌区的卡加入手牌。"
+	return super.get_unusable_reason(card, state)
 
 
 func execute(card: CardInstance, targets: Array, state: GameState) -> void:
@@ -64,6 +64,19 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 				break
 
 	_move_discard_cards_to_hand_with_log(state, card.owner_index, selected, card, "trainer")
+
+
+func _recoverable_discard_cards(card: CardInstance, state: GameState) -> Array[CardInstance]:
+	var cards: Array[CardInstance] = []
+	if card == null or state == null:
+		return cards
+	if card.owner_index < 0 or card.owner_index >= state.players.size():
+		return cards
+	var player: PlayerState = state.players[card.owner_index]
+	for discard_card: CardInstance in player.discard_pile:
+		if _matches_card(discard_card):
+			cards.append(discard_card)
+	return DiscardToHandBlockHelper.filter_recoverable_discard_cards(card.owner_index, state, cards, "trainer")
 
 
 func _matches_card(card: CardInstance) -> bool:

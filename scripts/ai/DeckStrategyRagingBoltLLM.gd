@@ -52,8 +52,7 @@ func plan_opening_setup(player: PlayerState) -> Dictionary:
 
 func score_action_absolute(action: Dictionary, game_state: GameState, player_index: int) -> float:
 	if game_state != null and has_llm_plan_for_turn(int(game_state.turn_number)):
-		if _is_low_deck_unplanned_draw_action(action, game_state, player_index) \
-				and not _is_low_deck_attack_unlock_action(action, game_state, player_index):
+		if _is_low_deck_draw_ability_action(action, game_state, player_index):
 			return -10000.0
 		var llm_score := super.score_action_absolute(action, game_state, player_index)
 		if llm_score >= 10000.0 or llm_score <= -1000.0:
@@ -1194,6 +1193,12 @@ func _is_low_deck_unplanned_draw_action(action: Dictionary, game_state: GameStat
 			or _name_contains(name, "Iono") \
 			or _name_contains(name, "Professor")
 	return false
+
+
+func _is_low_deck_draw_ability_action(action: Dictionary, game_state: GameState, player_index: int) -> bool:
+	if str(action.get("kind", action.get("type", ""))) != "use_ability":
+		return false
+	return _is_low_deck_unplanned_draw_action(action, game_state, player_index)
 
 
 func _is_low_deck_attack_unlock_action(action: Dictionary, game_state: GameState, player_index: int) -> bool:

@@ -22,7 +22,8 @@ func execute_ability(
 ## 检查指定玩家的战斗宝可梦是否会被对手战斗位的暗夜振翼压制。
 static func is_opponent_abilities_disabled(
 	state: GameState,
-	checking_player_index: int
+	checking_player_index: int,
+	before_order: int = -1
 ) -> bool:
 	# 对手玩家索引
 	var opp_index: int = 1 - checking_player_index
@@ -31,6 +32,8 @@ static func is_opponent_abilities_disabled(
 	# 只检查对手战斗位宝可梦
 	var active: PokemonSlot = opponent.active_pokemon
 	if active == null:
+		return false
+	if _is_source_not_earlier_than(active, before_order):
 		return false
 	if _is_dark_wing_source_suppressed(active, state):
 		return false
@@ -41,24 +44,39 @@ static func is_opponent_abilities_disabled(
 static func _is_dark_wing_source_suppressed(slot: PokemonSlot, state: GameState) -> bool:
 	if EffectCancelCologne.is_slot_directly_ability_disabled(slot, state):
 		return true
-	if AbilityBasicLock.is_locked_by_basic_lock(slot, state):
+	var source_order := _active_source_order(slot)
+	if AbilityBasicLock.is_locked_by_basic_lock(slot, state, source_order):
+		return true
+	if AbilityIronThornsInit.is_locked_by_init(slot, state, source_order):
+		return true
+	if AbilityBasicVLock.is_locked(slot, state, source_order):
 		return true
 	return false
 
 
 ## 检查给定宝可梦是否被暗夜振翼压制。
 ## 只有对手的战斗宝可梦会受影响，且自身拥有暗夜振翼时不受压制。
-static func is_locked_by_dark_wing(slot: PokemonSlot, state: GameState) -> bool:
+static func is_locked_by_dark_wing(slot: PokemonSlot, state: GameState, before_order: int = -1) -> bool:
 	if slot == null or state == null:
 		return false
 	var top: CardInstance = slot.get_top_card()
 	if top == null:
 		return false
-	if not is_opponent_abilities_disabled(state, top.owner_index):
+	if not is_opponent_abilities_disabled(state, top.owner_index, before_order):
 		return false
 	if slot != state.players[top.owner_index].active_pokemon:
 		return false
 	return not _has_dark_wing_ability(slot)
+
+
+static func _is_source_not_earlier_than(source: PokemonSlot, before_order: int) -> bool:
+	return before_order > 0 and _active_source_order(source) >= before_order
+
+
+static func _active_source_order(slot: PokemonSlot) -> int:
+	if slot == null:
+		return 0
+	return slot.get_active_continuous_ability_order()
 
 
 ## 检查单个 PokemonSlot 是否拥有"暗夜振翼"特性

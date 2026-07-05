@@ -1,0 +1,73 @@
+{
+	"abilities": [
+		{
+			"name": "Fan Call",
+			"text": "Once during your first turn, you may search your deck for up to 3 [C] Pokémon with 100 HP or less, reveal them, and put them into your hand. Then, shuffle your deck. You can't use more than 1 Fan Call Ability during your turn.",
+			"name_zh": "风扇呼唤",
+			"text_zh": "在自己的最初回合时可使用1次。从自己的牌库选择最多3张HP为100以下的无色宝可梦，给对手看后加入手牌。然后重洗牌库。在自己的回合，不能使用超过1次风扇呼唤特性。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "Toshinao Aoki",
+	"attacks": [
+		{
+			"cost": "C",
+			"damage": "70",
+			"is_vstar_power": false,
+			"name": "Assault Landing",
+			"text": "If there is no Stadium in play, this attack does nothing.",
+			"name_zh": "突击着陆",
+			"text_zh": "若场上没有竞技场卡，这个招式不造成伤害。"
+		}
+	],
+	"card_index": "118",
+	"card_index_en": "118",
+	"card_type": "Pokemon",
+	"description": "特性: 风扇呼唤\n在自己的最初回合时可使用1次。从自己的牌库选择最多3张HP为100以下的无色宝可梦，给对手看后加入手牌。然后重洗牌库。在自己的回合，不能使用超过1次风扇呼唤特性。\n\n突击着陆 70\n若场上没有竞技场卡，这个招式不造成伤害。",
+	"effect_id": "d8f473848c38f6c4b01d857934403392",
+	"energy_provides": "",
+	"energy_type": "C",
+	"evolves_from": "",
+	"hp": 70,
+	"image_local_path": "user://cards/images/LEN_SCR/118.png",
+	"image_url": "https://limitless3.nyc3.cdn.digitaloceanspaces.com/limitless/logo.png",
+	"is_tags": [
+		"Basic"
+	],
+	"label": "",
+	"mechanic": "",
+	"name": "Fan Rotom",
+	"name_en": "Fan Rotom",
+	"name_zh": "旋转洛托姆",
+	"rarity": "Stellar Crown (SCR)",
+	"regulation_expanded": true,
+	"regulation_mark": "",
+	"regulation_standard": true,
+	"release_date": "",
+	"resistance_energy": "F",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "LEN_SCR",
+	"set_code_en": "SCR",
+	"source_card_index": "118",
+	"source_imported_at": 1783008496695,
+	"source_language": "en",
+	"source_parser_version": 1,
+	"source_prints": [
+		"SCR/118",
+		"PRE/85",
+		"ASC/171",
+		"ASC/250",
+		"JP/SV7/80",
+		"JP/SV8A/131",
+		"JP/M2A/139",
+		"JP/M2A/213"
+	],
+	"source_provider": "limitless",
+	"source_set_code": "SCR",
+	"source_url": "https://limitlesstcg.com/cards/SCR/118",
+	"stage": "Basic",
+	"weakness_energy": "L",
+	"weakness_value": "x2",
+	"yoren_code": ""
+}

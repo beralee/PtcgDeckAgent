@@ -146,6 +146,78 @@ func test_card_gallery_late_starts_from_screen_drag_when_press_was_swallowed() -
 	return result
 
 
+func test_card_gallery_touch_press_does_not_swallow_plain_card_tap() -> String:
+	var fixture := _build_hand_scroll_fixture()
+	var host := fixture["host"] as HandDragHost
+	var gallery_scroll := fixture["scroll"] as ScrollContainer
+	var gallery_row := fixture["row"] as HBoxContainer
+	var coordinator := BattleDragScrollCoordinatorScript.new()
+	coordinator.setup(host)
+	coordinator.configure_card_gallery_drag_scroll(gallery_scroll, gallery_row, "dialog_cards")
+	coordinator.set_card_gallery_drag_scroll_active(gallery_scroll, true)
+	_prepare_scroll_range(gallery_scroll)
+
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.index = 0
+	press.position = Vector2(220, 24)
+	var press_consumed := bool(coordinator.handle_card_gallery_drag_scroll_input(press, gallery_scroll, "dialog_cards"))
+	var active_after_press := host._card_gallery_drag_active
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.index = 0
+	release.position = Vector2(220, 24)
+	var release_consumed := bool(coordinator.handle_card_gallery_drag_scroll_input(release, gallery_scroll, "dialog_cards"))
+
+	var result := run_checks([
+		assert_false(press_consumed, "Card-gallery touch press should not swallow a plain card tap before drag threshold"),
+		assert_true(active_after_press, "Touch press should still arm gallery drag recovery"),
+		assert_false(release_consumed, "Plain touch release without drag should be left for the card tap handler"),
+		assert_false(host._card_gallery_drag_active, "Plain touch release should clear the armed gallery drag state"),
+		assert_false(host._card_gallery_dragging, "Plain touch tap should not become a gallery drag"),
+		assert_eq(host._card_gallery_drag_suppress_click_until_msec, 0, "Plain touch tap should not suppress card clicks"),
+	])
+	host.free()
+	return result
+
+
+func test_card_gallery_mouse_press_does_not_swallow_plain_card_click() -> String:
+	var fixture := _build_hand_scroll_fixture()
+	var host := fixture["host"] as HandDragHost
+	var gallery_scroll := fixture["scroll"] as ScrollContainer
+	var gallery_row := fixture["row"] as HBoxContainer
+	var coordinator := BattleDragScrollCoordinatorScript.new()
+	coordinator.setup(host)
+	coordinator.configure_card_gallery_drag_scroll(gallery_scroll, gallery_row, "dialog_cards")
+	coordinator.set_card_gallery_drag_scroll_active(gallery_scroll, true)
+	_prepare_scroll_range(gallery_scroll)
+
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = Vector2(220, 24)
+	press.global_position = Vector2(220, 24)
+	var press_consumed := bool(coordinator.handle_card_gallery_drag_scroll_input(press, gallery_scroll, "dialog_cards"))
+	var active_after_press := host._card_gallery_drag_active
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = Vector2(220, 24)
+	release.global_position = Vector2(220, 24)
+	var release_consumed := bool(coordinator.handle_card_gallery_drag_scroll_input(release, gallery_scroll, "dialog_cards"))
+
+	var result := run_checks([
+		assert_false(press_consumed, "Card-gallery mouse press should not swallow a plain card click before drag threshold"),
+		assert_true(active_after_press, "Mouse press should still arm gallery drag recovery"),
+		assert_false(release_consumed, "Plain mouse release without drag should be left for the card click handler"),
+		assert_false(host._card_gallery_drag_active, "Plain mouse release should clear the armed gallery drag state"),
+		assert_false(host._card_gallery_dragging, "Plain mouse click should not become a gallery drag"),
+		assert_eq(host._card_gallery_drag_suppress_click_until_msec, 0, "Plain mouse click should not suppress card clicks"),
+	])
+	host.free()
+	return result
+
+
 func _build_hand_scroll_fixture() -> Dictionary:
 	var host := HandDragHost.new()
 	host.size = Vector2(480, 220)

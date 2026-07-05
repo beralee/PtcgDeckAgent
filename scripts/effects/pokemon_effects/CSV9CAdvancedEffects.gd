@@ -803,6 +803,7 @@ class KyuremTrifrost extends BaseEffect:
 		attacker.attached_energy.clear()
 		for energy: CardInstance in discarded:
 			player.discard_pile.append(energy)
+			_record_attack_effect_discarded_attached_energy(attacker, energy, state)
 		var targets := _selected_targets(opponent, 3)
 		for target: PokemonSlot in targets:
 			if AttackCoinFlipPreventDamageAndEffectsNextTurn.prevents_attack_damage(target, state):

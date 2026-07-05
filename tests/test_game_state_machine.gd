@@ -421,6 +421,45 @@ func test_professors_research_play_trainer_logs_drawn_cards_for_reveal_animation
 	])
 
 
+func test_professors_research_overdraw_ends_before_play_trainer_log() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 3
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var professor_cd := CardData.new()
+	professor_cd.name = "Professor's Research"
+	professor_cd.card_type = "Supporter"
+	professor_cd.effect_id = "aecd80ca2722885c3d062a2255346f3e"
+	var professor := CardInstance.create(professor_cd, 0)
+	var filler := CardInstance.create(_make_basic_pokemon_card_data("Discard Before Overdraw"), 0)
+	gsm.game_state.players[0].hand = [professor, filler]
+
+	for draw_index: int in 6:
+		gsm.game_state.players[0].deck.append(CardInstance.create(_make_basic_pokemon_card_data("Short Research Draw %d" % [draw_index + 1]), 0))
+
+	var played: bool = gsm.play_trainer(0, professor, [])
+	var last_action: GameAction = gsm.action_log.back() if not gsm.action_log.is_empty() else null
+	var play_action := _get_last_action_of_type(gsm.action_log, GameAction.ActionType.PLAY_TRAINER)
+
+	return run_checks([
+		assert_true(played, "Professor's Research should resolve into a terminal deck-out state"),
+		assert_true(gsm.game_state.is_game_over(), "Professor's Research overdraw should end the game immediately"),
+		assert_eq(gsm.game_state.winner_index, 1, "The opponent should win after the Research overdraw"),
+		assert_eq(gsm.game_state.win_reason, "deck_out", "The terminal reason should be deck_out"),
+		assert_not_null(last_action, "A GAME_END action should be logged"),
+		assert_eq(last_action.action_type, GameAction.ActionType.GAME_END, "Game end should be the final log entry after overdraw"),
+		assert_null(play_action, "The outer trainer action should not be logged after terminal overdraw"),
+	])
+
+
 func test_professors_research_logs_hand_discard_action_for_reveal_animation() -> String:
 	var gsm := GameStateMachine.new()
 	gsm.game_state = GameState.new()
@@ -613,6 +652,65 @@ func test_draw_cards_for_effect_logs_exact_drawn_card_names() -> String:
 		),
 		assert_eq(draw_action.data.get("source_kind", ""), "trainer", "Shared effect draw helper should preserve source kind metadata"),
 		assert_eq(draw_action.data.get("source_card_name", ""), "Effect Source", "Shared effect draw helper should preserve source card metadata"),
+	])
+
+
+func test_draw_cards_for_effect_overdraw_immediately_loses_player() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 3
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	gsm.game_state.players[0].deck.append(CardInstance.create(_make_basic_pokemon_card_data("Last Draw"), 0))
+	var source_cd := CardData.new()
+	source_cd.name = "Overdraw Source"
+	source_cd.card_type = "Supporter"
+	var source_card := CardInstance.create(source_cd, 0)
+
+	var drawn: Array[CardInstance] = gsm.draw_cards_for_effect(0, 2, source_card, "trainer")
+
+	return run_checks([
+		assert_eq(drawn.size(), 1, "The available card should still be drawn before the failed draw attempt"),
+		assert_eq(gsm.game_state.players[0].hand.size(), 1, "The drawn card should move to hand"),
+		assert_true(gsm.game_state.is_game_over(), "Overdrawing from deck should end the game immediately"),
+		assert_eq(gsm.game_state.winner_index, 1, "The opponent should win when player 0 overdraws"),
+		assert_eq(gsm.game_state.win_reason, "deck_out", "Immediate overdraw losses should use the deck_out reason"),
+	])
+
+
+func test_draw_cards_for_effect_exact_empty_deck_waits_for_next_draw_attempt() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 3
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	gsm.game_state.players[0].deck.append(CardInstance.create(_make_basic_pokemon_card_data("Exact Last Draw"), 0))
+
+	var first_drawn: Array[CardInstance] = gsm.draw_cards_for_effect(0, 1)
+	var still_playing: bool = not gsm.game_state.is_game_over()
+	var second_drawn: Array[CardInstance] = gsm.draw_cards_for_effect(0, 1)
+
+	return run_checks([
+		assert_eq(first_drawn.size(), 1, "Drawing exactly the last deck card should succeed"),
+		assert_true(still_playing, "A deck at zero should not lose until the next draw attempt"),
+		assert_eq(second_drawn.size(), 0, "The next draw attempt should find no cards"),
+		assert_true(gsm.game_state.is_game_over(), "Drawing past zero should end the game"),
+		assert_eq(gsm.game_state.winner_index, 1, "The opponent should win after the failed draw attempt"),
+		assert_eq(gsm.game_state.win_reason, "deck_out", "The failed draw attempt should use the deck_out reason"),
 	])
 
 

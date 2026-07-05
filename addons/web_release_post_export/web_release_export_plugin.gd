@@ -7,6 +7,8 @@ const WebReleaseLayout := preload("res://addons/web_release_post_export/web_rele
 const PUBLIC_BASE_PATH := "/dist"
 const LATEST_FILE_NAME := "latest-web.json"
 const RELEASE_MANIFEST_FILE_NAME := "release-manifest.json"
+const USER_VISIT_BRIDGE_SOURCE_PATH := "res://web/userptcg_bridge.html"
+const USER_VISIT_BRIDGE_FILE_NAME := "userptcg_bridge.html"
 
 var _pending_export_path := ""
 var _should_generate_release_metadata := false
@@ -53,6 +55,9 @@ func _generate_release_metadata(export_path: String) -> bool:
 	var base_name := str(layout.get("base_name", ""))
 	if release_dir == "" or output_root == "" or base_name == "":
 		push_warning("Unable to infer Web release metadata paths from export path: %s" % export_path)
+		return false
+
+	if not _copy_user_visit_bridge(release_dir):
 		return false
 
 	var missing_files := _collect_missing_required_files(release_dir, base_name)
@@ -137,7 +142,33 @@ func _collect_missing_required_files(release_dir: String, base_name: String) -> 
 		var file_path := release_dir.path_join("%s.%s" % [base_name, extension])
 		if not FileAccess.file_exists(file_path):
 			missing.append(file_path)
+	var bridge_path := release_dir.path_join(USER_VISIT_BRIDGE_FILE_NAME)
+	if not FileAccess.file_exists(bridge_path):
+		missing.append(bridge_path)
 	return missing
+
+
+func _copy_user_visit_bridge(release_dir: String) -> bool:
+	var source_path := ProjectSettings.globalize_path(USER_VISIT_BRIDGE_SOURCE_PATH).replace("\\", "/")
+	if not FileAccess.file_exists(source_path):
+		push_warning("Static user visit bridge is missing: %s" % source_path)
+		return false
+
+	var source := FileAccess.open(source_path, FileAccess.READ)
+	if source == null:
+		push_warning("Unable to read static user visit bridge: %s" % source_path)
+		return false
+	var bytes := source.get_buffer(int(source.get_length()))
+	source.close()
+
+	var target_path := release_dir.path_join(USER_VISIT_BRIDGE_FILE_NAME)
+	var target := FileAccess.open(target_path, FileAccess.WRITE)
+	if target == null:
+		push_warning("Unable to write static user visit bridge: %s" % target_path)
+		return false
+	target.store_buffer(bytes)
+	target.close()
+	return true
 
 
 func _collect_release_files(release_dir: String) -> Array[Dictionary]:

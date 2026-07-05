@@ -28,6 +28,7 @@ func execute_attack(
 	attacker.attached_energy.clear()
 	for energy: CardInstance in discarded:
 		player.discard_pile.append(energy)
+		_record_attack_effect_discarded_attached_energy(attacker, energy, state)
 
 
 func get_description() -> String:

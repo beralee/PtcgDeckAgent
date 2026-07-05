@@ -1,0 +1,75 @@
+{
+	"abilities": [
+		{
+			"name": "Skyliner",
+			"text": "Your Basic Pokémon in play have no Retreat Cost.",
+			"name_zh": "空中航线",
+			"text_zh": "自己的场上的基础宝可梦没有撤退费用。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "takuyoa",
+	"attacks": [
+		{
+			"cost": "PPC",
+			"damage": "200",
+			"is_vstar_power": false,
+			"name": "Eon Blade",
+			"text": "During your next turn, this Pokémon can't attack.",
+			"name_zh": "无限之刃",
+			"text_zh": "在自己的下个回合，这只宝可梦不能使用招式。"
+		}
+	],
+	"card_index": "76",
+	"card_index_en": "76",
+	"card_type": "Pokemon",
+	"description": "特性: 空中航线\n自己的场上的基础宝可梦没有撤退费用。\n\n无限之刃 200\n在自己的下个回合，这只宝可梦不能使用招式。",
+	"effect_id": "0ae80b64c46fbf648bf3d0fd49be4c04",
+	"energy_provides": "",
+	"energy_type": "P",
+	"evolves_from": "",
+	"hp": 210,
+	"image_local_path": "user://cards/images/LEN_SSP/76.png",
+	"image_url": "https://limitless3.nyc3.cdn.digitaloceanspaces.com/limitless/logo.png",
+	"is_tags": [
+		"Basic",
+		"ex"
+	],
+	"label": "ex",
+	"mechanic": "ex",
+	"name": "Latias ex",
+	"name_en": "Latias ex",
+	"name_zh": "拉帝亚斯ex",
+	"rarity": "Surging Sparks (SSP)",
+	"regulation_expanded": true,
+	"regulation_mark": "",
+	"regulation_standard": true,
+	"release_date": "",
+	"resistance_energy": "F",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "LEN_SSP",
+	"set_code_en": "SSP",
+	"source_card_index": "76",
+	"source_imported_at": 1783008496737,
+	"source_language": "en",
+	"source_parser_version": 1,
+	"source_prints": [
+		"SSP/76",
+		"SSP/220",
+		"SSP/239",
+		"JP/MP/32",
+		"JP/SV7A/19",
+		"JP/SV7A/78",
+		"JP/SV7A/87",
+		"JP/M2A/75",
+		"JP/MC/312"
+	],
+	"source_provider": "limitless",
+	"source_set_code": "SSP",
+	"source_url": "https://limitlesstcg.com/cards/SSP/76",
+	"stage": "Basic",
+	"weakness_energy": "D",
+	"weakness_value": "x2",
+	"yoren_code": ""
+}

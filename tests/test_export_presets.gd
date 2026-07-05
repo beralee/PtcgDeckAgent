@@ -9,6 +9,7 @@ const WEB_RELEASE_PLUGIN_CFG_PATH := "res://addons/web_release_post_export/plugi
 const WEB_RELEASE_PLUGIN_PATH := "res://addons/web_release_post_export/web_release_export_plugin.gd"
 const WEB_RELEASE_LAYOUT_PATH := "res://addons/web_release_post_export/web_release_layout.gd"
 const WEB_CUSTOM_SHELL_PATH := "res://web/ptcg_web_shell.html"
+const WEB_USER_VISIT_BRIDGE_PATH := "res://web/userptcg_bridge.html"
 const REQUIRED_BUNDLED_FILTER := "data/**"
 const WEB_PRESET_NAME := "Web"
 const WEB_EXCLUDE_FILTERS := ["tests/**", "docs/**", ".tmp/**", ".godot_test_user/**", "addons/web_release_post_export/**"]
@@ -170,6 +171,22 @@ func test_web_custom_shell_is_ascii_safe_for_export_encoding() -> String:
 	])
 
 
+func test_web_user_visit_static_bridge_posts_cloud_function() -> String:
+	var bridge_text := FileAccess.get_file_as_string(WEB_USER_VISIT_BRIDGE_PATH)
+
+	return run_checks([
+		assert_true(FileAccess.file_exists(WEB_USER_VISIT_BRIDGE_PATH), "Static user visit bridge page should exist beside Web release assets"),
+		assert_true(bridge_text.contains("http://fc.skillserver.cn/userptcg"), "Static user visit bridge should post to the cloud function"),
+		assert_true(bridge_text.contains("window.location.hash"), "Static user visit bridge should read the client payload from the URL hash"),
+		assert_true(bridge_text.contains("payload"), "Static user visit bridge should preserve the visit payload"),
+		assert_true(bridge_text.contains("navigator.sendBeacon"), "Static user visit bridge should try a beacon send first"),
+		assert_true(bridge_text.contains("mode: \"no-cors\""), "Static user visit bridge should use no-cors fetch as a browser-compatible fallback"),
+		assert_true(bridge_text.contains("document.createElement(\"form\")"), "Static user visit bridge should keep a form POST fallback for static hosting"),
+		assert_true(bridge_text.contains("application/x-www-form-urlencoded"), "Static user visit bridge should avoid a JSON preflight in the form fallback"),
+		assert_true(_is_ascii_only(bridge_text), "Static user visit bridge should stay ASCII-only for export encoding safety"),
+	])
+
+
 func test_web_export_excludes_development_only_files() -> String:
 	var preset_text := FileAccess.get_file_as_string(EXPORT_PRESETS_PATH)
 	var web_block := _extract_preset_block(preset_text, WEB_PRESET_NAME)
@@ -197,6 +214,7 @@ func test_web_release_script_generates_versioned_manifests() -> String:
 		assert_true(script_text.contains("/dist"), "Web release script should default to the deployed /dist public base path"),
 		assert_true(script_text.contains("Get-ReleaseSlug"), "Web release script should use a CDN-safe release slug without dots"),
 		assert_true(script_text.contains("$publicBase/web/$releaseSlug"), "Web release script should place versioned resources under /dist/web/<slug>"),
+		assert_true(script_text.contains("userptcg_bridge.html"), "Web release script should copy the static user visit bridge into the versioned release"),
 	])
 
 
@@ -225,6 +243,7 @@ func test_web_release_post_export_plugin_generates_metadata() -> String:
 		assert_true(plugin_text.contains("FileAccess.get_sha256"), "Web release plugin should hash release files during Godot export"),
 		assert_true(plugin_text.contains("file_name != RELEASE_MANIFEST_FILE_NAME"), "Web release plugin should not include a stale previous manifest in the new manifest"),
 		assert_true(plugin_text.contains("_infer_release_path"), "Web release plugin should write public URLs based on the normalized release directory"),
+		assert_true(plugin_text.contains("userptcg_bridge.html"), "Web release plugin should copy the static user visit bridge into the versioned release"),
 	])
 
 

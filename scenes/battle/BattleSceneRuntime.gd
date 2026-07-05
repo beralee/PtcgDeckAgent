@@ -1,6 +1,10 @@
 ## BattleScene lifecycle and layout runtime.
 extends "res://scenes/battle/runtime/BattleSceneDialogInteractionReviewRuntime.gd"
 
+var _dialog_card_touch_bridge_active_card: BattleCardView = null
+var _dialog_card_touch_bridge_touch_index: int = -1
+
+
 func _ready() -> void:
 	set_process(false)
 	_init_battle_runtime_log()
@@ -105,6 +109,9 @@ func _ready() -> void:
 	_discard_close_btn.pressed.connect(func() -> void:
 		_cancel_card_gallery_drag_scroll("discard_collection_close")
 		_discard_overlay.visible = false
+		_discard_collection_current_kind = ""
+		_discard_collection_current_player_index = -1
+		_discard_collection_current_title = ""
 	)
 	if _discard_list != null and not _discard_list.item_clicked.is_connected(_on_discard_list_item_clicked):
 		_discard_list.item_clicked.connect(_on_discard_list_item_clicked)
@@ -169,12 +176,236 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
+	_release_game_state_machine()
+	_release_battle_runtime_resources()
+	BattleMusicManager.stop_battle_music()
+	GameManager.apply_non_battle_orientation()
+
+
+func _release_battle_runtime_resources() -> void:
 	_responsive_layout_stabilization_frames_remaining = 0
 	set_process(false)
+	_cancel_runtime_http_requests()
 	_stop_all_deck_shuffle_effects()
-	BattleMusicManager.stop_battle_music()
-	_release_game_state_machine()
-	GameManager.apply_non_battle_orientation()
+	_stop_battle_discussion_flash()
+	_disconnect_llm_strategy_signals_from_current_ai()
+	_disconnect_battle_async_service_signals()
+	_release_runtime_timer_nodes()
+	_release_runtime_tweens()
+	_release_runtime_dynamic_nodes()
+	_clear_runtime_card_views()
+	_clear_runtime_state_payloads()
+	_release_runtime_cache_heavy_refs()
+
+
+func _cancel_runtime_http_requests() -> void:
+	for child: Node in find_children("*", "HTTPRequest", true, false):
+		var request := child as HTTPRequest
+		if request == null:
+			continue
+		request.cancel_request()
+		_queue_free_runtime_node(request)
+
+
+func _disconnect_llm_strategy_signals_from_current_ai() -> void:
+	if not (_ai_opponent is Object):
+		return
+	var strategy_variant: Variant = (_ai_opponent as Object).get("_deck_strategy")
+	if not (strategy_variant is Object):
+		return
+	var strategy := strategy_variant as Object
+	_disconnect_runtime_signal(strategy, "llm_thinking_started", Callable(self, "_on_llm_thinking_started"))
+	_disconnect_runtime_signal(strategy, "llm_thinking_finished", Callable(self, "_on_llm_thinking_finished"))
+	_disconnect_runtime_signal(strategy, "llm_thinking_failed", Callable(self, "_on_llm_thinking_failed"))
+
+
+func _disconnect_battle_async_service_signals() -> void:
+	_disconnect_runtime_signal(_battle_review_service, "status_changed", Callable(self, "_on_battle_review_status_changed"))
+	_disconnect_runtime_signal(_battle_review_service, "review_completed", Callable(self, "_on_battle_review_completed"))
+	_disconnect_runtime_signal(_battle_advice_service, "status_changed", Callable(self, "_on_battle_advice_status_changed"))
+	_disconnect_runtime_signal(_battle_advice_service, "advice_completed", Callable(self, "_on_battle_advice_completed"))
+	_disconnect_runtime_signal(_match_end_quick_review_service, "status_changed", Callable(self, "_on_match_end_quick_review_status_changed"))
+	_disconnect_runtime_signal(_match_end_quick_review_service, "quick_review_completed", Callable(self, "_on_match_end_quick_review_completed"))
+	_battle_review_service = null
+	_battle_advice_service = null
+	_match_end_quick_review_service = null
+
+
+func _disconnect_runtime_signal(emitter: Object, signal_name: String, callback: Callable) -> void:
+	if emitter == null or not is_instance_valid(emitter):
+		return
+	if not emitter.has_signal(signal_name):
+		return
+	if emitter.is_connected(signal_name, callback):
+		emitter.disconnect(signal_name, callback)
+
+
+func _release_runtime_timer_nodes() -> void:
+	if _slot_touch_long_press_timer != null and is_instance_valid(_slot_touch_long_press_timer):
+		_slot_touch_long_press_timer.stop()
+		_queue_free_runtime_node(_slot_touch_long_press_timer)
+	_slot_touch_long_press_timer = null
+	_handover_attack_vfx_delay_token += 1
+	_handover_attack_vfx_delay_active = false
+	_handover_attack_vfx_delay_timer = null
+	_draw_reveal_resume_timer = null
+	_ai_action_pause_timer = null
+	_ai_llm_waiting = false
+	_ai_llm_turn_requested = -1
+	_ai_llm_wait_anim_token += 1
+
+
+func _release_runtime_tweens() -> void:
+	_kill_runtime_tween(_detail_reveal_tween)
+	_detail_reveal_tween = null
+	_kill_runtime_tween(_my_deck_shuffle_tween)
+	_my_deck_shuffle_tween = null
+	_kill_runtime_tween(_opp_deck_shuffle_tween)
+	_opp_deck_shuffle_tween = null
+
+
+func _kill_runtime_tween(tween_variant: Variant) -> void:
+	if not (tween_variant is Tween):
+		return
+	var tween := tween_variant as Tween
+	if tween == null or not is_instance_valid(tween):
+		return
+	tween.kill()
+
+
+func _release_runtime_dynamic_nodes() -> void:
+	_queue_free_runtime_node(_battle_discussion_dialog)
+	_battle_discussion_dialog = null
+	_queue_free_runtime_node(_portrait_actions_popup)
+	_portrait_actions_popup = null
+	_queue_free_runtime_node(_draw_reveal_overlay)
+	_draw_reveal_overlay = null
+	_queue_free_runtime_node(_attack_vfx_overlay)
+	_attack_vfx_overlay = null
+	_queue_free_runtime_node(_ready_vfx_overlay)
+	_ready_vfx_overlay = null
+	_queue_free_runtime_node(_field_interaction_overlay)
+	_field_interaction_overlay = null
+	_queue_free_runtime_node(_field_swap_overlay)
+	_field_swap_overlay = null
+	_queue_free_runtime_node(_stadium_card_overlay)
+	_stadium_card_overlay = null
+	_stadium_card_view = null
+	_queue_free_runtime_node(_match_end_overlay)
+	_match_end_overlay = null
+	_queue_free_runtime_node(_battle_advice_panel)
+	_battle_advice_panel = null
+	_battle_advice_panel_title = null
+	_battle_advice_panel_toggle_btn = null
+	_battle_advice_panel_content = null
+	_queue_free_runtime_node(_coin_animator)
+	_coin_animator = null
+
+
+func _queue_free_runtime_node(node: Node) -> void:
+	if node == null or not is_instance_valid(node):
+		return
+	if node.is_queued_for_deletion():
+		return
+	node.queue_free()
+
+
+func _clear_runtime_card_views() -> void:
+	for card_view: BattleCardView in _draw_reveal_card_views:
+		_queue_free_runtime_node(card_view)
+	_draw_reveal_card_views.clear()
+	_slot_card_views.clear()
+	_opp_prize_slots.clear()
+	_my_prize_slots.clear()
+	_detail_card_view = null
+	_detail_hand_action_card = null
+	_opp_deck_preview = null
+	_my_deck_preview = null
+	_opp_discard_preview = null
+	_my_discard_preview = null
+
+
+func _clear_runtime_state_payloads() -> void:
+	_selected_hand_card = null
+	_pending_choice = ""
+	_pending_effect_card = null
+	_pending_effect_steps.clear()
+	_pending_effect_step_index = -1
+	_pending_effect_context.clear()
+	_pending_effect_kind = ""
+	_pending_effect_player_index = -1
+	_pending_effect_slot = null
+	_pending_effect_attack_data.clear()
+	_pending_effect_attack_effects.clear()
+	_dialog_multi_selected_indices.clear()
+	_dialog_data.clear()
+	_dialog_items_data.clear()
+	_dialog_card_selected_indices.clear()
+	_dialog_assignment_assignments.clear()
+	_discard_card_page = 0
+	_discard_card_page_size = 0
+	_field_interaction_data.clear()
+	_field_interaction_slot_index_by_id.clear()
+	_field_interaction_selected_indices.clear()
+	_field_interaction_assignment_entries.clear()
+	_pending_handover_action = Callable()
+	_pending_attack_vfx_completion_action = Callable()
+	_pending_attack_vfx_completion_reason = ""
+	_draw_reveal_queue.clear()
+	_draw_reveal_active = false
+	_draw_reveal_waiting_for_confirm = false
+	_draw_reveal_auto_continue_pending = false
+	_draw_reveal_pending_hand_refresh = false
+	_draw_reveal_current_action = null
+	_draw_reveal_allow_hand_refresh_during_fly = false
+	_draw_reveal_visible_instance_ids.clear()
+	_ready_vfx_seen_keys.clear()
+	_ready_vfx_trigger_source_player_index = -1
+	_ready_vfx_trigger_action_kind = ""
+	_pending_prize_player_index = -1
+	_pending_prize_remaining = 0
+	_pending_prize_animating = false
+	_ai_opponent = null
+	_ai_running = false
+	_ai_step_scheduled = false
+	_ai_followup_requested = false
+	_ai_turn_marker = ""
+	_ai_actions_this_turn = 0
+	_latest_opponent_action_text = ""
+	_latest_opponent_action_turn_number = -1
+	_coin_flip_queue.clear()
+	_coin_animating = false
+	_coin_animation_resume_effect_step = false
+	_battle_recording_started = false
+	_battle_recording_context_captured = false
+	_turn_start_snapshot_recorded_keys.clear()
+	_battle_review_last_review.clear()
+	_battle_review_busy = false
+	_battle_review_progress_text = ""
+	_match_end_stats.clear()
+	_match_end_quick_review_result.clear()
+	_match_end_quick_review_busy = false
+	_match_end_quick_review_progress_text = ""
+	_match_end_quick_review_requested = false
+	_battle_advice_last_result.clear()
+	_battle_advice_busy = false
+	_battle_advice_progress_text = ""
+	_battle_advice_initial_snapshot.clear()
+	if _log_list != null and is_instance_valid(_log_list):
+		_log_list.clear()
+
+
+func _release_runtime_cache_heavy_refs() -> void:
+	_player_card_back_texture = null
+	_opponent_card_back_texture = null
+	_vstar_hud_texture_indices_by_player.clear()
+	_deck_shuffle_counts.clear()
+	_deck_preview_base_positions.clear()
+	_field_swap_last_snapshot.clear()
+	_battle_recorder = null
+	_battle_attack_vfx_controller = null
+	_battle_ready_vfx_controller = null
+	_battle_stadium_backdrop_coordinator = null
 
 
 
@@ -193,6 +424,16 @@ func _process(_delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if _try_handle_library_search_board_touch_input(event):
+		var library_touch_viewport := get_viewport()
+		if library_touch_viewport != null:
+			library_touch_viewport.set_input_as_handled()
+		return
+	if _try_handle_dialog_card_gallery_touch_input(event):
+		var dialog_touch_viewport := get_viewport()
+		if dialog_touch_viewport != null:
+			dialog_touch_viewport.set_input_as_handled()
+		return
 	if _card_gallery_drag_active and _handle_card_gallery_drag_scroll_input(event, _card_gallery_drag_active_scroll, "battle_scene_input"):
 		var gallery_drag_viewport := get_viewport()
 		if gallery_drag_viewport != null:
@@ -210,6 +451,130 @@ func _input(event: InputEvent) -> void:
 		var viewport := get_viewport()
 		if viewport != null:
 			viewport.set_input_as_handled()
+
+
+func _try_handle_library_search_board_touch_input(event: InputEvent) -> bool:
+	if _battle_dialog_controller == null:
+		return false
+	return bool(_battle_dialog_controller.call("try_handle_library_search_board_touch_input", self, event))
+
+
+func _try_handle_dialog_card_gallery_touch_input(event: InputEvent) -> bool:
+	if not (event is InputEventScreenTouch or event is InputEventScreenDrag):
+		return false
+	if not _is_dialog_card_gallery_touch_bridge_active():
+		_clear_dialog_card_touch_bridge()
+		return false
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			var pressed_card := _dialog_card_gallery_card_at_screen_position(touch.position)
+			if pressed_card == null:
+				_clear_dialog_card_touch_bridge()
+				return false
+			_dialog_card_touch_bridge_active_card = pressed_card
+			_dialog_card_touch_bridge_touch_index = touch.index
+			_forward_dialog_card_touch_event(pressed_card, event)
+			return true
+		if _dialog_card_touch_bridge_active_card == null or touch.index != _dialog_card_touch_bridge_touch_index:
+			return false
+		var release_card := _dialog_card_touch_bridge_active_card
+		_clear_dialog_card_touch_bridge()
+		if release_card == null or not is_instance_valid(release_card):
+			return true
+		_forward_dialog_card_touch_event(release_card, event)
+		return true
+	if event is InputEventScreenDrag:
+		var drag := event as InputEventScreenDrag
+		var active_card := _dialog_card_touch_bridge_active_card
+		if active_card == null or drag.index != _dialog_card_touch_bridge_touch_index:
+			return false
+		if not is_instance_valid(active_card):
+			_clear_dialog_card_touch_bridge()
+			return true
+		_forward_dialog_card_touch_event(active_card, event)
+		return true
+	return false
+
+
+func _is_dialog_card_gallery_touch_bridge_active() -> bool:
+	if _dialog_overlay == null or not _dialog_overlay.visible:
+		return false
+	if not bool(_dialog_card_mode) and not bool(_dialog_assignment_mode):
+		return false
+	return true
+
+
+func _clear_dialog_card_touch_bridge() -> void:
+	_dialog_card_touch_bridge_active_card = null
+	_dialog_card_touch_bridge_touch_index = -1
+
+
+func _forward_dialog_card_touch_event(card_view: BattleCardView, event: InputEvent) -> void:
+	if card_view == null or not is_instance_valid(card_view):
+		return
+	if not card_view.has_method("handle_bridged_pointer_input"):
+		return
+	card_view.call("handle_bridged_pointer_input", event)
+
+
+func _dialog_card_gallery_card_at_screen_position(screen_position: Vector2) -> BattleCardView:
+	var card := _dialog_card_gallery_card_at_screen_position_in_gallery(_dialog_card_scroll, _dialog_card_row, screen_position)
+	if card != null:
+		return card
+	card = _dialog_card_gallery_card_at_screen_position_in_gallery(_dialog_assignment_source_scroll, _dialog_assignment_source_row, screen_position)
+	if card != null:
+		return card
+	return _dialog_card_gallery_card_at_screen_position_in_gallery(_dialog_assignment_target_scroll, _dialog_assignment_target_row, screen_position)
+
+
+func _dialog_card_gallery_card_at_screen_position_in_gallery(scroll: ScrollContainer, row: Control, screen_position: Vector2) -> BattleCardView:
+	if scroll == null or row == null:
+		return null
+	if not scroll.visible or not row.visible:
+		return null
+	if scroll.is_inside_tree() and not scroll.is_visible_in_tree():
+		return null
+	var clip_rect := scroll.get_global_rect()
+	if clip_rect.size == Vector2.ZERO or not clip_rect.has_point(screen_position):
+		return null
+	return _dialog_card_gallery_card_at_screen_position_in_node(row, screen_position, clip_rect)
+
+
+func _dialog_card_gallery_card_at_screen_position_in_node(node: Node, screen_position: Vector2, clip_rect: Rect2) -> BattleCardView:
+	if node == null:
+		return null
+	for child_index: int in range(node.get_child_count() - 1, -1, -1):
+		var child := node.get_child(child_index)
+		var nested_card := _dialog_card_gallery_card_at_screen_position_in_node(child, screen_position, clip_rect)
+		if nested_card != null:
+			return nested_card
+	var card_view := node as BattleCardView
+	if card_view == null:
+		return null
+	if not _is_dialog_card_gallery_touch_selectable(card_view):
+		return null
+	if card_view.is_inside_tree() and not card_view.is_visible_in_tree():
+		return null
+	var touch_rect := card_view.get_global_rect().intersection(clip_rect)
+	if touch_rect.size == Vector2.ZERO or not touch_rect.has_point(screen_position):
+		return null
+	return card_view
+
+
+func _is_dialog_card_gallery_touch_selectable(card_view: BattleCardView) -> bool:
+	if card_view == null:
+		return false
+	if card_view.has_meta("dialog_choice_index"):
+		return int(card_view.get_meta("dialog_choice_index", -1)) >= 0
+	if card_view.has_meta("assignment_source_index"):
+		return (
+			int(card_view.get_meta("assignment_source_index", -1)) >= 0
+			and not bool(card_view.get_meta("assignment_source_disabled", false))
+		)
+	if card_view.has_meta("assignment_target_index"):
+		return int(card_view.get_meta("assignment_target_index", -1)) >= 0
+	return false
 
 
 func _should_route_hand_drag_input_event(event: InputEvent) -> bool:
@@ -1936,23 +2301,6 @@ func _on_stadium_area_input(event: InputEvent) -> void:
 	if mbe.button_index != MOUSE_BUTTON_RIGHT:
 		return
 	_show_card_detail_for_instance(_gsm.game_state.stadium_card)
-
-
-func _is_board_modal_overlay_visible() -> bool:
-	for overlay_variant: Variant in [
-		_dialog_overlay,
-		_discard_overlay,
-		_detail_overlay,
-		_handover_panel,
-		_coin_overlay,
-		_review_overlay,
-		get("_match_end_overlay"),
-	]:
-		var overlay := overlay_variant as Control
-		if overlay != null and overlay.visible:
-			return true
-	return false
-
 
 
 func _on_back_pressed() -> void:

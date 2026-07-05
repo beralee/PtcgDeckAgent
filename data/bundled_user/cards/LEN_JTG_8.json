@@ -1,0 +1,69 @@
+{
+	"abilities": [
+		{
+			"name": "Exploding Needles",
+			"text": "If this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon, put 6 damage counters on the Attacking Pokémon.",
+			"name_zh": "爆裂针刺",
+			"text_zh": "若这只宝可梦在战斗场受到对手的宝可梦招式的伤害而被击倒，在攻击宝可梦身上放置6个伤害指示物。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "Dsuke",
+	"attacks": [
+		{
+			"cost": "C",
+			"damage": "20",
+			"is_vstar_power": false,
+			"name": "Corner",
+			"text": "During your opponent's next turn, the Defending Pokémon can't retreat.",
+			"name_zh": "围困",
+			"text_zh": "在对手的下个回合，防守宝可梦不能撤退。"
+		}
+	],
+	"card_index": "8",
+	"card_index_en": "8",
+	"card_type": "Pokemon",
+	"description": "特性: 爆裂针刺\n若这只宝可梦在战斗场受到对手的宝可梦招式的伤害而被击倒，在攻击宝可梦身上放置6个伤害指示物。\n\n围困 20\n在对手的下个回合，防守宝可梦不能撤退。",
+	"effect_id": "eba423df37bdbef092267471343994f5",
+	"energy_provides": "",
+	"energy_type": "G",
+	"evolves_from": "",
+	"hp": 110,
+	"image_local_path": "user://cards/images/LEN_JTG/8.png",
+	"image_url": "https://limitless3.nyc3.cdn.digitaloceanspaces.com/limitless/logo.png",
+	"is_tags": [
+		"Basic"
+	],
+	"label": "",
+	"mechanic": "",
+	"name": "Maractus",
+	"name_en": "Maractus",
+	"name_zh": "沙铃仙人掌",
+	"rarity": "Journey Together (JTG)",
+	"regulation_expanded": true,
+	"regulation_mark": "",
+	"regulation_standard": true,
+	"release_date": "",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "LEN_JTG",
+	"set_code_en": "JTG",
+	"source_card_index": "8",
+	"source_imported_at": 1783008495813,
+	"source_language": "en",
+	"source_parser_version": 1,
+	"source_prints": [
+		"JTG/8",
+		"JTG/160",
+		"JP/SV9/6",
+		"JP/SV9/101"
+	],
+	"source_provider": "limitless",
+	"source_set_code": "JTG",
+	"source_url": "https://limitlesstcg.com/cards/JTG/8",
+	"stage": "Basic",
+	"weakness_energy": "R",
+	"weakness_value": "x2",
+	"yoren_code": ""
+}

@@ -665,6 +665,11 @@ func _extract_action_slot_card_id(slot_variant: Variant) -> int:
 	return -1
 
 
+func _resolved_action_targets(action: Dictionary) -> Array:
+	var targets_raw: Variant = action.get("targets", [])
+	return targets_raw if targets_raw is Array else []
+
+
 func _execute_action(battle_scene: Control, gsm: GameStateMachine, action: Dictionary) -> bool:
 	match str(action.get("kind", "")):
 		"attach_energy":
@@ -701,33 +706,57 @@ func _execute_action(battle_scene: Control, gsm: GameStateMachine, action: Dicti
 					battle_scene.call("_maybe_run_ai")
 				return true
 		"play_trainer":
+			var trainer_targets: Array = _resolved_action_targets(action)
+			if not trainer_targets.is_empty():
+				if gsm.play_trainer(player_index, action.get("card"), trainer_targets):
+					_after_successful_action(battle_scene)
+					return true
+				return false
 			if bool(action.get("requires_interaction", false)):
 				if battle_scene != null and battle_scene.has_method("_try_play_trainer_with_interaction"):
 					var trainer_result: Variant = battle_scene.call("_try_play_trainer_with_interaction", player_index, action.get("card"))
 					return bool(trainer_result) if typeof(trainer_result) == TYPE_BOOL else true
 				return false
-			if gsm.play_trainer(player_index, action.get("card"), action.get("targets", [])):
+			if gsm.play_trainer(player_index, action.get("card"), trainer_targets):
 				_after_successful_action(battle_scene)
 				return true
 		"play_stadium":
+			var play_stadium_targets: Array = _resolved_action_targets(action)
+			if not play_stadium_targets.is_empty():
+				if gsm.play_stadium(player_index, action.get("card"), play_stadium_targets):
+					_after_successful_action(battle_scene)
+					return true
+				return false
 			if bool(action.get("requires_interaction", false)):
 				if battle_scene != null and battle_scene.has_method("_try_play_stadium_with_interaction"):
 					var stadium_result: Variant = battle_scene.call("_try_play_stadium_with_interaction", player_index, action.get("card"))
 					return bool(stadium_result) if typeof(stadium_result) == TYPE_BOOL else true
 				return false
-			if gsm.play_stadium(player_index, action.get("card"), action.get("targets", [])):
+			if gsm.play_stadium(player_index, action.get("card"), play_stadium_targets):
 				_after_successful_action(battle_scene)
 				return true
 		"use_stadium_effect":
+			var stadium_targets: Array = _resolved_action_targets(action)
+			if not stadium_targets.is_empty():
+				if gsm.use_stadium_effect(player_index, stadium_targets):
+					_after_successful_action(battle_scene)
+					return true
+				return false
 			if bool(action.get("requires_interaction", false)):
 				if battle_scene != null and battle_scene.has_method("_try_use_stadium_with_interaction"):
 					var use_stadium_result: Variant = battle_scene.call("_try_use_stadium_with_interaction", player_index)
 					return bool(use_stadium_result) if typeof(use_stadium_result) == TYPE_BOOL else true
 				return false
-			if gsm.use_stadium_effect(player_index, action.get("targets", [])):
+			if gsm.use_stadium_effect(player_index, stadium_targets):
 				_after_successful_action(battle_scene)
 				return true
 		"use_ability":
+			var ability_targets: Array = _resolved_action_targets(action)
+			if not ability_targets.is_empty():
+				if gsm.use_ability(player_index, action.get("source_slot"), int(action.get("ability_index", 0)), ability_targets):
+					_after_successful_action(battle_scene, true, "use_ability")
+					return true
+				return false
 			if bool(action.get("requires_interaction", false)):
 				if battle_scene != null and battle_scene.has_method("_try_use_ability_with_interaction"):
 					var ability_result: Variant = battle_scene.call(
@@ -738,7 +767,7 @@ func _execute_action(battle_scene: Control, gsm: GameStateMachine, action: Dicti
 					)
 					return bool(ability_result) if typeof(ability_result) == TYPE_BOOL else true
 				return false
-			if gsm.use_ability(player_index, action.get("source_slot"), int(action.get("ability_index", 0)), action.get("targets", [])):
+			if gsm.use_ability(player_index, action.get("source_slot"), int(action.get("ability_index", 0)), ability_targets):
 				_after_successful_action(battle_scene, true, "use_ability")
 				return true
 		"retreat":
@@ -746,6 +775,12 @@ func _execute_action(battle_scene: Control, gsm: GameStateMachine, action: Dicti
 				_after_successful_action(battle_scene)
 				return true
 		"attack":
+			var attack_targets: Array = _resolved_action_targets(action)
+			if not attack_targets.is_empty():
+				if gsm.use_attack(player_index, int(action.get("attack_index", -1)), attack_targets):
+					_after_successful_action(battle_scene, true)
+					return true
+				return false
 			if bool(action.get("requires_interaction", false)):
 				if battle_scene != null and battle_scene.has_method("_try_use_attack_with_interaction"):
 					var player: PlayerState = gsm.game_state.players[player_index]
@@ -757,7 +792,7 @@ func _execute_action(battle_scene: Control, gsm: GameStateMachine, action: Dicti
 					)
 					return bool(attack_result) if typeof(attack_result) == TYPE_BOOL else true
 				return false
-			if gsm.use_attack(player_index, int(action.get("attack_index", -1)), action.get("targets", [])):
+			if gsm.use_attack(player_index, int(action.get("attack_index", -1)), attack_targets):
 				_after_successful_action(battle_scene, true)
 				return true
 		"granted_attack":
@@ -765,12 +800,18 @@ func _execute_action(battle_scene: Control, gsm: GameStateMachine, action: Dicti
 			var ga_slot: PokemonSlot = action.get("source_slot")
 			if ga_slot == null:
 				ga_slot = gsm.game_state.players[player_index].active_pokemon
+			var granted_attack_targets: Array = _resolved_action_targets(action)
+			if not granted_attack_targets.is_empty():
+				if gsm.use_granted_attack(player_index, ga_slot, ga_data, granted_attack_targets):
+					_after_successful_action(battle_scene, true)
+					return true
+				return false
 			if bool(action.get("requires_interaction", false)):
 				if battle_scene != null and battle_scene.has_method("_try_use_granted_attack_with_interaction"):
 					var granted_result: Variant = battle_scene.call("_try_use_granted_attack_with_interaction", player_index, ga_slot, ga_data)
 					return bool(granted_result) if typeof(granted_result) == TYPE_BOOL else true
 				return false
-			if gsm.use_granted_attack(player_index, ga_slot, ga_data, action.get("targets", [])):
+			if gsm.use_granted_attack(player_index, ga_slot, ga_data, granted_attack_targets):
 				_after_successful_action(battle_scene, true)
 				return true
 		"end_turn":

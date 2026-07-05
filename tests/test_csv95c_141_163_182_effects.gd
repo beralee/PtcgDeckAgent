@@ -3,11 +3,16 @@ extends TestBase
 
 const AILegalActionBuilderScript = preload("res://scripts/ai/AILegalActionBuilder.gd")
 const CSV95C182AokisSkillScript = preload("res://scripts/effects/trainer_effects/CSV95C182AokisSkill.gd")
+const EffectMortysConvictionScript = preload("res://scripts/effects/trainer_effects/EffectMortysConviction.gd")
 const EffectApplyStatusScript = preload("res://scripts/effects/pokemon_effects/EffectApplyStatus.gd")
 const EffectLanasAidScript = preload("res://scripts/effects/trainer_effects/EffectLanasAid.gd")
+const AbilityToedscruelSlimeMoldColonyScript = preload("res://scripts/effects/pokemon_effects/AbilityToedscruelSlimeMoldColony.gd")
 
 const HOOTHOOT_ID := "76f4e0d39348c21f1f1a4be4d653b6a5"
 const AOKI_ID := "60efb96839df10bb78737047da1c4fb1"
+const MORTY_ID := "0d2ca8f42fe1500644bc1bd21c89eeb1"
+const MAX_ROD_ID := "6a7fe7ec3f22c435f50b49909e85b3d3"
+const TOEDSCRUEL_ID := "880338810e1bc9460b1d20044377e08c"
 
 
 func test_csv95c_141_insomnia_only_prevents_sleep() -> String:
@@ -51,7 +56,7 @@ func test_csv95c_163_max_rod_recovers_up_to_five_pokemon_and_basic_energy() -> S
 		special_energy,
 		trainer,
 	])
-	var max_rod := CardInstance.create(_make_trainer_data("Max Rod", "Item", "6a7fe7ec3f22c435f50b49909e85b3d3"), 0)
+	var max_rod := CardInstance.create(_make_trainer_data("Max Rod", "Item", MAX_ROD_ID), 0)
 	var effect := EffectLanasAidScript.new(5, true)
 	effect.execute(max_rod, [{
 		EffectLanasAidScript.STEP_ID: [
@@ -76,6 +81,47 @@ func test_csv95c_163_max_rod_recovers_up_to_five_pokemon_and_basic_energy() -> S
 		assert_true(special_energy in player.discard_pile, "Max Rod should not recover Special Energy"),
 		assert_true(trainer in player.discard_pile, "Max Rod should not recover Trainer cards"),
 	])
+
+
+func test_csv95c_163_max_rod_blocked_by_toedscruel_is_not_playable_or_spent() -> String:
+	var gsm := _make_gsm()
+	var state := gsm.game_state
+	var player: PlayerState = state.players[0]
+	var opponent: PlayerState = state.players[1]
+	player.hand.clear()
+	player.discard_pile.clear()
+	var max_rod := CardInstance.create(_make_trainer_data("Max Rod", "Item", MAX_ROD_ID), 0)
+	var discard_target := CardInstance.create(_make_pokemon_data("Discard Pokemon", "C"), 0)
+	player.hand.append(max_rod)
+	player.discard_pile.append(discard_target)
+	opponent.bench.append(_make_slot(_make_pokemon_data("Toedscruel", "G", 120, "Stage 1", "", TOEDSCRUEL_ID), 1))
+	gsm.effect_processor.register_effect(MAX_ROD_ID, EffectLanasAidScript.new(5, true))
+	gsm.effect_processor.register_effect(TOEDSCRUEL_ID, AbilityToedscruelSlimeMoldColonyScript.new())
+
+	var actions := AILegalActionBuilderScript.new().build_actions(gsm, 0)
+	var action := _find_action(actions, "play_trainer", func(candidate: Dictionary) -> bool:
+		return candidate.get("card") == max_rod
+	)
+	var effect: BaseEffect = gsm.effect_processor.get_effect(MAX_ROD_ID)
+	var can_execute_after_builder := effect.can_execute(max_rod, state)
+	var steps_after_builder := effect.get_interaction_steps(max_rod, state)
+	var played := gsm.play_trainer(0, max_rod, [{
+		EffectLanasAidScript.STEP_ID: [discard_target],
+	}])
+
+	var checks: Array[String] = [
+		assert_not_null(effect, "Max Rod should be registered by effect id"),
+		assert_false(can_execute_after_builder, "Max Rod should not be executable while Toedscruel blocks discard-to-hand Trainer effects"),
+		assert_true(steps_after_builder.is_empty(), "Blocked Max Rod should expose no discard recovery choices"),
+		assert_true(action.is_empty(), "AI legal actions should not expose a blocked Max Rod play"),
+		assert_false(played, "GameStateMachine.play_trainer should reject blocked Max Rod instead of spending it"),
+		assert_true(max_rod in player.hand, "Blocked Max Rod should remain in hand"),
+		assert_false(max_rod in player.discard_pile, "Blocked Max Rod should not be discarded"),
+		assert_true(discard_target in player.discard_pile, "Blocked Max Rod target should stay in discard"),
+		assert_false(discard_target in player.hand, "Blocked Max Rod target should not enter hand"),
+	]
+	gsm.prepare_for_disposal()
+	return run_checks(checks)
 
 
 func test_csv95c_182_aokis_skill_discards_hand_and_searches_three_categories() -> String:
@@ -193,6 +239,139 @@ func test_csv95c_182_aokis_skill_ai_allows_hidden_search_whiff() -> String:
 		assert_eq(empty_resolution.size(), 1, "AI should synthesize an empty-search resolution target"),
 		assert_eq(str(empty_resolution[0]), BaseEffect.EMPTY_SEARCH_CONTINUE, "AI should continue when no legal hidden-search targets exist"),
 	])
+
+
+func test_csv95c_199_mortys_conviction_discards_selected_card_and_draws_for_opponent_bench() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	var opponent: PlayerState = state.players[1]
+	player.hand.clear()
+	player.deck.clear()
+	var morty := CardInstance.create(_make_trainer_data("Morty's Conviction", "Supporter", MORTY_ID), 0)
+	var keep := CardInstance.create(_make_trainer_data("Keep", "Item"), 0)
+	var discard := CardInstance.create(_make_trainer_data("Discard", "Item"), 0)
+	player.hand.append_array([morty, keep, discard])
+	opponent.bench.append_array([
+		_make_slot(_make_pokemon_data("Opp Bench A", "C"), 1),
+		_make_slot(_make_pokemon_data("Opp Bench B", "C"), 1),
+		_make_slot(_make_pokemon_data("Opp Bench C", "C"), 1),
+	])
+	var draw_a := CardInstance.create(_make_trainer_data("Draw A", "Item"), 0)
+	var draw_b := CardInstance.create(_make_trainer_data("Draw B", "Item"), 0)
+	var draw_c := CardInstance.create(_make_trainer_data("Draw C", "Item"), 0)
+	var stay_deck := CardInstance.create(_make_trainer_data("Stay Deck", "Item"), 0)
+	player.deck.append_array([draw_a, draw_b, draw_c, stay_deck])
+
+	EffectMortysConvictionScript.new().execute(morty, [{
+		EffectMortysConvictionScript.DISCARD_STEP_ID: [discard],
+	}], state)
+
+	return run_checks([
+		assert_true(discard in player.discard_pile, "Morty's Conviction should discard the selected hand card"),
+		assert_false(discard in player.hand, "Discarded card should leave hand"),
+		assert_true(keep in player.hand, "Unselected hand card should stay in hand"),
+		assert_true(morty in player.hand, "The played Supporter should not be discarded by isolated effect execution"),
+		assert_true(draw_a in player.hand and draw_b in player.hand and draw_c in player.hand, "Morty's Conviction should draw one card per opponent Benched Pokemon"),
+		assert_true(stay_deck in player.deck, "Morty's Conviction should not draw beyond opponent Bench count"),
+	])
+
+
+func test_csv95c_199_mortys_conviction_exposes_one_card_discard_step() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	var opponent: PlayerState = state.players[1]
+	player.hand.clear()
+	player.deck.clear()
+	var morty := CardInstance.create(_make_trainer_data("Morty's Conviction", "Supporter", MORTY_ID), 0)
+	var keep := CardInstance.create(_make_trainer_data("Keep", "Item"), 0)
+	var discard := CardInstance.create(_make_trainer_data("Discard", "Item"), 0)
+	player.hand.append_array([morty, keep, discard])
+	player.deck.append(CardInstance.create(_make_trainer_data("Draw", "Item"), 0))
+	opponent.bench.append(_make_slot(_make_pokemon_data("Opp Bench", "C"), 1))
+	var effect: BaseEffect = EffectMortysConvictionScript.new()
+
+	var steps: Array[Dictionary] = effect.get_interaction_steps(morty, state)
+	var step: Dictionary = steps[0] if not steps.is_empty() else {}
+
+	return run_checks([
+		assert_true(effect.can_execute(morty, state), "Morty's Conviction should be playable when it can discard and draw"),
+		assert_eq(steps.size(), 1, "Morty's Conviction should ask for exactly one discard choice"),
+		assert_eq(str(step.get("id", "")), EffectMortysConvictionScript.DISCARD_STEP_ID, "Morty's Conviction discard step id should be stable"),
+		assert_eq(step.get("items", []), [keep, discard], "Morty's Conviction should expose only other hand cards as discard candidates"),
+		assert_eq(int(step.get("min_select", 0)), 1, "Morty's Conviction discard cost should require one card"),
+		assert_eq(int(step.get("max_select", 0)), 1, "Morty's Conviction should discard exactly one card"),
+		assert_false(bool(step.get("allow_cancel", true)), "Morty's Conviction should not allow cancel after choosing to play it"),
+	])
+
+
+func test_csv95c_199_mortys_conviction_rejects_empty_cost_or_draw_state() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	var opponent: PlayerState = state.players[1]
+	player.hand.clear()
+	player.deck.clear()
+	var morty := CardInstance.create(_make_trainer_data("Morty's Conviction", "Supporter", MORTY_ID), 0)
+	player.hand.append(morty)
+	player.deck.append(CardInstance.create(_make_trainer_data("Draw", "Item"), 0))
+	opponent.bench.append(_make_slot(_make_pokemon_data("Opp Bench", "C"), 1))
+	var effect: BaseEffect = EffectMortysConvictionScript.new()
+	var no_extra_hand_card: bool = effect.can_execute(morty, state)
+
+	player.hand.append(CardInstance.create(_make_trainer_data("Discard", "Item"), 0))
+	player.deck.clear()
+	var no_deck: bool = effect.can_execute(morty, state)
+
+	player.deck.append(CardInstance.create(_make_trainer_data("Draw", "Item"), 0))
+	opponent.bench.clear()
+	var no_opponent_bench: bool = effect.can_execute(morty, state)
+
+	return run_checks([
+		assert_false(no_extra_hand_card, "Morty's Conviction should require another hand card to discard"),
+		assert_false(no_deck, "Morty's Conviction should require a card available to draw"),
+		assert_false(no_opponent_bench, "Morty's Conviction should require at least one opponent Benched Pokemon"),
+	])
+
+
+func test_csv95c_199_mortys_conviction_ai_play_trainer_entry_discards_and_draws() -> String:
+	var gsm := _make_gsm()
+	var state := gsm.game_state
+	var player: PlayerState = state.players[0]
+	var opponent: PlayerState = state.players[1]
+	player.hand.clear()
+	player.deck.clear()
+	var morty := CardInstance.create(_make_trainer_data("Morty's Conviction", "Supporter", MORTY_ID), 0)
+	var discard := CardInstance.create(_make_trainer_data("Discard", "Item"), 0)
+	var draw_a := CardInstance.create(_make_trainer_data("Draw A", "Item"), 0)
+	var draw_b := CardInstance.create(_make_trainer_data("Draw B", "Item"), 0)
+	var draw_c := CardInstance.create(_make_trainer_data("Draw C", "Item"), 0)
+	player.hand.append_array([morty, discard])
+	player.deck.append_array([draw_a, draw_b, draw_c])
+	opponent.bench.append_array([
+		_make_slot(_make_pokemon_data("Opp Bench A", "C"), 1),
+		_make_slot(_make_pokemon_data("Opp Bench B", "C"), 1),
+	])
+
+	var effect: BaseEffect = gsm.effect_processor.get_effect(MORTY_ID)
+	var actions := AILegalActionBuilderScript.new().build_actions(gsm, 0)
+	var action := _find_action(actions, "play_trainer", func(candidate: Dictionary) -> bool:
+		return candidate.get("card") == morty
+	)
+	var played := false
+	if not action.is_empty():
+		played = gsm.play_trainer(0, morty, action.get("targets", []))
+
+	var checks: Array[String] = [
+		assert_not_null(effect, "Morty's Conviction should be registered by effect id"),
+		assert_false(action.is_empty(), "AI legal action builder should expose Morty's Conviction as playable"),
+		assert_false(bool(action.get("requires_interaction", true)), "AI should auto-resolve the discard choice for Morty's Conviction"),
+		assert_true(played, "GameStateMachine.play_trainer should resolve Morty's Conviction"),
+		assert_true(morty in player.discard_pile, "Played Morty's Conviction should go to discard"),
+		assert_true(discard in player.discard_pile, "Morty's Conviction should discard the selected cost card"),
+		assert_true(draw_a in player.hand and draw_b in player.hand, "Morty's Conviction should draw for the two opponent Benched Pokemon"),
+		assert_true(draw_c in player.deck, "Morty's Conviction should stop drawing after opponent Bench count"),
+	]
+	gsm.prepare_for_disposal()
+	return run_checks(checks)
 
 
 func _make_state() -> GameState:

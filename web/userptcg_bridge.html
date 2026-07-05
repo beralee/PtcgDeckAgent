@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="robots" content="noindex,nofollow">
+		<title>PTCG Visit Bridge</title>
+	</head>
+	<body>
+		<script>
+(function () {
+	"use strict";
+
+	var CLOUD_ENDPOINT = "http://fc.skillserver.cn/userptcg";
+
+	function readPayload() {
+		var hash = window.location.hash || "";
+		var match = hash.match(/(?:^#|[&])payload=([^&]+)/);
+		if (!match) {
+			return null;
+		}
+		try {
+			return JSON.parse(decodeURIComponent(match[1]));
+		} catch (_error) {
+			return null;
+		}
+	}
+
+	function notifyParent(status, detail) {
+		try {
+			if (window.parent && window.parent !== window) {
+				window.parent.postMessage({
+					type: "ptcg:userptcg-bridge",
+					status: status,
+					detail: detail || {}
+				}, "*");
+			}
+		} catch (_error) {}
+	}
+
+	function appendHiddenInput(form, name, value) {
+		var input = document.createElement("input");
+		input.type = "hidden";
+		input.name = name;
+		input.value = value == null ? "" : String(value);
+		form.appendChild(input);
+	}
+
+	function submitForm(payload) {
+		var sinkName = "ptcg_userptcg_sink_" + Date.now() + "_" + Math.floor(Math.random() * 1000000);
+		var sink = document.createElement("iframe");
+		sink.name = sinkName;
+		sink.style.position = "fixed";
+		sink.style.left = "-1px";
+		sink.style.top = "-1px";
+		sink.style.width = "1px";
+		sink.style.height = "1px";
+		sink.style.opacity = "0";
+		sink.style.pointerEvents = "none";
+		sink.style.border = "0";
+		document.body.appendChild(sink);
+
+		var form = document.createElement("form");
+		form.method = "POST";
+		form.action = CLOUD_ENDPOINT;
+		form.target = sinkName;
+		form.acceptCharset = "utf-8";
+		form.enctype = "application/x-www-form-urlencoded";
+		appendHiddenInput(form, "payload", JSON.stringify(payload));
+		Object.keys(payload).forEach(function (key) {
+			var value = payload[key];
+			if (value == null) {
+				appendHiddenInput(form, key, "");
+			} else if (typeof value === "object") {
+				appendHiddenInput(form, key, JSON.stringify(value));
+			} else {
+				appendHiddenInput(form, key, value);
+			}
+		});
+		document.body.appendChild(form);
+		form.submit();
+		window.setTimeout(function () {
+			try {
+				if (form.parentNode) {
+					form.parentNode.removeChild(form);
+				}
+				if (sink.parentNode) {
+					sink.parentNode.removeChild(sink);
+				}
+			} catch (_error) {}
+		}, 10000);
+		return true;
+	}
+
+	function sendNoCors(payload) {
+		if (!window.fetch) {
+			return false;
+		}
+		try {
+			window.fetch(CLOUD_ENDPOINT, {
+				method: "POST",
+				mode: "no-cors",
+				keepalive: true,
+				headers: {
+					"Content-Type": "text/plain;charset=UTF-8"
+				},
+				body: JSON.stringify(payload)
+			});
+			return true;
+		} catch (_error) {
+			return false;
+		}
+	}
+
+	function sendBeacon(payload) {
+		if (!navigator.sendBeacon) {
+			return false;
+		}
+		try {
+			return navigator.sendBeacon(
+				CLOUD_ENDPOINT,
+				new Blob([JSON.stringify(payload)], { type: "text/plain;charset=UTF-8" })
+			);
+		} catch (_error) {
+			return false;
+		}
+	}
+
+	var payload = readPayload();
+	if (!payload) {
+		notifyParent("failed", { reason: "missing_payload" });
+		return;
+	}
+
+	var queued = sendBeacon(payload) || sendNoCors(payload) || submitForm(payload);
+	notifyParent(queued ? "queued" : "failed", { endpoint: CLOUD_ENDPOINT });
+}());
+		</script>
+	</body>
+</html>

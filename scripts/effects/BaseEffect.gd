@@ -134,6 +134,14 @@ func _discard_cards_from_hand_with_log(
 	return discarded
 
 
+func _record_attack_effect_discarded_attached_energy(attacker: PokemonSlot, energy: CardInstance, state: GameState) -> void:
+	if state == null:
+		return
+	var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null)
+	if processor != null and processor.has_method("record_attack_effect_discarded_attached_energy"):
+		processor.call("record_attack_effect_discarded_attached_energy", attacker, energy, state)
+
+
 func _move_public_cards_to_hand_with_log(
 	state: GameState,
 	player_index: int,

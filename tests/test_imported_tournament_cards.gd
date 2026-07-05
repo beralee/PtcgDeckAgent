@@ -22,6 +22,7 @@ const IMPORTED_CARD_PATHS := [
 	"res://data/bundled_user/cards/CSV7C_038.json",
 	"res://data/bundled_user/cards/CSV7C_175.json",
 	"res://data/bundled_user/cards/CSV7C_132.json",
+	"res://data/bundled_user/cards/CSV7C_104.json",
 	"res://data/bundled_user/cards/CSVH1C_050.json",
 	"res://data/bundled_user/cards/CSV2C_111.json",
 	"res://data/bundled_user/cards/CS5aC_104.json",
@@ -289,6 +290,57 @@ func test_sandy_shocks_bonus_applies_to_first_attack_only_and_ignores_weakness()
 		assert_eq(processor.get_attack_damage_modifier(sandy, null, second_attack, state), 0, "Power Gem should not gain Magnetic Burst bonus"),
 		assert_true(processor.attack_ignores_weakness(sandy, 0, state), "Magnetic Burst should ignore Weakness"),
 		assert_false(processor.attack_ignores_weakness(sandy, 1, state), "Power Gem should not ignore Weakness"),
+	])
+
+
+func test_enamorus_love_resonance_bonus_requires_any_matching_field_type() -> String:
+	var state := _make_state()
+	var processor := EffectProcessor.new()
+	var enamorus_card := _load_card("res://data/bundled_user/cards/CSV7C_104.json")
+	processor.register_pokemon_card(enamorus_card)
+	var enamorus := _make_slot(enamorus_card, 0)
+	var own_grass := _make_slot(_pokemon("Own Grass", "G", 100), 0)
+	var opponent_fire := _make_slot(_pokemon("Opponent Fire", "R", 100), 1)
+	var opponent_grass := _make_slot(_pokemon("Opponent Grass", "G", 100), 1)
+	state.players[0].active_pokemon = enamorus
+	state.players[0].bench = [own_grass]
+	state.players[1].active_pokemon = opponent_fire
+	var basic_attack: Dictionary = enamorus_card.attacks[0]
+	var resonance_attack: Dictionary = enamorus_card.attacks[1]
+	var no_match_bonus := processor.get_attack_damage_modifier(enamorus, opponent_fire, resonance_attack, state)
+	state.players[1].bench = [opponent_grass]
+	var match_bonus := processor.get_attack_damage_modifier(enamorus, opponent_fire, resonance_attack, state)
+	var first_attack_bonus := processor.get_attack_damage_modifier(enamorus, opponent_fire, basic_attack, state)
+	return run_checks([
+		assert_true(processor.has_attack_effect(enamorus_card.effect_id), "CSV7C_104 Love Resonance should register as an attack effect"),
+		assert_eq(no_match_bonus, 0, "Love Resonance should not add damage without shared field types"),
+		assert_eq(match_bonus, 120, "Love Resonance should add 120 when any own field Pokemon type matches any opponent field Pokemon type"),
+		assert_eq(first_attack_bonus, 0, "Heart Sign should not inherit Love Resonance bonus"),
+	])
+
+
+func test_enamorus_love_resonance_use_attack_deals_bonus_damage() -> String:
+	var gsm := _make_gsm()
+	var state := gsm.game_state
+	var player := state.players[0]
+	var opponent := state.players[1]
+	var enamorus_card := _load_card("res://data/bundled_user/cards/CSV7C_104.json")
+	gsm.effect_processor.register_pokemon_card(enamorus_card)
+	var enamorus := _make_slot(enamorus_card, 0)
+	enamorus.attached_energy.append(CardInstance.create(_energy("Psychic Energy", "P"), 0))
+	enamorus.attached_energy.append(CardInstance.create(_energy("Grass Energy", "G"), 0))
+	enamorus.attached_energy.append(CardInstance.create(_energy("Lightning Energy", "L"), 0))
+	player.active_pokemon = enamorus
+	player.bench = [_make_slot(_pokemon("Own Grass", "G", 100), 0)]
+	var defender := _make_slot(_pokemon("Opponent Fire", "R", 300), 1)
+	opponent.active_pokemon = defender
+	opponent.bench = [_make_slot(_pokemon("Opponent Grass", "G", 100), 1)]
+	var can_attack := gsm.can_use_attack(0, 1)
+	var attacked := gsm.use_attack(0, 1)
+	return run_checks([
+		assert_true(can_attack, "Enamorus should be able to pay Love Resonance's PCC cost"),
+		assert_true(attacked, "GameStateMachine should execute Love Resonance through the real attack entry"),
+		assert_eq(defender.damage_counters, 200, "Love Resonance should deal printed 80 plus 120 bonus damage through DamageCalculator"),
 	])
 
 

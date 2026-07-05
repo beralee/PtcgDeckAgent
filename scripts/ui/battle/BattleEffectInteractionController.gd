@@ -316,6 +316,10 @@ func show_next_effect_interaction_step(scene: Object) -> void:
 		"card_click_selectable": step.get("card_click_selectable", true),
 		"choice_labels": step.get("choice_labels", labels),
 	}
+	if pending_effect_card != null:
+		dialog_data["source_card"] = pending_effect_card
+	if pending_effect_kind != "":
+		dialog_data["source_kind"] = pending_effect_kind
 	for passthrough_key: String in [
 		"action_items",
 		"card_groups",
@@ -519,7 +523,22 @@ func _finish_effect_interaction(scene: Object) -> void:
 	if not success and pending_effect_card != null:
 		scene.call("_log", _bt(scene, "battle.log.cannot_use_card", {"name": pending_effect_card.card_data.name}))
 	scene.call("_runtime_log", "effect_interaction_complete", "success=%s %s" % [str(success), scene.call("_state_snapshot")])
-	reset_effect_interaction(scene)
+	var current_effect_replaced := not _matches_current_pending_effect(
+		scene,
+		pending_effect_kind,
+		pending_effect_player_index,
+		pending_effect_card,
+		pending_effect_slot,
+		pending_effect_ability_index
+	)
+	if current_effect_replaced:
+		scene.call(
+			"_runtime_log",
+			"effect_interaction_reset_preserved",
+			"resolved_kind=%s current=%s" % [pending_effect_kind, scene.call("_effect_state_snapshot")]
+		)
+	else:
+		reset_effect_interaction(scene)
 	if success:
 		var ready_action_kind := "use_ability" if pending_effect_kind == "ability" else ""
 		if scene.has_method("_mark_ready_vfx_action_source"):
@@ -527,9 +546,12 @@ func _finish_effect_interaction(scene: Object) -> void:
 		else:
 			scene.set("_ready_vfx_trigger_source_player_index", resolved_player_index)
 			scene.set("_ready_vfx_trigger_action_kind", ready_action_kind)
-		if scene.has_method("_restore_pending_engine_prize_choice_if_needed"):
+		if not current_effect_replaced and scene.has_method("_restore_pending_engine_prize_choice_if_needed"):
 			scene.call("_restore_pending_engine_prize_choice_if_needed", "effect_interaction_complete")
 	scene.call("_refresh_ui")
+	if not success:
+		scene.call("_maybe_run_ai")
+		return
 	if success:
 		if followup_evolve_slot != null:
 			scene.call("_try_start_evolve_trigger_ability_interaction", resolved_player_index, followup_evolve_slot)
@@ -537,6 +559,23 @@ func _finish_effect_interaction(scene: Object) -> void:
 				return
 		scene.call("_check_two_player_handover")
 		scene.call("_maybe_run_ai")
+
+
+func _matches_current_pending_effect(
+	scene: Object,
+	kind: String,
+	player_index: int,
+	card: CardInstance,
+	slot: PokemonSlot,
+	ability_index: int
+) -> bool:
+	return (
+		str(scene.get("_pending_effect_kind")) == kind
+		and int(scene.get("_pending_effect_player_index")) == player_index
+		and scene.get("_pending_effect_card") == card
+		and scene.get("_pending_effect_slot") == slot
+		and int(scene.get("_pending_effect_ability_index")) == ability_index
+	)
 
 
 func _step_title(scene: Object, step: Dictionary) -> String:

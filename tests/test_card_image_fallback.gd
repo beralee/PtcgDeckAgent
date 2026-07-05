@@ -55,6 +55,25 @@ func test_battle_card_view_loads_texture_from_bundled_fallback() -> String:
 	])
 
 
+func test_battle_card_view_texture_cache_is_bounded() -> String:
+	BattleCardViewScript.clear_texture_cache_for_tests()
+	var max_entries: int = BattleCardViewScript.texture_cache_max_entries_for_tests()
+	for i: int in range(max_entries + 12):
+		var image := Image.create(1, 1, false, Image.FORMAT_RGBA8)
+		image.fill(Color(float(i % 7) / 7.0, 0.2, 0.4, 1.0))
+		var texture := ImageTexture.create_from_image(image)
+		BattleCardViewScript.store_texture_in_cache_for_tests("res://fake/card_%03d.png" % i, texture)
+
+	var newest_path := "res://fake/card_%03d.png" % (max_entries + 11)
+	var result := run_checks([
+		assert_eq(BattleCardViewScript.texture_cache_size_for_tests(), max_entries, "BattleCardView card image cache should stay bounded across matches"),
+		assert_false(BattleCardViewScript.texture_cache_has_path_for_tests("res://fake/card_000.png"), "Oldest card texture should be evicted when cache exceeds its limit"),
+		assert_true(BattleCardViewScript.texture_cache_has_path_for_tests(newest_path), "Newest card texture should remain cached"),
+	])
+	BattleCardViewScript.clear_texture_cache_for_tests()
+	return result
+
+
 func _write_bytes(path: String, bytes: PackedByteArray) -> void:
 	var absolute := ProjectSettings.globalize_path(path)
 	DirAccess.make_dir_recursive_absolute(absolute.get_base_dir())

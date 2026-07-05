@@ -78,13 +78,14 @@ func _evolution_cards_for_slot(cards: Array[CardInstance], slot: PokemonSlot) ->
 	var result: Array[CardInstance] = []
 	if slot == null:
 		return result
-	var base_name := slot.get_pokemon_name()
+	var top_card := slot.get_top_card()
+	var base_data: CardData = top_card.card_data if top_card != null else null
 	for card: CardInstance in cards:
 		if card == null or card.card_data == null:
 			continue
 		if not card.card_data.is_pokemon():
 			continue
-		if card.card_data.evolves_from == base_name:
+		if card.card_data.evolves_from_matches(base_data):
 			result.append(card)
 	return result
 

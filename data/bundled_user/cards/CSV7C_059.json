@@ -1,0 +1,49 @@
+{
+	"name": "雪妖女",
+	"card_type": "Pokemon",
+	"mechanic": "",
+	"label": "",
+	"description": "特性: 冻结帷幕\n只要这只宝可梦在场上，每当宝可梦检查时，给双方所有拥有特性的宝可梦（除「雪妖女」外）身上，各放置1个伤害指示物。\n\n【水】【无】 冰霜粉碎 60\n\n\n",
+	"yoren_code": "P478",
+	"set_code": "CSV7C",
+	"card_index": "059",
+	"set_code_en": "TWM",
+	"card_index_en": "53",
+	"name_en": "Froslass",
+	"artist": "Makura Tami",
+	"rarity": "R",
+	"release_date": "2026-01-16T00:00:00+08:00",
+	"regulation_mark": "H",
+	"effect_id": "f27a2982c03f5b49a68ec0a77a2d6e48",
+	"image_url": "https://tcg.mik.moe/static/img/CSV7C/059.png",
+	"image_local_path": "user://cards/images/CSV7C/059.png",
+	"is_tags": [],
+	"regulation_standard": true,
+	"regulation_expanded": true,
+	"energy_type": "W",
+	"stage": "Stage 1",
+	"hp": 90,
+	"weakness_energy": "M",
+	"weakness_value": "×2",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"evolves_from": "雪童子",
+	"ancient_trait": "",
+	"attacks": [
+		{
+			"name": "冰霜粉碎",
+			"text": "",
+			"cost": "WC",
+			"damage": "60",
+			"is_vstar_power": false
+		}
+	],
+	"abilities": [
+		{
+			"name": "冻结帷幕",
+			"text": "只要这只宝可梦在场上，每当宝可梦检查时，给双方所有拥有特性的宝可梦（除「雪妖女」外）身上，各放置1个伤害指示物。"
+		}
+	],
+	"energy_provides": ""
+}

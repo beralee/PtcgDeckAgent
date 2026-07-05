@@ -3,13 +3,14 @@ extends RefCounted
 
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
-const CARD_TILE_WIDTH := 100
-const CARD_TILE_HEIGHT := 140
-const VIEW_GRID_COLUMNS := 6
-const PORTRAIT_VIEW_GRID_COLUMNS := 3
+const CARD_TILE_WIDTH := 96
+const CARD_TILE_HEIGHT := 134
+const VIEW_GRID_COLUMNS := 8
+const PORTRAIT_VIEW_GRID_COLUMNS := 4
+const PORTRAIT_COMPACT_WIDTH := 600.0
 const CARD_LIST_DRAG_SCROLL_THRESHOLD := 10.0
 const CARD_LIST_DRAG_CLICK_SUPPRESS_MSEC := 180
-const CARD_LIST_DRAG_SCROLL_SENSITIVITY := 1.35
+const CARD_LIST_DRAG_SCROLL_SENSITIVITY := 1.0
 
 const ENERGY_TYPE_LABELS: Dictionary = {
 	"R": "火", "W": "水", "G": "草", "L": "雷",
@@ -33,13 +34,15 @@ var _failed_texture_paths: Dictionary = {}
 func show_deck(host: Node, deck: DeckData) -> void:
 	if host == null or deck == null:
 		return
-	var layout := _deck_view_layout_profile(host, deck.total_cards)
+	var view_entries := _unique_deck_view_entries(deck.cards)
+	var layout := _deck_view_layout_profile(host, view_entries.size())
 	var portrait := bool(layout.get("portrait", false))
 	var dialog := AcceptDialog.new()
 	dialog.name = "DeckViewDialog"
 	dialog.title = deck.deck_name
 	dialog.size = layout.get("dialog_size", Vector2i(800, 700))
 	dialog.min_size = dialog.size
+	_apply_deck_view_dialog_hud(dialog)
 	dialog.ok_button_text = "关闭"
 
 	var margin := MarginContainer.new()
@@ -64,18 +67,15 @@ func show_deck(host: Node, deck: DeckData) -> void:
 	var info_label := Label.new()
 	info_label.name = "DeckViewInfoLabel"
 	info_label.text = "ID: %d | %d 张卡牌" % [deck.id, deck.total_cards]
-	info_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+	info_label.add_theme_color_override("font_color", HudThemeScript.TEXT_MUTED)
 	info_label.add_theme_font_size_override("font_size", int(layout.get("info_font_size", 14)))
 	outer.add_child(info_label)
 
 	var scroll := ScrollContainer.new()
 	scroll.name = "DeckViewCardScroll"
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	HudThemeScript.style_scroll_container(scroll, "auto")
-	if portrait:
-		NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(scroll)
-	else:
-		NonBattleTouchBridgeScript.configure_visible_vertical_scroll(scroll)
+	HudThemeScript.style_scroll_container(scroll, "compact")
+	NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(scroll)
 	outer.add_child(scroll)
 
 	var grid := GridContainer.new()
@@ -86,20 +86,19 @@ func show_deck(host: Node, deck: DeckData) -> void:
 	grid.add_theme_constant_override("h_separation", int(layout.get("gap", 6)))
 	grid.add_theme_constant_override("v_separation", int(layout.get("gap", 6)))
 	scroll.add_child(grid)
-	_configure_card_list_drag_scroll(scroll, grid, portrait)
+	_configure_card_list_drag_scroll(scroll, grid, true)
 
 	var tile_width := int(layout.get("tile_width", CARD_TILE_WIDTH))
 	var tile_height := int(layout.get("tile_height", CARD_TILE_HEIGHT))
 	var label_font_size := int(layout.get("card_label_font_size", HudThemeScript.scaled_font_size(11)))
-	for entry: Dictionary in _sort_entries_by_category(deck.cards):
+	for entry: Dictionary in view_entries:
 		var card_name: String = entry.get("name", "?")
 		var set_code: String = entry.get("set_code", "")
 		var card_index: String = entry.get("card_index", "")
 		var count: int = entry.get("count", 0)
-		for _i: int in count:
-			var tile := _create_view_tile(card_name, set_code, card_index, tile_width, tile_height, label_font_size)
-			tile.gui_input.connect(_on_view_tile_input.bind(host, scroll, set_code, card_index))
-			grid.add_child(tile)
+		var tile := _create_view_tile(card_name, set_code, card_index, tile_width, tile_height, label_font_size, count)
+		tile.gui_input.connect(_on_view_tile_input.bind(host, scroll, set_code, card_index))
+		grid.add_child(tile)
 
 	var content_close_button: Button = null
 	if portrait:
@@ -129,52 +128,167 @@ func show_deck(host: Node, deck: DeckData) -> void:
 	dialog.confirmed.connect(dialog.queue_free)
 
 
-func _deck_view_layout_profile(host: Node, total_cards: int) -> Dictionary:
+func _apply_deck_view_dialog_hud(dialog: AcceptDialog) -> void:
+	if dialog == null:
+		return
+	dialog.add_theme_stylebox_override("panel", _deck_view_dialog_style())
+	dialog.add_theme_color_override("title_color", HudThemeScript.TEXT)
+
+
+func _deck_view_dialog_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.012, 0.036, 0.052, 0.94)
+	style.border_color = Color(0.28, 0.92, 1.0, 0.88)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(8)
+	style.shadow_color = Color(0.0, 0.62, 0.82, 0.24)
+	style.shadow_size = 14
+	style.set_content_margin_all(8)
+	return style
+
+
+func _unique_deck_view_entries(cards: Array[Dictionary]) -> Array[Dictionary]:
+	var merged_by_key: Dictionary = {}
+	var ordered_keys: PackedStringArray = PackedStringArray()
+	for entry: Dictionary in cards:
+		var count := maxi(0, int(entry.get("count", 0)))
+		if count <= 0:
+			continue
+		var key := _deck_view_entry_key(entry)
+		if key == "":
+			continue
+		if not merged_by_key.has(key):
+			var merged := entry.duplicate(true)
+			merged["count"] = count
+			merged["_deck_view_key"] = key
+			merged_by_key[key] = merged
+			ordered_keys.append(key)
+			continue
+		var existing := merged_by_key[key] as Dictionary
+		existing["count"] = int(existing.get("count", 0)) + count
+		if str(existing.get("name", "")).strip_edges() == "" and str(entry.get("name", "")).strip_edges() != "":
+			existing["name"] = str(entry.get("name", ""))
+		if str(existing.get("card_type", "")).strip_edges() == "" and str(entry.get("card_type", "")).strip_edges() != "":
+			existing["card_type"] = str(entry.get("card_type", ""))
+
+	var result: Array[Dictionary] = []
+	for key: String in ordered_keys:
+		if merged_by_key.has(key):
+			result.append(merged_by_key[key] as Dictionary)
+	return _sort_entries_by_category(result)
+
+
+func _deck_view_entry_key(entry: Dictionary) -> String:
+	var set_code := str(entry.get("set_code", "")).strip_edges()
+	var card_index := str(entry.get("card_index", "")).strip_edges()
+	if set_code != "" or card_index != "":
+		return "%s::%s" % [set_code, card_index]
+	var name := str(entry.get("name", "")).strip_edges()
+	if name == "":
+		return ""
+	return "name::%s::%s" % [name, str(entry.get("card_type", "")).strip_edges()]
+
+
+func _deck_view_layout_profile(host: Node, display_cards: int) -> Dictionary:
 	var viewport_size := _host_viewport_size(host)
 	var portrait := viewport_size.y > viewport_size.x and viewport_size.x >= 360.0
 	if portrait:
-		var page_margin := clampf(viewport_size.x * 0.026, 24.0, 34.0)
+		var compact := viewport_size.x < PORTRAIT_COMPACT_WIDTH
+		var page_margin := clampf(
+			viewport_size.x * (0.035 if compact else 0.026),
+			12.0 if compact else 24.0,
+			34.0
+		)
 		var dialog_size := Vector2i(
 			roundi(maxf(320.0, viewport_size.x - page_margin * 2.0)),
 			roundi(maxf(620.0, viewport_size.y - page_margin * 2.0))
 		)
-		var content_margin := roundi(clampf(viewport_size.x * 0.022, 22.0, 30.0))
-		var gap := roundi(clampf(viewport_size.x * 0.012, 10.0, 16.0))
-		var available_width := maxf(float(dialog_size.x) - float(content_margin * 2) - float(gap * (PORTRAIT_VIEW_GRID_COLUMNS - 1)), 1.0)
-		var tile_width := roundi(clampf(floor(available_width / float(PORTRAIT_VIEW_GRID_COLUMNS)), 250.0, 310.0))
-		var grid_width := float(tile_width * PORTRAIT_VIEW_GRID_COLUMNS + gap * (PORTRAIT_VIEW_GRID_COLUMNS - 1))
+		var content_margin := roundi(clampf(
+			viewport_size.x * (0.026 if compact else 0.022),
+			10.0 if compact else 22.0,
+			18.0 if compact else 30.0
+		))
+		var preferred_gap := roundi(clampf(viewport_size.x * (0.014 if compact else 0.010), 4.0 if compact else 8.0, 14.0))
+		var content_width := maxf(float(dialog_size.x) - float(content_margin * 2), 1.0)
+		var columns := PORTRAIT_VIEW_GRID_COLUMNS
+		var grid_metrics := _portrait_four_column_grid_metrics(content_width, preferred_gap)
+		var gap := int(grid_metrics.get("gap", preferred_gap))
+		var tile_width := int(grid_metrics.get("tile_width", 80))
+		var grid_width := float(grid_metrics.get("grid_width", tile_width * columns + gap * (columns - 1)))
+		var phone_scale := clampf(viewport_size.x / 390.0, 0.92, 1.08)
+		var tablet_scale := clampf(viewport_size.x / 1080.0, 1.0, 1.18)
 		return {
 			"portrait": true,
-			"columns": PORTRAIT_VIEW_GRID_COLUMNS,
+			"columns": columns,
 			"dialog_position": Vector2i(roundi(page_margin), roundi(page_margin)),
 			"dialog_size": dialog_size,
 			"margin": content_margin,
 			"gap": gap,
 			"tile_width": tile_width,
-			"tile_height": roundi(float(tile_width) * 1.40),
+			"tile_height": roundi(float(tile_width) * 1.38),
 			"grid_min_width": grid_width,
-			"info_font_size": roundi(clampf(viewport_size.x / 1080.0, 1.0, 1.18) * 31.0),
-			"card_label_font_size": roundi(clampf(viewport_size.x / 1080.0, 1.0, 1.18) * 25.0),
-			"button_font_size": roundi(clampf(viewport_size.x / 1080.0, 1.0, 1.18) * 32.0),
-			"ok_button_height": clampf(viewport_size.y * 0.052, 96.0, 128.0),
+			"info_font_size": roundi((17.0 * phone_scale) if compact else (31.0 * tablet_scale)),
+			"card_label_font_size": roundi((36.0 * phone_scale) if compact else (54.0 * tablet_scale)),
+			"button_font_size": roundi((18.0 * phone_scale) if compact else (32.0 * tablet_scale)),
+			"ok_button_height": clampf(viewport_size.y * (0.064 if compact else 0.052), 52.0 if compact else 96.0, 76.0 if compact else 128.0),
 		}
-	var cols := VIEW_GRID_COLUMNS
-	var rows := ceili(float(total_cards) / float(cols))
-	var w := mini(cols * (CARD_TILE_WIDTH + 6) + 60, 800)
-	var h := mini(rows * (CARD_TILE_HEIGHT + 26) + 100, 700)
+	var dialog_max_width := mini(1180, maxi(720, roundi(viewport_size.x - 24.0)))
+	var w := clampi(roundi(viewport_size.x * 0.82), 720, dialog_max_width)
+	var margin := 12
+	var gap := 6
+	var content_width := maxf(float(w - margin * 2), 1.0)
+	var cols := clampi(floori((content_width + float(gap)) / float(CARD_TILE_WIDTH + gap)), VIEW_GRID_COLUMNS, 10)
+	var available_width := maxf(content_width - float(gap * (cols - 1)), 1.0)
+	var tile_width := roundi(clampf(floor(available_width / float(cols)), 88.0, 116.0))
+	var tile_height := roundi(float(tile_width) * 1.38)
+	var label_font_size := HudThemeScript.scaled_font_size(11)
+	var label_height := roundi(maxf(22.0, float(label_font_size + 14)))
+	var rows := maxi(1, ceili(float(maxi(1, display_cards)) / float(cols)))
+	var viewport_height_limit := mini(760, maxi(360, roundi(viewport_size.y * 0.90)))
+	var desired_height := rows * (tile_height + label_height + gap) + 118
+	var h := clampi(desired_height, 360, viewport_height_limit)
 	return {
 		"portrait": false,
 		"columns": cols,
 		"dialog_position": Vector2i.ZERO,
 		"dialog_size": Vector2i(w, h),
-		"margin": 8,
-		"gap": 6,
-		"tile_width": CARD_TILE_WIDTH,
-		"tile_height": CARD_TILE_HEIGHT,
+		"margin": margin,
+		"gap": gap,
+		"tile_width": tile_width,
+		"tile_height": tile_height,
 		"info_font_size": HudThemeScript.scaled_font_size(14),
-		"card_label_font_size": HudThemeScript.scaled_font_size(11),
+		"card_label_font_size": label_font_size,
 		"button_font_size": 15,
 		"ok_button_height": 42.0,
+	}
+
+
+func _portrait_four_column_grid_metrics(content_width: float, preferred_gap: int) -> Dictionary:
+	var columns := PORTRAIT_VIEW_GRID_COLUMNS
+	var content_width_int := maxi(1, roundi(content_width))
+	var best_gap := clampi(preferred_gap, 4, 16)
+	var best_tile_width := maxi(1, floori(float(content_width_int - best_gap * (columns - 1)) / float(columns)))
+	var best_grid_width := best_tile_width * columns + best_gap * (columns - 1)
+	var best_score := 999999
+	for gap_candidate: int in range(4, 17):
+		var remaining_width := content_width_int - gap_candidate * (columns - 1)
+		if remaining_width <= columns:
+			continue
+		var tile_width := floori(float(remaining_width) / float(columns))
+		var grid_width := tile_width * columns + gap_candidate * (columns - 1)
+		var fill_error := absi(content_width_int - grid_width)
+		var score := fill_error * 100 + absi(gap_candidate - preferred_gap)
+		if score < best_score:
+			best_score = score
+			best_gap = gap_candidate
+			best_tile_width = tile_width
+			best_grid_width = grid_width
+			if fill_error == 0 and gap_candidate == preferred_gap:
+				break
+	return {
+		"gap": best_gap,
+		"tile_width": best_tile_width,
+		"grid_width": best_grid_width,
 	}
 
 
@@ -349,31 +463,36 @@ func _sort_entries_by_category(cards: Array[Dictionary]) -> Array[Dictionary]:
 	return result
 
 
-func _create_view_tile(card_name: String, set_code: String, card_index: String, tile_width: int = CARD_TILE_WIDTH, tile_height: int = CARD_TILE_HEIGHT, label_font_size: int = -1) -> PanelContainer:
+func _create_view_tile(card_name: String, set_code: String, card_index: String, tile_width: int = CARD_TILE_WIDTH, tile_height: int = CARD_TILE_HEIGHT, label_font_size: int = -1, copy_count: int = 1) -> PanelContainer:
 	var panel := PanelContainer.new()
+	panel.name = "DeckViewCardTile"
 	var label_height := maxf(22.0, float(label_font_size + 14))
 	panel.custom_minimum_size = Vector2(tile_width, float(tile_height) + label_height)
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
-
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.2, 0.22, 0.3, 1.0)
-	sb.border_color = Color(0.3, 0.32, 0.4, 1.0)
-	sb.set_border_width_all(1)
-	sb.set_corner_radius_all(6)
-	sb.set_content_margin_all(4)
-	panel.add_theme_stylebox_override("panel", sb)
+	panel.set_meta("deck_view_card_name", card_name)
+	panel.set_meta("deck_view_set_code", set_code)
+	panel.set_meta("deck_view_card_index", card_index)
+	panel.set_meta("deck_view_count", copy_count)
+	panel.add_theme_stylebox_override("panel", _deck_view_tile_style())
 
 	var vbox := VBoxContainer.new()
 	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_theme_constant_override("separation", 2)
 	panel.add_child(vbox)
 
+	var image_frame := Control.new()
+	image_frame.name = "DeckViewCardImageFrame"
+	image_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	image_frame.custom_minimum_size = Vector2(tile_width - 8, tile_height - 8)
+	image_frame.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	vbox.add_child(image_frame)
+
 	var tex_rect := TextureRect.new()
+	tex_rect.name = "DeckViewCardImage"
 	tex_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	tex_rect.custom_minimum_size = Vector2(tile_width - 8, tile_height - 8)
+	tex_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
 	tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	tex_rect.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	var texture := _load_card_texture(set_code, card_index)
 	if texture != null:
 		tex_rect.texture = texture
@@ -381,13 +500,41 @@ func _create_view_tile(card_name: String, set_code: String, card_index: String, 
 		var placeholder := PlaceholderTexture2D.new()
 		placeholder.size = Vector2(tile_width - 8, tile_height - 8)
 		tex_rect.texture = placeholder
-	vbox.add_child(tex_rect)
+	image_frame.add_child(tex_rect)
+
+	var badge := Label.new()
+	badge.name = "DeckViewCardCountBadge"
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.text = "X%d" % copy_count
+	badge.visible = copy_count > 1
+	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var badge_font_size := maxi(10, label_font_size)
+	badge.add_theme_font_size_override("font_size", badge_font_size)
+	badge.add_theme_color_override("font_color", Color(0.96, 1.0, 1.0, 1.0))
+	badge.add_theme_stylebox_override("normal", _deck_view_count_badge_style())
+	var badge_width := minf(maxf(34.0, float(badge_font_size) * 1.75), maxf(34.0, float(tile_width) - 12.0))
+	var badge_height := minf(maxf(24.0, float(badge_font_size) * 1.35), maxf(24.0, float(tile_height) * 0.50))
+	badge.custom_minimum_size = Vector2(badge_width, badge_height)
+	badge.anchor_left = 1.0
+	badge.anchor_top = 1.0
+	badge.anchor_right = 1.0
+	badge.anchor_bottom = 1.0
+	badge.offset_left = -badge_width - 4.0
+	badge.offset_top = -badge_height - 4.0
+	badge.offset_right = -4.0
+	badge.offset_bottom = -4.0
+	image_frame.add_child(badge)
 
 	var label := Label.new()
+	label.name = "DeckViewCardNameLabel"
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.text = card_name
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", label_font_size if label_font_size > 0 else HudThemeScript.scaled_font_size(11))
+	label.add_theme_color_override("font_color", HudThemeScript.TEXT)
+	label.add_theme_color_override("font_shadow_color", Color(0.0, 0.72, 0.95, 0.45))
+	label.add_theme_constant_override("shadow_offset_y", 1)
 	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	label.custom_minimum_size = Vector2(tile_width - 8, label_height)
 	vbox.add_child(label)
@@ -395,33 +542,104 @@ func _create_view_tile(card_name: String, set_code: String, card_index: String, 
 	return panel
 
 
+func _deck_view_tile_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.016, 0.052, 0.070, 0.86)
+	style.border_color = Color(0.30, 0.90, 1.0, 0.92)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(8)
+	style.shadow_color = Color(0.0, 0.70, 0.95, 0.18)
+	style.shadow_size = 8
+	style.set_content_margin_all(4)
+	return style
+
+
+func _deck_view_count_badge_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.02, 0.16, 0.22, 0.94)
+	style.border_color = Color(1.0, 0.62, 0.24, 0.96)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(6)
+	style.shadow_color = Color(1.0, 0.45, 0.12, 0.26)
+	style.shadow_size = 6
+	style.content_margin_left = 6
+	style.content_margin_right = 6
+	style.content_margin_top = 3
+	style.content_margin_bottom = 3
+	return style
+
+
 func _on_view_tile_input(event: InputEvent, host: Node, scroll: ScrollContainer, set_code: String, card_index: String) -> void:
 	if _handle_card_list_drag_scroll_input(event, scroll):
 		return
 	if _is_card_list_drag_click_suppressed(scroll):
 		return
-	if not (event is InputEventMouseButton and (event as InputEventMouseButton).pressed):
-		return
-	if (event as InputEventMouseButton).button_index == MOUSE_BUTTON_RIGHT:
-		var card := CardDatabase.get_card(set_code, card_index)
-		if card != null:
-			_show_card_detail(host, card)
+	var portrait := _host_uses_portrait_deck_view(host)
+	if event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if mouse_button.button_index == MOUSE_BUTTON_LEFT and not mouse_button.pressed:
+			if portrait:
+				_accept_scroll_event(scroll)
+				return
+			_open_view_tile_card_detail(host, set_code, card_index)
+			return
+		if mouse_button.button_index == MOUSE_BUTTON_RIGHT and mouse_button.pressed:
+			if portrait:
+				_accept_scroll_event(scroll)
+				return
+			_open_view_tile_card_detail(host, set_code, card_index)
+			return
+	if event is InputEventScreenTouch and not (event as InputEventScreenTouch).pressed:
+		if portrait:
+			_accept_scroll_event(scroll)
+			return
+		_open_view_tile_card_detail(host, set_code, card_index)
 
 
-func _show_card_detail(host: Node, card: CardData) -> void:
+func _open_view_tile_card_detail(host: Node, set_code: String, card_index: String) -> void:
+	var card := CardDatabase.get_card(set_code, card_index)
+	if card != null:
+		_show_card_detail(host, card)
+
+
+func _show_card_detail(host: Node, card: CardData) -> AcceptDialog:
+	if _host_uses_portrait_deck_view(host):
+		return null
 	var dialog := AcceptDialog.new()
-	dialog.title = card.name
+	dialog.name = "DeckViewCardDetailDialog"
+	dialog.title = card.display_name()
 	dialog.ok_button_text = "关闭"
-	dialog.size = Vector2i(500, 480)
+	dialog.size = _card_detail_dialog_size(host)
+	dialog.min_size = dialog.size
+	dialog.initial_position = Window.WINDOW_INITIAL_POSITION_ABSOLUTE
+	_apply_deck_view_dialog_hud(dialog)
+
+	var margin := MarginContainer.new()
+	margin.anchors_preset = Control.PRESET_FULL_RECT
+	var margin_value := 10
+	margin.offset_left = margin_value
+	margin.offset_top = margin_value
+	margin.offset_right = -margin_value
+	margin.offset_bottom = -margin_value
+	margin.add_theme_constant_override("margin_left", margin_value)
+	margin.add_theme_constant_override("margin_top", margin_value)
+	margin.add_theme_constant_override("margin_right", margin_value)
+	margin.add_theme_constant_override("margin_bottom", margin_value)
+	dialog.add_child(margin)
+
+	var outer := VBoxContainer.new()
+	outer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	outer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	outer.add_theme_constant_override("separation", 8)
+	margin.add_child(outer)
 
 	var scroll := ScrollContainer.new()
-	scroll.anchors_preset = Control.PRESET_FULL_RECT
-	scroll.offset_left = 8
-	scroll.offset_top = 8
-	scroll.offset_right = -8
-	scroll.offset_bottom = -8
-	HudThemeScript.style_scroll_container(scroll)
-	dialog.add_child(scroll)
+	scroll.name = "DeckViewCardDetailScroll"
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	HudThemeScript.style_scroll_container(scroll, "compact")
+	NonBattleTouchBridgeScript.configure_hidden_vertical_drag_scroll(scroll)
+	outer.add_child(scroll)
 
 	var content := VBoxContainer.new()
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -429,7 +647,7 @@ func _show_card_detail(host: Node, card: CardData) -> void:
 	scroll.add_child(content)
 
 	var header := Label.new()
-	header.text = card.name
+	header.text = card.display_name()
 	header.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(20))
 	content.add_child(header)
 
@@ -476,12 +694,13 @@ func _show_card_detail(host: Node, card: CardData) -> void:
 		for ab: Dictionary in card.abilities:
 			_add_detail_separator(content)
 			var ab_title := Label.new()
-			ab_title.text = "[特性] %s" % ab.get("name", "")
 			ab_title.add_theme_color_override("font_color", Color(1.0, 0.7, 0.3))
+			ab_title.text = "特性: %s" % CardData.dictionary_display_name(ab)
 			content.add_child(ab_title)
-			if ab.get("text", "") != "":
+			var ab_display_text := CardData.dictionary_display_text(ab)
+			if ab_display_text != "":
 				var ab_text := Label.new()
-				ab_text.text = str(ab.get("text", ""))
+				ab_text.text = ab_display_text
 				ab_text.autowrap_mode = TextServer.AUTOWRAP_WORD
 				content.add_child(ab_text)
 
@@ -493,15 +712,16 @@ func _show_card_detail(host: Node, card: CardData) -> void:
 			var parts: PackedStringArray = []
 			if cost_str != "":
 				parts.append("[%s]" % cost_str)
-			parts.append(str(atk.get("name", "")))
+			parts.append(CardData.dictionary_display_name(atk))
 			if dmg_str != "":
 				parts.append(dmg_str)
 			atk_header.text = " ".join(parts)
 			atk_header.add_theme_color_override("font_color", Color(0.5, 0.8, 1.0))
 			content.add_child(atk_header)
-			if atk.get("text", "") != "":
+			var atk_display_text := CardData.dictionary_display_text(atk)
+			if atk_display_text != "":
 				var atk_text := Label.new()
-				atk_text.text = str(atk.get("text", ""))
+				atk_text.text = atk_display_text
 				atk_text.autowrap_mode = TextServer.AUTOWRAP_WORD
 				content.add_child(atk_text)
 
@@ -525,9 +745,70 @@ func _show_card_detail(host: Node, card: CardData) -> void:
 		en_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
 		content.add_child(en_label)
 
+	outer.add_child(_create_card_detail_close_button(dialog))
 	host.add_child(dialog)
-	dialog.popup_centered()
+	var ok_button := dialog.get_ok_button()
+	if ok_button != null:
+		ok_button.visible = false
+	dialog.set_meta("deck_view_centered_position", _dialog_centered_position_for_host(host, dialog))
+	if dialog.is_inside_tree():
+		_popup_dialog_centered_for_host(host, dialog)
 	dialog.confirmed.connect(dialog.queue_free)
+	return dialog
+
+
+func _host_uses_portrait_deck_view(host: Node) -> bool:
+	var viewport_size := _host_viewport_size(host)
+	return viewport_size.y > viewport_size.x and viewport_size.x >= 360.0
+
+
+func _card_detail_dialog_size(host: Node) -> Vector2i:
+	var viewport_size := _host_viewport_size(host)
+	var portrait := viewport_size.y > viewport_size.x and viewport_size.x >= 320.0
+	if portrait:
+		var margin := clampf(viewport_size.x * 0.04, 16.0, 28.0)
+		return Vector2i(
+			roundi(clampf(viewport_size.x - margin * 2.0, 320.0, 560.0)),
+			roundi(clampf(viewport_size.y * 0.66, 420.0, viewport_size.y - margin * 2.0))
+		)
+	return Vector2i(500, 480)
+
+
+func _create_card_detail_close_button(dialog: AcceptDialog) -> Button:
+	var button := Button.new()
+	button.name = "DeckViewCardDetailCloseButton"
+	button.text = dialog.ok_button_text
+	button.custom_minimum_size = Vector2(0.0, 58.0)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(16))
+	button.add_theme_stylebox_override("normal", HudThemeScript.button_style(HudThemeScript.ACCENT, false, false))
+	button.add_theme_stylebox_override("hover", HudThemeScript.button_style(HudThemeScript.ACCENT, true, false))
+	button.add_theme_stylebox_override("pressed", HudThemeScript.button_style(HudThemeScript.ACCENT, true, true))
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	button.pressed.connect(dialog.queue_free)
+	NonBattleTouchBridgeScript.set_touch_bridge_enabled(button, true)
+	NonBattleTouchBridgeScript.set_button_window_visibility_fallback(button, true)
+	NonBattleTouchBridgeScript.bind_button_touch(button)
+	return button
+
+
+func _popup_dialog_centered_for_host(host: Node, dialog: Window) -> void:
+	if dialog == null:
+		return
+	var position := _dialog_centered_position_for_host(host, dialog)
+	dialog.set_meta("deck_view_centered_position", position)
+	dialog.position = position
+	dialog.popup(Rect2i(position, dialog.size))
+	dialog.position = position
+	dialog.set_deferred("position", position)
+
+
+func _dialog_centered_position_for_host(host: Node, dialog: Window) -> Vector2i:
+	var viewport_size := _host_viewport_size(host)
+	return Vector2i(
+		roundi(maxf(0.0, (viewport_size.x - float(dialog.size.x)) * 0.5)),
+		roundi(maxf(0.0, (viewport_size.y - float(dialog.size.y)) * 0.5))
+	)
 
 
 func _add_detail_separator(container: VBoxContainer) -> void:

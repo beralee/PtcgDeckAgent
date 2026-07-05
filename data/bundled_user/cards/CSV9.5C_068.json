@@ -1,0 +1,66 @@
+{
+    "name":  "太阳伊布ex",
+    "card_type":  "Pokemon",
+    "mechanic":  "ex",
+    "label":  "",
+    "description":  "【超】 精神驱逐 160\n在不看对手手牌正面的前提下，选择其中1张放于弃牌区。\n\n【草】【超】【恶】 阿赛斯特莱紫晶 \n从对手所有已经进化的宝可梦身上，各移除1张「进化卡」使其退化。将被移除的卡牌，放回对手牌库并重洗牌库。\n\n",
+    "yoren_code":  "Y1560",
+    "set_code":  "CSV9.5C",
+    "card_index":  "068",
+    "set_code_en":  "PRE",
+    "card_index_en":  "34",
+    "name_en":  "Espeon ex",
+    "name_zh":  "",
+    "artist":  "5ban Graphics",
+    "rarity":  "RR",
+    "release_date":  "2026-06-12T00:00:00+08:00",
+    "regulation_mark":  "H",
+    "effect_id":  "b8bb46f1d76a9143f1a8fbc74ae80602",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV9.5C/068.png",
+    "image_local_path":  "user://cards/images/CSV9.5C/068.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  "",
+    "source_parser_version":  "",
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "P",
+    "stage":  "Stage 1",
+    "hp":  270,
+    "weakness_energy":  "D",
+    "weakness_value":  "×2",
+    "resistance_energy":  "F",
+    "resistance_value":  "-30",
+    "retreat_cost":  1,
+    "evolves_from":  "伊布",
+    "ancient_trait":  "Tera",
+    "attacks":  [
+                    {
+                        "name":  "精神驱逐",
+                        "text":  "在不看对手手牌正面的前提下，选择其中1张放于弃牌区。",
+                        "cost":  "PCC",
+                        "damage":  "160",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "阿赛斯特莱紫晶",
+                        "text":  "从对手所有已经进化的宝可梦身上，各移除1张「进化卡」使其退化。将被移除的卡牌，放回对手牌库并重洗牌库。",
+                        "cost":  "GPD",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

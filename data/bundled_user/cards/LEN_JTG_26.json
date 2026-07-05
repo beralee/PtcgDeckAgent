@@ -1,0 +1,72 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "Gemi",
+	"attacks": [
+		{
+			"cost": "CC",
+			"damage": "20",
+			"is_vstar_power": false,
+			"name": "Rolling Tackle",
+			"text": "",
+			"name_zh": "滚动撞击",
+			"text_zh": ""
+		},
+		{
+			"cost": "RRC",
+			"damage": "50",
+			"is_vstar_power": false,
+			"name": "Flare",
+			"text": "",
+			"name_zh": "火花",
+			"text_zh": ""
+		}
+	],
+	"card_index": "26",
+	"card_index_en": "26",
+	"card_type": "Pokemon",
+	"description": "滚动撞击 20\n\n火花 50",
+	"effect_id": "915e49832b8228925fdb57ded9fd0cc5",
+	"energy_provides": "",
+	"energy_type": "R",
+	"evolves_from": "",
+	"hp": 80,
+	"image_local_path": "user://cards/images/LEN_JTG/26.png",
+	"image_url": "https://limitless3.nyc3.cdn.digitaloceanspaces.com/limitless/logo.png",
+	"is_tags": [
+		"Basic"
+	],
+	"label": "",
+	"mechanic": "",
+	"name": "N's Darumaka",
+	"name_en": "N's Darumaka",
+	"name_zh": "N的火红不倒翁",
+	"rarity": "Journey Together (JTG)",
+	"regulation_expanded": true,
+	"regulation_mark": "",
+	"regulation_standard": true,
+	"release_date": "",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "LEN_JTG",
+	"set_code_en": "JTG",
+	"source_card_index": "26",
+	"source_imported_at": 1783008496373,
+	"source_language": "en",
+	"source_parser_version": 1,
+	"source_prints": [
+		"JTG/26",
+		"ASC/32",
+		"JP/SV9/15",
+		"JP/M2A/27",
+		"JP/MC/118"
+	],
+	"source_provider": "limitless",
+	"source_set_code": "JTG",
+	"source_url": "https://limitlesstcg.com/cards/JTG/26",
+	"stage": "Basic",
+	"weakness_energy": "W",
+	"weakness_value": "x2",
+	"yoren_code": ""
+}

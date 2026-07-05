@@ -1,0 +1,51 @@
+{
+	"abilities": [
+		{
+			"name": "迅子打击",
+			"text": "在自己的回合，当这只宝可梦从备战区被放入战斗场时，可使用1次。给对手的1只宝可梦身上，放置2个伤害指示物。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "aky CG Works",
+	"attacks": [
+		{
+			"cost": "PPC",
+			"damage": "200",
+			"is_vstar_power": false,
+			"name": "镭射利刃",
+			"text": "在下一个自己的回合，这只宝可梦无法使用招式。"
+		}
+	],
+	"card_index": "081",
+	"card_index_en": "89",
+	"card_type": "Pokemon",
+	"description": "特性: 迅子打击\n在自己的回合，当这只宝可梦从备战区被放入战斗场时，可使用1次。给对手的1只宝可梦身上，放置2个伤害指示物。\n\n【超】【超】 镭射利刃 200\n在下一个自己的回合，这只宝可梦无法使用招式。\n\n",
+	"effect_id": "b417ad06ad8e4aa783b35fe1f3f27010",
+	"energy_provides": "",
+	"energy_type": "P",
+	"evolves_from": "",
+	"hp": 220,
+	"image_local_path": "user://cards/images/CSV9.5C/081.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9.5C/081.png",
+	"is_tags": [
+		"Future"
+	],
+	"label": "Future",
+	"mechanic": "ex",
+	"name": "铁武者ex",
+	"name_en": "Iron Valiant ex",
+	"rarity": "RR",
+	"regulation_expanded": true,
+	"regulation_mark": "G",
+	"regulation_standard": true,
+	"release_date": "2026-06-12T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "CSV9.5C",
+	"set_code_en": "PAR",
+	"stage": "Basic",
+	"weakness_energy": "M",
+	"weakness_value": "×2",
+	"yoren_code": "Y1368"
+}

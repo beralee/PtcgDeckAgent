@@ -45,6 +45,7 @@ const DeckStrategy175LugiaArcheopsScript = preload("res://scripts/ai/DeckStrateg
 const DeckStrategy175LugiaArcheopsLLMScript = preload("res://scripts/ai/DeckStrategy175LugiaArcheopsLLM.gd")
 const DeckStrategy17RegidragoScript = preload("res://scripts/ai/DeckStrategy17Regidrago.gd")
 const DeckStrategy17RegidragoLLMScript = preload("res://scripts/ai/DeckStrategy17RegidragoLLM.gd")
+const DeckStrategyNsZoroarkScript = preload("res://scripts/ai/DeckStrategyNsZoroark.gd")
 const _GARDEVOIR_SCRIPT_PATH := "res://scripts/ai/DeckStrategyGardevoir.gd"
 const _GARDEVOIR_LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategyGardevoirLLM.gd"
 const _V175_GARDEVOIR_LLM_SCRIPT_PATH := "res://scripts/ai/DeckStrategy175GardevoirLLM.gd"
@@ -93,6 +94,7 @@ const _STRATEGY_SCRIPTS := {
 	"v175_lugia_archeops_llm": DeckStrategy175LugiaArcheopsLLMScript,
 	"v17_regidrago": DeckStrategy17RegidragoScript,
 	"v17_regidrago_llm": DeckStrategy17RegidragoLLMScript,
+	"ns_zoroark": DeckStrategyNsZoroarkScript,
 	"miraidon": DeckStrategyMiraidonScript,
 }
 
@@ -107,6 +109,7 @@ const _STRATEGY_ID_BY_DECK_ID := {
 	1750002: "v175_pure_dragapult",
 	609431: "v175_lugia_archeops",
 	610080: "gardevoir",
+	800018502: "ns_zoroark",
 }
 
 const _STRATEGY_ORDER: Array[String] = [
@@ -125,6 +128,7 @@ const _STRATEGY_ORDER: Array[String] = [
 	"iron_thorns",
 	"raging_bolt_ogerpon",
 	"gouging_fire_ancient",
+	"ns_zoroark",
 	"blissey_tank",
 	"lost_box",
 	"gardevoir",

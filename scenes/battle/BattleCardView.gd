@@ -21,6 +21,8 @@ const ENERGY_ROW_MINIMUM_LAYOUT_GAP := 4
 const CARD_FOIL_OFF := "off"
 const CARD_FOIL_SHINE := "shine"
 const CARD_FOIL_DEFAULT_INTENSITY := 1.2
+const TEXTURE_CACHE_MAX_ENTRIES := 96
+const FAILED_TEXTURE_PATH_CACHE_MAX_ENTRIES := 256
 const CardImplementationStatusScript := preload("res://scripts/engine/CardImplementationStatus.gd")
 const ENERGY_ICON_TEXTURES := {
 	"R": preload("res://assets/ui/e-huo.png"),
@@ -70,9 +72,34 @@ class CardInputCatcherControl:
 		return Vector2.ZERO
 
 static var _texture_cache: Dictionary = {}
+static var _texture_cache_order: Array[String] = []
 static var _failed_texture_paths: Dictionary = {}
+static var _failed_texture_path_order: Array[String] = []
 static var _foil_shader: Shader = null
 static var _empty_slot_shader: Shader = null
+
+
+static func clear_texture_cache_for_tests() -> void:
+	_texture_cache.clear()
+	_texture_cache_order.clear()
+	_failed_texture_paths.clear()
+	_failed_texture_path_order.clear()
+
+
+static func texture_cache_size_for_tests() -> int:
+	return _texture_cache.size()
+
+
+static func texture_cache_max_entries_for_tests() -> int:
+	return TEXTURE_CACHE_MAX_ENTRIES
+
+
+static func texture_cache_has_path_for_tests(file_path: String) -> bool:
+	return _texture_cache.has(file_path)
+
+
+static func store_texture_in_cache_for_tests(file_path: String, texture: Texture2D) -> void:
+	_store_texture_in_cache(file_path, texture)
 
 
 func _get_minimum_size() -> Vector2:
@@ -850,7 +877,7 @@ func _refresh() -> void:
 	if display_mode == MODE_PREVIEW:
 		set_info("", "")
 	elif card_data != null:
-		set_info(card_data.name, _default_subtitle())
+		set_info(card_data.display_name(), _default_subtitle())
 	else:
 		set_info("", "")
 	_update_implementation_badge()
@@ -872,14 +899,14 @@ func _placeholder_text() -> String:
 		if display_mode == MODE_SLOT_ACTIVE or display_mode == MODE_SLOT_BENCH:
 			return ""
 		return "空位"
-	return card_data.name
+	return card_data.display_name()
 
 
 func _missing_art_text() -> String:
 	if card_data == null:
 		return ""
 
-	var lines: Array[String] = [card_data.name]
+	var lines: Array[String] = [card_data.display_name()]
 	if card_data.card_type != "":
 		lines.append(card_data.card_type)
 	if card_data.is_pokemon() and card_data.hp > 0:
@@ -898,7 +925,7 @@ func _default_subtitle() -> String:
 		MODE_SLOT_ACTIVE, MODE_SLOT_BENCH:
 			return card_data.card_type
 		MODE_CHOICE:
-			return "%s | %s" % [card_data.name, card_data.card_type]
+			return "%s | %s" % [card_data.display_name(), card_data.card_type]
 		MODE_PREVIEW:
 			return ""
 		_:
@@ -918,24 +945,64 @@ func _load_texture(data: CardData) -> Texture2D:
 		return null
 
 	if _texture_cache.has(file_path):
+		_mark_texture_cache_path_used(file_path)
 		return _texture_cache[file_path]
 	if _failed_texture_paths.has(file_path):
+		_mark_failed_texture_path_used(file_path)
 		return null
 
 	var image_bytes := FileAccess.get_file_as_bytes(file_path)
 	if image_bytes.is_empty():
-		_failed_texture_paths[file_path] = true
+		_store_failed_texture_path(file_path)
 		return null
 
 	var image := Image.new()
 	var err := _load_image_from_buffer(image, image_bytes)
 	if err != OK:
-		_failed_texture_paths[file_path] = true
+		_store_failed_texture_path(file_path)
 		return null
 
 	var texture := ImageTexture.create_from_image(image)
-	_texture_cache[file_path] = texture
+	_store_texture_in_cache(file_path, texture)
 	return texture
+
+
+static func _store_texture_in_cache(file_path: String, texture: Texture2D) -> void:
+	if file_path == "" or texture == null:
+		return
+	_texture_cache[file_path] = texture
+	_mark_texture_cache_path_used(file_path)
+	_trim_texture_cache()
+
+
+static func _mark_texture_cache_path_used(file_path: String) -> void:
+	_texture_cache_order.erase(file_path)
+	_texture_cache_order.append(file_path)
+
+
+static func _trim_texture_cache() -> void:
+	while _texture_cache_order.size() > TEXTURE_CACHE_MAX_ENTRIES:
+		var evicted_path: String = _texture_cache_order.pop_front()
+		_texture_cache.erase(evicted_path)
+
+
+static func _store_failed_texture_path(file_path: String) -> void:
+	if file_path == "":
+		return
+	_failed_texture_paths[file_path] = true
+	_mark_failed_texture_path_used(file_path)
+	_trim_failed_texture_path_cache()
+
+
+static func _mark_failed_texture_path_used(file_path: String) -> void:
+	_failed_texture_path_order.erase(file_path)
+	_failed_texture_path_order.append(file_path)
+
+
+static func _trim_failed_texture_path_cache() -> void:
+	while _failed_texture_path_order.size() > FAILED_TEXTURE_PATH_CACHE_MAX_ENTRIES:
+		var evicted_path: String = _failed_texture_path_order.pop_front()
+		_failed_texture_paths.erase(evicted_path)
 
 
 func _load_image_from_buffer(image: Image, image_bytes: PackedByteArray) -> int:
@@ -1722,6 +1789,10 @@ func _on_input_catcher_gui_input(event: InputEvent) -> void:
 	_handle_card_pointer_input(event)
 
 
+func handle_bridged_pointer_input(event: InputEvent) -> void:
+	_handle_card_pointer_input(event)
+
+
 func _handle_card_pointer_input(event: InputEvent) -> void:
 	if not _clickable:
 		return
@@ -1765,6 +1836,7 @@ func _handle_hand_primary_click_input(event: InputEvent) -> bool:
 			accept_event()
 			return true
 		if _hand_primary_press_active:
+			_update_hand_primary_click_motion(_primary_click_event_position(event))
 			var cancelled := _hand_primary_press_cancelled
 			_hand_primary_press_active = false
 			_hand_primary_press_cancelled = false
@@ -1800,6 +1872,8 @@ func _handle_hand_primary_click_input(event: InputEvent) -> bool:
 			accept_event()
 			return true
 		if _hand_primary_press_active:
+			if _touch_release_position_is_reliable(touch.position):
+				_update_hand_primary_click_motion(touch.position)
 			var cancelled := _hand_primary_press_cancelled
 			_hand_primary_press_active = false
 			_hand_primary_press_cancelled = false
@@ -1839,6 +1913,8 @@ func _handle_direct_touch_click_input(event: InputEvent) -> bool:
 			accept_event()
 			return true
 		if _hand_primary_press_active:
+			if _touch_release_position_is_reliable(touch.position):
+				_update_hand_primary_click_motion(touch.position)
 			var cancelled := _hand_primary_press_cancelled
 			_hand_primary_press_active = false
 			_hand_primary_press_cancelled = false
@@ -1896,6 +1972,10 @@ func _primary_click_event_position(event: InputEvent) -> Vector2:
 	if event is InputEventScreenDrag:
 		return (event as InputEventScreenDrag).position
 	return Vector2.ZERO
+
+
+func _touch_release_position_is_reliable(position: Vector2) -> bool:
+	return position != Vector2.ZERO or _hand_primary_press_start == Vector2.ZERO
 
 
 func _handle_touch_inspect_input(event: InputEvent) -> bool:

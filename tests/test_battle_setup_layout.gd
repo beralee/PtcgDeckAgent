@@ -345,16 +345,27 @@ func test_battle_setup_landscape_does_not_show_right_scrollbar() -> String:
 	tree.root.add_child(scene)
 	_force_two_player_mode(scene)
 	scene.call("_apply_non_battle_layout_for_tests", Vector2(1600, 900), "landscape")
+	await tree.process_frame
+	await tree.process_frame
 
 	var landscape_scroll := scene.find_child("LandscapeSetupScroll", true, false) as ScrollContainer
 	var portrait_scroll := scene.find_child("PortraitSetupScroll", true, false) as ScrollContainer
 	var vbar := landscape_scroll.get_v_scroll_bar() if landscape_scroll != null else null
+	var root_vbox := scene.find_child("RootVBox", true, false) as VBoxContainer
+	var right_vbox := scene.find_child("RightVBox", true, false) as VBoxContainer
+	var right_spacer := scene.find_child("RightSpacer", true, false) as Control
+	var action_row := scene.find_child("ActionRow", true, false) as HBoxContainer
+	var scroll_bottom := landscape_scroll.get_global_rect().end.y if landscape_scroll != null else INF
+	var root_bottom := root_vbox.get_global_rect().end.y if root_vbox != null else -INF
 
 	var result := run_checks([
 		assert_true(landscape_scroll != null and landscape_scroll.visible, "Landscape setup should keep the landscape layout wrapper visible"),
 		assert_eq(landscape_scroll.vertical_scroll_mode if landscape_scroll != null else -1, ScrollContainer.SCROLL_MODE_DISABLED, "Landscape setup should fit without a native right-side scrollbar"),
 		assert_true(vbar == null or (not vbar.visible and vbar.mouse_filter == Control.MOUSE_FILTER_IGNORE), "Landscape setup should not reserve an interactive right scrollbar"),
 		assert_true(portrait_scroll == null or not portrait_scroll.visible, "Landscape setup must not activate the portrait scroll layout"),
+		assert_true(scroll_bottom <= root_bottom + 1.0, "Landscape setup scroll wrapper should stay inside the RootVBox instead of using full window height"),
+		assert_true(action_row != null and action_row.get_parent() == right_vbox, "Landscape setup actions should live inside the right column"),
+		assert_true(right_spacer != null and action_row != null and action_row.get_index() > right_spacer.get_index(), "Landscape setup actions should stay below the flexible right spacer"),
 	])
 
 	_dispose_scene(scene)
@@ -1152,6 +1163,129 @@ func test_battle_setup_portrait_android_touch_on_edit_button_opens_deck_editor()
 	return result
 
 
+func test_battle_setup_web_portrait_hides_deck_edit_buttons_until_landscape() -> String:
+	_set_navigation_suppressed(true)
+	if GameManager.has_method("consume_last_requested_scene_path"):
+		GameManager.call("consume_last_requested_scene_path")
+	if GameManager.has_method("consume_deck_editor_id"):
+		GameManager.call("consume_deck_editor_id")
+	var scene := BattleSetupScene.instantiate()
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_ready")
+	scene.set("_test_web_runtime_override", true)
+	scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	_force_two_player_mode(scene)
+
+	var deck1 := DeckData.new()
+	deck1.id = 4441
+	deck1.deck_name = "Web Portrait Edit Deck"
+	deck1.total_cards = 60
+	var deck2 := DeckData.new()
+	deck2.id = 5551
+	deck2.deck_name = "Web Portrait Opponent Deck"
+	deck2.total_cards = 60
+	scene.set("_deck_list", [deck1, deck2])
+
+	var deck1_option := scene.get_node("%Deck1Option") as OptionButton
+	var deck2_option := scene.get_node("%Deck2Option") as OptionButton
+	deck1_option.clear()
+	deck2_option.clear()
+	deck1_option.add_item("Web Portrait Edit Deck")
+	deck1_option.set_item_metadata(0, 4441)
+	deck2_option.add_item("Web Portrait Opponent Deck")
+	deck2_option.set_item_metadata(0, 5551)
+	deck1_option.select(0)
+	deck2_option.select(0)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	scene.call("_refresh_deck_action_buttons")
+
+	var deck1_edit := scene.find_child("Deck1EditButton", true, false) as Button
+	var deck2_edit := scene.find_child("Deck2EditButton", true, false) as Button
+	var deck1_portrait_visible := deck1_edit != null and deck1_edit.visible
+	var deck2_portrait_visible := deck2_edit != null and deck2_edit.visible
+	var deck1_portrait_disabled := deck1_edit != null and deck1_edit.disabled
+	var deck1_portrait_mouse_ignore := deck1_edit != null and deck1_edit.mouse_filter == Control.MOUSE_FILTER_IGNORE
+	var deck1_portrait_focus_none := deck1_edit != null and deck1_edit.focus_mode == Control.FOCUS_NONE
+	scene.call("_on_deck_edit_pressed", 0)
+	var hidden_requested_scene: String = GameManager.call("consume_last_requested_scene_path")
+	var hidden_editor_deck_id := int(GameManager.call("consume_deck_editor_id"))
+
+	scene.size = Vector2(844, 390)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(844, 390), "landscape")
+	scene.call("_refresh_deck_action_buttons")
+	var deck1_landscape_visible := deck1_edit != null and deck1_edit.visible and not deck1_edit.disabled
+	var deck1_landscape_hit_test := deck1_edit != null and deck1_edit.mouse_filter == Control.MOUSE_FILTER_STOP and deck1_edit.focus_mode == Control.FOCUS_ALL
+	scene.call("_on_deck_edit_pressed", 0)
+	var landscape_requested_scene: String = GameManager.call("consume_last_requested_scene_path")
+	var landscape_editor_deck_id := int(GameManager.call("consume_deck_editor_id"))
+
+	var result := run_checks([
+		assert_not_null(deck1_edit, "Web battle setup should keep the player 1 edit button node for layout restoration"),
+		assert_not_null(deck2_edit, "Web battle setup should keep the player 2 edit button node for layout restoration"),
+		assert_false(deck1_portrait_visible, "Web portrait battle setup should hide the player 1 edit button"),
+		assert_false(deck2_portrait_visible, "Web portrait battle setup should hide the player 2 edit button"),
+		assert_true(deck1_portrait_disabled, "Hidden web portrait edit button should be disabled"),
+		assert_true(deck1_portrait_mouse_ignore, "Hidden web portrait edit button should not receive pointer input"),
+		assert_true(deck1_portrait_focus_none, "Hidden web portrait edit button should not receive keyboard focus"),
+		assert_eq(hidden_requested_scene, "", "Web portrait battle setup edit handler should not request DeckEditor"),
+		assert_eq(hidden_editor_deck_id, -1, "Web portrait battle setup should not pass a deck id to DeckEditor"),
+		assert_true(deck1_landscape_visible, "Web landscape battle setup should restore the player 1 edit button"),
+		assert_true(deck1_landscape_hit_test, "Web landscape battle setup should restore edit button hit testing"),
+		assert_eq(landscape_requested_scene, GameManager.SCENE_DECK_EDITOR, "Web landscape battle setup edit should request DeckEditor"),
+		assert_eq(landscape_editor_deck_id, 4441, "Web landscape battle setup edit should pass the selected deck id"),
+	])
+
+	_dispose_scene(scene)
+	_set_navigation_suppressed(false)
+	return result
+
+
+func test_battle_setup_battle_exit_startup_shield_blocks_portrait_release_only_footer_tap() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	_set_navigation_suppressed(true)
+	if GameManager.has_method("consume_last_requested_scene_path"):
+		GameManager.call("consume_last_requested_scene_path")
+	if GameManager.has_method("request_battle_setup_startup_input_shield"):
+		GameManager.call("request_battle_setup_startup_input_shield", "battle_confirm_exit", 1000)
+	var scene := BattleSetupScene.instantiate()
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_ready")
+	scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	_force_two_player_mode(scene)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+
+	var back_button := scene.find_child("BtnBack", true, false) as Button
+	var release_position := back_button.get_global_rect().get_center() if back_button != null else Vector2.ZERO
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.position = release_position
+	scene.call("_input", release)
+	var requested_scene := ""
+	if GameManager.has_method("consume_last_requested_scene_path"):
+		requested_scene = str(GameManager.call("consume_last_requested_scene_path"))
+	var shield := scene.find_child("BattleSetupStartupInputShield", true, false) as Control
+
+	var result := run_checks([
+		assert_true(GameManager.has_method("request_battle_setup_startup_input_shield"), "Battle exit should be able to request a BattleSetup-only startup input shield"),
+		assert_not_null(back_button, "Portrait battle setup should expose the footer back button for the release-only regression"),
+		assert_eq(str(scene.get_meta("non_battle_layout_mode", "")), "portrait", "Regression setup should force the portrait BattleSetup layout"),
+		assert_true(shield != null and shield.visible, "BattleSetup should install a temporary startup input shield after battle exit"),
+		assert_eq(requested_scene, "", "A release-only touch inherited from the battle exit dialog must not activate the returned BattleSetup footer button"),
+	])
+
+	_dispose_scene(scene)
+	_set_navigation_suppressed(false)
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	return result
+
+
 func test_battle_setup_deck_picker_touch_does_not_steal_edit_button_overlap() -> String:
 	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
@@ -1269,14 +1403,23 @@ func test_battle_setup_view_button_press_opens_deck_dialog() -> String:
 	var deck1 := DeckData.new()
 	deck1.id = 333
 	deck1.deck_name = "Deck Preview"
-	deck1.total_cards = 1
-	deck1.cards = [{
-		"name": "Test Card",
-		"count": 1,
-		"card_type": "Pokemon",
-		"set_code": "UTEST",
-		"card_index": "001",
-	}]
+	deck1.total_cards = 3
+	deck1.cards = [
+		{
+			"name": "Battle Setup Card",
+			"count": 1,
+			"card_type": "Pokemon",
+			"set_code": "UTEST",
+			"card_index": "001",
+		},
+		{
+			"name": "Battle Setup Card",
+			"count": 2,
+			"card_type": "Pokemon",
+			"set_code": "UTEST",
+			"card_index": "001",
+		},
+	]
 	var deck2 := DeckData.new()
 	deck2.id = 444
 	deck2.deck_name = "Deck Spare"
@@ -1301,10 +1444,15 @@ func test_battle_setup_view_button_press_opens_deck_dialog() -> String:
 		if child is AcceptDialog and (child as AcceptDialog).title == "Deck Preview":
 			dialog_opened = true
 			break
+	var grid := scene.find_child("DeckViewCardGrid", true, false) as GridContainer
+	var tile := _first_deck_view_tile(scene)
+	var badge := tile.find_child("DeckViewCardCountBadge", true, false) as Label if tile != null else null
 
 	var result := run_checks([
 		assert_false(deck1_view.disabled, "Battle setup view button should stay enabled when a deck is selected"),
 		assert_true(dialog_opened, "Pressing the battle setup view button should open the selected deck dialog"),
+		assert_eq(grid.get_child_count() if grid != null else -1, 1, "Battle setup deck view should render each unique card once"),
+		assert_true(badge != null and badge.text == "X3", "Battle setup deck view should show the merged copy count badge"),
 	])
 
 	scene.queue_free()
@@ -1328,3 +1476,15 @@ func test_battle_setup_hides_ai_edit_button_in_vs_ai_mode() -> String:
 
 	scene.queue_free()
 	return result
+
+
+func _first_deck_view_tile(node: Node) -> Control:
+	if node == null:
+		return null
+	if node is Control and node.has_meta("deck_view_card_name"):
+		return node as Control
+	for child: Node in node.get_children():
+		var found := _first_deck_view_tile(child)
+		if found != null:
+			return found
+	return null

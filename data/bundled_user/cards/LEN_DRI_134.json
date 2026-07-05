@@ -1,0 +1,69 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "KEIICHIRO ITO",
+	"attacks": [
+		{
+			"cost": "C",
+			"damage": "",
+			"is_vstar_power": false,
+			"name": "Filch",
+			"text": "Draw a card.",
+			"name_zh": "顺手牵羊",
+			"text_zh": "抽1张卡。"
+		},
+		{
+			"cost": "D",
+			"damage": "10",
+			"is_vstar_power": false,
+			"name": "Corkscrew Punch",
+			"text": "",
+			"name_zh": "螺旋拳",
+			"text_zh": ""
+		}
+	],
+	"card_index": "134",
+	"card_index_en": "134",
+	"card_type": "Pokemon",
+	"description": "顺手牵羊\n抽1张卡。\n\n螺旋拳 10",
+	"effect_id": "89d1ade1bc76566272924c0ee759cbdf",
+	"energy_provides": "",
+	"energy_type": "D",
+	"evolves_from": "",
+	"hp": 70,
+	"image_local_path": "user://cards/images/LEN_DRI/134.png",
+	"image_url": "https://limitless3.nyc3.cdn.digitaloceanspaces.com/limitless/logo.png",
+	"is_tags": [
+		"Basic"
+	],
+	"label": "",
+	"mechanic": "",
+	"name": "Marnie's Impidimp",
+	"name_en": "Marnie's Impidimp",
+	"name_zh": "玛俐的捣蛋小妖",
+	"rarity": "Destined Rivals (DRI)",
+	"regulation_expanded": true,
+	"regulation_mark": "",
+	"regulation_standard": true,
+	"release_date": "",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "LEN_DRI",
+	"set_code_en": "DRI",
+	"source_card_index": "134",
+	"source_imported_at": 1783008495996,
+	"source_language": "en",
+	"source_parser_version": 1,
+	"source_prints": [
+		"DRI/134",
+		"JP/SVOM/5"
+	],
+	"source_provider": "limitless",
+	"source_set_code": "DRI",
+	"source_url": "https://limitlesstcg.com/cards/DRI/134",
+	"stage": "Basic",
+	"weakness_energy": "G",
+	"weakness_value": "x2",
+	"yoren_code": ""
+}

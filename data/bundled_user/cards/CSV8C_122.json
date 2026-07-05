@@ -1,0 +1,51 @@
+{
+	"name": "超音蝠",
+	"card_type": "Pokemon",
+	"mechanic": "",
+	"label": "",
+	"description": "【恶】 引导 \n选择自己牌库中的1张支援者，在给对手看过之后，加入手牌。并重洗牌库。\n\n【恶】 暗之牙 10\n\n\n",
+	"yoren_code": "P041",
+	"set_code": "CSV8C",
+	"card_index": "122",
+	"set_code_en": "SFA",
+	"card_index_en": "27",
+	"name_en": "Zubat",
+	"artist": "osare",
+	"rarity": "C",
+	"release_date": "2026-03-13T00:00:00+08:00",
+	"regulation_mark": "H",
+	"effect_id": "bd712c72418b762b995cf1acd175c688",
+	"image_url": "https://tcg.mik.moe/static/img/CSV8C/122.png",
+	"image_local_path": "user://cards/images/CSV8C/122.png",
+	"is_tags": [],
+	"regulation_standard": true,
+	"regulation_expanded": true,
+	"energy_type": "D",
+	"stage": "Basic",
+	"hp": 50,
+	"weakness_energy": "L",
+	"weakness_value": "×2",
+	"resistance_energy": "F",
+	"resistance_value": "-30",
+	"retreat_cost": 1,
+	"evolves_from": "",
+	"ancient_trait": "",
+	"attacks": [
+		{
+			"name": "引导",
+			"text": "选择自己牌库中的1张支援者，在给对手看过之后，加入手牌。并重洗牌库。",
+			"cost": "D",
+			"damage": "",
+			"is_vstar_power": false
+		},
+		{
+			"name": "暗之牙",
+			"text": "",
+			"cost": "D",
+			"damage": "10",
+			"is_vstar_power": false
+		}
+	],
+	"abilities": [],
+	"energy_provides": ""
+}

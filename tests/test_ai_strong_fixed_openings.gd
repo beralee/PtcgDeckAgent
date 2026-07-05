@@ -143,16 +143,41 @@ func _trace_matches_action(trace: Dictionary, kind: String, card_name: String = 
 		return false
 	if card_name == "":
 		return true
-	var action_card_name := _resolved_action_card_name(chosen_action)
-	if action_card_name == "":
-		var source_slot_payload: Variant = chosen_action.get("source_slot", null)
-		if source_slot_payload is PokemonSlot:
-			action_card_name = _slot_name(source_slot_payload as PokemonSlot)
-		elif source_slot_payload is Dictionary:
-			action_card_name = str((source_slot_payload as Dictionary).get("pokemon_name", ""))
-			if action_card_name == "":
-				action_card_name = str((source_slot_payload as Dictionary).get("name", ""))
-	return action_card_name == card_name
+	return _trace_action_name_candidates(chosen_action).has(card_name)
+
+
+func _trace_action_name_candidates(chosen_action: Dictionary) -> Array[String]:
+	var candidates: Array[String] = []
+	var card_payload: Variant = chosen_action.get("card", null)
+	if card_payload is CardInstance and (card_payload as CardInstance).card_data != null:
+		var cd: CardData = (card_payload as CardInstance).card_data
+		_append_unique_name(candidates, str(cd.name))
+		_append_unique_name(candidates, str(cd.name_en))
+	elif card_payload is Dictionary:
+		var card_dict: Dictionary = card_payload as Dictionary
+		_append_unique_name(candidates, str(card_dict.get("name", "")))
+		_append_unique_name(candidates, str(card_dict.get("name_en", "")))
+	var source_slot_payload: Variant = chosen_action.get("source_slot", null)
+	if source_slot_payload is PokemonSlot:
+		var source_slot := source_slot_payload as PokemonSlot
+		_append_unique_name(candidates, _slot_name(source_slot))
+		var source_cd := source_slot.get_card_data()
+		if source_cd != null:
+			_append_unique_name(candidates, str(source_cd.name))
+			_append_unique_name(candidates, str(source_cd.name_en))
+	elif source_slot_payload is Dictionary:
+		var source_dict: Dictionary = source_slot_payload as Dictionary
+		_append_unique_name(candidates, str(source_dict.get("pokemon_name", "")))
+		_append_unique_name(candidates, str(source_dict.get("name", "")))
+		_append_unique_name(candidates, str(source_dict.get("name_en", "")))
+	return candidates
+
+
+func _append_unique_name(names: Array[String], value: String) -> void:
+	var normalized := value.strip_edges()
+	if normalized == "" or names.has(normalized):
+		return
+	names.append(normalized)
 
 
 func _resolved_action_card_name(chosen_action: Dictionary) -> String:

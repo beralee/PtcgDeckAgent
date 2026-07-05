@@ -28,10 +28,12 @@ const _RARE_CANDY_STAGE_ONE_BASIC_OVERRIDES := {
 	"呱头蛙": ["呱呱泡蛙", "Froakie"],
 	"冻脊龙": ["凉脊龙", "Frigibax"],
 	"力壮鸡": ["火稚鸡", "Torchic"],
+	"奇鲁莉安": ["拉鲁拉丝", "Ralts"],
 	"Pidgeotto": ["Pidgey", "波波"],
 	"Frogadier": ["Froakie", "呱呱泡蛙"],
 	"Arctibax": ["Frigibax", "凉脊龙"],
 	"Combusken": ["Torchic", "火稚鸡"],
+	"Kirlia": ["Ralts", "拉鲁拉丝"],
 }
 
 var _deck_strategy = null
@@ -241,6 +243,8 @@ func _build_use_stadium_effect_actions(
 	if stadium_card == null or stadium_card.card_data == null:
 		return actions
 	var effect: BaseEffect = gsm.effect_processor.get_effect(stadium_card.card_data.effect_id)
+	if effect != null and not effect.can_headless_execute(stadium_card, gsm.game_state):
+		return actions
 	var targets: Array = []
 	var requires_interaction := false
 	if effect != null:
@@ -569,6 +573,7 @@ func _evaluate_trainer_action(
 	var effect: BaseEffect = gsm.effect_processor.get_effect(card.card_data.effect_id)
 	if effect == null:
 		return {"allowed": true, "requires_interaction": false, "preview_steps": []}
+	gsm.game_state.shared_turn_flags["_draw_effect_processor"] = gsm.effect_processor
 	if not effect.can_headless_execute(card, gsm.game_state):
 		return {"allowed": false, "requires_interaction": false, "preview_steps": []}
 	var preview_steps: Array[Dictionary] = _get_effect_interaction_preview_steps(
@@ -797,17 +802,18 @@ func _rare_candy_target_matches_stage2(
 	var target_top: CardInstance = target_slot.get_top_card()
 	if target_top == null or target_top.card_data == null or not target_top.card_data.is_basic_pokemon():
 		return false
+	var target_data: CardData = target_top.card_data
 	var evolves_from := str(stage2_card.card_data.evolves_from)
 	var target_name := str(target_slot.get_pokemon_name())
 	if evolves_from == "" or target_name == "":
 		return false
-	if evolves_from == target_name or _matches_rare_candy_override(evolves_from, target_name):
+	if stage2_card.card_data.evolves_from_matches(target_data) or _matches_rare_candy_override(evolves_from, target_data):
 		return true
 	if owner_index < 0 or owner_index >= gsm.game_state.players.size():
 		return false
 	var player: PlayerState = gsm.game_state.players[owner_index]
 	for ref_card: CardInstance in _collect_player_cards_for_evolution_reference(player):
-		if _matches_stage_one_reference_for_rare_candy(ref_card, evolves_from, target_name):
+		if _matches_stage_one_reference_for_rare_candy(ref_card, evolves_from, target_data):
 			return true
 	return false
 
@@ -826,25 +832,28 @@ func _collect_player_cards_for_evolution_reference(player: PlayerState) -> Array
 	return cards
 
 
-func _matches_stage_one_reference_for_rare_candy(card: CardInstance, stage_one_name: String, basic_name: String) -> bool:
+func _matches_stage_one_reference_for_rare_candy(card: CardInstance, stage_one_name: String, basic_data: CardData) -> bool:
 	if card == null or card.card_data == null:
 		return false
 	var card_data: CardData = card.card_data
 	return (
 		card_data.is_pokemon()
 		and str(card_data.stage) == "Stage 1"
-		and str(card_data.name) == stage_one_name
-		and str(card_data.evolves_from) == basic_name
+		and card_data.matches_rule_identity_name(stage_one_name)
+		and card_data.evolves_from_matches(basic_data)
 	)
 
 
-func _matches_rare_candy_override(stage_one_name: String, basic_name: String) -> bool:
+func _matches_rare_candy_override(stage_one_name: String, basic_data: CardData) -> bool:
+	if basic_data == null:
+		return false
+	var basic_names := basic_data.rule_identity_names()
 	var aliases: Variant = _RARE_CANDY_STAGE_ONE_BASIC_OVERRIDES.get(stage_one_name, [])
 	if aliases is String:
-		return str(aliases) == basic_name
+		return str(aliases) in basic_names
 	if aliases is Array:
 		for alias: Variant in aliases:
-			if str(alias) == basic_name:
+			if str(alias) in basic_names:
 				return true
 	return false
 

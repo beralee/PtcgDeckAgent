@@ -234,18 +234,40 @@ func _portrait_bench_grid_hit_slot_id_for_screen_position(screen_position: Vecto
 
 
 func _consume_modal_slot_input_if_needed(event: InputEvent, source: String = "") -> bool:
-	if _modal_input_slot_suppress_until_msec <= 0:
+	if _modal_input_slot_suppress_until_msec > 0:
+		if Time.get_ticks_msec() > _modal_input_slot_suppress_until_msec:
+			_modal_input_slot_suppress_until_msec = 0
+		elif _is_slot_followup_click_event(event):
+			_cancel_slot_touch_long_press(false)
+			var viewport := get_viewport()
+			if viewport != null:
+				viewport.set_input_as_handled()
+			_runtime_log("modal_slot_input_consumed", "source=%s event=%s mode=time" % [source, event.get_class()])
+			return true
+	if _consume_modal_origin_slot_echo(event, source):
+		return true
+	return false
+
+
+func _consume_modal_origin_slot_echo(event: InputEvent, source: String = "") -> bool:
+	if _modal_input_finished_at_msec <= 0:
 		return false
-	if Time.get_ticks_msec() > _modal_input_slot_suppress_until_msec:
-		_modal_input_slot_suppress_until_msec = 0
+	if Time.get_ticks_msec() > _modal_input_finished_at_msec + MODAL_ORIGIN_SLOT_ECHO_SUPPRESS_MSEC:
 		return false
 	if not _is_slot_followup_click_event(event):
+		return false
+	if _modal_input_origin_position.x < 0.0 or _modal_input_origin_position.y < 0.0:
+		return false
+	var event_position := _action_hud_open_input_screen_position(event)
+	if event_position.x < 0.0 or event_position.y < 0.0:
+		return false
+	if event_position.distance_squared_to(_modal_input_origin_position) > MODAL_ORIGIN_SLOT_ECHO_POSITION_EPSILON * MODAL_ORIGIN_SLOT_ECHO_POSITION_EPSILON:
 		return false
 	_cancel_slot_touch_long_press(false)
 	var viewport := get_viewport()
 	if viewport != null:
 		viewport.set_input_as_handled()
-	_runtime_log("modal_slot_input_consumed", "source=%s event=%s" % [source, event.get_class()])
+	_runtime_log("modal_slot_input_consumed", "source=%s event=%s mode=origin" % [source, event.get_class()])
 	return true
 
 
@@ -364,10 +386,24 @@ func _show_send_out_dialog(pi: int) -> void:
 
 
 func _show_slot_card_detail(slot_id: String) -> bool:
-	var detail_card := _slot_card_instance_for_detail(slot_id)
+	var detail_state: GameState = _gsm.game_state if _gsm != null else null
+	if detail_state == null:
+		return false
+	var detail_slot := _slot_from_id(slot_id, detail_state)
+	if detail_slot == null or detail_slot.pokemon_stack.is_empty():
+		return false
+	var detail_card := detail_slot.get_top_card()
 	if detail_card == null:
 		return false
-	_show_card_detail_for_instance(detail_card)
+	_ensure_battle_card_detail_coordinator()
+	if _battle_card_detail_coordinator.has_method("show_pokemon_slot_detail"):
+		_battle_card_detail_coordinator.call("show_pokemon_slot_detail", detail_slot)
+	else:
+		_battle_card_detail_coordinator.call("show_card_instance_detail", detail_card)
+	var detail_card_view := _detail_card_view if _detail_card_view != null else find_child("DetailCardPreview", true, false) as BattleCardView
+	if detail_card_view != null and detail_card_view.has_method("set_card_foil_owner_index"):
+		detail_card_view.call("set_card_foil_owner_index", detail_card.owner_index)
+	_sync_card_foil_effects(_detail_overlay)
 	return true
 
 
@@ -382,6 +418,7 @@ func _handle_slot_left_click(slot_id: String) -> void:
 	var gs: GameState = _gsm.game_state if _gsm != null else null
 	if gs == null:
 		return
+	_clear_stale_selected_hand_card("slot_left_click")
 
 	var target_slot: PokemonSlot = _slot_from_id(slot_id, gs)
 	if _is_field_interaction_active():
@@ -418,7 +455,7 @@ func _handle_slot_left_click(slot_id: String) -> void:
 				_maybe_run_ai()
 			else:
 				_show_invalid_action_message({
-					"title": "%s 现在不能进化" % cd.name,
+					"title": "%s 现在不能进化" % cd.display_name(),
 					"reason": _gsm.rule_validator.get_evolve_unusable_reason(gs, cp, target_slot, card, _gsm.effect_processor),
 					"detail": "进化需要满足回合、进化链和目标宝可梦状态要求。",
 					"kind": "evolve",
@@ -433,7 +470,7 @@ func _handle_slot_left_click(slot_id: String) -> void:
 				if energy_reason == "":
 					energy_reason = "这张能量当前不能附着到这个目标。"
 				_show_invalid_action_message({
-					"title": "%s 现在不能附着" % cd.name,
+					"title": "%s 现在不能附着" % cd.display_name(),
 					"reason": energy_reason,
 					"detail": "通常每回合只能从手牌附着 1 次能量，并且只能附着给己方宝可梦。",
 					"kind": "energy",
@@ -445,7 +482,7 @@ func _handle_slot_left_click(slot_id: String) -> void:
 				_suppress_slot_followup_click(slot_id, "attach_tool_target")
 			else:
 				_show_invalid_action_message({
-					"title": "%s 现在不能附着" % cd.name,
+					"title": "%s 现在不能附着" % cd.display_name(),
 					"reason": _gsm.rule_validator.get_attach_tool_unusable_reason(gs, cp, target_slot, _gsm.effect_processor, card),
 					"detail": "宝可梦道具需要附着到有效目标上，且目标通常不能已经有道具。",
 					"kind": "tool",
@@ -530,7 +567,7 @@ func _show_retreat_energy_dialog(cp: int, active: PokemonSlot, retreat_cost: int
 	var energy_options: Array[CardInstance] = active.attached_energy.duplicate()
 	var choice_labels: Array[String] = []
 	for energy: CardInstance in energy_options:
-		var label := energy.card_data.name
+		var label := energy.card_data.display_name()
 		var provided := _gsm.effect_processor.get_energy_colorless_count(energy, _gsm.game_state)
 		if provided > 1:
 			label += " (%d)" % provided
@@ -672,6 +709,7 @@ func _stop_battle_discussion_flash() -> void:
 func _can_accept_live_action() -> bool:
 	return (
 		not _is_review_mode()
+		and not _is_board_modal_overlay_visible()
 		and not _draw_reveal_active
 		and not _ai_llm_waiting
 		and not _is_ai_action_pause_active()
@@ -724,6 +762,7 @@ func _card_foil_owner_index_for_view(card_view: BattleCardView) -> int:
 
 func _refresh_hand() -> void:
 	_trace_portrait_layout_stage("scene.refresh_hand.before_display")
+	_clear_stale_selected_hand_card("refresh_hand")
 	_ensure_battle_display_coordinator()
 	_battle_display_coordinator.call("refresh_hand")
 	_sync_card_foil_effects(_hand_container)
@@ -731,6 +770,34 @@ func _refresh_hand() -> void:
 	_finalize_portrait_layout_constraints()
 	_trace_portrait_layout_stage("scene.refresh_hand.after_finalize")
 	call_deferred("_deferred_finalize_portrait_layout_constraints")
+
+
+func _clear_stale_selected_hand_card(source: String = "") -> bool:
+	if _selected_hand_card == null:
+		return false
+	if _gsm == null or _gsm.game_state == null:
+		return false
+	var selected := _selected_hand_card
+	var players: Array[PlayerState] = _gsm.game_state.players
+	var owner_index := int(selected.owner_index)
+	var still_in_hand := false
+	if owner_index >= 0 and owner_index < players.size():
+		still_in_hand = selected in players[owner_index].hand
+	else:
+		for player: PlayerState in players:
+			if selected in player.hand:
+				still_in_hand = true
+				break
+	if still_in_hand:
+		return false
+	_runtime_log(
+		"selected_hand_card_cleared",
+		"source=%s card=%s %s" % [source, _card_instance_label(selected), _state_snapshot()]
+	)
+	if _detail_hand_action_card == selected:
+		_detail_hand_action_card = null
+	_selected_hand_card = null
+	return true
 
 
 
@@ -1168,7 +1235,7 @@ func _try_play_to_bench(player_index: int, card: CardInstance, _slot_id: String)
 	var bench_reason: String = _gsm.rule_validator.get_play_basic_to_bench_unusable_reason(gs, player_index, card)
 	if bench_reason != "":
 		_show_invalid_action_message({
-			"title": "%s 现在不能放到备战区" % card.card_data.name,
+			"title": "%s 现在不能放到备战区" % card.card_data.display_name(),
 			"reason": bench_reason,
 			"detail": "基础宝可梦只能在主要阶段放到己方备战区，并且备战区需要有空位。",
 			"kind": "pokemon",
@@ -1192,7 +1259,7 @@ func _try_play_to_bench(player_index: int, card: CardInstance, _slot_id: String)
 		_suppress_slot_followup_click(_slot_id, "bench_basic_target", BENCH_PLAY_FOLLOWUP_CLICK_SUPPRESS_MSEC)
 	else:
 		_show_invalid_action_message({
-			"title": "%s 现在不能放到备战区" % card.card_data.name,
+			"title": "%s 现在不能放到备战区" % card.card_data.display_name(),
 			"reason": "无法将这只宝可梦放到备战区。",
 			"detail": "请检查当前阶段、备战区空位和场上效果限制。",
 			"kind": "pokemon",
@@ -1365,6 +1432,7 @@ func _set_handover_panel_visible(visible_state: bool, reason: String) -> void:
 		)
 		return
 	_handover_panel.visible = visible_state
+	_refresh_end_turn_hud_button_state()
 	_runtime_log(
 		"handover_visibility",
 		"visible=%s reason=%s %s" % [str(visible_state), reason, _state_snapshot()]
@@ -1798,9 +1866,15 @@ func _sync_field_swap_snapshot_after_refresh() -> void:
 func _refresh_ui_after_successful_action(check_handover: bool = false, action_player_index: int = -1, action_kind: String = "") -> void:
 	if has_method("_clear_hand_drag_click_suppression"):
 		call("_clear_hand_drag_click_suppression", "successful_action")
-	if has_method("_arm_hand_primary_release_fallback_window"):
-		call("_arm_hand_primary_release_fallback_window", "successful_action")
+	var preserve_modal_release_fallback := false
+	if has_method("_should_preserve_hand_primary_release_fallback_after_successful_action"):
+		preserve_modal_release_fallback = bool(call("_should_preserve_hand_primary_release_fallback_after_successful_action"))
+	elif has_method("_should_arm_hand_primary_release_fallback"):
+		preserve_modal_release_fallback = bool(call("_should_arm_hand_primary_release_fallback"))
+	if not preserve_modal_release_fallback and has_method("_clear_hand_primary_release_fallback_window"):
+		call("_clear_hand_primary_release_fallback_window", "successful_action")
 	_hide_invalid_action_hint()
+	_clear_stale_selected_hand_card("successful_action")
 	_mark_ready_vfx_action_source(action_player_index, action_kind)
 	_refresh_ui()
 	if check_handover:

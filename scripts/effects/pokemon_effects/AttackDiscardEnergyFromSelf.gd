@@ -29,11 +29,26 @@ func execute_attack(
 	var i: int = attacker.attached_energy.size() - 1
 	while i >= 0 and removed < discard_count:
 		var energy: CardInstance = attacker.attached_energy[i]
-		if energy_type == "" or (energy.card_data != null and energy.card_data.energy_provides == energy_type):
+		if _matches_energy_type(energy, state):
 			attacker.attached_energy.remove_at(i)
 			player.discard_pile.append(energy)
+			_record_attack_effect_discarded_attached_energy(attacker, energy, state)
 			removed += 1
 		i -= 1
+
+
+func _matches_energy_type(energy: CardInstance, state: GameState) -> bool:
+	if energy == null or energy.card_data == null:
+		return false
+	if energy_type == "":
+		return true
+	if energy.card_data.energy_provides == energy_type or energy.card_data.energy_type == energy_type:
+		return true
+	var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null) if state != null else null
+	if processor != null and processor.has_method("get_energy_type"):
+		var provided := str(processor.call("get_energy_type", energy, state))
+		return provided == energy_type or provided == "ANY"
+	return false
 
 
 func get_description() -> String:

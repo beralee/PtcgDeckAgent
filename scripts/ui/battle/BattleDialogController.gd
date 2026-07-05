@@ -19,7 +19,31 @@ const TEXT_HUD_OPTION_SIZE := Vector2(760, 74)
 const PORTRAIT_TEXT_HUD_OPTION_HEIGHT := 128.0
 const PORTRAIT_TEXT_HUD_OPTION_HORIZONTAL_INSET := 48.0
 const ACTION_HUD_ENERGY_SUMMARY_HEIGHT := 66.0
+const ACTION_HUD_PREVIEW_CHROME_WIDTH := 14.0
+const ACTION_HUD_PREVIEW_ROW_SEPARATION := 16.0
+const PORTRAIT_ACTION_HUD_MIN_OPTION_WIDTH := 156.0
+const PORTRAIT_ACTION_HUD_MIN_PREVIEW_WIDTH := 96.0
+const PORTRAIT_ACTION_HUD_MAX_PREVIEW_WIDTH_RATIO := 0.40
+const ACTION_HUD_TOUCH_CLICK_MOVE_TOLERANCE := 32.0
+const DIALOG_BOX_VISIBLE_VERTICAL_MARGIN := 12.0
+const DIALOG_SCROLL_MIN_VISIBLE_HEIGHT := 120.0
 const DIALOG_MODAL_ECHO_POSITION_EPSILON := 24.0
+const DIALOG_MODAL_ECHO_SUPPRESS_MSEC := 250
+const LIBRARY_SEARCH_BOARD_MIN_WIDTH := 960.0
+const LIBRARY_SEARCH_BOARD_WIDTH_RATIO := 0.88
+const LIBRARY_SEARCH_BOARD_EXTRA_HEIGHT_RATIO := 0.05
+const LIBRARY_SEARCH_BOARD_EXTRA_HEIGHT_MIN := 28.0
+const LIBRARY_SEARCH_BOARD_EXTRA_HEIGHT_MAX := 56.0
+const LIBRARY_SEARCH_COMMAND_BAR_HEIGHT := 72.0
+const LIBRARY_SEARCH_PORTRAIT_COMMAND_BAR_HEIGHT := 92.0
+const LIBRARY_SEARCH_PORTRAIT_SELECTED_SCALE := 1.0
+const LIBRARY_SEARCH_PORTRAIT_SOURCE_CARD_SCALE := 0.58
+const LIBRARY_SEARCH_PORTRAIT_SOURCE_BAR_MIN_HEIGHT := 118.0
+const LIBRARY_SEARCH_PORTRAIT_EMPTY_SLOT_FONT_SIZE := 32
+const LIBRARY_SEARCH_SOURCE_WIDTH_MIN := 196.0
+const LIBRARY_SEARCH_SOURCE_WIDTH_MAX := 214.0
+const LIBRARY_SEARCH_CANDIDATE_TOUCH_CLICK_MOVE_TOLERANCE := 28.0
+const LIBRARY_SEARCH_CANDIDATE_VERTICAL_CLICK_TOLERANCE := 36.0
 
 
 func _bt(scene: Object, key: String, params: Dictionary = {}) -> String:
@@ -57,6 +81,20 @@ func _dialog_slot_suppression_mode(scene: Object) -> String:
 	return "arm"
 
 
+func _dialog_selection_slot_suppression_mode(scene: Object, sel_items: PackedInt32Array) -> String:
+	if str(scene.get("_pending_choice")) != "pokemon_action":
+		return _dialog_slot_suppression_mode(scene)
+	var dialog_data: Dictionary = scene.get("_dialog_data")
+	var actions: Array = dialog_data.get("actions", [])
+	for selected_index: int in sel_items:
+		if selected_index < 0 or selected_index >= actions.size():
+			continue
+		var action: Variant = actions[selected_index]
+		if action is Dictionary and str((action as Dictionary).get("type", "")) == "retreat":
+			return "arm"
+	return "clear"
+
+
 func _input_event_screen_position(event: InputEvent) -> Vector2:
 	if event is InputEventMouse:
 		var mouse := event as InputEventMouse
@@ -78,11 +116,19 @@ func _input_positions_match(a: Vector2, b: Vector2) -> bool:
 	return a.distance_squared_to(b) <= DIALOG_MODAL_ECHO_POSITION_EPSILON * DIALOG_MODAL_ECHO_POSITION_EPSILON
 
 
+func _dialog_modal_echo_window_active(scene: Object) -> bool:
+	var finished_at := int(scene.get("_modal_input_finished_at_msec"))
+	if finished_at <= 0:
+		return true
+	return Time.get_ticks_msec() <= finished_at + DIALOG_MODAL_ECHO_SUPPRESS_MSEC
+
+
 func _begin_dialog_modal_transition(scene: Object) -> void:
 	var depth := int(scene.get("_dialog_modal_transition_depth")) + 1
 	scene.set("_dialog_modal_transition_depth", depth)
 	scene.set("_dialog_modal_transition_generation", int(scene.get("_modal_input_generation")))
 	scene.set("_dialog_modal_transition_origin_position", scene.get("_modal_input_origin_position"))
+	scene.set("_dialog_modal_transition_origin_source", str(scene.get("_dialog_user_input_source")))
 
 
 func _end_dialog_modal_transition(scene: Object) -> void:
@@ -100,6 +146,7 @@ func _prepare_dialog_action_input_guard(scene: Object) -> void:
 	scene.set("_dialog_generation", next_generation)
 	scene.set("_dialog_user_input_generation", -1)
 	scene.set("_dialog_user_input_position", Vector2(-1.0, -1.0))
+	scene.set("_dialog_user_input_source", "")
 	scene.set("_dialog_confirm_input_generation", -1)
 	scene.set("_dialog_confirm_input_position", Vector2(-1.0, -1.0))
 	scene.set("_dialog_cancel_input_generation", -1)
@@ -114,11 +161,13 @@ func _prepare_dialog_action_input_guard(scene: Object) -> void:
 	)
 	if not requires_fresh_action:
 		scene.set("_dialog_modal_transition_origin_position", Vector2(-1.0, -1.0))
+		scene.set("_dialog_modal_transition_origin_source", "")
 
 
-func _record_dialog_fresh_input(scene: Object, _source: String = "dialog", position: Vector2 = Vector2(-1.0, -1.0)) -> void:
+func _record_dialog_fresh_input(scene: Object, source: String = "dialog", position: Vector2 = Vector2(-1.0, -1.0)) -> void:
 	scene.set("_dialog_user_input_generation", int(scene.get("_dialog_generation")))
 	scene.set("_dialog_user_input_position", position)
+	scene.set("_dialog_user_input_source", source)
 	scene.set("_dialog_echo_action_pending", "")
 	if (
 		not _valid_input_position(position)
@@ -129,6 +178,8 @@ func _record_dialog_fresh_input(scene: Object, _source: String = "dialog", posit
 
 func _is_modal_echo_action_position(scene: Object, position: Vector2) -> bool:
 	if not bool(scene.get("_dialog_requires_fresh_action_input")):
+		return false
+	if not _dialog_modal_echo_window_active(scene):
 		return false
 	if not bool(scene.get("_dialog_same_position_action_locked")):
 		return false
@@ -175,12 +226,14 @@ func on_dialog_action_button_down(scene: Object, action: String) -> void:
 	if (
 		bool(scene.get("_dialog_requires_fresh_action_input"))
 		and bool(scene.get("_dialog_same_position_action_locked"))
+		and _dialog_modal_echo_window_active(scene)
 		and str(scene.get("_dialog_echo_action_pending")) == action
 	):
 		return
 	if (
 		bool(scene.get("_dialog_requires_fresh_action_input"))
 		and bool(scene.get("_dialog_same_position_action_locked"))
+		and _dialog_modal_echo_window_active(scene)
 		and _valid_input_position(scene.get("_dialog_modal_transition_origin_position"))
 		and int(scene.get("_dialog_user_input_generation")) != int(scene.get("_dialog_generation"))
 	):
@@ -204,6 +257,18 @@ func _has_fresh_dialog_action_input(scene: Object, action: String) -> bool:
 		return true
 	if action == "cancel" and int(scene.get("_dialog_cancel_input_generation")) == generation:
 		return true
+	if str(scene.get("_dialog_echo_action_pending")) == action:
+		return false
+	if action == "cancel":
+		return true
+	if not bool(scene.get("_dialog_same_position_action_locked")):
+		if str(scene.get("_dialog_modal_transition_origin_source")) == "dialog_confirm":
+			return bool(scene.get("_dialog_modal_echo_blocked"))
+		return true
+	if bool(scene.get("_dialog_modal_echo_blocked")) and str(scene.get("_dialog_echo_action_pending")) == "":
+		return true
+	if bool(scene.get("_dialog_modal_echo_blocked")) and not _dialog_modal_echo_window_active(scene):
+		return true
 	return false
 
 
@@ -218,6 +283,33 @@ func _consume_dialog_action_if_stale(scene: Object, action: String) -> bool:
 		"generation=%d modal_generation=%d %s" % [
 			int(scene.get("_dialog_generation")),
 			int(scene.get("_modal_input_generation")),
+			scene.call("_dialog_state_snapshot"),
+		]
+	)
+	return true
+
+
+func _consume_direct_dialog_choice_if_stale(scene: Object, source: String, position: Vector2) -> bool:
+	if not bool(scene.get("_dialog_requires_fresh_action_input")):
+		return false
+	if not _dialog_modal_echo_window_active(scene):
+		return false
+	if not bool(scene.get("_dialog_same_position_action_locked")):
+		return false
+	if not _input_positions_match(position, scene.get("_dialog_modal_transition_origin_position")):
+		return false
+	if bool(scene.get("_dialog_modal_echo_blocked")):
+		scene.set("_dialog_same_position_action_locked", false)
+		return false
+	scene.set("_dialog_modal_echo_blocked", true)
+	scene.set("_dialog_echo_action_pending", "")
+	scene.call(
+		"_runtime_log",
+		"dialog_%s_stale_input_blocked" % source,
+		"generation=%d modal_generation=%d position=%s %s" % [
+			int(scene.get("_dialog_generation")),
+			int(scene.get("_modal_input_generation")),
+			str(position),
 			scene.call("_dialog_state_snapshot"),
 		]
 	)
@@ -243,6 +335,9 @@ func _hide_dialog_overlay(scene: Object, source: String) -> void:
 	var dialog_overlay := scene.get("_dialog_overlay") as Panel
 	if dialog_overlay != null:
 		dialog_overlay.visible = false
+	restore_library_search_board(scene)
+	if scene.has_method("_refresh_end_turn_hud_button_state"):
+		scene.call("_refresh_end_turn_hud_button_state")
 
 
 func _replace_int_array(scene: Object, property_name: String, values: Array) -> void:
@@ -459,12 +554,12 @@ func dialog_choice_subtitle(scene: Object, item: Variant, label: String) -> Stri
 		return "HP %d/%d" % [scene.call("_get_display_remaining_hp", slot), scene.call("_get_display_max_hp", slot)]
 	if item is CardInstance:
 		var card: CardInstance = item
-		if label != "" and label != card.card_data.name:
+		if label != "" and label != card.card_data.name and label != card.card_data.display_name():
 			return label
 		return str(scene.call("_hand_card_subtext", card.card_data))
 	if item is CardData:
 		var data: CardData = item
-		if label != "" and label != data.name:
+		if label != "" and label != data.name and label != data.display_name():
 			return label
 		return str(scene.call("_hand_card_subtext", data))
 	return label
@@ -474,12 +569,12 @@ func selection_label_from_item(item: Variant, fallback: String = "") -> String:
 	if fallback.strip_edges() != "":
 		return fallback.strip_edges()
 	if item is PokemonSlot:
-		return (item as PokemonSlot).get_pokemon_name()
+		return _slot_display_name(item as PokemonSlot)
 	if item is CardInstance:
 		var card: CardInstance = item
-		return card.card_data.name if card.card_data != null else ""
+		return card.card_data.display_name() if card.card_data != null else ""
 	if item is CardData:
-		return (item as CardData).name
+		return (item as CardData).display_name()
 	if item is Dictionary:
 		var entry: Dictionary = item
 		for key: String in ["pokemon_name", "card_name", "name", "title"]:
@@ -487,6 +582,15 @@ func selection_label_from_item(item: Variant, fallback: String = "") -> String:
 			if text != "":
 				return text
 	return str(item).strip_edges()
+
+
+func _slot_display_name(slot: PokemonSlot) -> String:
+	if slot == null:
+		return ""
+	var data := slot.get_card_data()
+	if data != null:
+		return data.display_name()
+	return slot.get_pokemon_name()
 
 
 func dialog_label_at(labels: Array, index: int) -> String:
@@ -529,10 +633,10 @@ func selected_assignment_labels(assignments: Array[Dictionary]) -> Array[String]
 func setup_dialog_card_view(scene: Object, card_view: BattleCardView, item: Variant, label: String) -> void:
 	if item is CardInstance:
 		card_view.setup_from_instance(item, BattleCardView.MODE_CHOICE)
-		card_view.set_info(item.card_data.name, dialog_choice_subtitle(scene, item, label))
+		card_view.set_info(item.card_data.display_name(), dialog_choice_subtitle(scene, item, label))
 	elif item is CardData:
 		card_view.setup_from_card_data(item, BattleCardView.MODE_CHOICE)
-		card_view.set_info(item.name, dialog_choice_subtitle(scene, item, label))
+		card_view.set_info(item.display_name(), dialog_choice_subtitle(scene, item, label))
 	elif item is PokemonSlot:
 		var slot: PokemonSlot = item
 		card_view.setup_from_card_data(slot.get_card_data(), scene.call("_battle_card_mode_for_slot", slot))
@@ -561,6 +665,82 @@ func dialog_should_use_card_mode(items: Array, extra_data: Dictionary) -> bool:
 	return not card_items.is_empty()
 
 
+func dialog_should_use_library_search_board(scene: Object, _items: Array, extra_data: Dictionary) -> bool:
+	var layout_mode := _library_search_layout_mode(scene)
+	return str(extra_data.get("visible_scope", "")) == "own_full_deck" \
+		and str(extra_data.get("presentation", "auto")) == "cards" \
+		and str(extra_data.get("ui_mode", "")) != "card_assignment" \
+		and (layout_mode == "landscape" or layout_mode == "portrait")
+
+
+func _library_search_layout_mode(scene: Object) -> String:
+	var layout_mode := str(scene.get("_active_battle_layout_mode"))
+	if layout_mode != "":
+		return layout_mode
+	if scene.has_method("_is_portrait_battle_layout_active") and bool(scene.call("_is_portrait_battle_layout_active")):
+		return "portrait"
+	return ""
+
+
+func _library_search_is_portrait(scene: Object) -> bool:
+	return _library_search_layout_mode(scene) == "portrait"
+
+
+func restore_library_search_board(scene: Object) -> void:
+	_restore_dialog_buttons_parent(scene)
+	var board := scene.get("_dialog_library_search_board") as Control
+	if board != null:
+		board.visible = false
+	scene.set("_dialog_library_search_board_mode", false)
+
+
+func _dialog_buttons_row(scene: Object) -> HBoxContainer:
+	var dialog_confirm := scene.get("_dialog_confirm") as Button
+	if dialog_confirm == null:
+		return null
+	return dialog_confirm.get_parent() as HBoxContainer
+
+
+func _restore_dialog_buttons_parent(scene: Object) -> void:
+	var buttons_row := _dialog_buttons_row(scene)
+	if buttons_row == null:
+		return
+	var original_parent := scene.get("_dialog_buttons_original_parent") as Node
+	var original_index := int(scene.get("_dialog_buttons_original_index"))
+	if original_parent != null and is_instance_valid(original_parent) and buttons_row.get_parent() != original_parent:
+		var current_parent := buttons_row.get_parent()
+		if current_parent != null:
+			current_parent.remove_child(buttons_row)
+		buttons_row.owner = null
+		original_parent.add_child(buttons_row)
+		original_parent.move_child(buttons_row, clampi(original_index, 0, original_parent.get_child_count() - 1))
+		var original_owner: Variant = buttons_row.get_meta("_library_search_original_owner", null)
+		if original_owner is Node and is_instance_valid(original_owner) and (original_owner as Node).is_ancestor_of(buttons_row):
+			buttons_row.owner = original_owner
+		if buttons_row.has_meta("_library_search_original_owner"):
+			buttons_row.remove_meta("_library_search_original_owner")
+	scene.set("_dialog_buttons_original_parent", null)
+	scene.set("_dialog_buttons_original_index", -1)
+
+
+func _move_dialog_buttons_to_instruction_bar(scene: Object, target: HBoxContainer) -> void:
+	var buttons_row := _dialog_buttons_row(scene)
+	if buttons_row == null or target == null or buttons_row.get_parent() == target:
+		return
+	if scene.get("_dialog_buttons_original_parent") == null:
+		scene.set("_dialog_buttons_original_parent", buttons_row.get_parent())
+		scene.set("_dialog_buttons_original_index", buttons_row.get_index())
+		buttons_row.set_meta("_library_search_original_owner", buttons_row.owner)
+	var current_parent := buttons_row.get_parent()
+	if current_parent != null:
+		current_parent.remove_child(buttons_row)
+	buttons_row.owner = null
+	target.add_child(buttons_row)
+	buttons_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	buttons_row.size_flags_horizontal = Control.SIZE_SHRINK_END
+	buttons_row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+
+
 func reset_dialog_assignment_state(scene: Object) -> void:
 	scene.set("_dialog_assignment_mode", false)
 	scene.set("_dialog_assignment_selected_source_index", -1)
@@ -586,6 +766,7 @@ func show_dialog(scene: Object, title: String, items: Array, extra_data: Diction
 		dialog_confirm.button_pressed = false
 	if dialog_cancel != null:
 		dialog_cancel.button_pressed = false
+	restore_library_search_board(scene)
 	scene.set("_dialog_items_data", items)
 	scene.set("_dialog_data", extra_data)
 	_replace_int_array(scene, "_dialog_multi_selected_indices", [])
@@ -595,14 +776,19 @@ func show_dialog(scene: Object, title: String, items: Array, extra_data: Diction
 	var presentation := str(extra_data.get("presentation", "auto"))
 	var assignment_mode := str(extra_data.get("ui_mode", "")) == "card_assignment"
 	var action_hud_mode := presentation == "action_hud"
+	var library_search_board_mode := false if assignment_mode or action_hud_mode else dialog_should_use_library_search_board(scene, items, extra_data)
 	scene.set("_dialog_assignment_mode", assignment_mode)
-	var card_mode := false if assignment_mode or action_hud_mode else dialog_should_use_card_mode(items, extra_data)
+	scene.set("_dialog_library_search_board_mode", library_search_board_mode)
+	dialog_title.visible = not library_search_board_mode
+	var card_mode := true if library_search_board_mode else (false if assignment_mode or action_hud_mode else dialog_should_use_card_mode(items, extra_data))
 	scene.set("_dialog_card_mode", card_mode)
 
 	if assignment_mode:
 		show_assignment_dialog(scene, extra_data)
 	elif action_hud_mode:
 		show_action_hud_dialog(scene, items, extra_data)
+	elif library_search_board_mode:
+		show_library_search_board_dialog(scene, items, extra_data)
 	elif card_mode:
 		show_card_dialog(scene, items, extra_data)
 	else:
@@ -610,12 +796,16 @@ func show_dialog(scene: Object, title: String, items: Array, extra_data: Diction
 
 	apply_dialog_surface_style(scene, bool(extra_data.get("transparent_battlefield_dialog", false)) or not (extra_data.get("card_groups", []) as Array).is_empty())
 	style_dialog_footer_buttons(scene)
+	if scene.has_method("_sync_portrait_modal_overlay_rects"):
+		scene.call("_sync_portrait_modal_overlay_rects")
 	if scene.has_method("_apply_portrait_popup_text_metrics"):
 		scene.call("_apply_portrait_popup_text_metrics")
 	dialog_overlay.modulate = Color(1, 1, 1, 0)
 	dialog_overlay.visible = true
 	if scene.has_method("_raise_dialog_overlay_for_input"):
 		scene.call("_raise_dialog_overlay_for_input")
+	if scene.has_method("_refresh_end_turn_hud_button_state"):
+		scene.call("_refresh_end_turn_hud_button_state")
 	dialog_cancel.visible = bool(extra_data.get("allow_cancel", true))
 	update_dialog_confirm_state(scene)
 	compact_dialog_box_to_content(scene)
@@ -625,7 +815,7 @@ func show_dialog(scene: Object, title: String, items: Array, extra_data: Diction
 		"show_dialog",
 		"title=%s mode=%s items=%d %s" % [
 			title,
-			"assignment" if assignment_mode else ("action_hud" if action_hud_mode else ("cards" if card_mode else "list")),
+			"assignment" if assignment_mode else ("action_hud" if action_hud_mode else ("library_search_board" if library_search_board_mode else ("cards" if card_mode else "list"))),
 			items.size(),
 			scene.call("_dialog_state_snapshot"),
 		]
@@ -699,10 +889,25 @@ func compact_dialog_box_to_content(scene: Object) -> void:
 		return
 	dialog_box.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	dialog_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var parent := dialog_box.get_parent()
+	var parent_control := parent as Control
+	_normalize_dialog_center_rect(parent_control)
+	_apply_dialog_box_size_and_position(scene, dialog_box, parent_control)
+	if parent_control != null:
+		_queue_dialog_box_center_lock(scene, dialog_box, parent_control)
+	if parent is Container:
+		(parent as Container).queue_sort()
+
+
+func _apply_dialog_box_size_and_position(scene: Object, dialog_box: Control, parent_control: Control) -> void:
+	if dialog_box == null:
+		return
+	_normalize_dialog_center_rect(parent_control)
 	compact_visible_dialog_scroll(scene, "_dialog_card_scroll")
 	compact_visible_dialog_scroll(scene, "_dialog_assignment_source_scroll")
 	compact_visible_dialog_scroll(scene, "_dialog_assignment_target_scroll")
 	var target_height := stable_dialog_box_content_height(scene, dialog_box)
+	target_height = _clamp_dialog_box_height_to_parent(scene, dialog_box, parent_control, target_height)
 	var minimum_size := dialog_box.custom_minimum_size
 	minimum_size.y = target_height
 	dialog_box.custom_minimum_size = minimum_size
@@ -715,9 +920,92 @@ func compact_dialog_box_to_content(scene: Object) -> void:
 		if panel_style != null:
 			panel_minimum_y = panel_style.get_minimum_size().y
 		dialog_vbox.size = Vector2(dialog_vbox.size.x, maxf(0.0, target_height - panel_minimum_y))
-	var parent := dialog_box.get_parent()
+	if parent_control != null:
+		_recenter_dialog_box_in_parent(dialog_box, parent_control)
+
+
+func _clamp_dialog_box_height_to_parent(scene: Object, dialog_box: Control, parent: Control, target_height: float) -> float:
+	var max_height := _dialog_box_max_visible_height(parent)
+	if max_height <= 0.0 or target_height <= max_height:
+		return target_height
+	var overflow := target_height - max_height
+	for property_name: String in ["_dialog_card_scroll", "_dialog_assignment_source_scroll", "_dialog_assignment_target_scroll"]:
+		overflow = _shrink_visible_dialog_scroll(scene, property_name, overflow)
+		if overflow <= 0.1:
+			break
+	var adjusted_height := stable_dialog_box_content_height(scene, dialog_box)
+	return minf(adjusted_height, max_height)
+
+
+func _dialog_box_max_visible_height(parent: Control) -> float:
+	if parent == null or parent.size.y <= 0.0:
+		return 0.0
+	return maxf(parent.size.y - DIALOG_BOX_VISIBLE_VERTICAL_MARGIN * 2.0, 1.0)
+
+
+func _shrink_visible_dialog_scroll(scene: Object, property_name: String, overflow: float) -> float:
+	if overflow <= 0.0:
+		return 0.0
+	var scroll := scene.get(property_name) as Control
+	if scroll == null or not scroll.visible:
+		return overflow
+	var minimum_size := scroll.custom_minimum_size
+	if minimum_size.y <= DIALOG_SCROLL_MIN_VISIBLE_HEIGHT:
+		return overflow
+	var reduction := minf(overflow, minimum_size.y - DIALOG_SCROLL_MIN_VISIBLE_HEIGHT)
+	minimum_size.y -= reduction
+	scroll.custom_minimum_size = minimum_size
+	scroll.size = Vector2(scroll.size.x, minimum_size.y)
+	scroll.update_minimum_size()
+	return overflow - reduction
+
+
+func _queue_dialog_box_center_lock(scene: Object, dialog_box: Control, parent: Control) -> void:
+	if dialog_box == null or parent == null:
+		return
+	var lock_id := int(dialog_box.get_meta("dialog_center_lock_id", 0)) + 1
+	dialog_box.set_meta("dialog_center_lock_id", lock_id)
+	var lock_callable := func() -> void:
+		if not is_instance_valid(dialog_box) or not is_instance_valid(parent):
+			return
+		if int(dialog_box.get_meta("dialog_center_lock_id", -1)) != lock_id:
+			return
+		_apply_dialog_box_size_and_position(scene, dialog_box, parent)
+	if parent.has_signal("sort_children"):
+		parent.connect("sort_children", lock_callable, CONNECT_ONE_SHOT)
+	if dialog_box.is_inside_tree():
+		var tree := dialog_box.get_tree()
+		tree.process_frame.connect(lock_callable, CONNECT_ONE_SHOT)
+
+
+func _normalize_dialog_center_rect(parent: Control) -> void:
+	if parent == null or str(parent.name) != "DialogCenter":
+		return
+	var overlay := parent.get_parent() as Control
+	if overlay == null or overlay.size.x <= 0.0 or overlay.size.y <= 0.0:
+		return
+	parent.set_anchors_preset(Control.PRESET_TOP_LEFT, false)
+	parent.position = Vector2.ZERO
+	parent.size = overlay.size
 	if parent is Container:
 		(parent as Container).queue_sort()
+
+
+func _recenter_dialog_box_in_parent(dialog_box: Control, parent: Control) -> void:
+	if dialog_box == null or parent == null:
+		return
+	var box_size := dialog_box.size
+	var minimum_size := dialog_box.custom_minimum_size
+	if box_size.x <= 0.0:
+		box_size.x = minimum_size.x
+	if box_size.y <= 0.0:
+		box_size.y = minimum_size.y
+	if parent.size.x <= 0.0 or parent.size.y <= 0.0:
+		return
+	dialog_box.position = Vector2(
+		maxf(roundf((parent.size.x - box_size.x) * 0.5), 0.0),
+		maxf(roundf((parent.size.y - box_size.y) * 0.5), 0.0)
+	)
 
 
 func reveal_dialog_after_layout(scene: Object, dialog_overlay: Control) -> void:
@@ -879,11 +1167,21 @@ func style_dialog_footer_buttons(scene: Object) -> void:
 	var buttons_row := dialog_confirm.get_parent() as HBoxContainer if dialog_confirm != null else null
 	if buttons_row != null:
 		buttons_row.alignment = BoxContainer.ALIGNMENT_CENTER
+		buttons_row.size_flags_horizontal = Control.SIZE_SHRINK_END if _dialog_buttons_are_in_instruction_bar(scene, buttons_row) else Control.SIZE_EXPAND_FILL
+		buttons_row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		buttons_row.add_theme_constant_override("separation", 12)
 	if dialog_cancel != null:
 		style_dialog_button(dialog_cancel, "secondary")
 	if dialog_confirm != null:
 		style_dialog_button(dialog_confirm, "primary")
+
+
+func _dialog_buttons_are_in_instruction_bar(scene: Object, buttons_row: HBoxContainer) -> bool:
+	var dialog_vbox := scene.get("_dialog_vbox") as VBoxContainer
+	if dialog_vbox != null and buttons_row.get_parent() == dialog_vbox:
+		return false
+	var parent := buttons_row.get_parent()
+	return parent != null and parent.name == "LibrarySearchButtonSlot"
 
 
 func style_dialog_button(button: Button, role: String = "primary") -> void:
@@ -933,11 +1231,22 @@ func _build_text_hud_option(scene: Object, label_text: String, option_index: int
 	panel.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	panel.set_meta("dialog_text_choice_index", option_index)
 	panel.gui_input.connect(func(event: InputEvent) -> void:
+		var activated := false
 		if event is InputEventMouseButton:
 			var mouse_event := event as InputEventMouseButton
 			if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
-				on_text_hud_option_pressed(scene, option_index)
+				activated = true
+		elif event is InputEventScreenTouch:
+			var touch_event := event as InputEventScreenTouch
+			if touch_event.pressed:
+				activated = true
+		if activated:
+			var origin_position := _input_event_screen_position(event)
+			if _consume_direct_dialog_choice_if_stale(scene, "text_hud_option", origin_position):
 				panel.accept_event()
+				return
+			on_text_hud_option_pressed(scene, option_index, origin_position)
+			panel.accept_event()
 	)
 
 	var margin := MarginContainer.new()
@@ -979,14 +1288,14 @@ func _build_text_hud_option(scene: Object, label_text: String, option_index: int
 	return panel
 
 
-func on_text_hud_option_pressed(scene: Object, option_index: int) -> void:
-	_record_dialog_fresh_input(scene, "text_hud_option")
+func on_text_hud_option_pressed(scene: Object, option_index: int, origin_position: Vector2 = Vector2(-1.0, -1.0)) -> void:
+	_record_dialog_fresh_input(scene, "text_hud_option", origin_position)
 	var dialog_data: Dictionary = scene.get("_dialog_data")
 	var min_select := int(dialog_data.get("min_select", 1))
 	var max_select := int(dialog_data.get("max_select", 1))
 	var is_multi := max_select > 1 or min_select > 1
 	if not is_multi:
-		confirm_dialog_selection(scene, PackedInt32Array([option_index]))
+		confirm_dialog_selection(scene, PackedInt32Array([option_index]), origin_position)
 		return
 	var selected_indices: Array = scene.get("_dialog_multi_selected_indices")
 	if option_index in selected_indices:
@@ -1019,6 +1328,1229 @@ func _sync_text_hud_selection_recursive(node: Node, selected_indices: Array) -> 
 func style_text_hud_option(panel: PanelContainer, selected: bool) -> void:
 	var accent := Color(1.0, 0.62, 0.28, 1.0) if selected else Color(0.36, 0.86, 1.0, 1.0)
 	panel.add_theme_stylebox_override("panel", _action_hud_panel_style(accent, true))
+
+
+func show_library_search_board_dialog(scene: Object, items: Array, extra_data: Dictionary) -> void:
+	var dialog_list: ItemList = scene.get("_dialog_list")
+	var dialog_card_scroll: ScrollContainer = scene.get("_dialog_card_scroll")
+	var dialog_assignment_panel: VBoxContainer = scene.get("_dialog_assignment_panel")
+	var dialog_utility_row: HBoxContainer = scene.get("_dialog_utility_row")
+	var dialog_confirm: Button = scene.get("_dialog_confirm")
+	var dialog_status_lbl: Label = scene.get("_dialog_status_lbl")
+
+	_cancel_card_gallery_drag_capture(scene, "show_library_search_board_dialog")
+	if scene.has_method("_clear_hand_drag_click_suppression"):
+		scene.call("_clear_hand_drag_click_suppression", "show_library_search_board_dialog")
+
+	dialog_list.visible = false
+	dialog_card_scroll.visible = false
+	dialog_assignment_panel.visible = false
+	dialog_utility_row.visible = false
+	dialog_status_lbl.visible = false
+	scene.call("_clear_container_children", dialog_utility_row)
+
+	var board_nodes := ensure_library_search_board(scene)
+	var board := board_nodes.get("board") as VBoxContainer
+	var library_scroll := board_nodes.get("library_scroll") as ScrollContainer
+	var library_row := board_nodes.get("library_row") as HBoxContainer
+	var selected_scroll := board_nodes.get("selected_scroll") as ScrollContainer
+	var selected_row := board_nodes.get("selected_row") as HBoxContainer
+	var instruction_label := board_nodes.get("instruction_label") as Label
+	var button_slot := board_nodes.get("button_slot") as HBoxContainer
+	var portrait_source_panel := board_nodes.get("portrait_source_panel") as Control
+	var portrait_source_holder := board_nodes.get("portrait_source_holder") as Control
+	var portrait_source_caption := board_nodes.get("portrait_source_caption") as Label
+	var source_panel := board_nodes.get("source_panel") as Control
+	var source_holder := board_nodes.get("source_holder") as Control
+	var source_caption := board_nodes.get("source_caption") as Label
+	if board == null or library_scroll == null or library_row == null or selected_scroll == null or selected_row == null:
+		show_card_dialog(scene, items, extra_data)
+		return
+
+	var portrait_layout := _library_search_is_portrait(scene)
+	_apply_library_search_board_layout(scene, board_nodes)
+	board.visible = true
+	board.custom_minimum_size = Vector2(0, _library_search_board_height(scene))
+	library_scroll.custom_minimum_size = Vector2(0, _library_search_library_scroll_height(scene))
+	selected_scroll.custom_minimum_size = Vector2(0, _library_search_selected_scroll_height(scene))
+	if portrait_source_panel != null:
+		portrait_source_panel.custom_minimum_size = Vector2(0, _library_search_portrait_source_bar_height(scene))
+	if source_panel != null and not portrait_layout:
+		source_panel.custom_minimum_size = Vector2(_library_search_source_width(scene), 0)
+	library_scroll.scroll_horizontal = 0
+	library_scroll.scroll_vertical = 0
+	selected_scroll.scroll_horizontal = 0
+	selected_scroll.scroll_vertical = 0
+	library_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	library_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	selected_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	selected_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	HudThemeScript.style_scroll_container(library_scroll, _dialog_scroll_profile(scene))
+	HudThemeScript.style_scroll_container(selected_scroll, _dialog_scroll_profile(scene))
+	if scene.has_method("_set_card_gallery_drag_scroll_active"):
+		scene.call("_set_card_gallery_drag_scroll_active", library_scroll, true)
+		scene.call("_set_card_gallery_drag_scroll_active", selected_scroll, true)
+	if scene.has_method("_configure_card_gallery_drag_scroll"):
+		scene.call("_configure_card_gallery_drag_scroll", library_scroll, library_row, "library_search_candidates")
+		scene.call("_configure_card_gallery_drag_scroll", selected_scroll, selected_row, "library_search_selected")
+	_connect_library_search_scroll_tap_handler(scene, library_scroll, library_row)
+
+	_populate_library_search_candidates(scene, library_scroll, library_row)
+	_populate_library_search_source(scene, source_holder, source_caption)
+	_populate_library_search_source(scene, portrait_source_holder, portrait_source_caption, _library_search_portrait_source_card_size(scene))
+	if portrait_layout:
+		_restore_dialog_buttons_parent(scene)
+	else:
+		_move_dialog_buttons_to_instruction_bar(scene, button_slot)
+	dialog_confirm.visible = true
+	if instruction_label != null:
+		instruction_label.text = _library_search_instruction_text(scene)
+	sync_library_search_board_selection(scene)
+	update_dialog_confirm_state(scene)
+
+
+func _apply_library_search_board_layout(scene: Object, board_nodes: Dictionary) -> void:
+	var board := board_nodes.get("board") as VBoxContainer
+	var source_panel := board_nodes.get("source_panel") as Control
+	var button_slot := board_nodes.get("button_slot") as HBoxContainer
+	var instruction_label := board_nodes.get("instruction_label") as Label
+	var portrait_source_panel := board_nodes.get("portrait_source_panel") as Control
+	var portrait_source_caption := board_nodes.get("portrait_source_caption") as Label
+	var portrait_layout := _library_search_is_portrait(scene)
+	var portrait_has_source := portrait_layout and _library_search_has_source(scene)
+	if board == null:
+		return
+	board.set_meta("library_search_portrait_layout", portrait_layout)
+	board.add_theme_constant_override("separation", 10 if portrait_layout else 8)
+
+	var main_row := board.find_child("LibrarySearchMainRow", true, false) as HBoxContainer
+	if main_row != null:
+		main_row.add_theme_constant_override("separation", 0 if portrait_layout else 14)
+	var left_column := board.find_child("LibrarySearchChoiceColumn", true, false) as VBoxContainer
+	if left_column != null:
+		left_column.add_theme_constant_override("separation", 10 if portrait_layout else 8)
+	var library_row := board_nodes.get("library_row") as HBoxContainer
+	if library_row != null:
+		library_row.add_theme_constant_override("separation", 10 if portrait_layout else 12)
+	var selected_row := board_nodes.get("selected_row") as HBoxContainer
+	if selected_row != null:
+		selected_row.add_theme_constant_override("separation", 10 if portrait_layout else 12)
+	var instruction_panel := board.find_child("LibrarySearchInstructionBar", true, false) as Control
+	if instruction_panel != null:
+		instruction_panel.custom_minimum_size = Vector2(
+			0,
+			LIBRARY_SEARCH_PORTRAIT_COMMAND_BAR_HEIGHT if portrait_layout else LIBRARY_SEARCH_COMMAND_BAR_HEIGHT
+		)
+	var instruction_row := board.find_child("LibrarySearchInstructionContent", true, false) as HBoxContainer
+	if instruction_row != null:
+		instruction_row.add_theme_constant_override("separation", 0 if portrait_layout else 16)
+	if instruction_label != null:
+		instruction_label.add_theme_font_size_override("font_size", 27 if portrait_layout else 22)
+		instruction_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	if portrait_source_panel != null:
+		portrait_source_panel.visible = portrait_has_source
+		portrait_source_panel.custom_minimum_size = Vector2(0, _library_search_portrait_source_bar_height(scene) if portrait_has_source else 0)
+		portrait_source_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		portrait_source_panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	if portrait_source_caption != null:
+		portrait_source_caption.add_theme_font_size_override("font_size", 16)
+	if button_slot != null:
+		button_slot.visible = not portrait_layout
+		button_slot.size_flags_horizontal = Control.SIZE_SHRINK_END
+	if source_panel != null:
+		source_panel.visible = not portrait_layout
+		source_panel.custom_minimum_size = Vector2.ZERO if portrait_layout else Vector2(_library_search_source_width(scene), 0)
+		source_panel.size_flags_horizontal = Control.SIZE_SHRINK_END
+		source_panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	if portrait_layout:
+		_restore_dialog_buttons_parent(scene)
+		var buttons_row := _dialog_buttons_row(scene)
+		if buttons_row != null:
+			buttons_row.alignment = BoxContainer.ALIGNMENT_CENTER
+			buttons_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			buttons_row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			buttons_row.add_theme_constant_override("separation", 12)
+
+
+func ensure_library_search_board(scene: Object) -> Dictionary:
+	var board := scene.get("_dialog_library_search_board") as VBoxContainer
+	if board != null and is_instance_valid(board):
+		return _library_search_board_nodes(board)
+	var dialog_vbox := scene.get("_dialog_vbox") as VBoxContainer
+	if dialog_vbox == null:
+		return {}
+	board = VBoxContainer.new()
+	board.name = "LibrarySearchBoard"
+	board.visible = false
+	board.mouse_filter = Control.MOUSE_FILTER_STOP
+	board.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	board.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	board.add_theme_constant_override("separation", 8)
+	scene.set("_dialog_library_search_board", board)
+
+	var main_row := HBoxContainer.new()
+	main_row.name = "LibrarySearchMainRow"
+	main_row.mouse_filter = Control.MOUSE_FILTER_STOP
+	main_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	main_row.add_theme_constant_override("separation", 14)
+	board.add_child(main_row)
+
+	var left_column := VBoxContainer.new()
+	left_column.name = "LibrarySearchChoiceColumn"
+	left_column.mouse_filter = Control.MOUSE_FILTER_STOP
+	left_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	left_column.add_theme_constant_override("separation", 8)
+	main_row.add_child(left_column)
+
+	var portrait_source_panel := PanelContainer.new()
+	portrait_source_panel.name = "LibrarySearchPortraitSourcePanel"
+	portrait_source_panel.visible = false
+	portrait_source_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	portrait_source_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	portrait_source_panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	portrait_source_panel.custom_minimum_size = Vector2(0, LIBRARY_SEARCH_PORTRAIT_SOURCE_BAR_MIN_HEIGHT)
+	portrait_source_panel.add_theme_stylebox_override("panel", _library_search_source_panel_style())
+	left_column.add_child(portrait_source_panel)
+
+	var portrait_source_margin := MarginContainer.new()
+	portrait_source_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	portrait_source_margin.add_theme_constant_override("margin_left", 12)
+	portrait_source_margin.add_theme_constant_override("margin_right", 12)
+	portrait_source_margin.add_theme_constant_override("margin_top", 8)
+	portrait_source_margin.add_theme_constant_override("margin_bottom", 8)
+	portrait_source_panel.add_child(portrait_source_margin)
+
+	var portrait_source_row := HBoxContainer.new()
+	portrait_source_row.name = "LibrarySearchPortraitSourceContent"
+	portrait_source_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	portrait_source_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	portrait_source_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	portrait_source_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	portrait_source_row.add_theme_constant_override("separation", 14)
+	portrait_source_margin.add_child(portrait_source_row)
+
+	var portrait_source_holder := VBoxContainer.new()
+	portrait_source_holder.name = "LibrarySearchPortraitSourceCardHolder"
+	portrait_source_holder.mouse_filter = Control.MOUSE_FILTER_STOP
+	portrait_source_holder.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	portrait_source_holder.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	portrait_source_holder.alignment = BoxContainer.ALIGNMENT_CENTER
+	portrait_source_row.add_child(portrait_source_holder)
+
+	var portrait_source_text := VBoxContainer.new()
+	portrait_source_text.name = "LibrarySearchPortraitSourceText"
+	portrait_source_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	portrait_source_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	portrait_source_text.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	portrait_source_text.alignment = BoxContainer.ALIGNMENT_CENTER
+	portrait_source_text.add_theme_constant_override("separation", 4)
+	portrait_source_row.add_child(portrait_source_text)
+
+	var portrait_source_title := Label.new()
+	portrait_source_title.name = "LibrarySearchPortraitSourceTitle"
+	portrait_source_title.text = "当前使用"
+	portrait_source_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	portrait_source_title.add_theme_font_size_override("font_size", 18)
+	portrait_source_title.add_theme_color_override("font_color", Color(0.92, 0.98, 1.0, 1.0))
+	portrait_source_text.add_child(portrait_source_title)
+
+	var portrait_source_caption := Label.new()
+	portrait_source_caption.name = "LibrarySearchPortraitSourceCaption"
+	portrait_source_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	portrait_source_caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	portrait_source_caption.add_theme_font_size_override("font_size", 16)
+	portrait_source_caption.add_theme_color_override("font_color", Color(0.72, 0.82, 0.90, 1.0))
+	portrait_source_text.add_child(portrait_source_caption)
+
+	var library_scroll := ScrollContainer.new()
+	library_scroll.name = "LibrarySearchLibraryScroll"
+	library_scroll.mouse_filter = Control.MOUSE_FILTER_STOP
+	library_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	library_scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	library_scroll.add_theme_stylebox_override("panel", _library_search_track_style())
+	left_column.add_child(library_scroll)
+
+	var library_row := HBoxContainer.new()
+	library_row.name = "LibraryCardRow"
+	library_row.mouse_filter = Control.MOUSE_FILTER_STOP
+	library_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	library_row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	library_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	library_row.add_theme_constant_override("separation", 12)
+	library_scroll.add_child(library_row)
+
+	var instruction_panel := PanelContainer.new()
+	instruction_panel.name = "LibrarySearchInstructionBar"
+	instruction_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	instruction_panel.custom_minimum_size = Vector2(0, LIBRARY_SEARCH_COMMAND_BAR_HEIGHT)
+	instruction_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	instruction_panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	instruction_panel.add_theme_stylebox_override("panel", _library_search_instruction_style())
+	left_column.add_child(instruction_panel)
+
+	var instruction_margin := MarginContainer.new()
+	instruction_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	instruction_margin.add_theme_constant_override("margin_left", 18)
+	instruction_margin.add_theme_constant_override("margin_right", 18)
+	instruction_margin.add_theme_constant_override("margin_top", 8)
+	instruction_margin.add_theme_constant_override("margin_bottom", 8)
+	instruction_panel.add_child(instruction_margin)
+
+	var instruction_row := HBoxContainer.new()
+	instruction_row.name = "LibrarySearchInstructionContent"
+	instruction_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	instruction_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	instruction_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	instruction_row.add_theme_constant_override("separation", 16)
+	instruction_margin.add_child(instruction_row)
+
+	var instruction_label := Label.new()
+	instruction_label.name = "LibrarySearchInstructionLabel"
+	instruction_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	instruction_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	instruction_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	instruction_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	instruction_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	instruction_label.add_theme_font_size_override("font_size", 22)
+	instruction_label.add_theme_color_override("font_color", Color(0.96, 0.99, 1.0, 1.0))
+	instruction_row.add_child(instruction_label)
+
+	var button_slot := HBoxContainer.new()
+	button_slot.name = "LibrarySearchButtonSlot"
+	button_slot.mouse_filter = Control.MOUSE_FILTER_STOP
+	button_slot.size_flags_horizontal = Control.SIZE_SHRINK_END
+	button_slot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	button_slot.alignment = BoxContainer.ALIGNMENT_CENTER
+	instruction_row.add_child(button_slot)
+
+	var selected_scroll := ScrollContainer.new()
+	selected_scroll.name = "LibrarySearchSelectedScroll"
+	selected_scroll.mouse_filter = Control.MOUSE_FILTER_STOP
+	selected_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	selected_scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	selected_scroll.add_theme_stylebox_override("panel", _library_search_track_style())
+	left_column.add_child(selected_scroll)
+
+	var selected_row := HBoxContainer.new()
+	selected_row.name = "LibrarySelectedSlotRow"
+	selected_row.mouse_filter = Control.MOUSE_FILTER_STOP
+	selected_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	selected_row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	selected_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	selected_row.add_theme_constant_override("separation", 12)
+	selected_scroll.add_child(selected_row)
+
+	var source_panel := PanelContainer.new()
+	source_panel.name = "LibrarySearchSourcePanel"
+	source_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	source_panel.custom_minimum_size = Vector2(_library_search_source_width(scene), 0)
+	source_panel.size_flags_horizontal = Control.SIZE_SHRINK_END
+	source_panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	source_panel.add_theme_stylebox_override("panel", _library_search_source_panel_style())
+	main_row.add_child(source_panel)
+
+	var source_margin := MarginContainer.new()
+	source_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	source_margin.add_theme_constant_override("margin_left", 10)
+	source_margin.add_theme_constant_override("margin_right", 10)
+	source_margin.add_theme_constant_override("margin_top", 10)
+	source_margin.add_theme_constant_override("margin_bottom", 10)
+	source_panel.add_child(source_margin)
+
+	var source_box := VBoxContainer.new()
+	source_box.name = "LibrarySearchSourceBox"
+	source_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	source_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	source_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	source_box.alignment = BoxContainer.ALIGNMENT_CENTER
+	source_box.add_theme_constant_override("separation", 8)
+	source_margin.add_child(source_box)
+
+	var source_title := Label.new()
+	source_title.name = "LibrarySearchSourceTitle"
+	source_title.text = "当前使用"
+	source_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	source_title.add_theme_font_size_override("font_size", 16)
+	source_title.add_theme_color_override("font_color", Color(0.86, 0.94, 1.0, 1.0))
+	source_box.add_child(source_title)
+
+	var source_holder := VBoxContainer.new()
+	source_holder.name = "LibrarySearchSourceCardHolder"
+	source_holder.mouse_filter = Control.MOUSE_FILTER_STOP
+	source_holder.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	source_holder.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	source_holder.alignment = BoxContainer.ALIGNMENT_CENTER
+	source_box.add_child(source_holder)
+
+	var source_caption := Label.new()
+	source_caption.name = "LibrarySearchSourceCaption"
+	source_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	source_caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	source_caption.add_theme_font_size_override("font_size", 14)
+	source_caption.add_theme_color_override("font_color", Color(0.72, 0.82, 0.90, 1.0))
+	source_box.add_child(source_caption)
+
+	var insert_index := dialog_vbox.get_child_count()
+	var dialog_card_scroll := scene.get("_dialog_card_scroll") as Control
+	if dialog_card_scroll != null and dialog_card_scroll.get_parent() == dialog_vbox:
+		insert_index = dialog_card_scroll.get_index()
+	dialog_vbox.add_child(board)
+	dialog_vbox.move_child(board, insert_index)
+	return _library_search_board_nodes(board)
+
+
+func _library_search_board_nodes(board: Node) -> Dictionary:
+	return {
+		"board": board,
+		"library_scroll": board.find_child("LibrarySearchLibraryScroll", true, false),
+		"library_row": board.find_child("LibraryCardRow", true, false),
+		"selected_scroll": board.find_child("LibrarySearchSelectedScroll", true, false),
+		"selected_row": board.find_child("LibrarySelectedSlotRow", true, false),
+		"instruction_label": board.find_child("LibrarySearchInstructionLabel", true, false),
+		"button_slot": board.find_child("LibrarySearchButtonSlot", true, false),
+		"portrait_source_panel": board.find_child("LibrarySearchPortraitSourcePanel", true, false),
+		"portrait_source_holder": board.find_child("LibrarySearchPortraitSourceCardHolder", true, false),
+		"portrait_source_caption": board.find_child("LibrarySearchPortraitSourceCaption", true, false),
+		"source_panel": board.find_child("LibrarySearchSourcePanel", true, false),
+		"source_holder": board.find_child("LibrarySearchSourceCardHolder", true, false),
+		"source_caption": board.find_child("LibrarySearchSourceCaption", true, false),
+	}
+
+
+func _populate_library_search_candidates(scene: Object, library_scroll: ScrollContainer, library_row: HBoxContainer) -> void:
+	var dialog_data: Dictionary = scene.get("_dialog_data")
+	var dialog_items_data: Array = scene.get("_dialog_items_data")
+	var card_items: Array = dialog_data.get("card_items", dialog_items_data)
+	var card_indices: Array = dialog_data.get("card_indices", [])
+	var labels: Array = dialog_data.get("choice_labels", dialog_items_data)
+	var card_click_selectable: bool = bool(dialog_data.get("card_click_selectable", true))
+	var disabled_badge := str(dialog_data.get("card_disabled_badge", "不可选"))
+	var card_size := _library_search_candidate_card_size(scene)
+	scene.call("_clear_container_children", library_row)
+	library_row.custom_minimum_size = Vector2(0, card_size.y)
+	library_row.size = Vector2(library_row.size.x, card_size.y)
+	for i: int in _visible_card_display_order(card_items, card_indices):
+		var real_index := _library_search_real_index_for_display(i, card_indices)
+		var disabled := real_index < 0
+		var card_view := BattleCardViewScript.new()
+		prepare_dialog_card_view(card_view, card_size)
+		card_view.set_selected_badge_text("已选")
+		card_view.set_clickable(card_click_selectable and not disabled)
+		setup_dialog_card_view(scene, card_view, card_items[i], dialog_label_at(labels, i))
+		if disabled:
+			card_view.set_disabled(true)
+			if disabled_badge != "":
+				card_view.set_badges(disabled_badge, "")
+		card_view.set_meta("dialog_choice_index", real_index)
+		var slot := _build_library_search_candidate_slot(scene, library_scroll, card_view, real_index, card_click_selectable and not disabled)
+		library_row.add_child(slot)
+
+
+func _build_library_search_candidate_slot(
+	scene: Object,
+	library_scroll: ScrollContainer,
+	card_view: BattleCardView,
+	real_index: int,
+	selectable: bool
+) -> Control:
+	var slot := Control.new()
+	slot.name = "LibrarySearchCandidateSlot"
+	slot.custom_minimum_size = card_view.custom_minimum_size
+	slot.size = card_view.size
+	slot.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	slot.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	slot.mouse_filter = Control.MOUSE_FILTER_STOP
+	slot.set_meta("library_search_candidate_slot", true)
+	slot.set_meta("dialog_choice_index", real_index)
+	slot.set_meta("library_search_press_active", false)
+	slot.set_meta("library_search_press_cancelled", false)
+	slot.set_meta("library_search_press_start", Vector2.ZERO)
+	slot.set_meta("library_search_press_from_touch", false)
+
+	card_view.set_clickable(false)
+	card_view.position = Vector2.ZERO
+	card_view.set_anchors_preset(Control.PRESET_FULL_RECT)
+	card_view.offset_left = 0.0
+	card_view.offset_top = 0.0
+	card_view.offset_right = 0.0
+	card_view.offset_bottom = 0.0
+	card_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	slot.add_child(card_view)
+
+	slot.gui_input.connect(func(event: InputEvent) -> void:
+		_handle_library_search_candidate_slot_input(scene, library_scroll, slot, card_view, real_index, selectable, event)
+	)
+	return slot
+
+
+func _connect_library_search_scroll_tap_handler(scene: Object, library_scroll: ScrollContainer, library_row: HBoxContainer) -> void:
+	if library_scroll == null or library_row == null:
+		return
+	if bool(library_scroll.get_meta("library_search_scroll_tap_handler_connected", false)):
+		return
+	library_scroll.set_meta("library_search_scroll_tap_handler_connected", true)
+	library_scroll.set_meta("library_search_press_active", false)
+	library_scroll.set_meta("library_search_press_cancelled", false)
+	library_scroll.set_meta("library_search_press_start", Vector2.ZERO)
+	library_scroll.set_meta("library_search_press_candidate_index", -1)
+	library_scroll.set_meta("library_search_press_from_touch", false)
+	library_scroll.gui_input.connect(func(event: InputEvent) -> void:
+		_handle_library_search_scroll_tap_input(scene, library_scroll, library_row, event)
+	)
+
+
+func try_handle_library_search_board_touch_input(scene: Object, event: InputEvent) -> bool:
+	if not (
+		event is InputEventScreenTouch
+		or event is InputEventScreenDrag
+		or event is InputEventMouseButton
+		or event is InputEventMouseMotion
+	):
+		return false
+	if scene == null or not bool(scene.get("_dialog_library_search_board_mode")):
+		return false
+	var board := scene.get("_dialog_library_search_board") as Control
+	if board == null or not board.visible:
+		return false
+	var nodes := _library_search_board_nodes(board)
+	var library_scroll := nodes.get("library_scroll", null) as ScrollContainer
+	var library_row := nodes.get("library_row", null) as HBoxContainer
+	var selected_scroll := nodes.get("selected_scroll", null) as ScrollContainer
+	var selected_row := nodes.get("selected_row", null) as HBoxContainer
+	if library_scroll == null or library_row == null:
+		return false
+	var position := _input_event_screen_position(event)
+	var library_press_active := bool(library_scroll.get_meta("library_search_press_active", false))
+	if event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if mouse_button.button_index != MOUSE_BUTTON_LEFT:
+			return false
+		if mouse_button.pressed:
+			if _library_search_control_contains_input_position(scene, library_scroll, position):
+				_handle_library_search_scroll_tap_input(scene, library_scroll, library_row, event)
+				return true
+			if _begin_library_search_selected_touch_if_hit(scene, selected_scroll, selected_row, position):
+				return true
+			return false
+		if library_press_active:
+			_handle_library_search_scroll_tap_input(scene, library_scroll, library_row, event)
+			return true
+		if _end_library_search_selected_touch(scene, selected_scroll, selected_row, position):
+			return true
+		return false
+	if event is InputEventMouseMotion:
+		var mouse_motion := event as InputEventMouseMotion
+		var left_pressed := (mouse_motion.button_mask & MOUSE_BUTTON_MASK_LEFT) != 0
+		if (library_press_active or _library_search_control_contains_input_position(scene, library_scroll, position)) and left_pressed:
+			_handle_library_search_scroll_tap_input(scene, library_scroll, library_row, event)
+			return true
+		if _update_library_search_selected_touch(selected_scroll, position):
+			return true
+		return false
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			if _library_search_control_contains_input_position(scene, library_scroll, position):
+				_handle_library_search_scroll_tap_input(scene, library_scroll, library_row, event)
+				return true
+			if _begin_library_search_selected_touch_if_hit(scene, selected_scroll, selected_row, position):
+				return true
+			return false
+		if library_press_active:
+			_handle_library_search_scroll_tap_input(scene, library_scroll, library_row, event)
+			return true
+		if _end_library_search_selected_touch(scene, selected_scroll, selected_row, position):
+			return true
+		return false
+	if event is InputEventScreenDrag:
+		if library_press_active or _library_search_control_contains_input_position(scene, library_scroll, position):
+			_handle_library_search_scroll_tap_input(scene, library_scroll, library_row, event)
+			return true
+		if _update_library_search_selected_touch(selected_scroll, position):
+			return true
+	return false
+
+
+func _handle_library_search_scroll_tap_input(
+	scene: Object,
+	library_scroll: ScrollContainer,
+	library_row: HBoxContainer,
+	event: InputEvent
+) -> void:
+	var drag_handled := _forward_library_search_candidate_drag_input(scene, library_scroll, event)
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.button_index != MOUSE_BUTTON_LEFT:
+			if drag_handled:
+				library_scroll.accept_event()
+			return
+		if mouse_event.pressed:
+			_begin_library_search_scroll_press(scene, library_scroll, library_row, mouse_event.global_position, false)
+			return
+		if _end_library_search_scroll_press(scene, library_scroll, library_row, mouse_event.global_position):
+			library_scroll.accept_event()
+			return
+		if drag_handled:
+			library_scroll.accept_event()
+		return
+
+	if event is InputEventMouseMotion:
+		if bool(library_scroll.get_meta("library_search_press_active", false)):
+			_update_library_search_candidate_press(library_scroll, (event as InputEventMouseMotion).global_position)
+		if drag_handled or bool(library_scroll.get_meta("library_search_press_cancelled", false)):
+			library_scroll.accept_event()
+		return
+
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			_begin_library_search_scroll_press(scene, library_scroll, library_row, touch.position, true)
+			return
+		var release_position := _library_search_touch_release_position(library_scroll, touch.position)
+		if _end_library_search_scroll_press(scene, library_scroll, library_row, release_position):
+			library_scroll.accept_event()
+			return
+		if drag_handled:
+			library_scroll.accept_event()
+		return
+
+	if event is InputEventScreenDrag:
+		if bool(library_scroll.get_meta("library_search_press_active", false)):
+			_update_library_search_candidate_press(library_scroll, (event as InputEventScreenDrag).position)
+		if drag_handled or bool(library_scroll.get_meta("library_search_press_cancelled", false)):
+			library_scroll.accept_event()
+
+
+func _begin_library_search_scroll_press(scene: Object, library_scroll: ScrollContainer, library_row: HBoxContainer, position: Vector2, from_touch: bool) -> void:
+	_begin_library_search_candidate_press(library_scroll, position, from_touch)
+	library_scroll.set_meta("library_search_press_candidate_index", _library_search_candidate_index_at_input_position(scene, library_row, position))
+
+
+func _end_library_search_scroll_press(scene: Object, library_scroll: ScrollContainer, library_row: HBoxContainer, position: Vector2) -> bool:
+	if not bool(library_scroll.get_meta("library_search_press_active", false)):
+		return false
+	_update_library_search_candidate_press(library_scroll, position)
+	var cancelled := bool(library_scroll.get_meta("library_search_press_cancelled", false))
+	var press_index := int(library_scroll.get_meta("library_search_press_candidate_index", -1))
+	library_scroll.set_meta("library_search_press_active", false)
+	library_scroll.set_meta("library_search_press_cancelled", false)
+	library_scroll.set_meta("library_search_press_from_touch", false)
+	library_scroll.set_meta("library_search_press_candidate_index", -1)
+	if cancelled or press_index < 0:
+		return true
+	var release_index := _library_search_candidate_index_at_input_position(scene, library_row, position)
+	if release_index != press_index:
+		return true
+	if _is_library_search_drag_click_suppressed(scene):
+		return true
+	on_library_search_candidate_pressed(scene, press_index)
+	return true
+
+
+func _library_search_candidate_index_at_position(library_row: HBoxContainer, position: Vector2) -> int:
+	if library_row == null:
+		return -1
+	for child: Node in library_row.get_children():
+		var slot := child as Control
+		if slot == null or not _is_library_search_candidate_slot(slot):
+			continue
+		if not slot.get_global_rect().has_point(position):
+			continue
+		return int(slot.get_meta("dialog_choice_index", -1))
+	return -1
+
+
+func _is_library_search_candidate_slot(slot: Control) -> bool:
+	return slot != null and (bool(slot.get_meta("library_search_candidate_slot", false)) or str(slot.name) == "LibrarySearchCandidateSlot")
+
+
+func _library_search_candidate_index_at_input_position(scene: Object, library_row: HBoxContainer, position: Vector2) -> int:
+	var raw_index := _library_search_candidate_index_at_position(library_row, position)
+	if raw_index >= 0:
+		return raw_index
+	var converted := _library_search_convert_input_position(scene, position)
+	if converted == position:
+		return -1
+	return _library_search_candidate_index_at_position(library_row, converted)
+
+
+func _library_search_convert_input_position(scene: Object, position: Vector2) -> Vector2:
+	if scene == null or not scene.has_method("_screen_position_to_battle_local"):
+		return position
+	var converted_variant: Variant = scene.call("_screen_position_to_battle_local", position)
+	if not (converted_variant is Vector2):
+		return position
+	return converted_variant as Vector2
+
+
+func _library_search_control_contains_input_position(scene: Object, control: Control, position: Vector2) -> bool:
+	if control == null or not control.visible:
+		return false
+	var raw_rect := control.get_global_rect()
+	if raw_rect.size != Vector2.ZERO and raw_rect.has_point(position):
+		return true
+	var converted := _library_search_convert_input_position(scene, position)
+	if converted == position:
+		return false
+	return raw_rect.size != Vector2.ZERO and raw_rect.has_point(converted)
+
+
+func _begin_library_search_selected_touch_if_hit(
+	scene: Object,
+	selected_scroll: ScrollContainer,
+	selected_row: HBoxContainer,
+	position: Vector2
+) -> bool:
+	if selected_scroll == null or selected_row == null:
+		return false
+	if not _library_search_control_contains_input_position(scene, selected_scroll, position):
+		return false
+	var real_index := _library_search_selected_real_index_at_input_position(scene, selected_row, position)
+	if real_index < 0:
+		return false
+	_begin_library_search_candidate_press(selected_scroll, position, true)
+	selected_scroll.set_meta("library_search_selected_press_real_index", real_index)
+	return true
+
+
+func _update_library_search_selected_touch(selected_scroll: ScrollContainer, position: Vector2) -> bool:
+	if selected_scroll == null or not bool(selected_scroll.get_meta("library_search_press_active", false)):
+		return false
+	_update_library_search_candidate_press(selected_scroll, position)
+	return true
+
+
+func _end_library_search_selected_touch(
+	scene: Object,
+	selected_scroll: ScrollContainer,
+	selected_row: HBoxContainer,
+	position: Vector2
+) -> bool:
+	if selected_scroll == null or selected_row == null:
+		return false
+	if not bool(selected_scroll.get_meta("library_search_press_active", false)):
+		return false
+	_update_library_search_candidate_press(selected_scroll, position)
+	var cancelled := bool(selected_scroll.get_meta("library_search_press_cancelled", false))
+	var press_real_index := int(selected_scroll.get_meta("library_search_selected_press_real_index", -1))
+	selected_scroll.set_meta("library_search_press_active", false)
+	selected_scroll.set_meta("library_search_press_cancelled", false)
+	selected_scroll.set_meta("library_search_press_from_touch", false)
+	selected_scroll.set_meta("library_search_selected_press_real_index", -1)
+	if cancelled or press_real_index < 0:
+		return true
+	var release_real_index := _library_search_selected_real_index_at_input_position(scene, selected_row, position)
+	if release_real_index != press_real_index:
+		return true
+	if _is_library_search_drag_click_suppressed(scene):
+		return true
+	on_library_selected_slot_pressed(scene, press_real_index)
+	return true
+
+
+func _library_search_selected_real_index_at_input_position(scene: Object, selected_row: HBoxContainer, position: Vector2) -> int:
+	var raw_index := _library_search_selected_real_index_at_position(selected_row, position)
+	if raw_index >= 0:
+		return raw_index
+	var converted := _library_search_convert_input_position(scene, position)
+	if converted == position:
+		return -1
+	return _library_search_selected_real_index_at_position(selected_row, converted)
+
+
+func _library_search_selected_real_index_at_position(selected_row: HBoxContainer, position: Vector2) -> int:
+	if selected_row == null:
+		return -1
+	for child: Node in selected_row.get_children():
+		var control := child as Control
+		if control == null:
+			continue
+		if not control.get_global_rect().has_point(position):
+			continue
+		if control.has_meta("library_selected_real_index"):
+			return int(control.get_meta("library_selected_real_index", -1))
+		for nested: Node in control.get_children():
+			var nested_control := nested as Control
+			if nested_control != null and nested_control.has_meta("library_selected_real_index") and nested_control.get_global_rect().has_point(position):
+				return int(nested_control.get_meta("library_selected_real_index", -1))
+	return -1
+
+
+func _handle_library_search_candidate_slot_input(
+	scene: Object,
+	library_scroll: ScrollContainer,
+	slot: Control,
+	card_view: BattleCardView,
+	real_index: int,
+	selectable: bool,
+	event: InputEvent
+) -> void:
+	var drag_handled := _forward_library_search_candidate_drag_input(scene, library_scroll, event)
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.button_index == MOUSE_BUTTON_RIGHT and mouse_event.pressed:
+			if scene.has_method("_on_dialog_card_right_signal"):
+				scene.call("_on_dialog_card_right_signal", card_view.card_instance, card_view.card_data)
+			slot.accept_event()
+			return
+		if mouse_event.button_index != MOUSE_BUTTON_LEFT:
+			if drag_handled:
+				slot.accept_event()
+			return
+		if mouse_event.pressed:
+			_begin_library_search_candidate_press(slot, mouse_event.global_position, false)
+			slot.accept_event()
+			return
+		if _end_library_search_candidate_press(scene, slot, mouse_event.global_position, real_index, selectable):
+			slot.accept_event()
+			return
+		if drag_handled:
+			slot.accept_event()
+		return
+
+	if event is InputEventMouseMotion:
+		if bool(slot.get_meta("library_search_press_active", false)):
+			_update_library_search_candidate_press(slot, (event as InputEventMouseMotion).global_position)
+		if drag_handled or bool(slot.get_meta("library_search_press_cancelled", false)):
+			slot.accept_event()
+		return
+
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			_begin_library_search_candidate_press(slot, touch.position, true)
+			slot.accept_event()
+			return
+		var release_position := _library_search_touch_release_position(slot, touch.position)
+		if _end_library_search_candidate_press(scene, slot, release_position, real_index, selectable):
+			slot.accept_event()
+			return
+		if drag_handled:
+			slot.accept_event()
+		return
+
+	if event is InputEventScreenDrag:
+		if bool(slot.get_meta("library_search_press_active", false)):
+			_update_library_search_candidate_press(slot, (event as InputEventScreenDrag).position)
+		if drag_handled or bool(slot.get_meta("library_search_press_cancelled", false)):
+			slot.accept_event()
+
+
+func _forward_library_search_candidate_drag_input(scene: Object, library_scroll: ScrollContainer, event: InputEvent) -> bool:
+	if scene == null or library_scroll == null:
+		return false
+	if scene.has_method("_handle_card_gallery_drag_scroll_input"):
+		return bool(scene.call("_handle_card_gallery_drag_scroll_input", event, library_scroll, "library_search_candidates"))
+	if scene.has_method("_on_card_gallery_card_input"):
+		scene.call("_on_card_gallery_card_input", event, library_scroll, "library_search_candidates")
+	return false
+
+
+func _begin_library_search_candidate_press(slot: Control, position: Vector2, from_touch: bool) -> void:
+	slot.set_meta("library_search_press_active", true)
+	slot.set_meta("library_search_press_cancelled", false)
+	slot.set_meta("library_search_press_start", position)
+	slot.set_meta("library_search_press_from_touch", from_touch)
+
+
+func _update_library_search_candidate_press(slot: Control, position: Vector2) -> void:
+	var start_variant: Variant = slot.get_meta("library_search_press_start", Vector2.ZERO)
+	var start: Vector2 = start_variant if start_variant is Vector2 else Vector2.ZERO
+	var delta: Vector2 = position - start
+	var horizontal_tolerance: float = LIBRARY_SEARCH_CANDIDATE_TOUCH_CLICK_MOVE_TOLERANCE if bool(slot.get_meta("library_search_press_from_touch", false)) else 12.0
+	if absf(delta.x) > horizontal_tolerance or absf(delta.y) > LIBRARY_SEARCH_CANDIDATE_VERTICAL_CLICK_TOLERANCE:
+		slot.set_meta("library_search_press_cancelled", true)
+
+
+func _end_library_search_candidate_press(scene: Object, slot: Control, position: Vector2, real_index: int, selectable: bool) -> bool:
+	if not bool(slot.get_meta("library_search_press_active", false)):
+		return false
+	_update_library_search_candidate_press(slot, position)
+	var cancelled := bool(slot.get_meta("library_search_press_cancelled", false))
+	slot.set_meta("library_search_press_active", false)
+	slot.set_meta("library_search_press_cancelled", false)
+	slot.set_meta("library_search_press_from_touch", false)
+	if cancelled:
+		return true
+	if not selectable:
+		return true
+	if _is_library_search_drag_click_suppressed(scene):
+		return true
+	on_library_search_candidate_pressed(scene, real_index)
+	return true
+
+
+func _library_search_touch_release_position(slot: Control, position: Vector2) -> Vector2:
+	if position != Vector2.ZERO:
+		return position
+	var start_variant: Variant = slot.get_meta("library_search_press_start", Vector2.ZERO)
+	return start_variant if start_variant is Vector2 else Vector2.ZERO
+
+
+func _populate_library_search_source(scene: Object, source_holder: Control, source_caption: Label, card_size: Vector2 = Vector2.ZERO) -> void:
+	if source_holder == null:
+		return
+	scene.call("_clear_container_children", source_holder)
+	var dialog_data: Dictionary = scene.get("_dialog_data")
+	var source: Variant = dialog_data.get("source_card", null)
+	var source_kind := str(dialog_data.get("source_kind", "")).strip_edges()
+	if source is CardInstance or source is CardData:
+		var card_view := BattleCardViewScript.new()
+		var source_card_size := card_size if card_size != Vector2.ZERO else _library_search_source_card_size(scene)
+		prepare_dialog_card_view(card_view, source_card_size)
+		card_view.set_clickable(true)
+		setup_dialog_card_view(scene, card_view, source, "")
+		card_view.left_clicked.connect(func(card_instance: CardInstance, card_data: CardData) -> void:
+			scene.call("_on_dialog_card_right_signal", card_instance, card_data)
+		)
+		card_view.right_clicked.connect(Callable(scene, "_on_dialog_card_right_signal"))
+		source_holder.add_child(card_view)
+		if source_caption != null:
+			source_caption.text = _library_search_source_caption(source, source_kind)
+		return
+	var placeholder := Label.new()
+	placeholder.text = "本次效果"
+	placeholder.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	placeholder.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	placeholder.custom_minimum_size = Vector2(120, 160)
+	placeholder.add_theme_font_size_override("font_size", 18)
+	placeholder.add_theme_color_override("font_color", Color(0.64, 0.74, 0.82, 1.0))
+	source_holder.add_child(placeholder)
+	if source_caption != null:
+		source_caption.text = "来源未显示"
+
+
+func _is_library_search_drag_click_suppressed(scene: Object) -> bool:
+	return scene != null and scene.has_method("_is_card_gallery_drag_click_suppressed") and bool(scene.call("_is_card_gallery_drag_click_suppressed"))
+
+
+func on_library_search_candidate_pressed(scene: Object, real_index: int) -> void:
+	_record_dialog_fresh_input(scene, "library_search_candidate")
+	if real_index < 0:
+		return
+	var dialog_data: Dictionary = scene.get("_dialog_data")
+	var max_select := int(dialog_data.get("max_select", 1))
+	if max_select == 0:
+		return
+	var selected_indices: Array = scene.get("_dialog_card_selected_indices")
+	if max_select == 1:
+		if real_index in selected_indices:
+			selected_indices.clear()
+		else:
+			selected_indices.clear()
+			selected_indices.append(real_index)
+	else:
+		if real_index in selected_indices:
+			selected_indices.erase(real_index)
+		elif max_select < 0 or selected_indices.size() < max_select:
+			selected_indices.append(real_index)
+	_replace_int_array(scene, "_dialog_card_selected_indices", selected_indices)
+	sync_library_search_board_selection(scene)
+	update_dialog_confirm_state(scene)
+
+
+func on_library_selected_slot_pressed(scene: Object, real_index: int) -> void:
+	_record_dialog_fresh_input(scene, "library_search_selected_slot")
+	var selected_indices: Array = scene.get("_dialog_card_selected_indices")
+	selected_indices.erase(real_index)
+	_replace_int_array(scene, "_dialog_card_selected_indices", selected_indices)
+	sync_library_search_board_selection(scene)
+	update_dialog_confirm_state(scene)
+
+
+func sync_library_search_board_selection(scene: Object) -> void:
+	var board := scene.get("_dialog_library_search_board") as Control
+	if board == null or not board.visible:
+		return
+	var selected_indices: Array = scene.get("_dialog_card_selected_indices")
+	var library_row := board.find_child("LibraryCardRow", true, false) as HBoxContainer
+	if library_row != null:
+		_sync_library_search_candidate_selection_recursive(library_row, selected_indices)
+	var selected_row := board.find_child("LibrarySelectedSlotRow", true, false) as HBoxContainer
+	if selected_row != null:
+		_rebuild_library_search_selected_slots(scene, selected_row)
+	var instruction_label := board.find_child("LibrarySearchInstructionLabel", true, false) as Label
+	if instruction_label != null:
+		instruction_label.text = _library_search_instruction_text(scene)
+
+
+func _sync_library_search_candidate_selection_recursive(node: Node, selected_indices: Array) -> void:
+	if node is BattleCardView:
+		var card_view := node as BattleCardView
+		var idx := int(card_view.get_meta("dialog_choice_index", -1))
+		card_view.set_selected(idx >= 0 and idx in selected_indices)
+	for child: Node in node.get_children():
+		_sync_library_search_candidate_selection_recursive(child, selected_indices)
+
+
+func _rebuild_library_search_selected_slots(scene: Object, selected_row: HBoxContainer) -> void:
+	scene.call("_clear_container_children", selected_row)
+	var selected_indices: Array = scene.get("_dialog_card_selected_indices")
+	var card_size := _library_search_selected_card_size(scene)
+	selected_row.custom_minimum_size = Vector2(0, card_size.y)
+	selected_row.size = Vector2(selected_row.size.x, card_size.y)
+	var slot_count := _library_search_selected_slot_count(scene, selected_indices.size())
+	var rendered_count := 0
+	for real_index: int in selected_indices:
+		var item: Variant = _library_search_card_for_real_index(scene, real_index)
+		if item == null:
+			continue
+		var bound_real_index := real_index
+		var card_view := BattleCardViewScript.new()
+		prepare_dialog_card_view(card_view, card_size)
+		card_view.set_selected_badge_text("移除")
+		card_view.set_selected(true)
+		card_view.set_clickable(true)
+		setup_dialog_card_view(scene, card_view, item, "")
+		card_view.set_meta("library_selected_real_index", bound_real_index)
+		card_view.left_clicked.connect(func(_card_instance: CardInstance, _card_data: CardData) -> void:
+			if _is_library_search_drag_click_suppressed(scene):
+				return
+			on_library_selected_slot_pressed(scene, bound_real_index)
+		)
+		card_view.right_clicked.connect(Callable(scene, "_on_dialog_card_right_signal"))
+		selected_row.add_child(card_view)
+		rendered_count += 1
+	while rendered_count < slot_count:
+		selected_row.add_child(_build_library_search_empty_slot(scene, rendered_count))
+		rendered_count += 1
+
+
+func _library_search_selected_slot_count(scene: Object, selected_count: int) -> int:
+	var dialog_data: Dictionary = scene.get("_dialog_data")
+	var max_select := int(dialog_data.get("max_select", 1))
+	if max_select > 0:
+		return maxi(max_select, selected_count)
+	if max_select < 0:
+		return selected_count + 1
+	return selected_count
+
+
+func _build_library_search_empty_slot(scene: Object, slot_index: int) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.name = "LibrarySearchEmptySlot"
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	panel.custom_minimum_size = _library_search_selected_card_size(scene)
+	panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	panel.set_meta("library_search_empty_slot", true)
+	panel.set_meta("library_search_slot_index", slot_index)
+	panel.add_theme_stylebox_override("panel", _library_search_empty_slot_style())
+	var label := Label.new()
+	label.text = _library_search_empty_slot_text(scene, slot_index)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var font_size := _library_search_empty_slot_font_size(scene)
+	label.add_theme_font_size_override("font_size", font_size)
+	label.set_meta("library_search_empty_slot_font_size", font_size)
+	label.add_theme_color_override("font_color", Color(0.68, 0.78, 0.86, 1.0))
+	panel.add_child(label)
+	return panel
+
+
+func _library_search_empty_slot_font_size(scene: Object) -> int:
+	var board: Control = null
+	if scene != null:
+		board = scene.get("_dialog_library_search_board") as Control
+	if board != null and bool(board.get_meta("library_search_portrait_layout", false)):
+		return LIBRARY_SEARCH_PORTRAIT_EMPTY_SLOT_FONT_SIZE
+	return LIBRARY_SEARCH_PORTRAIT_EMPTY_SLOT_FONT_SIZE if _library_search_is_portrait(scene) else 16
+
+
+func _library_search_real_index_for_display(display_index: int, card_indices: Array) -> int:
+	if display_index >= 0 and display_index < card_indices.size():
+		return int(card_indices[display_index])
+	return display_index
+
+
+func _library_search_card_for_real_index(scene: Object, real_index: int) -> Variant:
+	var dialog_data: Dictionary = scene.get("_dialog_data")
+	var dialog_items_data: Array = scene.get("_dialog_items_data")
+	var card_items: Array = dialog_data.get("card_items", dialog_items_data)
+	var card_indices: Array = dialog_data.get("card_indices", [])
+	for display_index: int in card_items.size():
+		if _library_search_real_index_for_display(display_index, card_indices) == real_index:
+			return card_items[display_index]
+	if real_index >= 0 and real_index < card_items.size():
+		return card_items[real_index]
+	return null
+
+
+func _library_search_instruction_text(scene: Object) -> String:
+	var title := ""
+	var dialog_title := scene.get("_dialog_title") as Label
+	if dialog_title != null:
+		title = dialog_title.text.strip_edges()
+	var dialog_data: Dictionary = scene.get("_dialog_data")
+	var selected_count := int((scene.get("_dialog_card_selected_indices") as Array).size())
+	var min_select := int(dialog_data.get("min_select", 1))
+	var max_select := int(dialog_data.get("max_select", 1))
+	var count_text := ""
+	if max_select <= 0:
+		count_text = "无需选择"
+	elif min_select <= 0:
+		count_text = "已选 %d/%d，可不选择" % [selected_count, max_select]
+	elif max_select == 1:
+		count_text = "已选 %d/1" % selected_count
+	else:
+		count_text = "已选 %d/%d，至少 %d" % [selected_count, max_select, min_select]
+	if title == "":
+		return count_text
+	return "%s\n%s；点击下方已选卡可移除" % [title, count_text]
+
+
+func _library_search_empty_slot_text(scene: Object, slot_index: int) -> String:
+	var dialog_data: Dictionary = scene.get("_dialog_data")
+	var min_select := int(dialog_data.get("min_select", 1))
+	return "选择后显示" if slot_index < min_select else "可不选择"
+
+
+func _library_search_source_caption(source: Variant, source_kind: String) -> String:
+	if source_kind != "":
+		return source_kind
+	if source is CardInstance and (source as CardInstance).card_data != null:
+		return str((source as CardInstance).card_data.card_type)
+	if source is CardData:
+		return str((source as CardData).card_type)
+	return "当前使用"
+
+
+func _library_search_board_height(scene: Object) -> float:
+	var content_height := _library_search_board_content_height(scene)
+	if _library_search_is_portrait(scene):
+		return content_height
+	if scene is Node and (scene as Node).is_inside_tree():
+		var viewport_size := (scene as Node).get_viewport().get_visible_rect().size
+		var extra_height := clampf(
+			viewport_size.y * LIBRARY_SEARCH_BOARD_EXTRA_HEIGHT_RATIO,
+			LIBRARY_SEARCH_BOARD_EXTRA_HEIGHT_MIN,
+			LIBRARY_SEARCH_BOARD_EXTRA_HEIGHT_MAX
+		)
+		return minf(content_height + extra_height, maxf(viewport_size.y - 40.0, content_height))
+	return content_height + LIBRARY_SEARCH_BOARD_EXTRA_HEIGHT_MIN
+
+
+func _library_search_board_content_height(scene: Object) -> float:
+	if _library_search_is_portrait(scene):
+		var source_height := _library_search_portrait_source_bar_height(scene) if _library_search_has_source(scene) else 0.0
+		var source_gap := 10.0 if source_height > 0.0 else 0.0
+		return source_height \
+			+ source_gap \
+			+ _library_search_library_scroll_height(scene) \
+			+ LIBRARY_SEARCH_PORTRAIT_COMMAND_BAR_HEIGHT \
+			+ _library_search_selected_scroll_height(scene) \
+			+ 20.0
+	return _library_search_library_scroll_height(scene) \
+		+ LIBRARY_SEARCH_COMMAND_BAR_HEIGHT \
+		+ _library_search_selected_scroll_height(scene) \
+		+ 16.0
+
+
+func _library_search_library_scroll_height(scene: Object) -> float:
+	return _library_search_candidate_card_size(scene).y + (20.0 if _library_search_is_portrait(scene) else 28.0)
+
+
+func _library_search_selected_scroll_height(scene: Object) -> float:
+	return _library_search_selected_card_size(scene).y + (18.0 if _library_search_is_portrait(scene) else 26.0)
+
+
+func _library_search_candidate_card_size(scene: Object) -> Vector2:
+	var dialog_card_size: Vector2 = scene.get("_dialog_card_size")
+	if _library_search_is_portrait(scene):
+		return dialog_card_size
+	return Vector2(minf(dialog_card_size.x, 126.0), minf(dialog_card_size.y, 176.0))
+
+
+func _library_search_selected_card_size(scene: Object) -> Vector2:
+	var candidate := _library_search_candidate_card_size(scene)
+	var scale := LIBRARY_SEARCH_PORTRAIT_SELECTED_SCALE if _library_search_is_portrait(scene) else 0.86
+	return Vector2(roundf(candidate.x * scale), roundf(candidate.y * scale))
+
+
+func _library_search_source_card_size(scene: Object) -> Vector2:
+	var candidate := _library_search_candidate_card_size(scene)
+	var source_width := _library_search_source_width(scene)
+	var source_card_width := minf(candidate.x * 1.32, maxf(source_width - 44.0, candidate.x))
+	var card_ratio := candidate.y / maxf(candidate.x, 1.0)
+	return Vector2(roundf(source_card_width), roundf(source_card_width * card_ratio))
+
+
+func _library_search_portrait_source_card_size(scene: Object) -> Vector2:
+	var candidate := _library_search_candidate_card_size(scene)
+	return Vector2(
+		roundf(candidate.x * LIBRARY_SEARCH_PORTRAIT_SOURCE_CARD_SCALE),
+		roundf(candidate.y * LIBRARY_SEARCH_PORTRAIT_SOURCE_CARD_SCALE)
+	)
+
+
+func _library_search_portrait_source_bar_height(scene: Object) -> float:
+	return maxf(LIBRARY_SEARCH_PORTRAIT_SOURCE_BAR_MIN_HEIGHT, _library_search_portrait_source_card_size(scene).y + 18.0)
+
+
+func _library_search_has_source(scene: Object) -> bool:
+	if scene == null:
+		return false
+	var dialog_data: Dictionary = scene.get("_dialog_data")
+	var source: Variant = dialog_data.get("source_card", null)
+	return source is CardInstance or source is CardData
+
+
+func _library_search_source_width(scene: Object) -> float:
+	if scene is Node and (scene as Node).is_inside_tree():
+		var viewport_size := (scene as Node).get_viewport().get_visible_rect().size
+		return clampf(viewport_size.x * 0.13, LIBRARY_SEARCH_SOURCE_WIDTH_MIN, LIBRARY_SEARCH_SOURCE_WIDTH_MAX)
+	return LIBRARY_SEARCH_SOURCE_WIDTH_MIN
+
+
+func _library_search_track_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.015, 0.035, 0.050, 0.74)
+	style.border_color = Color(0.22, 0.38, 0.50, 0.70)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(14)
+	style.content_margin_left = 10
+	style.content_margin_right = 10
+	style.content_margin_top = 10
+	style.content_margin_bottom = 10
+	return style
+
+
+func _library_search_instruction_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.02, 0.42, 0.68, 0.96)
+	style.border_color = Color(0.86, 0.70, 0.25, 1.0)
+	style.border_width_top = 3
+	style.border_width_bottom = 3
+	style.corner_radius_top_left = 6
+	style.corner_radius_top_right = 6
+	style.corner_radius_bottom_left = 6
+	style.corner_radius_bottom_right = 6
+	return style
+
+
+func _library_search_source_panel_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.025, 0.045, 0.065, 0.92)
+	style.border_color = Color(0.34, 0.48, 0.60, 0.90)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(14)
+	return style
+
+
+func _library_search_empty_slot_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.08, 0.11, 0.13, 0.62)
+	style.border_color = Color(0.45, 0.55, 0.62, 0.75)
+	style.set_border_width_all(2)
+	style.border_blend = true
+	style.set_corner_radius_all(10)
+	return style
 
 
 func show_card_dialog(scene: Object, items: Array, extra_data: Dictionary) -> void:
@@ -1640,6 +3172,8 @@ func show_action_hud_dialog(scene: Object, _items: Array, extra_data: Dictionary
 		var preview_extra_height := ACTION_HUD_ENERGY_SUMMARY_HEIGHT if attached_energy_summary != "" else 0.0
 		scroll_height = maxf(scroll_height, preview_size.y + preview_extra_height + 18.0)
 	dialog_card_scroll.custom_minimum_size = Vector2(0, scroll_height)
+	dialog_card_scroll.set_meta("dialog_presentation", "action_hud")
+	dialog_card_scroll.set_meta("action_hud_scroll_height", scroll_height)
 	if dialog_list.item_selected.is_connected(Callable(scene, "_on_dialog_item_selected")):
 		dialog_list.item_selected.disconnect(Callable(scene, "_on_dialog_item_selected"))
 	if dialog_list.multi_selected.is_connected(Callable(scene, "_on_dialog_item_multi_selected")):
@@ -1647,7 +3181,10 @@ func show_action_hud_dialog(scene: Object, _items: Array, extra_data: Dictionary
 	scene.call("_clear_container_children", dialog_card_row)
 	scene.call("_clear_container_children", dialog_utility_row)
 
-	dialog_card_row.add_theme_constant_override("separation", 16 if has_preview else 10)
+	dialog_card_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	dialog_card_row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	dialog_card_row.custom_minimum_size = Vector2.ZERO
+	dialog_card_row.add_theme_constant_override("separation", ACTION_HUD_PREVIEW_ROW_SEPARATION if has_preview else 10)
 	var stack := VBoxContainer.new()
 	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stack.add_theme_constant_override("separation", 8)
@@ -1662,12 +3199,42 @@ func show_action_hud_dialog(scene: Object, _items: Array, extra_data: Dictionary
 		stack.add_child(_build_action_hud_option(scene, action, i, option_width))
 
 
+func refresh_action_hud_dialog(scene: Object) -> void:
+	var dialog_data_variant: Variant = scene.get("_dialog_data")
+	if not (dialog_data_variant is Dictionary):
+		return
+	var dialog_data: Dictionary = dialog_data_variant
+	if str(dialog_data.get("presentation", "")) != "action_hud":
+		return
+	var dialog_items_variant: Variant = scene.get("_dialog_items_data")
+	var dialog_items: Array = dialog_items_variant if dialog_items_variant is Array else []
+	show_action_hud_dialog(scene, dialog_items, dialog_data)
+
+
 func _action_hud_scroll_height(action_count: int) -> float:
 	var visible_count: int = clampi(action_count, 1, 5)
 	return float(visible_count * 88 + maxi(visible_count - 1, 0) * 8 + 2)
 
 
 func _action_hud_preview_card_size(scene: Object) -> Vector2:
+	var base_size := _action_hud_base_preview_card_size(scene)
+	if not _is_portrait_text_dialog(scene):
+		return base_size
+	var dialog_width := _action_hud_dialog_width(scene)
+	if dialog_width <= 0.0 or base_size.x <= 0.0 or base_size.y <= 0.0:
+		return base_size
+	var max_preview_for_width := dialog_width - ACTION_HUD_PREVIEW_CHROME_WIDTH - ACTION_HUD_PREVIEW_ROW_SEPARATION - PORTRAIT_ACTION_HUD_MIN_OPTION_WIDTH
+	var ratio_preview_width := dialog_width * PORTRAIT_ACTION_HUD_MAX_PREVIEW_WIDTH_RATIO
+	var target_width := minf(base_size.x, minf(ratio_preview_width, max_preview_for_width))
+	target_width = maxf(PORTRAIT_ACTION_HUD_MIN_PREVIEW_WIDTH, target_width)
+	target_width = minf(target_width, base_size.x)
+	if target_width >= base_size.x:
+		return base_size
+	var scale := target_width / base_size.x
+	return Vector2(target_width, base_size.y * scale)
+
+
+func _action_hud_base_preview_card_size(scene: Object) -> Vector2:
 	var detail_card_size_variant: Variant = scene.get("_detail_card_size")
 	if detail_card_size_variant is Vector2:
 		var detail_card_size: Vector2 = detail_card_size_variant
@@ -1679,12 +3246,31 @@ func _action_hud_preview_card_size(scene: Object) -> Vector2:
 
 func _action_hud_option_width(scene: Object, preview_size: Vector2, has_preview: bool) -> float:
 	if not has_preview:
+		if _is_portrait_text_dialog(scene):
+			return maxf(_action_hud_dialog_width(scene) - PORTRAIT_TEXT_HUD_OPTION_HORIZONTAL_INSET, 1.0)
 		return 760.0
+	var box_width := _action_hud_dialog_width(scene)
+	if _is_portrait_text_dialog(scene):
+		return maxf(box_width - (preview_size.x + ACTION_HUD_PREVIEW_CHROME_WIDTH) - ACTION_HUD_PREVIEW_ROW_SEPARATION, 1.0)
+	return maxf(420.0, box_width - (preview_size.x + ACTION_HUD_PREVIEW_CHROME_WIDTH) - ACTION_HUD_PREVIEW_ROW_SEPARATION)
+
+
+func _action_hud_dialog_width(scene: Object) -> float:
+	if _is_portrait_text_dialog(scene) and scene.has_method("_portrait_popup_near_width"):
+		var near_width := float(scene.call("_portrait_popup_near_width"))
+		if near_width > 0.0:
+			return near_width
+	if _is_portrait_text_dialog(scene) and scene.has_method("_portrait_popup_content_size"):
+		var content_size_variant: Variant = scene.call("_portrait_popup_content_size")
+		if content_size_variant is Vector2:
+			var content_size: Vector2 = content_size_variant
+			if content_size.x > 0.0:
+				return content_size.x
 	var dialog_box := scene.get("_dialog_box") as Control
 	var box_width := 860.0
 	if dialog_box != null and dialog_box.custom_minimum_size.x > 0.0:
 		box_width = dialog_box.custom_minimum_size.x
-	return maxf(420.0, box_width - (preview_size.x + 14.0) - 16.0)
+	return box_width
 
 
 func _build_action_hud_card_preview(preview_item: Variant, preview_size: Vector2, attached_energy_summary: String = "") -> PanelContainer:
@@ -1692,7 +3278,7 @@ func _build_action_hud_card_preview(preview_item: Variant, preview_size: Vector2
 	panel.name = "PokemonActionCardPreview"
 	var summary_text := attached_energy_summary.strip_edges()
 	var summary_height := ACTION_HUD_ENERGY_SUMMARY_HEIGHT if summary_text != "" else 0.0
-	panel.custom_minimum_size = Vector2(preview_size.x + 14.0, preview_size.y + summary_height + 14.0)
+	panel.custom_minimum_size = Vector2(preview_size.x + ACTION_HUD_PREVIEW_CHROME_WIDTH, preview_size.y + summary_height + 14.0)
 	panel.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1808,13 +3394,35 @@ func _build_action_hud_option(scene: Object, action: Dictionary, action_index: i
 		elif event is InputEventScreenTouch:
 			var touch_event := event as InputEventScreenTouch
 			if touch_event.pressed:
-				activated = true
+				panel.set_meta("_action_hud_touch_active", true)
+				panel.set_meta("_action_hud_touch_index", touch_event.index)
+				panel.set_meta("_action_hud_touch_position", touch_event.position)
+				panel.accept_event()
+				return
+			var has_touch_press := bool(panel.get_meta("_action_hud_touch_active", false))
+			var touch_press_index := int(panel.get_meta("_action_hud_touch_index", touch_event.index))
+			var touch_press_position := touch_event.position
+			var stored_touch_position: Variant = panel.get_meta("_action_hud_touch_position", touch_event.position)
+			if stored_touch_position is Vector2:
+				touch_press_position = stored_touch_position
+			panel.set_meta("_action_hud_touch_active", false)
+			if not has_touch_press or touch_press_index != touch_event.index:
+				panel.accept_event()
+				return
+			if touch_press_position.distance_to(touch_event.position) > ACTION_HUD_TOUCH_CLICK_MOVE_TOLERANCE:
+				panel.accept_event()
+				return
+			activated = true
 		if activated:
 			if not enabled:
 				panel.accept_event()
 				return
-			_record_dialog_fresh_input(scene, "action_hud_option")
-			confirm_dialog_selection(scene, PackedInt32Array([action_index]), _input_event_screen_position(event))
+			var origin_position := _input_event_screen_position(event)
+			if _consume_direct_dialog_choice_if_stale(scene, "action_hud_option", origin_position):
+				panel.accept_event()
+				return
+			_record_dialog_fresh_input(scene, "action_hud_option", origin_position)
+			confirm_dialog_selection(scene, PackedInt32Array([action_index]), origin_position)
 			panel.accept_event()
 	)
 
@@ -2406,7 +4014,7 @@ func update_assignment_dialog_state(scene: Object) -> void:
 	for target: Variant in target_counts.keys():
 		if target is PokemonSlot:
 			var slot: PokemonSlot = target as PokemonSlot
-			summary_parts.append("%s×%d" % [slot.get_pokemon_name(), int(target_counts[target])])
+			summary_parts.append("%s×%d" % [_slot_display_name(slot), int(target_counts[target])])
 
 	var summary := ""
 	if max_assignments > 0:
@@ -2425,7 +4033,7 @@ func update_assignment_dialog_state(scene: Object) -> void:
 			var selected_source: Variant = source_items[selected_source_index]
 			if selected_source is CardInstance:
 				summary += " " + _bt(scene, "battle.dialog.assignment_current_source", {
-					"name": (selected_source as CardInstance).card_data.name,
+					"name": (selected_source as CardInstance).card_data.display_name(),
 				})
 	if not summary_parts.is_empty():
 		summary += " 已分配到：" + ", ".join(summary_parts)
@@ -2525,7 +4133,7 @@ func update_dialog_status_text(scene: Object) -> void:
 
 
 func confirm_dialog_selection(scene: Object, sel_items: PackedInt32Array, origin_position: Vector2 = Vector2(-1.0, -1.0)) -> void:
-	var slot_suppression_mode := _dialog_slot_suppression_mode(scene)
+	var slot_suppression_mode := _dialog_selection_slot_suppression_mode(scene, sel_items)
 	if origin_position.x >= 0.0 and origin_position.y >= 0.0:
 		mark_modal_input_consumed_at_position(scene, "dialog_confirm_selection", origin_position, slot_suppression_mode)
 	else:
@@ -2570,6 +4178,7 @@ func on_dialog_item_multi_selected(scene: Object, idx: int, selected: bool) -> v
 func on_dialog_confirm(scene: Object) -> void:
 	if _consume_dialog_action_if_stale(scene, "confirm"):
 		return
+	scene.set("_dialog_user_input_source", "dialog_confirm")
 	var confirm_origin := _dialog_action_input_position(scene, "confirm")
 	var slot_suppression_mode := _dialog_slot_suppression_mode(scene)
 	if _valid_input_position(confirm_origin):
@@ -2607,6 +4216,7 @@ func on_dialog_confirm(scene: Object) -> void:
 func on_dialog_cancel(scene: Object) -> void:
 	if _consume_dialog_action_if_stale(scene, "cancel"):
 		return
+	scene.set("_dialog_user_input_source", "dialog_cancel")
 	var cancel_origin := _dialog_action_input_position(scene, "cancel")
 	var slot_suppression_mode := _dialog_slot_suppression_mode(scene)
 	if _valid_input_position(cancel_origin):
@@ -2699,7 +4309,7 @@ func show_setup_active_dialog(scene: Object, pi: int) -> void:
 	var basics: Array[CardInstance] = player.get_basic_pokemon_in_hand()
 	var items: Array[String] = []
 	for card: CardInstance in basics:
-		items.append("%s (HP %d)" % [card.card_data.name, card.card_data.hp])
+		items.append("%s (HP %d)" % [card.card_data.display_name(), card.card_data.hp])
 	scene.set("_pending_choice", "setup_active_%d" % pi)
 	var dialog_data := {
 		"basics": basics,
@@ -2752,7 +4362,7 @@ func show_setup_bench_dialog(scene: Object, pi: int) -> void:
 		return
 	var items: Array[String] = ["完成"]
 	for card: CardInstance in basics:
-		items.append("%s (HP %d)" % [card.card_data.name, card.card_data.hp])
+		items.append("%s (HP %d)" % [card.card_data.display_name(), card.card_data.hp])
 	var choice_indices: Array[int] = []
 	for card_idx: int in basics.size():
 		choice_indices.append(card_idx + 1)
@@ -2854,11 +4464,11 @@ func show_heavy_baton_dialog(
 		var source_indices: Array[int] = []
 		for i: int in source_energy.size():
 			var energy: CardInstance = source_energy[i]
-			source_labels.append(energy.card_data.name if energy != null and energy.card_data != null else "")
+			source_labels.append(energy.card_data.display_name() if energy != null and energy.card_data != null else "")
 			source_indices.append(i)
 		var target_labels: Array[String] = []
 		for target: PokemonSlot in bench_targets:
-			target_labels.append(target.get_pokemon_name())
+			target_labels.append(_slot_display_name(target))
 		var assignment_data := dialog_data.duplicate(true)
 		assignment_data.merge({
 			"ui_mode": "card_assignment",
@@ -2904,11 +4514,11 @@ func show_exp_share_dialog(
 	var source_indices: Array[int] = []
 	for i: int in source_energy.size():
 		var energy: CardInstance = source_energy[i]
-		source_labels.append(energy.card_data.name if energy != null and energy.card_data != null else "")
+		source_labels.append(energy.card_data.display_name() if energy != null and energy.card_data != null else "")
 		source_indices.append(i)
 	var target_labels: Array[String] = []
 	for target: PokemonSlot in bench_targets:
-		target_labels.append(target.get_pokemon_name())
+		target_labels.append(_slot_display_name(target))
 	var assignment_data := dialog_data.duplicate(true)
 	assignment_data.merge({
 		"ui_mode": "card_assignment",
@@ -2938,9 +4548,10 @@ func show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlot, inclu
 	var should_list_attacks := include_attacks or not is_active_slot
 	for i: int in card_data.abilities.size():
 		var ability: Dictionary = card_data.abilities[i]
-		var ability_name := str(ability.get("name", ""))
+		var ability_name := CardData.dictionary_display_name(ability)
+		var ability_text := CardData.dictionary_display_text(ability)
 		var can_use := false
-		var ability_reason := "%s 当前无法使用特性" % card_data.name
+		var ability_reason := "%s 当前无法使用特性" % card_data.display_name()
 		if effect != null and effect.has_method("can_use_ability"):
 			can_use = gsm.effect_processor.can_use_ability(slot, gsm.game_state, i)
 			ability_reason = "" if can_use else gsm.effect_processor.get_ability_unusable_reason(slot, gsm.game_state, i)
@@ -2957,7 +4568,7 @@ func show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlot, inclu
 			"特性",
 			ability_name,
 			"",
-			_action_body_from_text(str(ability.get("text", ""))),
+			_action_body_from_text(ability_text),
 			can_use,
 			ability_reason
 		))
@@ -2986,6 +4597,7 @@ func show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlot, inclu
 	if should_list_attacks:
 		for i: int in card_data.attacks.size():
 			var attack: Dictionary = card_data.attacks[i]
+			var attack_name := CardData.dictionary_display_name(attack)
 			var can_use_attack := false
 			var attack_reason := "只有战斗区宝可梦可以使用招式"
 			var preview_damage := 0
@@ -2995,7 +4607,7 @@ func show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlot, inclu
 				preview_damage = gsm.get_attack_preview_damage(cp, i)
 			items.append("%s[招式] %s [%s] %s" % [
 				"" if can_use_attack else "[不可用] ",
-				str(attack.get("name", "")),
+				attack_name,
 				str(attack.get("cost", "")),
 				str(attack.get("damage", "")),
 			])
@@ -3009,7 +4621,7 @@ func show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlot, inclu
 			action_items.append(_build_pokemon_action_item(
 				"attack",
 				"招式",
-				str(attack.get("name", "")),
+				attack_name,
 				_attack_damage_meta_text(attack, preview_damage),
 				_attack_body_text(attack, preview_damage),
 				can_use_attack,
@@ -3064,7 +4676,7 @@ func show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlot, inclu
 				retreat_reason
 			))
 	if actions.is_empty():
-		var empty_reason := "%s 当前没有可执行的行动" % card_data.name
+		var empty_reason := "%s 当前没有可执行的行动" % card_data.display_name()
 		items.append("[不可用] 当前没有可执行行动")
 		actions.append({
 			"type": "noop",
@@ -3081,7 +4693,7 @@ func show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlot, inclu
 			empty_reason
 		))
 	scene.set("_pending_choice", "pokemon_action")
-	show_dialog(scene, "选择行动：%s" % card_data.name, items, {
+	show_dialog(scene, "选择行动：%s" % card_data.display_name(), items, {
 		"player": cp,
 		"actions": actions,
 		"action_items": action_items,
@@ -3121,11 +4733,7 @@ func _pokemon_action_attached_energy_names(slot: PokemonSlot) -> Array[String]:
 	for energy: CardInstance in slot.attached_energy:
 		if energy == null or energy.card_data == null:
 			continue
-		var energy_name := energy.card_data.name.strip_edges()
-		if energy_name == "":
-			energy_name = energy.card_data.name_en.strip_edges()
-		if energy_name == "":
-			energy_name = energy.card_data.card_type.strip_edges()
+		var energy_name := energy.card_data.display_name()
 		if energy_name != "":
 			names.append(energy_name)
 	return names
@@ -3165,7 +4773,7 @@ func show_stadium_action_dialog(scene: Object, cp: int) -> void:
 		)
 	]
 	scene.set("_pending_choice", "pokemon_action")
-	show_dialog(scene, "选择行动：%s" % card_data.name, items, {
+	show_dialog(scene, "选择行动：%s" % card_data.display_name(), items, {
 		"player": cp,
 		"actions": actions,
 		"action_items": action_items,
@@ -3274,7 +4882,7 @@ func _attack_body_text(attack: Dictionary, preview_damage: int) -> String:
 		lines.append("基础伤害：%s。" % damage)
 	elif preview_damage > 0:
 		lines.append("预览伤害：%d。" % preview_damage)
-	var text := str(attack.get("text", "")).strip_edges()
+	var text := CardData.dictionary_display_text(attack)
 	if text != "":
 		lines.append(text)
 	if lines.is_empty():
@@ -3333,7 +4941,7 @@ func _legacy_show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlo
 			var preview_text := ""
 			if String(attack.get("damage", "")) != "" or preview_damage > 0:
 				preview_text = " 预览伤害:%d" % preview_damage
-			items.append("%s[招式] %s [%s] %s%s" % [prefix, attack.get("name", ""), attack.get("cost", ""), attack.get("damage", ""), preview_text])
+			items.append("%s[招式] %s [%s] %s%s" % [prefix, CardData.dictionary_display_name(attack), attack.get("cost", ""), attack.get("damage", ""), preview_text])
 			actions.append({
 				"type": "attack",
 				"slot": slot,
@@ -3364,10 +4972,10 @@ func _legacy_show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlo
 				"reason": retreat_reason,
 			})
 	if actions.is_empty():
-		scene.call("_log", "%s 当前没有可执行的行动" % card_data.name)
+		scene.call("_log", "%s 当前没有可执行的行动" % card_data.display_name())
 		return
 	scene.set("_pending_choice", "pokemon_action")
-	show_dialog(scene, "选择行动：%s" % card_data.name, items, {"player": cp, "actions": actions})
+	show_dialog(scene, "选择行动：%s" % card_data.display_name(), items, {"player": cp, "actions": actions})
 	var dialog_cancel: Button = scene.get("_dialog_cancel")
 	if dialog_cancel != null:
 		dialog_cancel.visible = true

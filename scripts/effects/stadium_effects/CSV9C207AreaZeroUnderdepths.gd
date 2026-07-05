@@ -5,13 +5,14 @@ const H = preload("res://scripts/effects/CSV9CHelpers.gd")
 
 const EFFECT_ID := "701eb0ccb34fe3d319ea1307bc36c1ef"
 const REMOTE_EFFECT_ID := "cf3124da3d7bf217f7969b6ae4e60e38"
+const LIMITLESS_EFFECT_ID := "1f9a0ddd1be1adb3ca83829e7c05f8c7"
 const EXPANDED_BENCH_LIMIT := 8
 const DEFAULT_BENCH_LIMIT := 5
 const STEP_ID_PREFIX := "csv9c207_zero_area_discard_p"
 
 
 static func matches_effect_id(effect_id: String) -> bool:
-	return effect_id == EFFECT_ID or effect_id == REMOTE_EFFECT_ID
+	return effect_id == EFFECT_ID or effect_id == REMOTE_EFFECT_ID or effect_id == LIMITLESS_EFFECT_ID
 
 
 static func is_area_zero_active(state: GameState) -> bool:

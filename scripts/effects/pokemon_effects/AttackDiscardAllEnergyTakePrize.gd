@@ -34,6 +34,7 @@ func execute_attack(
 			continue
 		energy.face_up = true
 		player.discard_pile.append(energy)
+		_record_attack_effect_discarded_attached_energy(attacker, energy, state)
 	player.take_prize(0)
 
 

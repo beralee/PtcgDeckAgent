@@ -91,6 +91,7 @@ func execute_attack(
 	for energy: CardInstance in discarded:
 		energy.face_up = true
 		player.discard_pile.append(energy)
+		_record_attack_effect_discarded_attached_energy(attacker, energy, state)
 
 	var selected_targets: Dictionary = {}
 	for entry: Variant in ctx.get("greninja_ex_targets", []):

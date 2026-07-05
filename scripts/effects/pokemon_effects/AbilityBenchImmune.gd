@@ -5,6 +5,7 @@ class_name AbilityBenchImmune
 extends BaseEffect
 
 const AbilityPreventTeraAttackDamageAndEffectsScript = preload("res://scripts/effects/pokemon_effects/AbilityPreventTeraAttackDamageAndEffects.gd")
+const AbilityNonRuleBoxBenchDamageShieldScript = preload("res://scripts/effects/pokemon_effects/AbilityNonRuleBoxBenchDamageShield.gd")
 
 ## 匹配的特性名称（用于在 abilities 列表中识别）
 const ABILITY_NAME: String = "毫不在意"
@@ -55,6 +56,8 @@ static func prevents_opponent_attack_damage(
 	if AbilityPreventTeraAttackDamageAndEffectsScript.prevents_target_effect_from_tera_attack(attacker, target, state):
 		return true
 	if AbilityBenchProtect.protects_bench_target(target, attacker, state):
+		return true
+	if AbilityNonRuleBoxBenchDamageShieldScript.protects_bench_target(target, attacker, state):
 		return true
 	return AbilityTeamBenchShield.protects_bench_target(target, attacker, state)
 

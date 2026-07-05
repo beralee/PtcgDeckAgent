@@ -5,6 +5,7 @@ const HAND_DRAG_SCROLL_THRESHOLD := 12.0
 const CARD_GALLERY_TOUCH_DRAG_SCROLL_THRESHOLD := 28.0
 const HAND_DRAG_SCROLL_WHEEL_STEP := 96
 const HAND_DRAG_CLICK_SUPPRESS_MSEC := 220
+const HAND_DRAG_TOUCH_MOUSE_ECHO_POSITION_EPSILON := 28.0
 const HAND_DRAG_SCROLL_SENSITIVITY := 1.0
 const DEBUG_HAND_DRAG_SCROLL := false
 const DEBUG_HAND_DRAG_SCROLL_ENV := "PTCG_DEBUG_HAND_DRAG_SCROLL"
@@ -78,10 +79,10 @@ func handle_hand_drag_scroll_input(event: InputEvent, source: String = "external
 		if mouse_button.button_index != MOUSE_BUTTON_LEFT:
 			return false
 		if mouse_button.pressed:
-			_begin_hand_drag_scroll(hand_drag_event_position(event), hand_scroll, source)
+			_begin_hand_drag_scroll(hand_drag_event_position(event), hand_scroll, source, "mouse")
 			_accept_event()
 			return true
-		return _end_hand_drag_scroll(source)
+		return _end_hand_drag_scroll(source, hand_drag_event_position(event), "mouse")
 	if event is InputEventMouseMotion:
 		var motion := event as InputEventMouseMotion
 		if _as_bool(_get("_hand_drag_active"), false):
@@ -96,10 +97,10 @@ func handle_hand_drag_scroll_input(event: InputEvent, source: String = "external
 	if event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
 		if touch.pressed:
-			_begin_hand_drag_scroll(_screen_position_to_drag_local(touch.position), hand_scroll, source)
+			_begin_hand_drag_scroll(_screen_position_to_drag_local(touch.position), hand_scroll, source, "touch")
 			_accept_event()
 			return true
-		return _end_hand_drag_scroll(source)
+		return _end_hand_drag_scroll(source, _screen_position_to_drag_local(touch.position), "touch")
 	if event is InputEventScreenDrag:
 		var drag := event as InputEventScreenDrag
 		if _as_bool(_get("_hand_drag_active"), false):
@@ -116,6 +117,8 @@ func clear_hand_drag_click_suppression(source: String = "clear") -> void:
 	_set_scene_var("_hand_drag_active", false)
 	_set_scene_var("_hand_dragging", false)
 	_set_scene_var("_hand_drag_suppress_click_until_msec", 0)
+	_set_scene_var("_hand_drag_suppress_origin_position", Vector2(-1.0, -1.0))
+	_set_scene_var("_hand_drag_suppress_pointer_kind", "")
 	debug_hand_drag_scroll("clear-suppression source=%s" % source)
 
 
@@ -297,8 +300,7 @@ func handle_card_gallery_drag_scroll_input(event: InputEvent, scroll: ScrollCont
 			return false
 		if mouse_button.pressed:
 			_begin_card_gallery_drag_scroll(card_gallery_drag_event_position(event), scroll, false)
-			_accept_event()
-			return true
+			return false
 		return _end_card_gallery_drag_scroll(source)
 	if event is InputEventMouseMotion:
 		var motion := event as InputEventMouseMotion
@@ -316,8 +318,7 @@ func handle_card_gallery_drag_scroll_input(event: InputEvent, scroll: ScrollCont
 		var touch := event as InputEventScreenTouch
 		if touch.pressed:
 			_begin_card_gallery_drag_scroll(card_gallery_drag_event_position(event), scroll, true)
-			_accept_event()
-			return true
+			return false
 		return _end_card_gallery_drag_scroll(source)
 	if event is InputEventScreenDrag:
 		var drag := event as InputEventScreenDrag
@@ -487,9 +488,10 @@ func _handle_hand_drag_wheel(mouse_button: InputEventMouseButton, hand_scroll: S
 	return true
 
 
-func _begin_hand_drag_scroll(position: Vector2, hand_scroll: ScrollContainer, source: String = "") -> void:
+func _begin_hand_drag_scroll(position: Vector2, hand_scroll: ScrollContainer, source: String = "", pointer_kind: String = "") -> void:
 	if _as_bool(_get("_card_gallery_drag_active"), false):
 		cancel_card_gallery_drag_scroll("hand_drag_start")
+	_clear_hand_drag_click_suppression_for_fresh_press(position, pointer_kind, source)
 	refresh_hand_drag_scroll_extents(hand_scroll)
 	_set_scene_var("_hand_drag_active", true)
 	_set_scene_var("_hand_dragging", false)
@@ -536,7 +538,7 @@ func _update_hand_drag_scroll(position: Vector2, hand_scroll: ScrollContainer, s
 	return true
 
 
-func _end_hand_drag_scroll(source: String = "") -> bool:
+func _end_hand_drag_scroll(source: String = "", release_position: Vector2 = Vector2(-1.0, -1.0), pointer_kind: String = "") -> bool:
 	var was_dragging := _as_bool(_get("_hand_dragging"), false)
 	_set_scene_var("_hand_drag_active", false)
 	_set_scene_var("_hand_dragging", false)
@@ -544,8 +546,30 @@ func _end_hand_drag_scroll(source: String = "") -> bool:
 	debug_hand_drag_scroll("end source=%s was_dragging=%s scroll=%d range=%s" % [source, str(was_dragging), hand_scroll.scroll_horizontal if hand_scroll != null else -1, hand_drag_scroll_range_text(hand_scroll)])
 	if was_dragging:
 		_set_scene_var("_hand_drag_suppress_click_until_msec", Time.get_ticks_msec() + HAND_DRAG_CLICK_SUPPRESS_MSEC)
+		_set_scene_var("_hand_drag_suppress_origin_position", release_position)
+		_set_scene_var("_hand_drag_suppress_pointer_kind", pointer_kind)
 		_accept_event()
 	return was_dragging
+
+
+func _clear_hand_drag_click_suppression_for_fresh_press(position: Vector2, pointer_kind: String, source: String) -> void:
+	if not is_hand_drag_click_suppressed():
+		return
+	if _is_touch_drag_mouse_echo(position, pointer_kind):
+		debug_hand_drag_scroll("keep-suppression source=%s pointer=%s pos=%s" % [source, pointer_kind, str(position)])
+		return
+	clear_hand_drag_click_suppression("fresh_hand_press_%s" % source)
+
+
+func _is_touch_drag_mouse_echo(position: Vector2, pointer_kind: String) -> bool:
+	if pointer_kind != "mouse":
+		return false
+	if str(_get("_hand_drag_suppress_pointer_kind")) != "touch":
+		return false
+	var origin := _as_vector2(_get("_hand_drag_suppress_origin_position"), Vector2(-1.0, -1.0))
+	if origin.x < 0.0 or origin.y < 0.0:
+		return false
+	return position.distance_squared_to(origin) <= HAND_DRAG_TOUCH_MOUSE_ECHO_POSITION_EPSILON * HAND_DRAG_TOUCH_MOUSE_ECHO_POSITION_EPSILON
 
 
 func _handle_card_gallery_drag_wheel(mouse_button: InputEventMouseButton, scroll: ScrollContainer) -> bool:

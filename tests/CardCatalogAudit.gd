@@ -421,6 +421,11 @@ func _populate_player_fixture(state: GameState, player: PlayerState, owner_index
 	player.hand.append(CardInstance.create(_make_pokemon_data("HandStage2%d" % owner_index, "G", 150, "Stage 2", "", "Stage 1"), owner_index))
 	player.hand.append(CardInstance.create(_make_trainer_data("HandItem%d" % owner_index, "Item"), owner_index))
 	player.hand.append(CardInstance.create(_make_trainer_data("HandTool%d" % owner_index, "Tool"), owner_index))
+	for energy_type in ["L", "W", "G", "M", "F", "P", "D", "R", "C"]:
+		player.hand.append(CardInstance.create(
+			_make_energy_data("Hand%sEnergy%d" % [energy_type, owner_index], energy_type),
+			owner_index
+		))
 
 	player.deck.clear()
 	for cd in _make_deck_fixture_cards():

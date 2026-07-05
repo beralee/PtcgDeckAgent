@@ -8,6 +8,8 @@ extends Resource
 @export var deck_name: String = ""
 ## 来源URL
 @export var source_url: String = ""
+@export var source_provider: String = ""
+@export var source_id: String = ""
 ## 导入时间
 @export var import_date: String = ""
 ## Last local edit time in Unix milliseconds. 0 means unknown.
@@ -33,6 +35,8 @@ static func from_api_response(deck_id: int, data: Dictionary) -> DeckData:
 	var deck := DeckData.new()
 	deck.id = deck_id
 	deck.source_url = "https://tcg.mik.moe/decks/list/%d" % deck_id
+	deck.source_provider = "tcg_mik"
+	deck.source_id = str(deck_id)
 	deck.import_date = Time.get_datetime_string_from_system()
 	deck.updated_at = int(Time.get_unix_time_from_system() * 1000.0)
 	deck.deck_code = data.get("deckCode", "")
@@ -106,6 +110,8 @@ func to_dict() -> Dictionary:
 		"id": id,
 		"deck_name": deck_name,
 		"source_url": source_url,
+		"source_provider": source_provider,
+		"source_id": source_id,
 		"import_date": import_date,
 		"updated_at": updated_at,
 		"variant_name": variant_name,
@@ -122,6 +128,8 @@ static func from_dict(d: Dictionary) -> DeckData:
 	deck.id = int(d.get("id", 0))
 	deck.deck_name = d.get("deck_name", "")
 	deck.source_url = d.get("source_url", "")
+	deck.source_provider = d.get("source_provider", "")
+	deck.source_id = d.get("source_id", "")
 	deck.import_date = d.get("import_date", "")
 	deck.updated_at = int(d.get("updated_at", 0))
 	deck.variant_name = d.get("variant_name", "")

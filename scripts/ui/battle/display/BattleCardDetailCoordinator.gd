@@ -401,12 +401,13 @@ func show_card_detail(cd: CardData) -> void:
 	set_detail_action_mode("readonly", null)
 	var detail_title := _get_scene_var("_detail_title") as Label
 	if detail_title != null:
-		detail_title.text = cd.name
+		detail_title.text = cd.display_name()
 	var detail_card_view := _get_scene_var("_detail_card_view") as BattleCardView
 	if detail_card_view != null:
 		detail_card_view.setup_from_card_data(cd, BATTLE_CARD_VIEW.MODE_PREVIEW)
 		detail_card_view.set_badges("", "")
 		detail_card_view.set_info("", "")
+		detail_card_view.clear_battle_status()
 	var lines := detail_lines(cd)
 	var detail_content := _get_scene_var("_detail_content") as RichTextLabel
 	if detail_content != null:
@@ -434,11 +435,76 @@ func show_card_instance_detail(inst: CardInstance) -> void:
 		_scene.call("_sync_card_foil_effects", _get_scene_var("_detail_overlay") as Node)
 
 
+func show_pokemon_slot_detail(slot: PokemonSlot) -> void:
+	if slot == null:
+		return
+	var inst := slot.get_top_card()
+	if inst == null or inst.card_data == null:
+		return
+	show_card_instance_detail(inst)
+	var lines := detail_lines(inst.card_data)
+	var resource_lines := pokemon_slot_resource_detail_lines(slot)
+	if not resource_lines.is_empty():
+		lines.append("")
+		lines.append_array(resource_lines)
+	var detail_content := _get_scene_var("_detail_content") as RichTextLabel
+	if detail_content != null:
+		detail_content.text = "[color=#dceff8]%s[/color]" % "\n".join(lines)
+	var detail_card_view := _get_scene_var("_detail_card_view") as BattleCardView
+	if detail_card_view != null and _scene != null and _scene.has_method("_build_battle_status"):
+		var status_variant: Variant = _scene.call("_build_battle_status", slot)
+		if status_variant is Dictionary:
+			detail_card_view.set_battle_status(status_variant as Dictionary)
+	_call("_apply_portrait_popup_text_metrics")
+
+
+func pokemon_slot_resource_detail_lines(slot: PokemonSlot) -> Array[String]:
+	var lines: Array[String] = []
+	if slot == null:
+		return lines
+	var tool_name := card_instance_display_name(slot.attached_tool)
+	var energy_summary := pokemon_slot_attached_energy_summary(slot)
+	if tool_name == "" and energy_summary == "":
+		return lines
+	lines.append("[b]附加信息[/b]")
+	if tool_name != "":
+		lines.append("道具：%s" % tool_name)
+	if energy_summary != "":
+		lines.append("能量：%s" % energy_summary)
+	return lines
+
+
+func pokemon_slot_attached_energy_summary(slot: PokemonSlot) -> String:
+	if slot == null or slot.attached_energy.is_empty():
+		return ""
+	var order: Array[String] = []
+	var counts: Dictionary = {}
+	for energy: CardInstance in slot.attached_energy:
+		var energy_name := card_instance_display_name(energy)
+		if energy_name == "":
+			continue
+		if not counts.has(energy_name):
+			order.append(energy_name)
+			counts[energy_name] = 0
+		counts[energy_name] = int(counts[energy_name]) + 1
+	var parts: Array[String] = []
+	for energy_name: String in order:
+		var count := int(counts.get(energy_name, 0))
+		parts.append(energy_name if count <= 1 else "%s x%d" % [energy_name, count])
+	return " · ".join(parts)
+
+
+func card_instance_display_name(inst: CardInstance) -> String:
+	if inst == null or inst.card_data == null:
+		return ""
+	return inst.card_data.display_name()
+
+
 func detail_lines(cd: CardData) -> Array[String]:
 	var emap := _energy_name_map()
 	var lines: Array[String] = []
 	if cd.is_pokemon():
-		lines.append("[b]%s[/b]  %s宝可梦" % [cd.name, cd.stage])
+		lines.append("[b]%s[/b]  %s宝可梦" % [cd.display_name(), cd.stage])
 		if cd.mechanic != "":
 			lines.append("机制：%s" % cd.mechanic)
 		lines.append("属性：%s  HP：%d" % [emap.get(cd.energy_type, cd.energy_type), cd.hp])
@@ -454,8 +520,8 @@ func detail_lines(cd: CardData) -> Array[String]:
 			lines.append("由 %s 进化" % cd.evolves_from)
 		for ab: Dictionary in cd.abilities:
 			lines.append("")
-			lines.append("[b]特性：%s[/b]" % ab.get("name", ""))
-			var ab_text: String = ab.get("text", "")
+			lines.append("[b]特性：%s[/b]" % CardData.dictionary_display_name(ab))
+			var ab_text := CardData.dictionary_display_text(ab)
 			if ab_text != "":
 				lines.append(ab_text)
 		for atk: Dictionary in cd.attacks:
@@ -465,12 +531,12 @@ func detail_lines(cd: CardData) -> Array[String]:
 			for c: String in cost_str:
 				cost_display += emap.get(c, c)
 			var dmg: String = atk.get("damage", "")
-			lines.append("[b]招式：%s[/b]  [%s]  %s" % [atk.get("name", ""), cost_display, dmg])
-			var atk_text: String = atk.get("text", "")
+			lines.append("[b]招式：%s[/b]  [%s]  %s" % [CardData.dictionary_display_name(atk), cost_display, dmg])
+			var atk_text := CardData.dictionary_display_text(atk)
 			if atk_text != "":
 				lines.append(atk_text)
 	else:
-		lines.append("[b]%s[/b]  %s" % [cd.name, card_type_cn(cd)])
+		lines.append("[b]%s[/b]  %s" % [cd.display_name(), card_type_cn(cd)])
 		if cd.description != "":
 			lines.append("")
 			lines.append(cd.description)

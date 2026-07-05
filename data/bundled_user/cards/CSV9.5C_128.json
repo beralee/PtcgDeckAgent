@@ -1,0 +1,51 @@
+{
+	"name": "噗隆隆",
+	"card_type": "Pokemon",
+	"mechanic": "",
+	"label": "",
+	"description": "【钢】 硬直 \n在下一个对手的回合，这只宝可梦所受到的招式的伤害「-30」。\n\n【钢】【钢】 鲁莽头击 20\n\n\n",
+	"yoren_code": "P0965",
+	"set_code": "CSV9.5C",
+	"card_index": "128",
+	"set_code_en": "SFA",
+	"card_index_en": "43",
+	"name_en": "Varoom",
+	"artist": "HAGIYA Kaoru",
+	"rarity": "C",
+	"release_date": "2026-06-12T00:00:00+08:00",
+	"regulation_mark": "H",
+	"effect_id": "10fae18e35ba5ba1481dda8253f4b4d8",
+	"image_url": "https://tcg.mik.moe/static/img/CSV9.5C/128.png",
+	"image_local_path": "user://cards/images/CSV9.5C/128.png",
+	"is_tags": [],
+	"regulation_standard": true,
+	"regulation_expanded": true,
+	"energy_type": "M",
+	"stage": "Basic",
+	"hp": 70,
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"resistance_energy": "G",
+	"resistance_value": "-30",
+	"retreat_cost": 1,
+	"evolves_from": "",
+	"ancient_trait": "",
+	"attacks": [
+		{
+			"name": "硬直",
+			"text": "在下一个对手的回合，这只宝可梦所受到的招式的伤害「-30」。",
+			"cost": "M",
+			"damage": "",
+			"is_vstar_power": false
+		},
+		{
+			"name": "鲁莽头击",
+			"text": "",
+			"cost": "MM",
+			"damage": "20",
+			"is_vstar_power": false
+		}
+	],
+	"abilities": [],
+	"energy_provides": ""
+}

@@ -24,7 +24,7 @@ func _refresh() -> void:
 	if card_instance == null:
 		return
 	var cd: CardData = card_instance.card_data
-	_label_name.text = cd.name
+	_label_name.text = cd.display_name()
 	_label_type.text = _type_label(cd)
 	_label_info.text = _info_text(cd)
 	_update_style()

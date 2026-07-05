@@ -210,6 +210,8 @@ func test_import_panel_url_input_uses_feedback_style_focus_path() -> String:
 	await tree.process_frame
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
 	var url_input := scene.get_node_or_null("%UrlInput") as LineEdit
+	if url_input != null:
+		url_input.text = "https://tcg.mik.moe/decks/list/574793"
 
 	var press := InputEventScreenTouch.new()
 	press.pressed = true
@@ -361,12 +363,14 @@ func test_import_panel_url_input_touch_uses_feedback_focus_bridge() -> String:
 	var handled_press := bool(NonBattleTouchBridgeScript.handle_root_touch(import_panel, press)) if import_panel != null else false
 	var handled_release := bool(NonBattleTouchBridgeScript.handle_root_touch(import_panel, release)) if import_panel != null else false
 	var focus_requested := url_input != null and bool(url_input.get_meta(NonBattleTouchBridgeScript.FOCUS_REQUESTED_META, false))
+	var selected_all := url_input != null and bool(url_input.get_meta("_non_battle_line_edit_selected_all", false))
 
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
 	scene.queue_free()
 	return run_checks([
 		assert_true(handled_press and handled_release, "Deck import URL input taps should be handled by the shared focus bridge"),
 		assert_true(focus_requested, "Deck import URL input taps should request focus so Android can open the keyboard"),
+		assert_true(selected_all, "Tapping deck center import URL input should select all existing text"),
 	])
 
 
@@ -499,6 +503,25 @@ func test_deck_manager_sorts_decks_by_latest_edit_time_first() -> String:
 	])
 
 
+func test_deck_manager_sorts_naic_decks_before_newer_regular_decks() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	var newer_regular := _make_deck(910124, "Newer Regular Deck")
+	newer_regular.updated_at = 5000
+	var naic_deck := _make_deck(910125, "NAIC2025 Front Deck")
+	naic_deck.updated_at = 1000
+	var older_regular := _make_deck(910126, "Older Regular Deck")
+	older_regular.updated_at = 900
+	var decks: Array[DeckData] = [newer_regular, naic_deck, older_regular]
+
+	decks.sort_custom(scene._compare_decks_by_edit_time_desc)
+	scene.queue_free()
+
+	return run_checks([
+		assert_eq(decks[0].id, naic_deck.id, "Deck center should pin NAIC decks before newer regular decks in the All deck list"),
+		assert_eq(decks[1].id, newer_regular.id, "Deck center should keep regular decks sorted by edit time after NAIC decks"),
+	])
+
+
 func test_deck_view_card_list_hides_scrollbar_and_enables_drag_scroll() -> String:
 	var host := Control.new()
 	host.size = Vector2(1080, 2400)
@@ -525,7 +548,7 @@ func test_deck_view_card_list_hides_scrollbar_and_enables_drag_scroll() -> Strin
 	])
 
 
-func test_deck_view_dialog_uses_large_portrait_card_grid() -> String:
+func test_deck_view_dialog_uses_dense_portrait_hud_card_grid() -> String:
 	var host := Control.new()
 	host.size = Vector2(1080, 2400)
 	var dialog_helper = DeckViewDialogScript.new()
@@ -541,20 +564,228 @@ func test_deck_view_dialog_uses_large_portrait_card_grid() -> String:
 	var info_label := host.find_child("DeckViewInfoLabel", true, false) as Label
 	var close_button := host.find_child("DeckViewCloseButton", true, false) as Button
 	var first_tile := grid.get_child(0) as Control if grid != null and grid.get_child_count() > 0 else null
+	var first_tile_style := first_tile.get_theme_stylebox("panel") as StyleBoxFlat if first_tile != null else null
 	var vbar := scroll.get_v_scroll_bar() if scroll != null else null
 
 	host.queue_free()
 	return run_checks([
 		assert_true(dialog != null and dialog.size.x >= 990, "Portrait deck view dialog should use nearly the full phone width"),
 		assert_true(dialog != null and dialog.size.y >= 2280, "Portrait deck view dialog should be a tall mobile sheet instead of a desktop popup"),
-		assert_true(grid != null and grid.columns == 3, "Portrait deck view should use three large card columns"),
+		assert_true(grid != null and grid.columns == 4, "Portrait deck view should always show exactly four cards per row"),
 		assert_true(scroll != null and bool(scroll.get_meta("_non_battle_hidden_vertical_drag_scroll", false)), "Portrait deck view should use hidden surface drag scrolling"),
 		assert_true(vbar != null and not vbar.visible, "Portrait deck view should hide the right scrollbar"),
 		assert_true(info_label != null and info_label.get_theme_font_size("font_size") >= 31, "Portrait deck view metadata should use phone-readable text"),
 		assert_true(close_button != null and close_button.custom_minimum_size.y >= 96.0, "Portrait deck view should use a large content-level close button"),
 		assert_true(close_button != null and bool(close_button.get_meta("_non_battle_touch_bound", false)), "Portrait deck view close button should use the Android touch bridge"),
-		assert_true(first_tile != null and first_tile.custom_minimum_size.x >= 275.0, "Portrait deck view card tiles should fill the phone-width sheet instead of looking like desktop thumbnails"),
-		assert_true(first_tile != null and first_tile.custom_minimum_size.y >= 400.0, "Portrait deck view card tiles should leave room for a readable card image and name"),
+		assert_true(first_tile != null and first_tile.custom_minimum_size.x >= 230.0, "Portrait deck view card tiles should fill one quarter of a large portrait sheet"),
+		assert_true(first_tile_style != null and first_tile_style.border_color.a > 0.8, "Portrait deck view tiles should use a readable HUD border"),
+		assert_true(first_tile_style != null and first_tile_style.bg_color.a < 0.95, "Portrait deck view tiles should use translucent HUD panels"),
+	])
+
+
+func test_deck_view_dialog_compact_portrait_grid_fits_logical_phone_width() -> String:
+	var host := Control.new()
+	host.size = Vector2(390, 844)
+	var dialog_helper = DeckViewDialogScript.new()
+	var deck := _make_deck(910128, "Compact Portrait View Deck")
+	deck.cards = [
+		{"name": "Compact Portrait Test Card", "set_code": "", "card_index": "", "count": 60, "card_type": "Pokemon"},
+	]
+
+	dialog_helper.show_deck(host, deck)
+	var dialog := host.find_child("DeckViewDialog", true, false) as AcceptDialog
+	var grid := host.find_child("DeckViewCardGrid", true, false) as GridContainer
+	var info_label := host.find_child("DeckViewInfoLabel", true, false) as Label
+	var first_tile := grid.get_child(0) as Control if grid != null and grid.get_child_count() > 0 else null
+	var name_label := first_tile.find_child("DeckViewCardNameLabel", true, false) as Label if first_tile != null else null
+	var badge := first_tile.find_child("DeckViewCardCountBadge", true, false) as Label if first_tile != null else null
+	var layout: Dictionary = dialog_helper._deck_view_layout_profile(host, deck.total_cards)
+	var content_width := float(layout.get("dialog_size", Vector2i.ZERO).x) - float(layout.get("margin", 0)) * 2.0
+	var grid_width := float(layout.get("grid_min_width", 0.0))
+	var gap := int(layout.get("gap", 0))
+	var tile_width := int(layout.get("tile_width", 0))
+
+	host.queue_free()
+	return run_checks([
+		assert_true(dialog != null and dialog.size.x <= 390 and dialog.size.x >= 350, "Compact portrait deck view should use the available phone width without overflowing the viewport"),
+		assert_true(grid != null and grid.columns == 4, "Compact portrait deck view should show exactly four cards per row"),
+		assert_true(absf(grid_width - content_width) <= 1.0, "Compact portrait deck view grid should fill the dialog content width"),
+		assert_eq(tile_width * 4 + gap * 3, roundi(content_width), "Compact portrait card width and gap should exactly fill four columns"),
+		assert_true(first_tile != null and first_tile.custom_minimum_size.x >= 78.0, "Compact portrait cards should remain readable after four-column layout"),
+		assert_true(first_tile != null and first_tile.custom_minimum_size.x <= 92.0, "Compact portrait cards should not overflow the four-column grid"),
+		assert_true(name_label != null and name_label.get_theme_font_size("font_size") >= 36, "Compact portrait card names should be at least 3x larger for phone readability"),
+		assert_true(badge != null and badge.visible and badge.get_theme_font_size("font_size") >= 36, "Compact portrait copy count badge should be at least 3x larger for phone readability"),
+		assert_true(info_label != null and info_label.get_theme_font_size("font_size") <= 20, "Compact portrait metadata text should scale to logical phone pixels"),
+	])
+
+
+func test_deck_view_dialog_portrait_grid_fits_common_phone_widths() -> String:
+	var dialog_helper = DeckViewDialogScript.new()
+	var checks: Array[String] = []
+	for width: int in [390, 600, 768, 1080]:
+		var host := Control.new()
+		host.size = Vector2(width, width * 2)
+		var layout: Dictionary = dialog_helper._deck_view_layout_profile(host, 60)
+		var content_width := float(layout.get("dialog_size", Vector2i.ZERO).x) - float(layout.get("margin", 0)) * 2.0
+		var grid_width := float(layout.get("grid_min_width", 0.0))
+		var columns := int(layout.get("columns", 0))
+		checks.append(assert_true(absf(grid_width - content_width) <= 1.0, "Portrait deck view grid should fill content width at %dpx" % width))
+		checks.append(assert_eq(columns, 4, "Portrait deck view should keep exactly four columns at %dpx" % width))
+		host.queue_free()
+	return run_checks(checks)
+
+
+func test_deck_view_dialog_deduplicates_cards_and_marks_copy_count() -> String:
+	var host := Control.new()
+	host.size = Vector2(1600, 900)
+	var dialog_helper = DeckViewDialogScript.new()
+	var deck := _make_deck(910129, "HUD Count Deck")
+	deck.total_cards = 4
+	deck.cards = [
+		{"name": "Boss Orders", "set_code": "UTEST", "card_index": "001", "count": 2, "card_type": "Supporter"},
+		{"name": "Boss Orders", "set_code": "UTEST", "card_index": "001", "count": 1, "card_type": "Supporter"},
+		{"name": "Switch", "set_code": "", "card_index": "", "count": 1, "card_type": "Item"},
+	]
+
+	dialog_helper.show_deck(host, deck)
+	var grid := host.find_child("DeckViewCardGrid", true, false) as GridContainer
+	var boss_tiles := _deck_view_tiles_with_name(host, "Boss Orders")
+	var boss_tile := boss_tiles[0] as Control if boss_tiles.size() > 0 else null
+	var badge := boss_tile.find_child("DeckViewCardCountBadge", true, false) as Label if boss_tile != null else null
+
+	host.queue_free()
+	return run_checks([
+		assert_not_null(grid, "Deck view should render a card grid"),
+		assert_eq(grid.get_child_count() if grid != null else -1, 2, "Deck view should render each unique card only once"),
+		assert_eq(boss_tiles.size(), 1, "Deck view should merge duplicate entries for the same card"),
+		assert_eq(int(boss_tile.get_meta("deck_view_count", 0)) if boss_tile != null else 0, 3, "Merged deck view tile should keep the summed copy count"),
+		assert_true(badge != null and badge.visible and badge.text == "X3", "Merged deck view tile should show an X3 count badge"),
+	])
+
+
+func test_deck_view_landscape_hides_right_scrollbar_and_uses_drag_surface() -> String:
+	var host := Control.new()
+	host.size = Vector2(1600, 900)
+	var dialog_helper = DeckViewDialogScript.new()
+	var deck := _make_deck(910130, "Landscape HUD Deck")
+	deck.cards = []
+	for index: int in range(24):
+		deck.cards.append({
+			"name": "Card %02d" % index,
+			"set_code": "UTEST",
+			"card_index": "%03d" % index,
+			"count": 1,
+			"card_type": "Pokemon",
+		})
+
+	dialog_helper.show_deck(host, deck)
+	var scroll := host.find_child("DeckViewCardScroll", true, false) as ScrollContainer
+	var grid := host.find_child("DeckViewCardGrid", true, false) as GridContainer
+	var vbar := scroll.get_v_scroll_bar() if scroll != null else null
+
+	host.queue_free()
+	return run_checks([
+		assert_true(scroll != null and bool(scroll.get_meta("deck_card_list_drag_scroll_enabled", false)), "Landscape deck view should keep surface drag scrolling enabled"),
+		assert_true(scroll != null and bool(scroll.get_meta("_non_battle_hidden_vertical_drag_scroll", false)), "Landscape deck view should use hidden drag-scroll instead of a visible right bar"),
+		assert_true(vbar != null and not vbar.visible, "Landscape deck view should hide the native right scrollbar"),
+		assert_true(grid != null and grid.columns >= 8, "Landscape deck view should use a dense HUD grid"),
+	])
+
+
+func test_deck_view_tile_left_click_opens_card_detail_dialog() -> String:
+	var host := Control.new()
+	host.size = Vector2(1600, 900)
+	var dialog_helper = DeckViewDialogScript.new()
+	var deck := _make_deck(910131, "Click Detail Deck")
+	deck.cards = [{"name": "Clickable Card", "set_code": "UTEST", "card_index": "001", "count": 1, "card_type": "Pokemon"}]
+
+	dialog_helper.show_deck(host, deck)
+	var tile := _first_deck_view_tile(host)
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = Vector2(20, 20)
+	if tile != null:
+		tile.gui_input.emit(press)
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = press.position
+	if tile != null:
+		tile.gui_input.emit(release)
+	var detail := host.find_child("DeckViewCardDetailDialog", true, false) as AcceptDialog
+
+	host.queue_free()
+	return run_checks([
+		assert_not_null(tile, "Deck view should expose a clickable card tile"),
+		assert_not_null(detail, "Left-clicking a deck view card should reuse the card detail dialog"),
+	])
+
+
+func test_deck_view_tile_touch_tap_does_not_open_card_detail_dialog_in_portrait() -> String:
+	var host := Control.new()
+	host.size = Vector2(390, 844)
+	var dialog_helper = DeckViewDialogScript.new()
+	var deck := _make_deck(910132, "Tap Detail Deck")
+	deck.cards = [{"name": "Touchable Card", "set_code": "UTEST", "card_index": "001", "count": 1, "card_type": "Pokemon"}]
+
+	dialog_helper.show_deck(host, deck)
+	var tile := _first_deck_view_tile(host)
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.position = Vector2(20, 20)
+	if tile != null:
+		tile.gui_input.emit(press)
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.position = press.position
+	if tile != null:
+		tile.gui_input.emit(release)
+	var detail := host.find_child("DeckViewCardDetailDialog", true, false) as AcceptDialog
+
+	host.queue_free()
+	return run_checks([
+		assert_not_null(tile, "Deck view should expose a tappable card tile"),
+		assert_null(detail, "Tapping a portrait deck view card should not open the card detail dialog"),
+	])
+
+
+func test_deck_view_portrait_card_detail_dialog_is_disabled() -> String:
+	var host := Control.new()
+	host.size = Vector2(390, 844)
+	var dialog_helper = DeckViewDialogScript.new()
+	var card := CardDatabase.get_card("UTEST", "001")
+	var detail: AcceptDialog = null
+	if card != null:
+		detail = dialog_helper._show_card_detail(host, card)
+
+	host.queue_free()
+	return run_checks([
+		assert_not_null(card, "Test fixture card should be available"),
+		assert_null(detail, "Portrait deck view should not create a card detail popup"),
+	])
+
+
+func test_deck_manager_view_deck_uses_shared_hud_dedup_dialog() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	var deck := _make_deck(910133, "Deck Center HUD Preview")
+	deck.total_cards = 3
+	deck.cards = [
+		{"name": "Center Card", "set_code": "UTEST", "card_index": "001", "count": 1, "card_type": "Pokemon"},
+		{"name": "Center Card", "set_code": "UTEST", "card_index": "001", "count": 2, "card_type": "Pokemon"},
+	]
+
+	scene.call("_on_view_deck", deck)
+	var dialog := scene.find_child("DeckViewDialog", true, false) as AcceptDialog
+	var grid := scene.find_child("DeckViewCardGrid", true, false) as GridContainer
+	var tiles := _deck_view_tiles_with_name(scene, "Center Card")
+	var badge := (tiles[0] as Control).find_child("DeckViewCardCountBadge", true, false) as Label if tiles.size() > 0 else null
+
+	scene.queue_free()
+	return run_checks([
+		assert_not_null(dialog, "Deck center view action should open the shared deck view dialog"),
+		assert_eq(grid.get_child_count() if grid != null else -1, 1, "Deck center deck view should inherit unique-card rendering"),
+		assert_true(badge != null and badge.text == "X3", "Deck center deck view should show the merged copy badge"),
 	])
 
 
@@ -591,45 +822,9 @@ func test_deck_view_card_list_drag_moves_vertical_scroll_and_suppresses_click() 
 	return run_checks([
 		assert_true(press_consumed, "Deck view card-list drag should capture the initial press"),
 		assert_true(drag_consumed, "Deck view card-list drag should consume movement after the threshold"),
-		assert_true(final_scroll > 200, "Dragging upward should scroll the deck view card list downward with phone-friendly sensitivity"),
+		assert_eq(final_scroll, 200, "Dragging upward should move the deck view card list one-to-one with the pointer"),
 		assert_true(release_consumed, "Deck view card-list release should consume the completed drag"),
 		assert_true(suppress_until > Time.get_ticks_msec(), "Deck view card-list drag should suppress the follow-up click"),
-	])
-
-
-func test_deck_view_right_scrollbar_accepts_android_touch_drag() -> String:
-	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
-	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
-	var vbar := VScrollBar.new()
-	vbar.position = Vector2(900, 100)
-	vbar.size = Vector2(112, 1000)
-	vbar.custom_minimum_size = Vector2(112, 1000)
-	vbar.min_value = 0.0
-	vbar.max_value = 1600.0
-	vbar.page = 300.0
-	vbar.value = 0.0
-	NonBattleTouchBridgeScript.bind_range_touch(vbar)
-
-	var press := InputEventScreenTouch.new()
-	press.pressed = true
-	press.position = Vector2(956, 150)
-	var press_consumed := bool(NonBattleTouchBridgeScript.handle_range_touch(vbar, press))
-	var drag := InputEventScreenDrag.new()
-	drag.position = Vector2(956, 940)
-	var drag_consumed := bool(NonBattleTouchBridgeScript.handle_range_touch(vbar, drag))
-	var release := InputEventScreenTouch.new()
-	release.pressed = false
-	release.position = drag.position
-	var release_consumed := bool(NonBattleTouchBridgeScript.handle_range_touch(vbar, release))
-	var final_value := float(vbar.value)
-	vbar.queue_free()
-	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
-
-	return run_checks([
-		assert_true(press_consumed, "Portrait deck view scrollbar should capture Android ScreenTouch press"),
-		assert_true(drag_consumed, "Portrait deck view scrollbar should capture Android ScreenDrag"),
-		assert_true(release_consumed, "Portrait deck view scrollbar should consume release after dragging"),
-		assert_true(final_value > 900.0, "Dragging near the bottom of the portrait scrollbar should move the scroll value"),
 	])
 
 
@@ -665,6 +860,22 @@ func test_deck_manager_portrait_rename_uses_hud_dialog() -> String:
 	var input_font: int = scene._rename_input.get_theme_font_size("font_size") if scene._rename_input != null else 0
 	var confirm_height: float = scene._rename_confirm_button.custom_minimum_size.y if scene._rename_confirm_button != null else 0.0
 	var confirm_font: int = scene._rename_confirm_button.get_theme_font_size("font_size") if scene._rename_confirm_button != null else 0
+	var clear_button := scene.find_child("DeckRenameClearButton", true, false) as Button
+	var clear_height: float = clear_button.custom_minimum_size.y if clear_button != null else 0.0
+	var clear_font: int = clear_button.get_theme_font_size("font_size") if clear_button != null else 0
+	var clear_bound := bool(clear_button.get_meta("_non_battle_touch_bound", false)) if clear_button != null else false
+	if scene._rename_input != null:
+		var input_press := InputEventScreenTouch.new()
+		input_press.pressed = true
+		scene._rename_input.gui_input.emit(input_press)
+		var input_release := InputEventScreenTouch.new()
+		input_release.pressed = false
+		scene._rename_input.gui_input.emit(input_release)
+	var rename_selected_all := scene._rename_input != null and bool(scene._rename_input.get_meta("_non_battle_line_edit_selected_all", false))
+	if clear_button != null:
+		clear_button.emit_signal("pressed")
+	var cleared_text: String = scene._rename_input.text if scene._rename_input != null else "__missing__"
+	var confirm_disabled_after_clear: bool = scene._rename_confirm_button.disabled if scene._rename_confirm_button != null else false
 
 	scene.queue_free()
 	return run_checks([
@@ -674,6 +885,11 @@ func test_deck_manager_portrait_rename_uses_hud_dialog() -> String:
 		assert_true(panel_style != null and panel_style.border_color.a > 0.85, "Portrait rename HUD dialog panel should use the HUD border style"),
 		assert_null(default_dialog, "Portrait deck-row rename should not use the default AcceptDialog window"),
 		assert_true(input_height >= 98.0 and input_font >= 29, "Portrait rename HUD input should remain phone-sized"),
+		assert_true(rename_selected_all, "Tapping deck center rename input should select all existing text"),
+		assert_true(clear_height >= 104.0 and clear_font >= 33, "Portrait rename clear button should remain phone-sized"),
+		assert_true(clear_bound, "Portrait rename clear button should be bound to the Android touch bridge"),
+		assert_eq(cleared_text, "", "Portrait rename clear button should empty the current deck name"),
+		assert_true(confirm_disabled_after_clear, "Portrait rename confirm should be disabled after clearing the name"),
 		assert_true(confirm_height >= 104.0 and confirm_font >= 33, "Portrait rename HUD confirm button should remain phone-sized"),
 	])
 
@@ -793,7 +1009,8 @@ func test_deck_manager_portrait_hud_row_actions_commit_rename_and_delete() -> St
 	CardDatabase.save_deck(_make_deck(910031, "Portrait HUD Action Deck"))
 	scene.call("_refresh_deck_list")
 	var deck_list := scene.get_node_or_null("%DeckList") as VBoxContainer
-	var rename_button := deck_list.find_child("DeckRowRenameButton", true, false) as Button if deck_list != null else null
+	var target_row := _deck_row_with_id(deck_list, 910031)
+	var rename_button := target_row.find_child("DeckRowRenameButton", true, false) as Button if target_row != null else null
 	if rename_button != null:
 		rename_button.emit_signal("pressed")
 	if scene._rename_input != null:
@@ -808,7 +1025,8 @@ func test_deck_manager_portrait_hud_row_actions_commit_rename_and_delete() -> St
 
 	scene.call("_refresh_deck_list")
 	deck_list = scene.get_node_or_null("%DeckList") as VBoxContainer
-	var delete_button := deck_list.find_child("DeckRowDeleteButton", true, false) as Button if deck_list != null else null
+	target_row = _deck_row_with_id(deck_list, 910031)
+	var delete_button := target_row.find_child("DeckRowDeleteButton", true, false) as Button if target_row != null else null
 	if delete_button != null:
 		delete_button.emit_signal("pressed")
 	var delete_confirm := scene.find_child("DeleteDeckConfirmButton", true, false) as Button
@@ -882,6 +1100,56 @@ func test_deck_manager_edit_requests_deck_editor_from_portrait_mode() -> String:
 	])
 
 
+func test_deck_manager_web_portrait_edit_prompts_before_deck_editor() -> String:
+	var previous_mode := str(GameManager.non_battle_layout_mode)
+	if GameManager.has_method("set_scene_navigation_suppressed_for_tests"):
+		GameManager.call("set_scene_navigation_suppressed_for_tests", true)
+	if GameManager.has_method("consume_last_requested_scene_path"):
+		GameManager.call("consume_last_requested_scene_path")
+	if GameManager.has_method("consume_deck_editor_id"):
+		GameManager.call("consume_deck_editor_id")
+	GameManager.non_battle_layout_mode = GameManager.NON_BATTLE_LAYOUT_PORTRAIT
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	scene.set("_test_web_runtime_override", true)
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_apply_hud_theme")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	var deck := _make_deck(910034, "Web Portrait Edit Prompt Deck")
+
+	scene.call("_on_edit_deck", deck)
+	var requested_before_confirm := str(GameManager.call("consume_last_requested_scene_path"))
+	var editor_deck_id_before_confirm := int(GameManager.call("consume_deck_editor_id"))
+	var overlay := scene.find_child("DeckActionHudDialog", true, false) as Control
+	var title := scene.find_child("DeckActionHudTitle", true, false) as Label
+	var continue_button := scene.find_child("WebDeckEditContinueButton", true, false) as Button
+	var cancel_button := scene.find_child("WebDeckEditCancelButton", true, false) as Button
+	if continue_button != null:
+		continue_button.emit_signal("pressed")
+	var requested_after_confirm := str(GameManager.call("consume_last_requested_scene_path"))
+	var editor_deck_id_after_confirm := int(GameManager.call("consume_deck_editor_id"))
+	var overlay_visible_after_confirm := bool(scene.call("_is_deck_action_hud_dialog_visible"))
+
+	scene.queue_free()
+	GameManager.non_battle_layout_mode = previous_mode
+	if GameManager.has_method("set_scene_navigation_suppressed_for_tests"):
+		GameManager.call("set_scene_navigation_suppressed_for_tests", false)
+	return run_checks([
+		assert_eq(requested_before_confirm, "", "Web portrait deck center edit should not open DeckEditor before confirmation"),
+		assert_eq(editor_deck_id_before_confirm, -1, "Web portrait deck center edit should not pass a deck id before confirmation"),
+		assert_not_null(overlay, "Web portrait deck center edit should show a HUD prompt"),
+		assert_true(overlay != null and overlay.visible, "Web portrait deck edit prompt should be visible"),
+		assert_eq(title.text if title != null else "", "\u8bf7\u5148\u6a2a\u5c4f", "Web portrait deck edit prompt should ask the user to rotate manually"),
+		assert_not_null(cancel_button, "Web portrait deck edit prompt should provide a cancel button"),
+		assert_not_null(continue_button, "Web portrait deck edit prompt should provide a confirmation button"),
+		assert_eq(requested_after_confirm, GameManager.SCENE_DECK_EDITOR, "Confirming the web portrait prompt should open DeckEditor"),
+		assert_eq(editor_deck_id_after_confirm, 910034, "Confirming the web portrait prompt should pass the selected deck id"),
+		assert_false(overlay_visible_after_confirm, "Confirming the web portrait prompt should close the HUD prompt"),
+	])
+
+
 func test_deck_manager_portrait_edit_button_touch_requests_deck_editor_after_import_modal_close() -> String:
 	var previous_mode := str(GameManager.non_battle_layout_mode)
 	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
@@ -937,6 +1205,7 @@ func test_deck_manager_portrait_edit_button_touch_requests_deck_editor_after_imp
 func test_deck_manager_portrait_root_touch_routes_deck_row_edit_button() -> String:
 	var previous_mode := str(GameManager.non_battle_layout_mode)
 	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	_cleanup_decks([910034])
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
 	if GameManager.has_method("set_scene_navigation_suppressed_for_tests"):
 		GameManager.call("set_scene_navigation_suppressed_for_tests", true)
@@ -952,19 +1221,25 @@ func test_deck_manager_portrait_root_touch_routes_deck_row_edit_button() -> Stri
 	tree.root.add_child(scene)
 	scene.call("_apply_hud_theme")
 	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
 
-	var deck := _make_deck(910034, "Portrait Root Touch Edit Deck")
+	var deck := _make_deck(910034, "NAIC2025 Portrait Root Touch Edit Deck")
+	CardDatabase.save_deck(deck)
+	scene.call("_refresh_deck_list")
+	await tree.process_frame
 	var deck_list := scene.get_node_or_null("%DeckList") as VBoxContainer
-	var row := scene.call("_create_deck_item", deck) as Control
-	if deck_list != null and row != null:
-		deck_list.add_child(row)
-	var buttons: Array[Button] = []
-	_collect_buttons(row, buttons)
-	var edit_button := buttons[1] if buttons.size() > 1 else null
-	if edit_button != null:
-		edit_button.size = Vector2(180, 80)
-		edit_button.global_position = Vector2(120, 300)
+	var row := _deck_row_with_id(deck_list, 910034)
+	var deck_scroll := scene.find_child("DeckScroll", true, false) as ScrollContainer
+	if deck_scroll != null and row != null:
+		var target_scroll := maxi(0, roundi(row.position.y - 12.0))
+		deck_scroll.scroll_vertical = target_scroll
+		deck_scroll.set_deferred("scroll_vertical", target_scroll)
+		await tree.process_frame
+		row = _deck_row_with_id(deck_list, 910034)
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var edit_button := row.find_child("DeckRowEditButton", true, false) as Button if row != null else null
 	var touch_position := edit_button.get_global_rect().get_center() if edit_button != null else Vector2(160, 340)
+	var hit_button := NonBattleTouchBridgeScript.button_at_position(scene, touch_position)
 	var press := InputEventScreenTouch.new()
 	press.pressed = true
 	press.position = touch_position
@@ -977,12 +1252,20 @@ func test_deck_manager_portrait_root_touch_routes_deck_row_edit_button() -> Stri
 	var editor_deck_id := int(GameManager.call("consume_deck_editor_id"))
 
 	scene.queue_free()
+	_cleanup_decks([910034])
 	GameManager.non_battle_layout_mode = previous_mode
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
 	if GameManager.has_method("set_scene_navigation_suppressed_for_tests"):
 		GameManager.call("set_scene_navigation_suppressed_for_tests", false)
 	return run_checks([
 		assert_not_null(edit_button, "Deck row should expose an edit button for root touch routing"),
+		assert_true(hit_button == edit_button, "DeckManager root ScreenTouch bridge should hit the selected edit button at %s, got %s with row %s edit %s scroll %s" % [
+			str(touch_position),
+			str(hit_button.name if hit_button != null else "null"),
+			str(row.get_global_rect() if row != null else Rect2()),
+			str(edit_button.get_global_rect() if edit_button != null else Rect2()),
+			str(deck_scroll.scroll_vertical if deck_scroll != null else -1),
+		]),
 		assert_eq(requested_scene, GameManager.SCENE_DECK_EDITOR, "DeckManager root ScreenTouch bridge should route portrait edit taps to DeckEditor"),
 		assert_eq(editor_deck_id, 910034, "DeckManager root ScreenTouch bridge should preserve selected deck id"),
 	])
@@ -2050,6 +2333,32 @@ func test_confirm_existing_deck_rename_persists_trimmed_name() -> String:
 	])
 
 
+func test_existing_deck_rename_clear_button_clears_current_name() -> String:
+	_cleanup_decks([910009])
+	var deck := _make_deck(910009, "Name To Replace")
+	CardDatabase.save_deck(deck)
+
+	var scene: Control = DeckManagerScene.instantiate()
+	scene._on_rename_deck(deck)
+
+	var clear_button := scene.find_child("DeckRenameClearButton", true, false) as Button
+	var initial_text: String = scene._rename_input.text if scene._rename_input != null else "__missing__"
+	if clear_button != null:
+		clear_button.emit_signal("pressed")
+	var cleared_text: String = scene._rename_input.text if scene._rename_input != null else "__missing__"
+	var confirm_disabled: bool = scene._rename_confirm_button.disabled if scene._rename_confirm_button != null else false
+
+	_cleanup_decks([deck.id])
+	scene.queue_free()
+
+	return run_checks([
+		assert_not_null(clear_button, "Existing deck rename dialog should expose a clear button"),
+		assert_eq(initial_text, "Name To Replace", "Rename input should start with the current deck name"),
+		assert_eq(cleared_text, "", "Rename clear button should remove the current deck name"),
+		assert_true(confirm_disabled, "Confirm should be disabled after clearing to an empty deck name"),
+	])
+
+
 func test_duplicate_import_rename_dialog_stays_clamped_with_visible_confirm_controls() -> String:
 	var scene: Control = DeckManagerScene.instantiate()
 	scene._show_import_rename_dialog("Duplicate Deck Name")
@@ -2061,13 +2370,15 @@ func test_duplicate_import_rename_dialog_stays_clamped_with_visible_confirm_cont
 			if child is ScrollContainer:
 				scroll = child
 				break
+	var clear_button := scene.find_child("DeckRenameClearButton", true, false) as Button
 
 	scene.queue_free()
 
 	return run_checks([
 		assert_not_null(dialog, "duplicate import should open the rename dialog"),
-		assert_eq(dialog.size, Vector2i(460, 230), "rename dialog should use the fixed clamped size"),
+		assert_eq(dialog.size, Vector2i(460, 300), "rename dialog should use the fixed clamped size with room for the clear button"),
 		assert_not_null(scroll, "rename dialog should wrap content in a scroll container"),
+		assert_not_null(clear_button, "rename dialog should expose a clear-name button"),
 		assert_not_null(scene._rename_confirm_button, "rename dialog should still expose the confirm button"),
 	])
 
@@ -2199,6 +2510,43 @@ func _collect_labels(node: Node, out: Array[Label]) -> void:
 		out.append(node as Label)
 	for child: Node in node.get_children():
 		_collect_labels(child, out)
+
+
+func _first_deck_view_tile(node: Node) -> Control:
+	var tiles: Array[Control] = []
+	_collect_deck_view_tiles(node, tiles)
+	return tiles[0] if not tiles.is_empty() else null
+
+
+func _deck_view_tiles_with_name(node: Node, card_name: String) -> Array[Control]:
+	var tiles: Array[Control] = []
+	_collect_deck_view_tiles(node, tiles)
+	var result: Array[Control] = []
+	for tile: Control in tiles:
+		if str(tile.get_meta("deck_view_card_name", "")) == card_name:
+			result.append(tile)
+	return result
+
+
+func _collect_deck_view_tiles(node: Node, out: Array[Control]) -> void:
+	if node == null:
+		return
+	if node is Control and node.has_meta("deck_view_card_name"):
+		out.append(node as Control)
+	for child: Node in node.get_children():
+		_collect_deck_view_tiles(child, out)
+
+
+func _deck_row_with_id(node: Node, deck_id: int) -> Control:
+	if node == null:
+		return null
+	if node is Control and int(node.get_meta("deck_id", -1)) == deck_id:
+		return node as Control
+	for child: Node in node.get_children():
+		var row := _deck_row_with_id(child, deck_id)
+		if row != null:
+			return row
+	return null
 
 
 func _first_confirmation_dialog(node: Node) -> ConfirmationDialog:

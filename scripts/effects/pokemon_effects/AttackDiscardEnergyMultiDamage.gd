@@ -86,6 +86,8 @@ func execute_attack(
 		for attached: CardInstance in slot.attached_energy:
 			if selected_ids.has(attached.instance_id) and _matches_energy_type(attached, state):
 				player.discard_pile.append(attached)
+				if slot == attacker:
+					_record_attack_effect_discarded_attached_energy(attacker, attached, state)
 			else:
 				kept.append(attached)
 		slot.attached_energy = kept
@@ -102,6 +104,11 @@ func _matches_energy_type(card: CardInstance, state: GameState = null) -> bool:
 		return true
 	if cd.energy_provides == energy_type or cd.energy_type == energy_type:
 		return true
+	var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null) if state != null else null
+	if processor != null and processor.has_method("get_energy_type"):
+		var provided := str(processor.call("get_energy_type", card, state))
+		if provided == energy_type or provided == "ANY":
+			return true
 	if cd.card_type != "Special Energy" or _is_special_energy_suppressed(state):
 		return false
 	if cd.effect_id == LEGACY_ENERGY_EFFECT_ID:

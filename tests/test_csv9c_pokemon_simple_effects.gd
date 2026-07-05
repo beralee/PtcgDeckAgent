@@ -6,7 +6,6 @@ const EarlyEvolutionEffect := preload("res://scripts/effects/pokemon_effects/CSV
 const PreventBasicDamageEffect := preload("res://scripts/effects/pokemon_effects/CSV9CSimplePreventDamageFromBasicAfterAttack.gd")
 const TeraBenchBonusEffect := preload("res://scripts/effects/pokemon_effects/CSV9CSimpleBonusIfOwnBenchTera.gd")
 const DiscardEnergyCountDamageEffect := preload("res://scripts/effects/pokemon_effects/CSV9CSimpleDiscardPileEnergyCountDamage.gd")
-const JoltikChargeEffect := preload("res://scripts/effects/pokemon_effects/CSV9CSimpleAttachGrassLightningFromDeck.gd")
 const RecoverPokemonEffect := preload("res://scripts/effects/pokemon_effects/CSV9CSimpleRecoverPokemonFromDiscard.gd")
 const HealSelfEffect := preload("res://scripts/effects/pokemon_effects/CSV9CSimpleHealSelfAfterAttack.gd")
 const OpponentSpecialEnergyDamageEffect := preload("res://scripts/effects/pokemon_effects/CSV9CSimpleOpponentSpecialEnergyCountDamage.gd")
@@ -26,6 +25,7 @@ const AttackHealOwnBenchPokemonScript := preload("res://scripts/effects/pokemon_
 const AttackSearchAndAttachScript := preload("res://scripts/effects/pokemon_effects/AttackSearchAndAttach.gd")
 const AttackItemLockNextTurnScript := preload("res://scripts/effects/pokemon_effects/AttackItemLockNextTurn.gd")
 const AttackSelfAllAttacksLockNextTurnScript := preload("res://scripts/effects/pokemon_effects/AttackSelfAllAttacksLockNextTurn.gd")
+const EffectSwitchPokemonScript := preload("res://scripts/effects/trainer_effects/EffectSwitchPokemon.gd")
 
 
 class RiggedCoinFlipper extends CoinFlipper:
@@ -252,6 +252,171 @@ func test_csv95c_023_flareon_attaches_basic_energy_to_one_pokemon_and_locks_seco
 	])
 
 
+func test_csv95c_023_flareon_carnelian_lock_clears_after_retreat_and_reentry() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+	var player := state.players[0]
+
+	var flareon_cd: CardData = CardDatabase.get_card("CSV9.5C", "023")
+	if flareon_cd == null:
+		return "CSV9.5C_023 Flareon ex should load from CardDatabase"
+	gsm.effect_processor.register_pokemon_card(flareon_cd)
+	var flareon := _make_slot(flareon_cd, 0)
+	player.active_pokemon = flareon
+	player.bench.clear()
+	var pivot := _make_slot(_pokemon("Retreat Pivot", "Basic", "", "C", 100), 0)
+	player.bench.append(pivot)
+	state.players[1].active_pokemon = _make_slot(_pokemon("Opponent Active", "Basic", "", "C", 100), 1)
+
+	_attach_energy(flareon, 0, "R", 1)
+	_attach_energy(flareon, 0, "W", 1)
+	_attach_energy(flareon, 0, "L", 1)
+	var retreat_payment := _attach_energy(flareon, 0, "C", 2)
+
+	var attack_effects := gsm.effect_processor.get_attack_effects_for_slot(flareon, 1)
+	for effect: BaseEffect in attack_effects:
+		effect.execute_attack(flareon, state.players[1].active_pokemon, 1, state)
+
+	state.turn_number += 2
+	var attack0_locked_before_retreat := not gsm.can_use_attack(0, 0)
+	var attack1_locked_before_retreat := not gsm.can_use_attack(0, 1)
+	var retreated := gsm.retreat(0, retreat_payment, pivot)
+	var lock_kept_after_retreat := false
+	for effect_data: Dictionary in flareon.effects:
+		if str(effect_data.get("type", "")) == "attack_lock_all":
+			lock_kept_after_retreat = true
+			break
+
+	player.bench.erase(flareon)
+	player.bench.append(player.active_pokemon)
+	player.active_pokemon = flareon
+	flareon.mark_entered_active_from_bench(state.turn_number)
+	var attack0_available_after_reentry := gsm.can_use_attack(0, 0)
+	var attack1_available_after_reentry := gsm.can_use_attack(0, 1)
+
+	return run_checks([
+		assert_eq(attack_effects.size(), 1, "CSV9.5C_023 second attack should have one registered effect"),
+		assert_true(attack_effects[0] is AttackSelfAllAttacksLockNextTurnScript, "CSV9.5C_023 should register Carnelian as the whole-Pokemon next-turn attack lock"),
+		assert_true(attack0_locked_before_retreat, "Carnelian should block Burning Charge on the next own turn before leaving Active"),
+		assert_true(attack1_locked_before_retreat, "Carnelian should block Carnelian on the next own turn before leaving Active"),
+		assert_true(retreated, "The real GameStateMachine retreat path should succeed"),
+		assert_false(lock_kept_after_retreat, "Carnelian's attack_lock_all marker should clear when Flareon ex leaves Active"),
+		assert_true(attack0_available_after_reentry, "Burning Charge should be usable after Flareon ex retreats and re-enters Active"),
+		assert_true(attack1_available_after_reentry, "Carnelian should be usable after Flareon ex retreats and re-enters Active"),
+	])
+
+
+func test_csv95c_023_flareon_carnelian_lock_clears_after_real_attack_retreat_and_switch() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+	var player := state.players[0]
+
+	var flareon_cd: CardData = CardDatabase.get_card("CSV9.5C", "023")
+	if flareon_cd == null:
+		return "CSV9.5C_023 Flareon ex should load from CardDatabase"
+	gsm.effect_processor.register_pokemon_card(flareon_cd)
+	var flareon := _make_slot(flareon_cd, 0)
+	player.active_pokemon = flareon
+	player.bench.clear()
+	var pivot := _make_slot(_pokemon("Switch Pivot", "Basic", "", "C", 120), 0)
+	player.bench.append(pivot)
+	state.players[1].active_pokemon = _make_slot(_pokemon("High HP Opponent", "Basic", "", "C", 400), 1)
+	state.players[0].deck.append(CardInstance.create(_trainer("Player draw filler"), 0))
+	state.players[1].deck.append(CardInstance.create(_trainer("Opponent draw filler"), 1))
+	for pi: int in 2:
+		for i: int in 6:
+			state.players[pi].prizes.append(CardInstance.create(_trainer("Prize %d %d" % [pi, i]), pi))
+
+	_attach_energy(flareon, 0, "R", 1)
+	_attach_energy(flareon, 0, "W", 1)
+	_attach_energy(flareon, 0, "L", 1)
+	var retreat_payment := _attach_energy(flareon, 0, "C", 2)
+
+	var attacked := gsm.use_attack(0, 1)
+	var lock_marked_after_attack := false
+	for effect_data: Dictionary in flareon.effects:
+		if str(effect_data.get("type", "")) == "attack_lock_all":
+			lock_marked_after_attack = true
+			break
+	gsm.end_turn(1)
+	var attack_locked_next_own_turn := not gsm.can_use_attack(0, 1)
+	var retreated := gsm.retreat(0, retreat_payment, pivot)
+
+	var switch_effect := EffectSwitchPokemonScript.new("self")
+	var switch_card := CardInstance.create(_trainer("Switch", "Item"), 0)
+	switch_effect.execute(switch_card, [{"self_switch_target": [flareon]}], state)
+	var flareon_is_active_again := player.active_pokemon == flareon
+	var lock_kept_after_reentry := false
+	for effect_data: Dictionary in flareon.effects:
+		if str(effect_data.get("type", "")) == "attack_lock_all":
+			lock_kept_after_reentry = true
+			break
+	var carnelian_available_after_reentry := gsm.can_use_attack(0, 1)
+
+	return run_checks([
+		assert_true(attacked, "Carnelian should resolve through the real GameStateMachine attack path"),
+		assert_true(lock_marked_after_attack, "Carnelian should create the next-own-turn attack lock marker"),
+		assert_true(attack_locked_next_own_turn, "Carnelian should lock attacks on Flareon's next own turn before leaving Active"),
+		assert_true(retreated, "The real retreat path should move Flareon to the Bench"),
+		assert_true(flareon_is_active_again, "Switch should bring the same Flareon slot back to Active"),
+		assert_false(lock_kept_after_reentry, "The attack_lock_all marker must not survive retreat and re-entry"),
+		assert_true(carnelian_available_after_reentry, "Carnelian should be usable after Flareon leaves Active and re-enters with enough Energy"),
+	])
+
+
+func test_csv95c_023_flareon_after_retreat_can_still_fail_from_missing_energy_not_lock() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var state := gsm.game_state
+	var player := state.players[0]
+
+	var flareon_cd: CardData = CardDatabase.get_card("CSV9.5C", "023")
+	if flareon_cd == null:
+		return "CSV9.5C_023 Flareon ex should load from CardDatabase"
+	gsm.effect_processor.register_pokemon_card(flareon_cd)
+	var flareon := _make_slot(flareon_cd, 0)
+	player.active_pokemon = flareon
+	player.bench.clear()
+	var pivot := _make_slot(_pokemon("Energy Payment Pivot", "Basic", "", "C", 120), 0)
+	player.bench.append(pivot)
+	state.players[1].active_pokemon = _make_slot(_pokemon("High HP Opponent", "Basic", "", "C", 400), 1)
+	state.players[0].deck.append(CardInstance.create(_trainer("Player draw filler"), 0))
+	state.players[1].deck.append(CardInstance.create(_trainer("Opponent draw filler"), 1))
+	for pi: int in 2:
+		for i: int in 6:
+			state.players[pi].prizes.append(CardInstance.create(_trainer("Prize %d %d" % [pi, i]), pi))
+
+	var fire_energy := _attach_energy(flareon, 0, "R", 1)[0]
+	_attach_energy(flareon, 0, "W", 1)
+	var lightning_energy := _attach_energy(flareon, 0, "L", 1)[0]
+
+	var attacked := gsm.use_attack(0, 1)
+	gsm.end_turn(1)
+	var locked_before_retreat := not gsm.can_use_attack(0, 1)
+	var retreated := gsm.retreat(0, [fire_energy, lightning_energy], pivot)
+
+	var switch_effect := EffectSwitchPokemonScript.new("self")
+	var switch_card := CardInstance.create(_trainer("Switch", "Item"), 0)
+	switch_effect.execute(switch_card, [{"self_switch_target": [flareon]}], state)
+	var reason_after_reentry := gsm.get_attack_unusable_reason(0, 1)
+	var lock_marker_kept := false
+	for effect_data: Dictionary in flareon.effects:
+		if str(effect_data.get("type", "")) == "attack_lock_all":
+			lock_marker_kept = true
+			break
+
+	return run_checks([
+		assert_true(attacked, "Carnelian should resolve through the real GameStateMachine attack path"),
+		assert_true(locked_before_retreat, "Carnelian should lock attacks before Flareon leaves Active"),
+		assert_true(retreated, "Retreat should be legal when paying with attached R and L Energy"),
+		assert_false(lock_marker_kept, "Retreat should clear the next-own-turn attack lock marker"),
+		assert_false(gsm.can_use_attack(0, 1), "Carnelian should remain unusable if retreat payment removed required Energy"),
+		assert_str_contains(reason_after_reentry, "能量不足", "After re-entry with missing Energy, the unusable reason should be Energy shortage, not Carnelian's lock"),
+	])
+
+
 func test_csv9c_001_exeggcute_early_evolution_full_deck_visible_and_executes() -> String:
 	var state := _make_state()
 	var player: PlayerState = state.players[0]
@@ -337,6 +502,8 @@ func test_csv9c_021_034_038_damage_rules_and_ceruledge_energy_discard() -> Strin
 func test_csv9c_063_joltik_charge_full_deck_assignment_and_per_type_limit() -> String:
 	var state := _make_state()
 	var player: PlayerState = state.players[0]
+	var joltik_cd := _pokemon("Joltik", "Basic", "", "L", 30, [_attack("Joltik Charge", "C", "")])
+	player.active_pokemon = _make_slot(joltik_cd, 0)
 	player.bench.append(_make_slot(_pokemon("Bench Target", "Basic", "", "L"), 0))
 	player.deck.clear()
 	var grass_a := CardInstance.create(_energy("Grass A", "G"), 0)
@@ -350,18 +517,18 @@ func test_csv9c_063_joltik_charge_full_deck_assignment_and_per_type_limit() -> S
 	player.deck.append_array([grass_a, item, grass_b, grass_c, lightning_a, lightning_b, lightning_c, fire])
 	var visible_deck := player.deck.duplicate()
 
-	var effect = JoltikChargeEffect.new(2, -1)
-	var steps: Array[Dictionary] = effect.get_attack_interaction_steps(player.active_pokemon.get_top_card(), _attack("Joltik Charge", "C", ""), state)
+	var effect = CSV9CEffects.AttackJoltikCharge.new(0)
+	var steps: Array[Dictionary] = effect.get_attack_interaction_steps(player.active_pokemon.get_top_card(), joltik_cd.attacks[0], state)
 	var grass_step: Dictionary = steps[0] if steps.size() > 0 else {}
 	var lightning_step: Dictionary = steps[1] if steps.size() > 1 else {}
 	var bench_target: PokemonSlot = player.bench[0]
 	effect.set_attack_interaction_context([{
-		"csv9c_grass_energy_assignments": [
+		"csv9c_joltik_grass_assignments": [
 			{"source": grass_a, "target": bench_target},
 			{"source": grass_b, "target": bench_target},
 			{"source": grass_c, "target": bench_target},
 		],
-		"csv9c_lightning_energy_assignments": [
+		"csv9c_joltik_lightning_assignments": [
 			{"source": lightning_a, "target": bench_target},
 			{"source": lightning_b, "target": bench_target},
 			{"source": lightning_c, "target": bench_target},
@@ -383,6 +550,92 @@ func test_csv9c_063_joltik_charge_full_deck_assignment_and_per_type_limit() -> S
 		assert_true(grass_c in player.deck, "CSV9C_063 must leave the third selected Grass Energy in deck"),
 		assert_true(lightning_c in player.deck, "CSV9C_063 must leave the third selected Lightning Energy in deck"),
 		assert_true(item in player.deck, "CSV9C_063 must leave disabled non-Energy cards in deck"),
+	])
+
+
+func test_cbb5c_1501_joltik_charge_registered_attack_attaches_two_grass_and_two_lightning() -> String:
+	var state := _make_state()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = state
+	var player: PlayerState = state.players[0]
+	var joltik_cd: CardData = CardDatabase.get_card("CBB5C", "1501")
+	if joltik_cd == null:
+		return "CBB5C_1501 should load through CardDatabase"
+	player.active_pokemon = _make_slot(joltik_cd, 0)
+	_attach_energy(player.active_pokemon, 0, "C", 1)
+	player.bench.append(_make_slot(_pokemon("Bench Target", "Basic", "", "L"), 0))
+	player.deck.clear()
+	var grass_a := CardInstance.create(_energy("Grass A", "G"), 0)
+	var grass_b := CardInstance.create(_energy("Grass B", "G"), 0)
+	var grass_c := CardInstance.create(_energy("Grass C", "G"), 0)
+	var lightning_a := CardInstance.create(_energy("Lightning A", "L"), 0)
+	var lightning_b := CardInstance.create(_energy("Lightning B", "L"), 0)
+	var lightning_c := CardInstance.create(_energy("Lightning C", "L"), 0)
+	var item := CardInstance.create(_trainer("Deck Item"), 0)
+	player.deck.append_array([grass_a, grass_b, grass_c, lightning_a, lightning_b, lightning_c, item])
+	var bench_target: PokemonSlot = player.bench[0]
+
+	gsm.effect_processor.register_pokemon_card(joltik_cd)
+	var effects := gsm.effect_processor.get_attack_effects_for_slot(player.active_pokemon, 0)
+	var steps: Array[Dictionary] = []
+	if not effects.is_empty():
+		steps = effects[0].get_attack_interaction_steps(player.active_pokemon.get_top_card(), joltik_cd.attacks[0], state)
+	var attacked := gsm.use_attack(0, 0, [{
+		"csv9c_joltik_grass_assignments": [
+			{"source": grass_a, "target": bench_target},
+			{"source": grass_b, "target": bench_target},
+			{"source": grass_c, "target": bench_target},
+		],
+		"csv9c_joltik_lightning_assignments": [
+			{"source": lightning_a, "target": bench_target},
+			{"source": lightning_b, "target": bench_target},
+			{"source": lightning_c, "target": bench_target},
+		],
+	}])
+
+	return run_checks([
+		assert_true(attacked, "CBB5C_1501 Joltik should be able to use its charge attack"),
+		assert_eq(effects.size(), 1, "CBB5C_1501 should register one Joltik charge attack effect"),
+		assert_true(not effects.is_empty() and effects[0] is CSV9CEffects.AttackJoltikCharge, "CBB5C_1501 should use the native Joltik charge implementation"),
+		assert_eq(steps.size(), 2, "CBB5C_1501 should keep separate Grass and Lightning assignment prompts"),
+		assert_eq(bench_target.attached_energy.size(), 4, "CBB5C_1501 should attach two Grass plus two Lightning Energy"),
+		assert_true(grass_c in player.deck, "CBB5C_1501 must leave the third selected Grass Energy in deck"),
+		assert_true(lightning_c in player.deck, "CBB5C_1501 must leave the third selected Lightning Energy in deck"),
+		assert_true(item in player.deck, "CBB5C_1501 must leave non-Energy deck cards untouched"),
+	])
+
+
+func test_csv9c_063_joltik_charge_accepts_legacy_assignment_context_ids() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	var joltik_cd := _pokemon("Joltik", "Basic", "", "L", 30, [_attack("Joltik Charge", "C", "")])
+	player.active_pokemon = _make_slot(joltik_cd, 0)
+	player.bench.append(_make_slot(_pokemon("Bench Target", "Basic", "", "L"), 0))
+	player.deck.clear()
+	var grass_a := CardInstance.create(_energy("Grass A", "G"), 0)
+	var grass_b := CardInstance.create(_energy("Grass B", "G"), 0)
+	var lightning_a := CardInstance.create(_energy("Lightning A", "L"), 0)
+	var lightning_b := CardInstance.create(_energy("Lightning B", "L"), 0)
+	player.deck.append_array([grass_a, grass_b, lightning_a, lightning_b])
+	var bench_target: PokemonSlot = player.bench[0]
+
+	var effect = CSV9CEffects.AttackJoltikCharge.new(0)
+	effect.set_attack_interaction_context([{
+		"csv9c_grass_energy_assignments": [
+			{"source": grass_a, "target": bench_target},
+			{"source": grass_b, "target": bench_target},
+		],
+		"csv9c_lightning_energy_assignments": [
+			{"source": lightning_a, "target": bench_target},
+			{"source": lightning_b, "target": bench_target},
+		],
+	}])
+	effect.execute_attack(player.active_pokemon, state.players[1].active_pokemon, 0, state)
+	effect.clear_attack_interaction_context()
+
+	return run_checks([
+		assert_eq(bench_target.attached_energy.size(), 4, "CSV9C_063 should honor legacy context ids for two Grass plus two Lightning Energy"),
+		assert_true(player.deck.is_empty(), "CSV9C_063 should remove all four explicitly assigned legacy-context Energy from deck"),
 	])
 
 

@@ -18,11 +18,17 @@ func execute_ability(
 
 ## 检查基础宝可梦特性是否被恶作剧之锁封锁
 ## 只需要场上有一个在战斗场的钥圈儿拥有此特性即可
-static func is_basic_abilities_disabled(state: GameState, checking_slot: PokemonSlot = null) -> bool:
+static func is_basic_abilities_disabled(
+	state: GameState,
+	checking_slot: PokemonSlot = null,
+	before_order: int = -1
+) -> bool:
 	# 检查双方战斗场
 	for pi: int in 2:
 		var active: PokemonSlot = state.players[pi].active_pokemon
 		if active == null:
+			continue
+		if _is_source_not_earlier_than(active, before_order):
 			continue
 		if _has_basic_lock_ability(active) and not _is_basic_lock_source_suppressed(active, state):
 			return true
@@ -30,7 +36,16 @@ static func is_basic_abilities_disabled(state: GameState, checking_slot: Pokemon
 
 
 static func _is_basic_lock_source_suppressed(slot: PokemonSlot, state: GameState) -> bool:
-	return EffectCancelCologne.is_slot_directly_ability_disabled(slot, state)
+	if EffectCancelCologne.is_slot_directly_ability_disabled(slot, state):
+		return true
+	var source_order := _active_source_order(slot)
+	if AbilityDisableOpponentAbility.is_locked_by_dark_wing(slot, state, source_order):
+		return true
+	if AbilityIronThornsInit.is_locked_by_init(slot, state, source_order):
+		return true
+	if AbilityBasicVLock.is_locked(slot, state, source_order):
+		return true
+	return false
 
 
 static func _has_basic_lock_ability(slot: PokemonSlot) -> bool:
@@ -53,8 +68,8 @@ static func _has_basic_lock_ability(slot: PokemonSlot) -> bool:
 
 ## 检查给定宝可梦是否受到恶作剧之锁影响
 ## 只有基础宝可梦才会被锁，且拥有恶作剧之锁的宝可梦自身不受影响
-static func is_locked_by_basic_lock(slot: PokemonSlot, state: GameState) -> bool:
-	if not is_basic_abilities_disabled(state):
+static func is_locked_by_basic_lock(slot: PokemonSlot, state: GameState, before_order: int = -1) -> bool:
+	if not is_basic_abilities_disabled(state, null, before_order):
 		return false
 	var top: CardInstance = slot.get_top_card()
 	if top == null:
@@ -69,6 +84,16 @@ static func is_locked_by_basic_lock(slot: PokemonSlot, state: GameState) -> bool
 	if _has_basic_lock_ability(slot):
 		return false
 	return true
+
+
+static func _is_source_not_earlier_than(source: PokemonSlot, before_order: int) -> bool:
+	return before_order > 0 and _active_source_order(source) >= before_order
+
+
+static func _active_source_order(slot: PokemonSlot) -> int:
+	if slot == null:
+		return 0
+	return slot.get_active_continuous_ability_order()
 
 
 func get_description() -> String:

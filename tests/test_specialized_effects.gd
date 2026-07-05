@@ -864,6 +864,54 @@ func test_gsm_moonlight_shuriken_active_manaphy_blocks_bench_before_knockout_che
 	])
 
 
+func test_cs5bc_052_manaphy_registers_wave_veil_by_effect_id() -> String:
+	var processor := EffectProcessor.new()
+	var manaphy_cd: CardData = CardDatabase.get_card("CS5bC", "052")
+	if manaphy_cd != null:
+		processor.register_pokemon_card(manaphy_cd)
+
+	return run_checks([
+		assert_not_null(manaphy_cd, "CS5bC_052 Manaphy should exist in the card database"),
+		assert_eq(str(manaphy_cd.effect_id), MANAPHY_WAVE_VEIL_EFFECT_ID, "CS5bC_052 should keep the native Wave Veil effect_id"),
+		assert_true(processor.get_effect(MANAPHY_WAVE_VEIL_EFFECT_ID) is AbilityBenchProtect, "CS5bC_052 should register Wave Veil as AbilityBenchProtect by effect_id"),
+	])
+
+
+func test_cs5bc_052_benched_manaphy_blocks_regular_dual_target_attack_damage() -> String:
+	var processor := EffectProcessor.new()
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	var opponent: PlayerState = state.players[1]
+	opponent.bench.clear()
+
+	var attacker_cd := _make_basic_pokemon_data("Radiant Greninja", "W", 130, "Basic", "", RADIANT_GRENINJA_EFFECT_ID)
+	attacker_cd.attacks = [{
+		"name": "Moonlight Shuriken",
+		"cost": "WWC",
+		"damage": "",
+		"text": "",
+		"is_vstar_power": false,
+	}]
+	var attacker := _make_slot_from_card_data(attacker_cd, 0)
+	player.active_pokemon = attacker
+	var manaphy := _make_slot_from_card_data(_make_manaphy_data(), 1)
+	var protected_bench := _make_slot_from_card_data(_make_basic_pokemon_data("Protected Bench", "C", 100), 1)
+	opponent.bench.append_array([manaphy, protected_bench])
+
+	processor.replace_attack_effects(RADIANT_GRENINJA_EFFECT_ID, [
+		AttackMoonlightShuriken.new(90, 2),
+	])
+	processor.execute_attack_effect(attacker, 0, opponent.active_pokemon, state, [{
+		"moonlight_shuriken_targets": [opponent.active_pokemon, protected_bench],
+	}])
+
+	return run_checks([
+		assert_eq(opponent.active_pokemon.damage_counters, 90, "A regular dual-target attack may still damage the Active Pokemon"),
+		assert_eq(protected_bench.damage_counters, 0, "Benched Manaphy should protect other Benched Pokemon from regular attack damage"),
+		assert_eq(manaphy.damage_counters, 0, "Unselected Manaphy should remain undamaged"),
+	])
+
+
 func test_iron_crown_twin_blade_selects_any_two_opponent_pokemon() -> String:
 	var processor := EffectProcessor.new()
 	var state := _make_state()
@@ -918,6 +966,55 @@ func test_iron_crown_twin_blade_selects_any_two_opponent_pokemon() -> String:
 		assert_eq(bench_b.damage_counters, 50, "被选择的对手备战宝可梦应受到50伤害"),
 		assert_eq(bench_a.damage_counters, 0, "未选择的备战宝可梦不应受到伤害"),
 		assert_eq(attacker.damage_counters, 0, "铁头壳ex使用双刃不应对自己造成反伤"),
+	])
+
+
+func test_csv7c_111_iron_crown_twin_blade_bypasses_manaphy_wave_veil() -> String:
+	var processor := EffectProcessor.new()
+	var state := _make_state()
+	state.current_player_index = 0
+	var player: PlayerState = state.players[0]
+	var opponent: PlayerState = state.players[1]
+	opponent.bench.clear()
+
+	var iron_crown_cd := _make_basic_pokemon_data("铁头壳ex", "P", 220, "Basic", "ex", "9f00ff54c265aa486652154a5e976c67")
+	iron_crown_cd.abilities = [{
+		"name": "蔚蓝指令",
+		"text": "只要这只宝可梦在场上，自己的「未来」宝可梦（除「铁头壳【ex】」外）所使用的招式，给对手战斗宝可梦造成的伤害「+20」。",
+	}]
+	iron_crown_cd.attacks = [{
+		"name": "双刃",
+		"cost": "PCC",
+		"damage": "",
+		"text": "给对手的2只宝可梦，各造成50伤害。这个招式的伤害，不计算弱点、抗性，以及受到伤害的宝可梦身上所附加的效果。",
+		"is_vstar_power": false,
+	}]
+	var attacker := _make_slot_from_card_data(iron_crown_cd, 0)
+	player.active_pokemon = attacker
+
+	var active_target_cd := _make_basic_pokemon_data("Psychic Weak Active", "C", 120)
+	active_target_cd.weakness_energy = "P"
+	active_target_cd.weakness_value = "x2"
+	opponent.active_pokemon = _make_slot_from_card_data(active_target_cd, 1)
+	var manaphy := _make_slot_from_card_data(_make_manaphy_data(), 1)
+	var protected_bench := _make_slot_from_card_data(_make_basic_pokemon_data("Protected Bench", "C", 100), 1)
+	opponent.bench.append_array([manaphy, protected_bench])
+
+	processor.register_pokemon_card(iron_crown_cd)
+	var attack_effects: Array[BaseEffect] = processor.get_attack_effects_for_slot(attacker, 0)
+	var ignores_effects := processor.attack_ignores_defender_effects(attacker, 0, state)
+	var ignores_weakness := processor.attack_ignores_weakness(attacker, 0, state)
+	processor.execute_attack_effect(attacker, 0, opponent.active_pokemon, state, [{
+		"moonlight_shuriken_targets": [opponent.active_pokemon, protected_bench],
+	}])
+
+	return run_checks([
+		assert_true(not attack_effects.is_empty() and attack_effects[0] is AttackMoonlightShuriken, "CSV7C_111 Twin Shotels should use the two-target damage implementation"),
+		assert_true(ignores_effects, "CSV7C_111 Twin Shotels should advertise that it ignores effects on damaged Pokemon"),
+		assert_true(ignores_weakness, "CSV7C_111 Twin Shotels should advertise Weakness/Resistance ignore"),
+		assert_eq(opponent.active_pokemon.damage_counters, 50, "Twin Shotels should not double damage through Weakness"),
+		assert_eq(protected_bench.damage_counters, 50, "Twin Shotels should bypass Manaphy's Wave Veil on the damaged Benched Pokemon"),
+		assert_eq(manaphy.damage_counters, 0, "Unselected Manaphy should remain undamaged"),
 	])
 
 
@@ -2735,6 +2832,64 @@ func test_specialized_effect_descriptions_and_smoke() -> String:
 			return "效果描述不应为空: %s" % effect.get_class()
 
 	return ""
+
+
+func test_cached_catalog_gap_effects_register_and_resolve() -> String:
+	const COBALION_EFFECT_ID := "c87e28f4d502840e3ec98bfc04adc721"
+	const IRON_LEAVES_EFFECT_ID := "8b0ced2eb993ab58d8f0d5fee68efe74"
+	const HASSEL_EFFECT_ID := "a366de74dc69c87a4513d4f36a1390c0"
+
+	var state := _make_state()
+	var processor := EffectProcessor.new()
+
+	var cobalion_cd := _make_basic_pokemon_data("Cobalion", "M", 120, "Basic", "", COBALION_EFFECT_ID)
+	cobalion_cd.abilities = [{"name": "Justified Law", "text": ""}]
+	processor.register_pokemon_card(cobalion_cd)
+	var cobalion_slot := _make_slot_from_card_data(cobalion_cd, 0)
+	state.players[0].bench.clear()
+	state.players[0].bench.append(cobalion_slot)
+	var cobalion_attack_effects := processor.get_attack_effects_for_slot(cobalion_slot, 0)
+	var attacker := state.players[0].active_pokemon
+	var defender := state.players[1].active_pokemon
+	defender.get_card_data().energy_type = "D"
+	var cobalion_dark_bonus := processor.get_attacker_modifier(attacker, state, defender)
+	defender.get_card_data().energy_type = "R"
+	var cobalion_non_dark_bonus := processor.get_attacker_modifier(attacker, state, defender)
+
+	var iron_cd := _make_basic_pokemon_data("Iron Leaves", "G", 120, "Basic", "", IRON_LEAVES_EFFECT_ID)
+	iron_cd.attacks = [
+		{"name": "Recovery Net", "cost": "G", "damage": "", "text": "", "is_vstar_power": false},
+		{"name": "Avenging Edge", "cost": "GCC", "damage": "100+", "text": "", "is_vstar_power": false},
+	]
+	processor.register_pokemon_card(iron_cd)
+	var iron_slot := _make_slot_from_card_data(iron_cd, 0)
+	state.players[0].active_pokemon = iron_slot
+	var iron_first_attack_effects := processor.get_attack_effects_for_slot(iron_slot, 0)
+	var iron_second_attack_effects := processor.get_attack_effects_for_slot(iron_slot, 1)
+	var no_ko_bonus := processor.get_attack_damage_modifier(iron_slot, defender, iron_cd.attacks[1], state)
+	state.last_knockout_turn_against[0] = state.turn_number - 1
+	var ko_bonus := processor.get_attack_damage_modifier(iron_slot, defender, iron_cd.attacks[1], state)
+
+	var hassel := processor.get_effect(HASSEL_EFFECT_ID) as BaseEffect
+	var hassel_card := CardInstance.create(_make_trainer_data("Hassel", "Supporter", HASSEL_EFFECT_ID), 0)
+	state.last_knockout_turn_against[0] = -999
+	var hassel_blocked := hassel != null and not hassel.can_execute(hassel_card, state)
+	state.last_knockout_turn_against[0] = state.turn_number - 1
+	var hassel_allowed := hassel != null and hassel.can_execute(hassel_card, state)
+	var hassel_steps := hassel.get_interaction_steps(hassel_card, state) if hassel != null else []
+
+	return run_checks([
+		assert_eq(cobalion_dark_bonus, 30, "Cobalion should add 30 against the opponent's Active Darkness Pokemon"),
+		assert_eq(cobalion_non_dark_bonus, 0, "Cobalion should not boost damage against non-Darkness Pokemon"),
+		assert_true(not cobalion_attack_effects.is_empty(), "Cobalion Follow-Up should register its deck Energy attachment attack"),
+		assert_true(not iron_first_attack_effects.is_empty(), "Iron Leaves first attack should register a recover-from-discard effect"),
+		assert_true(not iron_second_attack_effects.is_empty(), "Iron Leaves second attack should register a knockout-last-turn bonus effect"),
+		assert_eq(no_ko_bonus, 0, "Iron Leaves should not gain revenge damage without a previous-turn knockout"),
+		assert_eq(ko_bonus, 60, "Iron Leaves should gain 60 revenge damage after a previous-turn knockout"),
+		assert_true(hassel_blocked, "Hassel should be blocked unless a Pokemon was Knocked Out last turn"),
+		assert_true(hassel_allowed, "Hassel should be usable after a Pokemon was Knocked Out last turn"),
+		assert_eq(int((hassel_steps[0] as Dictionary).get("max_select", -1)) if not hassel_steps.is_empty() else -1, 3, "Hassel should choose up to 3 cards"),
+	])
 
 
 func test_prime_catcher_requires_own_bench_target() -> String:

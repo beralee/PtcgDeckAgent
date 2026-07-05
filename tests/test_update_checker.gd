@@ -72,6 +72,9 @@ func test_update_checker_and_app_version_scripts_load() -> String:
 		"display_server": "test_display",
 		"is_mobile_runtime": true,
 	}) if user_visit_script != null else {}
+	var web_headers: PackedStringArray = user_visit_script.request_headers_for_runtime("Web", {}, "web") if user_visit_script != null else PackedStringArray()
+	var android_headers: PackedStringArray = user_visit_script.request_headers_for_runtime("Android", {"android": true}, "") if user_visit_script != null else PackedStringArray()
+	var user_visit_source := FileAccess.get_file_as_string(UserVisitClientPath)
 	var checks := run_checks([
 		assert_not_null(update_script, "UpdateChecker.gd should load"),
 		assert_not_null(feedback_script, "FeedbackClient.gd should load"),
@@ -80,10 +83,20 @@ func test_update_checker_and_app_version_scripts_load() -> String:
 		assert_not_null(update_instance, "UpdateChecker.gd should instantiate"),
 		assert_not_null(feedback_instance, "FeedbackClient.gd should instantiate"),
 		assert_not_null(user_visit_instance, "UserVisitClient.gd should instantiate"),
-		assert_eq(str(app_version_script.VERSION), "0.4.5", "AppVersion should expose the current version"),
-		assert_eq(str(app_version_script.DISPLAY_VERSION), "v0.4.5", "AppVersion should expose display version"),
+		assert_eq(str(app_version_script.VERSION), "0.4.8", "AppVersion should expose the current version"),
+		assert_eq(str(app_version_script.DISPLAY_VERSION), "v0.4.8", "AppVersion should expose display version"),
 		assert_eq(str(feedback_script.ENDPOINT_URL), "http://fc.skillserver.cn/ptcg", "Feedback client should use the production cloud function endpoint"),
 		assert_eq(str(user_visit_script.ENDPOINT_URL), "http://fc.skillserver.cn/userptcg", "User visit client should use the production cloud function endpoint"),
+		assert_eq(str(user_visit_script.WEB_BRIDGE_PAGE), "userptcg_bridge.html", "User visit client should expose the static Web bridge page"),
+		assert_eq(str(user_visit_script.endpoint_url_for_runtime("Web", {}, "web")), "userptcg_bridge.html", "Browser startup visit reports should target the static bridge page"),
+		assert_eq(str(user_visit_script.endpoint_url_for_runtime("", {"web_android": true}, "")), "userptcg_bridge.html", "Android browser startup visit reports should target the static bridge page"),
+		assert_eq(str(user_visit_script.endpoint_url_for_runtime("Android", {"android": true}, "")), "http://fc.skillserver.cn/userptcg", "Native Android startup visit reports should keep the cloud function endpoint"),
+		assert_true(user_visit_source.contains("JavaScriptBridge.eval"), "Browser startup visit reports should be launched through the Web JavaScript bridge"),
+		assert_true(user_visit_source.contains("web_static_html_bridge"), "Browser startup visit reports should identify the static HTML bridge transport"),
+		assert_false(_headers_contain_prefix(web_headers, "User-Agent:"), "Browser startup visit requests should not set forbidden User-Agent headers"),
+		assert_true(_headers_contain_prefix(android_headers, "User-Agent:"), "Native startup visit requests should keep the client User-Agent header"),
+		assert_false(bool(user_visit_script.should_use_threaded_request_for_runtime("Web", {}, "web")), "Browser startup visit reports should avoid threaded HTTPRequest mode"),
+		assert_true(bool(user_visit_script.should_use_threaded_request_for_runtime("Android", {"android": true}, "")), "Native startup visit reports should keep threaded HTTPRequest mode"),
 		assert_eq(str(visit_payload.get("client_id", "")), "client-test", "User visit payload should include a stable client id"),
 		assert_eq(str(visit_payload.get("source", "")), "unit_test", "User visit payload should include source metadata"),
 		assert_eq(int(visit_payload.get("screen_width", 0)), 1080, "User visit payload should include physical screen width"),
@@ -96,6 +109,7 @@ func test_update_checker_and_app_version_scripts_load() -> String:
 		assert_eq(str(visit_payload.get("screen_orientation", "")), "portrait", "User visit payload should include screen orientation"),
 		assert_eq(str(visit_payload.get("display_server", "")), "test_display", "User visit payload should include display server"),
 		assert_true(bool(visit_payload.get("is_mobile_runtime", false)), "User visit payload should flag mobile runtime"),
+		assert_false(bool(visit_payload.get("is_web_runtime", false)), "User visit payload should include Web runtime marker when applicable"),
 		assert_false(visit_payload.has("session_id"), "User visit payload should not include session id"),
 		assert_false(visit_payload.has("is_debug_build"), "User visit payload should not include debug build marker"),
 	])
@@ -106,6 +120,13 @@ func test_update_checker_and_app_version_scripts_load() -> String:
 	if user_visit_instance != null:
 		user_visit_instance.free()
 	return checks
+
+
+func _headers_contain_prefix(headers: PackedStringArray, prefix: String) -> bool:
+	for header: String in headers:
+		if header.begins_with(prefix):
+			return true
+	return false
 
 
 func test_main_menu_scene_loads_with_update_ui_dependencies() -> String:
@@ -449,8 +470,8 @@ func test_update_available_uses_current_version() -> String:
 		return str((checker_result as Dictionary).get("error", "checker setup failed"))
 	var checker: Object = (checker_result as Dictionary).get("value") as Object
 	var checks := run_checks([
-		assert_true(bool(checker.call("is_update_available", {"latest_version": "0.4.6"})), "0.4.6 should be available over current 0.4.5"),
-		assert_false(bool(checker.call("is_update_available", {"latest_version": "0.4.5"})), "Current version should not be treated as an update"),
+		assert_true(bool(checker.call("is_update_available", {"latest_version": "0.4.9"})), "0.4.9 should be available over current 0.4.8"),
+		assert_false(bool(checker.call("is_update_available", {"latest_version": "0.4.8"})), "Current version should not be treated as an update"),
 	])
 	checker.free()
 	return checks

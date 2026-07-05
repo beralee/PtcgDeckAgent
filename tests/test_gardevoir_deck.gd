@@ -67,6 +67,7 @@ func _make_slot(card_data: CardData, owner_index: int) -> PokemonSlot:
 
 
 func _make_state() -> GameState:
+	PokemonSlot.reset_order_stamp_counter()
 	var state := GameState.new()
 	state.turn_number = 2
 	state.current_player_index = 0
@@ -980,6 +981,81 @@ func test_flutter_mane_dark_wing_only_disables_opponent_active() -> String:
 	])
 
 
+func test_flutter_mane_played_before_klefki_suppresses_klefki_lock_source() -> String:
+	var state := _make_state()
+	var processor := EffectProcessor.new()
+
+	var flutter_cd := _make_basic_pokemon_data("Flutter Mane", "P", 90)
+	flutter_cd.abilities = [{"name": "暗夜振翼"}]
+	var flutter := _make_slot(flutter_cd, 0)
+	var flutter_order := PokemonSlot.next_order_stamp()
+	flutter.mark_entered_play(flutter_order)
+	flutter.mark_became_active(flutter_order)
+	state.players[0].active_pokemon = flutter
+
+	var munkidori_cd := _make_basic_pokemon_data("Munkidori", "D", 110, "Basic", "", "munkidori_adrena_brain_order_test")
+	munkidori_cd.abilities = [{"name": "亢奋脑力", "text": "Move up to 3 damage counters."}]
+	var munkidori := _make_slot(munkidori_cd, 0)
+	munkidori.attached_energy.append(CardInstance.create(_make_energy_data("Basic Darkness Energy", "D"), 0))
+	munkidori.damage_counters = 30
+	state.players[0].bench.clear()
+	state.players[0].bench.append(munkidori)
+
+	var klefki_cd := _make_basic_pokemon_data("Klefki", "P", 70)
+	klefki_cd.abilities = [{"name": "恶作剧之锁"}]
+	var klefki := _make_slot(klefki_cd, 1)
+	var klefki_order := PokemonSlot.next_order_stamp()
+	klefki.mark_entered_play(klefki_order)
+	klefki.mark_became_active(klefki_order)
+	state.players[1].active_pokemon = klefki
+
+	processor.register_effect(munkidori_cd.effect_id, AbilityMoveDamageCountersToOpponent.new(3))
+
+	return run_checks([
+		assert_true(processor.is_ability_disabled(klefki, state), "Flutter Mane was active first, so it should disable the opposing active Klefki"),
+		assert_false(processor.is_ability_disabled(munkidori, state), "Klefki's later Mischievous Lock should not disable benched Munkidori after Flutter Mane has already disabled Klefki"),
+		assert_true(processor.can_use_ability(munkidori, state, 0), "Munkidori's Adrena-Brain should remain usable when the later Klefki lock source is suppressed"),
+	])
+
+
+func test_klefki_played_before_flutter_mane_keeps_basic_lock_active() -> String:
+	var state := _make_state()
+	var processor := EffectProcessor.new()
+
+	var klefki_cd := _make_basic_pokemon_data("Klefki", "P", 70)
+	klefki_cd.abilities = [{"name": "恶作剧之锁"}]
+	var klefki := _make_slot(klefki_cd, 1)
+	var klefki_order := PokemonSlot.next_order_stamp()
+	klefki.mark_entered_play(klefki_order)
+	klefki.mark_became_active(klefki_order)
+	state.players[1].active_pokemon = klefki
+
+	var flutter_cd := _make_basic_pokemon_data("Flutter Mane", "P", 90)
+	flutter_cd.abilities = [{"name": "暗夜振翼"}]
+	var flutter := _make_slot(flutter_cd, 0)
+	var flutter_order := PokemonSlot.next_order_stamp()
+	flutter.mark_entered_play(flutter_order)
+	flutter.mark_became_active(flutter_order)
+	state.players[0].active_pokemon = flutter
+
+	var munkidori_cd := _make_basic_pokemon_data("Munkidori", "D", 110, "Basic", "", "munkidori_adrena_brain_reverse_order_test")
+	munkidori_cd.abilities = [{"name": "亢奋脑力", "text": "Move up to 3 damage counters."}]
+	var munkidori := _make_slot(munkidori_cd, 0)
+	munkidori.attached_energy.append(CardInstance.create(_make_energy_data("Basic Darkness Energy", "D"), 0))
+	munkidori.damage_counters = 30
+	state.players[0].bench.clear()
+	state.players[0].bench.append(munkidori)
+
+	processor.register_effect(munkidori_cd.effect_id, AbilityMoveDamageCountersToOpponent.new(3))
+
+	return run_checks([
+		assert_false(processor.is_ability_disabled(klefki, state), "Earlier Klefki should not be disabled by later Flutter Mane"),
+		assert_true(processor.is_ability_disabled(flutter, state), "Earlier Klefki should disable the later active Flutter Mane"),
+		assert_true(processor.is_ability_disabled(munkidori, state), "Earlier Klefki should still disable benched Basic Pokemon such as Munkidori"),
+		assert_false(processor.can_use_ability(munkidori, state, 0), "Munkidori's Adrena-Brain should remain unavailable when earlier Klefki lock is active"),
+	])
+
+
 ## ==================== 钥圈儿 狙落 ====================
 
 func test_klefki_snipe_discard_tool() -> String:
@@ -1084,7 +1160,7 @@ func test_artazon_search_basic_non_rule_to_bench() -> String:
 	])
 
 
-func test_artazon_excludes_rule_box_pokemon() -> String:
+func test_artazon_excludes_rule_box_pokemon_but_can_whiff() -> String:
 	var state := _make_state()
 	var player: PlayerState = state.players[0]
 	player.deck.clear()
@@ -1096,8 +1172,12 @@ func test_artazon_excludes_rule_box_pokemon() -> String:
 
 	var stadium_card := CardInstance.create(_make_trainer_data("深钵镇", "Stadium"), 0)
 	var effect := EffectArtazon.new()
+	var steps: Array[Dictionary] = effect.get_interaction_steps(stadium_card, state)
+	var first_step: Dictionary = steps[0] if not steps.is_empty() else {}
 	return run_checks([
-		assert_false(effect.can_execute(stadium_card, state), "深钵镇：牌库无非规则基础宝可梦时不可使用"),
+		assert_true(effect.can_execute(stadium_card, state), "Artazon should stay usable and whiff when only rule-box Pokemon are in deck"),
+		assert_eq(steps.size(), 1, "Artazon should expose an empty-search resolution when no legal non-rule Basic exists"),
+		assert_eq(str(first_step.get("id", "")), "empty_search_resolution", "Artazon should not expose rule-box Pokemon as selectable targets"),
 	])
 
 

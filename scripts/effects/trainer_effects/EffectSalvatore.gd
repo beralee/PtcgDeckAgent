@@ -137,9 +137,9 @@ func _can_evolve_onto(evo_card: CardInstance, slot: PokemonSlot) -> bool:
 	if slot == null or evo_card == null:
 		return false
 	var top: CardInstance = slot.get_top_card()
-	if top == null:
+	if top == null or top.card_data == null or evo_card.card_data == null:
 		return false
-	return evo_card.card_data.evolves_from == top.card_data.name
+	return evo_card.card_data.evolves_from_matches(top.card_data)
 
 
 func get_description() -> String:

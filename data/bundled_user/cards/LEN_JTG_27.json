@@ -1,0 +1,73 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "nagimiso",
+	"attacks": [
+		{
+			"cost": "CC",
+			"damage": "30x",
+			"is_vstar_power": false,
+			"name": "Back Draft",
+			"text": "This attack does 30 damage for each Basic Energy card in your opponent's discard pile.",
+			"name_zh": "回火气流",
+			"text_zh": "造成对手弃牌区的基本能量卡数量x30点伤害。"
+		},
+		{
+			"cost": "RRC",
+			"damage": "90",
+			"is_vstar_power": false,
+			"name": "Flamebody Cannon",
+			"text": "Discard all Energy from this Pokémon, and this attack also does 90 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+			"name_zh": "火焰体大炮",
+			"text_zh": "丢弃这只宝可梦身上附加的所有能量，这个招式也对对手的1只备战宝可梦造成90点伤害。（备战宝可梦不计算弱点、抵抗力。）"
+		}
+	],
+	"card_index": "27",
+	"card_index_en": "27",
+	"card_type": "Pokemon",
+	"description": "回火气流 30x\n造成对手弃牌区的基本能量卡数量x30点伤害。\n\n火焰体大炮 90\n丢弃这只宝可梦身上附加的所有能量，这个招式也对对手的1只备战宝可梦造成90点伤害。（备战宝可梦不计算弱点、抵抗力。）",
+	"effect_id": "ed38727125c1b1d101e4b9809458665f",
+	"energy_provides": "",
+	"energy_type": "R",
+	"evolves_from": "N's Darumaka",
+	"hp": 140,
+	"image_local_path": "user://cards/images/LEN_JTG/27.png",
+	"image_url": "https://limitless3.nyc3.cdn.digitaloceanspaces.com/limitless/logo.png",
+	"is_tags": [
+		"Stage 1"
+	],
+	"label": "",
+	"mechanic": "",
+	"name": "N's Darmanitan",
+	"name_en": "N's Darmanitan",
+	"name_zh": "N的达摩狒狒",
+	"rarity": "Journey Together (JTG)",
+	"regulation_expanded": true,
+	"regulation_mark": "",
+	"regulation_standard": true,
+	"release_date": "",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 3,
+	"set_code": "LEN_JTG",
+	"set_code_en": "JTG",
+	"source_card_index": "27",
+	"source_imported_at": 1783008496380,
+	"source_language": "en",
+	"source_parser_version": 1,
+	"source_prints": [
+		"JTG/27",
+		"SVP/181",
+		"ASC/33",
+		"JP/SV9/16",
+		"JP/M2A/28",
+		"JP/MC/119"
+	],
+	"source_provider": "limitless",
+	"source_set_code": "JTG",
+	"source_url": "https://limitlesstcg.com/cards/JTG/27",
+	"stage": "Stage 1",
+	"weakness_energy": "W",
+	"weakness_value": "x2",
+	"yoren_code": ""
+}

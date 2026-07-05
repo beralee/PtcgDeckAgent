@@ -1,0 +1,70 @@
+{
+	"abilities": [
+		{
+			"name": "Punk Up",
+			"text": "When you play this Pokémon from your hand to evolve 1 of your Pokémon during your turn, you may search your deck for up to 5 Basic [D] Energy cards and attach them to your Marnie's Pokémon in any way you like. Then, shuffle your deck.",
+			"name_zh": "朋克提升",
+			"text_zh": "在自己的回合，当你从手牌将这只宝可梦放置到场上使自己的1只宝可梦进化时，可从自己的牌库选择最多5张基本恶能量卡，以任意方式附于自己的玛俐的宝可梦身上。然后重洗牌库。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "PLANETA Mochizuki",
+	"attacks": [
+		{
+			"cost": "DD",
+			"damage": "180",
+			"is_vstar_power": false,
+			"name": "Shadow Bullet",
+			"text": "This attack also does 30 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+			"name_zh": "暗影子弹",
+			"text_zh": "这个招式也对对手的1只备战宝可梦造成30点伤害。（备战宝可梦不计算弱点、抵抗力。）"
+		}
+	],
+	"card_index": "136",
+	"card_index_en": "136",
+	"card_type": "Pokemon",
+	"description": "特性: 朋克提升\n在自己的回合，当你从手牌将这只宝可梦放置到场上使自己的1只宝可梦进化时，可从自己的牌库选择最多5张基本恶能量卡，以任意方式附于自己的玛俐的宝可梦身上。然后重洗牌库。\n\n暗影子弹 180\n这个招式也对对手的1只备战宝可梦造成30点伤害。（备战宝可梦不计算弱点、抵抗力。）",
+	"effect_id": "0ad4e076d1c6099663e6a69933d41dc8",
+	"energy_provides": "",
+	"energy_type": "D",
+	"evolves_from": "Marnie's Morgrem",
+	"hp": 320,
+	"image_local_path": "user://cards/images/LEN_DRI/136.png",
+	"image_url": "https://limitless3.nyc3.cdn.digitaloceanspaces.com/limitless/logo.png",
+	"is_tags": [
+		"Stage 2",
+		"ex"
+	],
+	"label": "ex",
+	"mechanic": "ex",
+	"name": "Marnie's Grimmsnarl ex",
+	"name_en": "Marnie's Grimmsnarl ex",
+	"name_zh": "玛俐的长毛巨魔ex",
+	"rarity": "Destined Rivals (DRI)",
+	"regulation_expanded": true,
+	"regulation_mark": "",
+	"regulation_standard": true,
+	"release_date": "",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "LEN_DRI",
+	"set_code_en": "DRI",
+	"source_card_index": "136",
+	"source_imported_at": 1783008496011,
+	"source_language": "en",
+	"source_parser_version": 1,
+	"source_prints": [
+		"DRI/136",
+		"ASC/287",
+		"JP/SVOM/7",
+		"JP/M2A/243"
+	],
+	"source_provider": "limitless",
+	"source_set_code": "DRI",
+	"source_url": "https://limitlesstcg.com/cards/DRI/136",
+	"stage": "Stage 2",
+	"weakness_energy": "G",
+	"weakness_value": "x2",
+	"yoren_code": ""
+}

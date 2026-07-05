@@ -7,6 +7,8 @@ const API_BASE := "https://tcg.mik.moe"
 const DECK_DETAIL_URL := API_BASE + "/api/v3/deck/detail"
 const CARD_DETAIL_URL := API_BASE + "/api/v3/card/card-detail"
 const CARD_IMAGE_DOWNLOADER := preload("res://scripts/network/CardImageDownloader.gd")
+const LIMITLESS_CARD_PARSER := preload("res://scripts/network/LimitlessCardParser.gd")
+const LIMITLESS_CARD_RESOLVER := preload("res://scripts/network/LimitlessCardResolver.gd")
 
 ## 导入进度信号
 signal import_progress(current: int, total: int, message: String)
@@ -20,6 +22,93 @@ var _http_request: HTTPRequest = null
 var _image_downloader = null
 var _pending_deck: DeckData = null
 var _pending_import_errors: PackedStringArray = PackedStringArray()
+
+
+static func request_headers_for_runtime(os_name: String = "", feature_flags: Dictionary = {}, display_server_name: String = "") -> PackedStringArray:
+	var headers := PackedStringArray(["Content-Type: application/json"])
+	if _is_web_runtime_for_context(os_name, feature_flags, display_server_name):
+		return headers
+	headers.append("User-Agent: PTCGTrain/1.0")
+	return headers
+
+
+static func _is_web_runtime_for_context(os_name: String = "", feature_flags: Dictionary = {}, display_server_name: String = "") -> bool:
+	var resolved_os := os_name.strip_edges().to_lower()
+	var resolved_display := display_server_name.strip_edges().to_lower()
+	var flags := feature_flags
+	if flags.is_empty() and os_name == "" and display_server_name == "":
+		flags = {
+			"web": OS.has_feature("web"),
+			"web_android": OS.has_feature("web_android"),
+			"web_ios": OS.has_feature("web_ios"),
+		}
+		resolved_os = OS.get_name().strip_edges().to_lower()
+		resolved_display = DisplayServer.get_name().strip_edges().to_lower()
+	if resolved_os in ["web", "html5"] or resolved_display in ["web", "html5"]:
+		return true
+	for feature: String in ["web", "web_android", "web_ios"]:
+		if bool(flags.get(feature, false)):
+			return true
+	return false
+
+
+static func parse_provider_ref(input: String) -> Dictionary:
+	var text := input.strip_edges()
+	if text.is_valid_int():
+		var deck_id := int(text)
+		return {
+			"provider": "tcg_mik",
+			"id": deck_id,
+			"local_id": deck_id,
+			"url": "https://tcg.mik.moe/decks/list/%d" % deck_id,
+		}
+
+	var limitless_regex := RegEx.new()
+	limitless_regex.compile("(?i)^(?:https?://)?(?:www\\.)?limitlesstcg\\.com/decks/list/(\\d+)(?:[/?#].*)?$")
+	var limitless_match := limitless_regex.search(text)
+	if limitless_match != null:
+		var limitless_id := int(limitless_match.get_string(1))
+		return {
+			"provider": "limitless",
+			"id": limitless_id,
+			"local_id": LIMITLESS_CARD_PARSER.limitless_deck_local_id(limitless_id),
+			"url": "https://limitlesstcg.com/decks/list/%d" % limitless_id,
+		}
+
+	var tcg_regex := RegEx.new()
+	tcg_regex.compile("(?i)^(?:https?://)?tcg\\.mik\\.moe/decks/list/(\\d+)(?:[/?#].*)?$")
+	var tcg_match := tcg_regex.search(text)
+	if tcg_match != null:
+		var tcg_id := int(tcg_match.get_string(1))
+		return {
+			"provider": "tcg_mik",
+			"id": tcg_id,
+			"local_id": tcg_id,
+			"url": "https://tcg.mik.moe/decks/list/%d" % tcg_id,
+		}
+
+	return {
+		"provider": "",
+		"id": -1,
+		"local_id": -1,
+		"url": text,
+	}
+
+
+static func generated_limitless_card_has_source_collision(existing: CardData, generated: CardData) -> bool:
+	if existing == null or generated == null:
+		return false
+	if str(generated.source_provider).strip_edges().to_lower() != "limitless":
+		return false
+	if existing.get_uid() != generated.get_uid():
+		return false
+	if str(existing.source_provider).strip_edges().to_lower() != "limitless":
+		return true
+	return (
+		str(existing.source_set_code).strip_edges().to_upper() != str(generated.source_set_code).strip_edges().to_upper()
+		or str(existing.source_card_index).strip_edges().to_upper() != str(generated.source_card_index).strip_edges().to_upper()
+		or str(existing.source_language).strip_edges().to_lower() != str(generated.source_language).strip_edges().to_lower()
+	)
 
 
 func _ready() -> void:
@@ -38,7 +127,7 @@ func _ready() -> void:
 static func parse_deck_id(url: String) -> int:
 	# 格式: https://tcg.mik.moe/decks/list/<id> 或 https://tcg.mik.moe/decks/list/<id>?...
 	var regex := RegEx.new()
-	regex.compile("decks/list/(\\d+)")
+	regex.compile("(?i)(?:^|tcg\\.mik\\.moe/)decks/list/(\\d+)")
 	var result := regex.search(url)
 	if result:
 		return int(result.get_string(1))
@@ -50,22 +139,182 @@ static func parse_deck_id(url: String) -> int:
 
 ## 导入卡组完整流程
 func import_deck(url_or_id: String) -> void:
-	var deck_id := parse_deck_id(url_or_id)
-	if deck_id <= 0:
-		import_failed.emit("无法识别卡组ID，请输入有效的 tcg.mik.moe 卡组链接")
+	var ref := parse_provider_ref(url_or_id)
+	var provider := str(ref.get("provider", ""))
+	if provider == "limitless":
+		import_progress.emit(0, 1, "Fetching Limitless deck data...")
+		_fetch_limitless_deck_detail(ref)
 		return
 
-	import_progress.emit(0, 1, "正在获取卡组数据...")
+	if provider != "tcg_mik":
+		import_failed.emit("Unsupported deck URL or deck ID")
+		return
+
+	var deck_id := int(ref.get("id", -1))
+	if deck_id <= 0:
+		import_failed.emit("Unable to parse deck ID from tcg.mik.moe deck URL")
+		return
+
+	import_progress.emit(0, 1, "Fetching deck data...")
 	_fetch_deck_detail(deck_id)
 
 
 ## 获取卡组详情
+func _fetch_limitless_deck_detail(ref: Dictionary) -> void:
+	var source_url := str(ref.get("url", ""))
+	if source_url == "":
+		import_failed.emit("Limitless deck URL is empty")
+		return
+	var callback := _on_limitless_deck_response.bind(ref)
+	_http_request.request_completed.connect(callback, CONNECT_ONE_SHOT)
+	var err := _http_request.request(source_url, request_headers_for_runtime(), HTTPClient.METHOD_GET)
+	if err != OK:
+		if _http_request.request_completed.is_connected(callback):
+			_http_request.request_completed.disconnect(callback)
+		import_failed.emit("Limitless deck request failed: %d" % err)
+
+
+func _on_limitless_deck_response(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray, ref: Dictionary) -> void:
+	if result != HTTPRequest.RESULT_SUCCESS:
+		import_failed.emit("Limitless network request failed (result=%d)" % result)
+		return
+	if response_code != 200:
+		import_failed.emit("Limitless deck returned HTTP %d" % response_code)
+		return
+
+	var parsed := LIMITLESS_CARD_PARSER.parse_deck_html(body.get_string_from_utf8(), str(ref.get("url", "")))
+	var deck := _deck_from_limitless_parse(parsed, ref)
+	var errors := deck.validate()
+	var entries := deck.cards.duplicate(true)
+	_fetch_limitless_cards_sequentially(deck, entries, 0, errors)
+
+
+func _deck_from_limitless_parse(parsed: Dictionary, ref: Dictionary) -> DeckData:
+	var deck := DeckData.new()
+	deck.id = int(parsed.get("id", ref.get("local_id", 0)))
+	deck.deck_name = str(parsed.get("deck_name", "Limitless %s" % str(ref.get("id", "")))).strip_edges()
+	if deck.deck_name == "":
+		deck.deck_name = "Limitless %s" % str(ref.get("id", ""))
+	deck.source_url = str(parsed.get("source_url", ref.get("url", "")))
+	deck.source_provider = "limitless"
+	deck.source_id = str(parsed.get("source_id", ref.get("id", "")))
+	deck.import_date = Time.get_datetime_string_from_system()
+	deck.updated_at = int(Time.get_unix_time_from_system() * 1000.0)
+	var cards_raw: Variant = parsed.get("cards", [])
+	var cards_array: Array = cards_raw if cards_raw is Array else []
+	deck.cards.clear()
+	for entry: Variant in cards_array:
+		if entry is Dictionary:
+			deck.cards.append((entry as Dictionary).duplicate(true))
+	deck.total_cards = int(parsed.get("total_cards", 0))
+	return deck
+
+
+func _fetch_limitless_cards_sequentially(deck: DeckData, entries: Array, index: int, errors: PackedStringArray) -> void:
+	if index >= entries.size():
+		_start_image_sync(deck, errors)
+		return
+
+	var entry_raw: Variant = entries[index]
+	var entry: Dictionary = entry_raw if entry_raw is Dictionary else {}
+	var source_set := str(entry.get("source_set_code", ""))
+	var source_index := str(entry.get("source_card_index", ""))
+	if source_set == "" or source_index == "":
+		errors.append("Limitless card entry is missing set or number")
+		call_deferred("_fetch_limitless_cards_sequentially", deck, entries, index + 1, errors)
+		return
+
+	import_progress.emit(index, entries.size(), "Fetching Limitless card %d/%d..." % [index + 1, entries.size()])
+	var callback := _on_limitless_card_response.bind(deck, entries, index, errors, entry)
+	_http_request.request_completed.connect(callback, CONNECT_ONE_SHOT)
+	var err := _http_request.request(LIMITLESS_CARD_PARSER.card_url(source_set, source_index), request_headers_for_runtime(), HTTPClient.METHOD_GET)
+	if err != OK:
+		if _http_request.request_completed.is_connected(callback):
+			_http_request.request_completed.disconnect(callback)
+		errors.append("Limitless card %s/%s request failed: %d" % [source_set, source_index, err])
+		_resolve_limitless_card_entry(deck, entry, entry, errors)
+		_fetch_limitless_cards_sequentially(deck, entries, index + 1, errors)
+
+
+func _on_limitless_card_response(
+	result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray,
+	deck: DeckData, entries: Array, index: int, errors: PackedStringArray, entry: Dictionary
+) -> void:
+	var parsed_card := entry.duplicate(true)
+	if result == HTTPRequest.RESULT_SUCCESS and response_code == 200:
+		parsed_card = LIMITLESS_CARD_PARSER.parse_card_html(body.get_string_from_utf8(), str(entry.get("source_url", "")))
+	else:
+		errors.append("Limitless card %s/%s fetch failed (HTTP %d)" % [
+			str(entry.get("source_set_code", "")),
+			str(entry.get("source_card_index", "")),
+			response_code,
+		])
+	_resolve_limitless_card_entry(deck, entry, parsed_card, errors)
+	_fetch_limitless_cards_sequentially(deck, entries, index + 1, errors)
+
+
+func _resolve_limitless_card_entry(deck: DeckData, entry: Dictionary, parsed_card: Dictionary, errors: PackedStringArray) -> void:
+	var resolved := LIMITLESS_CARD_RESOLVER.resolve_card(parsed_card, CardDatabase.get_all_cards())
+	var resolver_errors: Array = resolved.get("errors", [])
+	if not resolver_errors.is_empty():
+		for resolver_error: Variant in resolver_errors:
+			errors.append("Limitless card %s/%s resolver failed: %s" % [
+				str(entry.get("source_set_code", "")),
+				str(entry.get("source_card_index", "")),
+				str(resolver_error),
+			])
+		return
+	var card: CardData = resolved.get("card", null)
+	if card == null:
+		errors.append("Limitless card %s/%s could not be resolved" % [
+			str(entry.get("source_set_code", "")),
+			str(entry.get("source_card_index", "")),
+		])
+		return
+	if bool(resolved.get("generated", false)):
+		var existing := CardDatabase.get_card(card.set_code, card.card_index)
+		if generated_limitless_card_has_source_collision(existing, card):
+			errors.append("Limitless generated card %s/%s conflicts with existing source metadata" % [card.set_code, card.card_index])
+			return
+		CardDatabase.cache_card(card)
+	else:
+		_try_register_duplicate_effect_alias(card)
+	_update_limitless_deck_entry(deck, entry, card, str(resolved.get("resolved_via", "")))
+	if CardImplementationStatus.is_unimplemented(card):
+		errors.append("Limitless card %s/%s is not rule-runnable: %s" % [
+			str(entry.get("source_set_code", "")),
+			str(entry.get("source_card_index", "")),
+			CardImplementationStatus.get_reason(card),
+		])
+
+
+func _update_limitless_deck_entry(deck: DeckData, source_entry: Dictionary, card: CardData, resolved_via: String) -> void:
+	for i in range(deck.cards.size()):
+		var entry: Dictionary = deck.cards[i]
+		if str(entry.get("source_set_code", "")) != str(source_entry.get("source_set_code", "")):
+			continue
+		if str(entry.get("source_card_index", "")) != str(source_entry.get("source_card_index", "")):
+			continue
+		entry["set_code"] = card.set_code
+		entry["card_index"] = card.card_index
+		entry["card_type"] = card.card_type
+		entry["name"] = card.display_name()
+		entry["name_en"] = card.name_en
+		entry["effect_id"] = card.effect_id
+		entry["resolved_via"] = resolved_via
+		entry["source_provider"] = str(source_entry.get("source_provider", "limitless"))
+		entry["source_set_code"] = str(source_entry.get("source_set_code", entry.get("source_set_code", "")))
+		entry["source_card_index"] = str(source_entry.get("source_card_index", entry.get("source_card_index", "")))
+		entry["source_language"] = str(source_entry.get("source_language", entry.get("source_language", "en")))
+		entry["source_url"] = str(source_entry.get("source_url", entry.get("source_url", "")))
+		entry["source_name"] = str(source_entry.get("source_name", source_entry.get("name", entry.get("source_name", ""))))
+		deck.cards[i] = entry
+		return
+
+
 func _fetch_deck_detail(deck_id: int) -> void:
 	var body := JSON.stringify({"deckId": deck_id})
-	var headers := PackedStringArray([
-		"Content-Type: application/json",
-		"User-Agent: PTCGTrain/1.0",
-	])
+	var headers := request_headers_for_runtime()
 
 	var callback := _on_deck_detail_response.bind(deck_id)
 	_http_request.request_completed.connect(callback, CONNECT_ONE_SHOT)
@@ -129,10 +378,7 @@ func _fetch_cards_sequentially(deck: DeckData, keys: Array[Dictionary], index: i
 
 	# 从 API 获取
 	var body := JSON.stringify({"setCode": set_code, "cardIndex": card_index})
-	var headers := PackedStringArray([
-		"Content-Type: application/json",
-		"User-Agent: PTCGTrain/1.0",
-	])
+	var headers := request_headers_for_runtime()
 
 	var callback := _on_card_detail_response.bind(deck, keys, index, errors, set_code, card_index)
 	_http_request.request_completed.connect(callback, CONNECT_ONE_SHOT)

@@ -72,10 +72,24 @@ func _write_not_ready_llm_config_for_test() -> void:
 
 
 func test_main_menu_exposes_tournament_entry() -> String:
+	var previous_tournament := GameManager.current_tournament
+	var previous_tournament_deck_id := GameManager.tournament_selected_player_deck_id
+	var previous_in_progress := GameManager.tournament_battle_in_progress
+	GameManager.clear_tournament()
+	_set_navigation_suppressed(true)
 	var scene: Control = MainMenuScene.instantiate()
-	return run_checks([
+	scene.call("_on_tournament")
+	var requested_scene := GameManager.consume_last_requested_scene_path()
+	var result := run_checks([
 		assert_true(scene.find_child("BtnTournament", true, false) is Button, "首页应包含比赛模式按钮"),
+		assert_eq(requested_scene, GameManager.SCENE_TOURNAMENT_SETUP, "没有进行中的比赛时，首页比赛模式应直接进入合并后的设置页"),
 	])
+	scene.queue_free()
+	_set_navigation_suppressed(false)
+	GameManager.current_tournament = previous_tournament
+	GameManager.tournament_selected_player_deck_id = previous_tournament_deck_id
+	GameManager.tournament_battle_in_progress = previous_in_progress
+	return result
 
 
 func test_hidden_champion_preview_builds_final_standings() -> String:
@@ -121,7 +135,11 @@ func test_tournament_scenes_instantiate() -> String:
 		assert_true(deck_select.find_child("DeckOption", true, false) is OptionButton, "DeckSelect 应包含 DeckOption"),
 		assert_true(deck_select.find_child("DeckPickerButton", true, false) is Button, "DeckSelect 应包含 HUD 卡组选择按钮"),
 		assert_null(deck_select.find_child("SelectedDeckCard", true, false), "DeckSelect 不应再显示重复的已选卡组卡片"),
-		assert_true(setup.find_child("SizeOption", true, false) is OptionButton, "TournamentSetup 应包含 SizeOption"),
+		assert_true(setup.find_child("DeckOption", true, false) is OptionButton, "TournamentSetup 应包含卡组选择元数据"),
+		assert_true(setup.find_child("DeckPickerButton", true, false) is Button, "TournamentSetup 应包含 HUD 卡组选择按钮"),
+		assert_true(setup.find_child("SelectedDeckLabel", true, false) is Label, "TournamentSetup 应显示已选玩家卡组"),
+		assert_null(setup.find_child("SizeOption", true, false), "TournamentSetup 不应再使用人数下拉框"),
+		assert_true(setup.find_child("TournamentSizeRadioGroup", true, false) is GridContainer, "TournamentSetup 应使用 radio 人数选择组"),
 		assert_true(setup.find_child("RoundInfoLabel", true, false) is Label, "TournamentSetup 应显示预计轮数"),
 		assert_true(overview.find_child("RosterText", true, false) is TextEdit, "TournamentOverview 应包含参赛名单文本框"),
 		assert_true(overview.find_child("DistributionText", true, false) is TextEdit, "TournamentOverview 应包含卡组分布文本框"),
@@ -170,8 +188,8 @@ func test_tournament_scenes_use_hud_visual_theme() -> String:
 	return run_checks(checks)
 
 
-func test_tournament_deck_select_opens_hud_deck_picker() -> String:
-	var scene: Control = TournamentDeckSelectScene.instantiate()
+func test_tournament_setup_opens_hud_deck_picker() -> String:
+	var scene: Control = TournamentSetupScene.instantiate()
 	scene.call("_ready")
 	scene.call("_on_deck_picker_pressed")
 	var overlay := scene.find_child("DeckPickerOverlay", true, false) as Control

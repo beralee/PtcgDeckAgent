@@ -11,7 +11,7 @@ const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBatt
 const CARD_TILE_WIDTH := 100
 const CARD_TILE_HEIGHT := 140
 const VIEW_GRID_COLUMNS := 6
-const RENAME_DIALOG_SIZE := Vector2i(460, 230)
+const RENAME_DIALOG_SIZE := Vector2i(460, 300)
 const COMMUNITY_DATA_PATH := "res://community/data/community-data.json"
 const DECK_CENTER_META_STATE_PATH := "user://deck_center_meta_state.json"
 const HUD_ACCENT := Color(0.28, 0.92, 1.0, 1.0)
@@ -38,6 +38,9 @@ const IMPORT_DECK_GUIDE_TEXT := "导入步骤：\n1. 在浏览器打开 tcg.mik.
 const IMPORT_MODAL_PREVIOUS_MOUSE_FILTER_META := "_import_modal_previous_mouse_filter"
 const IMPORT_URL_FOCUS_REQUESTED_META := "_import_url_focus_requested"
 const DECK_ACTION_HUD_DIALOG_NAME := "DeckActionHudDialog"
+const WEB_PORTRAIT_DECK_EDIT_HUD_CONTEXT := "web_portrait_deck_edit"
+const WEB_PORTRAIT_DECK_EDIT_TITLE := "\u8bf7\u5148\u6a2a\u5c4f"
+const WEB_PORTRAIT_DECK_EDIT_MESSAGE := "\u6d4f\u89c8\u5668\u7248\u5361\u7ec4\u7f16\u8f91\u5668\u9700\u8981\u6a2a\u5c4f\u7a7a\u95f4\u3002\u8bf7\u5148\u5c06\u624b\u673a\u6a2a\u8fc7\u6765\uff08\u5fc5\u8981\u65f6\u5173\u95ed\u7cfb\u7edf\u65cb\u8f6c\u9501\uff09\uff0c\u786e\u8ba4\u540e\u518d\u8fdb\u5165\u5361\u7ec4\u7f16\u8f91\u3002"
 
 const ENERGY_TYPE_LABELS: Dictionary = {
 	"R": "火", "W": "水", "G": "草", "L": "雷",
@@ -56,6 +59,7 @@ var _rename_dialog: AcceptDialog = null
 var _rename_input: LineEdit = null
 var _rename_error_label: Label = null
 var _rename_confirm_button: Button = null
+var _rename_clear_button: Button = null
 var _rename_target_deck: DeckData = null
 var _rename_ignore_deck_id: int = -1
 var _rename_context: String = ""
@@ -87,6 +91,7 @@ var _recommendation_detail_overlay: Control = null
 var _import_result_close_timer: Timer = null
 var _non_battle_layout_controller: RefCounted = NonBattleLayoutControllerScript.new()
 var _current_non_battle_layout_context: Dictionary = {}
+var _test_web_runtime_override := false
 
 
 func _ready() -> void:
@@ -220,6 +225,7 @@ func _configure_import_feedback_line_edit(input: LineEdit, keyboard_type: int = 
 	if input.has_meta(NonBattleTouchBridgeScript.NATIVE_TEXT_INPUT_META):
 		input.remove_meta(NonBattleTouchBridgeScript.NATIVE_TEXT_INPUT_META)
 	NonBattleTouchBridgeScript.bind_focus_control_touch(input)
+	NonBattleTouchBridgeScript.bind_line_edit_select_all(input)
 
 
 func _consume_import_modal_event() -> void:
@@ -518,6 +524,7 @@ func _apply_deck_manager_mobile_metrics(node: Node, context: Dictionary, portrai
 		var input := node as LineEdit
 		input.custom_minimum_size.y = maxf(input.custom_minimum_size.y, float(context.get("input_height", 38.0)))
 		input.add_theme_font_size_override("font_size", int(context.get("input_font_size", 15)))
+		NonBattleTouchBridgeScript.bind_line_edit_select_all(input)
 	elif node is Label:
 		var label := node as Label
 		if label.name in ["Title", "TitleLabel"]:
@@ -1059,6 +1066,18 @@ func _is_deck_manager_portrait_layout() -> bool:
 	var viewport_size := get_viewport_rect().size if is_inside_tree() else size
 	var mobile_like := OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios")
 	return mobile_like and viewport_size.y > viewport_size.x
+
+
+func _is_deck_manager_web_runtime() -> bool:
+	if _test_web_runtime_override:
+		return true
+	if GameManager != null and GameManager.has_method("_is_web_runtime"):
+		return bool(GameManager.call("_is_web_runtime"))
+	return OS.has_feature("web") or OS.has_feature("web_android") or OS.has_feature("web_ios") or DisplayServer.get_name().to_lower() in ["web", "html5"]
+
+
+func _should_confirm_web_portrait_deck_edit() -> bool:
+	return _is_deck_manager_portrait_layout() and _is_deck_manager_web_runtime()
 
 
 func _deck_manager_portrait_scale() -> float:
@@ -2011,6 +2030,10 @@ func _close_recommendation_detail_overlay() -> void:
 
 
 func _compare_decks_by_edit_time_desc(a: DeckData, b: DeckData) -> bool:
+	var a_player_priority := _player_deck_sort_priority_key(a)
+	var b_player_priority := _player_deck_sort_priority_key(b)
+	if a_player_priority != b_player_priority:
+		return a_player_priority > b_player_priority
 	var a_time := _deck_edit_timestamp(a)
 	var b_time := _deck_edit_timestamp(b)
 	if a_time == b_time:
@@ -2026,6 +2049,14 @@ func _compare_decks_by_edit_time_desc(a: DeckData, b: DeckData) -> bool:
 			return a_name < b_name
 		return a_import > b_import
 	return a_time > b_time
+
+
+func _player_deck_sort_priority_key(deck: DeckData) -> int:
+	if CardDatabase != null and CardDatabase.has_method("get_player_deck_sort_priority"):
+		return int(CardDatabase.get_player_deck_sort_priority(deck))
+	if CardDatabase != null and CardDatabase.has_method("get_deck_version_priority"):
+		return int(CardDatabase.get_deck_version_priority(deck))
+	return 0
 
 
 func _deck_edit_timestamp(deck: DeckData) -> int:
@@ -2091,6 +2122,9 @@ func _create_deck_item(deck: DeckData) -> Control:
 		row_button_height * 2.0 + float(gap) * 3.0 + float(body_font) * 1.45
 	) if portrait else 76.0
 	var panel := PanelContainer.new()
+	panel.name = "DeckRowItem"
+	panel.set_meta("deck_id", int(deck.id))
+	panel.set_meta("deck_name", str(deck.deck_name))
 	panel.custom_minimum_size = Vector2(0, row_height)
 	panel.add_theme_stylebox_override("panel", _hud_panel_style(Color(0.035, 0.075, 0.11, 0.88), HUD_CARD_BORDER, 16))
 
@@ -2128,6 +2162,7 @@ func _create_deck_item(deck: DeckData) -> Control:
 	button_parent.add_child(btn_view)
 
 	var btn_edit := Button.new()
+	btn_edit.name = "DeckRowEditButton"
 	btn_edit.text = "编辑"
 	btn_edit.custom_minimum_size = Vector2(78, 38)
 	btn_edit.pressed.connect(_on_edit_deck.bind(deck))
@@ -2561,6 +2596,10 @@ func _show_rename_hud_dialog(initial_name: String, title: String, message_text: 
 	NonBattleTouchBridgeScript.bind_focus_control_touch(_rename_input)
 	content.add_child(_rename_input)
 
+	_rename_clear_button = _create_deck_action_hud_button("清除", HUD_SECONDARY, "DeckRenameClearButton")
+	_rename_clear_button.pressed.connect(_on_clear_rename_input)
+	content.add_child(_rename_clear_button)
+
 	_rename_error_label = Label.new()
 	_rename_error_label.name = "DeckRenameError"
 	_rename_error_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -2639,9 +2678,16 @@ func _show_rename_dialog(initial_name: String, title: String, message_text: Stri
 	content.add_child(message)
 
 	_rename_input = LineEdit.new()
+	_rename_input.name = "DeckRenameInput"
 	_rename_input.text = initial_name
 	_rename_input.text_changed.connect(_on_rename_text_changed)
 	content.add_child(_rename_input)
+
+	_rename_clear_button = Button.new()
+	_rename_clear_button.name = "DeckRenameClearButton"
+	_rename_clear_button.text = "清除"
+	_rename_clear_button.pressed.connect(_on_clear_rename_input)
+	content.add_child(_rename_clear_button)
 
 	_rename_error_label = Label.new()
 	_rename_error_label.autowrap_mode = TextServer.AUTOWRAP_WORD
@@ -2685,6 +2731,9 @@ func _apply_rename_dialog_layout(scroll: ScrollContainer, content: VBoxContainer
 			HudThemeScript.style_scroll_container(scroll)
 		if content != null:
 			content.custom_minimum_size = Vector2(dialog_size.x - 60, 0)
+		if _rename_clear_button != null:
+			_style_hud_button(_rename_clear_button, HUD_SECONDARY)
+			NonBattleTouchBridgeScript.bind_button_touch(_rename_clear_button)
 		return
 	var context := _current_non_battle_layout_context
 	var body_font := int(context.get("body_font_size", 27))
@@ -2712,6 +2761,11 @@ func _apply_rename_dialog_layout(scroll: ScrollContainer, content: VBoxContainer
 		_rename_input.custom_minimum_size.y = maxf(_rename_input.custom_minimum_size.y, input_height)
 		_rename_input.add_theme_font_size_override("font_size", input_font)
 		NonBattleTouchBridgeScript.bind_focus_control_touch(_rename_input)
+	if _rename_clear_button != null:
+		_style_hud_button(_rename_clear_button, HUD_SECONDARY)
+		_rename_clear_button.custom_minimum_size.y = maxf(_rename_clear_button.custom_minimum_size.y, button_height)
+		_rename_clear_button.add_theme_font_size_override("font_size", button_font)
+		NonBattleTouchBridgeScript.bind_button_touch(_rename_clear_button)
 	if _rename_confirm_button != null:
 		_rename_confirm_button.custom_minimum_size.y = maxf(_rename_confirm_button.custom_minimum_size.y, button_height)
 		_rename_confirm_button.add_theme_font_size_override("font_size", button_font)
@@ -2722,6 +2776,16 @@ func _popup_rename_dialog_centered() -> void:
 	if _rename_dialog == null or not is_instance_valid(_rename_dialog):
 		return
 	_rename_dialog.popup_centered(_rename_dialog_size_for_current_layout())
+
+
+func _on_clear_rename_input() -> void:
+	if _rename_input == null:
+		return
+	_rename_input.text = ""
+	_on_rename_text_changed("")
+	if _rename_input.is_inside_tree():
+		_rename_input.grab_focus()
+
 
 func _on_rename_text_changed(new_text: String) -> void:
 	var validation_error: String = _validate_deck_name(new_text, _rename_ignore_deck_id)
@@ -2776,6 +2840,7 @@ func _close_rename_dialog(clear_target: bool = true) -> void:
 	_rename_input = null
 	_rename_error_label = null
 	_rename_confirm_button = null
+	_rename_clear_button = null
 	_rename_ignore_deck_id = -1
 	_rename_context = ""
 	_rename_forced = false
@@ -2880,7 +2945,35 @@ func _on_image_sync_failed(error_message: String) -> void:
 	%ProgressLabel.text = "同步失败：%s" % error_message
 
 
+func _show_web_portrait_deck_edit_prompt(deck_id: int) -> void:
+	var shell := _create_deck_action_hud_shell(
+		WEB_PORTRAIT_DECK_EDIT_TITLE,
+		WEB_PORTRAIT_DECK_EDIT_MESSAGE,
+		Vector2(560.0, 390.0),
+		WEB_PORTRAIT_DECK_EDIT_HUD_CONTEXT
+	)
+	var footer := shell.get("footer") as HBoxContainer
+	if footer == null:
+		return
+	var cancel_button := _create_deck_action_hud_button("\u53d6\u6d88", HUD_SECONDARY, "WebDeckEditCancelButton")
+	cancel_button.pressed.connect(func() -> void:
+		_close_deck_action_hud_dialog(WEB_PORTRAIT_DECK_EDIT_HUD_CONTEXT)
+	)
+	footer.add_child(cancel_button)
+	var continue_button := _create_deck_action_hud_button("\u5df2\u6a2a\u5c4f\uff0c\u7ee7\u7eed", HUD_ACCENT_WARM, "WebDeckEditContinueButton")
+	continue_button.pressed.connect(func() -> void:
+		_close_deck_action_hud_dialog(WEB_PORTRAIT_DECK_EDIT_HUD_CONTEXT)
+		GameManager.goto_deck_editor(deck_id)
+	)
+	footer.add_child(continue_button)
+
+
 func _on_edit_deck(deck: DeckData) -> void:
+	if deck == null:
+		return
+	if _should_confirm_web_portrait_deck_edit():
+		_show_web_portrait_deck_edit_prompt(deck.id)
+		return
 	GameManager.goto_deck_editor(deck.id)
 
 
@@ -2967,7 +3060,7 @@ func _on_view_tile_input(event: InputEvent, set_code: String, card_index: String
 
 func _show_card_detail(card: CardData) -> void:
 	var dialog := AcceptDialog.new()
-	dialog.title = card.name
+	dialog.title = card.display_name()
 	dialog.ok_button_text = "关闭"
 	dialog.size = Vector2i(500, 480)
 
@@ -2986,7 +3079,7 @@ func _show_card_detail(card: CardData) -> void:
 	scroll.add_child(content)
 
 	var header := Label.new()
-	header.text = card.name
+	header.text = card.display_name()
 	header.add_theme_font_size_override("font_size", HudThemeScript.scaled_font_size(20))
 	content.add_child(header)
 
@@ -3033,12 +3126,13 @@ func _show_card_detail(card: CardData) -> void:
 		for ab: Dictionary in card.abilities:
 			_add_detail_separator(content)
 			var ab_title := Label.new()
-			ab_title.text = "[特性] %s" % ab.get("name", "")
 			ab_title.add_theme_color_override("font_color", Color(1.0, 0.7, 0.3))
+			ab_title.text = "特性: %s" % CardData.dictionary_display_name(ab)
 			content.add_child(ab_title)
-			if ab.get("text", "") != "":
+			var ab_display_text := CardData.dictionary_display_text(ab)
+			if ab_display_text != "":
 				var ab_text := Label.new()
-				ab_text.text = str(ab.get("text", ""))
+				ab_text.text = ab_display_text
 				ab_text.autowrap_mode = TextServer.AUTOWRAP_WORD
 				content.add_child(ab_text)
 
@@ -3050,15 +3144,16 @@ func _show_card_detail(card: CardData) -> void:
 			var parts: PackedStringArray = []
 			if cost_str != "":
 				parts.append("[%s]" % cost_str)
-			parts.append(str(atk.get("name", "")))
+			parts.append(CardData.dictionary_display_name(atk))
 			if dmg_str != "":
 				parts.append(dmg_str)
 			atk_header.text = " ".join(parts)
 			atk_header.add_theme_color_override("font_color", Color(0.5, 0.8, 1.0))
 			content.add_child(atk_header)
-			if atk.get("text", "") != "":
+			var atk_display_text := CardData.dictionary_display_text(atk)
+			if atk_display_text != "":
 				var atk_text := Label.new()
-				atk_text.text = str(atk.get("text", ""))
+				atk_text.text = atk_display_text
 				atk_text.autowrap_mode = TextServer.AUTOWRAP_WORD
 				content.add_child(atk_text)
 

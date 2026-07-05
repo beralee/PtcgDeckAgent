@@ -4,7 +4,7 @@ extends BaseEffect
 const SPIRITOMB_EFFECT_ID := "db7b9902fd4fed3b6f9d94a7ee7a12ba"
 
 
-static func is_locked(slot: PokemonSlot, state: GameState) -> bool:
+static func is_locked(slot: PokemonSlot, state: GameState, before_order: int = -1) -> bool:
 	if slot == null or state == null:
 		return false
 	var cd: CardData = slot.get_card_data()
@@ -16,6 +16,8 @@ static func is_locked(slot: PokemonSlot, state: GameState) -> bool:
 		return false
 	for pi: int in state.players.size():
 		for source_slot: PokemonSlot in state.players[pi].get_all_pokemon():
+			if _is_source_not_earlier_than(source_slot, before_order):
+				continue
 			if _is_live_lock_source(source_slot, state):
 				return true
 	return false
@@ -35,11 +37,24 @@ static func _is_live_lock_source(slot: PokemonSlot, state: GameState) -> bool:
 static func _is_lock_source_suppressed(slot: PokemonSlot, state: GameState) -> bool:
 	if EffectCancelCologne.is_slot_directly_ability_disabled(slot, state):
 		return true
-	if AbilityBasicLock.is_locked_by_basic_lock(slot, state):
+	var source_order := _in_play_source_order(slot)
+	if AbilityBasicLock.is_locked_by_basic_lock(slot, state, source_order):
 		return true
-	if AbilityDisableOpponentAbility.is_locked_by_dark_wing(slot, state):
+	if AbilityDisableOpponentAbility.is_locked_by_dark_wing(slot, state, source_order):
+		return true
+	if AbilityIronThornsInit.is_locked_by_init(slot, state, source_order):
 		return true
 	return false
+
+
+static func _is_source_not_earlier_than(source: PokemonSlot, before_order: int) -> bool:
+	return before_order > 0 and _in_play_source_order(source) >= before_order
+
+
+static func _in_play_source_order(slot: PokemonSlot) -> int:
+	if slot == null:
+		return 0
+	return slot.get_in_play_continuous_ability_order()
 
 
 func get_description() -> String:

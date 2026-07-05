@@ -31,6 +31,9 @@ func on_hand_card_clicked(scene: Object, inst: CardInstance, _panel: PanelContai
 		scene.set("_selected_hand_card", null)
 		scene.call("_refresh_hand")
 		return
+	if scene.get("_selected_hand_card") != null:
+		scene.set("_selected_hand_card", null)
+		scene.call("_refresh_hand")
 
 	var gsm: Variant = scene.get("_gsm")
 	var current_player: int = gsm.game_state.current_player_index
@@ -55,12 +58,12 @@ func on_hand_card_clicked(scene: Object, inst: CardInstance, _panel: PanelContai
 			return
 		scene.set("_selected_hand_card", inst)
 		scene.call("_refresh_hand")
-		scene.call("_log", _bt(scene, "battle.log.select_basic_to_bench", {"name": card_data.name}))
+		scene.call("_log", _bt(scene, "battle.log.select_basic_to_bench", {"name": card_data.display_name()}))
 		return
 	if card_data.is_pokemon() and card_data.stage != "Basic":
 		scene.set("_selected_hand_card", inst)
 		scene.call("_refresh_hand")
-		scene.call("_log", _bt(scene, "battle.log.select_evolution_target", {"name": card_data.name}))
+		scene.call("_log", _bt(scene, "battle.log.select_evolution_target", {"name": card_data.display_name()}))
 		return
 	if card_data.card_type == "Basic Energy" or card_data.card_type == "Special Energy":
 		var energy_reason: String = gsm.rule_validator.get_attach_energy_unusable_reason(gsm.game_state, current_player, inst, gsm.effect_processor)
@@ -69,12 +72,12 @@ func on_hand_card_clicked(scene: Object, inst: CardInstance, _panel: PanelContai
 			return
 		scene.set("_selected_hand_card", inst)
 		scene.call("_refresh_hand")
-		scene.call("_log", _bt(scene, "battle.log.select_attach_energy_target", {"name": card_data.name}))
+		scene.call("_log", _bt(scene, "battle.log.select_attach_energy_target", {"name": card_data.display_name()}))
 		return
 	if card_data.card_type == "Tool":
 		scene.set("_selected_hand_card", inst)
 		scene.call("_refresh_hand")
-		scene.call("_log", _bt(scene, "battle.log.select_attach_tool_target", {"name": card_data.name}))
+		scene.call("_log", _bt(scene, "battle.log.select_attach_tool_target", {"name": card_data.display_name()}))
 
 
 func try_play_trainer_with_interaction(scene: Object, player_index: int, card: CardInstance) -> void:
@@ -100,10 +103,11 @@ func try_play_trainer_with_interaction(scene: Object, player_index: int, card: C
 	var effect: BaseEffect = gsm.effect_processor.get_effect(card.card_data.effect_id)
 	if effect == null:
 		if not gsm.play_trainer(player_index, card, []):
-			_show_invalid_card_hint(scene, card, "%s 当前无法使用。" % card.card_data.name, "trainer")
+			_show_invalid_card_hint(scene, card, "%s 当前无法使用。" % card.card_data.display_name(), "trainer")
 		else:
 			scene.call("_refresh_ui_after_successful_action", false, player_index)
 		return
+	gsm.game_state.shared_turn_flags["_draw_effect_processor"] = gsm.effect_processor
 	if not effect.can_execute(card, gsm.game_state):
 		_show_invalid_card_hint(scene, card, gsm.effect_processor.get_effect_unusable_reason(card, gsm.game_state), "trainer")
 		return
@@ -134,7 +138,7 @@ func try_play_stadium_with_interaction(scene: Object, player_index: int, card: C
 	var effect: BaseEffect = gsm.effect_processor.get_effect(card.card_data.effect_id)
 	if effect == null:
 		if not gsm.play_stadium(player_index, card):
-			_show_invalid_card_hint(scene, card, "%s 当前无法打出。" % card.card_data.name, "stadium")
+			_show_invalid_card_hint(scene, card, "%s 当前无法打出。" % card.card_data.display_name(), "stadium")
 		else:
 			scene.call("_refresh_ui_after_successful_action", false, player_index)
 		return
@@ -160,7 +164,7 @@ func try_use_ability_with_interaction(scene: Object, player_index: int, slot: Po
 			scene.call("_refresh_ui_after_successful_action", true, player_index, "use_ability")
 		else:
 			_show_invalid_action_hint(scene, {
-				"title": "%s 现在不能使用特性" % card.card_data.name,
+				"title": "%s 现在不能使用特性" % card.card_data.display_name(),
 				"reason": gsm.effect_processor.get_ability_unusable_reason(slot, gsm.game_state, ability_index),
 				"detail": "特性需要满足卡面条件，并且可能受到场上特性封锁效果影响。",
 				"kind": "ability",
@@ -168,7 +172,7 @@ func try_use_ability_with_interaction(scene: Object, player_index: int, slot: Po
 		return
 	if not gsm.effect_processor.can_use_ability(slot, gsm.game_state, ability_index):
 		_show_invalid_action_hint(scene, {
-			"title": "%s 现在不能使用特性" % card.card_data.name,
+			"title": "%s 现在不能使用特性" % card.card_data.display_name(),
 			"reason": gsm.effect_processor.get_ability_unusable_reason(slot, gsm.game_state, ability_index),
 			"detail": "特性需要满足卡面条件，并且可能受到场上特性封锁效果影响。",
 			"kind": "ability",
@@ -182,7 +186,7 @@ func try_use_ability_with_interaction(scene: Object, player_index: int, slot: Po
 			scene.call("_refresh_ui_after_successful_action", true, player_index, "use_ability")
 		else:
 			_show_invalid_action_hint(scene, {
-				"title": "%s 现在不能使用特性" % card.card_data.name,
+				"title": "%s 现在不能使用特性" % card.card_data.display_name(),
 				"reason": gsm.effect_processor.get_ability_unusable_reason(slot, gsm.game_state, ability_index),
 				"detail": "特性需要满足卡面条件，并且可能受到场上特性封锁效果影响。",
 				"kind": "ability",
@@ -228,11 +232,11 @@ func try_use_stadium_with_interaction(scene: Object, player_index: int) -> void:
 
 func _show_invalid_card_hint(scene: Object, card: CardInstance, reason: String, kind: String) -> void:
 	if reason.strip_edges() == "" and card != null and card.card_data != null:
-		reason = "%s 当前无法使用。" % card.card_data.name
+		reason = "%s 当前无法使用。" % card.card_data.display_name()
 	var title := "当前无法执行"
 	var detail := ""
 	if card != null and card.card_data != null:
-		title = "%s 现在不能使用" % card.card_data.name
+		title = "%s 现在不能使用" % card.card_data.display_name()
 		detail = _card_detail_summary(card.card_data)
 	_show_invalid_action_hint(scene, {
 		"title": title,

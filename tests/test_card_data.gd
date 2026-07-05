@@ -231,6 +231,33 @@ func test_from_api_json_pokemon() -> String:
 	])
 
 
+func test_from_api_json_label_array_promotes_special_tags() -> String:
+	var json := {
+		"name": "Iron Valiant ex",
+		"cardType": "Pokemon",
+		"mechanic": "ex",
+		"label": ["Future"],
+		"setCode": "CSV9.5C",
+		"cardIndex": "081",
+		"nameEn": "Iron Valiant ex",
+		"effectId": "b417ad06ad8e4aa783b35fe1f3f27010",
+		"pokemonAttr": {
+			"energyType": "P",
+			"stage": "Basic",
+			"hp": 220,
+			"retreatCost": 2,
+			"attack": [],
+			"ability": [],
+		},
+	}
+	var card := CardData.from_api_json(json)
+	return run_checks([
+		assert_eq(card.label, "Future", "label array should serialize to the local label string"),
+		assert_eq(card.is_tags.size(), 1, "label array should create one local tag"),
+		assert_true(card.is_future_pokemon(), "Future label should be usable through CardData.is_future_pokemon"),
+	])
+
+
 func test_from_api_json_energy_infer() -> String:
 	var mapping := {"火能量": "R", "水能量": "W", "草能量": "G", "雷能量": "L", "超能量": "P", "斗能量": "F", "恶能量": "D", "钢能量": "M"}
 	for ename: String in mapping:

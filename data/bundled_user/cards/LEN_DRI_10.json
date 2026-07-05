@@ -1,0 +1,73 @@
+{
+	"abilities": [
+		{
+			"name": "Flower Curtain",
+			"text": "Prevent all damage done to your Benched Pokémon that don't have a Rule Box by attacks from your opponent's Pokémon. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)",
+			"name_zh": "花幕",
+			"text_zh": "防止对手的宝可梦使用招式对自己的备战区没有规则框的宝可梦造成的所有伤害。（宝可梦ex、宝可梦V等拥有规则框。）"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "tono",
+	"attacks": [
+		{
+			"cost": "CC",
+			"damage": "30",
+			"is_vstar_power": false,
+			"name": "Smash Kick",
+			"text": "",
+			"name_zh": "粉碎踢",
+			"text_zh": ""
+		}
+	],
+	"card_index": "10",
+	"card_index_en": "10",
+	"card_type": "Pokemon",
+	"description": "特性: 花幕\n防止对手的宝可梦使用招式对自己的备战区没有规则框的宝可梦造成的所有伤害。（宝可梦ex、宝可梦V等拥有规则框。）\n\n粉碎踢 30",
+	"effect_id": "69d439ca1bcf6877afa4d5ad4f369fd3",
+	"energy_provides": "",
+	"energy_type": "G",
+	"evolves_from": "",
+	"hp": 80,
+	"image_local_path": "user://cards/images/LEN_DRI/10.png",
+	"image_url": "https://limitless3.nyc3.cdn.digitaloceanspaces.com/limitless/logo.png",
+	"is_tags": [
+		"Basic"
+	],
+	"label": "",
+	"mechanic": "",
+	"name": "Shaymin",
+	"name_en": "Shaymin",
+	"name_zh": "谢米",
+	"rarity": "Destined Rivals (DRI)",
+	"regulation_expanded": true,
+	"regulation_mark": "",
+	"regulation_standard": true,
+	"release_date": "",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "LEN_DRI",
+	"set_code_en": "DRI",
+	"source_card_index": "10",
+	"source_imported_at": 1783008496067,
+	"source_language": "en",
+	"source_parser_version": 1,
+	"source_prints": [
+		"DRI/10",
+		"DRI/185",
+		"JP/MP/34",
+		"JP/MP/95",
+		"JP/SV9A/6",
+		"JP/SV9A/66",
+		"JP/MA/1",
+		"JP/M2A/12"
+	],
+	"source_provider": "limitless",
+	"source_set_code": "DRI",
+	"source_url": "https://limitlesstcg.com/cards/DRI/10",
+	"stage": "Basic",
+	"weakness_energy": "R",
+	"weakness_value": "x2",
+	"yoren_code": ""
+}

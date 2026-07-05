@@ -1,0 +1,79 @@
+{
+	"abilities": [
+		{
+			"name": "Trade",
+			"name_zh": "交易",
+			"text": "You must discard a card from your hand in order to use this Ability. Once during your turn, you may draw 2 cards.",
+			"text_zh": "若要使用这个特性，必须从自己的手牌中丢弃1张卡。在自己的回合时可使用1次，抽2张卡。"
+		}
+	],
+	"ancient_trait": "",
+	"artist": "takuyoa",
+	"attacks": [
+		{
+			"cost": "DD",
+			"damage": "",
+			"is_vstar_power": false,
+			"name": "Night Joker",
+			"name_zh": "暗夜小丑",
+			"text": "Choose 1 of your Benched N's Pokémon's attacks and use it as this attack.",
+			"text_zh": "选择自己备战区的1只N的宝可梦拥有的1个招式，作为这个招式使用。"
+		}
+	],
+	"card_index": "98",
+	"card_index_en": "98",
+	"card_type": "Pokemon",
+	"description": "特性: 交易\n若要使用这个特性，必须从自己的手牌中丢弃1张卡。在自己的回合时可使用1次，抽2张卡。\n\n暗夜小丑\n选择自己备战区的1只N的宝可梦拥有的1个招式，作为这个招式使用。",
+	"effect_id": "cd6639f9c8249c13aa07c7df55836542",
+	"energy_provides": "",
+	"energy_type": "D",
+	"evolves_from": "N's Zorua",
+	"hp": 280,
+	"image_local_path": "user://cards/images/LEN_JTG/98.png",
+	"image_url": "https://limitless3.nyc3.cdn.digitaloceanspaces.com/limitless/logo.png",
+	"is_tags": [
+		"Stage 1",
+		"ex"
+	],
+	"label": "ex",
+	"mechanic": "ex",
+	"name": "N's Zoroark ex",
+	"name_en": "N's Zoroark ex",
+	"name_zh": "N的索罗亚克ex",
+	"rarity": "Journey Together (JTG)",
+	"regulation_expanded": true,
+	"regulation_mark": "",
+	"regulation_standard": true,
+	"release_date": "",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"set_code": "LEN_JTG",
+	"set_code_en": "JTG",
+	"source_card_index": "98",
+	"source_imported_at": 1783008496337,
+	"source_language": "en",
+	"source_parser_version": 1,
+	"source_prints": [
+		"JTG/98",
+		"JTG/175",
+		"JTG/185",
+		"JTG/189",
+		"ASC/137",
+		"ASC/286",
+		"JP/SV9/61",
+		"JP/SV9/117",
+		"JP/SV9/127",
+		"JP/SV9/131",
+		"JP/M2A/112",
+		"JP/M2A/242",
+		"JP/MC/470"
+	],
+	"source_provider": "limitless",
+	"source_set_code": "JTG",
+	"source_url": "https://limitlesstcg.com/cards/JTG/98",
+	"stage": "Stage 1",
+	"weakness_energy": "G",
+	"weakness_value": "x2",
+	"yoren_code": ""
+}

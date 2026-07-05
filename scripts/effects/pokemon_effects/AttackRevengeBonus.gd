@@ -2,34 +2,37 @@ class_name AttackRevengeBonus
 extends BaseEffect
 
 var bonus_damage: int = 120
+var attack_index_to_match: int = -1
 
 
-func _init(bonus: int = 120) -> void:
+func _init(bonus: int = 120, match_attack_index: int = -1) -> void:
 	bonus_damage = bonus
+	attack_index_to_match = match_attack_index
+
+
+func applies_to_attack_index(attack_index: int) -> bool:
+	return attack_index_to_match == -1 or attack_index_to_match == attack_index
+
+
+func get_damage_bonus(attacker: PokemonSlot, state: GameState) -> int:
+	if attacker == null or state == null:
+		return 0
+	var top_card := attacker.get_top_card()
+	if top_card == null:
+		return 0
+	var owner_index := top_card.owner_index
+	if owner_index < 0 or owner_index >= state.last_knockout_turn_against.size():
+		return 0
+	return bonus_damage if int(state.last_knockout_turn_against[owner_index]) == state.turn_number - 1 else 0
 
 
 func execute_attack(
-	attacker: PokemonSlot,
-	defender: PokemonSlot,
+	_attacker: PokemonSlot,
+	_defender: PokemonSlot,
 	_attack_index: int,
-	state: GameState
+	_state: GameState
 ) -> void:
-	var top_card: CardInstance = attacker.get_top_card()
-	if top_card == null:
-		return
-
-	var player: PlayerState = state.players[top_card.owner_index]
-	var had_ko_last_turn := false
-	for slot: PokemonSlot in player.get_all_pokemon():
-		for effect: Dictionary in slot.effects:
-			if effect.get("type", "") == "pokemon_ko_last_turn":
-				had_ko_last_turn = true
-				break
-		if had_ko_last_turn:
-			break
-
-	if had_ko_last_turn:
-		defender.damage_counters += bonus_damage
+	pass
 
 
 func get_description() -> String:

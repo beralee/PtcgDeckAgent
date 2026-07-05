@@ -1,0 +1,55 @@
+{
+    "name":  "铁荆棘",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "Future",
+    "description":  "【雷】 致命碾压 70×\n将自己牌库上方5张卡牌翻到正面，造成其中「未来」卡牌张数×70伤害。将正面朝上的「未来」卡牌放于弃牌区，剩余的卡牌放回牌库并重洗牌库。\n\n【雷】【雷】【雷】 百万吨金勾臂 140\n\n\n",
+    "yoren_code":  "P0995",
+    "set_code":  "CSV9.5C",
+    "card_index":  "061",
+    "set_code_en":  "TEF",
+    "card_index_en":  "62",
+    "name_en":  "Iron Thorns",
+    "artist":  "Takeshi Nakamura",
+    "rarity":  "R",
+    "release_date":  "2026-06-12T00:00:00+08:00",
+    "regulation_mark":  "H",
+    "effect_id":  "793ffbeb1f3e933adc889d8784f85cf1",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV9.5C/061.png",
+    "image_local_path":  "user://cards/images/CSV9.5C/061.png",
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "L",
+    "stage":  "Basic",
+    "hp":  140,
+    "weakness_energy":  "F",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  3,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "致命碾压",
+                        "text":  "将自己牌库上方5张卡牌翻到正面，造成其中「未来」卡牌张数×70伤害。将正面朝上的「未来」卡牌放于弃牌区，剩余的卡牌放回牌库并重洗牌库。",
+                        "cost":  "LC",
+                        "damage":  "70×",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "百万吨金勾臂",
+                        "text":  "",
+                        "cost":  "LLLC",
+                        "damage":  "140",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

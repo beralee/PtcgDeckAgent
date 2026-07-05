@@ -70,6 +70,7 @@ func execute_attack(
 	attacker.attached_energy = kept
 	for energy: CardInstance in discarded:
 		player.discard_pile.append(energy)
+		_record_attack_effect_discarded_attached_energy(attacker, energy, state)
 
 
 func _get_selected_energy_ids() -> Dictionary:

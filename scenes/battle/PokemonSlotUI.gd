@@ -50,7 +50,7 @@ func refresh() -> void:
 	var stage_prefix := ""
 	if slot.pokemon_stack.size() > 1:
 		stage_prefix = "[进化x%d] " % (slot.pokemon_stack.size() - 1)
-	_lbl_name.text = stage_prefix + cd.name
+	_lbl_name.text = stage_prefix + cd.display_name()
 
 	# HP
 	_lbl_hp.text = "HP %d / %d" % [rem_hp, max_hp]
@@ -76,7 +76,7 @@ func refresh() -> void:
 
 	# 道具
 	if slot.attached_tool != null:
-		_lbl_energy.text += "  道具: " + slot.attached_tool.card_data.name
+		_lbl_energy.text += "  道具: " + slot.attached_tool.card_data.display_name()
 
 	# 状态
 	var statuses: Array[String] = []

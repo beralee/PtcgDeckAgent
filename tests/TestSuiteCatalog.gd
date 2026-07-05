@@ -49,6 +49,8 @@ const AI_TRAINING_FILES := {
 	"test_water_lost_strategies.gd": true,
 	"test_future_ancient_strategies.gd": true,
 	"test_llm_interaction_bridge.gd": true,
+	"test_llm_interaction_bridge_part2.gd": true,
+	"test_llm_interaction_bridge_part3.gd": true,
 	"test_llm_raging_bolt_duel_tool.gd": true,
 	"test_blissey_tank_strategy.gd": true,
 	"test_vstar_engine_strategies.gd": true,

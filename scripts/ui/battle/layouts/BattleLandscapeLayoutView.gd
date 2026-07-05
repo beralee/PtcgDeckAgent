@@ -8,6 +8,11 @@ const BENCH_SLOT_GAP := 1
 const LANDSCAPE_VSTAR_LOST_HUD_HEIGHT_SCALE := 0.7
 const VSTAR_HUD_HEIGHT_MULTIPLIER := 2.0
 const VSTAR_LOST_HUD_WIDTH_RATIO := 2.4
+const LANDSCAPE_LOG_MIN_WIDTH := 96.0
+const LANDSCAPE_LOG_COMPACT_BREAKPOINT_WIDTH := 1440.0
+const LANDSCAPE_LOG_COMPACT_WIDTH_RATIO := 0.10
+const LANDSCAPE_LOG_COMPACT_MAX_WIDTH := 136.0
+const LANDSCAPE_CENTER_WIDTH_SAFE_GAP := 24.0
 
 
 func mode() -> String:
@@ -127,10 +132,10 @@ func apply_scene_layout(viewport_size: Vector2) -> void:
 
 	var side_width: float = 0.0 if not left_panel.visible else clampf(viewport_size.x * 0.05, 72.0, 108.0)
 	var right_width: float = 0.0 if not right_panel.visible else side_width + 6.0
-	var log_width: float = clampf(viewport_size.x * 0.15, 144.0, 252.0)
+	var preferred_log_width: float = clampf(viewport_size.x * 0.15, 144.0, 252.0)
+	var log_width: float = _preferred_landscape_log_width(viewport_size, preferred_log_width)
 	left_panel.custom_minimum_size = Vector2(side_width, 0)
 	right_panel.custom_minimum_size = Vector2(right_width, 0)
-	log_panel.custom_minimum_size = Vector2(log_width, 0)
 
 	if opp_hand_bar != null:
 		opp_hand_bar.custom_minimum_size = Vector2(0, clampf(viewport_size.y * 0.032, 24.0, 34.0))
@@ -167,25 +172,38 @@ func apply_scene_layout(viewport_size: Vector2) -> void:
 	var center_width := maxf(0.0, viewport_size.x - side_width - right_width - log_width)
 	var bench_size := _as_int(_call_scene("_current_bench_display_size"), BENCH_SIZE)
 	var bench_spacing: float = float(BENCH_SLOT_GAP)
-	var measured_variant: Variant = _metrics_controller.call(
-		"measure_card_layout",
-		viewport_size,
-		center_width,
-		bench_spacing,
-		bench_size,
-		CARD_ASPECT
-	)
-	var measured: Dictionary = measured_variant if measured_variant is Dictionary else {}
+	var measured: Dictionary = _measure_landscape_cards(viewport_size, center_width, bench_spacing, bench_size)
 	var play_card_size: Vector2 = measured.get("play_card_size", _get_scene_var("_play_card_size"))
 	var dialog_card_size: Vector2 = measured.get("dialog_card_size", _get_scene_var("_dialog_card_size"))
 	var detail_card_size: Vector2 = measured.get("detail_card_size", _get_scene_var("_detail_card_size"))
+	var preview_card_size: Vector2 = measured.get("preview_card_size", Vector2(roundf(play_card_size.x * 0.9), roundf(play_card_size.y * 0.9)))
+	var prize_slot_size: Vector2 = measured.get("prize_slot_size", preview_card_size)
+	var resolved_log_width := _resolve_landscape_log_width(
+		viewport_size,
+		side_width,
+		right_width,
+		preferred_log_width,
+		log_width,
+		play_card_size,
+		preview_card_size,
+		prize_slot_size,
+		bench_size
+	)
+	if resolved_log_width < log_width - 0.5:
+		log_width = resolved_log_width
+		center_width = maxf(0.0, viewport_size.x - side_width - right_width - log_width)
+		measured = _measure_landscape_cards(viewport_size, center_width, bench_spacing, bench_size)
+		play_card_size = measured.get("play_card_size", play_card_size)
+		dialog_card_size = measured.get("dialog_card_size", dialog_card_size)
+		detail_card_size = measured.get("detail_card_size", detail_card_size)
+		preview_card_size = measured.get("preview_card_size", preview_card_size)
+		prize_slot_size = measured.get("prize_slot_size", prize_slot_size)
+	_apply_landscape_log_panel_width(log_panel, log_width)
 	_set_scene_var("_play_card_size", play_card_size)
 	_set_scene_var("_field_active_card_size", play_card_size)
 	_set_scene_var("_dialog_card_size", dialog_card_size)
 	_set_scene_var("_detail_card_size", detail_card_size)
 	_call_scene("_sync_battle_layout_state_from_scene")
-	var preview_card_size: Vector2 = measured.get("preview_card_size", Vector2(roundf(play_card_size.x * 0.9), roundf(play_card_size.y * 0.9)))
-	var prize_slot_size: Vector2 = measured.get("prize_slot_size", preview_card_size)
 
 	var hand_scroll_height := _as_float(_call_scene("_hand_scroll_height_with_scrollbar", [play_card_size.y]), play_card_size.y)
 	if hand_area != null:
@@ -354,28 +372,62 @@ func apply_scene_layout(viewport_size: Vector2) -> void:
 	if dialog_box == null:
 		dialog_box = _find("DialogBox", true, false) as PanelContainer
 	if dialog_box != null:
+		var library_board_mode := _as_bool(_get_scene_var("_dialog_library_search_board_mode"), false)
+		var dialog_width := clampf(viewport_size.x * 0.62, 640.0, 1120.0)
+		if library_board_mode:
+			dialog_width = clampf(viewport_size.x * 0.88, 960.0, maxf(viewport_size.x - 48.0, 640.0))
 		dialog_box.custom_minimum_size = Vector2(
-			clampf(viewport_size.x * 0.62, 640.0, 1120.0), 0
+			dialog_width, 0
 		)
+	var library_search_board := _get_scene_var("_dialog_library_search_board") as Control
+	if library_search_board != null and _as_bool(_get_scene_var("_dialog_library_search_board_mode"), false):
+		var library_candidate_height := minf(dialog_card_size.y, 176.0)
+		var library_selected_height := roundf(library_candidate_height * 0.86)
+		var library_content_height := (library_candidate_height + 28.0) + 72.0 + (library_selected_height + 26.0) + 16.0
+		var library_extra_height := clampf(viewport_size.y * 0.05, 28.0, 56.0)
+		library_search_board.custom_minimum_size = Vector2(
+			0,
+			minf(library_content_height + library_extra_height, maxf(viewport_size.y - 40.0, library_content_height))
+		)
+		var library_source_width := clampf(viewport_size.x * 0.13, 196.0, 214.0)
+		var library_source_panel := library_search_board.find_child("LibrarySearchSourcePanel", true, false) as Control
+		if library_source_panel != null:
+			library_source_panel.custom_minimum_size = Vector2(library_source_width, 0)
+		var library_source_holder := library_search_board.find_child("LibrarySearchSourceCardHolder", true, false) as Control
+		if library_source_holder != null:
+			var source_width := minf(minf(dialog_card_size.x, 126.0) * 1.32, maxf(library_source_width - 44.0, minf(dialog_card_size.x, 126.0)))
+			var source_height := roundf(source_width * (minf(dialog_card_size.y, 176.0) / maxf(minf(dialog_card_size.x, 126.0), 1.0)))
+			for source_child: Node in library_source_holder.get_children():
+				if source_child is BattleCardView:
+					var source_view := source_child as BattleCardView
+					source_view.custom_minimum_size = Vector2(roundf(source_width), source_height)
+					source_view.size = Vector2(roundf(source_width), source_height)
 	var dialog_card_scroll := _get_scene_var("_dialog_card_scroll") as ScrollContainer
 	var dialog_assignment_source_scroll := _get_scene_var("_dialog_assignment_source_scroll") as ScrollContainer
 	var dialog_assignment_target_scroll := _get_scene_var("_dialog_assignment_target_scroll") as ScrollContainer
 	var dialog_card_row := _get_scene_var("_dialog_card_row") as HBoxContainer
 	var dialog_assignment_source_row := _get_scene_var("_dialog_assignment_source_row") as HBoxContainer
 	var dialog_assignment_target_row := _get_scene_var("_dialog_assignment_target_row") as HBoxContainer
-	if dialog_card_scroll != null:
-		dialog_card_scroll.custom_minimum_size = Vector2(0, _as_float(_call_scene("_effective_dialog_card_scroll_height"), dialog_card_size.y))
-	if dialog_assignment_source_scroll != null:
-		dialog_assignment_source_scroll.custom_minimum_size = Vector2(0, _as_float(_call_scene("_dialog_card_scroll_height"), dialog_card_size.y))
-	if dialog_assignment_target_scroll != null:
-		dialog_assignment_target_scroll.custom_minimum_size = Vector2(0, _as_float(_call_scene("_dialog_card_scroll_height"), dialog_card_size.y))
 	var dialog_controller := _get_scene_var("_battle_dialog_controller") as RefCounted
-	if dialog_controller != null and dialog_card_scroll != null and dialog_card_row != null:
-		dialog_controller.call("reset_dialog_card_row_metrics", dialog_card_scroll, dialog_card_row, dialog_card_size)
-	if dialog_controller != null and dialog_assignment_source_scroll != null and dialog_assignment_source_row != null:
-		dialog_controller.call("reset_dialog_card_row_metrics", dialog_assignment_source_scroll, dialog_assignment_source_row, dialog_card_size)
-	if dialog_controller != null and dialog_assignment_target_scroll != null and dialog_assignment_target_row != null:
-		dialog_controller.call("reset_dialog_card_row_metrics", dialog_assignment_target_scroll, dialog_assignment_target_row, dialog_card_size)
+	var dialog_data_variant: Variant = _get_scene_var("_dialog_data")
+	var dialog_data: Dictionary = dialog_data_variant if dialog_data_variant is Dictionary else {}
+	var action_hud_mode := str(dialog_data.get("presentation", "")) == "action_hud"
+	if action_hud_mode:
+		if dialog_controller != null:
+			dialog_controller.call("refresh_action_hud_dialog", _scene)
+	else:
+		if dialog_card_scroll != null:
+			dialog_card_scroll.custom_minimum_size = Vector2(0, _as_float(_call_scene("_effective_dialog_card_scroll_height"), dialog_card_size.y))
+		if dialog_assignment_source_scroll != null:
+			dialog_assignment_source_scroll.custom_minimum_size = Vector2(0, _as_float(_call_scene("_dialog_card_scroll_height"), dialog_card_size.y))
+		if dialog_assignment_target_scroll != null:
+			dialog_assignment_target_scroll.custom_minimum_size = Vector2(0, _as_float(_call_scene("_dialog_card_scroll_height"), dialog_card_size.y))
+		if dialog_controller != null and dialog_card_scroll != null and dialog_card_row != null:
+			dialog_controller.call("reset_dialog_card_row_metrics", dialog_card_scroll, dialog_card_row, dialog_card_size)
+		if dialog_controller != null and dialog_assignment_source_scroll != null and dialog_assignment_source_row != null:
+			dialog_controller.call("reset_dialog_card_row_metrics", dialog_assignment_source_scroll, dialog_assignment_source_row, dialog_card_size)
+		if dialog_controller != null and dialog_assignment_target_scroll != null and dialog_assignment_target_row != null:
+			dialog_controller.call("reset_dialog_card_row_metrics", dialog_assignment_target_scroll, dialog_assignment_target_row, dialog_card_size)
 	var dialog_overlay := _get_scene_var("_dialog_overlay") as Control
 	if dialog_overlay != null and dialog_overlay.visible and dialog_controller != null:
 		dialog_controller.call("compact_dialog_box_to_content", _scene)
@@ -421,6 +473,89 @@ func apply_scene_layout(viewport_size: Vector2) -> void:
 	if _get_scene_var("_gsm") != null:
 		_call_scene("_refresh_hand")
 	_call_scene("_request_stadium_hud_debug_overlay_refresh")
+
+
+func _measure_landscape_cards(viewport_size: Vector2, center_width: float, bench_spacing: float, bench_size: int) -> Dictionary:
+	var measured_variant: Variant = _metrics_controller.call(
+		"measure_card_layout",
+		viewport_size,
+		center_width,
+		bench_spacing,
+		bench_size,
+		CARD_ASPECT
+	)
+	return measured_variant if measured_variant is Dictionary else {}
+
+
+func _preferred_landscape_log_width(viewport_size: Vector2, preferred_log_width: float) -> float:
+	if viewport_size.x >= LANDSCAPE_LOG_COMPACT_BREAKPOINT_WIDTH:
+		return preferred_log_width
+	var compact_width := clampf(
+		roundf(viewport_size.x * LANDSCAPE_LOG_COMPACT_WIDTH_RATIO),
+		LANDSCAPE_LOG_MIN_WIDTH,
+		LANDSCAPE_LOG_COMPACT_MAX_WIDTH
+	)
+	return minf(preferred_log_width, compact_width)
+
+
+func _resolve_landscape_log_width(
+	viewport_size: Vector2,
+	side_width: float,
+	right_width: float,
+	preferred_log_width: float,
+	current_log_width: float,
+	play_card_size: Vector2,
+	preview_card_size: Vector2,
+	prize_slot_size: Vector2,
+	bench_size: int
+) -> float:
+	if viewport_size.x >= LANDSCAPE_LOG_COMPACT_BREAKPOINT_WIDTH:
+		return current_log_width
+	var center_min_width := _estimate_landscape_center_min_width(
+		viewport_size,
+		play_card_size,
+		preview_card_size,
+		prize_slot_size,
+		bench_size
+	)
+	var available_log_width := viewport_size.x - side_width - right_width - center_min_width - LANDSCAPE_CENTER_WIDTH_SAFE_GAP
+	var budget_width := clampf(available_log_width, LANDSCAPE_LOG_MIN_WIDTH, preferred_log_width)
+	return minf(current_log_width, budget_width)
+
+
+func _estimate_landscape_center_min_width(
+	viewport_size: Vector2,
+	play_card_size: Vector2,
+	preview_card_size: Vector2,
+	prize_slot_size: Vector2,
+	bench_size: int
+) -> float:
+	var shell_gap := float(clampi(int(viewport_size.x * 0.006), 8, 16))
+	var active_row_gap := float(clampi(int(viewport_size.x * 0.002), 2, 4))
+	var prize_width := prize_slot_size.x * 3.0 + 12.0
+	var pile_width := _as_float(_call_scene("_landscape_pile_lost_panel_width", [preview_card_size]), preview_card_size.x * 2.0 + 16.0)
+	var vstar_width := _as_float(_call_scene("_vstar_hud_width_for_height", [44.0]), roundf(44.0 * VSTAR_LOST_HUD_WIDTH_RATIO))
+	var status_side_width := maxf(roundf(play_card_size.x * 2.6), vstar_width + roundf(play_card_size.x * 1.75))
+	var active_row_width := status_side_width * 2.0 + play_card_size.x + active_row_gap * 2.0
+	var bench_row_width := play_card_size.x * float(bench_size) + float(maxi(bench_size - 1, 0)) * float(BENCH_SLOT_GAP)
+	var axis_width := maxf(active_row_width, bench_row_width)
+	return prize_width + axis_width + pile_width + shell_gap * 2.0
+
+
+func _apply_landscape_log_panel_width(log_panel: Control, log_width: float) -> void:
+	if log_panel == null:
+		return
+	log_panel.visible = log_width > 0.0
+	log_panel.custom_minimum_size = Vector2(roundf(log_width), 0)
+	log_panel.size_flags_horizontal = Control.SIZE_SHRINK_END
+	log_panel.clip_contents = true
+	var log_title := log_panel.find_child("LogTitle", true, false) as Label
+	if log_title != null:
+		log_title.clip_text = true
+		log_title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	var log_list := log_panel.find_child("LogList", true, false) as RichTextLabel
+	if log_list != null:
+		log_list.custom_minimum_size = Vector2.ZERO
 
 
 func prepare_layout(context: Dictionary) -> void:

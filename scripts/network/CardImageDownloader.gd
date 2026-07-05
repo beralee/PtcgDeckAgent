@@ -15,6 +15,40 @@ var _skipped_count: int = 0
 var _is_running: bool = false
 
 
+static func request_headers_for_runtime(os_name: String = "", feature_flags: Dictionary = {}, display_server_name: String = "") -> PackedStringArray:
+	var headers := PackedStringArray()
+	if _is_web_runtime_for_context(os_name, feature_flags, display_server_name):
+		return headers
+	headers.append("User-Agent: PTCGTrain/1.0")
+	return headers
+
+
+static func should_sync_remote_images_for_runtime(os_name: String = "", feature_flags: Dictionary = {}, display_server_name: String = "") -> bool:
+	if _is_web_runtime_for_context(os_name, feature_flags, display_server_name):
+		return false
+	return true
+
+
+static func _is_web_runtime_for_context(os_name: String = "", feature_flags: Dictionary = {}, display_server_name: String = "") -> bool:
+	var resolved_os := os_name.strip_edges().to_lower()
+	var resolved_display := display_server_name.strip_edges().to_lower()
+	var flags := feature_flags
+	if flags.is_empty() and os_name == "" and display_server_name == "":
+		flags = {
+			"web": OS.has_feature("web"),
+			"web_android": OS.has_feature("web_android"),
+			"web_ios": OS.has_feature("web_ios"),
+		}
+		resolved_os = OS.get_name().strip_edges().to_lower()
+		resolved_display = DisplayServer.get_name().strip_edges().to_lower()
+	if resolved_os in ["web", "html5"] or resolved_display in ["web", "html5"]:
+		return true
+	for feature: String in ["web", "web_android", "web_ios"]:
+		if bool(flags.get(feature, false)):
+			return true
+	return false
+
+
 func _ready() -> void:
 	_http_request = HTTPRequest.new()
 	_http_request.timeout = 20.0
@@ -39,6 +73,11 @@ func sync_cards(cards: Array[CardData]) -> void:
 
 	if _queue.is_empty():
 		progress.emit(0, 0, "没有需要同步的卡牌")
+		completed.emit(_build_stats(), _errors)
+		return
+
+	if not should_sync_remote_images_for_runtime():
+		progress.emit(0, _queue.size(), "浏览器版跳过远程卡图同步")
 		completed.emit(_build_stats(), _errors)
 		return
 
@@ -88,7 +127,7 @@ func _process_next_card() -> void:
 	_http_request.request_completed.connect(callback, CONNECT_ONE_SHOT)
 	var err := _http_request.request(
 		card.image_url,
-		PackedStringArray(["User-Agent: PTCGTrain/1.0"]),
+		request_headers_for_runtime(),
 		HTTPClient.METHOD_GET
 	)
 	if err != OK:

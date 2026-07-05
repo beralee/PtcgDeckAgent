@@ -108,6 +108,12 @@ func _resolve_dialog_step(
 				return true
 	var selected_count: int = _baseline_pick_count(legal_items.size(), min_select, max_select)
 	if legal_items.is_empty() or selected_count <= 0:
+		if min_select > 0:
+			return _abort_unresolvable_effect_step(
+				battle_scene,
+				step,
+				"required_dialog_without_legal_items"
+			)
 		battle_scene.call("_handle_effect_interaction_choice", PackedInt32Array())
 		return true
 	var picked_legal_indices: PackedInt32Array = _pick_item_indices(
@@ -152,6 +158,12 @@ func _resolve_field_slot_step(
 		int(step.get("max_select", 1))
 	)
 	if legal_items.is_empty() or selected_count <= 0:
+		if int(step.get("min_select", 1)) > 0:
+			return _abort_unresolvable_effect_step(
+				battle_scene,
+				step,
+				"required_field_slot_without_legal_items"
+			)
 		if str(battle_scene.get("_field_interaction_mode")) == "slot_select":
 			battle_scene.call("_finalize_field_slot_selection")
 		return true
@@ -189,10 +201,16 @@ func _resolve_counter_distribution_step(
 ) -> bool:
 	var total_counters: int = int(step.get("total_counters", 0))
 	var target_items: Array = step.get("target_items", [])
-	if total_counters <= 0 or target_items.is_empty():
+	if total_counters <= 0:
 		if battle_scene.has_method("_finalize_counter_distribution"):
 			battle_scene.call("_finalize_counter_distribution")
 		return true
+	if target_items.is_empty():
+		return _abort_unresolvable_effect_step(
+			battle_scene,
+			step,
+			"required_counter_distribution_without_targets"
+		)
 	var assignments: Array[Dictionary] = _build_counter_distribution_assignments(
 		target_items,
 		total_counters,
@@ -201,9 +219,11 @@ func _resolve_counter_distribution_step(
 		state_features
 	)
 	if assignments.is_empty():
-		if battle_scene.has_method("_finalize_counter_distribution"):
-			battle_scene.call("_finalize_counter_distribution")
-		return true
+		return _abort_unresolvable_effect_step(
+			battle_scene,
+			step,
+			"required_counter_distribution_without_assignments"
+		)
 	var picked := PackedInt32Array()
 	for assignment: Dictionary in assignments:
 		var target_index := int(assignment.get("target_index", -1))
@@ -398,7 +418,11 @@ func _resolve_field_assignment_step(
 		assignment_plan
 	)
 	if assignments_made <= 0 and not bool(assignment_plan.get("handled", false)):
-		return false
+		return _abort_unresolvable_effect_step(
+			battle_scene,
+			step,
+			"required_field_assignment_without_targets"
+		)
 	if (
 		str(battle_scene.get("_field_interaction_mode")) == "assignment"
 		and _is_still_resolving_step(battle_scene, initial_step_index, initial_step_id)
@@ -436,8 +460,32 @@ func _resolve_dialog_assignment_step(
 		assignment_plan
 	)
 	if assignments_made <= 0 and not bool(assignment_plan.get("handled", false)):
-		return false
+		return _abort_unresolvable_effect_step(
+			battle_scene,
+			step,
+			"required_assignment_without_targets"
+		)
 	battle_scene.call("_confirm_assignment_dialog")
+	return true
+
+
+func _abort_unresolvable_effect_step(battle_scene: Control, step: Dictionary, reason: String) -> bool:
+	if battle_scene == null:
+		return false
+	if battle_scene.has_method("_runtime_log"):
+		battle_scene.call(
+			"_runtime_log",
+			"effect_step_unresolvable",
+			"step=%s reason=%s" % [str(step.get("id", "")), reason]
+		)
+	if battle_scene.has_method("_reset_effect_interaction"):
+		battle_scene.call("_reset_effect_interaction")
+	else:
+		battle_scene.set("_pending_choice", "")
+	if battle_scene.has_method("_refresh_ui"):
+		battle_scene.call("_refresh_ui")
+	if battle_scene.has_method("_maybe_run_ai"):
+		battle_scene.call("_maybe_run_ai")
 	return true
 
 

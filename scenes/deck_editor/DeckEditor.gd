@@ -2071,7 +2071,7 @@ func _show_card_detail(card: CardData) -> void:
 		return
 	_ensure_card_detail_overlay()
 	_apply_card_detail_overlay_metrics()
-	_card_detail_title.text = card.name
+	_card_detail_title.text = card.display_name()
 	_card_detail_card_view.setup_from_card_data(card, BATTLE_CARD_VIEW.MODE_PREVIEW)
 	_card_detail_card_view.set_badges("", "")
 	_card_detail_card_view.set_info("", "")
@@ -2363,8 +2363,8 @@ func _build_card_detail_bbcode(card: CardData) -> String:
 		lines.append(_bbcode_escape("弱点 %s | 抗性 %s" % [weakness_text, resist_text]))
 
 		for ab: Dictionary in card.abilities:
-			var ab_name := str(ab.get("name", "")).strip_edges()
-			var ab_text := str(ab.get("text", "")).strip_edges()
+			var ab_name := CardData.dictionary_display_name(ab)
+			var ab_text := CardData.dictionary_display_text(ab)
 			lines.append("")
 			lines.append("[color=#ffd782][b]特性: %s[/b][/color]" % _bbcode_escape(ab_name))
 			if ab_text != "":
@@ -2373,8 +2373,8 @@ func _build_card_detail_bbcode(card: CardData) -> String:
 		for atk: Dictionary in card.attacks:
 			var cost_str := str(atk.get("cost", "")).strip_edges()
 			var dmg_str := str(atk.get("damage", "")).strip_edges()
-			var atk_name := str(atk.get("name", "")).strip_edges()
-			var atk_text := str(atk.get("text", "")).strip_edges()
+			var atk_name := CardData.dictionary_display_name(atk)
+			var atk_text := CardData.dictionary_display_text(atk)
 			var parts: PackedStringArray = []
 			if cost_str != "":
 				parts.append("[%s]" % cost_str)

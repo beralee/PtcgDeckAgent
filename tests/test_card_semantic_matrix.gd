@@ -399,6 +399,65 @@ func test_attack_name_registered_effects_without_custom_index_are_scoped() -> St
 	])
 
 
+func test_cs6bc_117_minccino_call_for_family_searches_up_to_two_basics() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	player.bench.clear()
+	player.deck.clear()
+	var minccino_cd: CardData = CardDatabase.get_card("CS6bC", "117")
+	var processor := EffectProcessor.new()
+	processor.register_pokemon_card(minccino_cd)
+	player.active_pokemon = _make_slot(minccino_cd, 0)
+
+	var basic_a := CardInstance.create(_make_basic_pokemon_data("Basic A", "C"), 0)
+	var stage_one := CardInstance.create(_make_basic_pokemon_data("Stage One", "C", 80, "Stage 1"), 0)
+	var deck_item := CardInstance.create(_make_trainer_data("Deck Item"), 0)
+	var basic_b := CardInstance.create(_make_basic_pokemon_data("Basic B", "L"), 0)
+	var basic_c := CardInstance.create(_make_basic_pokemon_data("Basic C", "P"), 0)
+	player.deck.append_array([basic_a, stage_one, deck_item, basic_b, basic_c])
+	var visible_deck := player.deck.duplicate()
+
+	var effects: Array[BaseEffect] = processor.get_attack_effects_for_slot(player.active_pokemon, 0)
+	var call_effect: AttackCallForFamilyEffect = null
+	for effect: BaseEffect in effects:
+		if effect is AttackCallForFamilyEffect:
+			call_effect = effect as AttackCallForFamilyEffect
+			break
+
+	var steps: Array[Dictionary] = []
+	if call_effect != null:
+		steps = call_effect.get_attack_interaction_steps(
+			player.active_pokemon.get_top_card(),
+			minccino_cd.attacks[0],
+			state
+		)
+	var step: Dictionary = steps[0] if not steps.is_empty() else {}
+	processor.execute_attack_effect(player.active_pokemon, 0, state.players[1].active_pokemon, state, [{
+		"search_basic_pokemon": [deck_item, basic_b, basic_c],
+	}])
+
+	return run_checks([
+		assert_not_null(minccino_cd, "CS6bC_117 Minccino should exist in the card database"),
+		assert_eq(minccino_cd.name, "泡沫栗鼠", "CS6bC_117 should keep the localized card name"),
+		assert_not_null(call_effect, "CS6bC_117 Call for Family should register AttackCallForFamily"),
+		assert_eq(call_effect.search_count if call_effect != null else -1, 2, "Call for Family should search up to two Basic Pokemon"),
+		assert_true(call_effect.applies_to_attack_index(0) if call_effect != null else false, "Call for Family should apply to the first attack"),
+		assert_false(call_effect.applies_to_attack_index(1) if call_effect != null else true, "Call for Family should not apply to Pound"),
+		assert_eq(str(step.get("id", "")), "search_basic_pokemon", "Call for Family should expose a deck-search interaction step"),
+		assert_eq(step.get("card_items", []), visible_deck, "Call for Family should show the complete searched deck"),
+		assert_eq(step.get("items", []), [basic_a, basic_b, basic_c], "Call for Family should keep legal Basic Pokemon selectable"),
+		assert_eq(step.get("card_indices", []), [0, -1, -1, 1, 2], "Call for Family should mark non-Basic and Trainer deck cards as visible but disabled"),
+		assert_eq(int(step.get("min_select", -1)), 0, "Call for Family is an up-to hidden deck search and may whiff"),
+		assert_eq(int(step.get("max_select", -1)), 2, "Call for Family should cap selection at two Basic Pokemon"),
+		assert_eq(player.bench.size(), 2, "Call for Family should bench two selected Basic Pokemon when space is available"),
+		assert_eq(player.bench[0].get_pokemon_name(), "Basic B", "Call for Family should ignore selected non-Pokemon cards before benching"),
+		assert_eq(player.bench[1].get_pokemon_name(), "Basic C", "Call for Family should bench the second selected legal Basic Pokemon"),
+		assert_true(basic_a in player.deck, "Unselected Basic Pokemon should stay in deck"),
+		assert_true(stage_one in player.deck, "Stage 1 Pokemon should stay in deck"),
+		assert_true(deck_item in player.deck, "Trainer cards should stay in deck"),
+	])
+
+
 func test_all_multi_attack_cards_scope_attack_effect_instances_to_one_slot() -> String:
 	var failures: Array[String] = []
 	var checked_cards := 0

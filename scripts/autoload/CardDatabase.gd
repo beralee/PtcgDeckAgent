@@ -19,6 +19,16 @@ const SUPPORTED_AI_DECK_IDS: Array[int] = [
 	1700002, 1700003, 1700004, 1700005, 1700007, 1700008, 1700011,
 	1750002,
 ]
+const DEPRECATED_BUNDLED_DECK_IDS: Array[int] = [
+	800018921,
+]
+const BUNDLED_LIMITLESS_DISPLAY_REFRESH_DECK_IDS := {
+	800018497: true,
+	800018499: true,
+	800018501: true,
+	800018502: true,
+	800018509: true,
+}
 
 ## 内存中的卡牌缓存 {uid -> CardData}
 var _card_cache: Dictionary = {}
@@ -89,6 +99,22 @@ func _seed_bundled_user_data() -> void:
 			var target_path := DECKS_DIR.path_join(entry_name)
 			_copy_file_if_missing(bundled_path, target_path)
 	_backfill_deck_strategy_from_bundled(manifest)
+	_remove_deprecated_bundled_decks()
+
+
+func _remove_deprecated_bundled_decks() -> void:
+	for deck_id: int in DEPRECATED_BUNDLED_DECK_IDS:
+		_remove_user_deck_seed_file(DECKS_DIR.path_join("%d.json" % deck_id))
+		_remove_user_deck_seed_file(AI_DECKS_DIR.path_join("%d.json" % deck_id))
+		_deck_cache.erase(deck_id)
+		_ai_deck_cache.erase(deck_id)
+	_mark_deck_sort_cache_dirty()
+	_mark_ai_deck_sort_cache_dirty()
+
+
+func _remove_user_deck_seed_file(path: String) -> void:
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(path)
 
 
 ## 读取清单文件（导出后 DirAccess 无法遍历 pck，需要预生成清单）
@@ -164,8 +190,6 @@ func _merge_strategy_field(bundled_path: String, user_path: String) -> void:
 	if not bundled_data is Dictionary:
 		return
 	var bundled_strategy: String = (bundled_data as Dictionary).get("strategy", "")
-	if bundled_strategy == "":
-		return
 
 	var uf := FileAccess.open(user_path, FileAccess.READ)
 	if uf == null:
@@ -176,11 +200,25 @@ func _merge_strategy_field(bundled_path: String, user_path: String) -> void:
 		return
 
 	var user_dict := user_data as Dictionary
+	var changed := _merge_bundled_limitless_deck_display_fields(bundled_data as Dictionary, user_dict)
+	if bundled_strategy == "":
+		if changed:
+			_write_user_deck_dictionary(user_path, user_dict)
+		return
 	var existing: String = user_dict.get("strategy", "")
-	if existing.strip_edges() != "" and not _is_legacy_raging_bolt_strategy_text(user_dict, existing):
+	if existing.strip_edges() != "" and not _is_legacy_raging_bolt_strategy_text(user_dict, existing) and not _is_legacy_limitless_strategy_text(user_dict, existing):
+		if not changed:
+			return
+	else:
+		user_dict["strategy"] = bundled_strategy
+		changed = true
+	if not changed:
 		return
 
-	user_dict["strategy"] = bundled_strategy
+	_write_user_deck_dictionary(user_path, user_dict)
+
+
+func _write_user_deck_dictionary(user_path: String, user_dict: Dictionary) -> void:
 	var wf := FileAccess.open(user_path, FileAccess.WRITE)
 	if wf == null:
 		return
@@ -192,6 +230,58 @@ func _is_legacy_raging_bolt_strategy_text(deck_data: Dictionary, strategy_text: 
 	if int(deck_data.get("id", -1)) != 575718:
 		return false
 	return strategy_text.contains("从弃牌区") and strategy_text.contains("猛雷鼓") and strategy_text.contains("厄诡椪")
+
+
+func _is_legacy_limitless_strategy_text(deck_data: Dictionary, strategy_text: String) -> bool:
+	if int(deck_data.get("id", -1)) != 800018921:
+		return false
+	return strategy_text.contains("N's Zoroark uses a 4-4") \
+		or strategy_text.contains("Night Joker should copy") \
+		or strategy_text.contains("其他备战区N的宝可梦招式") \
+		or strategy_text.contains("备战区的N的宝可梦拥有的1个招式")
+
+
+func _merge_bundled_limitless_deck_display_fields(bundled_data: Dictionary, user_dict: Dictionary) -> bool:
+	var deck_id := int(bundled_data.get("id", -1))
+	if deck_id != int(user_dict.get("id", -1)):
+		return false
+	if not BUNDLED_LIMITLESS_DISPLAY_REFRESH_DECK_IDS.has(deck_id):
+		return false
+	if str(user_dict.get("source_provider", "")).strip_edges().to_lower() != "limitless":
+		return false
+	var changed := false
+	for key: String in ["deck_name", "variant_name"]:
+		var bundled_text := str(bundled_data.get(key, "")).strip_edges()
+		if bundled_text != "" and str(user_dict.get(key, "")) != bundled_text:
+			user_dict[key] = bundled_text
+			changed = true
+	var bundled_cards: Array = bundled_data.get("cards", []) if bundled_data.get("cards", []) is Array else []
+	var user_cards: Array = user_dict.get("cards", []) if user_dict.get("cards", []) is Array else []
+	for bundled_entry_raw: Variant in bundled_cards:
+		if not (bundled_entry_raw is Dictionary):
+			continue
+		var bundled_entry := bundled_entry_raw as Dictionary
+		var bundled_name := str(bundled_entry.get("name", "")).strip_edges()
+		var set_code := str(bundled_entry.get("set_code", "")).strip_edges()
+		var card_index := str(bundled_entry.get("card_index", "")).strip_edges()
+		if bundled_name == "" or set_code == "" or card_index == "":
+			continue
+		for idx: int in user_cards.size():
+			if not (user_cards[idx] is Dictionary):
+				continue
+			var user_entry := (user_cards[idx] as Dictionary).duplicate(true)
+			if str(user_entry.get("set_code", "")).strip_edges() != set_code:
+				continue
+			if str(user_entry.get("card_index", "")).strip_edges() != card_index:
+				continue
+			if str(user_entry.get("name", "")) != bundled_name:
+				user_entry["name"] = bundled_name
+				user_cards[idx] = user_entry
+				changed = true
+			break
+	if changed:
+		user_dict["cards"] = user_cards
+	return changed
 
 
 func _resolve_bundled_target_path(target_dir_path: String, entry_name: String) -> String:
@@ -225,6 +315,7 @@ func _copy_missing_files_recursive(source_dir_path: String, target_dir_path: Str
 func _copy_file_if_missing(source_path: String, target_path: String) -> void:
 	if FileAccess.file_exists(target_path) and not _should_replace_existing_seed_file(source_path, target_path):
 		return
+	var replaced_card_uid := _card_json_uid_from_file(source_path)
 	var source_file := FileAccess.open(source_path, FileAccess.READ)
 	if source_file == null:
 		push_warning("CardDatabase: 无法读取内置文件 %s" % source_path)
@@ -240,6 +331,8 @@ func _copy_file_if_missing(source_path: String, target_path: String) -> void:
 	target_file.store_buffer(source_file.get_buffer(source_file.get_length()))
 	target_file.close()
 	source_file.close()
+	if replaced_card_uid != "":
+		_card_cache.erase(replaced_card_uid)
 
 
 # === 卡牌操作 ===
@@ -247,12 +340,164 @@ func _copy_file_if_missing(source_path: String, target_path: String) -> void:
 ## 是否已缓存指定卡牌
 func _should_replace_existing_seed_file(source_path: String, target_path: String) -> bool:
 	if not _is_card_image_path(source_path):
-		return false
+		return _should_replace_existing_card_json_seed(source_path, target_path)
 	return CardData.is_valid_card_image_file(source_path) and not CardData.is_valid_card_image_file(target_path)
 
 
 func _is_card_image_path(path: String) -> bool:
 	return path.ends_with(".png") or path.ends_with(".png.bin")
+
+
+func _should_replace_existing_card_json_seed(source_path: String, target_path: String) -> bool:
+	if not source_path.ends_with(".json") or not target_path.ends_with(".json"):
+		return false
+	var source_data := _load_json_dictionary_from_file(source_path)
+	var target_data := _load_json_dictionary_from_file(target_path)
+	if source_data.is_empty() or target_data.is_empty():
+		return false
+	if not _card_json_identity_matches(source_data, target_data):
+		return false
+	return _bundled_card_json_has_missing_implementation_data(source_data, target_data)
+
+
+func _load_json_dictionary_from_file(path: String) -> Dictionary:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {}
+	var content := file.get_as_text()
+	file.close()
+	var json := JSON.new()
+	if json.parse(content) != OK:
+		return {}
+	if not (json.data is Dictionary):
+		return {}
+	return json.data as Dictionary
+
+
+func _card_json_identity_matches(source_data: Dictionary, target_data: Dictionary) -> bool:
+	var source_set := str(source_data.get("set_code", "")).strip_edges()
+	var source_index := str(source_data.get("card_index", "")).strip_edges()
+	var target_set := str(target_data.get("set_code", "")).strip_edges()
+	var target_index := str(target_data.get("card_index", "")).strip_edges()
+	return source_set != "" and source_index != "" and source_set == target_set and source_index == target_index
+
+
+func _bundled_card_json_has_missing_implementation_data(source_data: Dictionary, target_data: Dictionary) -> bool:
+	for key: String in [
+		"effect_id",
+		"card_type",
+		"name",
+		"name_en",
+		"name_zh",
+		"description",
+		"mechanic",
+		"energy_type",
+		"stage",
+		"energy_provides",
+	]:
+		if _seed_json_field_has_value(source_data.get(key)) and not _seed_json_field_has_value(target_data.get(key)):
+			return true
+	if int(target_data.get("hp", 0)) <= 0 and int(source_data.get("hp", 0)) > 0:
+		return true
+	for key: String in ["attacks", "abilities", "is_tags"]:
+		var source_value: Variant = source_data.get(key)
+		var target_value: Variant = target_data.get(key)
+		if source_value is Array and not (source_value as Array).is_empty() and (not (target_value is Array) or (target_value as Array).is_empty()):
+			return true
+	if _seed_json_array_entries_missing_display_fields(source_data.get("attacks"), target_data.get("attacks")):
+		return true
+	if _seed_json_array_entries_missing_display_fields(source_data.get("abilities"), target_data.get("abilities")):
+		return true
+	if _seed_limitless_display_fields_differ(source_data, target_data):
+		return true
+	return false
+
+
+func _seed_json_array_entries_missing_display_fields(source_value: Variant, target_value: Variant) -> bool:
+	if not (source_value is Array) or not (target_value is Array):
+		return false
+	var source_entries := source_value as Array
+	var target_entries := target_value as Array
+	for source_entry_raw: Variant in source_entries:
+		if not (source_entry_raw is Dictionary):
+			continue
+		var source_entry := source_entry_raw as Dictionary
+		var source_name := str(source_entry.get("name", "")).strip_edges()
+		if source_name == "":
+			continue
+		var target_entry := _seed_json_find_named_entry(target_entries, source_name)
+		if target_entry.is_empty():
+			continue
+		for key: String in ["name_zh", "text_zh", "display_name", "display_text"]:
+			if _seed_json_field_has_value(source_entry.get(key)) and not _seed_json_field_has_value(target_entry.get(key)):
+				return true
+	return false
+
+
+func _seed_limitless_display_fields_differ(source_data: Dictionary, target_data: Dictionary) -> bool:
+	if str(source_data.get("source_provider", "")).strip_edges().to_lower() != "limitless":
+		return false
+	if str(target_data.get("source_provider", "")).strip_edges().to_lower() != "limitless":
+		return false
+	for key: String in ["name_zh", "description"]:
+		var source_text := str(source_data.get(key, "")).strip_edges()
+		if source_text != "" and source_text != str(target_data.get(key, "")).strip_edges():
+			return true
+	if _seed_json_array_entries_display_fields_differ(source_data.get("attacks"), target_data.get("attacks")):
+		return true
+	if _seed_json_array_entries_display_fields_differ(source_data.get("abilities"), target_data.get("abilities")):
+		return true
+	return false
+
+
+func _seed_json_array_entries_display_fields_differ(source_value: Variant, target_value: Variant) -> bool:
+	if not (source_value is Array) or not (target_value is Array):
+		return false
+	var source_entries := source_value as Array
+	var target_entries := target_value as Array
+	for source_entry_raw: Variant in source_entries:
+		if not (source_entry_raw is Dictionary):
+			continue
+		var source_entry := source_entry_raw as Dictionary
+		var source_name := str(source_entry.get("name", "")).strip_edges()
+		if source_name == "":
+			continue
+		var target_entry := _seed_json_find_named_entry(target_entries, source_name)
+		if target_entry.is_empty():
+			continue
+		for key: String in ["name_zh", "text_zh", "display_name", "display_text"]:
+			var source_text := str(source_entry.get(key, "")).strip_edges()
+			if source_text != "" and source_text != str(target_entry.get(key, "")).strip_edges():
+				return true
+	return false
+
+
+func _seed_json_find_named_entry(entries: Array, name: String) -> Dictionary:
+	for entry_raw: Variant in entries:
+		if entry_raw is Dictionary:
+			var entry := entry_raw as Dictionary
+			if str(entry.get("name", "")).strip_edges() == name:
+				return entry
+	return {}
+
+
+func _seed_json_field_has_value(value: Variant) -> bool:
+	if value is String:
+		return (value as String).strip_edges() != ""
+	if value is Array:
+		return not (value as Array).is_empty()
+	return value != null
+
+
+func _card_json_uid_from_file(path: String) -> String:
+	if not path.ends_with(".json"):
+		return ""
+	var data := _load_json_dictionary_from_file(path)
+	var set_code := str(data.get("set_code", "")).strip_edges()
+	var card_index := str(data.get("card_index", "")).strip_edges()
+	if set_code == "" or card_index == "":
+		return ""
+	return "%s_%s" % [set_code, card_index]
 
 
 func has_card(set_code: String, card_index: String) -> bool:
@@ -645,9 +890,17 @@ func get_deck_version_priority(deck: DeckData) -> int:
 
 
 func get_player_deck_sort_priority(deck: DeckData) -> int:
+	if _is_front_pinned_player_deck(deck):
+		return 2000
 	if _is_player_modified_deck(deck):
 		return 1000
 	return 0
+
+
+func _is_front_pinned_player_deck(deck: DeckData) -> bool:
+	if deck == null:
+		return false
+	return str(deck.deck_name).strip_edges().begins_with("NAIC")
 
 
 func _deck_release_version_priority(deck: DeckData) -> int:

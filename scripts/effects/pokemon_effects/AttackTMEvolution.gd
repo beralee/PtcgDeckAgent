@@ -131,7 +131,7 @@ func execute_granted_attack(
 		if has_explicit_evolution_selection:
 			evo_card = _find_matching_selected_evolution(selected_evolutions, slot)
 		else:
-			evo_card = _find_evolution_in_deck(player, slot_top.card_data.name)
+			evo_card = _find_evolution_in_deck(player, slot_top.card_data)
 		if evo_card == null:
 			continue
 		player.deck.erase(evo_card)
@@ -210,7 +210,7 @@ func _find_evolution_for_slot(player: PlayerState, slot: PokemonSlot) -> CardIns
 	var slot_top: CardInstance = slot.get_top_card()
 	if slot_top == null or slot_top.card_data == null:
 		return null
-	return _find_evolution_in_deck(player, slot_top.card_data.name)
+	return _find_evolution_in_deck(player, slot_top.card_data)
 
 
 func _find_matching_selected_evolution(selected_evolutions: Array[CardInstance], slot: PokemonSlot) -> CardInstance:
@@ -228,16 +228,18 @@ func _can_evolve_card_onto_slot(evo_card: CardInstance, slot: PokemonSlot) -> bo
 	var slot_top: CardInstance = slot.get_top_card()
 	if slot_top == null or slot_top.card_data == null:
 		return false
-	return evo_card.card_data.evolves_from == slot_top.card_data.name
+	return evo_card.card_data.evolves_from_matches(slot_top.card_data)
 
 
-func _find_evolution_in_deck(player: PlayerState, pokemon_name: String) -> CardInstance:
+func _find_evolution_in_deck(player: PlayerState, pokemon_data: CardData) -> CardInstance:
+	if pokemon_data == null:
+		return null
 	for deck_card: CardInstance in player.deck:
 		if deck_card.card_data == null:
 			continue
 		if not deck_card.card_data.is_pokemon():
 			continue
-		if deck_card.card_data.evolves_from == pokemon_name:
+		if deck_card.card_data.evolves_from_matches(pokemon_data):
 			return deck_card
 	return null
 

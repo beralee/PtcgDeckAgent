@@ -672,7 +672,7 @@ func test_benchmark_runner_can_finish_real_headless_ai_duel() -> String:
 	])
 
 
-func test_headless_bridge_auto_resolves_send_out_prompt() -> String:
+func test_headless_bridge_delegates_send_out_prompt_to_owner_ai() -> String:
 	var bridge = HeadlessMatchBridgeScript.new()
 	var gsm := GameStateMachine.new()
 	gsm.game_state = GameState.new()
@@ -691,15 +691,19 @@ func test_headless_bridge_auto_resolves_send_out_prompt() -> String:
 	var pending_type: String = bridge.get_pending_prompt_type()
 	var pending_owner: int = bridge.get_pending_prompt_owner()
 	var can_resolve: bool = bridge.can_resolve_pending_prompt()
-	var resolved: bool = bridge.resolve_pending_prompt()
+	var direct_resolved: bool = bridge.resolve_pending_prompt()
+	var owner_ai := AIOpponentScript.new()
+	owner_ai.configure(1, 1)
+	var ai_resolved: bool = owner_ai.run_single_step(bridge, gsm)
 	var active_after: PokemonSlot = gsm.game_state.players[1].active_pokemon
 	bridge.free()
 
 	return run_checks([
 		assert_eq(pending_type, "send_out", "Bridge should capture send_out_pokemon as a send_out prompt"),
 		assert_eq(pending_owner, 1, "Bridge should preserve the send_out prompt owner"),
-		assert_true(can_resolve, "Headless bridge should auto-resolve send_out prompts it owns"),
-		assert_true(resolved, "Headless bridge should resolve the pending send_out prompt"),
+		assert_false(can_resolve, "Headless bridge should delegate send_out prompts to the owning AI"),
+		assert_false(direct_resolved, "Direct bridge resolution should preserve the pending send_out prompt"),
+		assert_true(ai_resolved, "The owning AI should resolve the delegated send_out prompt"),
 		assert_eq(active_after, replacement, "The selected replacement should become Active"),
 	])
 

@@ -112,6 +112,9 @@ func _restore_slot(slot_variant: Variant, fallback_owner_index: int) -> PokemonS
 	slot.damage_counters = int(slot_snapshot.get("damage_counters", 0))
 	slot.turn_played = int(slot_snapshot.get("turn_played", -1))
 	slot.turn_evolved = int(slot_snapshot.get("turn_evolved", -1))
+	slot.top_card_order = int(slot_snapshot.get("top_card_order", -1))
+	slot.active_order = int(slot_snapshot.get("active_order", -1))
+	PokemonSlot.ensure_next_order_after(maxi(slot.top_card_order, slot.active_order))
 	var status_variant: Variant = slot_snapshot.get("status_conditions", {})
 	slot.status_conditions = status_variant.duplicate(true) if status_variant is Dictionary else slot.status_conditions
 	var effects_variant: Variant = slot_snapshot.get("effects", [])

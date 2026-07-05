@@ -6,7 +6,11 @@
 android/
 
 .claude/
-.codex/
+.codex/*
+!.codex/skills/
+.codex/skills/*
+!.codex/skills/ptcg-limitless-importer/
+!.codex/skills/ptcg-limitless-importer/**
 .worktrees/
 
 *.log

@@ -1,0 +1,53 @@
+{
+	"name": "冻脊龙",
+	"card_type": "Pokemon",
+	"mechanic": "",
+	"label": "",
+	"description": "【水】 锐利之鳍 40\n\n\n【水】【水】 冰霜粉碎 80\n\n\n",
+	"yoren_code": "P0997",
+	"set_code": "CSVE2C",
+	"card_index": "045",
+	"set_code_en": "PAL",
+	"card_index_en": "59",
+	"name_en": "Arctibax",
+	"artist": "Kouki Saitou",
+	"rarity": "无标记",
+	"release_date": "2025-10-17T00:00:00+08:00",
+	"regulation_mark": "G",
+	"effect_id": "c053ce98d0ac66db8309a3e45338b20d",
+	"image_url": "https://tcg.mik.moe/static/img/CSVE2C/045.png",
+	"image_local_path": "user://cards/images/CSVE2C/045.png",
+	"is_tags": [
+		"Stage 1"
+	],
+	"regulation_standard": true,
+	"regulation_expanded": true,
+	"energy_type": "W",
+	"stage": "Stage 1",
+	"hp": 90,
+	"weakness_energy": "M",
+	"weakness_value": "×2",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 2,
+	"evolves_from": "凉脊龙",
+	"ancient_trait": "",
+	"attacks": [
+		{
+			"name": "锐利之鳍",
+			"text": "",
+			"cost": "WC",
+			"damage": "40",
+			"is_vstar_power": false
+		},
+		{
+			"name": "冰霜粉碎",
+			"text": "",
+			"cost": "WWC",
+			"damage": "80",
+			"is_vstar_power": false
+		}
+	],
+	"abilities": [],
+	"energy_provides": ""
+}

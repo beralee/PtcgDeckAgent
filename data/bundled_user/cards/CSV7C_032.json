@@ -1,0 +1,51 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "Mitsuhiro Arita",
+	"attacks": [
+		{
+			"cost": "G",
+			"damage": "",
+			"is_vstar_power": false,
+			"name": "复原网",
+			"text": "选择自己弃牌区中最多2张宝可梦，在给对手看过之后，加入手牌。"
+		},
+		{
+			"cost": "GCC",
+			"damage": "100+",
+			"is_vstar_power": false,
+			"name": "复仇利刃",
+			"text": "在上一个对手的回合，如果因为招式的伤害，而导致自己的宝可梦【昏厥】的话，则追加造成60伤害。"
+		}
+	],
+	"card_index": "032",
+	"card_index_en": "19",
+	"card_type": "Pokemon",
+	"description": "【草】 复原网 \n选择自己弃牌区中最多2张宝可梦，在给对手看过之后，加入手牌。\n\n【草】 复仇利刃 100+\n在上一个对手的回合，如果因为招式的伤害，而导致自己的宝可梦【昏厥】的话，则追加造成60伤害。\n\n",
+	"effect_id": "8b0ced2eb993ab58d8f0d5fee68efe74",
+	"energy_provides": "",
+	"energy_type": "G",
+	"evolves_from": "",
+	"hp": 120,
+	"image_local_path": "user://cards/images/CSV7C/032.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV7C/032.png",
+	"is_tags": [],
+	"label": "",
+	"mechanic": "",
+	"name": "铁斑叶",
+	"name_en": "Iron Leaves",
+	"rarity": "R",
+	"regulation_expanded": true,
+	"regulation_mark": "H",
+	"regulation_standard": true,
+	"release_date": "2026-01-16T00:00:00+08:00",
+	"resistance_energy": "",
+	"resistance_value": "",
+	"retreat_cost": 1,
+	"set_code": "CSV7C",
+	"set_code_en": "TWM",
+	"stage": "Basic",
+	"weakness_energy": "R",
+	"weakness_value": "×2",
+	"yoren_code": "P1010"
+}

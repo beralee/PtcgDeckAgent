@@ -410,7 +410,11 @@ func show_field_slot_choice(scene: Object, title: String, items: Array, data: Di
 	ensure_field_interaction_panel(scene)
 	update_field_interaction_panel_metrics(scene)
 	hide_field_interaction(scene)
-	if scene.has_method("_clear_modal_slot_time_guard_for_field_choice"):
+	var preserve_modal_slot_guard := (
+		str(data.get("prompt_type", scene.get("_pending_choice"))) == "retreat_bench"
+		and int(scene.get("_dialog_modal_transition_depth")) > 0
+	)
+	if not preserve_modal_slot_guard and scene.has_method("_clear_modal_slot_time_guard_for_field_choice"):
 		scene.call("_clear_modal_slot_time_guard_for_field_choice", "field_slot_choice")
 	scene.set("_field_interaction_mode", "slot_select")
 	var interaction_data := data.duplicate(true)
@@ -1035,12 +1039,13 @@ func field_assignment_source_label(interaction_data: Dictionary, source_index: i
 	var source_item: Variant = source_items[source_index]
 	if source_label.strip_edges() == "" and source_item is CardInstance:
 		var source_card := source_item as CardInstance
-		source_label = source_card.card_data.name if source_card.card_data != null else ""
+		source_label = source_card.card_data.display_name() if source_card.card_data != null else ""
 	if source_label.strip_edges() == "":
 		source_label = str(source_item)
 	var source_slot := field_assignment_source_slot_for_index(interaction_data, source_index)
 	if source_slot != null:
-		var slot_name := source_slot.get_pokemon_name()
+		var source_data := source_slot.get_card_data()
+		var slot_name := source_data.display_name() if source_data != null else source_slot.get_pokemon_name()
 		if slot_name.strip_edges() != "":
 			return "%s（来自 %s）" % [source_label, slot_name]
 	return source_label
@@ -1052,7 +1057,9 @@ func field_assignment_target_label(interaction_data: Dictionary, target_index: i
 	if target_label.strip_edges() != "":
 		return target_label
 	if target_item is PokemonSlot:
-		return (target_item as PokemonSlot).get_pokemon_name()
+		var target_slot := target_item as PokemonSlot
+		var target_data := target_slot.get_card_data()
+		return target_data.display_name() if target_data != null else target_slot.get_pokemon_name()
 	return str(target_item)
 
 
@@ -1179,7 +1186,7 @@ func refresh_field_interaction_status(scene: Object) -> void:
 		if selected_source_index < source_items.size():
 			var selected_source: Variant = source_items[selected_source_index]
 			if selected_source is CardInstance:
-				summary = "当前选择：%s。请点击场上目标。" % (selected_source as CardInstance).card_data.name
+				summary = "当前选择：%s。请点击场上目标。" % (selected_source as CardInstance).card_data.display_name()
 	var assignment_entries: Array = scene.get("_field_interaction_assignment_entries")
 	if not assignment_entries.is_empty():
 		summary += " 已分配 %d 项" % assignment_entries.size()
@@ -1531,7 +1538,9 @@ func _build_counter_target_summary(assignment_entries: Array) -> String:
 		var target: Variant = entry.get("target")
 		var amount: int = int(entry.get("amount", 0)) / 10
 		if target is PokemonSlot and amount > 0:
-			var name: String = (target as PokemonSlot).get_pokemon_name()
+			var target_slot := target as PokemonSlot
+			var target_data := target_slot.get_card_data()
+			var name: String = target_data.display_name() if target_data != null else target_slot.get_pokemon_name()
 			target_counts[name] = int(target_counts.get(name, 0)) + amount
 	if target_counts.is_empty():
 		return ""

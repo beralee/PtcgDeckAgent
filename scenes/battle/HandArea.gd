@@ -40,7 +40,7 @@ func _build_card_panel(inst: CardInstance, selectable: bool) -> PanelContainer:
 	panel.add_child(vbox)
 
 	var lbl_name := Label.new()
-	lbl_name.text = inst.card_data.name
+	lbl_name.text = inst.card_data.display_name()
 	lbl_name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	lbl_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl_name.add_theme_font_size_override("font_size", 11)

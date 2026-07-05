@@ -38,6 +38,8 @@ static var _tag_override_cache: Dictionary = {}
 @export var card_index_en: String = ""
 ## 英文名
 @export var name_en: String = ""
+## 中文展示名（用于外语来源卡牌详情展示，也可作为跨语言进化身份别名）
+@export var name_zh: String = ""
 
 ## 画师
 @export var artist: String = ""
@@ -51,6 +53,14 @@ static var _tag_override_cache: Dictionary = {}
 @export var effect_id: String = ""
 @export var image_url: String = ""
 @export var image_local_path: String = ""
+@export var source_provider: String = ""
+@export var source_url: String = ""
+@export var source_set_code: String = ""
+@export var source_card_index: String = ""
+@export var source_language: String = ""
+@export var source_prints: PackedStringArray = []
+@export var source_imported_at: int = 0
+@export var source_parser_version: int = 0
 ## 标签数组: Basic/Stage 1/Stage 2/ex/V/VSTAR/VMAX/Radiant/ACE SPEC 等
 @export var is_tags: PackedStringArray = []
 
@@ -102,6 +112,21 @@ static func build_image_url(card_set_code: String, card_idx: String) -> String:
 	if card_set_code == "" or card_idx == "":
 		return ""
 	return "%s/%s/%s.png" % [IMAGE_BASE_URL, card_set_code, card_idx]
+
+
+static func build_limitless_image_url(card_set_code: String, card_idx: String) -> String:
+	if card_set_code == "" or card_idx == "":
+		return ""
+	var normalized_set := card_set_code.strip_edges().to_upper()
+	var normalized_idx := card_idx.strip_edges()
+	var image_number := normalized_idx
+	if normalized_idx.is_valid_int():
+		image_number = "%03d" % int(normalized_idx)
+	return "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/%s/%s_%s_R_EN.png" % [
+		normalized_set,
+		normalized_set,
+		image_number,
+	]
 
 
 static func build_local_image_path(card_set_code: String, card_idx: String) -> String:
@@ -187,6 +212,20 @@ static func is_valid_png_file(path: String) -> bool:
 
 func ensure_image_metadata() -> bool:
 	var changed := false
+	if source_provider.strip_edges().to_lower() == "limitless":
+		var limitless_set := source_set_code if source_set_code != "" else set_code_en
+		var limitless_index := source_card_index if source_card_index != "" else card_index_en
+		var expected_limitless_url := build_limitless_image_url(limitless_set, limitless_index)
+		if image_url == "" and expected_limitless_url != "":
+			image_url = expected_limitless_url
+			changed = true
+
+		var expected_limitless_local_path := build_local_image_path(set_code, card_index)
+		if expected_limitless_local_path != "" and image_local_path != expected_limitless_local_path:
+			image_local_path = expected_limitless_local_path
+			changed = true
+		return changed
+
 	var expected_url := build_image_url(set_code, card_index)
 	if expected_url != "" and image_url != expected_url:
 		image_url = expected_url
@@ -203,6 +242,74 @@ func ensure_image_metadata() -> bool:
 func has_local_image() -> bool:
 	var local_path := image_local_path if image_local_path != "" else build_local_image_path(set_code, card_index)
 	return local_path != "" and is_valid_card_image_file(local_path)
+
+
+func display_name() -> String:
+	return display_name_for_values(name_zh, name, name_en if name_en != "" else card_type)
+
+
+static func display_name_for_values(local_name: String, english_name: String = "", fallback: String = "") -> String:
+	var local := str(local_name).strip_edges()
+	if local != "":
+		return local
+	var english := str(english_name).strip_edges()
+	if english != "":
+		return english
+	return str(fallback).strip_edges()
+
+
+static func dictionary_display_name(entry: Dictionary) -> String:
+	return _first_display_value([
+		entry.get("name_zh", ""),
+		entry.get("display_name", ""),
+		entry.get("name", ""),
+	])
+
+
+static func dictionary_display_text(entry: Dictionary) -> String:
+	return _first_display_value([
+		entry.get("text_zh", ""),
+		entry.get("display_text", ""),
+		entry.get("text", ""),
+	])
+
+
+static func _first_display_value(values: Array) -> String:
+	for value: Variant in values:
+		var text := str(value).strip_edges()
+		if text != "":
+			return text
+	return ""
+
+
+func rule_identity_names() -> PackedStringArray:
+	var names := PackedStringArray()
+	_append_rule_identity_name(names, name)
+	_append_rule_identity_name(names, name_en)
+	_append_rule_identity_name(names, name_zh)
+	return names
+
+
+func matches_rule_identity_name(raw_name: String) -> bool:
+	var normalized := str(raw_name).strip_edges()
+	if normalized == "":
+		return false
+	for candidate: String in rule_identity_names():
+		if candidate == normalized:
+			return true
+	return false
+
+
+func evolves_from_matches(target: CardData) -> bool:
+	if target == null:
+		return false
+	return target.matches_rule_identity_name(evolves_from)
+
+
+static func _append_rule_identity_name(names: PackedStringArray, raw_name: String) -> void:
+	var normalized := str(raw_name).strip_edges()
+	if normalized != "" and normalized not in names:
+		names.append(normalized)
 
 
 ## 是否为宝可梦卡
@@ -307,7 +414,7 @@ static func from_api_json(json: Dictionary) -> CardData:
 	card.name = _to_str(json.get("name"))
 	card.card_type = _to_str(json.get("cardType"))
 	card.mechanic = _to_str(json.get("mechanic"))
-	card.label = _to_str(json.get("label"))
+	card.label = _label_to_str(json.get("label"))
 	card.description = _to_str(json.get("description"))
 	card.yoren_code = _to_str(json.get("yorenCode"))
 	card.set_code = _to_str(json.get("setCode"))
@@ -321,11 +428,13 @@ static func from_api_json(json: Dictionary) -> CardData:
 	card.regulation_mark = _to_str(json.get("regulationMark"))
 	card.effect_id = _to_str(json.get("effectId"))
 
-	var tags_raw: Variant = json.get("is")
-	var tags_array: Array = tags_raw if tags_raw is Array else []
+	var tags_array := _tags_from_variant(json.get("is"))
+	for label_tag: String in _tags_from_variant(json.get("label")):
+		if label_tag not in tags_array:
+			tags_array.append(label_tag)
 	var packed := PackedStringArray()
-	for tag: Variant in tags_array:
-		packed.append(str(tag))
+	for tag: String in tags_array:
+		packed.append(tag)
 	card.is_tags = packed
 
 	var reg_raw: Variant = json.get("regulationLegal")
@@ -395,6 +504,31 @@ static func _to_str(value: Variant) -> String:
 	return value if value is String else ""
 
 
+static func _label_to_str(value: Variant) -> String:
+	if value is Array:
+		var parts: Array[String] = []
+		for raw: Variant in value:
+			var text := _to_str(raw)
+			if text != "":
+				parts.append(text)
+		return ", ".join(parts)
+	return _to_str(value)
+
+
+static func _tags_from_variant(value: Variant) -> Array[String]:
+	var tags: Array[String] = []
+	if value is Array:
+		for raw: Variant in value:
+			var text := _to_str(raw)
+			if text != "":
+				tags.append(text)
+	else:
+		var text := _to_str(value)
+		if text != "":
+			tags.append(text)
+	return tags
+
+
 static func normalize_attack_cost(value: Variant) -> String:
 	var cost := _to_str(value).strip_edges()
 	if cost == "0":
@@ -430,6 +564,7 @@ func to_dict() -> Dictionary:
 		"set_code_en": set_code_en,
 		"card_index_en": card_index_en,
 		"name_en": name_en,
+		"name_zh": name_zh,
 		"artist": artist,
 		"rarity": rarity,
 		"release_date": release_date,
@@ -437,6 +572,14 @@ func to_dict() -> Dictionary:
 		"effect_id": effect_id,
 		"image_url": image_url,
 		"image_local_path": image_local_path,
+		"source_provider": source_provider,
+		"source_url": source_url,
+		"source_set_code": source_set_code,
+		"source_card_index": source_card_index,
+		"source_language": source_language,
+		"source_prints": Array(source_prints),
+		"source_imported_at": source_imported_at,
+		"source_parser_version": source_parser_version,
 		"is_tags": Array(is_tags),
 		"regulation_standard": regulation_standard,
 		"regulation_expanded": regulation_expanded,
@@ -470,6 +613,7 @@ static func from_dict(d: Dictionary) -> CardData:
 	card.set_code_en = d.get("set_code_en", "")
 	card.card_index_en = d.get("card_index_en", "")
 	card.name_en = d.get("name_en", "")
+	card.name_zh = d.get("name_zh", "")
 	card.artist = d.get("artist", "")
 	card.rarity = d.get("rarity", "")
 	card.release_date = d.get("release_date", "")
@@ -477,6 +621,19 @@ static func from_dict(d: Dictionary) -> CardData:
 	card.effect_id = d.get("effect_id", "")
 	card.image_url = d.get("image_url", "")
 	card.image_local_path = d.get("image_local_path", "")
+	card.source_provider = d.get("source_provider", "")
+	card.source_url = d.get("source_url", "")
+	card.source_set_code = d.get("source_set_code", "")
+	card.source_card_index = d.get("source_card_index", "")
+	card.source_language = d.get("source_language", "")
+	var source_prints_raw: Variant = d.get("source_prints", [])
+	var source_prints_array: Array = source_prints_raw if source_prints_raw is Array else []
+	var packed_source_prints := PackedStringArray()
+	for raw_source_print: Variant in source_prints_array:
+		packed_source_prints.append(str(raw_source_print))
+	card.source_prints = packed_source_prints
+	card.source_imported_at = int(d.get("source_imported_at", 0))
+	card.source_parser_version = int(d.get("source_parser_version", 0))
 	card.regulation_standard = d.get("regulation_standard", true)
 	card.regulation_expanded = d.get("regulation_expanded", true)
 	card.energy_type = d.get("energy_type", "")

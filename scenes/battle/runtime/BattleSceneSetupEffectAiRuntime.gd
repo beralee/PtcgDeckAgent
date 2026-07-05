@@ -1673,6 +1673,26 @@ func _show_lost_zone(player_index: int, title: String) -> void:
 
 
 
+func _refresh_open_card_collection_after_zone_change(kind: String, player_index: int) -> void:
+	if _discard_overlay == null or not _discard_overlay.visible:
+		return
+	if _discard_collection_current_kind != kind:
+		return
+	if _discard_collection_current_player_index != player_index:
+		return
+	var previous_scroll := _discard_card_scroll.scroll_horizontal if _discard_card_scroll != null else 0
+	match kind:
+		"discard":
+			_show_discard_pile(player_index, _discard_collection_current_title)
+		"lost_zone":
+			_show_lost_zone(player_index, _discard_collection_current_title)
+		_:
+			return
+	if _discard_card_scroll != null:
+		_discard_card_scroll.scroll_horizontal = previous_scroll
+
+
+
 func _bind_slot_input_handler(control: Control, slot_id: String) -> void:
 	if control == null:
 		return
@@ -1957,7 +1977,6 @@ func _portrait_action_descriptors() -> Array[Dictionary]:
 	_append_portrait_button_action(actions, _btn_opponent_hand, "查看对手手牌")
 	_append_portrait_button_action(actions, _btn_attack_vfx_preview, "攻击特效预览")
 	_append_portrait_button_action(actions, _btn_ai_advice, "AI建议")
-	_append_portrait_button_action(actions, _btn_battle_discuss_ai, "AI探讨")
 	_append_portrait_button_action(actions, _btn_zeus_help, "宙斯帮我")
 	_append_portrait_button_action(actions, _btn_replay_prev_turn, "上一回合")
 	_append_portrait_button_action(actions, _btn_replay_next_turn, "下一回合")

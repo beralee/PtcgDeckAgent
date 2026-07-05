@@ -226,13 +226,15 @@ func get_evolve_unusable_reason(
 		return "没有选择要用于进化的宝可梦。"
 	if not evolution.card_data.is_pokemon():
 		return "选择的卡不是宝可梦，不能用于进化。"
+	var top_card: CardInstance = slot.get_top_card()
+	var top_data: CardData = top_card.card_data if top_card != null else null
 	var top_name: String = slot.get_pokemon_name()
 	var evolves_from: String = evolution.card_data.evolves_from
 	var special_hand_evolution_allowed := (
 		effect_processor != null
 		and effect_processor.slot_allows_evolution_from_hand_onto_self(slot, evolution, player_index, state)
 	)
-	if (evolves_from == "" or evolves_from != top_name) and not special_hand_evolution_allowed:
+	if (evolves_from == "" or not evolution.card_data.evolves_from_matches(top_data)) and not special_hand_evolution_allowed:
 		return "%s 不能从 %s 进化。" % [evolution.card_data.name, top_name]
 	return ""
 
