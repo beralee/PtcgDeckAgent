@@ -62,7 +62,7 @@ func test_field_uses_supported_ai_decks_and_random_modes() -> String:
 
 func test_field_can_include_all_llm_deck_variants_when_enabled() -> String:
 	var tournament := SwissTournamentScript.new()
-	tournament.setup("测试玩家", 575716, 16, 12345, true)
+	tournament.setup("测试玩家", 575716, 16, 12345, true, SwissTournamentScript.FORMAT_OPEN)
 	var supported_ids := CardDatabase.get_supported_ai_deck_ids()
 	var llm_deck_pool: Array = tournament.call("get_llm_deck_pool")
 	llm_deck_pool.sort()

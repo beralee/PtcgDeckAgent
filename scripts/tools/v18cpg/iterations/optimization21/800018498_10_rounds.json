@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "architecture": "V18CPG",
+  "evidence_revision": 1,
+  "status": "round01_candidate_no_production_delta",
+  "deck_id": 800018498,
+  "deck_name": "18.0 \u5b66\u9662\u6c99\u5948\u6735",
+  "anchor_id": 575720,
+  "seed_base": 800018498,
+  "games_per_round": 5,
+  "model": "deepseek-v4-flash",
+  "deck_source": "bundled_ai",
+  "deck_content_fingerprint": "e4dfb15b7f4f436077c4830ad2ce6e0f2b98d798e6773d6d2fed2949ae7fc319",
+  "baseline_artifact": "res://tmp/v18cpg/optimization21/800018498/round00_current_after_rollback.json",
+  "completed_rounds": 0,
+  "required_rounds": 10,
+  "rounds": [],
+  "preparation": {
+    "current_source_contract": {
+      "source_kind": "bundled_ai",
+      "bundled_seed_path": "res://data/bundled_user/decks/800018498.json",
+      "bundled_seed_file_sha256": "134e77f0201e44d2623f353f186878b251fd1e8f1245d4f74de416f92abcf39d",
+      "deck_content_fingerprint": "e4dfb15b7f4f436077c4830ad2ce6e0f2b98d798e6773d6d2fed2949ae7fc319",
+      "semantic_manifest_fingerprint": "e4dfb15b7f4f436077c4830ad2ce6e0f2b98d798e6773d6d2fed2949ae7fc319",
+      "semantic_manifest_file_sha256": "9fb56f4091f43136447327496a85fa422bb6f4779ecb5a94cd07b8ecf0848a19",
+      "profile_version": 9,
+      "profile_fingerprint": "271a99b7170e4405eafb8156d9521b03283b60f9f60eaf09ab326d5df452fadd",
+      "profile_file_sha256": "da71994f6fe15933942d22f746c10ca98250b6592e59b5d8bcddf31f21484be0",
+      "fingerprint_verified": true
+    },
+    "current_verified_local_baseline": {
+      "artifact": "res://tmp/v18cpg/optimization21/800018498/round00_current_after_rollback.json",
+      "artifact_sha256": "de0dfd62b61a7960dd7fe8bca3a13026253cc6a32a49d2ec41dbfba042a7b6bb",
+      "run_id": "opt21_800018498_round00_current_after_rollback",
+      "timestamp": "2026-07-21T13:32:33",
+      "profile_version": 9,
+      "rule_wins": 1,
+      "v18cpg_wins": 1,
+      "rule_clean_games": 5,
+      "v18cpg_clean_games": 5,
+      "model_calls": 0,
+      "positive_flips": 0,
+      "negative_flips": 0,
+      "loss_seeds": [800018499, 800018500, 800018501, 800018502]
+    },
+    "scenario_contract": {
+      "test": "res://tests/v18_llm_policy_graph/test_optimize_800018498_complex_decision_scenarios.gd",
+      "test_sha256": "7b344424e82aba84e9d159a5cee4a86c60b1b077d2aa19fdf8ae06a18e0ad210",
+      "artifact": "res://tmp/v18cpg/optimization21/800018498/complex_decision_scenarios.json",
+      "artifact_sha256": "1d669a8fb7aeb26713a9390eaad27ff29ba95fda85747dbda99b7a2e130f0f32",
+      "passed": 5,
+      "total": 5,
+      "production_status": "scenario_contract_ready_not_promoted"
+    },
+    "rejected_turn7_counter_engine_candidate": {
+      "seed": 800018498,
+      "route": "Bench Munkidori, reobserve, attach the unique Darkness Energy to that Munkidori, reobserve, then preserve Budew's Rule-floor attack.",
+      "candidate_artifact": "res://tmp/v18cpg/optimization21/800018498/round00_current_verified_local.json",
+      "candidate_artifact_sha256": "74b4c4b09af4ecfa7e762d7b54f40937cef38db55d011f8375264c863f1c52ca",
+      "candidate_profile_version": 10,
+      "focused_contract": "Positive path passed with 35/35 fail-closed boundaries and three observation epochs, but isolated safety proof did not create a production decision delta.",
+      "five_game_result": {
+        "rule_wins": 1,
+        "v18cpg_wins": 1,
+        "positive_flips": 0,
+        "negative_flips": 0,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5
+      },
+      "production_finding": "The candidate and rolled-back v9 artifacts have byte-equivalent Rule and V18CPG decision signatures across all five seeds. Existing v9 behavior already performs the turn-7 Munkidori route in the sole shared win; the added certificate changes no production action and none of the four Rule losses.",
+      "efficiency_finding": "In seed 800018498 both arms win, but V18CPG takes 51 turns and 143 steps versus Rule's 33 turns and 131 steps, so this shared-win route is not evidence of a stronger policy.",
+      "promotion": "rejected_and_rolled_back",
+      "rollback": {
+        "profile_version": 9,
+        "candidate_symbol_residue": 0,
+        "focused_test_removed": true,
+        "post_rollback_tests": {
+          "complex_scenarios": "5/5 pass",
+          "strategic_shapes": "9/9 pass",
+          "contracts": "17 groups pass",
+          "coverage": "24/24 profiles, 12/12 capability modules pass",
+          "round08_low_pressure_setup": "pass"
+        }
+      },
+      "reason": "A certificate that produces no production action or winner delta cannot count as an optimization round."
+    },
+    "invalidated_history": {
+      "archive": "res://scripts/tools/v18cpg/iterations/optimization21_invalidated_user_deck_20260720/800018498_10_rounds.json",
+      "reason": "Historical results used a different user-deck source and lacked current bundled_ai fingerprint ownership."
+    }
+  },
+  "next_action": "Start from the four current Rule-loss trajectories, require an earliest complete public frontier and same-seed production positive flip before any real-model Round01 is retained."
+}

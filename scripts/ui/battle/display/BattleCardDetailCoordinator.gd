@@ -572,6 +572,10 @@ func hide_card_detail() -> void:
 		detail_box.modulate = Color(1, 1, 1, 1)
 		detail_box.scale = Vector2.ONE
 		detail_box.pivot_offset = detail_box.size * 0.5
+	# The AI action pause can expire while a player is inspecting a card. In that
+	# case the detail overlay is the only reason scheduling was rejected, so the
+	# close event must re-check whether the AI can continue.
+	_call("_maybe_run_ai")
 
 
 func play_card_detail_open_animation() -> void:

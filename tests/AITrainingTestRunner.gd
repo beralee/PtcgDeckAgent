@@ -1,6 +1,7 @@
 extends SceneTree
 
 const TestSuiteFilterScript = preload("res://scripts/tools/TestSuiteFilter.gd")
+const DeckStrategyRegistryScript = preload("res://scripts/ai/DeckStrategyRegistry.gd")
 
 const RUN_MODE_SUITE := "suite"
 const RUN_MODE_MATCHUP_SWEEP := "matchup_sweep"
@@ -11,30 +12,6 @@ const DEFAULT_ANCHOR_DECK_ID := 575720
 const DEFAULT_GAMES_PER_MATCHUP := 10
 const DEFAULT_MAX_STEPS := 200
 const DEFAULT_SEED_BASE := 9000
-const DECK_ID_TO_STRATEGY_ID := {
-	561444: "dialga_metang",
-	569061: "arceus_giratina",
-	572568: "future_box",
-	575479: "palkia_gholdengo",
-	575620: "lost_box",
-	575653: "regidrago",
-	575657: "lugia_archeops",
-	609431: "v175_lugia_archeops",
-	575716: "charizard_ex",
-	575718: "raging_bolt_ogerpon",
-	575720: "miraidon",
-	575723: "dragapult_dusknoir",
-	577861: "palkia_dusknoir",
-	578647: "gardevoir",
-	579502: "dragapult_charizard",
-	579577: "iron_thorns",
-	580445: "dragapult_banette",
-	581056: "regidrago",
-	581614: "blissey_tank",
-	582754: "gouging_fire_ancient",
-}
-
-
 func _initialize() -> void:
 	var runner_script = load("res://tests/AITrainingRunnerScene.gd")
 	if runner_script == null:
@@ -183,7 +160,7 @@ static func truncate_name(name: String, limit: int) -> String:
 
 
 static func parse_strategy_id_for_deck(deck_id: int) -> String:
-	return str(DECK_ID_TO_STRATEGY_ID.get(deck_id, ""))
+	return DeckStrategyRegistryScript.strategy_id_for_deck_id(deck_id)
 
 
 static func _parse_int_suffix(raw_arg: String, prefix: String, fallback: int) -> int:

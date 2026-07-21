@@ -22,6 +22,8 @@ const AILegalActionBuilderScript = preload("res://scripts/ai/AILegalActionBuilde
 const HeadlessMatchBridgeScript = preload("res://scripts/ai/HeadlessMatchBridge.gd")
 const CSV9CHelpers = preload("res://scripts/effects/CSV9CHelpers.gd")
 
+const EFFECT_ID_ONLY_TERA_ID := "5d5d2589f2d9c19ef7364714766600d4"
+
 
 func _make_state() -> GameState:
 	var state := GameState.new()
@@ -372,6 +374,95 @@ func test_csv9c_181_tera_orb_shows_full_deck_and_searches_tera_pokemon() -> Stri
 		assert_true(tera in player.hand, "Selected Tera Pokemon should move to hand"),
 		assert_true(normal in player.deck, "Non-Tera Pokemon should remain in deck"),
 	])
+
+
+func test_csv9c_181_tera_orb_finds_real_csv7c_123_greninja_ex() -> String:
+	var state := _make_state()
+	var player := state.players[0]
+	var greninja_cd: CardData = CardDatabase.get_card("CSV7C", "123")
+	var greninja := CardInstance.create(greninja_cd, 0) if greninja_cd != null else null
+	var normal := CardInstance.create(_pokemon("Normal Pokemon", "R"), 0)
+	player.deck = [normal]
+	if greninja != null:
+		player.deck.append(greninja)
+	var effect := Effect181.new()
+	var card := CardInstance.create(_trainer("Tera Orb", "Item"), 0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
+	if greninja != null:
+		effect.execute(card, [{Effect181.STEP_ID: [greninja]}], state)
+
+	return run_checks([
+		assert_not_null(greninja_cd, "CSV7C_123 Greninja ex should load from the real bundled card database"),
+		assert_true(greninja_cd != null and greninja_cd.is_tera_pokemon(), "CSV7C_123 Greninja ex should be recognized as a Tera Pokemon"),
+		assert_eq(steps[0].get("card_items", []), [normal, greninja] if greninja != null else [normal], "Tera Orb should show the complete searched deck including Greninja ex"),
+		assert_true(steps[0].get("card_indices", []).has(0), "Tera Orb should make real CSV7C_123 Greninja ex selectable"),
+		assert_true(greninja != null and greninja in player.hand, "Selected real CSV7C_123 Greninja ex should move to hand"),
+		assert_true(normal in player.deck, "Non-Tera Pokemon should remain in deck"),
+	])
+
+
+func test_csv9c_181_tera_orb_finds_effect_id_only_tera_without_metadata() -> String:
+	var state := _make_state()
+	var player := state.players[0]
+	var tera_cd := _pokemon("Effect-id-only Tera", "C", 180, "Basic", "ex", EFFECT_ID_ONLY_TERA_ID)
+	var tera := CardInstance.create(tera_cd, 0)
+	var normal := CardInstance.create(_pokemon("Normal Pokemon", "R"), 0)
+	player.deck = [normal, tera]
+	var effect := Effect181.new()
+	var card := CardInstance.create(_trainer("Tera Orb", "Item"), 0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
+
+	return run_checks([
+		assert_true(tera_cd.is_tera_pokemon(), "Effect-id-only Tera card should be recognized without ancient_trait or tags"),
+		assert_true(CSV9CHelpers.is_tera_card_data(tera_cd), "CSV9CHelpers should delegate to central effect-id-only Tera recognition"),
+		assert_eq(steps[0].get("card_items", []), [normal, tera], "Tera Orb should show the complete deck for effect-id-only Tera cards"),
+		assert_eq(steps[0].get("card_indices", []), [-1, 0], "Tera Orb should make the effect-id-only Tera card selectable"),
+	])
+
+
+func test_csv9c_181_all_known_bundled_tera_pokemon_are_selectable() -> String:
+	var expected := [
+		["CSV5C", "075", "Charizard ex"],
+		["CSV7C", "123", "Greninja ex"],
+		["CSV7C", "141", "Farigiraf ex"],
+		["CSV8C", "028", "Teal Mask Ogerpon ex"],
+		["CSV8C", "067", "Wellspring Mask Ogerpon ex"],
+		["CSV8C", "121", "Cornerstone Mask Ogerpon ex"],
+		["CSV8C", "159", "Dragapult ex"],
+		["CSV9.5C", "006", "Leafeon ex"],
+		["CSV9.5C", "023", "Flareon ex"],
+		["CSV9.5C", "029", "Hearthflame Mask Ogerpon ex"],
+		["CSV9.5C", "068", "Espeon ex"],
+		["CSV9.5C", "104", "Umbreon ex"],
+		["CSV9.5C", "140", "Eevee ex"],
+		["CSV9C", "034", "Ceruledge ex"],
+		["CSV9C", "054", "Pikachu ex"],
+		["CSV9C", "064", "Galvantula ex"],
+		["CSV9C", "090", "Sylveon ex"],
+		["CSV9C", "119", "Hydreigon ex"],
+		["CSV9C", "144", "Alolan Exeggutor ex"],
+		["CSV9C", "152", "Tatsugiri ex"],
+		["CSV9C", "175", "Terapagos ex"],
+	]
+	var state := _make_state()
+	var player := state.players[0]
+	var normal := CardInstance.create(_pokemon("Normal Pokemon", "R"), 0)
+	player.deck = [normal]
+	var expected_indices: Array[int] = [-1]
+	var checks: Array[String] = []
+	for i: int in expected.size():
+		var entry: Array = expected[i]
+		var cd: CardData = CardDatabase.get_card(str(entry[0]), str(entry[1]))
+		checks.append(assert_not_null(cd, "%s_%s %s should exist in bundled card database" % [entry[0], entry[1], entry[2]]))
+		checks.append(assert_true(cd != null and cd.is_tera_pokemon(), "%s_%s %s should be centrally recognized as Tera" % [entry[0], entry[1], entry[2]]))
+		if cd != null:
+			player.deck.append(CardInstance.create(cd, 0))
+			expected_indices.append(i)
+	var effect := Effect181.new()
+	var card := CardInstance.create(_trainer("Tera Orb", "Item"), 0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
+	checks.append(assert_eq(steps[0].get("card_indices", []) if not steps.is_empty() else [], expected_indices, "Tera Orb should make every known bundled Tera Pokemon selectable"))
+	return run_checks(checks)
 
 
 func test_csv9c_183_perfect_mixer_discards_up_to_five_selected_deck_cards() -> String:

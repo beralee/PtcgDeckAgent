@@ -55,9 +55,28 @@ func get_followup_interaction_steps(card: CardInstance, state: GameState, resolv
 	return [build_readonly_deck_preview_step("巢穴球：查看剩余牌库", player.deck)]
 
 
+func validate_card_interaction(card: CardInstance, targets: Array, state: GameState) -> Dictionary:
+	if card == null or state == null or card.owner_index < 0 or card.owner_index >= state.players.size():
+		return interaction_validation_error("Nest Ball source card is invalid")
+	var player: PlayerState = state.players[card.owner_index]
+	var context := get_interaction_context(targets)
+	var legal_items := _get_basic_targets(player)
+	if legal_items.is_empty():
+		return validate_context_selection(
+			context,
+			"empty_search_resolution",
+			[EMPTY_SEARCH_CONTINUE, EMPTY_SEARCH_VIEW_DECK],
+			1,
+			1
+		)
+	return validate_context_selection(context, "basic_pokemon", legal_items, 0, 1, true, true)
+
+
 func execute(card: CardInstance, _targets: Array, state: GameState) -> void:
 	var pi: int = card.owner_index
 	var player: PlayerState = state.players[pi]
+	if not bool(validate_card_interaction(card, _targets, state).get("valid", false)):
+		return
 	if BenchLimit.is_bench_full(state, player):
 		player.shuffle_deck()
 		return
@@ -65,7 +84,6 @@ func execute(card: CardInstance, _targets: Array, state: GameState) -> void:
 
 	var pokemon: CardInstance = null
 	var selected_raw: Array = ctx.get("basic_pokemon", [])
-	var has_explicit_selection: bool = ctx.has("basic_pokemon")
 	for entry: Variant in selected_raw:
 		if not (entry is CardInstance):
 			continue
@@ -73,12 +91,6 @@ func execute(card: CardInstance, _targets: Array, state: GameState) -> void:
 		if selected in player.deck and selected.card_data.is_basic_pokemon():
 			pokemon = selected
 			break
-	if pokemon == null and not has_explicit_selection:
-		for deck_card: CardInstance in player.deck:
-			if deck_card.card_data.is_basic_pokemon():
-				pokemon = deck_card
-				break
-
 	if pokemon == null:
 		player.shuffle_deck()
 		return

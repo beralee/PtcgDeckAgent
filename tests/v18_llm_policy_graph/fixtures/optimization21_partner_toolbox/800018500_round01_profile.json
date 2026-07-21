@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "deck_id": 800018500,
+  "seed_base": 800018505,
+  "seed_selection": "first_nonoverlapping_rule_only_block_after_default_with_rule_wins_lte_4",
+  "derived_from": "res://tmp/v18cpg/optimization21/800018500/round00.json",
+  "failure_category": "semantic_gap",
+  "expected_profile_version": 3,
+  "baseline": {"rule_wins": 4, "v18cpg_wins": 3, "clean_games": 5, "model_calls": 28, "model_accepted": 0, "reference_mismatches": 0},
+  "expected_modules": ["grass_spread", "energy_burst", "cycle_pivot"],
+  "expected_primary_attacker_uid": "CSV5C_010",
+  "expected_attacker_root_uids": ["CSVSC_005", "CSV8C_028"],
+  "expected_energy_symbol": "G",
+  "expected_generic_attachment_uid": "",
+  "expected_energy_burst": {"mode": "energized_bench_count", "resource_zone": "own_bench_pokemon_with_G_energy", "raw_units": 3, "projected_public_damage": 200},
+  "expected_profiled_attack_cost": {"module": "grass_spread", "uid": "CSV5C_010", "cost": ["G", "G"]},
+  "expected_protected_roles": ["signature_piece", "evolution_piece", "energy_accelerator", "energy_source", "energy_mover", "recovery", "bench_space"]
+}

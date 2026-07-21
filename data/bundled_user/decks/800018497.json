@@ -17,14 +17,14 @@
 			"source_url": "https://limitlesstcg.com/cards/SVI/84"
 		},
 		{
-			"card_index": "85",
+			"card_index": "054",
 			"card_type": "Pokemon",
 			"count": 2,
-			"effect_id": "25a245d9fcfb5befa2fe4442d1cd0993",
+			"effect_id": "773a7c5bc165bd5d75321bc7c29fdd25",
 			"name": "奇鲁莉安",
 			"name_en": "Kirlia",
-			"resolved_via": "generated_limitless_card",
-			"set_code": "LEN_SVI",
+			"resolved_via": "exact_print",
+			"set_code": "CSV2C",
 			"source_card_index": "85",
 			"source_language": "en",
 			"source_name": "Kirlia",
@@ -81,14 +81,14 @@
 			"source_url": "https://limitlesstcg.com/cards/PAR/86"
 		},
 		{
-			"card_index": "56",
+			"card_index": "082",
 			"card_type": "Pokemon",
 			"count": 1,
-			"effect_id": "5c4e2a6033b2aa872f628b1dc060cc40",
+			"effect_id": "c82dc9185c27908490f8a00cfdc75765",
 			"name": "莉莉艾的皮皮ex",
-			"name_en": "Lillie's Clefairy ex",
-			"resolved_via": "generated_limitless_card",
-			"set_code": "LEN_JTG",
+			"name_en": "",
+			"resolved_via": "simplified_chinese_reprint",
+			"set_code": "CSV10C",
 			"source_card_index": "56",
 			"source_language": "en",
 			"source_name": "Lillie's Clefairy ex",
@@ -434,14 +434,14 @@
 		}
 	],
 	"deck_code": "",
-	"deck_name": "NAIC2025 沙奈朵",
+	"deck_name": "18.0 沙奈朵",
 	"id": 800018497,
-	"import_date": "2026-07-03T00:08:14",
+	"import_date": "2026-07-16T09:23:18",
 	"source_id": "18497",
 	"source_provider": "limitless",
 	"source_url": "https://limitlesstcg.com/decks/list/18497",
 	"strategy": "",
 	"total_cards": 60,
-	"updated_at": 1783008494967,
-	"variant_name": "NAIC2025 沙奈朵"
+	"updated_at": 1784164998618,
+	"variant_name": "18.0 沙奈朵"
 }

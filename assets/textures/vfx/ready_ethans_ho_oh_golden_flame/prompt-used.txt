@@ -1,0 +1,15 @@
+Use case: stylized-concept
+Asset type: production six-frame 2D game ready-state creature animation sheet
+Use CSV10C_035 card art as the visual identity reference for the same radiant phoenix-like bird. Preserve its golden-yellow head and beak, red crown and tail, red-orange outer wings, white chest and inner wing panels, dark blue lower body, green-gold collar accents, silver talons, bright eye, proportions, and polished cel-painted card-game style.
+Create one continuous nonviolent six-frame "Golden Flame has charged an ally" body-led ready animation.
+Exactly 6 equal invisible cells in a 2-row by 3-column grid, read top row left-to-right then bottom row left-to-right. No visible borders, boxes, labels, or gutters.
+Frame 1: full body perched low, wings folded close, head bowed slightly.
+Frame 2: chest rises and wings begin to open while the red crest lifts.
+Frame 3: two tiny golden fire-feather lights appear tightly at the wing roots.
+Frame 4: proud full-body stance with wings raised in a compact V and a small golden flame halo hugging chest and shoulders.
+Frame 5: one wing angles forward slightly while two attached gold fire-feathers glow beside the body.
+Frame 6: wings fold partway and the bird remains alert while the last gold ember fades.
+Clean high-definition hand-painted 2D game sprite art, polished anime creature rendering, crisp readable silhouette, controlled warm highlights, cinematic but body-first.
+Consistent 3/4 front view. Entire body, wings, tail, and feet visible and centered in each cell. Subject occupies only central 52-58% of each cell. Same scale, proportions, and centerline. Keep wing tips and tail at least 10% away from every cell boundary.
+Every pixel outside the bird and compact attached accents is perfectly flat solid #FF00FF magenta. No gradient, texture, floor, cast shadow, reflection, haze, or glow spill. Do not use flat #FF00FF inside the bird.
+No edge crossing, cropped feathers, projectile, impact, opponent, duplicate bird, human, trainer, card frame, text, symbols, UI, watermark, or logo.

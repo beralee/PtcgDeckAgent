@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "deck_id": 18000625,
+  "seed_base": 18000625,
+  "evidence_kind": "prebenchmark_static",
+  "derived_from": "res://scripts/ai/v18_cpg/profiles/generated_semantic_manifests/18000625.json",
+  "failure_category": "semantic_gap",
+  "failing_seeds": [],
+  "expected_modules": ["damage_counter_control", "stage2_chain", "energy_burst"],
+  "expected_protected_roles": ["blaziken_fire_cost", "torchic_root", "munkidori_dark_access", "damage_counter_mover"],
+  "expected_profiled_attack_costs": [
+    {"module": "stage2_chain", "uid": "CSV7C_038", "cost": ["R", "C"]},
+    {"module": "stage2_chain", "uid": "CSV10C_038", "cost": ["R", "R", "C"]}
+  ],
+  "expected_parameter_values": {
+    "damage_counter_control": {"counter_mover_required_energy_by_uid": {"CSV8C_094": ["D"]}},
+    "energy_burst": {"burst_damage_mode": "none", "primary_attacker_uids": ["CSV7C_038"], "primary_attack_required_types": ["R", "C"]}
+  },
+  "public_state_contract": {
+    "attack_cost_by_uid": {"CSV7C_038": ["R", "C"], "CSV10C_038": ["R", "R", "C"]},
+    "utility_cost_by_uid": {"CSV8C_094": ["D"]},
+    "prioritize_before_end_turn": ["route:evolve", "route:energy_commit", "route:accelerate", "route:attack_pressure"],
+    "preserve_roles": ["blaziken_fire_cost", "munkidori_dark_access", "discarded_basic_energy"]
+  },
+  "baseline": {"status": "pending_real_model_round00"}
+}

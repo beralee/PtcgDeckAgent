@@ -2,6 +2,14 @@ class_name TestBattleSetupAIVersions
 extends TestBase
 
 const BattleSetupScene = preload("res://scenes/battle_setup/BattleSetup.tscn")
+const DeckStrategyV18ProfileCatalogScript = preload("res://scripts/ai/DeckStrategyV18ProfileCatalog.gd")
+const EXPECTED_V18_STRENGTH_ORDER_IDS: Array[int] = [
+	# Final normal-mode n100 win rate descending; strong-mode n100 breaks ties.
+	800018500, 800018880, 800017631, 800018501, 18000625, 800018509,
+	800016834, 800018543, 800017047, 800017407, 18000230, 800015734,
+	800018502, 800018498, 800019125, 800018499, 800018105, 800033475,
+	800018497, 800017097, 800015934, 800017643, 800018539, 800018359,
+]
 
 
 class FakeAIVersionRegistry extends RefCounted:
@@ -184,7 +192,7 @@ func test_battle_setup_llm_model_controls_show_in_ai_mode() -> String:
 	_write_battle_review_config_for_test({
 		"endpoint": "https://zenmux.ai/api/v1",
 		"api_key": "test-key",
-		"model": "kimi-k2.6",
+		"model": "kimi-k3",
 		"timeout_seconds": 60.0,
 		"ai_personality": "",
 		"ai_test_passed": false,
@@ -217,7 +225,7 @@ func test_battle_setup_defaults_to_rules_model_without_llm_api() -> String:
 	_write_battle_review_config_for_test({
 		"endpoint": "https://zenmux.ai/api/v1",
 		"api_key": "",
-		"model": "kimi-k2.6",
+		"model": "kimi-k3",
 		"timeout_seconds": 60.0,
 		"ai_personality": "",
 		"ai_test_passed": false,
@@ -299,7 +307,7 @@ func test_battle_setup_strategy_variant_labels_are_readable_chinese() -> String:
 	_write_battle_review_config_for_test({
 		"endpoint": "https://zenmux.ai/api/v1",
 		"api_key": "test-key",
-		"model": "kimi-k2.6",
+		"model": "kimi-k3",
 		"timeout_seconds": 60.0,
 		"ai_personality": "",
 		"ai_test_passed": false,
@@ -336,7 +344,7 @@ func test_battle_setup_all_strategy_variant_labels_use_chinese_naming() -> Strin
 	_write_battle_review_config_for_test({
 		"endpoint": "https://zenmux.ai/api/v1",
 		"api_key": "test-key",
-		"model": "kimi-k2.6",
+		"model": "kimi-k3",
 		"timeout_seconds": 60.0,
 		"ai_personality": "",
 		"ai_test_passed": false,
@@ -387,7 +395,7 @@ func test_battle_setup_exposes_llm_variants_for_all_selectable_llm_decks() -> St
 	_write_battle_review_config_for_test({
 		"endpoint": "https://zenmux.ai/api/v1",
 		"api_key": "test-key",
-		"model": "kimi-k2.6",
+		"model": "kimi-k3",
 		"timeout_seconds": 60.0,
 		"ai_personality": "",
 		"ai_test_passed": false,
@@ -548,6 +556,15 @@ func test_battle_setup_ai_mode_limits_ai_decks_to_supported_shortlist() -> Strin
 		var deck := scene.call("_selected_deck_for_slot", 1) as DeckData
 		if deck != null:
 			resolved_ids.append(deck.id)
+	var missing_v18_ids: Array[int] = []
+	var catalog_v18_ids: Array[int] = DeckStrategyV18ProfileCatalogScript.deck_ids()
+	var resolved_v18_ids: Array[int] = []
+	for deck_id: int in catalog_v18_ids:
+		if deck_id not in resolved_ids:
+			missing_v18_ids.append(deck_id)
+	for deck_id: int in resolved_ids:
+		if deck_id in catalog_v18_ids:
+			resolved_v18_ids.append(deck_id)
 
 	return run_checks([
 		assert_eq(deck2_option.item_count, supported_ids.size(), "AI mode should only expose the supported AI decks"),
@@ -568,32 +585,30 @@ func test_battle_setup_ai_mode_limits_ai_decks_to_supported_shortlist() -> Strin
 		assert_true(1700007 in resolved_ids, "AI deck list should include 17.0 Miraidon"),
 		assert_true(1700008 in resolved_ids, "AI deck list should include 17.0 Dragapult / Dusknoir"),
 		assert_true(1700011 in resolved_ids, "AI deck list should include 17.0 Regidrago"),
+		assert_eq(missing_v18_ids, [], "AI deck list should include all 24 registered 18.0 rule-AI decks"),
+		assert_eq(resolved_v18_ids, EXPECTED_V18_STRENGTH_ORDER_IDS, "AI deck dropdown should order all 18.0 decks by final normal win rate, using strong win rate as the tie-breaker"),
 	])
 
 
-func test_battle_setup_ai_mode_lists_v175_ai_decks_first() -> String:
+func test_battle_setup_ai_mode_lists_v18_ai_decks_first() -> String:
 	var scene := _make_scene_ready()
 	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
 	var deck2_option := scene.find_child("Deck2Option", true, false) as OptionButton
 	mode_option.select(1)
 	scene.call("_on_mode_changed", 1)
 
-	var leading_ids: Array[int] = []
+	var leading_are_v18 := true
 	for i: int in mini(3, deck2_option.item_count):
-		var metadata: Variant = deck2_option.get_item_metadata(i)
-		leading_ids.append(int(metadata))
-	leading_ids.sort()
-	var expected_leading_ids := [
-		1750002, 609431, 610080,
-	]
-	expected_leading_ids.sort()
+		var deck_id := int(deck2_option.get_item_metadata(i))
+		var deck := CardDatabase.get_ai_deck(deck_id)
+		leading_are_v18 = leading_are_v18 and deck != null and deck.deck_name.begins_with("18.0")
 
 	return run_checks([
-		assert_eq(leading_ids, expected_leading_ids, "Battle setup AI deck dropdown should show the supported 17.5 AI decks first"),
+		assert_true(leading_are_v18, "Battle setup AI deck dropdown should show supported 18.0 AI decks first"),
 	])
 
 
-func test_battle_setup_ai_mode_selects_first_v175_ai_deck_by_default() -> String:
+func test_battle_setup_ai_mode_selects_first_v18_ai_deck_by_default() -> String:
 	var scene := _make_scene_ready()
 	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
 	var deck2_option := scene.find_child("Deck2Option", true, false) as OptionButton
@@ -603,12 +618,12 @@ func test_battle_setup_ai_mode_selects_first_v175_ai_deck_by_default() -> String
 	var selected_id := int(deck2_option.get_item_metadata(deck2_option.selected)) if deck2_option.selected >= 0 else -1
 	var selected_deck := scene.call("_selected_deck_for_slot", 1) as DeckData
 	return run_checks([
-		assert_true(selected_id in [1750002, 609431, 610080], "Switching to AI mode should default to a supported 17.5 AI deck"),
-		assert_true(selected_deck != null and selected_deck.deck_name.begins_with("17.5"), "Default AI deck should be labeled as 17.5"),
+		assert_true(selected_id in DeckStrategyV18ProfileCatalogScript.deck_ids(), "Switching to AI mode should default to a supported 18.0 AI deck"),
+		assert_true(selected_deck != null and selected_deck.deck_name.begins_with("18.0"), "Default AI deck should be labeled as 18.0"),
 	])
 
 
-func test_battle_setup_ai_deck_picker_opens_all_with_v175_ai_decks_first() -> String:
+func test_battle_setup_ai_deck_picker_opens_all_with_v18_ai_decks_first() -> String:
 	var scene := _make_scene_ready()
 	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
 	mode_option.select(1)
@@ -617,79 +632,56 @@ func test_battle_setup_ai_deck_picker_opens_all_with_v175_ai_decks_first() -> St
 	var picker_category := str(scene.call("_default_deck_picker_category", 1))
 	var all_decks: Array = scene.call("_decks_for_picker", 1, "all", "")
 	var recent_decks: Array = scene.call("_decks_for_picker", 1, "recent", "")
-	var leading_all_ids: Array[int] = []
-	var leading_recent_ids: Array[int] = []
-	for i: int in mini(3, all_decks.size()):
-		leading_all_ids.append(int((all_decks[i] as DeckData).id))
-	for i: int in mini(3, recent_decks.size()):
-		leading_recent_ids.append(int((recent_decks[i] as DeckData).id))
-	leading_all_ids.sort()
-	leading_recent_ids.sort()
-	var expected_leading_ids := [
-		1750002, 609431, 610080,
-	]
-	expected_leading_ids.sort()
+	var all_v18_ids: Array[int] = []
+	var recent_v18_ids: Array[int] = []
+	var catalog_v18_ids: Array[int] = DeckStrategyV18ProfileCatalogScript.deck_ids()
+	for deck: DeckData in all_decks:
+		if deck.id in catalog_v18_ids:
+			all_v18_ids.append(deck.id)
+	for deck: DeckData in recent_decks:
+		if deck.id in catalog_v18_ids:
+			recent_v18_ids.append(deck.id)
 
 	return run_checks([
 		assert_eq(picker_category, "all", "AI deck picker should open on the creation-time ordered full list"),
-		assert_eq(leading_all_ids, expected_leading_ids, "AI deck picker All category should show the supported 17.5 decks first"),
-		assert_eq(leading_recent_ids, expected_leading_ids, "AI deck picker Recent category should not push old AI decks ahead of the 17.5 deck set"),
+		assert_eq(all_v18_ids, EXPECTED_V18_STRENGTH_ORDER_IDS, "AI deck picker All category should order every 18.0 deck by benchmark strength"),
+		assert_eq(recent_v18_ids, EXPECTED_V18_STRENGTH_ORDER_IDS, "AI deck picker Recent category should preserve the same 18.0 benchmark-strength order"),
 	])
 
 
-func test_battle_setup_player_deck_picker_lists_player_modified_decks_first() -> String:
+func test_battle_setup_player_deck_picker_sorts_all_decks_by_updated_at_desc() -> String:
 	var scene := _make_scene_ready()
 	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
 	mode_option.select(0)
 	scene.call("_on_mode_changed", 0)
 
-	var expected_v175_ids := [
-		1750001, 1750002, 1750003, 1750004, 1750005,
-		606452, 606972, 609431, 610080, 611607,
-	]
-	var controlled_decks: Array[DeckData] = []
-	for deck_id: int in expected_v175_ids + [1700001]:
-		var deck: DeckData = CardDatabase._load_deck_from_file("res://data/bundled_user/decks/%d.json" % deck_id)
-		if deck != null:
-			controlled_decks.append(deck)
-	var player_created_deck := DeckData.new()
-	player_created_deck.id = 99000001
-	player_created_deck.deck_name = "player created deck"
-	player_created_deck.import_date = "2099-01-01T00:00:00"
-	player_created_deck.updated_at = 1000000000001
-	player_created_deck.total_cards = 60
-	controlled_decks.append(player_created_deck)
-	var modified_specs := [
-		{"id": 1700001, "name": "player modified baseline deck", "updated_at": 1000000000000},
-		{"id": 1700002, "name": "17.5 stale legacy Archaludon", "updated_at": 999999999999},
-		{"id": 575723, "name": "17.5 stale legacy Dragapult", "updated_at": 999999999998},
-		{"id": 599947, "name": "17.5 stale legacy Miraidon", "updated_at": 999999999997},
-	]
-	for spec: Dictionary in modified_specs:
-		var modified_id := int(spec["id"])
-		var modified_deck: DeckData = CardDatabase._load_deck_from_file("res://data/bundled_user/decks/%d.json" % modified_id)
-		if modified_deck != null:
-			modified_deck.deck_name = str(spec["name"])
-			modified_deck.updated_at = int(spec["updated_at"])
-			controlled_decks.append(modified_deck)
-	scene.set("_deck_list", controlled_decks)
+	var newest_bundled: DeckData = CardDatabase._load_deck_from_file("res://data/bundled_user/decks/1700001.json")
+	if newest_bundled == null:
+		return "Bundled baseline deck should load for battle setup ordering coverage"
+	newest_bundled.updated_at = 3000
+	var middle_player_deck := DeckData.new()
+	middle_player_deck.id = 99000001
+	middle_player_deck.deck_name = "player created deck"
+	middle_player_deck.updated_at = 2000
+	middle_player_deck.total_cards = 60
+	var oldest_v18_deck := DeckData.new()
+	oldest_v18_deck.id = 99000002
+	oldest_v18_deck.deck_name = "18.0 old edited deck"
+	oldest_v18_deck.updated_at = 1000
+	oldest_v18_deck.total_cards = 60
+	scene.set("_deck_list", [oldest_v18_deck, middle_player_deck, newest_bundled])
 
 	var all_decks: Array = scene.call("_decks_for_picker", 0, "all", "")
-	var leading_ids: Array[int] = []
-	var expected_modified_ids := [
-		99000001, 1700001, 1700002, 575723, 599947,
-	]
-	for i: int in mini(expected_modified_ids.size(), all_decks.size()):
-		var deck := all_decks[i] as DeckData
-		leading_ids.append(int(deck.id))
-
-	var checks: Array[String] = [
-		assert_eq(leading_ids, expected_modified_ids, "Battle setup player deck picker should put player-created or player-modified decks before bundled defaults"),
-	]
-	if all_decks.size() > expected_modified_ids.size():
-		var next_deck := all_decks[expected_modified_ids.size()] as DeckData
-		checks.append(assert_false(int(next_deck.id) in expected_modified_ids, "Modified deck ids should not be duplicated after the leading group"))
-	return run_checks(checks)
+	var sorted_ids: Array[int] = []
+	for deck: DeckData in all_decks:
+		sorted_ids.append(deck.id)
+	return run_checks([
+		assert_eq(
+			sorted_ids,
+			[newest_bundled.id, middle_player_deck.id, oldest_v18_deck.id],
+			"Battle setup player deck picker should sort by updated_at without pinning 18.0 or modified decks",
+		),
+	])
 
 
 func test_battle_setup_filters_dragapult_charizard_ai_versions() -> String:

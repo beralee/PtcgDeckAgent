@@ -1,0 +1,398 @@
+{
+  "cards": [
+    {
+      "count": 4,
+      "effect_id": "e793842faf5a8017e5456f898b1bf9d2",
+      "name": "Dreepy",
+      "roles": [
+        "pokemon",
+        "opening_active_candidate",
+        "attacker",
+        "development_piece",
+        "spread_attacker_candidate"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV8C_157"
+    },
+    {
+      "count": 4,
+      "effect_id": "4e13cd08de3b6d141ce8e2f09d17a3a4",
+      "name": "Drakloak",
+      "roles": [
+        "pokemon",
+        "evolution_piece",
+        "search_target",
+        "ability_engine",
+        "stage2_dependency"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV8C_158"
+    },
+    {
+      "count": 2,
+      "effect_id": "52a205820de799a53a689f23cbeb8622",
+      "name": "Dragapult ex",
+      "roles": [
+        "pokemon",
+        "signature_piece",
+        "energy_target",
+        "attacker",
+        "evolution_piece",
+        "search_target",
+        "stage2_dependency",
+        "spread_attacker_candidate"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV8C_159"
+    },
+    {
+      "count": 2,
+      "effect_id": "7d8db29232cb263d7a9f27342814dff9",
+      "name": "Charmander",
+      "roles": [
+        "pokemon",
+        "opening_active_candidate",
+        "attacker",
+        "development_piece",
+        "search_target",
+        "spread_attacker_candidate"
+      ],
+      "type": "Pokemon",
+      "uid": "151C_004"
+    },
+    {
+      "count": 1,
+      "effect_id": "80abbdd5ce75ddd713dab42752383acd",
+      "name": "Charmeleon",
+      "roles": [
+        "pokemon",
+        "evolution_piece",
+        "stage2_dependency"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV5C_015"
+    },
+    {
+      "count": 2,
+      "effect_id": "767b6233bf90b98b7af190ea3b40d7a2",
+      "name": "Charizard ex",
+      "roles": [
+        "pokemon",
+        "signature_piece",
+        "energy_target",
+        "attacker",
+        "evolution_piece",
+        "search_target",
+        "ability_engine",
+        "stage2_dependency",
+        "spread_attacker_candidate"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV5C_075"
+    },
+    {
+      "count": 1,
+      "effect_id": "28505a8ad6e07e74382c1b5e09737932",
+      "name": "含羞苞",
+      "roles": [
+        "pokemon",
+        "opening_active_candidate",
+        "attacker",
+        "spread_attacker_candidate"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV9.5C_004"
+    },
+    {
+      "count": 1,
+      "effect_id": "4e1e775eaafb11028f5378ede92cb964",
+      "name": "Chi-Yu",
+      "roles": [
+        "pokemon",
+        "opening_active_candidate",
+        "attacker",
+        "energy_target",
+        "spread_attacker_candidate"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV5C_022"
+    },
+    {
+      "count": 1,
+      "effect_id": "ab6c3357e2b8a8385a68da738f41e0c1",
+      "name": "Fezandipiti ex",
+      "roles": [
+        "pokemon",
+        "development_piece"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV8C_135"
+    },
+    {
+      "count": 1,
+      "effect_id": "74b83ef8987d072950dfe3bde3364d87",
+      "name": "Hawlucha",
+      "roles": [
+        "pokemon",
+        "development_piece"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV1C_079"
+    },
+    {
+      "count": 1,
+      "effect_id": "66fee12502043db7d92b97b0d62b0f59",
+      "name": "Munkidori",
+      "roles": [
+        "pokemon",
+        "development_piece",
+        "ability_engine"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV8C_094"
+    },
+    {
+      "count": 4,
+      "effect_id": "5bdbc985f9aa2e6f248b53f6f35d1d37",
+      "name": "Arven",
+      "roles": [
+        "supporter",
+        "trainer_tutor",
+        "trainer_plan_piece"
+      ],
+      "type": "Supporter",
+      "uid": "CSV1C_123"
+    },
+    {
+      "count": 4,
+      "effect_id": "af514f82d182aeae5327b2c360df703d",
+      "name": "Iono",
+      "roles": [
+        "supporter",
+        "draw_engine"
+      ],
+      "type": "Supporter",
+      "uid": "CSV3C_123"
+    },
+    {
+      "count": 3,
+      "effect_id": "8e1fa2c9018db938084c94c7c970d419",
+      "name": "Boss's Orders",
+      "roles": [
+        "supporter",
+        "gust"
+      ],
+      "type": "Supporter",
+      "uid": "CSVH1aC_023"
+    },
+    {
+      "count": 1,
+      "effect_id": "8d9b3076693b9f692bae94d057498720",
+      "name": "小刚的发掘",
+      "roles": [
+        "supporter"
+      ],
+      "type": "Supporter",
+      "uid": "CSV10C_207"
+    },
+    {
+      "count": 1,
+      "effect_id": "aecd80ca2722885c3d062a2255346f3e",
+      "name": "Professor's Research",
+      "roles": [
+        "supporter",
+        "draw_engine"
+      ],
+      "type": "Supporter",
+      "uid": "CSV1C_121"
+    },
+    {
+      "count": 4,
+      "effect_id": "f866dfee26cd6b0dbbb52b74438d0a59",
+      "name": "Buddy-Buddy Poffin",
+      "roles": [
+        "item",
+        "pokemon_search",
+        "trainer_plan_piece"
+      ],
+      "type": "Item",
+      "uid": "CSV7C_177"
+    },
+    {
+      "count": 3,
+      "effect_id": "a337ed34a45e63c6d21d98c3d8e0cb6e",
+      "name": "Ultra Ball",
+      "roles": [
+        "item",
+        "pokemon_search",
+        "trainer_plan_piece"
+      ],
+      "type": "Item",
+      "uid": "CSV1C_112"
+    },
+    {
+      "count": 2,
+      "effect_id": "d3891abcfe3277c8811cde06741d3236",
+      "name": "Rare Candy",
+      "roles": [
+        "item",
+        "trainer_plan_piece"
+      ],
+      "type": "Item",
+      "uid": "CSVH1C_045"
+    },
+    {
+      "count": 1,
+      "effect_id": "06bc00d5dcec33898dc6db2e4c4d10ec",
+      "name": "Counter Catcher",
+      "roles": [
+        "item",
+        "gust"
+      ],
+      "type": "Item",
+      "uid": "CSV6C_114"
+    },
+    {
+      "count": 1,
+      "effect_id": "1af63a7e2cb7a79215474ad8db8fd8fd",
+      "name": "Nest Ball",
+      "roles": [
+        "item",
+        "pokemon_search"
+      ],
+      "type": "Item",
+      "uid": "CSVH1C_043"
+    },
+    {
+      "count": 1,
+      "effect_id": "3e6f1daf545dfed48d0588dd50792a2e",
+      "name": "Night Stretcher",
+      "roles": [
+        "item",
+        "recovery"
+      ],
+      "type": "Item",
+      "uid": "CSV8C_183"
+    },
+    {
+      "count": 1,
+      "effect_id": "c9c948169525fbb3dce70c477ec7a90a",
+      "name": "Super Rod",
+      "roles": [
+        "item",
+        "recovery"
+      ],
+      "type": "Item",
+      "uid": "CSV1C_109"
+    },
+    {
+      "count": 1,
+      "effect_id": "d324e01179ab048ed023bf4a20bf658d",
+      "name": "Unfair Stamp",
+      "roles": [
+        "item"
+      ],
+      "type": "Item",
+      "uid": "CSV8C_173"
+    },
+    {
+      "count": 1,
+      "effect_id": "0b4cc131a19862f92acf71494f29a0ed",
+      "name": "Rescue Board",
+      "roles": [
+        "item"
+      ],
+      "type": "Tool",
+      "uid": "CSV7C_185"
+    },
+    {
+      "count": 1,
+      "effect_id": "43386015be5c073ba2e5b9d3692ece3f",
+      "name": "Technical Machine: Evolution",
+      "roles": [
+        "item",
+        "trainer_plan_piece"
+      ],
+      "type": "Tool",
+      "uid": "CSV5C_119"
+    },
+    {
+      "count": 1,
+      "effect_id": "4e16157bfa88a41e823d058a732df8e0",
+      "name": "Jamming Tower",
+      "roles": [
+        "stadium"
+      ],
+      "type": "Stadium",
+      "uid": "CSV8C_203"
+    },
+    {
+      "count": 1,
+      "effect_id": "99173b61a66aa2b9c169e36c8e0a10b4",
+      "name": "火箭队的监视塔",
+      "roles": [
+        "stadium"
+      ],
+      "type": "Stadium",
+      "uid": "CSV10C_219"
+    },
+    {
+      "count": 5,
+      "effect_id": "22db5405bf0cce61a00aa8082cdd1e65",
+      "name": "Fire Energy",
+      "roles": [
+        "energy_source",
+        "typed_energy"
+      ],
+      "type": "Basic Energy",
+      "uid": "CSVE1C_FIR"
+    },
+    {
+      "count": 4,
+      "effect_id": "540ee48bb93584e4bfe3d7f5d0ee0efc",
+      "name": "Luminous Energy",
+      "roles": [
+        "energy_source",
+        "typed_energy"
+      ],
+      "type": "Special Energy",
+      "uid": "CSV1C_127"
+    }
+  ],
+  "deck_content_fingerprint": "88bbb3835d0a2c838ffc79584438137fd2ef8422f05943638fbbd14bca217966",
+  "deck_id": 18000230,
+  "manifest_hash": "d6d734c3fe37cc24349090cc3eb505cad0041bf3fb2f1e553e942bdbb4fbede8",
+  "modules": [
+    "stage2_chain",
+    "dragapult_spread",
+    "energy_burst"
+  ],
+  "primary_module": "stage2_chain",
+  "role_counts": {
+    "ability_engine": 7,
+    "attacker": 12,
+    "development_piece": 9,
+    "draw_engine": 5,
+    "energy_source": 9,
+    "energy_target": 5,
+    "evolution_piece": 9,
+    "gust": 4,
+    "item": 16,
+    "opening_active_candidate": 8,
+    "pokemon": 20,
+    "pokemon_search": 8,
+    "recovery": 2,
+    "search_target": 10,
+    "signature_piece": 4,
+    "spread_attacker_candidate": 12,
+    "stadium": 2,
+    "stage2_dependency": 9,
+    "supporter": 13,
+    "trainer_plan_piece": 14,
+    "trainer_tutor": 4,
+    "typed_energy": 9
+  },
+  "schema_version": 1,
+  "semantic_version": 1,
+  "strategy_id": "v18cpg_18000230_dragapult_charizard"
+}

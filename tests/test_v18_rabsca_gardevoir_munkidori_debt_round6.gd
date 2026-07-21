@@ -1,0 +1,102 @@
+class_name TestV18RabscaGardevoirMunkidoriDebtRound6
+extends TestBase
+
+
+const REGISTRY_SCRIPT = preload("res://scripts/ai/DeckStrategyRegistry.gd")
+const DECK_PATH := "res://data/bundled_user/decks/800018105.json"
+
+
+func test_rabsca_variant_resolves_safe_munkidori_transfer_before_nonlethal_attack() -> String:
+	var strategy := _strategy()
+	if strategy == null:
+		return assert_true(false, "Deck 800018105 should resolve through the production registry")
+	var state := _state()
+	var player: PlayerState = state.players[0]
+	var scream_tail := _slot(_card("CSV6C_065"), 0)
+	scream_tail.damage_counters = 40
+	scream_tail.attached_energy.assign([_energy("P"), _energy("P")])
+	var gardevoir := _slot(_card("CSV2C_055"), 0)
+	gardevoir.damage_counters = 30
+	var munkidori := _slot(_card("CSV8C_094"), 0)
+	munkidori.attached_energy.append(_energy("D"))
+	player.active_pokemon = scream_tail
+	player.bench.assign([gardevoir, munkidori])
+	state.players[1].active_pokemon = _slot(_defender(), 1)
+
+	var contract: Dictionary = strategy.call("build_turn_contract", state, 0, {"prompt_kind": "action_selection"})
+	var flags: Dictionary = contract.get("flags", {}) if contract.get("flags", {}) is Dictionary else {}
+	var ability_score := float(strategy.call("score_action_absolute_with_plan", {
+		"kind": "use_ability",
+		"source_slot": munkidori,
+	}, state, 0, contract))
+	var attack_score := float(strategy.call("score_action_absolute_with_plan", {
+		"kind": "attack",
+		"source_slot": scream_tail,
+		"projected_knockout": false,
+	}, state, 0, contract))
+	return run_checks([
+		assert_true(bool(flags.get("munkidori_damage_transfer_debt", false)),
+			"Rabsca Gardevoir must expose the safe transfer debt owned by its Munkidori package"),
+		assert_true(ability_score > attack_score,
+			"Safe Munkidori transfer must resolve before a non-final Scream Tail attack"),
+	])
+
+
+func _strategy() -> RefCounted:
+	var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string(DECK_PATH))
+	return REGISTRY_SCRIPT.new().call("resolve_strategy_for_deck", DeckData.from_dict(raw)) \
+		if raw is Dictionary else null
+
+
+func _state() -> GameState:
+	var state := GameState.new()
+	for player_index: int in 2:
+		var player := PlayerState.new()
+		player.player_index = player_index
+		state.players.append(player)
+	state.current_player_index = 0
+	state.first_player_index = 1
+	state.turn_number = 13
+	state.phase = GameState.GamePhase.MAIN
+	for index: int in 6:
+		state.players[0].prizes.append(_filler("Own prize %d" % index, 0))
+		state.players[1].prizes.append(_filler("Opponent prize %d" % index, 1))
+	return state
+
+
+func _card(ref: String) -> CardData:
+	var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string(
+		"res://data/bundled_user/cards/%s.json" % ref
+	))
+	return CardData.from_dict(raw) if raw is Dictionary else null
+
+
+func _energy(symbol: String) -> CardInstance:
+	var card := CardData.new()
+	card.name_en = "Psychic Energy" if symbol == "P" else "Darkness Energy"
+	card.card_type = "Basic Energy"
+	card.energy_provides = symbol
+	return CardInstance.create(card, 0)
+
+
+func _defender() -> CardData:
+	var card := CardData.new()
+	card.name_en = "Transfer defender"
+	card.card_type = "Pokemon"
+	card.stage = "Basic"
+	card.hp = 260
+	return card
+
+
+func _slot(card: CardData, owner_index: int) -> PokemonSlot:
+	var slot := PokemonSlot.new()
+	if card != null:
+		slot.pokemon_stack.append(CardInstance.create(card, owner_index))
+	return slot
+
+
+func _filler(card_name: String, owner_index: int) -> CardInstance:
+	var card := CardData.new()
+	card.name_en = card_name
+	card.card_type = "Item"
+	return CardInstance.create(card, owner_index)

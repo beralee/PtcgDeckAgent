@@ -1,0 +1,59 @@
+{
+    "name":  "奇树的霹雳电球",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  " 连锁伏特 20+\n追加造成自己所有「奇树的宝可梦」身上附着的【雷】能量数量×20伤害。\n\n",
+    "yoren_code":  "P0100",
+    "set_code":  "CSV10C",
+    "card_index":  "064",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "Kazumasa Yasukuni",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "2c6aefef00bbd83125f4e927590d5ac1",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/064.png",
+    "image_local_path":  "user://cards/images/CSV10C/064.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "L",
+    "stage":  "Basic",
+    "hp":  70,
+    "weakness_energy":  "F",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "连锁伏特",
+                        "text":  "追加造成自己所有「奇树的宝可梦」身上附着的【雷】能量数量×20伤害。",
+                        "cost":  "CC",
+                        "damage":  "20+",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

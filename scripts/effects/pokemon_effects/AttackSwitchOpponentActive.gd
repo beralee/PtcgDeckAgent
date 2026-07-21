@@ -50,7 +50,7 @@ func get_attack_interaction_steps(
 
 func execute_attack(
 	attacker: PokemonSlot,
-	_defender: PokemonSlot,
+	defender: PokemonSlot,
 	attack_index: int,
 	state: GameState
 ) -> void:
@@ -68,6 +68,11 @@ func execute_attack(
 	var opponent: PlayerState = state.players[opponent_index]
 	if opponent.active_pokemon == null or opponent.bench.is_empty():
 		return
+	var protected_active := defender if defender != null and defender == opponent.active_pokemon else opponent.active_pokemon
+	var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null)
+	if processor != null and processor.has_method("is_attack_effect_prevented_by_defender_ability"):
+		if bool(processor.call("is_attack_effect_prevented_by_defender_ability", attacker, protected_active, state)):
+			return
 
 	var target := _resolve_selected_target(opponent)
 	if target == null:

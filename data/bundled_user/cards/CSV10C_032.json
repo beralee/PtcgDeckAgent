@@ -1,0 +1,62 @@
+{
+    "name":  "阿响的熔岩蜗牛",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "特性: 熔化流动\n如果这只宝可梦身上没有附着能量的话，则将这只宝可梦【撤退】所需能量全部消除。\n\n【火】【火】【火】 熔岩爆破 70×\n将这只宝可梦身上附着的最多5张【火】能量放于弃牌区，造成其张数×70伤害。\n\n",
+    "yoren_code":  "P0219",
+    "set_code":  "CSV10C",
+    "card_index":  "032",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "kodama",
+    "rarity":  "R",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "1eeea0dcde15f8d7bd8d2ad0a44ee583",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/032.png",
+    "image_local_path":  "user://cards/images/CSV10C/032.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "R",
+    "stage":  "Stage 1",
+    "hp":  130,
+    "weakness_energy":  "W",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  3,
+    "evolves_from":  "阿响的熔岩虫",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "熔岩爆破",
+                        "text":  "将这只宝可梦身上附着的最多5张【火】能量放于弃牌区，造成其张数×70伤害。",
+                        "cost":  "RRR",
+                        "damage":  "70×",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+                      {
+                          "name":  "熔化流动",
+                          "text":  "如果这只宝可梦身上没有附着能量的话，则将这只宝可梦【撤退】所需能量全部消除。"
+                      }
+                  ],
+    "energy_provides":  ""
+}

@@ -88,6 +88,13 @@ const BRAVERY_CHARM_EN := "Bravery Charm"
 const CRESSELIA_EFFECT_ID := "5a56387211377cf56bfeb12751a5eed3"
 const CRESSELIA_EN := "Cresselia"
 const PROFESSORS_RESEARCH_EFFECT_ID := "aecd80ca2722885c3d062a2255346f3e"
+const STANDARD_GARDEVOIR_DECK_ID := 800018497
+const LEGACY_FAST_EVOLUTION_DECK_ID := 578647
+const V175_GARDEVOIR_DECK_ID := 610080
+const MUNKIDORI_DEBT_ABILITY_FLOOR := 6200.0
+const MUNKIDORI_DEBT_NON_FINAL_ATTACK_CEILING := 1800.0
+const MID_LOW_DECK_DRAW_FLOOR := 24
+const ACADEMY_GARDEVOIR_DECK_ID := 800018498
 
 const CORE_NAMES: Array[String] = [RALTS, KIRLIA, GARDEVOIR_EX]
 const CONTROL_NAMES: Array[String] = [KLEFKI, FLUTTER_MANE]
@@ -189,6 +196,11 @@ func _is_budew_munkidori_scream_tail_variant() -> bool:
 		and _deck_allows_scream_tail_package() \
 		and _deck_allows_munkidori_package() \
 		and not _deck_allows_drifloon_package()
+
+
+func _deck_allows_munkidori_damage_transfer_debt() -> bool:
+	return _configured_deck_id == STANDARD_GARDEVOIR_DECK_ID \
+		or _is_budew_munkidori_scream_tail_variant()
 
 
 func is_budew_opening_variant() -> bool:
@@ -935,6 +947,8 @@ func _continuity_english_alias(name: String) -> String:
 			return "Artazon"
 		ARVEN:
 			return "Arven"
+		IONO:
+			return "Iono"
 		NIGHT_STRETCHER:
 			return "Night Stretcher"
 		RESCUE_STRETCHER:
@@ -1586,6 +1600,10 @@ func _abs_attach_tool(action: Dictionary, game_state: GameState, player: PlayerS
 			return 160.0
 		return -80.0
 	if tool_name == BRAVERY_CHARM:
+		if _configured_deck_id == STANDARD_GARDEVOIR_DECK_ID and not _slot_matches_name(target_slot, SCREAM_TAIL):
+			return -5000.0
+		if _configured_deck_id == ACADEMY_GARDEVOIR_DECK_ID:
+			return _score_academy_bravery_charm_commit(game_state, player, player_index, target_slot)
 		if _shell_lock_active(player):
 			if target_name == DRIFLOON and _bravery_charm_preload_window(player):
 				return 160.0
@@ -1611,6 +1629,64 @@ func _abs_attach_tool(action: Dictionary, game_state: GameState, player: PlayerS
 	if target_name in ATTACKER_NAMES or target_name == SCREAM_TAIL:
 		return 100.0
 	return -100.0
+
+
+func _score_academy_bravery_charm_commit(
+	game_state: GameState,
+	player: PlayerState,
+	player_index: int,
+	target_slot: PokemonSlot
+) -> float:
+	if target_slot == null:
+		return -5000.0
+	var target_name: String = target_slot.get_pokemon_name()
+	if target_name in [RALTS, MUNKIDORI]:
+		return -5000.0
+	if target_name not in [DRIFLOON, SCREAM_TAIL]:
+		return -2000.0
+	if not _academy_bravery_charm_scaler_commit_live(game_state, player, player_index, target_slot):
+		return -2000.0
+	return 920.0 if target_name == DRIFLOON else 880.0
+
+
+func _academy_bravery_charm_scaler_commit_live(
+	game_state: GameState,
+	player: PlayerState,
+	player_index: int,
+	target_slot: PokemonSlot
+) -> bool:
+	if game_state == null or player == null or target_slot == null:
+		return false
+	if player_index < 0 or player_index >= game_state.players.size():
+		return false
+	if not _has_online_shell(player) or _count_psychic_energy_in_discard(game_state, player_index) <= 0:
+		return false
+	if not _drifloon_survives_extra_embrace_count(target_slot, 1, true, game_state):
+		return false
+	var now: Dictionary = predict_attacker_damage(target_slot, 0)
+	var after: Dictionary = predict_attacker_damage(target_slot, 1)
+	if not bool(after.get("can_attack", false)):
+		return false
+	var now_damage: int = int(now.get("damage", 0))
+	var after_damage: int = int(after.get("damage", 0))
+	if after_damage <= now_damage:
+		return false
+	var opponent_index: int = 1 - player_index
+	if opponent_index < 0 or opponent_index >= game_state.players.size():
+		return false
+	var opponent: PlayerState = game_state.players[opponent_index]
+	if opponent == null:
+		return false
+	if target_slot.get_pokemon_name() == DRIFLOON:
+		var defender: PokemonSlot = opponent.active_pokemon
+		return _slot_is_live(defender) \
+			and now_damage < defender.get_remaining_hp() \
+			and after_damage >= defender.get_remaining_hp()
+	var visible_now := 0.0
+	if bool(now.get("can_attack", false)):
+		visible_now = _best_scream_tail_visible_prize_value(game_state, player_index, now_damage)
+	var visible_after := _best_scream_tail_visible_prize_value(game_state, player_index, after_damage)
+	return visible_after > visible_now
 
 
 func _abs_use_ability(action: Dictionary, game_state: GameState, player: PlayerState, player_index: int, phase: String) -> float:
@@ -2004,6 +2080,17 @@ func _score_psychic_embrace_target_slot(
 	var cresselia_route_score: float = _score_cresselia_embrace_target(target_slot, game_state, player, player_index)
 	if cresselia_route_score > 0.0:
 		return cresselia_route_score
+	var retreat_reservation_score: float = _score_standard_retreat_bridge_reservation(
+		target_slot,
+		game_state,
+		player,
+		player_index
+	)
+	if retreat_reservation_score > 0.0:
+		return retreat_reservation_score
+	var gust_insurance_score: float = _score_gardevoir_gust_insurance(target_slot, player, game_state, player_index)
+	if gust_insurance_score > 0.0:
+		return gust_insurance_score
 
 	if target_slot == player.active_pokemon \
 			and _active_retreat_bridge_to_ready_bench_attacker_live(game_state, player, player_index):
@@ -2070,6 +2157,74 @@ func _score_psychic_embrace_target_slot(
 	return 20.0
 
 
+func _score_standard_retreat_bridge_reservation(
+	target_slot: PokemonSlot,
+	game_state: GameState,
+	player: PlayerState,
+	player_index: int
+) -> float:
+	if _configured_deck_id != STANDARD_GARDEVOIR_DECK_ID \
+			or game_state == null \
+			or player == null \
+			or target_slot != player.active_pokemon \
+			or not _has_online_shell(player):
+		return 0.0
+	var active: PokemonSlot = player.active_pokemon
+	var active_prediction: Dictionary = predict_attacker_damage(active)
+	if bool(active_prediction.get("can_attack", false)) and int(active_prediction.get("damage", 0)) > 0:
+		return 0.0
+	var retreat_gap := _get_retreat_energy_gap(active)
+	if retreat_gap <= 0:
+		return 0.0
+	var psychic_fuel := _count_psychic_energy_in_discard(game_state, player_index)
+	if psychic_fuel <= retreat_gap \
+			or _available_psychic_embrace_payments_for_slot(game_state, player, player_index, active) < retreat_gap:
+		return 0.0
+	for bench_slot: PokemonSlot in player.bench:
+		if not _slot_is_live(bench_slot):
+			continue
+		var bench_name := bench_slot.get_pokemon_name()
+		if bench_name not in ATTACKER_NAMES and bench_name != SCREAM_TAIL:
+			continue
+		var attack_gap := _get_attack_energy_gap(bench_slot)
+		if attack_gap <= 0:
+			continue
+		if psychic_fuel < retreat_gap + attack_gap:
+			continue
+		if _safe_psychic_embrace_uses_for_slot(bench_slot, game_state) < attack_gap:
+			continue
+		return 1240.0
+	return 0.0
+
+
+func _score_gardevoir_gust_insurance(
+	target_slot: PokemonSlot,
+	player: PlayerState,
+	game_state: GameState = null,
+	player_index: int = -1
+) -> float:
+	if target_slot == null or player == null or player.active_pokemon == null:
+		return 0.0
+	if target_slot == player.active_pokemon or target_slot.get_pokemon_name() != GARDEVOIR_EX:
+		return 0.0
+	if _get_retreat_energy_gap(target_slot) != 2 or not _is_ready_attacker(player.active_pokemon):
+		return 0.0
+	var active: PokemonSlot = player.active_pokemon
+	if active.get_pokemon_name() == SCREAM_TAIL \
+			and _slot_has_bravery_charm(active) \
+			and game_state != null \
+			and player_index >= 0 \
+			and _count_psychic_energy_in_discard(game_state, player_index) > 0 \
+			and _can_take_more_psychic_embrace_damage(active, game_state):
+		var now: Dictionary = predict_attacker_damage(active, 0)
+		var after: Dictionary = predict_attacker_damage(active, 1)
+		var visible_now: float = _best_scream_tail_visible_prize_value(game_state, player_index, int(now.get("damage", 0)))
+		var visible_after: float = _best_scream_tail_visible_prize_value(game_state, player_index, int(after.get("damage", 0)))
+		if bool(after.get("can_attack", false)) and visible_now <= 0.0 and visible_after > 0.0:
+			return 0.0
+	return 760.0
+
+
 func _abs_play_trainer(action: Dictionary, game_state: GameState, player: PlayerState, player_index: int, phase: String) -> float:
 	var card: CardInstance = action.get("card")
 	if card == null or card.card_data == null:
@@ -2104,6 +2259,10 @@ func _abs_play_trainer(action: Dictionary, game_state: GameState, player: Player
 	var gardevoir_in_hand_by_alias: bool = _hand_has_card(player, GARDEVOIR_EX) or _hand_has_gardevoir_ex_alias(player)
 	var raw_draw_supporter: bool = _card_is_professors_research(card) \
 		or (card_type == "Supporter" and name not in [ARVEN, IONO, PROF_TURO, BOSSS_ORDERS])
+	if player.deck.size() <= MID_LOW_DECK_DRAW_FLOOR \
+			and _card_is_professors_research(card) \
+			and _hand_has_card(player, IONO):
+		return -600.0
 	if deck_out_pressure and raw_draw_supporter:
 		if first_gardevoir_missing_by_alias and kirlia_online_by_alias and not gardevoir_in_hand_by_alias:
 			return 80.0
@@ -2628,6 +2787,8 @@ func _abs_attack(action: Dictionary, game_state: GameState, player_index: int) -
 					best_ko_value = ko_val
 		if best_ko_value > 0.0:
 			return best_ko_value
+		if _has_safe_unused_refinement(player, game_state):
+			return 220.0
 		return 300.0 + float(damage)
 	if damage >= defender.get_remaining_hp():
 		var ko_score: float = 800.0
@@ -2645,6 +2806,23 @@ func _abs_attack(action: Dictionary, game_state: GameState, player_index: int) -
 	if damage > 0:
 		return 300.0 + float(damage)
 	return 0.0
+
+
+func _has_safe_unused_refinement(player: PlayerState, state: GameState) -> bool:
+	if player == null or state == null or player.deck.size() <= 8 or player.hand.is_empty():
+		return false
+	for slot: PokemonSlot in _get_all_slots(player):
+		if not _slot_is_live(slot) or slot.get_pokemon_name() != KIRLIA:
+			continue
+		var used_this_turn := false
+		for effect: Dictionary in slot.effects:
+			if str(effect.get("type", "")) == "ability_discard_draw_any_used" \
+					and int(effect.get("turn", -1)) == int(state.turn_number):
+				used_this_turn = true
+				break
+		if not used_this_turn:
+			return true
+	return false
 
 
 func _budew_should_wait_for_visible_online_development(game_state: GameState, player: PlayerState, player_index: int) -> bool:
@@ -3542,8 +3720,19 @@ func pick_embrace_target(target_slots: Array, game_state: GameState = null, play
 		if not _can_take_more_psychic_embrace_damage(slot, game_state):
 			continue
 		var cresselia_route_score: float = _score_cresselia_embrace_target(slot, game_state, player, player_index)
+		var retreat_reservation_score: float = _score_standard_retreat_bridge_reservation(
+			slot,
+			game_state,
+			player,
+			player_index
+		)
+		var gust_insurance_score: float = _score_gardevoir_gust_insurance(slot, player, game_state, player_index)
 		if cresselia_route_score > 0.0:
 			score = maxf(score, cresselia_route_score)
+		elif retreat_reservation_score > 0.0:
+			score = retreat_reservation_score
+		elif gust_insurance_score > 0.0:
+			score = gust_insurance_score
 		elif name in ATTACKER_NAMES or name == SCREAM_TAIL:
 			if name == SCREAM_TAIL and player != null and _preferred_attacker_recovery_suppresses_attacker_investment(game_state, player, player_index):
 				continue
@@ -3686,6 +3875,48 @@ func score_action(action: Dictionary, context: Dictionary) -> float:
 	return abs_score - base_estimate
 
 
+func score_action_absolute_with_plan(
+	action: Dictionary,
+	game_state: GameState,
+	player_index: int,
+	turn_plan: Dictionary = {}
+) -> float:
+	var score := super.score_action_absolute_with_plan(action, game_state, player_index, turn_plan)
+	return _apply_munkidori_debt_contract_score(score, action, game_state, player_index, turn_plan)
+
+
+func score_action_absolute_with_plan_context_only(
+	action: Dictionary,
+	game_state: GameState,
+	player_index: int,
+	turn_plan: Dictionary = {}
+) -> float:
+	var score := super.score_action_absolute_with_plan_context_only(action, game_state, player_index, turn_plan)
+	return _apply_munkidori_debt_contract_score(score, action, game_state, player_index, turn_plan)
+
+
+func _apply_munkidori_debt_contract_score(
+	score: float,
+	action: Dictionary,
+	game_state: GameState,
+	player_index: int,
+	turn_plan: Dictionary
+) -> float:
+	var constraints: Dictionary = turn_plan.get("constraints", {}) \
+		if turn_plan.get("constraints", {}) is Dictionary else {}
+	if not bool(constraints.get("must_resolve_munkidori_damage_transfer", false)):
+		return score
+	var kind := str(action.get("kind", ""))
+	var source_slot: PokemonSlot = action.get("source_slot", null)
+	if kind == "use_ability" \
+			and _slot_matches_name(source_slot, MUNKIDORI):
+		return maxf(score, MUNKIDORI_DEBT_ABILITY_FLOOR)
+	if kind in ["attack", "granted_attack"] \
+			and not _is_continuity_final_prize_attack(action, game_state, player_index):
+		return minf(score, MUNKIDORI_DEBT_NON_FINAL_ATTACK_CEILING)
+	return score
+
+
 
 func plan_opening_setup(player: PlayerState) -> Dictionary:
 	var basics: Array[Dictionary] = []
@@ -3737,6 +3968,10 @@ func plan_opening_setup(player: PlayerState) -> Dictionary:
 			elif bname_for_single == DRIFLOON:
 				has_drifloon = true
 		var single_ralts_active_preference: Array[String] = []
+		if _configured_deck_id == LEGACY_FAST_EVOLUTION_DECK_ID \
+				and _opening_tm_bridge_live(player) \
+				and _hand_has_card(player, BUDDY_BUDDY_POFFIN):
+			single_ralts_active_preference.append(KLEFKI)
 		if has_flutter_mane and has_drifloon:
 			single_ralts_active_preference.append(FLUTTER_MANE)
 		single_ralts_active_preference.append(DRIFLOON)
@@ -3761,7 +3996,7 @@ func plan_opening_setup(player: PlayerState) -> Dictionary:
 				break
 	if active_index == -1:
 		active_index = int(basics[0]["index"])
-	var opening_bench_limit: int = 2
+	var opening_bench_limit: int = 3 if _configured_deck_id == V175_GARDEVOIR_DECK_ID else 2
 	var bench_indices: Array[int] = []
 	var non_essentials: Array[int] = []
 	for b in basics:
@@ -4229,7 +4464,6 @@ func _score_night_stretcher_choice_target(card: CardInstance, game_state: GameSt
 	if player_index < 0 or player_index >= game_state.players.size():
 		return 0.0
 	var player: PlayerState = game_state.players[player_index]
-	var name: String = str(card.card_data.name)
 	var shell_lock: bool = _shell_lock_active(player)
 	var transition_shell: bool = _has_transition_shell(player)
 	var attacker_bodies: int = _count_attackers_on_field(player)
@@ -4240,37 +4474,45 @@ func _score_night_stretcher_choice_target(card: CardInstance, game_state: GameSt
 		if str(card.card_data.energy_provides) == "P":
 			return 180.0 if _count_pokemon_on_field(player, GARDEVOIR_EX) >= 1 else 80.0
 		return 20.0
-	if name == GARDEVOIR_EX:
+	if _card_data_matches_name(card.card_data, GARDEVOIR_EX):
 		if _count_pokemon_on_field(player, GARDEVOIR_EX) == 0:
 			return 1000.0 if _count_pokemon_on_field(player, KIRLIA) >= 1 else 240.0
 		return 40.0
-	if name == KIRLIA:
+	if _card_data_matches_name(card.card_data, KIRLIA):
 		if _count_pokemon_on_field(player, KIRLIA) == 0 and _count_pokemon_on_field(player, RALTS) >= 1:
 			return 720.0
 		return 60.0
-	if name == RALTS:
+	if _card_data_matches_name(card.card_data, RALTS):
 		if _count_primary_shell_bodies(player) < 2 and player.bench.size() < 5:
 			return 360.0
 		return 40.0
-	if _card_is_cresselia(card) or name in ATTACKER_NAMES or name == SCREAM_TAIL:
+	var matched_attacker_name := ""
+	for attacker_name: String in ATTACKER_NAMES:
+		if _card_data_matches_name(card.card_data, attacker_name):
+			matched_attacker_name = attacker_name
+			break
+	if matched_attacker_name == "" and _card_data_matches_name(card.card_data, SCREAM_TAIL):
+		matched_attacker_name = SCREAM_TAIL
+	var is_attacker := _card_is_cresselia(card) or matched_attacker_name != ""
+	if is_attacker:
 		if closed_loop_rebuild:
-			if name == preferred_transition_attacker:
-				return 960.0 if _count_pokemon_on_field(player, name) == 0 else 700.0
+			if _card_data_matches_name(card.card_data, preferred_transition_attacker):
+				return 960.0 if _count_pokemon_on_field(player, preferred_transition_attacker) == 0 else 700.0
 			if _card_is_cresselia(card):
 				return 820.0 if _count_cresselia_on_field(player) == 0 else 500.0
-			return 720.0 if _count_pokemon_on_field(player, name) == 0 else 440.0
+			return 720.0 if _count_pokemon_on_field(player, matched_attacker_name) == 0 else 440.0
 		if transition_shell and ready_attackers == 0:
-			if name == preferred_transition_attacker:
-				return 860.0 if _count_pokemon_on_field(player, name) == 0 else 520.0
+			if _card_data_matches_name(card.card_data, preferred_transition_attacker):
+				return 860.0 if _count_pokemon_on_field(player, preferred_transition_attacker) == 0 else 520.0
 			if _card_is_cresselia(card):
 				return 720.0 if _count_cresselia_on_field(player) == 0 else 420.0
-			return 380.0 if _count_pokemon_on_field(player, name) == 0 else 180.0
+			return 380.0 if _count_pokemon_on_field(player, matched_attacker_name) == 0 else 180.0
 		if transition_shell and attacker_bodies == 0:
 			return 800.0
 		if _count_pokemon_on_field(player, GARDEVOIR_EX) >= 1 and ready_attackers == 0:
 			return 520.0
 		return 140.0
-	if name == MUNKIDORI:
+	if _card_data_matches_name(card.card_data, MUNKIDORI):
 		if shell_lock:
 			return -80.0
 		if transition_shell and attacker_bodies == 0:
@@ -4502,7 +4744,7 @@ func _munkidori_can_threaten_ko(state: GameState, player_index: int) -> bool:
 func _munkidori_damage_transfer_debt_live(state: GameState, player: PlayerState, player_index: int) -> bool:
 	if state == null or player == null or player_index < 0 or player_index >= state.players.size():
 		return false
-	if not _is_budew_munkidori_scream_tail_variant():
+	if not _deck_allows_munkidori_damage_transfer_debt():
 		return false
 	if not _has_online_shell(player):
 		return false

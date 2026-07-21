@@ -1,0 +1,219 @@
+{
+  "target": "creature",
+  "mode": "charge",
+  "prompt": "",
+  "role": "",
+  "input": "assets\\textures\\vfx\\ready_munkidori_adrena_brain_transfer\\raw-sheet.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 180,
+  "rows": 2,
+  "cols": 3,
+  "cell_size": 256,
+  "fit_scale": 0.82,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "center",
+  "shared_scale": true,
+  "component_mode": "all",
+  "component_padding": 3,
+  "min_component_area": 1,
+  "edge_touch_margin": 2,
+  "frame_labels": [
+    "charge-1",
+    "charge-2",
+    "charge-3",
+    "charge-4",
+    "charge-5",
+    "charge-6"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "component_mode": "all",
+      "component_count": 18,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        32,
+        113,
+        438,
+        420
+      ],
+      "edge_touch": false,
+      "output_size": [
+        187,
+        141
+      ],
+      "paste_position": [
+        34,
+        57
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        512,
+        0,
+        1024,
+        512
+      ],
+      "component_mode": "all",
+      "component_count": 29,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        24,
+        52,
+        443,
+        423
+      ],
+      "edge_touch": false,
+      "output_size": [
+        193,
+        171
+      ],
+      "paste_position": [
+        31,
+        42
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        1024,
+        0,
+        1536,
+        512
+      ],
+      "component_mode": "all",
+      "component_count": 109,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        20,
+        44,
+        436,
+        423
+      ],
+      "edge_touch": false,
+      "output_size": [
+        192,
+        175
+      ],
+      "paste_position": [
+        32,
+        40
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        512,
+        512,
+        1024
+      ],
+      "component_mode": "all",
+      "component_count": 104,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        24,
+        35,
+        446,
+        430
+      ],
+      "edge_touch": false,
+      "output_size": [
+        195,
+        182
+      ],
+      "paste_position": [
+        30,
+        37
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        512,
+        512,
+        1024,
+        1024
+      ],
+      "component_mode": "all",
+      "component_count": 94,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        21,
+        40,
+        448,
+        428
+      ],
+      "edge_touch": false,
+      "output_size": [
+        197,
+        179
+      ],
+      "paste_position": [
+        29,
+        38
+      ]
+    },
+    {
+      "grid": [
+        1,
+        2
+      ],
+      "source_box": [
+        1024,
+        512,
+        1536,
+        1024
+      ],
+      "component_mode": "all",
+      "component_count": 50,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        20,
+        102,
+        474,
+        425
+      ],
+      "edge_touch": false,
+      "output_size": [
+        209,
+        149
+      ],
+      "paste_position": [
+        23,
+        53
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

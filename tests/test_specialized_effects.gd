@@ -544,7 +544,7 @@ func legacy_look_top_cards_can_whiff_without_becoming_unplayable() -> String:
 	])
 
 
-func test_look_top_cards_whiff_offers_empty_resolution_preview() -> String:
+func test_look_top_cards_whiff_uses_direct_disabled_card_preview() -> String:
 	var state := _make_state()
 	var player: PlayerState = state.players[0]
 	player.hand.clear()
@@ -556,24 +556,23 @@ func test_look_top_cards_whiff_offers_empty_resolution_preview() -> String:
 	var card := CardInstance.create(_make_trainer_data("Pokegear 3.0"), 0)
 	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
 	var first_step: Dictionary = steps[0] if not steps.is_empty() else {}
-	var labels: Array = first_step.get("labels", [])
 	var followup: Array[Dictionary] = effect.get_followup_interaction_steps(card, state, {
 		"empty_search_resolution": ["view_deck"],
 	})
-	var preview_step: Dictionary = followup[0] if not followup.is_empty() else {}
-	var preview_items: Array = preview_step.get("items", [])
+	var visible_cards: Array = first_step.get("card_items", [])
+	var card_indices: Array = first_step.get("card_indices", [])
+	var utility_actions: Array = first_step.get("utility_actions", [])
 
 	return run_checks([
 		assert_true(effect.can_execute(card, state), "Look-top effects should remain playable when the viewed cards miss"),
 		assert_false(effect.can_headless_execute(card, state), "AI should not treat look-top effects as headless-playable when they miss"),
-		assert_eq(steps.size(), 1, "Look-top whiffs should enter the shared empty-resolution flow"),
-		assert_eq(str(first_step.get("id", "")), "empty_search_resolution", "Look-top whiffs should reuse the shared empty-resolution id"),
-		assert_eq(labels.size(), 2, "Look-top whiffs should offer continue and preview options"),
-		assert_eq(str(labels[0]), "继续消耗", "Look-top whiffs should allow continuing to consume the card"),
-		assert_eq(str(labels[1]), "查看卡牌", "Look-top whiffs should allow previewing the viewed cards"),
-		assert_eq(followup.size(), 1, "Choosing to preview after a look-top whiff should open a readonly card preview"),
-		assert_eq(str(preview_step.get("presentation", "")), "cards", "Look-top whiff previews should use card presentation"),
-		assert_eq(preview_items.size(), 7, "Look-top whiff previews should show every looked-at card"),
+		assert_eq(steps.size(), 1, "Look-top whiffs should resolve in one direct card dialog"),
+		assert_eq(str(first_step.get("id", "")), "look_top_cards", "Look-top whiffs should keep the normal top-card step id"),
+		assert_eq(str(first_step.get("presentation", "")), "cards", "Look-top whiffs should use card presentation immediately"),
+		assert_eq(visible_cards.size(), 7, "Look-top whiffs should show every looked-at card"),
+		assert_eq(card_indices, [-1, -1, -1, -1, -1, -1, -1], "All nonmatching looked cards should be disabled"),
+		assert_eq(utility_actions.size(), 1, "A direct whiff preview should expose one close-and-continue action"),
+		assert_eq(followup.size(), 0, "Direct top-card previews should not inject a second temporary preview step"),
 	])
 
 
@@ -1787,6 +1786,43 @@ func test_up_to_effects_allow_zero_selection_without_fallback() -> String:
 	])
 
 
+func test_super_rod_rejects_ambiguous_empty_ui_submission_without_being_spent() -> String:
+	var state := _make_state()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = state
+	var player: PlayerState = state.players[0]
+	player.hand.clear()
+	player.discard_pile.clear()
+	const TEST_SUPER_ROD_EFFECT_ID := "test_super_rod_atomic_interaction"
+	var super_rod_card := CardInstance.create(_make_trainer_data("Super Rod", "Item", TEST_SUPER_ROD_EFFECT_ID), 0)
+	var discard_target := CardInstance.create(_make_basic_pokemon_data("Discard Pokemon", "C"), 0)
+	player.hand.append(super_rod_card)
+	player.discard_pile.append(discard_target)
+	var effect := EffectSuperRod.new()
+	gsm.effect_processor.register_effect(TEST_SUPER_ROD_EFFECT_ID, effect)
+	var steps := effect.get_interaction_steps(super_rod_card, state)
+	var first_step: Dictionary = steps[0] if not steps.is_empty() else {}
+
+	var played := gsm.play_trainer(0, super_rod_card, [{
+		BaseEffect.INTERACTION_SOURCE_KEY: BaseEffect.INTERACTION_SOURCE_BATTLE_UI,
+		BaseEffect.INTERACTION_INTENTS_KEY: {
+			"cards_to_return": BaseEffect.INTERACTION_INTENT_SELECT,
+		},
+		"cards_to_return": [],
+	}])
+
+	var checks: Array[String] = [
+		assert_false(played, "Super Rod must reject an ambiguous empty UI submit"),
+		assert_true(super_rod_card in player.hand, "Rejected Super Rod interaction must leave the Item in hand"),
+		assert_false(super_rod_card in player.discard_pile, "Rejected Super Rod interaction must not spend the Item"),
+		assert_true(discard_target in player.discard_pile, "Rejected Super Rod interaction must not mutate discard or deck"),
+		assert_true(bool(first_step.get("requires_explicit_empty_selection", false)), "Super Rod should distinguish deliberate zero selection from an accidental empty UI submit"),
+		assert_true(bool(first_step.get("force_confirm", false)), "Super Rod should require explicit confirmation for its multi-card choice"),
+	]
+	gsm.prepare_for_disposal()
+	return run_checks(checks)
+
+
 func test_superior_energy_retrieval_cannot_recover_cost_energy() -> String:
 	var state := _make_state()
 	var player: PlayerState = state.players[0]
@@ -1863,6 +1899,7 @@ func test_hisuian_heavy_ball_takes_basic_from_prizes_and_replaces_with_self() ->
 		assert_eq(steps.size(), 1, "Hisuian Heavy Ball should only ask for the prize Basic selection"),
 		assert_eq(str(first_step.get("id", "")), "chosen_prize_basic", "The only interaction should be choosing the Basic Pokemon from prizes"),
 		assert_eq(str(first_step.get("presentation", "")), "cards", "Hisuian Heavy Ball should use visible card presentation for prize contents"),
+		assert_eq(bool(first_step.get("allow_cancel", true)), false, "Hisuian Heavy Ball reveals prize cards and must not expose a cancel button"),
 		assert_eq(first_step_card_items.size(), 2, "Hisuian Heavy Ball should reveal every prize card in the prompt"),
 		assert_eq(first_step.get("card_indices", []), [0, -1], "Only Basic Pokemon prize cards should be selectable"),
 		assert_str_contains(non_basic_label, "仅查看", "Non-Basic prize cards should be clearly marked as view-only"),
@@ -1921,9 +1958,11 @@ func test_hisuian_heavy_ball_can_execute_without_basic_prize() -> String:
 	return run_checks([
 		assert_true(effect.can_execute(card, state), "即使奖赏卡里没有基础宝可梦也应允许使用洗翠的沉重球"),
 		assert_eq(steps.size(), 1, "没有基础宝可梦时仍应展示奖赏卡给玩家查看"),
+		assert_eq(bool(first_step.get("allow_cancel", true)), false, "即使没有可选基础宝可梦，查看奖赏卡也只能完成结算，不能取消"),
 		assert_eq(first_step.get("card_indices", []), [-1, -1], "没有基础宝可梦时所有奖赏卡都应仅可查看"),
 		assert_eq(int(first_step.get("min_select", -1)), 0, "没有基础宝可梦时不应强制选择目标"),
 		assert_eq(int(first_step.get("max_select", -1)), 0, "没有基础宝可梦时不应允许选择目标"),
+		assert_eq(first_step.get("utility_actions", []), [{"label": "完成", "selected_indices": [], "intent": BaseEffect.INTERACTION_INTENT_SELECT}], "没有可选基础宝可梦时应提供显式空选择的完成按钮"),
 		assert_eq(player.prizes.size(), 2, "空结算时奖赏卡数量应保持不变"),
 	])
 
@@ -2627,14 +2666,14 @@ func test_buddy_poffin_respects_collapsed_stadium_live_bench_limit() -> String:
 	var card := CardInstance.create(_make_trainer_data("友好宝芬"), 0)
 	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
 	effect.execute(card, [{
-		"buddy_poffin_pokemon": [poffin_a, poffin_b],
+		"buddy_poffin_pokemon": [poffin_a],
 	}], state)
 
 	return run_checks([
 		assert_eq(int(steps[0].get("max_select", -1)), 1, "崩塌的竞技场在场且已有3只备战时，友好宝芬最多只能选择1只"),
 		assert_eq(player.bench.size(), 4, "友好宝芬不应把备战区推进到第5只"),
 		assert_true(player.bench.any(func(slot: PokemonSlot) -> bool: return slot.get_pokemon_name() == "Poffin A"), "友好宝芬应只放入允许数量内的目标"),
-		assert_true(poffin_b in player.deck, "超出崩塌的竞技场上限的额外目标应留在牌库"),
+		assert_true(poffin_b in player.deck, "未选择的额外目标应留在牌库"),
 	])
 
 

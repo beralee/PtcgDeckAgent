@@ -1,0 +1,53 @@
+{
+    "name":  "幸运头盔",
+    "card_type":  "Tool",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "身上放有这张卡牌的宝可梦，在战斗场上受到对手宝可梦的招式的伤害时，从自己牌库上方抽取2张卡牌。",
+    "yoren_code":  "Y1416",
+    "set_code":  "CSV7C",
+    "card_index":  "190",
+    "set_code_en":  "TWM",
+    "card_index_en":  "158",
+    "name_en":  "Lucky Helmet",
+    "name_zh":  "",
+    "artist":  "Studio Bora Inc.",
+    "rarity":  "U",
+    "release_date":  "2026-01-16T00:00:00+08:00",
+    "regulation_mark":  "H",
+    "effect_id":  "76ed73e869ac742e97ea521f200a360e",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV7C/190.png",
+    "image_local_path":  "user://cards/images/CSV7C/190.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "",
+    "stage":  "",
+    "hp":  0,
+    "weakness_energy":  "",
+    "weakness_value":  "",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  0,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

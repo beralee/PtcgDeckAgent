@@ -1,0 +1,66 @@
+{
+    "name":  "加热洛托姆",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【火】 致焦 \n令对手的战斗宝可梦陷入【灼伤】状态。\n\n 配件秀 30×\n造成自己所有宝可梦身上放有的「宝可梦道具」数量×30伤害。\n\n",
+    "yoren_code":  "P479",
+    "set_code":  "CSV10C",
+    "card_index":  "039",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "Dsuke",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "7e9ec2af31b9db78282706bfd8572822",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/039.png",
+    "image_local_path":  "user://cards/images/CSV10C/039.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "R",
+    "stage":  "Basic",
+    "hp":  80,
+    "weakness_energy":  "W",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  2,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "致焦",
+                        "text":  "令对手的战斗宝可梦陷入【灼伤】状态。",
+                        "cost":  "R",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "配件秀",
+                        "text":  "造成自己所有宝可梦身上放有的「宝可梦道具」数量×30伤害。",
+                        "cost":  "CC",
+                        "damage":  "30×",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

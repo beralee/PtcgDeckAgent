@@ -1,0 +1,178 @@
+{
+  "profile_version": 5,
+  "semantic_version": 1,
+  "risk_posture": "balanced",
+  "switch_margin": 70.0,
+  "expected_regret_threshold": 60.0,
+  "initial_response_token_budget": 420,
+  "delta_response_token_budget": 170,
+  "turn_visible_wait_budget_ms": 6500,
+  "cold_request_estimate_ms": 5000,
+  "max_policy_nodes": 7,
+  "protected_roles": [
+    "signature_piece",
+    "evolution_piece",
+    "energy_accelerator",
+    "energy_source",
+    "energy_mover",
+    "recovery",
+    "bench_space"
+  ],
+  "strategic_priorities": [
+    {
+      "priority": 1,
+      "goal": "minimum_resource_ko",
+      "when_all": [{"fact": "attack.ko_available", "op": "==", "value": true}],
+      "prefer_routes": ["route:attack_ko", "route:gust"],
+      "avoid_routes": ["route:information", "route:develop", "route:end_turn"],
+      "preserve_roles": ["energy_source", "energy_mover", "recovery"]
+    },
+    {
+      "priority": 2,
+      "goal": "route_completion",
+      "when_all": [{"fact": "attack.ready", "op": "==", "value": false}],
+      "prefer_routes": ["route:evolve", "route:accelerate", "route:energy_commit", "route:develop"],
+      "avoid_routes": ["route:end_turn"],
+      "preserve_roles": ["signature_piece", "evolution_piece", "energy_accelerator"]
+    },
+    {
+      "priority": 3,
+      "goal": "typed_energy_continuity",
+      "when_all": [{"fact": "turn.energy_available", "op": "==", "value": true}],
+      "prefer_routes": ["route:energy_commit", "route:accelerate", "route:evolve"],
+      "avoid_routes": ["route:information"],
+      "preserve_roles": ["energy_source", "energy_mover", "signature_piece"]
+    },
+    {
+      "priority": 4,
+      "goal": "bench_space_preservation",
+      "when_all": [{"fact": "board.bench_full", "op": "==", "value": true}],
+      "prefer_routes": ["route:evolve", "route:attack_ko", "route:attack_pressure", "route:pivot"],
+      "avoid_routes": ["route:develop", "route:opening_search"],
+      "preserve_roles": ["evolution_piece", "energy_accelerator", "bench_space"]
+    },
+    {
+      "priority": 5,
+      "goal": "low_deck_safety",
+      "when_all": [{"fact": "resources.deck_low", "op": "==", "value": true}],
+      "prefer_routes": ["route:attack_ko", "route:attack_pressure", "route:energy_commit", "route:pivot"],
+      "avoid_routes": ["route:information", "route:opening_search", "route:develop"],
+      "preserve_roles": ["recovery", "energy_source"]
+    }
+  ],
+  "route_preferences": {
+    "model_consideration_margin": 340.0,
+    "route_biases": {
+      "route:attack_ko": 270.0,
+      "route:attack_pressure": 120.0,
+      "route:evolve": 190.0,
+      "route:accelerate": 170.0,
+      "route:energy_commit": 150.0,
+      "route:develop": 80.0,
+      "route:pivot": 90.0,
+      "route:information": 20.0,
+      "route:end_turn": -240.0
+    },
+    "ready_ko_order": ["route:attack_ko", "route:gust", "route:attack_pressure"],
+    "attackless_order": ["route:evolve", "route:accelerate", "route:energy_commit", "route:develop", "route:pivot"],
+    "avoid_after_ko_secured": ["route:information", "route:opening_search", "route:develop"]
+  },
+  "safety": {
+    "max_switch_gap": 105.0,
+    "block_search_when_deck_low": true,
+    "low_deck_threshold": 9,
+    "critical_deck_threshold": 5,
+    "preserve_bench_slots": 1,
+    "stop_optional_draw_when_attack_ready": true,
+    "reject_information_churn_after_ko_secured": true
+  },
+  "module_parameters": {
+    "grass_spread": {
+      "attack_cost_by_uid": {
+        "CSV5C_010": ["G", "G"],
+        "CSV8C_028": ["G", "G", "G"],
+        "CSV7C_033": ["G", "G", "C"]
+      },
+      "profiled_teal_dance_before_secured_ko": {
+        "enabled": true,
+        "owner_deck_id": 800018500,
+        "certificate_kind": "public_grass_draw_acceleration_before_secured_ko",
+        "source_pokemon_uid": "CSV8C_028",
+        "ability_effect_id": "409898a79b38fe8ca279e7bdaf4fd52e",
+        "ability_index": 0,
+        "energy_symbol": "G",
+        "visible_energy_count": 1,
+        "minimum_deck_count": 1,
+        "attack_index": 0,
+        "hidden_result_route_invariant": true
+      },
+      "profiled_energy_switch_before_secured_ko": {
+        "enabled": true,
+        "owner_deck_id": 800018500,
+        "certificate_kind": "public_grass_redistribution_before_secured_ko",
+        "trainer_card_uid": "CSVH1aC_008",
+        "interaction_step_id": "energy_assignment",
+        "energy_symbol": "G",
+        "active_pokemon_uid": "CSV5C_010",
+        "active_energy_count": 2,
+        "energy_source_pokemon_uid": "CSV8C_028",
+        "source_energy_before": 4,
+        "source_energy_reserve_after": 3,
+        "energy_target_pokemon_uid": "CSV5C_010",
+        "target_energy_before": 0,
+        "attack_index": 0,
+        "damage_per_new_energized_bench": 40
+      },
+      "profiled_iron_leaves_same_turn_prize_suffix": {
+        "enabled": true,
+        "owner_deck_id": 800018500,
+        "certificate_kind": "profiled_iron_leaves_same_turn_prize_suffix",
+        "source_action_kind": "play_basic_to_bench",
+        "source_pokemon_uid": "CSV7C_033",
+        "source_in_hand_count": 1,
+        "interaction_step_id": "iron_leaves_energy_to_move",
+        "pre_action_active_uid": "CSV8C_135",
+        "visible_own_slot_count": 3,
+        "exact_energy_source_uids": ["CSV5C_009", "CSV8C_028"],
+        "moved_energy_symbol": "G",
+        "required_moved_energy_count": 2,
+        "manual_attach_symbol": "G",
+        "manual_energy_in_hand_count": 1,
+        "attack_index": 0,
+        "attack_cost": "GGC",
+        "attack_damage": 180,
+        "target_pokemon_uid": "CSV6C_051",
+        "target_remaining_hp": 70,
+        "target_prize_count": 2,
+        "own_prizes_remaining": 4,
+        "opponent_prizes_remaining": 4
+      }
+    },
+    "energy_burst": {
+      "burst_damage_mode": "energized_bench_count",
+      "base_damage": 80,
+      "damage_per_energized_bench": 40,
+      "bench_energy_type": "G",
+      "primary_attack_required_types": ["G"],
+      "primary_attacker_uids": [],
+      "reserve_total_energy_next_turn": 2,
+      "reserve_engine_energy": 1,
+      "low_deck_threshold": 9,
+      "critical_deck_threshold": 5,
+      "bench_slots_to_reserve": 1
+    },
+    "cycle_pivot": {
+      "enabled_guards": ["optional_engine", "typed_energy", "ready_ko", "bench_reserve", "low_deck"],
+      "optional_draw_engine_uids": ["CSV2C_105", "CSV8C_135", "151C_151"],
+      "primary_required_energy": ["G"],
+      "primary_attacker_uids": [],
+      "attacker_root_uids": ["CSVSC_005", "CSV8C_028"],
+      "minimum_hand_for_optional_engine": 4,
+      "reserve_bench_slots": 1,
+      "low_deck_floor": 9,
+      "block_optional_engine_when_attack_ready": true,
+      "block_optional_engine_when_energy_attachment_open": true,
+      "block_off_color_primary_attachment": true
+    }
+  }
+}

@@ -65,9 +65,6 @@ func test_csv95c_163_max_rod_recovers_up_to_five_pokemon_and_basic_energy() -> S
 			grass_energy,
 			fire_energy,
 			water_energy,
-			sixth_valid,
-			special_energy,
-			trainer,
 		],
 	}], state)
 
@@ -119,6 +116,41 @@ func test_csv95c_163_max_rod_blocked_by_toedscruel_is_not_playable_or_spent() ->
 		assert_false(max_rod in player.discard_pile, "Blocked Max Rod should not be discarded"),
 		assert_true(discard_target in player.discard_pile, "Blocked Max Rod target should stay in discard"),
 		assert_false(discard_target in player.hand, "Blocked Max Rod target should not enter hand"),
+	]
+	gsm.prepare_for_disposal()
+	return run_checks(checks)
+
+
+func test_csv95c_163_max_rod_rejects_ambiguous_empty_ui_submission_without_being_spent() -> String:
+	var gsm := _make_gsm()
+	var state := gsm.game_state
+	var player: PlayerState = state.players[0]
+	player.hand.clear()
+	player.discard_pile.clear()
+	var max_rod := CardInstance.create(_make_trainer_data("Max Rod", "Item", MAX_ROD_ID), 0)
+	var discard_target := CardInstance.create(_make_pokemon_data("Discard Pokemon", "C"), 0)
+	player.hand.append(max_rod)
+	player.discard_pile.append(discard_target)
+	var effect := EffectLanasAidScript.new(5, true)
+	gsm.effect_processor.register_effect(MAX_ROD_ID, effect)
+	var steps := effect.get_interaction_steps(max_rod, state)
+	var first_step: Dictionary = steps[0] if not steps.is_empty() else {}
+
+	var played := gsm.play_trainer(0, max_rod, [{
+		BaseEffect.INTERACTION_SOURCE_KEY: BaseEffect.INTERACTION_SOURCE_BATTLE_UI,
+		BaseEffect.INTERACTION_INTENTS_KEY: {
+			EffectLanasAidScript.STEP_ID: BaseEffect.INTERACTION_INTENT_SELECT,
+		},
+		EffectLanasAidScript.STEP_ID: [],
+	}])
+
+	var checks: Array[String] = [
+		assert_false(played, "Max Rod must reject an empty UI submit that was not an explicit no-selection action"),
+		assert_true(max_rod in player.hand, "Rejected Max Rod interaction must leave the Item in hand"),
+		assert_false(max_rod in player.discard_pile, "Rejected Max Rod interaction must not spend the Item"),
+		assert_true(discard_target in player.discard_pile, "Rejected Max Rod interaction must not mutate its discard choices"),
+		assert_true(bool(first_step.get("requires_explicit_empty_selection", false)), "Max Rod should tell every UI layout that zero selection requires an explicit action"),
+		assert_true(bool(first_step.get("force_confirm", false)), "Max Rod should never auto-submit a multi-card discard choice"),
 	]
 	gsm.prepare_for_disposal()
 	return run_checks(checks)

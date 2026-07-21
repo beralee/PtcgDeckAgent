@@ -4,6 +4,114 @@ extends TestBase
 const CardDatabaseScript = preload("res://scripts/autoload/CardDatabase.gd")
 
 
+func test_csv1c_110_grabber_is_a_complete_bundled_seed_asset() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest: Array[String] = db._load_bundled_manifest()
+	var card_path := "res://data/bundled_user/cards/CSV1C_110.json"
+	var image_path := "res://data/bundled_user/cards/images/CSV1C/110.png.bin"
+	var card: CardData = db.get_card("CSV1C", "110")
+	var bundled_card: CardData = db._load_card_from_file(card_path)
+	var pooled_uids: Dictionary = {}
+	for pooled: CardData in db.get_all_cards():
+		if pooled != null:
+			pooled_uids[pooled.get_uid()] = true
+	var checks: Array[String] = [
+		assert_true(card_path in manifest, "CSV1C_110 JSON should be listed in the bundled manifest"),
+		assert_true(image_path in manifest, "CSV1C_110 image should be listed in the bundled manifest"),
+		assert_true(FileAccess.file_exists(card_path), "CSV1C_110 bundled JSON should exist"),
+		assert_true(CardData.is_valid_card_image_file(image_path), "CSV1C_110 bundled image should be a valid PNG"),
+		assert_not_null(card, "CSV1C_110 should load through CardDatabase"),
+		assert_not_null(bundled_card, "CSV1C_110 bundled JSON should deserialize directly"),
+		assert_true(db.has_card("CSV1C", "110"), "CSV1C_110 should be recognized by CardDatabase.has_card"),
+		assert_true(pooled_uids.has("CSV1C_110"), "CSV1C_110 should appear in the full DeckEditor card pool"),
+	]
+	if card != null:
+		checks.append_array([
+			assert_eq(card.name, "强夺机械臂", "CSV1C_110 should preserve its Simplified Chinese name"),
+			assert_eq(card.name_en, "Grabber", "CSV1C_110 should preserve its English name"),
+			assert_eq(card.card_type, "Item", "CSV1C_110 should be classified as an Item"),
+			assert_eq(card.effect_id, "203a0c4b978c8638a081a5cf05125230", "CSV1C_110 should preserve the API effect id"),
+		])
+	if bundled_card != null:
+		checks.append_array([
+			assert_eq(bundled_card.source_provider, "tcg_mik", "CSV1C_110 should retain its source provider"),
+			assert_eq(bundled_card.source_url, "https://tcg.mik.moe/cards/CSV1C/110", "CSV1C_110 should retain its source card URL"),
+			assert_eq(bundled_card.source_set_code, "CSV1C", "CSV1C_110 should retain its source set"),
+			assert_eq(bundled_card.source_card_index, "110", "CSV1C_110 should retain its source index"),
+			assert_eq(bundled_card.source_language, "zh-CN", "CSV1C_110 should retain its source language"),
+		])
+	db.free()
+	return run_checks(checks)
+
+
+func test_video18_expansion_cards_are_complete_bundled_seed_assets() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := FileAccess.get_file_as_string("res://data/bundled_user/_manifest.txt")
+	var expected := {
+		"CSV5C_022": {"name": "古玉鱼", "effect_id": "4e1e775eaafb11028f5378ede92cb964"},
+		"CS6bC_047": {"name": "小灰怪", "effect_id": "c410e34f000cef6f259709d1c3313c4b"},
+		"CS1bC_128": {"name": "气球", "effect_id": "55fc891681dd9731f7206cd75e908704"},
+		"CSV2C_041": {"name": "伦琴猫", "effect_id": "a4f457f1464c3410022b76ab77c11272"},
+	}
+	var checks: Array[String] = []
+	for ref: String in expected:
+		var parts := ref.split("_", false, 1)
+		var set_code := str(parts[0])
+		var card_index := str(parts[1])
+		var json_path := "res://data/bundled_user/cards/%s.json" % ref
+		var image_path := "res://data/bundled_user/cards/images/%s/%s.png.bin" % [set_code, card_index]
+		var card: CardData = db._load_card_from_file(json_path)
+		var spec: Dictionary = expected[ref]
+		checks.append(assert_true(FileAccess.file_exists(json_path), "%s bundled seed JSON should exist" % ref))
+		checks.append(assert_true(FileAccess.file_exists(image_path), "%s bundled seed image should exist" % ref))
+		checks.append(assert_true(CardData.is_valid_card_image_file(image_path), "%s bundled seed image should contain supported image bytes" % ref))
+		checks.append(assert_str_contains(manifest, "data/bundled_user/cards/%s.json" % ref, "%s JSON should be listed in the bundled manifest" % ref))
+		checks.append(assert_str_contains(manifest, "data/bundled_user/cards/images/%s/%s.png.bin" % [set_code, card_index], "%s image should be listed in the bundled manifest" % ref))
+		checks.append(assert_not_null(card, "%s bundled seed JSON should load as CardData" % ref))
+		checks.append(assert_eq(str(card.name if card != null else ""), str(spec.get("name", "")), "%s should preserve its Simplified Chinese name" % ref))
+		checks.append(assert_eq(str(card.effect_id if card != null else ""), str(spec.get("effect_id", "")), "%s should preserve its implementation effect id" % ref))
+	return run_checks(checks)
+
+
+func test_v18_limitless_rebuild_migrates_legacy_seed_without_overwriting_later_edits() -> String:
+	var db := CardDatabaseScript.new()
+	var bundled_raw: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/bundled_user/decks/800018502.json"))
+	if not bundled_raw is Dictionary:
+		return "18.0 N's Zoroark bundled deck should parse"
+	var bundled := bundled_raw as Dictionary
+	var user_copy := bundled.duplicate(true)
+	user_copy["deck_name"] = "NAIC2025 N的索罗亚克"
+	user_copy["variant_name"] = "NAIC2025 N的索罗亚克"
+	user_copy["cards"] = [{
+		"set_code": "LEN_JTG",
+		"card_index": "98",
+		"count": 4,
+		"name": "N的索罗亚克ex",
+	}]
+	var migrated := db._merge_bundled_limitless_deck_display_fields(bundled, user_copy)
+	var migrated_cards: Array = user_copy.get("cards", [])
+	var contains_legacy_ref := false
+	for entry: Variant in migrated_cards:
+		if entry is Dictionary and str((entry as Dictionary).get("set_code", "")).begins_with("LEN_"):
+			contains_legacy_ref = true
+			break
+	var first_entry := (migrated_cards[0] as Dictionary).duplicate(true) if not migrated_cards.is_empty() else {}
+	first_entry["count"] = int(first_entry.get("count", 0)) + 1
+	if not migrated_cards.is_empty():
+		migrated_cards[0] = first_entry
+	user_copy["cards"] = migrated_cards
+	var changed_again := db._merge_bundled_limitless_deck_display_fields(bundled, user_copy)
+	var preserved_count := int(((user_copy.get("cards", []) as Array)[0] as Dictionary).get("count", 0)) if not (user_copy.get("cards", []) as Array).is_empty() else -1
+	return run_checks([
+		assert_true(migrated, "Legacy seeded NAIC deck should migrate to the bundled 18.0 rebuild"),
+		assert_eq(str(user_copy.get("deck_name", "")), "18.0 N的索罗亚克", "Migration should refresh the 18.0 deck name"),
+		assert_eq(migrated_cards.size(), (bundled.get("cards", []) as Array).size(), "Migration should install the complete bundled 18.0 card list"),
+		assert_false(contains_legacy_ref, "Migration should remove every LEN_* card reference"),
+		assert_false(changed_again, "A migrated 18.0 deck should not be rewritten again when display fields already match"),
+		assert_eq(preserved_count, int(first_entry.get("count", 0)), "Later user card-count edits should be preserved after the one-time migration"),
+	])
+
+
 func test_copy_missing_files_recursive_copies_nested_files_without_overwriting() -> String:
 	var db := CardDatabaseScript.new()
 	var source_root := "res://.godot_test_user/utest_bundled_source"
@@ -150,6 +258,46 @@ func test_bundled_seed_replaces_stale_local_card_json_missing_attacks() -> Strin
 	])
 
 
+func test_bundled_seed_replaces_stale_local_evolution_card_json_missing_evolves_from() -> String:
+	var db := CardDatabaseScript.new()
+	var source_root := "res://.godot_test_user/utest_bundled_evolution_source"
+	var target_root := "res://.godot_test_user/utest_bundled_evolution_target"
+	_remove_dir_recursive(source_root)
+	_remove_dir_recursive(target_root)
+
+	var source_card := source_root.path_join("cards/UTEST_003.json")
+	var target_card := target_root.path_join("cards/UTEST_003.json")
+	var stale_payload := {
+		"name": "Team Evolution",
+		"card_type": "Pokemon",
+		"set_code": "UTEST",
+		"card_index": "003",
+		"stage": "Stage 1",
+		"evolves_from": "",
+		"hp": 100,
+		"attacks": [{"name": "Hit", "cost": "C", "damage": "20", "text": ""}],
+	}
+	var bundled_payload := stale_payload.duplicate(true)
+	bundled_payload["evolves_from"] = "Team Basic"
+	_write_text(source_card, JSON.stringify(bundled_payload, "\t"))
+	_write_text(target_card, JSON.stringify(stale_payload, "\t"))
+
+	db._copy_missing_files_recursive(source_root.path_join("cards"), target_root.path_join("cards"))
+	var repaired_card: CardData = db._load_card_from_file(target_card)
+
+	_remove_dir_recursive(source_root)
+	_remove_dir_recursive(target_root)
+
+	return run_checks([
+		assert_not_null(repaired_card, "Regression setup should load the repaired evolution card JSON"),
+		assert_eq(
+			str(repaired_card.evolves_from if repaired_card != null else ""),
+			"Team Basic",
+			"Bundled seed should repair stale evolution metadata so existing installs can evolve",
+		),
+	])
+
+
 func test_save_card_image_rejects_non_png_response() -> String:
 	var db := CardDatabaseScript.new()
 	var card := CardData.new()
@@ -222,26 +370,26 @@ func test_get_all_ai_decks_returns_supported_bundled_shortlist() -> String:
 	db._ai_deck_cache = {}
 	var ai_decks: Array[DeckData] = db.get_all_ai_decks()
 	var ids: Array[int] = []
-	var leading_ids: Array[int] = []
 	for deck: DeckData in ai_decks:
 		ids.append(deck.id)
-		if leading_ids.size() < 3:
-			leading_ids.append(deck.id)
 	ids.sort()
 	var expected_ids := [
 		569061, 575657, 575716, 575718, 575720, 575723, 578647, 579502, 609431, 610080,
 		1700002, 1700003, 1700004, 1700005, 1700007, 1700008, 1700011,
 		1750002,
+		18000230, 18000625,
+		800015734, 800015934, 800016834, 800017047, 800017097, 800017407,
+		800017631, 800017643, 800018105, 800018359, 800018497, 800018498,
+		800018499, 800018500, 800018501, 800018502, 800018509, 800018539,
+		800018543, 800018880, 800019125, 800033475,
 	]
-	var expected_leading_ids := [
-		1750002, 609431, 610080,
-	]
-	leading_ids.sort()
-	expected_leading_ids.sort()
+	var leading_are_v18 := true
+	for deck: DeckData in ai_decks.slice(0, mini(3, ai_decks.size())):
+		leading_are_v18 = leading_are_v18 and deck.deck_name.begins_with("18.0")
 	return run_checks([
 		assert_eq(ai_decks.size(), expected_ids.size(), "AI deck list should expose exactly the backed-up AI deck set"),
 		assert_eq(ids, expected_ids, "AI deck list should match the backed-up AI deck set"),
-		assert_eq(leading_ids, expected_leading_ids, "AI deck list should sort the supported 17.5 AI decks first"),
+		assert_true(leading_are_v18, "AI deck list should sort the supported 18.0 AI decks first"),
 	])
 
 
@@ -515,53 +663,41 @@ func test_version_175_configured_decks_are_bundled() -> String:
 	return run_checks(checks)
 
 
-func test_get_all_decks_sorts_naic_then_player_modified_decks_first() -> String:
+func test_get_all_decks_sorts_every_player_deck_by_updated_at_desc() -> String:
 	var db := CardDatabaseScript.new()
-	var expected_v175_ids := [
-		1750001, 1750002, 1750003, 1750005,
-		606452, 609431, 610080, 620753, 620761, 620880, 620909,
-	]
-	var cache := {}
-	for deck_id: int in expected_v175_ids + [1700001, 800018497]:
-		var deck: DeckData = db._load_deck_from_file("res://data/bundled_user/decks/%d.json" % deck_id)
-		if deck != null:
-			cache[deck.id] = deck
-	var player_created_deck := DeckData.new()
-	player_created_deck.id = 99000001
-	player_created_deck.deck_name = "player created deck"
-	player_created_deck.import_date = "2099-01-01T00:00:00"
-	player_created_deck.updated_at = 1000000000001
-	player_created_deck.total_cards = 60
-	cache[player_created_deck.id] = player_created_deck
-	var modified_specs := [
-		{"id": 1700001, "name": "player modified baseline deck", "updated_at": 1000000000000},
-		{"id": 1700002, "name": "17.5 stale legacy Archaludon", "updated_at": 999999999999},
-		{"id": 575723, "name": "17.5 stale legacy Dragapult", "updated_at": 999999999998},
-		{"id": 599947, "name": "17.5 stale legacy Miraidon", "updated_at": 999999999997},
-	]
-	for spec: Dictionary in modified_specs:
-		var modified_id := int(spec["id"])
-		var modified_deck: DeckData = db._load_deck_from_file("res://data/bundled_user/decks/%d.json" % modified_id)
-		if modified_deck != null:
-			modified_deck.deck_name = str(spec["name"])
-			modified_deck.updated_at = int(spec["updated_at"])
-			cache[modified_deck.id] = modified_deck
+	var newest_bundled: DeckData = db._load_deck_from_file("res://data/bundled_user/decks/1700001.json")
+	if newest_bundled == null:
+		return "Bundled baseline deck should load for player deck ordering coverage"
+	newest_bundled.updated_at = 3000
+
+	var middle_player_deck := DeckData.new()
+	middle_player_deck.id = 99000001
+	middle_player_deck.deck_name = "player created deck"
+	middle_player_deck.updated_at = 2000
+	middle_player_deck.total_cards = 60
+
+	var oldest_v18_deck := DeckData.new()
+	oldest_v18_deck.id = 99000002
+	oldest_v18_deck.deck_name = "18.0 old edited deck"
+	oldest_v18_deck.updated_at = 1000
+	oldest_v18_deck.total_cards = 60
+
+	var cache := {
+		newest_bundled.id: newest_bundled,
+		middle_player_deck.id: middle_player_deck,
+		oldest_v18_deck.id: oldest_v18_deck,
+	}
 	var sorted: Array[DeckData] = db._sorted_deck_values(cache)
-	var leading_ids: Array[int] = []
-	var expected_modified_ids := [
-		800018497, 99000001, 1700001, 1700002, 575723, 599947,
-	]
-	for i: int in mini(expected_modified_ids.size(), sorted.size()):
-		var deck := sorted[i] as DeckData
-		leading_ids.append(int(deck.id))
-	var checks: Array[String] = [
-		assert_eq(leading_ids, expected_modified_ids, "CardDatabase.get_all_decks should put NAIC decks first, then player-created or player-modified decks before bundled defaults"),
-	]
-	for i: int in range(expected_modified_ids.size(), sorted.size()):
-		var trailing_deck := sorted[i] as DeckData
-		checks.append(assert_false(int(trailing_deck.id) in expected_modified_ids, "Modified deck %d should not appear after bundled defaults" % int(trailing_deck.id)))
-		break
-	return run_checks(checks)
+	var sorted_ids: Array[int] = []
+	for deck: DeckData in sorted:
+		sorted_ids.append(deck.id)
+	return run_checks([
+		assert_eq(
+			sorted_ids,
+			[newest_bundled.id, middle_player_deck.id, oldest_v18_deck.id],
+			"CardDatabase.get_all_decks should sort only by updated_at and never pin 18.0 or player-modified decks",
+		),
+	])
 
 
 func test_175_slowking_deck_matches_screenshot_counts() -> String:
@@ -1157,12 +1293,20 @@ func test_recent_card_audit_batch_is_bundled_as_default_install_cards() -> Strin
 	var card_ids := [
 		"CSNC_020",
 		"CSV8C_050",
+		"CSV9.5C_034",
+		"CSV9.5C_036",
+		"CSV9.5C_205",
+		"CSV6C_112",
 		"CSV7C_030",
 		"CSV3C_086",
 	]
 	var expected_effect_ids := {
 		"CSNC_020": "2e5819cd4e1c354b8a9945525c54ec71",
 		"CSV8C_050": "7580acd5669bac12cb1af8007d2e6a6a",
+		"CSV9.5C_034": "c03588e3709ba32ad3c63409b64bdf2c",
+		"CSV9.5C_036": "cd3b65c57a50f301db65efd05d7d79e3",
+		"CSV9.5C_205": "6697150282b5d32d026ce20a993b4b53",
+		"CSV6C_112": "bbdb7b20fc7c4292acad64687c1ef318",
 		"CSV7C_030": "c2d6b5ec0bc365112105fea079a22fd7",
 		"CSV3C_086": "f189ac39dca6332f0b3af7b65cea8220",
 	}
@@ -1852,6 +1996,154 @@ func test_existing_install_backfills_new_poison_box_card_resources_on_startup() 
 		assert_true(CardData.is_valid_card_image_file("user://cards/images/CSV5C/054.png"), "Upgrade seed should backfill Xatu image for existing installs"),
 		assert_true(CardData.is_valid_card_image_file("user://cards/images/CSV6C/080.png"), "Upgrade seed should backfill Klawf image for existing installs"),
 	])
+
+
+func test_csv10c_101_to_200_range_is_fully_bundled_and_visible() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var pooled_uids: Dictionary = {}
+	for pooled: CardData in db.get_all_cards():
+		if pooled != null:
+			pooled_uids[pooled.get_uid()] = true
+	var expected_names := {
+		"101": "阿响的树才怪",
+		"145": "N的索罗亚克ex",
+		"189": "好伤药",
+		"200": "竹兰的力量负重",
+	}
+	var effect_ids: Dictionary = {}
+	var checks: Array[String] = []
+	for card_number: int in range(101, 201):
+		var card_index := "%03d" % card_number
+		var uid := "CSV10C_%s" % card_index
+		var card_path := "res://data/bundled_user/cards/%s.json" % uid
+		var image_path := "res://data/bundled_user/cards/images/CSV10C/%s.png.bin" % card_index
+		var direct_card: CardData = db._load_card_from_file(card_path)
+		var card: CardData = db.get_card("CSV10C", card_index)
+		checks.append(assert_true(card_path in manifest, "%s JSON should be listed in bundled manifest" % uid))
+		checks.append(assert_true(image_path in manifest, "%s image should be listed in bundled manifest" % uid))
+		checks.append(assert_true(FileAccess.file_exists(card_path), "%s bundled JSON should exist" % uid))
+		checks.append(assert_true(FileAccess.file_exists(image_path), "%s bundled image should exist" % uid))
+		checks.append(assert_true(CardData.is_valid_card_image_file(image_path), "%s bundled image should have a supported signature" % uid))
+		checks.append(assert_not_null(direct_card, "%s bundled JSON should deserialize directly" % uid))
+		checks.append(assert_not_null(card, "%s should load through CardDatabase bundled fallback" % uid))
+		checks.append(assert_true(db.has_card("CSV10C", card_index), "%s should be recognized by CardDatabase.has_card" % uid))
+		checks.append(assert_true(pooled_uids.has(uid), "%s should appear in the full DeckEditor card pool" % uid))
+		if card != null:
+			checks.append(assert_false(card.effect_id.is_empty(), "%s should preserve its API effect id" % uid))
+			effect_ids[card.effect_id] = true
+			if expected_names.has(card_index):
+				checks.append(assert_eq(card.name, str(expected_names[card_index]), "%s should preserve its API card name" % uid))
+	checks.append(assert_eq(effect_ids.size(), 100, "CSV10C 101-200 should contain 100 distinct base-print effect ids"))
+	return run_checks(checks)
+
+
+func test_csv10c_201_to_287_range_is_fully_bundled_and_visible() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var pooled_uids: Dictionary = {}
+	for pooled: CardData in db.get_all_cards():
+		if pooled != null:
+			pooled_uids[pooled.get_uid()] = true
+	var effect_ids: Dictionary = {}
+	var checks: Array[String] = []
+	for card_number: int in range(201, 288):
+		var card_index := "%03d" % card_number
+		var uid := "CSV10C_%s" % card_index
+		var card_path := "res://data/bundled_user/cards/%s.json" % uid
+		var image_path := "res://data/bundled_user/cards/images/CSV10C/%s.png.bin" % card_index
+		var direct_card: CardData = db._load_card_from_file(card_path)
+		var card: CardData = db.get_card("CSV10C", card_index)
+		checks.append(assert_true(card_path in manifest, "%s JSON should be listed in bundled manifest" % uid))
+		checks.append(assert_true(image_path in manifest, "%s image should be listed in bundled manifest" % uid))
+		checks.append(assert_true(FileAccess.file_exists(card_path), "%s bundled JSON should exist" % uid))
+		checks.append(assert_true(FileAccess.file_exists(image_path), "%s bundled image should exist" % uid))
+		checks.append(assert_true(CardData.is_valid_card_image_file(image_path), "%s bundled image should have a supported signature" % uid))
+		checks.append(assert_not_null(direct_card, "%s bundled JSON should deserialize directly" % uid))
+		checks.append(assert_not_null(card, "%s should load through CardDatabase bundled fallback" % uid))
+		checks.append(assert_true(db.has_card("CSV10C", card_index), "%s should be recognized by CardDatabase.has_card" % uid))
+		checks.append(assert_true(pooled_uids.has(uid), "%s should appear in the full DeckEditor card pool" % uid))
+		if card != null:
+			checks.append(assert_false(card.effect_id.is_empty(), "%s should preserve its API effect id" % uid))
+			effect_ids[card.effect_id] = true
+	checks.append(assert_eq(effect_ids.size(), 50, "CSV10C 201-287 should contain 50 unique effects after same-name alternate-art reuse"))
+	return run_checks(checks)
+
+
+func test_video18_missing_cards_batch1_is_bundled_and_visible() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var pooled_uids: Dictionary = {}
+	for pooled: CardData in db.get_all_cards():
+		if pooled != null:
+			pooled_uids[pooled.get_uid()] = true
+	var checks: Array[String] = []
+	for uid: String in ["SVP_080", "CSV4C_074", "CSV8C_056", "CSV8C_154", "CSV2C_125"]:
+		var parts := uid.rsplit("_", true, 1)
+		var set_code: String = parts[0]
+		var card_index: String = parts[1]
+		var card_path := "res://data/bundled_user/cards/%s.json" % uid
+		var image_path := "res://data/bundled_user/cards/images/%s/%s.png.bin" % [set_code, card_index]
+		var card: CardData = db.get_card(set_code, card_index)
+		checks.append(assert_true(card_path in manifest, "%s JSON should be listed in the bundled manifest" % uid))
+		checks.append(assert_true(image_path in manifest, "%s image should be listed in the bundled manifest" % uid))
+		checks.append(assert_true(FileAccess.file_exists(card_path), "%s bundled JSON should exist" % uid))
+		checks.append(assert_true(CardData.is_valid_card_image_file(image_path), "%s bundled image should be valid" % uid))
+		checks.append(assert_not_null(card, "%s should load through CardDatabase" % uid))
+		checks.append(assert_true(pooled_uids.has(uid), "%s should appear in the DeckEditor card pool" % uid))
+		if card != null:
+			checks.append(assert_false(card.effect_id.is_empty(), "%s should preserve its API effect id" % uid))
+	return run_checks(checks)
+
+
+func test_video18_missing_cards_batch2_is_bundled_and_visible() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var pooled_uids: Dictionary = {}
+	for pooled: CardData in db.get_all_cards():
+		if pooled != null:
+			pooled_uids[pooled.get_uid()] = true
+	var checks: Array[String] = []
+	for uid: String in ["151C_133", "CSV8C_196", "CSV3C_129", "CSVH3aC_002"]:
+		var parts := uid.rsplit("_", true, 1)
+		var set_code: String = parts[0]
+		var card_index: String = parts[1]
+		var card_path := "res://data/bundled_user/cards/%s.json" % uid
+		var image_path := "res://data/bundled_user/cards/images/%s/%s.png.bin" % [set_code, card_index]
+		var card: CardData = db.get_card(set_code, card_index)
+		checks.append(assert_true(card_path in manifest, "%s JSON should be listed in the bundled manifest" % uid))
+		checks.append(assert_true(image_path in manifest, "%s image should be listed in the bundled manifest" % uid))
+		checks.append(assert_true(CardData.is_valid_card_image_file(image_path), "%s bundled image should be valid" % uid))
+		checks.append(assert_not_null(card, "%s should load through CardDatabase" % uid))
+		checks.append(assert_true(pooled_uids.has(uid), "%s should appear in the DeckEditor card pool" % uid))
+		if card != null:
+			checks.append(assert_false(card.effect_id.is_empty(), "%s should preserve its API effect id" % uid))
+	return run_checks(checks)
+
+
+func test_video18_missing_cards_batch3_is_bundled_and_visible() -> String:
+	var db := CardDatabaseScript.new()
+	var manifest := db._load_bundled_manifest()
+	var pooled_uids: Dictionary = {}
+	for pooled: CardData in db.get_all_cards():
+		if pooled != null:
+			pooled_uids[pooled.get_uid()] = true
+	var checks: Array[String] = []
+	for uid: String in ["CSVSC_005", "CSV5C_010", "CSV9C_192", "CSV7C_190"]:
+		var parts := uid.rsplit("_", true, 1)
+		var set_code: String = parts[0]
+		var card_index: String = parts[1]
+		var card_path := "res://data/bundled_user/cards/%s.json" % uid
+		var image_path := "res://data/bundled_user/cards/images/%s/%s.png.bin" % [set_code, card_index]
+		var card: CardData = db.get_card(set_code, card_index)
+		checks.append(assert_true(card_path in manifest, "%s JSON should be listed in the bundled manifest" % uid))
+		checks.append(assert_true(image_path in manifest, "%s image should be listed in the bundled manifest" % uid))
+		checks.append(assert_true(CardData.is_valid_card_image_file(image_path), "%s bundled image should be valid" % uid))
+		checks.append(assert_not_null(card, "%s should load through CardDatabase" % uid))
+		checks.append(assert_true(pooled_uids.has(uid), "%s should appear in the DeckEditor card pool" % uid))
+		if card != null:
+			checks.append(assert_false(card.effect_id.is_empty(), "%s should preserve its API effect id" % uid))
+	return run_checks(checks)
 
 
 func _write_text(path: String, content: String) -> void:

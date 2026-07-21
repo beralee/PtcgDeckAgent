@@ -29,7 +29,7 @@ func run() -> Dictionary:
 	var skipped_cards := 0
 
 	_report_lines.append("===== Card Catalog Audit =====")
-	_report_lines.append("Cached cards: %d" % cards.size())
+	_report_lines.append("Audited cards: %d" % cards.size())
 	_report_lines.append("Imported decks: %d" % decks.size())
 	_report_lines.append("Deck effect coverage: %d/%d (%.1f%%)" % [
 		deck_coverage.covered_cards,
@@ -585,6 +585,21 @@ func _load_cached_cards() -> Array[CardData]:
 			continue
 		seen[uid] = true
 		cards.append(card)
+
+	# Audit tooling may materialize the full catalog explicitly. Runtime callers still
+	# keep CardDatabase.get_all_cards() lazy and avoid loading every catalog set.
+	var catalog_entries: Array[Dictionary] = CardDatabase.search_catalog_cards("", {}, 0, 0)
+	for entry: Dictionary in catalog_entries:
+		var set_code := str(entry.get("set_code", "")).strip_edges()
+		var card_index := str(entry.get("card_index", "")).strip_edges()
+		var uid := "%s_%s" % [set_code, card_index]
+		if uid == "_" or seen.has(uid):
+			continue
+		var catalog_card: CardData = CardDatabase.get_card(set_code, card_index)
+		if catalog_card == null:
+			continue
+		seen[uid] = true
+		cards.append(catalog_card)
 	if not cards.is_empty():
 		return cards
 

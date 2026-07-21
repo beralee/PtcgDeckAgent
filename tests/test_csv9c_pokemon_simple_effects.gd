@@ -25,7 +25,10 @@ const AttackHealOwnBenchPokemonScript := preload("res://scripts/effects/pokemon_
 const AttackSearchAndAttachScript := preload("res://scripts/effects/pokemon_effects/AttackSearchAndAttach.gd")
 const AttackItemLockNextTurnScript := preload("res://scripts/effects/pokemon_effects/AttackItemLockNextTurn.gd")
 const AttackSelfAllAttacksLockNextTurnScript := preload("res://scripts/effects/pokemon_effects/AttackSelfAllAttacksLockNextTurn.gd")
+const PreventTeraAttackEffect := preload("res://scripts/effects/pokemon_effects/AbilityPreventTeraAttackDamageAndEffects.gd")
 const EffectSwitchPokemonScript := preload("res://scripts/effects/trainer_effects/EffectSwitchPokemon.gd")
+
+const EFFECT_ID_ONLY_TERA_ID := "5d5d2589f2d9c19ef7364714766600d4"
 
 
 class RiggedCoinFlipper extends CoinFlipper:
@@ -499,6 +502,38 @@ func test_csv9c_021_034_038_damage_rules_and_ceruledge_energy_discard() -> Strin
 	])
 
 
+func test_tera_dependent_simple_helpers_accept_effect_id_only_tera() -> String:
+	var state := _make_state()
+	var player := state.players[0]
+	var attacker := player.active_pokemon
+	var tera_cd := _pokemon("Effect-id-only Tera", "Basic", "", "C", 180)
+	tera_cd.effect_id = EFFECT_ID_ONLY_TERA_ID
+	var tera_bench := _make_slot(tera_cd, 0)
+	player.bench.append(tera_bench)
+	var bench_bonus := TeraBenchBonusEffect.new(100, 0).get_damage_bonus(attacker, state)
+	var helper_main := CSV9CEffects.is_tera_card_data(tera_cd)
+	var helper_slot := CSV9CEffects.is_tera_slot(tera_bench)
+	var helper_player := CSV9CEffects.player_has_tera(player)
+
+	var opponent_tera_cd := _pokemon("Opponent effect-id-only Tera", "Basic", "", "C", 180)
+	opponent_tera_cd.effect_id = EFFECT_ID_ONLY_TERA_ID
+	var opponent_tera := _make_slot(opponent_tera_cd, 1)
+	state.players[1].active_pokemon = opponent_tera
+	var prevent_tera_attack := PreventTeraAttackEffect.new()
+	var prevents_damage := prevent_tera_attack.prevents_damage_from(opponent_tera, attacker, state)
+	var prevents_effects := prevent_tera_attack.prevents_effects_from(opponent_tera, attacker, state)
+
+	return run_checks([
+		assert_true(tera_cd.is_tera_pokemon(), "Effect-id-only Tera card should be recognized centrally"),
+		assert_true(helper_main, "CSV9CEffects helper should delegate to central Tera recognition"),
+		assert_true(helper_slot, "CSV9CEffects slot helper should recognize effect-id-only Tera"),
+		assert_true(helper_player, "CSV9CEffects player helper should recognize effect-id-only Tera in play"),
+		assert_eq(bench_bonus, 100, "Bench Tera bonus should apply with an effect-id-only Tera Pokemon"),
+		assert_true(prevents_damage, "Milotic-style protection should block damage from effect-id-only Tera attackers"),
+		assert_true(prevents_effects, "Milotic-style protection should block effects from effect-id-only Tera attackers"),
+	])
+
+
 func test_csv9c_063_joltik_charge_full_deck_assignment_and_per_type_limit() -> String:
 	var state := _make_state()
 	var player: PlayerState = state.players[0]
@@ -519,16 +554,13 @@ func test_csv9c_063_joltik_charge_full_deck_assignment_and_per_type_limit() -> S
 
 	var effect = CSV9CEffects.AttackJoltikCharge.new(0)
 	var steps: Array[Dictionary] = effect.get_attack_interaction_steps(player.active_pokemon.get_top_card(), joltik_cd.attacks[0], state)
-	var grass_step: Dictionary = steps[0] if steps.size() > 0 else {}
-	var lightning_step: Dictionary = steps[1] if steps.size() > 1 else {}
+	var step: Dictionary = steps[0] if steps.size() > 0 else {}
 	var bench_target: PokemonSlot = player.bench[0]
 	effect.set_attack_interaction_context([{
-		"csv9c_joltik_grass_assignments": [
+		"csv9c_joltik_energy_assignments": [
 			{"source": grass_a, "target": bench_target},
 			{"source": grass_b, "target": bench_target},
 			{"source": grass_c, "target": bench_target},
-		],
-		"csv9c_joltik_lightning_assignments": [
 			{"source": lightning_a, "target": bench_target},
 			{"source": lightning_b, "target": bench_target},
 			{"source": lightning_c, "target": bench_target},
@@ -538,14 +570,14 @@ func test_csv9c_063_joltik_charge_full_deck_assignment_and_per_type_limit() -> S
 	effect.clear_attack_interaction_context()
 
 	return run_checks([
-		assert_eq(steps.size(), 2, "CSV9C_063 should expose Grass and Lightning assignment steps"),
-		assert_eq(str(grass_step.get("source_visible_scope", "")), BaseEffect.VISIBLE_SCOPE_OWN_FULL_DECK, "CSV9C_063 Grass search must expose full deck"),
-		assert_eq(grass_step.get("source_card_items", []), visible_deck, "CSV9C_063 Grass step should show every deck card"),
-		assert_eq(grass_step.get("source_items", []), [grass_a, grass_b, grass_c], "CSV9C_063 Grass step should keep only Grass basic Energy selectable"),
-		assert_eq(grass_step.get("source_card_indices", []), [0, -1, 1, 2, -1, -1, -1, -1], "CSV9C_063 Grass step should disable non-Grass cards"),
-		assert_eq(str(lightning_step.get("source_visible_scope", "")), BaseEffect.VISIBLE_SCOPE_OWN_FULL_DECK, "CSV9C_063 Lightning search must expose full deck"),
-		assert_eq(lightning_step.get("source_items", []), [lightning_a, lightning_b, lightning_c], "CSV9C_063 Lightning step should keep only Lightning basic Energy selectable"),
-		assert_eq(lightning_step.get("source_card_indices", []), [-1, -1, -1, -1, 0, 1, 2, -1], "CSV9C_063 Lightning step should disable non-Lightning cards"),
+		assert_eq(steps.size(), 1, "CSV9C_063 should expose one combined Grass/Lightning assignment step"),
+		assert_eq(str(step.get("source_visible_scope", "")), BaseEffect.VISIBLE_SCOPE_OWN_FULL_DECK, "CSV9C_063 search must expose full deck"),
+		assert_eq(step.get("source_card_items", []), visible_deck, "CSV9C_063 step should show every deck card"),
+		assert_eq(step.get("source_items", []), [grass_a, grass_b, grass_c, lightning_a, lightning_b, lightning_c], "CSV9C_063 step should keep Grass and Lightning basic Energy selectable together"),
+		assert_eq(step.get("source_card_indices", []), [0, -1, 1, 2, 3, 4, 5, -1], "CSV9C_063 step should disable non-Grass/Lightning deck cards"),
+		assert_eq(int(step.get("max_select", 0)), 4, "CSV9C_063 should allow four total assignments when two Grass and two Lightning are available"),
+		assert_eq(step.get("source_bucket_keys", []), ["G", "G", "G", "L", "L", "L"], "CSV9C_063 should tag source Energy by type for per-type UI limits"),
+		assert_eq(step.get("max_assignments_per_source_bucket", {}), {"G": 2, "L": 2}, "CSV9C_063 should declare two assignments per Energy type"),
 		assert_eq(bench_target.attached_energy.size(), 4, "CSV9C_063 should attach at most two Energy of each requested type"),
 		assert_true(grass_c in player.deck, "CSV9C_063 must leave the third selected Grass Energy in deck"),
 		assert_true(lightning_c in player.deck, "CSV9C_063 must leave the third selected Lightning Energy in deck"),
@@ -581,12 +613,10 @@ func test_cbb5c_1501_joltik_charge_registered_attack_attaches_two_grass_and_two_
 	if not effects.is_empty():
 		steps = effects[0].get_attack_interaction_steps(player.active_pokemon.get_top_card(), joltik_cd.attacks[0], state)
 	var attacked := gsm.use_attack(0, 0, [{
-		"csv9c_joltik_grass_assignments": [
+		"csv9c_joltik_energy_assignments": [
 			{"source": grass_a, "target": bench_target},
 			{"source": grass_b, "target": bench_target},
 			{"source": grass_c, "target": bench_target},
-		],
-		"csv9c_joltik_lightning_assignments": [
 			{"source": lightning_a, "target": bench_target},
 			{"source": lightning_b, "target": bench_target},
 			{"source": lightning_c, "target": bench_target},
@@ -597,7 +627,8 @@ func test_cbb5c_1501_joltik_charge_registered_attack_attaches_two_grass_and_two_
 		assert_true(attacked, "CBB5C_1501 Joltik should be able to use its charge attack"),
 		assert_eq(effects.size(), 1, "CBB5C_1501 should register one Joltik charge attack effect"),
 		assert_true(not effects.is_empty() and effects[0] is CSV9CEffects.AttackJoltikCharge, "CBB5C_1501 should use the native Joltik charge implementation"),
-		assert_eq(steps.size(), 2, "CBB5C_1501 should keep separate Grass and Lightning assignment prompts"),
+		assert_eq(steps.size(), 1, "CBB5C_1501 should expose one combined Grass/Lightning assignment prompt"),
+		assert_true(not steps.is_empty() and int(steps[0].get("max_select", 0)) == 4, "CBB5C_1501 should allow four total assignments in the UI"),
 		assert_eq(bench_target.attached_energy.size(), 4, "CBB5C_1501 should attach two Grass plus two Lightning Energy"),
 		assert_true(grass_c in player.deck, "CBB5C_1501 must leave the third selected Grass Energy in deck"),
 		assert_true(lightning_c in player.deck, "CBB5C_1501 must leave the third selected Lightning Energy in deck"),

@@ -1,0 +1,251 @@
+{
+  "schema_version": 1,
+  "architecture": "V18CPG",
+  "evidence_revision": 4,
+  "status": "roi5_complete_noninferior",
+  "deck_id": 800018499,
+  "deck_name": "18.0 \u591a\u9f99\u5df4\u9c81\u6258",
+  "anchor_id": 575720,
+  "seed_base": 800018499,
+  "games_per_round": 5,
+  "model": "deepseek-v4-flash",
+  "deck_source": "bundled_ai",
+  "deck_content_fingerprint": "bc30241c0d8a2310a7f8f35eb854f2a0724a5938a09a3b12042ae95d8d7a8aba",
+  "baseline_artifact": "res://tmp/v18cpg/optimization21/800018499/round01_public_audit5.json",
+  "baseline_status": "valid_current_bundled_ai_no_model_rule_equivalent",
+  "completed_rounds": 0,
+  "required_rounds": 10,
+  "deep_iterations_completed": 5,
+  "required_deep_rounds": 5,
+  "roi5_completion": {
+    "complex_scenarios": 5,
+    "final_artifact": "res://tmp/v18cpg/roi5/800018499/final_bench5.json",
+    "rule_wins": 1,
+    "v18cpg_wins": 1,
+    "acceptance": "noninferior"
+  },
+  "deep_iterations": [
+    {
+      "round": 1,
+      "failure_category": "outcome_or_threat_error",
+      "decision": "rejected_before_implementation",
+      "evidence": "res://scripts/tools/v18cpg/iterations/optimization21/800018499_10_rounds.json",
+      "proof_reason": "Moving the opening Luminous Energy from Munkidori to Dreepy changes the retreat and exposure race, so no public monotonic certificate exists."
+    },
+    {
+      "round": 2,
+      "failure_category": "resource_assignment_error",
+      "decision": "rejected_and_rolled_back",
+      "evidence": "res://tmp/v18cpg/optimization21/800018499/round01_seed503_preflight_verified_local.json",
+      "proof_reason": "Fire-to-Dragapult passed focused safety but did not flip the same-seed production loss; all candidate code was removed."
+    },
+    {
+      "round": 3,
+      "failure_category": "route_reachability_error",
+      "decision": "rejected_and_rolled_back",
+      "evidence": "res://tmp/v18cpg/optimization21/800018499/round01_luminous_seed499_preflight_verified_local.json",
+      "proof_reason": "The Luminous-to-Phantom certificate passed 24 boundaries but its positive state was unreachable in the production trajectory."
+    },
+    {
+      "round": 4,
+      "failure_category": "pivot_resource_error",
+      "decision": "rejected_and_rolled_back",
+      "evidence": "res://tmp/v18cpg/roi5/800018499/round01_latias_verified5.json",
+      "proof_reason": "Latias free retreat passed exact positive, eleven negative, and tamper fixtures but preserved no additional production winner."
+    },
+    {
+      "round": 5,
+      "failure_category": "supporter_tempo_error",
+      "decision": "rejected_before_implementation",
+      "evidence": "res://tmp/v18cpg/optimization21/800018499/complex_decision_scenarios.json",
+      "proof_reason": "Holding the seed-501 Boss is plausible but not independently dominant because the gust can still tax retreat Energy; unsafe authority remains closed."
+    }
+  ],
+  "rounds": [],
+  "preparation": {
+    "current_source_contract": {
+      "source_kind": "bundled_ai",
+      "bundled_seed_path": "res://data/bundled_user/decks/800018499.json",
+      "bundled_seed_file_sha256": "683c11b4ddfd4188843eb872d5e39a1ea1ad76b861fed2a4b1376a4c67e64258",
+      "deck_content_fingerprint": "bc30241c0d8a2310a7f8f35eb854f2a0724a5938a09a3b12042ae95d8d7a8aba",
+      "semantic_manifest_fingerprint": "bc30241c0d8a2310a7f8f35eb854f2a0724a5938a09a3b12042ae95d8d7a8aba",
+      "semantic_manifest_file_sha256": "8916e66b9e7d15d80399453de68077f9c1c65fd943aef4ada7ac99e70ae657b6",
+      "profile_version": 2,
+      "profile_fingerprint": "ce7785db6c37522b4b4b66436fb2c9c835f4ed261c9fd18b6fc6ac79e605a6b6",
+      "profile_file_sha256": "c5509ea9b248d42818fa1604663d27392fa9d29877c9b7353e7827f2c84f006e",
+      "fingerprint_verified": true
+    },
+    "rejected_round00": {
+      "artifact": "res://tmp/v18cpg/optimization21/800018499/round00.json",
+      "artifact_sha256": "3c0282007fb0aee5b81ac6291f4d8bffa111671c0ec436ec6a7b9a5cc831a422",
+      "run_id": "opt21_800018499_round00",
+      "reason": "The exploratory report contains neither deck_source nor deck_content_fingerprint. Its real-model Rule 1/5 and V18CPG 1/5 result is diagnostic only and counts as zero completed optimization rounds.",
+      "metrics": {
+        "rule_wins": 1,
+        "v18cpg_wins": 1,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 32,
+        "model_accepted": 1,
+        "model_rejected": 31,
+        "paired_improvement": 0.0,
+        "visible_wait_p95_ms": 6254,
+        "loss_seeds": [800018499, 800018500, 800018501, 800018503]
+      }
+    },
+    "current_public_baseline": {
+      "artifact": "res://tmp/v18cpg/optimization21/800018499/round01_public_audit5.json",
+      "artifact_sha256": "cbddb3683013dde8ff7189bd6fa1c612b9dc6837fd4fdd6ec18cf6770b63dd05",
+      "run_id": "opt21_800018499_round01_public_audit5",
+      "scope": "current bundled_ai fingerprint, model disabled, exact Rule-floor public-decision audit",
+      "deck_source": "bundled_ai",
+      "deck_content_fingerprint": "bc30241c0d8a2310a7f8f35eb854f2a0724a5938a09a3b12042ae95d8d7a8aba",
+      "metrics": {
+        "rule_wins": 1,
+        "v18cpg_wins": 1,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 0,
+        "model_accepted": 0,
+        "paired_improvement": 0.0,
+        "graph_branch_hits": 27
+      },
+      "provenance_valid": true,
+      "strength_interpretation": "This proves the current bundled_ai identity and the unmodified local path remain Rule-equivalent. It is a preparation baseline, not an optimization round."
+    },
+    "scenario_contract": {
+      "test": "res://tests/v18_llm_policy_graph/test_optimize_800018499_complex_decision_scenarios.gd",
+      "test_sha256": "c95cfc4b5c6f73fceb65783aff69327f7ff6221dc7c555e436e6ffe61be63baa",
+      "artifact": "res://tmp/v18cpg/optimization21/800018499/complex_decision_scenarios.json",
+      "artifact_sha256": "48a52f39574e61a72a96c570aad6b0e05c7e3815740a08f4d89bd458f3685f47",
+      "passed": 5,
+      "total": 5,
+      "production_status": "scenario_contract_ready_not_promoted"
+    },
+    "winner_change_audit": {
+      "loss_seeds": [800018499, 800018500, 800018501, 800018503],
+      "earlier_rejected_candidates": [
+        {
+          "seed": 800018499,
+          "turn": 1,
+          "rule_action": "Attach the unique Luminous Energy to Active Munkidori, then retreat and discard it.",
+          "rejection": "Moving the Energy to Dreepy changes the Budew pivot and opponent exposure; no public monotonic certificate exists."
+        },
+        {
+          "seed": 800018500,
+          "turn": 12,
+          "rule_action": "Attach Luminous Energy to Active Fezandipiti ex, then retreat to Drakloak.",
+          "rejection": "The Energy is the public retreat payment. Preserving it changes a two-Prize pivot/exposure trade and is not monotonic."
+        },
+        {
+          "seed": 800018501,
+          "turn": 5,
+          "rule_action": "Use Boss's Orders on a one-Energy Raikou V with no payable attack, then end the turn.",
+          "rejection": "The gust can still exchange the Supporter for a retreat Energy or tempo; holding it is plausible but not independently dominant."
+        }
+      ],
+      "tested_candidate": {
+        "seed": 800018503,
+        "turn": 5,
+        "public_state": "Active Fezandipiti ex remains unchanged; the Bench contains a zero-Energy Dragapult ex, Drakloak, and Dreepy; the once-per-turn Fire attachment is available.",
+        "rule_action": "Attach Fire Energy to the fresh zero-Energy Dreepy.",
+        "candidate_action": "Attach the same Fire Energy to the unique full-HP zero-Energy Dragapult ex.",
+        "focused_red": "Reproduced as the sixth focused scenario before implementation.",
+        "focused_green": "A deck-scoped fail-closed certificate passed the positive case and seven negative boundaries, plus family and shared regressions.",
+        "verified_local_artifact": "res://tmp/v18cpg/optimization21/800018499/round01_seed503_preflight_verified_local.json",
+        "verified_local_artifact_sha256": "2f0084a23fc6fb8f6f86e4e8a2b3518fdf24e5c99f923250718d1c8b282c92c1",
+        "verified_local_result": {
+          "rule_wins": 0,
+          "v18cpg_wins": 0,
+          "rule_clean_games": 1,
+          "v18cpg_clean_games": 1,
+          "positive_flips": 0,
+          "negative_flips": 0
+        },
+        "promotion": "rejected_and_rolled_back",
+        "reason": "The production path stayed a loss. A locally sensible resource assignment is insufficient evidence of a winner change and must not count as Round01."
+      },
+      "rejected_luminous_phantom_candidate": {
+        "seed": 800018499,
+        "synthetic_state": "Active Dragapult ex has exactly one basic Psychic Energy, the unique Luminous Energy remains in hand, and opposing Active Iron Hands ex with Bravery Charm has exactly 140 HP remaining.",
+        "candidate_action": "Attach Luminous Energy to Active Dragapult ex so Phantom Dive 200 replaces Jet Head 70 and takes two Prizes.",
+        "focused_fixture_result": "The positive case and 24 fail-closed boundaries passed after implementation, but the fixture's positive state was not reachable in the current fixed-order production replay.",
+        "verified_local_artifact": "res://tmp/v18cpg/optimization21/800018499/round01_luminous_seed499_preflight_verified_local.json",
+        "verified_local_artifact_sha256": "ab27bf095f8a4d0f29883adeaff778599a91c2b6a3aa473b1604a3d7f68681a5",
+        "verified_local_result": {
+          "rule_wins": 0,
+          "v18cpg_wins": 0,
+          "rule_clean_games": 1,
+          "v18cpg_clean_games": 1,
+          "model_calls": 0,
+          "paired_improvement": 0.0,
+          "observable_route_switches": 0
+        },
+        "production_trace_contradiction": "The unique Luminous Energy is attached to Munkidori on turn 1 in both arms. On turn 9 both arms use Drakloak's Ability and Jet Head; the synthetic in-hand Luminous completion state never occurs.",
+        "promotion": "rejected_and_rolled_back",
+        "rollback": {
+          "profile_version": 2,
+          "profile_file_sha256": "c5509ea9b248d42818fa1604663d27392fa9d29877c9b7353e7827f2c84f006e",
+          "candidate_symbol_residue": 0,
+          "focused_test_removed": true,
+          "post_rollback_tests": {
+            "focused_complex_scenarios": "5/5 pass",
+            "strategic_shapes": "9/9 pass",
+            "coverage": "24/24 profiles, 12/12 capability modules pass"
+          }
+        },
+        "reason": "A safe certificate over an unreachable synthetic state cannot change a production winner and must not count as Round01."
+      },
+      "rejected_latias_free_retreat_candidate": {
+        "seed": 800018500,
+        "turn": 12,
+        "public_state": "Active Fezandipiti ex has no Energy; four Bench slots are occupied; Latias ex, Buddy-Buddy Poffin, and the unique remaining Luminous Energy are publicly visible in hand.",
+        "rule_action": "Use Buddy-Buddy Poffin, fill the final Bench slot with Budew, then spend Luminous Energy to retreat Fezandipiti ex.",
+        "candidate_action": "Bench Latias ex first so its public Ability makes the Basic Active retreat for free and preserves Luminous Energy.",
+        "focused_fixture_result": "The exact positive case, eleven near-neighbor negatives, and certificate-binding tamper test passed 6/6.",
+        "verified_local_artifact": "res://tmp/v18cpg/roi5/800018499/round01_latias_verified5.json",
+        "verified_local_artifact_sha256": "365143d593fcb6e23d8be22a1c4f20227f140200ed0409f985e97f689647bbc9",
+        "verified_local_result": {
+          "rule_wins": 1,
+          "v18cpg_wins": 1,
+          "rule_clean_games": 5,
+          "v18cpg_clean_games": 5,
+          "positive_flips": 0,
+          "negative_flips": 0
+        },
+        "promotion": "rejected_and_rolled_back",
+        "rollback": {
+          "profile_version": 2,
+          "profile_file_sha256": "c5509ea9b248d42818fa1604663d27392fa9d29877c9b7353e7827f2c84f006e",
+          "candidate_symbol_residue": 0,
+          "focused_test_removed": true,
+          "post_rollback_tests": {
+            "focused_complex_scenarios": "5/5 pass",
+            "strategic_shapes": "9/9 pass",
+            "marnie_complex_scenarios": "6/6 pass"
+          }
+        },
+        "reason": "The locally coherent pivot preserved Energy but did not change any production winner, so the full deck-scoped special case was removed."
+      }
+    },
+    "rollback": {
+      "temporary_diagnostic_tools_removed": true,
+      "candidate_profile_module_and_test_changes_removed": true,
+      "profile_file_sha256": "c5509ea9b248d42818fa1604663d27392fa9d29877c9b7353e7827f2c84f006e",
+      "strategic_shape_module_sha256": "1ccecb95e1a6fa9b0cda311c66561380315d6d69a31ab67564dd56440ccf6d31",
+      "focused_test_sha256": "6c2b9d7a129eaaac17d21fee2e2a34c34abbd8534e2504d336a2a47a91192cf5",
+      "profile_fixture_sha256": "93348a30b1573f81ddfd74f1738b8b9d92c5a2176c909f8a843874ec5e88a29f",
+      "post_rollback_tests": {
+        "focused_complex_scenarios": "5/5 pass",
+        "dragapult_stage2_profiles": "7/7 pass",
+        "strategic_shapes": "9/9 pass",
+        "coverage": "24/24 profiles, 12/12 capability modules pass"
+      }
+    },
+    "blockers": [
+      "No audited public candidate has yet produced a verified-local positive flip. The three earlier choices remain unsafe to certify; the seed 800018503 attachment and seed 800018500 Latias pivot candidates failed to change the winner; the Luminous-to-Phantom completion fixture was unreachable in the real seed 800018499 trajectory.",
+      "A current-provenance real-model formal Round01 is intentionally not run until a production-path verified-local positive flip exists."
+    ],
+    "next_action": "Keep completed_rounds at 0. Resume with a new earliest complete public decision frontier from the remaining loss trajectories, require focused RED then a deck-scoped fail-closed implementation, and reject it unless a same-seed verified-local replay produces at least one positive flip and zero negative flips before the five-seed gate."
+  }
+}

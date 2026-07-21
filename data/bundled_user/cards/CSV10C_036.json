@@ -1,0 +1,66 @@
+{
+    "name":  "火稚鸡",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  " 招来 \n从自己牌库上方抽取1张卡牌。\n\n【火】 烈焰 10\n\n\n",
+    "yoren_code":  "P255",
+    "set_code":  "CSV10C",
+    "card_index":  "036",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "Tika Matsuno",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "e6962cb473824c61448412bbb29b0313",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/036.png",
+    "image_local_path":  "user://cards/images/CSV10C/036.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "R",
+    "stage":  "Basic",
+    "hp":  70,
+    "weakness_energy":  "W",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "招来",
+                        "text":  "从自己牌库上方抽取1张卡牌。",
+                        "cost":  "C",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "烈焰",
+                        "text":  "",
+                        "cost":  "R",
+                        "damage":  "10",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

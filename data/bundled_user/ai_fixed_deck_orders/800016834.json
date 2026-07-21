@@ -1,0 +1,85 @@
+{
+	"deck_id": 800016834,
+	"deck_name": "18.0 纯赛富豪",
+	"strategy_id": "v18_800016834_pure_gholdengo",
+	"generator_version": 15,
+	"description": "Cards 1-7 are the setup hand, 8-13 are controlled prizes, and 14-19 bridge the first evolution and attack route.",
+	"top_to_bottom": [
+		{
+			"set_code": "CSV9C",
+			"card_index": "096"
+		},
+		{
+			"set_code": "CSV8C",
+			"card_index": "135"
+		},
+		{
+			"set_code": "CSV3C",
+			"card_index": "115"
+		},
+		{
+			"set_code": "CSV7C",
+			"card_index": "177"
+		},
+		{
+			"set_code": "CSVE1C",
+			"card_index": "MET"
+		},
+		{
+			"set_code": "CSVE1C",
+			"card_index": "MET"
+		},
+		{
+			"set_code": "CSV8C",
+			"card_index": "094"
+		},
+		{
+			"set_code": "CSV2C",
+			"card_index": "113"
+		},
+		{
+			"set_code": "CSV8C",
+			"card_index": "183"
+		},
+		{
+			"set_code": "CSVH1C",
+			"card_index": "043"
+		},
+		{
+			"set_code": "CSVH1aC",
+			"card_index": "023"
+		},
+		{
+			"set_code": "CSV1C",
+			"card_index": "123"
+		},
+		{
+			"set_code": "CSVE1C",
+			"card_index": "LIG"
+		},
+		{
+			"set_code": "CSV4C",
+			"card_index": "089"
+		},
+		{
+			"set_code": "CSV4C",
+			"card_index": "089"
+		},
+		{
+			"set_code": "CSVE1C",
+			"card_index": "MET"
+		},
+		{
+			"set_code": "CSV3C",
+			"card_index": "115"
+		},
+		{
+			"set_code": "CSV4C",
+			"card_index": "089"
+		},
+		{
+			"set_code": "CSVE1C",
+			"card_index": "DAR"
+		}
+	]
+}

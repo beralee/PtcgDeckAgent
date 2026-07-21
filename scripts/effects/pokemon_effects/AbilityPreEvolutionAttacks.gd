@@ -71,6 +71,28 @@ func get_granted_attack_interaction_steps(
 	)
 
 
+func get_followup_granted_attack_interaction_steps(
+	pokemon: PokemonSlot,
+	granted_attack: Dictionary,
+	state: GameState,
+	resolved_context: Dictionary
+) -> Array[Dictionary]:
+	if processor == null or pokemon == null or pokemon.get_top_card() == null:
+		return []
+	var original_effect_id := str(granted_attack.get("original_effect_id", ""))
+	var original_attack_index := int(granted_attack.get("original_attack_index", -1))
+	if original_effect_id == "" or original_attack_index < 0:
+		return []
+	return processor.get_attack_followup_interaction_steps_by_id(
+		original_effect_id,
+		original_attack_index,
+		pokemon.get_top_card(),
+		granted_attack,
+		state,
+		resolved_context
+	)
+
+
 func execute_granted_attack(
 	attacker: PokemonSlot,
 	granted_attack: Dictionary,

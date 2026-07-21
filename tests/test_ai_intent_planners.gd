@@ -68,6 +68,18 @@ func _make_munkidori_cd() -> CardData:
 	])
 
 
+func _make_scream_tail_cd() -> CardData:
+	return _make_pokemon_cd("Scream Tail", "Basic", "P", 90, [
+		{"name": "Slap", "cost": "P", "damage": "30"},
+		{
+			"name": "Roaring Scream",
+			"cost": "PP",
+			"damage": "",
+			"text": "This attack does damage counters on this Pokemon x20 damage.",
+		},
+	])
+
+
 func _make_energy_cd(pname: String, symbol: String) -> CardData:
 	var cd := CardData.new()
 	cd.name = pname
@@ -170,6 +182,54 @@ func test_prompt_payload_exposes_common_intent_facts() -> String:
 		assert_eq(str(phantom.get("role", "")), "primary_damage", "Phantom Dive should be a primary attack intent"),
 		assert_eq(str(jet.get("terminal_priority", "")), "low", "Jet Head should be low priority under the profile"),
 		assert_true(bool(jet.get("blocked_by_better_attack", false)), "Jet Head should be blocked when Phantom Dive is ready"),
+	])
+
+
+func test_interactive_scaling_attack_with_unknown_preview_is_not_hard_blocked() -> String:
+	var coordinator_script := _load_script(COORDINATOR_SCRIPT_PATH)
+	if coordinator_script == null or not coordinator_script.can_instantiate():
+		return "AIIntentPlannerCoordinator.gd should instantiate"
+	var gs := _make_game_state()
+	var scream_tail := _make_slot(_make_scream_tail_cd(), 0)
+	scream_tail.damage_counters = 80
+	scream_tail.attached_energy.append(_attached_energy("Psychic Energy 1", "P"))
+	scream_tail.attached_energy.append(_attached_energy("Psychic Energy 2", "P"))
+	gs.players[0].active_pokemon = scream_tail
+	gs.players[1].active_pokemon = _make_slot(_make_pokemon_cd("Defender", "Basic", "N", 200), 1)
+	var facts: Dictionary = coordinator_script.new().call("build_facts", gs, 0, [
+		{
+			"id": "attack:0",
+			"type": "attack",
+			"attack_index": 0,
+			"attack_name": "Slap",
+			"projected_damage": 30,
+		},
+		{
+			"id": "attack:1",
+			"type": "attack",
+			"attack_index": 1,
+			"attack_name": "Roaring Scream",
+			"projected_damage": 0,
+			"requires_interaction": true,
+		},
+	], {})
+	var attack_intents: Array = facts.get("attack_intents", []) if facts.get("attack_intents", []) is Array else []
+	var roaring_scream := _find_intent(attack_intents, "roaring scream")
+	var hard_blocks: Array = facts.get("hard_blocks", []) if facts.get("hard_blocks", []) is Array else []
+	var route_hints: Array = facts.get("route_hints", []) if facts.get("route_hints", []) is Array else []
+	var attack_one_blocked := false
+	var best_attack_id := ""
+	for raw_block: Variant in hard_blocks:
+		if raw_block is Dictionary and str((raw_block as Dictionary).get("action_id", "")) == "attack:1":
+			attack_one_blocked = true
+	for raw_hint: Variant in route_hints:
+		if raw_hint is Dictionary and str((raw_hint as Dictionary).get("type", "")) == "best_attack":
+			best_attack_id = str((raw_hint as Dictionary).get("action_id", ""))
+	return run_checks([
+		assert_eq(int(roaring_scream.get("estimated_damage", 0)), 160, "Visible self-damage counters should estimate Roaring Scream at 160"),
+		assert_eq(best_attack_id, "attack:1", "The 160-damage interactive attack should become the best attack route"),
+		assert_false(bool(roaring_scream.get("blocked_by_better_attack", false)), "Unknown-preview interactive scaling attack must remain selectable"),
+		assert_false(attack_one_blocked, "Unknown-preview interactive scaling attack must not become a -6000 hard block"),
 	])
 
 

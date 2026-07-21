@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "deck_id": 800018359,
+  "seed_base": 800018359,
+  "evidence_kind": "real_model_round00",
+  "derived_from": "res://tmp/v18cpg/optimization21/800018359/round00.json",
+  "failure_category": "uncertified_fallback_regression",
+  "target_flip_seeds": [800018361, 800018362, 800018363],
+  "regression_guard_seeds": [800018363],
+  "expected_modules": ["control_recycle", "stage2_chain", "cycle_pivot"],
+  "expected_protected_roles": ["ability_engine", "stage2_dependency", "typed_energy"],
+  "expected_profiled_attack_cost": {"module": "control_recycle", "uid": "CSV4C_101", "cost": ["C", "C"]},
+  "baseline": {"rule_wins": 3, "v18cpg_wins": 2, "clean_games": 5, "model_calls": 34, "model_accepted": 4, "reference_mismatches": 1}
+}

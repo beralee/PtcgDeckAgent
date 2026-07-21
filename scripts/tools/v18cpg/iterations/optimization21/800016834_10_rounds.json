@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "architecture": "V18CPG",
+  "evidence_revision": 2,
+  "status": "round01_preparation_blocked",
+  "deck_id": 800016834,
+  "deck_name": "18.0 纯赛富豪",
+  "anchor_id": 575720,
+  "seed_base": 800016834,
+  "games_per_round": 5,
+  "model": "deepseek-v4-flash",
+  "deck_source": "bundled_ai",
+  "deck_content_fingerprint": "2c74d7b59968c9689596390da8c118398c7d5be8e1785e28839fc5a929235a4c",
+  "baseline_artifact": "res://tmp/v18cpg/optimization21/800016834/round00_current.json",
+  "baseline_status": "valid_current_bundled_ai_rule_equivalent",
+  "completed_rounds": 0,
+  "required_rounds": 10,
+  "rounds": [],
+  "preparation": {
+    "current_source_contract": {
+      "source_kind": "bundled_ai",
+      "bundled_seed_path": "res://data/bundled_user/decks/800016834.json",
+      "total_cards": 60,
+      "deck_content_fingerprint": "2c74d7b59968c9689596390da8c118398c7d5be8e1785e28839fc5a929235a4c",
+      "semantic_manifest_fingerprint": "2c74d7b59968c9689596390da8c118398c7d5be8e1785e28839fc5a929235a4c",
+      "semantic_manifest_hash": "ef5b1342437c0e55b5b1e7b338dbaf0b0d5405f4ef177bd2fa01f0897e71ec14",
+      "fingerprint_verified": true,
+      "profile_version": 2,
+      "profile_fingerprint": "afb673e401967f4c5aa64ecf87ae85be1058f3021c1567ada4803a4c364b4c15",
+      "profile_file_sha256": "48c77a47e0a43c246634b5ba63e2d28d7de186cf875171c0482b5b5c74010551",
+      "semantic_manifest_file_sha256": "fbfe03841187f99d4abc7bd01f0062f4e66017cdb60e0ab78876cbb4a1754db7"
+    },
+    "rejected_round00": {
+      "artifact": "res://tmp/v18cpg/optimization21/800016834/round00.json",
+      "artifact_sha256": "9917a02b8ec96d542f02bfe5b19f4c2864be3013ee02962dc1ac2b368b0b0d8a",
+      "run_id": "opt21_800016834_round00",
+      "reason": "The report predates bundled-AI provenance enforcement and contains neither deck_source nor deck_content_fingerprint. Its Rule 4/5 and V18CPG 4/5 result is diagnostic only and counts as zero completed optimization rounds.",
+      "metrics": {
+        "rule_wins": 4,
+        "v18cpg_wins": 4,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 37,
+        "model_accepted": 1,
+        "paired_improvement": 0.0,
+        "loss_seeds": [800016834]
+      }
+    },
+    "current_round00": {
+      "artifact": "res://tmp/v18cpg/optimization21/800016834/round00_current.json",
+      "artifact_sha256": "b1a57e6020afee4dc1a7329c4168a434e8cb0cd02ca9624eed7d12a729cbc696",
+      "run_id": "opt21_800016834_round00_current",
+      "timestamp": "2026-07-21T10:06:19",
+      "deck_source": "bundled_ai",
+      "deck_content_fingerprint": "2c74d7b59968c9689596390da8c118398c7d5be8e1785e28839fc5a929235a4c",
+      "profile_version": 2,
+      "profile_fingerprint": "afb673e401967f4c5aa64ecf87ae85be1058f3021c1567ada4803a4c364b4c15",
+      "metrics": {
+        "rule_wins": 4,
+        "v18cpg_wins": 4,
+        "paired_improvement": 0.0,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 38,
+        "model_accepted": 18,
+        "model_rejected": 20,
+        "model_owned_action_results": 0,
+        "graph_branch_hits": 19,
+        "uncovered_events": 100,
+        "payload_p50_bytes": 28282,
+        "payload_p95_bytes": 35440,
+        "visible_wait_p50_ms": 5449,
+        "visible_wait_p95_ms": 6253,
+        "zero_model_action_reference_checks": 5,
+        "zero_model_action_reference_mismatches": 0,
+        "fallbacks": {
+          "deadline_fallback": 9,
+          "schema_fallback": 11
+        },
+        "fallback_reasons": {
+          "node_count": 1,
+          "turn_visible_wait_budget_exhausted": 9,
+          "typed_route_crosses_information_checkpoint": 10
+        }
+      },
+      "provenance_valid": true,
+      "strength_interpretation": "All five zero-model-action reference checks match and the result is exactly Rule-equivalent; this is a valid current bundled_ai strength baseline, not an optimization round.",
+      "concurrency_note": "A separate Agent-architecture process in another worktree started after this batch began. Source hashes remained stable and p95 stayed below 6500 ms, but the 6253 ms latency is treated as a conservative loaded baseline rather than an exclusive-machine latency floor.",
+      "frozen_hashes_stable": true
+    },
+    "scenario_contract": {
+      "test": "res://tests/v18_llm_policy_graph/test_optimize_800016834_complex_decision_scenarios.gd",
+      "test_sha256": "b57175489674ebd5cdcd83fbc79d958598891694f651db9f075d22d855916fd7",
+      "artifact": "res://tmp/v18cpg/optimization21/800016834/complex_decision_scenarios.json",
+      "artifact_sha256": "fd5a225e40a7b4203753388a0fca6dafa685ca10dd992a1835720eb415394595",
+      "passed": 5,
+      "total": 5,
+      "fingerprint_verified": true,
+      "production_status": "scenario_contract_ready_not_promoted"
+    },
+    "verified_local_preflight": {
+      "artifact": "res://tmp/v18cpg/optimization21/800016834/round01_preflight_verified_local_clean5.json",
+      "artifact_sha256": "c7543e04a91f2150335ca17714df3d68f11a76c5d7941cb7d90f756fa153c55b",
+      "scope": "current bundled_ai fingerprint, verified-local only, no real-model formal run",
+      "rule_wins": 4,
+      "v18cpg_wins": 4,
+      "rule_clean_games": 5,
+      "v18cpg_clean_games": 5,
+      "paired_improvement": 0.0,
+      "loss_seeds": [800016834],
+      "all_v18cpg_logs_equal_rule": true
+    },
+    "winner_change_audit": {
+      "seed": 800016834,
+      "scope": "read-only filtered-state trace",
+      "trace_directory": "res://tmp/v18cpg/optimization21/800016834/round01_seed800016834_trace",
+      "single_seed_artifact": "res://tmp/v18cpg/optimization21/800016834/round01_preflight_seed800016834_verified_local.json",
+      "single_seed_artifact_sha256": "36a94f91b86d3fe574b0de70bdaab1dda76d64865b341e6fb3c89423897aea08",
+      "earliest_complete_public_failure_candidate": {
+        "turn": 15,
+        "attack_ready": false,
+        "bench_slots_free": 2,
+        "public_hand": ["Boss's Orders", "Gholdengo ex", "Buddy-Buddy Poffin", "Night Stretcher"],
+        "public_discard_contains": ["Gimmighoul", "Gholdengo ex"],
+        "rule_suffix": ["Boss's Orders without a payable attack", "Night Stretcher recovers a second Gholdengo ex", "end turn without a new evolution root"],
+        "candidate_suffix": ["hold Boss's Orders", "Night Stretcher recovers Gimmighoul", "bench Gimmighoul", "preserve the public Gholdengo ex for the next evolution window"],
+        "winner_flip_proven": false
+      },
+      "focused_red_diagnostic": {
+        "status": "reproduced_then_removed_not_promoted",
+        "failed_contracts": [
+          "no installed module can upgrade Night Stretcher over the attackless Rule gust",
+          "no installed module owns the Night Stretcher recovery target"
+        ],
+        "negative_boundaries_designed": [
+          "Gholdengo ex absent from hand",
+          "Gimmighoul absent from public discard",
+          "Bench full",
+          "a payable attack already exists"
+        ]
+      }
+    },
+    "blockers": [
+      "The installed energy_burst and cycle_pivot modules expose neither an attackless-gust hold certificate nor a recovery-target interaction certificate. Implementing the candidate deterministically requires a shared module/registry seam, which is outside this task's no-shared boundary.",
+      "The turn-15 public suffix is a focused hypothesis only; no winner flip may be claimed until a production-path verified-local replay changes seed 800016834 with zero negative flips across the five fixed seeds."
+    ],
+    "next_action": "Keep completed_rounds at 0. The current bundled_ai Round00 baseline is now valid. Next obtain an allowed deck-scoped registration seam (or a narrowly gated shared energy_burst capability), restore the independent focused RED, make it green with fail-closed interaction ownership, and require a verified-local seed-800016834 positive flip before any real-model Round01 run."
+  }
+}

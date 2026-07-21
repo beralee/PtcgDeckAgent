@@ -1,0 +1,66 @@
+{
+    "name":  "小霞的拉普拉斯",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【水】 一同游动 \n选择自己牌库中最多3张「小霞的宝可梦」，在给对手看过之后加入手牌。并重洗牌库。\n\n【水】 冲浪 60\n\n\n",
+    "yoren_code":  "P0131",
+    "set_code":  "CSV10C",
+    "card_index":  "050",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "En Morikura",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "5a6e590eac6f7b2b7ab99bfc3423566f",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/050.png",
+    "image_local_path":  "user://cards/images/CSV10C/050.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "W",
+    "stage":  "Basic",
+    "hp":  110,
+    "weakness_energy":  "L",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "一同游动",
+                        "text":  "选择自己牌库中最多3张「小霞的宝可梦」，在给对手看过之后加入手牌。并重洗牌库。",
+                        "cost":  "W",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "冲浪",
+                        "text":  "",
+                        "cost":  "WC",
+                        "damage":  "60",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

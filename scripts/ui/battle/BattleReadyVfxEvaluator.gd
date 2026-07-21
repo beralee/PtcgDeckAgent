@@ -18,6 +18,19 @@ const RULE_ROARING_MOON_FRENZIED := "roaring_moon_frenzied_ready"
 const RULE_GARDEVOIR_PSYCHIC_EMBRACE := "gardevoir_psychic_embrace_ready"
 const RULE_ARCHALUDON_METAL_BRIDGE := "archaludon_metal_bridge_ready"
 const RULE_SQUAWKABILLY_FIRST_TURN_DRAW := "squawkabilly_first_turn_draw_ready"
+const RULE_MARNIES_GRIMMSNARL_PUNK_UP := "marnies_grimmsnarl_punk_up_ready"
+const RULE_NS_ZOROARK_NIGHT_JOKER := "ns_zoroark_night_joker_ready"
+const RULE_RAGING_BOLT_BELLOWING_THUNDER_LETHAL := "raging_bolt_bellowing_thunder_lethal_ready"
+const RULE_ETHANS_HO_OH_GOLDEN_FLAME := "ethans_ho_oh_golden_flame_ready"
+const RULE_CYNTHIAS_GARCHOMP_SPIRAL_DRAW := "cynthias_garchomp_spiral_draw_ready"
+const RULE_ETHANS_TYPHLOSION_PARTNER_BLAST_LETHAL := "ethans_typhlosion_partner_blast_lethal_ready"
+const RULE_BLAZIKEN_BOILING_SPIRIT_ACCELERATION := "blaziken_boiling_spirit_acceleration_ready"
+const RULE_PIDGEOT_QUICK_SEARCH_CONTROL := "pidgeot_quick_search_control_ready"
+const RULE_FLAREON_BURNING_CHARGE_ENGINE := "flareon_burning_charge_engine_ready"
+const RULE_HOPS_ZACIAN_BRAVE_BLADE_LETHAL := "hops_zacian_brave_blade_lethal_ready"
+const RULE_YANMEGA_BUZZING_RUSH_ACCELERATION := "yanmega_buzzing_rush_acceleration_ready"
+const RULE_MUNKIDORI_ADRENA_BRAIN_TRANSFER := "munkidori_adrena_brain_transfer_ready"
+const RULE_TOEDSCRUEL_COLONY_RUSH_LETHAL := "toedscruel_colony_rush_lethal_ready"
 
 const BUDEW_UID := "CSV9.5C_004"
 const DRAGAPULT_EX_UID := "CSV8C_159"
@@ -41,9 +54,27 @@ const ROARING_MOON_EX_UID := "CSV6C_096"
 const GARDEVOIR_EX_UID := "CSV2C_055"
 const ARCHALUDON_EX_UID := "CSV9C_138"
 const SQUAWKABILLY_EX_UID := "CSV2C_105"
+const MARNIES_GRIMMSNARL_EX_UID := "CSV10C_148"
+const NS_ZOROARK_EX_UID := "CSV10C_145"
+const RAGING_BOLT_EX_UID := "CSV7C_154"
+const ETHANS_HO_OH_EX_UID := "CSV10C_035"
+const CYNTHIAS_GARCHOMP_EX_UID := "CSV10C_113"
+const ETHANS_TYPHLOSION_UID := "CSV10C_030"
+const BLAZIKEN_EX_UID := "CSV7C_038"
+const PIDGEOT_EX_UID := "CSV4C_101"
+const FLAREON_EX_UID := "CSV9.5C_023"
+const HOPS_ZACIAN_EX_UID := "CSV10C_161"
+const YANMEGA_EX_UID := "CSV10C_003"
+const MUNKIDORI_UID := "CSV8C_094"
+const TOEDSCRUEL_EX_UID := "CSV5C_010"
+const HOPS_CHOICE_BAND_EFFECT_ID := "87bf196475e64140c14197af70648893"
 const TANDEM_UNIT_USED_EFFECT_TYPE := "ability_search_pokemon_to_bench_used"
 const TANDEM_UNIT_SUMMONED_EFFECT_TYPE := "ability_search_pokemon_to_bench_summoned"
 const SQUAWKABILLY_FIRST_TURN_DRAW_USED_EFFECT_TYPE := "ability_first_turn_draw_used"
+const MARNIES_GRIMMSNARL_PUNK_UP_USED_EFFECT_TYPE := "marnies_grimmsnarl_punk_up_used"
+const QUICK_SEARCH_USED_EFFECT_TYPE := "ability_search_any_used"
+const ATTACH_FROM_DECK_USED_EFFECT_TYPE := "ability_attach_from_deck_used"
+const MUNKIDORI_ADRENA_BRAIN_USED_EFFECT_TYPE := "ability_move_counters_to_opp_used"
 
 const ENERGY_SYMBOLS := {
 	"G": true,
@@ -95,6 +126,19 @@ func find_ready_triggers(game_state: GameState) -> Array:
 	_append_gardevoir_psychic_embrace_trigger(game_state, player, player_index, triggers)
 	_append_archaludon_metal_bridge_trigger(game_state, player, player_index, triggers)
 	_append_squawkabilly_first_turn_draw_trigger(game_state, player, player_index, triggers)
+	_append_marnies_grimmsnarl_punk_up_trigger(game_state, player, player_index, triggers)
+	_append_ns_zoroark_night_joker_trigger(game_state, player, player_index, triggers)
+	_append_raging_bolt_bellowing_thunder_lethal_trigger(game_state, player, player_index, triggers)
+	_append_ethans_ho_oh_golden_flame_trigger(game_state, player, player_index, triggers)
+	_append_cynthias_garchomp_spiral_draw_trigger(game_state, player, player_index, triggers)
+	_append_ethans_typhlosion_partner_blast_lethal_trigger(game_state, player, player_index, triggers)
+	_append_blaziken_boiling_spirit_acceleration_trigger(game_state, player, player_index, triggers)
+	_append_pidgeot_quick_search_control_trigger(game_state, player, player_index, triggers)
+	_append_flareon_burning_charge_engine_trigger(game_state, player, player_index, triggers)
+	_append_hops_zacian_brave_blade_lethal_trigger(game_state, player, player_index, triggers)
+	_append_yanmega_buzzing_rush_acceleration_trigger(game_state, player, player_index, triggers)
+	_append_munkidori_adrena_brain_transfer_trigger(game_state, player, player_index, triggers)
+	_append_toedscruel_colony_rush_lethal_trigger(game_state, player, player_index, triggers)
 	return triggers
 
 
@@ -133,6 +177,309 @@ func _append_squawkabilly_first_turn_draw_trigger(game_state: GameState, player:
 			"use_ability"
 		))
 		return
+
+
+func _append_marnies_grimmsnarl_punk_up_trigger(game_state: GameState, player: PlayerState, player_index: int, triggers: Array) -> void:
+	if _count_named_team_attached_basic_energy(player, ["marnie's ", "marnies ", "玛俐的"], "D") < 2:
+		return
+	for entry: Dictionary in _player_slot_entries(player):
+		var slot: PokemonSlot = entry.get("slot", null)
+		if not _slot_matches_uid(slot, MARNIES_GRIMMSNARL_EX_UID):
+			continue
+		if not _slot_has_effect_on_turn(slot, MARNIES_GRIMMSNARL_PUNK_UP_USED_EFFECT_TYPE, game_state.turn_number):
+			continue
+		triggers.append(_make_trigger(
+			RULE_MARNIES_GRIMMSNARL_PUNK_UP,
+			player_index,
+			str(entry.get("slot_kind", "active")),
+			int(entry.get("slot_index", 0)),
+			slot,
+			game_state.turn_number,
+			"punk_up_resolved_two_darkness_energy_board",
+			"use_ability"
+		))
+		return
+
+
+func _append_ns_zoroark_night_joker_trigger(game_state: GameState, player: PlayerState, player_index: int, triggers: Array) -> void:
+	var active := player.active_pokemon
+	if not _slot_matches_uid(active, NS_ZOROARK_EX_UID):
+		return
+	if not _slot_can_pay_cost(active, _attack_cost(active, 0, "DD")):
+		return
+	if _opponent_active(game_state, player_index) == null:
+		return
+	if not _player_has_benched_named_attack(
+		player,
+		["n's ", "n’s ", "N的"],
+		["night joker", "暗夜王牌", "暗夜小丑"]
+	):
+		return
+	triggers.append(_make_trigger(
+		RULE_NS_ZOROARK_NIGHT_JOKER,
+		player_index,
+		"active",
+		0,
+		active,
+		game_state.turn_number,
+		"night_joker_paid_with_benched_n_attack"
+	))
+
+
+func _append_raging_bolt_bellowing_thunder_lethal_trigger(game_state: GameState, player: PlayerState, player_index: int, triggers: Array) -> void:
+	var active := player.active_pokemon
+	if not _slot_matches_uid(active, RAGING_BOLT_EX_UID):
+		return
+	if not _slot_can_pay_cost(active, _attack_cost(active, 1, "LF")):
+		return
+	var opponent_active := _opponent_active(game_state, player_index)
+	if opponent_active == null:
+		return
+	var required_energy := maxi(1, int(ceil(float(opponent_active.get_remaining_hp()) / 70.0)))
+	if _count_attached_basic_energy(player) < required_energy:
+		return
+	triggers.append(_make_trigger(
+		RULE_RAGING_BOLT_BELLOWING_THUNDER_LETHAL,
+		player_index,
+		"active",
+		0,
+		active,
+		game_state.turn_number,
+		"bellowing_thunder_field_energy_covers_defender_hp"
+	))
+
+
+func _append_ethans_ho_oh_golden_flame_trigger(game_state: GameState, player: PlayerState, player_index: int, triggers: Array) -> void:
+	if _count_named_team_attached_basic_energy(player, ["ethan's ", "ethans ", "阿响的"], "R") < 2:
+		return
+	for entry: Dictionary in _player_slot_entries(player):
+		var slot: PokemonSlot = entry.get("slot", null)
+		if not _slot_matches_uid(slot, ETHANS_HO_OH_EX_UID):
+			continue
+		if not slot.has_ability_used(game_state.turn_number):
+			continue
+		triggers.append(_make_trigger(
+			RULE_ETHANS_HO_OH_GOLDEN_FLAME,
+			player_index,
+			str(entry.get("slot_kind", "active")),
+			int(entry.get("slot_index", 0)),
+			slot,
+			game_state.turn_number,
+			"golden_flame_resolved_double_fire_ethans_bench",
+			"use_ability"
+		))
+		return
+
+
+func _append_cynthias_garchomp_spiral_draw_trigger(game_state: GameState, player: PlayerState, player_index: int, triggers: Array) -> void:
+	var active := player.active_pokemon
+	if not _slot_matches_uid(active, CYNTHIAS_GARCHOMP_EX_UID):
+		return
+	if player.hand.size() > 4:
+		return
+	if not _slot_can_pay_cost(active, _attack_cost(active, 0, "F")):
+		return
+	if _opponent_active(game_state, player_index) == null:
+		return
+	triggers.append(_make_trigger(
+		RULE_CYNTHIAS_GARCHOMP_SPIRAL_DRAW,
+		player_index,
+		"active",
+		0,
+		active,
+		game_state.turn_number,
+		"spiral_dive_paid_with_two_or_more_draw_refill"
+	))
+
+
+func _append_ethans_typhlosion_partner_blast_lethal_trigger(game_state: GameState, player: PlayerState, player_index: int, triggers: Array) -> void:
+	var active := player.active_pokemon
+	if not _slot_matches_uid(active, ETHANS_TYPHLOSION_UID):
+		return
+	if not _slot_can_pay_cost(active, _attack_cost(active, 0, "R")):
+		return
+	var opponent_active := _opponent_active(game_state, player_index)
+	if opponent_active == null:
+		return
+	var adventure_count := _count_cards_named(player.discard_pile, ["Ethan's Adventure", "Ethan’s Adventure", "阿响的冒险"])
+	if adventure_count <= 0:
+		return
+	var partner_blast_damage := 40 + adventure_count * 60
+	if opponent_active.get_remaining_hp() > partner_blast_damage:
+		return
+	triggers.append(_make_trigger(
+		RULE_ETHANS_TYPHLOSION_PARTNER_BLAST_LETHAL,
+		player_index,
+		"active",
+		0,
+		active,
+		game_state.turn_number,
+		"partner_blast_discard_adventures_cover_defender_hp"
+	))
+
+
+func _append_blaziken_boiling_spirit_acceleration_trigger(game_state: GameState, player: PlayerState, player_index: int, triggers: Array) -> void:
+	if _count_attached_basic_energy(player) <= 0:
+		return
+	for entry: Dictionary in _player_slot_entries(player):
+		var slot: PokemonSlot = entry.get("slot", null)
+		if not _slot_matches_uid(slot, BLAZIKEN_EX_UID):
+			continue
+		if not slot.has_ability_used(game_state.turn_number):
+			continue
+		triggers.append(_make_trigger(
+			RULE_BLAZIKEN_BOILING_SPIRIT_ACCELERATION,
+			player_index,
+			str(entry.get("slot_kind", "active")),
+			int(entry.get("slot_index", 0)),
+			slot,
+			game_state.turn_number,
+			"boiling_spirit_resolved_basic_energy_acceleration",
+			"use_ability"
+		))
+		return
+
+
+func _append_pidgeot_quick_search_control_trigger(game_state: GameState, player: PlayerState, player_index: int, triggers: Array) -> void:
+	for entry: Dictionary in _player_slot_entries(player):
+		var slot: PokemonSlot = entry.get("slot", null)
+		if not _slot_matches_uid(slot, PIDGEOT_EX_UID):
+			continue
+		if not _slot_has_effect_on_turn(slot, QUICK_SEARCH_USED_EFFECT_TYPE, game_state.turn_number):
+			continue
+		triggers.append(_make_trigger(
+			RULE_PIDGEOT_QUICK_SEARCH_CONTROL,
+			player_index,
+			str(entry.get("slot_kind", "active")),
+			int(entry.get("slot_index", 0)),
+			slot,
+			game_state.turn_number,
+			"quick_search_resolved_exact_control_resource",
+			"use_ability"
+		))
+		return
+
+
+func _append_flareon_burning_charge_engine_trigger(game_state: GameState, player: PlayerState, player_index: int, triggers: Array) -> void:
+	var active := player.active_pokemon
+	if not _slot_matches_uid(active, FLAREON_EX_UID):
+		return
+	if not _slot_can_pay_cost(active, _attack_cost(active, 0, "RC")):
+		return
+	if _count_basic_energy_in_zone(player.deck, "") < 2:
+		return
+	if player.bench.is_empty():
+		return
+	if _opponent_active(game_state, player_index) == null:
+		return
+	triggers.append(_make_trigger(
+		RULE_FLAREON_BURNING_CHARGE_ENGINE,
+		player_index,
+		"active",
+		0,
+		active,
+		game_state.turn_number,
+		"burning_charge_paid_with_two_energy_bench_acceleration"
+	))
+
+
+func _append_hops_zacian_brave_blade_lethal_trigger(game_state: GameState, player: PlayerState, player_index: int, triggers: Array) -> void:
+	var active := player.active_pokemon
+	if not _slot_matches_uid(active, HOPS_ZACIAN_EX_UID):
+		return
+	var brave_blade_cost := _attack_cost(active, 1, "MMMC")
+	if active.attached_tool != null and active.attached_tool.card_data != null:
+		if String(active.attached_tool.card_data.effect_id) == HOPS_CHOICE_BAND_EFFECT_ID:
+			brave_blade_cost = _remove_first_cost_symbol(brave_blade_cost, "C")
+	if not _slot_can_pay_cost(active, brave_blade_cost):
+		return
+	if _slot_attack_is_locked(active, 1, game_state.turn_number):
+		return
+	var opponent_active := _opponent_active(game_state, player_index)
+	if opponent_active == null or opponent_active.get_remaining_hp() > 240:
+		return
+	triggers.append(_make_trigger(
+		RULE_HOPS_ZACIAN_BRAVE_BLADE_LETHAL,
+		player_index,
+		"active",
+		0,
+		active,
+		game_state.turn_number,
+		"brave_blade_legal_base_damage_covers_defender_hp"
+	))
+
+
+func _append_yanmega_buzzing_rush_acceleration_trigger(game_state: GameState, player: PlayerState, player_index: int, triggers: Array) -> void:
+	var active := player.active_pokemon
+	if not _slot_matches_uid(active, YANMEGA_EX_UID):
+		return
+	if not _slot_has_effect_on_turn(active, ATTACH_FROM_DECK_USED_EFFECT_TYPE, game_state.turn_number):
+		return
+	if _count_slot_attached_basic_energy(active, "G") < 3:
+		return
+	triggers.append(_make_trigger(
+		RULE_YANMEGA_BUZZING_RUSH_ACCELERATION,
+		player_index,
+		"active",
+		0,
+		active,
+		game_state.turn_number,
+		"buzzing_rush_resolved_three_grass_active_entry",
+		"use_ability"
+	))
+
+
+func _append_munkidori_adrena_brain_transfer_trigger(game_state: GameState, player: PlayerState, player_index: int, triggers: Array) -> void:
+	if not _player_has_damage_counters(player):
+		return
+	var opponent_index := 1 - player_index
+	if opponent_index < 0 or opponent_index >= game_state.players.size():
+		return
+	var opponent: PlayerState = game_state.players[opponent_index]
+	if opponent == null or opponent.get_all_pokemon().is_empty():
+		return
+	for entry: Dictionary in _player_slot_entries(player):
+		var slot: PokemonSlot = entry.get("slot", null)
+		if not _slot_matches_uid(slot, MUNKIDORI_UID):
+			continue
+		if _slot_has_effect_on_turn(slot, MUNKIDORI_ADRENA_BRAIN_USED_EFFECT_TYPE, game_state.turn_number):
+			continue
+		if _count_slot_attached_basic_energy(slot, "D") <= 0:
+			continue
+		triggers.append(_make_trigger(
+			RULE_MUNKIDORI_ADRENA_BRAIN_TRANSFER,
+			player_index,
+			str(entry.get("slot_kind", "active")),
+			int(entry.get("slot_index", 0)),
+			slot,
+			game_state.turn_number,
+			"adrena_brain_darkness_own_damage_opponent_target_ready"
+		))
+		return
+
+
+func _append_toedscruel_colony_rush_lethal_trigger(game_state: GameState, player: PlayerState, player_index: int, triggers: Array) -> void:
+	var active := player.active_pokemon
+	if not _slot_matches_uid(active, TOEDSCRUEL_EX_UID):
+		return
+	if not _slot_can_pay_cost(active, _attack_cost(active, 0, "GG")):
+		return
+	var opponent_active := _opponent_active(game_state, player_index)
+	if opponent_active == null:
+		return
+	var energized_bench_count := _count_benched_slots_with_energy_type(player, "G")
+	var colony_rush_damage := 80 + energized_bench_count * 40
+	if opponent_active.get_remaining_hp() > colony_rush_damage:
+		return
+	triggers.append(_make_trigger(
+		RULE_TOEDSCRUEL_COLONY_RUSH_LETHAL,
+		player_index,
+		"active",
+		0,
+		active,
+		game_state.turn_number,
+		"colony_rush_energized_bench_covers_defender_hp"
+	))
 
 
 func _append_dragapult_phantom_dive_trigger(game_state: GameState, player: PlayerState, player_index: int, triggers: Array) -> void:
@@ -559,11 +906,135 @@ func _count_basic_energy_in_zone(cards: Array, energy_type: String) -> int:
 	return count
 
 
+func _count_named_team_attached_basic_energy(player: PlayerState, name_prefixes: Array[String], energy_type: String) -> int:
+	if player == null:
+		return 0
+	var count := 0
+	for slot: PokemonSlot in player.get_all_pokemon():
+		if slot == null or not _card_name_starts_with_any(slot.get_card_data(), name_prefixes):
+			continue
+		for energy: CardInstance in slot.attached_energy:
+			if energy == null or energy.card_data == null or energy.card_data.card_type != "Basic Energy":
+				continue
+			if energy_type == "" or _card_provides_energy_type(energy, energy_type):
+				count += 1
+	return count
+
+
+func _count_attached_basic_energy(player: PlayerState) -> int:
+	if player == null:
+		return 0
+	var count := 0
+	for slot: PokemonSlot in player.get_all_pokemon():
+		if slot == null:
+			continue
+		for energy: CardInstance in slot.attached_energy:
+			if energy != null and energy.card_data != null and energy.card_data.card_type == "Basic Energy":
+				count += 1
+	return count
+
+
+func _count_slot_attached_basic_energy(slot: PokemonSlot, energy_type: String) -> int:
+	if slot == null:
+		return 0
+	var count := 0
+	for energy: CardInstance in slot.attached_energy:
+		if energy == null or energy.card_data == null or energy.card_data.card_type != "Basic Energy":
+			continue
+		if energy_type == "" or _card_provides_energy_type(energy, energy_type):
+			count += 1
+	return count
+
+
+func _player_has_damage_counters(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	for slot: PokemonSlot in player.get_all_pokemon():
+		if slot != null and slot.damage_counters >= 10:
+			return true
+	return false
+
+
+func _count_benched_slots_with_energy_type(player: PlayerState, energy_type: String) -> int:
+	if player == null:
+		return 0
+	var count := 0
+	for slot: PokemonSlot in player.bench:
+		if slot == null:
+			continue
+		for energy: CardInstance in slot.attached_energy:
+			if _card_provides_energy_type(energy, energy_type):
+				count += 1
+				break
+	return count
+
+
+func _card_name_starts_with_any(card_data: CardData, prefixes: Array[String]) -> bool:
+	if card_data == null:
+		return false
+	var names: Array[String] = [
+		String(card_data.name),
+		String(card_data.name_en),
+		String(card_data.name_zh),
+		String(card_data.label),
+	]
+	for raw_name: String in names:
+		var normalized := raw_name.strip_edges().to_lower()
+		for raw_prefix: String in prefixes:
+			if normalized.begins_with(raw_prefix.strip_edges().to_lower()):
+				return true
+	return false
+
+
+func _player_has_benched_named_attack(player: PlayerState, name_prefixes: Array[String], excluded_attack_names: Array[String]) -> bool:
+	if player == null:
+		return false
+	var excluded: Array[String] = []
+	for raw_excluded: String in excluded_attack_names:
+		excluded.append(raw_excluded.strip_edges().to_lower())
+	for slot: PokemonSlot in player.bench:
+		if slot == null or not _card_name_starts_with_any(slot.get_card_data(), name_prefixes):
+			continue
+		for attack_variant: Variant in slot.get_attacks():
+			if not (attack_variant is Dictionary):
+				continue
+			var attack: Dictionary = attack_variant
+			var names: Array[String] = [
+				str(attack.get("name", "")),
+				str(attack.get("name_en", "")),
+				str(attack.get("name_zh", "")),
+			]
+			var is_excluded := false
+			for raw_name: String in names:
+				if raw_name.strip_edges().to_lower() in excluded:
+					is_excluded = true
+					break
+			if not is_excluded:
+				return true
+	return false
+
+
 func _count_cards_in_zone_by_uid(cards: Array, uid: String) -> int:
 	var count := 0
 	for card: CardInstance in cards:
 		if card != null and _card_uid(card.card_data) == uid:
 			count += 1
+	return count
+
+
+func _count_cards_named(cards: Array, names: Array[String]) -> int:
+	var normalized_names: Array[String] = []
+	for raw_name: String in names:
+		normalized_names.append(raw_name.strip_edges().to_lower())
+	var count := 0
+	for card: CardInstance in cards:
+		if card == null or card.card_data == null:
+			continue
+		var card_name := _normalized_card_name(card.card_data)
+		for wanted: String in normalized_names:
+			if wanted != "" and wanted in card_name:
+				count += 1
+				break
 	return count
 
 
@@ -585,6 +1056,33 @@ func _attack_cost(slot: PokemonSlot, attack_index: int, fallback: String) -> Str
 		if cost != "":
 			return cost
 	return fallback
+
+
+func _remove_first_cost_symbol(cost: String, symbol: String) -> String:
+	var normalized := cost.strip_edges().to_upper()
+	var index := normalized.find(symbol.strip_edges().to_upper())
+	if index < 0:
+		return normalized
+	return normalized.substr(0, index) + normalized.substr(index + 1)
+
+
+func _slot_attack_is_locked(slot: PokemonSlot, attack_index: int, turn_number: int) -> bool:
+	if slot == null:
+		return false
+	var attacks := slot.get_attacks()
+	var attack_name := ""
+	if attack_index >= 0 and attack_index < attacks.size():
+		attack_name = str((attacks[attack_index] as Dictionary).get("name", ""))
+	for effect: Dictionary in slot.effects:
+		if str(effect.get("type", "")) != "attack_lock":
+			continue
+		if int(effect.get("turn", -999)) != turn_number - 2:
+			continue
+		var locked_index := int(effect.get("attack_index", -1))
+		var locked_name := str(effect.get("attack_name", ""))
+		if locked_index == attack_index or (locked_name != "" and locked_name == attack_name):
+			return true
+	return false
 
 
 func _slot_can_pay_cost(slot: PokemonSlot, cost: String) -> bool:

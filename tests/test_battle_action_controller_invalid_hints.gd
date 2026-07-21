@@ -61,6 +61,13 @@ class ActionSceneStub:
 		pass
 
 
+class IntentSceneStub extends ActionSceneStub:
+	var intent_rejections: Array[Dictionary] = []
+
+	func _show_battle_intent_rejection(payload: Dictionary) -> void:
+		intent_rejections.append(payload.duplicate(true))
+
+
 func _make_state() -> GameState:
 	var state := GameState.new()
 	state.turn_number = 2
@@ -134,4 +141,22 @@ func test_blocked_stadium_click_shows_invalid_hint() -> String:
 	return run_checks([
 		assert_eq(scene.invalid_hints.size(), 1, "Blocked Stadium should show invalid action HUD"),
 		assert_str_contains(str(scene.invalid_hints[0].get("reason", "")), "竞技场", "Stadium hint should mention Stadium"),
+	])
+
+
+func test_intent_enabled_scene_routes_blocked_card_to_local_rejection_with_source_id() -> String:
+	var controller := BattleActionControllerScript.new()
+	var scene := IntentSceneStub.new()
+	scene._gsm = _make_gsm()
+	scene._gsm.game_state.energy_attached_this_turn = true
+	var card := _make_card("基本火能量", "Basic Energy")
+	card.card_data.energy_provides = "R"
+	scene._gsm.game_state.players[0].hand = [card]
+
+	controller.on_hand_card_clicked(scene, card, null)
+
+	return run_checks([
+		assert_eq(scene.intent_rejections.size(), 1, "Intent-enabled battle should use the local rejection channel"),
+		assert_eq(scene.invalid_hints.size(), 0, "Ordinary blocked hand action should not open the legacy modal"),
+		assert_eq(str(scene.intent_rejections[0].get("card_instance_id", "")), str(card.instance_id), "Local rejection should anchor to the attempted hand card"),
 	])

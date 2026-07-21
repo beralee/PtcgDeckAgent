@@ -50,24 +50,41 @@ theme_override_constants/margin_bottom = 20
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="Header" type="HBoxContainer" parent="MarginContainer/VBox"]
+[node name="Header" type="VBoxContainer" parent="MarginContainer/VBox"]
 layout_mode = 2
+theme_override_constants/separation = 8
 
 [node name="Title" type="Label" parent="MarginContainer/VBox/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "卡组中心"
 
-[node name="BtnImport" type="Button" parent="MarginContainer/VBox/Header"]
+[node name="HeaderActions" type="GridContainer" parent="MarginContainer/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 3
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 8
+
+[node name="BtnNewDeck" type="Button" parent="MarginContainer/VBox/Header/HeaderActions"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(130, 35)
+size_flags_horizontal = 3
+text = "+ 新建卡组"
+
+[node name="BtnImport" type="Button" parent="MarginContainer/VBox/Header/HeaderActions"]
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(120, 35)
+size_flags_horizontal = 3
 text = "+ 导入卡组"
 
-[node name="BtnSyncImages" type="Button" parent="MarginContainer/VBox/Header"]
+[node name="BtnSyncImages" type="Button" parent="MarginContainer/VBox/Header/HeaderActions"]
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(120, 35)
+size_flags_horizontal = 3
 text = "同步卡图"
 
 [node name="DeckScroll" type="ScrollContainer" parent="MarginContainer/VBox"]
@@ -89,7 +106,7 @@ theme_override_constants/separation = 8
 [node name="EmptyLabel" type="Label" parent="MarginContainer/VBox/DeckScroll/DeckScrollMargin/DeckList"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "暂无卡组，点击右上角“+ 导入卡组”按钮导入。"
+text = "暂无卡组，可以新建基础卡组或导入现有卡组。"
 horizontal_alignment = 1
 vertical_alignment = 1
 

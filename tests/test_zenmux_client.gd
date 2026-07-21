@@ -570,7 +570,7 @@ func test_build_request_payload_disables_reasoning_for_current_supported_models(
 
 	var client: Object = (client_result as Dictionary).get("value") as Object
 	var model_ids := [
-		"kimi-k2.6",
+		"kimi-k3",
 		"z-ai/glm-5.2",
 		"qwen/qwen3.7-plus",
 		"qwen/qwen3.7-max",
@@ -598,21 +598,50 @@ func test_build_request_payload_disables_reasoning_for_current_supported_models(
 	return run_checks(checks)
 
 
-func test_build_request_payload_defaults_kimi_k26_temperature_to_required_value() -> String:
+func test_official_deepseek_endpoint_uses_deepseek_compatible_payload() -> String:
+	var client_result: Variant = _new_client()
+	if client_result is Dictionary and not bool((client_result as Dictionary).get("ok", false)):
+		return str((client_result as Dictionary).get("error", "ZenMuxClient setup failed"))
+
+	var client: Object = (client_result as Dictionary).get("value") as Object
+	if not client.has_method("_build_request_payload_for_endpoint"):
+		return "ZenMuxClient should adapt payloads for the selected provider endpoint"
+	var deepseek_payload: Dictionary = client.call("_build_request_payload_for_endpoint", {
+		"model": "deepseek-v4-flash",
+		"messages": [{"role": "user", "content": "hello"}],
+		"max_completion_tokens": 80,
+	}, "https://api.deepseek.com/chat/completions")
+	var zenmux_payload: Dictionary = client.call("_build_request_payload_for_endpoint", {
+		"model": "deepseek-v4-flash",
+		"messages": [{"role": "user", "content": "hello"}],
+		"max_completion_tokens": 80,
+	}, "https://zenmux.ai/api/v1/chat/completions")
+
+	return run_checks([
+		assert_false(deepseek_payload.has("reasoning"), "Official DeepSeek requests must not receive the ZenMux reasoning object"),
+		assert_false(deepseek_payload.has("max_completion_tokens"), "Official DeepSeek requests should use max_tokens instead of max_completion_tokens"),
+		assert_eq(int(deepseek_payload.get("max_tokens", 0)), 80, "Official DeepSeek payload should preserve the output limit through max_tokens"),
+		assert_eq(str((deepseek_payload.get("thinking", {}) as Dictionary).get("type", "")), "disabled", "Official DeepSeek V4 should keep the explicit non-thinking policy"),
+		assert_true(zenmux_payload.has("reasoning"), "ZenMux payload behavior must remain unchanged"),
+		assert_true(zenmux_payload.has("max_completion_tokens"), "ZenMux should keep accepting the existing max_completion_tokens field"),
+	])
+
+
+func test_build_request_payload_defaults_kimi_k3_temperature_to_required_value() -> String:
 	var client_result: Variant = _new_client()
 	if client_result is Dictionary and not bool((client_result as Dictionary).get("ok", false)):
 		return str((client_result as Dictionary).get("error", "ZenMuxClient setup failed"))
 
 	var client: Object = (client_result as Dictionary).get("value") as Object
 	var payload: Variant = client.call("_build_request_payload", {
-		"model": "kimi-k2.6",
+		"model": "kimi-k3",
 		"messages": [{
 			"role": "user",
 			"content": "hello",
 		}],
 	})
 	var explicit_payload: Variant = client.call("_build_request_payload", {
-		"model": "kimi-k2.6",
+		"model": "kimi-k3",
 		"messages": [{
 			"role": "user",
 			"content": "hello",
@@ -631,8 +660,8 @@ func test_build_request_payload_defaults_kimi_k26_temperature_to_required_value(
 		return "_build_request_payload should return dictionaries"
 
 	return run_checks([
-		assert_eq(float((payload as Dictionary).get("temperature", 0.0)), 0.6, "kimi-k2.6 should default to ZenMux-required temperature 0.6"),
-		assert_eq(float((explicit_payload as Dictionary).get("temperature", 0.0)), 0.6, "kimi-k2.6 should force ZenMux-required temperature 0.6 even if an upstream prompt builder set another value"),
+		assert_eq(float((payload as Dictionary).get("temperature", 0.0)), 0.6, "kimi-k3 should default to the established Kimi temperature 0.6"),
+		assert_eq(float((explicit_payload as Dictionary).get("temperature", 0.0)), 0.6, "kimi-k3 should force the established Kimi temperature 0.6 even if an upstream prompt builder set another value"),
 		assert_eq(float((explicit_non_kimi_payload as Dictionary).get("temperature", 0.0)), 0.9, "Explicit temperature should still be preserved for non-Kimi models"),
 	])
 

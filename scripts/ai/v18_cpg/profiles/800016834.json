@@ -1,0 +1,118 @@
+{
+  "profile_version": 2,
+  "semantic_version": 1,
+  "risk_posture": "balanced",
+  "switch_margin": 80.0,
+  "expected_regret_threshold": 65.0,
+  "initial_response_token_budget": 420,
+  "delta_response_token_budget": 170,
+  "turn_visible_wait_budget_ms": 6500,
+  "cold_request_estimate_ms": 5000,
+  "max_policy_nodes": 7,
+  "protected_roles": [
+    "signature_piece",
+    "evolution_piece",
+    "energy_source",
+    "energy_access",
+    "recovery",
+    "pokemon_search",
+    "bench_space"
+  ],
+  "strategic_priorities": [
+    {
+      "priority": 1,
+      "goal": "minimum_resource_ko",
+      "when_all": [{"fact": "attack.ko_available", "op": "==", "value": true}],
+      "prefer_routes": ["route:attack_ko", "route:gust"],
+      "avoid_routes": ["route:information", "route:develop", "route:end_turn"],
+      "preserve_roles": ["energy_source", "recovery", "evolution_piece"]
+    },
+    {
+      "priority": 2,
+      "goal": "route_completion",
+      "when_all": [{"fact": "attack.ready", "op": "==", "value": false}],
+      "prefer_routes": ["route:evolve", "route:information", "route:energy_commit", "route:develop"],
+      "avoid_routes": ["route:end_turn"],
+      "preserve_roles": ["signature_piece", "evolution_piece", "energy_source"]
+    },
+    {
+      "priority": 3,
+      "goal": "typed_energy_continuity",
+      "when_all": [{"fact": "turn.energy_available", "op": "==", "value": true}],
+      "prefer_routes": ["route:energy_commit", "route:evolve"],
+      "avoid_routes": ["route:develop"],
+      "preserve_roles": ["typed_energy", "signature_piece"]
+    },
+    {
+      "priority": 4,
+      "goal": "information_before_commitment",
+      "when_all": [
+        {"fact": "information.material_action_available", "op": "==", "value": true},
+        {"fact": "attack.ko_available", "op": "==", "value": false}
+      ],
+      "prefer_routes": ["route:information", "route:evolve"],
+      "avoid_routes": ["route:end_turn"],
+      "preserve_roles": ["energy_access", "evolution_piece"]
+    },
+    {
+      "priority": 5,
+      "goal": "low_deck_safety",
+      "when_all": [{"fact": "resources.deck_low", "op": "==", "value": true}],
+      "prefer_routes": ["route:attack_ko", "route:attack_pressure", "route:energy_commit"],
+      "avoid_routes": ["route:information", "route:opening_search", "route:develop"],
+      "preserve_roles": ["recovery", "energy_source"]
+    }
+  ],
+  "route_preferences": {
+    "model_consideration_margin": 320.0,
+    "route_biases": {
+      "route:attack_ko": 260.0,
+      "route:attack_pressure": 90.0,
+      "route:evolve": 180.0,
+      "route:information": 100.0,
+      "route:energy_commit": 130.0,
+      "route:develop": 60.0,
+      "route:gust": 110.0,
+      "route:end_turn": -220.0
+    },
+    "ready_ko_order": ["route:attack_ko", "route:gust", "route:energy_commit"],
+    "attackless_order": ["route:evolve", "route:information", "route:energy_commit", "route:develop"],
+    "avoid_after_ko_secured": ["route:information", "route:develop", "route:opening_search"]
+  },
+  "safety": {
+    "max_switch_gap": 120.0,
+    "block_search_when_deck_low": true,
+    "low_deck_threshold": 7,
+    "critical_deck_threshold": 4,
+    "preserve_bench_slots": 1,
+    "stop_optional_draw_when_attack_ready": true,
+    "reject_information_churn_after_ko_secured": true
+  },
+  "module_parameters": {
+    "energy_burst": {
+      "burst_damage_mode": "hand_discard",
+      "damage_per_discard": 50,
+      "reserve_hand_energy_next_turn": 0,
+      "primary_attack_required_types": ["M"],
+      "primary_attacker_uids": ["CSV4C_089"],
+      "reserve_total_energy_next_turn": 1,
+      "reserve_engine_energy": 0,
+      "low_deck_threshold": 7,
+      "critical_deck_threshold": 4,
+      "bench_slots_to_reserve": 1
+    },
+    "cycle_pivot": {
+      "enabled_guards": ["optional_engine", "typed_energy", "ready_ko", "bench_reserve", "low_deck"],
+      "optional_draw_engine_uids": ["CSV8C_135"],
+      "primary_required_energy": ["M"],
+      "primary_attacker_uids": ["CSV4C_089"],
+      "attacker_root_uids": ["CSV9C_096"],
+      "minimum_hand_for_optional_engine": 4,
+      "reserve_bench_slots": 1,
+      "low_deck_floor": 7,
+      "block_optional_engine_when_attack_ready": true,
+      "block_optional_engine_when_energy_attachment_open": true,
+      "block_off_color_primary_attachment": true
+    }
+  }
+}

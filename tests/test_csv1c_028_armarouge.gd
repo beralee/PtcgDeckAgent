@@ -57,6 +57,11 @@ func _load_armarouge() -> CardData:
 	return CardDatabaseScript.new().get_card("CSV1C", "028")
 
 
+func _load_energy(set_code: String, card_index: String) -> CardInstance:
+	var data := CardDatabaseScript.new().get_card(set_code, card_index)
+	return CardInstance.create(data, 0) if data != null else null
+
+
 func test_csv1c_028_registers_send_off_fire_and_burn_attack() -> String:
 	var card := _load_armarouge()
 	var state := _make_state(card)
@@ -120,6 +125,40 @@ func test_send_off_fire_moves_selected_bench_fire_energy_to_active_repeatedly() 
 		assert_false(first_fire in bench_a.attached_energy, "Moved first Fire Energy should leave the source Bench Pokemon"),
 		assert_false(second_fire in bench_a.attached_energy, "Moved second Fire Energy should leave the source Bench Pokemon"),
 		assert_true(water in bench_b.attached_energy, "Other Energy should stay attached"),
+	])
+
+
+func test_send_off_fire_recomputes_legacy_and_luminous_types_after_each_move() -> String:
+	var card := _load_armarouge()
+	var state := _make_state(card)
+	var player: PlayerState = state.players[0]
+	var active := player.active_pokemon
+	var source := player.bench[0]
+	var legacy := _load_energy("CSV8C", "207")
+	var luminous := _load_energy("CSV1C", "127")
+	source.attached_energy.assign([luminous, legacy])
+
+	var processor := EffectProcessor.new()
+	processor.register_pokemon_card(card)
+	var effect := processor.get_ability_effect(active, 0, state)
+	var usable_before := processor.can_use_ability(active, state, 0)
+	var first_steps: Array[Dictionary] = effect.get_interaction_steps(active.get_top_card(), state)
+	var first_items: Array = first_steps[0].get("items", []) if not first_steps.is_empty() else []
+	var moved_legacy := processor.execute_ability_effect(active, 0, [{
+		"move_fire_energy_from_bench_to_active": [legacy],
+	}], state)
+	var usable_after_legacy := processor.can_use_ability(active, state, 0)
+	var second_steps: Array[Dictionary] = effect.get_interaction_steps(active.get_top_card(), state)
+	var second_items: Array = second_steps[0].get("items", []) if not second_steps.is_empty() else []
+
+	return run_checks([
+		assert_true(usable_before, "Legacy Energy should dynamically provide Fire for Send Off Fire"),
+		assert_true(legacy in first_items, "Legacy Energy should be selectable as every Energy type"),
+		assert_false(luminous in first_items, "Luminous Energy beside Legacy must be suppressed to Colorless"),
+		assert_true(moved_legacy, "The selected Legacy Energy move should execute"),
+		assert_true(legacy in active.attached_energy, "Legacy Energy should move to the Active Pokemon"),
+		assert_true(usable_after_legacy, "Moving Legacy away should immediately restore the isolated Luminous Energy"),
+		assert_true(luminous in second_items, "Isolated Luminous Energy should be recomputed as Fire after Legacy moves"),
 	])
 
 

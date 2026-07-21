@@ -1,0 +1,58 @@
+{
+  "abilities": [
+    {
+      "name": "踱步跳跃",
+      "text": "如果这只宝可梦在备战区的话，则在自己的回合可以使用1次。将自己牌库下方1张卡牌放于弃牌区。然后，将放于这只宝可梦身上的卡牌全部放于弃牌区，将这只宝可梦放回牌库上方。"
+    }
+  ],
+  "ancient_trait": "",
+  "artist": "OKACHEKE",
+  "attacks": [
+    {
+      "cost": "W",
+      "damage": "30",
+      "is_vstar_power": false,
+      "name": "射水",
+      "text": ""
+    }
+  ],
+  "card_index": "225",
+  "card_index_en": "",
+  "card_type": "Pokemon",
+  "description": "特性: 踱步跳跃\n如果这只宝可梦在备战区的话，则在自己的回合可以使用1次。将自己牌库下方1张卡牌放于弃牌区。然后，将放于这只宝可梦身上的卡牌全部放于弃牌区，将这只宝可梦放回牌库上方。\n\n【水】 射水 30\n\n\n",
+  "effect_id": "77717753a8889b9fc190f4b2de0e649a",
+  "energy_provides": "",
+  "energy_type": "W",
+  "evolves_from": "",
+  "hp": 70,
+  "image_local_path": "user://cards/images/CSV10C/225.png",
+  "image_url": "https://tcg.mik.moe/static/img/CSV10C/225.png",
+  "is_tags": [],
+  "label": "",
+  "mechanic": "",
+  "name": "小霞的可达鸭",
+  "name_en": "",
+  "name_zh": "",
+  "rarity": "AR",
+  "regulation_expanded": true,
+  "regulation_mark": "I",
+  "regulation_standard": true,
+  "release_date": "2026-07-16T00:00:00+08:00",
+  "resistance_energy": "",
+  "resistance_value": "",
+  "retreat_cost": 1,
+  "set_code": "CSV10C",
+  "set_code_en": "",
+  "source_card_index": "225",
+  "source_imported_at": 0,
+  "source_language": "zh-CN",
+  "source_parser_version": 1,
+  "source_prints": [],
+  "source_provider": "tcg_mik",
+  "source_set_code": "CSV10C",
+  "source_url": "https://tcg.mik.moe/cards/CSV10C/225",
+  "stage": "Basic",
+  "weakness_energy": "L",
+  "weakness_value": "×2",
+  "yoren_code": "P0054"
+}

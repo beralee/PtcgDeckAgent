@@ -1,0 +1,66 @@
+{
+    "name":  "走鲸",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【水】 重掴 30\n\n\n【水】【水】【水】 冰霜粉碎 80\n\n\n",
+    "yoren_code":  "P0974",
+    "set_code":  "CSV10C",
+    "card_index":  "061",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "sui",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "0a84ac53e9fbed964ba6b3977f1dfb39",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/061.png",
+    "image_local_path":  "user://cards/images/CSV10C/061.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "W",
+    "stage":  "Basic",
+    "hp":  100,
+    "weakness_energy":  "M",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  3,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "重掴",
+                        "text":  "",
+                        "cost":  "WC",
+                        "damage":  "30",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "冰霜粉碎",
+                        "text":  "",
+                        "cost":  "WWWC",
+                        "damage":  "80",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

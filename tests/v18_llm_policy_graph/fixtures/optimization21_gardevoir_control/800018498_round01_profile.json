@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "deck_id": 800018498,
+  "seed_base": 800018498,
+  "evidence_kind": "real_model_round00",
+  "derived_from": "res://tmp/v18cpg/optimization21/800018498/round00.json",
+  "failure_category": "deadline_dominant_semantic_gap",
+  "target_flip_seeds": [800018498, 800018499, 800018500],
+  "expected_modules": ["gardevoir_embrace", "damage_counter_control"],
+  "expected_protected_roles": ["embrace_target", "evolution_piece", "typed_energy"],
+  "expected_profiled_attack_cost": {"module": "gardevoir_embrace", "uid": "CSV2C_060", "cost": ["P", "P"]},
+  "baseline": {"rule_wins": 0, "v18cpg_wins": 0, "clean_games": 5, "model_calls": 47, "model_accepted": 5}
+}

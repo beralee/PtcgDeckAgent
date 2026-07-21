@@ -3,6 +3,10 @@ extends TestBase
 
 const AdvancedEffects := preload("res://scripts/effects/pokemon_effects/CSV9CAdvancedEffects.gd")
 const CSV9CEffects := preload("res://scripts/effects/CSV9CEffects.gd")
+const AILegalActionBuilderScript := preload("res://scripts/ai/AILegalActionBuilder.gd")
+const BattleScene := preload("res://scenes/battle/BattleScene.tscn")
+
+const EFFECT_ID_ONLY_TERA_ID := "5d5d2589f2d9c19ef7364714766600d4"
 
 
 class RiggedCoinFlipper extends CoinFlipper:
@@ -283,6 +287,67 @@ func test_csv9c_147_kyurem_trifrost_discards_all_energy_and_damages_three_target
 	])
 
 
+func test_csv9c_147_real_battle_ui_requires_three_explicit_targets() -> String:
+	var kyurem_data: CardData = CardDatabase.get_card("CSV9C", "147")
+	if kyurem_data == null:
+		return "CSV9C_147 Kyurem must load from CardDatabase"
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	gsm.effect_processor.register_pokemon_card(kyurem_data)
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	var kyurem := _make_slot(kyurem_data, 0)
+	gsm.game_state.players[0].active_pokemon = kyurem
+	kyurem.attached_energy.append(CardInstance.create(_energy("Kyurem Colorless Energy", "C"), 0))
+	var opponent := gsm.game_state.players[1]
+	opponent.discard_pile.append(CardInstance.create(_trainer("Colress", "Supporter"), 1))
+	var bench_a := _make_slot(_pokemon("Bench A", "Basic", "", "G", 200), 1)
+	var bench_b := _make_slot(_pokemon("Bench B", "Basic", "", "R", 200), 1)
+	var bench_c := _make_slot(_pokemon("Bench C", "Basic", "", "L", 200), 1)
+	opponent.bench = [bench_a, bench_b, bench_c]
+
+	var tree := Engine.get_main_loop() as SceneTree
+	var battle_scene: Control = BattleScene.instantiate()
+	tree.root.add_child(battle_scene)
+	await tree.process_frame
+	battle_scene.set("_view_player", 0)
+	battle_scene.set("_gsm", gsm)
+	var reduced_cost_is_legal := gsm.rule_validator.can_use_attack(gsm.game_state, 0, 0, gsm.effect_processor)
+	battle_scene.call("_try_use_attack_with_interaction", 0, kyurem, 0)
+	var pending_before := str(battle_scene.get("_pending_choice"))
+	var mode_before := str(battle_scene.get("_field_interaction_mode"))
+	var interaction_data: Dictionary = battle_scene.get("_field_interaction_data")
+	var target_items: Array = interaction_data.get("items", [])
+	var active_before := opponent.active_pokemon.damage_counters
+	var bench_a_before := bench_a.damage_counters
+
+	# Select a non-default triple and let the exact-three field selector commit it.
+	battle_scene.call("_handle_field_slot_select_index", 0)
+	battle_scene.call("_handle_field_slot_select_index", 2)
+	battle_scene.call("_handle_field_slot_select_index", 3)
+	var active_after := opponent.active_pokemon.damage_counters
+	var bench_a_after := bench_a.damage_counters
+	var bench_b_after := bench_b.damage_counters
+	var bench_c_after := bench_c.damage_counters
+	var result := run_checks([
+		assert_true(reduced_cost_is_legal, "Kyurem Anti-Plasma should make Tri Frost legal for one Colorless Energy while Colress is in the opponent's discard"),
+		assert_eq(pending_before, "effect_interaction", "Real Kyurem Trifrost must wait for an effect interaction instead of attacking immediately"),
+		assert_eq(mode_before, "slot_select", "Real Kyurem Trifrost must use the field target selector"),
+		assert_eq(target_items.size(), 4, "Kyurem target selector must expose every opposing Pokemon when four are in play"),
+		assert_eq(int(interaction_data.get("min_select", 0)), 3, "Kyurem must require exactly three targets"),
+		assert_eq(int(interaction_data.get("max_select", 0)), 3, "Kyurem must cap selection at exactly three targets"),
+		assert_eq(active_before, 0, "Kyurem must not deal damage before target confirmation"),
+		assert_eq(bench_a_before, 0, "Kyurem must not auto-select a Bench target before target confirmation"),
+		assert_eq(active_after, 110, "The explicitly selected Active Pokemon should take 110 damage"),
+		assert_eq(bench_a_after, 0, "The deliberately unselected first Bench Pokemon must not be auto-targeted"),
+		assert_eq(bench_b_after, 110, "The explicitly selected second Bench Pokemon should take 110 damage"),
+		assert_eq(bench_c_after, 110, "The explicitly selected third Bench Pokemon should take 110 damage"),
+	])
+	battle_scene.queue_free()
+	await tree.process_frame
+	return result
+
+
 func test_csv9c_155_noctowl_and_161_rotom_full_deck_searches_filter_legal_cards() -> String:
 	var state := _make_state()
 	var player := state.players[0]
@@ -339,6 +404,30 @@ func test_csv9c_155_noctowl_and_161_rotom_full_deck_searches_filter_legal_cards(
 		assert_true(colorless_b in player.hand, "CSV9C_161 should move the second selected legal Pokemon to hand"),
 		assert_true(colorless_big in player.deck, "CSV9C_161 should ignore selected over-HP Pokemon"),
 		assert_false(rotom_can_use_again, "CSV9C_161 Fan Call should be once per turn"),
+	])
+
+
+func test_csv9c_155_noctowl_accepts_effect_id_only_tera_in_play() -> String:
+	var state := _make_state()
+	var player := state.players[0]
+	var tera_cd := _pokemon("Effect-id-only Tera", "Basic", "", "C", 180)
+	tera_cd.effect_id = EFFECT_ID_ONLY_TERA_ID
+	player.bench.append(_make_slot(tera_cd, 0))
+	var noctowl := _make_slot(_pokemon("Noctowl", "Stage 1", "Hoothoot", "C", 100), 0)
+	noctowl.turn_evolved = state.turn_number
+	player.active_pokemon = noctowl
+	player.deck.clear()
+	var trainer := CardInstance.create(_trainer("Trainer A", "Item"), 0)
+	player.deck.append(trainer)
+	var noctowl_effect := AdvancedEffects.NoctowlJewelSeeker.new()
+	var can_use := noctowl_effect.can_use_ability(noctowl, state)
+	var steps: Array[Dictionary] = noctowl_effect.get_interaction_steps(noctowl.get_top_card(), state)
+
+	return run_checks([
+		assert_true(tera_cd.is_tera_pokemon(), "Synthetic effect-id-only Tera should be recognized centrally"),
+		assert_true(can_use, "Noctowl Jewel Seeker should accept effect-id-only Tera Pokemon in play"),
+		assert_eq(steps.size(), 1, "Noctowl should still open the Trainer search step"),
+		assert_eq(steps[0].get("items", []) if not steps.is_empty() else [], [trainer], "Noctowl should expose Trainer cards after effect-id-only Tera detection"),
 	])
 
 
@@ -491,6 +580,102 @@ func test_csv9c_153_actual_eevee_early_evolution_requires_active_slot() -> Strin
 	return run_checks([
 		assert_true(RuleValidator.new().can_evolve(state, 0, active_eevee, evolution, processor), "CSV9C_153 should allow Active Eevee to evolve on the first/same turn"),
 		assert_false(RuleValidator.new().can_evolve(state, 0, bench_eevee, evolution, processor), "CSV9C_153 should not allow Benched Eevee to use the Active-only early evolution exception"),
+	])
+
+
+func test_csv9c_153_real_card_registration_player_and_ai_early_evolution_paths() -> String:
+	var eevee_data: CardData = CardDatabase.get_card("CSV9C", "153")
+	var sylveon_data: CardData = CardDatabase.get_card("CSV9C", "090")
+	if eevee_data == null or sylveon_data == null:
+		return "CSV9C_153 Eevee and CSV9C_090 Sylveon ex must load from CardDatabase"
+
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	gsm.game_state.turn_number = 1
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.current_player_index = 0
+	var eevee := _make_slot(eevee_data, 0, gsm.game_state.turn_number)
+	gsm.game_state.players[0].active_pokemon = eevee
+	var evolution := CardInstance.create(sylveon_data, 0)
+	gsm.game_state.players[0].hand = [evolution]
+
+	var legal_actions: Array[Dictionary] = AILegalActionBuilderScript.new().build_actions(gsm, 0)
+	var registered_effect := gsm.effect_processor.get_effect(eevee_data.effect_id)
+	var ai_can_evolve := legal_actions.any(func(action: Dictionary) -> bool:
+		return str(action.get("kind", "")) == "evolve" \
+			and action.get("card") == evolution \
+			and action.get("target_slot") == eevee
+	)
+	var player_can_evolve := gsm.rule_validator.can_evolve(gsm.game_state, 0, eevee, evolution, gsm.effect_processor)
+	var evolved := gsm.evolve_pokemon(0, evolution, eevee)
+
+	return run_checks([
+		assert_true(registered_effect is CSV9CEffects.AbilityEeveeEarlyEvolution, "Real CSV9C_153 effect_id should register the early-evolution ability"),
+		assert_true(player_can_evolve, "Real CSV9C_153 Active Eevee should bypass first-turn and same-turn evolution locks"),
+		assert_true(ai_can_evolve, "AI legal actions should expose the same early evolution as the player path"),
+		assert_true(evolved, "GameStateMachine should execute the real-card early evolution from hand"),
+		assert_eq(eevee.get_top_card(), evolution, "Successful early evolution should place the selected evolution on CSV9C_153"),
+	])
+
+
+func test_csv9c_153_real_player_slot_click_executes_early_evolution() -> String:
+	var eevee_data: CardData = CardDatabase.get_card("CSV9C", "153")
+	var sylveon_data: CardData = CardDatabase.get_card("CSV9C", "090")
+	if eevee_data == null or sylveon_data == null:
+		return "CSV9C_153 Eevee and CSV9C_090 Sylveon ex must load from CardDatabase"
+
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	gsm.game_state.turn_number = 1
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.current_player_index = 0
+	var eevee := _make_slot(eevee_data, 0, gsm.game_state.turn_number)
+	gsm.game_state.players[0].active_pokemon = eevee
+	var evolution := CardInstance.create(sylveon_data, 0)
+	gsm.game_state.players[0].hand = [evolution]
+
+	var battle_scene: Control = BattleScene.instantiate()
+	battle_scene.set("_view_player", 0)
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_selected_hand_card", evolution)
+	battle_scene.call("_handle_slot_left_click", "my_active")
+	var selected_after: CardInstance = battle_scene.get("_selected_hand_card") as CardInstance
+	battle_scene.free()
+
+	return run_checks([
+		assert_eq(eevee.get_top_card(), evolution, "Player clicking the Active slot should execute CSV9C_153 early evolution"),
+		assert_null(selected_after, "Successful player early evolution should clear the selected hand card"),
+	])
+
+
+func test_csv9c_153_action_hud_explains_early_evolution_is_passive() -> String:
+	var eevee_data: CardData = CardDatabase.get_card("CSV9C", "153")
+	if eevee_data == null:
+		return "CSV9C_153 Eevee must load from CardDatabase"
+	var gsm := GameStateMachine.new()
+	gsm.game_state = _make_state()
+	var eevee := _make_slot(eevee_data, 0, gsm.game_state.turn_number)
+	gsm.game_state.players[0].active_pokemon = eevee
+
+	var tree := Engine.get_main_loop() as SceneTree
+	var battle_scene: Control = BattleScene.instantiate()
+	battle_scene.set("_battle_mode", "review_readonly")
+	tree.root.add_child(battle_scene)
+	await tree.process_frame
+	battle_scene.set("_view_player", 0)
+	battle_scene.set("_gsm", gsm)
+	battle_scene.call("_show_pokemon_action_dialog", 0, eevee, true)
+	var dialog_data: Dictionary = battle_scene.get("_dialog_data")
+	var actions: Array = dialog_data.get("actions", [])
+	var action_items: Array = dialog_data.get("action_items", [])
+	var first_action: Dictionary = actions[0] if not actions.is_empty() and actions[0] is Dictionary else {}
+	var first_item: Dictionary = action_items[0] if not action_items.is_empty() and action_items[0] is Dictionary else {}
+	battle_scene.queue_free()
+
+	return run_checks([
+		assert_eq(str(first_action.get("type", "")), "passive_ability", "Rush Evolution should be presented as a passive ability, not a failed manual action"),
+		assert_eq(str(first_item.get("meta", "")), "被动生效", "Rush Evolution HUD should explain that the ability applies automatically"),
+		assert_true(str(first_item.get("reason", "")).contains("无需手动使用"), "Rush Evolution HUD should tell the player to play an Evolution card from hand"),
 	])
 
 

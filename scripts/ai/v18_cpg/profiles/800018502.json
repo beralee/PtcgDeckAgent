@@ -1,0 +1,297 @@
+{
+  "profile_version": 6,
+  "semantic_version": 1,
+  "risk_posture": "balanced",
+  "switch_margin": 75.0,
+  "expected_regret_threshold": 60.0,
+  "initial_response_token_budget": 420,
+  "delta_response_token_budget": 170,
+  "turn_visible_wait_budget_ms": 6500,
+  "cold_request_estimate_ms": 5000,
+  "max_policy_nodes": 7,
+  "protected_roles": [
+    "copy_source",
+    "partner_piece",
+    "signature_piece",
+    "evolution_piece",
+    "energy_source",
+    "recovery",
+    "bench_space"
+  ],
+  "strategic_priorities": [
+    {
+      "priority": 1,
+      "goal": "minimum_resource_ko",
+      "when_all": [{"fact": "attack.ko_available", "op": "==", "value": true}],
+      "prefer_routes": ["route:attack_ko", "route:gust"],
+      "avoid_routes": ["route:information", "route:develop", "route:end_turn"],
+      "preserve_roles": ["copy_source", "partner_piece", "recovery"]
+    },
+    {
+      "priority": 2,
+      "goal": "route_completion",
+      "when_all": [{"fact": "attack.ready", "op": "==", "value": false}],
+      "prefer_routes": ["route:evolve", "route:develop", "route:accelerate", "route:energy_commit"],
+      "avoid_routes": ["route:end_turn"],
+      "preserve_roles": ["copy_source", "signature_piece", "evolution_piece"]
+    },
+    {
+      "priority": 3,
+      "goal": "information_before_commitment",
+      "when_all": [
+        {"fact": "information.material_action_available", "op": "==", "value": true},
+        {"fact": "attack.ko_available", "op": "==", "value": false}
+      ],
+      "prefer_routes": ["route:information", "route:develop", "route:evolve"],
+      "avoid_routes": ["route:end_turn"],
+      "preserve_roles": ["copy_source", "energy_source", "evolution_piece"]
+    },
+    {
+      "priority": 4,
+      "goal": "typed_energy_continuity",
+      "when_all": [{"fact": "turn.energy_available", "op": "==", "value": true}],
+      "prefer_routes": ["route:energy_commit", "route:accelerate", "route:evolve"],
+      "avoid_routes": ["route:develop"],
+      "preserve_roles": ["energy_source", "copy_source"]
+    },
+    {
+      "priority": 5,
+      "goal": "low_deck_safety",
+      "when_all": [{"fact": "resources.deck_low", "op": "==", "value": true}],
+      "prefer_routes": ["route:attack_ko", "route:attack_pressure", "route:pivot"],
+      "avoid_routes": ["route:information", "route:opening_search", "route:develop"],
+      "preserve_roles": ["recovery", "copy_source"]
+    }
+  ],
+  "route_preferences": {
+    "model_consideration_margin": 350.0,
+    "route_biases": {
+      "route:attack_ko": 280.0,
+      "route:attack_pressure": 120.0,
+      "route:evolve": 190.0,
+      "route:develop": 150.0,
+      "route:accelerate": 150.0,
+      "route:energy_commit": 140.0,
+      "route:information": 90.0,
+      "route:pivot": 90.0,
+      "route:end_turn": -240.0
+    },
+    "ready_ko_order": ["route:attack_ko", "route:gust", "route:attack_pressure"],
+    "attackless_order": ["route:evolve", "route:develop", "route:accelerate", "route:energy_commit", "route:information"],
+    "avoid_after_ko_secured": ["route:information", "route:develop", "route:opening_search"]
+  },
+  "safety": {
+    "max_switch_gap": 115.0,
+    "block_search_when_deck_low": true,
+    "low_deck_threshold": 8,
+    "critical_deck_threshold": 5,
+    "preserve_bench_slots": 1,
+    "stop_optional_draw_when_attack_ready": true,
+    "reject_information_churn_after_ko_secured": true
+  },
+  "module_parameters": {
+    "copy_attack_toolbox": {
+      "attack_cost_by_uid": {
+        "CSV10C_145": ["D", "D"]
+      },
+      "strict_double_ko_suffix": {
+        "enabled": true,
+        "attacker_uid": "CSV10C_145",
+        "attacker_effect_id": "a1742becbf9fdc6a66ddfb1b306c4bc0",
+        "attacker_attack_index": 0,
+        "attacker_cost": ["D", "D"],
+        "copy_step_id": "copied_attack",
+        "copy_source_uid": "CSV10C_041",
+        "copy_source_effect_id": "26c746f169b803e490f3d0a92ca94412",
+        "copy_attack_index": 1,
+        "bench_step_id": "opponent_bench_damage_targets",
+        "active_damage": 90,
+        "bench_damage": 90,
+        "required_prizes": 3,
+        "active_prizes": 1,
+        "bench_prizes": 2,
+        "opponent_active_uid": "CS6aC_057",
+        "opponent_active_effect_id": "03bcecb40c957575e16b4af22b08b7bd",
+        "bench_target_uid": "CSV6C_051",
+        "bench_target_effect_id": "e9f0c124fc2e352af2408a7e61862b95",
+        "require_only_one_opponent_bench": true,
+        "require_no_target_tool": true,
+        "require_no_target_energy": true,
+        "rule_floor": {
+          "action_kind": "use_ability",
+          "source_uid": "CSV10C_145",
+          "ability_index": 0
+        }
+      }
+    },
+    "cycle_pivot": {
+      "enabled_guards": ["optional_engine", "typed_energy", "ready_ko", "bench_reserve", "low_deck"],
+      "optional_draw_engine_uids": ["CSV8C_135", "CSV4C_044"],
+      "primary_required_energy": ["D"],
+      "primary_attacker_uids": [],
+      "attacker_root_uids": ["CSV10C_144"],
+      "minimum_hand_for_optional_engine": 4,
+      "reserve_bench_slots": 1,
+      "low_deck_floor": 8,
+      "block_optional_engine_when_attack_ready": true,
+      "block_optional_engine_when_energy_attachment_open": true,
+      "block_off_color_primary_attachment": true
+    }
+  },
+  "local_action_certificate_parameters": {
+    "copy_attack_toolbox": {
+      "source_development_suffix": {
+        "enabled": true,
+        "candidate_uid": "CSV10C_040",
+        "candidate_effect_id": "2838414253437693be0e9946c8827b6d",
+        "evolution_uid": "CSV10C_041",
+        "evolution_effect_id": "26c746f169b803e490f3d0a92ca94412",
+        "rule_floor_uid": "CSV8C_094",
+        "rule_floor_effect_id": "66fee12502043db7d92b97b0d62b0f59",
+        "attacker_uid": "CSV10C_145",
+        "attacker_effect_id": "a1742becbf9fdc6a66ddfb1b306c4bc0",
+        "attacker_attack_index": 0,
+        "attacker_cost": ["D", "D"],
+        "required_prizes": 3,
+        "minimum_free_bench_slots": 2,
+        "require_no_own_damage": true,
+        "require_evolution_in_public_hand": true,
+        "require_preserved_attack_candidate": true
+      },
+      "attackless_unbound_gust_hold_suffix": {
+        "enabled": true,
+        "required_own_prizes": 6,
+        "required_opponent_prizes": 6,
+        "required_opponent_hand_count": 1,
+        "attacker_uid": "CSV10C_145",
+        "attacker_effect_id": "a1742becbf9fdc6a66ddfb1b306c4bc0",
+        "attacker_energy_count": 1,
+        "attacker_remaining_hp": 280,
+        "opponent_active_uid": "CS5bC_049",
+        "opponent_active_energy_count": 0,
+        "opponent_active_retreat_cost": 1,
+        "rule_floor": {
+          "action_kind": "play_trainer",
+          "route_id": "route:gust",
+          "card_uid": "CSVH1aC_023",
+          "card_effect_id": "8e1fa2c9018db938084c94c7c970d419",
+          "require_unbound_target": true
+        },
+        "expected_rule_target_uid": "CS5aC_019",
+        "expected_rule_target_energy_count": 1,
+        "expected_rule_target_immediate_attack_cost": 1,
+        "opponent_bench_rule_order": [
+          {"uid": "CS5aC_019", "energy_count": 1, "prize_count": 2, "rule_identity_bonus": 55},
+          {"uid": "CSV1C_050", "energy_count": 0, "prize_count": 2, "rule_identity_bonus": 55},
+          {"uid": "CSV6C_051", "energy_count": 1, "prize_count": 2, "rule_identity_bonus": 55},
+          {"uid": "CSV6C_051", "energy_count": 0, "prize_count": 2, "rule_identity_bonus": 55},
+          {"uid": "CS6aC_057", "energy_count": 0, "prize_count": 1, "rule_identity_bonus": 0}
+        ],
+        "stages": [
+          {
+            "id": "protect_partner_before_gust",
+            "action_kind": "attach_tool",
+            "card_uid": "CSV2C_114",
+            "card_effect_id": "6ec876cf4467166edf6e90fa1cc321eb",
+            "target_uid": "CSV10C_166",
+            "checkpoint_after": "action_resolved",
+            "expected_hand_uids": ["CSVH1aC_023", "CSV3C_123", "CSV3C_123", "CSV2C_114", "CSV8C_183"],
+            "expected_own_bench_uids": ["CSV10C_166", "CSV10C_144"],
+            "expected_own_deck_count": 42,
+            "expected_stadium_available": true,
+            "interaction_owner": "not_required",
+            "terminal_status": "public_development_continues"
+          },
+          {
+            "id": "develop_copy_source_before_gust",
+            "action_kind": "use_stadium_effect",
+            "card_uid": "CSV2C_127",
+            "card_effect_id": "c117bea3cc758d46430d6bef11062a56",
+            "checkpoint_after": "information_result",
+            "expected_hand_uids": ["CSVH1aC_023", "CSV3C_123", "CSV3C_123", "CSV8C_183"],
+            "expected_own_bench_uids": ["CSV10C_166", "CSV10C_144"],
+            "expected_own_deck_count": 42,
+            "expected_stadium_available": true,
+            "interaction_owner": "rules_fallback",
+            "terminal_status": "replan_after_public_information"
+          },
+          {
+            "id": "hold_unbound_gust_after_development",
+            "action_kind": "end_turn",
+            "checkpoint_after": "terminal",
+            "expected_hand_uids": ["CSVH1aC_023", "CSV3C_123", "CSV3C_123", "CSV8C_183"],
+            "expected_own_bench_uids": ["CSV10C_166", "CSV10C_144", "CSV8C_094"],
+            "expected_own_deck_count": 41,
+            "expected_stadium_available": true,
+            "interaction_owner": "not_required",
+            "terminal_status": "turn_ended_after_public_development"
+          }
+        ]
+      },
+      "attackless_gust_to_attack_epoch_suffix": {
+        "enabled": true,
+        "required_own_prizes": 6,
+        "required_opponent_prizes": 6,
+        "required_opponent_hand_count": 0,
+        "attacker_uid": "CSV10C_145",
+        "attacker_energy_count": 1,
+        "attacker_remaining_hp": 280,
+        "expected_own_deck_count": 38,
+        "expected_hand_uids": ["CSVH1aC_023", "CSV3C_123", "CSV3C_123", "CSV8C_183", "CSV8C_172", "CSV2C_114"],
+        "expected_own_bench_uids": ["CSV10C_166", "CSV10C_144", "CSV8C_094"],
+        "opponent_active_uid": "CS5bC_049",
+        "opponent_active_energy_count": 0,
+        "opponent_active_retreat_cost": 1,
+        "rule_floor": {
+          "action_kind": "play_trainer",
+          "route_id": "route:gust",
+          "card_uid": "CSVH1aC_023",
+          "card_effect_id": "8e1fa2c9018db938084c94c7c970d419",
+          "require_unbound_target": true
+        },
+        "candidate_action_kind": "play_trainer",
+        "candidate_route_id": "route:information",
+        "candidate_checkpoint_after": "information_result",
+        "candidate_card_uid": "CSV3C_123",
+        "candidate_card_effect_id": "af514f82d182aeae5327b2c360df703d",
+        "expected_rule_target_uid": "CSV6C_051",
+        "expected_rule_target_energy_count": 3,
+        "expected_rule_target_immediate_attack_cost": 3,
+        "opponent_bench_rule_order": [
+          {"uid": "CS5aC_019", "energy_count": 1, "prize_count": 2, "rule_identity_bonus": 55},
+          {"uid": "CSV1C_050", "energy_count": 0, "prize_count": 2, "rule_identity_bonus": 55},
+          {"uid": "CSV6C_051", "energy_count": 3, "prize_count": 2, "rule_identity_bonus": 55},
+          {"uid": "CSV6C_051", "energy_count": 0, "prize_count": 2, "rule_identity_bonus": 55},
+          {"uid": "CS6aC_057", "energy_count": 0, "prize_count": 1, "rule_identity_bonus": 0}
+        ]
+      },
+      "copy_source_recovery_attack_epoch_suffix": {
+        "enabled": true,
+        "required_own_prizes": 4,
+        "required_opponent_prizes": 4,
+        "required_opponent_hand_count": 7,
+        "expected_own_deck_count": 35,
+        "attacker_uid": "CSV10C_145",
+        "attacker_energy_count": 2,
+        "attacker_remaining_hp": 280,
+        "expected_own_bench_uids": ["CSV10C_144", "CSV10C_144"],
+        "minimum_free_bench_slots": 1,
+        "recovery_card_uid": "CSV8C_183",
+        "recovery_card_effect_id": "3e6f1daf545dfed48d0588dd50792a2e",
+        "recovery_step_id": "night_stretcher_choice",
+        "copy_source_uid": "CSV10C_166",
+        "copy_source_effect_id": "7ee514e3fb601f1f743a3d329b98daab",
+        "copy_damage_after": 170,
+        "rule_copy_source_uid": "CSV10C_144",
+        "rule_copy_damage_before": 20,
+        "rule_floor_route_id": "route:attack_pressure",
+        "rule_floor_attack_index": 0,
+        "opponent_active_uid": "CS4DaC_137",
+        "opponent_active_remaining_hp": 30,
+        "opponent_active_energy_count": 4,
+        "opponent_active_prize_count": 2,
+        "require_no_target_tool": true
+      }
+    }
+  }
+}

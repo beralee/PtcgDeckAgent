@@ -1,0 +1,66 @@
+{
+    "name":  "大吾的天秤偶",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  " 召集信号 \n选择自己牌库中最多2张【基础】宝可梦的「大吾的宝可梦」，放于备战区。并重洗牌库。\n\n【超】 念动弹 20\n\n\n",
+    "yoren_code":  "P0343",
+    "set_code":  "CSV10C",
+    "card_index":  "087",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "Tonji Matsuno",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "24662b5aa90517e6b2f1383e543d3887",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/087.png",
+    "image_local_path":  "user://cards/images/CSV10C/087.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "P",
+    "stage":  "Basic",
+    "hp":  60,
+    "weakness_energy":  "D",
+    "weakness_value":  "×2",
+    "resistance_energy":  "F",
+    "resistance_value":  "-30",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "召集信号",
+                        "text":  "选择自己牌库中最多2张【基础】宝可梦的「大吾的宝可梦」，放于备战区。并重洗牌库。",
+                        "cost":  "C",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "念动弹",
+                        "text":  "",
+                        "cost":  "P",
+                        "damage":  "20",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

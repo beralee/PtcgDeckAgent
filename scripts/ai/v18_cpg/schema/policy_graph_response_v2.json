@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "V18CPG exact conditional policy graph response v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["agenda_patch", "policy"],
+  "$defs": {
+    "guard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fact", "op", "value"],
+      "properties": {
+        "fact": {
+          "enum": [
+            "attack.ready", "attack.ko_available", "attack.max_damage",
+            "board.bench_full", "board.has_tera", "board.own_active_remaining_hp",
+            "board.opponent_active_remaining_hp", "fan_call.available",
+            "information.material_action_available", "resources.deck_low",
+            "resources.bench_slots_free", "resources.energy_on_board",
+            "resources.distinct_energy_symbols", "resources.hand_size",
+            "resources.prizes_remaining", "prize.current_swing", "prize.win_now",
+            "route.current_valid", "turn.energy_available", "turn.supporter_available"
+          ]
+        },
+        "op": {"enum": ["==", "!=", ">", ">=", "<", "<=", "in", "not_in", "exists"]},
+        "value": {}
+      }
+    },
+    "candidate_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "route_id", "candidate_id"],
+      "properties": {
+        "mode": {"const": "select_candidate"},
+        "route_id": {"type": "string", "pattern": "^route:"},
+        "candidate_id": {"type": "string", "pattern": "^candidate:"}
+      }
+    },
+    "follow_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "route_id"],
+      "properties": {
+        "mode": {"const": "follow_route"},
+        "route_id": {"type": "string", "pattern": "^route:"}
+      }
+    },
+    "synthesized_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "route_id", "first_candidate_id", "macro_actions"],
+      "properties": {
+        "mode": {"const": "propose_typed_route"},
+        "route_id": {"type": "string", "pattern": "^route:"},
+        "first_candidate_id": {"type": "string", "pattern": "^candidate:"},
+        "macro_actions": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "items": {"type": "string", "pattern": "^route:"}
+        }
+      }
+    },
+    "route_ref": {
+      "oneOf": [
+        {"$ref": "#/$defs/candidate_ref"},
+        {"$ref": "#/$defs/follow_ref"},
+        {"$ref": "#/$defs/synthesized_ref"}
+      ]
+    },
+    "route_node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_id", "kind", "route_ref"],
+      "properties": {
+        "node_id": {"type": "string", "minLength": 1},
+        "kind": {"const": "route"},
+        "route_ref": {"$ref": "#/$defs/route_ref"},
+        "next_node_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "branch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["when_all", "next_node_id"],
+      "properties": {
+        "when_all": {"type": "array", "minItems": 1, "maxItems": 3, "items": {"$ref": "#/$defs/guard"}},
+        "next_node_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "checkpoint_node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_id", "kind", "branches", "otherwise"],
+      "properties": {
+        "node_id": {"type": "string", "minLength": 1},
+        "kind": {"const": "checkpoint"},
+        "branches": {"type": "array", "maxItems": 3, "items": {"$ref": "#/$defs/branch"}},
+        "otherwise": {"type": "string", "minLength": 1}
+      }
+    },
+    "terminal_node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_id", "kind"],
+      "properties": {
+        "node_id": {"type": "string", "minLength": 1},
+        "kind": {"const": "terminal"}
+      }
+    },
+    "interaction_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy_id", "rank_by", "desired_roles", "must_preserve", "energy_symbols", "min_select", "max_select", "allow_explicit_empty", "tie_breakers"],
+      "properties": {
+        "policy_id": {"type": "string", "minLength": 1},
+        "rank_by": {
+          "type": "array",
+          "maxItems": 5,
+          "items": {"enum": ["route_completion", "energy_fit", "prize_value", "knockout_efficiency", "attacker_readiness", "survival", "resource_preservation", "stable_id"]}
+        },
+        "desired_roles": {
+          "type": "array",
+          "maxItems": 6,
+          "items": {"enum": ["attacker", "alternate_attacker", "finisher", "next_attacker", "draw_engine", "search_engine", "recovery", "evolution_piece", "energy_source", "energy_access", "typed_energy_access", "energy_accelerator", "supporter_acceleration", "energy_mover", "pivot", "gust", "hand_disruption", "lock", "stadium", "pokemon_search", "bench_protection", "resource_recycler"]}
+        },
+        "must_preserve": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {"type": "string", "pattern": "^[a-z0-9_]+$"}
+        },
+        "target_position": {"enum": ["any", "own_active", "own_bench", "opponent_active", "opponent_bench"]},
+        "energy_symbols": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {"enum": ["G", "W", "L", "P", "F", "D", "M", "C"]}
+        },
+        "prize_goal": {"enum": ["none", "shortest_safe_path", "highest_prize", "engine_ko", "spread_closeout"]},
+        "min_select": {"type": "integer", "minimum": 0, "maximum": 8},
+        "max_select": {"type": "integer", "minimum": 0, "maximum": 8},
+        "allow_explicit_empty": {"type": "boolean"},
+        "tie_breakers": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {"enum": ["stable_id", "lower_resource_cost", "higher_survival", "higher_prize"]}
+        }
+      }
+    }
+  },
+  "properties": {
+    "agenda_patch": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "victory_mode": {"enum": ["prize_race", "spread_closeout", "resource_lock", "deckout", "rebuild"]},
+        "risk_posture": {"enum": ["safe", "balanced", "forced"]},
+        "attacker_chain": {"type": "array", "maxItems": 3, "items": {"type": "string", "pattern": "^[a-z0-9_:-]+$"}},
+        "protected_resources": {"type": "array", "maxItems": 8, "items": {"type": "string", "pattern": "^[a-z0-9_:-]+$"}}
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root_node_id", "nodes", "reservations", "interaction_policy_refs", "interaction_policies", "replan_if"],
+      "properties": {
+        "root_node_id": {"type": "string", "minLength": 1},
+        "nodes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "oneOf": [
+              {"$ref": "#/$defs/route_node"},
+              {"$ref": "#/$defs/checkpoint_node"},
+              {"$ref": "#/$defs/terminal_node"}
+            ]
+          }
+        },
+        "reservations": {"type": "array", "maxItems": 6, "items": {"type": "object"}},
+        "interaction_policy_refs": {"type": "object", "additionalProperties": {"type": "string"}},
+        "interaction_policies": {"type": "array", "maxItems": 6, "items": {"$ref": "#/$defs/interaction_policy"}},
+        "replan_if": {
+          "type": "array",
+          "maxItems": 5,
+          "items": {"enum": ["no_branch_matches", "current_route_invalid", "new_prize_tier_available", "protected_resource_changed", "typed_route_step_unavailable"]}
+        }
+      }
+    }
+  }
+}

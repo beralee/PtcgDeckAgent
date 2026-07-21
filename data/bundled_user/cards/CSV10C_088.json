@@ -1,0 +1,66 @@
+{
+    "name":  "大吾的念力土偶",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【超】 不祥之光 20\n令对手的战斗宝可梦陷入【混乱】状态。\n\n【超】【超】 黏土爆破 220\n将这只宝可梦身上附着的能量全部放于弃牌区。\n\n",
+    "yoren_code":  "P0344",
+    "set_code":  "CSV10C",
+    "card_index":  "088",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "nagimiso",
+    "rarity":  "U",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "04333c3bc9451f33e2b2b29c105510f0",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/088.png",
+    "image_local_path":  "user://cards/images/CSV10C/088.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "P",
+    "stage":  "Stage 1",
+    "hp":  120,
+    "weakness_energy":  "D",
+    "weakness_value":  "×2",
+    "resistance_energy":  "F",
+    "resistance_value":  "-30",
+    "retreat_cost":  2,
+    "evolves_from":  "大吾的天秤偶",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "不祥之光",
+                        "text":  "令对手的战斗宝可梦陷入【混乱】状态。",
+                        "cost":  "P",
+                        "damage":  "20",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "黏土爆破",
+                        "text":  "将这只宝可梦身上附着的能量全部放于弃牌区。",
+                        "cost":  "PPC",
+                        "damage":  "220",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

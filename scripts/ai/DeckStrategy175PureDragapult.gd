@@ -3,6 +3,7 @@ extends "res://scripts/ai/DeckStrategy17DragapultDusknoir.gd"
 
 
 const V175_STRATEGY_ID := "v175_pure_dragapult"
+const V18_PURE_DRAGAPULT_DECK_ID := 800018499
 const BUDEW := "Budew"
 const BUDEW_EFFECT_ID := "28505a8ad6e07e74382c1b5e09737932"
 const DRAKLOAK_RECON_EFFECT_ID := "4e13cd08de3b6d141ce8e2f09d17a3a4"
@@ -10,6 +11,21 @@ const DRAKLOAK_RECON_USED_FLAG := "ability_look_top_to_hand_used"
 const LANCE := "Lance"
 const LANCE_EFFECT_ID := "2df65fcd5de0d9d9e24486b059981cdf"
 const LANCE_DRAGON_STEP := "dragon_pokemon"
+const MUNKIDORI := "Munkidori"
+const LUMINOUS_ENERGY_EFFECT_ID := "540ee48bb93584e4bfe3d7f5d0ee0efc"
+const NEO_UPPER_ENERGY_EFFECT_ID := "83aba7d0c92c81e8c03b3785af695c2f"
+const MARACTUS_GUST_LIABILITY_EFFECT_ID := "a5b32602f9c443a038fef288059aeb43"
+const HAWLUCHA_GUST_LIABILITY_EFFECT_ID := "74b83ef8987d072950dfe3bde3364d87"
+const PRE_PHANTOM_GUST_LIABILITY_BENCH_SCORE := -2600.0
+const PARTIAL_GUST_LIABILITY_ATTACHMENT_SCORE := -2600.0
+const FIRST_ATTACK_ENERGY_DISCARD_PRIORITY := -1200
+const FIRST_ATTACK_FODDER_DISCARD_PRIORITY := 180
+
+var _configured_deck_id := 0
+
+
+func configure_from_deck(deck: DeckData) -> void:
+	_configured_deck_id = int(deck.id) if deck != null else 0
 
 
 func get_strategy_id() -> String:
@@ -18,6 +34,22 @@ func get_strategy_id() -> String:
 
 func get_signature_names() -> Array[String]:
 	return [BUDEW, DRAGAPULT_EX, DRAKLOAK, DREEPY, DUSKNOIR, DUSKULL]
+
+
+func score_action_absolute(action: Dictionary, game_state: GameState, player_index: int) -> float:
+	var score := super.score_action_absolute(action, game_state, player_index)
+	if _configured_deck_id != V18_PURE_DRAGAPULT_DECK_ID \
+			or game_state == null \
+			or player_index < 0 \
+			or player_index >= game_state.players.size():
+		return score
+	var player: PlayerState = game_state.players[player_index]
+	if str(action.get("kind", "")) == "use_ability" \
+			and _v175_is_recon_drakloak(action.get("source_slot", null)) \
+			and _v175_dragapult_phantom_dive_ready(player.active_pokemon) \
+			and player.prizes.size() <= 2:
+		return minf(score, -4200.0)
+	return score
 
 
 func pick_interaction_items(items: Array, step: Dictionary, context: Dictionary = {}) -> Array:
@@ -127,13 +159,105 @@ func _score_basic_to_bench(action: Dictionary, game_state: GameState, player_ind
 	if card == null or card.card_data == null:
 		return 0.0
 	var player: PlayerState = game_state.players[player_index]
+	if _configured_deck_id == V18_PURE_DRAGAPULT_DECK_ID \
+			and _card_name(card) == DREEPY \
+			and _v175_dragapult_phantom_dive_ready(player.active_pokemon) \
+			and player.prizes.size() <= 2:
+		return -3800.0
 	if _card_name(card) == BUDEW:
 		if _v175_budew_count(player) > 0:
 			return 20.0
 		if _best_ready_dragapult_slot(player) != null:
 			return 40.0
 		return 620.0 if int(game_state.turn_number) <= 3 else 360.0
+	if _v175_should_suppress_gust_liability_bench(card, game_state, player_index):
+		return PRE_PHANTOM_GUST_LIABILITY_BENCH_SCORE
 	return super._score_basic_to_bench(action, game_state, player_index)
+
+
+func _score_attach_energy(action: Dictionary, game_state: GameState, player_index: int) -> float:
+	var score := super._score_attach_energy(action, game_state, player_index)
+	var player: PlayerState = game_state.players[player_index]
+	if _configured_deck_id == V18_PURE_DRAGAPULT_DECK_ID \
+			and action.get("target_slot", null) != player.active_pokemon \
+			and _v175_dragapult_phantom_dive_ready(player.active_pokemon) \
+			and player.prizes.size() <= 2:
+		return minf(score, -4200.0)
+	if _v175_should_suppress_gust_liability_attachment(action, game_state, player_index):
+		return minf(score, PARTIAL_GUST_LIABILITY_ATTACHMENT_SCORE)
+	return score
+
+
+func _v175_should_suppress_gust_liability_attachment(
+	action: Dictionary,
+	game_state: GameState,
+	player_index: int
+) -> bool:
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	if game_state.energy_attached_this_turn:
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	var target_slot: PokemonSlot = action.get("target_slot", null)
+	var proposed_energy: CardInstance = action.get("card", null)
+	if target_slot == null or target_slot != player.active_pokemon:
+		return false
+	if proposed_energy == null or proposed_energy.card_data == null \
+			or not proposed_energy.card_data.is_energy() or not player.hand.has(proposed_energy):
+		return false
+	var target_data := target_slot.get_card_data()
+	if target_data == null or str(target_data.effect_id) not in [
+		MARACTUS_GUST_LIABILITY_EFFECT_ID,
+		HAWLUCHA_GUST_LIABILITY_EFFECT_ID,
+	]:
+		return false
+	if maxi(0, _retreat_gap(target_slot) - 1) <= 0:
+		return false
+	if _best_ready_dragapult_slot(player) != null:
+		return false
+	return _v175_has_alternate_single_attachment_payment(player, proposed_energy)
+
+
+func _v175_has_alternate_single_attachment_payment(
+	player: PlayerState,
+	proposed_energy: CardInstance
+) -> bool:
+	if player == null:
+		return false
+	for slot: PokemonSlot in _v17_all_slots(player):
+		if _v175_slot_name(slot) not in [DREEPY, DRAKLOAK, DRAGAPULT_EX]:
+			continue
+		for combination: Array in _v175_first_attack_payment_combinations(player, slot):
+			if combination.size() != 1:
+				continue
+			var alternate: Variant = combination[0]
+			if alternate is CardInstance and alternate != proposed_energy and player.hand.has(alternate):
+				return true
+	return false
+
+
+func _v175_should_suppress_gust_liability_bench(
+	card: CardInstance,
+	game_state: GameState,
+	player_index: int
+) -> bool:
+	if card == null or card.card_data == null:
+		return false
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return false
+	var effect_id := str(card.card_data.effect_id)
+	if effect_id not in [MARACTUS_GUST_LIABILITY_EFFECT_ID, HAWLUCHA_GUST_LIABILITY_EFFECT_ID]:
+		return false
+	var player: PlayerState = game_state.players[player_index]
+	if _best_ready_dragapult_slot(player) != null:
+		return false
+	var turn_contract := _resolved_turn_contract(
+		game_state,
+		player_index,
+		{"prompt_kind": "action_selection", "kind": "play_basic_to_bench"}
+	)
+	var flags: Dictionary = turn_contract.get("flags", {}) if turn_contract.get("flags", {}) is Dictionary else {}
+	return bool(flags.get("miraidon_pressure", false))
 
 
 func _score_evolve(action: Dictionary, game_state: GameState, player_index: int) -> float:
@@ -146,6 +270,12 @@ func _score_evolve(action: Dictionary, game_state: GameState, player_index: int)
 	var player: PlayerState = game_state.players[player_index]
 	var target_slot: PokemonSlot = action.get("target_slot", null)
 	var name := _card_name(card)
+	if _configured_deck_id == V18_PURE_DRAGAPULT_DECK_ID \
+			and target_slot != player.active_pokemon \
+			and _v175_dragapult_phantom_dive_ready(player.active_pokemon) \
+			and player.prizes.size() <= 2 \
+			and name in [DRAKLOAK, DRAGAPULT_EX]:
+		return minf(base_score, -4200.0)
 	if name == DRAKLOAK:
 		if target_slot != null and _v175_slot_name(target_slot) == DREEPY:
 			var score := maxf(base_score, 900.0)
@@ -169,6 +299,11 @@ func _score_trainer(action: Dictionary, game_state: GameState, player_index: int
 		return super._score_trainer(action, game_state, player_index)
 	var player: PlayerState = game_state.players[player_index]
 	var name := _card_name(card)
+	if _configured_deck_id == V18_PURE_DRAGAPULT_DECK_ID \
+			and _v175_dragapult_phantom_dive_ready(player.active_pokemon) \
+			and player.prizes.size() <= 2 \
+			and name in ["Ultra Ball", "高级球", BUDDY_BUDDY_POFFIN, "Buddy-Buddy Poffin"]:
+		return -4200.0
 	match name:
 		IONO:
 			var opponent: PlayerState = game_state.players[1 - player_index]
@@ -211,12 +346,51 @@ func _score_trainer(action: Dictionary, game_state: GameState, player_index: int
 
 
 func _score_retreat(player: PlayerState, game_state: GameState, player_index: int) -> float:
+	if _configured_deck_id == V18_PURE_DRAGAPULT_DECK_ID \
+			and player != null \
+			and _v175_slot_name(player.active_pokemon) == DRAGAPULT_EX \
+			and _v175_dragapult_phantom_dive_ready(player.active_pokemon):
+		return -3200.0
+	if _v175_route_owner_retreat_spends_only_bridge(player):
+		return -2600.0
 	if player != null and _v175_slot_name(player.active_pokemon) == BUDEW:
 		if _has_ready_dragapult_promotion(player):
 			return 560.0
 		if _v17_dreepy_line_count(player) > 0 and int(game_state.turn_number) <= 5:
 			return -260.0
 	return super._score_retreat(player, game_state, player_index)
+
+
+func _v175_route_owner_retreat_spends_only_bridge(player: PlayerState) -> bool:
+	if player == null or player.active_pokemon == null:
+		return false
+	var active := player.active_pokemon
+	if _v175_slot_name(active) not in [DREEPY, DRAKLOAK]:
+		return false
+	var retreat_cost := active.get_retreat_cost()
+	if retreat_cost <= 0 or active.attached_energy.size() != retreat_cost:
+		return false
+	if not _v175_has_first_attack_payment_combination(player):
+		return false
+	return not _v175_hand_can_pay_first_attack_without_attached(player)
+
+
+func _v175_hand_can_pay_first_attack_without_attached(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	var hand_energy: Array[CardInstance] = []
+	for card: CardInstance in player.hand:
+		if card != null and card.card_data != null and card.card_data.is_energy():
+			hand_energy.append(card)
+	for first_index: int in hand_energy.size():
+		if _v175_energy_set_pays_first_attack([hand_energy[first_index]]):
+			return true
+		for second_index: int in range(first_index + 1, hand_energy.size()):
+			if _v175_energy_set_pays_first_attack([
+				hand_energy[first_index], hand_energy[second_index],
+			]):
+				return true
+	return false
 
 
 func _score_attack(action: Dictionary, game_state: GameState, player_index: int) -> float:
@@ -237,6 +411,15 @@ func _score_attack(action: Dictionary, game_state: GameState, player_index: int)
 func _score_search_pokemon(card: CardInstance, context: Dictionary, step_id: String = "") -> float:
 	if card != null and _card_name(card) == BUDEW:
 		return _v175_score_budew_search(_v17_context_player(context), context, step_id)
+	var player := _v17_context_player(context)
+	if player != null and _v17_count_name(player, DREEPY) > 0:
+		var name := _card_name(card)
+		var drakloak_missing := _v17_count_name(player, DRAKLOAK) == 0 and _v175_hand_count(player, DRAKLOAK) == 0
+		var candy_route_live := _has_hand_card(player, RARE_CANDY)
+		if name == DRAKLOAK and drakloak_missing:
+			return 980.0
+		if name == DRAGAPULT_EX and drakloak_missing and not candy_route_live:
+			return 420.0
 	return super._score_search_pokemon(card, context, step_id)
 
 
@@ -274,6 +457,140 @@ func get_discard_priority(card: CardInstance) -> int:
 	if _card_name(card) == BUDEW:
 		return 14
 	return super.get_discard_priority(card)
+
+
+func get_discard_priority_contextual(card: CardInstance, game_state: GameState, player_index: int) -> int:
+	var priority := super.get_discard_priority_contextual(card, game_state, player_index)
+	if card == null or card.card_data == null:
+		return priority
+	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
+		return priority
+	var player: PlayerState = game_state.players[player_index]
+	if _v175_removing_energy_eliminates_first_attack_payment(player, card):
+		return FIRST_ATTACK_ENERGY_DISCARD_PRIORITY
+	if _v175_has_route_critical_payment_energy(player):
+		var name := _card_name(card)
+		if name == MUNKIDORI:
+			return maxi(priority, FIRST_ATTACK_FODDER_DISCARD_PRIORITY + 10)
+		if name == DRAGAPULT_EX and _v175_hand_count(player, DRAGAPULT_EX) > 1:
+			return maxi(priority, FIRST_ATTACK_FODDER_DISCARD_PRIORITY)
+	return priority
+
+
+func _v175_removing_energy_eliminates_first_attack_payment(player: PlayerState, card: CardInstance) -> bool:
+	if player == null or card == null or card.card_data == null or not card.card_data.is_energy():
+		return false
+	if not player.hand.has(card) or not _v175_has_first_attack_payment_combination(player):
+		return false
+	return not _v175_has_first_attack_payment_combination(player, card)
+
+
+func _v175_has_route_critical_payment_energy(player: PlayerState) -> bool:
+	if player == null:
+		return false
+	for card: CardInstance in player.hand:
+		if _v175_removing_energy_eliminates_first_attack_payment(player, card):
+			return true
+	return false
+
+
+func _v175_has_first_attack_payment_combination(
+	player: PlayerState,
+	excluded_card: CardInstance = null,
+	include_dragapult_ex: bool = false
+) -> bool:
+	if player == null:
+		return false
+	var route_names: Array[String] = [DREEPY, DRAKLOAK]
+	if include_dragapult_ex:
+		route_names.append(DRAGAPULT_EX)
+	for slot: PokemonSlot in _v17_all_slots(player):
+		if _v175_slot_name(slot) not in route_names:
+			continue
+		if not _v175_first_attack_payment_combinations(player, slot, excluded_card).is_empty():
+			return true
+	return false
+
+
+func _v175_first_attack_payment_combinations(
+	player: PlayerState,
+	route_slot: PokemonSlot,
+	excluded_card: CardInstance = null
+) -> Array:
+	var combinations: Array = []
+	if player == null or route_slot == null \
+			or _v175_slot_name(route_slot) not in [DREEPY, DRAKLOAK, DRAGAPULT_EX]:
+		return combinations
+	var hand_energy: Array[CardInstance] = []
+	for card: CardInstance in player.hand:
+		if card != excluded_card and card.card_data != null and card.card_data.is_energy():
+			hand_energy.append(card)
+	var attached: Array[CardInstance] = []
+	attached.assign(route_slot.attached_energy)
+	if _v175_energy_set_pays_first_attack(attached):
+		combinations.append([])
+	for first_index: int in hand_energy.size():
+		var first_payment: Array[CardInstance] = attached.duplicate()
+		first_payment.append(hand_energy[first_index])
+		if _v175_energy_set_pays_first_attack(first_payment):
+			combinations.append([hand_energy[first_index]])
+		for second_index: int in range(first_index + 1, hand_energy.size()):
+			var pair_payment: Array[CardInstance] = first_payment.duplicate()
+			pair_payment.append(hand_energy[second_index])
+			if _v175_energy_set_pays_first_attack(pair_payment):
+				combinations.append([hand_energy[first_index], hand_energy[second_index]])
+	return combinations
+
+
+func _v175_energy_set_pays_first_attack(energy_cards: Array[CardInstance]) -> bool:
+	var special_energy_count := 0
+	for card: CardInstance in energy_cards:
+		if _v175_is_special_energy(card):
+			special_energy_count += 1
+	var fire_units := 0
+	var psychic_units := 0
+	var any_units := 0
+	for card: CardInstance in energy_cards:
+		for symbol: String in _v175_first_attack_payment_symbols(card, special_energy_count):
+			match symbol:
+				"R":
+					fire_units += 1
+				"P":
+					psychic_units += 1
+				"ANY":
+					any_units += 1
+	if fire_units > 0 and psychic_units > 0:
+		return true
+	if fire_units > 0 and any_units > 0:
+		return true
+	if psychic_units > 0 and any_units > 0:
+		return true
+	return any_units >= 2
+
+
+func _v175_first_attack_payment_symbols(card: CardInstance, special_energy_count: int) -> Array[String]:
+	var symbols: Array[String] = []
+	if card == null or card.card_data == null or not card.card_data.is_energy():
+		return symbols
+	var effect_id := str(card.card_data.effect_id)
+	if effect_id == NEO_UPPER_ENERGY_EFFECT_ID:
+		symbols.append("ANY")
+		symbols.append("ANY")
+		return symbols
+	if effect_id == LUMINOUS_ENERGY_EFFECT_ID:
+		if special_energy_count == 1:
+			symbols.append("ANY")
+		return symbols
+	var energy_type := _v17_energy_type(card).to_upper()
+	if energy_type in ["R", "P", "ANY"]:
+		symbols.append(energy_type)
+	return symbols
+
+
+func _v175_is_special_energy(card: CardInstance) -> bool:
+	if card == null or card.card_data == null:
+		return false
+	return str(card.card_data.card_type).to_lower().contains("special")
 
 
 func _card_name(card: Variant) -> String:

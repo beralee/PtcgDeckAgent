@@ -1,0 +1,219 @@
+{
+  "target": "creature",
+  "mode": "charge",
+  "prompt": "",
+  "role": "",
+  "input": "assets\\textures\\vfx\\ready_cynthias_garchomp_spiral_draw\\raw-sheet.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 180,
+  "rows": 2,
+  "cols": 3,
+  "cell_size": 256,
+  "fit_scale": 0.82,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "center",
+  "shared_scale": true,
+  "component_mode": "all",
+  "component_padding": 3,
+  "min_component_area": 1,
+  "edge_touch_margin": 2,
+  "frame_labels": [
+    "charge-1",
+    "charge-2",
+    "charge-3",
+    "charge-4",
+    "charge-5",
+    "charge-6"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        84,
+        104,
+        498,
+        431
+      ],
+      "edge_touch": false,
+      "output_size": [
+        202,
+        159
+      ],
+      "paste_position": [
+        27,
+        48
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        512,
+        0,
+        1024,
+        512
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        83,
+        78,
+        442,
+        436
+      ],
+      "edge_touch": false,
+      "output_size": [
+        175,
+        174
+      ],
+      "paste_position": [
+        40,
+        41
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        1024,
+        0,
+        1536,
+        512
+      ],
+      "component_mode": "all",
+      "component_count": 9,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        24,
+        92,
+        405,
+        437
+      ],
+      "edge_touch": false,
+      "output_size": [
+        185,
+        168
+      ],
+      "paste_position": [
+        35,
+        44
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        512,
+        512,
+        1024
+      ],
+      "component_mode": "all",
+      "component_count": 15,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        100,
+        18,
+        412,
+        386
+      ],
+      "edge_touch": false,
+      "output_size": [
+        152,
+        179
+      ],
+      "paste_position": [
+        52,
+        38
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        512,
+        512,
+        1024,
+        1024
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        6,
+        92,
+        436,
+        359
+      ],
+      "edge_touch": false,
+      "output_size": [
+        209,
+        130
+      ],
+      "paste_position": [
+        23,
+        63
+      ]
+    },
+    {
+      "grid": [
+        1,
+        2
+      ],
+      "source_box": [
+        1024,
+        512,
+        1536,
+        1024
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        47,
+        46,
+        424,
+        390
+      ],
+      "edge_touch": false,
+      "output_size": [
+        184,
+        167
+      ],
+      "paste_position": [
+        36,
+        44
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

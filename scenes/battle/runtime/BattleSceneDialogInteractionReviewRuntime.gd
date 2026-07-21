@@ -696,7 +696,7 @@ func _handle_dialog_choice_legacy(selected_indices: PackedInt32Array) -> void:
 					elif action_type == "stadium_ability":
 						_try_use_stadium_with_interaction(cp_action)
 					elif action_type == "retreat":
-						if _gsm.rule_validator.can_retreat(_gsm.game_state, cp_action):
+						if _gsm.rule_validator.can_retreat(_gsm.game_state, cp_action, _gsm.effect_processor):
 							_show_retreat_dialog(cp_action)
 						else:
 							_show_invalid_action_message({
@@ -1503,6 +1503,13 @@ func _on_llm_thinking_failed(turn_number: int, reason: String) -> void:
 	_maybe_run_ai()
 
 
+func _on_v18cpg_decision_ready(turn_number: int, accepted: bool, reason: String) -> void:
+	_ai_llm_waiting = false
+	_stop_llm_wait_hud()
+	_log("[V18CPG] turn %d: %s (%s)" % [turn_number, "policy ready" if accepted else "local fallback ready", reason])
+	_maybe_run_ai()
+
+
 
 func _run_ai_step() -> void:
 	if _ai_running:
@@ -1528,6 +1535,22 @@ func _run_ai_step() -> void:
 	_ai_running = false
 	if handled:
 		_ai_actions_this_turn += 1
+	elif starting_pending_choice == "" \
+		and _pending_choice == "" \
+		and _gsm != null \
+		and _gsm.game_state != null \
+		and _gsm.game_state.phase == GameState.GamePhase.MAIN \
+		and _gsm.game_state.current_player_index == _ai_opponent.player_index:
+		_runtime_log(
+			"ai_step_no_progress_fallback",
+			"turn=%d player=%d actions=%d" % [
+				_gsm.game_state.turn_number,
+				_ai_opponent.player_index,
+				_ai_actions_this_turn,
+			]
+		)
+		_hide_invalid_action_hint()
+		_on_end_turn(_ai_opponent.player_index)
 	var started_in_setup_prompt: bool = starting_pending_choice.begins_with("setup_active_") \
 		or starting_pending_choice.begins_with("setup_bench_")
 	if started_in_setup_prompt \
@@ -1822,6 +1845,19 @@ func _delay_effect_step_until_coin_animation_finishes() -> void:
 
 
 func _on_coin_animation_finished() -> void:
+	# CoinFlipAnimator emits from the last callback of its active Tween. Starting
+	# the next Tween synchronously from that callback is re-entrant: the old Tween
+	# can still finish teardown after play() installs the new one. Advance on the
+	# next idle turn so every queued toss owns an independent animation.
+	_coin_animating = false
+	if _coin_animation_advance_scheduled:
+		return
+	_coin_animation_advance_scheduled = true
+	call_deferred("_advance_coin_animation_queue")
+
+
+func _advance_coin_animation_queue() -> void:
+	_coin_animation_advance_scheduled = false
 	_play_next_coin_animation()
 
 

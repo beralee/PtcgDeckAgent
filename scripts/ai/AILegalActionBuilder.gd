@@ -134,7 +134,7 @@ func _build_play_basic_to_bench_actions(gsm: GameStateMachine, player_index: int
 	for card: CardInstance in player.hand:
 		if card == null or card.card_data == null:
 			continue
-		if not gsm.rule_validator.can_play_basic_to_bench(gsm.game_state, player_index, card):
+		if not gsm.rule_validator.can_play_basic_to_bench(gsm.game_state, player_index, card, gsm.effect_processor):
 			continue
 		actions.append({
 			"kind": "play_basic_to_bench",
@@ -220,13 +220,162 @@ func _build_play_stadium_actions(gsm: GameStateMachine, player_index: int, playe
 		if not gsm.rule_validator.can_play_stadium(gsm.game_state, player_index, card, gsm.effect_processor):
 			continue
 		var effect: BaseEffect = gsm.effect_processor.get_effect(card.card_data.effect_id)
-		actions.append({
+		var action := {
 			"kind": "play_stadium",
 			"card": card,
 			"targets": [],
 			"requires_interaction": effect != null and not effect.get_on_play_interaction_steps(card, gsm.game_state).is_empty(),
-		})
+		}
+		if not bool(action.get("requires_interaction", false)):
+			var certificate := _v18cpg_stadium_attack_breakpoint_certificate(
+				gsm, player_index, player, card
+			)
+			if not certificate.is_empty():
+				action["v18cpg_local_certificates"] = {
+					"partner_damage_breakpoint": certificate,
+				}
+		actions.append(action)
 	return actions
+
+
+func _v18cpg_stadium_attack_breakpoint_certificate(
+	gsm: GameStateMachine,
+	player_index: int,
+	player: PlayerState,
+	stadium_card: CardInstance
+) -> Dictionary:
+	var diagnostics := OS.has_environment("V18CPG_CERT_DIAGNOSTICS")
+	if _deck_strategy == null \
+			or not _deck_strategy.has_method("get_runtime_kind") \
+			or str(_deck_strategy.call("get_runtime_kind")) != "v18_conditional_policy" \
+			or not _deck_strategy.has_method("get_v18cpg_action_certificate_parameters"):
+		if diagnostics:
+			print("V18CPG_CERT_DIAGNOSTIC " + JSON.stringify({"stage": "runtime_gate"}))
+		return {}
+	var parameters: Variant = _deck_strategy.call("get_v18cpg_action_certificate_parameters")
+	if not (parameters is Dictionary):
+		if diagnostics:
+			print("V18CPG_CERT_DIAGNOSTIC " + JSON.stringify({"stage": "parameter_type"}))
+		return {}
+	var config: Variant = (parameters as Dictionary).get("same_turn_stadium_attack_breakpoint", {})
+	if not (config is Dictionary) or (config as Dictionary).is_empty():
+		if diagnostics:
+			print("V18CPG_CERT_DIAGNOSTIC " + JSON.stringify({"stage": "config_missing"}))
+		return {}
+	var booster_uid := str((config as Dictionary).get("booster_uid", "")).strip_edges().to_upper()
+	var attacker_uid := str((config as Dictionary).get("attacker_uid", "")).strip_edges().to_upper()
+	var replaced_uid := str((config as Dictionary).get("replaced_stadium_uid", "")).strip_edges().to_upper()
+	var attack_index := int((config as Dictionary).get("attack_index", -1))
+	if booster_uid == "" or attacker_uid == "" or replaced_uid == "" or attack_index < 0:
+		if diagnostics:
+			print("V18CPG_CERT_DIAGNOSTIC " + JSON.stringify({"stage": "config_invalid", "config": config}))
+		return {}
+	if stadium_card == null or stadium_card.card_data == null \
+			or stadium_card.card_data.get_uid().strip_edges().to_upper() != booster_uid:
+		if diagnostics:
+			print("V18CPG_CERT_DIAGNOSTIC " + JSON.stringify({"stage": "booster_mismatch", "expected": booster_uid, "actual": stadium_card.card_data.get_uid().strip_edges().to_upper() if stadium_card != null and stadium_card.card_data != null else ""}))
+		return {}
+	if gsm.game_state.stadium_card == null or gsm.game_state.stadium_card.card_data == null \
+			or gsm.game_state.stadium_card.card_data.get_uid().strip_edges().to_upper() != replaced_uid:
+		if diagnostics:
+			print("V18CPG_CERT_DIAGNOSTIC " + JSON.stringify({"stage": "replaced_stadium_mismatch", "expected": replaced_uid, "actual": gsm.game_state.stadium_card.card_data.get_uid().strip_edges().to_upper() if gsm.game_state.stadium_card != null and gsm.game_state.stadium_card.card_data != null else ""}))
+		return {}
+	var active := player.active_pokemon
+	if active == null or active.get_card_data() == null \
+			or active.get_card_data().get_uid().strip_edges().to_upper() != attacker_uid:
+		if diagnostics:
+			print("V18CPG_CERT_DIAGNOSTIC " + JSON.stringify({"stage": "attacker_mismatch", "expected": attacker_uid, "actual": active.get_card_data().get_uid().strip_edges().to_upper() if active != null and active.get_card_data() != null else ""}))
+		return {}
+	var blocker_uids: Array[String] = []
+	for raw_uid: Variant in (config as Dictionary).get("displacement_blocker_uids", []):
+		blocker_uids.append(str(raw_uid).strip_edges().to_upper())
+	for slot: PokemonSlot in _get_player_slots(gsm, player):
+		if slot != null and slot.get_card_data() != null \
+				and slot.get_card_data().get_uid().strip_edges().to_upper() in blocker_uids:
+			if diagnostics:
+				print("V18CPG_CERT_DIAGNOSTIC " + JSON.stringify({"stage": "displacement_blocker", "uid": slot.get_card_data().get_uid().strip_edges().to_upper()}))
+			return {}
+	var preview := gsm.get_v18_public_attack_preview_with_stadium(
+		player_index, attack_index, stadium_card
+	)
+	if preview.is_empty() \
+			or str(preview.get("attacker_uid", "")) != attacker_uid \
+			or str(preview.get("replaced_stadium_uid", "")) != replaced_uid:
+		if diagnostics:
+			print("V18CPG_CERT_DIAGNOSTIC " + JSON.stringify({"stage": "preview_identity", "preview": preview}))
+		return {}
+	var before: Dictionary = preview.get("before", {}) if preview.get("before", {}) is Dictionary else {}
+	var after: Dictionary = preview.get("after", {}) if preview.get("after", {}) is Dictionary else {}
+	var guards: Dictionary = preview.get("guards", {}) if preview.get("guards", {}) is Dictionary else {}
+	var after_knockout := bool(after.get("knockout", false))
+	var minimum_damage_gain := maxi(1, int((config as Dictionary).get("minimum_damage_gain", 1)))
+	var allow_non_ko_damage_upgrade := bool((config as Dictionary).get("allow_non_ko_damage_upgrade", false))
+	if not bool(before.get("attack_payable", false)) \
+			or bool(before.get("damage_cancelled", true)) \
+			or bool(before.get("knockout", true)) \
+			or not bool(after.get("attack_payable", false)) \
+			or bool(after.get("damage_cancelled", true)) \
+			or int(after.get("effective_damage", 0)) - int(before.get("effective_damage", 0)) < minimum_damage_gain \
+			or (not after_knockout and not allow_non_ko_damage_upgrade):
+		if diagnostics:
+			print("V18CPG_CERT_DIAGNOSTIC " + JSON.stringify({"stage": "preview_outcome", "before": before, "after": after, "target_effective_hp": int(preview.get("target_effective_hp", 0)), "guards": guards}))
+		return {}
+	if not bool(guards.get("attack_window_open", false)) \
+			or bool(guards.get("survival_hook", true)) \
+			or bool(guards.get("damage_reactive_hook", true)) \
+			or not bool(guards.get("active_damage_invariant_under_interaction", false)) \
+			or bool(guards.get("random", true)) \
+			or bool(guards.get("hidden_info", true)):
+		if diagnostics:
+			print("V18CPG_CERT_DIAGNOSTIC " + JSON.stringify({"stage": "preview_guard", "before": before, "after": after, "guards": guards}))
+		return {}
+	if diagnostics:
+		print("V18CPG_CERT_DIAGNOSTIC " + JSON.stringify({"stage": "minted", "before": before, "after": after, "target_effective_hp": int(preview.get("target_effective_hp", 0)), "guards": guards}))
+	var certificate_kind := "public_partner_same_turn_prize_breakpoint" \
+		if after_knockout else "public_partner_same_turn_damage_upgrade"
+	return {
+		"schema_version": 1,
+		"certificate_kind": certificate_kind,
+		"prefix": {
+			"kind": "play_stadium",
+			"card_uid": booster_uid,
+			"replaced_stadium_uid": replaced_uid,
+		},
+		"suffix": {
+			"attacker_slot_id": str(preview.get("attacker_slot_id", "")),
+			"attacker_uid": attacker_uid,
+			"attack_index": attack_index,
+			"target_slot_id": str(preview.get("target_slot_id", "")),
+			"active_damage_invariant_under_interaction": true,
+		},
+		"before": {
+			"attack_payable": true,
+			"damage_cancelled": false,
+			"effective_damage": int(before.get("effective_damage", 0)),
+			"target_effective_hp": int(preview.get("target_effective_hp", 0)),
+			"knockout": false,
+			"prizes": 0,
+		},
+		"after": {
+			"attack_payable": true,
+			"damage_cancelled": false,
+			"effective_damage": int(after.get("effective_damage", 0)),
+			"target_effective_hp": int(preview.get("target_effective_hp", 0)),
+			"knockout": after_knockout,
+			"prizes": int(preview.get("target_prizes", 0)) if after_knockout else 0,
+		},
+		"guards": {
+			"attack_window_open": true,
+			"target_stable": true,
+			"survival_hook": false,
+			"damage_reactive_hook": false,
+			"random": false,
+			"hidden_info": false,
+			"interaction_suffix_bound": true,
+			"displaced_suffix_dominates": false,
+		},
+		"evidence_kind": "engine_public_same_turn_suffix",
+	}
 
 
 func _build_use_stadium_effect_actions(
@@ -260,7 +409,8 @@ func _build_use_stadium_effect_actions(
 				gsm,
 				player_index,
 				player_index,
-				preview_steps
+				preview_steps,
+				stadium_card
 			)
 			if headless_targets != null:
 				targets = headless_targets
@@ -663,7 +813,37 @@ func _build_headless_targets_for_card_effect(
 	var steps: Array[Dictionary] = preview_steps
 	if steps.is_empty():
 		steps = _get_effect_interaction_preview_steps(effect, card, gsm.game_state, allow_side_effectful_headless_resolution)
-	return _build_headless_targets_from_steps(gsm, player_index, card.owner_index, steps)
+	var targets: Variant = _build_headless_targets_from_steps(gsm, player_index, card.owner_index, steps, card)
+	if targets == null:
+		return null
+	var context := _headless_target_context(targets)
+	for _followup_index: int in range(8):
+		var followup_steps: Array[Dictionary] = []
+		for step: Dictionary in effect.get_followup_interaction_steps(card, gsm.game_state, context):
+			var step_id: String = str(step.get("id", ""))
+			if step_id != "" and not context.has(step_id):
+				followup_steps.append(step)
+		if followup_steps.is_empty():
+			break
+		if not _can_headless_auto_resolve_steps(followup_steps, allow_side_effectful_headless_resolution):
+			return null
+		var resolved_followup: Variant = _build_headless_targets_from_steps(
+			gsm,
+			player_index,
+			card.owner_index,
+			followup_steps,
+			card,
+			context
+		)
+		if resolved_followup == null:
+			return null
+		var next_context := _headless_target_context(resolved_followup)
+		if next_context.size() <= context.size():
+			break
+		context = next_context
+	if context.is_empty():
+		return []
+	return [context]
 
 
 func _build_headless_targets_for_ability(
@@ -679,7 +859,7 @@ func _build_headless_targets_for_ability(
 	var steps: Array[Dictionary] = preview_steps
 	if steps.is_empty():
 		steps = _get_effect_interaction_preview_steps(effect, source_card, gsm.game_state, allow_side_effectful_headless_resolution)
-	return _build_headless_targets_from_steps(gsm, player_index, source_card.owner_index, steps)
+	return _build_headless_targets_from_steps(gsm, player_index, source_card.owner_index, steps, source_card)
 
 
 func _get_effect_interaction_preview_steps(
@@ -718,11 +898,15 @@ func _build_headless_targets_from_steps(
 	gsm: GameStateMachine,
 	player_index: int,
 	owner_index: int,
-	steps: Array[Dictionary]
+	steps: Array[Dictionary],
+	source_card: CardInstance = null,
+	initial_context: Dictionary = {}
 ) -> Variant:
 	if steps.is_empty():
 		return []
-	var context := {}
+	var context := initial_context.duplicate(false)
+	if source_card != null:
+		context["pending_effect_card"] = source_card
 	for step: Dictionary in steps:
 		var resolved: Variant = _resolve_headless_step(gsm, player_index, owner_index, step, context)
 		if resolved == null:
@@ -731,9 +915,16 @@ func _build_headless_targets_from_steps(
 			var resolved_dict: Dictionary = resolved
 			for key: Variant in resolved_dict.keys():
 				context[key] = resolved_dict[key]
+	context.erase("pending_effect_card")
 	if context.is_empty():
 		return []
 	return [context]
+
+
+func _headless_target_context(targets: Variant) -> Dictionary:
+	if targets is Array and not targets.is_empty() and targets[0] is Dictionary:
+		return targets[0].duplicate(false)
+	return {}
 
 
 func _resolve_headless_step(

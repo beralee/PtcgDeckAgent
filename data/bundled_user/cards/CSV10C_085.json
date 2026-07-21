@@ -1,0 +1,62 @@
+{
+    "name":  "火箭队的超梦ex",
+    "card_type":  "Pokemon",
+    "mechanic":  "ex",
+    "label":  "",
+    "description":  "特性: 力量抑制者\n只有在自己场上的「火箭队的宝可梦」数量在4只及以上时，这只宝可梦才可以使用招式。\n\n【超】【超】 擦除球 160+\n若希望，可以将最多2张自己备战宝可梦身上附着的能量放于弃牌区，追加造成其张数×60伤害。\n\n",
+    "yoren_code":  "Y1584",
+    "set_code":  "CSV10C",
+    "card_index":  "085",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "aky CG Works",
+    "rarity":  "RR",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "103a8775a94d6e7d8f151cbf680bd860",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/085.png",
+    "image_local_path":  "user://cards/images/CSV10C/085.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "P",
+    "stage":  "Basic",
+    "hp":  280,
+    "weakness_energy":  "D",
+    "weakness_value":  "×2",
+    "resistance_energy":  "F",
+    "resistance_value":  "-30",
+    "retreat_cost":  3,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "擦除球",
+                        "text":  "若希望，可以将最多2张自己备战宝可梦身上附着的能量放于弃牌区，追加造成其张数×60伤害。",
+                        "cost":  "PPC",
+                        "damage":  "160+",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+                      {
+                          "name":  "力量抑制者",
+                          "text":  "只有在自己场上的「火箭队的宝可梦」数量在4只及以上时，这只宝可梦才可以使用招式。"
+                      }
+                  ],
+    "energy_provides":  ""
+}

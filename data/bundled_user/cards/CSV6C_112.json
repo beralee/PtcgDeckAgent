@@ -1,0 +1,66 @@
+{
+    "name":  "下石鸟ex",
+    "card_type":  "Pokemon",
+    "mechanic":  "ex",
+    "label":  "",
+    "description":  " 快速搬运 \n这个招式，即使是先攻玩家的最初回合也可以使用。选择自己牌库中最多3张【基础】宝可梦，放于备战区。并重洗牌库。\n\n 暗影疾风 130\n若希望，可将这只宝可梦，以及放于其身上的所有卡牌，放回手牌。\n\n",
+    "yoren_code":  "Y1358",
+    "set_code":  "CSV6C",
+    "card_index":  "112",
+    "set_code_en":  "PAR",
+    "card_index_en":  "156",
+    "name_en":  "Bombirdier ex",
+    "name_zh":  "",
+    "artist":  "PLANETA Mochizuki",
+    "rarity":  "RR",
+    "release_date":  "2025-11-07T00:00:00+08:00",
+    "regulation_mark":  "G",
+    "effect_id":  "bbdb7b20fc7c4292acad64687c1ef318",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV6C/112.png",
+    "image_local_path":  "user://cards/images/CSV6C/112.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "C",
+    "stage":  "Basic",
+    "hp":  200,
+    "weakness_energy":  "L",
+    "weakness_value":  "×2",
+    "resistance_energy":  "F",
+    "resistance_value":  "-30",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "快速搬运",
+                        "text":  "这个招式，即使是先攻玩家的最初回合也可以使用。选择自己牌库中最多3张【基础】宝可梦，放于备战区。并重洗牌库。",
+                        "cost":  "C",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "暗影疾风",
+                        "text":  "若希望，可将这只宝可梦，以及放于其身上的所有卡牌，放回手牌。",
+                        "cost":  "CCC",
+                        "damage":  "130",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

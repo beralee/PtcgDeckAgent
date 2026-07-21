@@ -17,7 +17,11 @@ func applies_to_attack_index(attack_index: int) -> bool:
 func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state: GameState) -> Array[Dictionary]:
 	if not applies_to_attack_index(_resolve_attack_index(card, attack)):
 		return []
-	var opponent_bench: Array[PokemonSlot] = state.players[1 - card.owner_index].bench
+	var attacker := _find_slot_for_card(card, state)
+	var opponent_bench: Array[PokemonSlot] = []
+	for slot: PokemonSlot in state.players[1 - card.owner_index].bench:
+		if not _is_attack_effect_prevented(slot, attacker, state):
+			opponent_bench.append(slot)
 	if opponent_bench.is_empty():
 		return []
 	var counter_count: int = total_damage / 10
@@ -54,11 +58,33 @@ func execute_attack(attacker: PokemonSlot, _defender: PokemonSlot, attack_index:
 		var target: Variant = assignment.get("target", null)
 		var amount: int = int(assignment.get("amount", 10))
 		if target is PokemonSlot and target in opponent.bench:
-			if AbilityBenchImmune.prevents_opponent_attack_effect(target, attacker, state):
+			if _is_attack_effect_prevented(target as PokemonSlot, attacker, state):
 				continue
 			var target_slot := target as PokemonSlot
 			target_slot.damage_counters += max(0, amount)
 			_mark_attack_damage_counter_placement(target_slot, state)
+
+
+func _is_attack_effect_prevented(target: PokemonSlot, attacker: PokemonSlot, state: GameState) -> bool:
+	if target == null:
+		return true
+	if AbilityBenchImmune.prevents_opponent_attack_effect(target, attacker, state):
+		return true
+	if state == null:
+		return false
+	var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null)
+	if processor != null and processor.has_method("is_attack_effect_prevented_by_defender_ability"):
+		return bool(processor.call("is_attack_effect_prevented_by_defender_ability", attacker, target, state))
+	return false
+
+
+func _find_slot_for_card(card: CardInstance, state: GameState) -> PokemonSlot:
+	if card == null or state == null or card.owner_index < 0 or card.owner_index >= state.players.size():
+		return null
+	for slot: PokemonSlot in state.players[card.owner_index].get_all_pokemon():
+		if slot != null and slot.get_top_card() == card:
+			return slot
+	return null
 
 
 func _resolve_attack_index(card: CardInstance, attack: Dictionary) -> int:

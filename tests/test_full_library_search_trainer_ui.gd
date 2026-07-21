@@ -202,7 +202,7 @@ func test_energy_search_full_deck_visible_and_execution_ignores_non_basic_energy
 	return run_checks(checks)
 
 
-func test_top_n_search_is_not_upgraded_to_full_deck_visibility() -> String:
+func test_top_n_search_reveals_only_looked_cards_and_disables_non_matches() -> String:
 	var top_item := CardInstance.create(_make_trainer_data("Top Item"), 0)
 	var top_pokemon := CardInstance.create(_make_pokemon_data("Top Pokemon", 80), 0)
 	var hidden_item := CardInstance.create(_make_trainer_data("Hidden Item"), 0)
@@ -216,8 +216,36 @@ func test_top_n_search_is_not_upgraded_to_full_deck_visibility() -> String:
 
 	return run_checks([
 		assert_eq(step.get("items", []), [top_item], "top-N legal pool should only include matching cards in the looked range"),
-		assert_eq(visible_cards, [top_item], "top-N effects must not expose the full deck through card_items"),
+		assert_eq(visible_cards, [top_item, top_pokemon], "top-N effects should reveal every looked card without exposing cards below the looked range"),
+		assert_eq(step.get("card_indices", []), [0, -1], "top-N effects should keep matches selectable and render non-matches disabled"),
 		assert_false(hidden_item in visible_cards, "top-N effects must not reveal matching cards below the looked range"),
 		assert_false(hidden_pokemon in visible_cards, "top-N effects must not reveal non-matching hidden cards below the looked range"),
 		assert_false(str(step.get("visible_scope", "")) == "own_full_deck", "top-N effects must not be marked as own_full_deck"),
+	])
+
+
+func test_pokegear_whiff_reveals_top_seven_disabled_in_one_step() -> String:
+	var top_cards: Array[CardInstance] = []
+	for i: int in 7:
+		top_cards.append(CardInstance.create(_make_pokemon_data("Top Pokemon %d" % i, 80), 0))
+	var hidden_supporter := CardInstance.create(_make_trainer_data("Hidden Supporter", "Supporter"), 0)
+	var deck_cards: Array[CardInstance] = top_cards.duplicate()
+	deck_cards.append(hidden_supporter)
+	var state := _make_state_with_deck(deck_cards)
+	var effect := EffectLookTopCardsEffect.new(7, "Supporter", 1)
+	var card := CardInstance.create(_make_trainer_data("Pokégear 3.0"), 0)
+	var steps: Array[Dictionary] = effect.get_interaction_steps(card, state)
+	var step: Dictionary = steps[0] if not steps.is_empty() else {}
+	var utility_actions: Array = step.get("utility_actions", [])
+	var close_action: Dictionary = utility_actions[0] if not utility_actions.is_empty() and utility_actions[0] is Dictionary else {}
+
+	return run_checks([
+		assert_eq(steps.size(), 1, "Pokegear whiffs should still use one direct top-seven dialog"),
+		assert_eq(str(step.get("id", "")), "look_top_cards", "Pokegear whiffs should not enter the temporary empty-resolution prompt"),
+		assert_eq(step.get("items", []), [], "Pokegear should expose no selectable items when the top seven contain no Supporter"),
+		assert_eq(step.get("card_items", []), top_cards, "Pokegear should reveal exactly the top seven cards in the same dialog"),
+		assert_eq(step.get("card_indices", []), [-1, -1, -1, -1, -1, -1, -1], "Every non-Supporter in the viewed cards should be disabled"),
+		assert_false(hidden_supporter in (step.get("card_items", []) as Array), "Pokegear must not reveal a Supporter below the top seven"),
+		assert_eq(utility_actions.size(), 1, "A whiffed Pokegear should expose one close-and-continue action"),
+		assert_eq(close_action.get("selected_indices", null), [], "The close action should submit an explicit empty selection instead of a negative sentinel"),
 	])

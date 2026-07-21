@@ -1,0 +1,62 @@
+{
+    "name":  "鸭嘴炎兽",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "特性: 熔岩波动\n只要这只宝可梦在场上，对手处于【灼伤】状态的宝可梦因【灼伤】而放置的伤害指示物数量增加3个。\n\n【火】【火】 烧焦 90\n抛掷1次硬币，如果为正面，则令对手的战斗宝可梦陷入【灼伤】状态。\n\n",
+    "yoren_code":  "P467",
+    "set_code":  "CSV10C",
+    "card_index":  "026",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "Tonji Matsuno",
+    "rarity":  "R",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "efcbee0e4d6618efd25ec0ddd7801411",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/026.png",
+    "image_local_path":  "user://cards/images/CSV10C/026.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "R",
+    "stage":  "Stage 1",
+    "hp":  130,
+    "weakness_energy":  "W",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  2,
+    "evolves_from":  "鸭嘴火兽",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "烧焦",
+                        "text":  "抛掷1次硬币，如果为正面，则令对手的战斗宝可梦陷入【灼伤】状态。",
+                        "cost":  "RRC",
+                        "damage":  "90",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+                      {
+                          "name":  "熔岩波动",
+                          "text":  "只要这只宝可梦在场上，对手处于【灼伤】状态的宝可梦因【灼伤】而放置的伤害指示物数量增加3个。"
+                      }
+                  ],
+    "energy_provides":  ""
+}

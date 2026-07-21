@@ -1,0 +1,62 @@
+{
+    "name":  "大吾的小碎钻",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "特性: 岩石宫殿\n只要这只宝可梦在备战区，自己所有「大吾的宝可梦」所受到的对手宝可梦的招式的伤害「-30」。无论拥有这个特性的宝可梦有多少只，这个效果都不会重复。\n\n【超】 魔法射击 80\n\n\n",
+    "yoren_code":  "P0703",
+    "set_code":  "CSV10C",
+    "card_index":  "091",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "Ligton",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "ea90432003845e667141c349f775bc4b",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/091.png",
+    "image_local_path":  "user://cards/images/CSV10C/091.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "P",
+    "stage":  "Basic",
+    "hp":  80,
+    "weakness_energy":  "M",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  2,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "魔法射击",
+                        "text":  "",
+                        "cost":  "PCC",
+                        "damage":  "80",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+                      {
+                          "name":  "岩石宫殿",
+                          "text":  "只要这只宝可梦在备战区，自己所有「大吾的宝可梦」所受到的对手宝可梦的招式的伤害「-30」。无论拥有这个特性的宝可梦有多少只，这个效果都不会重复。"
+                      }
+                  ],
+    "energy_provides":  ""
+}

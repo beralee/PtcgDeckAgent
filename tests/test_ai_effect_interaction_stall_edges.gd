@@ -4,6 +4,7 @@ extends TestBase
 const AILegalActionBuilderScript = preload("res://scripts/ai/AILegalActionBuilder.gd")
 const AIStepResolverScript = preload("res://scripts/ai/AIStepResolver.gd")
 const BattleEffectInteractionControllerScript = preload("res://scripts/ui/battle/BattleEffectInteractionController.gd")
+const BattleCardDetailCoordinatorScript = preload("res://scripts/ui/battle/display/BattleCardDetailCoordinator.gd")
 
 
 class ResolverScene extends Control:
@@ -192,6 +193,20 @@ class CoinWaitScene extends RefCounted:
 		dialog_calls += 1
 
 
+class DetailResumeScene extends Node:
+	var _detail_overlay: Control = null
+	var _detail_action_bar: HBoxContainer = null
+	var _detail_use_btn: Button = null
+	var _detail_cancel_btn: Button = null
+	var _detail_hand_action_card: CardInstance = null
+	var _detail_mode: String = "readonly"
+	var _detail_reveal_tween: Tween = null
+	var ai_calls: int = 0
+
+	func _maybe_run_ai() -> void:
+		ai_calls += 1
+
+
 func _make_gsm() -> GameStateMachine:
 	var gsm := GameStateMachine.new()
 	gsm.game_state = GameState.new()
@@ -311,3 +326,21 @@ func test_failed_effect_interaction_reschedules_ai_after_reset() -> String:
 		assert_eq(str(scene._pending_choice), "", "Failed effect interactions should clear the stale effect prompt"),
 		assert_eq(scene.ai_calls, 1, "After clearing a failed AI-owned effect interaction, the scene should schedule the next AI step instead of idling"),
 	])
+
+
+func test_closing_card_detail_resumes_ai_after_mamoswine_ability_pause_race() -> String:
+	var coordinator := BattleCardDetailCoordinatorScript.new()
+	var scene := DetailResumeScene.new()
+	var detail_overlay := Panel.new()
+	detail_overlay.visible = true
+	scene._detail_overlay = detail_overlay
+	scene.add_child(detail_overlay)
+	coordinator.setup(scene)
+
+	coordinator.hide_card_detail()
+	var result := run_checks([
+		assert_false(detail_overlay.visible, "Closing the inspected card should remove the UI blocker"),
+		assert_eq(scene.ai_calls, 1, "Closing card detail after the AI pause expires must re-check AI scheduling"),
+	])
+	scene.free()
+	return result

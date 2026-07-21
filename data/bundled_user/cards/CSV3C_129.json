@@ -1,0 +1,53 @@
+{
+    "name":  "灾祸雪山",
+    "card_type":  "Stadium",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "每当双方玩家，各从自己的手牌给【基础】宝可梦（除【水】宝可梦外）附着能量时，给该宝可梦身上放置2个伤害指示物。",
+    "yoren_code":  "Y1300",
+    "set_code":  "CSV3C",
+    "card_index":  "129",
+    "set_code_en":  "PAL",
+    "card_index_en":  "174",
+    "name_en":  "Calamitous Snowy Mountain",
+    "name_zh":  "",
+    "artist":  "AYUMI ODASHIMA",
+    "rarity":  "U",
+    "release_date":  "2025-05-16T00:00:00+08:00",
+    "regulation_mark":  "G",
+    "effect_id":  "ceac9ee87d5850880f7438665925dbd2",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV3C/129.png",
+    "image_local_path":  "user://cards/images/CSV3C/129.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "",
+    "stage":  "",
+    "hp":  0,
+    "weakness_energy":  "",
+    "weakness_value":  "",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  0,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

@@ -1,0 +1,62 @@
+{
+    "name":  "阿响的火岩鼠",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "特性: 旅途牵绊\n在自己的回合可以使用1次。选择自己牌库中的1张「阿响的冒险」，在给对手看过之后加入手牌。并重洗牌库。\n\n【火】 烈焰 40\n\n\n",
+    "yoren_code":  "P0156",
+    "set_code":  "CSV10C",
+    "card_index":  "029",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "Souichirou Gunjima",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "3e4c565939e331574817cf3918c28725",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/029.png",
+    "image_local_path":  "user://cards/images/CSV10C/029.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "R",
+    "stage":  "Stage 1",
+    "hp":  100,
+    "weakness_energy":  "W",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "阿响的火球鼠",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "烈焰",
+                        "text":  "",
+                        "cost":  "R",
+                        "damage":  "40",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+                      {
+                          "name":  "旅途牵绊",
+                          "text":  "在自己的回合可以使用1次。选择自己牌库中的1张「阿响的冒险」，在给对手看过之后加入手牌。并重洗牌库。"
+                      }
+                  ],
+    "energy_provides":  ""
+}

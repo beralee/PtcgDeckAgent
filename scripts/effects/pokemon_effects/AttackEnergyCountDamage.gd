@@ -42,19 +42,34 @@ func execute_attack(
 	if count_all_own:
 		var player: PlayerState = state.players[player_index]
 		for slot: PokemonSlot in player.get_all_pokemon():
-			energy_count += _count_matching_energy(slot)
+			energy_count += _count_matching_energy(slot, state)
 	else:
-		energy_count = _count_matching_energy(attacker)
+		energy_count = _count_matching_energy(attacker, state)
 
 	defender.damage_counters += damage_per_energy * energy_count
 
 
-func _count_matching_energy(slot: PokemonSlot) -> int:
+func _count_matching_energy(slot: PokemonSlot, state: GameState) -> int:
 	if slot == null:
 		return 0
 	if energy_type == "":
 		return slot.get_total_energy_count()
-	return slot.count_energy_of_type(energy_type)
+	var count := 0
+	var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null) if state != null else null
+	for energy: CardInstance in slot.attached_energy:
+		if energy == null or energy.card_data == null:
+			continue
+		if processor != null and processor.has_method("get_energy_types_for"):
+			var provided_types := PackedStringArray(processor.call("get_energy_types_for", energy, state))
+			if energy_type in provided_types:
+				count += 1
+			continue
+		var provided := energy.card_data.energy_provides
+		if provided == "":
+			provided = energy.card_data.energy_type
+		if provided == energy_type or provided == "ANY":
+			count += 1
+	return count
 
 
 func get_description() -> String:

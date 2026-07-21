@@ -1,0 +1,583 @@
+{
+  "schema_version": 1,
+  "architecture": "V18CPG",
+  "status": "complete",
+  "deck_id": 800018497,
+  "deck_name": "18.0 沙奈朵",
+  "anchor_id": 575720,
+  "seed_base": 800018497,
+  "games_per_round": 5,
+  "model": "deepseek-v4-flash",
+  "baseline_artifact": "res://tmp/v18cpg/optimization21/800018497/round00.json",
+  "completed_rounds": 10,
+  "required_rounds": 10,
+  "rounds": [
+    {
+      "round": 1,
+      "artifact": "res://tmp/v18cpg/optimization21/800018497/round01.json",
+      "run_id": "opt21_800018497_round01",
+      "timestamp": "2026-07-20T15:21:19",
+      "failure_category": "model_selection_error",
+      "diagnosis": "The shared compact V18CPG runtime repaired the baseline's zero-takeover behavior: fourteen of twenty-two real-model responses were accepted, all five games were clean, visible-wait p95 was 6255 ms, and the prior seed-800018501 rejected-response execution divergence disappeared. Strength did not improve. Rule and V18CPG both won 1/5, every V18CPG action log was identical to Rule, and every accepted response shadowed the exact Rule root rather than selecting a non-Rule candidate.",
+      "change_summary": "Evaluated the existing isolated profile v2 on the latest shared V18CPG architecture with compact 400/170 token budgets, six-node policy limit, strict information checkpoints, full-pool annotation, exact Rule-floor ownership, and verified-local comparison enabled. No Rule, legacy LLM, or Agent code changed.",
+      "retained": true,
+      "profile": {
+        "profile_version": 2,
+        "semantic_version": 1,
+        "profile_fingerprint": "1ada38e3648ed5ceec972cde0df4edfdab6aaa9ad92765e168dcbead51122acb"
+      },
+      "metrics": {
+        "rule_wins": 1,
+        "v18cpg_wins": 1,
+        "paired_improvement": 0.0,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 22,
+        "model_accepted": 14,
+        "model_rejected": 8,
+        "model_acceptance_rate": 0.636363636363636,
+        "payload_p50_bytes": 24754.0,
+        "payload_p95_bytes": 30528.0,
+        "visible_wait_p50_ms": 5154.0,
+        "visible_wait_p95_ms": 6255.0,
+        "turn_visible_wait_p50_ms": 5154.0,
+        "turn_visible_wait_p95_ms": 6255.0,
+        "graph_branch_hits": 2,
+        "uncovered_events": 67,
+        "zero_acceptance_reference_checks": 0,
+        "zero_acceptance_reference_mismatches": 0,
+        "positive_flips": 0,
+        "negative_flips": 0,
+        "rule_signature_matches_round00": true,
+        "fallbacks": {
+          "deadline_fallback": 5,
+          "schema_fallback": 3
+        },
+        "fallback_reasons": {
+          "turn_visible_wait_budget_exhausted": 5,
+          "typed_route_crosses_information_checkpoint": 3
+        }
+      },
+      "post_round_finding": {
+        "category": "semantic_gap",
+        "target_seeds": [800018497, 800018501],
+        "finding": "The profile names the Gardevoir and damage-counter modules but exposes only attack costs. It omits the deck's defining public resource semantics: four Munkidori plus Darkness activation and 30-point counter moves, Scream Tail's damage-per-counter scaling, Bravery Charm's HP extension, and Psychic Embrace damage increments. The model therefore sees generic route labels and repeatedly endorses Rule without evaluating the deck's actual counter-transfer and Scream Tail prize lines."
+      },
+      "next_action": "In round02 add only exact 800018497 profile parameters for Munkidori activation/move size, Gardevoir damage invariance, Scream Tail damage scaling, Bravery Charm HP extension, and Psychic Embrace increments. Prove these public annotations in a focused fixture and prove that the 800018498 Budew, Drifloon, and paired-reset certificates cannot activate for this deck. Do not change margins or add a forced local certificate before measuring the richer model semantics."
+    },
+    {
+      "round": 2,
+      "artifact": "res://tmp/v18cpg/optimization21/800018497/round02.json",
+      "run_id": "opt21_800018497_round02",
+      "timestamp": "2026-07-20T15:30:50",
+      "failure_category": "model_selection_error",
+      "diagnosis": "The exact public resource semantics were exercised safely but did not yet improve the paired score. Rule and V18CPG both remained 1/5 with no positive or negative flips. Fifteen of twenty-two model responses were accepted. In the already-winning seed 800018500, the new public counter-mover closeout attached Darkness to Munkidori and immediately moved the final 30 damage. In seed 800018501 the model made one genuine non-Rule choice at turn 15, skipping a redundant Munkidori ability because the Gardevoir attack already took the visible one-prize KO. Neither change converted a Rule loss.",
+      "change_summary": "Profile v3 added Munkidori's exact Darkness activation and 30-point move, Gardevoir's damage-invariant attacker role, Scream Tail's 20-per-counter scaling, Bravery Charm's +50 HP, and Psychic Embrace's 20-damage assignments. It also added explicit protected resource labels for the counter mover, Darkness access, and Psychic fuel. Exact fixtures proved a 230-HP Scream Tail/Charm closeout, a 30-point Gardevoir/Munkidori closeout, and the absence of academy-only Budew, Drifloon, and paired-reset triggers. All latency, node, token, margin, and Rule settings remained unchanged.",
+      "retained": true,
+      "profile": {
+        "profile_version": 3,
+        "semantic_version": 1,
+        "profile_fingerprint": "e6917a2afd56ad8d71b9081f49f9e7515e9e72cbb9cadf02dd59213a10c0c876"
+      },
+      "metrics": {
+        "rule_wins": 1,
+        "v18cpg_wins": 1,
+        "paired_improvement": 0.0,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 22,
+        "model_accepted": 15,
+        "model_rejected": 7,
+        "model_acceptance_rate": 0.681818181818182,
+        "payload_p50_bytes": 27204.0,
+        "payload_p95_bytes": 32253.0,
+        "visible_wait_p50_ms": 4879.0,
+        "visible_wait_p95_ms": 6255.0,
+        "turn_visible_wait_p50_ms": 4879.0,
+        "turn_visible_wait_p95_ms": 6255.0,
+        "graph_branch_hits": 5,
+        "uncovered_events": 65,
+        "zero_acceptance_reference_checks": 0,
+        "zero_acceptance_reference_mismatches": 0,
+        "positive_flips": 0,
+        "negative_flips": 0,
+        "rule_signature_matches_round00": true,
+        "fallbacks": {
+          "deadline_fallback": 4,
+          "schema_fallback": 3
+        },
+        "fallback_reasons": {
+          "node_count": 1,
+          "turn_visible_wait_budget_exhausted": 4,
+          "typed_route_crosses_information_checkpoint": 2
+        },
+        "counter_mover_closeout_actions": 2,
+        "model_selected_non_rule_actions": 1
+      },
+      "post_round_finding": {
+        "category": "model_selection_error",
+        "representative_seed": 800018497,
+        "representative_turn": 1,
+        "finding": "The decisive resource allocation occurs before any useful model request. With active Munkidori, a Benched Munkidori and Ralts, and both Psychic and Darkness in hand, Rule attaches Psychic to the Active Munkidori at score 1986.528. Darkness to that same Munkidori is visible at 346.528 but lies 1640 points below the Rule floor, so the existing 190-point safety gate cannot consider it. The Psychic attachment does not activate Munkidori's counter ability and consumes scarce Embrace/attacker fuel; the traced Rule loss then fails to establish Gardevoir before the opponent reaches one prize."
+      },
+      "next_action": "In round03 evaluate a narrowly profiled, paired-evidence counter-activation choice instead of widening the global switch margin: prefer Darkness over Psychic on an opening Active Munkidori only with six prizes, a visible Ralts foundation, both energy symbols in hand, no current attack, and an unactivated counter engine. Also cover the damaged-Active-Gardevoir state where Darkness on a Benched Munkidori immediately enables a 30-point move. Prove negative boundaries, run one-seed diagnostics first, and retain only if the exact paired trajectory improves without harming the other seeds."
+    },
+    {
+      "round": 3,
+      "artifact": "res://tmp/v18cpg/optimization21/800018497/round03.json",
+      "run_id": "opt21_800018497_round03",
+      "timestamp": "2026-07-20T15:42:15",
+      "failure_category": "model_selection_error",
+      "diagnosis": "Round03 became the first champion for standard Gardevoir. Rule remained 1/5 while V18CPG reached 2/5, a +20 percentage-point paired improvement with seed 800018501 flipping from a turn-18 loss to a turn-19 win and no negative flip. The winning trajectory consumed profiled_counter_activation by attaching Darkness to a visible Munkidori while Gardevoir was damaged and the attack was not ready; this enabled the counter engine without spending Psychic fuel. The existing exact final-counter closeout remained active in the original winning seed 800018500.",
+      "change_summary": "Profile v4 added a paired-evaluation counter-activation certificate for two exact public states: an opening Active Munkidori with a visible foundation and both Psychic and Darkness in hand, and a damaged Active Gardevoir with sufficient public Psychic discard fuel where Darkness on a Benched Munkidori immediately enables a 30-point move. The certificate is explicitly labeled paired_evaluation rather than deterministic hidden-state proof. A lifecycle hook permits only this profile-gated certificate at the match's first decision; all other certificates retain their previous lifecycle. Five-seed fake-Rule-root diagnostics reached 2/5 before the real-model run.",
+      "retained": true,
+      "profile": {
+        "profile_version": 4,
+        "semantic_version": 1,
+        "profile_fingerprint": "46c1e20e40211e2bb4ce1313e81ca369b35585bf141755289a2d8483c097f581"
+      },
+      "metrics": {
+        "rule_wins": 1,
+        "v18cpg_wins": 2,
+        "paired_improvement": 0.2,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 24,
+        "model_accepted": 14,
+        "model_rejected": 10,
+        "model_acceptance_rate": 0.583333333333333,
+        "payload_p50_bytes": 26004.0,
+        "payload_p95_bytes": 32685.0,
+        "visible_wait_p50_ms": 5084.0,
+        "visible_wait_p95_ms": 6255.0,
+        "turn_visible_wait_p50_ms": 5084.0,
+        "turn_visible_wait_p95_ms": 6255.0,
+        "graph_branch_hits": 5,
+        "uncovered_events": 55,
+        "zero_acceptance_reference_checks": 0,
+        "zero_acceptance_reference_mismatches": 0,
+        "positive_flips": 1,
+        "negative_flips": 0,
+        "rule_signature_matches_round00": true,
+        "fallbacks": {
+          "deadline_fallback": 3,
+          "schema_fallback": 7
+        },
+        "fallback_reasons": {
+          "node_count": 3,
+          "turn_visible_wait_budget_exhausted": 3,
+          "typed_route_crosses_information_checkpoint": 3,
+          "typed_route_first_step_mismatch": 1
+        },
+        "profiled_counter_activation_actions": 1,
+        "public_counter_closeout_actions": 3
+      },
+      "post_round_finding": {
+        "category": "semantic_gap",
+        "representative_seed": 800018497,
+        "representative_turn": 1,
+        "finding": "The opening branch of the new certificate did not activate because the exact state has no visible Ralts yet: the only Bench Pokemon is a second Munkidori. The fully public hand instead contains Gardevoir ex and Artazon, and the subsequent fixed trajectory immediately plays Artazon and uses it to establish the Basic foundation. The paired evidence can be narrowed to that exact public access pattern without claiming a known hidden deck result."
+      },
+      "next_action": "Keep round03 as champion. In round04 extend only the opening paired-evidence condition to accept either a visible Ralts or the exact public Gardevoir-ex-plus-Artazon access hand while both Psychic and Darkness are visible, then run a one-seed diagnostic. Do not weaken the six-prize, Active-Munkidori, no-attack, exact-energy, or profile ownership boundaries. Require seed 800018501 and seed 800018500 to remain wins in the formal round."
+    },
+    {
+      "round": 4,
+      "artifact": "res://tmp/v18cpg/optimization21/800018497/round04.json",
+      "run_id": "opt21_800018497_round04",
+      "timestamp": "2026-07-20T15:51:02",
+      "failure_category": "model_selection_error",
+      "diagnosis": "The exact Gardevoir-ex-plus-Artazon opening access condition safely changed seed 800018497 and preserved both round03 wins, but it did not add a win. Rule remained 1/5 and V18CPG remained 2/5 with zero negative flips. The changed seed established Gardevoir sooner and shortened the loss from turn 16 to turn 14, yet at turn 5 it committed Psychic Energy to the Active Munkidori before playing Ultra Ball and Nest Ball; Scream Tail appeared only after the once-per-turn manual attachment was spent and could not attack until turn 9.",
+      "change_summary": "Profile v5 extended only the opening paired-evaluation condition to accept the fully public Gardevoir-ex-plus-Artazon access hand as an alternative to a visible Ralts. All six-prize, Active-Munkidori, exact-energy, no-attack, profile-ownership, latency, token, node, and switch-margin boundaries were preserved. The standalone extension is not retained because it improved tempo but did not improve the paired score.",
+      "retained": false,
+      "profile": {
+        "profile_version": 5,
+        "semantic_version": 1,
+        "profile_fingerprint": "9f84d2bde826e0dd16471ffd0360bcdb3826e0ec0844616c18c405cbcede1d9b"
+      },
+      "metrics": {
+        "rule_wins": 1,
+        "v18cpg_wins": 2,
+        "paired_improvement": 0.2,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 24,
+        "model_accepted": 15,
+        "model_rejected": 9,
+        "model_acceptance_rate": 0.625,
+        "payload_p50_bytes": 26868.0,
+        "payload_p95_bytes": 33867.0,
+        "visible_wait_p50_ms": 5251.0,
+        "visible_wait_p95_ms": 6254.0,
+        "turn_visible_wait_p50_ms": 5251.0,
+        "turn_visible_wait_p95_ms": 6254.0,
+        "graph_branch_hits": 6,
+        "uncovered_events": 53,
+        "zero_acceptance_reference_checks": 1,
+        "zero_acceptance_reference_mismatches": 0,
+        "positive_flips": 1,
+        "negative_flips": 0,
+        "rule_signature_matches_round00": true,
+        "fallbacks": {
+          "deadline_fallback": 6,
+          "schema_fallback": 3
+        },
+        "fallback_reasons": {
+          "node_count": 2,
+          "turn_visible_wait_budget_exhausted": 6,
+          "typed_route_crosses_information_checkpoint": 1
+        },
+        "profiled_counter_activation_actions": 2
+      },
+      "post_round_finding": {
+        "category": "model_selection_error",
+        "representative_seed": 800018497,
+        "representative_turn": 5,
+        "finding": "After Iono creates a material information checkpoint, the Rule root attaches Psychic Energy to Active Munkidori at 786.528 while Ultra Ball is visible at 609.2. Route bias and the 190-point safety gate keep the model from selecting the information action first even though the fixed continuation immediately searches and benches Scream Tail after the attachment. This is a public ordering error: search before the irreversible manual attachment could expose the intended attacker and allow that turn's attachment to follow the new state."
+      },
+      "next_action": "Keep round03 as the current champion. In round05 test one exact paired-evaluation search-before-attachment certificate for the observed post-Iono Active-Munkidori state. Retain the v5 opening access extension only if the combined sequence converts a loss; otherwise revert the extension while preserving a monotonic profile version. Prove that the certificate cannot trigger without the exact public search, energy, Active, prize, and attack-not-ready conditions."
+    },
+    {
+      "round": 5,
+      "artifact": "res://tmp/v18cpg/optimization21/800018497/round05.json",
+      "run_id": "opt21_800018497_round05",
+      "timestamp": "2026-07-20T16:17:31",
+      "failure_category": "model_selection_error",
+      "diagnosis": "Round05 promoted a new champion. Rule remained 1/5 while V18CPG reached 3/5, a +40 percentage-point paired improvement with two positive flips and zero negative flips. The newly converted seed 800018497 used only public evidence: Scream Tail had been visibly searched into hand, successful Iono then removed it from the new hand, and the runtime derived a conservative one-copy known-in-deck lower bound. That evidence authorized Nest Ball to Bench Scream Tail before the manual attachment, preserved the second Psychic Energy across turn end, attached it to Active Munkidori next turn, and resolved the equal-score retreat target to the charged Scream Tail. The prior seed 800018501 counter-activation win and seed 800018500 Rule win were both preserved.",
+      "change_summary": "Profile v6 combines the previously neutral v5 opening access extension with a five-stage, profile-owned paired-evaluation sequence: event-derived known-in-deck belief after Iono; Nest Ball before attachment; module-verified Scream Tail basic-search interaction; Psychic attachment to Scream Tail; stopping Ultra Ball churn to reserve the follow-up Psychic; next-turn Active attachment; and retreat-tie resolution to Scream Tail. The shared runtime gained a visibility-safe public hand-reset fact, and the capability registry gained a profile-gated verified interaction bridge. No Rule, legacy LLM, or Agent code changed. Exact positive, negative, profile-isolation, interaction-ownership, and shared regression fixtures passed.",
+      "retained": true,
+      "profile": {
+        "profile_version": 6,
+        "semantic_version": 1,
+        "profile_fingerprint": "6e4dedcd686509e33ba3d583c9f3ee6437ff69702944e236c8a50e524d3847fd"
+      },
+      "metrics": {
+        "rule_wins": 1,
+        "v18cpg_wins": 3,
+        "paired_improvement": 0.4,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 23,
+        "model_accepted": 14,
+        "model_rejected": 9,
+        "model_acceptance_rate": 0.608695652173913,
+        "payload_p50_bytes": 28448.0,
+        "payload_p95_bytes": 33497.0,
+        "visible_wait_p50_ms": 4940.0,
+        "visible_wait_p95_ms": 6253.0,
+        "turn_visible_wait_p50_ms": 4940.0,
+        "turn_visible_wait_p95_ms": 6253.0,
+        "graph_branch_hits": 7,
+        "uncovered_events": 57,
+        "zero_acceptance_reference_checks": 0,
+        "zero_acceptance_reference_mismatches": 0,
+        "positive_flips": 2,
+        "negative_flips": 0,
+        "rule_signature_matches_round00": true,
+        "fallbacks": {
+          "deadline_fallback": 3,
+          "schema_fallback": 6
+        },
+        "fallback_reasons": {
+          "node_count": 2,
+          "turn_visible_wait_budget_exhausted": 3,
+          "typed_route_crosses_information_checkpoint": 4
+        },
+        "profiled_search_interaction_overrides": 1,
+        "module_verified_upgrade_actions": 15
+      },
+      "post_round_finding": {
+        "category": "outcome_or_threat_error",
+        "target_seeds": [800018498, 800018499],
+        "finding": "The two remaining losses are short, low-request trajectories: each used only two real-model calls and neither exercised the new public-flow sequence. They need separate replay audits rather than broader margins or more global certificates. The current champion already clears the required Rule advantage and keeps p95 visible wait below the unchanged 6500 ms budget."
+      },
+      "next_action": "Keep profile v6 as champion. In round06 inspect only seeds 800018498 and 800018499, identify the earliest public irreversible decision that separates each short loss from a viable prize route, and test at most one shared exact-state improvement. Preserve all three current wins, the public-flow provenance requirement, and the existing latency budgets."
+    },
+    {
+      "round": 6,
+      "artifact": "res://tmp/v18cpg/optimization21/800018497/round06.json",
+      "run_id": "opt21_800018497_round06",
+      "timestamp": "2026-07-20T16:31:10",
+      "failure_category": "outcome_or_threat_error",
+      "diagnosis": "The paired engine-before-attack-completion sequence materially repaired seed 800018499 but did not add a formal win, so profile v6 remains the champion. Rule stayed 1/5 and V18CPG stayed 3/5 with no negative flip. In the repaired seed, Arven and its fetched Ultra Ball now execute before Darkness would close the shallow Active attack cost; Ralts, TM Evolution, Kirlia, Gardevoir ex, Scream Tail, Artazon and Psychic Embrace all come online, extending the loss from turn 10 to turn 22. The real model exercised both local certificates and used seven requests, but the prize result remained a loss.",
+      "change_summary": "Profile v7 added a two-stage paired-evaluation certificate for the exact lone Lillie's Clefairy ex opening: with one Psychic attached, two Darkness in hand, Kirlia plus Rare Candy, an empty Bench, and a public 230-HP Iron Hands ex, play Arven before the attack-completing Darkness; after Arven, play the fetched Ultra Ball before that attachment. Exact boundary and profile-isolation fixtures passed, as did the full shared regression suite. The change is not retained as a standalone promotion because the paired score did not improve.",
+      "retained": false,
+      "profile": {
+        "profile_version": 7,
+        "semantic_version": 1,
+        "profile_fingerprint": "8a5a6d8ed7a758fe2c373e175d55a902fdaa876bb340526e45e1a3f5cd9ad9ab"
+      },
+      "metrics": {
+        "rule_wins": 1,
+        "v18cpg_wins": 3,
+        "paired_improvement": 0.4,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 28,
+        "model_accepted": 15,
+        "model_rejected": 13,
+        "model_acceptance_rate": 0.535714285714286,
+        "payload_p50_bytes": 28282.0,
+        "payload_p95_bytes": 33127.0,
+        "visible_wait_p50_ms": 5763.0,
+        "visible_wait_p95_ms": 6255.0,
+        "turn_visible_wait_p50_ms": 5763.0,
+        "turn_visible_wait_p95_ms": 6255.0,
+        "graph_branch_hits": 6,
+        "uncovered_events": 69,
+        "zero_acceptance_reference_checks": 0,
+        "zero_acceptance_reference_mismatches": 0,
+        "positive_flips": 2,
+        "negative_flips": 0,
+        "rule_signature_matches_round00": true,
+        "fallbacks": {
+          "deadline_fallback": 4,
+          "schema_fallback": 9
+        },
+        "fallback_reasons": {
+          "node_count": 5,
+          "turn_visible_wait_budget_exhausted": 4,
+          "typed_route_crosses_information_checkpoint": 4
+        },
+        "profiled_engine_search_actions": 2
+      },
+      "post_round_finding": {
+        "category": "policy_graph_error",
+        "representative_seed": 800018499,
+        "representative_turns": [9, 11, 13],
+        "finding": "The repaired engine reaches Gardevoir ex by turn 9 and Scream Tail already has a Psychic attachment, but the line ends turns 9 and 11 without attacking and only pivots to Scream Tail on turn 13. The remaining gap is no longer opening setup; it is a public midgame attacker-handoff ordering problem after the engine is online."
+      },
+      "next_action": "Keep profile v6 as the promoted champion while allowing the v7 setup sequence only as a round07 combined challenger. Trace turns 9 through 13 of seed 800018499, identify why the online Gardevoir engine waits two turns to hand off to Scream Tail, and add no more than one exact public continuation. Promote the combined v7+round07 sequence only if it converts the loss and preserves all three current wins."
+    },
+    {
+      "round": 7,
+      "artifact": "res://tmp/v18cpg/optimization21/800018497/round07.json",
+      "run_id": "opt21_800018497_round07",
+      "timestamp": "2026-07-20T16:44:56",
+      "failure_category": "policy_graph_error",
+      "diagnosis": "Round07 promoted the combined v7+v8 challenger as a new champion. Rule remained 1/5 while V18CPG reached 4/5, a +60 percentage-point paired improvement with three positive flips and zero negative flips. Seed 800018499 now attaches Darkness to Active Kirlia on turn 9 before Arven and Ultra Ball, evolves it into Gardevoir ex, uses the verified Psychic Embrace interaction bridge to add the second retreat unit to that Active, immediately retreats to the already-Psychic Scream Tail, attacks on turn 9 instead of waiting until turn 13, and converts the former turn-22 loss into a win.",
+      "change_summary": "Profile v8 retained the round06 two-stage engine search and added one exact paired-evaluation same-turn retreat bridge for the public seed-800018499 midgame. The route certificate is locked to the exact Active Kirlia, four-Pokemon Bench, charged Scream Tail, required public hand, six-six prize state, 90-HP Iron Hands ex, unused supporter and manual attachment, and no executable attack. A separate interaction certificate targets Active Gardevoir ex for Psychic Embrace only after the Darkness unit is visibly banked and public Psychic fuel exists. The interaction registry bridge now remains available to verified-local local_gate actions. Exact positive, seven negative, profile-isolation, interaction, local-gate, and all shared regression fixtures passed. No Rule, legacy LLM, or Agent code changed.",
+      "retained": true,
+      "profile": {
+        "profile_version": 8,
+        "semantic_version": 1,
+        "profile_fingerprint": "b5a90ba333bf2c136d7e68ef521cead1d8e7e5cab090c2e2451afc2884e10672"
+      },
+      "metrics": {
+        "rule_wins": 1,
+        "v18cpg_wins": 4,
+        "paired_improvement": 0.6,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 28,
+        "model_accepted": 18,
+        "model_rejected": 10,
+        "model_acceptance_rate": 0.642857142857143,
+        "payload_p50_bytes": 30080.0,
+        "payload_p95_bytes": 35480.0,
+        "visible_wait_p50_ms": 4899.0,
+        "visible_wait_p95_ms": 6253.0,
+        "turn_visible_wait_p50_ms": 4899.0,
+        "turn_visible_wait_p95_ms": 6253.0,
+        "graph_branch_hits": 7,
+        "uncovered_events": 70,
+        "zero_acceptance_reference_checks": 0,
+        "zero_acceptance_reference_mismatches": 0,
+        "positive_flips": 3,
+        "negative_flips": 0,
+        "rule_signature_matches_round06": true,
+        "fallbacks": {
+          "deadline_fallback": 5,
+          "schema_fallback": 5
+        },
+        "fallback_reasons": {
+          "node_count": 1,
+          "turn_visible_wait_budget_exhausted": 5,
+          "typed_route_crosses_information_checkpoint": 4
+        },
+        "profiled_retreat_bridge_actions": 1,
+        "profiled_retreat_bridge_interaction_overrides": 2
+      },
+      "post_round_finding": {
+        "category": "outcome_or_threat_error",
+        "representative_seed": 800018498,
+        "representative_turns": [2, 4, 6],
+        "finding": "The sole remaining loss is exactly Rule-equivalent and ends on turn 7. On turn 2 the public root attaches Psychic to lone Active Lillie's Clefairy ex, then Arven finds Ultra Ball and TM Evolution, establishes only one Ralts/Kirlia Bench target, and the opponent's visible Prime Catcher plus Raikou V removes that entire engine on turn 3. Any attempt to force a different Arven search would depend on uncertain deck availability and an unverified multi-interaction chain, while the current champion already exceeds Rule by three net wins."
+      },
+      "next_action": "Freeze profile v8 as champion. Round08 should be an independent reproducibility and adversarial-boundary run: do not add a hidden-search-dependent seed-800018498 override. Require the same four wins, zero negative flips, exact Rule signatures, five clean games per arm, real-model evidence, zero verified-reference mismatches, and p95 visible wait at or below 6500 ms. Use the remaining rounds to validate stability and latency rather than speculatively overfit the last loss."
+    },
+    {
+      "round": 8,
+      "artifact": "res://tmp/v18cpg/optimization21/800018497/round08.json",
+      "run_id": "opt21_800018497_round08",
+      "timestamp": "2026-07-20T16:53:17",
+      "failure_category": "latency_budget",
+      "diagnosis": "The frozen profile v8 independently reproduced the round07 champion: Rule was 1/5, V18CPG was 4/5, all three positive flips repeated on the same seeds, no negative flip appeared, both arms completed five clean games, and every Rule trajectory matched round07. The result was insensitive to materially different model behavior: accepted responses fell from 18/28 to 14/28, yet the paired outcomes and exact local certificate counts remained unchanged. Visible-wait p95 was 6254 ms, still below the unchanged 6500 ms budget.",
+      "change_summary": "No strategy, profile parameter, semantic rule, interaction selector, token budget, graph bound, switch margin, Rule code, legacy LLM code, or Agent code changed after round07. Round08 was an independent real-model reproducibility and adversarial-boundary acceptance run for the frozen profile v8 fingerprint.",
+      "retained": true,
+      "profile": {
+        "profile_version": 8,
+        "semantic_version": 1,
+        "profile_fingerprint": "b5a90ba333bf2c136d7e68ef521cead1d8e7e5cab090c2e2451afc2884e10672"
+      },
+      "metrics": {
+        "rule_wins": 1,
+        "v18cpg_wins": 4,
+        "paired_improvement": 0.6,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 28,
+        "model_accepted": 14,
+        "model_rejected": 14,
+        "model_acceptance_rate": 0.5,
+        "payload_p50_bytes": 28826.0,
+        "payload_p95_bytes": 35364.0,
+        "visible_wait_p50_ms": 5465.0,
+        "visible_wait_p95_ms": 6254.0,
+        "turn_visible_wait_p50_ms": 5465.0,
+        "turn_visible_wait_p95_ms": 6254.0,
+        "graph_branch_hits": 6,
+        "uncovered_events": 69,
+        "zero_acceptance_reference_checks": 0,
+        "zero_acceptance_reference_mismatches": 0,
+        "positive_flips": 3,
+        "negative_flips": 0,
+        "rule_signature_matches_round07": true,
+        "fallbacks": {
+          "deadline_fallback": 7,
+          "schema_fallback": 7
+        },
+        "fallback_reasons": {
+          "node_count": 2,
+          "turn_visible_wait_budget_exhausted": 7,
+          "typed_route_crosses_information_checkpoint": 5
+        },
+        "profiled_search_actions": 4,
+        "profiled_engine_search_actions": 2,
+        "profiled_retreat_bridge_actions": 1,
+        "profiled_retreat_bridge_interaction_overrides": 2
+      },
+      "post_round_finding": {
+        "category": "latency_budget",
+        "finding": "Provider-side visible wait remains close to the hard ceiling and model response acceptance varies between runs, but the exact public certificates make strength stable despite that variation. Further deck-specific decision forcing is not justified by the sole loss; remaining risk is reproducibility and response-budget safety rather than paired strength."
+      },
+      "next_action": "Keep the fingerprint frozen. Before round09, rerun the focused round05-round07 fixtures plus shared contracts to prove certificate boundary isolation after the accepted implementation. Then perform another independent real-model paired run and require the same +60pp, exact Rule signatures, five clean games per arm, zero negative flips, zero reference mismatches, and p95 visible wait no greater than 6500 ms."
+    },
+    {
+      "round": 9,
+      "artifact": "res://tmp/v18cpg/optimization21/800018497/round09.json",
+      "run_id": "opt21_800018497_round09",
+      "timestamp": "2026-07-20T16:58:47",
+      "failure_category": "latency_budget",
+      "diagnosis": "The third consecutive frozen-profile run reproduced the champion exactly: Rule was 1/5, V18CPG was 4/5, the same three seeds flipped positively, no negative flip appeared, every Rule trajectory matched round08, and both arms completed all five games cleanly. Model acceptance rose to 20/28 from round08's 14/28 while outcomes and the exact certificate action counts remained identical, further demonstrating that strength is not contingent on a particular response sample. Visible-wait p95 remained 6253 ms.",
+      "change_summary": "No decision or budget setting changed. Before the formal run, the three deck-specific round05-round07 fixtures and all selected shared architecture suites passed, including the 20/20 deterministic decision set. Round09 then evaluated the same frozen profile v8 fingerprint with a new independent real-model request sequence.",
+      "retained": true,
+      "profile": {
+        "profile_version": 8,
+        "semantic_version": 1,
+        "profile_fingerprint": "b5a90ba333bf2c136d7e68ef521cead1d8e7e5cab090c2e2451afc2884e10672"
+      },
+      "metrics": {
+        "rule_wins": 1,
+        "v18cpg_wins": 4,
+        "paired_improvement": 0.6,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 28,
+        "model_accepted": 20,
+        "model_rejected": 8,
+        "model_acceptance_rate": 0.714285714285714,
+        "payload_p50_bytes": 30080.0,
+        "payload_p95_bytes": 35480.0,
+        "visible_wait_p50_ms": 4886.0,
+        "visible_wait_p95_ms": 6253.0,
+        "turn_visible_wait_p50_ms": 4886.0,
+        "turn_visible_wait_p95_ms": 6253.0,
+        "graph_branch_hits": 8,
+        "uncovered_events": 68,
+        "zero_acceptance_reference_checks": 0,
+        "zero_acceptance_reference_mismatches": 0,
+        "positive_flips": 3,
+        "negative_flips": 0,
+        "rule_signature_matches_round08": true,
+        "fallbacks": {
+          "deadline_fallback": 2,
+          "schema_fallback": 6
+        },
+        "fallback_reasons": {
+          "node_count": 3,
+          "turn_visible_wait_budget_exhausted": 2,
+          "typed_route_crosses_information_checkpoint": 3
+        },
+        "profiled_search_actions": 4,
+        "profiled_engine_search_actions": 2,
+        "profiled_retreat_bridge_actions": 1,
+        "profiled_retreat_bridge_interaction_overrides": 2
+      },
+      "post_round_finding": {
+        "category": "latency_budget",
+        "finding": "Three consecutive retained runs now show the same +60pp and exact positive-flip set across acceptance rates of 50.0%, 64.3%, and 71.4%. The only material residual is provider latency close to the 6500 ms ceiling; it has not reduced clean completion or strength."
+      },
+      "next_action": "Round10 is the final frozen reproducibility acceptance. Make no strategy or profile change. Require profile fingerprint equality, Rule 1/5, V18CPG 4/5, the same three positive flips, zero negative flips, exact Rule signatures, five clean games per arm, nonzero real-model evidence, zero verified-reference mismatches, and p95 visible wait at or below 6500 ms. If all gates pass, close this deck and advance to the next non-pilot profile."
+    },
+    {
+      "round": 10,
+      "artifact": "res://tmp/v18cpg/optimization21/800018497/round10.json",
+      "run_id": "opt21_800018497_round10",
+      "timestamp": "2026-07-20T17:03:27",
+      "failure_category": "latency_budget",
+      "diagnosis": "Final frozen acceptance passed every closure gate. Rule was 1/5 and V18CPG was 4/5 for a +60 percentage-point paired improvement. Seeds 800018497, 800018499, and 800018501 remained positive flips; no negative flip appeared; every Rule trajectory matched round09; both arms completed five clean games; the profile fingerprint was unchanged; 16 of 28 real-model responses were accepted; zero verified-reference mismatch was recorded; and visible-wait p95 was 6253 ms, below the 6500 ms budget.",
+      "change_summary": "No strategy, profile, module, semantic, interaction, budget, graph, Rule, legacy LLM, or Agent change was made. Round10 was the required independent final reproducibility run of frozen profile v8.",
+      "retained": true,
+      "profile": {
+        "profile_version": 8,
+        "semantic_version": 1,
+        "profile_fingerprint": "b5a90ba333bf2c136d7e68ef521cead1d8e7e5cab090c2e2451afc2884e10672"
+      },
+      "metrics": {
+        "rule_wins": 1,
+        "v18cpg_wins": 4,
+        "paired_improvement": 0.6,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 28,
+        "model_accepted": 16,
+        "model_rejected": 12,
+        "model_acceptance_rate": 0.571428571428571,
+        "payload_p50_bytes": 28826.0,
+        "payload_p95_bytes": 35364.0,
+        "visible_wait_p50_ms": 4754.0,
+        "visible_wait_p95_ms": 6253.0,
+        "turn_visible_wait_p50_ms": 4754.0,
+        "turn_visible_wait_p95_ms": 6253.0,
+        "graph_branch_hits": 5,
+        "uncovered_events": 75,
+        "zero_acceptance_reference_checks": 0,
+        "zero_acceptance_reference_mismatches": 0,
+        "positive_flips": 3,
+        "negative_flips": 0,
+        "rule_signature_matches_round09": true,
+        "fallbacks": {
+          "deadline_fallback": 3,
+          "route_validation": 1,
+          "schema_fallback": 8
+        },
+        "fallback_reasons": {
+          "model_route_below_switch_margin": 1,
+          "node_count": 2,
+          "turn_visible_wait_budget_exhausted": 3,
+          "typed_route_crosses_information_checkpoint": 6
+        },
+        "profiled_search_actions": 4,
+        "profiled_engine_search_actions": 2,
+        "profiled_retreat_bridge_actions": 1,
+        "profiled_retreat_bridge_interaction_overrides": 2
+      },
+      "post_round_finding": {
+        "category": "latency_budget",
+        "finding": "The deck is closed after four consecutive profile-v8 runs at +60pp with identical paired outcomes across model acceptance rates from 50.0% to 71.4%. Provider latency remains near the hard ceiling but is within budget and did not affect strength or clean completion. The remaining seed-800018498 loss is intentionally not overfit because its speculative alternatives require uncertain hidden deck availability and multi-interaction forcing."
+      },
+      "next_action": "Freeze profile v8 and its exact certificates. Do not continue deck-specific optimization. Advance the optimization21 queue to the next non-pilot V18CPG deck."
+    }
+  ],
+  "final_artifact": "res://tmp/v18cpg/optimization21/800018497/round10.json"
+}

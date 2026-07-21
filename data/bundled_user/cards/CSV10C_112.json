@@ -1,0 +1,58 @@
+{
+  "name": "竹兰的尖牙陆鲨",
+  "card_type": "Pokemon",
+  "mechanic": "",
+  "label": "",
+  "description": "特性: 王者呼声\n在自己的回合可以使用1次。选择自己牌库中的1张「竹兰的宝可梦」，在给对手看过之后加入手牌。并重洗牌库。\n\n【斗】 龙切 40\n\n\n",
+  "yoren_code": "P0444",
+  "set_code": "CSV10C",
+  "card_index": "112",
+  "set_code_en": "",
+  "card_index_en": "",
+  "name_en": "",
+  "name_zh": "",
+  "artist": "Taira Akitsu",
+  "rarity": "C",
+  "release_date": "2026-07-16T00:00:00+08:00",
+  "regulation_mark": "I",
+  "effect_id": "23e6f24fc40bdb19384bc3c7822beea1",
+  "image_url": "https://tcg.mik.moe/static/img/CSV10C/112.png",
+  "image_local_path": "user://cards/images/CSV10C/112.png",
+  "source_provider": "tcg_mik",
+  "source_url": "https://tcg.mik.moe/cards/CSV10C/112",
+  "source_set_code": "CSV10C",
+  "source_card_index": "112",
+  "source_language": "zh-CN",
+  "source_prints": [],
+  "source_imported_at": 0,
+  "source_parser_version": 1,
+  "is_tags": [],
+  "regulation_standard": true,
+  "regulation_expanded": true,
+  "energy_type": "F",
+  "stage": "Stage 1",
+  "hp": 100,
+  "weakness_energy": "G",
+  "weakness_value": "×2",
+  "resistance_energy": "",
+  "resistance_value": "",
+  "retreat_cost": 1,
+  "evolves_from": "竹兰的圆陆鲨",
+  "ancient_trait": "",
+  "attacks": [
+    {
+      "name": "龙切",
+      "text": "",
+      "cost": "F",
+      "damage": "40",
+      "is_vstar_power": false
+    }
+  ],
+  "abilities": [
+    {
+      "name": "王者呼声",
+      "text": "在自己的回合可以使用1次。选择自己牌库中的1张「竹兰的宝可梦」，在给对手看过之后加入手牌。并重洗牌库。"
+    }
+  ],
+  "energy_provides": ""
+}

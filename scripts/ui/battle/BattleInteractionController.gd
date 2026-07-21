@@ -983,6 +983,9 @@ func on_field_assignment_source_chosen(scene: Object, source_index: int) -> void
 	if max_assignments > 0 and assignment_entries.size() >= max_assignments:
 		scene.call("_log", "已达到可分配卡牌上限")
 		return
+	if field_assignment_source_bucket_limit_reached(interaction_data, assignment_entries, source_index):
+		scene.call("_log", "该类型已达到可分配上限")
+		return
 
 	if int(scene.get("_field_interaction_assignment_selected_source_index")) == source_index:
 		scene.set("_field_interaction_assignment_selected_source_index", -1)
@@ -1237,9 +1240,12 @@ func refresh_single_field_assignment_source_view(scene: Object, card_view: Battl
 	var idx: int = int(card_view.get_meta("field_assignment_source_index", -1))
 	var source_selected := idx == selected_source_index
 	var source_assigned := find_field_assignment_index_for_source(scene, idx) >= 0
+	var assignment_entries: Array = scene.get("_field_interaction_assignment_entries")
+	var interaction_data: Dictionary = scene.get("_field_interaction_data")
+	var source_bucket_full := false if source_assigned else field_assignment_source_bucket_limit_reached(interaction_data, assignment_entries, idx)
 	card_view.set_selected(source_selected)
-	card_view.set_selectable_hint(not source_selected and not source_assigned)
-	card_view.set_disabled(source_assigned)
+	card_view.set_selectable_hint(not source_selected and not source_assigned and not source_bucket_full)
+	card_view.set_disabled(source_assigned or source_bucket_full)
 
 
 func on_field_interaction_clear_pressed(scene: Object) -> void:
@@ -1565,6 +1571,40 @@ func _count_assignments_for_target_index(assignment_entries: Array, target_index
 		if int((entry_variant as Dictionary).get("target_index", -1)) == target_index:
 			count += 1
 	return count
+
+
+func field_assignment_source_bucket_key(interaction_data: Dictionary, source_index: int) -> String:
+	var bucket_keys: Array = interaction_data.get("source_bucket_keys", [])
+	if source_index < 0 or source_index >= bucket_keys.size():
+		return ""
+	return str(bucket_keys[source_index])
+
+
+func count_assignments_for_source_bucket(interaction_data: Dictionary, assignment_entries: Array, bucket_key: String) -> int:
+	if bucket_key == "":
+		return 0
+	var count := 0
+	for entry_variant: Variant in assignment_entries:
+		if not (entry_variant is Dictionary):
+			continue
+		var entry := entry_variant as Dictionary
+		var source_index := int(entry.get("source_index", -1))
+		if field_assignment_source_bucket_key(interaction_data, source_index) == bucket_key:
+			count += 1
+	return count
+
+
+func field_assignment_source_bucket_limit_reached(interaction_data: Dictionary, assignment_entries: Array, source_index: int) -> bool:
+	var bucket_key := field_assignment_source_bucket_key(interaction_data, source_index)
+	if bucket_key == "":
+		return false
+	var bucket_limits: Dictionary = interaction_data.get("max_assignments_per_source_bucket", {})
+	if not bucket_limits.has(bucket_key):
+		return false
+	var limit := int(bucket_limits.get(bucket_key, 0))
+	if limit <= 0:
+		return false
+	return count_assignments_for_source_bucket(interaction_data, assignment_entries, bucket_key) >= limit
 
 
 func _turn_number(scene: Object) -> int:

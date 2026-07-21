@@ -11,6 +11,7 @@ android/
 .codex/skills/*
 !.codex/skills/ptcg-limitless-importer/
 !.codex/skills/ptcg-limitless-importer/**
+.codex-remote-attachments/
 .worktrees/
 
 *.log

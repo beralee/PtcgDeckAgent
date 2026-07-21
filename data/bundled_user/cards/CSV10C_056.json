@@ -1,0 +1,59 @@
+{
+    "name":  "竹兰的美纳斯",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【水】 水流分裂 60\n给对手的2只备战宝可梦也各造成30伤害。[备战宝可梦不计算弱点、抗性。]\n\n",
+    "yoren_code":  "P0350",
+    "set_code":  "CSV10C",
+    "card_index":  "056",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "You Iribi",
+    "rarity":  "U",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "dd5b72f20a205142f9255a3475ed6b44",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/056.png",
+    "image_local_path":  "user://cards/images/CSV10C/056.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "W",
+    "stage":  "Stage 1",
+    "hp":  130,
+    "weakness_energy":  "L",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  2,
+    "evolves_from":  "竹兰的丑丑鱼",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "水流分裂",
+                        "text":  "给对手的2只备战宝可梦也各造成30伤害。[备战宝可梦不计算弱点、抗性。]",
+                        "cost":  "WC",
+                        "damage":  "60",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

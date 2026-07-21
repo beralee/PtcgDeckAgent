@@ -1,0 +1,58 @@
+{
+  "abilities": [
+    {
+      "name": "交易",
+      "text": "在自己的回合，如果将自己的1张手牌放于弃牌区的话，则可以使用1次。从自己牌库上方抽取2张卡牌。"
+    }
+  ],
+  "ancient_trait": "",
+  "artist": "Megumi Mizutani",
+  "attacks": [
+    {
+      "cost": "DD",
+      "damage": "",
+      "is_vstar_power": false,
+      "name": "暗夜王牌",
+      "text": "选择自己备战区中的「N的宝可梦」所拥有的1个招式，作为这个招式使用。"
+    }
+  ],
+  "card_index": "272",
+  "card_index_en": "",
+  "card_type": "Pokemon",
+  "description": "特性: 交易\n在自己的回合，如果将自己的1张手牌放于弃牌区的话，则可以使用1次。从自己牌库上方抽取2张卡牌。\n\n【恶】【恶】 暗夜王牌 \n选择自己备战区中的「N的宝可梦」所拥有的1个招式，作为这个招式使用。\n\n",
+  "effect_id": "a1742becbf9fdc6a66ddfb1b306c4bc0",
+  "energy_provides": "",
+  "energy_type": "D",
+  "evolves_from": "N的索罗亚",
+  "hp": 280,
+  "image_local_path": "user://cards/images/CSV10C/272.png",
+  "image_url": "https://tcg.mik.moe/static/img/CSV10C/272.png",
+  "is_tags": [],
+  "label": "",
+  "mechanic": "ex",
+  "name": "N的索罗亚克ex",
+  "name_en": "",
+  "name_zh": "",
+  "rarity": "SAR",
+  "regulation_expanded": true,
+  "regulation_mark": "I",
+  "regulation_standard": true,
+  "release_date": "2026-07-16T00:00:00+08:00",
+  "resistance_energy": "",
+  "resistance_value": "",
+  "retreat_cost": 2,
+  "set_code": "CSV10C",
+  "set_code_en": "",
+  "source_card_index": "272",
+  "source_imported_at": 0,
+  "source_language": "zh-CN",
+  "source_parser_version": 1,
+  "source_prints": [],
+  "source_provider": "tcg_mik",
+  "source_set_code": "CSV10C",
+  "source_url": "https://tcg.mik.moe/cards/CSV10C/272",
+  "stage": "Stage 1",
+  "weakness_energy": "G",
+  "weakness_value": "×2",
+  "yoren_code": "Y1593"
+}

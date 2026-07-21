@@ -1,0 +1,147 @@
+{
+  "profile_version": 12,
+  "semantic_version": 2,
+  "risk_posture": "safe",
+  "switch_margin": 85.0,
+  "expected_regret_threshold": 115.0,
+  "initial_response_token_budget": 400,
+  "delta_response_token_budget": 170,
+  "turn_visible_wait_budget_ms": 6500,
+  "cold_request_estimate_ms": 5000,
+  "max_policy_nodes": 6,
+  "protected_roles": [
+    "current_attacker",
+    "next_attacker",
+    "embrace_target",
+    "evolution_piece",
+    "ability_engine",
+    "energy_access",
+    "typed_energy",
+    "recovery",
+    "bench_space",
+    "damage_counter_mover",
+    "bench_protection",
+    "hand_disruption"
+  ],
+  "semantic_role_overrides": {
+    "CSV2C_054": {"remove": ["ability_engine"]},
+    "CSV8C_094": {"add": ["damage_counter_mover"]},
+    "CSV7C_030": {"remove": ["attacker"]},
+    "CSV7C_031": {"add": ["bench_protection"]},
+    "CSV10C_082": {"add": ["attacker", "energy_target", "embrace_target"]},
+    "CSV3C_123": {"add": ["hand_disruption"]},
+    "CSV8C_176": {"add": ["search_engine", "trainer_tutor"]}
+  },
+  "strategic_priorities": [
+    {
+      "priority": 1,
+      "goal": "minimum_resource_ko",
+      "when_all": [{"fact": "attack.ko_available", "op": "==", "value": true}],
+      "prefer_routes": ["route:attack_ko", "route:gust"],
+      "avoid_routes": ["route:information", "route:develop", "route:end_turn"],
+      "preserve_roles": ["next_attacker", "ability_engine"]
+    },
+    {
+      "priority": 2,
+      "goal": "route_completion",
+      "when_all": [{"fact": "attack.ready", "op": "==", "value": false}],
+      "prefer_routes": ["route:evolve", "route:opening_search", "route:energy_commit", "route:accelerate"],
+      "avoid_routes": ["route:end_turn"],
+      "preserve_roles": ["evolution_piece", "ability_engine", "bench_space"]
+    },
+    {
+      "priority": 3,
+      "goal": "bench_space_preservation",
+      "when_all": [{"fact": "board.bench_full", "op": "==", "value": false}],
+      "prefer_routes": ["route:evolve", "route:opening_search"],
+      "avoid_routes": ["route:develop"],
+      "preserve_roles": ["ability_engine", "embrace_target", "bench_space"]
+    },
+    {
+      "priority": 4,
+      "goal": "low_deck_safety",
+      "when_all": [{"fact": "resources.deck_low", "op": "==", "value": true}],
+      "prefer_routes": ["route:attack_ko", "route:attack_pressure", "route:pivot"],
+      "avoid_routes": ["route:information", "route:opening_search", "route:develop"],
+      "preserve_roles": ["recovery", "next_attacker"]
+    }
+  ],
+  "route_preferences": {
+    "model_consideration_margin": 220.0,
+    "route_biases": {
+      "route:attack_ko": 310.0,
+      "route:attack_pressure": 120.0,
+      "route:evolve": 240.0,
+      "route:opening_search": 120.0,
+      "route:energy_commit": 220.0,
+      "route:accelerate": 210.0,
+      "route:gust": 90.0,
+      "route:information": 20.0,
+      "route:develop": -80.0,
+      "route:end_turn": -250.0
+    },
+    "ready_ko_order": ["route:attack_ko", "route:gust", "route:energy_commit"],
+    "attackless_order": ["route:evolve", "route:opening_search", "route:energy_commit", "route:accelerate", "route:develop"],
+    "avoid_after_ko_secured": ["route:information", "route:opening_search", "route:develop"]
+  },
+  "safety": {
+    "max_switch_gap": 185.0,
+    "block_search_when_deck_low": true,
+    "low_deck_threshold": 8,
+    "critical_deck_threshold": 5,
+    "preserve_bench_slots": 2,
+    "stop_optional_draw_when_attack_ready": true,
+    "reject_information_churn_after_ko_secured": true
+  },
+  "module_parameters": {
+    "gardevoir_embrace": {
+      "attack_cost_by_uid": {
+        "CSV2C_055": ["P", "P", "C"],
+        "CSV8C_094": ["P", "C"],
+        "CSV6C_065": ["P", "C"],
+        "CSV2C_060": ["P", "P"],
+        "CSV10C_082": ["P", "C"]
+      },
+      "embrace_engine_uids": ["CSV2C_055"],
+      "checkpoint_missing_cost_all_attacks_blocked_uids": ["CSV2C_055"],
+      "prize_scaler_tools": {
+        "CSV1C_118": {"hp_bonus": 50}
+      },
+      "damage_scalers_by_uid": {
+        "CSV2C_060": {
+          "attack_cost": ["P", "P"],
+          "damage_per_counter": 30,
+          "embrace_damage_per_assignment": 20
+        },
+        "CSV6C_065": {
+          "attack_cost": ["P", "C"],
+          "damage_per_counter": 20,
+          "embrace_damage_per_assignment": 20
+        }
+      }
+    },
+    "damage_counter_control": {
+      "attack_cost_by_uid": {
+        "CSV2C_055": ["P", "P", "C"],
+        "CSV8C_094": ["P", "C"],
+        "CSV6C_065": ["P", "C"],
+        "CSV2C_060": ["P", "P"],
+        "CSV10C_082": ["P", "C"]
+      },
+      "counter_mover_uid": "CSV8C_094",
+      "activation_symbol": "D",
+      "move_points_per_use": 30,
+      "damage_invariant_attackers": ["CSV2C_055"],
+      "deterministic_attack_dominance_pairs_by_uid": {
+        "CSV2C_060": [
+          {
+            "preferred_attack_index": 0,
+            "dominated_attack_index": 1,
+            "requires_source_damage_points": 0,
+            "no_registered_side_effects": true
+          }
+        ]
+      }
+    }
+  }
+}

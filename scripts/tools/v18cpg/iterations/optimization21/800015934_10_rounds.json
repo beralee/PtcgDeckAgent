@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "architecture": "V18CPG",
+  "program_id": "roi5_precision",
+  "evidence_revision": 1,
+  "status": "roi5_complete_noninferior",
+  "deck_id": 800015934,
+  "deck_name": "18.0 Tord太晶盒",
+  "anchor_id": 575720,
+  "seed_base": 800015934,
+  "games_per_round": 5,
+  "model": "deepseek-v4-flash",
+  "deck_source": "bundled_ai",
+  "deck_content_fingerprint": "be3d96a9644bdda458defaa2123ea72eb0a3100bc00e03153bef001ec107cf16",
+  "completed_rounds": 1,
+  "required_rounds": 10,
+  "deep_iterations_completed": 5,
+  "required_deep_rounds": 5,
+  "roi5_completion": {
+    "complex_scenarios": 5,
+    "final_artifact": "res://tmp/v18cpg/roi5/800015934/final_bench5.json",
+    "rule_wins": 1,
+    "v18cpg_wins": 1,
+    "acceptance": "noninferior"
+  },
+  "deep_iterations": [
+    {
+      "round": 1,
+      "failure_category": "interaction_error",
+      "decision": "retained",
+      "evidence": "res://tests/v18_llm_policy_graph/pilots/test_tord_tera_box_round06_supporter_quota_pair.gd",
+      "proof_reason": "Fan Call excludes a Supporter whose turn quota is already spent."
+    },
+    {
+      "round": 2,
+      "failure_category": "interaction_error",
+      "decision": "retained",
+      "evidence": "res://tests/v18_llm_policy_graph/pilots/test_tord_tera_box_round07_minimum_resource_after_ko.gd",
+      "proof_reason": "Once a knockout is publicly secured, the route preserves gust, recovery, and pivot resources instead of churning search and Energy."
+    },
+    {
+      "round": 3,
+      "failure_category": "interaction_error",
+      "decision": "retained",
+      "evidence": "res://tests/v18_llm_policy_graph/pilots/test_tord_tera_box_round08_full_bench_pair.gd",
+      "proof_reason": "A full Bench rejects dead Pokemon search unless paired with the registered stadium-expansion role."
+    },
+    {
+      "round": 4,
+      "failure_category": "interaction_error",
+      "decision": "retained",
+      "evidence": "res://tests/v18_llm_policy_graph/pilots/test_tord_tera_box_round09_critical_deck_whiff.gd",
+      "proof_reason": "Critical deck count permits an explicit-empty Fan Call and blocks optional deckout-risk filtering."
+    },
+    {
+      "round": 5,
+      "failure_category": "interaction_error",
+      "decision": "retained_noninferior",
+      "evidence": "res://tests/v18_llm_policy_graph/pilots/test_tord_tera_box_round10_energy_mover_liveness.gd",
+      "proof_reason": "Energy Switch requires public movable Energy; otherwise the route selects live acceleration and access."
+    }
+  ],
+  "rounds": [
+    {
+      "round": 1,
+      "decision": "retained_noninferior",
+      "verified_local_artifact": "res://tmp/v18cpg/roi5/800015934/round01_verified5.json",
+      "verified_local_artifact_sha256": "15e85fdce6751c543beff5af1cab2227329ba70d5533e04662602d2bfb018d4d",
+      "formal_artifact": "res://tmp/v18cpg/roi5/800015934/round01_formal5.json",
+      "formal_artifact_sha256": "918c8203790426366c80a5b93de79b7f6ea5a5ab0b1dcc875c4bdf0aefed8e5a",
+      "profile_version": 14,
+      "profile_fingerprint": "8c8addedb5f36b9a2616bfdbacbf362d320a233d73e361fa058e3989f2b37115",
+      "metrics": {
+        "rule_wins": 1,
+        "v18cpg_wins": 1,
+        "positive_flips": 0,
+        "negative_flips": 0,
+        "paired_improvement": 0.0,
+        "paired_bootstrap_95": [0.0, 0.0],
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 24,
+        "model_accepted": 1,
+        "model_rejected": 23,
+        "turn_visible_wait_p95_ms": 6252,
+        "zero_model_action_reference_mismatches": 0,
+        "graph_branch_hits": 6,
+        "uncovered_events": 46
+      },
+      "quality_note": "The strength and latency floors pass, but 17 transport errors and only one accepted response make this a retained floor round, not a completed precision result."
+    }
+  ],
+  "source_hashes": {
+    "profile_file_sha256": "0e37f81940aabbdfd3b22d6a187ebf572704f230901f0717b841ed295de4594f",
+    "strategy_file_sha256": "d18c6e4d8bf68e918a16b376174143da6fcfcbddc33c62fa16b70962399f99c2",
+    "capability_registry_sha256": "2cfd96053fc60f199215d215b70166158a3bc76d231e5c615e9e040353cd1f65",
+    "runner_sha256": "56efe05607ece822d1cf72513541de08dc32786d99f5e14c82abfb9b5dde2a68"
+  },
+  "next_action": "Reduce Tord prompt/route payload and raise valid response acceptance before searching for a same-seed positive flip; do not claim the historical module-contaminated +1 as current promotion evidence."
+}

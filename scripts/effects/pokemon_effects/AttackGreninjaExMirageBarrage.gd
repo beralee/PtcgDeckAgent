@@ -4,6 +4,7 @@ extends BaseEffect
 var attack_index_to_match: int = -1
 var damage_amount: int = 120
 var discard_count: int = 2
+const ATTACK_EFFECT_TARGET_RESULTS_FLAG := "_attack_effect_target_results"
 
 
 func _init(match_attack_index: int = -1, damage: int = 120, energy_to_discard: int = 2) -> void:
@@ -56,6 +57,39 @@ func get_attack_interaction_steps(
 	}]
 
 
+func validate_attack_interaction(
+	attacker: PokemonSlot,
+	attack_index: int,
+	targets: Array,
+	state: GameState
+) -> Dictionary:
+	if attacker == null or state == null or not applies_to_attack_index(attack_index):
+		return interaction_validation_error("Mirage Barrage attacker or attack index is invalid")
+	var top := attacker.get_top_card()
+	if top == null or top.owner_index < 0 or top.owner_index >= state.players.size():
+		return interaction_validation_error("Mirage Barrage attacker owner is invalid")
+	var context := get_interaction_context(targets)
+	var energy_items: Array = attacker.attached_energy.duplicate()
+	var energy_result := validate_context_selection(
+		context,
+		"greninja_ex_discard_energy",
+		energy_items,
+		discard_count,
+		discard_count
+	)
+	if not bool(energy_result.get("valid", false)):
+		return energy_result
+	var target_items: Array = state.players[1 - top.owner_index].get_all_pokemon()
+	var expected_targets := mini(2, target_items.size())
+	return validate_context_selection(
+		context,
+		"greninja_ex_targets",
+		target_items,
+		expected_targets,
+		expected_targets
+	)
+
+
 func execute_attack(
 	attacker: PokemonSlot,
 	_defender: PokemonSlot,
@@ -70,28 +104,13 @@ func execute_attack(
 	var player: PlayerState = state.players[top.owner_index]
 	var opponent: PlayerState = state.players[1 - top.owner_index]
 	var ctx: Dictionary = get_attack_interaction_context()
+	if not bool(validate_attack_interaction(attacker, _attack_index, [ctx], state).get("valid", false)):
+		return
 
 	var selected_energy_ids: Dictionary = {}
 	for entry: Variant in ctx.get("greninja_ex_discard_energy", []):
 		if entry is CardInstance:
 			selected_energy_ids[(entry as CardInstance).instance_id] = true
-	if selected_energy_ids.is_empty():
-		return
-
-	var discarded: Array[CardInstance] = []
-	var kept_energy: Array[CardInstance] = []
-	for energy: CardInstance in attacker.attached_energy:
-		if discarded.size() < discard_count and selected_energy_ids.has(energy.instance_id):
-			discarded.append(energy)
-		else:
-			kept_energy.append(energy)
-	if discarded.size() < mini(discard_count, attacker.attached_energy.size()):
-		return
-	attacker.attached_energy = kept_energy
-	for energy: CardInstance in discarded:
-		energy.face_up = true
-		player.discard_pile.append(energy)
-		_record_attack_effect_discarded_attached_energy(attacker, energy, state)
 
 	var selected_targets: Dictionary = {}
 	for entry: Variant in ctx.get("greninja_ex_targets", []):
@@ -101,12 +120,41 @@ func execute_attack(
 		if target in opponent.get_all_pokemon():
 			selected_targets[target.get_instance_id()] = target
 
+	var discarded: Array[CardInstance] = []
+	var kept_energy: Array[CardInstance] = []
+	for energy: CardInstance in attacker.attached_energy:
+		if discarded.size() < discard_count and selected_energy_ids.has(energy.instance_id):
+			discarded.append(energy)
+		else:
+			kept_energy.append(energy)
+	attacker.attached_energy = kept_energy
+	for energy: CardInstance in discarded:
+		energy.face_up = true
+		player.discard_pile.append(energy)
+		_record_attack_effect_discarded_attached_energy(attacker, energy, state)
+
+	var target_results: Array = []
+	var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null)
 	for target: PokemonSlot in selected_targets.values():
+		var prevention_source := ""
 		if target in opponent.bench and AbilityBenchImmune.prevents_opponent_attack_damage(target, attacker, state):
-			continue
-		if AttackCoinFlipPreventDamageAndEffectsNextTurn.prevents_attack_damage(target, state):
-			continue
-		target.damage_counters += _calculate_attack_target_damage(attacker, target, damage_amount, state)
+			prevention_source = "bench_damage_immunity"
+		elif AttackCoinFlipPreventDamageAndEffectsNextTurn.prevents_attack_damage(target, state):
+			prevention_source = "attack_damage_and_effects_prevention"
+		var final_damage := 0 if prevention_source != "" else _calculate_attack_target_damage(attacker, target, damage_amount, state)
+		if final_damage > 0:
+			target.damage_counters += final_damage
+			if processor != null and processor.has_method("record_effect_damage"):
+				processor.call("record_effect_damage", top.owner_index, target, final_damage, state, "Mirage Barrage")
+		target_results.append({
+			"target_name": target.get_pokemon_name(),
+			"target_slot_id": int(target.get_instance_id()),
+			"target_zone": "bench" if target in opponent.bench else "active",
+			"base_damage": damage_amount,
+			"final_damage": final_damage,
+			"prevention_source": prevention_source,
+		})
+	state.shared_turn_flags[ATTACK_EFFECT_TARGET_RESULTS_FLAG] = target_results
 
 
 func _resolve_attack_index(card: CardInstance, attack: Dictionary) -> int:

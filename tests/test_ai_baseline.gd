@@ -60,6 +60,29 @@ class FollowupSchedulingSpyAIOpponent extends RefCounted:
 		return true
 
 
+class FailingAIOpponent extends RefCounted:
+	var player_index: int = 1
+	var difficulty: int = 1
+	var run_count: int = 0
+
+	func should_control_turn(game_state: GameState, ui_blocked: bool) -> bool:
+		if game_state == null or ui_blocked:
+			return false
+		return game_state.current_player_index == player_index
+
+	func run_single_step(_battle_scene: Control, _gsm: GameStateMachine) -> bool:
+		run_count += 1
+		return false
+
+
+class NoProgressInteractionScene extends Control:
+	var _pending_choice: String = ""
+	var _ai_followup_requested: bool = false
+
+	func _try_play_trainer_with_interaction(_player_index: int, _card: CardInstance) -> void:
+		pass
+
+
 class CountingAIOpponent extends RefCounted:
 	var player_index: int = 1
 	var difficulty: int = 1
@@ -1706,6 +1729,32 @@ func test_ai_heavy_baton_prefers_deck_strategy_handoff_target() -> String:
 	])
 
 
+func test_battle_scene_schedules_ai_for_exp_share_prompt_owned_by_non_current_ai() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var scene := _make_battle_scene_refresh_stub()
+	var gsm := _make_ai_manual_gsm()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.POKEMON_CHECK
+	var source_slot := _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Knocked Out AI Pokemon"), 1))
+	var target_slot := _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("AI Exp. Share Target"), 1))
+	var energy := CardInstance.create(_make_ai_energy_card_data("Transfer Energy", "L"), 1)
+	var targets: Array[PokemonSlot] = [target_slot]
+	var source_energy: Array[CardInstance] = [energy]
+	var spy_ai := SpyAIOpponent.new()
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	scene.set("_gsm", gsm)
+	scene._setup_ai_for_tests()
+	scene.set("_ai_opponent", spy_ai)
+	scene.call("_prompt_exp_share_dialog", 1, targets, source_slot, source_energy)
+	var checks := run_checks([
+		assert_eq(str(scene.get("_pending_choice")), "exp_share_target", "The Exp. Share target prompt should remain pending for its AI owner"),
+		assert_true(bool(scene.get("_ai_step_scheduled")), "An AI-owned Exp. Share prompt must schedule AI even when the opponent is the current turn player"),
+		assert_false(scene.get("_dialog_overlay").visible, "An AI-owned Exp. Share prompt should stay hidden from the human player"),
+	])
+	GameManager.current_mode = previous_mode
+	return checks
+
+
 func test_ai_opponent_ignores_human_owned_mulligan_bonus_draw_prompt() -> String:
 	var ai := AIOpponentScript.new()
 	ai.configure(1, 1)
@@ -2516,6 +2565,50 @@ func test_battle_scene_running_ai_can_queue_followup_step_from_success_hook() ->
 		assert_eq(spy_ai.run_count, 1, "The first AI step should run"),
 		assert_true(scheduled_followup, "A success hook during AI execution should queue one follow-up step"),
 	])
+
+
+func test_ai_void_interaction_call_without_state_change_reports_failure() -> String:
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	var gsm := _make_ai_manual_gsm()
+	gsm.game_state.current_player_index = 1
+	var scene := NoProgressInteractionScene.new()
+	var card := CardInstance.create(_make_ai_trainer_card_data("Stale Interactive Item", "Item"), 1)
+	var handled: bool = bool(ai.call("_execute_action", scene, gsm, {
+		"kind": "play_trainer",
+		"card": card,
+		"requires_interaction": true,
+	}))
+	return assert_false(
+		handled,
+		"Calling a void interaction entry point is not success unless it advances scene or engine state"
+	)
+
+
+func test_battle_scene_failed_rule_ai_step_safely_ends_turn() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var scene := _make_battle_scene_refresh_stub()
+	var gsm := _make_ai_manual_gsm()
+	gsm.game_state.current_player_index = 1
+	for player_index: int in 2:
+		var player: PlayerState = gsm.game_state.players[player_index]
+		player.active_pokemon = _make_ai_slot(CardInstance.create(_make_ai_pokemon_card_data("Active %d" % player_index), player_index))
+		player.deck = [CardInstance.create(_make_ai_trainer_card_data("Draw %d" % player_index, "Item"), player_index)]
+		player.prizes = [CardInstance.create(_make_ai_trainer_card_data("Prize %d" % player_index, "Item"), player_index)]
+	var failing_ai := FailingAIOpponent.new()
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	scene.set("_gsm", gsm)
+	scene._setup_ai_for_tests()
+	scene.set("_ai_opponent", failing_ai)
+	scene._maybe_run_ai()
+	scene._run_ai_step()
+	var checks := run_checks([
+		assert_eq(failing_ai.run_count, 1, "The failing rule AI step should run exactly once"),
+		assert_eq(gsm.game_state.current_player_index, 0, "A failed main-phase AI step should use the safe end-turn fallback instead of idling forever"),
+		assert_false(bool(scene.get("_ai_step_scheduled")), "The failed step fallback should not leave a duplicate AI step scheduled"),
+	])
+	GameManager.current_mode = previous_mode
+	return checks
 
 
 func test_battle_scene_successful_ai_action_pauses_before_next_vs_ai_step() -> String:

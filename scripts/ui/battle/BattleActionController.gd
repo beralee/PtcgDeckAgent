@@ -20,6 +20,10 @@ func on_hand_card_clicked(scene: Object, inst: CardInstance, _panel: PanelContai
 		return
 	if bool(scene.call("_is_field_interaction_active")):
 		return
+	if scene.has_method("_play_battle_interaction_press"):
+		scene.call("_play_battle_interaction_press", {
+			"card_instance_id": inst.instance_id if inst != null else "",
+		})
 	if scene.get("_selected_hand_card") == inst:
 		var selected_card_data: CardData = inst.card_data if inst != null else null
 		if selected_card_data != null and selected_card_data.is_pokemon():
@@ -51,8 +55,12 @@ func on_hand_card_clicked(scene: Object, inst: CardInstance, _panel: PanelContai
 	if card_data.card_type == "Stadium":
 		try_play_stadium_with_interaction(scene, current_player, inst)
 		return
+	if not card_data.is_basic_pokemon() and gsm.rule_validator.can_play_basic_to_bench(gsm.game_state, current_player, inst, gsm.effect_processor):
+		if gsm.play_basic_to_bench(current_player, inst):
+			scene.call("_refresh_ui_after_successful_action", true, current_player, "play_basic_to_bench")
+		return
 	if card_data.is_basic_pokemon():
-		var basic_reason: String = gsm.rule_validator.get_play_basic_to_bench_unusable_reason(gsm.game_state, current_player, inst)
+		var basic_reason: String = gsm.rule_validator.get_play_basic_to_bench_unusable_reason(gsm.game_state, current_player, inst, gsm.effect_processor)
 		if basic_reason != "":
 			_show_invalid_card_hint(scene, inst, basic_reason, "pokemon")
 			return
@@ -105,6 +113,7 @@ func try_play_trainer_with_interaction(scene: Object, player_index: int, card: C
 		if not gsm.play_trainer(player_index, card, []):
 			_show_invalid_card_hint(scene, card, "%s 当前无法使用。" % card.card_data.display_name(), "trainer")
 		else:
+			_play_success_feedback(scene, "trainer", card)
 			scene.call("_refresh_ui_after_successful_action", false, player_index)
 		return
 	gsm.game_state.shared_turn_flags["_draw_effect_processor"] = gsm.effect_processor
@@ -119,6 +128,7 @@ func try_play_trainer_with_interaction(scene: Object, player_index: int, card: C
 			var empty_message: String = effect.get_empty_interaction_message(card, gsm.game_state)
 			if empty_message != "":
 				scene.call("_log", empty_message)
+			_play_success_feedback(scene, "trainer", card)
 			scene.call("_refresh_ui_after_successful_action", false, player_index)
 		return
 	scene.call("_start_effect_interaction", "trainer", player_index, steps, card)
@@ -140,6 +150,7 @@ func try_play_stadium_with_interaction(scene: Object, player_index: int, card: C
 		if not gsm.play_stadium(player_index, card):
 			_show_invalid_card_hint(scene, card, "%s 当前无法打出。" % card.card_data.display_name(), "stadium")
 		else:
+			_play_success_feedback(scene, "stadium", card)
 			scene.call("_refresh_ui_after_successful_action", false, player_index)
 		return
 	var steps: Array[Dictionary] = effect.get_on_play_interaction_steps(card, gsm.game_state)
@@ -147,6 +158,7 @@ func try_play_stadium_with_interaction(scene: Object, player_index: int, card: C
 		if not gsm.play_stadium(player_index, card):
 			scene.call("_log", _bt(scene, "battle.log.cannot_play_stadium"))
 		else:
+			_play_success_feedback(scene, "stadium", card)
 			scene.call("_refresh_ui_after_successful_action", false, player_index)
 		return
 	scene.call("_start_effect_interaction", "play_stadium", player_index, steps, card)
@@ -161,6 +173,7 @@ func try_use_ability_with_interaction(scene: Object, player_index: int, slot: Po
 	var effect: BaseEffect = gsm.effect_processor.get_ability_effect(slot, ability_index, gsm.game_state)
 	if effect == null:
 		if gsm.use_ability(player_index, slot, ability_index):
+			_play_success_feedback(scene, "ability", card, slot)
 			scene.call("_refresh_ui_after_successful_action", true, player_index, "use_ability")
 		else:
 			_show_invalid_action_hint(scene, {
@@ -183,6 +196,7 @@ func try_use_ability_with_interaction(scene: Object, player_index: int, slot: Po
 		if gsm.use_ability(player_index, slot, ability_index):
 			var ability_name: String = gsm.effect_processor.get_ability_name(slot, ability_index, gsm.game_state)
 			scene.call("_log", _bt(scene, "battle.log.ability_used", {"name": ability_name}))
+			_play_success_feedback(scene, "ability", card, slot)
 			scene.call("_refresh_ui_after_successful_action", true, player_index, "use_ability")
 		else:
 			_show_invalid_action_hint(scene, {
@@ -204,6 +218,7 @@ func try_use_stadium_with_interaction(scene: Object, player_index: int) -> void:
 	var effect: BaseEffect = gsm.effect_processor.get_effect(stadium_card.card_data.effect_id)
 	if effect == null:
 		if gsm.use_stadium_effect(player_index):
+			_play_success_feedback(scene, "stadium", stadium_card)
 			scene.call("_refresh_ui_after_successful_action", false, player_index)
 		else:
 			scene.call("_log", _bt(scene, "battle.log.stadium_unavailable"))
@@ -218,6 +233,7 @@ func try_use_stadium_with_interaction(scene: Object, player_index: int) -> void:
 	var steps: Array[Dictionary] = effect.get_interaction_steps(stadium_card, gsm.game_state)
 	if steps.is_empty():
 		if gsm.use_stadium_effect(player_index):
+			_play_success_feedback(scene, "stadium", stadium_card)
 			scene.call("_refresh_ui_after_successful_action", false, player_index)
 		else:
 			_show_invalid_action_hint(scene, {
@@ -244,6 +260,24 @@ func _show_invalid_card_hint(scene: Object, card: CardInstance, reason: String, 
 		"detail": detail,
 		"hint": _hint_for_kind(kind),
 		"kind": kind,
+		"card_instance_id": card.instance_id if card != null else "",
+	})
+
+
+func _play_success_feedback(
+	scene: Object,
+	success_kind: String,
+	card: CardInstance = null,
+	slot: PokemonSlot = null
+) -> void:
+	if not scene.has_method("_play_battle_interaction_success"):
+		return
+	var target_slot_id := ""
+	if slot != null and scene.has_method("_slot_id_from_slot"):
+		target_slot_id = str(scene.call("_slot_id_from_slot", slot))
+	scene.call("_play_battle_interaction_success", success_kind, {
+		"source_card_instance_id": card.instance_id if card != null else "",
+		"target_slot_id": target_slot_id,
 	})
 
 
@@ -252,7 +286,9 @@ func _show_invalid_action_hint(scene: Object, payload: Dictionary) -> void:
 	if reason == "":
 		reason = "当前无法执行该操作。"
 		payload["reason"] = reason
-	if scene.has_method("_show_invalid_action_hint"):
+	if scene.has_method("_show_battle_intent_rejection"):
+		scene.call("_show_battle_intent_rejection", payload)
+	elif scene.has_method("_show_invalid_action_hint"):
 		scene.call("_show_invalid_action_hint", payload)
 	scene.call("_log", reason)
 

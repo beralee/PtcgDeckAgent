@@ -1,0 +1,52 @@
+{
+  "schema_version": 3,
+  "architecture": "V18CPG",
+  "anchor_id": 575720,
+  "games_per_round": 5,
+  "rounds": 10,
+  "model": "deepseek-v4-flash",
+  "failure_categories": [
+    "visibility_violation",
+    "belief_error",
+    "semantic_gap",
+    "fact_or_solver_error",
+    "frontier_gap",
+    "outcome_or_threat_error",
+    "policy_graph_error",
+    "model_selection_error",
+    "route_synthesis_error",
+    "compiler_error",
+    "interaction_error",
+    "event_or_version_error",
+    "engine_error",
+    "latency_budget"
+  ],
+  "seed_policy": {
+    "default": "deck_id",
+    "ceiling_rule": "If the Rule arm is 5/5, advance through non-overlapping five-seed blocks and freeze the first block where Rule is at most 4/5; never inspect the V18CPG arm while selecting the block.",
+    "overrides": {
+      "800018500": 800018505
+    },
+    "baseline_ignore_profile_overrides": [800018500]
+  },
+  "acceptance": {
+    "minimum_paired_improvement": 0.0,
+    "minimum_net_wins_at_five_games": 0,
+    "excellent_paired_improvement": 0.1,
+    "excellent_net_wins_at_five_games": 1,
+    "require_clean_games": 5,
+    "require_model_calls": true,
+    "require_accepted_response": true,
+    "require_exact_rule_replay_across_rounds": true
+  },
+  "groups": [{
+    "id": "gardevoir_control",
+    "decks": [800017097, 800018105, 800018497, 800018498, 800017631, 800018359, 800033475]
+  }, {
+    "id": "dragapult_stage2",
+    "decks": [18000230, 800015734, 800018499, 800019125, 18000625, 800017047, 800018501]
+  }, {
+    "id": "partner_toolbox",
+    "decks": [800016834, 800017407, 800018500, 800018502, 800018539, 800018543, 800018880]
+  }]
+}

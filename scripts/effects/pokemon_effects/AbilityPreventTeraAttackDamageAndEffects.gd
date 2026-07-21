@@ -55,10 +55,7 @@ static func _opponent_tera_attack_matches(
 static func _is_tera(card_data: CardData) -> bool:
 	if card_data == null:
 		return false
-	return card_data.ancient_trait == "Tera" \
-		or card_data.mechanic == "Tera" \
-		or card_data.has_tag("Tera") \
-		or card_data.label.contains("太晶")
+	return card_data.is_tera_pokemon()
 
 
 func get_description() -> String:

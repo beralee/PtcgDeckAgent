@@ -763,6 +763,31 @@ func test_build_pool_includes_requested_bundled_pokemon_cards() -> String:
 	return run_checks(checks)
 
 
+func test_build_pool_includes_tcg_mik_csv8c050_csv95c034_036_205_csv6c112_batch() -> String:
+	var editor: Control = DeckEditorScript.new()
+	editor.call("_build_pool")
+	var pool_by_category: Array = editor.get("_pool_by_category")
+	var expected_categories := {
+		"CSV8C_050": 0,
+		"CSV9.5C_034": 0,
+		"CSV9.5C_036": 0,
+		"CSV6C_112": 0,
+		"CSV9.5C_205": 4,
+	}
+	var checks: Array[String] = []
+	for uid: String in expected_categories:
+		var category_index := int(expected_categories[uid])
+		var category_cards: Array = pool_by_category[category_index] if category_index < pool_by_category.size() else []
+		var found: CardData = null
+		for card: CardData in category_cards:
+			if card.get_uid() == uid:
+				found = card
+				break
+		checks.append(assert_not_null(found, "DeckEditor should expose %s in category %d" % [uid, category_index]))
+	editor.free()
+	return run_checks(checks)
+
+
 # -- _ordered_pokemon_cards --
 
 func test_ordered_pokemon_cards_groups_by_energy() -> String:

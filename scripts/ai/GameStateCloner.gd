@@ -3,21 +3,53 @@ extends RefCounted
 
 ## 深拷贝 GameStateMachine，克隆体可独立运行完整对局。
 ## CardData 共享引用（静态数据），CardInstance 独立拷贝。
-## EffectProcessor / RuleValidator / DamageCalculator 共享引用（无状态或仅静态注册表）。
+## 规则与效果子系统由克隆体独立持有，避免搜索模拟污染实战状态或发出实战信号。
 
 
 func clone_gsm(original: GameStateMachine) -> GameStateMachine:
 	if original == null:
 		return null
 	var cloned := GameStateMachine.new()
-	cloned.rule_validator = original.rule_validator
-	cloned.damage_calculator = original.damage_calculator
-	cloned.effect_processor = original.effect_processor
-	cloned.coin_flipper = CoinFlipper.new()
 	cloned.game_state = _clone_game_state(original.game_state)
+	# shared_turn_flags may contain the live EffectProcessor as a transient draw
+	# routing hook.  Never retain that reference in an AI simulation.
+	cloned.game_state.shared_turn_flags.erase("_draw_effect_processor")
+	_register_all_pokemon_cards(cloned)
 	var empty_log: Array[GameAction] = []
 	cloned.action_log = empty_log
 	return cloned
+
+
+func _register_all_pokemon_cards(gsm: GameStateMachine) -> void:
+	if gsm == null or gsm.game_state == null or gsm.effect_processor == null:
+		return
+	for player: PlayerState in gsm.game_state.players:
+		for card: CardInstance in player.deck:
+			_register_pokemon_card(gsm, card)
+		for card: CardInstance in player.hand:
+			_register_pokemon_card(gsm, card)
+		for card: CardInstance in player.prizes:
+			_register_pokemon_card(gsm, card)
+		for card: CardInstance in player.discard_pile:
+			_register_pokemon_card(gsm, card)
+		for card: CardInstance in player.lost_zone:
+			_register_pokemon_card(gsm, card)
+		_register_slot_pokemon_cards(gsm, player.active_pokemon)
+		for slot: PokemonSlot in player.bench:
+			_register_slot_pokemon_cards(gsm, slot)
+
+
+func _register_slot_pokemon_cards(gsm: GameStateMachine, slot: PokemonSlot) -> void:
+	if slot == null:
+		return
+	for card: CardInstance in slot.pokemon_stack:
+		_register_pokemon_card(gsm, card)
+
+
+func _register_pokemon_card(gsm: GameStateMachine, card: CardInstance) -> void:
+	if card == null or card.card_data == null or not card.card_data.is_pokemon():
+		return
+	gsm.effect_processor.register_pokemon_card(card.card_data)
 
 
 func _clone_game_state(original: GameState) -> GameState:

@@ -395,6 +395,7 @@ func is_tera_pokemon() -> bool:
 		"62619a01b9dd1e1dec71d6f6557c9cb8",
 		"c09bd406f26faeab1683244e53bab0b4",
 		"5de19cbd4b2d1ff80ba14d6d89246ae9",
+		"5d5d2589f2d9c19ef7364714766600d4",
 	]:
 		return true
 	for attack: Dictionary in attacks:

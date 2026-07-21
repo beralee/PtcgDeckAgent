@@ -3,6 +3,8 @@ extends RefCounted
 
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
+const DECK_IMAGE_ACCENT := Color(0.72, 0.64, 1.0, 1.0)
+const CardImageOrProxyViewScript := preload("res://scripts/ui/cards/CardImageOrProxyView.gd")
 const CARD_TILE_WIDTH := 96
 const CARD_TILE_HEIGHT := 134
 const VIEW_GRID_COLUMNS := 8
@@ -31,7 +33,7 @@ var _texture_cache: Dictionary = {}
 var _failed_texture_paths: Dictionary = {}
 
 
-func show_deck(host: Node, deck: DeckData) -> void:
+func show_deck(host: Node, deck: DeckData, image_cache_service: Object = null) -> void:
 	if host == null or deck == null:
 		return
 	var view_entries := _unique_deck_view_entries(deck.cards)
@@ -96,9 +98,22 @@ func show_deck(host: Node, deck: DeckData) -> void:
 		var set_code: String = entry.get("set_code", "")
 		var card_index: String = entry.get("card_index", "")
 		var count: int = entry.get("count", 0)
-		var tile := _create_view_tile(card_name, set_code, card_index, tile_width, tile_height, label_font_size, count)
+		var tile := _create_view_tile_with_cache(card_name, set_code, card_index, tile_width, tile_height, label_font_size, count, image_cache_service, portrait)
 		tile.gui_input.connect(_on_view_tile_input.bind(host, scroll, set_code, card_index))
 		grid.add_child(tile)
+
+	var share_button := Button.new()
+	share_button.name = "DeckViewSharePosterButton"
+	share_button.text = "保存卡组图"
+	share_button.custom_minimum_size = Vector2(0.0, float(layout.get("ok_button_height", 96.0 if portrait else 42.0)))
+	share_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	share_button.add_theme_font_size_override("font_size", int(layout.get("button_font_size", 15)))
+	share_button.add_theme_stylebox_override("normal", HudThemeScript.button_style(DECK_IMAGE_ACCENT, false, false))
+	share_button.add_theme_stylebox_override("hover", HudThemeScript.button_style(DECK_IMAGE_ACCENT, true, false))
+	share_button.add_theme_stylebox_override("pressed", HudThemeScript.button_style(DECK_IMAGE_ACCENT, true, true))
+	share_button.pressed.connect(_on_share_poster_pressed.bind(host, dialog, deck))
+	NonBattleTouchBridgeScript.bind_button_touch(share_button)
+	outer.add_child(share_button)
 
 	var content_close_button: Button = null
 	if portrait:
@@ -126,6 +141,13 @@ func show_deck(host: Node, deck: DeckData) -> void:
 		else:
 			dialog.popup_centered()
 	dialog.confirmed.connect(dialog.queue_free)
+
+
+func _on_share_poster_pressed(host: Node, dialog: AcceptDialog, deck: DeckData) -> void:
+	if dialog != null and is_instance_valid(dialog):
+		dialog.queue_free()
+	if host != null and host.has_method("_on_share_deck_poster"):
+		host.call("_on_share_deck_poster", deck)
 
 
 func _apply_deck_view_dialog_hud(dialog: AcceptDialog) -> void:
@@ -464,6 +486,20 @@ func _sort_entries_by_category(cards: Array[Dictionary]) -> Array[Dictionary]:
 
 
 func _create_view_tile(card_name: String, set_code: String, card_index: String, tile_width: int = CARD_TILE_WIDTH, tile_height: int = CARD_TILE_HEIGHT, label_font_size: int = -1, copy_count: int = 1) -> PanelContainer:
+	return _create_view_tile_with_cache(card_name, set_code, card_index, tile_width, tile_height, label_font_size, copy_count, null, false)
+
+
+func _create_view_tile_with_cache(
+	card_name: String,
+	set_code: String,
+	card_index: String,
+	tile_width: int = CARD_TILE_WIDTH,
+	tile_height: int = CARD_TILE_HEIGHT,
+	label_font_size: int = -1,
+	copy_count: int = 1,
+	image_cache_service: Object = null,
+	portrait: bool = false
+) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.name = "DeckViewCardTile"
 	var label_height := maxf(22.0, float(label_font_size + 14))
@@ -487,20 +523,26 @@ func _create_view_tile(card_name: String, set_code: String, card_index: String, 
 	image_frame.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	vbox.add_child(image_frame)
 
-	var tex_rect := TextureRect.new()
-	tex_rect.name = "DeckViewCardImage"
-	tex_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	tex_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	var texture := _load_card_texture(set_code, card_index)
-	if texture != null:
-		tex_rect.texture = texture
+	var image_view := CardImageOrProxyViewScript.new()
+	image_view.name = "DeckViewCardImage"
+	image_view.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	image_view.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var card := CardDatabase.get_card(set_code, card_index)
+	if card != null:
+		image_view.call("setup_from_card", card, image_cache_service, {
+			"portrait": portrait,
+			"show_download_button": true,
+		})
 	else:
-		var placeholder := PlaceholderTexture2D.new()
-		placeholder.size = Vector2(tile_width - 8, tile_height - 8)
-		tex_rect.texture = placeholder
-	image_frame.add_child(tex_rect)
+		image_view.call("setup_from_entry", {
+			"name": card_name,
+			"set_code": set_code,
+			"card_index": card_index,
+		}, image_cache_service, {
+			"portrait": portrait,
+			"show_download_button": true,
+		})
+	image_frame.add_child(image_view)
 
 	var badge := Label.new()
 	badge.name = "DeckViewCardCountBadge"

@@ -5,8 +5,9 @@ const DeckManagerScene = preload("res://scenes/deck_manager/DeckManager.tscn")
 const DeckViewDialogScript = preload("res://scripts/ui/decks/DeckViewDialog.gd")
 const DeckRecommendationStoreScript = preload("res://scripts/engine/DeckRecommendationStore.gd")
 const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
+const DeckPosterComposerScript := preload("res://scripts/deck_share/DeckPosterComposer.gd")
 const TEST_RECOMMENDATION_CACHE_PATH := "user://test_deck_manager/recommendation_cache.json"
-const TEST_DECK_CENTER_META_STATE_PATH := "user://deck_center_meta_state.json"
+const TEST_DECK_CENTER_META_STATE_PATH := "user://deck_center_meta_state.headless.json"
 
 
 class FakeDeckSuggestionClient:
@@ -33,6 +34,17 @@ class FakeDeckImporter:
 
 	func import_deck(url_or_id: String) -> void:
 		imported_urls.append(url_or_id)
+
+
+class FakeDeckShareAdapter:
+	extends Node
+
+	var saved_images: Array[Image] = []
+	var saved_names := PackedStringArray()
+
+	func save_png(image: Image, suggested_name: String) -> void:
+		saved_images.append(image)
+		saved_names.append(suggested_name)
 
 
 func test_deck_manager_uses_hud_visual_theme() -> String:
@@ -339,6 +351,29 @@ func test_import_panel_paste_button_copies_clipboard_to_url_input() -> String:
 	])
 
 
+func test_import_panel_exposes_image_import_button() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	scene.call("_on_import_pressed")
+
+	var image_button := scene.find_child("BtnImageImport", true, false) as Button
+	var paste_button := scene.find_child("BtnPasteImport", true, false) as Button
+	var import_button := scene.get_node_or_null("%BtnDoImport") as Button
+
+	scene.queue_free()
+	return run_checks([
+		assert_not_null(image_button, "Import panel should expose an image import button"),
+		assert_true(image_button != null and image_button.visible, "Image import button should be visible in import mode"),
+		assert_true(image_button != null and image_button.text == "卡组图导入", "Image import action should use the unified deck-image wording"),
+		assert_true(image_button != null and image_button.custom_minimum_size.y >= (paste_button.custom_minimum_size.y if paste_button != null else 0.0), "Image import button should match the touch size of nearby import buttons"),
+		assert_true(import_button != null and import_button.visible, "URL import should remain available alongside image import"),
+	])
+
+
 func test_import_panel_url_input_touch_uses_feedback_focus_bridge() -> String:
 	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
@@ -433,9 +468,116 @@ func test_deck_manager_deck_row_buttons_use_50_percent_larger_text() -> String:
 	scene.queue_free()
 
 	return run_checks([
-		assert_eq(buttons.size(), 4, "Deck rows should expose view, edit, rename and delete buttons"),
+		assert_eq(buttons.size(), 5, "Deck rows should expose view, edit, share poster, rename and delete buttons"),
+		assert_true(buttons.any(func(button: Button) -> bool: return button.name == "DeckRowSharePosterButton"), "Deck rows should expose a share poster button"),
 		assert_true(min_font_size >= 21, "Deck row compact button text should be 50% larger"),
 		assert_true(min_height >= 57.0, "Deck row compact buttons should grow tall enough for the larger text"),
+	])
+
+
+func test_deck_manager_share_row_button_opens_share_poster_hud() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	var deck := _make_deck(910021, "Share Poster Deck")
+	var row := scene._create_deck_item(deck) as Control
+	scene.add_child(row)
+	var share_button := row.find_child("DeckRowSharePosterButton", true, false) as Button
+	if share_button != null:
+		share_button.emit_signal("pressed")
+	var save_button := scene.find_child("DeckSharePosterSaveButton", true, false) as Button
+	var dialog_title := scene.find_child("DeckActionHudTitle", true, false) as Label
+	var author_input := scene.find_child("DeckShareAuthorInput", true, false) as LineEdit
+	var note_input := scene.find_child("DeckShareNoteInput", true, false) as LineEdit
+	var background_selector := scene.find_child("DeckShareBackgroundSelector", true, false) as Control
+	var background_cards: Array[Control] = []
+	_collect_controls_with_name_prefix(scene, "DeckShareBackgroundCard_", background_cards)
+	row.queue_free()
+	scene.queue_free()
+
+	return run_checks([
+		assert_not_null(share_button, "Deck row should expose the share poster action"),
+		assert_true(share_button != null and share_button.text == "保存卡组图", "Deck row action should use the same save wording as recommendations"),
+		assert_not_null(save_button, "Share poster HUD should expose a save button"),
+		assert_true(save_button != null and save_button.text == "保存卡组图", "Deck-image HUD save action should use the unified wording"),
+		assert_true(dialog_title != null and dialog_title.text == "生成卡组总览图", "Native desktop deck-image HUD should describe the overview output"),
+		assert_not_null(author_input, "Share poster HUD should expose an author input"),
+		assert_null(note_input, "Share poster HUD should omit deck introduction copy"),
+		assert_null(background_selector, "Share poster HUD should omit manual banner selection"),
+		assert_eq(background_cards.size(), 0, "Share poster HUD should not create legacy banner cards"),
+	])
+
+
+func test_deck_manager_saved_deck_actions_match_recommendation_button_roles() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.call("_apply_hud_theme")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	var row := scene._create_deck_item(_make_deck(910022, "Button Role Deck")) as Control
+	var recommendation_card := scene._create_recommendation_feed_card(_remote_recommendation()) as Control
+	scene.add_child(row)
+	scene.add_child(recommendation_card)
+
+	var row_view := row.find_child("DeckRowViewButton", true, false) as Button
+	var row_edit := row.find_child("DeckRowEditButton", true, false) as Button
+	var row_rename := row.find_child("DeckRowRenameButton", true, false) as Button
+	var row_save_image := row.find_child("DeckRowSharePosterButton", true, false) as Button
+	var recommendation_detail := recommendation_card.find_child("RecommendationDetailButton", true, false) as Button
+	var recommendation_import := recommendation_card.find_child("RecommendationImportButton", true, false) as Button
+	var recommendation_next := recommendation_card.find_child("RecommendationNextButton", true, false) as Button
+	var recommendation_save_image := recommendation_card.find_child("RecommendationPosterDownloadButton", true, false) as Button
+	var checks: Array[String] = [
+		assert_not_null(row_view, "Saved deck rows should expose a named view action"),
+		assert_not_null(row_edit, "Saved deck rows should expose the edit action"),
+		assert_not_null(row_rename, "Saved deck rows should expose the rename action"),
+		assert_not_null(row_save_image, "Saved deck rows should expose the deck-image save action"),
+	]
+	var role_pairs := [
+		{"row": row_view, "recommendation": recommendation_detail, "label": "view/detail"},
+		{"row": row_edit, "recommendation": recommendation_import, "label": "edit/import"},
+		{"row": row_rename, "recommendation": recommendation_next, "label": "rename/neutral"},
+		{"row": row_save_image, "recommendation": recommendation_save_image, "label": "save deck image"},
+	]
+	for pair: Dictionary in role_pairs:
+		var row_button := pair.get("row") as Button
+		var recommendation_button := pair.get("recommendation") as Button
+		if row_button == null or recommendation_button == null:
+			continue
+		var row_style := row_button.get_theme_stylebox("normal") as StyleBoxFlat
+		var recommendation_style := recommendation_button.get_theme_stylebox("normal") as StyleBoxFlat
+		checks.append(assert_not_null(row_style, "%s row action should have a HUD style" % pair.get("label")))
+		checks.append(assert_not_null(recommendation_style, "%s recommendation action should have a HUD style" % pair.get("label")))
+		if row_style != null and recommendation_style != null:
+			checks.append(assert_eq(row_style.border_color, recommendation_style.border_color, "%s actions should use the same role color" % pair.get("label")))
+
+	scene.queue_free()
+	return run_checks(checks)
+
+
+func test_deck_manager_web_prepared_share_image_saves_on_the_user_action() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene._test_web_runtime_override = true
+	var fake_adapter := FakeDeckShareAdapter.new()
+	scene._deck_share_adapter = fake_adapter
+	scene.add_child(fake_adapter)
+	var deck := _make_deck(910023, "Web Save Picker Deck")
+	var image := Image.create(12, 8, false, Image.FORMAT_RGBA8)
+	image.fill(Color.WHITE)
+	var author_input := LineEdit.new()
+	author_input.text = "Browser Player"
+	var status_label := Label.new()
+	var save_button := Button.new()
+	scene.set("_share_poster_prepared_image", image)
+	scene.set("_share_poster_prepared_deck_id", deck.id)
+	scene.set("_share_poster_prepared_author", author_input.text)
+	scene.call("_on_share_poster_save_pressed", deck, author_input, status_label, save_button)
+	var saved_count := fake_adapter.saved_images.size()
+	var status_text := status_label.text
+	author_input.queue_free()
+	status_label.queue_free()
+	save_button.queue_free()
+	scene.queue_free()
+	return run_checks([
+		assert_eq(saved_count, 1, "Web save action should pass the pre-rendered image to the platform picker immediately"),
+		assert_eq(status_text, "正在选择保存位置...", "Web save action should report the system location picker"),
 	])
 
 
@@ -485,13 +627,15 @@ func test_deck_manager_deck_row_shows_edit_date_when_available() -> String:
 
 func test_deck_manager_sorts_decks_by_latest_edit_time_first() -> String:
 	var scene: Control = DeckManagerScene.instantiate()
+	var old_v18_deck := _make_deck(910027, "18.0 Old Edited Deck")
+	old_v18_deck.updated_at = 500
 	var old_deck := _make_deck(910024, "Old Edited Deck")
 	old_deck.updated_at = 1000
 	var latest_deck := _make_deck(910025, "Latest Edited Deck")
 	latest_deck.updated_at = 3000
 	var middle_deck := _make_deck(910026, "Middle Edited Deck")
 	middle_deck.updated_at = 2000
-	var decks: Array[DeckData] = [old_deck, latest_deck, middle_deck]
+	var decks: Array[DeckData] = [old_v18_deck, old_deck, latest_deck, middle_deck]
 
 	decks.sort_custom(scene._compare_decks_by_edit_time_desc)
 	scene.queue_free()
@@ -499,15 +643,16 @@ func test_deck_manager_sorts_decks_by_latest_edit_time_first() -> String:
 	return run_checks([
 		assert_eq(decks[0].id, latest_deck.id, "Deck center should place the most recently edited deck first"),
 		assert_eq(decks[1].id, middle_deck.id, "Deck center should keep edit timestamps in descending order"),
-		assert_eq(decks[2].id, old_deck.id, "Deck center should place the oldest edited deck last"),
+		assert_eq(decks[2].id, old_deck.id, "Deck center should keep older regular decks after newer decks"),
+		assert_eq(decks[3].id, old_v18_deck.id, "Deck center should not pin an older 18.0 deck ahead of newer decks"),
 	])
 
 
-func test_deck_manager_sorts_naic_decks_before_newer_regular_decks() -> String:
+func test_deck_manager_sorts_naic_decks_by_edit_time_like_regular_decks() -> String:
 	var scene: Control = DeckManagerScene.instantiate()
 	var newer_regular := _make_deck(910124, "Newer Regular Deck")
 	newer_regular.updated_at = 5000
-	var naic_deck := _make_deck(910125, "NAIC2025 Front Deck")
+	var naic_deck := _make_deck(910125, "NAIC2025 Regular Deck")
 	naic_deck.updated_at = 1000
 	var older_regular := _make_deck(910126, "Older Regular Deck")
 	older_regular.updated_at = 900
@@ -517,8 +662,9 @@ func test_deck_manager_sorts_naic_decks_before_newer_regular_decks() -> String:
 	scene.queue_free()
 
 	return run_checks([
-		assert_eq(decks[0].id, naic_deck.id, "Deck center should pin NAIC decks before newer regular decks in the All deck list"),
-		assert_eq(decks[1].id, newer_regular.id, "Deck center should keep regular decks sorted by edit time after NAIC decks"),
+		assert_eq(decks[0].id, newer_regular.id, "Deck center should not pin NAIC decks ahead of newer regular decks"),
+		assert_eq(decks[1].id, naic_deck.id, "Deck center should sort NAIC decks by edit time like regular decks"),
+		assert_eq(decks[2].id, older_regular.id, "Deck center should keep older regular decks after newer NAIC decks"),
 	])
 
 
@@ -660,6 +806,20 @@ func test_deck_view_dialog_deduplicates_cards_and_marks_copy_count() -> String:
 		assert_eq(boss_tiles.size(), 1, "Deck view should merge duplicate entries for the same card"),
 		assert_eq(int(boss_tile.get_meta("deck_view_count", 0)) if boss_tile != null else 0, 3, "Merged deck view tile should keep the summed copy count"),
 		assert_true(badge != null and badge.visible and badge.text == "X3", "Merged deck view tile should show an X3 count badge"),
+	])
+
+
+func test_deck_view_dialog_exposes_share_poster_button() -> String:
+	var host := Control.new()
+	host.size = Vector2(1600, 900)
+	var dialog_helper = DeckViewDialogScript.new()
+	var deck := _make_deck(910126, "Deck View Share")
+	dialog_helper.show_deck(host, deck)
+	var share_button := host.find_child("DeckViewSharePosterButton", true, false) as Button
+	host.queue_free()
+	return run_checks([
+		assert_not_null(share_button, "Deck view dialog should expose a share poster button"),
+		assert_true(share_button != null and share_button.text == "保存卡组图", "Deck view card-image button should use the same save wording as deck rows"),
 	])
 
 
@@ -1307,7 +1467,10 @@ func test_deck_manager_renders_recommendations_above_deck_list() -> String:
 	var import_button: Button = null
 	var detail_button: Button = null
 	var next_button: Button = null
-	var action_row: HBoxContainer = null
+	var action_row: Container = null
+	var landscape_content: HBoxContainer = null
+	var poster_preview: TextureRect = null
+	var poster_download_button: Button = null
 	if section != null:
 		feed = section.get_node_or_null("RecommendationFeed") as VBoxContainer
 		old_cards = section.get_node_or_null("RecommendationCards") as HBoxContainer
@@ -1316,7 +1479,10 @@ func test_deck_manager_renders_recommendations_above_deck_list() -> String:
 		import_button = section.find_child("RecommendationImportButton", true, false) as Button
 		detail_button = section.find_child("RecommendationDetailButton", true, false) as Button
 		next_button = section.find_child("RecommendationNextButton", true, false) as Button
-		action_row = section.find_child("RecommendationActionRow", true, false) as HBoxContainer
+		action_row = section.find_child("RecommendationActionRow", true, false) as Container
+		landscape_content = section.find_child("RecommendationLandscapeContent", true, false) as HBoxContainer
+		poster_preview = section.find_child("RecommendationPosterPreview", true, false) as TextureRect
+		poster_download_button = section.find_child("RecommendationPosterDownloadButton", true, false) as Button
 	var section_name: String = section.name if section != null else ""
 	var feed_count: int = feed.get_child_count() if feed != null else 0
 	var why_title_text := why_title.text if why_title != null else ""
@@ -1344,6 +1510,13 @@ func test_deck_manager_renders_recommendations_above_deck_list() -> String:
 		assert_not_null(feed, "Recommendation section should include the feed container"),
 		assert_eq(feed_count, 1, "Recommendation section should render one rich feed card"),
 		assert_not_null(card, "Recommendation feed should include the current deck card"),
+		assert_not_null(landscape_content, "Landscape recommendation should use a poster-and-copy split layout"),
+		assert_not_null(poster_preview, "Landscape recommendation should show the generated deck image"),
+		assert_true(poster_preview != null and is_equal_approx(poster_preview.custom_minimum_size.x / poster_preview.custom_minimum_size.y, 4.0 / 3.0), "Desktop recommendation preview should use the same 4:3 landscape ratio as its image"),
+		assert_true(action_row is GridContainer and (action_row as GridContainer).columns == 2, "Desktop recommendation actions should use a balanced two-column grid"),
+		assert_true(poster_download_button != null and poster_download_button.size_flags_horizontal == Control.SIZE_EXPAND_FILL, "Desktop recommendation actions should fill both grid columns evenly"),
+		assert_not_null(poster_download_button, "Landscape recommendation should expose the deck-image download action"),
+		assert_true(poster_download_button != null and poster_download_button.text == "保存卡组图", "Landscape deck-image action should use the unified player-facing wording"),
 		assert_eq(why_title_text, "为什么值得玩", "Recommendation card should explain why this deck is worth playing"),
 		assert_not_null(import_button, "Recommendation card should keep the import action"),
 		assert_not_null(detail_button, "Recommendation card should keep the detail action"),
@@ -2333,6 +2506,163 @@ func test_confirm_existing_deck_rename_persists_trimmed_name() -> String:
 	])
 
 
+func test_deck_manager_open_marks_latest_revision_seen_when_current_card_differs() -> String:
+	_delete_user_file(TEST_DECK_CENTER_META_STATE_PATH)
+	var scene: Control = DeckManagerScene.instantiate()
+	var revision := "test-opened-different-recommendation-revision"
+	scene._deck_center_latest_meta = {
+		"latest_revision": revision,
+		"latest_recommendation_id": "latest-server-recommendation",
+		"latest_deck_id": 999001,
+	}
+	scene._current_recommendation = {
+		"id": "different-visible-recommendation",
+		"deck_id": 999002,
+	}
+	scene._mark_deck_center_opened()
+	var state: Dictionary = scene._load_deck_center_meta_state()
+	var matches_visible_card: bool = scene._recommendation_matches_deck_center_latest(scene._current_recommendation)
+
+	scene.queue_free()
+	_delete_user_file(TEST_DECK_CENTER_META_STATE_PATH)
+	return run_checks([
+		assert_eq(str(state.get("last_seen_revision", "")), revision, "Opening deck center should clear its entrance NEW badge even when the visible recommendation card differs"),
+		assert_false(matches_visible_card, "A different recommendation card should not receive the latest recommendation's NEW badge"),
+	])
+
+
+func test_recommendation_poster_resolves_bundled_deck_with_recommendation_name() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	var recommendation := _remote_recommendation("bundled-poster-probe", 610080, "2026-06-20T00:00:00Z")
+	recommendation["deck_name"] = "推荐版沙奈朵"
+	var poster_deck: DeckData = scene._resolve_recommendation_poster_deck(recommendation)
+	var source_deck: DeckData = CardDatabase.get_deck(610080)
+
+	scene.queue_free()
+	return run_checks([
+		assert_not_null(poster_deck, "Recommendation poster should reuse a bundled deck without a network import"),
+		assert_true(poster_deck != null and not poster_deck.cards.is_empty(), "Resolved recommendation poster deck should contain the full card list"),
+		assert_eq(poster_deck.deck_name if poster_deck != null else "", "推荐版沙奈朵", "Poster copy should use the recommendation title instead of mutating the saved deck name"),
+		assert_true(source_deck == null or source_deck.deck_name != "推荐版沙奈朵", "Generating a recommendation poster must not rename the player's saved deck"),
+	])
+
+
+func test_deck_manager_selects_desktop_overview_only_for_native_desktop() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	var windows_variant: String = scene._deck_image_variant_for_context("Windows", {}, "windows")
+	var mac_variant: String = scene._deck_image_variant_for_context("macOS", {}, "macos")
+	var web_variant: String = scene._deck_image_variant_for_context("Web", {"web": true}, "web")
+	var android_variant: String = scene._deck_image_variant_for_context("Android", {"android": true, "mobile": true}, "android")
+	var web_android_variant: String = scene._deck_image_variant_for_context("Web", {"web_android": true, "mobile": true}, "web")
+	scene.queue_free()
+	return run_checks([
+		assert_eq(windows_variant, "desktop_overview", "Windows should generate the 4:3 desktop overview"),
+		assert_eq(mac_variant, "desktop_overview", "macOS should generate the 4:3 desktop overview"),
+		assert_eq(web_variant, "mobile_share", "browser builds should retain the vertical share image"),
+		assert_eq(android_variant, "mobile_share", "Android should retain the vertical share image"),
+		assert_eq(web_android_variant, "mobile_share", "mobile browser builds should retain the vertical share image"),
+	])
+
+
+func test_recommendation_poster_disk_cache_survives_scene_recreation() -> String:
+	var cache_dir := "user://test_deck_manager/recommendation_deck_images"
+	var recommendation := _remote_recommendation("persistent-poster", 610080, "2026-07-15T00:00:00Z")
+	var image := Image.create(1600, 1200, false, Image.FORMAT_RGBA8)
+	image.fill(Color(0.11, 0.17, 0.19, 1.0))
+
+	var first: Control = DeckManagerScene.instantiate()
+	first._test_deck_image_variant_override = "desktop_overview"
+	first._test_recommendation_poster_cache_dir = cache_dir
+	var saved: bool = first._save_recommendation_poster_disk_cache(recommendation, image)
+	var cache_path: String = first._recommendation_poster_disk_cache_path(recommendation)
+	first.queue_free()
+
+	var second: Control = DeckManagerScene.instantiate()
+	second._test_deck_image_variant_override = "desktop_overview"
+	second._test_recommendation_poster_cache_dir = cache_dir
+	var fake_importer := FakeDeckImporter.new()
+	second._recommendation_poster_importer = fake_importer
+	second.add_child(fake_importer)
+	second._request_recommendation_poster(recommendation)
+	var key: String = second._recommendation_poster_key(recommendation)
+	var cached: Dictionary = second._recommendation_poster_cache.get(key, {})
+	var loaded := not cached.is_empty()
+	var loaded_image := cached.get("image", null) as Image
+	var loaded_state := str(second._recommendation_poster_states.get(key, ""))
+	var import_count := fake_importer.imported_urls.size()
+	second.queue_free()
+	_delete_user_file(cache_path)
+
+	return run_checks([
+		assert_true(saved, "recommendation deck image should be written to persistent cache"),
+		assert_true(loaded, "a new deck-manager scene should load the cached deck image"),
+		assert_eq(import_count, 0, "persistent deck-image cache should bypass deck import and recomposition setup"),
+		assert_not_null(loaded_image, "persistent cache should restore image data"),
+		assert_eq(loaded_image.get_size() if loaded_image != null else Vector2i.ZERO, Vector2i(1600, 1200), "persistent cache should retain desktop overview dimensions"),
+		assert_eq(loaded_state, "ready", "loaded persistent image should be immediately ready"),
+	])
+
+
+func test_portrait_recommendation_download_saves_cached_share_poster() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene._test_deck_image_variant_override = DeckPosterComposerScript.VARIANT_MOBILE_SHARE
+	scene._apply_hud_theme()
+	scene._apply_non_battle_layout_for_tests(Vector2(1080, 2400), "portrait")
+	_configure_recommendation_test_state(scene)
+	var recommendation := _remote_recommendation("portrait-poster-download", 610080, "2026-06-20T00:00:00Z")
+	recommendation["deck_name"] = "保存卡组图测试"
+	scene._current_recommendation = recommendation
+	scene._ensure_recommendation_section()
+	var fake_adapter := FakeDeckShareAdapter.new()
+	scene._deck_share_adapter = fake_adapter
+	scene.add_child(fake_adapter)
+	var image := Image.create(8, 8, false, Image.FORMAT_RGBA8)
+	image.fill(Color.WHITE)
+	var deck := _make_deck(610080, "保存卡组图测试")
+	var key: String = scene._recommendation_poster_key(recommendation)
+	scene._store_recommendation_poster_cache(key, deck, image, ImageTexture.create_from_image(image))
+	scene._refresh_recommendation_cards()
+	var download_button := scene.find_child("RecommendationPosterDownloadButton", true, false) as Button
+	if download_button != null:
+		download_button.emit_signal("pressed")
+	var saved_count := fake_adapter.saved_images.size()
+	var saved_name := fake_adapter.saved_names[0] if not fake_adapter.saved_names.is_empty() else ""
+	scene._on_share_poster_image_saved("user://deck_share_exports/test.png")
+	var status_label := scene.find_child("RecommendationStatusLabel", true, false) as Label
+	var status_text := status_label.text if status_label != null else ""
+	var button_text := download_button.text if download_button != null else ""
+	var button_disabled := download_button.disabled if download_button != null else true
+
+	scene.queue_free()
+	return run_checks([
+		assert_not_null(download_button, "Portrait recommendation should expose the download action"),
+		assert_eq(saved_count, 1, "Downloading a cached recommendation poster should invoke the platform saver once"),
+		assert_true(saved_name.begins_with("保存卡组图测试_share_"), "Recommendation deck-image save should use a readable deck-based filename"),
+		assert_str_contains(status_text, "已保存推荐卡组图", "Successful recommendation deck-image download should report its saved path"),
+		assert_eq(button_text, "保存卡组图", "Save action should restore its label after saving"),
+		assert_false(button_disabled, "Download action should be re-enabled after saving"),
+	])
+
+
+func test_recommendation_poster_queue_keeps_only_latest_cycle_target() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene._recommendation_poster_loading_key = "already-loading"
+	var first_queued := _remote_recommendation("poster-queue-first", 990201, "2026-06-20T00:00:00Z")
+	var latest_queued := _remote_recommendation("poster-queue-latest", 990202, "2026-06-20T00:01:00Z")
+	scene._start_recommendation_poster_import(first_queued)
+	scene._start_recommendation_poster_import(latest_queued)
+	var queued_id := str(scene._recommendation_poster_queued_recommendation.get("id", ""))
+	var first_state := str(scene._recommendation_poster_states.get("poster-queue-first", ""))
+	var latest_state := str(scene._recommendation_poster_states.get("poster-queue-latest", ""))
+
+	scene.queue_free()
+	return run_checks([
+		assert_eq(queued_id, "poster-queue-latest", "Rapid recommendation cycling should keep only the latest poster request queued"),
+		assert_true(first_state != "queued", "Replaced poster request must not remain permanently marked as queued"),
+		assert_eq(latest_state, "queued", "Latest poster request should remain queued behind the active import"),
+	])
+
+
 func test_existing_deck_rename_clear_button_clears_current_name() -> String:
 	_cleanup_decks([910009])
 	var deck := _make_deck(910009, "Name To Replace")
@@ -2436,6 +2766,222 @@ func test_import_completed_does_not_reprompt_rename_for_same_saved_deck_id() -> 
 	])
 
 
+func test_deck_manager_new_deck_button_opens_guided_builder() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(1600, 900)
+	scene.call("_apply_hud_theme")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1600, 900), "landscape")
+	var new_button := scene.get_node_or_null("%BtnNewDeck") as Button
+	scene.call("_on_new_deck_pressed")
+
+	var overlay := scene.find_child("DeckActionHudDialog", true, false) as Control
+	var panel := scene.find_child("DeckActionHudPanel", true, false) as PanelContainer
+	var layout_context := scene.get("_current_non_battle_layout_context") as Dictionary
+	var safe_panel_height := 900.0 - float(layout_context.get("page_margin", 0.0)) * 2.0
+	var type_button := scene.find_child("StarterType_R", true, false) as Button
+	var axis_button := scene.find_child("StarterAxis_stage2", true, false) as Button
+	var pace_button := scene.find_child("StarterPace_balanced", true, false) as Button
+	var preview := scene.find_child("StarterDeckPreview", true, false) as Label
+	var create_button := scene.find_child("StarterDeckCreateButton", true, false) as Button
+	var option_popup := scene.find_child("StarterDeckOptionPopup", true, false) as OptionButton
+
+	scene.queue_free()
+	return run_checks([
+		assert_not_null(new_button, "Deck center header should expose a stable new-deck button"),
+		assert_eq(new_button.text if new_button != null else "", "+ 新建卡组", "New-deck action should be explicit"),
+		assert_true(new_button != null and bool(new_button.get_meta("_non_battle_touch_bound", false)), "New-deck action should use the shared Android touch bridge"),
+		assert_not_null(overlay, "New-deck action should open the deck-center HUD layer"),
+		assert_eq(panel.custom_minimum_size.y if panel != null else 0.0, safe_panel_height, "Landscape new-deck builder should fill the safe viewport height"),
+		assert_not_null(type_button, "Guided builder should provide Pokemon type choices"),
+		assert_not_null(axis_button, "Guided builder should provide main-axis choices"),
+		assert_not_null(pace_button, "Guided builder should provide pace choices"),
+		assert_null(option_popup, "Guided builder should avoid platform-dependent popup menus"),
+		assert_true(preview != null and preview.text.contains("60 张"), "Guided builder should preview a complete 60-card result"),
+		assert_true(create_button != null and not create_button.disabled, "Guided builder should allow creating its recommended deck"),
+	])
+
+
+func test_deck_manager_new_deck_builder_is_phone_sized_and_touch_bound() -> String:
+	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	scene.call("_apply_hud_theme")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	scene.call("_on_new_deck_pressed")
+
+	var panel := scene.find_child("DeckActionHudPanel", true, false) as PanelContainer
+	var type_button := scene.find_child("StarterType_R", true, false) as Button
+	var create_button := scene.find_child("StarterDeckCreateButton", true, false) as Button
+	var cancel_button := scene.find_child("StarterDeckCancelButton", true, false) as Button
+	var scroll := scene.find_child("DeckActionHudScroll", true, false) as ScrollContainer
+	var layout_context := scene.get("_current_non_battle_layout_context") as Dictionary
+	var safe_panel_height := 844.0 - float(layout_context.get("page_margin", 0.0)) * 2.0
+	var combined_panel_height := panel.get_combined_minimum_size().y if panel != null else 0.0
+	if type_button != null:
+		_emit_android_touch_on_button(type_button)
+	var selected_type := str((scene.get("_starter_deck_choice") as Dictionary).get("energy_type", ""))
+
+	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
+	scene.queue_free()
+	return run_checks([
+		assert_true(panel != null and panel.custom_minimum_size.x >= 340.0, "Portrait builder should use most of the phone width"),
+		assert_eq(panel.custom_minimum_size.y if panel != null else 0.0, safe_panel_height, "Portrait new-deck builder should fill the safe viewport height"),
+		assert_true(combined_panel_height <= safe_panel_height, "Portrait builder content must stay inside the safe viewport height"),
+		assert_true(scroll != null and bool(scroll.get_meta("_non_battle_hidden_vertical_drag_scroll", false)), "Portrait builder choices should remain reachable with touch drag scrolling"),
+		assert_true(type_button != null and type_button.custom_minimum_size.y >= 104.0, "Portrait type choices should be phone-sized"),
+		assert_true(type_button != null and bool(type_button.get_meta("_non_battle_touch_bound", false)), "Portrait type choices should use the Android touch bridge"),
+		assert_eq(selected_type, "R", "Android ScreenTouch should update the selected Pokemon type"),
+		assert_true(create_button != null and create_button.custom_minimum_size.y >= 104.0, "Portrait create action should be phone-sized"),
+		assert_true(cancel_button != null and cancel_button.custom_minimum_size.y >= 104.0, "Portrait cancel action should be phone-sized"),
+	])
+
+
+func test_deck_manager_new_deck_footer_actions_stay_inside_safe_portrait_viewport() -> String:
+	var tree := Engine.get_main_loop() as SceneTree
+	var viewport := SubViewport.new()
+	viewport.size = Vector2i(390, 844)
+	tree.root.add_child(viewport)
+	var scene: Control = DeckManagerScene.instantiate()
+	viewport.add_child(scene)
+	await tree.process_frame
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	scene.call("_on_new_deck_pressed")
+	await tree.process_frame
+
+	var layout_context := scene.get("_current_non_battle_layout_context") as Dictionary
+	var margin := float(layout_context.get("page_margin", 0.0))
+	var safe_top := margin
+	var safe_bottom := 844.0 - margin
+	var panel := scene.find_child("DeckActionHudPanel", true, false) as PanelContainer
+	var cancel_button := scene.find_child("StarterDeckCancelButton", true, false) as Button
+	var create_button := scene.find_child("StarterDeckCreateButton", true, false) as Button
+	var panel_rect := panel.get_global_rect() if panel != null else Rect2()
+	var cancel_rect := cancel_button.get_global_rect() if cancel_button != null else Rect2()
+	var create_rect := create_button.get_global_rect() if create_button != null else Rect2()
+
+	viewport.queue_free()
+	return run_checks([
+		assert_true(panel != null and panel_rect.position.y >= safe_top - 1.0, "Portrait new-deck panel should start inside the top safe margin; panel=%s safe_top=%s" % [panel_rect, safe_top]),
+		assert_true(panel != null and panel_rect.end.y <= safe_bottom + 1.0, "Portrait new-deck panel should end inside the bottom safe margin; panel=%s safe_bottom=%s" % [panel_rect, safe_bottom]),
+		assert_true(cancel_button != null and cancel_rect.end.y <= safe_bottom + 1.0, "Portrait cancel action must remain visible and tappable above the bottom safe margin; button=%s safe_bottom=%s" % [cancel_rect, safe_bottom]),
+		assert_true(create_button != null and create_rect.end.y <= safe_bottom + 1.0, "Portrait create action must remain visible and tappable above the bottom safe margin; button=%s safe_bottom=%s" % [create_rect, safe_bottom]),
+	])
+
+
+func test_deck_manager_header_switches_between_landscape_and_phone_grids() -> String:
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.call("_apply_hud_theme")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	var header := scene.find_child("Header", true, false) as VBoxContainer
+	var actions := scene.find_child("HeaderActions", true, false) as GridContainer
+	var new_button := scene.get_node_or_null("%BtnNewDeck") as Button
+	var import_button := scene.get_node_or_null("%BtnImport") as Button
+	var portrait_columns := actions.columns if actions != null else 0
+	var portrait_flags := header.size_flags_horizontal if header != null else -1
+	var portrait_new_text := new_button.text if new_button != null else ""
+	var portrait_import_text := import_button.text if import_button != null else ""
+
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1600, 900), "landscape")
+	var landscape_columns := actions.columns if actions != null else 0
+	var landscape_flags := header.size_flags_horizontal if header != null else -1
+	var landscape_new_text := new_button.text if new_button != null else ""
+	var landscape_import_text := import_button.text if import_button != null else ""
+
+	scene.queue_free()
+	return run_checks([
+		assert_eq(portrait_columns, 3, "Phone deck-center actions should stay in one fixed three-column row"),
+		assert_true((portrait_flags & Control.SIZE_SHRINK_CENTER) != 0, "Phone header should shrink to its controls instead of inheriting an oversized deck-list width"),
+		assert_eq(portrait_new_text, "新建卡组", "Phone header should keep a concise explicit create action"),
+		assert_eq(portrait_import_text, "导入卡组", "Phone header should keep a concise explicit import action"),
+		assert_eq(landscape_columns, 3, "Landscape deck-center actions should use one three-column row"),
+		assert_true((landscape_flags & Control.SIZE_EXPAND_FILL) != 0, "Landscape header should use the available width"),
+		assert_eq(landscape_new_text, "+ 新建卡组", "Landscape header should restore the full create label"),
+		assert_eq(landscape_import_text, "+ 导入卡组", "Landscape header should restore the full import label"),
+	])
+
+
+func test_deck_manager_generated_deck_is_saved_and_opens_editor_on_landscape() -> String:
+	const GENERATED_NAME := "自动生成器横屏测试"
+	_cleanup_decks_by_name(GENERATED_NAME)
+	var previous_mode := str(GameManager.non_battle_layout_mode)
+	GameManager.non_battle_layout_mode = GameManager.NON_BATTLE_LAYOUT_LANDSCAPE
+	GameManager.call("set_scene_navigation_suppressed_for_tests", true)
+	GameManager.call("consume_last_requested_scene_path")
+	GameManager.call("consume_deck_editor_id")
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.call("_apply_hud_theme")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1600, 900), "landscape")
+	scene.call("_on_new_deck_pressed")
+	var name_input := scene.find_child("StarterDeckNameInput", true, false) as LineEdit
+	if name_input != null:
+		name_input.text = GENERATED_NAME
+	scene.call("_on_create_starter_deck")
+
+	var generated := _find_deck_by_name(GENERATED_NAME)
+	var requested_scene := str(GameManager.call("consume_last_requested_scene_path"))
+	var editor_deck_id := int(GameManager.call("consume_deck_editor_id"))
+	var validation := generated.validate() if generated != null else PackedStringArray(["missing"])
+
+	scene.queue_free()
+	if generated != null:
+		_cleanup_decks([generated.id])
+	GameManager.non_battle_layout_mode = previous_mode
+	GameManager.call("set_scene_navigation_suppressed_for_tests", false)
+	return run_checks([
+		assert_not_null(generated, "Creating a starter deck should persist it in CardDatabase"),
+		assert_true(generated != null and generated.total_cards == 60 and validation.is_empty(), "Persisted starter deck should satisfy the core 60-card rules"),
+		assert_eq(requested_scene, GameManager.SCENE_DECK_EDITOR, "Landscape creation should continue directly to DeckEditor"),
+		assert_eq(editor_deck_id, generated.id if generated != null else -2, "DeckEditor should receive the newly generated deck id"),
+	])
+
+
+func test_deck_manager_web_portrait_generated_deck_waits_for_rotate_confirmation() -> String:
+	const GENERATED_NAME := "自动生成器网页竖屏测试"
+	_cleanup_decks_by_name(GENERATED_NAME)
+	var previous_mode := str(GameManager.non_battle_layout_mode)
+	GameManager.non_battle_layout_mode = GameManager.NON_BATTLE_LAYOUT_PORTRAIT
+	GameManager.call("set_scene_navigation_suppressed_for_tests", true)
+	GameManager.call("consume_last_requested_scene_path")
+	GameManager.call("consume_deck_editor_id")
+	var scene: Control = DeckManagerScene.instantiate()
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(390, 844)
+	scene.set("_test_web_runtime_override", true)
+	scene.call("_apply_hud_theme")
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	scene.call("_on_new_deck_pressed")
+	var name_input := scene.find_child("StarterDeckNameInput", true, false) as LineEdit
+	if name_input != null:
+		name_input.text = GENERATED_NAME
+	scene.call("_on_create_starter_deck")
+
+	var generated := _find_deck_by_name(GENERATED_NAME)
+	var requested_before := str(GameManager.call("consume_last_requested_scene_path"))
+	var id_before := int(GameManager.call("consume_deck_editor_id"))
+	var rotate_button := scene.find_child("WebDeckEditContinueButton", true, false) as Button
+	if rotate_button != null:
+		rotate_button.emit_signal("pressed")
+	var requested_after := str(GameManager.call("consume_last_requested_scene_path"))
+	var id_after := int(GameManager.call("consume_deck_editor_id"))
+
+	scene.queue_free()
+	if generated != null:
+		_cleanup_decks([generated.id])
+	GameManager.non_battle_layout_mode = previous_mode
+	GameManager.call("set_scene_navigation_suppressed_for_tests", false)
+	return run_checks([
+		assert_not_null(generated, "Web portrait creation should save before asking the player to rotate"),
+		assert_eq(requested_before, "", "Web portrait creation should not open the landscape-only editor immediately"),
+		assert_eq(id_before, -1, "Web portrait creation should not pass an editor id before confirmation"),
+		assert_not_null(rotate_button, "Web portrait creation should reuse the manual-rotate confirmation"),
+		assert_eq(requested_after, GameManager.SCENE_DECK_EDITOR, "Confirming rotation should open DeckEditor"),
+		assert_eq(id_after, generated.id if generated != null else -2, "Rotate confirmation should preserve the generated deck id"),
+	])
+
+
 func _configure_recommendation_test_state(scene: Control, cache_path: String = "") -> void:
 	scene._recommendation_store = DeckRecommendationStoreScript.new()
 	if cache_path != "":
@@ -2501,6 +3047,15 @@ func _collect_buttons(node: Node, out: Array[Button]) -> void:
 		out.append(node as Button)
 	for child: Node in node.get_children():
 		_collect_buttons(child, out)
+
+
+func _collect_controls_with_name_prefix(node: Node, prefix: String, out: Array[Control]) -> void:
+	if node == null:
+		return
+	if node is Control and node.name.begins_with(prefix):
+		out.append(node as Control)
+	for child: Node in node.get_children():
+		_collect_controls_with_name_prefix(child, prefix, out)
 
 
 func _collect_labels(node: Node, out: Array[Label]) -> void:
@@ -2593,6 +3148,21 @@ func _cleanup_decks(deck_ids: Array[int]) -> void:
 	for deck_id: int in deck_ids:
 		if CardDatabase.has_deck(deck_id):
 			CardDatabase.delete_deck(deck_id)
+
+
+func _find_deck_by_name(deck_name: String) -> DeckData:
+	for deck: DeckData in CardDatabase.get_all_decks():
+		if deck != null and deck.deck_name == deck_name:
+			return deck
+	return null
+
+
+func _cleanup_decks_by_name(deck_name: String) -> void:
+	var ids: Array[int] = []
+	for deck: DeckData in CardDatabase.get_all_decks():
+		if deck != null and deck.deck_name == deck_name:
+			ids.append(deck.id)
+	_cleanup_decks(ids)
 
 
 func _emit_android_touch_on_button(button: Button) -> void:

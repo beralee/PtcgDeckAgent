@@ -25,6 +25,7 @@ const BATTLE_CARD_VIEW := preload("res://scenes/battle/BattleCardView.gd")
 const CardImplementationStatusScript := preload("res://scripts/engine/CardImplementationStatus.gd")
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 const NonBattleTouchBridgeScript := preload("res://scripts/ui/non_battle/NonBattleTouchBridge.gd")
+const CardImageCacheServiceScript := preload("res://scripts/card_images/CardImageCacheService.gd")
 
 ## 卡图尺寸（标准卡牌比例约 63:88）
 const CARD_WIDTH := 100
@@ -136,6 +137,7 @@ var _deferred_tile_texture_queue: Array[Dictionary] = []
 var _deferred_tile_texture_pump_active := false
 var _deferred_tile_texture_generation := 0
 var _initial_pool_grid_refresh_done := false
+var _image_cache_service = null
 
 
 func _ready() -> void:
@@ -153,6 +155,8 @@ func _ready() -> void:
 	if _original_deck_id < 0:
 		_go_back_to_return_scene()
 		return
+	_image_cache_service = CardImageCacheServiceScript.new()
+	add_child(_image_cache_service)
 
 	var source_deck := CardDatabase.get_deck(_original_deck_id)
 	if source_deck == null:
@@ -345,7 +349,7 @@ func _on_editor_scroll_input(event: InputEvent, scroll: ScrollContainer) -> void
 # -- 分类构建 --
 
 func _build_pool() -> void:
-	var all_cards := CardDatabase.get_all_cards()
+	var all_cards := _catalog_pool_cards()
 	_pool_by_category.clear()
 	for _i: int in CATEGORY_TABS.size():
 		_pool_by_category.append([])
@@ -364,6 +368,50 @@ func _build_pool() -> void:
 		arr.sort_custom(func(a: CardData, b: CardData) -> bool:
 			return a.name < b.name
 		)
+
+
+func _catalog_pool_cards() -> Array[CardData]:
+	var cards: Array[CardData] = []
+	var seen := {}
+	for entry: Dictionary in CardDatabase.search_catalog_cards("", {}, 0, 0):
+		var card := _card_from_catalog_entry(entry)
+		if card == null or seen.has(card.get_uid()):
+			continue
+		seen[card.get_uid()] = true
+		cards.append(card)
+	for card: CardData in CardDatabase.get_all_materialized_cards():
+		if card == null or seen.has(card.get_uid()):
+			continue
+		seen[card.get_uid()] = true
+		cards.append(card)
+	return cards
+
+
+func _card_from_catalog_entry(entry: Dictionary) -> CardData:
+	var set_code := str(entry.get("set_code", "")).strip_edges()
+	var card_index := str(entry.get("card_index", "")).strip_edges()
+	if set_code == "" or card_index == "":
+		return null
+	var card := CardData.from_dict({
+		"name": str(entry.get("name", "")),
+		"name_en": str(entry.get("name_en", "")),
+		"name_zh": str(entry.get("name_zh", "")),
+		"card_type": str(entry.get("card_type", "")),
+		"mechanic": str(entry.get("mechanic", "")),
+		"label": str(entry.get("label", "")),
+		"is_tags": entry.get("is_tags", []),
+		"set_code": set_code,
+		"card_index": card_index,
+		"rarity": str(entry.get("rarity", "")),
+		"regulation_mark": str(entry.get("regulation_mark", "")),
+		"effect_id": str(entry.get("effect_id", "")),
+		"energy_type": str(entry.get("energy_type", "")),
+		"stage": str(entry.get("stage", "")),
+		"hp": int(entry.get("hp", 0)),
+		"image_url": str(entry.get("image_url", "")),
+		"image_local_path": CardData.build_local_image_path(set_code, card_index),
+	})
+	return card
 
 
 func _is_excluded_card(card: CardData) -> bool:
@@ -1256,6 +1304,7 @@ func _do_replace(entry_index: int, pool_card: CardData) -> void:
 
 	_recalc_total()
 	_dirty = true
+	_queue_pool_card_image_download(pool_card)
 	_selected_deck_index = -1
 	_selected_pool_uid = ""
 	_last_selected_card_payload = {}
@@ -1288,8 +1337,24 @@ func _find_pool_card(uid: String) -> CardData:
 	for cat: Array in _pool_by_category:
 		for card: CardData in cat:
 			if card.get_uid() == uid:
-				return card
+				var full_card := CardDatabase.get_card(card.set_code, card.card_index)
+				return full_card if full_card != null else card
 	return null
+
+
+func _queue_pool_card_image_download(card: CardData) -> void:
+	if card == null:
+		return
+	if _image_cache_service == null:
+		return
+	if _image_cache_service.has_method("ensure_image_with_options"):
+		_image_cache_service.ensure_image_with_options(card, {
+			"priority": 8,
+			"reason": "deck_editor_add",
+			"allow_remote": true,
+		})
+	else:
+		_image_cache_service.ensure_image(card, 8, "deck_editor_add")
 
 
 # -- AI 分析 --

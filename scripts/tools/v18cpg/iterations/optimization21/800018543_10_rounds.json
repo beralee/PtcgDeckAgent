@@ -1,0 +1,365 @@
+{
+  "schema_version": 1,
+  "architecture": "V18CPG",
+  "evidence_revision": 6,
+  "status": "in_progress",
+  "deck_id": 800018543,
+  "deck_name": "18.0 竹兰烈咬陆鲨",
+  "anchor_id": 575720,
+  "seed_base": 800018543,
+  "games_per_round": 5,
+  "model": "deepseek-v4-flash",
+  "deck_source": "bundled_ai",
+  "deck_content_fingerprint": "f1168a17bcf36be6e0711970c6c704f9fc3c1930e024f490ad969e0553387f66",
+  "baseline_artifact": "res://tmp/v18cpg/optimization21/800018543/round00.json",
+  "completed_rounds": 4,
+  "required_rounds": 10,
+  "rounds": [
+    {
+      "round": 1,
+      "artifact": "res://tmp/v18cpg/optimization21/800018543/round01.json",
+      "run_id": "opt21_800018543_round01",
+      "timestamp": "2026-07-21T01:51:54",
+      "failure_category": "event_or_version_error",
+      "diagnosis": "Round00 had one negative winner flip at seed 800018547: after the turn-23 attack and turn-24 forced replacement, the old runtime emitted a module-verified attack candidate at turn 25 and executed no Main action, while Rule evolved, attached Fighting Energy, and attacked. The current isolated V18CPG architecture already restores an exact Rule-equivalent turn-25 sequence, but the five-scenario suite proved that score_handoff_target still left the old graph, cursor, and certificate alive during the send_out interaction window. That stale same-window authority was a real lifecycle gap even though later _begin_turn cleanup prevented it from reproducing in the current single-seed preflight.",
+      "change_summary": "Added a V18CPG-only forced-sendout invalidation hook: send_out target scores remain exactly Rule-owned, while the prior graph, execution cursor, preferred action/candidate, module certificate, pending interaction context, and unconsumed action result are cleared before promotion scoring continues. Updated the Cynthia complex scenario to require same-window invalidation rather than merely documenting the gap. Focused scenarios passed 5/5; contracts 16 groups, shared blockers 13 groups, strategic shapes 9/9, dominance 20/20, generic compaction 12/12, and 24-deck coverage 24/24 passed. The frozen Rule signature remained identical to Round00, and all benchmark-critical file hashes remained unchanged during the formal run.",
+      "retained": true,
+      "profile": {
+        "profile_version": 2,
+        "semantic_version": 1,
+        "profile_fingerprint": "9e730d69a735fa9d50c1b4fba89275e6311c369a38da76b96a43ec36c3db8645",
+        "profile_file_sha256": "66802d8ba726c27f8322fc061e6f66895e2c9a99a2526fe96f6717eafadd9887",
+        "semantic_manifest_sha256": "5b67cb5314644b5445703c0a8bfd41a09ff76a00cc9919458ba0baf98facb924",
+        "v18_strategy_sha256": "73962b92f7408b78582945a9e72a6ba3303005ec358acd5cc07894ccb6b0310e",
+        "capability_registry_sha256": "8d548ffc0d01cab3ad636079b780edfae465e6ede35e128f435e53d81a7dfcfe",
+        "rule_strategy_sha256": "4f556cef5b452c9c9d82560130ce86895ebd42559cd1de06441e4e8a0283790a"
+      },
+      "metrics": {
+        "rule_wins": 3,
+        "v18cpg_wins": 3,
+        "paired_improvement": 0.0,
+        "paired_bootstrap_95": [0.0, 0.0],
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 15,
+        "model_accepted": 10,
+        "model_rejected": 5,
+        "model_acceptance_rate": 0.666666666666667,
+        "model_owned_action_results": 1,
+        "payload_p50_bytes": 28244,
+        "payload_p95_bytes": 33050,
+        "visible_wait_p50_ms": 5520,
+        "visible_wait_p95_ms": 6262,
+        "turn_visible_wait_p50_ms": 5520,
+        "turn_visible_wait_p95_ms": 6262,
+        "graph_branch_hits": 17,
+        "uncovered_events": 28,
+        "zero_acceptance_reference_checks": 1,
+        "zero_acceptance_reference_mismatches": 0,
+        "zero_model_action_reference_checks": 4,
+        "zero_model_action_reference_mismatches": 0,
+        "positive_flips": 0,
+        "negative_flips": 0,
+        "v18cpg_signature_matches_rule_by_game": [false, true, true, true, true],
+        "fallbacks": {
+          "deadline_fallback": 3,
+          "route_validation": 1,
+          "schema_fallback": 1
+        },
+        "fallback_reasons": {
+          "model_route_below_switch_margin": 1,
+          "turn_visible_wait_budget_exhausted": 3,
+          "typed_route_crosses_information_checkpoint": 1
+        },
+        "frozen_snapshot_unchanged": true,
+        "rule_signature_matches_round00": true,
+        "rule_signature_sha256": "909021dd2dc7f8e9ddc9f415077d73669e31b9ff720e29fbccbdd77749f1f943"
+      },
+      "preflight": {
+        "seed_800018547": {
+          "artifact": "res://tmp/v18cpg/optimization21/800018543/round01_preflight_seed547.json",
+          "rule": "win",
+          "v18cpg": "win",
+          "clean": true,
+          "model_calls": 4,
+          "model_owned_action_results": 0,
+          "decision_signature_matches_rule": true
+        }
+      },
+      "post_round_finding": {
+        "category": "parity_restored_and_forced_sendout_boundary_closed",
+        "finding": "The current architecture plus the explicit send_out invalidation hook recovered the old seed547 loss and produced exact 3/5 parity with Rule, zero negative flips, and four verified-reference games with no model-owned action mismatch. The remaining production opportunity is not the closed lifecycle gap: only seed543 had one model-owned action and its decision trace differed without changing the winner. Later rounds must explain that owned branch and find a complete public suffix that converts one of the two shared losses without weakening the three wins."
+      },
+      "next_action": "Round02 must audit seed800018543's sole model-owned branch for deck-route fidelity and the earliest public branches in shared losses 800018544/546. Prefer a complete Cynthia-specific evolve/search/attack suffix or a proved same-KO Spiral Dive energy-preservation certificate; do not widen the still-unproved Dragon Blast discard-cost inference, and retain the 3/5 floor with zero negative flips."
+    },
+    {
+      "round": 2,
+      "artifact": "res://tmp/v18cpg/optimization21/800018543/round02.json",
+      "run_id": "opt21_800018543_round02",
+      "timestamp": "2026-07-21T02:17:43",
+      "failure_category": "interaction_error",
+      "diagnosis": "The Round01 seed543 model-owned action skipped Munkidori's optional damage transfer and took the already-secured knockout; it still won on the same turn horizon, so that branch is not a negative flip. The earliest attractive interaction gap is Buddy-Buddy Poffin choosing two Gible roots even when a distinct Gible plus Roselia pair could feed TM Evolution. However, the shared loss seed800018544 does not expose the complete public suffix needed to authorize that switch: at the turn-2 Poffin interaction no TM Evolution is in the public hand, and seed800018546 exposes no actionable development choice at all. A broad duplicate-root override would therefore be an unproved strategic guess rather than a deterministic improvement.",
+      "change_summary": "Added a fail-closed partner-chain interaction certificate that changes duplicate Poffin roots to Gible plus Roselia only when TM Evolution is already public in hand, the Active publicly has Fighting Energy, both evolution groups are absent, two Bench slots are free, and both basics are visible in the current search result. The complex suite now executes the real capability-registry interaction path and covers five negative boundaries: missing TM, missing Active Energy, an existing chain, insufficient Bench space, and a missing second root. Focused scenarios passed 5/5; contracts 16, blockers 13, strategic shapes 9/9, dominance 20/20, compaction 12/12, and coverage 24/24 passed. A five-seed verified-local preflight and the formal run both remained 3/5 parity with no negative flips.",
+      "retained": false,
+      "profile": {
+        "profile_version": 3,
+        "semantic_version": 1,
+        "profile_fingerprint": "f5050f5313573191075822034f4000d87468571e51a23e49f06c749bc8178dbe",
+        "profile_file_sha256": "ff96d5858feffc8862b933a768b097a81f8d7aed4991f7fa137491f7ad26292f",
+        "semantic_manifest_sha256": "5b67cb5314644b5445703c0a8bfd41a09ff76a00cc9919458ba0baf98facb924",
+        "strategic_shape_module_sha256": "97e559ae29e799ab11f5e83cc9187c7ba1b143cbfd4b1a6530b783e649be1829",
+        "v18_strategy_sha256": "73962b92f7408b78582945a9e72a6ba3303005ec358acd5cc07894ccb6b0310e",
+        "capability_registry_sha256": "c3605a02679d90c8389db7e865d082a005b7b119df1f2e2e54825e8d5a2d4c8a",
+        "rule_strategy_sha256": "4f556cef5b452c9c9d82560130ce86895ebd42559cd1de06441e4e8a0283790a"
+      },
+      "metrics": {
+        "rule_wins": 3,
+        "v18cpg_wins": 3,
+        "paired_improvement": 0.0,
+        "paired_bootstrap_95": [0.0, 0.0],
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 15,
+        "model_accepted": 8,
+        "model_rejected": 7,
+        "model_acceptance_rate": 0.533333333333333,
+        "model_owned_action_results": 1,
+        "payload_p50_bytes": 29274,
+        "payload_p95_bytes": 33575,
+        "visible_wait_p50_ms": 5590,
+        "visible_wait_p95_ms": 6254,
+        "turn_visible_wait_p50_ms": 5590,
+        "turn_visible_wait_p95_ms": 6254,
+        "graph_branch_hits": 19,
+        "uncovered_events": 27,
+        "zero_model_action_reference_checks": 4,
+        "zero_model_action_reference_mismatches": 0,
+        "positive_flips": 0,
+        "negative_flips": 0,
+        "v18cpg_signature_matches_rule_by_game": [false, true, true, true, true],
+        "profiled_poffin_distinct_root_certificate_events": 0,
+        "fallbacks": {
+          "deadline_fallback": 6,
+          "schema_fallback": 1
+        },
+        "fallback_reasons": {
+          "turn_visible_wait_budget_exhausted": 6,
+          "typed_route_crosses_information_checkpoint": 1
+        },
+        "frozen_snapshot_unchanged": true,
+        "rule_signature_matches_round00": true,
+        "rule_signature_sha256": "909021dd2dc7f8e9ddc9f415077d73669e31b9ff720e29fbccbdd77749f1f943"
+      },
+      "preflight": {
+        "verified_local_five_seed": {
+          "artifact": "res://tmp/v18cpg/optimization21/800018543/round02_preflight_verified_local.json",
+          "rule_wins": 3,
+          "v18cpg_wins": 3,
+          "clean": true,
+          "model_calls": 0,
+          "profiled_poffin_distinct_root_certificate_events": 0
+        }
+      },
+      "post_round_finding": {
+        "category": "fixture_proved_but_no_production_eligibility",
+        "finding": "The exact Poffin-to-TM double-evolution interaction is now executable and fail-closed in the five-scenario suite, but none of the frozen production states contained its full public preconditions. Formal behavior therefore remained 3/5 with one unrelated model-owned action and zero certificate events. The strict guard is intentionally not widened for seed544, because that loss lacks public TM Evolution at the Poffin checkpoint; the round is diagnostic rather than production-retained evidence."
+      },
+      "next_action": "Round03 should focus on seed543's real model-owned early attack and prove whether skipping Munkidori is a dominated productive-prefix truncation, then inspect an actual same-KO Garchomp choice with real EffectProcessor evidence for Spiral Dive preserving Energy versus Dragon Blast discarding it. Require production ownership or an audited eligible interaction before retention, keep the 3/5 floor, and do not broaden the Poffin certificate into seed544's incomplete suffix."
+    },
+    {
+      "round": 3,
+      "artifact": "res://tmp/v18cpg/optimization21/800018543/round03.json",
+      "artifact_sha256": "3ab824c3bf6de90f7e4cd94941a9e7273b521457b04112bdefddd2c9452fa882",
+      "run_id": "opt21_800018543_round03_rerun",
+      "timestamp": "2026-07-21T03:00:17",
+      "failure_category": "fact_or_solver_error",
+      "diagnosis": "Round02 seed800018543 turn21 exposed a monotonic productive-prefix truncation. The exact Rule floor used Munkidori's Adrena-Brain before an already-secured one-prize Garchomp knockout, while the model selected the direct attack. Every public opposing slot had more than 30 HP, so moving the full thirty damage could not create a knockout, forced send-out, prize boundary, or change the Active target; the same 200-damage attack and one-prize suffix remained secured. The damage-counter module previously recognized only activation-by-attachment and a unique counter-KO, so this non-KO public suffix had no typed certificate.",
+      "change_summary": "Composed damage_counter_control into only deck800018543 and added a profile-v4 opt-in for a full thirty-point non-KO counter prefix. The shared module now requires the exact profiled Munkidori UID and ability index, explicit interaction ownership, Darkness activation, a unique damaged damage-invariant Garchomp source, an exact Rule floor, a ready non-winning KO attack, and no public live opposing slot at or below the transfer amount. It preserves Rule ownership over any public live target and certifies that the same Active KO/prize suffix remains bound. The focused trace and ten fail-closed boundaries pass; Cynthia scenarios 5/5, contracts 16, strategic shapes 9/9, compaction 12/12, blockers 13, dominance 20/20, and coverage 24/24 pass. Only Cynthia's semantic manifest was regenerated.",
+      "retained": true,
+      "profile": {
+        "profile_version": 4,
+        "semantic_version": 1,
+        "profile_fingerprint": "49acf4f738b8040f3d44a50f5f2baf53190981348228eb3887abfea28ba3fcf7",
+        "profile_file_sha256": "98994d86396a746ae9d4b8e5888c529c78ba44b085b67e6463cb79f00f0a7fa2",
+        "semantic_manifest_sha256": "4d5141896912b3d05b723071838ec245e5aa60f8e1416f4beb8552f2ad58e2a1",
+        "strategic_shape_module_sha256": "1ccecb95e1a6fa9b0cda311c66561380315d6d69a31ab67564dd56440ccf6d31",
+        "v18_strategy_sha256": "78182aaca8c808a70ff3577184dbed9254b69494c7b273847efb883abaaa3d22",
+        "capability_registry_sha256": "c3605a02679d90c8389db7e865d082a005b7b119df1f2e2e54825e8d5a2d4c8a",
+        "rule_strategy_sha256": "b4418ff8750c23ae43ebcbccfad10198ab6bbdb2ac2d4dc03cdd750173ff1ef6"
+      },
+      "metrics": {
+        "rule_wins": 3,
+        "v18cpg_wins": 3,
+        "paired_improvement": 0.0,
+        "paired_bootstrap_95": [0.0, 0.0],
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 15,
+        "model_accepted": 12,
+        "model_rejected": 3,
+        "model_acceptance_rate": 0.8,
+        "model_owned_action_results": 0,
+        "payload_p50_bytes": 30465,
+        "payload_p95_bytes": 35884,
+        "visible_wait_p50_ms": 5214,
+        "visible_wait_p95_ms": 6255,
+        "turn_visible_wait_p50_ms": 5214,
+        "turn_visible_wait_p95_ms": 6255,
+        "graph_branch_hits": 16,
+        "uncovered_events": 29,
+        "zero_acceptance_reference_checks": 1,
+        "zero_acceptance_reference_mismatches": 0,
+        "zero_model_action_reference_checks": 5,
+        "zero_model_action_reference_mismatches": 0,
+        "positive_flips": 0,
+        "negative_flips": 0,
+        "v18cpg_signature_matches_rule_by_game": [true, true, true, true, true],
+        "counter_mover_before_secured_ko_certificate_events": 1,
+        "production_certificate_seed": 800018543,
+        "production_certificate_turn": 21,
+        "fallbacks": {
+          "deadline_fallback": 1,
+          "schema_fallback": 2
+        },
+        "fallback_reasons": {
+          "turn_visible_wait_budget_exhausted": 1,
+          "typed_route_crosses_information_checkpoint": 2
+        },
+        "frozen_snapshot_unchanged": true,
+        "rule_signature_matches_round00": true,
+        "rule_signature_sha256": "909021dd2dc7f8e9ddc9f415077d73669e31b9ff720e29fbccbdd77749f1f943"
+      },
+      "preflight": {
+        "verified_local_five_seed": {
+          "artifact": "res://tmp/v18cpg/optimization21/800018543/round03_preflight_verified_local.json",
+          "rule_wins": 3,
+          "v18cpg_wins": 3,
+          "clean": true,
+          "model_calls": 0,
+          "decision_signature_matches_rule": true
+        }
+      },
+      "production_trace": {
+        "seed": 800018543,
+        "turn": 21,
+        "observation_hash": "6c9a53af6f59f1f19c887cea0306776694f5cceca1e67ae3d71d4243a2f75480",
+        "rule_candidate_id": "candidate:c939e45d6ddf01a9d7a2",
+        "direct_attack_candidate_id": "candidate:52d364823d3080641269",
+        "certificate_kind": "public_counter_mover_before_secured_ko",
+        "model_response": "exact_rule_root_shadowed",
+        "executed_prefix": "Munkidori ability before Garchomp attack",
+        "interaction_owner": "rules_fallback"
+      },
+      "post_round_finding": {
+        "category": "production_prefix_restored_without_winner_flip",
+        "finding": "The new public certificate was eligible in the exact seed543 turn21 production state. The accepted model response selected the exact Rule Munkidori root, the action_result carried public_counter_mover_before_secured_ko, and the subsequent Garchomp attack remained Rule-owned. This removes the prior model truncation while all five full decision logs and winners remain identical to Rule. It is retained as a verified route-fidelity improvement, not claimed as a win-rate gain."
+      },
+      "next_action": "Round04 should inspect the earliest complete public suffix in shared losses 800018544/546 and the real same-KO Garchomp choice where Spiral Dive preserves Energy while Dragon Blast discards it. Add a certificate only when real EffectProcessor evidence and the current public frontier bind attack cost, discard effect, same prize result, and next-attacker continuity; keep the 3/5 floor and zero negative flips."
+    },
+    {
+      "round": 4,
+      "artifact": "res://tmp/v18cpg/optimization21/800018543/round04.json",
+      "artifact_sha256": "afbb91e44c2d7b0d93d2e3639695e3cfa89d0543879f60d98da130d7be7b84bf",
+      "run_id": "opt21_800018543_round04",
+      "timestamp": "2026-07-21T10:37:53",
+      "failure_category": "zero_opportunity_public_resource_preservation",
+      "diagnosis": "The five-scenario suite exposed a real architecture gap: when both Garchomp attacks take the same nonterminal Prize, Spiral Dive can preserve two attached Fighting Energy while Dragon Blast discards both. The generic frontier previously treated both actions as the same attack_ko route and could not prove that the lower-damage attack dominated the exact Rule floor. The final five production seeds contained no state satisfying the complete certificate topology; seed800018547 turn25 used Dragon Blast because Spiral Dive did not secure the same knockout, so the new proof correctly remained closed.",
+      "change_summary": "Advanced only profile800018543 to v5 and extended its already-composed CyclePivot capability with a deck-scoped public_same_ko_preserve_attached_energy proof. It binds deck id, exact Garchomp UID and effect id, attack indices, Active source, exactly two visible Fighting Energy, hand-six draw no-op, both projected knockouts, equal public Prize gain, a nonterminal Prize state, and a live opponent replacement. Real EffectProcessor execution proves Spiral Dive preserves both Energy while Dragon Blast discards both; focused negative fixtures reject the final Prize, no replacement, hand below six, wrong effect, and missing Energy. V18CPG Strategy only adds this exact certificate to the autonomous public-certificate allowlists. Rule, legacy LLM, Agent, registry, model, token/node/wait budgets, and benchmark source were unchanged. Focused scenarios passed 5/5; contracts 16 groups, strategic shapes 9/9, compaction 12/12, blockers 13, dominance 20/20, and coverage 24/24 profiles plus 12/12 modules passed before formal.",
+      "retained": true,
+      "profile": {
+        "profile_version": 5,
+        "semantic_version": 1,
+        "profile_fingerprint": "d4a6c615e95060724d90bcfa95a3672da5f9bc12d99af6293750afd630ba67e4d",
+        "profile_file_sha256": "b9a50f01935481b0ffa0f2c470735e6b51f31c55e6defb4c3f51c568bda230bf",
+        "semantic_manifest_sha256": "4d5141896912b3d05b723071838ec245e5aa60f8e1416f4beb8552f2ad58e2a1",
+        "cycle_pivot_sha256": "b9cad77159b858a6189f45d954a1e009d120c955e95886ce397be02c0c09563a",
+        "v18_strategy_sha256": "db0ea7efff70a4217153a488e9a3a0671a1480c3ce9d6928b9c3c0834cd96e4d",
+        "capability_registry_sha256": "c3605a02679d90c8389db7e865d082a005b7b119df1f2e2e54825e8d5a2d4c8a",
+        "rule_strategy_sha256": "b4418ff8750c23ae43ebcbccfad10198ab6bbdb2ac2d4dc03cdd750173ff1ef6",
+        "focused_test_sha256": "59a1a0abc810e01f2c70b57d89b89998a62b56c707629bd80c6007deefceb8bd"
+      },
+      "metrics": {
+        "rule_wins": 3,
+        "v18cpg_wins": 3,
+        "paired_improvement": 0.0,
+        "paired_bootstrap_95": [0.0, 0.0],
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 15,
+        "model_accepted": 11,
+        "model_rejected": 4,
+        "model_acceptance_rate": 0.733333333333333,
+        "model_owned_action_results": 0,
+        "payload_p50_bytes": 31249,
+        "payload_p95_bytes": 37011,
+        "visible_wait_p50_ms": 4839,
+        "visible_wait_p95_ms": 6253,
+        "turn_visible_wait_p50_ms": 4839,
+        "turn_visible_wait_p95_ms": 6253,
+        "graph_branch_hits": 16,
+        "uncovered_events": 30,
+        "zero_acceptance_reference_checks": 1,
+        "zero_acceptance_reference_mismatches": 0,
+        "zero_model_action_reference_checks": 5,
+        "zero_model_action_reference_mismatches": 0,
+        "positive_flips": 0,
+        "negative_flips": 0,
+        "v18cpg_signature_matches_rule_by_game": [true, true, true, true, true],
+        "same_ko_energy_preservation_certificate_events": 0,
+        "fallbacks": {
+          "deadline_fallback": 1,
+          "route_validation": 2,
+          "schema_fallback": 1
+        },
+        "fallback_reasons": {
+          "turn_visible_wait_budget_exhausted": 1,
+          "typed_route_attack_dependency_unproven": 2,
+          "typed_route_crosses_information_checkpoint": 1
+        },
+        "frozen_snapshot_unchanged": true
+      },
+      "preflight": {
+        "verified_local_five_seed": {
+          "artifact": "res://tmp/v18cpg/optimization21/800018543/round04_preflight_verified_local_final.json",
+          "rule_wins": 3,
+          "v18cpg_wins": 3,
+          "clean": true,
+          "model_calls": 0,
+          "decision_signature_matches_rule": true,
+          "certificate_events": 0
+        }
+      },
+      "production_certificate_audit": {
+        "focused_real_effect_positive": true,
+        "focused_fail_closed_boundaries": [
+          "final_prize",
+          "no_live_replacement",
+          "visible_hand_below_six",
+          "wrong_effect_id",
+          "missing_second_fighting_energy"
+        ],
+        "formal_eligible_events": 0,
+        "formal_status": "fail_closed_no_matching_public_topology"
+      },
+      "concurrency_note": "The formal window started with zero Godot processes. An unrelated Agent-architecture run in D:/ai/code/ptcgtrain auto-started during the tail of this batch. Strength evidence remains valid because all five model runs had zero model-owned actions and matched the verified-local reference exactly; the observed 6253 ms p95 is retained as a conservative under-load latency and still passes the 6500 ms gate.",
+      "post_formal_shared_runtime_revalidation": {
+        "reason": "A later V18CPG-only Rule-floor fix overrides the inherited host score_action_absolute_with_plan contract so continuity and retreat guards are applied exactly once. The frozen Round04 artifact remains immutable historical evidence; this revalidation proves the current shared runtime preserves its result.",
+        "artifact": "res://tmp/v18cpg/optimization21/800018543/round04_rule_floor_fix_revalidate.json",
+        "artifact_sha256": "41b59222c4b45237609f01c863e1510ae811f00814d6d7047db5b14dc4a03713",
+        "v18_strategy_sha256": "d1d138e4a48d73acab03dba9f44dc95e1f0d73326cb286d9bb9e7854fba2e1ae",
+        "contract_test_sha256": "5c378528541b630894f4e1c497f7d130c8f2eb4edd1246f3bd7fc01bbb7a1fb1",
+        "rule_wins": 3,
+        "v18cpg_wins": 3,
+        "clean_games": 5,
+        "model_calls": 0,
+        "negative_flips": 0,
+        "decision_signature_matches_rule": true
+      },
+      "post_round_finding": {
+        "category": "architecture_gap_closed_without_production_opportunity_or_winner_flip",
+        "finding": "Round04 retains exact Rule parity at 3/5 with clean 5/5, zero positive flips, zero negative flips, and all five decision logs matching the verified-local Rule-equivalent reference. The exact same-KO resource certificate is now available and exhaustively fail-closed, but these five immutable seeds did not expose a legal state where it could execute. This is retained as a verified architecture and route-fidelity improvement, not claimed as a win-rate gain."
+      },
+      "next_action": "Round05 must stop widening the same-KO certificate and return to shared loss seeds800018544/546. Audit the earliest public complete suffix whose exact legal frontier can change the Prize clock; require a focused production-shape fixture, verified-local exercise, zero regression of the current 3/5 floor, and p95 <= 6500 ms before formal."
+    }
+  ]
+}

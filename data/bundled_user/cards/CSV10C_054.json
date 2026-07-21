@@ -1,0 +1,59 @@
+{
+    "name":  "吼鲸王",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  " 水炮 10+\n追加造成这只宝可梦身上附着的【水】能量数量×50伤害。\n\n",
+    "yoren_code":  "P321",
+    "set_code":  "CSV10C",
+    "card_index":  "054",
+    "set_code_en":  "JTG",
+    "card_index_en":  "162",
+    "name_en":  "Wailord",
+    "name_zh":  "",
+    "artist":  "Takeshi Nakamura",
+    "rarity":  "R",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "c659322e8e05e2b1beccd3faecdd3613",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/054.png",
+    "image_local_path":  "user://cards/images/CSV10C/054.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "W",
+    "stage":  "Stage 1",
+    "hp":  240,
+    "weakness_energy":  "L",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  4,
+    "evolves_from":  "吼吼鲸",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "水炮",
+                        "text":  "追加造成这只宝可梦身上附着的【水】能量数量×50伤害。",
+                        "cost":  "CCCC",
+                        "damage":  "10+",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

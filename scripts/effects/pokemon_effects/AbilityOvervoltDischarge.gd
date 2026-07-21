@@ -3,6 +3,10 @@
 class_name AbilityOvervoltDischarge
 extends BaseEffect
 
+
+func knocks_out_self() -> bool:
+	return true
+
 const SELECT_ASSIGNMENTS_ID := "overvolt_discharge_assignments"
 
 var max_energy_count: int = 3

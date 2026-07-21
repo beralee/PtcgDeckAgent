@@ -13,6 +13,7 @@ var _setup_order_index: int = 0
 var _setup_planner = AISetupPlannerScript.new()
 var _deck_strategy_registry = DeckStrategyRegistryScript.new()
 var _planned_setup_bench_ids: Array[int] = []
+var _setup_bench_plan_initialized: bool = false
 var _ai_controllers: Array = [null, null]
 
 ## 效果交互状态（与 BattleScene 同名以兼容 AIStepResolver）
@@ -243,6 +244,8 @@ func _begin_setup_flow(start_player_index: int = 0) -> void:
 
 
 func _setup_player_active(pi: int) -> void:
+	_planned_setup_bench_ids.clear()
+	_setup_bench_plan_initialized = false
 	_show_setup_active_dialog(pi)
 
 
@@ -1028,6 +1031,7 @@ func _resolve_setup_active(dialog_data: Dictionary) -> bool:
 	if active_hand_index < 0 or active_hand_index >= player.hand.size():
 		return false
 	_planned_setup_bench_ids.clear()
+	_setup_bench_plan_initialized = true
 	for hand_index: int in choice.get("bench_hand_indices", []):
 		if hand_index >= 0 and hand_index < player.hand.size():
 			_planned_setup_bench_ids.append(player.hand[hand_index].instance_id)
@@ -1112,8 +1116,9 @@ func _resolve_send_out(dialog_data: Dictionary) -> bool:
 
 
 func _find_next_planned_bench_card(player: PlayerState, available_cards: Array[CardInstance]) -> CardInstance:
-	if _planned_setup_bench_ids.is_empty():
+	if _planned_setup_bench_ids.is_empty() and not _setup_bench_plan_initialized:
 		var fallback_choice: Dictionary = _plan_opening_setup(player)
+		_setup_bench_plan_initialized = true
 		for hand_index: int in fallback_choice.get("bench_hand_indices", []):
 			if hand_index >= 0 and hand_index < player.hand.size():
 				_planned_setup_bench_ids.append(player.hand[hand_index].instance_id)

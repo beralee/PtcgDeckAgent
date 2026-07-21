@@ -97,7 +97,7 @@ class SilentWingsOpponentHandPreview extends BaseEffect:
 			"card_click_selectable": false,
 			"force_confirm": true,
 			"visible_scope": "opponent_hand",
-			"utility_actions": [{"label": "Continue", "index": -1}],
+			"utility_actions": [build_empty_dialog_utility_action("Continue")],
 		}]
 
 

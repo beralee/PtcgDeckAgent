@@ -7,12 +7,18 @@ const TARGET_STEP_ID := "attach_target"
 var energy_type: String = ""
 var max_count: int = 2
 var target_filter: String = "self"
+var attack_index_to_match: int = -1
 
 
-func _init(required_type: String = "", count: int = 2, target_mode: String = "self") -> void:
+func _init(required_type: String = "", count: int = 2, target_mode: String = "self", match_attack_index: int = -1) -> void:
 	energy_type = required_type
 	max_count = count
 	target_filter = target_mode
+	attack_index_to_match = match_attack_index
+
+
+func applies_to_attack_index(attack_index: int) -> bool:
+	return attack_index_to_match == -1 or attack_index_to_match == attack_index
 
 
 func get_attack_interaction_steps(
@@ -43,8 +49,7 @@ func get_attack_interaction_steps(
 			target_slot.get_max_hp(),
 		])
 
-	return [
-		{
+	var steps: Array[Dictionary] = [{
 			"id": ENERGY_STEP_ID,
 			"title": "选择最多%d张要附着的基本能量" % mini(max_count, energy_items.size()),
 			"items": energy_items,
@@ -52,8 +57,10 @@ func get_attack_interaction_steps(
 			"min_select": 0,
 			"max_select": mini(max_count, energy_items.size()),
 			"allow_cancel": true,
-		},
-		{
+		}]
+	# Self-targeting attacks do not need a redundant second confirmation.
+	if target_items.size() > 1 or target_filter != "self":
+		steps.append({
 			"id": TARGET_STEP_ID,
 			"title": "选择要附着能量的宝可梦",
 			"items": target_items,
@@ -61,8 +68,8 @@ func get_attack_interaction_steps(
 			"min_select": 1,
 			"max_select": 1,
 			"allow_cancel": true,
-		},
-	]
+		})
+	return steps
 
 
 func execute_attack(
@@ -81,7 +88,7 @@ func execute_attack(
 		return
 
 	var selected_energy: Array[CardInstance] = _resolve_selected_energy(player, ctx.get(ENERGY_STEP_ID, []))
-	if selected_energy.is_empty():
+	if selected_energy.is_empty() and not ctx.has(ENERGY_STEP_ID):
 		selected_energy = _fallback_energy(player)
 
 	for discard_card: CardInstance in selected_energy:
@@ -138,6 +145,9 @@ func _get_target_items(player: PlayerState, card: CardInstance) -> Array:
 	match target_filter:
 		"own_bench":
 			for slot: PokemonSlot in player.bench:
+				items.append(slot)
+		"own_any":
+			for slot: PokemonSlot in player.get_all_pokemon():
 				items.append(slot)
 		_:
 			for slot: PokemonSlot in player.get_all_pokemon():

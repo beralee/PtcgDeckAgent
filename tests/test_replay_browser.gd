@@ -1,7 +1,7 @@
 class_name TestReplayBrowser
 extends TestBase
 
-const DECK_CENTER_META_STATE_PATH := "user://deck_center_meta_state.json"
+const DECK_CENTER_META_STATE_PATH := "user://deck_center_meta_state.headless.json"
 
 
 class FakeRecordIndex extends RefCounted:

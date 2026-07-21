@@ -1,0 +1,66 @@
+{
+    "name":  "火焰鸡",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  " 高温爆破 70\n\n\n【火】【火】 业火连踢 120\n将这只宝可梦身上附着的2个能量放于弃牌区，给对手的1只备战宝可梦也造成120伤害。[备战宝可梦不计算弱点、抗性。]\n\n",
+    "yoren_code":  "P257",
+    "set_code":  "CSV10C",
+    "card_index":  "038",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "Kazumasa Yasukuni",
+    "rarity":  "R",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "d66a01f98e15b770b2c4bd1372382d4c",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/038.png",
+    "image_local_path":  "user://cards/images/CSV10C/038.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "R",
+    "stage":  "Stage 2",
+    "hp":  170,
+    "weakness_energy":  "W",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  2,
+    "evolves_from":  "力壮鸡",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "高温爆破",
+                        "text":  "",
+                        "cost":  "CC",
+                        "damage":  "70",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "业火连踢",
+                        "text":  "将这只宝可梦身上附着的2个能量放于弃牌区，给对手的1只备战宝可梦也造成120伤害。[备战宝可梦不计算弱点、抗性。]",
+                        "cost":  "RRC",
+                        "damage":  "120",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

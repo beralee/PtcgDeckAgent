@@ -232,6 +232,11 @@ func set_selected(selected: bool) -> void:
 	_update_style()
 
 
+func get_visual_card_control() -> Control:
+	_ensure_ui()
+	return _art_frame
+
+
 func set_selectable_hint(selectable_hint: bool) -> void:
 	_ensure_ui()
 	_selectable_hint = selectable_hint

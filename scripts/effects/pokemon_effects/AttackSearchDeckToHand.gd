@@ -4,11 +4,17 @@ extends BaseEffect
 
 var search_count: int = 1
 var card_type_filter: String = ""
+var attack_index_to_match: int = -1
 
 
-func _init(count: int = 1, filter: String = "") -> void:
+func _init(count: int = 1, filter: String = "", match_attack_index: int = -1) -> void:
 	search_count = count
 	card_type_filter = filter
+	attack_index_to_match = match_attack_index
+
+
+func applies_to_attack_index(attack_index: int) -> bool:
+	return attack_index_to_match < 0 or attack_index == attack_index_to_match
 
 
 func get_attack_interaction_steps(
@@ -16,7 +22,7 @@ func get_attack_interaction_steps(
 	_attack: Dictionary,
 	state: GameState
 ) -> Array[Dictionary]:
-	if card == null:
+	if card == null or not applies_to_attack_index(_resolve_attack_index(card, _attack)):
 		return []
 	var player: PlayerState = state.players[card.owner_index]
 	var items: Array = _collect_matching_cards(player)
@@ -40,6 +46,8 @@ func execute_attack(
 	_attack_index: int,
 	state: GameState
 ) -> void:
+	if not applies_to_attack_index(_attack_index):
+		return
 	var top: CardInstance = attacker.get_top_card()
 	if top == null:
 		return
@@ -81,6 +89,17 @@ func _collect_matching_cards(player: PlayerState) -> Array:
 		if _matches_filter(deck_card):
 			result.append(deck_card)
 	return result
+
+
+func _resolve_attack_index(card: CardInstance, attack: Dictionary) -> int:
+	if attack.has("_override_attack_index"):
+		return int(attack.get("_override_attack_index", -1))
+	if card == null or card.card_data == null:
+		return -1
+	for index: int in card.card_data.attacks.size():
+		if card.card_data.attacks[index] == attack:
+			return index
+	return -1
 
 
 func get_description() -> String:

@@ -1,0 +1,66 @@
+{
+    "name":  "伊布",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  " 多彩亲友 \n选择自己牌库中，属性各不相同的宝可梦最多3张，在给对手看过之后，加入手牌。并重洗牌库。\n\n 跳接 10\n\n\n",
+    "yoren_code":  "P133",
+    "set_code":  "151C",
+    "card_index":  "133",
+    "set_code_en":  "MEW",
+    "card_index_en":  "133",
+    "name_en":  "Eevee",
+    "name_zh":  "",
+    "artist":  "Narumi Sato",
+    "rarity":  "C",
+    "release_date":  "2025-01-17T00:00:00+08:00",
+    "regulation_mark":  "G",
+    "effect_id":  "9736e35ce77fbf8b005f413e20875a8f",
+    "image_url":  "https://tcg.mik.moe/static/img/151C/133.png",
+    "image_local_path":  "user://cards/images/151C/133.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "C",
+    "stage":  "Basic",
+    "hp":  70,
+    "weakness_energy":  "F",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "多彩亲友",
+                        "text":  "选择自己牌库中，属性各不相同的宝可梦最多3张，在给对手看过之后，加入手牌。并重洗牌库。",
+                        "cost":  "C",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "跳接",
+                        "text":  "",
+                        "cost":  "C",
+                        "damage":  "10",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

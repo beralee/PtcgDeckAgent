@@ -73,9 +73,16 @@ func get_play_supporter_unusable_reason(
 		return "受到场上效果影响，当前不能从手牌使用这张支援者卡。"
 	if state.supporter_used_this_turn:
 		return "本回合已经使用过支援者卡。每回合通常只能使用 1 张支援者。"
-	if state.turn_number == 1 and player_index == state.first_player_index:
+	if state.turn_number == 1 and player_index == state.first_player_index and not _supporter_allows_first_player_first_turn(card, effect_processor):
 		return "先攻玩家的第一个回合不能使用支援者卡。"
 	return ""
+
+
+func _supporter_allows_first_player_first_turn(card: CardInstance, effect_processor: EffectProcessor) -> bool:
+	if card == null or card.card_data == null or effect_processor == null:
+		return false
+	var effect := effect_processor.get_effect(card.card_data.effect_id)
+	return effect != null and effect.has_method("allows_first_player_first_turn") and bool(effect.call("allows_first_player_first_turn"))
 
 
 func can_play_item(
@@ -412,7 +419,7 @@ func get_attack_unusable_reason(
 	if attack_index < 0 or attack_index >= card_data.attacks.size():
 		return "招式索引无效"
 	var attack: Dictionary = card_data.attacks[attack_index]
-	var special_gate_reason := _fails_special_attack_usage_gate(state, player_index, active, attack_index)
+	var special_gate_reason := _fails_special_attack_usage_gate(state, player_index, active, attack_index, effect_processor)
 	if special_gate_reason != "":
 		return special_gate_reason
 
@@ -478,7 +485,8 @@ func _fails_special_attack_usage_gate(
 	state: GameState,
 	player_index: int,
 	active: PokemonSlot,
-	attack_index: int
+	attack_index: int,
+	effect_processor: EffectProcessor = null
 ) -> String:
 	var card_data: CardData = active.get_card_data()
 	if card_data == null:
@@ -504,6 +512,10 @@ func _fails_special_attack_usage_gate(
 		return "This attack cannot be used during the second player's first turn."
 	if _is_giratina_star_requiem(attack_name, attack_index, false) and state.players[player_index].lost_zone.size() < 10:
 		return "自己的放逐区没有达到 10 张，无法使用这个招式"
+	if effect_processor != null and not effect_processor.is_ability_disabled(active, state):
+		var effect := effect_processor.get_effect(card_data.effect_id)
+		if effect != null and effect.has_method("get_attack_unusable_reason"):
+			return str(effect.call("get_attack_unusable_reason", active, attack_index, state))
 	return ""
 
 
@@ -548,12 +560,17 @@ func has_enough_energy(
 	var available: Dictionary = {}
 	var colorless_pool: int = 0
 	var any_pool: int = 0
+	var flexible_type_pools: Array[Dictionary] = []
 	for energy: CardInstance in slot.attached_energy:
 		var e_type: String = energy.card_data.energy_provides
 		var energy_count: int = 1
 		if effect_processor != null:
 			e_type = effect_processor.get_energy_type(energy, state)
 			energy_count = effect_processor.get_energy_colorless_count(energy, state)
+			var energy_types := effect_processor.get_energy_types(energy, state)
+			if energy_types.size() > 1:
+				flexible_type_pools.append({"types": energy_types, "remaining": energy_count})
+				continue
 		if e_type == "":
 			e_type = "C"
 		if e_type == "ANY":
@@ -575,10 +592,22 @@ func has_enough_energy(
 		var owned: int = int(available.get(key, 0))
 		if owned < needed:
 			var missing: int = needed - owned
+			for pool: Dictionary in flexible_type_pools:
+				if missing <= 0:
+					break
+				var types: PackedStringArray = pool.get("types", PackedStringArray())
+				var pool_remaining := int(pool.get("remaining", 0))
+				if key not in types or pool_remaining <= 0:
+					continue
+				var used := mini(missing, pool_remaining)
+				missing -= used
+				pool["remaining"] = pool_remaining - used
 			if any_pool < missing:
 				return false
 			any_pool -= missing
 		remaining_energy += maxi(0, owned - needed)
+	for pool: Dictionary in flexible_type_pools:
+		remaining_energy += int(pool.get("remaining", 0))
 
 	# 已满足需求的多余属性能量也可用于支付无色消耗
 	for key: String in available.keys():
@@ -589,11 +618,21 @@ func has_enough_energy(
 	return remaining_energy >= colorless_needed
 
 
-func can_play_basic_to_bench(state: GameState, player_index: int, card: CardInstance) -> bool:
-	return get_play_basic_to_bench_unusable_reason(state, player_index, card) == ""
+func can_play_basic_to_bench(
+	state: GameState,
+	player_index: int,
+	card: CardInstance,
+	effect_processor: EffectProcessor = null
+) -> bool:
+	return get_play_basic_to_bench_unusable_reason(state, player_index, card, effect_processor) == ""
 
 
-func get_play_basic_to_bench_unusable_reason(state: GameState, player_index: int, card: CardInstance) -> String:
+func get_play_basic_to_bench_unusable_reason(
+	state: GameState,
+	player_index: int,
+	card: CardInstance,
+	effect_processor: EffectProcessor = null
+) -> String:
 	if state == null:
 		return "当前无法把基础宝可梦放到备战区。"
 	if player_index < 0 or player_index >= state.players.size():
@@ -604,8 +643,16 @@ func get_play_basic_to_bench_unusable_reason(state: GameState, player_index: int
 		return "只能在主要阶段把基础宝可梦放到备战区。"
 	if card == null or card.card_data == null:
 		return "没有选择要放置的宝可梦。"
-	if not card.card_data.is_basic_pokemon():
+	var hand_play_effect: BaseEffect = null
+	if effect_processor != null:
+		hand_play_effect = effect_processor.get_effect(card.card_data.effect_id)
+	var can_use_hand_play_ability := hand_play_effect != null and hand_play_effect.has_method("can_play_from_hand_to_bench")
+	if not card.card_data.is_basic_pokemon() and not can_use_hand_play_ability:
 		return "只有基础宝可梦可以直接放到备战区。"
+	if can_use_hand_play_ability and not bool(hand_play_effect.call("can_play_from_hand_to_bench", card, state, player_index)):
+		if hand_play_effect.has_method("get_hand_to_bench_unusable_reason"):
+			return str(hand_play_effect.call("get_hand_to_bench_unusable_reason", card, state, player_index))
+		return "当前不满足此特性的使用条件。"
 	var player: PlayerState = state.players[player_index]
 	if BenchLimit.is_bench_full(state, player):
 		return "你的备战区已经满了，不能再放置新的宝可梦。"

@@ -1,6 +1,8 @@
 class_name BaseEffect
 extends RefCounted
 
+const DiscardPileRestriction := preload("res://scripts/effects/DiscardPileRestrictionHelper.gd")
+
 var _attack_interaction_context: Dictionary = {}
 var _default_attack_index_to_match: int = -1
 
@@ -10,6 +12,11 @@ const EMPTY_SEARCH_VIEW_DECK := "view_deck"
 const VISIBLE_SCOPE_OWN_FULL_DECK := "own_full_deck"
 const DEFAULT_FULL_LIBRARY_DISABLED_BADGE := "不可选"
 const DEFAULT_FULL_LIBRARY_SELECTABLE_LABEL := "可选"
+const INTERACTION_SOURCE_KEY := "__interaction_source"
+const INTERACTION_INTENTS_KEY := "__interaction_intents"
+const INTERACTION_SOURCE_BATTLE_UI := "battle_ui"
+const INTERACTION_INTENT_SELECT := "select"
+const INTERACTION_INTENT_DECLINE := "decline"
 
 
 enum TargetType {
@@ -92,6 +99,91 @@ func get_interaction_context(targets: Array) -> Dictionary:
 		return {}
 	var ctx: Variant = targets[0]
 	return ctx.duplicate(false) if ctx is Dictionary else {}
+
+
+## Effects with mandatory costs or player choices override these validators.
+## The processor calls validation before any zone mutation or attack resolution.
+func validate_card_interaction(
+	_card: CardInstance,
+	_targets: Array,
+	_state: GameState
+) -> Dictionary:
+	return interaction_validation_ok()
+
+
+func validate_attack_interaction(
+	_attacker: PokemonSlot,
+	_attack_index: int,
+	_targets: Array,
+	_state: GameState
+) -> Dictionary:
+	return interaction_validation_ok()
+
+
+func interaction_validation_ok() -> Dictionary:
+	return {"valid": true, "reason": ""}
+
+
+func interaction_validation_error(reason: String) -> Dictionary:
+	return {"valid": false, "reason": reason}
+
+
+func interaction_context_selection(context: Dictionary, step_id: String) -> Array:
+	var raw: Variant = context.get(step_id, [])
+	return raw if raw is Array else []
+
+
+func interaction_context_has_explicit_empty_intent(context: Dictionary, step_id: String) -> bool:
+	if not context.has(step_id):
+		return false
+	if str(context.get(INTERACTION_SOURCE_KEY, "")) != INTERACTION_SOURCE_BATTLE_UI:
+		# Direct engine/AI callers express an intentional whiff by including the
+		# step key with an empty array. Missing and empty remain distinct.
+		return true
+	var intents_raw: Variant = context.get(INTERACTION_INTENTS_KEY, {})
+	if not (intents_raw is Dictionary):
+		return false
+	return str((intents_raw as Dictionary).get(step_id, "")) == INTERACTION_INTENT_DECLINE
+
+
+func validate_context_selection(
+	context: Dictionary,
+	step_id: String,
+	legal_items: Array,
+	min_select: int,
+	max_select: int,
+	require_explicit_empty: bool = false,
+	ignore_non_legal_items: bool = false
+) -> Dictionary:
+	if not context.has(step_id):
+		return interaction_validation_error("missing interaction step: %s" % step_id)
+	var raw: Variant = context.get(step_id)
+	if not (raw is Array):
+		return interaction_validation_error("interaction step is not an array: %s" % step_id)
+	var selected: Array = raw
+	var seen: Dictionary = {}
+	var legal_selection_count := 0
+	for item: Variant in selected:
+		if item == null or item not in legal_items:
+			if ignore_non_legal_items:
+				continue
+			return interaction_validation_error("interaction step %s contains a stale or illegal selection" % step_id)
+		var identity: Variant = item
+		if item is CardInstance:
+			identity = "card:%d" % (item as CardInstance).instance_id
+		elif item is PokemonSlot:
+			identity = "slot:%d" % (item as PokemonSlot).get_instance_id()
+		if seen.has(identity):
+			return interaction_validation_error("interaction step %s contains a duplicate selection" % step_id)
+		seen[identity] = true
+		legal_selection_count += 1
+	if legal_selection_count < min_select:
+		return interaction_validation_error("interaction step %s requires at least %d selection(s)" % [step_id, min_select])
+	if max_select >= 0 and legal_selection_count > max_select:
+		return interaction_validation_error("interaction step %s allows at most %d selection(s)" % [step_id, max_select])
+	if legal_selection_count == 0 and require_explicit_empty and not interaction_context_has_explicit_empty_intent(context, step_id):
+		return interaction_validation_error("interaction step %s requires an explicit decline" % step_id)
+	return interaction_validation_ok()
 
 
 func _draw_cards_with_log(
@@ -194,7 +286,12 @@ func _move_discard_cards_to_hand_with_log(
 	var moved: Array[CardInstance] = []
 	var seen_ids: Dictionary = {}
 	for card: CardInstance in cards:
-		if card == null or seen_ids.has(card.instance_id) or not (card in player.discard_pile):
+		if (
+			card == null
+			or seen_ids.has(card.instance_id)
+			or not (card in player.discard_pile)
+			or not DiscardPileRestriction.can_move_to_hand_or_deck(card)
+		):
 			continue
 		seen_ids[card.instance_id] = true
 		player.discard_pile.erase(card)
@@ -557,6 +654,29 @@ func should_preview_empty_search_deck(resolved_context: Dictionary) -> bool:
 	return str(selected_raw[0]) == EMPTY_SEARCH_VIEW_DECK
 
 
+func has_resolved_non_internal_interaction_step(
+	context: Dictionary,
+	ignored_step_ids: Array = []
+) -> bool:
+	for key: Variant in context.keys():
+		var key_name := str(key)
+		if key_name.begins_with("__") or key_name in ignored_step_ids:
+			continue
+		return true
+	return false
+
+
+func build_empty_dialog_utility_action(
+	label: String,
+	intent: String = INTERACTION_INTENT_SELECT
+) -> Dictionary:
+	return {
+		"label": label,
+		"selected_indices": [],
+		"intent": intent,
+	}
+
+
 func build_readonly_card_preview_step(
 	title: String,
 	cards: Array[CardInstance],
@@ -580,7 +700,7 @@ func build_readonly_card_preview_step(
 		"max_select": 0,
 		"allow_cancel": false,
 		"presentation": "cards",
-		"utility_actions": [{"label": close_label, "index": -1}],
+		"utility_actions": [build_empty_dialog_utility_action(close_label)],
 	}
 
 

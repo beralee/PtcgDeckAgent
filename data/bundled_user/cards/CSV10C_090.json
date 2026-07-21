@@ -1,0 +1,66 @@
+{
+    "name":  "N的象征鸟",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【超】 念动弹 20\n\n\n【超】 胜利象征 \n使用这个招式时，如果自己的剩余奖赏卡张数为1张的话，则这场对战算作自己的胜利。\n\n",
+    "yoren_code":  "P0561",
+    "set_code":  "CSV10C",
+    "card_index":  "090",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "Shiburingaru",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "a770967d38eaabde163e23c116736286",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/090.png",
+    "image_local_path":  "user://cards/images/CSV10C/090.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "P",
+    "stage":  "Basic",
+    "hp":  110,
+    "weakness_energy":  "L",
+    "weakness_value":  "×2",
+    "resistance_energy":  "F",
+    "resistance_value":  "-30",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "念动弹",
+                        "text":  "",
+                        "cost":  "P",
+                        "damage":  "20",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "胜利象征",
+                        "text":  "使用这个招式时，如果自己的剩余奖赏卡张数为1张的话，则这场对战算作自己的胜利。",
+                        "cost":  "PCC",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

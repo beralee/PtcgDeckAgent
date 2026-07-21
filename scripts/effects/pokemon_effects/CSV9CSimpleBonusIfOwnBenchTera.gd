@@ -28,7 +28,7 @@ func get_damage_bonus(attacker: PokemonSlot, state: GameState) -> int:
 
 
 func _is_tera(data: CardData) -> bool:
-	return data.ancient_trait == "Tera" or data.has_tag("Tera")
+	return data != null and data.is_tera_pokemon()
 
 
 func get_description() -> String:

@@ -79,6 +79,14 @@ class FakeInteractionTargetStrategy extends RefCounted:
 		return 900.0 if (item as PokemonSlot).get_pokemon_name() == preferred_name else 10.0
 
 
+class FakeOpeningSetupStrategy extends RefCounted:
+	func plan_opening_setup(_player: PlayerState) -> Dictionary:
+		return {
+			"active_hand_index": 0,
+			"bench_hand_indices": [],
+		}
+
+
 class HeavyBatonResolveSpyGameStateMachine extends GameStateMachine:
 	var resolve_heavy_baton_choice_calls: int = 0
 	var resolved_heavy_baton_player_index: int = -1
@@ -237,7 +245,7 @@ func test_bridge_injects_ability_followup_counter_distribution_steps() -> String
 	var munkidori := _make_slot(_make_basic_card_with_ability("Munkidori", "Adrena-Brain", "munkidori_headless_followup_test", 0))
 	munkidori.attached_energy.append(_make_energy_card("Darkness Energy", "D", 0))
 	var source := _make_slot(_make_basic_card("Drifloon"))
-	source.damage_counters = 30
+	source.damage_counters = 40
 	player.active_pokemon = munkidori
 	player.bench = [source]
 	var opponent_active_data := CardData.new()
@@ -257,12 +265,98 @@ func test_bridge_injects_ability_followup_counter_distribution_steps() -> String
 		injected_step_ids.append(str(step.get("id", "")))
 	bridge._on_counter_distribution_amount_chosen(3)
 	bridge._handle_counter_distribution_target(0)
+	var used_flag_exists := false
+	for marker: Dictionary in munkidori.effects:
+		if str(marker.get("type", "")) == AbilityMoveDamageCountersToOpponentScript.USED_FLAG_TYPE \
+				and int(marker.get("turn", -1)) == gsm.game_state.turn_number:
+			used_flag_exists = true
+			break
+	var rebuilt_actions: Array[Dictionary] = AILegalActionBuilderScript.new().build_actions(gsm, 0, false)
+	var repeated_ability_exists := false
+	for action: Dictionary in rebuilt_actions:
+		if str(action.get("kind", "")) == "use_ability" and action.get("source_slot") == munkidori:
+			repeated_ability_exists = true
+			break
 
 	return run_checks([
 		assert_true(injected_step_ids.has("target_damage_counters"), "Headless ability interaction should inject Munkidori's damage-counter follow-up step"),
-		assert_eq(source.damage_counters, 0, "Headless follow-up should remove selected counters from the damaged own Pokemon"),
+		assert_eq(source.damage_counters, 10, "Headless follow-up should remove selected counters from the damaged own Pokemon"),
 		assert_eq(opponent.active_pokemon.damage_counters, 30, "Headless follow-up should place selected counters onto the opponent target"),
+		assert_true(used_flag_exists, "A successful Adrena-Brain transfer must mark this Munkidori used for the current turn"),
+		assert_false(repeated_ability_exists, "Rebuilt legal actions must not offer the same Munkidori ability after a successful transfer"),
 		assert_eq(str(bridge.get("_pending_choice")), "", "Resolved follow-up should clear the effect interaction prompt"),
+	])
+
+
+func test_munkidori_invalid_target_is_not_reported_as_success() -> String:
+	var gsm := _make_gsm()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.turn_number = 2
+	var effect := AbilityMoveDamageCountersToOpponentScript.new(3)
+	gsm.effect_processor.register_effect("munkidori_invalid_target_test", effect)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+	var munkidori := _make_slot(_make_basic_card_with_ability("Munkidori", "Adrena-Brain", "munkidori_invalid_target_test", 0))
+	munkidori.attached_energy.append(_make_energy_card("Darkness Energy", "D", 0))
+	var source := _make_slot(_make_basic_card("Drifloon"))
+	source.damage_counters = 30
+	player.active_pokemon = munkidori
+	player.bench = [source]
+	var live_target := _make_slot(CardInstance.create(_make_basic_card("Live Target").card_data, 1))
+	opponent.active_pokemon = live_target
+	opponent.bench.clear()
+	var stale_target := _make_slot(CardInstance.create(_make_basic_card("Stale Target").card_data, 1))
+
+	var used := gsm.use_ability(0, munkidori, 0, [{
+		"source_pokemon": [source],
+		"target_damage_counters": [{"target": stale_target, "amount": 20}],
+	}])
+	var used_flag_exists := false
+	for marker: Dictionary in munkidori.effects:
+		if str(marker.get("type", "")) == AbilityMoveDamageCountersToOpponentScript.USED_FLAG_TYPE:
+			used_flag_exists = true
+			break
+
+	return run_checks([
+		assert_false(used, "An Adrena-Brain selection that is no longer on the opponent field must fail"),
+		assert_eq(source.damage_counters, 30, "A rejected Adrena-Brain selection must not remove source damage"),
+		assert_eq(live_target.damage_counters, 0, "A rejected Adrena-Brain selection must not damage another target"),
+		assert_false(used_flag_exists, "A rejected Adrena-Brain selection must not consume the ability"),
+	])
+
+
+func test_legal_action_builder_excludes_munkidori_when_only_opponent_target_is_knocked_out() -> String:
+	var gsm := _make_gsm()
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.turn_number = 11
+	var effect := AbilityMoveDamageCountersToOpponentScript.new(3)
+	gsm.effect_processor.register_effect("munkidori_knocked_out_target_test", effect)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+	var munkidori := _make_slot(_make_basic_card_with_ability("Munkidori", "Adrena-Brain", "munkidori_knocked_out_target_test", 0))
+	munkidori.attached_energy.append(_make_energy_card("Darkness Energy", "D", 0))
+	munkidori.damage_counters = 40
+	player.active_pokemon = munkidori
+	player.bench.clear()
+	var knocked_out_target := _make_slot(CardInstance.create(_make_basic_card("Raikou V").card_data, 1))
+	knocked_out_target.damage_counters = knocked_out_target.get_max_hp()
+	opponent.active_pokemon = knocked_out_target
+	opponent.bench.clear()
+
+	var actions: Array[Dictionary] = AILegalActionBuilderScript.new().build_actions(gsm, 0, false)
+	var ability_action_exists := false
+	for action: Dictionary in actions:
+		if str(action.get("kind", "")) == "use_ability" and action.get("source_slot") == munkidori:
+			ability_action_exists = true
+			break
+	return run_checks([
+		assert_true(knocked_out_target.is_knocked_out(), "The regression fixture must match seed 15322's knocked-out Raikou target"),
+		assert_false(gsm.effect_processor.can_use_ability(munkidori, gsm.game_state, 0), "Adrena-Brain requires at least one live opponent target"),
+		assert_false(ability_action_exists, "Legal actions must not offer Adrena-Brain against only a knocked-out target"),
 	])
 
 
@@ -776,6 +870,41 @@ func test_bridge_resolves_setup_bench_prompt() -> String:
 		assert_eq(gsm.setup_complete_calls.size(), 1, "setup_bench should hand off to setup completion"),
 		assert_eq(gsm.setup_complete_calls[0], 0, "setup_bench should finish setup through setup_complete"),
 		assert_eq(str(bridge.get("_pending_choice")), "", "setup_bench should clear the pending prompt after completion"),
+	])
+
+
+func test_bridge_does_not_replan_and_force_an_excluded_opening_basic_onto_bench() -> String:
+	var bridge := HeadlessMatchBridgeScript.new()
+	var gsm := SetupCompletionSpyGameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.phase = GameState.GamePhase.SETUP
+	gsm.game_state.players = [PlayerState.new(), PlayerState.new()]
+	gsm.game_state.players[0].player_index = 0
+	gsm.game_state.players[1].player_index = 1
+	gsm.game_state.players[0].active_pokemon = _make_slot(_make_basic_card("P0 Active"))
+	var planned_active := _make_basic_card("Planned Active")
+	var excluded_basic := _make_basic_card("Excluded Basic")
+	gsm.game_state.players[1].hand = [planned_active, excluded_basic]
+	bridge.bind(gsm)
+	var ai := AIOpponentScript.new()
+	ai.configure(1, 1)
+	ai.set_deck_strategy(FakeOpeningSetupStrategy.new())
+	bridge.set_ai_controllers(null, ai)
+	bridge.set("_pending_choice", "setup_active_1")
+	bridge.set("_dialog_data", {
+		"player": 1,
+		"basics": [planned_active, excluded_basic],
+	})
+
+	var handled_active := bridge.resolve_pending_prompt()
+	var handled_bench := bridge.resolve_pending_prompt()
+	return run_checks([
+		assert_true(handled_active, "The bridge should resolve the strategy-planned active Pokemon"),
+		assert_true(handled_bench, "An intentionally empty bench plan should complete setup"),
+		assert_eq(gsm.game_state.players[1].active_pokemon.get_pokemon_name(), "Planned Active", "The planned active Pokemon should remain active"),
+		assert_eq(gsm.game_state.players[1].bench.size(), 0, "A Basic excluded by the opening plan must stay in hand"),
+		assert_true(excluded_basic in gsm.game_state.players[1].hand, "The excluded Basic should not be forced onto the bench by a fallback replan"),
+		assert_eq(gsm.setup_complete_calls.size(), 1, "The empty bench plan should finish setup exactly once"),
 	])
 
 

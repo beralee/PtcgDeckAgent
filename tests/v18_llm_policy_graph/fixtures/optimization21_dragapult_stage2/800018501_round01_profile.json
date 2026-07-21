@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "deck_id": 800018501,
+  "seed_base": 800018501,
+  "evidence_kind": "prebenchmark_static",
+  "derived_from": "res://scripts/ai/v18_cpg/profiles/generated_semantic_manifests/800018501.json",
+  "failure_category": "semantic_gap",
+  "failing_seeds": [],
+  "expected_modules": ["stage2_chain", "energy_burst", "damage_counter_control"],
+  "expected_protected_roles": ["grimmsnarl_dd_cost", "impidimp_root", "marnie_energy_targets", "munkidori_dark_access"],
+  "expected_profiled_attack_costs": [
+    {"module": "stage2_chain", "uid": "CSV10C_148", "cost": ["D", "D"]}
+  ],
+  "expected_parameter_values": {
+    "energy_burst": {"burst_damage_mode": "none", "primary_attacker_uids": ["CSV10C_148"], "primary_attack_required_types": ["D", "D"], "attachment_target_constraint": "marnie_pokemon"},
+    "damage_counter_control": {"counter_mover_required_energy_by_uid": {"CSV8C_094": ["D"]}, "passive_counter_source_uids": ["CSV7C_059"]}
+  },
+  "public_state_contract": {
+    "attack_cost_by_uid": {"CSV10C_148": ["D", "D"]},
+    "utility_cost_by_uid": {"CSV8C_094": ["D"]},
+    "acceleration_target_constraint": "marnie_pokemon",
+    "prioritize_before_end_turn": ["route:evolve", "route:energy_commit", "route:accelerate", "route:attack_pressure"],
+    "preserve_roles": ["grimmsnarl_dd_cost", "marnie_energy_targets", "froslass_counter_engine"]
+  },
+  "baseline": {"status": "pending_real_model_round00"}
+}

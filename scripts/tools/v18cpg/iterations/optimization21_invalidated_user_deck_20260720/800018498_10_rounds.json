@@ -1,0 +1,586 @@
+{
+  "schema_version": 1,
+  "architecture": "V18CPG",
+  "status": "complete",
+  "deck_id": 800018498,
+  "deck_name": "学院沙奈朵",
+  "anchor_id": 575720,
+  "seed_base": 800018498,
+  "games_per_round": 5,
+  "model": "deepseek-v4-flash",
+  "baseline_artifact": "res://tmp/v18cpg/optimization21/800018498/round00.json",
+  "completed_rounds": 10,
+  "required_rounds": 10,
+  "rounds": [
+    {
+      "round": 1,
+      "artifact": "res://tmp/v18cpg/optimization21/800018498/round01.json",
+      "run_id": "opt21_800018498_round01",
+      "timestamp": "2026-07-20T11:52:25",
+      "failure_category": "latency_budget",
+      "diagnosis": "The deterministic Rule floor remained intact, but 41 of 42 real-model calls exhausted the 6500 ms visible-wait budget. The only accepted response arrived at 6178 ms and selected the exact Rule root, so the LLM produced no positive or negative game flip and no paired improvement.",
+      "change_summary": "Evaluated profile v2 with a six-node policy bound, compact 400/170 token budgets, Gardevoir route priorities, and exact public attack-cost annotations. Payload p50/p95 fell to 30045 bytes, but the response path still failed to take over often enough to improve a game. The round01 profile/runtime state was not retained as an accepted iteration.",
+      "retained": false,
+      "profile": {
+        "profile_version": 2,
+        "semantic_version": 1,
+        "profile_fingerprint": "5d9912ff7ec6f300a0e2c3597198f5eab3c005ea1792bf18c9beebc2452045e7"
+      },
+      "metrics": {
+        "rule_wins": 0,
+        "v18cpg_wins": 0,
+        "paired_improvement": 0.0,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 42,
+        "model_accepted": 1,
+        "model_rejected": 41,
+        "payload_p50_bytes": 30045.0,
+        "payload_p95_bytes": 30045.0,
+        "visible_wait_p95_ms": 6254.0,
+        "zero_acceptance_reference_checks": 4,
+        "zero_acceptance_reference_mismatches": 0,
+        "positive_flips": 0,
+        "negative_flips": 0,
+        "fallback_reasons": {
+          "turn_visible_wait_budget_exhausted": 41
+        },
+        "rule_signature_matches_round00": true
+      },
+      "post_round_finding": {
+        "category": "event_or_version_error",
+        "diagnosis": "After round01 was written, audit review found that seed 800018500 turn 3 had already been changed before the sole accepted model response: an autonomous public_typed_attack_cost_completion upgrade attached Psychic Energy to the Benched Munkidori ahead of the Rule search/draw sequence. Because a later response was accepted, the aggregate zero-acceptance mismatch counter did not expose this earlier contamination.",
+        "repair": "The V18 isolated runtime now permits autonomous typed-attack-cost completion only when Rule top is end_turn, the attachment target is the current Active Pokemon, and that attachment immediately completes the public attack cost. The certificate remains valid for a model-owned route switch.",
+        "artifact_immutability": "round01.json is preserved unchanged as the historical pre-repair artifact.",
+        "offline_revalidation_artifact": "res://tmp/v18cpg/optimization21/800018498/offline_fake_seed800018500_after_autonomous_gate.json",
+        "offline_revalidation": {
+          "clean_games": 1,
+          "model_calls": 38,
+          "model_accepted": 38,
+          "model_rejected": 0,
+          "paired_delta": 0,
+          "decision_logs_identical": true,
+          "first_action_difference_index": -1,
+          "module_verified_route_upgrade_records": 0
+        }
+      },
+      "next_action": "Re-run the same five real-model seeds after the shared autonomous-certificate repair; prioritize improving accepted non-Rule decisions without increasing the 6500 ms visible-wait budget."
+    },
+    {
+      "round": 2,
+      "artifact": "res://tmp/v18cpg/optimization21/800018498/round02.json",
+      "run_id": "opt21_800018498_round02",
+      "timestamp": "2026-07-20T12:41:11",
+      "failure_category": "policy_graph_error",
+      "diagnosis": "Compact wire v3 removed the latency wall but did not improve the five paired outcomes. All 41 calls completed within the report's 6500 ms gate, 26 responses were accepted, and p50/p95 visible wait fell to 4390/5563 ms. Replay inspection then found that all 24 multi-node responses omitted the root next_node_id, so every advertised checkpoint and branch was unreachable and only the root action could execute.",
+      "change_summary": "Retained the isolated compact wire v3, sparse response canonicalization, capability-context factoring, strict local full-schema validation, whole-graph candidate binding, self-contained delta state, and per-profile max-node limit. The formal artifact remains immutable. After the run, the graph contract was tightened so every emitted node must be root-reachable, the prompt now requires explicit next_node_id linkage, and the benchmark aggregate reads graph_branch_hits from the correct audit field.",
+      "retained": true,
+      "profile": {
+        "profile_version": 2,
+        "semantic_version": 1,
+        "profile_fingerprint": "5d9912ff7ec6f300a0e2c3597198f5eab3c005ea1792bf18c9beebc2452045e7"
+      },
+      "metrics": {
+        "rule_wins": 0,
+        "v18cpg_wins": 0,
+        "paired_improvement": 0.0,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 41,
+        "model_accepted": 26,
+        "model_rejected": 15,
+        "model_acceptance_rate": 0.634146341463415,
+        "payload_p50_bytes": 24362.0,
+        "payload_p95_bytes": 27377.0,
+        "visible_wait_p50_ms": 4390.0,
+        "visible_wait_p95_ms": 5563.0,
+        "turn_visible_wait_p50_ms": 4390.0,
+        "turn_visible_wait_p95_ms": 5563.0,
+        "graph_branch_hits_raw_report": 0,
+        "graph_branch_hits_recomputed_from_per_game": 3,
+        "uncovered_events": 76,
+        "zero_acceptance_reference_checks": 0,
+        "zero_acceptance_reference_mismatches": 0,
+        "positive_flips": 0,
+        "negative_flips": 0,
+        "fallbacks": {
+          "route_validation": 13,
+          "schema_fallback": 2
+        },
+        "fallback_reasons": {
+          "deckout_margin_blocks_search": 1,
+          "model_route_below_switch_margin": 12,
+          "transport_error": 1,
+          "unknown_macro_action": 1
+        }
+      },
+      "post_round_finding": {
+        "category": "policy_graph_error",
+        "multi_node_responses": 24,
+        "multi_node_responses_with_root_next": 0,
+        "repair": "Require all policy nodes to be reachable from root and tell the model to connect a route to its following checkpoint with next_node_id. The follow-up diagnostics produced real graph branch hits; remaining failures are compact grammar conformance rather than invisible dead branches.",
+        "diagnostic_artifacts": [
+          "res://tmp/v18cpg/optimization21/800018498/connected_graph_diag.json",
+          "res://tmp/v18cpg/optimization21/800018498/connected_graph_diag_v2.json"
+        ]
+      },
+      "next_action": "Canonicalize semantically dead unreachable nodes without repairing strategy, tighten typed-route string/first-step grammar, then run a fresh five-seed round that must preserve branch hits and convert at least one Rule loss."
+    },
+    {
+      "round": 3,
+      "artifact": "res://tmp/v18cpg/optimization21/800018498/round03.json",
+      "run_id": "opt21_800018498_round03",
+      "timestamp": "2026-07-20T12:59:25",
+      "failure_category": "model_selection_error",
+      "diagnosis": "The graph became executable: eight checkpoint branches were consumed across five clean games, compared with the corrected three branch hits in round02. Nevertheless all five paired outcomes remained losses. Twelve model roots were rejected by model_route_below_switch_margin; replay showed repeated attempts to play Nest Ball before a low-pressure Scream Tail attack and to bench Munkidori before a 10-damage Budew attack. Their effective gaps were 201.1 and 218.9, narrowly above the profile's 195 safety ceiling, so the model could not act on the visible setup debt.",
+      "change_summary": "Raised only this deck's policy-node allowance from six to eight without increasing the 400/170 token budgets or 6500 ms visible-wait budget. Retained root-reachability grammar, deterministic dead-node pruning after strict validation, exact typed-route first-step binding, and corrected branch-hit aggregation.",
+      "retained": true,
+      "profile": {
+        "profile_version": 3,
+        "semantic_version": 1,
+        "profile_fingerprint": "c358488b2c656e2ae2374905d82fa8622d2bde9cdeaf3e7644d86200b791e486"
+      },
+      "metrics": {
+        "rule_wins": 0,
+        "v18cpg_wins": 0,
+        "paired_improvement": 0.0,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 41,
+        "model_accepted": 22,
+        "model_rejected": 19,
+        "model_acceptance_rate": 0.536585365853659,
+        "payload_p50_bytes": 25262.0,
+        "payload_p95_bytes": 28361.0,
+        "visible_wait_p50_ms": 5068.0,
+        "visible_wait_p95_ms": 6252.0,
+        "turn_visible_wait_p95_ms": 6252.0,
+        "graph_branch_hits": 8,
+        "uncovered_events": 71,
+        "zero_acceptance_reference_checks": 0,
+        "zero_acceptance_reference_mismatches": 0,
+        "positive_flips": 0,
+        "negative_flips": 0,
+        "fallbacks": {
+          "deadline_fallback": 4,
+          "route_validation": 13,
+          "schema_fallback": 2
+        },
+        "fallback_reasons": {
+          "deckout_margin_blocks_search": 1,
+          "model_route_below_switch_margin": 12,
+          "node_count": 2,
+          "turn_visible_wait_budget_exhausted": 4
+        }
+      },
+      "post_round_finding": {
+        "category": "model_selection_error",
+        "candidate_pattern": "Rule terminal low-pressure attack versus reversible setup/search before that attack",
+        "rejected_munkidori_roots": 2,
+        "rejected_nest_ball_roots": 9,
+        "rejected_professors_research_roots": 1,
+        "planned_margin": 225.0,
+        "still_blocked_far_commitment_gap": 420.1
+      },
+      "next_action": "Raise this deck's max_switch_gap only to 225 so the repeated Munkidori and Nest Ball setup choices may execute before low-pressure attacks, while the much larger Professor's Research commitment remains blocked; prove both boundaries in a focused fixture before round04."
+    },
+    {
+      "round": 4,
+      "artifact": "res://tmp/v18cpg/optimization21/800018498/round04.json",
+      "run_id": "opt21_800018498_round04",
+      "timestamp": "2026-07-20T13:07:48",
+      "failure_category": "outcome_or_threat_error",
+      "diagnosis": "The 225 switch margin removed most false setup rejections: model_route_below_switch_margin fell from 12 to 2, acceptance rose from 53.7% to 75.0%, and graph branch hits rose from 8 to 10. All five paired outcomes still lost, although seeds 800018501 and 800018502 survived 4 and 10 additional turns. The representative failure was seed 800018502 turn 25: against a 230-HP two-prize Iron Hands ex with two own prizes remaining, the graph recovered and evolved Gardevoir but could not express the distinct Arven-to-Bravery-Charm tutor route. It then stopped Psychic Embrace after two assignments and attacked for only 120 before losing next turn.",
+      "change_summary": "Raised only this deck's max_switch_gap from 195 to 225 and profile_version from 3 to 4 while preserving the eight-node limit, 400/170 token budgets, and 6500 ms visible-wait budget. The focused fixture proves that the repeated 201.1-point Nest Ball setup gap is allowed while the 420.1-point Professor's Research commitment remains blocked.",
+      "retained": true,
+      "profile": {
+        "profile_version": 4,
+        "semantic_version": 1,
+        "profile_fingerprint": "53248669defbeeca5c1b17d07136414ddea037519c8a8dfa8d5203b00709b068"
+      },
+      "metrics": {
+        "rule_wins": 0,
+        "v18cpg_wins": 0,
+        "paired_improvement": 0.0,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 40,
+        "model_accepted": 30,
+        "model_rejected": 10,
+        "model_acceptance_rate": 0.75,
+        "payload_p50_bytes": 26176.0,
+        "payload_p95_bytes": 28951.0,
+        "visible_wait_p50_ms": 5259.0,
+        "visible_wait_p95_ms": 6252.0,
+        "turn_visible_wait_p50_ms": 5259.0,
+        "turn_visible_wait_p95_ms": 6252.0,
+        "graph_branch_hits": 10,
+        "uncovered_events": 96,
+        "zero_acceptance_reference_checks": 0,
+        "zero_acceptance_reference_mismatches": 0,
+        "positive_flips": 0,
+        "negative_flips": 0,
+        "fallbacks": {
+          "deadline_fallback": 5,
+          "route_validation": 3,
+          "schema_fallback": 2
+        },
+        "fallback_reasons": {
+          "deckout_margin_blocks_search": 1,
+          "model_route_below_switch_margin": 2,
+          "node_count": 1,
+          "turn_visible_wait_budget_exhausted": 5,
+          "typed_route_first_step_mismatch": 1
+        },
+        "divergent_seed_turn_extensions": {
+          "800018501": 4,
+          "800018502": 10
+        }
+      },
+      "post_round_finding": {
+        "category": "outcome_or_threat_error",
+        "representative_seed": 800018502,
+        "representative_turn": 25,
+        "finding": "Recovery and tutoring were collapsed into one information route, the public Psychic fuel fact falsely counted Psychic Pokemon as Energy, and no exact certificate could continue repeated Embrace through a legal but non-KO pressure attack."
+      },
+      "next_action": "Separate deterministic public-discard recovery from hidden-deck tutoring, count only Basic Psychic Energy, and prove a zero-extra-call Bravery Charm plus repeated-Embrace closeout before round05."
+    },
+    {
+      "round": 5,
+      "artifact": "res://tmp/v18cpg/optimization21/800018498/round05.json",
+      "run_id": "opt21_800018498_round05",
+      "timestamp": "2026-07-20T13:41:51",
+      "failure_category": "outcome_or_threat_error",
+      "diagnosis": "Round05 crossed the target gate for the first time: the paired Rule arm stayed at 0/5 while V18CPG reached 1/5, a +20 percentage-point improvement with one positive flip and no negative flips. In seed 800018498 the model-owned route developed Munkidori before the low-pressure attack and converted a 32-turn Rule loss into a 53-turn V18CPG win. The new Bravery Charm and repeated-Psychic-Embrace certificates were not consumed in the formal replay, so the positive result is attributed to the broader route and semantic corrections rather than an unobserved certificate claim.",
+      "change_summary": "Split public-discard recovery and hidden-deck tutoring into route:recover and route:tutor, compiled Arven and Bravery Charm into exact semantic roles, corrected public Psychic fuel to count only Basic Psychic Energy, and added narrow profile-driven certificates for Bravery Charm plus repeated Psychic Embrace. Profile v5 kept the 225 switch margin, eight-node graph bound, 400/170 token limits, and 6500 ms visible-wait budget unchanged.",
+      "retained": true,
+      "profile": {
+        "profile_version": 5,
+        "semantic_version": 1,
+        "profile_fingerprint": "99e7387adbdfa2dbebe5656da7a1a013eddbf0bc59008351658d9e878a2a6233"
+      },
+      "metrics": {
+        "rule_wins": 0,
+        "v18cpg_wins": 1,
+        "paired_improvement": 0.2,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 47,
+        "model_accepted": 25,
+        "model_rejected": 22,
+        "model_acceptance_rate": 0.531914893617021,
+        "payload_p50_bytes": 27193.0,
+        "payload_p95_bytes": 32106.0,
+        "visible_wait_p50_ms": 5793.0,
+        "visible_wait_p95_ms": 6253.0,
+        "turn_visible_wait_p50_ms": 5793.0,
+        "turn_visible_wait_p95_ms": 6253.0,
+        "graph_branch_hits": 16,
+        "uncovered_events": 99,
+        "zero_acceptance_reference_checks": 0,
+        "zero_acceptance_reference_mismatches": 0,
+        "positive_flips": 1,
+        "negative_flips": 0,
+        "fallbacks": {
+          "deadline_fallback": 16,
+          "route_validation": 3,
+          "schema_fallback": 3
+        },
+        "fallback_reasons": {
+          "cycle": 1,
+          "deckout_margin_blocks_search": 1,
+          "model_route_below_switch_margin": 2,
+          "turn_visible_wait_budget_exhausted": 16,
+          "typed_route_first_step_mismatch": 1,
+          "typed_route_macro_count": 1
+        }
+      },
+      "post_round_finding": {
+        "category": "response_or_graph_reliability",
+        "representative_seed": 800018498,
+        "finding": "The accepted conditional routes produced a real positive flip, but 16 of 47 calls still ended at the per-turn visible-wait ceiling and three responses failed strict graph grammar. The round05 result must remain the champion while response and graph reliability are improved without relaxing any safety or latency bound."
+      },
+      "next_action": "Keep round05 as the champion. In round06 tighten root-versus-non-root typed-route grammar and preserve accepted conditional graphs across information checkpoints; reject cycles and oversized macros without loosening the schema, then require the seed 800018498 positive flip, zero negative flips, clean/reference integrity, and p95 latency at or below 6500 ms."
+    },
+    {
+      "round": 6,
+      "artifact": "res://tmp/v18cpg/optimization21/800018498/round06.json",
+      "run_id": "opt21_800018498_round06",
+      "timestamp": "2026-07-20T14:09:31",
+      "failure_category": "route_synthesis_error",
+      "diagnosis": "Round06 preserved the champion result with one positive flip and no negative flips: Rule remained 0/5 while V18CPG remained 1/5. The exact Rule signatures for all five seeds were unchanged. Calls fell from 47 to 40, payload p95 fell from 32106 to 30021 bytes, and uncovered events fell from 99 to 66. The stricter contract rejected 14 model responses that tried to continue a typed macro beyond an information checkpoint; this removed stale-order execution but reduced acceptance from 53.2% to 40.0%, confirming that the provider frequently expresses search-followed-by-action as an unsafe linear macro instead of a conditional graph.",
+      "change_summary": "Made propose_typed_route root-only, stated the 2-4 macro bound and forward-only DAG rule constructively in the compact prompt, and rejected any typed macro that places route:information, route:noctowl_search, route:opening_search, or route:tutor before a later macro. Information routes may end a typed cursor, but only a graph checkpoint may choose the continuation from newly visible state. Profile v6 changed no strategic thresholds, node limits, token budgets, or latency budgets.",
+      "retained": true,
+      "profile": {
+        "profile_version": 6,
+        "semantic_version": 1,
+        "profile_fingerprint": "fecb43767781f16bc38d643c422be873ac94a056d86c77b3aba959f4fb442175"
+      },
+      "metrics": {
+        "rule_wins": 0,
+        "v18cpg_wins": 1,
+        "paired_improvement": 0.2,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 40,
+        "model_accepted": 16,
+        "model_rejected": 24,
+        "model_acceptance_rate": 0.4,
+        "payload_p50_bytes": 26709.0,
+        "payload_p95_bytes": 30021.0,
+        "visible_wait_p50_ms": 5479.0,
+        "visible_wait_p95_ms": 6256.0,
+        "turn_visible_wait_p50_ms": 5479.0,
+        "turn_visible_wait_p95_ms": 6256.0,
+        "graph_branch_hits": 10,
+        "uncovered_events": 66,
+        "zero_acceptance_reference_checks": 2,
+        "zero_acceptance_reference_mismatches": 0,
+        "positive_flips": 1,
+        "negative_flips": 0,
+        "fallbacks": {
+          "deadline_fallback": 9,
+          "schema_fallback": 15
+        },
+        "fallback_reasons": {
+          "transport_error": 1,
+          "turn_visible_wait_budget_exhausted": 9,
+          "typed_route_crosses_information_checkpoint": 14
+        }
+      },
+      "post_round_finding": {
+        "category": "frontier_gap",
+        "representative_seed": 800018502,
+        "representative_turn": 23,
+        "finding": "A deterministic final-prize line was absent from the model frontier: existing Munkidori move 30, bench a second Munkidori, attach Darkness, move 30, then Gardevoir attacks for 190 to reach 250 against a 230-HP two-prize Iron Hands ex. The Rule bench-padding guard scores the second Munkidori at -100000, and RouteSearch prunes it before capability annotation can issue a narrow public closeout certificate."
+      },
+      "next_action": "In round07 split candidate generation from pruning, annotate the full legal V18CPG pool before keeping at most ten candidates, and preserve only exact verified-advantage candidates through pruning. Add a public_second_counter_mover_final_prize_closeout certificate for the exact two-Munkidori line with full negative fixtures; do not change Rule, the global bench guard, switch margin, token, node, or wait budgets."
+    },
+    {
+      "round": 7,
+      "artifact": "res://tmp/v18cpg/optimization21/800018498/round07.json",
+      "run_id": "opt21_800018498_round07",
+      "timestamp": "2026-07-20T14:27:00",
+      "failure_category": "model_selection_error",
+      "diagnosis": "Round07 was clean and produced no negative flip, but it lost the champion's seed-800018498 positive flip: both Rule and V18CPG finished 0/5. The new counter-mover certificate was consumed zero times because the formal trajectories never reached the seed-800018502 turn-23 public state. Acceptance fell to 33.3% and 11 responses still crossed an information checkpoint as a stale linear macro. The candidate-pool repair passed exact fixtures but did not improve any formal paired outcome, so this challenger is not promoted.",
+      "change_summary": "Split V18CPG route construction into a complete legal candidate pool and certificate-aware pruning, annotated the pool before retaining at most ten candidates, and added a narrow public_second_counter_mover_final_prize_closeout certificate for benching, energizing, and using a second Munkidori only when one final counter move plus a damage-invariant Gardevoir attack takes the last prizes. Rule scores, Rule bench guards, frontier cap, switch margin, token budgets, and visible-wait budget were unchanged.",
+      "retained": false,
+      "profile": {
+        "profile_version": 7,
+        "semantic_version": 1,
+        "profile_fingerprint": "731c7b8631bd7347a0d48d4109443c4ca2f9c48ac799338859fe240c7e8a51d8"
+      },
+      "metrics": {
+        "rule_wins": 0,
+        "v18cpg_wins": 0,
+        "paired_improvement": 0.0,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 42,
+        "model_accepted": 14,
+        "model_rejected": 28,
+        "model_acceptance_rate": 0.333333333333333,
+        "payload_p50_bytes": 28215.0,
+        "payload_p95_bytes": 31026.0,
+        "visible_wait_p50_ms": 5726.0,
+        "visible_wait_p95_ms": 6255.0,
+        "turn_visible_wait_p50_ms": 5726.0,
+        "turn_visible_wait_p95_ms": 6255.0,
+        "graph_branch_hits": 9,
+        "uncovered_events": 70,
+        "zero_acceptance_reference_checks": 1,
+        "zero_acceptance_reference_mismatches": 0,
+        "positive_flips": 0,
+        "negative_flips": 0,
+        "fallbacks": {
+          "deadline_fallback": 15,
+          "route_validation": 2,
+          "schema_fallback": 11
+        },
+        "fallback_reasons": {
+          "deckout_margin_blocks_search": 1,
+          "model_route_below_switch_margin": 1,
+          "turn_visible_wait_budget_exhausted": 15,
+          "typed_route_crosses_information_checkpoint": 11
+        },
+        "counter_mover_certificate_consumed": 0
+      },
+      "post_round_finding": {
+        "category": "outcome_error",
+        "representative_seed": 800018498,
+        "representative_turns": [7, 13],
+        "finding": "The retained round05 win came from two exact public route changes that round07 did not reproduce: with Budew's non-KO 10-damage attack as the Rule root, Munkidori was benched on turns 7 and 13 while preserving one bench slot. The first was immediately energized with Darkness by the local floor. The resulting double-counter engine later converted a Rule loss into a win."
+      },
+      "next_action": "Keep round06 as the benchmark champion. In round08 add an 800018498-profiled, public low-pressure setup certificate that benches Munkidori only with the exact Budew 10-damage non-KO root, six prizes remaining, a two-prize opposing Active, sufficient bench reserve, and fewer than two Munkidori in play; stop after the second copy. Prove turn-7 and turn-13 fixtures plus negative boundaries, then require a same-seed diagnostic to consume the certificate before the formal round."
+    },
+    {
+      "round": 8,
+      "artifact": "res://tmp/v18cpg/optimization21/800018498/round08.json",
+      "run_id": "opt21_800018498_round08",
+      "timestamp": "2026-07-20T14:48:00",
+      "failure_category": "model_selection_error",
+      "diagnosis": "Round08 restored and stabilized the paired gate: Rule remained 0/5 while V18CPG reached 1/5, with one positive flip, zero negative flips, exact Rule-signature equality, and five clean games per arm. Seed 800018498 consumed the two public low-pressure Munkidori setup actions on turns 7 and 13 and the explicitly paired-evaluation Professor's Research reset on turn 19, then won on turn 49. This converts the round05 model-sampled setup into an auditable local profile path. Forty model calls remained, including 16 stale typed macros that crossed information checkpoints, so response efficiency is the remaining issue rather than paired strength.",
+      "change_summary": "Retained full-pool capability annotation before the ten-candidate cap. Added an exact public_profiled_low_pressure_counter_engine_setup certificate that benches at most two Munkidori only for the six-prize Budew 10-damage stall while preserving a bench slot. Added a distinct profiled_double_counter_engine_hand_reset decision for the exact full-bench, double-Munkidori, double-Ralts midgame stall; its audit evidence_kind is paired_evaluation so it is not misrepresented as proof of a hidden draw result. No Rule code or global Rule score changed.",
+      "retained": true,
+      "profile": {
+        "profile_version": 8,
+        "semantic_version": 1,
+        "profile_fingerprint": "f08b500a3eacc4517cc48c227691a97fe385c02f566e20f0ca2301ded5d8688d"
+      },
+      "metrics": {
+        "rule_wins": 0,
+        "v18cpg_wins": 1,
+        "paired_improvement": 0.2,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 40,
+        "model_accepted": 14,
+        "model_rejected": 26,
+        "model_acceptance_rate": 0.35,
+        "payload_p50_bytes": 29081.0,
+        "payload_p95_bytes": 33314.0,
+        "visible_wait_p50_ms": 5332.0,
+        "visible_wait_p95_ms": 6255.0,
+        "turn_visible_wait_p50_ms": 5332.0,
+        "turn_visible_wait_p95_ms": 6255.0,
+        "graph_branch_hits": 12,
+        "uncovered_events": 60,
+        "zero_acceptance_reference_checks": 2,
+        "zero_acceptance_reference_mismatches": 0,
+        "positive_flips": 1,
+        "negative_flips": 0,
+        "fallbacks": {
+          "deadline_fallback": 7,
+          "route_validation": 1,
+          "schema_fallback": 18
+        },
+        "fallback_reasons": {
+          "deckout_margin_blocks_search": 1,
+          "node_count": 2,
+          "turn_visible_wait_budget_exhausted": 7,
+          "typed_route_crosses_information_checkpoint": 16
+        },
+        "seed_800018498_module_actions": [
+          "turn7:public_profiled_low_pressure_counter_engine_setup",
+          "turn13:public_profiled_low_pressure_counter_engine_setup",
+          "turn19:profiled_double_counter_engine_hand_reset"
+        ]
+      },
+      "post_round_finding": {
+        "category": "latency_budget",
+        "finding": "Seeds 800018501 and 800018502 accepted zero model responses and matched the verified-local reference, while the run still spent 13 model calls across those games. A request is provably unnecessary when the Rule root is terminal for the decision window and every non-Rule exact candidate fails the production safety shield without an independent certificate."
+      },
+      "next_action": "In round09 add a profile-independent skip_provably_terminal_no_gain gate before network dispatch. It must keep true Rule ownership, use the production safety validator on every non-Rule exact candidate, never impose a per-turn call count, and remain open for information/recovery roots or any safe alternative/certificate. Preserve all round08 positive-flip and audit gates."
+    },
+    {
+      "round": 9,
+      "artifact": "res://tmp/v18cpg/optimization21/800018498/round09.json",
+      "run_id": "opt21_800018498_round09",
+      "timestamp": "2026-07-20T15:05:04",
+      "failure_category": "latency_budget",
+      "diagnosis": "Round09 preserved the formal strength gate: Rule remained 0/5 and V18CPG remained 1/5, with one positive flip, zero negative flips, five clean games per arm, and exact Rule-signature equality on all seeds. The new gate classified 64 terminal decision windows as having no production-admissible non-Rule root switch. Calls fell only from 40 to 39 because many of those windows were already handled locally by existing policy reuse or expected-regret logic; p95 visible wait stayed at 6255 ms. The result is safe and retained, but it does not justify broader latency suppression.",
+      "change_summary": "Added a profile-independent pre-dispatch proof over the complete annotated legal candidate pool, bound to the host's exact Rule floor before ten-candidate transport pruning. It skips only attack_ko, attack_pressure, or end_turn roots when every other candidate fails the existing production safety validator. The selected Rule action keeps rules_fallback ownership in a one-shot selection with no reusable graph, so any later observation is evaluated afresh. Information and recovery roots, deterministic win/prize candidates, and verified module certificates remain open. No per-turn call cap, Rule change, token increase, node increase, or wait-budget increase was introduced.",
+      "retained": true,
+      "profile": {
+        "profile_version": 9,
+        "semantic_version": 1,
+        "profile_fingerprint": "271a99b7170e4405eafb8156d9521b03283b60f9f60eaf09ab326d5df452fadd"
+      },
+      "metrics": {
+        "rule_wins": 0,
+        "v18cpg_wins": 1,
+        "paired_improvement": 0.2,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 39,
+        "model_accepted": 12,
+        "model_rejected": 27,
+        "model_acceptance_rate": 0.307692307692308,
+        "payload_p50_bytes": 28852.0,
+        "payload_p95_bytes": 32679.0,
+        "visible_wait_p50_ms": 6039.0,
+        "visible_wait_p95_ms": 6255.0,
+        "turn_visible_wait_p50_ms": 6039.0,
+        "turn_visible_wait_p95_ms": 6255.0,
+        "graph_branch_hits": 11,
+        "uncovered_events": 63,
+        "zero_acceptance_reference_checks": 2,
+        "zero_acceptance_reference_mismatches": 0,
+        "positive_flips": 1,
+        "negative_flips": 0,
+        "full_pool_terminal_skip_events": 64,
+        "rule_signature_matches_round00": true,
+        "fallbacks": {
+          "deadline_fallback": 18,
+          "schema_fallback": 9
+        },
+        "fallback_reasons": {
+          "node_count": 1,
+          "turn_visible_wait_budget_exhausted": 18,
+          "typed_route_crosses_information_checkpoint": 8
+        }
+      },
+      "post_round_finding": {
+        "category": "latency_budget",
+        "finding": "The complete-pool proof is safe and avoids one real request, but the provider-side latency distribution remains close to the 6500 ms hard gate and model variability reduced accepted responses from 14 to 12. Further generic suppression would risk the repeated in-turn decisions that created the positive flip and is not warranted by this five-game evidence."
+      },
+      "next_action": "Freeze the retained round09 semantics and budgets. Round10 is a reproducibility acceptance run only: change no decision policy, require the same +20pp paired result, one positive and zero negative flips, exact Rule signatures, five clean games per arm, real-model evidence, zero reference mismatches, and p95 visible wait at or below 6500 ms."
+    },
+    {
+      "round": 10,
+      "artifact": "res://tmp/v18cpg/optimization21/800018498/round10.json",
+      "run_id": "opt21_800018498_round10",
+      "timestamp": "2026-07-20T15:15:32",
+      "failure_category": "latency_budget",
+      "diagnosis": "The frozen round09 champion reproduced the acceptance result without any decision-policy change: Rule was 0/5, V18CPG was 1/5, paired improvement was +20 percentage points, and the same seed 800018498 remained the sole positive flip with no negative flip. All ten games were clean, all five Rule decision signatures matched round00 exactly, and both zero-acceptance reference checks matched. Forty real-model calls produced thirteen accepted responses; p95 visible wait was 6256 ms, inside the 6500 ms hard gate.",
+      "change_summary": "No strategy, profile parameter, semantic rule, token budget, graph bound, safety margin, Rule code, legacy LLM code, or Agent code changed between round09 and round10. This round is the independent frozen reproducibility acceptance required before closing the deck. The retained profile remains version 9 with the same fingerprint as round09.",
+      "retained": true,
+      "profile": {
+        "profile_version": 9,
+        "semantic_version": 1,
+        "profile_fingerprint": "271a99b7170e4405eafb8156d9521b03283b60f9f60eaf09ab326d5df452fadd"
+      },
+      "metrics": {
+        "rule_wins": 0,
+        "v18cpg_wins": 1,
+        "paired_improvement": 0.2,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 40,
+        "model_accepted": 13,
+        "model_rejected": 27,
+        "model_acceptance_rate": 0.325,
+        "payload_p50_bytes": 28698.0,
+        "payload_p95_bytes": 34507.0,
+        "visible_wait_p50_ms": 5431.0,
+        "visible_wait_p95_ms": 6256.0,
+        "turn_visible_wait_p50_ms": 5431.0,
+        "turn_visible_wait_p95_ms": 6256.0,
+        "graph_branch_hits": 9,
+        "uncovered_events": 66,
+        "zero_acceptance_reference_checks": 2,
+        "zero_acceptance_reference_mismatches": 0,
+        "positive_flips": 1,
+        "negative_flips": 0,
+        "full_pool_terminal_skip_events": 56,
+        "rule_signature_matches_round00": true,
+        "fallbacks": {
+          "deadline_fallback": 10,
+          "route_validation": 1,
+          "schema_fallback": 16
+        },
+        "fallback_reasons": {
+          "turn_visible_wait_budget_exhausted": 10,
+          "typed_route_crosses_information_checkpoint": 16,
+          "typed_route_double_spends_quota": 1
+        }
+      },
+      "post_round_finding": {
+        "category": "latency_budget",
+        "finding": "Three consecutive retained rounds now exceed Rule by one net win with no negative flips, so this deck is closed rather than over-optimized. Provider latency still sits near the hard ceiling and remains a shared architecture concern for later decks, but the deck-specific strength and safety gates are met."
+      },
+      "next_action": "Close deck 800018498 and move to the next non-pilot deck. Reuse only the validated shared V18CPG architecture; require each new deck to earn its own exact public-state certificates and independent ten-round ledger."
+    }
+  ],
+  "final_artifact": "res://tmp/v18cpg/optimization21/800018498/round10.json"
+}

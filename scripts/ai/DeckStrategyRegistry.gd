@@ -3,6 +3,9 @@ extends RefCounted
 
 
 const DeckStrategyMiraidonScript = preload("res://scripts/ai/DeckStrategyMiraidon.gd")
+const DeckStrategyV18ProfileCatalogScript = preload("res://scripts/ai/DeckStrategyV18ProfileCatalog.gd")
+const DeckStrategyV18RulesScript = preload("res://scripts/ai/DeckStrategyV18Rules.gd")
+const V18CPGRegistryAdapterScript = preload("res://scripts/ai/v18_cpg/runtime/V18CPGRegistryAdapter.gd")
 const DeckStrategyCharizardExScript = preload("res://scripts/ai/DeckStrategyCharizardEx.gd")
 const DeckStrategyCharizardExLLMScript = preload("res://scripts/ai/DeckStrategyCharizardExLLM.gd")
 const DeckStrategyCharizardExBaselineScript = preload("res://scripts/ai/DeckStrategyCharizardExBaseline.gd")
@@ -99,6 +102,25 @@ const _STRATEGY_SCRIPTS := {
 }
 
 const _STRATEGY_ID_BY_DECK_ID := {
+	561444: "dialga_metang",
+	572568: "future_box",
+	575479: "palkia_gholdengo",
+	575620: "lost_box",
+	575653: "regidrago",
+	577861: "palkia_dusknoir",
+	579577: "iron_thorns",
+	580445: "dragapult_banette",
+	581056: "regidrago",
+	581614: "blissey_tank",
+	582754: "gouging_fire_ancient",
+	575716: "charizard_ex",
+	578647: "gardevoir",
+	569061: "arceus_giratina",
+	575657: "lugia_archeops",
+	575718: "raging_bolt_ogerpon",
+	575720: "miraidon",
+	575723: "dragapult_dusknoir",
+	579502: "dragapult_charizard",
 	1700002: "v17_archaludon_dialga",
 	1700003: "v17_water_turtle",
 	1700004: "v17_palkia_gholdengo",
@@ -109,7 +131,6 @@ const _STRATEGY_ID_BY_DECK_ID := {
 	1750002: "v175_pure_dragapult",
 	609431: "v175_lugia_archeops",
 	610080: "gardevoir",
-	800018502: "ns_zoroark",
 }
 
 const _STRATEGY_ORDER: Array[String] = [
@@ -146,6 +167,14 @@ func detect_strategy_id_for_player(player: PlayerState) -> String:
 
 
 func create_strategy_by_id(strategy_id: String) -> RefCounted:
+	var v18cpg_strategy: RefCounted = V18CPGRegistryAdapterScript.create_strategy_by_id(strategy_id)
+	if v18cpg_strategy != null:
+		return v18cpg_strategy
+	var v18_profile: Dictionary = DeckStrategyV18ProfileCatalogScript.get_profile_for_strategy(strategy_id)
+	if not v18_profile.is_empty():
+		var strategy: RefCounted = DeckStrategyV18RulesScript.new()
+		strategy.call("configure_profile", v18_profile)
+		return strategy
 	if strategy_id == "gardevoir":
 		return _instantiate_strategy_from_path(_GARDEVOIR_SCRIPT_PATH)
 	if strategy_id == "gardevoir_llm":
@@ -165,10 +194,17 @@ func create_strategy_for_player(player: PlayerState) -> RefCounted:
 	return create_strategy_by_id(strategy_id)
 
 
+static func strategy_id_for_deck_id(deck_id: int) -> String:
+	var v18_strategy_id := DeckStrategyV18ProfileCatalogScript.strategy_id_for_deck(deck_id)
+	if v18_strategy_id != "":
+		return v18_strategy_id
+	return str(_STRATEGY_ID_BY_DECK_ID.get(deck_id, ""))
+
+
 func resolve_strategy_id_for_deck(deck: DeckData) -> String:
 	if deck == null:
 		return ""
-	var deck_strategy_id := str(_STRATEGY_ID_BY_DECK_ID.get(int(deck.id), ""))
+	var deck_strategy_id := strategy_id_for_deck_id(int(deck.id))
 	if deck_strategy_id != "":
 		return deck_strategy_id
 	var visible_names: Dictionary = {}

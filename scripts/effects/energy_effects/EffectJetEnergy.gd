@@ -45,6 +45,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 		# 若战斗位为空（理论上对战中不应出现），直接移过去
 		player.bench.remove_at(bench_index)
 		player.active_pokemon = target_slot
+		target_slot.mark_entered_active_from_bench(state.turn_number)
 		return
 
 	var old_active: PokemonSlot = player.active_pokemon
@@ -52,6 +53,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	old_active.clear_on_leave_active()
 	player.bench.append(old_active)
 	player.active_pokemon = target_slot
+	target_slot.mark_entered_active_from_bench(state.turn_number)
 
 
 ## 获取此特殊能量提供的能量类型（供 EffectProcessor.get_energy_type 查询）

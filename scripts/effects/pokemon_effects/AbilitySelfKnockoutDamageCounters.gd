@@ -20,6 +20,10 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	return not state.players[1 - top.owner_index].get_all_pokemon().is_empty()
 
 
+func knocks_out_self() -> bool:
+	return true
+
+
 func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var opponent: PlayerState = state.players[1 - card.owner_index]
 	var items: Array = opponent.get_all_pokemon()

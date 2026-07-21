@@ -1,0 +1,443 @@
+{
+  "cards": [
+    {
+      "count": 2,
+      "effect_id": "66fee12502043db7d92b97b0d62b0f59",
+      "name": "Munkidori",
+      "roles": [
+        "pokemon",
+        "development_piece",
+        "ability_engine"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV8C_094"
+    },
+    {
+      "count": 2,
+      "effect_id": "a250d62a3355b00d48f2eaa8be6a5dfb",
+      "name": "赫普的古月鸟",
+      "roles": [
+        "pokemon",
+        "signature_piece",
+        "opening_active_candidate",
+        "attacker",
+        "search_target",
+        "partner_piece"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV10C_188"
+    },
+    {
+      "count": 2,
+      "effect_id": "49c917fdc3770a031e96267e6add09ab",
+      "name": "赫普的卡比兽",
+      "roles": [
+        "pokemon",
+        "signature_piece",
+        "opening_active_candidate",
+        "attacker",
+        "development_piece",
+        "energy_target",
+        "search_target",
+        "partner_piece"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV10C_175"
+    },
+    {
+      "count": 2,
+      "effect_id": "832e8b704b5457781ee7c52adc1a0571",
+      "name": "赫普的苍响ex",
+      "roles": [
+        "pokemon",
+        "signature_piece",
+        "development_piece",
+        "energy_target",
+        "attacker",
+        "evolution_piece",
+        "search_target",
+        "partner_piece"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV10C_161"
+    },
+    {
+      "count": 1,
+      "effect_id": "1ceeba6dac51ccc19833c5a513fe3fc6",
+      "name": "Tatsugiri",
+      "roles": [
+        "pokemon"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV8C_160"
+    },
+    {
+      "count": 1,
+      "effect_id": "ab6c3357e2b8a8385a68da738f41e0c1",
+      "name": "Fezandipiti ex",
+      "roles": [
+        "pokemon",
+        "ability_engine"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV8C_135"
+    },
+    {
+      "count": 1,
+      "effect_id": "f2afef80b13b8f6a071facbcade0251c",
+      "name": "Bloodmoon Ursaluna ex",
+      "roles": [
+        "pokemon",
+        "energy_target",
+        "attacker"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV8C_172"
+    },
+    {
+      "count": 1,
+      "effect_id": "49669fcf461deacebeb5755c11ec51f1",
+      "name": "Mew ex",
+      "roles": [
+        "pokemon",
+        "opening_active_candidate",
+        "attacker"
+      ],
+      "type": "Pokemon",
+      "uid": "151C_151"
+    },
+    {
+      "count": 1,
+      "effect_id": "f8c2715403e3f4ea9783c46be2de832b",
+      "name": "拉帝亚斯ex",
+      "roles": [
+        "pokemon",
+        "development_piece"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV9C_078"
+    },
+    {
+      "count": 4,
+      "effect_id": "5bdbc985f9aa2e6f248b53f6f35d1d37",
+      "name": "Arven",
+      "roles": [
+        "supporter",
+        "trainer_tutor",
+        "trainer_plan_piece"
+      ],
+      "type": "Supporter",
+      "uid": "CSV1C_123"
+    },
+    {
+      "count": 2,
+      "effect_id": "8e1fa2c9018db938084c94c7c970d419",
+      "name": "Boss's Orders",
+      "roles": [
+        "supporter",
+        "gust"
+      ],
+      "type": "Supporter",
+      "uid": "CSVH1aC_023"
+    },
+    {
+      "count": 1,
+      "effect_id": "9fb5f53c9952d10b4fe26508ecbc644a",
+      "name": "Penny",
+      "roles": [
+        "supporter"
+      ],
+      "type": "Supporter",
+      "uid": "CSV1C_124"
+    },
+    {
+      "count": 1,
+      "effect_id": "565a02f4e75076963c6a884ae3622ff1",
+      "name": "Surfer",
+      "roles": [
+        "supporter"
+      ],
+      "type": "Supporter",
+      "uid": "CSV8C_196"
+    },
+    {
+      "count": 1,
+      "effect_id": "0a9bdf265647461dd5c6c827ffc19e61",
+      "name": "Judge",
+      "roles": [
+        "supporter",
+        "draw_engine"
+      ],
+      "type": "Supporter",
+      "uid": "CSV10C_206"
+    },
+    {
+      "count": 1,
+      "effect_id": "aecd80ca2722885c3d062a2255346f3e",
+      "name": "Professor's Research",
+      "roles": [
+        "supporter",
+        "draw_engine"
+      ],
+      "type": "Supporter",
+      "uid": "CSV1C_121"
+    },
+    {
+      "count": 1,
+      "effect_id": "af514f82d182aeae5327b2c360df703d",
+      "name": "Iono",
+      "roles": [
+        "supporter",
+        "draw_engine"
+      ],
+      "type": "Supporter",
+      "uid": "CSV3C_123"
+    },
+    {
+      "count": 1,
+      "effect_id": "a444b83881df9e2a0225aee95bbc853a",
+      "name": "Black Belt's Training",
+      "roles": [
+        "supporter"
+      ],
+      "type": "Supporter",
+      "uid": "CSV9.5C_188"
+    },
+    {
+      "count": 3,
+      "effect_id": "517d6bf6e21dbaf53ab99bbb392f2460",
+      "name": "赫普的包包",
+      "roles": [
+        "item",
+        "trainer_plan_piece"
+      ],
+      "type": "Item",
+      "uid": "CSV10C_195"
+    },
+    {
+      "count": 3,
+      "effect_id": "1af63a7e2cb7a79215474ad8db8fd8fd",
+      "name": "Nest Ball",
+      "roles": [
+        "item",
+        "pokemon_search",
+        "trainer_plan_piece"
+      ],
+      "type": "Item",
+      "uid": "CSVH1C_043"
+    },
+    {
+      "count": 2,
+      "effect_id": "3e6f1daf545dfed48d0588dd50792a2e",
+      "name": "Night Stretcher",
+      "roles": [
+        "item",
+        "recovery"
+      ],
+      "type": "Item",
+      "uid": "CSV8C_183"
+    },
+    {
+      "count": 2,
+      "effect_id": "e366f56ecd3f805a28294109a1a37453",
+      "name": "Earthen Vessel",
+      "roles": [
+        "item",
+        "energy_access",
+        "typed_energy_access",
+        "trainer_plan_piece"
+      ],
+      "type": "Item",
+      "uid": "CSV6C_115"
+    },
+    {
+      "count": 2,
+      "effect_id": "768b545a38fccd5e265093b5adce10af",
+      "name": "Pokégear 3.0",
+      "roles": [
+        "item"
+      ],
+      "type": "Item",
+      "uid": "CSV2C_113"
+    },
+    {
+      "count": 1,
+      "effect_id": "7c0b20e121c9d0e0d2d8a43524f7494e",
+      "name": "Switch",
+      "roles": [
+        "item",
+        "pivot"
+      ],
+      "type": "Item",
+      "uid": "CSV1C_113"
+    },
+    {
+      "count": 1,
+      "effect_id": "06bc00d5dcec33898dc6db2e4c4d10ec",
+      "name": "Counter Catcher",
+      "roles": [
+        "item",
+        "gust"
+      ],
+      "type": "Item",
+      "uid": "CSV6C_114"
+    },
+    {
+      "count": 1,
+      "effect_id": "294212d9c02dc0acb886a7ef01ebeac4",
+      "name": "Energy Switch",
+      "roles": [
+        "item",
+        "energy_mover",
+        "pivot"
+      ],
+      "type": "Item",
+      "uid": "CSVH1aC_008"
+    },
+    {
+      "count": 1,
+      "effect_id": "4ec261453212280d0eb03ed8254ca97f",
+      "name": "Prime Catcher",
+      "roles": [
+        "item"
+      ],
+      "type": "Item",
+      "uid": "CSV7C_180"
+    },
+    {
+      "count": 1,
+      "effect_id": "a47d5a8ed00e14a2146fc511745d23b5",
+      "name": "Pal Pad",
+      "roles": [
+        "item"
+      ],
+      "type": "Item",
+      "uid": "CSV1C_111"
+    },
+    {
+      "count": 4,
+      "effect_id": "87bf196475e64140c14197af70648893",
+      "name": "赫普的讲究头带",
+      "roles": [
+        "item",
+        "trainer_plan_piece"
+      ],
+      "type": "Tool",
+      "uid": "CSV10C_201"
+    },
+    {
+      "count": 1,
+      "effect_id": "d1c2f018a644e662f2b6895fdfc29281",
+      "name": "Bravery Charm",
+      "roles": [
+        "item",
+        "hp_expansion_tool"
+      ],
+      "type": "Tool",
+      "uid": "CSV1C_118"
+    },
+    {
+      "count": 1,
+      "effect_id": "0b4cc131a19862f92acf71494f29a0ed",
+      "name": "Rescue Board",
+      "roles": [
+        "item"
+      ],
+      "type": "Tool",
+      "uid": "CSV7C_185"
+    },
+    {
+      "count": 3,
+      "effect_id": "0c3c21449043e462bb73afac6c389a34",
+      "name": "化朗镇",
+      "roles": [
+        "stadium",
+        "trainer_plan_piece"
+      ],
+      "type": "Stadium",
+      "uid": "CSV10C_218"
+    },
+    {
+      "count": 2,
+      "effect_id": "ceac9ee87d5850880f7438665925dbd2",
+      "name": "Calamitous Snowy Mountain",
+      "roles": [
+        "stadium"
+      ],
+      "type": "Stadium",
+      "uid": "CSV3C_129"
+    },
+    {
+      "count": 1,
+      "effect_id": "13b3caaa408a85dfd1e2a5ad797e8b8a",
+      "name": "Town Store",
+      "roles": [
+        "stadium"
+      ],
+      "type": "Stadium",
+      "uid": "CSV5C_128"
+    },
+    {
+      "count": 4,
+      "effect_id": "46c769fc57a6c250c560df648bb779f8",
+      "name": "Darkness Energy",
+      "roles": [
+        "energy_source",
+        "typed_energy"
+      ],
+      "type": "Basic Energy",
+      "uid": "CSVE1C_DAR"
+    },
+    {
+      "count": 2,
+      "effect_id": "1323733f19cc04e54090b39bc1a393b8",
+      "name": "Jet Energy",
+      "roles": [
+        "energy_source",
+        "typed_energy"
+      ],
+      "type": "Special Energy",
+      "uid": "CSV4C_129"
+    }
+  ],
+  "deck_content_fingerprint": "42509d14ca34f13c47daf5aca30da3c96f422ab0c07bce66162907edee7891a7",
+  "deck_id": 800017407,
+  "manifest_hash": "96d3c3913d7ebef1c7c14207fa2a544c04f53f95103f1134e179a50fd381e881",
+  "modules": [
+    "partner_chain",
+    "energy_burst",
+    "cycle_pivot"
+  ],
+  "primary_module": "partner_chain",
+  "role_counts": {
+    "ability_engine": 3,
+    "attacker": 8,
+    "development_piece": 7,
+    "draw_engine": 3,
+    "energy_access": 2,
+    "energy_mover": 1,
+    "energy_source": 6,
+    "energy_target": 5,
+    "evolution_piece": 2,
+    "gust": 3,
+    "hp_expansion_tool": 1,
+    "item": 23,
+    "opening_active_candidate": 5,
+    "partner_piece": 6,
+    "pivot": 2,
+    "pokemon": 13,
+    "pokemon_search": 3,
+    "recovery": 2,
+    "search_target": 6,
+    "signature_piece": 6,
+    "stadium": 6,
+    "supporter": 12,
+    "trainer_plan_piece": 19,
+    "trainer_tutor": 4,
+    "typed_energy": 6,
+    "typed_energy_access": 2
+  },
+  "schema_version": 1,
+  "semantic_version": 1,
+  "strategy_id": "v18cpg_800017407_hops_zacian"
+}

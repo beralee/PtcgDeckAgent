@@ -190,10 +190,7 @@ func _get_selected_option_from_context(context: Dictionary) -> Dictionary:
 
 
 func _has_resolved_copied_followup(context: Dictionary) -> bool:
-	for key: Variant in context.keys():
-		if str(key) != STEP_ID:
-			return true
-	return false
+	return has_resolved_non_internal_interaction_step(context, [STEP_ID])
 
 
 func _is_selected_vstar_power_used(option: Dictionary, attacker: PokemonSlot, state: GameState) -> bool:

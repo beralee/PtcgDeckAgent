@@ -48,7 +48,7 @@ func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state:
 			"min_select": required_return_count,
 			"max_select": required_return_count,
 			"allow_cancel": true,
-			"utility_actions": [{"label": "不洗回能量", "index": -1}],
+			"utility_actions": [build_empty_dialog_utility_action("不洗回能量", INTERACTION_INTENT_DECLINE)],
 		},
 	]
 

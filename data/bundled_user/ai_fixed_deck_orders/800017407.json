@@ -1,0 +1,126 @@
+{
+	"deck_id": 800017407,
+	"deck_name": "18.0 赫普苍响",
+	"strategy_id": "v18_800017407_hops_zacian",
+	"generator_version": 15,
+	"description": "Cards 1-7 are the setup hand, 8-13 are controlled prizes, and 14-19 bridge the first evolution and attack route.",
+	"top_to_bottom": [
+		{
+			"set_code": "CSV10C",
+			"card_index": "218"
+		},
+		{
+			"set_code": "CSV10C",
+			"card_index": "161"
+		},
+		{
+			"set_code": "CSV10C",
+			"card_index": "201"
+		},
+		{
+			"set_code": "CSV10C",
+			"card_index": "201"
+		},
+		{
+			"set_code": "CSVE1C",
+			"card_index": "DAR"
+		},
+		{
+			"set_code": "CSV4C",
+			"card_index": "129"
+		},
+		{
+			"set_code": "CSV10C",
+			"card_index": "175"
+		},
+		{
+			"set_code": "CSV3C",
+			"card_index": "129"
+		},
+		{
+			"set_code": "CSV2C",
+			"card_index": "113"
+		},
+		{
+			"set_code": "CSV8C",
+			"card_index": "183"
+		},
+		{
+			"set_code": "CSVH1aC",
+			"card_index": "023"
+		},
+		{
+			"set_code": "CSV10C",
+			"card_index": "218"
+		},
+		{
+			"set_code": "CSV1C",
+			"card_index": "123"
+		},
+		{
+			"set_code": "CSV10C",
+			"card_index": "161"
+		},
+		{
+			"set_code": "CSV8C",
+			"card_index": "094"
+		},
+		{
+			"set_code": "CSVE1C",
+			"card_index": "DAR"
+		},
+		{
+			"set_code": "CSV10C",
+			"card_index": "195"
+		},
+		{
+			"set_code": "CSV10C",
+			"card_index": "175"
+		},
+		{
+			"set_code": "CSVE1C",
+			"card_index": "DAR"
+		},
+		{"set_code": "CSV8C", "card_index": "094"},
+		{"set_code": "CSV10C", "card_index": "188"},
+		{"set_code": "CSV10C", "card_index": "188"},
+		{"set_code": "CSV8C", "card_index": "160"},
+		{"set_code": "CSV8C", "card_index": "135"},
+		{"set_code": "CSV8C", "card_index": "172"},
+		{"set_code": "151C", "card_index": "151"},
+		{"set_code": "CSV9C", "card_index": "078"},
+		{"set_code": "CSV1C", "card_index": "123"},
+		{"set_code": "CSV1C", "card_index": "123"},
+		{"set_code": "CSV1C", "card_index": "123"},
+		{"set_code": "CSVH1aC", "card_index": "023"},
+		{"set_code": "CSV1C", "card_index": "124"},
+		{"set_code": "CSV8C", "card_index": "196"},
+		{"set_code": "CSV10C", "card_index": "206"},
+		{"set_code": "CSV1C", "card_index": "121"},
+		{"set_code": "CSV3C", "card_index": "123"},
+		{"set_code": "CSV9.5C", "card_index": "188"},
+		{"set_code": "CSV10C", "card_index": "195"},
+		{"set_code": "CSV10C", "card_index": "195"},
+		{"set_code": "CSVH1C", "card_index": "043"},
+		{"set_code": "CSVH1C", "card_index": "043"},
+		{"set_code": "CSVH1C", "card_index": "043"},
+		{"set_code": "CSV8C", "card_index": "183"},
+		{"set_code": "CSV6C", "card_index": "115"},
+		{"set_code": "CSV6C", "card_index": "115"},
+		{"set_code": "CSV2C", "card_index": "113"},
+		{"set_code": "CSV1C", "card_index": "113"},
+		{"set_code": "CSV6C", "card_index": "114"},
+		{"set_code": "CSVH1aC", "card_index": "008"},
+		{"set_code": "CSV7C", "card_index": "180"},
+		{"set_code": "CSV1C", "card_index": "111"},
+		{"set_code": "CSV10C", "card_index": "201"},
+		{"set_code": "CSV10C", "card_index": "201"},
+		{"set_code": "CSV1C", "card_index": "118"},
+		{"set_code": "CSV7C", "card_index": "185"},
+		{"set_code": "CSV10C", "card_index": "218"},
+		{"set_code": "CSV3C", "card_index": "129"},
+		{"set_code": "CSV5C", "card_index": "128"},
+		{"set_code": "CSVE1C", "card_index": "DAR"},
+		{"set_code": "CSV4C", "card_index": "129"}
+	]
+}

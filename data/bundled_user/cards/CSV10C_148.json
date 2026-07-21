@@ -1,0 +1,58 @@
+{
+  "name": "玛俐的长毛巨魔ex",
+  "card_type": "Pokemon",
+  "mechanic": "ex",
+  "label": "",
+  "description": "特性: 庞克泵感\n在自己的回合，当将这张卡牌从手牌使出并进行进化时，可以使用1次。选择自己牌库中最多5张「基本【恶】能量」，以任意方式附着于自己的「玛俐的宝可梦」身上。并重洗牌库。\n\n【恶】【恶】 暗影子弹 180\n给对手的1只备战宝可梦也造成30伤害。[备战宝可梦不计算弱点、抗性。]\n\n",
+  "yoren_code": "Y1594",
+  "set_code": "CSV10C",
+  "card_index": "148",
+  "set_code_en": "",
+  "card_index_en": "",
+  "name_en": "",
+  "name_zh": "",
+  "artist": "PLANETA Mochizuki",
+  "rarity": "RR",
+  "release_date": "2026-07-16T00:00:00+08:00",
+  "regulation_mark": "I",
+  "effect_id": "863479acd128e1e5e2643a3a1e77ce26",
+  "image_url": "https://tcg.mik.moe/static/img/CSV10C/148.png",
+  "image_local_path": "user://cards/images/CSV10C/148.png",
+  "source_provider": "tcg_mik",
+  "source_url": "https://tcg.mik.moe/cards/CSV10C/148",
+  "source_set_code": "CSV10C",
+  "source_card_index": "148",
+  "source_language": "zh-CN",
+  "source_prints": [],
+  "source_imported_at": 0,
+  "source_parser_version": 1,
+  "is_tags": [],
+  "regulation_standard": true,
+  "regulation_expanded": true,
+  "energy_type": "D",
+  "stage": "Stage 2",
+  "hp": 320,
+  "weakness_energy": "G",
+  "weakness_value": "×2",
+  "resistance_energy": "",
+  "resistance_value": "",
+  "retreat_cost": 2,
+  "evolves_from": "玛俐的诈唬魔",
+  "ancient_trait": "",
+  "attacks": [
+    {
+      "name": "暗影子弹",
+      "text": "给对手的1只备战宝可梦也造成30伤害。[备战宝可梦不计算弱点、抗性。]",
+      "cost": "DD",
+      "damage": "180",
+      "is_vstar_power": false
+    }
+  ],
+  "abilities": [
+    {
+      "name": "庞克泵感",
+      "text": "在自己的回合，当将这张卡牌从手牌使出并进行进化时，可以使用1次。选择自己牌库中最多5张「基本【恶】能量」，以任意方式附着于自己的「玛俐的宝可梦」身上。并重洗牌库。"
+    }
+  ],
+  "energy_provides": ""
+}

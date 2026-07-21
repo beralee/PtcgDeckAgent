@@ -982,6 +982,11 @@ func _show_card_collection(
 		scene.call("_raise_discard_overlay_for_input")
 	else:
 		discard_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	var discard_close_button: Button = scene.get("_discard_close_btn")
+	if discard_close_button != null:
+		discard_close_button.visible = true
+		discard_close_button.disabled = false
+		discard_close_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	discard_overlay.visible = true
 	if scene.has_method("_sync_card_foil_effects"):
 		scene.call("_sync_card_foil_effects", discard_overlay)

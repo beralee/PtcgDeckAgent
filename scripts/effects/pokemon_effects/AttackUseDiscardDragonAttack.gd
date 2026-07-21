@@ -225,10 +225,7 @@ func _get_selected_source_effect_id(option: Dictionary) -> String:
 
 
 func _has_resolved_copied_followup(context: Dictionary) -> bool:
-	for key: Variant in context.keys():
-		if str(key) != "copied_attack":
-			return true
-	return false
+	return has_resolved_non_internal_interaction_step(context, ["copied_attack"])
 
 
 func _build_copied_attack_action_item(source_data: CardData, copied_attack: Dictionary, apex_cost: String) -> Dictionary:

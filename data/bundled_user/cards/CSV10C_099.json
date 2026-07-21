@@ -1,0 +1,59 @@
+{
+    "name":  "火暴猴",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【斗】 强行拖出 \n选择对手的1只备战宝可梦，将其与战斗宝可梦互换。然后，给新出场的宝可梦造成30伤害。\n\n",
+    "yoren_code":  "P057",
+    "set_code":  "CSV10C",
+    "card_index":  "099",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "GOTO minori",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "21e9059614bf4f853ac21e60d71132f4",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/099.png",
+    "image_local_path":  "user://cards/images/CSV10C/099.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "F",
+    "stage":  "Stage 1",
+    "hp":  110,
+    "weakness_energy":  "P",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  2,
+    "evolves_from":  "猴怪",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "强行拖出",
+                        "text":  "选择对手的1只备战宝可梦，将其与战斗宝可梦互换。然后，给新出场的宝可梦造成30伤害。",
+                        "cost":  "F",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

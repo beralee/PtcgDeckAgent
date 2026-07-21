@@ -62,7 +62,7 @@ func execute_attack(
 			var target: Variant = assignment.get("target", null)
 			var amount: int = int(assignment.get("amount", 10))
 			if target is PokemonSlot and target in opp_player.bench:
-				if AbilityBenchImmune.prevents_opponent_attack_effect(target, attacker, state):
+				if _is_attack_effect_prevented(target as PokemonSlot, attacker, state):
 					continue
 				var target_slot := target as PokemonSlot
 				target_slot.damage_counters += max(0, amount)
@@ -73,7 +73,7 @@ func execute_attack(
 	var remaining: int = damage_counters_total
 	var legal_bench: Array[PokemonSlot] = []
 	for slot: PokemonSlot in opp_player.bench:
-		if not AbilityBenchImmune.prevents_opponent_attack_effect(slot, attacker, state):
+		if not _is_attack_effect_prevented(slot, attacker, state):
 			legal_bench.append(slot)
 	var bench_count: int = legal_bench.size()
 	var idx: int = 0
@@ -84,6 +84,19 @@ func execute_attack(
 		_mark_attack_damage_counter_placement(target_slot, state)
 		remaining -= chunk
 		idx += 1
+
+
+func _is_attack_effect_prevented(target: PokemonSlot, attacker: PokemonSlot, state: GameState) -> bool:
+	if target == null:
+		return true
+	if AbilityBenchImmune.prevents_opponent_attack_effect(target, attacker, state):
+		return true
+	if state == null:
+		return false
+	var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null)
+	if processor != null and processor.has_method("is_attack_effect_prevented_by_defender_ability"):
+		return bool(processor.call("is_attack_effect_prevented_by_defender_ability", attacker, target, state))
+	return false
 
 
 func get_description() -> String:

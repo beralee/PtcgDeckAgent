@@ -1037,8 +1037,12 @@ func test_tournament_game_over_shows_match_end_before_standings() -> String:
 	battle_scene.call("_on_game_over", 0, "knockout")
 	var match_end_overlay := battle_scene.get("_match_end_overlay") as Panel
 	var return_button := battle_scene.get("_match_end_return_button") as Button
-	var requested_path := GameManager.consume_last_requested_scene_path()
+	var requested_before_return := GameManager.consume_last_requested_scene_path()
 	var active_after_game_over := GameManager.is_tournament_battle_active()
+	var return_route_latched := bool(battle_scene.get("_match_end_tournament_return_pending"))
+	var summary_after_game_over: Dictionary = GameManager.current_tournament.last_round_summary if GameManager.current_tournament != null else {}
+	battle_scene.call("_on_match_end_return_pressed")
+	var requested_after_return := GameManager.consume_last_requested_scene_path()
 
 	GameManager.clear_tournament()
 	GameManager.current_tournament = previous_tournament
@@ -1051,8 +1055,11 @@ func test_tournament_game_over_shows_match_end_before_standings() -> String:
 		assert_true(prepared, "Tournament test setup should prepare an active battle"),
 		assert_true(match_end_overlay != null and match_end_overlay.visible, "Tournament game over should show the match-end screen"),
 		assert_eq(return_button.text if return_button != null else "", "返回比赛积分", "Tournament match-end screen should return to standings"),
-		assert_eq(requested_path, "", "Tournament game over should not navigate away before the player sees the result screen"),
-		assert_true(active_after_game_over, "Tournament battle should remain active until the player presses return"),
+		assert_eq(requested_before_return, "", "Tournament game over should not navigate away before the player sees the result screen"),
+		assert_false(active_after_game_over, "Tournament result should be finalized immediately so resume cannot misclassify a completed match as a forfeit"),
+		assert_true(return_route_latched, "The result screen should retain an immutable tournament-standings return route after finalization"),
+		assert_false(summary_after_game_over.is_empty(), "Game over should persist the completed round before the result screen is shown"),
+		assert_eq(requested_after_return, GameManager.SCENE_TOURNAMENT_STANDINGS, "The latched result-screen route should still return to standings after the active flag is cleared"),
 	])
 
 
@@ -1186,7 +1193,7 @@ func test_battle_scene_match_end_quick_review_payload_focuses_human_in_vs_ai_eve
 func test_battle_scene_landscape_match_end_quick_review_busy_keeps_progress_panel() -> String:
 	var battle_scene = _make_battle_scene_stub()
 	battle_scene.set("_match_end_quick_review_busy", true)
-	battle_scene.set("_match_end_quick_review_progress_text", "正在让 Kimi K2.6 快速点评...")
+	battle_scene.set("_match_end_quick_review_progress_text", "正在让 Kimi K3 快速点评...")
 	battle_scene.call("_show_match_end_dialog", 0, "knockout")
 
 	var result: Dictionary = battle_scene.get("_match_end_quick_review_result")
@@ -1198,7 +1205,7 @@ func test_battle_scene_landscape_match_end_quick_review_busy_keeps_progress_pane
 		assert_true(result.is_empty(), "Busy quick review should not create a local preview result"),
 		assert_true(ai_title != null and ai_title.visible, "Landscape match end should show AI progress title"),
 		assert_true(ai_content != null and ai_content.visible, "Landscape match end should show AI progress content"),
-		assert_str_contains(ai_content.text if ai_content != null else "", "Kimi K2.6", "Landscape match end should keep the model progress text"),
+		assert_str_contains(ai_content.text if ai_content != null else "", "Kimi K3", "Landscape match end should keep the model progress text"),
 		assert_true(return_button != null and return_button.visible, "Match end should keep the return action visible while quick-review state is busy"),
 	])
 
@@ -1215,7 +1222,7 @@ func test_battle_scene_portrait_match_end_quick_review_busy_uses_scrollable_prog
 	battle_scene.rotation_degrees = 90.0
 	battle_scene.position = Vector2(1600.0, 0.0)
 	battle_scene.set("_match_end_quick_review_busy", true)
-	battle_scene.set("_match_end_quick_review_progress_text", "正在生成 Kimi K2.6 快评...")
+	battle_scene.set("_match_end_quick_review_progress_text", "正在生成 Kimi K3 快评...")
 	battle_scene.call("_show_match_end_dialog", 0, "knockout")
 
 	var result: Dictionary = battle_scene.get("_match_end_quick_review_result")
@@ -1233,7 +1240,7 @@ func test_battle_scene_portrait_match_end_quick_review_busy_uses_scrollable_prog
 		assert_true(ai_content != null and ai_content.visible, "Portrait match end should show AI progress content"),
 		assert_true(ai_content != null and ai_content.scroll_active, "Portrait progress content should use the same fixed scrollable panel"),
 		assert_true(ai_content != null and not ai_content.fit_content, "Portrait progress content should not resize the result modal"),
-		assert_str_contains(ai_content.text if ai_content != null else "", "Kimi K2.6", "Portrait match end should keep the model progress text"),
+		assert_str_contains(ai_content.text if ai_content != null else "", "Kimi K3", "Portrait match end should keep the model progress text"),
 		assert_true(return_button != null and return_button.visible, "Portrait match end should keep the return action visible while quick-review state is busy"),
 	])
 

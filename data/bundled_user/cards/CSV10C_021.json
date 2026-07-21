@@ -1,0 +1,66 @@
+{
+    "name":  "奥利纽",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【草】 营养素 \n回复自己1只宝可梦「40」HP。\n\n 撞击 40\n\n\n",
+    "yoren_code":  "P0929",
+    "set_code":  "CSV10C",
+    "card_index":  "021",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "Felicia Chen",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "de7b953c01ccb40c67b2633c97a3d743",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/021.png",
+    "image_local_path":  "user://cards/images/CSV10C/021.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "G",
+    "stage":  "Stage 1",
+    "hp":  90,
+    "weakness_energy":  "R",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "迷你芙",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "营养素",
+                        "text":  "回复自己1只宝可梦「40」HP。",
+                        "cost":  "G",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "撞击",
+                        "text":  "",
+                        "cost":  "CC",
+                        "damage":  "40",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

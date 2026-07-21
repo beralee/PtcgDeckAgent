@@ -1,0 +1,59 @@
+{
+    "name":  "盐石宝",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【斗】 穷追不舍 10\n在下一个对手的回合，受到这个招式影响的宝可梦，无法撤退。\n\n",
+    "yoren_code":  "P0932",
+    "set_code":  "SVP",
+    "card_index":  "080",
+    "set_code_en":  "PAR",
+    "card_index_en":  "102",
+    "name_en":  "Nacli",
+    "name_zh":  "",
+    "artist":  "Pani Kobayashi",
+    "rarity":  "无标记",
+    "release_date":  "2025-09-12T00:00:00+08:00",
+    "regulation_mark":  "G",
+    "effect_id":  "f0453eea8a2c67c4034c82adf034fc84",
+    "image_url":  "https://tcg.mik.moe/static/img/SVP/080.png",
+    "image_local_path":  "user://cards/images/SVP/080.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "F",
+    "stage":  "Basic",
+    "hp":  70,
+    "weakness_energy":  "G",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  3,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "穷追不舍",
+                        "text":  "在下一个对手的回合，受到这个招式影响的宝可梦，无法撤退。",
+                        "cost":  "F",
+                        "damage":  "10",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

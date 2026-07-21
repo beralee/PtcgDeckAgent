@@ -1,0 +1,58 @@
+{
+  "abilities": [
+    {
+      "name": "混入雪中",
+      "text": "当对手从手牌使出物品或支援者时，这只宝可梦不会受到其效果影响。"
+    }
+  ],
+  "ancient_trait": "",
+  "artist": "PLANETA Tsuji",
+  "attacks": [
+    {
+      "cost": "WWWC",
+      "damage": "140+",
+      "is_vstar_power": false,
+      "name": "粉碎压制",
+      "text": "若希望，可以将场上的竞技场放于弃牌区。在这种情况下，追加造成140伤害。"
+    }
+  ],
+  "card_index": "234",
+  "card_index_en": "",
+  "card_type": "Pokemon",
+  "description": "特性: 混入雪中\n当对手从手牌使出物品或支援者时，这只宝可梦不会受到其效果影响。\n\n【水】【水】【水】 粉碎压制 140+\n若希望，可以将场上的竞技场放于弃牌区。在这种情况下，追加造成140伤害。\n\n",
+  "effect_id": "f8a7ab601e5eba8d038f5ae262fb69f3",
+  "energy_provides": "",
+  "energy_type": "W",
+  "evolves_from": "走鲸",
+  "hp": 300,
+  "image_local_path": "user://cards/images/CSV10C/234.png",
+  "image_url": "https://tcg.mik.moe/static/img/CSV10C/234.png",
+  "is_tags": [],
+  "label": "",
+  "mechanic": "ex",
+  "name": "浩大鲸ex",
+  "name_en": "",
+  "name_zh": "",
+  "rarity": "SR",
+  "regulation_expanded": true,
+  "regulation_mark": "I",
+  "regulation_standard": true,
+  "release_date": "2026-07-16T00:00:00+08:00",
+  "resistance_energy": "",
+  "resistance_value": "",
+  "retreat_cost": 4,
+  "set_code": "CSV10C",
+  "set_code_en": "",
+  "source_card_index": "234",
+  "source_imported_at": 0,
+  "source_language": "zh-CN",
+  "source_parser_version": 1,
+  "source_prints": [],
+  "source_provider": "tcg_mik",
+  "source_set_code": "CSV10C",
+  "source_url": "https://tcg.mik.moe/cards/CSV10C/234",
+  "stage": "Stage 1",
+  "weakness_energy": "M",
+  "weakness_value": "×2",
+  "yoren_code": "Y1576"
+}

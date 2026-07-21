@@ -2,6 +2,121 @@
 
 extends "res://tests/helpers/BattleUIFeaturesShared.gd"
 
+
+func test_munkidori_ability_opens_and_completes_two_stage_field_interaction() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 3
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for player_index: int in 2:
+		var player := PlayerState.new()
+		player.player_index = player_index
+		gsm.game_state.players.append(player)
+
+	var munkidori_data := _make_pokemon_cd("Munkidori", 110, "P")
+	munkidori_data.effect_id = "munkidori_ui_regression"
+	munkidori_data.abilities = [{"name": "Adrena-Brain", "text": "Move up to 3 damage counters."}]
+	var munkidori := PokemonSlot.new()
+	munkidori.pokemon_stack.append(CardInstance.create(munkidori_data, 0))
+	munkidori.attached_energy.append(CardInstance.create(_make_energy_cd("Darkness Energy", "D"), 0))
+	var damaged_ally := PokemonSlot.new()
+	damaged_ally.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Damaged Ally", 120, "P"), 0))
+	damaged_ally.damage_counters = 20
+	var opponent := PokemonSlot.new()
+	opponent.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Opponent", 120, "C"), 1))
+	gsm.game_state.players[0].active_pokemon = munkidori
+	gsm.game_state.players[0].bench = [damaged_ally]
+	gsm.game_state.players[1].active_pokemon = opponent
+	gsm.effect_processor.register_effect("munkidori_ui_regression", AbilityMoveDamageCountersToOpponentScript.new(3))
+
+	battle_scene.call("_try_use_ability_with_interaction", 0, munkidori, 0)
+	var opened_source_step := str(battle_scene.get("_field_interaction_mode"))
+	battle_scene.call("_handle_field_slot_select_index", 0)
+	var opened_counter_step := str(battle_scene.get("_field_interaction_mode"))
+	battle_scene.call("_on_counter_distribution_amount_chosen", 2)
+	battle_scene.call("_handle_counter_distribution_target", 0)
+
+	return run_checks([
+		assert_eq(opened_source_step, "slot_select", "Munkidori should always open the damaged-own-Pokemon selection when its conditions are met"),
+		assert_eq(opened_counter_step, "counter_distribution", "Selecting the damage source should reliably open the opponent counter-placement step"),
+		assert_eq(damaged_ally.damage_counters, 0, "Completing the HUD flow should remove the selected two counters from the ally"),
+		assert_eq(opponent.damage_counters, 20, "Completing the HUD flow should place both counters on the opponent"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "A valid Munkidori interaction should finish without leaving a stuck modal"),
+	])
+
+
+func test_portrait_crispin_cannot_skip_energy_steps_from_empty_or_stale_confirm() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 3
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for player_index: int in 2:
+		var player := PlayerState.new()
+		player.player_index = player_index
+		gsm.game_state.players.append(player)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var crispin := CardInstance.create(_make_trainer_cd("Crispin", "Supporter", ""), 0)
+	crispin.card_data.effect_id = "136fdb6578daa3b81aef369495de4c3d"
+	var fire := CardInstance.create(_make_energy_cd("Fire Energy", "R"), 0)
+	var water := CardInstance.create(_make_energy_cd("Water Energy", "W"), 0)
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Crispin Target", 120, "C"), 0))
+	player.active_pokemon = active
+	player.hand = [crispin]
+	player.deck = [fire, water]
+	gsm.effect_processor.register_effect(crispin.card_data.effect_id, CSV9C196Crispin.new())
+
+	battle_scene.call("_try_play_trainer_with_interaction", 0, crispin)
+	battle_scene.call("_on_dialog_confirm")
+	var first_step_after_empty_confirm := str(((battle_scene.get("_pending_effect_steps") as Array)[int(battle_scene.get("_pending_effect_step_index"))] as Dictionary).get("id", ""))
+
+	var dialog_controller: RefCounted = battle_scene.get("_battle_dialog_controller")
+	dialog_controller.call("on_library_search_candidate_pressed", battle_scene, 0)
+	var confirm_press := InputEventMouseButton.new()
+	confirm_press.button_index = MOUSE_BUTTON_LEFT
+	confirm_press.pressed = true
+	confirm_press.position = Vector2(420, 760)
+	confirm_press.global_position = Vector2(420, 760)
+	battle_scene.call("_on_dialog_confirm_input", confirm_press)
+	battle_scene.call("_on_dialog_confirm_button_down")
+	battle_scene.call("_on_dialog_confirm")
+
+	var attachment_step_index := int(battle_scene.get("_pending_effect_step_index"))
+	var attachment_step_id := str(((battle_scene.get("_pending_effect_steps") as Array)[attachment_step_index] as Dictionary).get("id", ""))
+	battle_scene.call("_on_dialog_confirm")
+	var stayed_on_attachment_after_echo := (
+		str(battle_scene.get("_pending_choice")) == "effect_interaction"
+		and int(battle_scene.get("_pending_effect_step_index")) == attachment_step_index
+		and crispin in player.hand
+	)
+
+	battle_scene.call("_on_field_assignment_source_chosen", 0)
+	battle_scene.call("_handle_field_assignment_target_index", 0)
+	battle_scene.call("_on_field_interaction_confirm_pressed")
+
+	return run_checks([
+		assert_eq(first_step_after_empty_confirm, CSV9C196Crispin.HAND_STEP_ID, "Crispin must not skip its first Energy search on an empty confirm"),
+		assert_eq(attachment_step_id, CSV9C196Crispin.ATTACH_STEP_ID, "Choosing the hand Energy should open Crispin's attachment step"),
+		assert_true(stayed_on_attachment_after_echo, "The first dialog's delayed Android confirm must not immediately skip Crispin's attachment step"),
+		assert_true(crispin in player.discard_pile, "Crispin should resolve after a fresh assignment confirmation"),
+		assert_true(fire in player.hand, "The explicitly selected first Energy should enter the hand"),
+		assert_true(water in active.attached_energy, "The different-type second Energy should attach to the selected Pokemon"),
+	])
+
 func test_battle_scene_two_player_terminal_draw_reveal_finishes_before_handover() -> String:
 	var previous_mode: int = GameManager.current_mode
 	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
@@ -65,7 +180,7 @@ func test_battle_scene_two_player_terminal_draw_reveal_finishes_before_handover(
 	])
 
 
-func test_battle_scene_two_player_setup_view_alignment_resumes_deferred_turn_start_draw() -> String:
+func test_battle_scene_two_player_setup_view_alignment_skips_opening_turn_draw_reveal() -> String:
 	var previous_mode: int = GameManager.current_mode
 	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
 
@@ -116,21 +231,16 @@ func test_battle_scene_two_player_setup_view_alignment_resumes_deferred_turn_sta
 	battle_scene.call("_check_two_player_handover")
 	var reveal_active_after_alignment: Variant = battle_scene.get("_draw_reveal_active")
 	var auto_pending_after_alignment: Variant = battle_scene.get("_draw_reveal_auto_continue_pending")
-	var controller: RefCounted = battle_scene.get("_battle_draw_reveal_controller")
-	var has_auto_continue := controller != null and controller.has_method("run_auto_continue")
-	if has_auto_continue:
-		controller.call("run_auto_continue", battle_scene)
 	var visible_count_after_resume := hand_container.get_child_count()
 	GameManager.current_mode = previous_mode
 
 	return run_checks([
-		assert_eq(reveal_active_before_alignment, false, "Setup-time turn-start draw should initially defer while the view still belongs to the other player"),
-		assert_eq(queue_size_before_alignment, 1, "Deferred turn-start draw should stay queued until the visible player is realigned"),
-		assert_eq(visible_count_before_resume, 6, "Precondition: queued draw hides the new card before reveal resumes"),
-		assert_eq(reveal_active_after_alignment, true, "Realigning to the current player should resume the deferred turn-start draw reveal"),
-		assert_eq(auto_pending_after_alignment, true, "Resumed turn-start draw should auto-continue instead of waiting for a click"),
-		assert_eq(has_auto_continue, true, "Draw reveal controller should expose a run_auto_continue entrypoint"),
-		assert_eq(visible_count_after_resume, 7, "Auto-continued setup turn-start draw should render all seven hand cards"),
+		assert_eq(reveal_active_before_alignment, false, "Opening turn draw should not start a duplicate reveal while setup is aligning the view"),
+		assert_eq(queue_size_before_alignment, 0, "Opening turn draw should not remain queued for a later duplicate reveal"),
+		assert_eq(visible_count_before_resume, 7, "Realigned opening hand should immediately contain the already-drawn seventh card"),
+		assert_eq(reveal_active_after_alignment, false, "Realigning to the current player should not revive the skipped opening draw reveal"),
+		assert_eq(auto_pending_after_alignment, false, "Skipped opening draw should not leave an auto-continue callback pending"),
+		assert_eq(visible_count_after_resume, 7, "Setup alignment should keep all seven hand cards visible"),
 	])
 
 
@@ -578,12 +688,15 @@ func test_battle_scene_discard_viewer_uses_compact_hud_surface() -> String:
 	for i: int in range(3):
 		gsm.game_state.players[0].discard_pile.append(CardInstance.create(_make_pokemon_cd("紧凑弃牌%d" % i, 70, "C"), 0))
 	scene.set("_gsm", gsm)
+	var close_button := scene.find_child("DiscardCloseBtn", true, false) as Button
+	close_button.visible = false
+	close_button.disabled = true
+	close_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	scene.call("_show_discard_pile", 0, "己方弃牌区")
 	var discard_box := scene.find_child("DiscardBox", true, false) as PanelContainer
 	var discard_title := scene.find_child("DiscardTitle", true, false) as Label
 	var discard_scroll := scene.get("_discard_card_scroll") as ScrollContainer
-	var close_button := scene.find_child("DiscardCloseBtn", true, false) as Button
 	var dialog_card_size: Vector2 = scene.get("_dialog_card_size")
 	var expected_scroll_height := float(scene.call("_card_gallery_scroll_height", dialog_card_size.y))
 	var result := run_checks([
@@ -594,9 +707,46 @@ func test_battle_scene_discard_viewer_uses_compact_hud_surface() -> String:
 		assert_true(discard_title != null and discard_title.get_theme_font_size("font_size") >= 18, "Discard viewer title should use readable HUD text"),
 		assert_true(close_button != null and close_button.custom_minimum_size.y >= 54.0, "Discard viewer close button should be a touch-sized HUD button"),
 		assert_true(close_button != null and close_button.get_theme_font_size("font_size") >= 17, "Discard viewer close button text should be readable"),
+		assert_true(close_button != null and close_button.visible and not close_button.disabled, "Opening the discard viewer should always restore an enabled close button"),
+		assert_eq(close_button.mouse_filter if close_button != null else Control.MOUSE_FILTER_IGNORE, Control.MOUSE_FILTER_STOP, "Discard viewer close button should capture touch input"),
 	])
 	scene.queue_free()
 	return result
+
+
+func test_battle_scene_ai_turn_discard_viewer_is_paused_and_always_closable() -> String:
+	var previous_mode: int = GameManager.current_mode
+	GameManager.current_mode = GameManager.GameMode.VS_AI
+	var scene := _make_battle_scene_stub()
+	var discard_overlay := scene.get("_discard_overlay") as Panel
+	var detail_overlay := scene.get("_detail_overlay") as Panel
+	var dialog_overlay := scene.get("_dialog_overlay") as Panel
+	var coin_overlay := scene.get("_coin_overlay") as Panel
+	detail_overlay.visible = false
+	dialog_overlay.visible = false
+	coin_overlay.visible = false
+	discard_overlay.visible = true
+	scene.set("_discard_collection_current_kind", "discard")
+	scene.set("_discard_collection_current_player_index", 1)
+	scene.set("_discard_collection_current_title", "对方弃牌区")
+
+	var ai_paused_while_open: bool = bool(scene.call("_is_ui_blocking_ai"))
+	var cancel_event := InputEventAction.new()
+	cancel_event.action = "ui_cancel"
+	cancel_event.pressed = true
+	var cancel_consumed: bool = bool(scene.call("_try_close_discard_collection_from_cancel", cancel_event))
+	var ai_unblocked_after_close: bool = not bool(scene.call("_is_ui_blocking_ai"))
+
+	GameManager.current_mode = previous_mode
+	return run_checks([
+		assert_true(ai_paused_while_open, "Opening an opponent discard viewer during the AI turn must pause AI progression so another overlay cannot cover its exit"),
+		assert_true(cancel_consumed, "Android Back/Escape should close the discard viewer"),
+		assert_false(discard_overlay.visible, "Closing the discard viewer should hide the modal"),
+		assert_eq(str(scene.get("_discard_collection_current_kind")), "", "Closing should clear the collection kind"),
+		assert_eq(int(scene.get("_discard_collection_current_player_index")), -1, "Closing should clear the viewed player"),
+		assert_eq(str(scene.get("_discard_collection_current_title")), "", "Closing should clear the collection title"),
+		assert_true(ai_unblocked_after_close, "Closing the discard viewer should release the AI pause"),
+	])
 
 
 func test_battle_scene_discard_card_right_click_opens_topmost_detail_overlay() -> String:
@@ -1107,6 +1257,60 @@ func test_battle_scene_one_energy_retreat_action_hud_first_bench_click_works() -
 		assert_true(retreat_energy in gsm.game_state.players[0].discard_pile, "The selected retreat Energy should move to discard"),
 		assert_eq(str(scene.get("_pending_choice")), "", "Successful retreat should clear the pending retreat choice"),
 		assert_eq(str(scene.get("_field_interaction_mode")), "", "Successful retreat should close field selection"),
+	])
+
+
+func test_battle_scene_confused_pokemon_can_retreat_from_action_hud() -> String:
+	var scene = _make_battle_scene_stub()
+	scene._setup_ai_for_tests()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 2
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	scene._gsm = gsm
+	scene._view_player = 0
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var active_cd := _make_pokemon_cd("Confused Retreat Active", 70, "C")
+	active_cd.retreat_cost = 1
+	active_cd.attacks = []
+	active_cd.abilities = []
+	var active := PokemonSlot.new()
+	active.pokemon_stack.append(CardInstance.create(active_cd, 0))
+	active.set_status("confused", true)
+	var retreat_energy := CardInstance.create(_make_energy_cd("Retreat Energy", "C"), 0)
+	active.attached_energy.append(retreat_energy)
+	var bench := PokemonSlot.new()
+	bench.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Confused Retreat Bench", 80, "C"), 0))
+	gsm.game_state.players[0].active_pokemon = active
+	gsm.game_state.players[0].bench = [bench]
+
+	scene.call("_show_pokemon_action_dialog", 0, active, true)
+	var actions: Array = (scene.get("_dialog_data") as Dictionary).get("actions", [])
+	var retreat_index := -1
+	var retreat_enabled := false
+	for i: int in actions.size():
+		if actions[i] is Dictionary and str((actions[i] as Dictionary).get("type", "")) == "retreat":
+			retreat_index = i
+			retreat_enabled = bool((actions[i] as Dictionary).get("enabled", false))
+			break
+	var retreat_option := _action_hud_option_at_index(scene, retreat_index)
+	_emit_action_hud_mouse_click(retreat_option, Vector2(20, 20), Vector2(520, 520))
+	scene.set("_modal_input_slot_suppress_until_msec", Time.get_ticks_msec() - 1)
+	scene.set("_modal_input_finished_at_msec", Time.get_ticks_msec() - 1000)
+	_emit_slot_mouse_click(scene, "my_bench_0", Vector2(720, 520))
+
+	return run_checks([
+		assert_true(retreat_enabled, "Confusion alone must not disable retreat in the Pokemon action HUD"),
+		assert_eq(gsm.game_state.players[0].active_pokemon, bench, "A Confused Pokemon should retreat after paying its retreat cost"),
+		assert_false(active.status_conditions.get("confused", false), "Retreating to the Bench should clear Confusion"),
+		assert_true(retreat_energy in gsm.game_state.players[0].discard_pile, "Confused retreat should still pay the normal retreat cost"),
 	])
 
 
@@ -2466,6 +2670,82 @@ func test_battle_scene_buddy_poffin_card_dialog_clicks_select_distinct_candidate
 	])
 
 
+func test_portrait_arven_second_search_ignores_first_confirm_echo_and_resolves() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 3
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player_state := PlayerState.new()
+		player_state.player_index = pi
+		gsm.game_state.players.append(player_state)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var arven := CardInstance.create(_make_trainer_cd("Arven", "Supporter", ""), 0)
+	arven.card_data.effect_id = "5bdbc985f9aa2e6f248b53f6f35d1d37"
+	var item := CardInstance.create(_make_trainer_cd("Arven Item", "Item", ""), 0)
+	var pokemon := CardInstance.create(_make_pokemon_cd("Visible Pokemon", 90, "C"), 0)
+	var tool := CardInstance.create(_make_trainer_cd("Arven Tool", "Tool", ""), 0)
+	player.hand = [arven]
+	player.deck = [item, pokemon, tool]
+
+	battle_scene.call("_try_play_trainer_with_interaction", 0, arven)
+	var dialog_controller: RefCounted = battle_scene.get("_battle_dialog_controller")
+	var item_dialog_data: Dictionary = battle_scene.get("_dialog_data").duplicate(true)
+	dialog_controller.call("on_library_search_candidate_pressed", battle_scene, 0)
+
+	var confirm_pos := Vector2(420, 760)
+	var confirm_press := InputEventMouseButton.new()
+	confirm_press.button_index = MOUSE_BUTTON_LEFT
+	confirm_press.pressed = true
+	confirm_press.position = confirm_pos
+	confirm_press.global_position = confirm_pos
+	battle_scene.call("_on_dialog_confirm_input", confirm_press)
+	battle_scene.call("_on_dialog_confirm_button_down")
+	battle_scene.call("_on_dialog_confirm")
+
+	var tool_step_index := int(battle_scene.get("_pending_effect_step_index"))
+	var tool_step: Dictionary = (battle_scene.get("_pending_effect_steps") as Array)[tool_step_index]
+	var tool_dialog_data: Dictionary = battle_scene.get("_dialog_data").duplicate(true)
+	battle_scene.call("_on_dialog_confirm_input", confirm_press)
+	battle_scene.call("_on_dialog_confirm_button_down")
+	battle_scene.call("_on_dialog_confirm")
+	var still_waiting_after_echo := (
+		str(battle_scene.get("_pending_choice")) == "effect_interaction"
+		and int(battle_scene.get("_pending_effect_step_index")) == tool_step_index
+		and arven in player.hand
+	)
+
+	dialog_controller.call("on_library_search_candidate_pressed", battle_scene, 0)
+	var fresh_confirm_press := InputEventMouseButton.new()
+	fresh_confirm_press.button_index = MOUSE_BUTTON_LEFT
+	fresh_confirm_press.pressed = true
+	fresh_confirm_press.position = Vector2(520, 760)
+	fresh_confirm_press.global_position = Vector2(520, 760)
+	battle_scene.call("_on_dialog_confirm_input", fresh_confirm_press)
+	battle_scene.call("_on_dialog_confirm_button_down")
+	battle_scene.call("_on_dialog_confirm")
+
+	return run_checks([
+		assert_eq(item_dialog_data.get("card_indices", []), [0, -1, -1], "Arven Item search should show the full deck and only enable Item cards"),
+		assert_eq(str(tool_step.get("id", "")), "search_tool", "Confirming Arven's Item should open the Tool search"),
+		assert_eq(tool_dialog_data.get("card_indices", []), [-1, -1, 0], "Arven Tool search should keep the full deck visible and only enable Tool cards"),
+		assert_true(still_waiting_after_echo, "The Android mouse echo from Arven's first confirm must not dismiss the Tool search"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "A fresh Tool choice should finish Arven's interaction"),
+		assert_true(arven in player.discard_pile, "Arven should be consumed after both explicit searches finish"),
+		assert_true(item in player.hand, "Arven should move the explicitly selected Item to hand"),
+		assert_true(tool in player.hand, "Arven should move the explicitly selected Tool to hand"),
+		assert_true(pokemon in player.deck, "Arven must leave visible-only Pokemon cards in the deck"),
+	])
+
+
 func test_portrait_ultra_ball_search_step_does_not_arm_candidate_release_fallback() -> String:
 	var battle_scene = _make_battle_scene_stub()
 	battle_scene.set("_active_battle_layout_mode", "portrait")
@@ -2811,12 +3091,17 @@ func test_portrait_ultra_ball_search_step_accepts_delayed_confirm_button_down_wi
 		var current_step := (battle_scene.get("_pending_effect_steps") as Array)[pending_step_index] as Dictionary
 		search_step_id = str(current_step.get("id", ""))
 	battle_scene.set("_modal_input_finished_at_msec", Time.get_ticks_msec() - 1000)
-	battle_scene.call("_on_dialog_confirm_button_down")
-	battle_scene.call("_on_dialog_confirm")
+	var empty_row := battle_scene.get("_dialog_utility_row") as HBoxContainer
+	var empty_button := empty_row.find_child("LibrarySearchEmptySelectionButton", true, false) as Button if empty_row != null else null
+	var no_selection_button := battle_scene.get("_dialog_cancel") as Button
+	if no_selection_button != null:
+		battle_scene.call("_on_dialog_cancel")
 
 	return run_checks([
 		assert_eq(search_step_id, "search_pokemon", "Precondition: Ultra Ball should be waiting on the Pokemon search step"),
-		assert_eq(str(battle_scene.get("_pending_choice")), "", "A delayed real confirm button_down should resolve the Pokemon search"),
+		assert_null(empty_button, "Portrait Ultra Ball search should not stack a separate empty-selection action above the footer"),
+		assert_true(no_selection_button != null and no_selection_button.visible and no_selection_button.text == "不选择", "Portrait Ultra Ball search should reuse the footer cancel slot for no-selection"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "Explicit empty-selection action should resolve the Pokemon search"),
 		assert_true(ultra_ball in player.discard_pile, "Ultra Ball should resolve after choosing no Pokemon"),
 		assert_true(discard_a in player.discard_pile, "Ultra Ball should still pay the first discard cost"),
 		assert_true(discard_b in player.discard_pile, "Ultra Ball should still pay the second discard cost"),
@@ -2871,19 +3156,25 @@ func test_portrait_ultra_ball_search_step_accepts_followup_confirm_pressed_after
 
 	battle_scene.call("_on_dialog_confirm")
 	var still_waiting_after_stale := str(battle_scene.get("_pending_choice")) == "effect_interaction" and ultra_ball not in player.discard_pile
-	battle_scene.call("_on_dialog_confirm")
+	var empty_row := battle_scene.get("_dialog_utility_row") as HBoxContainer
+	var empty_button := empty_row.find_child("LibrarySearchEmptySelectionButton", true, false) as Button if empty_row != null else null
+	var no_selection_button := battle_scene.get("_dialog_cancel") as Button
+	if no_selection_button != null:
+		battle_scene.call("_on_dialog_cancel")
 
 	return run_checks([
 		assert_true(still_waiting_after_stale, "The first stale confirm press should leave Ultra Ball on the Pokemon search dialog"),
-		assert_eq(str(battle_scene.get("_pending_choice")), "", "A follow-up real confirm press should resolve even if the platform did not emit button_down"),
-		assert_true(ultra_ball in player.discard_pile, "Ultra Ball should resolve from the follow-up confirm press after the stale press is blocked"),
+		assert_null(empty_button, "Portrait Ultra Ball search should not recreate a separate empty-selection action after stale confirm suppression"),
+		assert_true(no_selection_button != null and no_selection_button.visible and no_selection_button.text == "不选择", "Portrait Ultra Ball search should keep the footer no-selection action after stale confirm suppression"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "Explicit empty-selection action should resolve after stale confirm suppression"),
+		assert_true(ultra_ball in player.discard_pile, "Ultra Ball should resolve from explicit empty-selection after the stale press is blocked"),
 		assert_true(discard_a in player.discard_pile, "Ultra Ball should still pay the first discard cost"),
 		assert_true(discard_b in player.discard_pile, "Ultra Ball should still pay the second discard cost"),
 		assert_true(search_pokemon in player.deck, "Choosing no Pokemon should leave the searched Pokemon in deck"),
 	])
 
 
-func test_portrait_ultra_ball_search_step_accepts_cancel_pressed_after_stale_confirm_pressed_blocked() -> String:
+func test_portrait_ultra_ball_search_step_accepts_no_selection_after_stale_confirm_pressed_blocked() -> String:
 	var battle_scene = _make_battle_scene_stub()
 	battle_scene.set("_active_battle_layout_mode", "portrait")
 	var gsm := GameStateMachine.new()
@@ -2927,18 +3218,21 @@ func test_portrait_ultra_ball_search_step_accepts_cancel_pressed_after_stale_con
 	battle_scene.set("_modal_input_finished_at_msec", Time.get_ticks_msec() - 1000)
 	battle_scene.call("_on_dialog_confirm")
 	var still_waiting_after_stale := str(battle_scene.get("_pending_choice")) == "effect_interaction" and ultra_ball in player.hand
+	var no_selection_button := battle_scene.get("_dialog_cancel") as Button
 	battle_scene.call("_on_dialog_cancel")
 
 	return run_checks([
-		assert_true(still_waiting_after_stale, "The stale confirm press should not consume Ultra Ball before cancel"),
-		assert_eq(str(battle_scene.get("_pending_choice")), "", "A cancel press after stale confirm suppression should close the Pokemon search"),
-		assert_true(ultra_ball in player.hand, "Cancelling after stale confirm suppression should leave Ultra Ball in hand"),
-		assert_true(discard_a in player.hand, "Cancelling should not pay the first discard cost"),
-		assert_true(discard_b in player.hand, "Cancelling should not pay the second discard cost"),
+		assert_true(still_waiting_after_stale, "The stale confirm press should not consume Ultra Ball before the no-selection action"),
+		assert_true(no_selection_button != null and no_selection_button.text == "不选择", "The portrait footer should identify the action as no-selection instead of cancel"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "No-selection after stale confirm suppression should resolve the Pokemon search"),
+		assert_true(ultra_ball in player.discard_pile, "No-selection should finish using Ultra Ball"),
+		assert_true(discard_a in player.discard_pile, "No-selection should preserve the first paid discard cost"),
+		assert_true(discard_b in player.discard_pile, "No-selection should preserve the second paid discard cost"),
+		assert_true(search_pokemon in player.deck, "No-selection should leave the searched Pokemon in the deck"),
 	])
 
 
-func test_portrait_ultra_ball_search_step_accepts_delayed_cancel_button_down_without_position() -> String:
+func test_portrait_ultra_ball_search_step_accepts_delayed_no_selection_button_down_without_position() -> String:
 	var battle_scene = _make_battle_scene_stub()
 	battle_scene.set("_active_battle_layout_mode", "portrait")
 	var gsm := GameStateMachine.new()
@@ -2984,17 +3278,19 @@ func test_portrait_ultra_ball_search_step_accepts_delayed_cancel_button_down_wit
 	if pending_step_index >= 0:
 		var current_step := (battle_scene.get("_pending_effect_steps") as Array)[pending_step_index] as Dictionary
 		search_step_id = str(current_step.get("id", ""))
+	var no_selection_button := battle_scene.get("_dialog_cancel") as Button
 	battle_scene.set("_modal_input_finished_at_msec", Time.get_ticks_msec() - 1000)
 	battle_scene.call("_on_dialog_cancel_button_down")
 	battle_scene.call("_on_dialog_cancel")
 
 	return run_checks([
-		assert_eq(search_step_id, "search_pokemon", "Precondition: Ultra Ball should be waiting on the Pokemon search step before cancel"),
-		assert_eq(str(battle_scene.get("_pending_choice")), "", "A delayed real cancel button_down should close the Pokemon search"),
-		assert_true(ultra_ball in player.hand, "Cancelling the second step should leave Ultra Ball in hand"),
-		assert_true(discard_a in player.hand, "Cancelling the second step should not pay the first discard cost"),
-		assert_true(discard_b in player.hand, "Cancelling the second step should not pay the second discard cost"),
-		assert_false(ultra_ball in player.discard_pile, "Cancelling the second step should not consume Ultra Ball"),
+		assert_eq(search_step_id, "search_pokemon", "Precondition: Ultra Ball should be waiting on the Pokemon search step before no-selection"),
+		assert_true(no_selection_button != null and no_selection_button.text == "不选择", "The delayed footer action should be labeled as no-selection"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "A delayed no-selection button_down should resolve the Pokemon search"),
+		assert_true(ultra_ball in player.discard_pile, "No-selection on the second step should finish using Ultra Ball"),
+		assert_true(discard_a in player.discard_pile, "No-selection should preserve the first paid discard cost"),
+		assert_true(discard_b in player.discard_pile, "No-selection should preserve the second paid discard cost"),
+		assert_true(search_pokemon in player.deck, "No-selection should leave the searched Pokemon in the deck"),
 	])
 
 
@@ -3609,6 +3905,122 @@ func test_battle_scene_nest_ball_without_target_can_preview_deck_then_consume() 
 		assert_eq(utility_row.get_child_count(), 1, "Deck preview should expose a single close-and-continue utility action"),
 		assert_true(nest_ball in player.discard_pile, "Nest Ball should still be consumed after the deck preview closes"),
 		assert_eq(player.bench.size(), 0, "Nest Ball whiff preview should not add any Pokemon to the bench"),
+	])
+
+
+func test_battle_scene_pokegear_whiff_shows_top_seven_and_real_close_button_consumes_card() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 3
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player_state := PlayerState.new()
+		player_state.player_index = pi
+		gsm.game_state.players.append(player_state)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	player.hand.clear()
+	player.deck.clear()
+	player.discard_pile.clear()
+	var viewed_cards: Array[CardInstance] = []
+	for i: int in 7:
+		var viewed_card := CardInstance.create(_make_pokemon_cd("Viewed Pokemon %d" % i, 80, "C"), 0)
+		viewed_cards.append(viewed_card)
+		player.deck.append(viewed_card)
+	var hidden_supporter := CardInstance.create(_make_trainer_cd("Hidden Supporter", "Supporter", ""), 0)
+	player.deck.append(hidden_supporter)
+
+	var pokegear := CardInstance.create(_make_trainer_cd("宝可装置3.0", "Item", ""), 0)
+	pokegear.card_data.effect_id = "768b545a38fccd5e265093b5adce10af"
+	player.hand.append(pokegear)
+
+	battle_scene.call("_try_play_trainer_with_interaction", 0, pokegear)
+	var step_index := int(battle_scene.get("_pending_effect_step_index"))
+	var steps: Array = battle_scene.get("_pending_effect_steps")
+	var step: Dictionary = steps[step_index] if step_index >= 0 and step_index < steps.size() else {}
+	var dialog_data: Dictionary = battle_scene.get("_dialog_data")
+	var utility_row := battle_scene.get("_dialog_utility_row") as HBoxContainer
+	var close_button := utility_row.get_child(0) as Button if utility_row != null and utility_row.get_child_count() == 1 else null
+	if close_button != null:
+		close_button.pressed.emit()
+
+	return run_checks([
+		assert_eq(str(step.get("id", "")), "look_top_cards", "Pokegear should open the direct top-seven selection step even when it misses"),
+		assert_eq(dialog_data.get("card_items", []), viewed_cards, "Pokegear should show exactly the seven viewed cards in the first dialog"),
+		assert_eq(dialog_data.get("card_indices", []), [-1, -1, -1, -1, -1, -1, -1], "Non-Supporters should be visible but disabled"),
+		assert_true(close_button != null and close_button.text == "关闭并继续", "A missed Pokegear should expose one working close-and-continue action"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "The real utility button signal should finish the trainer interaction"),
+		assert_true(pokegear in player.discard_pile, "Closing the direct top-seven view should consume Pokegear"),
+		assert_true(hidden_supporter in player.deck, "Pokegear must not select or reveal a Supporter below the top seven"),
+		assert_eq(player.deck.size(), 8, "A missed Pokegear should only shuffle the deck, not change its card count"),
+	])
+
+
+func test_battle_scene_tatsugiri_whiff_preview_close_button_finishes_ability() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 3
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player_state := PlayerState.new()
+		player_state.player_index = pi
+		gsm.game_state.players.append(player_state)
+
+	var player: PlayerState = gsm.game_state.players[0]
+	var tatsugiri_cd := _make_pokemon_cd("米立龙", 70, "N")
+	tatsugiri_cd.effect_id = "1ceeba6dac51ccc19833c5a513fe3fc6"
+	tatsugiri_cd.abilities = [{
+		"name": "揽客",
+		"text": "查看自己牌库上方6张卡牌，选择其中1张支援者加入手牌。",
+	}]
+	var tatsugiri := PokemonSlot.new()
+	tatsugiri.pokemon_stack.append(CardInstance.create(tatsugiri_cd, 0))
+	player.active_pokemon = tatsugiri
+	var item := CardInstance.create(_make_trainer_cd("Top Item", "Item", ""), 0)
+	var pokemon := CardInstance.create(_make_pokemon_cd("Top Pokemon", 80, "C"), 0)
+	player.deck = [item, pokemon]
+	gsm.effect_processor.register_pokemon_card(tatsugiri_cd)
+
+	battle_scene.call("_try_use_ability_with_interaction", 0, tatsugiri, 0)
+	var initial_step_index := int(battle_scene.get("_pending_effect_step_index"))
+	var initial_steps: Array = battle_scene.get("_pending_effect_steps")
+	var initial_step: Dictionary = initial_steps[initial_step_index] if initial_step_index >= 0 and initial_step_index < initial_steps.size() else {}
+	battle_scene.call("_on_dialog_item_selected", 1)
+
+	var preview_step_index := int(battle_scene.get("_pending_effect_step_index"))
+	var preview_steps: Array = battle_scene.get("_pending_effect_steps")
+	var preview_step: Dictionary = preview_steps[preview_step_index] if preview_step_index >= 0 and preview_step_index < preview_steps.size() else {}
+	var preview_data: Dictionary = battle_scene.get("_dialog_data")
+	var utility_row := battle_scene.get("_dialog_utility_row") as HBoxContainer
+	var close_button := utility_row.get_child(0) as Button if utility_row != null and utility_row.get_child_count() == 1 else null
+	var close_label := close_button.text if close_button != null else ""
+	if close_button != null:
+		close_button.pressed.emit()
+
+	var ability_still_available := gsm.effect_processor.can_use_ability(tatsugiri, gsm.game_state, 0)
+	return run_checks([
+		assert_eq(str(initial_step.get("id", "")), "empty_search_resolution", "Tatsugiri whiff should first offer continue or view-card resolution"),
+		assert_eq(str(preview_step.get("id", "")), "empty_search_view_deck", "Choosing view cards should open Tatsugiri's readonly top-card preview"),
+		assert_eq(preview_data.get("card_items", []), [item, pokemon], "Tatsugiri may reveal only the looked-at top cards"),
+		assert_eq(close_label, "关闭并继续", "Tatsugiri's whiff preview should expose a working close-and-continue button"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "Closing Tatsugiri's preview should finish the interaction instead of trapping the player"),
+		assert_false(ability_still_available, "Closing the preview should consume Tatsugiri's once-per-turn Ability"),
+		assert_true(item in player.deck and pokemon in player.deck, "Tatsugiri should return the looked-at cards before shuffling"),
+		assert_true(player.hand.is_empty(), "A Tatsugiri whiff must not add a card to hand"),
 	])
 
 

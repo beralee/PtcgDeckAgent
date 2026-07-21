@@ -1,0 +1,85 @@
+{
+	"deck_id": 800018359,
+	"deck_name": "18.0 大比鸟控制",
+	"strategy_id": "v18_800018359_pidgeot_control",
+	"generator_version": 15,
+	"description": "Cards 1-7 are the setup hand, 8-13 are controlled prizes, and 14-19 bridge the first evolution and attack route.",
+	"top_to_bottom": [
+		{
+			"set_code": "CSV9.5C",
+			"card_index": "004"
+		},
+		{
+			"set_code": "151C",
+			"card_index": "016"
+		},
+		{
+			"set_code": "CSVH1C",
+			"card_index": "045"
+		},
+		{
+			"set_code": "CSV1C",
+			"card_index": "123"
+		},
+		{
+			"set_code": "CSVE1C",
+			"card_index": "FIG"
+		},
+		{
+			"set_code": "CSVE1C",
+			"card_index": "FIG"
+		},
+		{
+			"set_code": "SVP",
+			"card_index": "080"
+		},
+		{
+			"set_code": "CSVH1aC",
+			"card_index": "023"
+		},
+		{
+			"set_code": "CSV4C",
+			"card_index": "118"
+		},
+		{
+			"set_code": "CSV8C",
+			"card_index": "175"
+		},
+		{
+			"set_code": "CSV10C",
+			"card_index": "193"
+		},
+		{
+			"set_code": "CSV6C",
+			"card_index": "114"
+		},
+		{
+			"set_code": "CSV1C",
+			"card_index": "111"
+		},
+		{
+			"set_code": "CSV4C",
+			"card_index": "101"
+		},
+		{
+			"set_code": "CSV4C",
+			"card_index": "101"
+		},
+		{
+			"set_code": "CSV1C",
+			"card_index": "127"
+		},
+		{
+			"set_code": "CSVH1C",
+			"card_index": "045"
+		},
+		{
+			"set_code": "CSV4C",
+			"card_index": "074"
+		},
+		{
+			"set_code": "CSV7C",
+			"card_index": "204"
+		}
+	]
+}

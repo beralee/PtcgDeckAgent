@@ -29,14 +29,18 @@ func get_attack_interaction_steps(card: CardInstance, _attack: Dictionary, state
 		"labels": labels,
 		"min_select": 1,
 		"max_select": 1,
-		"allow_cancel": true,
+		"allow_cancel": false,
 	}]
 
 
 func execute_attack(attacker: PokemonSlot, defender: PokemonSlot, _attack_index: int, state: GameState) -> void:
 	if attacker == null or defender == null:
 		return
-	if EffectMistEnergy.has_mist_energy(defender):
+	var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null)
+	if processor != null and processor.has_method("is_attack_effect_prevented_by_defender_ability"):
+		if bool(processor.call("is_attack_effect_prevented_by_defender_ability", attacker, defender, state)):
+			return
+	elif EffectMistEnergy.has_mist_energy(defender):
 		return
 	var attack_name: String = _resolve_attack_name(defender)
 	if attack_name == "":

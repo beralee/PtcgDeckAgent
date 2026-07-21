@@ -1,0 +1,62 @@
+{
+    "name":  "火箭队的电龙",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "特性: 黑暗脉冲\n只要这只宝可梦在场上，每当对手从手牌使出宝可梦并进行进化时，就给那只宝可梦身上放置4个伤害指示物。无论拥有这个特性的宝可梦有多少只，这个效果都不会重复。\n\n【雷】 伏特头击 140\n\n\n",
+    "yoren_code":  "P0181",
+    "set_code":  "CSV10C",
+    "card_index":  "072",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "Shiburingaru",
+    "rarity":  "U",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "abcbd04c4d2233f0eb02c5cc25208707",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/072.png",
+    "image_local_path":  "user://cards/images/CSV10C/072.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "L",
+    "stage":  "Stage 2",
+    "hp":  140,
+    "weakness_energy":  "F",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  2,
+    "evolves_from":  "火箭队的茸茸羊",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "伏特头击",
+                        "text":  "",
+                        "cost":  "LCC",
+                        "damage":  "140",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+                      {
+                          "name":  "黑暗脉冲",
+                          "text":  "只要这只宝可梦在场上，每当对手从手牌使出宝可梦并进行进化时，就给那只宝可梦身上放置4个伤害指示物。无论拥有这个特性的宝可梦有多少只，这个效果都不会重复。"
+                      }
+                  ],
+    "energy_provides":  ""
+}

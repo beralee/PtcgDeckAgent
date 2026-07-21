@@ -137,6 +137,29 @@ func test_continuity_contract_requests_backup_shell_before_nonterminal_attack() 
 	])
 
 
+func test_bellowing_thunder_readiness_uses_local_core_and_field_fuel() -> String:
+	var strategy = RagingBoltStrategyScript.new()
+	var gs := _make_game_state(6)
+	var player: PlayerState = gs.players[0]
+	player.active_pokemon = _make_slot(_make_raging_bolt_cd(), 0)
+	player.active_pokemon.attached_energy.append(_make_energy("Lightning Energy", "L"))
+	player.active_pokemon.attached_energy.append(_make_energy("Fighting Energy", "F"))
+	var ogerpon := _make_slot(_make_ogerpon_cd(), 0)
+	ogerpon.attached_energy.append(_make_energy("Grass Energy", "G"))
+	player.bench.append(ogerpon)
+	for i: int in 18:
+		player.deck.append(_make_trainer("Filler%d" % i))
+
+	var facts: Dictionary = strategy.call("_raging_bolt_attack_facts", player, player.active_pokemon)
+	var plan: Dictionary = strategy.build_turn_plan(gs, 0, {"prompt_kind": "action_selection"})
+	return run_checks([
+		assert_true(bool(facts.get("core_legal", false)), "Local Lightning plus Fighting must satisfy Bellowing Thunder's real attack cost"),
+		assert_eq(int(facts.get("field_fuel", 0)), 3, "Bellowing Thunder fuel must include Basic Energy on the whole field"),
+		assert_eq(int(facts.get("max_damage", 0)), 210, "Three field Energy must expose 210 maximum Bellowing Thunder damage"),
+		assert_true(str(plan.get("phase", "")) != "launch", "A core-legal Raging Bolt must not remain in launch phase because its third Energy is on Ogerpon"),
+	])
+
+
 func test_continuity_contract_rewards_ogerpon_and_energy_relay() -> String:
 	var strategy = RagingBoltStrategyScript.new()
 	var gs := _make_game_state(6)
@@ -821,7 +844,7 @@ func test_raging_bolt_pressure_gap_requires_lightning_and_fighting() -> String:
 	)
 
 
-func test_grass_attach_to_bolt_is_high_when_core_cost_ready_but_needs_fuel() -> String:
+func test_grass_field_fuel_does_not_need_to_be_local_to_a_core_ready_bolt() -> String:
 	var strategy = RagingBoltStrategyScript.new()
 	var gs := _make_game_state(5)
 	var player: PlayerState = gs.players[0]
@@ -842,10 +865,9 @@ func test_grass_attach_to_bolt_is_high_when_core_cost_ready_but_needs_fuel() -> 
 		"card": grass,
 		"target_slot": ogerpon,
 	}, gs, 0)
-	return assert_gt(
-		bolt_score,
-		ogerpon_score + 100.0,
-		"Once L+F are ready, the third basic Energy should fuel Bellowing Thunder before charging Ogerpon (Bolt=%f Ogerpon=%f)" % [bolt_score, ogerpon_score]
+	return assert_true(
+		absf(bolt_score - ogerpon_score) <= 50.0,
+		"Once L+F are ready, Grass on either Pokemon is equivalent Bellowing Thunder field fuel (Bolt=%f Ogerpon=%f)" % [bolt_score, ogerpon_score]
 	)
 
 

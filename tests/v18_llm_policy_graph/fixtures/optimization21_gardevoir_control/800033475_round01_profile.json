@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "deck_id": 800033475,
+  "seed_base": 800033475,
+  "evidence_kind": "real_model_round00",
+  "derived_from": "res://tmp/v18cpg/optimization21/800033475/round00.json",
+  "failure_category": "deadline_dominant_typed_energy_gap",
+  "target_flip_seeds": [800033476, 800033477, 800033478],
+  "expected_modules": ["cycle_pivot", "grass_spread"],
+  "expected_protected_roles": ["energy_mover", "evolution_piece", "typed_energy"],
+  "expected_profiled_attack_cost": {"module": "grass_spread", "uid": "CSV10C_003", "cost": ["G", "G", "G"]},
+  "baseline": {"rule_wins": 2, "v18cpg_wins": 2, "clean_games": 5, "model_calls": 25, "model_accepted": 2}
+}

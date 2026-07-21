@@ -83,6 +83,10 @@ func build_default_ai_opponent(deck_strategy_registry: RefCounted, host_scene: N
 		if variant_strategy != null and variant_strategy != deck_strategy:
 			deck_strategy = variant_strategy
 		ai.set_deck_strategy(deck_strategy)
+		if deck_strategy.has_method("get_runtime_kind") \
+				and str(deck_strategy.call("get_runtime_kind")) == "v18_conditional_policy":
+			ai.use_mcts = false
+			ai.decision_runtime_mode = AIOpponentScript.DECISION_RUNTIME_RULES_ONLY
 		strategy_label = str(deck_strategy.call("get_strategy_id")) if deck_strategy.has_method("get_strategy_id") else "Default AI"
 	elif GameManager.selected_deck_ids.size() < 2:
 		match GameManager.ai_deck_strategy:
@@ -193,6 +197,8 @@ func resolve_strategy_variant_override(strategy: RefCounted, deck_strategy_regis
 	var ai_deck: DeckData = GameManager.resolve_selected_battle_deck(1) if GameManager.selected_deck_ids.size() >= 2 else null
 	if ai_deck != null and variant.has_method("configure_from_deck"):
 		variant.call("configure_from_deck", ai_deck)
+	if variant.has_method("configure_runtime"):
+		variant.call("configure_runtime", host_scene, GameManager.get_llm_opponent_battle_review_api_config())
 	if variant.has_method("set_llm_host_node"):
 		variant.call("set_llm_host_node", host_scene)
 	connect_llm_strategy_signals(variant, host_scene)
@@ -238,6 +244,10 @@ func ai_path_exists(path: String) -> bool:
 func connect_llm_strategy_signals(strategy: RefCounted, host_scene: Node) -> void:
 	if strategy == null or host_scene == null:
 		return
+	if strategy.has_signal("v18cpg_decision_ready") and host_scene.has_method("_on_v18cpg_decision_ready"):
+		var v18_cb := Callable(host_scene, "_on_v18cpg_decision_ready")
+		if not strategy.is_connected("v18cpg_decision_ready", v18_cb):
+			strategy.connect("v18cpg_decision_ready", v18_cb)
 	var started_cb := Callable(host_scene, "_on_llm_thinking_started")
 	var finished_cb := Callable(host_scene, "_on_llm_thinking_finished")
 	var failed_cb := Callable(host_scene, "_on_llm_thinking_failed")

@@ -1,0 +1,62 @@
+{
+    "name":  "盐石巨灵",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "特性: 恩惠之盐\n只要这只宝可梦在场上，每当宝可梦检查时，自己所有宝可梦的HP，各回复「20」。\n\n【斗】【斗】 敲打重锤 130\n将对手牌库上方1张卡牌放于弃牌区。\n\n",
+    "yoren_code":  "P0934",
+    "set_code":  "CSV4C",
+    "card_index":  "074",
+    "set_code_en":  "PAL",
+    "card_index_en":  "123",
+    "name_en":  "Garganacl",
+    "name_zh":  "",
+    "artist":  "Anesaki Dynamic",
+    "rarity":  "R",
+    "release_date":  "2025-07-18T00:00:00+08:00",
+    "regulation_mark":  "G",
+    "effect_id":  "73c1d28d980ebe98f205db87eb647fe8",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV4C/074.png",
+    "image_local_path":  "user://cards/images/CSV4C/074.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "F",
+    "stage":  "Stage 2",
+    "hp":  180,
+    "weakness_energy":  "G",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  3,
+    "evolves_from":  "盐石垒",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "敲打重锤",
+                        "text":  "将对手牌库上方1张卡牌放于弃牌区。",
+                        "cost":  "FF",
+                        "damage":  "130",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+                      {
+                          "name":  "恩惠之盐",
+                          "text":  "只要这只宝可梦在场上，每当宝可梦检查时，自己所有宝可梦的HP，各回复「20」。"
+                      }
+                  ],
+    "energy_provides":  ""
+}

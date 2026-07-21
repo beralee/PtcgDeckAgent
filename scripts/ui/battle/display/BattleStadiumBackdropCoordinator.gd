@@ -23,17 +23,16 @@ func sync_stadium_backdrop(gs: GameState, immediate: bool = false) -> void:
 		return
 	var base_path := _base_backdrop_path()
 	var stadium_card: CardInstance = gs.stadium_card if gs != null else null
-	var enabled := bool(GameManager.dynamic_stadium_background_enabled)
 	var target_path := base_path
 	var stadium_key := "none"
-	if enabled and stadium_card != null:
+	if stadium_card != null:
 		stadium_key = _stadium_identity_key(stadium_card)
 		target_path = resolve_stadium_backdrop_path(stadium_card, base_path)
-	var state_key := "%s|%s|%s" % [str(enabled), stadium_key, target_path]
+	var state_key := "%s|%s" % [stadium_key, target_path]
 	if state_key == _last_state_key:
 		return
 	_last_state_key = state_key
-	_apply_backdrop_path(target_path, immediate)
+	_apply_backdrop_path(target_path, immediate or not bool(GameManager.battle_effects_enabled))
 
 
 func resolve_stadium_backdrop_path(stadium_card: CardInstance, default_path: String) -> String:

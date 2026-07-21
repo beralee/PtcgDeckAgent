@@ -25,13 +25,15 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 
 func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
-	var items: Array = player.discard_pile.duplicate()
+	var items: Array = DiscardPileRestriction.filter_cards(player.discard_pile)
 	var labels: Array[String] = []
 	for discard_card: CardInstance in items:
 		labels.append(discard_card.card_data.name)
 	var preview: Array[CardInstance] = []
 	for idx: int in mini(mill_count, player.deck.size()):
-		preview.append(player.deck[idx])
+		var preview_card: CardInstance = player.deck[idx]
+		if DiscardPileRestriction.can_move_to_hand_or_deck(preview_card):
+			preview.append(preview_card)
 	for entry: CardInstance in preview:
 		items.append(entry)
 		labels.append(entry.card_data.name)
@@ -71,7 +73,7 @@ func execute_ability(
 	var selected_raw: Array = ctx.get("recover_cards", [])
 	var selected_cards: Array[CardInstance] = []
 	for entry: Variant in selected_raw:
-		if entry is CardInstance and entry in player.discard_pile:
+		if entry is CardInstance and entry in player.discard_pile and DiscardPileRestriction.can_move_to_hand_or_deck(entry):
 			selected_cards.append(entry)
 			if selected_cards.size() >= recover_count:
 				break

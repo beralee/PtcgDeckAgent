@@ -1,0 +1,107 @@
+{
+  "profile_version": 2,
+  "semantic_version": 1,
+  "risk_posture": "balanced",
+  "switch_margin": 80.0,
+  "expected_regret_threshold": 155.0,
+  "initial_response_token_budget": 420,
+  "delta_response_token_budget": 180,
+  "turn_visible_wait_budget_ms": 6500,
+  "cold_request_estimate_ms": 5000,
+  "max_policy_nodes": 8,
+  "protected_roles": [
+    "dragapult_rp_cost",
+    "dragapult_root",
+    "luminous_energy",
+    "munkidori_dark_access",
+    "spread_closeout",
+    "next_attacker"
+  ],
+  "strategic_priorities": [
+    {
+      "priority": 1,
+      "goal": "minimum_resource_ko",
+      "when_all": [{"fact": "attack.ko_available", "op": "==", "value": true}],
+      "prefer_routes": ["route:attack_ko", "route:gust"],
+      "avoid_routes": ["route:information", "route:develop"],
+      "preserve_roles": ["next_attacker", "dragapult_rp_cost"]
+    },
+    {
+      "priority": 2,
+      "goal": "next_attacker_continuity",
+      "when_all": [{"fact": "attack.ready", "op": "==", "value": false}],
+      "prefer_routes": ["route:evolve", "route:energy_commit", "route:pivot"],
+      "avoid_routes": ["route:end_turn"],
+      "preserve_roles": ["dragapult_root", "dragapult_rp_cost"]
+    },
+    {
+      "priority": 3,
+      "goal": "typed_energy_continuity",
+      "when_all": [{"fact": "turn.energy_available", "op": "==", "value": true}],
+      "prefer_routes": ["route:energy_commit", "route:evolve"],
+      "avoid_routes": ["route:develop"],
+      "preserve_roles": ["dragapult_rp_cost", "luminous_energy"]
+    },
+    {
+      "priority": 4,
+      "goal": "prize_closeout",
+      "when_all": [{"fact": "resources.prizes_remaining", "op": "<=", "value": 2}],
+      "prefer_routes": ["route:attack_ko", "route:gust", "route:attack_pressure"],
+      "avoid_routes": ["route:information", "route:develop"],
+      "preserve_roles": ["spread_closeout"]
+    },
+    {
+      "priority": 5,
+      "goal": "low_deck_safety",
+      "when_all": [{"fact": "resources.deck_low", "op": "==", "value": true}],
+      "prefer_routes": ["route:attack_ko", "route:attack_pressure", "route:pivot"],
+      "avoid_routes": ["route:information", "route:develop"],
+      "preserve_roles": ["next_attacker", "luminous_energy"]
+    }
+  ],
+  "route_preferences": {
+    "model_consideration_margin": 220.0,
+    "route_biases": {
+      "route:attack_ko": 320.0,
+      "route:attack_pressure": 190.0,
+      "route:energy_commit": 180.0,
+      "route:evolve": 150.0,
+      "route:pivot": 105.0,
+      "route:gust": 95.0,
+      "route:information": -20.0,
+      "route:develop": -45.0,
+      "route:end_turn": -210.0
+    },
+    "ready_ko_order": ["route:attack_ko", "route:gust", "route:attack_pressure"],
+    "attackless_order": ["route:evolve", "route:energy_commit", "route:pivot", "route:information", "route:develop"],
+    "avoid_after_ko_secured": ["route:information", "route:develop"]
+  },
+  "safety": {
+    "max_switch_gap": 80.0,
+    "block_search_when_deck_low": true,
+    "low_deck_threshold": 8,
+    "critical_deck_threshold": 5,
+    "preserve_bench_slots": 1,
+    "stop_optional_draw_when_attack_ready": true,
+    "require_payable_ko_before_gust": true,
+    "reject_information_churn_after_ko_secured": true
+  },
+  "module_parameters": {
+    "stage2_chain": {
+      "attack_cost_by_uid": {"CSV8C_159": ["R", "P"]},
+      "evolution_root_by_attacker_uid": {"CSV8C_159": "CSV8C_157"},
+      "prefer_ready_attacker_before_optional_stage2": true
+    },
+    "dragapult_spread": {
+      "primary_attacker_uids": ["CSV8C_159"],
+      "primary_attack_index": 1,
+      "spread_counter_budget": 6,
+      "avoid_chip_when_primary_reachable": true
+    },
+    "damage_counter_control": {
+      "counter_mover_uids": ["CSV8C_094"],
+      "counter_mover_required_energy_by_uid": {"CSV8C_094": ["D"]},
+      "spread_followup_attacker_uids": ["CSV8C_159"]
+    }
+  }
+}

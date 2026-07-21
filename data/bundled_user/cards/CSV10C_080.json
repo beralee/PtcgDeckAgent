@@ -1,0 +1,59 @@
+{
+    "name":  "奇树的电海燕",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【雷】 电光一闪 10+\n抛掷1次硬币，如果为正面，则追加造成20伤害。\n\n",
+    "yoren_code":  "Y1581",
+    "set_code":  "CSV10C",
+    "card_index":  "080",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "Akira Komayama",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "a8f4d760e73c1e9fc124498f3bb3113f",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/080.png",
+    "image_local_path":  "user://cards/images/CSV10C/080.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "L",
+    "stage":  "Basic",
+    "hp":  60,
+    "weakness_energy":  "L",
+    "weakness_value":  "×2",
+    "resistance_energy":  "F",
+    "resistance_value":  "-30",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "电光一闪",
+                        "text":  "抛掷1次硬币，如果为正面，则追加造成20伤害。",
+                        "cost":  "L",
+                        "damage":  "10+",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

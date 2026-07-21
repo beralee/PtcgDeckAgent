@@ -58,6 +58,31 @@ horizontal_alignment = 1
 layout_mode = 2
 text = "ZenMux 与 AI 性格"
 
+[node name="ProviderLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "API 提供商:"
+
+[node name="ProviderSegment" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ProviderZenMuxButton" type="Button" parent="VBoxContainer/ProviderSegment"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(190, 40)
+toggle_mode = true
+button_pressed = true
+text = "ZenMux"
+
+[node name="ProviderDeepSeekButton" type="Button" parent="VBoxContainer/ProviderSegment"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(190, 40)
+toggle_mode = true
+text = "DeepSeek 直连"
+
 [node name="EndpointLabel" type="Label" parent="VBoxContainer"]
 layout_mode = 2
 text = "API 地址:"

@@ -1,8 +1,11 @@
 class_name AbilityNonRuleBoxBenchDamageShield
 extends BaseEffect
 
-const FLOWER_CURTAIN_EFFECT_ID := "69d439ca1bcf6877afa4d5ad4f369fd3"
-const FLOWER_CURTAIN_ABILITY_NAMES := ["Flower Curtain"]
+const FLOWER_CURTAIN_EFFECT_IDS := [
+	"69d439ca1bcf6877afa4d5ad4f369fd3",
+	"fd1e9b0379f79156fbb304162cbe21ba",
+]
+const FLOWER_CURTAIN_ABILITY_NAMES := ["Flower Curtain", "花之纱幔"]
 
 
 func execute_ability(
@@ -42,7 +45,7 @@ static func _is_flower_curtain_source(source: PokemonSlot) -> bool:
 	var card_data: CardData = source.get_card_data()
 	if card_data == null:
 		return false
-	if card_data.effect_id == FLOWER_CURTAIN_EFFECT_ID:
+	if card_data.effect_id in FLOWER_CURTAIN_EFFECT_IDS:
 		return true
 	for ability: Variant in card_data.abilities:
 		if ability is Dictionary and str(ability.get("name", "")) in FLOWER_CURTAIN_ABILITY_NAMES:

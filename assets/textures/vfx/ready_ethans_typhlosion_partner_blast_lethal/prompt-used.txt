@@ -1,0 +1,9 @@
+Use case: stylized-concept
+Asset type: production six-frame 2D game creature ready animation sheet
+Create an original powerful fire badger-like fantasy creature for a card-battle game. It has a long golden-yellow head and back, cream muzzle and underside, a black shoulder-and-back cape marking, red eyes, compact rounded ears, strong forelimbs and hind legs, and a vivid red-orange-to-yellow flame collar rising from its shoulders. Keep exactly the same creature identity in every frame.
+Exactly 6 equal invisible cells in a 2-row by 3-column grid, read top row left-to-right then bottom row left-to-right. No visible borders, boxes, labels, or gutters.
+One nonviolent preparation sequence: 1 full body low on four feet with small flame collar; 2 shoulders rise, head lifts, collar grows; 3 two tiny red-gold memory sparks appear close to shoulders; 4 proud upright ready posture with a compact red-orange flame arc hugging back and neck; 5 one forepaw steps slightly forward while three attached ember points pulse along collar; 6 alert grounded settle while collar and final ember soften.
+Clean high-definition hand-painted 2D game sprite art, polished cel-painted anime creature rendering, crisp silhouette, controlled fire highlights, body-first cinematic cue.
+Consistent 3/4 side-front view. Entire body, flame collar, feet, and rear silhouette visible and centered. Subject occupies only central 52-58% of each cell. Same scale, proportions, and centerline. Keep all extremities and flames at least 10% away from boundaries.
+Every pixel outside the creature and compact attached flame accents is perfectly flat solid #FF00FF magenta. No gradient, texture, floor, cast shadow, reflection, haze, smoke, or glow spill. Do not use flat #FF00FF inside the creature.
+No edge crossing, cropped flame, projectile, fire stream, impact, opponent, duplicate creature, human, trainer, card frame, playing cards, text, symbols, UI, watermark, or logo.

@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "V18CPG policy graph response v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["agenda_patch", "policy"],
+  "$defs": {
+    "guard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fact", "op", "value"],
+      "properties": {
+        "fact": {
+          "enum": [
+            "attack.ready", "attack.ko_available", "attack.max_damage",
+            "board.bench_full", "board.has_tera", "fan_call.available",
+            "resources.deck_low", "resources.hand_size", "resources.prizes_remaining",
+            "route.current_valid", "turn.energy_available", "turn.supporter_available"
+          ]
+        },
+        "op": {"enum": ["==", "!=", ">", ">=", "<", "<=", "in", "not_in", "exists"]},
+        "value": {}
+      }
+    },
+    "route_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "route_id"],
+      "properties": {
+        "mode": {"const": "select_existing"},
+        "route_id": {
+          "enum": [
+            "route:attack_ko", "route:attack_pressure", "route:noctowl_search",
+            "route:opening_search", "route:information", "route:accelerate",
+            "route:energy_commit", "route:evolve", "route:develop", "route:stadium",
+            "route:gust", "route:pivot", "route:end_turn"
+          ]
+        }
+      }
+    },
+    "route_node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_id", "kind", "route_ref"],
+      "properties": {
+        "node_id": {"type": "string", "minLength": 1},
+        "kind": {"const": "route"},
+        "route_ref": {"$ref": "#/$defs/route_ref"},
+        "next_node_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "branch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["when_all", "next_node_id"],
+      "properties": {
+        "when_all": {"type": "array", "minItems": 1, "maxItems": 3, "items": {"$ref": "#/$defs/guard"}},
+        "next_node_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "checkpoint_node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_id", "kind", "branches", "otherwise"],
+      "properties": {
+        "node_id": {"type": "string", "minLength": 1},
+        "kind": {"const": "checkpoint"},
+        "branches": {"type": "array", "maxItems": 3, "items": {"$ref": "#/$defs/branch"}},
+        "otherwise": {"type": "string", "minLength": 1}
+      }
+    },
+    "terminal_node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_id", "kind"],
+      "properties": {
+        "node_id": {"type": "string", "minLength": 1},
+        "kind": {"const": "terminal"}
+      }
+    }
+  },
+  "properties": {
+    "agenda_patch": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "victory_mode": {"enum": ["prize_race", "spread_closeout", "resource_lock", "deckout", "rebuild"]},
+        "risk_posture": {"enum": ["safe", "balanced", "forced"]},
+        "attacker_chain": {"type": "array", "maxItems": 3, "items": {"type": "string"}},
+        "protected_resources": {"type": "array", "maxItems": 6, "items": {"type": "string"}}
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root_node_id", "nodes", "reservations", "interaction_policy_refs", "replan_if"],
+      "properties": {
+        "root_node_id": {"type": "string", "minLength": 1},
+        "nodes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "oneOf": [
+              {"$ref": "#/$defs/route_node"},
+              {"$ref": "#/$defs/checkpoint_node"},
+              {"$ref": "#/$defs/terminal_node"}
+            ]
+          }
+        },
+        "reservations": {"type": "array", "maxItems": 4, "items": {"type": "object"}},
+        "interaction_policy_refs": {"type": "object"},
+        "replan_if": {
+          "type": "array",
+          "maxItems": 4,
+          "items": {"enum": ["no_branch_matches", "current_route_invalid", "new_prize_tier_available", "protected_resource_changed"]}
+        }
+      }
+    }
+  }
+}

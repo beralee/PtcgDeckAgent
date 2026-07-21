@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "architecture": "V18CPG",
+  "evidence_revision": 1,
+  "status": "round01_preparation",
+  "deck_id": 800017631,
+  "deck_name": "18.0 \u96ea\u5996\u5973\u613f\u589e\u733f",
+  "anchor_id": 575720,
+  "seed_base": 800017631,
+  "games_per_round": 5,
+  "model": "deepseek-v4-flash",
+  "deck_source": "bundled_ai",
+  "deck_content_fingerprint": "ef817989aed00513d93f10889e93a3bea0b94f63a369408389a590953a50d810",
+  "baseline_artifact": "res://tmp/v18cpg/optimization21/800017631/round00_current_verified_local.json",
+  "completed_rounds": 0,
+  "required_rounds": 10,
+  "rounds": [],
+  "preparation": {
+    "current_source_contract": {
+      "source_kind": "bundled_ai",
+      "bundled_seed_path": "res://data/bundled_user/decks/800017631.json",
+      "bundled_seed_file_sha256": "bbdd67634e8b9dc5b1fa0791cb8834dd6d18f047c921cf94c70c81a107efbf1c",
+      "deck_content_fingerprint": "ef817989aed00513d93f10889e93a3bea0b94f63a369408389a590953a50d810",
+      "semantic_manifest_fingerprint": "ef817989aed00513d93f10889e93a3bea0b94f63a369408389a590953a50d810",
+      "semantic_manifest_file_sha256": "d81c3d584b0d2f7ed921a6cbc4d2fa26373edfb5af58f8c09cab0cf40e2be6e5",
+      "profile_version": 2,
+      "profile_fingerprint": "d9ed5f2e3b010d8c3b902f5bce72ca7ac9853d20a8bf38024201e4c6408e0825",
+      "profile_file_sha256": "6d25eb7760155dc0c7acbda3fa294ee2d07059df7359bf6aa2f30bdd3ae64154",
+      "fingerprint_verified": true
+    },
+    "current_verified_local_baseline": {
+      "artifact": "res://tmp/v18cpg/optimization21/800017631/round00_current_verified_local.json",
+      "artifact_sha256": "f5e044c02d1be0919faa8b0bad8941505634c35423bcb0ac6211b18935b31fcf",
+      "scope": "current bundled_ai fingerprint, model disabled, verified-local policy audit",
+      "rule_wins": 3,
+      "v18cpg_wins": 3,
+      "rule_clean_games": 5,
+      "v18cpg_clean_games": 5,
+      "model_calls": 0,
+      "positive_flips": 0,
+      "negative_flips": 0,
+      "loss_seeds": [800017634, 800017635],
+      "reference_gate": "not_applicable_model_disabled"
+    },
+    "scenario_contract": {
+      "test": "res://tests/v18_llm_policy_graph/test_optimize_800017631_complex_decision_scenarios.gd",
+      "test_sha256": "ab7b55e1529efe2c6108abc64ede07591870fa632004ca74747a2ae2935b05f0",
+      "artifact": "res://tmp/v18cpg/optimization21/800017631/complex_decision_scenarios.json",
+      "artifact_sha256": "a2d8b6c306bcb56e09fee59f709c55173d95773ad0c5903804fb4a5b559b8402",
+      "passed": 5,
+      "total": 5,
+      "production_status": "scenario_contract_ready_not_promoted"
+    },
+    "round01_candidate": {
+      "seed": 800017635,
+      "turn": 5,
+      "finding": "The public state has no ready attack, no KO, and no active-dependent prize payoff, yet Rule consumes two Counter Catchers and then ends the turn. The earliest candidate is to prevent the second redundant gust and preserve one Counter Catcher behind exact public guards.",
+      "status": "focused_red_in_progress",
+      "required_gate": "The focused fixture must bind both card instances, the first gust result, the second Rule target, attackless facts, and Froslass passive independence; then a same-seed production replay must produce a positive flip before formal Round01."
+    },
+    "deferred_candidate": {
+      "seed": 800017634,
+      "turn": 18,
+      "finding": "Research may discard the unique visible Darkness Energy before counter-engine activation, but current public survival and target facts do not yet prove a strictly better placement.",
+      "status": "insufficient_public_certificate"
+    }
+  },
+  "next_action": "Complete the seed 800017635 duplicate-gust focused RED, implement only a deck-scoped fail-closed certificate, and reject it unless the current same-seed production replay flips with zero negatives."
+}

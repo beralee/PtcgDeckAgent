@@ -104,11 +104,40 @@ func score_action_absolute_with_plan(
 	turn_plan: Dictionary = {}
 ) -> float:
 	var turn_contract := _normalize_turn_contract(turn_plan)
+	var score: float = _score_action_absolute_with_contract_context(
+		action,
+		game_state,
+		player_index,
+		turn_contract
+	)
+	score += _score_continuity_action_bonus(action, game_state, player_index, turn_contract)
+	score += _score_resource_paid_owner_retreat_guard(action, game_state, player_index, turn_contract)
+	return score
+
+
+func score_action_absolute_with_plan_context_only(
+	action: Dictionary,
+	game_state: GameState,
+	player_index: int,
+	turn_plan: Dictionary = {}
+) -> float:
+	return _score_action_absolute_with_contract_context(
+		action,
+		game_state,
+		player_index,
+		_normalize_turn_contract(turn_plan)
+	)
+
+
+func _score_action_absolute_with_contract_context(
+	action: Dictionary,
+	game_state: GameState,
+	player_index: int,
+	turn_contract: Dictionary
+) -> float:
 	_set_turn_plan_context(turn_contract)
 	_set_turn_contract_context(turn_contract)
 	var score: float = score_action_absolute(action, game_state, player_index)
-	score += _score_continuity_action_bonus(action, game_state, player_index, turn_contract)
-	score += _score_resource_paid_owner_retreat_guard(action, game_state, player_index, turn_contract)
 	_clear_turn_plan_context()
 	_clear_turn_contract_context()
 	return score
@@ -352,7 +381,16 @@ func _is_continuity_final_prize_attack(action: Dictionary, game_state: GameState
 	if game_state == null or player_index < 0 or player_index >= game_state.players.size():
 		return false
 	var player: PlayerState = game_state.players[player_index]
-	return player != null and player.prizes.size() <= 1
+	if player == null or player.prizes.is_empty():
+		return false
+	if player.prizes.size() <= 1:
+		return true
+	if game_state.players.size() != 2:
+		return false
+	var opponent: PlayerState = game_state.players[1 - player_index]
+	if opponent == null or opponent.active_pokemon == null:
+		return false
+	return opponent.active_pokemon.get_prize_count() >= player.prizes.size()
 
 
 func _score_resource_paid_owner_retreat_guard(
@@ -362,6 +400,9 @@ func _score_resource_paid_owner_retreat_guard(
 	turn_contract: Dictionary
 ) -> float:
 	if str(action.get("kind", "")) != "retreat":
+		return 0.0
+	var flags: Variant = turn_contract.get("flags", {})
+	if flags is Dictionary and bool((flags as Dictionary).get("allow_resource_paid_owner_retreat", false)):
 		return 0.0
 	var discards: Variant = action.get("energy_to_discard", [])
 	if not (discards is Array) or (discards as Array).is_empty():

@@ -265,6 +265,66 @@ func test_csv9c_072_slowking_injects_copied_kyurem_target_followup() -> String:
 	])
 
 
+func test_csv9c_072_slowking_copied_kyurem_ignores_internal_ui_context_keys() -> String:
+	var state := _make_state()
+	var processor := EffectProcessor.new()
+	var slowking_cd := _pokemon(
+		"呆呆王",
+		"59d3af627f14b4a65ab4d589f6cb52db",
+		[_attack("灵感挑战", "PC", ""), _attack("超念力", "PPC", "120")],
+		[],
+		"P",
+		120,
+		"Stage 1"
+	)
+	var kyurem_cd := _pokemon(
+		"酋雷姆",
+		"5ed7ff97aa96afb6a023ad8ce6636eba",
+		[_attack("三重冰霜", "WWMMC", "", "将这只宝可梦身上附加的能量全部丢弃，给对手的3只宝可梦各造成110伤害。")],
+		[],
+		"N",
+		130
+	)
+	processor.register_pokemon_card(slowking_cd)
+	processor.register_pokemon_card(kyurem_cd)
+	var slowking := _make_slot(slowking_cd, 0)
+	state.players[0].active_pokemon = slowking
+	var kyurem_card := CardInstance.create(kyurem_cd, 0)
+	state.players[0].deck.append(kyurem_card)
+	state.players[1].bench.append(_make_slot(_basic_target("Bench A"), 1))
+	state.players[1].bench.append(_make_slot(_basic_target("Bench B"), 1))
+
+	var slowking_effect: BaseEffect = null
+	for effect: BaseEffect in processor.get_attack_effects_for_slot(slowking, 0):
+		if effect.has_method("get_followup_attack_interaction_steps"):
+			slowking_effect = effect
+			break
+	var initial_steps := slowking_effect.get_attack_interaction_steps(slowking.get_top_card(), slowking_cd.attacks[0], state) if slowking_effect != null else []
+	var copied_option: Dictionary = initial_steps[0].get("items", [])[0] if not initial_steps.is_empty() and not (initial_steps[0].get("items", []) as Array).is_empty() else {}
+	var ui_context := {
+		"csv9c_slowking_copied_attack": [copied_option],
+		BaseEffect.INTERACTION_SOURCE_KEY: BaseEffect.INTERACTION_SOURCE_BATTLE_UI,
+		"__interaction_generation": 11,
+		BaseEffect.INTERACTION_INTENTS_KEY: {
+			"csv9c_slowking_copied_attack": BaseEffect.INTERACTION_INTENT_SELECT,
+		},
+	}
+	var followup_steps: Array[Dictionary] = slowking_effect.get_followup_attack_interaction_steps(
+		slowking.get_top_card(),
+		slowking_cd.attacks[0],
+		state,
+		ui_context
+	) if slowking_effect != null else []
+	var followup: Dictionary = followup_steps[0] if not followup_steps.is_empty() else {}
+
+	return run_checks([
+		assert_eq(followup_steps.size(), 1, "Battle UI internal context keys must not suppress Slowking's copied-attack follow-up"),
+		assert_eq(str(followup.get("id", "")), "csv9c_tri_frost_targets", "Slowking copying Kyurem should still open the three-target chooser in battle UI"),
+		assert_eq(int(followup.get("min_select", -1)), 3, "Slowking copying Kyurem should require exactly three targets"),
+		assert_eq(int(followup.get("max_select", -1)), 3, "Slowking copying Kyurem must not auto-resolve before all three targets are chosen"),
+	])
+
+
 func test_csv9c_072_slowking_copied_kyurem_uses_selected_targets() -> String:
 	var state := _make_state()
 	var processor := EffectProcessor.new()

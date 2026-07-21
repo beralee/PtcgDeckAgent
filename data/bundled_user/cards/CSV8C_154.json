@@ -1,0 +1,66 @@
+{
+    "name":  "爆焰龟兽",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【火】 完全烧焦 \n选择对手战斗场上的「宝可梦【ex】」身上附着的1个能量，放于弃牌区。\n\n【斗】 爆热重压 100\n\n\n",
+    "yoren_code":  "P776",
+    "set_code":  "CSV8C",
+    "card_index":  "154",
+    "set_code_en":  "SSP",
+    "card_index_en":  "137",
+    "name_en":  "Turtonator",
+    "name_zh":  "",
+    "artist":  "Rianti Hidayat",
+    "rarity":  "U",
+    "release_date":  "2026-03-13T00:00:00+08:00",
+    "regulation_mark":  "H",
+    "effect_id":  "5924d0f73f2e04f4cd258136ea138594",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV8C/154.png",
+    "image_local_path":  "user://cards/images/CSV8C/154.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "N",
+    "stage":  "Basic",
+    "hp":  120,
+    "weakness_energy":  "",
+    "weakness_value":  "",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  3,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "完全烧焦",
+                        "text":  "选择对手战斗场上的「宝可梦【ex】」身上附着的1个能量，放于弃牌区。",
+                        "cost":  "R",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "爆热重压",
+                        "text":  "",
+                        "cost":  "FCC",
+                        "damage":  "100",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

@@ -59,7 +59,7 @@ func _write_battle_review_config_for_test() -> void:
 	file.store_string(JSON.stringify({
 		"endpoint": "https://zenmux.ai/api/v1",
 		"api_key": "test-key",
-		"model": "kimi-k2.6",
+		"model": "kimi-k3",
 		"timeout_seconds": 60.0,
 		"ai_personality": "",
 		"ai_test_passed": false,
@@ -1118,17 +1118,17 @@ func test_battle_setup_portrait_ai_mode_refresh_keeps_dynamic_controls_touch_siz
 	var min_button_height := float(context.get("secondary_button_height", 104.0))
 	var min_button_font := int(context.get("button_font_size", 33))
 	var min_body_font := int(context.get("body_font_size", 27))
-	var dynamic_label := scene.find_child("DynamicStadiumBackgroundLabel", true, false) as Label
-	var dynamic_on := scene.find_child("DynamicStadiumBackgroundOnButton", true, false) as Button
+	var effects_label := scene.find_child("BattleEffectsLabel", true, false) as Label
+	var effects_on := scene.find_child("BattleEffectsOnButton", true, false) as Button
 	var ai_status_title := scene.find_child("AIModeStatusTitle", true, false) as Label
 	var ai_status_body := scene.find_child("AIModeStatusBody", true, false) as Label
 	var ai_strategy_label := scene.find_child("AIStrategyLabel", true, false) as Label
 	var ai_strategy_segment := scene.find_child("AIStrategySegment", true, false) as HBoxContainer
 	var ai_strategy_button := ai_strategy_segment.get_child(0) as Button if ai_strategy_segment != null and ai_strategy_segment.get_child_count() > 0 else null
 	var result := run_checks([
-		assert_true(dynamic_label != null and dynamic_label.get_theme_font_size("font_size") >= min_body_font, "Portrait AI refresh should keep dynamic stadium label phone-readable"),
-		assert_true(dynamic_on != null and dynamic_on.custom_minimum_size.y >= min_button_height, "Portrait AI refresh should keep dynamic stadium buttons touch-sized"),
-		assert_true(dynamic_on != null and dynamic_on.get_theme_font_size("font_size") >= min_button_font, "Portrait AI refresh should keep dynamic stadium button text phone-readable"),
+		assert_true(effects_label != null and effects_label.get_theme_font_size("font_size") >= min_body_font, "Portrait AI refresh should keep the battle effects label phone-readable"),
+		assert_true(effects_on != null and effects_on.custom_minimum_size.y >= min_button_height, "Portrait AI refresh should keep battle effects buttons touch-sized"),
+		assert_true(effects_on != null and effects_on.get_theme_font_size("font_size") >= min_button_font, "Portrait AI refresh should keep battle effects button text phone-readable"),
 		assert_true(ai_status_title != null and ai_status_title.visible and ai_status_title.get_theme_font_size("font_size") >= min_body_font, "Portrait AI refresh should keep AI status title phone-readable"),
 		assert_true(ai_status_body != null and ai_status_body.visible and ai_status_body.get_theme_font_size("font_size") >= min_body_font, "Portrait AI refresh should keep AI status body phone-readable"),
 		assert_true(ai_strategy_label != null and ai_strategy_label.visible and ai_strategy_label.get_theme_font_size("font_size") >= min_body_font, "Portrait AI refresh should keep AI strategy label phone-readable"),
@@ -1879,6 +1879,9 @@ func test_deck_manager_portrait_recommendation_card_and_detail_are_phone_readabl
 	var deck_label := scene.find_child("RecommendationDeckName", true, false) as Label
 	var read_button := scene.find_child("RecommendationDetailButton", true, false) as Button
 	var import_button := scene.find_child("RecommendationImportButton", true, false) as Button
+	var poster_preview := scene.find_child("RecommendationPosterPreview", true, false) as TextureRect
+	var poster_download_button := scene.find_child("RecommendationPosterDownloadButton", true, false) as Button
+	var action_grid := scene.find_child("RecommendationActionRow", true, false) as GridContainer
 	scene.call("_show_recommendation_article_dialog", recommendation)
 	var detail_panel := scene.find_child("RecommendationDetailPanel", true, false) as PanelContainer
 	var detail_scroll := scene.find_child("RecommendationDetailScroll", true, false) as ScrollContainer
@@ -1890,6 +1893,10 @@ func test_deck_manager_portrait_recommendation_card_and_detail_are_phone_readabl
 		assert_true(deck_label != null and deck_label.get_theme_font_size("font_size") >= 50, "Portrait deck recommendation title should be phone-readable"),
 		assert_true(read_button != null and read_button.custom_minimum_size.y >= 145.0, "Portrait recommendation read button should be touch-sized"),
 		assert_true(import_button != null and import_button.custom_minimum_size.y >= 145.0, "Portrait recommendation import button should be touch-sized"),
+		assert_null(poster_preview, "Portrait recommendation should not spend vertical space on the landscape poster preview"),
+		assert_true(poster_download_button != null and poster_download_button.custom_minimum_size.y >= 145.0, "Portrait recommendation should expose a touch-sized deck-image download action"),
+		assert_true(poster_download_button != null and poster_download_button.text == "保存卡组图", "Portrait deck-image action should use the unified player-facing wording"),
+		assert_true(action_grid != null and action_grid.columns == 2, "Portrait recommendation actions should use a two-column grid instead of overflowing one row"),
 		assert_true(detail_panel != null and detail_panel.custom_minimum_size.x >= 1000.0, "Portrait recommendation detail should use nearly the full phone width"),
 		assert_true(detail_panel != null and detail_panel.custom_minimum_size.y >= 2240.0, "Portrait recommendation detail should use nearly the full phone height"),
 		assert_true(detail_scroll != null and bool(detail_scroll.get_meta("_non_battle_hidden_vertical_drag_scroll", false)), "Portrait recommendation detail should use hidden surface drag scrolling"),
@@ -2045,18 +2052,30 @@ func test_tournament_setup_portrait_size_radio_updates_round_info() -> String:
 	scene.call("_ready")
 	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
 	var size_option := scene.find_child("SizeOption", true, false) as OptionButton
+	var format_group := scene.find_child("TournamentFormatRadioGroup", true, false) as GridContainer
+	var format_standard := scene.find_child("TournamentFormatRadioStandard", true, false) as Button
+	var format_open := scene.find_child("TournamentFormatRadioOpen", true, false) as Button
 	var radio_group := scene.find_child("TournamentSizeRadioGroup", true, false) as GridContainer
 	var radio_64 := scene.find_child("TournamentSizeRadio64", true, false) as Button
 	if radio_64 != null:
 		radio_64.pressed.emit()
 	var radio_16 := scene.find_child("TournamentSizeRadio16", true, false) as Button
 	var radio_128 := scene.find_child("TournamentSizeRadio128", true, false) as Button
+	var radio_256 := scene.find_child("TournamentSizeRadio256", true, false) as Button
+	var radio_512 := scene.find_child("TournamentSizeRadio512", true, false) as Button
+	var radio_1024 := scene.find_child("TournamentSizeRadio1024", true, false) as Button
+	var radio_2048 := scene.find_child("TournamentSizeRadio2048", true, false) as Button
 	var start_button := scene.find_child("BtnStart", true, false) as Button
 	var overlay := scene.find_child("TournamentSizeHudPickerOverlay", true, false) as Control
 	var round_info := scene.find_child("RoundInfoLabel", true, false) as Label
 	var result := run_checks([
 		assert_null(size_option, "Tournament setup should not include the native SizeOption dropdown"),
+		assert_true(format_group != null and format_group.columns == 2, "Tournament setup should show standard/open format radios in two columns"),
+		assert_true(format_standard != null and format_standard.button_pressed, "Tournament setup should default to Standard format"),
+		assert_true(format_open != null and format_open.button_group == format_standard.button_group, "Standard and Open format radios should be mutually exclusive"),
 		assert_true(radio_group != null and radio_group.columns == 2, "Tournament setup portrait size radios should use two columns"),
+		assert_true(radio_group != null and radio_group.get_child_count() == 8, "Tournament setup should expose eight tournament-size radios"),
+		assert_true(radio_256 != null and radio_512 != null and radio_1024 != null and radio_2048 != null, "Tournament setup should extend sizes through 2048 players"),
 		assert_true(radio_64 != null and radio_64.toggle_mode and radio_64.button_group != null, "Tournament size radio buttons should be mutually exclusive buttons"),
 		assert_true(radio_64 != null and radio_64.custom_minimum_size.y >= 145.0, "Tournament size radio buttons should be phone touch-sized"),
 		assert_true(radio_16 != null and radio_16.get_theme_font_size("font_size") >= 50, "Tournament size radios should keep phone-readable text after a portrait selection refresh"),
@@ -2072,7 +2091,7 @@ func test_tournament_setup_portrait_size_radio_updates_round_info() -> String:
 	return result
 
 
-func test_tournament_setup_landscape_size_radio_uses_single_row() -> String:
+func test_tournament_setup_landscape_size_radio_uses_four_columns() -> String:
 	var scene: Control = TournamentSetupScene.instantiate()
 	scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	scene.position = Vector2.ZERO
@@ -2083,12 +2102,15 @@ func test_tournament_setup_landscape_size_radio_uses_single_row() -> String:
 	var radio_group := scene.find_child("TournamentSizeRadioGroup", true, false) as GridContainer
 	var radio_16 := scene.find_child("TournamentSizeRadio16", true, false) as Button
 	var radio_128 := scene.find_child("TournamentSizeRadio128", true, false) as Button
+	var radio_2048 := scene.find_child("TournamentSizeRadio2048", true, false) as Button
 	var overlay := scene.find_child("TournamentSizeHudPickerOverlay", true, false) as Control
 	var result := run_checks([
 		assert_null(size_option, "Tournament setup landscape should not include the native SizeOption dropdown"),
-		assert_true(radio_group != null and radio_group.columns == 4, "Tournament setup landscape size radios should fit in one row"),
+		assert_true(radio_group != null and radio_group.columns == 4, "Tournament setup landscape size radios should use four columns"),
+		assert_true(radio_group != null and radio_group.get_child_count() == 8, "Tournament setup landscape should keep all eight size radios visible"),
 		assert_true(radio_16 != null and radio_16.button_pressed, "Tournament setup should default to the 16-player radio"),
 		assert_true(radio_128 != null and radio_128.button_group == radio_16.button_group, "Tournament setup size radios should share one ButtonGroup"),
+		assert_true(radio_2048 != null and radio_2048.button_group == radio_16.button_group, "Extended tournament size radios should share the same ButtonGroup"),
 		assert_true(overlay == null or not overlay.visible, "Tournament setup landscape radio selection should not open the old HUD picker"),
 	])
 	_dispose_scene(scene)
@@ -2268,6 +2290,56 @@ func test_ai_settings_fresh_install_and_null_config_use_defaults() -> String:
 		assert_false((null_personality.text if null_personality != null else "").to_lower().contains("instance is null"), "Null personality config should never leak a null-instance diagnostic"),
 	])
 	_dispose_scene(null_scene)
+	_restore_battle_review_config_file(snapshot)
+	return result
+
+
+func test_ai_settings_switches_and_saves_independent_zenmux_and_deepseek_profiles() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test()
+	var scene: Control = SettingsScene.instantiate()
+	scene.call("_ready")
+	var zenmux_button := scene.find_child("ProviderZenMuxButton", true, false) as Button
+	var deepseek_button := scene.find_child("ProviderDeepSeekButton", true, false) as Button
+	var endpoint := scene.find_child("EndpointInput", true, false) as LineEdit
+	var api_key := scene.find_child("ApiKeyInput", true, false) as LineEdit
+	var model := scene.find_child("ModelOption", true, false) as OptionButton
+	if api_key != null:
+		api_key.text = "zenmux-profile-key"
+	scene.call("_switch_provider", "deepseek")
+	var deepseek_model_ids := PackedStringArray()
+	if model != null:
+		for index: int in model.get_item_count():
+			deepseek_model_ids.append(str(model.get_item_metadata(index)))
+	var switched_endpoint := endpoint.text if endpoint != null else ""
+	var switched_api_key := api_key.text if api_key != null else "missing"
+	if api_key != null:
+		api_key.text = "deepseek-profile-key"
+	scene.call("_select_model", "deepseek-v4-pro")
+	scene.call("_switch_provider", "zenmux")
+	var restored_zenmux_key := api_key.text if api_key != null else ""
+	scene.call("_switch_provider", "deepseek")
+	scene.call("_on_save")
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(GameManager.get_battle_review_api_config_path()))
+	var saved := parsed as Dictionary if parsed is Dictionary else {}
+	var profiles := saved.get("provider_configs", {}) as Dictionary
+	var saved_zenmux := profiles.get("zenmux", {}) as Dictionary
+	var saved_deepseek := profiles.get("deepseek", {}) as Dictionary
+	var result := run_checks([
+		assert_not_null(zenmux_button, "AI settings should expose the backward-compatible ZenMux provider button"),
+		assert_not_null(deepseek_button, "AI settings should expose a direct DeepSeek provider button"),
+		assert_eq(switched_endpoint, "https://api.deepseek.com", "Switching to DeepSeek should fill the official base URL"),
+		assert_eq(switched_api_key, "", "A fresh DeepSeek profile must not reuse the ZenMux credential"),
+		assert_eq(",".join(deepseek_model_ids), "deepseek-v4-flash,deepseek-v4-pro", "Direct DeepSeek mode should only offer official DeepSeek models"),
+		assert_eq(restored_zenmux_key, "zenmux-profile-key", "Switching back should restore the edited ZenMux credential"),
+		assert_eq(str(saved.get("provider", "")), "deepseek", "Saving should persist the selected provider"),
+		assert_eq(str(saved.get("endpoint", "")), "https://api.deepseek.com", "Existing runtime callers should receive the selected direct endpoint"),
+		assert_eq(str(saved.get("api_key", "")), "deepseek-profile-key", "Existing runtime callers should receive the selected DeepSeek key"),
+		assert_eq(str(saved.get("model", "")), "deepseek-v4-pro", "Existing runtime callers should receive the selected DeepSeek model"),
+		assert_eq(str(saved_zenmux.get("api_key", "")), "zenmux-profile-key", "Saving DeepSeek must keep the ZenMux profile"),
+		assert_eq(str(saved_deepseek.get("api_key", "")), "deepseek-profile-key", "Saving should persist the separate DeepSeek profile"),
+	])
+	_dispose_scene(scene)
 	_restore_battle_review_config_file(snapshot)
 	return result
 

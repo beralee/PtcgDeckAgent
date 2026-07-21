@@ -1,0 +1,62 @@
+{
+    "name":  "弃世猴",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "特性: 怒之穴位\n如果这只宝可梦身上放置有2个及以上伤害指示物的话，则这只宝可梦所使用的招式给对手战斗宝可梦造成的伤害「+120」。\n\n【斗】【斗】 冲击重拳 160\n在下一个自己的回合，这只宝可梦无法使用「冲击重拳」。\n\n",
+    "yoren_code":  "P0979",
+    "set_code":  "CSV10C",
+    "card_index":  "100",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "Shiburingaru",
+    "rarity":  "R",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "69ce58aa80cbc0551b2764da9c3b5735",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/100.png",
+    "image_local_path":  "user://cards/images/CSV10C/100.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "F",
+    "stage":  "Stage 2",
+    "hp":  150,
+    "weakness_energy":  "P",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  2,
+    "evolves_from":  "火暴猴",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "冲击重拳",
+                        "text":  "在下一个自己的回合，这只宝可梦无法使用「冲击重拳」。",
+                        "cost":  "FF",
+                        "damage":  "160",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+                      {
+                          "name":  "怒之穴位",
+                          "text":  "如果这只宝可梦身上放置有2个及以上伤害指示物的话，则这只宝可梦所使用的招式给对手战斗宝可梦造成的伤害「+120」。"
+                      }
+                  ],
+    "energy_provides":  ""
+}

@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "deck_id": 18000230,
+  "seed_base": 18000230,
+  "evidence_kind": "real_model_round00",
+  "derived_from": "res://tmp/v18cpg/optimization21/18000230/round00.json",
+  "failure_category": "semantic_gap",
+  "failing_seeds": [18000231, 18000234],
+  "expected_modules": ["stage2_chain", "dragapult_spread", "energy_burst"],
+  "expected_protected_roles": ["dragapult_rp_cost", "charizard_fire_bank", "stage2_roots"],
+  "expected_profiled_attack_costs": [
+    {"module": "stage2_chain", "uid": "CSV8C_159", "cost": ["R", "P"]},
+    {"module": "stage2_chain", "uid": "CSV5C_075", "cost": ["R", "R"]}
+  ],
+  "expected_parameter_values": {
+    "dragapult_spread": {"primary_attacker_uids": ["CSV8C_159"], "primary_attack_index": 1},
+    "energy_burst": {"burst_damage_mode": "none", "primary_attacker_uids": ["CSV8C_159"], "primary_attack_required_types": ["R", "P"]}
+  },
+  "public_state_contract": {
+    "attack_cost_by_uid": {"CSV8C_159": ["R", "P"], "CSV5C_075": ["R", "R"]},
+    "prioritize_before_end_turn": ["route:evolve", "route:energy_commit", "route:attack_pressure"],
+    "preserve_roles": ["dragapult_rp_cost", "charizard_fire_bank", "stage2_roots"]
+  },
+  "baseline": {"status": "complete", "rule_wins": 3, "v18cpg_wins": 3, "clean_games": 5, "model_calls": 28, "model_accepted": 0}
+}

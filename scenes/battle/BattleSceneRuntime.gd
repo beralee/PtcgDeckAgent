@@ -1,6 +1,8 @@
 ## BattleScene lifecycle and layout runtime.
 extends "res://scenes/battle/runtime/BattleSceneDialogInteractionReviewRuntime.gd"
 
+const PointerGeometryScript := preload("res://scripts/ui/input/PointerGeometry.gd")
+
 var _dialog_card_touch_bridge_active_card: BattleCardView = null
 var _dialog_card_touch_bridge_touch_index: int = -1
 
@@ -106,13 +108,17 @@ func _ready() -> void:
 		_detail_close_btn.pressed.connect(detail_close_callable)
 	if not _detail_close_btn.button_down.is_connected(detail_close_callable):
 		_detail_close_btn.button_down.connect(detail_close_callable)
-	_discard_close_btn.pressed.connect(func() -> void:
-		_cancel_card_gallery_drag_scroll("discard_collection_close")
-		_discard_overlay.visible = false
-		_discard_collection_current_kind = ""
-		_discard_collection_current_player_index = -1
-		_discard_collection_current_title = ""
-	)
+	var discard_close_callable := Callable(self, "_close_discard_collection_viewer").bind("close_button")
+	if not _discard_close_btn.pressed.is_connected(discard_close_callable):
+		_discard_close_btn.pressed.connect(discard_close_callable)
+	# Android browsers and a few devices can lose the release event while the
+	# card gallery is cancelling a drag. Closing on button_down gives the modal
+	# a reliable touch exit without waiting for the release/pressed pair.
+	if not _discard_close_btn.button_down.is_connected(discard_close_callable):
+		_discard_close_btn.button_down.connect(discard_close_callable)
+	var discard_overlay_input_callable := Callable(self, "_on_discard_overlay_gui_input")
+	if not _discard_overlay.gui_input.is_connected(discard_overlay_input_callable):
+		_discard_overlay.gui_input.connect(discard_overlay_input_callable)
 	if _discard_list != null and not _discard_list.item_clicked.is_connected(_on_discard_list_item_clicked):
 		_discard_list.item_clicked.connect(_on_discard_list_item_clicked)
 	_review_close_btn.pressed.connect(func() -> void:
@@ -190,6 +196,10 @@ func _release_battle_runtime_resources() -> void:
 	_stop_battle_discussion_flash()
 	_disconnect_llm_strategy_signals_from_current_ai()
 	_disconnect_battle_async_service_signals()
+	if _battle_visual_sequence_controller != null:
+		_battle_visual_sequence_controller.call("clear", "scene_exit")
+	if _battle_action_intent_controller != null:
+		_battle_action_intent_controller.call("release")
 	_release_runtime_timer_nodes()
 	_release_runtime_tweens()
 	_release_runtime_dynamic_nodes()
@@ -375,6 +385,7 @@ func _clear_runtime_state_payloads() -> void:
 	_latest_opponent_action_turn_number = -1
 	_coin_flip_queue.clear()
 	_coin_animating = false
+	_coin_animation_advance_scheduled = false
 	_coin_animation_resume_effect_step = false
 	_battle_recording_started = false
 	_battle_recording_context_captured = false
@@ -387,6 +398,7 @@ func _clear_runtime_state_payloads() -> void:
 	_match_end_quick_review_busy = false
 	_match_end_quick_review_progress_text = ""
 	_match_end_quick_review_requested = false
+	_match_end_tournament_return_pending = false
 	_battle_advice_last_result.clear()
 	_battle_advice_busy = false
 	_battle_advice_progress_text = ""
@@ -424,6 +436,11 @@ func _process(_delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if _try_close_discard_collection_from_cancel(event):
+		var discard_cancel_viewport := get_viewport()
+		if discard_cancel_viewport != null:
+			discard_cancel_viewport.set_input_as_handled()
+		return
 	if _try_handle_library_search_board_touch_input(event):
 		var library_touch_viewport := get_viewport()
 		if library_touch_viewport != null:
@@ -451,6 +468,60 @@ func _input(event: InputEvent) -> void:
 		var viewport := get_viewport()
 		if viewport != null:
 			viewport.set_input_as_handled()
+
+
+func _try_close_discard_collection_from_cancel(event: InputEvent) -> bool:
+	if _discard_overlay == null or not _discard_overlay.visible:
+		return false
+	# A card detail opened from the collection owns the top layer. Do not close
+	# the collection underneath it when the user presses Android Back/Escape.
+	if _detail_overlay != null and _detail_overlay.visible:
+		return false
+	if not event.is_action_pressed("ui_cancel"):
+		return false
+	_close_discard_collection_viewer("ui_cancel")
+	return true
+
+
+func _on_discard_overlay_gui_input(event: InputEvent) -> void:
+	if _discard_overlay == null or not _discard_overlay.visible:
+		return
+	var pointer_position := Vector2.ZERO
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if not touch.pressed:
+			return
+		pointer_position = touch.position
+	elif event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if not mouse_button.pressed or mouse_button.button_index != MOUSE_BUTTON_LEFT:
+			return
+		pointer_position = mouse_button.position
+	else:
+		return
+	var discard_box := get_node_or_null("DiscardOverlay/DiscardCenter/DiscardBox") as Control
+	if discard_box != null and discard_box.get_global_rect().has_point(pointer_position):
+		return
+	_close_discard_collection_viewer("backdrop")
+	var viewport := get_viewport()
+	if viewport != null:
+		viewport.set_input_as_handled()
+
+
+func _close_discard_collection_viewer(reason: String = "close") -> void:
+	if _discard_overlay == null or not _discard_overlay.visible:
+		return
+	_cancel_card_gallery_drag_scroll("discard_collection_%s" % reason)
+	_discard_overlay.visible = false
+	_discard_collection_current_kind = ""
+	_discard_collection_current_player_index = -1
+	_discard_collection_current_title = ""
+	_refresh_end_turn_hud_button_state()
+	# Opening the read-only collection now pauses the AI. Resume only after the
+	# modal has fully left the input stack so the next AI animation cannot cover
+	# or steal the close interaction.
+	if is_inside_tree():
+		call_deferred("_maybe_run_ai")
 
 
 func _try_handle_library_search_board_touch_input(event: InputEvent) -> bool:
@@ -535,18 +606,17 @@ func _dialog_card_gallery_card_at_screen_position_in_gallery(scroll: ScrollConta
 		return null
 	if scroll.is_inside_tree() and not scroll.is_visible_in_tree():
 		return null
-	var clip_rect := scroll.get_global_rect()
-	if clip_rect.size == Vector2.ZERO or not clip_rect.has_point(screen_position):
+	if not PointerGeometryScript.control_visible_point(scroll, screen_position):
 		return null
-	return _dialog_card_gallery_card_at_screen_position_in_node(row, screen_position, clip_rect)
+	return _dialog_card_gallery_card_at_screen_position_in_node(row, screen_position, scroll)
 
 
-func _dialog_card_gallery_card_at_screen_position_in_node(node: Node, screen_position: Vector2, clip_rect: Rect2) -> BattleCardView:
+func _dialog_card_gallery_card_at_screen_position_in_node(node: Node, screen_position: Vector2, clip_control: Control) -> BattleCardView:
 	if node == null:
 		return null
 	for child_index: int in range(node.get_child_count() - 1, -1, -1):
 		var child := node.get_child(child_index)
-		var nested_card := _dialog_card_gallery_card_at_screen_position_in_node(child, screen_position, clip_rect)
+		var nested_card := _dialog_card_gallery_card_at_screen_position_in_node(child, screen_position, clip_control)
 		if nested_card != null:
 			return nested_card
 	var card_view := node as BattleCardView
@@ -556,8 +626,9 @@ func _dialog_card_gallery_card_at_screen_position_in_node(node: Node, screen_pos
 		return null
 	if card_view.is_inside_tree() and not card_view.is_visible_in_tree():
 		return null
-	var touch_rect := card_view.get_global_rect().intersection(clip_rect)
-	if touch_rect.size == Vector2.ZERO or not touch_rect.has_point(screen_position):
+	if clip_control == null or not PointerGeometryScript.control_visible_point(clip_control, screen_position):
+		return null
+	if not PointerGeometryScript.control_visible_point(card_view, screen_position):
 		return null
 	return card_view
 
@@ -2028,6 +2099,8 @@ func _play_deck_shuffle_effect(player_index: int) -> void:
 
 
 func _refresh_deck_shuffle_detection(gs: GameState) -> void:
+	if _battle_visual_sequence_controller != null and bool(_battle_visual_sequence_controller.call("is_active")):
+		return
 	_ensure_battle_deck_shuffle_animator()
 	_battle_deck_shuffle_animator.call("refresh_deck_shuffle_detection", gs)
 
@@ -2043,6 +2116,31 @@ func _on_state_changed(_new_phase: GameState.GamePhase) -> void:
 
 func _on_action_logged(action: GameAction) -> void:
 	_capture_battle_recording_context_if_ready()
+	if (
+		action != null
+		and _battle_visual_sequence_controller != null
+		and _gsm != null
+		and _gsm.game_state != null
+		and not _is_review_mode()
+		and (
+			_gsm.game_state.phase not in [GameState.GamePhase.SETUP, GameState.GamePhase.MULLIGAN, GameState.GamePhase.SETUP_PLACE]
+			or action.action_type == GameAction.ActionType.TURN_START
+		)
+	):
+		var suppressed_visual_semantics: Array[String] = []
+		if action.action_type == GameAction.ActionType.DRAW_CARD:
+			suppressed_visual_semantics.append("*")
+		elif action.action_type == GameAction.ActionType.DISCARD and str(action.data.get("source_zone", "")) == "hand":
+			suppressed_visual_semantics.append("zone_transfer")
+		elif action.action_type == GameAction.ActionType.PLAY_TRAINER and str(action.data.get("trainer_vfx", "")) == "switching_ticket":
+			suppressed_visual_semantics.append("*")
+		_battle_visual_sequence_controller.call(
+			"capture_action",
+			action,
+			_gsm.game_state,
+			_view_player,
+			suppressed_visual_semantics
+		)
 	if action.description != "":
 		var display_description := _format_action_description_for_display(action.description)
 		if action.player_index != _view_player:
@@ -2060,6 +2158,7 @@ func _on_action_logged(action: GameAction) -> void:
 		and _gsm.game_state != null
 		and _gsm.game_state.phase != GameState.GamePhase.SETUP
 		and not _is_review_mode()
+		and not _is_opening_turn_start_draw_action(action)
 		and not (action.data.get("card_instance_ids", []) as Array).is_empty()
 	):
 		_battle_draw_reveal_controller.call("enqueue_reveal", self, action)
@@ -2069,6 +2168,13 @@ func _on_action_logged(action: GameAction) -> void:
 		and not _is_review_mode()
 		and str(action.data.get("source_zone", "")) == "hand"
 		and not (action.data.get("card_instance_ids", []) as Array).is_empty()
+	):
+		_battle_draw_reveal_controller.call("enqueue_reveal", self, action)
+	elif (
+		action != null
+		and action.action_type == GameAction.ActionType.PLAY_TRAINER
+		and not _is_review_mode()
+		and str(action.data.get("trainer_vfx", "")) == "switching_ticket"
 	):
 		_battle_draw_reveal_controller.call("enqueue_reveal", self, action)
 	elif (
@@ -2207,6 +2313,11 @@ func _update_prize_title(label: Label, player_index: int, default_text: String, 
 
 func _on_game_over(winner_index: int, reason: String) -> void:
 	_runtime_log("game_over", "winner=%d reason=%s" % [winner_index, reason])
+	# Finalize the tournament result while its battle identity is still intact.
+	# The result screen may remain open for a long time (or the app may resume),
+	# so its return route must not depend on the mutable in-progress flag.
+	var tournament_match := GameManager.is_tournament_battle_active() or _match_end_tournament_return_pending
+	_match_end_tournament_return_pending = tournament_match
 	_clear_prize_selection()
 	_refresh_ui()
 	_battle_review_winner_index = winner_index
@@ -2229,13 +2340,17 @@ func _on_game_over(winner_index: int, reason: String) -> void:
 	})
 	if _battle_recorder != null and _battle_recorder.has_method("get_match_dir"):
 		_battle_review_match_dir = str(_battle_recorder.call("get_match_dir"))
-	if GameManager.is_tournament_battle_active():
+	if tournament_match:
 		_finalize_battle_recording({
 			"winner_index": winner_index,
 			"reason": reason,
 			"turn_number": _gsm.game_state.turn_number if _gsm != null and _gsm.game_state != null else 0,
 		})
+		# Build the result screen before finalization clears the tournament player
+		# display names, then persist the completed round immediately afterwards.
 		_show_match_end_dialog(winner_index, reason)
+		if GameManager.is_tournament_battle_active():
+			GameManager.finalize_current_tournament_battle(winner_index, reason)
 		return
 	_show_match_end_dialog(winner_index, reason)
 	_finalize_battle_recording({

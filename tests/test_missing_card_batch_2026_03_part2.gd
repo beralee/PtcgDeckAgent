@@ -600,6 +600,82 @@ func test_csv7c_123_greninja_ex_mirage_barrage_discards_two_energy_and_hits_two_
 	])
 
 
+func test_csv7c_123_greninja_ex_mirage_barrage_applies_weakness_only_to_active_target() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	var opponent: PlayerState = state.players[1]
+	player.discard_pile.clear()
+	var greninja_cd: CardData = CardDatabase.get_card("CSV7C", "123")
+	var attacker := _make_slot(greninja_cd, 0)
+	player.active_pokemon = attacker
+	var energy_a := CardInstance.create(_make_energy_data("Water A", "W"), 0)
+	var energy_b := CardInstance.create(_make_energy_data("Water B", "W"), 0)
+	attacker.attached_energy.append_array([energy_a, energy_b])
+	var active_target := opponent.active_pokemon
+	var bench_target := opponent.bench[0]
+	active_target.get_card_data().weakness_energy = "F"
+	active_target.get_card_data().weakness_value = "×2"
+	bench_target.get_card_data().weakness_energy = "F"
+	bench_target.get_card_data().weakness_value = "×2"
+
+	var processor := EffectProcessor.new()
+	processor.register_pokemon_card(greninja_cd)
+	var resolved := processor.execute_attack_effect(attacker, 1, active_target, state, [{
+		"greninja_ex_discard_energy": [energy_a, energy_b],
+		"greninja_ex_targets": [active_target, bench_target],
+	}])
+	var target_results: Array = state.shared_turn_flags.get("_attack_effect_target_results", [])
+
+	return run_checks([
+		assert_true(resolved, "Mirage Barrage with two complete targets should resolve"),
+		assert_eq(active_target.damage_counters, 240, "The Active target should apply Fighting Weakness to the printed 120 damage"),
+		assert_eq(bench_target.damage_counters, 120, "The Benched target must ignore Weakness and still take exactly 120"),
+		assert_eq(target_results.size(), 2, "Mirage Barrage should record one audit result per selected target"),
+		assert_true(target_results.any(func(entry: Dictionary) -> bool: return str(entry.get("target_zone", "")) == "active" and int(entry.get("final_damage", 0)) == 240), "Target audit should explain the Active target's final damage"),
+		assert_true(target_results.any(func(entry: Dictionary) -> bool: return str(entry.get("target_zone", "")) == "bench" and int(entry.get("final_damage", 0)) == 120), "Target audit should explain the Benched target's final damage"),
+	])
+
+
+func test_csv7c_123_greninja_ex_mirage_barrage_records_bench_protection_reason() -> String:
+	var state := _make_state()
+	var player: PlayerState = state.players[0]
+	var opponent: PlayerState = state.players[1]
+	var greninja_cd: CardData = CardDatabase.get_card("CSV7C", "123")
+	var attacker := _make_slot(greninja_cd, 0)
+	player.active_pokemon = attacker
+	var energy_a := CardInstance.create(_make_energy_data("Water A", "W"), 0)
+	var energy_b := CardInstance.create(_make_energy_data("Water B", "W"), 0)
+	attacker.attached_energy.append_array([energy_a, energy_b])
+	var active_target := opponent.active_pokemon
+	var protected_bench := opponent.bench[0]
+	protected_bench.get_card_data().abilities = [{
+		"name": "毫不在意",
+		"text": "This Pokemon takes no damage from attacks while on the Bench.",
+	}]
+
+	var processor := EffectProcessor.new()
+	processor.register_pokemon_card(greninja_cd)
+	var resolved := processor.execute_attack_effect(attacker, 1, active_target, state, [{
+		"greninja_ex_discard_energy": [energy_a, energy_b],
+		"greninja_ex_targets": [active_target, protected_bench],
+	}])
+	var target_results: Array = state.shared_turn_flags.get("_attack_effect_target_results", [])
+	var protected_result: Dictionary = {}
+	for result_variant: Variant in target_results:
+		if result_variant is Dictionary and str((result_variant as Dictionary).get("target_zone", "")) == "bench":
+			protected_result = result_variant
+			break
+
+	return run_checks([
+		assert_true(resolved, "A legally protected target should not invalidate the already complete attack selection"),
+		assert_eq(active_target.damage_counters, 120, "The unprotected Active target should still take damage"),
+		assert_eq(protected_bench.damage_counters, 0, "The protected Benched target should take no damage"),
+		assert_eq(int(protected_result.get("base_damage", 0)), 120, "Target audit should retain Mirage Barrage's base damage"),
+		assert_eq(int(protected_result.get("final_damage", -1)), 0, "Target audit should report zero final damage for the protected target"),
+		assert_eq(str(protected_result.get("prevention_source", "")), "bench_damage_immunity", "Target audit should identify the protection source"),
+	])
+
+
 func test_csv2c_118_erikas_invitation_brings_out_basic_from_opponent_hand() -> String:
 	var gsm := GameStateMachine.new()
 	gsm.game_state = _make_state()

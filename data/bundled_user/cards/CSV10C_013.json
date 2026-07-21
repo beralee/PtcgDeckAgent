@@ -1,0 +1,59 @@
+{
+    "name":  "裹蜜虫",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【草】 能量环 50\n选择这只宝可梦身上附着的1个能量，放回手牌。\n\n",
+    "yoren_code":  "P1011",
+    "set_code":  "CSV10C",
+    "card_index":  "013",
+    "set_code_en":  "DRI",
+    "card_index_en":  "17",
+    "name_en":  "Dipplin",
+    "name_zh":  "",
+    "artist":  "Shigenori Negishi",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "a7b6cab27a9565d3f2a312cf22248b2b",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/013.png",
+    "image_local_path":  "user://cards/images/CSV10C/013.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "G",
+    "stage":  "Stage 1",
+    "hp":  90,
+    "weakness_energy":  "R",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  3,
+    "evolves_from":  "啃果虫",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "能量环",
+                        "text":  "选择这只宝可梦身上附着的1个能量，放回手牌。",
+                        "cost":  "G",
+                        "damage":  "50",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

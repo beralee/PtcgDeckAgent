@@ -13,7 +13,9 @@ const AbilityAttachFromDeckEffect = preload("res://scripts/effects/pokemon_effec
 const EffectHandheldFan = preload("res://scripts/effects/tool_effects/EffectHandheldFan.gd")
 
 const ANCIENT_SUPPORTER_PLAYED_FLAG_PREFIX := "ancient_supporter_played_turn_"
+const ROCKET_SUPPORTER_PLAYED_FLAG_PREFIX := "rocket_supporter_played_turn:"
 const BOSS_ORDERS_EFFECT_ID := "8e1fa2c9018db938084c94c7c970d419"
+const SWITCHING_TICKET_EFFECT_ID := "6c48ceec110a6f65a07e0547b059e7aa"
 
 static var _live_refs: Array[WeakRef] = []
 
@@ -67,6 +69,7 @@ var _pending_trainer_vfx_data: Dictionary = {}
 const MAX_SETUP_MULLIGAN_LOOPS: int = 64
 const ATTACK_DAMAGE_COUNTER_PLACEMENT_FLAG := "_attack_damage_counter_effect_slot_ids"
 const ATTACK_EFFECT_DAMAGE_TARGETS_FLAG := "_attack_effect_damage_targets"
+const ATTACK_EFFECT_TARGET_RESULTS_FLAG := "_attack_effect_target_results"
 const ORDERED_KNOCKOUT_SLOT_IDS_FLAG := "_ordered_knockout_slot_ids"
 const ORDERED_ACTIVE_REPLACEMENT_PLAYERS_FLAG := "_ordered_active_replacement_players"
 const DECK_OUT_REASON := "deck_out"
@@ -543,6 +546,7 @@ func _start_turn() -> void:
 	_assert_card_totals("start_turn:%d" % (game_state.turn_number + 1))
 	var cp: int = game_state.current_player_index
 	game_state.turn_number += 1
+	_refresh_delayed_extra_prize_markers(cp)
 	game_state.energy_attached_this_turn = false
 	game_state.supporter_used_this_turn = false
 	game_state.stadium_played_this_turn = false
@@ -901,6 +905,8 @@ func _finalize_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -
 		if _maybe_request_exp_share_choice(player_index, slot, is_active):
 			return false
 		_apply_exp_share_if_possible(player_index, slot, null, null)
+	_record_attack_damage_knockout_identity(player_index, slot)
+	_record_knockout_identity(player_index, slot)
 	game_state.last_knockout_turn_against[player_index] = game_state.turn_number
 
 	# 遗赠能量 / 豪华披风等减奖或加奖效果，只在对手招式伤害造成的昏厥上结算。
@@ -938,6 +944,38 @@ func _finalize_knockout(player_index: int, slot: PokemonSlot, is_active: bool) -
 		return false
 
 	return _continue_after_knockout_field_effects(player_index, prize_count, is_active)
+
+
+func _record_attack_damage_knockout_identity(player_index: int, slot: PokemonSlot) -> void:
+	if slot == null or not _attack_damage_knockout_slot_ids.has(int(slot.get_instance_id())):
+		return
+	var card_data := slot.get_card_data()
+	if card_data == null:
+		return
+	var key := "attack_damage_knockout_names:%d:%d" % [player_index, game_state.turn_number]
+	var names: Array = game_state.shared_turn_flags.get(key, [])
+	if not (names is Array):
+		names = []
+	for identity_name: String in card_data.rule_identity_names():
+		if identity_name not in names:
+			names.append(identity_name)
+	game_state.shared_turn_flags[key] = names
+
+
+func _record_knockout_identity(player_index: int, slot: PokemonSlot) -> void:
+	if slot == null:
+		return
+	var card_data := slot.get_card_data()
+	if card_data == null:
+		return
+	var key := "knockout_names:%d:%d" % [player_index, game_state.turn_number]
+	var names: Array = game_state.shared_turn_flags.get(key, [])
+	if not (names is Array):
+		names = []
+	for identity_name: String in card_data.rule_identity_names():
+		if identity_name not in names:
+			names.append(identity_name)
+	game_state.shared_turn_flags[key] = names
 
 
 func _continue_after_knockout_field_effects(player_index: int, prize_count: int, is_active: bool) -> bool:
@@ -1247,17 +1285,30 @@ func _resolve_prize_take_effect(taken_prize: CardInstance, player: PlayerState) 
 
 
 func _move_knocked_out_cards(slot: PokemonSlot, player: PlayerState) -> void:
+	var return_to_hand := effect_processor.get_knockout_attached_cards_to_hand(
+		slot,
+		game_state,
+		_attack_damage_knockout_slot_ids.has(int(slot.get_instance_id()))
+	)
 	if _should_lost_city_redirect_knockout():
 		for pokemon_card: CardInstance in slot.pokemon_stack:
 			player.lost_zone.append(pokemon_card)
 		for energy: CardInstance in slot.attached_energy:
-			player.discard_pile.append(energy)
+			if energy in return_to_hand:
+				energy.face_up = true
+				player.hand.append(energy)
+			else:
+				player.discard_pile.append(energy)
 		if slot.attached_tool != null:
 			player.discard_pile.append(slot.attached_tool)
 		return
 
 	for card: CardInstance in slot.collect_all_cards():
-		player.discard_pile.append(card)
+		if card in return_to_hand:
+			card.face_up = true
+			player.hand.append(card)
+		else:
+			player.discard_pile.append(card)
 
 
 func _should_lost_city_redirect_knockout() -> bool:
@@ -1706,7 +1757,7 @@ func play_basic_to_bench(
 	card: CardInstance,
 	auto_trigger_bench_ability: bool = true
 ) -> bool:
-	if not rule_validator.can_play_basic_to_bench(game_state, player_index, card):
+	if not rule_validator.can_play_basic_to_bench(game_state, player_index, card, effect_processor):
 		return false
 
 	var player: PlayerState = game_state.players[player_index]
@@ -1721,7 +1772,8 @@ func play_basic_to_bench(
 	_log_action(GameAction.ActionType.PLAY_POKEMON, player_index,
 		{"card_name": card.card_data.name},
 		"玩家%d将 %s 放入备战区" % [player_index + 1, card.card_data.name])
-	_apply_stadium_basic_bench_enter_effect(player_index, slot)
+	if card.card_data.is_basic_pokemon():
+		_apply_stadium_basic_bench_enter_effect(player_index, slot)
 	_enforce_current_bench_limits("play_basic_to_bench:stadium_enter", player_index)
 	if _resolve_mid_turn_knockouts():
 		return true
@@ -1743,17 +1795,24 @@ func evolve_pokemon(player_index: int, evolution: CardInstance, target_slot: Pok
 	if not rule_validator.can_evolve(game_state, player_index, target_slot, evolution, effect_processor):
 		return false
 
+	var base_name := target_slot.get_pokemon_name()
+	var target_slot_runtime_id := int(target_slot.get_instance_id())
 	player.hand.erase(evolution)
 	target_slot.pokemon_stack.append(evolution)
 	target_slot.turn_evolved = game_state.turn_number
 	target_slot.mark_top_card_changed()
 	CSV9CHelpers.mark_evolved_from_hand(target_slot, game_state)
+	effect_processor.process_after_evolution_from_hand(player_index, target_slot, game_state)
 	# 进化清除特殊状态
 	target_slot.clear_all_status()
 
 	_log_action(GameAction.ActionType.EVOLVE, player_index,
-		{"evolution": evolution.card_data.name, "base": target_slot.get_pokemon_name()},
-		"玩家%d将 %s 进化为 %s" % [player_index + 1, target_slot.get_pokemon_name(), evolution.card_data.name])
+		{
+			"evolution": evolution.card_data.name,
+			"base": base_name,
+			"target_slot_runtime_id": target_slot_runtime_id,
+		},
+		"玩家%d将 %s 进化为 %s" % [player_index + 1, base_name, evolution.card_data.name])
 	_try_auto_resolve_on_evolve_ability(player_index, target_slot)
 	_enforce_current_bench_limits("evolve_pokemon", player_index)
 	return true
@@ -1858,6 +1917,7 @@ func attach_energy(player_index: int, energy: CardInstance, target_slot: Pokemon
 	target_slot.attached_energy.append(energy)
 	game_state.energy_attached_this_turn = true
 	effect_processor.execute_card_effect(energy, [target_slot], game_state)
+	effect_processor.process_after_energy_attached_from_hand(player_index, target_slot, game_state)
 	if game_state.is_game_over():
 		return true
 	if effect_processor.prevents_special_status(target_slot, game_state):
@@ -1906,12 +1966,19 @@ func play_trainer(player_index: int, card: CardInstance, targets: Array) -> bool
 	if not card in player.hand:
 		return false
 
+	var resolved_targets := effect_processor.sanitize_opponent_hand_trainer_targets(card, targets, game_state)
+	if not effect_processor.validate_card_effect_context(card, resolved_targets, game_state):
+		return false
+
 	_pending_trainer_vfx_data.clear()
 	var boss_orders_target := _selected_boss_orders_target(player_index, card, targets)
+	var switching_ticket_old_prizes: Array[CardInstance] = []
+	if _is_switching_ticket_card(card):
+		switching_ticket_old_prizes.assign(player.prizes)
 	player.hand.erase(card)
 
 	# 执行效果
-	var success: bool = effect_processor.execute_card_effect(card, targets, game_state)
+	var success: bool = effect_processor.execute_card_effect(card, resolved_targets, game_state)
 	if not success:
 		# 效果执行失败，将卡牌放回手牌
 		player.hand.append(card)
@@ -1929,8 +1996,16 @@ func play_trainer(player_index: int, card: CardInstance, targets: Array) -> bool
 		game_state.supporter_used_this_turn = true
 		if card.card_data.has_tag(CardData.ANCIENT_TAG):
 			game_state.shared_turn_flags["%s%d" % [ANCIENT_SUPPORTER_PLAYED_FLAG_PREFIX, player_index]] = game_state.turn_number
+		if _is_team_rocket_supporter(card.card_data):
+			game_state.shared_turn_flags["%s%d" % [ROCKET_SUPPORTER_PLAYED_FLAG_PREFIX, player_index]] = game_state.turn_number
 
 	var trainer_vfx_data := _build_boss_orders_vfx_data(player_index, card, boss_orders_target)
+	if trainer_vfx_data.is_empty():
+		trainer_vfx_data = _build_switching_ticket_vfx_data(
+			player_index,
+			card,
+			switching_ticket_old_prizes
+		)
 	_pending_trainer_vfx_data = trainer_vfx_data.duplicate(true)
 	_log_action(GameAction.ActionType.PLAY_TRAINER, player_index,
 		{"card_name": card.card_data.name}, "玩家%d使用 %s" % [player_index + 1, card.card_data.name])
@@ -1938,6 +2013,16 @@ func play_trainer(player_index: int, card: CardInstance, targets: Array) -> bool
 	_assert_card_totals("play_trainer:%s" % card.card_data.name)
 	_resolve_mid_turn_knockouts()
 	return true
+
+
+func _is_team_rocket_supporter(card_data: CardData) -> bool:
+	if card_data == null or card_data.card_type != "Supporter":
+		return false
+	for identity_name: String in card_data.rule_identity_names():
+		var normalized := identity_name.strip_edges().to_lower()
+		if normalized.contains("火箭队") or normalized.contains("team rocket"):
+			return true
+	return false
 
 
 func _is_card_in_any_zone(card: CardInstance) -> bool:
@@ -2135,7 +2220,101 @@ func get_attack_preview_damage(player_index: int, attack_index: int) -> int:
 	var attacks: Array = attacker.get_card_data().attacks
 	if attack_index < 0 or attack_index >= attacks.size():
 		return 0
+	var effect_preview_damage := effect_processor.get_attack_effect_preview_damage(
+		attacker,
+		defender,
+		attack_index,
+		game_state
+	)
+	if effect_preview_damage >= 0:
+		return effect_preview_damage
 	return _calculate_attack_damage(attacker, defender, attacks[attack_index], attack_index)
+
+
+func get_v18_public_attack_preview_with_stadium(
+	player_index: int,
+	attack_index: int,
+	stadium_card: CardInstance
+) -> Dictionary:
+	# Isolated V18CPG proof helper.  The temporary substitution is synchronous,
+	# read-only from the caller's perspective, and is always restored before the
+	# result escapes.  Normal Rule/legacy callers never invoke this method.
+	if game_state == null or effect_processor == null or stadium_card == null or stadium_card.card_data == null:
+		return {}
+	if player_index < 0 or player_index >= game_state.players.size():
+		return {}
+	var opponent_index := 1 - player_index
+	if opponent_index < 0 or opponent_index >= game_state.players.size():
+		return {}
+	var attacker := game_state.players[player_index].active_pokemon
+	var defender := game_state.players[opponent_index].active_pokemon
+	if attacker == null or defender == null or attacker.get_card_data() == null:
+		return {}
+	if attack_index < 0 or attack_index >= attacker.get_card_data().attacks.size():
+		return {}
+	# Effect registration is lazy. Prime every public in-play Pokemon before the
+	# before/after comparison so the first preview cannot omit a field ability
+	# that the second preview happens to register while checking attack legality.
+	for public_player: PlayerState in game_state.players:
+		for public_slot: PokemonSlot in public_player.get_all_pokemon():
+			if public_slot != null and public_slot.get_card_data() != null:
+				effect_processor.register_pokemon_card(public_slot.get_card_data())
+	var old_stadium := game_state.stadium_card
+	var old_stadium_owner := game_state.stadium_owner_index
+	var before_payable := can_use_attack(player_index, attack_index)
+	var before_cancelled := effect_processor.attack_damage_cancelled(
+		attacker, attack_index, defender, game_state, []
+	)
+	var before_damage := 0 if before_cancelled else get_attack_preview_damage(player_index, attack_index)
+	game_state.stadium_card = stadium_card
+	game_state.stadium_owner_index = player_index
+	var after_payable := can_use_attack(player_index, attack_index)
+	var after_cancelled := effect_processor.attack_damage_cancelled(
+		attacker, attack_index, defender, game_state, []
+	)
+	var after_damage := 0 if after_cancelled else get_attack_preview_damage(player_index, attack_index)
+	game_state.stadium_card = old_stadium
+	game_state.stadium_owner_index = old_stadium_owner
+	var effective_hp := effect_processor.get_effective_remaining_hp(defender, game_state)
+	var active_damage_invariant := effect_processor.attack_active_damage_is_interaction_invariant(
+		attacker, attack_index, game_state
+	)
+	var survival_hook := effect_processor.has_attack_damage_survival_hook(defender, game_state)
+	var reactive_hook := effect_processor.has_attack_damage_reactive_hook(defender, game_state)
+	var attack_window_open := game_state.current_player_index == player_index \
+		and game_state.phase == GameState.GamePhase.MAIN
+	var random_attack := bool(attacker.status_conditions.get("confused", false))
+	return {
+		"attacker_uid": attacker.get_card_data().get_uid().strip_edges().to_upper(),
+		"attacker_slot_id": "slot:%d" % int(attacker.get_top_card().instance_id),
+		"target_slot_id": "slot:%d" % int(defender.get_top_card().instance_id),
+		"attack_index": attack_index,
+		"replaced_stadium_uid": old_stadium.card_data.get_uid().strip_edges().to_upper() \
+			if old_stadium != null and old_stadium.card_data != null else "",
+		"target_effective_hp": effective_hp,
+		"target_prizes": _get_knockout_prize_count(defender),
+		"before": {
+			"attack_payable": before_payable,
+			"damage_cancelled": before_cancelled,
+			"effective_damage": before_damage,
+			"knockout": before_payable and not before_cancelled and before_damage >= effective_hp,
+		},
+		"after": {
+			"attack_payable": after_payable,
+			"damage_cancelled": after_cancelled,
+			"effective_damage": after_damage,
+			"knockout": after_payable and not after_cancelled and after_damage >= effective_hp \
+				and not survival_hook,
+		},
+		"guards": {
+			"attack_window_open": attack_window_open,
+			"survival_hook": survival_hook,
+			"damage_reactive_hook": reactive_hook,
+			"active_damage_invariant_under_interaction": active_damage_invariant,
+			"random": random_attack,
+			"hidden_info": false,
+		},
+	}
 
 
 func _clear_attack_damage_tracking() -> void:
@@ -2143,6 +2322,7 @@ func _clear_attack_damage_tracking() -> void:
 	if game_state != null:
 		game_state.shared_turn_flags.erase(ATTACK_DAMAGE_COUNTER_PLACEMENT_FLAG)
 		game_state.shared_turn_flags.erase(ATTACK_EFFECT_DAMAGE_TARGETS_FLAG)
+		game_state.shared_turn_flags.erase(ATTACK_EFFECT_TARGET_RESULTS_FLAG)
 		game_state.shared_turn_flags.erase(ORDERED_KNOCKOUT_SLOT_IDS_FLAG)
 		game_state.shared_turn_flags.erase(ORDERED_ACTIVE_REPLACEMENT_PLAYERS_FLAG)
 
@@ -2162,6 +2342,8 @@ func use_attack(player_index: int, attack_index: int, targets: Array = []) -> bo
 
 	var attack: Dictionary = attacker.get_card_data().attacks[attack_index]
 	var attack_name: String = str(attack.get("name", ""))
+	if not effect_processor.validate_attack_effect_context(attacker, attack_index, defender, game_state, targets):
+		return false
 	var damage_before_attack := _snapshot_damage_counters()
 
 	if attacker.status_conditions.get("confused", false):
@@ -2184,12 +2366,14 @@ func use_attack(player_index: int, attack_index: int, targets: Array = []) -> bo
 			_attack_damage_knockout_slot_ids.clear()
 			return true
 
+	effect_processor.execute_before_attack_damage_effects(attacker, attack_index, defender, game_state, targets)
 	var damage_cancelled := effect_processor.attack_damage_cancelled(attacker, attack_index, defender, game_state, targets)
 	var damage: int = 0 if damage_cancelled else _calculate_attack_damage(attacker, defender, attack, attack_index, targets)
 
 	if damage > 0:
 		var defender_damage_before: int = defender.damage_counters
 		damage_calculator.apply_damage_to_slot(defender, damage)
+		effect_processor.process_after_attack_damage(defender, attacker, damage, game_state, targets)
 		var survival_prevented_knockout := _apply_attack_damage_survival_tool_if_possible(attacker, defender, defender_damage_before)
 		if not survival_prevented_knockout:
 			_apply_handheld_fan_if_possible(attacker, defender, targets)
@@ -2205,7 +2389,8 @@ func use_attack(player_index: int, attack_index: int, targets: Array = []) -> bo
 			]
 		)
 
-	effect_processor.execute_attack_effect(attacker, attack_index, defender, game_state, targets)
+	if not effect_processor.execute_attack_effect(attacker, attack_index, defender, game_state, targets):
+		return false
 	if game_state.is_game_over():
 		return true
 	if not _has_pending_knockouts():
@@ -2231,6 +2416,9 @@ func use_attack(player_index: int, attack_index: int, targets: Array = []) -> bo
 		var effect_targets: Array = game_state.shared_turn_flags.get(ATTACK_EFFECT_DAMAGE_TARGETS_FLAG, [])
 		if not effect_targets.is_empty():
 			attack_action.data["targets"] = effect_targets.duplicate(true)
+		var target_results: Array = game_state.shared_turn_flags.get(ATTACK_EFFECT_TARGET_RESULTS_FLAG, [])
+		if not target_results.is_empty():
+			attack_action.data["target_results"] = target_results.duplicate(true)
 		attack_action.data["damage"] = damage
 	_after_attack(player_index)
 	return true
@@ -2272,11 +2460,23 @@ func use_granted_attack(
 			return true
 
 	var damage_before_attack := _snapshot_damage_counters()
+	var original_effect_id := str(granted_attack.get("original_effect_id", ""))
+	var original_attack_index := int(granted_attack.get("original_attack_index", -1))
+	if original_effect_id != "" and original_attack_index >= 0:
+		effect_processor.execute_before_attack_damage_effects_by_id(
+			original_effect_id,
+			original_attack_index,
+			attacker,
+			defender,
+			game_state,
+			targets
+		)
 	var granted_damage: int = _calculate_attack_damage(attacker, defender, granted_attack, -1, targets)
 
 	if granted_damage > 0:
 		var defender_damage_before: int = defender.damage_counters
 		damage_calculator.apply_damage_to_slot(defender, granted_damage)
+		effect_processor.process_after_attack_damage(defender, attacker, granted_damage, game_state, targets)
 		var survival_prevented_knockout := _apply_attack_damage_survival_tool_if_possible(attacker, defender, defender_damage_before)
 		if not survival_prevented_knockout:
 			_apply_handheld_fan_if_possible(attacker, defender, targets)
@@ -2328,15 +2528,20 @@ func _attack_targets_define_resolved_target(targets: Array) -> bool:
 
 
 func get_post_damage_defender_interaction_steps(attacker: PokemonSlot, defender: PokemonSlot) -> Array[Dictionary]:
-	if attacker == null or defender == null or defender.attached_tool == null:
-		return []
-	if effect_processor.is_tool_effect_suppressed(defender, game_state):
-		return []
+	var steps: Array[Dictionary] = []
+	if attacker == null or defender == null:
+		return steps
+	if defender.get_card_data() != null and not effect_processor.is_ability_disabled(defender, game_state):
+		var native_effect: BaseEffect = effect_processor.get_effect(defender.get_card_data().effect_id)
+		if native_effect != null and native_effect.has_method("get_reactive_interaction_steps"):
+			steps.append_array(native_effect.call("get_reactive_interaction_steps", defender, attacker, game_state))
+	if defender.attached_tool == null or effect_processor.is_tool_effect_suppressed(defender, game_state):
+		return steps
 	var effect: BaseEffect = effect_processor.get_effect(defender.attached_tool.card_data.effect_id)
-	if not effect is EffectHandheldFan:
-		return []
-	var fan_effect: EffectHandheldFan = effect as EffectHandheldFan
-	return fan_effect.get_trigger_interaction_steps(attacker, defender, game_state)
+	if effect is EffectHandheldFan:
+		var fan_effect: EffectHandheldFan = effect as EffectHandheldFan
+		steps.append_array(fan_effect.get_trigger_interaction_steps(attacker, defender, game_state))
+	return steps
 
 
 func _apply_handheld_fan_if_possible(attacker: PokemonSlot, defender: PokemonSlot, targets: Array = []) -> void:
@@ -2505,6 +2710,27 @@ func _build_boss_orders_vfx_data(player_index: int, card: CardInstance, selected
 	}
 
 
+func _build_switching_ticket_vfx_data(
+	player_index: int,
+	card: CardInstance,
+	old_prizes: Array[CardInstance]
+) -> Dictionary:
+	if not _is_switching_ticket_card(card) or game_state == null:
+		return {}
+	if player_index < 0 or player_index >= game_state.players.size() or old_prizes.is_empty():
+		return {}
+	var new_prizes: Array[CardInstance] = game_state.players[player_index].prizes
+	if new_prizes.size() != old_prizes.size():
+		return {}
+	return {
+		"trainer_vfx": "switching_ticket",
+		"source_player_index": player_index,
+		"prize_count": old_prizes.size(),
+		"old_prize_instance_ids": _card_ids_from_cards(old_prizes),
+		"new_prize_instance_ids": _card_ids_from_cards(new_prizes),
+	}
+
+
 func _selected_boss_orders_target(player_index: int, card: CardInstance, targets: Array) -> PokemonSlot:
 	if not _is_boss_orders_card(card) or game_state == null:
 		return null
@@ -2540,6 +2766,15 @@ func _is_boss_orders_card(card: CardInstance) -> bool:
 	var name_en := String(card.card_data.name_en).strip_edges().to_lower()
 	var name := String(card.card_data.name).strip_edges().to_lower()
 	return name_en == "boss's orders" or name == "boss's orders"
+
+
+func _is_switching_ticket_card(card: CardInstance) -> bool:
+	if card == null or card.card_data == null:
+		return false
+	var effect_id := String(card.card_data.effect_id)
+	if effect_processor != null:
+		effect_id = effect_processor.resolve_effect_id(effect_id)
+	return effect_id == SWITCHING_TICKET_EFFECT_ID
 
 
 func _contains_target_selection_marker(value: Variant) -> bool:
@@ -2686,9 +2921,54 @@ func _get_knockout_prize_count(slot: PokemonSlot) -> int:
 	for effect: Dictionary in slot.effects:
 		if effect.get("type", "") == "extra_prize":
 			prize_count += int(effect.get("count", 0))
+		elif _delayed_extra_prize_marker_is_active(effect, slot):
+			prize_count += int(effect.get("count", 0))
 	var modifier: int = effect_processor.get_knockout_prize_modifier(slot, game_state) if _knockout_prize_modifiers_apply(slot) else 0
 	prize_count += modifier
 	return maxi(0, prize_count)
+
+
+func _delayed_extra_prize_marker_is_active(effect: Dictionary, slot: PokemonSlot) -> bool:
+	if game_state == null or slot == null:
+		return false
+	if effect.get("type", "") != PokemonSlot.DELAYED_EXTRA_PRIZE_EFFECT_TYPE:
+		return false
+	var top := slot.get_top_card()
+	if top == null or int(effect.get("target_card_instance_id", -1)) != top.instance_id:
+		return false
+	var source_owner := int(effect.get("source_owner", -1))
+	return (
+		source_owner == game_state.current_player_index
+		and int(effect.get("active_turn", -1)) == game_state.turn_number
+	)
+
+
+func _refresh_delayed_extra_prize_markers(current_player_index: int) -> void:
+	if game_state == null:
+		return
+	for player: PlayerState in game_state.players:
+		for slot: PokemonSlot in player.get_all_pokemon():
+			if slot == null:
+				continue
+			var top := slot.get_top_card()
+			var kept: Array[Dictionary] = []
+			for effect: Dictionary in slot.effects:
+				if effect.get("type", "") != PokemonSlot.DELAYED_EXTRA_PRIZE_EFFECT_TYPE:
+					kept.append(effect)
+					continue
+				if top == null or int(effect.get("target_card_instance_id", -1)) != top.instance_id:
+					continue
+				var active_turn := int(effect.get("active_turn", -1))
+				if active_turn >= 0 and active_turn < game_state.turn_number:
+					continue
+				if (
+					active_turn < 0
+					and int(effect.get("source_owner", -1)) == current_player_index
+					and int(effect.get("applied_turn", -1)) < game_state.turn_number
+				):
+					effect["active_turn"] = game_state.turn_number
+				kept.append(effect)
+			slot.effects = kept
 
 
 func _knockout_prize_modifiers_apply(slot: PokemonSlot) -> bool:
@@ -2930,7 +3210,11 @@ func use_ability(
 	if game_state.is_game_over():
 		return true
 
-	var action_data := {"pokemon_name": pokemon.get_pokemon_name(), "ability_name": ability_name}
+	var action_data := {
+		"pokemon_name": pokemon.get_pokemon_name(),
+		"ability_name": ability_name,
+		"source_slot_runtime_id": int(pokemon.get_instance_id()),
+	}
 	if not ability_vfx_data.is_empty():
 		action_data.merge(ability_vfx_data, true)
 	_log_action(GameAction.ActionType.USE_ABILITY, player_index,

@@ -114,7 +114,7 @@ func _name_is_ns(value: String) -> bool:
 	normalized = normalized.replace(char(0x2019), "'")
 	normalized = normalized.replace(char(0x2018), "'")
 	normalized = normalized.replace(char(0x02BC), "'")
-	return normalized.begins_with("N's ")
+	return normalized.begins_with("N's ") or normalized.begins_with("N的")
 
 
 func get_description() -> String:

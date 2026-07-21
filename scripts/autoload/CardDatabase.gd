@@ -2,6 +2,7 @@
 extends Node
 
 const CardEffectAliasResolverScript := preload("res://scripts/engine/CardEffectAliasResolver.gd")
+const CardCatalogIndexScript := preload("res://scripts/card_catalog/CardCatalogIndex.gd")
 
 ## 卡牌缓存目录
 const CARDS_DIR := "user://cards/"
@@ -18,6 +19,39 @@ const SUPPORTED_AI_DECK_IDS: Array[int] = [
 	569061, 575657, 575716, 575718, 575720, 575723, 578647, 579502, 609431, 610080,
 	1700002, 1700003, 1700004, 1700005, 1700007, 1700008, 1700011,
 	1750002,
+	18000230, 18000625,
+	800015734, 800015934, 800016834, 800017047, 800017097, 800017407,
+	800017631, 800017643, 800018105, 800018359, 800018497, 800018498,
+	800018499, 800018500, 800018501, 800018502, 800018509, 800018539,
+	800018543, 800018880, 800019125, 800033475,
+]
+# 2026-07-18 final same-seed n100 results versus rules-only Miraidon (575720).
+# Sort by normal-mode wins descending; strong-mode wins break equal normal scores.
+const V18_AI_DECK_STRENGTH_ORDER_IDS: Array[int] = [
+	800018500, # 63% normal, 69% strong
+	800018880, # 63% normal, 59% strong
+	800017631, # 60% normal, 65% strong
+	800018501, # 59% normal, 79% strong
+	18000625,  # 58% normal, 58% strong
+	800018509, # 57% normal, 96% strong
+	800016834, # 56% normal, 71% strong
+	800018543, # 52% normal, 83% strong
+	800017047, # 51% normal, 78% strong
+	800017407, # 51% normal, 57% strong
+	18000230,  # 50% normal, 71% strong
+	800015734, # 50% normal, 55% strong
+	800018502, # 45% normal, 72% strong
+	800018498, # 44% normal, 52% strong
+	800019125, # 38% normal, 47% strong
+	800018499, # 37% normal, 53% strong
+	800018105, # 37% normal, 47% strong
+	800033475, # 33% normal, 50% strong
+	800018497, # 32% normal, 50% strong
+	800017097, # 32% normal, 49% strong
+	800015934, # 27% normal, 32% strong
+	800017643, # 20% normal, 35% strong
+	800018539, # 13% normal, 35% strong
+	800018359, # 9% normal, 52% strong
 ]
 const DEPRECATED_BUNDLED_DECK_IDS: Array[int] = [
 	800018921,
@@ -32,6 +66,7 @@ const BUNDLED_LIMITLESS_DISPLAY_REFRESH_DECK_IDS := {
 
 ## 内存中的卡牌缓存 {uid -> CardData}
 var _card_cache: Dictionary = {}
+var _card_catalog_index = null
 var _effect_aliases: Dictionary = {}
 var _effect_aliases_loaded: bool = false
 var _bundled_deck_signature_cache: Dictionary = {}
@@ -49,10 +84,92 @@ signal decks_changed()
 
 func _ready() -> void:
 	_ensure_directories()
+	_ensure_card_catalog_index()
 	_load_effect_aliases()
 	_seed_bundled_user_data()
 	_load_all_decks()
 	_load_all_ai_decks()
+
+
+func _ensure_card_catalog_index() -> void:
+	if _card_catalog_index != null:
+		return
+	_card_catalog_index = CardCatalogIndexScript.new()
+
+
+func reload_card_catalog_for_tests() -> void:
+	_card_catalog_index = CardCatalogIndexScript.new()
+
+
+func set_card_catalog_index_for_tests(index) -> void:
+	_card_catalog_index = index
+
+
+func clear_card_cache_for_tests() -> void:
+	_card_cache.clear()
+
+
+func get_card_catalog_version() -> String:
+	_ensure_card_catalog_index()
+	if _card_catalog_index == null:
+		return ""
+	return str(_card_catalog_index.get_catalog_version())
+
+
+func search_catalog_cards(query: String, filters: Dictionary = {}, limit: int = 50, offset: int = 0) -> Array[Dictionary]:
+	_ensure_card_catalog_index()
+	if _card_catalog_index == null:
+		return []
+	return _card_catalog_index.search_cards(query, filters, limit, offset)
+
+
+func get_catalog_card_entry(set_code: String, card_index: String) -> Dictionary:
+	_ensure_card_catalog_index()
+	if _card_catalog_index == null:
+		return {}
+	return _card_catalog_index.get_entry(set_code, card_index)
+
+
+func find_cards_by_source_ref(source_set_code: String, source_card_index: String) -> Array[CardData]:
+	var normalized_set := source_set_code.strip_edges().to_upper()
+	var normalized_index := source_card_index.strip_edges().to_upper()
+	if normalized_set == "" or normalized_index == "":
+		return []
+	var result: Array[CardData] = []
+	var seen := {}
+	for card: CardData in get_all_materialized_cards():
+		if card == null or seen.has(card.get_uid()):
+			continue
+		if _card_matches_source_ref(card, normalized_set, normalized_index):
+			seen[card.get_uid()] = true
+			result.append(card)
+	_ensure_card_catalog_index()
+	if _card_catalog_index != null and _card_catalog_index.has_method("find_entries_by_source_ref"):
+		for entry: Dictionary in _card_catalog_index.find_entries_by_source_ref(normalized_set, normalized_index):
+			var set_code := str(entry.get("set_code", "")).strip_edges()
+			var card_index := str(entry.get("card_index", "")).strip_edges()
+			var uid := "%s_%s" % [set_code, card_index]
+			if uid == "_" or seen.has(uid):
+				continue
+			var card := get_card(set_code, card_index)
+			if card != null:
+				seen[uid] = true
+				result.append(card)
+	return result
+
+
+func _card_matches_source_ref(card: CardData, normalized_set: String, normalized_index: String) -> bool:
+	if card == null:
+		return false
+	if card.source_set_code.strip_edges().to_upper() == normalized_set and card.source_card_index.strip_edges().to_upper() == normalized_index:
+		return true
+	if card.set_code_en.strip_edges().to_upper() == normalized_set and card.card_index_en.strip_edges().to_upper() == normalized_index:
+		return true
+	var ref := "%s/%s" % [normalized_set, normalized_index]
+	for source_print: String in card.source_prints:
+		if source_print.strip_edges().to_upper() == ref:
+			return true
+	return false
 
 
 func _current_deck_edit_timestamp() -> int:
@@ -94,6 +211,9 @@ func _seed_bundled_user_data() -> void:
 				target_dir = CARDS_DIR.path_join(sub_dir)
 			var target_path := _resolve_bundled_target_path(target_dir, entry_name)
 			_copy_file_if_missing(bundled_path, target_path)
+			var seeded_uid := _card_json_uid_from_file(bundled_path)
+			if seeded_uid != "":
+				_card_cache.erase(seeded_uid)
 		elif relative.begins_with("decks/"):
 			var entry_name := relative.get_file()
 			var target_path := DECKS_DIR.path_join(entry_name)
@@ -257,6 +377,24 @@ func _merge_bundled_limitless_deck_display_fields(bundled_data: Dictionary, user
 			changed = true
 	var bundled_cards: Array = bundled_data.get("cards", []) if bundled_data.get("cards", []) is Array else []
 	var user_cards: Array = user_dict.get("cards", []) if user_dict.get("cards", []) is Array else []
+	# Migrate previously seeded NAIC copies once the bundled 18.0 rebuild no
+	# longer references generated LEN_* cards. This preserves later user edits:
+	# after the legacy references are gone, only display fields are refreshed.
+	var user_has_legacy_limitless_cards := false
+	var bundled_has_legacy_limitless_cards := false
+	for entry_raw: Variant in user_cards:
+		if entry_raw is Dictionary and str((entry_raw as Dictionary).get("set_code", "")).begins_with("LEN_"):
+			user_has_legacy_limitless_cards = true
+			break
+	for entry_raw: Variant in bundled_cards:
+		if entry_raw is Dictionary and str((entry_raw as Dictionary).get("set_code", "")).begins_with("LEN_"):
+			bundled_has_legacy_limitless_cards = true
+			break
+	if user_has_legacy_limitless_cards and not bundled_has_legacy_limitless_cards:
+		user_cards = bundled_cards.duplicate(true)
+		user_dict["cards"] = user_cards
+		user_dict["total_cards"] = int(bundled_data.get("total_cards", 60))
+		changed = true
 	for bundled_entry_raw: Variant in bundled_cards:
 		if not (bundled_entry_raw is Dictionary):
 			continue
@@ -383,6 +521,8 @@ func _card_json_identity_matches(source_data: Dictionary, target_data: Dictionar
 
 
 func _bundled_card_json_has_missing_implementation_data(source_data: Dictionary, target_data: Dictionary) -> bool:
+	if int(source_data.get("bundled_implementation_revision", 0)) > int(target_data.get("bundled_implementation_revision", 0)):
+		return true
 	for key: String in [
 		"effect_id",
 		"card_type",
@@ -393,6 +533,7 @@ func _bundled_card_json_has_missing_implementation_data(source_data: Dictionary,
 		"mechanic",
 		"energy_type",
 		"stage",
+		"evolves_from",
 		"energy_provides",
 	]:
 		if _seed_json_field_has_value(source_data.get(key)) and not _seed_json_field_has_value(target_data.get(key)):
@@ -507,7 +648,10 @@ func has_card(set_code: String, card_index: String) -> bool:
 	# 检查文件系统
 	if FileAccess.file_exists(CARDS_DIR + uid + ".json"):
 		return true
-	return FileAccess.file_exists(BUNDLED_CARDS_DIR + uid + ".json")
+	if FileAccess.file_exists(BUNDLED_CARDS_DIR + uid + ".json"):
+		return true
+	_ensure_card_catalog_index()
+	return _card_catalog_index != null and _card_catalog_index.has_card(set_code, card_index)
 
 
 ## 获取卡牌数据（先查内存，再查文件）
@@ -533,7 +677,18 @@ func get_card(set_code: String, card_index: String) -> CardData:
 			_card_cache[uid] = card
 			return card
 
+	_ensure_card_catalog_index()
+	if _card_catalog_index != null:
+		var catalog_card: CardData = _card_catalog_index.get_card_data(set_code, card_index)
+		if catalog_card != null:
+			_card_cache[uid] = catalog_card
+			return catalog_card
+
 	return null
+
+
+func get_all_materialized_cards() -> Array[CardData]:
+	return get_all_cards()
 
 
 func get_all_cards() -> Array[CardData]:
@@ -863,7 +1018,24 @@ func get_supported_ai_deck_ids() -> Array[int]:
 	return SUPPORTED_AI_DECK_IDS.duplicate()
 
 
+func get_v18_ai_deck_strength_order_ids() -> Array[int]:
+	return V18_AI_DECK_STRENGTH_ORDER_IDS.duplicate()
+
+
+func get_ai_deck_strength_priority(deck: DeckData) -> int:
+	if deck == null:
+		return 0
+	var order_index := V18_AI_DECK_STRENGTH_ORDER_IDS.find(int(deck.id))
+	if order_index < 0:
+		return 0
+	return V18_AI_DECK_STRENGTH_ORDER_IDS.size() - order_index
+
+
 func _compare_ai_decks_by_created_time_desc(a: DeckData, b: DeckData) -> bool:
+	var a_strength_priority := get_ai_deck_strength_priority(a)
+	var b_strength_priority := get_ai_deck_strength_priority(b)
+	if a_strength_priority != b_strength_priority:
+		return a_strength_priority > b_strength_priority
 	var a_version_priority := get_ai_deck_version_priority(a)
 	var b_version_priority := get_ai_deck_version_priority(b)
 	if a_version_priority != b_version_priority:
@@ -885,27 +1057,22 @@ func get_ai_deck_version_priority(deck: DeckData) -> int:
 	return _deck_release_version_priority(deck)
 
 
-func get_deck_version_priority(deck: DeckData) -> int:
-	return get_player_deck_sort_priority(deck)
-
-
-func get_player_deck_sort_priority(deck: DeckData) -> int:
-	if _is_front_pinned_player_deck(deck):
-		return 2000
-	if _is_player_modified_deck(deck):
-		return 1000
+func get_deck_version_priority(_deck: DeckData) -> int:
+	# Compatibility hook for older UI code. Player deck lists no longer group by
+	# release version; they are ordered only by their edit timestamp.
 	return 0
 
 
-func _is_front_pinned_player_deck(deck: DeckData) -> bool:
-	if deck == null:
-		return false
-	return str(deck.deck_name).strip_edges().begins_with("NAIC")
+func get_player_deck_sort_priority(_deck: DeckData) -> int:
+	# A non-zero result would pin a deck group ahead of updated_at ordering.
+	return 0
 
 
 func _deck_release_version_priority(deck: DeckData) -> int:
 	var deck_id := int(deck.id) if deck != null else 0
 	var deck_name := str(deck.deck_name) if deck != null else ""
+	if deck_name.begins_with("18.0"):
+		return 300
 	if deck_name.begins_with("17.5") or (deck_id >= 1750000 and deck_id < 1760000):
 		return 200
 	if deck_name.begins_with("17.0") or (deck_id >= 1700000 and deck_id < 1710000):
@@ -974,6 +1141,8 @@ func _canonicalize_signature_value(value: Variant) -> Variant:
 func _generated_ai_deck_release_key(deck: DeckData) -> int:
 	var deck_id := int(deck.id) if deck != null else 0
 	var deck_name := str(deck.deck_name) if deck != null else ""
+	if deck_name.begins_with("18.0"):
+		return 180
 	if deck_name.begins_with("17.5") or (deck_id >= 1750000 and deck_id < 1760000):
 		return 175
 	if deck_name.begins_with("17.0") or (deck_id >= 1700000 and deck_id < 1710000):
@@ -1051,18 +1220,11 @@ func _sorted_deck_values(cache: Dictionary) -> Array[DeckData]:
 	var result: Array[DeckData] = []
 	for deck: Variant in cache.values():
 		result.append(deck)
-	var priorities := {}
-	result.sort_custom(func(a: DeckData, b: DeckData) -> bool:
-		return _compare_decks_by_player_priority_desc_cached(a, b, priorities)
-	)
+	result.sort_custom(Callable(self, "_compare_player_decks_by_updated_at_desc"))
 	return result
 
 
-func _compare_decks_by_player_priority_desc_cached(a: DeckData, b: DeckData, priorities: Dictionary) -> bool:
-	var a_priority := _player_deck_sort_priority_cached(a, priorities)
-	var b_priority := _player_deck_sort_priority_cached(b, priorities)
-	if a_priority != b_priority:
-		return a_priority > b_priority
+func _compare_player_decks_by_updated_at_desc(a: DeckData, b: DeckData) -> bool:
 	var a_time := int(a.updated_at) if a != null else 0
 	var b_time := int(b.updated_at) if b != null else 0
 	if a_time != b_time:
@@ -1074,33 +1236,11 @@ func _compare_decks_by_player_priority_desc_cached(a: DeckData, b: DeckData, pri
 	var a_id := int(a.id) if a != null else 0
 	var b_id := int(b.id) if b != null else 0
 	return a_id < b_id
-
-
-func _player_deck_sort_priority_cached(deck: DeckData, priorities: Dictionary) -> int:
-	var deck_id := int(deck.id) if deck != null else 0
-	if priorities.has(deck_id):
-		return int(priorities[deck_id])
-	var priority := get_player_deck_sort_priority(deck)
-	priorities[deck_id] = priority
-	return priority
 
 
 func _compare_decks_by_player_priority_desc(a: DeckData, b: DeckData) -> bool:
-	var a_priority := get_player_deck_sort_priority(a)
-	var b_priority := get_player_deck_sort_priority(b)
-	if a_priority != b_priority:
-		return a_priority > b_priority
-	var a_time := int(a.updated_at) if a != null else 0
-	var b_time := int(b.updated_at) if b != null else 0
-	if a_time != b_time:
-		return a_time > b_time
-	var a_import := str(a.import_date) if a != null else ""
-	var b_import := str(b.import_date) if b != null else ""
-	if a_import != b_import:
-		return a_import > b_import
-	var a_id := int(a.id) if a != null else 0
-	var b_id := int(b.id) if b != null else 0
-	return a_id < b_id
+	# Compatibility wrapper for callers compiled against the previous name.
+	return _compare_player_decks_by_updated_at_desc(a, b)
 
 
 ## 从文件加载卡组

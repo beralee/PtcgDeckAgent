@@ -337,6 +337,7 @@ func run_headless_duel(
 				progressed = bridge.resolve_pending_prompt()
 				if not progressed:
 					result = _make_failed_match_result("invalid_state_transition", steps + 1, gsm)
+					_attach_bridge_failure_diagnostics(result, bridge, gsm)
 					break
 			else:
 				var pending_choice: String = bridge.get_pending_prompt_type()
@@ -441,6 +442,9 @@ func _attach_bridge_failure_diagnostics(
 		diagnostics["phase"] = int(gsm.game_state.phase)
 	if bridge != null:
 		diagnostics["pending_choice"] = str(bridge.get("_pending_choice"))
+		var dialog_data: Variant = bridge.get("_dialog_data")
+		if dialog_data is Dictionary:
+			diagnostics["pending_dialog_data"] = _diagnostic_safe_value(dialog_data)
 		diagnostics["pending_effect_kind"] = str(bridge.get("_pending_effect_kind"))
 		diagnostics["pending_effect_step_index"] = int(bridge.get("_pending_effect_step_index"))
 		var steps_variant: Variant = bridge.get("_pending_effect_steps")
@@ -450,11 +454,73 @@ func _attach_bridge_failure_diagnostics(
 			if step is Dictionary:
 				diagnostics["pending_effect_step_id"] = str((step as Dictionary).get("id", ""))
 				diagnostics["pending_effect_step_type"] = str((step as Dictionary).get("type", ""))
+	if gsm != null and gsm.game_state != null:
+		for pending_key: String in [
+			"_pending_prize_player_index",
+			"_pending_prize_remaining",
+			"_pending_prize_resume_mode",
+			"_pending_prize_resume_player_index",
+		]:
+			diagnostics[pending_key.trim_prefix("_")] = gsm.get(pending_key)
+		var prize_state: Array[Dictionary] = []
+		for player_index: int in gsm.game_state.players.size():
+			var player: PlayerState = gsm.game_state.players[player_index]
+			var occupied_slots := 0
+			var matching_prize_slots := 0
+			var layout_instance_ids: Array[int] = []
+			var prize_instance_ids: Array[int] = []
+			if player != null:
+				for prize_card: CardInstance in player.prizes:
+					if prize_card != null:
+						prize_instance_ids.append(prize_card.instance_id)
+				for entry: Variant in player.get_prize_layout():
+					if entry is CardInstance:
+						occupied_slots += 1
+						var layout_card := entry as CardInstance
+						layout_instance_ids.append(layout_card.instance_id)
+						if layout_card in player.prizes:
+							matching_prize_slots += 1
+			prize_state.append({
+				"player_index": player_index,
+				"prize_count": player.prizes.size() if player != null else -1,
+				"layout_size": player.get_prize_layout().size() if player != null else -1,
+				"occupied_slots": occupied_slots,
+				"matching_prize_slots": matching_prize_slots,
+				"layout_instance_ids": layout_instance_ids,
+				"prize_instance_ids": prize_instance_ids,
+			})
+		diagnostics["prize_state"] = prize_state
 	if not precomputed_interactive_actions.is_empty():
 		diagnostics["interactive_legal_actions"] = precomputed_interactive_actions
 	elif current_ai != null and gsm != null:
 		diagnostics["interactive_legal_actions"] = _get_interactive_legal_action_debug_names(current_ai, gsm)
 	result["failure_diagnostics"] = diagnostics
+
+
+func _diagnostic_safe_value(value: Variant) -> Variant:
+	if value is Dictionary:
+		var safe: Dictionary = {}
+		for key: Variant in (value as Dictionary).keys():
+			safe[str(key)] = _diagnostic_safe_value((value as Dictionary).get(key))
+		return safe
+	if value is Array:
+		var safe_array: Array = []
+		for item: Variant in value:
+			safe_array.append(_diagnostic_safe_value(item))
+		return safe_array
+	if value is CardInstance:
+		var card := value as CardInstance
+		return {
+			"instance_id": card.instance_id,
+			"uid": card.card_data.get_uid() if card.card_data != null else "",
+		}
+	if value is PokemonSlot:
+		var slot := value as PokemonSlot
+		return {
+			"owner_index": slot.owner_index,
+			"uid": slot.get_card_data().get_uid() if slot.get_card_data() != null else "",
+		}
+	return value
 
 
 func _action_debug_name(action: Dictionary) -> String:

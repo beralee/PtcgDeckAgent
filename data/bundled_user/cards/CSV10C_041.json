@@ -1,0 +1,66 @@
+{
+    "name":  "N的达摩狒狒",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  " 复燃 30×\n造成对手弃牌区中基本能量张数×30伤害。\n\n【火】【火】 焚身加农炮 90\n将这只宝可梦身上附着的能量全部放于弃牌区，给对手的1只备战宝可梦也造成90伤害。[备战宝可梦不计算弱点、抗性。]\n\n",
+    "yoren_code":  "P0555",
+    "set_code":  "CSV10C",
+    "card_index":  "041",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "nagimiso",
+    "rarity":  "U",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "26c746f169b803e490f3d0a92ca94412",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/041.png",
+    "image_local_path":  "user://cards/images/CSV10C/041.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "R",
+    "stage":  "Stage 1",
+    "hp":  140,
+    "weakness_energy":  "W",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  3,
+    "evolves_from":  "N的火红不倒翁",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "复燃",
+                        "text":  "造成对手弃牌区中基本能量张数×30伤害。",
+                        "cost":  "CC",
+                        "damage":  "30×",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "焚身加农炮",
+                        "text":  "将这只宝可梦身上附着的能量全部放于弃牌区，给对手的1只备战宝可梦也造成90伤害。[备战宝可梦不计算弱点、抗性。]",
+                        "cost":  "RRC",
+                        "damage":  "90",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

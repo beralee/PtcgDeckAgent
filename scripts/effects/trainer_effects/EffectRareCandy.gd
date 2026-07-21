@@ -14,6 +14,8 @@ const STAGE_ONE_BASIC_NAME_OVERRIDES := {
 	"Arctibax": ["Frigibax", "凉脊龙"],
 	"Combusken": ["Torchic", "火稚鸡"],
 	"Kirlia": ["Ralts", "拉鲁拉丝"],
+	"盐石垒": ["盐石宝", "Nacli"],
+	"Naclstack": ["Nacli", "盐石宝"],
 }
 
 

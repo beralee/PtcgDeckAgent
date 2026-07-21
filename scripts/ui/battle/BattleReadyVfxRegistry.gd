@@ -20,6 +20,19 @@ const RULE_ROARING_MOON_FRENZIED := "roaring_moon_frenzied_ready"
 const RULE_GARDEVOIR_PSYCHIC_EMBRACE := "gardevoir_psychic_embrace_ready"
 const RULE_ARCHALUDON_METAL_BRIDGE := "archaludon_metal_bridge_ready"
 const RULE_SQUAWKABILLY_FIRST_TURN_DRAW := "squawkabilly_first_turn_draw_ready"
+const RULE_MARNIES_GRIMMSNARL_PUNK_UP := "marnies_grimmsnarl_punk_up_ready"
+const RULE_NS_ZOROARK_NIGHT_JOKER := "ns_zoroark_night_joker_ready"
+const RULE_RAGING_BOLT_BELLOWING_THUNDER_LETHAL := "raging_bolt_bellowing_thunder_lethal_ready"
+const RULE_ETHANS_HO_OH_GOLDEN_FLAME := "ethans_ho_oh_golden_flame_ready"
+const RULE_CYNTHIAS_GARCHOMP_SPIRAL_DRAW := "cynthias_garchomp_spiral_draw_ready"
+const RULE_ETHANS_TYPHLOSION_PARTNER_BLAST_LETHAL := "ethans_typhlosion_partner_blast_lethal_ready"
+const RULE_BLAZIKEN_BOILING_SPIRIT_ACCELERATION := "blaziken_boiling_spirit_acceleration_ready"
+const RULE_PIDGEOT_QUICK_SEARCH_CONTROL := "pidgeot_quick_search_control_ready"
+const RULE_FLAREON_BURNING_CHARGE_ENGINE := "flareon_burning_charge_engine_ready"
+const RULE_HOPS_ZACIAN_BRAVE_BLADE_LETHAL := "hops_zacian_brave_blade_lethal_ready"
+const RULE_YANMEGA_BUZZING_RUSH_ACCELERATION := "yanmega_buzzing_rush_acceleration_ready"
+const RULE_MUNKIDORI_ADRENA_BRAIN_TRANSFER := "munkidori_adrena_brain_transfer_ready"
+const RULE_TOEDSCRUEL_COLONY_RUSH_LETHAL := "toedscruel_colony_rush_lethal_ready"
 
 const BUDEW_READY_ASSET_SPECS := {
 	"burst": {
@@ -213,6 +226,123 @@ const GARDEVOIR_READY_ASSET_SPECS := {
 const ARCHALUDON_READY_ASSET_SPECS := {
 	"burst": {
 		"path": "res://assets/textures/vfx/ready_archaludon_metal_bridge/sheet-transparent.png",
+		"frames": 6,
+		"rows": 2,
+		"cols": 3,
+	},
+}
+
+const MARNIES_GRIMMSNARL_READY_ASSET_SPECS := {
+	"burst": {
+		"path": "res://assets/textures/vfx/ready_marnies_grimmsnarl_punk_up/sheet-transparent.png",
+		"frames": 6,
+		"rows": 2,
+		"cols": 3,
+	},
+}
+
+const NS_ZOROARK_READY_ASSET_SPECS := {
+	"burst": {
+		"path": "res://assets/textures/vfx/ready_ns_zoroark_night_joker/sheet-transparent.png",
+		"frames": 6,
+		"rows": 2,
+		"cols": 3,
+	},
+}
+
+const RAGING_BOLT_READY_ASSET_SPECS := {
+	"burst": {
+		"path": "res://assets/textures/vfx/ready_raging_bolt_bellowing_thunder_lethal/sheet-transparent.png",
+		"frames": 6,
+		"rows": 2,
+		"cols": 3,
+	},
+}
+
+const ETHANS_HO_OH_READY_ASSET_SPECS := {
+	"burst": {
+		"path": "res://assets/textures/vfx/ready_ethans_ho_oh_golden_flame/sheet-transparent.png",
+		"frames": 6,
+		"rows": 2,
+		"cols": 3,
+	},
+}
+
+const CYNTHIAS_GARCHOMP_READY_ASSET_SPECS := {
+	"burst": {
+		"path": "res://assets/textures/vfx/ready_cynthias_garchomp_spiral_draw/sheet-transparent.png",
+		"frames": 6,
+		"rows": 2,
+		"cols": 3,
+	},
+}
+
+const ETHANS_TYPHLOSION_READY_ASSET_SPECS := {
+	"burst": {
+		"path": "res://assets/textures/vfx/ready_ethans_typhlosion_partner_blast_lethal/sheet-transparent.png",
+		"frames": 6,
+		"rows": 2,
+		"cols": 3,
+	},
+}
+
+const BLAZIKEN_READY_ASSET_SPECS := {
+	"burst": {
+		"path": "res://assets/textures/vfx/ready_blaziken_boiling_spirit_acceleration/sheet-transparent.png",
+		"frames": 6,
+		"rows": 2,
+		"cols": 3,
+	},
+}
+
+const PIDGEOT_READY_ASSET_SPECS := {
+	"burst": {
+		"path": "res://assets/textures/vfx/ready_pidgeot_quick_search_control/sheet-transparent.png",
+		"frames": 6,
+		"rows": 2,
+		"cols": 3,
+	},
+}
+
+const FLAREON_READY_ASSET_SPECS := {
+	"burst": {
+		"path": "res://assets/textures/vfx/ready_flareon_burning_charge_engine/sheet-transparent.png",
+		"frames": 6,
+		"rows": 2,
+		"cols": 3,
+	},
+}
+
+const HOPS_ZACIAN_READY_ASSET_SPECS := {
+	"burst": {
+		"path": "res://assets/textures/vfx/ready_hops_zacian_brave_blade_lethal/sheet-transparent.png",
+		"frames": 6,
+		"rows": 2,
+		"cols": 3,
+	},
+}
+
+const YANMEGA_READY_ASSET_SPECS := {
+	"burst": {
+		"path": "res://assets/textures/vfx/ready_yanmega_buzzing_rush_acceleration/sheet-transparent.png",
+		"frames": 6,
+		"rows": 2,
+		"cols": 3,
+	},
+}
+
+const MUNKIDORI_READY_ASSET_SPECS := {
+	"burst": {
+		"path": "res://assets/textures/vfx/ready_munkidori_adrena_brain_transfer/sheet-transparent.png",
+		"frames": 6,
+		"rows": 2,
+		"cols": 3,
+	},
+}
+
+const TOEDSCRUEL_READY_ASSET_SPECS := {
+	"burst": {
+		"path": "res://assets/textures/vfx/ready_toedscruel_colony_rush_lethal/sheet-transparent.png",
 		"frames": 6,
 		"rows": 2,
 		"cols": 3,
@@ -580,6 +710,292 @@ var _profiles: Dictionary = {
 			"portrait_effect_max_size": 820.0,
 			"portrait_anchor_offset_ratio": Vector2(0.0, -0.12),
 			"flash_color": Color(0.68, 0.84, 1.0, 0.34),
+		}
+	),
+	RULE_MARNIES_GRIMMSNARL_PUNK_UP: _make_profile(
+		"ready_marnies_grimmsnarl_punk_up",
+		RULE_MARNIES_GRIMMSNARL_PUNK_UP,
+		MARNIES_GRIMMSNARL_READY_ASSET_SPECS,
+		{
+			"duration": 1.64,
+			"effect_size": Vector2(520.0, 520.0),
+			"anchor_offset": Vector2(0.0, -40.0),
+			"start_scale": 0.7,
+			"peak_scale": 1.2,
+			"hold_scale": 1.12,
+			"end_scale": 1.03,
+			"hold_ratio": 0.24,
+			"flipbook_ratio": 0.96,
+			"portrait_duration": 1.74,
+			"portrait_effect_width_ratio": 0.9,
+			"portrait_effect_min_size": 600.0,
+			"portrait_effect_max_size": 820.0,
+			"portrait_anchor_offset_ratio": Vector2(0.0, -0.12),
+			"flash_color": Color(0.96, 0.12, 0.78, 0.34),
+		}
+	),
+	RULE_NS_ZOROARK_NIGHT_JOKER: _make_profile(
+		"ready_ns_zoroark_night_joker",
+		RULE_NS_ZOROARK_NIGHT_JOKER,
+		NS_ZOROARK_READY_ASSET_SPECS,
+		{
+			"duration": 1.62,
+			"effect_size": Vector2(520.0, 520.0),
+			"anchor_offset": Vector2(0.0, -42.0),
+			"start_scale": 0.7,
+			"peak_scale": 1.19,
+			"hold_scale": 1.11,
+			"end_scale": 1.03,
+			"hold_ratio": 0.23,
+			"flipbook_ratio": 0.96,
+			"portrait_duration": 1.72,
+			"portrait_effect_width_ratio": 0.9,
+			"portrait_effect_min_size": 600.0,
+			"portrait_effect_max_size": 820.0,
+			"portrait_anchor_offset_ratio": Vector2(0.0, -0.12),
+			"flash_color": Color(0.14, 0.78, 1.0, 0.32),
+		}
+	),
+	RULE_RAGING_BOLT_BELLOWING_THUNDER_LETHAL: _make_profile(
+		"ready_raging_bolt_bellowing_thunder_lethal",
+		RULE_RAGING_BOLT_BELLOWING_THUNDER_LETHAL,
+		RAGING_BOLT_READY_ASSET_SPECS,
+		{
+			"duration": 1.66,
+			"effect_size": Vector2(520.0, 520.0),
+			"anchor_offset": Vector2(0.0, -42.0),
+			"start_scale": 0.68,
+			"peak_scale": 1.18,
+			"hold_scale": 1.1,
+			"end_scale": 1.02,
+			"hold_ratio": 0.24,
+			"flipbook_ratio": 0.96,
+			"portrait_duration": 1.76,
+			"portrait_effect_width_ratio": 0.9,
+			"portrait_effect_min_size": 600.0,
+			"portrait_effect_max_size": 820.0,
+			"portrait_anchor_offset_ratio": Vector2(0.0, -0.12),
+			"flash_color": Color(1.0, 0.84, 0.12, 0.34),
+		}
+	),
+	RULE_ETHANS_HO_OH_GOLDEN_FLAME: _make_profile(
+		"ready_ethans_ho_oh_golden_flame",
+		RULE_ETHANS_HO_OH_GOLDEN_FLAME,
+		ETHANS_HO_OH_READY_ASSET_SPECS,
+		{
+			"duration": 1.66,
+			"effect_size": Vector2(520.0, 520.0),
+			"anchor_offset": Vector2(0.0, -42.0),
+			"start_scale": 0.7,
+			"peak_scale": 1.2,
+			"hold_scale": 1.12,
+			"end_scale": 1.03,
+			"hold_ratio": 0.24,
+			"flipbook_ratio": 0.96,
+			"portrait_duration": 1.76,
+			"portrait_effect_width_ratio": 0.9,
+			"portrait_effect_min_size": 600.0,
+			"portrait_effect_max_size": 820.0,
+			"portrait_anchor_offset_ratio": Vector2(0.0, -0.12),
+			"flash_color": Color(1.0, 0.68, 0.08, 0.34),
+		}
+	),
+	RULE_CYNTHIAS_GARCHOMP_SPIRAL_DRAW: _make_profile(
+		"ready_cynthias_garchomp_spiral_draw",
+		RULE_CYNTHIAS_GARCHOMP_SPIRAL_DRAW,
+		CYNTHIAS_GARCHOMP_READY_ASSET_SPECS,
+		{
+			"duration": 1.64,
+			"effect_size": Vector2(520.0, 520.0),
+			"anchor_offset": Vector2(0.0, -40.0),
+			"start_scale": 0.7,
+			"peak_scale": 1.2,
+			"hold_scale": 1.11,
+			"end_scale": 1.03,
+			"hold_ratio": 0.23,
+			"flipbook_ratio": 0.96,
+			"portrait_duration": 1.74,
+			"portrait_effect_width_ratio": 0.9,
+			"portrait_effect_min_size": 600.0,
+			"portrait_effect_max_size": 820.0,
+			"portrait_anchor_offset_ratio": Vector2(0.0, -0.12),
+			"flash_color": Color(1.0, 0.78, 0.2, 0.32),
+		}
+	),
+	RULE_ETHANS_TYPHLOSION_PARTNER_BLAST_LETHAL: _make_profile(
+		"ready_ethans_typhlosion_partner_blast_lethal",
+		RULE_ETHANS_TYPHLOSION_PARTNER_BLAST_LETHAL,
+		ETHANS_TYPHLOSION_READY_ASSET_SPECS,
+		{
+			"duration": 1.64,
+			"effect_size": Vector2(520.0, 520.0),
+			"anchor_offset": Vector2(0.0, -40.0),
+			"start_scale": 0.7,
+			"peak_scale": 1.2,
+			"hold_scale": 1.12,
+			"end_scale": 1.03,
+			"hold_ratio": 0.23,
+			"flipbook_ratio": 0.96,
+			"portrait_duration": 1.74,
+			"portrait_effect_width_ratio": 0.9,
+			"portrait_effect_min_size": 600.0,
+			"portrait_effect_max_size": 820.0,
+			"portrait_anchor_offset_ratio": Vector2(0.0, -0.12),
+			"flash_color": Color(1.0, 0.36, 0.04, 0.34),
+		}
+	),
+	RULE_BLAZIKEN_BOILING_SPIRIT_ACCELERATION: _make_profile(
+		"ready_blaziken_boiling_spirit_acceleration",
+		RULE_BLAZIKEN_BOILING_SPIRIT_ACCELERATION,
+		BLAZIKEN_READY_ASSET_SPECS,
+		{
+			"duration": 1.64,
+			"effect_size": Vector2(520.0, 520.0),
+			"anchor_offset": Vector2(0.0, -40.0),
+			"start_scale": 0.7,
+			"peak_scale": 1.2,
+			"hold_scale": 1.12,
+			"end_scale": 1.03,
+			"hold_ratio": 0.24,
+			"flipbook_ratio": 0.96,
+			"portrait_duration": 1.74,
+			"portrait_effect_width_ratio": 0.9,
+			"portrait_effect_min_size": 600.0,
+			"portrait_effect_max_size": 820.0,
+			"portrait_anchor_offset_ratio": Vector2(0.0, -0.12),
+			"flash_color": Color(1.0, 0.42, 0.08, 0.34),
+		}
+	),
+	RULE_PIDGEOT_QUICK_SEARCH_CONTROL: _make_profile(
+		"ready_pidgeot_quick_search_control",
+		RULE_PIDGEOT_QUICK_SEARCH_CONTROL,
+		PIDGEOT_READY_ASSET_SPECS,
+		{
+			"duration": 1.64,
+			"effect_size": Vector2(520.0, 520.0),
+			"anchor_offset": Vector2(0.0, -42.0),
+			"start_scale": 0.7,
+			"peak_scale": 1.18,
+			"hold_scale": 1.1,
+			"end_scale": 1.03,
+			"hold_ratio": 0.24,
+			"flipbook_ratio": 0.96,
+			"portrait_duration": 1.74,
+			"portrait_effect_width_ratio": 0.9,
+			"portrait_effect_min_size": 600.0,
+			"portrait_effect_max_size": 820.0,
+			"portrait_anchor_offset_ratio": Vector2(0.0, -0.12),
+			"flash_color": Color(1.0, 0.82, 0.36, 0.32),
+		}
+	),
+	RULE_FLAREON_BURNING_CHARGE_ENGINE: _make_profile(
+		"ready_flareon_burning_charge_engine",
+		RULE_FLAREON_BURNING_CHARGE_ENGINE,
+		FLAREON_READY_ASSET_SPECS,
+		{
+			"duration": 1.64,
+			"effect_size": Vector2(520.0, 520.0),
+			"anchor_offset": Vector2(0.0, -38.0),
+			"start_scale": 0.7,
+			"peak_scale": 1.2,
+			"hold_scale": 1.12,
+			"end_scale": 1.03,
+			"hold_ratio": 0.24,
+			"flipbook_ratio": 0.96,
+			"portrait_duration": 1.74,
+			"portrait_effect_width_ratio": 0.9,
+			"portrait_effect_min_size": 600.0,
+			"portrait_effect_max_size": 820.0,
+			"portrait_anchor_offset_ratio": Vector2(0.0, -0.12),
+			"flash_color": Color(1.0, 0.5, 0.12, 0.34),
+		}
+	),
+	RULE_HOPS_ZACIAN_BRAVE_BLADE_LETHAL: _make_profile(
+		"ready_hops_zacian_brave_blade_lethal",
+		RULE_HOPS_ZACIAN_BRAVE_BLADE_LETHAL,
+		HOPS_ZACIAN_READY_ASSET_SPECS,
+		{
+			"duration": 1.66,
+			"effect_size": Vector2(520.0, 520.0),
+			"anchor_offset": Vector2(0.0, -40.0),
+			"start_scale": 0.68,
+			"peak_scale": 1.2,
+			"hold_scale": 1.12,
+			"end_scale": 1.03,
+			"hold_ratio": 0.24,
+			"flipbook_ratio": 0.96,
+			"portrait_duration": 1.76,
+			"portrait_effect_width_ratio": 0.9,
+			"portrait_effect_min_size": 600.0,
+			"portrait_effect_max_size": 820.0,
+			"portrait_anchor_offset_ratio": Vector2(0.0, -0.12),
+			"flash_color": Color(0.72, 0.88, 1.0, 0.34),
+		}
+	),
+	RULE_YANMEGA_BUZZING_RUSH_ACCELERATION: _make_profile(
+		"ready_yanmega_buzzing_rush_acceleration",
+		RULE_YANMEGA_BUZZING_RUSH_ACCELERATION,
+		YANMEGA_READY_ASSET_SPECS,
+		{
+			"duration": 1.64,
+			"effect_size": Vector2(520.0, 520.0),
+			"anchor_offset": Vector2(0.0, -44.0),
+			"start_scale": 0.7,
+			"peak_scale": 1.2,
+			"hold_scale": 1.12,
+			"end_scale": 1.03,
+			"hold_ratio": 0.24,
+			"flipbook_ratio": 0.96,
+			"portrait_duration": 1.74,
+			"portrait_effect_width_ratio": 0.9,
+			"portrait_effect_min_size": 600.0,
+			"portrait_effect_max_size": 820.0,
+			"portrait_anchor_offset_ratio": Vector2(0.0, -0.13),
+			"flash_color": Color(0.42, 1.0, 0.16, 0.34),
+		}
+	),
+	RULE_MUNKIDORI_ADRENA_BRAIN_TRANSFER: _make_profile(
+		"ready_munkidori_adrena_brain_transfer",
+		RULE_MUNKIDORI_ADRENA_BRAIN_TRANSFER,
+		MUNKIDORI_READY_ASSET_SPECS,
+		{
+			"duration": 1.64,
+			"effect_size": Vector2(520.0, 520.0),
+			"anchor_offset": Vector2(0.0, -40.0),
+			"start_scale": 0.7,
+			"peak_scale": 1.2,
+			"hold_scale": 1.12,
+			"end_scale": 1.03,
+			"hold_ratio": 0.24,
+			"flipbook_ratio": 0.96,
+			"portrait_duration": 1.74,
+			"portrait_effect_width_ratio": 0.9,
+			"portrait_effect_min_size": 600.0,
+			"portrait_effect_max_size": 820.0,
+			"portrait_anchor_offset_ratio": Vector2(0.0, -0.12),
+			"flash_color": Color(0.82, 0.18, 1.0, 0.34),
+		}
+	),
+	RULE_TOEDSCRUEL_COLONY_RUSH_LETHAL: _make_profile(
+		"ready_toedscruel_colony_rush_lethal",
+		RULE_TOEDSCRUEL_COLONY_RUSH_LETHAL,
+		TOEDSCRUEL_READY_ASSET_SPECS,
+		{
+			"duration": 1.66,
+			"effect_size": Vector2(520.0, 520.0),
+			"anchor_offset": Vector2(0.0, -38.0),
+			"start_scale": 0.68,
+			"peak_scale": 1.2,
+			"hold_scale": 1.12,
+			"end_scale": 1.03,
+			"hold_ratio": 0.24,
+			"flipbook_ratio": 0.96,
+			"portrait_duration": 1.76,
+			"portrait_effect_width_ratio": 0.9,
+			"portrait_effect_min_size": 600.0,
+			"portrait_effect_max_size": 820.0,
+			"portrait_anchor_offset_ratio": Vector2(0.0, -0.12),
+			"flash_color": Color(0.5, 1.0, 0.18, 0.34),
 		}
 	),
 }

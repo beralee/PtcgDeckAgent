@@ -60,6 +60,13 @@ func get_interaction_steps(_card: CardInstance, state: GameState) -> Array[Dicti
 	return [step]
 
 
+func get_followup_interaction_steps(_card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
+	if not should_preview_empty_search_deck(resolved_context):
+		return []
+	var player := state.players[state.current_player_index]
+	return [build_readonly_deck_preview_step("桌台市：查看剩余牌库", player.deck)]
+
+
 func execute(_card: CardInstance, targets: Array, state: GameState) -> void:
 	if not _has_pending_flip:
 		var flipper: CoinFlipper = _coin_flipper if _coin_flipper != null else CoinFlipper.new()

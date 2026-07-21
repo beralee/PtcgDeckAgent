@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "deck_id": 800018539,
+  "seed_base": 800018539,
+  "derived_from": "res://tmp/v18cpg/optimization21/800018539/round00.json",
+  "failure_category": "semantic_gap",
+  "baseline": {"rule_wins": 2, "v18cpg_wins": 2, "clean_games": 5, "model_calls": 36, "model_accepted": 1},
+  "expected_modules": ["fire_toolbox", "partner_chain", "energy_burst"],
+  "expected_primary_attacker_uid": "CSV10C_035",
+  "expected_energy_symbol": "R",
+  "expected_generic_attachment_uid": "",
+  "expected_energy_burst": {"mode": "none", "resource_zone": "none", "raw_units": 0, "projected_public_damage": 0},
+  "expected_profiled_attack_cost": {"module": "fire_toolbox", "uid": "CSV10C_035", "cost": ["R", "R", "R", "R"]},
+  "expected_protected_roles": ["partner_piece", "signature_piece", "energy_accelerator", "energy_source", "energy_target", "evolution_piece", "recovery", "bench_space"]
+}

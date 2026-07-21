@@ -1,0 +1,85 @@
+{
+	"deck_id": 800018502,
+	"deck_name": "18.0 N的索罗亚克",
+	"strategy_id": "v18_800018502_ns_zoroark",
+	"generator_version": 15,
+	"description": "Cards 1-7 are the setup hand, 8-13 are controlled prizes, and 14-19 bridge the first evolution and attack route.",
+	"top_to_bottom": [
+		{
+			"set_code": "CSV4C",
+			"card_index": "044"
+		},
+		{
+			"set_code": "CSV10C",
+			"card_index": "144"
+		},
+		{
+			"set_code": "CSV7C",
+			"card_index": "177"
+		},
+		{
+			"set_code": "CSV10C",
+			"card_index": "190"
+		},
+		{
+			"set_code": "CSVE1C",
+			"card_index": "DAR"
+		},
+		{
+			"set_code": "CSVE1C",
+			"card_index": "DAR"
+		},
+		{
+			"set_code": "CSV10C",
+			"card_index": "166"
+		},
+		{
+			"set_code": "CSV6C",
+			"card_index": "114"
+		},
+		{
+			"set_code": "CSV7C",
+			"card_index": "191"
+		},
+		{
+			"set_code": "CSV6C",
+			"card_index": "125"
+		},
+		{
+			"set_code": "CSVH1aC",
+			"card_index": "023"
+		},
+		{
+			"set_code": "CSV3C",
+			"card_index": "123"
+		},
+		{
+			"set_code": "CSV9C",
+			"card_index": "198"
+		},
+		{
+			"set_code": "CSV10C",
+			"card_index": "145"
+		},
+		{
+			"set_code": "CSV10C",
+			"card_index": "145"
+		},
+		{
+			"set_code": "CSVE1C",
+			"card_index": "DAR"
+		},
+		{
+			"set_code": "CSV7C",
+			"card_index": "177"
+		},
+		{
+			"set_code": "CSV10C",
+			"card_index": "145"
+		},
+		{
+			"set_code": "CSVE1C",
+			"card_index": "DAR"
+		}
+	]
+}

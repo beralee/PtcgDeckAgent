@@ -39,10 +39,10 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		"show_selectable_hints": true,
 		"card_selectable_hint": "可选",
 		"card_disabled_badge": "仅查看",
-		"utility_actions": [] if has_basic_prize else [{"label": "完成", "index": -1}],
+		"utility_actions": [] if has_basic_prize else [build_empty_dialog_utility_action("完成")],
 		"min_select": 1 if has_basic_prize else 0,
 		"max_select": 1 if has_basic_prize else 0,
-		"allow_cancel": true,
+		"allow_cancel": false,
 	}]
 
 

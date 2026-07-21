@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "deck_id": 800018502,
+  "seed_base": 800018502,
+  "derived_from": "res://tmp/v18cpg/optimization21/800018502/round00.json",
+  "failure_category": "semantic_gap",
+  "baseline": {"rule_wins": 3, "v18cpg_wins": 3, "clean_games": 5, "model_calls": 29, "model_accepted": 2},
+  "expected_modules": ["copy_attack_toolbox", "partner_chain", "cycle_pivot"],
+  "expected_primary_attacker_uid": "CSV10C_145",
+  "expected_attacker_root_uids": ["CSV10C_144"],
+  "expected_energy_symbol": "D",
+  "expected_generic_attachment_uid": "",
+  "expected_profiled_attack_cost": {"module": "copy_attack_toolbox", "uid": "CSV10C_145", "cost": ["D", "D"]},
+  "expected_protected_roles": ["copy_source", "partner_piece", "signature_piece", "evolution_piece", "energy_source", "recovery", "bench_space"]
+}

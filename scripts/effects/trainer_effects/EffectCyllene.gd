@@ -10,7 +10,7 @@ func _init(flipper: CoinFlipper = null) -> void:
 
 
 func can_execute(card: CardInstance, state: GameState) -> bool:
-	return not state.players[card.owner_index].discard_pile.is_empty()
+	return not _recoverable_cards(state.players[card.owner_index]).is_empty()
 
 
 func get_preview_interaction_steps(_card: CardInstance, _state: GameState) -> Array[Dictionary]:
@@ -30,9 +30,12 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	var player: PlayerState = state.players[card.owner_index]
 	var items: Array = []
 	var labels: Array[String] = []
-	for discard_card: CardInstance in player.discard_pile:
+	for discard_card: CardInstance in _recoverable_cards(player):
 		items.append(discard_card)
 		labels.append(discard_card.card_data.name)
+	if items.is_empty():
+		_pending_heads_count = -1
+		return []
 
 	return [{
 		"id": "discard_to_top",
@@ -58,7 +61,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	var selected_raw: Array = ctx.get("discard_to_top", [])
 	var selected_cards: Array[CardInstance] = []
 	for entry: Variant in selected_raw:
-		if entry is CardInstance and entry in player.discard_pile:
+		if entry is CardInstance and entry in player.discard_pile and DiscardPileRestriction.can_move_to_hand_or_deck(entry):
 			selected_cards.append(entry)
 			if selected_cards.size() >= _pending_heads_count:
 				break
@@ -71,6 +74,14 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 		player.deck.push_front(picked)
 
 	_pending_heads_count = -1
+
+
+func _recoverable_cards(player: PlayerState) -> Array[CardInstance]:
+	var result: Array[CardInstance] = []
+	for card: CardInstance in player.discard_pile:
+		if DiscardPileRestriction.can_move_to_hand_or_deck(card):
+			result.append(card)
+	return result
 
 
 func _flip_heads_count() -> int:

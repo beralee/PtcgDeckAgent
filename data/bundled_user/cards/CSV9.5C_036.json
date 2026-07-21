@@ -1,0 +1,66 @@
+{
+    "name":  "水伊布ex",
+    "card_type":  "Pokemon",
+    "mechanic":  "ex",
+    "label":  "",
+    "description":  "【水】 疾风骤雨 \n给对手所有的「宝可梦【ex】」，各造成60伤害。这个招式的伤害不计算弱点、抗性。\n\n【火】【水】【雷】 海蓝宝石 280\n在下一个自己的回合，这只宝可梦无法使用招式。\n\n",
+    "yoren_code":  "Y1557",
+    "set_code":  "CSV9.5C",
+    "card_index":  "036",
+    "set_code_en":  "PRE",
+    "card_index_en":  "23",
+    "name_en":  "Vaporeon ex",
+    "name_zh":  "",
+    "artist":  "5ban Graphics",
+    "rarity":  "RR",
+    "release_date":  "2026-06-12T00:00:00+08:00",
+    "regulation_mark":  "H",
+    "effect_id":  "cd3b65c57a50f301db65efd05d7d79e3",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV9.5C/036.png",
+    "image_local_path":  "user://cards/images/CSV9.5C/036.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "W",
+    "stage":  "Stage 1",
+    "hp":  280,
+    "weakness_energy":  "L",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  2,
+    "evolves_from":  "伊布",
+    "ancient_trait":  "Tera",
+    "attacks":  [
+                    {
+                        "name":  "疾风骤雨",
+                        "text":  "给对手所有的「宝可梦【ex】」，各造成60伤害。这个招式的伤害不计算弱点、抗性。",
+                        "cost":  "WC",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "海蓝宝石",
+                        "text":  "在下一个自己的回合，这只宝可梦无法使用招式。",
+                        "cost":  "RWL",
+                        "damage":  "280",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

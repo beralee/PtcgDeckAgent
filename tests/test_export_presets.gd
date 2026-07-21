@@ -13,6 +13,33 @@ const WEB_USER_VISIT_BRIDGE_PATH := "res://web/userptcg_bridge.html"
 const REQUIRED_BUNDLED_FILTER := "data/**"
 const WEB_PRESET_NAME := "Web"
 const WEB_EXCLUDE_FILTERS := ["tests/**", "docs/**", ".tmp/**", ".godot_test_user/**", "addons/web_release_post_export/**"]
+const DUPLICATE_APP_ICON_FILTER := "assets/ui/app_icon/app_icon.png"
+const EXPECTED_APP_VERSION := "0.5.1"
+const EXPECTED_BUILD_NUMBER := "51"
+const AppVersionScript := preload("res://scripts/app/AppVersion.gd")
+
+
+func test_release_version_metadata_is_consistent_across_platforms() -> String:
+	var preset_text := FileAccess.get_file_as_string(EXPORT_PRESETS_PATH)
+	var windows_options := _extract_preset_options_block(preset_text, "Windows Desktop")
+	var mac_options := _extract_preset_options_block(preset_text, "macOS")
+	var android_options := _extract_preset_options_block(preset_text, "Android")
+	var ios_options := _extract_preset_options_block(preset_text, "iOS")
+
+	return run_checks([
+		assert_eq(str(ProjectSettings.get_setting("application/config/version", "")), EXPECTED_APP_VERSION, "Project version should match the release version"),
+		assert_eq(str(AppVersionScript.VERSION), EXPECTED_APP_VERSION, "Runtime version should match the release version"),
+		assert_eq(str(AppVersionScript.DISPLAY_VERSION), "v%s" % EXPECTED_APP_VERSION, "Display version should match the release version"),
+		assert_eq(str(AppVersionScript.BUILD_NUMBER), EXPECTED_BUILD_NUMBER, "Runtime build number should match mobile exports"),
+		assert_eq(_extract_string_value(windows_options, "application/file_version"), "%s.0" % EXPECTED_APP_VERSION, "Windows file version should match the release version"),
+		assert_eq(_extract_string_value(windows_options, "application/product_version"), "%s.0" % EXPECTED_APP_VERSION, "Windows product version should match the release version"),
+		assert_eq(_extract_string_value(mac_options, "application/short_version"), EXPECTED_APP_VERSION, "macOS short version should match the release version"),
+		assert_eq(_extract_string_value(mac_options, "application/version"), EXPECTED_BUILD_NUMBER, "macOS build number should match the release build"),
+		assert_eq(_extract_string_value(android_options, "version/name"), EXPECTED_APP_VERSION, "Android version name should match the release version"),
+		assert_eq(_extract_string_value(android_options, "version/code"), EXPECTED_BUILD_NUMBER, "Android version code should match the release build"),
+		assert_eq(_extract_string_value(ios_options, "application/short_version"), EXPECTED_APP_VERSION, "iOS short version should match the release version"),
+		assert_eq(_extract_string_value(ios_options, "application/version"), EXPECTED_BUILD_NUMBER, "iOS build number should match the release build"),
+	])
 
 
 func test_web_export_includes_bundled_user_data() -> String:
@@ -122,11 +149,18 @@ func test_web_custom_shell_has_click_start_and_ios_layout_guards() -> String:
 		assert_false(shell_text.contains("orientation.lock('landscape')"), "Custom shell should not request browser orientation lock"),
 		assert_false(shell_text.contains("bestEffortFullscreen().then(bestEffortLandscapeOrientation)"), "Custom shell should not chain fullscreen before orientation lock"),
 		assert_true(shell_text.contains("AudioContext"), "Custom shell should unlock browser audio from the click gesture"),
+		assert_true(shell_text.contains("AUDIO_UNLOCK_TIMEOUT_MS"), "Audio unlock should have a bounded timeout on browsers that never settle resume()"),
+		assert_true(shell_text.contains("unlockAudioFromGesture();\n\t\tsetStage(TEXT_LOADING_DOWNLOAD);"), "Game startup should not await browser audio unlock"),
 		assert_true(shell_text.contains("viewport-fit=cover"), "Custom shell should opt into iOS safe-area viewport handling"),
 		assert_true(shell_text.contains("user-scalable=no"), "Custom shell should prevent iOS double-tap zoom during play"),
 		assert_true(shell_text.contains("apple-mobile-web-app-capable"), "Custom shell should include iOS PWA meta"),
 		assert_false(shell_text.contains("100dvh"), "Custom shell should avoid dynamic viewport height while Android canvas sizing is being stabilized"),
 		assert_true(shell_text.contains("safe-area-inset"), "Custom shell should account for iOS safe areas"),
+		assert_true(shell_text.contains("--ptcg-safe-top: env(safe-area-inset-top"), "Web shell should expose the iOS top safe inset as a shared canvas variable"),
+		assert_true(shell_text.contains("top: var(--ptcg-safe-top)"), "Game canvas itself should start below the iOS top safe area"),
+		assert_true(shell_text.contains("left: var(--ptcg-safe-left)"), "Game canvas itself should start after the iOS left safe area"),
+		assert_true(shell_text.contains("calc(100% - var(--ptcg-safe-left) - var(--ptcg-safe-right))"), "Game canvas width should exclude both horizontal safe areas"),
+		assert_true(shell_text.contains("calc(100% - var(--ptcg-safe-top) - var(--ptcg-safe-bottom))"), "Game canvas height should exclude both vertical safe areas"),
 		assert_true(shell_text.contains("touch-action: none"), "Custom shell should prevent browser gesture interference"),
 		assert_true(shell_text.contains("-webkit-user-select: none"), "Custom shell should prevent long-press text selection"),
 	])
@@ -196,7 +230,8 @@ func test_web_export_excludes_development_only_files() -> String:
 	var checks: Array[String] = []
 	for filter: String in WEB_EXCLUDE_FILTERS:
 		checks.append(assert_true(web_filters.has(filter), "Web export should exclude development-only path %s" % filter))
-	checks.append(assert_eq(_extract_string_value(windows_block, "exclude_filter"), "", "Windows full export should not be changed by Web-only trimming"))
+	checks.append(assert_true(web_filters.has(DUPLICATE_APP_ICON_FILTER), "Web export should omit the unreferenced duplicate 1024px app icon"))
+	checks.append(assert_eq(_extract_string_value(windows_block, "exclude_filter"), DUPLICATE_APP_ICON_FILTER, "Windows full export should only omit the unreferenced duplicate 1024px app icon"))
 	return run_checks(checks)
 
 

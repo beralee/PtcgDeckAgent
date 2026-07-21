@@ -1,0 +1,66 @@
+{
+    "name":  "落雷兽",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  " 后踢 10\n\n\n【雷】 小型伏特 30\n\n\n",
+    "yoren_code":  "P309",
+    "set_code":  "CSV10C",
+    "card_index":  "073",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "Narano",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "81a80ea43889b17c49846b1b06dda45c",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/073.png",
+    "image_local_path":  "user://cards/images/CSV10C/073.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "L",
+    "stage":  "Basic",
+    "hp":  60,
+    "weakness_energy":  "F",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "后踢",
+                        "text":  "",
+                        "cost":  "C",
+                        "damage":  "10",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "小型伏特",
+                        "text":  "",
+                        "cost":  "LC",
+                        "damage":  "30",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

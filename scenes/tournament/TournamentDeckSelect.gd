@@ -331,7 +331,7 @@ func _ensure_deck_picker_overlay() -> void:
 	_deck_picker_tabs.clear()
 	for tab: Dictionary in [
 		{"id": DECK_PICKER_RECENT, "label": "最近使用"},
-		{"id": DECK_PICKER_ALL, "label": "全部"},
+		{"id": DECK_PICKER_ALL, "label": "全部(更新18.0)"},
 	]:
 		var button := Button.new()
 		button.text = str(tab.get("label", ""))

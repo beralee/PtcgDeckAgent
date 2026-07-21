@@ -1,0 +1,66 @@
+{
+    "name":  "雷电兽",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  " 电气踢 30\n\n\n【雷】 闪光冲击 120\n给自己的1只备战宝可梦也造成40伤害。[备战宝可梦不计算弱点、抗性。]\n\n",
+    "yoren_code":  "P310",
+    "set_code":  "CSV10C",
+    "card_index":  "074",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "Izucch",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "3a7164c7a64b6fe77f4f480326b646e9",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/074.png",
+    "image_local_path":  "user://cards/images/CSV10C/074.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "L",
+    "stage":  "Stage 1",
+    "hp":  120,
+    "weakness_energy":  "F",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "落雷兽",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "电气踢",
+                        "text":  "",
+                        "cost":  "C",
+                        "damage":  "30",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "闪光冲击",
+                        "text":  "给自己的1只备战宝可梦也造成40伤害。[备战宝可梦不计算弱点、抗性。]",
+                        "cost":  "LC",
+                        "damage":  "120",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

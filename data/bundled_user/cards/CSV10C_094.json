@@ -1,0 +1,66 @@
+{
+    "name":  "莉莉艾的花疗环环",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  " 招花 \n选择自己牌库中任意数量的【基础】宝可梦的「莉莉艾的宝可梦」，放于备战区。并重洗牌库。\n\n【超】 瞬间消失 30\n将这只宝可梦以及放于其身上的全部的卡牌放回手牌。\n\n",
+    "yoren_code":  "P0764",
+    "set_code":  "CSV10C",
+    "card_index":  "094",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "Narumi Sato",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "0126bc75f3ebc4b0937ebb83399f5e5a",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/094.png",
+    "image_local_path":  "user://cards/images/CSV10C/094.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "P",
+    "stage":  "Basic",
+    "hp":  70,
+    "weakness_energy":  "M",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "招花",
+                        "text":  "选择自己牌库中任意数量的【基础】宝可梦的「莉莉艾的宝可梦」，放于备战区。并重洗牌库。",
+                        "cost":  "C",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "瞬间消失",
+                        "text":  "将这只宝可梦以及放于其身上的全部的卡牌放回手牌。",
+                        "cost":  "P",
+                        "damage":  "30",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

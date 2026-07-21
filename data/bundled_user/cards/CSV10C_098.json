@@ -1,0 +1,59 @@
+{
+    "name":  "猴怪",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【斗】 踹 30\n抛掷1次硬币，如果为反面，则这个招式失败。\n\n",
+    "yoren_code":  "P056",
+    "set_code":  "CSV10C",
+    "card_index":  "098",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "Ayako Ozaki",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "5b0e3f747d9e8f2cb3bfeac127247664",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/098.png",
+    "image_local_path":  "user://cards/images/CSV10C/098.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "F",
+    "stage":  "Basic",
+    "hp":  70,
+    "weakness_energy":  "P",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "踹",
+                        "text":  "抛掷1次硬币，如果为反面，则这个招式失败。",
+                        "cost":  "F",
+                        "damage":  "30",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

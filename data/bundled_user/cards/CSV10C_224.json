@@ -1,0 +1,58 @@
+{
+  "abilities": [
+    {
+      "name": "炸裂针刺",
+      "text": "当这只宝可梦在战斗场上受到对手宝可梦的招式的伤害而【昏厥】时，给使用了招式的宝可梦身上放置6个伤害指示物。"
+    }
+  ],
+  "ancient_trait": "",
+  "artist": "Ounishi",
+  "attacks": [
+    {
+      "cost": "C",
+      "damage": "20",
+      "is_vstar_power": false,
+      "name": "穷追不舍",
+      "text": "在下一个对手的回合，受到这个招式影响的宝可梦无法撤退。"
+    }
+  ],
+  "card_index": "224",
+  "card_index_en": "",
+  "card_type": "Pokemon",
+  "description": "特性: 炸裂针刺\n当这只宝可梦在战斗场上受到对手宝可梦的招式的伤害而【昏厥】时，给使用了招式的宝可梦身上放置6个伤害指示物。\n\n 穷追不舍 20\n在下一个对手的回合，受到这个招式影响的宝可梦无法撤退。\n\n",
+  "effect_id": "a5b32602f9c443a038fef288059aeb43",
+  "energy_provides": "",
+  "energy_type": "G",
+  "evolves_from": "",
+  "hp": 110,
+  "image_local_path": "user://cards/images/CSV10C/224.png",
+  "image_url": "https://tcg.mik.moe/static/img/CSV10C/224.png",
+  "is_tags": [],
+  "label": "",
+  "mechanic": "",
+  "name": "沙铃仙人掌",
+  "name_en": "",
+  "name_zh": "",
+  "rarity": "AR",
+  "regulation_expanded": true,
+  "regulation_mark": "I",
+  "regulation_standard": true,
+  "release_date": "2026-07-16T00:00:00+08:00",
+  "resistance_energy": "",
+  "resistance_value": "",
+  "retreat_cost": 2,
+  "set_code": "CSV10C",
+  "set_code_en": "",
+  "source_card_index": "224",
+  "source_imported_at": 0,
+  "source_language": "zh-CN",
+  "source_parser_version": 1,
+  "source_prints": [],
+  "source_provider": "tcg_mik",
+  "source_set_code": "CSV10C",
+  "source_url": "https://tcg.mik.moe/cards/CSV10C/224",
+  "stage": "Basic",
+  "weakness_energy": "R",
+  "weakness_value": "×2",
+  "yoren_code": "P556"
+}

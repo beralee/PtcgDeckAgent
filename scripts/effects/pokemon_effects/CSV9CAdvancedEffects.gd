@@ -886,7 +886,7 @@ class NoctowlJewelSeeker extends BaseEffect:
 	func _has_tera_pokemon(player: PlayerState) -> bool:
 		for slot: PokemonSlot in player.get_all_pokemon():
 			var cd := slot.get_card_data()
-			if cd != null and (cd.ancient_trait == "Tera" or cd.has_tag("Tera") or cd.label.contains("太晶") or cd.name.contains("太乐巴戈斯")):
+			if cd != null and cd.is_tera_pokemon():
 				return true
 		return false
 

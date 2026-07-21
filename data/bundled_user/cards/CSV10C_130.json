@@ -1,0 +1,58 @@
+{
+  "name": "火箭队的叉字蝠ex",
+  "card_type": "Pokemon",
+  "mechanic": "ex",
+  "label": "",
+  "description": "特性: 乱咬\n在自己的回合，当将这张卡牌从手牌使出并进行进化时，可以使用1次。给对手的2只宝可梦身上各放置2个伤害指示物。\n\n【恶】【恶】 奇袭回转 120\n若希望，可以将这只宝可梦放回手牌。（除宝可梦以外的卡牌全部放于弃牌区。）\n\n",
+  "yoren_code": "Y1591",
+  "set_code": "CSV10C",
+  "card_index": "130",
+  "set_code_en": "",
+  "card_index_en": "",
+  "name_en": "",
+  "name_zh": "",
+  "artist": "5ban Graphics",
+  "rarity": "RR",
+  "release_date": "2026-07-16T00:00:00+08:00",
+  "regulation_mark": "I",
+  "effect_id": "c4cf39844b70f177c0f202f57e1f0841",
+  "image_url": "https://tcg.mik.moe/static/img/CSV10C/130.png",
+  "image_local_path": "user://cards/images/CSV10C/130.png",
+  "source_provider": "tcg_mik",
+  "source_url": "https://tcg.mik.moe/cards/CSV10C/130",
+  "source_set_code": "CSV10C",
+  "source_card_index": "130",
+  "source_language": "zh-CN",
+  "source_prints": [],
+  "source_imported_at": 0,
+  "source_parser_version": 1,
+  "is_tags": [],
+  "regulation_standard": true,
+  "regulation_expanded": true,
+  "energy_type": "D",
+  "stage": "Stage 2",
+  "hp": 310,
+  "weakness_energy": "L",
+  "weakness_value": "×2",
+  "resistance_energy": "F",
+  "resistance_value": "-30",
+  "retreat_cost": 1,
+  "evolves_from": "火箭队的大嘴蝠",
+  "ancient_trait": "",
+  "attacks": [
+    {
+      "name": "奇袭回转",
+      "text": "若希望，可以将这只宝可梦放回手牌。（除宝可梦以外的卡牌全部放于弃牌区。）",
+      "cost": "DD",
+      "damage": "120",
+      "is_vstar_power": false
+    }
+  ],
+  "abilities": [
+    {
+      "name": "乱咬",
+      "text": "在自己的回合，当将这张卡牌从手牌使出并进行进化时，可以使用1次。给对手的2只宝可梦身上各放置2个伤害指示物。"
+    }
+  ],
+  "energy_provides": ""
+}

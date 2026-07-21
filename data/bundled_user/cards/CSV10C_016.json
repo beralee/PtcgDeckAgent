@@ -1,0 +1,59 @@
+{
+    "name":  "蒂蕾喵",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  " 魔法叶 30+\n抛掷1次硬币，如果为正面，则追加造成30伤害，回复这只宝可梦「30」HP。\n\n",
+    "yoren_code":  "P0907",
+    "set_code":  "CSV10C",
+    "card_index":  "016",
+    "set_code_en":  "JTG",
+    "card_index_en":  "17",
+    "name_en":  "Floragato",
+    "name_zh":  "",
+    "artist":  "Felicia Chen",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "98ed625f5d517d3f449265b176a5f2f0",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/016.png",
+    "image_local_path":  "user://cards/images/CSV10C/016.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "G",
+    "stage":  "Stage 1",
+    "hp":  90,
+    "weakness_energy":  "R",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "新叶喵",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "魔法叶",
+                        "text":  "抛掷1次硬币，如果为正面，则追加造成30伤害，回复这只宝可梦「30」HP。",
+                        "cost":  "CC",
+                        "damage":  "30+",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

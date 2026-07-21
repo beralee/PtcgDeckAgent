@@ -155,7 +155,7 @@ func test_battle_setup_right_column_exposes_ai_strategy_discussion_button() -> S
 	_write_battle_review_config_for_test({
 		"endpoint": "https://zenmux.ai/api/v1",
 		"api_key": "test-key",
-		"model": "kimi-k2.6",
+		"model": "kimi-k3",
 		"timeout_seconds": 60.0,
 		"ai_personality": "",
 		"ai_test_passed": false,
@@ -184,7 +184,7 @@ func test_battle_setup_strategy_discussion_uses_pair_session_and_resets_on_deck_
 	_write_battle_review_config_for_test({
 		"endpoint": "https://zenmux.ai/api/v1",
 		"api_key": "test-key",
-		"model": "kimi-k2.6",
+		"model": "kimi-k3",
 		"timeout_seconds": 60.0,
 		"ai_personality": "",
 		"ai_test_passed": false,
@@ -316,6 +316,58 @@ func test_battle_setup_landscape_ai_and_self_practice_deck_picker_fonts_match() 
 	])
 
 	scene.queue_free()
+	return result
+
+
+func test_battle_setup_landscape_deck_picker_stays_inside_short_viewport() -> String:
+	var viewport_size := Vector2(1280, 720)
+	var scene := BattleSetupScene.instantiate()
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		_dispose_scene(scene)
+		return "SceneTree root is required for landscape deck picker layout verification"
+	scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	scene.position = Vector2.ZERO
+	scene.size = viewport_size
+	tree.root.add_child(scene)
+	scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	scene.position = Vector2.ZERO
+	scene.size = viewport_size
+	scene.call("_apply_non_battle_layout_for_tests", viewport_size, "landscape")
+	scene.call("_ensure_deck_picker_overlay")
+	scene.call("_refresh_deck_picker")
+	scene.call("_resize_deck_picker_panel")
+	await tree.process_frame
+	await tree.process_frame
+
+	var panel := scene.get("_deck_picker_panel") as PanelContainer
+	var scroll := panel.find_child("DeckPickerScroll", true, false) as ScrollContainer if panel != null else null
+	var root := panel.find_child("DeckPickerRoot", true, false) as VBoxContainer if panel != null else null
+	var header := panel.find_child("DeckPickerHeader", true, false) as HBoxContainer if panel != null else null
+	var subtitle := scene.get("_deck_picker_subtitle") as Label
+	var search := scene.get("_deck_picker_search_input") as LineEdit
+	var tabs := panel.find_child("DeckPickerTabs", true, false) as HBoxContainer if panel != null else null
+	var picker_tabs: Dictionary = scene.get("_deck_picker_tabs")
+	var all_tab := picker_tabs.get("all") as Button
+	var panel_rect := panel.get_global_rect() if panel != null else Rect2()
+	var safe_margin := 16.0
+	var diagnostics := {
+		"panel_min": panel.get_combined_minimum_size() if panel != null else Vector2.ZERO,
+		"root_min": root.get_combined_minimum_size() if root != null else Vector2.ZERO,
+		"header_min": header.get_combined_minimum_size() if header != null else Vector2.ZERO,
+		"subtitle_min": subtitle.get_combined_minimum_size() if subtitle != null else Vector2.ZERO,
+		"search_min": search.get_combined_minimum_size() if search != null else Vector2.ZERO,
+		"tabs_min": tabs.get_combined_minimum_size() if tabs != null else Vector2.ZERO,
+		"scroll_min": scroll.get_combined_minimum_size() if scroll != null else Vector2.ZERO,
+	}
+	var result := run_checks([
+		assert_true(panel != null and panel_rect.position.y >= safe_margin - 0.5, "Landscape deck picker should keep its top edge inside the viewport: %s" % str(panel_rect)),
+		assert_true(panel != null and panel_rect.end.y <= viewport_size.y - safe_margin + 0.5, "Landscape deck picker should keep its bottom edge inside the viewport: %s vs %s; %s" % [str(panel_rect), str(viewport_size), str(diagnostics)]),
+		assert_true(scroll != null and scroll.size.y > 0.0, "Landscape deck picker should retain a usable scroll area after fitting the viewport"),
+		assert_eq(all_tab.text if all_tab != null else "", "全部(更新18.0)", "Battle setup deck picker should identify the full 18.0 deck list"),
+	])
+
+	_dispose_scene(scene)
 	return result
 
 
@@ -524,7 +576,7 @@ func test_battle_setup_portrait_ai_copy_stays_compact_like_landscape() -> String
 	_write_battle_review_config_for_test({
 		"endpoint": "https://zenmux.ai/api/v1",
 		"api_key": "test-key",
-		"model": "kimi-k2.6",
+		"model": "kimi-k3",
 		"timeout_seconds": 60.0,
 		"ai_personality": "",
 		"ai_test_passed": false,
@@ -567,7 +619,7 @@ func test_battle_setup_hides_strategy_discussion_button_in_portrait_only() -> St
 	_write_battle_review_config_for_test({
 		"endpoint": "https://zenmux.ai/api/v1",
 		"api_key": "test-key",
-		"model": "kimi-k2.6",
+		"model": "kimi-k3",
 		"timeout_seconds": 60.0,
 		"ai_personality": "",
 		"ai_test_passed": false,
@@ -592,7 +644,39 @@ func test_battle_setup_hides_strategy_discussion_button_in_portrait_only() -> St
 		assert_true(hidden_in_portrait, "Battle setup portrait should remove the AI strategy discussion button"),
 		assert_null(dialog_after_portrait_press, "Battle setup portrait should not open the AI strategy discussion dialog even if the handler is called directly"),
 		assert_true(visible_in_landscape, "Battle setup landscape should keep the AI strategy discussion button available"),
-		assert_str_contains(discuss_button.text if discuss_button != null else "", "Kimi K2.6", "Landscape strategy discussion button should still name the selected model"),
+		assert_str_contains(discuss_button.text if discuss_button != null else "", "Kimi K3", "Landscape strategy discussion button should still name the selected model"),
+	])
+
+	_dispose_scene(scene)
+	_restore_battle_review_config_file(snapshot)
+	return result
+
+
+func test_battle_setup_strategy_discussion_uses_configured_model_during_empty_option_selection() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	_write_battle_review_config_for_test({
+		"endpoint": "https://zenmux.ai/api/v1",
+		"api_key": "test-key",
+		"model": "kimi-k3",
+		"timeout_seconds": 60.0,
+		"ai_personality": "",
+		"ai_test_passed": false,
+		"ai_test_signature": "",
+	})
+	var scene := BattleSetupScene.instantiate()
+	scene.call("_ready")
+	var model_option := scene.find_child("LLMModelOption", true, false) as OptionButton
+	if model_option != null:
+		model_option.select(-1)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1600, 900), "landscape")
+	var discuss_button := scene.find_child("BtnDiscussStrategyAI", true, false) as Button
+
+	var result := run_checks([
+		assert_str_contains(
+			discuss_button.text if discuss_button != null else "",
+			"Kimi K3",
+			"Strategy discussion should keep the configured model while the option control has no active selection"
+		),
 	])
 
 	_dispose_scene(scene)
@@ -605,7 +689,7 @@ func test_battle_setup_portrait_llm_test_button_remains_available() -> String:
 	_write_battle_review_config_for_test({
 		"endpoint": "https://zenmux.ai/api/v1",
 		"api_key": "test-key",
-		"model": "kimi-k2.6",
+		"model": "kimi-k3",
 		"timeout_seconds": 60.0,
 		"ai_personality": "",
 		"ai_test_passed": false,
@@ -658,7 +742,7 @@ func test_battle_setup_llm_status_shows_saved_passed_result_in_both_layouts() ->
 	var config := {
 		"endpoint": "https://zenmux.ai/api/v1",
 		"api_key": "test-key",
-		"model": "kimi-k2.6",
+		"model": "kimi-k3",
 		"timeout_seconds": 60.0,
 		"ai_personality": "",
 		"ai_test_passed": true,
@@ -695,7 +779,7 @@ func test_battle_setup_llm_test_failure_result_stays_visible() -> String:
 	_write_battle_review_config_for_test({
 		"endpoint": "https://zenmux.ai/api/v1",
 		"api_key": "test-key",
-		"model": "kimi-k2.6",
+		"model": "kimi-k3",
 		"timeout_seconds": 60.0,
 		"ai_personality": "",
 		"ai_test_passed": false,
@@ -735,7 +819,7 @@ func test_battle_setup_landscape_ai_guidance_labels_reserve_readable_height() ->
 	_write_battle_review_config_for_test({
 		"endpoint": "https://zenmux.ai/api/v1",
 		"api_key": "test-key",
-		"model": "kimi-k2.6",
+		"model": "kimi-k3",
 		"timeout_seconds": 60.0,
 		"ai_personality": "",
 		"ai_test_passed": false,
@@ -772,7 +856,7 @@ func test_battle_setup_landscape_keeps_advanced_help_visible() -> String:
 	_write_battle_review_config_for_test({
 		"endpoint": "https://zenmux.ai/api/v1",
 		"api_key": "test-key",
-		"model": "kimi-k2.6",
+		"model": "kimi-k3",
 		"timeout_seconds": 60.0,
 		"ai_personality": "",
 		"ai_test_passed": false,
@@ -805,7 +889,7 @@ func test_battle_setup_deck_picker_categories_keep_recent_and_all_only() -> Stri
 
 	var old_deck := DeckData.new()
 	old_deck.id = 901001
-	old_deck.deck_name = "旧卡组"
+	old_deck.deck_name = "18.0 旧卡组"
 	old_deck.total_cards = 60
 	old_deck.import_date = "2026-05-06T10:00:00"
 	old_deck.updated_at = 1000
@@ -844,7 +928,7 @@ func test_battle_setup_deck_picker_categories_keep_recent_and_all_only() -> Stri
 		assert_true(tabs.has("all"), "Deck picker should keep the all category"),
 		assert_false(tabs.has("frequent"), "Deck picker should remove the frequent category"),
 		assert_eq((recent[0] as DeckData).id, recent_deck.id, "Recent category should sort by last_used descending"),
-		assert_eq((all_decks[0] as DeckData).id, latest_deck.id, "All category should sort by latest edit time descending"),
+		assert_eq((all_decks[0] as DeckData).id, latest_deck.id, "All category should sort by latest edit time descending instead of pinning 18.0 decks"),
 		assert_false(latest_meta.contains("60张"), "Deck picker card meta should not waste space on total card count"),
 		assert_false(latest_meta.contains("导入"), "Deck picker card meta should not display import timestamps"),
 		assert_true(first_card_button != null and "\n" not in first_card_button.text, "Deck picker list entries should show only the deck name"),
@@ -909,7 +993,7 @@ func test_battle_setup_uses_hud_ai_strategy_segment() -> String:
 	_write_battle_review_config_for_test({
 		"endpoint": "https://zenmux.ai/api/v1",
 		"api_key": "test-key",
-		"model": "kimi-k2.6",
+		"model": "kimi-k3",
 		"timeout_seconds": 60.0,
 		"ai_personality": "",
 		"ai_test_passed": false,
@@ -950,6 +1034,26 @@ func test_battle_setup_uses_hud_ai_strategy_segment() -> String:
 	if option != null and option.selected >= 0 and option.selected < option.item_count:
 		selected_after_llm = str(option.get_item_metadata(option.selected))
 
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(390, 844), "portrait")
+	var strategy_label := scene.find_child("AIStrategyLabel", true, false) as Label
+	var left_vbox := scene.find_child("LeftVBox", true, false) as VBoxContainer
+	var deck2_row := scene.find_child("Deck2Row", true, false) as HBoxContainer
+	var portrait_parent := segment.get_parent() if segment != null else null
+	var portrait_label_parent := strategy_label.get_parent() if strategy_label != null else null
+	var portrait_ordered_below_ai_deck := (
+		left_vbox != null
+		and deck2_row != null
+		and strategy_label != null
+		and segment != null
+		and strategy_label.get_index() == deck2_row.get_index() + 1
+		and segment.get_index() == strategy_label.get_index() + 1
+	)
+
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1600, 900), "landscape")
+	var right_vbox := scene.find_child("RightVBox", true, false) as VBoxContainer
+	var landscape_parent := segment.get_parent() if segment != null else null
+	var landscape_label_parent := strategy_label.get_parent() if strategy_label != null else null
+
 	var result := run_checks([
 		assert_not_null(segment, "AI strategy selection should expose a HUD segmented control"),
 		assert_true(segment != null and segment.visible, "AI strategy segmented control should be visible in VS_AI mode"),
@@ -958,9 +1062,95 @@ func test_battle_setup_uses_hud_ai_strategy_segment() -> String:
 		assert_true(first_button != null and first_button.custom_minimum_size.y >= 42.0, "Rules strategy button should be mobile tappable"),
 		assert_true(second_button != null and second_button.custom_minimum_size.y >= 42.0, "LLM strategy button should be mobile tappable"),
 		assert_eq(selected_after_llm, "miraidon_llm", "Pressing the LLM strategy segment should update the hidden strategy state"),
+		assert_eq(portrait_label_parent, left_vbox, "Portrait setup should place the AI strategy label beside the AI deck controls"),
+		assert_eq(portrait_parent, left_vbox, "Portrait setup should place rules and LLM buttons beside the AI deck controls"),
+		assert_true(portrait_ordered_below_ai_deck, "Portrait rules and LLM buttons should sit immediately below the AI deck row"),
+		assert_eq(landscape_label_parent, right_vbox, "Landscape setup should restore the AI strategy label to advanced settings"),
+		assert_eq(landscape_parent, right_vbox, "Landscape setup should restore rules and LLM buttons to advanced settings"),
 	])
 
 	scene.queue_free()
+	_restore_battle_review_config_file(snapshot)
+	return result
+
+
+func test_battle_setup_android_portrait_refreshes_ai_strategy_after_delayed_deck_seed() -> String:
+	var snapshot := _snapshot_battle_review_config_file()
+	var previous_layout_mode := str(GameManager.non_battle_layout_mode)
+	GameManager.non_battle_layout_mode = "portrait"
+	_write_battle_review_config_for_test({
+		"endpoint": "https://zenmux.ai/api/v1",
+		"api_key": "test-key",
+		"model": "kimi-k3",
+		"timeout_seconds": 60.0,
+		"ai_personality": "",
+		"ai_test_passed": false,
+		"ai_test_signature": "",
+	})
+	var scene := BattleSetupScene.instantiate()
+	var tree := Engine.get_main_loop() as SceneTree
+	scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(1080, 2400)
+	tree.root.add_child(scene)
+
+	var player_deck := DeckData.new()
+	player_deck.id = 575716
+	player_deck.deck_name = "Player Test Deck"
+	player_deck.total_cards = 60
+	var ai_deck := DeckData.new()
+	ai_deck.id = 575720
+	ai_deck.deck_name = "AI Test Deck"
+	ai_deck.total_cards = 60
+	var mode_option := scene.find_child("ModeOption", true, false) as OptionButton
+	if mode_option != null:
+		mode_option.select(1)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1080, 2400), "portrait")
+
+	# Reproduce Android's first pass: player decks are ready but bundled AI decks
+	# have not finished seeding yet, so the dependent selector is initially hidden.
+	scene.set("_deck_list", [player_deck])
+	scene.set("_ai_deck_list", [])
+	scene.call("_apply_deck_option_controls")
+	var segment := scene.find_child("AIStrategySegment", true, false) as HBoxContainer
+	var hidden_before_seed := segment == null or not segment.visible
+
+	# The delayed seed refresh must restore the selector without requiring the
+	# player to rotate the device or toggle AI mode.
+	scene.set("_ai_deck_list", [ai_deck])
+	scene.call("_apply_deck_option_controls")
+	await tree.process_frame
+	await tree.process_frame
+	var scroll := scene.find_child("PortraitSetupScroll", true, false) as ScrollContainer
+	var segment_in_portrait_scroll := scroll != null and segment != null and scroll.is_ancestor_of(segment)
+	var left_column := scene.find_child("LeftColumn", true, false) as PanelContainer
+	var right_column := scene.find_child("RightColumn", true, false) as PanelContainer
+	if segment_in_portrait_scroll:
+		scroll.ensure_control_visible(segment)
+		await tree.process_frame
+	var first_button := segment.get_child(0) as Button if segment != null and segment.get_child_count() > 0 else null
+	var second_button := segment.get_child(1) as Button if segment != null and segment.get_child_count() > 1 else null
+	var segment_visible_in_scroll := (
+		scroll != null
+		and segment != null
+		and segment.is_visible_in_tree()
+		and scroll.get_global_rect().intersects(segment.get_global_rect())
+	)
+
+	var result := run_checks([
+		assert_true(hidden_before_seed, "Regression setup should begin with the AI strategy selector hidden before AI decks finish seeding"),
+		assert_true(segment != null and segment.visible, "Delayed Android deck seeding should refresh the rules/LLM selector"),
+		assert_eq(segment.get_child_count() if segment != null else 0, 2, "Configured API should restore both rules and LLM buttons"),
+		assert_true(first_button != null and first_button.custom_minimum_size.y >= 100.0, "Portrait rules button should receive Android touch sizing after delayed creation"),
+		assert_true(second_button != null and second_button.custom_minimum_size.y >= 100.0, "Portrait LLM button should receive Android touch sizing after delayed creation"),
+		assert_eq(left_column.owner if left_column != null else null, scene, "Portrait reparenting should preserve LeftColumn scene ownership"),
+		assert_eq(right_column.owner if right_column != null else null, scene, "Portrait reparenting should preserve RightColumn scene ownership"),
+		assert_true(segment_in_portrait_scroll, "Portrait rules/LLM selector should remain inside the portrait scroll content"),
+		assert_true(segment_visible_in_scroll, "Portrait rules/LLM selector should be reachable inside the visible scroll viewport"),
+	])
+
+	_dispose_scene(scene)
+	GameManager.non_battle_layout_mode = previous_layout_mode
 	_restore_battle_review_config_file(snapshot)
 	return result
 
@@ -1476,6 +1666,114 @@ func test_battle_setup_hides_ai_edit_button_in_vs_ai_mode() -> String:
 
 	scene.queue_free()
 	return result
+
+
+func test_battle_setup_tablet_start_touch_cannot_route_to_deck_view() -> String:
+	var scene := BattleSetupScene.instantiate()
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_ready")
+	scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	scene.position = Vector2.ZERO
+	scene.size = Vector2(1280, 800)
+	_force_two_player_mode(scene)
+	scene.call("_apply_non_battle_layout_for_tests", Vector2(1280, 800), "landscape")
+	await tree.process_frame
+	await tree.process_frame
+
+	var start_button := scene.find_child("BtnStart", true, false) as Button
+	var deck1_view := scene.find_child("Deck1ViewButton", true, false) as Button
+	var deck2_view := scene.find_child("Deck2ViewButton", true, false) as Button
+	var start_rect := start_button.get_global_rect() if start_button != null else Rect2()
+	var start_center := start_rect.get_center()
+	var routed_action: Button = scene.call("_deck_action_button_at_position", start_center) if start_button != null else null
+	var deck1_overlaps_start := deck1_view != null and deck1_view.get_global_rect().intersects(start_rect)
+	var deck2_overlaps_start := deck2_view != null and deck2_view.get_global_rect().intersects(start_rect)
+	var forced_overlap_routes_to_start := false
+	if start_button != null and deck1_view != null:
+		deck1_view.global_position = start_rect.position
+		deck1_view.size = start_rect.size
+		forced_overlap_routes_to_start = scene.call("_deck_action_button_at_position", start_center) == null
+	var result := run_checks([
+		assert_not_null(start_button, "Tablet battle setup should expose Start Battle"),
+		assert_true(start_rect.size.x > 0.0 and start_rect.size.y > 0.0, "Tablet Start Battle should have a real hit rectangle"),
+		assert_false(deck1_overlaps_start, "Player 1 deck-view hitbox must not overlap Start Battle on tablet landscape"),
+		assert_false(deck2_overlaps_start, "Player 2 deck-view hitbox must not overlap Start Battle on tablet landscape"),
+		assert_null(routed_action, "A tablet touch at Start Battle must never be claimed by a deck-view root route"),
+		assert_true(forced_overlap_routes_to_start, "Start Battle must keep input priority even if a stale tablet layout temporarily overlaps a deck-view hitbox"),
+	])
+	_dispose_scene(scene)
+	return result
+
+
+func test_battle_setup_deck_view_close_release_does_not_reopen_underlying_button() -> String:
+	var scene := BattleSetupScene.instantiate()
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	scene.call("_clear_startup_input_shield")
+	_force_two_player_mode(scene)
+
+	var deck := DeckData.new()
+	deck.id = 991001
+	deck.deck_name = "Tablet modal input regression"
+	deck.total_cards = 4
+	deck.cards = [{"name": "Test Pokemon", "count": 4, "card_type": "Pokemon", "set_code": "UTEST", "card_index": "001"}]
+	scene.set("_deck_list", [deck])
+	var deck1_option := scene.find_child("Deck1Option", true, false) as OptionButton
+	deck1_option.clear()
+	deck1_option.add_item(deck.deck_name, deck.id)
+	deck1_option.select(0)
+	scene.call("_on_deck_view_pressed", 0)
+	await tree.process_frame
+
+	var dialog := scene.find_child("DeckViewDialog", false, false) as AcceptDialog
+	var deck1_view := scene.find_child("Deck1ViewButton", true, false) as Button
+	if deck1_view != null:
+		deck1_view.global_position = Vector2(80, 80)
+		deck1_view.size = Vector2(220, 64)
+	var release_position := deck1_view.get_global_rect().get_center() if deck1_view != null else Vector2.ZERO
+	var routed_before_close: Button = scene.call("_deck_action_button_at_position", release_position)
+	var initial_dialog_count := 0
+	for child: Node in scene.get_children():
+		if child.name == "DeckViewDialog":
+			initial_dialog_count += 1
+	if dialog != null:
+		dialog.queue_free()
+	var release := InputEventScreenTouch.new()
+	release.position = release_position
+	release.pressed = false
+	var release_handled := bool(scene.call("_handle_deck_action_button_input", release))
+	await tree.process_frame
+	var remaining_dialog_count := 0
+	for child: Node in scene.get_children():
+		if child.name == "DeckViewDialog":
+			remaining_dialog_count += 1
+
+	var result := run_checks([
+		assert_eq(initial_dialog_count, 1, "Deck view regression setup should open exactly one modal"),
+		assert_eq(routed_before_close, deck1_view, "Regression setup should place the close release over the underlying deck-view root route"),
+		assert_false(release_handled, "Deck action root routing must ignore the release while its deck-view modal is closing"),
+		assert_eq(remaining_dialog_count, 0, "The release that closes deck view must not pass through and reopen it from the underlying tablet button"),
+	])
+	_dispose_scene(scene)
+	return result
+
+
+func test_battle_setup_deferred_deck_refresh_stops_during_scene_teardown() -> String:
+	var scene := BattleSetupScene.instantiate()
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	var warning := scene.find_child("NoDeckWarning", true, false)
+	var generation := int(scene.get("_initial_deck_refresh_generation"))
+	scene.queue_free()
+	# Reproduce the teardown window where child controls have exited before a
+	# previously scheduled initial-data refresh callback is dispatched.
+	if warning != null and warning.get_parent() != null:
+		warning.get_parent().remove_child(warning)
+		warning.free()
+	scene.call("_refresh_deck_options_after_initial_data_settle", generation)
+	await tree.process_frame
+	return ""
 
 
 func _first_deck_view_tile(node: Node) -> Control:

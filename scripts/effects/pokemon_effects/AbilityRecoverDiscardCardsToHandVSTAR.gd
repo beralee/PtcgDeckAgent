@@ -88,7 +88,7 @@ func _get_recoverable_cards(player: PlayerState) -> Array:
 	for card: CardInstance in player.discard_pile:
 		if card == null or card.card_data == null:
 			continue
-		if card.card_data.card_type == card_type_filter:
+		if card.card_data.card_type == card_type_filter and DiscardPileRestriction.can_move_to_hand_or_deck(card):
 			result.append(card)
 	return result
 

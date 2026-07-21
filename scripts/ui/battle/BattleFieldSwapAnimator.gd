@@ -6,6 +6,7 @@ const MOVE_SECONDS := 0.28
 const HIDDEN_SLOT_ALPHA := 0.18
 const MAX_FIELD_BENCH_SIZE := 8
 const BattleCardViewScript := preload("res://scenes/battle/BattleCardView.gd")
+const OverlayGeometry := preload("res://scripts/ui/battle/BattleOverlayGeometry.gd")
 
 
 func capture_field_snapshot(gs: GameState, view_player: int) -> Dictionary:
@@ -58,6 +59,8 @@ func play_detected_swap(scene: Object, before_snapshot: Dictionary, after_snapsh
 
 
 func play_detected_field_movement(scene: Object, before_snapshot: Dictionary, after_snapshot: Dictionary) -> bool:
+	if not bool(GameManager.battle_effects_enabled):
+		return false
 	var movement := detect_active_field_movement(before_snapshot, after_snapshot)
 	if movement.is_empty():
 		return false
@@ -66,7 +69,7 @@ func play_detected_field_movement(scene: Object, before_snapshot: Dictionary, af
 
 
 func play_swap(scene: Object, movement: Dictionary) -> void:
-	if scene == null or movement.is_empty():
+	if scene == null or movement.is_empty() or not bool(GameManager.battle_effects_enabled):
 		return
 	var overlay := _ensure_overlay(scene)
 	if overlay == null:
@@ -260,8 +263,7 @@ func _node_name_for_slot_id(slot_id: String) -> String:
 
 
 func _control_rect_in_overlay(overlay: Control, control: Control) -> Rect2:
-	var global_rect := control.get_global_rect()
-	return Rect2(global_rect.position - overlay.get_global_rect().position, global_rect.size)
+	return OverlayGeometry.control_rect_in_overlay(overlay, control)
 
 
 func _hide_involved_field_slots(scene: Object, movement: Dictionary) -> Array[Dictionary]:

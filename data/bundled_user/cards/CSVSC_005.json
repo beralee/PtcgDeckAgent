@@ -1,0 +1,66 @@
+{
+    "name":  "原野水母",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【草】 冲撞 10\n\n\n【草】 重掴 20\n\n\n",
+    "yoren_code":  "P0948",
+    "set_code":  "CSVSC",
+    "card_index":  "005",
+    "set_code_en":  "SCR",
+    "card_index_en":  "17",
+    "name_en":  "Toedscool",
+    "name_zh":  "",
+    "artist":  "Tetsu Kayama",
+    "rarity":  "无标记",
+    "release_date":  "2026-01-16T00:00:00+08:00",
+    "regulation_mark":  "H",
+    "effect_id":  "89682d9351f11f21cc26dadd9bb36fb8",
+    "image_url":  "https://tcg.mik.moe/static/img/CSVSC/005.png",
+    "image_local_path":  "user://cards/images/CSVSC/005.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "G",
+    "stage":  "Basic",
+    "hp":  60,
+    "weakness_energy":  "R",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "冲撞",
+                        "text":  "",
+                        "cost":  "G",
+                        "damage":  "10",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "重掴",
+                        "text":  "",
+                        "cost":  "GC",
+                        "damage":  "20",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

@@ -55,6 +55,20 @@ func test_attack_only_pokemon_interaction_status_uses_attack_steps() -> String:
 	])
 
 
+func test_catalog_only_cards_are_included_in_full_card_audit() -> String:
+	var audit := CardCatalogAuditRunner.new()
+	var cards: Array = audit.call("_load_cached_cards")
+	var found := false
+	for raw_card: Variant in cards:
+		if raw_card is CardData and (raw_card as CardData).get_uid() == "CSV4C_015":
+			found = true
+			break
+	return run_checks([
+		assert_true(found, "Full card audit should explicitly materialize catalog-only cards"),
+		assert_false(FileAccess.file_exists("res://data/bundled_user/cards/CSV4C_015.json"), "Audit coverage must not require promoting catalog-only cards into bundled user data"),
+	])
+
+
 func _make_pokemon_card(
 	name: String,
 	stage: String,

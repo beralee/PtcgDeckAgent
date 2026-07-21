@@ -42,7 +42,7 @@ func _write_ready_llm_config_for_test() -> void:
 	var config := {
 		"endpoint": "https://zenmux.ai/api/v1",
 		"api_key": "test-key",
-		"model": "kimi-k2.6",
+		"model": "kimi-k3",
 		"timeout_seconds": 60.0,
 		"ai_personality": "",
 		"ai_test_passed": true,
@@ -59,7 +59,7 @@ func _write_not_ready_llm_config_for_test() -> void:
 	var config := {
 		"endpoint": "https://zenmux.ai/api/v1",
 		"api_key": "test-key",
-		"model": "kimi-k2.6",
+		"model": "kimi-k3",
 		"timeout_seconds": 60.0,
 		"ai_personality": "",
 		"ai_test_passed": false,
@@ -139,6 +139,7 @@ func test_tournament_scenes_instantiate() -> String:
 		assert_true(setup.find_child("DeckPickerButton", true, false) is Button, "TournamentSetup 应包含 HUD 卡组选择按钮"),
 		assert_true(setup.find_child("SelectedDeckLabel", true, false) is Label, "TournamentSetup 应显示已选玩家卡组"),
 		assert_null(setup.find_child("SizeOption", true, false), "TournamentSetup 不应再使用人数下拉框"),
+		assert_true(setup.find_child("TournamentFormatRadioGroup", true, false) is GridContainer, "TournamentSetup 应使用 radio 赛制选择组"),
 		assert_true(setup.find_child("TournamentSizeRadioGroup", true, false) is GridContainer, "TournamentSetup 应使用 radio 人数选择组"),
 		assert_true(setup.find_child("RoundInfoLabel", true, false) is Label, "TournamentSetup 应显示预计轮数"),
 		assert_true(overview.find_child("RosterText", true, false) is TextEdit, "TournamentOverview 应包含参赛名单文本框"),
@@ -195,6 +196,8 @@ func test_tournament_setup_opens_hud_deck_picker() -> String:
 	var overlay := scene.find_child("DeckPickerOverlay", true, false) as Control
 	var grid := scene.find_child("DeckPickerGrid", true, false) as GridContainer
 	var picker_button := scene.find_child("DeckPickerButton", true, false) as Button
+	var picker_tabs: Dictionary = scene.get("_deck_picker_tabs")
+	var all_tab := picker_tabs.get("all") as Button
 	var overlay_visible := overlay != null and overlay.visible
 	var grid_has_content := grid != null and grid.get_child_count() > 0
 	var picker_style := picker_button.get_theme_stylebox("normal") as StyleBoxFlat if picker_button != null else null
@@ -205,6 +208,57 @@ func test_tournament_setup_opens_hud_deck_picker() -> String:
 		assert_not_null(grid, "比赛模式卡组选择弹层应包含卡组网格"),
 		assert_true(grid_has_content, "比赛模式卡组选择弹层应渲染可选卡组或空状态"),
 		assert_true(picker_style != null and picker_style.border_color.a > 0.5, "比赛模式卡组选择按钮应使用 HUD 样式"),
+		assert_eq(all_tab.text if all_tab != null else "", "全部(更新18.0)", "比赛模式卡组选择应标明完整 18.0 卡组列表"),
+	])
+
+
+func test_tournament_defaults_to_standard_and_excludes_pre_18_ai_decks() -> String:
+	var tournament := SwissTournamentScript.new()
+	tournament.setup("标准赛玩家", 800018499, 128, 20260718)
+	var standard_pool: Array[int] = tournament.get_ai_deck_pool_for_format("standard")
+	var open_pool: Array[int] = tournament.get_ai_deck_pool_for_format("open")
+	var legacy_ai_deck_ids: Array[int] = []
+	var selected_ai_deck_ids: Dictionary = {}
+	for participant: Dictionary in tournament.participants:
+		if bool(participant.get("is_player", false)):
+			continue
+		var deck_id := int(participant.get("deck_id", 0))
+		selected_ai_deck_ids[deck_id] = true
+		var deck: DeckData = CardDatabase.get_ai_deck(deck_id)
+		var version_token := str(deck.deck_name if deck != null else "").get_slice(" ", 0)
+		if not version_token.is_valid_float() or float(version_token) < 18.0:
+			legacy_ai_deck_ids.append(deck_id)
+	return run_checks([
+		assert_eq(tournament.tournament_format, "standard", "Tournament format should default to Standard"),
+		assert_true(not selected_ai_deck_ids.is_empty(), "Default tournament should create AI opponents"),
+		assert_eq(legacy_ai_deck_ids, [], "Default standard tournament must exclude every pre-18.0 AI deck"),
+		assert_true(not standard_pool.is_empty() and standard_pool.size() < open_pool.size(), "Standard AI pool should be a non-empty subset of the Open pool"),
+		assert_true(575720 not in standard_pool and 575720 in open_pool, "A pre-18.0 Miraidon deck should only be eligible in Open format"),
+	])
+
+
+func test_open_tournament_uses_all_ai_decks_and_persists_format() -> String:
+	var tournament := SwissTournamentScript.new()
+	tournament.setup("开放赛玩家", 800018499, 128, 20260718, false, "open")
+	var legacy_ai_deck_ids: Array[int] = []
+	for participant: Dictionary in tournament.participants:
+		if bool(participant.get("is_player", false)):
+			continue
+		var deck_id := int(participant.get("deck_id", 0))
+		var deck: DeckData = CardDatabase.get_ai_deck(deck_id)
+		var version_token := str(deck.deck_name if deck != null else "").get_slice(" ", 0)
+		if not version_token.is_valid_float() or float(version_token) < 18.0:
+			legacy_ai_deck_ids.append(deck_id)
+	var restored := SwissTournamentScript.new()
+	restored.restore_state(tournament.serialize_state())
+	var future_deck := DeckData.new()
+	future_deck.deck_name = "19.0 Future Standard Deck"
+	return run_checks([
+		assert_eq(tournament.tournament_format, "open", "Explicit Open tournament should retain the selected format"),
+		assert_true(not legacy_ai_deck_ids.is_empty(), "Open tournament should allow pre-18.0 AI decks"),
+		assert_eq(restored.tournament_format, "open", "Tournament save/restore should preserve Open format"),
+		assert_true(tournament.is_standard_ai_deck(future_deck), "Future 19.0 AI decks should automatically qualify for Standard format"),
+		assert_eq(tournament.rounds_for_size(2048), 11, "The extended 2048-player option should produce eleven Swiss rounds"),
 	])
 
 
@@ -334,7 +388,9 @@ func test_tournament_setup_flows_into_overview_before_battle() -> String:
 	var result := run_checks([
 		assert_not_null(tournament, "点击查看比赛情况后应创建比赛对象"),
 		assert_true(tournament != null and int(tournament.current_round) == 0, "进入总览页前不应提前开始第一轮"),
+		assert_true(tournament != null and str(tournament.tournament_format) == "standard", "比赛设置应默认创建标准赛"),
 		assert_true(meta_label.text.find("测试玩家") >= 0, "总览页应显示玩家名字"),
+		assert_true(meta_label.text.find("比赛赛制：标准") >= 0, "总览页应显示当前标准赛制"),
 		assert_true(roster_text.text.find("测试玩家") >= 0, "总览页应列出玩家参赛信息"),
 		assert_true(distribution_text.text.find("卡组分布") >= 0, "总览页应显示卡组分布区块"),
 	])
@@ -347,6 +403,46 @@ func test_tournament_setup_flows_into_overview_before_battle() -> String:
 	GameManager.current_tournament = previous_tournament
 	GameManager.tournament_selected_player_deck_id = previous_tournament_deck_id
 	return result
+
+
+func test_tournament_setup_open_radio_reaches_created_tournament() -> String:
+	var previous_tournament := GameManager.current_tournament
+	var previous_tournament_deck_id := GameManager.tournament_selected_player_deck_id
+	GameManager.clear_tournament()
+	GameManager.set_tournament_selected_player_deck_id(800018499)
+	_set_navigation_suppressed(true)
+	var setup: Control = TournamentSetupScene.instantiate()
+	setup.call("_ready")
+	var name_edit := setup.find_child("NameEdit", true, false) as LineEdit
+	var open_radio := setup.find_child("TournamentFormatRadioOpen", true, false) as Button
+	if name_edit != null:
+		name_edit.text = "开放赛玩家"
+	if open_radio != null:
+		open_radio.pressed.emit()
+	setup.call("_on_start_pressed")
+	var created_tournament = GameManager.current_tournament
+	var result := run_checks([
+		assert_true(open_radio != null and open_radio.button_pressed, "Open format radio should remain selected after being pressed"),
+		assert_not_null(created_tournament, "Open format UI should create a tournament"),
+		assert_eq(str(created_tournament.tournament_format if created_tournament != null else ""), "open", "TournamentSetup must pass Open format through GameManager"),
+	])
+	setup.queue_free()
+	_set_navigation_suppressed(false)
+	GameManager.current_tournament = previous_tournament
+	GameManager.tournament_selected_player_deck_id = previous_tournament_deck_id
+	return result
+
+
+func test_tournament_supports_2048_players_and_first_round_pairings() -> String:
+	var tournament := SwissTournamentScript.new()
+	tournament.setup("大型赛玩家", 800018499, 2048, 20260718)
+	var player_pairing := tournament.prepare_next_round()
+	return run_checks([
+		assert_eq(tournament.participants.size(), 2048, "The largest tournament option should create all 2048 participants"),
+		assert_eq(tournament.total_rounds, 11, "A 2048-player Swiss tournament should use eleven rounds"),
+		assert_eq(tournament.current_pairings.size(), 1024, "The first 2048-player round should create 1024 tables"),
+		assert_true(not player_pairing.is_empty(), "The player should receive a valid first-round pairing in a 2048-player tournament"),
+	])
 
 
 func test_practice_battle_does_not_count_as_tournament_when_tournament_exists() -> String:

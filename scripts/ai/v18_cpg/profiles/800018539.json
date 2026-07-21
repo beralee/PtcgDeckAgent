@@ -1,0 +1,185 @@
+{
+  "profile_version": 5,
+  "semantic_version": 1,
+  "risk_posture": "balanced",
+  "switch_margin": 80.0,
+  "expected_regret_threshold": 65.0,
+  "initial_response_token_budget": 420,
+  "delta_response_token_budget": 170,
+  "turn_visible_wait_budget_ms": 6500,
+  "cold_request_estimate_ms": 5000,
+  "max_policy_nodes": 7,
+  "protected_roles": [
+    "partner_piece",
+    "signature_piece",
+    "energy_accelerator",
+    "energy_source",
+    "energy_target",
+    "evolution_piece",
+    "recovery",
+    "bench_space"
+  ],
+  "strategic_priorities": [
+    {
+      "priority": 1,
+      "goal": "minimum_resource_ko",
+      "when_all": [{"fact": "attack.ko_available", "op": "==", "value": true}],
+      "prefer_routes": ["route:attack_ko", "route:gust"],
+      "avoid_routes": ["route:information", "route:develop", "route:end_turn"],
+      "preserve_roles": ["energy_source", "energy_accelerator", "recovery"]
+    },
+    {
+      "priority": 2,
+      "goal": "route_completion",
+      "when_all": [{"fact": "attack.ready", "op": "==", "value": false}],
+      "prefer_routes": ["route:accelerate", "route:develop", "route:evolve", "route:energy_commit", "route:pivot"],
+      "avoid_routes": ["route:end_turn"],
+      "preserve_roles": ["partner_piece", "energy_target", "evolution_piece"]
+    },
+    {
+      "priority": 3,
+      "goal": "next_attacker_continuity",
+      "when_all": [{"fact": "resources.energy_on_board", "op": ">=", "value": 2}],
+      "prefer_routes": ["route:pivot", "route:evolve", "route:energy_commit", "route:attack_pressure"],
+      "avoid_routes": ["route:information"],
+      "preserve_roles": ["energy_target", "energy_accelerator", "partner_piece"]
+    },
+    {
+      "priority": 4,
+      "goal": "bench_space_preservation",
+      "when_all": [{"fact": "board.bench_full", "op": "==", "value": true}],
+      "prefer_routes": ["route:attack_ko", "route:attack_pressure", "route:pivot", "route:evolve"],
+      "avoid_routes": ["route:develop", "route:opening_search"],
+      "preserve_roles": ["energy_target", "evolution_piece", "bench_space"]
+    },
+    {
+      "priority": 5,
+      "goal": "low_deck_safety",
+      "when_all": [{"fact": "resources.deck_low", "op": "==", "value": true}],
+      "prefer_routes": ["route:attack_ko", "route:attack_pressure", "route:pivot"],
+      "avoid_routes": ["route:information", "route:opening_search", "route:develop"],
+      "preserve_roles": ["recovery", "energy_source"]
+    }
+  ],
+  "route_preferences": {
+    "model_consideration_margin": 360.0,
+    "route_biases": {
+      "route:attack_ko": 280.0,
+      "route:attack_pressure": 120.0,
+      "route:accelerate": 200.0,
+      "route:develop": 130.0,
+      "route:evolve": 150.0,
+      "route:energy_commit": 150.0,
+      "route:pivot": 140.0,
+      "route:information": 10.0,
+      "route:end_turn": -250.0
+    },
+    "ready_ko_order": ["route:attack_ko", "route:gust", "route:attack_pressure"],
+    "attackless_order": ["route:accelerate", "route:develop", "route:evolve", "route:energy_commit", "route:pivot"],
+    "avoid_after_ko_secured": ["route:information", "route:develop", "route:opening_search"]
+  },
+  "safety": {
+    "max_switch_gap": 120.0,
+    "block_search_when_deck_low": true,
+    "low_deck_threshold": 8,
+    "critical_deck_threshold": 5,
+    "preserve_bench_slots": 1,
+    "stop_optional_draw_when_attack_ready": true,
+    "reject_information_churn_after_ko_secured": true
+  },
+  "module_parameters": {
+    "fire_toolbox": {
+      "attack_cost_by_uid": {
+        "CSV10C_035": ["R", "R", "R", "R"],
+        "CSV9.5C_029": ["R", "R", "R"],
+        "CSV1C_028": ["R", "R", "C"]
+      },
+      "same_turn_retreat_attack_invariant": {
+        "schema_version": 1,
+        "attacker_uid": "CSV10C_035",
+        "attacker_effect_id": "23d228f7053a7314a2ee5f651f38a3cb",
+        "attack_index": 0,
+        "attack_damage": 160,
+        "required_fire_units": 4,
+        "basic_fire_energy_uid": "CSVE1C_FIR",
+        "any_type_energy_uids": ["CSV8C_207"],
+        "conditional_any_type_energy_uids": ["CSV1C_127"],
+        "special_energy_uids": ["CSV1C_127", "CSV8C_207"],
+        "target_energy_effect_id_by_uid": {
+          "CSVE1C_FIR": "22db5405bf0cce61a00aa8082cdd1e65",
+          "CSV1C_127": "540ee48bb93584e4bfe3d7f5d0ee0efc",
+          "CSV8C_207": "6f31b7241a181631016466e561f148f3"
+        },
+        "free_retreat_provider_uid": "CSV9C_078",
+        "free_retreat_provider_effect_id": "f8c2715403e3f4ea9783c46be2de832b",
+        "free_retreat_active_stage": "Basic",
+        "opponent_active_uid": "CSV6C_051",
+        "opponent_active_effect_id": "e9f0c124fc2e352af2408a7e61862b95",
+        "allowed_opponent_tool_effect_ids": [
+          "0b4cc131a19862f92acf71494f29a0ed"
+        ],
+        "allowed_opponent_energy_effect_ids": [
+          "45550fd10011f6ade7eef16ba88788cf"
+        ],
+        "allowed_stadium_effect_ids": [
+          "4e16157bfa88a41e823d058a732df8e0"
+        ],
+        "rule_target_min_attack_energy_count_by_uid": {
+          "CSV2C_105": 1,
+          "CSV1C_028": 3,
+          "CSV10C_082": 2,
+          "CSV9C_033": 1,
+          "CSV9C_078": 3,
+          "CSV9C_006": 3,
+          "CSV10C_035": 4
+        },
+        "minimum_projected_damage": 1,
+        "require_target_on_bench": true,
+        "require_exact_retreat_quota": true,
+        "require_rule_suffix_unavailable": true
+      }
+    },
+    "energy_burst": {
+      "burst_damage_mode": "none",
+      "primary_attack_required_types": ["R"],
+      "primary_attacker_uids": [],
+      "reserve_total_energy_next_turn": 4,
+      "reserve_engine_energy": 2,
+      "low_deck_threshold": 8,
+      "critical_deck_threshold": 5,
+      "bench_slots_to_reserve": 1,
+      "extra_prize_closeout": {
+        "deck_id": 800018539,
+        "attacker_uid": "CSV6C_051",
+        "attacker_effect_id": "e9f0c124fc2e352af2408a7e61862b95",
+        "bonus_attack_index": 1,
+        "comparison_attack_index": 0,
+        "bonus_damage": 120,
+        "comparison_damage": 160,
+        "extra_prizes": 1,
+        "required_own_prizes_remaining": 2,
+        "required_active_prize_count": 1,
+        "max_active_remaining_hp": 120,
+        "require_live_opponent_bench": true,
+        "required_active_energy_count": 4,
+        "wildcard_energy_uid": "CSV1C_127",
+        "wildcard_energy_effect_id": "540ee48bb93584e4bfe3d7f5d0ee0efc",
+        "required_wildcard_energy_count": 1,
+        "required_basic_energy_uid": "CSVE1C_FIR",
+        "required_basic_energy_effect_id": "22db5405bf0cce61a00aa8082cdd1e65",
+        "required_basic_energy_count": 3,
+        "public_protection_effect_ids": [
+          "896c85e6588f5e35909fd0969201be21",
+          "fd252ce877c709e9e3161c56ef98aff8"
+        ],
+        "public_reaction_effect_ids": [
+          "0c65d1d9705ccf735d3780b072e3924d",
+          "08e4abe39ce058b6724cf68c1e9828e4",
+          "76ed73e869ac742e97ea521f200a360e",
+          "1bc2bed91258ca0ecfb69e5ee8dc0c79",
+          "f9db949f369ecead569fb8e3adc4eaee"
+        ]
+      }
+    }
+  }
+}

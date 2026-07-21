@@ -83,8 +83,9 @@ func test_update_checker_and_app_version_scripts_load() -> String:
 		assert_not_null(update_instance, "UpdateChecker.gd should instantiate"),
 		assert_not_null(feedback_instance, "FeedbackClient.gd should instantiate"),
 		assert_not_null(user_visit_instance, "UserVisitClient.gd should instantiate"),
-		assert_eq(str(app_version_script.VERSION), "0.4.8", "AppVersion should expose the current version"),
-		assert_eq(str(app_version_script.DISPLAY_VERSION), "v0.4.8", "AppVersion should expose display version"),
+		assert_eq(str(app_version_script.VERSION), "0.5.1", "AppVersion should expose the current version"),
+		assert_eq(str(app_version_script.DISPLAY_VERSION), "v0.5.1", "AppVersion should expose display version"),
+		assert_eq(int(app_version_script.BUILD_NUMBER), 51, "AppVersion should expose the current mobile build number"),
 		assert_eq(str(feedback_script.ENDPOINT_URL), "http://fc.skillserver.cn/ptcg", "Feedback client should use the production cloud function endpoint"),
 		assert_eq(str(user_visit_script.ENDPOINT_URL), "http://fc.skillserver.cn/userptcg", "User visit client should use the production cloud function endpoint"),
 		assert_eq(str(user_visit_script.WEB_BRIDGE_PAGE), "userptcg_bridge.html", "User visit client should expose the static Web bridge page"),
@@ -470,8 +471,8 @@ func test_update_available_uses_current_version() -> String:
 		return str((checker_result as Dictionary).get("error", "checker setup failed"))
 	var checker: Object = (checker_result as Dictionary).get("value") as Object
 	var checks := run_checks([
-		assert_true(bool(checker.call("is_update_available", {"latest_version": "0.4.9"})), "0.4.9 should be available over current 0.4.8"),
-		assert_false(bool(checker.call("is_update_available", {"latest_version": "0.4.8"})), "Current version should not be treated as an update"),
+		assert_true(bool(checker.call("is_update_available", {"latest_version": "0.5.2"})), "0.5.2 should be available over current 0.5.1"),
+		assert_false(bool(checker.call("is_update_available", {"latest_version": "0.5.1"})), "Current version should not be treated as an update"),
 	])
 	checker.free()
 	return checks

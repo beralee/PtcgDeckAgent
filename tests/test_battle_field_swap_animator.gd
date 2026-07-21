@@ -85,6 +85,39 @@ func test_ignores_view_player_flip_and_bench_only_reorder() -> String:
 	])
 
 
+func test_swap_animation_rects_follow_transformed_battle_canvas() -> String:
+	var root := Control.new()
+	root.size = Vector2(1000, 700)
+	root.position = Vector2(115, 65)
+	root.rotation = 0.13
+	root.scale = Vector2(1.18, 0.86)
+	var overlay := Control.new()
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root.add_child(overlay)
+	var field_parent := Control.new()
+	field_parent.position = Vector2(170, 95)
+	field_parent.rotation = -0.19
+	field_parent.scale = Vector2(0.91, 1.12)
+	root.add_child(field_parent)
+	var slot_control := Control.new()
+	slot_control.position = Vector2(280, 210)
+	slot_control.size = Vector2(156, 218)
+	field_parent.add_child(slot_control)
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.add_child(root)
+	await tree.process_frame
+	var animator: RefCounted = AnimatorScript.new()
+	var actual: Rect2 = animator.call("_control_rect_in_overlay", overlay, slot_control)
+	var expected := _rect_in_overlay_space(overlay, slot_control)
+	var result := run_checks([
+		assert_true(actual.position.distance_to(expected.position) < 0.5, "Forced-switch animation must start at the rendered Pokemon position: actual=%s expected=%s" % [actual, expected]),
+		assert_true(actual.size.distance_to(expected.size) < 0.5, "Forced-switch animation card size must match the transformed slot: actual=%s expected=%s" % [actual, expected]),
+	])
+	root.queue_free()
+	await tree.process_frame
+	return result
+
+
 func _make_state() -> GameState:
 	var gs := GameState.new()
 	for player_index: int in 2:
@@ -119,3 +152,19 @@ func _from_to_pairs(moves: Array) -> Array:
 
 func _contains_pair(pairs: Array, pair: String) -> bool:
 	return pair in pairs
+
+
+func _rect_in_overlay_space(overlay: Control, control: Control) -> Rect2:
+	var relative := overlay.get_screen_transform().affine_inverse() * control.get_screen_transform()
+	var corners := [
+		relative * Vector2.ZERO,
+		relative * Vector2(control.size.x, 0),
+		relative * control.size,
+		relative * Vector2(0, control.size.y),
+	]
+	var min_point: Vector2 = corners[0]
+	var max_point: Vector2 = corners[0]
+	for point: Vector2 in corners:
+		min_point = min_point.min(point)
+		max_point = max_point.max(point)
+	return Rect2(min_point, max_point - min_point)

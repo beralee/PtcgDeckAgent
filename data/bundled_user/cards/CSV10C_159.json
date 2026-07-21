@@ -1,0 +1,58 @@
+{
+  "name": "玛机雅娜",
+  "card_type": "Pokemon",
+  "mechanic": "",
+  "label": "",
+  "description": "特性: 自动治愈\n只要这只宝可梦在战斗场上，每当自己从手牌给宝可梦附着能量时，就回复那只宝可梦「90」HP。\n\n 决胜抽取 20\n从自己牌库上方抽取2张卡牌。\n\n",
+  "yoren_code": "P801",
+  "set_code": "CSV10C",
+  "card_index": "159",
+  "set_code_en": "",
+  "card_index_en": "",
+  "name_en": "",
+  "name_zh": "",
+  "artist": "rika",
+  "rarity": "R",
+  "release_date": "2026-07-16T00:00:00+08:00",
+  "regulation_mark": "I",
+  "effect_id": "b546d9d9e11f6329bc743986c3b578c2",
+  "image_url": "https://tcg.mik.moe/static/img/CSV10C/159.png",
+  "image_local_path": "user://cards/images/CSV10C/159.png",
+  "source_provider": "tcg_mik",
+  "source_url": "https://tcg.mik.moe/cards/CSV10C/159",
+  "source_set_code": "CSV10C",
+  "source_card_index": "159",
+  "source_language": "zh-CN",
+  "source_prints": [],
+  "source_imported_at": 0,
+  "source_parser_version": 1,
+  "is_tags": [],
+  "regulation_standard": true,
+  "regulation_expanded": true,
+  "energy_type": "M",
+  "stage": "Basic",
+  "hp": 90,
+  "weakness_energy": "R",
+  "weakness_value": "×2",
+  "resistance_energy": "G",
+  "resistance_value": "-30",
+  "retreat_cost": 1,
+  "evolves_from": "",
+  "ancient_trait": "",
+  "attacks": [
+    {
+      "name": "决胜抽取",
+      "text": "从自己牌库上方抽取2张卡牌。",
+      "cost": "C",
+      "damage": "20",
+      "is_vstar_power": false
+    }
+  ],
+  "abilities": [
+    {
+      "name": "自动治愈",
+      "text": "只要这只宝可梦在战斗场上，每当自己从手牌给宝可梦附着能量时，就回复那只宝可梦「90」HP。"
+    }
+  ],
+  "energy_provides": ""
+}

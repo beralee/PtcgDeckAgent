@@ -144,11 +144,12 @@ func predict_attacker_damage(slot: PokemonSlot, extra_context: int = 0) -> Dicti
 		return {"damage": 0, "can_attack": false, "description": ""}
 	if _matches_key(slot, TERAPAGOS_ID):
 		var attached := slot.attached_energy.size() + extra_context
+		var attack_discount := _sparkling_crystal_attack_discount(slot)
 		var best_damage := 0
 		var can_attack := false
 		for attack: Dictionary in slot.get_card_data().attacks:
 			var cost := CardData.normalize_attack_cost(str(attack.get("cost", "")))
-			if attached < cost.length():
+			if attached < maxi(0, cost.length() - attack_discount):
 				continue
 			can_attack = true
 			var raw_damage := str(attack.get("damage", "0"))
@@ -171,6 +172,17 @@ func predict_attacker_damage(slot: PokemonSlot, extra_context: int = 0) -> Dicti
 			best_damage = maxi(best_damage, 260 if raw_damage.begins_with("60+") else _parse_damage(raw_damage))
 		return {"damage": best_damage, "can_attack": can_attack, "description": "palkia_bench_scaling"}
 	return super.predict_attacker_damage(slot, extra_context)
+
+
+func _sparkling_crystal_attack_discount(slot: PokemonSlot) -> int:
+	if slot == null or slot.get_card_data() == null or slot.attached_tool == null or slot.attached_tool.card_data == null:
+		return 0
+	var trait_name := str(slot.get_card_data().ancient_trait).to_lower()
+	if trait_name != "tera" and not str(slot.get_card_data().ancient_trait).contains("太晶"):
+		return 0
+	var tool_data := slot.attached_tool.card_data
+	var tool_name := "%s %s" % [str(tool_data.name), str(tool_data.name_en)]
+	return 1 if tool_name.contains("璀璨结晶") or tool_name.to_lower().contains("sparkling crystal") else 0
 
 
 func score_action_absolute(action: Dictionary, game_state: GameState, player_index: int) -> float:

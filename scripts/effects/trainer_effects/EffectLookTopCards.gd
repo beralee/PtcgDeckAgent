@@ -24,35 +24,33 @@ func can_headless_execute(card: CardInstance, state: GameState) -> bool:
 
 func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
 	var player: PlayerState = state.players[card.owner_index]
+	var visible_cards: Array[CardInstance] = _get_looked_cards(player)
 	var items: Array = _get_matching_cards(player)
-	if items.is_empty():
-		return [
-			build_empty_search_resolution_step_with_view_label(
-				"%s：查看到的卡牌里没有符合条件的%s。你仍可以使用这张卡。" % [card.card_data.name, _get_filter_label()],
-				"查看卡牌"
-			)
-		]
-
-	var labels: Array[String] = []
-	for deck_card: CardInstance in items:
-		labels.append(deck_card.card_data.name)
 	var max_select: int = mini(pick_count, items.size())
-	return [{
-		"id": "look_top_cards",
-		"title": "选择最多%d张符合条件的卡" % pick_count,
-		"items": items,
-		"labels": labels,
-		"min_select": 1 if max_select > 0 else 0,
-		"max_select": max_select,
-		"allow_cancel": true,
-	}]
+	var title := "从牌库上方%d张中选择最多%d张%s" % [visible_cards.size(), pick_count, _get_filter_label()]
+	var options := {
+		"allow_cancel": max_select > 0,
+		"card_disabled_badge": "不可选",
+		"card_selectable_hint": "可选",
+		"show_selectable_hints": true,
+	}
+	if max_select == 0:
+		title = "%s：查看到的卡牌里没有符合条件的%s" % [card.card_data.name, _get_filter_label()]
+		options["utility_actions"] = [build_empty_dialog_utility_action("关闭并继续")]
+	return [build_full_library_search_step(
+		"look_top_cards",
+		title,
+		visible_cards,
+		items,
+		"own_top_%d_cards" % visible_cards.size(),
+		1 if max_select > 0 else 0,
+		max_select,
+		options
+	)]
 
 
-func get_followup_interaction_steps(card: CardInstance, state: GameState, resolved_context: Dictionary) -> Array[Dictionary]:
-	if not should_preview_empty_search_deck(resolved_context):
-		return []
-	var player: PlayerState = state.players[card.owner_index]
-	return [build_readonly_card_preview_step("%s：查看已查看的卡牌" % card.card_data.name, _get_looked_cards(player))]
+func get_followup_interaction_steps(_card: CardInstance, _state: GameState, _resolved_context: Dictionary) -> Array[Dictionary]:
+	return []
 
 
 func execute(card: CardInstance, targets: Array, state: GameState) -> void:

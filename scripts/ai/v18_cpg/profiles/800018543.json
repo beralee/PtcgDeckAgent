@@ -1,0 +1,152 @@
+{
+  "profile_version": 5,
+  "semantic_version": 1,
+  "risk_posture": "balanced",
+  "switch_margin": 70.0,
+  "expected_regret_threshold": 60.0,
+  "initial_response_token_budget": 420,
+  "delta_response_token_budget": 170,
+  "turn_visible_wait_budget_ms": 6500,
+  "cold_request_estimate_ms": 5000,
+  "max_policy_nodes": 7,
+  "protected_roles": [
+    "partner_piece",
+    "signature_piece",
+    "evolution_piece",
+    "stage2_dependency",
+    "energy_source",
+    "supporter_acceleration",
+    "recovery",
+    "bench_space"
+  ],
+  "strategic_priorities": [
+    {
+      "priority": 1,
+      "goal": "minimum_resource_ko",
+      "when_all": [{"fact": "attack.ko_available", "op": "==", "value": true}],
+      "prefer_routes": ["route:attack_ko", "route:gust"],
+      "avoid_routes": ["route:information", "route:develop", "route:end_turn"],
+      "preserve_roles": ["energy_source", "evolution_piece", "recovery"]
+    },
+    {
+      "priority": 2,
+      "goal": "route_completion",
+      "when_all": [{"fact": "attack.ready", "op": "==", "value": false}],
+      "prefer_routes": ["route:evolve", "route:accelerate", "route:energy_commit", "route:develop"],
+      "avoid_routes": ["route:end_turn"],
+      "preserve_roles": ["stage2_dependency", "signature_piece", "supporter_acceleration"]
+    },
+    {
+      "priority": 3,
+      "goal": "typed_energy_continuity",
+      "when_all": [{"fact": "turn.energy_available", "op": "==", "value": true}],
+      "prefer_routes": ["route:energy_commit", "route:evolve", "route:accelerate"],
+      "avoid_routes": ["route:develop"],
+      "preserve_roles": ["energy_source", "stage2_dependency"]
+    },
+    {
+      "priority": 4,
+      "goal": "bench_space_preservation",
+      "when_all": [{"fact": "board.bench_full", "op": "==", "value": true}],
+      "prefer_routes": ["route:evolve", "route:attack_ko", "route:attack_pressure", "route:pivot"],
+      "avoid_routes": ["route:develop", "route:opening_search"],
+      "preserve_roles": ["stage2_dependency", "partner_piece", "bench_space"]
+    },
+    {
+      "priority": 5,
+      "goal": "low_deck_safety",
+      "when_all": [{"fact": "resources.deck_low", "op": "==", "value": true}],
+      "prefer_routes": ["route:attack_ko", "route:attack_pressure", "route:pivot"],
+      "avoid_routes": ["route:information", "route:opening_search", "route:develop"],
+      "preserve_roles": ["recovery", "energy_source", "stage2_dependency"]
+    }
+  ],
+  "route_preferences": {
+    "model_consideration_margin": 350.0,
+    "route_biases": {
+      "route:attack_ko": 290.0,
+      "route:attack_pressure": 120.0,
+      "route:evolve": 220.0,
+      "route:accelerate": 160.0,
+      "route:energy_commit": 150.0,
+      "route:develop": 100.0,
+      "route:pivot": 90.0,
+      "route:information": 20.0,
+      "route:end_turn": -250.0
+    },
+    "ready_ko_order": ["route:attack_ko", "route:gust", "route:attack_pressure"],
+    "attackless_order": ["route:evolve", "route:accelerate", "route:energy_commit", "route:develop", "route:pivot"],
+    "avoid_after_ko_secured": ["route:information", "route:develop", "route:opening_search"]
+  },
+  "safety": {
+    "max_switch_gap": 110.0,
+    "block_search_when_deck_low": true,
+    "low_deck_threshold": 8,
+    "critical_deck_threshold": 5,
+    "preserve_bench_slots": 1,
+    "stop_optional_draw_when_attack_ready": true,
+    "reject_information_churn_after_ko_secured": true
+  },
+  "module_parameters": {
+    "partner_chain": {
+      "attack_cost_by_uid": {
+        "CSV10C_113": ["F"]
+      },
+      "profiled_poffin_distinct_evolution_roots": {
+        "enabled": true,
+        "owner_deck_id": 800018543,
+        "step_id": "buddy_poffin_pokemon",
+        "max_select": 2,
+        "root_groups": [
+          ["CSV10C_111", "CSV10C_112", "CSV10C_113"],
+          ["CSV10C_004", "CSV10C_005"]
+        ],
+        "preferred_basic_uids": ["CSV10C_111", "CSV10C_004"],
+        "require_both_groups_absent": true,
+        "minimum_bench_slots_free": 2,
+        "required_public_hand_uids": ["CSV5C_119"],
+        "required_active_energy_symbol": "F",
+        "certificate_kind": "profiled_poffin_distinct_evolution_roots"
+      }
+    },
+    "cycle_pivot": {
+      "enabled_guards": ["optional_engine", "typed_energy", "ready_ko", "bench_reserve", "low_deck"],
+      "optional_draw_engine_uids": ["CSV8C_094", "CSV9.5C_004"],
+      "primary_required_energy": ["F"],
+      "primary_attacker_uids": ["CSV10C_113"],
+      "attacker_root_uids": ["CSV10C_111", "CSV10C_112"],
+      "minimum_hand_for_optional_engine": 4,
+      "reserve_bench_slots": 1,
+      "low_deck_floor": 8,
+      "block_optional_engine_when_attack_ready": true,
+      "block_optional_engine_when_energy_attachment_open": true,
+      "block_off_color_primary_attachment": true,
+      "same_ko_attack_resource_preservation": {
+        "enabled": true,
+        "owner_deck_id": 800018543,
+        "attacker_uid": "CSV10C_113",
+        "attacker_effect_id": "b494c15a64405edbc24ed017733ad8a5",
+        "preserving_attack_index": 0,
+        "consuming_attack_index": 1,
+        "required_attached_energy_count": 2,
+        "required_energy_symbol": "F",
+        "preserved_attached_energy_count": 2,
+        "consumed_attached_energy_count": 2,
+        "required_visible_hand_size": 6,
+        "require_same_public_knockout": true,
+        "require_nonterminal_prize_state": true,
+        "require_live_opponent_replacement": true,
+        "certificate_kind": "public_same_ko_preserve_attached_energy"
+      }
+    },
+    "damage_counter_control": {
+      "counter_mover_uid": "CSV8C_094",
+      "counter_mover_ability_index": 0,
+      "activation_symbol": "D",
+      "move_points_per_use": 30,
+      "damage_invariant_attackers": ["CSV10C_113"],
+      "allow_non_ko_counter_prefix_before_secured_ko": true,
+      "require_no_counter_ko_target": true
+    }
+  }
+}

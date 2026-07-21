@@ -7,6 +7,7 @@ const SEQUENCE_NAME := "ReadyVfxSequence"
 const BURST_NAME := "ReadyVfxBurst"
 const FLASH_NAME := "ReadyVfxFlash"
 const BattleReadyVfxRegistryScript := preload("res://scripts/ui/battle/BattleReadyVfxRegistry.gd")
+const OverlayGeometry := preload("res://scripts/ui/battle/BattleOverlayGeometry.gd")
 
 var _texture_cache: Dictionary = {}
 
@@ -28,7 +29,7 @@ func ensure_overlay(scene: Object) -> Control:
 
 
 func play_ready_vfx(scene: Object, trigger: Dictionary) -> void:
-	if scene == null or trigger.is_empty():
+	if scene == null or trigger.is_empty() or not bool(GameManager.battle_effects_enabled):
 		return
 	var overlay := ensure_overlay(scene)
 	if overlay == null:
@@ -164,11 +165,16 @@ func _play_sequence_animation(scene: Node, sequence: Control, profile: RefCounte
 			flash_tween.tween_property(flash, "modulate:a", 0.0, duration * 0.3).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 	var cleanup_tween := scene.create_tween()
 	cleanup_tween.tween_interval(duration + 0.08)
-	cleanup_tween.finished.connect(func() -> void:
-		if is_instance_valid(sequence):
-			sequence.set_meta("ready_vfx_animation_active", false)
-			sequence.queue_free()
+	cleanup_tween.finished.connect(
+		Callable(self, "_cleanup_ready_sequence").bind(sequence),
+		CONNECT_ONE_SHOT
 	)
+
+
+func _cleanup_ready_sequence(sequence: Control) -> void:
+	if is_instance_valid(sequence):
+		sequence.set_meta("ready_vfx_animation_active", false)
+		sequence.queue_free()
 
 
 func _resolve_profile_layout_metrics(profile: RefCounted, viewport_size: Vector2) -> Dictionary:
@@ -235,16 +241,34 @@ func _animate_grid_flipbook(scene: Node, texture_rect: TextureRect, duration: fl
 	var frame_height := float(atlas.atlas.get_height()) / float(rows)
 	var tween := scene.create_tween()
 	for frame_index: int in frames:
-		tween.tween_callback(func() -> void:
-			if is_instance_valid(texture_rect):
-				var current: AtlasTexture = texture_rect.texture as AtlasTexture
-				if current != null:
-					var col := frame_index % cols
-					var row := int(frame_index / cols)
-					current.region = Rect2(frame_width * col, frame_height * row, frame_width, frame_height)
+		tween.tween_callback(
+			Callable(self, "_set_flipbook_frame").bind(
+				texture_rect,
+				frame_index,
+				cols,
+				frame_width,
+				frame_height
+			)
 		)
 		if frame_index < frames - 1:
 			tween.tween_interval(duration / float(frames))
+
+
+func _set_flipbook_frame(
+	texture_rect: TextureRect,
+	frame_index: int,
+	cols: int,
+	frame_width: float,
+	frame_height: float
+) -> void:
+	if not is_instance_valid(texture_rect):
+		return
+	var current: AtlasTexture = texture_rect.texture as AtlasTexture
+	if current == null:
+		return
+	var col := frame_index % cols
+	var row := int(frame_index / cols)
+	current.region = Rect2(frame_width * col, frame_height * row, frame_width, frame_height)
 
 
 func _load_texture(resource_path: String) -> Texture2D:
@@ -260,10 +284,10 @@ func _load_texture(resource_path: String) -> Texture2D:
 
 func _target_position(scene: Object, anchor: Control) -> Vector2:
 	if anchor != null:
-		return anchor.global_position + anchor.size * 0.5
+		return OverlayGeometry.control_point_on_screen(anchor, anchor.size * 0.5)
 	var center_field := _center_field(scene)
 	if center_field != null:
-		return center_field.global_position + center_field.size * 0.5
+		return OverlayGeometry.control_point_on_screen(center_field, center_field.size * 0.5)
 	return Vector2(640.0, 360.0)
 
 
@@ -288,8 +312,8 @@ func _target_anchor(scene: Object, player_index: int) -> Control:
 	return scene.get("_opp_active") as Control
 
 
-func _overlay_local_position(overlay: Control, global_position: Vector2) -> Vector2:
-	return global_position - overlay.global_position
+func _overlay_local_position(overlay: Control, screen_position: Vector2) -> Vector2:
+	return OverlayGeometry.screen_point_to_overlay(overlay, screen_position)
 
 
 func _overlay_host(scene: Object) -> Node:

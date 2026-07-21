@@ -1,0 +1,53 @@
+{
+	"abilities": [],
+	"ancient_trait": "",
+	"artist": "kawayoo",
+	"attacks": [
+		{
+			"cost": "PC",
+			"damage": "30",
+			"is_vstar_power": false,
+			"name": "魔法射击",
+			"text": ""
+		},
+		{
+			"cost": "PPC",
+			"damage": "60+",
+			"is_vstar_power": false,
+			"name": "精神强念",
+			"text": "追加造成对手战斗宝可梦身上附着的能量数量×20伤害。"
+		}
+	],
+	"card_index": "054",
+	"card_index_en": "85",
+	"card_type": "Pokemon",
+	"description": "【超】【无】 魔法射击 30\n\n【超】【超】【无】 精神强念 60+\n追加造成对手战斗宝可梦身上附着的能量数量×20伤害。\n",
+	"effect_id": "773a7c5bc165bd5d75321bc7c29fdd25",
+	"energy_provides": "",
+	"energy_type": "P",
+	"evolves_from": "拉鲁拉丝",
+	"hp": 90,
+	"image_local_path": "user://cards/images/CSV2C/054.png",
+	"image_url": "https://tcg.mik.moe/static/img/CSV2C/054.png",
+	"is_tags": [
+		"Stage 1"
+	],
+	"label": "",
+	"mechanic": "",
+	"name": "奇鲁莉安",
+	"name_en": "Kirlia",
+	"rarity": "C",
+	"regulation_expanded": true,
+	"regulation_mark": "G",
+	"regulation_standard": true,
+	"release_date": "2025-03-21T00:00:00+08:00",
+	"resistance_energy": "F",
+	"resistance_value": "-30",
+	"retreat_cost": 1,
+	"set_code": "CSV2C",
+	"set_code_en": "SVI",
+	"stage": "Stage 1",
+	"weakness_energy": "D",
+	"weakness_value": "×2",
+	"yoren_code": "P281"
+}

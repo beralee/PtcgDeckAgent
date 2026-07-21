@@ -23,7 +23,6 @@ func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state:
 	var items: Array = []
 	var labels: Array[String] = []
 	var action_items: Array[Dictionary] = []
-	var copied_cost := str(attack.get("cost", ""))
 	for bench_slot: PokemonSlot in player.bench:
 		var source_data := _get_copy_source_data(bench_slot)
 		if source_data == null:
@@ -42,7 +41,7 @@ func get_attack_interaction_steps(card: CardInstance, attack: Dictionary, state:
 				source_data.display_name(),
 				CardData.dictionary_display_name(copied_attack),
 			])
-			action_items.append(_build_copied_attack_action_item(source_data, copied_attack, copied_cost))
+			action_items.append(_build_copied_attack_action_item(source_data, copied_attack))
 	if items.is_empty():
 		return []
 	return [{
@@ -181,10 +180,7 @@ func _get_selected_source_effect_id(option: Dictionary) -> String:
 
 
 func _has_resolved_copied_followup(context: Dictionary) -> bool:
-	for key: Variant in context.keys():
-		if str(key) != STEP_ID:
-			return true
-	return false
+	return has_resolved_non_internal_interaction_step(context, [STEP_ID])
 
 
 func _get_copy_source_data(slot: PokemonSlot) -> CardData:
@@ -255,7 +251,7 @@ func _build_copied_attack_option(
 	}
 
 
-func _build_copied_attack_action_item(source_data: CardData, copied_attack: Dictionary, copied_cost: String) -> Dictionary:
+func _build_copied_attack_action_item(source_data: CardData, copied_attack: Dictionary) -> Dictionary:
 	var attack_name := CardData.dictionary_display_name(copied_attack)
 	var damage_text := str(copied_attack.get("damage", "")).strip_edges()
 	var meta := source_data.display_name()
@@ -263,14 +259,14 @@ func _build_copied_attack_action_item(source_data: CardData, copied_attack: Dict
 		meta = "%s  %s" % [source_data.display_name(), damage_text]
 	var body := CardData.dictionary_display_text(copied_attack).strip_edges()
 	if body == "":
-		body = "使用这只%sN的宝可梦的这个招式。" % SOURCE_ZONE_LABEL
+		body = "无额外效果。"
 	return {
 		"type": "attack",
 		"kind": "招式",
 		"title": attack_name,
 		"meta": meta,
 		"body": body,
-		"cost": copied_cost,
+		"cost": str(copied_attack.get("cost", "")),
 		"enabled": true,
 		"reason": "",
 	}

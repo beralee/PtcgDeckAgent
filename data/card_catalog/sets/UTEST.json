@@ -1,0 +1,64 @@
+{
+	"cards": [
+		{
+			"abilities": [
+				{
+					"name": "娴姳姘村笜",
+					"text": ""
+				}
+			],
+			"ancient_trait": "",
+			"artist": "",
+			"attacks": [
+				{
+					"cost": "RR",
+					"damage": "100",
+					"is_vstar_power": false,
+					"name": "鐐庣垎",
+					"text": ""
+				}
+			],
+			"card_index": "001",
+			"card_index_en": "",
+			"card_type": "Pokemon",
+			"description": "",
+			"effect_id": "gsm_dynamic_registration",
+			"energy_provides": "",
+			"energy_type": "W",
+			"evolves_from": "",
+			"hp": 120,
+			"image_local_path": "user://cards/images/UTEST/001.png",
+			"image_url": "https://tcg.mik.moe/static/img/UTEST/001.png",
+			"is_tags": [],
+			"label": "",
+			"mechanic": "",
+			"name": "Dynamic Registration",
+			"name_en": "",
+			"name_zh": "",
+			"rarity": "",
+			"regulation_expanded": true,
+			"regulation_mark": "",
+			"regulation_standard": true,
+			"release_date": "",
+			"resistance_energy": "",
+			"resistance_value": "",
+			"retreat_cost": 0,
+			"set_code": "UTEST",
+			"set_code_en": "",
+			"source_card_index": "",
+			"source_imported_at": 0,
+			"source_language": "",
+			"source_parser_version": 0,
+			"source_prints": [],
+			"source_provider": "",
+			"source_set_code": "",
+			"source_url": "",
+			"stage": "Basic",
+			"weakness_energy": "",
+			"weakness_value": "",
+			"yoren_code": ""
+		}
+	],
+	"schema_version": 1,
+	"set_code": "UTEST"
+}

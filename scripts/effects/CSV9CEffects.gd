@@ -17,23 +17,6 @@ const LAST_ATTACK_TURN_PREFIX := "csv9c_last_attack_turn_p"
 const LAST_ATTACK_SLOT_PREFIX := "csv9c_last_attack_slot_p"
 const LAST_ATTACK_ANCIENT_PREFIX := "csv9c_last_attack_ancient_p"
 
-const KNOWN_TERA_EFFECT_IDS := {
-	"a533d02d029bd799e8c425beecd3ffaa": true,
-	"cd845155473716c29f29efa29da0a869": true,
-	"cfe54f4650db054ec2eec6dfcaaff88a": true,
-	"317cdd81106733967d562ad538a7983a": true,
-	"fa9e235782bba9bdb62005106bbdd6d9": true,
-	"0f9c649bb3f59a7a342b53cdc78952a4": true,
-	"1e48ba6c2140461745fc407bf34f5598": true,
-	"92770a887520f6c4528cf57ae82392b3": true,
-	"689549e631f4f93ecf618a215c628bd1": true,
-	"27d1eb5f7abc237f462328c2ff00fdf3": true,
-	"61fb0755be18f5fcdc6a30781d5fc05e": true,
-	"62619a01b9dd1e1dec71d6f6557c9cb8": true,
-	"c09bd406f26faeab1683244e53bab0b4": true,
-	"5de19cbd4b2d1ff80ba14d6d89246ae9": true,
-}
-
 const KNOWN_ANCIENT_EFFECT_IDS := {
 	"41dd160743c1707676c4faa6759c718b": true,
 	"66377923675b93ec93a30c3411292d47": true,
@@ -80,24 +63,7 @@ static func basic_energy_type(card: CardInstance) -> String:
 
 
 static func is_tera_card_data(cd: CardData) -> bool:
-	if cd == null or not cd.is_pokemon():
-		return false
-	if cd.is_tera_pokemon():
-		return true
-	if KNOWN_TERA_EFFECT_IDS.has(cd.effect_id):
-		return true
-	for tag: String in cd.is_tags:
-		var normalized := tag.to_lower()
-		if normalized == "tera" or normalized == "terastal" or tag == "太晶":
-			return true
-	for attack: Dictionary in cd.attacks:
-		var seen_types: Dictionary = {}
-		for symbol: String in CardData.normalize_attack_cost(str(attack.get("cost", ""))):
-			if symbol != "C":
-				seen_types[symbol] = true
-		if seen_types.size() >= 3:
-			return true
-	return false
+	return cd != null and cd.is_tera_pokemon()
 
 
 static func is_tera_slot(slot: PokemonSlot) -> bool:
@@ -405,38 +371,28 @@ class AttackJoltikCharge:
 		var target_labels: Array[String] = []
 		for slot: PokemonSlot in targets:
 			target_labels.append(H.slot_label(slot, state))
-		var steps: Array[Dictionary] = []
 		var grass_sources := _candidate_energy(player, "G")
-		if not grass_sources.is_empty():
-			steps.append(build_full_library_card_assignment_step(
-				GRASS_STEP_ID,
-				"Attach Grass Energy",
-				player.deck,
-				grass_sources,
-				_card_labels(grass_sources),
-				targets,
-				target_labels,
-				0,
-				mini(2, grass_sources.size()),
-				VISIBLE_SCOPE_OWN_FULL_DECK,
-				true
-			))
 		var lightning_sources := _candidate_energy(player, "L")
-		if not lightning_sources.is_empty():
-			steps.append(build_full_library_card_assignment_step(
-				LIGHTNING_STEP_ID,
-				"Attach Lightning Energy",
-				player.deck,
-				lightning_sources,
-				_card_labels(lightning_sources),
-				targets,
-				target_labels,
-				0,
-				mini(2, lightning_sources.size()),
-				VISIBLE_SCOPE_OWN_FULL_DECK,
-				true
-			))
-		return steps
+		var sources := _candidate_energy(player)
+		if sources.is_empty():
+			return []
+		var max_assignments := mini(2, grass_sources.size()) + mini(2, lightning_sources.size())
+		var step := build_full_library_card_assignment_step(
+			STEP_ID,
+			"Attach Grass and Lightning Energy",
+			player.deck,
+			sources,
+			_card_labels(sources),
+			targets,
+			target_labels,
+			0,
+			max_assignments,
+			VISIBLE_SCOPE_OWN_FULL_DECK,
+			true
+		)
+		step["source_bucket_keys"] = _energy_type_keys(sources)
+		step["max_assignments_per_source_bucket"] = {"G": 2, "L": 2}
+		return [step]
 
 	func execute_attack(attacker: PokemonSlot, _defender: PokemonSlot, attack_index: int, state: GameState) -> void:
 		if attacker == null or attacker.get_top_card() == null or not applies_to_attack_index(attack_index):
@@ -468,6 +424,12 @@ class AttackJoltikCharge:
 		for card: CardInstance in cards:
 			labels.append(H.card_label(card))
 		return labels
+
+	func _energy_type_keys(cards: Array[CardInstance]) -> Array[String]:
+		var keys: Array[String] = []
+		for card: CardInstance in cards:
+			keys.append(H.basic_energy_type(card))
+		return keys
 
 	func _resolve_assignments(player: PlayerState, attacker: PokemonSlot) -> Array[Dictionary]:
 		var result: Array[Dictionary] = []
@@ -1634,10 +1596,7 @@ class AttackSlowkingInspiration:
 		return raw[0]
 
 	func _has_resolved_copied_followup(context: Dictionary) -> bool:
-		for key: Variant in context.keys():
-			if str(key) != STEP_ID:
-				return true
-		return false
+		return has_resolved_non_internal_interaction_step(context, [STEP_ID])
 
 	func _build_copied_attack_action_item(source_data: CardData, copied_attack: Dictionary, attack_cost: String) -> Dictionary:
 		var attack_name := str(copied_attack.get("name", ""))

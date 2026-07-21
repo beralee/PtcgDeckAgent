@@ -1654,6 +1654,50 @@ func test_dragon_copy_phantom_dive_produces_followup_bench_steps() -> String:
 	])
 
 
+func test_dragon_copy_kyurem_trifrost_ignores_internal_ui_context_keys() -> String:
+	var source_cd := _make_dragon_pokemon_data(
+		"酋雷姆", 130, "5ed7ff97aa96afb6a023ad8ce6636eba",
+		[{
+			"name": "三重冰霜",
+			"cost": "WWMMC",
+			"damage": "",
+			"text": "给对手的3只宝可梦各造成110伤害。",
+			"is_vstar_power": false,
+		}]
+	)
+	var setup: Array = _setup_dragon_copy_test(source_cd, 0)
+	var processor: EffectProcessor = setup[0]
+	var state: GameState = setup[1]
+	var attacker: PokemonSlot = setup[2]
+	var ctx: Dictionary = setup[4]
+	ctx[BaseEffect.INTERACTION_SOURCE_KEY] = BaseEffect.INTERACTION_SOURCE_BATTLE_UI
+	ctx["__interaction_generation"] = 7
+	ctx[BaseEffect.INTERACTION_INTENTS_KEY] = {"copied_attack": BaseEffect.INTERACTION_INTENT_SELECT}
+
+	var dragon_effect: AttackUseDiscardDragonAttackEffect = null
+	for effect: BaseEffect in processor.get_attack_effects_for_slot(attacker, 0):
+		if effect is AttackUseDiscardDragonAttackEffect:
+			dragon_effect = effect
+			break
+	if dragon_effect == null:
+		return "巨龙无双效果未注册到 EffectProcessor"
+
+	var followup := dragon_effect.get_followup_attack_interaction_steps(
+		attacker.get_top_card(),
+		_make_regidrago_vstar_data().attacks[0],
+		state,
+		ctx
+	)
+	var step: Dictionary = followup[0] if not followup.is_empty() else {}
+	return run_checks([
+		assert_eq(followup.size(), 1, "Battle UI internal context keys must not suppress Kyurem's target follow-up"),
+		assert_eq(str(step.get("id", "")), "csv9c_tri_frost_targets", "Copied Kyurem should expose its three-target step"),
+		assert_eq((step.get("items", []) as Array).size(), 3, "Copied Kyurem should show all three opposing Pokemon as selectable targets"),
+		assert_eq(int(step.get("min_select", -1)), 3, "Copied Kyurem should require exactly three targets when three are in play"),
+		assert_eq(int(step.get("max_select", -1)), 3, "Copied Kyurem should not auto-resolve before all three targets are chosen"),
+	])
+
+
 ## 测试11：复制幻影潜袭时全流程（选择招式 + 分配伤害指示物 + 执行）
 func test_dragon_copy_phantom_dive_full_flow_with_bench_counters() -> String:
 	var source_cd := _make_dragon_pokemon_data(
@@ -1769,6 +1813,79 @@ func test_dragon_copy_alolan_exeggutor_swinging_sphene_flips_before_tails_target
 		assert_true(bool(followup[0].get("wait_for_coin_animation", false)) if not followup.is_empty() else false, "Copied CSV9C_144 tails target should wait for the coin animation"),
 		assert_eq(bench_target.damage_counters, bench_target.get_max_hp(), "Copied CSV9C_144 tails should KO the selected Benched Basic"),
 		assert_eq(other_bench.damage_counters, 0, "Copied CSV9C_144 tails should not KO an unselected Benched Pokemon"),
+	])
+
+
+func test_video18_missing_batch3_effect_ids_map_to_exact_semantics() -> String:
+	var processor := EffectProcessor.new()
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/bundled_user/cards/CSV5C_010.json"))
+	var toedscruel := CardData.from_dict(parsed) if parsed is Dictionary else null
+	if toedscruel == null:
+		return "CSV5C_010 should deserialize for semantic-matrix coverage"
+	processor.register_pokemon_card(toedscruel)
+	var slot := _make_slot(toedscruel, 0)
+	var attack_effects := processor.get_attack_effects_for_slot(slot, 0)
+	return run_checks([
+		assert_eq(str(processor.get_effect(toedscruel.effect_id).get_script().resource_path).get_file() if processor.get_effect(toedscruel.effect_id) != null else "", "AbilityProtectiveMycelium.gd", "CSV5C_010 should map to energized-own-Pokemon attack-effect protection"),
+		assert_eq(str(attack_effects[0].get_script().resource_path).get_file() if not attack_effects.is_empty() else "", "AttackBenchGrassEnergyCountBonus.gd", "CSV5C_010 should map Colony Rush to per-Bench-Pokemon Grass Energy bonus"),
+		assert_eq(str(processor.get_effect("6d4d9b954e3a2cbad2ae1e0bfad2305a").get_script().resource_path).get_file() if processor.get_effect("6d4d9b954e3a2cbad2ae1e0bfad2305a") != null else "", "EffectGravityGemstone.gd", "CSV9C_192 should map to both-Active Retreat Cost increase"),
+		assert_eq(str(processor.get_effect("76ed73e869ac742e97ea521f200a360e").get_script().resource_path).get_file() if processor.get_effect("76ed73e869ac742e97ea521f200a360e") != null else "", "EffectLuckyHelmet.gd", "CSV7C_190 should map to Active opponent-attack-damage draw 2"),
+	])
+
+
+func test_video18_missing_batch2_effect_ids_map_to_exact_semantics() -> String:
+	var processor := EffectProcessor.new()
+	var cards: Dictionary = {}
+	for ref: String in ["151C_133", "CSVH3aC_002", "CSV10C_161"]:
+		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/bundled_user/cards/%s.json" % ref))
+		var card := CardData.from_dict(parsed) if parsed is Dictionary else null
+		if card == null:
+			return "%s should deserialize for semantic-matrix coverage" % ref
+		cards[ref] = card
+		processor.register_pokemon_card(card)
+	var eevee := _make_slot(cards["151C_133"], 0)
+	var dunsparce := _make_slot(cards["CSVH3aC_002"], 0)
+	var zacian := _make_slot(cards["CSV10C_161"], 0)
+	var eevee_effects := processor.get_attack_effects_for_slot(eevee, 0)
+	var dunsparce_effects := processor.get_attack_effects_for_slot(dunsparce, 0)
+	return run_checks([
+		assert_eq(str(eevee_effects[0].get_script().resource_path).get_file() if not eevee_effects.is_empty() else "", "AttackSearchDistinctPokemonTypes.gd", "151C_133 should map Colorful Friends to a distinct-type Pokemon search"),
+		assert_true(processor.get_attack_effects_for_slot(eevee, 1).is_empty(), "151C_133 Skip should remain numeric-only"),
+		assert_eq(str(processor.get_effect("565a02f4e75076963c6a884ae3622ff1").get_script().resource_path).get_file() if processor.get_effect("565a02f4e75076963c6a884ae3622ff1") != null else "", "EffectSurfer.gd", "CSV8C_196 should map to switch-then-draw-to-five"),
+		assert_eq(str(processor.get_effect("ceac9ee87d5850880f7438665925dbd2").get_script().resource_path).get_file() if processor.get_effect("ceac9ee87d5850880f7438665925dbd2") != null else "", "EffectCalamitousSnowyMountain.gd", "CSV3C_129 should map to the hand-Energy attachment Stadium trigger"),
+		assert_eq(str(dunsparce_effects[0].get_script().resource_path).get_file() if not dunsparce_effects.is_empty() else "", "AttackSearchDeckToHand.gd", "CSVH3aC_002 should map Find a Friend to Pokemon search"),
+		assert_true(processor.get_attack_effects_for_slot(dunsparce, 1).is_empty(), "CSVH3aC_002 Bite should remain numeric-only"),
+		assert_eq(processor.get_attack_effects_for_slot(zacian, 0).size(), 1, "CSV10C_161 first attack should retain one Bench-damage effect"),
+		assert_eq(processor.get_attack_effects_for_slot(zacian, 1).size(), 1, "CSV10C_161 second attack should retain one self-lock effect"),
+	])
+
+
+func test_video18_missing_batch1_effect_ids_map_to_exact_semantics() -> String:
+	var processor := EffectProcessor.new()
+	var cards: Dictionary = {}
+	for ref: String in ["SVP_080", "CSV4C_074", "CSV8C_056", "CSV8C_154"]:
+		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/bundled_user/cards/%s.json" % ref))
+		var card := CardData.from_dict(parsed) if parsed is Dictionary else null
+		if card == null:
+			return "%s should deserialize for semantic-matrix coverage" % ref
+		cards[ref] = card
+		processor.register_pokemon_card(card)
+	var nacli := _make_slot(cards["SVP_080"], 0)
+	var garganacl := _make_slot(cards["CSV4C_074"], 0)
+	var feebas := _make_slot(cards["CSV8C_056"], 0)
+	var turtonator := _make_slot(cards["CSV8C_154"], 0)
+	var nacli_effects := processor.get_attack_effects_for_slot(nacli, 0)
+	var garganacl_effects := processor.get_attack_effects_for_slot(garganacl, 0)
+	var feebas_effects := processor.get_attack_effects_for_slot(feebas, 0)
+	var turtonator_effects := processor.get_attack_effects_for_slot(turtonator, 0)
+	return run_checks([
+		assert_eq(str(nacli_effects[0].get_script().resource_path).get_file() if not nacli_effects.is_empty() else "", "AttackDefenderRetreatLockNextTurn.gd", "SVP_080 should map only Corner to retreat lock"),
+		assert_eq(str(processor.get_effect(cards["CSV4C_074"].effect_id).get_script().resource_path).get_file() if processor.get_effect(cards["CSV4C_074"].effect_id) != null else "", "AbilityPokemonCheckHealAllOwn.gd", "CSV4C_074 should map Blessed Salt to own-field Checkup healing"),
+		assert_eq(str(garganacl_effects[0].get_script().resource_path).get_file() if not garganacl_effects.is_empty() else "", "AttackMillOpponentDeck.gd", "CSV4C_074 should map Knocking Hammer to opponent top-deck mill"),
+		assert_eq(str(feebas_effects[0].get_script().resource_path).get_file() if not feebas_effects.is_empty() else "", "AttackSwitchSelfToBench.gd", "CSV8C_056 should map Leap Out to explicit self-switch"),
+		assert_eq(str(turtonator_effects[0].get_script().resource_path).get_file() if not turtonator_effects.is_empty() else "", "AttackDiscardOpponentActiveEnergy.gd", "CSV8C_154 should map Fully Singe to conditional Active Energy discard"),
+		assert_true(processor.get_attack_effects_for_slot(turtonator, 1).is_empty(), "CSV8C_154 Steaming Stomp should remain numeric-only"),
+		assert_eq(str(processor.get_effect("b54276b42598426febfe34bb67d5f075").get_script().resource_path).get_file() if processor.get_effect("b54276b42598426febfe34bb67d5f075") != null else "", "EffectTeamStarGrunt.gd", "CSV2C_125 should map only to Team Star Grunt's Active Energy top-deck effect"),
 	])
 
 

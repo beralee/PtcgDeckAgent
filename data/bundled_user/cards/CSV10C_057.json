@@ -1,0 +1,59 @@
+{
+    "name":  "珍珠贝",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【水】 贝壳压制 10\n在下一个对手的回合，这只宝可梦所受到的招式的伤害「-10」。\n\n",
+    "yoren_code":  "P366",
+    "set_code":  "CSV10C",
+    "card_index":  "057",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "Miki Tanaka",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "40fc3dee60f8f43bc3ba0e28ada7ccbf",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/057.png",
+    "image_local_path":  "user://cards/images/CSV10C/057.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "W",
+    "stage":  "Basic",
+    "hp":  60,
+    "weakness_energy":  "L",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  2,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "贝壳压制",
+                        "text":  "在下一个对手的回合，这只宝可梦所受到的招式的伤害「-10」。",
+                        "cost":  "W",
+                        "damage":  "10",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

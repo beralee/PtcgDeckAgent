@@ -1,0 +1,58 @@
+{
+  "name": "伦琴猫",
+  "card_type": "Pokemon",
+  "mechanic": "",
+  "label": "",
+  "description": "特性: 弥漫闪光\n在自己的回合，如果这张卡牌在手牌中，自己的剩余奖赏卡张数，比对手的剩余奖赏卡张数多的话，则可以使用1次。将这张卡牌放于备战区。\n\n【雷】 疯狂伏特 180\n给这只宝可梦也造成20伤害。\n\n",
+  "yoren_code": "P405",
+  "set_code": "CSV2C",
+  "card_index": "041",
+  "set_code_en": "PAL",
+  "card_index_en": "71",
+  "name_en": "Luxray",
+  "name_zh": "",
+  "artist": "aoki",
+  "rarity": "R",
+  "release_date": "2025-03-21T00:00:00+08:00",
+  "regulation_mark": "G",
+  "effect_id": "a4f457f1464c3410022b76ab77c11272",
+  "image_url": "https://tcg.mik.moe/static/img/CSV2C/041.png",
+  "image_local_path": "user://cards/images/CSV2C/041.png",
+  "source_provider": "tcg_mik",
+  "source_url": "https://tcg.mik.moe/cards/CSV2C/041",
+  "source_set_code": "CSV2C",
+  "source_card_index": "041",
+  "source_language": "zh-CN",
+  "source_prints": [],
+  "source_imported_at": 0,
+  "source_parser_version": 1,
+  "is_tags": [],
+  "regulation_standard": true,
+  "regulation_expanded": true,
+  "energy_type": "L",
+  "stage": "Stage 2",
+  "hp": 150,
+  "weakness_energy": "F",
+  "weakness_value": "×2",
+  "resistance_energy": "",
+  "resistance_value": "",
+  "retreat_cost": 1,
+  "evolves_from": "勒克猫",
+  "ancient_trait": "",
+  "attacks": [
+    {
+      "name": "疯狂伏特",
+      "text": "给这只宝可梦也造成20伤害。",
+      "cost": "LCC",
+      "damage": "180",
+      "is_vstar_power": false
+    }
+  ],
+  "abilities": [
+    {
+      "name": "弥漫闪光",
+      "text": "在自己的回合，如果这张卡牌在手牌中，自己的剩余奖赏卡张数，比对手的剩余奖赏卡张数多的话，则可以使用1次。将这张卡牌放于备战区。"
+    }
+  ],
+  "energy_provides": ""
+}

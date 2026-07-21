@@ -14,6 +14,8 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	var labels: Array[String] = []
 	for discard_card: CardInstance in items:
 		labels.append("%s - %s" % [_category(discard_card), discard_card.card_data.name])
+	if items.is_empty():
+		return []
 	return [{
 		"id": STEP_ID,
 		"title": "从弃牌区选择最多1张宝可梦、道具、竞技场和能量",
@@ -35,7 +37,12 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 			continue
 		var discard_card: CardInstance = entry
 		var cat: String = _category(discard_card)
-		if cat == "" or used_categories.has(cat) or discard_card not in player.discard_pile:
+		if (
+			cat == ""
+			or used_categories.has(cat)
+			or discard_card not in player.discard_pile
+			or not DiscardPileRestriction.can_move_to_hand_or_deck(discard_card)
+		):
 			continue
 		chosen.append(discard_card)
 		used_categories[cat] = true
@@ -56,7 +63,7 @@ func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 func _get_candidates(player: PlayerState) -> Array:
 	var result: Array = []
 	for discard_card: CardInstance in player.discard_pile:
-		if _category(discard_card) != "":
+		if _category(discard_card) != "" and DiscardPileRestriction.can_move_to_hand_or_deck(discard_card):
 			result.append(discard_card)
 	return result
 

@@ -175,7 +175,7 @@ func _is_marnies_card_data(card_data: CardData) -> bool:
 	var names: Array[String] = [card_data.name, card_data.name_en, card_data.name_zh]
 	for raw_name: String in names:
 		var normalized := raw_name.strip_edges().to_lower()
-		if normalized.begins_with("marnie's ") or normalized.begins_with("marnies "):
+		if normalized.begins_with("marnie's ") or normalized.begins_with("marnies ") or normalized.begins_with("玛俐的"):
 			return true
 	return false
 

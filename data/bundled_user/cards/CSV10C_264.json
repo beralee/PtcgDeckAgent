@@ -1,0 +1,58 @@
+{
+  "abilities": [
+    {
+      "name": "金色火焰",
+      "text": "在自己的回合可以使用1次。选择自己手牌中最多2张「基本【火】能量」，附着于备战区中的1只「阿响的宝可梦」身上。"
+    }
+  ],
+  "ancient_trait": "",
+  "artist": "Atsushi Furusawa",
+  "attacks": [
+    {
+      "cost": "RRRR",
+      "damage": "160",
+      "is_vstar_power": false,
+      "name": "闪耀之羽",
+      "text": "回复自己所有宝可梦的HP各「50」。"
+    }
+  ],
+  "card_index": "264",
+  "card_index_en": "",
+  "card_type": "Pokemon",
+  "description": "特性: 金色火焰\n在自己的回合可以使用1次。选择自己手牌中最多2张「基本【火】能量」，附着于备战区中的1只「阿响的宝可梦」身上。\n\n【火】【火】【火】【火】 闪耀之羽 160\n回复自己所有宝可梦的HP各「50」。\n\n",
+  "effect_id": "23d228f7053a7314a2ee5f651f38a3cb",
+  "energy_provides": "",
+  "energy_type": "R",
+  "evolves_from": "",
+  "hp": 230,
+  "image_local_path": "user://cards/images/CSV10C/264.png",
+  "image_url": "https://tcg.mik.moe/static/img/CSV10C/264.png",
+  "is_tags": [],
+  "label": "",
+  "mechanic": "ex",
+  "name": "阿响的凤王ex",
+  "name_en": "",
+  "name_zh": "",
+  "rarity": "SAR",
+  "regulation_expanded": true,
+  "regulation_mark": "I",
+  "regulation_standard": true,
+  "release_date": "2026-07-16T00:00:00+08:00",
+  "resistance_energy": "",
+  "resistance_value": "",
+  "retreat_cost": 2,
+  "set_code": "CSV10C",
+  "set_code_en": "",
+  "source_card_index": "264",
+  "source_imported_at": 0,
+  "source_language": "zh-CN",
+  "source_parser_version": 1,
+  "source_prints": [],
+  "source_provider": "tcg_mik",
+  "source_set_code": "CSV10C",
+  "source_url": "https://tcg.mik.moe/cards/CSV10C/264",
+  "stage": "Basic",
+  "weakness_energy": "W",
+  "weakness_value": "×2",
+  "yoren_code": "Y1574"
+}

@@ -4188,6 +4188,43 @@ func test_rotated_portrait_screen_position_maps_to_logical_canvas() -> String:
 	return result
 
 
+func test_rotated_portrait_dialog_gallery_hit_uses_control_local_geometry() -> String:
+	var scene: Control = BattleScene.instantiate()
+	scene.call("_apply_battle_canvas_transform", true, Vector2(1600, 900), Vector2(900, 1600))
+	var scroll := ScrollContainer.new()
+	scroll.name = "RotatedDialogScroll"
+	scroll.position = Vector2(120, 360)
+	scroll.size = Vector2(640, 300)
+	scroll.custom_minimum_size = scroll.size
+	var row := HBoxContainer.new()
+	row.name = "RotatedDialogRow"
+	row.size = Vector2(640, 280)
+	row.custom_minimum_size = row.size
+	scroll.add_child(row)
+	var card := BattleCardViewScript.new()
+	card.name = "RotatedDialogCard"
+	card.position = Vector2(40, 20)
+	card.size = Vector2(144, 208)
+	card.custom_minimum_size = card.size
+	card.set_meta("dialog_choice_index", 0)
+	row.add_child(card)
+	scene.add_child(scroll)
+	scene.set("_dialog_card_scroll", scroll)
+	scene.set("_dialog_card_row", row)
+
+	var screen_center := card.get_global_transform() * (card.size * 0.5)
+	var hit_card := scene.call("_dialog_card_gallery_card_at_screen_position", screen_center) as BattleCardViewScript
+	var clipped_screen_point := scroll.get_global_transform() * Vector2(scroll.size.x + 20.0, 40.0)
+	var clipped_hit := scene.call("_dialog_card_gallery_card_at_screen_position", clipped_screen_point) as BattleCardViewScript
+	var result := run_checks([
+		assert_eq(hit_card, card, "Rotated portrait gallery should hit the visible card through inverse Control transforms"),
+		assert_eq(clipped_hit, null, "Rotated portrait gallery should reject points outside the ScrollContainer clip"),
+	])
+
+	scene.queue_free()
+	return result
+
+
 func test_rotated_portrait_hand_drag_uses_logical_hand_axis() -> String:
 	var scene: Control = BattleScene.instantiate()
 	scene.call("_apply_battle_canvas_transform", true, Vector2(1600, 900), Vector2(900, 1600))
@@ -4275,12 +4312,15 @@ func test_rotated_portrait_draw_reveal_anchor_uses_physical_screen_center() -> S
 
 	var rect: Rect2 = scene.call("_draw_reveal_anchor_rect")
 	var controller := BattleDrawRevealControllerScript.new()
-	var global_rect: Rect2 = controller.call("_get_reveal_anchor_rect", scene)
+	var stage_rect: Rect2 = controller.call("_get_reveal_anchor_rect", scene)
+	var stage: Control = (scene.get("_draw_reveal_overlay") as Control).get_node("Stage") as Control
+	var screen_center := stage.get_global_transform() * stage_rect.get_center()
 	var result := run_checks([
 		assert_eq(rect.position, Vector2.ZERO, "Rotated portrait draw reveal should define the full logical portrait canvas as its local anchor"),
 		assert_eq(rect.size, Vector2(900, 1600), "Rotated portrait draw reveal should use the logical portrait canvas before global conversion"),
-		assert_eq(global_rect.position, Vector2.ZERO, "Rotated portrait reveal controller should convert the local anchor to the visible physical screen"),
-		assert_eq(global_rect.size, Vector2(1600, 900), "Rotated portrait reveal controller should center on the visible physical screen"),
+		assert_eq(stage_rect.position, Vector2.ZERO, "Rotated portrait reveal geometry should stay in its animation stage coordinate space"),
+		assert_eq(stage_rect.size, Vector2(900, 1600), "Rotated portrait reveal geometry should preserve the logical canvas instead of mixing physical dimensions into local animation positions"),
+		assert_true(screen_center.distance_to(Vector2(800, 450)) < 1.0, "Rotated portrait reveal stage center should still map to the visible physical screen center"),
 	])
 
 	scene.queue_free()

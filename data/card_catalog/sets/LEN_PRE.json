@@ -1,0 +1,137 @@
+{
+	"cards": [
+		{
+			"abilities": [],
+			"ancient_trait": "",
+			"artist": "Yoriyuki Ikegami",
+			"attacks": [
+				{
+					"cost": "",
+					"damage": "10",
+					"is_vstar_power": false,
+					"name": "Itchy Pollen",
+					"name_zh": "刺痒花粉",
+					"text": "During your opponent's next turn, they can't play any Item cards from their hand.",
+					"text_zh": "在对手的下个回合，对手不能从手牌打出物品卡。"
+				}
+			],
+			"card_index": "4",
+			"card_index_en": "4",
+			"card_type": "Pokemon",
+			"description": "刺痒花粉 10\n在对手的下个回合，对手不能从手牌打出物品卡。",
+			"effect_id": "07ece21268d2d5ad700ebc6859b1ab1d",
+			"energy_provides": "",
+			"energy_type": "G",
+			"evolves_from": "",
+			"hp": 30,
+			"image_local_path": "user://cards/images/LEN_PRE/4.png",
+			"image_url": "https://limitless3.nyc3.cdn.digitaloceanspaces.com/limitless/logo.png",
+			"is_tags": [
+				"Basic"
+			],
+			"label": "",
+			"mechanic": "",
+			"name": "Budew",
+			"name_en": "Budew",
+			"name_zh": "含羞苞",
+			"rarity": "Prismatic Evolutions (PRE)",
+			"regulation_expanded": true,
+			"regulation_mark": "",
+			"regulation_standard": true,
+			"release_date": "",
+			"resistance_energy": "",
+			"resistance_value": "",
+			"retreat_cost": 0,
+			"set_code": "LEN_PRE",
+			"set_code_en": "PRE",
+			"source_card_index": "4",
+			"source_imported_at": 1783008496059,
+			"source_language": "en",
+			"source_parser_version": 1,
+			"source_prints": [
+				"PRE/4",
+				"ASC/16",
+				"ASC/221",
+				"JP/SV8A/1",
+				"JP/M2A/11",
+				"JP/M2A/196"
+			],
+			"source_provider": "limitless",
+			"source_set_code": "PRE",
+			"source_url": "https://limitlesstcg.com/cards/PRE/4",
+			"stage": "Basic",
+			"weakness_energy": "R",
+			"weakness_value": "x2",
+			"yoren_code": ""
+		},
+		{
+			"abilities": [
+				{
+					"name": "Insomnia",
+					"name_zh": "不眠",
+					"text": "This Pokémon can't be Asleep.",
+					"text_zh": "这只宝可梦不会陷入睡眠。"
+				}
+			],
+			"ancient_trait": "",
+			"artist": "Nakamura Ippan",
+			"attacks": [
+				{
+					"cost": "CC",
+					"damage": "20",
+					"is_vstar_power": false,
+					"name": "Tackle",
+					"name_zh": "撞击",
+					"text": "",
+					"text_zh": ""
+				}
+			],
+			"card_index": "77",
+			"card_index_en": "77",
+			"card_type": "Pokemon",
+			"description": "特性: 不眠\n这只宝可梦不会陷入睡眠。\n\n撞击 20",
+			"effect_id": "d5f66047087bc07ad7a765caaf743e55",
+			"energy_provides": "",
+			"energy_type": "C",
+			"evolves_from": "",
+			"hp": 80,
+			"image_local_path": "user://cards/images/LEN_PRE/77.png",
+			"image_url": "https://limitless3.nyc3.cdn.digitaloceanspaces.com/limitless/logo.png",
+			"is_tags": [
+				"Basic"
+			],
+			"label": "",
+			"mechanic": "",
+			"name": "Hoothoot",
+			"name_en": "Hoothoot",
+			"name_zh": "咕咕",
+			"rarity": "Prismatic Evolutions (PRE)",
+			"regulation_expanded": true,
+			"regulation_mark": "",
+			"regulation_standard": true,
+			"release_date": "",
+			"resistance_energy": "F",
+			"resistance_value": "",
+			"retreat_cost": 2,
+			"set_code": "LEN_PRE",
+			"set_code_en": "PRE",
+			"source_card_index": "77",
+			"source_imported_at": 1783008496663,
+			"source_language": "en",
+			"source_parser_version": 1,
+			"source_prints": [
+				"PRE/77",
+				"JP/SV8A/127"
+			],
+			"source_provider": "limitless",
+			"source_set_code": "PRE",
+			"source_url": "https://limitlesstcg.com/cards/PRE/77",
+			"stage": "Basic",
+			"weakness_energy": "L",
+			"weakness_value": "x2",
+			"yoren_code": ""
+		}
+	],
+	"schema_version": 1,
+	"set_code": "LEN_PRE"
+}

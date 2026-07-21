@@ -2,7 +2,7 @@ class_name TestDeckCenterMetaClient
 extends TestBase
 
 const DeckCenterMetaClientScript := preload("res://scripts/network/DeckCenterMetaClient.gd")
-const STATE_PATH := "user://deck_center_meta_state.json"
+const STATE_PATH := "user://deck_center_meta_state.headless.json"
 
 
 func _remove_state_file() -> void:
@@ -13,6 +13,14 @@ func _remove_state_file() -> void:
 
 func test_deck_center_meta_client_uses_public_endpoint() -> String:
 	return assert_eq(str(DeckCenterMetaClientScript.ENDPOINT_URL), "http://fc.skillserver.cn/deckcentermeta", "Deck center metadata client should use the production cloud function endpoint")
+
+
+func test_deck_center_meta_headless_state_is_isolated_from_player_state() -> String:
+	return run_checks([
+		assert_eq(DeckCenterMetaClientScript.state_path_for_display_server("headless"), STATE_PATH, "Headless tests should use their own deck-center metadata state"),
+		assert_eq(DeckCenterMetaClientScript.state_path_for_display_server("windows"), DeckCenterMetaClientScript.STATE_PATH, "Interactive builds should keep the production player state path"),
+		assert_false(DeckCenterMetaClientScript.state_path_for_display_server("headless") == DeckCenterMetaClientScript.STATE_PATH, "Headless tests must never delete or overwrite the player's NEW-badge receipt"),
+	])
 
 
 func test_deck_center_meta_normalizes_latest_revision() -> String:

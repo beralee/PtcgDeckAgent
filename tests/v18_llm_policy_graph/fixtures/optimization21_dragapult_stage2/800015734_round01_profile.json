@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "deck_id": 800015734,
+  "seed_base": 800015734,
+  "evidence_kind": "real_model_round00",
+  "derived_from": "res://tmp/v18cpg/optimization21/800015734/round00.json",
+  "failure_category": "semantic_gap",
+  "failing_seeds": [800015734],
+  "expected_modules": ["dragapult_spread", "damage_counter_control", "stage2_chain"],
+  "expected_protected_roles": ["dragapult_rp_cost", "dragapult_root", "dusknoir_line"],
+  "expected_profiled_attack_costs": [
+    {"module": "stage2_chain", "uid": "CSV8C_159", "cost": ["R", "P"]}
+  ],
+  "expected_parameter_values": {
+    "dragapult_spread": {"primary_attacker_uids": ["CSV8C_159"], "primary_attack_index": 1},
+    "damage_counter_control": {"self_ko_counter_by_uid": {"CSV8C_082": 5, "CSV8C_083": 13}}
+  },
+  "public_state_contract": {
+    "attack_cost_by_uid": {"CSV8C_159": ["R", "P"]},
+    "self_ko_counter_by_uid": {"CSV8C_082": 5, "CSV8C_083": 13},
+    "prioritize_before_end_turn": ["route:evolve", "route:energy_commit", "route:pivot", "route:attack_pressure"],
+    "preserve_roles": ["dragapult_rp_cost", "dragapult_root", "dusknoir_line"]
+  },
+  "baseline": {"status": "complete", "rule_wins": 4, "v18cpg_wins": 4, "clean_games": 5, "model_calls": 25, "model_accepted": 1}
+}

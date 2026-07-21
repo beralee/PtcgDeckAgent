@@ -1,0 +1,62 @@
+{
+    "name":  "魔幻假面喵",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "特性: 表演时间\n如果这只宝可梦在备战区的话，则在自己的回合可以使用1次。将这只宝可梦与战斗宝可梦互换。\n\n 上升绽放 90+\n如果对手的战斗宝可梦是「宝可梦【ex】」的话，则追加造成90伤害。\n\n",
+    "yoren_code":  "P0908",
+    "set_code":  "CSV10C",
+    "card_index":  "017",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "kodama",
+    "rarity":  "R",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "c53aaef004359c485dc8b653308d0a20",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/017.png",
+    "image_local_path":  "user://cards/images/CSV10C/017.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "G",
+    "stage":  "Stage 2",
+    "hp":  160,
+    "weakness_energy":  "R",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "蒂蕾喵",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "上升绽放",
+                        "text":  "如果对手的战斗宝可梦是「宝可梦【ex】」的话，则追加造成90伤害。",
+                        "cost":  "CC",
+                        "damage":  "90+",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+                      {
+                          "name":  "表演时间",
+                          "text":  "如果这只宝可梦在备战区的话，则在自己的回合可以使用1次。将这只宝可梦与战斗宝可梦互换。"
+                      }
+                  ],
+    "energy_provides":  ""
+}

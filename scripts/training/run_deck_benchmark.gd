@@ -16,12 +16,16 @@ extends Control
 const AIBenchmarkRunnerScript = preload("res://scripts/ai/AIBenchmarkRunner.gd")
 const AIOpponentScript = preload("res://scripts/ai/AIOpponent.gd")
 const DeckStrategyRegistryScript = preload("res://scripts/ai/DeckStrategyRegistry.gd")
+const DeckStrategyV18ProfileCatalogScript = preload("res://scripts/ai/DeckStrategyV18ProfileCatalog.gd")
 const AIFixedDeckOrderRegistryScript = preload("res://scripts/ai/AIFixedDeckOrderRegistry.gd")
 
 const DEFAULT_ANCHOR_ID := 575720
 const DEFAULT_GAMES := 100
 const DEFAULT_SEED_BASE := 5000
 const DEFAULT_MAX_STEPS := 200
+const PROVENANCE_SCHEMA_VERSION := 1
+const AI_SOURCE_ROOT := "res://scripts/ai"
+const BENCHMARK_RUNNER_SOURCE_PATH := "res://scripts/training/run_deck_benchmark.gd"
 
 
 class BenchmarkTraceCollector:
@@ -65,6 +69,10 @@ func _ready() -> void:
 		_quit(1)
 		return
 
+	var source_provenance := _build_source_provenance()
+	var deck_strategy_provenance := _build_strategy_provenance(deck)
+	var anchor_strategy_provenance := _build_strategy_provenance(anchor_deck)
+
 	print("===== 卡组基准测试 =====")
 	print("被测卡组: %s (%d)" % [deck.deck_name, deck_id])
 	print("对手卡组: %s (%d)" % [anchor_deck.deck_name, anchor_id])
@@ -86,6 +94,7 @@ func _ready() -> void:
 	var turn_list_wins: Array[int] = []
 	var turn_list_losses: Array[int] = []
 	var trace_collector: BenchmarkTraceCollector = null
+	var trace_provenance: Dictionary = {}
 
 	for i: int in games:
 		var seed_val: int = seed_base + i
@@ -111,10 +120,24 @@ func _ready() -> void:
 		var p1_decision_mode := anchor_decision_mode if tracked_player == 0 else deck_decision_mode
 		var p0_ai := _make_ai(0, p0_deck, p0_decision_mode, p0_strong_fixed)
 		var p1_ai := _make_ai(1, p1_deck, p1_decision_mode, p1_strong_fixed)
+		var p0_strategy_provenance: Dictionary = deck_strategy_provenance if tracked_player == 0 else anchor_strategy_provenance
+		var p1_strategy_provenance: Dictionary = anchor_strategy_provenance if tracked_player == 0 else deck_strategy_provenance
+		var game_provenance := {
+			"schema_version": PROVENANCE_SCHEMA_VERSION,
+			"seed": seed_val,
+			"tracked_player": tracked_player,
+			"source": source_provenance.duplicate(true),
+			"players": {
+				"0": _build_player_provenance(p0_strategy_provenance, p0_strong_fixed, p0_fixed_order_path),
+				"1": _build_player_provenance(p1_strategy_provenance, p1_strong_fixed, p1_fixed_order_path),
+			},
+		}
 		var game_trace_collector: BenchmarkTraceCollector = null
 		if trace_jsonl_output != "" and trace_game == i + 1:
 			game_trace_collector = BenchmarkTraceCollector.new()
 			trace_collector = game_trace_collector
+			trace_provenance = game_provenance.duplicate(true)
+			trace_provenance["game"] = i + 1
 
 		var result: Dictionary = runner.run_headless_duel(p0_ai, p1_ai, gsm, max_steps, Callable(), game_trace_collector)
 
@@ -153,6 +176,7 @@ func _ready() -> void:
 			"terminated_by_cap": bool(result.get("terminated_by_cap", false)),
 			"player_0_fixed_order_path": p0_fixed_order_path,
 			"player_1_fixed_order_path": p1_fixed_order_path,
+			"provenance": game_provenance,
 		})
 
 		if (i + 1) % 10 == 0:
@@ -162,6 +186,11 @@ func _ready() -> void:
 	var total: int = maxi(games, 1)
 	var win_rate: float = float(wins) / float(total)
 	var avg_turns: float = float(total_turns) / float(total)
+	var source_provenance_at_end := _build_source_provenance()
+	var source_changed_during_run := str(source_provenance.get("fingerprint", "")) != str(source_provenance_at_end.get("fingerprint", ""))
+	if not trace_provenance.is_empty():
+		trace_provenance["source_at_end"] = source_provenance_at_end.duplicate(true)
+		trace_provenance["source_changed_during_run"] = source_changed_during_run
 
 	# 判定基准是否干净
 	var is_clean: bool = true
@@ -170,6 +199,9 @@ func _ready() -> void:
 		if int(failure_reasons.get(dirty_key, 0)) > 0:
 			is_clean = false
 			dirty_reasons.append("%s:%d" % [dirty_key, int(failure_reasons[dirty_key])])
+	if source_changed_during_run:
+		is_clean = false
+		dirty_reasons.append("source_changed_during_run")
 
 	print("")
 	print("===== 结果 =====")
@@ -216,6 +248,14 @@ func _ready() -> void:
 		"failure_reasons": failure_reasons,
 		"elapsed_seconds": elapsed,
 		"timestamp": Time.get_datetime_string_from_system(),
+		"provenance": {
+			"schema_version": PROVENANCE_SCHEMA_VERSION,
+			"source": source_provenance,
+			"source_at_end": source_provenance_at_end,
+			"source_changed_during_run": source_changed_during_run,
+			"deck_strategy": deck_strategy_provenance,
+			"anchor_strategy": anchor_strategy_provenance,
+		},
 		"per_game": per_game,
 	}
 
@@ -229,7 +269,7 @@ func _ready() -> void:
 			print("[警告] 无法写入 %s" % json_output)
 
 	if trace_jsonl_output != "" and trace_collector != null:
-		_write_trace_jsonl(trace_jsonl_output, trace_collector.traces)
+		_write_trace_jsonl(trace_jsonl_output, trace_collector.traces, trace_provenance)
 		print("Trace JSONL exported: %s" % trace_jsonl_output)
 
 	_quit(0)
@@ -369,7 +409,104 @@ func _json_ascii_safe(value: Variant) -> Variant:
 	return value
 
 
-func _write_trace_jsonl(path: String, traces: Array) -> void:
+func _build_source_provenance() -> Dictionary:
+	var source_paths: Array[String] = []
+	_collect_gd_source_paths(AI_SOURCE_ROOT, source_paths)
+	if not BENCHMARK_RUNNER_SOURCE_PATH in source_paths:
+		source_paths.append(BENCHMARK_RUNNER_SOURCE_PATH)
+	source_paths.sort()
+
+	var context := HashingContext.new()
+	if context.start(HashingContext.HASH_SHA256) != OK:
+		return {}
+	var latest_mtime: int = 0
+	var file_count: int = 0
+	context.update(("%d|" % source_paths.size()).to_utf8_buffer())
+	for source_path: String in source_paths:
+		if not FileAccess.file_exists(source_path):
+			continue
+		var bytes := FileAccess.get_file_as_bytes(source_path)
+		var path_bytes := source_path.to_utf8_buffer()
+		context.update(("%d|" % path_bytes.size()).to_utf8_buffer())
+		context.update(path_bytes)
+		context.update(("%d|" % bytes.size()).to_utf8_buffer())
+		context.update(bytes)
+		latest_mtime = maxi(latest_mtime, int(FileAccess.get_modified_time(source_path)))
+		file_count += 1
+	return {
+		"algorithm": "sha256",
+		"fingerprint": context.finish().hex_encode(),
+		"file_count": file_count,
+		"latest_mtime_unix": latest_mtime,
+		"source_root": AI_SOURCE_ROOT,
+		"runner_path": BENCHMARK_RUNNER_SOURCE_PATH,
+	}
+
+
+func _collect_gd_source_paths(directory_path: String, output: Array[String]) -> void:
+	for file_name: String in DirAccess.get_files_at(directory_path):
+		if file_name.ends_with(".gd"):
+			output.append(directory_path.path_join(file_name))
+	for subdirectory_name: String in DirAccess.get_directories_at(directory_path):
+		_collect_gd_source_paths(directory_path.path_join(subdirectory_name), output)
+
+
+func _build_strategy_provenance(deck: DeckData) -> Dictionary:
+	if deck == null:
+		return {}
+	var registry := DeckStrategyRegistryScript.new()
+	var strategy_id := str(registry.resolve_strategy_id_for_deck(deck))
+	var strategy = registry.resolve_strategy_for_deck(deck)
+	var script_path := ""
+	if strategy != null:
+		var script_resource: Variant = strategy.get_script()
+		if script_resource is Script:
+			script_path = str((script_resource as Script).resource_path)
+	var provenance := {
+		"deck_id": int(deck.id),
+		"strategy_id": strategy_id,
+		"script_path": script_path,
+	}
+	provenance["script"] = _build_file_provenance(script_path)
+	var profile: Dictionary = DeckStrategyV18ProfileCatalogScript.get_profile_for_strategy(strategy_id)
+	provenance["delegate"] = _build_file_provenance(str(profile.get("delegate_script_path", "")))
+	return provenance
+
+
+func _build_player_provenance(strategy_provenance: Dictionary, fixed_requested: bool, fixed_order_path: String) -> Dictionary:
+	var provenance := strategy_provenance.duplicate(true)
+	provenance["fixed_opening_requested"] = fixed_requested
+	provenance["fixed_opening_applied"] = fixed_order_path != ""
+	provenance["fixed_order"] = _build_file_provenance(fixed_order_path)
+	return provenance
+
+
+func _build_file_provenance(path: String) -> Dictionary:
+	var normalized_path := path.replace("\\", "/")
+	if normalized_path == "" or not FileAccess.file_exists(normalized_path):
+		return {
+			"path": normalized_path,
+			"sha256": "",
+			"mtime_unix": 0,
+		}
+	var context := HashingContext.new()
+	if context.start(HashingContext.HASH_SHA256) != OK:
+		return {"path": normalized_path, "sha256": "", "mtime_unix": 0}
+	context.update(FileAccess.get_file_as_bytes(normalized_path))
+	return {
+		"path": normalized_path,
+		"sha256": context.finish().hex_encode(),
+		"mtime_unix": int(FileAccess.get_modified_time(normalized_path)),
+	}
+
+
+func _attach_trace_provenance(payload: Dictionary, provenance: Dictionary) -> Dictionary:
+	var decorated := payload.duplicate(true)
+	decorated["provenance"] = provenance.duplicate(true)
+	return decorated
+
+
+func _write_trace_jsonl(path: String, traces: Array, provenance: Dictionary = {}) -> void:
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
 		print("[warn] failed to write trace JSONL: %s" % path)
@@ -378,6 +515,7 @@ func _write_trace_jsonl(path: String, traces: Array) -> void:
 		if trace == null:
 			continue
 		var payload: Dictionary = trace.to_dictionary() if trace.has_method("to_dictionary") else {}
+		payload = _attach_trace_provenance(payload, provenance)
 		file.store_line(JSON.stringify(_json_ascii_safe(payload)))
 	file.close()
 

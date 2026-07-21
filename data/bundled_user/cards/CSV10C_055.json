@@ -1,0 +1,59 @@
+{
+    "name":  "竹兰的丑丑鱼",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  " 摇摇游动 10\n抛掷1次硬币，如果为正面，则在下一个对手的回合，这只宝可梦不会受到招式的伤害和效果影响。\n\n",
+    "yoren_code":  "P0349",
+    "set_code":  "CSV10C",
+    "card_index":  "055",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "kamonabe",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "378bdd2ac733acdbaff10a974fb78535",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/055.png",
+    "image_local_path":  "user://cards/images/CSV10C/055.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "W",
+    "stage":  "Basic",
+    "hp":  30,
+    "weakness_energy":  "L",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "摇摇游动",
+                        "text":  "抛掷1次硬币，如果为正面，则在下一个对手的回合，这只宝可梦不会受到招式的伤害和效果影响。",
+                        "cost":  "C",
+                        "damage":  "10",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

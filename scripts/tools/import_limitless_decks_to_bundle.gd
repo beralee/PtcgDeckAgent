@@ -4,13 +4,184 @@ const Parser := preload("res://scripts/network/LimitlessCardParser.gd")
 const Resolver := preload("res://scripts/network/LimitlessCardResolver.gd")
 
 const LIMITLESS_IDS := [18497, 18499, 18501, 18502, 18509]
-const DECK_NAME_PREFIX := "NAIC2025"
+const VIDEO18_LIMITLESS_IDS := [15934, 18359, 17643, 17407, 18543, 33475, 18539, 18880, 17631, 18500]
+const VIDEO18_EXPANSION_IDS := [15734, 19125, 17097, 18105, 18498, 16834, 17047]
+const VIDEO18_REMAINING_IDS := [15927, 17070, 17098, 17280, 17405, 17413, 18334, 18714, 18817, 21836, 25404, 26575]
+const DECK_NAME_PREFIX := "18.0"
 const DECK_DISPLAY_NAMES := {
-	18497: "NAIC2025 沙奈朵",
-	18499: "NAIC2025 多龙巴鲁托",
-	18501: "NCIC2025 玛俐的长矛巨魔",
-	18502: "NAIC2025 N的索罗亚克",
-	18509: "NAIC2025 猛雷鼓厄诡椪",
+	15734: "18.0 自爆多龙巴鲁托",
+	15934: "18.0 Tord太晶盒",
+	16834: "18.0 纯赛富豪",
+	17047: "18.0 象牙猪火焰鸡",
+	17097: "18.0 无碟沙奈朵",
+	18359: "18.0 大比鸟控制",
+	18105: "18.0 虫甲圣沙奈朵",
+	17643: "18.0 火伊布猫头夜鹰",
+	17407: "18.0 赫普苍响",
+	33475: "18.0 远古巨蜓",
+	17631: "18.0 雪妖女愿增猿",
+	18500: "18.0 陆地水母厄诡椪",
+	18539: "18.0 阿响凤王",
+	18543: "18.0 竹兰烈咬陆鲨",
+	18880: "18.0 阿响火暴兽",
+	18497: "18.0 沙奈朵",
+	18498: "18.0 学院沙奈朵",
+	18499: "18.0 多龙巴鲁托",
+	18501: "18.0 玛俐的长毛巨魔",
+	18502: "18.0 N的索罗亚克",
+	18509: "18.0 猛雷鼓厄诡椪",
+	19125: "18.0 火焰鸡多龙巴鲁托",
+	15927: "18.0 回血药免疫盒",
+	17070: "18.0 土龙赛富豪",
+	17098: "18.0 纯幸福蛋",
+	17280: "18.0 毒桥龙",
+	17405: "18.0 多龙赛富豪",
+	17413: "18.0 普隆隆姆苍炎刃鬼",
+	18334: "18.0 毒轰",
+	18714: "18.0 螃蟹铁荆棘",
+	18817: "18.0 电电虫盒",
+	21836: "18.0 螃蟹N的索罗亚克",
+	25404: "18.0 自爆恶喷",
+	26575: "18.0 火箭队超梦爆阵蛛",
+}
+const SIMPLIFIED_CHINESE_CARD_OVERRIDES := {
+	"DRI_2": {"set_code": "CSV10C", "card_index": "002"},
+	"DRI_3": {"set_code": "CSV10C", "card_index": "003"},
+	"DRI_7": {"set_code": "CSV10C", "card_index": "004"},
+	"DRI_8": {"set_code": "CSV10C", "card_index": "005"},
+	"DRI_10": {"set_code": "CSV10C", "card_index": "007"},
+	"DRI_11": {"set_code": "CSV10C", "card_index": "009"},
+	"DRI_12": {"set_code": "CSV10C", "card_index": "010"},
+	"DRI_32": {"set_code": "CSV10C", "card_index": "028"},
+	"DRI_33": {"set_code": "CSV10C", "card_index": "029"},
+	"DRI_34": {"set_code": "CSV10C", "card_index": "030"},
+	"DRI_39": {"set_code": "CSV10C", "card_index": "035"},
+	"DRI_40": {"set_code": "CSV10C", "card_index": "036"},
+	"DRI_41": {"set_code": "CSV10C", "card_index": "037"},
+	"DRI_42": {"set_code": "CSV10C", "card_index": "038"},
+	"DRI_102": {"set_code": "CSV10C", "card_index": "111"},
+	"DRI_103": {"set_code": "CSV10C", "card_index": "112"},
+	"DRI_104": {"set_code": "CSV10C", "card_index": "113"},
+	"DRI_129": {"set_code": "CSV10C", "card_index": "138"},
+	"DRI_134": {"set_code": "CSV10C", "card_index": "146"},
+	"DRI_135": {"set_code": "CSV10C", "card_index": "147"},
+	"DRI_136": {"set_code": "CSV10C", "card_index": "148"},
+	"DRI_162": {"set_code": "CSV10C", "card_index": "200"},
+	"DRI_165": {"set_code": "CSV10C", "card_index": "208"},
+	"DRI_169": {"set_code": "CSV10C", "card_index": "216"},
+	"DRI_176": {"set_code": "CSV10C", "card_index": "212"},
+	"DRI_180": {"set_code": "CSV10C", "card_index": "219"},
+	"JTG_8": {"set_code": "CSV10C", "card_index": "008"},
+	"JTG_26": {"set_code": "CSV10C", "card_index": "040"},
+	"JTG_27": {"set_code": "CSV10C", "card_index": "041"},
+	"JTG_56": {"set_code": "CSV10C", "card_index": "082"},
+	"JTG_77": {"set_code": "CSV10C", "card_index": "102"},
+	"JTG_78": {"set_code": "CSV10C", "card_index": "103"},
+	"JTG_79": {"set_code": "CSV10C", "card_index": "104"},
+	"JTG_97": {"set_code": "CSV10C", "card_index": "144"},
+	"JTG_98": {"set_code": "CSV10C", "card_index": "145"},
+	"JTG_116": {"set_code": "CSV10C", "card_index": "166"},
+	"JTG_117": {"set_code": "CSV10C", "card_index": "175"},
+	"JTG_121": {"set_code": "CSV10C", "card_index": "179"},
+	"JTG_138": {"set_code": "CSV10C", "card_index": "188"},
+	"JTG_146": {"set_code": "CSV10C", "card_index": "207"},
+	"JTG_147": {"set_code": "CSV10C", "card_index": "195"},
+	"JTG_148": {"set_code": "CSV10C", "card_index": "201"},
+	"JTG_152": {"set_code": "CSV10C", "card_index": "215"},
+	"JTG_153": {"set_code": "CSV10C", "card_index": "190"},
+	"JTG_154": {"set_code": "CSV10C", "card_index": "218"},
+	"JTG_156": {"set_code": "CSV10C", "card_index": "193"},
+	"JTG_157": {"set_code": "CSV10C", "card_index": "205"},
+	"PRE_6": {"set_code": "CSV9.5C", "card_index": "006"},
+	"PRE_14": {"set_code": "CSV9.5C", "card_index": "023"},
+	"PRE_4": {"set_code": "CSV9.5C", "card_index": "004"},
+	"PRE_75": {"set_code": "CSV9.5C", "card_index": "140"},
+	"PRE_77": {"set_code": "CSV9.5C", "card_index": "141"},
+	"PRE_86": {"set_code": "CSV9.5C", "card_index": "149"},
+	"PAR_29": {"set_code": "CSV5C", "card_index": "022"},
+	"PAR_102": {"set_code": "SVP", "card_index": "080"},
+	"PAL_71": {"set_code": "CSV2C", "card_index": "041"},
+	"PAL_123": {"set_code": "CSV4C", "card_index": "074"},
+	"SSP_97": {"set_code": "CSV9C", "card_index": "096"},
+	"SSP_131": {"set_code": "CSV9C", "card_index": "142"},
+	"SSP_176": {"set_code": "CSV9C", "card_index": "176"},
+	"SSP_41": {"set_code": "CSV8C", "card_index": "056"},
+	"SSP_137": {"set_code": "CSV8C", "card_index": "154"},
+	"OBF_195": {"set_code": "CSV2C", "card_index": "125"},
+	"MEW_133": {"set_code": "151C", "card_index": "133"},
+	"JTG_111": {"set_code": "CSV10C", "card_index": "161"},
+	"SSP_187": {"set_code": "CSV8C", "card_index": "196"},
+	"PAL_174": {"set_code": "CSV3C", "card_index": "129"},
+	"PAL_156": {"set_code": "CSVH3aC", "card_index": "002"},
+	# PAR 016 and SCR 017 are different Toedscool prints. The user explicitly
+	# chose the available Simplified-Chinese CSVSC 005 print for both slots so
+	# the reconstructed list keeps the original four-copy Toedscool line.
+	"PAR_16": {"set_code": "CSVSC", "card_index": "005", "deck_rebuild": true},
+	"SCR_17": {"set_code": "CSVSC", "card_index": "005"},
+	"OBF_22": {"set_code": "CSV5C", "card_index": "010"},
+	"SCR_137": {"set_code": "CSV9C", "card_index": "192"},
+	"TWM_158": {"set_code": "CSV7C", "card_index": "190"},
+	"SCR_114": {"set_code": "CSV9C", "card_index": "154"},
+	"SCR_115": {"set_code": "CSV9C", "card_index": "155"},
+	"SCR_118": {"set_code": "CSV9C", "card_index": "161"},
+	"SCR_128": {"set_code": "CSV9C", "card_index": "175"},
+	"SCR_131": {"set_code": "CSV9C", "card_index": "207"},
+	"SCR_132": {"set_code": "CSV9C", "card_index": "202"},
+	"SCR_133": {"set_code": "CSV9C", "card_index": "196"},
+	"SFA_40": {"set_code": "CSV9C", "card_index": "133"},
+	"SSP_4": {"set_code": "CSV9C", "card_index": "006"},
+	"SSP_21": {"set_code": "CSV9C", "card_index": "023"},
+	"SSP_32": {"set_code": "CSV9C", "card_index": "033"},
+	"SSP_57": {"set_code": "CSV9C", "card_index": "054"},
+	"SSP_76": {"set_code": "CSV9C", "card_index": "078"},
+	"SSP_86": {"set_code": "CSV9C", "card_index": "090"},
+	"SSP_143": {"set_code": "CSV9C", "card_index": "153"},
+	"SSP_170": {"set_code": "CSV9C", "card_index": "198"},
+	"SSP_185": {"set_code": "CSV9C", "card_index": "186"},
+	"SSP_189": {"set_code": "CSV9C", "card_index": "181"},
+	"TWM_50": {"set_code": "CSV9C", "card_index": "039"},
+	"ASC_39": {"set_code": "CSV10C", "card_index": "043"},
+	"SVP_149": {"set_code": "CSV9C", "card_index": "127"},
+	# Black Bolt's Elgyem print has not been released in Simplified Chinese.
+	# Keep the original Pokemon name with the available Simplified-Chinese print.
+	"BLK_40": {"set_code": "CS6bC", "card_index": "047", "deck_rebuild": true},
+	"BLK_79": {"set_code": "CS1bC", "card_index": "128"},
+	# Video 18.0 rebuilds. These cards either have an equivalent Simplified-
+	# Chinese print whose English metadata is blank, or are unreleased utility
+	# cards replaced by the closest legal card with the same deck-building role.
+	"TEF_66": {"set_code": "CSV8C", "card_index": "078", "deck_rebuild": true},
+	"SFA_62": {"set_code": "CSV8C", "card_index": "176", "deck_rebuild": true},
+	"OBF_197": {"set_code": "CSV1C", "card_index": "118", "deck_rebuild": true},
+	"SCR_106": {"set_code": "CSV9C", "card_index": "136"},
+	"SSP_130": {"set_code": "CSV9C", "card_index": "138"},
+	"SSP_36": {"set_code": "CSV9C", "card_index": "034"},
+	"SSP_164": {"set_code": "CSV9C", "card_index": "183"},
+	"SSP_116": {"set_code": "CSV9C", "card_index": "112"},
+	"JTG_158": {"set_code": "CSV10C", "card_index": "189"},
+	"PAR_182": {"set_code": "CSV3C", "card_index": "130"},
+	"SCR_50": {"set_code": "CSV9C", "card_index": "063"},
+	"ASC_40": {"set_code": "CSV10C", "card_index": "044", "deck_rebuild": true},
+	"MEG_119": {"set_code": "CSV1C", "card_index": "121", "deck_rebuild": true},
+	"PFL_11": {"set_code": "151C", "card_index": "004", "deck_rebuild": true},
+	"PFL_12": {"set_code": "CSV5C", "card_index": "015", "deck_rebuild": true},
+	"OBF_163": {"set_code": "151C", "card_index": "017"},
+	"DRI_19": {"set_code": "CSV10C", "card_index": "018"},
+	"DRI_20": {"set_code": "CSV10C", "card_index": "019"},
+	"DRI_51": {"set_code": "CSV10C", "card_index": "052"},
+	"DRI_81": {"set_code": "CSV10C", "card_index": "085"},
+	"DRI_87": {"set_code": "CSV10C", "card_index": "095"},
+	"DRI_168": {"set_code": "CSV10C", "card_index": "192"},
+	"DRI_170": {"set_code": "CSV10C", "card_index": "210"},
+	"DRI_171": {"set_code": "CSV10C", "card_index": "209"},
+	"DRI_173": {"set_code": "CSV10C", "card_index": "220"},
+	"DRI_174": {"set_code": "CSV10C", "card_index": "211"},
+	"DRI_177": {"set_code": "CSV10C", "card_index": "213"},
+	"DRI_178": {"set_code": "CSV10C", "card_index": "199"},
+	"DRI_182": {"set_code": "CSV10C", "card_index": "222"},
+	"WHT_80": {"set_code": "CSV1C", "card_index": "117", "deck_rebuild": true},
+	# No matching SVI 085 print exists in the Simplified-Chinese pool. The 18.0
+	# Gardevoir rebuild intentionally uses the available Refinement Kirlia.
+	"SVI_85": {"set_code": "CS6.5C", "card_index": "030", "deck_rebuild": true},
 }
 const CACHE_ROOT := "res://tmp/limitless_naic2025_import"
 const BUNDLED_USER_DIR := "res://data/bundled_user/"
@@ -29,6 +200,7 @@ var _summary: Dictionary = {
 }
 var _manifest_entries: Array[String] = []
 var _manifest_seen: Dictionary = {}
+var _strict_mode := false
 
 
 func _initialize() -> void:
@@ -42,8 +214,17 @@ func _run() -> void:
 		_finish()
 		return
 	_load_manifest()
+	var args := OS.get_cmdline_user_args()
+	var selected_ids: Array = LIMITLESS_IDS
+	if args.has("--video18-expansion"):
+		selected_ids = VIDEO18_EXPANSION_IDS
+	elif args.has("--video18-remaining"):
+		selected_ids = VIDEO18_REMAINING_IDS
+	elif args.has("--video18"):
+		selected_ids = VIDEO18_LIMITLESS_IDS
+	_strict_mode = args.has("--strict") or args.has("--video18") or args.has("--video18-expansion") or args.has("--video18-remaining")
 
-	for raw_id: Variant in LIMITLESS_IDS:
+	for raw_id: Variant in selected_ids:
 		_import_and_bundle_deck(int(raw_id))
 
 	_write_manifest()
@@ -68,11 +249,57 @@ func _import_and_bundle_deck(limitless_id: int) -> void:
 	for entry_raw: Variant in entries:
 		if entry_raw is Dictionary:
 			_resolve_limitless_entry(deck, entry_raw as Dictionary, errors)
+	_normalize_deck_name(deck, limitless_id)
+	_validate_resolved_deck_construction(deck, errors)
+	if _strict_mode and not errors.is_empty():
+		_summary["decks"].append({
+			"id": deck.id,
+			"name": deck.deck_name,
+			"source_url": deck.source_url,
+			"total_cards": deck.total_cards,
+			"skipped": true,
+			"errors": Array(errors),
+		})
+		for err: String in errors:
+			_add_error("deck %d skipped: %s" % [limitless_id, err])
+		return
 	for err: String in errors:
 		_add_error("deck %d import warning: %s" % [limitless_id, err])
 
-	_normalize_deck_name(deck, limitless_id)
 	_bundle_deck(deck)
+
+
+func _validate_resolved_deck_construction(deck: DeckData, errors: PackedStringArray) -> void:
+	var name_counts := {}
+	var ace_spec_count := 0
+	var radiant_count := 0
+	var basic_pokemon_count := 0
+	for entry: Dictionary in deck.cards:
+		var set_code := str(entry.get("set_code", "")).strip_edges()
+		var card_index := str(entry.get("card_index", "")).strip_edges()
+		var card: CardData = _card_db.call("get_card", set_code, card_index)
+		if card == null:
+			continue
+		var count := int(entry.get("count", 0))
+		if card.card_type != "Basic Energy":
+			var card_name := card.display_name()
+			name_counts[card_name] = int(name_counts.get(card_name, 0)) + count
+		if card.is_ace_spec():
+			ace_spec_count += count
+		if card.is_radiant():
+			radiant_count += count
+		if card.card_type == "Pokemon" and (card.stage == "Basic" or card.has_tag("Basic")):
+			basic_pokemon_count += count
+	for card_name: Variant in name_counts:
+		var count := int(name_counts[card_name])
+		if count > 4:
+			errors.append("Resolved card '%s' has %d copies; non-Basic-Energy cards are capped at 4" % [str(card_name), count])
+	if ace_spec_count > 1:
+		errors.append("Resolved deck has %d ACE SPEC cards; the limit is 1" % ace_spec_count)
+	if radiant_count > 1:
+		errors.append("Resolved deck has %d Radiant Pokemon; the limit is 1" % radiant_count)
+	if basic_pokemon_count == 0:
+		errors.append("Resolved deck must contain at least one Basic Pokemon")
 
 
 func _deck_from_limitless_parse(parsed: Dictionary, limitless_id: int, source_url: String) -> DeckData:
@@ -120,7 +347,26 @@ func _resolve_limitless_entry(deck: DeckData, entry: Dictionary, errors: PackedS
 		errors.append("Limitless card %s/%s could not be resolved" % [source_set, source_index])
 		return
 	var resolved_via := str(resolved.get("resolved_via", ""))
-	if str(card.set_code).begins_with("LEN_") and str(card.source_provider).strip_edges().to_lower() == "limitless":
+	var chinese_override: Dictionary = SIMPLIFIED_CHINESE_CARD_OVERRIDES.get("%s_%s" % [source_set, source_index], {})
+	if not chinese_override.is_empty():
+		var chinese_card: CardData = _card_db.call(
+			"get_card",
+			str(chinese_override.get("set_code", "")),
+			str(chinese_override.get("card_index", ""))
+		)
+		if chinese_card == null:
+			errors.append("Simplified-Chinese override %s/%s is unavailable" % [
+				str(chinese_override.get("set_code", "")),
+				str(chinese_override.get("card_index", "")),
+			])
+			return
+		card = chinese_card
+		resolved_via = "simplified_chinese_deck_rebuild" if bool(chinese_override.get("deck_rebuild", false)) else "simplified_chinese_reprint"
+		_card_db.call("try_register_duplicate_effect_alias", card)
+	elif _strict_mode and (bool(resolved.get("generated", false)) or str(card.set_code).begins_with("LEN_")):
+		errors.append("Limitless card %s/%s has no Simplified-Chinese implementation" % [source_set, source_index])
+		return
+	elif str(card.set_code).begins_with("LEN_") and str(card.source_provider).strip_edges().to_lower() == "limitless":
 		card = Resolver.build_generated_card(parsed_card)
 		_card_db.call("cache_card", card)
 		resolved_via = "generated_limitless_card"

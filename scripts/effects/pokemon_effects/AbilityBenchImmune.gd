@@ -9,6 +9,7 @@ const AbilityNonRuleBoxBenchDamageShieldScript = preload("res://scripts/effects/
 
 ## 匹配的特性名称（用于在 abilities 列表中识别）
 const ABILITY_NAME: String = "毫不在意"
+const DAMAGE_AND_EFFECT_ABILITY_NAME: String = "深度下潜"
 
 
 ## 被动特性无需主动执行
@@ -39,8 +40,18 @@ static func has_bench_immune(slot: PokemonSlot) -> bool:
 	for ability: Variant in abilities:
 		if ability is Dictionary:
 			var ab_name: Variant = ability.get("name", "")
-			if ab_name == ABILITY_NAME:
+			if ab_name == ABILITY_NAME or ab_name == DAMAGE_AND_EFFECT_ABILITY_NAME:
 				return true
+	return false
+
+
+static func has_bench_damage_and_effect_immunity(slot: PokemonSlot) -> bool:
+	var top: CardInstance = slot.get_top_card() if slot != null else null
+	if top == null or top.card_data == null:
+		return false
+	for ability: Variant in top.card_data.abilities:
+		if ability is Dictionary and str(ability.get("name", "")) == DAMAGE_AND_EFFECT_ABILITY_NAME:
+			return true
 	return false
 
 
@@ -51,7 +62,9 @@ static func prevents_opponent_attack_damage(
 ) -> bool:
 	if target == null:
 		return false
-	if has_bench_immune(target):
+	if _is_tera_bench_rule_active(target, state):
+		return true
+	if has_bench_immune(target) and not _is_bench_immunity_disabled(target, state):
 		return true
 	if AbilityPreventTeraAttackDamageAndEffectsScript.prevents_target_effect_from_tera_attack(attacker, target, state):
 		return true
@@ -67,6 +80,8 @@ static func prevents_opponent_attack_effect(
 	attacker: PokemonSlot,
 	state: GameState
 ) -> bool:
+	if target != null and has_bench_damage_and_effect_immunity(target) and not _is_bench_immunity_disabled(target, state):
+		return true
 	if AbilityPreventTeraAttackDamageAndEffectsScript.prevents_target_effect_from_tera_attack(attacker, target, state):
 		return true
 	return AbilityTeamBenchShield.protects_bench_target(target, attacker, state)
@@ -78,6 +93,26 @@ static func prevents_opponent_attack_damage_or_effect(
 	state: GameState
 ) -> bool:
 	return prevents_opponent_attack_damage(target, attacker, state)
+
+
+static func _is_bench_immunity_disabled(target: PokemonSlot, state: GameState) -> bool:
+	if target == null or state == null:
+		return false
+	var processor: Variant = state.shared_turn_flags.get("_draw_effect_processor", null)
+	if processor != null and processor.has_method("is_ability_disabled"):
+		return bool(processor.call("is_ability_disabled", target, state))
+	return EffectCancelCologne.is_slot_directly_ability_disabled(target, state)
+
+
+static func _is_tera_bench_rule_active(target: PokemonSlot, state: GameState) -> bool:
+	if target == null or state == null or target.get_card_data() == null:
+		return false
+	if not target.get_card_data().is_tera_pokemon():
+		return false
+	for player: PlayerState in state.players:
+		if target in player.bench:
+			return true
+	return false
 
 
 func get_description() -> String:

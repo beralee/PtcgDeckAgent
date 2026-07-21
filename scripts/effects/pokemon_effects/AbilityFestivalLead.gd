@@ -5,6 +5,7 @@ const FESTIVAL_GROUNDS_EFFECT_ID := "357d55b54ded5db071b55ebe165749fc"
 const FESTIVAL_LEAD_EFFECT_IDS := {
 	"144b6904892dc89e3efb81067c5668c4": true, # Dipplin CSV8C
 	"7580acd5669bac12cb1af8007d2e6a6a": true, # Goldeen CSV8C
+	"c03588e3709ba32ad3c63409b64bdf2c": true, # Seaking CSV9.5C
 }
 const PENDING_PLAYER_KEY := "festival_lead_pending_player"
 const PENDING_SLOT_KEY := "festival_lead_pending_slot"

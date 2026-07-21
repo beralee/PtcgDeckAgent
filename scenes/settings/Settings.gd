@@ -11,8 +11,12 @@ const HUD_TEXT := Color(0.92, 0.98, 1.0, 1.0)
 const HUD_TEXT_MUTED := Color(0.64, 0.76, 0.86, 1.0)
 const ZENMUX_HOME_URL := "https://zenmux.ai"
 const ZENMUX_DEFAULT_ENDPOINT := "https://zenmux.ai/api/v1"
+const DEEPSEEK_HOME_URL := "https://platform.deepseek.com/api_keys"
+const DEEPSEEK_DEFAULT_ENDPOINT := "https://api.deepseek.com"
 const ZENMUX_SETUP_GUIDE := "1. 在浏览器打开 zenmux.ai，注册或登录账号。\n2. 进入控制台/API Keys，新建一个 API Key。\n3. 回到这里，API 地址保持 https://zenmux.ai/api/v1。\n4. 把 API Key 粘贴到“API 密钥”，选择模型；不确定就用默认模型。\n5. 点“测试连接”。提示测试通过后，回到开始对战选择大模型 AI。"
 const ZENMUX_TROUBLESHOOTING := "测试失败时先看这里：\n- 鉴权失败/401：API Key 复制错、少复制字符，或 Key 已失效。\n- model not found：当前 Key 不能用这个模型，换一个模型再测。\n- timeout/请求超时：网络慢，把超时改成 90 或 120 秒再试。"
+const DEEPSEEK_SETUP_GUIDE := "1. 在 DeepSeek 开放平台登录并创建 API Key。\n2. 选择“DeepSeek 直连”，API 地址保持 https://api.deepseek.com。\n3. 粘贴 DeepSeek API Key，选择 V4 Flash 或 V4 Pro。\n4. 点“测试连接”。通过后，游戏里的大模型 AI、复盘和建议都会走 DeepSeek 官方接口。"
+const DEEPSEEK_TROUBLESHOOTING := "测试失败时先看这里：\n- 鉴权失败/401：确认粘贴的是 DeepSeek 开放平台的 API Key，不是 ZenMux Key。\n- 余额不足/402：请在 DeepSeek 开放平台检查余额。\n- timeout/请求超时：把超时改成 90 或 120 秒再试。"
 const MODEL_PICKER_OVERLAY_NAME := "AISettingsModelPickerOverlay"
 const API_KEY_SELECT_ALL_BOUND_META := "_ai_settings_api_key_select_all_bound"
 const API_KEY_SELECTED_ALL_META := "_ai_settings_api_key_selected_all"
@@ -25,11 +29,15 @@ var _model_picker_overlay: Control = null
 var _model_picker_scroll: ScrollContainer = null
 var _model_picker_list: VBoxContainer = null
 var _web_api_key_clipboard_callback = null
+var _active_provider: String = "zenmux"
+var _provider_configs: Dictionary = {}
+var _provider_button_group := ButtonGroup.new()
 
 
 func _ready() -> void:
 	_apply_settings_copy()
 	_ensure_zenmux_setup_guide()
+	_configure_provider_controls()
 	_configure_settings_form_bounds()
 	_apply_hud_theme()
 	_connect_non_battle_layout_signal()
@@ -371,7 +379,7 @@ func _apply_settings_mobile_metrics(node: Node, context: Dictionary, portrait: b
 			button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, button_height)
 		elif button.name in ["BtnSave", "BtnTest", "BtnBack"]:
 			button.custom_minimum_size.y = 40.0
-		if portrait and button.name in ["BtnSave", "BtnTest", "BtnBack", "BtnUseZenMuxDefault", "BtnPasteApiKey", "BtnOpenZenMux"]:
+		if portrait and button.name in ["BtnSave", "BtnTest", "BtnBack", "BtnUseZenMuxDefault", "BtnPasteApiKey", "BtnOpenZenMux", "ProviderZenMuxButton", "ProviderDeepSeekButton"]:
 			button.custom_minimum_size.x = 0.0
 			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		elif not portrait and button.name in ["BtnSave", "BtnTest", "BtnBack"]:
@@ -424,7 +432,8 @@ func _apply_settings_mobile_metrics(node: Node, context: Dictionary, portrait: b
 
 func _apply_settings_copy() -> void:
 	_set_label_text("Title", "AI 设置")
-	_set_label_text("SectionLabel", "ZenMux 与 AI 性格")
+	_set_label_text("SectionLabel", "AI 提供商与 AI 性格")
+	_set_label_text("ProviderLabel", "API 提供商:")
 	_set_label_text("EndpointLabel", "API 地址:")
 	_set_label_text("ApiKeyLabel", "API 密钥:")
 	_set_label_text("ModelLabel", "模型:")
@@ -432,10 +441,10 @@ func _apply_settings_copy() -> void:
 	_set_label_text("PersonalityLabel", "AI 性格:")
 	var endpoint_input := _endpoint_input()
 	if endpoint_input != null:
-		endpoint_input.placeholder_text = ZENMUX_DEFAULT_ENDPOINT
+		endpoint_input.placeholder_text = _default_endpoint_for_provider(_active_provider)
 	var api_key_input := _api_key_input()
 	if api_key_input != null:
-		api_key_input.placeholder_text = "粘贴 ZenMux 控制台里的 API Key"
+		api_key_input.placeholder_text = "粘贴 API 提供商控制台里的 API Key"
 	var paste_api_key_button := find_child("BtnPasteApiKey", true, false) as Button
 	if paste_api_key_button != null:
 		paste_api_key_button.text = "粘贴密钥"
@@ -451,6 +460,7 @@ func _apply_settings_copy() -> void:
 	var back_button := _settings_button("BtnBack")
 	if back_button != null:
 		back_button.text = "返回"
+	_refresh_provider_copy()
 
 
 func _set_label_text(node_name: String, text: String) -> void:
@@ -607,6 +617,8 @@ func _set_runtime_owner(node: Node) -> void:
 
 func _reparent_form_controls(root: VBoxContainer, form_column: VBoxContainer) -> void:
 	var control_names := [
+		"ProviderLabel",
+		"ProviderSegment",
 		"EndpointLabel",
 		"EndpointInput",
 		"ApiKeyLabel",
@@ -699,6 +711,48 @@ func _add_zenmux_guide_controls(guide_column: VBoxContainer) -> void:
 	guide_column.add_child(trouble_body)
 
 
+func _default_endpoint_for_provider(provider: String) -> String:
+	return DEEPSEEK_DEFAULT_ENDPOINT if GameManager.normalize_battle_review_provider(provider) == "deepseek" else ZENMUX_DEFAULT_ENDPOINT
+
+
+func _provider_display_name(provider: String) -> String:
+	return "DeepSeek" if GameManager.normalize_battle_review_provider(provider) == "deepseek" else "ZenMux"
+
+
+func _refresh_provider_copy() -> void:
+	var direct_deepseek := _active_provider == "deepseek"
+	var provider_name := _provider_display_name(_active_provider)
+	var endpoint_input := _endpoint_input()
+	if endpoint_input != null:
+		endpoint_input.placeholder_text = _default_endpoint_for_provider(_active_provider)
+	var api_key_input := _api_key_input()
+	if api_key_input != null:
+		api_key_input.placeholder_text = "粘贴 %s 控制台里的 API Key" % provider_name
+	var default_endpoint_button := find_child("BtnUseZenMuxDefault", true, false) as Button
+	if default_endpoint_button != null:
+		default_endpoint_button.text = "填入 %s 默认地址" % provider_name
+	var endpoint_hint := find_child("EndpointHint", true, false) as Label
+	if endpoint_hint != null:
+		endpoint_hint.text = "%s 用户通常保持这个地址即可。" % provider_name
+	var model_hint := find_child("ModelHint", true, false) as Label
+	if model_hint != null:
+		model_hint.text = "直连模式仅显示 DeepSeek 官方模型；测试通过后才会启用大模型对手。" if direct_deepseek else "不确定模型就先保留默认；测试通过后才会启用大模型对手。"
+	var guide_title := find_child("ZenMuxGuideTitle", true, false) as Label
+	if guide_title != null:
+		guide_title.text = "%s 配置步骤" % provider_name
+	var guide_body := find_child("ZenMuxGuideBody", true, false) as Label
+	if guide_body != null:
+		guide_body.text = DEEPSEEK_SETUP_GUIDE if direct_deepseek else ZENMUX_SETUP_GUIDE
+	var trouble_body := find_child("ZenMuxTroubleBody", true, false) as Label
+	if trouble_body != null:
+		trouble_body.text = DEEPSEEK_TROUBLESHOOTING if direct_deepseek else ZENMUX_TROUBLESHOOTING
+	var open_provider_button := find_child("BtnOpenZenMux", true, false) as Button
+	if open_provider_button != null:
+		open_provider_button.text = "打开 DeepSeek 开放平台" if direct_deepseek else "打开 zenmux.ai"
+		open_provider_button.set_meta("external_url", DEEPSEEK_HOME_URL if direct_deepseek else ZENMUX_HOME_URL)
+	_update_provider_button_state()
+
+
 func _build_zenmux_link_button() -> Button:
 	var button := Button.new()
 	button.name = "BtnOpenZenMux"
@@ -724,6 +778,7 @@ func _apply_hud_theme() -> void:
 
 
 func _connect_settings_controls() -> void:
+	_configure_provider_controls()
 	var save_button := _settings_button("BtnSave")
 	if save_button != null and not save_button.pressed.is_connected(_on_save):
 		save_button.pressed.connect(_on_save)
@@ -752,6 +807,31 @@ func _connect_settings_controls() -> void:
 		var model_input_callback := Callable(self, "_on_model_option_gui_input")
 		if not model_option.gui_input.is_connected(model_input_callback):
 			model_option.gui_input.connect(model_input_callback)
+
+
+func _configure_provider_controls() -> void:
+	var zenmux_button := find_child("ProviderZenMuxButton", true, false) as Button
+	var deepseek_button := find_child("ProviderDeepSeekButton", true, false) as Button
+	var zenmux_callback := _switch_provider.bind("zenmux")
+	var deepseek_callback := _switch_provider.bind("deepseek")
+	if zenmux_button != null:
+		zenmux_button.button_group = _provider_button_group
+		if not zenmux_button.pressed.is_connected(zenmux_callback):
+			zenmux_button.pressed.connect(zenmux_callback)
+	if deepseek_button != null:
+		deepseek_button.button_group = _provider_button_group
+		if not deepseek_button.pressed.is_connected(deepseek_callback):
+			deepseek_button.pressed.connect(deepseek_callback)
+	_update_provider_button_state()
+
+
+func _update_provider_button_state() -> void:
+	var zenmux_button := find_child("ProviderZenMuxButton", true, false) as Button
+	var deepseek_button := find_child("ProviderDeepSeekButton", true, false) as Button
+	if zenmux_button != null:
+		zenmux_button.set_pressed_no_signal(_active_provider == "zenmux")
+	if deepseek_button != null:
+		deepseek_button.set_pressed_no_signal(_active_provider == "deepseek")
 
 
 func _ensure_hud_frame() -> void:
@@ -1180,7 +1260,7 @@ func _populate_model_options() -> void:
 	if model_option == null:
 		return
 	model_option.clear()
-	for model: Dictionary in GameManager.get_supported_battle_review_models():
+	for model: Dictionary in GameManager.get_supported_battle_review_models_for_provider(_active_provider):
 		var index: int = model_option.get_item_count()
 		model_option.add_item(str(model.get("label", model.get("id", ""))))
 		model_option.set_item_metadata(index, str(model.get("id", "")))
@@ -1190,7 +1270,12 @@ func _populate_model_options() -> void:
 
 func _load_config() -> void:
 	var config := GameManager.get_battle_review_api_config()
-	var endpoint := _settings_config_text(config.get("endpoint", ZENMUX_DEFAULT_ENDPOINT), ZENMUX_DEFAULT_ENDPOINT)
+	_active_provider = GameManager.normalize_battle_review_provider(str(config.get("provider", "zenmux")))
+	var profiles_variant: Variant = config.get("provider_configs", {})
+	_provider_configs = (profiles_variant as Dictionary).duplicate(true) if profiles_variant is Dictionary else {}
+	_populate_model_options()
+	var default_endpoint := _default_endpoint_for_provider(_active_provider)
+	var endpoint := _settings_config_text(config.get("endpoint", default_endpoint), default_endpoint)
 	var endpoint_input := _endpoint_input()
 	if endpoint_input != null:
 		endpoint_input.text = endpoint
@@ -1207,6 +1292,52 @@ func _load_config() -> void:
 	var status_label := _status_label()
 	if status_label != null:
 		status_label.text = ""
+	_refresh_provider_copy()
+
+
+func _provider_profile(provider: String) -> Dictionary:
+	var normalized := GameManager.normalize_battle_review_provider(provider)
+	var profile_variant: Variant = _provider_configs.get(normalized, {})
+	if profile_variant is Dictionary and not (profile_variant as Dictionary).is_empty():
+		return (profile_variant as Dictionary).duplicate(true)
+	return GameManager.get_default_battle_review_provider_config(normalized)
+
+
+func _stash_current_provider_profile() -> void:
+	var profile := _provider_profile(_active_provider)
+	var endpoint_input := _endpoint_input()
+	var api_key_input := _api_key_input()
+	if endpoint_input != null:
+		profile["endpoint"] = _settings_input_text(endpoint_input, str(profile.get("endpoint", _default_endpoint_for_provider(_active_provider))))
+	if api_key_input != null:
+		profile["api_key"] = _settings_input_text(api_key_input, str(profile.get("api_key", "")))
+	if _model_option() != null:
+		profile["model"] = _selected_model_id()
+	_provider_configs[_active_provider] = profile
+
+
+func _apply_provider_profile(provider: String) -> void:
+	var profile := _provider_profile(provider)
+	var endpoint_input := _endpoint_input()
+	if endpoint_input != null:
+		endpoint_input.text = _settings_config_text(profile.get("endpoint", _default_endpoint_for_provider(provider)), _default_endpoint_for_provider(provider))
+	var api_key_input := _api_key_input()
+	if api_key_input != null:
+		api_key_input.text = _settings_config_text(profile.get("api_key", ""), "")
+	_select_model(str(profile.get("model", GameManager.DEFAULT_BATTLE_REVIEW_MODEL)))
+
+
+func _switch_provider(provider: String) -> void:
+	var normalized := GameManager.normalize_battle_review_provider(provider)
+	if normalized == _active_provider:
+		_update_provider_button_state()
+		return
+	_stash_current_provider_profile()
+	_active_provider = normalized
+	_populate_model_options()
+	_apply_provider_profile(_active_provider)
+	_refresh_provider_copy()
+	_set_status_message("已切换到 %s；两套 API Key 会分别保存。" % _provider_display_name(_active_provider), Color(0.3, 0.85, 1.0))
 
 
 func _settings_config_text(value: Variant, fallback: String) -> String:
@@ -1227,7 +1358,7 @@ func _select_model(model_id: String) -> void:
 	var model_option := _model_option()
 	if model_option == null:
 		return
-	var normalized := GameManager.normalize_battle_review_model(model_id)
+	var normalized := GameManager.normalize_battle_review_model_for_provider(model_id, _active_provider)
 	for index: int in model_option.get_item_count():
 		if str(model_option.get_item_metadata(index)) == normalized:
 			model_option.select(index)
@@ -1239,11 +1370,11 @@ func _select_model(model_id: String) -> void:
 func _selected_model_id() -> String:
 	var model_option := _model_option()
 	if model_option == null:
-		return GameManager.normalize_battle_review_model("")
+		return GameManager.normalize_battle_review_model_for_provider("", _active_provider)
 	var selected_index: int = model_option.selected
 	if selected_index < 0:
-		return GameManager.normalize_battle_review_model("")
-	return GameManager.normalize_battle_review_model(str(model_option.get_item_metadata(selected_index)))
+		return GameManager.normalize_battle_review_model_for_provider("", _active_provider)
+	return GameManager.normalize_battle_review_model_for_provider(str(model_option.get_item_metadata(selected_index)), _active_provider)
 
 
 func _on_use_zenmux_default_endpoint() -> void:
@@ -1251,8 +1382,9 @@ func _on_use_zenmux_default_endpoint() -> void:
 	if endpoint_input == null:
 		_set_ai_settings_inputs_unavailable_status("填写默认地址")
 		return
-	endpoint_input.text = ZENMUX_DEFAULT_ENDPOINT
-	_set_status_message("已填入 ZenMux 默认 API 地址，请继续粘贴 API Key 并测试连接。", Color(0.3, 1, 0.3))
+	var provider_name := _provider_display_name(_active_provider)
+	endpoint_input.text = _default_endpoint_for_provider(_active_provider)
+	_set_status_message("已填入 %s 默认 API 地址，请继续粘贴 API Key 并测试连接。" % provider_name, Color(0.3, 1, 0.3))
 
 
 func _on_paste_api_key_pressed() -> void:
@@ -1373,7 +1505,7 @@ func _apply_api_key_paste_text(text: String) -> bool:
 		return false
 	var api_key := text.strip_edges()
 	if api_key == "":
-		_set_status_message("剪贴板为空，请先复制 ZenMux API Key。", Color(1, 0.35, 0.25))
+		_set_status_message("剪贴板为空，请先复制 %s API Key。" % _provider_display_name(_active_provider), Color(1, 0.35, 0.25))
 		return false
 	api_key_input.text = api_key
 	if api_key_input.is_inside_tree():
@@ -1385,11 +1517,13 @@ func _apply_api_key_paste_text(text: String) -> bool:
 
 
 func _on_open_zenmux_pressed() -> void:
-	var err := OS.shell_open(ZENMUX_HOME_URL)
+	var provider_name := _provider_display_name(_active_provider)
+	var provider_url := DEEPSEEK_HOME_URL if _active_provider == "deepseek" else ZENMUX_HOME_URL
+	var err := OS.shell_open(provider_url)
 	if err == OK:
-		_set_status_message("已打开 zenmux.ai，请在浏览器注册或复制 API Key。", Color(0.3, 1, 0.3))
+		_set_status_message("已打开 %s，请在浏览器注册或复制 API Key。" % provider_name, Color(0.3, 1, 0.3))
 		return
-	_set_status_message("无法自动打开浏览器，请手动访问 https://zenmux.ai。", Color(1, 0.35, 0.25))
+	_set_status_message("无法自动打开浏览器，请手动访问 %s。" % provider_url, Color(1, 0.35, 0.25))
 
 
 func _on_save() -> void:
@@ -1406,14 +1540,16 @@ func _on_save() -> void:
 
 func _current_config_data() -> Dictionary:
 	var existing := GameManager.get_battle_review_api_config()
-	var endpoint_input := _endpoint_input()
-	var api_key_input := _api_key_input()
+	_stash_current_provider_profile()
+	var active_profile := _provider_profile(_active_provider)
 	var timeout_input := _timeout_input()
 	var personality_input := _personality_input()
 	return {
-		"endpoint": _settings_input_text(endpoint_input, str(existing.get("endpoint", ZENMUX_DEFAULT_ENDPOINT))),
-		"api_key": _settings_input_text(api_key_input, str(existing.get("api_key", ""))),
-		"model": _selected_model_id(),
+		"provider": _active_provider,
+		"endpoint": str(active_profile.get("endpoint", _default_endpoint_for_provider(_active_provider))),
+		"api_key": str(active_profile.get("api_key", "")),
+		"model": GameManager.normalize_battle_review_model_for_provider(str(active_profile.get("model", "")), _active_provider),
+		"provider_configs": _provider_configs.duplicate(true),
 		"timeout_seconds": timeout_input.value if timeout_input != null else float(existing.get("timeout_seconds", 60.0)),
 		"ai_personality": _settings_input_text(personality_input, str(existing.get("ai_personality", GameManager.DEFAULT_AI_PERSONALITY))),
 	}

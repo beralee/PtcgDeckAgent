@@ -14,6 +14,10 @@ const TANDEM_UNIT_SUMMONED_KEY := "ability_search_pokemon_to_bench_summoned"
 const SQUAWKABILLY_FIRST_TURN_DRAW_USED_KEY := "ability_first_turn_draw_used"
 
 
+class ReadyGeometryScene extends Control:
+	var _ready_vfx_overlay: Control = null
+
+
 func _make_pokemon_card(
 	name: String,
 	set_code: String,
@@ -100,6 +104,17 @@ func _add_special_energy_to_zone(zone: Array, owner: int, energy_type: String, c
 
 func _add_card_to_zone(zone: Array, card: CardData, owner: int) -> void:
 	zone.append(CardInstance.create(card, owner))
+
+
+func _deck_entry_count(deck: DeckData, card_ref: String) -> int:
+	if deck == null:
+		return 0
+	var count := 0
+	for entry: Dictionary in deck.cards:
+		var entry_ref := "%s_%s" % [str(entry.get("set_code", "")), str(entry.get("card_index", ""))]
+		if entry_ref == card_ref:
+			count += int(entry.get("count", 0))
+	return count
 
 
 func _mark_tandem_unit_used(slot: PokemonSlot, turn_number: int) -> void:
@@ -415,6 +430,19 @@ func test_ready_vfx_registry_registers_all_priority_profiles() -> String:
 		"gardevoir_psychic_embrace_ready",
 		"archaludon_metal_bridge_ready",
 		"squawkabilly_first_turn_draw_ready",
+		"marnies_grimmsnarl_punk_up_ready",
+		"ns_zoroark_night_joker_ready",
+		"raging_bolt_bellowing_thunder_lethal_ready",
+		"ethans_ho_oh_golden_flame_ready",
+		"cynthias_garchomp_spiral_draw_ready",
+		"ethans_typhlosion_partner_blast_lethal_ready",
+		"blaziken_boiling_spirit_acceleration_ready",
+		"pidgeot_quick_search_control_ready",
+		"flareon_burning_charge_engine_ready",
+		"hops_zacian_brave_blade_lethal_ready",
+		"yanmega_buzzing_rush_acceleration_ready",
+		"munkidori_adrena_brain_transfer_ready",
+		"toedscruel_colony_rush_lethal_ready",
 	]
 	var checks: Array[String] = [
 		assert_eq((registry.call("list_rule_ids") as Array).size(), expected_rules.size(), "Registry should expose one profile for each designed ready scene"),
@@ -457,6 +485,727 @@ func test_non_budew_ready_profiles_use_body_first_cinematic_sheets() -> String:
 		checks.append(assert_gte(float(profile.get("portrait_effect_width_ratio")) if profile != null else 0.0, 0.85, "%s should scale up in portrait mode" % rule_id))
 		checks.append(assert_gte(int(metrics.get("opaque", 0)), 30000, "%s sheet should contain substantial visible Pokemon art, not a tiny symbol" % rule_id))
 		checks.append(assert_eq(int(metrics.get("edge_alpha", 0)), 0, "%s sheet should not touch cell edges or be cropped" % rule_id))
+	return run_checks(checks)
+
+
+func test_video18_ready_vfx_coverage_matrix_has_one_tactical_core_per_deck() -> String:
+	var registry: RefCounted = BattleReadyVfxRegistryScript.new()
+	var coverage := {
+		800015934: {"core": "CSV9C_175", "rule": "terapagos_cavern_board_ready"},
+		800018359: {"core": "CSV4C_101", "rule": "pidgeot_quick_search_control_ready"},
+		800017643: {"core": "CSV9.5C_023", "rule": "flareon_burning_charge_engine_ready"},
+		800017407: {"core": "CSV10C_161", "rule": "hops_zacian_brave_blade_lethal_ready"},
+		800033475: {"core": "CSV10C_003", "rule": "yanmega_buzzing_rush_acceleration_ready"},
+		800017631: {"core": "CSV8C_094", "rule": "munkidori_adrena_brain_transfer_ready"},
+		800018543: {"core": "CSV10C_113", "rule": "cynthias_garchomp_spiral_draw_ready"},
+		800018539: {"core": "CSV10C_035", "rule": "ethans_ho_oh_golden_flame_ready"},
+		800018880: {"core": "CSV10C_030", "rule": "ethans_typhlosion_partner_blast_lethal_ready"},
+		800018500: {"core": "CSV5C_010", "rule": "toedscruel_colony_rush_lethal_ready"},
+		18000625: {"core": "CSV7C_038", "rule": "blaziken_boiling_spirit_acceleration_ready"},
+		800018497: {"core": "CSV2C_055", "rule": "gardevoir_psychic_embrace_ready"},
+		800018499: {"core": "CSV8C_159", "rule": "dragapult_phantom_dive_ready"},
+		800018501: {"core": "CSV10C_148", "rule": "marnies_grimmsnarl_punk_up_ready"},
+		800018502: {"core": "CSV10C_145", "rule": "ns_zoroark_night_joker_ready"},
+		800018509: {"core": "CSV7C_154", "rule": "raging_bolt_bellowing_thunder_lethal_ready"},
+		800015734: {"core": "CSV8C_159", "rule": "dragapult_phantom_dive_ready"},
+		800019125: {"core": "CSV8C_159", "rule": "dragapult_phantom_dive_ready"},
+		800017097: {"core": "CSV2C_055", "rule": "gardevoir_psychic_embrace_ready"},
+		800018105: {"core": "CSV2C_055", "rule": "gardevoir_psychic_embrace_ready"},
+		800018498: {"core": "CSV2C_055", "rule": "gardevoir_psychic_embrace_ready"},
+		800016834: {"core": "CSV4C_089", "rule": "gholdengo_big_swing_ready"},
+		800017047: {"core": "CSV7C_038", "rule": "blaziken_boiling_spirit_acceleration_ready"},
+		18000230: {"core": "CSV5C_075", "rule": "charizard_infernal_reign_ready"},
+	}
+	var checks: Array[String] = [
+		assert_eq(coverage.size(), 24, "All twenty-four bundled 18.0 decks should have a tactical ready-VFX core"),
+	]
+	for deck_id_variant: Variant in coverage:
+		var deck_id := int(deck_id_variant)
+		var spec: Dictionary = coverage[deck_id]
+		var deck: DeckData = CardDatabase.get_deck(deck_id)
+		var core_ref := str(spec.get("core", ""))
+		var rule_id := str(spec.get("rule", ""))
+		checks.append(assert_not_null(deck, "18.0 deck %d should load for ready-VFX coverage" % deck_id))
+		checks.append(assert_true(_deck_entry_count(deck, core_ref) > 0, "18.0 deck %d should contain mapped ready core %s" % [deck_id, core_ref]))
+		checks.append(assert_not_null(registry.call("get_profile", rule_id), "18.0 deck %d should map to registered ready rule %s" % [deck_id, rule_id]))
+	return run_checks(checks)
+
+
+func test_marnies_grimmsnarl_punk_up_ready_asset_is_body_first() -> String:
+	var registry: RefCounted = BattleReadyVfxRegistryScript.new()
+	var profile: RefCounted = registry.call("get_profile", "marnies_grimmsnarl_punk_up_ready")
+	var asset_specs: Dictionary = profile.get("asset_specs") if profile != null else {}
+	var burst: Dictionary = asset_specs.get("burst", {})
+	var path := str(burst.get("path", ""))
+	var image := Image.load_from_file(ProjectSettings.globalize_path(path))
+	var metrics := _ready_sheet_pixel_metrics(image)
+	return run_checks([
+		assert_not_null(profile, "Marnie's Grimmsnarl ready profile should be registered"),
+		assert_eq(str(profile.get("profile_id")) if profile != null else "", "ready_marnies_grimmsnarl_punk_up", "Grimmsnarl profile id should describe Punk Up"),
+		assert_eq(path, "res://assets/textures/vfx/ready_marnies_grimmsnarl_punk_up/sheet-transparent.png", "Grimmsnarl ready profile should use its generated body sheet"),
+		assert_eq(image.get_size() if image != null else Vector2i.ZERO, Vector2i(768, 512), "Grimmsnarl ready sheet should be a 2x3 256px grid"),
+		assert_gte(int(metrics.get("opaque", 0)), 30000, "Grimmsnarl sheet should contain substantial full-body art"),
+		assert_gte(int(metrics.get("green", 0)), 250, "Grimmsnarl sheet should preserve its green body accents"),
+		assert_gte(int(metrics.get("black", 0)), 1200, "Grimmsnarl sheet should preserve its dark silhouette"),
+		assert_eq(int(metrics.get("edge_alpha", 0)), 0, "Grimmsnarl animation must stay inside every frame"),
+	])
+
+
+func test_marnies_grimmsnarl_punk_up_ready_requires_resolved_energy_board() -> String:
+	var evaluator: RefCounted = BattleReadyVfxEvaluatorScript.new()
+	var state := _make_state(0, 4)
+	var grimmsnarl := _make_pokemon_card(
+		"玛俐的长毛巨魔ex",
+		"CSV10C",
+		"148",
+		"D",
+		"Stage 2",
+		320,
+		"ex",
+		[_attack("DD", "180", "暗影子弹")],
+		"Marnie's Grimmsnarl ex"
+	)
+	var grimmsnarl_slot := _make_slot(grimmsnarl, 0)
+	grimmsnarl_slot.turn_evolved = state.turn_number
+	grimmsnarl_slot.effects.append({"type": "marnies_grimmsnarl_punk_up_used", "turn": state.turn_number})
+	_attach_energy(grimmsnarl_slot, 0, "D", 2)
+	state.players[0].bench.append(grimmsnarl_slot)
+
+	var trigger := _first_rule(evaluator.call("find_ready_triggers", state), "marnies_grimmsnarl_punk_up_ready")
+	var checks: Array[String] = [
+		assert_false(trigger.is_empty(), "Punk Up should cue after the evolve ability resolves into an attack-ready Darkness board"),
+		assert_eq(str(trigger.get("required_action_kind", "")), "use_ability", "Punk Up cue should be sourced from the resolved ability action"),
+		assert_eq(str(trigger.get("slot_kind", "")), "bench", "Punk Up should cue on the Grimmsnarl that powered the board"),
+	]
+
+	grimmsnarl_slot.effects.clear()
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "marnies_grimmsnarl_punk_up_ready"), "Evolving without resolving Punk Up must not cue"))
+	grimmsnarl_slot.effects.append({"type": "marnies_grimmsnarl_punk_up_used", "turn": state.turn_number - 1})
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "marnies_grimmsnarl_punk_up_ready"), "A Punk Up resolved on an earlier turn must not cue"))
+	grimmsnarl_slot.effects[0]["turn"] = state.turn_number
+	grimmsnarl_slot.attached_energy.resize(1)
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "marnies_grimmsnarl_punk_up_ready"), "Punk Up should not cue before the Marnie's board reaches two Darkness Energy"))
+	return run_checks(checks)
+
+
+func test_ns_zoroark_night_joker_ready_asset_is_body_first() -> String:
+	var registry: RefCounted = BattleReadyVfxRegistryScript.new()
+	var profile: RefCounted = registry.call("get_profile", "ns_zoroark_night_joker_ready")
+	var asset_specs: Dictionary = profile.get("asset_specs") if profile != null else {}
+	var burst: Dictionary = asset_specs.get("burst", {})
+	var path := str(burst.get("path", ""))
+	var image := Image.load_from_file(ProjectSettings.globalize_path(path))
+	var metrics := _ready_sheet_pixel_metrics(image)
+	return run_checks([
+		assert_not_null(profile, "N's Zoroark ready profile should be registered"),
+		assert_eq(str(profile.get("profile_id")) if profile != null else "", "ready_ns_zoroark_night_joker", "Zoroark profile id should describe the Night Joker route"),
+		assert_eq(path, "res://assets/textures/vfx/ready_ns_zoroark_night_joker/sheet-transparent.png", "Zoroark ready profile should use its generated body sheet"),
+		assert_eq(image.get_size() if image != null else Vector2i.ZERO, Vector2i(768, 512), "Zoroark ready sheet should be a 2x3 256px grid"),
+		assert_gte(int(metrics.get("opaque", 0)), 30000, "Zoroark sheet should contain substantial full-body art"),
+		assert_gte(int(metrics.get("black", 0)), 1000, "Zoroark sheet should preserve its dark illusion silhouette"),
+		assert_eq(int(metrics.get("edge_alpha", 0)), 0, "Zoroark animation must stay inside every frame"),
+	])
+
+
+func test_ns_zoroark_night_joker_ready_requires_paid_attack_and_copy_target() -> String:
+	var evaluator: RefCounted = BattleReadyVfxEvaluatorScript.new()
+	var state := _make_state(0, 5)
+	var zoroark := _make_pokemon_card(
+		"N的索罗亚克ex", "CSV10C", "145", "D", "Stage 1", 280, "ex",
+		[_attack("DD", "", "暗夜王牌")], "N's Zoroark ex"
+	)
+	var zoroark_slot := _make_slot(zoroark, 0)
+	_attach_energy(zoroark_slot, 0, "D", 2)
+	state.players[0].active_pokemon = zoroark_slot
+	var reshiram := _make_pokemon_card(
+		"N的莱希拉姆", "CSV10C", "166", "R", "Basic", 130, "",
+		[_attack("RRC", "170", "力量怒火")], "N's Reshiram"
+	)
+	state.players[0].bench.append(_make_slot(reshiram, 0))
+	state.players[1].active_pokemon = _make_slot(_make_pokemon_card("Target", "TEST", "900", "C", "Basic", 220), 1)
+
+	var trigger := _first_rule(evaluator.call("find_ready_triggers", state), "ns_zoroark_night_joker_ready")
+	var checks: Array[String] = [
+		assert_false(trigger.is_empty(), "Night Joker should cue when active Zoroark has DD and a Benched N attack to copy"),
+		assert_eq(str(trigger.get("slot_kind", "")), "active", "Night Joker cue should belong to the active Zoroark"),
+	]
+
+	zoroark_slot.attached_energy.resize(1)
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "ns_zoroark_night_joker_ready"), "Night Joker should not cue before both Darkness costs are paid"))
+	_attach_energy(zoroark_slot, 0, "D", 1)
+	state.players[0].bench.clear()
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "ns_zoroark_night_joker_ready"), "Night Joker should not cue without a Benched N Pokemon attack"))
+	var recursive := _make_pokemon_card(
+		"N的另一只索罗亚克", "TEST", "145B", "D", "Stage 1", 140, "",
+		[_attack("DD", "", "暗夜王牌")], "N's Other Zoroark"
+	)
+	state.players[0].bench.append(_make_slot(recursive, 0))
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "ns_zoroark_night_joker_ready"), "Night Joker must not treat another recursive copy attack as a tactical route"))
+	return run_checks(checks)
+
+
+func test_raging_bolt_bellowing_thunder_ready_asset_is_body_first() -> String:
+	var registry: RefCounted = BattleReadyVfxRegistryScript.new()
+	var profile: RefCounted = registry.call("get_profile", "raging_bolt_bellowing_thunder_lethal_ready")
+	var asset_specs: Dictionary = profile.get("asset_specs") if profile != null else {}
+	var burst: Dictionary = asset_specs.get("burst", {})
+	var path := str(burst.get("path", ""))
+	var image := Image.load_from_file(ProjectSettings.globalize_path(path))
+	var metrics := _ready_sheet_pixel_metrics(image)
+	return run_checks([
+		assert_not_null(profile, "Raging Bolt ready profile should be registered"),
+		assert_eq(str(profile.get("profile_id")) if profile != null else "", "ready_raging_bolt_bellowing_thunder_lethal", "Raging Bolt profile id should describe the lethal Bellowing Thunder line"),
+		assert_eq(path, "res://assets/textures/vfx/ready_raging_bolt_bellowing_thunder_lethal/sheet-transparent.png", "Raging Bolt ready profile should use its generated body sheet"),
+		assert_eq(image.get_size() if image != null else Vector2i.ZERO, Vector2i(768, 512), "Raging Bolt ready sheet should be a 2x3 256px grid"),
+		assert_gte(int(metrics.get("opaque", 0)), 30000, "Raging Bolt sheet should contain substantial full-body art"),
+		assert_gte(int(metrics.get("yellow_orange", 0)), 600, "Raging Bolt sheet should preserve its yellow lightning body accents"),
+		assert_gte(int(metrics.get("white", 0)), 600, "Raging Bolt sheet should preserve its bright cloud-and-neck silhouette"),
+		assert_eq(int(metrics.get("edge_alpha", 0)), 0, "Raging Bolt animation must stay inside every frame"),
+	])
+
+
+func test_raging_bolt_bellowing_thunder_ready_requires_exact_lethal_energy_line() -> String:
+	var evaluator: RefCounted = BattleReadyVfxEvaluatorScript.new()
+	var state := _make_state(0, 3)
+	var raging_bolt := _make_pokemon_card(
+		"猛雷鼓ex", "CSV7C", "154", "N", "Basic", 240, "ex",
+		[_attack("C", "", "飞溅咆哮"), _attack("LF", "70×", "极雷轰")], "Raging Bolt ex"
+	)
+	var bolt_slot := _make_slot(raging_bolt, 0)
+	_attach_energy(bolt_slot, 0, "L", 1)
+	_attach_energy(bolt_slot, 0, "F", 1)
+	state.players[0].active_pokemon = bolt_slot
+	var ogerpon := _make_pokemon_card("厄诡椪 碧草面具ex", "CSV8C", "028", "G", "Basic", 210, "ex", [], "Teal Mask Ogerpon ex")
+	var ogerpon_slot := _make_slot(ogerpon, 0)
+	_attach_energy(ogerpon_slot, 0, "G", 1)
+	state.players[0].bench.append(ogerpon_slot)
+	state.players[1].active_pokemon = _make_slot(_make_pokemon_card("Target 210", "TEST", "910", "C", "Basic", 210), 1)
+
+	var trigger := _first_rule(evaluator.call("find_ready_triggers", state), "raging_bolt_bellowing_thunder_lethal_ready")
+	var checks: Array[String] = [
+		assert_false(trigger.is_empty(), "Bellowing Thunder should cue when LF is paid and three field Energy exactly cover 210 HP"),
+		assert_eq(str(trigger.get("slot_kind", "")), "active", "Bellowing Thunder lethal cue should belong to active Raging Bolt"),
+	]
+
+	state.players[1].active_pokemon = _make_slot(_make_pokemon_card("Target 280", "TEST", "911", "C", "Basic", 280), 1)
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "raging_bolt_bellowing_thunder_lethal_ready"), "Three field Energy must not cue against a 280 HP target"))
+	_attach_energy(ogerpon_slot, 0, "G", 1)
+	checks.append(assert_true(_has_rule(evaluator.call("find_ready_triggers", state), "raging_bolt_bellowing_thunder_lethal_ready"), "A fourth field Energy should complete the 280 HP lethal line"))
+	bolt_slot.attached_energy.resize(1)
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "raging_bolt_bellowing_thunder_lethal_ready"), "Field fuel alone must not cue before Raging Bolt pays both Lightning and Fighting"))
+	return run_checks(checks)
+
+
+func test_ethans_ho_oh_golden_flame_ready_asset_is_body_first() -> String:
+	var registry: RefCounted = BattleReadyVfxRegistryScript.new()
+	var profile: RefCounted = registry.call("get_profile", "ethans_ho_oh_golden_flame_ready")
+	var asset_specs: Dictionary = profile.get("asset_specs") if profile != null else {}
+	var burst: Dictionary = asset_specs.get("burst", {})
+	var path := str(burst.get("path", ""))
+	var image := Image.load_from_file(ProjectSettings.globalize_path(path))
+	var metrics := _ready_sheet_pixel_metrics(image)
+	return run_checks([
+		assert_not_null(profile, "Ethan's Ho-Oh ready profile should be registered"),
+		assert_eq(str(profile.get("profile_id")) if profile != null else "", "ready_ethans_ho_oh_golden_flame", "Ho-Oh profile id should describe Golden Flame"),
+		assert_eq(path, "res://assets/textures/vfx/ready_ethans_ho_oh_golden_flame/sheet-transparent.png", "Ho-Oh ready profile should use its generated body sheet"),
+		assert_eq(image.get_size() if image != null else Vector2i.ZERO, Vector2i(768, 512), "Ho-Oh ready sheet should be a 2x3 256px grid"),
+		assert_gte(int(metrics.get("opaque", 0)), 30000, "Ho-Oh sheet should contain substantial full-body art"),
+		assert_gte(int(metrics.get("yellow_orange", 0)), 800, "Ho-Oh sheet should preserve its gold-and-fire plumage"),
+		assert_gte(int(metrics.get("white", 0)), 500, "Ho-Oh sheet should preserve its bright chest and wing accents"),
+		assert_eq(int(metrics.get("edge_alpha", 0)), 0, "Ho-Oh animation must stay inside every frame"),
+	])
+
+
+func test_ethans_ho_oh_golden_flame_ready_requires_resolved_double_fire_bench() -> String:
+	var evaluator: RefCounted = BattleReadyVfxEvaluatorScript.new()
+	var state := _make_state(0, 4)
+	var ho_oh := _make_pokemon_card("阿响的凤王ex", "CSV10C", "035", "R", "Basic", 230, "ex", [_attack("RRRR", "160", "闪耀之羽")], "Ethan's Ho-Oh ex")
+	var ho_oh_slot := _make_slot(ho_oh, 0)
+	ho_oh_slot.mark_ability_used(state.turn_number)
+	state.players[0].bench.append(ho_oh_slot)
+	var cyndaquil := _make_pokemon_card("阿响的火球鼠", "CSV10C", "028", "R", "Basic", 70, "", [], "Ethan's Cyndaquil")
+	var cyndaquil_slot := _make_slot(cyndaquil, 0)
+	_attach_energy(cyndaquil_slot, 0, "R", 2)
+	state.players[0].bench.append(cyndaquil_slot)
+
+	var trigger := _first_rule(evaluator.call("find_ready_triggers", state), "ethans_ho_oh_golden_flame_ready")
+	var checks: Array[String] = [
+		assert_false(trigger.is_empty(), "Golden Flame should cue after the ability resolves into two Fire Energy on Ethan's Bench"),
+		assert_eq(str(trigger.get("required_action_kind", "")), "use_ability", "Golden Flame cue should be sourced from the resolved ability action"),
+		assert_eq(str(trigger.get("slot_kind", "")), "bench", "Golden Flame cue should stay anchored to Ho-Oh"),
+	]
+
+	ho_oh_slot.effects.clear()
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "ethans_ho_oh_golden_flame_ready"), "A charged Ethan's Bench alone must not cue before Golden Flame resolves"))
+	ho_oh_slot.mark_ability_used(state.turn_number - 1)
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "ethans_ho_oh_golden_flame_ready"), "Golden Flame from an earlier turn must not cue"))
+	ho_oh_slot.effects.clear()
+	ho_oh_slot.mark_ability_used(state.turn_number)
+	cyndaquil_slot.attached_energy.resize(1)
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "ethans_ho_oh_golden_flame_ready"), "Golden Flame should not cue before the Ethan's Bench reaches two basic Fire Energy"))
+	return run_checks(checks)
+
+
+func test_cynthias_garchomp_spiral_draw_ready_asset_is_body_first() -> String:
+	var registry: RefCounted = BattleReadyVfxRegistryScript.new()
+	var profile: RefCounted = registry.call("get_profile", "cynthias_garchomp_spiral_draw_ready")
+	var asset_specs: Dictionary = profile.get("asset_specs") if profile != null else {}
+	var burst: Dictionary = asset_specs.get("burst", {})
+	var path := str(burst.get("path", ""))
+	var image := Image.load_from_file(ProjectSettings.globalize_path(path))
+	var metrics := _ready_sheet_pixel_metrics(image)
+	return run_checks([
+		assert_not_null(profile, "Cynthia's Garchomp ready profile should be registered"),
+		assert_eq(str(profile.get("profile_id")) if profile != null else "", "ready_cynthias_garchomp_spiral_draw", "Garchomp profile id should describe its Spiral Dive draw engine"),
+		assert_eq(path, "res://assets/textures/vfx/ready_cynthias_garchomp_spiral_draw/sheet-transparent.png", "Garchomp ready profile should use its generated body sheet"),
+		assert_eq(image.get_size() if image != null else Vector2i.ZERO, Vector2i(768, 512), "Garchomp ready sheet should be a 2x3 256px grid"),
+		assert_gte(int(metrics.get("opaque", 0)), 30000, "Garchomp sheet should contain substantial full-body art"),
+		assert_gte(int(metrics.get("yellow_orange", 0)), 500, "Garchomp sheet should preserve its gold star and chest accents"),
+		assert_gte(int(metrics.get("white", 0)), 500, "Garchomp sheet should preserve its bright claws and spiral highlights"),
+		assert_eq(int(metrics.get("edge_alpha", 0)), 0, "Garchomp animation must stay inside every frame"),
+	])
+
+
+func test_cynthias_garchomp_spiral_draw_ready_requires_active_refill_window() -> String:
+	var evaluator: RefCounted = BattleReadyVfxEvaluatorScript.new()
+	var state := _make_state(0, 4)
+	var garchomp := _make_pokemon_card(
+		"竹兰的烈咬陆鲨ex", "CSV10C", "113", "F", "Stage 2", 330, "ex",
+		[_attack("F", "100", "螺旋俯冲"), _attack("FF", "260", "龙之爆破")], "Cynthia's Garchomp ex"
+	)
+	var garchomp_slot := _make_slot(garchomp, 0)
+	_attach_energy(garchomp_slot, 0, "F", 1)
+	state.players[0].active_pokemon = garchomp_slot
+	for i: int in 4:
+		_add_card_to_zone(state.players[0].hand, _make_trainer_card("Hand %d" % i), 0)
+	state.players[1].active_pokemon = _make_slot(_make_pokemon_card("Target", "TEST", "920", "C", "Basic", 180), 1)
+
+	var trigger := _first_rule(evaluator.call("find_ready_triggers", state), "cynthias_garchomp_spiral_draw_ready")
+	var checks: Array[String] = [
+		assert_false(trigger.is_empty(), "Spiral Dive should cue when active Garchomp can attack and refill a four-card hand to six"),
+		assert_eq(str(trigger.get("slot_kind", "")), "active", "Spiral Dive draw cue should belong to active Garchomp"),
+	]
+
+	_add_card_to_zone(state.players[0].hand, _make_trainer_card("Fifth Hand"), 0)
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "cynthias_garchomp_spiral_draw_ready"), "A five-card hand should not spend the cinematic cue on only one draw"))
+	state.players[0].hand.resize(4)
+	garchomp_slot.attached_energy.clear()
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "cynthias_garchomp_spiral_draw_ready"), "Spiral Dive should not cue before Fighting Energy is paid"))
+	_attach_energy(garchomp_slot, 0, "F", 1)
+	state.players[0].active_pokemon = null
+	state.players[0].bench.append(garchomp_slot)
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "cynthias_garchomp_spiral_draw_ready"), "Bench Garchomp should not cue until it reaches the Active Spot"))
+	return run_checks(checks)
+
+
+func test_ethans_typhlosion_partner_blast_ready_asset_is_body_first() -> String:
+	var registry: RefCounted = BattleReadyVfxRegistryScript.new()
+	var profile: RefCounted = registry.call("get_profile", "ethans_typhlosion_partner_blast_lethal_ready")
+	var asset_specs: Dictionary = profile.get("asset_specs") if profile != null else {}
+	var burst: Dictionary = asset_specs.get("burst", {})
+	var path := str(burst.get("path", ""))
+	var image := Image.load_from_file(ProjectSettings.globalize_path(path))
+	var metrics := _ready_sheet_pixel_metrics(image)
+	return run_checks([
+		assert_not_null(profile, "Ethan's Typhlosion ready profile should be registered"),
+		assert_eq(str(profile.get("profile_id")) if profile != null else "", "ready_ethans_typhlosion_partner_blast_lethal", "Typhlosion profile id should describe the Partner Blast lethal line"),
+		assert_eq(path, "res://assets/textures/vfx/ready_ethans_typhlosion_partner_blast_lethal/sheet-transparent.png", "Typhlosion ready profile should use its generated body sheet"),
+		assert_eq(image.get_size() if image != null else Vector2i.ZERO, Vector2i(768, 512), "Typhlosion ready sheet should be a 2x3 256px grid"),
+		assert_gte(int(metrics.get("opaque", 0)), 30000, "Typhlosion sheet should contain substantial full-body art"),
+		assert_gte(int(metrics.get("yellow_orange", 0)), 900, "Typhlosion sheet should preserve its yellow body and flame collar"),
+		assert_gte(int(metrics.get("black", 0)), 500, "Typhlosion sheet should preserve its dark back silhouette"),
+		assert_eq(int(metrics.get("edge_alpha", 0)), 0, "Typhlosion animation must stay inside every frame"),
+	])
+
+
+func test_ethans_typhlosion_partner_blast_ready_tracks_discard_lethal_math() -> String:
+	var evaluator: RefCounted = BattleReadyVfxEvaluatorScript.new()
+	var state := _make_state(0, 5)
+	var typhlosion := _make_pokemon_card(
+		"阿响的火暴兽", "CSV10C", "030", "R", "Stage 2", 170, "",
+		[_attack("R", "40+", "搭档爆破"), _attack("RRC", "160", "爆热炮")], "Ethan's Typhlosion"
+	)
+	var typhlosion_slot := _make_slot(typhlosion, 0)
+	_attach_energy(typhlosion_slot, 0, "R", 1)
+	state.players[0].active_pokemon = typhlosion_slot
+	_add_card_to_zone(state.players[0].discard_pile, _make_trainer_card("阿响的冒险", "Supporter"), 0)
+	_add_card_to_zone(state.players[0].discard_pile, _make_trainer_card("阿响的冒险", "Supporter"), 0)
+	state.players[1].active_pokemon = _make_slot(_make_pokemon_card("Target 160", "TEST", "930", "C", "Basic", 160), 1)
+
+	var trigger := _first_rule(evaluator.call("find_ready_triggers", state), "ethans_typhlosion_partner_blast_lethal_ready")
+	var checks: Array[String] = [
+		assert_false(trigger.is_empty(), "Partner Blast should cue when two discarded Adventures make 160 lethal"),
+		assert_eq(str(trigger.get("slot_kind", "")), "active", "Partner Blast lethal cue should belong to active Typhlosion"),
+	]
+
+	state.players[1].active_pokemon = _make_slot(_make_pokemon_card("Target 170", "TEST", "931", "C", "Basic", 170), 1)
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "ethans_typhlosion_partner_blast_lethal_ready"), "Two Adventures must not cue against 170 remaining HP"))
+	_add_card_to_zone(state.players[0].discard_pile, _make_trainer_card("阿响的冒险", "Supporter"), 0)
+	checks.append(assert_true(_has_rule(evaluator.call("find_ready_triggers", state), "ethans_typhlosion_partner_blast_lethal_ready"), "A third Adventure should raise Partner Blast to 220 and complete the lethal line"))
+	typhlosion_slot.attached_energy.clear()
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "ethans_typhlosion_partner_blast_lethal_ready"), "Discard math alone must not cue before Fire Energy is paid"))
+	return run_checks(checks)
+
+
+func test_blaziken_boiling_spirit_ready_asset_is_body_first() -> String:
+	var registry: RefCounted = BattleReadyVfxRegistryScript.new()
+	var profile: RefCounted = registry.call("get_profile", "blaziken_boiling_spirit_acceleration_ready")
+	var asset_specs: Dictionary = profile.get("asset_specs") if profile != null else {}
+	var burst: Dictionary = asset_specs.get("burst", {})
+	var path := str(burst.get("path", ""))
+	var image := Image.load_from_file(ProjectSettings.globalize_path(path))
+	var metrics := _ready_sheet_pixel_metrics(image)
+	return run_checks([
+		assert_not_null(profile, "Blaziken ready profile should be registered"),
+		assert_eq(str(profile.get("profile_id")) if profile != null else "", "ready_blaziken_boiling_spirit_acceleration", "Blaziken profile id should describe Boiling Spirit acceleration"),
+		assert_eq(path, "res://assets/textures/vfx/ready_blaziken_boiling_spirit_acceleration/sheet-transparent.png", "Blaziken ready profile should use its generated body sheet"),
+		assert_eq(image.get_size() if image != null else Vector2i.ZERO, Vector2i(768, 512), "Blaziken ready sheet should be a 2x3 256px grid"),
+		assert_gte(int(metrics.get("opaque", 0)), 30000, "Blaziken sheet should contain substantial full-body art"),
+		assert_gte(int(metrics.get("yellow_orange", 0)), 700, "Blaziken sheet should preserve its red-and-gold fire accents"),
+		assert_gte(int(metrics.get("white", 0)), 500, "Blaziken sheet should preserve its bright feather silhouette"),
+		assert_eq(int(metrics.get("edge_alpha", 0)), 0, "Blaziken animation must stay inside every frame"),
+	])
+
+
+func test_blaziken_boiling_spirit_ready_requires_resolved_acceleration() -> String:
+	var evaluator: RefCounted = BattleReadyVfxEvaluatorScript.new()
+	var state := _make_state(0, 4)
+	var blaziken := _make_pokemon_card(
+		"火焰鸡ex", "CSV7C", "038", "R", "Stage 2", 320, "ex",
+		[_attack("RC", "200", "燃烧旋踢")], "Blaziken ex"
+	)
+	var blaziken_slot := _make_slot(blaziken, 0)
+	blaziken_slot.mark_ability_used(state.turn_number)
+	state.players[0].bench.append(blaziken_slot)
+	var torchic_slot := _make_slot(_make_pokemon_card("火稚鸡", "CSV10C", "036", "R", "Basic", 60, "", [], "Torchic"), 0)
+	_attach_energy(torchic_slot, 0, "R", 1)
+	state.players[0].bench.append(torchic_slot)
+
+	var trigger := _first_rule(evaluator.call("find_ready_triggers", state), "blaziken_boiling_spirit_acceleration_ready")
+	var checks: Array[String] = [
+		assert_false(trigger.is_empty(), "Boiling Spirit should cue after the ability resolves and puts a basic Energy onto the board"),
+		assert_eq(str(trigger.get("required_action_kind", "")), "use_ability", "Boiling Spirit cue should be sourced from the resolved ability action"),
+		assert_eq(str(trigger.get("slot_kind", "")), "bench", "Boiling Spirit cue should stay anchored to Blaziken"),
+	]
+
+	blaziken_slot.effects.clear()
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "blaziken_boiling_spirit_acceleration_ready"), "A board with Energy must not cue before Boiling Spirit resolves"))
+	blaziken_slot.mark_ability_used(state.turn_number - 1)
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "blaziken_boiling_spirit_acceleration_ready"), "Boiling Spirit from an earlier turn must not cue"))
+	blaziken_slot.effects.clear()
+	blaziken_slot.mark_ability_used(state.turn_number)
+	torchic_slot.attached_energy.clear()
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "blaziken_boiling_spirit_acceleration_ready"), "Boiling Spirit should not cue unless a basic Energy is present after resolution"))
+	return run_checks(checks)
+
+
+func test_pidgeot_quick_search_ready_asset_is_body_first() -> String:
+	var registry: RefCounted = BattleReadyVfxRegistryScript.new()
+	var profile: RefCounted = registry.call("get_profile", "pidgeot_quick_search_control_ready")
+	var asset_specs: Dictionary = profile.get("asset_specs") if profile != null else {}
+	var burst: Dictionary = asset_specs.get("burst", {})
+	var path := str(burst.get("path", ""))
+	var image := Image.load_from_file(ProjectSettings.globalize_path(path))
+	var metrics := _ready_sheet_pixel_metrics(image)
+	return run_checks([
+		assert_not_null(profile, "Pidgeot ready profile should be registered"),
+		assert_eq(str(profile.get("profile_id")) if profile != null else "", "ready_pidgeot_quick_search_control", "Pidgeot profile id should describe the resolved control tutor"),
+		assert_eq(path, "res://assets/textures/vfx/ready_pidgeot_quick_search_control/sheet-transparent.png", "Pidgeot ready profile should use its generated body sheet"),
+		assert_eq(image.get_size() if image != null else Vector2i.ZERO, Vector2i(768, 512), "Pidgeot ready sheet should be a 2x3 256px grid"),
+		assert_gte(int(metrics.get("opaque", 0)), 30000, "Pidgeot sheet should contain substantial full-body art"),
+		assert_gte(int(metrics.get("white", 0)), 900, "Pidgeot sheet should preserve its bright wing silhouette"),
+		assert_gte(int(metrics.get("yellow_orange", 0)), 400, "Pidgeot sheet should preserve its gold crest and search cue"),
+		assert_eq(int(metrics.get("edge_alpha", 0)), 0, "Pidgeot animation must stay inside every frame"),
+	])
+
+
+func test_pidgeot_quick_search_ready_requires_resolved_tutor() -> String:
+	var evaluator: RefCounted = BattleReadyVfxEvaluatorScript.new()
+	var state := _make_state(0, 5)
+	var pidgeot := _make_pokemon_card(
+		"大比鸟ex", "CSV4C", "101", "C", "Stage 2", 280, "ex",
+		[_attack("CC", "120", "狂风呼啸")], "Pidgeot ex"
+	)
+	var pidgeot_slot := _make_slot(pidgeot, 0)
+	pidgeot_slot.effects.append({"type": "ability_search_any_used", "turn": state.turn_number})
+	state.players[0].bench.append(pidgeot_slot)
+
+	var trigger := _first_rule(evaluator.call("find_ready_triggers", state), "pidgeot_quick_search_control_ready")
+	var checks: Array[String] = [
+		assert_false(trigger.is_empty(), "Quick Search should cue after Pidgeot resolves the exact-card tutor"),
+		assert_eq(str(trigger.get("required_action_kind", "")), "use_ability", "Quick Search cue should be sourced from the resolved ability action"),
+		assert_eq(str(trigger.get("slot_kind", "")), "bench", "Quick Search cue should stay anchored to Pidgeot"),
+	]
+
+	pidgeot_slot.effects.clear()
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "pidgeot_quick_search_control_ready"), "Pidgeot must not cue merely for being in play"))
+	pidgeot_slot.effects.append({"type": "ability_search_any_used", "turn": state.turn_number - 1})
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "pidgeot_quick_search_control_ready"), "Quick Search from an earlier turn must not cue"))
+	return run_checks(checks)
+
+
+func test_flareon_burning_charge_ready_asset_is_body_first() -> String:
+	var registry: RefCounted = BattleReadyVfxRegistryScript.new()
+	var profile: RefCounted = registry.call("get_profile", "flareon_burning_charge_engine_ready")
+	var asset_specs: Dictionary = profile.get("asset_specs") if profile != null else {}
+	var burst: Dictionary = asset_specs.get("burst", {})
+	var path := str(burst.get("path", ""))
+	var image := Image.load_from_file(ProjectSettings.globalize_path(path))
+	var metrics := _ready_sheet_pixel_metrics(image)
+	return run_checks([
+		assert_not_null(profile, "Flareon ready profile should be registered"),
+		assert_eq(str(profile.get("profile_id")) if profile != null else "", "ready_flareon_burning_charge_engine", "Flareon profile id should describe its Burning Charge engine"),
+		assert_eq(path, "res://assets/textures/vfx/ready_flareon_burning_charge_engine/sheet-transparent.png", "Flareon ready profile should use its generated body sheet"),
+		assert_eq(image.get_size() if image != null else Vector2i.ZERO, Vector2i(768, 512), "Flareon ready sheet should be a 2x3 256px grid"),
+		assert_gte(int(metrics.get("opaque", 0)), 30000, "Flareon sheet should contain substantial full-body art"),
+		assert_gte(int(metrics.get("yellow_orange", 0)), 1200, "Flareon sheet should preserve its orange body and charging flame"),
+		assert_gte(int(metrics.get("white", 0)), 700, "Flareon sheet should preserve its pale mane and tail silhouette"),
+		assert_eq(int(metrics.get("edge_alpha", 0)), 0, "Flareon animation must stay inside every frame"),
+	])
+
+
+func test_flareon_burning_charge_ready_requires_full_acceleration_value() -> String:
+	var evaluator: RefCounted = BattleReadyVfxEvaluatorScript.new()
+	var state := _make_state(0, 4)
+	var flareon := _make_pokemon_card(
+		"火伊布ex", "CSV9.5C", "023", "R", "Stage 1", 270, "ex",
+		[_attack("RC", "130", "燃烧充能"), _attack("RWL", "280", "红玉髓")], "Flareon ex"
+	)
+	var flareon_slot := _make_slot(flareon, 0)
+	_attach_energy(flareon_slot, 0, "R", 1)
+	_attach_energy(flareon_slot, 0, "C", 1)
+	state.players[0].active_pokemon = flareon_slot
+	state.players[0].bench.append(_make_slot(_make_pokemon_card("伊布", "TEST", "940", "C", "Basic", 60, "", [], "Eevee"), 0))
+	_add_card_to_zone(state.players[0].deck, _make_energy_card("Fire Energy", "R"), 0)
+	_add_card_to_zone(state.players[0].deck, _make_energy_card("Water Energy", "W"), 0)
+	state.players[1].active_pokemon = _make_slot(_make_pokemon_card("Target", "TEST", "941", "C", "Basic", 180), 1)
+
+	var trigger := _first_rule(evaluator.call("find_ready_triggers", state), "flareon_burning_charge_engine_ready")
+	var checks: Array[String] = [
+		assert_false(trigger.is_empty(), "Burning Charge should cue when RC is paid and two basic Energy can accelerate to the Bench"),
+		assert_eq(str(trigger.get("slot_kind", "")), "active", "Burning Charge cue should belong to active Flareon"),
+	]
+
+	state.players[0].deck.resize(1)
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "flareon_burning_charge_engine_ready"), "Burning Charge should not spend the cinematic cue on only one remaining basic Energy"))
+	_add_card_to_zone(state.players[0].deck, _make_energy_card("Lightning Energy", "L"), 0)
+	state.players[0].bench.clear()
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "flareon_burning_charge_engine_ready"), "Burning Charge should not cue without a Benched engine target"))
+	state.players[0].bench.append(_make_slot(_make_pokemon_card("伊布", "TEST", "942", "C", "Basic", 60, "", [], "Eevee"), 0))
+	flareon_slot.attached_energy.resize(1)
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "flareon_burning_charge_engine_ready"), "Burning Charge must not cue before both Fire and Colorless costs are paid"))
+	return run_checks(checks)
+
+
+func test_hops_zacian_brave_blade_ready_asset_is_body_first() -> String:
+	var registry: RefCounted = BattleReadyVfxRegistryScript.new()
+	var profile: RefCounted = registry.call("get_profile", "hops_zacian_brave_blade_lethal_ready")
+	var asset_specs: Dictionary = profile.get("asset_specs") if profile != null else {}
+	var burst: Dictionary = asset_specs.get("burst", {})
+	var path := str(burst.get("path", ""))
+	var image := Image.load_from_file(ProjectSettings.globalize_path(path))
+	var metrics := _ready_sheet_pixel_metrics(image)
+	return run_checks([
+		assert_not_null(profile, "Hop's Zacian ready profile should be registered"),
+		assert_eq(str(profile.get("profile_id")) if profile != null else "", "ready_hops_zacian_brave_blade_lethal", "Zacian profile id should describe its Brave Blade lethal line"),
+		assert_eq(path, "res://assets/textures/vfx/ready_hops_zacian_brave_blade_lethal/sheet-transparent.png", "Zacian ready profile should use its generated body sheet"),
+		assert_eq(image.get_size() if image != null else Vector2i.ZERO, Vector2i(768, 512), "Zacian ready sheet should be a 2x3 256px grid"),
+		assert_gte(int(metrics.get("opaque", 0)), 30000, "Zacian sheet should contain substantial full-body art"),
+		assert_gte(int(metrics.get("white", 0)), 700, "Zacian sheet should preserve its bright blade and armor highlights"),
+		assert_gte(int(metrics.get("yellow_orange", 0)), 500, "Zacian sheet should preserve its gold armor accents"),
+		assert_eq(int(metrics.get("edge_alpha", 0)), 0, "Zacian animation must stay inside every frame"),
+	])
+
+
+func test_hops_zacian_brave_blade_ready_requires_legal_lethal_line() -> String:
+	var evaluator: RefCounted = BattleReadyVfxEvaluatorScript.new()
+	var state := _make_state(0, 5)
+	var zacian := _make_pokemon_card(
+		"赫普的苍响ex", "CSV10C", "161", "M", "Basic", 230, "ex",
+		[_attack("C", "30", "刹那斩"), _attack("MMMC", "240", "英勇之刃")], "Hop's Zacian ex"
+	)
+	var zacian_slot := _make_slot(zacian, 0)
+	_attach_energy(zacian_slot, 0, "M", 3)
+	_attach_energy(zacian_slot, 0, "C", 1)
+	state.players[0].active_pokemon = zacian_slot
+	state.players[1].active_pokemon = _make_slot(_make_pokemon_card("Target 240", "TEST", "950", "C", "Basic", 240), 1)
+
+	var trigger := _first_rule(evaluator.call("find_ready_triggers", state), "hops_zacian_brave_blade_lethal_ready")
+	var checks: Array[String] = [
+		assert_false(trigger.is_empty(), "Brave Blade should cue when its full cost is paid and 240 damage is lethal"),
+		assert_eq(str(trigger.get("slot_kind", "")), "active", "Brave Blade lethal cue should belong to active Zacian"),
+	]
+
+	state.players[1].active_pokemon = _make_slot(_make_pokemon_card("Target 250", "TEST", "951", "C", "Basic", 250), 1)
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "hops_zacian_brave_blade_lethal_ready"), "Base Brave Blade must not cue above 240 remaining HP"))
+	state.players[1].active_pokemon = _make_slot(_make_pokemon_card("Target 240", "TEST", "952", "C", "Basic", 240), 1)
+	zacian_slot.effects.append({"type": "attack_lock", "attack_name": "英勇之刃", "attack_index": 1, "turn": state.turn_number - 2})
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "hops_zacian_brave_blade_lethal_ready"), "Brave Blade must not cue while its next-turn lock is active"))
+	zacian_slot.effects.clear()
+	zacian_slot.attached_energy.resize(3)
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "hops_zacian_brave_blade_lethal_ready"), "Three Metal Energy alone must not pay the printed Colorless cost"))
+	var band := _make_trainer_card("赫普的讲究头带", "Tool", "CSV10C", "201", "87bf196475e64140c14197af70648893")
+	zacian_slot.attached_tool = CardInstance.create(band, 0)
+	checks.append(assert_true(_has_rule(evaluator.call("find_ready_triggers", state), "hops_zacian_brave_blade_lethal_ready"), "Hop's Choice Band should remove the Colorless cost and restore the legal lethal line"))
+	return run_checks(checks)
+
+
+func test_yanmega_buzzing_rush_ready_asset_is_body_first() -> String:
+	var registry: RefCounted = BattleReadyVfxRegistryScript.new()
+	var profile: RefCounted = registry.call("get_profile", "yanmega_buzzing_rush_acceleration_ready")
+	var asset_specs: Dictionary = profile.get("asset_specs") if profile != null else {}
+	var burst: Dictionary = asset_specs.get("burst", {})
+	var path := str(burst.get("path", ""))
+	var image := Image.load_from_file(ProjectSettings.globalize_path(path))
+	var metrics := _ready_sheet_pixel_metrics(image)
+	return run_checks([
+		assert_not_null(profile, "Yanmega ready profile should be registered"),
+		assert_eq(str(profile.get("profile_id")) if profile != null else "", "ready_yanmega_buzzing_rush_acceleration", "Yanmega profile id should describe its Buzzing Rush acceleration"),
+		assert_eq(path, "res://assets/textures/vfx/ready_yanmega_buzzing_rush_acceleration/sheet-transparent.png", "Yanmega ready profile should use its generated body sheet"),
+		assert_eq(image.get_size() if image != null else Vector2i.ZERO, Vector2i(768, 512), "Yanmega ready sheet should be a 2x3 256px grid"),
+		assert_gte(int(metrics.get("opaque", 0)), 30000, "Yanmega sheet should contain substantial full-body art"),
+		assert_gte(int(metrics.get("green", 0)), 800, "Yanmega sheet should preserve its green body and Grass Energy cue"),
+		assert_gte(int(metrics.get("yellow_orange", 0)), 300, "Yanmega sheet should preserve its warm eye and wing accents"),
+		assert_eq(int(metrics.get("edge_alpha", 0)), 0, "Yanmega animation must stay inside every frame"),
+	])
+
+
+func test_yanmega_buzzing_rush_ready_requires_resolved_three_grass_entry() -> String:
+	var evaluator: RefCounted = BattleReadyVfxEvaluatorScript.new()
+	var state := _make_state(0, 4)
+	var yanmega := _make_pokemon_card(
+		"远古巨蜓ex", "CSV10C", "003", "G", "Stage 1", 280, "ex",
+		[_attack("GGG", "210", "喷射旋风")], "Yanmega ex"
+	)
+	var yanmega_slot := _make_slot(yanmega, 0)
+	yanmega_slot.effects.append({"type": "ability_attach_from_deck_used", "turn": state.turn_number})
+	_attach_energy(yanmega_slot, 0, "G", 3)
+	state.players[0].active_pokemon = yanmega_slot
+
+	var trigger := _first_rule(evaluator.call("find_ready_triggers", state), "yanmega_buzzing_rush_acceleration_ready")
+	var checks: Array[String] = [
+		assert_false(trigger.is_empty(), "Buzzing Rush should cue after Active Yanmega resolves three Grass Energy from the deck"),
+		assert_eq(str(trigger.get("required_action_kind", "")), "use_ability", "Buzzing Rush cue should be sourced from the resolved ability action"),
+		assert_eq(str(trigger.get("slot_kind", "")), "active", "Buzzing Rush cue should belong to Active Yanmega"),
+	]
+
+	yanmega_slot.effects.clear()
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "yanmega_buzzing_rush_acceleration_ready"), "Three Grass Energy alone must not cue without Buzzing Rush resolving this turn"))
+	yanmega_slot.effects.append({"type": "ability_attach_from_deck_used", "turn": state.turn_number})
+	yanmega_slot.attached_energy.resize(2)
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "yanmega_buzzing_rush_acceleration_ready"), "Buzzing Rush should not cue when fewer than three basic Grass Energy were established"))
+	_attach_energy(yanmega_slot, 0, "G", 1)
+	state.players[0].active_pokemon = null
+	state.players[0].bench.append(yanmega_slot)
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "yanmega_buzzing_rush_acceleration_ready"), "Buzzing Rush should not cue after Yanmega has left the Active Spot"))
+	return run_checks(checks)
+
+
+func test_munkidori_adrena_brain_ready_asset_is_body_first() -> String:
+	var registry: RefCounted = BattleReadyVfxRegistryScript.new()
+	var profile: RefCounted = registry.call("get_profile", "munkidori_adrena_brain_transfer_ready")
+	var asset_specs: Dictionary = profile.get("asset_specs") if profile != null else {}
+	var burst: Dictionary = asset_specs.get("burst", {})
+	var path := str(burst.get("path", ""))
+	var image := Image.load_from_file(ProjectSettings.globalize_path(path))
+	var metrics := _ready_sheet_pixel_metrics(image)
+	return run_checks([
+		assert_not_null(profile, "Munkidori ready profile should be registered"),
+		assert_eq(str(profile.get("profile_id")) if profile != null else "", "ready_munkidori_adrena_brain_transfer", "Munkidori profile id should describe its Adrena-Brain transfer window"),
+		assert_eq(path, "res://assets/textures/vfx/ready_munkidori_adrena_brain_transfer/sheet-transparent.png", "Munkidori ready profile should use its generated body sheet"),
+		assert_eq(image.get_size() if image != null else Vector2i.ZERO, Vector2i(768, 512), "Munkidori ready sheet should be a 2x3 256px grid"),
+		assert_gte(int(metrics.get("opaque", 0)), 30000, "Munkidori sheet should contain substantial full-body art"),
+		assert_gte(int(metrics.get("green", 0)), 350, "Munkidori sheet should preserve its green head accent"),
+		assert_gte(int(metrics.get("black", 0)), 700, "Munkidori sheet should preserve its dark psychic silhouette"),
+		assert_eq(int(metrics.get("edge_alpha", 0)), 0, "Munkidori animation must stay inside every frame"),
+	])
+
+
+func test_munkidori_adrena_brain_ready_requires_live_transfer_window() -> String:
+	var evaluator: RefCounted = BattleReadyVfxEvaluatorScript.new()
+	var state := _make_state(0, 4)
+	var munkidori := _make_pokemon_card(
+		"愿增猿", "CSV8C", "094", "P", "Basic", 110, "",
+		[_attack("PC", "60", "精神幻觉")], "Munkidori"
+	)
+	var munkidori_slot := _make_slot(munkidori, 0)
+	_attach_energy(munkidori_slot, 0, "D", 1)
+	state.players[0].bench.append(munkidori_slot)
+	var damaged_ally := _make_slot(_make_pokemon_card("Damaged Ally", "TEST", "960", "C", "Basic", 120), 0)
+	damaged_ally.damage_counters = 30
+	state.players[0].active_pokemon = damaged_ally
+	state.players[1].active_pokemon = _make_slot(_make_pokemon_card("Opponent", "TEST", "961", "C", "Basic", 180), 1)
+
+	var trigger := _first_rule(evaluator.call("find_ready_triggers", state), "munkidori_adrena_brain_transfer_ready")
+	var checks: Array[String] = [
+		assert_false(trigger.is_empty(), "Adrena-Brain should cue when Darkness Energy, own damage, and an opponent target form a live transfer window"),
+		assert_eq(str(trigger.get("slot_kind", "")), "bench", "Adrena-Brain cue should stay anchored to Munkidori"),
+	]
+
+	munkidori_slot.attached_energy.clear()
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "munkidori_adrena_brain_transfer_ready"), "Adrena-Brain must not cue before Munkidori has Darkness Energy"))
+	_attach_energy(munkidori_slot, 0, "D", 1)
+	damaged_ally.damage_counters = 0
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "munkidori_adrena_brain_transfer_ready"), "Adrena-Brain must not cue without own damage counters to move"))
+	damaged_ally.damage_counters = 30
+	munkidori_slot.effects.append({"type": "ability_move_counters_to_opp_used", "turn": state.turn_number})
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "munkidori_adrena_brain_transfer_ready"), "Adrena-Brain must not cue after this copy already moved counters this turn"))
+	munkidori_slot.effects.clear()
+	state.players[1].active_pokemon = null
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "munkidori_adrena_brain_transfer_ready"), "Adrena-Brain must not cue without an opponent target"))
+	return run_checks(checks)
+
+
+func test_toedscruel_colony_rush_ready_asset_is_body_first() -> String:
+	var registry: RefCounted = BattleReadyVfxRegistryScript.new()
+	var profile: RefCounted = registry.call("get_profile", "toedscruel_colony_rush_lethal_ready")
+	var asset_specs: Dictionary = profile.get("asset_specs") if profile != null else {}
+	var burst: Dictionary = asset_specs.get("burst", {})
+	var path := str(burst.get("path", ""))
+	var image := Image.load_from_file(ProjectSettings.globalize_path(path))
+	var metrics := _ready_sheet_pixel_metrics(image)
+	return run_checks([
+		assert_not_null(profile, "Toedscruel ready profile should be registered"),
+		assert_eq(str(profile.get("profile_id")) if profile != null else "", "ready_toedscruel_colony_rush_lethal", "Toedscruel profile id should describe its Colony Rush lethal line"),
+		assert_eq(path, "res://assets/textures/vfx/ready_toedscruel_colony_rush_lethal/sheet-transparent.png", "Toedscruel ready profile should use its generated body sheet"),
+		assert_eq(image.get_size() if image != null else Vector2i.ZERO, Vector2i(768, 512), "Toedscruel ready sheet should be a 2x3 256px grid"),
+		assert_gte(int(metrics.get("opaque", 0)), 30000, "Toedscruel sheet should contain substantial full-body art"),
+		assert_gte(int(metrics.get("green", 0)), 900, "Toedscruel sheet should preserve its green fungal body and colony nodes"),
+		assert_gte(int(metrics.get("white", 0)), 500, "Toedscruel sheet should preserve its pale tentacle and mushroom highlights"),
+		assert_eq(int(metrics.get("edge_alpha", 0)), 0, "Toedscruel animation must stay inside every frame"),
+	])
+
+
+func test_toedscruel_colony_rush_ready_tracks_energized_bench_lethal_math() -> String:
+	var evaluator: RefCounted = BattleReadyVfxEvaluatorScript.new()
+	var state := _make_state(0, 4)
+	var toedscruel := _make_pokemon_card(
+		"陆地水母ex", "CSV5C", "010", "G", "Stage 1", 270, "ex",
+		[_attack("GG", "80+", "聚落突进")], "Toedscruel ex"
+	)
+	var toedscruel_slot := _make_slot(toedscruel, 0)
+	_attach_energy(toedscruel_slot, 0, "G", 2)
+	state.players[0].active_pokemon = toedscruel_slot
+	for i: int in 3:
+		var bench_slot := _make_slot(_make_pokemon_card("Grass Bench %d" % i, "TEST", "97%d" % i, "G", "Basic", 120), 0)
+		_attach_energy(bench_slot, 0, "G", 1)
+		state.players[0].bench.append(bench_slot)
+	state.players[1].active_pokemon = _make_slot(_make_pokemon_card("Target 200", "TEST", "980", "C", "Basic", 200), 1)
+
+	var trigger := _first_rule(evaluator.call("find_ready_triggers", state), "toedscruel_colony_rush_lethal_ready")
+	var checks: Array[String] = [
+		assert_false(trigger.is_empty(), "Colony Rush should cue when three energized Bench Pokemon raise damage to exactly 200"),
+		assert_eq(str(trigger.get("slot_kind", "")), "active", "Colony Rush lethal cue should belong to active Toedscruel"),
+	]
+
+	state.players[0].bench[2].attached_energy.clear()
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "toedscruel_colony_rush_lethal_ready"), "Two energized Bench Pokemon only reach 160 and must not cue against 200 HP"))
+	_attach_energy(state.players[0].bench[2], 0, "G", 1)
+	toedscruel_slot.attached_energy.resize(1)
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "toedscruel_colony_rush_lethal_ready"), "Colony size must not cue before Toedscruel pays both Grass costs"))
+	_attach_energy(toedscruel_slot, 0, "G", 1)
+	state.players[1].active_pokemon = _make_slot(_make_pokemon_card("Target 210", "TEST", "981", "C", "Basic", 210), 1)
+	checks.append(assert_false(_has_rule(evaluator.call("find_ready_triggers", state), "toedscruel_colony_rush_lethal_ready"), "Three energized Bench Pokemon must not cue above their 200 damage line"))
 	return run_checks(checks)
 
 
@@ -1014,6 +1763,78 @@ func test_scene_gardevoir_ready_vfx_only_plays_after_evolve_action_source() -> S
 		assert_not_null(sequence, "Gardevoir ready VFX should play immediately after the evolve action source"),
 		assert_eq(str(sequence.get_meta("rule_id", "")) if sequence != null else "", "gardevoir_psychic_embrace_ready", "Gardevoir ready sequence should use the Psychic Embrace rule"),
 		assert_eq(str(sequence.get_meta("profile_id", "")) if sequence != null else "", "ready_gardevoir_psychic_embrace", "Gardevoir ready sequence should use the dedicated profile"),
+	])
+	battle_scene.free()
+	return result
+
+
+func test_ready_vfx_uses_final_screen_center_under_nested_transforms() -> String:
+	var tree := Engine.get_main_loop() as SceneTree
+	var controller: RefCounted = BattleReadyVfxControllerScript.new()
+	var registry: RefCounted = BattleReadyVfxRegistryScript.new()
+	var profile: RefCounted = registry.call("get_profile", "charizard_infernal_reign_ready")
+	var battle_scene := ReadyGeometryScene.new()
+	battle_scene.size = Vector2(980, 620)
+	battle_scene.position = Vector2(118, 66)
+	battle_scene.rotation_degrees = 6.0
+	battle_scene.scale = Vector2(0.88, 1.12)
+	var field := Control.new()
+	field.position = Vector2(82, 44)
+	field.size = Vector2(810, 520)
+	field.rotation_degrees = -3.5
+	field.scale = Vector2(1.06, 0.92)
+	battle_scene.add_child(field)
+	var my_active := Control.new()
+	my_active.position = Vector2(340, 298)
+	my_active.size = Vector2(132, 184)
+	field.add_child(my_active)
+	tree.root.add_child(battle_scene)
+	await tree.process_frame
+	var overlay: Control = controller.call("ensure_overlay", battle_scene) as Control
+	var target_screen: Vector2 = controller.call("_target_position", battle_scene, my_active)
+	controller.call("_play_sequence", battle_scene, overlay, profile, target_screen, {
+		"rule_id": "charizard_infernal_reign_ready",
+		"ready_key": "geometry-test",
+	})
+	await tree.process_frame
+	var sequence: Control = overlay.get_child(0) as Control if overlay.get_child_count() > 0 else null
+	var burst: TextureRect = sequence.get_node_or_null("ReadyVfxBurst") as TextureRect if sequence != null else null
+	var offset: Vector2 = sequence.get_meta("ready_vfx_anchor_offset", Vector2.ZERO) if sequence != null else Vector2.ZERO
+	var expected_local: Vector2 = controller.call("_overlay_local_position", overlay, target_screen) + offset
+	var actual_local := burst.position + burst.size * 0.5 if burst != null else Vector2.ZERO
+	var result := assert_true(actual_local.distance_to(expected_local) < 1.0, "Ready VFX must stay centered on the Pokemon under transformed battle canvases")
+	battle_scene.queue_free()
+	await tree.process_frame
+	return result
+
+
+func test_scene_pidgeot_ready_vfx_only_plays_after_quick_search_action_source() -> String:
+	var gs := _make_state(0, 5, GameState.GamePhase.MAIN)
+	var pidgeot := _make_slot(_make_pokemon_card(
+		"大比鸟ex", "CSV4C", "101", "C", "Stage 2", 280, "ex",
+		[_attack("CC", "120", "狂风呼啸")], "Pidgeot ex"
+	), 0)
+	pidgeot.effects.append({"type": "ability_search_any_used", "turn": gs.turn_number})
+	gs.players[0].bench.append(pidgeot)
+	var battle_scene := _make_scene_stub_with_state(gs)
+
+	battle_scene.set("_ready_vfx_trigger_source_player_index", 0)
+	battle_scene.set("_ready_vfx_trigger_action_kind", "play_trainer")
+	battle_scene.call("_check_ready_vfx_triggers")
+	var overlay_after_trainer: Control = battle_scene.get("_ready_vfx_overlay") as Control
+	var trainer_count := overlay_after_trainer.get_child_count() if overlay_after_trainer != null else 0
+
+	battle_scene.set("_ready_vfx_trigger_source_player_index", 0)
+	battle_scene.set("_ready_vfx_trigger_action_kind", "use_ability")
+	battle_scene.call("_check_ready_vfx_triggers")
+	var overlay_after_ability: Control = battle_scene.get("_ready_vfx_overlay") as Control
+	var sequence: Control = overlay_after_ability.get_child(0) as Control if overlay_after_ability != null and overlay_after_ability.get_child_count() > 0 else null
+
+	var result := run_checks([
+		assert_eq(trainer_count, 0, "Pidgeot ready VFX should not replay its used marker after a later Trainer action"),
+		assert_not_null(sequence, "Pidgeot ready VFX should play for the resolved Quick Search ability source"),
+		assert_eq(str(sequence.get_meta("rule_id", "")) if sequence != null else "", "pidgeot_quick_search_control_ready", "Pidgeot scene sequence should use the Quick Search rule"),
+		assert_eq(str(sequence.get_meta("profile_id", "")) if sequence != null else "", "ready_pidgeot_quick_search_control", "Pidgeot scene sequence should use its dedicated body profile"),
 	])
 	battle_scene.free()
 	return result

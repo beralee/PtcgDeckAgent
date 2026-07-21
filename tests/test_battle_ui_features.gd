@@ -1784,6 +1784,37 @@ func test_battle_scene_coin_animation_raises_above_modal_overlays() -> String:
 	return result
 
 
+func test_battle_scene_three_coin_animation_queue_advances_outside_tween_callback() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var coin_animator := FakeLayeredCoinAnimator.new()
+	battle_scene.add_child(coin_animator)
+	battle_scene.set("_coin_animator", coin_animator)
+	var queued_results: Array[bool] = [true, false, true]
+	battle_scene.set("_coin_flip_queue", queued_results)
+
+	battle_scene.call("_play_next_coin_animation")
+	battle_scene.call("_on_coin_animation_finished")
+	var count_inside_finish_callback := coin_animator.played_results.size()
+	await Engine.get_main_loop().process_frame
+	var count_after_first_idle := coin_animator.played_results.size()
+	battle_scene.call("_on_coin_animation_finished")
+	await Engine.get_main_loop().process_frame
+	var count_after_second_idle := coin_animator.played_results.size()
+	battle_scene.call("_on_coin_animation_finished")
+	await Engine.get_main_loop().process_frame
+
+	var result := run_checks([
+		assert_eq(count_inside_finish_callback, 1, "A completed toss must not start the next Tween re-entrantly from the old Tween callback"),
+		assert_eq(count_after_first_idle, 2, "The second Hoothoot toss should start on the next idle turn"),
+		assert_eq(count_after_second_idle, 3, "The third Hoothoot toss should also remain queued and visible"),
+		assert_eq(coin_animator.played_results, [true, false, true], "Three queued coin results must be animated once each and in order"),
+		assert_false(bool(battle_scene.get("_coin_animating")), "The coin animator should return to idle after all three tosses"),
+		assert_eq((battle_scene.get("_coin_flip_queue") as Array).size(), 0, "The three-toss queue should be fully drained"),
+	])
+	battle_scene.free()
+	return result
+
+
 func test_battle_setup_scene_includes_first_player_option() -> String:
 	var scene: Control = BattleSetupScene.instantiate()
 	var first_player_label := scene.find_child("FirstPlayerLabel", true, false)
@@ -1821,18 +1852,19 @@ func test_battle_setup_scene_includes_background_gallery() -> String:
 	])
 
 
-func test_battle_setup_scene_includes_dynamic_stadium_background_toggle() -> String:
+func test_battle_setup_replaces_dynamic_stadium_toggle_with_battle_effects_toggle() -> String:
 	var scene: Control = BattleSetupScene.instantiate()
-	var dynamic_label := scene.find_child("DynamicStadiumBackgroundLabel", true, false)
-	var dynamic_segment := scene.find_child("DynamicStadiumBackgroundSegment", true, false)
-	var on_button := scene.find_child("DynamicStadiumBackgroundOnButton", true, false)
-	var off_button := scene.find_child("DynamicStadiumBackgroundOffButton", true, false)
+	var effects_label := scene.find_child("BattleEffectsLabel", true, false) as Label
+	var effects_segment := scene.find_child("BattleEffectsSegment", true, false)
+	var on_button := scene.find_child("BattleEffectsOnButton", true, false)
+	var off_button := scene.find_child("BattleEffectsOffButton", true, false)
 
 	return run_checks([
-		assert_true(dynamic_label is Label, "Battle setup should include dynamic stadium background label"),
-		assert_true(dynamic_segment is HBoxContainer, "Battle setup should include dynamic stadium background segment"),
-		assert_true(on_button is Button, "Battle setup should include dynamic stadium background on button"),
-		assert_true(off_button is Button, "Battle setup should include dynamic stadium background off button"),
+		assert_true(effects_label != null and effects_label.text == "对战动画特效", "Battle setup should use the existing setting slot for battle effects"),
+		assert_true(effects_segment is HBoxContainer, "Battle setup should keep the existing two-button segment layout"),
+		assert_true(on_button is Button, "Battle setup should include a battle effects on button"),
+		assert_true(off_button is Button, "Battle setup should include a battle effects off button"),
+		assert_null(scene.find_child("DynamicStadiumBackgroundSegment", true, false), "Dynamic Stadium backgrounds should no longer require a user setting"),
 	])
 
 
@@ -2723,6 +2755,31 @@ func test_battle_scene_detects_reordered_deck_for_active_player_only() -> String
 	])
 
 
+func test_battle_scene_first_observed_shuffle_count_only_primes_missing_opponent_baseline() -> String:
+	var scene := _make_battle_scene_stub()
+	_seed_battle_scene_deck_previews(scene)
+	var state := GameState.new()
+	state.players = [PlayerState.new(), PlayerState.new()]
+	for player_index: int in 2:
+		state.players[player_index].player_index = player_index
+		state.players[player_index].deck = _make_named_deck_cards(player_index, ["A", "B", "C"])
+	state.players[0].shuffle_count = 2
+	state.players[1].shuffle_count = 3
+	scene.set("_view_player", 0)
+	scene.set("_deck_shuffle_counts", {0: 2})
+
+	scene.call("_refresh_deck_shuffle_detection", state)
+	var false_opponent_tween: Variant = scene.get("_opp_deck_shuffle_tween")
+	state.players[1].shuffle_count += 1
+	scene.call("_refresh_deck_shuffle_detection", state)
+	var real_opponent_tween: Variant = scene.get("_opp_deck_shuffle_tween")
+	scene.queue_free()
+	return run_checks([
+		assert_null(false_opponent_tween, "An unrelated board refresh such as Evolution must not animate a player whose shuffle baseline was merely missing"),
+		assert_not_null(real_opponent_tween, "A later real shuffle-count increment should still animate that player's deck"),
+	])
+
+
 func test_battle_scene_shuffle_effect_restart_replaces_running_tween() -> String:
 	var scene := _make_battle_scene_stub()
 	_seed_battle_scene_deck_previews(scene)
@@ -2885,6 +2942,54 @@ func test_battle_scene_turn_start_snapshot_records_after_drawn_card_enters_hand(
 	])
 
 
+func test_battle_scene_opening_turn_draw_does_not_reveal_card_already_in_hand() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 1
+	gsm.game_state.phase = GameState.GamePhase.DRAW
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var drawn_card := CardInstance.create(_make_pokemon_cd("Opening Draw", 70, "C"), 0)
+	gsm.game_state.players[0].hand = [drawn_card]
+	var action := GameAction.create(
+		GameAction.ActionType.DRAW_CARD,
+		0,
+		{
+			"count": 1,
+			"card_names": ["Opening Draw"],
+			"card_instance_ids": [drawn_card.instance_id],
+			"turn_start": true,
+			"draw_source": "turn_start",
+		},
+		1,
+		"opening turn draw"
+	)
+
+	battle_scene.call("_on_action_logged", action)
+	battle_scene.call("_refresh_hand")
+
+	var reveal_active: Variant = battle_scene.get("_draw_reveal_active")
+	var pending_hand_refresh: Variant = battle_scene.get("_draw_reveal_pending_hand_refresh")
+	var reveal_overlay: Variant = battle_scene.get("_draw_reveal_overlay")
+	var hand_container: HBoxContainer = battle_scene.get("_hand_container")
+
+	return run_checks([
+		assert_eq(reveal_active, false, "The opening turn draw should not replay a card that is already visible in hand"),
+		assert_eq(pending_hand_refresh, false, "Skipping the opening draw reveal should not defer hand rendering"),
+		assert_null(reveal_overlay, "Skipping the opening draw reveal should not create an overlay"),
+		assert_eq(hand_container.get_child_count(), 1, "The opening draw card should remain directly visible in hand"),
+	])
+
+
 func test_battle_scene_turn_start_draw_waits_for_player_click_before_hand_refresh() -> String:
 	var previous_mode: int = GameManager.current_mode
 	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
@@ -2936,7 +3041,7 @@ func test_battle_scene_turn_start_draw_waits_for_player_click_before_hand_refres
 	])
 
 
-func test_battle_scene_marked_turn_start_draw_auto_continues_for_human() -> String:
+func test_battle_scene_marked_later_turn_start_draw_auto_continues_for_human() -> String:
 	var previous_mode: int = GameManager.current_mode
 	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
 
@@ -2967,7 +3072,7 @@ func test_battle_scene_marked_turn_start_draw_auto_continues_for_human() -> Stri
 			"turn_start": true,
 			"draw_source": "turn_start",
 		},
-		1,
+		2,
 		"turn start draw"
 	)
 	battle_scene.call("_on_action_logged", action)
@@ -3970,20 +4075,22 @@ func test_battle_scene_batch_draw_layout_centers_short_second_row_independently(
 	])
 
 
-func test_battle_scene_portrait_draw_reveal_uses_hand_sized_scale() -> String:
+func test_battle_scene_portrait_draw_reveal_uses_field_card_scale() -> String:
 	var battle_scene = _make_battle_scene_stub()
 	battle_scene.size = Vector2(390, 844)
 	battle_scene.set("_active_battle_layout_mode", "portrait")
+	battle_scene.set("_field_active_card_size", Vector2(172.8, 240.0))
 	var controller: RefCounted = battle_scene.get("_battle_draw_reveal_controller")
 	var card_view := BattleCardViewScript.new()
 	card_view.custom_minimum_size = Vector2(108, 150)
 
-	var single_scale: Vector2 = controller.call("_reveal_scale", battle_scene)
+	var single_scale: Vector2 = controller.call("_reveal_scale", battle_scene, card_view)
 	var batch_scale: Vector2 = controller.call("_batch_reveal_scale", battle_scene, card_view, 7)
 
 	return run_checks([
-		assert_eq(single_scale, Vector2.ONE, "Portrait single-card draw reveal should keep cards at hand-card size"),
-		assert_eq(batch_scale, Vector2.ONE, "Portrait batch draw reveal should keep cards at hand-card size"),
+		assert_eq(single_scale, Vector2(1.6, 1.6), "Portrait single-card draw reveal should match the field Active Pokemon size"),
+		assert_gt(batch_scale.x, 1.0, "Portrait batch draw reveal should remain larger than the hand-card presentation"),
+		assert_true(batch_scale.x <= single_scale.x, "Portrait batch reveal may shrink only as needed to keep every card visible"),
 	])
 
 
@@ -3991,15 +4098,17 @@ func test_battle_scene_portrait_batch_draw_layout_fits_visible_screen() -> Strin
 	var battle_scene = _make_battle_scene_stub()
 	battle_scene.size = Vector2(390, 844)
 	battle_scene.set("_active_battle_layout_mode", "portrait")
+	battle_scene.set("_field_active_card_size", Vector2(172.8, 240.0))
 	var controller: RefCounted = battle_scene.get("_battle_draw_reveal_controller")
 	var card_view := BattleCardViewScript.new()
 	card_view.custom_minimum_size = Vector2(108, 150)
 	var scale: Vector2 = controller.call("_batch_reveal_scale", battle_scene, card_view, 7)
 	var visual_size := card_view.custom_minimum_size * scale
 	var anchor_rect: Rect2 = controller.call("_get_reveal_anchor_rect", battle_scene)
+	var columns: int = controller.call("_batch_column_count", battle_scene, card_view, 7)
 	var positions: Array[Vector2] = []
 	var checks: Array[String] = [
-		assert_eq(scale, Vector2.ONE, "Portrait batch reveal should not enlarge cards beyond hand size"),
+		assert_gt(scale.x, 1.0, "Portrait batch reveal should enlarge cards beyond the hand-card size when the screen permits"),
 	]
 	for index: int in 7:
 		var position: Vector2 = controller.call("_batch_stack_position", battle_scene, card_view, index, 7)
@@ -4010,10 +4119,11 @@ func test_battle_scene_portrait_batch_draw_layout_fits_visible_screen() -> Strin
 		checks.append(assert_true(position.y + visual_size.y <= anchor_rect.position.y + anchor_rect.size.y + 0.01, "Portrait reveal card %d should not overflow bottom" % [index + 1]))
 
 	var center_x := anchor_rect.position.x + anchor_rect.size.x * 0.5
-	var first_row_center := (positions[0].x + positions[2].x + visual_size.x) * 0.5
-	checks.append(assert_eq(positions[0].y, positions[1].y, "Portrait batch reveal should keep the first row aligned"))
-	checks.append(assert_eq(positions[1].y, positions[2].y, "Portrait batch reveal should place three cards on the first narrow-screen row"))
-	checks.append(assert_gt(positions[3].y, positions[0].y, "Portrait batch reveal should wrap the fourth card to the second row on narrow screens"))
+	var first_row_center := (positions[0].x + positions[columns - 1].x + visual_size.x) * 0.5
+	checks.append(assert_gte(columns, 2, "Portrait batch reveal should keep at least two enlarged cards per row"))
+	for index: int in range(1, columns):
+		checks.append(assert_eq(positions[0].y, positions[index].y, "Portrait batch reveal should keep its first row aligned"))
+	checks.append(assert_gt(positions[columns].y, positions[0].y, "Portrait batch reveal should wrap only after the enlarged first row is full"))
 	checks.append(assert_true(absf(first_row_center - center_x) < 0.01, "Portrait batch reveal first row should stay centered"))
 
 	return run_checks(checks)

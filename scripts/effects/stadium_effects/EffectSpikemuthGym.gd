@@ -87,7 +87,7 @@ func _is_marnies_pokemon(card: CardInstance) -> bool:
 	var names: Array[String] = [card.card_data.name, card.card_data.name_en, card.card_data.name_zh]
 	for raw_name: String in names:
 		var normalized := raw_name.strip_edges().to_lower()
-		if normalized.begins_with("marnie's ") or normalized.begins_with("marnies "):
+		if normalized.begins_with("marnie's ") or normalized.begins_with("marnies ") or normalized.begins_with("玛俐的"):
 			return true
 	return false
 

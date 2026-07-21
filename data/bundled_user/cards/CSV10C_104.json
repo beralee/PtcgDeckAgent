@@ -1,0 +1,58 @@
+{
+  "name": "象牙猪ex",
+  "card_type": "Pokemon",
+  "mechanic": "ex",
+  "label": "",
+  "description": "特性: 猛犸搬运\n在自己的回合可以使用1次。选择自己牌库中的1张宝可梦，在给对手看过之后加入手牌。并重洗牌库。\n\n【斗】【斗】 轰隆行进 180+\n追加造成自己备战区中的【2阶进化】宝可梦数量×40伤害。\n\n",
+  "yoren_code": "Y1585",
+  "set_code": "CSV10C",
+  "card_index": "104",
+  "set_code_en": "",
+  "card_index_en": "",
+  "name_en": "",
+  "name_zh": "",
+  "artist": "Nisota Niso",
+  "rarity": "RR",
+  "release_date": "2026-07-16T00:00:00+08:00",
+  "regulation_mark": "I",
+  "effect_id": "e81894ba20ba5db44d8a4133f78564c2",
+  "image_url": "https://tcg.mik.moe/static/img/CSV10C/104.png",
+  "image_local_path": "user://cards/images/CSV10C/104.png",
+  "source_provider": "tcg_mik",
+  "source_url": "https://tcg.mik.moe/cards/CSV10C/104",
+  "source_set_code": "CSV10C",
+  "source_card_index": "104",
+  "source_language": "zh-CN",
+  "source_prints": [],
+  "source_imported_at": 0,
+  "source_parser_version": 1,
+  "is_tags": [],
+  "regulation_standard": true,
+  "regulation_expanded": true,
+  "energy_type": "F",
+  "stage": "Stage 2",
+  "hp": 340,
+  "weakness_energy": "G",
+  "weakness_value": "×2",
+  "resistance_energy": "",
+  "resistance_value": "",
+  "retreat_cost": 4,
+  "evolves_from": "长毛猪",
+  "ancient_trait": "",
+  "attacks": [
+    {
+      "name": "轰隆行进",
+      "text": "追加造成自己备战区中的【2阶进化】宝可梦数量×40伤害。",
+      "cost": "FF",
+      "damage": "180+",
+      "is_vstar_power": false
+    }
+  ],
+  "abilities": [
+    {
+      "name": "猛犸搬运",
+      "text": "在自己的回合可以使用1次。选择自己牌库中的1张宝可梦，在给对手看过之后加入手牌。并重洗牌库。"
+    }
+  ],
+  "energy_provides": ""
+}

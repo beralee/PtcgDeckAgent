@@ -2,6 +2,61 @@
 
 extends "res://tests/helpers/BattleUIFeaturesShared.gd"
 
+func test_prize_touch_release_without_same_prompt_press_does_not_take_prize() -> String:
+	var previous_mode: int = GameManager.current_mode
+	var previous_layout: String = GameManager.battle_layout_mode
+	GameManager.current_mode = GameManager.GameMode.TWO_PLAYER
+	GameManager.battle_layout_mode = GameManager.BATTLE_LAYOUT_PORTRAIT
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_view_player", 0)
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 4
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+	gsm.game_state.players[0].prizes.append(CardInstance.create(_make_pokemon_cd("Release Echo Prize", 60, "C"), 0))
+	gsm.set("_pending_prize_player_index", 0)
+	gsm.set("_pending_prize_remaining", 1)
+
+	var my_prize_slots: Array[BattleCardView] = []
+	var opp_prize_slots: Array[BattleCardView] = []
+	for _i: int in 6:
+		my_prize_slots.append(BattleCardView.new())
+		opp_prize_slots.append(BattleCardView.new())
+	battle_scene.set("_my_prize_slots", my_prize_slots)
+	battle_scene.set("_opp_prize_slots", opp_prize_slots)
+	battle_scene.call("_setup_prize_viewer")
+	battle_scene.set("_pending_choice", "take_prize")
+	battle_scene.set("_pending_prize_player_index", 0)
+	battle_scene.set("_pending_prize_remaining", 1)
+	battle_scene.call("_update_prize_slots", my_prize_slots, gsm.game_state.players[0].get_prize_layout(), true)
+
+	var prize_slot := my_prize_slots[0]
+	var hand_before := gsm.game_state.players[0].hand.size()
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.index = 0
+	release.position = Vector2(24, 24)
+	if prize_slot != null:
+		prize_slot.emit_signal("gui_input", release)
+	var hand_after := gsm.game_state.players[0].hand.size()
+	var pending_after := str(battle_scene.get("_pending_choice"))
+
+	battle_scene.free()
+	GameManager.current_mode = previous_mode
+	GameManager.battle_layout_mode = previous_layout
+	return run_checks([
+		assert_eq(hand_after, hand_before, "A release inherited from the action that opened the Prize prompt must not auto-pick a Prize"),
+		assert_eq(pending_after, "take_prize", "An unmatched release must leave the human Prize choice pending"),
+	])
+
+
 func test_prize_card_view_own_touch_input_takes_prize_on_android() -> String:
 	var battle_scene = _make_battle_scene_stub()
 	battle_scene.set("_view_player", 0)

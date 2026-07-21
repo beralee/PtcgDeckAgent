@@ -1,0 +1,58 @@
+{
+  "name": "火箭队的瓦斯弹",
+  "card_type": "Pokemon",
+  "mechanic": "",
+  "label": "",
+  "description": "特性: 警戒烟雾\n当这只宝可梦在战斗场上受到对手宝可梦的招式的伤害时，选择自己牌库中最多2张名字中带有「瓦斯弹」的宝可梦，放于备战区。并重洗牌库。\n\n【恶】 瓦斯泄漏 30\n\n\n",
+  "yoren_code": "P0109",
+  "set_code": "CSV10C",
+  "card_index": "133",
+  "set_code_en": "",
+  "card_index_en": "",
+  "name_en": "",
+  "name_zh": "",
+  "artist": "kodama",
+  "rarity": "C",
+  "release_date": "2026-07-16T00:00:00+08:00",
+  "regulation_mark": "I",
+  "effect_id": "0c65d1d9705ccf735d3780b072e3924d",
+  "image_url": "https://tcg.mik.moe/static/img/CSV10C/133.png",
+  "image_local_path": "user://cards/images/CSV10C/133.png",
+  "source_provider": "tcg_mik",
+  "source_url": "https://tcg.mik.moe/cards/CSV10C/133",
+  "source_set_code": "CSV10C",
+  "source_card_index": "133",
+  "source_language": "zh-CN",
+  "source_prints": [],
+  "source_imported_at": 0,
+  "source_parser_version": 1,
+  "is_tags": [],
+  "regulation_standard": true,
+  "regulation_expanded": true,
+  "energy_type": "D",
+  "stage": "Basic",
+  "hp": 70,
+  "weakness_energy": "F",
+  "weakness_value": "×2",
+  "resistance_energy": "",
+  "resistance_value": "",
+  "retreat_cost": 1,
+  "evolves_from": "",
+  "ancient_trait": "",
+  "attacks": [
+    {
+      "name": "瓦斯泄漏",
+      "text": "",
+      "cost": "DC",
+      "damage": "30",
+      "is_vstar_power": false
+    }
+  ],
+  "abilities": [
+    {
+      "name": "警戒烟雾",
+      "text": "当这只宝可梦在战斗场上受到对手宝可梦的招式的伤害时，选择自己牌库中最多2张名字中带有「瓦斯弹」的宝可梦，放于备战区。并重洗牌库。"
+    }
+  ],
+  "energy_provides": ""
+}

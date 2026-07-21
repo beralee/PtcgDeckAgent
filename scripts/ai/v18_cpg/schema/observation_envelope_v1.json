@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "V18CPG observation envelope v1",
+  "type": "object",
+  "required": ["schema_version", "observation_version", "turn", "own", "opponent", "legal_actions", "visibility", "observation_hash"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "observation_version": {"type": "integer"},
+    "turn": {"type": "object"},
+    "own": {"type": "object"},
+    "opponent": {"type": "object"},
+    "legal_actions": {"type": "array"},
+    "interaction": {"type": "object"},
+    "visibility": {"type": "object"},
+    "observation_hash": {"type": "string"}
+  }
+}

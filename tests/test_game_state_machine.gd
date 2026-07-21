@@ -655,6 +655,39 @@ func test_draw_cards_for_effect_logs_exact_drawn_card_names() -> String:
 	])
 
 
+func test_ultra_ball_rejects_missing_discard_context_without_mutating_zones() -> String:
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	gsm.game_state.turn_number = 3
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var ultra_cd := CardData.new()
+	ultra_cd.name = "Ultra Ball"
+	ultra_cd.card_type = "Item"
+	ultra_cd.effect_id = "a337ed34a45e63c6d21d98c3d8e0cb6e"
+	var ultra_ball := CardInstance.create(ultra_cd, 0)
+	var discard_a := CardInstance.create(_make_basic_pokemon_card_data("Ultra Cost A"), 0)
+	var discard_b := CardInstance.create(_make_basic_pokemon_card_data("Ultra Cost B"), 0)
+	var target := CardInstance.create(_make_basic_pokemon_card_data("Search Target"), 0)
+	var player: PlayerState = gsm.game_state.players[0]
+	player.hand = [ultra_ball, discard_a, discard_b]
+	player.deck = [target]
+
+	var played: bool = gsm.play_trainer(0, ultra_ball, [{"search_pokemon": [target]}])
+
+	return run_checks([
+		assert_false(played, "Ultra Ball must reject an interaction payload that omitted its two-card discard choice"),
+		assert_eq(player.hand, [ultra_ball, discard_a, discard_b], "Rejected Ultra Ball must preserve the complete hand"),
+		assert_eq(player.deck, [target], "Rejected Ultra Ball must preserve the deck"),
+		assert_true(player.discard_pile.is_empty(), "Rejected Ultra Ball must not discard either its cost or itself"),
+	])
+
+
 func test_draw_cards_for_effect_overdraw_immediately_loses_player() -> String:
 	var gsm := GameStateMachine.new()
 	gsm.game_state = GameState.new()
@@ -2890,6 +2923,7 @@ func test_evolve_charizard_triggers_infernal_reign_and_attaches_fire_energy() ->
 	player.deck.append(CardInstance.create(_make_test_energy("W"), 0))
 
 	var evolved: bool = gsm.evolve_pokemon(0, evolution, active_slot)
+	var evolve_action: GameAction = _get_last_action_of_type(gsm.action_log, GameAction.ActionType.EVOLVE)
 	var steps: Array[Dictionary] = gsm.get_evolve_ability_interaction_steps(active_slot)
 	var ability_used: bool = gsm.use_ability(0, active_slot, 0, [{
 		"energy_assignments": [
@@ -2900,6 +2934,7 @@ func test_evolve_charizard_triggers_infernal_reign_and_attaches_fire_energy() ->
 	}])
 	return run_checks([
 		assert_eq(evolved, true, "Charizard ex should evolve successfully"),
+		assert_eq(int(evolve_action.data.get("target_slot_runtime_id", -1)) if evolve_action != null else -1, int(active_slot.get_instance_id()), "Evolution actions must identify the exact target slot for visual anchoring"),
 		assert_eq(active_slot.get_pokemon_name(), "鍠风伀榫檈x", "The evolved Pokemon should be Charizard ex"),
 		assert_eq(steps.size(), 1, "Infernal Reign should use one reusable assignment step"),
 		assert_eq(str(steps[0].get("ui_mode", "")), "card_assignment", "Infernal Reign should use card_assignment UI mode"),
@@ -3585,7 +3620,7 @@ func test_attack_log_keeps_active_target_for_non_target_prompt_with_damage() -> 
 	])
 
 
-func test_attack_log_omits_active_target_for_existing_explicit_target_step_ids() -> String:
+func test_greninja_mirage_barrage_rejects_partial_targets_before_paying_energy_cost() -> String:
 	var gsm := _make_gsm_with_decks()
 	gsm.game_state.phase = GameState.GamePhase.MAIN
 	gsm.game_state.turn_number = 2
@@ -3633,15 +3668,13 @@ func test_attack_log_omits_active_target_for_existing_explicit_target_step_ids()
 		"greninja_ex_discard_energy": [energy_a, energy_b],
 		"greninja_ex_targets": [bench_defender],
 	}])
-	var attack_action: GameAction = _get_last_action_of_type(gsm.action_log, GameAction.ActionType.ATTACK)
-	var attack_data: Dictionary = attack_action.data if attack_action != null else {}
-
 	return run_checks([
-		assert_eq(result, true, "Explicit-target attack should resolve successfully"),
-		assert_not_null(attack_action, "Attack should be logged"),
-		assert_eq(bench_defender.damage_counters, 120, "The explicit bench target should take the attack damage"),
-		assert_eq(active_defender.damage_counters, 0, "The opposing Active should not be treated as the resolved target"),
-		assert_eq(attack_data.has("target_pokemon_name"), false, "Explicit target-step attacks should not mislabel the opposing Active as the target"),
+		assert_false(result, "Mirage Barrage must reject one target while two legal opponent Pokemon exist"),
+		assert_eq(attacker_slot.attached_energy, [energy_a, energy_b], "Rejected Mirage Barrage must not discard its Energy cost"),
+		assert_true(player.discard_pile.is_empty(), "Rejected Mirage Barrage must not move Energy to the discard pile"),
+		assert_eq(bench_defender.damage_counters, 0, "Rejected Mirage Barrage must not damage the partial target"),
+		assert_eq(active_defender.damage_counters, 0, "Rejected Mirage Barrage must leave every opponent Pokemon unchanged"),
+		assert_eq(_get_last_action_of_type(gsm.action_log, GameAction.ActionType.ATTACK), null, "Rejected Mirage Barrage must not be logged as a completed attack"),
 	])
 
 

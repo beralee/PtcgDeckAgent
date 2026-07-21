@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "architecture": "V18CPG",
+  "program_id": "roi5_precision",
+  "selection_date": "2026-07-21",
+  "source_program": "optimization21",
+  "anchor_id": 575720,
+  "games_per_round": 5,
+  "required_deep_rounds": 5,
+  "model": "deepseek-v4-flash",
+  "scope_policy": "Only these five decks receive new deck-specific optimization work until the ROI5 gate passes. Completed decks remain regression anchors; all other experimental decks are paused.",
+  "acceptance": {
+    "minimum_paired_improvement": 0.0,
+    "minimum_net_wins_at_five_games": 0,
+    "excellent_paired_improvement": 0.1,
+    "excellent_net_wins_at_five_games": 1,
+    "require_clean_games": 5,
+    "require_model_calls": true,
+    "require_accepted_response": true,
+    "require_exact_rule_replay_across_rounds": true,
+    "require_zero_model_action_reference_mismatches": true,
+    "turn_visible_wait_p95_ms_max": 6500
+  },
+  "phases": [
+    {
+      "id": "close_existing_gain",
+      "deck_ids": [800018502, 800018501]
+    },
+    {
+      "id": "flagship_representatives",
+      "deck_ids": [800018499, 800018509, 800015934]
+    }
+  ],
+  "decks": [
+    {
+      "priority": 1,
+      "deck_id": 800018502,
+      "display_name": "18.0 N的索罗亚克",
+      "strategy_id": "v18cpg_800018502_ns_zoroark",
+      "primary_module": "copy_attack_toolbox",
+      "scenario_artifact": "res://tmp/v18cpg/optimization21/800018502/complex_decision_scenarios.json",
+      "final_benchmark_artifact": "res://tmp/v18cpg/optimization21/800018502/round05.json",
+      "starting_formal_rounds": 4,
+      "starting_latest_rule_wins": 3,
+      "starting_latest_v18cpg_wins": 4,
+      "evidence_ledger": "res://scripts/tools/v18cpg/iterations/optimization21/800018502_10_rounds.json",
+      "roi_reasons": ["already_has_strict_positive_flip", "four_rounds_retained", "copy_attack_module_reuse", "high_player_value"]
+    },
+    {
+      "priority": 2,
+      "deck_id": 800018501,
+      "display_name": "18.0 玛俐的长毛巨魔",
+      "strategy_id": "v18cpg_800018501_marnies_grimmsnarl",
+      "primary_module": "stage2_chain",
+      "scenario_artifact": "res://tmp/v18cpg/optimization21/800018501/complex_decision_scenarios.json",
+      "final_benchmark_artifact": "res://tmp/v18cpg/optimization21/800018501/round02.json",
+      "starting_formal_rounds": 1,
+      "starting_latest_rule_wins": 3,
+      "starting_latest_v18cpg_wins": 4,
+      "evidence_ledger": "res://scripts/tools/v18cpg/iterations/optimization21/800018501_10_rounds.json",
+      "roi_reasons": ["already_has_strict_positive_flip", "stage2_energy_counter_reuse", "high_player_value"]
+    },
+    {
+      "priority": 3,
+      "deck_id": 800018499,
+      "display_name": "18.0 多龙巴鲁托",
+      "strategy_id": "v18cpg_800018499_pure_dragapult",
+      "primary_module": "dragapult_spread",
+      "scenario_artifact": "res://tmp/v18cpg/optimization21/800018499/complex_decision_scenarios.json",
+      "final_benchmark_artifact": "res://tmp/v18cpg/roi5/800018499/final_bench5.json",
+      "starting_formal_rounds": 0,
+      "starting_latest_rule_wins": 1,
+      "starting_latest_v18cpg_wins": 1,
+      "evidence_ledger": "res://scripts/tools/v18cpg/iterations/optimization21/800018499_10_rounds.json",
+      "roi_reasons": ["representative_for_four_dragapult_variants", "highest_family_reuse", "high_player_value"]
+    },
+    {
+      "priority": 4,
+      "deck_id": 800018509,
+      "display_name": "18.0 猛雷鼓厄诡椪",
+      "strategy_id": "v18cpg_800018509_raging_bolt_ogerpon",
+      "primary_module": "energy_burst",
+      "scenario_artifact": "res://tmp/v18cpg/optimization21/800018509/complex_decision_scenarios.json",
+      "final_benchmark_artifact": "res://tmp/v18cpg/roi5/800018509/final_bench5.json",
+      "starting_formal_rounds": 0,
+      "legacy_pilot_status": "benchmarked_experimental",
+      "evidence_ledger": "res://scripts/tools/v18cpg/iterations/optimization21/800018509_10_rounds.json",
+      "roi_reasons": ["mature_pilot_assets", "energy_engine_reuse", "high_player_value", "continuous_draw_search_stress"]
+    },
+    {
+      "priority": 5,
+      "deck_id": 800015934,
+      "display_name": "18.0 Tord太晶盒",
+      "strategy_id": "v18cpg_800015934_tord_tera_box",
+      "primary_module": "tera_noctowl_search",
+      "scenario_artifact": "res://tmp/v18cpg/optimization21/800015934/complex_decision_scenarios.json",
+      "final_benchmark_artifact": "res://tmp/v18cpg/roi5/800015934/final_bench5.json",
+      "starting_formal_rounds": 0,
+      "legacy_pilot_status": "benchmarked_experimental",
+      "evidence_ledger": "res://scripts/tools/v18cpg/iterations/optimization21/800015934_10_rounds.json",
+      "roi_reasons": ["mature_pilot_assets", "noctowl_pair_search_reuse", "toolbox_decision_stress", "explicit_product_priority"]
+    }
+  ]
+}

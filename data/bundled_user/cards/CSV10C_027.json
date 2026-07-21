@@ -1,0 +1,66 @@
+{
+    "name":  "火箭队的火焰鸟ex",
+    "card_type":  "Pokemon",
+    "mechanic":  "ex",
+    "label":  "",
+    "description":  "【火】 火焰屏障 110\n在下一个对手的回合，这只宝可梦所受到的招式的伤害「-50」。\n\n【火】 邪恶燃烧 \n选择这只宝可梦身上附着的1张「火箭队能量」，放于弃牌区。在这种情况下，将对手的战斗宝可梦以及放于其身上的全部的卡牌放于弃牌区。\n\n",
+    "yoren_code":  "Y1573",
+    "set_code":  "CSV10C",
+    "card_index":  "027",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "5ban Graphics",
+    "rarity":  "RR",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "453285d9bb2986c6603cbae746502b97",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/027.png",
+    "image_local_path":  "user://cards/images/CSV10C/027.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "R",
+    "stage":  "Basic",
+    "hp":  220,
+    "weakness_energy":  "L",
+    "weakness_value":  "×2",
+    "resistance_energy":  "F",
+    "resistance_value":  "-30",
+    "retreat_cost":  2,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "火焰屏障",
+                        "text":  "在下一个对手的回合，这只宝可梦所受到的招式的伤害「-50」。",
+                        "cost":  "RCC",
+                        "damage":  "110",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "邪恶燃烧",
+                        "text":  "选择这只宝可梦身上附着的1张「火箭队能量」，放于弃牌区。在这种情况下，将对手的战斗宝可梦以及放于其身上的全部的卡牌放于弃牌区。",
+                        "cost":  "RCCC",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

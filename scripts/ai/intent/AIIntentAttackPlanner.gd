@@ -62,12 +62,16 @@ func _intent_for_attack(
 	var attack_name := str(attack.get("name", legal_ref.get("attack_name", "")))
 	var cost_counts := Util.cost_counts(attack.get("cost", ""))
 	var missing := Util.missing_cost(cost_counts, attached_counts)
-	var damage := int(legal_ref.get("projected_damage", Util.parse_damage(attack.get("damage", ""))))
 	var text := str(attack.get("text", legal_ref.get("attack_rules", {}).get("text", "") if legal_ref.get("attack_rules", {}) is Dictionary else ""))
+	var preview_damage := int(legal_ref.get("projected_damage", Util.parse_damage(attack.get("damage", ""))))
+	var damage := maxi(preview_damage, _estimate_visible_dynamic_damage(slot, attack, text))
 	var role := _attack_role(cd, attack_name, attack_index, attack, profile)
 	var opponent_hp := Util.opponent_active_hp(game_state, player_index)
 	var ko_active := damage > 0 and opponent_hp > 0 and damage >= opponent_hp
 	var ready_now := not legal_ref.is_empty()
+	var requires_interaction := bool(legal_ref.get("requires_interaction", false))
+	var scaling_damage := Util.damage_is_scaling(attack.get("damage", ""), text)
+	var damage_unknown := ready_now and requires_interaction and scaling_damage and damage <= 0
 	var priority := _terminal_priority(role, damage, ko_active, ready_now)
 	var intent := {
 		"action_id": Util.action_id(legal_ref),
@@ -77,6 +81,8 @@ func _intent_for_attack(
 		"attack_index": attack_index,
 		"role": role,
 		"ready_now": ready_now,
+		"requires_interaction": requires_interaction,
+		"damage_unknown": damage_unknown,
 		"unlock_cost": _symbols_to_words(Util.symbols_from_cost(attack.get("cost", ""))),
 		"missing_cost": _symbols_to_words(missing),
 		"estimated_damage": damage,
@@ -89,7 +95,7 @@ func _intent_for_attack(
 		"deck_draw_risk": false,
 		"reason": _attack_reason(role, ready_now, damage, ko_active),
 	}
-	if Util.damage_is_scaling(attack.get("damage", ""), text):
+	if scaling_damage:
 		intent["scaling_damage"] = true
 	return intent
 
@@ -156,6 +162,39 @@ func _terminal_priority(role: String, damage: int, ko_active: bool, ready_now: b
 	return "low"
 
 
+func _estimate_visible_dynamic_damage(slot: PokemonSlot, attack: Dictionary, text: String) -> int:
+	if slot == null or slot.damage_counters <= 0 or not _uses_own_damage_counters(text):
+		return 0
+	var multiplier := _scaling_multiplier("%s %s" % [str(attack.get("damage", "")), text])
+	if multiplier <= 0:
+		return 0
+	return int(slot.damage_counters / 10) * multiplier
+
+
+func _uses_own_damage_counters(text: String) -> bool:
+	var lower := text.to_lower()
+	var has_damage_counters := lower.contains("damage counter") or text.contains("伤害指示物")
+	var references_self := (
+		lower.contains("this pokemon")
+		or lower.contains("this pokémon")
+		or text.contains("这只宝可梦身上")
+		or text.contains("自身伤害指示物")
+	)
+	return has_damage_counters and references_self
+
+
+func _scaling_multiplier(value: String) -> int:
+	var after_marker := RegEx.new()
+	after_marker.compile("[x×]\\s*(\\d+)")
+	var match_after := after_marker.search(value)
+	if match_after != null:
+		return int(match_after.get_string(1))
+	var before_marker := RegEx.new()
+	before_marker.compile("(\\d+)\\s*[x×]")
+	var match_before := before_marker.search(value)
+	return int(match_before.get_string(1)) if match_before != null else 0
+
+
 func _mark_better_attack_blocks(intents: Array[Dictionary]) -> void:
 	var best_score := -999999
 	for intent: Dictionary in intents:
@@ -166,6 +205,8 @@ func _mark_better_attack_blocks(intents: Array[Dictionary]) -> void:
 		return
 	for intent: Dictionary in intents:
 		if not bool(intent.get("ready_now", false)):
+			continue
+		if bool(intent.get("damage_unknown", false)):
 			continue
 		var score := _priority_score(intent)
 		if score + 150 < best_score:

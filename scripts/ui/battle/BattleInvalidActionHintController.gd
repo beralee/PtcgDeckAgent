@@ -8,8 +8,10 @@ const PORTRAIT_EDGE_MARGIN := 8.0
 const PORTRAIT_HAND_GAP := 8.0
 const PORTRAIT_MIN_USABLE_HEIGHT := 260.0
 const LANDSCAPE_MAX_BOX_HEIGHT := 260.0
+const AUTO_DISMISS_SECONDS := 2.5
 
 var _scene: Control = null
+var _hint_generation := 0
 
 
 func setup(scene: Control) -> void:
@@ -36,6 +38,7 @@ func show_hint(payload: Variant) -> void:
 	_apply_metrics()
 	var overlay := _overlay()
 	if overlay != null:
+		_hint_generation += 1
 		overlay.visible = true
 		overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 		overlay.z_index = 620
@@ -43,14 +46,27 @@ func show_hint(payload: Variant) -> void:
 		var parent := overlay.get_parent()
 		if parent != null:
 			parent.move_child(overlay, parent.get_child_count() - 1)
+		var tree := _scene.get_tree() if _scene.is_inside_tree() else null
+		if tree != null:
+			tree.create_timer(AUTO_DISMISS_SECONDS).timeout.connect(
+				_auto_hide_hint.bind(_hint_generation),
+				CONNECT_ONE_SHOT
+			)
 
 
 func hide_hint() -> void:
+	_hint_generation += 1
 	var overlay := _overlay()
 	if overlay == null:
 		return
 	overlay.visible = false
 	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+func _auto_hide_hint(generation: int) -> void:
+	if generation != _hint_generation:
+		return
+	hide_hint()
 
 
 func _normalize_payload(payload: Variant) -> Dictionary:

@@ -3,6 +3,7 @@ class_name TestEffectInteractionFlow
 extends TestBase
 
 const AbilityGustFromBenchEffect = preload("res://scripts/effects/pokemon_effects/AbilityGustFromBench.gd")
+const BattleEffectInteractionControllerScript = preload("res://scripts/ui/battle/BattleEffectInteractionController.gd")
 
 
 func _make_basic_pokemon_data(
@@ -57,6 +58,98 @@ func _make_manual_gsm() -> GameStateMachine:
 	return gsm
 
 
+func test_effect_step_validator_rejects_partial_duplicate_out_of_range_and_ambiguous_empty_choices() -> String:
+	var controller := BattleEffectInteractionControllerScript.new()
+	var step := {
+		"id": "strict_step",
+		"items": ["A", "B"],
+		"min_select": 2,
+		"max_select": 2,
+	}
+	var partial: Dictionary = controller.call("validate_effect_step_choice", step, PackedInt32Array([0]))
+	var duplicate: Dictionary = controller.call("validate_effect_step_choice", step, PackedInt32Array([0, 0]))
+	var out_of_range: Dictionary = controller.call("validate_effect_step_choice", step, PackedInt32Array([0, 2]))
+	var valid: Dictionary = controller.call("validate_effect_step_choice", step, PackedInt32Array([0, 1]))
+	var hidden_step := {
+		"id": "hidden_search",
+		"items": ["A"],
+		"min_select": 0,
+		"max_select": 1,
+		"hidden_search_can_whiff": true,
+	}
+	var ambiguous_empty: Dictionary = controller.call(
+		"validate_effect_step_choice",
+		hidden_step,
+		PackedInt32Array(),
+		BaseEffect.INTERACTION_INTENT_SELECT,
+		true
+	)
+	var explicit_empty: Dictionary = controller.call(
+		"validate_effect_step_choice",
+		hidden_step,
+		PackedInt32Array(),
+		BaseEffect.INTERACTION_INTENT_DECLINE,
+		true
+	)
+	var public_optional_step := {
+		"id": "discard_recovery",
+		"items": ["A"],
+		"min_select": 0,
+		"max_select": 3,
+		"requires_explicit_empty_selection": true,
+	}
+	var public_ambiguous_empty: Dictionary = controller.call(
+		"validate_effect_step_choice",
+		public_optional_step,
+		PackedInt32Array(),
+		BaseEffect.INTERACTION_INTENT_SELECT,
+		true
+	)
+	var public_explicit_empty: Dictionary = controller.call(
+		"validate_effect_step_choice",
+		public_optional_step,
+		PackedInt32Array(),
+		BaseEffect.INTERACTION_INTENT_DECLINE,
+		true
+	)
+	var optional_required_step := {
+		"id": "optional_energy_return",
+		"items": ["A", "B", "C"],
+		"min_select": 3,
+		"max_select": 3,
+		"allow_cancel": true,
+	}
+	var optional_required_decline: Dictionary = controller.call(
+		"validate_effect_step_choice",
+		optional_required_step,
+		PackedInt32Array(),
+		BaseEffect.INTERACTION_INTENT_DECLINE,
+		true
+	)
+	var mandatory_required_step := optional_required_step.duplicate()
+	mandatory_required_step["allow_cancel"] = false
+	var mandatory_required_decline: Dictionary = controller.call(
+		"validate_effect_step_choice",
+		mandatory_required_step,
+		PackedInt32Array(),
+		BaseEffect.INTERACTION_INTENT_DECLINE,
+		true
+	)
+
+	return run_checks([
+		assert_false(bool(partial.get("valid", true)), "A required two-choice step must reject a partial response"),
+		assert_false(bool(duplicate.get("valid", true)), "A step must reject duplicate indices"),
+		assert_false(bool(out_of_range.get("valid", true)), "A step must reject indices outside its current legal items"),
+		assert_true(bool(valid.get("valid", false)), "Two distinct current indices should remain valid"),
+		assert_false(bool(ambiguous_empty.get("valid", true)), "A UI hidden search must reject an ambiguous empty confirm"),
+		assert_true(bool(explicit_empty.get("valid", false)), "A UI hidden search must accept the explicit decline action"),
+		assert_false(bool(public_ambiguous_empty.get("valid", true)), "A public optional choice must reject an accidental empty UI submit when the effect requests explicit intent"),
+		assert_true(bool(public_explicit_empty.get("valid", false)), "A public optional choice must still allow a deliberate no-selection action"),
+		assert_true(bool(optional_required_decline.get("valid", false)), "An explicit decline utility action should bypass selection bounds only for an optional step"),
+		assert_false(bool(mandatory_required_decline.get("valid", true)), "An explicit decline must not bypass a mandatory non-cancelable step"),
+	])
+
+
 func test_attach_special_energy_triggers_on_attach_effect() -> String:
 	var gsm := _make_manual_gsm()
 	var player: PlayerState = gsm.game_state.players[0]
@@ -108,6 +201,7 @@ func test_attach_jet_energy_switches_benched_pokemon_active() -> String:
 	return run_checks([
 		assert_true(result, "Jet Energy attach should succeed"),
 		assert_eq(player.active_pokemon, bench_slot, "Jet Energy should switch the attached Benched Pokemon to Active"),
+		assert_true(bench_slot.entered_active_from_bench_this_turn(gsm.game_state.turn_number), "Jet Energy should publish the Bench-to-Active trigger event"),
 		assert_true(active_slot in player.bench, "The previous Active Pokemon should move to the Bench"),
 		assert_eq(bench_slot.attached_energy.size(), 1, "Jet Energy should remain attached after the switch"),
 	])
@@ -738,11 +832,13 @@ func test_first_turn_draw_ability_works_on_second_players_first_turn() -> String
 		player.deck.append(CardInstance.create(_make_trainer_data("Draw%d" % i, "Item"), 1))
 
 	var result: bool = gsm.use_ability(1, active_slot, 0)
+	var ability_action: GameAction = gsm.action_log.back() if not gsm.action_log.is_empty() else null
 	return run_checks([
 		assert_true(result, "Squawkabilly ex should be able to use its Ability on its controller's first turn"),
 		assert_eq(player.hand.size(), 6, "The Ability should redraw to six cards"),
 		assert_eq(player.discard_pile.size(), 3, "The original hand should be discarded"),
 		assert_true(active_slot.effects.any(func(e: Dictionary) -> bool: return e.get("type", "") == AbilityFirstTurnDraw.USED_KEY), "The Ability should mark itself as used"),
+		assert_eq(int(ability_action.data.get("source_slot_runtime_id", -1)) if ability_action != null else -1, int(active_slot.get_instance_id()), "Ability actions should preserve their exact source slot for UI feedback anchoring"),
 	])
 
 

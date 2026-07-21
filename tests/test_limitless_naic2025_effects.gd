@@ -23,12 +23,19 @@ const CSV9C196CrispinScript := preload("res://scripts/effects/trainer_effects/CS
 const CSV9C198CilanScript := preload("res://scripts/effects/trainer_effects/CSV9C198Cilan.gd")
 const CSV9C207AreaZeroUnderdepthsScript := preload("res://scripts/effects/stadium_effects/CSV9C207AreaZeroUnderdepths.gd")
 
-const NAIC2025_DECK_DISPLAY_NAMES := {
-	800018497: "NAIC2025 沙奈朵",
-	800018499: "NAIC2025 多龙巴鲁托",
-	800018501: "NCIC2025 玛俐的长矛巨魔",
-	800018502: "NAIC2025 N的索罗亚克",
-	800018509: "NAIC2025 猛雷鼓厄诡椪",
+const V18_DECK_DISPLAY_NAMES := {
+	800018497: "18.0 沙奈朵",
+	800018499: "18.0 多龙巴鲁托",
+	800018501: "18.0 玛俐的长毛巨魔",
+	800018502: "18.0 N的索罗亚克",
+	800018509: "18.0 猛雷鼓厄诡椪",
+}
+const V18_REQUIRED_SIMPLIFIED_CHINESE_REFS := {
+	800018497: ["CSV2C_054", "CSV10C_082"],
+	800018499: ["CSV9.5C_004", "CSV9C_078", "CSV10C_008", "CSV10C_207"],
+	800018501: ["CSV10C_007", "CSV10C_146", "CSV10C_147", "CSV10C_148", "CSV10C_216"],
+	800018502: ["CSV9C_198", "CSV10C_040", "CSV10C_041", "CSV10C_144", "CSV10C_145", "CSV10C_166", "CSV10C_190", "CSV10C_215"],
+	800018509: ["CSV9.5C_141", "CSV9C_078", "CSV9C_154", "CSV9C_155", "CSV9C_161", "CSV9C_196", "CSV9C_207"],
 }
 
 
@@ -941,46 +948,44 @@ func test_len_ssp_170_cyrano_searches_pokemon_ex() -> String:
 	])
 
 
-func test_naic2025_deck_names_and_limitless_card_details_are_translated() -> String:
+func test_v18_decks_are_rebuilt_with_simplified_chinese_cards() -> String:
 	var checks: Array[String] = []
-	for deck_id: int in NAIC2025_DECK_DISPLAY_NAMES.keys():
-		var expected_name := str(NAIC2025_DECK_DISPLAY_NAMES[deck_id])
+	for deck_id: int in V18_DECK_DISPLAY_NAMES.keys():
+		var expected_name := str(V18_DECK_DISPLAY_NAMES[deck_id])
 		var deck_json := _read_json("res://data/bundled_user/decks/%d.json" % deck_id)
 		var runtime_deck: DeckData = CardDatabase.get_deck(deck_id)
-		checks.append(assert_false(deck_json.is_empty(), "NAIC2025 deck %d should load from bundled JSON" % deck_id))
-		checks.append(assert_eq(str(deck_json.get("deck_name", "")), expected_name, "NAIC2025 deck %d should use the Chinese display name" % deck_id))
-		checks.append(assert_eq(str(deck_json.get("variant_name", "")), expected_name, "NAIC2025 deck %d variant should use the Chinese display name" % deck_id))
-		checks.append(assert_false(expected_name.contains(str(deck_json.get("source_id", ""))), "NAIC2025 deck %d display name should not keep the source id suffix" % deck_id))
-		checks.append(assert_not_null(runtime_deck, "NAIC2025 deck %d should load through CardDatabase" % deck_id))
+		checks.append(assert_false(deck_json.is_empty(), "18.0 deck %d should load from bundled JSON" % deck_id))
+		checks.append(assert_eq(str(deck_json.get("deck_name", "")), expected_name, "18.0 deck %d should use the expected display name" % deck_id))
+		checks.append(assert_eq(str(deck_json.get("variant_name", "")), expected_name, "18.0 deck %d variant should use the expected display name" % deck_id))
+		checks.append(assert_false(expected_name.contains(str(deck_json.get("source_id", ""))), "18.0 deck %d display name should not keep the source id suffix" % deck_id))
+		checks.append(assert_not_null(runtime_deck, "18.0 deck %d should load through CardDatabase" % deck_id))
 		if runtime_deck != null:
-			checks.append(assert_eq(runtime_deck.deck_name, expected_name, "NAIC2025 deck %d runtime deck should use the Chinese display name" % deck_id))
-			checks.append(assert_eq(runtime_deck.variant_name, expected_name, "NAIC2025 deck %d runtime variant should use the Chinese display name" % deck_id))
+			checks.append(assert_eq(runtime_deck.deck_name, expected_name, "18.0 deck %d runtime deck should use the expected display name" % deck_id))
+			checks.append(assert_eq(runtime_deck.variant_name, expected_name, "18.0 deck %d runtime variant should use the expected display name" % deck_id))
+			checks.append(assert_eq(CardDatabase.build_deck_instances(runtime_deck, 0).size(), 60, "18.0 deck %d should build all 60 runtime card instances" % deck_id))
 		var cards: Array = deck_json.get("cards", [])
+		var total_cards := 0
+		var local_refs: Array[String] = []
 		for entry: Variant in cards:
 			if not (entry is Dictionary):
 				continue
 			var deck_entry := entry as Dictionary
 			var set_code := str(deck_entry.get("set_code", ""))
-			if not set_code.begins_with("LEN_"):
-				continue
 			var card_index := str(deck_entry.get("card_index", ""))
+			total_cards += int(deck_entry.get("count", 0))
+			local_refs.append("%s_%s" % [set_code, card_index])
+			checks.append(assert_false(set_code.begins_with("LEN_"), "18.0 deck %d must not retain generated Limitless card %s/%s" % [deck_id, set_code, card_index]))
 			var card: CardData = CardDatabase.get_card(set_code, card_index)
 			var ref := "%s/%s in deck %d" % [set_code, card_index, deck_id]
 			checks.append(assert_not_null(card, "%s should load from CardDatabase" % ref))
 			if card == null:
 				continue
-			checks.append(assert_eq(str(card.name), str(card.name_en), "%s should keep English rule-facing name" % ref))
-			checks.append(assert_true(str(card.name_zh).strip_edges() != "", "%s should have a Chinese display name" % ref))
-			checks.append(assert_eq(str(deck_entry.get("name", "")), str(card.name_zh), "%s deck entry should display the Chinese card name" % ref))
-			checks.append(assert_true(str(card.description).strip_edges() != "", "%s should have a Chinese card description" % ref))
-			for ability: Dictionary in card.abilities:
-				checks.append(assert_true(str(ability.get("name_zh", "")).strip_edges() != "", "%s ability %s should have a Chinese name" % [ref, ability.get("name", "")]))
-				if str(ability.get("text", "")).strip_edges() != "":
-					checks.append(assert_true(str(ability.get("text_zh", "")).strip_edges() != "", "%s ability %s should have Chinese text" % [ref, ability.get("name", "")]))
-			for attack: Dictionary in card.attacks:
-				checks.append(assert_true(str(attack.get("name_zh", "")).strip_edges() != "", "%s attack %s should have a Chinese name" % [ref, attack.get("name", "")]))
-				if str(attack.get("text", "")).strip_edges() != "":
-					checks.append(assert_true(str(attack.get("text_zh", "")).strip_edges() != "", "%s attack %s should have Chinese text" % [ref, attack.get("name", "")]))
+			checks.append(assert_true(str(card.display_name()).strip_edges() != "", "%s should have a display name" % ref))
+			checks.append(assert_eq(str(deck_entry.get("name", "")), str(card.display_name()), "%s deck entry should use the local Simplified-Chinese display name" % ref))
+			checks.append(assert_false(CardImplementationStatusScript.is_unimplemented(card), "%s should remain implemented after the 18.0 rebuild: %s" % [ref, CardImplementationStatusScript.get_reason(card)]))
+		checks.append(assert_eq(total_cards, 60, "18.0 deck %d should contain exactly 60 cards" % deck_id))
+		for expected_ref: String in V18_REQUIRED_SIMPLIFIED_CHINESE_REFS.get(deck_id, []):
+			checks.append(assert_contains(local_refs, expected_ref, "18.0 deck %d should include Simplified-Chinese replacement %s" % [deck_id, expected_ref]))
 	return run_checks(checks)
 
 

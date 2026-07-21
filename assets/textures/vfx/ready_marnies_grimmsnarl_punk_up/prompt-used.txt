@@ -1,0 +1,15 @@
+Use case: stylized-concept
+Asset type: production 2D game ready-state creature animation sheet
+Input image: CSV10C_148 card art used only as the visual identity reference for Marnie's Grimmsnarl ex; preserve its recognizable green markings, dark muscular body, magenta hair tendrils, pointed ears, claws, face, and proportions.
+Primary request: one continuous six-frame "Punk Up energy board online" ready-state body animation, not an attack.
+Layout: exactly 6 equal invisible cells in a 2-row by 3-column grid, read left-to-right across the top row and then the bottom row. No borders, dividers, labels, panels, or drawn gutters.
+Frame 1: crouched anticipation, claws low, magenta hair tendrils coil inward.
+Frame 2: shoulders rise and arms pull close, compact magenta punk sparks cling to the forearms.
+Frame 3: green body markings brighten and two small dark-energy nodes gather immediately beside the fists.
+Frame 4: powerful wide full-body stance with a compact magenta-and-black sonic energy ring hugging the torso and arms.
+Frame 5: one fist extends slightly while energy stabilizes around the hands and chest.
+Frame 6: upright energized settle while the attached glow fades.
+Style: clean high-definition hand-painted 2D game sprite art, crisp silhouette, polished anime creature rendering, controlled highlights, body-led cinematic cue.
+Composition: consistent 3/4 front view, full body centered in every cell, central 60-65% safe area, same scale and centerline, generous padding.
+Background: perfectly flat solid #FF00FF with no gradient, shadow, texture, floor, reflection, glow spill, or lighting variation.
+Constraints: body and compact attached effects stay inside each cell with magenta margin on all sides. No projectile, impact burst, wide attack arc, opponent, card frame, trainer, text, symbols, UI, or watermark.

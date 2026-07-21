@@ -1,0 +1,62 @@
+{
+    "name":  "可达鸭",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "特性: 湿气\n只要这只宝可梦在场上，就将双方所有宝可梦的令自身【昏厥】的效果的特性全部消除。\n\n 冲撞 20\n\n\n",
+    "yoren_code":  "P054",
+    "set_code":  "CSV10C",
+    "card_index":  "043",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "Jiro Sasumo",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "e441a28267f0304f38448bc267a3e61d",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/043.png",
+    "image_local_path":  "user://cards/images/CSV10C/043.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "W",
+    "stage":  "Basic",
+    "hp":  70,
+    "weakness_energy":  "L",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "冲撞",
+                        "text":  "",
+                        "cost":  "CC",
+                        "damage":  "20",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+                      {
+                          "name":  "湿气",
+                          "text":  "只要这只宝可梦在场上，就将双方所有宝可梦的令自身【昏厥】的效果的特性全部消除。"
+                      }
+                  ],
+    "energy_provides":  ""
+}

@@ -1,0 +1,203 @@
+{
+  "schema_version": 1,
+  "architecture": "V18CPG",
+  "evidence_revision": 1,
+  "status": "in_progress",
+  "deck_id": 800017097,
+  "deck_name": "18.0 \u65e0\u789f\u6c99\u5948\u6735",
+  "anchor_id": 575720,
+  "seed_base": 800017097,
+  "games_per_round": 5,
+  "model": "deepseek-v4-flash",
+  "deck_source": "bundled_ai",
+  "deck_content_fingerprint": "98f27aebdb2b8eeb4f449191b519a049eba0e11b108323264ea84bd6a3fdce63",
+  "baseline_artifact": "res://tmp/v18cpg/optimization21/800017097/round00.json",
+  "completed_rounds": 2,
+  "required_rounds": 10,
+  "rounds": [
+    {
+      "round": 1,
+      "artifact": "res://tmp/v18cpg/optimization21/800017097/round01.json",
+      "run_id": "opt21_800017097_round01",
+      "timestamp": "2026-07-21T13:07:25",
+      "failure_category": "model_selection_error",
+      "diagnosis": "The current bundled-AI replay invalidates the old provenance-less +3-win result. Profile v7 received 26 real-model responses and accepted 22, but produced zero model-owned action results. The accepted policies either selected the exact Rule-root candidate or branched after information checkpoints into the same local candidate. Four Rule-loss seeds therefore remained losses, while the single Rule win was preserved. This is a selection/ownership gap rather than a transport, latency, replay, or Rule-floor failure.",
+      "change_summary": "Established a source-correct immutable v1 baseline and formally revalidated the existing v7 no-balloon Gardevoir profile under the current bundled_ai fingerprint, real deepseek-v4-flash model path, model-action reference arm, and 6500 ms visible-wait budget. Historical user-deck evidence was not imported. No Rule, legacy LLM, Agent, shared margin, token budget, or card behavior changed.",
+      "retained": true,
+      "profile": {
+        "profile_version": 7,
+        "semantic_version": 1,
+        "profile_fingerprint": "e2e3b8f7cedc9075cafeadcb927d46d44064120593107794b87139458b074d06",
+        "profile_file_sha256": "880fd8a38243f4dd15ca7f0b9ca635fd86b5493ea883db55154eb01c9089e020"
+      },
+      "metrics": {
+        "rule_wins": 1,
+        "v18cpg_wins": 1,
+        "paired_improvement": 0.0,
+        "paired_bootstrap_95": [0.0, 0.0],
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 26,
+        "model_accepted": 22,
+        "model_rejected": 4,
+        "model_acceptance_rate": 0.846153846153846,
+        "model_owned_action_results": 0,
+        "payload_p50_bytes": 45611,
+        "payload_p95_bytes": 53700,
+        "visible_wait_p50_ms": 5438,
+        "visible_wait_p95_ms": 6070,
+        "turn_visible_wait_p50_ms": 5438,
+        "turn_visible_wait_p95_ms": 6070,
+        "graph_branch_hits": 4,
+        "uncovered_events": 78,
+        "zero_acceptance_reference_checks": 0,
+        "zero_acceptance_reference_mismatches": 0,
+        "zero_model_action_reference_checks": 5,
+        "zero_model_action_reference_mismatches": 0,
+        "positive_flips": 0,
+        "negative_flips": 0,
+        "fallbacks": {
+          "deadline_fallback": 1,
+          "schema_fallback": 3
+        },
+        "fallback_reasons": {
+          "transport_error": 1,
+          "turn_visible_wait_budget_exhausted": 1,
+          "typed_route_crosses_information_checkpoint": 2
+        }
+      },
+      "post_round_finding": {
+        "category": "model_selection_error",
+        "finding": "The response and latency layers are healthy enough for formal iteration, but high response acceptance does not imply strategic takeover. Round02 must target an exact public state from a current Rule-loss trace and prove a route that crosses a material outcome boundary; increasing response acceptance alone cannot improve the winner."
+      },
+      "next_action": "Inspect the earliest complete decision frontier in seeds 800017097, 800017098, 800017100, and 800017101. Add one deck-scoped focused RED with exact UID/effect and action ownership, require a same-seed positive flip with zero negatives, then replay the unchanged five-seed block as Round02."
+    },
+    {
+      "round": 2,
+      "artifact": "res://tmp/v18cpg/optimization21/800017097/round02.json",
+      "artifact_sha256": "47bac2671c708a1fb40124e24414a891dc041db5fe656127c704d8c4ac3651ce",
+      "run_id": "opt21_800017097_round02",
+      "timestamp": "2026-07-21T16:07:44",
+      "failure_category": "route_execution_ownership_gap",
+      "diagnosis": "In seed 800017098 turn 6, exact Rule attached Psychic Energy to Bench Drifloon and did not take the available two-prize knockout. The model-selected public suffix correctly started by attaching instance 51 to Active Gardevoir ex, but the runtime demoted each reobserved continuation to local_gate ownership, allowing Ultra Ball or Munkidori to preempt the certified plan. Production also omitted compact attack_cost and interaction min_select fields that the focused fixture supplied, so otherwise identical public actions failed exact binding.",
+      "change_summary": "Added a deck-scoped profile-v10 four-checkpoint public suffix for Active Gardevoir ex: manual Psychic attachment, two separately reobserved Psychic Embrace actions targeting Active, then Miracle Force for 190 and a two-prize knockout. Added a fail-closed continuation ticket that advances only when the next independently annotated public observation proves the exact deck, turn, board, prior action result, stage, action binding, and new observation hash. Added repeated interaction-call target ownership and compact-field omission handling consistent with the observation contract. No Rule, legacy LLM, Agent, card behavior, shared switch margin, model budget, or wait budget changed.",
+      "retained": true,
+      "profile": {
+        "profile_version": 10,
+        "semantic_version": 1,
+        "profile_fingerprint": "c04bb5a7c0c5b92822040c78f1fef0edb707db50226ec58f6497e5174f930a9c",
+        "profile_file_sha256": "153a7f4aa78222c5ddc86908e6e7e6e4a8957557dc19fe08ca5ac8f40c7c4de1"
+      },
+      "focused_acceptance": {
+        "test": "res://tests/v18_llm_policy_graph/test_optimize_800017097_round02_active_gardevoir_retreat_fuel_ko.gd",
+        "test_sha256": "8e8ae6a28d0d31add407de00c3988d768e9cb02c29616dbafdb9bba4bed19f37",
+        "passed_fail_closed_boundaries": 88,
+        "production_seed": 800017098,
+        "production_turn": 6,
+        "executed_actions": [
+          "action:attach_energy:51:-:6:-1:-1",
+          "action:use_ability:-:6:-:-1:0",
+          "action:use_ability:-:6:-:-1:0",
+          "action:attack:-:6:-:0:-1"
+        ],
+        "interaction_target": "slot:6",
+        "projected_damage": 190,
+        "prizes_now": 2,
+        "extra_model_requests": 0
+      },
+      "metrics": {
+        "rule_wins": 1,
+        "v18cpg_wins": 1,
+        "paired_improvement": 0.0,
+        "paired_bootstrap_95": [0.0, 0.0],
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 20,
+        "model_accepted": 16,
+        "model_rejected": 4,
+        "model_acceptance_rate": 0.8,
+        "model_owned_action_results": 0,
+        "payload_p50_bytes": 53315,
+        "payload_p95_bytes": 59842,
+        "visible_wait_p50_ms": 5454,
+        "visible_wait_p95_ms": 6253,
+        "turn_visible_wait_p50_ms": 5454,
+        "turn_visible_wait_p95_ms": 6253,
+        "graph_branch_hits": 7,
+        "uncovered_events": 69,
+        "zero_acceptance_reference_checks": 0,
+        "zero_acceptance_reference_mismatches": 0,
+        "zero_model_action_reference_checks": 5,
+        "zero_model_action_reference_mismatches": 0,
+        "positive_flips": 0,
+        "negative_flips": 0,
+        "fallbacks": {
+          "deadline_fallback": 4
+        },
+        "fallback_reasons": {
+          "turn_visible_wait_budget_exhausted": 4
+        }
+      },
+      "acceptance": {
+        "not_worse_than_exact_rule": true,
+        "clean_5_of_5": true,
+        "real_model_calls_and_acceptance": true,
+        "exact_rule_reference_mismatches": 0,
+        "visible_wait_p95_within_6500_ms": true,
+        "focused_decision_strictly_better_than_rule": true
+      },
+      "post_round_finding": {
+        "category": "certified_suffix_executed_without_latency_regression",
+        "finding": "A model-selected multi-observation route can now retain exact execution ownership across repeated public reobservation without a second model call. The formal five-seed winner floor remains equal to Rule while the captured seed executes a two-prize line Rule missed; this round therefore satisfies the corrected non-inferiority gate but does not claim a positive win flip."
+      },
+      "next_action": "Round03 should mine the earliest complete divergence in the remaining Rule-loss seeds, prefer a decision with a direct prize or terminal boundary, and preserve the same exact-reference and 6500 ms latency gates."
+    }
+  ],
+  "preparation": {
+    "current_source_contract": {
+      "source_kind": "bundled_ai",
+      "bundled_seed_path": "res://data/bundled_user/decks/800017097.json",
+      "bundled_seed_file_sha256": "9a546200d8480455fc55809704b7f9d8535589ba6f1f4c8085a752a8b9a85e94",
+      "deck_content_fingerprint": "98f27aebdb2b8eeb4f449191b519a049eba0e11b108323264ea84bd6a3fdce63",
+      "semantic_manifest_fingerprint": "98f27aebdb2b8eeb4f449191b519a049eba0e11b108323264ea84bd6a3fdce63",
+      "semantic_manifest_file_sha256": "e1eb2931f1b1f59c2a70d3b1b214d181d375987a865f4cf89d0837e89bdb26b0",
+      "profile_version": 7,
+      "profile_fingerprint": "e2e3b8f7cedc9075cafeadcb927d46d44064120593107794b87139458b074d06",
+      "profile_file_sha256": "880fd8a38243f4dd15ca7f0b9ca635fd86b5493ea883db55154eb01c9089e020",
+      "fingerprint_verified": true
+    },
+    "formal_baseline": {
+      "artifact": "res://tmp/v18cpg/optimization21/800017097/round00.json",
+      "artifact_sha256": "721985c3b5c7d1b7e720264c9e225dcd7d001dbe9e14e0be2737429b18673509",
+      "run_id": "opt21_800017097_round00",
+      "timestamp": "2026-07-21T13:12:07",
+      "profile_overrides_enabled": false,
+      "profile_version": 1,
+      "rule_wins": 1,
+      "v18cpg_wins": 1,
+      "rule_clean_games": 5,
+      "v18cpg_clean_games": 5,
+      "model_calls": 25,
+      "model_accepted": 16,
+      "model_owned_action_results": 0,
+      "visible_wait_p95_ms": 6252,
+      "zero_model_action_reference_checks": 5,
+      "zero_model_action_reference_mismatches": 0,
+      "rule_signature_matches_round01": true
+    },
+    "scenario_contract": {
+      "test": "res://tests/v18_llm_policy_graph/test_optimize_800017097_complex_decision_scenarios.gd",
+      "test_sha256": "3304abe8fe23c782df2cbaf7b5fde274c1c214721eee710906309d716d0753d9",
+      "artifact": "res://tmp/v18cpg/optimization21/800017097/complex_decision_scenarios.json",
+      "artifact_sha256": "ba48772cdf388677a44f88529bebed3031ac0c1cdcc30e949803d4cbb1723e4a",
+      "passed": 5,
+      "total": 5,
+      "production_status": "scenario_contract_ready_not_promoted"
+    },
+    "invalidated_history": {
+      "archive": "res://scripts/tools/v18cpg/iterations/optimization21_invalidated_user_deck_20260720/800017097_10_rounds.json",
+      "reason": "The historical +3-win result lacked current bundled_ai source and fingerprint ownership and is candidate-discovery evidence only."
+    }
+  },
+  "next_action": "Round03 should mine the earliest complete divergence in seeds 800017097, 800017100, and 800017101, retain only a public-state improvement that preserves the exact Rule signature, and rerun the unchanged five-seed block under the 6500 ms wait budget."
+}

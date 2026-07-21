@@ -1,0 +1,62 @@
+{
+    "name":  "岩殿居蟹",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "特性: 神秘石居\n这只宝可梦不会受到对手「宝可梦【ex】」的招式的伤害。\n\n【草】 超强剪 120\n这个招式的伤害不计算对手战斗宝可梦身上所附加的效果。\n\n",
+    "yoren_code":  "P558",
+    "set_code":  "CSV10C",
+    "card_index":  "010",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "Po-Suzuki",
+    "rarity":  "R",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "896c85e6588f5e35909fd0969201be21",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/010.png",
+    "image_local_path":  "user://cards/images/CSV10C/010.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "G",
+    "stage":  "Stage 1",
+    "hp":  150,
+    "weakness_energy":  "R",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  3,
+    "evolves_from":  "石居蟹",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "超强剪",
+                        "text":  "这个招式的伤害不计算对手战斗宝可梦身上所附加的效果。",
+                        "cost":  "GCC",
+                        "damage":  "120",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+                      {
+                          "name":  "神秘石居",
+                          "text":  "这只宝可梦不会受到对手「宝可梦【ex】」的招式的伤害。"
+                      }
+                  ],
+    "energy_provides":  ""
+}

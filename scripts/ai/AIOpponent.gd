@@ -183,6 +183,82 @@ func get_legal_actions(gsm: GameStateMachine) -> Array[Dictionary]:
 	return _last_legal_actions.duplicate()
 
 
+func build_rule_floor_certificate(
+	gsm: GameStateMachine,
+	legal_actions: Array[Dictionary] = []
+) -> Dictionary:
+	if gsm == null or gsm.game_state == null or _deck_strategy == null:
+		return {}
+	if not _deck_strategy.has_method("score_rule_floor_action") \
+			or not _deck_strategy.has_method("build_rule_floor_turn_plan") \
+			or not _deck_strategy.has_method("stable_action_id_for_host"):
+		return {}
+	var actions := legal_actions.duplicate(true) if not legal_actions.is_empty() else get_legal_actions(gsm)
+	if actions.is_empty():
+		return {}
+	var turn_plan: Dictionary = _deck_strategy.call(
+		"build_rule_floor_turn_plan",
+		gsm.game_state,
+		player_index,
+		{"prompt_kind": "v18cpg_rule_floor_certificate"}
+	)
+	var scoreable: Array[Dictionary] = []
+	var end_entry: Dictionary = {}
+	var scores: Dictionary = {}
+	# The executable Rule floor includes the host's deterministic intent
+	# adjustments as well as the deck strategy score.  Omitting this second
+	# layer can certify a different attachment/evolution target than the action
+	# the same host would actually choose moments later.
+	var intent_context: Dictionary = _build_intent_score_context(actions, gsm)
+	var intent_ids: Array = intent_context.get("ids_by_index", []) \
+		if intent_context.get("ids_by_index", []) is Array else []
+	var intent_adjustments: Dictionary = intent_context.get("adjustments", {}) \
+		if intent_context.get("adjustments", {}) is Dictionary else {}
+	for action_index: int in actions.size():
+		var action: Dictionary = actions[action_index]
+		var augmented := _augment_action_for_scoring(gsm, action)
+		var score := float(_deck_strategy.call(
+			"score_rule_floor_action",
+			augmented,
+			gsm.game_state,
+			player_index,
+			turn_plan
+		))
+		var intent_action_id := str(intent_ids[action_index]) if action_index < intent_ids.size() else ""
+		score += float(intent_adjustments.get(intent_action_id, 0.0))
+		var action_id := str(_deck_strategy.call("stable_action_id_for_host", action))
+		if action_id != "":
+			scores[action_id] = score
+		var entry := {
+			"action": action,
+			"scored_action": augmented,
+			"score": score,
+			"runtime_score": score,
+			"absolute_score": score,
+			"learned_action_score": 0.0,
+			"features": {},
+			"runtime_mode": DECISION_RUNTIME_RULES_ONLY,
+		}
+		if str(action.get("kind", "")) == "end_turn":
+			end_entry = entry
+		else:
+			scoreable.append(entry)
+	var best := _pick_best_scored_absolute(scoreable)
+	var chosen: Dictionary = best.get("action", {}) if best.get("action", {}) is Dictionary else {}
+	var chosen_score := float(best.get("score", -INF))
+	if not end_entry.is_empty() and (chosen.is_empty() or float(end_entry.get("score", 0.0)) > chosen_score):
+		chosen = end_entry.get("action", {})
+		chosen_score = float(end_entry.get("score", 0.0))
+	if chosen.is_empty():
+		return {}
+	return {
+		"action_id": str(_deck_strategy.call("stable_action_id_for_host", chosen)),
+		"action_kind": str(chosen.get("kind", "")),
+		"score": chosen_score,
+		"scores": scores,
+	}
+
+
 func get_last_decision_trace():
 	if _last_decision_trace == null:
 		return null
@@ -258,6 +334,24 @@ func run_single_step(battle_scene: Control, gsm: GameStateMachine) -> bool:
 			"pending_choice_after": str(battle_scene.get("_pending_choice")),
 		})
 		return interaction_handled
+	if _deck_strategy != null and _deck_strategy.has_method("prepare_decision"):
+		if _deck_strategy.has_method("enforce_visible_wait_deadline"):
+			_deck_strategy.call("enforce_visible_wait_deadline")
+		var planning_actions: Array = _legal_action_builder.build_actions(gsm, player_index)
+		var rule_floor_certificate := build_rule_floor_certificate(gsm, planning_actions)
+		var preparation: Variant = _deck_strategy.call(
+			"prepare_decision",
+			gsm.game_state,
+			player_index,
+			planning_actions,
+			{
+				"event_type": "MAIN_ACTION_WINDOW",
+				"rule_floor_action_id": str(rule_floor_certificate.get("action_id", "")),
+				"rule_floor_certificate": rule_floor_certificate,
+			}
+		)
+		if preparation is Dictionary and str((preparation as Dictionary).get("status", "")) == "pending":
+			return false
 	var action := _choose_best_action(gsm)
 	if action.is_empty():
 		return false
@@ -670,6 +764,34 @@ func _resolved_action_targets(action: Dictionary) -> Array:
 	return targets_raw if targets_raw is Array else []
 
 
+func _call_scene_action_with_progress_evidence(
+	battle_scene: Control,
+	gsm: GameStateMachine,
+	method: StringName,
+	args: Array = []
+) -> bool:
+	if battle_scene == null or not battle_scene.has_method(method):
+		return false
+	var pending_choice_before := str(battle_scene.get("_pending_choice"))
+	var action_log_size_before := gsm.action_log.size() if gsm != null else -1
+	var turn_before := int(gsm.game_state.turn_number) if gsm != null and gsm.game_state != null else -1
+	var current_player_before := int(gsm.game_state.current_player_index) if gsm != null and gsm.game_state != null else -1
+	var phase_before := int(gsm.game_state.phase) if gsm != null and gsm.game_state != null else -1
+	var result: Variant = battle_scene.callv(method, args)
+	if typeof(result) == TYPE_BOOL:
+		return bool(result)
+	if str(battle_scene.get("_pending_choice")) != pending_choice_before:
+		return true
+	if gsm == null or gsm.game_state == null:
+		return false
+	return (
+		gsm.action_log.size() != action_log_size_before
+		or int(gsm.game_state.turn_number) != turn_before
+		or int(gsm.game_state.current_player_index) != current_player_before
+		or int(gsm.game_state.phase) != phase_before
+	)
+
+
 func _execute_action(battle_scene: Control, gsm: GameStateMachine, action: Dictionary) -> bool:
 	match str(action.get("kind", "")):
 		"attach_energy":
@@ -687,8 +809,12 @@ func _execute_action(battle_scene: Control, gsm: GameStateMachine, action: Dicti
 		"play_basic_to_bench":
 			var basic_card: CardInstance = action.get("card")
 			if battle_scene != null and battle_scene.has_method("_try_play_to_bench"):
-				battle_scene.call("_try_play_to_bench", player_index, basic_card, "")
-				return true
+				return _call_scene_action_with_progress_evidence(
+					battle_scene,
+					gsm,
+					"_try_play_to_bench",
+					[player_index, basic_card, ""]
+				)
 			if gsm.play_basic_to_bench(player_index, basic_card):
 				_after_successful_action(battle_scene)
 				return true
@@ -714,8 +840,12 @@ func _execute_action(battle_scene: Control, gsm: GameStateMachine, action: Dicti
 				return false
 			if bool(action.get("requires_interaction", false)):
 				if battle_scene != null and battle_scene.has_method("_try_play_trainer_with_interaction"):
-					var trainer_result: Variant = battle_scene.call("_try_play_trainer_with_interaction", player_index, action.get("card"))
-					return bool(trainer_result) if typeof(trainer_result) == TYPE_BOOL else true
+					return _call_scene_action_with_progress_evidence(
+						battle_scene,
+						gsm,
+						"_try_play_trainer_with_interaction",
+						[player_index, action.get("card")]
+					)
 				return false
 			if gsm.play_trainer(player_index, action.get("card"), trainer_targets):
 				_after_successful_action(battle_scene)
@@ -729,8 +859,12 @@ func _execute_action(battle_scene: Control, gsm: GameStateMachine, action: Dicti
 				return false
 			if bool(action.get("requires_interaction", false)):
 				if battle_scene != null and battle_scene.has_method("_try_play_stadium_with_interaction"):
-					var stadium_result: Variant = battle_scene.call("_try_play_stadium_with_interaction", player_index, action.get("card"))
-					return bool(stadium_result) if typeof(stadium_result) == TYPE_BOOL else true
+					return _call_scene_action_with_progress_evidence(
+						battle_scene,
+						gsm,
+						"_try_play_stadium_with_interaction",
+						[player_index, action.get("card")]
+					)
 				return false
 			if gsm.play_stadium(player_index, action.get("card"), play_stadium_targets):
 				_after_successful_action(battle_scene)
@@ -744,8 +878,12 @@ func _execute_action(battle_scene: Control, gsm: GameStateMachine, action: Dicti
 				return false
 			if bool(action.get("requires_interaction", false)):
 				if battle_scene != null and battle_scene.has_method("_try_use_stadium_with_interaction"):
-					var use_stadium_result: Variant = battle_scene.call("_try_use_stadium_with_interaction", player_index)
-					return bool(use_stadium_result) if typeof(use_stadium_result) == TYPE_BOOL else true
+					return _call_scene_action_with_progress_evidence(
+						battle_scene,
+						gsm,
+						"_try_use_stadium_with_interaction",
+						[player_index]
+					)
 				return false
 			if gsm.use_stadium_effect(player_index, stadium_targets):
 				_after_successful_action(battle_scene)
@@ -759,13 +897,16 @@ func _execute_action(battle_scene: Control, gsm: GameStateMachine, action: Dicti
 				return false
 			if bool(action.get("requires_interaction", false)):
 				if battle_scene != null and battle_scene.has_method("_try_use_ability_with_interaction"):
-					var ability_result: Variant = battle_scene.call(
+					return _call_scene_action_with_progress_evidence(
+						battle_scene,
+						gsm,
 						"_try_use_ability_with_interaction",
-						player_index,
-						action.get("source_slot"),
-						int(action.get("ability_index", 0))
+						[
+							player_index,
+							action.get("source_slot"),
+							int(action.get("ability_index", 0)),
+						]
 					)
-					return bool(ability_result) if typeof(ability_result) == TYPE_BOOL else true
 				return false
 			if gsm.use_ability(player_index, action.get("source_slot"), int(action.get("ability_index", 0)), ability_targets):
 				_after_successful_action(battle_scene, true, "use_ability")
@@ -784,13 +925,16 @@ func _execute_action(battle_scene: Control, gsm: GameStateMachine, action: Dicti
 			if bool(action.get("requires_interaction", false)):
 				if battle_scene != null and battle_scene.has_method("_try_use_attack_with_interaction"):
 					var player: PlayerState = gsm.game_state.players[player_index]
-					var attack_result: Variant = battle_scene.call(
+					return _call_scene_action_with_progress_evidence(
+						battle_scene,
+						gsm,
 						"_try_use_attack_with_interaction",
-						player_index,
-						player.active_pokemon,
-						int(action.get("attack_index", -1))
+						[
+							player_index,
+							player.active_pokemon,
+							int(action.get("attack_index", -1)),
+						]
 					)
-					return bool(attack_result) if typeof(attack_result) == TYPE_BOOL else true
 				return false
 			if gsm.use_attack(player_index, int(action.get("attack_index", -1)), attack_targets):
 				_after_successful_action(battle_scene, true)
@@ -808,8 +952,12 @@ func _execute_action(battle_scene: Control, gsm: GameStateMachine, action: Dicti
 				return false
 			if bool(action.get("requires_interaction", false)):
 				if battle_scene != null and battle_scene.has_method("_try_use_granted_attack_with_interaction"):
-					var granted_result: Variant = battle_scene.call("_try_use_granted_attack_with_interaction", player_index, ga_slot, ga_data)
-					return bool(granted_result) if typeof(granted_result) == TYPE_BOOL else true
+					return _call_scene_action_with_progress_evidence(
+						battle_scene,
+						gsm,
+						"_try_use_granted_attack_with_interaction",
+						[player_index, ga_slot, ga_data]
+					)
 				return false
 			if gsm.use_granted_attack(player_index, ga_slot, ga_data, granted_attack_targets):
 				_after_successful_action(battle_scene, true)

@@ -130,7 +130,7 @@ func clear_proxy() -> void:
 
 func request_json(parent: Node, endpoint: String, api_key: String, payload: Dictionary, callback: Callable) -> int:
 	var request_url := _normalize_endpoint(endpoint)
-	var request_payload := _build_request_payload(payload)
+	var request_payload := _build_request_payload_for_endpoint(payload, request_url)
 	if _should_prefer_python_transport():
 		var async_error := _request_json_payload_via_python_fallback_async(parent, request_url, api_key, request_payload, callback)
 		if async_error == OK:
@@ -316,6 +316,37 @@ func _build_request_payload(payload: Dictionary) -> Dictionary:
 	return _make_chat_payload_compatible(request_payload)
 
 
+func _build_request_payload_for_endpoint(payload: Dictionary, request_url: String) -> Dictionary:
+	var request_payload := _build_request_payload(payload)
+	if not _is_official_deepseek_endpoint(request_url):
+		return request_payload
+	# DeepSeek's OpenAI-compatible API uses `thinking`, but does not accept
+	# ZenMux's separate `reasoning` object. It also names the output limit
+	# `max_tokens` rather than `max_completion_tokens`.
+	request_payload.erase("reasoning")
+	request_payload.erase("enable_thinking")
+	if request_payload.has("max_completion_tokens"):
+		if not request_payload.has("max_tokens"):
+			request_payload["max_tokens"] = int(request_payload.get("max_completion_tokens", 0))
+		request_payload.erase("max_completion_tokens")
+	return request_payload
+
+
+func _is_official_deepseek_endpoint(endpoint: String) -> bool:
+	var normalized := endpoint.strip_edges().to_lower()
+	var scheme_index := normalized.find("://")
+	if scheme_index < 0:
+		return false
+	var authority_start := scheme_index + 3
+	var path_index := normalized.find("/", authority_start)
+	var authority := normalized.substr(authority_start) if path_index < 0 else normalized.substr(authority_start, path_index - authority_start)
+	var userinfo_index := authority.rfind("@")
+	if userinfo_index >= 0:
+		authority = authority.substr(userinfo_index + 1)
+	var host := authority.get_slice(":", 0)
+	return host == "api.deepseek.com"
+
+
 func _make_chat_payload_compatible(request_payload: Dictionary) -> Dictionary:
 	request_payload["temperature"] = _temperature_for_model(str(request_payload.get("model", "")), request_payload)
 	var response_format_variant: Variant = request_payload.get("response_format", {})
@@ -363,9 +394,9 @@ func _is_qwen_model(model: String) -> bool:
 	return model.strip_edges().to_lower().contains("qwen")
 
 
-func _is_kimi_k26_model(model: String) -> bool:
+func _is_kimi_k3_model(model: String) -> bool:
 	var normalized := model.strip_edges().to_lower()
-	return normalized.contains("kimi") and (normalized.contains("k2.6") or normalized.contains("k2-6"))
+	return normalized.contains("kimi") and (normalized.contains("k3") or normalized.contains("k-3"))
 
 
 func _apply_qwen_no_think_policy(request_payload: Dictionary) -> void:
@@ -400,7 +431,7 @@ func _prepend_qwen_no_think_instruction(request_payload: Dictionary) -> void:
 
 
 func _temperature_for_model(model: String, payload: Dictionary) -> Variant:
-	if _is_kimi_k26_model(model):
+	if _is_kimi_k3_model(model):
 		return 0.6
 	if payload.has("temperature"):
 		return payload.get("temperature", 0)

@@ -1,0 +1,101 @@
+{
+  "profile_version": 2,
+  "semantic_version": 1,
+  "risk_posture": "safe",
+  "switch_margin": 65.0,
+  "expected_regret_threshold": 135.0,
+  "initial_response_token_budget": 400,
+  "delta_response_token_budget": 170,
+  "turn_visible_wait_budget_ms": 6500,
+  "cold_request_estimate_ms": 5000,
+  "max_policy_nodes": 5,
+  "protected_roles": [
+    "current_attacker",
+    "next_attacker",
+    "ability_engine",
+    "stage2_dependency",
+    "recovery",
+    "pivot",
+    "gust",
+    "typed_energy",
+    "bench_space"
+  ],
+  "strategic_priorities": [
+    {
+      "priority": 1,
+      "goal": "minimum_resource_ko",
+      "when_all": [{"fact": "attack.ko_available", "op": "==", "value": true}],
+      "prefer_routes": ["route:attack_ko", "route:gust"],
+      "avoid_routes": ["route:information", "route:develop", "route:end_turn"],
+      "preserve_roles": ["ability_engine", "recovery"]
+    },
+    {
+      "priority": 2,
+      "goal": "route_completion",
+      "when_all": [{"fact": "attack.ready", "op": "==", "value": false}],
+      "prefer_routes": ["route:evolve", "route:opening_search", "route:information", "route:energy_commit"],
+      "avoid_routes": ["route:end_turn"],
+      "preserve_roles": ["stage2_dependency", "ability_engine", "bench_space"]
+    },
+    {
+      "priority": 3,
+      "goal": "safe_pivot",
+      "when_all": [{"fact": "route.current_valid", "op": "==", "value": false}],
+      "prefer_routes": ["route:pivot", "route:evolve", "route:attack_pressure"],
+      "avoid_routes": ["route:develop"],
+      "preserve_roles": ["ability_engine", "next_attacker", "recovery"]
+    },
+    {
+      "priority": 4,
+      "goal": "low_deck_safety",
+      "when_all": [{"fact": "resources.deck_low", "op": "==", "value": true}],
+      "prefer_routes": ["route:attack_ko", "route:attack_pressure", "route:pivot", "route:end_turn"],
+      "avoid_routes": ["route:information", "route:opening_search", "route:develop"],
+      "preserve_roles": ["recovery", "ability_engine"]
+    }
+  ],
+  "route_preferences": {
+    "model_consideration_margin": 190.0,
+    "route_biases": {
+      "route:attack_ko": 260.0,
+      "route:attack_pressure": 150.0,
+      "route:evolve": 250.0,
+      "route:opening_search": 140.0,
+      "route:information": 80.0,
+      "route:energy_commit": 210.0,
+      "route:pivot": 180.0,
+      "route:gust": 120.0,
+      "route:develop": -120.0,
+      "route:end_turn": -160.0
+    },
+    "ready_ko_order": ["route:attack_ko", "route:gust", "route:attack_pressure"],
+    "attackless_order": ["route:evolve", "route:opening_search", "route:information", "route:energy_commit", "route:pivot"],
+    "avoid_after_ko_secured": ["route:information", "route:opening_search", "route:develop"]
+  },
+  "safety": {
+    "max_switch_gap": 150.0,
+    "block_search_when_deck_low": true,
+    "low_deck_threshold": 10,
+    "critical_deck_threshold": 6,
+    "preserve_bench_slots": 1,
+    "stop_optional_draw_when_attack_ready": true,
+    "reject_information_churn_after_ko_secured": true,
+    "require_model_execution_certificate": true
+  },
+  "module_parameters": {
+    "control_recycle": {
+      "attack_cost_by_uid": {
+        "CSV4C_101": ["C", "C"],
+        "CSV4C_074": ["F", "F"],
+        "CSV8C_154": ["R"],
+        "CSV8C_172": ["C", "C", "C", "C", "C"]
+      }
+    },
+    "stage2_chain": {
+      "attack_cost_by_uid": {
+        "CSV4C_101": ["C", "C"],
+        "CSV4C_074": ["F", "F"]
+      }
+    }
+  }
+}

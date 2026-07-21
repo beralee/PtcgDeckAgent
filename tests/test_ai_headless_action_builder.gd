@@ -1024,6 +1024,63 @@ func test_mcts_planner_does_not_emit_live_coin_flips_while_planning_coin_cards()
 	])
 
 
+func test_mcts_after_mew_restart_does_not_emit_live_coin_flips_from_simulated_attacks() -> String:
+	var gsm := _make_manual_gsm()
+	var player: PlayerState = gsm.game_state.players[0]
+	var opponent: PlayerState = gsm.game_state.players[1]
+	var flipper := CountingCoinFlipper.new([true, false, true, false, true, false])
+	gsm.coin_flipper = flipper
+	gsm.effect_processor = EffectProcessor.new(flipper)
+	gsm.effect_processor.bind_game_state_machine(gsm)
+
+	var attacker_cd := _make_pokemon_card_data(
+		"猴怪",
+		"F",
+		"5b0e3f747d9e8f2cb3bfeac127247664"
+	)
+	attacker_cd.attacks = [{
+		"name": "踹",
+		"cost": "F",
+		"damage": "30",
+		"text": "抛掷1次硬币，如果为反面，则这个招式失败。",
+		"is_vstar_power": false,
+	}]
+	var attacker := _make_slot(CardInstance.create(attacker_cd, 0))
+	attacker.attached_energy.append(CardInstance.create(_make_energy_card_data("基本斗能量", "F"), 0))
+	player.active_pokemon = attacker
+
+	var mew_cd := _make_pokemon_card_data(
+		"梦幻ex",
+		"P",
+		"49669fcf461deacebeb5755c11ec51f1",
+		[{"name": "再起动", "text": "从牌库抽牌直到手牌变为3张。"}]
+	)
+	var mew := _make_slot(CardInstance.create(mew_cd, 0))
+	player.bench = [mew]
+	gsm.effect_processor.register_pokemon_card(mew_cd)
+	for i: int in 5:
+		player.deck.append(CardInstance.create(_make_trainer_card_data("补牌%d" % i, "Item", ""), 0))
+	opponent.active_pokemon = _make_slot(CardInstance.create(_make_pokemon_card_data("对手前场", "G"), 1))
+
+	var restart_succeeded := gsm.use_ability(0, mew, 0, [])
+	var flips_after_restart := flipper.flip_count
+	var planner := MCTSPlannerScript.new()
+	var sequence: Array = planner.plan_turn(gsm, 0, {
+		"branch_factor": 2,
+		"max_actions_per_turn": 3,
+		"rollouts_per_sequence": 0,
+		"time_budget_ms": 50,
+	})
+
+	return run_checks([
+		assert_true(restart_succeeded, "Mew ex should successfully use Restart before the AI plans its follow-up"),
+		assert_eq(player.hand.size(), 3, "Restart should draw the AI up to three cards"),
+		assert_eq(flips_after_restart, 0, "Restart itself must not flip any coins"),
+		assert_eq(flipper.flip_count, 0, "AI simulations after Restart must not enqueue live coin animations"),
+		assert_false(sequence.is_empty(), "AI should still produce a follow-up plan after Restart"),
+	])
+
+
 func test_builder_only_enables_radiant_charizard_attack_after_prize_cost_reduction() -> String:
 	var gsm := _make_manual_gsm()
 	var player: PlayerState = gsm.game_state.players[0]

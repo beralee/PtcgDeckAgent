@@ -1,0 +1,62 @@
+{
+    "name":  "陆地水母ex",
+    "card_type":  "Pokemon",
+    "mechanic":  "ex",
+    "label":  "",
+    "description":  "特性: 守护菌丝\n只要这只宝可梦在场上，身上附着了能量的自己所有的宝可梦，不会受到对手宝可梦所使用的招式的效果影响。（已经受到的效果，不会消失。）\n\n【草】【草】 聚落突进 80+\n追加造成自己备战区中附着了【草】能量的宝可梦数量×40伤害。\n\n",
+    "yoren_code":  "Y1330",
+    "set_code":  "CSV5C",
+    "card_index":  "010",
+    "set_code_en":  "PAF",
+    "card_index_en":  "5",
+    "name_en":  "Toedscruel ex",
+    "name_zh":  "",
+    "artist":  "5ban Graphics",
+    "rarity":  "RR",
+    "release_date":  "2025-09-12T00:00:00+08:00",
+    "regulation_mark":  "G",
+    "effect_id":  "668c8db0f156c52de12887587ec1b6d8",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV5C/010.png",
+    "image_local_path":  "user://cards/images/CSV5C/010.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "G",
+    "stage":  "Stage 1",
+    "hp":  270,
+    "weakness_energy":  "R",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  2,
+    "evolves_from":  "原野水母",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "聚落突进",
+                        "text":  "追加造成自己备战区中附着了【草】能量的宝可梦数量×40伤害。",
+                        "cost":  "GG",
+                        "damage":  "80+",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+                      {
+                          "name":  "守护菌丝",
+                          "text":  "只要这只宝可梦在场上，身上附着了能量的自己所有的宝可梦，不会受到对手宝可梦所使用的招式的效果影响。（已经受到的效果，不会消失。）"
+                      }
+                  ],
+    "energy_provides":  ""
+}

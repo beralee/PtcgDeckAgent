@@ -857,8 +857,9 @@ func _refresh_match_end_buttons(scene: Object) -> void:
 		learning_button.visible = false
 		learning_button.disabled = true
 	if return_button != null:
+		var returns_to_tournament := bool(scene.get("_match_end_tournament_return_pending")) or GameManager.is_tournament_battle_active()
 		return_button.visible = true
-		return_button.text = "返回比赛积分" if GameManager.is_tournament_battle_active() else "返回对战准备"
+		return_button.text = "返回比赛积分" if returns_to_tournament else "返回对战准备"
 		return_button.disabled = false
 		if _match_end_uses_compact_portrait(scene):
 			return_button.custom_minimum_size = _match_end_handover_button_size(scene, _match_end_viewport_size(scene))

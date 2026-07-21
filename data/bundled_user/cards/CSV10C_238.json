@@ -1,0 +1,58 @@
+{
+  "abilities": [
+    {
+      "name": "妖精领域",
+      "text": "只要这只宝可梦在场上，对手场上所有【龙】宝可梦的弱点全部变为【超】属性。［弱点按「×2」计算伤害。］"
+    }
+  ],
+  "ancient_trait": "",
+  "artist": "5ban Graphics",
+  "attacks": [
+    {
+      "cost": "PC",
+      "damage": "20+",
+      "is_vstar_power": false,
+      "name": "满月回旋曲",
+      "text": "追加造成双方备战宝可梦数量×20伤害。"
+    }
+  ],
+  "card_index": "238",
+  "card_index_en": "",
+  "card_type": "Pokemon",
+  "description": "特性: 妖精领域\n只要这只宝可梦在场上，对手场上所有【龙】宝可梦的弱点全部变为【超】属性。［弱点按「×2」计算伤害。］\n\n【超】 满月回旋曲 20+\n追加造成双方备战宝可梦数量×20伤害。\n\n",
+  "effect_id": "c82dc9185c27908490f8a00cfdc75765",
+  "energy_provides": "",
+  "energy_type": "P",
+  "evolves_from": "",
+  "hp": 190,
+  "image_local_path": "user://cards/images/CSV10C/238.png",
+  "image_url": "https://tcg.mik.moe/static/img/CSV10C/238.png",
+  "is_tags": [],
+  "label": "",
+  "mechanic": "ex",
+  "name": "莉莉艾的皮皮ex",
+  "name_en": "",
+  "name_zh": "",
+  "rarity": "SR",
+  "regulation_expanded": true,
+  "regulation_mark": "I",
+  "regulation_standard": true,
+  "release_date": "2026-07-16T00:00:00+08:00",
+  "resistance_energy": "",
+  "resistance_value": "",
+  "retreat_cost": 1,
+  "set_code": "CSV10C",
+  "set_code_en": "",
+  "source_card_index": "238",
+  "source_imported_at": 0,
+  "source_language": "zh-CN",
+  "source_parser_version": 1,
+  "source_prints": [],
+  "source_provider": "tcg_mik",
+  "source_set_code": "CSV10C",
+  "source_url": "https://tcg.mik.moe/cards/CSV10C/238",
+  "stage": "Basic",
+  "weakness_energy": "M",
+  "weakness_value": "×2",
+  "yoren_code": "Y1583"
+}

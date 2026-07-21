@@ -1,0 +1,66 @@
+{
+    "name":  "土龙弟弟",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  " 找朋友 \n选择自己牌库中的1张宝可梦，在给对手看过之后，加入手牌。并重洗牌库。\n\n 咬住 50\n\n\n",
+    "yoren_code":  "P206",
+    "set_code":  "CSVH3aC",
+    "card_index":  "002",
+    "set_code_en":  "PAL",
+    "card_index_en":  "156",
+    "name_en":  "Dunsparce",
+    "name_zh":  "",
+    "artist":  "Nagomi Nijo",
+    "rarity":  "无标记",
+    "release_date":  "2025-09-12T00:00:00+08:00",
+    "regulation_mark":  "G",
+    "effect_id":  "0d02b63d128400622f704237482e5829",
+    "image_url":  "https://tcg.mik.moe/static/img/CSVH3aC/002.png",
+    "image_local_path":  "user://cards/images/CSVH3aC/002.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "C",
+    "stage":  "Basic",
+    "hp":  70,
+    "weakness_energy":  "F",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "找朋友",
+                        "text":  "选择自己牌库中的1张宝可梦，在给对手看过之后，加入手牌。并重洗牌库。",
+                        "cost":  "C",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "咬住",
+                        "text":  "",
+                        "cost":  "CCC",
+                        "damage":  "50",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

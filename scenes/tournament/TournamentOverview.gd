@@ -218,12 +218,15 @@ func _render() -> void:
 	var snapshot: Dictionary = tournament.get_overview_snapshot()
 	var tournament_size: int = int(snapshot.get("tournament_size", 0))
 	var total_rounds: int = int(snapshot.get("total_rounds", 0))
+	var tournament_format: String = str(snapshot.get("tournament_format", "standard"))
+	var tournament_format_label := "开放" if tournament_format == "open" else "标准"
 	var player_name: String = str(snapshot.get("player_name", "玩家"))
 	var player_deck_name: String = str(snapshot.get("player_deck_name", "未选择"))
 
 	%MetaLabel.text = "\n".join([
 		"玩家：%s" % player_name,
 		"参赛卡组：%s" % player_deck_name,
+		"比赛赛制：%s" % tournament_format_label,
 		"比赛人数：%d 人" % tournament_size,
 		"瑞士轮数：%d 轮" % total_rounds,
 		"对局规则：每轮自动配对，随机先后攻。",

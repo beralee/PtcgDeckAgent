@@ -1,0 +1,219 @@
+{
+  "target": "creature",
+  "mode": "charge",
+  "prompt": "",
+  "role": "",
+  "input": "assets\\textures\\vfx\\ready_marnies_grimmsnarl_punk_up\\raw-sheet.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 180,
+  "rows": 2,
+  "cols": 3,
+  "cell_size": 256,
+  "fit_scale": 0.84,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "center",
+  "shared_scale": true,
+  "component_mode": "all",
+  "component_padding": 3,
+  "min_component_area": 1,
+  "edge_touch_margin": 2,
+  "frame_labels": [
+    "charge-1",
+    "charge-2",
+    "charge-3",
+    "charge-4",
+    "charge-5",
+    "charge-6"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        560,
+        467
+      ],
+      "component_mode": "all",
+      "component_count": 84,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        88,
+        92,
+        483,
+        396
+      ],
+      "edge_touch": false,
+      "output_size": [
+        195,
+        150
+      ],
+      "paste_position": [
+        30,
+        53
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        560,
+        0,
+        1120,
+        467
+      ],
+      "component_mode": "all",
+      "component_count": 100,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        86,
+        91,
+        445,
+        399
+      ],
+      "edge_touch": false,
+      "output_size": [
+        177,
+        152
+      ],
+      "paste_position": [
+        39,
+        52
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        1120,
+        0,
+        1680,
+        467
+      ],
+      "component_mode": "all",
+      "component_count": 112,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        46,
+        86,
+        467,
+        399
+      ],
+      "edge_touch": false,
+      "output_size": [
+        208,
+        154
+      ],
+      "paste_position": [
+        24,
+        51
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        467,
+        560,
+        934
+      ],
+      "component_mode": "all",
+      "component_count": 284,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        61,
+        30,
+        496,
+        363
+      ],
+      "edge_touch": false,
+      "output_size": [
+        215,
+        164
+      ],
+      "paste_position": [
+        20,
+        46
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        560,
+        467,
+        1120,
+        934
+      ],
+      "component_mode": "all",
+      "component_count": 175,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        64,
+        48,
+        467,
+        373
+      ],
+      "edge_touch": false,
+      "output_size": [
+        199,
+        160
+      ],
+      "paste_position": [
+        28,
+        48
+      ]
+    },
+    {
+      "grid": [
+        1,
+        2
+      ],
+      "source_box": [
+        1120,
+        467,
+        1680,
+        934
+      ],
+      "component_mode": "all",
+      "component_count": 89,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        89,
+        22,
+        433,
+        378
+      ],
+      "edge_touch": false,
+      "output_size": [
+        170,
+        175
+      ],
+      "paste_position": [
+        43,
+        40
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

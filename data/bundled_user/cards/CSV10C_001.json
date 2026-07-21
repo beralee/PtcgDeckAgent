@@ -1,0 +1,66 @@
+{
+    "name":  "阿响的凯罗斯",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【草】 夹住 20\n\n\n 一力反攻 70+\n在上一个对手的回合，如果自己的「阿响的宝可梦」受到招式的伤害而【昏厥】的话，则追加造成100伤害。\n\n",
+    "yoren_code":  "P0127",
+    "set_code":  "CSV10C",
+    "card_index":  "001",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "GIDORA",
+    "rarity":  "U",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "57937ca2b1d4d1118df547c37b217e65",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/001.png",
+    "image_local_path":  "user://cards/images/CSV10C/001.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "G",
+    "stage":  "Basic",
+    "hp":  120,
+    "weakness_energy":  "R",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  2,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "夹住",
+                        "text":  "",
+                        "cost":  "G",
+                        "damage":  "20",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "一力反攻",
+                        "text":  "在上一个对手的回合，如果自己的「阿响的宝可梦」受到招式的伤害而【昏厥】的话，则追加造成100伤害。",
+                        "cost":  "CCC",
+                        "damage":  "70+",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

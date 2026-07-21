@@ -17,6 +17,12 @@ func applies_to_attack_index(attack_index: int) -> bool:
 	return attack_index_to_match == -1 or attack_index == attack_index_to_match
 
 
+func active_damage_is_invariant_under_interaction(attack_index: int) -> bool:
+	# This interaction only chooses where the separate Bench damage lands.  It
+	# cannot change the damage already calculated for the opponent's Active.
+	return applies_to_attack_index(attack_index)
+
+
 func get_attack_interaction_steps(
 	card: CardInstance,
 	attack: Dictionary,
@@ -38,7 +44,7 @@ func get_attack_interaction_steps(
 		"labels": labels,
 		"min_select": 1,
 		"max_select": 1,
-		"allow_cancel": true,
+		"allow_cancel": false,
 	}]
 
 

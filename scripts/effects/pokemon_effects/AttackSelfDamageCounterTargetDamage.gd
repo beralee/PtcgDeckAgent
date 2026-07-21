@@ -11,6 +11,22 @@ func _init(per_counter: int = 20) -> void:
 	damage_per_counter = per_counter
 
 
+func get_attack_preview_damage(
+	attacker: PokemonSlot,
+	target: PokemonSlot,
+	state: GameState
+) -> int:
+	if attacker == null:
+		return 0
+	var counter_count: int = attacker.damage_counters / 10
+	return _calculate_attack_target_damage(
+		attacker,
+		target,
+		counter_count * damage_per_counter,
+		state
+	)
+
+
 func get_attack_interaction_steps(
 	card: CardInstance,
 	_attack: Dictionary,

@@ -72,38 +72,57 @@ func get_followup_interaction_steps(card: CardInstance, state: GameState, resolv
 	return [build_readonly_deck_preview_step("%s：查看剩余牌库" % card.card_data.name, player.deck)]
 
 
+func validate_card_interaction(card: CardInstance, targets: Array, state: GameState) -> Dictionary:
+	if card == null or state == null or card.owner_index < 0 or card.owner_index >= state.players.size():
+		return interaction_validation_error("Ultra Ball source card is invalid")
+	var player: PlayerState = state.players[card.owner_index]
+	var context := get_interaction_context(targets)
+	var discard_items: Array = []
+	for hand_card: CardInstance in player.hand:
+		if hand_card != card:
+			discard_items.append(hand_card)
+	var discard_result := validate_context_selection(
+		context,
+		"discard_cards",
+		discard_items,
+		DISCARD_COUNT,
+		DISCARD_COUNT
+	)
+	if not bool(discard_result.get("valid", false)):
+		return discard_result
+	var pokemon_items := _get_pokemon_cards(player)
+	if pokemon_items.is_empty():
+		return validate_context_selection(
+			context,
+			"empty_search_resolution",
+			[EMPTY_SEARCH_CONTINUE, EMPTY_SEARCH_VIEW_DECK],
+			1,
+			1
+		)
+	return validate_context_selection(context, "search_pokemon", pokemon_items, 0, 1, true, true)
+
+
 func execute(card: CardInstance, targets: Array, state: GameState) -> void:
 	var player: PlayerState = state.players[card.owner_index]
 	var ctx: Dictionary = get_interaction_context(targets)
+	if not bool(validate_card_interaction(card, targets, state).get("valid", false)):
+		return
 
 	var discard_cards: Array[CardInstance] = []
 	var discard_cards_raw: Array = ctx.get("discard_cards", [])
 	for entry: Variant in discard_cards_raw:
 		if entry is CardInstance and entry in player.hand and entry != card and entry not in discard_cards:
 			discard_cards.append(entry)
-	if discard_cards.size() < DISCARD_COUNT:
-		for hand_card: CardInstance in player.hand:
-			if discard_cards.size() >= DISCARD_COUNT:
-				break
-			if hand_card != card and hand_card not in discard_cards:
-				discard_cards.append(hand_card)
-
 	_discard_cards_from_hand_with_log(state, card.owner_index, discard_cards, card, "trainer")
 
 	var selected_pokemon: CardInstance = null
 	var selected_raw: Array = ctx.get("search_pokemon", [])
-	var has_explicit_search_selection: bool = ctx.has("search_pokemon")
 	for entry: Variant in selected_raw:
 		if not (entry is CardInstance):
 			continue
 		var chosen: CardInstance = entry
 		if chosen in player.deck and chosen.card_data.is_pokemon():
 			selected_pokemon = chosen
-			break
-
-	if selected_pokemon == null and not has_explicit_search_selection:
-		for deck_card: CardInstance in _get_pokemon_cards(player):
-			selected_pokemon = deck_card
 			break
 
 	if selected_pokemon != null:

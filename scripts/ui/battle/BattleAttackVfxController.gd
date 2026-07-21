@@ -13,6 +13,7 @@ const COUNTER_SOURCE_LABEL_NAME := "CounterTransferSourceLabel"
 const COUNTER_TARGET_LABEL_NAME := "CounterTransferTargetLabel"
 const COUNTER_CASTER_AURA_NAME := "CounterTransferCasterAura"
 const BattleAttackVfxRegistryScript := preload("res://scripts/ui/battle/BattleAttackVfxRegistry.gd")
+const OverlayGeometry := preload("res://scripts/ui/battle/BattleOverlayGeometry.gd")
 const PRECOMPUTED_REGION_CACHE_PATH := "res://assets/textures/vfx/visible_region_cache.json"
 
 var _texture_cache: Dictionary = {}
@@ -88,17 +89,17 @@ func resolve_target_positions(scene: Object, action: GameAction) -> Array[Vector
 func resolve_source_position(scene: Object, player_index: int) -> Vector2:
 	var source_anchor: Control = _source_anchor(scene, player_index)
 	if source_anchor != null:
-		return source_anchor.global_position + source_anchor.size * 0.5
+		return OverlayGeometry.control_point_on_screen(source_anchor, source_anchor.size * 0.5)
 	var center_field: Control = _center_field(scene)
 	if center_field != null:
 		var t := 0.32 if player_index == int(scene.get("_view_player")) else 0.68
 		var y := 0.74 if player_index == int(scene.get("_view_player")) else 0.26
-		return center_field.global_position + center_field.size * Vector2(t, y)
+		return OverlayGeometry.control_point_on_screen(center_field, center_field.size * Vector2(t, y))
 	return Vector2.ZERO
 
 
 func play_attack_vfx(scene: Object, action: GameAction) -> void:
-	if scene == null or action == null:
+	if scene == null or action == null or not bool(GameManager.battle_effects_enabled):
 		return
 	var overlay: Control = ensure_overlay(scene)
 	if overlay == null:
@@ -121,7 +122,7 @@ func play_attack_vfx(scene: Object, action: GameAction) -> void:
 
 
 func play_preview_vfx(scene: Object, profile: RefCounted) -> void:
-	if scene == null or profile == null:
+	if scene == null or profile == null or not bool(GameManager.battle_effects_enabled):
 		return
 	var overlay: Control = ensure_overlay(scene)
 	if overlay == null:
@@ -137,7 +138,7 @@ func play_preview_vfx(scene: Object, profile: RefCounted) -> void:
 
 
 func play_counter_transfer_vfx(scene: Object, data: Dictionary) -> void:
-	if scene == null or data.is_empty():
+	if scene == null or data.is_empty() or not bool(GameManager.battle_effects_enabled):
 		return
 	var overlay: Control = ensure_overlay(scene)
 	if overlay == null:
@@ -165,7 +166,7 @@ func play_counter_transfer_vfx(scene: Object, data: Dictionary) -> void:
 
 
 func play_boss_orders_vfx(scene: Object, data: Dictionary) -> void:
-	if scene == null or data.is_empty():
+	if scene == null or data.is_empty() or not bool(GameManager.battle_effects_enabled):
 		return
 	if str(data.get("trainer_vfx", "")) != "boss_orders":
 		return
@@ -260,20 +261,20 @@ func _play_sequence(
 func _preview_source_position(scene: Object) -> Vector2:
 	var my_active: Control = scene.get("_my_active") as Control
 	if my_active != null:
-		return my_active.global_position + my_active.size * 0.5
+		return OverlayGeometry.control_point_on_screen(my_active, my_active.size * 0.5)
 	var center_field: Control = _center_field(scene)
 	if center_field != null:
-		return center_field.global_position + center_field.size * Vector2(0.32, 0.74)
+		return OverlayGeometry.control_point_on_screen(center_field, center_field.size * Vector2(0.32, 0.74))
 	return Vector2(420.0, 520.0)
 
 
 func _preview_target_position(scene: Object) -> Vector2:
 	var opp_active: Control = scene.get("_opp_active") as Control
 	if opp_active != null:
-		return opp_active.global_position + opp_active.size * 0.5
+		return OverlayGeometry.control_point_on_screen(opp_active, opp_active.size * 0.5)
 	var center_field: Control = _center_field(scene)
 	if center_field != null:
-		return center_field.global_position + center_field.size * Vector2(0.68, 0.26)
+		return OverlayGeometry.control_point_on_screen(center_field, center_field.size * Vector2(0.68, 0.26))
 	return Vector2(860.0, 220.0)
 
 
@@ -295,8 +296,8 @@ func _resolve_attack_source_position(scene: Object, player_index: int, profile: 
 	return base
 
 
-func _overlay_local_position(overlay: Control, global_position: Vector2) -> Vector2:
-	return global_position - overlay.global_position
+func _overlay_local_position(overlay: Control, screen_position: Vector2) -> Vector2:
+	return OverlayGeometry.screen_point_to_overlay(overlay, screen_position)
 
 
 func _overlay_host(scene: Object) -> Node:
@@ -359,7 +360,7 @@ func _target_spec_from_dict(scene: Object, target: Dictionary) -> Dictionary:
 	if anchor == null:
 		return {}
 	return {
-		"position": anchor.global_position + anchor.size * 0.5,
+		"position": OverlayGeometry.control_point_on_screen(anchor, anchor.size * 0.5),
 		"anchor": anchor,
 		"impact_style": str(target.get("impact_style", "damage")),
 		"slot_kind": slot_kind,
@@ -371,10 +372,10 @@ func _default_target_position(scene: Object, action: GameAction) -> Vector2:
 	var target_player_index := 1 - clampi(action.player_index, 0, 1)
 	var target_anchor: Control = _target_anchor(scene, target_player_index)
 	if target_anchor != null:
-		return target_anchor.global_position + target_anchor.size * 0.5
+		return OverlayGeometry.control_point_on_screen(target_anchor, target_anchor.size * 0.5)
 	var center_field: Control = _center_field(scene)
 	if center_field != null:
-		return center_field.global_position + center_field.size * 0.5
+		return OverlayGeometry.control_point_on_screen(center_field, center_field.size * 0.5)
 	return Vector2.ZERO
 
 

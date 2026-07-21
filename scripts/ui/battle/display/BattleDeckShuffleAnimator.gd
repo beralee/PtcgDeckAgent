@@ -29,6 +29,8 @@ func play_deck_shuffle_effect(player_index: int) -> void:
 	if preview == null:
 		return
 	stop_deck_shuffle_effect(player_index)
+	if not bool(GameManager.battle_effects_enabled):
+		return
 	preview.pivot_offset = preview.size * 0.5
 	var base_positions_variant: Variant = _get("_deck_preview_base_positions")
 	var base_positions: Dictionary = base_positions_variant if base_positions_variant is Dictionary else {}
@@ -75,7 +77,12 @@ func refresh_deck_shuffle_detection(gs: GameState) -> void:
 		if player == null:
 			continue
 		var current_count: int = player.shuffle_count
-		var previous_count: int = int(counts.get(player_index, 0))
+		if not counts.has(player_index):
+			# First observation establishes a baseline; it is not a shuffle that
+			# happened during this action or refresh.
+			counts[player_index] = current_count
+			continue
+		var previous_count: int = int(counts.get(player_index, current_count))
 		if current_count > previous_count:
 			play_deck_shuffle_effect(player_index)
 		counts[player_index] = current_count

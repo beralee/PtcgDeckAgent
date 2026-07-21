@@ -61,7 +61,13 @@ func _setup_battle_scene_context() -> void:
 	_battle_invalid_action_hint_controller.call("setup", self)
 	if _battle_prompt_router == null:
 		_battle_prompt_router = BattlePromptRouterScript.new()
-	_battle_prompt_router.call("setup", _battle_scene_context)
+		_battle_prompt_router.call("setup", _battle_scene_context)
+	if _battle_visual_sequence_controller == null:
+		_battle_visual_sequence_controller = BattleVisualSequenceControllerScript.new()
+	_battle_visual_sequence_controller.call("setup", self)
+	if _battle_action_intent_controller == null:
+		_battle_action_intent_controller = BattleActionIntentControllerScript.new()
+	_battle_action_intent_controller.call("setup", self)
 	_sync_battle_scene_context_runtime()
 
 
@@ -780,6 +786,17 @@ func _is_turn_start_draw_action(action: GameAction) -> bool:
 	)
 
 
+func _is_opening_turn_start_draw_action(action: GameAction) -> bool:
+	if action == null or action.action_type != GameAction.ActionType.DRAW_CARD:
+		return false
+	if action.turn_number != 1:
+		return false
+	return (
+		bool(action.data.get("turn_start", false))
+		or str(action.data.get("draw_source", "")) == "turn_start"
+	)
+
+
 
 func _record_turn_start_snapshot_after_draw(action: GameAction) -> void:
 	var key := "%d:%d" % [action.player_index, action.turn_number]
@@ -795,6 +812,8 @@ func _record_turn_start_snapshot_after_draw(action: GameAction) -> void:
 
 
 func _start_prize_selection(player_index: int, count: int) -> void:
+	_prize_prompt_generation += 1
+	_prize_touch_press_contexts.clear()
 	_ensure_battle_overlay_coordinator()
 	_battle_overlay_coordinator.call("start_prize_selection", player_index, count)
 	_sync_battle_dialog_state_from_scene()
@@ -1263,13 +1282,15 @@ func _try_use_attack_with_interaction(
 	steps.append_array(_gsm.get_post_damage_defender_interaction_steps(slot, defender))
 	if not preselected_targets.is_empty():
 		if _gsm.use_attack(player_index, attack_index, preselected_targets):
-			_refresh_ui_after_successful_action(true, player_index)
+			_play_battle_interaction_success("attack", {"target_slot_id": str(call("_slot_id_from_slot", slot))})
+			_refresh_ui_after_successful_action(true, player_index, "attack")
 		else:
 			_log(_gsm.get_attack_unusable_reason(player_index, attack_index))
 		return
 	if steps.is_empty():
 		if _gsm.use_attack(player_index, attack_index):
-			_refresh_ui_after_successful_action(true, player_index)
+			_play_battle_interaction_success("attack", {"target_slot_id": str(call("_slot_id_from_slot", slot))})
+			_refresh_ui_after_successful_action(true, player_index, "attack")
 		else:
 			_log(_gsm.get_attack_unusable_reason(player_index, attack_index))
 		return
@@ -1290,7 +1311,8 @@ func _try_use_granted_attack_with_interaction(player_index: int, slot: PokemonSl
 	)
 	if steps.is_empty():
 		if _gsm.use_granted_attack(player_index, slot, granted_attack):
-			_refresh_ui_after_successful_action(true, player_index)
+			_play_battle_interaction_success("attack", {"target_slot_id": str(call("_slot_id_from_slot", slot))})
+			_refresh_ui_after_successful_action(true, player_index, "attack")
 		else:
 			_log(_get_granted_attack_unusable_reason(player_index, slot, granted_attack))
 		return
@@ -1357,8 +1379,11 @@ func _show_retreat_dialog(cp: int) -> void:
 
 
 func _on_match_end_return_pressed() -> void:
+	var return_to_tournament := _match_end_tournament_return_pending or GameManager.is_tournament_battle_active()
 	if GameManager.is_tournament_battle_active():
 		GameManager.finalize_current_tournament_battle(_battle_review_winner_index, _battle_review_reason)
+	if return_to_tournament:
+		_match_end_tournament_return_pending = false
 		GameManager.goto_tournament_standings()
 	else:
 		GameManager.goto_battle_setup()
@@ -1558,7 +1583,13 @@ func _should_wait_for_llm() -> bool:
 		return false
 	if strategy.has_method("ensure_llm_request_fired"):
 		var legal_actions: Array[Dictionary] = _ai_opponent.get_legal_actions(_gsm)
-		strategy.call("ensure_llm_request_fired", _gsm.game_state, _ai_opponent.player_index, legal_actions)
+		var rule_floor_certificate: Dictionary = _ai_opponent.build_rule_floor_certificate(_gsm, legal_actions) \
+			if _ai_opponent.has_method("build_rule_floor_certificate") else {}
+		strategy.call("ensure_llm_request_fired", _gsm.game_state, _ai_opponent.player_index, legal_actions, {
+			"event_type": "MAIN_ACTION_WINDOW",
+			"rule_floor_action_id": str(rule_floor_certificate.get("action_id", "")),
+			"rule_floor_certificate": rule_floor_certificate,
+		})
 	if strategy.has_method("is_llm_soft_timed_out_for_turn") and strategy.call("is_llm_soft_timed_out_for_turn", turn):
 		if strategy.has_method("force_rules_for_turn"):
 			strategy.call("force_rules_for_turn", turn, "soft timeout")
@@ -1636,6 +1667,7 @@ func _effect_state_snapshot() -> String:
 func _play_next_coin_animation() -> void:
 	if _coin_flip_queue.is_empty():
 		_coin_animating = false
+		_coin_animation_advance_scheduled = false
 		if _coin_animation_resume_effect_step:
 			_coin_animation_resume_effect_step = false
 			_show_next_effect_interaction_step()
@@ -1644,6 +1676,7 @@ func _play_next_coin_animation() -> void:
 	if _coin_animator == null or not _coin_animator.has_method("play"):
 		_coin_flip_queue.clear()
 		_coin_animating = false
+		_coin_animation_advance_scheduled = false
 		if _coin_animation_resume_effect_step:
 			_coin_animation_resume_effect_step = false
 			_show_next_effect_interaction_step()
@@ -1921,8 +1954,42 @@ func _on_prize_slot_input(event: InputEvent, player_index: int, title: String, s
 		var touch_viewport := get_viewport()
 		if touch_viewport != null:
 			touch_viewport.set_input_as_handled()
-		if not touch.pressed:
-			_try_take_prize_from_slot(player_index, slot_index)
+		var touch_key := str(touch.index)
+		if touch.pressed:
+			if (
+				_pending_choice == "take_prize"
+				and _pending_prize_player_index == player_index
+				and _pending_prize_remaining > 0
+				and not _pending_prize_animating
+			):
+				_prize_touch_press_contexts[touch_key] = {
+					"generation": _prize_prompt_generation,
+					"player_index": player_index,
+					"slot_index": slot_index,
+					"position": touch.position,
+				}
+			else:
+				_prize_touch_press_contexts.erase(touch_key)
+			return
+		var press_context_variant: Variant = _prize_touch_press_contexts.get(touch_key, null)
+		_prize_touch_press_contexts.erase(touch_key)
+		if not (press_context_variant is Dictionary):
+			return
+		var press_context: Dictionary = press_context_variant
+		if (
+			int(press_context.get("generation", -1)) != _prize_prompt_generation
+			or int(press_context.get("player_index", -1)) != player_index
+			or int(press_context.get("slot_index", -1)) != slot_index
+			or _pending_choice != "take_prize"
+			or _pending_prize_player_index != player_index
+			or _pending_prize_remaining <= 0
+			or _pending_prize_animating
+		):
+			return
+		var press_position: Vector2 = press_context.get("position", touch.position)
+		if touch.position.distance_to(press_position) > PRIZE_TOUCH_MOVE_TOLERANCE:
+			return
+		_try_take_prize_from_slot(player_index, slot_index)
 		return
 	if not (event is InputEventMouseButton):
 		return

@@ -397,6 +397,8 @@ static func set_range_window_visibility_fallback(range_control: Range, enabled: 
 static func button_can_bridge_touch(button: Button) -> bool:
 	if button == null or button.disabled or not button.visible:
 		return false
+	if button.mouse_filter == Control.MOUSE_FILTER_IGNORE:
+		return false
 	if button.is_inside_tree() and not button.is_visible_in_tree():
 		return bool(button.get_meta(BUTTON_WINDOW_VISIBILITY_FALLBACK_META, false))
 	return true

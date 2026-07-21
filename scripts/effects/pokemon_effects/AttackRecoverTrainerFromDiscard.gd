@@ -82,7 +82,12 @@ func _resolve_selected(player: PlayerState, limit: int) -> Array[CardInstance]:
 func _trainer_cards(cards: Array[CardInstance]) -> Array[CardInstance]:
 	var result: Array[CardInstance] = []
 	for card: CardInstance in cards:
-		if card != null and card.card_data != null and card.card_data.is_trainer():
+		if (
+			card != null
+			and card.card_data != null
+			and card.card_data.is_trainer()
+			and DiscardPileRestriction.can_move_to_hand_or_deck(card)
+		):
 			result.append(card)
 	return result
 

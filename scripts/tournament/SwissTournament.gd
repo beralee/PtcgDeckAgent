@@ -4,6 +4,8 @@ extends RefCounted
 const POINTS_WIN := 3
 const POINTS_DRAW := 1
 const POINTS_LOSS := 0
+const FORMAT_STANDARD := "standard"
+const FORMAT_OPEN := "open"
 const AIFixedDeckOrderRegistryScript := preload("res://scripts/ai/AIFixedDeckOrderRegistry.gd")
 
 const DEFAULT_AI_DECK_POOL: Array[int] = [
@@ -76,12 +78,20 @@ var current_player_pairing: Dictionary = {}
 var last_round_summary: Dictionary = {}
 var finished: bool = false
 var llm_opponents_enabled: bool = false
+var tournament_format: String = FORMAT_STANDARD
 
 var _rng := RandomNumberGenerator.new()
 var _fixed_order_registry: RefCounted = AIFixedDeckOrderRegistryScript.new()
 
 
-func setup(next_player_name: String, next_player_deck_id: int, next_tournament_size: int, seed: int = 0, enable_llm_opponents: bool = false) -> void:
+func setup(
+	next_player_name: String,
+	next_player_deck_id: int,
+	next_tournament_size: int,
+	seed: int = 0,
+	enable_llm_opponents: bool = false,
+	next_tournament_format: String = FORMAT_STANDARD
+) -> void:
 	player_name = next_player_name.strip_edges()
 	if player_name == "":
 		player_name = "玩家"
@@ -89,6 +99,7 @@ func setup(next_player_name: String, next_player_deck_id: int, next_tournament_s
 	tournament_size = next_tournament_size
 	total_rounds = rounds_for_size(tournament_size)
 	llm_opponents_enabled = enable_llm_opponents
+	tournament_format = _sanitize_tournament_format(next_tournament_format)
 	current_round = 0
 	player_participant_id = 0
 	participants.clear()
@@ -292,6 +303,7 @@ func get_overview_snapshot() -> Dictionary:
 		"player_deck_name": participant_deck_name(player_participant_id),
 		"tournament_size": tournament_size,
 		"total_rounds": total_rounds,
+		"tournament_format": tournament_format,
 		"participants": get_overview_participants(),
 		"deck_distribution": get_deck_distribution(),
 	}
@@ -312,6 +324,7 @@ func serialize_state() -> Dictionary:
 		"finished": finished,
 		"rng_state": _rng.state,
 		"llm_opponents_enabled": llm_opponents_enabled,
+		"tournament_format": tournament_format,
 	}
 
 
@@ -334,6 +347,7 @@ func restore_state(data: Dictionary) -> void:
 	last_round_summary = (data.get("last_round_summary", {}) as Dictionary).duplicate(true)
 	finished = bool(data.get("finished", false))
 	llm_opponents_enabled = bool(data.get("llm_opponents_enabled", false))
+	tournament_format = _sanitize_tournament_format(str(data.get("tournament_format", FORMAT_STANDARD)))
 	if data.has("rng_state"):
 		_rng.state = int(data.get("rng_state", _rng.state))
 
@@ -342,22 +356,24 @@ func _build_field() -> void:
 	var used_names := {}
 	participants.append(_make_participant(player_participant_id, player_name, player_deck_id, true))
 	used_names[player_name] = true
-	var ai_deck_pool := CardDatabase.get_supported_ai_deck_ids()
+	var ai_deck_pool := get_ai_deck_pool_for_format(tournament_format)
 	if ai_deck_pool.is_empty():
-		ai_deck_pool = DEFAULT_AI_DECK_POOL.duplicate()
+		push_error("SwissTournament: no AI decks available for tournament format %s" % tournament_format)
+		return
 	var llm_deck_pool := _llm_deck_pool_from_ai_pool(ai_deck_pool)
+	var llm_pool_available := not llm_deck_pool.is_empty()
 	var llm_inserted := false
 	for i: int in range(1, tournament_size):
 		var next_name := _generate_unique_name(used_names)
-		var next_ai_mode := _roll_ai_mode(i, llm_inserted)
+		var next_ai_mode := _roll_ai_mode(i, llm_inserted, llm_pool_available)
 		var next_deck_id := _roll_llm_deck_id(llm_deck_pool) if next_ai_mode == "llm" else int(ai_deck_pool[_rng.randi_range(0, ai_deck_pool.size() - 1)])
 		if next_ai_mode == "llm":
 			llm_inserted = true
 		participants.append(_make_participant(i, next_name, next_deck_id, false, next_ai_mode))
 
 
-func _roll_ai_mode(participant_index: int, llm_inserted: bool) -> String:
-	if llm_opponents_enabled:
+func _roll_ai_mode(participant_index: int, llm_inserted: bool, llm_pool_available: bool = true) -> String:
+	if llm_opponents_enabled and llm_pool_available:
 		var remaining_after_this := tournament_size - participant_index - 1
 		if _rng.randf() < LLM_OPPONENT_PROBABILITY or (not llm_inserted and remaining_after_this <= 0):
 			return "llm"
@@ -370,14 +386,40 @@ func _llm_deck_pool_from_ai_pool(ai_deck_pool: Array) -> Array[int]:
 		var deck_id := int(deck_id_variant)
 		if LLM_STRATEGY_ID_BY_DECK_ID.has(deck_id):
 			result.append(deck_id)
-	if result.is_empty():
-		result = get_llm_deck_pool()
 	return result
 
 
 func _roll_llm_deck_id(llm_deck_pool: Array[int]) -> int:
-	var pool := llm_deck_pool if not llm_deck_pool.is_empty() else get_llm_deck_pool()
-	return int(pool[_rng.randi_range(0, pool.size() - 1)])
+	if llm_deck_pool.is_empty():
+		return 0
+	return int(llm_deck_pool[_rng.randi_range(0, llm_deck_pool.size() - 1)])
+
+
+func get_ai_deck_pool_for_format(format_id: String = "") -> Array[int]:
+	var resolved_format := _sanitize_tournament_format(format_id if format_id != "" else tournament_format)
+	var all_deck_ids: Array[int] = CardDatabase.get_supported_ai_deck_ids()
+	if all_deck_ids.is_empty():
+		for fallback_id: int in DEFAULT_AI_DECK_POOL:
+			all_deck_ids.append(fallback_id)
+	if resolved_format == FORMAT_OPEN:
+		return all_deck_ids
+	var standard_deck_ids: Array[int] = []
+	for deck_id: int in all_deck_ids:
+		var deck: DeckData = CardDatabase.get_ai_deck(deck_id)
+		if is_standard_ai_deck(deck):
+			standard_deck_ids.append(deck_id)
+	return standard_deck_ids
+
+
+func is_standard_ai_deck(deck: DeckData) -> bool:
+	if deck == null:
+		return false
+	var version_token := str(deck.deck_name).strip_edges().get_slice(" ", 0)
+	return version_token.is_valid_float() and float(version_token) >= 18.0
+
+
+func _sanitize_tournament_format(format_id: String) -> String:
+	return FORMAT_OPEN if format_id.strip_edges().to_lower() == FORMAT_OPEN else FORMAT_STANDARD
 
 
 func _make_participant(id: int, name: String, deck_id: int, is_player: bool, ai_mode: String = "weak") -> Dictionary:

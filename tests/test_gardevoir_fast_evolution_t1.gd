@@ -127,6 +127,7 @@ func _run_fixed_order_scenario(seed_value: int) -> Dictionary:
 
 	var player_0_ai := _make_ai_for_deck(0, OPPONENT_DECK_ID)
 	var player_1_ai := _make_ai_for_deck(1, GARDEVOIR_DECK_ID)
+	bridge.set_ai_controllers(player_0_ai, player_1_ai)
 	var outcome := _run_one_full_turn(gsm, bridge, player_0_ai, player_1_ai, 1, 1)
 
 	var gardevoir_player: PlayerState = gsm.game_state.players[1]

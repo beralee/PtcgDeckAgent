@@ -8,6 +8,8 @@ extends RefCounted
 
 static var _effect_script_cache: Dictionary = {}
 const CSV9CEffects = preload("res://scripts/effects/CSV9CEffects.gd")
+const CSV10CEffects = preload("res://scripts/effects/CSV10CEffects.gd")
+const CSV10C101To200Registry = preload("res://scripts/engine/CSV10C101To200Registry.gd")
 
 const CSV9C_EFFECT_ID_ALIASES = {
 	"6b6641a24bd64c822e7ca22834562305": "80861b2bfa9967d1e28a97ee4d1f1316",
@@ -143,6 +145,7 @@ const AttackSelfAllAttacksLockNextTurnEffect = "res://scripts/effects/pokemon_ef
 const AttackDiscardAllOpponentSpecialEnergyEffect = "res://scripts/effects/pokemon_effects/AttackDiscardAllOpponentSpecialEnergy.gd"
 const AttackOpponentHiddenHandDiscardEffect = "res://scripts/effects/pokemon_effects/AttackOpponentHiddenHandDiscard.gd"
 const AttackDevolveOpponentEvolutionToDeckEffect = "res://scripts/effects/pokemon_effects/AttackDevolveOpponentEvolutionToDeck.gd"
+const AttackDelayedExtraPrizeNextOwnTurnEffect = "res://scripts/effects/pokemon_effects/AttackDelayedExtraPrizeNextOwnTurn.gd"
 const AbilityHealOwnPokemonEffect = "res://scripts/effects/pokemon_effects/AbilityHealOwnPokemon.gd"
 const AttackDragonLauncher = "res://scripts/effects/pokemon_effects/AttackDragonLauncher.gd"
 const EffectHisuianHeavyBallEffect = "res://scripts/effects/trainer_effects/EffectHisuianHeavyBall.gd"
@@ -183,8 +186,14 @@ const AttackMillAndAttachAllEnergyEffect = "res://scripts/effects/pokemon_effect
 const AttackOpponentHandCountDamageEffect = "res://scripts/effects/pokemon_effects/AttackOpponentHandCountDamage.gd"
 const AttackBonusIfSelfDamagedEffect = "res://scripts/effects/pokemon_effects/AttackBonusIfSelfDamaged.gd"
 const AttackAttachBasicEnergyFromDiscardEffect = "res://scripts/effects/pokemon_effects/AttackAttachBasicEnergyFromDiscard.gd"
+const AbilitySwellingFlashEffect = "res://scripts/effects/pokemon_effects/AbilitySwellingFlash.gd"
 const AttackCopyOwnBenchNamedPokemonAttackEffect = "res://scripts/effects/pokemon_effects/AttackCopyOwnBenchNamedPokemonAttack.gd"
 const AttackMillOpponentDeckEffect = "res://scripts/effects/pokemon_effects/AttackMillOpponentDeck.gd"
+const AbilityPokemonCheckHealAllOwnEffect = "res://scripts/effects/pokemon_effects/AbilityPokemonCheckHealAllOwn.gd"
+const AttackDiscardOpponentActiveEnergyEffect = "res://scripts/effects/pokemon_effects/AttackDiscardOpponentActiveEnergy.gd"
+const AttackSearchDistinctPokemonTypesEffect = "res://scripts/effects/pokemon_effects/AttackSearchDistinctPokemonTypes.gd"
+const AbilityProtectiveMyceliumEffect = "res://scripts/effects/pokemon_effects/AbilityProtectiveMycelium.gd"
+const AttackBenchGrassEnergyCountBonusEffect = "res://scripts/effects/pokemon_effects/AttackBenchGrassEnergyCountBonus.gd"
 const AttackDiscardHandDrawCardsEffect = "res://scripts/effects/pokemon_effects/AttackDiscardHandDrawCards.gd"
 const AttackDiscardBasicEnergyFromFieldDamageEffect = "res://scripts/effects/pokemon_effects/AttackDiscardBasicEnergyFromFieldDamage.gd"
 const AttackDiscardEnergyMultiDamageEffect = "res://scripts/effects/pokemon_effects/AttackDiscardEnergyMultiDamage.gd"
@@ -229,6 +238,8 @@ const AttackSweetTrapEffect = "res://scripts/effects/pokemon_effects/AttackSweet
 const AttackReturnEnergyThenBenchDamageEffect = "res://scripts/effects/pokemon_effects/AttackReturnEnergyThenBenchDamage.gd"
 const AttackTargetOwnBenchDamageEffect = "res://scripts/effects/pokemon_effects/AttackTargetOwnBenchDamage.gd"
 const AttackTargetOpponentBenchDamageEffect = "res://scripts/effects/pokemon_effects/AttackTargetOpponentBenchDamage.gd"
+const AttackDiscardOwnBenchBasicEnergyBonusDamageEffect = "res://scripts/effects/pokemon_effects/AttackDiscardOwnBenchBasicEnergyBonusDamage.gd"
+const AttackKnockOutOpponentWithExactDamageCountersEffect = "res://scripts/effects/pokemon_effects/AttackKnockOutOpponentWithExactDamageCounters.gd"
 const AttackCrobatCriticalBiteEffect = "res://scripts/effects/pokemon_effects/AttackCrobatCriticalBite.gd"
 const AbilityMoveBasicEnergyToOwnPokemonEffect = "res://scripts/effects/pokemon_effects/AbilityMoveBasicEnergyToOwnPokemon.gd"
 const AbilityMoveFireEnergyFromBenchToActiveEffect = "res://scripts/effects/pokemon_effects/AbilityMoveFireEnergyFromBenchToActive.gd"
@@ -294,6 +305,11 @@ const EffectBoomerangEnergyEffect = "res://scripts/effects/energy_effects/Effect
 const EffectMagmaBasinEffect = "res://scripts/effects/stadium_effects/EffectMagmaBasin.gd"
 const EffectCyclingRoadEffect = "res://scripts/effects/stadium_effects/EffectCyclingRoad.gd"
 const EffectCrushingHammerEffect = "res://scripts/effects/trainer_effects/EffectCrushingHammer.gd"
+const EffectTeamStarGruntEffect = "res://scripts/effects/trainer_effects/EffectTeamStarGrunt.gd"
+const EffectSurferEffect = "res://scripts/effects/trainer_effects/EffectSurfer.gd"
+const EffectCalamitousSnowyMountainEffect = "res://scripts/effects/stadium_effects/EffectCalamitousSnowyMountain.gd"
+const EffectGravityGemstoneEffect = "res://scripts/effects/tool_effects/EffectGravityGemstone.gd"
+const EffectLuckyHelmetEffect = "res://scripts/effects/tool_effects/EffectLuckyHelmet.gd"
 const EffectEriEffect = "res://scripts/effects/trainer_effects/EffectEri.gd"
 const EffectPennyEffect = "res://scripts/effects/trainer_effects/EffectPenny.gd"
 const EffectScoopUpCycloneEffect = "res://scripts/effects/trainer_effects/EffectScoopUpCyclone.gd"
@@ -313,8 +329,13 @@ const AbilityBenchShuffleIntoDeck = "res://scripts/effects/pokemon_effects/Abili
 const AbilityActiveRetreatLock = "res://scripts/effects/pokemon_effects/AbilityActiveRetreatLock.gd"
 const AttackBonusIfOwnStadium = "res://scripts/effects/pokemon_effects/AttackBonusIfOwnStadium.gd"
 const AttackPlaceDamageCountersOnOpponentActive = "res://scripts/effects/pokemon_effects/AttackPlaceDamageCountersOnOpponentActive.gd"
+const AttackChooseOpponentPokemonDamageCountersEffect = "res://scripts/effects/pokemon_effects/AttackChooseOpponentPokemonDamageCounters.gd"
 const AttackReviveBasicFromAnyDiscardToBench = "res://scripts/effects/pokemon_effects/AttackReviveBasicFromAnyDiscardToBench.gd"
 const AttackReturnSelfAllCardsToHandEffect = "res://scripts/effects/pokemon_effects/AttackReturnSelfAllCardsToHand.gd"
+const AttackOptionalReturnSelfAllCardsToHandEffect = "res://scripts/effects/pokemon_effects/AttackOptionalReturnSelfAllCardsToHand.gd"
+const AttackSearchBasicPokemonToBenchEffect = "res://scripts/effects/pokemon_effects/AttackSearchBasicPokemonToBench.gd"
+const AttackDamageAllOpponentMechanicEffect = "res://scripts/effects/pokemon_effects/AttackDamageAllOpponentMechanic.gd"
+const EffectNeutralizationZoneEffect = "res://scripts/effects/stadium_effects/EffectNeutralizationZone.gd"
 const AttackMoveOwnDamageCountersToOpponentEffect = "res://scripts/effects/pokemon_effects/AttackMoveOwnDamageCountersToOpponent.gd"
 const AbilityMoveAnyEnergyToSelfOnActiveEffect = "res://scripts/effects/pokemon_effects/AbilityMoveAnyEnergyToSelfOnActive.gd"
 const AttackDiscardOpponentToolsEffect = "res://scripts/effects/pokemon_effects/AttackDiscardOpponentTools.gd"
@@ -327,6 +348,7 @@ const EffectRoseannesBackupEffect = "res://scripts/effects/trainer_effects/Effec
 const AttackChosenDefenderAttackLockNextTurnEffect = "res://scripts/effects/pokemon_effects/AttackChosenDefenderAttackLockNextTurn.gd"
 const AbilityAttachBasicEnergyFromDiscardToOwnEffect = "res://scripts/effects/pokemon_effects/AbilityAttachBasicEnergyFromDiscardToOwn.gd"
 const EffectEnhancedHammerEffect = "res://scripts/effects/trainer_effects/EffectEnhancedHammer.gd"
+const EffectGrabberEffect = "res://scripts/effects/trainer_effects/EffectGrabber.gd"
 const EffectHealAllPokemonEffect = "res://scripts/effects/trainer_effects/EffectHealAllPokemon.gd"
 const AttackFieldEnergyThresholdBonusEffect = "res://scripts/effects/pokemon_effects/AttackFieldEnergyThresholdBonus.gd"
 const AttackAncientDiscardCountDamageEffect = "res://scripts/effects/pokemon_effects/AttackAncientDiscardCountDamage.gd"
@@ -374,17 +396,48 @@ const AttackMoveOpponentHandCardToDeckEffect = "res://scripts/effects/pokemon_ef
 const AbilityFroslassFreezingShroudEffect = "res://scripts/effects/pokemon_effects/AbilityFroslassFreezingShroud.gd"
 const AttackTopDeckPokemonToBenchEffect = "res://scripts/effects/pokemon_effects/AttackTopDeckPokemonToBench.gd"
 const AbilityOpponentBenchColorlessReductionEffect = "res://scripts/effects/pokemon_effects/AbilityOpponentBenchColorlessReduction.gd"
+const AttackTaggedRevengeBonusEffect = "res://scripts/effects/pokemon_effects/AttackTaggedRevengeBonus.gd"
+const AbilityAttachGrassFromDeckOnActiveEntryEffect = "res://scripts/effects/pokemon_effects/AbilityAttachGrassFromDeckOnActiveEntry.gd"
+const AbilityNamedTeamDamageBoostEffect = "res://scripts/effects/pokemon_effects/AbilityNamedTeamDamageBoost.gd"
 ## ==================== 主入口 ====================
 
 ## 注册所有已知卡牌效果到 EffectProcessor
 ## 包含：物品卡、支援者卡、道具、竞技场、特殊能量
 static func register_all(processor: EffectProcessor) -> void:
+	if processor == null:
+		return
 	_register_items(processor)
 	_register_supporters(processor)
 	_register_tools(processor)
 	_register_stadiums(processor)
 	_register_special_energies(processor)
 	_register_csv9c_effect_aliases(processor)
+	CSV10C101To200Registry.register_fixed(processor)
+	_register_csv10c_201_to_287(processor)
+
+
+static func _register_csv10c_201_to_287(processor: EffectProcessor) -> void:
+	processor.register_effect("87bf196475e64140c14197af70648893", CSV10CEffects.HopsChoiceBand.new())
+	processor.register_effect("17c3b922d3e855f12bda63ec5ad6ec55", CSV10CEffects.LilliesPearl.new())
+	processor.register_effect("4eadb12f43cd50ddec37821f28ce0359", CSV10CEffects.IrissFightingSpirit.new())
+	processor.register_effect("2d4c85c2075cb99646ad0e5e34f0f825", CSV10CEffects.MCExcitement.new())
+	processor.register_effect("dacd942c84db0948ced6544bacfa08d7", CSV10CEffects.ScaryBigBrother.new())
+	processor.register_effect("8d9b3076693b9f692bae94d057498720", _instantiate_effect(EffectBrocksScoutingEffect))
+	processor.register_effect("3b03f59349002f02a731b531dbdb4358", CSV10CEffects.EthansAdventure.new())
+	processor.register_effect("e3b38149675a6f8f0e606ddbe321e094", CSV10CEffects.TeamRocketsAriana.new())
+	processor.register_effect("e905f4430cb382552e052cf8d926f890", CSV10CEffects.TeamRocketsArcher.new())
+	processor.register_effect("f567109551b79471a196f605ba549be8", CSV10CEffects.TeamRocketsGiovanni.new())
+	processor.register_effect("ffc8153bc60e336eee4c6c5c74a3d95f", EffectSearchDeck.new(1, 0, "Trainer"))
+	processor.register_effect("c73f4fde5f12bf1f6c1e8866492ef4b3", CSV10CEffects.TeamRocketsLance.new())
+	processor.register_effect("da4dac3550078557c6d4b378eefbb783", CSV10CEffects.StonesCave.new())
+	processor.register_effect("36e665b638c0c5d082a96f11552121ad", CSV10CEffects.NsCastle.new())
+	processor.register_effect("dc1d73740f5d6e98ad1491ca9067aac3", _instantiate_effect(EffectSpikemuthGymEffect))
+	processor.register_effect("cf88045d66d42c709157d28d64449c64", CSV10CEffects.Levincia.new())
+	processor.register_effect("0c3c21449043e462bb73afac6c389a34", CSV10CEffects.Postwick.new())
+	processor.register_effect("99173b61a66aa2b9c169e36c8e0a10b4", CSV10CEffects.TeamRocketsWatchtower.new())
+	processor.register_effect("0efa680f3ebb077cfd90884f9317c93b", CSV10CEffects.TeamRocketsFactory.new())
+	processor.register_effect("f9db949f369ecead569fb8e3adc4eaee", CSV10CEffects.SpikemuthEnergy.new())
+	processor.register_effect("53341530fef1494fe72b335f06038205", CSV10CEffects.TeamRocketEnergy.new())
 
 
 ## 根据宝可梦卡牌数据注册其特性效果和招式附加效果
@@ -420,6 +473,7 @@ static func register_pokemon_card(processor: EffectProcessor, card: CardData) ->
 			processor.register_attack_effect(eid, fx)
 
 	_register_pokemon_effect_overrides(processor, eid)
+	CSV10C101To200Registry.register_pokemon_card(processor, card)
 
 
 static func _bind_attack_index_if_supported(effect: BaseEffect, attack_index: int) -> void:
@@ -436,6 +490,277 @@ static func _bind_attack_index_if_supported(effect: BaseEffect, attack_index: in
 
 static func _register_pokemon_effect_overrides(processor: EffectProcessor, effect_id: String) -> void:
 	match _canonical_csv9c_effect_id(effect_id):
+		"4221c41ba964470cc5e7394886cd7716":
+			processor.replace_attack_effects(effect_id, [
+				_instantiate_effect(AttackTargetOpponentBenchDamageEffect, [30, 0]),
+				_instantiate_effect(AttackKnockOutOpponentWithExactDamageCountersEffect, [6, 1]),
+			])
+		"ea603744a76e329006742da58c0f7514":
+			processor.replace_attack_effects(effect_id, [
+				_instantiate_effect(AttackDiscardOwnBenchBasicEnergyBonusDamageEffect, [2, 90, 0]),
+				_instantiate_effect(AttackSelfAllAttacksLockNextTurnEffect, [1]),
+			])
+		"773a7c5bc165bd5d75321bc7c29fdd25":
+			processor.replace_attack_effects(effect_id, [AttackOpponentActiveEnergyCountDamage.new(20, 1)])
+		"4e1e775eaafb11028f5378ede92cb964":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackAttachBasicEnergyFromDiscardEffect, ["R", 2, "own_any", 0]))
+			processor.register_attack_effect(effect_id, AttackRevengeBonus.new(90, 1))
+		"a4f457f1464c3410022b76ab77c11272":
+			processor.register_effect(effect_id, _instantiate_effect(AbilitySwellingFlashEffect))
+			processor.register_attack_effect(effect_id, EffectSelfDamage.new(20, 0))
+		"f0453eea8a2c67c4034c82adf034fc84":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackDefenderRetreatLockNextTurnEffect, [0]))
+		"73c1d28d980ebe98f205db87eb647fe8":
+			processor.register_effect(effect_id, _instantiate_effect(AbilityPokemonCheckHealAllOwnEffect, [20]))
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackMillOpponentDeckEffect, [1, 0]))
+		"d7fd6b6e4df58df509e15a929754b2fe":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackSwitchSelfToBenchEffect, [0]))
+		"5924d0f73f2e04f4cd258136ea138594":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackDiscardOpponentActiveEnergyEffect, [0, "ex"]))
+		"9736e35ce77fbf8b005f413e20875a8f":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackSearchDistinctPokemonTypesEffect, [3, 0]))
+		"0d02b63d128400622f704237482e5829":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackSearchDeckToHandEffect, [1, "Pokemon", 0]))
+		"668c8db0f156c52de12887587ec1b6d8":
+			processor.register_effect(effect_id, _instantiate_effect(AbilityProtectiveMyceliumEffect))
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackBenchGrassEnergyCountBonusEffect, [40, 0]))
+		"57937ca2b1d4d1118df547c37b217e65":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackTaggedRevengeBonusEffect, [100, PackedStringArray(["阿响的", "Ethan's "]), 1]))
+		"2027075ee9baee2e2a52bd1e1a477153":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackSwitchOpponentActiveEffect, [0]))
+		"88367894eb8e5dc6ae6b2b8350eb75f9":
+			processor.register_effect(effect_id, _instantiate_effect(AbilityAttachGrassFromDeckOnActiveEntryEffect))
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackMoveAttachedEnergyToOwnBenchEffect, [3, "", 0]))
+		"3040f040cd7a982b18f5e8359ab1ed21":
+			processor.register_effect(effect_id, _instantiate_effect(AbilityNamedTeamDamageBoostEffect, [30, PackedStringArray(["竹兰的", "Cynthia's "])]))
+		"3275565e49f6b7ceb38f0e7d46566110":
+			processor.register_attack_effect(effect_id, AttackDiscardStadium.new(0))
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackOwnFieldToolCountDamage.new(30, 1))
+		"fd1e9b0379f79156fbb304162cbe21ba":
+			processor.register_effect(effect_id, _instantiate_effect(AbilityNonRuleBoxBenchDamageShieldEffect))
+		"a5b32602f9c443a038fef288059aeb43":
+			processor.register_effect(effect_id, _instantiate_effect(AbilityExplodingNeedlesEffect, [6]))
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackDefenderRetreatLockNextTurnEffect, [0]))
+		"77717753a8889b9fc190f4b2de0e649a":
+			processor.register_effect(effect_id, CSV10CEffects.MistysPsyduckStrollJump.new())
+		"e88a648419aa3c1e323c6bd4f66d1dab":
+			var rotom_astonish := _instantiate_effect(AttackMoveOpponentHandCardToDeckEffect)
+			_bind_attack_index_if_supported(rotom_astonish, 0)
+			processor.register_attack_effect(effect_id, rotom_astonish)
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackOwnFieldToolCountDamage.new(30, 1))
+		"08e4abe39ce058b6724cf68c1e9828e4":
+			processor.register_effect(effect_id, CSV10CEffects.ZamazentaPowerSlam.new())
+			processor.register_attack_effect(effect_id, CSV10CEffects.ZamazentaPowerSlam.new())
+		"7ee514e3fb601f1f743a3d329b98daab":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackSelfDamageCounterMultiplierEffect, [20, 0]))
+		"f8a7ab601e5eba8d038f5ae262fb69f3":
+			processor.register_effect(effect_id, CSV10CEffects.CetitanSnowedIn.new())
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackDiscardStadiumBonusDamageEffect, [140, 0]))
+		"7dc748893391fd983b4e889222c7e7fe":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackSelfDamageCounterBonusEffect, [10, 0]))
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackOptionalBonusSelfDamageEffect, [120, 50, 1]))
+		"104442f76485b0b3e62a3f5ec7c1a73d":
+			processor.register_attack_effect(effect_id, CSV10CEffects.ElectivireDoubleVolt.new())
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackExcessAttachedEnergyBonus.new(5, 100, 1))
+		"945599a057164c3c735c59a7f34461db":
+			processor.register_effect(effect_id, CSV10CEffects.IonosBelliboltElectricStream.new())
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackSelfAllAttacksLockNextTurnEffect, [0]))
+		"c82dc9185c27908490f8a00cfdc75765":
+			processor.register_effect(effect_id, _instantiate_effect(AbilityOpponentDragonWeaknessToPsychicEffect))
+			var lillie_clefairy_rondo := _instantiate_effect(AttackBenchCountDamageEffect, [20, "both", false])
+			_bind_attack_index_if_supported(lillie_clefairy_rondo, 0)
+			processor.register_attack_effect(effect_id, lillie_clefairy_rondo)
+		"103a8775a94d6e7d8f151cbf680bd860":
+			processor.register_effect(effect_id, CSV10CEffects.TeamRocketsMewtwoPowerSuppressor.new())
+			processor.register_attack_effect(effect_id, CSV10CEffects.TeamRocketsMewtwoEraseBall.new())
+		"c419e29a55a3f486fc14ca896f3037c2":
+			processor.register_effect(effect_id, CSV10CEffects.AbilityDiscardAttachedLightningDrawToSix.new())
+		"129b22b27e7039870e9edbe7aa69f11e":
+			processor.register_attack_effect(effect_id, EffectApplyStatus.new("asleep", false, 0))
+		"8d165d753d10c7c2a8432b2d777cb397":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackOpponentBenchTailsMultiplier.new(80, 80, 1, processor.coin_flipper))
+		"1a637859049070376045eb781fe6640e":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackRocketMirror.new(0))
+		"24662b5aa90517e6b2f1383e543d3887":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackSearchBasicStevensPokemonToBench.new(2, 0))
+		"04333c3bc9451f33e2b2b29c105510f0":
+			processor.register_attack_effect(effect_id, EffectApplyStatus.new("confused", false, 0))
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackDiscardAllAttachedEnergyFromSelfEffect, [1]))
+		"195e9653bfcf78cea70616db8738a5d2":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackOpponentHiddenHandDiscardEffect, [0]))
+		"a770967d38eaabde163e23c116736286":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackVictorySymbol.new(1))
+		"ea90432003845e667141c349f775bc4b":
+			processor.register_effect(effect_id, CSV10CEffects.AbilityBenchStevensPokemonDamageReduction.new(30))
+		"1e0ad8479845fce8d95c7b6b2b6faf80":
+			processor.register_attack_effect(effect_id, CSV9CEffects.AttackHealSelf.new(10, 0))
+		"b793a98a61f206702a98bed3dbe2b416":
+			processor.register_effect(effect_id, CSV10CEffects.AbilityLuringWink.new())
+		"0126bc75f3ebc4b0937ebb83399f5e5a":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackSearchBasicLilliesPokemonToBench.new(0))
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackReturnSelfAllCardsToHandAtIndex.new(1))
+		"36d56a3bbadd7fcbc0348c759b580e03":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackCopyOpponentTeraAttack.new(processor))
+		"0da9e6adfac8c6fefd93c4be2a36dcf9":
+			processor.replace_attack_effects(effect_id, [CSV10CEffects.AttackReorderOpponentTopCards.new(5, 0)])
+		"b96e6e26e8e4935d6ffd8fe421d764b5":
+			processor.register_effect(effect_id, CSV10CEffects.AbilityRocketBrain.new())
+			processor.replace_attack_effects(effect_id, [AttackOpponentActiveEnergyCountDamage.new(40, 0)])
+		"5b0e3f747d9e8f2cb3bfeac127247664":
+			processor.replace_attack_effects(effect_id, [AttackCoinFlipOrFail.new(30, "no_damage", processor.coin_flipper)])
+		"21e9059614bf4f853ac21e60d71132f4":
+			processor.replace_attack_effects(effect_id, [CSV10CEffects.AttackForceOutThenDamage.new(30, 0)])
+		"69ce58aa80cbc0551b2764da9c3b5735":
+			processor.register_effect(effect_id, CSV10CEffects.AbilityRagePointDamageBoost.new(20, 120))
+			processor.replace_attack_effects(effect_id, [AttackSelfLockNextTurn.new(0)])
+		"11ea687ef47b095786562c92afdc67cf":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackOpponentPokemonExCountDamage.new(60, 0))
+			processor.register_attack_effect(effect_id, AttackIgnoreDefenderEffects.new(1))
+		"177168ce89f506ae730d6a24e3ec0bc8":
+			processor.register_attack_effect(effect_id, CSV9CEffects.AttackEvolveFromDeck.new(0))
+		"896c85e6588f5e35909fd0969201be21":
+			processor.register_effect(effect_id, CSV10CEffects.AbilityPreventDamageFromMechanic.new(PackedStringArray(["ex"])))
+			processor.register_attack_effect(effect_id, AttackIgnoreDefenderEffects.new())
+		"f748abbbcfb10752c325aeecf4eb0903":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackLookAtOpponentPrize.new(0))
+		"3416dbe73db67a8538a2fb9b2e9610ec":
+			processor.register_attack_effect(effect_id, CSV9CEffects.AttackHealSelf.new(10, 0))
+		"f3c78cc77685fbe6dd76f66795e8a017": # CSV7C_102 Cutiefly
+			processor.replace_attack_effects(effect_id, [CSV9CEffects.AttackHealSelf.new(10, 0)])
+		"e2ee371632f10e68b3bba36e35aedc1b": # CSV7C_103 Ribombee
+			processor.replace_attack_effects(effect_id, [_instantiate_effect(AttackDelayedExtraPrizeNextOwnTurnEffect, [2, 0])])
+		"43543442a95ed97f78dc11922cd57534": # CSV8C_156 Dipplin
+			processor.replace_attack_effects(effect_id, [CSV10CEffects.AttackForceOutThenDamage.new(70, 0)])
+		"a7b6cab27a9565d3f2a312cf22248b2b":
+			processor.register_attack_effect(effect_id, CSV9CEffects.AttackReturnEnergyToHand.new(0))
+		"14a217d892bfd9ebc8176becdcbed5aa":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackDiscardSixBasicEnergyKnockout.new("G", 6, 0))
+		"202a2ada2b445c1f931500be9fca056e":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackFixedCoinFlipDamageEffect, [3, 10, 10, 0, processor.coin_flipper]))
+		"98ed625f5d517d3f449265b176a5f2f0":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackCoinFlipBonusAndHeal.new(30, 30, 0, processor.coin_flipper))
+		"c53aaef004359c485dc8b653308d0a20":
+			processor.register_effect(effect_id, CSV10CEffects.AbilitySwitchSelfFromBench.new())
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackBonusIfDefenderMechanicEffect, [90, "ex", 0]))
+		"04e3456f8b777e4367990c68429bcb39":
+			processor.register_attack_effect(effect_id, EffectSelfDamage.new(10, 0))
+		"dcef9009286ec27896171611aca69f5a":
+			processor.register_effect(effect_id, CSV10CEffects.AbilityAttachBasicEnergyFromDiscardToSelf.new())
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackOwnFieldNamedPokemonCountDamage.new(30, PackedStringArray(["火箭队的", "Team Rocket's "]), 0))
+		"de7b953c01ccb40c67b2633c97a3d743":
+			processor.register_attack_effect(effect_id, CSV9CEffects.AttackHealOwnPokemon.new(40, 0))
+		"158981f07985a13c7ea6990821377019":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackRepeatedTargetDamage.new(6, 20, 0))
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackClearOwnStatusEffect, [1]))
+		"6d75de093359df96ae452146265a47e5":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackFixedCoinFlipDamageEffect, [2, 10, 10, 0, processor.coin_flipper]))
+		"4993380edb7f82c1011f2878ac217c62":
+			processor.register_effect(effect_id, CSV10CEffects.AbilityDrawCardsOncePerTurn.new(1))
+		"76c09e77399197ff92643a298e999abc":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackCoinFlipApplyStatusEffect, ["burned", processor.coin_flipper]))
+		"efcbee0e4d6618efd25ec0ddd7801411":
+			processor.register_effect(effect_id, CSV10CEffects.AbilityBurnDamageBonus.new(30))
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackCoinFlipApplyStatusEffect, ["burned", processor.coin_flipper]))
+		"453285d9bb2986c6603cbae746502b97":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackReduceDamageNextTurnEffect, [50, 0]))
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackDiscardTeamRocketEnergyAndOpponentActive.new(1))
+		"37286bb1c41e2a5ea5d647b9c0e974f9":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackDiscardAttachedEnergyFromSelf, [1, 0]))
+		"3e4c565939e331574817cf3918c28725":
+			processor.register_effect(effect_id, CSV10CEffects.AbilitySearchNamedCard.new(["阿响的冒险", "Ethan's Adventure"]))
+		"58b6393e8518ece9660234700f511a22":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackDiscardPileNamedCardCountDamage.new(60, ["阿响的冒险", "Ethan's Adventure"], 0))
+		"1eeea0dcde15f8d7bd8d2ad0a44ee583":
+			processor.register_effect(effect_id, _instantiate_effect(AbilityNoEnergyFreeRetreatEffect))
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackDiscardFireEnergyFromSelfMultiplier.new(70, 5, 0))
+		"18e2f69b20cb18e73f86a78ba7a15e6b":
+			processor.register_attack_effect(effect_id, EffectApplyStatus.new("burned", false, 0))
+			processor.register_attack_effect(effect_id, EffectApplyStatus.new("confused", false, 0))
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackDiscardAttachedEnergyFromSelf, [1, 1]))
+		"23d228f7053a7314a2ee5f651f38a3cb":
+			processor.register_effect(effect_id, CSV10CEffects.AbilityAttachFireToBenchedEthansPokemon.new(2))
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackHealAllOwnPokemon.new(50, 0))
+		"e6962cb473824c61448412bbb29b0313":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackDrawCardsEffect, [1, 0]))
+		"aa3e6e7b35d94f4cfc99d9bb7ba5ddc3":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackFixedCoinFlipDamageEffect, [2, 40, 40, 1, processor.coin_flipper]))
+		"d66a01f98e15b770b2c4bd1372382d4c":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackDiscardTwoEnergyThenBenchDamage.new(120, 1))
+		"7e9ec2af31b9db78282706bfd8572822":
+			processor.register_attack_effect(effect_id, EffectApplyStatus.new("burned", false, 0))
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackOwnFieldToolCountDamage.new(30, 1))
+		"26c746f169b803e490f3d0a92ca94412":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackOpponentDiscardBasicEnergyCountDamageEffect, [30, 0, true]))
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackDiscardAllAttachedEnergyFromSelfEffect, [1]))
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackSelectOpponentBenchDamageEffect, [90, 1, 1]))
+		"075fe490ef98a74bc6f880be9ebd75de":
+			processor.register_effect(effect_id, CSV10CEffects.AbilityBurnOpponentActiveOncePerTurn.new())
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackMoveAttachedEnergyToOwnBenchEffect, [1, "", 0]))
+		"e441a28267f0304f38448bc267a3e61d", "dd11778be441f4d8e5e1e103985a99fc":
+			processor.register_effect(effect_id, CSV10CEffects.AbilityDamp.new())
+			if effect_id == "dd11778be441f4d8e5e1e103985a99fc":
+				processor.register_attack_effect(effect_id, AttackEnergyCountDamage.new("W", 20, false, 0))
+		"2bcf3838c9c3a9d2c35839cf2b438825":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackCoinFlipApplyStatusEffect, ["paralyzed", processor.coin_flipper]))
+		"3c0f4c53095033699fd48f27d59e50bd":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackEvolvedFromNamedPokemonBonus.new(80, ["小霞的海星星", "Misty's Staryu"], 0))
+		"711a40348dc94efcdca55d07e19e8b24":
+			processor.register_effect(effect_id, AbilityBenchImmune.new())
+		"1ff15233f8c2c9c7221d660c0d0bfa99":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackMillTopAndCountNamedPokemon.new(7, 70, ["小霞的", "Misty's "], 0))
+		"5a6e590eac6f7b2b7ab99bfc3423566f":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackSearchNamedPokemonToHand.new(3, ["小霞的", "Misty's "], 0))
+		"f1bcec657dd292b21b42b8bdf252c2e5":
+			var articuno_attach := AttackSearchAndAttach.new("W", 2, "deck_search", 0, "self")
+			_bind_attack_index_if_supported(articuno_attach, 0)
+			processor.register_attack_effect(effect_id, articuno_attach)
+		"4b981eb8556357e2b5b3a7eea4e26509":
+			processor.register_effect(effect_id, CSV10CEffects.AbilityBasicTeamRocketAttackEffectShield.new())
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackBonusIfAttachedNamedEnergy.new(60, ["火箭队能量", "Team Rocket Energy", "Team Rocket's Energy"], 0))
+		"c659322e8e05e2b1beccd3faecdd3613":
+			processor.register_attack_effect(effect_id, AttackEnergyCountDamage.new("W", 50, false, 0))
+		"378bdd2ac733acdbaff10a974fb78535":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackCoinFlipPreventDamageAndEffectsNextTurnEffect, [processor.coin_flipper, 0]))
+		"dd5b72f20a205142f9255a3475ed6b44":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackSelectOpponentBenchDamageEffect, [30, 2, 0]))
+		"40fc3dee60f8f43bc3ba0e28ada7ccbf":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackReduceDamageNextTurnEffect, [10]))
+		"d9d5cb5f60e71c0dfe3d30cda483ff7d":
+			processor.register_effect(effect_id, CSV10CEffects.AbilityReturnBasicWaterOnAttackKnockout.new())
+		"48b71a18d752ba1f53ed8f22836e30df":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackAttachWaterFromHandMultiplier.new(30, 0))
+		"3541003c6369be81bc29a74acade3e7f":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackHealAllOwnPokemon.new(10, 0))
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackOwnFieldToolCountDamage.new(30, 1))
+		"2c6aefef00bbd83125f4e927590d5ac1":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackNamedFieldEnergyCountBonus.new("L", 20, ["奇树的", "Iono's "], 0))
+		"4ea206793d0e1406c9a3dabd94d254c2":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackSelfDamageThenCoinKnockout.new(100, 0, processor.coin_flipper))
+		"104442f76485b0b3e62a3f5ec7c1a73d":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackTwoOpponentPokemonDamage.new(50, 2, 0))
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackBonusIfExcessEnergy.new(2, 100, 1))
+		"bbd4dcdc5cd9540a5c4401e9afc70ab5":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackMoveOpponentActiveEnergyToBench.new(0))
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackBonusIfAttachedNamedEnergy.new(60, ["火箭队能量", "Team Rocket Energy", "Team Rocket's Energy"], 1))
+		"7a86e48911e95a8ab9261bb2bf7792ab":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackDrawCardsEffect, [1, 0]))
+		"0207d5b8e1c8805ce95f7bc0c4fde3c8":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackSearchDeckToHandEffect, [1, "Item", 0]))
+		"5b5509b26b73c832a275cd514cc70c00":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackCoinFlipApplyStatusEffect, ["paralyzed", processor.coin_flipper]))
+		"abcbd04c4d2233f0eb02c5cc25208707":
+			processor.register_effect(effect_id, CSV10CEffects.AbilityDamageOpponentEvolutionFromHand.new(4))
+		"3a7164c7a64b6fe77f4f480326b646e9":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackTargetOwnBenchDamageEffect, [40, 1]))
+		"331b1b7005ab09cedc0b25b1b9b94f7c":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackDiscardOpponentToolThenParalyze.new(0))
+		"794c8875529dca289781ae3fd80462de":
+			processor.register_attack_effect(effect_id, CSV10CEffects.AttackDiscardAllEnergyDamageBenchedEx.new(210, 1))
+		"a8f4d760e73c1e9fc124498f3bb3113f":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackCoinFlipBonusDamageEffect, [20, 0, processor.coin_flipper]))
+		"b540fb36a187e1d05008e3be61084e81":
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackChooseOpponentPokemonDamageCountersEffect, [9, 1]))
+			processor.register_attack_effect(effect_id, _instantiate_effect(AttackSelfAllAttacksLockNextTurnEffect, [1]))
 		"f6baf0c4c60ff47c7f836c1271f40cb3":
 			var snorunt_astonish := _instantiate_effect(AttackMoveOpponentHandCardToDeckEffect)
 			_bind_attack_index_if_supported(snorunt_astonish, 0)
@@ -855,6 +1180,19 @@ static func _register_pokemon_effect_overrides(processor: EffectProcessor, effec
 		"7580acd5669bac12cb1af8007d2e6a6a":
 			processor.register_effect(effect_id, AbilityFestivalLead.new())
 			processor.register_attack_effect(effect_id, _instantiate_effect(AttackCoinFlipDiscardOpponentActiveEnergyEffect, [0, processor.coin_flipper]))
+		"c03588e3709ba32ad3c63409b64bdf2c":
+			processor.register_effect(effect_id, AbilityFestivalLead.new())
+			processor.replace_attack_effects(effect_id, [_instantiate_effect(AttackDrawCardsEffect, [2, 0])])
+		"cd3b65c57a50f301db65efd05d7d79e3":
+			processor.replace_attack_effects(effect_id, [
+				_instantiate_effect(AttackDamageAllOpponentMechanicEffect, [60, "ex", 0]),
+				_instantiate_effect(AttackSelfAllAttacksLockNextTurnEffect, [1]),
+			])
+		"bbdb7b20fc7c4292acad64687c1ef318":
+			processor.replace_attack_effects(effect_id, [
+				_instantiate_effect(AttackSearchBasicPokemonToBenchEffect, [3, 0]),
+				_instantiate_effect(AttackOptionalReturnSelfAllCardsToHandEffect, [1]),
+			])
 		"c2d6b5ec0bc365112105fea079a22fd7":
 			processor.register_attack_effect(effect_id, EffectSelfDamage.new(10, 0))
 		"f189ac39dca6332f0b3af7b65cea8220":
@@ -1130,6 +1468,8 @@ static func _register_items(processor: EffectProcessor) -> void:
 	processor.register_effect("77a259dbcc81481b6d06e3fc18f29c3c", _instantiate_effect(EffectCrushingHammerEffect, [processor.coin_flipper]))
 	processor.register_effect("a13ba21d54c2f0e8ea4f7d5b2ca37380", _instantiate_effect(EffectLookBottomCardsEffect, [7, "Pokemon", 1]))
 	processor.register_effect("23ee27488d0c1317557a3106a1fc7db3", _instantiate_effect(EffectEnhancedHammerEffect))
+	# 强夺机械臂：查看完整对手手牌，选择1张宝可梦放到牌库下方
+	processor.register_effect("203a0c4b978c8638a081a5cf05125230", _instantiate_effect(EffectGrabberEffect))
 	processor.register_effect("5ad6b7f0c1b9da35cd0d284de31b65a3", _instantiate_effect(EffectLetterOfEncouragementEffect))
 	processor.register_effect("9c90d75a1cb539e68db4c94e8552884a", _instantiate_effect("res://scripts/effects/trainer_effects/CSV9C176EnergySearchPro.gd"))
 	processor.register_effect("e8db81c59ba75ebb6ecf44f7b8519f74", _instantiate_effect("res://scripts/effects/trainer_effects/CSV9C178GlassTrumpet.gd"))
@@ -1142,6 +1482,8 @@ static func _register_items(processor: EffectProcessor) -> void:
 ## ==================== 支援者卡注册（register_effect）====================
 
 static func _register_supporters(processor: EffectProcessor) -> void:
+	processor.register_effect("b54276b42598426febfe34bb67d5f075", _instantiate_effect(EffectTeamStarGruntEffect))
+	processor.register_effect("565a02f4e75076963c6a884ae3622ff1", _instantiate_effect(EffectSurferEffect))
 	# 派帕
 	processor.register_effect("5bdbc985f9aa2e6f248b53f6f35d1d37", EffectArven.new())
 	# 弗图博士的剧本
@@ -1170,7 +1512,7 @@ static func _register_supporters(processor: EffectProcessor) -> void:
 	# Lance
 	processor.register_effect("2df65fcd5de0d9d9e24486b059981cdf", _instantiate_effect(EffectLanceEffect))
 	# Cyllene
-	processor.register_effect("e5c317e428f0cfd885b53d4d058b5d5b", _instantiate_effect(EffectCylleneEffect))
+	processor.register_effect("e5c317e428f0cfd885b53d4d058b5d5b", _instantiate_effect(EffectCylleneEffect, [processor.coin_flipper]))
 	# Mela
 	processor.register_effect("f9162d9c9d98c74523257f17dcb6053b", _instantiate_effect(EffectMelaEffect))
 	# Professor Sada's Vitality
@@ -1216,6 +1558,8 @@ static func _register_supporters(processor: EffectProcessor) -> void:
 ## ==================== 道具卡注册（register_effect）====================
 
 static func _register_tools(processor: EffectProcessor) -> void:
+	processor.register_effect("6d4d9b954e3a2cbad2ae1e0bfad2305a", _instantiate_effect(EffectGravityGemstoneEffect))
+	processor.register_effect("76ed73e869ac742e97ea521f200a360e", _instantiate_effect(EffectLuckyHelmetEffect))
 	processor.register_effect("0ad0108e5ab1346d88f6ce11b75028d7", _instantiate_effect(EffectSupereffectiveGlassesEffect))
 	processor.register_effect("8da8631aa1827b122ec65b712939ad48", _instantiate_effect(EffectToolAncientBoosterEnergyCapsuleEffect))
 	# 极限腰带：对ex伤害+50
@@ -1236,6 +1580,7 @@ static func _register_tools(processor: EffectProcessor) -> void:
 	# 紧急滑板
 	processor.register_effect("0b4cc131a19862f92acf71494f29a0ed", EffectToolRescueBoard.new())
 	processor.register_effect("cc0c7efeba2b7c70d81636e3293d695f", EffectToolRetreatModifier.new(-2))
+	processor.register_effect("55fc891681dd9731f7206cd75e908704", EffectToolRetreatModifier.new(-2))
 	# Sparkling Crystal
 	processor.register_effect("12164ed03296d2df4ef6d0fa8b5f8aae", _instantiate_effect(EffectSparklingCrystalEffect))
 	processor.register_effect("cd9192e99ba06596352434d53223514f", EffectToolHPModifier.new(100))
@@ -1260,6 +1605,8 @@ static func _register_tools(processor: EffectProcessor) -> void:
 ## ==================== 竞技场卡注册（register_effect）====================
 
 static func _register_stadiums(processor: EffectProcessor) -> void:
+	processor.register_effect("ceac9ee87d5850880f7438665925dbd2", _instantiate_effect(EffectCalamitousSnowyMountainEffect))
+	processor.register_effect("6697150282b5d32d026ce20a993b4b53", _instantiate_effect(EffectNeutralizationZoneEffect))
 	processor.register_effect("16a6fb86a8ebd1cffc6f171250057d5c", _instantiate_effect(EffectPerilousJungleEffect))
 	# 崩塌的竞技场
 	processor.register_effect("fb3628071280487676f79281696ffbd9", EffectCollapsedStadium.new())
@@ -1633,11 +1980,11 @@ static func get_registered_count() -> Dictionary:
 	# 物品卡数量（硬编码，与 _register_items 保持同步）
 	var items_count: int = 48
 	# 支援者卡数量（硬编码，与 _register_supporters 保持同步）
-	var supporters_count: int = 40
+	var supporters_count: int = 42
 	# 道具数量（硬编码，与 _register_tools 保持同步）
-	var tools_count: int = 25
+	var tools_count: int = 27
 	# 竞技场数量（硬编码，与 _register_stadiums 保持同步）
-	var stadiums_count: int = 19
+	var stadiums_count: int = 20
 	# 特殊能量数量（硬编码，与 _register_special_energies 保持同步）
 	var energies_count: int = 12
 

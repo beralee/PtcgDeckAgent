@@ -1,0 +1,66 @@
+{
+    "name":  "力壮鸡",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  " 烈焰 20\n\n\n【火】 二连踢 40×\n抛掷2次硬币，造成正面次数×40伤害。\n\n",
+    "yoren_code":  "P256",
+    "set_code":  "CSV10C",
+    "card_index":  "037",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "yuu",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "aa3e6e7b35d94f4cfc99d9bb7ba5ddc3",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/037.png",
+    "image_local_path":  "user://cards/images/CSV10C/037.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "R",
+    "stage":  "Stage 1",
+    "hp":  100,
+    "weakness_energy":  "W",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  2,
+    "evolves_from":  "火稚鸡",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "烈焰",
+                        "text":  "",
+                        "cost":  "C",
+                        "damage":  "20",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "二连踢",
+                        "text":  "抛掷2次硬币，造成正面次数×40伤害。",
+                        "cost":  "RC",
+                        "damage":  "40×",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

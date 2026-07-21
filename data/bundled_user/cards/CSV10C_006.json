@@ -1,0 +1,66 @@
+{
+    "name":  "切割洛托姆",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【草】 切割利刃 20\n将场上的竞技场放于弃牌区。\n\n 配件秀 30×\n造成自己所有宝可梦身上放有的「宝可梦道具」数量×30伤害。\n\n",
+    "yoren_code":  "P479",
+    "set_code":  "CSV10C",
+    "card_index":  "006",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "Rianti Hidayat",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "3275565e49f6b7ceb38f0e7d46566110",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/006.png",
+    "image_local_path":  "user://cards/images/CSV10C/006.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "G",
+    "stage":  "Basic",
+    "hp":  70,
+    "weakness_energy":  "R",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "切割利刃",
+                        "text":  "将场上的竞技场放于弃牌区。",
+                        "cost":  "G",
+                        "damage":  "20",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "配件秀",
+                        "text":  "造成自己所有宝可梦身上放有的「宝可梦道具」数量×30伤害。",
+                        "cost":  "CC",
+                        "damage":  "30×",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

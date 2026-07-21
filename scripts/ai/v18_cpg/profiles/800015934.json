@@ -1,0 +1,165 @@
+{
+	"profile_version": 14,
+	"semantic_version": 1,
+	"risk_posture": "safe",
+	"switch_margin": 90.0,
+	"expected_regret_threshold": 82.0,
+	"initial_response_token_budget": 420,
+	"delta_response_token_budget": 180,
+	"turn_visible_wait_budget_ms": 6500,
+	"cold_request_estimate_ms": 5000,
+	"max_policy_nodes": 7,
+	"protected_roles": [
+		"toolbox_attacker",
+		"typed_energy",
+		"bench_space",
+		"pivot",
+		"next_attacker"
+	],
+	"strategic_priorities": [
+		{
+			"priority": 1,
+			"goal": "minimum_resource_ko",
+			"when_all": [{"fact": "attack.ko_available", "op": "==", "value": true}],
+			"prefer_routes": ["route:attack_ko", "route:gust"],
+			"avoid_routes": ["route:information", "route:noctowl_search", "route:develop"],
+			"preserve_roles": ["typed_energy", "next_attacker"]
+		},
+		{
+			"priority": 2,
+			"goal": "prize_closeout",
+			"when_all": [
+				{"fact": "resources.prizes_remaining", "op": "<=", "value": 2},
+				{"fact": "attack.ko_available", "op": "==", "value": true}
+			],
+			"prefer_routes": ["route:attack_ko", "route:gust"],
+			"avoid_routes": ["route:information", "route:noctowl_search"],
+			"preserve_roles": ["pivot"]
+		},
+		{
+			"priority": 3,
+			"goal": "route_completion",
+			"when_all": [
+				{"fact": "attack.ready", "op": "==", "value": false},
+				{"fact": "board.has_tera", "op": "==", "value": true}
+			],
+			"prefer_routes": ["route:noctowl_search", "route:evolve", "route:energy_commit", "route:accelerate"],
+			"avoid_routes": ["route:end_turn"],
+			"preserve_roles": ["bench_space", "typed_energy"]
+		},
+		{
+			"priority": 4,
+			"goal": "typed_energy_continuity",
+			"when_all": [{"fact": "turn.energy_available", "op": "==", "value": true}],
+			"prefer_routes": ["route:energy_commit", "route:accelerate"],
+			"avoid_routes": [],
+			"preserve_roles": ["typed_energy", "next_attacker"]
+		},
+		{
+			"priority": 5,
+			"goal": "bench_space_preservation",
+			"when_all": [{"fact": "board.bench_full", "op": "==", "value": false}],
+			"prefer_routes": ["route:evolve", "route:stadium", "route:develop"],
+			"avoid_routes": [],
+			"preserve_roles": ["bench_space", "toolbox_attacker", "pivot"]
+		},
+		{
+			"priority": 6,
+			"goal": "low_deck_safety",
+			"when_all": [{"fact": "resources.deck_low", "op": "==", "value": true}],
+			"prefer_routes": ["route:attack_ko", "route:attack_pressure", "route:energy_commit", "route:pivot"],
+			"avoid_routes": ["route:information", "route:noctowl_search", "route:opening_search"],
+			"preserve_roles": ["recovery", "next_attacker"]
+		}
+	],
+	"route_preferences": {
+		"model_consideration_margin": 240.0,
+		"route_biases": {
+			"route:noctowl_search": 120.0,
+			"route:energy_commit": 90.0,
+			"route:accelerate": 100.0,
+			"route:attack_ko": 180.0,
+			"route:attack_pressure": 80.0,
+			"route:information": -60.0,
+			"route:end_turn": -100.0
+		}
+	},
+	"safety": {
+		"max_switch_gap": 240.0,
+		"block_search_when_deck_low": true,
+		"low_deck_threshold": 8,
+		"preserve_bench_slots": 1,
+		"stop_optional_draw_when_attack_ready": true,
+		"require_model_execution_certificate": true
+	},
+	"noctowl_pair_roles": [
+		["energy_access", "energy_mover"],
+		["supporter_acceleration", "energy_mover"],
+		["typed_energy_access", "energy_mover"],
+		["stadium", "pokemon_search"],
+		["pivot", "recovery"]
+	],
+	"module_parameters": {
+		"tera_noctowl_search": {
+			"low_deck_threshold": 8,
+			"critical_deck_threshold": 5,
+			"bench_slots_to_reserve": 1,
+			"minimum_attack_commitment": true,
+			"preserve_distinct_typed_energy": true,
+			"verify_distinct_typed_energy_attachment": true,
+			"supporter_unavailable_penalty": 900.0,
+			"secured_attack_churn_penalty": 650.0,
+			"secured_attack_preserve_bonus": 420.0,
+			"secured_attack_churn_roles": ["energy_access", "energy_mover", "draw_engine", "pokemon_search"],
+			"secured_attack_preserve_roles": ["gust", "recovery", "pivot"],
+			"full_bench_expansion_pair_bonus": 760.0,
+			"full_bench_dead_search_penalty": 950.0,
+			"allow_explicit_empty_when_deck_critical": true,
+			"low_deck_search_role_penalty": 420.0,
+			"low_deck_preserve_role_bonus": 300.0,
+			"energy_mover_requires_board_energy": true,
+			"dead_energy_mover_penalty": 1100.0,
+			"verify_energy_handoff_from_end_turn": true,
+			"verified_energy_mover_uids": ["CSVH1AC_008"],
+			"energy_bank_uids": ["CSV9C_078", "CSV8C_135"],
+			"energy_handoff_target_uids": [
+				"CSV9C_175", "CSV8C_067", "CSV9C_054", "CSV8C_172", "CSV8C_028"
+			],
+			"energy_rescue_source_uids": [
+				"CSV9C_175", "CSV8C_067", "CSV9C_054", "CSV8C_172", "CSV8C_028"
+			],
+			"energy_rescue_target_priority": [
+				"CSV8C_172", "CSV8C_028", "CSV9C_054", "CSV8C_067", "CSV9C_175"
+			],
+			"energy_handoff_min_bank_energy": 1,
+			"energy_handoff_max_target_energy": 0,
+			"energy_rescue_active_hp_threshold": 60,
+			"energy_rescue_min_opponent_energy": 2,
+			"verify_tera_expansion_basic_search": true,
+			"verify_tera_expansion_from_hand": true,
+			"tera_expansion_stadium_uids": ["CSV9C_207"],
+			"tera_expansion_target_priority": [
+				"CSV8C_028", "CSV8C_067", "CSV9C_175", "CSV9C_054"
+			],
+			"typed_energy_priority": ["W", "P", "M", "L", "G"],
+			"reserve_by_symbol": {"G": 1, "W": 1, "P": 1, "M": 1, "L": 1},
+			"pair_roles_by_route": {
+				"route:energy_commit": [
+					["energy_access", "energy_mover"],
+					["supporter_acceleration", "energy_mover"]
+				],
+				"route:accelerate": [
+					["supporter_acceleration", "energy_mover"],
+					["typed_energy_access", "energy_mover"]
+				],
+				"route:develop": [
+					["stadium", "pokemon_search"],
+					["pokemon_search", "recovery"]
+				],
+				"route:pivot": [
+					["pivot", "recovery"]
+				]
+			}
+		}
+	}
+}

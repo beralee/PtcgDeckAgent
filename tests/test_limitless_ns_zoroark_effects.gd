@@ -120,6 +120,7 @@ func test_night_joker_copies_selected_attack_from_own_benched_ns_pokemon() -> St
 	var second_attack: Dictionary = second_option.get("attack", {}) if second_option.get("attack", {}) is Dictionary else {}
 	var selected_source_card: CardInstance = selected.get("source_card", null) as CardInstance
 	var first_action_item: Dictionary = action_items[0] if not action_items.is_empty() and action_items[0] is Dictionary else {}
+	var second_action_item: Dictionary = action_items[1] if action_items.size() > 1 and action_items[1] is Dictionary else {}
 	var used := gsm.use_attack(0, 0, [{AttackCopyOwnBenchNamedPokemonAttackScript.STEP_ID: [selected]}])
 
 	return run_checks([
@@ -142,8 +143,56 @@ func test_night_joker_copies_selected_attack_from_own_benched_ns_pokemon() -> St
 		assert_false(str(first_action_item.get("body", "")).contains("弃牌区"), "Night Joker action HUD body should not use the obsolete discard-pile wording"),
 		assert_false(str(first_action_item.get("meta", "")).contains("伤害"), "Night Joker action HUD meta should match Apex Dragon source/damage style"),
 		assert_str_contains(str(first_action_item.get("body", "")), "伤害指示物", "Night Joker action HUD body should use translated copied attack text"),
+		assert_eq(str(first_action_item.get("cost", "")), "RL", "Night Joker action HUD should show Powerful Rage's printed source cost instead of Zoroark's DD cost"),
+		assert_eq(str(second_action_item.get("cost", "")), "RRLC", "Night Joker action HUD should show Virtuous Flame's printed source cost"),
+		assert_eq(str(second_action_item.get("body", "")), "无额外效果。", "A copied attack without rules text should not repeat Night Joker's own copy description"),
 		assert_true(used, "Night Joker should be usable with DD attached"),
 		assert_eq(defender.damage_counters, 60, "Copied Powerful Rage should use Zoroark's own 3 damage counters for 60 damage"),
+	])
+
+
+func test_real_csv10c_145_night_joker_hud_uses_benched_source_attack_details() -> String:
+	var zoroark_card: CardData = CardDatabase.get_card("CSV10C", "145")
+	var reshiram_card: CardData = CardDatabase.get_card("CSV10C", "166")
+	if zoroark_card == null or reshiram_card == null:
+		return "CSV10C_145 or CSV10C_166 fixture missing"
+	var gsm := GameStateMachine.new()
+	var state := GameState.new()
+	state.current_player_index = 0
+	state.first_player_index = 1
+	state.turn_number = 2
+	for player_index: int in 2:
+		var player := PlayerState.new()
+		player.player_index = player_index
+		state.players.append(player)
+	var zoroark := _make_slot(zoroark_card, 0)
+	var reshiram := _make_slot(reshiram_card, 0)
+	state.players[0].active_pokemon = zoroark
+	state.players[0].bench.append(reshiram)
+	gsm.game_state = state
+	gsm.effect_processor.register_pokemon_card(zoroark_card)
+	gsm.effect_processor.register_pokemon_card(reshiram_card)
+	var effects := gsm.effect_processor.get_attack_effects_for_slot(zoroark, 0)
+	var copy_effect: BaseEffect = effects[0] if not effects.is_empty() else null
+	var steps: Array[Dictionary] = copy_effect.get_attack_interaction_steps(
+		zoroark.get_top_card(),
+		zoroark.get_attacks()[0],
+		state
+	) if copy_effect != null else []
+	var action_items: Array = steps[0].get("action_items", []) if not steps.is_empty() else []
+	var powerful_rage: Dictionary = action_items[0] if not action_items.is_empty() and action_items[0] is Dictionary else {}
+	var virtuous_flame: Dictionary = action_items[1] if action_items.size() > 1 and action_items[1] is Dictionary else {}
+
+	return run_checks([
+		assert_not_null(copy_effect, "Real CSV10C_145 should register Night Joker's Bench copy effect"),
+		assert_eq(action_items.size(), 2, "Real CSV10C_166 should contribute both printed attacks to Night Joker's HUD"),
+		assert_eq(str(powerful_rage.get("title", "")), "力量愤怒", "HUD should show the Benched source attack name"),
+		assert_eq(str(powerful_rage.get("cost", "")), "RL", "HUD should show Powerful Rage's printed cost instead of Night Joker's DD"),
+		assert_eq(str(powerful_rage.get("meta", "")), "N的莱希拉姆  20×", "HUD should show the source Pokemon and printed damage"),
+		assert_str_contains(str(powerful_rage.get("body", "")), "伤害指示物", "HUD should show Powerful Rage's detailed effect text"),
+		assert_eq(str(virtuous_flame.get("title", "")), "纯真火焰", "HUD should show the second Benched source attack name"),
+		assert_eq(str(virtuous_flame.get("cost", "")), "RRLC", "HUD should show Pure Flame's printed source cost"),
+		assert_eq(str(virtuous_flame.get("body", "")), "无额外效果。", "A source attack without rules text should show an explicit empty detail"),
 	])
 
 
@@ -361,6 +410,101 @@ func test_ns_zoroark_strategy_preserves_reshiram_as_benched_night_joker_source()
 	return run_checks([
 		assert_gt(darkness_priority, reshiram_priority, "Darkness Energy should be discarded before N's Reshiram because Night Joker copies Benched N's Pokemon"),
 		assert_gt(generic_priority, reshiram_priority, "Generic filler should be discarded before N's Reshiram so Reshiram can stay benched as Night Joker source"),
+	])
+
+
+func test_ns_zoroark_strategy_preserves_real_reversal_energy_by_effect_id() -> String:
+	var rig := _make_ns_zoroark_rig()
+	var state: GameState = (rig["gsm"] as GameStateMachine).game_state
+	var player: PlayerState = state.players[0]
+	var strategy := DeckStrategyNsZoroarkScript.new()
+	var reversal_data: CardData = CardDatabase.get_card("CSV2C", "128")
+	if reversal_data == null:
+		return "CSV2C_128 fixture missing"
+	var id_only_data := reversal_data.duplicate(true) as CardData
+	id_only_data.name = "ID-only special Energy"
+	id_only_data.name_en = ""
+	id_only_data.name_zh = ""
+	var reversal := CardInstance.create(id_only_data, 0)
+	var filler := CardInstance.create(_make_pokemon_card("Trade Fuel", "Trade Fuel", "C", 60, "", "Basic", "", []), 0)
+	player.hand.assign([reversal, filler])
+	var reversal_priority: int = strategy.get_discard_priority_contextual(reversal, state, 0)
+	var filler_priority: int = strategy.get_discard_priority_contextual(filler, state, 0)
+
+	return run_checks([
+		assert_eq(str(reversal_data.effect_id), "cbadb3473273c14cf667d495d44d111b", "The real CSV2C_128 effect ID should anchor Reversal Energy recognition"),
+		assert_true(reversal_priority < filler_priority, "Trade should preserve the only Reversal Energy even when only its real effect ID identifies it"),
+	])
+
+
+func test_ns_zoroark_strategy_trade_protects_the_only_manual_darkness_energy() -> String:
+	var rig := _make_ns_zoroark_rig()
+	var state: GameState = (rig["gsm"] as GameStateMachine).game_state
+	var player: PlayerState = state.players[0]
+	var strategy := DeckStrategyNsZoroarkScript.new()
+	player.bench.append(_make_slot(_make_ns_zorua_card(), 0))
+	var recoverable_energy := CardInstance.create(_make_energy_card("基本恶能量", "D"), 0)
+	var ready_filler := CardInstance.create(_make_pokemon_card("Ready Fuel", "Ready Fuel", "C", 60, "", "Basic", "", []), 0)
+	player.hand.assign([recoverable_energy, ready_filler])
+	var recoverable_priority: int = strategy.get_discard_priority_contextual(recoverable_energy, state, 0)
+	var ready_filler_priority: int = strategy.get_discard_priority_contextual(ready_filler, state, 0)
+
+	player.active_pokemon.attached_energy.resize(1)
+	var required_energy := CardInstance.create(_make_energy_card("基本恶能量", "D"), 0)
+	var launch_filler := CardInstance.create(_make_pokemon_card("Launch Fuel", "Launch Fuel", "C", 60, "", "Basic", "", []), 0)
+	player.hand.assign([required_energy, launch_filler])
+	var required_priority: int = strategy.get_discard_priority_contextual(required_energy, state, 0)
+	var launch_filler_priority: int = strategy.get_discard_priority_contextual(launch_filler, state, 0)
+
+	return run_checks([
+		assert_gt(recoverable_priority, ready_filler_priority, "Trade should seed a recoverable Darkness Energy after the Active Zoroark is funded"),
+		assert_true(required_priority < launch_filler_priority, "Trade should preserve the only Darkness Energy that completes the Active Zoroark's DD cost"),
+	])
+
+
+func test_ns_zoroark_strategy_predicts_and_selects_real_benched_n_attacks() -> String:
+	var rig := _make_ns_zoroark_rig()
+	var state: GameState = (rig["gsm"] as GameStateMachine).game_state
+	var player: PlayerState = state.players[0]
+	var strategy := DeckStrategyNsZoroarkScript.new()
+	var zoroark_data: CardData = CardDatabase.get_card("CSV10C", "145")
+	var reshiram_data: CardData = CardDatabase.get_card("CSV10C", "166")
+	if zoroark_data == null or reshiram_data == null:
+		return "CSV10C_145 or CSV10C_166 fixture missing"
+	var zoroark := _make_slot(zoroark_data, 0)
+	zoroark.attached_energy.assign([
+		CardInstance.create(_make_energy_card("基本恶能量", "D"), 0),
+		CardInstance.create(_make_energy_card("基本恶能量", "D"), 0),
+	])
+	var reshiram := _make_slot(reshiram_data, 0)
+	player.active_pokemon = zoroark
+	player.bench.assign([reshiram])
+	zoroark.damage_counters = 120
+	strategy.build_turn_plan(state, 0, {})
+	var rage_prediction: Dictionary = strategy.predict_attacker_damage(zoroark)
+	var rage_option := {"source_slot": reshiram, "attack": reshiram.get_attacks()[0]}
+	var flame_option := {"source_slot": reshiram, "attack": reshiram.get_attacks()[1]}
+	var rage_score: float = strategy.score_interaction_target(rage_option, {"id": "copied_attack"}, {"game_state": state, "player_index": 0})
+	var flame_score_at_high_damage: float = strategy.score_interaction_target(flame_option, {"id": "copied_attack"}, {"game_state": state, "player_index": 0})
+
+	zoroark.damage_counters = 20
+	strategy.build_turn_plan(state, 0, {})
+	var flame_prediction: Dictionary = strategy.predict_attacker_damage(zoroark)
+	var rage_score_at_low_damage: float = strategy.score_interaction_target(rage_option, {"id": "copied_attack"}, {"game_state": state, "player_index": 0})
+	var flame_score: float = strategy.score_interaction_target(flame_option, {"id": "copied_attack"}, {"game_state": state, "player_index": 0})
+	player.bench.clear()
+	strategy.build_turn_plan(state, 0, {})
+	var no_source_prediction: Dictionary = strategy.predict_attacker_damage(zoroark)
+
+	return run_checks([
+		assert_eq(int(rage_prediction.get("damage", 0)), 240, "Night Joker should predict Powerful Rage from Zoroark's live 120 damage"),
+		assert_true(bool(rage_prediction.get("can_attack", false)), "Two Darkness Energy plus a real Benched N attack source should make Night Joker live"),
+		assert_str_contains(str(rage_prediction.get("description", "")), str(reshiram.get_attacks()[0].get("name", "")), "The prediction should identify the copied attack"),
+		assert_gt(rage_score, flame_score_at_high_damage, "At 120 damage, Night Joker AI should choose the stronger live Powerful Rage copy"),
+		assert_eq(int(flame_prediction.get("damage", 0)), 170, "At low damage, Night Joker should predict the stable real Reshiram attack"),
+		assert_gt(flame_score, rage_score_at_low_damage, "At low damage, Night Joker AI should choose the stable 170-damage copy"),
+		assert_false(bool(no_source_prediction.get("can_attack", true)), "Night Joker should not predict a legal attack after its real Bench source leaves play"),
+		assert_eq(int(no_source_prediction.get("damage", -1)), 0, "Night Joker without a Benched N attack source should predict zero damage"),
 	])
 
 

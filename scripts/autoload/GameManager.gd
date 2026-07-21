@@ -36,7 +36,13 @@ var ai_deck_strategy: String = "generic"
 var first_player_choice: int = -1
 ## 对战背景资源路径
 var selected_battle_background: String = "res://assets/ui/background.png"
+# Stadium cards always drive the battle backdrop. This legacy field remains for
+# compatibility with older call sites and saved data, but is forced on when
+# preferences are loaded.
 var dynamic_stadium_background_enabled: bool = true
+## Cosmetic battle motion/VFX: zone flight, particles, attack VFX, field swaps,
+## draw reveals, and Pokemon ready demonstrations.
+var battle_effects_enabled: bool = true
 var selected_battle_music_id: String = "none"
 var battle_bgm_volume_percent: int = 20
 var battle_layout_mode: String = "auto"
@@ -81,6 +87,10 @@ const BATTLE_LAYOUT_DESKTOP_MIN_LANDSCAPE := Vector2i(640, 360)
 const BATTLE_LAYOUT_DESKTOP_MIN_PORTRAIT := Vector2i(360, 640)
 const BATTLE_SETUP_STARTUP_INPUT_SHIELD_DEFAULT_MSEC := 450
 const BATTLE_SETUP_STARTUP_INPUT_SHIELD_REQUEST_TTL_MSEC := 2000
+const AI_PROVIDER_ZENMUX := "zenmux"
+const AI_PROVIDER_DEEPSEEK := "deepseek"
+const ZENMUX_DEFAULT_ENDPOINT := "https://zenmux.ai/api/v1"
+const DEEPSEEK_DEFAULT_ENDPOINT := "https://api.deepseek.com"
 const DEFAULT_BATTLE_REVIEW_MODEL := "deepseek-v4-flash"
 const DEFAULT_AI_PERSONALITY := "是一个大逗比，臭牌篓子"
 const BATTLE_REVIEW_MOJIBAKE_CODEPOINT_MARKERS: Array[int] = [
@@ -91,8 +101,8 @@ const BATTLE_REVIEW_MOJIBAKE_CODEPOINT_MARKERS: Array[int] = [
 ]
 const SUPPORTED_BATTLE_REVIEW_MODELS: Array[Dictionary] = [
 	{
-		"id": "kimi-k2.6",
-		"label": "Kimi K2.6",
+		"id": "kimi-k3",
+		"label": "Kimi K3",
 	},
 	{
 		"id": "z-ai/glm-5.2",
@@ -596,6 +606,11 @@ func _current_non_battle_layout_viewport_size() -> Vector2:
 
 
 func _input(event: InputEvent) -> void:
+	# BattleScene owns its complete pointer pipeline. The compatibility bridge is a
+	# non-battle fallback and must never bypass battle modal input isolation.
+	if _has_active_battle_scene():
+		_touch_button_bridge_candidate = null
+		return
 	if event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
 		_handle_touch_button_bridge_at_position(touch.position, touch.pressed)
@@ -994,6 +1009,7 @@ func load_battle_setup_preferences() -> void:
 	battle_bgm_volume_percent = DEFAULT_BATTLE_BGM_VOLUME_PERCENT
 	battle_layout_mode = BATTLE_LAYOUT_AUTO
 	dynamic_stadium_background_enabled = true
+	battle_effects_enabled = true
 	if not FileAccess.file_exists(BATTLE_SETUP_SETTINGS_PATH):
 		return
 	var file := FileAccess.open(BATTLE_SETUP_SETTINGS_PATH, FileAccess.READ)
@@ -1008,7 +1024,11 @@ func load_battle_setup_preferences() -> void:
 	selected_battle_music_id = str(data.get("battle_music_id", selected_battle_music_id))
 	battle_bgm_volume_percent = resolve_battle_bgm_volume_percent_from_settings(data, battle_bgm_volume_percent)
 	battle_layout_mode = sanitize_battle_layout_mode(str(data.get("battle_layout_mode", battle_layout_mode)))
-	dynamic_stadium_background_enabled = bool(data.get("dynamic_stadium_background_enabled", dynamic_stadium_background_enabled))
+	# Dynamic Stadium backdrops are no longer optional. Do not migrate the old
+	# toggle into the new effects preference: an old disabled backdrop must not
+	# unexpectedly disable all battle animations after upgrading.
+	dynamic_stadium_background_enabled = true
+	battle_effects_enabled = bool(data.get("battle_effects_enabled", true))
 
 
 func resolve_battle_bgm_volume_percent_from_settings(data: Dictionary, fallback: int = DEFAULT_BATTLE_BGM_VOLUME_PERCENT) -> int:
@@ -1072,6 +1092,26 @@ func get_supported_battle_review_models() -> Array[Dictionary]:
 	return SUPPORTED_BATTLE_REVIEW_MODELS.duplicate(true)
 
 
+func get_supported_battle_review_models_for_provider(provider: String) -> Array[Dictionary]:
+	var normalized_provider := normalize_battle_review_provider(provider)
+	if normalized_provider != AI_PROVIDER_DEEPSEEK:
+		return get_supported_battle_review_models()
+	var models: Array[Dictionary] = []
+	for model: Dictionary in SUPPORTED_BATTLE_REVIEW_MODELS:
+		if str(model.get("id", "")) in ["deepseek-v4-flash", "deepseek-v4-pro"]:
+			models.append(model.duplicate(true))
+	return models
+
+
+func normalize_battle_review_provider(provider: String) -> String:
+	return AI_PROVIDER_DEEPSEEK if provider.strip_edges().to_lower() == AI_PROVIDER_DEEPSEEK else AI_PROVIDER_ZENMUX
+
+
+func get_default_battle_review_provider_config(provider: String) -> Dictionary:
+	var normalized_provider := normalize_battle_review_provider(provider)
+	return _default_battle_review_provider_configs().get(normalized_provider, {}).duplicate(true)
+
+
 func get_battle_review_model_label(model_id: String) -> String:
 	var normalized := normalize_battle_review_model(model_id)
 	for model: Dictionary in SUPPORTED_BATTLE_REVIEW_MODELS:
@@ -1083,6 +1123,8 @@ func get_battle_review_model_label(model_id: String) -> String:
 func normalize_battle_review_model(model_id: String) -> String:
 	var normalized := model_id.strip_edges()
 	match normalized:
+		"kimi-k2.6":
+			return "kimi-k3"
 		"z-ai/glm-5.1":
 			return "z-ai/glm-5.2"
 		"qwen/qwen3.6-plus":
@@ -1095,6 +1137,13 @@ func normalize_battle_review_model(model_id: String) -> String:
 		if str(model.get("id", "")) == normalized:
 			return normalized
 	return DEFAULT_BATTLE_REVIEW_MODEL
+
+
+func normalize_battle_review_model_for_provider(model_id: String, provider: String) -> String:
+	var normalized := normalize_battle_review_model(model_id)
+	if normalize_battle_review_provider(provider) == AI_PROVIDER_DEEPSEEK and normalized not in ["deepseek-v4-flash", "deepseek-v4-pro"]:
+		return DEFAULT_BATTLE_REVIEW_MODEL
+	return normalized
 
 
 func get_battle_review_api_config() -> Dictionary:
@@ -1126,20 +1175,30 @@ func _load_battle_review_api_config_from_path(path: String) -> Dictionary:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return config
 	var parsed_dict: Dictionary = parsed
+	var provider := normalize_battle_review_provider(_battle_review_config_text(parsed_dict.get("provider", AI_PROVIDER_ZENMUX), AI_PROVIDER_ZENMUX))
+	config["provider"] = provider
+	var parsed_provider_configs: Dictionary = parsed_dict.get("provider_configs", {}) if parsed_dict.get("provider_configs", {}) is Dictionary else {}
+	var parsed_active_profile: Dictionary = parsed_provider_configs.get(provider, {}) if parsed_provider_configs.get(provider, {}) is Dictionary else {}
 	for key: String in ["endpoint", "api_key", "ai_test_signature"]:
 		if parsed_dict.has(key):
 			config[key] = _battle_review_config_text(parsed_dict[key], str(config.get(key, "")))
+		elif key in ["endpoint", "api_key"] and parsed_active_profile.has(key):
+			config[key] = _battle_review_config_text(parsed_active_profile[key], str(config.get(key, "")))
 	if parsed_dict.has("ai_personality"):
 		config["ai_personality"] = _battle_review_personality_text(
 			parsed_dict["ai_personality"],
 			str(config.get("ai_personality", DEFAULT_AI_PERSONALITY))
 		)
 	if str(config.get("endpoint", "")).strip_edges() == "":
-		config["endpoint"] = "https://zenmux.ai/api/v1"
+		config["endpoint"] = DEEPSEEK_DEFAULT_ENDPOINT if provider == AI_PROVIDER_DEEPSEEK else ZENMUX_DEFAULT_ENDPOINT
 	if str(config.get("ai_personality", "")).strip_edges() == "":
 		config["ai_personality"] = DEFAULT_AI_PERSONALITY
-	if parsed_dict.has("model") and parsed_dict["model"] != null:
-		config["model"] = normalize_battle_review_model(_battle_review_config_text(parsed_dict["model"], str(config.get("model", DEFAULT_BATTLE_REVIEW_MODEL))))
+	var model_value: Variant = parsed_dict.get("model", parsed_active_profile.get("model", config.get("model", DEFAULT_BATTLE_REVIEW_MODEL)))
+	if model_value != null:
+		config["model"] = normalize_battle_review_model_for_provider(
+			_battle_review_config_text(model_value, str(config.get("model", DEFAULT_BATTLE_REVIEW_MODEL))),
+			provider
+		)
 	if parsed_dict.has("timeout_seconds"):
 		var timeout_value: Variant = parsed_dict["timeout_seconds"]
 		if timeout_value is int or timeout_value is float:
@@ -1148,6 +1207,13 @@ func _load_battle_review_api_config_from_path(path: String) -> Dictionary:
 			config["timeout_seconds"] = float(str(timeout_value).strip_edges())
 	if parsed_dict.has("ai_test_passed"):
 		config["ai_test_passed"] = bool(parsed_dict["ai_test_passed"])
+	var provider_configs := _normalize_battle_review_provider_configs(parsed_provider_configs)
+	provider_configs[provider] = {
+		"endpoint": str(config.get("endpoint", "")),
+		"api_key": str(config.get("api_key", "")),
+		"model": str(config.get("model", DEFAULT_BATTLE_REVIEW_MODEL)),
+	}
+	config["provider_configs"] = provider_configs
 	return config
 
 
@@ -1209,14 +1275,50 @@ func _canonical_battle_review_api_config_path() -> String:
 
 func _default_battle_review_api_config() -> Dictionary:
 	return {
-		"endpoint": "https://zenmux.ai/api/v1",
+		"provider": AI_PROVIDER_ZENMUX,
+		"endpoint": ZENMUX_DEFAULT_ENDPOINT,
 		"api_key": "",
 		"model": DEFAULT_BATTLE_REVIEW_MODEL,
+		"provider_configs": _default_battle_review_provider_configs(),
 		"timeout_seconds": 60.0,
 		"ai_personality": DEFAULT_AI_PERSONALITY,
 		"ai_test_passed": false,
 		"ai_test_signature": "",
 	}
+
+
+func _default_battle_review_provider_configs() -> Dictionary:
+	return {
+		AI_PROVIDER_ZENMUX: {
+			"endpoint": ZENMUX_DEFAULT_ENDPOINT,
+			"api_key": "",
+			"model": DEFAULT_BATTLE_REVIEW_MODEL,
+		},
+		AI_PROVIDER_DEEPSEEK: {
+			"endpoint": DEEPSEEK_DEFAULT_ENDPOINT,
+			"api_key": "",
+			"model": DEFAULT_BATTLE_REVIEW_MODEL,
+		},
+	}
+
+
+func _normalize_battle_review_provider_configs(parsed_profiles: Dictionary) -> Dictionary:
+	var normalized_profiles := _default_battle_review_provider_configs()
+	for provider: String in [AI_PROVIDER_ZENMUX, AI_PROVIDER_DEEPSEEK]:
+		var profile_variant: Variant = parsed_profiles.get(provider, {})
+		if not profile_variant is Dictionary:
+			continue
+		var profile := profile_variant as Dictionary
+		var defaults := normalized_profiles.get(provider, {}) as Dictionary
+		normalized_profiles[provider] = {
+			"endpoint": _battle_review_config_text(profile.get("endpoint", defaults.get("endpoint", "")), str(defaults.get("endpoint", ""))),
+			"api_key": _battle_review_config_text(profile.get("api_key", defaults.get("api_key", "")), str(defaults.get("api_key", ""))),
+			"model": normalize_battle_review_model_for_provider(
+				_battle_review_config_text(profile.get("model", defaults.get("model", DEFAULT_BATTLE_REVIEW_MODEL)), str(defaults.get("model", DEFAULT_BATTLE_REVIEW_MODEL))),
+				provider
+			),
+		}
+	return normalized_profiles
 
 
 func battle_review_ai_config_signature(config: Dictionary) -> String:
@@ -1281,7 +1383,7 @@ func set_tournament_selected_player_deck_id(deck_id: int) -> void:
 	tournament_selected_player_deck_id = deck_id
 
 
-func start_swiss_tournament(player_name: String, tournament_size: int) -> void:
+func start_swiss_tournament(player_name: String, tournament_size: int, tournament_format: String = "standard") -> void:
 	if tournament_selected_player_deck_id <= 0:
 		return
 	var tournament := SwissTournamentScript.new()
@@ -1290,7 +1392,8 @@ func start_swiss_tournament(player_name: String, tournament_size: int) -> void:
 		tournament_selected_player_deck_id,
 		tournament_size,
 		0,
-		is_battle_review_ai_ready_for_llm_opponents()
+		is_battle_review_ai_ready_for_llm_opponents(),
+		tournament_format
 	)
 	current_tournament = tournament
 	tournament_battle_in_progress = false

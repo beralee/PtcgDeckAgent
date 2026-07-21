@@ -1,0 +1,353 @@
+{
+  "cards": [
+    {
+      "count": 4,
+      "effect_id": "1bbd1874c0cc4c60d3f1128e8583d583",
+      "name": "竹兰的圆陆鲨",
+      "roles": [
+        "pokemon",
+        "opening_active_candidate",
+        "attacker",
+        "development_piece"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV10C_111"
+    },
+    {
+      "count": 3,
+      "effect_id": "b494c15a64405edbc24ed017733ad8a5",
+      "name": "竹兰的烈咬陆鲨ex",
+      "roles": [
+        "pokemon",
+        "signature_piece",
+        "energy_target",
+        "attacker",
+        "evolution_piece",
+        "search_target",
+        "ability_engine",
+        "stage2_dependency",
+        "partner_piece"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV10C_113"
+    },
+    {
+      "count": 4,
+      "effect_id": "23e6f24fc40bdb19384bc3c7822beea1",
+      "name": "竹兰的尖牙陆鲨",
+      "roles": [
+        "pokemon",
+        "evolution_piece",
+        "search_target",
+        "stage2_dependency"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV10C_112"
+    },
+    {
+      "count": 2,
+      "effect_id": "727c75c20bc176aedf17c8190ab91044",
+      "name": "竹兰的毒蔷薇",
+      "roles": [
+        "pokemon",
+        "development_piece"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV10C_004"
+    },
+    {
+      "count": 2,
+      "effect_id": "3040f040cd7a982b18f5e8359ab1ed21",
+      "name": "竹兰的罗丝雷朵",
+      "roles": [
+        "pokemon",
+        "energy_target",
+        "attacker",
+        "evolution_piece",
+        "search_target",
+        "ability_engine",
+        "stage2_dependency"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV10C_005"
+    },
+    {
+      "count": 2,
+      "effect_id": "66fee12502043db7d92b97b0d62b0f59",
+      "name": "Munkidori",
+      "roles": [
+        "pokemon",
+        "development_piece",
+        "ability_engine"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV8C_094"
+    },
+    {
+      "count": 1,
+      "effect_id": "3c4ab79ab7320fa3a57639e232f507e9",
+      "name": "竹兰的花岩怪",
+      "roles": [
+        "pokemon",
+        "signature_piece",
+        "opening_active_candidate",
+        "attacker",
+        "partner_piece"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV10C_138"
+    },
+    {
+      "count": 1,
+      "effect_id": "28505a8ad6e07e74382c1b5e09737932",
+      "name": "含羞苞",
+      "roles": [
+        "pokemon",
+        "opening_active_candidate",
+        "attacker"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV9.5C_004"
+    },
+    {
+      "count": 4,
+      "effect_id": "5bdbc985f9aa2e6f248b53f6f35d1d37",
+      "name": "Arven",
+      "roles": [
+        "supporter",
+        "trainer_tutor"
+      ],
+      "type": "Supporter",
+      "uid": "CSV1C_123"
+    },
+    {
+      "count": 3,
+      "effect_id": "af514f82d182aeae5327b2c360df703d",
+      "name": "Iono",
+      "roles": [
+        "supporter",
+        "draw_engine"
+      ],
+      "type": "Supporter",
+      "uid": "CSV3C_123"
+    },
+    {
+      "count": 3,
+      "effect_id": "8e1fa2c9018db938084c94c7c970d419",
+      "name": "Boss's Orders",
+      "roles": [
+        "supporter",
+        "gust"
+      ],
+      "type": "Supporter",
+      "uid": "CSVH1aC_023"
+    },
+    {
+      "count": 2,
+      "effect_id": "136fdb6578daa3b81aef369495de4c3d",
+      "name": "赤松",
+      "roles": [
+        "supporter",
+        "supporter_acceleration",
+        "energy_access"
+      ],
+      "type": "Supporter",
+      "uid": "CSV9C_196"
+    },
+    {
+      "count": 2,
+      "effect_id": "ffc8153bc60e336eee4c6c5c74a3d95f",
+      "name": "火箭队的拉姆达",
+      "roles": [
+        "supporter"
+      ],
+      "type": "Supporter",
+      "uid": "CSV10C_212"
+    },
+    {
+      "count": 3,
+      "effect_id": "f866dfee26cd6b0dbbb52b74438d0a59",
+      "name": "Buddy-Buddy Poffin",
+      "roles": [
+        "item",
+        "pokemon_search",
+        "trainer_plan_piece"
+      ],
+      "type": "Item",
+      "uid": "CSV7C_177"
+    },
+    {
+      "count": 2,
+      "effect_id": "3e6f1daf545dfed48d0588dd50792a2e",
+      "name": "Night Stretcher",
+      "roles": [
+        "item",
+        "recovery",
+        "trainer_plan_piece"
+      ],
+      "type": "Item",
+      "uid": "CSV8C_183"
+    },
+    {
+      "count": 1,
+      "effect_id": "e366f56ecd3f805a28294109a1a37453",
+      "name": "Earthen Vessel",
+      "roles": [
+        "item",
+        "energy_access",
+        "typed_energy_access",
+        "trainer_plan_piece"
+      ],
+      "type": "Item",
+      "uid": "CSV6C_115"
+    },
+    {
+      "count": 1,
+      "effect_id": "06bc00d5dcec33898dc6db2e4c4d10ec",
+      "name": "Counter Catcher",
+      "roles": [
+        "item",
+        "gust"
+      ],
+      "type": "Item",
+      "uid": "CSV6C_114"
+    },
+    {
+      "count": 1,
+      "effect_id": "c9c948169525fbb3dce70c477ec7a90a",
+      "name": "Super Rod",
+      "roles": [
+        "item",
+        "recovery"
+      ],
+      "type": "Item",
+      "uid": "CSV1C_109"
+    },
+    {
+      "count": 1,
+      "effect_id": "e92a86246f44351d023bd4fa271089aa",
+      "name": "Secret Box",
+      "roles": [
+        "item"
+      ],
+      "type": "Item",
+      "uid": "CSV8C_176"
+    },
+    {
+      "count": 4,
+      "effect_id": "a13a8391817936aaa9c79cd3cfe5483f",
+      "name": "竹兰的力量负重",
+      "roles": [
+        "item",
+        "trainer_plan_piece"
+      ],
+      "type": "Tool",
+      "uid": "CSV10C_200"
+    },
+    {
+      "count": 2,
+      "effect_id": "43386015be5c073ba2e5b9d3692ece3f",
+      "name": "Technical Machine: Evolution",
+      "roles": [
+        "item",
+        "trainer_plan_piece"
+      ],
+      "type": "Tool",
+      "uid": "CSV5C_119"
+    },
+    {
+      "count": 2,
+      "effect_id": "99173b61a66aa2b9c169e36c8e0a10b4",
+      "name": "火箭队的监视塔",
+      "roles": [
+        "stadium",
+        "trainer_plan_piece"
+      ],
+      "type": "Stadium",
+      "uid": "CSV10C_219"
+    },
+    {
+      "count": 1,
+      "effect_id": "c117bea3cc758d46430d6bef11062a56",
+      "name": "Artazon",
+      "roles": [
+        "stadium"
+      ],
+      "type": "Stadium",
+      "uid": "CSV2C_127"
+    },
+    {
+      "count": 4,
+      "effect_id": "9fedb80a97ddd5cc8b8022a21364c326",
+      "name": "Fighting Energy",
+      "roles": [
+        "energy_source",
+        "typed_energy"
+      ],
+      "type": "Basic Energy",
+      "uid": "CSVE1C_FIG"
+    },
+    {
+      "count": 3,
+      "effect_id": "46c769fc57a6c250c560df648bb779f8",
+      "name": "Darkness Energy",
+      "roles": [
+        "energy_source",
+        "typed_energy"
+      ],
+      "type": "Basic Energy",
+      "uid": "CSVE1C_DAR"
+    },
+    {
+      "count": 2,
+      "effect_id": "540ee48bb93584e4bfe3d7f5d0ee0efc",
+      "name": "Luminous Energy",
+      "roles": [
+        "energy_source",
+        "typed_energy"
+      ],
+      "type": "Special Energy",
+      "uid": "CSV1C_127"
+    }
+  ],
+  "deck_content_fingerprint": "f1168a17bcf36be6e0711970c6c704f9fc3c1930e024f490ad969e0553387f66",
+  "deck_id": 800018543,
+  "manifest_hash": "0816748023599fb89f4603bf8fc36106b38a904c77fbc8005e2389e1d6bcd7cc",
+  "modules": [
+    "partner_chain",
+    "stage2_chain",
+    "cycle_pivot",
+    "damage_counter_control"
+  ],
+  "primary_module": "partner_chain",
+  "role_counts": {
+    "ability_engine": 7,
+    "attacker": 11,
+    "development_piece": 8,
+    "draw_engine": 3,
+    "energy_access": 3,
+    "energy_source": 9,
+    "energy_target": 5,
+    "evolution_piece": 9,
+    "gust": 4,
+    "item": 15,
+    "opening_active_candidate": 6,
+    "partner_piece": 4,
+    "pokemon": 19,
+    "pokemon_search": 3,
+    "recovery": 3,
+    "search_target": 9,
+    "signature_piece": 4,
+    "stadium": 3,
+    "stage2_dependency": 9,
+    "supporter": 14,
+    "supporter_acceleration": 2,
+    "trainer_plan_piece": 14,
+    "trainer_tutor": 4,
+    "typed_energy": 9,
+    "typed_energy_access": 1
+  },
+  "schema_version": 1,
+  "semantic_version": 1,
+  "strategy_id": "v18cpg_800018543_cynthias_garchomp"
+}

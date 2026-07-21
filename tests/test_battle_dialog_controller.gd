@@ -58,7 +58,9 @@ class DialogSceneStub:
 	var _pending_choice := ""
 	var _gsm = null
 	var _last_dialog_choice: PackedInt32Array = PackedInt32Array()
+	var _dialog_choice_call_count := 0
 	var _last_effect_choice: PackedInt32Array = PackedInt32Array()
+	var _effect_choice_call_count := 0
 	var _cancelled_card_gallery_drag_sources: Array[String] = []
 	var _card_gallery_drag_click_suppressed := false
 	var _screen_position_to_battle_local_offset := Vector2.ZERO
@@ -121,9 +123,11 @@ class DialogSceneStub:
 		pass
 
 	func _handle_dialog_choice(selected_indices: PackedInt32Array) -> void:
+		_dialog_choice_call_count += 1
 		_last_dialog_choice = selected_indices
 
 	func _handle_effect_interaction_choice(selected_indices: PackedInt32Array) -> void:
+		_effect_choice_call_count += 1
 		_last_effect_choice = selected_indices
 
 	func _cancel_card_gallery_drag_scroll(source: String = "cancel") -> void:
@@ -568,6 +572,105 @@ func test_card_dialog_large_choice_sets_rendered_drag_gallery() -> String:
 		assert_true(card_scroll.has_meta("hud_scrollbar_styled"), "Card dialogs should keep the shared scroll container contract even when the visible bar is hidden"),
 		assert_false(utility_row.find_child("CardDialogWheel", true, false) != null, "Large card dialogs should not create the old wheel slider"),
 		assert_false(utility_row.visible, "Large card dialogs should not reserve a wheel utility row when there are no utility actions"),
+	])
+	scene.free()
+	return result
+
+
+func test_readonly_card_dialog_utility_action_submits_explicit_empty_selection() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var scene := DialogSceneStub.new()
+	scene.set("_pending_choice", "effect_interaction")
+	var card := _make_test_card("Viewed Card")
+
+	controller.call("show_dialog", scene, "Inspect cards", [], {
+		"presentation": "cards",
+		"card_items": [card],
+		"card_indices": [-1],
+		"min_select": 0,
+		"max_select": 0,
+		"allow_cancel": false,
+		"utility_actions": [{
+			"label": "关闭并继续",
+			"selected_indices": [],
+		}],
+	})
+	var utility_row := scene.get("_dialog_utility_row") as HBoxContainer
+	var close_button := utility_row.get_child(0) as Button if utility_row != null and utility_row.get_child_count() == 1 else null
+	if close_button != null:
+		close_button.pressed.emit()
+
+	var result := run_checks([
+		assert_true(close_button != null and close_button.text == "关闭并继续", "Readonly card previews should expose their close-and-continue action"),
+		assert_eq(scene._dialog_choice_call_count, 1, "Pressing close-and-continue should resolve the dialog exactly once"),
+		assert_eq(Array(scene._last_dialog_choice), [], "Readonly close actions must submit an empty selection instead of the invalid [-1] sentinel"),
+	])
+	scene.free()
+	return result
+
+
+func test_public_discard_optional_card_dialog_requires_explicit_empty_action() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var scene := DialogSceneStub.new()
+	scene.set("_active_battle_layout_mode", "portrait")
+	scene.set("_pending_choice", "effect_interaction")
+	var cards := [_make_test_card("Discard Pokemon"), _make_test_card("Discard Energy")]
+	var labels := ["Discard Pokemon", "Discard Energy"]
+
+	controller.call("show_dialog", scene, "Choose up to 5 cards from discard", labels, {
+		"presentation": "cards",
+		"card_items": cards,
+		"choice_labels": labels,
+		"min_select": 0,
+		"max_select": 5,
+		"allow_cancel": true,
+		"force_confirm": true,
+		"requires_explicit_empty_selection": true,
+	})
+	var confirm := scene.get("_dialog_confirm") as Button
+	var empty_button := scene.find_child("LibrarySearchEmptySelectionButton", true, false) as Button
+	var disabled_on_open := confirm != null and confirm.disabled
+	if confirm != null:
+		controller.call("on_dialog_confirm", scene)
+	var calls_after_ambiguous_confirm := scene._dialog_choice_call_count
+	if empty_button != null:
+		empty_button.pressed.emit()
+
+	var result := run_checks([
+		assert_true(disabled_on_open, "Portrait discard recovery must not enable an empty normal confirm"),
+		assert_eq(calls_after_ambiguous_confirm, 0, "An empty normal confirm must not resolve a public discard choice"),
+		assert_true(empty_button != null and empty_button.visible, "Public optional discard choices must expose a distinct no-selection action"),
+		assert_eq(scene._dialog_choice_call_count, 1, "Only the explicit no-selection action may submit an empty public choice"),
+		assert_eq(Array(scene._last_dialog_choice), [], "The explicit no-selection action should preserve the empty rules payload"),
+	])
+	scene.free()
+	return result
+
+
+func test_windows_landscape_public_discard_optional_card_dialog_requires_explicit_empty_action() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var scene := DialogSceneStub.new()
+	scene.set("_active_battle_layout_mode", "landscape")
+	scene.set("_pending_choice", "effect_interaction")
+	var cards := [_make_test_card("Discard Pokemon"), _make_test_card("Discard Energy")]
+	var labels := ["Discard Pokemon", "Discard Energy"]
+
+	controller.call("show_dialog", scene, "Choose up to 5 cards from discard", labels, {
+		"presentation": "cards",
+		"card_items": cards,
+		"choice_labels": labels,
+		"min_select": 0,
+		"max_select": 5,
+		"allow_cancel": true,
+		"force_confirm": true,
+		"requires_explicit_empty_selection": true,
+	})
+	var confirm := scene.get("_dialog_confirm") as Button
+	var empty_button := scene.find_child("LibrarySearchEmptySelectionButton", true, false) as Button
+
+	var result := run_checks([
+		assert_true(confirm != null and confirm.disabled, "Windows landscape discard recovery must disable an ambiguous empty confirm"),
+		assert_true(empty_button != null and empty_button.visible, "Windows landscape discard recovery must expose the explicit no-selection action"),
 	])
 	scene.free()
 	return result
@@ -1118,6 +1221,136 @@ func test_library_search_board_allows_empty_confirm_when_min_select_zero() -> St
 	var result := run_checks([
 		assert_false(disabled_before_confirm, "Optional full-library board searches should allow empty confirm"),
 		assert_eq(Array(scene._last_dialog_choice), [], "Empty confirm should submit an empty selection"),
+	])
+	scene.free()
+	return result
+
+
+func test_android_portrait_library_search_board_does_not_submit_empty_effect_choice_on_open() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var scene := DialogSceneStub.new()
+	scene.set("_active_battle_layout_mode", "portrait")
+	scene.set("_pending_choice", "effect_interaction")
+	var cards := [_make_test_card("Basic A"), _make_test_card("Basic B")]
+	var labels := ["Basic A", "Basic B"]
+
+	controller.call("show_dialog", scene, "Choose 1 Basic Pokemon", labels, {
+		"presentation": "cards",
+		"visible_scope": "own_full_deck",
+		"card_items": cards,
+		"choice_labels": labels,
+		"card_indices": [0, 1],
+		"min_select": 0,
+		"max_select": 1,
+		"allow_cancel": true,
+		"force_confirm": true,
+		"hidden_search_can_whiff": true,
+	})
+	var confirm := scene.get("_dialog_confirm") as Button
+	var disabled_on_open := confirm.disabled if confirm != null else false
+	if confirm != null and not confirm.disabled:
+		controller.call("on_dialog_confirm", scene)
+	var dialog_choice_calls_after_open_confirm := scene._dialog_choice_call_count
+	controller.call("on_library_search_candidate_pressed", scene, 0)
+	var enabled_after_selection := confirm != null and not confirm.disabled
+	if confirm != null and not confirm.disabled:
+		controller.call("on_dialog_confirm", scene)
+	var submitted_after_selection := Array(scene._last_dialog_choice)
+
+	var result := run_checks([
+		assert_true(disabled_on_open, "Android portrait full-library effect search should not enable empty confirm before selection or an explicit skip action"),
+		assert_eq(dialog_choice_calls_after_open_confirm, 0, "Opening-frame confirm should not submit an explicit empty effect selection"),
+		assert_true(enabled_after_selection, "Selecting a legal card should enable the normal confirm button"),
+		assert_eq(submitted_after_selection, [0], "Normal confirm should still submit the selected card after a portrait library pick"),
+	])
+	scene.free()
+	return result
+
+
+func test_android_portrait_library_search_board_reuses_cancel_slot_for_explicit_empty_choice() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var scene := DialogSceneStub.new()
+	scene.set("_active_battle_layout_mode", "portrait")
+	scene.set("_pending_choice", "effect_interaction")
+	var cards := [_make_test_card("Basic A"), _make_test_card("Basic B")]
+	var labels := ["Basic A", "Basic B"]
+
+	controller.call("show_dialog", scene, "Choose 1 Basic Pokemon", labels, {
+		"presentation": "cards",
+		"visible_scope": "own_full_deck",
+		"card_items": cards,
+		"choice_labels": labels,
+		"card_indices": [0, 1],
+		"min_select": 0,
+		"max_select": 1,
+		"allow_cancel": true,
+		"force_confirm": true,
+		"hidden_search_can_whiff": true,
+	})
+	var empty_button := scene.find_child("LibrarySearchEmptySelectionButton", true, false) as Button
+	var cancel_button := scene.get("_dialog_cancel") as Button
+	var utility_row := scene.get("_dialog_utility_row") as HBoxContainer
+	var no_selection_visible := cancel_button != null and cancel_button.visible
+	var no_selection_label := cancel_button.text if cancel_button != null else ""
+	controller.call("on_dialog_cancel", scene)
+	var no_selection_closed_dialog := not scene._dialog_overlay.visible
+	controller.call("show_dialog", scene, "Ordinary choice", ["Continue"], {
+		"presentation": "list",
+		"allow_cancel": true,
+	})
+	var restored_cancel_label := cancel_button.text if cancel_button != null else ""
+
+	var result := run_checks([
+		assert_null(empty_button, "Android portrait hidden-search board should not stack a separate no-selection action above the footer"),
+		assert_true(utility_row != null and not utility_row.visible and utility_row.get_child_count() == 0, "Android portrait hidden-search board should reclaim the redundant utility row"),
+		assert_true(no_selection_visible, "Android portrait hidden-search board should keep the footer secondary action visible"),
+		assert_eq(no_selection_label, "不选择", "Android portrait should replace the footer cancel label with no-selection"),
+		assert_eq(scene._dialog_choice_call_count, 1, "The portrait no-selection footer action should submit exactly one dialog choice"),
+		assert_eq(Array(scene._last_dialog_choice), [], "The portrait no-selection footer action should submit an empty selection"),
+		assert_true(no_selection_closed_dialog, "The portrait no-selection footer action should close the library-search dialog"),
+		assert_eq(restored_cancel_label, "取消", "The footer label should reset for the next ordinary portrait dialog"),
+	])
+	scene.free()
+	return result
+
+
+func test_windows_landscape_hidden_search_requires_explicit_empty_action() -> String:
+	var controller := BattleDialogControllerScript.new()
+	var scene := DialogSceneStub.new()
+	scene.set("_active_battle_layout_mode", "landscape")
+	scene.set("_pending_choice", "effect_interaction")
+	var cards := [_make_test_card("Basic A"), _make_test_card("Basic B")]
+	var labels := ["Basic A", "Basic B"]
+
+	controller.call("show_dialog", scene, "Choose 1 Basic Pokemon", labels, {
+		"presentation": "cards",
+		"visible_scope": "own_full_deck",
+		"card_items": cards,
+		"choice_labels": labels,
+		"card_indices": [0, 1],
+		"min_select": 0,
+		"max_select": 1,
+		"allow_cancel": true,
+		"force_confirm": true,
+		"hidden_search_can_whiff": true,
+	})
+	var confirm := scene.get("_dialog_confirm") as Button
+	var cancel_button := scene.get("_dialog_cancel") as Button
+	var empty_button := scene.find_child("LibrarySearchEmptySelectionButton", true, false) as Button
+	var disabled_on_open := confirm != null and confirm.disabled
+	if confirm != null:
+		controller.call("on_dialog_confirm", scene)
+	var calls_after_normal_empty_confirm := scene._dialog_choice_call_count
+	if empty_button != null:
+		empty_button.pressed.emit()
+
+	var result := run_checks([
+		assert_true(disabled_on_open, "Windows landscape hidden search must disable the ambiguous empty confirm"),
+		assert_eq(calls_after_normal_empty_confirm, 0, "Ambiguous empty confirm must not resolve a landscape effect prompt"),
+		assert_true(empty_button != null and empty_button.visible, "Windows landscape hidden search should keep its separate explicit no-selection action"),
+		assert_eq(cancel_button.text if cancel_button != null else "", "取消", "Windows landscape should keep the normal cancel action unchanged"),
+		assert_eq(scene._dialog_choice_call_count, 1, "The explicit no-selection action should resolve exactly once"),
+		assert_eq(Array(scene._last_dialog_choice), [], "Explicit no-selection should keep the rules payload empty"),
 	])
 	scene.free()
 	return result

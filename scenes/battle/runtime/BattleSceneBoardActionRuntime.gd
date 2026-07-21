@@ -418,6 +418,7 @@ func _handle_slot_left_click(slot_id: String) -> void:
 	var gs: GameState = _gsm.game_state if _gsm != null else null
 	if gs == null:
 		return
+	_play_battle_interaction_press({"anchor_key": slot_id})
 	_clear_stale_selected_hand_card("slot_left_click")
 
 	var target_slot: PokemonSlot = _slot_from_id(slot_id, gs)
@@ -441,12 +442,17 @@ func _handle_slot_left_click(slot_id: String) -> void:
 				"reason": "不能对对方的宝可梦使用手牌。",
 				"detail": "从手牌进化、附着能量或附着道具时，请选择己方场上的宝可梦。",
 				"kind": "target",
+				"anchor_key": slot_id,
 			})
 			return
 		var card := _selected_hand_card
 		var cd := card.card_data
 		if cd.is_pokemon() and cd.stage != "Basic":
 			if _gsm.evolve_pokemon(cp, card, target_slot):
+				_play_battle_interaction_success("evolution", {
+					"source_card_instance_id": card.instance_id,
+					"target_slot_id": slot_id,
+				})
 				_selected_hand_card = null
 				_mark_ready_vfx_action_source(cp, "evolve")
 				_refresh_ui()
@@ -459,9 +465,14 @@ func _handle_slot_left_click(slot_id: String) -> void:
 					"reason": _gsm.rule_validator.get_evolve_unusable_reason(gs, cp, target_slot, card, _gsm.effect_processor),
 					"detail": "进化需要满足回合、进化链和目标宝可梦状态要求。",
 					"kind": "evolve",
+					"anchor_key": slot_id,
 				})
 		elif cd.card_type == "Basic Energy" or cd.card_type == "Special Energy":
 			if _gsm.attach_energy(cp, card, target_slot):
+				_play_battle_interaction_success("energy", {
+					"source_card_instance_id": card.instance_id,
+					"target_slot_id": slot_id,
+				})
 				_selected_hand_card = null
 				_refresh_ui_after_successful_action(false, cp)
 				_suppress_slot_followup_click(slot_id, "attach_energy_target")
@@ -474,9 +485,14 @@ func _handle_slot_left_click(slot_id: String) -> void:
 					"reason": energy_reason,
 					"detail": "通常每回合只能从手牌附着 1 次能量，并且只能附着给己方宝可梦。",
 					"kind": "energy",
+					"anchor_key": slot_id,
 				})
 		elif cd.card_type == "Tool":
 			if _gsm.attach_tool(cp, card, target_slot):
+				_play_battle_interaction_success("tool", {
+					"source_card_instance_id": card.instance_id,
+					"target_slot_id": slot_id,
+				})
 				_selected_hand_card = null
 				_refresh_ui_after_successful_action(false, cp)
 				_suppress_slot_followup_click(slot_id, "attach_tool_target")
@@ -486,6 +502,7 @@ func _handle_slot_left_click(slot_id: String) -> void:
 					"reason": _gsm.rule_validator.get_attach_tool_unusable_reason(gs, cp, target_slot, _gsm.effect_processor, card),
 					"detail": "宝可梦道具需要附着到有效目标上，且目标通常不能已经有道具。",
 					"kind": "tool",
+					"anchor_key": slot_id,
 				})
 		return
 
@@ -769,7 +786,27 @@ func _refresh_hand() -> void:
 	_trace_portrait_layout_stage("scene.refresh_hand.after_display")
 	_finalize_portrait_layout_constraints()
 	_trace_portrait_layout_stage("scene.refresh_hand.after_finalize")
+	_sync_battle_action_intents()
 	call_deferred("_deferred_finalize_portrait_layout_constraints")
+	call_deferred("_sync_battle_action_intents")
+
+
+func _sync_battle_action_intents() -> void:
+	if _battle_action_intent_controller == null:
+		return
+	_battle_action_intent_controller.call("sync")
+
+
+func _play_battle_interaction_success(success_kind: String, payload: Dictionary = {}) -> void:
+	if _battle_action_intent_controller == null:
+		return
+	_battle_action_intent_controller.call("play_success", success_kind, payload)
+
+
+func _play_battle_interaction_press(payload: Dictionary = {}) -> void:
+	if _battle_action_intent_controller == null:
+		return
+	_battle_action_intent_controller.call("play_press", payload)
 
 
 func _clear_stale_selected_hand_card(source: String = "") -> bool:
@@ -1230,7 +1267,7 @@ func _show_card_detail_for_instance(inst: CardInstance) -> void:
 
 
 
-func _try_play_to_bench(player_index: int, card: CardInstance, _slot_id: String) -> void:
+func _try_play_to_bench(player_index: int, card: CardInstance, slot_id: String) -> void:
 	var gs: GameState = _gsm.game_state
 	var bench_reason: String = _gsm.rule_validator.get_play_basic_to_bench_unusable_reason(gs, player_index, card)
 	if bench_reason != "":
@@ -1239,6 +1276,7 @@ func _try_play_to_bench(player_index: int, card: CardInstance, _slot_id: String)
 			"reason": bench_reason,
 			"detail": "基础宝可梦只能在主要阶段放到己方备战区，并且备战区需要有空位。",
 			"kind": "pokemon",
+			"anchor_key": slot_id,
 		})
 		return
 	var bench_effect: BaseEffect = _gsm.effect_processor.get_effect(card.card_data.effect_id)
@@ -1249,6 +1287,10 @@ func _try_play_to_bench(player_index: int, card: CardInstance, _slot_id: String)
 	var auto_trigger_bench_ability: bool = is_bench_enter_ability and bench_steps.is_empty()
 	var should_start_bench_interaction: bool = is_bench_enter_ability and not bench_steps.is_empty()
 	if _gsm.play_basic_to_bench(player_index, card, auto_trigger_bench_ability):
+		_play_battle_interaction_success("bench", {
+			"source_card_instance_id": card.instance_id,
+			"target_slot_id": slot_id,
+		})
 		if should_start_bench_interaction:
 			var player: PlayerState = _gsm.game_state.players[player_index]
 			var bench_slot: PokemonSlot = player.bench.back() if not player.bench.is_empty() else null
@@ -1256,13 +1298,14 @@ func _try_play_to_bench(player_index: int, card: CardInstance, _slot_id: String)
 				_start_effect_interaction("ability", player_index, bench_steps, bench_slot.get_top_card(), bench_slot, 0)
 		_selected_hand_card = null
 		_refresh_ui_after_successful_action(false, player_index)
-		_suppress_slot_followup_click(_slot_id, "bench_basic_target", BENCH_PLAY_FOLLOWUP_CLICK_SUPPRESS_MSEC)
+		_suppress_slot_followup_click(slot_id, "bench_basic_target", BENCH_PLAY_FOLLOWUP_CLICK_SUPPRESS_MSEC)
 	else:
 		_show_invalid_action_message({
 			"title": "%s 现在不能放到备战区" % card.card_data.display_name(),
 			"reason": "无法将这只宝可梦放到备战区。",
 			"detail": "请检查当前阶段、备战区空位和场上效果限制。",
 			"kind": "pokemon",
+			"anchor_key": slot_id,
 		})
 
 
@@ -1569,6 +1612,8 @@ func _style_end_turn_hud_button(button: Button, prominent: bool) -> void:
 
 
 func _clear_prize_selection() -> void:
+	_prize_prompt_generation += 1
+	_prize_touch_press_contexts.clear()
 	_close_portrait_prize_dialog()
 	_ensure_battle_overlay_coordinator()
 	_battle_overlay_coordinator.call("clear_prize_selection")
@@ -1624,7 +1669,7 @@ func _animate_prize_flip(prize_view: BattleCardView, prize_card: CardInstance, o
 		if on_complete.is_valid():
 			on_complete.call()
 		return
-	if not is_inside_tree():
+	if not bool(GameManager.battle_effects_enabled) or not is_inside_tree():
 		prize_view.setup_from_instance(prize_card, BATTLE_CARD_VIEW.MODE_PREVIEW)
 		prize_view.set_face_down(false)
 		if on_complete.is_valid():
@@ -1853,11 +1898,24 @@ func _ensure_battle_field_swap_animator() -> void:
 func _sync_field_swap_snapshot_after_refresh() -> void:
 	if _gsm == null or _gsm.game_state == null:
 		return
+	if not bool(GameManager.battle_effects_enabled):
+		_field_swap_last_snapshot = {}
+		return
 	_ensure_battle_field_swap_animator()
 	if _battle_field_swap_animator == null:
 		return
 	var current_snapshot: Dictionary = _battle_field_swap_animator.call("capture_field_snapshot", _gsm.game_state, _view_player)
+	if _battle_visual_sequence_controller != null and bool(_battle_visual_sequence_controller.call("is_active")):
+		_field_swap_last_snapshot = current_snapshot
+		return
 	if not _is_review_mode() and not _field_swap_last_snapshot.is_empty():
+		var movement: Dictionary = _battle_field_swap_animator.call(
+			"detect_active_field_movement",
+			_field_swap_last_snapshot,
+			current_snapshot
+		)
+		if not movement.is_empty() and _battle_action_intent_controller != null:
+			_battle_action_intent_controller.call("play_field_movement", movement)
 		_battle_field_swap_animator.call("play_detected_field_movement", self, _field_swap_last_snapshot, current_snapshot)
 	_field_swap_last_snapshot = current_snapshot
 
@@ -1945,8 +2003,15 @@ func _show_invalid_action_message(payload: Dictionary) -> void:
 	if reason == "":
 		reason = "当前无法执行该操作。"
 		payload["reason"] = reason
-	_show_invalid_action_hint(payload)
+	_show_battle_intent_rejection(payload)
 	_log(reason)
+
+
+func _show_battle_intent_rejection(payload: Dictionary) -> void:
+	if _battle_action_intent_controller == null:
+		_show_invalid_action_hint(payload)
+		return
+	_battle_action_intent_controller.call("show_rejection", payload)
 
 
 func _hide_invalid_action_hint() -> void:
@@ -2368,6 +2433,10 @@ func _start_ai_action_pause() -> void:
 
 
 func _check_ready_vfx_triggers() -> void:
+	if not bool(GameManager.battle_effects_enabled):
+		_ready_vfx_trigger_source_player_index = -1
+		_ready_vfx_trigger_action_kind = ""
+		return
 	if _is_review_mode():
 		return
 	if _gsm == null or _gsm.game_state == null:
@@ -2403,6 +2472,7 @@ func _check_ready_vfx_triggers() -> void:
 
 
 func _refresh_ui() -> void:
+	_sync_battle_visual_snapshot_before_refresh()
 	_trace_portrait_layout_stage("scene.refresh_ui.before_display")
 	_ensure_battle_display_coordinator()
 	_battle_display_coordinator.call("refresh_all")
@@ -2420,3 +2490,22 @@ func _refresh_ui() -> void:
 	_sync_field_swap_snapshot_after_refresh()
 	call_deferred("_deferred_finalize_portrait_layout_constraints")
 	_check_ready_vfx_triggers()
+	_sync_battle_action_intents()
+	call_deferred("_sync_battle_action_intents")
+
+
+func _sync_battle_visual_snapshot_before_refresh() -> void:
+	if _battle_visual_sequence_controller == null or _gsm == null or _gsm.game_state == null:
+		return
+	if _is_review_mode() or _gsm.game_state.phase in [
+		GameState.GamePhase.SETUP,
+		GameState.GamePhase.MULLIGAN,
+		GameState.GamePhase.SETUP_PLACE,
+	]:
+		_battle_visual_sequence_controller.call("prime_snapshot", _gsm.game_state, _view_player)
+		return
+	_battle_visual_sequence_controller.call("sync_after_refresh", _gsm.game_state, _view_player)
+
+
+func _set_battle_visual_input_blocked(blocked: bool) -> void:
+	_battle_visual_input_blocked = blocked

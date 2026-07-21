@@ -1,0 +1,53 @@
+{
+    "name":  "重力之玉",
+    "card_type":  "Tool",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "只要身上放有这张卡牌的宝可梦在战斗场上，双方战斗宝可梦【撤退】所需能量，各增加1个。",
+    "yoren_code":  "Y1532",
+    "set_code":  "CSV9C",
+    "card_index":  "192",
+    "set_code_en":  "SCR",
+    "card_index_en":  "137",
+    "name_en":  "Gravity Gemstone",
+    "name_zh":  "",
+    "artist":  "Toyste Beach",
+    "rarity":  "U",
+    "release_date":  "2026-05-15T00:00:00+08:00",
+    "regulation_mark":  "H",
+    "effect_id":  "6d4d9b954e3a2cbad2ae1e0bfad2305a",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV9C/192.png",
+    "image_local_path":  "user://cards/images/CSV9C/192.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "",
+    "stage":  "",
+    "hp":  0,
+    "weakness_energy":  "",
+    "weakness_value":  "",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  0,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

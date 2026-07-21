@@ -1,0 +1,69 @@
+{
+	"cards": [
+		{
+			"abilities": [],
+			"ancient_trait": "",
+			"artist": "Nisota Niso",
+			"attacks": [
+				{
+					"cost": "CC",
+					"damage": "70",
+					"is_vstar_power": false,
+					"name": "隐秘飞行",
+					"text": "在下一个对手的回合，这只宝可梦不会受到【基础】宝可梦的招式的伤害。"
+				},
+				{
+					"cost": "PD",
+					"damage": "140",
+					"is_vstar_power": false,
+					"name": "支配回响",
+					"text": "在下一个对手的回合，对手无法从手牌使出并附着特殊能量，也无法放置竞技场。"
+				}
+			],
+			"card_index": "045",
+			"card_index_en": "69",
+			"card_type": "Pokemon",
+			"description": " 隐秘飞行 70\n在下一个对手的回合，这只宝可梦不会受到【基础】宝可梦的招式的伤害。\n\n【超】【恶】 支配回响 140\n在下一个对手的回合，对手无法从手牌使出并附着特殊能量，也无法放置竞技场。\n\n",
+			"effect_id": "7f21a88085207d28e38ca3593994edc2",
+			"energy_provides": "",
+			"energy_type": "N",
+			"evolves_from": "嗡蝠",
+			"hp": 260,
+			"image_local_path": "user://cards/images/CSVL1C/045.png",
+			"image_url": "https://tcg.mik.moe/static/img/CSVL1C/045.png",
+			"is_tags": [
+				"ex",
+				"Stage 1"
+			],
+			"label": "",
+			"mechanic": "ex",
+			"name": "音波龙ex",
+			"name_en": "Noivern ex",
+			"name_zh": "",
+			"rarity": "无标记",
+			"regulation_expanded": true,
+			"regulation_mark": "G",
+			"regulation_standard": true,
+			"release_date": "2025-06-13T00:00:00+08:00",
+			"resistance_energy": "",
+			"resistance_value": "",
+			"retreat_cost": 0,
+			"set_code": "CSVL1C",
+			"set_code_en": "PAF",
+			"source_card_index": "",
+			"source_imported_at": 0,
+			"source_language": "",
+			"source_parser_version": 0,
+			"source_prints": [],
+			"source_provider": "",
+			"source_set_code": "",
+			"source_url": "",
+			"stage": "Stage 1",
+			"weakness_energy": "",
+			"weakness_value": "",
+			"yoren_code": "Y1303"
+		}
+	],
+	"schema_version": 1,
+	"set_code": "CSVL1C"
+}

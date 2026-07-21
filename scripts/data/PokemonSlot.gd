@@ -38,6 +38,7 @@ const ENTERED_ACTIVE_FROM_BENCH_EFFECT_TYPE := "entered_active_from_bench"
 const ENTERED_BENCH_FROM_HAND_EFFECT_TYPE := "entered_bench_from_hand"
 const ABILITY_USED_EFFECT_TYPE := "ability_used"
 const RARE_CANDY_EVOLVED_EFFECT_TYPE := "rare_candy_evolved"
+const DELAYED_EXTRA_PRIZE_EFFECT_TYPE := "delayed_extra_prize_next_own_turn"
 
 
 static func reset_order_stamp_counter() -> void:
@@ -164,6 +165,7 @@ func has_any_status() -> bool:
 func clear_all_status() -> void:
 	for key: String in status_conditions:
 		status_conditions[key] = false
+	_clear_status_metadata("poisoned")
 
 
 ## 从战斗场退回备战区时，清除所有特殊状态和战斗位置相关的临时效果
@@ -181,6 +183,7 @@ const _BENCH_CLEAR_EFFECT_TYPES: Array[String] = [
 	"prevent_attack_damage_and_effects",
 	"ability_disabled",
 	"extra_prize",
+	DELAYED_EXTRA_PRIZE_EFFECT_TYPE,
 ]
 
 func clear_on_leave_active() -> void:
@@ -276,6 +279,8 @@ func has_ability_used(turn_number: int) -> bool:
 func set_status(status_name: String, value: bool) -> void:
 	if not status_conditions.has(status_name):
 		return
+	if status_name == "poisoned":
+		_clear_status_metadata(status_name)
 
 	if value:
 		# 睡眠、麻痹、混乱三者互斥
@@ -285,6 +290,14 @@ func set_status(status_name: String, value: bool) -> void:
 				status_conditions[s] = false
 
 	status_conditions[status_name] = value
+
+
+func _clear_status_metadata(status_name: String) -> void:
+	if status_name != "poisoned":
+		return
+	for index: int in range(effects.size() - 1, -1, -1):
+		if effects[index].get("type", "") == "csv10c_poison_damage_bonus":
+			effects.remove_at(index)
 
 
 ## 获取附着的特定类型能量数量

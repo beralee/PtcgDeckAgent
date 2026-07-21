@@ -1,0 +1,268 @@
+{
+	"card_count": 759,
+	"catalog_version": "2026.07.12.1",
+	"generated_at": "2026-07-12T00:00:00+08:00",
+	"index_file": {
+		"path": "index.json",
+		"sha256": "66bd12e5656d6c0e8bf1a6ee6e81ef04a05bc3c881a7e1d590add7dc605de1d3"
+	},
+	"schema_version": 1,
+	"sets": [
+		{
+			"card_count": 10,
+			"path": "sets/151C.json",
+			"set_code": "151C",
+			"sha256": "c50bee597dc47d11f416924e31c94af53d7b67d6a436c09e82f30d176741a12b"
+		},
+		{
+			"card_count": 2,
+			"path": "sets/CBB5C.json",
+			"set_code": "CBB5C",
+			"sha256": "ce7341044bfe3edd9f5f6daaf64c41113b9ebb335a985141b7a33d38b8008e64"
+		},
+		{
+			"card_count": 1,
+			"path": "sets/CS1bC.json",
+			"set_code": "CS1bC",
+			"sha256": "e6975e0177cd1dafe371ea1a72e21f7c29923580bf66f9e5d866d4d0ff93a07c"
+		},
+		{
+			"card_count": 1,
+			"path": "sets/CS4.5C.json",
+			"set_code": "CS4.5C",
+			"sha256": "40aae151c3951043e194ca482098a728a4942f2d12a161ca92f4294cf3c255f3"
+		},
+		{
+			"card_count": 4,
+			"path": "sets/CS4DaC.json",
+			"set_code": "CS4DaC",
+			"sha256": "91a2a85dab07651be1095136aa6aa06f0b51423d745f307fc6e1bbb5f9c161d7"
+		},
+		{
+			"card_count": 13,
+			"path": "sets/CS5.5C.json",
+			"set_code": "CS5.5C",
+			"sha256": "a00c870752017940fa8cbf4dbca8a3e78487574bf5ac6483fd13fb1fbdf9bd17"
+		},
+		{
+			"card_count": 10,
+			"path": "sets/CS5DC.json",
+			"set_code": "CS5DC",
+			"sha256": "568abf10abe3964b844b5e642e1b9042d32a5c036e5b71c39634ed1443b15811"
+		},
+		{
+			"card_count": 14,
+			"path": "sets/CS5aC.json",
+			"set_code": "CS5aC",
+			"sha256": "e201463170f84c834d2154b0abcebba106f56185571c528019f6504d44098117"
+		},
+		{
+			"card_count": 10,
+			"path": "sets/CS5bC.json",
+			"set_code": "CS5bC",
+			"sha256": "27bacbd98f46aafd2c073a800a84853fa4eb57cc0c6610889c0b39cc9791ad1f"
+		},
+		{
+			"card_count": 16,
+			"path": "sets/CS6.5C.json",
+			"set_code": "CS6.5C",
+			"sha256": "83ba4db7c0acf9aa19d45b6aebbc7b6529d7a3771e7ec32d0aca85840a1f5cdd"
+		},
+		{
+			"card_count": 14,
+			"path": "sets/CS6aC.json",
+			"set_code": "CS6aC",
+			"sha256": "a16e36382c2f027995521c251e300c83b31bbc4ee874f02d4407fbe031150d9f"
+		},
+		{
+			"card_count": 15,
+			"path": "sets/CS6bC.json",
+			"set_code": "CS6bC",
+			"sha256": "7da5fb06aa7ee302c1c6a6c1e1528f82d9fb9022df493db58078faab3914ff24"
+		},
+		{
+			"card_count": 6,
+			"path": "sets/CSNC.json",
+			"set_code": "CSNC",
+			"sha256": "5588a07a60f0b8afe5331085d32897e42cead3cbbe1ab059521406159013576f"
+		},
+		{
+			"card_count": 287,
+			"path": "sets/CSV10C.json",
+			"set_code": "CSV10C",
+			"sha256": "360d7b4615e3a99e961feef9781ac0497a3bcab55b74b22e42c05cb191d1ac43"
+		},
+		{
+			"card_count": 26,
+			"path": "sets/CSV1C.json",
+			"set_code": "CSV1C",
+			"sha256": "a2b34b6c8547128339ae0462ab1e09964b303d825edc1e69b205b6b382965f05"
+		},
+		{
+			"card_count": 17,
+			"path": "sets/CSV2C.json",
+			"set_code": "CSV2C",
+			"sha256": "9d1860ba2b04322023382991d00293335269fea9f5e1df79985fa00ccf80da8f"
+		},
+		{
+			"card_count": 13,
+			"path": "sets/CSV3C.json",
+			"set_code": "CSV3C",
+			"sha256": "c84dae9fd1d9ba69db89c01aaf23c3d117b0f88b9599de83037c457ffbd2885c"
+		},
+		{
+			"card_count": 13,
+			"path": "sets/CSV4C.json",
+			"set_code": "CSV4C",
+			"sha256": "384812dc0dbb3d7a37c3b3c255c823127982e08ccf9fdc1e77e9dfb0d00d22ac"
+		},
+		{
+			"card_count": 13,
+			"path": "sets/CSV5C.json",
+			"set_code": "CSV5C",
+			"sha256": "357f316bfe79dc2d05652e66eba52c4ece7e50c328a520b6765a29e73f73ac90"
+		},
+		{
+			"card_count": 18,
+			"path": "sets/CSV6C.json",
+			"set_code": "CSV6C",
+			"sha256": "542aaba863e8abc6a665a459a7e46658abeaf7f42a267b0d27005343ebe4cb39"
+		},
+		{
+			"card_count": 55,
+			"path": "sets/CSV7C.json",
+			"set_code": "CSV7C",
+			"sha256": "49bb503cd3dd9b60f3f65090a863b534fe348c3776ab1add1dd5939bbc5c05df"
+		},
+		{
+			"card_count": 59,
+			"path": "sets/CSV8C.json",
+			"set_code": "CSV8C",
+			"sha256": "7b764e59fbe6601344dea2bc39eead022cec7fbe415d81af3b51079a85270180"
+		},
+		{
+			"card_count": 24,
+			"path": "sets/CSV9.5C.json",
+			"set_code": "CSV9.5C",
+			"sha256": "d88bdebed5c1d8652a427e249af36f2b41839f1f4d0f4532832e0699506ef685"
+		},
+		{
+			"card_count": 63,
+			"path": "sets/CSV9C.json",
+			"set_code": "CSV9C",
+			"sha256": "40dc5059b3158be34774fa15ae10c51f174f320ca1819ae94959c0c5ccbe5061"
+		},
+		{
+			"card_count": 8,
+			"path": "sets/CSVE1C.json",
+			"set_code": "CSVE1C",
+			"sha256": "3cee6af143615dd73a3809227e0f8489156e103a9e359fb98f751c45417e8d35"
+		},
+		{
+			"card_count": 1,
+			"path": "sets/CSVE2C.json",
+			"set_code": "CSVE2C",
+			"sha256": "d5b1f4b49518ae6cf43edc05d41a9def23fb8560f03ab995cbcc1f62e08e16d2"
+		},
+		{
+			"card_count": 7,
+			"path": "sets/CSVH1C.json",
+			"set_code": "CSVH1C",
+			"sha256": "940439b29b982a810b3fd36d88af55ad0744af931c93ed2e1ef7ddc32fa10a1d"
+		},
+		{
+			"card_count": 2,
+			"path": "sets/CSVH1aC.json",
+			"set_code": "CSVH1aC",
+			"sha256": "040dd25fae22bb95d7b23ea921ecca9f6761a07ae81111f204676964e04a40c6"
+		},
+		{
+			"card_count": 2,
+			"path": "sets/CSVH3aC.json",
+			"set_code": "CSVH3aC",
+			"sha256": "668e5bda17097730d003e18c8188f80c97c5d9615e3d3d3a4bc73887252f31dc"
+		},
+		{
+			"card_count": 1,
+			"path": "sets/CSVH3pC.json",
+			"set_code": "CSVH3pC",
+			"sha256": "53d7a01f5edf5fd0eb580a8281abe1a9fc6a816e38cbeee1774ff8f1505819b8"
+		},
+		{
+			"card_count": 1,
+			"path": "sets/CSVL1C.json",
+			"set_code": "CSVL1C",
+			"sha256": "368712f0386239d9e9110d60346adc6c881115c4993f0b3d65aa8e3941523cc3"
+		},
+		{
+			"card_count": 1,
+			"path": "sets/CSVSC.json",
+			"set_code": "CSVSC",
+			"sha256": "e5c960423a59178f06eddeba5c574935461d8975bb317590b02baceab0b9857b"
+		},
+		{
+			"card_count": 1,
+			"path": "sets/LEN_BLK.json",
+			"set_code": "LEN_BLK",
+			"sha256": "66fb686cb763f3246e5b035f0796b480dce9d186c191aa5b11bf94e6ff816c8e"
+		},
+		{
+			"card_count": 5,
+			"path": "sets/LEN_DRI.json",
+			"set_code": "LEN_DRI",
+			"sha256": "19d400581f7a2d98c4a2481df1c6a48666af4425c4d4b3c8e253cd5f335338ff"
+		},
+		{
+			"card_count": 10,
+			"path": "sets/LEN_JTG.json",
+			"set_code": "LEN_JTG",
+			"sha256": "d9ad5407ab6e3649cd71c910e686508eb4aa279a1c71be7a0f0934b094b15f41"
+		},
+		{
+			"card_count": 2,
+			"path": "sets/LEN_PRE.json",
+			"set_code": "LEN_PRE",
+			"sha256": "4ee48c39eaf305cf5cd85a0d5336d986c3c66f10f10cb61063dd81126669dba0"
+		},
+		{
+			"card_count": 5,
+			"path": "sets/LEN_SCR.json",
+			"set_code": "LEN_SCR",
+			"sha256": "2e7a6d5e698446573c38c1fe361fa3c283e74ab5d039245bf3dd940287638c34"
+		},
+		{
+			"card_count": 2,
+			"path": "sets/LEN_SSP.json",
+			"set_code": "LEN_SSP",
+			"sha256": "d3622d0b23d2ab70a87c2b7755b1e658ec1007eb49b1af2da4529f9e16d737c5"
+		},
+		{
+			"card_count": 1,
+			"path": "sets/LEN_SVI.json",
+			"set_code": "LEN_SVI",
+			"sha256": "3a8bbe436c7d6406eccc9ed708608ec097b28c3502e052d14291c653d74c9b4f"
+		},
+		{
+			"card_count": 5,
+			"path": "sets/SVP.json",
+			"set_code": "SVP",
+			"sha256": "8d67460a17a40f3c8fa7afead2020f688e9ba86d62e66e923db38667d8dae065"
+		},
+		{
+			"card_count": 1,
+			"path": "sets/UTEST.json",
+			"set_code": "UTEST",
+			"sha256": "d31449397e2a2d72d5ec3a410dc06530fe39499af95db214f1f794f81311b24e"
+		}
+	],
+	"sources": [
+		{
+			"provider": "catalog_sources",
+			"snapshot": "local"
+		},
+		{
+			"provider": "bundled_user_cards",
+			"snapshot": "local"
+		}
+	]
+}

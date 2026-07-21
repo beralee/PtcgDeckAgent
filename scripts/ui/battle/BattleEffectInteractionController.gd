@@ -1,6 +1,9 @@
 class_name BattleEffectInteractionController
 extends RefCounted
 
+const EFFECT_GENERATION_META := "pending_effect_interaction_generation"
+const EFFECT_RESPONSE_META := "effect_interaction_response"
+
 
 func _bt(scene: Object, key: String, params: Dictionary = {}) -> String:
 	return str(scene.call("_bt", key, params))
@@ -18,6 +21,8 @@ func start_effect_interaction(
 	attack_effects: Array[BaseEffect] = []
 ) -> void:
 	scene.call("_reset_effect_interaction")
+	var interaction_generation := int(scene.get_meta(EFFECT_GENERATION_META, 0)) + 1
+	scene.set_meta(EFFECT_GENERATION_META, interaction_generation)
 	scene.set("_pending_effect_kind", kind)
 	scene.set("_pending_effect_player_index", player_index)
 	scene.set("_pending_effect_card", card)
@@ -27,7 +32,11 @@ func start_effect_interaction(
 	scene.set("_pending_effect_attack_effects", attack_effects.duplicate())
 	scene.set("_pending_effect_steps", steps)
 	scene.set("_pending_effect_step_index", 0)
-	scene.set("_pending_effect_context", {})
+	scene.set("_pending_effect_context", {
+		BaseEffect.INTERACTION_SOURCE_KEY: BaseEffect.INTERACTION_SOURCE_BATTLE_UI,
+		"__interaction_generation": interaction_generation,
+		BaseEffect.INTERACTION_INTENTS_KEY: {},
+	})
 	scene.call(
 		"_runtime_log",
 		"start_effect_interaction",
@@ -315,6 +324,9 @@ func show_next_effect_interaction_step(scene: Object) -> void:
 		"card_indices": step.get("card_indices", []),
 		"card_click_selectable": step.get("card_click_selectable", true),
 		"choice_labels": step.get("choice_labels", labels),
+		"interaction_generation": int(scene.get_meta(EFFECT_GENERATION_META, 0)),
+		"interaction_step_index": pending_effect_step_index,
+		"interaction_step_id": str(step.get("id", "step_%d" % pending_effect_step_index)),
 	}
 	if pending_effect_card != null:
 		dialog_data["source_card"] = pending_effect_card
@@ -329,6 +341,10 @@ func show_next_effect_interaction_step(scene: Object) -> void:
 		"pokemon_card",
 		"pokemon_card_data",
 		"visible_scope",
+		"visible_count",
+		"selectable_count",
+		"hidden_search_can_whiff",
+		"requires_explicit_empty_selection",
 		"force_confirm",
 		"cancel_resolves_empty",
 	]:
@@ -340,6 +356,62 @@ func show_next_effect_interaction_step(scene: Object) -> void:
 		dialog_data["utility_actions"] = step.get("utility_actions", [])
 	scene.call("_show_dialog", _step_title(scene, step), labels, dialog_data)
 	hide_ai_owned_effect_step_ui(scene, chooser_player)
+
+
+func validate_effect_step_choice(
+	step: Dictionary,
+	selected_indices: PackedInt32Array,
+	response_intent: String = BaseEffect.INTERACTION_INTENT_SELECT,
+	require_explicit_empty_intent: bool = false
+) -> Dictionary:
+	var items_raw: Array = step.get("items", [])
+	var min_select := int(step.get("min_select", 1))
+	var max_select := int(step.get("max_select", 1))
+	var filters_visible_only_indices := str(step.get("visible_scope", "")) == BaseEffect.VISIBLE_SCOPE_OWN_FULL_DECK
+	var seen_indices: Dictionary = {}
+	var selected_items: Array = []
+	for selected_idx: int in selected_indices:
+		if selected_idx < 0 or selected_idx >= items_raw.size():
+			if filters_visible_only_indices:
+				continue
+			return {"valid": false, "reason": "selection index is outside the current step"}
+		if seen_indices.has(selected_idx):
+			return {"valid": false, "reason": "selection contains a duplicate index"}
+		seen_indices[selected_idx] = true
+		selected_items.append(items_raw[selected_idx])
+	var explicitly_declined_optional_step := (
+		selected_items.is_empty()
+		and response_intent == BaseEffect.INTERACTION_INTENT_DECLINE
+		and bool(step.get("allow_cancel", true))
+	)
+	if selected_items.size() < min_select and not explicitly_declined_optional_step:
+		return {"valid": false, "reason": "selection count is below min_select"}
+	if max_select >= 0 and selected_items.size() > max_select:
+		return {"valid": false, "reason": "selection count exceeds max_select"}
+	var requires_explicit_empty := (
+		bool(step.get("requires_explicit_empty_selection", false))
+		or (bool(step.get("hidden_search_can_whiff", false)) and not items_raw.is_empty())
+	)
+	if (
+		selected_items.is_empty()
+		and require_explicit_empty_intent
+		and requires_explicit_empty
+		and response_intent != BaseEffect.INTERACTION_INTENT_DECLINE
+	):
+		return {"valid": false, "reason": "empty selection requires an explicit decline"}
+	return {"valid": true, "reason": "", "selected_items": selected_items}
+
+
+func _consume_effect_response(scene: Object) -> Dictionary:
+	var response_raw: Variant = scene.get_meta(EFFECT_RESPONSE_META, {})
+	scene.remove_meta(EFFECT_RESPONSE_META)
+	return response_raw if response_raw is Dictionary else {}
+
+
+func _reject_effect_choice(scene: Object, reason: String) -> void:
+	scene.call("_runtime_log", "effect_choice_rejected", reason)
+	scene.set("_pending_choice", "effect_interaction")
+	show_next_effect_interaction_step(scene)
 
 
 func handle_effect_interaction_choice(scene: Object, selected_indices: PackedInt32Array) -> void:
@@ -357,14 +429,42 @@ func handle_effect_interaction_choice(scene: Object, selected_indices: PackedInt
 		return
 
 	var step: Dictionary = pending_effect_steps[pending_effect_step_index]
-	var items_raw: Array = step.get("items", [])
-	var selected_items: Array = []
-	for selected_idx: int in selected_indices:
-		if selected_idx >= 0 and selected_idx < items_raw.size():
-			selected_items.append(items_raw[selected_idx])
+	var response := _consume_effect_response(scene)
+	var current_generation := int(scene.get_meta(EFFECT_GENERATION_META, 0))
+	var response_generation := int(response.get("generation", current_generation))
+	var response_step_index := int(response.get("step_index", pending_effect_step_index))
+	var current_step_id := str(step.get("id", "step_%d" % pending_effect_step_index))
+	var response_step_id := str(response.get("step_id", current_step_id))
+	if response_generation >= 0 and response_generation != current_generation:
+		_reject_effect_choice(scene, "stale generation %d (current %d)" % [response_generation, current_generation])
+		return
+	if response_step_index >= 0 and response_step_index != pending_effect_step_index:
+		_reject_effect_choice(scene, "stale step index %d (current %d)" % [response_step_index, pending_effect_step_index])
+		return
+	if response_step_id != "" and response_step_id != current_step_id:
+		_reject_effect_choice(scene, "stale step id %s (current %s)" % [response_step_id, current_step_id])
+		return
+	var response_intent := str(response.get("intent", BaseEffect.INTERACTION_INTENT_SELECT))
+	if response.is_empty() and selected_indices.is_empty() and (
+		bool(step.get("hidden_search_can_whiff", false))
+		or bool(step.get("requires_explicit_empty_selection", false))
+	):
+		# AI and test/headless-style resolvers call the controller directly. An
+		# explicit empty call from those resolvers is intentional, not a UI echo.
+		response_intent = BaseEffect.INTERACTION_INTENT_DECLINE
+	var require_explicit_empty := str(response.get("source", "")) in ["dialog", "dialog_cancel"]
+	var validation := validate_effect_step_choice(step, selected_indices, response_intent, require_explicit_empty)
+	if not bool(validation.get("valid", false)):
+		_reject_effect_choice(scene, str(validation.get("reason", "invalid selection")))
+		return
+	var selected_items: Array = validation.get("selected_items", [])
 
 	var pending_effect_context: Dictionary = scene.get("_pending_effect_context")
-	pending_effect_context[step.get("id", "step_%d" % pending_effect_step_index)] = selected_items
+	pending_effect_context[current_step_id] = selected_items
+	var intents_raw: Variant = pending_effect_context.get(BaseEffect.INTERACTION_INTENTS_KEY, {})
+	var intents: Dictionary = intents_raw if intents_raw is Dictionary else {}
+	intents[current_step_id] = response_intent
+	pending_effect_context[BaseEffect.INTERACTION_INTENTS_KEY] = intents
 	scene.set("_pending_effect_context", pending_effect_context)
 	scene.call(
 		"_runtime_log",
@@ -423,6 +523,12 @@ func inject_followup_steps(scene: Object) -> void:
 			)
 		_:
 			return
+	followup_steps = ensure_empty_search_preview_fallback(
+		followup_steps,
+		pending_effect_card,
+		gsm.game_state,
+		pending_effect_context
+	)
 	if followup_steps.is_empty():
 		return
 	var pending_effect_step_index: int = int(scene.get("_pending_effect_step_index"))
@@ -453,8 +559,33 @@ func inject_followup_steps(scene: Object) -> void:
 	)
 
 
+func ensure_empty_search_preview_fallback(
+	followup_steps: Array[Dictionary],
+	card: CardInstance,
+	state: GameState,
+	resolved_context: Dictionary
+) -> Array[Dictionary]:
+	var resolved_steps: Array[Dictionary] = followup_steps.duplicate()
+	if not resolved_steps.is_empty():
+		return resolved_steps
+	var base_effect := BaseEffect.new()
+	if not base_effect.should_preview_empty_search_deck(resolved_context):
+		return resolved_steps
+	if card == null or card.card_data == null or state == null:
+		return resolved_steps
+	if card.owner_index < 0 or card.owner_index >= state.players.size():
+		return resolved_steps
+	var player: PlayerState = state.players[card.owner_index]
+	resolved_steps.append(base_effect.build_readonly_deck_preview_step(
+		"%s：查看牌库" % card.card_data.name,
+		player.deck
+	))
+	return resolved_steps
+
+
 func reset_effect_interaction(scene: Object) -> void:
 	scene.call("_runtime_log", "reset_effect_interaction", scene.call("_effect_state_snapshot"))
+	scene.remove_meta(EFFECT_RESPONSE_META)
 	var clearing_effect_dialog: bool = str(scene.get("_pending_choice")) == "effect_interaction"
 	var clearing_field_interaction: bool = bool(scene.call("_is_field_interaction_active"))
 	scene.set("_pending_effect_kind", "")
@@ -520,6 +651,19 @@ func _finish_effect_interaction(scene: Object) -> void:
 			success = gsm.enforce_current_bench_limits("bench_limit_cleanup", pending_effect_player_index, "", -1, [pending_effect_context])
 		"powerglass_end_turn":
 			success = gsm.resolve_powerglass_end_turn_choice(pending_effect_player_index, [pending_effect_context])
+	if success and scene.has_method("_play_battle_interaction_success"):
+		var feedback_kind := pending_effect_kind
+		if pending_effect_kind == "play_stadium":
+			feedback_kind = "stadium"
+		elif pending_effect_kind == "granted_attack":
+			feedback_kind = "attack"
+		var target_slot_id := ""
+		if pending_effect_slot != null and scene.has_method("_slot_id_from_slot"):
+			target_slot_id = str(scene.call("_slot_id_from_slot", pending_effect_slot))
+		scene.call("_play_battle_interaction_success", feedback_kind, {
+			"source_card_instance_id": pending_effect_card.instance_id if pending_effect_card != null else "",
+			"target_slot_id": target_slot_id,
+		})
 	if not success and pending_effect_card != null:
 		scene.call("_log", _bt(scene, "battle.log.cannot_use_card", {"name": pending_effect_card.card_data.name}))
 	scene.call("_runtime_log", "effect_interaction_complete", "success=%s %s" % [str(success), scene.call("_state_snapshot")])

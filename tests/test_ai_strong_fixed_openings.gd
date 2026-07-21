@@ -816,6 +816,10 @@ func test_charizard_strong_fixed_order_hits_t2_charizard_and_pidgeot_board() -> 
 	CardInstance.reset_id_counter()
 	var gsm := GameStateMachine.new()
 	gsm.set_deck_order_override(0, fixed_order)
+	gsm.set_deck_order_override(1, _miraidon_low_pressure_fixed_order())
+	var shuffle_seed_owner := PlayerState.new()
+	if shuffle_seed_owner.has_method("set_forced_shuffle_seed"):
+		shuffle_seed_owner.call("set_forced_shuffle_seed", 101)
 	if gsm.coin_flipper != null:
 		var rng: Variant = gsm.coin_flipper.get("_rng")
 		if rng is RandomNumberGenerator:
@@ -837,6 +841,8 @@ func test_charizard_strong_fixed_order_hits_t2_charizard_and_pidgeot_board() -> 
 	var player_0_ai := _make_ai_for_deck(0, CHARIZARD_DECK_ID)
 	var player_1_ai := _make_ai_for_deck(1, MIRAIDON_DECK_ID)
 	var outcome := _run_until_turn_end(gsm, bridge, player_0_ai, player_1_ai, 3, 0)
+	if shuffle_seed_owner.has_method("clear_forced_shuffle_seed"):
+		shuffle_seed_owner.call("clear_forced_shuffle_seed")
 
 	var player: PlayerState = gsm.game_state.players[0]
 	var pidgeot_slot := _find_slot_by_name(player, "Pidgeot ex")

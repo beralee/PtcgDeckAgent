@@ -1,0 +1,58 @@
+{
+  "abilities": [
+    {
+      "name": "灼热蒸汽",
+      "text": "如果这只宝可梦在战斗场上的话，则在自己的回合可以使用1次。令对手的战斗宝可梦陷入【灼伤】状态。"
+    }
+  ],
+  "ancient_trait": "",
+  "artist": "5ban Graphics",
+  "attacks": [
+    {
+      "cost": "RRC",
+      "damage": "160",
+      "is_vstar_power": false,
+      "name": "高温旋风",
+      "text": "选择这只宝可梦身上附着的1个能量，转附于备战宝可梦身上。"
+    }
+  ],
+  "card_index": "233",
+  "card_index_en": "",
+  "card_type": "Pokemon",
+  "description": "特性: 灼热蒸汽\n如果这只宝可梦在战斗场上的话，则在自己的回合可以使用1次。令对手的战斗宝可梦陷入【灼伤】状态。\n\n【火】【火】 高温旋风 160\n选择这只宝可梦身上附着的1个能量，转附于备战宝可梦身上。\n\n",
+  "effect_id": "075fe490ef98a74bc6f880be9ebd75de",
+  "energy_provides": "",
+  "energy_type": "R",
+  "evolves_from": "",
+  "hp": 220,
+  "image_local_path": "user://cards/images/CSV10C/233.png",
+  "image_url": "https://tcg.mik.moe/static/img/CSV10C/233.png",
+  "is_tags": [],
+  "label": "",
+  "mechanic": "ex",
+  "name": "波尔凯尼恩ex",
+  "name_en": "",
+  "name_zh": "",
+  "rarity": "SR",
+  "regulation_expanded": true,
+  "regulation_mark": "I",
+  "regulation_standard": true,
+  "release_date": "2026-07-16T00:00:00+08:00",
+  "resistance_energy": "",
+  "resistance_value": "",
+  "retreat_cost": 3,
+  "set_code": "CSV10C",
+  "set_code_en": "",
+  "source_card_index": "233",
+  "source_imported_at": 0,
+  "source_language": "zh-CN",
+  "source_parser_version": 1,
+  "source_prints": [],
+  "source_provider": "tcg_mik",
+  "source_set_code": "CSV10C",
+  "source_url": "https://tcg.mik.moe/cards/CSV10C/233",
+  "stage": "Basic",
+  "weakness_energy": "W",
+  "weakness_value": "×2",
+  "yoren_code": "Y1575"
+}

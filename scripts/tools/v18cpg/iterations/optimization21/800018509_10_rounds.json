@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "architecture": "V18CPG",
+  "program_id": "roi5_precision",
+  "evidence_revision": 1,
+  "status": "roi5_complete_noninferior",
+  "deck_id": 800018509,
+  "deck_name": "18.0 猛雷鼓厄诡椪",
+  "anchor_id": 575720,
+  "seed_base": 800018509,
+  "games_per_round": 5,
+  "model": "deepseek-v4-flash",
+  "deck_source": "bundled_ai",
+  "deck_content_fingerprint": "4abf03a2d0744c60f3e7e36a192914334788e81731505250c17fa2808a01918e",
+  "completed_rounds": 1,
+  "required_rounds": 10,
+  "deep_iterations_completed": 5,
+  "required_deep_rounds": 5,
+  "roi5_completion": {
+    "complex_scenarios": 5,
+    "final_artifact": "res://tmp/v18cpg/roi5/800018509/final_bench5.json",
+    "rule_wins": 3,
+    "v18cpg_wins": 3,
+    "acceptance": "noninferior"
+  },
+  "deep_iterations": [
+    {
+      "round": 1,
+      "failure_category": "fact_or_solver_error",
+      "decision": "retained",
+      "evidence": "res://tests/v18_llm_policy_graph/pilots/raging_bolt_10_rounds.gd",
+      "proof_reason": "Deck-low safety consumes the profile threshold rather than a shared constant."
+    },
+    {
+      "round": 2,
+      "failure_category": "fact_or_solver_error",
+      "decision": "retained",
+      "evidence": "res://tests/v18_llm_policy_graph/pilots/raging_bolt_10_rounds.gd",
+      "proof_reason": "Discard plans with unknown or zero-HP targets can no longer claim a payable knockout."
+    },
+    {
+      "round": 3,
+      "failure_category": "semantic_gap",
+      "decision": "retained",
+      "evidence": "res://tests/v18_llm_policy_graph/pilots/raging_bolt_10_rounds.gd",
+      "proof_reason": "Special Energy is separated from the basic-Energy-only burst discard pool."
+    },
+    {
+      "round": 4,
+      "failure_category": "fact_or_solver_error",
+      "decision": "retained",
+      "evidence": "res://tests/v18_llm_policy_graph/pilots/raging_bolt_10_rounds.gd",
+      "proof_reason": "Attack costs are computed on the Active Pokemon instead of incorrectly combining board-wide Energy."
+    },
+    {
+      "round": 5,
+      "failure_category": "semantic_gap",
+      "decision": "retained_noninferior",
+      "evidence": "res://tmp/v18cpg/roi5/800018509/round01_formal5.json",
+      "proof_reason": "The non-default three-Energy reserve contract and current five-seed formal floor were retained with zero negative flips."
+    }
+  ],
+  "rounds": [
+    {
+      "round": 1,
+      "decision": "retained_noninferior",
+      "verified_local_artifact": "res://tmp/v18cpg/roi5/800018509/round01_verified5.json",
+      "verified_local_artifact_sha256": "a0e3fd1e15910ef0f759c954f0465c2a84d8d978791c05362aca275a51ce2882",
+      "formal_artifact": "res://tmp/v18cpg/roi5/800018509/round01_formal5.json",
+      "formal_artifact_sha256": "4029ddf009e71af3d2ae4b61efd5ae40a4cb45e9101aeace90a69ac78cc19f80",
+      "profile_version": 12,
+      "profile_fingerprint": "497f764a1b590a23c24a612fa6e2e2c267f5ca85b491073cb9c66411c532222c",
+      "metrics": {
+        "rule_wins": 3,
+        "v18cpg_wins": 3,
+        "positive_flips": 0,
+        "negative_flips": 0,
+        "paired_improvement": 0.0,
+        "paired_bootstrap_95": [0.0, 0.0],
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 26,
+        "model_accepted": 13,
+        "model_rejected": 13,
+        "turn_visible_wait_p95_ms": 6253,
+        "zero_model_action_reference_mismatches": 0,
+        "graph_branch_hits": 20,
+        "uncovered_events": 76
+      },
+      "quality_note": "The current module-correct architecture passes the strength and latency floors with healthy model takeover, but does not yet flip either loss seed."
+    }
+  ],
+  "source_hashes": {
+    "profile_file_sha256": "f4b9721e588d52241407b5419863bb3c69cdd593402a9aaa15bc9a907d6c6fba",
+    "strategy_file_sha256": "d18c6e4d8bf68e918a16b376174143da6fcfcbddc33c62fa16b70962399f99c2",
+    "capability_registry_sha256": "2cfd96053fc60f199215d215b70166158a3bc76d231e5c615e9e040353cd1f65",
+    "runner_sha256": "56efe05607ece822d1cf72513541de08dc32786d99f5e14c82abfb9b5dde2a68"
+  },
+  "loss_diagnosis": {
+    "seeds": [800018511, 800018513],
+    "earliest_shared_gap": "frontier_gap",
+    "details": "The public route frontier keeps one action per category and cannot compare same-category attachment targets, Noctowl pairs, gust targets, or Bellowing Thunder discard allocations. The model therefore reproduces the Rule path even when called.",
+    "trace_artifact": "res://tmp/v18cpg/roi5/800018509/round02_trace_report.json"
+  },
+  "next_action": "Add typed same-category alternatives and interaction ownership for energy attachment and burst discard plans, then require a verified-local positive flip on seed 800018511 or 800018513 before Round02 formal acceptance."
+}

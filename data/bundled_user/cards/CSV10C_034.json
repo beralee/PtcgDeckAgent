@@ -1,0 +1,66 @@
+{
+    "name":  "火箭队的黑鲁加",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【火】 恶之火种 \n令对手的战斗宝可梦陷入【灼伤】和【混乱】状态。\n\n【火】 燃烧驱逐 120\n选择这只宝可梦身上附着的1个能量，放于弃牌区。\n\n",
+    "yoren_code":  "P0229",
+    "set_code":  "CSV10C",
+    "card_index":  "034",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "Anesaki Dynamic",
+    "rarity":  "U",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "18e2f69b20cb18e73f86a78ba7a15e6b",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/034.png",
+    "image_local_path":  "user://cards/images/CSV10C/034.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "R",
+    "stage":  "Stage 1",
+    "hp":  130,
+    "weakness_energy":  "W",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  2,
+    "evolves_from":  "火箭队的戴鲁比",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "恶之火种",
+                        "text":  "令对手的战斗宝可梦陷入【灼伤】和【混乱】状态。",
+                        "cost":  "R",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "燃烧驱逐",
+                        "text":  "选择这只宝可梦身上附着的1个能量，放于弃牌区。",
+                        "cost":  "RC",
+                        "damage":  "120",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

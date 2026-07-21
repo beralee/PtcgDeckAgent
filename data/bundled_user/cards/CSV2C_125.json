@@ -1,0 +1,53 @@
+{
+    "name":  "天星队手下",
+    "card_type":  "Supporter",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "选择对手战斗宝可梦身上附着的1个能量，放回对手的牌库上方。",
+    "yoren_code":  "Y1263",
+    "set_code":  "CSV2C",
+    "card_index":  "125",
+    "set_code_en":  "OBF",
+    "card_index_en":  "195",
+    "name_en":  "Team Star Grunt",
+    "name_zh":  "",
+    "artist":  "nagimiso",
+    "rarity":  "U",
+    "release_date":  "2025-03-21T00:00:00+08:00",
+    "regulation_mark":  "G",
+    "effect_id":  "b54276b42598426febfe34bb67d5f075",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV2C/125.png",
+    "image_local_path":  "user://cards/images/CSV2C/125.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "",
+    "stage":  "",
+    "hp":  0,
+    "weakness_energy":  "",
+    "weakness_value":  "",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  0,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

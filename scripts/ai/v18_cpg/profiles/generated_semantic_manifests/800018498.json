@@ -1,0 +1,360 @@
+{
+  "cards": [
+    {
+      "count": 3,
+      "effect_id": "daccaa8fc34b41e47e77be2143eea71b",
+      "name": "Ralts",
+      "roles": [
+        "pokemon",
+        "opening_active_candidate",
+        "attacker",
+        "development_piece"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV2C_053"
+    },
+    {
+      "count": 2,
+      "effect_id": "773a7c5bc165bd5d75321bc7c29fdd25",
+      "name": "Kirlia",
+      "roles": [
+        "pokemon",
+        "evolution_piece",
+        "search_target",
+        "ability_engine"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV2C_054"
+    },
+    {
+      "count": 2,
+      "effect_id": "bd134d7d84e9f1a837a74b061fcb5f40",
+      "name": "Gardevoir ex",
+      "roles": [
+        "pokemon",
+        "signature_piece",
+        "energy_target",
+        "attacker",
+        "evolution_piece",
+        "search_target",
+        "ability_engine",
+        "embrace_target"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV2C_055"
+    },
+    {
+      "count": 3,
+      "effect_id": "66fee12502043db7d92b97b0d62b0f59",
+      "name": "Munkidori",
+      "roles": [
+        "pokemon",
+        "signature_piece",
+        "development_piece",
+        "search_target",
+        "ability_engine"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV8C_094"
+    },
+    {
+      "count": 1,
+      "effect_id": "c82dc9185c27908490f8a00cfdc75765",
+      "name": "莉莉艾的皮皮ex",
+      "roles": [
+        "pokemon",
+        "development_piece"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV10C_082"
+    },
+    {
+      "count": 1,
+      "effect_id": "ab6c3357e2b8a8385a68da738f41e0c1",
+      "name": "Fezandipiti ex",
+      "roles": [
+        "pokemon",
+        "development_piece"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV8C_135"
+    },
+    {
+      "count": 1,
+      "effect_id": "fd1e9b0379f79156fbb304162cbe21ba",
+      "name": "谢米",
+      "roles": [
+        "pokemon",
+        "opening_active_candidate",
+        "attacker"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV10C_007"
+    },
+    {
+      "count": 1,
+      "effect_id": "8e295bb9597fb1ebbc2c6d58a98e0839",
+      "name": "Drifloon",
+      "roles": [
+        "pokemon",
+        "energy_target",
+        "attacker",
+        "embrace_target"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV2C_060"
+    },
+    {
+      "count": 1,
+      "effect_id": "28505a8ad6e07e74382c1b5e09737932",
+      "name": "含羞苞",
+      "roles": [
+        "pokemon",
+        "opening_active_candidate",
+        "attacker"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV9.5C_004"
+    },
+    {
+      "count": 1,
+      "effect_id": "12c9416c64d1a8cfbbf0a3000a9f3d50",
+      "name": "Scream Tail",
+      "roles": [
+        "pokemon",
+        "energy_target",
+        "attacker",
+        "embrace_target"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV6C_065"
+    },
+    {
+      "count": 4,
+      "effect_id": "aecd80ca2722885c3d062a2255346f3e",
+      "name": "Professor's Research",
+      "roles": [
+        "supporter",
+        "draw_engine"
+      ],
+      "type": "Supporter",
+      "uid": "CSV1C_121"
+    },
+    {
+      "count": 4,
+      "effect_id": "af514f82d182aeae5327b2c360df703d",
+      "name": "Iono",
+      "roles": [
+        "supporter",
+        "draw_engine"
+      ],
+      "type": "Supporter",
+      "uid": "CSV3C_123"
+    },
+    {
+      "count": 2,
+      "effect_id": "5bdbc985f9aa2e6f248b53f6f35d1d37",
+      "name": "Arven",
+      "roles": [
+        "supporter",
+        "trainer_tutor"
+      ],
+      "type": "Supporter",
+      "uid": "CSV1C_123"
+    },
+    {
+      "count": 4,
+      "effect_id": "a337ed34a45e63c6d21d98c3d8e0cb6e",
+      "name": "Ultra Ball",
+      "roles": [
+        "item",
+        "pokemon_search",
+        "trainer_plan_piece"
+      ],
+      "type": "Item",
+      "uid": "CSV1C_112"
+    },
+    {
+      "count": 3,
+      "effect_id": "e366f56ecd3f805a28294109a1a37453",
+      "name": "Earthen Vessel",
+      "roles": [
+        "item",
+        "energy_access",
+        "typed_energy_access",
+        "trainer_plan_piece"
+      ],
+      "type": "Item",
+      "uid": "CSV6C_115"
+    },
+    {
+      "count": 2,
+      "effect_id": "1af63a7e2cb7a79215474ad8db8fd8fd",
+      "name": "Nest Ball",
+      "roles": [
+        "item",
+        "pokemon_search",
+        "trainer_plan_piece"
+      ],
+      "type": "Item",
+      "uid": "CSVH1C_043"
+    },
+    {
+      "count": 2,
+      "effect_id": "06bc00d5dcec33898dc6db2e4c4d10ec",
+      "name": "Counter Catcher",
+      "roles": [
+        "item",
+        "gust"
+      ],
+      "type": "Item",
+      "uid": "CSV6C_114"
+    },
+    {
+      "count": 2,
+      "effect_id": "3e6f1daf545dfed48d0588dd50792a2e",
+      "name": "Night Stretcher",
+      "roles": [
+        "item",
+        "recovery",
+        "trainer_plan_piece"
+      ],
+      "type": "Item",
+      "uid": "CSV8C_183"
+    },
+    {
+      "count": 1,
+      "effect_id": "f866dfee26cd6b0dbbb52b74438d0a59",
+      "name": "Buddy-Buddy Poffin",
+      "roles": [
+        "item",
+        "pokemon_search"
+      ],
+      "type": "Item",
+      "uid": "CSV7C_177"
+    },
+    {
+      "count": 1,
+      "effect_id": "c9c948169525fbb3dce70c477ec7a90a",
+      "name": "Super Rod",
+      "roles": [
+        "item",
+        "recovery"
+      ],
+      "type": "Item",
+      "uid": "CSV1C_109"
+    },
+    {
+      "count": 1,
+      "effect_id": "e92a86246f44351d023bd4fa271089aa",
+      "name": "Secret Box",
+      "roles": [
+        "item"
+      ],
+      "type": "Item",
+      "uid": "CSV8C_176"
+    },
+    {
+      "count": 1,
+      "effect_id": "d3891abcfe3277c8811cde06741d3236",
+      "name": "Rare Candy",
+      "roles": [
+        "item"
+      ],
+      "type": "Item",
+      "uid": "CSVH1C_045"
+    },
+    {
+      "count": 3,
+      "effect_id": "43386015be5c073ba2e5b9d3692ece3f",
+      "name": "Technical Machine: Evolution",
+      "roles": [
+        "item",
+        "trainer_plan_piece"
+      ],
+      "type": "Tool",
+      "uid": "CSV5C_119"
+    },
+    {
+      "count": 2,
+      "effect_id": "d1c2f018a644e662f2b6895fdfc29281",
+      "name": "Bravery Charm",
+      "roles": [
+        "item",
+        "hp_expansion_tool"
+      ],
+      "type": "Tool",
+      "uid": "CSV1C_118"
+    },
+    {
+      "count": 2,
+      "effect_id": "c117bea3cc758d46430d6bef11062a56",
+      "name": "Artazon",
+      "roles": [
+        "stadium",
+        "trainer_plan_piece"
+      ],
+      "type": "Stadium",
+      "uid": "CSV2C_127"
+    },
+    {
+      "count": 7,
+      "effect_id": "41b2d1a95fafc35e4cf39383ffae928a",
+      "name": "Psychic Energy",
+      "roles": [
+        "energy_source",
+        "typed_energy"
+      ],
+      "type": "Basic Energy",
+      "uid": "CSVE1C_PSY"
+    },
+    {
+      "count": 3,
+      "effect_id": "46c769fc57a6c250c560df648bb779f8",
+      "name": "Darkness Energy",
+      "roles": [
+        "energy_source",
+        "typed_energy"
+      ],
+      "type": "Basic Energy",
+      "uid": "CSVE1C_DAR"
+    }
+  ],
+  "deck_content_fingerprint": "e4dfb15b7f4f436077c4830ad2ce6e0f2b98d798e6773d6d2fed2949ae7fc319",
+  "deck_id": 800018498,
+  "manifest_hash": "e729eafab9c9d5c37a4c6ee06ee00bf3d9ec00e70e521f0a9543b3fe8dfee621",
+  "modules": [
+    "gardevoir_embrace",
+    "damage_counter_control"
+  ],
+  "primary_module": "gardevoir_embrace",
+  "role_counts": {
+    "ability_engine": 7,
+    "attacker": 9,
+    "development_piece": 8,
+    "draw_engine": 8,
+    "embrace_target": 4,
+    "energy_access": 3,
+    "energy_source": 10,
+    "energy_target": 4,
+    "evolution_piece": 4,
+    "gust": 2,
+    "hp_expansion_tool": 2,
+    "item": 22,
+    "opening_active_candidate": 5,
+    "pokemon": 16,
+    "pokemon_search": 7,
+    "recovery": 3,
+    "search_target": 7,
+    "signature_piece": 5,
+    "stadium": 2,
+    "supporter": 10,
+    "trainer_plan_piece": 16,
+    "trainer_tutor": 2,
+    "typed_energy": 10,
+    "typed_energy_access": 3
+  },
+  "schema_version": 1,
+  "semantic_version": 1,
+  "strategy_id": "v18cpg_800018498_academy_gardevoir"
+}

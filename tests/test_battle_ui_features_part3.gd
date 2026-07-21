@@ -93,11 +93,17 @@ func test_battle_scene_earthen_vessel_energy_search_accepts_confirm_pressed_with
 	if pending_index >= 0 and pending_index < pending_steps.size() and pending_steps[pending_index] is Dictionary:
 		current_step_id = str((pending_steps[pending_index] as Dictionary).get("id", ""))
 	battle_scene.set("_modal_input_finished_at_msec", Time.get_ticks_msec() - 1000)
-	battle_scene.call("_on_dialog_confirm")
+	var empty_row := battle_scene.get("_dialog_utility_row") as HBoxContainer
+	var empty_button := empty_row.find_child("LibrarySearchEmptySelectionButton", true, false) as Button if empty_row != null else null
+	var no_selection_button := battle_scene.get("_dialog_cancel") as Button
+	if no_selection_button != null:
+		battle_scene.call("_on_dialog_cancel")
 
 	var result := run_checks([
 		assert_eq(current_step_id, "search_energy", "Precondition: Earthen Vessel should be waiting on the Basic Energy search step"),
-		assert_eq(str(battle_scene.get("_pending_choice")), "", "A confirm press should resolve the Energy search when the previous step had no confirm-button origin"),
+		assert_null(empty_button, "Portrait Earthen Vessel search should not stack a separate empty-selection action above the footer"),
+		assert_true(no_selection_button != null and no_selection_button.visible and no_selection_button.text == "不选择", "Portrait Earthen Vessel search should reuse the footer cancel slot for no-selection"),
+		assert_eq(str(battle_scene.get("_pending_choice")), "", "Explicit empty-selection action should resolve the Energy search"),
 		assert_true(earthen_vessel in player.discard_pile, "Earthen Vessel should resolve after choosing no Energy"),
 		assert_true(discard_cost in player.discard_pile, "Earthen Vessel should still pay its discard cost"),
 		assert_true(energy_a in player.deck, "Choosing no Energy should leave the first Basic Energy in deck"),
@@ -2072,6 +2078,23 @@ func test_stadium_backdrop_resolves_area_zero_background() -> String:
 	])
 
 
+func test_stadium_backdrop_resolves_calamitous_snowy_mountain_background() -> String:
+	var coordinator := BattleStadiumBackdropCoordinatorScript.new()
+	var stadium_cd := _make_trainer_cd("灾祸雪山", "Stadium", "")
+	stadium_cd.name_en = "Calamitous Snowy Mountain"
+	stadium_cd.set_code = "CSV3C"
+	stadium_cd.card_index = "129"
+	stadium_cd.effect_id = "ceac9ee87d5850880f7438665925dbd2"
+	var stadium := CardInstance.create(stadium_cd, 0)
+	var expected_path := "res://assets/ui/stadium_backgrounds/calamitous_snowy_mountain.webp"
+	var resolved_path: String = coordinator.resolve_stadium_backdrop_path(stadium, "res://assets/ui/background.png")
+
+	return run_checks([
+		assert_eq(resolved_path, expected_path, "Calamitous Snowy Mountain should resolve to its dynamic stadium background"),
+		assert_true(FileAccess.file_exists(expected_path), "Calamitous Snowy Mountain background asset should exist"),
+	])
+
+
 func test_stadium_backdrop_resolves_perilous_jungle_background() -> String:
 	var coordinator := BattleStadiumBackdropCoordinatorScript.new()
 	var stadium_cd := _make_trainer_cd("Perilous Jungle", "Stadium", "")
@@ -2122,6 +2145,37 @@ func test_stadium_background_map_resources_exist_and_load() -> String:
 					texture = ImageTexture.create_from_image(image)
 			checks.append(assert_not_null(texture, "Mapped stadium background should load as texture: %s" % path))
 	checks.append(assert_gte(mapped_count, 19, "Stadium background map should include the local Stadium card set"))
+	return run_checks(checks)
+
+
+func test_csv10c_stadium_cards_resolve_their_dynamic_backgrounds() -> String:
+	var coordinator := BattleStadiumBackdropCoordinatorScript.new()
+	var default_path := "res://assets/ui/background.png"
+	var expected_by_card_id := {
+		"214": "res://assets/ui/stadium_backgrounds/stones_cave.webp",
+		"215": "res://assets/ui/stadium_backgrounds/ns_castle.webp",
+		"216": "res://assets/ui/stadium_backgrounds/spikemuth_gym.webp",
+		"217": "res://assets/ui/stadium_backgrounds/levincia.webp",
+		"218": "res://assets/ui/stadium_backgrounds/postwick.webp",
+		"219": "res://assets/ui/stadium_backgrounds/team_rocket_watchtower.webp",
+		"220": "res://assets/ui/stadium_backgrounds/team_rocket_factory.webp",
+		"286": "res://assets/ui/stadium_backgrounds/levincia.webp",
+	}
+	var checks: Array[String] = []
+	for card_index_variant: Variant in expected_by_card_id.keys():
+		var card_index := str(card_index_variant)
+		var stadium_cd := _make_trainer_cd("CSV10C Stadium %s" % card_index, "Stadium", "")
+		stadium_cd.set_code = "CSV10C"
+		stadium_cd.card_index = card_index
+		var resolved_path: String = coordinator.resolve_stadium_backdrop_path(
+			CardInstance.create(stadium_cd, 0),
+			default_path
+		)
+		checks.append(assert_eq(
+			resolved_path,
+			str(expected_by_card_id[card_index_variant]),
+			"CSV10C_%s should resolve to its dynamic stadium background" % card_index
+		))
 	return run_checks(checks)
 
 
@@ -3209,6 +3263,72 @@ func test_battle_scene_search_and_attach_routes_real_attack_to_field_assignment_
 		assert_eq(str(battle_scene.get("_field_interaction_position")), "top", "给我方宝可梦贴能的 assignment UI 应上移"),
 		assert_eq(int((battle_scene.get("_field_interaction_data") as Dictionary).get("source_items", []).size()), 2, "应展示两张可分配的基础能量"),
 	])
+
+
+func test_battle_scene_portrait_joltik_charge_combines_grass_and_lightning_assignment_ui() -> String:
+	var battle_scene = _make_battle_scene_stub()
+	battle_scene.set("_active_battle_layout_mode", "portrait")
+	var gsm := GameStateMachine.new()
+	gsm.game_state = GameState.new()
+	gsm.game_state.current_player_index = 0
+	gsm.game_state.first_player_index = 0
+	gsm.game_state.turn_number = 3
+	gsm.game_state.phase = GameState.GamePhase.MAIN
+	battle_scene.set("_gsm", gsm)
+	battle_scene.set("_view_player", 0)
+
+	for pi: int in 2:
+		var player := PlayerState.new()
+		player.player_index = pi
+		gsm.game_state.players.append(player)
+
+	var joltik_cd := _make_pokemon_cd("Joltik", 30, "L")
+	joltik_cd.attacks = [{"name": "Joltik Charge", "cost": "C", "damage": "", "text": "", "is_vstar_power": false}]
+	var attacker_card := CardInstance.create(joltik_cd, 0)
+	var attacker := PokemonSlot.new()
+	attacker.pokemon_stack.append(attacker_card)
+	gsm.game_state.players[0].active_pokemon = attacker
+	var bench := PokemonSlot.new()
+	bench.pokemon_stack.append(CardInstance.create(_make_pokemon_cd("Bench Target", 100, "L"), 0))
+	gsm.game_state.players[0].bench = [bench]
+	gsm.game_state.players[0].deck = [
+		CardInstance.create(_make_energy_cd("Grass 1", "G"), 0),
+		CardInstance.create(_make_energy_cd("Grass 2", "G"), 0),
+		CardInstance.create(_make_energy_cd("Grass 3", "G"), 0),
+		CardInstance.create(_make_energy_cd("Lightning 1", "L"), 0),
+		CardInstance.create(_make_energy_cd("Lightning 2", "L"), 0),
+		CardInstance.create(_make_energy_cd("Lightning 3", "L"), 0),
+	]
+
+	var effect := CSV9CEffects.AttackJoltikCharge.new(0)
+	var steps: Array[Dictionary] = effect.get_attack_interaction_steps(attacker_card, joltik_cd.attacks[0], gsm.game_state)
+	battle_scene.call("_start_effect_interaction", "attack", 0, steps, attacker_card, attacker, 0)
+	var data: Dictionary = battle_scene.get("_field_interaction_data")
+	battle_scene.call("_on_field_assignment_source_chosen", 0)
+	battle_scene.call("_handle_field_assignment_target_index", 0)
+	battle_scene.call("_on_field_assignment_source_chosen", 1)
+	battle_scene.call("_handle_field_assignment_target_index", 0)
+	battle_scene.call("_on_field_assignment_source_chosen", 2)
+	var selected_after_third_grass := int(battle_scene.get("_field_interaction_assignment_selected_source_index"))
+	var assignments_after_third_grass: Array = (battle_scene.get("_field_interaction_assignment_entries") as Array).duplicate(true)
+	battle_scene.call("_on_field_assignment_source_chosen", 3)
+	battle_scene.call("_handle_field_assignment_target_index", 1)
+	battle_scene.call("_on_field_assignment_source_chosen", 4)
+	battle_scene.call("_handle_field_assignment_target_index", 1)
+	var assignments_after_two_lightning: Array = (battle_scene.get("_field_interaction_assignment_entries") as Array).duplicate(true)
+
+	var result := run_checks([
+		assert_eq(steps.size(), 1, "Joltik Charge should enter one combined assignment step on portrait UI"),
+		assert_eq(str(battle_scene.get("_field_interaction_mode")), "assignment", "Portrait Joltik Charge should use the field assignment HUD"),
+		assert_eq(int(data.get("source_items", []).size()), 6, "Portrait Joltik Charge should show Grass and Lightning Energy together"),
+		assert_eq(int(data.get("max_select", 0)), 4, "Portrait Joltik Charge should allow four total assignments"),
+		assert_eq(data.get("source_bucket_keys", []), ["G", "G", "G", "L", "L", "L"], "Portrait Joltik Charge should preserve source Energy type buckets"),
+		assert_eq(selected_after_third_grass, -1, "Portrait Joltik Charge should reject selecting a third Grass source"),
+		assert_eq(assignments_after_third_grass.size(), 2, "Portrait Joltik Charge should keep only two Grass assignments"),
+		assert_eq(assignments_after_two_lightning.size(), 4, "Portrait Joltik Charge should accept two Grass plus two Lightning assignments"),
+	])
+	battle_scene.free()
+	return result
 
 
 func test_battle_scene_gholdengo_single_selected_energy_deals_fifty_to_neutral_target() -> String:

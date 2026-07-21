@@ -4,6 +4,8 @@ extends "res://scenes/battle/runtime/BattleSceneRuntimeFoundation.gd"
 const LLM_WAIT_LANDSCAPE_FONT_SIZE := 12
 const LLM_WAIT_PORTRAIT_FONT_SIZE := 56
 const MODAL_BACKGROUND_PREVIOUS_MOUSE_FILTER_META := "_modal_background_previous_mouse_filter"
+const AI_WATCHDOG_META := "_battle_ai_watchdog"
+const BattleAIWatchdogScript := preload("res://scripts/ui/battle/ai/BattleAIWatchdog.gd")
 
 func _ensure_battle_interaction_coordinator() -> void:
 	if _battle_interaction_coordinator == null:
@@ -420,7 +422,7 @@ func _llm_wait_model_display_name(model_id: String) -> String:
 	if lower.contains("qwen"):
 		return "Qwen 3.7 Plus"
 	if lower.contains("kimi"):
-		return "Kimi K2.6"
+		return "Kimi K3"
 	if lower.contains("claude"):
 		return "Claude Sonnet 4.6"
 	if lower.contains("gpt-5.5"):
@@ -491,6 +493,7 @@ func _ensure_battle_drag_scroll_coordinator() -> void:
 
 
 func _maybe_run_ai() -> void:
+	_notify_ai_watchdog_activity("maybe_run_ai")
 	if _try_auto_continue_ai_draw_reveal():
 		return
 	if _ai_running:
@@ -501,6 +504,36 @@ func _maybe_run_ai() -> void:
 		return
 	_ai_step_scheduled = true
 	call_deferred("_run_ai_step")
+
+
+func _notify_ai_watchdog_activity(reason: String = "") -> void:
+	var watchdog := _ensure_ai_watchdog()
+	if watchdog != null:
+		watchdog.call("notify_activity", reason)
+
+
+func _ensure_ai_watchdog() -> RefCounted:
+	var existing: Variant = get_meta(AI_WATCHDOG_META) if has_meta(AI_WATCHDOG_META) else null
+	if existing is RefCounted and is_instance_valid(existing):
+		return existing as RefCounted
+	var watchdog: RefCounted = BattleAIWatchdogScript.new()
+	watchdog.call("setup", self)
+	set_meta(AI_WATCHDOG_META, watchdog)
+	return watchdog
+
+
+func _ai_watchdog_force_finish_draw_reveal() -> void:
+	if not _draw_reveal_active:
+		_maybe_run_ai()
+		return
+	if _battle_draw_reveal_controller != null and _battle_draw_reveal_controller.has_method("_finish_all_reveals"):
+		_battle_draw_reveal_controller.call("_finish_all_reveals", self)
+		return
+	_draw_reveal_active = false
+	_draw_reveal_queue.clear()
+	_draw_reveal_current_action = null
+	_draw_reveal_resume_timer = null
+	_maybe_run_ai()
 
 
 
@@ -733,6 +766,10 @@ func _is_ai_turn_ready() -> bool:
 		if _is_ui_blocking_ai():
 			return false
 		return _is_ai_heavy_baton_prompt()
+	if _pending_choice == "exp_share_target":
+		if _is_ui_blocking_ai():
+			return false
+		return _is_ai_exp_share_prompt()
 	if _pending_choice == "effect_interaction":
 		if _is_ui_blocking_ai():
 			return false
@@ -913,16 +950,22 @@ func _is_ai_send_out_prompt() -> bool:
 
 
 func _is_ui_blocking_ai() -> bool:
-	var dialog_blocks_ai := _dialog_overlay != null and _dialog_overlay.visible and not (_is_ai_setup_prompt() or _is_ai_effect_prompt() or _is_ai_heavy_baton_prompt())
+	var dialog_blocks_ai := _dialog_overlay != null and _dialog_overlay.visible and not (
+		_is_ai_setup_prompt()
+		or _is_ai_effect_prompt()
+		or _is_ai_heavy_baton_prompt()
+		or _is_ai_exp_share_prompt()
+	)
 	return (
 		_draw_reveal_active
 		or _is_ai_action_pause_active()
 		or dialog_blocks_ai
+		or (_discard_overlay != null and _discard_overlay.visible)
 		or (_handover_panel != null and _handover_panel.visible)
 		or _has_pending_coin_animation()
 		or (_pending_choice == "take_prize" and not _is_ai_prize_prompt())
 		or _pending_prize_animating
-		or (_field_interaction_overlay != null and _field_interaction_overlay.visible and not (_is_ai_effect_prompt() or _is_ai_heavy_baton_prompt()))
+		or (_field_interaction_overlay != null and _field_interaction_overlay.visible and not (_is_ai_effect_prompt() or _is_ai_heavy_baton_prompt() or _is_ai_exp_share_prompt()))
 	)
 
 
@@ -993,6 +1036,15 @@ func _is_ai_heavy_baton_prompt() -> bool:
 		return false
 	return (
 		_pending_choice == "heavy_baton_target"
+		and int(_dialog_data.get("player", -1)) == _ai_opponent.player_index
+	)
+
+
+func _is_ai_exp_share_prompt() -> bool:
+	if _ai_opponent == null:
+		return false
+	return (
+		_pending_choice == "exp_share_target"
 		and int(_dialog_data.get("player", -1)) == _ai_opponent.player_index
 	)
 

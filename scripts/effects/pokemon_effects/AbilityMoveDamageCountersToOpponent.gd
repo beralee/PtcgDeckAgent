@@ -27,13 +27,16 @@ func can_use_ability(pokemon: PokemonSlot, state: GameState) -> bool:
 	var player: PlayerState = state.players[top.owner_index]
 	var has_source := false
 	for slot: PokemonSlot in player.get_all_pokemon():
-		if slot.damage_counters >= 10:
+		if _is_live_slot(slot) and slot.damage_counters >= 10:
 			has_source = true
 			break
 	if not has_source:
 		return false
 	var opponent: PlayerState = state.players[1 - top.owner_index]
-	return not opponent.get_all_pokemon().is_empty()
+	for slot: PokemonSlot in opponent.get_all_pokemon():
+		if _is_live_slot(slot):
+			return true
+	return false
 
 
 func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictionary]:
@@ -41,7 +44,7 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 	var source_items: Array = []
 	var source_labels: Array[String] = []
 	for slot: PokemonSlot in player.get_all_pokemon():
-		if slot.damage_counters >= 10:
+		if _is_live_slot(slot) and slot.damage_counters >= 10:
 			source_items.append(slot)
 			source_labels.append("%s (%d伤害)" % [slot.get_pokemon_name(), slot.damage_counters])
 	if source_items.is_empty():
@@ -70,8 +73,9 @@ func get_followup_interaction_steps(
 	var target_items: Array = []
 	var target_labels: Array[String] = []
 	for slot: PokemonSlot in opponent.get_all_pokemon():
-		target_items.append(slot)
-		target_labels.append(slot.get_pokemon_name())
+		if _is_live_slot(slot):
+			target_items.append(slot)
+			target_labels.append(slot.get_pokemon_name())
 	if target_items.is_empty():
 		return []
 	var available_counters: int = mini(max_counters, source.damage_counters / 10)
@@ -94,51 +98,78 @@ func get_followup_interaction_steps(
 	}]
 
 
+func validate_ability_interaction(
+	pokemon: PokemonSlot,
+	_ability_index: int,
+	targets: Array,
+	state: GameState
+) -> Dictionary:
+	var transfer := _resolve_transfer(pokemon, targets, state)
+	if bool(transfer.get("valid", false)):
+		return interaction_validation_ok()
+	return interaction_validation_error(str(transfer.get("reason", "invalid damage-counter transfer")))
+
+
 func execute_ability(
 	pokemon: PokemonSlot,
 	_ability_index: int,
 	targets: Array,
 	state: GameState
 ) -> void:
-	var top: CardInstance = pokemon.get_top_card()
-	if top == null:
+	var transfer := _resolve_transfer(pokemon, targets, state)
+	if not bool(transfer.get("valid", false)):
 		return
-	var player: PlayerState = state.players[top.owner_index]
-	var opponent: PlayerState = state.players[1 - top.owner_index]
-	var ctx: Dictionary = get_interaction_context(targets)
+	var source: PokemonSlot = transfer.get("source", null)
+	var target: PokemonSlot = transfer.get("target", null)
+	var move_amount: int = int(transfer.get("move_amount", 0))
+	source.damage_counters -= move_amount
+	target.damage_counters += move_amount
 
+	pokemon.effects.append({"type": USED_FLAG_TYPE, "turn": state.turn_number})
+
+
+func _resolve_transfer(pokemon: PokemonSlot, targets: Array, state: GameState) -> Dictionary:
+	if pokemon == null or state == null:
+		return {"valid": false, "reason": "ability source is missing"}
+	var top: CardInstance = pokemon.get_top_card()
+	if top == null or top.owner_index < 0 or top.owner_index >= state.players.size():
+		return {"valid": false, "reason": "ability source owner is invalid"}
+	var ctx: Dictionary = get_interaction_context(targets)
 	var source: PokemonSlot = _selected_source_from_context(top, state, ctx)
 	if source == null:
-		return
+		return {"valid": false, "reason": "damage source is missing or no longer legal"}
 
+	var opponent: PlayerState = state.players[1 - top.owner_index]
 	var assignment: Dictionary = _selected_counter_assignment(ctx)
 	var target: PokemonSlot = null
 	var count: int = 1
 	if not assignment.is_empty():
 		var assigned_target: Variant = assignment.get("target", null)
-		if assigned_target is PokemonSlot and assigned_target in opponent.get_all_pokemon():
+		if assigned_target is PokemonSlot:
 			target = assigned_target as PokemonSlot
-			count = maxi(1, int(assignment.get("amount", 10)) / 10)
-	if target == null:
+		var amount := int(assignment.get("amount", 10))
+		if amount <= 0 or amount % 10 != 0:
+			return {"valid": false, "reason": "damage-counter amount is invalid"}
+		count = int(amount / 10)
+	else:
 		var target_raw: Array = ctx.get("target_pokemon", [])
 		if not target_raw.is_empty() and target_raw[0] is PokemonSlot:
-			var t: PokemonSlot = target_raw[0]
-			if t in opponent.get_all_pokemon():
-				target = t
+			target = target_raw[0] as PokemonSlot
 		var count_raw: Array = ctx.get("counter_count", [])
 		if not count_raw.is_empty():
 			count = int(count_raw[0])
-	if target == null:
-		return
+	if target == null or target not in opponent.get_all_pokemon() or not _is_live_slot(target):
+		return {"valid": false, "reason": "damage target is missing or no longer legal"}
 
-	count = clampi(count, 1, max_counters)
-	var move_amount: int = mini(count * 10, source.damage_counters)
-	if move_amount <= 0:
-		return
-	source.damage_counters -= move_amount
-	target.damage_counters += move_amount
-
-	pokemon.effects.append({"type": USED_FLAG_TYPE, "turn": state.turn_number})
+	var available_counters: int = mini(max_counters, source.damage_counters / 10)
+	if count < 1 or count > available_counters:
+		return {"valid": false, "reason": "damage-counter count exceeds the legal transfer amount"}
+	return {
+		"valid": true,
+		"source": source,
+		"target": target,
+		"move_amount": count * 10,
+	}
 
 
 func _selected_source_from_context(card: CardInstance, state: GameState, ctx: Dictionary) -> PokemonSlot:
@@ -149,7 +180,7 @@ func _selected_source_from_context(card: CardInstance, state: GameState, ctx: Di
 	if source_raw.is_empty() or not (source_raw[0] is PokemonSlot):
 		return null
 	var source: PokemonSlot = source_raw[0]
-	if source in player.get_all_pokemon() and source.damage_counters >= 10:
+	if source in player.get_all_pokemon() and _is_live_slot(source) and source.damage_counters >= 10:
 		return source
 	return null
 
@@ -160,6 +191,10 @@ func _selected_counter_assignment(ctx: Dictionary) -> Dictionary:
 		return {}
 	var first: Variant = assignments[0]
 	return first.duplicate(false) if first is Dictionary else {}
+
+
+func _is_live_slot(slot: PokemonSlot) -> bool:
+	return slot != null and slot.get_top_card() != null and slot.get_remaining_hp() > 0
 
 
 func _has_dark_energy(pokemon: PokemonSlot, state: GameState = null) -> bool:

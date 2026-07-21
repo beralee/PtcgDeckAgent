@@ -1,6 +1,12 @@
 extends Control
 
-const TOURNAMENT_SIZES := [16, 32, 64, 128]
+const TOURNAMENT_FORMAT_STANDARD := "standard"
+const TOURNAMENT_FORMAT_OPEN := "open"
+const TOURNAMENT_FORMATS := [
+	{"id": TOURNAMENT_FORMAT_STANDARD, "label": "标准", "tooltip": "AI 只使用 18.0 及之后版本的卡组"},
+	{"id": TOURNAMENT_FORMAT_OPEN, "label": "开放", "tooltip": "AI 可以使用全部内置卡组"},
+]
+const TOURNAMENT_SIZES := [16, 32, 64, 128, 256, 512, 1024, 2048]
 const SwissTournamentScript := preload("res://scripts/tournament/SwissTournament.gd")
 const HudThemeScript := preload("res://scripts/ui/HudTheme.gd")
 const NonBattleLayoutControllerScript := preload("res://scripts/ui/non_battle/NonBattleLayoutController.gd")
@@ -33,6 +39,9 @@ var _deck_picker_tabs: Dictionary = {}
 var _deck_picker_grid: GridContainer = null
 var _deck_picker_search_input: LineEdit = null
 var _deck_picker_subtitle: Label = null
+var _format_button_group: ButtonGroup = ButtonGroup.new()
+var _format_radio_buttons: Array[Button] = []
+var _selected_tournament_format := TOURNAMENT_FORMAT_STANDARD
 var _size_button_group: ButtonGroup = ButtonGroup.new()
 var _size_radio_buttons: Array[Button] = []
 var _selected_tournament_size_index := 0
@@ -48,8 +57,9 @@ func _ready() -> void:
 	%TitleLabel.text = "比赛模式"
 	%DeckLabel.text = "玩家卡组"
 	%NameLabel.text = "玩家名字"
+	%FormatLabel.text = "比赛赛制"
 	%SizeLabel.text = "比赛人数"
-	%HintLabel.text = "选择玩家卡组、名字和比赛人数后，会进入赛前总览页面，先查看参赛名单、卡组分布和本次瑞士轮轮数，再正式开始第一轮。"
+	%HintLabel.text = "标准赛的 AI 只使用 18.0 及之后版本卡组；开放赛可使用全部内置卡组。设置完成后会先进入赛前总览。"
 	%NameEdit.placeholder_text = "输入你的名字"
 	_ensure_random_default_player_name()
 	%BtnBack.pressed.connect(_on_back_pressed)
@@ -58,6 +68,7 @@ func _ready() -> void:
 	%NameEdit.text_changed.connect(_on_name_changed)
 	_load_deck_usage_stats()
 	_load_decks()
+	_setup_format_options()
 	_setup_size_options()
 	_refresh_round_info()
 	_clear_error()
@@ -104,7 +115,7 @@ func _apply_non_battle_layout(viewport_size: Vector2 = Vector2.ZERO, forced_mode
 	var panel := find_child("Panel", true, false) as Control
 	if panel != null:
 		panel.custom_minimum_size.x = _portrait_tournament_width(size, context) if portrait else 720.0
-		panel.custom_minimum_size.y = maxf(760.0, size.y - _portrait_tournament_margin(size, context) * 2.0) if portrait else 620.0
+		panel.custom_minimum_size.y = maxf(760.0, size.y - _portrait_tournament_margin(size, context) * 2.0) if portrait else minf(720.0, size.y)
 	_apply_tournament_setup_mobile_metrics(self, context, portrait)
 	_apply_tournament_setup_button_stack(portrait)
 	_apply_tournament_setup_size_radio_layout(portrait)
@@ -367,7 +378,7 @@ func _ensure_deck_picker_overlay() -> void:
 	_deck_picker_tabs.clear()
 	for tab: Dictionary in [
 		{"id": DECK_PICKER_RECENT, "label": "最近使用"},
-		{"id": DECK_PICKER_ALL, "label": "全部"},
+		{"id": DECK_PICKER_ALL, "label": "全部(更新18.0)"},
 	]:
 		var button := Button.new()
 		button.text = str(tab.get("label", ""))
@@ -750,6 +761,31 @@ func _setup_size_options() -> void:
 	_refresh_size_radio_buttons()
 
 
+func _setup_format_options() -> void:
+	var group := get_node_or_null("%TournamentFormatRadioGroup") as GridContainer
+	if group == null:
+		return
+	for child: Node in group.get_children():
+		group.remove_child(child)
+		child.queue_free()
+	_format_radio_buttons.clear()
+	for format_entry: Dictionary in TOURNAMENT_FORMATS:
+		var format_id := str(format_entry.get("id", TOURNAMENT_FORMAT_STANDARD))
+		var button := Button.new()
+		button.name = "TournamentFormatRadio%s" % format_id.capitalize()
+		button.toggle_mode = true
+		button.button_group = _format_button_group
+		button.custom_minimum_size = Vector2(0.0, 44.0)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.clip_text = true
+		button.tooltip_text = str(format_entry.get("tooltip", ""))
+		button.set_meta("tournament_format", format_id)
+		button.pressed.connect(_on_format_radio_pressed.bind(format_id))
+		group.add_child(button)
+		_format_radio_buttons.append(button)
+	_refresh_format_radio_buttons()
+
+
 func _apply_tournament_setup_size_radio_layout(portrait: bool) -> void:
 	var group := get_node_or_null("%TournamentSizeRadioGroup") as GridContainer
 	if group == null:
@@ -762,10 +798,31 @@ func _selected_tournament_size() -> int:
 	return int(TOURNAMENT_SIZES[size_index])
 
 
+func _on_format_radio_pressed(format_id: String) -> void:
+	_selected_tournament_format = TOURNAMENT_FORMAT_OPEN if format_id == TOURNAMENT_FORMAT_OPEN else TOURNAMENT_FORMAT_STANDARD
+	_refresh_format_radio_buttons()
+	_refresh_round_info()
+	_clear_error()
+
+
+func _refresh_format_radio_buttons() -> void:
+	for index: int in _format_radio_buttons.size():
+		var button := _format_radio_buttons[index]
+		if button == null:
+			continue
+		var format_entry: Dictionary = TOURNAMENT_FORMATS[index]
+		var format_id := str(format_entry.get("id", TOURNAMENT_FORMAT_STANDARD))
+		var selected := format_id == _selected_tournament_format
+		button.button_pressed = selected
+		button.text = "%s %s" % ["◉" if selected else "○", str(format_entry.get("label", ""))]
+		_style_size_radio_button(button, selected)
+
+
 func _refresh_round_info() -> void:
 	var tournament_size: int = _selected_tournament_size()
 	var total_rounds: int = int(_round_probe.call("rounds_for_size", tournament_size))
-	%RoundInfoLabel.text = "预计轮数：%d 轮（%d 人瑞士轮）" % [total_rounds, tournament_size]
+	var format_label := "开放" if _selected_tournament_format == TOURNAMENT_FORMAT_OPEN else "标准"
+	%RoundInfoLabel.text = "%s赛制 · 预计 %d 轮（%d 人瑞士轮）" % [format_label, total_rounds, tournament_size]
 
 
 func _clear_error() -> void:
@@ -989,7 +1046,7 @@ func _on_start_pressed() -> void:
 	_record_tournament_deck_usage(deck)
 	GameManager.set_tournament_selected_player_deck_id(deck.id)
 	var tournament_size: int = _selected_tournament_size()
-	GameManager.start_swiss_tournament(player_name, tournament_size)
+	GameManager.start_swiss_tournament(player_name, tournament_size, _selected_tournament_format)
 	if not GameManager.has_active_tournament():
 		_show_error("比赛初始化失败，请重新选择卡组后再试。")
 		return

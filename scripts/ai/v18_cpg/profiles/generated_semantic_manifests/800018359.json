@@ -1,0 +1,504 @@
+{
+  "cards": [
+    {
+      "count": 2,
+      "effect_id": "c52439ea1ed321c25091b60e04c0d1da",
+      "name": "Pidgey",
+      "roles": [
+        "pokemon",
+        "opening_active_candidate",
+        "attacker",
+        "development_piece"
+      ],
+      "type": "Pokemon",
+      "uid": "151C_016"
+    },
+    {
+      "count": 1,
+      "effect_id": "b49bd864d4eba1284fd004de01446b81",
+      "name": "Pidgeotto",
+      "roles": [
+        "pokemon",
+        "evolution_piece",
+        "stage2_dependency"
+      ],
+      "type": "Pokemon",
+      "uid": "151C_017"
+    },
+    {
+      "count": 2,
+      "effect_id": "8105afde9792c2596166f318a480d041",
+      "name": "Pidgeot ex",
+      "roles": [
+        "pokemon",
+        "signature_piece",
+        "energy_target",
+        "attacker",
+        "evolution_piece",
+        "search_target",
+        "ability_engine",
+        "stage2_dependency"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV4C_101"
+    },
+    {
+      "count": 2,
+      "effect_id": "f0453eea8a2c67c4034c82adf034fc84",
+      "name": "Nacli",
+      "roles": [
+        "pokemon",
+        "opening_active_candidate",
+        "attacker",
+        "development_piece"
+      ],
+      "type": "Pokemon",
+      "uid": "SVP_080"
+    },
+    {
+      "count": 2,
+      "effect_id": "73c1d28d980ebe98f205db87eb647fe8",
+      "name": "Garganacl",
+      "roles": [
+        "pokemon",
+        "signature_piece",
+        "energy_target",
+        "attacker",
+        "evolution_piece",
+        "search_target",
+        "ability_engine",
+        "stage2_dependency"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV4C_074"
+    },
+    {
+      "count": 1,
+      "effect_id": "d7fd6b6e4df58df509e15a929754b2fe",
+      "name": "Feebas",
+      "roles": [
+        "pokemon",
+        "development_piece"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV8C_056"
+    },
+    {
+      "count": 1,
+      "effect_id": "88b2885578a73494f1eed7c2b53e67c7",
+      "name": "美纳斯",
+      "roles": [
+        "pokemon",
+        "signature_piece",
+        "evolution_piece",
+        "search_target",
+        "stage2_dependency"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV9C_039"
+    },
+    {
+      "count": 1,
+      "effect_id": "28505a8ad6e07e74382c1b5e09737932",
+      "name": "含羞苞",
+      "roles": [
+        "pokemon",
+        "opening_active_candidate",
+        "attacker"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV9.5C_004"
+    },
+    {
+      "count": 1,
+      "effect_id": "ab6c3357e2b8a8385a68da738f41e0c1",
+      "name": "Fezandipiti ex",
+      "roles": [
+        "pokemon"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV8C_135"
+    },
+    {
+      "count": 1,
+      "effect_id": "5924d0f73f2e04f4cd258136ea138594",
+      "name": "Turtonator",
+      "roles": [
+        "pokemon",
+        "energy_target",
+        "attacker"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV8C_154"
+    },
+    {
+      "count": 1,
+      "effect_id": "5bb7158b704f6d30d43c8f68cc52f39c",
+      "name": "Cleffa",
+      "roles": [
+        "pokemon",
+        "opening_active_candidate",
+        "attacker"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV4C_044"
+    },
+    {
+      "count": 1,
+      "effect_id": "571a7dd294812109ab0bf179ecf863eb",
+      "name": "盖诺赛克特",
+      "roles": [
+        "pokemon",
+        "development_piece"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV9C_133"
+    },
+    {
+      "count": 1,
+      "effect_id": "f2afef80b13b8f6a071facbcade0251c",
+      "name": "Bloodmoon Ursaluna ex",
+      "roles": [
+        "pokemon",
+        "energy_target",
+        "attacker"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV8C_172"
+    },
+    {
+      "count": 1,
+      "effect_id": "d348652e6296773db8b777e20e79fa4c",
+      "name": "Relicanth",
+      "roles": [
+        "pokemon"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV7C_118"
+    },
+    {
+      "count": 1,
+      "effect_id": "1ceeba6dac51ccc19833c5a513fe3fc6",
+      "name": "Tatsugiri",
+      "roles": [
+        "pokemon"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV8C_160"
+    },
+    {
+      "count": 1,
+      "effect_id": "f8c2715403e3f4ea9783c46be2de832b",
+      "name": "拉帝亚斯ex",
+      "roles": [
+        "pokemon",
+        "development_piece"
+      ],
+      "type": "Pokemon",
+      "uid": "CSV9C_078"
+    },
+    {
+      "count": 4,
+      "effect_id": "5bdbc985f9aa2e6f248b53f6f35d1d37",
+      "name": "Arven",
+      "roles": [
+        "supporter",
+        "trainer_tutor",
+        "trainer_plan_piece"
+      ],
+      "type": "Supporter",
+      "uid": "CSV1C_123"
+    },
+    {
+      "count": 4,
+      "effect_id": "8d9b3076693b9f692bae94d057498720",
+      "name": "小刚的发掘",
+      "roles": [
+        "supporter",
+        "trainer_plan_piece"
+      ],
+      "type": "Supporter",
+      "uid": "CSV10C_207"
+    },
+    {
+      "count": 2,
+      "effect_id": "8e1fa2c9018db938084c94c7c970d419",
+      "name": "Boss's Orders",
+      "roles": [
+        "supporter",
+        "gust"
+      ],
+      "type": "Supporter",
+      "uid": "CSVH1aC_023"
+    },
+    {
+      "count": 1,
+      "effect_id": "b79ddb9a6aab6d346f6a1f71b7fcd3de",
+      "name": "Lana's Aid",
+      "roles": [
+        "supporter"
+      ],
+      "type": "Supporter",
+      "uid": "CSV7C_193"
+    },
+    {
+      "count": 1,
+      "effect_id": "dacd942c84db0948ced6544bacfa08d7",
+      "name": "可怕的哥哥",
+      "roles": [
+        "supporter"
+      ],
+      "type": "Supporter",
+      "uid": "CSV10C_205"
+    },
+    {
+      "count": 1,
+      "effect_id": "af514f82d182aeae5327b2c360df703d",
+      "name": "Iono",
+      "roles": [
+        "supporter",
+        "draw_engine"
+      ],
+      "type": "Supporter",
+      "uid": "CSV3C_123"
+    },
+    {
+      "count": 1,
+      "effect_id": "0176c179359368cdb84ff754e0bbd701",
+      "name": "Erika's Invitation",
+      "roles": [
+        "supporter"
+      ],
+      "type": "Supporter",
+      "uid": "CSV2C_118"
+    },
+    {
+      "count": 1,
+      "effect_id": "9fb5f53c9952d10b4fe26508ecbc644a",
+      "name": "Penny",
+      "roles": [
+        "supporter"
+      ],
+      "type": "Supporter",
+      "uid": "CSV1C_124"
+    },
+    {
+      "count": 1,
+      "effect_id": "15f9d5ea244ceaa819ecafc18644be17",
+      "name": "Xerosic's Machinations",
+      "roles": [
+        "supporter"
+      ],
+      "type": "Supporter",
+      "uid": "CSV8C_195"
+    },
+    {
+      "count": 1,
+      "effect_id": "b54276b42598426febfe34bb67d5f075",
+      "name": "Team Star Grunt",
+      "roles": [
+        "supporter"
+      ],
+      "type": "Supporter",
+      "uid": "CSV2C_125"
+    },
+    {
+      "count": 3,
+      "effect_id": "d3891abcfe3277c8811cde06741d3236",
+      "name": "Rare Candy",
+      "roles": [
+        "item",
+        "trainer_plan_piece"
+      ],
+      "type": "Item",
+      "uid": "CSVH1C_045"
+    },
+    {
+      "count": 2,
+      "effect_id": "a47d5a8ed00e14a2146fc511745d23b5",
+      "name": "Pal Pad",
+      "roles": [
+        "item",
+        "trainer_plan_piece"
+      ],
+      "type": "Item",
+      "uid": "CSV1C_111"
+    },
+    {
+      "count": 2,
+      "effect_id": "6c48ceec110a6f65a07e0547b059e7aa",
+      "name": "调换票",
+      "roles": [
+        "item",
+        "pivot",
+        "trainer_plan_piece"
+      ],
+      "type": "Item",
+      "uid": "CSV10C_193"
+    },
+    {
+      "count": 2,
+      "effect_id": "06bc00d5dcec33898dc6db2e4c4d10ec",
+      "name": "Counter Catcher",
+      "roles": [
+        "item",
+        "gust",
+        "trainer_plan_piece"
+      ],
+      "type": "Item",
+      "uid": "CSV6C_114"
+    },
+    {
+      "count": 2,
+      "effect_id": "e9bd0b4b3d97716a9757e6bccb1446ac",
+      "name": "Accompanying Flute",
+      "roles": [
+        "item"
+      ],
+      "type": "Item",
+      "uid": "CSV8C_175"
+    },
+    {
+      "count": 1,
+      "effect_id": "28f142be07616ba497b1afd206477963",
+      "name": "贵重推车",
+      "roles": [
+        "item"
+      ],
+      "type": "Item",
+      "uid": "CSV9C_186"
+    },
+    {
+      "count": 1,
+      "effect_id": "1af63a7e2cb7a79215474ad8db8fd8fd",
+      "name": "Nest Ball",
+      "roles": [
+        "item",
+        "pokemon_search"
+      ],
+      "type": "Item",
+      "uid": "CSVH1C_043"
+    },
+    {
+      "count": 1,
+      "effect_id": "3e6f1daf545dfed48d0588dd50792a2e",
+      "name": "Night Stretcher",
+      "roles": [
+        "item",
+        "recovery"
+      ],
+      "type": "Item",
+      "uid": "CSV8C_183"
+    },
+    {
+      "count": 1,
+      "effect_id": "a337ed34a45e63c6d21d98c3d8e0cb6e",
+      "name": "Ultra Ball",
+      "roles": [
+        "item",
+        "pokemon_search"
+      ],
+      "type": "Item",
+      "uid": "CSV1C_112"
+    },
+    {
+      "count": 2,
+      "effect_id": "8661d78f9695838cee64d65fb73ddf58",
+      "name": "Defiance Vest",
+      "roles": [
+        "item"
+      ],
+      "type": "Tool",
+      "uid": "CSV4C_118"
+    },
+    {
+      "count": 1,
+      "effect_id": "3f2231d269066792b860d31b568aaf2a",
+      "name": "Luxurious Cape",
+      "roles": [
+        "item"
+      ],
+      "type": "Tool",
+      "uid": "CSV4C_117"
+    },
+    {
+      "count": 2,
+      "effect_id": "9fedb80a97ddd5cc8b8022a21364c326",
+      "name": "Fighting Energy",
+      "roles": [
+        "energy_source",
+        "typed_energy"
+      ],
+      "type": "Basic Energy",
+      "uid": "CSVE1C_FIG"
+    },
+    {
+      "count": 1,
+      "effect_id": "540ee48bb93584e4bfe3d7f5d0ee0efc",
+      "name": "Luminous Energy",
+      "roles": [
+        "energy_source",
+        "typed_energy"
+      ],
+      "type": "Special Energy",
+      "uid": "CSV1C_127"
+    },
+    {
+      "count": 1,
+      "effect_id": "fb0948c721db1f31767aa6cf0c2ea692",
+      "name": "Mist Energy",
+      "roles": [
+        "energy_source",
+        "typed_energy"
+      ],
+      "type": "Special Energy",
+      "uid": "CSV7C_204"
+    },
+    {
+      "count": 1,
+      "effect_id": "22db5405bf0cce61a00aa8082cdd1e65",
+      "name": "Fire Energy",
+      "roles": [
+        "energy_source",
+        "typed_energy"
+      ],
+      "type": "Basic Energy",
+      "uid": "CSVE1C_FIR"
+    }
+  ],
+  "deck_content_fingerprint": "52856df196e18110ad329cabfa7a650bae4f66c2a117526f43a14acfa393fe4f",
+  "deck_id": 800018359,
+  "manifest_hash": "1f7b33d0fc2ab77721544f39d62d3d5360ad55c066f9df4e05649170aa3060c8",
+  "modules": [
+    "control_recycle",
+    "stage2_chain",
+    "cycle_pivot"
+  ],
+  "primary_module": "control_recycle",
+  "role_counts": {
+    "ability_engine": 4,
+    "attacker": 12,
+    "development_piece": 7,
+    "draw_engine": 1,
+    "energy_source": 5,
+    "energy_target": 6,
+    "evolution_piece": 6,
+    "gust": 4,
+    "item": 18,
+    "opening_active_candidate": 6,
+    "pivot": 2,
+    "pokemon": 20,
+    "pokemon_search": 2,
+    "recovery": 1,
+    "search_target": 5,
+    "signature_piece": 5,
+    "stage2_dependency": 6,
+    "supporter": 17,
+    "trainer_plan_piece": 17,
+    "trainer_tutor": 4,
+    "typed_energy": 5
+  },
+  "schema_version": 1,
+  "semantic_version": 1,
+  "strategy_id": "v18cpg_800018359_pidgeot_control"
+}

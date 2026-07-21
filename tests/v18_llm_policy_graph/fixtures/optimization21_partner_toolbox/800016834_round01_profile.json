@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "deck_id": 800016834,
+  "seed_base": 800016834,
+  "derived_from": "res://tmp/v18cpg/optimization21/800016834/round00.json",
+  "failure_category": "semantic_gap",
+  "baseline": {"rule_wins": 4, "v18cpg_wins": 4, "clean_games": 5, "model_calls": 37, "model_accepted": 1},
+  "expected_modules": ["energy_burst", "cycle_pivot"],
+  "expected_primary_attacker_uid": "CSV4C_089",
+  "expected_attacker_root_uids": ["CSV9C_096"],
+  "expected_energy_symbol": "M",
+  "expected_generic_attachment_uid": "CSV4C_089",
+  "expected_energy_burst": {"mode": "hand_discard", "resource_zone": "own_hand_basic_energy", "raw_units": 3, "projected_public_damage": 150},
+  "expected_protected_roles": ["signature_piece", "evolution_piece", "energy_source", "energy_access", "recovery", "pokemon_search", "bench_space"]
+}

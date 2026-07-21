@@ -34,6 +34,8 @@ func get_interaction_steps(card: CardInstance, state: GameState) -> Array[Dictio
 		"min_select": 0,
 		"max_select": mini(recover_count, items.size()),
 		"allow_cancel": true,
+		"force_confirm": true,
+		"requires_explicit_empty_selection": true,
 	}]
 
 
@@ -43,23 +45,31 @@ func get_unusable_reason(card: CardInstance, state: GameState) -> String:
 	return super.get_unusable_reason(card, state)
 
 
+func validate_card_interaction(card: CardInstance, targets: Array, state: GameState) -> Dictionary:
+	if card == null or state == null or card.owner_index < 0 or card.owner_index >= state.players.size():
+		return interaction_validation_error("Discard recovery source card is invalid")
+	var legal_items: Array = _recoverable_discard_cards(card, state)
+	return validate_context_selection(
+		get_interaction_context(targets),
+		STEP_ID,
+		legal_items,
+		0,
+		mini(recover_count, legal_items.size()),
+		true,
+		true
+	)
+
+
 func execute(card: CardInstance, targets: Array, state: GameState) -> void:
+	if not bool(validate_card_interaction(card, targets, state).get("valid", false)):
+		return
 	var player: PlayerState = state.players[card.owner_index]
 	var ctx: Dictionary = get_interaction_context(targets)
 	var selected: Array[CardInstance] = []
 	var selected_raw: Array = ctx.get(STEP_ID, [])
-	var has_explicit_selection := ctx.has(STEP_ID)
 	for entry: Variant in selected_raw:
 		if entry is CardInstance and entry in player.discard_pile and _matches_card(entry) and entry not in selected:
 			selected.append(entry)
-			if selected.size() >= recover_count:
-				break
-
-	if selected.is_empty() and not has_explicit_selection:
-		for discard_card: CardInstance in player.discard_pile:
-			if not _matches_card(discard_card):
-				continue
-			selected.append(discard_card)
 			if selected.size() >= recover_count:
 				break
 
@@ -74,7 +84,7 @@ func _recoverable_discard_cards(card: CardInstance, state: GameState) -> Array[C
 		return cards
 	var player: PlayerState = state.players[card.owner_index]
 	for discard_card: CardInstance in player.discard_pile:
-		if _matches_card(discard_card):
+		if _matches_card(discard_card) and DiscardPileRestriction.can_move_to_hand_or_deck(discard_card):
 			cards.append(discard_card)
 	return DiscardToHandBlockHelper.filter_recoverable_discard_cards(card.owner_index, state, cards, "trainer")
 

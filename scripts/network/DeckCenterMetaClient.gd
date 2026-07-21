@@ -6,6 +6,7 @@ const AppVersionScript := preload("res://scripts/app/AppVersion.gd")
 const ENDPOINT_URL := "http://fc.skillserver.cn/deckcentermeta"
 const REQUEST_TIMEOUT_SECONDS := 6.0
 const STATE_PATH := "user://deck_center_meta_state.json"
+const HEADLESS_STATE_PATH := "user://deck_center_meta_state.headless.json"
 
 signal new_revision_available(info: Dictionary)
 signal no_new_revision(info: Dictionary)
@@ -47,6 +48,14 @@ static func is_bootstrap_meta(info: Dictionary) -> bool:
 	var recommendation_id := str(info.get("latest_recommendation_id", "")).strip_edges()
 	var source := str(info.get("source", "")).strip_edges()
 	return latest_revision.begins_with("bootstrap:") or recommendation_id == "bootstrap-old" or source == "manual_bootstrap"
+
+
+static func state_path_for_display_server(display_server_name: String) -> String:
+	return HEADLESS_STATE_PATH if display_server_name.strip_edges().to_lower() == "headless" else STATE_PATH
+
+
+static func state_path() -> String:
+	return state_path_for_display_server(DisplayServer.get_name())
 
 
 func check_latest() -> int:
@@ -175,9 +184,10 @@ func _handle_checked_meta(info: Dictionary) -> void:
 
 
 func _load_state() -> Dictionary:
-	if not FileAccess.file_exists(STATE_PATH):
+	var path := state_path()
+	if not FileAccess.file_exists(path):
 		return {}
-	var file := FileAccess.open(STATE_PATH, FileAccess.READ)
+	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
 		return {}
 	var text := file.get_as_text()
@@ -189,7 +199,7 @@ func _load_state() -> Dictionary:
 
 
 func _save_state(state: Dictionary) -> void:
-	var file := FileAccess.open(STATE_PATH, FileAccess.WRITE)
+	var file := FileAccess.open(state_path(), FileAccess.WRITE)
 	if file == null:
 		return
 	file.store_string(JSON.stringify(state, "\t"))

@@ -45,6 +45,9 @@ const LIBRARY_SEARCH_SOURCE_WIDTH_MAX := 214.0
 const LIBRARY_SEARCH_CANDIDATE_TOUCH_CLICK_MOVE_TOLERANCE := 28.0
 const LIBRARY_SEARCH_CANDIDATE_VERTICAL_CLICK_TOLERANCE := 36.0
 
+var _pending_dialog_center_locks: Dictionary = {}
+var _pending_dialog_reveals: Dictionary = {}
+
 
 func _bt(scene: Object, key: String, params: Dictionary = {}) -> String:
 	return str(scene.call("_bt", key, params))
@@ -686,6 +689,42 @@ func _library_search_is_portrait(scene: Object) -> bool:
 	return _library_search_layout_mode(scene) == "portrait"
 
 
+func _library_search_selectable_count(scene: Object) -> int:
+	var dialog_data: Dictionary = scene.get("_dialog_data")
+	if dialog_data.has("selectable_count"):
+		return maxi(0, int(dialog_data.get("selectable_count", 0)))
+	var card_indices: Array = dialog_data.get("card_indices", [])
+	if not card_indices.is_empty():
+		var count := 0
+		for index_variant: Variant in card_indices:
+			if int(index_variant) >= 0:
+				count += 1
+		return count
+	var card_items: Array = dialog_data.get("card_items", scene.get("_dialog_items_data"))
+	return card_items.size()
+
+
+func _library_search_requires_explicit_empty_selection(scene: Object) -> bool:
+	if str(scene.get("_pending_choice")) != "effect_interaction":
+		return false
+	var dialog_data: Dictionary = scene.get("_dialog_data")
+	if bool(dialog_data.get("requires_explicit_empty_selection", false)):
+		return int(dialog_data.get("min_select", 1)) <= 0 \
+			and int(dialog_data.get("max_select", 1)) > 0
+	if scene.get("_dialog_library_search_board_mode") != true:
+		return false
+	return str(dialog_data.get("visible_scope", "")) == "own_full_deck" \
+		and int(dialog_data.get("min_select", 1)) <= 0 \
+		and int(dialog_data.get("max_select", 1)) > 0 \
+		and _library_search_selectable_count(scene) > 0
+
+
+func _portrait_library_search_uses_cancel_slot_for_empty_selection(scene: Object) -> bool:
+	return scene.get("_dialog_library_search_board_mode") == true \
+		and _library_search_is_portrait(scene) \
+		and _library_search_requires_explicit_empty_selection(scene)
+
+
 func restore_library_search_board(scene: Object) -> void:
 	_restore_dialog_buttons_parent(scene)
 	var board := scene.get("_dialog_library_search_board") as Control
@@ -806,7 +845,9 @@ func show_dialog(scene: Object, title: String, items: Array, extra_data: Diction
 		scene.call("_raise_dialog_overlay_for_input")
 	if scene.has_method("_refresh_end_turn_hud_button_state"):
 		scene.call("_refresh_end_turn_hud_button_state")
-	dialog_cancel.visible = bool(extra_data.get("allow_cancel", true))
+	var portrait_empty_action := _portrait_library_search_uses_cancel_slot_for_empty_selection(scene)
+	dialog_cancel.text = "不选择" if portrait_empty_action else "取消"
+	dialog_cancel.visible = portrait_empty_action or bool(extra_data.get("allow_cancel", true))
 	update_dialog_confirm_state(scene)
 	compact_dialog_box_to_content(scene)
 	reveal_dialog_after_layout(scene, dialog_overlay)
@@ -965,17 +1006,36 @@ func _queue_dialog_box_center_lock(scene: Object, dialog_box: Control, parent: C
 		return
 	var lock_id := int(dialog_box.get_meta("dialog_center_lock_id", 0)) + 1
 	dialog_box.set_meta("dialog_center_lock_id", lock_id)
-	var lock_callable := func() -> void:
-		if not is_instance_valid(dialog_box) or not is_instance_valid(parent):
-			return
-		if int(dialog_box.get_meta("dialog_center_lock_id", -1)) != lock_id:
-			return
-		_apply_dialog_box_size_and_position(scene, dialog_box, parent)
-	if parent.has_signal("sort_children"):
+	_pending_dialog_center_locks[dialog_box.get_instance_id()] = {
+		"scene": scene,
+		"dialog_box": dialog_box,
+		"parent": parent,
+		"lock_id": lock_id,
+	}
+	var lock_callable := Callable(self, "_flush_queued_dialog_box_center_locks")
+	if parent.has_signal("sort_children") and not parent.is_connected("sort_children", lock_callable):
 		parent.connect("sort_children", lock_callable, CONNECT_ONE_SHOT)
 	if dialog_box.is_inside_tree():
 		var tree := dialog_box.get_tree()
-		tree.process_frame.connect(lock_callable, CONNECT_ONE_SHOT)
+		if not tree.process_frame.is_connected(lock_callable):
+			tree.process_frame.connect(lock_callable, CONNECT_ONE_SHOT)
+
+
+func _flush_queued_dialog_box_center_locks() -> void:
+	var pending: Array = _pending_dialog_center_locks.values()
+	_pending_dialog_center_locks.clear()
+	for request_raw: Variant in pending:
+		if not (request_raw is Dictionary):
+			continue
+		var request: Dictionary = request_raw
+		var scene: Object = request.get("scene")
+		var dialog_box: Control = request.get("dialog_box") as Control
+		var parent: Control = request.get("parent") as Control
+		if not is_instance_valid(scene) or not is_instance_valid(dialog_box) or not is_instance_valid(parent):
+			continue
+		if int(dialog_box.get_meta("dialog_center_lock_id", -1)) != int(request.get("lock_id", -1)):
+			continue
+		_apply_dialog_box_size_and_position(scene, dialog_box, parent)
 
 
 func _normalize_dialog_center_rect(parent: Control) -> void:
@@ -1015,20 +1075,35 @@ func reveal_dialog_after_layout(scene: Object, dialog_overlay: Control) -> void:
 		var scene_node := scene as Node
 		if scene_node.is_inside_tree():
 			var tree := scene_node.get_tree()
-			tree.process_frame.connect(func() -> void:
-				if not is_instance_valid(scene):
-					return
-				if not is_instance_valid(dialog_overlay):
-					return
-				if int(dialog_overlay.get_meta("dialog_reveal_id", -1)) != reveal_id:
-					return
-				if not dialog_overlay.visible:
-					return
-				compact_dialog_box_to_content(scene)
-				dialog_overlay.modulate = Color.WHITE
-			, CONNECT_ONE_SHOT)
+			_pending_dialog_reveals[dialog_overlay.get_instance_id()] = {
+				"scene": scene,
+				"dialog_overlay": dialog_overlay,
+				"reveal_id": reveal_id,
+			}
+			var reveal_callable := Callable(self, "_flush_pending_dialog_reveals")
+			if not tree.process_frame.is_connected(reveal_callable):
+				tree.process_frame.connect(reveal_callable, CONNECT_ONE_SHOT)
 			return
 	dialog_overlay.call_deferred("set", "modulate", Color.WHITE)
+
+
+func _flush_pending_dialog_reveals() -> void:
+	var pending: Array = _pending_dialog_reveals.values()
+	_pending_dialog_reveals.clear()
+	for request_raw: Variant in pending:
+		if not (request_raw is Dictionary):
+			continue
+		var request: Dictionary = request_raw
+		var scene: Object = request.get("scene")
+		var dialog_overlay: Control = request.get("dialog_overlay") as Control
+		if not is_instance_valid(scene) or not is_instance_valid(dialog_overlay):
+			continue
+		if int(dialog_overlay.get_meta("dialog_reveal_id", -1)) != int(request.get("reveal_id", -1)):
+			continue
+		if not dialog_overlay.visible:
+			continue
+		compact_dialog_box_to_content(scene)
+		dialog_overlay.modulate = Color.WHITE
 
 
 func stable_dialog_box_content_height(scene: Object, dialog_box: Control) -> float:
@@ -1402,6 +1477,7 @@ func show_library_search_board_dialog(scene: Object, items: Array, extra_data: D
 		_restore_dialog_buttons_parent(scene)
 	else:
 		_move_dialog_buttons_to_instruction_bar(scene, button_slot)
+	_rebuild_library_search_empty_action_row(scene)
 	dialog_confirm.visible = true
 	if instruction_label != null:
 		instruction_label.text = _library_search_instruction_text(scene)
@@ -2595,7 +2671,10 @@ func show_card_dialog(scene: Object, items: Array, extra_data: Dictionary) -> vo
 	scene.call("_clear_container_children", dialog_utility_row)
 
 	_populate_card_dialog_cards(scene)
-	_rebuild_card_dialog_utility_row(scene)
+	if _library_search_requires_explicit_empty_selection(scene):
+		_rebuild_library_search_empty_action_row(scene)
+	else:
+		_rebuild_card_dialog_utility_row(scene)
 	dialog_card_scroll.visible = true
 
 	var min_select := int(extra_data.get("min_select", 1))
@@ -3133,14 +3212,67 @@ func _rebuild_card_dialog_utility_row(scene: Object) -> void:
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.text = str(action.get("label", _bt(scene, "battle.dialog.action_label")))
 		style_dialog_button(button, "primary")
-		var action_index := int(action.get("index", -1))
+		var selected_indices := _dialog_utility_action_selected_indices(action)
+		var action_intent := _dialog_utility_action_intent(action)
 		button.pressed.connect(func() -> void:
 			_record_dialog_fresh_input(scene, "dialog_utility_action")
 			mark_modal_input_consumed(scene, "dialog_utility_action")
-			confirm_dialog_selection(scene, PackedInt32Array([action_index]))
+			confirm_dialog_selection(scene, selected_indices, Vector2(-1.0, -1.0), action_intent)
 		)
 		dialog_utility_row.add_child(button)
 	dialog_utility_row.visible = has_controls
+
+
+func _dialog_utility_action_selected_indices(action: Dictionary) -> PackedInt32Array:
+	var result := PackedInt32Array()
+	if action.has("selected_indices"):
+		var selected_raw: Variant = action.get("selected_indices", [])
+		if selected_raw is PackedInt32Array:
+			return (selected_raw as PackedInt32Array).duplicate()
+		if selected_raw is Array:
+			for index_variant: Variant in selected_raw:
+				result.append(int(index_variant))
+		return result
+	var legacy_index := int(action.get("index", -1))
+	if legacy_index >= 0:
+		result.append(legacy_index)
+	return result
+
+
+func _dialog_utility_action_intent(action: Dictionary) -> String:
+	if action.has("intent"):
+		return str(action.get("intent", BaseEffect.INTERACTION_INTENT_SELECT))
+	if action.has("index") and int(action.get("index", -1)) < 0:
+		return BaseEffect.INTERACTION_INTENT_DECLINE
+	return BaseEffect.INTERACTION_INTENT_SELECT
+
+
+func _rebuild_library_search_empty_action_row(scene: Object) -> void:
+	var dialog_utility_row: HBoxContainer = scene.get("_dialog_utility_row")
+	if dialog_utility_row == null:
+		return
+	scene.call("_clear_container_children", dialog_utility_row)
+	if not _library_search_requires_explicit_empty_selection(scene):
+		dialog_utility_row.visible = false
+		return
+	if _portrait_library_search_uses_cancel_slot_for_empty_selection(scene):
+		dialog_utility_row.visible = false
+		return
+
+	var button := Button.new()
+	button.name = "LibrarySearchEmptySelectionButton"
+	button.custom_minimum_size = Vector2(240, 56)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.text = "不选择"
+	style_dialog_button(button, "secondary")
+	button.pressed.connect(func() -> void:
+		_record_dialog_fresh_input(scene, "library_search_empty_selection")
+		mark_modal_input_consumed(scene, "library_search_empty_selection", _dialog_slot_suppression_mode(scene))
+		_replace_int_array(scene, "_dialog_card_selected_indices", [])
+		confirm_dialog_selection(scene, PackedInt32Array(), Vector2(-1.0, -1.0), BaseEffect.INTERACTION_INTENT_DECLINE)
+	)
+	dialog_utility_row.add_child(button)
+	dialog_utility_row.visible = true
 
 
 func show_action_hud_dialog(scene: Object, _items: Array, extra_data: Dictionary) -> void:
@@ -3914,6 +4046,9 @@ func on_assignment_source_chosen(scene: Object, source_index: int) -> void:
 	if max_assignments > 0 and assignments.size() >= max_assignments:
 		scene.call("_log", _bt(scene, "battle.dialog.assign_limit_reached"))
 		return
+	if assignment_source_bucket_limit_reached(dialog_data, assignments, source_index):
+		scene.call("_log", _bt(scene, "battle.dialog.assign_limit_reached"))
+		return
 	if int(scene.get("_dialog_assignment_selected_source_index")) == source_index:
 		scene.set("_dialog_assignment_selected_source_index", -1)
 	else:
@@ -3963,6 +4098,8 @@ func on_assignment_target_chosen(scene: Object, target_index: int) -> void:
 func refresh_assignment_dialog_views(scene: Object) -> void:
 	var dialog_assignment_source_row: HBoxContainer = scene.get("_dialog_assignment_source_row")
 	var dialog_assignment_target_row: HBoxContainer = scene.get("_dialog_assignment_target_row")
+	var dialog_data: Dictionary = scene.get("_dialog_data")
+	var assignments: Array = scene.get("_dialog_assignment_assignments")
 	var selected_source_index := int(scene.get("_dialog_assignment_selected_source_index"))
 	for child: Node in dialog_assignment_source_row.get_children():
 		if not (child is BattleCardView):
@@ -3976,9 +4113,10 @@ func refresh_assignment_dialog_views(scene: Object) -> void:
 		var idx := int(card_view.get_meta("assignment_source_index", -1))
 		var source_selected := idx == selected_source_index
 		var source_assigned := find_assignment_index_for_source(scene, idx) >= 0
+		var source_bucket_full := false if source_assigned else assignment_source_bucket_limit_reached(dialog_data, assignments, idx)
 		card_view.set_selected(source_selected)
-		card_view.set_selectable_hint(not source_selected and not source_assigned)
-		card_view.set_disabled(source_assigned)
+		card_view.set_selectable_hint(not source_selected and not source_assigned and not source_bucket_full)
+		card_view.set_disabled(source_assigned or source_bucket_full)
 	for child: Node in dialog_assignment_target_row.get_children():
 		if not (child is BattleCardView):
 			continue
@@ -4050,6 +4188,40 @@ func _count_assignments_for_target_index(assignments: Array, target_index: int) 
 	return count
 
 
+func assignment_source_bucket_key(dialog_data: Dictionary, source_index: int) -> String:
+	var bucket_keys: Array = dialog_data.get("source_bucket_keys", [])
+	if source_index < 0 or source_index >= bucket_keys.size():
+		return ""
+	return str(bucket_keys[source_index])
+
+
+func count_assignments_for_source_bucket(dialog_data: Dictionary, assignments: Array, bucket_key: String) -> int:
+	if bucket_key == "":
+		return 0
+	var count := 0
+	for assignment_variant: Variant in assignments:
+		if not (assignment_variant is Dictionary):
+			continue
+		var assignment := assignment_variant as Dictionary
+		var source_index := int(assignment.get("source_index", -1))
+		if assignment_source_bucket_key(dialog_data, source_index) == bucket_key:
+			count += 1
+	return count
+
+
+func assignment_source_bucket_limit_reached(dialog_data: Dictionary, assignments: Array, source_index: int) -> bool:
+	var bucket_key := assignment_source_bucket_key(dialog_data, source_index)
+	if bucket_key == "":
+		return false
+	var bucket_limits: Dictionary = dialog_data.get("max_assignments_per_source_bucket", {})
+	if not bucket_limits.has(bucket_key):
+		return false
+	var limit := int(bucket_limits.get(bucket_key, 0))
+	if limit <= 0:
+		return false
+	return count_assignments_for_source_bucket(dialog_data, assignments, bucket_key) >= limit
+
+
 func on_dialog_card_chosen(scene: Object, real_index: int) -> void:
 	_record_dialog_fresh_input(scene, "dialog_card")
 	var dialog_data: Dictionary = scene.get("_dialog_data")
@@ -4097,7 +4269,10 @@ func update_dialog_confirm_state(scene: Object) -> void:
 		return
 	if bool(scene.get("_dialog_card_mode")):
 		var selected_indices: Array = scene.get("_dialog_card_selected_indices")
-		dialog_confirm.disabled = selected_indices.size() < min_select
+		if selected_indices.is_empty() and _library_search_requires_explicit_empty_selection(scene):
+			dialog_confirm.disabled = true
+		else:
+			dialog_confirm.disabled = selected_indices.size() < min_select
 		update_dialog_status_text(scene)
 		return
 	if not dialog_list.visible:
@@ -4132,7 +4307,25 @@ func update_dialog_status_text(scene: Object) -> void:
 		})
 
 
-func confirm_dialog_selection(scene: Object, sel_items: PackedInt32Array, origin_position: Vector2 = Vector2(-1.0, -1.0)) -> void:
+func _stage_effect_interaction_response(scene: Object, intent: String, source: String = "dialog") -> void:
+	if str(scene.get("_pending_choice")) != "effect_interaction":
+		return
+	var dialog_data: Dictionary = scene.get("_dialog_data")
+	scene.set_meta("effect_interaction_response", {
+		"source": source,
+		"intent": intent,
+		"generation": int(dialog_data.get("interaction_generation", -1)),
+		"step_index": int(dialog_data.get("interaction_step_index", -1)),
+		"step_id": str(dialog_data.get("interaction_step_id", "")),
+	})
+
+
+func confirm_dialog_selection(
+	scene: Object,
+	sel_items: PackedInt32Array,
+	origin_position: Vector2 = Vector2(-1.0, -1.0),
+	choice_intent: String = BaseEffect.INTERACTION_INTENT_SELECT
+) -> void:
 	var slot_suppression_mode := _dialog_selection_slot_suppression_mode(scene, sel_items)
 	if origin_position.x >= 0.0 and origin_position.y >= 0.0:
 		mark_modal_input_consumed_at_position(scene, "dialog_confirm_selection", origin_position, slot_suppression_mode)
@@ -4144,6 +4337,7 @@ func confirm_dialog_selection(scene: Object, sel_items: PackedInt32Array, origin
 		"confirm_dialog_selection",
 		"choice=%s selected=%s %s" % [scene.get("_pending_choice"), JSON.stringify(sel_items), scene.call("_dialog_state_snapshot")]
 	)
+	_stage_effect_interaction_response(scene, choice_intent)
 	_hide_dialog_overlay(scene, "dialog_confirm_selection")
 	scene.call("_handle_dialog_choice", sel_items)
 	_end_dialog_modal_transition(scene)
@@ -4204,6 +4398,10 @@ func on_dialog_confirm(scene: Object) -> void:
 				sel_items.append(selected_idx)
 	var min_select := int(dialog_data.get("min_select", 1))
 	var max_select := int(dialog_data.get("max_select", 1))
+	if sel_items.is_empty() and _library_search_requires_explicit_empty_selection(scene):
+		scene.call("_runtime_log", "dialog_empty_confirm_blocked", "choice=%s %s" % [scene.get("_pending_choice"), scene.call("_dialog_state_snapshot")])
+		update_dialog_confirm_state(scene)
+		return
 	if sel_items.size() < min_select:
 		scene.call("_log", _bt(scene, "battle.dialog.select_at_least", {"count": min_select}))
 		return
@@ -4224,6 +4422,20 @@ func on_dialog_cancel(scene: Object) -> void:
 	else:
 		mark_modal_input_consumed(scene, "dialog_cancel", slot_suppression_mode)
 	var dialog_data: Dictionary = scene.get("_dialog_data")
+	if _portrait_library_search_uses_cancel_slot_for_empty_selection(scene):
+		scene.call(
+			"_runtime_log",
+			"portrait_library_search_empty_selection",
+			"choice=%s %s" % [scene.get("_pending_choice"), scene.call("_dialog_state_snapshot")]
+		)
+		_replace_int_array(scene, "_dialog_card_selected_indices", [])
+		confirm_dialog_selection(
+			scene,
+			PackedInt32Array(),
+			cancel_origin,
+			BaseEffect.INTERACTION_INTENT_DECLINE
+		)
+		return
 	if not bool(dialog_data.get("allow_cancel", true)):
 		scene.call(
 			"_runtime_log",
@@ -4241,6 +4453,7 @@ func on_dialog_cancel(scene: Object) -> void:
 		_replace_int_array(scene, "_dialog_card_selected_indices", [])
 		reset_dialog_assignment_state(scene)
 		_begin_dialog_modal_transition(scene)
+		_stage_effect_interaction_response(scene, BaseEffect.INTERACTION_INTENT_DECLINE, "dialog_cancel")
 		scene.call("_handle_effect_interaction_choice", PackedInt32Array())
 		_end_dialog_modal_transition(scene)
 		return
@@ -4541,6 +4754,7 @@ func show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlot, inclu
 	var items: Array[String] = []
 	var actions: Array[Dictionary] = []
 	var action_items: Array[Dictionary] = []
+	gsm.effect_processor.register_pokemon_card(card_data)
 	var effect: BaseEffect = gsm.effect_processor.get_effect(card_data.effect_id)
 	var is_active_slot := false
 	if gsm != null and gsm.game_state != null and cp >= 0 and cp < gsm.game_state.players.size():
@@ -4550,14 +4764,21 @@ func show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlot, inclu
 		var ability: Dictionary = card_data.abilities[i]
 		var ability_name := CardData.dictionary_display_name(ability)
 		var ability_text := CardData.dictionary_display_text(ability)
+		var is_passive := effect != null and not effect.has_method("can_use_ability")
 		var can_use := false
 		var ability_reason := "%s 当前无法使用特性" % card_data.display_name()
-		if effect != null and effect.has_method("can_use_ability"):
+		if is_passive:
+			ability_reason = (
+				"被动特性，无需手动使用；从手牌打出进化宝可梦时会自动生效。"
+				if effect.has_method("allows_early_evolution")
+				else "被动特性，无需手动使用；满足卡面条件时会自动生效。"
+			)
+		elif effect != null and effect.has_method("can_use_ability"):
 			can_use = gsm.effect_processor.can_use_ability(slot, gsm.game_state, i)
 			ability_reason = "" if can_use else gsm.effect_processor.get_ability_unusable_reason(slot, gsm.game_state, i)
-		items.append("%s[特性] %s" % ["" if can_use else "[不可用] ", ability_name])
+		items.append("%s[特性] %s" % ["[被动] " if is_passive else ("" if can_use else "[不可用] "), ability_name])
 		actions.append({
-			"type": "ability",
+			"type": "passive_ability" if is_passive else "ability",
 			"slot": slot,
 			"ability_index": i,
 			"enabled": can_use,
@@ -4567,7 +4788,7 @@ func show_pokemon_action_dialog(scene: Object, cp: int, slot: PokemonSlot, inclu
 			"ability",
 			"特性",
 			ability_name,
-			"",
+			"被动生效" if is_passive else "",
 			_action_body_from_text(ability_text),
 			can_use,
 			ability_reason
@@ -4824,12 +5045,14 @@ func _stadium_action_body(card_data: CardData, effect: BaseEffect) -> String:
 		var ability_text := str(ability.get("text", "")).strip_edges()
 		if ability_text != "":
 			return ability_text
+	# The card database is the localized, player-facing source of truth. Effect
+	# descriptions are implementation/debug fallbacks and may be written in English.
+	if card_data != null and card_data.description.strip_edges() != "":
+		return card_data.description.strip_edges()
 	if effect != null:
 		var effect_text := effect.get_description().strip_edges()
 		if effect_text != "":
 			return effect_text
-	if card_data != null and card_data.description.strip_edges() != "":
-		return card_data.description.strip_edges()
 	return "这张竞技场当前没有可主动使用的效果。"
 
 

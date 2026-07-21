@@ -1,0 +1,68 @@
+{
+	"cards": [
+		{
+			"abilities": [],
+			"ancient_trait": "",
+			"artist": "Kouki Saitou",
+			"attacks": [
+				{
+					"cost": "WC",
+					"damage": "40",
+					"is_vstar_power": false,
+					"name": "锐利之鳍",
+					"text": ""
+				},
+				{
+					"cost": "WWC",
+					"damage": "80",
+					"is_vstar_power": false,
+					"name": "冰霜粉碎",
+					"text": ""
+				}
+			],
+			"card_index": "045",
+			"card_index_en": "59",
+			"card_type": "Pokemon",
+			"description": "【水】 锐利之鳍 40\n\n\n【水】【水】 冰霜粉碎 80\n\n\n",
+			"effect_id": "c053ce98d0ac66db8309a3e45338b20d",
+			"energy_provides": "",
+			"energy_type": "W",
+			"evolves_from": "凉脊龙",
+			"hp": 90,
+			"image_local_path": "user://cards/images/CSVE2C/045.png",
+			"image_url": "https://tcg.mik.moe/static/img/CSVE2C/045.png",
+			"is_tags": [
+				"Stage 1"
+			],
+			"label": "",
+			"mechanic": "",
+			"name": "冻脊龙",
+			"name_en": "Arctibax",
+			"name_zh": "",
+			"rarity": "无标记",
+			"regulation_expanded": true,
+			"regulation_mark": "G",
+			"regulation_standard": true,
+			"release_date": "2025-10-17T00:00:00+08:00",
+			"resistance_energy": "",
+			"resistance_value": "",
+			"retreat_cost": 2,
+			"set_code": "CSVE2C",
+			"set_code_en": "PAL",
+			"source_card_index": "",
+			"source_imported_at": 0,
+			"source_language": "",
+			"source_parser_version": 0,
+			"source_prints": [],
+			"source_provider": "",
+			"source_set_code": "",
+			"source_url": "",
+			"stage": "Stage 1",
+			"weakness_energy": "M",
+			"weakness_value": "×2",
+			"yoren_code": "P0997"
+		}
+	],
+	"schema_version": 1,
+	"set_code": "CSVE2C"
+}

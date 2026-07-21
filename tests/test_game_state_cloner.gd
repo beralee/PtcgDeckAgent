@@ -105,4 +105,7 @@ func test_cloned_gsm_has_working_subsystems() -> String:
 		assert_not_null(cloned.rule_validator, "克隆体应有 rule_validator"),
 		assert_not_null(cloned.effect_processor, "克隆体应有 effect_processor"),
 		assert_not_null(cloned.coin_flipper, "克隆体应有 coin_flipper"),
+		assert_false(cloned.effect_processor == original.effect_processor, "克隆体不能共享实战 EffectProcessor"),
+		assert_false(cloned.coin_flipper == original.coin_flipper, "克隆体不能共享实战 CoinFlipper"),
+		assert_eq(cloned.effect_processor.coin_flipper, cloned.coin_flipper, "克隆效果必须使用克隆体自己的硬币系统"),
 	])

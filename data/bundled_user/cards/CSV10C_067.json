@@ -1,0 +1,66 @@
+{
+    "name":  "电击魔兽ex",
+    "card_type":  "Pokemon",
+    "mechanic":  "ex",
+    "label":  "",
+    "description":  "【雷】 二重伏特 \n给对手的2只宝可梦各造成50伤害。[备战宝可梦不计算弱点、抗性。]\n\n【雷】【雷】 高压电压制 180+\n如果身上附着的能量比使用这个招式所需能量多2个的话，则追加造成100伤害。\n\n",
+    "yoren_code":  "Y1578",
+    "set_code":  "CSV10C",
+    "card_index":  "067",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "PLANETA Mochizuki",
+    "rarity":  "RR",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "104442f76485b0b3e62a3f5ec7c1a73d",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/067.png",
+    "image_local_path":  "user://cards/images/CSV10C/067.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "L",
+    "stage":  "Stage 1",
+    "hp":  280,
+    "weakness_energy":  "F",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  4,
+    "evolves_from":  "电击兽",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "二重伏特",
+                        "text":  "给对手的2只宝可梦各造成50伤害。[备战宝可梦不计算弱点、抗性。]",
+                        "cost":  "LC",
+                        "damage":  "",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "高压电压制",
+                        "text":  "如果身上附着的能量比使用这个招式所需能量多2个的话，则追加造成100伤害。",
+                        "cost":  "LLC",
+                        "damage":  "180+",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

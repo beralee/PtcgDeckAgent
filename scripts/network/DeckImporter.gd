@@ -6,7 +6,7 @@ extends Node
 const API_BASE := "https://tcg.mik.moe"
 const DECK_DETAIL_URL := API_BASE + "/api/v3/deck/detail"
 const CARD_DETAIL_URL := API_BASE + "/api/v3/card/card-detail"
-const CARD_IMAGE_DOWNLOADER := preload("res://scripts/network/CardImageDownloader.gd")
+const CARD_IMAGE_CACHE_SERVICE := preload("res://scripts/card_images/CardImageCacheService.gd")
 const LIMITLESS_CARD_PARSER := preload("res://scripts/network/LimitlessCardParser.gd")
 const LIMITLESS_CARD_RESOLVER := preload("res://scripts/network/LimitlessCardResolver.gd")
 
@@ -116,11 +116,10 @@ func _ready() -> void:
 	_http_request.timeout = 15.0
 	add_child(_http_request)
 
-	_image_downloader = CARD_IMAGE_DOWNLOADER.new()
+	_image_downloader = CARD_IMAGE_CACHE_SERVICE.new()
 	add_child(_image_downloader)
-	_image_downloader.progress.connect(_on_image_sync_progress)
-	_image_downloader.completed.connect(_on_image_sync_completed)
-	_image_downloader.failed.connect(_on_image_sync_failed)
+	_image_downloader.image_progress.connect(_on_image_sync_progress)
+	_image_downloader.job_completed.connect(_on_image_sync_completed)
 
 
 ## 从 tcg.mik.moe 链接中提取 deckId
@@ -224,6 +223,11 @@ func _fetch_limitless_cards_sequentially(deck: DeckData, entries: Array, index: 
 		call_deferred("_fetch_limitless_cards_sequentially", deck, entries, index + 1, errors)
 		return
 
+	if _try_resolve_limitless_card_entry_from_catalog(deck, entry, errors):
+		import_progress.emit(index + 1, entries.size(), "Resolved Limitless card %d/%d from catalog..." % [index + 1, entries.size()])
+		call_deferred("_fetch_limitless_cards_sequentially", deck, entries, index + 1, errors)
+		return
+
 	import_progress.emit(index, entries.size(), "Fetching Limitless card %d/%d..." % [index + 1, entries.size()])
 	var callback := _on_limitless_card_response.bind(deck, entries, index, errors, entry)
 	_http_request.request_completed.connect(callback, CONNECT_ONE_SHOT)
@@ -251,6 +255,34 @@ func _on_limitless_card_response(
 		])
 	_resolve_limitless_card_entry(deck, entry, parsed_card, errors)
 	_fetch_limitless_cards_sequentially(deck, entries, index + 1, errors)
+
+
+func _try_resolve_limitless_card_entry_from_catalog(deck: DeckData, entry: Dictionary, errors: PackedStringArray) -> bool:
+	if not CardDatabase.has_method("find_cards_by_source_ref"):
+		return false
+	var source_set := str(entry.get("source_set_code", "")).strip_edges()
+	var source_index := str(entry.get("source_card_index", "")).strip_edges()
+	var candidates: Array = CardDatabase.find_cards_by_source_ref(source_set, source_index)
+	if candidates.is_empty():
+		return false
+	var resolved := LIMITLESS_CARD_RESOLVER.resolve_card(entry, candidates)
+	var resolver_errors: Array = resolved.get("errors", []) if resolved.get("errors", []) is Array else []
+	if not resolver_errors.is_empty():
+		return false
+	if bool(resolved.get("generated", false)):
+		return false
+	var card: CardData = resolved.get("card", null)
+	if card == null:
+		return false
+	_try_register_duplicate_effect_alias(card)
+	_update_limitless_deck_entry(deck, entry, card, str(resolved.get("resolved_via", "catalog_source_ref")))
+	if CardImplementationStatus.is_unimplemented(card):
+		errors.append("Limitless card %s/%s is not rule-runnable: %s" % [
+			source_set,
+			source_index,
+			CardImplementationStatus.get_reason(card),
+		])
+	return true
 
 
 func _resolve_limitless_card_entry(deck: DeckData, entry: Dictionary, parsed_card: Dictionary, errors: PackedStringArray) -> void:
@@ -448,14 +480,14 @@ func _start_image_sync(deck: DeckData, errors: PackedStringArray) -> void:
 		_pending_import_errors.append(err)
 
 	import_progress.emit(0, cards_to_sync.size(), "正在同步卡图...")
-	_image_downloader.sync_cards(cards_to_sync)
+	_image_downloader.ensure_cards(cards_to_sync, {"priority": 5, "reason": "deck_import"})
 
 
-func _on_image_sync_progress(current: int, total: int, message: String) -> void:
-	import_progress.emit(current, total, message)
+func _on_image_sync_progress(_job_id: String, current: int, total: int) -> void:
+	import_progress.emit(current, total, "正在同步本卡组卡图 %d/%d" % [current, total])
 
 
-func _on_image_sync_completed(stats: Dictionary, errors: PackedStringArray) -> void:
+func _on_image_sync_completed(_job_id: String, stats: Dictionary, errors: PackedStringArray) -> void:
 	if _pending_deck == null:
 		return
 

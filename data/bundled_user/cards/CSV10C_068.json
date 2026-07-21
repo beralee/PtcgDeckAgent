@@ -1,0 +1,66 @@
+{
+    "name":  "火箭队的闪电鸟",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  " 阻碍之翼 30\n若希望，可以选择对手战斗宝可梦身上附着的1个能量，转附于对手的备战宝可梦身上。\n\n【雷】 狂徒闪电 60+\n如果这只宝可梦身上附着了「火箭队能量」的话，则追加造成60伤害。\n\n",
+    "yoren_code":  "P0145",
+    "set_code":  "CSV10C",
+    "card_index":  "068",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "Nurikabe",
+    "rarity":  "R",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "bbd4dcdc5cd9540a5c4401e9afc70ab5",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/068.png",
+    "image_local_path":  "user://cards/images/CSV10C/068.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "L",
+    "stage":  "Basic",
+    "hp":  120,
+    "weakness_energy":  "L",
+    "weakness_value":  "×2",
+    "resistance_energy":  "F",
+    "resistance_value":  "-30",
+    "retreat_cost":  1,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "阻碍之翼",
+                        "text":  "若希望，可以选择对手战斗宝可梦身上附着的1个能量，转附于对手的备战宝可梦身上。",
+                        "cost":  "CC",
+                        "damage":  "30",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "狂徒闪电",
+                        "text":  "如果这只宝可梦身上附着了「火箭队能量」的话，则追加造成60伤害。",
+                        "cost":  "LCC",
+                        "damage":  "60+",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

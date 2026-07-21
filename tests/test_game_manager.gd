@@ -141,11 +141,13 @@ func test_battle_review_api_config_uses_defaults_when_file_is_missing() -> Strin
 
 	return run_checks([
 		assert_eq(str(manager.call("get_battle_review_api_config_path")), CONFIG_PATH, "GameManager should expose the fixed user:// config path"),
+		assert_eq(str(config.get("provider", "")), "zenmux", "missing config file should keep ZenMux as the backward-compatible provider"),
 		assert_eq(str(config.get("endpoint", "")), "https://zenmux.ai/api/v1", "missing config file should keep default endpoint"),
 		assert_eq(str(config.get("api_key", "")), "", "missing config file should keep default api_key"),
 		assert_eq(str(config.get("model", "")), "deepseek-v4-flash", "missing config file should keep default no-reasoning model"),
 		assert_eq(float(config.get("timeout_seconds", 0.0)), 60.0, "missing config file should keep default timeout"),
 		assert_eq(str(config.get("ai_personality", "")), "是一个大逗比，臭牌篓子", "missing config file should use default AI personality"),
+		assert_eq(str(((config.get("provider_configs", {}) as Dictionary).get("deepseek", {}) as Dictionary).get("endpoint", "")), "https://api.deepseek.com", "missing config should prepare the official DeepSeek endpoint without activating it"),
 	])
 
 
@@ -161,7 +163,7 @@ func test_supported_battle_review_models_match_current_no_reasoning_batch() -> S
 		labels[model_id] = str(model.get("label", ""))
 
 	var expected_ids := PackedStringArray([
-		"kimi-k2.6",
+		"kimi-k3",
 		"z-ai/glm-5.2",
 		"qwen/qwen3.7-plus",
 		"qwen/qwen3.7-max",
@@ -172,6 +174,7 @@ func test_supported_battle_review_models_match_current_no_reasoning_batch() -> S
 	])
 	return run_checks([
 		assert_eq(",".join(ids), ",".join(expected_ids), "Supported battle review models should match the current no-reasoning batch"),
+		assert_eq(str(labels.get("kimi-k3", "")), "Kimi K3", "Kimi display label should match the current model"),
 		assert_eq(str(labels.get("z-ai/glm-5.2", "")), "GLM 5.2", "GLM display label should match the current model"),
 		assert_eq(str(labels.get("qwen/qwen3.7-plus", "")), "Qwen 3.7 Plus", "Qwen Plus display label should match the current model"),
 		assert_eq(str(labels.get("qwen/qwen3.7-max", "")), "Qwen 3.7 Max", "Qwen Max display label should match the current model"),
@@ -224,11 +227,53 @@ func test_battle_review_api_config_loads_user_file() -> String:
 	_restore_config_text(original_config_text)
 
 	return run_checks([
+		assert_eq(str(config.get("provider", "")), "zenmux", "Legacy config without provider should migrate to ZenMux"),
 		assert_eq(str(config.get("endpoint", "")), "https://example.invalid/v1/chat/completions", "GameManager should load endpoint from user config"),
 		assert_eq(str(config.get("api_key", "")), "zenmux-key", "GameManager should load api_key from user config"),
 		assert_eq(str(config.get("model", "")), "z-ai/glm-5.2", "GameManager should load supported no-reasoning model from user config"),
 		assert_eq(float(config.get("timeout_seconds", 0.0)), 45.0, "GameManager should load timeout_seconds from user config"),
 		assert_eq(str(config.get("ai_personality", "")), "谨慎但幽默", "GameManager should load AI personality from user config"),
+		assert_eq(str(((config.get("provider_configs", {}) as Dictionary).get("zenmux", {}) as Dictionary).get("api_key", "")), "zenmux-key", "Legacy credentials should be retained in the migrated ZenMux profile"),
+	])
+
+
+func test_battle_review_api_config_loads_active_deepseek_profile_without_losing_zenmux() -> String:
+	var original_config_text := _read_config_text()
+	_remove_config_file()
+	_write_config({
+		"provider": "deepseek",
+		"endpoint": "https://api.deepseek.com",
+		"api_key": "deepseek-key",
+		"model": "deepseek-v4-pro",
+		"timeout_seconds": 90,
+		"provider_configs": {
+			"zenmux": {
+				"endpoint": "https://zenmux.ai/api/v1",
+				"api_key": "zenmux-key",
+				"model": "qwen/qwen3.7-plus",
+			},
+			"deepseek": {
+				"endpoint": "https://api.deepseek.com",
+				"api_key": "deepseek-key",
+				"model": "deepseek-v4-pro",
+			},
+		},
+	})
+	var manager: Node = _load_game_manager_script().new()
+	var config: Dictionary = manager.call("get_battle_review_api_config")
+	_restore_config_text(original_config_text)
+	var profiles := config.get("provider_configs", {}) as Dictionary
+	var zenmux_profile := profiles.get("zenmux", {}) as Dictionary
+	var deepseek_profile := profiles.get("deepseek", {}) as Dictionary
+
+	return run_checks([
+		assert_eq(str(config.get("provider", "")), "deepseek", "Saved DeepSeek provider should remain active"),
+		assert_eq(str(config.get("endpoint", "")), "https://api.deepseek.com", "Active config should expose the official DeepSeek base URL to existing callers"),
+		assert_eq(str(config.get("api_key", "")), "deepseek-key", "Active config should expose the DeepSeek key to existing callers"),
+		assert_eq(str(config.get("model", "")), "deepseek-v4-pro", "Active config should expose the selected DeepSeek model to existing callers"),
+		assert_eq(str(zenmux_profile.get("api_key", "")), "zenmux-key", "Switching to DeepSeek must retain the ZenMux key"),
+		assert_eq(str(zenmux_profile.get("model", "")), "qwen/qwen3.7-plus", "Switching to DeepSeek must retain the ZenMux model"),
+		assert_eq(str(deepseek_profile.get("api_key", "")), "deepseek-key", "DeepSeek profile should preserve its own key"),
 	])
 
 
@@ -342,6 +387,13 @@ func test_battle_review_api_config_restricts_models_to_supported_allowlist() -> 
 	_write_config({
 		"endpoint": "https://example.invalid/v1",
 		"api_key": "old-key",
+		"model": "kimi-k2.6",
+		"timeout_seconds": 30,
+	})
+	var legacy_kimi_config: Dictionary = manager.call("get_battle_review_api_config")
+	_write_config({
+		"endpoint": "https://example.invalid/v1",
+		"api_key": "old-key",
 		"model": "x-ai/grok-4.2-fast-non-reasoning",
 		"timeout_seconds": 30,
 	})
@@ -354,6 +406,7 @@ func test_battle_review_api_config_restricts_models_to_supported_allowlist() -> 
 		assert_eq(str(deepseek_pro_config.get("model", "")), "deepseek-v4-pro", "Provider-prefixed DeepSeek V4 Pro should normalize to the tested no-thinking slug"),
 		assert_eq(str(legacy_glm_config.get("model", "")), "z-ai/glm-5.2", "Legacy GLM 5.1 config should migrate to GLM 5.2"),
 		assert_eq(str(legacy_qwen_config.get("model", "")), "qwen/qwen3.7-plus", "Legacy Qwen 3.6 Plus config should migrate to Qwen 3.7 Plus"),
+		assert_eq(str(legacy_kimi_config.get("model", "")), "kimi-k3", "Legacy Kimi K2.6 config should migrate to Kimi K3"),
 		assert_eq(str(removed_grok_config.get("model", "")), "deepseek-v4-flash", "Removed Grok model should fall back to the default model"),
 	])
 
@@ -525,7 +578,7 @@ func test_web_runtime_skips_native_orientation_calls() -> String:
 	])
 
 
-func test_android_screen_touch_bridge_keeps_battle_buttons_clickable_without_mouse_emulation() -> String:
+func test_android_global_touch_bridge_yields_battle_input_ownership() -> String:
 	var previous_emulation := bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", false)
 	var manager: Node = _load_game_manager_script().new()
@@ -560,13 +613,13 @@ func test_android_screen_touch_bridge_keeps_battle_buttons_clickable_without_mou
 	release.pressed = false
 	release.position = center
 	manager.call("_input", release)
-	manager.queue_free()
-	battle_root.queue_free()
+	manager.free()
+	battle_root.free()
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
 
 	return run_checks([
-		assert_true(candidate_recorded, "Global touch bridge should remember a pressed battle Button when touch-to-mouse is disabled"),
-		assert_true(bool(pressed[0]), "Battle Buttons should still activate from Android ScreenTouch without changing battle scene code"),
+		assert_false(candidate_recorded, "Global compatibility bridge must yield all BattleScene pointer ownership"),
+		assert_false(bool(pressed[0]), "Battle buttons must only activate through the battle-owned pointer pipeline"),
 	])
 
 
@@ -605,8 +658,8 @@ func test_android_screen_touch_bridge_keeps_non_battle_buttons_clickable_with_mo
 	release.pressed = false
 	release.position = center
 	manager.call("_input", release)
-	manager.queue_free()
-	page_root.queue_free()
+	manager.free()
+	page_root.free()
 	ProjectSettings.set_setting("input_devices/pointing/emulate_mouse_from_touch", previous_emulation)
 
 	return run_checks([
@@ -646,6 +699,50 @@ func test_global_touch_bridge_suppresses_button_already_handled_by_scene_bridge(
 
 	return run_checks([
 		assert_false(bool(pressed[0]), "Global touch bridge should not re-emit a Button already handled by the scene-level non-battle touch bridge"),
+	])
+
+
+func test_global_touch_bridge_never_routes_inside_active_battle_scene() -> String:
+	var manager: Node = _load_game_manager_script().new()
+	manager.name = "GameManagerBattleOwnershipProbe"
+	var battle_root := Control.new()
+	battle_root.name = "BattleScene"
+	battle_root.size = Vector2(480, 860)
+	var button := Button.new()
+	button.name = "HudEndTurnBtn"
+	button.position = Vector2(120, 240)
+	button.size = Vector2(220, 90)
+	button.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	battle_root.add_child(button)
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		manager.queue_free()
+		battle_root.queue_free()
+		return "SceneTree root should be available for battle input ownership test"
+	tree.root.add_child(manager)
+	tree.root.add_child(battle_root)
+	var pressed_count := [0]
+	button.pressed.connect(func() -> void:
+		pressed_count[0] += 1
+	)
+	var center := button.get_global_rect().get_center()
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.position = center
+	manager.call("_input", press)
+	var candidate_recorded: bool = manager.get("_touch_button_bridge_candidate") != null
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.position = center
+	manager.call("_input", release)
+	var ignored_button_bridgeable := bool(manager.call("_button_can_bridge_touch", button))
+	manager.free()
+	battle_root.free()
+
+	return run_checks([
+		assert_false(candidate_recorded, "GameManager must not claim ScreenTouch while BattleScene owns mobile input"),
+		assert_eq(int(pressed_count[0]), 0, "Global bridge must not press a modal-blocked battle button"),
+		assert_false(ignored_button_bridgeable, "MOUSE_FILTER_IGNORE buttons must never be eligible for compatibility bridging"),
 	])
 
 

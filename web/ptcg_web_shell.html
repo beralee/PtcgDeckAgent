@@ -9,12 +9,18 @@
 		<meta name="theme-color" content="#0b1117">
 		<title>$GODOT_PROJECT_NAME</title>
 		<style>
-html,
-body,
-#canvas {
-	margin: 0;
-	padding: 0;
-	border: 0;
+	:root {
+		--ptcg-safe-top: env(safe-area-inset-top, 0px);
+		--ptcg-safe-right: env(safe-area-inset-right, 0px);
+		--ptcg-safe-bottom: env(safe-area-inset-bottom, 0px);
+		--ptcg-safe-left: env(safe-area-inset-left, 0px);
+	}
+
+	html,
+	body {
+		margin: 0;
+		padding: 0;
+		border: 0;
 	width: 100%;
 	height: 100%;
 }
@@ -38,10 +44,18 @@ body {
 	-webkit-tap-highlight-color: transparent;
 }
 
-#canvas {
-	display: block;
-	background: #05080c;
-}
+	#canvas {
+		display: block;
+		position: fixed;
+		top: var(--ptcg-safe-top);
+		left: var(--ptcg-safe-left);
+		width: calc(100% - var(--ptcg-safe-left) - var(--ptcg-safe-right)) !important;
+		height: calc(100% - var(--ptcg-safe-top) - var(--ptcg-safe-bottom)) !important;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		background: #05080c;
+	}
 
 #canvas:focus {
 	outline: none;
@@ -255,6 +269,7 @@ const engine = new Engine(GODOT_CONFIG);
 	const TEXT_LOADING_DOWNLOAD = '\u6b63\u5728\u4e0b\u8f7d\u6e38\u620f\u8d44\u6e90...';
 	const TEXT_LOADING_ENGINE = '\u6b63\u5728\u521d\u59cb\u5316\u5f15\u64ce...';
 	const TEXT_ENGINE_READY = '\u6b63\u5728\u521d\u59cb\u5316\u5f15\u64ce\uff0c\u9a6c\u4e0a\u8fdb\u5165\u6e38\u620f\u3002';
+	const AUDIO_UNLOCK_TIMEOUT_MS = 1000;
 	const TEXT_NEW_VERSION_PREFIX = '\u68c0\u6d4b\u5230\u65b0\u7248\u672c ';
 	const TEXT_NEW_VERSION_SUFFIX = '\uff0c\u5efa\u8bae\u6e05\u7406\u65e7\u7248\u672c\u7f13\u5b58\u540e\u6253\u5f00\u3002';
 	const TEXT_OPENING_NEW_VERSION = '\u6b63\u5728\u6e05\u7406\u65e7\u7248\u672c\u7f13\u5b58...';
@@ -446,18 +461,34 @@ const engine = new Engine(GODOT_CONFIG);
 	function unlockAudioFromGesture() {
 		const AudioContextClass = window.AudioContext || window.webkitAudioContext;
 		if (!AudioContextClass) {
-			return Promise.resolve();
+			return;
 		}
 		try {
 			const context = new AudioContextClass();
-			const resumePromise = context.state === 'suspended' ? context.resume() : Promise.resolve();
-			return resumePromise.then(function () {
-				if (typeof context.close === 'function') {
-					return context.close().catch(function () {});
+			let finished = false;
+			let timeoutId = 0;
+			const finish = function () {
+				if (finished) {
+					return;
 				}
-			}).catch(function () {});
+				finished = true;
+				window.clearTimeout(timeoutId);
+				if (typeof context.close === 'function') {
+					try {
+						const closeResult = context.close();
+						if (closeResult && typeof closeResult.catch === 'function') {
+							closeResult.catch(function () {});
+						}
+					} catch (err) {
+						// Audio unlock is best effort and must never block game startup.
+					}
+				}
+			};
+			timeoutId = window.setTimeout(finish, AUDIO_UNLOCK_TIMEOUT_MS);
+			const resumePromise = context.state === 'suspended' ? context.resume() : Promise.resolve();
+			Promise.resolve(resumePromise).then(finish, finish);
 		} catch (err) {
-			return Promise.resolve();
+			// Some iOS/WebView builds expose AudioContext but still reject construction.
 		}
 	}
 
@@ -503,10 +534,10 @@ const engine = new Engine(GODOT_CONFIG);
 		setStatusMode('progress');
 		setStage(TEXT_PREPARE_START);
 
-		Promise.all([
-			unlockAudioFromGesture(),
-		]).then(function () {
-			setStage(TEXT_LOADING_DOWNLOAD);
+		unlockAudioFromGesture();
+		setStage(TEXT_LOADING_DOWNLOAD);
+
+		Promise.resolve().then(function () {
 			return engine.startGame({
 				'onProgress': function (current, total) {
 					if (current > 0 && total > 0) {

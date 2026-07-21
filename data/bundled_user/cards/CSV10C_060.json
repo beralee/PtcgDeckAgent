@@ -1,0 +1,66 @@
+{
+    "name":  "清洗洛托姆",
+    "card_type":  "Pokemon",
+    "mechanic":  "",
+    "label":  "",
+    "description":  "【水】 搓洗 20\n回复自己所有宝可梦的HP各「10」。\n\n 配件秀 30×\n造成自己所有宝可梦身上放有的「宝可梦道具」数量×30伤害。\n\n",
+    "yoren_code":  "P479",
+    "set_code":  "CSV10C",
+    "card_index":  "060",
+    "set_code_en":  "",
+    "card_index_en":  "",
+    "name_en":  "",
+    "name_zh":  "",
+    "artist":  "miki kudo",
+    "rarity":  "C",
+    "release_date":  "2026-07-16T00:00:00+08:00",
+    "regulation_mark":  "I",
+    "effect_id":  "3541003c6369be81bc29a74acade3e7f",
+    "image_url":  "https://tcg.mik.moe/static/img/CSV10C/060.png",
+    "image_local_path":  "user://cards/images/CSV10C/060.png",
+    "source_provider":  "",
+    "source_url":  "",
+    "source_set_code":  "",
+    "source_card_index":  "",
+    "source_language":  "",
+    "source_prints":  [
+
+                      ],
+    "source_imported_at":  0,
+    "source_parser_version":  0,
+    "is_tags":  [
+
+                ],
+    "regulation_standard":  true,
+    "regulation_expanded":  true,
+    "energy_type":  "W",
+    "stage":  "Basic",
+    "hp":  80,
+    "weakness_energy":  "L",
+    "weakness_value":  "×2",
+    "resistance_energy":  "",
+    "resistance_value":  "",
+    "retreat_cost":  2,
+    "evolves_from":  "",
+    "ancient_trait":  "",
+    "attacks":  [
+                    {
+                        "name":  "搓洗",
+                        "text":  "回复自己所有宝可梦的HP各「10」。",
+                        "cost":  "W",
+                        "damage":  "20",
+                        "is_vstar_power":  false
+                    },
+                    {
+                        "name":  "配件秀",
+                        "text":  "造成自己所有宝可梦身上放有的「宝可梦道具」数量×30伤害。",
+                        "cost":  "CC",
+                        "damage":  "30×",
+                        "is_vstar_power":  false
+                    }
+                ],
+    "abilities":  [
+
+                  ],
+    "energy_provides":  ""
+}

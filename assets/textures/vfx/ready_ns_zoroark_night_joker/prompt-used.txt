@@ -1,0 +1,9 @@
+Use case: stylized-concept
+Asset type: six-frame 2D game creature ready animation sheet
+Create an original dark fantasy fox-like illusion creature for a card-battle game. It has a lean charcoal-gray body, a large swept-back crimson-and-black mane, a bright cyan forehead jewel and cyan eye accents, long expressive forearms, three-fingered hands, digitigrade legs, red facial markings, and a sharp readable silhouette. Keep exactly the same creature identity in every frame.
+Exactly 6 equal invisible cells arranged as 2 rows by 3 columns, read top row left-to-right then bottom row left-to-right. No visible borders, boxes, labels, or gutters.
+Frames form one calm preparation sequence: 1 low balanced anticipation; 2 torso rises and mane fans; 3 small cyan-red reflective slivers gather close to shoulders and hands; 4 confident full-body ready stance with a compact halo of tiny illusion shards hugging the silhouette; 5 one hand reaches slightly forward and two reflections align beside it; 6 poised settle with reflections fading.
+Clean high-definition hand-painted 2D game sprite art, polished cel-painted anime creature rendering, crisp silhouette, controlled highlights, body-led cue, nonviolent.
+Consistent 3/4 front view. Full body centered in each cell. Subject occupies only central 60-65% of each cell. Same scale, proportions, and centerline across all six frames. Generous padding.
+Every pixel outside the creature and its compact attached accents must be perfectly flat solid #FF00FF magenta. No background gradient, texture, floor, cast shadow, reflection, haze, or glow spill. Do not use flat #FF00FF inside the creature.
+All body parts, mane tips, hands, feet, and illusion accents remain fully inside their own cell with magenta margin on all four sides. No edge crossing, projectile, impact, opponent, duplicate creature, human, card frame, text, symbols, UI, watermark, or logo.

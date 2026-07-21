@@ -1,0 +1,311 @@
+{
+  "schema_version": 1,
+  "architecture": "V18CPG",
+  "evidence_revision": 5,
+  "status": "in_progress",
+  "deck_id": 800018539,
+  "deck_name": "18.0 阿响凤王",
+  "anchor_id": 575720,
+  "seed_base": 800018539,
+  "games_per_round": 5,
+  "model": "deepseek-v4-flash",
+  "deck_source": "bundled_ai",
+  "deck_content_fingerprint": "0b15d7235767547bdb1a367a064278da2cd7a8742de30bd9eaa47ca46abf93d1",
+  "baseline_artifact": "res://tmp/v18cpg/optimization21/800018539/round00.json",
+  "completed_rounds": 3,
+  "required_rounds": 10,
+  "rounds": [
+    {
+      "round": 1,
+      "artifact": "res://tmp/v18cpg/optimization21/800018539/round01.json",
+      "run_id": "opt21_800018539_round01",
+      "timestamp": "2026-07-21T01:28:53",
+      "failure_category": "frontier_gap",
+      "diagnosis": "The immutable five-seed production run was clean and exactly Rule-equivalent, but it never exposed the new Iron Hands extra-Prize comparison frontier. Across the tracked Ethan's Ho-Oh deck, the only Iron Hands action was seed 800018543 turn 33 play_basic_to_bench, immediately followed by end_turn; there was no tracked-deck Iron Hands attack action or attack0-versus-attack1 frontier in any game. The Iron Hands attacks seen on seed 800018542 belonged to the opposing Miraidon anchor and are not certificate evidence. Consequently public_extra_prize_attack_terminal appeared zero times in production audit, module_certificate_kind was empty for every action, and no certificate-owned action occurred. This is an unexercised production state, not evidence that the exact public binding failed.",
+      "change_summary": "Froze profile v3, semantic manifest v1, the Rule implementation, and the loaded shared V18CPG runtime after the 800018500 shared fix had completed all common regressions. The pre/post-run SHA-256 values were identical: profile cc28e98bb28071480b736fd4bb3ff1bf01274ed8319b0e8f66e3810516176d6e, semantic manifest c11e238206d70c35ee7a5d5be1240274f2f9d33ec66fe4a25b905243bcb0fd5e, Rule strategy 4f556cef5b452c9c9d82560130ce86895ebd42559cd1de06441e4e8a0283790a, V18ConditionalPolicyStrategy 406093484cfdca9354f5485ed3d2b2086d66022208cdb80e68d0d834d8a73c91, CapabilityRegistry 8d548ffc0d01cab3ad636079b780edfae465e6ede35e128f435e53d81a7dfcfe, EnergyBurst dd180686823803e54ac83df697bf52134e81fd4587df8b6eb6654e074726f2f0, PrizeGraph cddfa4f408f0dbb776f929e1f8afe7bd148d5185e90ba03d39bf03d72bc9823e, and RouteSearch 5037384d448d341c7aaea162fd918c91449ecae91d9a762747a989501e145835. The Rule decision signature also remained b4a847faea880728a2cb46c8cec8b24d58886cef1ab601fac038bb10615f6fa5, exactly matching round00.",
+      "retained": false,
+      "profile": {
+        "profile_version": 3,
+        "semantic_version": 1,
+        "profile_fingerprint": "21bac9a606946b26ab14832a4b53b615ef0b707d3c2ffbbf6e1f26ed67af7db1",
+        "semantic_manifest_hash": "17ef9fbda1a8801c1342f829b4704ffe752ca95ba73f7895a3ae4155e11040ef"
+      },
+      "metrics": {
+        "rule_wins": 2,
+        "v18cpg_wins": 2,
+        "paired_improvement": 0.0,
+        "paired_bootstrap_95": [0.0, 0.0],
+        "positive_flips": 0,
+        "negative_flips": 0,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 40,
+        "model_accepted": 32,
+        "model_rejected": 8,
+        "model_acceptance_rate": 0.8,
+        "model_owned_action_results": 0,
+        "graph_branch_hits": 4,
+        "uncovered_events": 83,
+        "system_prompt_p50_bytes": 7060,
+        "system_prompt_p95_bytes": 7060,
+        "user_prompt_p50_bytes": 18334,
+        "user_prompt_p95_bytes": 24160,
+        "payload_p50_bytes": 27922,
+        "payload_p95_bytes": 34566,
+        "response_p50_bytes": 888,
+        "response_p95_bytes": 1375,
+        "visible_wait_p50_ms": 4864,
+        "visible_wait_p95_ms": 6002,
+        "turn_visible_wait_p50_ms": 4864,
+        "turn_visible_wait_p95_ms": 6002,
+        "full_requests": 36,
+        "full_payload_p50_bytes": 27692,
+        "full_payload_p95_bytes": 34566,
+        "full_visible_wait_p50_ms": 4901,
+        "full_visible_wait_p95_ms": 6002,
+        "delta_requests": 3,
+        "delta_payload_p50_bytes": 30188,
+        "delta_payload_p95_bytes": 30803,
+        "delta_visible_wait_p50_ms": 4811,
+        "delta_visible_wait_p95_ms": 4861,
+        "zero_acceptance_reference_checks": 0,
+        "zero_acceptance_reference_mismatches": 0,
+        "zero_model_action_reference_checks": 5,
+        "zero_model_action_reference_mismatches": 0,
+        "v18cpg_signature_matches_rule_by_game": [true, true, true, true, true],
+        "rule_decision_signature": "b4a847faea880728a2cb46c8cec8b24d58886cef1ab601fac038bb10615f6fa5",
+        "v18cpg_decision_signature": "b4a847faea880728a2cb46c8cec8b24d58886cef1ab601fac038bb10615f6fa5",
+        "action_owners": {
+          "local_gate": 126,
+          "deadline_fallback": 43,
+          "rules_fallback": 47,
+          "schema_fallback": 7
+        },
+        "fallbacks": {
+          "deadline_fallback": 1,
+          "schema_fallback": 7
+        },
+        "fallback_reasons": {
+          "node_count": 3,
+          "turn_visible_wait_budget_exhausted": 1,
+          "typed_route_crosses_information_checkpoint": 4
+        },
+        "extra_prize_certificate_events": 0,
+        "extra_prize_certificate_owned_actions": 0,
+        "tracked_iron_hands_attack_actions": 0,
+        "tracked_iron_hands_bench_actions": 1
+      },
+      "production_certificate_audit": {
+        "certificate_kind": "public_extra_prize_attack_terminal",
+        "triggered": false,
+        "owned_action": false,
+        "closest_state": {
+          "seed": 800018543,
+          "turn": 33,
+          "action": "play_basic_to_bench Iron Hands ex",
+          "next_action": "end_turn",
+          "missing_public_precondition": "Iron Hands never became the tracked deck's Active attacker and no legal attack0/attack1 candidate pair existed."
+        },
+        "anchor_only_observation": "Seed 800018542 turns 15/17/19 contain Iron Hands attacks, but player ownership proves they are opposing anchor actions and must not be counted.",
+        "focused_production_binding": "The focused EffectProcessor and public-state fixture remains green; Round01 does not independently validate a live production trigger."
+      },
+      "post_round_finding": {
+        "category": "unexercised_extra_prize_frontier",
+        "finding": "Round01 proves isolation, clean fallback, reference monotonicity, and latency compliance, but not strict strength improvement or a live extra-Prize takeover. Thirty-two accepted model responses produced zero model-owned actions because every installed response remained on the exact Rule root; all five complete V18CPG logs therefore equal both Rule and verified-local. A targeted production replay must first create the exact Active Iron Hands, one Luminous plus three basic Fire, two-prizes-remaining, single-prize 120-HP opponent state before another aggregate round can claim this certificate as exercised."
+      },
+      "next_action": "Round02 should add no shared behavior. Build or reuse a deterministic production-path replay that reaches the exact seed/turn state through the real observation, candidate-pool, Rule-floor, capability, audit, and action-owner path; require one public_extra_prize_attack_terminal action_result and exact attack1 ownership while preserving the negative fixtures. Then rerun the unchanged five formal seeds only if the production trigger is proven, and separately seek a real positive winner flip rather than treating Rule-equivalence as promotion."
+    },
+    {
+      "round": 2,
+      "artifact": "res://tmp/v18cpg/optimization21/800018539/round02.json",
+      "artifact_sha256": "c823365039f836569a266e07d1b0e2b3148003a9af4e3b438c1870e5c752e03b",
+      "run_id": "opt21_800018539_round02",
+      "timestamp": "2026-07-21T03:17:40",
+      "failure_category": "fact_or_solver_error",
+      "diagnosis": "Round01 exposed two public retreat-to-attack suffix failures outside the original Iron Hands certificate: seed 800018540 turn 28 and seed 800018543 turn 15. In both states Rule retreated into a non-attacking endpoint even though a benched Ethan's Ho-Oh ex could legally become Active and immediately use a payable 160-damage attack. The resulting lost attack tempo was a deterministic public planning error, not hidden-information inference or a model-ranking disagreement.",
+      "change_summary": "Added a deck-scoped Ethan Ho-Oh fire-toolbox module and profile v4 opt-in for public_fire_same_turn_retreat_attack_suffix. The certificate validates the public deck id, exact legal retreat candidate, public attached-energy payment, a legal same-turn attack suffix, and the Rule floor before upgrading the retreat. It fired exactly twice in production: seed 800018540 turn 28 selected retreat slot 5 into Ethan's Ho-Oh ex and then attack 160; seed 800018543 turn 15 selected retreat slot 6 into Ethan's Ho-Oh ex and then attack 160 to KO a 70-HP Iron Hands ex for two Prizes. No legacy LLM, Agent, Rule strategy, hidden state, raw GameState, or RNG path was changed. Frozen SHA-256 values remained stable through formal: profile fb9ea197b80133771eeb6cdb16d46396df0850ebb02b72588eb49800a3b95678, module 0425913536e58d12b4c88d82998193e9ee02e6caa1721637457304d1dd88cf8b, semantic manifest c11e238206d70c35ee7a5d5be1240274f2f9d33ec66fe4a25b905243bcb0fd5e, V18ConditionalPolicyStrategy 78182aaca8c808a70ff3577184dbed9254b69494c7b273847efb883abaaa3d22, CapabilityRegistry c3605a02679d90c8389db7e865d082a005b7b119df1f2e2e54825e8d5a2d4c8a, and ProfileCatalog 23c78c7712b56c2fbaa7da08e0e4d5c9be9feb85f939cd5e9e73e39fdccf8854.",
+      "retained": true,
+      "profile": {
+        "profile_version": 4,
+        "semantic_version": 1,
+        "profile_fingerprint": "acb9a67728f7338e076f4fce5ed8663a92831cfea22e2bc5e8623dc58403f481",
+        "semantic_manifest_sha256": "c11e238206d70c35ee7a5d5be1240274f2f9d33ec66fe4a25b905243bcb0fd5e"
+      },
+      "metrics": {
+        "rule_wins": 2,
+        "v18cpg_wins": 2,
+        "paired_improvement": 0.0,
+        "paired_bootstrap_95": [0.0, 0.0],
+        "positive_flips": 0,
+        "negative_flips": 0,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 36,
+        "model_accepted": 26,
+        "model_rejected": 10,
+        "model_acceptance_rate": 0.7222222222222222,
+        "model_owned_action_results": 1,
+        "graph_branch_hits": 2,
+        "uncovered_events": 80,
+        "payload_p50_bytes": 31239,
+        "payload_p95_bytes": 36698,
+        "visible_wait_p50_ms": 5303,
+        "visible_wait_p95_ms": 6253,
+        "turn_visible_wait_p50_ms": 5303,
+        "turn_visible_wait_p95_ms": 6253,
+        "zero_acceptance_reference_checks": 0,
+        "zero_acceptance_reference_mismatches": 0,
+        "zero_model_action_reference_checks": 4,
+        "zero_model_action_reference_mismatches": 0,
+        "v18cpg_signature_matches_rule_by_game": [true, false, true, true, false],
+        "rule_decision_logs_match_round00_by_game": [true, true, true, true, true],
+        "fallbacks": {
+          "deadline_fallback": 3,
+          "schema_fallback": 7
+        },
+        "fallback_reasons": {
+          "node_count": 2,
+          "turn_visible_wait_budget_exhausted": 3,
+          "typed_route_crosses_information_checkpoint": 5
+        },
+        "fire_suffix_certificate_events": 2,
+        "fire_suffix_certificate_owned_actions": 2
+      },
+      "production_certificate_audit": {
+        "certificate_kind": "public_fire_same_turn_retreat_attack_suffix",
+        "triggered": true,
+        "trigger_count": 2,
+        "states": [
+          {
+            "seed": 800018540,
+            "turn": 28,
+            "rule_suffix": ["retreat to inactive Armarouge", "end_turn"],
+            "certified_suffix": ["retreat slot 5 to Ethan's Ho-Oh ex", "attack 160"],
+            "winner_flip": false
+          },
+          {
+            "seed": 800018543,
+            "turn": 15,
+            "rule_suffix": ["retreat to Squawkabilly ex", "end_turn"],
+            "certified_suffix": ["retreat slot 6 to Ethan's Ho-Oh ex", "attack 160 and KO Iron Hands ex for two Prizes"],
+            "winner_flip": false
+          }
+        ],
+        "preflight": "res://tmp/v18cpg/optimization21/800018539/round02c_certificate_preflight.json",
+        "focused_test": "res://tests/v18_llm_policy_graph/test_optimize_800018539_round02_prize_clock_suffix.gd"
+      },
+      "regressions": {
+        "focused_round02": "pass",
+        "complex_decision_scenarios": "5/5 pass",
+        "v18cpg_contracts": "16 pass",
+        "strategic_shape_modules": "9/9 pass",
+        "compaction": "12/12 pass",
+        "checkpoint_blockers": "13 pass",
+        "dominance": "20/20 pass",
+        "strategy_coverage": "24/24/12 pass"
+      },
+      "post_round_finding": {
+        "category": "two_public_suffix_improvements_without_winner_flip",
+        "finding": "Round02 is retained because it produces two deterministic, public, production-path action improvements with no negative game flip and keeps the paired result at Rule 2/5 versus V18CPG 2/5. It does not prove aggregate superiority: neither improved suffix changes a winner in this five-seed sample, and visible-wait p95 rose from 6002 ms to 6253 ms (+251 ms, 4.2%) although it remains below the 6500 ms budget. The profile delta is also too trace-shaped to claim broad generalization, so the certificate must be generalized before rollout to other fire-toolbox states.",
+        "generalization_gap": "The v4 profile enumerates narrow public board shapes close to the two observed traces. Round03 must replace those snapshot clauses with typed public invariants for retreat payment, target readiness, payable post-retreat attack, projected damage or Prize gain, and preservation of the Rule suffix floor."
+      },
+      "next_action": "Round03 should generalize public_fire_same_turn_retreat_attack_suffix away from the two exact board snapshots, add focused positive variants with different bench slots, damage, energy distributions, and opposing Active HP plus strict negative boundaries, then require Rule non-inferiority, zero negative flips, production certificate evidence, and visible-wait p95 no worse than Round02 or at minimum still below the 6500 ms architecture budget."
+    },
+    {
+      "round": 3,
+      "artifact": "res://tmp/v18cpg/optimization21/800018539/round03.json",
+      "artifact_sha256": "288accb4c922269c38899da6ce75cb7c87da26784a8aad9e9a0b53a5c882728b",
+      "run_id": "opt21_800018539_round03",
+      "timestamp": "2026-07-21T08:55:33",
+      "failure_category": "profile_overfit_and_fact_binding_error",
+      "diagnosis": "Round02 retained two useful public retreat-to-attack upgrades, but profile v4 encoded board snapshots too close to the observed seed/turn/slot traces. The first generalized preflight then produced zero certificate events because it compared printed retreat cost with attached Energy count and failed to model Latias ex Skyline making Basic Pokemon retreat for free. That zero-hit preflight is invalid evidence and is preserved only as a diagnostic. The repaired typed proof requires a Basic Active plus a live exact UID/effect-id Latias Skyline provider and still binds the real legal retreat action, checkpoint, quota, post-retreat attack payment, damage, and Prize result.",
+      "change_summary": "Replaced the v4 snapshot table with one deck-scoped public typed invariant. It validates the selected retreat candidate and Rule floor in the same quota/checkpoint; a live, HP-consistent Ethan's Ho-Oh ex target; Skyline or fully payable retreat; RRRR attack payment with explicit Basic/Legacy/Luminous semantics; attack-window availability; public opponent HP, Prize count, Tool, Energy, Stadium, protection and reaction boundaries; capped projected damage and Prize gain; and no already-preserved attack suffix. The invalid first preflight `round03_preflight_verified_local.json` correctly counted zero events and was not promoted. The repaired `round03b_preflight_verified_local.json` restored exactly the two previously proven production events and no others. Frozen formal SHA-256 values stayed stable: profile f2e02be4e13929342017704705c41688d17bab7dabd4c10af4c80a06f98dcf4f, module 451b983a22feaaed2b476f8b71cfb807027e1f2eff399062894d11b781d65220, focused cc5b08ce9ef9af6d72a2a925bebe37ef4a7b6860a61bc3515ef10e677e90fa31, manifest c11e238206d70c35ee7a5d5be1240274f2f9d33ec66fe4a25b905243bcb0fd5e, Strategy 78182aaca8c808a70ff3577184dbed9254b69494c7b273847efb883abaaa3d22, Registry c3605a02679d90c8389db7e865d082a005b7b119df1f2e2e54825e8d5a2d4c8a, ProfileCatalog 23c78c7712b56c2fbaa7da08e0e4d5c9be9feb85f939cd5e9e73e39fdccf8854, runner 572389d3a34c80fc6afde5b0c3bd5d61ff13dbb2904e60aae3052f1c3d6477d6, benchmark source bc514c72a2c05323a0c0e6b32878c1aaff5fe272941d5b3383b293ebf0fc6610, AIOpponent ffddf824919308af3406d50fb9745fee6c3c5dd8558b3addf4e6d65705f154d7, and Rule strategy 497b70038e63dc95bb1dd49755381ba400461908588de8022c7396601ff8831e.",
+      "retained": true,
+      "profile": {
+        "profile_version": 5,
+        "semantic_version": 1,
+        "profile_fingerprint": "ab161a034b6d5c049bd602a59e6a7bc8613083c93276a1df0b41046d8e887377",
+        "semantic_manifest_sha256": "c11e238206d70c35ee7a5d5be1240274f2f9d33ec66fe4a25b905243bcb0fd5e"
+      },
+      "metrics": {
+        "rule_wins": 2,
+        "v18cpg_wins": 2,
+        "paired_improvement": 0.0,
+        "paired_bootstrap_95": [0.0, 0.0],
+        "positive_flips": 0,
+        "negative_flips": 0,
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 36,
+        "model_accepted": 24,
+        "model_rejected": 12,
+        "model_acceptance_rate": 0.6666666666666666,
+        "model_owned_action_results": 1,
+        "graph_branch_hits": 4,
+        "uncovered_events": 78,
+        "payload_p50_bytes": 29181,
+        "payload_p95_bytes": 35528,
+        "visible_wait_p50_ms": 5198,
+        "visible_wait_p95_ms": 6253,
+        "turn_visible_wait_p50_ms": 5198,
+        "turn_visible_wait_p95_ms": 6253,
+        "zero_model_action_reference_checks": 4,
+        "zero_model_action_reference_mismatches": 0,
+        "v18cpg_signature_matches_rule_by_game": [true, false, true, true, false],
+        "rule_decision_logs_match_round00_by_game": [true, true, true, true, true],
+        "fallbacks": {
+          "deadline_fallback": 2,
+          "schema_fallback": 10
+        },
+        "fallback_reasons": {
+          "node_count": 2,
+          "turn_visible_wait_budget_exhausted": 2,
+          "typed_route_crosses_information_checkpoint": 8
+        },
+        "fire_suffix_certificate_events": 2,
+        "fire_suffix_certificate_owned_actions": 2
+      },
+      "production_certificate_audit": {
+        "certificate_kind": "public_fire_same_turn_retreat_attack_suffix",
+        "trigger_count": 2,
+        "states": [
+          {
+            "seed": 800018540,
+            "turn": 28,
+            "action": "retreat",
+            "candidate_id": "candidate:95c50d976bf74ee0048b",
+            "owner": "module_verified_upgrade",
+            "success": true
+          },
+          {
+            "seed": 800018543,
+            "turn": 15,
+            "action": "retreat",
+            "candidate_id": "candidate:1b7ad984a0aa1774e351",
+            "owner": "module_verified_upgrade",
+            "success": true
+          }
+        ],
+        "valid_preflight": "res://tmp/v18cpg/optimization21/800018539/round03b_preflight_verified_local.json",
+        "invalid_zero_hit_diagnostic": "res://tmp/v18cpg/optimization21/800018539/round03_preflight_verified_local.json",
+        "no_other_production_trigger": true
+      },
+      "regressions": {
+        "focused_generalized_fire_suffix": "pass including two captured production shapes",
+        "complex_decision_scenarios": "5/5 pass",
+        "v18cpg_contracts": "16 pass",
+        "strategic_shape_modules": "9/9 pass",
+        "compaction": "12/12 pass",
+        "checkpoint_blockers": "13 pass",
+        "dominance": "20/20 pass",
+        "strategy_coverage": "24/24/12 pass"
+      },
+      "post_round_finding": {
+        "category": "generalization_completed_without_winner_flip",
+        "finding": "Round03 is retained because it removes the Round02 trace-shaped profile while preserving exactly the two verified production upgrades, zero negative flips, Rule 2/5 = V18CPG 2/5, clean 5/5, and the 6253 ms p95 latency budget. It does not claim aggregate strength improvement: the same two action improvements still do not flip a game in this five-seed sample. The value of this round is a stronger reusable public proof, not a higher observed win count.",
+        "latency_vs_round02": "p95 unchanged at 6253 ms; p50 improved from 5303 ms to 5198 ms; payload p95 improved from 36698 to 35528 bytes."
+      },
+      "next_action": "Round04 should stop refining the already-generalized retreat certificate and diagnose the earliest remaining losing-game decision frontier that can produce a strict paired winner flip. Require a public focused counterexample, verified-local production-path exercise, zero negative flips, and the same 6500 ms p95 budget before formal."
+    }
+  ]
+}

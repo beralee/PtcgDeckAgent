@@ -295,6 +295,8 @@ func _score_attach_energy(card: CardInstance, target_slot: PokemonSlot, game_sta
 		var type_needed: bool = _energy_type_is_needed_for_attack(target_slot, energy_type)
 		if not core_ready and not type_needed:
 			return 60.0
+		if type_needed and gap == 1 and player != null and target_slot == player.active_pokemon:
+			return 1900.0
 		if phase != PHASE_LAUNCH:
 			if gap == 1:
 				return 540.0
@@ -524,6 +526,8 @@ func _score_attack(action: Dictionary, game_state: GameState, player_index: int)
 			return 5.0
 		if attack_index == 1 or attack_name == "Bellowing Thunder":
 			projected_damage = _estimate_best_bellowing_thunder_damage(player, game_state, player_index)
+			if projected_damage <= 0:
+				return -1600.0
 	if projected_damage <= 0:
 		if player != null and _slot_matches(player.active_pokemon, RAGING_BOLT_EX):
 			if phase != PHASE_LAUNCH:
@@ -562,6 +566,12 @@ func _score_retreat(target_slot: PokemonSlot, game_state: GameState = null, play
 	if target_slot == null:
 		return 0.0
 	var player: PlayerState = _get_player(game_state, player_index)
+	if player != null \
+			and _slot_matches(player.active_pokemon, RAGING_BOLT_EX) \
+			and _raging_bolt_core_cost_ready(player.active_pokemon) \
+			and _slot_matches(target_slot, RAGING_BOLT_EX) \
+			and not _raging_bolt_core_cost_ready(target_slot):
+		return -1800.0
 	var stuck_bonus: float = 0.0
 	if player != null and _active_is_non_attacker(player):
 		stuck_bonus = 200.0
@@ -776,10 +786,20 @@ func _raging_bolt_pressure_gap(slot: PokemonSlot) -> int:
 		missing += 1
 	if slot.count_energy_of_type("F") <= 0:
 		missing += 1
-	var total_after_core: int = slot.attached_energy.size() + missing
-	if total_after_core < 3:
-		missing += 3 - total_after_core
 	return missing
+
+
+func _raging_bolt_attack_facts(player: PlayerState, slot: PokemonSlot) -> Dictionary:
+	var core_legal := player != null \
+		and slot != null \
+		and _slot_matches(slot, RAGING_BOLT_EX) \
+		and _raging_bolt_core_cost_ready(slot)
+	var field_fuel := _collect_bellowing_thunder_energy_candidates(player).size() if player != null else 0
+	return {
+		"core_legal": core_legal,
+		"field_fuel": field_fuel,
+		"max_damage": field_fuel * 70 if core_legal else 0,
+	}
 
 
 func _active_is_non_attacker(player: PlayerState) -> bool:
@@ -793,7 +813,7 @@ func _active_is_non_attacker(player: PlayerState) -> bool:
 	if _slot_matches(active, SLITHER_WING) and _attack_energy_gap(active) <= 0:
 		return false
 	for slot: PokemonSlot in player.bench:
-		if _slot_matches(slot, RAGING_BOLT_EX) and _preferred_attack_energy_gap(slot) <= 1:
+		if bool(_raging_bolt_attack_facts(player, slot).get("core_legal", false)):
 			return true
 	return false
 
@@ -812,7 +832,7 @@ func _has_attack_ready_raging_bolt(player: PlayerState) -> bool:
 	if player == null:
 		return false
 	for slot: PokemonSlot in player.get_all_pokemon():
-		if _slot_matches(slot, RAGING_BOLT_EX) and _preferred_attack_energy_gap(slot) <= 0:
+		if bool(_raging_bolt_attack_facts(player, slot).get("core_legal", false)):
 			return true
 	return false
 
@@ -821,7 +841,7 @@ func _has_ready_benched_raging_bolt(player: PlayerState) -> bool:
 	if player == null:
 		return false
 	for slot: PokemonSlot in player.bench:
-		if _slot_matches(slot, RAGING_BOLT_EX) and _preferred_attack_energy_gap(slot) <= 0:
+		if bool(_raging_bolt_attack_facts(player, slot).get("core_legal", false)):
 			return true
 	return false
 
@@ -830,7 +850,7 @@ func _has_immediate_raging_bolt_attack_window(game_state: GameState, player_inde
 	var player: PlayerState = _get_player(game_state, player_index)
 	if player == null:
 		return false
-	if _slot_matches(player.active_pokemon, RAGING_BOLT_EX) and _preferred_attack_energy_gap(player.active_pokemon) <= 0:
+	if bool(_raging_bolt_attack_facts(player, player.active_pokemon).get("core_legal", false)):
 		return true
 	if not _has_ready_benched_raging_bolt(player):
 		return false
@@ -893,7 +913,7 @@ func _count_ready_raging_bolts(player: PlayerState) -> int:
 		return 0
 	var count := 0
 	for slot: PokemonSlot in player.get_all_pokemon():
-		if _slot_matches(slot, RAGING_BOLT_EX) and _preferred_attack_energy_gap(slot) <= 0:
+		if bool(_raging_bolt_attack_facts(player, slot).get("core_legal", false)):
 			count += 1
 	return count
 
@@ -967,7 +987,10 @@ func _desired_bellowing_thunder_discard_count(player: PlayerState, target_hp: in
 	var lethal_count: int = int(ceili(float(target_hp) / 70.0))
 	if turn_number > 0 and turn_number <= 4:
 		lethal_count = maxi(lethal_count, 3)
-	return mini(available_count, maxi(1, lethal_count))
+	if lethal_count <= available_count:
+		return maxi(1, lethal_count)
+	var core_reserve := 2 if _raging_bolt_core_cost_ready(player.active_pokemon) else 0
+	return maxi(0, available_count - core_reserve)
 
 
 func _collect_bellowing_thunder_energy_candidates(player: PlayerState) -> Array[CardInstance]:

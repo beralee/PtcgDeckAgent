@@ -16,23 +16,6 @@ const MILOTIC_CALMING_SHORE_REMOTE_EFFECT_ID := "57aa4d41e927a2f1cdf846f73509b90
 const VIBRANT_PALACE_EFFECT_ID := "528f7e92b624e35bb42828e372c45252"
 const VIBRANT_PALACE_REMOTE_EFFECT_ID := "4622932a419f939cc537e765a5bbe543"
 
-const KNOWN_TERA_EFFECT_IDS := {
-	"a533d02d029bd799e8c425beecd3ffaa": true,
-	"cd845155473716c29f29efa29da0a869": true,
-	"cfe54f4650db054ec2eec6dfcaaff88a": true,
-	"317cdd81106733967d562ad538a7983a": true,
-	"fa9e235782bba9bdb62005106bbdd6d9": true,
-	"0f9c649bb3f59a7a342b53cdc78952a4": true,
-	"1e48ba6c2140461745fc407bf34f5598": true,
-	"92770a887520f6c4528cf57ae82392b3": true,
-	"689549e631f4f93ecf618a215c628bd1": true,
-	"27d1eb5f7abc237f462328c2ff00fdf3": true,
-	"61fb0755be18f5fcdc6a30781d5fc05e": true,
-	"62619a01b9dd1e1dec71d6f6557c9cb8": true,
-	"c09bd406f26faeab1683244e53bab0b4": true,
-	"5de19cbd4b2d1ff80ba14d6d89246ae9": true,
-}
-
 const KNOWN_ANCIENT_EFFECT_IDS := {
 	"41dd160743c1707676c4faa6759c718b": true,
 	"66377923675b93ec93a30c3411292d47": true,
@@ -99,24 +82,7 @@ static func basic_energy_type(card: CardInstance) -> String:
 
 
 static func is_tera_card_data(cd: CardData) -> bool:
-	if cd == null or not cd.is_pokemon():
-		return false
-	if cd.is_tera_pokemon():
-		return true
-	if KNOWN_TERA_EFFECT_IDS.has(cd.effect_id):
-		return true
-	for tag: String in cd.is_tags:
-		var normalized := tag.to_lower()
-		if normalized == "tera" or normalized == "terastal" or tag == "太晶":
-			return true
-	for attack: Dictionary in cd.attacks:
-		var seen_types: Dictionary = {}
-		for symbol: String in CardData.normalize_attack_cost(str(attack.get("cost", ""))):
-			if symbol != "C":
-				seen_types[symbol] = true
-		if seen_types.size() >= 3:
-			return true
-	return false
+	return cd != null and cd.is_tera_pokemon()
 
 
 static func is_tera_slot(slot: PokemonSlot) -> bool:

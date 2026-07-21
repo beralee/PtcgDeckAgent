@@ -1,0 +1,249 @@
+{
+  "target": "creature",
+  "mode": "charge",
+  "prompt": "",
+  "role": "",
+  "input": "assets\\textures\\vfx\\ready_ethans_typhlosion_partner_blast_lethal\\raw-sheet.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 180,
+  "rows": 2,
+  "cols": 3,
+  "cell_size": 256,
+  "fit_scale": 0.82,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "center",
+  "shared_scale": true,
+  "component_mode": "largest",
+  "component_padding": 3,
+  "min_component_area": 1,
+  "edge_touch_margin": 2,
+  "frame_labels": [
+    "charge-1",
+    "charge-2",
+    "charge-3",
+    "charge-4",
+    "charge-5",
+    "charge-6"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 2,
+      "selected_component_area": 60185,
+      "selected_component_bbox": [
+        77,
+        211,
+        504,
+        443
+      ],
+      "crop_bbox": [
+        74,
+        208,
+        504,
+        446
+      ],
+      "edge_touch": false,
+      "output_size": [
+        209,
+        116
+      ],
+      "paste_position": [
+        23,
+        70
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        512,
+        0,
+        1024,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 2,
+      "selected_component_area": 74621,
+      "selected_component_bbox": [
+        74,
+        113,
+        476,
+        447
+      ],
+      "crop_bbox": [
+        71,
+        110,
+        479,
+        450
+      ],
+      "edge_touch": false,
+      "output_size": [
+        199,
+        165
+      ],
+      "paste_position": [
+        28,
+        45
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        1024,
+        0,
+        1536,
+        512
+      ],
+      "component_mode": "largest",
+      "component_count": 6,
+      "selected_component_area": 74069,
+      "selected_component_bbox": [
+        73,
+        120,
+        473,
+        447
+      ],
+      "crop_bbox": [
+        70,
+        117,
+        476,
+        450
+      ],
+      "edge_touch": false,
+      "output_size": [
+        198,
+        162
+      ],
+      "paste_position": [
+        29,
+        47
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        512,
+        512,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 80570,
+      "selected_component_bbox": [
+        80,
+        68,
+        488,
+        396
+      ],
+      "crop_bbox": [
+        77,
+        65,
+        491,
+        399
+      ],
+      "edge_touch": false,
+      "output_size": [
+        202,
+        163
+      ],
+      "paste_position": [
+        27,
+        46
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        512,
+        512,
+        1024,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 2,
+      "selected_component_area": 87698,
+      "selected_component_bbox": [
+        69,
+        57,
+        479,
+        401
+      ],
+      "crop_bbox": [
+        66,
+        54,
+        482,
+        404
+      ],
+      "edge_touch": false,
+      "output_size": [
+        203,
+        170
+      ],
+      "paste_position": [
+        26,
+        43
+      ]
+    },
+    {
+      "grid": [
+        1,
+        2
+      ],
+      "source_box": [
+        1024,
+        512,
+        1536,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 66836,
+      "selected_component_bbox": [
+        47,
+        113,
+        459,
+        399
+      ],
+      "crop_bbox": [
+        44,
+        110,
+        462,
+        402
+      ],
+      "edge_touch": false,
+      "output_size": [
+        204,
+        142
+      ],
+      "paste_position": [
+        26,
+        57
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

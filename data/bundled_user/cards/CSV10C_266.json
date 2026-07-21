@@ -1,0 +1,58 @@
+{
+  "abilities": [
+    {
+      "name": "电气直播",
+      "text": "在自己的回合可以使用任意次。选择自己手牌中的1张「基本【雷】能量」，附着于自己的「奇树的宝可梦」身上。"
+    }
+  ],
+  "ancient_trait": "",
+  "artist": "Yuu Nishida",
+  "attacks": [
+    {
+      "cost": "LLLC",
+      "damage": "230",
+      "is_vstar_power": false,
+      "name": "雷电伏特",
+      "text": "在下一个自己的回合，这只宝可梦无法使用招式。"
+    }
+  ],
+  "card_index": "266",
+  "card_index_en": "",
+  "card_type": "Pokemon",
+  "description": "特性: 电气直播\n在自己的回合可以使用任意次。选择自己手牌中的1张「基本【雷】能量」，附着于自己的「奇树的宝可梦」身上。\n\n【雷】【雷】【雷】 雷电伏特 230\n在下一个自己的回合，这只宝可梦无法使用招式。\n\n",
+  "effect_id": "945599a057164c3c735c59a7f34461db",
+  "energy_provides": "",
+  "energy_type": "L",
+  "evolves_from": "奇树的光蚪仔",
+  "hp": 280,
+  "image_local_path": "user://cards/images/CSV10C/266.png",
+  "image_url": "https://tcg.mik.moe/static/img/CSV10C/266.png",
+  "is_tags": [],
+  "label": "",
+  "mechanic": "ex",
+  "name": "奇树的电肚蛙ex",
+  "name_en": "",
+  "name_zh": "",
+  "rarity": "SAR",
+  "regulation_expanded": true,
+  "regulation_mark": "I",
+  "regulation_standard": true,
+  "release_date": "2026-07-16T00:00:00+08:00",
+  "resistance_energy": "",
+  "resistance_value": "",
+  "retreat_cost": 2,
+  "set_code": "CSV10C",
+  "set_code_en": "",
+  "source_card_index": "266",
+  "source_imported_at": 0,
+  "source_language": "zh-CN",
+  "source_parser_version": 1,
+  "source_prints": [],
+  "source_provider": "tcg_mik",
+  "source_set_code": "CSV10C",
+  "source_url": "https://tcg.mik.moe/cards/CSV10C/266",
+  "stage": "Stage 1",
+  "weakness_energy": "F",
+  "weakness_value": "×2",
+  "yoren_code": "Y1580"
+}

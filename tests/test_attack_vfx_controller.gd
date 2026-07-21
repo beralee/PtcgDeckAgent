@@ -4,6 +4,14 @@ extends TestBase
 
 const BattleSceneScript = preload("res://scenes/battle/BattleScene.gd")
 const BattleCardViewScript = preload("res://scenes/battle/BattleCardView.gd")
+const BattleAttackVfxControllerScript = preload("res://scripts/ui/battle/BattleAttackVfxController.gd")
+
+
+class AttackGeometryScene extends Control:
+	var _attack_vfx_overlay: Control = null
+	var _view_player := 0
+	var _my_active: Control = null
+	var _opp_active: Control = null
 
 
 func _make_pokemon_card(name: String, energy_type: String) -> CardData:
@@ -109,6 +117,56 @@ func _make_scene_stub() -> Control:
 	gsm.game_state.players[1].active_pokemon = defender_slot
 
 	return battle_scene
+
+
+func test_attack_vfx_uses_final_screen_centers_under_nested_transforms() -> String:
+	var tree := Engine.get_main_loop() as SceneTree
+	var scene := AttackGeometryScene.new()
+	scene.size = Vector2(980, 620)
+	scene.position = Vector2(130, 74)
+	scene.rotation_degrees = 7.0
+	scene.scale = Vector2(0.86, 1.14)
+	var field := Control.new()
+	field.position = Vector2(95, 52)
+	field.size = Vector2(760, 500)
+	field.rotation_degrees = -4.0
+	field.scale = Vector2(1.08, 0.91)
+	scene.add_child(field)
+	var source := Control.new()
+	source.position = Vector2(110, 325)
+	source.size = Vector2(126, 176)
+	field.add_child(source)
+	var target := Control.new()
+	target.position = Vector2(525, 72)
+	target.size = Vector2(132, 184)
+	field.add_child(target)
+	scene._my_active = source
+	scene._opp_active = target
+	tree.root.add_child(scene)
+	await tree.process_frame
+
+	var controller := BattleAttackVfxControllerScript.new()
+	var overlay: Control = controller.ensure_overlay(scene)
+	var source_screen := controller.resolve_source_position(scene, 0)
+	var target_screen := target.get_screen_transform() * (target.size * 0.5)
+	controller.call("_play_sequence", scene, overlay, null, source_screen, [{
+		"position": target_screen,
+		"anchor": target,
+		"impact_style": "damage",
+	}], "geometry_test")
+	await tree.process_frame
+	var sequence: Control = overlay.get_child(0) as Control if overlay.get_child_count() > 0 else null
+	var cast: Control = sequence.get_node_or_null("AttackVfxCast") as Control if sequence != null else null
+	var impact: Control = sequence.get_node_or_null("AttackVfxImpact0") as Control if sequence != null else null
+	var cast_screen := cast.get_screen_transform() * Vector2.ZERO if cast != null else Vector2.ZERO
+	var impact_screen := impact.get_screen_transform() * Vector2.ZERO if impact != null else Vector2.ZERO
+	var result := run_checks([
+		assert_true(cast_screen.distance_to(source.get_screen_transform() * (source.size * 0.5)) < 1.0, "Attack cast must stay centered on its source under transformed battle canvases"),
+		assert_true(impact_screen.distance_to(target_screen) < 1.0, "Attack impact must stay centered on its target under transformed battle canvases"),
+	])
+	scene.queue_free()
+	await tree.process_frame
+	return result
 
 
 func test_play_preview_vfx_creates_cast_travel_and_impact_nodes() -> String:

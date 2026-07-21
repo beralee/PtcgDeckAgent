@@ -2,6 +2,7 @@ class_name BattleDrawRevealController
 extends RefCounted
 
 const BattleCardViewScript := preload("res://scenes/battle/BattleCardView.gd")
+const OverlayGeometry := preload("res://scripts/ui/battle/BattleOverlayGeometry.gd")
 
 const HUMAN_CONFIRM_HINT := "Click to continue"
 const AI_HOLD_HINT := "AI drawing..."
@@ -11,6 +12,7 @@ const REVEAL_SCALE := Vector2(2.0, 2.0)
 const REVEAL_STAGGER_SECONDS := 0.08
 const FLY_TO_HAND_SECONDS := 0.08
 const DISCARD_FLY_SECONDS := 0.14
+const PRIZE_EXCHANGE_STAGGER_SECONDS := 0.05
 const BATCH_MAX_COLUMNS := 4
 const BATCH_CARD_GAP := Vector2.ZERO
 const BATCH_AREA_PADDING := Vector2(16.0, 16.0)
@@ -18,6 +20,12 @@ const BATCH_AREA_PADDING := Vector2(16.0, 16.0)
 
 func enqueue_reveal(scene: Object, action: GameAction) -> void:
 	if scene == null or action == null:
+		return
+	if not bool(GameManager.battle_effects_enabled):
+		# The card movement is already committed to GameState. Render the final
+		# state immediately without creating an overlay, timer, or blocking queue.
+		if action.action_type == GameAction.ActionType.DRAW_CARD and scene.has_method("_refresh_hand"):
+			scene.call("_refresh_hand")
 		return
 	var queue: Array = scene.get("_draw_reveal_queue")
 	queue.append(action)
@@ -81,6 +89,9 @@ func _start_next_reveal(scene: Object) -> void:
 	scene.set("_draw_reveal_pending_hand_refresh", action.action_type == GameAction.ActionType.DRAW_CARD)
 	scene.set("_draw_reveal_allow_hand_refresh_during_fly", false)
 	scene.set("_draw_reveal_visible_instance_ids", [])
+	if _is_switching_ticket_action(action):
+		_begin_prize_exchange(scene, action)
+		return
 	if action.action_type == GameAction.ActionType.DRAW_CARD and action.player_index == int(scene.get("_view_player")) and scene.has_method("_refresh_hand"):
 		scene.set("_draw_reveal_allow_hand_refresh_during_fly", true)
 		scene.call("_refresh_hand")
@@ -98,6 +109,259 @@ func _start_next_reveal(scene: Object) -> void:
 	_begin_batch_reveal(scene, cards, action.player_index)
 
 
+func build_prize_exchange_animation_plan(action: GameAction) -> Array[Dictionary]:
+	var phases: Array[Dictionary] = []
+	if not _is_switching_ticket_action(action):
+		return phases
+	var count := int(action.data.get("prize_count", 0))
+	var old_ids: Array = action.data.get("old_prize_instance_ids", [])
+	var new_ids: Array = action.data.get("new_prize_instance_ids", [])
+	if count <= 0 or old_ids.size() != count or new_ids.size() != count:
+		return phases
+	phases.append(_prize_exchange_phase(
+		"prizes_to_display", "prize", "display", old_ids, count, 0.28, 0.48,
+		"奖赏卡飞出 · %d张（背面朝上）" % count
+	))
+	phases.append(_prize_exchange_phase(
+		"old_prizes_to_deck", "display", "deck", old_ids, count, 0.24, 0.16,
+		"放回牌库下方 · %d张" % count
+	))
+	phases.append(_prize_exchange_phase(
+		"deck_to_display", "deck", "display", new_ids, count, 0.28, 0.24,
+		"从牌库抽取新奖赏卡 · %d张" % count
+	))
+	phases.append(_prize_exchange_phase(
+		"new_prizes_to_slots", "display", "prize", new_ids, count, 0.30, 0.10,
+		"新奖赏卡放置完成 · %d张" % count
+	))
+	return phases
+
+
+func _prize_exchange_phase(
+	id: String,
+	from_zone: String,
+	to_zone: String,
+	instance_ids: Array,
+	count: int,
+	duration: float,
+	hold_after: float,
+	label: String
+) -> Dictionary:
+	return {
+		"id": id,
+		"from_zone": from_zone,
+		"to_zone": to_zone,
+		"card_instance_ids": instance_ids.duplicate(),
+		"count": count,
+		"face_down": true,
+		"duration": duration,
+		"hold_after": hold_after,
+		"stagger": PRIZE_EXCHANGE_STAGGER_SECONDS,
+		"label": label,
+	}
+
+
+func _is_switching_ticket_action(action: GameAction) -> bool:
+	return (
+		action != null
+		and action.action_type == GameAction.ActionType.PLAY_TRAINER
+		and str(action.data.get("trainer_vfx", "")) == "switching_ticket"
+	)
+
+
+func _begin_prize_exchange(scene: Object, action: GameAction) -> void:
+	if scene == null or not is_instance_valid(scene):
+		return
+	var phases := build_prize_exchange_animation_plan(action)
+	if phases.is_empty():
+		_finish_current_reveal(scene)
+		return
+	var overlay := _ensure_overlay(scene)
+	overlay.visible = true
+	scene.set("_draw_reveal_waiting_for_confirm", false)
+	scene.set("_draw_reveal_auto_continue_pending", false)
+	scene.set("_draw_reveal_pending_hand_refresh", false)
+	_run_prize_exchange_phase(scene, action, phases, 0)
+
+
+func _run_prize_exchange_phase(
+	scene: Object,
+	action: GameAction,
+	phases: Array[Dictionary],
+	phase_index: int
+) -> void:
+	if scene == null or not is_instance_valid(scene) or scene.get("_draw_reveal_current_action") != action:
+		return
+	if phase_index >= phases.size():
+		_finish_prize_exchange(scene)
+		return
+	var phase: Dictionary = phases[phase_index]
+	if phase_index == 0 or phase_index == 2:
+		_clear_card_views(scene)
+		var cards := _exchange_cards_from_ids(scene, action.player_index, phase.get("card_instance_ids", []))
+		if cards.size() != int(phase.get("count", 0)):
+			_finish_prize_exchange(scene)
+			return
+		var overlay := _ensure_overlay(scene)
+		var staged_views: Array[BattleCardView] = []
+		for index: int in cards.size():
+			var card_view := _create_reveal_card_view(scene, overlay, cards[index], action.player_index)
+			card_view.set_face_down(true)
+			var source_zone := str(phase.get("from_zone", ""))
+			var source_scale := _prize_exchange_zone_scale(scene, card_view, action.player_index, source_zone, index)
+			card_view.scale = source_scale
+			card_view.position = _prize_exchange_zone_position(
+				scene, card_view, action.player_index, source_zone, index, cards.size(), source_scale
+			)
+			staged_views.append(card_view)
+		scene.set("_draw_reveal_card_views", staged_views)
+
+	var views: Array[BattleCardView] = scene.get("_draw_reveal_card_views")
+	if views.is_empty():
+		_finish_prize_exchange(scene)
+		return
+	var overlay := _ensure_overlay(scene)
+	_set_hint_text(overlay, str(phase.get("label", "")))
+	var target_zone := str(phase.get("to_zone", ""))
+	var duration := float(phase.get("duration", 0.24))
+	var stagger := float(phase.get("stagger", PRIZE_EXCHANGE_STAGGER_SECONDS))
+	if scene is Node and (scene as Node).is_inside_tree():
+		var tween: Tween = (scene as Node).create_tween()
+		tween.set_parallel(true)
+		for index: int in views.size():
+			var card_view := views[index]
+			if card_view == null:
+				continue
+			var target_scale := _prize_exchange_zone_scale(scene, card_view, action.player_index, target_zone, index)
+			var target_position := _prize_exchange_zone_position(
+				scene, card_view, action.player_index, target_zone, index, views.size(), target_scale
+			)
+			tween.tween_property(card_view, "position", target_position, duration).set_delay(index * stagger).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+			tween.tween_property(card_view, "scale", target_scale, duration).set_delay(index * stagger).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		tween.finished.connect(func() -> void:
+			_hold_after_prize_exchange_phase(scene, action, phases, phase_index)
+		)
+		return
+
+	for index: int in views.size():
+		var card_view := views[index]
+		if card_view == null:
+			continue
+		var target_scale := _prize_exchange_zone_scale(scene, card_view, action.player_index, target_zone, index)
+		card_view.scale = target_scale
+		card_view.position = _prize_exchange_zone_position(
+			scene, card_view, action.player_index, target_zone, index, views.size(), target_scale
+		)
+	_hold_after_prize_exchange_phase(scene, action, phases, phase_index)
+
+
+func _hold_after_prize_exchange_phase(
+	scene: Object,
+	action: GameAction,
+	phases: Array[Dictionary],
+	phase_index: int
+) -> void:
+	if scene == null or not is_instance_valid(scene) or scene.get("_draw_reveal_current_action") != action:
+		return
+	var hold_seconds := float(phases[phase_index].get("hold_after", 0.0))
+	if hold_seconds > 0.0 and scene is Node and (scene as Node).is_inside_tree():
+		var timer := (scene as Node).get_tree().create_timer(hold_seconds)
+		scene.set("_draw_reveal_resume_timer", timer)
+		timer.timeout.connect(func() -> void:
+			if scene != null and is_instance_valid(scene) and scene.get("_draw_reveal_current_action") == action:
+				scene.set("_draw_reveal_resume_timer", null)
+				_run_prize_exchange_phase(scene, action, phases, phase_index + 1)
+		)
+		return
+	_run_prize_exchange_phase(scene, action, phases, phase_index + 1)
+
+
+func _finish_prize_exchange(scene: Object) -> void:
+	if scene == null or not is_instance_valid(scene):
+		return
+	var overlay := _ensure_overlay(scene)
+	_set_hint_text(overlay, "")
+	if scene.has_method("_refresh_ui"):
+		scene.call("_refresh_ui")
+	_finish_current_reveal(scene)
+
+
+func _exchange_cards_from_ids(scene: Object, player_index: int, raw_ids: Array) -> Array[CardInstance]:
+	var ordered: Array[CardInstance] = []
+	if scene == null:
+		return ordered
+	var gsm: Variant = scene.get("_gsm")
+	if gsm == null or gsm.game_state == null:
+		return ordered
+	if player_index < 0 or player_index >= gsm.game_state.players.size():
+		return ordered
+	var player: PlayerState = gsm.game_state.players[player_index]
+	var by_id: Dictionary = {}
+	for zone: Array[CardInstance] in [player.deck, player.prizes, player.hand, player.discard_pile]:
+		for card: CardInstance in zone:
+			if card != null:
+				by_id[card.instance_id] = card
+	for raw_id: Variant in raw_ids:
+		var instance_id := int(raw_id)
+		if by_id.has(instance_id):
+			ordered.append(by_id[instance_id])
+	return ordered
+
+
+func _prize_exchange_zone_scale(
+	scene: Object,
+	card_view: Control,
+	player_index: int,
+	zone: String,
+	index: int
+) -> Vector2:
+	if zone == "display":
+		return _batch_reveal_scale(scene, card_view, maxi(1, int((scene.get("_draw_reveal_card_views") as Array).size())))
+	var anchor := _prize_exchange_zone_anchor(scene, player_index, zone, index)
+	if anchor == null or anchor.size == Vector2.ZERO:
+		return Vector2(0.68, 0.68)
+	var card_size := _card_visual_size(card_view)
+	return Vector2.ONE * clampf(minf(anchor.size.x / card_size.x, anchor.size.y / card_size.y), 0.45, 1.0)
+
+
+func _prize_exchange_zone_position(
+	scene: Object,
+	card_view: Control,
+	player_index: int,
+	zone: String,
+	index: int,
+	total: int,
+	zone_scale: Vector2
+) -> Vector2:
+	if zone == "display":
+		return _batch_stack_position(scene, card_view, index, total)
+	var anchor := _prize_exchange_zone_anchor(scene, player_index, zone, index)
+	if anchor == null:
+		return _center_position(scene, card_view)
+	var scaled_size := _card_visual_size(card_view) * zone_scale
+	var anchor_rect := _control_rect_in_stage(scene, anchor)
+	var centered := anchor_rect.get_center() - scaled_size * 0.5
+	if zone == "deck":
+		var centered_index := float(index) - float(total - 1) * 0.5
+		centered += Vector2(centered_index * 3.0, centered_index * 2.0)
+	return centered
+
+
+func _prize_exchange_zone_anchor(scene: Object, player_index: int, zone: String, index: int) -> Control:
+	if zone == "deck":
+		return scene.get("_my_deck_preview") as Control if player_index == int(scene.get("_view_player")) else scene.get("_opp_deck_preview") as Control
+	if zone != "prize":
+		return null
+	if scene.has_method("_get_prize_slot_view"):
+		var slot_variant: Variant = scene.call("_get_prize_slot_view", player_index, index)
+		if slot_variant is Control:
+			return slot_variant as Control
+	var slots: Array = scene.get("_my_prize_slots") if player_index == int(scene.get("_view_player")) else scene.get("_opp_prize_slots")
+	if index >= 0 and index < slots.size() and slots[index] is Control:
+		return slots[index] as Control
+	return null
+
+
 func _begin_single_card_reveal(scene: Object, card: CardInstance, player_index: int) -> void:
 	var overlay: Control = _ensure_overlay(scene)
 	var card_view: BattleCardView = _create_reveal_card_view(scene, overlay, card, player_index)
@@ -107,7 +371,7 @@ func _begin_single_card_reveal(scene: Object, card: CardInstance, player_index: 
 	overlay.visible = true
 	_set_hint_text(overlay, "")
 	var keep_face_down: bool = _should_keep_face_down(scene, player_index)
-	var reveal_scale := _reveal_scale(scene)
+	var reveal_scale := _reveal_scale(scene, card_view)
 
 	if scene is Node and (scene as Node).is_inside_tree():
 		var tween: Tween = _create_reveal_tween(scene, card_view, _center_position(scene, card_view), reveal_scale, keep_face_down)
@@ -210,7 +474,7 @@ func _begin_fly_to_hand(scene: Object) -> void:
 				continue
 			tween.tween_property(
 				card_view,
-				"global_position",
+				"position",
 				_hand_target_position(scene, card_view, player_index, index, card_views.size()),
 				FLY_TO_HAND_SECONDS
 			).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
@@ -239,7 +503,7 @@ func _begin_discard_reveal(scene: Object, cards: Array[CardInstance], player_ind
 	var keep_face_down: bool = _should_keep_face_down(scene, player_index)
 	for index: int in cards.size():
 		var card_view: BattleCardView = _create_reveal_card_view(scene, overlay, cards[index], player_index)
-		card_view.global_position = _discard_source_position(scene, card_view, player_index, index, cards.size())
+		card_view.position = _discard_source_position(scene, card_view, player_index, index, cards.size())
 		card_view.set_face_down(keep_face_down)
 		card_view.scale = Vector2.ONE
 		staged_views.append(card_view)
@@ -255,7 +519,7 @@ func _begin_discard_reveal(scene: Object, cards: Array[CardInstance], player_ind
 			continue
 		tween.tween_property(
 			card_view,
-			"global_position",
+			"position",
 			_discard_target_position(scene, card_view, player_index, index, staged_views.size()),
 			DISCARD_FLY_SECONDS
 		).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
@@ -334,7 +598,7 @@ func _create_reveal_tween(
 ) -> Tween:
 	card_view.pivot_offset = _card_visual_size(card_view) * 0.5
 	var tween: Tween = (scene as Node).create_tween()
-	tween.tween_property(card_view, "global_position", target_position, 0.22).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(card_view, "position", target_position, 0.22).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tween.parallel().tween_property(card_view, "scale", target_scale, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	if not keep_face_down:
 		tween.tween_interval(REVEAL_STAGGER_SECONDS)
@@ -449,7 +713,8 @@ func _position_card_at_deck_origin(scene: Object, card_view: Control, player_ind
 	elif player_index == 1 - view_player:
 		preview = scene.get("_opp_deck_preview")
 	if preview != null:
-		card_view.global_position = preview.global_position
+		var preview_rect := _control_rect_in_stage(scene, preview)
+		card_view.position = preview_rect.get_center() - _card_visual_size(card_view) * 0.5
 	else:
 		card_view.position = Vector2.ZERO
 
@@ -492,13 +757,48 @@ func _batch_stack_position(scene: Object, card_view: Control, index: int, total:
 
 
 func _batch_reveal_scale(scene: Object, card_view: Control, total: int) -> Vector2:
-	return _reveal_scale(scene)
+	var desired := _reveal_scale(scene, card_view)
+	if not _is_portrait_reveal_layout(scene):
+		return desired
+	var anchor_rect := _get_reveal_anchor_rect(scene)
+	if anchor_rect.size.x <= 0.0 or anchor_rect.size.y <= 0.0:
+		return desired
+	var base_size := _card_visual_size(card_view)
+	var available := Vector2(
+		maxf(1.0, anchor_rect.size.x - BATCH_AREA_PADDING.x * 2.0),
+		maxf(1.0, anchor_rect.size.y - BATCH_AREA_PADDING.y * 2.0)
+	)
+	var best_scale := 0.0
+	var max_columns := mini(BATCH_MAX_COLUMNS, maxi(total, 1))
+	for columns: int in range(1, max_columns + 1):
+		var rows := ceili(float(maxi(total, 1)) / float(columns))
+		var width_limit := available.x / maxf(base_size.x * float(columns), 1.0)
+		var height_limit := available.y / maxf(base_size.y * float(rows), 1.0)
+		best_scale = maxf(best_scale, minf(desired.x, minf(width_limit, height_limit)))
+	best_scale = clampf(best_scale, 0.55, desired.x)
+	return Vector2.ONE * best_scale
 
 
-func _reveal_scale(scene: Object) -> Vector2:
+func _reveal_scale(scene: Object, card_view: Control = null) -> Vector2:
 	if _is_portrait_reveal_layout(scene):
-		return Vector2.ONE
+		var base_size := _card_visual_size(card_view) if card_view != null else _portrait_reveal_base_size(scene)
+		var field_size_variant: Variant = scene.get("_field_active_card_size") if scene != null else null
+		if field_size_variant is Vector2:
+			var field_size := field_size_variant as Vector2
+			if field_size.x > 1.0 and field_size.y > 1.0 and base_size.x > 1.0 and base_size.y > 1.0:
+				var field_scale := minf(field_size.x / base_size.x, field_size.y / base_size.y)
+				return Vector2.ONE * clampf(field_scale, 1.0, REVEAL_SCALE.x)
+		return Vector2(1.35, 1.35)
 	return REVEAL_SCALE
+
+
+func _portrait_reveal_base_size(scene: Object) -> Vector2:
+	var play_size_variant: Variant = scene.get("_play_card_size") if scene != null else null
+	if play_size_variant is Vector2:
+		var play_size := play_size_variant as Vector2
+		if play_size.x > 1.0 and play_size.y > 1.0:
+			return play_size
+	return Vector2(130, 182)
 
 
 func _is_portrait_reveal_layout(scene: Object) -> bool:
@@ -539,7 +839,7 @@ func _hand_target_position(scene: Object, card_view: Control, player_index: int,
 	if hand_anchor == null:
 		return _center_position(scene, card_view)
 	var card_size: Vector2 = _card_visual_size(card_view)
-	var target: Vector2 = _hand_target_base_position(hand_anchor, card_size, _uses_top_center_hand_target(scene, player_index))
+	var target: Vector2 = _hand_target_base_position(scene, hand_anchor, card_size, _uses_top_center_hand_target(scene, player_index))
 	var centered_index: float = float(index) - (float(total - 1) * 0.5)
 	return Vector2(
 		target.x + centered_index * 14.0,
@@ -547,15 +847,16 @@ func _hand_target_position(scene: Object, card_view: Control, player_index: int,
 	)
 
 
-func _hand_target_base_position(anchor: Control, card_size: Vector2, use_top_center: bool) -> Vector2:
+func _hand_target_base_position(scene: Object, anchor: Control, card_size: Vector2, use_top_center: bool) -> Vector2:
 	if anchor == null:
 		return Vector2.ZERO
-	var x: float = anchor.global_position.x + (anchor.size.x - card_size.x) * 0.5
+	var anchor_rect := _control_rect_in_stage(scene, anchor)
+	var x: float = anchor_rect.position.x + (anchor_rect.size.x - card_size.x) * 0.5
 	var y: float
 	if use_top_center:
-		y = anchor.global_position.y + 16.0
+		y = anchor_rect.position.y + 16.0
 	else:
-		y = anchor.global_position.y + (anchor.size.y - card_size.y) * 0.5
+		y = anchor_rect.position.y + (anchor_rect.size.y - card_size.y) * 0.5
 	return Vector2(x, y)
 
 
@@ -568,9 +869,10 @@ func _discard_target_position(scene: Object, card_view: Control, player_index: i
 	if discard_preview == null:
 		return _center_position(scene, card_view)
 	var card_size: Vector2 = _card_visual_size(card_view)
+	var discard_rect := _control_rect_in_stage(scene, discard_preview)
 	var target := Vector2(
-		discard_preview.global_position.x + (discard_preview.size.x - card_size.x * 0.72) * 0.5,
-		discard_preview.global_position.y + (discard_preview.size.y - card_size.y * 0.72) * 0.5
+		discard_rect.position.x + (discard_rect.size.x - card_size.x * 0.72) * 0.5,
+		discard_rect.position.y + (discard_rect.size.y - card_size.y * 0.72) * 0.5
 	)
 	var centered_index: float = float(index) - (float(total - 1) * 0.5)
 	return Vector2(target.x + centered_index * 10.0, target.y + centered_index * 3.0)
@@ -600,58 +902,40 @@ func _get_reveal_anchor_rect(scene: Object) -> Rect2:
 	if not (scene is Node):
 		return Rect2()
 	var scene_node: Node = scene as Node
+	var stage := _reveal_stage(scene)
 	if scene_node.has_method("_draw_reveal_anchor_rect"):
 		var custom_rect_variant: Variant = scene_node.call("_draw_reveal_anchor_rect")
 		if custom_rect_variant is Rect2:
 			var custom_rect: Rect2 = custom_rect_variant
-			if custom_rect.size != Vector2.ZERO:
-				return _local_rect_to_global_bounds(scene_node, custom_rect)
+			if custom_rect.size != Vector2.ZERO and scene_node is Control and stage != null:
+				return OverlayGeometry.local_rect_in_overlay(stage, scene_node as Control, custom_rect)
 	if scene_node is Control:
 		var scene_control := scene_node as Control
 		if scene_control.size != Vector2.ZERO:
-			return Rect2(scene_control.global_position, scene_control.size)
+			return _control_rect_in_stage(scene, scene_control)
 	var main_area: Control = scene_node.get_node_or_null("MainArea") as Control
 	if main_area != null:
-		return Rect2(main_area.global_position, main_area.size)
+		return _control_rect_in_stage(scene, main_area)
 	var center_field: Control = _get_center_field(scene)
 	if center_field != null:
-		return Rect2(center_field.global_position, center_field.size)
+		return _control_rect_in_stage(scene, center_field)
 	return Rect2()
 
 
-func _local_rect_to_global_bounds(scene_node: Node, local_rect: Rect2) -> Rect2:
-	if not scene_node is CanvasItem:
-		return local_rect
-	var canvas_item := scene_node as CanvasItem
-	var x0 := local_rect.position.x
-	var y0 := local_rect.position.y
-	var x1 := local_rect.position.x + local_rect.size.x
-	var y1 := local_rect.position.y + local_rect.size.y
-	var transform := canvas_item.get_global_transform()
-	var points: Array[Vector2] = [
-		transform * Vector2(x0, y0),
-		transform * Vector2(x1, y0),
-		transform * Vector2(x0, y1),
-		transform * Vector2(x1, y1),
-	]
-	var min_point: Vector2 = points[0]
-	var max_point: Vector2 = points[0]
-	for point: Vector2 in points:
-		min_point.x = minf(min_point.x, point.x)
-		min_point.y = minf(min_point.y, point.y)
-		max_point.x = maxf(max_point.x, point.x)
-		max_point.y = maxf(max_point.y, point.y)
-	min_point = _snap_vector2_to_zero(min_point)
-	max_point = _snap_vector2_to_zero(max_point)
-	return Rect2(min_point, max_point - min_point)
+func _control_rect_in_stage(scene: Object, control: Control) -> Rect2:
+	var stage := _reveal_stage(scene)
+	if stage == null or control == null:
+		return Rect2()
+	return OverlayGeometry.control_rect_in_overlay(stage, control)
 
 
-func _snap_vector2_to_zero(value: Vector2) -> Vector2:
-	if absf(value.x) < 0.001:
-		value.x = 0.0
-	if absf(value.y) < 0.001:
-		value.y = 0.0
-	return value
+func _reveal_stage(scene: Object) -> Control:
+	if scene == null:
+		return null
+	var overlay := _ensure_overlay(scene)
+	if overlay == null:
+		return null
+	return overlay.get_node_or_null("Stage") as Control
 
 
 func _should_defer_for_handover(scene: Object, player_index: int) -> bool:

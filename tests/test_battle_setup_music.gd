@@ -59,6 +59,7 @@ func _snapshot_game_manager_state() -> Dictionary:
 		"battle_bgm_volume_percent": int(GameManager.battle_bgm_volume_percent),
 		"battle_layout_mode": str(GameManager.battle_layout_mode),
 		"dynamic_stadium_background_enabled": bool(GameManager.dynamic_stadium_background_enabled),
+		"battle_effects_enabled": bool(GameManager.battle_effects_enabled),
 		"ai_selection": GameManager.ai_selection.duplicate(true),
 		"ai_deck_strategy": str(GameManager.ai_deck_strategy),
 		"suppress_scene_navigation_for_tests": bool(GameManager.suppress_scene_navigation_for_tests),
@@ -77,6 +78,7 @@ func _restore_game_manager_state(snapshot: Dictionary) -> void:
 	GameManager.battle_bgm_volume_percent = int(snapshot.get("battle_bgm_volume_percent", 20))
 	GameManager.battle_layout_mode = str(snapshot.get("battle_layout_mode", GameManager.BATTLE_LAYOUT_AUTO))
 	GameManager.dynamic_stadium_background_enabled = bool(snapshot.get("dynamic_stadium_background_enabled", true))
+	GameManager.battle_effects_enabled = bool(snapshot.get("battle_effects_enabled", true))
 	GameManager.ai_selection = (snapshot.get("ai_selection", {}) as Dictionary).duplicate(true)
 	GameManager.ai_deck_strategy = str(snapshot.get("ai_deck_strategy", "generic"))
 	GameManager.suppress_scene_navigation_for_tests = bool(snapshot.get("suppress_scene_navigation_for_tests", false))
@@ -215,6 +217,36 @@ func test_battle_setup_portrait_migrates_legacy_bgm_volume_100_to_20() -> String
 	return result
 
 
+func test_battle_setup_preferences_force_dynamic_stadium_on_and_do_not_migrate_old_toggle_to_effects() -> String:
+	var gm_snapshot := _snapshot_game_manager_state()
+	var original_settings_text := _read_settings_text()
+	_write_settings({
+		"dynamic_stadium_background_enabled": false,
+	})
+	GameManager.dynamic_stadium_background_enabled = false
+	GameManager.battle_effects_enabled = false
+	GameManager.load_battle_setup_preferences()
+	var legacy_dynamic_enabled := bool(GameManager.dynamic_stadium_background_enabled)
+	var legacy_effects_enabled := bool(GameManager.battle_effects_enabled)
+
+	_write_settings({
+		"dynamic_stadium_background_enabled": false,
+		"battle_effects_enabled": false,
+	})
+	GameManager.load_battle_setup_preferences()
+	var explicit_dynamic_enabled := bool(GameManager.dynamic_stadium_background_enabled)
+	var explicit_effects_enabled := bool(GameManager.battle_effects_enabled)
+
+	_restore_settings_text(original_settings_text)
+	_restore_game_manager_state(gm_snapshot)
+	return run_checks([
+		assert_true(legacy_dynamic_enabled, "Legacy saved settings must no longer disable dynamic Stadium backgrounds"),
+		assert_true(legacy_effects_enabled, "A legacy disabled backdrop must not migrate into a disabled battle effects setting"),
+		assert_true(explicit_dynamic_enabled, "Dynamic Stadium backgrounds must remain on even when old data says off"),
+		assert_false(explicit_effects_enabled, "The new battle effects preference should load its own explicit value"),
+	])
+
+
 func test_battle_setup_back_persists_bgm_volume_setting() -> String:
 	var gm_snapshot := _snapshot_game_manager_state()
 	var original_settings_text := _read_settings_text()
@@ -227,6 +259,7 @@ func test_battle_setup_back_persists_bgm_volume_setting() -> String:
 
 	var bgm_volume_slider := scene.get_node("%BgmVolumeSlider") as HSlider
 	bgm_volume_slider.value = 24
+	scene.call("_on_battle_effects_segment_pressed", false)
 	scene.call("_on_back")
 
 	var saved_text := _read_settings_text()
@@ -241,6 +274,8 @@ func test_battle_setup_back_persists_bgm_volume_setting() -> String:
 	return run_checks([
 		assert_true(parse_ok, "返回对战设置后应写入 battle_setup.json"),
 		assert_eq(int(saved_data.get("battle_bgm_volume_percent", -1)), 24, "返回主菜单时应持久化当前 BGM 音量"),
+		assert_false(bool(saved_data.get("battle_effects_enabled", true)), "返回主菜单时应持久化新的对战动画特效开关"),
+		assert_false(saved_data.has("dynamic_stadium_background_enabled"), "保存设置时不应继续写入已移除的动态背景开关"),
 	])
 
 

@@ -1,0 +1,385 @@
+{
+  "schema_version": 1,
+  "architecture": "V18CPG",
+  "evidence_revision": 5,
+  "status": "in_progress",
+  "deck_id": 18000625,
+  "deck_name": "18.0 愿增猿火焰鸡",
+  "anchor_id": 575720,
+  "seed_base": 18000625,
+  "games_per_round": 5,
+  "model": "deepseek-v4-flash",
+  "deck_source": "bundled_ai",
+  "deck_content_fingerprint": "50dfa4db29d7d61255f52ef8968a35fc9c199d3fefcc29fa0572f08947ec3f2a",
+  "baseline_artifact": "res://tmp/v18cpg/optimization21/18000625/round00_current.json",
+  "baseline_status": "valid_current_bundled_ai_rule_equivalent",
+  "completed_rounds": 3,
+  "required_rounds": 10,
+  "rounds": [
+    {
+      "round": 1,
+      "artifact": "res://tmp/v18cpg/optimization21/18000625/round01.json",
+      "artifact_sha256": "4200678074540a89fb530e661d13dcb0efbe0ebc2b1a5dd223fc646dc7d3453c",
+      "run_id": "opt21_18000625_round01",
+      "status": "passed",
+      "retained": true,
+      "profile": {
+        "profile_version": 3,
+        "profile_fingerprint": "e89bfcac13419461a6aa32660b0dda01c242aa050a8bde0fffc95c78d33e3b11",
+        "profile_file_sha256": "a837631db60e918739176e4c13a0304886f90ad6784d470b44ceeb07b6a38a92",
+        "semantic_version": 1,
+        "semantic_manifest_file_sha256": "d6df9dba798098d898c98178ad3e2a861175772aa0550168b4a65df83e5619ac"
+      },
+      "implementation": {
+        "focused_test": "res://tests/v18_llm_policy_graph/test_optimize_18000625_round01_search_before_pivot.gd",
+        "focused_test_sha256": "4545e34c511d3a68fa2e00bac562b23d84aad64278af420b66d6fad38a651b90",
+        "strategic_shape_module_sha256": "345764aef9bea14ca6d5a476f010eec94e2f95ddeb0731131d082310cf719154",
+        "capability_registry_sha256": "2cfd96053fc60f199215d215b70166158a3bc76d231e5c615e9e040353cd1f65",
+        "strategy_sha256": "7f7f7892a57a68fa68e954a4ed0f32fec4484e45d33344cd8b4c529acca0b06f"
+      },
+      "metrics": {
+        "rule_wins": 4,
+        "v18cpg_wins": 5,
+        "paired_improvement": 0.2,
+        "paired_bootstrap_95": [0.0, 0.6],
+        "positive_flips": 1,
+        "negative_flips": 0,
+        "positive_flip_seeds": [18000627],
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 22,
+        "model_accepted": 15,
+        "model_rejected": 7,
+        "model_acceptance_rate": 0.6818181818181818,
+        "model_owned_action_results": 0,
+        "payload_p50_bytes": 33494,
+        "payload_p95_bytes": 36921,
+        "visible_wait_p50_ms": 5274,
+        "visible_wait_p95_ms": 6254,
+        "graph_branch_hits": 7,
+        "uncovered_events": 93,
+        "zero_model_action_reference_checks": 5,
+        "zero_model_action_reference_mismatches": 0,
+        "fallbacks": {"deadline_fallback": 6, "schema_fallback": 1},
+        "fallback_reasons": {
+          "turn_visible_wait_budget_exhausted": 6,
+          "typed_route_crosses_information_checkpoint": 1
+        }
+      },
+      "winner_flip_audit": {
+        "seed": 18000627,
+        "rule_outcome": "loss",
+        "v18cpg_outcome": "win",
+        "search_prefix_certificate": "profiled_stage2_search_before_pivot",
+        "counter_closeout_certificate": "public_second_counter_mover_final_prize_closeout",
+        "turn21_suffix": [
+          "Secret Box before retreat",
+          "Rare Candy into Blaziken ex",
+          "Boiling Spirit acceleration",
+          "retreat into Blaziken ex",
+          "Burning Spin Kick for two prizes"
+        ],
+        "final_prize_suffix": [
+          "move exactly 30 damage from Blaziken ex",
+          "place all 30 on the opposing Active Iron Hands ex",
+          "Burning Spin Kick closes the exact two-prize gap"
+        ],
+        "verified_local_single_seed": "res://tmp/v18cpg/optimization21/18000625/round01_preflight_seed627_closeout.json",
+        "verified_local_clean5": "res://tmp/v18cpg/optimization21/18000625/round01_preflight_clean5.json"
+      },
+      "regressions": {
+        "round01_focused": "pass",
+        "complex_decision_scenarios": "5/5 pass",
+        "v18cpg_contracts": "17 groups pass",
+        "strategic_shapes": "9/9 pass",
+        "generic_compaction": "12/12 pass",
+        "shared_blockers": "13 groups pass",
+        "dominance": "20/20 pass",
+        "coverage": "24/24 profiles and 12/12 modules pass"
+      },
+      "post_round_finding": {
+        "category": "strict_public_winner_flip",
+        "finding": "The Rule root spent the retreat before Secret Box exposed Rare Candy, so the new Blaziken ex could not become the same-turn attacker. Round01 safely commutes the already-visible information action before the irreversible pivot, then binds Munkidori's final 30-counter assignment to the public Active whose 230 HP is exactly closed by 30 counters plus Blaziken ex's 200 damage.",
+        "latency_context": "Formal p95 6254 ms passed the 6500 ms budget while an unrelated Agent worktree Godot benchmark was concurrently active; treat this as a conservative under-load latency measurement."
+      },
+      "next_action": "Round02 must preserve seed18000627 and all four Rule wins, retain both certificate boundaries, and reduce deadline fallbacks or uncovered events without increasing p95 above 6500 ms."
+    },
+    {
+      "round": 2,
+      "artifact": "res://tmp/v18cpg/optimization21/18000625/round02.json",
+      "artifact_sha256": "922743a8d90cd5f4ea8f2d2816f7b495cad5ad90d7d9aded182030798b17e316",
+      "run_id": "opt21_18000625_round02",
+      "status": "passed",
+      "retained": true,
+      "profile": {
+        "profile_version": 4,
+        "profile_fingerprint": "618ef71de56ab06461bf58263823bbe1f91a55e4a8803fb4045ee872936dcdef",
+        "profile_file_sha256": "51d02fa8d85414013db54898e26f393428914f1e56194bd53a9d0a148056e05a",
+        "semantic_version": 1,
+        "semantic_manifest_file_sha256": "d6df9dba798098d898c98178ad3e2a861175772aa0550168b4a65df83e5619ac"
+      },
+      "implementation": {
+        "change_scope": "deck_profile_only",
+        "expected_regret_threshold_before": 160.0,
+        "expected_regret_threshold_after": 271.0,
+        "focused_test": "res://tests/v18_llm_policy_graph/test_optimize_18000625_round02_regret_gate.gd",
+        "focused_test_sha256": "023268dae5cc78d6603d44ee889ad96ee5baf30564e14ba6d55f459d2135b0cb",
+        "verified_local_preflight": "res://tmp/v18cpg/optimization21/18000625/round02_preflight_clean5.json",
+        "verified_local_preflight_sha256": "9599ef55df77dc3090de787937549a52bdecb15d43136fe2063490fa7a5450bc",
+        "strategy_sha256": "7f7f7892a57a68fa68e954a4ed0f32fec4484e45d33344cd8b4c529acca0b06f",
+        "capability_registry_sha256": "2cfd96053fc60f199215d215b70166158a3bc76d231e5c615e9e040353cd1f65",
+        "strategic_shape_module_sha256": "345764aef9bea14ca6d5a476f010eec94e2f95ddeb0731131d082310cf719154"
+      },
+      "metrics": {
+        "rule_wins": 4,
+        "v18cpg_wins": 5,
+        "paired_improvement": 0.2,
+        "paired_bootstrap_95": [0.0, 0.6],
+        "positive_flips": 1,
+        "negative_flips": 0,
+        "positive_flip_seeds": [18000627],
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 13,
+        "model_accepted": 12,
+        "model_rejected": 1,
+        "model_acceptance_rate": 0.923076923076923,
+        "model_owned_action_results": 1,
+        "payload_p50_bytes": 31342,
+        "payload_p95_bytes": 35348,
+        "visible_wait_p50_ms": 5355,
+        "visible_wait_p95_ms": 6254,
+        "graph_branch_hits": 6,
+        "uncovered_events": 86,
+        "zero_model_action_reference_checks": 4,
+        "zero_model_action_reference_mismatches": 0,
+        "fallbacks": {"deadline_fallback": 1},
+        "fallback_reasons": {"turn_visible_wait_budget_exhausted": 1},
+        "call_reduction_vs_round01": 9,
+        "call_reduction_rate_vs_round01": 0.4090909090909091,
+        "deadline_reduction_vs_round01": 5,
+        "schema_rejection_reduction_vs_round01": 1
+      },
+      "model_owned_action_audit": {
+        "seed": 18000629,
+        "turn": 29,
+        "action": "attack",
+        "route_id": "route:attack_ko",
+        "candidate_id": "candidate:a3136351193ed1d99aec",
+        "outcome_preserved": "Rule win -> V18CPG win",
+        "prior_evidence": "The same exact model-owned KO candidate already appeared in the valid current Round00 without a winner change."
+      },
+      "regressions": {
+        "round02_focused": "pass",
+        "round01_focused": "pass",
+        "complex_decision_scenarios": "5/5 pass",
+        "v18cpg_contracts": "17 groups pass",
+        "strategic_shapes": "9/9 pass",
+        "generic_compaction": "12/12 pass",
+        "shared_blockers": "13 groups pass",
+        "dominance": "20/20 pass",
+        "coverage": "24/24 profiles and 12/12 modules pass"
+      },
+      "post_round_finding": {
+        "category": "deck_scoped_request_value_gate",
+        "finding": "Round01's 22 requests contained fifteen accepted responses that merely shadowed the exact Rule root, six deadline fallbacks, one schema fallback, and zero model-owned actions. Raising only this deck's expected-regret threshold to the audited 271 boundary keeps higher-uncertainty information and multi-alternative decisions model-visible while deterministically closing low-value tied or clearly-led frontiers. Formal calls fell from 22 to 13, deadline fallbacks from six to one, schema rejections from one to zero, and uncovered events from 93 to 86. The strict Rule 4/5 to V18CPG 5/5 winner flip and zero-negative gate were preserved; p95 remained 6254 ms."
+      },
+      "next_action": "Round03 must preserve the two public winner-flip certificates and the 4/5 to 5/5 zero-negative result. Audit the sole remaining deadline fallback and the seed18000629 turn29 model-owned KO; reduce one additional low-value request only if the high-uncertainty information roots remain model-visible and p95 stays <= 6500 ms."
+    },
+    {
+      "round": 3,
+      "artifact": "res://tmp/v18cpg/optimization21/18000625/round03.json",
+      "artifact_sha256": "472be3ea1e9968975d35a526528b8062aa05462eb60f5052fcead4d57a97cdc4",
+      "run_id": "opt21_18000625_round03",
+      "status": "passed",
+      "retained": true,
+      "profile": {
+        "profile_version": 5,
+        "profile_fingerprint": "b31239c249a236911a8692fec7056851c0182b19b8ec110b3018657fa71a0d29",
+        "profile_file_sha256": "b15291fb30fda88b48215342d1fb074a1c6dd4f0270bd425081299490e0205cb",
+        "semantic_version": 1,
+        "semantic_manifest_file_sha256": "d6df9dba798098d898c98178ad3e2a861175772aa0550168b4a65df83e5619ac"
+      },
+      "implementation": {
+        "change_scope": "shared_opt_in_gate_plus_single_deck_profile",
+        "deterministic_root_threshold": 386.0,
+        "protected_model_review_routes": {
+          "route:information": 271.0,
+          "route:noctowl_search": 271.0,
+          "route:opening_search": 271.0,
+          "route:tutor": 271.0
+        },
+        "focused_test": "res://tests/v18_llm_policy_graph/test_optimize_18000625_round03_regret_gate.gd",
+        "focused_test_sha256": "0704f7423a42683af987fa179519476badc760b6b6a39f9fa4ec2a3e497125a0",
+        "verified_local_preflight": "res://tmp/v18cpg/optimization21/18000625/round03_preflight_clean5.json",
+        "verified_local_preflight_sha256": "78cdd5df5862bab44000b617c643e1042ddaee76360adc60e151fd34a0793edc",
+        "strategy_sha256": "b49c7c56a55f6d5049db69279b6e1a4db207c84ac74ecafbb7629ef0c1220509",
+        "capability_registry_sha256": "2cfd96053fc60f199215d215b70166158a3bc76d231e5c615e9e040353cd1f65",
+        "strategic_shape_module_sha256": "345764aef9bea14ca6d5a476f010eec94e2f95ddeb0731131d082310cf719154"
+      },
+      "metrics": {
+        "rule_wins": 4,
+        "v18cpg_wins": 5,
+        "paired_improvement": 0.2,
+        "paired_bootstrap_95": [0.0, 0.6],
+        "positive_flips": 1,
+        "negative_flips": 0,
+        "positive_flip_seeds": [18000627],
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 12,
+        "model_accepted": 10,
+        "model_rejected": 2,
+        "model_acceptance_rate": 0.833333333333333,
+        "model_owned_action_results": 0,
+        "payload_p50_bytes": 32232,
+        "payload_p95_bytes": 35348,
+        "visible_wait_p50_ms": 5518,
+        "visible_wait_p95_ms": 6254,
+        "graph_branch_hits": 7,
+        "uncovered_events": 90,
+        "zero_model_action_reference_checks": 5,
+        "zero_model_action_reference_mismatches": 0,
+        "fallbacks": {"deadline_fallback": 2},
+        "fallback_reasons": {"turn_visible_wait_budget_exhausted": 2},
+        "call_reduction_vs_round02": 1,
+        "call_reduction_vs_round01": 10,
+        "call_reduction_rate_vs_round01": 0.4545454545454545
+      },
+      "request_value_audit": {
+        "removed_round02_roots": [
+          "seed18000625 turn3 deterministic energy_commit Rule shadow",
+          "seed18000628 turn24 low-uncertainty recover root"
+        ],
+        "downstream_effect": "Closing recover locally exposed a new public information epoch at the same turn, so the formal total fell by one rather than two requests.",
+        "high_uncertainty_information_routes_preserved": true,
+        "seed18000629_turn29_model_review_preserved": true,
+        "seed18000629_turn29_response": "The model selected the exact Rule information root in this run; Round02's accepted attack_ko remains valid nondeterministic evidence but did not recur.",
+        "deadline_context": "The removed recover deadline did not recur. Two other high-value requests reached the 6254 ms deadline under a concurrently active, unrelated Agent-worktree Godot benchmark; neither changed a winner."
+      },
+      "regressions": {
+        "round03_focused": "pass",
+        "round02_focused": "pass",
+        "round01_focused": "pass",
+        "complex_decision_scenarios": "5/5 pass",
+        "v18cpg_contracts": "17 groups pass",
+        "strategic_shapes": "9/9 pass",
+        "generic_compaction": "12/12 pass",
+        "shared_blockers": "13 groups pass",
+        "dominance": "20/20 pass",
+        "coverage": "24/24 profiles and 12/12 modules pass"
+      },
+      "post_round_finding": {
+        "category": "route_aware_model_review_gate",
+        "finding": "A single scalar threshold could not remove a low-value request without first hiding the regret-287 high-uncertainty Tutor root. The new opt-in route threshold lets this deck keep information, Noctowl, opening-search, and Tutor roots on the Round02 model-review boundary while closing deterministic non-information roots at 386. Formal calls fell from 13 to 12 and from 22 to 12 across two rounds, with the strict winner flip, zero-negative gate, clean 5/5, and 6254 ms p95 preserved. The transient deadline count rose from one to two under external load, so Round04 must address response reliability rather than raise the route thresholds again."
+      },
+      "next_action": "Round04 must freeze the route-aware thresholds and both winner-flip certificates. Do not suppress additional high-uncertainty roots. Audit the two deadline turns and prompt/transport payload for a bounded reliability improvement; preserve Rule 4/5 -> V18CPG 5/5, zero negative flips, and p95 <= 6500 ms."
+    }
+  ],
+  "preparation": {
+    "current_source_contract": {
+      "source_kind": "bundled_ai",
+      "bundled_seed_path": "res://data/bundled_user/decks/18000625.json",
+      "total_cards": 60,
+      "deck_content_fingerprint": "50dfa4db29d7d61255f52ef8968a35fc9c199d3fefcc29fa0572f08947ec3f2a",
+      "fingerprint_verified": true,
+      "profile_version": 5,
+      "profile_fingerprint": "b31239c249a236911a8692fec7056851c0182b19b8ec110b3018657fa71a0d29",
+      "profile_file_sha256": "b15291fb30fda88b48215342d1fb074a1c6dd4f0270bd425081299490e0205cb",
+      "semantic_manifest_file_sha256": "d6df9dba798098d898c98178ad3e2a861175772aa0550168b4a65df83e5619ac"
+    },
+    "complex_decision_scenarios": {
+      "artifact": "res://tmp/v18cpg/optimization21/18000625/complex_decision_scenarios.json",
+      "focused_test_sha256": "1f57d4e47e863d1e8e1b81a7bb649909d6fa7b577b8f5b5bffd46cd6f6dbdb18",
+      "passed": 5,
+      "total": 5
+    },
+    "rejected_pre_fix_verified_local": {
+      "artifact": "res://tmp/v18cpg/optimization21/18000625/round00_verified_local.json",
+      "artifact_sha256": "68b974fd73f3c0dea0d55acb38636891a06991d8d9dc6914dd19456f3a5e49db",
+      "rule_wins": 4,
+      "v18cpg_wins": 2,
+      "negative_flip_seeds": [18000628, 18000629],
+      "reason": "The inherited host score_action_absolute_with_plan contract applied continuity and retreat guards a second time after the V18 Rule adapter had already applied them. Both public late-game Rule retreats were inverted into end_turn. This is rejected diagnostic evidence and counts as zero rounds."
+    },
+    "current_verified_local": {
+      "artifact": "res://tmp/v18cpg/optimization21/18000625/round00_verified_local_rule_floor_fix.json",
+      "artifact_sha256": "ade8352c0a277f0327a61e8fc97ac4853460defe48a9cb23e4500200d3d0413d",
+      "run_id": "opt21_18000625_round00_verified_local_rule_floor_fix",
+      "rule_wins": 4,
+      "v18cpg_wins": 4,
+      "rule_clean_games": 5,
+      "v18cpg_clean_games": 5,
+      "model_calls": 0,
+      "positive_flips": 0,
+      "negative_flips": 0,
+      "decision_signature_matches_rule": true,
+      "fixed_negative_flip_seeds": [18000628, 18000629],
+      "shared_v18_strategy_sha256": "d1d138e4a48d73acab03dba9f44dc95e1f0d73326cb286d9bb9e7854fba2e1ae",
+      "contract_test_sha256": "5c378528541b630894f4e1c497f7d130c8f2eb4edd1246f3bd7fc01bbb7a1fb1"
+    },
+    "current_round00": {
+      "artifact": "res://tmp/v18cpg/optimization21/18000625/round00_current.json",
+      "artifact_sha256": "5f628c728cecb7d8fec2a22518650078a320e6df4c99a8a96a038151f31cef98",
+      "run_id": "opt21_18000625_round00_current",
+      "deck_source": "bundled_ai",
+      "deck_content_fingerprint": "50dfa4db29d7d61255f52ef8968a35fc9c199d3fefcc29fa0572f08947ec3f2a",
+      "profile_version": 2,
+      "profile_fingerprint": "4b219ff6dde90b060d39980753c1ae62947ff44f15de1a421465dc433d46a586",
+      "metrics": {
+        "rule_wins": 4,
+        "v18cpg_wins": 4,
+        "paired_improvement": 0.0,
+        "paired_bootstrap_95": [0.0, 0.0],
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 22,
+        "model_accepted": 16,
+        "model_rejected": 6,
+        "model_acceptance_rate": 0.7272727272727273,
+        "model_owned_action_results": 1,
+        "payload_p50_bytes": 30509,
+        "payload_p95_bytes": 34416,
+        "visible_wait_p50_ms": 5213,
+        "visible_wait_p95_ms": 6253,
+        "graph_branch_hits": 5,
+        "uncovered_events": 93,
+        "zero_model_action_reference_checks": 4,
+        "zero_model_action_reference_mismatches": 0,
+        "positive_flips": 0,
+        "negative_flips": 0,
+        "fallbacks": {
+          "deadline_fallback": 2,
+          "route_validation": 2,
+          "schema_fallback": 2
+        },
+        "fallback_reasons": {
+          "turn_visible_wait_budget_exhausted": 2,
+          "typed_route_attack_dependency_unproven": 2,
+          "typed_route_crosses_information_checkpoint": 2
+        }
+      },
+      "model_owned_action_audit": {
+        "seed": 18000629,
+        "turn": 29,
+        "action": "attack",
+        "route_id": "route:attack_ko",
+        "candidate_id": "candidate:a3136351193ed1d99aec",
+        "outcome_preserved": "Rule win -> V18CPG win"
+      },
+      "hash_frozen_sources_unchanged": true
+    },
+    "regressions": {
+      "v18cpg_contracts": "17 groups pass",
+      "strategic_shapes": "9/9 pass",
+      "generic_compaction": "12/12 pass",
+      "shared_blockers": "13 groups pass",
+      "dominance": "20/20 pass",
+      "coverage": "24/24 profiles and 12/12 modules pass",
+      "n_zoroark_positive_flip_preserved": "Rule 3/5 -> V18CPG 4/5, zero negative flips",
+      "cynthia_round04_parity_preserved": "Rule 3/5 = V18CPG 3/5, zero negative flips"
+    }
+  },
+  "blockers": [],
+  "next_action": "Run Round04 on the same frozen five-seed block. Freeze the route-aware thresholds and both winner-flip certificates, audit the two high-value deadline turns for prompt/transport reliability without suppressing them, preserve Rule 4/5 -> V18CPG 5/5 with zero negative flips, and keep p95 <= 6500 ms."
+}

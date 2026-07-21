@@ -1,0 +1,275 @@
+{
+  "schema_version": 1,
+  "architecture": "V18CPG",
+  "evidence_revision": 2,
+  "status": "roi5_complete_strictly_better",
+  "deck_id": 800018501,
+  "deck_name": "18.0 玛俐的长毛巨魔",
+  "anchor_id": 575720,
+  "seed_base": 800018501,
+  "games_per_round": 5,
+  "model": "deepseek-v4-flash",
+  "deck_source": "bundled_ai",
+  "deck_content_fingerprint": "2e5c3534bff9e3349dda17bf3b97224fc7ec723ff600b7f295b3970c52904763",
+  "baseline_artifact": "res://tmp/v18cpg/optimization21/800018501/round00.json",
+  "completed_rounds": 2,
+  "required_rounds": 10,
+  "deep_iterations_completed": 5,
+  "required_deep_rounds": 5,
+  "roi5_completion": {
+    "complex_scenarios": 6,
+    "final_artifact": "res://tmp/v18cpg/optimization21/800018501/round02.json",
+    "rule_wins": 3,
+    "v18cpg_wins": 5,
+    "acceptance": "strictly_better"
+  },
+  "deep_iterations": [
+    {
+      "round": 1,
+      "failure_category": "event_or_version_error",
+      "decision": "retained",
+      "evidence": "res://tmp/v18cpg/optimization21/800018501/round01.json",
+      "proof_reason": "Action-result bindings replaced latency-sensitive observation versions and produced the first strict public winner flip."
+    },
+    {
+      "round": 2,
+      "failure_category": "fact_or_solver_error",
+      "decision": "retained",
+      "evidence": "res://tmp/v18cpg/optimization21/800018501/round02.json",
+      "proof_reason": "The exact visible Rare Candy plus Stage 2 line is preserved before a destructive hand reset, producing a second winner flip."
+    },
+    {
+      "round": 3,
+      "failure_category": "interaction_error",
+      "decision": "validated_and_frozen",
+      "evidence": "res://tmp/v18cpg/optimization21/800018501/complex_decision_scenarios.json",
+      "proof_reason": "Six ordering scenarios cover setup, evolution, Ability damage transfer, Supporter timing, and the three-Prize closeout with fail-closed boundaries."
+    },
+    {
+      "round": 4,
+      "failure_category": "certificate_integrity_error",
+      "decision": "validated_and_frozen",
+      "evidence": "res://tmp/v18cpg/roi5/800018501/round02_verified5.json",
+      "proof_reason": "The verified-local arm and binding-tamper matrix proved deterministic ownership independent of model sampling."
+    },
+    {
+      "round": 5,
+      "failure_category": "reference_and_latency_validation",
+      "decision": "validated_and_frozen",
+      "evidence": "res://tmp/v18cpg/optimization21/800018501/round02.json",
+      "proof_reason": "The frozen five-seed real-model replay remained 5/5, exactly matched reference-owned actions, and stayed below the visible-wait ceiling."
+    }
+  ],
+  "rounds": [
+    {
+      "round": 1,
+      "artifact": "res://tmp/v18cpg/optimization21/800018501/round01.json",
+      "artifact_sha256": "62ddde0ad10de1ad76e6f75e69d5c034c2115219367c5fa22fc0a5d3a88340ab",
+      "run_id": "opt21_800018501_round01",
+      "timestamp": "2026-07-21T14:31:24",
+      "failure_category": "event_or_version_error",
+      "diagnosis": "Seed 800018501 exposed the earliest complete public mistake: after Counter Catcher #35 stranded an attackless four-retreat-cost Iron Hands ex, Rule immediately spent Counter Catcher #36 to release a fully powered Raikou V. The first certificate implementation was semantically correct in verified-local play but bound its stages to absolute observation versions 41 and 43. Real-model waiting advanced the same public states to versions 45 and 47, invalidated the certificate, and produced one zero-model-action reference mismatch. Profile v3 replaces the latency-sensitive version predicate with exact successful action-result bindings for the first gust and the free retreat. The real-model rerun then preserved the second Catcher and converted the Rule loss into a V18CPG win with zero reference mismatches.",
+      "change_summary": "Added one deck-scoped fail-closed public certificate for the exact attackless second-gust state. It binds both Counter Catcher instances, the stranded Iron Hands ex, released Raikou V, Munkidori, Impidimp, card UID/effect/instance/slot identities, exact Rule floor, free retreat, and terminal end action. Observation version remains audit provenance only; each stage now requires the exact successful immediately preceding public action result. No Rule, legacy LLM, Agent, shared margin, token budget, model request count, card behavior, or hidden information changed.",
+      "retained": true,
+      "profile": {
+        "profile_version": 3,
+        "semantic_version": 1,
+        "profile_fingerprint": "ed96e083127b1a2e13c6617f7a5b4bb5272f151e4ee4ff336fc4e6c49f1c75ab",
+        "profile_file_sha256": "82b758429280889540b1b473dc4efe4c743e928d85aa63cbc6327140ba2371c9"
+      },
+      "metrics": {
+        "rule_wins": 3,
+        "v18cpg_wins": 4,
+        "paired_improvement": 0.2,
+        "paired_bootstrap_95": [0.0, 0.6],
+        "positive_flips": 1,
+        "negative_flips": 0,
+        "positive_flip_seeds": [800018501],
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 25,
+        "model_accepted": 15,
+        "model_rejected": 10,
+        "model_acceptance_rate": 0.6,
+        "model_owned_action_results": 0,
+        "payload_p95_bytes": 34881,
+        "turn_visible_wait_p95_ms": 6254,
+        "graph_branch_hits": 13,
+        "uncovered_events": 75,
+        "zero_acceptance_reference_checks": 0,
+        "zero_acceptance_reference_mismatches": 0,
+        "zero_model_action_reference_checks": 5,
+        "zero_model_action_reference_mismatches": 0,
+        "rule_decision_logs_match_round00_by_game": [true, true, true, true, true],
+        "fallbacks": {
+          "deadline_fallback": 4,
+          "route_validation": 1,
+          "schema_fallback": 5
+        },
+        "fallback_reasons": {
+          "node_count": 1,
+          "transport_error": 1,
+          "turn_visible_wait_budget_exhausted": 4,
+          "typed_route_attack_dependency_unproven": 1,
+          "typed_route_crosses_information_checkpoint": 3
+        }
+      },
+      "production_certificate_audit": {
+        "seed": 800018501,
+        "turn": 7,
+        "rule_suffix": ["Counter Catcher #35", "Counter Catcher #36", "retreat", "end_turn"],
+        "v18cpg_suffix": ["Counter Catcher #35", "module-certified free retreat", "module-certified end_turn"],
+        "certificate": "public_attackless_second_gust_releases_ready_attacker",
+        "module_verified_action_results": 2,
+        "single_seed_real_model_preflight": "res://tmp/v18cpg/optimization21/800018501/round01_seed501_real_v3.json",
+        "single_seed_reference_equal": true
+      },
+      "regressions": {
+        "focused_fail_closed": "76/76 pass",
+        "v18cpg_contracts": "17 groups pass",
+        "checkpoint_blockers": "13 groups pass",
+        "dominance": "20/20 pass",
+        "complex_decision_scenarios": "5/5 pass",
+        "strategy_coverage": "24/24 profiles and 12/12 modules pass"
+      },
+      "post_round_finding": {
+        "category": "strict_public_winner_flip",
+        "finding": "Round01 proves a source-current +1 net win without negative flips. More importantly, it closes a shared evidence-validity hole: model latency may change observation provenance but can no longer change a public certificate's meaning. All five games had zero model-owned action results and exactly matched the verified-local reference, so the winner flip is attributable to the deterministic deck-scoped certificate rather than an unverified model deviation."
+      },
+      "next_action": "Round02 must preserve seed 800018501 and audit the remaining Rule-loss seed 800018502 for an independent complete public suffix. Require another exact focused counterexample, zero negative flips, zero reference mismatches, clean 5/5, and p95 <= 6500 ms before retaining the round."
+    },
+    {
+      "round": 2,
+      "artifact": "res://tmp/v18cpg/optimization21/800018501/round02.json",
+      "artifact_sha256": "e466233bfc89de8b58a25da999454717c2cedb36da9785288b8134464bfb97b3",
+      "run_id": "roi5_800018501_round02_formal",
+      "timestamp": "2026-07-21T17:38:58",
+      "failure_category": "fact_or_solver_error",
+      "diagnosis": "The remaining Rule-loss seed 800018502 made its earliest complete public mistake on turn 2 after Ultra Ball had visibly produced Marnie's Grimmsnarl ex. The public hand was exactly Rare Candy, Professor's Research, Darkness Energy, and Grimmsnarl ex; an energized Impidimp was the only Bench Pokemon; the opposing active Iron Hands ex had one Energy and an empty Bench. Rule played Research, irreversibly discarded the guaranteed Rare Candy plus Stage 2 pair, never established Grimmsnarl, and lost on turn 13. The retained V18 certificate ends the turn only for this exact public shape, reobserves, Rare Candy evolves on turn 4, and converts the loss into a win. Eleven state mutations and a binding-hash tamper all fail closed.",
+      "change_summary": "Added a deck-scoped preserve_visible_stage2_setup_before_hand_reset certificate to the existing damage-counter-control module and profile v4. It binds the exact public hand multiset and effect identities, discard history, deck/prize counts, Munkidori active, single energized Impidimp Bench root, empty opposing Bench, Iron Hands ex identity/HP/prize count/Energy and three-Energy attack deficit, exact Professor's Research Rule floor, and end-turn action. The annotation is zero-wire outside the two participating candidates and carries a self-hash checked by the safety verifier. No Rule, legacy LLM, Agent, shared budget, model, card behavior, or hidden-zone access changed.",
+      "retained": true,
+      "profile": {
+        "profile_version": 4,
+        "semantic_version": 1,
+        "profile_fingerprint": "e2874c6594c48e9b74ddf097a6a87d099f1ad48691bf13c5df015fb943b18941",
+        "profile_file_sha256": "9bce85936f2c86a49f6d58e5516416023eb004272138bcbbd871fa187c261200"
+      },
+      "metrics": {
+        "rule_wins": 3,
+        "v18cpg_wins": 5,
+        "paired_improvement": 0.4,
+        "paired_bootstrap_95": [0.0, 0.8],
+        "positive_flips": 2,
+        "negative_flips": 0,
+        "positive_flip_seeds": [800018501, 800018502],
+        "rule_clean_games": 5,
+        "v18cpg_clean_games": 5,
+        "model_calls": 23,
+        "model_accepted": 13,
+        "model_rejected": 10,
+        "model_acceptance_rate": 0.5652173913043478,
+        "model_owned_action_results": 0,
+        "payload_p95_bytes": 34911,
+        "turn_visible_wait_p95_ms": 6253,
+        "graph_branch_hits": 13,
+        "uncovered_events": 65,
+        "zero_acceptance_reference_checks": 0,
+        "zero_acceptance_reference_mismatches": 0,
+        "zero_model_action_reference_checks": 5,
+        "zero_model_action_reference_mismatches": 0,
+        "rule_decision_logs_match_round00_by_game": [true, true, true, true, true],
+        "fallbacks": {
+          "deadline_fallback": 2,
+          "route_validation": 1,
+          "schema_fallback": 7
+        },
+        "fallback_reasons": {
+          "node_count": 1,
+          "turn_visible_wait_budget_exhausted": 2,
+          "typed_route_attack_dependency_unproven": 1,
+          "typed_route_crosses_information_checkpoint": 6
+        }
+      },
+      "production_certificate_audit": {
+        "seed": 800018502,
+        "turn": 2,
+        "rule_suffix": ["Professor's Research", "discard Rare Candy + Marnie's Grimmsnarl ex", "no Stage 2 board"],
+        "v18cpg_suffix": ["module-certified end_turn", "reobserve", "Rare Candy into Marnie's Grimmsnarl ex"],
+        "certificate": "public_visible_stage2_setup_preserved_before_destructive_hand_reset",
+        "module_verified_action_results": 1,
+        "verified_local_preflight": "res://tmp/v18cpg/roi5/800018501/round02_verified5.json",
+        "verified_local_preflight_sha256": "e55ca470e013ff3b015a876930253943dd7a2e47b4c84a54c29a2766f7b3f79f",
+        "formal_log": "user://logs/v18cpg/roi5_800018501_round02_formal/800018501_2/2.jsonl",
+        "all_zero_model_action_references_equal": true
+      },
+      "regressions": {
+        "v18cpg_contracts": "17 groups pass",
+        "strategy_coverage": "24/24 profiles and 12/12 modules pass",
+        "generic_module_compaction": "12/12 modules pass",
+        "strategic_shape_modules": "9/9 exact public-state fixtures pass",
+        "dominance": "20/20 pass",
+        "checkpoint_blockers": "13 groups pass",
+        "roi5_precision_manifest": "5/5 pass",
+        "complex_decision_scenarios": "6/6 pass including 11 negative boundaries and one binding tamper",
+        "n_zoroark_shared_regression": "10/10 pass"
+      },
+      "frozen_source_sha256": {
+        "profile": "9bce85936f2c86a49f6d58e5516416023eb004272138bcbbd871fa187c261200",
+        "strategic_shape_module": "eaf63f96a55918a225b656ef7e0d6aeac34a9d33ab51ea107051c7100e1a8e5b",
+        "strategy": "d18c6e4d8bf68e918a16b376174143da6fcfcbddc33c62fa16b70962399f99c2",
+        "capability_registry": "2cfd96053fc60f199215d215b70166158a3bc76d231e5c615e9e040353cd1f65",
+        "focused_test": "6e8ce7205ee11b6aa6de244e6c39dc8d504ed4131c976b41a653b8615a96c668",
+        "benchmark_runner": "56efe05607ece822d1cf72513541de08dc32786d99f5e14c82abfb9b5dde2a68",
+        "rule_strategy": "b4418ff8750c23ae43ebcbccfad10198ab6bbdb2ac2d4dc03cdd750173ff1ef6"
+      },
+      "post_round_finding": {
+        "category": "second_independent_strict_public_winner_flip",
+        "finding": "Round02 closes both fixed-seed Rule losses: Rule remains 3/5 while V18CPG reaches 5/5, with two positive flips, zero negative flips, exact Rule-signature stability, five clean games, all five zero-model-action reference checks equal, and 6253 ms p95 inside the 6500 ms gate. Calls fell from 25 to 23 while the additional winner flip is entirely attributable to one audited deterministic module action, not model sampling."
+      },
+      "next_action": "Freeze the two retained winner-flip certificates for this deck. Further Marnie work is lower ROI than beginning the next frozen ROI5 deck, pure Dragapult; revisit only if an independent regression set exposes a new public counterexample."
+    }
+  ],
+  "preparation": {
+    "current_source_contract": {
+      "source_kind": "bundled_ai",
+      "bundled_seed_path": "res://data/bundled_user/decks/800018501.json",
+      "bundled_seed_file_sha256": "94d99e78bd67dcee628e893936523b889b2d09e9e033047d1ff131fe1fa76f48",
+      "deck_content_fingerprint": "2e5c3534bff9e3349dda17bf3b97224fc7ec723ff600b7f295b3970c52904763",
+      "semantic_manifest_fingerprint": "2e5c3534bff9e3349dda17bf3b97224fc7ec723ff600b7f295b3970c52904763",
+      "semantic_manifest_file_sha256": "d9911fc234d1ac0ea63895dad56cadcf2cfbb776688f4e559c604410005e519f",
+      "profile_version": 4,
+      "profile_fingerprint": "e2874c6594c48e9b74ddf097a6a87d099f1ad48691bf13c5df015fb943b18941",
+      "profile_file_sha256": "9bce85936f2c86a49f6d58e5516416023eb004272138bcbbd871fa187c261200",
+      "fingerprint_verified": true
+    },
+    "formal_baseline": {
+      "artifact": "res://tmp/v18cpg/optimization21/800018501/round00.json",
+      "artifact_sha256": "69a9bd8153d6cecef58baec4bf71b4ddc24e190acbddebfe9d8f8ae290b15539",
+      "run_id": "opt21_800018501_round00",
+      "timestamp": "2026-07-21T14:13:10",
+      "profile_overrides_enabled": false,
+      "profile_version": 1,
+      "rule_wins": 3,
+      "v18cpg_wins": 3,
+      "rule_clean_games": 5,
+      "v18cpg_clean_games": 5,
+      "model_calls": 28,
+      "model_accepted": 17,
+      "model_owned_action_results": 0,
+      "turn_visible_wait_p95_ms": 6254,
+      "zero_model_action_reference_checks": 5,
+      "zero_model_action_reference_mismatches": 0,
+      "rule_signature_matches_round01": true
+    },
+    "scenario_contract": {
+      "test": "res://tests/v18_llm_policy_graph/test_optimize_800018501_complex_decision_scenarios.gd",
+      "test_sha256": "6e8ce7205ee11b6aa6de244e6c39dc8d504ed4131c976b41a653b8615a96c668",
+      "artifact": "res://tmp/v18cpg/optimization21/800018501/complex_decision_scenarios.json",
+      "artifact_sha256": "01b919587aaf690f188d16afacdfb5424f14badd5fcb53091cdbf5195b7dcdd4",
+      "passed": 6,
+      "total": 6,
+      "production_status": "round02_promoted"
+    }
+  },
+  "next_action": "Marnie's Grimmsnarl has reached 5/5 versus Rule 3/5 on the frozen batch with two independent deterministic winner flips. Freeze it and move ROI5 precision work to pure Dragapult."
+}

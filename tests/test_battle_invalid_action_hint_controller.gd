@@ -106,6 +106,29 @@ func test_invalid_action_hint_renders_payload_and_hides() -> String:
 	])
 
 
+func test_invalid_action_hint_auto_closes_and_releases_battle_input() -> String:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return "SceneTree is required for the auto-close regression"
+	var host := HintHost.new()
+	host.size = Vector2(1280, 720)
+	tree.root.add_child(host)
+	var controller := HintControllerScript.new()
+	controller.setup(host)
+	controller.show_reason("本回合已经附着过能量。", "能量不能附着")
+	var overlay := host.get_node_or_null("InvalidActionOverlay") as Control
+	var checks: Array[String] = [
+		assert_true(overlay != null and overlay.visible, "Invalid action hint should be visible long enough to read"),
+		assert_eq(overlay.mouse_filter if overlay != null else Control.MOUSE_FILTER_IGNORE, Control.MOUSE_FILTER_STOP, "Visible legacy hint should own its modal input window"),
+	]
+	await tree.create_timer(2.7).timeout
+	checks.append(assert_false(overlay.visible, "Invalid action hint should automatically close instead of covering the battle area"))
+	checks.append(assert_eq(overlay.mouse_filter, Control.MOUSE_FILTER_IGNORE, "Auto-close should release battle input"))
+	host.queue_free()
+	await tree.process_frame
+	return run_checks(checks)
+
+
 func test_invalid_action_hint_accepts_plain_reason() -> String:
 	var host := HintHost.new()
 	var controller := HintControllerScript.new()
